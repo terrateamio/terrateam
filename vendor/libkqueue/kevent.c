@@ -174,21 +174,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
      * Wait for one or more filters to have events.
      */
     fds = kq->kq_fds;
-#if BROKEN
     n = pselect(kq->kq_nfds, &fds, NULL , NULL, timeout, NULL);
-#else
-    /* BROKEn, but testing vnode crap */
-    struct timeval tv;
-    struct timeval *tvp = &tv;
-    if (timeout) {
-        tv.tv_sec = timeout->tv_sec;
-        tv.tv_usec = timeout->tv_nsec / 1000;
-    } else {
-        dbg_puts("null timeout..");
-        tvp = NULL;
-    }
-    n = select(kq->kq_nfds, &fds, NULL, NULL, tvp);
-#endif
     if (n < 0) {
         if (errno == EINTR) {
             dbg_puts("signal caught");
