@@ -1,0 +1,51 @@
+libkqueue emulates the kqueue(2) kernel event notification mechanism
+on platforms which do not provide it natively. Currently, the only
+supported platform is Linux and the only tested platform is
+Ubuntu x64 with kernel 2.6.28.
+
+
+                kevent.flags Implementation Status
+
+            ADD DELETE  ENABLE  DISABLE DISPATCH    ONESHOT CLEAR   EOF
+
+READ/WRITE   Y  Y       Y       Y       N           Y       N       N
+AIO          N  N       N       N       N           N       N       N
+VNODE        Y  N       N       N       N           N       N       N
+PROC        NO -- Cannot fully implement on Linux   
+SIGNAL       Y  N       N       N       N           N       N       N
+NETDEV      NO -- Don't know how to implement on Linux
+TIMER        Y  N       N       N       N           N       N       N 
+USER        Totally broken
+
+            kevent.fflags Implementation Status
+
+                        Status
+READ
+    NOTE_LOWAT          No
+    EV_EOF              No
+WRITE
+    NOTE_LOWAT          No
+    EV_EOF              No
+VNODE
+    NOTE_DELETE         No
+    NOTE_WRITE          No
+    NOTE_EXTEND         No
+    NOTE_ATTRIB         No
+    NOTE_LINK           No
+    NOTE_RENAME         No
+    NOTE_REVOKE         N/A 
+USER
+    NOTE_FFNOP         Ignore the input fflags.
+    NOTE_FFAND         Bitwise AND fflags.
+    NOTE_FFOR          Bitwise OR fflags.
+    NOTE_COPY          Copy fflags.
+    NOTE_FFCTRLMASK    Control mask for fflags.
+    NOTE_FFLAGSMASK    User defined flag mask for fflags.
+    NOTE_TRIGGER       Cause the event to be triggered.
+
+            Filter sets kevent.data structure when returning
+EV_RECEIPT  Yes
+kevent.data No
+
+--
+Mark Heily <mark@heily.com>
