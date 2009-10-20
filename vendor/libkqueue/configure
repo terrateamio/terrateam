@@ -1,0 +1,34 @@
+#!/bin/sh
+
+check_header() {	 
+   sym=`echo "HAVE_$1" | tr a-z A-Z | sed 's,[./],_,g'`	 
+   if [ -f /usr/include/$1 ] ; then
+     echo "#define $sym" >> config.h
+     return 0
+   else  
+     echo "#undef $sym" >> config.h
+     return 1
+   fi
+}
+
+echo "Checking operating system type... `uname`"
+kernel=`uname -s | tr A-Z a-z`
+target=$kernel
+
+echo "Creating config.h"
+echo "# AUTOMATICALLY GENERATED -- DO NOT EDIT" > config.h
+if [ $kernel = "linux" ] ; then
+   check_header sys/epoll.h && ln -s os/linux/socket.c    \
+       || ln -s os/posix/socket.c
+   check_header sys/inotify.h && ln -s os/linux/vnode.c   \
+       || ln -s os/posix/vnode.c
+   check_header sys/signalfd.h && ln -s os/linux/signal.c \
+       || ln -s os/posix/signal.c
+   check_header sys/timerfd.h && ln -s os/linux/timer.c   \
+       || ln -s os/posix/timer.c
+   ln -s os/posix/user.c
+fi
+
+echo "Creating config.mk"
+echo "# AUTOMATICALLY GENERATED -- DO NOT EDIT" > config.mk
+echo "UNAME=$target" >> config.mk
