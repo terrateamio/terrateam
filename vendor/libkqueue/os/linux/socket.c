@@ -16,10 +16,12 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <linux/sockios.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -122,7 +124,17 @@ evfilt_socket_copyout(struct filter *filt,
             /* FIXME: this is wrong. See the manpage */
             dst->flags = 0; 
             dst->fflags = 0;
-            dst->data = 0;
+
+            /* On return, data contains the number of bytes of protocol
+               data available to read.
+             */
+            if (ioctl(dst->ident, 
+                        (dst->filter == EVFILT_READ) ? SIOCINQ : SIOCOUTQ, 
+                        &dst->data) < 0) {
+                /* race condition with socket close, so ignore this error */
+                dbg_puts("ioctl(2) of socket failed");
+                dst->data = 0;
+            }
 
             nevents++;
             dst++;
