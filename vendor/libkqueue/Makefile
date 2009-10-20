@@ -50,6 +50,9 @@ dist:
 	tar zcvf $(PROGRAM)-`date +%y%m%d_%H%M`.tar.gz $(PROGRAM)
 	rm -rf $(PROGRAM)
 
+publish-www:
+	rm -rf ~/public_html/libkqueue/ ; cp -R www ~/public_html/libkqueue/
+
 clean:
 	rm -f a.out *.a *.o *.so $(FILTERS)
 
