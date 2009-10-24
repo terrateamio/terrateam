@@ -11,6 +11,8 @@
 <body>
 <h1>Implementation Status</h1>
 
+<h2>kevent.flags</h2>
+
 <table border="1">
 
 <tr>
@@ -49,22 +51,47 @@
 <td>No</td>
 <td>No</td>
 </tr>
+
+<tr>
+<td>EVFILT_TIMER<BR></td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+</tr>
+
+<tr>
+<td>EVFILT_PROC<BR></td>
+<td colspan=6>No - This will be difficult to implement fully</td>
+</tr>
+
+<tr>
+<td>EVFILT_SIGNAL</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+</tr>
+
+<tr>
+<td>EVFILT_NETDEV<BR></td>
+<td colspan=6>No - low priority</td>
+</tr>
+
+<tr>
+<td>EVFILT_USER<BR></td>
+<td colspan=6>No - stub</td>
+</tr>
+
 </table>
 
+<h2>kevent.fflags</h2>
+
 <pre>
-                kevent.flags Implementation Status
-
-            ADD DELETE  ENABLE  DISABLE DISPATCH    ONESHOT CLEAR   EOF
-
-VNODE        Y  N       N       N       N           N       N       N
-PROC        NO -- Cannot fully implement on Linux   
-SIGNAL       Y  N       N       N       N           N       N       N
-NETDEV      NO -- Don't know how to implement on Linux
-TIMER        Y  N       N       N       N           N       N       N 
-USER        Totally broken
-
-            kevent.fflags Implementation Status
-
                         Status
 READ
     NOTE_LOWAT          No
