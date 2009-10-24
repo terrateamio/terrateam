@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Content-Language" content="en-us" />
+
+    <title>libkqueue - Implementation status</title>
+</head>
+
+<body>
+<h1>Implementation Status</h1>
+
+<table border="1">
+
+<tr>
+<th>Filter</th>
+<th>EV_ADD<br>
+    EV_DELETE</th>
+<th>EV_ENABLE<br>
+    EV_DISABLE</th>
+<th>EV_DISPATCH</th>
+<th>EV_ONESHOT</th>
+<th>EV_CLEAR</th>
+<th>EV_EOF</th>
+</tr>
+
+<tr>
+<td>EVFILT_READ<BR>EVFILT_WRITE<BR></td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+</tr>
+
+<tr>
+<td>EVFILT_AIO<BR></td>
+<td colspan=6>No</td>
+</tr>
+
+<tr>
+<td>EVFILT_VNODE</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+</tr>
+</table>
+
+<pre>
+                kevent.flags Implementation Status
+
+            ADD DELETE  ENABLE  DISABLE DISPATCH    ONESHOT CLEAR   EOF
+
+VNODE        Y  N       N       N       N           N       N       N
+PROC        NO -- Cannot fully implement on Linux   
+SIGNAL       Y  N       N       N       N           N       N       N
+NETDEV      NO -- Don't know how to implement on Linux
+TIMER        Y  N       N       N       N           N       N       N 
+USER        Totally broken
+
+            kevent.fflags Implementation Status
+
+                        Status
+READ
+    NOTE_LOWAT          No
+    EV_EOF              No
+WRITE
+    NOTE_LOWAT          No
+    EV_EOF              No
+VNODE
+    NOTE_DELETE         No
+    NOTE_WRITE          No
+    NOTE_EXTEND         No
+    NOTE_ATTRIB         No
+    NOTE_LINK           No
+    NOTE_RENAME         No
+    NOTE_REVOKE         N/A 
+USER
+    NOTE_FFNOP         Ignore the input fflags.
+    NOTE_FFAND         Bitwise AND fflags.
+    NOTE_FFOR          Bitwise OR fflags.
+    NOTE_COPY          Copy fflags.
+    NOTE_FFCTRLMASK    Control mask for fflags.
+    NOTE_FFLAGSMASK    User defined flag mask for fflags.
+    NOTE_TRIGGER       Cause the event to be triggered.
+
+            Filter sets kevent.data structure when returning
+EV_RECEIPT  Yes
+kevent.data No
+</pre>
+
+--
+Mark Heily <mark@heily.com>
+</body>
+</html>
