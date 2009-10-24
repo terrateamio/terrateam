@@ -29,7 +29,7 @@
 #include <sys/signalfd.h>
 
 #include "sys/event.h"
-#include "../../private.h"
+#include "private.h"
 
 /* Highest signal number supported. POSIX standard signals are < 32 */
 #define SIGNAL_MAX      32

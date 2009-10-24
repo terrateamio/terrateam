@@ -31,7 +31,7 @@
 #include <sys/timerfd.h>
 
 #include "sys/event.h"
-#include "../../private.h"
+#include "private.h"
 
 static void timer_convert(struct itimerspec *dst, int src);
 
