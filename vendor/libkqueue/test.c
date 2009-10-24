@@ -185,6 +185,7 @@ test_kevent_socket_del(void)
 {
     const char *test_id = "kevent(EVFILT_READ, EV_DELETE)";
     struct kevent kev;
+    char buf[100];
 
     test_begin(test_id);
 
@@ -196,9 +197,36 @@ test_kevent_socket_del(void)
     if (write(sockfd[1], ".", 1) < 1)
         err(1, "write(2)");
     test_no_kevents();
+    if (read(sockfd[0], &buf[0], sizeof(buf)) < 1)
+        err(1, "read(2)");
 
     success(test_id);
 }
+
+void
+test_kevent_socket_eof(void)
+{
+    const char *test_id = "kevent(EVFILT_READ, EV_EOF)";
+    struct kevent kev;
+
+    test_begin(test_id);
+
+    /* Re-add the watch and make sure no events are pending */
+    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_ADD, 0, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+    test_no_kevents();
+
+    if (close(sockfd[1]) < 0)
+        err(1, "close(2)");
+
+    if (kevent(kqfd, NULL, 0, &kev, 1, NULL) < 1)
+        err(1, "%s", test_id);
+    KEV_CMP(kev, sockfd[0], EVFILT_READ, EV_EOF);
+
+    success(test_id);
+}
+
 
 void
 test_kevent_signal_add(void)
@@ -431,6 +459,7 @@ main(int argc, char **argv)
         test_kevent_socket_disable();
         test_kevent_socket_enable();
         test_kevent_socket_del();
+        test_kevent_socket_eof();
     }
 
     if (test_signal) {
