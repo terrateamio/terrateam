@@ -67,10 +67,11 @@ evfilt_socket_copyin(struct filter *filt,
     if (src->flags & EV_ENABLE || src->flags & EV_DISABLE) 
         op = EPOLL_CTL_MOD;
     // FIXME: probably won't work with EV_ADD | EV_DISABLE 
+    // XXX-FIXME: need to update dst for delete/modify
 
     /* Convert the kevent into an epoll_event */
     if (src->filter == EVFILT_READ)
-        ev.events = EPOLLIN;
+        ev.events = EPOLLIN | EPOLLRDHUP;
     else
         ev.events = EPOLLOUT;
     if (src->flags & EV_ONESHOT)
@@ -99,6 +100,7 @@ evfilt_socket_copyout(struct filter *filt,
             int nevents)
 {
     struct epoll_event epevt[MAX_KEVENT];
+    struct epoll_event *ev;
     struct knote *kn;
     int i, nret;
 
@@ -115,15 +117,18 @@ evfilt_socket_copyout(struct filter *filt,
     }
 
     for (i = 0, nevents = 0; i < nret; i++) {
-        kn = knote_lookup(filt, epevt[i].data.fd);
+        ev = &epevt[i];
+        kn = knote_lookup(filt, ev->data.fd);
         if (kn != NULL) {
             dst->ident = kn->kev.ident;
             dst->filter = kn->kev.filter;
             dst->udata = kn->kev.udata;
-
-            /* FIXME: this is wrong. See the manpage */
             dst->flags = 0; 
             dst->fflags = 0;
+            if (ev->events & EPOLLRDHUP || ev->events & EPOLLHUP)
+                dst->flags |= EV_EOF;
+            if (ev->events & EPOLLERR)
+                dst->fflags = 1; /* FIXME: Return the actual socket error */
 
             /* On return, data contains the number of bytes of protocol
                data available to read.
