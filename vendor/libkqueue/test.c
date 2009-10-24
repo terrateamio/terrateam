@@ -127,8 +127,8 @@ test_kevent_socket_get(void)
     if (nfds < 1)
         err(1, "%s", test_id);
     KEV_CMP(kev, sockfd[0], EVFILT_READ, 0);
-    if (kev.data != 1)
-        err(1, "incorrect data value %d", kev.data); // FIXME: make part of KEV_CMP
+    if ((int)kev.data != 1)
+        err(1, "incorrect data value %d", (int) kev.data); // FIXME: make part of KEV_CMP
 
     /* Drain the read buffer, then make sure there are no more events. */
     puts("draining the read buffer");
