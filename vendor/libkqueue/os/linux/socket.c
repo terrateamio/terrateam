@@ -33,6 +33,33 @@
 #include "sys/event.h"
 #include "private.h"
 
+
+char *
+epoll_event_dump(struct epoll_event *evt)
+{
+
+#define EPEVT_DUMP(attrib) \
+    if (evt->events & attrib) \
+       fputs(#attrib" ", stdout);
+
+    fprintf(stdout, " { data = %p, events = ", evt->data.ptr);
+    EPEVT_DUMP(EPOLLIN);
+    EPEVT_DUMP(EPOLLOUT);
+    EPEVT_DUMP(EPOLLRDHUP);
+    EPEVT_DUMP(EPOLLONESHOT);
+    EPEVT_DUMP(EPOLLET);
+    fputs("}\n", stdout);
+    fflush(stdout);
+
+    return "";  //XXX-BROKEN
+}
+
+static int 
+socket_knote_delete(int epfd, int fd)
+{
+    return epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
+}
+
 int
 evfilt_socket_init(struct filter *filt)
 {
@@ -74,7 +101,7 @@ evfilt_socket_copyin(struct filter *filt,
         ev.events = EPOLLIN | EPOLLRDHUP;
     else
         ev.events = EPOLLOUT;
-    if (src->flags & EV_ONESHOT)
+    if (src->flags & EV_ONESHOT || src->flags & EV_DISPATCH)
         ev.events |= EPOLLONESHOT;
     if (src->flags & EV_CLEAR)
         ev.events |= EPOLLET;
@@ -83,8 +110,12 @@ evfilt_socket_copyin(struct filter *filt,
     if (src->flags & EV_DISABLE) 
         ev.events = 0;
 
-    dbg_printf("epoll_ctl(2): epfd=%d, op=%d, fd=%d evts=%d", 
-            filt->kf_pfd, op, (int)src->ident, ev.events);
+    dbg_printf("epoll_ctl(2): epfd=%d, op=%d, fd=%d event=%s", 
+            filt->kf_pfd, 
+            op, 
+            (int)src->ident, 
+            epoll_event_dump(&ev)
+            );
     rv = epoll_ctl(filt->kf_pfd, op, src->ident, &ev);
     if (rv < 0) {
         dbg_printf("epoll_ctl(2): %s", strerror(errno));
@@ -118,6 +149,7 @@ evfilt_socket_copyout(struct filter *filt,
 
     for (i = 0, nevents = 0; i < nret; i++) {
         ev = &epevt[i];
+        epoll_event_dump(ev);
         kn = knote_lookup(filt, ev->data.fd);
         if (kn != NULL) {
             dst->ident = kn->kev.ident;
@@ -129,7 +161,7 @@ evfilt_socket_copyout(struct filter *filt,
                 dst->flags |= EV_EOF;
             if (ev->events & EPOLLERR)
                 dst->fflags = 1; /* FIXME: Return the actual socket error */
-
+          
             /* On return, data contains the number of bytes of protocol
                data available to read.
              */
@@ -139,6 +171,14 @@ evfilt_socket_copyout(struct filter *filt,
                 /* race condition with socket close, so ignore this error */
                 dbg_puts("ioctl(2) of socket failed");
                 dst->data = 0;
+            }
+
+            if (kn->kev.flags & EV_ONESHOT) {
+                socket_knote_delete(filt->kf_pfd, kn->kev.ident);
+                knote_free(kn);
+            }
+            if (kn->kev.flags & EV_DISPATCH) {
+                /* NOOP: EPOLLONESHOT disables, does not delete */
             }
 
             nevents++;

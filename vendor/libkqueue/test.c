@@ -57,6 +57,7 @@ test_no_kevents(void)
     memset(&timeo, 0, sizeof(timeo));
     nfds = kevent(kqfd, NULL, 0, &kev, 1, &timeo);
     if (nfds != 0) {
+        puts("\nUnexpected event:");
         puts(kevent_dump(&kev));
         errx(1, "%d event(s) pending, but none expected:", nfds);
     }
@@ -96,6 +97,25 @@ test_kqueue_close(void)
     success("kqueue_close()");
 }
 
+static void
+kevent_socket_drain(void)
+{
+    char buf[1];
+
+    /* Drain the read buffer, then make sure there are no more events. */
+    puts("draining the read buffer");
+    if (read(sockfd[0], &buf[0], 1) < 1)
+        err(1, "read(2)");
+}
+
+static void
+kevent_socket_fill(void)
+{
+  puts("filling the read buffer");
+    if (write(sockfd[1], ".", 1) < 1)
+        err(1, "write(2)");
+}
+
 void
 test_kevent_socket_add(void)
 {
@@ -114,7 +134,6 @@ void
 test_kevent_socket_get(void)
 {
     const char *test_id = "kevent(EVFILT_READ) wait";
-    char buf[1];
     struct kevent kev;
     int nfds;
 
@@ -130,10 +149,7 @@ test_kevent_socket_get(void)
     if ((int)kev.data != 1)
         err(1, "incorrect data value %d", (int) kev.data); // FIXME: make part of KEV_CMP
 
-    /* Drain the read buffer, then make sure there are no more events. */
-    puts("draining the read buffer");
-    if (read(sockfd[0], &buf[0], 1) < 1)
-        err(1, "read(2)");
+    kevent_socket_drain();
     test_no_kevents();
 
     success(test_id);
@@ -151,10 +167,9 @@ test_kevent_socket_disable(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-    puts("filling the read buffer");
-    if (write(sockfd[1], ".", 1) < 1)
-        err(1, "write(2)");
+    kevent_socket_fill();
     test_no_kevents();
+    kevent_socket_drain();
 
     success(test_id);
 }
@@ -172,10 +187,12 @@ test_kevent_socket_enable(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
+    kevent_socket_fill();
     nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
     if (nfds < 1)
         err(1, "%s", test_id);
     KEV_CMP(kev, sockfd[0], EVFILT_READ, 0);
+    kevent_socket_drain();
 
     success(test_id);
 }
@@ -185,7 +202,6 @@ test_kevent_socket_del(void)
 {
     const char *test_id = "kevent(EVFILT_READ, EV_DELETE)";
     struct kevent kev;
-    char buf[100];
 
     test_begin(test_id);
 
@@ -193,12 +209,76 @@ test_kevent_socket_del(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-    puts("filling the read buffer");
-    if (write(sockfd[1], ".", 1) < 1)
-        err(1, "write(2)");
+    kevent_socket_fill();
     test_no_kevents();
-    if (read(sockfd[0], &buf[0], sizeof(buf)) < 1)
-        err(1, "read(2)");
+    kevent_socket_drain();
+
+    success(test_id);
+}
+
+void
+test_kevent_socket_oneshot(void)
+{
+    const char *test_id = "kevent(EVFILT_READ, EV_ONESHOT)";
+    struct kevent kev;
+
+    test_begin(test_id);
+
+    /* Re-add the watch and make sure no events are pending */
+    puts("-- re-adding knote");
+    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_ADD | EV_ONESHOT, 0, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+    test_no_kevents();
+
+    puts("-- getting one event");
+    kevent_socket_fill();
+    if (kevent(kqfd, NULL, 0, &kev, 1, NULL) != 1)
+        err(1, "%s", test_id);
+    KEV_CMP(kev, sockfd[0], EVFILT_READ, 0);
+
+    puts("-- checking knote disabled");
+    test_no_kevents();
+
+    /* Try to delete the knote, it should already be deleted */
+    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_DELETE, 0, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) == 0)
+        err(1, "%s", test_id);
+
+    kevent_socket_drain();
+
+    success(test_id);
+}
+
+void
+test_kevent_socket_dispatch(void)
+{
+    const char *test_id = "kevent(EVFILT_READ, EV_DISPATCH)";
+    struct kevent kev;
+
+    test_begin(test_id);
+
+    /* Re-add the watch and make sure no events are pending */
+    puts("-- re-adding knote");
+    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_ADD | EV_DISPATCH, 0, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+    test_no_kevents();
+
+    /* Since the knote is disabled, there are no events. */
+    puts("-- checking if knote is disabled..");
+    kevent_socket_fill();
+    if (kevent(kqfd, NULL, 0, &kev, 1, NULL) != 1)
+        err(1, "%s", test_id);
+    KEV_CMP(kev, sockfd[0], EVFILT_READ, 0);
+    test_no_kevents();
+
+    /* Since the knote is disabled, the EV_DELETE operation succeeds. */
+    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_DELETE, 0, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+
+    kevent_socket_drain();
 
     success(test_id);
 }
@@ -224,9 +304,13 @@ test_kevent_socket_eof(void)
         err(1, "%s", test_id);
     KEV_CMP(kev, sockfd[0], EVFILT_READ, EV_EOF);
 
+    /* Delete the watch */
+    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_DELETE, 0, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+
     success(test_id);
 }
-
 
 void
 test_kevent_signal_add(void)
@@ -459,6 +543,8 @@ main(int argc, char **argv)
         test_kevent_socket_disable();
         test_kevent_socket_enable();
         test_kevent_socket_del();
+        test_kevent_socket_oneshot();
+        test_kevent_socket_dispatch();
         test_kevent_socket_eof();
     }
 
