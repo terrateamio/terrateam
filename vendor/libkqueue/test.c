@@ -284,6 +284,38 @@ test_kevent_socket_dispatch(void)
 }
 
 void
+test_kevent_socket_lowat(void)
+{
+    const char *test_id = "kevent(EVFILT_READ, NOTE_LOWAT)";
+    struct kevent kev;
+
+    test_begin(test_id);
+
+    /* Re-add the watch and make sure no events are pending */
+    puts("-- re-adding knote, setting low watermark to 2 bytes");
+    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_ADD | EV_ONESHOT, NOTE_LOWAT, 2, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+    test_no_kevents();
+
+    puts("-- checking that one byte does not trigger an event..");
+    kevent_socket_fill();
+    test_no_kevents();
+
+    puts("-- checking that two bytes triggers an event..");
+    kevent_socket_fill();
+    if (kevent(kqfd, NULL, 0, &kev, 1, NULL) != 1)
+        err(1, "%s", test_id);
+    KEV_CMP(kev, sockfd[0], EVFILT_READ, 0);
+    test_no_kevents();
+
+    kevent_socket_drain();
+    kevent_socket_drain();
+
+    success(test_id);
+}
+
+void
 test_kevent_socket_eof(void)
 {
     const char *test_id = "kevent(EVFILT_READ, EV_EOF)";
@@ -545,6 +577,7 @@ main(int argc, char **argv)
         test_kevent_socket_del();
         test_kevent_socket_oneshot();
         test_kevent_socket_dispatch();
+        test_kevent_socket_lowat();
         test_kevent_socket_eof();
     }
 
