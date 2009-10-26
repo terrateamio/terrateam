@@ -110,6 +110,32 @@ evfilt_socket_copyin(struct filter *filt,
     if (src->flags & EV_DISABLE) 
         ev.events = 0;
 
+    /* Set the low water mark */
+    /* PORTABILITY -
+       BSD kqueue(2) NOTE_LOWAT does not modify the underlying
+       socket.
+
+       It appears that epoll(2) does not respect the SO_RCVLOWAT
+       setting.
+
+     */
+    if (src->fflags & NOTE_LOWAT) {
+#if EPOLL_IS_NOT_BROKEN
+        const socklen_t optlen = sizeof(int);
+        int sockopt;
+
+        sockopt = src->data;
+        if (setsockopt(src->ident, SOL_SOCKET, SO_RCVLOWAT, &sockopt, optlen) < 0) {
+            dbg_printf("setsockopt(2): %s", strerror(errno));
+            return (-1);
+        }
+        dbg_printf("Low watermark set to %d", sockopt);
+#else
+        errno = ENOTSUP;
+        return (-1);
+#endif
+    }
+
     dbg_printf("epoll_ctl(2): epfd=%d, op=%d, fd=%d event=%s", 
             filt->kf_pfd, 
             op, 
