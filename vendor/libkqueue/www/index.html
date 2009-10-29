@@ -6,6 +6,9 @@
     <meta http-equiv="Content-Language" content="en-us" />
 
     <title>libkqueue</title>
+    <style type="text/css">
+    .blockquote { margin-right: 2em }
+    </style>
 </head>
 
 <body>
@@ -22,6 +25,19 @@ To checkout the SVN repository, run the following command:
 
 <h2>Status</h2>
 The current implementation status is <a href="status.html">here</a>.
+<p>
+There are several compatibility issues to be aware of when using this library under Linux:<p>
+<ol>
+
+<li>The NOTE_LOWAT flag is not supported. According to <i>socket(7)</i>,<p>
+<pre style="blockquote">
+"The select(2) and poll(2) system  calls  currently  do not respect the 
+SO_RCVLOWAT setting on Linux, and mark a socket readable when even  a  
+single  byte  of data is available.  A subsequent read from the socket 
+will block until SO_RCVLOWAT bytes are available."</pre>
+</li>
+
+</ol>
 
 <h2>Links</h2>
 

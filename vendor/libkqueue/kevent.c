@@ -93,8 +93,6 @@ kevent_copyin(struct kqueue *kq, const struct kevent *src, int nchanges,
         }
 
         if (filt->kf_copyin(filt, dst, src) < 0) {
-            if (kn_alloc)
-                knote_free(dst);
             status = -EBADMSG;
             goto err_out;
         }
