@@ -199,12 +199,11 @@ evfilt_socket_copyout(struct filter *filt,
                 dst->data = 0;
             }
 
+            if (kn->kev.flags & EV_DISPATCH) 
+                KNOTE_DISABLE(kn);
             if (kn->kev.flags & EV_ONESHOT) {
                 socket_knote_delete(filt->kf_pfd, kn->kev.ident);
                 knote_free(kn);
-            }
-            if (kn->kev.flags & EV_DISPATCH) {
-                /* NOOP: EPOLLONESHOT disables, does not delete */
             }
 
             nevents++;
