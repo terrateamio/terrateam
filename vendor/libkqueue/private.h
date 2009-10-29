@@ -50,6 +50,16 @@ LIST_HEAD(knotelist, knote);
 #define KNOTE_INSERT(knl, ent)      LIST_INSERT_HEAD((knl), (ent), entries)
 #define KNOTE_EMPTY(ent)            ((ent)->kev.filter == 0)
 
+#define KNOTE_ENABLE(ent)           do {                            \
+            (ent)->kev.flags |=  EV_ENABLE;                         \
+            (ent)->kev.flags &= ~EV_DISABLE;                        \
+} while (0/*CONSTCOND*/)
+
+#define KNOTE_DISABLE(ent)          do {                            \
+            (ent)->kev.flags &= ~EV_ENABLE;                         \
+            (ent)->kev.flags |=  EV_DISABLE;                        \
+} while (0/*CONSTCOND*/)
+
 struct filter {
     int       kf_id;
     int     (*kf_init)(struct filter *);
