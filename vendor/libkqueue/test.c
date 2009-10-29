@@ -156,6 +156,45 @@ test_kevent_socket_get(void)
 }
 
 void
+test_kevent_socket_clear(void)
+{
+    const char *test_id = "kevent(EVFILT_READ, EV_CLEAR)";
+    struct kevent kev;
+    int nfds;
+
+    test_begin(test_id);
+
+    test_no_kevents();
+
+    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+
+    kevent_socket_fill();
+    kevent_socket_fill();
+
+    nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
+    if (nfds < 1)
+        err(1, "%s", test_id);
+    KEV_CMP(kev, sockfd[0], EVFILT_READ, 0);
+    if ((int)kev.data != 2)
+        err(1, "incorrect data value %d", (int) kev.data); // FIXME: make part of KEV_CMP
+
+    /* We filled twice, but drain once. Edge-triggered would not generate
+       additional events.
+     */
+    kevent_socket_drain();
+    test_no_kevents();
+
+    kevent_socket_drain();
+    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_DELETE, 0, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+
+    success(test_id);
+}
+
+void
 test_kevent_socket_disable(void)
 {
     const char *test_id = "kevent(EVFILT_READ, EV_DISABLE)";
@@ -753,6 +792,7 @@ main(int argc, char **argv)
         test_kevent_socket_enable();
         test_kevent_socket_del();
         test_kevent_socket_oneshot();
+        test_kevent_socket_clear();
         test_kevent_socket_dispatch();
         /* TODO: broken on linux: test_kevent_socket_lowat(); */
         test_kevent_socket_eof();
