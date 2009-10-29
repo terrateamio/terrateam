@@ -128,6 +128,8 @@ See: http://lists.schmorp.de/pipermail/libev/2008q4/000443.html
         */
         if (src->fflags & NOTE_DELETE)
             mask |= IN_ATTRIB | IN_DELETE | IN_DELETE_SELF;
+        if (src->fflags & NOTE_WRITE)
+            mask |= IN_MODIFY;
 
         if (src->flags & EV_ONESHOT)
             mask |= IN_ONESHOT;
@@ -196,6 +198,10 @@ evfilt_vnode_copyout(struct filter *filt,
             dst->ident = kn->kev.ident;
             dst->filter = kn->kev.filter;
             dst->udata = kn->kev.udata;
+
+            if (inevt[i].events & IN_MODIFY && kn->kev.fflags & EV_WRITE) {
+                dst->flags |= EV_WRITE;
+            }
 
             /* FIXME: this is wrong. See the manpage */
             dst->flags = 0; 
