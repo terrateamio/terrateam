@@ -494,12 +494,9 @@ test_kevent_vnode_add(void)
         printf("vnode_fd = %d\n", vnode_fd);
 
     EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_ADD, 
-            NOTE_WRITE | NOTE_DELETE, 0, &sockfd[0]);
+            NOTE_WRITE | NOTE_ATTRIB | NOTE_RENAME | NOTE_DELETE, 0, &sockfd[0]);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
-
-    // XXX-causes an event..
-    close(vnode_fd);
 
     success(test_id);
 }
@@ -513,12 +510,21 @@ test_kevent_vnode_note_delete(void)
 
     test_begin(test_id);
 
+    EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_DELETE, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+
+    /* FIXME: workaround for linux behavior. if the file is open,
+       the delete event isn't registered; an IN_ATTRIB event is fired
+       instead.
+       */
+    close(vnode_fd);
     if (unlink("/tmp/kqueue-test.tmp") < 0)
         err(1, "unlink");
 
     nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
     if (nfds < 1)
-        err(1, "%s", test_id);
+        err(1, "%s %d events", test_id, nfds);
     if (kev.ident != vnode_fd ||
             kev.filter != EVFILT_VNODE || 
             kev.fflags != NOTE_DELETE)
@@ -537,9 +543,9 @@ test_kevent_vnode_note_write(void)
 
     test_begin(test_id);
 
-    //EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_ADD, NOTE_WRITE, 0, &sockfd[0]);
-    //if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-    //    err(1, "%s", test_id);
+    EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_WRITE, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
 
     if (system("echo hello >> /tmp/kqueue-test.tmp") < 0)
         err(1, "system");
@@ -557,6 +563,65 @@ test_kevent_vnode_note_write(void)
 }
 
 void
+test_kevent_vnode_note_attrib(void)
+{
+    const char *test_id = "kevent(EVFILT_VNODE, NOTE_ATTRIB)";
+    struct kevent kev;
+    int nfds;
+
+    test_begin(test_id);
+
+    EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_ATTRIB, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+
+    if (system("touch /tmp/kqueue-test.tmp") < 0)
+        err(1, "system");
+
+    nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
+    if (nfds < 1)
+        err(1, "%s", test_id);
+    if (kev.ident != vnode_fd ||
+            kev.filter != EVFILT_VNODE || 
+            kev.fflags != NOTE_ATTRIB)
+        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)", 
+                test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
+
+    success(test_id);
+}
+
+void
+test_kevent_vnode_note_rename(void)
+{
+    const char *test_id = "kevent(EVFILT_VNODE, NOTE_RENAME)";
+    struct kevent kev;
+    int nfds;
+
+    test_begin(test_id);
+
+    EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_RENAME, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+
+    if (system("mv /tmp/kqueue-test.tmp /tmp/kqueue-test2.tmp") < 0)
+        err(1, "system");
+
+    nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
+    if (nfds < 1)
+        err(1, "%s", test_id);
+    if (kev.ident != vnode_fd ||
+            kev.filter != EVFILT_VNODE || 
+            kev.fflags != NOTE_RENAME)
+        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)", 
+                test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
+
+    if (system("mv /tmp/kqueue-test2.tmp /tmp/kqueue-test.tmp") < 0)
+        err(1, "system");
+
+    success(test_id);
+}
+
+void
 test_kevent_vnode_del(void)
 {
     const char *test_id = "kevent(EVFILT_VNODE, EV_DELETE)";
@@ -567,6 +632,89 @@ test_kevent_vnode_del(void)
     EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_DELETE, 0, 0, &sockfd[0]);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
+
+    success(test_id);
+}
+
+void
+test_kevent_vnode_disable_and_enable(void)
+{
+    const char *test_id = "kevent(EVFILT_VNODE, EV_DISABLE and EV_ENABLE)";
+    struct kevent kev;
+    int nfds;
+
+    test_begin(test_id);
+
+    test_no_kevents();
+
+    /* Add the watch and immediately disable it */
+    EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_ATTRIB, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+    kev.flags = EV_DISABLE;
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+
+    /* Confirm that the watch is disabled */
+    if (system("touch /tmp/kqueue-test.tmp") < 0)
+        err(1, "system");
+    test_no_kevents();
+
+    /* Re-enable and check again */
+    kev.flags = EV_ENABLE;
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+    if (system("touch /tmp/kqueue-test.tmp") < 0)
+        err(1, "system");
+    nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
+    if (nfds < 1)
+        err(1, "%s", test_id);
+    if (kev.ident != vnode_fd ||
+            kev.filter != EVFILT_VNODE || 
+            kev.fflags != NOTE_ATTRIB)
+        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)", 
+                test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
+
+    success(test_id);
+}
+
+void
+test_kevent_vnode_dispatch(void)
+{
+    const char *test_id = "kevent(EVFILT_VNODE, EV_DISPATCH)";
+    struct kevent kev;
+    int nfds;
+
+    test_begin(test_id);
+
+    test_no_kevents();
+
+    EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_DISPATCH, NOTE_ATTRIB, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+
+    if (system("touch /tmp/kqueue-test.tmp") < 0)
+        err(1, "system");
+
+    nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
+    if (nfds < 1)
+        err(1, "%s", test_id);
+    if (kev.ident != vnode_fd ||
+            kev.filter != EVFILT_VNODE || 
+            kev.fflags != NOTE_ATTRIB)
+        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)", 
+                test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
+
+    /* Confirm that the watch is disabled automatically */
+    puts("-- checking that watch is disabled");
+    if (system("touch /tmp/kqueue-test.tmp") < 0)
+        err(1, "system");
+    test_no_kevents();
+
+    /* Delete the watch */
+    EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_DELETE, NOTE_ATTRIB, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "remove watch failed: %s", test_id);
 
     success(test_id);
 }
@@ -620,11 +768,13 @@ main(int argc, char **argv)
 
     if (test_vnode) {
         test_kevent_vnode_add();
-        /* XXX-FIXME
-           test_kevent_vnode_note_delete();
-         */
-        test_kevent_vnode_note_write();
         test_kevent_vnode_del();
+        test_kevent_vnode_disable_and_enable();
+        test_kevent_vnode_dispatch();
+        test_kevent_vnode_note_write();
+        test_kevent_vnode_note_attrib();
+        test_kevent_vnode_note_rename();
+        test_kevent_vnode_note_delete();
     }
 
     if (test_timer) {

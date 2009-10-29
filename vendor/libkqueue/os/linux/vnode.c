@@ -15,6 +15,7 @@
  */
 
 #include <errno.h>
+#include <err.h>
 #include <fcntl.h>
 #include <pthread.h>
 #include <signal.h>
@@ -73,7 +74,50 @@ fd_to_path(char *buf, size_t bufsz, int fd)
     return (readlink(path, buf, bufsz));
 }
 
- 
+
+/* TODO: USE this to get events with name field */
+int
+get_one_event(struct inotify_event *dst, int pfd)
+{
+    ssize_t n;
+
+    dbg_puts("reading one inotify event");
+    for (;;) {
+        n = read(pfd, dst, sizeof(*dst));
+        if (n < 0) {
+            if (errno == EINTR)
+                continue;
+            dbg_perror("read");
+            return (-1);
+        } else {
+            break;
+        }
+    }
+    dbg_printf("read(2) from inotify wd: %zu bytes", n);
+
+    /* FIXME-TODO: if len > 0, read(len) */
+    if (dst->len != 0) 
+        abort();
+
+
+    return (0);
+}
+
+static int
+delete_watch(int pfd, struct knote *kn)
+{
+    if (kn->kev.data < 0) 
+        return (0);
+    if (inotify_rm_watch(pfd, kn->kev.data) < 0) {
+        dbg_printf("inotify_rm_watch(2): %s", strerror(errno));
+        return (-1);
+    }
+    dbg_printf("wd %d removed", (int) kn->kev.data);
+    kn->kev.data = -1;
+
+    return (0);
+}
+
 int
 evfilt_vnode_init(struct filter *filt)
 {
@@ -95,67 +139,46 @@ int
 evfilt_vnode_copyin(struct filter *filt, 
         struct knote *dst, const struct kevent *src)
 {
-    char path[1024];        //FIXME: maxpathlen
-    int rv;
+    char path[PATH_MAX];
     uint32_t mask;
 
-    if (src->flags & EV_DELETE) {
-        dbg_puts("hi");
-        if (inotify_rm_watch(filt->kf_pfd, dst->kev.data) < 0) {
-            dbg_printf("inotify_rm_watch(2): %s", strerror(errno));
-            return (-1);
-        } else {
-            return (0);
-        }
-    }
+    if (src->flags & EV_DELETE || src->flags & EV_DISABLE)
+        return delete_watch(filt->kf_pfd, dst);
 
     if (src->flags & EV_ADD && KNOTE_EMPTY(dst)) {
         memcpy(&dst->kev, src, sizeof(*src));
+        dst->kev.flags |= EV_CLEAR;
+        dst->kev.data = -1;
+    }
+
+    if (src->flags & EV_ADD || src->flags & EV_ENABLE) {
+
+        /* Convert the fd to a pathname */
         if (fd_to_path(&path[0], sizeof(path), src->ident) < 0)
             return (-1);
 
         /* Convert the fflags to the inotify mask */
         mask = 0;
-
-        /* FIXME: buggy inotify will not send IN_DELETE events
-           if the application has the file opened.
-See: http://lists.schmorp.de/pipermail/libev/2008q4/000443.html
-           Need to proccess this case during copyout.
-
-           Actually it seems that IN_DELETE | IN_DELETE_SELF is only
-            returned when watching directories; when watching
-             files, IN_ATTRIB seems to be returned only.
-        */
-        if (src->fflags & NOTE_DELETE)
-            mask |= IN_ATTRIB | IN_DELETE | IN_DELETE_SELF;
-        if (src->fflags & NOTE_WRITE)
+        if (dst->kev.fflags & NOTE_DELETE)
+            mask |= IN_DELETE_SELF;
+        if (dst->kev.fflags & NOTE_WRITE)
             mask |= IN_MODIFY;
-
-        if (src->flags & EV_ONESHOT)
+        if (dst->kev.fflags & NOTE_ATTRIB)
+            mask |= IN_ATTRIB;
+        if (dst->kev.fflags & NOTE_RENAME)
+            mask |= IN_MOVE_SELF;
+        if (dst->kev.flags & EV_ONESHOT)
             mask |= IN_ONESHOT;
-#if FIXME
-        if (src->flags & EV_CLEAR)
-            ev.events |= EPOLLET;
-#endif
+
         dbg_printf("inotify_add_watch(2); inofd=%d, mask=%d, path=%s", 
                 filt->kf_pfd, mask, path);
-        rv = inotify_add_watch(filt->kf_pfd, path, mask);
-        if (rv < 0) {
+        dst->kev.data = inotify_add_watch(filt->kf_pfd, path, mask);
+        if (dst->kev.data < 0) {
             dbg_printf("inotify_add_watch(2): %s", strerror(errno));
             return (-1);
-        } else {
-            dbg_printf("watch descriptor = %d", rv);
-            dst->kev.data = rv;
-            return (0);
         }
-
-    }
-    if (src->flags & EV_ENABLE || src->flags & EV_DISABLE) {
-        abort();
-        //FIXME todo
     }
 
-    //REFACTOR this
     return (0);
 }
 
@@ -164,75 +187,48 @@ evfilt_vnode_copyout(struct filter *filt,
             struct kevent *dst, 
             int nevents)
 {
-    struct inotify_event inevt[MAX_KEVENT];
+    struct inotify_event evt;
     struct knote *kn;
-    struct stat sb;
-    ssize_t n;
-    int i;
 
-    dbg_puts("draining inotify events");
-    for (;;) {
-        n = read(filt->kf_pfd, &inevt[0], nevents * sizeof(inevt[0]));
-        if (n < 0) {
-            if (errno == EINTR)
-                continue;
-            dbg_perror("read");
-            return (-1);
-        } else {
-            break;
-        }
-    }
-    dbg_printf("read(2) from inotify wd: %zu bytes", n);
+    if (get_one_event(&evt, filt->kf_pfd) < 0)
+        return (-1);
 
-    for (i = 0, nevents = 0; i < n; i++) {
-        if (inevt[i].wd == 0)
-            break;
-        inotify_event_dump(&inevt[i]);
-        /* FIXME: support variable-length structures.. */
-        if (inevt[i].len != 0) 
-            abort();
-
-        kn = knote_lookup_data(filt, inevt[i].wd);
-        if (kn != NULL) {
-            kevent_dump(&kn->kev);
-            dst->ident = kn->kev.ident;
-            dst->filter = kn->kev.filter;
-            dst->udata = kn->kev.udata;
-
-            if (inevt[i].events & IN_MODIFY && kn->kev.fflags & EV_WRITE) {
-                dst->flags |= EV_WRITE;
-            }
-
-            /* FIXME: this is wrong. See the manpage */
-            dst->flags = 0; 
-            dst->fflags = 0;
-            dst->data = 0;
-
-            /* NOTE: unavoidable filesystem race here */
-            if (kn->kev.fflags & EV_DELETE) {
-                if (fstat(kn->kev.ident, &sb) < 0) {
-                    /* TODO: handle signals */
-                    dbg_puts("woot!");
-                    dst->fflags = EV_DELETE;
-                } else {
-                    dbg_printf("link count = %zu", sb.st_nlink);
-                    if (sb.st_nlink == 0) {
-                        dbg_puts("woot! woot!");
-                        dst->fflags = EV_DELETE;
-                    } else {
-                    /* FIXME: not delete.. maybe ATTRIB event */
-                    }
-                }
-            }
-
-            nevents++;
-            dst++;
-        } else {
-            dbg_printf("no match for wd # %d", inevt[i].wd);
-        }
+    inotify_event_dump(&evt);
+    if (evt.mask & IN_IGNORED) {
+        /* TODO: possibly return error when fs is unmounted */
+        return (0);
     }
 
-    return (nevents);
+    kn = knote_lookup_data(filt, evt.wd);
+    if (kn == NULL) {
+        dbg_printf("no match for wd # %d", evt.wd);
+        return (-1);
+    }
+
+    kevent_dump(&kn->kev);
+    dst->ident = kn->kev.ident;
+    dst->filter = kn->kev.filter;
+    dst->udata = kn->kev.udata;
+    dst->flags = 0; 
+    dst->fflags = 0;
+
+    if (evt.mask & IN_MODIFY && kn->kev.fflags & NOTE_WRITE) 
+        dst->fflags |= NOTE_WRITE;
+    if (evt.mask & IN_ATTRIB && kn->kev.fflags & NOTE_ATTRIB) 
+        dst->fflags |= NOTE_ATTRIB;
+    if (evt.mask & IN_MOVE_SELF && kn->kev.fflags & NOTE_RENAME) 
+        dst->fflags |= NOTE_RENAME;
+    if (evt.mask & IN_DELETE_SELF && kn->kev.fflags & NOTE_DELETE) 
+        dst->fflags |= NOTE_DELETE;
+
+    if (kn->kev.flags & EV_DISPATCH) {
+        delete_watch(filt->kf_pfd, kn); /* TODO: error checking */
+        KNOTE_DISABLE(kn);
+    }
+    if (kn->kev.flags & EV_ONESHOT) 
+        knote_free(kn);
+            
+    return (1);
 }
 
 const struct filter evfilt_vnode = {

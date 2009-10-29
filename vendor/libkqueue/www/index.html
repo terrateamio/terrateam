@@ -37,6 +37,9 @@ single  byte  of data is available.  A subsequent read from the socket
 will block until SO_RCVLOWAT bytes are available."</pre>
 </li>
 
+<li>The NOTE_DELETE flag is supported; however, the event will not be triggered if the program holds an open file descriptor to the file being monitored. This behavior isn't documented in any manpage; see <a href="http://lists.schmorp.de/pipermail/libev/2008q4/000443.html">here</a> for discussion.
+</li>
+
 </ol>
 
 <h2>Links</h2>

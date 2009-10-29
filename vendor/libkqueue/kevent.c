@@ -100,17 +100,12 @@ kevent_copyin(struct kqueue *kq, const struct kevent *src, int nchanges,
         /*
          * Update the knote flags based on src->flags.
          */
-        if (src->flags & EV_ENABLE) {
-            dst->kev.flags |=  EV_ENABLE;
-            dst->kev.flags &= ~EV_DISABLE;
-        }
-        if (src->flags & EV_DISABLE) {
-            dst->kev.flags &= ~EV_ENABLE;
-            dst->kev.flags |=  EV_DISABLE;
-        }
-        if (src->flags & EV_DELETE) {
+        if (src->flags & EV_ENABLE)
+            KNOTE_ENABLE(dst);
+        if (src->flags & EV_DISABLE) 
+            KNOTE_DISABLE(dst);
+        if (src->flags & EV_DELETE) 
             knote_free(dst);
-        }
         if (src->flags & EV_RECEIPT) {
             status = 0;
             goto err_out;
@@ -171,6 +166,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
     /*
      * Wait for one or more filters to have events.
      */
+wait_for_events:
     fds = kq->kq_fds;
     n = pselect(kq->kq_nfds, &fds, NULL , NULL, timeout, NULL);
     if (n < 0) {
@@ -209,6 +205,10 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         }
     }
     kqueue_unlock(kq);
+
+    /* Handle spurious wakeups where no events are generated. */
+    if (nret == 0)
+        goto wait_for_events;
 
     return (nret);
 }
