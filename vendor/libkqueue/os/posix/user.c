@@ -46,7 +46,38 @@ int
 evfilt_user_copyin(struct filter *filt, 
         struct knote *dst, const struct kevent *src)
 {
-    /* STUB */
+    u_int ffctrl;
+    struct kevent *kev;
+
+    if (src->flags & EV_ADD && KNOTE_EMPTY(dst)) {
+        memcpy(&dst->kev, src, sizeof(*src));
+    }
+    kev = &dst->kev;
+
+    /* Based on sys/kern/kern_event.c in FreeBSD HEAD */
+    ffctrl = kev->fflags & NOTE_FFCTRLMASK;
+    kev->fflags &= NOTE_FFLAGSMASK;
+    switch (ffctrl) {
+        case NOTE_FFNOP:
+            break;
+
+        case NOTE_FFAND:
+            kev->fflags &= src->fflags;
+            break;
+
+        case NOTE_FFOR:
+            kev->fflags |= src->fflags;
+            break;
+
+        case NOTE_FFCOPY:
+            kev->fflags = kev->fflags;
+            break;
+
+        default:
+            /* XXX Return error? */
+            break;
+    }
+
     return (-1);
 }
 
