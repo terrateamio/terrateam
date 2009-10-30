@@ -517,6 +517,46 @@ test_kevent_signal_del(void)
 }
 
 void
+test_kevent_signal_oneshot(void)
+{
+    const char *test_id = "kevent(EVFILT_SIGNAL, EV_ONESHOT)";
+    struct kevent kev;
+    int nfds;
+
+    test_begin(test_id);
+
+    EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD | EV_ONESHOT, 0, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+
+    /* Block SIGUSR1, then send it to ourselves */
+    sigset_t mask;
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGUSR1);
+    if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
+        err(1, "sigprocmask");
+    if (kill(getpid(), SIGUSR1) < 0)
+        err(1, "kill");
+
+    nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
+    if (nfds < 1)
+        err(1, "test failed: %s, retval %d", test_id, nfds);
+    if (kev.ident != SIGUSR1 ||
+            kev.filter != EVFILT_SIGNAL || 
+            kev.flags != 0)
+        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)", 
+                test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
+    //FIXME: test kev->flags, fflags, data
+
+    /* Send another one and make sure we get no events */
+    if (kill(getpid(), SIGUSR1) < 0)
+        err(1, "kill");
+    test_no_kevents();
+
+    success(test_id);
+}
+
+void
 test_kevent_vnode_add(void)
 {
     const char *test_id = "kevent(EVFILT_VNODE, EV_ADD)";
@@ -762,7 +802,7 @@ int
 main(int argc, char **argv)
 {
     int test_socket = 1;
-    int test_signal = 0;//XXX-FIXME
+    int test_signal = 1;//XXX-FIXME
     int test_vnode = 1;
     int test_timer = 1;
 
@@ -804,6 +844,7 @@ main(int argc, char **argv)
         test_kevent_signal_disable();
         test_kevent_signal_enable();
         test_kevent_signal_del();
+        test_kevent_signal_oneshot();
     }
 
     if (test_vnode) {
