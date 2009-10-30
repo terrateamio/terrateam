@@ -34,6 +34,20 @@
 /* Highest signal number supported. POSIX standard signals are < 32 */
 #define SIGNAL_MAX      32
 
+static int
+update_sigmask(const struct filter *filt)
+{
+    int rv;
+    rv = signalfd(filt->kf_pfd, &filt->kf_sigmask, 0);
+    dbg_printf("signalfd = %d", filt->kf_pfd);
+    if (rv < 0 || rv != filt->kf_pfd) {
+        dbg_printf("signalfd(2): %s", strerror(errno));
+        return (-1);
+    }
+
+    return (0);
+}
+
 int
 evfilt_signal_init(struct filter *filt)
 {
@@ -56,8 +70,6 @@ int
 evfilt_signal_copyin(struct filter *filt, 
         struct knote *dst, const struct kevent *src)
 {
-    int rv;
-
     if (src->ident >= SIGNAL_MAX) {
         dbg_printf("unsupported signal number %u", (u_int) src->ident);
         return (-1);
@@ -72,14 +84,7 @@ evfilt_signal_copyin(struct filter *filt,
     if (src->flags & EV_DISABLE || src->flags & EV_DELETE) 
         sigdelset(&filt->kf_sigmask, src->ident);
 
-    rv = signalfd(filt->kf_pfd, &filt->kf_sigmask, 0);
-    dbg_printf("signalfd = %d", filt->kf_pfd);
-    if (rv < 0 || rv != filt->kf_pfd) {
-        dbg_printf("signalfd(2): %s", strerror(errno));
-        return (-1);
-    }
-
-    return (0);
+    return (update_sigmask(filt));
 }
 
 int
@@ -119,6 +124,16 @@ evfilt_signal_copyout(struct filter *filt,
         dst->flags = 0; 
         dst->fflags = 0;
         dst->data = 1;  
+
+        if (kn->kev.flags & EV_DISPATCH || kn->kev.flags & EV_ONESHOT) {
+            sigdelset(&filt->kf_sigmask, dst->ident);
+            update_sigmask(filt); /* TODO: error checking */
+        }
+        if (kn->kev.flags & EV_DISPATCH)
+            KNOTE_DISABLE(kn);
+        if (kn->kev.flags & EV_ONESHOT) 
+            knote_free(kn);
+
         dst++; 
         nevents++;
     }
