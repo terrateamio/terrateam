@@ -25,10 +25,12 @@ include config.mk
 
 build:
 	gcc $(CFLAGS) -c *.c
+	rm test.o
 	ar rcs libkqueue.a *.o
 	gcc -shared -Wl,-soname,libkqueue.so -o libkqueue.so *.o
 	rm *.o
 	gcc -D_REENTRANT=1 $(CFLAGS) -c *.c
+	rm test.o
 	ar rcs libkqueue_r.a *.o
 	gcc -shared -Wl,-soname,libkqueue_r.so -o libkqueue_r.so *.o
 
@@ -41,7 +43,7 @@ install:
 
 check:
 	make build CFLAGS="$(CFLAGS) -g -O0 -DKQUEUE_DEBUG -DUNIT_TEST"
-	gcc -g -O0 $(CFLAGS) test.c libkqueue.a -lpthread -lrt
+	gcc -g -O0 $(CFLAGS) test.c libkqueue.a
 	./a.out
 
 check-installed:
