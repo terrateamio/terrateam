@@ -798,6 +798,62 @@ test_kevent_vnode_dispatch(void)
     success(test_id);
 }
 
+void
+test_kevent_timer_add(void)
+{
+    const char *test_id = "kevent(EVFILT_TIMER, EV_ADD)";
+    struct kevent kev;
+
+    test_begin(test_id);
+
+    EV_SET(&kev, 1, EVFILT_TIMER, EV_ADD, 0, 1000, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+
+    success(test_id);
+}
+
+void
+test_kevent_timer_del(void)
+{
+    const char *test_id = "kevent(EVFILT_TIMER, EV_DELETE)";
+    struct kevent kev;
+
+    test_begin(test_id);
+
+    EV_SET(&kev, 1, EVFILT_TIMER, EV_DELETE, 0, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+
+    success(test_id);
+}
+
+void
+test_kevent_timer_get(void)
+{
+    const char *test_id = "kevent(EVFILT_TIMER, get)";
+    struct kevent kev;
+    int nfds;
+
+    test_begin(test_id);
+
+    EV_SET(&kev, 1, EVFILT_TIMER, EV_ADD, 0, 1000, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+
+    nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
+    if (nfds < 1)
+        err(1, "%s", test_id);
+    if (kev.ident != 1 || kev.filter != EVFILT_TIMER) 
+        errx(1, "wrong event");
+
+    EV_SET(&kev, 1, EVFILT_TIMER, EV_DELETE, 0, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+
+    success(test_id);
+}
+
 int 
 main(int argc, char **argv)
 {
@@ -859,6 +915,9 @@ main(int argc, char **argv)
     }
 
     if (test_timer) {
+        test_kevent_timer_add();
+        test_kevent_timer_del();
+        test_kevent_timer_get();
     }
 
     test_kqueue_close();
