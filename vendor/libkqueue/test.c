@@ -94,6 +94,7 @@ test_kqueue_close(void)
     test_begin("close(kq)");
     if (close(kqfd) < 0)
         err(1, "close()");
+    kqueue_free(kqfd);
     success("kqueue_close()");
 }
 

@@ -27,11 +27,15 @@ build:
 	gcc $(CFLAGS) -c *.c
 	ar rcs libkqueue.a *.o
 	gcc -shared -Wl,-soname,libkqueue.so -o libkqueue.so *.o
+	rm *.o
+	gcc -D_REENTRANT=1 $(CFLAGS) -c *.c
+	ar rcs libkqueue_r.a *.o
+	gcc -shared -Wl,-soname,libkqueue_r.so -o libkqueue_r.so *.o
 
 install:
 	mkdir -p $(PREFIX)/include/kqueue/sys
 	cp event.h $(PREFIX)/include/kqueue/sys
-	cp libkqueue.so $(PREFIX)/lib
+	cp libkqueue.so libkqueue_r.so $(PREFIX)/lib
 	cp kqueue.2 $(PREFIX)/share/man/man2/kqueue.2
 	ln -s kqueue.2 $(PREFIX)/share/man/man2/kevent.2
 
@@ -41,7 +45,7 @@ check:
 	./a.out
 
 check-installed:
-	gcc -g -O0 -Wall -Werror -I$(PREFIX)/kqueue test.c -lkqueue -lpthread -lrt
+	gcc -g -O0 -Wall -Werror -I$(PREFIX)/kqueue test.c -lkqueue
 	./a.out
 
 dist:

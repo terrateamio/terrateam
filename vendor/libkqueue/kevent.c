@@ -20,7 +20,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
-#include <pthread.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
