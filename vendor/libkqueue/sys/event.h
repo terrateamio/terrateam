@@ -37,6 +37,8 @@
 
 struct timespec;
 
+/* Library version number */
+#define LIBKQUEUE       20091030
 
 #define EVFILT_READ		(-1)
 #define EVFILT_WRITE		(-2)
@@ -147,6 +149,7 @@ struct kevent {
 
 __BEGIN_DECLS
 int     kqueue(void);
+void    kqueue_free(int);
 int     kevent(int kq, const struct kevent *changelist, int nchanges,
 	    struct kevent *eventlist, int nevents,
 	    const struct timespec *timeout);

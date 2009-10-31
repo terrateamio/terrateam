@@ -42,6 +42,38 @@ will block until SO_RCVLOWAT bytes are available."</pre>
 
 </ol>
 
+<h2>Usage</h2>
+
+Assuming that libkqueue is installed under /usr/include:
+
+<ol>
+<li>Add <code>-I/usr/lib/kqueue</code> to the CFLAGS variable.
+<li>Add <code>#include &lt;sys/event.h&gt;</code> to the source code.
+<li>Link against the libkqueue library by appending <code>-lkqueue</code> for single-threaded programs, or <code>-lkqueue_r</code> for multi-threaded programs.
+</ol>
+
+One major difference between libkqueue and the real kqueue is that 
+closing the kqueue descriptor will not free any of the resources
+associated with the descriptor. The following example shows how to
+close the descriptor and free the resources:
+<p>
+<pre>
+    int kqfd;
+
+    kqfd = kqueue();
+
+    /* ... */
+
+    close(kqfd);
+    #if LIBKQUEUE
+    kqueue_free(kqfd);
+    #endif
+</pre>
+
+If your program accesses an event queue from multiple threads,
+you should link against the threadsafe version of the library (libkqueue_r).
+This will provide reentrant versions of <code>kqueue()</code> and <code>kevent()</code>.
+
 <h2>Links</h2>
 
 <ul>
