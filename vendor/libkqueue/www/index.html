@@ -37,7 +37,20 @@ single  byte  of data is available.  A subsequent read from the socket
 will block until SO_RCVLOWAT bytes are available."</pre>
 </li>
 
-<li>The NOTE_DELETE flag is supported; however, the event will not be triggered if the program holds an open file descriptor to the file being monitored. This behavior isn't documented in any manpage; see <a href="http://lists.schmorp.de/pipermail/libev/2008q4/000443.html">here</a> for discussion.
+<li>
+The NOTE_REVOKE flag is not supported because Linux does not have
+a <code>revoke(2)</code> system call.
+</li>
+
+<li>
+The NOTE_EXTEND flag for the EVFILT_VNODE filter is not supported. An alternative approach is to use a combination of <code>stat(2)</code> and NOTE_ATTRIB to keep track of changes to the file's <code>st_size</code> field.
+</li>
+
+<li>
+The NOTE_LINK flag for the EVFILT_VNODE filter is not supported. An alternative approach is to use a combination of <code>stat(2)</code> and NOTE_ATTRIB to keep track of changes to the file's <code>st_nlink</code> field.
+</li>
+
+<li>The NOTE_DELETE flag is supported; however, the event will not be triggered if the program holds an open file descriptor to the file being monitored. This behavior isn't documented in any Linux manpage; see <a href="http://lists.schmorp.de/pipermail/libev/2008q4/000443.html">here</a> for discussion. A workaround would be to close the file descriptor after setting the NOTE_DELETE watch.
 </li>
 
 </ol>
