@@ -49,11 +49,19 @@ update_timeres(struct filter *filt)
     struct itimerspec tval;
     u_int cur = filt->kf_timeres;
 
+    if (KNOTELIST_EMPTY(&filt->knl)) {
+        abort();
+    }
+
+    /* Find the smallest timeout interval */
+    //FIXME not optimized
     KNOTELIST_FOREACH(kn, &filt->knl) {
-        if (kn->kev.data < cur)
+        dbg_printf("cur=%d new=%d", cur, (int) kn->kev.data);
+        if (cur == 0 || kn->kev.data < cur)
             cur = kn->kev.data;
     }
 
+    dbg_printf("cur=%d res=%d", cur, filt->kf_timeres);
     if (cur == filt->kf_timeres) 
         return (0);
 
@@ -75,19 +83,19 @@ static void
 timer_convert(struct itimerspec *dst, int src)
 {
     struct timespec now;
-    time_t x, y;
+    time_t sec, nsec;
 
     /* Set the interval */
     /* XXX-FIXME: this is probably horribly wrong :) */
-    x = src / 1000;
-    y = (src % 1000) * 1000000;
-    dst->it_interval.tv_sec = x;
-    dst->it_interval.tv_nsec = y;
+    sec = src / 1000;
+    nsec = (src % 1000) * 1000000;
+    dst->it_interval.tv_sec = sec;
+    dst->it_interval.tv_nsec = nsec;
 
     /* Set the initial expiration */
     clock_gettime(CLOCK_MONOTONIC, &now);
-    dst->it_value.tv_sec = now.tv_sec + x;
-    dst->it_value.tv_nsec = now.tv_nsec + 7;
+    dst->it_value.tv_sec = now.tv_sec + sec;
+    dst->it_value.tv_nsec = now.tv_nsec + nsec;
 }
 
 int

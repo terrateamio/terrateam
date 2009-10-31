@@ -47,6 +47,7 @@ LIST_HEAD(knotelist, knote);
 /* TODO: This should be a red-black tree or a heap */
 #define KNOTELIST_INIT(knl)         LIST_INIT((knl))
 #define KNOTELIST_FOREACH(ent,knl)  LIST_FOREACH((ent),(knl), entries)
+#define KNOTELIST_EMPTY(knl)        LIST_EMPTY((knl))
 #define KNOTE_INSERT(knl, ent)      LIST_INSERT_HEAD((knl), (ent), entries)
 #define KNOTE_EMPTY(ent)            ((ent)->kev.filter == 0)
 
