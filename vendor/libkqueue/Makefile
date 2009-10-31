@@ -60,7 +60,7 @@ publish-www:
 	rm -rf ~/public_html/libkqueue/ ; cp -R www ~/public_html/libkqueue/
 
 clean:
-	rm -f a.out *.a *.o *.so $(FILTERS)
+	rm -f a.out *.a *.o *.so
 
 distclean: clean
-	rm -f *.tar.gz config.mk
+	rm -f *.tar.gz config.mk $(FILTERS)
