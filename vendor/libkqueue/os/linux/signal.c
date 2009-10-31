@@ -97,8 +97,6 @@ evfilt_signal_copyout(struct filter *filt,
     int i;
     ssize_t n;
 
-    /* NOTE: This will consume the signals so they will not be delivered
-     * to the process. This differs from kqueue(2) behavior. */
     n = read(filt->kf_pfd, &sig, nevents * sizeof(sig[0]));
     if (n < 0 || n < sizeof(sig[0])) {
         dbg_puts("invalid read from signalfd");
