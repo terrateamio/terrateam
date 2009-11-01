@@ -119,8 +119,8 @@ evfilt_socket_copyin(struct filter *filt,
        setting.
 
      */
+#if LINUX_SUPPORTS_SO_RCVLOWAT
     if (src->fflags & NOTE_LOWAT) {
-#if EPOLL_IS_NOT_BROKEN
         const socklen_t optlen = sizeof(int);
         int sockopt;
 
@@ -130,11 +130,8 @@ evfilt_socket_copyin(struct filter *filt,
             return (-1);
         }
         dbg_printf("Low watermark set to %d", sockopt);
-#else
-        errno = ENOTSUP;
-        return (-1);
-#endif
     }
+#endif
 
     dbg_printf("epoll_ctl(2): epfd=%d, op=%d, fd=%d event=%s", 
             filt->kf_pfd, 
