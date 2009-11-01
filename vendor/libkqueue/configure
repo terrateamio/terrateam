@@ -87,3 +87,5 @@ sed -e "
      s,@@MANDIR@@,$mandir,g;
      " < $program.pc.in >> $program.pc
 chmod 400 $program.pc
+
+echo "Creating config.mk"
