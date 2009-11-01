@@ -15,7 +15,6 @@
 #
 PROGRAM=libkqueue
 INSTALL=/usr/bin/install
-PREFIX=/usr
 DISTFILES=*.c *.h kqueue.2 README Makefile configure os sys
 SOURCES=src/$(UNAME)/*.c
 CFLAGS=-fPIC -D_REENTRANT -I. -Wall -Werror -fvisibility=hidden
@@ -30,21 +29,22 @@ build:
 	gcc -shared -Wl,-soname,libkqueue.so -o libkqueue.so *.o
 
 install:
-	mkdir -p $(PREFIX)/include/kqueue/sys
-	cp event.h $(PREFIX)/include/kqueue/sys
-	cp libkqueue.so $(PREFIX)/lib
-	cp libkqueue.pc $(PREFIX)/lib/pkgconfig
-	cp kqueue.2 $(PREFIX)/share/man/man2/kqueue.2
-	ln -s kqueue.2 $(PREFIX)/share/man/man2/kevent.2
+	$(INSTALL) -d -m 755 $(INCLUDEDIR)/kqueue
+	$(INSTALL) -d -m 755 $(INCLUDEDIR)/kqueue/sys
+	$(INSTALL) -d -m 755 $(MANDIR)/man2
+	$(INSTALL) -m 644 sys/event.h $(INCLUDEDIR)/kqueue/sys/event.h
+	$(INSTALL) -m 644 libkqueue.so $(LIBDIR)/libkqueue.so
+	$(INSTALL) -m 644 libkqueue.pc $(LIBDIR)/pkgconfig
+	$(INSTALL) -m 644 kqueue.2 $(MANDIR)/man2/kqueue.2
+	$(INSTALL) -m 644 kqueue.2 $(MANDIR)/man2/kevent.2
 
 uninstall:
-	rm $(PREFIX)/include/kqueue/sys/event.h
-	rmdir $(PREFIX)/include/kqueue/sys
-	rmdir $(PREFIX)/include/kqueue
-	rm $(PREFIX)/lib/libkqueue.so 
-	rm $(PREFIX)/lib/pkgconfig/libkqueue.pc 
-	rm $(PREFIX)/share/man/man2/kqueue.2
-	rm $(PREFIX)/share/man/man2/kevent.2
+	rm -f $(INCLUDEDIR)/kqueue/sys/event.h
+	rm -f $(LIBDIR)/libkqueue.so 
+	rm -f $(LIBDIR)/pkgconfig/libkqueue.pc 
+	rm -f $(MANDIR)/man2/kqueue.2 
+	rm -f $(MANDIR)/man2/kevent.2 
+	rmdir $(INCLUDEDIR)/kqueue/sys $(INCLUDEDIR)/kqueue
 
 check:
 	make build CFLAGS="$(CFLAGS) -g -O0 -DKQUEUE_DEBUG -DUNIT_TEST"

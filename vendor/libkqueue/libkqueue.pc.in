@@ -1,13 +1,13 @@
-prefix=/usr
+prefix=@@PREFIX@@
 exec_prefix=${prefix}
-libdir=${exec_prefix}/lib
-includedir=${prefix}/include
+libdir=@@LIBDIR@@
+includedir=@@INCLUDEDIR@@
 
-Name: libkqueue
+Name: @@PROGRAM@@
 Description: Emulates FreeBSD kqueue(2) on other platforms
-Version: 0.1g
+Version: @@VERSION@@
 Requires: 
 Libs: -L${libdir} -lkqueue
 Libs.private: -lpthread -lrt
-Cflags: -I${includedir} 
+Cflags: -I${includedir}/kqueue 
 
