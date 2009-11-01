@@ -18,7 +18,7 @@ INSTALL=/usr/bin/install
 PREFIX=/usr
 DISTFILES=*.c *.h kqueue.2 README Makefile configure os sys
 SOURCES=src/$(UNAME)/*.c
-CFLAGS=-fPIC -I. -Wall -Werror -fvisibility=hidden
+CFLAGS=-fPIC -D_REENTRANT -I. -Wall -Werror -fvisibility=hidden
 FILTERS=vnode.c timer.c signal.c socket.c user.c
 
 include config.mk
@@ -28,22 +28,28 @@ build:
 	rm test.o
 	ar rcs libkqueue.a *.o
 	gcc -shared -Wl,-soname,libkqueue.so -o libkqueue.so *.o
-	rm *.o
-	gcc -D_REENTRANT=1 $(CFLAGS) -c *.c
-	rm test.o
-	ar rcs libkqueue_r.a *.o
-	gcc -shared -Wl,-soname,libkqueue_r.so -o libkqueue_r.so *.o
 
 install:
 	mkdir -p $(PREFIX)/include/kqueue/sys
 	cp event.h $(PREFIX)/include/kqueue/sys
-	cp libkqueue.so libkqueue_r.so $(PREFIX)/lib
+	cp libkqueue.so $(PREFIX)/lib
+	cp libkqueue.pc $(PREFIX)/lib/pkgconfig
 	cp kqueue.2 $(PREFIX)/share/man/man2/kqueue.2
 	ln -s kqueue.2 $(PREFIX)/share/man/man2/kevent.2
 
+uninstall:
+	rm $(PREFIX)/include/kqueue/sys/event.h
+	rmdir $(PREFIX)/include/kqueue/sys
+	rmdir $(PREFIX)/include/kqueue
+	rm $(PREFIX)/lib/libkqueue.so 
+	rm $(PREFIX)/lib/pkgconfig/libkqueue.pc 
+	rm $(PREFIX)/share/man/man2/kqueue.2
+	rm $(PREFIX)/share/man/man2/kevent.2
+
 check:
 	make build CFLAGS="$(CFLAGS) -g -O0 -DKQUEUE_DEBUG -DUNIT_TEST"
-	gcc -g -O0 $(CFLAGS) test.c libkqueue.a
+	gcc -c $(CFLAGS) test.c
+	gcc -g -O0 $(CFLAGS) test.c libkqueue.a -lpthread -lrt
 	./a.out
 
 check-installed:

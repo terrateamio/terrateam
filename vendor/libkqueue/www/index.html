@@ -67,12 +67,14 @@ libkqueue currently requires the following:
 
 <h2>Usage</h2>
 
+libkqueue is a multi-threaded library and <code>kqueue()</code> and <code>kevent()</code> are safe to be used from multiple threads.
+
 Assuming that libkqueue is installed under /usr/include:
 
 <ol>
 <li>Add <code>-I/usr/lib/kqueue</code> to the CFLAGS variable.
 <li>Add <code>#include &lt;sys/event.h&gt;</code> to the source code.
-<li>Link against the libkqueue library by appending <code>-lkqueue</code> for single-threaded programs, or <code>-lkqueue_r</code> for multi-threaded programs.
+<li>Link against the libkqueue library by adding <code>-lkqueue</code> to the LDADD variable.
 </ol>
 
 One major difference between libkqueue and the real kqueue is that 
@@ -92,10 +94,6 @@ close the descriptor and free the resources:
     kqueue_free(kqfd);
     #endif
 </pre>
-
-If your program accesses an event queue from multiple threads,
-you should link against the threadsafe version of the library (libkqueue_r).
-This will provide reentrant versions of <code>kqueue()</code> and <code>kevent()</code>.
 
 <h2>Links</h2>
 

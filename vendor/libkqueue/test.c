@@ -14,8 +14,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef UNIT_TEST
-
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -323,6 +321,7 @@ test_kevent_socket_dispatch(void)
     success(test_id);
 }
 
+#if BROKEN
 void
 test_kevent_socket_lowat(void)
 {
@@ -354,6 +353,7 @@ test_kevent_socket_lowat(void)
 
     success(test_id);
 }
+#endif
 
 void
 test_kevent_socket_eof(void)
@@ -926,12 +926,3 @@ main(int argc, char **argv)
     puts("all tests completed.");
     return (0);
 }
-
-#else     /* UNIT_TEST */
-
-void __kqueue_dummy(void)
-{
-    /* STUB */
-}
-
-#endif    /* ! UNIT_TEST */
