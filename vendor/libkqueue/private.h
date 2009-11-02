@@ -40,6 +40,7 @@ struct evfilt_data;
 
 struct knote {
     struct kevent     kev;
+    int               kn_pfd;       /* Used by timerfd */
     LIST_ENTRY(knote) entries;
 };
 LIST_HEAD(knotelist, knote);
