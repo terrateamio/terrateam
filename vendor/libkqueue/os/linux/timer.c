@@ -20,6 +20,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/epoll.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -33,11 +34,8 @@
 #include "sys/event.h"
 #include "private.h"
 
+#if DEADWOOD
 static void timer_convert(struct itimerspec *dst, int src);
-
-struct evfilt_data {
-    int dummy;
-};
 
 /*
  * Determine the smallest interval used by active timers.
@@ -48,10 +46,6 @@ update_timeres(struct filter *filt)
     struct knote *kn;
     struct itimerspec tval;
     u_int cur = filt->kf_timeres;
-
-    if (KNOTELIST_EMPTY(&filt->knl)) {
-        abort();
-    }
 
     /* Find the smallest timeout interval */
     //FIXME not optimized
@@ -77,10 +71,11 @@ update_timeres(struct filter *filt)
 
     return (0);
 }
+#endif
 
 /* Convert milliseconds into seconds+nanoseconds */
 static void
-timer_convert(struct itimerspec *dst, int src)
+convert_msec_to_itimerspec(struct itimerspec *dst, int src, int oneshot)
 {
     struct timespec now;
     time_t sec, nsec;
@@ -98,19 +93,79 @@ timer_convert(struct itimerspec *dst, int src)
     dst->it_value.tv_nsec = now.tv_nsec + nsec;
 }
 
+static int
+ktimer_create(struct filter *filt, struct knote *kn)
+{
+    struct epoll_event ev;
+    struct itimerspec *ts;
+    int tfd;
+
+    tfd = timerfd_create(CLOCK_MONOTONIC, 0);
+    if (tfd < 0) {
+        dbg_printf("timerfd_create(2): %s", strerror(errno));
+        return (-1);
+    }
+    dbg_printf("created timerfd %d", tfd);
+
+    convert_msec_to_itimerspec(ts, kn->kev.data, kn->kev.flags & EV_ONESHOT);
+    if (timerfd_settime(tfd, 0, ts, NULL) < 0) {
+        dbg_printf("timerfd_settime(2): %s", strerror(errno));
+        close(tfd);
+        return (-1);
+    }
+
+    ev.events = EPOLLIN;
+    ev.data.fd = kn->kev.ident;
+    if (epoll_ctl(filt->kf_pfd, EPOLL_CTL_ADD, kn->kn_pfd, &ev) < 0) {
+        dbg_printf("epoll_ctl(2): %d", errno);
+        close(tfd);
+        return (-1);
+    }
+
+    kn->kn_pfd = tfd;
+    return (0);
+}
+
+static int
+ktimer_delete(struct filter *filt, struct knote *kn)
+{
+    int rv =  0;
+
+    dbg_printf("removing timerfd %d from %d", kn->kn_pfd, filt->kf_pfd);
+    if (close(kn->kn_pfd) < 0) {
+        dbg_printf("close(2): %s", strerror(errno));
+        rv = -1;
+    }
+    if (epoll_ctl(filt->kf_pfd, EPOLL_CTL_DEL, kn->kn_pfd, NULL) < 0) {
+        dbg_printf("epoll_ctl(2): %s", strerror(errno));
+        rv = -1;
+    }
+
+    kn->kn_pfd = -1;
+    return (rv);
+}
+
 int
 evfilt_timer_init(struct filter *filt)
 {
-    filt->kf_pfd = timerfd_create(CLOCK_MONOTONIC, 0);
-    if (filt->kf_pfd < 0) 
+    filt->kf_pfd = epoll_create(1);
+    if (filt->kf_pfd < 0)
         return (-1);
 
+    dbg_printf("timer epollfd = %d", filt->kf_pfd);
     return (0);
 }
 
 void
 evfilt_timer_destroy(struct filter *filt)
 {
+    struct knote *kn;
+
+    /* Destroy all timerfds */
+    KNOTELIST_FOREACH(kn, &filt->knl) {
+        close(kn->kn_pfd);
+    }
+
     close (filt->kf_pfd);
 }
 
@@ -122,12 +177,16 @@ evfilt_timer_copyin(struct filter *filt,
         memcpy(&dst->kev, src, sizeof(*src));
         dst->kev.flags |= EV_CLEAR;
     }
-    if (src->flags & EV_ADD || src->flags & EV_ENABLE) {
-        if (update_timeres(filt) < 0)
-            return (-1);
-    }
-    if (src->flags & EV_DISABLE || src->flags & EV_DELETE) {
-        // TODO
+    if (src->flags & EV_ADD) 
+        return ktimer_create(filt, dst);
+    if (src->flags & EV_DELETE) 
+        return ktimer_delete(filt, dst);
+    if (src->flags & EV_ENABLE) 
+        return ktimer_create(filt, dst);
+    if (src->flags & EV_DISABLE) {
+        // TODO: err checking
+        (void) ktimer_delete(filt, dst);
+        KNOTE_DISABLE(dst);
     }
 
     return (0);
@@ -142,6 +201,8 @@ evfilt_timer_copyout(struct filter *filt,
     uint64_t buf;
     int i;
     ssize_t n;
+
+    abort(); //TBD
 
     n = read(filt->kf_pfd, &buf, sizeof(buf));
     if (n < 0 || n < sizeof(buf)) {
