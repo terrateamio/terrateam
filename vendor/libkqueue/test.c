@@ -882,12 +882,6 @@ main(int argc, char **argv)
 
     test_kqueue();
 
-    if (test_timer) {
-        test_kevent_timer_add();
-        test_kevent_timer_del();
-        test_kevent_timer_get();
-    }
-
     if (test_socket) {
         test_kevent_socket_add();
         test_kevent_socket_get();
@@ -919,6 +913,12 @@ main(int argc, char **argv)
         test_kevent_vnode_note_attrib();
         test_kevent_vnode_note_rename();
         test_kevent_vnode_note_delete();
+    }
+
+    if (test_timer) {
+        test_kevent_timer_add();
+        test_kevent_timer_del();
+        test_kevent_timer_get();
     }
 
     test_kqueue_close();
