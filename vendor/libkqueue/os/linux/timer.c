@@ -86,6 +86,9 @@ convert_msec_to_itimerspec(struct itimerspec *dst, int src, int oneshot)
     nsec = (src % 1000) * 1000000;
     dst->it_interval.tv_sec = sec;
     dst->it_interval.tv_nsec = nsec;
+    dbg_printf("timer val=%lu %lu", sec, nsec);
+
+    /* FIXME: doesnt handle oneshot */
 
     /* Set the initial expiration */
     clock_gettime(CLOCK_MONOTONIC, &now);
@@ -97,7 +100,7 @@ static int
 ktimer_create(struct filter *filt, struct knote *kn)
 {
     struct epoll_event ev;
-    struct itimerspec *ts;
+    struct itimerspec ts;
     int tfd;
 
     tfd = timerfd_create(CLOCK_MONOTONIC, 0);
@@ -107,8 +110,8 @@ ktimer_create(struct filter *filt, struct knote *kn)
     }
     dbg_printf("created timerfd %d", tfd);
 
-    convert_msec_to_itimerspec(ts, kn->kev.data, kn->kev.flags & EV_ONESHOT);
-    if (timerfd_settime(tfd, 0, ts, NULL) < 0) {
+    convert_msec_to_itimerspec(&ts, kn->kev.data, kn->kev.flags & EV_ONESHOT);
+    if (timerfd_settime(tfd, 0, &ts, NULL) < 0) {
         dbg_printf("timerfd_settime(2): %s", strerror(errno));
         close(tfd);
         return (-1);
@@ -116,7 +119,7 @@ ktimer_create(struct filter *filt, struct knote *kn)
 
     ev.events = EPOLLIN;
     ev.data.fd = kn->kev.ident;
-    if (epoll_ctl(filt->kf_pfd, EPOLL_CTL_ADD, kn->kn_pfd, &ev) < 0) {
+    if (epoll_ctl(filt->kf_pfd, EPOLL_CTL_ADD, tfd, &ev) < 0) {
         dbg_printf("epoll_ctl(2): %d", errno);
         close(tfd);
         return (-1);
@@ -129,15 +132,15 @@ ktimer_create(struct filter *filt, struct knote *kn)
 static int
 ktimer_delete(struct filter *filt, struct knote *kn)
 {
-    int rv =  0;
+    int rv = 0;
 
     dbg_printf("removing timerfd %d from %d", kn->kn_pfd, filt->kf_pfd);
-    if (close(kn->kn_pfd) < 0) {
-        dbg_printf("close(2): %s", strerror(errno));
-        rv = -1;
-    }
     if (epoll_ctl(filt->kf_pfd, EPOLL_CTL_DEL, kn->kn_pfd, NULL) < 0) {
         dbg_printf("epoll_ctl(2): %s", strerror(errno));
+        rv = -1;
+    }
+    if (close(kn->kn_pfd) < 0) {
+        dbg_printf("close(2): %s", strerror(errno));
         rv = -1;
     }
 
