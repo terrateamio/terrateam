@@ -1,0 +1,97 @@
+#!/bin/sh
+
+program=libkqueue-test
+version=0.1
+
+finalize() {
+  eval "if [ \"\$$1\" = \"\" ] ; then $1=$2 ; fi"
+
+  # Add the variable to config.mk and config.h
+  id=`echo $1 | tr 'a-z' 'A-Z'`;
+  eval "echo \"$id=\$$1\" >> config.mk"
+  eval "echo \"#define $id \\\"\$$1\\\"\" >> config.h"
+}
+
+process_argv() {
+    for arg in $*
+    do
+        id=`echo "$arg" | sed 's/=.*//; s/^--//;'`
+        val=`echo "$arg" | sed 's/^.*=//'`
+        if [ "$val" = "" ] ; then val=1 ; fi
+        eval "$id=$val" 
+    done
+}
+
+check_header() {	 
+   sym=`echo "HAVE_$1" | tr a-z A-Z | sed 's,[./],_,g'`	 
+   path=$1
+
+   printf "checking for $path.. "
+   if [ -f "/usr/include/$path" ] ; then
+     echo "yes"
+     echo "#define $sym" >> config.h
+     return 0
+   else  
+     echo "no"
+     echo "#undef $sym" >> config.h
+     return 1
+   fi
+}
+
+check_symbol() {
+    header=$1
+    symbol=$2
+
+    uc_symbol=`echo "HAVE_$symbol" | tr a-z A-Z | sed 's,[./],_,g'`	 
+
+    printf "checking <$header> for $symbol.. "
+    if [ "`grep '#define $symbol' /usr/include/$header`" != "" ] ; then
+     echo "yes"
+     echo "#define $uc_symbol" >> config.h
+     return 0
+    else  
+     echo "no"
+     echo "#undef $uc_symbol" >> config.h
+     return 1
+    fi
+}
+
+#######################################################################
+#
+#                           MAIN()
+#
+#######################################################################
+
+# Initialize the output files
+#
+rm -f config.h
+echo "/* AUTOMATICALLY GENERATED -- DO NOT EDIT */" > config.h
+rm -f config.mk
+echo "# AUTOMATICALLY GENERATED -- DO NOT EDIT" > config.mk
+
+process_argv $*
+
+finalize program    $program
+finalize version    $version
+finalize target     `uname -s | tr A-Z a-z`
+finalize prefix     /usr/local
+finalize libdir     "${prefix}/lib"
+finalize includedir "${prefix}/include"
+finalize mandir     "${prefix}/share/man"
+
+echo "Checking operating system type... $target"
+check_header sys/event.h && {
+    check_symbol sys/event.h EVFILT_DISPATCH
+}
+
+cflags="-g -O0 -Wall -Werror"
+ldadd=""
+if [ "`uname -s`" = "Linux" ] ; then
+   cflags="$cflags -I.."
+   ldadd="$ldadd ../libkqueue.a -lpthread -lrt"
+fi
+finalize cflags ""
+finalize ldadd ""
+  
+echo "Creating config.h"
+echo "Creating config.mk"
