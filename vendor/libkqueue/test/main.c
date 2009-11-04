@@ -42,6 +42,23 @@ test_no_kevents(void)
     }
 }
 
+/* Retrieve a single kevent */
+struct kevent *
+kevent_get(int kqfd)
+{
+    int nfds;
+    struct kevent *kev;
+
+    if ((kev = calloc(1, sizeof(*kev))) == NULL)
+	err(1, "out of memory");
+    
+    nfds = kevent(kqfd, NULL, 0, kev, 1, NULL);
+    if (nfds < 1)
+        err(1, "kevent(2)");
+
+    return (kev);
+}
+
 char *
 kevent_flags_dump(struct kevent *kev)
 {
@@ -157,6 +174,7 @@ main(int argc, char **argv)
     }
 
     test_kqueue();
+    test_kqueue_close();
 
     if (test_socket) 
         test_evfilt_read();
@@ -183,7 +201,6 @@ main(int argc, char **argv)
     }
 #endif
 
-    test_kqueue_close();
 
     puts("all tests completed.");
     return (0);
