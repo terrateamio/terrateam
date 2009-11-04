@@ -117,8 +117,9 @@ ktimer_create(struct filter *filt, struct knote *kn)
         return (-1);
     }
 
+    memset(&ev, 0, sizeof(ev));
     ev.events = EPOLLIN;
-    ev.data.fd = kn->kev.ident;
+    ev.data.ptr = kn;
     if (epoll_ctl(filt->kf_pfd, EPOLL_CTL_ADD, tfd, &ev) < 0) {
         dbg_printf("epoll_ctl(2): %d", errno);
         close(tfd);
