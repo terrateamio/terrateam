@@ -22,6 +22,7 @@ char *cur_test_id = "undef";
 int kqfd;
 
 extern void test_evfilt_read();
+extern void test_evfilt_signal();
 
 /* Checks if any events are pending, which is an error. */
 void 
@@ -41,15 +42,49 @@ test_no_kevents(void)
     }
 }
 
-/* Copied from ../kevent.c kevent_dump() */
+char *
+kevent_flags_dump(struct kevent *kev)
+{
+    char *buf;
+
+#define KEVFL_DUMP(attrib) \
+    if (kev->flags & attrib) \
+	strcat(buf, #attrib" ");
+
+    if ((buf = calloc(1, 1024)) == NULL)
+	abort();
+
+    sprintf(buf, "flags = %d (", kev->flags);
+    KEVFL_DUMP(EV_ADD);
+    KEVFL_DUMP(EV_ENABLE);
+    KEVFL_DUMP(EV_DISABLE);
+    KEVFL_DUMP(EV_DELETE);
+    KEVFL_DUMP(EV_ONESHOT);
+    KEVFL_DUMP(EV_CLEAR);
+    KEVFL_DUMP(EV_EOF);
+    KEVFL_DUMP(EV_ERROR);
+#if HAVE_EV_DISPATCH
+    KEVFL_DUMP(EV_DISPATCH);
+#endif
+#if HAVE_EV_RECEIPT
+    KEVFL_DUMP(EV_RECEIPT);
+#endif
+    strcat(buf, ")");
+
+    return (buf);
+}
+
+/* Copied from ../kevent.c kevent_dump() and improved */
 const char *
 kevent_to_str(struct kevent *kev)
 {
     char buf[512];
-    snprintf(&buf[0], sizeof(buf), "[filter=%d,flags=%d,ident=%u,udata=%p]",
+    snprintf(&buf[0], sizeof(buf), "[filter=%d,%s,fflags=%d,ident=%u,data=%d,udata=%p]",
             kev->filter,
-            kev->flags,
+            kevent_flags_dump(kev),
+            kev->fflags,
             (u_int) kev->ident,
+            kev->data,
             kev->udata);
     return (strdup(buf));
 }
@@ -58,7 +93,7 @@ void
 kevent_cmp(struct kevent *k1, struct kevent *k2)
 {
     if (memcmp(k1, k2, sizeof(*k1)) != 0) {
-        printf("kevent_cmp: mismatch: %s != %s\n", 
+        printf("kevent_cmp: mismatch:\n  %s !=\n  %s\n", 
               kevent_to_str(k1), kevent_to_str(k2));
         abort();
     }
@@ -77,6 +112,7 @@ success(const char *func)
 {
     printf("%-70s %s\n", func, "passed");
 }
+
 void
 test_kqueue(void)
 {
@@ -122,19 +158,12 @@ main(int argc, char **argv)
 
     test_kqueue();
 
-    if (test_socket) {
+    if (test_socket) 
         test_evfilt_read();
-    }
+    if (test_signal) 
+        test_evfilt_signal();
 
 #if TODO
-    if (test_signal) {
-        test_kevent_signal_add();
-        test_kevent_signal_get();
-        test_kevent_signal_disable();
-        test_kevent_signal_enable();
-        test_kevent_signal_del();
-        test_kevent_signal_oneshot();
-    }
 
     if (test_vnode) {
         test_kevent_vnode_add();

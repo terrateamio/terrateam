@@ -17,6 +17,7 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
+
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -24,14 +25,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/event.h>
+#include <stdint.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
+
+#include <sys/event.h>
 
 #include "config.h"
 
 extern char *cur_test_id;
-int kqfd;
 int vnode_fd;
 
 extern const char * kevent_to_str(struct kevent *);
