@@ -1,7 +1,7 @@
 include config.mk
 
-all: evfilt_read.o main.o
-	cc $(CFLAGS) *.o $(LDADD)
+all:
+	gcc $(CFLAGS) main.c evfilt_read.c evfilt_signal.c $(LDADD)
 
 clean:
 	rm -f *.o 
