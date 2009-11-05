@@ -47,22 +47,7 @@ uninstall:
 	rmdir $(INCLUDEDIR)/kqueue/sys $(INCLUDEDIR)/kqueue
 
 check:
-	make build CFLAGS="$(CFLAGS) -g -O0 -DKQUEUE_DEBUG -DUNIT_TEST"
-	gcc -c $(CFLAGS) test.c
-	gcc -g -O0 $(CFLAGS) test.c libkqueue.a -lpthread -lrt
-	./a.out
-
-# NOTE: copy+paste of 'make check'
-valgrind:
-	make build CFLAGS="$(CFLAGS) -g -O0 -DKQUEUE_DEBUG -DUNIT_TEST"
-	gcc -c $(CFLAGS) test.c
-	gcc -g -O0 $(CFLAGS) test.c libkqueue.a -lpthread -lrt
-	valgrind --tool=memcheck --leak-check=full --show-reachable=yes --num-callers=20 --track-fds=yes ./a.out
-
-
-check-installed:
-	gcc -g -O0 -Wall -Werror -I$(PREFIX)/kqueue test.c -lkqueue
-	./a.out
+	cd test && ./configure && make check
 
 dist:
 	mkdir $(PROGRAM)
