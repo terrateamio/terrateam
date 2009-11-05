@@ -24,6 +24,7 @@ int kqfd;
 extern void test_evfilt_read();
 extern void test_evfilt_signal();
 extern void test_evfilt_vnode();
+extern void test_evfilt_timer();
 
 /* Checks if any events are pending, which is an error. */
 void 
@@ -215,27 +216,8 @@ main(int argc, char **argv)
         test_evfilt_signal();
     if (test_vnode) 
         test_evfilt_vnode();
-
-#if TODO
-
-    if (test_vnode) {
-        test_kevent_vnode_add();
-        test_kevent_vnode_del();
-        test_kevent_vnode_disable_and_enable();
-        test_kevent_vnode_dispatch();
-        test_kevent_vnode_note_write();
-        test_kevent_vnode_note_attrib();
-        test_kevent_vnode_note_rename();
-        test_kevent_vnode_note_delete();
-    }
-
-    if (test_timer) {
-        test_kevent_timer_add();
-        test_kevent_timer_del();
-        test_kevent_timer_get();
-    }
-#endif
-
+    if (test_timer) 
+        test_evfilt_timer();
 
     puts("all tests completed.");
     return (0);
