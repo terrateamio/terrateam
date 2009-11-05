@@ -23,6 +23,7 @@ int kqfd;
 
 extern void test_evfilt_read();
 extern void test_evfilt_signal();
+extern void test_evfilt_vnode();
 
 /* Checks if any events are pending, which is an error. */
 void 
@@ -57,6 +58,38 @@ kevent_get(int kqfd)
         err(1, "kevent(2)");
 
     return (kev);
+}
+
+char *
+kevent_fflags_dump(struct kevent *kev)
+{
+    char *buf;
+
+#define KEVFFL_DUMP(attrib) \
+    if (kev->fflags & attrib) \
+	strcat(buf, #attrib" ");
+
+    if ((buf = calloc(1, 1024)) == NULL)
+	abort();
+
+    /* Not every filter has meaningful fflags */
+    if (kev->filter != EVFILT_VNODE) {
+    	sprintf(buf, "fflags = %d", kev->flags);
+	return (buf);
+    }
+
+    sprintf(buf, "fflags = %d (", kev->fflags);
+    KEVFFL_DUMP(NOTE_DELETE);
+    KEVFFL_DUMP(NOTE_WRITE);
+    KEVFFL_DUMP(NOTE_EXTEND);
+    KEVFFL_DUMP(NOTE_TRUNCATE);
+    KEVFFL_DUMP(NOTE_ATTRIB);
+    KEVFFL_DUMP(NOTE_LINK);
+    KEVFFL_DUMP(NOTE_RENAME);
+    KEVFFL_DUMP(NOTE_REVOKE);
+    strcat(buf, ")");
+
+    return (buf);
 }
 
 char *
@@ -96,10 +129,10 @@ const char *
 kevent_to_str(struct kevent *kev)
 {
     char buf[512];
-    snprintf(&buf[0], sizeof(buf), "[filter=%d,%s,fflags=%d,ident=%u,data=%d,udata=%p]",
+    snprintf(&buf[0], sizeof(buf), "[filter=%d,%s,%s,ident=%u,data=%d,udata=%p]",
             kev->filter,
             kevent_flags_dump(kev),
-            kev->fflags,
+            kevent_fflags_dump(kev),
             (u_int) kev->ident,
             kev->data,
             kev->udata);
@@ -180,6 +213,8 @@ main(int argc, char **argv)
         test_evfilt_read();
     if (test_signal) 
         test_evfilt_signal();
+    if (test_vnode) 
+        test_evfilt_vnode();
 
 #if TODO
 
