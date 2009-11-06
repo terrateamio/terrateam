@@ -24,17 +24,16 @@ include config.mk
 
 build:
 	gcc $(CFLAGS) -c *.c
-	rm test.o
 	ar rcs libkqueue.a *.o
 	gcc -shared -Wl,-soname,libkqueue.so -o libkqueue.so *.o
 
 install:
-	$(INSTALL) -d -m 755 $(INCLUDEDIR)/kqueue
 	$(INSTALL) -d -m 755 $(INCLUDEDIR)/kqueue/sys
-	$(INSTALL) -d -m 755 $(MANDIR)/man2
 	$(INSTALL) -m 644 sys/event.h $(INCLUDEDIR)/kqueue/sys/event.h
 	$(INSTALL) -m 644 libkqueue.so $(LIBDIR)/libkqueue.so
+	$(INSTALL) -d -m 755 $(LIBDIR)/pkgconfig
 	$(INSTALL) -m 644 libkqueue.pc $(LIBDIR)/pkgconfig
+	$(INSTALL) -d -m 755 $(MANDIR)/man2
 	$(INSTALL) -m 644 kqueue.2 $(MANDIR)/man2/kqueue.2
 	$(INSTALL) -m 644 kqueue.2 $(MANDIR)/man2/kevent.2
 
