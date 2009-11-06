@@ -38,7 +38,7 @@ check-installed:
 	./a.out
 
 distclean: clean
-	rm -f config.mk config.h
+	rm -f config.mk config.h a.out
 
 clean:
 	rm -f *.o 
