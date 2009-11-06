@@ -55,17 +55,6 @@ test_kevent_vnode_note_delete(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-    /* FIXME: workaround for linux behavior. if the file is open,
-       the delete event isn't registered; an IN_ATTRIB event is fired
-       instead.
-
-       Unfortunately, closing the descriptor causes BSD kqueue to 
-       remove the knote, thus the event is never triggered.
-       */
-#if LIBKQUEUE
-    close(vnode_fd);
-#endif
-
     if (unlink("/tmp/kqueue-test.tmp") < 0)
         err(1, "unlink");
 

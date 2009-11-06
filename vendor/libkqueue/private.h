@@ -38,9 +38,14 @@ struct kqueue;
 struct kevent;
 struct evfilt_data;
 
+/* TODO: Make this a variable length structure and allow
+   each filter to add custom fields at the end.
+ */
 struct knote {
     struct kevent     kev;
     int               kn_pfd;       /* Used by timerfd */
+    nlink_t           kn_st_nlink;  /* Used by vnode */
+    off_t             kn_st_size;   /* Used by vnode */
     LIST_ENTRY(knote) entries;
 };
 LIST_HEAD(knotelist, knote);

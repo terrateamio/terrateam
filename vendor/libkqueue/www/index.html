@@ -23,8 +23,15 @@ To checkout the SVN repository, run the following command:
 <p>
 <code>svn checkout svn://mark.heily.com/libkqueue</code>
 
+<h2>Mailing Lists</h2>
+
+There are two mailing lists: one for 
+<a href="http://groups.google.com/group/libkqueue">general discussion</a>, and one for 
+<a href="http://groups.google.com/group/libkqueue-announce">announcements only</a>.
+
 <h2>Status</h2>
-The current implementation status is <a href="status.html">here</a>.
+
+Most of the API is implemented, with the notable exception of EVFILT_TIMER and EVFILT_USER. More details about the current implementation status is <a href="status.html">here</a>.
 <p>
 There are several compatibility issues to be aware of when using this library under Linux:<p>
 <ol>
@@ -43,14 +50,8 @@ a <code>revoke(2)</code> system call.
 </li>
 
 <li>
-The NOTE_EXTEND flag for the EVFILT_VNODE filter is not supported. An alternative approach is to use a combination of <code>stat(2)</code> and NOTE_ATTRIB to keep track of changes to the file's <code>st_size</code> field.
-</li>
-
-<li>
-The NOTE_LINK flag for the EVFILT_VNODE filter is not supported. An alternative approach is to use a combination of <code>stat(2)</code> and NOTE_ATTRIB to keep track of changes to the file's <code>st_nlink</code> field.
-</li>
-
-<li>The NOTE_DELETE flag is supported; however, the event will not be triggered if the program holds an open file descriptor to the file being monitored. This behavior isn't documented in any Linux manpage; see <a href="http://lists.schmorp.de/pipermail/libev/2008q4/000443.html">here</a> for discussion. A workaround would be to close the file descriptor after setting the NOTE_DELETE watch.
+When an EVFILT_SIGNAL event is generated, the <code>data</code> field 
+is set to 1 regardless of how many times the signal was received by the process. 
 </li>
 
 </ol>

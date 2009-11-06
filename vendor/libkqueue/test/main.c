@@ -83,12 +83,16 @@ kevent_fflags_dump(struct kevent *kev)
     KEVFFL_DUMP(NOTE_DELETE);
     KEVFFL_DUMP(NOTE_WRITE);
     KEVFFL_DUMP(NOTE_EXTEND);
+#if HAVE_NOTE_TRUNCATE
     KEVFFL_DUMP(NOTE_TRUNCATE);
+#endif
     KEVFFL_DUMP(NOTE_ATTRIB);
     KEVFFL_DUMP(NOTE_LINK);
     KEVFFL_DUMP(NOTE_RENAME);
+#if HAVE_NOTE_REVOKE
     KEVFFL_DUMP(NOTE_REVOKE);
-    strcat(buf, ")");
+#endif
+    buf[strlen(buf) - 1] = ')';
 
     return (buf);
 }
@@ -120,7 +124,7 @@ kevent_flags_dump(struct kevent *kev)
 #if HAVE_EV_RECEIPT
     KEVFL_DUMP(EV_RECEIPT);
 #endif
-    strcat(buf, ")");
+    buf[strlen(buf) - 1] = ')';
 
     return (buf);
 }
@@ -135,7 +139,7 @@ kevent_to_str(struct kevent *kev)
             kevent_flags_dump(kev),
             kevent_fflags_dump(kev),
             (u_int) kev->ident,
-            kev->data,
+            (int) kev->data,
             kev->udata);
     return (strdup(buf));
 }
@@ -216,8 +220,10 @@ main(int argc, char **argv)
         test_evfilt_signal();
     if (test_vnode) 
         test_evfilt_vnode();
+#if FIXME
     if (test_timer) 
         test_evfilt_timer();
+#endif
 
     puts("all tests completed.");
     return (0);

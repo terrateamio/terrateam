@@ -178,8 +178,12 @@ evfilt_socket_copyout(struct filter *filt,
             dst->ident = kn->kev.ident;
             dst->filter = kn->kev.filter;
             dst->udata = kn->kev.udata;
-            dst->flags = 0; 
+            dst->flags = EV_ADD; 
             dst->fflags = 0;
+            if (kn->kev.flags & EV_ONESHOT) /*TODO: move elsewhere */
+                dst->flags |= EV_ONESHOT;
+            if (kn->kev.flags & EV_CLEAR) /*TODO: move elsewhere */
+                dst->flags |= EV_CLEAR;
             if (ev->events & EPOLLRDHUP || ev->events & EPOLLHUP)
                 dst->flags |= EV_EOF;
             if (ev->events & EPOLLERR)

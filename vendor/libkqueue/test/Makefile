@@ -16,14 +16,13 @@
 
 include config.mk
 
-all:
-	gcc $(CFLAGS) main.c read.c signal.c vnode.c timer.c $(LDADD)
-	./a.out
+SOURCES=main.c read.c signal.c vnode.c timer.c 
 
 check:
-	cd .. && make build CFLAGS="$(CFLAGS) -g -O0 -DKQUEUE_DEBUG -DUNIT_TEST"
-	gcc -c $(CFLAGS) test.c
-	gcc $(CFLAGS) test.c libkqueue.a $(LDADD)
+	if [ ! -f /usr/include/sys/event.h ] ; then \
+        cd .. && ./configure --debug=yes && make build ; \
+	fi
+	gcc $(CFLAGS) $(SOURCES) $(LDADD)
 	./a.out
 
 # NOTE: copy+paste of 'make check'

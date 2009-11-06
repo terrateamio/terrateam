@@ -4,12 +4,12 @@ program=libkqueue
 version=0.1
 
 finalize() {
-  eval "if [ \"\$$1\" = \"\" ] ; then $1=$2 ; fi"
+  eval "if [ \"\$$1\" = \"\" ] ; then $1=\"$2\" ; fi"
 
   # Add the variable to config.mk and config.h
-  id=`echo $1 | tr 'a-z' 'A-Z'`;
-  eval "echo \"$id=\$$1\" >> config.mk"
-  eval "echo \"#define $id \\\"\$$1\\\"\" >> config.h"
+  uc_id=`echo $1 | tr 'a-z' 'A-Z'`;
+  eval "echo \"$uc_id=\"\$$1\"\" >> config.mk"
+  eval "echo \"#define $uc_id \\\"\$$1\\\"\" >> config.h"
 }
 
 process_argv() {
@@ -44,15 +44,24 @@ check_header() {
 #
 #######################################################################
 
+default_cflags="-fPIC -D_REENTRANT -I. -Wall -Werror"
+
 # Initialize the output files
 #
-for output_file in config.h config.mk $program.pc
+for output_file in config.mk $program.pc
 do
    rm -f $output_file
    echo "# AUTOMATICALLY GENERATED -- DO NOT EDIT" > $output_file
 done
+rm -f config.h
+echo "/* AUTOMATICALLY GENERATED -- DO NOT EDIT */" > config.h
 
 process_argv $*
+
+if [ "$debug" = "yes" ]
+then
+  default_cflags="$default_cflags -DKQUEUE_DEBUG"
+fi
 
 finalize program    $program
 finalize version    $version
@@ -61,6 +70,7 @@ finalize prefix     /usr/local
 finalize libdir     "${prefix}/lib"
 finalize includedir "${prefix}/include"
 finalize mandir     "${prefix}/share/man"
+finalize cflags     "$default_cflags"
 
 echo "Checking operating system type... $target"
 rm -f socket.c vnode.c signal.c timer.c user.c
