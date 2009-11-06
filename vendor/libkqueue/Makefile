@@ -60,4 +60,4 @@ clean:
 	rm -f a.out *.a *.o *.so
 
 distclean: clean
-	rm -f *.tar.gz config.mk $(FILTERS)
+	rm -f *.tar.gz config.mk config.h libkqueue.pc $(FILTERS)
