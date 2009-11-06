@@ -13,10 +13,13 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
-PROGRAM=libkqueue
 INSTALL=/usr/bin/install
-DISTFILES=*.c *.h kqueue.2 README Makefile configure os sys
-SOURCES=src/$(UNAME)/*.c
+SOURCES=filter.c kevent.c knote.c kqueue.c
+MANS=kqueue.2
+HEADERS=private.h
+EXTRA_DIST=*.in README
+SUBDIRS=os sys test
+DISTFILES=Makefile configure
 FILTERS=vnode.c timer.c signal.c socket.c user.c
 
 include config.mk
@@ -48,10 +51,14 @@ check:
 	cd test && ./configure && make check
 
 dist:
-	mkdir $(PROGRAM)
-	cp -R $(DISTFILES) $(PROGRAM)
-	tar zcvf $(PROGRAM)-`date +%y%m%d_%H%M`.tar.gz $(PROGRAM)
-	rm -rf $(PROGRAM)
+	mkdir $(PROGRAM)-$(VERSION)
+	cp  Makefile configure                            \
+        $(SOURCES) $(MANS) $(HEADERS) $(EXTRA_DIST)   \
+        $(PROGRAM)-$(VERSION)
+	cp -R $(SUBDIRS) $(PROGRAM)-$(VERSION)
+	rm -rf `find $(PROGRAM)-$(VERSION) -type d -name .svn`
+	tar zcf $(PROGRAM)-$(VERSION).tar.gz $(PROGRAM)-$(VERSION)
+	rm -rf $(PROGRAM)-$(VERSION)
 
 publish-www:
 	rm -rf ~/public_html/libkqueue/ ; cp -R www ~/public_html/libkqueue/
