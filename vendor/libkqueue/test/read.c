@@ -58,21 +58,24 @@ test_kevent_socket_get(void)
 {
     const char *test_id = "kevent(EVFILT_READ) wait";
     struct kevent kev;
-    int nfds;
 
     test_begin(test_id);
 
+    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_ADD, 0, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+
     kevent_socket_fill();
 
-    nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
-    if (nfds < 1)
-        err(1, "%s: nfds=%d", test_id, nfds);
-    KEV_CMP(kev, sockfd[0], EVFILT_READ, EV_ADD);
-    if ((int)kev.data != 1)
-        err(1, "incorrect data value %d", (int) kev.data); // FIXME: make part of KEV_CMP
+    kev.data = 1;
+    kevent_cmp(&kev, kevent_get(kqfd));
 
     kevent_socket_drain();
     test_no_kevents();
+
+    kev.flags = EV_DELETE;
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
 
     success(test_id);
 }
@@ -81,8 +84,7 @@ void
 test_kevent_socket_clear(void)
 {
     const char *test_id = "kevent(EVFILT_READ, EV_CLEAR)";
-    struct kevent kev, ret;
-    int nfds;
+    struct kevent kev;
 
     test_begin(test_id);
 
@@ -95,11 +97,8 @@ test_kevent_socket_clear(void)
     kevent_socket_fill();
     kevent_socket_fill();
 
-    nfds = kevent(kqfd, NULL, 0, &ret, 1, NULL);
-    if (nfds < 1)
-        err(1, "%s", test_id);
     kev.data = 2;
-    kevent_cmp(&kev,&ret); 
+    kevent_cmp(&kev, kevent_get(kqfd)); 
 
     /* We filled twice, but drain once. Edge-triggered would not generate
        additional events.
@@ -116,45 +115,37 @@ test_kevent_socket_clear(void)
 }
 
 void
-test_kevent_socket_disable(void)
+test_kevent_socket_disable_and_enable(void)
 {
     const char *test_id = "kevent(EVFILT_READ, EV_DISABLE)";
     struct kevent kev;
 
     test_begin(test_id);
 
+    /* Add an event, then disable it. */
+    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_ADD, 0, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
     EV_SET(&kev, sockfd[0], EVFILT_READ, EV_DISABLE, 0, 0, &sockfd[0]);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
     kevent_socket_fill();
     test_no_kevents();
-    kevent_socket_drain();
 
-    success(test_id);
-}
-
-void
-test_kevent_socket_enable(void)
-{
-    const char *test_id = "kevent(EVFILT_READ, EV_ENABLE)";
-    struct kevent kev, ret;
-    int nfds;
-
-    test_begin(test_id);
-
-    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_ENABLE, 0, 0, &sockfd[0]);
+    /* Re-enable the knote, then see if an event is generated */
+    kev.flags = EV_ENABLE;
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
-
-    kevent_socket_fill();
-    nfds = kevent(kqfd, NULL, 0, &ret, 1, NULL);
-    if (nfds < 1)
         err(1, "%s", test_id);
     kev.flags = EV_ADD;
     kev.data = 1;
-    kevent_cmp(&kev, &ret);
+    kevent_cmp(&kev, kevent_get(kqfd));
+
     kevent_socket_drain();
+
+    kev.flags = EV_DELETE;
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
 
     success(test_id);
 }
@@ -182,7 +173,7 @@ void
 test_kevent_socket_oneshot(void)
 {
     const char *test_id = "kevent(EVFILT_READ, EV_ONESHOT)";
-    struct kevent kev, ret;
+    struct kevent kev;
 
     test_begin(test_id);
 
@@ -195,10 +186,8 @@ test_kevent_socket_oneshot(void)
 
     puts("-- getting one event");
     kevent_socket_fill();
-    if (kevent(kqfd, NULL, 0, &ret, 1, NULL) != 1)
-        err(1, "%s", test_id);
     kev.data = 1;
-    kevent_cmp(&kev, &ret);
+    kevent_cmp(&kev, kevent_get(kqfd));
 
     puts("-- checking knote disabled");
     test_no_kevents();
@@ -289,7 +278,7 @@ void
 test_kevent_socket_eof(void)
 {
     const char *test_id = "kevent(EVFILT_READ, EV_EOF)";
-    struct kevent kev, ret;
+    struct kevent kev;
 
     test_begin(test_id);
 
@@ -302,10 +291,8 @@ test_kevent_socket_eof(void)
     if (close(sockfd[1]) < 0)
         err(1, "close(2)");
 
-    if (kevent(kqfd, NULL, 0, &ret, 1, NULL) < 1)
-        err(1, "%s", test_id);
     kev.flags |= EV_EOF;
-    kevent_cmp(&kev, &ret);
+    kevent_cmp(&kev, kevent_get(kqfd));
 
     /* Delete the watch */
     EV_SET(&kev, sockfd[0], EVFILT_READ, EV_DELETE, 0, 0, &sockfd[0]);
@@ -324,10 +311,9 @@ test_evfilt_read()
 
     kqfd = kqueue();
     test_kevent_socket_add();
-    test_kevent_socket_get();
-    test_kevent_socket_disable();
-    test_kevent_socket_enable();
     test_kevent_socket_del();
+    test_kevent_socket_get();
+    test_kevent_socket_disable_and_enable();
     test_kevent_socket_oneshot();
     test_kevent_socket_clear();
     test_kevent_socket_dispatch();

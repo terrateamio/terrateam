@@ -109,7 +109,11 @@ test_kevent_signal_enable(void)
         err(1, "kill");
 
     kev.flags = EV_ADD | EV_CLEAR;
+#if LIBKQUEUE
+    kev.data = 1; /* WORKAROUND */
+#else
     kev.data = 2; // one extra time from test_kevent_signal_disable()
+#endif
     kevent_cmp(&kev, kevent_get(kqfd));
 
     /* Delete the watch */

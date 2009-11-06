@@ -17,7 +17,6 @@ PROGRAM=libkqueue
 INSTALL=/usr/bin/install
 DISTFILES=*.c *.h kqueue.2 README Makefile configure os sys
 SOURCES=src/$(UNAME)/*.c
-CFLAGS=-fPIC -D_REENTRANT -I. -Wall -Werror -fvisibility=hidden
 FILTERS=vnode.c timer.c signal.c socket.c user.c
 
 include config.mk

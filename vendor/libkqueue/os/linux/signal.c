@@ -119,7 +119,7 @@ evfilt_signal_copyout(struct filter *filt,
         dst->ident = sig[i].ssi_signo;
         dst->filter = EVFILT_SIGNAL;
         dst->udata = kn->kev.udata;
-        dst->flags = 0; 
+        dst->flags = EV_ADD | EV_CLEAR; 
         dst->fflags = 0;
         dst->data = 1;  
 
@@ -129,8 +129,10 @@ evfilt_signal_copyout(struct filter *filt,
         }
         if (kn->kev.flags & EV_DISPATCH)
             KNOTE_DISABLE(kn);
-        if (kn->kev.flags & EV_ONESHOT) 
+        if (kn->kev.flags & EV_ONESHOT) {
+            dst->flags |= EV_ONESHOT;
             knote_free(kn);
+        }
 
         dst++; 
         nevents++;
