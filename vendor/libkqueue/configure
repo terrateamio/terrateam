@@ -66,14 +66,14 @@ echo "Checking operating system type... $target"
 rm -f socket.c vnode.c signal.c timer.c user.c
 if [ $target = "linux" ] ; then
    check_header sys/epoll.h && ln -s os/linux/socket.c    \
-       || ln -s os/posix/socket.c
+       || ln -sf os/posix/socket.c
    check_header sys/inotify.h && ln -s os/linux/vnode.c   \
-       || ln -s os/posix/vnode.c
+       || ln -sf os/posix/vnode.c
    check_header sys/signalfd.h && ln -s os/linux/signal.c \
-       || ln -s os/posix/signal.c
+       || ln -sf os/posix/signal.c
    check_header sys/timerfd.h && ln -s os/linux/timer.c   \
-       || ln -s os/posix/timer.c
-   ln -s os/posix/user.c
+       || ln -sf os/posix/timer.c
+   ln -sf os/posix/user.c
 fi
 echo "Creating config.h"
 
