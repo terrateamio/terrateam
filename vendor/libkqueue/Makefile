@@ -61,7 +61,7 @@ dist:
 	rm -rf $(PROGRAM)-$(VERSION)
 
 publish-www:
-	rm -rf ~/public_html/libkqueue/ ; cp -R www ~/public_html/libkqueue/
+	rm ~/public_html/libkqueue/*.html ; cp -R www/*.html ~/public_html/libkqueue/
 
 clean:
 	rm -f a.out *.a *.o *.so
