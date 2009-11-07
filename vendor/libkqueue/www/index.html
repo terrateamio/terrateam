@@ -19,6 +19,8 @@ libkqueue is a portable userspace implementation of the <a href="http://www.free
 
 <h2>Download</h2>
 
+Source code releases can be found <a href="dist">here</a>.
+<p>
 To checkout the SVN repository, run the following command:
 <p>
 <code>svn checkout svn://mark.heily.com/libkqueue</code>
@@ -68,8 +70,6 @@ libkqueue currently requires the following:
 
 <h2>Usage</h2>
 
-libkqueue is a multi-threaded library and <code>kqueue()</code> and <code>kevent()</code> are safe to be used from multiple threads.
-
 Here are the steps to use libkqueue in your program:
 <ol>
 <li>Add <code>`pkg-config libkqueue --cflags`</code> to the CFLAGS variable.
@@ -94,6 +94,10 @@ close the descriptor and free the resources:
     kqueue_free(kqfd);
     #endif
 </pre>
+
+<h3>Threads</h3>
+
+libkqueue is a threadsafe library, and <code>kqueue()</code> and <code>kevent()</code> are safe to be used from multiple threads.  libkqueue requires that the POSIX threads headers (<code>pthread.h</code>) be available, but does not require you to link against <code>libpthread.so</code>. This allows it to be used in both non-threaded and multi-threaded programs. 
 
 <h2>Links</h2>
 
