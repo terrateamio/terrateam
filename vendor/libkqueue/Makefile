@@ -14,6 +14,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 REPOSITORY=svn+ssh://mark.heily.com/$$HOME/svn/$(PROGRAM)
+DIST=heily.com:$$HOME/public_html/$(PROGRAM)/dist
 INSTALL=/usr/bin/install
 SOURCES=filter.c kevent.c knote.c kqueue.c
 MANS=kqueue.2
@@ -53,6 +54,7 @@ check:
 	cd test && ./configure && make check
 
 dist:
+	cd test && make distclean || true
 	mkdir $(PROGRAM)-$(VERSION)
 	cp  Makefile configure                            \
         $(SOURCES) $(MANS) $(HEADERS) $(EXTRA_DIST)   \
@@ -61,6 +63,9 @@ dist:
 	rm -rf `find $(PROGRAM)-$(VERSION) -type d -name .svn`
 	tar zcf $(PROGRAM)-$(VERSION).tar.gz $(PROGRAM)-$(VERSION)
 	rm -rf $(PROGRAM)-$(VERSION)
+
+dist-upload: dist
+	scp libkqueue-$(VERSION).tar.gz $(DIST)
 
 publish-www:
 	rm ~/public_html/libkqueue/*.html ; cp -R www/*.html ~/public_html/libkqueue/
