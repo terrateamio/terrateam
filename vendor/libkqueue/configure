@@ -1,7 +1,7 @@
 #!/bin/sh
 
 program=libkqueue
-version=0.1
+version=0.2
 
 finalize() {
   eval "if [ \"\$$1\" = \"\" ] ; then $1=\"$2\" ; fi"
