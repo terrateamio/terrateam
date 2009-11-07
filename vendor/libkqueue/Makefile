@@ -13,6 +13,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
+REPOSITORY=svn+ssh://mark.heily.com/$$HOME/svn/$(PROGRAM)
 INSTALL=/usr/bin/install
 SOURCES=filter.c kevent.c knote.c kqueue.c
 MANS=kqueue.2
@@ -66,6 +67,12 @@ publish-www:
 
 clean:
 	rm -f a.out *.a *.o *.so
+
+merge:
+	svn diff $(REPOSITORY)/branches/stable $(REPOSITORY)/trunk | gvim -
+	@printf "Merge changes from the trunk to the stable branch [y/N]? "
+	@read x && test "$$x" = "y"
+	echo "ok"
 
 distclean: clean
 	rm -f *.tar.gz config.mk config.h libkqueue.pc $(FILTERS)

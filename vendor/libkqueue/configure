@@ -71,6 +71,7 @@ finalize libdir     "${prefix}/lib"
 finalize includedir "${prefix}/include"
 finalize mandir     "${prefix}/share/man"
 finalize cflags     "$default_cflags"
+finalize libdepends ""
 
 echo "Checking operating system type... $target"
 rm -f socket.c vnode.c signal.c timer.c user.c
@@ -95,6 +96,7 @@ sed -e "
      s,@@LIBDIR@@,$libdir,g;
      s,@@INCLUDEDIR@@,$includedir,g;
      s,@@MANDIR@@,$mandir,g;
+     s,@@LIBDEPENDS@@,$libdepends,g;
      " < $program.pc.in >> $program.pc
 chmod 400 $program.pc
 
