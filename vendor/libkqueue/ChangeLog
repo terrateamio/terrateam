@@ -1,0 +1,13 @@
+2009-11-10  v0.2    r59
+
+    * Implement EVFILT_TIMER on Linux.
+
+    * Fix another 'make install' problem reported by Mario Schwalbe.
+
+    * Do not link the test program with the pthreads library.
+
+    * pkg-config no longer requires linking with -lpthread and -lrt.
+
+2009-05-05  v0.1     r49
+
+    * Initial stable release.
