@@ -45,16 +45,15 @@ test_kevent_timer_del(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-    test_no_kevents();
-
     success(test_id);
 }
 
 void
 test_kevent_timer_get(void)
 {
-    const char *test_id = "kevent(EVFILT_TIMER, wait)";
+    const char *test_id = "kevent(EVFILT_TIMER, get)";
     struct kevent kev;
+    int nfds;
 
     test_begin(test_id);
 
@@ -62,9 +61,11 @@ test_kevent_timer_get(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-    kev.flags |= EV_CLEAR;
-    kev.data = 1; 
-    kevent_cmp(&kev, kevent_get(kqfd));
+    nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
+    if (nfds < 1)
+        err(1, "%s", test_id);
+    if (kev.ident != 1 || kev.filter != EVFILT_TIMER) 
+        errx(1, "wrong event");
 
     EV_SET(&kev, 1, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
@@ -73,104 +74,17 @@ test_kevent_timer_get(void)
     success(test_id);
 }
 
-static void
-test_oneshot(void)
-{
-    const char *test_id = "kevent(EVFILT_TIMER, EV_ONESHOT)";
-    struct kevent kev;
-
-    test_begin(test_id);
-
-    test_no_kevents();
-
-    EV_SET(&kev, vnode_fd, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, 500,NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
-
-    /* Retrieve the event */
-    kev.flags = EV_ADD | EV_CLEAR | EV_ONESHOT;
-    kev.data = 1; 
-    kevent_cmp(&kev, kevent_get(kqfd));
-
-    /* Check if the event occurs again */
-    sleep(3);
-    test_no_kevents();
-
-
-    success(test_id);
-}
-
-static void
-test_periodic(void)
-{
-    const char *test_id = "kevent(EVFILT_TIMER, periodic)";
-    struct kevent kev;
-
-    test_begin(test_id);
-
-    test_no_kevents();
-
-    EV_SET(&kev, vnode_fd, EVFILT_TIMER, EV_ADD, 0, 1000,NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
-
-    /* Retrieve the event */
-    kev.flags = EV_ADD | EV_CLEAR;
-    kev.data = 1; 
-    kevent_cmp(&kev, kevent_get(kqfd));
-
-    /* Check if the event occurs again */
-    sleep(1);
-    kevent_cmp(&kev, kevent_get(kqfd));
-
-    /* Delete the event */
-    kev.flags = EV_DELETE;
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
-
-    success(test_id);
-}
-
-static void
-disable_and_enable(void)
-{
-    const char *test_id = "kevent(EVFILT_TIMER, EV_DISABLE and EV_ENABLE)";
-    struct kevent kev;
-
-    test_begin(test_id);
-
-    test_no_kevents();
-
-    /* Add the watch and immediately disable it */
-    EV_SET(&kev, vnode_fd, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, 2000,NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
-    kev.flags = EV_DISABLE;
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
-    test_no_kevents();
-
-    /* Re-enable and check again */
-    kev.flags = EV_ENABLE;
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
-
-    kev.flags = EV_ADD | EV_CLEAR | EV_ONESHOT;
-    kev.data = 1; 
-    kevent_cmp(&kev, kevent_get(kqfd));
-
-    success(test_id);
-}
-
 void
 test_evfilt_timer()
 {
 	kqfd = kqueue();
-    test_kevent_timer_add();
-    test_kevent_timer_del();
-    test_kevent_timer_get();
-    test_oneshot();
-    test_periodic();
-    disable_and_enable();
+        test_kevent_timer_add();
+        test_kevent_timer_del();
+        test_kevent_timer_get();
+#if TODO
+        test_kevent_signal_disable();
+        test_kevent_signal_enable();
+        test_kevent_signal_oneshot();
+#endif
 	close(kqfd);
 }

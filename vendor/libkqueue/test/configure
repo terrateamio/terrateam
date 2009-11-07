@@ -89,7 +89,7 @@ cflags="-g -O0 -Wall -Werror"
 ldadd=""
 if [ "`uname -s`" = "Linux" ] ; then
    cflags="$cflags -I.."
-   ldadd="$ldadd ../libkqueue.a"
+   ldadd="$ldadd ../libkqueue.a -lpthread -lrt"
 fi
 finalize cflags ""
 finalize ldadd ""

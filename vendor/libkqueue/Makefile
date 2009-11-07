@@ -72,7 +72,8 @@ merge:
 	svn diff $(REPOSITORY)/branches/stable $(REPOSITORY)/trunk | gvim -
 	@printf "Merge changes from the trunk to the stable branch [y/N]? "
 	@read x && test "$$x" = "y"
-	echo "ok"
+	EDITOR=vi svn merge $(REPOSITORY)/trunk $(REPOSITORY)/branches/stable
+	cd ../branches/stable && svn up
 
 distclean: clean
 	rm -f *.tar.gz config.mk config.h libkqueue.pc $(FILTERS)

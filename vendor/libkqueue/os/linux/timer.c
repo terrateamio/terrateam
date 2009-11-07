@@ -34,24 +34,42 @@
 #include "sys/event.h"
 #include "private.h"
 
-#if KQUEUE_DEBUG
-static char *
-itimerspec_dump(struct itimerspec *ts)
+#if DEADWOOD
+static void timer_convert(struct itimerspec *dst, int src);
+
+/*
+ * Determine the smallest interval used by active timers.
+ */
+static int
+update_timeres(struct filter *filt)
 {
-    char *buf;
+    struct knote *kn;
+    struct itimerspec tval;
+    u_int cur = filt->kf_timeres;
 
-    if ((buf = calloc(1, 1024)) == NULL)
-        abort();
+    /* Find the smallest timeout interval */
+    //FIXME not optimized
+    KNOTELIST_FOREACH(kn, &filt->knl) {
+        dbg_printf("cur=%d new=%d", cur, (int) kn->kev.data);
+        if (cur == 0 || kn->kev.data < cur)
+            cur = kn->kev.data;
+    }
 
-    snprintf(buf, 1024,
-            "itimer: [ interval=%lu s %lu ns, next expire=%lu s %lu ns ]",
-            ts->it_interval.tv_sec,
-            ts->it_interval.tv_nsec,
-            ts->it_value.tv_sec,
-            ts->it_value.tv_nsec
-           );
+    dbg_printf("cur=%d res=%d", cur, filt->kf_timeres);
+    if (cur == filt->kf_timeres) 
+        return (0);
 
-    return (buf);
+    dbg_printf("new timer interval = %d", cur);
+    filt->kf_timeres = cur;
+
+    /* Convert from miliseconds to seconds+nanoseconds */
+    timer_convert(&tval, cur);
+    if (timerfd_settime(filt->kf_pfd, 0, &tval, NULL) < 0) {
+        dbg_printf("signalfd(2): %s", strerror(errno));
+        return (-1);
+    }
+
+    return (0);
 }
 #endif
 
@@ -59,24 +77,23 @@ itimerspec_dump(struct itimerspec *ts)
 static void
 convert_msec_to_itimerspec(struct itimerspec *dst, int src, int oneshot)
 {
+    struct timespec now;
     time_t sec, nsec;
 
+    /* Set the interval */
+    /* XXX-FIXME: this is probably horribly wrong :) */
     sec = src / 1000;
     nsec = (src % 1000) * 1000000;
+    dst->it_interval.tv_sec = sec;
+    dst->it_interval.tv_nsec = nsec;
+    dbg_printf("timer val=%lu %lu", sec, nsec);
 
-    /* Set the interval */
-    if (oneshot) {
-        dst->it_interval.tv_sec = 0;
-        dst->it_interval.tv_nsec = 0;
-    } else {
-        dst->it_interval.tv_sec = sec;
-        dst->it_interval.tv_nsec = nsec;
-    }
+    /* FIXME: doesnt handle oneshot */
 
     /* Set the initial expiration */
-    dst->it_value.tv_sec = sec;
-    dst->it_value.tv_nsec = nsec;
-    dbg_printf("%s", itimerspec_dump(dst));
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    dst->it_value.tv_sec = now.tv_sec + sec;
+    dst->it_value.tv_nsec = now.tv_nsec + nsec;
 }
 
 static int
@@ -179,70 +196,44 @@ evfilt_timer_copyin(struct filter *filt,
     return (0);
 }
 
-/* TODO: This entire function is copy+pasted from socket.c
-   with minor changes for timerfds.
-   Perhaps it could be refactored into a generic epoll_copyout()
-   that calls custom per-filter actions.
-   */
 int
 evfilt_timer_copyout(struct filter *filt, 
             struct kevent *dst, 
             int nevents)
 {
-    struct epoll_event epevt[MAX_KEVENT];
-    struct epoll_event *ev;
-    struct knote *kn;
-    uint64_t expired;
-    int i, nret;
+    //struct knote *kn;
+    uint64_t buf;
+    int i;
     ssize_t n;
 
-    for (;;) {
-        nret = epoll_wait(filt->kf_pfd, &epevt[0], nevents, 0);
-        if (nret < 0) {
-            if (errno == EINTR)
-                continue;
-            dbg_perror("epoll_wait");
-            return (-1);
-        } else {
-            break;
-        }
+    abort(); //TBD
+
+    n = read(filt->kf_pfd, &buf, sizeof(buf));
+    if (n < 0 || n < sizeof(buf)) {
+        dbg_puts("invalid read from timerfd");
+        return (-1);
     }
+    n = 1;  // KLUDGE
 
-    for (i = 0, nevents = 0; i < nret; i++) {
-        ev = &epevt[i];
-        /* TODO: put in generic debug.c: epoll_event_dump(ev); */
-        kn = ev->data.ptr;
-        dst->ident = kn->kev.ident;
-        dst->filter = kn->kev.filter;
+    //KNOTELIST_FOREACH(kn, &filt->knl) {
+
+    for (i = 0, nevents = 0; i < n; i++) {
+#if FIXME
+        /* Want to have multiple timers, so maybe multiple timerfds... */
+        kn = knote_lookup(filt, sig[i].ssi_signo);
+        if (kn == NULL)
+            continue;
+
+        /* TODO: dst->data should be the number of times the signal occurred */
+        dst->ident = sig[i].ssi_signo;
+        dst->filter = EVFILT_SIGNAL;
         dst->udata = kn->kev.udata;
-        dst->flags = EV_ADD; 
+        dst->flags = 0; 
         dst->fflags = 0;
-        if (kn->kev.flags & EV_ONESHOT) /*TODO: move elsewhere */
-            dst->flags |= EV_ONESHOT;
-        if (kn->kev.flags & EV_CLEAR) /*TODO: move elsewhere */
-            dst->flags |= EV_CLEAR;
-        if (ev->events & EPOLLERR)
-            dst->fflags = 1; /* FIXME: Return the actual timer error */
-          
-        /* On return, data contains the number of times the
-           timer has been trigered.
-             */
-        n = read(kn->kn_pfd, &expired, sizeof(expired));
-        if (n < 0 || n < sizeof(expired)) {
-            dbg_puts("invalid read from timerfd");
-            expired = 1;  /* Fail gracefully */
-        } 
-        dst->data = expired;
-
-        if (kn->kev.flags & EV_DISPATCH) 
-            KNOTE_DISABLE(kn);
-        if (kn->kev.flags & EV_ONESHOT) {
-            ktimer_delete(filt, kn);
-            knote_free(kn);
-        }
-
+        dst->data = 1;  
+        dst++; 
         nevents++;
-        dst++;
+#endif
     }
 
     return (nevents);
