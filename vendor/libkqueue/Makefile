@@ -32,6 +32,7 @@ build:
 install:
 	$(INSTALL) -d -m 755 $(INCLUDEDIR)/kqueue/sys
 	$(INSTALL) -m 644 sys/event.h $(INCLUDEDIR)/kqueue/sys/event.h
+	$(INSTALL) -d -m 755 $(LIBDIR) 
 	$(INSTALL) -m 644 libkqueue.so $(LIBDIR)/libkqueue.so
 	$(INSTALL) -d -m 755 $(LIBDIR)/pkgconfig
 	$(INSTALL) -m 644 libkqueue.pc $(LIBDIR)/pkgconfig
