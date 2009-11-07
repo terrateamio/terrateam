@@ -55,11 +55,11 @@
 <tr>
 <td>EVFILT_TIMER<BR></td>
 <td>Yes</td>
-<td>No</td>
-<td>No</td>
-<td>No</td>
-<td>No</td>
-<td>No</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>N/A</td>
 </tr>
 
 <tr>
@@ -96,13 +96,13 @@
 READ / WRITE
     NOTE_LOWAT          No -- Not supported by Linux
 VNODE
-    NOTE_DELETE         Partial (fd must be closed)
+    NOTE_DELETE         Yes
     NOTE_WRITE          Yes
-    NOTE_EXTEND         No
+    NOTE_EXTEND         Yes
     NOTE_ATTRIB         Yes
-    NOTE_LINK           No
+    NOTE_LINK           Yes
     NOTE_RENAME         Yes
-    NOTE_REVOKE         N/A -- Not available in Linux 
+    NOTE_REVOKE         No -- Not available in Linux 
 USER
     NOTE_FFNOP         Ignore the input fflags.
     NOTE_FFAND         Bitwise AND fflags.
