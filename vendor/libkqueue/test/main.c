@@ -26,7 +26,9 @@ extern void test_evfilt_read();
 extern void test_evfilt_signal();
 extern void test_evfilt_vnode();
 extern void test_evfilt_timer();
+#if HAVE_EVFILT_USER
 extern void test_evfilt_user();
+#endif
 
 /* Checks if any events are pending, which is an error. */
 void 
@@ -70,18 +72,18 @@ kevent_fflags_dump(struct kevent *kev)
 
 #define KEVFFL_DUMP(attrib) \
     if (kev->fflags & attrib) \
-	strcat(buf, #attrib" ");
+	strncat(buf, #attrib" ", 64);
 
     if ((buf = calloc(1, 1024)) == NULL)
 	abort();
 
     /* Not every filter has meaningful fflags */
     if (kev->filter != EVFILT_VNODE) {
-    	sprintf(buf, "fflags = %d", kev->flags);
+    	snprintf(buf, 1024, "fflags = %d", kev->flags);
 	return (buf);
     }
 
-    sprintf(buf, "fflags = %d (", kev->fflags);
+    snprintf(buf, 1024, "fflags = %d (", kev->fflags);
     KEVFFL_DUMP(NOTE_DELETE);
     KEVFFL_DUMP(NOTE_WRITE);
     KEVFFL_DUMP(NOTE_EXTEND);
@@ -106,12 +108,12 @@ kevent_flags_dump(struct kevent *kev)
 
 #define KEVFL_DUMP(attrib) \
     if (kev->flags & attrib) \
-	strcat(buf, #attrib" ");
+	strncat(buf, #attrib" ", 64);
 
     if ((buf = calloc(1, 1024)) == NULL)
 	abort();
 
-    sprintf(buf, "flags = %d (", kev->flags);
+    snprintf(buf, 1024, "flags = %d (", kev->flags);
     KEVFL_DUMP(EV_ADD);
     KEVFL_DUMP(EV_ENABLE);
     KEVFL_DUMP(EV_DISABLE);
@@ -224,8 +226,10 @@ main(int argc, char **argv)
         test_evfilt_signal();
     if (test_vnode) 
         test_evfilt_vnode();
+#if HAVE_EVFILT_USER
     if (test_user) 
         test_evfilt_user();
+#endif
     if (test_timer) 
         test_evfilt_timer();
 

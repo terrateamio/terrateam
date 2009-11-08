@@ -16,8 +16,6 @@
 
 include config.mk
 
-SOURCES=main.c read.c signal.c vnode.c timer.c user.c
-
 check:
 	if [ ! -f /usr/include/sys/event.h ] ; then \
         cd .. && ./configure --debug=yes && make build ; \
