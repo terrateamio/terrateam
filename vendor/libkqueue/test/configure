@@ -88,7 +88,7 @@ check_header sys/event.h && {
 cflags="-g -O0 -Wall -Werror"
 ldadd=""
 if [ "`uname -s`" = "Linux" ] ; then
-   cflags="$cflags -I.."
+   cflags="$cflags -I../include"
    ldadd="$ldadd ../libkqueue.a"
 fi
 finalize cflags ""

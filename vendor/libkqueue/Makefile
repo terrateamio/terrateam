@@ -20,7 +20,7 @@ SOURCES=filter.c kevent.c knote.c kqueue.c
 MANS=kqueue.2
 HEADERS=private.h
 EXTRA_DIST=*.in README
-SUBDIRS=os sys test
+SUBDIRS=os include test
 DISTFILES=Makefile configure
 FILTERS=vnode.c timer.c signal.c socket.c user.c
 
@@ -33,7 +33,7 @@ build:
 
 install:
 	$(INSTALL) -d -m 755 $(INCLUDEDIR)/kqueue/sys
-	$(INSTALL) -m 644 sys/event.h $(INCLUDEDIR)/kqueue/sys/event.h
+	$(INSTALL) -m 644 include/sys/event.h $(INCLUDEDIR)/kqueue/sys/event.h
 	$(INSTALL) -d -m 755 $(LIBDIR) 
 	$(INSTALL) -m 644 libkqueue.so $(LIBDIR)/libkqueue.so
 	$(INSTALL) -d -m 755 $(LIBDIR)/pkgconfig

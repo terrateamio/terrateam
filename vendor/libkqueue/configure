@@ -44,7 +44,7 @@ check_header() {
 #
 #######################################################################
 
-default_cflags="-fPIC -I. -Wall -Werror"
+default_cflags="-fPIC -I./include -Wall -Werror"
 
 # Initialize the output files
 #
