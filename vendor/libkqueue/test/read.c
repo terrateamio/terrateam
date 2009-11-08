@@ -203,6 +203,7 @@ test_kevent_socket_oneshot(void)
 }
 
 
+#if HAVE_EV_DISPATCH
 void
 test_kevent_socket_dispatch(void)
 {
@@ -210,7 +211,6 @@ test_kevent_socket_dispatch(void)
 
     test_begin(test_id);
 
-#if HAVE_EV_DISPATCH
     struct kevent kev;
 
     /* Re-add the watch and make sure no events are pending */
@@ -220,12 +220,12 @@ test_kevent_socket_dispatch(void)
         err(1, "%s", test_id);
     test_no_kevents();
 
-    /* Since the knote is disabled, there are no events. */
-    puts("-- checking if knote is disabled..");
+    /* The event will occur only once, even though EV_CLEAR is not
+       specified. */
     kevent_socket_fill();
-    if (kevent(kqfd, NULL, 0, &kev, 1, NULL) != 1)
-        err(1, "%s", test_id);
-    KEV_CMP(kev, sockfd[0], EVFILT_READ, 0);
+    kev.flags = EV_ADD;     /* FIXME: not sure what the proper behavior is */
+    kev.data = 1;
+    kevent_cmp(&kev, kevent_get(kqfd));
     test_no_kevents();
 
     /* Since the knote is disabled, the EV_DELETE operation succeeds. */
@@ -235,10 +235,9 @@ test_kevent_socket_dispatch(void)
 
     kevent_socket_drain();
 
-#endif  /* HAVE_EV_DISPATCH */
-
     success(test_id);
 }
+#endif  /* HAVE_EV_DISPATCH */
 
 #if BROKEN
 void

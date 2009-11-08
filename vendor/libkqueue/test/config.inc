@@ -6,17 +6,19 @@ cflags="-g -O0 -Wall -Werror"
 sources="main.c read.c signal.c timer.c vnode.c"
 
 pre_configure_hook() {
-  check_header sys/event.h && {
-      check_symbol sys/event.h EV_DISPATCH
-      check_symbol sys/event.h EV_RECEIPT
-      check_symbol sys/event.h NOTE_TRUNCATE 
-      check_symbol sys/event.h EVFILT_USER && \
-          sources="$sources user.c"
-      check_symbol sys/event.h EVFILT_TIMER
-  }
+ 
+  check_header "sys/event.h" \
+      && sys_event_h="sys/event.h" \
+      || {
+            sys_event_h="../include/sys/event.h"
+            cflags="$cflags -I../include"
+            ldadd="$ldadd ../libkqueue.a"
+         }
 
-  if [ "`uname -s`" = "Linux" ] ; then
-     cflags="$cflags -I../include"
-     ldadd="$ldadd ../libkqueue.a"
-  fi
+  check_symbol $sys_event_h EV_DISPATCH
+  check_symbol $sys_event_h EV_RECEIPT
+  check_symbol $sys_event_h NOTE_TRUNCATE 
+  check_symbol $sys_event_h EVFILT_TIMER
+  check_symbol $sys_event_h EVFILT_USER && \
+     sources="$sources user.c"
 }

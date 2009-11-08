@@ -20,7 +20,7 @@ check:
 	if [ ! -f /usr/include/sys/event.h ] ; then \
         cd .. && ./configure --debug=yes && make build ; \
 	fi
-	gcc $(CFLAGS) $(SOURCES) $(LDADD)
+	$(CC) $(CFLAGS) $(SOURCES) $(LDADD)
 	./a.out
 
 # NOTE: copy+paste of 'make check'

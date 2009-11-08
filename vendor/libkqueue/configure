@@ -4,7 +4,7 @@ c_exports="program version target cflags"
 
 make_exports="program version target \
               prefix libdir includedir mandir \
-              cflags ldflags libadd libdepends \
+              cflags ldflags ldadd libdepends \
               sources mans headers extra_dist subdirs \
               install"
 
@@ -51,6 +51,7 @@ process_argv() {
     done
 }
 
+ 
 check_header() {	 
    sym=`echo "have_$1" | sed 's,[./],_,g'`	 
    uc_sym=`echo "$sym" | tr a-z A-Z`	 
@@ -83,9 +84,18 @@ check_symbol() {
 
     uc_symbol=`echo "HAVE_$symbol" | tr a-z A-Z | sed 's,[./],_,g'`
     lc_symbol=`echo "have_$symbol" | tr A-Z a-z | sed 's,[./],_,g'`
-      
-    printf "checking <$header> for $symbol.. "    
-    if [ "`grep $symbol /usr/include/$header`" != "" ] ; then
+
+    if [ -f "$header" ] ; then
+        path="$header"
+    elif [ -f "/usr/include/$header" ] ; then
+        path="/usr/include/$path"
+    else
+        echo "*** ERROR: Cannot find <$header>"
+        exit 1
+    fi
+     
+    printf "checking $path for $symbol.. "    
+    if [ "`grep $symbol $path`" != "" ] ; then
      eval "$lc_symbol=yes"
      echo "#define $uc_symbol 1" >> config.h
      echo "yes"
@@ -141,6 +151,8 @@ finalize includedir "${prefix}/include"
 finalize mandir     "${prefix}/share/man"
 finalize cflags     "$cflags"
 finalize libdepends "$libdepends"
+finalize ldadd      ""
+finalize ldflags    ""
 finalize cc         "/usr/bin/cc"
 
 echo "checking operating system type.. $target"
