@@ -315,7 +315,9 @@ test_evfilt_read()
     test_kevent_socket_disable_and_enable();
     test_kevent_socket_oneshot();
     test_kevent_socket_clear();
+#if HAVE_EV_DISPATCH
     test_kevent_socket_dispatch();
+#endif
     test_kevent_socket_eof();
     close(kqfd);
 }
