@@ -81,8 +81,10 @@ finalize mandir     "${prefix}/share/man"
 
 echo "Checking operating system type... $target"
 check_header sys/event.h && {
-    check_symbol sys/event.h EVFILT_DISPATCH
-    check_symbol sys/event.h EVFILT_RECEIPT
+    check_symbol sys/event.h EV_DISPATCH
+    check_symbol sys/event.h EV_RECEIPT
+    check_symbol sys/event.h EVFILT_USER
+    check_symbol sys/event.h EVFILT_TIMER
 }
 
 cflags="-g -O0 -Wall -Werror"

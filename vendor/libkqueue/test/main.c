@@ -18,6 +18,7 @@
 
 #include "common.h"
 
+int testnum = 1;
 char *cur_test_id = "undef";
 int kqfd;
 
@@ -25,6 +26,7 @@ extern void test_evfilt_read();
 extern void test_evfilt_signal();
 extern void test_evfilt_vnode();
 extern void test_evfilt_timer();
+extern void test_evfilt_user();
 
 /* Checks if any events are pending, which is an error. */
 void 
@@ -157,7 +159,6 @@ kevent_cmp(struct kevent *k1, struct kevent *k2)
 void
 test_begin(const char *func)
 {
-    static int testnum = 1;
     cur_test_id = (char *) func;
     printf("\n\nTest %d: %s\n", testnum++, func);
 }
@@ -194,9 +195,10 @@ int
 main(int argc, char **argv)
 {
     int test_socket = 1;
-    int test_signal = 1;//XXX-FIXME
+    int test_signal = 1;
     int test_vnode = 1;
     int test_timer = 1;
+    int test_user = 1;
 
     while (argc) {
         if (strcmp(argv[0], "--no-socket") == 0)
@@ -207,6 +209,8 @@ main(int argc, char **argv)
             test_signal = 0;
         if (strcmp(argv[0], "--no-vnode") == 0)
             test_vnode = 0;
+        if (strcmp(argv[0], "--no-user") == 0)
+            test_user = 0;
         argv++;
         argc--;
     }
@@ -220,9 +224,12 @@ main(int argc, char **argv)
         test_evfilt_signal();
     if (test_vnode) 
         test_evfilt_vnode();
+    if (test_user) 
+        test_evfilt_user();
     if (test_timer) 
         test_evfilt_timer();
 
-    puts("all tests completed.");
+    printf("\n---\n"
+            "+OK All %d tests completed.\n", testnum - 1);
     return (0);
 }
