@@ -44,7 +44,7 @@ check_header() {
 #
 #######################################################################
 
-default_cflags="-fPIC -D_REENTRANT -I. -Wall -Werror"
+default_cflags="-fPIC -I. -Wall -Werror"
 
 # Initialize the output files
 #

@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -31,15 +32,9 @@
 
 static LIST_HEAD(,kqueue) kqlist 	= LIST_HEAD_INITIALIZER(&kqlist);
 
-#if _REENTRANT
-# include <pthread.h>
-# define kqlist_lock()            pthread_mutex_lock(&kqlist_mtx)
-# define kqlist_unlock()          pthread_mutex_unlock(&kqlist_mtx)
+#define kqlist_lock()            pthread_mutex_lock(&kqlist_mtx)
+#define kqlist_unlock()          pthread_mutex_unlock(&kqlist_mtx)
 static pthread_mutex_t    kqlist_mtx 	= PTHREAD_MUTEX_INITIALIZER;
-#else
-# define kqlist_lock()            /**/
-# define kqlist_unlock()          /**/
-#endif
 
 struct kqueue *
 kqueue_lookup(int kq)
@@ -71,19 +66,15 @@ kqueue_shutdown(struct kqueue *kq)
 void
 kqueue_lock(struct kqueue *kq)
 {
-#if _REENTRANT
     dbg_puts("kqueue_lock()");
     pthread_mutex_lock(&kq->kq_mtx);
-#endif
 }
 
 void
 kqueue_unlock(struct kqueue *kq)
 {
-#if _REENTRANT
     dbg_puts("kqueue_unlock()");
     pthread_mutex_unlock(&kq->kq_mtx);
-#endif
 }
 
 int
@@ -94,9 +85,7 @@ kqueue(void)
     kq = calloc(1, sizeof(*kq));
     if (kq == NULL)
         return (-1);
-#if _REENTRANT
     pthread_mutex_init(&kq->kq_mtx, NULL);
-#endif
 
     if (filter_register_all(kq) < 0)
         return (-1);
