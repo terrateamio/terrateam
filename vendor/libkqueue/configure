@@ -88,13 +88,14 @@ check_symbol() {
     if [ "`grep '#define $symbol' /usr/include/$header`" != "" ] ; then
      eval "$lc_symbol=yes"
      echo "#define $uc_symbol" >> config.h
+     echo "$sym"
      return 0
     else
      eval "$lc_symbol=no"
+     echo "$sym"
      echo "#undef $uc_symbol" >> config.h
      return 1
     fi
-    echo "$sym"
 }
 
 check_install() {
@@ -155,17 +156,19 @@ check_headers $optional_headers
 
 post_configure_hook
 
-echo "Creating $program.pc"
-sed -e "
-     s,@@PROGRAM@@,$program,g;
-     s,@@VERSION@@,$version,g;
-     s,@@PREFIX@@,$prefix,g;
-     s,@@LIBDIR@@,$libdir,g;
-     s,@@INCLUDEDIR@@,$includedir,g;
-     s,@@MANDIR@@,$mandir,g;
-     s,@@LIBDEPENDS@@,$libdepends,g;
-     " < $program.pc.in >> $program.pc
-chmod 400 $program.pc
+if [ -f "$program.pc.in" ] ; then
+  echo "Creating $program.pc"
+  sed -e "
+       s,@@PROGRAM@@,$program,g;
+       s,@@VERSION@@,$version,g;
+       s,@@PREFIX@@,$prefix,g;
+       s,@@LIBDIR@@,$libdir,g;
+       s,@@INCLUDEDIR@@,$includedir,g;
+       s,@@MANDIR@@,$mandir,g;
+       s,@@LIBDEPENDS@@,$libdepends,g;
+       " < $program.pc.in >> $program.pc
+  chmod 400 $program.pc
+fi
 
 echo "Creating config.h"
 export_to_c $c_exports
