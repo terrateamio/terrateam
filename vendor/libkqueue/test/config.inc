@@ -9,6 +9,7 @@ pre_configure_hook() {
   check_header sys/event.h && {
       check_symbol sys/event.h EV_DISPATCH
       check_symbol sys/event.h EV_RECEIPT
+      check_symbol sys/event.h NOTE_TRUNCATE 
       check_symbol sys/event.h EVFILT_USER && \
           sources="$sources user.c"
       check_symbol sys/event.h EVFILT_TIMER
