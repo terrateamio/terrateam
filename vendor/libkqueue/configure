@@ -88,13 +88,13 @@ check_symbol() {
     if [ -f "$header" ] ; then
         path="$header"
     elif [ -f "/usr/include/$header" ] ; then
-        path="/usr/include/$path"
+        path="/usr/include/$header"
     else
         echo "*** ERROR: Cannot find <$header>"
         exit 1
     fi
      
-    printf "checking $path for $symbol.. "    
+    printf "checking $header for $symbol.. "    
     if [ "`grep $symbol $path`" != "" ] ; then
      eval "$lc_symbol=yes"
      echo "#define $uc_symbol 1" >> config.h
