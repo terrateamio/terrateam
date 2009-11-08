@@ -85,14 +85,14 @@ check_symbol() {
     lc_symbol=`echo "have_$symbol" | tr A-Z a-z | sed 's,[./],_,g'`
       
     printf "checking <$header> for $symbol.. "    
-    if [ "`grep '#define $symbol' /usr/include/$header`" != "" ] ; then
+    if [ "`grep $symbol /usr/include/$header`" != "" ] ; then
      eval "$lc_symbol=yes"
-     echo "#define $uc_symbol" >> config.h
-     echo "$sym"
+     echo "#define $uc_symbol 1" >> config.h
+     echo "yes"
      return 0
     else
      eval "$lc_symbol=no"
-     echo "$sym"
+     echo "no"
      echo "#undef $uc_symbol" >> config.h
      return 1
     fi
