@@ -13,21 +13,14 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
+
 REPOSITORY=svn+ssh://mark.heily.com/$$HOME/svn/$(PROGRAM)
 DIST=heily.com:$$HOME/public_html/$(PROGRAM)/dist
-INSTALL=/usr/bin/install
-SOURCES=filter.c kevent.c knote.c kqueue.c
-MANS=kqueue.2
-HEADERS=private.h
-EXTRA_DIST=*.in README
-SUBDIRS=os include test
-DISTFILES=Makefile configure
-FILTERS=vnode.c timer.c signal.c socket.c user.c
 
 include config.mk
 
 build:
-	gcc $(CFLAGS) -c *.c
+	$(CC) $(CFLAGS) -c $(SOURCES)
 	ar rcs libkqueue.a *.o
 	gcc -shared -Wl,-soname,libkqueue.so -o libkqueue.so *.o
 
@@ -56,7 +49,7 @@ check:
 dist:
 	cd test && make distclean || true
 	mkdir $(PROGRAM)-$(VERSION)
-	cp  Makefile configure                            \
+	cp  Makefile configure config.inc                 \
         $(SOURCES) $(MANS) $(HEADERS) $(EXTRA_DIST)   \
         $(PROGRAM)-$(VERSION)
 	cp -R $(SUBDIRS) $(PROGRAM)-$(VERSION)
@@ -65,7 +58,7 @@ dist:
 	rm -rf $(PROGRAM)-$(VERSION)
 
 dist-upload: dist
-	scp libkqueue-$(VERSION).tar.gz $(DIST)
+	scp $(PROGRAM)-$(VERSION).tar.gz $(DIST)
 
 publish-www:
 	rm ~/public_html/libkqueue/*.html ; cp -R www/*.html ~/public_html/libkqueue/
@@ -80,4 +73,4 @@ merge:
 	echo "ok"
 
 distclean: clean
-	rm -f *.tar.gz config.mk config.h libkqueue.pc $(FILTERS)
+	rm -f *.tar.gz config.mk config.h libkqueue.pc
