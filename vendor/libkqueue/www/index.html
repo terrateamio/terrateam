@@ -33,7 +33,15 @@ There are two mailing lists: one for
 
 <h2>Status</h2>
 
-Most of the API is implemented, with the notable exception of EVFILT_TIMER and EVFILT_USER. More details about the current implementation status is <a href="status.html">here</a>.
+The kqueue and kevent functions are implemented, and most of the filters are working. The following filters are not yet implemented:<p>
+
+<ul>
+ <li><code>EVFILT_PROC</code>
+ <li><code>EVFILT_AIO</code>
+ <li><code>EVFILT_NETDEV</code>
+</ul>
+
+More details about the current implementation status can be found <a href="status.html">here</a>.
 <p>
 There are several compatibility issues to be aware of when using this library under Linux:<p>
 <ol>
