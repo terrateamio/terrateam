@@ -77,6 +77,26 @@ check_headers() {
    done
 }
 
+check_symbol() {
+    header=$1
+    symbol=$2
+
+    uc_symbol=`echo "HAVE_$symbol" | tr a-z A-Z | sed 's,[./],_,g'`
+    lc_symbol=`echo "have_$symbol" | tr A-Z a-z | sed 's,[./],_,g'`
+      
+    printf "checking <$header> for $symbol.. "    
+    if [ "`grep '#define $symbol' /usr/include/$header`" != "" ] ; then
+     eval "$lc_symbol=yes"
+     echo "#define $uc_symbol" >> config.h
+     return 0
+    else
+     eval "$lc_symbol=no"
+     echo "#undef $uc_symbol" >> config.h
+     return 1
+    fi
+    echo "$sym"
+}
+
 check_install() {
     printf "checking for a BSD-compatible install.. "
     if [ "`uname -s`" = "SunOS" ] ; then
