@@ -2,6 +2,7 @@ program="libkqueue"
 version="0.2"
 cflags="-fPIC -I./include -I./src/common -Wall -Werror"
 sources="src/common/*.c"
+libdepends=""
 mans="kqueue.2"
 headers="private.h"
 extra_dist="*.in README"
@@ -13,6 +14,7 @@ pre_configure_hook() {
   fi
 
   if [ $target = "linux" ] ; then
+      libdepends="$libdepends -lpthread -lrt"
       required_headers="sys/epoll.h sys/inotify.h 
                         sys/signalfd.h sys/timerfd.h sys/eventfd.h"
   fi
