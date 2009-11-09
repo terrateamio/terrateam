@@ -262,19 +262,6 @@ evfilt_vnode_copyout(struct filter *filt,
     if (evt.mask & IN_DELETE_SELF && kn->kev.fflags & NOTE_DELETE) 
         dst->fflags |= NOTE_DELETE;
 
-    if (kn->kev.flags & EV_DISPATCH) {
-        delete_watch(filt->kf_pfd, kn); /* TODO: error checking */
-        KNOTE_DISABLE(kn);
-#if HAVE_NOTE_TRUNCATE
-        if (sb.st_size == 0 && kn->kev.fflags & NOTE_TRUNCATE) 
-            dst->fflags |= NOTE_TRUNCATE;
-#endif
-        if (sb.st_size > kn->kn_st_size && kn->kev.fflags & NOTE_WRITE) 
-            dst->fflags |= NOTE_EXTEND;
-       kn->kn_st_nlink = sb.st_nlink;
-       kn->kn_st_size = sb.st_size;
-    }
-
     if (evt.mask & IN_MODIFY && kn->kev.fflags & NOTE_WRITE) 
         dst->fflags |= NOTE_WRITE;
     if (evt.mask & IN_ATTRIB && kn->kev.fflags & NOTE_ATTRIB) 
