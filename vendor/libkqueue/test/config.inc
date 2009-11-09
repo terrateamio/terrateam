@@ -12,7 +12,7 @@ pre_configure_hook() {
       || {
             sys_event_h="../include/sys/event.h"
             cflags="$cflags -I../include"
-            ldadd="$ldadd ../libkqueue.a"
+            ldadd="$ldadd ../libkqueue.a -lpthread -lrt"
          }
 
   check_symbol $sys_event_h EV_DISPATCH
