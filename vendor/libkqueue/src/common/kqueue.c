@@ -35,6 +35,23 @@ static LIST_HEAD(,kqueue) kqlist 	= LIST_HEAD_INITIALIZER(&kqlist);
 #define kqlist_lock()            pthread_mutex_lock(&kqlist_mtx)
 #define kqlist_unlock()          pthread_mutex_unlock(&kqlist_mtx)
 static pthread_mutex_t    kqlist_mtx 	= PTHREAD_MUTEX_INITIALIZER;
+static sigset_t saved_sigmask;
+
+static void
+mask_signals(void)
+{
+   sigset_t mask;
+
+   sigemptyset (&mask);
+   if (pthread_sigmask(SIG_BLOCK, &mask, &saved_sigmask) != 0)
+       sigemptyset (&saved_sigmask);
+}
+
+static void
+unmask_signals(void)
+{
+   pthread_sigmask(SIG_SETMASK, &saved_sigmask, NULL);
+}
 
 struct kqueue *
 kqueue_lookup(int kq)
@@ -81,26 +98,38 @@ int
 kqueue(void)
 {
     struct kqueue *kq;
+    int rv;
 
     kq = calloc(1, sizeof(*kq));
     if (kq == NULL)
         return (-1);
     pthread_mutex_init(&kq->kq_mtx, NULL);
 
-    if (filter_register_all(kq) < 0)
-        return (-1);
-    
-    if (socketpair(AF_LOCAL, SOCK_STREAM, 0, kq->kq_sockfd) < 0) {
-        free(kq);
-        return (-1);
-    }
+    if (socketpair(AF_LOCAL, SOCK_STREAM, 0, kq->kq_sockfd) < 0) 
+        goto errout;
 
     kqlist_lock();
-    LIST_INSERT_HEAD(&kqlist, kq, entries);
+    mask_signals();
+    rv = filter_register_all(kq);
+    if (rv == 0) {
+        LIST_INSERT_HEAD(&kqlist, kq, entries);
+    }
+    unmask_signals();
     kqlist_unlock();
+
+    if (rv != 0) 
+        goto errout;
 
     dbg_printf("created kqueue: fd=%d", kq->kq_sockfd[1]);
     return (kq->kq_sockfd[1]);
+
+errout:
+    if (kq->kq_sockfd[0] != kq->kq_sockfd[1]) {
+        close(kq->kq_sockfd[0]);
+        close(kq->kq_sockfd[1]);
+    }
+    free(kq);
+    return (-1);
 }
 
 void

@@ -17,6 +17,7 @@
 #ifndef  _KQUEUE_PRIVATE_H
 #define  _KQUEUE_PRIVATE_H
 
+#include <pthread.h>
 #include <stdio.h>
 #include <sys/select.h>
 #include "sys/event.h"
@@ -58,12 +59,10 @@ LIST_HEAD(knotelist, knote);
 #define KNOTE_EMPTY(ent)            ((ent)->kev.filter == 0)
 
 #define KNOTE_ENABLE(ent)           do {                            \
-            (ent)->kev.flags |=  EV_ENABLE;                         \
             (ent)->kev.flags &= ~EV_DISABLE;                        \
 } while (0/*CONSTCOND*/)
 
 #define KNOTE_DISABLE(ent)          do {                            \
-            (ent)->kev.flags &= ~EV_ENABLE;                         \
             (ent)->kev.flags |=  EV_DISABLE;                        \
 } while (0/*CONSTCOND*/)
 
