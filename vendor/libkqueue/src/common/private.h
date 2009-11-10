@@ -22,6 +22,9 @@
 #include <sys/select.h>
 #include "sys/event.h"
 
+/* Maximum number of kqueue descriptors in a single process. */
+#define MAX_KQUEUE  1024
+
 /* Maximum events returnable in a single kevent() call */
 #define MAX_KEVENT  512
 
@@ -85,7 +88,6 @@ struct filter {
 
 struct kqueue {
     int             kq_sockfd[2];
-    pthread_t       kq_close_tid;
     struct filter   kq_filt[EVFILT_SYSCOUNT];
     fd_set          kq_fds; 
     int             kq_nfds;
