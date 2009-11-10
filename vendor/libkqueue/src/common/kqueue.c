@@ -31,11 +31,18 @@
 #include "private.h"
 
 static LIST_HEAD(,kqueue) kqlist 	= LIST_HEAD_INITIALIZER(&kqlist);
+static size_t kqcount = 0;
 
 #define kqlist_lock()            pthread_mutex_lock(&kqlist_mtx)
 #define kqlist_unlock()          pthread_mutex_unlock(&kqlist_mtx)
 static pthread_mutex_t    kqlist_mtx 	= PTHREAD_MUTEX_INITIALIZER;
 static sigset_t saved_sigmask;
+
+static int kqgc_pfd[2];
+static pthread_once_t kqueue_init_ctl = PTHREAD_ONCE_INIT;
+static pthread_cond_t kqueue_init_cond = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t kqueue_init_mtx = PTHREAD_MUTEX_INITIALIZER;
+static int kqueue_init_status = 0;
 
 static void
 mask_signals(void)
@@ -80,6 +87,72 @@ kqueue_shutdown(struct kqueue *kq)
     free(kq);
 }
 
+static void *
+kqueue_close_wait(void *arg)
+{
+    struct kqueue *kq;
+    struct pollfd fds[MAX_KQUEUE + 1];
+    int n;
+
+    pthread_mutex_lock(&kqueue_init_mtx);
+
+    /* Block all signals in this thread */
+    sigset_t mask;
+    sigfillset(&mask);
+    sigprocmask(SIG_BLOCK, &mask, NULL);
+
+    pthread_cond_signal(&kqueue_init_cond); 
+    pthread_mutex_unlock(&kqueue_init_mtx);
+
+    for (;;) {
+
+        /* This thread is woken up by writing to kqgc_pfd[1] */
+        fds[0].fd = kqgc_pfd[0];
+        fds[0].events = POLLIN;
+        n = 1;
+
+        kqlist_lock();
+        LIST_FOREACH(kq, &kqlist, entries) {
+            fds[n].fd = kq->kq_sockfd[0];
+            fds[n].events = POLLIN;
+            n++;
+        }
+        kqlist_unlock();
+
+        n = poll(&fds[0], n, -1);
+        if (n == 0)
+            continue;           /* Spurious wakeup */
+        if (n < 0) {
+            dbg_printf("poll(2): %s", strerror(errno));
+            abort(); //FIXME
+        }
+
+        /* XXX-FIXME Check the result and free kqueues */
+    }
+    dbg_puts("kqueue: fd closed");
+
+    kqueue_shutdown(kq);
+
+    return (NULL);
+}
+
+static void
+kqueue_init(void)
+{
+    pthread_t tid;
+	
+    if (socketpair(AF_LOCAL, SOCK_STREAM, 0, kqgc_pfd) < 0) 
+        goto errout;
+
+    pthread_mutex_lock(&kqueue_init_mtx);
+    pthread_create(&tid, NULL, kqueue_close_wait, NULL);
+    pthread_cond_wait(&kqueue_init_cond, &kqueue_init_mtx); 
+    pthread_mutex_unlock(&kqueue_init_mtx);
+
+errout:
+    kqueue_init_status = -1;
+}
+
 void
 kqueue_lock(struct kqueue *kq)
 {
@@ -108,11 +181,14 @@ kqueue(void)
     if (socketpair(AF_LOCAL, SOCK_STREAM, 0, kq->kq_sockfd) < 0) 
         goto errout;
 
+    (void) pthread_once(&kqueue_init_ctl, kqueue_init);
+
     kqlist_lock();
     mask_signals();
     rv = filter_register_all(kq);
     if (rv == 0) {
         LIST_INSERT_HEAD(&kqlist, kq, entries);
+        kqcount++;
     }
     unmask_signals();
     kqlist_unlock();
@@ -124,6 +200,7 @@ kqueue(void)
     return (kq->kq_sockfd[1]);
 
 errout:
+    //FIXME: unregister_all filters
     if (kq->kq_sockfd[0] != kq->kq_sockfd[1]) {
         close(kq->kq_sockfd[0]);
         close(kq->kq_sockfd[1]);
