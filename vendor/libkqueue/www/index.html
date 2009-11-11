@@ -7,7 +7,33 @@
 
     <title>libkqueue</title>
     <style type="text/css">
+    body {
+        margin-left: 2em;
+        padding-bottom: 2em;
+    }
     .blockquote { margin-right: 2em }
+    code.block { 
+         padding: 20px; 
+         border: 1px solid black; 
+         background: beige;
+         margin: 3em; 
+    }
+    h1 {
+        margin-left: -0.5em;
+    }
+    h2 {
+        margin-left: -0.5em;
+        padding-top: 1em;
+    }
+    ol {
+        margin: 2em;
+    }
+    li {
+        padding-bottom: 10px;
+    }
+    p {
+        padding-bottom: 10px;
+    } 
     </style>
 </head>
 
@@ -19,11 +45,21 @@ libkqueue is a portable userspace implementation of the <a href="http://www.free
 
 <h2>Download</h2>
 
-Source code releases can be found <a href="dist">here</a>.
+Source code releases can be found <a href="dist">here</a>. There are no binary packages at the moment.
 <p>
-To checkout the SVN repository, run the following command:
+To checkout the entire SVN repository, run the following command:
 <p>
-<code>svn checkout svn://mark.heily.com/libkqueue</code>
+<code class=block>svn checkout svn://mark.heily.com/libkqueue</code>
+<p>
+You can checkout the trunk by using the following command:
+<p>
+<code class=block>svn checkout svn://mark.heily.com/libkqueue/trunk&nbsp;libkqueue</code>
+
+<p>
+There is heavy development on the trunk, and it may not always be in a usable state. If you want to be current, but not bleeding edge, there is also a stable branch. You can checkout the stable branch by using the following command:
+<p>
+<code class=block>svn checkout svn://mark.heily.com/libkqueue/branches/stable libkqueue</code>
+   
 
 <h2>Mailing Lists</h2>
 
@@ -43,10 +79,11 @@ The kqueue and kevent functions are implemented, and most of the filters are wor
 
 More details about the current implementation status can be found <a href="status.html">here</a>.
 <p>
-There are several compatibility issues to be aware of when using this library under Linux:<p>
+There are several compatibility issues to be aware of when using this library under Linux:<br>
+
 <ol>
 
-<li>The NOTE_LOWAT flag is not supported. According to <i>socket(7)</i>,<p>
+<li>The NOTE_LOWAT flag is not supported. According to <i>socket(7)</i>,<br>
 <pre style="blockquote">
 "The select(2) and poll(2) system  calls  currently  do not respect the 
 SO_RCVLOWAT setting on Linux, and mark a socket readable when even  a  
@@ -108,6 +145,12 @@ libkqueue uses one or more helper threads, so all programs that link with libkqu
 
 <h2>Contact</h2>
 For more information, contact <a href="mailto:devel@heily.com">Mark Heily</a>.
+
+<p>
+<hr>
+<center>
+&copy; 2009 Mark Heily. All rights reserved.
+</center>
 
 </body>
 </html>
