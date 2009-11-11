@@ -4,8 +4,8 @@ cflags="-fPIC -I./include -I./src/common -Wall -Werror"
 sources="src/common/*.c"
 libdepends=""
 mans="kqueue.2"
-headers="private.h"
-extra_dist="*.in README"
+headers="src/common/private.h"
+extra_dist="*.in"
 subdirs="src include test"
 
 pre_configure_hook() {
