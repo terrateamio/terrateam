@@ -1,4 +1,31 @@
-2009-11-10  v0.2    r59
+2009-11-10  v0.3    r83
+------------------------------------------------------------------------
+
+  * The EVFILT_USER filter has been implemented, but needs additional
+    testing.
+
+  * The EVFILT_PROC filter is partially implemented on Linux, but is
+    currently broken.
+
+  * The unit tests have been moved to a separate subdirectory and now
+    function under OpenBSD 4.4 using the native kqueue(2) and kevent(2)
+    system calls.
+
+  * The kqueue_free() function has been removed. 
+
+  * A helper thread performs garbage collection when close(2) is called
+    on the file descriptor returned by kqueue().
+
+  * All symbols in <sys/event.h> that are not implemented are now
+    undefined.
+
+  * Major internal reorganization of the source tree.
+
+  * A copy-and-paste error in vnode.c has been fixed.
+
+  * The pthreads library is now required.
+
+2009-11-07  v0.2    r59
 
     * Implement EVFILT_TIMER on Linux.
 
@@ -8,6 +35,6 @@
 
     * pkg-config no longer requires linking with -lpthread and -lrt.
 
-2009-05-05  v0.1     r49
+2009-11-05  v0.1     r49
 
     * Initial stable release.
