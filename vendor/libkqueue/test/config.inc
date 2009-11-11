@@ -3,7 +3,7 @@
 program=libkqueue-test
 version=0.1
 cflags="-g -O0 -Wall -Werror"
-sources="main.c read.c signal.c timer.c vnode.c"
+sources="main.c proc.c read.c signal.c timer.c vnode.c"
 
 pre_configure_hook() {
  

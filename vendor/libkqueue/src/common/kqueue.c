@@ -75,24 +75,23 @@ kqueue_lookup(int kq)
     return (ent);
 }
 
+/* SEE ALSO: kqueue_shutdown */
 static void
-kqueue_shutdown(struct kqueue *kq)
+kqueue_destroy_unlocked(struct kqueue *kq)
 {
-    dbg_puts("shutdown invoked\n");
-
-    kqlist_lock();
     LIST_REMOVE(kq, entries);
-    kqlist_unlock();
     filter_unregister_all(kq);
     free(kq);
 }
 
 static void *
-kqueue_close_wait(void *arg)
+kqueue_close_wait(void *unused)
 {
     struct kqueue *kq;
+    char buf[1];
     struct pollfd fds[MAX_KQUEUE + 1];
-    int n;
+    int wake_flag;
+    int i, n;
 
     pthread_mutex_lock(&kqueue_init_mtx);
 
@@ -100,6 +99,8 @@ kqueue_close_wait(void *arg)
     sigset_t mask;
     sigfillset(&mask);
     sigprocmask(SIG_BLOCK, &mask, NULL);
+
+    wake_flag = 0;
 
     pthread_cond_signal(&kqueue_init_cond); 
     pthread_mutex_unlock(&kqueue_init_mtx);
@@ -119,6 +120,18 @@ kqueue_close_wait(void *arg)
         }
         kqlist_unlock();
 
+        /* Inform the main thread that it can continue */
+        if (wake_flag) {
+            if (write (kqgc_pfd[0], ".", 1) < 1) {
+                /* TODO: error checking */
+                abort();
+            }
+            wake_flag = 0;
+        }
+
+
+        dbg_printf("gc: waiting for events on %d kqfds", n - 1);
+
         n = poll(&fds[0], n, -1);
         if (n == 0)
             continue;           /* Spurious wakeup */
@@ -127,13 +140,77 @@ kqueue_close_wait(void *arg)
             abort(); //FIXME
         }
 
-        /* XXX-FIXME Check the result and free kqueues */
-    }
-    dbg_puts("kqueue: fd closed");
+        dbg_printf("watcher: revents=%d", fds[0].revents);
+        if (fds[0].revents == POLLIN) {
+            dbg_puts("gc: waking up at user request");
+            if (read(kqgc_pfd[0], &buf, 1) < 0) {
+                abort();//TODO: err handling
+            }
 
-    kqueue_shutdown(kq);
+            wake_flag = 1;
+        } else {
+            /* Destroy any kqueue that close(2) has been called on */
+            kqlist_lock();
+            for (i = 1; i <= n; i++) {
+                dbg_printf("i=%d revents=%d", i, fds[n].revents);
+                if (fds[n].revents & POLLHUP) {
+                    LIST_FOREACH(kq, &kqlist, entries) {
+                        if (kq->kq_sockfd[0] == fds[n].fd) {
+                            dbg_printf("gc: destroying kqueue; kqfd=%d", 
+                                    kq->kq_sockfd[1]);
+                            kqueue_destroy_unlocked(kq);
+                        }
+                    }
+                }
+            }
+            kqlist_unlock();
+        }
+    }
+
+    /* NOTREACHED */
 
     return (NULL);
+}
+
+static void
+kqgc_wakeup(void)
+{ 
+    char buf[1];
+    ssize_t n;
+
+    dbg_puts("main: requesting wakeup");
+    n = write (kqgc_pfd[1], ".", 1);
+    if (n < 1) {
+        /* TODO: error checking */
+        abort();
+    }
+
+    /*
+     * There is a race condition as follows:
+     *     main_thread             GC_thread
+     *     -----------             ---------
+     *      kqueue() called
+     *    create kqueue  
+     *    wake GC_thread            ... (sleeping)
+     *      kqueue() returns
+     *         ..                   .. 
+     *    close(2) kqueue fd        .
+     *                         wake and update pollset
+     *
+     * This would prevent the resources for the kqueue from
+     * ever being deallocated.
+     * 
+     * To prevent this, the main_thread will wait for the
+     * gc_thread to update it's pollset before continuing.
+     *
+     */                    
+    dbg_puts("main: waiting for gc to refresh it's pollset");
+    n = read(kqgc_pfd[1], &buf, 1); 
+    if (n < 1) {
+        /* TODO: error checking */
+        abort();
+    }
+    dbg_puts("main: synchronization complete");
 }
 
 static void
@@ -196,6 +273,9 @@ kqueue(void)
     if (rv != 0) 
         goto errout;
 
+    /* Force the GC thread to add the fd to it's pollset */
+    kqgc_wakeup();
+
     dbg_printf("created kqueue: fd=%d", kq->kq_sockfd[1]);
     return (kq->kq_sockfd[1]);
 
@@ -207,15 +287,4 @@ errout:
     }
     free(kq);
     return (-1);
-}
-
-void
-kqueue_free(int kqfd)
-{
-    struct kqueue *kq;
-
-    if ((kq = kqueue_lookup(kqfd)) == NULL)
-        return;
-
-    kqueue_shutdown(kq);
 }

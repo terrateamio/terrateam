@@ -61,8 +61,14 @@ a <code>revoke(2)</code> system call.
 
 <li>
 When an EVFILT_SIGNAL event is generated, the <code>data</code> field 
-is set to 1 regardless of how many times the signal was received by the process. 
+is set to 1 regardless of how many times the signal was received by the process.
 </li>
+
+<!--
+<li>
+The EVFILT_PROC filter only supports the NOTE_EXIT flag, and the <code>ident</code> field must contain the PID of a child of the current process. This filter is only suitable as an event-driven replacement for the <code>wait(2)</code> family of system calls.
+</li>
+-->
 
 </ol>
 
@@ -85,27 +91,9 @@ Here are the steps to use libkqueue in your program:
 <li>Add <code>#include &lt;sys/event.h&gt;</code> to the source code.
 </ol>
 
-One major difference between libkqueue and the real kqueue is that 
-closing the kqueue descriptor will not free any of the resources
-associated with the descriptor. The following example shows how to
-close the descriptor and free the resources:
-<p>
-<pre>
-    int kqfd;
-
-    kqfd = kqueue();
-
-    /* ... */
-
-    close(kqfd);
-    #if LIBKQUEUE
-    kqueue_free(kqfd);
-    #endif
-</pre>
-
 <h3>Threads</h3>
 
-libkqueue is a threadsafe library, and <code>kqueue()</code> and <code>kevent()</code> are safe to be used from multiple threads.  libkqueue requires that the POSIX threads headers (<code>pthread.h</code>) be available, but does not require you to link against <code>libpthread.so</code>. This allows it to be used in both non-threaded and multi-threaded programs. 
+libkqueue uses one or more helper threads, so all programs that link with libkqueue must also link against the pthreads library. Calls to <code>kqueue()</code> and <code>kevent()</code> are safe to be used from multiple threads.
 
 <h2>Links</h2>
 
