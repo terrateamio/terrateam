@@ -49,8 +49,8 @@ check:
 dist:
 	cd test && make distclean || true
 	mkdir $(PROGRAM)-$(VERSION)
-	cp  Makefile configure config.inc                 \
-        $(SOURCES) $(MANS) $(HEADERS) $(EXTRA_DIST)   \
+	cp  Makefile ChangeLog configure config.inc      \
+        $(MANS) $(EXTRA_DIST)   \
         $(PROGRAM)-$(VERSION)
 	cp -R $(SUBDIRS) $(PROGRAM)-$(VERSION)
 	rm -rf `find $(PROGRAM)-$(VERSION) -type d -name .svn`
