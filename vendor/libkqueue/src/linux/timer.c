@@ -212,15 +212,7 @@ evfilt_timer_copyout(struct filter *filt,
         ev = &epevt[i];
         /* TODO: put in generic debug.c: epoll_event_dump(ev); */
         kn = ev->data.ptr;
-        dst->ident = kn->kev.ident;
-        dst->filter = kn->kev.filter;
-        dst->udata = kn->kev.udata;
-        dst->flags = EV_ADD; 
-        dst->fflags = 0;
-        if (kn->kev.flags & EV_ONESHOT) /*TODO: move elsewhere */
-            dst->flags |= EV_ONESHOT;
-        if (kn->kev.flags & EV_CLEAR) /*TODO: move elsewhere */
-            dst->flags |= EV_CLEAR;
+        memcpy(dst, &kn->kev, sizeof(*dst));
         if (ev->events & EPOLLERR)
             dst->fflags = 1; /* FIXME: Return the actual timer error */
           

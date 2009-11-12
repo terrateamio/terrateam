@@ -115,12 +115,8 @@ evfilt_signal_copyout(struct filter *filt,
             continue;
 
         dbg_printf("got signal %d", sig[i].ssi_signo);
+        memcpy(dst, &kn->kev, sizeof(*dst));
         /* TODO: dst->data should be the number of times the signal occurred */
-        dst->ident = sig[i].ssi_signo;
-        dst->filter = EVFILT_SIGNAL;
-        dst->udata = kn->kev.udata;
-        dst->flags = EV_ADD | EV_CLEAR; 
-        dst->fflags = 0;
         dst->data = 1;  
 
         if (kn->kev.flags & EV_DISPATCH || kn->kev.flags & EV_ONESHOT) {
@@ -129,10 +125,8 @@ evfilt_signal_copyout(struct filter *filt,
         }
         if (kn->kev.flags & EV_DISPATCH)
             KNOTE_DISABLE(kn);
-        if (kn->kev.flags & EV_ONESHOT) {
-            dst->flags |= EV_ONESHOT;
+        if (kn->kev.flags & EV_ONESHOT) 
             knote_free(kn);
-        }
 
         dst++; 
         nevents++;

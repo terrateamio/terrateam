@@ -139,13 +139,16 @@ const char *
 kevent_to_str(struct kevent *kev)
 {
     char buf[512];
-    snprintf(&buf[0], sizeof(buf), "[filter=%d,%s,%s,ident=%u,data=%d,udata=%p]",
+
+    snprintf(&buf[0], sizeof(buf), 
+            "[ident=%d, filter=%d, %s, %s, data=%d, udata=%p]",
+            (u_int) kev->ident,
             kev->filter,
             kevent_flags_dump(kev),
             kevent_fflags_dump(kev),
-            (u_int) kev->ident,
             (int) kev->data,
             kev->udata);
+
     return (strdup(buf));
 }
 

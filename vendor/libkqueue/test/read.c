@@ -223,7 +223,6 @@ test_kevent_socket_dispatch(void)
     /* The event will occur only once, even though EV_CLEAR is not
        specified. */
     kevent_socket_fill();
-    kev.flags = EV_ADD;     /* FIXME: not sure what the proper behavior is */
     kev.data = 1;
     kevent_cmp(&kev, kevent_get(kqfd));
     test_no_kevents();
