@@ -175,15 +175,7 @@ evfilt_socket_copyout(struct filter *filt,
         epoll_event_dump(ev);
         kn = knote_lookup(filt, ev->data.fd);
         if (kn != NULL) {
-            dst->ident = kn->kev.ident;
-            dst->filter = kn->kev.filter;
-            dst->udata = kn->kev.udata;
-            dst->flags = EV_ADD; 
-            dst->fflags = 0;
-            if (kn->kev.flags & EV_ONESHOT) /*TODO: move elsewhere */
-                dst->flags |= EV_ONESHOT;
-            if (kn->kev.flags & EV_CLEAR) /*TODO: move elsewhere */
-                dst->flags |= EV_CLEAR;
+            memcpy(dst, &kn->kev, sizeof(*dst));
             if (ev->events & EPOLLRDHUP || ev->events & EPOLLHUP)
                 dst->flags |= EV_EOF;
             if (ev->events & EPOLLERR)

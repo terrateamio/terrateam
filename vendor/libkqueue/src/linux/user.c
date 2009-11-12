@@ -132,16 +132,7 @@ evfilt_user_copyout(struct filter *filt,
         if (!(kn->kev.fflags & NOTE_TRIGGER))
             continue;
 
-        dst->ident = kn->kev.ident;
-        dst->filter = kn->kev.filter;
-        dst->udata = kn->kev.udata;
-        dst->flags = EV_ADD; 
-        dst->fflags = kn->kev.fflags;
-        dst->data = 0;
-        if (kn->kev.flags & EV_ONESHOT) /*TODO: move elsewhere */
-            dst->flags |= EV_ONESHOT;
-        if (kn->kev.flags & EV_CLEAR) /*TODO: move elsewhere */
-            dst->flags |= EV_CLEAR;
+        memcpy(dst, &kn->kev, sizeof(*dst));
         if (kn->kev.flags & EV_DISPATCH) 
             KNOTE_DISABLE(kn);
         if (kn->kev.flags & EV_ONESHOT) 

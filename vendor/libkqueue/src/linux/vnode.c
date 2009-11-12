@@ -229,12 +229,8 @@ evfilt_vnode_copyout(struct filter *filt,
         return (-1);
     }
 
-    kevent_dump(&kn->kev);
-    dst->ident = kn->kev.ident;
-    dst->filter = kn->kev.filter;
-    dst->udata = kn->kev.udata;
-    dst->flags = kn->kev.flags; 
-    dst->fflags = 0;
+    memcpy(dst, &kn->kev, sizeof(*dst));
+    dst->data = 0;
 
     /* No error checking because fstat(2) should rarely fail */
     if ((evt.mask & IN_ATTRIB || evt.mask & IN_MODIFY) 
