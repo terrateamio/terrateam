@@ -80,7 +80,7 @@ kevent_fflags_dump(struct kevent *kev)
 
     /* Not every filter has meaningful fflags */
     if (kev->filter != EVFILT_VNODE) {
-    	snprintf(buf, 1024, "fflags = %d", kev->flags);
+    	snprintf(buf, 1024, "fflags = %d", kev->fflags);
 	return (buf);
     }
 
