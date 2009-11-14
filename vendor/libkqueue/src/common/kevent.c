@@ -85,6 +85,12 @@ kevent_copyin(struct kqueue *kq, const struct kevent *src, int nchanges,
                status = -ENOENT;
                goto err_out;
            } else {
+
+               /* Special case for EVFILT_USER:
+                  Ignore user-generated events that are not of interest */
+               if (src->fflags & NOTE_TRIGGER)
+                   continue;
+
                /* flags == 0 or no action */
                status = -EINVAL;
                goto err_out;
