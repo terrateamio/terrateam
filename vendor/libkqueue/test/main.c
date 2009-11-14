@@ -155,6 +155,10 @@ kevent_to_str(struct kevent *kev)
 void
 kevent_cmp(struct kevent *k1, struct kevent *k2)
 {
+/* Workaround for inconsistent implementation of kevent(2) */
+#ifdef __FreeBSD__
+    k2->flags |= EV_ADD;
+#endif
     if (memcmp(k1, k2, sizeof(*k1)) != 0) {
         printf("kevent_cmp: mismatch:\n  %s !=\n  %s\n", 
               kevent_to_str(k1), kevent_to_str(k2));
