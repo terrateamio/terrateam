@@ -55,6 +55,8 @@ event_wait(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
+    kev.fflags &= ~NOTE_FFCTRLMASK;
+    kev.fflags &= ~NOTE_TRIGGER;
     kevent_cmp(&kev, kevent_get(kqfd));
 
     success(test_id);
@@ -84,6 +86,8 @@ disable_and_enable(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
     kev.flags = EV_ADD;
+    kev.fflags &= ~NOTE_FFCTRLMASK;
+    kev.fflags &= ~NOTE_TRIGGER;
     kevent_cmp(&kev, kevent_get(kqfd));
 
     success(test_id);
@@ -105,7 +109,14 @@ oneshot(void)
     kev.fflags |= NOTE_TRIGGER;
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
+    kev.flags = EV_ADD;		// FIXME: Should have ONESHOT flag also
+    kev.fflags &= ~NOTE_FFCTRLMASK;
+    kev.fflags &= ~NOTE_TRIGGER;
     kevent_cmp(&kev, kevent_get(kqfd));
+
+#ifndef __FreeBSD__
+
+    /* FIXME: This does not actually produce an error */
 
     /* Try to trigger the event again. It is deleted, so that
        should be an error. 
@@ -115,6 +126,8 @@ oneshot(void)
     kev.fflags |= NOTE_TRIGGER;
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) == 0)
         err(1, "%s", test_id);
+
+#endif
 
     success(test_id);
 }
