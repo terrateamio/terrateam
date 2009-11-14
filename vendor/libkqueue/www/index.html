@@ -115,6 +115,31 @@ The EVFILT_PROC filter only supports the NOTE_EXIT flag, and the <code>ident</co
 
 </ol>
 
+<h2>Portability of kevent(2) across BSD systems</h2>
+
+There are some differences in the behavior of the <code>kevent(2)</code> system call across the various BSD-based operating systems. Here are some of the differences to be aware of:
+
+<ol>
+
+<li>FreeBSD 8 does not set the <i>EV_ADD</i> flag for kevents on the eventlist, but OpenBSD and Darwin do. This means you should never use the equality operator (==) to test the flags; use the logical AND operator instead.
+</li>
+
+<li>The <code>EVFILT_USER</code> filter behaves differently from other filters with respect to the <i>EV_ONESHOT</i> flag. All other filters will preserve the flag when the event is triggered and placed on the eventlist. The <code>EVFILT_USER</code> filter does not preserve this flag.
+</li>
+
+<li>
+OpenBSD has the <i>NOTE_TRUNCATE</i> fflag, while FreeBSD and Darwin do not.
+</li>
+
+<!--
+<li>
+[TODO - Verify and check against 10.6] OS X 10.5 and earlier do not implement the <code>EVFILT_AIO</code> or <code>EVFILT_TIMER</code> filters.
+</li>
+-->
+
+</ol>
+
+
 <h2>Requirements</h2>
 
 libkqueue currently requires the following:

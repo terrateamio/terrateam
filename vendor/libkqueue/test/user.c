@@ -114,20 +114,17 @@ oneshot(void)
     kev.fflags &= ~NOTE_TRIGGER;
     kevent_cmp(&kev, kevent_get(kqfd));
 
-#ifndef __FreeBSD__
-
-    /* FIXME: This does not actually produce an error */
-
     /* Try to trigger the event again. It is deleted, so that
-       should be an error. 
+       should be an error. However, on FreeBSD 8 it is not an error,
+       so the event is ignored.
      */
-    puts("  -- event 2 (should fail)");
+    puts("  -- triggering an event that will be ignored");
     kev.flags = 0; 
     kev.fflags |= NOTE_TRIGGER;
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) == 0)
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-#endif
+    test_no_kevents();
 
     success(test_id);
 }
