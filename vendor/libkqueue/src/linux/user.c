@@ -136,6 +136,11 @@ evfilt_user_copyout(struct filter *filt,
         dst->fflags &= ~NOTE_TRIGGER;
         if (kn->kev.flags & EV_DISPATCH) 
             KNOTE_DISABLE(kn);
+        if (kn->kev.flags & EV_ADD) {
+            /* NOTE: True on FreeBSD but not consistent behavior with
+                      other filters. */
+            dst->flags &= ~EV_ADD;
+        }
         if (kn->kev.flags & EV_ONESHOT) {
 
             /* NOTE: True on FreeBSD but not consistent behavior with

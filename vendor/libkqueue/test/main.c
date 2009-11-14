@@ -19,7 +19,7 @@
 #include "common.h"
 
 int testnum = 1;
-char *cur_test_id = "undef";
+char *cur_test_id = NULL;
 int kqfd;
 
 extern void test_evfilt_read();
@@ -153,6 +153,23 @@ kevent_to_str(struct kevent *kev)
 }
 
 void
+kevent_add(int kqfd, struct kevent *kev, 
+        uintptr_t ident,
+        short     filter,
+        u_short   flags,
+        u_int     fflags,
+        intptr_t  data,
+        void      *udata)
+{
+    EV_SET(kev, ident, filter, flags, fflags, data, NULL);    
+    if (kevent(kqfd, kev, 1, NULL, 0, NULL) < 0) {
+        printf("Unable to add the following kevent:\n%s\n",
+                kevent_to_str(kev));
+        err(1, "kevent(): %s", strerror(errno));
+    }
+}
+
+void
 kevent_cmp(struct kevent *k1, struct kevent *k2)
 {
 /* Workaround for inconsistent implementation of kevent(2) */
@@ -169,14 +186,21 @@ kevent_cmp(struct kevent *k1, struct kevent *k2)
 void
 test_begin(const char *func)
 {
-    cur_test_id = (char *) func;
+    if (cur_test_id)
+        free(cur_test_id);
+    cur_test_id = strdup(func);
+    if (!cur_test_id)
+        err(1, "strdup failed");
+
     printf("\n\nTest %d: %s\n", testnum++, func);
 }
 
 void
-success(const char *func)
+success(void)
 {
-    printf("%-70s %s\n", func, "passed");
+    printf("%-70s %s\n", cur_test_id, "passed");
+    free(cur_test_id);
+    cur_test_id = NULL;
 }
 
 void
@@ -186,7 +210,7 @@ test_kqueue(void)
     if ((kqfd = kqueue()) < 0)
         err(1, "kqueue()");
     test_no_kevents();
-    success("kqueue()");
+    success();
 }
 
 void
@@ -195,7 +219,7 @@ test_kqueue_close(void)
     test_begin("close(kq)");
     if (close(kqfd) < 0)
         err(1, "close()");
-    success("kqueue_close()");
+    success();
 }
 
 int 

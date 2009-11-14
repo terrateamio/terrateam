@@ -43,6 +43,15 @@ struct kevent * kevent_get(int);
 
 void kevent_cmp(struct kevent *, struct kevent *);
 
+void
+kevent_add(int kqfd, struct kevent *kev, 
+        uintptr_t ident,
+        short     filter,
+        u_short   flags,
+        u_int     fflags,
+        intptr_t  data,
+        void      *udata);
+
 /* DEPRECATED: */
 #define KEV_CMP(kev,_ident,_filter,_flags) do {                 \
     if (kev.ident != (_ident) ||                                \
@@ -57,6 +66,6 @@ void kevent_cmp(struct kevent *, struct kevent *);
 extern void test_no_kevents(void);
 
 extern void test_begin(const char *);
-extern void success(const char *);
+extern void success();
 
 #endif  /* _COMMON_H */
