@@ -30,7 +30,7 @@ test_kevent_timer_add(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-    success(test_id);
+    success();
 }
 
 void
@@ -47,7 +47,7 @@ test_kevent_timer_del(void)
 
     test_no_kevents();
 
-    success(test_id);
+    success();
 }
 
 void
@@ -70,7 +70,7 @@ test_kevent_timer_get(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-    success(test_id);
+    success();
 }
 
 static void
@@ -97,7 +97,7 @@ test_oneshot(void)
     test_no_kevents();
 
 
-    success(test_id);
+    success();
 }
 
 static void
@@ -128,7 +128,7 @@ test_periodic(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-    success(test_id);
+    success();
 }
 
 static void
@@ -159,7 +159,7 @@ disable_and_enable(void)
     kev.data = 1; 
     kevent_cmp(&kev, kevent_get(kqfd));
 
-    success(test_id);
+    success();
 }
 
 void
