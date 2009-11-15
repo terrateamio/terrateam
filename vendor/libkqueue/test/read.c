@@ -50,7 +50,7 @@ test_kevent_socket_add(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-    success(test_id);
+    success();
 }
 
 void
@@ -77,7 +77,7 @@ test_kevent_socket_get(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-    success(test_id);
+    success();
 }
 
 void
@@ -111,7 +111,7 @@ test_kevent_socket_clear(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-    success(test_id);
+    success();
 }
 
 void
@@ -147,7 +147,7 @@ test_kevent_socket_disable_and_enable(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-    success(test_id);
+    success();
 }
 
 void
@@ -166,7 +166,7 @@ test_kevent_socket_del(void)
     test_no_kevents();
     kevent_socket_drain();
 
-    success(test_id);
+    success();
 }
 
 void
@@ -199,7 +199,7 @@ test_kevent_socket_oneshot(void)
 
     kevent_socket_drain();
 
-    success(test_id);
+    success();
 }
 
 
@@ -234,7 +234,7 @@ test_kevent_socket_dispatch(void)
 
     kevent_socket_drain();
 
-    success(test_id);
+    success();
 }
 #endif  /* HAVE_EV_DISPATCH */
 
@@ -268,7 +268,7 @@ test_kevent_socket_lowat(void)
     kevent_socket_drain();
     kevent_socket_drain();
 
-    success(test_id);
+    success();
 }
 #endif
 
@@ -297,7 +297,7 @@ test_kevent_socket_eof(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-    success(test_id);
+    success();
 }
 
 void

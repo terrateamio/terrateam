@@ -40,7 +40,7 @@ test_kevent_vnode_add(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-    success(test_id);
+    success();
 }
 
 void
@@ -60,7 +60,7 @@ test_kevent_vnode_note_delete(void)
 
     kevent_cmp(&kev, kevent_get(kqfd));
 
-    success(test_id);
+    success();
 }
 
 void
@@ -84,7 +84,7 @@ test_kevent_vnode_note_write(void)
     kev.fflags |= NOTE_EXTEND; // XXX-FIXME compatibility issue
     kevent_cmp(&kev, kevent_get(kqfd));
 
-    success(test_id);
+    success();
 }
 
 void
@@ -112,7 +112,7 @@ test_kevent_vnode_note_attrib(void)
         err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)", 
                 test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
 
-    success(test_id);
+    success();
 }
 
 void
@@ -143,7 +143,7 @@ test_kevent_vnode_note_rename(void)
     if (system("mv /tmp/kqueue-test2.tmp /tmp/kqueue-test.tmp") < 0)
         err(1, "system");
 
-    success(test_id);
+    success();
 }
 
 void
@@ -158,7 +158,7 @@ test_kevent_vnode_del(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-    success(test_id);
+    success();
 }
 
 void
@@ -200,7 +200,7 @@ test_kevent_vnode_disable_and_enable(void)
         err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)", 
                 test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
 
-    success(test_id);
+    success();
 }
 
 #if HAVE_EV_DISPATCH
@@ -242,7 +242,7 @@ test_kevent_vnode_dispatch(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "remove watch failed: %s", test_id);
 
-    success(test_id);
+    success();
 }
 #endif 	/* HAVE_EV_DISPATCH */
 

@@ -66,6 +66,6 @@ kevent_add(int kqfd, struct kevent *kev,
 extern void test_no_kevents(void);
 
 extern void test_begin(const char *);
-extern void success();
+extern void success(void);
 
 #endif  /* _COMMON_H */

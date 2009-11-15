@@ -131,6 +131,9 @@ There are some differences in the behavior of the <code>kevent(2)</code> system 
 OpenBSD has the <i>NOTE_TRUNCATE</i> fflag, while FreeBSD and Darwin do not.
 </li>
 
+<li>
+EVFILT_FS is undocumented and only available on FreeBSD and Darwin. Here is the <a href="http://adam.kungfoohampster.com/lists/cvs-all/msg71399.shtml">CVS commit log</a> which could be helpful to document this filter.
+</li>
 <!--
 <li>
 [TODO - Verify and check against 10.6] OS X 10.5 and earlier do not implement the <code>EVFILT_AIO</code> or <code>EVFILT_TIMER</code> filters.

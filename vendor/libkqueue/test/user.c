@@ -36,7 +36,7 @@ add_and_delete(void)
         err(1, "%s", test_id);
     test_no_kevents();
 
-    success(test_id);
+    success();
 }
 
 static void
@@ -57,7 +57,7 @@ event_wait(void)
 
     test_no_kevents();
 
-    success(test_id);
+    success();
 }
 
 static void
@@ -83,7 +83,7 @@ disable_and_enable(void)
     kev.fflags &= ~NOTE_TRIGGER;
     kevent_cmp(&kev, kevent_get(kqfd));
 
-    success(test_id);
+    success();
 }
 
 static void
@@ -116,7 +116,7 @@ oneshot(void)
 
     test_no_kevents();
 
-    success(test_id);
+    success();
 }
 
 void

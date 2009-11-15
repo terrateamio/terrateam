@@ -30,7 +30,7 @@ test_kevent_signal_add(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-    success(test_id);
+    success();
 }
 
 void
@@ -58,7 +58,7 @@ test_kevent_signal_get(void)
     kev.data = 1;
     kevent_cmp(&kev, kevent_get(kqfd));
 
-    success(test_id);
+    success();
 }
 
 void
@@ -84,7 +84,7 @@ test_kevent_signal_disable(void)
 
     test_no_kevents();
 
-    success(test_id);
+    success();
 }
 
 void
@@ -121,7 +121,7 @@ test_kevent_signal_enable(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-    success(test_id);
+    success();
 }
 
 void
@@ -147,7 +147,7 @@ test_kevent_signal_del(void)
         err(1, "kill");
 
     test_no_kevents();
-    success(test_id);
+    success();
 }
 
 void
@@ -180,7 +180,7 @@ test_kevent_signal_oneshot(void)
         err(1, "kill");
     test_no_kevents();
 
-    success(test_id);
+    success();
 }
 
 void
