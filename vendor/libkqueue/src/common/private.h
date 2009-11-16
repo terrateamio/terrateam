@@ -100,7 +100,7 @@ struct knote *  knote_lookup_data(struct filter *filt, intptr_t);
 struct knote *  knote_new(struct filter *);
 void 		    knote_free(struct knote *);
 
-struct filter *  filter_lookup(struct kqueue *, short);
+int         filter_lookup(struct filter **, struct kqueue *, short);
 int         filter_socketpair(struct filter *);
 int      	filter_register_all(struct kqueue *);
 void     	filter_unregister_all(struct kqueue *);

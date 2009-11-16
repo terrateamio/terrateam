@@ -61,10 +61,9 @@ kevent_copyin(struct kqueue *kq, const struct kevent *src, int nchanges,
 
     for (; nchanges > 0; src++, nchanges--) {
 
-        if ((filt = filter_lookup(kq, src->filter)) == NULL) {
-            status = -EINVAL;
+        status = filter_lookup(&filt, kq, src->filter);
+        if (status < 0) 
             goto err_out;
-        }
 
         /*
          * Retrieve an existing knote object, or create a new one.
