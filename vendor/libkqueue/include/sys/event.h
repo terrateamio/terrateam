@@ -148,6 +148,20 @@ struct kevent {
 #define NOTE_LINKDOWN	0x0002			/* link is down */
 #define NOTE_LINKINV	0x0004			/* link state is invalid */
 
+/* KLUDGE: This is from <sys/mount.h> on FreeBSD and is used by 
+           the EVFILT_FS filter. */
+/* vfsquery flags */
+#define VQ_NOTRESP      0x0001  /* server down */
+#define VQ_NEEDAUTH     0x0002  /* server bad auth */
+#define VQ_LOWDISK      0x0004  /* we're low on space */
+#define VQ_MOUNT        0x0008  /* new filesystem arrived */
+#define VQ_UNMOUNT      0x0010  /* filesystem has left */
+#define VQ_DEAD         0x0020  /* filesystem is dead, needs force unmount */
+#define VQ_ASSIST       0x0040  /* filesystem needs assistance from external
+                                   program */
+#define VQ_NOTRESPLOCK  0x0080  /* server lockd down */
+
+
 __BEGIN_DECLS
 int     kqueue(void);
 int     kevent(int kq, const struct kevent *changelist, int nchanges,
