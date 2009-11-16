@@ -133,20 +133,23 @@ filter_socketpair(struct filter *filt)
     return (0);
 } 
 
-struct filter *
-filter_lookup(struct kqueue *kq, short id)
+int
+filter_lookup(struct filter **filt, struct kqueue *kq, short id)
 {
-    id = (-1 * id) - 1;
-    if (id < 0 || id >= EVFILT_SYSCOUNT) {
+    if (~id < 0 || ~id >= EVFILT_SYSCOUNT) {
+        dbg_printf("invalid id: id %d ~id %d", id, (~id));
         errno = EINVAL;
-        return (NULL);
+        *filt = NULL;
+        return (-1);
     }
-    if (kq->kq_filt[id].kf_copyin == NULL) {
-        errno = ENOTSUP;
-        return (NULL);
+    *filt = &kq->kq_filt[~id];
+    if ((*filt)->kf_copyin == NULL) {
+        errno = ENOSYS;
+        *filt = NULL;
+        return (-1);
     }
 
-    return (&kq->kq_filt[id]);
+    return (0);
 }
 
 const char *

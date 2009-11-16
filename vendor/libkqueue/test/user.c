@@ -26,14 +26,10 @@ add_and_delete(void)
 
     test_begin(test_id);
 
-    EV_SET(&kev, 1, EVFILT_USER, EV_ADD, 0, 0, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_add(kqfd, &kev, 1, EVFILT_USER, EV_ADD, 0, 0, NULL);
     test_no_kevents();
 
-    kev.flags = EV_DELETE;
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_add(kqfd, &kev, 1, EVFILT_USER, EV_DELETE, 0, 0, NULL);
     test_no_kevents();
 
     success();
