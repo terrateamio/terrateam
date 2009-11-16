@@ -124,6 +124,31 @@ err() {
     exit 1
 }
 
+subst_vars() {
+  outfile=$1
+
+  if [ ! -f "${outfile}.in" ] ; then
+      return
+  fi
+
+  echo "Creating $outfile"
+  rm -f $outfile
+  sed -e "
+       s,@@PROGRAM@@,$program,g;
+       s,@@VERSION@@,$version,g;
+       s,@@PREFIX@@,$prefix,g;
+       s,@@LIBDIR@@,$libdir,g;
+       s,@@INCLUDEDIR@@,$includedir,g;
+       s,@@MANDIR@@,$mandir,g;
+       s,@@LIBDEPENDS@@,$libdepends,g;
+       s,@@PKG_SUMMARY@@,$pkg_summary,g;
+       s,@@PKG_DESCRIPTION@@,$pkg_description,g;
+       s,@@LICENSE@@,$license,g;
+       s,@@AUTHOR@@,$author,g;
+       " < ${outfile}.in > $outfile
+  chmod 400 $outfile
+}
+
 #######################################################################
 #
 #                           MAIN()
@@ -168,19 +193,8 @@ check_headers $optional_headers
 
 post_configure_hook
 
-if [ -f "$program.pc.in" ] ; then
-  echo "Creating $program.pc"
-  sed -e "
-       s,@@PROGRAM@@,$program,g;
-       s,@@VERSION@@,$version,g;
-       s,@@PREFIX@@,$prefix,g;
-       s,@@LIBDIR@@,$libdir,g;
-       s,@@INCLUDEDIR@@,$includedir,g;
-       s,@@MANDIR@@,$mandir,g;
-       s,@@LIBDEPENDS@@,$libdepends,g;
-       " < $program.pc.in >> $program.pc
-  chmod 400 $program.pc
-fi
+subst_vars "$program.pc"
+subst_vars "rpm.spec"
 
 echo "Creating config.h"
 export_to_c $c_exports

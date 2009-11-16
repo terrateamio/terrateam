@@ -8,6 +8,12 @@ headers="src/common/private.h"
 extra_dist="*.in"
 subdirs="src include test"
 
+# Package metadata
+pkg_summary="Emulates the kqueue and kevent system calls"
+pkg_description="Emulates the kqueue and kevent system calls"
+license="BSD"
+author="Mark Heily"
+
 pre_configure_hook() {
   if [ "$debug" = "yes" ] ; then
       cflags="$cflags -DKQUEUE_DEBUG"
