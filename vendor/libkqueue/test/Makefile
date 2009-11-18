@@ -35,6 +35,11 @@ check-installed:
 	gcc $(CFLAGS) -I$(PREFIX)/kqueue test.c -lkqueue
 	./a.out
 
+check-libtool:
+	gcc $(CFLAGS) -c *.c
+	libtool --mode=link gcc -g -O0 -o a.out *.o $(LIBDIR)/libkqueue.la
+	./a.out
+
 distclean: clean
 	rm -f config.mk config.h a.out
 

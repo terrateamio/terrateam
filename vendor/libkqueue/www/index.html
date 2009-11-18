@@ -160,12 +160,45 @@ libkqueue currently requires the following:
 
 <h2>Usage</h2>
 
-Here are the steps to use libkqueue in your program:
+
+<h3>Ordinary Makefile</h3>
+
+Here are the steps to use libkqueue in your program if you use an ordinary Makefile:
+
 <ol>
 <li>Add <code>`pkg-config libkqueue --cflags`</code> to the CFLAGS variable.
 <li>Add <code>`pkg-config libkqueue --libs`</code> to the LDADD variable.
 <li>Add <code>#include &lt;sys/event.h&gt;</code> to the source code.
 </ol>
+<p>
+
+<h3>Autoconf/Automake/Libtool</h3>
+
+If your program uses the GNU Autoconf/Automake/Libtool build system, the following steps will allow you to use libkqueue:
+
+<ol>
+
+<li>Add the following to <code>configure.ac</code>:
+<pre>
+#
+# Prefer native kqueue(2); otherwise use libkqueue if present.
+#
+AC_CHECK_HEADER(sys/event.h, [],
+  [PKG_CHECK_MODULES(KQUEUE, libkqueue)]
+)
+</pre>
+</li>
+
+<li>
+Add the following to <code>Makefile.am</code> (assuming your program is named "foo"):
+<pre>
+foo_CFLAGS+=$(KQUEUE_CFLAGS)
+foo_LDADD+=$(KQUEUE_LIBS)
+</pre>
+</li>
+</ol>    
+
+<p>Instead of using the <code>$(KQUEUE_LIBS)</code> variable, you could just add <code>libkqueue.la</code> to your programs LDADD variable.
 
 <h3>Threads</h3>
 

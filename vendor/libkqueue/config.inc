@@ -19,6 +19,7 @@ pre_configure_hook() {
       cflags="$cflags -DKQUEUE_DEBUG"
   fi
 
+  libdepends=" -L$libdir"
   if [ $target = "linux" ] ; then
       libdepends="$libdepends -lpthread -lrt"
       required_headers="sys/epoll.h sys/inotify.h 
