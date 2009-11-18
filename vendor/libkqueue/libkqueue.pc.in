@@ -7,7 +7,7 @@ Name: @@PROGRAM@@
 Description: Emulates FreeBSD kqueue(2) on other platforms
 Version: @@VERSION@@
 Requires: 
-Libs: -L${libdir} -lkqueue
+Libs: ${libdir}/libkqueue.la
 Libs.private: @@LIBDEPENDS@@
 Cflags: -I${includedir}/kqueue 
 
