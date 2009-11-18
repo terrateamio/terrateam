@@ -194,6 +194,7 @@ check_headers $optional_headers
 post_configure_hook
 
 subst_vars "$program.pc"
+subst_vars "$program.la"
 subst_vars "rpm.spec"
 
 echo "Creating config.h"
