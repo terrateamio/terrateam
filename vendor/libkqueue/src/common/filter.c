@@ -174,3 +174,46 @@ filter_name(short filt)
     else
         return fname[~filt];
 }
+
+int
+filter_raise(struct filter *filt)
+{
+    for (;;) {
+        if (write(filt->kf_wfd, " ", 1) < 0) {
+            if (errno == EINTR) 
+                continue;
+
+            if (errno != EAGAIN) {
+                dbg_printf("write(2): %s", strerror(errno));
+                /* TODO: set filter error flag */
+                return (-1);
+            }
+        }
+        break;
+    }
+
+    return (0);
+}
+
+int
+filter_lower(struct filter *filt)
+{
+    char buf[1024];
+    ssize_t n;
+
+    for (;;) {
+        n = read(filt->kf_pfd, &buf, sizeof(buf));
+        if (n < 0) {
+            if (errno == EINTR) 
+                continue;
+            if (errno == EAGAIN) 
+                break;
+
+            dbg_printf("read(2): %s", strerror(errno));
+            return (-1);
+        }
+        break;
+    }
+
+    return (0);
+}

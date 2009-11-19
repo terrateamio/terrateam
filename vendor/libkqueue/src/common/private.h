@@ -105,6 +105,8 @@ int         filter_socketpair(struct filter *);
 int      	filter_register_all(struct kqueue *);
 void     	filter_unregister_all(struct kqueue *);
 const char *filter_name(short);
+int         filter_lower(struct filter *);
+int         filter_raise(struct filter *);
 
 int 		kevent_init(struct kqueue *);
 const char * kevent_dump(struct kevent *);
