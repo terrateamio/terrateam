@@ -21,7 +21,6 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/eventfd.h>
 #include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -29,8 +28,6 @@
 #include <unistd.h>
 
 #include <limits.h>
-#include <sys/inotify.h>
-#include <sys/epoll.h>
 
 #include "sys/event.h"
 #include "private.h"
@@ -55,10 +52,9 @@ static void *
 wait_thread(void *arg)
 {
     struct filter *filt = (struct filter *) arg;
-    uint64_t counter = 1;
-    const int options = WEXITED | WNOWAIT; 
     struct proc_event *evt;
-    siginfo_t si;
+    int status;
+    pid_t pid;
     sigset_t sigmask;
 
     /* Block all signals */
@@ -68,13 +64,17 @@ wait_thread(void *arg)
     for (;;) {
 
         /* Wait for a child process to exit(2) */
-        if (waitid(P_ALL, 0, &si, options) != 0)
+        if ((pid = wait(&status)) < 0) {
+            if (errno == EINTR)
+                continue;
+            dbg_printf("wait(2): %s", strerror(errno));
             break;
+        } 
 
         /* Scan the wait queue to see if anyone is interested */
         pthread_mutex_lock(&filt->kf_data->wthr_mtx);
         LIST_FOREACH(evt, &filt->kf_data->wthr_waitq, entries) {
-            if (evt->pe_pid == si.si_pid)
+            if (evt->pe_pid == pid)
                 break;
         }
         if (evt == NULL) {
@@ -83,15 +83,14 @@ wait_thread(void *arg)
         }
 
         /* Create a proc_event */
-        if (si.si_code == CLD_EXITED) {
-            evt->pe_status = si.si_status;
-        } else if (si.si_code == CLD_KILLED) {
+        if (WIFEXITED(status)) {
+            evt->pe_status = WEXITSTATUS(status);
+        } else if (WIFSIGNALED(status)) {
             /* FIXME: probably not true on BSD */
-            /* FIXME: arbitrary non-zero number */
-            evt->pe_status = 254; 
+            evt->pe_status = WTERMSIG(status);
         } else {
-            /* Should never happen. */
-            evt->pe_status = 255; 
+            dbg_puts("unexpected code path");
+            evt->pe_status = 254; 
         }
 
         /* Add the event to the eventlist */
@@ -100,13 +99,8 @@ wait_thread(void *arg)
         pthread_mutex_unlock(&filt->kf_data->wthr_mtx);
 
         /* Indicate read(2) readiness */
-        if (write(filt->kf_pfd, &counter, sizeof(counter)) < 0) {
-            if (errno != EAGAIN) {
-                dbg_printf("write(2): %s", strerror(errno));
-                /* TODO: set filter error flag */
-                break;
-                }
-        }
+        /* TODO: error handling */
+        filter_raise(filt);
     }
 
     /* TODO: error handling */
@@ -126,7 +120,6 @@ int
 evfilt_proc_init(struct filter *filt)
 {
     struct evfilt_data *ed;
-    int efd = -1;
 
     if ((ed = calloc(1, sizeof(*ed))) == NULL)
         return (-1);
@@ -134,22 +127,15 @@ evfilt_proc_init(struct filter *filt)
     LIST_INIT(&ed->wthr_eventq);
     LIST_INIT(&ed->wthr_waitq);
 
-    if ((efd = eventfd(0, 0)) < 0) 
-        goto errout;
-    if (fcntl(filt->kf_pfd, F_SETFL, O_NONBLOCK) < 0) 
+    if (filter_socketpair(filt) < 0) 
         goto errout;
     if (pthread_create(&ed->wthr_id, NULL, wait_thread, filt) != 0) 
         goto errout;
 
-    filt->kf_pfd = efd;
-
     return (0);
 
 errout:
-    if (efd >= 0)
-        close(efd);
     free(ed);
-    close(filt->kf_pfd);
     return (-1);
 }
 

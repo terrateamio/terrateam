@@ -29,5 +29,27 @@ pre_configure_hook() {
 
 post_configure_hook() {
     finalize target "$target"
-    sources="$sources src/$target/*.c"
+
+    evfilt_signal="src/$target/signal.c"
+    evfilt_proc="src/$target/proc.c"
+    evfilt_socket="src/$target/socket.c"
+    evfilt_timer="src/$target/timer.c"
+    evfilt_user="src/$target/user.c"
+    evfilt_vnode="src/$target/vnode.c"
+
+    if [ $target = "linux" ] ; then
+      if [ "$have_sys_signalfd_h" != "yes" ] ; then
+          evfilt_signal="src/posix/signal.c"
+      fi
+      if [ "$have_sys_timerfd_h" != "yes" ] ; then
+          evfilt_timer=""      # TODO: "src/posix/timer.c"
+      fi
+      if [ "$have_sys_eventfd_h" != "yes" ] ; then
+          evfilt_user=""      # TODO: "src/posix/user.c"
+      fi
+      evfilt_proc="src/posix/proc.c"
+    fi      
+
+    sources="$sources $evfilt_signal $evfilt_proc $evfilt_socket 
+             $evfilt_timer $evfilt_user $evfilt_vnode"
 }
