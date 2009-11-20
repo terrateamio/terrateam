@@ -63,8 +63,9 @@ kevent_copyin(struct kqueue *kq, const struct kevent *src, int nchanges,
 
         status = filter_lookup(&filt, kq, src->filter);
         if (status < 0) 
-            goto err_out;
+            goto err_out_unlocked;
 
+        filter_lock(filt);
         /*
          * Retrieve an existing knote object, or create a new one.
          */
@@ -87,8 +88,10 @@ kevent_copyin(struct kqueue *kq, const struct kevent *src, int nchanges,
 
                /* Special case for EVFILT_USER:
                   Ignore user-generated events that are not of interest */
-               if (src->fflags & NOTE_TRIGGER)
+               if (src->fflags & NOTE_TRIGGER) {
+                   filter_unlock(filt);
                    continue;
+               }
 
                /* flags == 0 or no action */
                status = -EINVAL;
@@ -115,9 +118,12 @@ kevent_copyin(struct kqueue *kq, const struct kevent *src, int nchanges,
             goto err_out;
         }
 
+        filter_unlock(filt);
         continue;
 
 err_out:
+        filter_unlock(filt);
+err_out_unlocked:
         if (status != 0 && kn_alloc)
             knote_free(dst);
         if (nevents > 0) {
@@ -154,9 +160,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
      * Process each kevent on the changelist.
      */
     if (nchanges) {
-        kqueue_lock(kq);
         rv = kevent_copyin(kq, changelist, nchanges, eventlist, nevents);
-        kqueue_unlock(kq);
         if (rv < 0)
             return (-1); 
     }
@@ -189,16 +193,16 @@ wait_for_events:
      * Process each event and place it on the eventlist
      */ 
     nret = 0;
-    kqueue_lock(kq);
     for (i = 0; (i < EVFILT_SYSCOUNT && n > 0 && nevents > 0); i++) {
         dbg_printf("eventlist: n = %d nevents = %d", n, nevents);
         filt = &kq->kq_filt[i]; 
         dbg_printf("pfd[%d] = %d", i, filt->kf_pfd);
         if (FD_ISSET(filt->kf_pfd, &fds)) {
             dbg_printf("event(s) for filter #%d", i);
+            filter_lock(filt);
             rv = filt->kf_copyout(filt, eventlist, nevents);
             if (rv < 0) {
-                kqueue_unlock(kq);
+                filter_unlock(filt);
                 dbg_puts("kevent_copyout failed");
                 return (-1);
             }
@@ -206,9 +210,9 @@ wait_for_events:
             eventlist += rv;
             nevents -= rv;
             n--;
+            filter_unlock(filt);
         }
     }
-    kqueue_unlock(kq);
 
     /* Handle spurious wakeups where no events are generated. */
     if (nret == 0)

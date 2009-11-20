@@ -228,7 +228,7 @@ test_kqueue_close(void)
 int 
 main(int argc, char **argv)
 {
-    int test_proc = 1;
+    int test_proc = 0;  /* XXX-FIXME */
     int test_socket = 1;
     int test_signal = 1;
     int test_vnode = 1;
@@ -255,12 +255,8 @@ main(int argc, char **argv)
     test_kqueue();
     test_kqueue_close();
 
-#if FIXME
     if (test_proc) 
         test_evfilt_proc();
-    puts("All proc tests OK");
-    exit(0);
-#endif
 
     if (test_socket) 
         test_evfilt_read();

@@ -46,7 +46,9 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
     dst = &kq->kq_filt[filt];
     memcpy(dst, src, sizeof(*src));
     dst->kf_kqueue = kq;
-    KNOTELIST_INIT(&dst->knl);
+    pthread_mutex_init(&dst->kf_mtx, NULL);
+    KNOTELIST_INIT(&dst->kf_watchlist);
+    KNOTELIST_INIT(&dst->kf_eventlist);
     if (src->kf_init == NULL) {
         dbg_puts("filter has no initializer");
         return (-1);
@@ -111,7 +113,11 @@ filter_unregister_all(struct kqueue *kq)
             kq->kq_filt[i].kf_destroy(&kq->kq_filt[i]);
 
         /* Destroy all knotes associated with this filter */
-        for (n1 = LIST_FIRST(&kq->kq_filt[i].knl); n1 != NULL; n1 = n2) {
+        for (n1 = LIST_FIRST(&kq->kq_filt[i].kf_watchlist); n1 != NULL; n1 = n2) {
+            n2 = LIST_NEXT(n1, entries);
+            free(n1);
+        }
+        for (n1 = LIST_FIRST(&kq->kq_filt[i].kf_eventlist); n1 != NULL; n1 = n2) {
             n2 = LIST_NEXT(n1, entries);
             free(n1);
         }

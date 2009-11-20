@@ -81,8 +81,10 @@ struct filter {
     int       kf_wfd;                   /* fd to write when an event occurs */
     u_int     kf_timeres;               /* timer resolution, in miliseconds */
     sigset_t  kf_sigmask;
+    pthread_mutex_t kf_mtx;
     struct evfilt_data *kf_data;	/* filter-specific data */
-    struct knotelist knl; 
+    struct knotelist kf_watchlist;      /* events that have not occurred */
+    struct knotelist kf_eventlist;      /* events that have occurred */
     struct kqueue *kf_kqueue;
 };
 
@@ -107,6 +109,8 @@ void     	filter_unregister_all(struct kqueue *);
 const char *filter_name(short);
 int         filter_lower(struct filter *);
 int         filter_raise(struct filter *);
+#define     filter_lock(f)   pthread_mutex_lock(&(f)->kf_mtx)
+#define     filter_unlock(f) pthread_mutex_unlock(&(f)->kf_mtx)
 
 int 		kevent_init(struct kqueue *);
 const char * kevent_dump(struct kevent *);
@@ -117,7 +121,5 @@ int 		kevent_wait(struct kqueue *kq,
 void 		kevent_free(struct kqueue *);
 
 struct kqueue * kqueue_lookup(int kq);
-void            kqueue_lock(struct kqueue *kq);
-void            kqueue_unlock(struct kqueue *kq);
 
 #endif  /* ! _KQUEUE_PRIVATE_H */

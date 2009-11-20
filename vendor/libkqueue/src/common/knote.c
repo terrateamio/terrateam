@@ -30,7 +30,7 @@ knote_new(struct filter *filt)
 
     if ((dst = calloc(1, sizeof(*dst))) == NULL) 
         return (NULL);
-    KNOTE_INSERT(&filt->knl, dst);
+    KNOTE_INSERT(&filt->kf_watchlist, dst);
     return (dst);
 }
 
@@ -48,20 +48,33 @@ struct knote *
 knote_lookup(struct filter *filt, short ident)
 {
     struct knote *kn;
-    LIST_FOREACH(kn, &filt->knl, entries) {
+
+    /* TODO: Use rbtree for faster searching */
+    LIST_FOREACH(kn, &filt->kf_watchlist, entries) {
         if (ident == kn->kev.ident)
-            break;
+            return (kn);
     }
-    return (kn);
+    LIST_FOREACH(kn, &filt->kf_eventlist, entries) {
+        if (ident == kn->kev.ident)
+            return (kn);
+    }
+
+    return (NULL);
 }
     
 struct knote *
 knote_lookup_data(struct filter *filt, intptr_t data)
 {
     struct knote *kn;
-    LIST_FOREACH(kn, &filt->knl, entries) {
+
+    LIST_FOREACH(kn, &filt->kf_watchlist, entries) {
         if (data == kn->kev.data)
-            break;
+            return (kn);
     }
-    return (kn);
+    LIST_FOREACH(kn, &filt->kf_eventlist, entries) {
+        if (data == kn->kev.data)
+            return (kn);
+    }
+
+    return (NULL);
 }

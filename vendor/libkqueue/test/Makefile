@@ -16,20 +16,18 @@
 
 include config.mk
 
-check:
+all:
 	if [ ! -f /usr/include/sys/event.h ] ; then \
         cd .. && ./configure --debug=yes && make build ; \
 	fi
 	$(CC) $(CFLAGS) $(SOURCES) $(LDADD)
+
+check:
 	./a.out
 
 # NOTE: copy+paste of 'make check'
-valgrind:
-	cd .. && make build CFLAGS="$(CFLAGS) -g -O0 -DKQUEUE_DEBUG -DUNIT_TEST"
-	gcc -c $(CFLAGS) test.c
-	gcc -g -O0 $(CFLAGS) test.c libkqueue.a $(LDADD)
+valgrind: all
 	valgrind --tool=memcheck --leak-check=full --show-reachable=yes --num-callers=20 --track-fds=yes ./a.out
-
 
 check-installed:
 	gcc $(CFLAGS) -I$(PREFIX)/kqueue test.c -lkqueue
