@@ -89,6 +89,7 @@ evfilt_socket_copyin(struct filter *filt,
         op = EPOLL_CTL_ADD;
         memcpy(&dst->kev, src, sizeof(*src));
     }
+    memset(&ev, 0, sizeof(ev));
     if (src->flags & EV_DELETE) 
         op = EPOLL_CTL_DEL;
     if (src->flags & EV_ENABLE || src->flags & EV_DISABLE) 

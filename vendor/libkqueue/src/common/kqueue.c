@@ -33,9 +33,7 @@
 static LIST_HEAD(,kqueue) kqlist 	= LIST_HEAD_INITIALIZER(&kqlist);
 static size_t kqcount = 0;
 
-#define kqlist_lock()            pthread_mutex_lock(&kqlist_mtx)
-#define kqlist_unlock()          pthread_mutex_unlock(&kqlist_mtx)
-static pthread_mutex_t    kqlist_mtx 	= PTHREAD_MUTEX_INITIALIZER;
+static pthread_rwlock_t    kqlist_mtx 	= PTHREAD_RWLOCK_INITIALIZER;
 static sigset_t saved_sigmask;
 
 static int kqgc_pfd[2];
@@ -65,12 +63,12 @@ kqueue_lookup(int kq)
 {
     struct kqueue *ent = NULL;
 
-    kqlist_lock();
+    pthread_rwlock_rdlock(&kqlist_mtx);
     LIST_FOREACH(ent, &kqlist, entries) {
         if (ent->kq_sockfd[1] == kq)
             break;
     }
-    kqlist_unlock();
+    pthread_rwlock_unlock(&kqlist_mtx);
 
     return (ent);
 }
@@ -82,6 +80,23 @@ kqueue_destroy_unlocked(struct kqueue *kq)
     LIST_REMOVE(kq, entries);
     filter_unregister_all(kq);
     free(kq);
+}
+
+static int
+kqueue_destroy_by_sockfd(int sockfd)
+{
+    struct kqueue *kq;
+
+    LIST_FOREACH(kq, &kqlist, entries) {
+        if (kq->kq_sockfd[0] != sockfd)
+            continue;
+        dbg_printf("gc: destroying kqueue; kqfd=%d", 
+                kq->kq_sockfd[1]);
+        kqueue_destroy_unlocked(kq);
+        return (0);
+    }
+
+    return (-1);
 }
 
 static void *
@@ -112,13 +127,14 @@ kqueue_close_wait(void *unused)
         fds[0].events = POLLIN;
         n = 1;
 
-        kqlist_lock();
+        /* Build the pollset containing all kfilter pollfds */
+        pthread_rwlock_rdlock(&kqlist_mtx);
         LIST_FOREACH(kq, &kqlist, entries) {
             fds[n].fd = kq->kq_sockfd[0];
             fds[n].events = POLLIN;
             n++;
         }
-        kqlist_unlock();
+        pthread_rwlock_unlock(&kqlist_mtx);
 
         /* Inform the main thread that it can continue */
         if (wake_flag) {
@@ -128,7 +144,6 @@ kqueue_close_wait(void *unused)
             }
             wake_flag = 0;
         }
-
 
         dbg_printf("gc: waiting for events on %d kqfds", n - 1);
 
@@ -150,20 +165,13 @@ kqueue_close_wait(void *unused)
             wake_flag = 1;
         } else {
             /* Destroy any kqueue that close(2) has been called on */
-            kqlist_lock();
+            pthread_rwlock_wrlock(&kqlist_mtx);
             for (i = 1; i <= n; i++) {
-                dbg_printf("i=%d revents=%d", i, fds[n].revents);
-                if (fds[n].revents & POLLHUP) {
-                    LIST_FOREACH(kq, &kqlist, entries) {
-                        if (kq->kq_sockfd[0] == fds[n].fd) {
-                            dbg_printf("gc: destroying kqueue; kqfd=%d", 
-                                    kq->kq_sockfd[1]);
-                            kqueue_destroy_unlocked(kq);
-                        }
-                    }
-                }
+            //    dbg_printf("i=%d revents=%d", i, fds[n].revents);
+                if (fds[n].revents & POLLHUP) 
+                    kqueue_destroy_by_sockfd(fds[n].fd);
             }
-            kqlist_unlock();
+            pthread_rwlock_unlock(&kqlist_mtx);
         }
     }
 
@@ -230,20 +238,6 @@ errout:
     kqueue_init_status = -1;
 }
 
-void
-kqueue_lock(struct kqueue *kq)
-{
-    dbg_puts("kqueue_lock()");
-    pthread_mutex_lock(&kq->kq_mtx);
-}
-
-void
-kqueue_unlock(struct kqueue *kq)
-{
-    dbg_puts("kqueue_unlock()");
-    pthread_mutex_unlock(&kq->kq_mtx);
-}
-
 int
 kqueue(void)
 {
@@ -260,7 +254,7 @@ kqueue(void)
 
     (void) pthread_once(&kqueue_init_ctl, kqueue_init);
 
-    kqlist_lock();
+    pthread_rwlock_wrlock(&kqlist_mtx);
     mask_signals();
     rv = filter_register_all(kq);
     if (rv == 0) {
@@ -268,7 +262,7 @@ kqueue(void)
         kqcount++;
     }
     unmask_signals();
-    kqlist_unlock();
+    pthread_rwlock_unlock(&kqlist_mtx);
 
     if (rv != 0) 
         goto errout;

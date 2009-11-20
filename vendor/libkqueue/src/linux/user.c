@@ -115,7 +115,7 @@ evfilt_user_copyout(struct filter *filt,
             struct kevent *dst, 
             int maxevents)
 {
-    struct knote *kn;
+    struct knote *kn, *kn_next;
     int nevents = 0;
     uint64_t cur;
 
@@ -126,10 +126,8 @@ evfilt_user_copyout(struct filter *filt,
     }
     dbg_printf("  counter=%llu", (unsigned long long) cur);
 
-    /* Scan for events that have been triggered */
-    KNOTELIST_FOREACH(kn, &filt->knl) {
-        if (!(kn->kev.fflags & NOTE_TRIGGER))
-            continue;
+    for (kn = LIST_FIRST(&filt->kf_watchlist); kn != NULL; kn = kn_next) {
+        kn_next = LIST_NEXT(kn, entries);
 
         memcpy(dst, &kn->kev, sizeof(*dst));
         dst->fflags &= ~NOTE_FFCTRLMASK;     //FIXME: Not sure if needed
