@@ -24,7 +24,7 @@ post_configure_hook() {
 export_to_make() {
   for id in $*
   do
-    uc_id=`echo $id | tr 'a-z' 'A-Z'`;
+    uc_id=`echo $id | tr -s '[:lower:]' '[:upper:]'`;
     eval "echo \"$uc_id=\"\$$id\"\" >> config.mk"
   done
 }
@@ -32,7 +32,7 @@ export_to_make() {
 export_to_c() {
   for id in $*
   do
-    uc_id=`echo $id | tr 'a-z' 'A-Z'`;
+    uc_id=`echo $id | tr -s '[:lower:]' '[:upper:]'`;
     eval "echo \"#define $uc_id \\\"\$$id\\\"\" >> config.h"
   done
 }
@@ -54,7 +54,7 @@ process_argv() {
  
 check_header() {	 
    sym=`echo "have_$1" | sed 's,[./],_,g'`	 
-   uc_sym=`echo "$sym" | tr a-z A-Z`	 
+   uc_sym=`echo "$sym" | tr -s '[:lower:]' '[:upper:]'`;
    path=$1
 
    printf "checking for $path.. "
@@ -82,8 +82,8 @@ check_symbol() {
     header=$1
     symbol=$2
 
-    uc_symbol=`echo "HAVE_$symbol" | tr a-z A-Z | sed 's,[./],_,g'`
-    lc_symbol=`echo "have_$symbol" | tr A-Z a-z | sed 's,[./],_,g'`
+    uc_symbol=`echo "HAVE_$symbol" | tr -s '[:lower:]' '[:upper:]' | sed 's,[./],_,g'`
+    lc_symbol=`echo "have_$symbol" | tr -s '[:upper:]' '[:lower:]' | sed 's,[./],_,g'`
 
     if [ -f "$header" ] ; then
         path="$header"
@@ -169,7 +169,7 @@ process_argv "$*"
 
 finalize program    "$program"
 finalize version    "$version"
-finalize target     `uname -s | tr A-Z a-z`
+finalize target     `uname -s | tr -s '[:upper:]' '[:lower:]'`
 finalize prefix     "/usr/local"
 finalize libdir     "${prefix}/lib"
 finalize includedir "${prefix}/include"
