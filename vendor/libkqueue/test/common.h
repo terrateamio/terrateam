@@ -18,7 +18,12 @@
 #define _COMMON_H
 
 
-#include <err.h>
+#if HAVE_ERR_H
+# include <err.h>
+#else
+# define err(rc,msg,...) do { perror(msg); exit(rc); } while (0)
+# define errx(rc,msg,...) do { puts(msg); exit(rc); } while (0)
+#endif
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>

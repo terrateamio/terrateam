@@ -17,8 +17,15 @@
 #ifndef  _KQUEUE_PRIVATE_H
 #define  _KQUEUE_PRIVATE_H
 
+#if defined (__SVR4) && defined (__sun)
+#define SOLARIS
+#include <port.h>
+#endif
+
+#include <errno.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/select.h>
 #include "sys/event.h"
 
@@ -91,9 +98,12 @@ struct filter {
 struct kqueue {
     int             kq_sockfd[2];
     struct filter   kq_filt[EVFILT_SYSCOUNT];
-    fd_set          kq_fds; 
+    fd_set          kq_fds, kq_rfds; 
     int             kq_nfds;
     pthread_mutex_t kq_mtx;
+#ifdef SOLARIS
+    int             kq_port;
+#endif
     LIST_ENTRY(kqueue) entries;
 };
 
@@ -114,12 +124,12 @@ int         filter_raise(struct filter *);
 
 int 		kevent_init(struct kqueue *);
 const char * kevent_dump(struct kevent *);
-int 		kevent_wait(struct kqueue *kq,
-                        struct kevent *kevent, 
-                        int nevents,
-                        const struct timespec *timeout);
+int         kevent_wait(struct kqueue *, const struct timespec *);
+int         kevent_copyout(struct kqueue *, int, struct kevent *, int);
 void 		kevent_free(struct kqueue *);
 
 struct kqueue * kqueue_lookup(int kq);
+int         kqueue_init_hook(void);
+int         kqueue_hook(struct kqueue *);
 
 #endif  /* ! _KQUEUE_PRIVATE_H */
