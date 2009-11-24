@@ -32,6 +32,9 @@
 #include "sys/event.h"
 #include "private.h"
 
+pthread_cond_t   wait_cond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t  wait_mtx = PTHREAD_MUTEX_INITIALIZER;
+
 struct evfilt_data {
     pthread_t       wthr_id;
 };
@@ -53,10 +56,13 @@ wait_thread(void *arg)
     for (;;) {
 
         /* Wait for a child process to exit(2) */
-        if ((pid = wait(&status)) < 0) {
+        if ((pid = waitpid(-1, &status, 0)) < 0) {
             if (errno == ECHILD) {
-                dbg_puts("waiting for child");
-                pause();        /*XXX-FIXME stupid */
+                dbg_puts("got ECHILD, waiting for wakeup condition");
+                pthread_mutex_lock(&wait_mtx);
+                pthread_cond_wait(&wait_cond, &wait_mtx);
+                pthread_mutex_unlock(&wait_mtx);
+                dbg_puts("awoken from ECHILD-induced sleep");
                 continue;
             }
             if (errno == EINTR)
@@ -127,8 +133,11 @@ int
 evfilt_proc_copyin(struct filter *filt, 
         struct knote *dst, const struct kevent *src)
 {
-    if (src->flags & EV_ADD && KNOTE_EMPTY(dst)) 
+    if (src->flags & EV_ADD && KNOTE_EMPTY(dst)) {
         memcpy(&dst->kev, src, sizeof(*src));
+        /* TODO: think about locking the mutex first.. */
+        pthread_cond_signal(&wait_cond);
+    }
 
     if (src->flags & EV_ADD || src->flags & EV_ENABLE) {
         /* Nothing to do.. */

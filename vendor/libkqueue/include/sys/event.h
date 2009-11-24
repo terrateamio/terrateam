@@ -33,7 +33,6 @@
 #include <sys/queue.h> 
 #include <sys/types.h> 
 #include <stdint.h> 
-#include <sys/cdefs.h>
 
 struct timespec;
 
@@ -162,12 +161,17 @@ struct kevent {
 #define VQ_NOTRESPLOCK  0x0080  /* server lockd down */
 
 
-__BEGIN_DECLS
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 int     kqueue(void);
 int     kevent(int kq, const struct kevent *changelist, int nchanges,
 	    struct kevent *eventlist, int nevents,
 	    const struct timespec *timeout);
-__END_DECLS
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif /* !_SYS_EVENT_H_ */
-

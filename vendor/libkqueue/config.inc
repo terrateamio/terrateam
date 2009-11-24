@@ -1,7 +1,7 @@
 program="libkqueue"
 version="0.3"
 cflags="-fPIC -I./include -I./src/common -Wall -Werror"
-sources="src/common/*.c"
+sources="src/common/*.c" 
 libdepends=""
 mans="kqueue.2"
 headers="src/common/private.h"
@@ -18,6 +18,8 @@ pre_configure_hook() {
   if [ "$debug" = "yes" ] ; then
       cflags="$cflags -DKQUEUE_DEBUG"
   fi
+
+  optional_headers="err.h"
 
   libdepends=" -L$libdir"
   if [ $target = "linux" ] ; then
@@ -47,9 +49,8 @@ post_configure_hook() {
       if [ "$have_sys_eventfd_h" != "yes" ] ; then
           evfilt_user=""      # TODO: "src/posix/user.c"
       fi
-      evfilt_proc="src/posix/proc.c"
     fi      
 
-    sources="$sources $evfilt_signal $evfilt_proc $evfilt_socket 
-             $evfilt_timer $evfilt_user $evfilt_vnode"
+    sources="$sources src/$target/hook.c $evfilt_signal $evfilt_proc 
+             $evfilt_socket $evfilt_timer $evfilt_user $evfilt_vnode"
 }

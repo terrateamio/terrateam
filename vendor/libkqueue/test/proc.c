@@ -16,63 +16,82 @@
 
 #include "common.h"
 
+static int sigusr1_caught = 0;
+
 int kqfd;
-pid_t child;
+
+static void
+sig_handler(int signum)
+{
+    sigusr1_caught = 1;
+}
 
 static void
 add_and_delete(void)
 {
-    const char *test_id1 = "kevent(EVFILT_PROC, EV_ADD)";
-    const char *test_id2 = "kevent(EVFILT_PROC, EV_ADD)";
     struct kevent kev;
+    pid_t pid;
 
-    test_begin(test_id1);
+    /* Create a child that waits to be killed and then exits */
+    pid = fork();
+    if (pid == 0) {
+        pause();
+        exit(2);
+    }
+    printf(" -- child created (pid %d)\n", (int) pid);
 
-    EV_SET(&kev, child, EVFILT_PROC, EV_ADD, 0, 0, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id1);
+    test_begin("kevent(EVFILT_PROC, EV_ADD)");
+
+    test_no_kevents();
+    kevent_add(kqfd, &kev, pid, EVFILT_PROC, EV_ADD, 0, 0, NULL);
+    test_no_kevents();
 
     success();
 
-    test_begin(test_id2);
+    test_begin("kevent(EVFILT_PROC, EV_DELETE)");
 
-    kev.flags = EV_DELETE;
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id2);
-
-    success();
-
-}
-
-#if TODO
-void
-test_kevent_signal_get(void)
-{
-    const char *test_id = "kevent(EVFILT_SIGNAL, wait)";
-    struct kevent kev;
-
-    test_begin(test_id);
-
-    EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);    
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
-
-    /* Block SIGUSR1, then send it to ourselves */
-    sigset_t mask;
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGUSR1);
-    if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
-        err(1, "sigprocmask");
-    if (kill(getpid(), SIGUSR1) < 0)
+    test_no_kevents();
+    kevent_add(kqfd, &kev, pid, EVFILT_PROC, EV_DELETE, 0, 0, NULL);
+    if (kill(pid, SIGKILL) < 0)
         err(1, "kill");
+    sleep(1);
+    test_no_kevents();
 
-    kev.flags |= EV_CLEAR;
-    kev.data = 1;
+    success();
+
+}
+
+static void
+event_trigger(void)
+{
+    struct kevent kev;
+    pid_t pid;
+
+    test_begin("kevent(EVFILT_PROC, wait)");
+
+    /* Create a child that waits to be killed and then exits */
+    pid = fork();
+    if (pid == 0) {
+        pause();
+        printf(" -- child caught signal, exiting\n");
+        exit(2);
+    }
+    printf(" -- child created (pid %d)\n", (int) pid);
+
+    test_no_kevents();
+    kevent_add(kqfd, &kev, pid, EVFILT_PROC, EV_ADD, 0, 0, NULL);
+
+    /* Cause the child to exit, then retrieve the event */
+    printf(" -- killing process %d\n", (int) pid);
+    if (kill(pid, SIGUSR1) < 0)
+        err(1, "kill");
     kevent_cmp(&kev, kevent_get(kqfd));
+    test_no_kevents();
 
     success();
 }
 
+#ifdef TODO
 void
 test_kevent_signal_disable(void)
 {
@@ -91,7 +110,7 @@ test_kevent_signal_disable(void)
     sigaddset(&mask, SIGUSR1);
     if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
         err(1, "sigprocmask");
-    if (kill(getpid(), SIGUSR1) < 0)
+    if (kill(getpid(), SIGKILL) < 0)
         err(1, "kill");
 
     test_no_kevents();
@@ -201,14 +220,13 @@ test_evfilt_proc()
 {
     kqfd = kqueue();
 
-    /* Create a child that sleeps for a few seconds and then exits */
-    child = fork();
-    if (child == 0) {
-        sleep(3);
-        exit(123);
-    }
+    signal(SIGUSR1, sig_handler);
 
     add_and_delete();
+    event_trigger();
+
+    signal(SIGUSR1, SIG_DFL);
+
 #if TODO
     test_kevent_signal_add();
     test_kevent_signal_del();

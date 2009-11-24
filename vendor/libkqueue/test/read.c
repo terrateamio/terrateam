@@ -304,7 +304,7 @@ void
 test_evfilt_read()
 {
     /* Create a connected pair of full-duplex sockets for testing socket events */
-    if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sockfd) < 0) 
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd) < 0) 
         abort();
 
     kqfd = kqueue();

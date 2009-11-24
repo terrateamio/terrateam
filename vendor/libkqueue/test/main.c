@@ -255,9 +255,6 @@ main(int argc, char **argv)
     test_kqueue();
     test_kqueue_close();
 
-    if (test_proc) 
-        test_evfilt_proc();
-
     if (test_socket) 
         test_evfilt_read();
     if (test_signal) 
@@ -270,6 +267,8 @@ main(int argc, char **argv)
 #endif
     if (test_timer) 
         test_evfilt_timer();
+    if (test_proc) 
+        test_evfilt_proc();
 
     printf("\n---\n"
             "+OK All %d tests completed.\n", testnum - 1);

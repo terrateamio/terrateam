@@ -41,7 +41,7 @@
 
 <h1>libkqueue</h1>
 
-libkqueue is a portable userspace implementation of the <a href="http://www.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2">kqueue(2)</a> kernel event notification mechanism. Initial efforts are focused on porting the kqueue API to the Linux 2.6 kernel.
+libkqueue is a portable userspace implementation of the <a href="http://www.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2">kqueue(2)</a> kernel event notification mechanism. Initial efforts are focused on porting the kqueue API to the Linux 2.6 kernel. There is also an experimental Solaris port (currently broken). 
 
 <h2>Download</h2>
 
@@ -157,6 +157,8 @@ libkqueue currently requires the following:
 <li>Linux 2.6.22 or higher
 <li>glibc 2.8 or higher
 </ul>
+
+The Solaris port requires Solaris 10 or higher, and uses the GNU compiler and toolchain.
 
 <h2>Usage</h2>
 

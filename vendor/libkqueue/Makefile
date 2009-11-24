@@ -21,8 +21,8 @@ include config.mk
 
 build:
 	$(CC) $(CFLAGS) -c $(SOURCES)
-	ar rcs libkqueue.a *.o
-	gcc -shared -Wl,-soname,libkqueue.so -o libkqueue.so *.o
+	$(AR) rcs $(PROGRAM).a *.o
+	$(LD) $(LDFLAGS) -o $(PROGRAM).so *.o $(LDADD)
 
 install:
 	$(INSTALL) -d -m 755 $(INCLUDEDIR)/kqueue/sys

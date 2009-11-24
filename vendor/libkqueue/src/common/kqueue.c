@@ -37,7 +37,12 @@ static pthread_rwlock_t    kqlist_mtx 	= PTHREAD_RWLOCK_INITIALIZER;
 static sigset_t saved_sigmask;
 
 static int kqgc_pfd[2];
+
+#ifdef SOLARIS
+static pthread_once_t kqueue_init_ctl = { PTHREAD_ONCE_INIT };
+#else
 static pthread_once_t kqueue_init_ctl = PTHREAD_ONCE_INIT;
+#endif
 static pthread_cond_t kqueue_init_cond = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t kqueue_init_mtx = PTHREAD_MUTEX_INITIALIZER;
 static int kqueue_init_status = 0;
@@ -147,7 +152,7 @@ kqueue_close_wait(void *unused)
 
         dbg_printf("gc: waiting for events on %d kqfds", n - 1);
 
-        n = poll(&fds[0], n, -1);
+        n = poll(fds, n, -1);
         if (n == 0)
             continue;           /* Spurious wakeup */
         if (n < 0) {
@@ -226,13 +231,28 @@ kqueue_init(void)
 {
     pthread_t tid;
 	
-    if (socketpair(AF_LOCAL, SOCK_STREAM, 0, kqgc_pfd) < 0) 
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, kqgc_pfd) < 0) 
         goto errout;
 
     pthread_mutex_lock(&kqueue_init_mtx);
-    pthread_create(&tid, NULL, kqueue_close_wait, NULL);
+    if (pthread_create(&tid, NULL, kqueue_close_wait, NULL) != 0) 
+        goto err1;
     pthread_cond_wait(&kqueue_init_cond, &kqueue_init_mtx); 
+
+    if (kqueue_init_hook() < 0)
+        goto err2;
+
     pthread_mutex_unlock(&kqueue_init_mtx);
+
+    return;
+
+err2:
+    pthread_cancel(tid);
+
+err1:
+    pthread_mutex_unlock(&kqueue_init_mtx);
+    close(kqgc_pfd[0]);
+    close(kqgc_pfd[1]);
 
 errout:
     kqueue_init_status = -1;
@@ -249,7 +269,10 @@ kqueue(void)
         return (-1);
     pthread_mutex_init(&kq->kq_mtx, NULL);
 
-    if (socketpair(AF_LOCAL, SOCK_STREAM, 0, kq->kq_sockfd) < 0) 
+    if (kqueue_hook(kq) < 0)
+        goto errout;
+
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, kq->kq_sockfd) < 0) 
         goto errout;
 
     (void) pthread_once(&kqueue_init_ctl, kqueue_init);

@@ -49,6 +49,10 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
     pthread_mutex_init(&dst->kf_mtx, NULL);
     KNOTELIST_INIT(&dst->kf_watchlist);
     KNOTELIST_INIT(&dst->kf_eventlist);
+    if (src->kf_id == 0) {
+        dbg_puts("filter is not implemented");
+        return (0);
+    }
     if (src->kf_init == NULL) {
         dbg_puts("filter has no initializer");
         return (-1);
@@ -62,15 +66,12 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
     }
 
     /* Add the filter's event descriptor to the main fdset */
-    if (dst->kf_pfd <= 0) {
-        dbg_printf("FIXME - filter %s did not return a fd to poll!",
-                filter_name(filter));
-        return (-1);
+    if (dst->kf_pfd > 0) {
+        FD_SET(dst->kf_pfd, &kq->kq_fds);
+        if (dst->kf_pfd > kq->kq_nfds)  
+            kq->kq_nfds = dst->kf_pfd;
+        dbg_printf("fds: added %d (nfds=%d)", dst->kf_pfd, kq->kq_nfds);
     }
-    FD_SET(dst->kf_pfd, &kq->kq_fds);
-    if (dst->kf_pfd > kq->kq_nfds)  
-        kq->kq_nfds = dst->kf_pfd;
-    dbg_printf("fds: added %d (nfds=%d)", dst->kf_pfd, kq->kq_nfds);
     dbg_printf("%s registered", filter_name(filter));
 
     return (0);
@@ -130,7 +131,7 @@ filter_socketpair(struct filter *filt)
 {
     int sockfd[2];
 
-    if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sockfd) < 0)
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd) < 0)
         return (-1);
 
     fcntl(sockfd[0], F_SETFL, O_NONBLOCK);

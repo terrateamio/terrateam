@@ -6,7 +6,7 @@ make_exports="program version target \
               prefix libdir includedir mandir \
               cflags ldflags ldadd libdepends \
               sources mans headers extra_dist subdirs \
-              install"
+              cc cpp ld ar install"
 
 required_headers=
 optional_headers=
@@ -19,12 +19,10 @@ post_configure_hook() {
     return
 }
 
-. ./config.inc
-
 export_to_make() {
   for id in $*
   do
-    uc_id=`echo $id | tr '[:lower:]' '[:upper:]'`;
+    uc_id=`echo $id | $tr '[:lower:]' '[:upper:]'`;
     eval "echo \"$uc_id=\"\$$id\"\" >> config.mk"
   done
 }
@@ -32,12 +30,13 @@ export_to_make() {
 export_to_c() {
   for id in $*
   do
-    uc_id=`echo $id | tr '[:lower:]' '[:upper:]'`;
+    uc_id=`echo $id | $tr '[:lower:]' '[:upper:]'`;
     eval "echo \"#define $uc_id \\\"\$$id\\\"\" >> config.h"
   done
 }
 
 finalize() {
+  uc_id=`echo \"$1\" | $tr '[:lower:]' '[:upper:]'`;
   eval "if [ \"\$$1\" = \"\" ] ; then $1=\"$2\" ; fi"
 }
 
@@ -51,10 +50,19 @@ process_argv() {
     done
 }
 
+process_env() {
+    test -n "$CC" && cc="$CC"
+    test -n "$CPP" && cpp="$CPP"
+    test -n "$CPPFLAGS" && cppflags="$CPPFLAGS"
+    test -n "$CFLAGS" && cflags="$CFLAGS"
+    test -n "$LD" && ld="$LD"
+    test -n "$LDFLAGS" && ldflags="$LDFLAGS"
+    test -n "$AR" && ar="$AR"
+}
  
 check_header() {	 
    sym=`echo "have_$1" | sed 's,[./],_,g'`	 
-   uc_sym=`echo "$sym" | tr '[:lower:]' '[:upper:]'`;
+   uc_sym=`echo "$sym" | $tr '[:lower:]' '[:upper:]'`;
    path=$1
 
    printf "checking for $path.. "
@@ -82,8 +90,8 @@ check_symbol() {
     header=$1
     symbol=$2
 
-    uc_symbol=`echo "HAVE_$symbol" | tr '[:lower:]' '[:upper:]' | sed 's,[./],_,g'`
-    lc_symbol=`echo "have_$symbol" | tr '[:upper:]' '[:lower:]' | sed 's,[./],_,g'`
+    uc_symbol=`echo "HAVE_$symbol" | $tr '[:lower:]' '[:upper:]' | sed 's,[./],_,g'`
+    lc_symbol=`echo "have_$symbol" | $tr '[:upper:]' '[:lower:]' | sed 's,[./],_,g'`
 
     if [ -f "$header" ] ; then
         path="$header"
@@ -119,6 +127,49 @@ check_install() {
     echo "$install"
 }
 
+check_target() {
+    printf "checking operating system type.. "
+    default_target=`uname -s | $tr '[:upper:]' '[:lower:]'`
+    if [ "$default_target" = "sunos" ] ; then
+       default_target="solaris"
+    fi
+    finalize target "$default_target"
+    echo "$target"
+}
+
+check_compiler() {
+    printf "checking for a C compiler.. "
+    if [ "`uname -s`" = "SunOS" ] ; then
+       default_cc="/usr/sfw/bin/gcc"
+    else
+       default_cc="/usr/bin/cc"
+    fi
+    finalize cc "$default_cc"
+    echo "$cc"
+}
+
+check_linker() {
+    printf "checking for a suitable linker.. "
+    if [ "`uname -s`" = "SunOS" ] ; then
+       default_ld="/usr/sfw/bin/gld"
+    else
+       default_ld="/usr/bin/ld"
+    fi
+    ldflags="-shared -soname $program.so $ldflags"
+    finalize ld "$default_ld"
+    echo "$ld"
+}
+
+check_archiver() {
+    printf "checking for a suitable archiver.. "
+    if [ "`uname -s`" = "SunOS" ] ; then
+       default_ar="/usr/sfw/bin/gar"
+    else
+       default_ar="/usr/bin/ar"
+    fi
+    finalize ar "$default_ar"
+    echo "$ar"
+}
 err() {
     echo "*** ERROR *** $*"
     exit 1
@@ -155,6 +206,12 @@ subst_vars() {
 #
 #######################################################################
 
+# Workaround for Solaris "Bad string" issue when LOCALE is undefined
+tr="/usr/bin/tr"
+test -f /usr/xpg4/bin/tr && tr="/usr/xpg4/bin/tr"
+
+. ./config.inc
+
 # Initialize the output files
 #
 for output_file in config.mk $program.pc
@@ -166,10 +223,16 @@ rm -f config.h
 echo "/* AUTOMATICALLY GENERATED -- DO NOT EDIT */" > config.h
 
 process_argv "$*"
+process_env
+
+check_target
+check_compiler
+check_linker
+check_archiver
+check_install
 
 finalize program    "$program"
 finalize version    "$version"
-finalize target     `uname -s | tr '[:upper:]' '[:lower:]'`
 finalize prefix     "/usr/local"
 finalize libdir     "${prefix}/lib"
 finalize includedir "${prefix}/include"
@@ -178,10 +241,6 @@ finalize cflags     "$cflags"
 finalize libdepends "$libdepends"
 finalize ldadd      ""
 finalize ldflags    ""
-finalize cc         "/usr/bin/cc"
-
-echo "checking operating system type.. $target"
-check_install
 
 pre_configure_hook
 

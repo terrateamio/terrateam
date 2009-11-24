@@ -143,9 +143,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         const struct timespec *timeout)
 {
     struct kqueue *kq;
-    struct filter *filt;
-    fd_set fds;
-    int i, rv, n, nret;
+    int rv, n, nret;
 
     errno = 0;
 
@@ -171,52 +169,17 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
     if (nevents > MAX_KEVENT)
         nevents = MAX_KEVENT;
 
-    /*
-     * Wait for one or more filters to have events.
-     */
-wait_for_events:
-    fds = kq->kq_fds;
-    n = pselect(kq->kq_nfds, &fds, NULL , NULL, timeout, NULL);
-    if (n < 0) {
-        if (errno == EINTR) {
-            dbg_puts("signal caught");
-            return (-1);
-        }
-        dbg_perror("pselect(2)");
-        return (-1);
-    }
-    dbg_printf("pselect(2): %d bits set", n);
-    if (n == 0)
-        return (0);
-
-    /* 
-     * Process each event and place it on the eventlist
-     */ 
-    nret = 0;
-    for (i = 0; (i < EVFILT_SYSCOUNT && n > 0 && nevents > 0); i++) {
-        dbg_printf("eventlist: n = %d nevents = %d", n, nevents);
-        filt = &kq->kq_filt[i]; 
-        dbg_printf("pfd[%d] = %d", i, filt->kf_pfd);
-        if (FD_ISSET(filt->kf_pfd, &fds)) {
-            dbg_printf("event(s) for filter #%d", i);
-            filter_lock(filt);
-            rv = filt->kf_copyout(filt, eventlist, nevents);
-            if (rv < 0) {
-                filter_unlock(filt);
-                dbg_puts("kevent_copyout failed");
-                return (-1);
-            }
-            nret += rv;
-            eventlist += rv;
-            nevents -= rv;
-            n--;
-            filter_unlock(filt);
-        }
-    }
-
     /* Handle spurious wakeups where no events are generated. */
-    if (nret == 0)
-        goto wait_for_events;
+    for (nret = 0; nret == 0; 
+            nret = kevent_copyout(kq, n, eventlist, nevents)) 
+    {
+        /* Wait for one or more events. */
+        n = kevent_wait(kq, timeout);
+        if (n < 0)
+            return (-1);
+        if (n == 0)
+            return (0);             /* Timeout */
+    }
 
     return (nret);
 }

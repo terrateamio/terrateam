@@ -15,6 +15,8 @@ pre_configure_hook() {
             ldadd="$ldadd ../libkqueue.a -lpthread -lrt"
          }
 
+  test "$target" = "solaris" && ldadd="$ldadd -lsocket"
+
   check_symbol $sys_event_h EV_DISPATCH
   check_symbol $sys_event_h EV_RECEIPT
   check_symbol $sys_event_h NOTE_TRUNCATE 
