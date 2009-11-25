@@ -68,6 +68,12 @@ publish-www:
 clean:
 	rm -f *.a $(OBJS) *.so rpm.spec
 
+fresh-build:
+	rm -rf /tmp/$(PROGRAM)-testbuild 
+	svn co svn://mark.heily.com/libkqueue/trunk /tmp/$(PROGRAM)-testbuild 
+	cd /tmp/$(PROGRAM)-testbuild && ./configure && make check
+	rm -rf /tmp/$(PROGRAM)-testbuild 
+
 merge:
 	svn diff $(REPOSITORY)/branches/stable $(REPOSITORY)/trunk | gvim -
 	@printf "Merge changes from the trunk to the stable branch [y/N]? "
