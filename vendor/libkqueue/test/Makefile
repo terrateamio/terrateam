@@ -20,7 +20,7 @@ kqtest: $(SOURCES)
 	if [ ! -f /usr/include/sys/event.h ] ; then \
         if [ ! -f libkqueue.a ] ; then \
           cd .. && ./configure --debug=yes && make ; \
-          cp ../libkqueue.a . ; \
+          cp libkqueue.a test ; \
 		fi \
 	fi
 	$(CC) -o kqtest $(CFLAGS) $(SOURCES) $(LDADD)
