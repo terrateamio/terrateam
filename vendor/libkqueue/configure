@@ -5,7 +5,7 @@ c_exports="program version target cflags"
 make_exports="program version target \
               prefix libdir includedir mandir \
               cflags ldflags ldadd libdepends \
-              sources mans headers extra_dist subdirs \
+              sources objs mans headers extra_dist subdirs \
               cc cpp ld ar install"
 
 required_headers=
@@ -200,6 +200,10 @@ subst_vars() {
   chmod 400 $outfile
 }
 
+compute_objs() {
+    objs="echo \"$(SOURCES)\" | sed 's/\.c/\.o/g'"
+}
+
 #######################################################################
 #
 #                           MAIN()
@@ -251,6 +255,8 @@ done
 check_headers $optional_headers
 
 post_configure_hook
+
+objs="`echo \"$sources\" | sed 's/\.c/\.o/g'`"
 
 subst_vars "$program.pc"
 subst_vars "$program.la"
