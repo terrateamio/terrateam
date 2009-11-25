@@ -5,7 +5,7 @@ c_exports="program version target cflags"
 make_exports="program version target \
               prefix libdir includedir mandir \
               cflags ldflags ldadd libdepends \
-              sources objs mans headers extra_dist subdirs \
+              sources objs deps mans headers extra_dist subdirs \
               cc cpp ld ar install"
 
 required_headers=
@@ -241,6 +241,7 @@ finalize cflags     "$cflags"
 finalize libdepends "$libdepends"
 finalize ldadd      ""
 finalize ldflags    ""
+finalize deps       ""
 
 pre_configure_hook
 

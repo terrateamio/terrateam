@@ -4,6 +4,7 @@ cflags="-fPIC -I./include -I./src/common -Wall -Werror"
 sources="src/common/filter.c src/common/knote.c 
          src/common/kevent.c src/common/kqueue.c" 
 libdepends=""
+deps="src/common/private.h"
 mans="kqueue.2"
 headers="src/common/private.h"
 extra_dist="*.in"
