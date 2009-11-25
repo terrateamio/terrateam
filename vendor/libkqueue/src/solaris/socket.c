@@ -57,13 +57,14 @@ evfilt_socket_copyin(struct filter *filt,
         return (-1);
     }
 
-    if (src->flags & EV_ADD && KNOTE_EMPTY(dst)) {
+    if (src->filter == EVFILT_READ)
+        events = POLLIN;
+    else
+        events = POLLOUT;
+
+    if (src->flags & EV_ADD && KNOTE_EMPTY(dst)) 
         memcpy(&dst->kev, src, sizeof(*src));
-        if (src->filter == EVFILT_READ)
-            events = POLLIN;
-        else
-            events = POLLOUT;
-    }
+
     if (src->flags & EV_DELETE || src->flags & EV_DISABLE) {
         rv = port_dissociate(port, PORT_SOURCE_FD, src->ident);
         if (rv < 0) {

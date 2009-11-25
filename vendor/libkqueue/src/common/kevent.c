@@ -59,6 +59,10 @@ kevent_copyin(struct kqueue *kq, const struct kevent *src, int nchanges,
     struct filter *filt;
     int kn_alloc,status;
 
+    /* To avoid compiler warnings.. perhaps there is a better way */
+    dst = NULL;
+    kn_alloc = 0;
+
     for (; nchanges > 0; src++, nchanges--) {
 
         status = filter_lookup(&filt, kq, src->filter);

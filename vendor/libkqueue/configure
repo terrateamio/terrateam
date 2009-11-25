@@ -200,10 +200,6 @@ subst_vars() {
   chmod 400 $outfile
 }
 
-compute_objs() {
-    objs="echo \"$(SOURCES)\" | sed 's/\.c/\.o/g'"
-}
-
 #######################################################################
 #
 #                           MAIN()
