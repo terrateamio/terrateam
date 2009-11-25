@@ -19,12 +19,11 @@ DIST=heily.com:$$HOME/public_html/$(PROGRAM)/dist
 
 include config.mk
 
-build:
-	$(CC) $(CFLAGS) -c $(SOURCES)
-	$(AR) rcs $(PROGRAM).a *.o
-	$(LD) $(LDFLAGS) -o $(PROGRAM).so *.o $(LDADD)
+$(PROGRAM).so: $(OBJS)
+	$(AR) rcs $(PROGRAM).a $(OBJS)
+	$(LD) $(LDFLAGS) -o $(PROGRAM).so $(OBJS) $(LDADD)
 
-install:
+install: $(PROGRAM).so
 	$(INSTALL) -d -m 755 $(INCLUDEDIR)/kqueue/sys
 	$(INSTALL) -m 644 include/sys/event.h $(INCLUDEDIR)/kqueue/sys/event.h
 	$(INSTALL) -d -m 755 $(LIBDIR) 
@@ -64,7 +63,7 @@ publish-www:
 	rm ~/public_html/libkqueue/*.html ; cp -R www/*.html ~/public_html/libkqueue/
 
 clean:
-	rm -f a.out *.a *.o *.so
+	rm -f *.a $(OBJS) *.so rpm.spec
 
 merge:
 	svn diff $(REPOSITORY)/branches/stable $(REPOSITORY)/trunk | gvim -
@@ -73,4 +72,4 @@ merge:
 	echo "ok"
 
 distclean: clean
-	rm -f *.tar.gz config.mk config.h libkqueue.pc
+	rm -f *.tar.gz config.mk config.h $(PROGRAM).pc $(PROGRAM).la

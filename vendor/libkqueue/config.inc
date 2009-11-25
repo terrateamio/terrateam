@@ -1,7 +1,8 @@
 program="libkqueue"
 version="0.3"
 cflags="-fPIC -I./include -I./src/common -Wall -Werror"
-sources="src/common/*.c" 
+sources="src/common/filter.c src/common/knote.c 
+         src/common/kevent.c src/common/kqueue.c" 
 libdepends=""
 mans="kqueue.2"
 headers="src/common/private.h"
@@ -16,7 +17,9 @@ author="Mark Heily"
 
 pre_configure_hook() {
   if [ "$debug" = "yes" ] ; then
-      cflags="$cflags -DKQUEUE_DEBUG"
+      cflags="$cflags -g3 -O0 -DKQUEUE_DEBUG"
+  else
+      cflags="$cflags -g -O2"
   fi
 
   optional_headers="err.h"
