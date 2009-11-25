@@ -19,6 +19,8 @@ DIST=heily.com:$$HOME/public_html/$(PROGRAM)/dist
 
 include config.mk
 
+.PHONY :: install uninstall check dist dist-upload publish-www clean merge distclean fresh-build
+
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $(CFLAGS) $<
 
