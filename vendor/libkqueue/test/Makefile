@@ -18,7 +18,10 @@ include config.mk
 
 kqtest: $(SOURCES)
 	if [ ! -f /usr/include/sys/event.h ] ; then \
-        cd .. && ./configure --debug=yes && make build ; \
+        if [ ! -f libkqueue.a ] ; then \
+          cd .. && ./configure --debug=yes && make ; \
+          cp ../libkqueue.a . ; \
+		fi \
 	fi
 	$(CC) -o kqtest $(CFLAGS) $(SOURCES) $(LDADD)
 
@@ -42,4 +45,4 @@ distclean: clean
 	rm -f config.mk config.h
 
 clean:
-	rm -f *.o kqtest
+	rm -f *.o *.a kqtest

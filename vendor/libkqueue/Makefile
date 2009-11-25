@@ -19,6 +19,9 @@ DIST=heily.com:$$HOME/public_html/$(PROGRAM)/dist
 
 include config.mk
 
+%.o: %.c $(DEPS)
+	$(CC) -c -o $@ $(CFLAGS) $<
+
 $(PROGRAM).so: $(OBJS)
 	$(AR) rcs $(PROGRAM).a $(OBJS)
 	$(LD) $(LDFLAGS) -o $(PROGRAM).so $(OBJS) $(LDADD)
