@@ -12,7 +12,7 @@ pre_configure_hook() {
       || {
             sys_event_h="../include/sys/event.h"
             cflags="$cflags -I../include"
-            ldadd="$ldadd ../libkqueue.a -lpthread -lrt"
+            ldadd="$ldadd libkqueue.a -lpthread -lrt"
          }
 
   test "$target" = "solaris" && ldadd="$ldadd -lsocket"
