@@ -68,7 +68,7 @@ publish-www:
 	rm ~/public_html/libkqueue/*.html ; cp -R www/*.html ~/public_html/libkqueue/
 
 clean:
-	rm -f *.a $(OBJS) *.so rpm.spec
+	rm -f *.a $(OBJS) *.so 
 
 fresh-build:
 	rm -rf /tmp/$(PROGRAM)-testbuild 
@@ -83,4 +83,4 @@ merge:
 	echo "ok"
 
 distclean: clean
-	rm -f *.tar.gz config.mk config.h $(PROGRAM).pc $(PROGRAM).la
+	rm -f *.tar.gz config.mk config.h $(PROGRAM).pc $(PROGRAM).la rpm.spec
