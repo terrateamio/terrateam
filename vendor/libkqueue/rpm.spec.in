@@ -31,20 +31,18 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-build
 @@PKG_DESCRIPTION@@
 
 %prep
-
 tar zxvf ../SOURCES/@@PROGRAM@@-@@VERSION@@.tar.gz
 mv @@PROGRAM@@-@@VERSION@@/* .
 
 %build
-
 ./configure --prefix=/usr
 make
 
 %install
-
 make DESTDIR=%buildroot install
 
 %clean
+[ ${RPM_BUILD_ROOT} != "/" ] && rm -rf ${RPM_BUILD_ROOT}
 
 %post
 /sbin/ldconfig
