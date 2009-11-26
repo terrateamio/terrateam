@@ -14,10 +14,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-# Based on suggestions from http://blag.wiki.aktivix.org/Rpm_tips
-#
-%define _builddir ./
-%define _rpmdir ./
+%define _topdir ./rpm
 %define _rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm
 
 Name:       @@PROGRAM@@
@@ -34,23 +31,20 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-build
 @@PKG_DESCRIPTION@@
 
 %prep
-#echo %_target
-#echo %_target_alias
-#echo %_target_cpu
-#echo %_target_os
-#echo %_target_vendor
-echo Building %{name}-%{version}-%{release}
 
-%setup -q -n %{name}-%{version}
+tar zxvf ../SOURCES/@@PROGRAM@@-@@VERSION@@.tar.gz
+mv @@PROGRAM@@-@@VERSION@@/* .
 
 %build
+
+./configure --prefix=/usr
 make
 
 %install
+
 make DESTDIR=%buildroot install
 
 %clean
-[ ${RPM_BUILD_ROOT} != "/" ] && rm -rf ${RPM_BUILD_ROOT}
 
 %post
 /sbin/ldconfig
@@ -61,6 +55,12 @@ make DESTDIR=%buildroot install
 %files
 %defattr(-,root,root)
 
-#TODO
+/usr/include/kqueue/sys/event.h
+/usr/lib/libkqueue.so
+/usr/lib/libkqueue.la
+/usr/lib/libkqueue.a
+/usr/lib/pkgconfig/libkqueue.pc
+/usr/share/man/man2/kqueue.2.gz
+/usr/share/man/man2/kevent.2.gz
 
 %changelog

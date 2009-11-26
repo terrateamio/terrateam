@@ -16,10 +16,11 @@
 
 REPOSITORY=svn+ssh://mark.heily.com/$$HOME/svn/$(PROGRAM)
 DIST=heily.com:$$HOME/public_html/$(PROGRAM)/dist
+DISTFILE=$(PROGRAM)-$(VERSION).tar.gz
 
 include config.mk
 
-.PHONY :: install uninstall check dist dist-upload publish-www clean merge distclean fresh-build
+.PHONY :: install uninstall check dist dist-upload publish-www clean merge distclean fresh-build rpm
 
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $(CFLAGS) $<
@@ -32,7 +33,9 @@ install: $(PROGRAM).so
 	$(INSTALL) -d -m 755 $(INCLUDEDIR)/kqueue/sys
 	$(INSTALL) -m 644 include/sys/event.h $(INCLUDEDIR)/kqueue/sys/event.h
 	$(INSTALL) -d -m 755 $(LIBDIR) 
-	$(INSTALL) -m 644 $(PROGRAM).so $(PROGRAM).la $(PROGRAM).a $(LIBDIR)
+	$(INSTALL) -m 644 $(PROGRAM).so $(LIBDIR)
+	$(INSTALL) -m 644 $(PROGRAM).la $(LIBDIR)
+	$(INSTALL) -m 644 $(PROGRAM).a $(LIBDIR)
 	$(INSTALL) -d -m 755 $(LIBDIR)/pkgconfig
 	$(INSTALL) -m 644 libkqueue.pc $(LIBDIR)/pkgconfig
 	$(INSTALL) -d -m 755 $(MANDIR)/man2
@@ -50,7 +53,7 @@ uninstall:
 check:
 	cd test && ./configure && make check
 
-dist:
+$(DISTFILE): $(OBJS)
 	cd test && make distclean || true
 	mkdir $(PROGRAM)-$(VERSION)
 	cp  Makefile ChangeLog configure config.inc      \
@@ -58,8 +61,13 @@ dist:
         $(PROGRAM)-$(VERSION)
 	cp -R $(SUBDIRS) $(PROGRAM)-$(VERSION)
 	rm -rf `find $(PROGRAM)-$(VERSION) -type d -name .svn`
+	cd $(PROGRAM)-$(VERSION) && rm $(OBJS)
 	tar zcf $(PROGRAM)-$(VERSION).tar.gz $(PROGRAM)-$(VERSION)
 	rm -rf $(PROGRAM)-$(VERSION)
+
+dist:
+	rm -f $(DISTFILE)
+	make $(DISTFILE)
 
 dist-upload: dist
 	scp $(PROGRAM)-$(VERSION).tar.gz $(DIST)
@@ -84,3 +92,14 @@ merge:
 
 distclean: clean
 	rm -f *.tar.gz config.mk config.h $(PROGRAM).pc $(PROGRAM).la rpm.spec
+
+rpm: $(DISTFILE)
+	rm -rf rpm *.rpm *.deb
+	mkdir -p rpm/BUILD rpm/RPMS rpm/SOURCES rpm/SPECS rpm/SRPMS
+	mkdir -p rpm/RPMS/i386 rpm/RPMS/x86_64
+	cp $(DISTFILE) rpm/SOURCES 
+	rpmbuild -bb rpm.spec
+	mv ./rpm/RPMS/* .
+	rm -rf rpm
+	fakeroot alien --scripts *.rpm
+

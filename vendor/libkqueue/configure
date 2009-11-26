@@ -22,6 +22,13 @@ post_configure_hook() {
 export_to_make() {
   for id in $*
   do
+
+    # Prepend $DESTDIR to installation directories
+    case "$id" in
+        prefix|libdir|includedir|mandir)  
+        eval "$id=\"\\\$\\\$DESTDIR\$$id\""
+    esac
+
     uc_id=`echo $id | $tr '[:lower:]' '[:upper:]'`;
     eval "echo \"$uc_id=\"\$$id\"\" >> config.mk"
   done
@@ -150,12 +157,22 @@ check_compiler() {
 
 check_linker() {
     printf "checking for a suitable linker.. "
-    if [ "`uname -s`" = "SunOS" ] ; then
-       default_ld="/usr/sfw/bin/gld"
-    else
-       default_ld="/usr/bin/ld"
-    fi
-    ldflags="-shared -soname $program.so $ldflags"
+
+    # Disabled due to problems with ld(1) under Linux
+    #if [ "`uname -s`" = "SunOS" ] ; then
+    #   default_ld="/usr/sfw/bin/gld"
+    #else
+    #   default_ld="/usr/bin/ld"
+    #fi
+    #ldflags="-shared -export-dynamic -soname $program.so $ldflags"
+
+    # Workaround for "hidden symbol <foo> is referenced by DSO" linker error
+    # seen when compiling libdispatch.
+    # Appears to be a problem with GCC 4.0 and binutils
+    #
+    default_ld="$cc"
+    ldflags="-shared -Wl,-soname,$program.so $ldflags"
+
     finalize ld "$default_ld"
     echo "$ld"
 }

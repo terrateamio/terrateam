@@ -33,7 +33,7 @@ valgrind: kqtest
 	valgrind --tool=memcheck --leak-check=full --show-reachable=yes --num-callers=20 --track-fds=yes ./kqtest
 
 check-installed:
-	gcc $(CFLAGS) -o kqtest -I$(PREFIX)/kqueue test.c -lkqueue
+	$(CC) -o kqtest $(CFLAGS) $(SOURCES) $(LDADD) -lkqueue
 	./kqtest
 
 check-libtool:
@@ -41,8 +41,9 @@ check-libtool:
 	libtool --mode=link gcc -g -O0 -o kqtest *.o $(LIBDIR)/libkqueue.la
 	./kqtest
 
-distclean: clean
+distclean: clean 
 	rm -f config.mk config.h
+	for x in libdispatch ; do cd $$x && make distclean ; done
 
 clean:
 	rm -f *.o *.a kqtest
