@@ -129,7 +129,10 @@ int         kevent_copyout(struct kqueue *, int, struct kevent *, int);
 void 		kevent_free(struct kqueue *);
 
 struct kqueue * kqueue_lookup(int kq);
-int         kqueue_init_hook(void);
-int         kqueue_hook(struct kqueue *);
+/* TODO: make a kqops struct */
+int         kqueue_init_hook(void);     // in hook.c
+int         kqlist_insert_hook(struct kqueue *);       // in hook.c
+int         kqueue_gc(void);        // in hook.c
+void        kqueue_free(struct kqueue *);
 
 #endif  /* ! _KQUEUE_PRIVATE_H */

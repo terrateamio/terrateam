@@ -14,19 +14,64 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/epoll.h>
+#include <stdlib.h>
+
 #include "sys/event.h"
 #include "private.h"
+
+static int gcfd;
+
+static int
+gcfd_ctl(int op, struct kqueue *kq)
+{
+    struct epoll_event evt;
+
+    evt.data.ptr = kq;
+    evt.events = 0;
+    return (epoll_ctl(gcfd, op, kq->kq_sockfd[0], &evt));
+}
 
 int
 kqueue_init_hook(void)
 {
+    int epfd;
+
+    if ((epfd = epoll_create(1)) < 0) {
+        dbg_perror("epoll_create(2)");
+        return (-1);
+    }
+
+    gcfd = epfd;
+
     return (0);
 }
 
 int
-kqueue_hook(struct kqueue *kq)
+kqueue_gc(void)
 {
-    return (0);
+    struct epoll_event evt;
+    struct kqueue *kq;
+    int rv;
+
+    do {
+        rv = epoll_wait(gcfd, &evt, 1, 0);
+        if (rv > 0) {
+            kq = (struct kqueue *)evt.data.ptr;
+            rv = gcfd_ctl(EPOLL_CTL_DEL, kq);
+            kqueue_free(kq);
+        } else if (rv < 0) {
+            dbg_perror("epoll_wait(2)");
+        }
+    } while (rv > 0);
+
+    return (rv);
+}
+
+int
+kqlist_insert_hook(struct kqueue *kq)
+{
+    return (gcfd_ctl(EPOLL_CTL_ADD, kq));
 }
 
 int
