@@ -116,6 +116,14 @@ The EVFILT_PROC filter only supports the NOTE_EXIT flag, and the <code>ident</co
 
 </ol>
 
+Here are the issues to be aware of when using this library under any platform:<br>
+
+<ol>
+<li>When a kqueue descriptor is closed, it's resources are not immediately reclaimed. Instead,
+    they will be freed the next time that the <code>kqueue(2)</code> function is called.
+</li>    
+</ol>
+
 <h2>Future Plans</h2>
 
 In the future, I plan to add three more backends. One will be for Solaris and take advantage of the event port mechanism described in <a href="http://docs.sun.com/app/docs/doc/816-5168/port-create-3c?l=en&a=view&q=port_create">port_create(3C)</a>. The second will be a generic POSIX backend that does not use any non-portable system calls. The third will be a Microsoft Windows port that uses <code>WaitForMultipleObjects()</code>.
