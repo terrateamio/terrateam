@@ -77,6 +77,7 @@ publish-www:
 
 clean:
 	rm -f *.a $(OBJS) *.so 
+	cd test && make clean || true
 
 fresh-build:
 	rm -rf /tmp/$(PROGRAM)-testbuild 
