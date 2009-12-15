@@ -7,6 +7,7 @@ sources="main.c proc.c read.c signal.c timer.c vnode.c"
 
 pre_configure_hook() {
  
+  check_header "err.h"
   check_header "sys/event.h" \
       && sys_event_h="sys/event.h" \
       || {
