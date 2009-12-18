@@ -102,9 +102,9 @@ kevent_copyout(struct kqueue *kq, int nready,
 
     nret = 0;
     for (i = 0; (i < EVFILT_SYSCOUNT && nready > 0 && nevents > 0); i++) {
-        dbg_printf("eventlist: n = %d nevents = %d", nready, nevents);
+//        dbg_printf("eventlist: n = %d nevents = %d", nready, nevents);
         filt = &kq->kq_filt[i]; 
-        dbg_printf("pfd[%d] = %d", i, filt->kf_pfd);
+//        dbg_printf("pfd[%d] = %d", i, filt->kf_pfd);
         if (FD_ISSET(filt->kf_pfd, &kq->kq_rfds)) {
             dbg_printf("event(s) for filter #%d", i);
             filter_lock(filt);
