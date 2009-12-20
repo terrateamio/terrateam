@@ -162,6 +162,7 @@ filter_lookup(struct filter **filt, struct kqueue *kq, short id)
 const char *
 filter_name(short filt)
 {
+    unsigned int id;
     const char *fname[EVFILT_SYSCOUNT] = {
         "EVFILT_READ",
         "EVFILT_WRITE",
@@ -176,10 +177,11 @@ filter_name(short filt)
         "EVFILT_USER"
     };
 
-    if (~filt >= EVFILT_SYSCOUNT)
-        return "EVFILT_BAD_RANGE";
+    id = ~filt;
+    if (id < 0 || id >= EVFILT_SYSCOUNT)
+        return "EVFILT_INVALID";
     else
-        return fname[~filt];
+        return fname[id];
 }
 
 int

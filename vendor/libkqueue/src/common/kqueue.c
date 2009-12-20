@@ -56,7 +56,7 @@ kqueue_lookup(int kq)
 void
 kqueue_free(struct kqueue *kq)
 {
-    dbg_printf("kqueue_free() on fd %d", kq->kq_sockfd[1]);
+    dbg_printf("fd=%d", kq->kq_sockfd[1]);
     LIST_REMOVE(kq, entries);
     filter_unregister_all(kq);
     free(kq);
@@ -98,7 +98,7 @@ kqueue(void)
     kqcount++;
     pthread_rwlock_unlock(&kqlist_mtx);
 
-    dbg_printf("created kqueue: fd=%d", kq->kq_sockfd[1]);
+    dbg_printf("created kqueue, fd=%d", kq->kq_sockfd[1]);
     return (kq->kq_sockfd[1]);
 
 errout:

@@ -134,7 +134,7 @@ kevent_flags_dump(struct kevent *kev)
     return (buf);
 }
 
-/* Copied from ../kevent.c kevent_dump() and improved */
+/* TODO - backport changes from src/common/kevent.c kevent_dump() */
 const char *
 kevent_to_str(struct kevent *kev)
 {
