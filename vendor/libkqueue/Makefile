@@ -105,3 +105,6 @@ rpm: clean $(DISTFILE)
 	rmdir i386 x86_64    # WORKAROUND: These aren't supposed to exist
 	fakeroot alien --scripts *.rpm
 
+debug-install:
+	./configure --prefix=/usr --debug=yes
+	make clean && make && sudo make install
