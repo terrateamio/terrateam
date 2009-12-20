@@ -32,16 +32,97 @@
 #include "sys/event.h"
 #include "private.h"
 
+static char *
+kevent_filter_dump(const struct kevent *kev)
+{
+    char *buf;
+
+    if ((buf = calloc(1, 64)) == NULL)
+        abort();
+
+    snprintf(buf, 64, "%d (%s)", kev->filter, filter_name(kev->filter));
+    return (buf);
+}
+
+static char *
+kevent_fflags_dump(const struct kevent *kev)
+{
+    char *buf;
+
+#define KEVFFL_DUMP(attrib) \
+    if (kev->fflags & attrib) \
+    strncat(buf, #attrib" ", 64);
+
+    if ((buf = calloc(1, 1024)) == NULL)
+        abort();
+
+    snprintf(buf, 1024, "fflags=0x%04x (", kev->fflags);
+    if (kev->filter == EVFILT_VNODE) {
+        KEVFFL_DUMP(NOTE_DELETE);
+        KEVFFL_DUMP(NOTE_WRITE);
+        KEVFFL_DUMP(NOTE_EXTEND);
+        KEVFFL_DUMP(NOTE_ATTRIB);
+        KEVFFL_DUMP(NOTE_LINK);
+        KEVFFL_DUMP(NOTE_RENAME);
+    } else if (kev->filter == EVFILT_USER) {
+        KEVFFL_DUMP(NOTE_FFNOP);
+        KEVFFL_DUMP(NOTE_FFAND);
+        KEVFFL_DUMP(NOTE_FFOR);
+        KEVFFL_DUMP(NOTE_FFCOPY);
+        KEVFFL_DUMP(NOTE_TRIGGER);
+    } 
+    buf[strlen(buf) - 1] = ')';
+
+#undef KEVFFL_DUMP
+
+    return (buf);
+}
+
+static char *
+kevent_flags_dump(const struct kevent *kev)
+{
+    char *buf;
+
+#define KEVFL_DUMP(attrib) \
+    if (kev->flags & attrib) \
+	strncat(buf, #attrib" ", 64);
+
+    if ((buf = calloc(1, 1024)) == NULL)
+        abort();
+
+    snprintf(buf, 1024, "flags=0x%04x (", kev->flags);
+    KEVFL_DUMP(EV_ADD);
+    KEVFL_DUMP(EV_ENABLE);
+    KEVFL_DUMP(EV_DISABLE);
+    KEVFL_DUMP(EV_DELETE);
+    KEVFL_DUMP(EV_ONESHOT);
+    KEVFL_DUMP(EV_CLEAR);
+    KEVFL_DUMP(EV_EOF);
+    KEVFL_DUMP(EV_ERROR);
+    KEVFL_DUMP(EV_DISPATCH);
+    KEVFL_DUMP(EV_RECEIPT);
+    buf[strlen(buf) - 1] = ')';
+
+#undef KEVFL_DUMP
+
+    return (buf);
+}
+
 const char *
-kevent_dump(struct kevent *kev)
+kevent_dump(const struct kevent *kev)
 {
     char buf[512];
-    snprintf(&buf[0], sizeof(buf), "[filter=%d,flags=%d,ident=%u,udata=%p]", 
-            kev->filter,
-            kev->flags,
+
+    snprintf(&buf[0], sizeof(buf), 
+            "[ident=%d, filter=%s, %s, %s, data=%d, udata=%p]",
             (u_int) kev->ident,
+            kevent_filter_dump(kev),
+            kevent_flags_dump(kev),
+            kevent_fflags_dump(kev),
+            (int) kev->data,
             kev->udata);
-    return (strdup(buf));
+
+    return (strdup(buf)); /* FIXME: memory leak */
 }
 
 static void
@@ -63,11 +144,15 @@ kevent_copyin(struct kqueue *kq, const struct kevent *src, int nchanges,
     dst = NULL;
     kn_alloc = 0;
 
+    dbg_printf("processing %d changes", nchanges);
+
     for (; nchanges > 0; src++, nchanges--) {
 
         status = filter_lookup(&filt, kq, src->filter);
         if (status < 0) 
             goto err_out_unlocked;
+
+        dbg_printf("%d %s\n", nchanges, kevent_dump(src));
 
         filter_lock(filt);
         /*
@@ -81,7 +166,6 @@ kevent_copyin(struct kqueue *kq, const struct kevent *src, int nchanges,
                    status = -ENOMEM;
                    goto err_out;
                }
-               dbg_puts(kevent_dump(&dst->kev));
                kn_alloc = 1;
            } else if (src->flags & EV_ENABLE 
                    || src->flags & EV_DISABLE

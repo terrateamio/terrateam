@@ -36,9 +36,9 @@
 #define MAX_KEVENT  512
 
 #ifdef KQUEUE_DEBUG
-# define dbg_puts(str)           fprintf(stderr, "%s\n", str)
-# define dbg_printf(fmt,...)     fprintf(stderr, fmt"\n", __VA_ARGS__)
-# define dbg_perror(str)         fprintf(stderr, "%s: %s\n", str, strerror(errno))
+# define dbg_puts(str)           fprintf(stderr, "%s(): %s\n", __func__,str)
+# define dbg_printf(fmt,...)     fprintf(stderr, "%s(): "fmt"\n", __func__,__VA_ARGS__)
+# define dbg_perror(str)         fprintf(stderr, "%s(): %s: %s\n", __func__,str, strerror(errno))
 #else
 # define dbg_puts(str)           ;
 # define dbg_printf(fmt,...)     ;
@@ -123,7 +123,7 @@ int         filter_raise(struct filter *);
 #define     filter_unlock(f) pthread_mutex_unlock(&(f)->kf_mtx)
 
 int 		kevent_init(struct kqueue *);
-const char * kevent_dump(struct kevent *);
+const char * kevent_dump(const struct kevent *);
 int         kevent_wait(struct kqueue *, const struct timespec *);
 int         kevent_copyout(struct kqueue *, int, struct kevent *, int);
 void 		kevent_free(struct kqueue *);
