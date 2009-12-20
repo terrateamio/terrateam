@@ -70,7 +70,9 @@ kevent_fflags_dump(const struct kevent *kev)
         KEVFFL_DUMP(NOTE_FFOR);
         KEVFFL_DUMP(NOTE_FFCOPY);
         KEVFFL_DUMP(NOTE_TRIGGER);
-    } 
+    }  else {
+        strncat(buf, " ", 1);
+    }
     buf[strlen(buf) - 1] = ')';
 
 #undef KEVFFL_DUMP
@@ -114,7 +116,7 @@ kevent_dump(const struct kevent *kev)
     char buf[512];
 
     snprintf(&buf[0], sizeof(buf), 
-            "[ident=%d, filter=%s, %s, %s, data=%d, udata=%p]",
+            "{ ident=%d, filter=%s, %s, %s, data=%d, udata=%p }",
             (u_int) kev->ident,
             kevent_filter_dump(kev),
             kevent_flags_dump(kev),
@@ -268,6 +270,13 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         if (n == 0)
             return (0);             /* Timeout */
     }
+
+#ifdef KQUEUE_DEBUG
+    for (n = 0; n < nret; n++) {
+        dbg_printf("eventlist[%d] = %s", n, kevent_dump(&eventlist[n]));
+    }
+#endif /* KQUEUE_DEBUG */
+
 
     return (nret);
 }
