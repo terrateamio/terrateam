@@ -37,8 +37,8 @@ knote_new(struct filter *filt)
 void
 knote_free(struct knote *kn)
 {
-    dbg_printf("filt=%d, ident=%u",
-            kn->kev.filter, (u_int) kn->kev.ident);
+    dbg_printf("filter=%s, ident=%u",
+            filter_name(kn->kev.filter), (u_int) kn->kev.ident);
 	LIST_REMOVE(kn, entries);
 	free(kn);
 }
