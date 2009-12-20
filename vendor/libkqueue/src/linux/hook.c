@@ -79,6 +79,7 @@ kevent_wait(struct kqueue *kq, const struct timespec *timeout)
 {
     int n;
 
+    dbg_puts("waiting for events");
     kq->kq_rfds = kq->kq_fds;
     n = pselect(kq->kq_nfds, &kq->kq_rfds, NULL , NULL, timeout, NULL);
     if (n < 0) {
@@ -123,6 +124,5 @@ kevent_copyout(struct kqueue *kq, int nready,
         }
     }
 
-    dbg_printf("returned %d events", nret);
     return (nret);
 }
