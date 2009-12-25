@@ -25,10 +25,13 @@
 pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 int testnum;
 
+void test_countdown(void);
+
 void
 say_hello(void *arg)
 {
 	puts("hello");
+	test_countdown();
 }
 
 void
@@ -67,7 +70,7 @@ test_timer()
 }
 
 void
-test_countdown()
+test_countdown(void)
 {
 	dispatch_apply_f(15,
 			dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,0),
@@ -87,8 +90,7 @@ main(int argc, char **argv)
         argc--;
     }
 
-	//test_timer();
-	test_countdown();
+	test_timer();
 
 	dispatch_main();
     printf("\n---\n"
