@@ -127,9 +127,8 @@ evfilt_user_copyin(struct filter *filt,
     }
 
     if ((!(dst->kev.flags & EV_DISABLE)) && src->fflags & NOTE_TRIGGER) {
-        evfd_raise(filt->kf_pfd);
         dst->kev.fflags |= NOTE_TRIGGER;
-        dbg_puts("knote triggered");
+        evfd_raise(filt->kf_pfd);
     }
 
     return (0);
