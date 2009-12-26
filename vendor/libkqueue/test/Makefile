@@ -16,13 +16,10 @@
 
 include config.mk
 
+all: kqtest
+
 kqtest: $(SOURCES)
-	if [ ! -f /usr/include/sys/event.h ] ; then \
-        if [ ! -f libkqueue.a ] ; then \
-          cd .. && ./configure --debug=yes && make ; \
-          cp libkqueue.a test ; \
-		fi \
-	fi
+	test -f libkqueue.a || ln -s ../libkqueue.a 
 	$(CC) -o kqtest $(CFLAGS) $(SOURCES) $(LDADD)
 
 check: kqtest

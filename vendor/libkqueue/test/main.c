@@ -39,7 +39,6 @@ test_no_kevents(void)
     struct timespec timeo;
     struct kevent kev;
 
-    puts("confirming that there are no events pending");
     memset(&timeo, 0, sizeof(timeo));
     nfds = kevent(kqfd, NULL, 0, &kev, 1, &timeo);
     if (nfds != 0) {
