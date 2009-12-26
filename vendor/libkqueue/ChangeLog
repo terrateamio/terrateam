@@ -1,5 +1,15 @@
-2009-11-15  v0.4    r97
+2009-12-26  v0.4    r133
 ------------------------------------------------------------------------
+
+  * Incomplete and experimental support for Solaris added.
+
+  * Lots of work on the test suite.
+
+  * Replace the buggy GC thread with an event-based alternative.
+
+  * Do not implicitly set EV_CLEAR in the EVFILT_USER filter.
+
+  * Adjust the eventlist when EV_RECEIPT causes it to be modified.
 
 2009-11-10  v0.3    r84
 ------------------------------------------------------------------------
