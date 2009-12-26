@@ -227,24 +227,23 @@ test_kqueue_close(void)
 void
 test_ev_receipt(void)
 {
+    int kq;
     struct kevent kev;
 
     test_begin("EV_RECEIPT");
 
 #if HAVE_EV_RECEIPT
 
+    if ((kq = kqueue()) < 0)
+        err(1, "kqueue");
+
     EV_SET(&kev, SIGUSR2, EVFILT_SIGNAL, EV_ADD | EV_RECEIPT, 0, 0, NULL);
-    if (kevent(kqfd, &kev, 1, &kev, 1, NULL) < 0)
+    if (kevent(kq, &kev, 1, &kev, 1, NULL) < 0)
         err(1, "%s", test_id);
 
     /* TODO: check the receipt */
 
-    /* Delete the kevent */
-    kev.flags = EV_DELETE;
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
-
-    test_no_kevents();
+    close(kq);
 
 #else
     memset(&kev, 0, sizeof(kev));
