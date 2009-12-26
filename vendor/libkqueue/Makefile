@@ -29,6 +29,8 @@ $(PROGRAM).so: $(OBJS)
 	$(AR) rcs $(PROGRAM).a $(OBJS)
 	$(LD) $(LDFLAGS) -o $(PROGRAM).so $(OBJS) $(LDADD)
 
+all: $(PROGRAM).so
+
 install: $(PROGRAM).so
 	$(INSTALL) -d -m 755 $(INCLUDEDIR)/kqueue/sys
 	$(INSTALL) -m 644 include/sys/event.h $(INCLUDEDIR)/kqueue/sys/event.h
