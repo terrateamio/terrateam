@@ -134,19 +134,21 @@ kevent_error(struct kevent *dst, const struct kevent *src, int data)
     dst->data = data;
 }
 
+/** @return number of events added to the eventlist */
 static int
 kevent_copyin(struct kqueue *kq, const struct kevent *src, int nchanges,
         struct kevent *eventlist, int nevents)
 {
-    struct knote  *dst;
+    struct knote  *dst = NULL;
     struct filter *filt;
-    int kn_alloc,status;
+    int kn_alloc;
+    int status, rv;
 
-    /* To avoid compiler warnings.. perhaps there is a better way */
-    dst = NULL;
     kn_alloc = 0;
+    status = 0;
+    rv = 0;
 
-    dbg_printf("processing %d changes", nchanges);
+    dbg_printf("nchanges=%d nevents=%d", nchanges, nevents);
 
     for (; nchanges > 0; src++, nchanges--) {
 
@@ -219,12 +221,13 @@ err_out_unlocked:
         if (nevents > 0) {
             kevent_error(eventlist++, src, status);
             nevents--;
+            rv++;
         } else {
             return (-1);
         }
     }
 
-    return (0);
+    return (rv);
 }
 
 int
@@ -251,6 +254,10 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         rv = kevent_copyin(kq, changelist, nchanges, eventlist, nevents);
         if (rv < 0)
             return (-1); 
+        if (rv > 0) {
+            eventlist += rv;
+            nevents -= rv;
+        }
     }
 
     /* Determine if we need to wait for events. */

@@ -225,6 +225,35 @@ test_kqueue_close(void)
     success();
 }
 
+void
+test_ev_receipt(void)
+{
+    struct kevent kev;
+
+    test_begin("EV_RECEIPT");
+
+#if HAVE_EV_RECEIPT
+
+    EV_SET(&kev, SIGUSR2, EVFILT_SIGNAL, EV_ADD | EV_RECEIPT, 0, 0, NULL);
+    if (kevent(kqfd, &kev, 1, &kev, 1, NULL) < 0)
+        err(1, "%s", test_id);
+
+    /* TODO: check the receipt */
+
+    /* Delete the kevent */
+    kev.flags = EV_DELETE;
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1, "%s", test_id);
+
+    test_no_kevents();
+
+#else
+    memset(&kev, 0, sizeof(kev));
+    puts("Skipped -- EV_RECEIPT is not available");
+#endif
+    success();
+}
+
 int 
 main(int argc, char **argv)
 {
@@ -269,6 +298,8 @@ main(int argc, char **argv)
         test_evfilt_timer();
     if (test_proc) 
         test_evfilt_proc();
+
+    test_ev_receipt();
 
     printf("\n---\n"
             "+OK All %d tests completed.\n", testnum - 1);
