@@ -230,7 +230,7 @@ err_out_unlocked:
     return (rv);
 }
 
-int
+int __attribute__((visibility("default")))
 kevent(int kqfd, const struct kevent *changelist, int nchanges,
         struct kevent *eventlist, int nevents,
         const struct timespec *timeout)
