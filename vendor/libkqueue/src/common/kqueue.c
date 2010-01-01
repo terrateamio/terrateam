@@ -57,12 +57,15 @@ kqueue_lookup(int kq)
     return (ent);
 }
 
-/* Must hold the kqtree_mtx when calling this */
 void
 kqueue_free(struct kqueue *kq)
 {
     dbg_printf("fd=%d", kq->kq_sockfd[1]);
+
+    pthread_rwlock_wrlock(&kqtree_mtx);
     RB_REMOVE(kqt, &kqtree, kq);
+    pthread_rwlock_unlock(&kqtree_mtx);
+
     filter_unregister_all(kq);
     free(kq);
 }
@@ -96,8 +99,6 @@ kqueue(void)
     if (filter_register_all(kq) < 0)
         goto errout;
     if (kqueue_create_hook(kq) < 0)
-        goto errout;
-    if (kqueue_gc() < 0)
         goto errout;
     RB_INSERT(kqt, &kqtree, kq);
     pthread_rwlock_unlock(&kqtree_mtx);

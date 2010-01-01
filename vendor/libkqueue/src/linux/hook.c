@@ -62,6 +62,7 @@ kqueue_gc(void)
             kqueue_free(kq);
         } else if (rv < 0) {
             dbg_perror("epoll_wait(2)");
+            return (-1);
         }
     } while (rv > 0);
 
