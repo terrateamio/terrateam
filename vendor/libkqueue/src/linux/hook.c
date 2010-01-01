@@ -69,7 +69,7 @@ kqueue_gc(void)
 }
 
 int
-kqlist_insert_hook(struct kqueue *kq)
+kqueue_create_hook(struct kqueue *kq)
 {
     return (gcfd_ctl(EPOLL_CTL_ADD, kq));
 }

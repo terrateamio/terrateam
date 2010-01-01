@@ -32,32 +32,37 @@
 
 static int kqueue_initialized;          /* Set to 1 by kqueue_init() */
 
-static LIST_HEAD(,kqueue) kqlist 	= LIST_HEAD_INITIALIZER(&kqlist);
-static size_t kqcount;
+static RB_HEAD(kqt, kqueue) kqtree       = RB_INITIALIZER(&kqtree);
+static pthread_rwlock_t     kqtree_mtx   = PTHREAD_RWLOCK_INITIALIZER;
 
-static pthread_rwlock_t    kqlist_mtx 	= PTHREAD_RWLOCK_INITIALIZER;
+static int
+kqueue_cmp(struct kqueue *a, struct kqueue *b)
+{
+    return memcmp(&a->kq_sockfd[1], &b->kq_sockfd[1], sizeof(int)); 
+}
+
+RB_GENERATE(kqt, kqueue, entries, kqueue_cmp);
 
 struct kqueue *
 kqueue_lookup(int kq)
 {
+    struct kqueue query;
     struct kqueue *ent = NULL;
 
-    pthread_rwlock_rdlock(&kqlist_mtx);
-    LIST_FOREACH(ent, &kqlist, entries) {
-        if (ent->kq_sockfd[1] == kq)
-            break;
-    }
-    pthread_rwlock_unlock(&kqlist_mtx);
+    query.kq_sockfd[1] = kq;
+    pthread_rwlock_rdlock(&kqtree_mtx);
+    ent = RB_FIND(kqt, &kqtree, &query);
+    pthread_rwlock_unlock(&kqtree_mtx);
 
     return (ent);
 }
 
-/* Must hold the kqlist_mtx when calling this */
+/* Must hold the kqtree_mtx when calling this */
 void
 kqueue_free(struct kqueue *kq)
 {
     dbg_printf("fd=%d", kq->kq_sockfd[1]);
-    LIST_REMOVE(kq, entries);
+    RB_REMOVE(kqt, &kqtree, kq);
     filter_unregister_all(kq);
     free(kq);
 }
@@ -85,24 +90,23 @@ kqueue(void)
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, kq->kq_sockfd) < 0) 
         goto errout_unlocked;
 
-    pthread_rwlock_wrlock(&kqlist_mtx);
+    pthread_rwlock_wrlock(&kqtree_mtx);
     if (!kqueue_initialized && kqueue_init() < 0) 
         goto errout;
     if (filter_register_all(kq) < 0)
         goto errout;
-    if (kqlist_insert_hook(kq) < 0)
+    if (kqueue_create_hook(kq) < 0)
         goto errout;
     if (kqueue_gc() < 0)
         goto errout;
-    LIST_INSERT_HEAD(&kqlist, kq, entries);
-    kqcount++;
-    pthread_rwlock_unlock(&kqlist_mtx);
+    RB_INSERT(kqt, &kqtree, kq);
+    pthread_rwlock_unlock(&kqtree_mtx);
 
     dbg_printf("created kqueue, fd=%d", kq->kq_sockfd[1]);
     return (kq->kq_sockfd[1]);
 
 errout:
-    pthread_rwlock_unlock(&kqlist_mtx);
+    pthread_rwlock_unlock(&kqtree_mtx);
 
 errout_unlocked:
     //FIXME: unregister_all filters

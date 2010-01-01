@@ -29,8 +29,7 @@
 #include <sys/select.h>
 #include "sys/event.h"
 
-/* Maximum number of kqueue descriptors in a single process. */
-#define MAX_KQUEUE  1024
+#include "tree.h"
 
 /* Maximum events returnable in a single kevent() call */
 #define MAX_KEVENT  512
@@ -104,7 +103,7 @@ struct kqueue {
 #ifdef SOLARIS
     int             kq_port;
 #endif
-    LIST_ENTRY(kqueue) entries;
+    RB_ENTRY(kqueue) entries;
 };
 
 struct knote *  knote_lookup(struct filter *, short);
@@ -131,7 +130,7 @@ void 		kevent_free(struct kqueue *);
 struct kqueue * kqueue_lookup(int kq);
 /* TODO: make a kqops struct */
 int         kqueue_init_hook(void);     // in hook.c
-int         kqlist_insert_hook(struct kqueue *);       // in hook.c
+int         kqueue_create_hook(struct kqueue *);       // in hook.c
 int         kqueue_gc(void);        // in hook.c
 void        kqueue_free(struct kqueue *);
 
