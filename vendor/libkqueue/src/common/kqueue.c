@@ -72,7 +72,7 @@ kqueue_init(void)
     return (0);
 }
 
-int
+int __attribute__((visibility("default")))
 kqueue(void)
 {
     struct kqueue *kq;
