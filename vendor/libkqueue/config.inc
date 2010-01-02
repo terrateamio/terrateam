@@ -55,6 +55,6 @@ post_configure_hook() {
       fi
     fi      
 
-    sources="$sources src/$target/hook.c $evfilt_signal $evfilt_proc 
+    sources="$sources src/$target/hook.c src/$target/eventfd.c $evfilt_signal $evfilt_proc 
              $evfilt_socket $evfilt_timer $evfilt_user $evfilt_vnode"
 }
