@@ -147,10 +147,53 @@ evfilt_user_copyout(struct filter *filt,
     return (nevents);
 }
 
+int
+evfilt_user_knote_create(struct filter *filt, struct knote *kn)
+{
+#if TODO
+    //determine if EV_ADD + NOTE_TRIGGER in the same kevent will cause a trigger */
+    if ((!(kn->kev.flags & EV_DISABLE)) && kn->kev.fflags & NOTE_TRIGGER) {
+        dst->kev.fflags |= NOTE_TRIGGER;
+        knote_enqueue(filt, dst);
+        evfd_raise(filt->kf_pfd);
+    }
+#endif
+    return (0);
+}
+
+int
+evfilt_user_knote_modify(struct filter *filt, struct knote *kn)
+{
+    return (0);
+}
+
+int
+evfilt_user_knote_delete(struct filter *filt, struct knote *kn)
+{
+    return (0);
+}
+
+int
+evfilt_user_knote_enable(struct filter *filt, struct knote *kn)
+{
+    return (0);
+}
+
+int
+evfilt_user_knote_disable(struct filter *filt, struct knote *kn)
+{
+    return (0);
+}
+
 const struct filter evfilt_user = {
     EVFILT_USER,
     evfilt_user_init,
     evfilt_user_destroy,
     evfilt_user_copyin,
     evfilt_user_copyout,
+    evfilt_user_knote_create,
+    evfilt_user_knote_modify,
+    evfilt_user_knote_delete,
+    evfilt_user_knote_enable,
+    evfilt_user_knote_disable,   
 };
