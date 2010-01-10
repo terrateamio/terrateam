@@ -162,7 +162,7 @@ evfilt_user_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_user_knote_modify(struct filter *filt, struct knote *kn)
+evfilt_user_knote_modify(struct filter *filt, struct knote *kn, struct kevent *kev)
 {
     return (0);
 }

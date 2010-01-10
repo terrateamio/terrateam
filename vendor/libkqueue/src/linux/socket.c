@@ -248,7 +248,7 @@ evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_socket_knote_modify(struct filter *filt, struct knote *kn)
+evfilt_socket_knote_modify(struct filter *filt, struct knote *kn, struct kevent *kev)
 {
     return (-1); /* STUB */
 }
