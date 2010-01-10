@@ -83,12 +83,24 @@ LIST_HEAD(knotelist, knote);
 
 struct filter {
     int       kf_id;
+
+    /* filter operations */
+
     int     (*kf_init)(struct filter *);
     void    (*kf_destroy)(struct filter *);
     int     (*kf_copyin)(struct filter *, 
                          struct knote *, 
                          const struct kevent *);
     int     (*kf_copyout)(struct filter *, struct kevent *, int);
+
+    /* knote operations */
+
+    int     (*kn_create)(struct filter *, struct knote *);
+    int     (*kn_modify)(struct filter *, struct knote *);
+    int     (*kn_delete)(struct filter *, struct knote *);
+    int     (*kn_enable)(struct filter *, struct knote *);
+    int     (*kn_disable)(struct filter *, struct knote *);
+
     int       kf_pfd;                   /* fd to poll(2) for readiness */
     int       kf_wfd;                   /* fd to write when an event occurs */
     u_int     kf_timeres;               /* timer resolution, in miliseconds */
@@ -116,6 +128,10 @@ struct knote *  knote_lookup(struct filter *, short);
 struct knote *  knote_lookup_data(struct filter *filt, intptr_t);
 struct knote *  knote_new(struct filter *);
 void 		    knote_free(struct knote *);
+
+int         eventfd_create(void);
+int         eventfd_raise(int);
+int         eventfd_lower(int);
 
 int         filter_lookup(struct filter **, struct kqueue *, short);
 int         filter_socketpair(struct filter *);
