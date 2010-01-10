@@ -224,6 +224,36 @@ evfilt_proc_copyout(struct filter *filt,
 
     return (nevents);
 }
+ 
+int
+evfilt_proc_knote_create(struct filter *filt, struct knote *kn)
+{
+    return (0); /* STUB */
+}
+
+int
+evfilt_proc_knote_modify(struct filter *filt, struct knote *kn)
+{
+    return (0); /* STUB */
+}
+
+int
+evfilt_proc_knote_delete(struct filter *filt, struct knote *kn)
+{
+    return (0); /* STUB */
+}
+
+int
+evfilt_proc_knote_enable(struct filter *filt, struct knote *kn)
+{
+    return (0); /* STUB */
+}
+
+int
+evfilt_proc_knote_disable(struct filter *filt, struct knote *kn)
+{
+    return (0); /* STUB */
+}
 
 const struct filter evfilt_proc = {
     0, //XXX-FIXME broken: EVFILT_PROC,
@@ -231,4 +261,9 @@ const struct filter evfilt_proc = {
     evfilt_proc_destroy,
     evfilt_proc_copyin,
     evfilt_proc_copyout,
+    evfilt_proc_knote_create,
+    evfilt_proc_knote_modify,
+    evfilt_proc_knote_delete,
+    evfilt_proc_knote_enable,
+    evfilt_proc_knote_disable,
 };
