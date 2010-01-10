@@ -276,7 +276,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_timer_knote_modify(struct filter *filt, struct knote *kn)
+evfilt_timer_knote_modify(struct filter *filt, struct knote *kn, struct kevent *kev)
 {
     return (0); /* STUB */
 }

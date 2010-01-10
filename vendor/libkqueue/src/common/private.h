@@ -97,7 +97,7 @@ struct filter {
     /* knote operations */
 
     int     (*kn_create)(struct filter *, struct knote *);
-    int     (*kn_modify)(struct filter *, struct knote *);
+    int     (*kn_modify)(struct filter *, struct knote *, struct kevent *);
     int     (*kn_delete)(struct filter *, struct knote *);
     int     (*kn_enable)(struct filter *, struct knote *);
     int     (*kn_disable)(struct filter *, struct knote *);
