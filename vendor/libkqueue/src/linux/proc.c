@@ -80,12 +80,9 @@ wait_thread(void *arg)
         }
 
         /* Scan the wait queue to see if anyone is interested */
-        pthread_mutex_lock(&filt->kf_mtx);
         kn = knote_lookup(filt, si.si_pid);
-        if (kn == NULL) {
-            pthread_mutex_unlock(&filt->kf_mtx);
+        if (kn == NULL) 
             continue;
-        }
 
         /* Create a proc_event */
         if (si.si_code == CLD_EXITED) {
@@ -101,9 +98,10 @@ wait_thread(void *arg)
         }
 
         /* Move the knote from the watchlist to the eventlist */
+        pthread_rwlock_wrlock(&filt->kf_mtx);
         LIST_REMOVE(kn, entries);
         LIST_INSERT_HEAD(&filt->kf_eventlist, kn, entries);
-        pthread_mutex_unlock(&filt->kf_mtx);
+        pthread_rwlock_unlock(&filt->kf_mtx);
 
         /* Indicate read(2) readiness */
         if (write(filt->kf_pfd, &counter, sizeof(counter)) < 0) {
@@ -191,7 +189,7 @@ evfilt_proc_copyout(struct filter *filt,
     }
     dbg_printf("  counter=%llu", (unsigned long long) cur);
 
-    pthread_mutex_lock(&filt->kf_mtx);
+    pthread_rwlock_wrlock(&filt->kf_mtx);
     for (kn = LIST_FIRST(&filt->kf_eventlist); kn != NULL; kn = kn_nxt) {
         kn_nxt = LIST_NEXT(kn, entries);
 
@@ -202,7 +200,7 @@ evfilt_proc_copyout(struct filter *filt,
             KNOTE_DISABLE(kn);
         }
         if (kn->kev.flags & EV_ONESHOT) {
-            knote_free(kn);
+            knote_free(filt, kn);
         } else {
             kn->kev.data = 0;
             LIST_REMOVE(kn, entries);
@@ -214,7 +212,7 @@ evfilt_proc_copyout(struct filter *filt,
             break;
         dst++;
     }
-    pthread_mutex_unlock(&filt->kf_mtx);
+    pthread_rwlock_unlock(&filt->kf_mtx);
 
     if (!LIST_EMPTY(&filt->kf_eventlist)) {
     /* XXX-FIXME: If there are leftover events on the waitq, 

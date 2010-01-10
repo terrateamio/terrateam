@@ -272,7 +272,7 @@ evfilt_vnode_copyout(struct filter *filt,
         KNOTE_DISABLE(kn);
     }
     if (kn->kev.flags & EV_ONESHOT) 
-        knote_free(kn);
+        knote_free(filt, kn);
             
     return (1);
 }
