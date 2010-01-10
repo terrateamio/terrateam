@@ -30,44 +30,11 @@
 #include "sys/event.h"
 #include "private.h"
 
-/* TODO: make common linux function */
-static int
-evfd_raise(int evfd)
-{
-    uint64_t counter;
-
-    dbg_puts("efd_raise(): raising event level");
-    counter = 1;
-    if (write(evfd, &counter, sizeof(counter)) < 0) {
-        /* FIXME: handle EAGAIN */
-        dbg_printf("write(2): %s", strerror(errno));
-        return (-1);
-    }
-    return (0);
-}
-
-static int
-evfd_lower(int evfd)
-{
-    uint64_t cur;
-
-    /* Reset the counter */
-    dbg_puts("efd_lower(): lowering event level");
-    if (read(evfd, &cur, sizeof(cur)) < sizeof(cur)) {
-        /* FIXME: handle EAGAIN */
-        dbg_printf("read(2): %s", strerror(errno));
-        return (-1);
-    }
-    dbg_printf("  counter=%llu", (unsigned long long) cur);
-    return (0);
-}
-
 int
 evfilt_user_init(struct filter *filt)
 {
-    if ((filt->kf_pfd = eventfd(0, 0)) < 0) 
-        return (-1);
-    if (fcntl(filt->kf_pfd, F_SETFL, O_NONBLOCK) < 0)
+    filt->kf_pfd = eventfd_create();
+    if (filt->kf_pfd < 0) 
         return (-1);
 
     return (0);
@@ -128,7 +95,7 @@ evfilt_user_copyin(struct filter *filt,
 
     if ((!(dst->kev.flags & EV_DISABLE)) && src->fflags & NOTE_TRIGGER) {
         dst->kev.fflags |= NOTE_TRIGGER;
-        evfd_raise(filt->kf_pfd);
+        eventfd_raise(filt->kf_pfd);
     }
 
     return (0);
@@ -164,7 +131,7 @@ evfilt_user_copyout(struct filter *filt,
         if (kn->kev.flags & EV_CLEAR)
             kn->kev.fflags &= ~NOTE_TRIGGER;
         if (kn->kev.flags & (EV_DISPATCH | EV_CLEAR | EV_ONESHOT))
-            evfd_lower(filt->kf_pfd);
+            eventfd_lower(filt->kf_pfd);
 
         dst++;
         if (++nevents == maxevents)
@@ -174,7 +141,7 @@ evfilt_user_copyout(struct filter *filt,
     /* This should normally never happen but is here for debugging */
     if (nevents == 0) {
         dbg_puts("spurious wakeup");
-        evfd_lower(filt->kf_pfd);
+        eventfd_lower(filt->kf_pfd);
     }
 
     return (nevents);
