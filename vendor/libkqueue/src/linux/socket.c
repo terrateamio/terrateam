@@ -33,6 +33,17 @@
 #include "sys/event.h"
 #include "private.h"
 
+static int
+epoll_update(int op, struct filter *filt, struct knote *kn, struct epoll_event *ev)
+{
+    dbg_printf("op=%d fd=%d events=%s", op, (int)kn->kev.ident, epoll_event_dump(ev));
+    if (epoll_ctl(filt->kf_pfd, op, kn->kev.ident, ev) < 0) {
+        dbg_printf("epoll_ctl(2): %s", strerror(errno));
+        return (-1);
+    }
+
+    return (0);
+}
 
 char *
 epoll_event_dump(struct epoll_event *evt)
@@ -216,10 +227,65 @@ const struct filter evfilt_read = {
     evfilt_socket_copyout,
 };
 
+int
+evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
+{
+    struct epoll_event ev;
+
+    /* Convert the kevent into an epoll_event */
+    if (kn->kev.filter == EVFILT_READ)
+        kn->kn_events = EPOLLIN | EPOLLRDHUP;
+    else
+        kn->kn_events = EPOLLOUT;
+    if (kn->kev.flags & EV_ONESHOT || kn->kev.flags & EV_DISPATCH)
+        kn->kn_events |= EPOLLONESHOT;
+    if (kn->kev.flags & EV_CLEAR)
+        kn->kn_events |= EPOLLET;
+    ev.events = kn->kn_events;
+    ev.data.fd = kn->kev.ident;
+
+    return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
+}
+
+int
+evfilt_socket_knote_modify(struct filter *filt, struct knote *kn)
+{
+    return (-1); /* STUB */
+}
+
+int
+evfilt_socket_knote_delete(struct filter *filt, struct knote *kn)
+{
+    return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
+}
+
+int
+evfilt_socket_knote_enable(struct filter *filt, struct knote *kn)
+{
+    struct epoll_event ev;
+
+    ev.events = kn->kn_events;
+    ev.data.fd = kn->kev.ident;
+
+    return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
+}
+
+int
+evfilt_socket_knote_disable(struct filter *filt, struct knote *kn)
+{
+    return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
+}
+
+
 const struct filter evfilt_write = {
     EVFILT_WRITE,
     evfilt_socket_init,
     evfilt_socket_destroy,
     evfilt_socket_copyin,
     evfilt_socket_copyout,
+    evfilt_socket_knote_create,
+    evfilt_socket_knote_modify,
+    evfilt_socket_knote_delete,
+    evfilt_socket_knote_enable,
+    evfilt_socket_knote_disable,         
 };
