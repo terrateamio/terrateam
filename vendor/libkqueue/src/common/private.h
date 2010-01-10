@@ -156,5 +156,8 @@ int         kqueue_init_hook(void);     // in hook.c
 int         kqueue_create_hook(struct kqueue *);       // in hook.c
 int         kqueue_gc(void);        // in hook.c
 void        kqueue_free(struct kqueue *);
+#define     kqueue_lock(kq)     pthread_mutex_lock(&(kq)->kq_mtx);
+#define     kqueue_unlock(kq)   pthread_mutex_unlock(&(kq)->kq_mtx);
+ 
 
 #endif  /* ! _KQUEUE_PRIVATE_H */
