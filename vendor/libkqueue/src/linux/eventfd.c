@@ -55,7 +55,7 @@ eventfd_raise(int evfd)
     return (0);
 }
 
-static int
+int
 eventfd_lower(int evfd)
 {
     uint64_t cur;
@@ -70,5 +70,3 @@ eventfd_lower(int evfd)
     dbg_printf("  counter=%llu", (unsigned long long) cur);
     return (0);
 }
-
-
