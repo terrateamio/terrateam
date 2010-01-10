@@ -46,7 +46,7 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
     dst = &kq->kq_filt[filt];
     memcpy(dst, src, sizeof(*src));
     dst->kf_kqueue = kq;
-    pthread_mutex_init(&dst->kf_mtx, NULL);
+    pthread_rwlock_init(&dst->kf_mtx, NULL);
     KNOTELIST_INIT(&dst->kf_watchlist);
     KNOTELIST_INIT(&dst->kf_eventlist);
     if (src->kf_id == 0) {

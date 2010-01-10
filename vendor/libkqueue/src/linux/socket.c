@@ -208,7 +208,7 @@ evfilt_socket_copyout(struct filter *filt,
                 KNOTE_DISABLE(kn);
             if (kn->kev.flags & EV_ONESHOT) {
                 socket_knote_delete(filt->kf_pfd, kn->kev.ident);
-                knote_free(kn);
+                knote_free(filt, kn);
             }
 
             nevents++;

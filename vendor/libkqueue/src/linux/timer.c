@@ -231,7 +231,7 @@ evfilt_timer_copyout(struct filter *filt,
             KNOTE_DISABLE(kn);
         if (kn->kev.flags & EV_ONESHOT) {
             ktimer_delete(filt, kn);
-            knote_free(kn);
+            knote_free(filt, kn);
         }
 
         nevents++;

@@ -110,10 +110,8 @@ kevent_copyout(struct kqueue *kq, int nready,
         if (FD_ISSET(filt->kf_pfd, &kq->kq_rfds)) {
             dbg_printf("pending events for %s", 
                     filter_name(filt->kf_id));
-            filter_lock(filt);
             rv = filt->kf_copyout(filt, eventlist, nevents);
             if (rv < 0) {
-                filter_unlock(filt);
                 dbg_puts("kevent_copyout failed");
                 return (-1);
             }
@@ -121,7 +119,6 @@ kevent_copyout(struct kqueue *kq, int nready,
             eventlist += rv;
             nevents -= rv;
             nready--;
-            filter_unlock(filt);
         }
     }
 

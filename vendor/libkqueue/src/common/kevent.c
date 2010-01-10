@@ -134,37 +134,23 @@ kevent_error(struct kevent *dst, const struct kevent *src, int data)
     dst->data = data;
 }
 
-/** @return number of events added to the eventlist */
+#if IFXME
 static int
-kevent_copyin(struct kqueue *kq, const struct kevent *src, int nchanges,
-        struct kevent *eventlist, int nevents)
+kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
 {
-    struct knote  *dst = NULL;
+    struct knote  *kn = NULL;
     struct filter *filt;
-    int kn_alloc;
-    int status, rv;
 
-    kn_alloc = 0;
-    status = 0;
-    rv = 0;
+    if (filter_lookup(&filt, kq, src->filter) < 0)
+        return (-1);
 
-    dbg_printf("nchanges=%d nevents=%d", nchanges, nevents);
+    //dbg_printf("%s\n", nchanges, kevent_dump(src));
 
-    for (; nchanges > 0; src++, nchanges--) {
+    filter_lock(filt);
+    kn = knote_lookup(filt, src->ident);
+    filter_unlock(filt);
 
-        status = filter_lookup(&filt, kq, src->filter);
-        if (status < 0) 
-            goto err_out_unlocked;
-
-        dbg_printf("%d %s\n", nchanges, kevent_dump(src));
-
-        filter_lock(filt);
-        /*
-         * Retrieve an existing knote object, or create a new one.
-         */
-        kn_alloc = 0;
-        dst = knote_lookup(filt, src->ident);
-        if (dst == NULL) {
+    if (dst == NULL) {
            if (src->flags & EV_ADD) {
                if ((dst = knote_new(filt)) == NULL) {
                    status = -ENOMEM;
@@ -218,6 +204,100 @@ err_out:
 err_out_unlocked:
         if (status != 0 && kn_alloc)
             knote_free(dst);
+        if (nevents > 0) {
+            kevent_error(eventlist++, src, status);
+            nevents--;
+            rv++;
+        } else {
+            return (-1);
+        }
+    }
+
+    return (rv);
+}
+#endif
+
+/** @return number of events added to the eventlist */
+static int
+kevent_copyin(struct kqueue *kq, const struct kevent *src, int nchanges,
+        struct kevent *eventlist, int nevents)
+{
+    struct knote  *dst = NULL;
+    struct filter *filt;
+    int kn_alloc;
+    int status, rv;
+
+    kn_alloc = 0;
+    status = 0;
+    rv = 0;
+
+    dbg_printf("nchanges=%d nevents=%d", nchanges, nevents);
+
+    for (; nchanges > 0; src++, nchanges--) {
+
+        status = filter_lookup(&filt, kq, src->filter);
+        if (status < 0) 
+            goto err_out_unlocked;
+
+        dbg_printf("%d %s\n", nchanges, kevent_dump(src));
+
+        /*
+         * Retrieve an existing knote object, or create a new one.
+         */
+        kn_alloc = 0;
+        dst = knote_lookup(filt, src->ident);
+        if (dst == NULL) {
+           if (src->flags & EV_ADD) {
+               if ((dst = knote_new(filt)) == NULL) {
+                   status = -ENOMEM;
+                   goto err_out;
+               }
+               kn_alloc = 1;
+           } else if (src->flags & EV_ENABLE 
+                   || src->flags & EV_DISABLE
+                   || src->flags & EV_DELETE) {
+               status = -ENOENT;
+               goto err_out;
+           } else {
+
+               /* Special case for EVFILT_USER:
+                  Ignore user-generated events that are not of interest */
+               if (src->fflags & NOTE_TRIGGER) {
+                   continue;
+               }
+
+               /* flags == 0 or no action */
+               status = -EINVAL;
+               goto err_out;
+           }
+        }
+
+        if (filt->kf_copyin(filt, dst, src) < 0) {
+            status = -EBADMSG;
+            goto err_out;
+        }
+
+        /*
+         * Update the knote flags based on src->flags.
+         */
+        if (src->flags & EV_ENABLE)
+            KNOTE_ENABLE(dst);
+        if (src->flags & EV_DISABLE) 
+            KNOTE_DISABLE(dst);
+        if (src->flags & EV_DELETE) 
+            knote_free(filt, dst);
+        if (src->flags & EV_RECEIPT) {
+            status = 0;
+            goto err_out;
+        }
+
+        continue;
+
+err_out:
+        //DEADWOOD: filter_unlock(filt);
+err_out_unlocked:
+        if (status != 0 && kn_alloc)
+            knote_free(filt, dst);
         if (nevents > 0) {
             kevent_error(eventlist++, src, status);
             nevents--;

@@ -30,16 +30,20 @@ knote_new(struct filter *filt)
 
     if ((dst = calloc(1, sizeof(*dst))) == NULL) 
         return (NULL);
+    pthread_rwlock_wrlock(&filt->kf_mtx);
     KNOTE_INSERT(&filt->kf_watchlist, dst);
+    pthread_rwlock_unlock(&filt->kf_mtx);
     return (dst);
 }
 
 void
-knote_free(struct knote *kn)
+knote_free(struct filter *filt, struct knote *kn)
 {
     dbg_printf("filter=%s, ident=%u",
             filter_name(kn->kev.filter), (u_int) kn->kev.ident);
+    pthread_rwlock_wrlock(&filt->kf_mtx);
 	LIST_REMOVE(kn, entries);
+    pthread_rwlock_unlock(&filt->kf_mtx);
 	free(kn);
 }
 
@@ -49,17 +53,22 @@ knote_lookup(struct filter *filt, short ident)
 {
     struct knote *kn;
 
+    pthread_rwlock_rdlock(&filt->kf_mtx);
     /* TODO: Use rbtree for faster searching */
     LIST_FOREACH(kn, &filt->kf_watchlist, entries) {
         if (ident == kn->kev.ident)
-            return (kn);
+            goto knote_found;
     }
     LIST_FOREACH(kn, &filt->kf_eventlist, entries) {
         if (ident == kn->kev.ident)
-            return (kn);
+            goto knote_found;
     }
-
+    pthread_rwlock_unlock(&filt->kf_mtx);
     return (NULL);
+
+knote_found:
+    pthread_rwlock_unlock(&filt->kf_mtx);
+    return (kn);
 }
     
 struct knote *
@@ -67,14 +76,19 @@ knote_lookup_data(struct filter *filt, intptr_t data)
 {
     struct knote *kn;
 
+    pthread_rwlock_rdlock(&filt->kf_mtx);
     LIST_FOREACH(kn, &filt->kf_watchlist, entries) {
         if (data == kn->kev.data)
-            return (kn);
+            goto knote_found;
     }
     LIST_FOREACH(kn, &filt->kf_eventlist, entries) {
         if (data == kn->kev.data)
-            return (kn);
+            goto knote_found;
     }
-
+    pthread_rwlock_unlock(&filt->kf_mtx);
     return (NULL);
+
+knote_found:
+    pthread_rwlock_unlock(&filt->kf_mtx);
+    return (kn);
 }
