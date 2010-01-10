@@ -241,10 +241,86 @@ evfilt_timer_copyout(struct filter *filt,
     return (nevents);
 }
 
+int
+evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
+{
+    struct epoll_event ev;
+    struct itimerspec ts;
+    int tfd;
+
+    tfd = timerfd_create(CLOCK_MONOTONIC, 0);
+    if (tfd < 0) {
+        dbg_printf("timerfd_create(2): %s", strerror(errno));
+        return (-1);
+    }
+    dbg_printf("created timerfd %d", tfd);
+
+    convert_msec_to_itimerspec(&ts, kn->kev.data, kn->kev.flags & EV_ONESHOT);
+    if (timerfd_settime(tfd, 0, &ts, NULL) < 0) {
+        dbg_printf("timerfd_settime(2): %s", strerror(errno));
+        close(tfd);
+        return (-1);
+    }
+
+    memset(&ev, 0, sizeof(ev));
+    ev.events = EPOLLIN;
+    ev.data.ptr = kn;
+    if (epoll_ctl(filt->kf_pfd, EPOLL_CTL_ADD, tfd, &ev) < 0) {
+        dbg_printf("epoll_ctl(2): %d", errno);
+        close(tfd);
+        return (-1);
+    }
+
+    kn->kn_pfd = tfd;
+    return (0);
+}
+
+int
+evfilt_timer_knote_modify(struct filter *filt, struct knote *kn)
+{
+    return (0); /* STUB */
+}
+
+int
+evfilt_timer_knote_delete(struct filter *filt, struct knote *kn)
+{
+    int rv = 0;
+
+    dbg_printf("removing timerfd %d from %d", kn->kn_pfd, filt->kf_pfd);
+    if (epoll_ctl(filt->kf_pfd, EPOLL_CTL_DEL, kn->kn_pfd, NULL) < 0) {
+        dbg_printf("epoll_ctl(2): %s", strerror(errno));
+        rv = -1;
+    }
+    if (close(kn->kn_pfd) < 0) {
+        dbg_printf("close(2): %s", strerror(errno));
+        rv = -1;
+    }
+
+    kn->kn_pfd = -1;
+    return (rv);
+}
+
+int
+evfilt_timer_knote_enable(struct filter *filt, struct knote *kn)
+{
+    return evfilt_timer_knote_create(filt, kn);
+}
+
+int
+evfilt_timer_knote_disable(struct filter *filt, struct knote *kn)
+{
+    return evfilt_timer_knote_delete(filt, kn);
+}
+
 const struct filter evfilt_timer = {
     EVFILT_TIMER,
     evfilt_timer_init,
     evfilt_timer_destroy,
     evfilt_timer_copyin,
     evfilt_timer_copyout,
+    evfilt_timer_knote_create,
+    evfilt_timer_knote_modify,
+    evfilt_timer_knote_delete,
+    evfilt_timer_knote_enable,
+    evfilt_timer_knote_disable,     
 };
