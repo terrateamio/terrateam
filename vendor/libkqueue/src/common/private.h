@@ -60,6 +60,7 @@ struct evfilt_data;
 struct knote {
     struct kevent     kev;
     int               kn_pfd;       /* Used by timerfd */
+    int               kn_events;    /* Used by socket */
     nlink_t           kn_st_nlink;  /* Used by vnode */
     off_t             kn_st_size;   /* Used by vnode */
     LIST_ENTRY(knote) entries;
