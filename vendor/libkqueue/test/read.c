@@ -54,6 +54,31 @@ test_kevent_socket_add(void)
 }
 
 void
+test_kevent_socket_add_without_ev_add(void)
+{
+    const char *test_id = "kevent(EVFILT_READ, add without EV_ADD)";
+    struct kevent kev;
+
+    test_begin(test_id);
+
+    /* Try to add a kevent without specifying EV_ADD */
+    EV_SET(&kev, sockfd[0], EVFILT_READ, 0, 0, 0, &sockfd[0]);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) == 0)
+        err(1, "%s", test_id);
+
+    kevent_socket_fill();
+    test_no_kevents();
+    kevent_socket_drain();
+
+    /* Try to delete a kevent which does not exist */
+    kev.flags = EV_DELETE;
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) == 0)
+        err(1, "%s", test_id);
+
+    success();
+}
+
+void
 test_kevent_socket_get(void)
 {
     const char *test_id = "kevent(EVFILT_READ) wait";
@@ -310,6 +335,7 @@ test_evfilt_read()
     kqfd = kqueue();
     test_kevent_socket_add();
     test_kevent_socket_del();
+    test_kevent_socket_add_without_ev_add();
     test_kevent_socket_get();
     test_kevent_socket_disable_and_enable();
     test_kevent_socket_oneshot();
