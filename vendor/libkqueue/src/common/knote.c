@@ -21,6 +21,14 @@
 
 #include "private.h"
 
+static int
+knote_cmp(struct knote *a, struct knote *b)
+{
+    return memcmp(&a->kev.ident, &b->kev.ident, sizeof(a->kev.ident)); 
+}
+
+RB_GENERATE(knt, knote, kntree_ent, knote_cmp);
+
 /* TODO: These must be called with the kqueue lock held */
 
 struct knote *
@@ -30,10 +38,21 @@ knote_new(struct filter *filt)
 
     if ((dst = calloc(1, sizeof(*dst))) == NULL) 
         return (NULL);
+
+    /* LEGACY */
     pthread_rwlock_wrlock(&filt->kf_mtx);
     KNOTE_INSERT(&filt->kf_watchlist, dst);
     pthread_rwlock_unlock(&filt->kf_mtx);
+
     return (dst);
+}
+
+void
+knote_insert(struct filter *filt, struct knote *kn)
+{
+    pthread_rwlock_wrlock(&filt->kf_mtx);
+    RB_INSERT(knt, &filt->kf_knote, kn);
+    pthread_rwlock_unlock(&filt->kf_mtx);
 }
 
 void
@@ -42,7 +61,9 @@ knote_free(struct filter *filt, struct knote *kn)
     dbg_printf("filter=%s, ident=%u",
             filter_name(kn->kev.filter), (u_int) kn->kev.ident);
     pthread_rwlock_wrlock(&filt->kf_mtx);
-	LIST_REMOVE(kn, entries);
+	LIST_REMOVE(kn, entries);   //DEADWOOD
+	RB_REMOVE(knt, &filt->kf_knote, kn);
+    /* XXX-FIXME Remove from eventlist */
     pthread_rwlock_unlock(&filt->kf_mtx);
 	free(kn);
 }
@@ -90,5 +111,28 @@ knote_lookup_data(struct filter *filt, intptr_t data)
 
 knote_found:
     pthread_rwlock_unlock(&filt->kf_mtx);
+    return (kn);
+}
+
+void
+knote_enqueue(struct filter *filt, struct knote *kn)
+{
+    /* FIXME: check if the knote is already on the eventlist */
+    dbg_printf("id=%ld", kn->kev.ident);
+    LIST_INSERT_HEAD(&filt->kf_event, kn, event_ent);
+}
+
+struct knote *
+knote_dequeue(struct filter *filt)
+{
+    struct knote *kn;
+
+    if (LIST_EMPTY(&filt->kf_event)) 
+        return (NULL);
+
+    kn = LIST_FIRST(&filt->kf_event);
+    LIST_REMOVE(kn, event_ent);
+    dbg_printf("id=%ld", kn->kev.ident);
+
     return (kn);
 }
