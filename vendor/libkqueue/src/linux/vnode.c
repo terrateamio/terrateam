@@ -186,62 +186,6 @@ evfilt_vnode_destroy(struct filter *filt)
 }
 
 int
-evfilt_vnode_copyin(struct filter *filt, 
-        struct knote *dst, const struct kevent *src)
-{
-    char path[PATH_MAX];
-    struct stat sb;
-    uint32_t mask;
-
-    if (src->flags & EV_DELETE || src->flags & EV_DISABLE)
-        return delete_watch(filt, dst);
-
-    if (src->flags & EV_ADD && KNOTE_EMPTY(dst)) {
-        memcpy(&dst->kev, src, sizeof(*src));
-        if (fstat(src->ident, &sb) < 0) {
-            dbg_puts("fstat failed");
-            return (-1);
-        }
-        dst->kn_st_nlink = sb.st_nlink;
-        dst->kn_st_size = sb.st_size;
-        dst->kev.data = -1;
-    }
-
-    if (src->flags & EV_ADD || src->flags & EV_ENABLE) {
-
-        /* Convert the fd to a pathname */
-        if (fd_to_path(&path[0], sizeof(path), src->ident) < 0)
-            return (-1);
-
-        /* Convert the fflags to the inotify mask */
-        mask = 0;
-        if (dst->kev.fflags & NOTE_DELETE)
-            mask |= IN_ATTRIB | IN_DELETE_SELF;
-        if (dst->kev.fflags & NOTE_WRITE)      
-            mask |= IN_MODIFY | IN_ATTRIB;
-        if (dst->kev.fflags & NOTE_EXTEND)
-            mask |= IN_MODIFY | IN_ATTRIB;
-        if ((dst->kev.fflags & NOTE_ATTRIB) || 
-            (dst->kev.fflags & NOTE_LINK))
-            mask |= IN_ATTRIB;
-        if (dst->kev.fflags & NOTE_RENAME)
-            mask |= IN_MOVE_SELF;
-        if (dst->kev.flags & EV_ONESHOT)
-            mask |= IN_ONESHOT;
-
-        dbg_printf("inotify_add_watch(2); inofd=%d, %s, path=%s", 
-                filt->kf_pfd, inotify_mask_dump(mask), path);
-        dst->kev.data = inotify_add_watch(filt->kf_pfd, path, mask);
-        if (dst->kev.data < 0) {
-            dbg_printf("inotify_add_watch(2): %s", strerror(errno));
-            return (-1);
-        }
-    }
-
-    return (0);
-}
-
-int
 evfilt_vnode_copyout(struct filter *filt, 
             struct kevent *dst, 
             int nevents)
@@ -358,7 +302,6 @@ const struct filter evfilt_vnode = {
     EVFILT_VNODE,
     evfilt_vnode_init,
     evfilt_vnode_destroy,
-    evfilt_vnode_copyin,
     evfilt_vnode_copyout,
     evfilt_vnode_knote_create,
     evfilt_vnode_knote_modify,
