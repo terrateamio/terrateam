@@ -248,6 +248,8 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
     struct itimerspec ts;
     int tfd;
 
+    kn->kev.flags |= EV_CLEAR;
+
     tfd = timerfd_create(CLOCK_MONOTONIC, 0);
     if (tfd < 0) {
         dbg_printf("timerfd_create(2): %s", strerror(errno));
@@ -276,7 +278,8 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_timer_knote_modify(struct filter *filt, struct knote *kn, struct kevent *kev)
+evfilt_timer_knote_modify(struct filter *filt, struct knote *kn, 
+        const struct kevent *kev)
 {
     return (0); /* STUB */
 }

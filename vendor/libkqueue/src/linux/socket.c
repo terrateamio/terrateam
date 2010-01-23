@@ -33,36 +33,45 @@
 #include "sys/event.h"
 #include "private.h"
 
+
+static char *
+epoll_event_dump(struct epoll_event *evt)
+{
+    char *buf;
+
+    if (evt == NULL)
+        return "(null)";
+
+    if ((buf = calloc(1, 128)) == NULL)
+        abort();
+
+#define EPEVT_DUMP(attrib) \
+    if (evt->events & attrib) \
+       strcat(buf, #attrib" ");
+
+    snprintf(buf, 128, " { data = %p, events = ", evt->data.ptr);
+    EPEVT_DUMP(EPOLLIN);
+    EPEVT_DUMP(EPOLLOUT);
+    EPEVT_DUMP(EPOLLRDHUP);
+    EPEVT_DUMP(EPOLLONESHOT);
+    EPEVT_DUMP(EPOLLET);
+    strcat(buf, "}\n");
+
+    return (buf);
+#undef EPEVT_DUMP
+}
+
 static int
 epoll_update(int op, struct filter *filt, struct knote *kn, struct epoll_event *ev)
 {
-    dbg_printf("op=%d fd=%d events=%s", op, (int)kn->kev.ident, epoll_event_dump(ev));
+    dbg_printf("op=%d fd=%d events=%s", op, (int)kn->kev.ident, 
+            epoll_event_dump(ev));
     if (epoll_ctl(filt->kf_pfd, op, kn->kev.ident, ev) < 0) {
         dbg_printf("epoll_ctl(2): %s", strerror(errno));
         return (-1);
     }
 
     return (0);
-}
-
-char *
-epoll_event_dump(struct epoll_event *evt)
-{
-
-#define EPEVT_DUMP(attrib) \
-    if (evt->events & attrib) \
-       fputs(#attrib" ", stdout);
-
-    fprintf(stdout, " { data = %p, events = ", evt->data.ptr);
-    EPEVT_DUMP(EPOLLIN);
-    EPEVT_DUMP(EPOLLOUT);
-    EPEVT_DUMP(EPOLLRDHUP);
-    EPEVT_DUMP(EPOLLONESHOT);
-    EPEVT_DUMP(EPOLLET);
-    fputs("}\n", stdout);
-    fflush(stdout);
-
-    return "";  //XXX-BROKEN
 }
 
 static int 
@@ -219,14 +228,6 @@ evfilt_socket_copyout(struct filter *filt,
     return (nevents);
 }
 
-const struct filter evfilt_read = {
-    EVFILT_READ,
-    evfilt_socket_init,
-    evfilt_socket_destroy,
-    evfilt_socket_copyin,
-    evfilt_socket_copyout,
-};
-
 int
 evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 {
@@ -248,7 +249,8 @@ evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_socket_knote_modify(struct filter *filt, struct knote *kn, struct kevent *kev)
+evfilt_socket_knote_modify(struct filter *filt, struct knote *kn, 
+        const struct kevent *kev)
 {
     return (-1); /* STUB */
 }
@@ -276,6 +278,19 @@ evfilt_socket_knote_disable(struct filter *filt, struct knote *kn)
     return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
 }
 
+
+const struct filter evfilt_read = {
+    EVFILT_READ,
+    evfilt_socket_init,
+    evfilt_socket_destroy,
+    evfilt_socket_copyin,
+    evfilt_socket_copyout,
+    evfilt_socket_knote_create,
+    evfilt_socket_knote_modify,
+    evfilt_socket_knote_delete,
+    evfilt_socket_knote_enable,
+    evfilt_socket_knote_disable,         
+};
 
 const struct filter evfilt_write = {
     EVFILT_WRITE,

@@ -118,11 +118,47 @@ get_one_event(struct inotify_event *dst, int pfd)
 }
 
 static int
-delete_watch(int pfd, struct knote *kn)
+add_watch(struct filter *filt, struct knote *kn)
+{
+    char path[PATH_MAX];
+    uint32_t mask;
+
+    /* Convert the fd to a pathname */
+    if (fd_to_path(&path[0], sizeof(path), kn->kev.ident) < 0)
+        return (-1);
+
+    /* Convert the fflags to the inotify mask */
+    mask = 0;
+    if (kn->kev.fflags & NOTE_DELETE)
+        mask |= IN_ATTRIB | IN_DELETE_SELF;
+    if (kn->kev.fflags & NOTE_WRITE)      
+        mask |= IN_MODIFY | IN_ATTRIB;
+    if (kn->kev.fflags & NOTE_EXTEND)
+        mask |= IN_MODIFY | IN_ATTRIB;
+    if ((kn->kev.fflags & NOTE_ATTRIB) || 
+            (kn->kev.fflags & NOTE_LINK))
+        mask |= IN_ATTRIB;
+    if (kn->kev.fflags & NOTE_RENAME)
+        mask |= IN_MOVE_SELF;
+    if (kn->kev.flags & EV_ONESHOT)
+        mask |= IN_ONESHOT;
+
+    dbg_printf("inotify_add_watch(2); inofd=%d, %s, path=%s", 
+            filt->kf_pfd, inotify_mask_dump(mask), path);
+    kn->kev.data = inotify_add_watch(filt->kf_pfd, path, mask);
+    if (kn->kev.data < 0) {
+        dbg_printf("inotify_add_watch(2): %s", strerror(errno));
+        return (-1);
+    }
+    return (0);
+}
+
+static int
+delete_watch(struct filter *filt, struct knote *kn)
 {
     if (kn->kev.data < 0) 
         return (0);
-    if (inotify_rm_watch(pfd, kn->kev.data) < 0) {
+    if (inotify_rm_watch(filt->kf_pfd, kn->kev.data) < 0) {
         dbg_printf("inotify_rm_watch(2): %s", strerror(errno));
         return (-1);
     }
@@ -158,7 +194,7 @@ evfilt_vnode_copyin(struct filter *filt,
     uint32_t mask;
 
     if (src->flags & EV_DELETE || src->flags & EV_DISABLE)
-        return delete_watch(filt->kf_pfd, dst);
+        return delete_watch(filt, dst);
 
     if (src->flags & EV_ADD && KNOTE_EMPTY(dst)) {
         memcpy(&dst->kev, src, sizeof(*src));
@@ -268,7 +304,7 @@ evfilt_vnode_copyout(struct filter *filt,
         dst->fflags |= NOTE_DELETE;
 
     if (kn->kev.flags & EV_DISPATCH) {
-        delete_watch(filt->kf_pfd, kn); /* TODO: error checking */
+        delete_watch(filt, kn); /* TODO: error checking */
         KNOTE_DISABLE(kn);
     }
     if (kn->kev.flags & EV_ONESHOT) 
@@ -277,10 +313,56 @@ evfilt_vnode_copyout(struct filter *filt,
     return (1);
 }
 
+int
+evfilt_vnode_knote_create(struct filter *filt, struct knote *kn)
+{
+    struct stat sb;
+
+    if (fstat(kn->kev.ident, &sb) < 0) {
+        dbg_puts("fstat failed");
+        return (-1);
+    }
+    kn->kn_st_nlink = sb.st_nlink;
+    kn->kn_st_size = sb.st_size;
+    kn->kev.data = -1;
+
+    return (add_watch(filt, kn));
+}
+
+int
+evfilt_vnode_knote_modify(struct filter *filt, struct knote *kn, 
+        const struct kevent *kev)
+{
+    return (-1); /* FIXME - STUB */
+}
+
+int
+evfilt_vnode_knote_delete(struct filter *filt, struct knote *kn)
+{   
+    return delete_watch(filt, kn);
+}
+
+int
+evfilt_vnode_knote_enable(struct filter *filt, struct knote *kn)
+{
+    return add_watch(filt, kn);
+}
+
+int
+evfilt_vnode_knote_disable(struct filter *filt, struct knote *kn)
+{
+    return delete_watch(filt, kn);
+}
+
 const struct filter evfilt_vnode = {
     EVFILT_VNODE,
     evfilt_vnode_init,
     evfilt_vnode_destroy,
     evfilt_vnode_copyin,
     evfilt_vnode_copyout,
+    evfilt_vnode_knote_create,
+    evfilt_vnode_knote_modify,
+    evfilt_vnode_knote_delete,
+    evfilt_vnode_knote_enable,
+    evfilt_vnode_knote_disable,        
 };
