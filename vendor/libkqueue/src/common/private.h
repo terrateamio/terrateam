@@ -92,9 +92,6 @@ struct filter {
 
     int     (*kf_init)(struct filter *);
     void    (*kf_destroy)(struct filter *);
-    int     (*kf_copyin)(struct filter *, 
-                         struct knote *, 
-                         const struct kevent *);
     int     (*kf_copyout)(struct filter *, struct kevent *, int);
 
     /* knote operations */

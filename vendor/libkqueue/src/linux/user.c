@@ -48,60 +48,6 @@ evfilt_user_destroy(struct filter *filt)
 }
 
 int
-evfilt_user_copyin(struct filter *filt, 
-        struct knote *dst, const struct kevent *src)
-{
-    u_int ffctrl;
-    struct kevent *kev;
-
-    if (src->flags & EV_ADD && KNOTE_EMPTY(dst)) 
-        memcpy(&dst->kev, src, sizeof(*src));
-    kev = &dst->kev;
-    if (src->flags & EV_ENABLE) {
-        dst->kev.flags &= ~EV_DISABLE;
-        /* FIXME: what happens if NOTE_TRIGGER is in fflags?
-           should the event fire? */
-    }
-    if (src->flags & EV_DISABLE)
-        dst->kev.flags |= EV_DISABLE;
-
-    /* FIXME: can oneshot be added after the knote is already created? */
-    if (src->flags & EV_ONESHOT)
-        dst->kev.flags |= EV_ONESHOT;
-
-    /* Excerpted from sys/kern/kern_event.c in FreeBSD HEAD */
-    ffctrl = kev->fflags & NOTE_FFCTRLMASK;
-    kev->fflags &= NOTE_FFLAGSMASK;
-    switch (ffctrl) {
-        case NOTE_FFNOP:
-            break;
-
-        case NOTE_FFAND:
-            kev->fflags &= src->fflags;
-            break;
-
-        case NOTE_FFOR:
-            kev->fflags |= src->fflags;
-            break;
-
-        case NOTE_FFCOPY:
-            kev->fflags = kev->fflags;
-            break;
-
-        default:
-            /* XXX Return error? */
-            break;
-    }
-
-    if ((!(dst->kev.flags & EV_DISABLE)) && src->fflags & NOTE_TRIGGER) {
-        dst->kev.fflags |= NOTE_TRIGGER;
-        eventfd_raise(filt->kf_pfd);
-    }
-
-    return (0);
-}
-
-int
 evfilt_user_copyout(struct filter *filt, 
             struct kevent *dst, 
             int maxevents)
@@ -232,7 +178,6 @@ const struct filter evfilt_user = {
     EVFILT_USER,
     evfilt_user_init,
     evfilt_user_destroy,
-    evfilt_user_copyin,
     evfilt_user_copyout,
     evfilt_user_knote_create,
     evfilt_user_knote_modify,

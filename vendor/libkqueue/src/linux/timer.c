@@ -80,40 +80,6 @@ convert_msec_to_itimerspec(struct itimerspec *dst, int src, int oneshot)
 }
 
 static int
-ktimer_create(struct filter *filt, struct knote *kn)
-{
-    struct epoll_event ev;
-    struct itimerspec ts;
-    int tfd;
-
-    tfd = timerfd_create(CLOCK_MONOTONIC, 0);
-    if (tfd < 0) {
-        dbg_printf("timerfd_create(2): %s", strerror(errno));
-        return (-1);
-    }
-    dbg_printf("created timerfd %d", tfd);
-
-    convert_msec_to_itimerspec(&ts, kn->kev.data, kn->kev.flags & EV_ONESHOT);
-    if (timerfd_settime(tfd, 0, &ts, NULL) < 0) {
-        dbg_printf("timerfd_settime(2): %s", strerror(errno));
-        close(tfd);
-        return (-1);
-    }
-
-    memset(&ev, 0, sizeof(ev));
-    ev.events = EPOLLIN;
-    ev.data.ptr = kn;
-    if (epoll_ctl(filt->kf_pfd, EPOLL_CTL_ADD, tfd, &ev) < 0) {
-        dbg_printf("epoll_ctl(2): %d", errno);
-        close(tfd);
-        return (-1);
-    }
-
-    kn->kn_pfd = tfd;
-    return (0);
-}
-
-static int
 ktimer_delete(struct filter *filt, struct knote *kn)
 {
     int rv = 0;
@@ -155,29 +121,6 @@ evfilt_timer_destroy(struct filter *filt)
     /* TODO: use eventlist, close these also */
 
     close (filt->kf_pfd);
-}
-
-int
-evfilt_timer_copyin(struct filter *filt, 
-        struct knote *dst, const struct kevent *src)
-{
-    if (src->flags & EV_ADD && KNOTE_EMPTY(dst)) {
-        memcpy(&dst->kev, src, sizeof(*src));
-        dst->kev.flags |= EV_CLEAR;
-    }
-    if (src->flags & EV_ADD) 
-        return ktimer_create(filt, dst);
-    if (src->flags & EV_DELETE) 
-        return ktimer_delete(filt, dst);
-    if (src->flags & EV_ENABLE) 
-        return ktimer_create(filt, dst);
-    if (src->flags & EV_DISABLE) {
-        // TODO: err checking
-        (void) ktimer_delete(filt, dst);
-        KNOTE_DISABLE(dst);
-    }
-
-    return (0);
 }
 
 /* TODO: This entire function is copy+pasted from socket.c
@@ -319,7 +262,6 @@ const struct filter evfilt_timer = {
     EVFILT_TIMER,
     evfilt_timer_init,
     evfilt_timer_destroy,
-    evfilt_timer_copyin,
     evfilt_timer_copyout,
     evfilt_timer_knote_create,
     evfilt_timer_knote_modify,

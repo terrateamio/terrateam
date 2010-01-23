@@ -157,23 +157,6 @@ evfilt_proc_destroy(struct filter *filt)
 }
 
 int
-evfilt_proc_copyin(struct filter *filt, 
-        struct knote *dst, const struct kevent *src)
-{
-    if (src->flags & EV_ADD && KNOTE_EMPTY(dst)) {
-        memcpy(&dst->kev, src, sizeof(*src));
-        /* TODO: Consider holding the mutex here.. */
-        pthread_cond_signal(&filt->kf_data->wait_cond);
-    }
-
-    if (src->flags & EV_ADD || src->flags & EV_ENABLE) {
-        /* Nothing to do.. */
-    }
-
-    return (0);
-}
-
-int
 evfilt_proc_copyout(struct filter *filt, 
             struct kevent *dst, 
             int maxevents)
@@ -258,7 +241,6 @@ const struct filter evfilt_proc = {
     0, //XXX-FIXME broken: EVFILT_PROC,
     evfilt_proc_init,
     evfilt_proc_destroy,
-    evfilt_proc_copyin,
     evfilt_proc_copyout,
     evfilt_proc_knote_create,
     evfilt_proc_knote_modify,

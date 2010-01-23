@@ -152,7 +152,7 @@ filter_lookup(struct filter **filt, struct kqueue *kq, short id)
         return (-1);
     }
     *filt = &kq->kq_filt[~id];
-    if ((*filt)->kf_copyin == NULL) {
+    if ((*filt)->kf_copyout == NULL) {
         errno = ENOSYS;
         *filt = NULL;
         return (-1);

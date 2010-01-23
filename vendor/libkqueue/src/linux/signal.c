@@ -67,27 +67,6 @@ evfilt_signal_destroy(struct filter *filt)
 }
 
 int
-evfilt_signal_copyin(struct filter *filt, 
-        struct knote *dst, const struct kevent *src)
-{
-    if (src->ident >= SIGNAL_MAX) {
-        dbg_printf("unsupported signal number %u", (u_int) src->ident);
-        return (-1);
-    }
-
-    if (src->flags & EV_ADD && KNOTE_EMPTY(dst)) {
-        memcpy(&dst->kev, src, sizeof(*src));
-        dst->kev.flags |= EV_CLEAR;
-    }
-    if (src->flags & EV_ADD || src->flags & EV_ENABLE) 
-        sigaddset(&filt->kf_sigmask, src->ident);
-    if (src->flags & EV_DISABLE || src->flags & EV_DELETE) 
-        sigdelset(&filt->kf_sigmask, src->ident);
-
-    return (update_sigmask(filt));
-}
-
-int
 evfilt_signal_copyout(struct filter *filt, 
             struct kevent *dst, 
             int nevents)
@@ -186,7 +165,6 @@ const struct filter evfilt_signal = {
     EVFILT_SIGNAL,
     evfilt_signal_init,
     evfilt_signal_destroy,
-    evfilt_signal_copyin,
     evfilt_signal_copyout,
     evfilt_signal_knote_create,
     evfilt_signal_knote_modify,

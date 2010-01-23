@@ -98,78 +98,6 @@ evfilt_socket_destroy(struct filter *filt)
 }
 
 int
-evfilt_socket_copyin(struct filter *filt, 
-        struct knote *dst, const struct kevent *src)
-{
-    struct epoll_event ev;
-    int op, rv;
-
-    /* Determine which operation to perform */
-    if (src->flags & EV_ADD && KNOTE_EMPTY(dst)) {
-        op = EPOLL_CTL_ADD;
-        memcpy(&dst->kev, src, sizeof(*src));
-    }
-    memset(&ev, 0, sizeof(ev));
-    if (src->flags & EV_DELETE) 
-        op = EPOLL_CTL_DEL;
-    if (src->flags & EV_ENABLE || src->flags & EV_DISABLE) 
-        op = EPOLL_CTL_MOD;
-    // FIXME: probably won't work with EV_ADD | EV_DISABLE 
-    // XXX-FIXME: need to update dst for delete/modify
-
-    /* Convert the kevent into an epoll_event */
-    if (src->filter == EVFILT_READ)
-        ev.events = EPOLLIN | EPOLLRDHUP;
-    else
-        ev.events = EPOLLOUT;
-    if (src->flags & EV_ONESHOT || src->flags & EV_DISPATCH)
-        ev.events |= EPOLLONESHOT;
-    if (src->flags & EV_CLEAR)
-        ev.events |= EPOLLET;
-    ev.data.fd = src->ident;
-
-    if (src->flags & EV_DISABLE) 
-        ev.events = 0;
-
-    /* Set the low water mark */
-    /* PORTABILITY -
-       BSD kqueue(2) NOTE_LOWAT does not modify the underlying
-       socket.
-
-       It appears that epoll(2) does not respect the SO_RCVLOWAT
-       setting.
-
-     */
-#if LINUX_SUPPORTS_SO_RCVLOWAT
-    if (src->fflags & NOTE_LOWAT) {
-        const socklen_t optlen = sizeof(int);
-        int sockopt;
-
-        sockopt = src->data;
-        if (setsockopt(src->ident, SOL_SOCKET, SO_RCVLOWAT, &sockopt, optlen) < 0) {
-            dbg_printf("setsockopt(2): %s", strerror(errno));
-            return (-1);
-        }
-        dbg_printf("Low watermark set to %d", sockopt);
-    }
-#endif
-
-    dbg_printf("epoll_ctl(2): epfd=%d, op=%d, fd=%d event=%s", 
-            filt->kf_pfd, 
-            op, 
-            (int)src->ident, 
-            epoll_event_dump(&ev)
-            );
-    rv = epoll_ctl(filt->kf_pfd, op, src->ident, &ev);
-    if (rv < 0) {
-        dbg_printf("epoll_ctl(2): %s", strerror(errno));
-        return (-1);
-    }
-
-    return (0);
-}
-
-int
 evfilt_socket_copyout(struct filter *filt, 
             struct kevent *dst, 
             int nevents)
@@ -283,7 +211,6 @@ const struct filter evfilt_read = {
     EVFILT_READ,
     evfilt_socket_init,
     evfilt_socket_destroy,
-    evfilt_socket_copyin,
     evfilt_socket_copyout,
     evfilt_socket_knote_create,
     evfilt_socket_knote_modify,
@@ -296,7 +223,6 @@ const struct filter evfilt_write = {
     EVFILT_WRITE,
     evfilt_socket_init,
     evfilt_socket_destroy,
-    evfilt_socket_copyin,
     evfilt_socket_copyout,
     evfilt_socket_knote_create,
     evfilt_socket_knote_modify,
