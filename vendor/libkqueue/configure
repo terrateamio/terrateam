@@ -6,7 +6,7 @@ make_exports="program version target \
               prefix libdir includedir mandir \
               cflags ldflags ldadd libdepends \
               sources objs deps mans headers extra_dist subdirs \
-              cc cpp ld ar install"
+              cc cpp ld ar install diff"
 
 required_headers=
 optional_headers=
@@ -192,6 +192,14 @@ err() {
     exit 1
 }
 
+check_diff() {
+    # TODO: Support non-GNU diff syntax
+    # TODO: Search for the command
+    printf "checking for a suitable diff(1) command.. "
+    finalize diff "diff -ruN -dEbwBp -x .svn -x .o -x config.h -x config.mk"
+    echo "found"
+}
+
 subst_vars() {
   outfile=$1
 
@@ -247,6 +255,7 @@ check_compiler
 check_linker
 check_archiver
 check_install
+check_diff
 
 finalize program    "$program"
 finalize version    "$version"
