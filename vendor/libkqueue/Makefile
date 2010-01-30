@@ -25,8 +25,10 @@ include config.mk
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $(CFLAGS) $<
 
-$(PROGRAM).so: $(OBJS)
+$(PROGRAM).a: $(OBJS)
 	$(AR) rcs $(PROGRAM).a $(OBJS)
+
+$(PROGRAM).so: $(OBJS)
 	$(LD) $(LDFLAGS) -o $(PROGRAM).so $(OBJS) $(LDADD)
 
 all: $(PROGRAM).so
@@ -52,7 +54,7 @@ uninstall:
 	rm -f $(MANDIR)/man2/kevent.2 
 	rmdir $(INCLUDEDIR)/kqueue/sys $(INCLUDEDIR)/kqueue
 
-check:
+check: $(PROGRAM).a
 	cd test && ./configure && make check
 
 $(DISTFILE): $(OBJS)
