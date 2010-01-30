@@ -42,5 +42,8 @@ distclean: clean
 	rm -f config.mk config.h
 	for x in libdispatch ; do cd $$x && make distclean ; done
 
+edit:
+	$(EDITOR) *.[ch]
+
 clean:
 	rm -f *.o *.a kqtest

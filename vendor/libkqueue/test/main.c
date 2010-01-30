@@ -19,6 +19,7 @@
 #include "common.h"
 
 int testnum = 1;
+int error_flag = 1;
 char *cur_test_id = NULL;
 int kqfd;
 
@@ -185,22 +186,32 @@ kevent_cmp(struct kevent *k1, struct kevent *k2)
     }
 }
 
+static void
+test_atexit(void)
+{
+    if (error_flag) {
+        printf(" *** TEST FAILED: %s\n", cur_test_id);
+        //TODO: print detailed log
+    } else {
+        printf("\n---\n"
+                "+OK All %d tests completed.\n", testnum - 1);
+    }
+}
+
 void
 test_begin(const char *func)
 {
     if (cur_test_id)
         free(cur_test_id);
     cur_test_id = strdup(func);
-    if (!cur_test_id)
-        err(1, "strdup failed");
 
-    printf("\n\nTest %d: %s\n", testnum++, func);
+    printf("%d: %s\n", testnum++, cur_test_id);
+    //TODO: redirect stdout/err to logfile
 }
 
 void
-success(void)
+test_end(void)
 {
-    printf("%-70s %s\n", cur_test_id, "passed");
     free(cur_test_id);
     cur_test_id = NULL;
 }
@@ -208,20 +219,16 @@ success(void)
 void
 test_kqueue(void)
 {
-    test_begin("kqueue()");
     if ((kqfd = kqueue()) < 0)
         err(1, "kqueue()");
     test_no_kevents();
-    success();
 }
 
 void
 test_kqueue_close(void)
 {
-    test_begin("close(kq)");
     if (close(kqfd) < 0)
         err(1, "close()");
-    success();
 }
 
 void
@@ -229,8 +236,6 @@ test_ev_receipt(void)
 {
     int kq;
     struct kevent kev;
-
-    test_begin("EV_RECEIPT");
 
 #if HAVE_EV_RECEIPT
 
@@ -249,7 +254,6 @@ test_ev_receipt(void)
     memset(&kev, 0, sizeof(kev));
     puts("Skipped -- EV_RECEIPT is not available");
 #endif
-    success();
 }
 
 int 
@@ -279,8 +283,9 @@ main(int argc, char **argv)
         argc--;
     }
 
-    test_kqueue();
-    test_kqueue_close();
+    atexit(test_atexit);
+    test(kqueue);
+    test(kqueue_close);
 
     if (test_socket) 
         test_evfilt_read();
@@ -297,9 +302,9 @@ main(int argc, char **argv)
     if (test_proc) 
         test_evfilt_proc();
 
-    test_ev_receipt();
+    test(ev_receipt);
 
-    printf("\n---\n"
-            "+OK All %d tests completed.\n", testnum - 1);
+    error_flag = 0;
+
     return (0);
 }

@@ -39,6 +39,13 @@
 
 #include "config.h"
 
+#define test(f,...) do {                                             \
+    test_begin("test_"#f"()\t"__VA_ARGS__);                                                  \
+    test_##f();\
+    test_end();                                                     \
+} while (/*CONSTCOND*/0)
+
+
 extern char *cur_test_id;
 int vnode_fd;
 
@@ -69,8 +76,7 @@ kevent_add(int kqfd, struct kevent *kev,
 
 /* Checks if any events are pending, which is an error. */
 extern void test_no_kevents(void);
-
 extern void test_begin(const char *);
-extern void success(void);
+extern void test_end(void);
 
 #endif  /* _COMMON_H */

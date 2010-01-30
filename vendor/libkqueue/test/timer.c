@@ -21,42 +21,29 @@ int kqfd;
 void
 test_kevent_timer_add(void)
 {
-    const char *test_id = "kevent(EVFILT_TIMER, EV_ADD)";
     struct kevent kev;
-
-    test_begin(test_id);
 
     EV_SET(&kev, 1, EVFILT_TIMER, EV_ADD, 0, 1000, NULL);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
-
-    success();
 }
 
 void
 test_kevent_timer_del(void)
 {
-    const char *test_id = "kevent(EVFILT_TIMER, EV_DELETE)";
     struct kevent kev;
-
-    test_begin(test_id);
 
     EV_SET(&kev, 1, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
     test_no_kevents();
-
-    success();
 }
 
 void
 test_kevent_timer_get(void)
 {
-    const char *test_id = "kevent(EVFILT_TIMER, wait)";
     struct kevent kev;
-
-    test_begin(test_id);
 
     EV_SET(&kev, 1, EVFILT_TIMER, EV_ADD, 0, 1000, NULL);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
@@ -69,17 +56,12 @@ test_kevent_timer_get(void)
     EV_SET(&kev, 1, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
-
-    success();
 }
 
 static void
-test_oneshot(void)
+test_kevent_timer_oneshot(void)
 {
-    const char *test_id = "kevent(EVFILT_TIMER, EV_ONESHOT)";
     struct kevent kev;
-
-    test_begin(test_id);
 
     test_no_kevents();
 
@@ -95,18 +77,12 @@ test_oneshot(void)
     /* Check if the event occurs again */
     sleep(3);
     test_no_kevents();
-
-
-    success();
 }
 
 static void
-test_periodic(void)
+test_kevent_timer_periodic(void)
 {
-    const char *test_id = "kevent(EVFILT_TIMER, periodic)";
     struct kevent kev;
-
-    test_begin(test_id);
 
     test_no_kevents();
 
@@ -127,17 +103,12 @@ test_periodic(void)
     kev.flags = EV_DELETE;
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
-
-    success();
 }
 
 static void
-disable_and_enable(void)
+test_kevent_timer_disable_and_enable(void)
 {
-    const char *test_id = "kevent(EVFILT_TIMER, EV_DISABLE and EV_ENABLE)";
     struct kevent kev;
-
-    test_begin(test_id);
 
     test_no_kevents();
 
@@ -158,19 +129,17 @@ disable_and_enable(void)
     kev.flags = EV_ADD | EV_CLEAR | EV_ONESHOT;
     kev.data = 1; 
     kevent_cmp(&kev, kevent_get(kqfd));
-
-    success();
 }
 
 void
 test_evfilt_timer()
 {
 	kqfd = kqueue();
-    test_kevent_timer_add();
-    test_kevent_timer_del();
-    test_kevent_timer_get();
-    test_oneshot();
-    test_periodic();
-    disable_and_enable();
+    test(kevent_timer_add);
+    test(kevent_timer_del);
+    test(kevent_timer_get);
+    test(kevent_timer_oneshot);
+    test(kevent_timer_periodic);
+    test(kevent_timer_disable_and_enable);
 	close(kqfd);
 }
