@@ -22,6 +22,8 @@ include config.mk
 
 .PHONY :: install uninstall check dist dist-upload publish-www clean merge distclean fresh-build rpm edit
 
+all: $(PROGRAM).so $(PROGRAM).a
+
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $(CFLAGS) $<
 
@@ -31,7 +33,6 @@ $(PROGRAM).a: $(OBJS)
 $(PROGRAM).so: $(OBJS)
 	$(LD) $(LDFLAGS) -o $(PROGRAM).so $(OBJS) $(LDADD)
 
-all: $(PROGRAM).so
 
 install: $(PROGRAM).so
 	$(INSTALL) -d -m 755 $(INCLUDEDIR)/kqueue/sys
