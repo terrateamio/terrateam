@@ -117,3 +117,11 @@ rpm: clean $(DISTFILE)
 debug-install:
 	./configure --prefix=/usr --debug=yes
 	make clean && make && sudo make install
+
+diff:
+	if [ "`pwd | grep /trunk`" != "" ] ; then \
+	   (cd .. ; $(DIFF) branches/stable trunk | less) ; \
+    fi
+	if [ "`pwd | grep /branches/stable`" != "" ] ; then \
+	   (cd ../.. ; $(DIFF) branches/stable trunk | less) ; \
+    fi
