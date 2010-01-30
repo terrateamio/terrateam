@@ -19,29 +19,21 @@
 int kqfd;
 
 static void
-add_and_delete(void)
+test_kevent_user_add_and_delete(void)
 {
-    const char *test_id = "kevent(EVFILT_USER, EV_ADD and EV_DELETE)";
     struct kevent kev;
-
-    test_begin(test_id);
 
     kevent_add(kqfd, &kev, 1, EVFILT_USER, EV_ADD, 0, 0, NULL);
     test_no_kevents();
 
     kevent_add(kqfd, &kev, 1, EVFILT_USER, EV_DELETE, 0, 0, NULL);
     test_no_kevents();
-
-    success();
 }
 
 static void
-event_wait(void)
+test_kevent_user_get(void)
 {
-    const char *test_id = "kevent(EVFILT_USER, wait)";
     struct kevent kev;
-
-    test_begin(test_id);
 
     test_no_kevents();
 
@@ -55,17 +47,12 @@ event_wait(void)
     kevent_cmp(&kev, kevent_get(kqfd));
 
     test_no_kevents();
-
-    success();
 }
 
 static void
-disable_and_enable(void)
+test_kevent_user_disable_and_enable(void)
 {
-    const char *test_id = "kevent(EVFILT_USER, EV_DISABLE and EV_ENABLE)";
     struct kevent kev;
-
-    test_begin(test_id);
 
     test_no_kevents();
 
@@ -83,17 +70,13 @@ disable_and_enable(void)
     kev.fflags &= ~NOTE_FFCTRLMASK;
     kev.fflags &= ~NOTE_TRIGGER;
     kevent_cmp(&kev, kevent_get(kqfd));
-
-    success();
 }
 
 static void
-oneshot(void)
+test_kevent_user_oneshot(void)
 {
-    const char *test_id = "kevent(EVFILT_USER, EV_ONESHOT)";
     struct kevent kev;
 
-    test_begin(test_id);
 
     test_no_kevents();
 
@@ -108,8 +91,6 @@ oneshot(void)
     kevent_cmp(&kev, kevent_get(kqfd));
 
     test_no_kevents();
-
-    success();
 }
 
 void
@@ -117,10 +98,10 @@ test_evfilt_user()
 {
 	kqfd = kqueue();
 
-    add_and_delete();
-    event_wait();
-    disable_and_enable();
-    oneshot();
+    test(kevent_user_add_and_delete);
+    test(kevent_user_get);
+    test(kevent_user_disable_and_enable);
+    test(kevent_user_oneshot);
     /* TODO: try different fflags operations */
 
 	close(kqfd);

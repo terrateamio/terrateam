@@ -17,6 +17,7 @@
 #include "common.h"
 
 static int sigusr1_caught = 0;
+static pid_t pid;
 
 int kqfd;
 
@@ -27,28 +28,19 @@ sig_handler(int signum)
 }
 
 static void
-add_and_delete(void)
+test_kevent_proc_add(void)
 {
     struct kevent kev;
-    pid_t pid;
-
-    /* Create a child that waits to be killed and then exits */
-    pid = fork();
-    if (pid == 0) {
-        pause();
-        exit(2);
-    }
-    printf(" -- child created (pid %d)\n", (int) pid);
-
-    test_begin("kevent(EVFILT_PROC, EV_ADD)");
 
     test_no_kevents();
     kevent_add(kqfd, &kev, pid, EVFILT_PROC, EV_ADD, 0, 0, NULL);
     test_no_kevents();
+}
 
-    success();
-
-    test_begin("kevent(EVFILT_PROC, EV_DELETE)");
+static void
+test_kevent_proc_delete(void)
+{
+    struct kevent kev;
 
     test_no_kevents();
     kevent_add(kqfd, &kev, pid, EVFILT_PROC, EV_DELETE, 0, 0, NULL);
@@ -56,18 +48,12 @@ add_and_delete(void)
         err(1, "kill");
     sleep(1);
     test_no_kevents();
-
-    success();
-
 }
 
 static void
-event_trigger(void)
+test_kevent_proc_get(void)
 {
     struct kevent kev;
-    pid_t pid;
-
-    test_begin("kevent(EVFILT_PROC, wait)");
 
     /* Create a child that waits to be killed and then exits */
     pid = fork();
@@ -87,8 +73,6 @@ event_trigger(void)
         err(1, "kill");
     kevent_cmp(&kev, kevent_get(kqfd));
     test_no_kevents();
-
-    success();
 }
 
 #ifdef TODO
@@ -222,8 +206,17 @@ test_evfilt_proc()
 
     signal(SIGUSR1, sig_handler);
 
-    add_and_delete();
-    event_trigger();
+    /* Create a child that waits to be killed and then exits */
+    pid = fork();
+    if (pid == 0) {
+        pause();
+        exit(2);
+    }
+    printf(" -- child created (pid %d)\n", (int) pid);
+
+    test(kevent_proc_add);
+    test(kevent_proc_delete);
+    test(kevent_proc_get);
 
     signal(SIGUSR1, SIG_DFL);
 

@@ -21,25 +21,17 @@ int kqfd;
 void
 test_kevent_signal_add(void)
 {
-    const char *test_id = "kevent(EVFILT_SIGNAL, EV_ADD)";
     struct kevent kev;
-
-    test_begin(test_id);
 
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
-
-    success();
 }
 
 void
 test_kevent_signal_get(void)
 {
-    const char *test_id = "kevent(EVFILT_SIGNAL, wait)";
     struct kevent kev;
-
-    test_begin(test_id);
 
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);    
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
@@ -57,17 +49,12 @@ test_kevent_signal_get(void)
     kev.flags |= EV_CLEAR;
     kev.data = 1;
     kevent_cmp(&kev, kevent_get(kqfd));
-
-    success();
 }
 
 void
 test_kevent_signal_disable(void)
 {
-    const char *test_id = "kevent(EVFILT_SIGNAL, EV_DISABLE)";
     struct kevent kev;
-
-    test_begin(test_id);
 
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_DISABLE, 0, 0, NULL);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
@@ -83,17 +70,12 @@ test_kevent_signal_disable(void)
         err(1, "kill");
 
     test_no_kevents();
-
-    success();
 }
 
 void
 test_kevent_signal_enable(void)
 {
-    const char *test_id = "kevent(EVFILT_SIGNAL, EV_ENABLE)";
     struct kevent kev;
-
-    test_begin(test_id);
 
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_ENABLE, 0, 0, NULL);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
@@ -120,17 +102,12 @@ test_kevent_signal_enable(void)
     kev.flags = EV_DELETE;
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
-
-    success();
 }
 
 void
 test_kevent_signal_del(void)
 {
-    const char *test_id = "kevent(EVFILT_SIGNAL, EV_DELETE)";
     struct kevent kev;
-
-    test_begin(test_id);
 
     /* Delete the kevent */
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_DELETE, 0, 0, NULL);
@@ -147,16 +124,12 @@ test_kevent_signal_del(void)
         err(1, "kill");
 
     test_no_kevents();
-    success();
 }
 
 void
 test_kevent_signal_oneshot(void)
 {
-    const char *test_id = "kevent(EVFILT_SIGNAL, EV_ONESHOT)";
     struct kevent kev;
-
-    test_begin(test_id);
 
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD | EV_ONESHOT, 0, 0, NULL);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
@@ -179,19 +152,17 @@ test_kevent_signal_oneshot(void)
     if (kill(getpid(), SIGUSR1) < 0)
         err(1, "kill");
     test_no_kevents();
-
-    success();
 }
 
 void
 test_evfilt_signal()
 {
 	kqfd = kqueue();
-        test_kevent_signal_add();
-        test_kevent_signal_del();
-        test_kevent_signal_get();
-        test_kevent_signal_disable();
-        test_kevent_signal_enable();
-        test_kevent_signal_oneshot();
-	close(kqfd);
+    test(kevent_signal_add);
+    test(kevent_signal_del);
+    test(kevent_signal_get);
+    test(kevent_signal_disable);
+    test(kevent_signal_enable);
+    test(kevent_signal_oneshot);
+    close(kqfd);
 }
