@@ -22,6 +22,12 @@
 #include <pthread.h> 
 #include <sys/event.h> 
 
+/* Number of threads to create */
+static const int nthreads = 64;
+
+/* Number of iterations performed by each thread */
+static const int nrounds = 10;
+
 //pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 
 void
@@ -40,19 +46,38 @@ test_kqueue_conc(void)
 void *
 test_harness(void *arg)
 {
+    int id = (long) arg;
+    int i;
+    int kqfd;
+
+    kqfd = kqueue();
+    if (kqfd < 0)
+        err(1, "kqueue");
+
+    printf("thread %d runs %d\n", id, id % 3);
+
     //test_kqueue_conc();
-    test_evfilt_user();
+    for (i = 0; i < nrounds; i++) {
+        switch (id % 3) {
+            case 0: test_evfilt_user(kqfd);
+                    break;
+            case 1: test_evfilt_read(kqfd);
+                    break;
+            case 2: test_evfilt_timer(kqfd);
+                    break;
+        }
+    }
+    printf("thread %d done\n", id);
 }
 
 int 
 main(int argc, char **argv)
 {
-    const int nthreads = 64;
     pthread_t tid[nthreads];
-    int i;
+    long i;
 
     for (i=0; i<nthreads; i++) {
-        if (pthread_create(&tid[i], NULL, test_harness, NULL) != 0)
+        if (pthread_create(&tid[i], NULL, test_harness, (void *)i) != 0)
             err(1, "pthread_create");
     }
     for (i=0; i<nthreads; i++) {

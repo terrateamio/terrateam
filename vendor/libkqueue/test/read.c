@@ -17,7 +17,7 @@
 #include "common.h"
 
 static int __thread kqfd;
-int sockfd[2];
+static int __thread sockfd[2];
 
 static void
 kevent_socket_drain(void)
