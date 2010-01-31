@@ -38,12 +38,9 @@
 static char *
 itimerspec_dump(struct itimerspec *ts)
 {
-    char *buf;
+    static char __thread buf[1024];
 
-    if ((buf = calloc(1, 1024)) == NULL)
-        abort();
-
-    snprintf(buf, 1024,
+    snprintf(buf, sizeof(buf),
             "itimer: [ interval=%lu s %lu ns, next expire=%lu s %lu ns ]",
             ts->it_interval.tv_sec,
             ts->it_interval.tv_nsec,
