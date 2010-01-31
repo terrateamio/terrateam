@@ -16,8 +16,8 @@
 
 #include "common.h"
 
-int kqfd;
-int vnode_fd;
+static int __thread kqfd;
+static int __thread vnode_fd;
 
 void
 test_kevent_vnode_add(void)
@@ -137,7 +137,7 @@ test_kevent_vnode_disable_and_enable(void)
     struct kevent kev;
     int nfds;
 
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     /* Add the watch and immediately disable it */
     EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_ATTRIB, 0, NULL);
@@ -150,7 +150,7 @@ test_kevent_vnode_disable_and_enable(void)
     /* Confirm that the watch is disabled */
     if (system("touch /tmp/kqueue-test.tmp") < 0)
         err(1, "system");
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     /* Re-enable and check again */
     kev.flags = EV_ENABLE;
@@ -175,7 +175,7 @@ test_kevent_vnode_dispatch(void)
     struct kevent kev;
     int nfds;
 
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_DISPATCH, NOTE_ATTRIB, 0, NULL);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
@@ -197,7 +197,7 @@ test_kevent_vnode_dispatch(void)
     puts("-- checking that watch is disabled");
     if (system("touch /tmp/kqueue-test.tmp") < 0)
         err(1, "system");
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     /* Delete the watch */
     EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_DELETE, NOTE_ATTRIB, 0, NULL);
@@ -207,9 +207,9 @@ test_kevent_vnode_dispatch(void)
 #endif 	/* HAVE_EV_DISPATCH */
 
 void
-test_evfilt_vnode()
+test_evfilt_vnode(int _kqfd)
 {
-	kqfd = kqueue();
+	kqfd = _kqfd;
     test(kevent_vnode_add);
     test(kevent_vnode_del);
     test(kevent_vnode_disable_and_enable);
@@ -220,5 +220,4 @@ test_evfilt_vnode()
     test(kevent_vnode_note_attrib);
     test(kevent_vnode_note_rename);
     test(kevent_vnode_note_delete);
-	close(kqfd);
 }

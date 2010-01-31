@@ -16,7 +16,7 @@
 
 #include "common.h"
 
-int kqfd;
+static int __thread kqfd;
 int sockfd[2];
 
 static void
@@ -60,7 +60,7 @@ test_kevent_socket_add_without_ev_add(void)
         err(1, "%s", test_id);
 
     kevent_socket_fill();
-    test_no_kevents();
+    test_no_kevents(kqfd);
     kevent_socket_drain();
 
     /* Try to delete a kevent which does not exist */
@@ -84,7 +84,7 @@ test_kevent_socket_get(void)
     kevent_cmp(&kev, kevent_get(kqfd));
 
     kevent_socket_drain();
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     kev.flags = EV_DELETE;
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
@@ -96,7 +96,7 @@ test_kevent_socket_clear(void)
 {
     struct kevent kev;
 
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     EV_SET(&kev, sockfd[0], EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, &sockfd[0]);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
@@ -112,7 +112,7 @@ test_kevent_socket_clear(void)
        additional events.
      */
     kevent_socket_drain();
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     kevent_socket_drain();
     EV_SET(&kev, sockfd[0], EVFILT_READ, EV_DELETE, 0, 0, &sockfd[0]);
@@ -134,7 +134,7 @@ test_kevent_socket_disable_and_enable(void)
         err(1, "%s", test_id);
 
     kevent_socket_fill();
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     /* Re-enable the knote, then see if an event is generated */
     kev.flags = EV_ENABLE;
@@ -161,7 +161,7 @@ test_kevent_socket_del(void)
         err(1, "%s", test_id);
 
     kevent_socket_fill();
-    test_no_kevents();
+    test_no_kevents(kqfd);
     kevent_socket_drain();
 }
 
@@ -175,7 +175,7 @@ test_kevent_socket_oneshot(void)
     EV_SET(&kev, sockfd[0], EVFILT_READ, EV_ADD | EV_ONESHOT, 0, 0, &sockfd[0]);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     puts("-- getting one event");
     kevent_socket_fill();
@@ -183,7 +183,7 @@ test_kevent_socket_oneshot(void)
     kevent_cmp(&kev, kevent_get(kqfd));
 
     puts("-- checking knote disabled");
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     /* Try to delete the knote, it should already be deleted */
     EV_SET(&kev, sockfd[0], EVFILT_READ, EV_DELETE, 0, 0, &sockfd[0]);
@@ -205,14 +205,14 @@ test_kevent_socket_dispatch(void)
     EV_SET(&kev, sockfd[0], EVFILT_READ, EV_ADD | EV_DISPATCH, 0, 0, &sockfd[0]);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     /* The event will occur only once, even though EV_CLEAR is not
        specified. */
     kevent_socket_fill();
     kev.data = 1;
     kevent_cmp(&kev, kevent_get(kqfd));
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     /* Since the knote is disabled, the EV_DELETE operation succeeds. */
     EV_SET(&kev, sockfd[0], EVFILT_READ, EV_DELETE, 0, 0, &sockfd[0]);
@@ -263,7 +263,7 @@ test_kevent_socket_eof(void)
     EV_SET(&kev, sockfd[0], EVFILT_READ, EV_ADD, 0, 0, &sockfd[0]);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     if (close(sockfd[1]) < 0)
         err(1, "close(2)");
@@ -278,13 +278,13 @@ test_kevent_socket_eof(void)
 }
 
 void
-test_evfilt_read()
+test_evfilt_read(int _kqfd)
 {
     /* Create a connected pair of full-duplex sockets for testing socket events */
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd) < 0) 
         abort();
 
-    kqfd = kqueue();
+    kqfd = _kqfd;
     test(kevent_socket_add);
     test(kevent_socket_del);
     test(kevent_socket_add_without_ev_add);
@@ -296,5 +296,4 @@ test_evfilt_read()
     test(kevent_socket_dispatch);
 #endif
     test(kevent_socket_eof);
-    close(kqfd);
 }

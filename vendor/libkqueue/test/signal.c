@@ -16,7 +16,7 @@
 
 #include "common.h"
 
-int kqfd;
+static int __thread kqfd;
 
 void
 test_kevent_signal_add(void)
@@ -69,7 +69,7 @@ test_kevent_signal_disable(void)
     if (kill(getpid(), SIGUSR1) < 0)
         err(1, "kill");
 
-    test_no_kevents();
+    test_no_kevents(kqfd);
 }
 
 void
@@ -123,7 +123,7 @@ test_kevent_signal_del(void)
     if (kill(getpid(), SIGUSR1) < 0)
         err(1, "kill");
 
-    test_no_kevents();
+    test_no_kevents(kqfd);
 }
 
 void
@@ -151,18 +151,17 @@ test_kevent_signal_oneshot(void)
     /* Send another one and make sure we get no events */
     if (kill(getpid(), SIGUSR1) < 0)
         err(1, "kill");
-    test_no_kevents();
+    test_no_kevents(kqfd);
 }
 
 void
-test_evfilt_signal()
+test_evfilt_signal(int _kqfd)
 {
-	kqfd = kqueue();
+	kqfd = _kqfd;
     test(kevent_signal_add);
     test(kevent_signal_del);
     test(kevent_signal_get);
     test(kevent_signal_disable);
     test(kevent_signal_enable);
     test(kevent_signal_oneshot);
-    close(kqfd);
 }

@@ -18,212 +18,15 @@
 
 #include "common.h"
 
-int testnum = 1;
-int error_flag = 1;
-char *cur_test_id = NULL;
-int kqfd;
-
-extern void test_evfilt_read();
-extern void test_evfilt_signal();
-extern void test_evfilt_vnode();
-extern void test_evfilt_timer();
-extern void test_evfilt_proc();
-#if HAVE_EVFILT_USER
-extern void test_evfilt_user();
-#endif
-
-/* Checks if any events are pending, which is an error. */
-void 
-test_no_kevents(void)
-{
-    int nfds;
-    struct timespec timeo;
-    struct kevent kev;
-
-    memset(&timeo, 0, sizeof(timeo));
-    nfds = kevent(kqfd, NULL, 0, &kev, 1, &timeo);
-    if (nfds != 0) {
-        puts("\nUnexpected event:");
-        puts(kevent_to_str(&kev));
-        errx(1, "%d event(s) pending, but none expected:", nfds);
-    }
-}
-
-/* Retrieve a single kevent */
-struct kevent *
-kevent_get(int kqfd)
-{
-    int nfds;
-    static struct kevent kev;
-
-    nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
-    if (nfds < 1)
-        err(1, "kevent(2)");
-
-    return (&kev);
-}
-
-char *
-kevent_fflags_dump(struct kevent *kev)
-{
-    char *buf;
-
-#define KEVFFL_DUMP(attrib) \
-    if (kev->fflags & attrib) \
-	strncat(buf, #attrib" ", 64);
-
-    if ((buf = calloc(1, 1024)) == NULL)
-	abort();
-
-    /* Not every filter has meaningful fflags */
-    if (kev->filter != EVFILT_VNODE) {
-    	snprintf(buf, 1024, "fflags = %d", kev->fflags);
-	return (buf);
-    }
-
-    snprintf(buf, 1024, "fflags = %d (", kev->fflags);
-    KEVFFL_DUMP(NOTE_DELETE);
-    KEVFFL_DUMP(NOTE_WRITE);
-    KEVFFL_DUMP(NOTE_EXTEND);
-#if HAVE_NOTE_TRUNCATE
-    KEVFFL_DUMP(NOTE_TRUNCATE);
-#endif
-    KEVFFL_DUMP(NOTE_ATTRIB);
-    KEVFFL_DUMP(NOTE_LINK);
-    KEVFFL_DUMP(NOTE_RENAME);
-#if HAVE_NOTE_REVOKE
-    KEVFFL_DUMP(NOTE_REVOKE);
-#endif
-    buf[strlen(buf) - 1] = ')';
-
-    return (buf);
-}
-
-char *
-kevent_flags_dump(struct kevent *kev)
-{
-    char *buf;
-
-#define KEVFL_DUMP(attrib) \
-    if (kev->flags & attrib) \
-	strncat(buf, #attrib" ", 64);
-
-    if ((buf = calloc(1, 1024)) == NULL)
-	abort();
-
-    snprintf(buf, 1024, "flags = %d (", kev->flags);
-    KEVFL_DUMP(EV_ADD);
-    KEVFL_DUMP(EV_ENABLE);
-    KEVFL_DUMP(EV_DISABLE);
-    KEVFL_DUMP(EV_DELETE);
-    KEVFL_DUMP(EV_ONESHOT);
-    KEVFL_DUMP(EV_CLEAR);
-    KEVFL_DUMP(EV_EOF);
-    KEVFL_DUMP(EV_ERROR);
-#if HAVE_EV_DISPATCH
-    KEVFL_DUMP(EV_DISPATCH);
-#endif
-#if HAVE_EV_RECEIPT
-    KEVFL_DUMP(EV_RECEIPT);
-#endif
-    buf[strlen(buf) - 1] = ')';
-
-    return (buf);
-}
-
-/* TODO - backport changes from src/common/kevent.c kevent_dump() */
-const char *
-kevent_to_str(struct kevent *kev)
-{
-    char buf[512];
-
-    snprintf(&buf[0], sizeof(buf), 
-            "[ident=%d, filter=%d, %s, %s, data=%d, udata=%p]",
-            (u_int) kev->ident,
-            kev->filter,
-            kevent_flags_dump(kev),
-            kevent_fflags_dump(kev),
-            (int) kev->data,
-            kev->udata);
-
-    return (strdup(buf));
-}
-
-void
-kevent_add(int kqfd, struct kevent *kev, 
-        uintptr_t ident,
-        short     filter,
-        u_short   flags,
-        u_int     fflags,
-        intptr_t  data,
-        void      *udata)
-{
-    EV_SET(kev, ident, filter, flags, fflags, data, NULL);    
-    if (kevent(kqfd, kev, 1, NULL, 0, NULL) < 0) {
-        printf("Unable to add the following kevent:\n%s\n",
-                kevent_to_str(kev));
-        err(1, "kevent(): %s", strerror(errno));
-    }
-}
-
-void
-kevent_cmp(struct kevent *k1, struct kevent *k2)
-{
-/* XXX-
-   Workaround for inconsistent implementation of kevent(2) 
- */
-#ifdef __FreeBSD__
-    if (k1->flags & EV_ADD)
-        k2->flags |= EV_ADD;
-#endif
-    if (memcmp(k1, k2, sizeof(*k1)) != 0) {
-        printf("kevent_cmp: mismatch:\n  %s !=\n  %s\n", 
-              kevent_to_str(k1), kevent_to_str(k2));
-        abort();
-    }
-}
-
-static void
-test_atexit(void)
-{
-    if (error_flag) {
-        printf(" *** TEST FAILED: %s\n", cur_test_id);
-        //TODO: print detailed log
-    } else {
-        printf("\n---\n"
-                "+OK All %d tests completed.\n", testnum - 1);
-    }
-}
-
-void
-test_begin(const char *func)
-{
-    if (cur_test_id)
-        free(cur_test_id);
-    cur_test_id = strdup(func);
-
-    printf("%d: %s\n", testnum++, cur_test_id);
-    //TODO: redirect stdout/err to logfile
-}
-
-void
-test_end(void)
-{
-    free(cur_test_id);
-    cur_test_id = NULL;
-}
 
 void
 test_kqueue(void)
 {
+    int kqfd;
+
     if ((kqfd = kqueue()) < 0)
         err(1, "kqueue()");
-    test_no_kevents();
-}
-
-void
-test_kqueue_close(void)
-{
+    test_no_kevents(kqfd);
     if (close(kqfd) < 0)
         err(1, "close()");
 }
@@ -234,10 +37,9 @@ test_ev_receipt(void)
     int kq;
     struct kevent kev;
 
-#if HAVE_EV_RECEIPT
-
     if ((kq = kqueue()) < 0)
-        err(1, "kqueue");
+        err(1, "kqueue()");
+#if HAVE_EV_RECEIPT
 
     EV_SET(&kev, SIGUSR2, EVFILT_SIGNAL, EV_ADD | EV_RECEIPT, 0, 0, NULL);
     if (kevent(kq, &kev, 1, &kev, 1, NULL) < 0)
@@ -246,7 +48,6 @@ test_ev_receipt(void)
     /* TODO: check the receipt */
 
     close(kq);
-
 #else
     memset(&kev, 0, sizeof(kev));
     puts("Skipped -- EV_RECEIPT is not available");
@@ -256,6 +57,7 @@ test_ev_receipt(void)
 int 
 main(int argc, char **argv)
 {
+    int kqfd;
     int test_proc = 0;  /* XXX-FIXME */
     int test_socket = 1;
     int test_signal = 1;
@@ -280,28 +82,31 @@ main(int argc, char **argv)
         argc--;
     }
 
-    atexit(test_atexit);
+    testing_begin();
+
     test(kqueue);
-    test(kqueue_close);
+
+    if ((kqfd = kqueue()) < 0)
+        err(1, "kqueue()");
 
     if (test_socket) 
-        test_evfilt_read();
+        test_evfilt_read(kqfd);
     if (test_signal) 
-        test_evfilt_signal();
+        test_evfilt_signal(kqfd);
     if (test_vnode) 
-        test_evfilt_vnode();
+        test_evfilt_vnode(kqfd);
 #if HAVE_EVFILT_USER
     if (test_user) 
-        test_evfilt_user();
+        test_evfilt_user(kqfd);
 #endif
     if (test_timer) 
-        test_evfilt_timer();
+        test_evfilt_timer(kqfd);
     if (test_proc) 
-        test_evfilt_proc();
+        test_evfilt_proc(kqfd);
 
     test(ev_receipt);
 
-    error_flag = 0;
+    testing_end();
 
     return (0);
 }

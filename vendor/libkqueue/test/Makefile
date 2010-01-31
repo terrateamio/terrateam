@@ -25,7 +25,6 @@ kqtest: $(SOURCES)
 check: kqtest
 	./kqtest
 
-# NOTE: copy+paste of 'make check'
 valgrind: kqtest
 	valgrind --tool=memcheck --leak-check=full --show-reachable=yes --num-callers=20 --track-fds=yes ./kqtest
 
