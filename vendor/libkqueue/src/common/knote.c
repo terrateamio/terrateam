@@ -78,7 +78,7 @@ knote_free_all(struct filter *filt)
     /* Distroy all knotes */
     for (n1 = RB_MIN(knt, &filt->kf_knote); 
             n1 != NULL; 
-            n1 = RB_NEXT(knt, filt->kf_knote, n1))
+            n1 = n2)
     {
         n2 = RB_NEXT(knt, filt->kf_knote, n1);
         RB_REMOVE(knt, &filt->kf_knote, n1);
