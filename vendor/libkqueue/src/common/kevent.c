@@ -36,28 +36,23 @@
 static char *
 kevent_filter_dump(const struct kevent *kev)
 {
-    char *buf;
+    static char __thread buf[64];
 
-    if ((buf = calloc(1, 64)) == NULL)
-        abort();
-
-    snprintf(buf, 64, "%d (%s)", kev->filter, filter_name(kev->filter));
-    return (buf);
+    snprintf(&buf[0], sizeof(buf), "%d (%s)", 
+            kev->filter, filter_name(kev->filter));
+    return (&buf[0]);
 }
 
 static char *
 kevent_fflags_dump(const struct kevent *kev)
 {
-    char *buf;
+    static char __thread buf[1024];
 
 #define KEVFFL_DUMP(attrib) \
     if (kev->fflags & attrib) \
     strncat(buf, #attrib" ", 64);
 
-    if ((buf = calloc(1, 1024)) == NULL)
-        abort();
-
-    snprintf(buf, 1024, "fflags=0x%04x (", kev->fflags);
+    snprintf(buf, sizeof(buf), "fflags=0x%04x (", kev->fflags);
     if (kev->filter == EVFILT_VNODE) {
         KEVFFL_DUMP(NOTE_DELETE);
         KEVFFL_DUMP(NOTE_WRITE);
@@ -84,16 +79,13 @@ kevent_fflags_dump(const struct kevent *kev)
 static char *
 kevent_flags_dump(const struct kevent *kev)
 {
-    char *buf;
+    static char __thread buf[1024];
 
 #define KEVFL_DUMP(attrib) \
     if (kev->flags & attrib) \
 	strncat(buf, #attrib" ", 64);
 
-    if ((buf = calloc(1, 1024)) == NULL)
-        abort();
-
-    snprintf(buf, 1024, "flags=0x%04x (", kev->flags);
+    snprintf(buf, sizeof(buf), "flags=0x%04x (", kev->flags);
     KEVFL_DUMP(EV_ADD);
     KEVFL_DUMP(EV_ENABLE);
     KEVFL_DUMP(EV_DISABLE);
@@ -114,9 +106,9 @@ kevent_flags_dump(const struct kevent *kev)
 const char *
 kevent_dump(const struct kevent *kev)
 {
-    char buf[512];
+    static char __thread buf[1024];
 
-    snprintf(&buf[0], sizeof(buf), 
+    snprintf(buf, sizeof(buf), 
             "{ ident=%d, filter=%s, %s, %s, data=%d, udata=%p }",
             (u_int) kev->ident,
             kevent_filter_dump(kev),
@@ -125,7 +117,7 @@ kevent_dump(const struct kevent *kev)
             (int) kev->data,
             kev->udata);
 
-    return (strdup(buf)); /* FIXME: memory leak */
+    return (buf);
 }
 
 static int

@@ -54,16 +54,13 @@ struct kevent *
 kevent_get(int kqfd)
 {
     int nfds;
-    struct kevent *kev;
+    static struct kevent kev;
 
-    if ((kev = calloc(1, sizeof(*kev))) == NULL)
-	err(1, "out of memory");
-    
-    nfds = kevent(kqfd, NULL, 0, kev, 1, NULL);
+    nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
     if (nfds < 1)
         err(1, "kevent(2)");
 
-    return (kev);
+    return (&kev);
 }
 
 char *

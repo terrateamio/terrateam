@@ -38,14 +38,12 @@
 char *
 inotify_mask_dump(uint32_t mask)
 {
-    char *buf;
+    static char __thread buf[1024];
 
 #define INEVT_MASK_DUMP(attrib) \
     if (mask & attrib) \
        strcat(buf, #attrib" ");
 
-    if ((buf = calloc(1, 1024)) == NULL)
-	abort();
     sprintf(buf, "mask = %d (", mask);
     INEVT_MASK_DUMP(IN_ACCESS);
     INEVT_MASK_DUMP(IN_MODIFY);
