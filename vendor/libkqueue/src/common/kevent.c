@@ -143,7 +143,7 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
     kn = knote_lookup(filt, src->ident);
     if (kn == NULL) {
         if (src->flags & EV_ADD) {
-            if ((kn = knote_new(filt)) == NULL) {
+            if ((kn = knote_new()) == NULL) {
                 errno = ENOENT;
                 return (-1);
             }
@@ -156,6 +156,7 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
                 errno = EFAULT;
                 return (-1);
             } 
+            knote_insert(filt, kn);
             dbg_printf("created kevent %s\n", kevent_dump(src));
             if (src->flags & EV_DISABLE) {
                 kn->kev.flags |= EV_DISABLE;

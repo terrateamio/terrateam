@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -47,18 +48,21 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
     memcpy(dst, src, sizeof(*src));
     dst->kf_kqueue = kq;
     pthread_rwlock_init(&dst->kf_mtx, NULL);
-    KNOTELIST_INIT(&dst->kf_watchlist);
-    KNOTELIST_INIT(&dst->kf_eventlist);
     RB_INIT(&dst->kf_knote);
-    LIST_INIT(&dst->kf_event);
+    TAILQ_INIT(&dst->kf_event);
     if (src->kf_id == 0) {
         dbg_puts("filter is not implemented");
         return (0);
     }
-    if (src->kf_init == NULL) {
-        dbg_puts("filter has no initializer");
-        return (-1);
-    }
+
+    assert(src->kf_init);
+    assert(src->kf_destroy);
+    assert(src->kf_copyout);
+    assert(src->kn_create);
+    assert(src->kn_modify);
+    assert(src->kn_delete);
+    assert(src->kn_enable);
+    assert(src->kn_disable);
 
     rv = src->kf_init(dst);
     if (rv < 0) {
@@ -105,7 +109,6 @@ filter_register_all(struct kqueue *kq)
 void
 filter_unregister_all(struct kqueue *kq)
 {
-    struct knote *n1, *n2;
     int i;
 
     for (i = 0; i < EVFILT_SYSCOUNT; i++) {
@@ -115,15 +118,7 @@ filter_unregister_all(struct kqueue *kq)
         if (kq->kq_filt[i].kf_destroy != NULL) 
             kq->kq_filt[i].kf_destroy(&kq->kq_filt[i]);
 
-        /* Destroy all knotes associated with this filter */
-        for (n1 = LIST_FIRST(&kq->kq_filt[i].kf_watchlist); n1 != NULL; n1 = n2) {
-            n2 = LIST_NEXT(n1, entries);
-            free(n1);
-        }
-        for (n1 = LIST_FIRST(&kq->kq_filt[i].kf_eventlist); n1 != NULL; n1 = n2) {
-            n2 = LIST_NEXT(n1, entries);
-            free(n1);
-        }
+        knote_free_all(&kq->kq_filt[i]);
     }
     memset(&kq->kq_filt[0], 0, sizeof(kq->kq_filt));
 }

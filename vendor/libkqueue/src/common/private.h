@@ -63,9 +63,7 @@ struct knote {
     int               kn_events;    /* Used by socket */
     nlink_t           kn_st_nlink;  /* Used by vnode */
     off_t             kn_st_size;   /* Used by vnode */
-    LIST_ENTRY(knote) entries;      /* DEADWOOD */
-    /* NOTE: replaces entries above */
-    LIST_ENTRY(knote) event_ent;    /* Used by kqueue->eventlist */
+    TAILQ_ENTRY(knote) event_ent;    /* Used by filter->kf_event */
     RB_ENTRY(knote)   kntree_ent;   /* Used by filter->kntree */
 };
 LIST_HEAD(knotelist, knote);
@@ -109,14 +107,8 @@ struct filter {
     sigset_t  kf_sigmask;
     pthread_rwlock_t kf_mtx;
     struct evfilt_data *kf_data;	/* filter-specific data */
-
-    /* DEADWOOD */
-    struct knotelist kf_watchlist;      /* events that have not occurred */
-    struct knotelist kf_eventlist;      /* events that have occurred */
-    /* replaces above 2 fields */
     RB_HEAD(knt, knote) kf_knote;
-    LIST_HEAD(, knote)  kf_event;       /* events that have occurred */
-
+    TAILQ_HEAD(, knote)  kf_event;       /* events that have occurred */
     struct kqueue *kf_kqueue;
 };
 
@@ -134,11 +126,15 @@ struct kqueue {
 
 struct knote *  knote_lookup(struct filter *, short);
 struct knote *  knote_lookup_data(struct filter *filt, intptr_t);
-struct knote *  knote_new(struct filter *);
+struct knote *  knote_new(void);
 void 		    knote_free(struct filter *, struct knote *);
+void            knote_free_all(struct filter *);
 void            knote_insert(struct filter *, struct knote *);
+
+/* TODO: these deal with the eventlist, should use a different prefix */
 void            knote_enqueue(struct filter *, struct knote *);
 struct knote *  knote_dequeue(struct filter *);
+int             knote_events_pending(struct filter *);
 
 int         eventfd_create(void);
 int         eventfd_raise(int);
