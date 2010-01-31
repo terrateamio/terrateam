@@ -97,11 +97,7 @@ wait_thread(void *arg)
             kn->kev.data = 1; 
         }
 
-        /* Move the knote from the watchlist to the eventlist */
-        pthread_rwlock_wrlock(&filt->kf_mtx);
-        LIST_REMOVE(kn, entries);
-        LIST_INSERT_HEAD(&filt->kf_eventlist, kn, entries);
-        pthread_rwlock_unlock(&filt->kf_mtx);
+        knote_enqueue(filt, kn);
 
         /* Indicate read(2) readiness */
         if (write(filt->kf_pfd, &counter, sizeof(counter)) < 0) {
@@ -161,7 +157,7 @@ evfilt_proc_copyout(struct filter *filt,
             struct kevent *dst, 
             int maxevents)
 {
-    struct knote *kn, *kn_nxt;
+    struct knote *kn;
     int nevents = 0;
     uint64_t cur;
 
@@ -172,10 +168,7 @@ evfilt_proc_copyout(struct filter *filt,
     }
     dbg_printf("  counter=%llu", (unsigned long long) cur);
 
-    pthread_rwlock_wrlock(&filt->kf_mtx);
-    for (kn = LIST_FIRST(&filt->kf_eventlist); kn != NULL; kn = kn_nxt) {
-        kn_nxt = LIST_NEXT(kn, entries);
-
+    for (kn = knote_dequeue(filt); kn != NULL; kn = knote_dequeue(filt)) {
         kevent_dump(&kn->kev);
         memcpy(dst, &kn->kev, sizeof(*dst));
 
@@ -185,9 +178,7 @@ evfilt_proc_copyout(struct filter *filt,
         if (kn->kev.flags & EV_ONESHOT) {
             knote_free(filt, kn);
         } else {
-            kn->kev.data = 0;
-            LIST_REMOVE(kn, entries);
-            LIST_INSERT_HEAD(&filt->kf_watchlist, kn, entries);
+            kn->kev.data = 0; //why??
         }
 
 
@@ -195,9 +186,8 @@ evfilt_proc_copyout(struct filter *filt,
             break;
         dst++;
     }
-    pthread_rwlock_unlock(&filt->kf_mtx);
 
-    if (!LIST_EMPTY(&filt->kf_eventlist)) {
+    if (knote_events_pending(filt)) {
     /* XXX-FIXME: If there are leftover events on the waitq, 
        re-arm the eventfd. list */
         abort();

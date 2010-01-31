@@ -112,15 +112,7 @@ evfilt_timer_init(struct filter *filt)
 void
 evfilt_timer_destroy(struct filter *filt)
 {
-    struct knote *kn;
-
-    /* Destroy all timerfds */
-    KNOTELIST_FOREACH(kn, &filt->kf_watchlist) {
-        close(kn->kn_pfd);
-    }
-    /* TODO: use eventlist, close these also */
-
-    close (filt->kf_pfd);
+    close (filt->kf_pfd);//LAME
 }
 
 /* TODO: This entire function is copy+pasted from socket.c

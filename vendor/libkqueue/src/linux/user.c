@@ -52,22 +52,10 @@ evfilt_user_copyout(struct filter *filt,
             struct kevent *dst, 
             int maxevents)
 {
-    struct knote *kn, *kn_next;
+    struct knote *kn;
     int nevents = 0;
   
-    pthread_rwlock_rdlock(&filt->kf_mtx);
-    kn = LIST_FIRST(&filt->kf_watchlist);
-    pthread_rwlock_unlock(&filt->kf_mtx);
-
-    for (; kn != NULL; kn = kn_next) {
-        pthread_rwlock_rdlock(&filt->kf_mtx);
-        kn_next = LIST_NEXT(kn, entries);
-        pthread_rwlock_unlock(&filt->kf_mtx);
-
-        /* Skip knotes that have not been triggered */
-        if (!(kn->kev.fflags & NOTE_TRIGGER))
-                continue;
-
+    for (kn = knote_dequeue(filt); kn != NULL; kn = knote_dequeue(filt)) {
         memcpy(dst, &kn->kev, sizeof(*dst));
         dst->fflags &= ~NOTE_FFCTRLMASK;     //FIXME: Not sure if needed
         dst->fflags &= ~NOTE_TRIGGER;
@@ -148,6 +136,7 @@ evfilt_user_knote_modify(struct filter *filt, struct knote *kn,
 
     if ((!(kn->kev.flags & EV_DISABLE)) && kev->fflags & NOTE_TRIGGER) {
         kn->kev.fflags |= NOTE_TRIGGER;
+        knote_enqueue(filt, kn);
         eventfd_raise(filt->kf_pfd);
     }
 
