@@ -66,12 +66,12 @@ evfilt_user_copyout(struct filter *filt,
                       other filters. */
             dst->flags &= ~EV_ADD;
         }
-        if (kn->kev.flags & EV_ONESHOT) 
-            knote_free(filt, kn);
         if (kn->kev.flags & EV_CLEAR)
             kn->kev.fflags &= ~NOTE_TRIGGER;
         if (kn->kev.flags & (EV_DISPATCH | EV_CLEAR | EV_ONESHOT))
             eventfd_lower(filt->kf_pfd);
+        if (kn->kev.flags & EV_ONESHOT) 
+            knote_free(filt, kn);
 
         dst++;
         if (++nevents == maxevents)
