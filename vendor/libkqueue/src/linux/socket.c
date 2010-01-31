@@ -37,27 +37,24 @@
 static char *
 epoll_event_dump(struct epoll_event *evt)
 {
-    char *buf;
+    static char __thread buf[128];
 
     if (evt == NULL)
         return "(null)";
 
-    if ((buf = calloc(1, 128)) == NULL)
-        abort();
-
 #define EPEVT_DUMP(attrib) \
     if (evt->events & attrib) \
-       strcat(buf, #attrib" ");
+       strcat(&buf[0], #attrib" ");
 
-    snprintf(buf, 128, " { data = %p, events = ", evt->data.ptr);
+    snprintf(&buf[0], 128, " { data = %p, events = ", evt->data.ptr);
     EPEVT_DUMP(EPOLLIN);
     EPEVT_DUMP(EPOLLOUT);
     EPEVT_DUMP(EPOLLRDHUP);
     EPEVT_DUMP(EPOLLONESHOT);
     EPEVT_DUMP(EPOLLET);
-    strcat(buf, "}\n");
+    strcat(&buf[0], "}\n");
 
-    return (buf);
+    return (&buf[0]);
 #undef EPEVT_DUMP
 }
 
