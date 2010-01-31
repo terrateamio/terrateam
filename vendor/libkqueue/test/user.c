@@ -16,7 +16,7 @@
 
 #include "common.h"
 
-int kqfd;
+static int __thread kqfd;
 
 static void
 test_kevent_user_add_and_delete(void)
@@ -24,10 +24,10 @@ test_kevent_user_add_and_delete(void)
     struct kevent kev;
 
     kevent_add(kqfd, &kev, 1, EVFILT_USER, EV_ADD, 0, 0, NULL);
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     kevent_add(kqfd, &kev, 1, EVFILT_USER, EV_DELETE, 0, 0, NULL);
-    test_no_kevents();
+    test_no_kevents(kqfd);
 }
 
 static void
@@ -35,7 +35,7 @@ test_kevent_user_get(void)
 {
     struct kevent kev;
 
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     /* Add the event, and then trigger it */
     kevent_add(kqfd, &kev, 1, EVFILT_USER, EV_ADD | EV_CLEAR, 0, 0, NULL);    
@@ -46,7 +46,7 @@ test_kevent_user_get(void)
     kev.flags = EV_CLEAR;
     kevent_cmp(&kev, kevent_get(kqfd));
 
-    test_no_kevents();
+    test_no_kevents(kqfd);
 }
 
 static void
@@ -54,14 +54,14 @@ test_kevent_user_disable_and_enable(void)
 {
     struct kevent kev;
 
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     kevent_add(kqfd, &kev, 1, EVFILT_USER, EV_ADD, 0, 0, NULL); 
     kevent_add(kqfd, &kev, 1, EVFILT_USER, EV_DISABLE, 0, 0, NULL); 
 
     /* Trigger the event, but since it is disabled, nothing will happen. */
     kevent_add(kqfd, &kev, 1, EVFILT_USER, 0, NOTE_TRIGGER, 0, NULL); 
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     kevent_add(kqfd, &kev, 1, EVFILT_USER, EV_ENABLE, 0, 0, NULL); 
     kevent_add(kqfd, &kev, 1, EVFILT_USER, 0, NOTE_TRIGGER, 0, NULL); 
@@ -77,8 +77,7 @@ test_kevent_user_oneshot(void)
 {
     struct kevent kev;
 
-
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     kevent_add(kqfd, &kev, 2, EVFILT_USER, EV_ADD | EV_ONESHOT, 0, 0, NULL);
 
@@ -90,19 +89,17 @@ test_kevent_user_oneshot(void)
     kev.fflags &= ~NOTE_TRIGGER;
     kevent_cmp(&kev, kevent_get(kqfd));
 
-    test_no_kevents();
+    test_no_kevents(kqfd);
 }
 
 void
-test_evfilt_user()
+test_evfilt_user(int _kqfd)
 {
-	kqfd = kqueue();
+    kqfd = _kqfd;
 
     test(kevent_user_add_and_delete);
     test(kevent_user_get);
     test(kevent_user_disable_and_enable);
     test(kevent_user_oneshot);
     /* TODO: try different fflags operations */
-
-	close(kqfd);
 }

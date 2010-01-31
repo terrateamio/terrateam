@@ -16,7 +16,7 @@
 
 #include "common.h"
 
-int kqfd;
+static int __thread kqfd;
 
 void
 test_kevent_timer_add(void)
@@ -37,7 +37,7 @@ test_kevent_timer_del(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
-    test_no_kevents();
+    test_no_kevents(kqfd);
 }
 
 void
@@ -63,9 +63,9 @@ test_kevent_timer_oneshot(void)
 {
     struct kevent kev;
 
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
-    EV_SET(&kev, vnode_fd, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, 500,NULL);
+    EV_SET(&kev, 2, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, 500,NULL);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
@@ -76,7 +76,7 @@ test_kevent_timer_oneshot(void)
 
     /* Check if the event occurs again */
     sleep(3);
-    test_no_kevents();
+    test_no_kevents(kqfd);
 }
 
 static void
@@ -84,9 +84,9 @@ test_kevent_timer_periodic(void)
 {
     struct kevent kev;
 
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
-    EV_SET(&kev, vnode_fd, EVFILT_TIMER, EV_ADD, 0, 1000,NULL);
+    EV_SET(&kev, 3, EVFILT_TIMER, EV_ADD, 0, 1000,NULL);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
 
@@ -110,16 +110,16 @@ test_kevent_timer_disable_and_enable(void)
 {
     struct kevent kev;
 
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     /* Add the watch and immediately disable it */
-    EV_SET(&kev, vnode_fd, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, 2000,NULL);
+    EV_SET(&kev, 4, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, 2000,NULL);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
     kev.flags = EV_DISABLE;
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         err(1, "%s", test_id);
-    test_no_kevents();
+    test_no_kevents(kqfd);
 
     /* Re-enable and check again */
     kev.flags = EV_ENABLE;
@@ -132,14 +132,13 @@ test_kevent_timer_disable_and_enable(void)
 }
 
 void
-test_evfilt_timer()
+test_evfilt_timer(int _kqfd)
 {
-	kqfd = kqueue();
+	kqfd = _kqfd;
     test(kevent_timer_add);
     test(kevent_timer_del);
     test(kevent_timer_get);
     test(kevent_timer_oneshot);
     test(kevent_timer_periodic);
     test(kevent_timer_disable_and_enable);
-	close(kqfd);
 }

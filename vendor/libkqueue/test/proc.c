@@ -18,8 +18,7 @@
 
 static int sigusr1_caught = 0;
 static pid_t pid;
-
-int kqfd;
+static int __thread kqfd;
 
 static void
 sig_handler(int signum)
@@ -32,9 +31,9 @@ test_kevent_proc_add(void)
 {
     struct kevent kev;
 
-    test_no_kevents();
+    test_no_kevents(kqfd);
     kevent_add(kqfd, &kev, pid, EVFILT_PROC, EV_ADD, 0, 0, NULL);
-    test_no_kevents();
+    test_no_kevents(kqfd);
 }
 
 static void
@@ -42,12 +41,12 @@ test_kevent_proc_delete(void)
 {
     struct kevent kev;
 
-    test_no_kevents();
+    test_no_kevents(kqfd);
     kevent_add(kqfd, &kev, pid, EVFILT_PROC, EV_DELETE, 0, 0, NULL);
     if (kill(pid, SIGKILL) < 0)
         err(1, "kill");
     sleep(1);
-    test_no_kevents();
+    test_no_kevents(kqfd);
 }
 
 static void
@@ -64,7 +63,7 @@ test_kevent_proc_get(void)
     }
     printf(" -- child created (pid %d)\n", (int) pid);
 
-    test_no_kevents();
+    test_no_kevents(kqfd);
     kevent_add(kqfd, &kev, pid, EVFILT_PROC, EV_ADD, 0, 0, NULL);
 
     /* Cause the child to exit, then retrieve the event */
@@ -72,7 +71,7 @@ test_kevent_proc_get(void)
     if (kill(pid, SIGUSR1) < 0)
         err(1, "kill");
     kevent_cmp(&kev, kevent_get(kqfd));
-    test_no_kevents();
+    test_no_kevents(kqfd);
 }
 
 #ifdef TODO
@@ -200,9 +199,9 @@ test_kevent_signal_oneshot(void)
 #endif
 
 void
-test_evfilt_proc()
+test_evfilt_proc(int _kqfd)
 {
-    kqfd = kqueue();
+    kqfd = _kqfd;
 
     signal(SIGUSR1, sig_handler);
 
@@ -228,5 +227,4 @@ test_evfilt_proc()
     test_kevent_signal_enable();
     test_kevent_signal_oneshot();
 #endif
-    close(kqfd);
 }
