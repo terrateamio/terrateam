@@ -170,6 +170,8 @@ evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
         kn->kn_events |= EPOLLONESHOT;
     if (kn->kev.flags & EV_CLEAR)
         kn->kn_events |= EPOLLET;
+
+    memset(&ev, 0, sizeof(ev));
     ev.events = kn->kn_events;
     ev.data.fd = kn->kev.ident;
 
@@ -194,6 +196,7 @@ evfilt_socket_knote_enable(struct filter *filt, struct knote *kn)
 {
     struct epoll_event ev;
 
+    memset(&ev, 0, sizeof(ev));
     ev.events = kn->kn_events;
     ev.data.fd = kn->kev.ident;
 
