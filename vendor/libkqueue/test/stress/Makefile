@@ -1,7 +1,7 @@
 CFLAGS=-I../../include
 LDADD=-lpthread
 PROGRAM=stresstest
-SOURCES=main.c ../timer.c ../user.c ../kevent.c ../test.c
+SOURCES=main.c ../timer.c ../user.c ../kevent.c ../read.c ../test.c
 
 all: $(PROGRAM)
 
@@ -17,6 +17,10 @@ valgrind: $(PROGRAM)
 
 clean:
 	rm -f *.o
+
+edit:
+	ctags $(SOURCES)
+	$(EDITOR) $(SOURCES)
 
 distclean: clean
 	rm -f $(PROGRAM) 
