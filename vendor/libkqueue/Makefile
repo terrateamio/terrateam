@@ -97,6 +97,7 @@ merge:
 	echo "ok"
 
 edit:
+	$(CTAGS) $(SOURCES) 
 	$(EDITOR) `find src/common -name '*.c' -o -name '*.h'` \
               `find src/$(TARGET) -name '*.c'`
     
