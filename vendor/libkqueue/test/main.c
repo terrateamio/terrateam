@@ -15,9 +15,40 @@
  */
 
 #include <sys/types.h>
+#include <poll.h>
 
 #include "common.h"
 
+
+/*
+ * Test the method for detecting when one end of a socketpair 
+ * has been closed. This technique is used in kqueue_validate()
+ */
+static void
+test_peer_close_detection(void)
+{
+    int sockfd[2];
+    char buf[1];
+    struct pollfd pfd;
+
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd) < 0)
+        err(1, "socketpair");
+
+    pfd.fd = sockfd[0];
+    pfd.events = POLLIN | POLLHUP;
+    pfd.revents = 0;
+
+    if (poll(&pfd, 1, 0) > 0) 
+        err(1, "unexpected data");
+
+    if (close(sockfd[1]) < 0)
+        err(1, "close");
+
+    if (poll(&pfd, 1, 0) > 0) {
+        if (recv(sockfd[0], buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT) != 0) 
+            err(1, "failed to detect peer shutdown");
+    }
+}
 
 void
 test_kqueue(void)
@@ -83,6 +114,8 @@ main(int argc, char **argv)
     }
 
     testing_begin();
+
+    test(peer_close_detection);
 
     test(kqueue);
 
