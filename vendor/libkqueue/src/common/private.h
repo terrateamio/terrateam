@@ -154,14 +154,10 @@ int         kevent_wait(struct kqueue *, const struct timespec *);
 int         kevent_copyout(struct kqueue *, int, struct kevent *, int);
 void 		kevent_free(struct kqueue *);
 
-struct kqueue * kqueue_lookup(int kq);
-/* TODO: make a kqops struct */
-int         kqueue_init_hook(void);     // in hook.c
-int         kqueue_create_hook(struct kqueue *);       // in hook.c
-int         kqueue_gc(void);        // in hook.c
-void        kqueue_free(struct kqueue *);
+int         kqueue_lookup(struct kqueue **, int);
 #define     kqueue_lock(kq)     pthread_mutex_lock(&(kq)->kq_mtx);
 #define     kqueue_unlock(kq)   pthread_mutex_unlock(&(kq)->kq_mtx);
+int         kqueue_validate(struct kqueue *);
  
 
 #endif  /* ! _KQUEUE_PRIVATE_H */

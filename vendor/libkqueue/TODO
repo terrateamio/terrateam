@@ -1,2 +1,4 @@
  * Ensure that kevent_copyout() on Solaris does not rely on having
    the filter lock. Linux has already been converted.
+
+ * Fix the crasher w/ corruption in test/vnode.c

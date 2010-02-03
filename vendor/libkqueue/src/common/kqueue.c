@@ -30,8 +30,6 @@
 #include "sys/event.h"
 #include "private.h"
 
-static int kqueue_initialized;          /* Set to 1 by kqueue_init() */
-
 static RB_HEAD(kqt, kqueue) kqtree       = RB_INITIALIZER(&kqtree);
 static pthread_rwlock_t     kqtree_mtx   = PTHREAD_RWLOCK_INITIALIZER;
 
@@ -43,40 +41,77 @@ kqueue_cmp(struct kqueue *a, struct kqueue *b)
 
 RB_GENERATE(kqt, kqueue, entries, kqueue_cmp);
 
-struct kqueue *
-kqueue_lookup(int kq)
+static void
+kqueue_free(struct kqueue *kq)
+{
+    RB_REMOVE(kqt, &kqtree, kq);
+    filter_unregister_all(kq);
+    free(kq);
+}
+
+int
+kqueue_validate(struct kqueue *kq)
+{
+    int rv;
+    char buf[1];
+    struct pollfd pfd;
+
+    pfd.fd = kq->kq_sockfd[0];
+    pfd.events = POLLIN | POLLHUP;
+    pfd.revents = 0;
+
+    /* XXX-FIXME: handle EINTR */
+    rv = poll(&pfd, 1, 0);
+    if (rv == 0)
+        return (1);
+    if (rv < 0)
+        return (-1);
+    if (rv > 0) {
+        /* XXX-FIXME: handle EINTR */
+        /* NOTE: If the caller accidentally writes to the kqfd, it will
+                 be considered invalid. */
+        rv = recv(kq->kq_sockfd[0], buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT);
+        if (rv == 0) 
+            return (0);
+        else
+            return (-1);
+    }
+
+    return (0);
+}
+
+int
+kqueue_lookup(struct kqueue **dst, int kq)
 {
     struct kqueue query;
     struct kqueue *ent = NULL;
+    int x;
+
+    *dst = NULL;
 
     query.kq_sockfd[1] = kq;
     pthread_rwlock_rdlock(&kqtree_mtx);
     ent = RB_FIND(kqt, &kqtree, &query);
     pthread_rwlock_unlock(&kqtree_mtx);
 
-    return (ent);
-}
-
-void
-kqueue_free(struct kqueue *kq)
-{
-    dbg_printf("fd=%d", kq->kq_sockfd[1]);
-
-    pthread_rwlock_wrlock(&kqtree_mtx);
-    RB_REMOVE(kqt, &kqtree, kq);
-    pthread_rwlock_unlock(&kqtree_mtx);
-
-    filter_unregister_all(kq);
-    free(kq);
-}
-
-static int
-kqueue_init(void)
-{
-    if (kqueue_init_hook() < 0)
+    if (ent == NULL)
         return (-1);
 
-    kqueue_initialized = 1;
+    x = kqueue_validate(ent);
+    if (x > 0) {
+        *dst = ent;
+    } else if (x < 0) {
+        return (-1);
+    } else {
+            /* Avoid racing with other threads to free the same kqfd */
+            pthread_rwlock_wrlock(&kqtree_mtx);
+            ent = RB_FIND(kqt, &kqtree, &query);
+            if (ent != NULL)
+                kqueue_free(ent);
+            pthread_rwlock_unlock(&kqtree_mtx);
+            ent = NULL;
+    }
+
     return (0);
 }
 
@@ -84,6 +119,7 @@ int __attribute__((visibility("default")))
 kqueue(void)
 {
     struct kqueue *kq;
+    struct kqueue *n1, *n2;
 
     kq = calloc(1, sizeof(*kq));
     if (kq == NULL)
@@ -94,11 +130,19 @@ kqueue(void)
         goto errout_unlocked;
 
     pthread_rwlock_wrlock(&kqtree_mtx);
-    if (!kqueue_initialized && kqueue_init() < 0) 
-        goto errout;
+
+    /* Free any kqueue descriptor that is no longer needed */
+    /* O(1), however needed in the case that a descriptor is
+       closed and kevent(2) will never again be called on it. */
+    for (n1 = RB_MIN(kqt, &kqtree); n1 != NULL; n1 = n2)
+    {
+        n2 = RB_NEXT(kqt, &kqtree, n1);
+        if (kqueue_validate(n1) == 0) 
+            kqueue_free(n1);
+    }
+
+    /* TODO: move outside of the lock if it is safe */
     if (filter_register_all(kq) < 0)
-        goto errout;
-    if (kqueue_create_hook(kq) < 0)
         goto errout;
     RB_INSERT(kqt, &kqtree, kq);
     pthread_rwlock_unlock(&kqtree_mtx);
