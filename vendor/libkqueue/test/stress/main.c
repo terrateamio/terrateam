@@ -26,7 +26,7 @@
 static const int nthreads = 64;
 
 /* Number of iterations performed by each thread */
-static const int nrounds = 10;
+static const int nrounds = 1000000;
 
 //pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 
@@ -68,6 +68,7 @@ test_harness(void *arg)
             case 3: test_evfilt_vnode(kqfd);
                     break;
         }
+        printf("thread %d round %d / %d\n", id, i, nrounds);
     }
     printf("thread %d done\n", id);
 }
