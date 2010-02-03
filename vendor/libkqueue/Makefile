@@ -20,7 +20,7 @@ DISTFILE=$(PROGRAM)-$(VERSION).tar.gz
 
 include config.mk
 
-.PHONY :: install uninstall check dist dist-upload publish-www clean merge distclean fresh-build rpm edit
+.PHONY :: install uninstall check dist dist-upload publish-www clean merge distclean fresh-build rpm edit cscope
 
 all: $(PROGRAM).so $(PROGRAM).a
 
@@ -97,10 +97,13 @@ merge:
 	echo "ok"
 
 edit:
-	$(CTAGS) $(SOURCES) 
+	ctags $(SOURCES) 
 	$(EDITOR) `find src/common -name '*.c' -o -name '*.h'` \
               `find src/$(TARGET) -name '*.c'`
     
+cscope:
+	cscope $(SOURCES) 
+
 distclean: clean
 	rm -f *.tar.gz config.mk config.h $(PROGRAM).pc $(PROGRAM).la rpm.spec
 
