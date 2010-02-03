@@ -54,16 +54,18 @@ test_harness(void *arg)
     if (kqfd < 0)
         err(1, "kqueue");
 
-    printf("thread %d runs %d\n", id, id % 3);
+    printf("thread %d runs %d\n", id, id % 4);
 
     //test_kqueue_conc();
     for (i = 0; i < nrounds; i++) {
-        switch (id % 3) {
+        switch (id % 4) {
             case 0: test_evfilt_user(kqfd);
                     break;
             case 1: test_evfilt_read(kqfd);
                     break;
             case 2: test_evfilt_timer(kqfd);
+                    break;
+            case 3: test_evfilt_vnode(kqfd);
                     break;
         }
     }

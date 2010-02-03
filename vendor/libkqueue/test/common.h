@@ -84,10 +84,11 @@ kevent_add(int kqfd, struct kevent *kev,
 void test_no_kevents(int);
 
 /* From test.c */
-void test_begin(const char *);
-void test_end(void);
-void test_atexit(void);
-void testing_begin(void);
-void testing_end(void);
+void    test_begin(const char *);
+void    test_end(void);
+void    test_atexit(void);
+void    testing_begin(void);
+void    testing_end(void);
+int     testing_make_uid(void);
 
 #endif  /* _COMMON_H */

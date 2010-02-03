@@ -15,6 +15,8 @@
  */
 
 #include <sys/types.h>
+#include <limits.h>
+#include <pthread.h>
 
 #include "common.h"
 
@@ -62,4 +64,20 @@ void
 testing_end(void)
 {
     error_flag = 0;
+}
+
+/* Generate a unique ID */
+int
+testing_make_uid(void)
+{
+    static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+    static int id = 0;
+
+    pthread_mutex_lock(&mtx);
+    if (id == INT_MAX)
+        abort();
+    id++;
+    pthread_mutex_unlock(&mtx);
+
+    return (id);
 }
