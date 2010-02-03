@@ -236,11 +236,10 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
 
     errno = 0;
 
-    if (kqueue_gc() < 0)
+    rv = kqueue_lookup(&kq, kqfd);
+    if (rv < 0)
         return (-1);
-
-    kq = kqueue_lookup(kqfd);
-    if (kq == NULL) {
+    if (rv == 0 && kq == NULL) {
         dbg_printf("fd lookup failed; fd=%d", kqfd);
         errno = EINVAL;
         return (-1);

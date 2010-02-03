@@ -211,6 +211,7 @@ evfilt_vnode_copyout(struct filter *filt,
     dst->data = 0;
 
     /* No error checking because fstat(2) should rarely fail */
+    //FIXME: EINTR
     if ((evt.mask & IN_ATTRIB || evt.mask & IN_MODIFY) 
         && fstat(kn->kev.ident, &sb) == 0) {
         if (sb.st_nlink == 0 && kn->kev.fflags & NOTE_DELETE) 
@@ -249,8 +250,10 @@ evfilt_vnode_copyout(struct filter *filt,
         delete_watch(filt, kn); /* TODO: error checking */
         KNOTE_DISABLE(kn);
     }
-    if (kn->kev.flags & EV_ONESHOT) 
+    if (kn->kev.flags & EV_ONESHOT) {
+        delete_watch(filt, kn); /* TODO: error checking */
         knote_free(filt, kn);
+    }
             
     return (1);
 }
