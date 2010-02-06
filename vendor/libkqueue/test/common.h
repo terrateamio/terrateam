@@ -24,6 +24,12 @@
 # define err(rc,msg,...) do { perror(msg); exit(rc); } while (0)
 # define errx(rc,msg,...) do { puts(msg); exit(rc); } while (0)
 #endif
+
+#define die(str)   do { \
+    fprintf(stderr, "%s(): %s: %s\n", __func__,str, strerror(errno));\
+    abort();\
+} while (0)
+
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -58,6 +64,8 @@ void test_evfilt_user(int);
 extern const char * kevent_to_str(struct kevent *);
 struct kevent * kevent_get(int);
 
+
+void kevent_update(int kqfd, struct kevent *kev);
 
 void kevent_cmp(struct kevent *, struct kevent *);
 
