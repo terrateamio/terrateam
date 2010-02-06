@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <execinfo.h>
 #include <sys/types.h>
 #include <limits.h>
 #include <pthread.h>
@@ -23,6 +24,17 @@
 static int __thread testnum = 1;
 static int __thread error_flag = 1;
 static char __thread * cur_test_id = NULL;
+
+/* FIXME: not portable beyond linux */
+static void
+error_handler(int signum)
+{
+	void *buf[32];
+
+	printf("***** ERROR: Program received signal %d *****\n", signum);
+	backtrace_symbols_fd(buf, sizeof(buf) / sizeof(void *), 2);
+    exit(1);
+}
 
 static void
 testing_atexit(void)
@@ -57,7 +69,16 @@ test_end(void)
 void
 testing_begin(void)
 {
+    struct sigaction sa;
+
     atexit(testing_atexit);
+
+    /* Install a signal handler for crashes and hangs */
+    sa.sa_handler = error_handler;
+    sigemptyset(&sa.sa_mask);
+    sigaction(SIGSEGV, &sa, NULL);
+    sigaction(SIGABRT, &sa, NULL);
+    sigaction(SIGINT, &sa, NULL);
 }
 
 void
