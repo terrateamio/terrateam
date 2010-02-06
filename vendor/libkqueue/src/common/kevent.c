@@ -234,13 +234,13 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
     struct kqueue *kq;
     int rv, n, nret;
 
-    errno = 0;
-
     rv = kqueue_lookup(&kq, kqfd);
-    if (rv < 0)
+    if (rv < 0) {
+        dbg_printf("kqueue_lookup error: fd=%d", kqfd);
         return (-1);
+    }
     if (rv == 0 && kq == NULL) {
-        dbg_printf("fd lookup failed; fd=%d", kqfd);
+        dbg_printf("fd lookup: no such entry fd=%d", kqfd);
         errno = EINVAL;
         return (-1);
     }
@@ -270,8 +270,10 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
     {
         /* Wait for one or more events. */
         n = kevent_wait(kq, timeout);
-        if (n < 0)
+        if (n < 0) {
+            dbg_puts("kevent_wait failed");
             return (-1);
+        }
         if (n == 0)
             return (0);             /* Timeout */
     }

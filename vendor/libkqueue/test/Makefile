@@ -19,7 +19,6 @@ include config.mk
 all: kqtest
 
 kqtest: $(SOURCES)
-	test -L libkqueue.a || ln -s ../libkqueue.a 
 	$(CC) -o kqtest $(CFLAGS) $(SOURCES) $(LDADD)
 
 check: kqtest
