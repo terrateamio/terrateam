@@ -75,7 +75,7 @@ check_header() {
    printf "checking for $path.. "
    if [ -f "/usr/include/$path" ] ; then
      echo "yes"
-     echo "#define $uc_sym" >> config.h
+     echo "#define $uc_sym 1" >> config.h
      eval "$sym=yes"
      return 0
    else  
