@@ -282,7 +282,7 @@ test_evfilt_read(int _kqfd)
 {
     /* Create a connected pair of full-duplex sockets for testing socket events */
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd) < 0) 
-        abort();
+        err(1, "socketpair");
 
     kqfd = _kqfd;
     test(kevent_socket_add);
@@ -296,4 +296,6 @@ test_evfilt_read(int _kqfd)
     test(kevent_socket_dispatch);
 #endif
     test(kevent_socket_eof);
+    close(sockfd[0]);
+    close(sockfd[1]);
 }

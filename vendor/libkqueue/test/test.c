@@ -31,6 +31,7 @@ error_handler(int signum)
 {
 	void *buf[32];
 
+    /* FIXME: the symbols aren't printing */
 	printf("***** ERROR: Program received signal %d *****\n", signum);
 	backtrace_symbols_fd(buf, sizeof(buf) / sizeof(void *), 2);
     exit(1);
@@ -74,6 +75,7 @@ testing_begin(void)
     atexit(testing_atexit);
 
     /* Install a signal handler for crashes and hangs */
+    memset(&sa, 0, sizeof(sa));
     sa.sa_handler = error_handler;
     sigemptyset(&sa.sa_mask);
     sigaction(SIGSEGV, &sa, NULL);

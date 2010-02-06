@@ -205,7 +205,7 @@ test_kevent_vnode_disable_and_enable(void)
     /* Re-enable and check again */
     kev.flags = EV_ENABLE;
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+        err(1, "kevent");
     testfile_touch();
     nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
     if (nfds < 1)
@@ -242,7 +242,6 @@ test_kevent_vnode_dispatch(void)
                 test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
 
     /* Confirm that the watch is disabled automatically */
-    puts("-- checking that watch is disabled");
     testfile_touch();
     test_no_kevents(kqfd);
 
