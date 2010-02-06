@@ -1,6 +1,6 @@
 program="libkqueue"
 version="0.4"
-cflags="-fPIC -fvisibility=hidden -I./include -I./src/common -Wall -Werror"
+cflags="-fPIC -I./include -I./src/common -Wall -Werror"
 sources="src/common/filter.c src/common/knote.c 
          src/common/kevent.c src/common/kqueue.c" 
 libdepends=""
@@ -18,9 +18,9 @@ author="Mark Heily"
 
 pre_configure_hook() {
   if [ "$debug" = "yes" ] ; then
-      cflags="$cflags -g3 -O0 -DKQUEUE_DEBUG"
+      cflags="$cflags -g3 -O0 -DKQUEUE_DEBUG -rdynamic"
   else
-      cflags="$cflags -g -O2"
+      cflags="$cflags -g -O2 -fvisibility=hidden"
   fi
 
   optional_headers="err.h"
