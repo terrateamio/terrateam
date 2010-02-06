@@ -9,7 +9,7 @@ $(PROGRAM): $(SOURCES)
 	$(CC) -o $(PROGRAM) $(CFLAGS) $(SOURCES) ../../libkqueue.a $(LDADD)
 
 check: $(PROGRAM)
-	./$(PROGRAM)
+	ulimit -c 999999 ; ./$(PROGRAM)
 
 valgrind: $(PROGRAM)
 	valgrind --tool=memcheck --leak-check=full --show-reachable=yes \
