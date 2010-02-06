@@ -28,7 +28,9 @@ test_no_kevents(int kqfd)
 
     memset(&timeo, 0, sizeof(timeo));
     nfds = kevent(kqfd, NULL, 0, &kev, 1, &timeo);
-    if (nfds != 0) {
+    if (nfds < 0)
+        err(1, "kevent(2)");
+    if (nfds > 0) {
         puts("\nUnexpected event:");
         puts(kevent_to_str(&kev));
         errx(1, "%d event(s) pending, but none expected:", nfds);

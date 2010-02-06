@@ -64,8 +64,10 @@ kqueue_validate(struct kqueue *kq)
     rv = poll(&pfd, 1, 0);
     if (rv == 0)
         return (1);
-    if (rv < 0)
+    if (rv < 0) {
+        dbg_perror("poll(2)");
         return (-1);
+    }
     if (rv > 0) {
         /* XXX-FIXME: handle EINTR */
         /* NOTE: If the caller accidentally writes to the kqfd, it will
@@ -94,25 +96,29 @@ kqueue_lookup(struct kqueue **dst, int kq)
     ent = RB_FIND(kqt, &kqtree, &query);
     pthread_rwlock_unlock(&kqtree_mtx);
 
-    if (ent == NULL)
+    if (ent == NULL) {
+        errno = ENOENT;
         return (-1);
+    }
 
     x = kqueue_validate(ent);
     if (x > 0) {
         *dst = ent;
+        return (0);
     } else if (x < 0) {
-        return (-1);
+        errno = EBADF;
     } else {
-            /* Avoid racing with other threads to free the same kqfd */
-            pthread_rwlock_wrlock(&kqtree_mtx);
-            ent = RB_FIND(kqt, &kqtree, &query);
-            if (ent != NULL)
-                kqueue_free(ent);
-            pthread_rwlock_unlock(&kqtree_mtx);
-            ent = NULL;
+        /* Avoid racing with other threads to free the same kqfd */
+        pthread_rwlock_wrlock(&kqtree_mtx);
+        ent = RB_FIND(kqt, &kqtree, &query);
+        if (ent != NULL)
+            kqueue_free(ent);
+        pthread_rwlock_unlock(&kqtree_mtx);
+        ent = NULL;
+        errno = EBADF;
     }
 
-    return (0);
+    return (-1);
 }
 
 int __attribute__((visibility("default")))
