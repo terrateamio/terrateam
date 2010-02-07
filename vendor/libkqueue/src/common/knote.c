@@ -68,18 +68,13 @@ knote_free_all(struct filter *filt)
     struct knote *n1, *n2;
 
     /* Destroy all pending events */
-    for (n1 = TAILQ_FIRST(&filt->kf_event); 
-            n1 != NULL; n1 = n2) 
-    {
+    for (n1 = TAILQ_FIRST(&filt->kf_event); n1 != NULL; n1 = n2) {
         n2 = TAILQ_NEXT(n1, event_ent);
         free(n1);
     }
 
     /* Distroy all knotes */
-    for (n1 = RB_MIN(knt, &filt->kf_knote); 
-            n1 != NULL; 
-            n1 = n2)
-    {
+    for (n1 = RB_MIN(knt, &filt->kf_knote); n1 != NULL; n1 = n2) {
         n2 = RB_NEXT(knt, filt->kf_knote, n1);
         RB_REMOVE(knt, &filt->kf_knote, n1);
         free(n1);
