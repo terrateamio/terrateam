@@ -28,7 +28,7 @@ testfile_create(void)
     int fd;
 
     if ((fd = open(testfile, O_CREAT | O_WRONLY, 0600)) < 0)
-        err(1, "open");
+        die("open");
     close(fd);
 }
 
@@ -39,7 +39,7 @@ testfile_touch(void)
 
     snprintf(&buf[0], sizeof(buf), "touch %s", testfile);
     if (system(buf) != 0)
-        err(1,"system"); 
+        die("system"); 
 }
 
 static void
@@ -49,7 +49,7 @@ testfile_write(void)
 
     snprintf(&buf[0], sizeof(buf), "echo hi >> %s", testfile);
     if (system(buf) != 0)
-        err(1,"system"); 
+        die("system"); 
 }
 
 static void
@@ -82,13 +82,9 @@ test_kevent_vnode_add(void)
     vnode_fd = open(testfile, O_RDWR);
     if (vnode_fd < 0)
         err(1, "open of %s", testfile);
-    else
-        printf("vnode_fd = %d\n", vnode_fd);
 
-    EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_ADD, 
+    kevent_add(kqfd, &kev, vnode_fd, EVFILT_VNODE, EV_ADD, 
             NOTE_WRITE | NOTE_ATTRIB | NOTE_RENAME | NOTE_DELETE, 0, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
 }
 
 void
@@ -96,12 +92,10 @@ test_kevent_vnode_note_delete(void)
 {
     struct kevent kev;
 
-    EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_DELETE, 0, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_add(kqfd, &kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_DELETE, 0, NULL);
 
     if (unlink(testfile) < 0)
-        err(1, "unlink");
+        die("unlink");
 
     kevent_cmp(&kev, kevent_get(kqfd));
 }
@@ -111,9 +105,7 @@ test_kevent_vnode_note_write(void)
 {
     struct kevent kev;
 
-    EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_WRITE, 0, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_add(kqfd, &kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_WRITE, 0, NULL);
 
     testfile_write();
 
@@ -130,15 +122,13 @@ test_kevent_vnode_note_attrib(void)
     struct kevent kev;
     int nfds;
 
-    EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_ATTRIB, 0, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_add(kqfd, &kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_ATTRIB, 0, NULL);
 
     testfile_touch();
 
     nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
     if (nfds < 1)
-        err(1, "%s", test_id);
+        die("kevent");
     if (kev.ident != vnode_fd ||
             kev.filter != EVFILT_VNODE || 
             kev.fflags != NOTE_ATTRIB)
@@ -152,15 +142,13 @@ test_kevent_vnode_note_rename(void)
     struct kevent kev;
     int nfds;
 
-    EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_RENAME, 0, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_add(kqfd, &kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_RENAME, 0, NULL);
 
     testfile_rename(0);
 
     nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
     if (nfds < 1)
-        err(1, "%s", test_id);
+        die("kevent");
     if (kev.ident != vnode_fd ||
             kev.filter != EVFILT_VNODE || 
             kev.fflags != NOTE_RENAME)
@@ -177,9 +165,7 @@ test_kevent_vnode_del(void)
 {
     struct kevent kev;
 
-    EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_DELETE, 0, 0, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_add(kqfd, &kev, vnode_fd, EVFILT_VNODE, EV_DELETE, 0, 0, NULL);
 }
 
 void
@@ -191,12 +177,9 @@ test_kevent_vnode_disable_and_enable(void)
     test_no_kevents(kqfd);
 
     /* Add the watch and immediately disable it */
-    EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_ATTRIB, 0, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_add(kqfd, &kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_ATTRIB, 0, NULL);
     kev.flags = EV_DISABLE;
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_update(kqfd, &kev);
 
     /* Confirm that the watch is disabled */
     testfile_touch();
@@ -204,12 +187,11 @@ test_kevent_vnode_disable_and_enable(void)
 
     /* Re-enable and check again */
     kev.flags = EV_ENABLE;
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "kevent");
+    kevent_update(kqfd, &kev);
     testfile_touch();
     nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
     if (nfds < 1)
-        err(1, "%s", test_id);
+        die("kevent");
     if (kev.ident != vnode_fd ||
             kev.filter != EVFILT_VNODE || 
             kev.fflags != NOTE_ATTRIB)
@@ -226,15 +208,13 @@ test_kevent_vnode_dispatch(void)
 
     test_no_kevents(kqfd);
 
-    EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_DISPATCH, NOTE_ATTRIB, 0, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_add(kqfd, &kev, vnode_fd, EVFILT_VNODE, EV_ADD | EV_DISPATCH, NOTE_ATTRIB, 0, NULL);
 
     testfile_touch();
 
     nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
     if (nfds < 1)
-        err(1, "%s", test_id);
+        die("kevent");
     if (kev.ident != vnode_fd ||
             kev.filter != EVFILT_VNODE || 
             kev.fflags != NOTE_ATTRIB)
@@ -246,9 +226,7 @@ test_kevent_vnode_dispatch(void)
     test_no_kevents(kqfd);
 
     /* Delete the watch */
-    EV_SET(&kev, vnode_fd, EVFILT_VNODE, EV_DELETE, NOTE_ATTRIB, 0, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "remove watch failed: %s", test_id);
+    kevent_add(kqfd, &kev, vnode_fd, EVFILT_VNODE, EV_DELETE, NOTE_ATTRIB, 0, NULL);
 }
 #endif 	/* HAVE_EV_DISPATCH */
 

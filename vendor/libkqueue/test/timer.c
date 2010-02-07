@@ -23,9 +23,7 @@ test_kevent_timer_add(void)
 {
     struct kevent kev;
 
-    EV_SET(&kev, 1, EVFILT_TIMER, EV_ADD, 0, 1000, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_add(kqfd, &kev, 1, EVFILT_TIMER, EV_ADD, 0, 1000, NULL);
 }
 
 void
@@ -33,9 +31,7 @@ test_kevent_timer_del(void)
 {
     struct kevent kev;
 
-    EV_SET(&kev, 1, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_add(kqfd, &kev, 1, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
 
     test_no_kevents(kqfd);
 }
@@ -45,17 +41,13 @@ test_kevent_timer_get(void)
 {
     struct kevent kev;
 
-    EV_SET(&kev, 1, EVFILT_TIMER, EV_ADD, 0, 1000, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_add(kqfd, &kev, 1, EVFILT_TIMER, EV_ADD, 0, 1000, NULL);
 
     kev.flags |= EV_CLEAR;
     kev.data = 1; 
     kevent_cmp(&kev, kevent_get(kqfd));
 
-    EV_SET(&kev, 1, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_add(kqfd, &kev, 1, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
 }
 
 static void
@@ -65,9 +57,7 @@ test_kevent_timer_oneshot(void)
 
     test_no_kevents(kqfd);
 
-    EV_SET(&kev, 2, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, 500,NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_add(kqfd, &kev, 2, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, 500,NULL);
 
     /* Retrieve the event */
     kev.flags = EV_ADD | EV_CLEAR | EV_ONESHOT;
@@ -86,9 +76,7 @@ test_kevent_timer_periodic(void)
 
     test_no_kevents(kqfd);
 
-    EV_SET(&kev, 3, EVFILT_TIMER, EV_ADD, 0, 1000,NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_add(kqfd, &kev, 3, EVFILT_TIMER, EV_ADD, 0, 1000,NULL);
 
     /* Retrieve the event */
     kev.flags = EV_ADD | EV_CLEAR;
@@ -101,8 +89,7 @@ test_kevent_timer_periodic(void)
 
     /* Delete the event */
     kev.flags = EV_DELETE;
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_update(kqfd, &kev);
 }
 
 static void
@@ -113,18 +100,14 @@ test_kevent_timer_disable_and_enable(void)
     test_no_kevents(kqfd);
 
     /* Add the watch and immediately disable it */
-    EV_SET(&kev, 4, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, 2000,NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_add(kqfd, &kev, 4, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, 2000,NULL);
     kev.flags = EV_DISABLE;
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_update(kqfd, &kev);
     test_no_kevents(kqfd);
 
     /* Re-enable and check again */
     kev.flags = EV_ENABLE;
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+    kevent_update(kqfd, &kev);
 
     kev.flags = EV_ADD | EV_CLEAR | EV_ONESHOT;
     kev.data = 1; 

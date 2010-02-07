@@ -44,7 +44,7 @@ test_kevent_proc_delete(void)
     test_no_kevents(kqfd);
     kevent_add(kqfd, &kev, pid, EVFILT_PROC, EV_DELETE, 0, 0, NULL);
     if (kill(pid, SIGKILL) < 0)
-        err(1, "kill");
+        die("kill");
     sleep(1);
     test_no_kevents(kqfd);
 }
@@ -69,7 +69,7 @@ test_kevent_proc_get(void)
     /* Cause the child to exit, then retrieve the event */
     printf(" -- killing process %d\n", (int) pid);
     if (kill(pid, SIGUSR1) < 0)
-        err(1, "kill");
+        die("kill");
     kevent_cmp(&kev, kevent_get(kqfd));
     test_no_kevents(kqfd);
 }
@@ -85,16 +85,16 @@ test_kevent_signal_disable(void)
 
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_DISABLE, 0, 0, NULL);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+        die("%s", test_id);
 
     /* Block SIGUSR1, then send it to ourselves */
     sigset_t mask;
     sigemptyset(&mask);
     sigaddset(&mask, SIGUSR1);
     if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
-        err(1, "sigprocmask");
+        die("sigprocmask");
     if (kill(getpid(), SIGKILL) < 0)
-        err(1, "kill");
+        die("kill");
 
     test_no_kevents();
 
@@ -111,16 +111,16 @@ test_kevent_signal_enable(void)
 
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_ENABLE, 0, 0, NULL);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+        die("%s", test_id);
 
     /* Block SIGUSR1, then send it to ourselves */
     sigset_t mask;
     sigemptyset(&mask);
     sigaddset(&mask, SIGUSR1);
     if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
-        err(1, "sigprocmask");
+        die("sigprocmask");
     if (kill(getpid(), SIGUSR1) < 0)
-        err(1, "kill");
+        die("kill");
 
     kev.flags = EV_ADD | EV_CLEAR;
 #if LIBKQUEUE
@@ -133,7 +133,7 @@ test_kevent_signal_enable(void)
     /* Delete the watch */
     kev.flags = EV_DELETE;
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+        die("%s", test_id);
 
     success();
 }
@@ -149,16 +149,16 @@ test_kevent_signal_del(void)
     /* Delete the kevent */
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_DELETE, 0, 0, NULL);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+        die("%s", test_id);
 
     /* Block SIGUSR1, then send it to ourselves */
     sigset_t mask;
     sigemptyset(&mask);
     sigaddset(&mask, SIGUSR1);
     if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
-        err(1, "sigprocmask");
+        die("sigprocmask");
     if (kill(getpid(), SIGUSR1) < 0)
-        err(1, "kill");
+        die("kill");
 
     test_no_kevents();
     success();
@@ -174,16 +174,16 @@ test_kevent_signal_oneshot(void)
 
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD | EV_ONESHOT, 0, 0, NULL);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        err(1, "%s", test_id);
+        die("%s", test_id);
 
     /* Block SIGUSR1, then send it to ourselves */
     sigset_t mask;
     sigemptyset(&mask);
     sigaddset(&mask, SIGUSR1);
     if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
-        err(1, "sigprocmask");
+        die("sigprocmask");
     if (kill(getpid(), SIGUSR1) < 0)
-        err(1, "kill");
+        die("kill");
 
     kev.flags |= EV_CLEAR;
     kev.data = 1;
@@ -191,7 +191,7 @@ test_kevent_signal_oneshot(void)
 
     /* Send another one and make sure we get no events */
     if (kill(getpid(), SIGUSR1) < 0)
-        err(1, "kill");
+        die("kill");
     test_no_kevents();
 
     success();

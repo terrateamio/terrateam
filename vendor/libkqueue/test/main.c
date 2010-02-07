@@ -32,21 +32,21 @@ test_peer_close_detection(void)
     struct pollfd pfd;
 
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd) < 0)
-        err(1, "socketpair");
+        die("socketpair");
 
     pfd.fd = sockfd[0];
     pfd.events = POLLIN | POLLHUP;
     pfd.revents = 0;
 
     if (poll(&pfd, 1, 0) > 0) 
-        err(1, "unexpected data");
+        die("unexpected data");
 
     if (close(sockfd[1]) < 0)
-        err(1, "close");
+        die("close");
 
     if (poll(&pfd, 1, 0) > 0) {
         if (recv(sockfd[0], buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT) != 0) 
-            err(1, "failed to detect peer shutdown");
+            die("failed to detect peer shutdown");
     }
 }
 
@@ -56,10 +56,10 @@ test_kqueue(void)
     int kqfd;
 
     if ((kqfd = kqueue()) < 0)
-        err(1, "kqueue()");
+        die("kqueue()");
     test_no_kevents(kqfd);
     if (close(kqfd) < 0)
-        err(1, "close()");
+        die("close()");
 }
 
 void
@@ -69,12 +69,12 @@ test_ev_receipt(void)
     struct kevent kev;
 
     if ((kq = kqueue()) < 0)
-        err(1, "kqueue()");
+        die("kqueue()");
 #if HAVE_EV_RECEIPT
 
     EV_SET(&kev, SIGUSR2, EVFILT_SIGNAL, EV_ADD | EV_RECEIPT, 0, 0, NULL);
     if (kevent(kq, &kev, 1, &kev, 1, NULL) < 0)
-        err(1, "%s", test_id);
+        die("kevent");
 
     /* TODO: check the receipt */
 
@@ -120,7 +120,7 @@ main(int argc, char **argv)
     test(kqueue);
 
     if ((kqfd = kqueue()) < 0)
-        err(1, "kqueue()");
+        die("kqueue()");
 
     if (test_socket) 
         test_evfilt_read(kqfd);

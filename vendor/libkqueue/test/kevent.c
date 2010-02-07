@@ -29,11 +29,10 @@ test_no_kevents(int kqfd)
     memset(&timeo, 0, sizeof(timeo));
     nfds = kevent(kqfd, NULL, 0, &kev, 1, &timeo);
     if (nfds < 0)
-        err(1, "kevent(2)");
+        die("kevent(2)");
     if (nfds > 0) {
         puts("\nUnexpected event:");
-        puts(kevent_to_str(&kev));
-        errx(1, "%d event(s) pending, but none expected:", nfds);
+        die(kevent_to_str(&kev));
     }
 }
 
@@ -46,7 +45,7 @@ kevent_get(int kqfd)
 
     nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
     if (nfds < 1)
-        err(1, "kevent(2)");
+        die("kevent(2)");
 
     return (&kev);
 }
@@ -138,6 +137,16 @@ kevent_to_str(struct kevent *kev)
 }
 
 void
+kevent_update(int kqfd, struct kevent *kev)
+{
+    if (kevent(kqfd, kev, 1, NULL, 0, NULL) < 0) {
+        printf("Unable to add the following kevent:\n%s\n",
+                kevent_to_str(kev));
+        die("kevent");
+    }
+}
+
+void
 kevent_add(int kqfd, struct kevent *kev, 
         uintptr_t ident,
         short     filter,
@@ -150,7 +159,7 @@ kevent_add(int kqfd, struct kevent *kev,
     if (kevent(kqfd, kev, 1, NULL, 0, NULL) < 0) {
         printf("Unable to add the following kevent:\n%s\n",
                 kevent_to_str(kev));
-        err(1, "kevent(): %s", strerror(errno));
+        die("kevent");
     }
 }
 
