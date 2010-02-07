@@ -123,6 +123,7 @@ kqueue(void)
 {
     struct kqueue *kq;
     struct kqueue *n1, *n2;
+    int rv, tmp;
 
     kq = calloc(1, sizeof(*kq));
     if (kq == NULL)
@@ -135,13 +136,15 @@ kqueue(void)
     pthread_rwlock_wrlock(&kqtree_mtx);
 
     /* Free any kqueue descriptor that is no longer needed */
-    /* O(1), however needed in the case that a descriptor is
+    /* Sadly O(N), however needed in the case that a descriptor is
        closed and kevent(2) will never again be called on it. */
-    for (n1 = RB_MIN(kqt, &kqtree); n1 != NULL; n1 = n2)
-    {
+    for (n1 = RB_MIN(kqt, &kqtree); n1 != NULL; n1 = n2) {
         n2 = RB_NEXT(kqt, &kqtree, n1);
-        if (kqueue_validate(n1) == 0) 
+        rv = kqueue_validate(n1);
+        if (rv == 0)
             kqueue_free(n1);
+        if (rv < 0)
+            goto errout;
     }
 
     /* TODO: move outside of the lock if it is safe */
@@ -157,11 +160,11 @@ errout:
     pthread_rwlock_unlock(&kqtree_mtx);
 
 errout_unlocked:
-    //FIXME: unregister_all filters
     if (kq->kq_sockfd[0] != kq->kq_sockfd[1]) {
-        // FIXME: close() may clobber errno in the case of EINTR
-        close(kq->kq_sockfd[0]);
-        close(kq->kq_sockfd[1]);
+        tmp = errno;
+        (void)close(kq->kq_sockfd[0]);
+        (void)close(kq->kq_sockfd[1]);
+        errno = tmp;
     }
     free(kq);
     return (-1);
