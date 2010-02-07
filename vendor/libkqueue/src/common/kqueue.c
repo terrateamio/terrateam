@@ -60,7 +60,6 @@ kqueue_validate(struct kqueue *kq)
     pfd.events = POLLIN | POLLHUP;
     pfd.revents = 0;
 
-    /* XXX-FIXME: handle EINTR */
     rv = poll(&pfd, 1, 0);
     if (rv == 0)
         return (1);
@@ -69,7 +68,6 @@ kqueue_validate(struct kqueue *kq)
         return (-1);
     }
     if (rv > 0) {
-        /* XXX-FIXME: handle EINTR */
         /* NOTE: If the caller accidentally writes to the kqfd, it will
                  be considered invalid. */
         rv = recv(kq->kq_sockfd[0], buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT);
@@ -102,12 +100,11 @@ kqueue_lookup(struct kqueue **dst, int kq)
     }
 
     x = kqueue_validate(ent);
-    if (x > 0) {
+    if (x == 1) {
         *dst = ent;
         return (0);
-    } else if (x < 0) {
-        errno = EBADF;
-    } else {
+    }
+    if (x == 0) {
         /* Avoid racing with other threads to free the same kqfd */
         pthread_rwlock_wrlock(&kqtree_mtx);
         ent = RB_FIND(kqt, &kqtree, &query);
