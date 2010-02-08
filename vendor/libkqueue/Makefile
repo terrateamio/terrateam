@@ -97,12 +97,12 @@ merge:
 	echo "ok"
 
 edit:
-	ctags $(SOURCES) 
+	ctags $(SOURCES) $(HEADERS)
 	$(EDITOR) `find src/common -name '*.c' -o -name '*.h'` \
               `find src/$(TARGET) -name '*.c'`
     
 cscope:
-	cscope $(SOURCES) 
+	cscope $(SOURCES) $(HEADERS)
 
 distclean: clean
 	rm -f *.tar.gz config.mk config.h $(PROGRAM).pc $(PROGRAM).la rpm.spec
