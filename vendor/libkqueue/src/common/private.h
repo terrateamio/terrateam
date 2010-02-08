@@ -59,21 +59,18 @@ struct evfilt_data;
  */
 struct knote {
     struct kevent     kev;
-    int               kn_pfd;       /* Used by timerfd */
-    int               kn_events;    /* Used by socket */
-    nlink_t           kn_st_nlink;  /* Used by vnode */
-    off_t             kn_st_size;   /* Used by vnode */
+    union {
+        int           kn_pfd;       /* Used by timerfd */
+        int           kn_events;    /* Used by socket */
+        struct {
+            nlink_t   kn_st_nlink;  /* Used by vnode */
+            off_t     kn_st_size;   /* Used by vnode */
+        };
+    };
     TAILQ_ENTRY(knote) event_ent;    /* Used by filter->kf_event */
     RB_ENTRY(knote)   kntree_ent;   /* Used by filter->kntree */
 };
 LIST_HEAD(knotelist, knote);
-
-/* TODO: This should be a red-black tree or a heap */
-#define KNOTELIST_INIT(knl)         LIST_INIT((knl))
-#define KNOTELIST_FOREACH(ent,knl)  LIST_FOREACH((ent),(knl), entries)
-#define KNOTELIST_EMPTY(knl)        LIST_EMPTY((knl))
-#define KNOTE_INSERT(knl, ent)      LIST_INSERT_HEAD((knl), (ent), entries)
-#define KNOTE_EMPTY(ent)            ((ent)->kev.filter == 0)
 
 #define KNOTE_ENABLE(ent)           do {                            \
             (ent)->kev.flags &= ~EV_DISABLE;                        \
