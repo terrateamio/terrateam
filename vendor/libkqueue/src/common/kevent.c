@@ -249,13 +249,15 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
      * Process each kevent on the changelist.
      */
     if (nchanges) {
+        pthread_mutex_lock(&kq->kq_mtx);
         rv = kevent_copyin(kq, changelist, nchanges, eventlist, nevents);
         if (rv < 0)
-            return (-1); 
+            goto errout;
         if (rv > 0) {
             eventlist += rv;
             nevents -= rv;
         }
+        pthread_mutex_unlock(&kq->kq_mtx);
     }
 
     /* Determine if we need to wait for events. */
@@ -286,4 +288,8 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
 #endif /* KQUEUE_DEBUG */
 
     return (nret);
+
+errout:
+    pthread_mutex_unlock(&kq->kq_mtx);
+    return (-1);
 }
