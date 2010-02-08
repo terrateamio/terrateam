@@ -99,10 +99,8 @@ evfilt_signal_copyout(struct filter *filt,
         dst->data = 1;  
 
         if (kn->kev.flags & EV_DISPATCH || kn->kev.flags & EV_ONESHOT) {
-            pthread_rwlock_wrlock(&filt->kf_mtx);
             sigdelset(&filt->kf_sigmask, dst->ident);
             update_sigmask(filt); /* TODO: error checking */
-            pthread_rwlock_unlock(&filt->kf_mtx);
         }
         if (kn->kev.flags & EV_DISPATCH)
             KNOTE_DISABLE(kn);

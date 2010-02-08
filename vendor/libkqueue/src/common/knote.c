@@ -43,9 +43,7 @@ knote_new(void)
 void
 knote_insert(struct filter *filt, struct knote *kn)
 {
-    pthread_rwlock_wrlock(&filt->kf_mtx);
     RB_INSERT(knt, &filt->kf_knote, kn);
-    pthread_rwlock_unlock(&filt->kf_mtx);
 }
 
 void
@@ -53,11 +51,9 @@ knote_free(struct filter *filt, struct knote *kn)
 {
     dbg_printf("filter=%s, ident=%u",
             filter_name(kn->kev.filter), (u_int) kn->kev.ident);
-    pthread_rwlock_wrlock(&filt->kf_mtx);
 	RB_REMOVE(knt, &filt->kf_knote, kn);
     if (kn->event_ent.tqe_prev) //XXX-FIXME what if this is the 1st entry??
         TAILQ_REMOVE(&filt->kf_event, kn, event_ent);
-    pthread_rwlock_unlock(&filt->kf_mtx);
     filt->kn_delete(filt, kn);
 	free(kn);
 }
@@ -89,9 +85,7 @@ knote_lookup(struct filter *filt, short ident)
     struct knote *ent = NULL;
 
     query.kev.ident = ident;
-    pthread_rwlock_rdlock(&filt->kf_mtx);
     ent = RB_FIND(knt, &filt->kf_knote, &query);
-    pthread_rwlock_unlock(&filt->kf_mtx);
 
     dbg_printf("id=%d ent=%p", ident, ent);
 
@@ -103,12 +97,10 @@ knote_lookup_data(struct filter *filt, intptr_t data)
 {
     struct knote *kn;
 
-    pthread_rwlock_rdlock(&filt->kf_mtx);
     RB_FOREACH(kn, knt, &filt->kf_knote) {
         if (data == kn->kev.data) 
             break;
     }
-    pthread_rwlock_unlock(&filt->kf_mtx);
     return (kn);
 }
 
@@ -117,9 +109,7 @@ knote_enqueue(struct filter *filt, struct knote *kn)
 {
     /* XXX-FIXME: check if the knote is already on the eventlist */
     dbg_printf("id=%ld", kn->kev.ident);
-    pthread_rwlock_wrlock(&filt->kf_mtx);
     TAILQ_INSERT_TAIL(&filt->kf_event, kn, event_ent);
-    pthread_rwlock_unlock(&filt->kf_mtx);
 }
 
 struct knote *
@@ -127,7 +117,6 @@ knote_dequeue(struct filter *filt)
 {
     struct knote *kn;
 
-    pthread_rwlock_wrlock(&filt->kf_mtx);
     if (TAILQ_EMPTY(&filt->kf_event)) {
         kn = NULL;
         dbg_puts("no events are pending");
@@ -137,7 +126,6 @@ knote_dequeue(struct filter *filt)
         memset(&kn->event_ent, 0, sizeof(kn->event_ent));
         dbg_printf("id=%ld", kn->kev.ident);
     }
-    pthread_rwlock_unlock(&filt->kf_mtx);
 
     return (kn);
 }
@@ -147,9 +135,7 @@ knote_events_pending(struct filter *filt)
 {
     int res;
 
-    pthread_rwlock_rdlock(&filt->kf_mtx);
     res = TAILQ_EMPTY(&filt->kf_event);
-    pthread_rwlock_unlock(&filt->kf_mtx);
 
     return (res);
 }

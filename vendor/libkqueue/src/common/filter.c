@@ -47,7 +47,6 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
     dst = &kq->kq_filt[filt];
     memcpy(dst, src, sizeof(*src));
     dst->kf_kqueue = kq;
-    pthread_rwlock_init(&dst->kf_mtx, NULL);
     RB_INIT(&dst->kf_knote);
     TAILQ_INIT(&dst->kf_event);
     if (src->kf_id == 0) {

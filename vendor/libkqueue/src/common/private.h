@@ -102,7 +102,6 @@ struct filter {
     int       kf_wfd;                   /* fd to write when an event occurs */
     u_int     kf_timeres;               /* timer resolution, in miliseconds */
     sigset_t  kf_sigmask;
-    pthread_rwlock_t kf_mtx;
     struct evfilt_data *kf_data;	/* filter-specific data */
     RB_HEAD(knt, knote) kf_knote;
     TAILQ_HEAD(, knote)  kf_event;       /* events that have occurred */
