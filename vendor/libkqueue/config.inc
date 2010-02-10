@@ -28,8 +28,8 @@ pre_configure_hook() {
   libdepends=" -L$libdir"
   if [ $target = "linux" ] ; then
       libdepends="$libdepends -lpthread -lrt"
-      required_headers="sys/epoll.h sys/inotify.h 
-                        sys/signalfd.h sys/timerfd.h sys/eventfd.h"
+      required_headers="sys/epoll.h sys/inotify.h"
+      optional_headers="sys/eventfd.h"
   fi
 }
 
@@ -48,7 +48,7 @@ post_configure_hook() {
           evfilt_signal="src/posix/signal.c"
       fi
       if [ "$have_sys_timerfd_h" != "yes" ] ; then
-          evfilt_timer=""      # TODO: "src/posix/timer.c"
+          evfilt_timer="src/posix/timer.c"
       fi
       if [ "$have_sys_eventfd_h" != "yes" ] ; then
           evfilt_user=""      # TODO: "src/posix/user.c"
