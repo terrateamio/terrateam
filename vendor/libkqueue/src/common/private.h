@@ -124,14 +124,14 @@ struct kqueue {
 struct knote *  knote_lookup(struct filter *, short);
 struct knote *  knote_lookup_data(struct filter *filt, intptr_t);
 struct knote *  knote_new(void);
-void 		    knote_free(struct filter *, struct knote *);
-void            knote_free_all(struct filter *);
-void            knote_insert(struct filter *, struct knote *);
+void        knote_free(struct filter *, struct knote *);
+void        knote_free_all(struct filter *);
+void        knote_insert(struct filter *, struct knote *);
 
 /* TODO: these deal with the eventlist, should use a different prefix */
-void            knote_enqueue(struct filter *, struct knote *);
+void        knote_enqueue(struct filter *, struct knote *);
 struct knote *  knote_dequeue(struct filter *);
-int             knote_events_pending(struct filter *);
+int         knote_events_pending(struct filter *);
 
 int         eventfd_create(void);
 int         eventfd_raise(int);
@@ -146,16 +146,15 @@ int         filter_lower(struct filter *);
 int         filter_raise(struct filter *);
 
 int 		kevent_init(struct kqueue *);
-const char * kevent_dump(const struct kevent *);
 int         kevent_wait(struct kqueue *, const struct timespec *);
 int         kevent_copyout(struct kqueue *, int, struct kevent *, int);
 void 		kevent_free(struct kqueue *);
+const char *kevent_dump(const struct kevent *);
 
 struct kqueue * kqueue_get(int);
 void        kqueue_put(struct kqueue *);
 #define     kqueue_lock(kq)     pthread_mutex_lock(&(kq)->kq_mtx)
 #define     kqueue_unlock(kq)   pthread_mutex_unlock(&(kq)->kq_mtx)
 int         kqueue_validate(struct kqueue *);
- 
 
 #endif  /* ! _KQUEUE_PRIVATE_H */
