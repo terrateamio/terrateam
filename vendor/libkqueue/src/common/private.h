@@ -98,6 +98,7 @@ struct filter {
     int     (*kn_enable)(struct filter *, struct knote *);
     int     (*kn_disable)(struct filter *, struct knote *);
 
+    struct eventfd *kf_efd;             /* Used by user.c */
     int       kf_pfd;                   /* fd to poll(2) for readiness */
     int       kf_wfd;                   /* fd to write when an event occurs */
     u_int     kf_timeres;               /* timer resolution, in miliseconds */
@@ -133,9 +134,11 @@ void        knote_enqueue(struct filter *, struct knote *);
 struct knote *  knote_dequeue(struct filter *);
 int         knote_events_pending(struct filter *);
 
-int         eventfd_create(void);
-int         eventfd_raise(int);
-int         eventfd_lower(int);
+struct eventfd * eventfd_create(void);
+int         eventfd_raise(struct eventfd *);
+int         eventfd_lower(struct eventfd *);
+int         eventfd_reader(struct eventfd *);
+int         eventfd_writer(struct eventfd *);
 
 int         filter_lookup(struct filter **, struct kqueue *, short);
 int         filter_socketpair(struct filter *);

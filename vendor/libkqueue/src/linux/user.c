@@ -33,7 +33,11 @@
 int
 evfilt_user_init(struct filter *filt)
 {
-    filt->kf_pfd = eventfd_create();
+    filt->kf_efd = eventfd_create();
+    if (filt->kf_efd == NULL)
+        return (-1);
+
+    filt->kf_pfd = eventfd_reader(filt->kf_efd);
     if (filt->kf_pfd < 0) 
         return (-1);
 
@@ -69,7 +73,7 @@ evfilt_user_copyout(struct filter *filt,
         if (kn->kev.flags & EV_CLEAR)
             kn->kev.fflags &= ~NOTE_TRIGGER;
         if (kn->kev.flags & (EV_DISPATCH | EV_CLEAR | EV_ONESHOT))
-            eventfd_lower(filt->kf_pfd);
+            eventfd_lower(filt->kf_efd);
         if (kn->kev.flags & EV_ONESHOT) 
             knote_free(filt, kn);
 
@@ -81,7 +85,7 @@ evfilt_user_copyout(struct filter *filt,
     /* This should normally never happen but is here for debugging */
     if (nevents == 0) {
         dbg_puts("spurious wakeup");
-        eventfd_lower(filt->kf_pfd);
+        eventfd_lower(filt->kf_efd);
     }
 
     return (nevents);
@@ -137,7 +141,7 @@ evfilt_user_knote_modify(struct filter *filt, struct knote *kn,
     if ((!(kn->kev.flags & EV_DISABLE)) && kev->fflags & NOTE_TRIGGER) {
         kn->kev.fflags |= NOTE_TRIGGER;
         knote_enqueue(filt, kn);
-        eventfd_raise(filt->kf_pfd);
+        eventfd_raise(filt->kf_efd);
     }
 
     return (0);
