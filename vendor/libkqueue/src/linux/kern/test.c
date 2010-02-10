@@ -25,13 +25,17 @@
 int 
 main(int argc, char **argv)
 {
-    int fd;
+    int fd, x;
 
     fd = open("/dev/kqueue", 0);
     if (fd < 0)
         err(1, "open()");
 
-	if (ioctl(fd, 3, (char *) &fd) < 0)
+    x = 1;
+	if (ioctl(fd, 1234, (char *) &x) < 0)
+        err(1, "ioctl");
+    x = 2;
+	if (ioctl(fd, 1234, (char *) &x) < 0)
         err(1, "ioctl");
 
     close(fd);
