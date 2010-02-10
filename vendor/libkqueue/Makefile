@@ -33,7 +33,6 @@ $(PROGRAM).a: $(OBJS)
 $(PROGRAM).so: $(OBJS)
 	$(LD) $(LDFLAGS) -o $(PROGRAM).so $(OBJS) $(LDADD)
 
-
 install: $(PROGRAM).so
 	$(INSTALL) -d -m 755 $(INCLUDEDIR)/kqueue/sys
 	$(INSTALL) -m 644 include/sys/event.h $(INCLUDEDIR)/kqueue/sys/event.h
