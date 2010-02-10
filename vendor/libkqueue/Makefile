@@ -81,7 +81,7 @@ publish-www:
 	rm ~/public_html/libkqueue/*.html ; cp -R www/*.html ~/public_html/libkqueue/
 
 clean:
-	rm -f *.a $(OBJS) *.so 
+	rm -f tags *.a $(OBJS) *.so 
 	cd test && make clean || true
 
 fresh-build:
@@ -96,12 +96,13 @@ merge:
 	@read x && test "$$x" = "y"
 	echo "ok"
 
-edit:
+tags: $(SOURCES) $(HEADERS)
 	ctags $(SOURCES) $(HEADERS)
-	$(EDITOR) `find src/common -name '*.c' -o -name '*.h'` \
-              `find src/$(TARGET) -name '*.c'`
+
+edit: tags
+	$(EDITOR) $(SOURCES) $(HEADERS)
     
-cscope:
+cscope: tags
 	cscope $(SOURCES) $(HEADERS)
 
 distclean: clean

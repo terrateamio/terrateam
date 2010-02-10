@@ -234,14 +234,19 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
     struct kqueue *kq;
     int rv, n, nret;
 
-    rv = kqueue_lookup(&kq, kqfd);
-    if (rv < 0) {
-        dbg_printf("kqueue_lookup error: fd=%d", kqfd);
+    nret = 0;
+
+    kq = kqueue_get(kqfd);
+    if (kq == NULL) {
+        errno = ENOENT;
         return (-1);
     }
-    if (rv == 0 && kq == NULL) {
-        dbg_printf("fd lookup: no such entry fd=%d", kqfd);
-        errno = EINVAL;
+
+    rv = kqueue_validate(kq);
+    if (rv < 0) {
+        return (-1);
+    } else if (rv == 0) {
+        errno = EBADF;
         return (-1);
     }
 
@@ -249,35 +254,39 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
      * Process each kevent on the changelist.
      */
     if (nchanges) {
-        pthread_mutex_lock(&kq->kq_mtx);
+        kqueue_lock(kq);
         rv = kevent_copyin(kq, changelist, nchanges, eventlist, nevents);
+        kqueue_unlock(kq);
         if (rv < 0)
             goto errout;
         if (rv > 0) {
             eventlist += rv;
             nevents -= rv;
         }
-        pthread_mutex_unlock(&kq->kq_mtx);
     }
 
     /* Determine if we need to wait for events. */
-    if (nevents == 0)
-        return (0);
     if (nevents > MAX_KEVENT)
         nevents = MAX_KEVENT;
+    if (nevents == 0)
+        goto out;
 
     /* Handle spurious wakeups where no events are generated. */
-    for (nret = 0; nret == 0; 
-            nret = kevent_copyout(kq, n, eventlist, nevents)) 
+    for (nret = 0; nret == 0;) 
     {
         /* Wait for one or more events. */
         n = kevent_wait(kq, timeout);
         if (n < 0) {
             dbg_puts("kevent_wait failed");
-            return (-1);
+            goto errout;
         }
         if (n == 0)
-            return (0);             /* Timeout */
+            goto out;      /* Timeout */
+
+        /* Copy the events to the caller */
+        kqueue_lock(kq);
+        nret = kevent_copyout(kq, n, eventlist, nevents);
+        kqueue_unlock(kq);
     }
 
 #ifdef KQUEUE_DEBUG
@@ -287,9 +296,12 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
     }
 #endif /* KQUEUE_DEBUG */
 
-    return (nret);
+    goto out;
 
 errout:
-    pthread_mutex_unlock(&kq->kq_mtx);
-    return (-1);
+    nret = -1;
+
+out:
+    kqueue_put(kq);
+    return (nret);
 }
