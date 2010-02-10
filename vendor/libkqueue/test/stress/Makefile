@@ -18,7 +18,7 @@ valgrind: $(PROGRAM)
 	         --num-callers=20 --track-fds=yes ./$(PROGRAM)
 
 clean:
-	rm -f $(PROGRAM) core *.o
+	rm -f $(PROGRAM) core tags *.o
 
 edit:
 	ctags $(SOURCES)
