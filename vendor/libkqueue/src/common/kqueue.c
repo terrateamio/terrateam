@@ -41,6 +41,7 @@ kqueue_cmp(struct kqueue *a, struct kqueue *b)
 
 RB_GENERATE(kqt, kqueue, entries, kqueue_cmp);
 
+/* Must hold the kqtree_mtx when calling this */
 static void
 kqueue_free(struct kqueue *kq)
 {
@@ -48,6 +49,33 @@ kqueue_free(struct kqueue *kq)
     filter_unregister_all(kq);
     free(kq);
 }
+
+static int
+kqueue_gc(void)
+{
+    int rv;
+    struct kqueue *n1, *n2;
+
+    /* Free any kqueue descriptor that is no longer needed */
+    /* Sadly O(N), however needed in the case that a descriptor is
+       closed and kevent(2) will never again be called on it. */
+    for (n1 = RB_MIN(kqt, &kqtree); n1 != NULL; n1 = n2) {
+        n2 = RB_NEXT(kqt, &kqtree, n1);
+
+        if (n1->kq_ref == 0) {
+            kqueue_free(n1);
+        } else {
+            rv = kqueue_validate(n1);
+            if (rv == 0) 
+                kqueue_free(n1);
+            else if (rv < 0) 
+                return (-1);
+        }
+    }
+
+    return (0);
+}
+
 
 int
 kqueue_validate(struct kqueue *kq)
@@ -80,73 +108,50 @@ kqueue_validate(struct kqueue *kq)
     return (0);
 }
 
-int
-kqueue_lookup(struct kqueue **dst, int kq)
+void
+kqueue_put(struct kqueue *kq)
+{
+    atomic_dec(&kq->kq_ref);
+}
+
+struct kqueue *
+kqueue_get(int kq)
 {
     struct kqueue query;
     struct kqueue *ent = NULL;
-    int x;
-
-    *dst = NULL;
 
     query.kq_sockfd[1] = kq;
     pthread_rwlock_rdlock(&kqtree_mtx);
     ent = RB_FIND(kqt, &kqtree, &query);
     pthread_rwlock_unlock(&kqtree_mtx);
 
-    if (ent == NULL) {
-        errno = ENOENT;
-        return (-1);
-    }
-
-    x = kqueue_validate(ent);
-    if (x == 1) {
-        *dst = ent;
-        return (0);
-    }
-    if (x == 0) {
-        /* Avoid racing with other threads to free the same kqfd */
-        pthread_rwlock_wrlock(&kqtree_mtx);
-        ent = RB_FIND(kqt, &kqtree, &query);
-        if (ent != NULL)
-            kqueue_free(ent);
-        pthread_rwlock_unlock(&kqtree_mtx);
+    /* Check for invalid kqueue objects still in the tree */
+    if (ent != NULL && (ent->kq_sockfd[0] < 0 || ent->kq_ref == 0))
         ent = NULL;
-        errno = EBADF;
-    }
+    else
+        atomic_inc(&ent->kq_ref);
 
-    return (-1);
+    return (ent);
 }
 
 int __attribute__((visibility("default")))
 kqueue(void)
 {
     struct kqueue *kq;
-    struct kqueue *n1, *n2;
-    int rv, tmp;
+    int tmp;
 
     kq = calloc(1, sizeof(*kq));
     if (kq == NULL)
         return (-1);
+    kq->kq_ref = 1;
     pthread_mutex_init(&kq->kq_mtx, NULL);
 
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, kq->kq_sockfd) < 0) 
         goto errout_unlocked;
 
     pthread_rwlock_wrlock(&kqtree_mtx);
-
-    /* Free any kqueue descriptor that is no longer needed */
-    /* Sadly O(N), however needed in the case that a descriptor is
-       closed and kevent(2) will never again be called on it. */
-    for (n1 = RB_MIN(kqt, &kqtree); n1 != NULL; n1 = n2) {
-        n2 = RB_NEXT(kqt, &kqtree, n1);
-        rv = kqueue_validate(n1);
-        if (rv == 0)
-            kqueue_free(n1);
-        if (rv < 0)
-            goto errout;
-    }
-
+    if (kqueue_gc < 0)
+        goto errout;
     /* TODO: move outside of the lock if it is safe */
     if (filter_register_all(kq) < 0)
         goto errout;

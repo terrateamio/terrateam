@@ -117,6 +117,7 @@ struct kqueue {
 #ifdef SOLARIS
     int             kq_port;
 #endif
+    volatile unsigned int    kq_ref;
     RB_ENTRY(kqueue) entries;
 };
 
@@ -150,9 +151,10 @@ int         kevent_wait(struct kqueue *, const struct timespec *);
 int         kevent_copyout(struct kqueue *, int, struct kevent *, int);
 void 		kevent_free(struct kqueue *);
 
-int         kqueue_lookup(struct kqueue **, int);
-#define     kqueue_lock(kq)     pthread_mutex_lock(&(kq)->kq_mtx);
-#define     kqueue_unlock(kq)   pthread_mutex_unlock(&(kq)->kq_mtx);
+struct kqueue * kqueue_get(int);
+void        kqueue_put(struct kqueue *);
+#define     kqueue_lock(kq)     pthread_mutex_lock(&(kq)->kq_mtx)
+#define     kqueue_unlock(kq)   pthread_mutex_unlock(&(kq)->kq_mtx)
 int         kqueue_validate(struct kqueue *);
  
 

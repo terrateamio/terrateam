@@ -48,7 +48,6 @@ kevent_copyout(struct kqueue *kq, int nready,
     struct filter *filt;
     int i, rv, nret;
 
-    pthread_mutex_lock(&kq->kq_mtx);
     nret = 0;
     for (i = 0; (i < EVFILT_SYSCOUNT && nready > 0 && nevents > 0); i++) {
 //        dbg_printf("eventlist: n = %d nevents = %d", nready, nevents);
@@ -69,7 +68,6 @@ kevent_copyout(struct kqueue *kq, int nready,
             nready--;
         }
     }
-    pthread_mutex_unlock(&kq->kq_mtx);
 
     return (nret);
 }
