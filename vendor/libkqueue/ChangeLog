@@ -1,3 +1,34 @@
+2010-02-09  v0.5    r200
+------------------------------------------------------------------------
+
+  * Prevent namespace pollution by hiding all ELF symbols except for 
+    kqueue() and kevent().
+
+  * Add reference counting to the garbage collection mechanism so that
+    a kqueue object is never destroyed while multiple threads are using
+    it.
+
+  * Improve scalability by using red-black trees instead of linked lists.
+
+  * Refactor the internal API to promote modularity and code reuse. 
+    Five methods are added to each filter: create, modify, delete,
+    enable, disable. These replace the copyin() method, which was
+    overly complicated.
+
+  * Remove the fine-grained locking at the filter level, and replace
+    it with coarse locking inside kevent(). This simplifys the locking
+    implementation and provides a stronger guarantee of reentrancy.
+
+  * Initial attempt at writing a Linux kernel module. It fails to
+    link because sys_epoll_create() and other event-related syscalls
+    are not available to kernelspace (?). Need to ask LKML for guidance.
+
+  * Make unit tests threadsafe and created a stresstest which runs
+    the unit tests in parallel.
+
+  * Use helper functions to reduce the amount of duplicate code in the
+    unit tests.
+
 2009-12-26  v0.4    r133
 ------------------------------------------------------------------------
 
@@ -39,15 +70,17 @@
   * The pthreads library is now required.
 
 2009-11-07  v0.2    r59
+------------------------------------------------------------------------
 
-    * Implement EVFILT_TIMER on Linux.
+  * Implement EVFILT_TIMER on Linux.
 
-    * Fix another 'make install' problem reported by Mario Schwalbe.
+  * Fix another 'make install' problem reported by Mario Schwalbe.
 
-    * Do not link the test program with the pthreads library.
+  * Do not link the test program with the pthreads library.
 
-    * pkg-config no longer requires linking with -lpthread and -lrt.
+  * pkg-config no longer requires linking with -lpthread and -lrt.
 
 2009-11-05  v0.1     r49
+------------------------------------------------------------------------
 
-    * Initial stable release.
+  * Initial stable release.
