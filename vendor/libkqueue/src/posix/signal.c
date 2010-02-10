@@ -44,6 +44,7 @@ evfilt_signal_destroy(struct filter *filt)
     close (filt->kf_pfd);
 }
 
+#if DEADWOOD
 int
 evfilt_signal_copyin(struct filter *filt, 
         struct knote *dst, const struct kevent *src)
@@ -75,6 +76,61 @@ evfilt_signal_copyin(struct filter *filt,
 #endif
 
     return (0);
+}
+#endif
+
+int
+evfilt_signal_knote_create(struct filter *filt, struct knote *kn)
+{
+    if (kn->kev.ident >= SIGNAL_MAX) {
+        dbg_printf("unsupported signal number %u", (u_int) kn->kev.ident);
+        return (-1);
+    }
+
+    kn->kev.flags |= EV_CLEAR;
+
+#if FIXME
+    /* TODO */
+    rv = signalfd(filt->kf_pfd, &filt->kf_sigmask, 0);
+    dbg_printf("signalfd = %d", filt->kf_pfd);
+    if (rv < 0 || rv != filt->kf_pfd) {
+        dbg_printf("signalfd(2): %s", strerror(errno));
+        return (-1);
+    }
+#endif
+
+    return (0);
+}
+
+int
+evfilt_signal_knote_modify(struct filter *filt, struct knote *kn, 
+                const struct kevent *kev)
+{
+        return (-1); /* FIXME - STUB */
+}
+
+int
+evfilt_signal_knote_delete(struct filter *filt, struct knote *kn)
+{   
+        return (-1); /* FIXME - STUB */
+//        sigdelset(&filt->kf_sigmask, kn->kev.ident);
+//           return (update_sigmask(filt));
+}
+
+int
+evfilt_signal_knote_enable(struct filter *filt, struct knote *kn)
+{
+        return (-1); /* FIXME - STUB */
+        //sigaddset(&filt->kf_sigmask, kn->kev.ident);
+
+         //   return (update_sigmask(filt));
+}
+
+int
+evfilt_signal_knote_disable(struct filter *filt, struct knote *kn)
+{
+        return (-1); /* FIXME - STUB */
+        //return (evfilt_signal_knote_delete(filt, kn));
 }
 
 int
@@ -128,6 +184,10 @@ const struct filter evfilt_signal = {
     EVFILT_SIGNAL,
     evfilt_signal_init,
     evfilt_signal_destroy,
-    evfilt_signal_copyin,
     evfilt_signal_copyout,
+    evfilt_signal_knote_create,
+    evfilt_signal_knote_modify,
+    evfilt_signal_knote_delete,
+    evfilt_signal_knote_enable,
+    evfilt_signal_knote_disable,     
 };
