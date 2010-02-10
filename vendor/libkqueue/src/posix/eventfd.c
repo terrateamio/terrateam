@@ -31,13 +31,12 @@ struct eventfd *
 eventfd_create(void)
 {
     struct eventfd *e;
-    int evfd;
 
     e = malloc(sizeof(*e));
     if (e == NULL)
         return (NULL);
 
-    if (socketpair(AF_UNIX, SOCK_STREAM, 0, e->fd) < 0)
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, e->fd) < 0) {
         free(e);
         return (NULL);
     }
@@ -46,7 +45,6 @@ eventfd_create(void)
         free(e);
         close(e->fd[0]);
         close(e->fd[1]);
-        close(evfd);
         return (NULL);
     }
 

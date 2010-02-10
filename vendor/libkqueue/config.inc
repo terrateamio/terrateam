@@ -51,10 +51,12 @@ post_configure_hook() {
           evfilt_timer="src/posix/timer.c"
       fi
       if [ "$have_sys_eventfd_h" != "yes" ] ; then
-          evfilt_user=""      # TODO: "src/posix/user.c"
+          sources="$sources src/posix/eventfd.c"
+      else
+          sources="$sources src/linux/eventfd.c"
       fi
     fi      
 
-    sources="$sources src/$target/kevent.c src/$target/eventfd.c $evfilt_signal $evfilt_proc 
+    sources="$sources src/$target/kevent.c $evfilt_signal $evfilt_proc 
              $evfilt_socket $evfilt_timer $evfilt_user $evfilt_vnode"
 }
