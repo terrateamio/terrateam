@@ -23,32 +23,44 @@
 
 #include "private.h"
 
-/* TODO: make src/posix/eventfd.c equivalent functions */
+/* A structure is used to allow other targets to emulate this */
+struct eventfd {
+    int fd;
+};
 
-int
+struct eventfd *
 eventfd_create(void)
 {
+    struct eventfd *e;
     int evfd;
 
-    if ((evfd = eventfd(0, 0)) < 0) 
-        return (-1);
-    if (fcntl(evfd, F_SETFL, O_NONBLOCK) < 0) {
-        close(evfd);
-        return (-1);
-    }
+    e = malloc(sizeof(*e));
+    if (e == NULL)
+        return (NULL);
 
-    return (evfd);
+    if ((evfd = eventfd(0, 0)) < 0) {
+        free(e);
+        return (NULL);
+    }
+    if (fcntl(evfd, F_SETFL, O_NONBLOCK) < 0) {
+        free(e);
+        close(evfd);
+        return (NULL);
+    }
+    e->fd = evfd;
+
+    return (e);
 }
 
 int
-eventfd_raise(int evfd)
+eventfd_raise(struct eventfd *e)
 {
     uint64_t counter;
 
-    dbg_puts("efd_raise(): raising event level");
+    dbg_puts("raising event level");
     counter = 1;
-    if (write(evfd, &counter, sizeof(counter)) < 0) {
-        /* FIXME: handle EAGAIN */
+    if (write(e->fd, &counter, sizeof(counter)) < 0) {
+        /* FIXME: handle EAGAIN and EINTR */
         dbg_printf("write(2): %s", strerror(errno));
         return (-1);
     }
@@ -56,17 +68,29 @@ eventfd_raise(int evfd)
 }
 
 int
-eventfd_lower(int evfd)
+eventfd_lower(struct eventfd *e)
 {
     uint64_t cur;
 
     /* Reset the counter */
-    dbg_puts("efd_lower(): lowering event level");
-    if (read(evfd, &cur, sizeof(cur)) < sizeof(cur)) {
-        /* FIXME: handle EAGAIN */
+    dbg_puts("lowering event level");
+    if (read(e->fd, &cur, sizeof(cur)) < sizeof(cur)) {
+        /* FIXME: handle EAGAIN and EINTR */
         dbg_printf("read(2): %s", strerror(errno));
         return (-1);
     }
     dbg_printf("  counter=%llu", (unsigned long long) cur);
     return (0);
+}
+
+int
+eventfd_reader(struct eventfd *e)
+{
+    return (e->fd);
+}
+
+int
+eventfd_writer(struct eventfd *e)
+{
+    return (e->fd);
 }
