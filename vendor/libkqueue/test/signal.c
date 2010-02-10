@@ -33,12 +33,6 @@ test_kevent_signal_get(void)
 
     kevent_add(kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);    
 
-    /* Block SIGUSR1, then send it to ourselves */
-    sigset_t mask;
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGUSR1);
-    if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
-        die("sigprocmask");
     if (kill(getpid(), SIGUSR1) < 0)
         die("kill");
 
@@ -54,12 +48,6 @@ test_kevent_signal_disable(void)
 
     kevent_add(kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_DISABLE, 0, 0, NULL);
 
-    /* Block SIGUSR1, then send it to ourselves */
-    sigset_t mask;
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGUSR1);
-    if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
-        die("sigprocmask");
     if (kill(getpid(), SIGUSR1) < 0)
         die("kill");
 
@@ -73,12 +61,6 @@ test_kevent_signal_enable(void)
 
     kevent_add(kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_ENABLE, 0, 0, NULL);
 
-    /* Block SIGUSR1, then send it to ourselves */
-    sigset_t mask;
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGUSR1);
-    if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
-        die("sigprocmask");
     if (kill(getpid(), SIGUSR1) < 0)
         die("kill");
 
@@ -100,16 +82,10 @@ void
 test_kevent_signal_del(void)
 {
     struct kevent kev;
-
+  
     /* Delete the kevent */
     kevent_add(kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_DELETE, 0, 0, NULL);
 
-    /* Block SIGUSR1, then send it to ourselves */
-    sigset_t mask;
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGUSR1);
-    if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
-        die("sigprocmask");
     if (kill(getpid(), SIGUSR1) < 0)
         die("kill");
 
@@ -123,12 +99,6 @@ test_kevent_signal_oneshot(void)
 
     kevent_add(kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD | EV_ONESHOT, 0, 0, NULL);
 
-    /* Block SIGUSR1, then send it to ourselves */
-    sigset_t mask;
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGUSR1);
-    if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
-        die("sigprocmask");
     if (kill(getpid(), SIGUSR1) < 0)
         die("kill");
 
@@ -145,6 +115,14 @@ test_kevent_signal_oneshot(void)
 void
 test_evfilt_signal(int _kqfd)
 {
+    sigset_t mask;
+
+    /* Block SIGUSR1 */
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGUSR1);
+    if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
+        die("sigprocmask");
+
 	kqfd = _kqfd;
     test(kevent_signal_add);
     test(kevent_signal_del);
