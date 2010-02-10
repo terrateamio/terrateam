@@ -20,6 +20,7 @@
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/syscalls.h>
 #include <linux/uaccess.h>
 
 /* Max. number of descriptors that can be associated with a kqueue descriptor */
@@ -58,6 +59,10 @@ static int kqueue_open (struct inode *inode, struct file *file)
     }
     memset(kq, 0, sizeof(*kq));
     file->private_data = kq;
+    /* FIXME Unresolved symbols
+    kq->kq_fd[0] = epoll_create1(0);
+    */
+    kq->kq_fd[0] = sys_inotify_init();
 
     return 0;
 }
@@ -70,6 +75,7 @@ static int kqueue_release (struct inode *inode, struct file *file)
     printk("kqueue_release\n");
     for (i = 0; i < kq->kq_cnt; i++) {
         printk(KERN_INFO "also close fd %d...\n", kq->kq_fd[i]);
+        sys_close(kq->kq_fd[i]);
     }
     kfree(file->private_data);
 
