@@ -57,7 +57,7 @@ uninstall:
 check: $(PROGRAM).a
 	cd test && ./configure && make check
 
-$(DISTFILE): $(OBJS)
+$(DISTFILE): $(SOURCES) $(HEADERS)
 	cd test && make distclean || true
 	mkdir $(PROGRAM)-$(VERSION)
 	cp  Makefile ChangeLog configure config.inc      \
@@ -65,7 +65,7 @@ $(DISTFILE): $(OBJS)
         $(PROGRAM)-$(VERSION)
 	cp -R $(SUBDIRS) $(PROGRAM)-$(VERSION)
 	rm -rf `find $(PROGRAM)-$(VERSION) -type d -name .svn -o -name .libs`
-	cd $(PROGRAM)-$(VERSION) && rm $(OBJS)
+	cd $(PROGRAM)-$(VERSION) && ./configure && make distclean
 	tar zcf $(PROGRAM)-$(VERSION).tar.gz $(PROGRAM)-$(VERSION)
 	rm -rf $(PROGRAM)-$(VERSION)
 
