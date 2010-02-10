@@ -23,40 +23,50 @@
 
 #include "private.h"
 
-struct FIXME
+struct eventfd {
+    int fd[2];
+};
 
-/*
- * Emulate Linux eventfd(2) in a limited way. See src/linux/eventfd.c
- */
-
-int
+struct eventfd *
 eventfd_create(void)
 {
+    struct eventfd *e;
     int evfd;
 
-    int sockfd[2];
+    e = malloc(sizeof(*e));
+    if (e == NULL)
+        return (NULL);
 
-         if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd) < 0)
-                        return (-1);
-    if ((evfd = eventfd(0, 0)) < 0) 
-        return (-1);
-    if (fcntl(evfd, F_SETFL, O_NONBLOCK) < 0) {
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, e->fd) < 0)
+        free(e);
+        return (NULL);
+    }
+    if ((fcntl(e->fd[0], F_SETFL, O_NONBLOCK) < 0) ||
+            (fcntl(e->fd[1], F_SETFL, O_NONBLOCK) < 0)) {
+        free(e);
+        close(e->fd[0]);
+        close(e->fd[1]);
         close(evfd);
-        return (-1);
+        return (NULL);
     }
 
-    return (evfd);
+    return (e);
+}
+
+void
+eventfd_free(struct eventfd *e)
+{
+    close(e->fd[0]);
+    close(e->fd[1]);
+    free(e);
 }
 
 int
-eventfd_raise(int evfd)
+eventfd_raise(struct eventfd *e)
 {
-    uint64_t counter;
-
-    dbg_puts("efd_raise(): raising event level");
-    counter = 1;
-    if (write(evfd, &counter, sizeof(counter)) < 0) {
-        /* FIXME: handle EAGAIN */
+    dbg_puts("raising event level");
+    if (write(e->fd[0], ".", 1) < 0) {
+        /* FIXME: handle EAGAIN and EINTR */
         dbg_printf("write(2): %s", strerror(errno));
         return (-1);
     }
@@ -64,17 +74,29 @@ eventfd_raise(int evfd)
 }
 
 int
-eventfd_lower(int evfd)
+eventfd_lower(struct eventfd *e)
 {
-    uint64_t cur;
+    char buf[1024];
 
     /* Reset the counter */
-    dbg_puts("efd_lower(): lowering event level");
-    if (read(evfd, &cur, sizeof(cur)) < sizeof(cur)) {
-        /* FIXME: handle EAGAIN */
+    dbg_puts("lowering event level");
+    if (read(e->fd[1], &buf, sizeof(buf)) < 0) {
+        /* FIXME: handle EAGAIN and EINTR */
+        /* FIXME: loop so as to consume all data.. may need mutex */
         dbg_printf("read(2): %s", strerror(errno));
         return (-1);
     }
-    dbg_printf("  counter=%llu", (unsigned long long) cur);
     return (0);
+}
+
+int
+eventfd_reader(struct eventfd *e)
+{
+    return (e->fd[1]);
+}
+
+int
+eventfd_writer(struct eventfd *e)
+{
+    return (e->fd[0]);
 }

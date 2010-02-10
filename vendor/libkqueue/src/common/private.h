@@ -135,6 +135,7 @@ struct knote *  knote_dequeue(struct filter *);
 int         knote_events_pending(struct filter *);
 
 struct eventfd * eventfd_create(void);
+void        eventfd_free(struct eventfd *);
 int         eventfd_raise(struct eventfd *);
 int         eventfd_lower(struct eventfd *);
 int         eventfd_reader(struct eventfd *);

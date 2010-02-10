@@ -47,7 +47,7 @@ evfilt_user_init(struct filter *filt)
 void
 evfilt_user_destroy(struct filter *filt)
 {
-    close(filt->kf_pfd);    /* TODO: do this in the parent */
+    eventfd_free(filt->kf_efd);
     return;
 }
 
