@@ -52,6 +52,13 @@ eventfd_create(void)
     return (e);
 }
 
+void
+eventfd_free(struct eventfd *e)
+{
+    close(e->fd);
+    free(e);
+}
+
 int
 eventfd_raise(struct eventfd *e)
 {
