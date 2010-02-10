@@ -20,7 +20,6 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/eventfd.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/types.h>

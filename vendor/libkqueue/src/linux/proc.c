@@ -21,7 +21,6 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/eventfd.h>
 #include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -45,7 +44,8 @@ struct evfilt_data {
     pthread_mutex_t  wait_mtx;
 };
 
-static void *
+//FIXME: WANT: static void *
+void *
 wait_thread(void *arg)
 {
     struct filter *filt = (struct filter *) arg;
@@ -117,6 +117,7 @@ wait_thread(void *arg)
 int
 evfilt_proc_init(struct filter *filt)
 {
+#if FIXME
     struct evfilt_data *ed;
     int efd = -1;
 
@@ -143,6 +144,8 @@ errout:
     free(ed);
     close(filt->kf_pfd);
     return (-1);
+#endif
+    return (-1); /*STUB*/
 }
 
 void

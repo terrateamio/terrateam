@@ -40,19 +40,10 @@ struct evfilt_data {
  * Determine the smallest interval used by active timers.
  */
 static int
-update_timeres(struct filter *filt)
+update_timeres(struct filter *filt, struct knote *kn)
 {
-    struct knote *kn;
     struct itimerspec tval;
     u_int cur = filt->kf_timeres;
-
-    KNOTELIST_FOREACH(kn, &filt->knl) {
-        if (kn->kev.data < cur)
-            cur = kn->kev.data;
-    }
-
-    if (cur == filt->kf_timeres) 
-        return (0);
 
     dbg_printf("new timer interval = %d", cur);
     filt->kf_timeres = cur;
@@ -63,6 +54,8 @@ update_timeres(struct filter *filt)
     //    dbg_printf("signalfd(2): %s", strerror(errno));
     //    return (-1);
    // }
+
+    //FIXME
 
     return (0);
 }
@@ -99,6 +92,7 @@ evfilt_timer_destroy(struct filter *filt)
     close (filt->kf_pfd);
 }
 
+#if DEADWOOD
 int
 evfilt_timer_copyin(struct filter *filt, 
         struct knote *dst, const struct kevent *src)
@@ -116,6 +110,41 @@ evfilt_timer_copyin(struct filter *filt,
     }
 
     return (0);
+}
+#endif
+
+
+int
+evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
+{
+    kn->kev.flags |= EV_CLEAR;
+    return update_timeres(filt, kn);
+    return (0);
+}
+
+int
+evfilt_timer_knote_modify(struct filter *filt, struct knote *kn, 
+                const struct kevent *kev)
+{
+        return (0); /* STUB */
+}
+
+int
+evfilt_timer_knote_delete(struct filter *filt, struct knote *kn)
+{
+    return (-1); /* STUB */
+}
+
+int
+evfilt_timer_knote_enable(struct filter *filt, struct knote *kn)
+{
+    return evfilt_timer_knote_create(filt, kn);
+}
+
+int
+evfilt_timer_knote_disable(struct filter *filt, struct knote *kn)
+{
+    return evfilt_timer_knote_delete(filt, kn);
 }
 
 int
@@ -163,6 +192,11 @@ const struct filter evfilt_timer = {
     EVFILT_TIMER,
     evfilt_timer_init,
     evfilt_timer_destroy,
-    evfilt_timer_copyin,
     evfilt_timer_copyout,
+    evfilt_timer_knote_create,
+    evfilt_timer_knote_modify,
+    evfilt_timer_knote_delete,
+    evfilt_timer_knote_enable,
+    evfilt_timer_knote_disable,     
+
 };
