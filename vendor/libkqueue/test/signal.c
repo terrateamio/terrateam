@@ -86,6 +86,7 @@ test_kevent_signal_del(void)
     /* Delete the kevent */
     kevent_add(kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_DELETE, 0, 0, NULL);
 
+    signal(SIGUSR1, SIG_IGN);
     if (kill(getpid(), SIGUSR1) < 0)
         die("kill");
 
@@ -115,13 +116,7 @@ test_kevent_signal_oneshot(void)
 void
 test_evfilt_signal(int _kqfd)
 {
-    sigset_t mask;
-
-    /* Block SIGUSR1 */
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGUSR1);
-    if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
-        die("sigprocmask");
+    signal(SIGUSR1, SIG_IGN);
 
 	kqfd = _kqfd;
     test(kevent_signal_add);
