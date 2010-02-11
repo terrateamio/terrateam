@@ -126,7 +126,6 @@ evfilt_signal_knote_create(struct filter *filt, struct knote *kn)
     sigaddset(&filt->kf_sigmask, kn->kev.ident);
 
     return (update_sigmask(filt));
-
 }
 
 int

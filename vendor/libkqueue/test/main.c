@@ -19,6 +19,11 @@
 
 #include "common.h"
 
+struct unit_test {
+    const char *ut_name;
+    int         ut_enabled;
+    void      (*ut_func)(int);
+};
 
 /*
  * Test the method for detecting when one end of a socketpair 
@@ -88,27 +93,35 @@ test_ev_receipt(void)
 int 
 main(int argc, char **argv)
 {
+    struct unit_test tests[] = {
+        { "socket", 1, test_evfilt_read },
+        { "signal", 1, test_evfilt_signal },
+#if FIXME
+        { "proc", 1, test_evfilt_proc },
+#endif
+        { "vnode", 1, test_evfilt_vnode },
+        { "timer", 1, test_evfilt_timer },
+#if HAVE_EVFILT_USER
+        { "user", 1, test_evfilt_user },
+#endif
+        { NULL, 0, NULL },
+    };
+    struct unit_test *test;
     int kqfd;
-    int test_proc = 0;  /* XXX-FIXME */
-    int test_socket = 1;
-    int test_signal = 1;
-    int test_vnode = 1;
-    int test_timer = 1;
-    int test_user = 1;
+
+    /* Enable all tests by default */
+    if (argc == 0)
+        for (test = &tests[0]; test->ut_name != NULL; test++) {
+            test->ut_enabled = 1;
+        }
 
     while (argc) {
-        if (strcmp(argv[0], "--no-proc") == 0)
-            test_proc = 0;
-        if (strcmp(argv[0], "--no-socket") == 0)
-            test_socket = 0;
-        if (strcmp(argv[0], "--no-timer") == 0)
-            test_timer = 0;
-        if (strcmp(argv[0], "--no-signal") == 0)
-            test_signal = 0;
-        if (strcmp(argv[0], "--no-vnode") == 0)
-            test_vnode = 0;
-        if (strcmp(argv[0], "--no-user") == 0)
-            test_user = 0;
+        for (test = &tests[0]; test->ut_name != NULL; test++) {
+            if (strcmp(argv[0], test->ut_name) == 0) {
+                test->ut_enabled = 1;
+                break;
+            }
+        }
         argv++;
         argc--;
     }
@@ -122,20 +135,9 @@ main(int argc, char **argv)
     if ((kqfd = kqueue()) < 0)
         die("kqueue()");
 
-    if (test_socket) 
-        test_evfilt_read(kqfd);
-    if (test_signal) 
-        test_evfilt_signal(kqfd);
-    if (test_vnode) 
-        test_evfilt_vnode(kqfd);
-#if HAVE_EVFILT_USER
-    if (test_user) 
-        test_evfilt_user(kqfd);
-#endif
-    if (test_timer) 
-        test_evfilt_timer(kqfd);
-    if (test_proc) 
-        test_evfilt_proc(kqfd);
+    for (test = &tests[0]; test->ut_name != NULL; test++) {
+        test->ut_func(kqfd);
+    }
 
     test(ev_receipt);
 
