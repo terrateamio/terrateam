@@ -122,6 +122,20 @@ Here are the issues to be aware of when using this library under any platform:<b
 <li>When a kqueue descriptor is closed, it's resources are not immediately reclaimed. Instead,
     they will be freed the next time that the <code>kqueue(2)</code> function is called.
 </li>    
+
+<li>
+A signal handler is installed when a EVFILT_SIGNAL kevent is created. For compatibility with kernel-based <code>kqueue(2)</code>, programs must ignore signals that will generate kevents. After an EVFILT_SIGNAL kevent is created, a program must not modify the disposition of the associated signal. The following example shows the proper way to handle SIGUSR1 with a kevent:<p>
+<pre>
+int main() {
+  int kqfd;
+  struct kevent kev;
+
+  kqfd = kqueue();
+  signal(SIGUSR1, SIG_IGN);
+  EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+  kevent(kqfd, &kev, 1, NULL, 0, NULL);
+}
+</pre>
 </ol>
 
 <h2>Future Plans</h2>

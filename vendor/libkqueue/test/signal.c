@@ -108,6 +108,7 @@ test_kevent_signal_oneshot(void)
     kevent_cmp(&kev, kevent_get(kqfd));
 
     /* Send another one and make sure we get no events */
+    test_no_kevents(kqfd);
     if (kill(getpid(), SIGUSR1) < 0)
         die("kill");
     test_no_kevents(kqfd);
