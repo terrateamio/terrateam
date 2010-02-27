@@ -45,6 +45,7 @@
 
 #include "../include/sys/event.h"
 #include "queue.h"
+#include "freebsd-compat.h"
 
 static int kqueue_open (struct inode *inode, struct file *file);
 static int kqueue_release (struct inode *inode, struct file *file);
@@ -68,6 +69,8 @@ struct kqueue_data {
     spinlock_t  kq_lock;
 };
 
+/************* BEGIN COPY FROM sys/event.h ***************************/
+
 /*
  * Flags for knote call
  */
@@ -80,7 +83,6 @@ struct kqueue_data {
 
 #define KNLIST_EMPTY(list)              SLIST_EMPTY(&(list)->kl_list)
 
-/************* BEGIN COPY FROM sys/event.h ***************************/
 struct knote;
 
 /*
@@ -159,36 +161,48 @@ static struct filterops timer_filtops =
 
 /************* END COPY FROM sys/event.h ***************************/
 
-struct kfilter {
+/************* BEGIN COPY FROM kern_event.c ***************************/
 
-    /* filter operations */
+static int
+filt_nullattach(struct knote *kn)
+{
 
-    int     (*kf_init)(struct filter *);
-    void    (*kf_destroy)(struct filter *);
-    int     (*kf_copyout)(struct filter *, struct kevent *, int);
-
-    /* knote operations */
-
-    int     (*kn_create)(struct filter *, struct knote *);
-    int     (*kn_modify)(struct filter *, struct knote *, 
-                            const struct kevent *);
-    int     (*kn_delete)(struct filter *, struct knote *);
-    int     (*kn_enable)(struct filter *, struct knote *);
-    int     (*kn_disable)(struct filter *, struct knote *);
-
-#if DEADWOOD
-    struct eventfd *kf_efd;             /* Used by user.c */
-    int       kf_pfd;                   /* fd to poll(2) for readiness */
-    int       kf_wfd;                   /* fd to write when an event occurs */
-    u_int     kf_timeres;               /* timer resolution, in miliseconds */
-    sigset_t  kf_sigmask;
-    struct evfilt_data *kf_data;	/* filter-specific data */
-    RB_HEAD(knt, knote) kf_knote;
-    TAILQ_HEAD(, knote)  kf_event;       /* events that have occurred */
-    struct kqueue *kf_kqueue;
-#endif
+        return (ENXIO);
 };
 
+struct filterops null_filtops =
+        { 0, filt_nullattach, NULL, NULL };
+
+/* XXX - make SYSINIT to add these, and move into respective modules. */
+extern struct filterops sig_filtops;
+extern struct filterops fs_filtops;
+
+/*
+ * Table for for all system-defined filters.
+ */
+static DEFINE_SPINLOCK(filterops_lock);
+static struct {
+        struct filterops *for_fop;
+        int for_refcnt;
+} sysfilt_ops[EVFILT_SYSCOUNT] = {
+        { &file_filtops },                      /* EVFILT_READ */
+        { &file_filtops },                      /* EVFILT_WRITE */
+        { &null_filtops },                      /* EVFILT_AIO */
+        { &file_filtops },                      /* EVFILT_VNODE */
+        { &proc_filtops },                      /* EVFILT_PROC */
+        { &sig_filtops },                       /* EVFILT_SIGNAL */
+        { &timer_filtops },                     /* EVFILT_TIMER */
+        { &file_filtops },                      /* EVFILT_NETDEV */
+        { &fs_filtops },                        /* EVFILT_FS */
+        { &null_filtops },                      /* EVFILT_LIO */
+};
+
+/************* END COPY FROM kern_event.c ***************************/
+
+
+#include "knlist.c"
+
+/*************** BEGIN ORIGINAL CODE ********************************/
 static int major;
 static struct class *kqueue_class;
 static struct task_struct *kq_thread;

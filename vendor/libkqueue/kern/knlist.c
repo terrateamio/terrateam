@@ -1,5 +1,68 @@
 //from kern_event.c
 
+/* XXX - ensure not KN_INFLUX?? */
+#define KNOTE_ACTIVATE(kn, islock) do {                                 \
+        if ((islock))                                                   \
+                mtx_assert(&(kn)->kn_kq->kq_lock, MA_OWNED);            \
+        else                                                            \
+                KQ_LOCK((kn)->kn_kq);                                   \
+        (kn)->kn_status |= KN_ACTIVE;                                   \
+        if (((kn)->kn_status & (KN_QUEUED | KN_DISABLED)) == 0)         \
+                knote_enqueue((kn));                                    \
+        if (!(islock))                                                  \
+                KQ_UNLOCK((kn)->kn_kq);                                 \
+} while(0)
+#define KQ_LOCK(kq) do {                                                \
+        mtx_lock(&(kq)->kq_lock);                                       \
+} while (0)
+#define KQ_FLUX_WAKEUP(kq) do {                                         \
+        if (((kq)->kq_state & KQ_FLUXWAIT) == KQ_FLUXWAIT) {            \
+                (kq)->kq_state &= ~KQ_FLUXWAIT;                         \
+                wakeup((kq));                                           \
+        }                                                               \
+} while (0)
+#define KQ_UNLOCK_FLUX(kq) do {                                         \
+        KQ_FLUX_WAKEUP(kq);                                             \
+        mtx_unlock(&(kq)->kq_lock);                                     \
+} while (0)
+#define KQ_UNLOCK(kq) do {                                              \
+        mtx_unlock(&(kq)->kq_lock);                                     \
+} while (0)
+#define KQ_OWNED(kq) do {                                               \
+        mtx_assert(&(kq)->kq_lock, MA_OWNED);                           \
+} while (0)
+#define KQ_NOTOWNED(kq) do {                                            \
+        mtx_assert(&(kq)->kq_lock, MA_NOTOWNED);                        \
+} while (0)
+#define KN_LIST_LOCK(kn) do {                                           \
+        if (kn->kn_knlist != NULL)                                      \
+                kn->kn_knlist->kl_lock(kn->kn_knlist->kl_lockarg);      \
+} while (0)
+#define KN_LIST_UNLOCK(kn) do {                                         \
+        if (kn->kn_knlist != NULL)                                      \
+                kn->kn_knlist->kl_unlock(kn->kn_knlist->kl_lockarg);    \
+} while (0)
+#define KNL_ASSERT_LOCK(knl, islocked) do {                             \
+        if (islocked)                                                   \
+                KNL_ASSERT_LOCKED(knl);                         \
+        else                                                            \
+                KNL_ASSERT_UNLOCKED(knl);                               \
+} while (0)
+#ifdef INVARIANTS
+#define KNL_ASSERT_LOCKED(knl) do {                                     \
+        knl->kl_assert_locked((knl)->kl_lockarg);                       \
+} while (0)
+#define KNL_ASSERT_UNLOCKED(knl) do {                                   \
+        knl->kl_assert_unlocked((knl)->kl_lockarg);                     \
+} while (0)
+#else /* !INVARIANTS */
+#define KNL_ASSERT_LOCKED(knl) do {} while(0)
+#define KNL_ASSERT_UNLOCKED(knl) do {} while (0)
+#endif /* INVARIANTS */
+
+#define KN_HASHSIZE             64              /* XXX should be tunable */
+#define KN_HASH(val, mask)      (((val) ^ (val >> 8)) & (mask))
+
 /*
  * add a knote to a knlist
  */
