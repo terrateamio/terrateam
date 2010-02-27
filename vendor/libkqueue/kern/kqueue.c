@@ -19,6 +19,7 @@
 #include <linux/fs.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
+#include <linux/kthread.h>
 #include <linux/module.h>
 #include <linux/syscalls.h>
 #include <linux/uaccess.h>
@@ -45,6 +46,22 @@ struct kqueue_data {
 
 static int major;
 static struct class *kqueue_class;
+static struct task_struct *kq_thread;
+
+//only for sleeping during testing
+#include <linux/delay.h>
+static int kqueue_main(void *arg)
+{
+    printk(KERN_INFO "kqueue thread started...\n");
+    while (!kthread_should_stop()) {
+        msleep(5000);
+        printk(KERN_INFO "kqueue thread awake...\n");
+        schedule();
+    }
+    printk(KERN_INFO "kqueue stopping...\n");
+
+    return 0;
+}
 
 static int kqueue_open (struct inode *inode, struct file *file) 
 {
@@ -61,8 +78,8 @@ static int kqueue_open (struct inode *inode, struct file *file)
     file->private_data = kq;
     /* FIXME Unresolved symbols
     kq->kq_fd[0] = epoll_create1(0);
-    */
     kq->kq_fd[0] = sys_inotify_init();
+    */
 
     return 0;
 }
@@ -102,6 +119,8 @@ static int kqueue_ioctl(struct inode *inode, struct file *file,
 
 static int __init kqueue_start(void)
 {
+    int rv = 0;
+
     printk(KERN_INFO "Loading kqueue module...\n");
 
     /* Register as a character device */
@@ -115,9 +134,20 @@ static int __init kqueue_start(void)
     kqueue_class = class_create(THIS_MODULE, "kqueue");
     device_create(kqueue_class, NULL, MKDEV(major,0), NULL, "kqueue");
 
-    printk(KERN_INFO "Finished loading kqueue module...\n");
+    printk(KERN_INFO "Creating helper thread...\n");
+    kq_thread = kthread_create(kqueue_main, NULL, "kqueue");
+    if (IS_ERR(kq_thread)) {
+        rv = PTR_ERR(kq_thread);
+        goto err_out;
+    }
+    wake_up_process(kq_thread);
 
-    return 0;
+    printk(KERN_INFO "Finished loading kqueue module...\n");
+    return rv;
+
+err_out:
+    //TODO: cleanup
+    return rv;
 }
 
 static void __exit kqueue_end(void)
@@ -127,8 +157,9 @@ static void __exit kqueue_end(void)
     /* Remove /dev/kqueue */
     device_destroy(kqueue_class, MKDEV(major,0));
     class_destroy(kqueue_class);
-
     unregister_chrdev(major, "kqueue");
+
+    kthread_stop(kq_thread);
 }
 
 module_init(kqueue_start);
