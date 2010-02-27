@@ -33,12 +33,18 @@ static int kqueue_open (struct inode *inode, struct file *file);
 static int kqueue_release (struct inode *inode, struct file *file);
 static int kqueue_ioctl(struct inode *inode, struct file *file,
         unsigned int cmd, unsigned long arg);
+static ssize_t kqueue_read(struct file *file, char __user *buf, 
+        size_t lbuf, loff_t *ppos);
+static ssize_t kqueue_write(struct file *file, char __user *buf, 
+        size_t lbuf, loff_t *ppos);
  
 struct file_operations fops = {
     .owner  =   THIS_MODULE,
     .ioctl	=   kqueue_ioctl,
     .open	=   kqueue_open,
     .release =  kqueue_release,
+    .read	=   kqueue_read,
+    .write	=   kqueue_write,
 };
 
 struct kqueue_data {
@@ -58,7 +64,6 @@ static int kqueue_main(void *arg)
     while (!kthread_should_stop()) {
         msleep(5000);
         printk(KERN_INFO "kqueue thread awake...\n");
-        schedule();
     }
     printk(KERN_INFO "kqueue stopping...\n");
 
@@ -117,6 +122,19 @@ static int kqueue_ioctl(struct inode *inode, struct file *file,
     printk(KERN_INFO "added fd %d\n", fd);
 
     return 0;
+}
+
+static ssize_t kqueue_read(struct file *file, char __user *buf, 
+        size_t lbuf, loff_t *ppos)
+{
+
+    return sizeof(struct kevent);
+}
+
+static ssize_t kqueue_write(struct file *file, char __user *buf, 
+        size_t lbuf, loff_t *ppos)
+{
+    return sizeof(struct kevent);
 }
 
 static int __init kqueue_start(void)
