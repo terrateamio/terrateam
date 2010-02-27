@@ -25,11 +25,15 @@
 int 
 main(int argc, char **argv)
 {
-    int fd, x;
+    int fd;
 
-    fd = open("/dev/kqueue", 0);
+    fd = open("/dev/kqueue", O_RDWR);
     if (fd < 0)
         err(1, "open()");
+    printf("kqfd = %d\n", fd);
+
+#if OLD
+    int x;
 
     x = 1;
 	if (ioctl(fd, 1234, (char *) &x) < 0)
@@ -37,6 +41,8 @@ main(int argc, char **argv)
     x = 2;
 	if (ioctl(fd, 1234, (char *) &x) < 0)
         err(1, "ioctl");
+#endif
+	write(fd, "hi\n", 3);
 
     close(fd);
     puts("ok");
