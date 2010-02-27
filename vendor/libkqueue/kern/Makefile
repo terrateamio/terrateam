@@ -17,15 +17,25 @@
 obj-m = kqueue.o
 KVERSION = $(shell uname -r)
 
-all:
+all: kqueue.ko modtest
+
+kqueue.ko: kqueue.c
 	make -C /lib/modules/`uname -r`/build M=$(PWD) modules
 
 clean:
 	make -C /lib/modules/`uname -r`/build M=$(PWD) clean
 	rm -f modtest
 
+update: all
+	rmmod kqueue
+	insmod ./kqueue.ko
+	chmod 777 /dev/kqueue
+
 modtest: test.c
 	gcc -o modtest -Wall -Werror test.c
+
+edit:
+	$(EDITOR) Makefile *.[ch]
 
 check: modtest
 	./modtest
