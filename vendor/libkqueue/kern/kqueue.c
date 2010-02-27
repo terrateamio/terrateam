@@ -24,6 +24,8 @@
 #include <linux/syscalls.h>
 #include <linux/uaccess.h>
 
+#include "../include/sys/event.h"
+
 /* Max. number of descriptors that can be associated with a kqueue descriptor */
 #define KQUEUE_FD_MAX 10
 
