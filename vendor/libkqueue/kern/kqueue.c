@@ -31,6 +31,7 @@
 
 /* Portions based on
    $FreeBSD: src/sys/kern/kern_event.c,v 1.126.2.1.2.1 2009/10/25 01:10:29 kensmith Exp $
+   $FreeBSD: src/sys/sys/eventvar.h,v 1.6.30.1.2.1 2009/10/25 01:10:29 kensmith Exp $
  */
 
 #include <linux/cdev.h>
@@ -40,11 +41,16 @@
 #include <linux/kernel.h>
 #include <linux/kthread.h>
 #include <linux/module.h>
+#include <linux/rbtree.h>
 #include <linux/syscalls.h>
 #include <linux/uaccess.h>
 
 #include "../include/sys/event.h"
 #include "queue.h"
+
+struct kqueue;
+struct kfilter;
+struct knote;
 
 static int kqueue_open (struct inode *inode, struct file *file);
 static int kqueue_release (struct inode *inode, struct file *file);
@@ -64,13 +70,53 @@ struct file_operations fops = {
     .write	=   kqueue_write,
 };
 
-struct kqueue_data {
-    spinlock_t  kq_lock;
+struct kfilter {
+    struct rb_root kf_note;
 };
+
+struct kqueue {
+    spinlock_t  kq_lock;
+    int         kq_count;               /* number of pending events */
+    struct kfilter kq_filt[EVFILT_SYSCOUNT];
+};
+
+#ifdef TODO
+struct filterops {
+        int     f_isfd;         /* true if ident == filedescriptor */
+        int     (*f_attach)(struct knote *kn);
+        void    (*f_detach)(struct knote *kn);
+        int     (*f_event)(struct knote *kn, long hint);
+};
+
+static struct kfilter {
+        struct filterops kf_fop;
+        int for_refcnt;
+} sysfilt_ops[EVFILT_SYSCOUNT];
+= {
+        { &file_filtops },                      /* EVFILT_READ */
+        { &file_filtops },                      /* EVFILT_WRITE */
+        { &null_filtops },                      /* EVFILT_AIO */
+        { &file_filtops },                      /* EVFILT_VNODE */
+        { &proc_filtops },                      /* EVFILT_PROC */
+        { &sig_filtops },                       /* EVFILT_SIGNAL */
+        { &timer_filtops },                     /* EVFILT_TIMER */
+        { &file_filtops },                      /* EVFILT_NETDEV */
+        { &fs_filtops },                        /* EVFILT_FS */
+        { &null_filtops },                      /* EVFILT_LIO */
+};
+#endif
 
 static int major;
 static struct class *kqueue_class;
 static struct task_struct *kq_thread;
+
+static struct kfilter *
+kfilter_lookup(struct kqueue *kq, int filt)
+{
+    if (filt > 0 || filt + EVFILT_SYSCOUNT < 0)  
+        return NULL;
+    return &kq->kq_filt[~filt];
+}
 
 //only for sleeping during testing
 #include <linux/delay.h>
@@ -88,7 +134,8 @@ static int kqueue_main(void *arg)
 
 static int kqueue_open (struct inode *inode, struct file *file) 
 {
-    struct kqueue_data *kq;
+    struct kqueue *kq;
+    int i;
 
     printk("kqueue_open\n");
 
@@ -98,11 +145,9 @@ static int kqueue_open (struct inode *inode, struct file *file)
         return -1;
     }
     spin_lock_init(&kq->kq_lock);
+    for (i = 0; i < EVFILT_SYSCOUNT; i++) 
+        kq->kq_filt[i].kf_note = RB_ROOT;
     file->private_data = kq;
-    /* FIXME Unresolved symbols
-    kq->kq_fd[0] = epoll_create1(0);
-    kq->kq_fd[0] = sys_inotify_init();
-    */
 
     return 0;
 }
@@ -131,7 +176,7 @@ static int kqueue_ioctl(struct inode *inode, struct file *file,
 static ssize_t kqueue_read(struct file *file, char __user *buf, 
         size_t lbuf, loff_t *ppos)
 {
-    struct kqueue_data *kq = file->private_data;
+    struct kqueue *kq = file->private_data;
 
     spin_lock(&kq->kq_lock);
     //STUB
@@ -143,14 +188,31 @@ static ssize_t kqueue_read(struct file *file, char __user *buf,
 static ssize_t kqueue_write(struct file *file, const char __user *buf, 
         size_t lbuf, loff_t *ppos)
 {
-    struct kqueue_data *kq = file->private_data;
+    struct kqueue *kq = file->private_data;
+    struct kevent kev;
+    struct kfilter *filt;
+    size_t i, nchanges;
 
-    char kbuf[4];
+    if ((lbuf % sizeof(struct kevent)) != 0)
+        return -EINVAL;
+    nchanges = lbuf / sizeof(struct kevent);
 
-    spin_lock(&kq->kq_lock);
-    copy_from_user(kbuf, buf, 4);
-    printk("%zu bytes: %s", lbuf, kbuf);
-    spin_unlock(&kq->kq_lock);
+    for (i = 0; i < nchanges; i++) {
+        if (copy_from_user(&kev, (struct kevent *) buf, sizeof(kev)))
+            return -EFAULT;
+
+        filt = kfilter_lookup(kq, kev.filter);
+        if (filt == NULL)
+            return -EINVAL;
+
+#ifdef DEADWOOD
+        spin_lock(&kq->kq_lock);
+        printk("%zu bytes, nchanges=%zu", lbuf, nchanges);
+        spin_unlock(&kq->kq_lock);
+#endif
+
+        buf += sizeof(kev);
+    }
 
     return sizeof(struct kevent);
 }

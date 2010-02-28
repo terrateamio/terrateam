@@ -29,6 +29,7 @@ clean:
 update: all
 	rmmod kqueue
 	insmod ./kqueue.ko
+	sleep 2
 	chmod 777 /dev/kqueue
 
 modtest: test.c
