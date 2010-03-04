@@ -243,7 +243,11 @@ libkqueue uses one or more helper threads, so all programs that link with libkqu
 <a href="http://www.opensource.apple.com/source/xnu/xnu-1456.1.26/tools/tests/xnu_quick_test/kqueue_tests.c">XNU kqueue test program</a> - Demonstrates use of EVFILT_USER
 </li>
 
-<h3>Solaris Event Ports</h3>
+<li>
+<a href="http://www.fsl.cs.sunysb.edu/~kolya/projects/">kqueue for linux</a> - abandoned port of kqueue to Linux circa 2002 <a href="http://www.fsl.cs.sunysb.edu/~kolya/pubs/kqueue_for_linux.pdf">[PDF]</a>.
+</li>
+
+<h2>Solaris Event Ports</h2>
 I do plan to add Solaris event port support to libkqueue once the Linux backend is complete and the internal API is stabilized. I checked the port_create(3C) manpage in Solaris 10 and OpenSolaris, and did not see any way to wait for signals. There is also no equivalent to EVFILT_VNODE in Solaris 10, although OpenSolaris has the PORT_SOURCE_FILE functionality.
 <ul>
 <li>
