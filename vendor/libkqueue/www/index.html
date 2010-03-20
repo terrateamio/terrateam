@@ -61,7 +61,7 @@ libkqueue acts as a translator between the <code>kevent</code> structure and the
 </p>
 
 <h2>Benchmarks</h2>
-On Linux, libkqueue uses <code>epoll(2)</code> and exhibits O(1) scalability relative to the number of concurrent client connections. For testing, two versions of the <a href="http://www.acme.com/software/thttpd/">thttpd web server</a> were compiled: one using libkqueue, and one using poll(2). The ApacheBench benchmarking utility was used to compare the performance of both versions. A custom script was used to create thousands of idle connections to the server, to simulate the use of HTTP Keepalives on a busy real-world server. 
+On Linux, libkqueue provides O(1) scalability relative to the number of concurrent client connections. This is an improvement over the traditional <code>poll(2)</code> system call which has O(N) scalability. For testing, two versions of the <a href="http://www.acme.com/software/thttpd/">thttpd web server</a> were compiled: one using libkqueue, and one using poll(2). The ApacheBench benchmarking utility was used to compare the performance of both versions. A custom script was used to create thousands of idle connections to the server, to simulate the use of HTTP Keepalives on a busy real-world server. 
 <p align=center>
 <img src="scalability.png" border=0>
 </p>
