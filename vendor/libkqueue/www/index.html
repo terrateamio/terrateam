@@ -8,22 +8,29 @@
     <title>libkqueue</title>
     <style type="text/css">
     body {
-        margin-left: 3em;
-        padding-bottom: 2em;
+        background:	#DCDCDC;
+        margin: 0;
+    }
+    div.content {
+        background: white;
+        margin: 0 3em;
+        padding: 0 2em;
     }
     .blockquote { margin-right: 2em }
     code.block { 
-         padding: 20px; 
+         padding: 10px; 
          border: 1px solid black; 
          background: beige;
-         margin: 3em; 
+         margin: 2em; 
     }
     h1 {
-        margin-left: -1em;
+        font-size: 3em;
+        color: maroon;
+        text-align: center;
     }
     h2 {
         margin-left: -1em;
-        padding-top: 1em;
+        padding-top: 0.5em;
     }
     ol {
         margin: 2em;
@@ -39,27 +46,33 @@
 
 <body>
 
+<div class="content">
 <h1>libkqueue</h1>
 
-libkqueue is a userspace implementation of the FreeBSD <a href="http://www.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2">kqueue(2)</a> kernel event notification mechanism. Initial efforts are focused on porting to the Linux 2.6 kernel. There is also an experimental Solaris port (currently broken).
+<h2>Overview</h2>
+libkqueue is a userspace implementation of the <a href="http://www.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2">kqueue(2)</a> kernel event notification mechanism. Initial efforts are focused on porting to the Linux 2.6 kernel. There is also an experimental Solaris port (currently broken).
+
+<p>
+libkqueue acts as a translator between the <code>kevent</code> structure and the native kernel facilities of the host machine. The following diagram illustrates how this works under Linux: 
+</p>
+
+<p align=center>
+<img src="linux_impl.png" border=0>
+</p>
+
+<h2>Benchmarks</h2>
+On Linux, libkqueue uses <code>epoll(2)</code> and exhibits linear scalability relative to the number of client connections. For testing, two versions of the <a href="http://www.acme.com/software/thttpd/">thttpd web server</a> were compiled: one using libkqueue, and one using poll(2). The ApacheBench benchmarking utility was used to compare the performance of both versions. A custom script was used to create thousands of idle connections to the server, to simulate the use of HTTP Keepalives on a busy real-world server. 
+<p align=center>
+<img src="scalability.png" border=0>
+</p>
 
 <h2>Download</h2>
 
-Source code releases can be found <a href="dist">here</a>. There are no binary packages at the moment.
+Source code releases can be found <a href="dist">here</a>. There are no binary packages yet.
 <p>
-To checkout the entire SVN repository, run the following command:
+To checkout the Subversion repository, run the following command:
 <p>
-<code class=block>svn co svn://mark.heily.com/libkqueue</code>
-<p>
-You can checkout the trunk by using the following command:
-<p>
-<code class=block>svn co svn://mark.heily.com/libkqueue/trunk libkqueue</code>
-
-<p>
-There is heavy development on the trunk, and it may not always be in a usable state. If you want to be current, but not bleeding edge, there is also a stable branch. You can checkout the stable branch by using the following command:
-<p>
-<code class=block>svn co svn://mark.heily.com/libkqueue/branches/stable libkqueue</code>
-   
+<code class=block>svn checkout svn://mark.heily.com/libkqueue</code>
 
 <h2>Mailing Lists</h2>
 
@@ -266,6 +279,6 @@ For more information, contact <a href="mailto:devel+libkqueue@heily.com">Mark He
 <center>
 &copy; 2009 Mark Heily. All rights reserved.
 </center>
-
+</div>
 </body>
 </html>
