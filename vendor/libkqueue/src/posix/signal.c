@@ -45,10 +45,11 @@ static void
 signal_handler(int sig)
 {
     struct sentry *s = &sigtbl[sig];
+    ssize_t n;
 
     dbg_printf("caught sig=%d", sig);
     atomic_inc(&s->s_cnt);
-    write(s->s_filt->kf_wfd, &sig, sizeof(sig));//FIXME:errhandling
+    n = write(s->s_filt->kf_wfd, &sig, sizeof(sig));//FIXME:errhandling
 }
 
 static int
