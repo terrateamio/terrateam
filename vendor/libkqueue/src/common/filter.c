@@ -46,10 +46,11 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
 
     dst = &kq->kq_filt[filt];
     memcpy(dst, src, sizeof(*src));
+    dst->kf_initialized = false;
     dst->kf_kqueue = kq;
     RB_INIT(&dst->kf_knote);
     TAILQ_INIT(&dst->kf_event);
-    if (src->kf_id == 0) {
+    if (!src->kf_initialized) {
         dbg_puts("filter is not implemented");
         return (0);
     }
@@ -66,7 +67,6 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
     rv = src->kf_init(dst);
     if (rv < 0) {
         dbg_puts("filter failed to initialize");
-        dst->kf_id = 0; /* FIXME: lame magic constant */ 
         return (-1);
     }
 
@@ -79,6 +79,7 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
     }
     dbg_printf("%s registered", filter_name(filter));
 
+    dst->kf_initialized = true;
     return (0);
 }
 
@@ -111,7 +112,7 @@ filter_unregister_all(struct kqueue *kq)
     int i;
 
     for (i = 0; i < EVFILT_SYSCOUNT; i++) {
-        if (kq->kq_filt[i].kf_id == 0)
+        if (!kq->kq_filt[i].kf_initialized)
             continue;
 
         if (kq->kq_filt[i].kf_destroy != NULL) 

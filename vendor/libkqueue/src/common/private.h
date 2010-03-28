@@ -24,6 +24,7 @@
 
 #include <errno.h>
 #include <pthread.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/select.h>
@@ -81,7 +82,7 @@ LIST_HEAD(knotelist, knote);
 } while (0/*CONSTCOND*/)
 
 struct filter {
-    int       kf_id;
+    bool      kf_initialized;
 
     /* filter operations */
 
