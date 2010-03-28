@@ -117,6 +117,14 @@ rpm: clean $(DISTFILE)
 	rmdir i386 x86_64    # WORKAROUND: These aren't supposed to exist
 	fakeroot alien --scripts *.rpm
 
+deb: clean $(DISTFILE)
+	rm -rf debian
+	echo | dh_make -c bsd -e 'mark@heily.com' -n -l -p $(PROGRAM)_$(VERSION)
+	perl -pi -e "s/$(PROGRAM)BROKEN/$(PROGRAM)/g" debian/control
+	perl -pi -e "s,\t./configure .*,\t./configure --prefix=/usr," debian/rules
+#   FIXME: still some problems with the build
+	fakeroot debian/rules binary
+
 debug-install:
 	./configure --prefix=/usr --debug=yes
 	make clean && make && sudo make install
