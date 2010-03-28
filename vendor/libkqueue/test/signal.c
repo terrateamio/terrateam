@@ -115,6 +115,22 @@ test_kevent_signal_oneshot(void)
 }
 
 void
+test_kevent_signal_modify(void)
+{
+    struct kevent kev;
+
+    kevent_add(kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+    kevent_add(kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, ((void *)-1));
+
+    if (kill(getpid(), SIGUSR1) < 0)
+        die("kill");
+
+    kev.flags |= EV_CLEAR;
+    kev.data = 1;
+    kevent_cmp(&kev, kevent_get(kqfd));
+}
+
+void
 test_evfilt_signal(int _kqfd)
 {
     signal(SIGUSR1, SIG_IGN);
@@ -126,4 +142,5 @@ test_evfilt_signal(int _kqfd)
     test(kevent_signal_disable);
     test(kevent_signal_enable);
     test(kevent_signal_oneshot);
+    test(kevent_signal_modify);
 }
