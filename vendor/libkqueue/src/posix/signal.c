@@ -129,7 +129,8 @@ int
 evfilt_signal_knote_modify(struct filter *filt, struct knote *kn, 
                 const struct kevent *kev)
 {
-    return (-1); /* FIXME - STUB */
+    kn->kev.flags = kev->flags | EV_CLEAR;
+    return (0);
 }
 
 int
