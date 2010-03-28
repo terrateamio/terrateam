@@ -172,7 +172,10 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
         kn->kev.flags &= ~EV_DISABLE;
         return (filt->kn_enable(filt, kn));
     } else {
+        /* Implicit EV_ADD */
+        kn->kev.udata = src->udata;
         return (filt->kn_modify(filt, kn, src));
+        /* TODO: restore old udata if modification failed */
     }
 
     errno = EINVAL;
@@ -200,6 +203,7 @@ kevent_copyin(struct kqueue *kq, const struct kevent *src, int nchanges,
     for (nret = 0; nchanges > 0; src++, nchanges--) {
 
         if (kevent_copyin_one(kq, src) < 0) {
+            dbg_printf("errno=%s",strerror(errno));
             status = errno;
             goto err_path;
         } else {
@@ -257,6 +261,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         kqueue_lock(kq);
         rv = kevent_copyin(kq, changelist, nchanges, eventlist, nevents);
         kqueue_unlock(kq);
+        dbg_printf("changelist: rv=%d", rv);
         if (rv < 0)
             goto errout;
         if (rv > 0) {

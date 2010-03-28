@@ -132,7 +132,14 @@ int
 evfilt_signal_knote_modify(struct filter *filt, struct knote *kn, 
         const struct kevent *kev)
 {
-    return (-1); /* FIXME - STUB */
+    if (kev.ident >= SIGNAL_MAX) {
+        dbg_printf("bad signal number %u", (u_int) kev.ident);
+        return (-1);
+    }
+
+    /* Nothing to do since the sigmask does not change. */
+
+    return (0);
 }
 
 int
