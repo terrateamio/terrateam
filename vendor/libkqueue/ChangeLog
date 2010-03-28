@@ -1,3 +1,12 @@
+2010-03-28  v0.6    r238
+------------------------------------------------------------------------
+
+  * Experimental Linux kernel module.
+
+  * Implement knote modification for signals.
+
+  * Implement POSIX signal.c 
+
 2010-02-09  v0.5    r200
 ------------------------------------------------------------------------
 

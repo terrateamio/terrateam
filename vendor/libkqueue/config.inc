@@ -1,5 +1,5 @@
 program="libkqueue"
-version="0.5"
+version="0.6"
 cflags="-fPIC -I./include -I./src/common -Wall -Werror"
 sources="src/common/filter.c src/common/knote.c 
          src/common/kevent.c src/common/kqueue.c" 
