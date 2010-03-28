@@ -63,31 +63,53 @@ int
 eventfd_raise(struct eventfd *e)
 {
     uint64_t counter;
+    int rv = 0;
 
     dbg_puts("raising event level");
     counter = 1;
     if (write(e->fd, &counter, sizeof(counter)) < 0) {
-        /* FIXME: handle EAGAIN and EINTR */
-        dbg_printf("write(2): %s", strerror(errno));
-        return (-1);
+        switch (errno) {
+            case EAGAIN:    
+                /* Not considered an error */
+                break;
+
+            case EINTR:
+                rv = -EINTR;
+                break;
+
+            default:
+                dbg_printf("write(2): %s", strerror(errno));
+                rv = -1;
+        }
     }
-    return (0);
+    return (rv);
 }
 
 int
 eventfd_lower(struct eventfd *e)
 {
     uint64_t cur;
+    int rv = 0;
 
     /* Reset the counter */
     dbg_puts("lowering event level");
     if (read(e->fd, &cur, sizeof(cur)) < sizeof(cur)) {
-        /* FIXME: handle EAGAIN and EINTR */
-        dbg_printf("read(2): %s", strerror(errno));
-        return (-1);
-    }
-    dbg_printf("  counter=%llu", (unsigned long long) cur);
-    return (0);
+        switch (errno) {
+            case EAGAIN:    
+                /* Not considered an error */
+                break;
+
+            case EINTR:
+                rv = -EINTR;
+                break;
+
+            default:
+                dbg_printf("write(2): %s", strerror(errno));
+                rv = -1;
+        }
+    } 
+
+    return (rv);
 }
 
 int
