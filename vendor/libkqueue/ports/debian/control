@@ -4,6 +4,7 @@ Maintainer: Mark Heily <mark@heily.com>
 Build-Depends: debhelper (>= 7)
 Standards-Version: 3.8.1
 Section: libs
+Vcs-Svn: svn://mark.heily.com/libkqueue
 Homepage: http://mark.heily.com/libkqueue
 
 Package: libkqueue
@@ -11,14 +12,21 @@ Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: kqueue and kevent emulation for Linux
-  TBD
+
+ libkqueue is a portable userspace implementation of the kqueue(2) 
+ kernel event notification mechanism found in FreeBSD and other BSD-based 
+ operating systems. The library translates between the kevent structure 
+ and the native kernel facilities of the host machine.
 
 Package: libkqueue-dev
 Section: libdevel
 Architecture: any
 Depends: libkqueue (= ${binary:Version})
 Description: Development-related files for libkqueue
- Contains the header files and static libraries 
- for use in developing applications that use the libkqueue library.
+ Contains the header files, manpages, and static libraries for use in 
+ developing applications that use the libkqueue library.
  .
- The libevent library is TBD
+ libkqueue is a portable userspace implementation of the kqueue(2) 
+ kernel event notification mechanism found in FreeBSD and other BSD-based 
+ operating systems. The library translates between the kevent structure 
+ and the native kernel facilities of the host machine.

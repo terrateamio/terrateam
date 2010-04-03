@@ -104,7 +104,8 @@ cscope: tags
 	cscope $(SOURCES) $(HEADERS)
 
 distclean: clean
-	rm -f *.tar.gz config.mk config.h $(PROGRAM).pc $(PROGRAM).la rpm.spec
+	rm -f *.tar.gz *.deb *.rpm *.dsc *.changes \
+            config.mk config.h $(PROGRAM).pc $(PROGRAM).la rpm.spec
 	rm -rf $(PROGRAM)-$(VERSION) 2>/dev/null || true
 
 rpm: clean $(DISTFILE)
@@ -120,7 +121,8 @@ rpm: clean $(DISTFILE)
 
 deb: clean $(DISTFILE)
 	tar zxf $(DISTFILE)
-	cp -R ports/debian $(PROGRAM)-$(VERSION)
+	mkdir $(PROGRAM)-$(VERSION)/debian
+	cp ports/debian/* $(PROGRAM)-$(VERSION)/debian
 	cd $(PROGRAM)-$(VERSION) && dpkg-buildpackage
 	rm -rf $(PROGRAM)-$(VERSION)
 
