@@ -1,6 +1,10 @@
 program="libkqueue"
 version="0.6"
+abi_major="0"
+abi_minor="0"
+abi_version="$abi_major.$abi_minor"
 cflags=""
+ldflags=""
 sources="src/common/filter.c src/common/knote.c 
          src/common/kevent.c src/common/kqueue.c" 
 libdepends=""

@@ -31,13 +31,16 @@ $(PROGRAM).a: $(OBJS)
 	$(AR) rcs $(PROGRAM).a $(OBJS)
 
 $(PROGRAM).so: $(OBJS)
-	$(LD) $(LDFLAGS) -o $(PROGRAM).so $(OBJS) $(LDADD)
+	$(LD) $(LDFLAGS) $(OBJS) $(LDADD)
+	$(LN) -sf $(PROGRAM).so.$(ABI_VERSION) $(PROGRAM).so
 
 install: $(PROGRAM).so
 	$(INSTALL) -d -m 755 $(INCLUDEDIR)/kqueue/sys
 	$(INSTALL) -m 644 include/sys/event.h $(INCLUDEDIR)/kqueue/sys/event.h
 	$(INSTALL) -d -m 755 $(LIBDIR) 
-	$(INSTALL) -m 644 $(PROGRAM).so $(LIBDIR)
+	$(INSTALL) -m 644 $(PROGRAM).so.$(ABI_VERSION) $(LIBDIR)
+	$(LN) -sf $(PROGRAM).so.$(ABI_VERSION) $(LIBDIR)/$(PROGRAM).so.$(ABI_MAJOR)
+	$(LN) -sf $(PROGRAM).so.$(ABI_VERSION) $(LIBDIR)/$(PROGRAM).so
 	$(INSTALL) -m 644 $(PROGRAM).la $(LIBDIR)
 	$(INSTALL) -m 644 $(PROGRAM).a $(LIBDIR)
 	$(INSTALL) -d -m 755 $(LIBDIR)/pkgconfig
@@ -104,7 +107,7 @@ cscope: tags
 	cscope $(SOURCES) $(HEADERS)
 
 distclean: clean
-	rm -f *.tar.gz *.deb *.rpm *.dsc *.changes \
+	rm -f *.tar.gz *.deb *.rpm *.dsc *.changes *.diff.gz \
             config.mk config.h $(PROGRAM).pc $(PROGRAM).la rpm.spec
 	rm -rf $(PROGRAM)-$(VERSION) 2>/dev/null || true
 
@@ -121,6 +124,7 @@ rpm: clean $(DISTFILE)
 
 deb: clean $(DISTFILE)
 	tar zxf $(DISTFILE)
+	cp $(DISTFILE) $(PROGRAM)_$(VERSION).orig.tar.gz
 	mkdir $(PROGRAM)-$(VERSION)/debian
 	cp ports/debian/* $(PROGRAM)-$(VERSION)/debian
 	cd $(PROGRAM)-$(VERSION) && dpkg-buildpackage
