@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/select.h>
-#include "sys/event.h"
+#include "../../include/sys/event.h"
 
 #include "tree.h"
 

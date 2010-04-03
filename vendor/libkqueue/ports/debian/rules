@@ -11,24 +11,17 @@ config.status: configure
 build: build-stamp
 build-stamp:  config.status
 	dh_testdir
-
-	# Add here commands to compile the package.
 	$(MAKE)
-
 	touch $@
 
-   
-unpatch: 
-# todo
-
-clean: unpatch
+clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp 
 
 	# Add here commands to clean up after the build process.
-	[ ! -f Makefile ] || $(MAKE) distclean
-	rm -f config.sub config.guess
+	[ ! -f config.mk ] || $(MAKE) distclean
+	rm -f config.mk
 
 	dh_clean 
 
