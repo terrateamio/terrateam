@@ -1,0 +1,24 @@
+Source: libkqueue
+Priority: extra
+Maintainer: Mark Heily <mark@heily.com>
+Build-Depends: debhelper (>= 7)
+Standards-Version: 3.8.1
+Section: libs
+Homepage: http://mark.heily.com/libkqueue
+
+Package: libkqueue
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: kqueue and kevent emulation for Linux
+  TBD
+
+Package: libkqueue-dev
+Section: libdevel
+Architecture: any
+Depends: libkqueue (= ${binary:Version})
+Description: Development-related files for libkqueue
+ Contains the header files and static libraries 
+ for use in developing applications that use the libkqueue library.
+ .
+ The libevent library is TBD
