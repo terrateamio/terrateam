@@ -25,7 +25,7 @@ include config.mk
 all: $(PROGRAM).so $(PROGRAM).a
 
 %.o: %.c $(DEPS)
-	$(CC) -c -o $@ $(CFLAGS) $<
+	$(CC) -c -o $@ -fPIC -I./include -I./src/common -Wall -Werror $(CFLAGS) $<
 
 $(PROGRAM).a: $(OBJS)
 	$(AR) rcs $(PROGRAM).a $(OBJS)
@@ -105,6 +105,7 @@ cscope: tags
 
 distclean: clean
 	rm -f *.tar.gz config.mk config.h $(PROGRAM).pc $(PROGRAM).la rpm.spec
+	rm -rf $(PROGRAM)-$(VERSION) 2>/dev/null || true
 
 rpm: clean $(DISTFILE)
 	rm -rf rpm *.rpm *.deb
@@ -118,12 +119,10 @@ rpm: clean $(DISTFILE)
 	fakeroot alien --scripts *.rpm
 
 deb: clean $(DISTFILE)
-	rm -rf debian
-	echo | dh_make -c bsd -e 'mark@heily.com' -n -l -p $(PROGRAM)_$(VERSION)
-	perl -pi -e "s/$(PROGRAM)BROKEN/$(PROGRAM)/g" debian/control
-	perl -pi -e "s,\t./configure .*,\t./configure --prefix=/usr," debian/rules
-#   FIXME: still some problems with the build
-	fakeroot debian/rules binary
+	tar zxf $(DISTFILE)
+	cp -R ports/debian $(PROGRAM)-$(VERSION)
+	cd $(PROGRAM)-$(VERSION) && dpkg-buildpackage
+	rm -rf $(PROGRAM)-$(VERSION)
 
 debug-install:
 	./configure --prefix=/usr --debug=yes
