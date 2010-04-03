@@ -6,7 +6,8 @@ make_exports="program version target \
               prefix libdir includedir mandir \
               cflags ldflags ldadd libdepends \
               sources objs deps mans headers extra_dist subdirs \
-              cc cpp ld ar install diff"
+              abi_major abi_minor abi_version \
+              cc cpp ld ln ar install diff"
 
 required_headers=
 optional_headers=
@@ -63,6 +64,7 @@ process_env() {
     test -n "$CPPFLAGS" && cppflags="$CPPFLAGS"
     test -n "$CFLAGS" && cflags="$CFLAGS"
     test -n "$LD" && ld="$LD"
+    test -n "$LN" && ld="$LN"
     test -n "$LDFLAGS" && ldflags="$LDFLAGS"
     test -n "$AR" && ar="$AR"
 }
@@ -171,7 +173,7 @@ check_linker() {
     # Appears to be a problem with GCC 4.0 and binutils
     #
     default_ld="$cc"
-    ldflags="-shared -Wl,-soname,$program.so $ldflags"
+    ldflags="-shared -Wl,-export-dynamic -Wl,-soname,$program.so.$abi_major -o $program.so.$abi_major.$abi_minor $ldflags"
 
     finalize ld "$default_ld"
     echo "$ld"
@@ -261,6 +263,9 @@ check_diff
 
 finalize program    "$program"
 finalize version    "$version"
+finalize abi_major  "$abi_major"
+finalize abi_minor  "$abi_minor"
+finalize abi_version "$abi_major.$abi_minor"
 finalize prefix     "/usr/local"
 finalize libdir     "${prefix}/lib"
 finalize includedir "${prefix}/include"
@@ -270,6 +275,7 @@ finalize libdepends "$libdepends"
 finalize ldadd      ""
 finalize ldflags    ""
 finalize deps       ""
+finalize ln         "`which ln`"
 
 pre_configure_hook
 
