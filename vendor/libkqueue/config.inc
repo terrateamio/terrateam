@@ -1,9 +1,9 @@
 program="libkqueue"
-version="0.6"
+version="0.7"
 abi_major="0"
 abi_minor="0"
 abi_version="$abi_major.$abi_minor"
-cflags=""
+cflags="-fpic -Wall -Werror -g -O2 -fvisibility=hidden"
 ldflags=""
 sources="src/common/filter.c src/common/knote.c 
          src/common/kevent.c src/common/kqueue.c" 
@@ -23,8 +23,6 @@ author="Mark Heily"
 pre_configure_hook() {
   if [ "$debug" = "yes" ] ; then
       cflags="$cflags -g3 -O0 -DKQUEUE_DEBUG -rdynamic"
-  else
-      cflags="$cflags -g -O2 -fvisibility=hidden"
   fi
 
   optional_headers="err.h"

@@ -25,7 +25,7 @@ include config.mk
 all: $(PROGRAM).so $(PROGRAM).a
 
 %.o: %.c $(DEPS)
-	$(CC) -c -o $@ -fPIC -I./include -I./src/common -Wall -Werror $(CFLAGS) $<
+	$(CC) -c -o $@ -I./include -I./src/common $(CFLAGS) $<
 
 $(PROGRAM).a: $(OBJS)
 	$(AR) rcs $(PROGRAM).a $(OBJS)
