@@ -128,7 +128,9 @@ deb: clean $(DISTFILE)
 	cp ../$(DISTFILE) $(PROGRAM)_$(VERSION).orig.tar.gz ; \
 	cp -R ../ports/debian $(PROGRAM)-$(VERSION) ; \
 	cd $(PROGRAM)-$(VERSION) && dpkg-buildpackage -uc -us
-	lintian -i deb/*.deb
+	lintian -i pkg/*.deb
+	@printf "\nThe following packages have been created:\n"
+	@find ./pkg -name '*.deb' | sed 's/^/    /'
 
 debug-install:
 	./configure --prefix=/usr --debug=yes
