@@ -1,4 +1,4 @@
-libkqueue (0.6-1) unstable; urgency=low
+libkqueue (@@VERSION@@-1) unstable; urgency=low
 
   * Initial release (Closes: #576317)
 
