@@ -3,12 +3,13 @@
 # Uncomment this to turn on verbose mode.
 export DH_VERBOSE=1
 
-config.status: configure
+config.mk: configure
+configure:
 	dh_testdir
 	./configure --prefix=/usr --mandir=\$${prefix}/share/man
 
 build: build-stamp
-build-stamp:  config.status
+build-stamp:  config.mk
 	dh_testdir
 	$(MAKE)
 	touch $@
@@ -20,7 +21,6 @@ clean:
 
 	# Add here commands to clean up after the build process.
 	[ ! -f config.mk ] || $(MAKE) distclean
-	rm -f config.mk
 
 	dh_clean 
 
