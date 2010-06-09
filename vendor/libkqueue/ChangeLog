@@ -1,3 +1,13 @@
+2010-06-08  v0.7    r244
+------------------------------------------------------------------------
+
+  * Add Debian packaging to the ports/ directory and improve the 'make deb'
+    target.
+
+  * Set the library soname version.
+
+  * Switch from -fPIC to -fpic as the default in CFLAGS.
+
 2010-03-28  v0.6    r238
 ------------------------------------------------------------------------
 
