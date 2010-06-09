@@ -3,14 +3,10 @@
 # Uncomment this to turn on verbose mode.
 export DH_VERBOSE=1
 
-config.mk: configure
-configure:
-	dh_testdir
-	./configure --prefix=/usr --mandir=\$${prefix}/share/man
-
 build: build-stamp
-build-stamp:  config.mk
+build-stamp: 
 	dh_testdir
+	CFLAGS="" LDFLAGS="" ./configure --prefix=/usr --mandir=\$${prefix}/share/man
 	$(MAKE)
 	touch $@
 

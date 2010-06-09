@@ -82,8 +82,13 @@ publish-www:
 	cp -R www/* ~/public_html/libkqueue/
 
 clean:
-	rm -f tags *.a $(OBJS) *.so 
+	rm -f tags *.a $(OBJS) *.so *.so.*
+	rm -rf pkg
 	cd test && make clean || true
+
+distclean: clean
+	rm -f *.tar.gz config.mk config.h $(PROGRAM).pc $(PROGRAM).la rpm.spec
+	rm -rf $(PROGRAM)-$(VERSION) 2>/dev/null || true
 
 fresh-build:
 	rm -rf /tmp/$(PROGRAM)-testbuild 
@@ -106,11 +111,6 @@ edit: tags
 cscope: tags
 	cscope $(SOURCES) $(HEADERS)
 
-distclean: clean
-	rm -f *.tar.gz *.deb *.rpm *.dsc *.changes *.diff.gz \
-            config.mk config.h $(PROGRAM).pc $(PROGRAM).la rpm.spec
-	rm -rf $(PROGRAM)-$(VERSION) 2>/dev/null || true
-
 rpm: clean $(DISTFILE)
 	rm -rf rpm *.rpm *.deb
 	mkdir -p rpm/BUILD rpm/RPMS rpm/SOURCES rpm/SPECS rpm/SRPMS
@@ -123,12 +123,12 @@ rpm: clean $(DISTFILE)
 	fakeroot alien --scripts *.rpm
 
 deb: clean $(DISTFILE)
-	tar zxf $(DISTFILE)
-	cp $(DISTFILE) $(PROGRAM)_$(VERSION).orig.tar.gz
-	mkdir $(PROGRAM)-$(VERSION)/debian
-	cp ports/debian/* $(PROGRAM)-$(VERSION)/debian
-	cd $(PROGRAM)-$(VERSION) && dpkg-buildpackage
-	rm -rf $(PROGRAM)-$(VERSION)
+	mkdir pkg && cd pkg ; \
+	tar zxf ../$(DISTFILE) ; \
+	cp ../$(DISTFILE) $(PROGRAM)_$(VERSION).orig.tar.gz ; \
+	cp -R ../ports/debian $(PROGRAM)-$(VERSION) ; \
+	cd $(PROGRAM)-$(VERSION) && dpkg-buildpackage -uc -us
+	lintian -i deb/*.deb
 
 debug-install:
 	./configure --prefix=/usr --debug=yes
