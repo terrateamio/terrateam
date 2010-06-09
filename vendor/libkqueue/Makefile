@@ -127,6 +127,7 @@ deb: clean $(DISTFILE)
 	tar zxf ../$(DISTFILE) ; \
 	cp ../$(DISTFILE) $(PROGRAM)_$(VERSION).orig.tar.gz ; \
 	cp -R ../ports/debian $(PROGRAM)-$(VERSION) ; \
+	rm -rf `find $(PROGRAM)-$(VERSION)/debian -type d -name .svn` ; \
 	perl -pi -e 's/\@\@VERSION\@\@/$(VERSION)/' $(PROGRAM)-$(VERSION)/debian/changelog ; \
 	cd $(PROGRAM)-$(VERSION) && dpkg-buildpackage -uc -us
 	lintian -i pkg/*.deb

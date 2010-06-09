@@ -1,4 +1,4 @@
-2010-06-08  v0.7    r247
+2010-06-08  v0.7    r248
 ------------------------------------------------------------------------
 
   * Add Debian packaging to the ports/ directory and improve the 'make deb'
