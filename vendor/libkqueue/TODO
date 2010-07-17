@@ -2,3 +2,6 @@
    the filter lock. Linux has already been converted.
 
  * Fix the crasher w/ corruption in test/vnode.c
+
+ * Add the kevent64() syscall as implemented on MacOS X. This guarantees
+   that 64-bit values can be used in the 'udata' field on 32-bit platforms.
