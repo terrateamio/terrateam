@@ -1,3 +1,10 @@
+2010-07-21  HEAD
+------------------------------------------------------------------------
+
+  * Fix a bug that prevented a knote with the EV_DISPATCH flag from
+    being re-enabled after an event had been triggered. 
+    [Credit to Julien Blache for finding and researching this bug]
+
 2010-06-08  v0.7    r248
 ------------------------------------------------------------------------
 
