@@ -127,6 +127,11 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
     struct filter *filt;
     int rv;
 
+    if (src->flags & EV_DISPATCH && src->flags & EV_ONESHOT) {
+        errno = EINVAL;
+        return (-1);
+    }
+
     if (filter_lookup(&filt, kq, src->filter) < 0) 
         return (-1);
 

@@ -201,6 +201,14 @@ test_kevent_socket_dispatch(void)
     kevent_cmp(&kev, kevent_get(kqfd));
     test_no_kevents(kqfd);
 
+    /* Re-enable the kevent */
+    /* FIXME- is EV_DISPATCH needed when rearming ? */
+    kevent_add(kqfd, &kev, sockfd[0], EVFILT_READ, EV_ENABLE | EV_DISPATCH, 0, 0, &sockfd[0]);
+    kev.data = 1;
+    kev.flags = EV_ADD | EV_DISPATCH;   /* FIXME: may not be portable */
+    kevent_cmp(&kev, kevent_get(kqfd));
+    test_no_kevents(kqfd);
+
     /* Since the knote is disabled, the EV_DELETE operation succeeds. */
     kevent_add(kqfd, &kev, sockfd[0], EVFILT_READ, EV_DELETE, 0, 0, &sockfd[0]);
 

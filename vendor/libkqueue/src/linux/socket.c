@@ -138,9 +138,10 @@ evfilt_socket_copyout(struct filter *filt,
                 dst->data = 0;
             }
 
-            if (kn->kev.flags & EV_DISPATCH) 
+            if (kn->kev.flags & EV_DISPATCH) {
+                socket_knote_delete(filt->kf_pfd, kn->kev.ident);
                 KNOTE_DISABLE(kn);
-            if (kn->kev.flags & EV_ONESHOT) {
+            } else if (kn->kev.flags & EV_ONESHOT) {
                 socket_knote_delete(filt->kf_pfd, kn->kev.ident);
                 knote_free(filt, kn);
             }
@@ -185,7 +186,10 @@ evfilt_socket_knote_modify(struct filter *filt, struct knote *kn,
 int
 evfilt_socket_knote_delete(struct filter *filt, struct knote *kn)
 {
-    return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
+    if (kn->kev.flags & EV_DISABLE)
+        return (0);
+    else
+        return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
 }
 
 int
