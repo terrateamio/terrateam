@@ -82,7 +82,7 @@ LIST_HEAD(knotelist, knote);
 } while (0/*CONSTCOND*/)
 
 struct filter {
-    bool      kf_initialized;
+    short     kf_id;
 
     /* filter operations */
 
