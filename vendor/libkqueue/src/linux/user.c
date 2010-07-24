@@ -62,8 +62,6 @@ evfilt_user_copyout(struct filter *filt,
         memcpy(dst, &kn->kev, sizeof(*dst));
         dst->fflags &= ~NOTE_FFCTRLMASK;     //FIXME: Not sure if needed
         dst->fflags &= ~NOTE_TRIGGER;
-        if (kn->kev.flags & EV_DISPATCH) 
-            KNOTE_DISABLE(kn);
         if (kn->kev.flags & EV_ADD) {
             /* NOTE: True on FreeBSD but not consistent behavior with
                       other filters. */
@@ -73,8 +71,12 @@ evfilt_user_copyout(struct filter *filt,
             kn->kev.fflags &= ~NOTE_TRIGGER;
         if (kn->kev.flags & (EV_DISPATCH | EV_CLEAR | EV_ONESHOT))
             eventfd_lower(filt->kf_efd);
-        if (kn->kev.flags & EV_ONESHOT) 
+        if (kn->kev.flags & EV_DISPATCH) {
+            KNOTE_DISABLE(kn);
+            kn->kev.fflags &= ~NOTE_TRIGGER;
+        } else if (kn->kev.flags & EV_ONESHOT) {
             knote_free(filt, kn);
+        }
 
         dst++;
         if (++nevents == maxevents)
