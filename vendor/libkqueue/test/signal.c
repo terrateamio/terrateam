@@ -130,6 +130,46 @@ test_kevent_signal_modify(void)
     kevent_cmp(&kev, kevent_get(kqfd));
 }
 
+#if HAVE_EV_DISPATCH
+void
+test_kevent_signal_dispatch(void)
+{
+    struct kevent kev;
+
+    test_no_kevents(kqfd);
+
+    kevent_add(kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD | EV_CLEAR | EV_DISPATCH, 0, 0, NULL);
+
+    /* Get one event */
+    if (kill(getpid(), SIGUSR1) < 0)
+        die("kill");
+    kev.data = 1;
+    kevent_cmp(&kev, kevent_get(kqfd));
+
+    /* Confirm that the knote is disabled */
+    if (kill(getpid(), SIGUSR1) < 0)
+        die("kill");
+    test_no_kevents(kqfd);
+
+    /* Enable the knote and make sure no events are pending */
+    kevent_add(kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_ENABLE | EV_DISPATCH, 0, 0, NULL);
+    test_no_kevents(kqfd);
+
+    /* Get the next event */
+    if (kill(getpid(), SIGUSR1) < 0)
+        die("kill");
+    kev.flags = EV_ADD | EV_CLEAR | EV_DISPATCH;
+    kev.data = 1;
+    kevent_cmp(&kev, kevent_get(kqfd));
+
+    /* Remove the knote and ensure the event no longer fires */
+    kevent_add(kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_DELETE, 0, 0, NULL);
+    if (kill(getpid(), SIGUSR1) < 0)
+        die("kill");
+    test_no_kevents(kqfd);
+}
+#endif  /* HAVE_EV_DISPATCH */
+
 void
 test_evfilt_signal(int _kqfd)
 {
@@ -143,4 +183,7 @@ test_evfilt_signal(int _kqfd)
     test(kevent_signal_enable);
     test(kevent_signal_oneshot);
     test(kevent_signal_modify);
+#if HAVE_EV_DISPATCH
+    test(kevent_signal_dispatch);
+#endif
 }
