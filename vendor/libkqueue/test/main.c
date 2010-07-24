@@ -107,20 +107,31 @@ main(int argc, char **argv)
         { NULL, 0, NULL },
     };
     struct unit_test *test;
-    int kqfd;
+    char *arg;
+    int match, kqfd;
 
-    /* Enable all tests by default */
-    if (argc == 0)
+    /* If specific tests are requested, disable all tests by default */
+    if (argc > 1) {
         for (test = &tests[0]; test->ut_name != NULL; test++) {
-            test->ut_enabled = 1;
+            test->ut_enabled = 0;
         }
+    }
 
-    while (argc) {
+    while (argc > 1) {
+        match = 0;
+        arg = argv[1];
         for (test = &tests[0]; test->ut_name != NULL; test++) {
-            if (strcmp(argv[0], test->ut_name) == 0) {
+            if (strcmp(arg, test->ut_name) == 0) {
                 test->ut_enabled = 1;
+                match = 1;
                 break;
             }
+        }
+        if (!match) {
+            printf("ERROR: invalid option: %s\n", arg);
+            exit(1);
+        } else {
+            printf("enabled test: %s\n", arg);
         }
         argv++;
         argc--;
@@ -136,7 +147,8 @@ main(int argc, char **argv)
         die("kqueue()");
 
     for (test = &tests[0]; test->ut_name != NULL; test++) {
-        test->ut_func(kqfd);
+        if (test->ut_enabled)
+            test->ut_func(kqfd);
     }
 
     test(ev_receipt);
