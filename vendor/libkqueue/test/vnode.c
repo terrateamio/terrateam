@@ -225,6 +225,15 @@ test_kevent_vnode_dispatch(void)
     testfile_touch();
     test_no_kevents(kqfd);
 
+    /* Re-enable the kevent */
+    /* FIXME- is EV_DISPATCH needed when rearming ? */
+    kevent_add(kqfd, &kev, vnode_fd, EVFILT_VNODE, EV_ENABLE | EV_DISPATCH, 0, 0, NULL);
+    kev.flags = EV_ADD | EV_DISPATCH;   /* FIXME: may not be portable */
+    kev.fflags = NOTE_ATTRIB;
+    testfile_touch();
+    kevent_cmp(&kev, kevent_get(kqfd));
+    test_no_kevents(kqfd);
+
     /* Delete the watch */
     kevent_add(kqfd, &kev, vnode_fd, EVFILT_VNODE, EV_DELETE, NOTE_ATTRIB, 0, NULL);
 }
