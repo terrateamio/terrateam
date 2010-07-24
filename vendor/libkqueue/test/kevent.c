@@ -174,7 +174,7 @@ kevent_cmp(struct kevent *k1, struct kevent *k2)
         k2->flags |= EV_ADD;
 #endif
     if (memcmp(k1, k2, sizeof(*k1)) != 0) {
-        printf("kevent_cmp: mismatch:\n  %s !=\n  %s\n", 
+        printf("kevent_cmp: mismatch:\n  expected %s\n  but got  %s\n", 
               kevent_to_str(k1), kevent_to_str(k2));
         abort();
     }
