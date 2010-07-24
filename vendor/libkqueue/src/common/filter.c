@@ -77,7 +77,7 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
             kq->kq_nfds = dst->kf_pfd;
         dbg_printf("fds: added %d (nfds=%d)", dst->kf_pfd, kq->kq_nfds);
     }
-    dbg_printf("%s registered", filter_name(filter));
+    dbg_printf("filter %d (%s) registered", filter, filter_name(filter));
 
     dst->kf_initialized = true;
     return (0);
