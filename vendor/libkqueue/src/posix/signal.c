@@ -174,9 +174,10 @@ evfilt_signal_copyout(struct filter *filt,
     dst->fflags = 0;
     dst->data = 1;  
 
-    if (kn->kev.flags & EV_DISPATCH) 
+    if (kn->kev.flags & EV_DISPATCH) {
+        ignore_signal(kn->kev.ident);
         KNOTE_DISABLE(kn);
-    if (kn->kev.flags & EV_ONESHOT) {
+    } else if (kn->kev.flags & EV_ONESHOT) {
         ignore_signal(kn->kev.ident);
         knote_free(filt, kn);
     }
