@@ -114,6 +114,42 @@ test_kevent_timer_disable_and_enable(void)
     kevent_cmp(&kev, kevent_get(kqfd));
 }
 
+#if HAVE_EV_DISPATCH
+void
+test_kevent_timer_dispatch(void)
+{
+    struct kevent kev;
+
+    test_no_kevents(kqfd);
+
+    kevent_add(kqfd, &kev, 4, EVFILT_TIMER, EV_ADD | EV_DISPATCH, 0, 800, NULL);
+
+    /* Get one event */
+    kev.flags = EV_ADD | EV_CLEAR | EV_DISPATCH;
+    kev.data = 1; 
+    kevent_cmp(&kev, kevent_get(kqfd));
+
+    /* Confirm that the knote is disabled */
+    sleep(1);
+    test_no_kevents(kqfd);
+
+    /* Enable the knote and make sure no events are pending */
+    kevent_add(kqfd, &kev, 4, EVFILT_TIMER, EV_ENABLE | EV_DISPATCH, 0, 800, NULL);
+    test_no_kevents(kqfd);
+
+    /* Get the next event */
+    sleep(1);
+    kev.flags = EV_ADD | EV_CLEAR | EV_DISPATCH;
+    kev.data = 1; 
+    kevent_cmp(&kev, kevent_get(kqfd));
+
+    /* Remove the knote and ensure the event no longer fires */
+    kevent_add(kqfd, &kev, 4, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
+    sleep(1);
+    test_no_kevents(kqfd);
+}
+#endif  /* HAVE_EV_DISPATCH */
+
 void
 test_evfilt_timer(int _kqfd)
 {
@@ -124,4 +160,7 @@ test_evfilt_timer(int _kqfd)
     test(kevent_timer_oneshot);
     test(kevent_timer_periodic);
     test(kevent_timer_disable_and_enable);
+#if HAVE_EV_DISPATCH
+    test(kevent_timer_dispatch);
+#endif
 }

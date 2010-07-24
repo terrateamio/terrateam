@@ -81,6 +81,9 @@ ktimer_delete(struct filter *filt, struct knote *kn)
 {
     int rv = 0;
 
+    if (kn->kn_pfd == -1)
+        return (0);
+
     dbg_printf("removing timerfd %d from %d", kn->kn_pfd, filt->kf_pfd);
     if (epoll_ctl(filt->kf_pfd, EPOLL_CTL_DEL, kn->kn_pfd, NULL) < 0) {
         dbg_printf("epoll_ctl(2): %s", strerror(errno));
@@ -159,9 +162,10 @@ evfilt_timer_copyout(struct filter *filt,
         } 
         dst->data = expired;
 
-        if (kn->kev.flags & EV_DISPATCH) 
+        if (kn->kev.flags & EV_DISPATCH) {
             KNOTE_DISABLE(kn);
-        if (kn->kev.flags & EV_ONESHOT) {
+            ktimer_delete(filt, kn);
+        } else if (kn->kev.flags & EV_ONESHOT) {
             ktimer_delete(filt, kn);
             knote_free(filt, kn);
         }
@@ -219,20 +223,7 @@ evfilt_timer_knote_modify(struct filter *filt, struct knote *kn,
 int
 evfilt_timer_knote_delete(struct filter *filt, struct knote *kn)
 {
-    int rv = 0;
-
-    dbg_printf("removing timerfd %d from %d", kn->kn_pfd, filt->kf_pfd);
-    if (epoll_ctl(filt->kf_pfd, EPOLL_CTL_DEL, kn->kn_pfd, NULL) < 0) {
-        dbg_printf("epoll_ctl(2): %s", strerror(errno));
-        rv = -1;
-    }
-    if (close(kn->kn_pfd) < 0) {
-        dbg_printf("close(2): %s", strerror(errno));
-        rv = -1;
-    }
-
-    kn->kn_pfd = -1;
-    return (rv);
+    return (ktimer_delete(filt,kn));
 }
 
 int
