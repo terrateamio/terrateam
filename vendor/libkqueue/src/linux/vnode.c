@@ -154,7 +154,7 @@ add_watch(struct filter *filt, struct knote *kn)
 static int
 delete_watch(struct filter *filt, struct knote *kn)
 {
-    if (kn->kev.data < 0) 
+    if (kn->kev.data < 0)
         return (0);
     if (inotify_rm_watch(filt->kf_pfd, kn->kev.data) < 0) {
         dbg_printf("inotify_rm_watch(2): %s", strerror(errno));
@@ -249,8 +249,7 @@ evfilt_vnode_copyout(struct filter *filt,
     if (kn->kev.flags & EV_DISPATCH) {
         delete_watch(filt, kn); /* TODO: error checking */
         KNOTE_DISABLE(kn);
-    }
-    if (kn->kev.flags & EV_ONESHOT) {
+    } else if (kn->kev.flags & EV_ONESHOT) {
         delete_watch(filt, kn); /* TODO: error checking */
         knote_free(filt, kn);
     }
