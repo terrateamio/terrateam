@@ -1,4 +1,4 @@
-2010-07-21  v0.8    r263
+2010-07-21  v0.8    r264
 ------------------------------------------------------------------------
 
   * Fix a bug that prevented a knote with the EV_DISPATCH flag from
