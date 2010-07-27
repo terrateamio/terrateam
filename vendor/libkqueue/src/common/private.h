@@ -61,13 +61,13 @@ struct evfilt_data;
 struct knote {
     struct kevent     kev;
     union {
-        int           kn_pfd;       /* Used by timerfd */
-        int           kn_events;    /* Used by socket */
+        int           pfd;       /* Used by timerfd */
+        int           events;    /* Used by socket */
         struct {
-            nlink_t   kn_st_nlink;  /* Used by vnode */
-            off_t     kn_st_size;   /* Used by vnode */
-        };
-    };
+            nlink_t   nlink;  /* Used by vnode */
+            off_t     size;   /* Used by vnode */
+        } vnode;
+    } data;
     TAILQ_ENTRY(knote) event_ent;    /* Used by filter->kf_event */
     RB_ENTRY(knote)   kntree_ent;   /* Used by filter->kntree */
 };
@@ -102,7 +102,7 @@ struct filter {
     struct eventfd *kf_efd;             /* Used by user.c */
     int       kf_pfd;                   /* fd to poll(2) for readiness */
     int       kf_wfd;                   /* fd to write when an event occurs */
-    u_int     kf_timeres;               /* timer resolution, in miliseconds */
+    unsigned int     kf_timeres;        /* timer resolution, in miliseconds */
     sigset_t  kf_sigmask;
     struct evfilt_data *kf_data;	/* filter-specific data */
     RB_HEAD(knt, knote) kf_knote;

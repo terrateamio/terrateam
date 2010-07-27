@@ -37,7 +37,7 @@ static int
 filter_register(struct kqueue *kq, short filter, const struct filter *src)
 {
     struct filter *dst;
-    u_int filt;
+    unsigned int filt;
     int rv = 0;
 
     filt = (-1 * filter) - 1;

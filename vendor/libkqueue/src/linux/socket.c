@@ -161,16 +161,16 @@ evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 
     /* Convert the kevent into an epoll_event */
     if (kn->kev.filter == EVFILT_READ)
-        kn->kn_events = EPOLLIN | EPOLLRDHUP;
+        kn->data.events = EPOLLIN | EPOLLRDHUP;
     else
-        kn->kn_events = EPOLLOUT;
+        kn->data.events = EPOLLOUT;
     if (kn->kev.flags & EV_ONESHOT || kn->kev.flags & EV_DISPATCH)
-        kn->kn_events |= EPOLLONESHOT;
+        kn->data.events |= EPOLLONESHOT;
     if (kn->kev.flags & EV_CLEAR)
-        kn->kn_events |= EPOLLET;
+        kn->data.events |= EPOLLET;
 
     memset(&ev, 0, sizeof(ev));
-    ev.events = kn->kn_events;
+    ev.events = kn->data.events;
     ev.data.fd = kn->kev.ident;
 
     return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
@@ -198,7 +198,7 @@ evfilt_socket_knote_enable(struct filter *filt, struct knote *kn)
     struct epoll_event ev;
 
     memset(&ev, 0, sizeof(ev));
-    ev.events = kn->kn_events;
+    ev.events = kn->data.events;
     ev.data.fd = kn->kev.ident;
 
     return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
