@@ -70,6 +70,6 @@ post_configure_hook() {
           sources="$sources src/posix/eventfd.c"
     fi      
 
-    sources="$sources src/$target/kevent.c $evfilt_signal $evfilt_proc 
+    sources="$sources src/posix/kevent.c $evfilt_signal $evfilt_proc 
              $evfilt_socket $evfilt_timer $evfilt_user $evfilt_vnode"
 }
