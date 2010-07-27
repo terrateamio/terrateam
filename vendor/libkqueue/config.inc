@@ -45,7 +45,7 @@ post_configure_hook() {
     evfilt_proc="src/$target/proc.c"
     evfilt_socket="src/$target/socket.c"
     evfilt_timer="src/$target/timer.c"
-    evfilt_user="src/$target/user.c"
+    evfilt_user="src/posix/user.c"
     evfilt_vnode="src/$target/vnode.c"
 
     if [ $target = "linux" ] ; then
