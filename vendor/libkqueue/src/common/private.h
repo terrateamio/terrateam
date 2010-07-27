@@ -35,8 +35,14 @@
 /* GCC atomic builtins. 
  * See: http://gcc.gnu.org/onlinedocs/gcc-4.1.0/gcc/Atomic-Builtins.html 
  */
-#define atomic_inc(p)   __sync_add_and_fetch((p), 1)
-#define atomic_dec(p)   __sync_sub_and_fetch((p), 1)
+/* XXX-FIXME need alternative for platforms without atomic builtins */
+#ifndef __sun
+# define atomic_inc(p)   __sync_add_and_fetch((p), 1)
+# define atomic_dec(p)   __sync_sub_and_fetch((p), 1)
+#else
+# define atomic_inc(p)   do { } while (0)
+# define atomic_dec(p)   do { } while (0)
+#endif
 
 /* Maximum events returnable in a single kevent() call */
 #define MAX_KEVENT  512
