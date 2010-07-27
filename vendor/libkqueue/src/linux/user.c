@@ -112,8 +112,8 @@ int
 evfilt_user_knote_modify(struct filter *filt, struct knote *kn, 
         const struct kevent *kev)
 {
-    u_int ffctrl;
-    u_int fflags;
+    unsigned int ffctrl;
+    unsigned int fflags;
 
     /* Excerpted from sys/kern/kern_event.c in FreeBSD HEAD */
     ffctrl = kev->fflags & NOTE_FFCTRLMASK;

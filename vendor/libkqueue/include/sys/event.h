@@ -30,6 +30,8 @@
 #ifndef _SYS_EVENT_H_
 #define _SYS_EVENT_H_
 
+#include <sys/types.h>
+
 #ifdef __KERNEL__
 #define intptr_t long
 #else
@@ -67,8 +69,8 @@ struct timespec;
 struct kevent {
 	uintptr_t	ident;		/* identifier for this event */
 	short		filter;		/* filter for event */
-	u_short		flags;
-	u_int		fflags;
+	unsigned short flags;
+	unsigned int fflags;
 	intptr_t	data;
 	void		*udata;		/* opaque user data identifier */
 };

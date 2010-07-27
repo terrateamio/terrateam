@@ -3,7 +3,7 @@ version="0.8"
 abi_major="0"
 abi_minor="0"
 abi_version="$abi_major.$abi_minor"
-cflags="-fpic -Wall -Werror -g -O2 -fvisibility=hidden"
+cflags="-fpic -Wall -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600"
 ldflags=""
 sources="src/common/filter.c src/common/knote.c 
          src/common/kevent.c src/common/kqueue.c" 
@@ -29,6 +29,9 @@ pre_configure_hook() {
 
   libdepends=" -L$libdir"
   if [ $target = "linux" ] ; then
+      # Actually a GCC 4.X dependency
+      cflags="$cflags -fvisibility=hidden"
+
       libdepends="$libdepends -lpthread -lrt"
       required_headers="sys/epoll.h sys/inotify.h"
       optional_headers="sys/signalfd.h sys/timerfd.h sys/eventfd.h"
@@ -58,6 +61,13 @@ post_configure_hook() {
       else
           sources="$sources src/linux/eventfd.c"
       fi
+    fi      
+
+    if [ $target = "solaris" ] ; then
+          cflags="$cflags -D__EXTENSIONS__"
+          evfilt_signal="src/posix/signal.c"
+          evfilt_timer="src/posix/timer.c"
+          sources="$sources src/posix/eventfd.c"
     fi      
 
     sources="$sources src/$target/kevent.c $evfilt_signal $evfilt_proc 

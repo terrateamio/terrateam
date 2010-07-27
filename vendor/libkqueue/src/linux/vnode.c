@@ -216,16 +216,16 @@ evfilt_vnode_copyout(struct filter *filt,
         && fstat(kn->kev.ident, &sb) == 0) {
         if (sb.st_nlink == 0 && kn->kev.fflags & NOTE_DELETE) 
             dst->fflags |= NOTE_DELETE;
-        if (sb.st_nlink != kn->kn_st_nlink && kn->kev.fflags & NOTE_LINK) 
+        if (sb.st_nlink != kn->data.vnode.nlink && kn->kev.fflags & NOTE_LINK) 
             dst->fflags |= NOTE_LINK;
 #if HAVE_NOTE_TRUNCATE
         if (sb.st_nsize == 0 && kn->kev.fflags & NOTE_TRUNCATE) 
             dst->fflags |= NOTE_TRUNCATE;
 #endif
-        if (sb.st_size > kn->kn_st_size && kn->kev.fflags & NOTE_WRITE) 
+        if (sb.st_size > kn->data.vnode.size && kn->kev.fflags & NOTE_WRITE) 
             dst->fflags |= NOTE_EXTEND;
-       kn->kn_st_nlink = sb.st_nlink;
-       kn->kn_st_size = sb.st_size;
+       kn->data.vnode.nlink = sb.st_nlink;
+       kn->data.vnode.size = sb.st_size;
     }
 
     if (evt.mask & IN_MODIFY && kn->kev.fflags & NOTE_WRITE) 
@@ -266,8 +266,8 @@ evfilt_vnode_knote_create(struct filter *filt, struct knote *kn)
         dbg_puts("fstat failed");
         return (-1);
     }
-    kn->kn_st_nlink = sb.st_nlink;
-    kn->kn_st_size = sb.st_size;
+    kn->data.vnode.nlink = sb.st_nlink;
+    kn->data.vnode.size = sb.st_size;
     kn->kev.data = -1;
 
     return (add_watch(filt, kn));
