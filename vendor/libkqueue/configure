@@ -303,5 +303,3 @@ export_to_c $c_exports
 
 echo "Creating config.mk"
 export_to_make "$make_exports"
-
-make clean >/dev/null 2>&1
