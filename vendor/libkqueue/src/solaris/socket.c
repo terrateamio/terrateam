@@ -42,6 +42,8 @@ evfilt_socket_destroy(struct filter *filt)
     ;
 }
 
+#if DEADWOOD
+// split into multiple funcs
 int
 evfilt_socket_copyin(struct filter *filt, 
         struct knote *dst, const struct kevent *src)
@@ -62,9 +64,6 @@ evfilt_socket_copyin(struct filter *filt,
     else
         events = POLLOUT;
 
-    if (src->flags & EV_ADD && KNOTE_EMPTY(dst)) 
-        memcpy(&dst->kev, src, sizeof(*src));
-
     if (src->flags & EV_DELETE || src->flags & EV_DISABLE) {
         rv = port_dissociate(port, PORT_SOURCE_FD, src->ident);
         if (rv < 0) {
@@ -84,6 +83,78 @@ evfilt_socket_copyin(struct filter *filt,
 
     return (0);
 }
+#endif
+
+int
+evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
+{
+#if TODO
+    struct epoll_event ev;
+
+    /* Convert the kevent into an epoll_event */
+    if (kn->kev.filter == EVFILT_READ)
+        kn->kn_events = EPOLLIN | EPOLLRDHUP;
+    else
+        kn->kn_events = EPOLLOUT;
+    if (kn->kev.flags & EV_ONESHOT || kn->kev.flags & EV_DISPATCH)
+        kn->kn_events |= EPOLLONESHOT;
+    if (kn->kev.flags & EV_CLEAR)
+        kn->kn_events |= EPOLLET;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.events = kn->kn_events;
+    ev.data.fd = kn->kev.ident;
+
+    return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
+#endif
+	return (-1);
+}
+
+int
+evfilt_socket_knote_modify(struct filter *filt, struct knote *kn, 
+        const struct kevent *kev)
+{
+    return (-1); /* STUB */
+}
+
+int
+evfilt_socket_knote_delete(struct filter *filt, struct knote *kn)
+{
+#if TODO
+    if (kn->kev.flags & EV_DISABLE)
+        return (0);
+    else
+        return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
+#else
+   return (-1);
+#endif
+}
+
+int
+evfilt_socket_knote_enable(struct filter *filt, struct knote *kn)
+{
+#if TODO
+    struct epoll_event ev;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.events = kn->kn_events;
+    ev.data.fd = kn->kev.ident;
+
+    return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
+#else
+   return (-1);
+#endif
+}
+
+int
+evfilt_socket_knote_disable(struct filter *filt, struct knote *kn)
+{
+#if TODO
+    return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
+#else
+   return (-1);
+#endif
+}
 
 int
 evfilt_socket_copyout(struct filter *filt, 
@@ -97,14 +168,22 @@ const struct filter evfilt_read = {
     EVFILT_READ,
     evfilt_socket_init,
     evfilt_socket_destroy,
-    evfilt_socket_copyin,
     evfilt_socket_copyout,
+    evfilt_socket_knote_create,
+    evfilt_socket_knote_modify,
+    evfilt_socket_knote_delete,
+    evfilt_socket_knote_enable,
+    evfilt_socket_knote_disable,         
 };
 
 const struct filter evfilt_write = {
     EVFILT_WRITE,
     evfilt_socket_init,
     evfilt_socket_destroy,
-    evfilt_socket_copyin,
     evfilt_socket_copyout,
+    evfilt_socket_knote_create,
+    evfilt_socket_knote_modify,
+    evfilt_socket_knote_delete,
+    evfilt_socket_knote_enable,
+    evfilt_socket_knote_disable,         
 };
