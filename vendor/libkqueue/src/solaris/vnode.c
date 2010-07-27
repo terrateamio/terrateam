@@ -163,10 +163,85 @@ evfilt_vnode_copyout(struct filter *filt,
     return (-1);
 }
 
+int
+evfilt_vnode_knote_create(struct filter *filt, struct knote *kn)
+{
+#if TODO
+    struct epoll_event ev;
+
+    /* Convert the kevent into an epoll_event */
+    if (kn->kev.filter == EVFILT_READ)
+        kn->kn_events = EPOLLIN | EPOLLRDHUP;
+    else
+        kn->kn_events = EPOLLOUT;
+    if (kn->kev.flags & EV_ONESHOT || kn->kev.flags & EV_DISPATCH)
+        kn->kn_events |= EPOLLONESHOT;
+    if (kn->kev.flags & EV_CLEAR)
+        kn->kn_events |= EPOLLET;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.events = kn->kn_events;
+    ev.data.fd = kn->kev.ident;
+
+    return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
+#endif
+	return (-1);
+}
+
+int
+evfilt_vnode_knote_modify(struct filter *filt, struct knote *kn, 
+        const struct kevent *kev)
+{
+    return (-1); /* STUB */
+}
+
+int
+evfilt_vnode_knote_delete(struct filter *filt, struct knote *kn)
+{
+#if TODO
+    if (kn->kev.flags & EV_DISABLE)
+        return (0);
+    else
+        return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
+#else
+   return (-1);
+#endif
+}
+
+int
+evfilt_vnode_knote_enable(struct filter *filt, struct knote *kn)
+{
+#if TODO
+    struct epoll_event ev;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.events = kn->kn_events;
+    ev.data.fd = kn->kev.ident;
+
+    return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
+#else
+   return (-1);
+#endif
+}
+
+int
+evfilt_vnode_knote_disable(struct filter *filt, struct knote *kn)
+{
+#if TODO
+    return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
+#else
+   return (-1);
+#endif
+}
+
 const struct filter evfilt_vnode = {
     0, //EVFILT_VNODE,
     evfilt_vnode_init,
     evfilt_vnode_destroy,
-    evfilt_vnode_copyin,
     evfilt_vnode_copyout,
+    evfilt_vnode_knote_create,
+    evfilt_vnode_knote_modify,
+    evfilt_vnode_knote_delete,
+    evfilt_vnode_knote_enable,
+    evfilt_vnode_knote_disable,        
 };
