@@ -14,12 +14,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/epoll.h>
 #include <stdlib.h>
 
 #include "sys/event.h"
 #include "private.h"
-
 
 int
 kevent_wait(struct kqueue *kq, const struct timespec *timeout)
