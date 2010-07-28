@@ -39,7 +39,7 @@ kqueue_cmp(struct kqueue *a, struct kqueue *b)
     return memcmp(&a->kq_sockfd[1], &b->kq_sockfd[1], sizeof(int)); 
 }
 
-RB_GENERATE(kqt, kqueue, entries, kqueue_cmp);
+RB_GENERATE(kqt, kqueue, entries, kqueue_cmp)
 
 /* Must hold the kqtree_mtx when calling this */
 static void

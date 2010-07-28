@@ -27,7 +27,7 @@ knote_cmp(struct knote *a, struct knote *b)
     return memcmp(&a->kev.ident, &b->kev.ident, sizeof(a->kev.ident)); 
 }
 
-RB_GENERATE(knt, knote, kntree_ent, knote_cmp);
+RB_GENERATE(knt, knote, kntree_ent, knote_cmp)
 
 struct knote *
 knote_new(void)
