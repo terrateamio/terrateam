@@ -40,8 +40,9 @@
 # define atomic_inc(p)   __sync_add_and_fetch((p), 1)
 # define atomic_dec(p)   __sync_sub_and_fetch((p), 1)
 #else
-# define atomic_inc(p)   do { } while (0)
-# define atomic_dec(p)   do { } while (0)
+# include <atomic.h>
+# define atomic_inc(p)   atomic_inc_32((p))
+# define atomic_dec(p)   atomic_dec_32((p))
 #endif
 
 /* Maximum events returnable in a single kevent() call */
