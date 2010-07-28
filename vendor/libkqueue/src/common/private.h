@@ -35,14 +35,13 @@
 /* GCC atomic builtins. 
  * See: http://gcc.gnu.org/onlinedocs/gcc-4.1.0/gcc/Atomic-Builtins.html 
  */
-/* XXX-FIXME need alternative for platforms without atomic builtins */
-#ifndef __sun
+#ifdef __sun
+# include <atomic.h>
+# define atomic_inc      atomic_inc_32
+# define atomic_dec      atomic_dec_32
+#else
 # define atomic_inc(p)   __sync_add_and_fetch((p), 1)
 # define atomic_dec(p)   __sync_sub_and_fetch((p), 1)
-#else
-# include <atomic.h>
-# define atomic_inc(p)   atomic_inc_32((p))
-# define atomic_dec(p)   atomic_dec_32((p))
 #endif
 
 /* Maximum events returnable in a single kevent() call */
@@ -126,7 +125,7 @@ struct kqueue {
 #ifdef SOLARIS
     int             kq_port;
 #endif
-    volatile unsigned int    kq_ref;
+    volatile uint32_t        kq_ref;
     RB_ENTRY(kqueue) entries;
 };
 

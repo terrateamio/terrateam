@@ -33,9 +33,9 @@
 #define SIGNAL_MAX      32
 
 struct sentry {
-    size_t          s_cnt;
     struct filter  *s_filt;
     struct knote   *s_knote;
+    volatile uint32_t s_cnt;
 };
 
 static pthread_mutex_t sigtbl_mtx = PTHREAD_MUTEX_INITIALIZER;
