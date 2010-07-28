@@ -150,7 +150,7 @@ kqueue(void)
         goto errout_unlocked;
 
     pthread_rwlock_wrlock(&kqtree_mtx);
-    if (kqueue_gc < 0)
+    if (kqueue_gc() < 0)
         goto errout;
     /* TODO: move outside of the lock if it is safe */
     if (filter_register_all(kq) < 0)
