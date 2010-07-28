@@ -173,12 +173,16 @@ check_linker() {
     # Appears to be a problem with GCC 4.0 and binutils
     #
     default_ld="$cc"
-    ldflags="-shared -o $program.so.$abi_major.$abi_minor $ldflags"
+    ldflags="-o $program.so.$abi_major.$abi_minor $ldflags"
 
     # FIXME: port to solaris
     if [ "$target" = "linux" ] ; then
-    ldflags="$ldflags -Wl,-export-dynamic -Wl,-soname,$program.so.$abi_major"
+    ldflags="-shared $ldflags -Wl,-export-dynamic -Wl,-soname,$program.so.$abi_major"
     fi 
+
+    if [ "$target" = "solaris" ] ; then
+    ldflags="-G $ldflags"
+    fi
 
     finalize ld "$default_ld"
     echo "$ld"
