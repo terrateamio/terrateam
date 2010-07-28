@@ -176,15 +176,11 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
     } else if (src->flags & EV_ENABLE) {
         kn->kev.flags &= ~EV_DISABLE;
         return (filt->kn_enable(filt, kn));
-    } else {
-        /* Implicit EV_ADD */
-        kn->kev.udata = src->udata;
-        return (filt->kn_modify(filt, kn, src));
-        /* TODO: restore old udata if modification failed */
     }
 
-    errno = EINVAL;
-    return (-1);
+    /* Implicit EV_ADD */
+    kn->kev.udata = src->udata;
+    return (filt->kn_modify(filt, kn, src));
 
 #if DEADWOOD
     /* Special case for EVFILT_USER:
