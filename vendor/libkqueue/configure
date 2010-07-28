@@ -172,7 +172,7 @@ check_linker() {
     fi 
 
     if [ "$target" = "solaris" ] ; then
-    default_ld="/usr/ccs/ld"
+    default_ld="/usr/ccs/bin/ld"
     ldflags="-G $ldflags"
     fi
 
