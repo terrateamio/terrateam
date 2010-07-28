@@ -36,6 +36,11 @@ pre_configure_hook() {
       required_headers="sys/epoll.h sys/inotify.h"
       optional_headers="sys/signalfd.h sys/timerfd.h sys/eventfd.h"
   fi
+
+  if [ $target = "solaris" ] ; then
+      cflags="$cflags -m64"
+      libdepends="$libdepends -lsocket -lnsl"
+  fi
 }
 
 post_configure_hook() {
