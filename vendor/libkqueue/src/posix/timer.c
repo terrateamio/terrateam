@@ -119,7 +119,6 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 {
     kn->kev.flags |= EV_CLEAR;
     return update_timeres(filt, kn);
-    return (0);
 }
 
 int
