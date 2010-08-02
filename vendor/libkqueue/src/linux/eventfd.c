@@ -104,7 +104,7 @@ eventfd_lower(struct eventfd *e)
                 break;
 
             default:
-                dbg_printf("write(2): %s", strerror(errno));
+                dbg_printf("read(2): %s", strerror(errno));
                 rv = -1;
         }
     } 
