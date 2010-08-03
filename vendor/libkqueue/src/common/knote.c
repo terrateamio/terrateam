@@ -17,6 +17,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/queue.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "private.h"
@@ -138,4 +140,32 @@ knote_events_pending(struct filter *filt)
     res = TAILQ_EMPTY(&filt->kf_event);
 
     return (res);
+}
+
+/*
+ * Test if a socket is active or passive.
+ */
+int
+knote_get_socket_type(struct knote *kn)
+{
+    socklen_t slen;
+    int i, lsock;
+
+    slen = sizeof(lsock);
+    lsock = 0;
+    i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_ACCEPTCONN, &lsock, &slen);
+    if (i < 0) {
+        switch (errno) {
+            case ENOTSOCK:   /* same as lsock = 0 */
+                return (0);
+                break;
+            default:
+                dbg_printf("getsockopt(3) failed: %s", strerror(errno));
+                return (-1);
+        }
+    } else {
+        if (lsock) 
+            kn->flags |= KNFL_PASSIVE_SOCKET;
+        return (0);
+    }
 }

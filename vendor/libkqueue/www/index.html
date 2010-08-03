@@ -119,6 +119,9 @@ When an EVFILT_SIGNAL event is generated, the <code>data</code> field
 is set to 1 regardless of how many times the signal was received by the process.
 </li>
 
+<li>
+When an EVFILT_READ event occurs on a listening socket, the   <code>data</code> field is set to 1 regardless of how many pending connections are available.
+
 <!--
 <li>
 The EVFILT_PROC filter only supports the NOTE_EXIT flag, and the <code>ident</code> field must contain the PID of a child of the current process. This filter is only suitable as an event-driven replacement for the <code>wait(2)</code> family of system calls.

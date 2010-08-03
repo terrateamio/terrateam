@@ -1,3 +1,13 @@
+2010-08-01  v0.9    r282
+------------------------------------------------------------------------
+
+  * Set kevent.data = 1 for passive sockets that have at least one pending
+    connection.  
+    (Credit to Julien Blache for finding and researching this bug)
+
+  * Fix various compilation errors under Solaris.
+    (Credit to Joakim Johansson for testing and providing patches)
+
 2010-07-21  v0.8    r264
 ------------------------------------------------------------------------
 

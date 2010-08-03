@@ -1,5 +1,5 @@
 program="libkqueue"
-version="0.9pre"
+version="0.9"
 abi_major="0"
 abi_minor="0"
 abi_version="$abi_major.$abi_minor"

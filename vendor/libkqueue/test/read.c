@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <arpa/inet.h>
+#include <sys/socket.h>
 #include "common.h"
 
 static int __thread kqfd;
@@ -183,6 +185,46 @@ test_kevent_socket_oneshot(void)
     kevent_socket_drain();
 }
 
+/*
+ * Test if the data field returns 1 when a listen(2) socket has
+ * a pending connection.
+ */
+void
+test_kevent_socket_listen_backlog(void)
+{
+    struct kevent kev;
+    struct sockaddr_in sain;
+    socklen_t sa_len = sizeof(sain);
+    int one = 1;
+    const short port = 14973;
+    int clnt, srvr;
+
+    /* Create a passive socket */
+    sain.sin_family = AF_INET;
+    sain.sin_port = htons(port);
+    if ((srvr = socket(PF_INET, SOCK_STREAM, 0)) < 0) abort();
+    if (setsockopt(srvr, SOL_SOCKET, SO_REUSEADDR, 
+                (char *) &one, sizeof(one)) != 0) abort();
+    if (bind(srvr, (struct sockaddr *) &sain, sa_len) < 0) abort();
+    if (listen(srvr, 100) < 0) abort();
+
+    /* Watch for events on the socket */
+    test_no_kevents(kqfd);
+    kevent_add(kqfd, &kev, srvr, EVFILT_READ, EV_ADD | EV_ONESHOT, 0, 0, NULL);
+    test_no_kevents(kqfd);
+
+    /* Simulate a client connecting to the server */
+    sain.sin_family = AF_INET;
+    sain.sin_port = htons(port);
+    sain.sin_addr.s_addr = inet_addr("127.0.0.1");
+    if ((clnt = socket(AF_INET, SOCK_STREAM, 0)) < 0) abort();
+    if (connect(clnt, (struct sockaddr *) &sain, sa_len) < 0) abort();
+
+    /* Verify that data=1 */
+    kev.data = 1;
+    kevent_cmp(&kev, kevent_get(kqfd));
+    test_no_kevents(kqfd);
+}
 
 #if HAVE_EV_DISPATCH
 void
@@ -284,6 +326,7 @@ test_evfilt_read(int _kqfd)
 #if HAVE_EV_DISPATCH
     test(kevent_socket_dispatch);
 #endif
+    test(kevent_socket_listen_backlog);
     test(kevent_socket_eof);
     close(sockfd[0]);
     close(sockfd[1]);

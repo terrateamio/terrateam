@@ -91,6 +91,9 @@ evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 #if TODO
     struct epoll_event ev;
 
+    if (knote_get_socket_type(kn) < 0)
+        return (-1);
+
     /* Convert the kevent into an epoll_event */
     if (kn->kev.filter == EVFILT_READ)
         kn->kn_events = EPOLLIN | EPOLLRDHUP;
