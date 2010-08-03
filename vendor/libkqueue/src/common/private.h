@@ -61,11 +61,17 @@ struct kqueue;
 struct kevent;
 struct evfilt_data;
 
+/* 
+ * Flags used by knote->flags
+ */
+#define KNFL_PASSIVE_SOCKET  (0x01)  /* Socket is in listen(2) mode */
+
 /* TODO: Make this a variable length structure and allow
    each filter to add custom fields at the end.
  */
 struct knote {
     struct kevent     kev;
+    int               flags;       
     union {
         int           pfd;       /* Used by timerfd */
         int           events;    /* Used by socket */
@@ -135,6 +141,7 @@ struct knote *  knote_new(void);
 void        knote_free(struct filter *, struct knote *);
 void        knote_free_all(struct filter *);
 void        knote_insert(struct filter *, struct knote *);
+int         knote_get_socket_type(struct knote *);
 
 /* TODO: these deal with the eventlist, should use a different prefix */
 void        knote_enqueue(struct filter *, struct knote *);
