@@ -34,7 +34,7 @@
 #include "sys/event.h"
 #include "private.h"
 
-#if KQUEUE_DEBUG
+#ifndef NDEBUG
 static char *
 itimerspec_dump(struct itimerspec *ts)
 {

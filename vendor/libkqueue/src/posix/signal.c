@@ -116,7 +116,8 @@ int
 evfilt_signal_knote_create(struct filter *filt, struct knote *kn)
 {
     if (kn->kev.ident >= SIGNAL_MAX) {
-        dbg_printf("unsupported signal number %u", (u_int) kn->kev.ident);
+        dbg_printf("unsupported signal number %u", 
+                    (unsigned int) kn->kev.ident);
         return (-1);
     }
 
