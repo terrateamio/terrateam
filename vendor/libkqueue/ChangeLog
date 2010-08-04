@@ -8,6 +8,8 @@
   * Fix various compilation errors under Solaris.
     (Credit to Joakim Johansson for testing and providing patches)
 
+  * Use the KQUEUE_DEBUG environment variable to turn on debugging output.
+
 2010-07-21  v0.8    r264
 ------------------------------------------------------------------------
 

@@ -52,7 +52,7 @@ void
 knote_free(struct filter *filt, struct knote *kn)
 {
     dbg_printf("filter=%s, ident=%u",
-            filter_name(kn->kev.filter), (u_int) kn->kev.ident);
+            filter_name(kn->kev.filter), (unsigned int) kn->kev.ident);
 	RB_REMOVE(knt, &filt->kf_knote, kn);
     if (kn->event_ent.tqe_prev) //XXX-FIXME what if this is the 1st entry??
         TAILQ_REMOVE(&filt->kf_event, kn, event_ent);

@@ -22,7 +22,7 @@ kqtest: $(SOURCES)
 	$(CC) -o kqtest $(CFLAGS) $(SOURCES) $(LDADD)
 
 check: kqtest
-	./kqtest
+	KQUEUE_DEBUG=1 ./kqtest
 
 valgrind: kqtest
 	valgrind --tool=memcheck --leak-check=full --show-reachable=yes --num-callers=20 --track-fds=yes ./kqtest

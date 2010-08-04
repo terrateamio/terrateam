@@ -30,6 +30,10 @@
 #include "sys/event.h"
 #include "private.h"
 
+#ifndef NDEBUG
+int KQUEUE_DEBUG = 0;
+#endif
+
 static RB_HEAD(kqt, kqueue) kqtree       = RB_INITIALIZER(&kqtree);
 static pthread_rwlock_t     kqtree_mtx   = PTHREAD_RWLOCK_INITIALIZER;
 
@@ -145,6 +149,11 @@ kqueue(void)
         return (-1);
     kq->kq_ref = 1;
     pthread_mutex_init(&kq->kq_mtx, NULL);
+
+#ifndef NDEBUG
+    if (getenv("KQUEUE_DEBUG") != NULL)
+        KQUEUE_DEBUG = 1;
+#endif
 
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, kq->kq_sockfd) < 0) 
         goto errout_unlocked;

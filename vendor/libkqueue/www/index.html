@@ -156,6 +156,10 @@ int main() {
 
 In the future, I plan to add three more backends. One will be for Solaris and take advantage of the event port mechanism described in <a href="http://docs.sun.com/app/docs/doc/816-5168/port-create-3c?l=en&a=view&q=port_create">port_create(3C)</a>. The second will be a generic POSIX backend that does not use any non-portable system calls. The third will be a Microsoft Windows port that uses <code>WaitForMultipleObjects()</code>.
 
+<h2>Bugs</h2>
+
+If you suspect that you have found a bug in libkqueue, please send an email report to the mailing list. If you can reproduce the bug, write a simple testcase and enable debugging output by setting the <code>KQUEUE_DEBUG=y</code> environment variable. Provide this debugging output and the code for the testcase in your bug report.
+
 <h2>Portability of kevent(2) across BSD systems</h2>
 
 There are some differences in the behavior of the <code>kevent(2)</code> system call across the various BSD-based operating systems. Here are some of the differences to be aware of:
