@@ -22,7 +22,7 @@ author="Mark Heily"
 
 pre_configure_hook() {
   if [ "$debug" = "yes" ] ; then
-      cflags="$cflags -g3 -O0 -DKQUEUE_DEBUG -rdynamic"
+      cflags="$cflags -g3 -O0 -rdynamic"
   fi
 
   optional_headers="err.h"
