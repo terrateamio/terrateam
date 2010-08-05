@@ -35,7 +35,7 @@
 #include "sys/event.h"
 #include "private.h"
 
-char *
+static char *
 inotify_mask_dump(uint32_t mask)
 {
     static char __thread buf[1024];
@@ -44,7 +44,7 @@ inotify_mask_dump(uint32_t mask)
     if (mask & attrib) \
        strcat(buf, #attrib" ");
 
-    sprintf(buf, "mask = %d (", mask);
+    snprintf(buf, sizeof(buf), "mask = %d (", mask);
     INEVT_MASK_DUMP(IN_ACCESS);
     INEVT_MASK_DUMP(IN_MODIFY);
     INEVT_MASK_DUMP(IN_ATTRIB);
@@ -62,16 +62,16 @@ inotify_mask_dump(uint32_t mask)
     return (buf);
 }
 
-static void
+static char *
 inotify_event_dump(struct inotify_event *evt)
 {
-    fputs("[BEGIN: inotify_event dump]\n", stdout);
-    fprintf(stdout, "  wd = %d\n", evt->wd);
-    fprintf(stdout, "  %s", inotify_mask_dump(evt->mask));
+    static char __thread buf[1024];
 
-    fputs(")\n", stdout);
-    fputs("[END: inotify_event dump]\n", stdout);
-    fflush(stdout);
+    snprintf(buf, sizeof(buf), "wd=%d mask=%s", 
+            evt->wd,
+            inotify_mask_dump(evt->mask));
+
+    return (buf);
 }
 
 static int
@@ -195,7 +195,7 @@ evfilt_vnode_copyout(struct filter *filt,
     if (get_one_event(&evt, filt->kf_pfd) < 0)
         return (-1);
 
-    inotify_event_dump(&evt);
+    dbg_printf("inotify event: %s", inotify_event_dump(&evt));
     if (evt.mask & IN_IGNORED) {
         /* TODO: possibly return error when fs is unmounted */
         return (0);

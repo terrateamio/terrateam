@@ -54,17 +54,17 @@ extern int KQUEUE_DEBUG;
 
 #define dbg_puts(str)           do {                                \
     if (KQUEUE_DEBUG)                                               \
-      fprintf(stderr, "KQ: %s(): %s\n", __func__,str);            \
+      fprintf(stderr, "KQ: %s(): %s\n", __func__,str);              \
 } while (0)
 
 #define dbg_printf(fmt,...)     do {                                \
     if (KQUEUE_DEBUG)                                               \
-      fprintf(stderr, "KQ: \t%s(): "fmt"\n", __func__,__VA_ARGS__); \
+      fprintf(stderr, "KQ: %s(): "fmt"\n", __func__,__VA_ARGS__);   \
 } while (0)
 
 #define dbg_perror(str)         do {                                \
     if (KQUEUE_DEBUG)                                               \
-      fprintf(stderr, "KQ: %s(): %s: %s\n",                       \
+      fprintf(stderr, "KQ: %s(): %s: %s\n",                         \
               __func__, str, strerror(errno));                      \
 } while (0)
 

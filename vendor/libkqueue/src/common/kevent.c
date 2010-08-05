@@ -295,12 +295,12 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         kqueue_unlock(kq);
     }
 
-#ifdef KQUEUE_DEBUG
-    dbg_printf("returning %d events", nret);
-    for (n = 0; n < nret; n++) {
-        dbg_printf("eventlist[%d] = %s", n, kevent_dump(&eventlist[n]));
+    if (KQUEUE_DEBUG) {
+        dbg_printf("returning %d events", nret);
+        for (n = 0; n < nret; n++) {
+            dbg_printf("eventlist[%d] = %s", n, kevent_dump(&eventlist[n]));
+        }
     }
-#endif /* KQUEUE_DEBUG */
 
     goto out;
 

@@ -150,9 +150,10 @@ kqueue(void)
     kq->kq_ref = 1;
     pthread_mutex_init(&kq->kq_mtx, NULL);
 
-#ifndef NDEBUG
-    if (getenv("KQUEUE_DEBUG") != NULL)
-        KQUEUE_DEBUG = 1;
+#ifdef NDEBUG
+    KQUEUE_DEBUG = 0;
+#else
+    KQUEUE_DEBUG = (getenv("KQUEUE_DEBUG") == NULL) ? 0 : 1;
 #endif
 
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, kq->kq_sockfd) < 0) 

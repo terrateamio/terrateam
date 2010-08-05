@@ -22,7 +22,7 @@ kqtest: $(SOURCES)
 	$(CC) -o kqtest $(CFLAGS) $(SOURCES) $(LDADD)
 
 check: kqtest
-	KQUEUE_DEBUG=1 ./kqtest
+	./kqtest
 
 valgrind: kqtest
 	valgrind --tool=memcheck --leak-check=full --show-reachable=yes --num-callers=20 --track-fds=yes ./kqtest
@@ -38,10 +38,11 @@ check-libtool:
 
 distclean: clean 
 	rm -f config.mk config.h
-	for x in libdispatch stress; do cd $$x && make distclean ; done
+	for x in libdispatch stress; do cd $$x && make distclean && cd .. ; done
 
 edit:
 	$(EDITOR) *.[ch]
 
 clean:
 	rm -f *.o *.a kqtest
+	for x in libdispatch stress; do cd $$x && make clean && cd ..; done
