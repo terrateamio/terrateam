@@ -200,6 +200,7 @@ test_kevent_socket_listen_backlog(void)
     int clnt, srvr;
 
     /* Create a passive socket */
+    memset(&sain, 0, sizeof(sain));
     sain.sin_family = AF_INET;
     sain.sin_port = htons(port);
     if ((srvr = socket(PF_INET, SOCK_STREAM, 0)) < 0) abort();
