@@ -1,3 +1,9 @@
+2010-08-05  v0.9.2  r289
+------------------------------------------------------------------------
+
+  * Fix some build failures on 32-bit platforms related to the debugging
+    codepaths being enabled by default.
+
 2010-08-04  v0.9.1  r286
 ------------------------------------------------------------------------
 
