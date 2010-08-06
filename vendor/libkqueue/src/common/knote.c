@@ -110,7 +110,6 @@ void
 knote_enqueue(struct filter *filt, struct knote *kn)
 {
     /* XXX-FIXME: check if the knote is already on the eventlist */
-    dbg_printf("id=%ld", kn->kev.ident);
     TAILQ_INSERT_TAIL(&filt->kf_event, kn, event_ent);
 }
 
@@ -126,7 +125,6 @@ knote_dequeue(struct filter *filt)
         kn = TAILQ_FIRST(&filt->kf_event);
         TAILQ_REMOVE(&filt->kf_event, kn, event_ent);
         memset(&kn->event_ent, 0, sizeof(kn->event_ent));
-        dbg_printf("id=%ld", kn->kev.ident);
     }
 
     return (kn);
