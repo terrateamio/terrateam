@@ -169,7 +169,7 @@ kevent_cmp(struct kevent *k1, struct kevent *k2)
 /* XXX-
    Workaround for inconsistent implementation of kevent(2) 
  */
-#ifdef __FreeBSD__
+#if defined (__FreeBSD_kernel__) || defined (__FreeBSD__) 
     if (k1->flags & EV_ADD)
         k2->flags |= EV_ADD;
 #endif
