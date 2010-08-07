@@ -142,6 +142,9 @@ check_target() {
     if [ "$default_target" = "sunos" ] ; then
        default_target="solaris"
     fi
+    if [ "$default_target" = "gnu/kfreebsd" ] ; then
+       default_target="freebsd"
+    fi
     finalize target "$default_target"
     echo "$target"
 }
