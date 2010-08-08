@@ -9,6 +9,7 @@ $(PROGRAM): $(SOURCES)
 	$(CC) -o $(PROGRAM) $(CFLAGS) $(SOURCES) ../../libkqueue.a $(LDADD)
 
 check: $(PROGRAM)
+	@echo "ERROR: The stresstest is currently not usable" ; false
 	rm -f core 2>/dev/null
 	ulimit -c 999999 ; ./$(PROGRAM) || true
 	if [ -f core ] ; then gdb ./$(PROGRAM) core ; fi
