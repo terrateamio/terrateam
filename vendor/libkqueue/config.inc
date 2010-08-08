@@ -75,6 +75,15 @@ post_configure_hook() {
           sources="$sources src/posix/eventfd.c"
     fi      
 
+    # FIXME: This will compile but not actually work
+    if [ $target = "freebsd" ] ; then
+          evfilt_signal="src/posix/signal.c"
+          evfilt_proc=""
+          evfilt_socket=""
+          evfilt_timer=""
+          evfilt_vnode=""
+    fi
+
     sources="$sources src/posix/kevent.c $evfilt_signal $evfilt_proc 
              $evfilt_socket $evfilt_timer $evfilt_user $evfilt_vnode"
 }
