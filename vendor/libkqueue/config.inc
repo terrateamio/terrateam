@@ -39,6 +39,7 @@ pre_configure_hook() {
 
   if [ $target = "solaris" ] ; then
       cflags="$cflags -m64"
+      ldflags="$ldflags -m64"
       libdepends="$libdepends -lsocket -lnsl"
   fi
 }
