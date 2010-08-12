@@ -88,29 +88,28 @@ evfilt_socket_copyin(struct filter *filt,
 int
 evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 {
-#if TODO
-    struct epoll_event ev;
+    int rv, events;
 
-    if (knote_get_socket_type(kn) < 0)
-        return (-1);
+    switch (kn->kev.filter) {
+        case EVFILT_READ:
+                events = POLLIN;
+                break;
+        case EVFILT_WRITE:
+                events = POLLOUT;
+                break;
+        default:
+                dbg_puts("invalid filter");
+                return (-1);
+    }
 
-    /* Convert the kevent into an epoll_event */
-    if (kn->kev.filter == EVFILT_READ)
-        kn->kn_events = EPOLLIN | EPOLLRDHUP;
-    else
-        kn->kn_events = EPOLLOUT;
-    if (kn->kev.flags & EV_ONESHOT || kn->kev.flags & EV_DISPATCH)
-        kn->kn_events |= EPOLLONESHOT;
-    if (kn->kev.flags & EV_CLEAR)
-        kn->kn_events |= EPOLLET;
+    rv = port_associate(filt->kf_kqueue->kq_port, PORT_SOURCE_FD,
+            kn->kev.ident, events, kn->kev.udata);
+    if (rv < 0) {
+            dbg_perror("port_associate(2)");
+            return (-1);
+        }
 
-    memset(&ev, 0, sizeof(ev));
-    ev.events = kn->kn_events;
-    ev.data.fd = kn->kev.ident;
-
-    return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
-#endif
-	return (-1);
+        return (0);
 }
 
 int

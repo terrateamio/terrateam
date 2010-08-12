@@ -2,7 +2,7 @@
 
 program=libkqueue-test
 version=0.1
-cflags="-g -O0 -rdynamic -Wall -Werror"
+cflags="-g -O0 -Wall -Werror"
 sources="main.c kevent.c test.c proc.c read.c signal.c timer.c vnode.c"
 
 pre_configure_hook() {
@@ -16,7 +16,9 @@ pre_configure_hook() {
             ldadd="$ldadd ../libkqueue.a -lpthread -lrt"
          }
 
-  test "$target" = "solaris" && ldadd="$ldadd -lsocket"
+  
+  test "$target" = "linux" && cflags="$cflags -rdynamic"
+  test "$target" = "solaris" && ldadd="$ldadd -lsocket -lnsl -m64"
 
   check_symbol $sys_event_h EV_DISPATCH
   check_symbol $sys_event_h EV_RECEIPT

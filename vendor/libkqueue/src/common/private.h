@@ -146,8 +146,8 @@ struct kqueue {
     fd_set          kq_fds, kq_rfds; 
     int             kq_nfds;
     pthread_mutex_t kq_mtx;
-#ifdef SOLARIS
-    int             kq_port;
+#ifdef __sun__
+    int             kq_port;   /* Event port returned by port_create(2) */
 #endif
     volatile uint32_t        kq_ref;
     RB_ENTRY(kqueue) entries;
@@ -181,7 +181,6 @@ const char *filter_name(short);
 int         filter_lower(struct filter *);
 int         filter_raise(struct filter *);
 
-int 		kevent_init(struct kqueue *);
 int         kevent_wait(struct kqueue *, const struct timespec *);
 int         kevent_copyout(struct kqueue *, int, struct kevent *, int);
 void 		kevent_free(struct kqueue *);
