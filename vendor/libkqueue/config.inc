@@ -47,6 +47,7 @@ pre_configure_hook() {
 post_configure_hook() {
     finalize target "$target"
 
+    kevent="src/posix/kevent.c"
     evfilt_signal="src/$target/signal.c"
     evfilt_proc="src/$target/proc.c"
     evfilt_socket="src/$target/socket.c"
@@ -71,6 +72,7 @@ post_configure_hook() {
 
     if [ $target = "solaris" ] ; then
           cflags="$cflags -D__EXTENSIONS__"
+    	  kevent="src/solaris/kevent.c"
           evfilt_signal="src/posix/signal.c"
           evfilt_timer="src/posix/timer.c"
           sources="$sources src/posix/eventfd.c"
@@ -85,6 +87,6 @@ post_configure_hook() {
           evfilt_vnode=""
     fi
 
-    sources="$sources src/posix/kevent.c $evfilt_signal $evfilt_proc 
+    sources="$sources $kevent $evfilt_signal $evfilt_proc 
              $evfilt_socket $evfilt_timer $evfilt_user $evfilt_vnode"
 }
