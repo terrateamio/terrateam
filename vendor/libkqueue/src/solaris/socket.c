@@ -30,6 +30,17 @@
 #include "sys/event.h"
 #include "private.h"
 
+static int
+socket_knote_delete(int port, int fd)
+{
+   if (port_dissociate(port, PORT_SOURCE_FD, fd) < 0) {
+            dbg_perror("port_dissociate(2)");
+            return (-1);
+   } else {
+	return (0);
+   }
+}
+   
 int
 evfilt_socket_init(struct filter *filt)
 {
@@ -67,7 +78,7 @@ evfilt_socket_copyin(struct filter *filt,
     if (src->flags & EV_DELETE || src->flags & EV_DISABLE) {
         rv = port_dissociate(port, PORT_SOURCE_FD, src->ident);
         if (rv < 0) {
-            dbg_perror("port_disassociate(2)");
+            dbg_perror("port_dissociate(2)");
             return (-1);
         }
     }
@@ -109,7 +120,7 @@ evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
             return (-1);
         }
 
-        return (0);
+    return (0);
 }
 
 int
@@ -122,14 +133,10 @@ evfilt_socket_knote_modify(struct filter *filt, struct knote *kn,
 int
 evfilt_socket_knote_delete(struct filter *filt, struct knote *kn)
 {
-#if TODO
     if (kn->kev.flags & EV_DISABLE)
         return (0);
     else
-        return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
-#else
-   return (-1);
-#endif
+        return (socket_knote_delete(filt->kf_kqueue->kq_port, kn->kev.ident));
 }
 
 int
@@ -163,7 +170,50 @@ evfilt_socket_copyout(struct filter *filt,
             struct kevent *dst, 
             int nevents)
 {
-    return (-1);
+    port_event_t *pe = (port_event_t *) pthread_getspecific(filt->kf_kqueue->kq_port_event);
+    struct knote *kn;
+
+    kn = knote_lookup(filt, pe->portev_object);
+    if (kn == NULL)
+	return (-1);
+
+    memcpy(dst, &kn->kev, sizeof(*dst));
+    if (pe->portev_events & POLLHUP)
+        dst->flags |= EV_EOF;
+    if (pe->portev_events & POLLERR)
+        dst->fflags = 1; /* FIXME: Return the actual socket error */
+          
+    if (kn->flags & KNFL_PASSIVE_SOCKET) {
+        /* On return, data contains the length of the 
+           socket backlog. This is not available under Solaris (?).
+         */
+        dst->data = 1;
+    } else {
+        /* On return, data contains the number of bytes of protocol
+           data available to read.
+         */
+#if FIXME
+        if (ioctl(dst->ident, 
+                    (dst->filter == EVFILT_READ) ? SIOCINQ : SIOCOUTQ, 
+                            &dst->data) < 0) {
+                  /* race condition with socket close, so ignore this error */
+                    dbg_puts("ioctl(2) of socket failed");
+                    dst->data = 0;
+     	}
+#else
+                    dst->data = 1;
+#endif
+    }
+
+    if (kn->kev.flags & EV_DISPATCH) {
+        socket_knote_delete(filt->kf_kqueue->kq_port, kn->kev.ident);
+        KNOTE_DISABLE(kn);
+    } else if (kn->kev.flags & EV_ONESHOT) {
+        socket_knote_delete(filt->kf_kqueue->kq_port, kn->kev.ident);
+        knote_free(filt, kn);
+    }
+
+    return (1);
 }
 
 const struct filter evfilt_read = {
