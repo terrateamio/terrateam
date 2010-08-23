@@ -20,9 +20,6 @@
 #include "sys/event.h"
 #include "private.h"
 
-/* KLUDGE: This avoids the need to redesign the POSIX code */
-static __thread port_event_t pe;
-
 static char *
 port_event_dump(port_event_t *evt)
 {
@@ -33,10 +30,10 @@ port_event_dump(port_event_t *evt)
 
 #define PE_DUMP(attrib) \
     if (evt->portev_source == attrib) \
-       strcat(&buf[0], #attrib" ");
+       strcat(&buf[0], #attrib);
 
     snprintf(&buf[0], 128,
-                " { object = %u, user = %p, events = %d, source = %d",
+                " { object = %u, user = %p, events = %d, source = %d (",
                 (unsigned int) evt->portev_object,
                 evt->portev_user,
                 evt->portev_events,
@@ -46,7 +43,7 @@ port_event_dump(port_event_t *evt)
     PE_DUMP(PORT_SOURCE_TIMER);
     PE_DUMP(PORT_SOURCE_USER);
     PE_DUMP(PORT_SOURCE_ALERT);
-    strcat(&buf[0], "}\n");
+    strcat(&buf[0], ") }\n");
 
     return (&buf[0]);
 #undef PE_DUMP
@@ -55,13 +52,14 @@ port_event_dump(port_event_t *evt)
 int
 kevent_wait(struct kqueue *kq, const struct timespec *timeout)
 {
+    port_event_t *pe = (port_event_t *) pthread_getspecific(kq->kq_port_event);
     int rv;
 
     dbg_printf("waiting for events (timeout=%p)", timeout);
-    memset(&pe, 0, sizeof(pe));
-    rv = port_get(kq->kq_port, &pe, (struct timespec *) timeout);
+    memset(pe, 0, sizeof(*pe));
+    rv = port_get(kq->kq_port, pe, (struct timespec *) timeout);
     dbg_printf("rv=%d errno=%d evt=%s",rv,errno,
-                port_event_dump(&pe));
+                port_event_dump(pe));
     if (rv < 0) {
         if (errno == ETIME) {
             dbg_puts("no events within the given timeout");
@@ -91,7 +89,7 @@ kevent_wait(struct kqueue *kq, const struct timespec *timeout)
          does not return -1 and ETIME. Instead it seems to return
          0 and pe->portev_source == 0
     */
-    if (pe.portev_source == 0)
+    if (pe->portev_source == 0)
        return (0);
 
     return (1);
@@ -101,28 +99,25 @@ int
 kevent_copyout(struct kqueue *kq, int nready,
         struct kevent *eventlist, int nevents)
 {
+    port_event_t *pe = (port_event_t *) pthread_getspecific(kq->kq_port_event);
     struct filter *filt;
-    int i, rv, nret;
+    int rv;
 
-    nret = 0;
-    for (i = 0; (i < EVFILT_SYSCOUNT && nready > 0 && nevents > 0); i++) {
-//        dbg_printf("eventlist: n = %d nevents = %d", nready, nevents);
-        filt = &kq->kq_filt[i]; 
-//        dbg_printf("pfd[%d] = %d", i, filt->kf_pfd);
-        if (FD_ISSET(filt->kf_pfd, &kq->kq_rfds)) {
-            dbg_printf("pending events for filter %d (%s)", filt->kf_id, filter_name(filt->kf_id));
-            rv = filt->kf_copyout(filt, eventlist, nevents);
-            if (rv < 0) {
-                dbg_puts("kevent_copyout failed");
-                nret = -1;
-                break;
-            }
-            nret += rv;
-            eventlist += rv;
-            nevents -= rv;
-            nready--;
-        }
+    dbg_printf("%s", port_event_dump(pe));
+    switch (pe->portev_source) {
+	case PORT_SOURCE_FD:
+		//FIXME: could also be EVFILT_WRITE
+        	filter_lookup(&filt, kq, EVFILT_READ);
+                rv = filt->kf_copyout(filt, eventlist, nevents);
+		break;
+	default:
+		dbg_puts("unsupported source");
+    		abort();
+    }
+    if (rv < 0) {
+        dbg_puts("kevent_copyout failed");
+	return (-1);
     }
 
-    return (nret);
+    return (1);
 }
