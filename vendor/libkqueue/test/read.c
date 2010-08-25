@@ -104,7 +104,12 @@ test_kevent_socket_clear(void)
     kevent_socket_fill();
     kevent_socket_fill();
 
+/* Solaris does not offer a way to get the amount of data pending */
+#if defined(__sun__)
+    kev.data = 1;
+#else
     kev.data = 2;
+#endif
     kevent_cmp(&kev, kevent_get(kqfd)); 
 
     /* We filled twice, but drain once. Edge-triggered would not generate

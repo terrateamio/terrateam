@@ -31,6 +31,32 @@
 #include "private.h"
 
 static int
+socket_knote_create(int port, int filter, int fd, void *udata)
+{
+    int rv, events;
+
+    switch (filter) {
+        case EVFILT_READ:
+                events = POLLIN;
+                break;
+        case EVFILT_WRITE:
+                events = POLLOUT;
+                break;
+        default:
+                dbg_puts("invalid filter");
+                return (-1);
+    }
+
+    rv = port_associate(port, PORT_SOURCE_FD, fd, events, udata);
+    if (rv < 0) {
+            dbg_perror("port_associate(2)");
+            return (-1);
+        }
+
+    return (0);
+}
+
+static int
 socket_knote_delete(int port, int fd)
 {
    if (port_dissociate(port, PORT_SOURCE_FD, fd) < 0) {
@@ -99,28 +125,8 @@ evfilt_socket_copyin(struct filter *filt,
 int
 evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 {
-    int rv, events;
-
-    switch (kn->kev.filter) {
-        case EVFILT_READ:
-                events = POLLIN;
-                break;
-        case EVFILT_WRITE:
-                events = POLLOUT;
-                break;
-        default:
-                dbg_puts("invalid filter");
-                return (-1);
-    }
-
-    rv = port_associate(filt->kf_kqueue->kq_port, PORT_SOURCE_FD,
-            kn->kev.ident, events, kn->kev.udata);
-    if (rv < 0) {
-            dbg_perror("port_associate(2)");
-            return (-1);
-        }
-
-    return (0);
+    return socket_knote_create(filt->kf_kqueue->kq_port,
+		kn->kev.filter, kn->kev.ident, kn->kev.udata);
 }
 
 int
@@ -142,27 +148,14 @@ evfilt_socket_knote_delete(struct filter *filt, struct knote *kn)
 int
 evfilt_socket_knote_enable(struct filter *filt, struct knote *kn)
 {
-#if TODO
-    struct epoll_event ev;
-
-    memset(&ev, 0, sizeof(ev));
-    ev.events = kn->kn_events;
-    ev.data.fd = kn->kev.ident;
-
-    return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
-#else
-   return (-1);
-#endif
+    return socket_knote_create(filt->kf_kqueue->kq_port,
+		kn->kev.filter, kn->kev.ident, kn->kev.udata);
 }
 
 int
 evfilt_socket_knote_disable(struct filter *filt, struct knote *kn)
 {
-#if TODO
-    return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
-#else
-   return (-1);
-#endif
+    return socket_knote_delete(filt->kf_kqueue->kq_port, kn->kev.ident);
 }
 
 int
@@ -211,6 +204,10 @@ evfilt_socket_copyout(struct filter *filt,
     } else if (kn->kev.flags & EV_ONESHOT) {
         socket_knote_delete(filt->kf_kqueue->kq_port, kn->kev.ident);
         knote_free(filt, kn);
+    } else {
+	/* Solaris automatically disassociates a FD event after it
+	   is delivered. This effectively disables the knote. */
+        KNOTE_DISABLE(kn);
     }
 
     return (1);
