@@ -23,7 +23,7 @@
 static char *
 port_event_dump(port_event_t *evt)
 {
-    static char __thread buf[128];
+    static char __thread buf[512];
 
     if (evt == NULL)
         return "(null)";
@@ -32,8 +32,8 @@ port_event_dump(port_event_t *evt)
     if (evt->portev_source == attrib) \
        strcat(&buf[0], #attrib);
 
-    snprintf(&buf[0], 128,
-                " { object = %u, user = %p, events = %d, source = %d (",
+    snprintf(&buf[0], 512,
+                " { object = %u, user = %p, events = 0x%o, source = %d (",
                 (unsigned int) evt->portev_object,
                 evt->portev_user,
                 evt->portev_events,
