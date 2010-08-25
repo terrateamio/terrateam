@@ -145,3 +145,12 @@ diff:
 	if [ "`pwd | grep /branches/stable`" != "" ] ; then \
 	   (cd ../.. ; $(DIFF) branches/stable trunk | less) ; \
     fi
+
+# Copy to/from the host to the Solaris guest VM
+#
+solaris-push:
+	cd .. ; scp -rq -P 2222 trunk localhost:/export/home/mheily/libkqueue
+
+solaris-pull:
+	scp -rq -P 2222 localhost:/export/home/mheily/libkqueue/\* .
+##
