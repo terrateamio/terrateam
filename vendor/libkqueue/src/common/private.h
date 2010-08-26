@@ -18,8 +18,9 @@
 #define  _KQUEUE_PRIVATE_H
 
 #if defined (__SVR4) && defined (__sun)
-#define SOLARIS
-#include <port.h>
+# define SOLARIS
+# include <port.h>
+# define X_PORT_SOURCE_SIGNAL  101
 #endif
 
 #include <errno.h>
