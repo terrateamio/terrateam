@@ -52,14 +52,12 @@ port_event_dump(port_event_t *evt)
 int
 kevent_wait(struct kqueue *kq, const struct timespec *timeout)
 {
-    port_event_t *pe = (port_event_t *) pthread_getspecific(kq->kq_port_event);
-    int rv;
+    port_event_t pe;
+    int nget, rv;
 
     dbg_printf("waiting for events (timeout=%p)", timeout);
-    memset(pe, 0, sizeof(*pe));
-    rv = port_get(kq->kq_port, pe, (struct timespec *) timeout);
-    dbg_printf("rv=%d errno=%d evt=%s",rv,errno,
-                port_event_dump(pe));
+    rv = port_getn(kq->kq_port, &pe, &nget, (struct timespec *) timeout);
+    dbg_printf("rv=%d errno=%d nget=%d", rv, errno, nget);
     if (rv < 0) {
         if (errno == ETIME) {
             dbg_puts("no events within the given timeout");
@@ -85,23 +83,39 @@ kevent_wait(struct kqueue *kq, const struct timespec *timeout)
         return (-1);
     }
 
-    /* UNDOCUMENTED: polling a port with no associated events
-         does not return -1 and ETIME. Instead it seems to return
-         0 and pe->portev_source == 0
-    */
-    if (pe->portev_source == 0)
-       return (0);
-
-    return (1);
+    return (nget);
 }
 
 int
 kevent_copyout(struct kqueue *kq, int nready,
         struct kevent *eventlist, int nevents)
 {
-    port_event_t *pe = (port_event_t *) pthread_getspecific(kq->kq_port_event);
+    port_event_t pe;
     struct filter *filt;
-    int rv;
+    struct timespec timeout;
+    int nget, rv;
+
+    /* Retrieve an event */
+    timeout.tv_sec = 0;
+    timeout.tv_nsec = 0;
+    rv = port_getn(kq->kq_port, &pe, &nget, &timeout);
+    dbg_printf("rv=%d errno=%d nget=%d", rv, errno, nget);
+    if (rv < 0) {
+        if (errno == ETIME) {
+            dbg_puts("no events within the given timeout");
+            return (-1);
+        }
+        if (errno == EINTR) {
+            dbg_puts("signal caught");
+            return (-1);
+        }
+        dbg_perror("port_get(2)");
+        return (-1);
+    }
+    if (nget == 0) {
+            dbg_puts("no events returned");
+            return (-1);
+    }
 
     dbg_printf("%s", port_event_dump(pe));
     switch (pe->portev_source) {
