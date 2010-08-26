@@ -148,6 +148,7 @@ struct kqueue {
     pthread_mutex_t kq_mtx;
 #ifdef __sun__
     int             kq_port;   /* Event port returned by port_create(2) */
+    port_event_t    kq_evt;    /* Event returned by port_get(2) */
 #endif
     volatile uint32_t        kq_ref;
     RB_ENTRY(kqueue) entries;

@@ -163,7 +163,7 @@ evfilt_socket_copyout(struct filter *filt,
             struct kevent *dst, 
             int nevents)
 {
-    port_event_t *pe = (port_event_t *) pthread_getspecific(filt->kf_kqueue->kq_port_event);
+    port_event_t *pe = &filt->kf_kqueue->kq_evt;
     struct knote *kn;
 
     kn = knote_lookup(filt, pe->portev_object);
@@ -171,31 +171,33 @@ evfilt_socket_copyout(struct filter *filt,
 	return (-1);
 
     memcpy(dst, &kn->kev, sizeof(*dst));
-    if (pe->portev_events & POLLHUP)
+    if (pe->portev_events & POLLHUP & POLLERR) //XXX-FIXME Should be POLLHUP)
         dst->flags |= EV_EOF;
-    if (pe->portev_events & POLLERR)
+    else if (pe->portev_events & POLLERR)
         dst->fflags = 1; /* FIXME: Return the actual socket error */
           
-    if (kn->flags & KNFL_PASSIVE_SOCKET) {
-        /* On return, data contains the length of the 
-           socket backlog. This is not available under Solaris (?).
-         */
-        dst->data = 1;
-    } else {
-        /* On return, data contains the number of bytes of protocol
-           data available to read.
-         */
+    if (pe->portev_events & POLLIN) {
+        if (kn->flags & KNFL_PASSIVE_SOCKET) {
+            /* On return, data contains the length of the 
+               socket backlog. This is not available under Solaris (?).
+             */
+            dst->data = 1;
+        } else {
+            /* On return, data contains the number of bytes of protocol
+               data available to read.
+             */
 #if FIXME
-        if (ioctl(dst->ident, 
-                    (dst->filter == EVFILT_READ) ? SIOCINQ : SIOCOUTQ, 
-                            &dst->data) < 0) {
-                  /* race condition with socket close, so ignore this error */
-                    dbg_puts("ioctl(2) of socket failed");
-                    dst->data = 0;
-     	}
+            if (ioctl(dst->ident, 
+                        (dst->filter == EVFILT_READ) ? SIOCINQ : SIOCOUTQ, 
+                        &dst->data) < 0) {
+                /* race condition with socket close, so ignore this error */
+                dbg_puts("ioctl(2) of socket failed");
+                dst->data = 0;
+            }
 #else
-                    dst->data = 1;
+            dst->data = 1;
 #endif
+        }
     }
 
     if (kn->kev.flags & EV_DISPATCH) {

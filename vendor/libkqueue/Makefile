@@ -149,8 +149,13 @@ diff:
 # Copy to/from the host to the Solaris guest VM
 #
 solaris-push:
+	ssh -p 2222 localhost 'rm -rf /export/home/mheily/libkqueue'
 	cd .. ; scp -rq -P 2222 trunk localhost:/export/home/mheily/libkqueue
+
+solaris-test: solaris-push
+	ssh -p 2222 localhost 'cd /export/home/mheily/libkqueue && /usr/sfw/bin/gmake distclean && ./configure && /usr/sfw/bin/gmake clean all check'
 
 solaris-pull:
 	scp -rq -P 2222 localhost:/export/home/mheily/libkqueue/\* .
-##
+#
+#
