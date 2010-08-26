@@ -123,9 +123,15 @@ kevent_copyout(struct kqueue *kq, int nready,
     switch (pe->portev_source) {
 	case PORT_SOURCE_FD:
 		//FIXME: could also be EVFILT_WRITE
-        	filter_lookup(&filt, kq, EVFILT_READ);
-                rv = filt->kf_copyout(filt, eventlist, nevents);
-		break;
+        filter_lookup(&filt, kq, EVFILT_READ);
+        rv = filt->kf_copyout(filt, eventlist, nevents);
+        break;
+
+	case PORT_SOURCE_TIMER:
+        filter_lookup(&filt, kq, EVFILT_TIMER);
+        rv = filt->kf_copyout(filt, eventlist, nevents);
+        break;
+
 	case PORT_SOURCE_USER:
         switch (pe->portev_events) {
             case X_PORT_SOURCE_SIGNAL:

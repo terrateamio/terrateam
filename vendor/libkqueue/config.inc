@@ -74,7 +74,7 @@ post_configure_hook() {
           cflags="$cflags -D__EXTENSIONS__"
     	  kevent="src/solaris/kevent.c"
           evfilt_signal="src/posix/signal.c"
-          evfilt_timer="src/posix/timer.c"
+          evfilt_timer="src/solaris/timer.c"
           sources="$sources src/posix/eventfd.c"
     fi      
 

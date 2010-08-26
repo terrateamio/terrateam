@@ -65,8 +65,8 @@ extern int KQUEUE_DEBUG;
 
 #define dbg_perror(str)         do {                                \
     if (KQUEUE_DEBUG)                                               \
-      fprintf(stderr, "KQ: %s(): %s: %s\n",                         \
-              __func__, str, strerror(errno));                      \
+      fprintf(stderr, "KQ: %s(): %s: %s (errno=%d)\n",              \
+              __func__, str, strerror(errno), errno);               \
 } while (0)
 
 #else /* NDEBUG */
@@ -98,6 +98,7 @@ struct knote {
             nlink_t   nlink;  /* Used by vnode */
             off_t     size;   /* Used by vnode */
         } vnode;
+        timer_t       timerid;  
     } data;
     TAILQ_ENTRY(knote) event_ent;    /* Used by filter->kf_event */
     RB_ENTRY(knote)   kntree_ent;   /* Used by filter->kntree */
