@@ -147,17 +147,10 @@ static int
 kqueue_sys_init(struct kqueue *kq)
 {
 #if defined(__sun__)
-    port_event_t *pe;
     if ((kq->kq_port = port_create()) < 0) {
         dbg_perror("port_create(2)");
         return (-1);
     }
-    if (pthread_key_create(&kq->kq_port_event, NULL) != 0)
-	abort();
-    if ((pe = calloc(1, sizeof(*pe))) == NULL)	
-	abort();
-    if (pthread_setspecific(kq->kq_port_event, pe) != 0)
-	abort();
 #endif
     return (0);
 }
