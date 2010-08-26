@@ -171,7 +171,7 @@ evfilt_socket_copyout(struct filter *filt,
 	return (-1);
 
     memcpy(dst, &kn->kev, sizeof(*dst));
-    if (pe->portev_events & POLLHUP & POLLERR) //XXX-FIXME Should be POLLHUP)
+    if (pe->portev_events == 8) //XXX-FIXME Should be POLLHUP)
         dst->flags |= EV_EOF;
     else if (pe->portev_events & POLLERR)
         dst->fflags = 1; /* FIXME: Return the actual socket error */

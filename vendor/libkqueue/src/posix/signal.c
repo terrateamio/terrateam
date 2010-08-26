@@ -49,7 +49,15 @@ signal_handler(int sig)
 
     dbg_printf("caught sig=%d", sig);
     atomic_inc(&s->s_cnt);
+#if defined(__sun__)
+    n = 0;//FIXME: workaround
+    if (port_send(s->s_filt->kf_kqueue->kq_port, 
+                   X_PORT_SOURCE_SIGNAL, &sigtbl[sig]) < 0) {
+        return; //FIXME: errorhandling
+    }
+#else
     n = write(s->s_filt->kf_wfd, &sig, sizeof(sig));//FIXME:errhandling
+#endif
 }
 
 static int
@@ -162,9 +170,15 @@ evfilt_signal_copyout(struct filter *filt,
     int sig;
     ssize_t n;
 
+#if defined(__sun__)
+    s = (struct sentry *) filt->kf_kqueue->kq_evt.portev_user;
+    sig = s - &sigtbl[0];
+    n = 0; //FIXME: Workaround
+#else
     n = read(filt->kf_pfd, &sig, sizeof(sig));//FIXME:errhandling
-    dbg_printf("got sig=%d", sig);
     s = &sigtbl[sig];
+#endif
+
     kn = s->s_knote;
     //TODO: READ counter: s->s_knote->kev.data = ?;
     /* TODO: dst->data should be the number of times the signal occurred */

@@ -126,6 +126,18 @@ kevent_copyout(struct kqueue *kq, int nready,
         	filter_lookup(&filt, kq, EVFILT_READ);
                 rv = filt->kf_copyout(filt, eventlist, nevents);
 		break;
+	case PORT_SOURCE_USER:
+        switch (pe->portev_events) {
+            case X_PORT_SOURCE_SIGNAL:
+                filter_lookup(&filt, kq, EVFILT_SIGNAL);
+                rv = filt->kf_copyout(filt, eventlist, nevents);
+                break;
+            default:
+                dbg_puts("unsupported portev_events");
+                abort();
+        }
+        break;
+
 	default:
 		dbg_puts("unsupported source");
     		abort();
