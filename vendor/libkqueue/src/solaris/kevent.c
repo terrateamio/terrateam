@@ -53,10 +53,11 @@ int
 kevent_wait(struct kqueue *kq, const struct timespec *timeout)
 {
     port_event_t pe;
-    int nget, rv;
+    int rv;
+    uint_t nget;
 
     dbg_printf("waiting for events (timeout=%p)", timeout);
-    rv = port_getn(kq->kq_port, &pe, &nget, (struct timespec *) timeout);
+    rv = port_getn(kq->kq_port, &pe, 0, &nget, (struct timespec *) timeout);
     dbg_printf("rv=%d errno=%d nget=%d", rv, errno, nget);
     if (rv < 0) {
         if (errno == ETIME) {
@@ -90,15 +91,16 @@ int
 kevent_copyout(struct kqueue *kq, int nready,
         struct kevent *eventlist, int nevents)
 {
-    port_event_t pe;
+    port_event_t *pe = &kq->kq_evt;
     struct filter *filt;
     struct timespec timeout;
-    int nget, rv;
+    int rv;
+    uint_t nget;
 
     /* Retrieve an event */
     timeout.tv_sec = 0;
     timeout.tv_nsec = 0;
-    rv = port_getn(kq->kq_port, &pe, &nget, &timeout);
+    rv = port_getn(kq->kq_port, pe, 1, &nget, &timeout);
     dbg_printf("rv=%d errno=%d nget=%d", rv, errno, nget);
     if (rv < 0) {
         if (errno == ETIME) {
