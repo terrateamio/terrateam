@@ -1,3 +1,13 @@
+ * Add a counter that increments on each each kevent() call. When printing
+   debug information within kevent(), display the value of the counter.
+   This will be helpful when debugging a multithreaded program that may have
+   multiple kevent() calls executing in parallel.
+
+ * Add a dbg_printf() statement within kevent_wait() to report the value
+   of the timeout.
+
+ * Refactor kevent_copyin() to remove the goto statements.
+
  * Ensure that kevent_copyout() on Solaris does not rely on having
    the filter lock. Linux has already been converted.
 
