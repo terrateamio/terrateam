@@ -1,3 +1,10 @@
+2010-08-05  v0.9.3  r308
+------------------------------------------------------------------------
+
+  * Fix a typo in kevent_copyin() that caused EV_RECEIPT to set the
+    data field incorrectly in some cases. 
+    (Credit to Julien Blache for discovering and fixing this bug)
+
 2010-08-05  v0.9.2  r289
 ------------------------------------------------------------------------
 
