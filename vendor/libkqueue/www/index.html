@@ -50,7 +50,7 @@
 <h1>libkqueue</h1>
 
 <h2>Overview</h2>
-libkqueue is a userspace implementation of the <a href="http://www.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2">kqueue(2)</a> kernel event notification mechanism. Initial efforts are focused on porting to the Linux 2.6 kernel. There is also an experimental Solaris port (currently broken).
+libkqueue is a userspace implementation of the <a href="http://www.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2">kqueue(2)</a> kernel event notification mechanism. Initial efforts are focused on porting to the Linux 2.6 kernel. There is also an experimental Solaris port.
 
 <p>
 libkqueue acts as a translator between the <code>kevent</code> structure and the native kernel facilities of the host machine. The following diagram illustrates how this works under Linux: 
@@ -97,6 +97,7 @@ The kqueue and kevent functions are implemented, and most of the filters are wor
 
 More details about the current implementation status can be found <a href="status.html">here</a>.
 <p>
+<h3>Status: Linux</h3>
 There are several compatibility issues to be aware of when using this library under Linux:<br>
 
 <ol>
@@ -130,6 +131,18 @@ The EVFILT_PROC filter only supports the NOTE_EXIT flag, and the <code>ident</co
 
 </ol>
 
+<h3>Status: Solaris</h3>
+Here are the issues to be aware of when using this library under Solaris:<br>
+
+<ol>
+<li>Solaris 10 or newer is required.</li>
+<li>The EVFILT_TIMER filter is implemented using high-resolution timers. In order to use high-resolution timers, the calling process must hold the PRIV_PROC_CLOCK_HIGHRES privilege. This privilege is not granted to ordinary users by default. It can be granted to individual users by running the following command as root:<br>
+<pre>
+# usermod -K defaultpriv=basic,proc_clock_highres $user
+</pre>
+</ol>
+
+<h3>Status: All Platforms</h3>
 Here are the issues to be aware of when using this library under any platform:<br>
 
 <ol>
