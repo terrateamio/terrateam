@@ -16,9 +16,37 @@
 
 #include <stdlib.h>
 #include <port.h>
+#include <poll.h>
 
 #include "sys/event.h"
 #include "private.h"
+
+/* Dump a poll(2) events bitmask */
+static char *
+poll_events_dump(short events)
+{
+    static char __thread buf[512];
+
+#define _PL_DUMP(attrib) \
+    if (events == attrib) \
+       strcat(&buf[0], " "#attrib);
+
+    snprintf(&buf[0], 512, "events = %hd 0x%o (", events, events);
+    _PL_DUMP(POLLIN);
+    _PL_DUMP(POLLPRI);
+    _PL_DUMP(POLLOUT);
+    _PL_DUMP(POLLRDNORM);
+    _PL_DUMP(POLLRDBAND);
+    _PL_DUMP(POLLWRBAND);
+    _PL_DUMP(POLLERR);
+    _PL_DUMP(POLLHUP);
+    _PL_DUMP(POLLNVAL);
+    strcat(&buf[0], ")");
+
+    return (&buf[0]);
+
+#undef _PL_DUMP
+}
 
 static char *
 port_event_dump(port_event_t *evt)
@@ -33,10 +61,10 @@ port_event_dump(port_event_t *evt)
        strcat(&buf[0], #attrib);
 
     snprintf(&buf[0], 512,
-                " { object = %u, user = %p, events = 0x%o, source = %d (",
+                " { object = %u, user = %p, %s, source = %d (",
                 (unsigned int) evt->portev_object,
                 evt->portev_user,
-                evt->portev_events,
+                poll_events_dump(evt->portev_events),
                 evt->portev_source);
     PE_DUMP(PORT_SOURCE_AIO);
     PE_DUMP(PORT_SOURCE_FD);
@@ -122,8 +150,7 @@ kevent_copyout(struct kqueue *kq, int nready,
     dbg_printf("%s", port_event_dump(pe));
     switch (pe->portev_source) {
 	case PORT_SOURCE_FD:
-		//FIXME: could also be EVFILT_WRITE
-        filter_lookup(&filt, kq, EVFILT_READ);
+        filt = pe->portev_user;
         rv = filt->kf_copyout(filt, eventlist, nevents);
         break;
 
