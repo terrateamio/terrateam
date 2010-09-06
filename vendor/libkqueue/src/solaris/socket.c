@@ -126,7 +126,7 @@ int
 evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 {
     return socket_knote_create(filt->kf_kqueue->kq_port,
-		kn->kev.filter, kn->kev.ident, kn->kev.udata);
+		kn->kev.filter, kn->kev.ident, filt);
 }
 
 int
@@ -149,7 +149,7 @@ int
 evfilt_socket_knote_enable(struct filter *filt, struct knote *kn)
 {
     return socket_knote_create(filt->kf_kqueue->kq_port,
-		kn->kev.filter, kn->kev.ident, kn->kev.udata);
+		kn->kev.filter, kn->kev.ident, filt);
 }
 
 int
