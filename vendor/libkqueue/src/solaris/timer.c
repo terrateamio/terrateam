@@ -101,6 +101,8 @@ ktimer_create(struct filter *filt, struct knote *kn)
     }
 
     kn->data.timerid = timerid;
+    dbg_printf("created timer with id #%lu", (unsigned long) timerid);
+
     return (0);
 }
 
@@ -128,6 +130,7 @@ evfilt_timer_copyout(struct filter *filt,
     timerid = pe->portev_object;
     kn = knote_lookup(filt, timerid);
 
+    dbg_printf("knote=%p", kn);
     memcpy(dst, &kn->kev, sizeof(*dst));
     //TODO:
     //if (ev->events & EPOLLERR)

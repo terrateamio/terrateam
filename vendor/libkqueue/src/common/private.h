@@ -69,10 +69,13 @@ extern int KQUEUE_DEBUG;
               __func__, str, strerror(errno), errno);               \
 } while (0)
 
+# define reset_errno()          do { errno = 0; } while (0)
+
 #else /* NDEBUG */
 # define dbg_puts(str)           ;
 # define dbg_printf(fmt,...)     ;
 # define dbg_perror(str)         ;
+# define reset_errno()           ;
 #endif 
 
 
