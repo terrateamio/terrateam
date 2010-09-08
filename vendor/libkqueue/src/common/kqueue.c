@@ -52,8 +52,11 @@ kqueue_free(struct kqueue *kq)
     RB_REMOVE(kqt, &kqtree, kq);
     filter_unregister_all(kq);
 #if defined(__sun__)
+    port_event_t *pe = (port_event_t *) pthread_getspecific(kq->kq_port_event);
+
     if (kq->kq_port > 0) 
         close(kq->kq_port);
+    free(pe);
 #endif
     free(kq);
 }
