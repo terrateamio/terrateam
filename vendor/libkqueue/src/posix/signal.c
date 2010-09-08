@@ -171,7 +171,9 @@ evfilt_signal_copyout(struct filter *filt,
     ssize_t n;
 
 #if defined(__sun__)
-    s = (struct sentry *) filt->kf_kqueue->kq_evt.portev_user;
+    port_event_t *pe = (port_event_t *) pthread_getspecific(filt->kf_kqueue->kq_port_event);
+
+    s = (struct sentry *) pe->portev_user;
     sig = s - &sigtbl[0];
     n = 0; //FIXME: Workaround
 #else

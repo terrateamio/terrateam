@@ -83,7 +83,7 @@ ktimer_create(struct filter *filt, struct knote *kn)
     kn->kev.flags |= EV_CLEAR;
 
     pn.portnfy_port = filt->kf_kqueue->kq_port;
-    pn.portnfy_user = NULL;
+    pn.portnfy_user = (void *) kn->kev.ident;
 
     se.sigev_notify = SIGEV_PORT;
     se.sigev_value.sival_ptr = &pn;
@@ -123,11 +123,15 @@ evfilt_timer_copyout(struct filter *filt,
             struct kevent *dst, 
             int nevents)
 {
-    port_event_t *pe = &filt->kf_kqueue->kq_evt;
+    port_event_t *pe = (port_event_t *) pthread_getspecific(filt->kf_kqueue->kq_port_event);
+    long buf;
     timer_t timerid;
     struct knote *kn;
 
-    timerid = pe->portev_object;
+    /* XXX-FIXME: danger here -- there has to be a better way */
+    buf = (long) pe->portev_user;
+    timerid = (timer_t) buf;
+    /* ^^^^^^^^^ */
     kn = knote_lookup(filt, timerid);
 
     dbg_printf("knote=%p", kn);
@@ -168,6 +172,10 @@ evfilt_timer_knote_modify(struct filter *filt, struct knote *kn,
 int
 evfilt_timer_knote_delete(struct filter *filt, struct knote *kn)
 {
+    if (kn->kev.flags & EV_DISABLE)
+        return (0);
+
+    dbg_printf("deleting timer # %d", kn->data.timerid);
     return timer_delete(kn->data.timerid);
 }
 

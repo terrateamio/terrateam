@@ -163,7 +163,7 @@ evfilt_socket_copyout(struct filter *filt,
             struct kevent *dst, 
             int nevents)
 {
-    port_event_t *pe = &filt->kf_kqueue->kq_evt;
+    port_event_t *pe = (port_event_t *) pthread_getspecific(filt->kf_kqueue->kq_port_event);
     struct knote *kn;
 
     kn = knote_lookup(filt, pe->portev_object);
