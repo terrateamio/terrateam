@@ -80,14 +80,14 @@ port_event_dump(port_event_t *evt)
 int
 kevent_wait(struct kqueue *kq, const struct timespec *timeout)
 {
-    port_event_t pe;
+    port_event_t *pe = (port_event_t *) pthread_getspecific(kq->kq_port_event);
+
     int rv;
     uint_t nget = 1;
 
-retry_port_getn:
     reset_errno();
     dbg_printf("waiting for events (timeout=%p)", timeout);
-    rv = port_getn(kq->kq_port, &pe, 0, &nget, (struct timespec *) timeout);
+    rv = port_getn(kq->kq_port, pe, 1, &nget, (struct timespec *) timeout);
     dbg_printf("rv=%d errno=%d (%s) nget=%d", 
                 rv, errno, strerror(errno), nget);
     if (rv < 0) {
@@ -103,17 +103,6 @@ retry_port_getn:
         return (-1);
     }
 
-#error FIXME
-    // according to manpage, port_getn with max=0 will not block.
-    // will have to use max=1 and store the result in a TLS variable
-
-    /* WORKAROUND: Solaris sometimes returns immediately with no events
-       even when a NULL timeout has been provided. */
-    if (nget == 0 && rv == 0 && timeout == NULL) {
-        dbg_puts("WARNING: port_getn() returned no events and no error was indicated");
-        goto retry_port_getn;
-    }
-
     return (nget);
 }
 
@@ -121,33 +110,9 @@ int
 kevent_copyout(struct kqueue *kq, int nready,
         struct kevent *eventlist, int nevents)
 {
-    port_event_t *pe = &kq->kq_evt;
+    port_event_t *pe = (port_event_t *) pthread_getspecific(kq->kq_port_event);
     struct filter *filt;
-    struct timespec timeout;
     int rv;
-    uint_t nget = 1;
-
-    /* Retrieve an event */
-    timeout.tv_sec = 0;
-    timeout.tv_nsec = 0;
-    rv = port_getn(kq->kq_port, pe, 1, &nget, &timeout);
-    dbg_printf("rv=%d errno=%d nget=%d", rv, errno, nget);
-    if (rv < 0) {
-        if (errno == ETIME) {
-            dbg_puts("no events within the given timeout");
-            return (-1);
-        }
-        if (errno == EINTR) {
-            dbg_puts("signal caught");
-            return (-1);
-        }
-        dbg_perror("port_get(2)");
-        return (-1);
-    }
-    if (nget == 0) {
-            dbg_puts("no events returned");
-            return (-1);
-    }
 
     dbg_printf("%s", port_event_dump(pe));
     switch (pe->portev_source) {
