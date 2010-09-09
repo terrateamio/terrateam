@@ -74,6 +74,7 @@ post_configure_hook() {
     	  kevent="src/solaris/kevent.c"
           evfilt_signal="src/posix/signal.c"
           evfilt_timer="src/solaris/timer.c"
+          evfilt_user="src/solaris/user.c"
           eventfd=""
     fi      
 
