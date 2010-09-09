@@ -135,7 +135,17 @@ The EVFILT_PROC filter only supports the NOTE_EXIT flag, and the <code>ident</co
 Here are the issues to be aware of when using this library under Solaris:<br>
 
 <ol>
-<li>Solaris 10 or newer is required.</li>
+
+<li>
+Solaris 10 or newer is required. It should work with OpenSolaris and other Solaris-based distributions, but has not been tested.
+</li>
+
+<li>
+The EVFILT_VNODE filter is not implemented. This will eventually be implemented
+using the PORT_SOURCE_FILE mechanism described <a href="http://blogs.sun.com/pra
+ks/entry/file_events_notification">here</a>.
+</li>
+
 <li>The EVFILT_TIMER filter is implemented using high-resolution timers. In order to use high-resolution timers, the calling process must hold the PRIV_PROC_CLOCK_HIGHRES privilege. This privilege is not granted to ordinary users by default. It can be granted to individual users by running the following command as root:<br>
 <pre>
 # usermod -K defaultpriv=basic,proc_clock_highres $user
