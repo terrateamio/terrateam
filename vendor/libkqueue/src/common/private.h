@@ -20,7 +20,9 @@
 #if defined (__SVR4) && defined (__sun)
 # define SOLARIS
 # include <port.h>
+  /* Used to set portev_events for PORT_SOURCE_USER */
 # define X_PORT_SOURCE_SIGNAL  101
+# define X_PORT_SOURCE_USER    102
 #endif
 
 #include <errno.h>

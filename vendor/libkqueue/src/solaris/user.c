@@ -20,7 +20,7 @@
 int
 evfilt_user_init(struct filter *filt)
 {
-    return (-1);
+    return (0);
 }
 
 void
@@ -30,107 +30,33 @@ evfilt_user_destroy(struct filter *filt)
 }
 
 int
-evfilt_user_copyin(struct filter *filt, 
-        struct knote *dst, const struct kevent *src)
-{
-    return (-1);
-#if TODO
-    u_int ffctrl;
-    struct kevent *kev;
-    uint64_t counter;
-
-    if (src->flags & EV_ADD && KNOTE_EMPTY(dst)) 
-        memcpy(&dst->kev, src, sizeof(*src));
-    kev = &dst->kev;
-    if (src->flags & EV_ENABLE) {
-        dst->kev.flags &= ~EV_DISABLE;
-        /* FIXME: what happens if NOTE_TRIGGER is in fflags?
-           should the event fire? */
-    }
-    if (src->flags & EV_DISABLE)
-        dst->kev.flags |= EV_DISABLE;
-
-    /* FIXME: can oneshot be added after the knote is already created? */
-    if (src->flags & EV_ONESHOT)
-        dst->kev.flags |= EV_ONESHOT;
-
-    /* Excerpted from sys/kern/kern_event.c in FreeBSD HEAD */
-    ffctrl = kev->fflags & NOTE_FFCTRLMASK;
-    kev->fflags &= NOTE_FFLAGSMASK;
-    switch (ffctrl) {
-        case NOTE_FFNOP:
-            break;
-
-        case NOTE_FFAND:
-            kev->fflags &= src->fflags;
-            break;
-
-        case NOTE_FFOR:
-            kev->fflags |= src->fflags;
-            break;
-
-        case NOTE_FFCOPY:
-            kev->fflags = kev->fflags;
-            break;
-
-        default:
-            /* XXX Return error? */
-            break;
-    }
-
-    if ((!(dst->kev.flags & EV_DISABLE)) && src->fflags & NOTE_TRIGGER) {
-        counter = 1;
-        if (write(filt->kf_pfd, &counter, sizeof(counter)) < 0) {
-            if (errno != EAGAIN) {
-                dbg_printf("write(2): %s", strerror(errno));
-                return (-1);
-            }
-        }
-        dst->kev.fflags |= NOTE_TRIGGER;
-        dbg_puts("knote triggered");
-    }
-#endif
-    return (0);
-}
-
-int
 evfilt_user_copyout(struct filter *filt, 
             struct kevent *dst, 
             int maxevents)
 {
-    return (-1);
-#if TODO
-    struct knote *kn, *kn_next;
+    struct knote *kn;
     int nevents = 0;
-    uint64_t cur;
-
-    /* Reset the counter */
-    if (read(filt->kf_pfd, &cur, sizeof(cur)) < sizeof(cur)) {
-        dbg_printf("read(2): %s", strerror(errno));
-        return (-1);
-    }
-    dbg_printf("  counter=%llu", (unsigned long long) cur);
-
-    for (kn = LIST_FIRST(&filt->kf_watchlist); kn != NULL; kn = kn_next) {
-        kn_next = LIST_NEXT(kn, entries);
-
+  
+    for (kn = knote_dequeue(filt); kn != NULL; kn = knote_dequeue(filt)) {
         memcpy(dst, &kn->kev, sizeof(*dst));
         dst->fflags &= ~NOTE_FFCTRLMASK;     //FIXME: Not sure if needed
         dst->fflags &= ~NOTE_TRIGGER;
-        if (kn->kev.flags & EV_DISPATCH) 
-            KNOTE_DISABLE(kn);
         if (kn->kev.flags & EV_ADD) {
             /* NOTE: True on FreeBSD but not consistent behavior with
                       other filters. */
             dst->flags &= ~EV_ADD;
         }
-        if (kn->kev.flags & EV_ONESHOT) {
-
-            /* NOTE: True on FreeBSD but not consistent behavior with
-                      other filters. */
-            dst->flags &= ~EV_ONESHOT;  
-
-            knote_free(kn);
+        if (kn->kev.flags & EV_CLEAR)
+            kn->kev.fflags &= ~NOTE_TRIGGER;
+        /* FIXME: This shouldn't be necessary in Solaris...
+        if (kn->kev.flags & (EV_DISPATCH | EV_CLEAR | EV_ONESHOT))
+            eventfd_lower(filt->kf_efd);
+         */
+        if (kn->kev.flags & EV_DISPATCH) {
+            KNOTE_DISABLE(kn);
+            kn->kev.fflags &= ~NOTE_TRIGGER;
+        } else if (kn->kev.flags & EV_ONESHOT) {
+            knote_free(filt, kn);
         }
 
         dst++;
@@ -138,14 +64,100 @@ evfilt_user_copyout(struct filter *filt,
             break;
     }
 
+    /* This should normally never happen but is here for debugging */
+    if (nevents == 0) {
+        dbg_puts("spurious wakeup");
+        /* FIXME: NOT IMPLEMENTED: eventfd_lower(filt->kf_efd); */
+    }
+
     return (nevents);
+}
+
+
+int
+evfilt_user_knote_create(struct filter *filt, struct knote *kn)
+{
+#if TODO
+    u_int ffctrl;
+
+    //determine if EV_ADD + NOTE_TRIGGER in the same kevent will cause a trigger */
+    if ((!(dst->kev.flags & EV_DISABLE)) && src->fflags & NOTE_TRIGGER) {
+        dst->kev.fflags |= NOTE_TRIGGER;
+        eventfd_raise(filt->kf_pfd);
+    }
+
 #endif
+    return (0);
+}
+
+int
+evfilt_user_knote_modify(struct filter *filt, struct knote *kn, 
+        const struct kevent *kev)
+{
+    unsigned int ffctrl;
+    unsigned int fflags;
+
+    /* Excerpted from sys/kern/kern_event.c in FreeBSD HEAD */
+    ffctrl = kev->fflags & NOTE_FFCTRLMASK;
+    fflags = kev->fflags & NOTE_FFLAGSMASK;
+    switch (ffctrl) {
+        case NOTE_FFNOP:
+            break;
+
+        case NOTE_FFAND:
+            kn->kev.fflags &= fflags;
+            break;
+
+        case NOTE_FFOR:
+            kn->kev.fflags |= fflags;
+            break;
+
+        case NOTE_FFCOPY:
+            kn->kev.fflags = fflags;
+            break;
+
+        default:
+            /* XXX Return error? */
+            break;
+    }
+
+    if ((!(kn->kev.flags & EV_DISABLE)) && kev->fflags & NOTE_TRIGGER) {
+        kn->kev.fflags |= NOTE_TRIGGER;
+        knote_enqueue(filt, kn);
+        return (port_send(filt->kf_kqueue->kq_port, X_PORT_SOURCE_USER, NULL)); 
+    }
+
+    return (0);
+}
+
+int
+evfilt_user_knote_delete(struct filter *filt, struct knote *kn)
+{
+    return (0);
+}
+
+int
+evfilt_user_knote_enable(struct filter *filt, struct knote *kn)
+{
+    /* FIXME: what happens if NOTE_TRIGGER is in fflags?
+       should the event fire? */
+    return (0);
+}
+
+int
+evfilt_user_knote_disable(struct filter *filt, struct knote *kn)
+{
+    return (0);
 }
 
 const struct filter evfilt_user = {
-    0, //EVFILT_USER,
+    EVFILT_USER,
     evfilt_user_init,
     evfilt_user_destroy,
-    evfilt_user_copyin,
     evfilt_user_copyout,
+    evfilt_user_knote_create,
+    evfilt_user_knote_modify,
+    evfilt_user_knote_delete,
+    evfilt_user_knote_enable,
+    evfilt_user_knote_disable,   
 };
