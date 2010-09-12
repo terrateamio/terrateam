@@ -13,7 +13,7 @@ The source code for each release can be downloaded from <a href="dist">here</a>.
 <h2>Unreleased Development Version</h2>
 
 To checkout the Subversion repository, run the following command:
-<p>
+
 <code class=block>svn checkout svn://mark.heily.com/libkqueue/trunk libkqueue</code>
 
 m4_include(footer.m4)

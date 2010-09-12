@@ -9,7 +9,15 @@ all: clean $(SOURCES)
 
 %.html:
 	m4 -P < $@.in > $@
+	tidy -q -m $@
 	chmod 444 $@
 
 clean:
 	rm -f $(SOURCES)
+
+edit:
+	$(EDITOR) *.in
+
+install:
+	cp *.html *.css *.png ~/public_html/libkqueue/
+

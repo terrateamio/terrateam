@@ -6,7 +6,7 @@
     <meta http-equiv="Content-Language" content="en-us" />
 
     <title>libkqueue</title>
-    <link rel="stylesheet" href="default.css" type="text/css">
+    <link rel="stylesheet" href="default.css" type="text/css"/>
 </head>
 
 <body>
@@ -14,7 +14,7 @@
 <div class="content">
 <h1>libkqueue</h1>
 
-<hr>
+<hr/>
 <center>
 <a href="index.html">Overview</a> |
 <a href="download.html">Download</a> |
@@ -24,4 +24,4 @@
 <a href="links.html">Links</a>
 </center>
 
-<hr>
+<hr/>

@@ -78,9 +78,6 @@ dist:
 dist-upload: dist
 	scp $(PROGRAM)-$(VERSION).tar.gz $(DIST)
 
-publish-www:
-	cp -R www/* ~/public_html/libkqueue/
-
 clean:
 	rm -f tags *.a $(OBJS) *.so *.so.*
 	rm -rf pkg
