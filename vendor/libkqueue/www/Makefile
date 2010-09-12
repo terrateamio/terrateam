@@ -1,4 +1,4 @@
-SOURCES=download.html
+SOURCES=download.html index.html links.html usage.html support.html install.html
 
 all: clean $(SOURCES)
 
