@@ -1,0 +1,23 @@
+
+m4_include(header.m4)
+
+<h2>Mailing Lists</h2>
+
+There are two mailing lists: one for general discussion, and one for announcements.  If you subscribe to a mailing list through the web interface, you will need to sign up for a free Google account. If you prefer not to create a Google account, you can subscribe via email instead.
+<p>
+To subscribe to the general discussion group, visit the group's <a href="http://groups.google.com/group/libkqueue">web interface</a>, or send an email to <a href="mailto:libkqueue+subscribe@googlegroups.com">libkqueue+subscribe@googlegroups.com</a>. 
+<p>
+To subscribe to the low-traffic annoucements-only group, visit the group's <a href="http://groups.google.com/group/libkqueue-announce">web interface</a>, or send an email to <a href="mailto:libkqueue-announce+subscribe@googlegroups.com">libkqueue-announce+subscribe@googlegroups.com</a>. 
+<p>
+Please note that if you use multiple email addresses, Google Groups does not allow you to choose which email address will receive messages. The address on the <code>From:</code> line of the subscribe request will be used as the destination address.
+<p>
+To unsubscribe from either group, send an email to <code>[group name]+unsubscribe@googlegroups.com</code>. If you have any problems subscribing or unsubscribing, send a note to <a href="mailto:devel+libkqueue@heily.com">Mark Heily</a>.
+
+<h2>Bugs</h2>
+
+If you suspect that you have found a bug in libkqueue, please send an email report to the mailing list. If you can reproduce the bug, write a simple testcase and enable debugging output by setting the <code>KQUEUE_DEBUG=y</code> environment variable. Provide this debugging output and the code for the testcase in your bug report.
+
+<h2>Contact</h2>
+For more information, contact <a href="mailto:devel+libkqueue@heily.com">Mark Heily</a>.
+
+m4_include(footer.m4)

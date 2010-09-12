@@ -1,0 +1,49 @@
+
+m4_include(header.m4)
+
+<h2>Links</h2>
+
+<ul>
+
+<li>
+ <a href="http://people.freebsd.org/~jlemon/papers/kqueue.pdf">Kqueue: A generic and scalable event notification facility</a> [Lemon][PDF]
+</li>
+
+<li><a href="http://doc.geoffgarside.co.uk/kqueue/">Kqueues for Fun and Profit</a> [Werner]</li>
+
+<li>
+<a href="http://www.opensource.apple.com/source/xnu/xnu-1456.1.26/tools/tests/xnu_quick_test/kqueue_tests.c">XNU kqueue test program</a> - Demonstrates use of EVFILT_USER
+</li>
+
+<li>
+<a href="http://www.fsl.cs.sunysb.edu/~kolya/projects/">kqueue for linux</a> - abandoned port of kqueue to Linux circa 2002 <a href="http://www.fsl.cs.sunysb.edu/~kolya/pubs/kqueue_for_linux.pdf">[PDF]</a>.
+</li>
+
+</ul>
+
+<h3>Linux kernel event mechanisms</h3>
+
+<ul>
+<li><a href="http://linux.die.net/man/4/epoll">epoll</a>
+<li><a href="http://linux.die.net/man/7/inotify">inotify</a>
+<li><a href="http://linux.die.net/man/2/signalfd">signalfd</a>
+<li><a href="http://linux.die.net/man/2/signalfd">signalfd</a>
+<li><a href="http://linux.die.net/man/2/eventfd">eventfd</a>
+<li><a href="http://www.kernel.org/doc/man-pages/online/pages/man2/timerfd_create.2.html">timerfd</a>
+</ul>
+
+<h3>Solaris kernel event mechanisms</h3>
+
+<ul>
+<li>
+<a href="http://docs.sun.com/app/docs/doc/816-5168/port-create-3c?l=en&a=view&q=port_create">Solaris 10 port_create(3C) manual page</a>
+</li>
+
+<li>
+<a href="http://docs.sun.com/app/docs/doc/819-2243/port-create-3c?a=view">
+OpenSolaris port_create(3C) manual page</a>
+</li>
+
+</ul>
+
+m4_include(footer.m4)
