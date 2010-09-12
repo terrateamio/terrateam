@@ -36,7 +36,7 @@ m4_include(header.m4)
 
 <ul>
 <li>
-<a href="http://docs.sun.com/app/docs/doc/816-5168/port-create-3c?l=en&a=view&q=port_create">Solaris 10 port_create(3C) manual page</a>
+<a href="http://docs.sun.com/app/docs/doc/816-5168/port-create-3c?l=en&amp;a=view&amp;q=port_create">Solaris 10 port_create(3C) manual page</a>
 </li>
 
 <li>

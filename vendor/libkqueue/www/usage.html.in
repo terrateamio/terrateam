@@ -2,7 +2,8 @@ m4_include(header.m4)
 
 <h2>Usage</h2>
 
-Here are some issues to be aware of when using this library under any platform:<br>
+Here are some issues to be aware of when using this library under any platform:
+<br/>
 
 <ol>
 
@@ -18,7 +19,8 @@ The EVFILT_AIO filter is not implemented.
 </li>    
 
 <li>
-A signal handler is implicitly installed when a EVFILT_SIGNAL kevent is created. For compatibility with kernel-based <code>kqueue(2)</code>, programs must ignore signals that will generate kevents. After an EVFILT_SIGNAL kevent is created, a program must not modify the disposition of the associated signal. The following example shows the proper way to handle SIGUSR1 with a kevent:<p>
+A signal handler is implicitly installed when a EVFILT_SIGNAL kevent is created. For compatibility with kernel-based <code>kqueue(2)</code>, programs must ignore signals that will generate kevents. After an EVFILT_SIGNAL kevent is created, a program must not modify the disposition of the associated signal. The following example shows the proper way to handle SIGUSR1 with a kevent:
+
 <pre>
 int main() {
   int kqfd;
@@ -26,19 +28,19 @@ int main() {
 
   kqfd = kqueue();
   signal(SIGUSR1, SIG_IGN);
-  EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
-  kevent(kqfd, &kev, 1, NULL, 0, NULL);
+  EV_SET(&amp;kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+  kevent(kqfd, &amp;kev, 1, NULL, 0, NULL);
 }
 </pre>
 </ol>
 
 <h3>Linux</h3>
 
-There are several compatibility issues to be aware of when using this library under Linux:<br>
+There are several compatibility issues to be aware of when using this library under Linux:<br/>
 
 <ol>
 
-<li>The NOTE_LOWAT flag is not supported. According to <i>socket(7)</i>,<br>
+<li>The NOTE_LOWAT flag is not supported. According to <i>socket(7)</i>,<br/>
 <pre style="blockquote">
 "The select(2) and poll(2) system  calls  currently  do not respect the 
 SO_RCVLOWAT setting on Linux, and mark a socket readable when even  a  
@@ -68,7 +70,7 @@ The EVFILT_PROC filter only supports the NOTE_EXIT flag, and the <code>ident</co
 </ol>
 
 <h3>Solaris</h3>
-Here are the issues to be aware of when using this library under Solaris:<br>
+Here are the issues to be aware of when using this library under Solaris:<br/>
 
 <ol>
 
@@ -78,11 +80,10 @@ Solaris 10 or newer is required. It should work with OpenSolaris and other Solar
 
 <li>
 The EVFILT_VNODE filter is not implemented. This will eventually be implemented
-using the PORT_SOURCE_FILE mechanism described <a href="http://blogs.sun.com/pra
-ks/entry/file_events_notification">here</a>.
+using the PORT_SOURCE_FILE mechanism described <a href="http://blogs.sun.com/praks/entry/file_events_notification">here</a>.
 </li>
 
-<li>The EVFILT_TIMER filter is implemented using high-resolution timers. In order to use high-resolution timers, the calling process must hold the PRIV_PROC_CLOCK_HIGHRES privilege. This privilege is not granted to ordinary users by default. It can be granted to individual users by running the following command as root:<br>
+<li>The EVFILT_TIMER filter is implemented using high-resolution timers. In order to use high-resolution timers, the calling process must hold the PRIV_PROC_CLOCK_HIGHRES privilege. This privilege is not granted to ordinary users by default. It can be granted to individual users by running the following command as root:<br/>
 <pre>
 # usermod -K defaultpriv=basic,proc_clock_highres $user
 </pre>
@@ -126,7 +127,6 @@ Here are the steps to use libkqueue in your program if you use an ordinary Makef
 <li>Add <code>&lsquo;pkg-config libkqueue --libs&lsquo;</code> to the LDADD variable.
 <li>Add <code>#include &lt;sys/event.h&gt;</code> to the source code.
 </ol>
-<p>
 
 <h3>Autoconf/Automake/Libtool</h3>
 
@@ -154,11 +154,10 @@ foo_LDADD+=$(KQUEUE_LIBS)
 </li>
 </ol>    
 
-<p>Instead of using the <code>$(KQUEUE_LIBS)</code> variable, you could just add <code>libkqueue.la</code> to your programs LDADD variable.
+Instead of using the <code>$(KQUEUE_LIBS)</code> variable, you could just add <code>libkqueue.la</code> to your programs LDADD variable.
 
 <h3>Threads</h3>
 
 libkqueue uses one or more helper threads, so all programs that link with libkqueue must also link against the pthreads library. Calls to <code>kqueue()</code> and <code>kevent()</code> are safe to be used from multiple threads.
 
 m4_include(footer.m4)
-
