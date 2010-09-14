@@ -3,9 +3,10 @@
 #     http://tldp.org/LDP/LG/issue22/using_m4.html
 #
 
-SOURCES=download.html index.html links.html usage.html support.html install.html
+OBJS=download.html index.html links.html usage.html support.html install.html
+DESTDIR=~/public_html/libkqueue
 
-all: clean $(SOURCES)
+all: clean $(OBJS)
 
 %.html:
 	m4 -P < $@.in > $@
@@ -13,11 +14,12 @@ all: clean $(SOURCES)
 	chmod 444 $@
 
 clean:
-	rm -f $(SOURCES)
+	rm -f $(OBJS)
 
 edit:
 	$(EDITOR) *.in
 
 install:
+	cd $(DESTDIR) && rm -f $(OBJS)
 	cp *.html *.css *.png ~/public_html/libkqueue/
 
