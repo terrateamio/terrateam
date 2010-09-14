@@ -166,7 +166,7 @@ int
 evfilt_timer_knote_modify(struct filter *filt, struct knote *kn, 
         const struct kevent *kev)
 {
-    return (0); /* STUB */
+    return (-1); /* STUB */
 }
 
 int
