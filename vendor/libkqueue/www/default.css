@@ -5,7 +5,7 @@
     div.content {
         background: white;
         margin: 0 3em;
-        padding: 0 2em;
+        padding: 0 3em;
     }
     .blockquote { margin-right: 2em }
     code.block { 
@@ -20,7 +20,7 @@
         text-align: center;
     }
     h2 {
-        margin-left: -1em;
+        //margin-left: -1em;
         padding-top: 0.5em;
     }
     ol {
