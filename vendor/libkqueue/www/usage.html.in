@@ -70,12 +70,23 @@ The EVFILT_PROC filter only supports the NOTE_EXIT flag, and the <code>ident</co
 </ol>
 
 <h3>Solaris</h3>
+
 Here are the issues to be aware of when using this library under Solaris:<br/>
 
 <ol>
 
 <li>
 Solaris 10 or newer is required. It should work with OpenSolaris and other Solaris-based distributions, but has not been tested.
+</li>
+
+<li>
+When an EVFILT_READ event is generated, the <code>data</code> field 
+is set to 1 regardless of how many bytes are available to read.
+</li>
+
+<li>
+When an EVFILT_TIMER event is generated, the <code>data</code> field 
+is set to 1 regardless of how many times the timer has been triggered.
 </li>
 
 <li>

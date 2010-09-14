@@ -79,49 +79,6 @@ evfilt_socket_destroy(struct filter *filt)
     ;
 }
 
-#if DEADWOOD
-// split into multiple funcs
-int
-evfilt_socket_copyin(struct filter *filt, 
-        struct knote *dst, const struct kevent *src)
-{
-    int port, events;
-    int rv;
-
-    port = filt->kf_kqueue->kq_port;
-
-    /* Not supported or not implemented */
-    if (src->flags & EV_CLEAR) {
-        dbg_puts("attempt to use unsupported mechanism");
-        return (-1);
-    }
-
-    if (src->filter == EVFILT_READ)
-        events = POLLIN;
-    else
-        events = POLLOUT;
-
-    if (src->flags & EV_DELETE || src->flags & EV_DISABLE) {
-        rv = port_dissociate(port, PORT_SOURCE_FD, src->ident);
-        if (rv < 0) {
-            dbg_perror("port_dissociate(2)");
-            return (-1);
-        }
-    }
-    if (src->flags & EV_ENABLE || src->flags & EV_ADD) {
-        rv = port_associate(port, PORT_SOURCE_FD, 
-                src->ident, events, src->udata);
-        if (rv < 0) {
-            dbg_perror("port_associate(2)");
-            return (-1);
-        }
-    }
-    /* XXX-TODO support modifying an existing watch */
-
-    return (0);
-}
-#endif
-
 int
 evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 {
@@ -195,6 +152,7 @@ evfilt_socket_copyout(struct filter *filt,
                 dst->data = 0;
             }
 #else
+            /* Workaround */
             dst->data = 1;
 #endif
         }
