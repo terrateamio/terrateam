@@ -22,4 +22,8 @@ The Solaris port requires Solaris 10 or higher, and uses the GNU compiler and to
 
 To build on Nexenta, the <code>gcc-multilib</code> package is required.
 
+<h3>RHEL 5</h3>
+
+Required packages: glibc-headers, gcc
+
 m4_include(footer.m4)
