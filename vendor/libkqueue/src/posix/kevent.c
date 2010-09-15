@@ -19,6 +19,8 @@
 #include "sys/event.h"
 #include "private.h"
 
+const struct filter evfilt_proc = EVFILT_NOTIMPL;
+
 int
 kevent_wait(struct kqueue *kq, const struct timespec *timeout)
 {

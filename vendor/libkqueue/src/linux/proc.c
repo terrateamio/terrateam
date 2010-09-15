@@ -230,7 +230,7 @@ evfilt_proc_knote_disable(struct filter *filt, struct knote *kn)
     return (0); /* STUB */
 }
 
-const struct filter evfilt_proc = {
+const struct filter evfilt_proc_DEADWOOD = {
     0, //XXX-FIXME broken: EVFILT_PROC,
     evfilt_proc_init,
     evfilt_proc_destroy,
