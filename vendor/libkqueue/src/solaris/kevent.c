@@ -21,6 +21,8 @@
 #include "sys/event.h"
 #include "private.h"
 
+const struct filter evfilt_vnode = EVFILT_NOTIMPL;
+
 /* Dump a poll(2) events bitmask */
 static char *
 poll_events_dump(short events)

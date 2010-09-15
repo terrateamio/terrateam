@@ -147,6 +147,9 @@ struct filter {
     struct kqueue *kf_kqueue;
 };
 
+/* Use this to declare a filter that is not implemented */
+#define EVFILT_NOTIMPL { -1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+
 struct kqueue {
     int             kq_sockfd[2];
     struct filter   kq_filt[EVFILT_SYSCOUNT];
