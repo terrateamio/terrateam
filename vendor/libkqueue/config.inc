@@ -48,7 +48,7 @@ post_configure_hook() {
     finalize target "$target"
 
     kevent="src/posix/kevent.c"
-    evfilt_signal="src/$target/signal.c"
+    evfilt_signal="src/posix/signal.c"
     evfilt_proc="src/$target/proc.c"
     evfilt_socket="src/$target/socket.c"
     evfilt_timer="src/$target/timer.c"
@@ -57,14 +57,14 @@ post_configure_hook() {
     eventfd="src/posix/eventfd.c"
 
     if [ $target = "linux" ] ; then
-      if [ "$have_sys_signalfd_h" != "yes" ] ; then
-          evfilt_signal="src/posix/signal.c"
-      fi
-          evfilt_signal="src/posix/signal.c" #XXX-FIXME TESTING
+      # FIXME: not tested
+      #if [ "$have_sys_signalfd_h" = "yes" ] ; then
+      #    evfilt_signal="src/linux/signal.c"
+      #fi
       if [ "$have_sys_timerfd_h" != "yes" ] ; then
           evfilt_timer="src/posix/timer.c"
       fi
-      if [ "$have_sys_eventfd_h" != "yes" ] ; then
+      if [ "$have_sys_eventfd_h" = "yes" ] ; then
           eventfd="src/linux/eventfd.c"
       fi
     fi      
@@ -72,7 +72,6 @@ post_configure_hook() {
     if [ $target = "solaris" ] ; then
           cflags="$cflags -D__EXTENSIONS__"
     	  kevent="src/solaris/kevent.c"
-          evfilt_signal="src/posix/signal.c"
           evfilt_timer="src/solaris/timer.c"
           evfilt_user="src/solaris/user.c"
           evfilt_proc=""
