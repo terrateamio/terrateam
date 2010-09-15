@@ -49,7 +49,9 @@ epoll_event_dump(struct epoll_event *evt)
     snprintf(&buf[0], 128, " { data = %p, events = ", evt->data.ptr);
     EPEVT_DUMP(EPOLLIN);
     EPEVT_DUMP(EPOLLOUT);
+#if defined(HAVE_EPOLLRDHUP)
     EPEVT_DUMP(EPOLLRDHUP);
+#endif
     EPEVT_DUMP(EPOLLONESHOT);
     EPEVT_DUMP(EPOLLET);
     strcat(&buf[0], "}\n");
@@ -122,8 +124,13 @@ evfilt_socket_copyout(struct filter *filt,
         kn = knote_lookup(filt, ev->data.fd);
         if (kn != NULL) {
             memcpy(dst, &kn->kev, sizeof(*dst));
+#if defined(HAVE_EPOLLRDHUP)
             if (ev->events & EPOLLRDHUP || ev->events & EPOLLHUP)
                 dst->flags |= EV_EOF;
+#else
+            if (ev->events & EPOLLHUP)
+                dst->flags |= EV_EOF;
+#endif
             if (ev->events & EPOLLERR)
                 dst->fflags = 1; /* FIXME: Return the actual socket error */
           
@@ -171,7 +178,11 @@ evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 
     /* Convert the kevent into an epoll_event */
     if (kn->kev.filter == EVFILT_READ)
+#if defined(HAVE_EPOLLRDHUP)
         kn->data.events = EPOLLIN | EPOLLRDHUP;
+#else
+        kn->data.events = EPOLLIN;
+#endif
     else
         kn->data.events = EPOLLOUT;
     if (kn->kev.flags & EV_ONESHOT || kn->kev.flags & EV_DISPATCH)

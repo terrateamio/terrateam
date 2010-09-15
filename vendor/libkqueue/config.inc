@@ -29,6 +29,9 @@ pre_configure_hook() {
 
   libdepends=" -L$libdir"
   if [ $target = "linux" ] ; then
+
+      check_symbol sys/epoll.h EPOLLRDHUP
+
       # Actually a GCC 4.X dependency
       cflags="$cflags -fvisibility=hidden"
 
@@ -51,7 +54,7 @@ post_configure_hook() {
     evfilt_signal="src/posix/signal.c"
     evfilt_proc="src/$target/proc.c"
     evfilt_socket="src/$target/socket.c"
-    evfilt_timer="src/$target/timer.c"
+    evfilt_timer="src/posix/timer.c"
     evfilt_user="src/posix/user.c"
     evfilt_vnode="src/$target/vnode.c"
     eventfd="src/posix/eventfd.c"
@@ -61,8 +64,8 @@ post_configure_hook() {
       #if [ "$have_sys_signalfd_h" = "yes" ] ; then
       #    evfilt_signal="src/linux/signal.c"
       #fi
-      if [ "$have_sys_timerfd_h" != "yes" ] ; then
-          evfilt_timer="src/posix/timer.c"
+      if [ "$have_sys_timerfd_h" = "yes" ] ; then
+          evfilt_timer="src/linux/timer.c"
       fi
       if [ "$have_sys_eventfd_h" = "yes" ] ; then
           eventfd="src/linux/eventfd.c"

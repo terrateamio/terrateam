@@ -43,7 +43,7 @@ static int
 update_timeres(struct filter *filt, struct knote *kn)
 {
     struct itimerspec tval;
-    u_int cur = filt->kf_timeres;
+    unsigned int cur = filt->kf_timeres;
 
     dbg_printf("new timer interval = %d", cur);
     filt->kf_timeres = cur;
