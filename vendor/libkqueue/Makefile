@@ -108,16 +108,17 @@ edit: tags
 cscope: tags
 	cscope $(SOURCES) $(HEADERS)
 
-rpm: clean $(DISTFILE)
+# Creates an ~/rpmbuild tree
+rpmbuild:
+	mkdir -p $$HOME/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+	grep _topdir $$HOME/.rpmmacros || \
+           echo "%_topdir %(echo $$HOME/rpmbuild)" >> $$HOME/.rpmmacros
+
+rpm: rpmbuild clean $(DISTFILE)
 	mkdir -p pkg
-	rm -rf rpm
-	mkdir -p rpm/BUILD rpm/RPMS rpm/SOURCES rpm/SPECS rpm/SRPMS
-	mkdir -p rpm/RPMS/i386 rpm/RPMS/x86_64
-	cp $(DISTFILE) rpm/SOURCES 
-	rpmbuild -bb --buildroot=`pwd`/rpm rpm.spec
-	mv ./rpm/RPMS/* .
-	rm -rf rpm
-	rmdir i386 x86_64    # WORKAROUND: These aren't supposed to exist
+	cp $(DISTFILE) $$HOME/rpmbuild/SOURCES 
+	rpmbuild -bb rpm.spec
+	find $$HOME/rpmbuild -name '$(PROGRAM)-$(VERSION)*.rpm' -exec mv {} ./pkg \;
 
 deb: clean $(DISTFILE)
 	mkdir pkg && cd pkg ; \

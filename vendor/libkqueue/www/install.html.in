@@ -24,6 +24,10 @@ To build on Nexenta, the <code>gcc-multilib</code> package is required.
 
 <h3>RHEL 5</h3>
 
+<pre>
 Required packages: glibc-headers, gcc
+
+Recommended packages: rpm-build
+</pre>
 
 m4_include(footer.m4)
