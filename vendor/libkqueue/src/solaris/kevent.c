@@ -22,6 +22,7 @@
 #include "private.h"
 
 const struct filter evfilt_vnode = EVFILT_NOTIMPL;
+const struct filter evfilt_proc  = EVFILT_NOTIMPL;
 
 /* Dump a poll(2) events bitmask */
 static char *
