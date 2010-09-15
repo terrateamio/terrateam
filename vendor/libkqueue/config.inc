@@ -75,6 +75,8 @@ post_configure_hook() {
           evfilt_signal="src/posix/signal.c"
           evfilt_timer="src/solaris/timer.c"
           evfilt_user="src/solaris/user.c"
+          evfilt_proc=""
+          evfilt_vnode=""
           eventfd=""
     fi      
 
