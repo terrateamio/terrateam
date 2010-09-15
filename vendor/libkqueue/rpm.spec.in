@@ -14,14 +14,6 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-%define _topdir        @@CWD@@/rpm
-%define _builddir      %{_topdir}/BUILD
-%define _rpmdir        %{_topdir}/RPMS
-%define _sourcedir     %{_topdir}/SOURCES
-%define _specdir       %{_topdir}/SPECS
-%define _srcrpmdir     %{_topdir}/SRPMS
-%define _tmppath       %{_topdir}/tmp
-
 Name:       @@PROGRAM@@
 Summary:    @@PKG_SUMMARY@@
 Version:    @@VERSION@@
@@ -30,7 +22,7 @@ License:    @@LICENSE@@
 Vendor:     @@AUTHOR@@
 Group:      System Environment/Libraries
 Source0:    %{name}-%version.tar.gz
-#BuildRoot:  %{_tmppath}/%{name}-%{version}-build
+BuildRoot:  %{_tmppath}/%{name}-%{version}-build
 
 %description
 @@PKG_DESCRIPTION@@
