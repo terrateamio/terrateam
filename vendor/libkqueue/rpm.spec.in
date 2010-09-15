@@ -14,8 +14,13 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-%define _topdir ./rpm
-%define _rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm
+%define _topdir        @@CWD@@/rpm
+%define _builddir      %{_topdir}/BUILD
+%define _rpmdir        %{_topdir}/RPMS
+%define _sourcedir     %{_topdir}/SOURCES
+%define _specdir       %{_topdir}/SPECS
+%define _srcrpmdir     %{_topdir}/SRPMS
+%define _tmppath       %{_topdir}/tmp
 
 Name:       @@PROGRAM@@
 Summary:    @@PKG_SUMMARY@@
@@ -24,22 +29,23 @@ Release:    1
 License:    @@LICENSE@@
 Vendor:     @@AUTHOR@@
 Group:      System Environment/Libraries
-Source0:   %{name}-%version.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-build
+Source0:    %{name}-%version.tar.gz
+#BuildRoot:  %{_tmppath}/%{name}-%{version}-build
 
 %description
 @@PKG_DESCRIPTION@@
 
 %prep
-tar zxvf ../SOURCES/@@PROGRAM@@-@@VERSION@@.tar.gz
-mv @@PROGRAM@@-@@VERSION@@/* .
+%setup -q -n @@PROGRAM@@-@@VERSION@@
 
 %build
 ./configure --prefix=/usr
 make
 
 %install
-make DESTDIR=%buildroot install
+make DESTDIR=$RPM_BUILD_ROOT install
+gzip $RPM_BUILD_ROOT/usr/share/man/man2/kqueue.2
+gzip $RPM_BUILD_ROOT/usr/share/man/man2/kevent.2
 
 %clean
 [ ${RPM_BUILD_ROOT} != "/" ] && rm -rf ${RPM_BUILD_ROOT}
@@ -55,6 +61,8 @@ make DESTDIR=%buildroot install
 
 /usr/include/kqueue/sys/event.h
 /usr/lib/libkqueue.so
+/usr/lib/libkqueue.so.0
+/usr/lib/libkqueue.so.0.0
 /usr/lib/libkqueue.la
 /usr/lib/libkqueue.a
 /usr/lib/pkgconfig/libkqueue.pc

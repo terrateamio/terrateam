@@ -109,15 +109,15 @@ cscope: tags
 	cscope $(SOURCES) $(HEADERS)
 
 rpm: clean $(DISTFILE)
-	rm -rf rpm *.rpm *.deb
+	mkdir -p pkg
+	rm -rf rpm
 	mkdir -p rpm/BUILD rpm/RPMS rpm/SOURCES rpm/SPECS rpm/SRPMS
 	mkdir -p rpm/RPMS/i386 rpm/RPMS/x86_64
 	cp $(DISTFILE) rpm/SOURCES 
-	rpmbuild -bb rpm.spec
+	rpmbuild -bb --buildroot=`pwd`/rpm rpm.spec
 	mv ./rpm/RPMS/* .
 	rm -rf rpm
 	rmdir i386 x86_64    # WORKAROUND: These aren't supposed to exist
-	fakeroot alien --scripts *.rpm
 
 deb: clean $(DISTFILE)
 	mkdir pkg && cd pkg ; \

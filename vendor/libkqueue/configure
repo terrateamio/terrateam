@@ -248,6 +248,7 @@ subst_vars() {
   echo "Creating $outfile"
   rm -f $outfile
   sed -e "
+       s,@@CWD@@,`pwd`,g;
        s,@@PROGRAM@@,$program,g;
        s,@@VERSION@@,$version,g;
        s,@@PREFIX@@,$prefix,g;
