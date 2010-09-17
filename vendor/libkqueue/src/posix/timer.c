@@ -30,108 +30,243 @@
 #include "sys/event.h"
 #include "private.h"
 
-static void timer_convert(struct itimerspec *dst, int src);
-
-struct evfilt_data {
-    int dummy;
+/* A request to sleep for a certain time */
+struct sleepreq {
+    int         pfd;            /* fd to poll for ACKs */
+    int         wfd;            /* fd to wake up when sleep is over */
+    uintptr_t   ident;          /* from kevent */
+    intptr_t    interval;       /* sleep time, in milliseconds */
+    struct sleepstat *stat;
 };
 
-/*
- * Determine the smallest interval used by active timers.
- */
-static int
-update_timeres(struct filter *filt, struct knote *kn)
+/* Information about a successful sleep operation */
+struct sleepinfo {
+    uintptr_t   ident;          /* from kevent */
+    uintptr_t   counter;        /* number of times the timer expired */
+};
+
+static void *
+sleeper_thread(void *arg)
 {
-    struct itimerspec tval;
-    unsigned int cur = filt->kf_timeres;
+    struct sleepreq sr;
+    struct sleepinfo si;
+    struct timespec req, rem;
+    sigset_t        mask;
+    ssize_t         cnt;
+    bool            cts = true;     /* Clear To Send */
+    char            buf[1];
 
-    dbg_printf("new timer interval = %d", cur);
-    filt->kf_timeres = cur;
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
-    /* Convert from miliseconds to seconds+nanoseconds */
-    timer_convert(&tval, cur);
-    //if (timerfd_settime(filt->kf_pfd, 0, &tval, NULL) < 0) {
-    //    dbg_printf("signalfd(2): %s", strerror(errno));
-    //    return (-1);
-   // }
+    /* Copyin the request */
+    memcpy(&sr, arg, sizeof(sr));
+    free(arg);
 
-    //FIXME
+    /* Initialize the response */
+    si.ident = sr.ident;
+    si.counter = 0;
+
+    /* Convert milliseconds into seconds+nanoseconds */
+    req.tv_sec = sr.interval / 1000;
+    req.tv_nsec = (sr.interval % 1000) * 1000000;
+
+    /* Block all signals */
+    sigfillset(&mask);
+    (void) pthread_sigmask(SIG_BLOCK, &mask, NULL);
+
+    for (;;) {
+
+        /* Sleep */
+        if (nanosleep(&req, &rem) < 0) {
+            //TODO: handle eintr, spurious wakeups
+            dbg_perror("nanosleep(2)");
+        }
+        si.counter++;
+        dbg_printf(" -------- sleep over (CTS=%d)----------", cts);
+
+        /* Test if the previous wakeup has been acknowledged */
+        if (!cts) {
+            cnt = read(sr.wfd, &buf, 1);
+            if (cnt < 0) {
+                if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                    ;
+                } else {
+                    dbg_perror("read(2)");
+                    break;
+                }
+            } else if (cnt == 0) {
+                dbg_perror("short read(2)");
+                break;
+            } else {
+                cts = true;
+            }
+        }
+
+        /* Wake up kevent waiters if they are ready */
+        if (cts) {
+            cnt = write(sr.wfd, &si, sizeof(si));
+            if (cnt < 0) {
+                /* FIXME: handle EAGAIN and EINTR */
+                dbg_perror("write(2)");
+            } else if (cnt < sizeof(si)) {
+                dbg_puts("FIXME: handle short write"); 
+            } 
+            cts = false;
+            si.counter = 0;
+        }
+    }
+
+    return (NULL);
+}
+
+static int
+_timer_create(struct filter *filt, struct knote *kn)
+{
+    pthread_attr_t attr;
+    struct sleepreq *req;
+    kn->kev.flags |= EV_CLEAR;
+
+    req = malloc(sizeof(*req));
+    if (req == NULL) {
+        dbg_perror("malloc");
+        return (-1);
+    }
+    req->pfd = filt->kf_pfd;
+    req->wfd = filt->kf_wfd;
+    req->ident = kn->kev.ident;
+    req->interval = kn->kev.data;
+
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    if (pthread_create(&kn->data.tid, &attr, sleeper_thread, req) != 0) {
+        dbg_perror("pthread_create");
+        pthread_attr_destroy(&attr);
+        free(req);
+        return (-1);
+    }
+    pthread_attr_destroy(&attr);
 
     return (0);
 }
 
-/* Convert milliseconds into seconds+nanoseconds */
-static void
-timer_convert(struct itimerspec *dst, int src)
+static int
+_timer_delete(struct knote *kn)
 {
-    struct timespec now;
-    time_t x, y;
-
-    /* Set the interval */
-    /* XXX-FIXME: this is probably horribly wrong :) */
-    x = src / 1000;
-    y = (src % 1000) * 1000000;
-    dst->it_interval.tv_sec = x;
-    dst->it_interval.tv_nsec = y;
-
-    /* Set the initial expiration */
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    dst->it_value.tv_sec = now.tv_sec + x;
-    dst->it_value.tv_nsec = now.tv_nsec + 7;
+    if (pthread_cancel(kn->data.tid) != 0) {
+        /* Race condition: sleeper_thread exits before it is cancelled */
+        if (errno == ENOENT)
+            return (0);
+        dbg_perror("pthread_cancel(3)");
+        return (-1);
+    }
+    return (0);
 }
 
 int
 evfilt_timer_init(struct filter *filt)
 {
-    return filter_socketpair(filt);
+    int fd[2];
+
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, fd) < 0) {
+        dbg_perror("socketpair(3)");
+        return (-1);
+    }
+    if (fcntl(fd[0], F_SETFL, O_NONBLOCK) < 0
+        || fcntl(fd[1], F_SETFL, O_NONBLOCK) < 0) {
+        dbg_perror("fcntl(2)");
+        close(fd[0]);
+        close(fd[1]);
+        return (-1);
+    }
+
+    filt->kf_wfd = fd[0];
+    filt->kf_pfd = fd[1];
+
+    return (0);
 }
 
 void
 evfilt_timer_destroy(struct filter *filt)
 {
-    close (filt->kf_pfd);
+    (void) close(filt->kf_wfd);
+    (void) close(filt->kf_pfd);
 }
 
-#if DEADWOOD
 int
-evfilt_timer_copyin(struct filter *filt, 
-        struct knote *dst, const struct kevent *src)
+evfilt_timer_copyout(struct filter *filt, 
+            struct kevent *dst, 
+            int nevents)
 {
-    if (src->flags & EV_ADD && KNOTE_EMPTY(dst)) {
-        memcpy(&dst->kev, src, sizeof(*src));
-        dst->kev.flags |= EV_CLEAR;
-    }
-    if (src->flags & EV_ADD || src->flags & EV_ENABLE) {
-        if (update_timeres(filt) < 0)
-            return (-1);
-    }
-    if (src->flags & EV_DISABLE || src->flags & EV_DELETE) {
-        // TODO
+    struct sleepinfo    si;
+    ssize_t       cnt;
+    struct knote *kn;
+
+    /* Read the ident */
+    cnt = read(filt->kf_pfd, &si, sizeof(si));
+    if (cnt < 0) {
+        /* FIXME: handle EAGAIN and EINTR */
+        dbg_printf("read(2): %s", strerror(errno));
+        return (-1);
+    } else if (cnt < sizeof(si)) {
+        dbg_puts("error: short read");
+        return (-1);
     }
 
-    return (0);
+    /* Acknowlege receipt */
+    cnt = write(filt->kf_pfd, ".", 1);
+    if (cnt < 0) {
+        /* FIXME: handle EAGAIN and EINTR */
+        dbg_printf("write(2): %s", strerror(errno));
+        return (-1);
+    } else if (cnt < 1) {
+        dbg_puts("error: short write");
+        return (-1);
+    }
+
+    kn = knote_lookup(filt, si.ident);
+
+    /* Race condition: timer events remain queued even after
+       the knote is deleted. Ignore these events */
+    if (kn == NULL)
+        return (0);
+
+    dbg_printf("knote=%p", kn);
+    memcpy(dst, &kn->kev, sizeof(*dst));
+
+    dst->data = si.counter;
+
+    if (kn->kev.flags & EV_DISPATCH) {
+        KNOTE_DISABLE(kn);
+        _timer_delete(kn);
+    } else if (kn->kev.flags & EV_ONESHOT) {
+        _timer_delete(kn);
+        knote_free(filt, kn);
+    } 
+
+    return (1);
 }
-#endif
-
 
 int
 evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 {
-    kn->kev.flags |= EV_CLEAR;
-    return update_timeres(filt, kn);
+    return _timer_create(filt, kn);
 }
 
 int
 evfilt_timer_knote_modify(struct filter *filt, struct knote *kn, 
-                const struct kevent *kev)
+        const struct kevent *kev)
 {
-        return (0); /* STUB */
+    return (-1); /* STUB */
 }
 
 int
 evfilt_timer_knote_delete(struct filter *filt, struct knote *kn)
 {
-    return (-1); /* STUB */
+    if (kn->kev.flags & EV_DISABLE)
+        return (0);
+
+    dbg_printf("deleting timer # %d", (int) kn->kev.ident);
+    return _timer_delete(kn);
 }
 
 int
@@ -146,47 +281,6 @@ evfilt_timer_knote_disable(struct filter *filt, struct knote *kn)
     return evfilt_timer_knote_delete(filt, kn);
 }
 
-int
-evfilt_timer_copyout(struct filter *filt, 
-            struct kevent *dst, 
-            int nevents)
-{
-    //struct knote *kn;
-    uint64_t buf;
-    int i;
-    ssize_t n;
-
-    n = read(filt->kf_pfd, &buf, sizeof(buf));
-    if (n < 0 || n < sizeof(buf)) {
-        dbg_puts("invalid read from timerfd");
-        return (-1);
-    }
-    n = 1;  // KLUDGE
-
-    //KNOTELIST_FOREACH(kn, &filt->knl) {
-
-    for (i = 0, nevents = 0; i < n; i++) {
-#if FIXME
-        /* Want to have multiple timers, so maybe multiple timerfds... */
-        kn = knote_lookup(filt, sig[i].ssi_signo);
-        if (kn == NULL)
-            continue;
-
-        /* TODO: dst->data should be the number of times the signal occurred */
-        dst->ident = sig[i].ssi_signo;
-        dst->filter = EVFILT_SIGNAL;
-        dst->udata = kn->kev.udata;
-        dst->flags = 0; 
-        dst->fflags = 0;
-        dst->data = 1;  
-        dst++; 
-        nevents++;
-#endif
-    }
-
-    return (nevents);
-}
-
 const struct filter evfilt_timer = {
     EVFILT_TIMER,
     evfilt_timer_init,
@@ -197,5 +291,4 @@ const struct filter evfilt_timer = {
     evfilt_timer_knote_delete,
     evfilt_timer_knote_enable,
     evfilt_timer_knote_disable,     
-
 };

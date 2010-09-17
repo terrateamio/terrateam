@@ -60,6 +60,9 @@ uninstall:
 check: $(PROGRAM).a
 	cd test && ./configure && make check
 
+debug-check: clean $(PROGRAM).a
+	cd test && ./configure && KQUEUE_DEBUG=y make check
+
 $(DISTFILE): $(SOURCES) $(HEADERS)
 	mkdir $(PROGRAM)-$(VERSION)
 	cp  Makefile ChangeLog configure config.inc      \
@@ -110,7 +113,8 @@ cscope: tags
 
 # Creates an ~/rpmbuild tree
 rpmbuild:
-	mkdir -p $$HOME/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+	mkdir -p $$HOME/rpmbuild
+	cd $$HOME/rpmbuild && mkdir -p BUILD RPMS SOURCES SPECS SRPMS
 	grep _topdir $$HOME/.rpmmacros || \
            echo "%_topdir %(echo $$HOME/rpmbuild)" >> $$HOME/.rpmmacros
 
