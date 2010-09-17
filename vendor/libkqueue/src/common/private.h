@@ -104,6 +104,7 @@ struct knote {
             off_t     size;   /* Used by vnode */
         } vnode;
         timer_t       timerid;  
+        pthread_t     tid;          /* Used by posix/timer.c */
     } data;
     TAILQ_ENTRY(knote) event_ent;    /* Used by filter->kf_event */
     RB_ENTRY(knote)   kntree_ent;   /* Used by filter->kntree */
@@ -139,12 +140,11 @@ struct filter {
     struct eventfd *kf_efd;             /* Used by user.c */
     int       kf_pfd;                   /* fd to poll(2) for readiness */
     int       kf_wfd;                   /* fd to write when an event occurs */
-    unsigned int     kf_timeres;        /* timer resolution, in miliseconds */
-    sigset_t  kf_sigmask;
-    struct evfilt_data *kf_data;	/* filter-specific data */
+    sigset_t            kf_sigmask;
+    struct evfilt_data *kf_data;	    /* filter-specific data */
     RB_HEAD(knt, knote) kf_knote;
-    TAILQ_HEAD(, knote)  kf_event;       /* events that have occurred */
-    struct kqueue *kf_kqueue;
+    TAILQ_HEAD(, knote) kf_event;       /* events that have occurred */
+    struct kqueue      *kf_kqueue;
 };
 
 /* Use this to declare a filter that is not implemented */
