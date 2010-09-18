@@ -78,11 +78,12 @@ dist:
 	rm -f $(DISTFILE)
 	make $(DISTFILE)
 
-dist-upload: dist
-	scp $(PROGRAM)-$(VERSION).tar.gz $(DIST)
+dist-upload: $(DISTFILE)
+	scp $(DISTFILE) $(DIST)
 
 clean:
-	rm -f tags *.a $(OBJS) *.so *.so.*
+	rm -f tags *.a *.so *.so.*
+	find src -name '*.o' -exec rm {} \;
 	rm -rf pkg
 	cd test && make clean || true
 
