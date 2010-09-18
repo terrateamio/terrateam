@@ -1,4 +1,4 @@
-2010-09-18  v1.0  r340
+2010-09-18  v1.0  r341
 ------------------------------------------------------------------------
 
   * Support older Linux kernels that do not have the EPOLLRDHUP flag.
