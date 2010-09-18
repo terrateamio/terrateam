@@ -1,3 +1,16 @@
+2010-09-18  v1.0  r340
+------------------------------------------------------------------------
+
+  * Support older Linux kernels that do not have the EPOLLRDHUP flag.
+
+  * Add a portable implementation of the EVFILT_TIMER filter.
+
+  * Add Solaris to the list of supported platforms.
+
+  * Fixed the 'make rpm' target to work on CentOS 5.
+
+  * Modified the manpage to remove unimplemented features.
+
 2010-08-05  v0.9.3  r309
 ------------------------------------------------------------------------
 

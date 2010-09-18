@@ -8,14 +8,9 @@
 
  * Refactor kevent_copyin() to remove the goto statements.
 
- * Ensure that kevent_copyout() on Solaris does not rely on having
-   the filter lock. Linux has already been converted.
-
  * Fix the crasher w/ corruption in test/vnode.c
 
  * Add the kevent64() syscall as implemented on MacOS X. This guarantees
    that 64-bit values can be used in the 'udata' field on 32-bit platforms.
-
- * Include <sys/types.h> or convert u_int to uint32_t in event.h
 
  * Check other filters for the EV_DISPATCH bug that was fixed in r252.
