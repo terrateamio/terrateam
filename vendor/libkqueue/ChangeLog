@@ -1,3 +1,11 @@
+HEAD
+------------------------------------------------------------------------
+
+   * Add a counter that increments on each each kevent() call. When printing
+   debug information within kevent(), display the value of the counter.
+   This will be helpful when debugging a multithreaded program that may have
+   multiple kevent() calls executing in parallel.    (Credit: Julien Blache)
+
 2010-09-18  v1.0  r344
 ------------------------------------------------------------------------
 
