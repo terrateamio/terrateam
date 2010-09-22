@@ -237,23 +237,35 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         struct kevent *eventlist, int nevents,
         const struct timespec *timeout)
 {
+    static unsigned int _kevent_counter = 0;
     struct kqueue *kq;
     int rv, n, nret;
+    unsigned int myid;
+
+    if (KQUEUE_DEBUG) {
+        myid = __sync_add_and_fetch(&_kevent_counter, 1);
+        dbg_printf("--- kevent %u ---", myid);
+    } else {
+        myid = 0;
+    }
 
     nret = 0;
 
     kq = kqueue_get(kqfd);
     if (kq == NULL) {
         errno = ENOENT;
-        return (-1);
+        nret = -1;
+        goto out2;
     }
 
     rv = kqueue_validate(kq);
     if (rv < 0) {
-        return (-1);
+        nret = -1;
+        goto out2;
     } else if (rv == 0) {
         errno = EBADF;
-        return (-1);
+        nret = -1;
+        goto out2;
     }
 
     /*
@@ -263,7 +275,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         kqueue_lock(kq);
         rv = kevent_copyin(kq, changelist, nchanges, eventlist, nevents);
         kqueue_unlock(kq);
-        dbg_printf("changelist: rv=%d", rv);
+        dbg_printf("(%u) changelist: rv=%d", myid, rv);
         if (rv < 0)
             goto errout;
         if (rv > 0) {
@@ -284,7 +296,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         /* Wait for one or more events. */
         n = kevent_wait(kq, timeout);
         if (n < 0) {
-            dbg_puts("kevent_wait failed");
+	    dbg_printf("(%u) kevent_wait failed", myid);
             goto errout;
         }
         if (n == 0)
@@ -297,9 +309,9 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
     }
 
     if (KQUEUE_DEBUG) {
-        dbg_printf("returning %d events", nret);
+        dbg_printf("(%u) returning %d events", myid, nret);
         for (n = 0; n < nret; n++) {
-            dbg_printf("eventlist[%d] = %s", n, kevent_dump(&eventlist[n]));
+	    dbg_printf("(%u) eventlist[%d] = %s", myid, n, kevent_dump(&eventlist[n]));
         }
     }
 
@@ -310,5 +322,8 @@ errout:
 
 out:
     kqueue_put(kq);
+
+out2:
+    dbg_printf("--- END kevent %u ret %d ---", myid, nret);
     return (nret);
 }
