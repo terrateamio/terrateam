@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009 Mark Heily <mark@heily.com>
+# Copyright (c) 2009-2010 Mark Heily <mark@heily.com>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -22,10 +22,19 @@ License:    @@LICENSE@@
 Vendor:     @@AUTHOR@@
 Group:      System Environment/Libraries
 Source0:    %{name}-%version.tar.gz
-BuildRoot:  %{_tmppath}/%{name}-%{version}-build
 
 %description
 @@PKG_DESCRIPTION@@
+
+%package devel
+Summary: Header files, libraries and development documentation for %{name}
+Group: Development/Libraries
+Requires: %{name} = %{version}-%{release}
+
+%description devel
+This package contains the header files, static libraries and development
+documentation for %{name}. If you like to develop programs using %{name},
+you will need to install %{name}-devel.
 
 %prep
 %setup -q -n @@PROGRAM@@-@@VERSION@@
@@ -35,30 +44,32 @@ BuildRoot:  %{_tmppath}/%{name}-%{version}-build
 make
 
 %install
-make DESTDIR=$RPM_BUILD_ROOT install
+make DESTDIR=%{buildroot} install
 gzip $RPM_BUILD_ROOT/usr/share/man/man2/kqueue.2
 gzip $RPM_BUILD_ROOT/usr/share/man/man2/kevent.2
 
 %clean
-[ ${RPM_BUILD_ROOT} != "/" ] && rm -rf ${RPM_BUILD_ROOT}
+[ %{buildroot} != "/" ] && rm -rf %{buildroot}
 
-%post
-/sbin/ldconfig
-
-%postun
-/sbin/ldconfig
+%post -p /sbin/ldconfig
+%postun -p /sbin/ldconfig
 
 %files
 %defattr(-,root,root)
 
+/usr/lib/*.so
+/usr/lib/*.so.*
+
+%files devel
+%defattr(-,root,root)
+
 /usr/include/kqueue/sys/event.h
-/usr/lib/libkqueue.so
-/usr/lib/libkqueue.so.0
-/usr/lib/libkqueue.so.0.0
-/usr/lib/libkqueue.la
-/usr/lib/libkqueue.a
 /usr/lib/pkgconfig/libkqueue.pc
 /usr/share/man/man2/kqueue.2.gz
 /usr/share/man/man2/kevent.2.gz
+%exclude /usr/lib/*.la
+%exclude /usr/lib/*.a
 
 %changelog
+* @@RPM_DATE@@ Mark Heily <mark@heily.com> - @@VERSION@@-1
+- automatically generated spec file

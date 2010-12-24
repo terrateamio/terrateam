@@ -257,6 +257,7 @@ subst_vars() {
        s,@@MANDIR@@,$mandir,g;
        s,@@LIBDEPENDS@@,$libdepends,g;
        s,@@PKG_SUMMARY@@,$pkg_summary,g;
+       s,@@RPM_DATE@@,`date +'%a %b %d %Y'`,g;
        s,@@PKG_DESCRIPTION@@,$pkg_description,g;
        s,@@LICENSE@@,$license,g;
        s,@@AUTHOR@@,$author,g;
