@@ -57,12 +57,12 @@ gzip $RPM_BUILD_ROOT/usr/share/man/man2/kevent.2
 %files
 %defattr(-,root,root)
 
-/usr/lib/*.so
 /usr/lib/*.so.*
 
 %files devel
 %defattr(-,root,root)
 
+/usr/lib/*.so
 /usr/include/kqueue/sys/event.h
 /usr/lib/pkgconfig/libkqueue.pc
 /usr/share/man/man2/kqueue.2.gz
