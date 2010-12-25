@@ -42,7 +42,7 @@ you will need to install %{name}-devel.
 %setup -q -n @@PROGRAM@@-@@VERSION@@
 
 %build
-./configure --prefix=/usr
+./configure --prefix=/usr --libdir=%{_libdir}
 make
 
 %install
@@ -59,14 +59,14 @@ gzip $RPM_BUILD_ROOT/usr/share/man/man2/kevent.2
 %files
 %defattr(-,root,root)
 
-/usr/lib/*.so.*
+%{_libdir}/*.so.*
 
 %files devel
 %defattr(-,root,root)
 
-/usr/lib/*.so
+%{_libdir}/*.so
 /usr/include/kqueue/sys/event.h
-/usr/lib/pkgconfig/libkqueue.pc
+%{_libdir}/pkgconfig/libkqueue.pc
 /usr/share/man/man2/kqueue.2.gz
 /usr/share/man/man2/kevent.2.gz
 %exclude /usr/lib/*.la
