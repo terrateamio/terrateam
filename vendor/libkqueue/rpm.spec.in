@@ -23,7 +23,7 @@ Vendor:     @@AUTHOR@@
 Group:      System Environment/Libraries
 Source0:    %{name}-%version.tar.gz
 
-BuildRequires: make, glibc-devel
+BuildRequires: glibc-devel
 
 %description
 @@PKG_DESCRIPTION@@
