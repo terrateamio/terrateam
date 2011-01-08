@@ -149,16 +149,7 @@ diff:
 	   (cd ../.. ; $(DIFF) branches/stable trunk | less) ; \
     fi
 
-# Copy to/from the host to the Solaris guest VM
+# Used for testing on a Solaris guest VM
 #
-solaris-push:
-	ssh -p 2222 localhost 'rm -rf /export/home/mheily/libkqueue'
-	cd .. ; scp -rq -P 2222 trunk localhost:/export/home/mheily/libkqueue
-
-solaris-test: solaris-push
-	ssh -p 2222 localhost 'cd /export/home/mheily/libkqueue && /usr/sfw/bin/gmake distclean && ./configure && /usr/sfw/bin/gmake clean all check'
-
-solaris-pull:
-	scp -rq -P 2222 localhost:/export/home/mheily/libkqueue/\* .
-#
-#
+solaris-test:
+	make dist && scp -P 2222 libkqueue-1.0a.tar.gz localhost:/tmp && ssh -p 2222 localhost ". .profile ; cd /tmp ; rm -rf libkqueue-$(VERSION) ; gtar zxvf libkqueue-$(VERSION).tar.gz && cd libkqueue-$(VERSION) && ./configure && make && make check"

@@ -17,8 +17,6 @@ pre_configure_hook() {
          }
 
   
-  test "$target" = "linux" && cflags="$cflags -rdynamic"
-  test "$target" = "solaris" && ldadd="$ldadd -lsocket -lnsl -m64"
 
   check_symbol $sys_event_h EV_DISPATCH
   check_symbol $sys_event_h EV_RECEIPT
@@ -26,4 +24,17 @@ pre_configure_hook() {
   check_symbol $sys_event_h EVFILT_TIMER
   check_symbol $sys_event_h EVFILT_USER && \
      sources="$sources user.c"
+
+  if [ "$target" = "solaris" ] 
+  then
+      ldadd="$ldadd -lsocket -lnsl -m64"
+
+      check_symbol port.h PORT_SOURCE_FILE
+  fi
+
+  if [ "$target" = "linux" ] 
+  then
+      cflags="$cflags -rdynamic"
+  fi
+
 }

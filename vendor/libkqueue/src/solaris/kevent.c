@@ -81,16 +81,18 @@ port_event_dump(port_event_t *evt)
 }
 
 int
-kevent_wait(struct kqueue *kq, const struct timespec *timeout)
+kevent_wait(
+        struct event_buf *evbuf,
+        struct kqueue *kq, 
+        const struct timespec *timeout)
 {
-    port_event_t *pe = (port_event_t *) pthread_getspecific(kq->kq_port_event);
-
+    port_event_t pe;
     int rv;
     uint_t nget = 1;
 
     reset_errno();
     dbg_printf("waiting for events (timeout=%p)", timeout);
-    rv = port_getn(kq->kq_port, pe, 1, &nget, (struct timespec *) timeout);
+    rv = port_getn(kq->kq_port, &pe, 1, &nget, (struct timespec *) timeout);
     dbg_printf("rv=%d errno=%d (%s) nget=%d", 
                 rv, errno, strerror(errno), nget);
     if (rv < 0) {
@@ -106,18 +108,23 @@ kevent_wait(struct kqueue *kq, const struct timespec *timeout)
         return (-1);
     }
 
+    memcpy(&evbuf->pe, &pe, sizeof(pe));
+
     return (nget);
 }
 
 int
 kevent_copyout(struct kqueue *kq, int nready,
-        struct kevent *eventlist, int nevents)
+        struct kevent *eventlist, int nevents, 
+        struct event_buf *evbuf)
 {
-    port_event_t *pe = (port_event_t *) pthread_getspecific(kq->kq_port_event);
+    port_event_t  *pe = &evbuf->pe;
     struct filter *filt;
     int rv;
 
-    dbg_printf("%s", port_event_dump(pe));
+    memcpy(&kq->kq_port_event, pe, sizeof(*pe));
+
+    dbg_printf("kq_port_event=%s", port_event_dump(pe));
     switch (pe->portev_source) {
 	case PORT_SOURCE_FD:
         filt = pe->portev_user;

@@ -242,6 +242,12 @@ test_kevent_vnode_dispatch(void)
 void
 test_evfilt_vnode(int _kqfd)
 {
+
+#if (defined(__sun) && !defined(HAVE_PORT_SOURCE_FILE))
+    puts("**NOTE** EVFILT_VNODE is not supported on this version of Solaris");
+    return;
+#endif
+
     snprintf(testfile, sizeof(testfile), "/tmp/kqueue-test%d.tmp",
             testing_make_uid());
 
