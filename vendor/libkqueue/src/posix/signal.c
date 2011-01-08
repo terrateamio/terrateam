@@ -171,7 +171,7 @@ evfilt_signal_copyout(struct filter *filt,
     ssize_t n;
 
 #if defined(__sun__)
-    port_event_t *pe = (port_event_t *) pthread_getspecific(filt->kf_kqueue->kq_port_event);
+    port_event_t *pe = &filt->kf_kqueue->kq_port_event;
 
     s = (struct sentry *) pe->portev_user;
     sig = s - &sigtbl[0];

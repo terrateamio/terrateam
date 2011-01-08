@@ -123,7 +123,7 @@ evfilt_timer_copyout(struct filter *filt,
             struct kevent *dst, 
             int nevents)
 {
-    port_event_t *pe = (port_event_t *) pthread_getspecific(filt->kf_kqueue->kq_port_event);
+    port_event_t *pe = &filt->kf_kqueue->kq_port_event;
     long buf;
     timer_t timerid;
     struct knote *kn;

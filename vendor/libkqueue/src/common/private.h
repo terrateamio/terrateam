@@ -17,13 +17,9 @@
 #ifndef  _KQUEUE_PRIVATE_H
 #define  _KQUEUE_PRIVATE_H
 
-#if defined (__SVR4) && defined (__sun)
-# define SOLARIS
-# include <port.h>
-  /* Used to set portev_events for PORT_SOURCE_USER */
-# define X_PORT_SOURCE_SIGNAL  101
-# define X_PORT_SOURCE_USER    102
-#endif
+struct kqueue;
+struct kevent;
+struct evfilt_data;
 
 #include <errno.h>
 #include <pthread.h>
@@ -40,8 +36,8 @@
  */
 #ifdef __sun
 # include <atomic.h>
-# define atomic_inc      atomic_inc_32
-# define atomic_dec      atomic_dec_32
+# define atomic_inc      atomic_inc_32_nv
+# define atomic_dec      atomic_dec_32_nv
 #else
 # define atomic_inc(p)   __sync_add_and_fetch((p), 1)
 # define atomic_dec(p)   __sync_sub_and_fetch((p), 1)
@@ -80,10 +76,30 @@ extern int KQUEUE_DEBUG;
 # define reset_errno()           ;
 #endif 
 
+#if defined (__SVR4) && defined (__sun)
+# define SOLARIS
+# include <port.h>
+  /* Used to set portev_events for PORT_SOURCE_USER */
+# define X_PORT_SOURCE_SIGNAL  101
+# define X_PORT_SOURCE_USER    102
 
-struct kqueue;
-struct kevent;
-struct evfilt_data;
+# define kqueue_free_hook      solaris_kqueue_free
+void    solaris_kqueue_free(struct kqueue *);
+
+# define kqueue_init_hook      solaris_kqueue_init
+int     solaris_kqueue_init(struct kqueue *);
+
+struct event_buf {
+    port_event_t pe;
+};
+
+#else 
+    /* The event_buf structure is only needed by Solaris */
+    struct event_buf {
+        int unused;
+    };
+#endif
+
 
 /* 
  * Flags used by knote->flags
@@ -158,7 +174,7 @@ struct kqueue {
     pthread_mutex_t kq_mtx;
 #ifdef __sun__
     int             kq_port;            /* see: port_create(2) */
-    pthread_key_t   kq_port_event;
+    port_event_t    kq_port_event;
 #endif
     volatile uint32_t        kq_ref;
     RB_ENTRY(kqueue) entries;
@@ -192,8 +208,8 @@ const char *filter_name(short);
 int         filter_lower(struct filter *);
 int         filter_raise(struct filter *);
 
-int         kevent_wait(struct kqueue *, const struct timespec *);
-int         kevent_copyout(struct kqueue *, int, struct kevent *, int);
+int         kevent_wait(struct event_buf *, struct kqueue *, const struct timespec *);
+int         kevent_copyout(struct kqueue *, int, struct kevent *, int, struct event_buf *);
 void 		kevent_free(struct kqueue *);
 const char *kevent_dump(const struct kevent *);
 
