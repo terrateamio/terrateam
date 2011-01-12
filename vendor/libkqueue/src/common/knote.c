@@ -109,8 +109,9 @@ knote_lookup_data(struct filter *filt, intptr_t data)
 void
 knote_enqueue(struct filter *filt, struct knote *kn)
 {
-    /* XXX-FIXME: check if the knote is already on the eventlist */
-    TAILQ_INSERT_TAIL(&filt->kf_event, kn, event_ent);
+    /* Prevent a knote from being enqueued() multiple times */
+    if (kn->event_ent.tqe_next == NULL && kn->event_ent.tqe_prev == NULL)
+        TAILQ_INSERT_TAIL(&filt->kf_event, kn, event_ent);
 }
 
 struct knote *
