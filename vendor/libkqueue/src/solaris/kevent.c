@@ -24,6 +24,44 @@
 const struct filter evfilt_vnode = EVFILT_NOTIMPL;
 const struct filter evfilt_proc  = EVFILT_NOTIMPL;
 
+static char * port_event_dump(port_event_t *evt);
+
+
+/* The caller must hold the kq_mtx */
+void
+port_event_dequeue(port_event_t *pe, struct kqueue *kq)
+{
+    struct event_buf *ebp;
+
+    ebp = TAILQ_FIRST(&kq->kq_events);
+    if (ebp == NULL)
+        abort();        /* Should never happen */
+    memcpy(pe, &ebp->pe, sizeof(*pe));
+    TAILQ_REMOVE(&kq->kq_events, ebp, entries);
+    free(ebp);
+}
+
+/* The caller must not hold the kq_mtx */
+void
+port_event_enqueue(struct kqueue *kq, port_event_t *pe)
+{
+    struct event_buf *ebp;
+
+    ebp = calloc(1, sizeof(*ebp));
+    if (ebp == NULL) {
+        dbg_perror("lost an event! malloc(2)");
+        abort();        /* FIXME: use a freelist to prevent this*/
+    }
+    memcpy(&ebp->pe, pe, sizeof(*pe));
+    kqueue_lock(kq);
+    /* XXX-want to insert at the tail but this causes list corruption */
+    /* Since multiple threads are consuming events from the list, 
+       there is no guarantee that ordering will be preserved.
+       */
+    TAILQ_INSERT_HEAD(&kq->kq_events, ebp, entries);
+    kqueue_unlock(kq);
+}
+
 /* Dump a poll(2) events bitmask */
 static char *
 poll_events_dump(short events)
@@ -56,8 +94,10 @@ port_event_dump(port_event_t *evt)
 {
     static char __thread buf[512];
 
-    if (evt == NULL)
-        return "(null)";
+    if (evt == NULL) {
+        snprintf(&buf[0], sizeof(buf), "NULL ?!?!\n");
+        goto out;
+    }
 
 #define PE_DUMP(attrib) \
     if (evt->portev_source == attrib) \
@@ -75,16 +115,14 @@ port_event_dump(port_event_t *evt)
     PE_DUMP(PORT_SOURCE_USER);
     PE_DUMP(PORT_SOURCE_ALERT);
     strcat(&buf[0], ") }\n");
-
-    return (&buf[0]);
 #undef PE_DUMP
+
+out:
+    return (&buf[0]);
 }
 
 int
-kevent_wait(
-        struct event_buf *evbuf,
-        struct kqueue *kq, 
-        const struct timespec *timeout)
+kevent_wait(struct kqueue *kq, const struct timespec *timeout)
 {
     port_event_t pe;
     int rv;
@@ -108,26 +146,29 @@ kevent_wait(
         return (-1);
     }
 
-    memcpy(&evbuf->pe, &pe, sizeof(pe));
+    port_event_enqueue(kq, &pe);
 
     return (nget);
 }
 
 int
 kevent_copyout(struct kqueue *kq, int nready,
-        struct kevent *eventlist, int nevents, 
-        struct event_buf *evbuf)
+        struct kevent *eventlist, int nevents)
 {
-    port_event_t  *pe = &evbuf->pe;
+    struct event_buf *ebp;
     struct filter *filt;
     int rv;
 
-    memcpy(&kq->kq_port_event, pe, sizeof(*pe));
+    ebp = TAILQ_FIRST(&kq->kq_events);
+    if (ebp == NULL) {
+        dbg_puts("kq_events was empty");
+        return (-1);
+    }
 
-    dbg_printf("kq_port_event=%s", port_event_dump(pe));
-    switch (pe->portev_source) {
+    dbg_printf("event=%s", port_event_dump(&ebp->pe));
+    switch (ebp->pe.portev_source) {
 	case PORT_SOURCE_FD:
-        filt = pe->portev_user;
+        filt = ebp->pe.portev_user;
         rv = filt->kf_copyout(filt, eventlist, nevents);
         break;
 
@@ -137,7 +178,7 @@ kevent_copyout(struct kqueue *kq, int nready,
         break;
 
 	case PORT_SOURCE_USER:
-        switch (pe->portev_events) {
+        switch (ebp->pe.portev_events) {
             case X_PORT_SOURCE_SIGNAL:
                 filter_lookup(&filt, kq, EVFILT_SIGNAL);
                 rv = filt->kf_copyout(filt, eventlist, nevents);

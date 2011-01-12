@@ -123,13 +123,15 @@ evfilt_timer_copyout(struct filter *filt,
             struct kevent *dst, 
             int nevents)
 {
-    port_event_t *pe = &filt->kf_kqueue->kq_port_event;
+    port_event_t pe;
     long buf;
     timer_t timerid;
     struct knote *kn;
 
+    port_event_dequeue(&pe, filt->kf_kqueue);
+
     /* XXX-FIXME: danger here -- there has to be a better way */
-    buf = (long) pe->portev_user;
+    buf = (long) pe.portev_user;
     timerid = (timer_t) buf;
     /* ^^^^^^^^^ */
     kn = knote_lookup(filt, timerid);
