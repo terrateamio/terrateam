@@ -51,20 +51,31 @@ struct evfilt_data;
 
 extern int KQUEUE_DEBUG;
 
+#ifdef __linux__
+# define _GNU_SOURCE
+# include <linux/unistd.h>
+# include <sys/syscall.h>
+# include <unistd.h>
+extern long int syscall (long int __sysno, ...);
+# define THREAD_ID ((pid_t) syscall(__NR_gettid))
+#else
+# define THREAD_ID (pthread_self())
+#endif
+
 #define dbg_puts(str)           do {                                \
     if (KQUEUE_DEBUG)                                               \
-      fprintf(stderr, "KQ: %s(): %s\n", __func__,str);              \
+      fprintf(stderr, "KQ [%d]: %s(): %s\n", THREAD_ID, __func__,str);              \
 } while (0)
 
 #define dbg_printf(fmt,...)     do {                                \
     if (KQUEUE_DEBUG)                                               \
-      fprintf(stderr, "KQ: %s(): "fmt"\n", __func__,__VA_ARGS__);   \
+      fprintf(stderr, "KQ [%d]: %s(): "fmt"\n", THREAD_ID, __func__,__VA_ARGS__);   \
 } while (0)
 
 #define dbg_perror(str)         do {                                \
     if (KQUEUE_DEBUG)                                               \
-      fprintf(stderr, "KQ: %s(): %s: %s (errno=%d)\n",              \
-              __func__, str, strerror(errno), errno);               \
+      fprintf(stderr, "KQ: [%d] %s(): %s: %s (errno=%d)\n",              \
+              THREAD_ID, __func__, str, strerror(errno), errno);               \
 } while (0)
 
 # define reset_errno()          do { errno = 0; } while (0)
