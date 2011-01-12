@@ -36,5 +36,6 @@ solaris_kqueue_init(struct kqueue *kq)
         dbg_perror("port_create(2)");
         return (-1);
     }
+    TAILQ_INIT(&kq->kq_events);
     return (0);
 }

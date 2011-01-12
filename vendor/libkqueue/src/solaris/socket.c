@@ -120,20 +120,21 @@ evfilt_socket_copyout(struct filter *filt,
             struct kevent *dst, 
             int nevents)
 {
-    port_event_t *pe = &filt->kf_kqueue->kq_port_event;
+    port_event_t pe;
     struct knote *kn;
 
-    kn = knote_lookup(filt, pe->portev_object);
+    port_event_dequeue(&pe, filt->kf_kqueue);
+    kn = knote_lookup(filt, pe.portev_object);
     if (kn == NULL)
 	return (-1);
 
     memcpy(dst, &kn->kev, sizeof(*dst));
-    if (pe->portev_events == 8) //XXX-FIXME Should be POLLHUP)
+    if (pe.portev_events == 8) //XXX-FIXME Should be POLLHUP)
         dst->flags |= EV_EOF;
-    else if (pe->portev_events & POLLERR)
+    else if (pe.portev_events & POLLERR)
         dst->fflags = 1; /* FIXME: Return the actual socket error */
           
-    if (pe->portev_events & POLLIN) {
+    if (pe.portev_events & POLLIN) {
         if (kn->flags & KNFL_PASSIVE_SOCKET) {
             /* On return, data contains the length of the 
                socket backlog. This is not available under Solaris (?).

@@ -100,8 +100,11 @@ void    solaris_kqueue_free(struct kqueue *);
 # define kqueue_init_hook      solaris_kqueue_init
 int     solaris_kqueue_init(struct kqueue *);
 
+void port_event_dequeue(port_event_t *, struct kqueue *);
+
 struct event_buf {
     port_event_t pe;
+    TAILQ_ENTRY(event_buf) entries;
 };
 
 #else 
@@ -185,7 +188,7 @@ struct kqueue {
     pthread_mutex_t kq_mtx;
 #ifdef __sun__
     int             kq_port;            /* see: port_create(2) */
-    port_event_t    kq_port_event;
+    TAILQ_HEAD(event_buf_listhead,event_buf) kq_events;
 #endif
     volatile uint32_t        kq_ref;
     RB_ENTRY(kqueue) entries;
@@ -219,8 +222,8 @@ const char *filter_name(short);
 int         filter_lower(struct filter *);
 int         filter_raise(struct filter *);
 
-int         kevent_wait(struct event_buf *, struct kqueue *, const struct timespec *);
-int         kevent_copyout(struct kqueue *, int, struct kevent *, int, struct event_buf *);
+int         kevent_wait(struct kqueue *, const struct timespec *);
+int         kevent_copyout(struct kqueue *, int, struct kevent *, int);
 void 		kevent_free(struct kqueue *);
 const char *kevent_dump(const struct kevent *);
 

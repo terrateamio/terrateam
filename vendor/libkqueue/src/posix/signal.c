@@ -171,9 +171,10 @@ evfilt_signal_copyout(struct filter *filt,
     ssize_t n;
 
 #if defined(__sun__)
-    port_event_t *pe = &filt->kf_kqueue->kq_port_event;
+    port_event_t pe;
 
-    s = (struct sentry *) pe->portev_user;
+    port_event_dequeue(&pe, filt->kf_kqueue);
+    s = (struct sentry *) pe.portev_user;
     sig = s - &sigtbl[0];
     n = 0; //FIXME: Workaround
 #else
