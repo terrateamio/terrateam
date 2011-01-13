@@ -30,6 +30,7 @@ struct evfilt_data;
 #include "../../include/sys/event.h"
 
 #include "tree.h"
+#include "queue.h"
 
 /* GCC atomic builtins. 
  * See: http://gcc.gnu.org/onlinedocs/gcc-4.1.0/gcc/Atomic-Builtins.html 
