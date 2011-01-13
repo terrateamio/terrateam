@@ -24,6 +24,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include <poll.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #endif
@@ -35,7 +36,6 @@ struct evfilt_data;
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/select.h>
 #include "../../include/sys/event.h"
 
 #include "tree.h"
