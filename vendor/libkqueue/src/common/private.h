@@ -17,6 +17,16 @@
 #ifndef  _KQUEUE_PRIVATE_H
 #define  _KQUEUE_PRIVATE_H
 
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include "../../include/sys/event.h"
+#include "tree.h"
+
+struct kqueue;
+struct kevent;
+struct evfilt_data;
+
 #if defined(_WIN32)
 # include "../windows/platform.h"
 #elif defined(__linux__)
@@ -29,17 +39,6 @@
 # error Unknown platform
 #endif
 
-struct kqueue;
-struct kevent;
-struct evfilt_data;
-
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
-#include "../../include/sys/event.h"
-
-#include "tree.h"
-#include "queue.h"
 
 /* Maximum events returnable in a single kevent() call */
 #define MAX_KEVENT  512

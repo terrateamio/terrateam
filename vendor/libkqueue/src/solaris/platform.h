@@ -17,13 +17,17 @@
 #ifndef  _KQUEUE_SOLARIS_PLATFORM_H
 #define  _KQUEUE_SOLARIS_PLATFORM_H
 
+#include <sys/queue.h>
+
 #define THREAD_ID (pthread_self())
 
 /*
- * Atomic integer operations 
+ * Atomic integer operations that override the ones in posix/platform.h
  */
 #include <atomic.h>
+#undef atomic_inc
 #define atomic_inc      atomic_inc_32_nv
+#undef atomic_dec
 #define atomic_dec      atomic_dec_32_nv
 
 /*

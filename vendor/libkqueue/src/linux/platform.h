@@ -17,6 +17,8 @@
 #ifndef  _KQUEUE_LINUX_PLATFORM_H
 #define  _KQUEUE_LINUX_PLATFORM_H
 
+#include <sys/queue.h>
+
 /*
  * Get the current thread ID
  */
