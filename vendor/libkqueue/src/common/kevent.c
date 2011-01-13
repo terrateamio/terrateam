@@ -26,7 +26,6 @@
 #include <sys/types.h>
 #include <string.h>
 
-#include "sys/event.h"
 #include "private.h"
 
 static char *

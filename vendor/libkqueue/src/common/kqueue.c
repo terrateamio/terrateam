@@ -16,19 +16,18 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <poll.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <string.h>
 
-#include "sys/event.h"
 #include "private.h"
 
 #ifndef NDEBUG
 int KQUEUE_DEBUG = 0;
 #endif
+
 
 static RB_HEAD(kqt, kqueue) kqtree       = RB_INITIALIZER(&kqtree);
 static pthread_rwlock_t     kqtree_mtx   = PTHREAD_RWLOCK_INITIALIZER;
@@ -81,10 +80,12 @@ kqueue_gc(void)
     return (0);
 }
 
-
 int
 kqueue_validate(struct kqueue *kq)
 {
+#if defined(_WIN32)
+    return (0); /* FIXME */
+#else
     int rv;
     char buf[1];
     struct pollfd pfd;
@@ -111,6 +112,7 @@ kqueue_validate(struct kqueue *kq)
     }
 
     return (0);
+#endif /* WIN32 */
 }
 
 void
