@@ -35,7 +35,6 @@
 #ifdef __KERNEL__
 #define intptr_t long
 #else
-#include <sys/queue.h> 
 #include <sys/types.h> 
 #include <stdint.h> 
 #define LIBKQUEUE       1
