@@ -38,6 +38,7 @@
 #include <sys/types.h> 
 #include <stdint.h> 
 #define LIBKQUEUE       1
+int _libkqueue_init(void) __attribute__ ((constructor));
 #endif
 
 struct timespec;

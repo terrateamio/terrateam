@@ -30,7 +30,14 @@ int KQUEUE_DEBUG = 0;
 
 
 static RB_HEAD(kqt, kqueue) kqtree       = RB_INITIALIZER(&kqtree);
-static pthread_rwlock_t     kqtree_mtx   = PTHREAD_RWLOCK_INITIALIZER;
+static pthread_rwlock_t     kqtree_mtx;
+
+int __attribute__ ((constructor))
+_libkqueue_init(void)
+{
+    pthread_rwlock_init(&kqtree_mtx, NULL);
+    return (0);
+}
 
 static int
 kqueue_cmp(struct kqueue *a, struct kqueue *b)

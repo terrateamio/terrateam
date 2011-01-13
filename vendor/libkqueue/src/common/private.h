@@ -149,7 +149,6 @@ struct knote {
     TAILQ_ENTRY(knote) event_ent;    /* Used by filter->kf_event */
     RB_ENTRY(knote)   kntree_ent;   /* Used by filter->kntree */
 };
-LIST_HEAD(knotelist, knote);
 
 #define KNOTE_ENABLE(ent)           do {                            \
             (ent)->kev.flags &= ~EV_DISABLE;                        \
