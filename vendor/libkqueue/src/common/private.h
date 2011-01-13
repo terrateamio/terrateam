@@ -21,6 +21,9 @@
 # include "../windows/platform.h"
 #else
 /* TODO: move to posix/platform.h */
+#define CONSTRUCTOR int __attribute__ ((constructor))
+#define VISIBLE         __attribute__((visibility("default")))
+#define HIDDEN          __attribute__((visibility("hidden")))
 #include <stdbool.h>
 #include <pthread.h>
 #include <poll.h>
@@ -48,6 +51,9 @@ struct evfilt_data;
 # include <atomic.h>
 # define atomic_inc      atomic_inc_32_nv
 # define atomic_dec      atomic_dec_32_nv
+#elif defined(_WIN32)
+# define atomic_inc   InterlockedIncrement
+# define atomic_dec   InterlockedDecrement
 #else
 # define atomic_inc(p)   __sync_add_and_fetch((p), 1)
 # define atomic_dec(p)   __sync_sub_and_fetch((p), 1)

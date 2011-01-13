@@ -227,7 +227,7 @@ err_path:
     return (nret);
 }
 
-int __attribute__((visibility("default")))
+int VISIBLE
 kevent(int kqfd, const struct kevent *changelist, int nchanges,
         struct kevent *eventlist, int nevents,
         const struct timespec *timeout)
