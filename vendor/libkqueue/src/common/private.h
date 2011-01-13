@@ -21,7 +21,9 @@
 # include "../windows/platform.h"
 #else
 /* TODO: move to posix/platform.h */
+#include <pthread.h>
 #include <sys/socket.h>
+#include <unistd.h>
 #endif
 
 struct kqueue;
@@ -29,7 +31,6 @@ struct kevent;
 struct evfilt_data;
 
 #include <errno.h>
-#include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
