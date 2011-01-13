@@ -167,8 +167,17 @@ kqueue(void)
     KQUEUE_DEBUG = (getenv("KQUEUE_DEBUG") == NULL) ? 0 : 1;
 #endif
 
+#ifdef _WIN32
+    static int kqueue_id = 0;
+    pthread_rwlock_wrlock(&kqtree_mtx);
+    kqueue_id++;
+    pthread_rwlock_unlock(&kqtree_mtx);
+    kq->kq_sockfd[0] = kqueue_id;
+    kq->kq_sockfd[1] = kqueue_id;
+#else
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, kq->kq_sockfd) < 0) 
         goto errout_unlocked;
+#endif
 
 #ifdef kqueue_init_hook
     if (kqueue_init_hook(kq) < 0)
@@ -193,8 +202,10 @@ errout:
 errout_unlocked:
     if (kq->kq_sockfd[0] != kq->kq_sockfd[1]) {
         tmp = errno;
+#ifndef _WIN32
         (void)close(kq->kq_sockfd[0]);
         (void)close(kq->kq_sockfd[1]);
+#endif
         errno = tmp;
     }
 #if defined(__sun__)

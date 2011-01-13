@@ -14,26 +14,18 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "private.h"
+#ifndef  _KQUEUE_LINUX_PLATFORM_H
+#define  _KQUEUE_LINUX_PLATFORM_H
 
-BOOL WINAPI DllMain(
-        HINSTANCE self,
-        DWORD reason,
-        LPVOID unused)
-{
-    switch (reason) { 
-        case DLL_PROCESS_ATTACH:
-            /* XXX-FIXME: initialize kqtree mutex */
-            if (WSAStartup(MAKEWORD(2,2), NULL) != 0)
-                return (FALSE);
-            /* TODO: bettererror handling */
-            break;
+/*
+ * Get the current thread ID
+ */
+# define _GNU_SOURCE
+# include <linux/unistd.h>
+# include <sys/syscall.h>
+# include <unistd.h>
+extern long int syscall (long int __sysno, ...);
+#define THREAD_ID ((pid_t) syscall(__NR_gettid))
 
-        case DLL_PROCESS_DETACH:
-            WSACleanup();
-            break;
-    }
 
-    return (TRUE);
-}
-
+#endif  /* ! _KQUEUE_LINUX_PLATFORM_H */
