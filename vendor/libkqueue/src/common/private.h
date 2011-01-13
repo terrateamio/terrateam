@@ -19,17 +19,14 @@
 
 #if defined(_WIN32)
 # include "../windows/platform.h"
+#elif defined(__linux__)
+# include "../posix/platform.h"
+# include "../linux/platform.h"
+#elif defined(__sun)
+# include "../posix/platform.h"
+# include "../solaris/platform.h"
 #else
-/* TODO: move to posix/platform.h */
-#define CONSTRUCTOR int __attribute__ ((constructor))
-#define VISIBLE         __attribute__((visibility("default")))
-#define HIDDEN          __attribute__((visibility("hidden")))
-#include <stdbool.h>
-#include <pthread.h>
-#include <poll.h>
-#include <sys/select.h>
-#include <sys/socket.h>
-#include <unistd.h>
+# error Unknown platform
 #endif
 
 struct kqueue;
@@ -44,39 +41,13 @@ struct evfilt_data;
 #include "tree.h"
 #include "queue.h"
 
-/* GCC atomic builtins. 
- * See: http://gcc.gnu.org/onlinedocs/gcc-4.1.0/gcc/Atomic-Builtins.html 
- */
-#ifdef __sun
-# include <atomic.h>
-# define atomic_inc      atomic_inc_32_nv
-# define atomic_dec      atomic_dec_32_nv
-#elif defined(_WIN32)
-# define atomic_inc   InterlockedIncrement
-# define atomic_dec   InterlockedDecrement
-#else
-# define atomic_inc(p)   __sync_add_and_fetch((p), 1)
-# define atomic_dec(p)   __sync_sub_and_fetch((p), 1)
-#endif
-
 /* Maximum events returnable in a single kevent() call */
 #define MAX_KEVENT  512
-
 
 #ifndef NDEBUG
 
 extern int KQUEUE_DEBUG;
 
-#ifdef __linux__
-# define _GNU_SOURCE
-# include <linux/unistd.h>
-# include <sys/syscall.h>
-# include <unistd.h>
-extern long int syscall (long int __sysno, ...);
-# define THREAD_ID ((pid_t) syscall(__NR_gettid))
-#else
-# define THREAD_ID (pthread_self())
-#endif
 
 #define dbg_puts(str)           do {                                \
     if (KQUEUE_DEBUG)                                               \
@@ -103,32 +74,10 @@ extern long int syscall (long int __sysno, ...);
 # define reset_errno()           ;
 #endif 
 
-#if defined (__SVR4) && defined (__sun)
-# define SOLARIS
-# include <port.h>
-  /* Used to set portev_events for PORT_SOURCE_USER */
-# define X_PORT_SOURCE_SIGNAL  101
-# define X_PORT_SOURCE_USER    102
-
-# define kqueue_free_hook      solaris_kqueue_free
-void    solaris_kqueue_free(struct kqueue *);
-
-# define kqueue_init_hook      solaris_kqueue_init
-int     solaris_kqueue_init(struct kqueue *);
-
-void port_event_dequeue(port_event_t *, struct kqueue *);
-
-struct event_buf {
-    port_event_t pe;
-    TAILQ_ENTRY(event_buf) entries;
-};
-
-#else 
     /* The event_buf structure is only needed by Solaris */
-    struct event_buf {
+    struct DEADWOOD_event_buf {
         int unused;
     };
-#endif
 
 
 /* 

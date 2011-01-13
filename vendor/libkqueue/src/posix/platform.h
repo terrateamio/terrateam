@@ -14,26 +14,27 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "private.h"
+#ifndef  _KQUEUE_POSIX_PLATFORM_H
+#define  _KQUEUE_POSIX_PLATFORM_H
 
-BOOL WINAPI DllMain(
-        HINSTANCE self,
-        DWORD reason,
-        LPVOID unused)
-{
-    switch (reason) { 
-        case DLL_PROCESS_ATTACH:
-            /* XXX-FIXME: initialize kqtree mutex */
-            if (WSAStartup(MAKEWORD(2,2), NULL) != 0)
-                return (FALSE);
-            /* TODO: bettererror handling */
-            break;
+/*
+ * GCC-compatible atomic integer operations 
+ */
+#ifndef _sun
+#define atomic_inc(p)   __sync_add_and_fetch((p), 1)
+#define atomic_dec(p)   __sync_sub_and_fetch((p), 1)
+#endif
 
-        case DLL_PROCESS_DETACH:
-            WSACleanup();
-            break;
-    }
+#define CONSTRUCTOR int __attribute__ ((constructor))
+#define VISIBLE         __attribute__((visibility("default")))
+#define HIDDEN          __attribute__((visibility("hidden")))
 
-    return (TRUE);
-}
+#include <signal.h>
+#include <stdbool.h>
+#include <pthread.h>
+#include <poll.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
+#endif  /* ! _KQUEUE_POSIX_PLATFORM_H */

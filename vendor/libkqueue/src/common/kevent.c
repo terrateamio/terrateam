@@ -28,24 +28,24 @@
 
 #include "private.h"
 
-static char *
+static const char *
 kevent_filter_dump(const struct kevent *kev)
 {
     static char __thread buf[64];
 
     snprintf(&buf[0], sizeof(buf), "%d (%s)", 
             kev->filter, filter_name(kev->filter));
-    return (&buf[0]);
+    return ((const char *) &buf[0]);
 }
 
-static char *
+static const char *
 kevent_fflags_dump(const struct kevent *kev)
 {
     static char __thread buf[1024];
 
 #define KEVFFL_DUMP(attrib) \
     if (kev->fflags & attrib) \
-    strncat(buf, #attrib" ", 64);
+    strncat((char *) &buf[0], #attrib" ", 64);
 
     snprintf(buf, sizeof(buf), "fflags=0x%04x (", kev->fflags);
     if (kev->filter == EVFILT_VNODE) {
@@ -62,23 +62,23 @@ kevent_fflags_dump(const struct kevent *kev)
         KEVFFL_DUMP(NOTE_FFCOPY);
         KEVFFL_DUMP(NOTE_TRIGGER);
     }  else {
-        strncat(buf, " ", 1);
+        strncat((char *) &buf[0], " ", 1);
     }
     buf[strlen(buf) - 1] = ')';
 
 #undef KEVFFL_DUMP
 
-    return (buf);
+    return ((const char *) &buf[0]);
 }
 
-static char *
+static const char *
 kevent_flags_dump(const struct kevent *kev)
 {
     static char __thread buf[1024];
 
 #define KEVFL_DUMP(attrib) \
     if (kev->flags & attrib) \
-	strncat(buf, #attrib" ", 64);
+	strncat((char *) &buf[0], #attrib" ", 64);
 
     snprintf(buf, sizeof(buf), "flags=0x%04x (", kev->flags);
     KEVFL_DUMP(EV_ADD);
@@ -95,7 +95,7 @@ kevent_flags_dump(const struct kevent *kev)
 
 #undef KEVFL_DUMP
 
-    return (buf);
+    return ((const char *) &buf[0]);
 }
 
 const char *
@@ -103,7 +103,7 @@ kevent_dump(const struct kevent *kev)
 {
     static char __thread buf[1024];
 
-    snprintf(buf, sizeof(buf), 
+    snprintf((char *) &buf[0], sizeof(buf), 
             "{ ident=%d, filter=%s, %s, %s, data=%d, udata=%p }",
             (u_int) kev->ident,
             kevent_filter_dump(kev),
@@ -112,7 +112,7 @@ kevent_dump(const struct kevent *kev)
             (int) kev->data,
             kev->udata);
 
-    return (buf);
+    return ((const char *) &buf[0]);
 }
 
 static int
