@@ -17,14 +17,11 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
-#include <pthread.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/socket.h>
 #include <sys/types.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "sys/event.h"
 #include "private.h"
