@@ -20,4 +20,31 @@
 #include <windows.h>
 #include <winsock.h>
 
+/* DllMain() is the only available constructor function */
+#define CONSTRUCTOR int
+
+/* Function visibility macros */
+#define VISIBLE __declspec(dllexport)
+#define HIDDEN  
+
+/* For POSIX compatibility when compiling, not for actual use */
+typedef int nlink_t;
+typedef int timer_t;
+typedef int pthread_t;
+typedef int sigset_t;
+
+/* Emulation of pthreads mutex functionality */
+typedef CRITICAL_SECTION pthread_mutex_t;
+typedef CRITICAL_SECTION pthread_rwlock_t;
+#define _cs_init(x)  InitializeCriticalSection((x))
+#define _cs_lock(x)  EnterCriticalSection ((x))
+#define _cs_unlock(x)  LeaveCriticalSection ((x))
+#define pthread_mutex_lock _cs_lock
+#define pthread_mutex_unlock _cs_unlock
+#define pthread_mutex_init(x,y) _cs_init((x))
+#define pthread_rwlock_rdlock _cs_lock
+#define pthread_rwlock_wrlock _cs_lock
+#define pthread_rwlock_unlock _cs_unlock
+#define pthread_rwlock_init(x,y) _cs_init((x))
+
 #endif  /* ! _KQUEUE_PLATFORM_H */

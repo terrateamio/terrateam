@@ -32,7 +32,7 @@ int KQUEUE_DEBUG = 0;
 static RB_HEAD(kqt, kqueue) kqtree       = RB_INITIALIZER(&kqtree);
 static pthread_rwlock_t     kqtree_mtx;
 
-int __attribute__ ((constructor))
+CONSTRUCTOR
 _libkqueue_init(void)
 {
     pthread_rwlock_init(&kqtree_mtx, NULL);
@@ -149,7 +149,7 @@ kqueue_get(int kq)
 }
 
 
-int __attribute__((visibility("default")))
+int VISIBLE
 kqueue(void)
 {
     struct kqueue *kq;

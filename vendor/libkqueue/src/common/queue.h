@@ -132,6 +132,7 @@ struct qm_trace {
 #define	TRASHIT(x)
 #endif	/* QUEUE_MACRO_DEBUG */
 
+#ifndef _WIN32
 /*
  * Singly-linked List declarations.
  */
@@ -207,6 +208,8 @@ struct {								\
 #define	SLIST_REMOVE_HEAD(head, field) do {				\
 	SLIST_FIRST((head)) = SLIST_NEXT(SLIST_FIRST((head)), field);	\
 } while (0)
+
+#endif /* defined(_WIN32) */
 
 /*
  * Singly-linked Tail queue declarations.
