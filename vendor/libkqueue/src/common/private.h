@@ -21,7 +21,9 @@
 # include "../windows/platform.h"
 #else
 /* TODO: move to posix/platform.h */
+#include <stdbool.h>
 #include <pthread.h>
+#include <poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #endif
@@ -31,7 +33,6 @@ struct kevent;
 struct evfilt_data;
 
 #include <errno.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/select.h>
@@ -238,8 +239,8 @@ const char *kevent_dump(const struct kevent *);
 
 struct kqueue * kqueue_get(int);
 void        kqueue_put(struct kqueue *);
+int         kqueue_validate(struct kqueue *);
 #define     kqueue_lock(kq)     pthread_mutex_lock(&(kq)->kq_mtx)
 #define     kqueue_unlock(kq)   pthread_mutex_unlock(&(kq)->kq_mtx)
-int         kqueue_validate(struct kqueue *);
 
 #endif  /* ! _KQUEUE_PRIVATE_H */
