@@ -17,6 +17,13 @@
 #ifndef  _KQUEUE_PRIVATE_H
 #define  _KQUEUE_PRIVATE_H
 
+#if defined(_WIN32)
+# include "../windows/platform.h"
+#else
+/* TODO: move to posix/platform.h */
+#include <sys/socket.h>
+#endif
+
 struct kqueue;
 struct kevent;
 struct evfilt_data;
