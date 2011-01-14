@@ -148,11 +148,13 @@ kqueue_get(int kq)
     return (ent);
 }
 
-
 int VISIBLE
 kqueue(void)
 {
-    struct kqueue *kq;
+#ifdef _WIN32
+    static int kqueue_id = 0;
+#endif
+	struct kqueue *kq;
     int tmp;
 
     kq = calloc(1, sizeof(*kq));
@@ -163,12 +165,14 @@ kqueue(void)
 
 #ifdef NDEBUG
     KQUEUE_DEBUG = 0;
+#elif _WIN32
+	/* Experimental port, always debug */
+	KQUEUE_DEBUG = 1;
 #else
     KQUEUE_DEBUG = (getenv("KQUEUE_DEBUG") == NULL) ? 0 : 1;
 #endif
 
 #ifdef _WIN32
-    static int kqueue_id = 0;
     pthread_rwlock_wrlock(&kqtree_mtx);
     kqueue_id++;
     pthread_rwlock_unlock(&kqtree_mtx);

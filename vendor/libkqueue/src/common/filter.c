@@ -123,6 +123,7 @@ filter_unregister_all(struct kqueue *kq)
 int 
 filter_socketpair(struct filter *filt)
 {
+#ifndef _WIN32
     int sockfd[2];
 
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd) < 0)
@@ -131,6 +132,9 @@ filter_socketpair(struct filter *filt)
     fcntl(sockfd[0], F_SETFL, O_NONBLOCK);
     filt->kf_wfd = sockfd[0];
     filt->kf_pfd = sockfd[1];
+#else
+#warning FIXME function has no effect
+#endif
     return (0);
 } 
 
