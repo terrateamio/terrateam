@@ -14,7 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "private.h"
+#include "../common/private.h"
 
 BOOL WINAPI DllMain(
         HINSTANCE self,

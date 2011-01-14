@@ -29,6 +29,7 @@ struct evfilt_data;
 
 #if defined(_WIN32)
 # include "../windows/platform.h"
+# include "../common/queue.h"
 #elif defined(__linux__)
 # include "../posix/platform.h"
 # include "../linux/platform.h"

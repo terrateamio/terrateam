@@ -37,7 +37,7 @@
 #define __func__ __FUNCDNAME__
 #endif
 
-#define snprintf _snprintf_s
+#define snprintf _snprintf
 #define ssize_t  SSIZE_T
 
 /* For POSIX compatibility when compiling, not for actual use */
