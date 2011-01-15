@@ -24,9 +24,7 @@
 
 #include "private.h"
 
-#ifndef NDEBUG
 int KQUEUE_DEBUG = 0;
-#endif
 
 
 static RB_HEAD(kqt, kqueue) kqtree       = RB_INITIALIZER(&kqtree);
