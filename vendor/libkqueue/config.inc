@@ -50,7 +50,7 @@ pre_configure_hook() {
 post_configure_hook() {
     finalize target "$target"
 
-    kqueue=""
+    kqueue="src/posix/kqueue.c"
     kevent="src/posix/kevent.c"
     evfilt_signal="src/posix/signal.c"
     evfilt_proc="src/$target/proc.c"
@@ -75,8 +75,8 @@ post_configure_hook() {
 
     if [ $target = "solaris" ] ; then
           cflags="$cflags -D__EXTENSIONS__"
-    	  kqueue="src/solaris/kqueue.c"
-    	  kevent="src/solaris/kevent.c"
+    	  kqueue="$kqueue src/solaris/kqueue.c"
+    	  kevent="$kevent src/solaris/kevent.c"
           evfilt_timer="src/solaris/timer.c"
           evfilt_user="src/solaris/user.c"
           evfilt_proc=""

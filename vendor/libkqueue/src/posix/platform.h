@@ -20,6 +20,15 @@
 #include "../../include/sys/event.h"
 
 /*
+ * Hooks and prototypes
+ */
+#define kqueue_free_hook      posix_kqueue_free
+void    posix_kqueue_free(struct kqueue *);
+
+#define kqueue_init_hook      posix_kqueue_init
+int     posix_kqueue_init(struct kqueue *);
+
+/*
  * GCC-compatible atomic integer operations 
  */
 #define atomic_inc(p)   __sync_add_and_fetch((p), 1)
@@ -38,3 +47,4 @@
 #include <unistd.h>
 
 #endif  /* ! _KQUEUE_POSIX_PLATFORM_H */
+
