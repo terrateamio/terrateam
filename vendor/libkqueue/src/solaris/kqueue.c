@@ -42,6 +42,7 @@ solaris_kqueue_init(struct kqueue *kq)
         dbg_perror("port_create(2)");
         return (-1);
     }
+    dbg_printf("created event port: fd=%d", kq->kq_port);
     TAILQ_INIT(&kq->kq_events);
     return (0);
 }

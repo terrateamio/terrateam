@@ -76,7 +76,7 @@ post_configure_hook() {
     if [ $target = "solaris" ] ; then
           cflags="$cflags -D__EXTENSIONS__"
     	  kqueue="$kqueue src/solaris/kqueue.c"
-    	  kevent="$kevent src/solaris/kevent.c"
+    	  kevent="src/solaris/kevent.c"
           evfilt_timer="src/solaris/timer.c"
           evfilt_user="src/solaris/user.c"
           evfilt_proc=""

@@ -41,9 +41,11 @@
 /*
  * Hooks and prototypes
  */
+#undef kqueue_free_hook
 #define kqueue_free_hook      solaris_kqueue_free
 void    solaris_kqueue_free(struct kqueue *);
 
+#undef kqueue_init_hook
 #define kqueue_init_hook      solaris_kqueue_init
 int     solaris_kqueue_init(struct kqueue *);
 
