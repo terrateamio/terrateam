@@ -170,10 +170,25 @@ struct kevent {
 extern "C" {
 #endif
 
+#ifdef _WIN32
+
+__declspec(dllexport) HANDLE
+CreateEventQueue(void);
+
+__declspec(dllexport) HANDLE
+WaitForEventQueueObject(HANDLE kq, const struct kevent *changelist, int nchanges,
+	    struct kevent *eventlist, int nevents,
+	    const struct timespec *timeout);
+
+__declspec(dllexport) void
+DestroyEventQueue(HANDLE);
+
+#else
 int     kqueue(void);
 int     kevent(int kq, const struct kevent *changelist, int nchanges,
 	    struct kevent *eventlist, int nevents,
 	    const struct timespec *timeout);
+#endif
 
 #ifdef  __cplusplus
 }
