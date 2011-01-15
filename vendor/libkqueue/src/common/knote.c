@@ -156,7 +156,7 @@ knote_get_socket_type(struct knote *kn)
                 return (0);
                 break;
             default:
-                dbg_perror("getsockopt(3)");
+                dbg_printf("getsockopt(3) failed: %s", strerror(errno));
                 return (-1);
         }
     } else {

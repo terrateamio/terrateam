@@ -22,13 +22,9 @@
 #include "sys/event.h"
 #include "private.h"
 
-extern int posix_kqueue_init(struct kqueue *kq);
-extern void posix_kqueue_free(struct kqueue *kq);
-
 void
 solaris_kqueue_free(struct kqueue *kq)
 {
-    posix_kqueue_free(kq);
     if (kq->kq_port > 0) 
         close(kq->kq_port);
 }
@@ -36,13 +32,10 @@ solaris_kqueue_free(struct kqueue *kq)
 int
 solaris_kqueue_init(struct kqueue *kq)
 {
-    if (posix_kqueue_init(kq) < 0)
-        return (-1);
     if ((kq->kq_port = port_create()) < 0) {
         dbg_perror("port_create(2)");
         return (-1);
     }
-    dbg_printf("created event port: fd=%d", kq->kq_port);
     TAILQ_INIT(&kq->kq_events);
     return (0);
 }

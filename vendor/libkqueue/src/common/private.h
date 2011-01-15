@@ -43,9 +43,10 @@ struct evfilt_data;
 /* Maximum events returnable in a single kevent() call */
 #define MAX_KEVENT  512
 
+#ifndef NDEBUG
+
 extern int KQUEUE_DEBUG;
 
-#ifndef NDEBUG
 
 #define dbg_puts(str)           do {                                \
     if (KQUEUE_DEBUG)                                               \

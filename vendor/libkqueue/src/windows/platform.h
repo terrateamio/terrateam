@@ -17,17 +17,10 @@
 #ifndef  _KQUEUE_WINDOWS_PLATFORM_H
 #define  _KQUEUE_WINDOWS_PLATFORM_H
 
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <io.h>
-#include <stdio.h>
-#include <fcntl.h>
+#include <windows.h>
+#include <winsock.h>
 
-#pragma comment(lib, "Ws2_32.lib")
-
-/* The #define doesn't seem to work, but the #pragma does.. */
-#define _CRT_SECURE_NO_WARNINGS 1
-#pragma warning( disable : 4996 )
+#include "../../include/kqueue.h"
 
 /*
  * Atomic integer operations 
@@ -72,17 +65,5 @@ typedef CRITICAL_SECTION pthread_rwlock_t;
 #define pthread_rwlock_wrlock _cs_lock
 #define pthread_rwlock_unlock _cs_unlock
 #define pthread_rwlock_init(x,y) _cs_init((x))
-
-#define VISIBLE_DECL(t,x) __declspec(dllexport) t x
-
-#include "../../include/sys/event.h"
-/*
- * Hooks and prototypes
- */
-#define kqueue_free_hook      windows_kqueue_free
-void    windows_kqueue_free(struct kqueue *);
-
-#define kqueue_init_hook      windows_kqueue_init
-int     windows_kqueue_init(struct kqueue *);
 
 #endif  /* ! _KQUEUE_WINDOWS_PLATFORM_H */
