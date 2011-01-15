@@ -1,6 +1,9 @@
 HEAD
 ------------------------------------------------------------------------
 
+   * NOTE: r368 is the last version to work properly on Solaris.
+           The HEAD fails the unit tests
+
    * Add a counter that increments on each each kevent() call. When printing
    debug information within kevent(), display the value of the counter.
    This will be helpful when debugging a multithreaded program that may have
