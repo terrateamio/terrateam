@@ -25,6 +25,10 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
+/* The #define doesn't seem to work, but the #pragma does.. */
+#define _CRT_SECURE_NO_WARNINGS 1
+#pragma warning( disable : 4996 )
+
 /*
  * Atomic integer operations 
  */
