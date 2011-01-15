@@ -17,6 +17,8 @@
 #ifndef  _KQUEUE_POSIX_PLATFORM_H
 #define  _KQUEUE_POSIX_PLATFORM_H
 
+#include "../../include/sys/event.h"
+
 /*
  * GCC-compatible atomic integer operations 
  */
