@@ -17,8 +17,6 @@
 #ifndef  _KQUEUE_POSIX_PLATFORM_H
 #define  _KQUEUE_POSIX_PLATFORM_H
 
-#include "../../include/sys/event.h"
-
 /*
  * Hooks and prototypes
  */
@@ -35,7 +33,7 @@ int     posix_kqueue_init(struct kqueue *);
 #define atomic_dec(p)   __sync_sub_and_fetch((p), 1)
 
 #define CONSTRUCTOR int __attribute__ ((constructor))
-#define VISIBLE         __attribute__((visibility("default")))
+#define VISIBLE         
 #define HIDDEN          __attribute__((visibility("hidden")))
 
 #include <signal.h>
@@ -45,6 +43,10 @@ int     posix_kqueue_init(struct kqueue *);
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
+#define VISIBLE_DECL(t,x) t __attribute__((visibility("default"))) x
+
+#include "../../include/sys/event.h"
 
 #endif  /* ! _KQUEUE_POSIX_PLATFORM_H */
 

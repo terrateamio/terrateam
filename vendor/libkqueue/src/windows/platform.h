@@ -20,7 +20,6 @@
 #include <windows.h>
 #include <winsock.h>
 
-#include "../../include/kqueue.h"
 
 /*
  * Atomic integer operations 
@@ -65,5 +64,9 @@ typedef CRITICAL_SECTION pthread_rwlock_t;
 #define pthread_rwlock_wrlock _cs_lock
 #define pthread_rwlock_unlock _cs_unlock
 #define pthread_rwlock_init(x,y) _cs_init((x))
+
+#define VISIBLE_DECL(t,x) __declspec(dllexport) t x
+
+#include "../../include/sys/event.h"
 
 #endif  /* ! _KQUEUE_WINDOWS_PLATFORM_H */

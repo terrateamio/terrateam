@@ -148,8 +148,7 @@ kqueue_get(int kq)
     return (ent);
 }
 
-int VISIBLE
-kqueue(void)
+VISIBLE_DECL(int, kqueue(void))
 {
 	struct kqueue *kq;
 
