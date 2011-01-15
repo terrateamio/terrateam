@@ -28,8 +28,11 @@
 #define atomic_inc   InterlockedIncrement
 #define atomic_dec   InterlockedDecrement
 
-/* DllMain() is the only available constructor function */
-#define CONSTRUCTOR int
+/* Windows does not support this attribute.
+   DllMain() is the only available constructor function.
+   This means the constructor must be called from within DllMain().
+ */
+#define CONSTRUCTOR
 
 /* Function visibility macros */
 #define VISIBLE __declspec(dllexport)

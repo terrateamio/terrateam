@@ -30,10 +30,11 @@ int KQUEUE_DEBUG = 0;
 static RB_HEAD(kqt, kqueue) kqtree       = RB_INITIALIZER(&kqtree);
 static pthread_rwlock_t     kqtree_mtx;
 
-CONSTRUCTOR
+int CONSTRUCTOR
 _libkqueue_init(void)
 {
     pthread_rwlock_init(&kqtree_mtx, NULL);
+    dbg_puts("library initialization complete");
     return (0);
 }
 
