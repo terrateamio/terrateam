@@ -12,11 +12,9 @@ pre_configure_hook() {
       && sys_event_h="sys/event.h" \
       || {
             sys_event_h="../include/sys/event.h"
-            cflags="$cflags -I../include"
-            ldadd="$ldadd ../libkqueue.a -lpthread -lrt"
+            cflags="$cflags -I../include -L.."
+            ldadd="$ldadd -lkqueue -lpthread -lrt"
          }
-
-  
 
   check_symbol $sys_event_h EV_DISPATCH
   check_symbol $sys_event_h EV_RECEIPT
