@@ -17,10 +17,10 @@
 #ifndef  _KQUEUE_WINDOWS_PLATFORM_H
 #define  _KQUEUE_WINDOWS_PLATFORM_H
 
-#include "../../include/kqueue.h"
-
 #include <windows.h>
 #include <winsock.h>
+
+#include "../../include/kqueue.h"
 
 /*
  * Atomic integer operations 
