@@ -22,7 +22,7 @@ kqtest: $(SOURCES)
 	$(CC) -o kqtest $(CFLAGS) $(SOURCES) $(LDADD)
 
 check: kqtest
-	./kqtest
+	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" ./kqtest
 
 valgrind: kqtest
 	valgrind --tool=memcheck --leak-check=full --show-reachable=yes --num-callers=20 --track-fds=yes ./kqtest
