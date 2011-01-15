@@ -227,10 +227,11 @@ err_path:
     return (nret);
 }
 
-int VISIBLE
+VISIBLE_DECL(int,
 kevent(int kqfd, const struct kevent *changelist, int nchanges,
         struct kevent *eventlist, int nevents,
         const struct timespec *timeout)
+)
 {
     static unsigned int _kevent_counter = 0;
     struct kqueue *kq;
