@@ -17,14 +17,7 @@
 #ifndef  _KQUEUE_POSIX_PLATFORM_H
 #define  _KQUEUE_POSIX_PLATFORM_H
 
-/*
- * Hooks and prototypes
- */
-#define kqueue_free_hook      posix_kqueue_free
-void    posix_kqueue_free(struct kqueue *);
-
-#define kqueue_init_hook      posix_kqueue_init
-int     posix_kqueue_init(struct kqueue *);
+#include "../../include/sys/event.h"
 
 /*
  * GCC-compatible atomic integer operations 
@@ -33,7 +26,7 @@ int     posix_kqueue_init(struct kqueue *);
 #define atomic_dec(p)   __sync_sub_and_fetch((p), 1)
 
 #define CONSTRUCTOR int __attribute__ ((constructor))
-#define VISIBLE         
+#define VISIBLE         __attribute__((visibility("default")))
 #define HIDDEN          __attribute__((visibility("hidden")))
 
 #include <signal.h>
@@ -44,9 +37,4 @@ int     posix_kqueue_init(struct kqueue *);
 #include <sys/socket.h>
 #include <unistd.h>
 
-#define VISIBLE_DECL(t,x) t __attribute__((visibility("default"))) x
-
-#include "../../include/sys/event.h"
-
 #endif  /* ! _KQUEUE_POSIX_PLATFORM_H */
-

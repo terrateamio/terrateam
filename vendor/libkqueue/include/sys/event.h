@@ -40,11 +40,6 @@
 #define LIBKQUEUE       1
 #endif
 
-#ifndef _WIN32
-#define __declspec(x) /* */
-#define dllexport 0
-#endif
-
 struct timespec;
 
 #define EVFILT_READ		(-1)
@@ -175,10 +170,7 @@ struct kevent {
 extern "C" {
 #endif
 
-__declspec(dllexport)
 int     kqueue(void);
-
-__declspec(dllexport)
 int     kevent(int kq, const struct kevent *changelist, int nchanges,
 	    struct kevent *eventlist, int nevents,
 	    const struct timespec *timeout);

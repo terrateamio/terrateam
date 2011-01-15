@@ -24,7 +24,10 @@
 
 #include "private.h"
 
+#ifndef NDEBUG
 int KQUEUE_DEBUG = 0;
+#endif
+
 
 static RB_HEAD(kqt, kqueue) kqtree       = RB_INITIALIZER(&kqtree);
 static pthread_rwlock_t     kqtree_mtx;
@@ -145,9 +148,14 @@ kqueue_get(int kq)
     return (ent);
 }
 
-VISIBLE_DECL(int, kqueue(void))
+int VISIBLE
+kqueue(void)
 {
+#ifdef _WIN32
+    static int kqueue_id = 0;
+#endif
 	struct kqueue *kq;
+    int tmp;
 
     kq = calloc(1, sizeof(*kq));
     if (kq == NULL)
@@ -164,8 +172,21 @@ VISIBLE_DECL(int, kqueue(void))
     KQUEUE_DEBUG = (getenv("KQUEUE_DEBUG") == NULL) ? 0 : 1;
 #endif
 
+#ifdef _WIN32
+    pthread_rwlock_wrlock(&kqtree_mtx);
+    kqueue_id++;
+    pthread_rwlock_unlock(&kqtree_mtx);
+    kq->kq_sockfd[0] = kqueue_id;
+    kq->kq_sockfd[1] = kqueue_id;
+#else
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, kq->kq_sockfd) < 0) 
+        goto errout_unlocked;
+#endif
+
+#ifdef kqueue_init_hook
     if (kqueue_init_hook(kq) < 0)
         goto errout_unlocked;
+#endif
 
     pthread_rwlock_wrlock(&kqtree_mtx);
     if (kqueue_gc() < 0)
@@ -183,7 +204,18 @@ errout:
     pthread_rwlock_unlock(&kqtree_mtx);
 
 errout_unlocked:
-    kqueue_free_hook(kq);
+    if (kq->kq_sockfd[0] != kq->kq_sockfd[1]) {
+        tmp = errno;
+#ifndef _WIN32
+        (void)close(kq->kq_sockfd[0]);
+        (void)close(kq->kq_sockfd[1]);
+#endif
+        errno = tmp;
+    }
+#if defined(__sun__)
+    if (kq->kq_port > 0) 
+	close(kq->kq_port);
+#endif
     free(kq);
     return (-1);
 }
