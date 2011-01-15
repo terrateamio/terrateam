@@ -17,10 +17,19 @@
 #ifndef  _KQUEUE_WINDOWS_PLATFORM_H
 #define  _KQUEUE_WINDOWS_PLATFORM_H
 
-#include <windows.h>
-#include <winsock.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <io.h>
+#include <stdio.h>
+#include <fcntl.h>
 
-#include "../../include/kqueue.h"
+#pragma comment(lib, "Ws2_32.lib")
+ 
+/* The #define doesn't seem to work, but the #pragma does.. */
+#define _CRT_SECURE_NO_WARNINGS 1
+#pragma warning( disable : 4996 )
+
+#include "../../include/sys/event.h"
 
 /*
  * Atomic integer operations 
