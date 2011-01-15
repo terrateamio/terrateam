@@ -25,7 +25,7 @@
 #define atomic_inc(p)   __sync_add_and_fetch((p), 1)
 #define atomic_dec(p)   __sync_sub_and_fetch((p), 1)
 
-#define CONSTRUCTOR int __attribute__ ((constructor))
+#define CONSTRUCTOR     __attribute__ ((constructor))
 #define VISIBLE         __attribute__((visibility("default")))
 #define HIDDEN          __attribute__((visibility("hidden")))
 

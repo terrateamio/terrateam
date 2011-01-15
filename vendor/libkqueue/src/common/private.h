@@ -195,4 +195,6 @@ int         kqueue_validate(struct kqueue *);
 #define     kqueue_lock(kq)     pthread_mutex_lock(&(kq)->kq_mtx)
 #define     kqueue_unlock(kq)   pthread_mutex_unlock(&(kq)->kq_mtx)
 
+int CONSTRUCTOR _libkqueue_init(void);
+
 #endif  /* ! _KQUEUE_PRIVATE_H */
