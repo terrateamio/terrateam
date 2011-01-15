@@ -37,3 +37,18 @@ BOOL WINAPI DllMain(
     return (TRUE);
 }
 
+void
+windows_kqueue_free(struct kqueue *kq)
+{
+/*XXX-FIXME close the _pipe() */
+}
+
+int
+windows_kqueue_init(struct kqueue *kq)
+{
+	if (_pipe(kq->kq_sockfd, 512, _O_BINARY) == -1) {
+		dbg_puts("_pipe failed");
+		return (-1);
+	}   
+    return (0);
+}
