@@ -57,7 +57,7 @@ uninstall:
 	rm -f $(MANDIR)/man2/kevent.2 
 	rmdir $(INCLUDEDIR)/kqueue/sys $(INCLUDEDIR)/kqueue
 
-check: $(PROGRAM).a
+check: clean $(PROGRAM).so
 	cd test && ./configure && make check
 
 debug-check: clean $(PROGRAM).a
