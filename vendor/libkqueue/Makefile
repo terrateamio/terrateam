@@ -22,7 +22,7 @@ include config.mk
 
 .PHONY :: install uninstall check dist dist-upload publish-www clean merge distclean fresh-build rpm edit cscope
 
-all: $(PROGRAM).so $(PROGRAM).a
+all: $(PROGRAM).so
 
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ -I./include -I./src/common $(CFLAGS) $<
