@@ -20,7 +20,6 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include "../../include/sys/event.h"
 #include "tree.h"
 
 struct kqueue;
