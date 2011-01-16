@@ -172,16 +172,18 @@ extern "C" {
 
 #ifdef _WIN32
 
-__declspec(dllexport) HANDLE
+#define EVENT_QUEUE struct event_queue *
+
+__declspec(dllexport) EVENT_QUEUE
 CreateEventQueue(void);
 
-__declspec(dllexport) HANDLE
-WaitForEventQueueObject(HANDLE kq, const struct kevent *changelist, int nchanges,
+__declspec(dllexport) int
+WaitForEventQueueObject(EVENT_QUEUE kq, const struct kevent *changelist, int nchanges,
 	    struct kevent *eventlist, int nevents,
 	    const struct timespec *timeout);
 
 __declspec(dllexport) void
-DestroyEventQueue(HANDLE);
+DestroyEventQueue(EVENT_QUEUE);
 
 #else
 int     kqueue(void);
