@@ -42,6 +42,14 @@
 #define atomic_inc   InterlockedIncrement
 #define atomic_dec   InterlockedDecrement
 
+/*
+ * Additional members of struct kqueue
+ */
+#define KQUEUE_PLATFORM_SPECIFIC \
+	HANDLE kq_handle; \
+    HANDLE kq_events[MAXIMUM_WAIT_OBJECTS]; \
+    size_t kq_nevents
+
 /* Windows does not support this attribute.
    DllMain() is the only available constructor function.
    This means the constructor must be called from within DllMain().
