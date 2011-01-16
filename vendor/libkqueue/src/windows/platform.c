@@ -25,12 +25,6 @@ const struct filter evfilt_read = EVFILT_NOTIMPL;
 const struct filter evfilt_timer = EVFILT_NOTIMPL;
 const struct filter evfilt_user = EVFILT_NOTIMPL;
 
-struct event_queue {
-    HANDLE notifier;
-    HANDLE events[MAXIMUM_WAIT_OBJECTS];
-    size_t nevents;
-};
-
 BOOL WINAPI DllMain(
         HINSTANCE self,
         DWORD reason,
@@ -41,6 +35,8 @@ BOOL WINAPI DllMain(
             /* XXX-FIXME: initialize kqtree mutex */
             if (WSAStartup(MAKEWORD(2,2), NULL) != 0)
                 return (FALSE);
+			if (_libkqueue_init() < 0)
+				return (FALSE);
             /* TODO: bettererror handling */
             break;
 
@@ -55,13 +51,20 @@ BOOL WINAPI DllMain(
 __declspec(dllexport) EVENT_QUEUE
 CreateEventQueue(void)
 {
-    EVENT_QUEUE *evq;
+    EVENT_QUEUE evq;
+	int kqfd;
+
+	kqfd = kqueue();
+	if (kqfd < 0)
+		return (NULL);
+
+
 
     evq = calloc(1, sizeof(*evq));
     if (evq == NULL)
         return (NULL);
-    evq->notifier = CreateEvent(NULL, FALSE, FALSE, NULL);
-    if (evq->notifier == NULL) {
+    evq->kq_handle = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if (evq->kq_handle == NULL) {
         free(evq);
         return (NULL);
     }

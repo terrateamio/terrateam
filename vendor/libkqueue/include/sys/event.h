@@ -172,7 +172,7 @@ extern "C" {
 
 #ifdef _WIN32
 
-#define EVENT_QUEUE struct event_queue *
+#define EVENT_QUEUE struct kqueue *
 
 __declspec(dllexport) EVENT_QUEUE
 CreateEventQueue(void);
