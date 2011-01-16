@@ -17,9 +17,14 @@
 #ifndef  _KQUEUE_WINDOWS_PLATFORM_H
 #define  _KQUEUE_WINDOWS_PLATFORM_H
 
+/* Reduces build time by omitting extra system headers */
+#define WIN32_LEAN_AND_MEAN
+
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <io.h>
+#include <malloc.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
 
