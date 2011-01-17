@@ -44,27 +44,42 @@
 
 /*
  * Additional members of struct kqueue
+ * FIXME: This forces a thread-per-filter model
+ *			Would be better to 
  */
 #define KQUEUE_PLATFORM_SPECIFIC \
 	HANDLE kq_handle; \
-    HANDLE kq_events[MAXIMUM_WAIT_OBJECTS]; \
-    size_t kq_nevents
+    HANDLE kq_filt_handle[EVFILT_SYSCOUNT]; \
+	struct filter *kq_filt_ref[EVFILT_SYSCOUNT]; \
+    size_t kq_filt_count; \
+	DWORD  kq_filt_signalled
+
+/*
+ * Additional members of struct filter
+ */
+#define FILTER_PLATFORM_SPECIFIC \
+	HANDLE kf_event_handle
 
 /*
  * Hooks and prototypes
  */
-#define kqueue_free_hook      windows_kqueue_free
-void    windows_kqueue_free(struct kqueue *);
-
 #define kqueue_init_hook      windows_kqueue_init
 int     windows_kqueue_init(struct kqueue *);
+
+#define kqueue_free_hook      windows_kqueue_free
+void    windows_kqueue_free(struct kqueue *);
 
 #define kevent_wait           windows_kevent_wait
 int     windows_kevent_wait(struct kqueue *, const struct timespec *);
 
 #define kevent_copyout        windows_kevent_copyout
-int    
-windows_kevent_copyout(struct kqueue *, int, struct kevent *, int);
+int     windows_kevent_copyout(struct kqueue *, int, struct kevent *, int);
+
+#define filter_init_hook      windows_filter_init
+int     windows_filter_init(struct kqueue *, struct filter *);
+
+#define filter_free_hook      windows_filter_free
+void    windows_filter_free(struct kqueue *, struct filter *);
 
 /* Windows does not support this attribute.
    DllMain() is the only available constructor function.

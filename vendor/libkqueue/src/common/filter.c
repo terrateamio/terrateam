@@ -77,6 +77,12 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
     }
     dbg_printf("filter %d (%s) registered", filter, filter_name(filter));
 
+	/* FIXME: should totally remove const from src */
+#if defined(filter_init_hook)
+	if (filter_init_hook(kq, (struct filter *) src) < 0)
+		return (-1);
+#endif
+
     return (0);
 }
 
@@ -116,7 +122,12 @@ filter_unregister_all(struct kqueue *kq)
             kq->kq_filt[i].kf_destroy(&kq->kq_filt[i]);
 
         knote_free_all(&kq->kq_filt[i]);
-    }
+
+#if defined(filter_free_hook)
+	filter_free_hook(kq, &kq->kq_filt[i]);
+#endif
+
+	}
     memset(&kq->kq_filt[0], 0, sizeof(kq->kq_filt));
 }
 
