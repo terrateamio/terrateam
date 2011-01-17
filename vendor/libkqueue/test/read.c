@@ -14,8 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <arpa/inet.h>
-#include <sys/socket.h>
+
 #include "common.h"
 
 static int __thread kqfd;
@@ -317,9 +316,13 @@ test_kevent_socket_eof(void)
 void
 test_evfilt_read(int _kqfd)
 {
+#ifdef _WIN32
+	die("XXX-FIXME");
+#else
     /* Create a connected pair of full-duplex sockets for testing socket events */
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd) < 0) 
         die("socketpair");
+#endif
 
     kqfd = _kqfd;
     test(kevent_socket_add);

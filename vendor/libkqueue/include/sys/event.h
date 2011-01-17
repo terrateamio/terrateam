@@ -172,6 +172,11 @@ extern "C" {
 
 #ifdef _WIN32
 
+struct timespec {
+    time_t  tv_sec;
+    long    tv_nsec;
+};
+
 __declspec(dllexport) int
 kqueue(void);
 

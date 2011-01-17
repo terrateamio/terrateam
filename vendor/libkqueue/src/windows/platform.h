@@ -82,6 +82,7 @@ windows_kevent_copyout(struct kqueue *, int, struct kevent *, int);
 
 #define snprintf _snprintf
 #define ssize_t  SSIZE_T
+#define sleep(x) Sleep((x) * 1000)
 
 /* For POSIX compatibility when compiling, not for actual use */
 typedef int socklen_t;
@@ -89,6 +90,7 @@ typedef int nlink_t;
 typedef int timer_t;
 typedef int pthread_t;
 typedef int sigset_t;
+typedef int pid_t;
 
 #define THREAD_ID   (GetCurrentThreadId())
 #define __thread    __declspec(thread)

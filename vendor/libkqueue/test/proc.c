@@ -18,7 +18,7 @@
 
 static int sigusr1_caught = 0;
 static pid_t pid;
-static int __thread kqfd;
+static int kqfd;
 
 static void
 sig_handler(int signum)

@@ -90,7 +90,7 @@ int
 kqueue_validate(struct kqueue *kq)
 {
 #if defined(_WIN32)
-    return (0); /* FIXME */
+    return (1); /* FIXME: should scan kqlist to verify fd is valid? */
 #else
     int rv;
     char buf[1];

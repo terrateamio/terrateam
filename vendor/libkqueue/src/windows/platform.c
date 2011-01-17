@@ -32,9 +32,12 @@ BOOL WINAPI DllMain(
 {
     switch (reason) { 
         case DLL_PROCESS_ATTACH:
-            /* XXX-FIXME: initialize kqtree mutex */
+
+#if XXX
+			//move to EVFILT_READ?
             if (WSAStartup(MAKEWORD(2,2), NULL) != 0)
                 return (FALSE);
+#endif
 			if (_libkqueue_init() < 0)
 				return (FALSE);
             /* TODO: bettererror handling */
