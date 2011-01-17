@@ -29,6 +29,4 @@
 extern long int syscall (long int __sysno, ...);
 #define THREAD_ID ((pid_t) syscall(__NR_gettid))
 
-#define KQUEUE_PLATFORM_SPECIFIC //
-
 #endif  /* ! _KQUEUE_LINUX_PLATFORM_H */

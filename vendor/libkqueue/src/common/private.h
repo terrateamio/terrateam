@@ -137,7 +137,9 @@ struct filter {
     RB_HEAD(knt, knote) kf_knote;
     TAILQ_HEAD(, knote) kf_event;       /* events that have occurred */
     struct kqueue      *kf_kqueue;
+#if defined(FILTER_PLATFORM_SPECIFIC)
     FILTER_PLATFORM_SPECIFIC;
+#endif
 };
 
 /* Use this to declare a filter that is not implemented */
@@ -150,7 +152,9 @@ struct kqueue {
     int             kq_nfds;
     pthread_mutex_t kq_mtx;
     volatile uint32_t  kq_ref;
+#if defined(KQUEUE_PLATFORM_SPECIFIC)
     KQUEUE_PLATFORM_SPECIFIC;
+#endif
     RB_ENTRY(kqueue) entries;
 };
 
