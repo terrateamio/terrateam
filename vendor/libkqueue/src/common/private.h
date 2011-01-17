@@ -158,6 +158,14 @@ struct kqueue {
     RB_ENTRY(kqueue) entries;
 };
 
+struct kqueue_vtable {
+    int  (*kvt_kqueue_init)(struct kqueue *);
+    void (*kvt_kqueue_free)(struct kqueue *);
+    int  (*kvt_filter_init)(struct kqueue *, struct filter *);
+    void (*kvt_filter_free)(struct kqueue *, struct filter *);
+};
+extern const struct kqueue_vtable const kqops;
+
 struct knote *  knote_lookup(struct filter *, short);
 struct knote *  knote_lookup_data(struct filter *filt, intptr_t);
 struct knote *  knote_new(void);

@@ -5,7 +5,7 @@ abi_minor="0"
 abi_version="$abi_major.$abi_minor"
 cflags="-fpic -Wall -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600"
 ldflags=""
-sources="src/common/filter.c src/common/knote.c 
+sources="src/common/filter.c src/common/knote.c
          src/common/kevent.c src/common/kqueue.c" 
 libdepends=""
 deps="src/common/private.h"
@@ -50,8 +50,8 @@ pre_configure_hook() {
 post_configure_hook() {
     finalize target "$target"
 
-    kqueue=""
     kevent="src/posix/kevent.c"
+    platform="src/posix/platform.c"
     evfilt_signal="src/posix/signal.c"
     evfilt_proc="src/$target/proc.c"
     evfilt_socket="src/$target/socket.c"
@@ -71,12 +71,13 @@ post_configure_hook() {
       if [ "$have_sys_eventfd_h" = "yes" ] ; then
           eventfd="src/linux/eventfd.c"
       fi
+      platform="$platform src/linux/platform.c"
     fi      
 
     if [ $target = "solaris" ] ; then
           cflags="$cflags -D__EXTENSIONS__"
-    	  kqueue="src/solaris/kqueue.c"
     	  kevent="src/solaris/kevent.c"
+          platform="$platform src/solaris/platform.c"
           evfilt_timer="src/solaris/timer.c"
           evfilt_user="src/solaris/user.c"
           evfilt_proc=""
@@ -93,6 +94,7 @@ post_configure_hook() {
           evfilt_vnode=""
     fi
 
-    sources="$sources $kqueue $kevent $eventfd $evfilt_signal $evfilt_proc 
+    sources="$sources $platform $kevent $eventfd 
+            $evfilt_signal $evfilt_proc 
              $evfilt_socket $evfilt_timer $evfilt_user $evfilt_vnode"
 }
