@@ -50,6 +50,13 @@ int     solaris_kqueue_init(struct kqueue *);
 void port_event_dequeue(port_event_t *, struct kqueue *);
 
 /*
+ * Additional members of struct kqueue
+ */
+#define KQUEUE_PLATFORM_SPECIFIC \
+    int    kq_port; \
+    TAILQ_HEAD(event_buf_listhead,event_buf) kq_events
+
+/*
  * Data structures
  */
 struct event_buf {

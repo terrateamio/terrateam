@@ -48,41 +48,21 @@ BOOL WINAPI DllMain(
     return (TRUE);
 }
 
-__declspec(dllexport) EVENT_QUEUE
-CreateEventQueue(void)
+int
+windows_kqueue_init(struct kqueue *kq)
 {
-    EVENT_QUEUE evq;
-	int kqfd;
-
-	kqfd = kqueue();
-	if (kqfd < 0)
-		return (NULL);
-
-
-
-    evq = calloc(1, sizeof(*evq));
-    if (evq == NULL)
-        return (NULL);
-    evq->kq_handle = CreateEvent(NULL, FALSE, FALSE, NULL);
-    if (evq->kq_handle == NULL) {
-        free(evq);
-        return (NULL);
+    kq->kq_handle = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if (kq->kq_handle == NULL) {
+        dbg_perror("CreatEvent()");
+        return (-1);
     }
 
-    return (evq);
-}
-
-__declspec(dllexport) int
-WaitForEventQueueObject(EVENT_QUEUE kq, const struct kevent *changelist, int nchanges,
-	    struct kevent *eventlist, int nevents,
-	    const struct timespec *timeout)
-{
     return (0);
 }
 
-__declspec(dllexport) void
-DestroyEventQueue(EVENT_QUEUE kq)
+void
+windows_kqueue_free(struct kqueue *kq)
 {
-    CloseHandle(kq->notifier);
+    CloseHandle(kq->kq_handle);
     free(kq);
 }
