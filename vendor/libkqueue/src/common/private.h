@@ -148,12 +148,8 @@ struct kqueue {
     fd_set          kq_fds, kq_rfds; 
     int             kq_nfds;
     pthread_mutex_t kq_mtx;
-KQUEUE_PLATFORM_SPECIFIC;
-#ifdef __sun__
-    int             kq_port;            /* see: port_create(2) */
-    TAILQ_HEAD(event_buf_listhead,event_buf) kq_events;
-#endif
-    volatile uint32_t        kq_ref;
+    volatile uint32_t  kq_ref;
+    KQUEUE_PLATFORM_SPECIFIC;
     RB_ENTRY(kqueue) entries;
 };
 

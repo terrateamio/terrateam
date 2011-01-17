@@ -150,9 +150,6 @@ kqueue_get(int kq)
 int VISIBLE
 kqueue(void)
 {
-#ifdef _WIN32
-    static int kqueue_id = 0;
-#endif
 	struct kqueue *kq;
     int tmp;
 
@@ -171,13 +168,7 @@ kqueue(void)
     KQUEUE_DEBUG = (getenv("KQUEUE_DEBUG") == NULL) ? 0 : 1;
 #endif
 
-#ifdef _WIN32
-    pthread_rwlock_wrlock(&kqtree_mtx);
-    kqueue_id++;
-    pthread_rwlock_unlock(&kqtree_mtx);
-    kq->kq_sockfd[0] = kqueue_id;
-    kq->kq_sockfd[1] = kqueue_id;
-#else
+#ifndef _WIN32
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, kq->kq_sockfd) < 0) 
         goto errout_unlocked;
 #endif
