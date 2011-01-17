@@ -196,6 +196,7 @@ void        kqueue_put(struct kqueue *);
 int         kqueue_validate(struct kqueue *);
 #define     kqueue_lock(kq)     pthread_mutex_lock(&(kq)->kq_mtx)
 #define     kqueue_unlock(kq)   pthread_mutex_unlock(&(kq)->kq_mtx)
+#define     kqueue_id(kq)       ((kq)->kq_sockfd[1])
 
 int CONSTRUCTOR _libkqueue_init(void);
 

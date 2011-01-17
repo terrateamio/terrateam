@@ -76,8 +76,11 @@ kqueue_gc(void)
             kqueue_free(n1);
         } else {
             rv = kqueue_validate(n1);
-            if (rv == 0) 
+            if (rv == 0) {
+                dbg_printf("kqueue %d is no longer valid, will be freed", 
+                        kqueue_id(n1));
                 kqueue_free(n1);
+            }
             else if (rv < 0) 
                 return (-1);
         }
@@ -187,7 +190,7 @@ kqueue(void)
     RB_INSERT(kqt, &kqtree, kq);
     pthread_rwlock_unlock(&kqtree_mtx);
 
-    dbg_printf("created kqueue, fd=%d", kq->kq_sockfd[1]);
+    dbg_printf("created kqueue, fd=%d", kqueue_id(kq));
     return (kq->kq_sockfd[1]);
 
 errout:
