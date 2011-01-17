@@ -45,6 +45,7 @@
 #include <unistd.h>
 #include <sys/event.h>
 #include <arpa/inet.h>
+#include <poll.h>
 #include "config.h"
 #else
 #include "../include/sys/event.h"
