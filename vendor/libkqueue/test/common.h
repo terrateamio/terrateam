@@ -38,13 +38,20 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+
+#ifndef _WIN32
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-
 #include <sys/event.h>
-
+#include <arpa/inet.h>
 #include "config.h"
+#else
+#include "../include/sys/event.h"
+#include "../src/windows/platform.h"
+#pragma comment(lib, "../Debug/libkqueue.lib")
+#endif
+
 
 void test_evfilt_read(int);
 void test_evfilt_signal(int);

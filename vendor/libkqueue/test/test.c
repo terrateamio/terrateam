@@ -19,13 +19,12 @@
 #endif
 #include <sys/types.h>
 #include <limits.h>
-#include <pthread.h>
 
 #include "common.h"
 
-static int __thread testnum = 1;
-static int __thread error_flag = 1;
-static char __thread * cur_test_id = NULL;
+static int testnum = 1;
+static int error_flag = 1;
+static char * cur_test_id = NULL;
 
 /* FIXME: not portable beyond linux */
 static void
@@ -76,9 +75,8 @@ test_end(void)
 void
 testing_begin(void)
 {
+#ifndef _WIN32
     struct sigaction sa;
-
-    atexit(testing_atexit);
 
     /* Install a signal handler for crashes and hangs */
     memset(&sa, 0, sizeof(sa));
@@ -87,6 +85,10 @@ testing_begin(void)
     sigaction(SIGSEGV, &sa, NULL);
     sigaction(SIGABRT, &sa, NULL);
     sigaction(SIGINT, &sa, NULL);
+#endif
+
+    atexit(testing_atexit);
+
 }
 
 void
@@ -99,14 +101,11 @@ testing_end(void)
 int
 testing_make_uid(void)
 {
-    static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
     static int id = 0;
 
-    pthread_mutex_lock(&mtx);
     if (id == INT_MAX)
         abort();
     id++;
-    pthread_mutex_unlock(&mtx);
-
+    
     return (id);
 }
