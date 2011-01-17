@@ -59,6 +59,12 @@ void    windows_kqueue_free(struct kqueue *);
 #define kqueue_init_hook      windows_kqueue_init
 int     windows_kqueue_init(struct kqueue *);
 
+#define kevent_wait           windows_kevent_wait
+int     windows_kevent_wait(struct kqueue *, const struct timespec *);
+
+#define kevent_copyout        windows_kevent_copyout
+int    
+windows_kevent_copyout(struct kqueue *, int, struct kevent *, int);
 
 /* Windows does not support this attribute.
    DllMain() is the only available constructor function.
