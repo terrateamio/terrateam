@@ -31,10 +31,18 @@
 
 #include <signal.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
 #include <pthread.h>
 #include <poll.h>
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
+
+void    posix_kqueue_free(struct kqueue *);
+int     posix_kqueue_init(struct kqueue *);
 
 #endif  /* ! _KQUEUE_POSIX_PLATFORM_H */

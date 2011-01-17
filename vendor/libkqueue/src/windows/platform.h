@@ -63,22 +63,11 @@
 /*
  * Hooks and prototypes
  */
-#define kqueue_init_hook      windows_kqueue_init
 int     windows_kqueue_init(struct kqueue *);
-
-#define kqueue_free_hook      windows_kqueue_free
 void    windows_kqueue_free(struct kqueue *);
-
-#define kevent_wait           windows_kevent_wait
 int     windows_kevent_wait(struct kqueue *, const struct timespec *);
-
-#define kevent_copyout        windows_kevent_copyout
 int     windows_kevent_copyout(struct kqueue *, int, struct kevent *, int);
-
-#define filter_init_hook      windows_filter_init
 int     windows_filter_init(struct kqueue *, struct filter *);
-
-#define filter_free_hook      windows_filter_free
 void    windows_filter_free(struct kqueue *, struct filter *);
 
 /* Windows does not support this attribute.

@@ -52,15 +52,13 @@ kqueue_free(struct kqueue *kq)
 {
     RB_REMOVE(kqt, &kqtree, kq);
     filter_unregister_all(kq);
-
-#ifdef kqueue_free_hook
-    kqueue_free_hook(kq);
-#endif
-
+    kqops.kvt_kqueue_free(kq);
     free(kq);
 }
 
-static int
+/* DEADWOOD: When a file descriptor is closed, it's FD # can be reused by the
+ next call to open(), socket(), etc. */
+int
 kqueue_gc(void)
 {
     int rv;
@@ -73,6 +71,8 @@ kqueue_gc(void)
         n2 = RB_NEXT(kqt, &kqtree, n1);
 
         if (n1->kq_ref == 0) {
+            dbg_printf("kqueue %d refcount is zero, will be freed", 
+                    kqueue_id(n1));
             kqueue_free(n1);
         } else {
             rv = kqueue_validate(n1);
@@ -154,7 +154,14 @@ int VISIBLE
 kqueue(void)
 {
 	struct kqueue *kq;
-    int tmp;
+
+#if DEADWOOD
+    /* Free resources associated with closed kqueue descriptors */
+    pthread_rwlock_wrlock(&kqtree_mtx);
+    if (kqueue_gc() < 0)
+        return (-1);
+    pthread_rwlock_unlock(&kqtree_mtx);
+#endif
 
     kq = calloc(1, sizeof(*kq));
     if (kq == NULL)
@@ -172,18 +179,11 @@ kqueue(void)
 #endif
 
 #ifndef _WIN32
-    if (socketpair(AF_UNIX, SOCK_STREAM, 0, kq->kq_sockfd) < 0) 
-        goto errout_unlocked;
-#endif
-
-#ifdef kqueue_init_hook
-    if (kqueue_init_hook(kq) < 0)
+    if (kqops.kvt_kqueue_init(kq) < 0)
         goto errout_unlocked;
 #endif
 
     pthread_rwlock_wrlock(&kqtree_mtx);
-    if (kqueue_gc() < 0)
-        goto errout;
     /* TODO: move outside of the lock if it is safe */
     if (filter_register_all(kq) < 0)
         goto errout;
@@ -197,18 +197,7 @@ errout:
     pthread_rwlock_unlock(&kqtree_mtx);
 
 errout_unlocked:
-    if (kq->kq_sockfd[0] != kq->kq_sockfd[1]) {
-        tmp = errno;
-#ifndef _WIN32
-        (void)close(kq->kq_sockfd[0]);
-        (void)close(kq->kq_sockfd[1]);
-#endif
-        errno = tmp;
-    }
-#if defined(__sun__)
-    if (kq->kq_port > 0) 
-	close(kq->kq_port);
-#endif
+    kqops.kvt_kqueue_free(kq);
     free(kq);
     return (-1);
 }

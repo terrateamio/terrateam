@@ -14,28 +14,26 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdlib.h>
-#include <port.h>
-#include <poll.h>
-#include <unistd.h>
-
-#include "sys/event.h"
-#include "private.h"
-
-void
-solaris_kqueue_free(struct kqueue *kq)
-{
-    if (kq->kq_port > 0) 
-        close(kq->kq_port);
-}
+#include "../common/private.h"
 
 int
-solaris_kqueue_init(struct kqueue *kq)
+posix_kqueue_init(struct kqueue *kq)
 {
-    if ((kq->kq_port = port_create()) < 0) {
-        dbg_perror("port_create(2)");
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, kq->kq_sockfd) < 0) {
+        dbg_perror("socketpair");
+        kq->kq_sockfd[0] = -1;
+        kq->kq_sockfd[1] = -1;
         return (-1);
     }
-    TAILQ_INIT(&kq->kq_events);
+
     return (0);
+}
+
+void
+posix_kqueue_free(struct kqueue *kq)
+{
+    if (kq->kq_sockfd[0] != -1)
+        (void) close(kq->kq_sockfd[0]);
+    if (kq->kq_sockfd[1] != -1)
+        (void) close(kq->kq_sockfd[1]);
 }
