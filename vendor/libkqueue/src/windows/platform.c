@@ -40,7 +40,6 @@ BOOL WINAPI DllMain(
 #endif
 			if (_libkqueue_init() < 0)
 				return (FALSE);
-            /* TODO: bettererror handling */
             break;
 
         case DLL_PROCESS_DETACH:
@@ -70,93 +69,88 @@ windows_kqueue_free(struct kqueue *kq)
     free(kq);
 }
 
-
 int
 windows_kevent_wait(struct kqueue *kq, const struct timespec *timeout)
 {
-#if FIXME
-    port_event_t pe;
-    int rv;
-    uint_t nget = 1;
+	int retval;
+    DWORD rv, timeout_ms;
+    
+	/* Convert timeout to milliseconds */
+	/* NOTE: loss of precision for timeout values less than 1ms */
+	if (timeout == NULL) {
+		timeout_ms = INFINITE;
+	} else {
+		timeout_ms = 0;
+		if (timeout->tv_sec > 0)
+			timeout_ms += ((DWORD)timeout->tv_sec) / 1000;
+		if (timeout->tv_sec > 0)
+			timeout_ms += timeout->tv_nsec / 1000000;
+	}
 
-    reset_errno();
-    dbg_printf("waiting for events (timeout=%p)", timeout);
-    rv = port_getn(kq->kq_port, &pe, 1, &nget, (struct timespec *) timeout);
-    dbg_printf("rv=%d errno=%d (%s) nget=%d", 
-                rv, errno, strerror(errno), nget);
-    if (rv < 0) {
-        if (errno == ETIME) {
-            dbg_puts("no events within the given timeout");
-            return (0);
-        }
-        if (errno == EINTR) {
-            dbg_puts("signal caught");
-            return (-1);
-        }
-        dbg_perror("port_get(2)");
-        return (-1);
-    }
+	/* Wait for an event */
+    dbg_printf("waiting for events (timeout=%u ms)", timeout_ms);
+    rv = WaitForMultipleObjects(kq->kq_filt_count, kq->kq_filt_handle, FALSE, timeout_ms);
+	switch (rv) {
+	case WAIT_TIMEOUT:
+		dbg_puts("no events within the given timeout");
+		retval = 0;
+		break;
 
-    port_event_enqueue(kq, &pe);
+	case WAIT_FAILED:
+		dbg_perror("WaitForMultipleEvents()");
+		/* TODO: Use GetLastError() for details */
+		retval = -1;
 
-    return (nget);
-#endif
-	return 0;
+	default:
+		kq->kq_filt_signalled = rv;
+		retval = 1;
+	}
+
+    return (retval);
 }
 
 int
 windows_kevent_copyout(struct kqueue *kq, int nready,
         struct kevent *eventlist, int nevents)
 {
-#if FIXME
-    struct event_buf *ebp;
     struct filter *filt;
     int rv;
 
-    ebp = TAILQ_FIRST(&kq->kq_events);
-    if (ebp == NULL) {
-        dbg_puts("kq_events was empty");
+	/* KLUDGE: We are abusing the WAIT_FAILED constant to mean
+	that there are no filters with pending events.
+	*/
+	if (kq->kq_filt_signalled == WAIT_FAILED)
+		return (0);
+	filt = kq->kq_filt_ref[kq->kq_filt_signalled];
+	kq->kq_filt_signalled = WAIT_FAILED;
+	rv = filt->kf_copyout(filt, eventlist, nevents);
+    if (rv < 0) {
+        dbg_puts("kevent_copyout failed");
+        return (-1);
+    }
+	return (1);
+}
+
+int
+windows_filter_init(struct kqueue *kq, struct filter *kf)
+{
+	kf->kf_event_handle = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if (kf->kf_event_handle == NULL) {
+        dbg_perror("CreateEvent()");
         return (-1);
     }
 
-    dbg_printf("event=%s", port_event_dump(&ebp->pe));
-    switch (ebp->pe.portev_source) {
-	case PORT_SOURCE_FD:
-        filt = ebp->pe.portev_user;
-        rv = filt->kf_copyout(filt, eventlist, nevents);
-        break;
+	/* Add the handle to the kqueue filter table */
+	kq->kq_filt_handle[kq->kq_filt_count] = kf->kf_event_handle;
+	kq->kq_filt_ref[kq->kq_filt_count] = (struct filter *) kf;
+    kq->kq_filt_count++;
 
-	case PORT_SOURCE_TIMER:
-        filter_lookup(&filt, kq, EVFILT_TIMER);
-        rv = filt->kf_copyout(filt, eventlist, nevents);
-        break;
-
-	case PORT_SOURCE_USER:
-        switch (ebp->pe.portev_events) {
-            case X_PORT_SOURCE_SIGNAL:
-                filter_lookup(&filt, kq, EVFILT_SIGNAL);
-                rv = filt->kf_copyout(filt, eventlist, nevents);
-                break;
-            case X_PORT_SOURCE_USER:
-                filter_lookup(&filt, kq, EVFILT_USER);
-                rv = filt->kf_copyout(filt, eventlist, nevents);
-                break;
-            default:
-                dbg_puts("unsupported portev_events");
-                abort();
-        }
-        break;
-
-	default:
-		dbg_puts("unsupported source");
-    		abort();
-    }
-    if (rv < 0) {
-        dbg_puts("kevent_copyout failed");
-	return (-1);
-    }
-
-#endif
-    return (1);
+	return (0);
 }
 
+void
+windows_filter_free(struct kqueue *kq, struct filter *kf)
+{
+	CloseHandle(kf->kf_event_handle);
+	/* FIXME: Remove the handle from the kqueue filter table */
+}
