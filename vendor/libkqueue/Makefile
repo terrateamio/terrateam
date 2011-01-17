@@ -44,7 +44,6 @@ install: $(PROGRAM).so.$(ABI_VERSION)
 	$(LN) -sf $(PROGRAM).so.$(ABI_VERSION) $(LIBDIR)/$(PROGRAM).so.$(ABI_MAJOR)
 	$(LN) -sf $(PROGRAM).so.$(ABI_VERSION) $(LIBDIR)/$(PROGRAM).so
 	$(INSTALL) -m 644 $(PROGRAM).la $(LIBDIR)
-	$(INSTALL) -m 644 $(PROGRAM).a $(LIBDIR)
 	$(INSTALL) -d -m 755 $(LIBDIR)/pkgconfig
 	$(INSTALL) -m 644 libkqueue.pc $(LIBDIR)/pkgconfig
 	$(INSTALL) -d -m 755 $(MANDIR)/man2
