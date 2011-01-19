@@ -159,12 +159,14 @@ struct kqueue {
 };
 
 struct kqueue_vtable {
-    int  (*kvt_kqueue_init)(struct kqueue *);
-    void (*kvt_kqueue_free)(struct kqueue *);
-    int  (*kvt_filter_init)(struct kqueue *, struct filter *);
-    void (*kvt_filter_free)(struct kqueue *, struct filter *);
+    int  (*kqueue_init)(struct kqueue *);
+    void (*kqueue_free)(struct kqueue *);
+	int  (*kevent_wait)(struct kqueue *, const struct timespec *);
+	int  (*kevent_copyout)(struct kqueue *, int, struct kevent *, int);
+    int  (*filter_init)(struct kqueue *, struct filter *);
+    void (*filter_free)(struct kqueue *, struct filter *);
 };
-extern const struct kqueue_vtable const kqops;
+extern const struct kqueue_vtable kqops;
 
 struct knote *  knote_lookup(struct filter *, short);
 struct knote *  knote_lookup_data(struct filter *filt, intptr_t);

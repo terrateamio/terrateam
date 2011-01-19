@@ -289,7 +289,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
     for (nret = 0; nret == 0;) 
     {
         /* Wait for one or more events. */
-        n = kevent_wait(kq, timeout);
+        n = kqops.kevent_wait(kq, timeout);
         if (n < 0) {
 	    dbg_printf("(%u) kevent_wait failed", myid);
             goto errout;
@@ -299,7 +299,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
 
         /* Copy the events to the caller */
         kqueue_lock(kq);
-        nret = kevent_copyout(kq, n, eventlist, nevents);
+        nret = kqops.kevent_copyout(kq, n, eventlist, nevents);
         kqueue_unlock(kq);
     }
 

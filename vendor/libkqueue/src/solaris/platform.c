@@ -40,8 +40,10 @@ solaris_kqueue_free(struct kqueue *kq)
     }
 }
 
-const struct kqueue_vtable const kqops =
+const struct kqueue_vtable kqops =
 {
     solaris_kqueue_init,
     solaris_kqueue_free,
+	solaris_kevent_wait,
+	solaris_kevent_copyout,
 };
