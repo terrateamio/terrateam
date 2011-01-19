@@ -16,7 +16,7 @@
 
 #include "../common/private.h"
 
-const struct kqueue_vtable const kqops = {
+const struct kqueue_vtable kqops = {
     posix_kqueue_init,
     posix_kqueue_free,
 	posix_kevent_wait,

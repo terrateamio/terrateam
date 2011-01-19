@@ -178,10 +178,8 @@ kqueue(void)
     KQUEUE_DEBUG = (getenv("KQUEUE_DEBUG") == NULL) ? 0 : 1;
 #endif
 
-#ifndef _WIN32
-    if (kqops.kvt_kqueue_init(kq) < 0)
+    if (kqops.kqueue_init(kq) < 0)
         goto errout_unlocked;
-#endif
 
     pthread_rwlock_wrlock(&kqtree_mtx);
     /* TODO: move outside of the lock if it is safe */
