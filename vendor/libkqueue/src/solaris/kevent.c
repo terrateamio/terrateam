@@ -122,7 +122,7 @@ out:
 }
 
 int
-kevent_wait(struct kqueue *kq, const struct timespec *timeout)
+solaris_kevent_wait(struct kqueue *kq, const struct timespec *timeout)
 {
     port_event_t pe;
     int rv;
@@ -152,7 +152,7 @@ kevent_wait(struct kqueue *kq, const struct timespec *timeout)
 }
 
 int
-kevent_copyout(struct kqueue *kq, int nready,
+solaris_kevent_copyout(struct kqueue *kq, int nready,
         struct kevent *eventlist, int nevents)
 {
     struct event_buf *ebp;

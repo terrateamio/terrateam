@@ -41,6 +41,7 @@
 
 #ifndef _WIN32
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/event.h>
