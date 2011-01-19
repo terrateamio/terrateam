@@ -31,7 +31,7 @@ struct unit_test {
  * Test if calling fstat() on a socketpair returns unique ino_t and dev_t
  * values. This is something that kqueue_gc() relies on.
  */
-static void
+void
 test_fstat_on_socketpair(void)
 {
 #ifdef _WIN32
