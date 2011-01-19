@@ -40,6 +40,8 @@
 
 void    solaris_kqueue_free(struct kqueue *);
 int     solaris_kqueue_init(struct kqueue *);
+int     solaris_kevent_wait(struct kqueue *, const struct timespec *);
+int     solaris_kevent_copyout(struct kqueue *, int, struct kevent *, int);
 void    port_event_dequeue(port_event_t *, struct kqueue *);
 
 /*

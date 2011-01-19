@@ -52,7 +52,7 @@ kqueue_free(struct kqueue *kq)
 {
     RB_REMOVE(kqt, &kqtree, kq);
     filter_unregister_all(kq);
-    kqops.kvt_kqueue_free(kq);
+    kqops.kqueue_free(kq);
     free(kq);
 }
 
@@ -197,7 +197,7 @@ errout:
     pthread_rwlock_unlock(&kqtree_mtx);
 
 errout_unlocked:
-    kqops.kvt_kqueue_free(kq);
+    kqops.kqueue_free(kq);
     free(kq);
     return (-1);
 }

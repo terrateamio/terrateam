@@ -49,6 +49,7 @@
  */
 #define KQUEUE_PLATFORM_SPECIFIC \
 	HANDLE kq_handle; \
+	HANDLE kq_apc_dispatcher; \
     HANDLE kq_filt_handle[EVFILT_SYSCOUNT]; \
 	struct filter *kq_filt_ref[EVFILT_SYSCOUNT]; \
     size_t kq_filt_count; \

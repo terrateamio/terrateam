@@ -25,6 +25,15 @@ const struct filter evfilt_read = EVFILT_NOTIMPL;
 const struct filter evfilt_timer = EVFILT_NOTIMPL;
 const struct filter evfilt_user = EVFILT_NOTIMPL;
 
+const struct kqueue_vtable kqops = {
+    windows_kqueue_init,
+    windows_kqueue_free,
+	windows_kevent_wait,
+	windows_kevent_copyout,
+	windows_filter_init,
+	windows_filter_free,
+};
+
 BOOL WINAPI DllMain(
         HINSTANCE self,
         DWORD reason,

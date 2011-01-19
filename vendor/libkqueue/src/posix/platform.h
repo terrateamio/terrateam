@@ -44,5 +44,7 @@
 
 void    posix_kqueue_free(struct kqueue *);
 int     posix_kqueue_init(struct kqueue *);
+int     posix_kevent_wait(struct kqueue *, const struct timespec *);
+int     posix_kevent_copyout(struct kqueue *, int, struct kevent *, int);
 
 #endif  /* ! _KQUEUE_POSIX_PLATFORM_H */

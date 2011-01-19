@@ -78,8 +78,8 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
     dbg_printf("filter %d (%s) registered", filter, filter_name(filter));
 
 	/* FIXME: should totally remove const from src */
-	if (kqops.kvt_filter_init != NULL
-            && kqops.kvt_filter_init(kq, (struct filter *) src) < 0)
+	if (kqops.filter_init != NULL
+            && kqops.filter_init(kq, (struct filter *) src) < 0)
 		return (-1);
 
     return (0);
@@ -122,8 +122,8 @@ filter_unregister_all(struct kqueue *kq)
 
         knote_free_all(&kq->kq_filt[i]);
 
-        if (kqops.kvt_filter_free != NULL)
-            kqops.kvt_filter_free(kq, &kq->kq_filt[i]);
+        if (kqops.filter_free != NULL)
+            kqops.filter_free(kq, &kq->kq_filt[i]);
 	}
     memset(&kq->kq_filt[0], 0, sizeof(kq->kq_filt));
 }

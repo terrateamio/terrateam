@@ -22,7 +22,7 @@
 const struct filter evfilt_proc = EVFILT_NOTIMPL;
 
 int
-kevent_wait(
+posix_kevent_wait(
         struct kqueue *kq, 
         const struct timespec *timeout)
 {
@@ -44,7 +44,7 @@ kevent_wait(
 }
 
 int
-kevent_copyout(struct kqueue *kq, int nready,
+posix_kevent_copyout(struct kqueue *kq, int nready,
         struct kevent *eventlist, int nevents)
 {
     struct filter *filt;
