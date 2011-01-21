@@ -16,97 +16,49 @@
 
 #include "../common/private.h"
 
-#ifndef NDEBUG
-static char *
-itimerspec_dump(struct itimerspec *ts)
-{
-    static char __thread buf[1024];
-
-    snprintf(buf, sizeof(buf),
-            "itimer: [ interval=%lu s %lu ns, next expire=%lu s %lu ns ]",
-            ts->it_interval.tv_sec,
-            ts->it_interval.tv_nsec,
-            ts->it_value.tv_sec,
-            ts->it_value.tv_nsec
-           );
-
-    return (buf);
-}
-#endif
-
-/* Convert milliseconds into seconds+nanoseconds */
+/* Convert milliseconds into negative increments of 100-nanoseconds */
 static void
-convert_msec_to_itimerspec(struct itimerspec *dst, int src, int oneshot)
+convert_msec_to_filetime(LARGE_INTEGER *dst, int src)
 {
-    time_t sec, nsec;
-
-    sec = src / 1000;
-    nsec = (src % 1000) * 1000000;
-
-    /* Set the interval */
-    if (oneshot) {
-        dst->it_interval.tv_sec = 0;
-        dst->it_interval.tv_nsec = 0;
-    } else {
-        dst->it_interval.tv_sec = sec;
-        dst->it_interval.tv_nsec = nsec;
-    }
-
-    /* Set the initial expiration */
-    dst->it_value.tv_sec = sec;
-    dst->it_value.tv_nsec = nsec;
-    dbg_printf("%s", itimerspec_dump(dst));
+	dst->QuadPart = -((int64_t) src * 1000 * 10);
 }
 
 static int
 ktimer_delete(struct filter *filt, struct knote *kn)
 {
-    int rv = 0;
-
-    if (kn->data.pfd == -1)
+    if (kn->data.handle == NULL)
         return (0);
 
-    dbg_printf("removing timerfd %d from %d", kn->data.pfd, filt->kf_pfd);
-    if (epoll_ctl(filt->kf_pfd, EPOLL_CTL_DEL, kn->data.pfd, NULL) < 0) {
-        dbg_printf("epoll_ctl(2): %s", strerror(errno));
-        rv = -1;
-    }
-    if (close(kn->data.pfd) < 0) {
-        dbg_printf("close(2): %s", strerror(errno));
-        rv = -1;
-    }
+	if (!CancelWaitableTimer(kn->data.handle)) {
+		dbg_lasterror("CancelWaitableTimer()");
+		return (-1);
+	}
+	if (!CloseHandle(kn->data.handle)) {
+		dbg_lasterror("CloseHandle()");
+		return (-1);
+	}
 
-    kn->data.pfd = -1;
-    return (rv);
+    kn->data.handle = NULL;
+    return (0);
 }
 
 int
 evfilt_timer_init(struct filter *filt)
 {
-    filt->kf_pfd = epoll_create(1);
-    if (filt->kf_pfd < 0)
-        return (-1);
-
-    dbg_printf("timer epollfd = %d", filt->kf_pfd);
     return (0);
 }
 
 void
 evfilt_timer_destroy(struct filter *filt)
 {
-    close (filt->kf_pfd);//LAME
 }
 
-/* TODO: This entire function is copy+pasted from socket.c
-   with minor changes for timerfds.
-   Perhaps it could be refactored into a generic epoll_copyout()
-   that calls custom per-filter actions.
-   */
 int
 evfilt_timer_copyout(struct filter *filt, 
             struct kevent *dst, 
             int nevents)
 {
+#if FIXME
     struct epoll_event epevt[MAX_KEVENT];
     struct epoll_event *ev;
     struct knote *kn;
@@ -157,41 +109,35 @@ evfilt_timer_copyout(struct filter *filt,
     }
 
     return (nevents);
+#endif
+	return (0);
 }
 
 int
 evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 {
-    struct epoll_event ev;
-    struct itimerspec ts;
-    int tfd;
+    HANDLE th;
+	LARGE_INTEGER liDueTime;
 
     kn->kev.flags |= EV_CLEAR;
 
-    tfd = timerfd_create(CLOCK_MONOTONIC, 0);
-    if (tfd < 0) {
-        dbg_printf("timerfd_create(2): %s", strerror(errno));
+    th = CreateWaitableTimer(NULL, FALSE, NULL);
+    if (th == NULL) {
+        dbg_lasterror("CreateWaitableTimer()");
         return (-1);
     }
-    dbg_printf("created timerfd %d", tfd);
+    dbg_printf("created timer handle %p", th);
 
-    convert_msec_to_itimerspec(&ts, kn->kev.data, kn->kev.flags & EV_ONESHOT);
-    if (timerfd_settime(tfd, 0, &ts, NULL) < 0) {
-        dbg_printf("timerfd_settime(2): %s", strerror(errno));
-        close(tfd);
-        return (-1);
-    }
-
-    memset(&ev, 0, sizeof(ev));
-    ev.events = EPOLLIN;
-    ev.data.ptr = kn;
-    if (epoll_ctl(filt->kf_pfd, EPOLL_CTL_ADD, tfd, &ev) < 0) {
-        dbg_printf("epoll_ctl(2): %d", errno);
-        close(tfd);
+    convert_msec_to_filetime(&liDueTime, kn->kev.data);
+	
+	// XXX-FIXME add completion routine to this call
+    if (!SetWaitableTimer(th, &liDueTime, (kn->kev.flags & EV_ONESHOT), NULL, NULL, FALSE)) {
+        dbg_lasterror("SetWaitableTimer()");
+        CloseHandle(th);
         return (-1);
     }
 
-    kn->data.pfd = tfd;
+    kn->data.handle = th;
     return (0);
 }
 

@@ -36,6 +36,19 @@
 
 #include "../../include/sys/event.h"
 
+
+/*
+ * Debugging macros
+ */
+#ifndef NDEBUG
+#define dbg_lasterror(str)         do {                                \
+    if (KQUEUE_DEBUG)                                               \
+      fprintf(stderr, "KQ: [%d] %s(): %s: (LastError=%d)\n",              \
+              THREAD_ID, __func__, str, GetLastError()); \
+} while (0)
+
+#endif 
+
 /*
  * Atomic integer operations 
  */
