@@ -73,6 +73,7 @@
     <ClCompile Include="src\common\knote.c" />
     <ClCompile Include="src\common\kqueue.c" />
     <ClCompile Include="src\windows\platform.c" />
+    <ClCompile Include="src\windows\timer.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\kqueue.h" />

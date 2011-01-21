@@ -22,7 +22,6 @@ const struct filter evfilt_vnode = EVFILT_NOTIMPL;
 const struct filter evfilt_signal = EVFILT_NOTIMPL;
 const struct filter evfilt_write = EVFILT_NOTIMPL;
 const struct filter evfilt_read = EVFILT_NOTIMPL;
-const struct filter evfilt_timer = EVFILT_NOTIMPL;
 const struct filter evfilt_user = EVFILT_NOTIMPL;
 
 const struct kqueue_vtable kqops = {
@@ -96,8 +95,9 @@ windows_kevent_wait(struct kqueue *kq, const struct timespec *timeout)
 			timeout_ms += timeout->tv_nsec / 1000000;
 	}
 
+#if DEADWOOD
 	/* Wait for an event */
-    dbg_printf("waiting for events (timeout=%u ms)", timeout_ms);
+    dbg_printf("waiting for %u events (timeout=%u ms)", kq->kq_filt_count, timeout_ms);
     rv = WaitForMultipleObjects(kq->kq_filt_count, kq->kq_filt_handle, FALSE, timeout_ms);
 	switch (rv) {
 	case WAIT_TIMEOUT:
@@ -106,15 +106,24 @@ windows_kevent_wait(struct kqueue *kq, const struct timespec *timeout)
 		break;
 
 	case WAIT_FAILED:
-		dbg_perror("WaitForMultipleEvents()");
-		/* TODO: Use GetLastError() for details */
+		dbg_lasterror("WaitForMultipleEvents()");
 		retval = -1;
 
 	default:
 		kq->kq_filt_signalled = rv;
 		retval = 1;
 	}
+#endif
 
+	rv = SleepEx(timeout_ms, TRUE);
+	if (rv == 0) {
+		dbg_puts("timeout reached");
+		retval = 0;
+	} else {
+		dbg_lasterror("SleepEx()");
+		retval = -1;
+	}
+	
     return (retval);
 }
 
@@ -143,6 +152,8 @@ windows_kevent_copyout(struct kqueue *kq, int nready,
 int
 windows_filter_init(struct kqueue *kq, struct filter *kf)
 {
+	return (0); //XXX-FIXME TESTING
+
 	kf->kf_event_handle = CreateEvent(NULL, FALSE, FALSE, NULL);
     if (kf->kf_event_handle == NULL) {
         dbg_perror("CreateEvent()");

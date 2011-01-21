@@ -98,6 +98,7 @@ struct knote {
         } vnode;
         timer_t       timerid;  
         pthread_t     tid;          /* Used by posix/timer.c */
+		void          *handle;      /* Used by win32 filters */
     } data;
     TAILQ_ENTRY(knote) event_ent;    /* Used by filter->kf_event */
     RB_ENTRY(knote)   kntree_ent;   /* Used by filter->kntree */
