@@ -79,7 +79,7 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
 
 	/* FIXME: should totally remove const from src */
 	if (kqops.filter_init != NULL
-            && kqops.filter_init(kq, (struct filter *) src) < 0)
+            && kqops.filter_init(kq, dst) < 0)
 		return (-1);
 
     return (0);
