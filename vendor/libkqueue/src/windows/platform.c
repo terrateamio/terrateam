@@ -95,10 +95,9 @@ windows_kevent_wait(struct kqueue *kq, const struct timespec *timeout)
 			timeout_ms += timeout->tv_nsec / 1000000;
 	}
 
-#if DEADWOOD
 	/* Wait for an event */
     dbg_printf("waiting for %u events (timeout=%u ms)", kq->kq_filt_count, timeout_ms);
-    rv = WaitForMultipleObjects(kq->kq_filt_count, kq->kq_filt_handle, FALSE, timeout_ms);
+    rv = WaitForMultipleObjectsEx(kq->kq_filt_count, kq->kq_filt_handle, FALSE, timeout_ms, TRUE);
 	switch (rv) {
 	case WAIT_TIMEOUT:
 		dbg_puts("no events within the given timeout");
@@ -112,16 +111,6 @@ windows_kevent_wait(struct kqueue *kq, const struct timespec *timeout)
 	default:
 		kq->kq_filt_signalled = rv;
 		retval = 1;
-	}
-#endif
-
-	rv = SleepEx(timeout_ms, TRUE);
-	if (rv == 0) {
-		dbg_puts("timeout reached");
-		retval = 0;
-	} else {
-		dbg_lasterror("SleepEx()");
-		retval = -1;
 	}
 	
     return (retval);
@@ -152,16 +141,17 @@ windows_kevent_copyout(struct kqueue *kq, int nready,
 int
 windows_filter_init(struct kqueue *kq, struct filter *kf)
 {
-	return (0); //XXX-FIXME TESTING
+	HANDLE h;
 
-	kf->kf_event_handle = CreateEvent(NULL, FALSE, FALSE, NULL);
-    if (kf->kf_event_handle == NULL) {
+	h = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if (h == NULL) {
         dbg_perror("CreateEvent()");
         return (-1);
     }
+	kf->kf_event_handle = h;
 
 	/* Add the handle to the kqueue filter table */
-	kq->kq_filt_handle[kq->kq_filt_count] = kf->kf_event_handle;
+	kq->kq_filt_handle[kq->kq_filt_count] = h;
 	kq->kq_filt_ref[kq->kq_filt_count] = (struct filter *) kf;
     kq->kq_filt_count++;
 
