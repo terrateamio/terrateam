@@ -32,13 +32,10 @@
 int
 evfilt_user_init(struct filter *filt)
 {
-    filt->kf_efd = eventfd_create();
-    if (filt->kf_efd == NULL)
+    if (kqops.eventfd_init(&filt->kf_efd) < 0)
         return (-1);
 
-    filt->kf_pfd = eventfd_reader(filt->kf_efd);
-    if (filt->kf_pfd < 0) 
-        return (-1);
+    filt->kf_pfd = kqops.eventfd_descriptor(&filt->kf_efd);
 
     return (0);
 }
@@ -46,7 +43,7 @@ evfilt_user_init(struct filter *filt)
 void
 evfilt_user_destroy(struct filter *filt)
 {
-    eventfd_free(filt->kf_efd);
+    kqops.eventfd_close(&filt->kf_efd);
     return;
 }
 
@@ -70,7 +67,7 @@ evfilt_user_copyout(struct filter *filt,
         if (kn->kev.flags & EV_CLEAR)
             kn->kev.fflags &= ~NOTE_TRIGGER;
         if (kn->kev.flags & (EV_DISPATCH | EV_CLEAR | EV_ONESHOT))
-            eventfd_lower(filt->kf_efd);
+            kqops.eventfd_lower(&filt->kf_efd);
         if (kn->kev.flags & EV_DISPATCH) {
             KNOTE_DISABLE(kn);
             kn->kev.fflags &= ~NOTE_TRIGGER;
@@ -86,7 +83,7 @@ evfilt_user_copyout(struct filter *filt,
     /* This should normally never happen but is here for debugging */
     if (nevents == 0) {
         dbg_puts("spurious wakeup");
-        eventfd_lower(filt->kf_efd);
+        kqops.eventfd_lower(&filt->kf_efd);
     }
 
     return (nevents);
@@ -142,7 +139,7 @@ evfilt_user_knote_modify(struct filter *filt, struct knote *kn,
     if ((!(kn->kev.flags & EV_DISABLE)) && kev->fflags & NOTE_TRIGGER) {
         kn->kev.fflags |= NOTE_TRIGGER;
         knote_enqueue(filt, kn);
-        eventfd_raise(filt->kf_efd);
+        kqops.eventfd_raise(&filt->kf_efd);
     }
 
     return (0);

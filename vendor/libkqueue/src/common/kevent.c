@@ -253,16 +253,6 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         goto out2;
     }
 
-    rv = kqueue_validate(kq);
-    if (rv < 0) {
-        nret = -1;
-        goto out2;
-    } else if (rv == 0) {
-        errno = EBADF;
-        nret = -1;
-        goto out2;
-    }
-
     /*
      * Process each kevent on the changelist.
      */
