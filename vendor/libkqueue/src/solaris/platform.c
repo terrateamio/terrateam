@@ -44,6 +44,13 @@ const struct kqueue_vtable kqops =
 {
     solaris_kqueue_init,
     solaris_kqueue_free,
-	solaris_kevent_wait,
-	solaris_kevent_copyout,
+    solaris_kevent_wait,
+    solaris_kevent_copyout,
+    NULL,
+    NULL,
+    posix_eventfd_init,
+    posix_eventfd_close,
+    posix_eventfd_raise,
+    posix_eventfd_lower,
+    posix_eventfd_descriptor
 };

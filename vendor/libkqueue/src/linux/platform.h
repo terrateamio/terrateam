@@ -18,6 +18,7 @@
 #define  _KQUEUE_LINUX_PLATFORM_H
 
 #include <sys/queue.h>
+#include <sys/eventfd.h>
 
 /*
  * Get the current thread ID
@@ -28,5 +29,11 @@
 # include <unistd.h>
 extern long int syscall (long int __sysno, ...);
 #define THREAD_ID ((pid_t) syscall(__NR_gettid))
+ 
+int     linux_eventfd_init(struct eventfd *);
+void    linux_eventfd_close(struct eventfd *);
+int     linux_eventfd_raise(struct eventfd *);
+int     linux_eventfd_lower(struct eventfd *);
+int     linux_eventfd_descriptor(struct eventfd *);
 
 #endif  /* ! _KQUEUE_LINUX_PLATFORM_H */

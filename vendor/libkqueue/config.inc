@@ -58,7 +58,6 @@ post_configure_hook() {
     evfilt_timer="src/posix/timer.c"
     evfilt_user="src/posix/user.c"
     evfilt_vnode="src/$target/vnode.c"
-    eventfd="src/posix/eventfd.c"
 
     if [ $target = "linux" ] ; then
       # FIXME: not tested
@@ -67,9 +66,6 @@ post_configure_hook() {
       #fi
       if [ "$have_sys_timerfd_h" = "yes" ] ; then
           evfilt_timer="src/linux/timer.c"
-      fi
-      if [ "$have_sys_eventfd_h" = "yes" ] ; then
-          eventfd="src/linux/eventfd.c"
       fi
       platform="$platform src/linux/platform.c"
     fi      
@@ -82,7 +78,6 @@ post_configure_hook() {
           evfilt_user="src/solaris/user.c"
           evfilt_proc=""
           evfilt_vnode=""
-          eventfd=""
     fi      
 
     # FIXME: This will compile but not actually work
@@ -94,7 +89,7 @@ post_configure_hook() {
           evfilt_vnode=""
     fi
 
-    sources="$sources $platform $kevent $eventfd 
+    sources="$sources $platform $kevent 
             $evfilt_signal $evfilt_proc 
              $evfilt_socket $evfilt_timer $evfilt_user $evfilt_vnode"
 }
