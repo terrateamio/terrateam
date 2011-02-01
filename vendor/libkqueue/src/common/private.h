@@ -22,8 +22,12 @@
 #include <string.h>
 #include "tree.h"
 
+/* Maximum events returnable in a single kevent() call */
+#define MAX_KEVENT  512
+
 struct kqueue;
 struct kevent;
+struct knote;
 struct eventfd;
 struct evfilt_data;
 
@@ -40,10 +44,7 @@ struct evfilt_data;
 # error Unknown platform
 #endif
 
-
-/* Maximum events returnable in a single kevent() call */
-#define MAX_KEVENT  512
-
+#include <assert.h>
 
 extern int KQUEUE_DEBUG;
 
@@ -98,6 +99,7 @@ struct knote {
     struct kevent     kev;
     int               flags;       
     union {
+        /* OLD */
         int           pfd;       /* Used by timerfd */
         int           events;    /* Used by socket */
         struct {
@@ -108,6 +110,9 @@ struct knote {
         pthread_t     tid;          /* Used by posix/timer.c */
 		void          *handle;      /* Used by win32 filters */
     } data;
+#if defined(KNOTE_PLATFORM_SPECIFIC)
+    KNOTE_PLATFORM_SPECIFIC;
+#endif
     TAILQ_ENTRY(knote) event_ent;    /* Used by filter->kf_event */
     RB_ENTRY(knote)   kntree_ent;   /* Used by filter->kntree */
 };
@@ -127,7 +132,7 @@ struct filter {
 
     int     (*kf_init)(struct filter *);
     void    (*kf_destroy)(struct filter *);
-    int     (*kf_copyout)(struct filter *, struct kevent *, int);
+    int     (*kf_copyout)(struct kevent *, const struct kqueue *, struct filter *, struct knote *, void *);
 
     /* knote operations */
 
@@ -139,12 +144,15 @@ struct filter {
     int     (*kn_disable)(struct filter *, struct knote *);
 
     struct eventfd kf_efd;             /* Used by user.c */
+
+#if DEADWOOD
+    //MOVE TO POSIX?
     int       kf_pfd;                   /* fd to poll(2) for readiness */
     int       kf_wfd;                   /* fd to write when an event occurs */
-    sigset_t            kf_sigmask;
+#endif
+
     struct evfilt_data *kf_data;	    /* filter-specific data */
     RB_HEAD(knt, knote) kf_knote;
-    TAILQ_HEAD(, knote) kf_event;       /* events that have occurred */
     struct kqueue      *kf_kqueue;
 #if defined(FILTER_PLATFORM_SPECIFIC)
     FILTER_PLATFORM_SPECIFIC;
@@ -155,7 +163,7 @@ struct filter {
 #define EVFILT_NOTIMPL { 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 
 struct kqueue {
-    struct eventfd  kq_evfd;
+    int             kq_id;
     struct filter   kq_filt[EVFILT_SYSCOUNT];
     fd_set          kq_fds, kq_rfds; 
     int             kq_nfds;
@@ -170,8 +178,8 @@ struct kqueue {
 struct kqueue_vtable {
     int  (*kqueue_init)(struct kqueue *);
     void (*kqueue_free)(struct kqueue *);
-	int  (*kevent_wait)(struct kqueue *, const struct timespec *);
-	int  (*kevent_copyout)(struct kqueue *, int, struct kevent *, int);
+	int  (*kevent_wait)(struct kqueue *, int, const struct timespec *);
+    int  (*kevent_copyout)(struct kqueue *, int, struct kevent *, int);
     int  (*filter_init)(struct kqueue *, struct filter *);
     void (*filter_free)(struct kqueue *, struct filter *);
     int  (*eventfd_init)(struct eventfd *);
@@ -191,17 +199,15 @@ void        knote_insert(struct filter *, struct knote *);
 int         knote_get_socket_type(struct knote *);
 
 /* TODO: these deal with the eventlist, should use a different prefix */
-void        knote_enqueue(struct filter *, struct knote *);
-struct knote *  knote_dequeue(struct filter *);
-int         knote_events_pending(struct filter *);
+//DEADWOOD:void        knote_enqueue(struct filter *, struct knote *);
+//DEADWOOD:struct knote *  knote_dequeue(struct filter *);
+//DEADWOOD:int         knote_events_pending(struct filter *);
+int         knote_disable(struct filter *, struct knote *);
 
 int         filter_lookup(struct filter **, struct kqueue *, short);
-int         filter_socketpair(struct filter *);
 int      	filter_register_all(struct kqueue *);
 void     	filter_unregister_all(struct kqueue *);
 const char *filter_name(short);
-int         filter_lower(struct filter *);
-int         filter_raise(struct filter *);
 
 int         kevent_wait(struct kqueue *, const struct timespec *);
 int         kevent_copyout(struct kqueue *, int, struct kevent *, int);
@@ -213,7 +219,6 @@ void        kqueue_put(struct kqueue *);
 int         kqueue_validate(struct kqueue *);
 #define     kqueue_lock(kq)     pthread_mutex_lock(&(kq)->kq_mtx)
 #define     kqueue_unlock(kq)   pthread_mutex_unlock(&(kq)->kq_mtx)
-#define     kqueue_id(kq)       ((kq)->kq_evfd.ef_id)
 
 int CONSTRUCTOR _libkqueue_init(void);
 

@@ -51,7 +51,7 @@ _libkqueue_init(void)
 static int
 kqueue_cmp(struct kqueue *a, struct kqueue *b)
 {
-    return memcmp(&a->kq_evfd.ef_id, &b->kq_evfd.ef_id, sizeof(int)); 
+    return memcmp(&a->kq_id, &b->kq_id, sizeof(int)); 
 }
 
 RB_GENERATE(kqt, kqueue, entries, kqueue_cmp)
@@ -79,7 +79,7 @@ kqueue_get(int kq)
     struct kqueue query;
     struct kqueue *ent = NULL;
 
-    query.kq_evfd.ef_id = kq;
+    query.kq_id = kq;
     pthread_rwlock_rdlock(&kqtree_mtx);
     ent = RB_FIND(kqt, &kqtree, &query);
     pthread_rwlock_unlock(&kqtree_mtx);
@@ -101,26 +101,17 @@ kqueue(void)
     kq->kq_ref = 1;
     pthread_mutex_init(&kq->kq_mtx, NULL);
 
-
-    if (kqops.eventfd_init(&kq->kq_evfd) < 0)
-        goto errout_unlocked;
-    if (kqops.kqueue_init(kq) < 0)
-        goto errout_unlocked;
-
     pthread_rwlock_wrlock(&kqtree_mtx);
-    /* TODO: move outside of the lock if it is safe */
-    if (filter_register_all(kq) < 0)
+    if (kqops.kqueue_init(kq) < 0)
         goto errout;
     RB_INSERT(kqt, &kqtree, kq);
     pthread_rwlock_unlock(&kqtree_mtx);
 
-    dbg_printf("created kqueue, fd=%d", kqueue_id(kq));
-    return (kqops.eventfd_descriptor(&kq->kq_evfd));
+    dbg_printf("created kqueue, fd=%d", kq->kq_id);
+    return (kq->kq_id);
 
 errout:
     pthread_rwlock_unlock(&kqtree_mtx);
-
-errout_unlocked:
     kqops.kqueue_free(kq);
     free(kq);
     return (-1);

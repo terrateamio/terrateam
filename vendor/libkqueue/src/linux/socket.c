@@ -28,9 +28,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <sys/epoll.h>
-
-#include "sys/event.h"
 #include "private.h"
 
 
@@ -65,7 +62,7 @@ epoll_update(int op, struct filter *filt, struct knote *kn, struct epoll_event *
 {
     dbg_printf("op=%d fd=%d events=%s", op, (int)kn->kev.ident, 
             epoll_event_dump(ev));
-    if (epoll_ctl(filt->kf_pfd, op, kn->kev.ident, ev) < 0) {
+    if (epoll_ctl(filter_epfd(filt), op, kn->kev.ident, ev) < 0) {
         dbg_printf("epoll_ctl(2): %s", strerror(errno));
         return (-1);
     }
@@ -73,99 +70,57 @@ epoll_update(int op, struct filter *filt, struct knote *kn, struct epoll_event *
     return (0);
 }
 
-static int 
-socket_knote_delete(int epfd, int fd)
-{
-    return epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
-}
-
 int
 evfilt_socket_init(struct filter *filt)
 {
-    filt->kf_pfd = epoll_create(1);
-    if (filt->kf_pfd < 0)
-        return (-1);
-
-    dbg_printf("socket epollfd = %d", filt->kf_pfd);
     return (0);
 }
 
 void
 evfilt_socket_destroy(struct filter *filt)
 {
-    close(filt->kf_pfd);
 }
 
 int
-evfilt_socket_copyout(struct filter *filt, 
-            struct kevent *dst, 
-            int nevents)
+evfilt_socket_copyout(struct kevent *dst, 
+            const struct kqueue *kq, 
+            struct filter *filt, 
+            struct knote *src, 
+            void *ptr)
 {
-    struct epoll_event epevt[MAX_KEVENT];
-    struct epoll_event *ev;
-    struct knote *kn;
-    int i, nret;
+    struct epoll_event * const ev = (struct epoll_event *) ptr;
 
-    for (;;) {
-        nret = epoll_wait(filt->kf_pfd, &epevt[0], nevents, 0);
-        if (nret < 0) {
-            if (errno == EINTR)
-                continue;
-            dbg_perror("epoll_wait");
-            return (-1);
-        } else {
-            break;
-        }
-    }
-
-    for (i = 0, nevents = 0; i < nret; i++) {
-        ev = &epevt[i];
-        epoll_event_dump(ev);
-        kn = knote_lookup(filt, ev->data.fd);
-        if (kn != NULL) {
-            memcpy(dst, &kn->kev, sizeof(*dst));
+    epoll_event_dump(ev);
+    memcpy(dst, &src->kev, sizeof(*dst));
 #if defined(HAVE_EPOLLRDHUP)
-            if (ev->events & EPOLLRDHUP || ev->events & EPOLLHUP)
-                dst->flags |= EV_EOF;
+    if (ev->events & EPOLLRDHUP || ev->events & EPOLLHUP)
+        dst->flags |= EV_EOF;
 #else
-            if (ev->events & EPOLLHUP)
-                dst->flags |= EV_EOF;
+    if (ev->events & EPOLLHUP)
+        dst->flags |= EV_EOF;
 #endif
-            if (ev->events & EPOLLERR)
-                dst->fflags = 1; /* FIXME: Return the actual socket error */
+    if (ev->events & EPOLLERR)
+        dst->fflags = 1; /* FIXME: Return the actual socket error */
           
-            if (kn->flags & KNFL_PASSIVE_SOCKET) {
-                /* On return, data contains the length of the 
-                   socket backlog. This is not available under Linux.
-                 */
-                dst->data = 1;
-            } else {
-                /* On return, data contains the number of bytes of protocol
-                   data available to read.
-                 */
-                if (ioctl(dst->ident, 
-                            (dst->filter == EVFILT_READ) ? SIOCINQ : SIOCOUTQ, 
-                            &dst->data) < 0) {
-                    /* race condition with socket close, so ignore this error */
-                    dbg_puts("ioctl(2) of socket failed");
-                    dst->data = 0;
-                }
-            }
-
-            if (kn->kev.flags & EV_DISPATCH) {
-                socket_knote_delete(filt->kf_pfd, kn->kev.ident);
-                KNOTE_DISABLE(kn);
-            } else if (kn->kev.flags & EV_ONESHOT) {
-                socket_knote_delete(filt->kf_pfd, kn->kev.ident);
-                knote_free(filt, kn);
-            }
-
-            nevents++;
-            dst++;
+    if (src->flags & KNFL_PASSIVE_SOCKET) {
+        /* On return, data contains the length of the 
+           socket backlog. This is not available under Linux.
+         */
+        dst->data = 1;
+    } else {
+        /* On return, data contains the number of bytes of protocol
+           data available to read.
+         */
+        if (ioctl(dst->ident, 
+                    (dst->filter == EVFILT_READ) ? SIOCINQ : SIOCOUTQ, 
+                    &dst->data) < 0) {
+            /* race condition with socket close, so ignore this error */
+            dbg_puts("ioctl(2) of socket failed");
+            dst->data = 0;
         }
     }
 
-    return (nevents);
+    return (0);
 }
 
 int
@@ -192,7 +147,7 @@ evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 
     memset(&ev, 0, sizeof(ev));
     ev.events = kn->data.events;
-    ev.data.fd = kn->kev.ident;
+    ev.data.ptr = kn;
 
     return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
 }
@@ -220,7 +175,7 @@ evfilt_socket_knote_enable(struct filter *filt, struct knote *kn)
 
     memset(&ev, 0, sizeof(ev));
     ev.events = kn->data.events;
-    ev.data.fd = kn->kev.ident;
+    ev.data.ptr = kn;
 
     return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
 }

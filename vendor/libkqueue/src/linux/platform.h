@@ -17,8 +17,12 @@
 #ifndef  _KQUEUE_LINUX_PLATFORM_H
 #define  _KQUEUE_LINUX_PLATFORM_H
 
+#include <sys/epoll.h>
 #include <sys/queue.h>
+#include <sys/inotify.h>
 #include <sys/eventfd.h>
+#include <sys/signalfd.h>
+#include <sys/timerfd.h>
 
 /*
  * Get the current thread ID
@@ -28,8 +32,38 @@
 # include <sys/syscall.h>
 # include <unistd.h>
 extern long int syscall (long int __sysno, ...);
-#define THREAD_ID ((pid_t) syscall(__NR_gettid))
+#define THREAD_ID ((pid_t)  syscall(__NR_gettid))
  
+/* Convenience macros to access the epoll descriptor for the kqueue */
+#define kqueue_epfd(kq)     ((kq)->kq_id)
+#define filter_epfd(filt)   ((filt)->kf_kqueue->kq_id)
+
+/*
+ * Additional members of struct knote
+ */
+#define KNOTE_PLATFORM_SPECIFIC \
+    union { \
+        int kn_timerfd; \
+        int kn_signalfd; \
+        int kn_inotifyfd; \
+        int kn_eventfd; \
+    } kdata
+
+/*
+ * Additional members of struct kqueue
+ */
+#define KQUEUE_PLATFORM_SPECIFIC \
+    struct epoll_event kq_plist[MAX_KEVENT]; \
+    size_t kq_nplist
+
+int     linux_kqueue_init(struct kqueue *);
+void    linux_kqueue_free(struct kqueue *);
+
+int     linux_kevent_wait(struct kqueue *, int, const struct timespec *);
+int     linux_kevent_copyout(struct kqueue *, int, struct kevent *, int);
+
+int     linux_knote_copyout(struct kevent *, struct knote *);
+
 int     linux_eventfd_init(struct eventfd *);
 void    linux_eventfd_close(struct eventfd *);
 int     linux_eventfd_raise(struct eventfd *);

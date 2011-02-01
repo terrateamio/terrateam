@@ -46,7 +46,6 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
     memcpy(dst, src, sizeof(*src));
     dst->kf_kqueue = kq;
     RB_INIT(&dst->kf_knote);
-    TAILQ_INIT(&dst->kf_event);
     if (src->kf_id == 0) {
         dbg_puts("filter is not implemented");
         return (0);
@@ -68,6 +67,7 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
         return (-1);
     }
 
+#if DEADWOOD
     /* Add the filter's event descriptor to the main fdset */
     if (dst->kf_pfd > 0) {
         FD_SET(dst->kf_pfd, &kq->kq_fds);
@@ -76,6 +76,7 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
         dbg_printf("fds: added %d (nfds=%d)", dst->kf_pfd, kq->kq_nfds);
     }
     dbg_printf("filter %d (%s) registered", filter, filter_name(filter));
+#endif
 
 	/* FIXME: should totally remove const from src */
 	if (kqops.filter_init != NULL
@@ -128,31 +129,6 @@ filter_unregister_all(struct kqueue *kq)
     memset(&kq->kq_filt[0], 0, sizeof(kq->kq_filt));
 }
 
-int 
-filter_socketpair(struct filter *filt)
-{
-    int sockfd[2];
-
-#ifdef _WIN32
-	if (_pipe(sockfd, 512, _O_BINARY) == -1) {
-		dbg_puts("_pipe failed");
-		return (-1);
-	}   
-	/* FIXME: want nonblocking behavior for writer */
-    filt->kf_wfd = sockfd[0];
-    filt->kf_pfd = sockfd[1];
-#else
-    if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd) < 0)
-        return (-1);
-
-    fcntl(sockfd[0], F_SETFL, O_NONBLOCK);
-    filt->kf_wfd = sockfd[0];
-    filt->kf_pfd = sockfd[1];
-#endif
-
-    return (0);
-} 
-
 int
 filter_lookup(struct filter **filt, struct kqueue *kq, short id)
 {
@@ -195,47 +171,4 @@ filter_name(short filt)
         return "EVFILT_INVALID";
     else
         return fname[id];
-}
-
-int
-filter_raise(struct filter *filt)
-{
-    for (;;) {
-        if (write(filt->kf_wfd, " ", 1) < 0) {
-            if (errno == EINTR) 
-                continue;
-
-            if (errno != EAGAIN) {
-                dbg_printf("write(2): %s", strerror(errno));
-                /* TODO: set filter error flag */
-                return (-1);
-            }
-        }
-        break;
-    }
-
-    return (0);
-}
-
-int
-filter_lower(struct filter *filt)
-{
-    char buf[1024];
-    ssize_t n;
-
-    for (;;) {
-        n = read(filt->kf_pfd, &buf, sizeof(buf));
-        if (n < 0) {
-            if (errno == EINTR) 
-                continue;
-            if (errno == EAGAIN) 
-                break;
-
-            dbg_printf("read(2): %s", strerror(errno));
-            return (-1);
-        }
-        break;
-    }
-
-    return (0);
 }

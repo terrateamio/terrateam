@@ -16,11 +16,20 @@
 
 #include "../common/private.h"
 
+//XXX-FIXME TEMP
+const struct filter evfilt_proc = EVFILT_NOTIMPL;
+
+/*
+ * Per-thread epoll event buffer used to ferry data between
+ * kevent_wait() and kevent_copyout().
+ */
+static struct epoll_event __thread epevt[MAX_KEVENT];
+
 const struct kqueue_vtable kqops = {
-    posix_kqueue_init,
-    posix_kqueue_free,
-	posix_kevent_wait,
-	posix_kevent_copyout,
+    linux_kqueue_init,
+    linux_kqueue_free,
+	linux_kevent_wait,
+	linux_kevent_copyout,
 	NULL,
 	NULL,
     linux_eventfd_init,
@@ -29,6 +38,147 @@ const struct kqueue_vtable kqops = {
     linux_eventfd_lower,
     linux_eventfd_descriptor
 };
+
+int
+linux_kqueue_init(struct kqueue *kq)
+{
+    kq->kq_id = epoll_create(1);
+    if (kq->kq_id < 0) {
+        dbg_perror("epoll_create(2)");
+        return (-1);
+    }
+
+    if (filter_register_all(kq) < 0) {
+        close(kq->kq_id);
+        return (-1);
+    }
+
+
+ #if DEADWOOD
+    //might be useful in posix
+
+    /* Add each filter's pollable descriptor to the epollset */
+    for (i = 0; i < EVFILT_SYSCOUNT; i++) {
+        filt = &kq->kq_filt[i];
+
+        if (filt->kf_id == 0)
+            continue;
+
+        memset(&ev, 0, sizeof(ev));
+        ev.events = EPOLLIN;
+        ev.data.ptr = filt;
+
+        if (epoll_ctl(kq->kq_id, EPOLL_CTL_ADD, filt->kf_pfd, &ev) < 0) {
+            dbg_perror("epoll_ctl(2)");
+            close(kq->kq_id);
+            return (-1);
+        }
+    }
+#endif
+
+    return (0);
+}
+
+void
+linux_kqueue_free(struct kqueue *kq)
+{
+    abort();//FIXME
+}
+
+static int
+linux_kevent_wait_hires(
+        struct kqueue *kq, 
+        const struct timespec *timeout)
+{
+    fd_set fds;
+    int n;
+
+    dbg_puts("waiting for events");
+    FD_ZERO(&fds);
+    FD_SET(kqueue_epfd(kq), &fds);
+    n = pselect(1, &fds, NULL , NULL, timeout, NULL);
+    if (n < 0) {
+        if (errno == EINTR) {
+            dbg_puts("signal caught");
+            return (-1);
+        }
+        dbg_perror("pselect(2)");
+        return (-1);
+    }
+
+    return (n);
+}
+
+int
+linux_kevent_wait(
+        struct kqueue *kq, 
+        int nevents,
+        const struct timespec *ts)
+{
+    int timeout, nret;
+
+    /* Use pselect() if the timeout value is less than one millisecond.  */
+    if (ts != NULL && ts->tv_sec == 0 && ts->tv_nsec > 1000000) {
+        nret = linux_kevent_wait_hires(kq, ts);
+        if (nret < 1)
+            return (nret);
+
+    /* Otherwise, use epoll_wait() directly */
+    } else {
+
+        /* Convert timeout to the format used by epoll_wait() */
+        if (ts == NULL) 
+            timeout = -1;
+        else
+            timeout = (1000 * ts->tv_sec) + (ts->tv_nsec / 1000000);
+
+        dbg_puts("waiting for events");
+        nret = epoll_wait(kqueue_epfd(kq), &epevt[0], nevents, timeout);
+        if (nret < 0) {
+            dbg_perror("epoll_wait");
+            return (-1);
+        }
+    }
+
+    return (nret);
+}
+
+int
+linux_kevent_copyout(struct kqueue *kq, int nready,
+        struct kevent *eventlist, int nevents)
+{
+    struct epoll_event *ev;
+    struct filter *filt;
+    struct knote *kn;
+    int i, rv;
+
+    assert(nready >= 1);
+
+    for (i = 0; i < nready; i++) {
+        ev = &epevt[i];
+        kn = (struct knote *) ev->data.ptr;
+        filt = &kq->kq_filt[~(kn->kev.filter)];
+        rv = filt->kf_copyout(eventlist, kq, filt, kn, ev);
+        if (slowpath(rv < 0)) {
+            dbg_puts("knote_copyout failed");
+            /* XXX-FIXME: hard to handle this without losing events */
+            abort();
+        }
+
+        /*
+         * Certain flags cause the associate knote to be deleted
+         * or disabled.
+         */
+        if (eventlist->flags & EV_DISPATCH) 
+            knote_disable(filt, kn); //TODO: Error checking
+        if (eventlist->flags & EV_ONESHOT) 
+            knote_free(filt, kn); //TODO: Error checking
+
+        eventlist++;
+    }
+
+    return (i);
+}
 
 int
 linux_eventfd_init(struct eventfd *e)

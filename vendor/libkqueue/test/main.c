@@ -26,6 +26,37 @@ struct unit_test {
 };
 
 
+void
+test_kqueue_descriptor_is_pollable(void)
+{
+    int kq, rv;
+    struct kevent kev;
+    fd_set fds;
+    struct timeval tv;
+
+    if ((kq = kqueue()) < 0)
+        die("kqueue()");
+
+    test_no_kevents(kq);
+    kevent_add(kq, &kev, 2, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, 1000, NULL);
+    test_no_kevents(kq);
+
+    FD_ZERO(&fds);
+    FD_SET(kq, &fds);
+    tv.tv_sec = 5;
+    tv.tv_usec = 0;
+    rv = select(1, &fds, NULL, NULL, &tv);
+    if (rv < 0)
+        die("select() error");
+    if (rv == 0)
+        die("select() no events");
+    if (!FD_ISSET(kq, &fds)) {
+        die("descriptor is not ready for reading");
+    }
+
+    close(kq);
+}
+
 /*
  * DEADWOOD: fails on Solaris
  * Test if calling fstat() on a socketpair returns unique ino_t and dev_t
@@ -206,6 +237,9 @@ main(int argc, char **argv)
     }
 
     test(ev_receipt);
+    /* TODO: this fails now, but would be good later 
+    test(kqueue_descriptor_is_pollable);
+    */
 
     testing_end();
 

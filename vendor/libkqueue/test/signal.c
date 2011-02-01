@@ -128,6 +128,8 @@ test_kevent_signal_modify(void)
     kev.flags |= EV_CLEAR;
     kev.data = 1;
     kevent_cmp(&kev, kevent_get(kqfd));
+
+    test_kevent_signal_del();
 }
 
 #if HAVE_EV_DISPATCH
