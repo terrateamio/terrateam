@@ -51,8 +51,6 @@ knote_free(struct filter *filt, struct knote *kn)
     dbg_printf("filter=%s, ident=%u",
             filter_name(kn->kev.filter), (unsigned int) kn->kev.ident);
 	RB_REMOVE(knt, &filt->kf_knote, kn);
-    if (kn->event_ent.tqe_prev) //XXX-FIXME what if this is the 1st entry??
-        TAILQ_REMOVE(&filt->kf_event, kn, event_ent);
     filt->kn_delete(filt, kn);
 	free(kn);
 }
@@ -62,13 +60,7 @@ knote_free_all(struct filter *filt)
 {
     struct knote *n1, *n2;
 
-    /* Destroy all pending events */
-    for (n1 = TAILQ_FIRST(&filt->kf_event); n1 != NULL; n1 = n2) {
-        n2 = TAILQ_NEXT(n1, event_ent);
-        free(n1);
-    }
-
-    /* Distroy all knotes */
+    /* Destroy all knotes */
     for (n1 = RB_MIN(knt, &filt->kf_knote); n1 != NULL; n1 = n2) {
         n2 = RB_NEXT(knt, filt->kf_knote, n1);
         RB_REMOVE(knt, &filt->kf_knote, n1);
@@ -103,41 +95,6 @@ knote_lookup_data(struct filter *filt, intptr_t data)
     return (kn);
 }
 
-void
-knote_enqueue(struct filter *filt, struct knote *kn)
-{
-    /* Prevent a knote from being enqueued() multiple times */
-    if (kn->event_ent.tqe_next == NULL && kn->event_ent.tqe_prev == NULL)
-        TAILQ_INSERT_TAIL(&filt->kf_event, kn, event_ent);
-}
-
-struct knote *
-knote_dequeue(struct filter *filt)
-{
-    struct knote *kn;
-
-    if (TAILQ_EMPTY(&filt->kf_event)) {
-        kn = NULL;
-        dbg_puts("no events are pending");
-    } else {
-        kn = TAILQ_FIRST(&filt->kf_event);
-        TAILQ_REMOVE(&filt->kf_event, kn, event_ent);
-        memset(&kn->event_ent, 0, sizeof(kn->event_ent));
-    }
-
-    return (kn);
-}
-
-int
-knote_events_pending(struct filter *filt)
-{
-    int res;
-
-    res = TAILQ_EMPTY(&filt->kf_event);
-
-    return (res);
-}
-
 /*
  * Test if a socket is active or passive.
  */
@@ -165,3 +122,15 @@ knote_get_socket_type(struct knote *kn)
         return (0);
     }
 }
+
+int
+knote_disable(struct filter *filt, struct knote *kn)
+{
+    assert(!(kn->kev.flags & EV_DISABLE));
+
+    filt->kn_disable(filt, kn); //TODO: Error checking
+    KNOTE_DISABLE(kn);
+    return (0);
+}
+
+//TODO: knote_enable()

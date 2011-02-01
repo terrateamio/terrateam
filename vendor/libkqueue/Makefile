@@ -61,6 +61,9 @@ uninstall:
 check: clean $(PROGRAM).so.$(ABI_VERSION)
 	cd test && ./configure && make check
 
+debug: clean $(PROGRAM).so.$(ABI_VERSION)
+	cd test && ./configure && make debug
+
 debug-check: clean
 	cd test && ./configure && KQUEUE_DEBUG=y make check
 

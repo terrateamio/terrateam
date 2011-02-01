@@ -14,154 +14,174 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <errno.h>
-#include <fcntl.h>
-#include <pthread.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/queue.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <string.h>
-#include <unistd.h>
-
-#include <sys/signalfd.h>
-
-#include "sys/event.h"
 #include "private.h"
 
-/* Highest signal number supported. POSIX standard signals are < 32 */
-#define SIGNAL_MAX      32
+static void
+signalfd_reset(int sigfd)
+{
+    struct signalfd_siginfo sig;
+    ssize_t n;
+
+    /* Discard any pending signal */
+    n = read(sigfd, &sig, sizeof(sig));
+    if (n < sizeof(sig)) {
+        if (errno == EWOULDBLOCK)
+            return;
+        //FIXME: eintr?
+        dbg_perror("read(2) from signalfd");
+        abort();
+    }
+}
 
 static int
-update_sigmask(const struct filter *filt)
+signalfd_add(int epfd, int sigfd, void *ptr)
 {
+    struct epoll_event ev;
     int rv;
-    rv = signalfd(filt->kf_pfd, &filt->kf_sigmask, 0);
-    dbg_printf("signalfd = %d", filt->kf_pfd);
-    if (rv < 0 || rv != filt->kf_pfd) {
-        dbg_printf("signalfd(2): %s", strerror(errno));
+
+    /* Add the signalfd to the kqueue's epoll descriptor set */
+    memset(&ev, 0, sizeof(ev));
+    ev.events = EPOLLIN;
+    ev.data.ptr = ptr;
+    rv = epoll_ctl(epfd, EPOLL_CTL_ADD, sigfd, &ev);
+    if (rv < 0) {
+        dbg_perror("epoll_ctl(2)");
         return (-1);
     }
 
     return (0);
 }
 
+static int
+signalfd_create(int epfd, void *ptr, int signum)
+{
+    sigset_t sigmask;
+    int sigfd;
+
+    /* Create a signalfd */
+    sigemptyset(&sigmask);
+    sigaddset(&sigmask, signum);
+    sigfd = signalfd(-1, &sigmask, SFD_NONBLOCK);
+    if (sigfd < 0) {
+        dbg_perror("signalfd(2)");
+        goto errout;
+    }
+
+    /* Block the signal handler from being invoked */
+    if (sigprocmask(SIG_BLOCK, &sigmask, NULL) < 0) {
+        dbg_perror("sigprocmask(2)");
+        goto errout;
+    }
+
+    signalfd_reset(sigfd);
+
+    if (signalfd_add(epfd, sigfd, ptr) < 0)
+        goto errout;
+
+    dbg_printf("added sigfd %d to epfd %d (signum=%d)", sigfd, epfd, signum);
+
+    return (sigfd);
+
+errout:
+    (void) close(sigfd);
+    return (-1);
+}
+
 int
 evfilt_signal_init(struct filter *filt)
 {
-    sigemptyset(&filt->kf_sigmask);
-    filt->kf_pfd = signalfd(-1, &filt->kf_sigmask, 0);
-    dbg_printf("signalfd = %d", filt->kf_pfd);
-    if (filt->kf_pfd < 0) 
-        return (-1);
-
     return (0);
 }
 
 void
 evfilt_signal_destroy(struct filter *filt)
 {
-    close (filt->kf_pfd);
 }
 
 int
-evfilt_signal_copyout(struct filter *filt, 
-            struct kevent *dst, 
-            int nevents)
+evfilt_signal_copyout(struct kevent *dst, 
+            const struct kqueue *kq, 
+            struct filter *filt, 
+            struct knote *src, 
+            void *unused)
 {
-    struct knote *kn;
-    struct signalfd_siginfo sig[MAX_KEVENT];
-    int i;
-    ssize_t n;
+    int sigfd;
 
-    n = read(filt->kf_pfd, &sig, nevents * sizeof(sig[0]));
-    if (n < 0 || n < sizeof(sig[0])) {
-        dbg_puts("invalid read from signalfd");
-        return (-1);
-    }
-    n /= sizeof(sig[0]);
+    sigfd = src->kdata.kn_signalfd;
 
-    for (i = 0, nevents = 0; i < n; i++) {
-        /* This is not an error because of this race condition:
-         *    1. Signal arrives and is queued
-         *    2. The kevent is deleted via kevent(..., EV_DELETE)
-         *    3. The event is dequeued from the signalfd
-         */
-        kn = knote_lookup(filt, sig[i].ssi_signo);
-        if (kn == NULL)
-            continue;
+    signalfd_reset(sigfd);
 
-        dbg_printf("got signal %d", sig[i].ssi_signo);
-        memcpy(dst, &kn->kev, sizeof(*dst));
-        /* TODO: dst->data should be the number of times the signal occurred */
-        dst->data = 1;  
+    memcpy(dst, &src->kev, sizeof(*dst));
+    /* NOTE: dst->data should be the number of times the signal occurred,
+       but that information is not available.
+     */
+    dst->data = 1;  
 
-        if (kn->kev.flags & EV_DISPATCH || kn->kev.flags & EV_ONESHOT) {
-            sigdelset(&filt->kf_sigmask, dst->ident);
-            update_sigmask(filt); /* TODO: error checking */
-        }
-        if (kn->kev.flags & EV_DISPATCH)
-            KNOTE_DISABLE(kn);
-        if (kn->kev.flags & EV_ONESHOT) 
-            knote_free(filt, kn);
-
-        dst++; 
-        nevents++;
-    }
-
-    return (nevents);
+    return (0);
 }
 
 int
 evfilt_signal_knote_create(struct filter *filt, struct knote *kn)
 {
-    if (kn->kev.ident >= SIGNAL_MAX) {
-        dbg_printf("bad signal number %u", (u_int) kn->kev.ident);
+    int fd;
+
+    fd = signalfd_create(filter_epfd(filt), kn, kn->kev.ident);
+    if (fd > 0) {
+        kn->kev.flags |= EV_CLEAR;
+        kn->kdata.kn_signalfd = fd;
+        return (0);
+    } else {
+        kn->kdata.kn_signalfd = -1;
         return (-1);
     }
-
-    kn->kev.flags |= EV_CLEAR;
-    sigaddset(&filt->kf_sigmask, kn->kev.ident);
-
-    return (update_sigmask(filt));
 }
 
 int
 evfilt_signal_knote_modify(struct filter *filt, struct knote *kn, 
         const struct kevent *kev)
 {
-    if (kev.ident >= SIGNAL_MAX) {
-        dbg_printf("bad signal number %u", (u_int) kev.ident);
-        return (-1);
-    }
-
-    /* Nothing to do since the sigmask does not change. */
+    /* Nothing to do since the signal number does not change. */
 
     return (0);
 }
 
 int
 evfilt_signal_knote_delete(struct filter *filt, struct knote *kn)
-{   
-    sigdelset(&filt->kf_sigmask, kn->kev.ident);
+{
+    const int sigfd = kn->kdata.kn_signalfd;
 
-    return (update_sigmask(filt));
+    /* Needed so that delete() can be called after disable() */
+    if (kn->kdata.kn_signalfd == -1)
+        return (0);
+
+    if (epoll_ctl(filter_epfd(filt), EPOLL_CTL_DEL, sigfd, NULL) < 0) {
+        dbg_perror("epoll_ctl(2)");
+        return (-1);
+    }
+
+    if (close(sigfd) < 0) {
+        dbg_perror("close(2)");
+        return (-1);
+    }
+
+    /* NOTE: This does not call sigprocmask(3) to unblock the signal. */
+    kn->kdata.kn_signalfd = -1;
+
+    return (0);
 }
 
 int
 evfilt_signal_knote_enable(struct filter *filt, struct knote *kn)
 {
-    sigaddset(&filt->kf_sigmask, kn->kev.ident);
-
-    return (update_sigmask(filt));
+    dbg_printf("enabling ident %u", (unsigned int) kn->kev.ident);
+    return evfilt_signal_knote_create(filt, kn);
 }
 
 int
 evfilt_signal_knote_disable(struct filter *filt, struct knote *kn)
 {
-    return (evfilt_signal_knote_delete(filt, kn));
+    dbg_printf("disabling ident %u", (unsigned int) kn->kev.ident);
+    return evfilt_signal_knote_delete(filt, kn);
 }
 
 

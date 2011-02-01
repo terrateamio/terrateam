@@ -162,7 +162,6 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
     }
 
     if (src->flags & EV_DELETE) {
-        rv = filt->kn_delete(filt, kn);
         knote_free(filt, kn);
         return (rv);
     } else if (src->flags & EV_DISABLE) {
@@ -269,9 +268,9 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         }
     }
 
-    /* Determine if we need to wait for events. */
     if (nevents > MAX_KEVENT)
         nevents = MAX_KEVENT;
+
     if (nevents == 0)
         goto out;
 
@@ -279,18 +278,20 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
     for (nret = 0; nret == 0;) 
     {
         /* Wait for one or more events. */
-        n = kqops.kevent_wait(kq, timeout);
+        n = kqops.kevent_wait(kq, nevents, timeout);
+
+        /* Copy the events to the caller */
+        if (fastpath(n > 0)) {
+            kqueue_lock(kq);
+            nret = kqops.kevent_copyout(kq, n, eventlist, nevents);
+            kqueue_unlock(kq);
+        }
         if (n < 0) {
-	    dbg_printf("(%u) kevent_wait failed", myid);
+            dbg_printf("(%u) kevent_wait failed", myid);
             goto errout;
         }
         if (n == 0)
-            goto out;      /* Timeout */
-
-        /* Copy the events to the caller */
-        kqueue_lock(kq);
-        nret = kqops.kevent_copyout(kq, n, eventlist, nevents);
-        kqueue_unlock(kq);
+            goto out;      /* Timed out */
     }
 
     if (KQUEUE_DEBUG) {

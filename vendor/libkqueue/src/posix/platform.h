@@ -25,11 +25,18 @@
 #define atomic_inc(p)   __sync_add_and_fetch((p), 1)
 #define atomic_dec(p)   __sync_sub_and_fetch((p), 1)
 
+/*
+ * GCC-compatible branch prediction macros
+ */
+#define fastpath(x)     __builtin_expect((x), 1)
+#define slowpath(x)     __builtin_expect((x), 0)
+
 #define CONSTRUCTOR     __attribute__ ((constructor))
 #define VISIBLE         __attribute__((visibility("default")))
 #define HIDDEN          __attribute__((visibility("hidden")))
 
 #include <fcntl.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdlib.h>

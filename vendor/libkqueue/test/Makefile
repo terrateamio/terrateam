@@ -24,6 +24,9 @@ kqtest: $(SOURCES)
 check: kqtest
 	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" ./kqtest
 
+debug: kqtest
+	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" gdb ./kqtest
+
 valgrind: kqtest
 	valgrind --tool=memcheck --leak-check=full --show-reachable=yes --num-callers=20 --track-fds=yes ./kqtest
 

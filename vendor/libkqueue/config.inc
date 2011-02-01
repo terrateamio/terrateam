@@ -50,7 +50,6 @@ pre_configure_hook() {
 post_configure_hook() {
     finalize target "$target"
 
-    kevent="src/posix/kevent.c"
     platform="src/posix/platform.c"
     evfilt_signal="src/posix/signal.c"
     evfilt_proc="src/$target/proc.c"
@@ -60,10 +59,14 @@ post_configure_hook() {
     evfilt_vnode="src/$target/vnode.c"
 
     if [ $target = "linux" ] ; then
-      # FIXME: not tested
-      #if [ "$have_sys_signalfd_h" = "yes" ] ; then
-      #    evfilt_signal="src/linux/signal.c"
-      #fi
+      evfilt_user="src/linux/user.c"
+
+       #XXX-FIXME disabled
+       evfilt_proc=""
+
+      if [ "$have_sys_signalfd_h" = "yes" ] ; then
+          evfilt_signal="src/linux/signal.c"
+      fi
       if [ "$have_sys_timerfd_h" = "yes" ] ; then
           evfilt_timer="src/linux/timer.c"
       fi
@@ -72,7 +75,6 @@ post_configure_hook() {
 
     if [ $target = "solaris" ] ; then
           cflags="$cflags -D__EXTENSIONS__"
-    	  kevent="src/solaris/kevent.c"
           platform="$platform src/solaris/platform.c"
           evfilt_timer="src/solaris/timer.c"
           evfilt_user="src/solaris/user.c"
@@ -89,7 +91,7 @@ post_configure_hook() {
           evfilt_vnode=""
     fi
 
-    sources="$sources $platform $kevent 
+    sources="$sources $platform  
             $evfilt_signal $evfilt_proc 
              $evfilt_socket $evfilt_timer $evfilt_user $evfilt_vnode"
 }
