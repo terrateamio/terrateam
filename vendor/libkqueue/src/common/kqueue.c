@@ -27,6 +27,15 @@
 int KQUEUE_DEBUG = 0;
 
 
+/*
+ * Fast path (lock-free) for kqueue descriptors < KQLIST_MAX
+ */
+#define KQLIST_MAX 512
+static struct kqueue       *kqlist[KQLIST_MAX];
+
+/*
+ * Slow path for kqueue descriptors > KQLIST_MAX
+ */
 static RB_HEAD(kqt, kqueue) kqtree       = RB_INITIALIZER(&kqtree);
 static pthread_rwlock_t     kqtree_mtx;
 
@@ -66,26 +75,23 @@ kqueue_free(struct kqueue *kq)
     free(kq);
 }
 
-void
-kqueue_put(struct kqueue *kq)
-{
-    atomic_dec(&kq->kq_ref);
-    /* TODO: free() object when refcount == 0 */
-}
-
 struct kqueue *
-kqueue_get(int kq)
+kqueue_lookup(int kq)
 {
     struct kqueue query;
     struct kqueue *ent = NULL;
 
-    query.kq_id = kq;
-    pthread_rwlock_rdlock(&kqtree_mtx);
-    ent = RB_FIND(kqt, &kqtree, &query);
-    pthread_rwlock_unlock(&kqtree_mtx);
-
-    if (ent != NULL)
-        atomic_inc(&ent->kq_ref);
+    if (slowpath(kq < 0)) {
+        return (NULL);
+    }
+    if (fastpath(kq < KQLIST_MAX)) {
+        ent = kqlist[kq];
+    } else {
+        query.kq_id = kq;
+        pthread_rwlock_rdlock(&kqtree_mtx);
+        ent = RB_FIND(kqt, &kqtree, &query);
+        pthread_rwlock_unlock(&kqtree_mtx);
+    }
 
     return (ent);
 }
@@ -98,21 +104,20 @@ kqueue(void)
     kq = calloc(1, sizeof(*kq));
     if (kq == NULL)
         return (-1);
-    kq->kq_ref = 1;
-    pthread_mutex_init(&kq->kq_mtx, NULL);
 
-    pthread_rwlock_wrlock(&kqtree_mtx);
-    if (kqops.kqueue_init(kq) < 0)
-        goto errout;
-    RB_INSERT(kqt, &kqtree, kq);
-    pthread_rwlock_unlock(&kqtree_mtx);
+    if (kqops.kqueue_init(kq) < 0) {
+        free(kq);
+        return (-1);
+    }
+
+    if (kq->kq_id < KQLIST_MAX) {
+        kqlist[kq->kq_id] = kq;
+    } else {
+        pthread_rwlock_wrlock(&kqtree_mtx);
+        RB_INSERT(kqt, &kqtree, kq);
+        pthread_rwlock_unlock(&kqtree_mtx);
+    }
 
     dbg_printf("created kqueue, fd=%d", kq->kq_id);
     return (kq->kq_id);
-
-errout:
-    pthread_rwlock_unlock(&kqtree_mtx);
-    kqops.kqueue_free(kq);
-    free(kq);
-    return (-1);
 }
