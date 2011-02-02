@@ -28,7 +28,16 @@ debug: kqtest
 	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" gdb ./kqtest
 
 valgrind: kqtest
+	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" \
 	valgrind --tool=memcheck --leak-check=full --show-reachable=yes --num-callers=20 --track-fds=yes ./kqtest
+
+helgrind: kqtest
+	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" \
+	valgrind --tool=helgrind ./kqtest
+
+cachegrind: kqtest
+	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" \
+	valgrind --tool=cachegrind --branch-sim=yes ./kqtest
 
 check-installed:
 	$(CC) -o kqtest $(CFLAGS) $(SOURCES) $(LDADD) -lkqueue
