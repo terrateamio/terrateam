@@ -98,6 +98,7 @@ struct eventfd {
 struct knote {
     struct kevent     kev;
     int               flags;       
+    pthread_mutex_t   mtx;
     union {
         /* OLD */
         int           pfd;       /* Used by timerfd */
@@ -110,6 +111,7 @@ struct knote {
         pthread_t     tid;          /* Used by posix/timer.c */
 		void          *handle;      /* Used by win32 filters */
     } data;
+    volatile uint32_t  kn_ref;
 #if defined(KNOTE_PLATFORM_SPECIFIC)
     KNOTE_PLATFORM_SPECIFIC;
 #endif
@@ -153,6 +155,7 @@ struct filter {
 
     struct evfilt_data *kf_data;	    /* filter-specific data */
     RB_HEAD(knt, knote) kf_knote;
+    pthread_rwlock_t    kf_knote_mtx;
     struct kqueue      *kf_kqueue;
 #if defined(FILTER_PLATFORM_SPECIFIC)
     FILTER_PLATFORM_SPECIFIC;
@@ -167,8 +170,6 @@ struct kqueue {
     struct filter   kq_filt[EVFILT_SYSCOUNT];
     fd_set          kq_fds, kq_rfds; 
     int             kq_nfds;
-    pthread_mutex_t kq_mtx;
-    volatile uint32_t  kq_ref;
 #if defined(KQUEUE_PLATFORM_SPECIFIC)
     KQUEUE_PLATFORM_SPECIFIC;
 #endif
@@ -193,7 +194,7 @@ extern const struct kqueue_vtable kqops;
 struct knote *  knote_lookup(struct filter *, short);
 struct knote *  knote_lookup_data(struct filter *filt, intptr_t);
 struct knote *  knote_new(void);
-void        knote_free(struct filter *, struct knote *);
+void        knote_release(struct filter *, struct knote *);
 void        knote_free_all(struct filter *);
 void        knote_insert(struct filter *, struct knote *);
 int         knote_get_socket_type(struct knote *);
@@ -203,6 +204,8 @@ int         knote_get_socket_type(struct knote *);
 //DEADWOOD:struct knote *  knote_dequeue(struct filter *);
 //DEADWOOD:int         knote_events_pending(struct filter *);
 int         knote_disable(struct filter *, struct knote *);
+#define     knote_lock(kn)     pthread_mutex_lock(&(kn)->mtx)
+#define     knote_unlock(kn)   pthread_mutex_unlock(&(kn)->mtx)
 
 int         filter_lookup(struct filter **, struct kqueue *, short);
 int      	filter_register_all(struct kqueue *);
@@ -214,11 +217,8 @@ int         kevent_copyout(struct kqueue *, int, struct kevent *, int);
 void 		kevent_free(struct kqueue *);
 const char *kevent_dump(const struct kevent *);
 
-struct kqueue * kqueue_get(int);
-void        kqueue_put(struct kqueue *);
+struct kqueue * kqueue_lookup(int);
 int         kqueue_validate(struct kqueue *);
-#define     kqueue_lock(kq)     pthread_mutex_lock(&(kq)->kq_mtx)
-#define     kqueue_unlock(kq)   pthread_mutex_unlock(&(kq)->kq_mtx)
 
 int CONSTRUCTOR _libkqueue_init(void);
 

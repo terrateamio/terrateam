@@ -130,7 +130,7 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
     if (filter_lookup(&filt, kq, src->filter) < 0) 
         return (-1);
 
-    //dbg_printf("src=%s\n", kevent_dump(src));
+    dbg_printf("src=%s\n", kevent_dump(src));
 
     kn = knote_lookup(filt, src->ident);
     if (kn == NULL) {
@@ -144,16 +144,23 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
             kn->kev.flags |= EV_ADD;//FIXME why?
             assert(filt->kn_create);
             if (filt->kn_create(filt, kn) < 0) {
-                knote_free(filt, kn);
+                knote_release(filt, kn);
                 errno = EFAULT;
                 return (-1);
             } 
             knote_insert(filt, kn);
             dbg_printf("created kevent %s\n", kevent_dump(src));
+
+
+/* XXX- FIXME Needs to be handled in kn_create() to prevent races */
             if (src->flags & EV_DISABLE) {
                 kn->kev.flags |= EV_DISABLE;
                 return (filt->kn_disable(filt, kn));
             }
+            //........................................
+
+
+
             return (0);
         } else {
             errno = ENOENT;
@@ -162,28 +169,22 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
     }
 
     if (src->flags & EV_DELETE) {
-        knote_free(filt, kn);
-        return (rv);
+        knote_release(filt, kn);
+        rv = 0;
     } else if (src->flags & EV_DISABLE) {
         kn->kev.flags |= EV_DISABLE;
-        return (filt->kn_disable(filt, kn));
+        rv = filt->kn_disable(filt, kn);
     } else if (src->flags & EV_ENABLE) {
         kn->kev.flags &= ~EV_DISABLE;
-        return (filt->kn_enable(filt, kn));
+        rv = filt->kn_enable(filt, kn);
+    } else if (src->flags & EV_ADD || src->flags == 0) {
+        kn->kev.udata = src->udata;
+        rv = filt->kn_modify(filt, kn, src);
     }
 
-    /* Implicit EV_ADD */
-    kn->kev.udata = src->udata;
-    return (filt->kn_modify(filt, kn, src));
+    knote_unlock(kn);
 
-#if DEADWOOD
-    /* Special case for EVFILT_USER:
-       Ignore user-generated events that are not of interest */
-    if (src->fflags & NOTE_TRIGGER) {
-        filter_unlock(filt);
-        continue;
-    }
-#endif
+    return (rv);
 }
 
 /** @return number of events added to the eventlist */
@@ -233,8 +234,15 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
 {
     static unsigned int _kevent_counter = 0;
     struct kqueue *kq;
-    int rv, n, nret;
+    int rv = 0;
     unsigned int myid;
+
+    /* Convert the descriptor into an object pointer */
+    kq = kqueue_lookup(kqfd);
+    if (kq == NULL) {
+        errno = ENOENT;
+        return (-1);
+    }
 
     if (KQUEUE_DEBUG) {
         myid = atomic_inc(&_kevent_counter);
@@ -243,73 +251,47 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         myid = 0;
     }
 
-    nret = 0;
-
-    kq = kqueue_get(kqfd);
-    if (kq == NULL) {
-        errno = ENOENT;
-        nret = -1;
-        goto out2;
-    }
-
     /*
      * Process each kevent on the changelist.
      */
-    if (nchanges) {
-        kqueue_lock(kq);
+    if (nchanges > 0) {
         rv = kevent_copyin(kq, changelist, nchanges, eventlist, nevents);
-        kqueue_unlock(kq);
         dbg_printf("(%u) changelist: rv=%d", myid, rv);
         if (rv < 0)
-            goto errout;
+            goto out;
         if (rv > 0) {
             eventlist += rv;
             nevents -= rv;
         }
     }
 
+    /*
+     * Wait for events and copy them to the eventlist
+     */
     if (nevents > MAX_KEVENT)
         nevents = MAX_KEVENT;
-
-    if (nevents == 0)
-        goto out;
-
-    /* Handle spurious wakeups where no events are generated. */
-    for (nret = 0; nret == 0;) 
-    {
-        /* Wait for one or more events. */
-        n = kqops.kevent_wait(kq, nevents, timeout);
-
-        /* Copy the events to the caller */
-        if (fastpath(n > 0)) {
-            kqueue_lock(kq);
-            nret = kqops.kevent_copyout(kq, n, eventlist, nevents);
-            kqueue_unlock(kq);
-        }
-        if (n < 0) {
+    if (nevents > 0) {
+        rv = kqops.kevent_wait(kq, nevents, timeout);
+        if (fastpath(rv > 0)) {
+            rv = kqops.kevent_copyout(kq, rv, eventlist, nevents);
+        } else if (rv == 0) {
+            /* Timeout reached */
+        } else {
             dbg_printf("(%u) kevent_wait failed", myid);
-            goto errout;
+            goto out;
         }
-        if (n == 0)
-            goto out;      /* Timed out */
     }
 
     if (KQUEUE_DEBUG) {
-        dbg_printf("(%u) returning %d events", myid, nret);
-        for (n = 0; n < nret; n++) {
+        int n;
+
+        dbg_printf("(%u) returning %d events", myid, rv);
+        for (n = 0; n < rv; n++) {
 	    dbg_printf("(%u) eventlist[%d] = %s", myid, n, kevent_dump(&eventlist[n]));
         }
     }
 
-    goto out;
-
-errout:
-    nret = -1;
-
 out:
-    kqueue_put(kq);
-
-out2:
-    dbg_printf("--- END kevent %u ret %d ---", myid, nret);
-    return (nret);
+    dbg_printf("--- END kevent %u ret %d ---", myid, rv);
+    return (rv);
 }

@@ -152,13 +152,13 @@ linux_kevent_copyout(struct kqueue *kq, int nready,
     struct knote *kn;
     int i, rv;
 
-    assert(nready >= 1);
-
     for (i = 0; i < nready; i++) {
         ev = &epevt[i];
         kn = (struct knote *) ev->data.ptr;
+        knote_lock(kn);
         filt = &kq->kq_filt[~(kn->kev.filter)];
         rv = filt->kf_copyout(eventlist, kq, filt, kn, ev);
+        knote_unlock(kn);
         if (slowpath(rv < 0)) {
             dbg_puts("knote_copyout failed");
             /* XXX-FIXME: hard to handle this without losing events */
@@ -166,13 +166,13 @@ linux_kevent_copyout(struct kqueue *kq, int nready,
         }
 
         /*
-         * Certain flags cause the associate knote to be deleted
+         * Certain flags cause the associated knote to be deleted
          * or disabled.
          */
         if (eventlist->flags & EV_DISPATCH) 
             knote_disable(filt, kn); //TODO: Error checking
         if (eventlist->flags & EV_ONESHOT) 
-            knote_free(filt, kn); //TODO: Error checking
+            knote_release(filt, kn); //TODO: Error checking
 
         eventlist++;
     }

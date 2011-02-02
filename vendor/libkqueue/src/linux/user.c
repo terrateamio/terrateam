@@ -207,6 +207,7 @@ evfilt_user_knote_delete(struct filter *filt, struct knote *kn)
         dbg_perror("close(2)");
         return (-1);
     }
+    dbg_printf("removed eventfd %d from the epollfd", kn->kdata.kn_eventfd); 
     kn->kdata.kn_eventfd = -1;
 
     return (0);
