@@ -28,6 +28,7 @@
 struct kqueue;
 struct kevent;
 struct knote;
+struct map;
 struct eventfd;
 struct evfilt_data;
 
@@ -216,9 +217,14 @@ int         kevent_wait(struct kqueue *, const struct timespec *);
 int         kevent_copyout(struct kqueue *, int, struct kevent *, int);
 void 		kevent_free(struct kqueue *);
 const char *kevent_dump(const struct kevent *);
-
 struct kqueue * kqueue_lookup(int);
 int         kqueue_validate(struct kqueue *);
+
+struct map *map_new(size_t);
+int         map_insert(struct map *, int, void *);
+void       *map_lookup(struct map *, int);
+int         map_delete(struct map *, int);
+void        map_free(struct map *);
 
 int CONSTRUCTOR _libkqueue_init(void);
 

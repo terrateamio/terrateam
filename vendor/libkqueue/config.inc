@@ -5,7 +5,7 @@ abi_minor="0"
 abi_version="$abi_major.$abi_minor"
 cflags="-fpic -Wall -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600"
 ldflags=""
-sources="src/common/filter.c src/common/knote.c
+sources="src/common/filter.c src/common/knote.c src/common/map.c
          src/common/kevent.c src/common/kqueue.c" 
 libdepends=""
 deps="src/common/private.h"
