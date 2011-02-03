@@ -27,17 +27,7 @@
 int KQUEUE_DEBUG = 0;
 
 
-/*
- * Fast path (lock-free) for kqueue descriptors < KQLIST_MAX
- */
-#define KQLIST_MAX 512
-static struct kqueue       *kqlist[KQLIST_MAX];
-
-/*
- * Slow path for kqueue descriptors > KQLIST_MAX
- */
-static RB_HEAD(kqt, kqueue) kqtree       = RB_INITIALIZER(&kqtree);
-static pthread_rwlock_t     kqtree_mtx;
+static struct map *kqmap;
 
 int CONSTRUCTOR
 _libkqueue_init(void)
@@ -51,19 +41,19 @@ _libkqueue_init(void)
     KQUEUE_DEBUG = (getenv("KQUEUE_DEBUG") == NULL) ? 0 : 1;
 #endif
 
-   pthread_rwlock_init(&kqtree_mtx, NULL);
-
+   kqmap = map_new(INT_MAX);
+   if (kqmap == NULL)
+       abort(); 
    dbg_puts("library initialization complete");
    return (0);
 }
 
+#if DEADWOOD
 static int
 kqueue_cmp(struct kqueue *a, struct kqueue *b)
 {
     return memcmp(&a->kq_id, &b->kq_id, sizeof(int)); 
 }
-
-RB_GENERATE(kqt, kqueue, entries, kqueue_cmp)
 
 /* Must hold the kqtree_mtx when calling this */
 void
@@ -75,25 +65,12 @@ kqueue_free(struct kqueue *kq)
     free(kq);
 }
 
+#endif
+
 struct kqueue *
 kqueue_lookup(int kq)
 {
-    struct kqueue query;
-    struct kqueue *ent = NULL;
-
-    if (slowpath(kq < 0)) {
-        return (NULL);
-    }
-    if (fastpath(kq < KQLIST_MAX)) {
-        ent = kqlist[kq];
-    } else {
-        query.kq_id = kq;
-        pthread_rwlock_rdlock(&kqtree_mtx);
-        ent = RB_FIND(kqt, &kqtree, &query);
-        pthread_rwlock_unlock(&kqtree_mtx);
-    }
-
-    return (ent);
+    return ((struct kqueue *) map_lookup(kqmap, kq));
 }
 
 int VISIBLE
@@ -110,14 +87,13 @@ kqueue(void)
         return (-1);
     }
 
-    if (kq->kq_id < KQLIST_MAX) {
-        kqlist[kq->kq_id] = kq;
-    } else {
-        pthread_rwlock_wrlock(&kqtree_mtx);
-        RB_INSERT(kqt, &kqtree, kq);
-        pthread_rwlock_unlock(&kqtree_mtx);
+    dbg_printf("created kqueue, fd=%d", kq->kq_id);
+
+    if (map_insert(kqmap, kq->kq_id, kq) < 0) {
+        dbg_puts("map insertion failed");
+        kqops.kqueue_free(kq);
+        return (-1);
     }
 
-    dbg_printf("created kqueue, fd=%d", kq->kq_id);
     return (kq->kq_id);
 }
