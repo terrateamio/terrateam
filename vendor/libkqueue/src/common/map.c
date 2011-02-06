@@ -17,7 +17,7 @@
 #include "private.h"
 
 struct map {
-    volatile size_t len;
+    size_t len;
     void **data;
 };
 
@@ -58,6 +58,41 @@ map_insert(struct map *m, int idx, void *ptr)
     }
 }
 
+int
+map_remove(struct map *m, int idx, void *ptr)
+{
+    if (slowpath(idx < 0 || idx > m->len))
+           return (-1);
+
+    if (__sync_val_compare_and_swap(&(m->data[idx]), ptr, 0) == NULL) {
+        dbg_printf("removed %p from location %d", ptr, idx);
+        return (0);
+    } else {
+        dbg_printf("removal failed: location %d does not contain value %p", idx, m->data[idx]);
+        return (-1);
+    }
+}
+
+int
+map_replace(struct map *m, int idx, void *oldp, void *newp)
+{
+    void *tmp;
+
+    if (slowpath(idx < 0 || idx > m->len))
+           return (-1);
+
+    tmp = __sync_val_compare_and_swap(&(m->data[idx]), oldp, newp);
+    if (tmp == oldp) {
+        dbg_printf("replaced value %p in location %d with value %p",
+                oldp, idx, newp);
+        return (0);
+    } else {
+        dbg_printf("item in location %d does not match expected value %p",
+                idx, oldp);
+        return (-1);
+    }
+}
+
 void *
 map_lookup(struct map *m, int idx)
 {
@@ -67,14 +102,22 @@ map_lookup(struct map *m, int idx)
     return m->data[idx];
 }
 
-int
+void *
 map_delete(struct map *m, int idx)
 {
-    if (slowpath(idx < 0 || idx > m->len))
-        return (-1);
+    void *oval;
+    void *nval;
 
-    //TODO: use CAS and fail if entry is NULL
+    if (slowpath(idx < 0 || idx > m->len))
+           return ((void *)-1);
+
+    /* Hopefully we aren't racing with another thread, but you never know.. */
+    do {
+        oval = m->data[idx];
+        nval = __sync_val_compare_and_swap(&(m->data[idx]), oval, NULL);
+    } while (nval != oval);
 
     m->data[idx] = NULL;
-    return (0);
+
+    return ((void *) oval);
 }
