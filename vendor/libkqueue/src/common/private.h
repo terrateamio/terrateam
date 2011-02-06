@@ -222,8 +222,10 @@ int         kqueue_validate(struct kqueue *);
 
 struct map *map_new(size_t);
 int         map_insert(struct map *, int, void *);
+int         map_remove(struct map *, int, void *);
+int         map_replace(struct map *, int, void *, void *);
 void       *map_lookup(struct map *, int);
-int         map_delete(struct map *, int);
+void       *map_delete(struct map *, int);
 void        map_free(struct map *);
 
 int CONSTRUCTOR _libkqueue_init(void);
