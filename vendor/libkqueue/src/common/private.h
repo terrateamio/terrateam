@@ -199,6 +199,7 @@ void        knote_release(struct filter *, struct knote *);
 void        knote_free_all(struct filter *);
 void        knote_insert(struct filter *, struct knote *);
 int         knote_get_socket_type(struct knote *);
+int         knote_init(void);
 
 /* TODO: these deal with the eventlist, should use a different prefix */
 //DEADWOOD:void        knote_enqueue(struct filter *, struct knote *);

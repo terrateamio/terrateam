@@ -44,6 +44,8 @@ _libkqueue_init(void)
    kqmap = map_new(INT_MAX);
    if (kqmap == NULL)
        abort(); 
+   if (knote_init() < 0)
+       abort();
    dbg_puts("library initialization complete");
    return (0);
 }

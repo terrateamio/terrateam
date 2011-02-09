@@ -19,8 +19,15 @@
 #include <sys/types.h>
 
 #include "private.h"
+#include "alloc.h"
 
 static void knote_free(struct filter *, struct knote *);
+
+int
+knote_init(void)
+{
+    return (mem_init(sizeof(struct knote), 1024));
+}
 
 static int
 knote_cmp(struct knote *a, struct knote *b)
@@ -33,12 +40,7 @@ RB_GENERATE(knt, knote, kntree_ent, knote_cmp)
 struct knote *
 knote_new(void)
 {
-    struct knote *dst;
-
-    if ((dst = calloc(1, sizeof(*dst))) == NULL) 
-        return (NULL);
-
-    return (dst);
+    return (mem_calloc());
 }
 
 static inline void
@@ -76,7 +78,7 @@ knote_free(struct filter *filt, struct knote *kn)
 {
     RB_REMOVE(knt, &filt->kf_knote, kn);
     filt->kn_delete(filt, kn);
-    free(kn);
+    mem_free(kn);
 }
 
 /* XXX-FIXME this is broken and should be removed */
@@ -84,6 +86,8 @@ void
 knote_free_all(struct filter *filt)
 {
     struct knote *n1, *n2;
+
+    abort();
 
     /* Destroy all knotes */
     pthread_rwlock_wrlock(&filt->kf_knote_mtx);
