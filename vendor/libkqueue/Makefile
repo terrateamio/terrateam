@@ -157,4 +157,4 @@ diff:
 # Used for testing on a Solaris guest VM
 #
 solaris-test:
-	make dist && scp -P 2222 libkqueue-1.0a.tar.gz localhost:/tmp && ssh -p 2222 localhost ". .profile ; cd /tmp ; rm -rf libkqueue-$(VERSION) ; gtar zxvf libkqueue-$(VERSION).tar.gz && cd libkqueue-$(VERSION) && ./configure && make && make check"
+	make dist && scp -P 2222 libkqueue-$(VERSION).tar.gz localhost:/tmp && ssh -p 2222 localhost ". .profile ; cd /tmp ; rm -rf libkqueue-$(VERSION) ; gtar zxvf libkqueue-$(VERSION).tar.gz && cd libkqueue-$(VERSION) && ./configure && make && make check"
