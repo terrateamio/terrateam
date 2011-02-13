@@ -88,17 +88,6 @@ errout:
 }
 
 int
-evfilt_signal_init(struct filter *filt)
-{
-    return (0);
-}
-
-void
-evfilt_signal_destroy(struct filter *filt)
-{
-}
-
-int
 evfilt_signal_copyout(struct kevent *dst, 
             const struct kqueue *kq, 
             struct filter *filt, 
@@ -187,8 +176,8 @@ evfilt_signal_knote_disable(struct filter *filt, struct knote *kn)
 
 const struct filter evfilt_signal = {
     EVFILT_SIGNAL,
-    evfilt_signal_init,
-    evfilt_signal_destroy,
+    NULL,
+    NULL,
     evfilt_signal_copyout,
     evfilt_signal_knote_create,
     evfilt_signal_knote_modify,

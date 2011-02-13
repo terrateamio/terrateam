@@ -52,8 +52,6 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
         return (0);
     }
 
-    assert(src->kf_init);
-    assert(src->kf_destroy);
     assert(src->kf_copyout);
     assert(src->kn_create);
     assert(src->kn_modify);
@@ -61,11 +59,14 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
     assert(src->kn_enable);
     assert(src->kn_disable);
 
-    rv = src->kf_init(dst);
-    if (rv < 0) {
-        dbg_puts("filter failed to initialize");
-        dst->kf_id = 0;
-        return (-1);
+    /* Perform (optional) per-filter initialization */
+    if (src->kf_init != NULL) {
+        rv = src->kf_init(dst);
+        if (rv < 0) {
+            dbg_puts("filter failed to initialize");
+            dst->kf_id = 0;
+            return (-1);
+        }
     }
 
 #if DEADWOOD
