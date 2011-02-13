@@ -117,7 +117,6 @@ solaris_kevent_wait(
         const struct timespec *ts)
 
 {
-    port_event_t pe;
     int rv;
     uint_t nget = 1;
 
