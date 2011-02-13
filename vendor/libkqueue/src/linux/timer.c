@@ -59,17 +59,6 @@ convert_msec_to_itimerspec(struct itimerspec *dst, int src, int oneshot)
 }
 
 int
-evfilt_timer_init(struct filter *filt)
-{
-    return (0);
-}
-
-void
-evfilt_timer_destroy(struct filter *filt)
-{
-}
-
-int
 evfilt_timer_copyout(struct kevent *dst, 
             const struct kqueue *kq, 
             struct filter *filt, 
@@ -175,8 +164,8 @@ evfilt_timer_knote_disable(struct filter *filt, struct knote *kn)
 
 const struct filter evfilt_timer = {
     EVFILT_TIMER,
-    evfilt_timer_init,
-    evfilt_timer_destroy,
+    NULL,
+    NULL,
     evfilt_timer_copyout,
     evfilt_timer_knote_create,
     evfilt_timer_knote_modify,

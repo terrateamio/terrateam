@@ -85,18 +85,6 @@ eventfd_lower(int evfd)
 }
 
 int
-evfilt_user_init(struct filter *filt)
-{
-    return (0);
-}
-
-void
-evfilt_user_destroy(struct filter *filt)
-{
-    return;
-}
-
-int
 evfilt_user_copyout(struct kevent *dst, 
             const struct kqueue *kq, 
             struct filter *filt, 
@@ -229,8 +217,8 @@ evfilt_user_knote_disable(struct filter *filt, struct knote *kn)
 
 const struct filter evfilt_user = {
     EVFILT_USER,
-    evfilt_user_init,
-    evfilt_user_destroy,
+    NULL,
+    NULL,
     evfilt_user_copyout,
     evfilt_user_knote_create,
     evfilt_user_knote_modify,

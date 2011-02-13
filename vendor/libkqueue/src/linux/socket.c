@@ -71,17 +71,6 @@ epoll_update(int op, struct filter *filt, struct knote *kn, struct epoll_event *
 }
 
 int
-evfilt_socket_init(struct filter *filt)
-{
-    return (0);
-}
-
-void
-evfilt_socket_destroy(struct filter *filt)
-{
-}
-
-int
 evfilt_socket_copyout(struct kevent *dst, 
             const struct kqueue *kq, 
             struct filter *filt, 
@@ -189,8 +178,8 @@ evfilt_socket_knote_disable(struct filter *filt, struct knote *kn)
 
 const struct filter evfilt_read = {
     EVFILT_READ,
-    evfilt_socket_init,
-    evfilt_socket_destroy,
+    NULL,
+    NULL,
     evfilt_socket_copyout,
     evfilt_socket_knote_create,
     evfilt_socket_knote_modify,
@@ -201,8 +190,8 @@ const struct filter evfilt_read = {
 
 const struct filter evfilt_write = {
     EVFILT_WRITE,
-    evfilt_socket_init,
-    evfilt_socket_destroy,
+    NULL,
+    NULL,
     evfilt_socket_copyout,
     evfilt_socket_knote_create,
     evfilt_socket_knote_modify,

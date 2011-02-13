@@ -177,17 +177,6 @@ delete_watch(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_vnode_init(struct filter *filt)
-{
-    return (0);
-}
-
-void
-evfilt_vnode_destroy(struct filter *filt)
-{
-}
-
-int
 evfilt_vnode_copyout(struct kevent *dst, 
             const struct kqueue *kq, 
             struct filter *filt, 
@@ -291,8 +280,8 @@ evfilt_vnode_knote_disable(struct filter *filt, struct knote *kn)
 
 const struct filter evfilt_vnode = {
     EVFILT_VNODE,
-    evfilt_vnode_init,
-    evfilt_vnode_destroy,
+    NULL,
+    NULL,
     evfilt_vnode_copyout,
     evfilt_vnode_knote_create,
     evfilt_vnode_knote_modify,
