@@ -120,7 +120,7 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
 {
     struct knote  *kn = NULL;
     struct filter *filt;
-    int rv;
+    int rv = 0;
 
     if (src->flags & EV_DISPATCH && src->flags & EV_ONESHOT) {
         errno = EINVAL;
@@ -170,7 +170,6 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
 
     if (src->flags & EV_DELETE) {
         knote_release(filt, kn);
-        rv = 0;
     } else if (src->flags & EV_DISABLE) {
         kn->kev.flags |= EV_DISABLE;
         rv = filt->kn_disable(filt, kn);
