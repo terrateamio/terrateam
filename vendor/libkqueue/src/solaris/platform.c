@@ -30,25 +30,25 @@ static port_event_t __thread evbuf[MAX_KEVENT];
 int
 solaris_kqueue_init(struct kqueue *kq)
 {
-    if (posix_kqueue_init(kq) < 0)
-        return (-1);
-    if ((kq->kq_port = port_create()) < 0) {
+    if ((kq->kq_id = port_create()) < 0) {
         dbg_perror("port_create(2)");
         return (-1);
     }
-    dbg_printf("created event port; fd=%d", kq->kq_port);
-    TAILQ_INIT(&kq->kq_events);
+    dbg_printf("created event port; fd=%d", kq->kq_id);
+
+    if (filter_register_all(kq) < 0) {
+        close(kq->kq_id);
+        return (-1);
+    }
+
     return (0);
 }
 
 void
 solaris_kqueue_free(struct kqueue *kq)
 {
-    posix_kqueue_free(kq);
-    if (kq->kq_port > 0) {
-        (void) close(kq->kq_port);
-        dbg_printf("closed event port; fd=%d", kq->kq_port);
-    }
+    (void) close(kq->kq_id);
+    dbg_printf("closed event port; fd=%d", kq->kq_id);
 }
 
 /* Dump a poll(2) events bitmask */
@@ -122,7 +122,7 @@ solaris_kevent_wait(
 
     reset_errno();
     dbg_puts("waiting for events");
-    rv = port_getn(kq->kq_port, &evbuf[0], 1, &nget, (struct timespec *) ts);
+    rv = port_getn(kq->kq_id, &evbuf[0], 1, &nget, (struct timespec *) ts);
     dbg_printf("rv=%d errno=%d (%s) nget=%d", 
                 rv, errno, strerror(errno), nget);
     if (rv < 0) {
@@ -146,32 +146,35 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
         struct kevent *eventlist, int nevents)
 {
     port_event_t  *evt;
+    struct knote  *kn;
     struct filter *filt;
     int i, rv;
 
     for (i = 0; i < nready; i++) {
         evt = &evbuf[i];
+	kn = evt->portev_user;
         dbg_printf("event=%s", port_event_dump(evt));
         switch (evt->portev_source) {
             case PORT_SOURCE_FD:
-                filt = evt->portev_user;
-                rv = filt->kf_copyout(filt, eventlist, nevents);
+//XXX-FIXME WHAT ABOUT WRITE???
+                filter_lookup(&filt, kq, EVFILT_READ);
+                rv = filt->kf_copyout(eventlist, kn, evt);
                 break;
 
             case PORT_SOURCE_TIMER:
                 filter_lookup(&filt, kq, EVFILT_TIMER);
-                rv = filt->kf_copyout(filt, eventlist, nevents);
+                rv = filt->kf_copyout(eventlist, kn, evt);
                 break;
 
             case PORT_SOURCE_USER:
-                switch (ebp->pe.portev_events) {
+                switch (evt->portev_events) {
                     case X_PORT_SOURCE_SIGNAL:
                         filter_lookup(&filt, kq, EVFILT_SIGNAL);
-                        rv = filt->kf_copyout(filt, eventlist, nevents);
+                        rv = filt->kf_copyout(eventlist, kn, evt);
                         break;
                     case X_PORT_SOURCE_USER:
                         filter_lookup(&filt, kq, EVFILT_USER);
-                        rv = filt->kf_copyout(filt, eventlist, nevents);
+                        rv = filt->kf_copyout(eventlist, kn, evt);
                         break;
                     default:
                 dbg_puts("unsupported portev_events");
@@ -183,10 +186,11 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
                 dbg_puts("unsupported source");
                 abort();
         }
-    if (rv < 0) {
-        dbg_puts("kevent_copyout failed");
-	return (-1);
-    }
+	if (rv < 0) {
+		dbg_puts("kevent_copyout failed");
+		return (-1);
+	}
+        eventlist++;
     }
 
     return (nready);

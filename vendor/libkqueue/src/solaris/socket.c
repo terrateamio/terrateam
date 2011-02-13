@@ -68,18 +68,6 @@ socket_knote_delete(int port, int fd)
 }
    
 int
-evfilt_socket_init(struct filter *filt)
-{
-    return (0);
-}
-
-void
-evfilt_socket_destroy(struct filter *filt)
-{
-    ;
-}
-
-int
 evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 {
     int rv, events;
@@ -119,43 +107,35 @@ evfilt_socket_knote_delete(struct filter *filt, struct knote *kn)
     if (kn->kev.flags & EV_DISABLE)
         return (0);
     else
-        return (socket_knote_delete(filt->kf_kqueue->kq_port, kn->kev.ident));
+        return (socket_knote_delete(filter_epfd(filt), kn->kev.ident));
 }
 
 int
 evfilt_socket_knote_enable(struct filter *filt, struct knote *kn)
 {
-    return socket_knote_create(filt->kf_kqueue->kq_port,
+    return socket_knote_create(filter_epfd(filt),
 		kn->kev.filter, kn->kev.ident, filt);
 }
 
 int
 evfilt_socket_knote_disable(struct filter *filt, struct knote *kn)
 {
-    return socket_knote_delete(filt->kf_kqueue->kq_port, kn->kev.ident);
+    return socket_knote_delete(filter_epfd(filt), kn->kev.ident);
 }
 
 int
-evfilt_socket_copyout(struct filter *filt, 
-            struct kevent *dst, 
-            int nevents)
+evfilt_socket_copyout(struct kevent *dst, struct knote *src, void *ptr)
 {
-    port_event_t pe;
-    struct knote *kn;
+    port_event_t *pe = (port_event_t *) ptr;
 
-    port_event_dequeue(&pe, filt->kf_kqueue);
-    kn = knote_lookup(filt, pe.portev_object);
-    if (kn == NULL)
-	return (-1);
-
-    memcpy(dst, &kn->kev, sizeof(*dst));
-    if (pe.portev_events == 8) //XXX-FIXME Should be POLLHUP)
+    memcpy(dst, &src->kev, sizeof(*dst));
+    if (pe->portev_events == 8) //XXX-FIXME Should be POLLHUP)
         dst->flags |= EV_EOF;
-    else if (pe.portev_events & POLLERR)
+    else if (pe->portev_events & POLLERR)
         dst->fflags = 1; /* FIXME: Return the actual socket error */
           
-    if (pe.portev_events & POLLIN) {
-        if (kn->flags & KNFL_PASSIVE_SOCKET) {
+    if (pe->portev_events & POLLIN) {
+        if (src->flags & KNFL_PASSIVE_SOCKET) {
             /* On return, data contains the length of the 
                socket backlog. This is not available under Solaris (?).
              */
@@ -179,25 +159,19 @@ evfilt_socket_copyout(struct filter *filt,
         }
     }
 
-    if (kn->kev.flags & EV_DISPATCH) {
+    /* FIXME: make sure this is in kqops.copyout() 
+    if (src->kev.flags & EV_DISPATCH || src->kev.flags & EV_ONESHOT) {
         socket_knote_delete(filt->kf_kqueue->kq_port, kn->kev.ident);
-        KNOTE_DISABLE(kn);
-    } else if (kn->kev.flags & EV_ONESHOT) {
-        socket_knote_delete(filt->kf_kqueue->kq_port, kn->kev.ident);
-        knote_free(filt, kn);
-    } else {
-	/* Solaris automatically disassociates a FD event after it
-	   is delivered. This effectively disables the knote. */
-        KNOTE_DISABLE(kn);
     }
+    */
 
     return (1);
 }
 
 const struct filter evfilt_read = {
     EVFILT_READ,
-    evfilt_socket_init,
-    evfilt_socket_destroy,
+    NULL,
+    NULL,
     evfilt_socket_copyout,
     evfilt_socket_knote_create,
     evfilt_socket_knote_modify,
@@ -208,8 +182,8 @@ const struct filter evfilt_read = {
 
 const struct filter evfilt_write = {
     EVFILT_WRITE,
-    evfilt_socket_init,
-    evfilt_socket_destroy,
+    NULL,
+    NULL,
     evfilt_socket_copyout,
     evfilt_socket_knote_create,
     evfilt_socket_knote_modify,
