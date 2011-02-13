@@ -85,11 +85,7 @@ eventfd_lower(int evfd)
 }
 
 int
-evfilt_user_copyout(struct kevent *dst, 
-            const struct kqueue *kq, 
-            struct filter *filt, 
-            struct knote *src, 
-            void *ptr)
+evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr)
 {
     memcpy(dst, &src->kev, sizeof(*dst));
     dst->fflags &= ~NOTE_FFCTRLMASK;     //FIXME: Not sure if needed

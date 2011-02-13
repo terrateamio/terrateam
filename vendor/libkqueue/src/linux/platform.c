@@ -157,7 +157,7 @@ linux_kevent_copyout(struct kqueue *kq, int nready,
         kn = (struct knote *) ev->data.ptr;
         knote_lock(kn);
         filt = &kq->kq_filt[~(kn->kev.filter)];
-        rv = filt->kf_copyout(eventlist, kq, filt, kn, ev);
+        rv = filt->kf_copyout(eventlist, kn, ev);
         knote_unlock(kn);
         if (slowpath(rv < 0)) {
             dbg_puts("knote_copyout failed");

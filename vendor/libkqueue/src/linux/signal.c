@@ -88,11 +88,7 @@ errout:
 }
 
 int
-evfilt_signal_copyout(struct kevent *dst, 
-            const struct kqueue *kq, 
-            struct filter *filt, 
-            struct knote *src, 
-            void *unused)
+evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *unused)
 {
     int sigfd;
 
