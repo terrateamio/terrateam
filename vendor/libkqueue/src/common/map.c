@@ -47,7 +47,7 @@ map_insert(struct map *m, int idx, void *ptr)
     if (slowpath(idx < 0 || idx > m->len))
            return (-1);
 
-    if (__sync_val_compare_and_swap(&(m->data[idx]), 0, ptr) == NULL) {
+    if (atomic_cas(&(m->data[idx]), 0, ptr) == NULL) {
         dbg_printf("inserted %p in location %d", ptr, idx);
         return (0);
     } else {
@@ -64,7 +64,7 @@ map_remove(struct map *m, int idx, void *ptr)
     if (slowpath(idx < 0 || idx > m->len))
            return (-1);
 
-    if (__sync_val_compare_and_swap(&(m->data[idx]), ptr, 0) == NULL) {
+    if (atomic_cas(&(m->data[idx]), ptr, 0) == NULL) {
         dbg_printf("removed %p from location %d", ptr, idx);
         return (0);
     } else {
@@ -81,7 +81,7 @@ map_replace(struct map *m, int idx, void *oldp, void *newp)
     if (slowpath(idx < 0 || idx > m->len))
            return (-1);
 
-    tmp = __sync_val_compare_and_swap(&(m->data[idx]), oldp, newp);
+    tmp = atomic_cas(&(m->data[idx]), oldp, newp);
     if (tmp == oldp) {
         dbg_printf("replaced value %p in location %d with value %p",
                 oldp, idx, newp);
@@ -114,7 +114,7 @@ map_delete(struct map *m, int idx)
     /* Hopefully we aren't racing with another thread, but you never know.. */
     do {
         oval = m->data[idx];
-        nval = __sync_val_compare_and_swap(&(m->data[idx]), oval, NULL);
+        nval = atomic_cas(&(m->data[idx]), oval, NULL);
     } while (nval != oval);
 
     m->data[idx] = NULL;

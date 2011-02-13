@@ -22,13 +22,15 @@
 #define THREAD_ID (pthread_self())
 
 /*
- * Atomic integer operations that override the ones in posix/platform.h
+ * Atomic operations that override the ones in posix/platform.h
  */
 #include <atomic.h>
 #undef atomic_inc
 #define atomic_inc      atomic_inc_32_nv
 #undef atomic_dec
 #define atomic_dec      atomic_dec_32_nv
+#undef atomic_cas
+#define atomic_cas      atomic_cas_ptr
 
 /*
  * Event ports
