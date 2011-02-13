@@ -82,8 +82,28 @@ evfilt_socket_destroy(struct filter *filt)
 int
 evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 {
-    return socket_knote_create(filt->kf_kqueue->kq_port,
-		kn->kev.filter, kn->kev.ident, filt);
+    int rv, events;
+
+    switch (kn->kev.filter) {
+        case EVFILT_READ:
+            events = POLLIN;
+            break;
+        case EVFILT_WRITE:
+            events = POLLOUT;
+            break;
+        default:
+            dbg_puts("invalid filter");
+            return (-1);
+    }
+
+    rv = port_associate(filter_epfd(filt), PORT_SOURCE_FD, kn->kev.ident, 
+            events, kn);
+    if (rv < 0) {
+            dbg_perror("port_associate(2)");
+            return (-1);
+        }
+
+    return (0);
 }
 
 int
