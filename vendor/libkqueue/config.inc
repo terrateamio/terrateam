@@ -78,6 +78,7 @@ post_configure_hook() {
           platform="$platform src/solaris/platform.c"
           evfilt_timer="src/solaris/timer.c"
           evfilt_user="src/solaris/user.c"
+          evfilt_signal="src/solaris/signal.c"
           evfilt_proc=""
           evfilt_vnode=""
     fi      

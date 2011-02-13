@@ -82,7 +82,7 @@ ktimer_create(struct filter *filt, struct knote *kn)
 
     kn->kev.flags |= EV_CLEAR;
 
-    pn.portnfy_port = filt->kf_kqueue->kq_port;
+    pn.portnfy_port = filter_epfd(filt);
     pn.portnfy_user = (void *) kn->kev.ident;
 
     se.sigev_notify = SIGEV_PORT;
@@ -119,25 +119,18 @@ evfilt_timer_destroy(struct filter *filt)
 }
 
 int
-evfilt_timer_copyout(struct filter *filt, 
-            struct kevent *dst, 
-            int nevents)
+evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr)
 {
-    port_event_t pe;
+    port_event_t *pe = (port_event_t *) ptr;
     long buf;
     timer_t timerid;
-    struct knote *kn;
-
-    port_event_dequeue(&pe, filt->kf_kqueue);
 
     /* XXX-FIXME: danger here -- there has to be a better way */
-    buf = (long) pe.portev_user;
+    buf = (long) pe->portev_user;
     timerid = (timer_t) buf;
     /* ^^^^^^^^^ */
-    kn = knote_lookup(filt, timerid);
 
-    dbg_printf("knote=%p", kn);
-    memcpy(dst, &kn->kev, sizeof(*dst));
+    memcpy(dst, &src->kev, sizeof(*dst));
     //TODO:
     //if (ev->events & EPOLLERR)
     //    dst->fflags = 1; /* FIXME: Return the actual timer error */
@@ -147,13 +140,14 @@ evfilt_timer_copyout(struct filter *filt,
      */
     dst->data = 1;  //workaround
 
-    if (kn->kev.flags & EV_DISPATCH) {
-        KNOTE_DISABLE(kn);
-        timer_delete(kn->data.timerid);
-    } else if (kn->kev.flags & EV_ONESHOT) {
-        timer_delete(kn->data.timerid);
-        knote_free(filt, kn);
+#if FIXME
+    //should be done in kqops.copyout() 
+    if (src->kev.flags & EV_DISPATCH) {
+        timer_delete(src->data.timerid);
+    } else if (src->kev.flags & EV_ONESHOT) {
+        timer_delete(src->data.timerid);
     }
+#endif
 
     return (1);
 }
