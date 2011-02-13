@@ -71,11 +71,7 @@ epoll_update(int op, struct filter *filt, struct knote *kn, struct epoll_event *
 }
 
 int
-evfilt_socket_copyout(struct kevent *dst, 
-            const struct kqueue *kq, 
-            struct filter *filt, 
-            struct knote *src, 
-            void *ptr)
+evfilt_socket_copyout(struct kevent *dst, struct knote *src, void *ptr)
 {
     struct epoll_event * const ev = (struct epoll_event *) ptr;
 

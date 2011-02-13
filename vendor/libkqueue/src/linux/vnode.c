@@ -177,11 +177,7 @@ delete_watch(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_vnode_copyout(struct kevent *dst, 
-            const struct kqueue *kq, 
-            struct filter *filt, 
-            struct knote *src, 
-            void *ptr)
+evfilt_vnode_copyout(struct kevent *dst, struct knote *src, void *ptr)
 {
     struct inotify_event evt;
     struct stat sb;

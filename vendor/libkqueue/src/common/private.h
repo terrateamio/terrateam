@@ -135,7 +135,7 @@ struct filter {
 
     int     (*kf_init)(struct filter *);
     void    (*kf_destroy)(struct filter *);
-    int     (*kf_copyout)(struct kevent *, const struct kqueue *, struct filter *, struct knote *, void *);
+    int     (*kf_copyout)(struct kevent *, struct knote *, void *);
 
     /* knote operations */
 

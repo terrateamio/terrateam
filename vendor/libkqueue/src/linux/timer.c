@@ -59,11 +59,7 @@ convert_msec_to_itimerspec(struct itimerspec *dst, int src, int oneshot)
 }
 
 int
-evfilt_timer_copyout(struct kevent *dst, 
-            const struct kqueue *kq, 
-            struct filter *filt, 
-            struct knote *src, 
-            void *ptr)
+evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr)
 {
     struct epoll_event * const ev = (struct epoll_event *) ptr;
     uint64_t expired;
