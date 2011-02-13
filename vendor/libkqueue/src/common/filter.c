@@ -107,6 +107,7 @@ filter_register_all(struct kqueue *kq)
         filter_unregister_all(kq);
         return (-1);
     } else {
+        dbg_puts("complete");
         return (0);
     }
 }
@@ -142,6 +143,7 @@ filter_lookup(struct filter **filt, struct kqueue *kq, short id)
     }
     *filt = &kq->kq_filt[~id];
     if ((*filt)->kf_copyout == NULL) {
+        dbg_printf("filter %s is not implemented", filter_name(id));
         errno = ENOSYS;
         *filt = NULL;
         return (-1);

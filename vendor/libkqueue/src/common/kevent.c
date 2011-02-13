@@ -123,6 +123,7 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
     int rv = 0;
 
     if (src->flags & EV_DISPATCH && src->flags & EV_ONESHOT) {
+        dbg_puts("Error: EV_DISPATCH and EV_ONESHOT are mutually exclusive");
         errno = EINVAL;
         return (-1);
     }
