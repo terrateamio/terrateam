@@ -76,7 +76,8 @@ struct kevent * kevent_get(int);
 
 void kevent_update(int kqfd, struct kevent *kev);
 
-void kevent_cmp(struct kevent *, struct kevent *);
+#define kevent_cmp(a,b) _kevent_cmp(a,b, __FILE__, __LINE__)
+void _kevent_cmp(struct kevent *, struct kevent *, const char *, int);
 
 void
 kevent_add(int kqfd, struct kevent *kev, 
