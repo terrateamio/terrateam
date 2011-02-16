@@ -30,6 +30,7 @@
 #include "sys/event.h"
 #include "private.h"
 
+#if DEADWOOD
 static int
 socket_knote_create(int port, int filter, int fd, void *udata)
 {
@@ -66,6 +67,7 @@ socket_knote_delete(int port, int fd)
 	return (0);
    }
 }
+#endif
    
 int
 evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
@@ -106,21 +108,25 @@ evfilt_socket_knote_delete(struct filter *filt, struct knote *kn)
 {
     if (kn->kev.flags & EV_DISABLE)
         return (0);
-    else
-        return (socket_knote_delete(filter_epfd(filt), kn->kev.ident));
+
+    if (port_dissociate(filter_epfd(filt), PORT_SOURCE_FD, kn->kev.ident) < 0) {
+        dbg_perror("port_dissociate(2)");
+        return (-1);
+    }
+
+    return (0);
 }
 
 int
 evfilt_socket_knote_enable(struct filter *filt, struct knote *kn)
 {
-    return socket_knote_create(filter_epfd(filt),
-		kn->kev.filter, kn->kev.ident, filt);
+    return evfilt_socket_knote_create(filt, kn);
 }
 
 int
 evfilt_socket_knote_disable(struct filter *filt, struct knote *kn)
 {
-    return socket_knote_delete(filter_epfd(filt), kn->kev.ident);
+    return evfilt_socket_knote_delete(filt, kn);
 }
 
 int
