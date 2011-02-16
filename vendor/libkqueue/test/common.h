@@ -99,7 +99,8 @@ kevent_add(int kqfd, struct kevent *kev,
 } while (0);
 
 /* Checks if any events are pending, which is an error. */
-void test_no_kevents(int);
+#define test_no_kevents(a) _test_no_kevents(a, __FILE__, __LINE__)
+void _test_no_kevents(int, const char *, int);
 
 /* From test.c */
 void    test_begin(const char *);

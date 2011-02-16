@@ -106,8 +106,10 @@ evfilt_socket_knote_modify(struct filter *filt, struct knote *kn,
 int
 evfilt_socket_knote_delete(struct filter *filt, struct knote *kn)
 {
+    /* FIXME: should be handled at kevent_copyin()
     if (kn->kev.flags & EV_DISABLE)
         return (0);
+    */
 
     if (port_dissociate(filter_epfd(filt), PORT_SOURCE_FD, kn->kev.ident) < 0) {
         dbg_perror("port_dissociate(2)");
@@ -120,12 +122,14 @@ evfilt_socket_knote_delete(struct filter *filt, struct knote *kn)
 int
 evfilt_socket_knote_enable(struct filter *filt, struct knote *kn)
 {
+    dbg_printf("enabling knote %p", kn);
     return evfilt_socket_knote_create(filt, kn);
 }
 
 int
 evfilt_socket_knote_disable(struct filter *filt, struct knote *kn)
 {
+    dbg_printf("disabling knote %p", kn);
     return evfilt_socket_knote_delete(filt, kn);
 }
 
