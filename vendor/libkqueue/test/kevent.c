@@ -20,7 +20,7 @@ extern int kqfd;
 
 /* Checks if any events are pending, which is an error. */
 void 
-test_no_kevents(int kqfd)
+_test_no_kevents(int kqfd, const char *file, int line)
 {
     int nfds;
     struct timespec timeo;
@@ -31,7 +31,7 @@ test_no_kevents(int kqfd)
     if (nfds < 0)
         die("kevent(2)");
     if (nfds > 0) {
-        puts("\nUnexpected event:");
+        printf("\n[%s:%d]: Unexpected event:", file, line);
         die(kevent_to_str(&kev));
     }
 }
