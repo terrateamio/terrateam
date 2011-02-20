@@ -87,14 +87,7 @@ evfilt_timer_destroy(struct filter *filt)
 int
 evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr)
 {
-    port_event_t *pe = (port_event_t *) ptr;
-    long buf;
-    timer_t timerid;
-
-    /* XXX-FIXME: danger here -- there has to be a better way */
-    buf = (long) pe->portev_user;
-    timerid = (timer_t) buf;
-    /* ^^^^^^^^^ */
+    /* port_event_t *pe = (port_event_t *) ptr; */
 
     memcpy(dst, &src->kev, sizeof(*dst));
     //TODO:
@@ -107,6 +100,7 @@ evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr)
     dst->data = 1;  //workaround
 
 #if FIXME
+    timerid = src->data.timerid;
     //should be done in kqops.copyout() 
     if (src->kev.flags & EV_DISPATCH) {
         timer_delete(src->data.timerid);
