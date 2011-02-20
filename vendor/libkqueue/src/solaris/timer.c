@@ -72,40 +72,6 @@ convert_msec_to_itimerspec(struct itimerspec *dst, int src, int oneshot)
     dbg_printf("%s", itimerspec_dump(dst));
 }
 
-static int
-ktimer_create(struct filter *filt, struct knote *kn)
-{
-    port_notify_t pn;
-    struct sigevent se;
-    struct itimerspec ts;
-    timer_t timerid;
-
-    kn->kev.flags |= EV_CLEAR;
-
-    pn.portnfy_port = filter_epfd(filt);
-    pn.portnfy_user = (void *) kn->kev.ident;
-
-    se.sigev_notify = SIGEV_PORT;
-    se.sigev_value.sival_ptr = &pn;
-
-    if (timer_create (CLOCK_MONOTONIC, &se, &timerid) < 0) {
-        dbg_perror("timer_create(2)"); 
-        return (-1);
-    }
-   
-    convert_msec_to_itimerspec(&ts, kn->kev.data, kn->kev.flags & EV_ONESHOT);
-    if (timer_settime(timerid, 0, &ts, NULL) < 0) {
-        dbg_perror("timer_settime(2)");
-        (void) timer_delete(timerid);
-        return (-1);
-    }
-
-    kn->data.timerid = timerid;
-    dbg_printf("created timer with id #%lu", (unsigned long) timerid);
-
-    return (0);
-}
-
 int
 evfilt_timer_init(struct filter *filt)
 {
@@ -155,7 +121,35 @@ evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr)
 int
 evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 {
-    return ktimer_create(filt, kn);
+    port_notify_t pn;
+    struct sigevent se;
+    struct itimerspec ts;
+    timer_t timerid;
+
+    kn->kev.flags |= EV_CLEAR;
+
+    pn.portnfy_port = filter_epfd(filt);
+    pn.portnfy_user = (void *) kn;
+
+    se.sigev_notify = SIGEV_PORT;
+    se.sigev_value.sival_ptr = &pn;
+
+    if (timer_create (CLOCK_MONOTONIC, &se, &timerid) < 0) {
+        dbg_perror("timer_create(2)"); 
+        return (-1);
+    }
+   
+    convert_msec_to_itimerspec(&ts, kn->kev.data, kn->kev.flags & EV_ONESHOT);
+    if (timer_settime(timerid, 0, &ts, NULL) < 0) {
+        dbg_perror("timer_settime(2)");
+        (void) timer_delete(timerid);
+        return (-1);
+    }
+
+    kn->data.timerid = timerid;
+    dbg_printf("created timer with id #%lu", (unsigned long) timerid);
+
+    return (0);
 }
 
 int
