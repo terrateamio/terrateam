@@ -159,6 +159,14 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
 //XXX-FIXME WHAT ABOUT WRITE???
                 filter_lookup(&filt, kq, EVFILT_READ);
                 rv = filt->kf_copyout(eventlist, kn, evt);
+
+                /* For sockets, the event port object must be reassociated
+                   after each event is retrieved. */
+                if (rv == 0 && !(kn->kev.flags & EV_DISPATCH 
+                            || kn->kev.flags & EV_ONESHOT)) {
+                    rv = filt->kn_create(filt, kn);
+                }
+
                 break;
 
             case PORT_SOURCE_TIMER:
@@ -186,10 +194,21 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
                 dbg_puts("unsupported source");
                 abort();
         }
-	if (rv < 0) {
-		dbg_puts("kevent_copyout failed");
-		return (-1);
-	}
+
+        if (rv < 0) {
+            dbg_puts("kevent_copyout failed");
+            return (-1);
+        }
+
+        /*
+         * Certain flags cause the associated knote to be deleted
+         * or disabled.
+         */
+        if (eventlist->flags & EV_DISPATCH) 
+            knote_disable(filt, kn); //TODO: Error checking
+        if (eventlist->flags & EV_ONESHOT) 
+            knote_release(filt, kn); //TODO: Error checking
+
         eventlist++;
     }
 

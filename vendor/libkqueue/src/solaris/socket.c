@@ -30,45 +30,6 @@
 #include "sys/event.h"
 #include "private.h"
 
-#if DEADWOOD
-static int
-socket_knote_create(int port, int filter, int fd, void *udata)
-{
-    int rv, events;
-
-    switch (filter) {
-        case EVFILT_READ:
-                events = POLLIN;
-                break;
-        case EVFILT_WRITE:
-                events = POLLOUT;
-                break;
-        default:
-                dbg_puts("invalid filter");
-                return (-1);
-    }
-
-    rv = port_associate(port, PORT_SOURCE_FD, fd, events, udata);
-    if (rv < 0) {
-            dbg_perror("port_associate(2)");
-            return (-1);
-        }
-
-    return (0);
-}
-
-static int
-socket_knote_delete(int port, int fd)
-{
-   if (port_dissociate(port, PORT_SOURCE_FD, fd) < 0) {
-            dbg_perror("port_dissociate(2)");
-            return (-1);
-   } else {
-	return (0);
-   }
-}
-#endif
-   
 int
 evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 {
@@ -100,6 +61,7 @@ int
 evfilt_socket_knote_modify(struct filter *filt, struct knote *kn, 
         const struct kevent *kev)
 {
+    dbg_puts("XXX-FIXME");
     return (-1); /* STUB */
 }
 
