@@ -152,7 +152,7 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
 
     for (i = 0; i < nready; i++) {
         evt = &evbuf[i];
-	kn = evt->portev_user;
+        kn = evt->portev_user;
         dbg_printf("event=%s", port_event_dump(evt));
         switch (evt->portev_source) {
             case PORT_SOURCE_FD:
