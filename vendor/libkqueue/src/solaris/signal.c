@@ -19,14 +19,14 @@
 /* Highest signal number supported. POSIX standard signals are < 32 */
 #define SIGNAL_MAX      32
 
-struct sentry {
-    struct filter  *s_filt;
-    struct knote   *s_knote;
-    volatile uint32_t s_cnt;
-};
+static struct sentry {
+    int             st_signum;
+    int             st_port;
+    volatile sig_atomic_t st_count;
+    struct kevent st_kev;
+} sigtbl[SIGNAL_MAX];
 
 static pthread_mutex_t sigtbl_mtx = PTHREAD_MUTEX_INITIALIZER;
-static struct sentry sigtbl[SIGNAL_MAX];
 
 static void
 signal_handler(int sig)
@@ -34,11 +34,12 @@ signal_handler(int sig)
     struct sentry *s;
    
     if (sig < 0 || sig > SIGNAL_MAX)
-        abort();
+        return; //TODO: DEBUG OUTPUT
 
     s = &sigtbl[sig];
-    atomic_inc(&s->s_cnt);
-    port_send(filter_epfd(s->s_filt), X_PORT_SOURCE_SIGNAL, &sigtbl[sig]);
+    dbg_printf("sig=%d %d", sig, s->st_signum);
+    atomic_inc(&s->st_count);
+    port_send(s->st_port, X_PORT_SOURCE_SIGNAL, &sigtbl[sig]);
     /* TODO: crash if port_send() fails? */
 }
 
@@ -58,13 +59,16 @@ catch_signal(struct filter *filt, struct knote *kn)
 		dbg_perror("sigaction");
 		return (-1);
 	}
-    /* FIXME: will clobber previous entry, if any */
+
     pthread_mutex_lock(&sigtbl_mtx);
-    sigtbl[kn->kev.ident].s_filt = filt;
-    sigtbl[kn->kev.ident].s_knote = kn;
+    sigtbl[sig].st_signum = sig;
+    sigtbl[sig].st_port = filter_epfd(filt);
+    sigtbl[sig].st_count = 0;
+    memcpy(&sigtbl[sig].st_kev, &kn->kev, sizeof(struct kevent));
     pthread_mutex_unlock(&sigtbl_mtx);
 
     dbg_printf("installed handler for signal %d", sig);
+    dbg_printf("sigtbl ptr = %p", &sigtbl[sig]);
     return (0);
 }
 
@@ -81,10 +85,6 @@ ignore_signal(int sig)
 		dbg_perror("sigaction");
 		return (-1);
 	}
-    pthread_mutex_lock(&sigtbl_mtx);
-    sigtbl[sig].s_filt = NULL;
-    sigtbl[sig].s_knote = NULL;
-    pthread_mutex_unlock(&sigtbl_mtx);
 
     dbg_printf("removed handler for signal %d", sig);
     return (0);
@@ -133,12 +133,18 @@ evfilt_signal_knote_disable(struct filter *filt, struct knote *kn)
 int
 evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *ptr)
 {
-    dst->ident = src->kev.ident;
+    port_event_t *pe = (port_event_t *) ptr;
+    struct sentry *ent = (struct sentry *) pe->portev_user;
+
+    pthread_mutex_lock(&sigtbl_mtx);
+    dbg_printf("sigtbl ptr = %p sig=%d", ptr, ent->st_signum);
+    dst->ident = ent->st_kev.ident;
     dst->filter = EVFILT_SIGNAL;
-    dst->udata = src->kev.udata;
-    dst->flags = src->kev.flags; 
+    dst->udata = ent->st_kev.udata;
+    dst->flags = ent->st_kev.flags; 
     dst->fflags = 0;
     dst->data = 1;
+    pthread_mutex_unlock(&sigtbl_mtx);
 
     if (src->kev.flags & EV_DISPATCH || src->kev.flags & EV_ONESHOT) 
         ignore_signal(src->kev.ident);
