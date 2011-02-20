@@ -134,6 +134,7 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
     dbg_printf("src=%s\n", kevent_dump(src));
 
     kn = knote_lookup(filt, src->ident);
+    dbg_printf("knote_lookup: ident %d == %p", (int)src->ident, kn);
     if (kn == NULL) {
         if (src->flags & EV_ADD) {
             if ((kn = knote_new()) == NULL) {
@@ -174,12 +175,15 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
     } else if (src->flags & EV_DISABLE) {
         kn->kev.flags |= EV_DISABLE;
         rv = filt->kn_disable(filt, kn);
+        dbg_printf("kn_disable returned %d", rv);
     } else if (src->flags & EV_ENABLE) {
         kn->kev.flags &= ~EV_DISABLE;
         rv = filt->kn_enable(filt, kn);
+        dbg_printf("kn_enable returned %d", rv);
     } else if (src->flags & EV_ADD || src->flags == 0) {
         kn->kev.udata = src->udata;
         rv = filt->kn_modify(filt, kn, src);
+        dbg_printf("kn_modify returned %d", rv);
     }
 
     knote_unlock(kn);
