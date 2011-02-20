@@ -98,7 +98,7 @@ test_kevent_socket_clear(void)
 
     EV_SET(&kev, sockfd[0], EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, &sockfd[0]);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        die("kevent");
+        die("kevent1");
 
     kevent_socket_fill();
     kevent_socket_fill();
@@ -120,7 +120,7 @@ test_kevent_socket_clear(void)
     kevent_socket_drain();
     EV_SET(&kev, sockfd[0], EVFILT_READ, EV_DELETE, 0, 0, &sockfd[0]);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        die("kevent");
+        die("kevent2");
 }
 
 void
@@ -183,10 +183,15 @@ test_kevent_socket_oneshot(void)
 
     test_no_kevents(kqfd);
 
-    /* Verify that the event has been deleted */
+    /* Verify that the kernel watch has been deleted */
     kevent_socket_fill();
     test_no_kevents(kqfd);
     kevent_socket_drain();
+
+    /* Verify that the kevent structure does not exist. */
+    kev.flags = EV_DELETE;
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) == 0)
+        die("kevent() should have failed");
 }
 
 /*
