@@ -18,7 +18,7 @@
 
 c_exports="program version target cflags"
 
-make_exports="program version target \
+make_exports="program version target distfile \
               prefix libdir includedir mandir \
               cflags ldflags ldadd libdepends \
               sources objs deps mans headers extra_dist subdirs \
@@ -198,7 +198,7 @@ check_linker() {
     # Appears to be a problem with GCC 4.0 and binutils
     #
     default_ld="$cc"
-    ldflags="-shared -o $program.so.$abi_major.$abi_minor $ldflags"
+    ldflags="-o $program.so.$abi_major.$abi_minor $ldflags"
 
     # FIXME: port to solaris
     if [ "$target" = "linux" ] ; then
@@ -312,6 +312,7 @@ finalize ldadd      ""
 finalize ldflags    ""
 finalize deps       ""
 finalize ln         "`which ln`"
+finalize distfile   "$program-$version.tar.gz" 
 
 pre_configure_hook
 
