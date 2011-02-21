@@ -206,7 +206,7 @@ check_linker() {
     fi 
 
     if [ "$target" = "solaris" ] ; then
-    ldflags="$ldflags"
+    ldflags="-shared $ldflags"
     fi
 
     finalize ld "$default_ld"

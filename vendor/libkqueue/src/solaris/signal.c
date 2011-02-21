@@ -22,7 +22,7 @@
 static struct sentry {
     int             st_signum;
     int             st_port;
-    volatile sig_atomic_t st_count;
+//    volatile sig_atomic_t st_count;
     struct kevent st_kev;
 } sigtbl[SIGNAL_MAX];
 
@@ -38,7 +38,7 @@ signal_handler(int sig)
 
     s = &sigtbl[sig];
     dbg_printf("sig=%d %d", sig, s->st_signum);
-    atomic_inc(&s->st_count);
+//    atomic_inc(&s->st_count);
     port_send(s->st_port, X_PORT_SOURCE_SIGNAL, &sigtbl[sig]);
     /* TODO: crash if port_send() fails? */
 }
@@ -63,7 +63,7 @@ catch_signal(struct filter *filt, struct knote *kn)
     pthread_mutex_lock(&sigtbl_mtx);
     sigtbl[sig].st_signum = sig;
     sigtbl[sig].st_port = filter_epfd(filt);
-    sigtbl[sig].st_count = 0;
+//    sigtbl[sig].st_count = 0;
     memcpy(&sigtbl[sig].st_kev, &kn->kev, sizeof(struct kevent));
     pthread_mutex_unlock(&sigtbl_mtx);
 
