@@ -26,6 +26,18 @@
 
 int KQUEUE_DEBUG = 0;
 
+static unsigned int
+get_fd_limit(void)
+{
+    struct rlimit rlim;
+    
+    if (getrlimit(RLIMIT_NOFILE, &rlim) < 0) {
+        dbg_perror("getrlimit(2)");
+        return (65536);
+    } else {
+        return (rlim.rlim_max);
+    }
+}
 
 static struct map *kqmap;
 
@@ -41,7 +53,7 @@ _libkqueue_init(void)
     KQUEUE_DEBUG = (getenv("KQUEUE_DEBUG") == NULL) ? 0 : 1;
 #endif
 
-   kqmap = map_new(INT_MAX);
+   kqmap = map_new(get_fd_limit()); // INT_MAX
    if (kqmap == NULL)
        abort(); 
    if (knote_init() < 0)
