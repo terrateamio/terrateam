@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2009-2010 Mark Heily <mark@heily.com>
+# Copyright (c) 2009-2011 Mark Heily <mark@heily.com>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,11 +15,12 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
+makeconf_version="$Revision: 10 $"
 
-c_exports="program version target cflags"
+c_exports="program version target api cflags"
 
-make_exports="program version target distfile \
-              prefix libdir includedir mandir \
+make_exports="program version target api distfile \
+              prefix bindir sbindir libdir includedir mandir \
               cflags ldflags ldadd libdepends \
               sources objs deps mans headers extra_dist subdirs \
               abi_major abi_minor abi_version \
@@ -42,7 +43,7 @@ export_to_make() {
 
     # Prepend $DESTDIR to installation directories
     case "$id" in
-        prefix|libdir|includedir|mandir)  
+        prefix)  
         eval "$id=\"\\\$\\\$DESTDIR\$$id\""
     esac
 
@@ -67,6 +68,10 @@ finalize() {
 process_argv() {
     for arg in $*
     do
+        if [ "$arg" = "--makeconf-version" ] ; then
+            echo $makeconf_version | sed 's/[^0-9.]//g'
+            exit 0
+        fi
         id=`echo "$arg" | sed 's/=.*//; s/^--//;'`
         val=`echo "$arg" | sed 's/^.*=//'`
         if [ "$val" = "" ] ; then val=1 ; fi
@@ -173,20 +178,29 @@ check_install() {
 check_target() {
     printf "checking operating system type.. "
     default_target=`uname -s | $tr '[:upper:]' '[:lower:]'`
-    if [ "$default_target" = "sunos" ] ; then
-       default_target="solaris"
-    fi
-    if [ "$default_target" = "gnu/kfreebsd" ] ; then
-       default_target="freebsd"
-    fi
+    default_api="posix"
+    case "$default_target" in
+    sunos)
+            default_target="solaris"
+            ;;
+    "gnu/kfreebsd")
+            default_target="freebsd"
+            ;;
+    "mingw*")
+            default_target="windows"
+            default_api="windows"
+            ;;
+    esac
     finalize target "$default_target"
-    echo "$target"
+    finalize api "$default_api"
+    echo "$api-$target"
 }
 
 check_compiler() {
     printf "checking for a C compiler.. "
-    check_binary default_cc "/usr/bin/cc" "/usr/bin/gcc" "/usr/sfw/bin/gcc"
+    check_binary default_cc "/usr/bin/cc" "/usr/bin/gcc" "/usr/sfw/bin/gcc" "`which gcc 2>/dev/null`"
     finalize cc "$default_cc"
+    test -x "$cc" || err "Unable to locate a C compiler"
     echo "$cc"
 }
 
@@ -206,7 +220,7 @@ check_linker() {
     fi 
 
     if [ "$target" = "solaris" ] ; then
-    ldflags="-shared $ldflags"
+    ldflags="$ldflags"
     fi
 
     finalize ld "$default_ld"
@@ -279,13 +293,15 @@ test -f /usr/xpg4/bin/tr && tr="/usr/xpg4/bin/tr"
 
 # Initialize the output files
 #
-for output_file in config.mk $program.pc
+for output_file in config.mk
 do
    rm -f $output_file
    echo "# AUTOMATICALLY GENERATED -- DO NOT EDIT" > $output_file
 done
-rm -f config.h
-echo "/* AUTOMATICALLY GENERATED -- DO NOT EDIT */" > config.h
+if [ "$sources" != "" ] ; then
+   rm -f config.h
+   echo "/* AUTOMATICALLY GENERATED -- DO NOT EDIT */" > config.h
+fi
 
 process_argv "$*"
 process_env
@@ -303,9 +319,11 @@ finalize abi_major  "$abi_major"
 finalize abi_minor  "$abi_minor"
 finalize abi_version "$abi_major.$abi_minor"
 finalize prefix     "/usr/local"
-finalize libdir     "${prefix}/lib"
-finalize includedir "${prefix}/include"
-finalize mandir     "${prefix}/share/man"
+finalize bindir     "\\\$(PREFIX)/bin"
+finalize sbindir    "\\\$(PREFIX)/sbin"
+finalize libdir     "\\\$(PREFIX)/lib"
+finalize includedir "\\\$(PREFIX)/include"
+finalize mandir     "\\\$(PREFIX)/share/man"
 finalize cflags     "$cflags"
 finalize libdepends "$libdepends"
 finalize ldadd      ""
@@ -330,8 +348,10 @@ subst_vars "$program.pc"
 subst_vars "$program.la"
 subst_vars "rpm.spec"
 
-echo "Creating config.h"
-export_to_c $c_exports
+if [ "$sources" != "" ] ; then
+    echo "Creating config.h"
+    export_to_c $c_exports
+fi
 
 echo "Creating config.mk"
 export_to_make "$make_exports"
