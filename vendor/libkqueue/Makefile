@@ -31,7 +31,7 @@ $(PROGRAM).a: $(OBJS)
 	$(AR) rcs $(PROGRAM).a $(OBJS)
 
 $(PROGRAM).so.$(ABI_VERSION): $(OBJS)
-	$(LD) $(LDFLAGS) $(OBJS) $(LDADD)
+	$(LD) -shared $(LDFLAGS) $(OBJS) $(LDADD)
 	$(LN) -sf $(PROGRAM).so.$(ABI_VERSION) $(PROGRAM).so.$(ABI_MAJOR)
 	$(LN) -sf $(PROGRAM).so.$(ABI_VERSION) $(PROGRAM).so
 
