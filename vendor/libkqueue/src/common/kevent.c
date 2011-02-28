@@ -131,7 +131,7 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
     if (filter_lookup(&filt, kq, src->filter) < 0) 
         return (-1);
 
-    dbg_printf("src=%s\n", kevent_dump(src));
+    dbg_printf("src=%s", kevent_dump(src));
 
     kn = knote_lookup(filt, src->ident);
     dbg_printf("knote_lookup: ident %d == %p", (int)src->ident, kn);
@@ -151,7 +151,7 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
                 return (-1);
             } 
             knote_insert(filt, kn);
-            dbg_printf("created kevent %s\n", kevent_dump(src));
+            dbg_printf("created kevent %s", kevent_dump(src));
 
 
 /* XXX- FIXME Needs to be handled in kn_create() to prevent races */
@@ -250,7 +250,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
 
     if (KQUEUE_DEBUG) {
         myid = atomic_inc(&_kevent_counter);
-        dbg_printf("--- kevent %u ---", myid);
+        dbg_printf("--- kevent %u --- (nchanges = %d, nevents = %d)", myid, nchanges, nevents);
     } else {
         myid = 0;
     }
@@ -269,6 +269,8 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         }
     }
 
+    rv = 0;
+    
     /*
      * Wait for events and copy them to the eventlist
      */
@@ -276,6 +278,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         nevents = MAX_KEVENT;
     if (nevents > 0) {
         rv = kqops.kevent_wait(kq, nevents, timeout);
+        dbg_printf("kqops.kevent_wait returned %d", rv);
         if (fastpath(rv > 0)) {
             rv = kqops.kevent_copyout(kq, rv, eventlist, nevents);
         } else if (rv == 0) {
