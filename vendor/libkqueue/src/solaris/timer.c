@@ -94,10 +94,7 @@ evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr)
     //if (ev->events & EPOLLERR)
     //    dst->fflags = 1; /* FIXME: Return the actual timer error */
 
-    /* FIXME: On return, data contains the number of times the
-       timer has been trigered.
-     */
-    dst->data = 1;  //workaround
+    dst->data = timer_getoverrun(src->data.timerid) + 1; 
 
 #if FIXME
     timerid = src->data.timerid;
