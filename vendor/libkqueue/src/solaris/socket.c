@@ -47,6 +47,8 @@ evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
             dbg_puts("invalid filter");
             return (-1);
     }
+    
+    dbg_printf("port_associate kq fd %d with actual fd %ld", filter_epfd(filt), kn->kev.ident);
 
     rv = port_associate(filter_epfd(filt), PORT_SOURCE_FD, kn->kev.ident, 
             events, kn);
@@ -100,7 +102,8 @@ int
 evfilt_socket_copyout(struct kevent *dst, struct knote *src, void *ptr)
 {
     port_event_t *pe = (port_event_t *) ptr;
-
+    unsigned int pending_data = 0;
+    
     memcpy(dst, &src->kev, sizeof(*dst));
     if (pe->portev_events == 8) //XXX-FIXME Should be POLLHUP)
         dst->flags |= EV_EOF;
@@ -112,12 +115,14 @@ evfilt_socket_copyout(struct kevent *dst, struct knote *src, void *ptr)
         /* On return, data contains the number of bytes of protocol
          data available to read / the length of the socket backlog. */
 
-        if (ioctl(pe->portev_object, FIONREAD, &dst->data) < 0)
+        if (ioctl(pe->portev_object, FIONREAD, &pending_data) < 0)
         {
             /* race condition with socket close, so ignore this error */
             dbg_puts("ioctl(2) of socket failed");
             dst->data = 0;
         }   
+        else
+            dst->data = pending_data;
     }
     
     /* FIXME: make sure this is in kqops.copyout() 
