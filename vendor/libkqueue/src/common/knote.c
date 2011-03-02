@@ -26,7 +26,8 @@ static void knote_free(struct filter *, struct knote *);
 int
 knote_init(void)
 {
-    return (mem_init(sizeof(struct knote), 1024));
+    return 0;
+//    return (mem_init(sizeof(struct knote), 1024));
 }
 
 static int
@@ -40,7 +41,8 @@ RB_GENERATE(knt, knote, kntree_ent, knote_cmp)
 struct knote *
 knote_new(void)
 {
-    return (mem_calloc());
+    return calloc(1, sizeof(struct knote));
+//    return (mem_calloc());
 }
 
 static inline void
@@ -78,7 +80,8 @@ knote_free(struct filter *filt, struct knote *kn)
 {
     RB_REMOVE(knt, &filt->kf_knote, kn);
     filt->kn_delete(filt, kn);
-    mem_free(kn);
+    free(kn);
+//    mem_free(kn);
 }
 
 /* XXX-FIXME this is broken and should be removed */
