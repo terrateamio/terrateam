@@ -62,7 +62,7 @@ extern int KQUEUE_DEBUG;
 
 #define dbg_perror(str)         do {                                \
     if (KQUEUE_DEBUG)                                               \
-      fprintf(stderr, "KQ: [%d] %s(): %s: %s (errno=%d)\n",              \
+      fprintf(stderr, "KQ [%d]: %s(): %s: %s (errno=%d)\n",              \
               THREAD_ID, __func__, str, strerror(errno), errno);               \
 } while (0)
 
