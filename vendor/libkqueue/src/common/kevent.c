@@ -180,7 +180,7 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
         kn->kev.flags &= ~EV_DISABLE;
         rv = filt->kn_enable(filt, kn);
         dbg_printf("kn_enable returned %d", rv);
-    } else if (src->flags & EV_ADD || src->flags == 0) {
+    } else if (src->flags & EV_ADD || src->flags == 0 || src->flags & EV_RECEIPT) {
         kn->kev.udata = src->udata;
         rv = filt->kn_modify(filt, kn, src);
         dbg_printf("kn_modify returned %d", rv);
