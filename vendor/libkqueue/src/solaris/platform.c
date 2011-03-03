@@ -103,7 +103,7 @@ port_event_dump(port_event_t *evt)
     PE_DUMP(PORT_SOURCE_TIMER);
     PE_DUMP(PORT_SOURCE_USER);
     PE_DUMP(PORT_SOURCE_ALERT);
-    strcat(&buf[0], ") }\n");
+    strcat(&buf[0], ") }");
 #undef PE_DUMP
 
 out:
