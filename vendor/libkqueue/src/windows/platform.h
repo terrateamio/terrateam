@@ -38,18 +38,6 @@
 
 
 /*
- * Debugging macros
- */
-#ifndef NDEBUG
-#define dbg_lasterror(str)         do {                                \
-    if (KQUEUE_DEBUG)                                               \
-      fprintf(stderr, "KQ: [%d] %s(): %s: (LastError=%d)\n",              \
-              THREAD_ID, __func__, str, GetLastError()); \
-} while (0)
-
-#endif 
-
-/*
  * Atomic integer operations 
  */
 #define atomic_inc   InterlockedIncrement
@@ -110,7 +98,6 @@ typedef int pthread_t;
 typedef int sigset_t;
 typedef int pid_t;
 
-#define THREAD_ID   (GetCurrentThreadId())
 #define __thread    __declspec(thread)
 
 /* Emulation of pthreads mutex functionality */

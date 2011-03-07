@@ -45,41 +45,7 @@ struct evfilt_data;
 # error Unknown platform
 #endif
 
-#include <assert.h>
-
-extern int KQUEUE_DEBUG;
-
-#ifndef NDEBUG
-#define dbg_puts(str)           do {                                \
-    if (KQUEUE_DEBUG)                                               \
-      fprintf(stderr, "KQ [%d]: %s(): %s\n", THREAD_ID, __func__,str);              \
-} while (0)
-
-#define dbg_printf(fmt,...)     do {                                \
-    if (KQUEUE_DEBUG)                                               \
-      fprintf(stderr, "KQ [%d]: %s(): "fmt"\n", THREAD_ID, __func__,__VA_ARGS__);   \
-} while (0)
-
-#define dbg_perror(str)         do {                                \
-    if (KQUEUE_DEBUG)                                               \
-      fprintf(stderr, "KQ [%d]: %s(): %s: %s (errno=%d)\n",              \
-              THREAD_ID, __func__, str, strerror(errno), errno);               \
-} while (0)
-
-# define reset_errno()          do { errno = 0; } while (0)
-
-#else /* NDEBUG */
-# define dbg_puts(str)           ;
-# define dbg_printf(fmt,...)     ;
-# define dbg_perror(str)         ;
-# define reset_errno()           ;
-#endif 
-
-    /* The event_buf structure is only needed by Solaris */
-    struct DEADWOOD_event_buf {
-        int unused;
-    };
-
+#include "debug.h"
 
 /* 
  * Flags used by knote->flags

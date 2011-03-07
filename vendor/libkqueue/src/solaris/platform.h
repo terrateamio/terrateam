@@ -19,8 +19,6 @@
 
 #include <sys/queue.h>
 
-#define THREAD_ID (pthread_self())
-
 /*
  * Atomic operations that override the ones in posix/platform.h
  */
