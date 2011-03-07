@@ -32,7 +32,6 @@
 # include <sys/syscall.h>
 # include <unistd.h>
 extern long int syscall (long int __sysno, ...);
-#define THREAD_ID ((pid_t)  syscall(__NR_gettid))
  
 /* Convenience macros to access the epoll descriptor for the kqueue */
 #define kqueue_epfd(kq)     ((kq)->kq_id)
