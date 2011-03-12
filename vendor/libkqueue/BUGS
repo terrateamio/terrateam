@@ -1,1 +1,5 @@
  * need to uninitialize library after fork() using pthread_atfork()
+
+ * EVFILT_READ and EVFILT_WRITE hang on Linux when used with regular files.
+   This is because epoll does not work with regular files.
+
