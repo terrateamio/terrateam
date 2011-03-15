@@ -122,9 +122,10 @@ solaris_kevent_wait(
 
     reset_errno();
     dbg_puts("waiting for events");
-    rv = port_getn(kq->kq_id, &evbuf[0], 1, &nget, (struct timespec *) ts);
-    dbg_printf("rv=%d errno=%d (%s) nget=%d", 
-                rv, errno, strerror(errno), nget);
+//    rv = port_getn(kq->kq_id, &evbuf[0], 1, &nget, (struct timespec *) ts);
+    rv = port_get(kq->kq_id, &evbuf[0], (struct timespec *) ts);
+
+    dbg_printf("rv=%d errno=%d (%s) nget=%d", rv, errno, strerror(errno), nget);
     if (rv < 0) {
         if (errno == ETIME) {
             dbg_puts("no events within the given timeout");
