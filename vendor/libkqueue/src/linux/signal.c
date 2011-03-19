@@ -55,13 +55,19 @@ signalfd_add(int epfd, int sigfd, void *ptr)
 static int
 signalfd_create(int epfd, void *ptr, int signum)
 {
+    static int flags = SFD_NONBLOCK;
     sigset_t sigmask;
     int sigfd;
 
     /* Create a signalfd */
     sigemptyset(&sigmask);
     sigaddset(&sigmask, signum);
-    sigfd = signalfd(-1, &sigmask, SFD_NONBLOCK);
+    sigfd = signalfd(-1, &sigmask, flags);
+    /* WORKAROUND: Flags are broken on kernels older than Linux 2.6.27 */
+    if (sigfd < 0 && errno == EINVAL && flags != 0) {
+        flags = 0;
+        sigfd = signalfd(-1, &sigmask, flags);
+    }
     if (sigfd < 0) {
         dbg_perror("signalfd(2)");
         goto errout;
