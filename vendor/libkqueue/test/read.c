@@ -334,8 +334,6 @@ test_kevent_regular_file(void)
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         die("kevent");
 
-    //FIXME:kevent_socket_fill();
-
     kev.data = 1;
     kevent_cmp(&kev, kevent_get(kqfd));
 

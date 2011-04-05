@@ -30,94 +30,6 @@
 
 #include "private.h"
 
-/* 
- * Flags used by knote->flags
- */
-#define KNFL_PASSIVE_SOCKET  (0x01)  /* Socket is in listen(2) mode */
-#define KNFL_REGULAR_FILE    (0x02)  /* File descriptor is a regular file */
-
-
-static int
-get_descriptor_type(struct knote *kn)
-{
-    socklen_t slen;
-    struct stat sb;
-    int i, lsock;
-
-    /*
-     * Test if the descriptor is a socket.
-     */
-    if (fstat(kn->kev.ident, &sb) < 0) {
-        dbg_perror("fstat(2)");
-        return (-1);
-    }
-    if (! S_ISSOCK(sb.st_mode)) {
-        //FIXME: could be a pipe, device file, or other non-regular file
-        kn->flags |= KNFL_REGULAR_FILE;
-        return (0);
-    }
-
-    /*
-     * Test if the socket is active or passive.
-     */
-    slen = sizeof(lsock);
-    lsock = 0;
-    i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_ACCEPTCONN, (char *) &lsock, &slen);
-    if (i < 0) {
-        switch (errno) {
-            case ENOTSOCK:   /* same as lsock = 0 */
-                return (0);
-                break;
-            default:
-                dbg_perror("getsockopt(3)");
-                return (-1);
-        }
-    } else {
-        if (lsock) 
-            kn->flags |= KNFL_PASSIVE_SOCKET;
-        return (0);
-    }
-}
-
-static char *
-epoll_event_dump(struct epoll_event *evt)
-{
-    static char __thread buf[128];
-
-    if (evt == NULL)
-        return "(null)";
-
-#define EPEVT_DUMP(attrib) \
-    if (evt->events & attrib) \
-       strcat(&buf[0], #attrib" ");
-
-    snprintf(&buf[0], 128, " { data = %p, events = ", evt->data.ptr);
-    EPEVT_DUMP(EPOLLIN);
-    EPEVT_DUMP(EPOLLOUT);
-#if defined(HAVE_EPOLLRDHUP)
-    EPEVT_DUMP(EPOLLRDHUP);
-#endif
-    EPEVT_DUMP(EPOLLONESHOT);
-    EPEVT_DUMP(EPOLLET);
-    strcat(&buf[0], "}\n");
-
-    return (&buf[0]);
-#undef EPEVT_DUMP
-}
-
-static int
-epoll_update(int op, struct filter *filt, struct knote *kn, struct epoll_event *ev)
-{
-    dbg_printf("op=%d fd=%d events=%s", op, (int)kn->kev.ident, 
-            epoll_event_dump(ev));
-    if (epoll_ctl(filter_epfd(filt), op, kn->kev.ident, ev) < 0) {
-        dbg_printf("epoll_ctl(2): %s", strerror(errno));
-        return (-1);
-    }
-
-    return (0);
-}
-
 int
 evfilt_socket_copyout(struct kevent *dst, struct knote *src, void *ptr)
 {
@@ -135,22 +47,11 @@ evfilt_socket_copyout(struct kevent *dst, struct knote *src, void *ptr)
     if (ev->events & EPOLLERR)
         dst->fflags = 1; /* FIXME: Return the actual socket error */
           
-    if (src->flags & KNFL_PASSIVE_SOCKET) {
-        /* On return, data contains the length of the 
-           socket backlog. This is not available under Linux.
-         */
-        dst->data = 1;
-    } else {
-        /* On return, data contains the number of bytes of protocol
-           data available to read.
-         */
-        if (ioctl(dst->ident, 
-                    (dst->filter == EVFILT_READ) ? SIOCINQ : SIOCOUTQ, 
-                    &dst->data) < 0) {
+    /* On return, data contains the the amount of space remaining in the write buffer */
+    if (ioctl(dst->ident, SIOCOUTQ, &dst->data) < 0) {
             /* race condition with socket close, so ignore this error */
             dbg_puts("ioctl(2) of socket failed");
             dst->data = 0;
-        }
     }
 
     return (0);
@@ -161,18 +62,15 @@ evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 {
     struct epoll_event ev;
 
-    if (get_descriptor_type(kn) < 0)
+    if (linux_get_descriptor_type(kn) < 0)
+        return (-1);
+
+    /* TODO: return EBADF? */
+    if (kn->flags & KNFL_REGULAR_FILE)
         return (-1);
 
     /* Convert the kevent into an epoll_event */
-    if (kn->kev.filter == EVFILT_READ)
-#if defined(HAVE_EPOLLRDHUP)
-        kn->data.events = EPOLLIN | EPOLLRDHUP;
-#else
-        kn->data.events = EPOLLIN;
-#endif
-    else
-        kn->data.events = EPOLLOUT;
+    kn->data.events = EPOLLOUT;
     if (kn->kev.flags & EV_ONESHOT || kn->kev.flags & EV_DISPATCH)
         kn->data.events |= EPOLLONESHOT;
     if (kn->kev.flags & EV_CLEAR)
@@ -218,19 +116,6 @@ evfilt_socket_knote_disable(struct filter *filt, struct knote *kn)
 {
     return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
 }
-
-
-const struct filter evfilt_read = {
-    EVFILT_READ,
-    NULL,
-    NULL,
-    evfilt_socket_copyout,
-    evfilt_socket_knote_create,
-    evfilt_socket_knote_modify,
-    evfilt_socket_knote_delete,
-    evfilt_socket_knote_enable,
-    evfilt_socket_knote_disable,         
-};
 
 const struct filter evfilt_write = {
     EVFILT_WRITE,
