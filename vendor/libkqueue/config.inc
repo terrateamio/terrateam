@@ -60,6 +60,7 @@ post_configure_hook() {
 
     if [ $target = "linux" ] ; then
       evfilt_user="src/linux/user.c"
+      evfilt_socket="src/linux/read.c src/linux/write.c"
 
        #XXX-FIXME disabled
        evfilt_proc=""
