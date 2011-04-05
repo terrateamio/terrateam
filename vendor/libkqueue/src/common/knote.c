@@ -139,34 +139,6 @@ knote_lookup_data(struct filter *filt, intptr_t data)
     return (kn);
 }
 
-/*
- * Test if a socket is active or passive.
- */
-int
-knote_get_socket_type(struct knote *kn)
-{
-    socklen_t slen;
-    int i, lsock;
-
-    slen = sizeof(lsock);
-    lsock = 0;
-    i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_ACCEPTCONN, (char *) &lsock, &slen);
-    if (i < 0) {
-        switch (errno) {
-            case ENOTSOCK:   /* same as lsock = 0 */
-                return (0);
-                break;
-            default:
-                dbg_perror("getsockopt(3)");
-                return (-1);
-        }
-    } else {
-        if (lsock) 
-            kn->flags |= KNFL_PASSIVE_SOCKET;
-        return (0);
-    }
-}
-
 int
 knote_disable(struct filter *filt, struct knote *kn)
 {

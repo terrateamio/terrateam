@@ -318,6 +318,35 @@ test_kevent_socket_eof(void)
     kevent_add(kqfd, &kev, sockfd[0], EVFILT_READ, EV_DELETE, 0, 0, &sockfd[0]);
 }
 
+/* Test if EVFILT_READ works with regular files */
+void
+test_kevent_regular_file(void)
+{
+    struct kevent kev;
+    int fd;
+
+    fd = open("/etc/hosts", O_RDONLY);
+    if (fd < 0)
+        abort();
+    printf("regfd=%d\n", fd);
+
+    EV_SET(&kev, fd, EVFILT_READ, EV_ADD, 0, 0, &fd);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        die("kevent");
+
+    //FIXME:kevent_socket_fill();
+
+    kev.data = 1;
+    kevent_cmp(&kev, kevent_get(kqfd));
+
+    //FIXME:kevent_socket_drain();
+    test_no_kevents(kqfd);
+
+    kev.flags = EV_DELETE;
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        die("kevent");
+}
+
 void
 test_evfilt_read(int _kqfd)
 {
@@ -342,6 +371,7 @@ test_evfilt_read(int _kqfd)
 #endif
     test(kevent_socket_listen_backlog);
     test(kevent_socket_eof);
+    test(kevent_regular_file);
     close(sockfd[0]);
     close(sockfd[1]);
 }

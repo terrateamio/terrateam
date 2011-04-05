@@ -47,11 +47,6 @@ struct evfilt_data;
 
 #include "debug.h"
 
-/* 
- * Flags used by knote->flags
- */
-#define KNFL_PASSIVE_SOCKET  (0x01)  /* Socket is in listen(2) mode */
-
 struct eventfd {
     int ef_id;
 #if defined(EVENTFD_PLATFORM_SPECIFIC)
@@ -164,7 +159,6 @@ struct knote *  knote_new(void);
 void        knote_release(struct filter *, struct knote *);
 void        knote_free_all(struct filter *);
 void        knote_insert(struct filter *, struct knote *);
-int         knote_get_socket_type(struct knote *);
 int         knote_init(void);
 
 /* TODO: these deal with the eventlist, should use a different prefix */
