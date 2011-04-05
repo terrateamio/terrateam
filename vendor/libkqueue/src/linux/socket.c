@@ -30,6 +30,54 @@
 
 #include "private.h"
 
+/* 
+ * Flags used by knote->flags
+ */
+#define KNFL_PASSIVE_SOCKET  (0x01)  /* Socket is in listen(2) mode */
+#define KNFL_REGULAR_FILE    (0x02)  /* File descriptor is a regular file */
+
+
+static int
+get_descriptor_type(struct knote *kn)
+{
+    socklen_t slen;
+    struct stat sb;
+    int i, lsock;
+
+    /*
+     * Test if the descriptor is a socket.
+     */
+    if (fstat(kn->kev.ident, &sb) < 0) {
+        dbg_perror("fstat(2)");
+        return (-1);
+    }
+    if (! S_ISSOCK(sb.st_mode)) {
+        //FIXME: could be a pipe, device file, or other non-regular file
+        kn->flags |= KNFL_REGULAR_FILE;
+        return (0);
+    }
+
+    /*
+     * Test if the socket is active or passive.
+     */
+    slen = sizeof(lsock);
+    lsock = 0;
+    i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_ACCEPTCONN, (char *) &lsock, &slen);
+    if (i < 0) {
+        switch (errno) {
+            case ENOTSOCK:   /* same as lsock = 0 */
+                return (0);
+                break;
+            default:
+                dbg_perror("getsockopt(3)");
+                return (-1);
+        }
+    } else {
+        if (lsock) 
+            kn->flags |= KNFL_PASSIVE_SOCKET;
+        return (0);
+    }
+}
 
 static char *
 epoll_event_dump(struct epoll_event *evt)
@@ -113,7 +161,7 @@ evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 {
     struct epoll_event ev;
 
-    if (knote_get_socket_type(kn) < 0)
+    if (get_descriptor_type(kn) < 0)
         return (-1);
 
     /* Convert the kevent into an epoll_event */
