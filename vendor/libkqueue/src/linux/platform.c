@@ -150,8 +150,9 @@ linux_kevent_copyout(struct kqueue *kq, int nready,
     struct epoll_event *ev;
     struct filter *filt;
     struct knote *kn;
-    int i, rv;
+    int i, nret, rv;
 
+    nret = nready;
     for (i = 0; i < nready; i++) {
         ev = &epevt[i];
         kn = (struct knote *) ev->data.ptr;
@@ -174,10 +175,17 @@ linux_kevent_copyout(struct kqueue *kq, int nready,
         if (eventlist->flags & EV_ONESHOT) 
             knote_release(filt, kn); //TODO: Error checking
 
-        eventlist++;
+        /* If an empty kevent structure is returned, the event is discarded. */
+        /* TODO: add these semantics to windows + solaris platform.c */
+        if (fastpath(eventlist->filter != 0)) {
+            eventlist++;
+        } else {
+            dbg_puts("spurious wakeup, discarding event");
+            nret--;
+        }
     }
 
-    return (i);
+    return (nret);
 }
 
 int
@@ -282,6 +290,7 @@ linux_get_descriptor_type(struct knote *kn)
     if (! S_ISSOCK(sb.st_mode)) {
         //FIXME: could be a pipe, device file, or other non-regular file
         kn->flags |= KNFL_REGULAR_FILE;
+        dbg_printf("fd %d is a regular file\n", (int)kn->kev.ident);
         return (0);
     }
 
@@ -344,5 +353,20 @@ epoll_update(int op, struct filter *filt, struct knote *kn, struct epoll_event *
     }
 
     return (0);
+}
+
+/*
+ * Given a file descriptor, return the path to the file it refers to.
+ */
+int
+linux_fd_to_path(char *buf, size_t bufsz, int fd)
+{
+    char path[1024];    //TODO: Maxpathlen, etc.
+
+    if (snprintf(&path[0], sizeof(path), "/proc/%d/fd/%d", getpid(), fd) < 0)
+        return (-1);
+
+    memset(buf, 0, bufsz);
+    return (readlink(path, buf, bufsz));
 }
 

@@ -30,10 +30,78 @@
 
 #include "private.h"
 
+/*
+ * Return the offset from the current position to end of file.
+ */
+static intptr_t
+get_eof_offset(int fd)
+{
+    off_t curpos;
+    struct stat sb;
+
+    curpos = lseek(fd, 0, SEEK_CUR);
+    if (curpos == (off_t) -1) {
+        dbg_perror("lseek(2)");
+        curpos = 0;
+    }
+    if (fstat(fd, &sb) < 0) {
+        dbg_perror("fstat(2)");
+        sb.st_size = 1;
+    }
+
+    dbg_printf("curpos=%zu size=%zu\n", curpos, sb.st_size);
+    return (sb.st_size - curpos); //FIXME: can overflow
+}
+
 int
 evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
 {
     struct epoll_event * const ev = (struct epoll_event *) ptr;
+
+    /* Special case: for regular files, return the offset from current position to end of file */
+    if (src->flags & KNFL_REGULAR_FILE) {
+        memcpy(dst, &src->kev, sizeof(*dst));
+        dst->data = get_eof_offset(src->kev.ident);
+
+        if (dst->data == 0) {
+            dst->filter = 0;    /* Will cause the kevent to be discarded */
+            if (epoll_ctl(src->kn_epollfd, EPOLL_CTL_DEL, src->kdata.kn_eventfd, NULL) < 0) {
+                dbg_perror("epoll_ctl(2)");
+                return (-1);
+            }
+
+#if FIXME
+            /* XXX-FIXME Switch to using kn_inotifyfd to monitor for IN_ATTRIB events
+                         that may signify the file size has changed.
+
+                         This code is not tested.
+             */
+            int inofd;
+            char path[PATH_MAX];
+
+            inofd = inotify_init();
+            if (inofd < 0) {
+                dbg_perror("inotify_init(2)");
+                (void) close(inofd);
+                return (-1);
+            } 
+            src->kdata.kn_inotifyfd = inofd;
+            if (linux_fd_to_path(&path[0], sizeof(path), src->kev.ident) < 0)
+                return (-1);
+            if (inotify_add_watch(inofd, path, IN_ATTRIB) < 0) {
+                dbg_perror("inotify_add_watch");
+                return (-1);
+            }
+            if (epoll_ctl(src->kn_epollfd, EPOLL_CTL_ADD, src->kdata.kn_inotifyfd, NULL) < 0) {
+                dbg_perror("epoll_ctl(2)");
+                return (-1);
+            }
+            /* FIXME: race here, should we check the EOF status again ? */
+#endif
+        }
+
+        return (0);
+    }
 
     epoll_event_dump(ev);
     memcpy(dst, &src->kev, sizeof(*dst));
@@ -89,6 +157,30 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
     ev.events = kn->data.events;
     ev.data.ptr = kn;
 
+    /* Special case: for regular files, add a surrogate eventfd that is always readable */
+    if (kn->flags & KNFL_REGULAR_FILE) {
+        int evfd;
+
+        kn->kn_epollfd = filter_epfd(filt);
+        evfd = eventfd(0, 0);
+        if (evfd < 0) {
+            dbg_perror("eventfd(2)");
+            return (-1);
+        }
+        if (eventfd_write(evfd, 1) < 0) {
+            dbg_perror("eventfd_write(3)");
+            (void) close(evfd);
+            return (-1);
+        }
+        kn->kdata.kn_eventfd = evfd;
+
+        if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_ADD, kn->kdata.kn_eventfd, &ev) < 0) {
+            dbg_printf("epoll_ctl(2): %s", strerror(errno));
+            return (-1);
+        }
+        return (0);
+    }
+
     return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
 }
 
@@ -104,8 +196,17 @@ evfilt_read_knote_delete(struct filter *filt, struct knote *kn)
 {
     if (kn->kev.flags & EV_DISABLE)
         return (0);
-    else
+
+    if ((kn->flags & KNFL_REGULAR_FILE && kn->kdata.kn_eventfd != -1) < 0) {
+        if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_DEL, kn->kdata.kn_eventfd, NULL) < 0) {
+            dbg_perror("epoll_ctl(2)");
+            return (-1);
+        }
+        (void) close(kn->kdata.kn_eventfd);
+        kn->kdata.kn_eventfd = -1;
+    } else {
         return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
+    }
 }
 
 int
@@ -117,13 +218,29 @@ evfilt_read_knote_enable(struct filter *filt, struct knote *kn)
     ev.events = kn->data.events;
     ev.data.ptr = kn;
 
-    return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
+    if (kn->flags & KNFL_REGULAR_FILE) {
+        if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_ADD, kn->kdata.kn_eventfd, &ev) < 0) {
+            dbg_perror("epoll_ctl(2)");
+            return (-1);
+        }
+        return (0);
+    } else {
+        return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
+    }
 }
 
 int
 evfilt_read_knote_disable(struct filter *filt, struct knote *kn)
 {
-    return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
+    if (kn->flags & KNFL_REGULAR_FILE) {
+        if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_DEL, kn->kdata.kn_eventfd, NULL) < 0) {
+            dbg_perror("epoll_ctl(2)");
+            return (-1);
+        }
+        return (0);
+    } else {
+        return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
+    }
 }
 
 const struct filter evfilt_read = {
