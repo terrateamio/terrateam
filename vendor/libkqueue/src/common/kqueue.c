@@ -51,7 +51,9 @@ _libkqueue_init(void)
 	/* Experimental port, always debug */
 	DEBUG = 1;
 #else
-    DEBUG = (getenv("KQUEUE_DEBUG") == NULL) ? 0 : 1;
+    char *s = getenv("KQUEUE_DEBUG");
+    if (s != NULL && strlen(s) > 0)
+        DEBUG = 1;
 #endif
 
    kqmap = map_new(get_fd_limit()); // INT_MAX
