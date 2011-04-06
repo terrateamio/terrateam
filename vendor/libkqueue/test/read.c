@@ -323,26 +323,41 @@ void
 test_kevent_regular_file(void)
 {
     struct kevent kev;
+    struct kevent *kev2;
+    off_t curpos;
     int fd;
 
     fd = open("/etc/hosts", O_RDONLY);
     if (fd < 0)
         abort();
-    printf("regfd=%d\n", fd);
 
     EV_SET(&kev, fd, EVFILT_READ, EV_ADD, 0, 0, &fd);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         die("kevent");
 
-    kev.data = 1;
-    kevent_cmp(&kev, kevent_get(kqfd));
+    kev2 = kevent_get(kqfd);
 
-    //FIXME:kevent_socket_drain();
+    /* Set file position to EOF-1 */
+    kev2->data--;
+    if ((curpos = lseek(fd, kev2->data, SEEK_SET)) != kev2->data) {
+        printf("seek to %zu failed with rv=%zu\n", kev2->data, curpos);
+        abort();
+    }
+
+    /* Set file position to EOF */
+    (void) kevent_get(kqfd);
+    kev2->data = curpos + 1;
+    if ((curpos = lseek(fd, kev2->data, SEEK_SET)) != kev2->data) {
+        printf("seek to %zu failed with rv=%zu\n", kev2->data, curpos);
+        abort();
+    }
+
     test_no_kevents(kqfd);
 
     kev.flags = EV_DELETE;
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         die("kevent");
+    close(fd);
 }
 
 void

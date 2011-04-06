@@ -55,18 +55,6 @@ inotify_event_dump(struct inotify_event *evt)
     return (buf);
 }
 
-static int
-fd_to_path(char *buf, size_t bufsz, int fd)
-{
-    char path[1024];    //TODO: Maxpathlen, etc.
-
-    if (snprintf(&path[0], sizeof(path), "/proc/%d/fd/%d", getpid(), fd) < 0)
-        return (-1);
-
-    memset(buf, 0, bufsz);
-    return (readlink(path, buf, bufsz));
-}
-
 
 /* TODO: USE this to get events with name field */
 int
@@ -105,7 +93,7 @@ add_watch(struct filter *filt, struct knote *kn)
     uint32_t mask;
 
     /* Convert the fd to a pathname */
-    if (fd_to_path(&path[0], sizeof(path), kn->kev.ident) < 0)
+    if (linux_fd_to_path(&path[0], sizeof(path), kn->kev.ident) < 0)
         return (-1);
 
     /* Convert the fflags to the inotify mask */

@@ -44,11 +44,17 @@ extern long int syscall (long int __sysno, ...);
  */
 #define KNFL_PASSIVE_SOCKET  (0x01)  /* Socket is in listen(2) mode */
 #define KNFL_REGULAR_FILE    (0x02)  /* File descriptor is a regular file */
+ 
+/*
+ * Additional members of struct filter
+ */
+#undef FILTER_PLATFORM_SPECIFIC 
 
 /*
  * Additional members of struct knote
  */
 #define KNOTE_PLATFORM_SPECIFIC \
+    int kn_epollfd; /* A copy of filter->epfd */      \
     union { \
         int kn_timerfd; \
         int kn_signalfd; \
@@ -77,7 +83,10 @@ int     linux_eventfd_raise(struct eventfd *);
 int     linux_eventfd_lower(struct eventfd *);
 int     linux_eventfd_descriptor(struct eventfd *);
 
+/* utility functions */
+
 int     linux_get_descriptor_type(struct knote *);
+int     linux_fd_to_path(char *, size_t, int);
 
 /* epoll-related functions */
 
