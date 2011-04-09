@@ -50,6 +50,26 @@ kevent_get(int kqfd)
     return (&kev);
 }
 
+/* In Linux, a kevent() call with less than 1ms resolution
+   will perform a pselect() call to obtain the higer resolution.
+   This test exercises that codepath.
+ */
+struct kevent *
+kevent_get_hires(int kqfd)
+{
+    int nfds;
+    struct timespec timeo;
+    static struct kevent __thread kev;
+
+    timeo.tv_sec = 0;
+    timeo.tv_nsec = 500000;
+    nfds = kevent(kqfd, NULL, 0, &kev, 1, &timeo);
+    if (nfds < 1)
+        die("kevent(2)");
+
+    return (&kev);
+}
+
 char *
 kevent_fflags_dump(struct kevent *kev)
 {
