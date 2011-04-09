@@ -93,7 +93,8 @@ linux_kevent_wait_hires(
     fd_set fds;
     int n;
 
-    dbg_puts("waiting for events");
+    dbg_printf("waiting for events (timeout=%ld sec %ld nsec)",
+            timeout->tv_sec, timeout->tv_nsec);
     FD_ZERO(&fds);
     FD_SET(kqueue_epfd(kq), &fds);
     n = pselect(1, &fds, NULL , NULL, timeout, NULL);
@@ -118,10 +119,8 @@ linux_kevent_wait(
     int timeout, nret;
 
     /* Use pselect() if the timeout value is less than one millisecond.  */
-    if (ts != NULL && ts->tv_sec == 0 && ts->tv_nsec > 1000000) {
+    if (ts != NULL && ts->tv_sec == 0 && ts->tv_nsec < 1000000) {
         nret = linux_kevent_wait_hires(kq, ts);
-        if (nret < 1)
-            return (nret);
 
     /* Otherwise, use epoll_wait() directly */
     } else {
