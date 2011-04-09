@@ -72,6 +72,7 @@ void test_evfilt_user(int);
 
 extern const char * kevent_to_str(struct kevent *);
 struct kevent * kevent_get(int);
+struct kevent * kevent_get_hires(int);
 
 
 void kevent_update(int kqfd, struct kevent *kev);

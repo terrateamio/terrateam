@@ -50,6 +50,25 @@ test_kevent_user_get(void)
 }
 
 static void
+test_kevent_user_get_hires(void)
+{
+    struct kevent kev;
+
+    test_no_kevents(kqfd);
+
+    /* Add the event, and then trigger it */
+    kevent_add(kqfd, &kev, 1, EVFILT_USER, EV_ADD | EV_CLEAR, 0, 0, NULL);    
+    kevent_add(kqfd, &kev, 1, EVFILT_USER, 0, NOTE_TRIGGER, 0, NULL);    
+
+    kev.fflags &= ~NOTE_FFCTRLMASK;
+    kev.fflags &= ~NOTE_TRIGGER;
+    kev.flags = EV_CLEAR;
+    kevent_cmp(&kev, kevent_get_hires(kqfd));
+
+    test_no_kevents(kqfd);
+}
+
+static void
 test_kevent_user_disable_and_enable(void)
 {
     struct kevent kev;
@@ -139,6 +158,7 @@ test_evfilt_user(int _kqfd)
 
     test(kevent_user_add_and_delete);
     test(kevent_user_get);
+    test(kevent_user_get_hires);
     test(kevent_user_disable_and_enable);
     test(kevent_user_oneshot);
 #if HAVE_EV_DISPATCH
