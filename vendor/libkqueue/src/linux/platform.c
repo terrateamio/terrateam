@@ -92,12 +92,14 @@ linux_kevent_wait_hires(
 {
     fd_set fds;
     int n;
+    int epfd;
 
     dbg_printf("waiting for events (timeout=%ld sec %ld nsec)",
             timeout->tv_sec, timeout->tv_nsec);
+    epfd = kqueue_epfd(kq);
     FD_ZERO(&fds);
-    FD_SET(kqueue_epfd(kq), &fds);
-    n = pselect(1, &fds, NULL , NULL, timeout, NULL);
+    FD_SET(epfd, &fds);
+    n = pselect(epfd + 1, &fds, NULL , NULL, timeout, NULL);
     if (n < 0) {
         if (errno == EINTR) {
             dbg_puts("signal caught");
