@@ -54,62 +54,16 @@ evfilt_timer_destroy(struct filter *filt)
 }
 
 int
-evfilt_timer_copyout(struct filter *filt, 
-            struct kevent *dst, 
-            int nevents)
+evfilt_timer_copyout(struct kevent* dst, struct knote* src, void* ptr)
 {
-#if FIXME
-    struct epoll_event epevt[MAX_KEVENT];
-    struct epoll_event *ev;
-    struct knote *kn;
-    uint64_t expired;
-    int i, nret;
-    ssize_t n;
+    memcpy(dst, &src->kev, sizeof(struct kevent*));
+	// TODO: Timer error handling
+	
+    /* We have no way to determine the number of times
+       the timer triggered, thus we assume it was only once
+    */
+    dst->data = 1;
 
-    for (;;) {
-        nret = epoll_wait(filt->kf_pfd, &epevt[0], nevents, 0);
-        if (nret < 0) {
-            if (errno == EINTR)
-                continue;
-            dbg_perror("epoll_wait");
-            return (-1);
-        } else {
-            break;
-        }
-    }
-
-    for (i = 0, nevents = 0; i < nret; i++) {
-        ev = &epevt[i];
-        /* TODO: put in generic debug.c: epoll_event_dump(ev); */
-        kn = ev->data.ptr;
-        memcpy(dst, &kn->kev, sizeof(*dst));
-        if (ev->events & EPOLLERR)
-            dst->fflags = 1; /* FIXME: Return the actual timer error */
-          
-        /* On return, data contains the number of times the
-           timer has been trigered.
-             */
-        n = read(kn->data.pfd, &expired, sizeof(expired));
-        if (n < 0 || n < sizeof(expired)) {
-            dbg_puts("invalid read from timerfd");
-            expired = 1;  /* Fail gracefully */
-        } 
-        dst->data = expired;
-
-        if (kn->kev.flags & EV_DISPATCH) {
-            KNOTE_DISABLE(kn);
-            ktimer_delete(filt, kn);
-        } else if (kn->kev.flags & EV_ONESHOT) {
-            ktimer_delete(filt, kn);
-            knote_free(filt, kn);
-        }
-
-        nevents++;
-        dst++;
-    }
-
-    return (nevents);
-#endif
 	return (0);
 }
 

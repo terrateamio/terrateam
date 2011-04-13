@@ -51,7 +51,9 @@ BOOL WINAPI DllMain(
             break;
 
         case DLL_PROCESS_DETACH:
+#if XXX
             WSACleanup();
+#endif
             break;
     }
 
@@ -67,6 +69,11 @@ windows_kqueue_init(struct kqueue *kq)
         return (-1);
     }
 
+	if(filter_register_all(kq) < 0) {
+		CloseHandle(kq->kq_handle);
+		return (-1);
+	}
+
     return (0);
 }
 
@@ -78,7 +85,7 @@ windows_kqueue_free(struct kqueue *kq)
 }
 
 int
-windows_kevent_wait(struct kqueue *kq, const struct timespec *timeout)
+windows_kevent_wait(struct kqueue *kq, int no, const struct timespec *timeout)
 {
 	int retval;
     DWORD rv, timeout_ms;
@@ -96,7 +103,7 @@ windows_kevent_wait(struct kqueue *kq, const struct timespec *timeout)
 	}
 
 	/* Wait for an event */
-    dbg_printf("waiting for %u events (timeout=%u ms)", kq->kq_filt_count, timeout_ms);
+    dbg_printf("waiting for %u events (timeout=%u ms)", kq->kq_filt_count, (unsigned int)timeout_ms);
     rv = WaitForMultipleObjectsEx(kq->kq_filt_count, kq->kq_filt_handle, FALSE, timeout_ms, TRUE);
 	switch (rv) {
 	case WAIT_TIMEOUT:
@@ -121,6 +128,7 @@ windows_kevent_copyout(struct kqueue *kq, int nready,
         struct kevent *eventlist, int nevents)
 {
     struct filter *filt;
+	struct knote* kn;
     int rv;
 
 	/* KLUDGE: We are abusing the WAIT_FAILED constant to mean
@@ -129,8 +137,13 @@ windows_kevent_copyout(struct kqueue *kq, int nready,
 	if (kq->kq_filt_signalled == WAIT_FAILED)
 		return (0);
 	filt = kq->kq_filt_ref[kq->kq_filt_signalled];
+	kn = knote_lookup(filt, eventlist->ident);
+	if(kn == NULL) {
+		dbg_puts("knote_lookup failed");
+		return (-1);
+	}
 	kq->kq_filt_signalled = WAIT_FAILED;
-	rv = filt->kf_copyout(filt, eventlist, nevents);
+    rv = filt->kf_copyout(eventlist, kn, filt);
     if (rv < 0) {
         dbg_puts("kevent_copyout failed");
         return (-1);

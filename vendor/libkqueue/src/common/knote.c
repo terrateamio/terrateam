@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include "private.h"
+
 #include "alloc.h"
 
 static void knote_free(struct filter *, struct knote *);
@@ -45,11 +46,15 @@ knote_new(void)
 	struct knote* res = malloc(sizeof(struct knote));
 	if(!res) return NULL;
 
+#ifdef _WIN32
+	pthread_mutex_init(&res->mtx, NULL);
+#else
 	if(pthread_mutex_init(&res->mtx, NULL)){
 		dbg_perror("pthread_mutex_init");
 		free(res);
 		return NULL;
 	}
+#endif
 
     return res;
 }

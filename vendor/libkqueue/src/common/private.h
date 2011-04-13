@@ -35,6 +35,9 @@ struct evfilt_data;
 #if defined(_WIN32)
 # include "../windows/platform.h"
 # include "../common/queue.h"
+# if !defined(NDEBUG) && !defined(__GNUC__)
+#  include <crtdbg.h>
+# endif
 #elif defined(__linux__)
 # include "../posix/platform.h"
 # include "../linux/platform.h"
@@ -141,7 +144,15 @@ struct kqueue {
 struct kqueue_vtable {
     int  (*kqueue_init)(struct kqueue *);
     void (*kqueue_free)(struct kqueue *);
+    // @param timespec can be given as timeout
+    // @param int the number of events to wait for
+    // @param kqueue the queue to wait on
 	int  (*kevent_wait)(struct kqueue *, int, const struct timespec *);
+    // @param kqueue the queue to look at
+    // @param int The number of events that should be ready
+    // @param kevent the structure to copy the events into
+    // @param int The number of events to copy
+    // @return the actual number of events copied
     int  (*kevent_copyout)(struct kqueue *, int, struct kevent *, int);
     int  (*filter_init)(struct kqueue *, struct filter *);
     void (*filter_free)(struct kqueue *, struct filter *);
