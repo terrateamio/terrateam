@@ -41,8 +41,17 @@ RB_GENERATE(knt, knote, kntree_ent, knote_cmp)
 struct knote *
 knote_new(void)
 {
-    return calloc(1, sizeof(struct knote));
-//    return (mem_calloc());
+	// struct knote* res = return (mem_calloc());
+	struct knote* res = malloc(sizeof(struct knote));
+	if(!res) return NULL;
+
+	if(pthread_mutex_init(&res->mtx, NULL)){
+		dbg_perror("pthread_mutex_init");
+		free(res);
+		return NULL;
+	}
+
+    return res;
 }
 
 static inline void
@@ -80,6 +89,7 @@ knote_free(struct filter *filt, struct knote *kn)
 {
     RB_REMOVE(knt, &filt->kf_knote, kn);
     filt->kn_delete(filt, kn);
+    pthread_mutex_destroy(&kn->mtx);
     free(kn);
 //    mem_free(kn);
 }
