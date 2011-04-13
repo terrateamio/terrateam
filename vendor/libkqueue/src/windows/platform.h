@@ -27,12 +27,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
-
-#pragma comment(lib, "Ws2_32.lib")
  
-/* The #define doesn't seem to work, but the #pragma does.. */
 #define _CRT_SECURE_NO_WARNINGS 1
-#pragma warning( disable : 4996 )
+/* The #define doesn't seem to work, but the #pragma does.. */
+#ifdef _MSC_VER
+# pragma warning( disable : 4996 )
+#endif
 
 #include "../../include/sys/event.h"
 
@@ -40,8 +40,17 @@
 /*
  * Atomic integer operations 
  */
-#define atomic_inc   InterlockedIncrement
-#define atomic_dec   InterlockedDecrement
+#ifdef __GNUC__
+# define atomic_inc(p)   __sync_add_and_fetch((p), 1)
+# define atomic_dec(p)   __sync_sub_and_fetch((p), 1)
+# define atomic_cas(p, oval, nval) __sync_val_compare_and_swap(p, oval, nval)
+# define atomic_ptr_cas(p, oval, nval) __sync_val_compare_and_swap(p, oval, nval)
+#else
+# define atomic_inc   InterlockedIncrement
+# define atomic_dec   InterlockedDecrement
+# define atomic_cas(p, oval, nval) InterlockedCompareExchange(p, nval, oval)
+# define atomic_ptr_cas(p, oval, nval) InterlockedCompareExchangePointer(p, nval, oval)
+#endif
 
 /*
  * Additional members of struct kqueue
@@ -63,11 +72,17 @@
 	HANDLE kf_event_handle
 
 /*
+ * Some datatype forward declarations
+ */
+struct filter;
+struct kqueue;
+
+/*
  * Hooks and prototypes
  */
 int     windows_kqueue_init(struct kqueue *);
 void    windows_kqueue_free(struct kqueue *);
-int     windows_kevent_wait(struct kqueue *, const struct timespec *);
+int     windows_kevent_wait(struct kqueue *, int, const struct timespec *);
 int     windows_kevent_copyout(struct kqueue *, int, struct kevent *, int);
 int     windows_filter_init(struct kqueue *, struct filter *);
 void    windows_filter_free(struct kqueue *, struct filter *);
@@ -78,17 +93,29 @@ void    windows_filter_free(struct kqueue *, struct filter *);
  */
 #define CONSTRUCTOR
 
+/*
+ * GCC-compatible branch prediction macros
+ */
+#ifdef __GNUC__
+# define fastpath(x)     __builtin_expect((x), 1)
+# define slowpath(x)     __builtin_expect((x), 0)
+#else
+# define fastpath(x) (x)
+# define slowpath(x) (x)
+#endif
+
 /* Function visibility macros */
 #define VISIBLE __declspec(dllexport)
 #define HIDDEN  
 
-#ifndef __func__
+#if !defined(__func__) && !defined(__GNUC__)
 #define __func__ __FUNCDNAME__
 #endif
 
 #define snprintf _snprintf
 #define ssize_t  SSIZE_T
 #define sleep(x) Sleep((x) * 1000)
+#define inline __inline
 
 /* For POSIX compatibility when compiling, not for actual use */
 typedef int socklen_t;
@@ -98,7 +125,9 @@ typedef int pthread_t;
 typedef int sigset_t;
 typedef int pid_t;
 
-#define __thread    __declspec(thread)
+#ifndef __GNUC__
+# define __thread    __declspec(thread)
+#endif
 
 /* Emulation of pthreads mutex functionality */
 #define PTHREAD_PROCESS_SHARED 1
@@ -116,6 +145,7 @@ typedef CRITICAL_SECTION pthread_rwlock_t;
 #define pthread_spin_unlock _cs_unlock
 #define pthread_spin_init(x,y) _cs_init((x))
 #define pthread_mutex_init(x,y) _cs_init((x))
+#define pthread_mutex_destroy(x)
 #define pthread_rwlock_rdlock _cs_lock
 #define pthread_rwlock_wrlock _cs_lock
 #define pthread_rwlock_unlock _cs_unlock

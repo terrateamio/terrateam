@@ -50,6 +50,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>msvcrtd.lib;Libcmtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -72,12 +73,14 @@
     <ClCompile Include="src\common\kevent.c" />
     <ClCompile Include="src\common\knote.c" />
     <ClCompile Include="src\common\kqueue.c" />
+    <ClCompile Include="src\common\map.c" />
     <ClCompile Include="src\windows\platform.c" />
     <ClCompile Include="src\windows\timer.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\kqueue.h" />
     <ClInclude Include="include\sys\event.h" />
+    <ClInclude Include="src\common\debug.h" />
     <ClInclude Include="src\common\private.h" />
     <ClInclude Include="src\common\queue.h" />
     <ClInclude Include="src\common\tree.h" />

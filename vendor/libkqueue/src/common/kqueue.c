@@ -24,12 +24,20 @@
 
 #include "private.h"
 
-int DEBUG = 0;
+int DEBUG_ACTIVE = 0;
 char *DEBUG_IDENT = "KQ";
 
 static unsigned int
 get_fd_limit(void)
 {
+#ifdef _WIN32
+    /* actually windows should be able to hold
+       way more, as they use HANDLEs for everything.
+       Still this number should still be sufficient for
+       the provided number of kqueue fds.
+       */
+    return 65536;
+#else
     struct rlimit rlim;
     
     if (getrlimit(RLIMIT_NOFILE, &rlim) < 0) {
@@ -38,6 +46,7 @@ get_fd_limit(void)
     } else {
         return (rlim.rlim_max);
     }
+#endif
 }
 
 static struct map *kqmap;
@@ -46,14 +55,22 @@ int CONSTRUCTOR
 _libkqueue_init(void)
 {
 #ifdef NDEBUG
-    DEBUG = 0;
+    DEBUG_ACTIVE = 0;
 #elif _WIN32
 	/* Experimental port, always debug */
-	DEBUG = 1;
+	DEBUG_ACTIVE = 1;
+# ifndef __GNUC__
+	/* Enable heap surveillance */
+	{
+		int tmpFlag = _CrtSetDbgFlag( _CRTDBG_REPORT_FLAG );
+		tmpFlag |= _CRTDBG_CHECK_ALWAYS_DF;
+		_CrtSetDbgFlag(tmpFlag);
+	}
+# endif
 #else
     char *s = getenv("KQUEUE_DEBUG");
     if (s != NULL && strlen(s) > 0)
-        DEBUG = 1;
+        DEBUG_ACTIVE = 1;
 #endif
 
    kqmap = map_new(get_fd_limit()); // INT_MAX

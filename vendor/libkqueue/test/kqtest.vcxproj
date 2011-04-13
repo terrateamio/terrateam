@@ -50,6 +50,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -81,6 +82,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="config.inc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\libkqueue.vcxproj">
+      <Project>{74c1eceb-1d2b-2740-8a0b-9ec65aa06eab}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

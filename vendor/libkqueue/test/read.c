@@ -340,7 +340,7 @@ test_kevent_regular_file(void)
     /* Set file position to EOF-1 */
     kev2->data--;
     if ((curpos = lseek(fd, kev2->data, SEEK_SET)) != kev2->data) {
-        printf("seek to %zu failed with rv=%zu\n", kev2->data, curpos);
+        printf("seek to %u failed with rv=%lu\n", kev2->data, curpos);
         abort();
     }
 
@@ -348,7 +348,7 @@ test_kevent_regular_file(void)
     (void) kevent_get(kqfd);
     kev2->data = curpos + 1;
     if ((curpos = lseek(fd, kev2->data, SEEK_SET)) != kev2->data) {
-        printf("seek to %zu failed with rv=%zu\n", kev2->data, curpos);
+        printf("seek to %u failed with rv=%lu\n", kev2->data, curpos);
         abort();
     }
 
