@@ -42,18 +42,21 @@ RB_GENERATE(knt, knote, kntree_ent, knote_cmp)
 struct knote *
 knote_new(void)
 {
-	// struct knote* res = return (mem_calloc());
-	struct knote* res = malloc(sizeof(struct knote));
-	if(!res) return NULL;
+	struct knote *res;
+
+	// return (mem_calloc());
+    res = calloc(1, sizeof(struct knote));
+	if (res == NULL)
+        return (NULL);
 
 #ifdef _WIN32
 	pthread_mutex_init(&res->mtx, NULL);
 #else
-	if(pthread_mutex_init(&res->mtx, NULL)){
-		dbg_perror("pthread_mutex_init");
-		free(res);
-		return NULL;
-	}
+    if (pthread_mutex_init(&res->mtx, NULL)){
+        dbg_perror("pthread_mutex_init");
+        free(res);
+        return (NULL);
+    }
 #endif
 
     return res;
