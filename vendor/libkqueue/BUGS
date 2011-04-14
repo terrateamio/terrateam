@@ -13,4 +13,3 @@
 
     [read.c:84]: Unexpected event:_test_no_kevents(): [ident=7, filter=-1, flags = 1 (EV_ADD), fflags = 0, data=0, udata=fffffd7fff08c6b4]: Error 0
 
-
