@@ -4,7 +4,7 @@
  * Solaris unit test failure.
     
     LD_LIBRARY_PATH="..:/usr/sfw/lib/64" ./kqtest
- 1: test_peer_close_detection()  
+    1: test_peer_close_detection()  
     2: test_kqueue()        
     3: test_kevent_socket_add()     
     4: test_kevent_socket_del()     
