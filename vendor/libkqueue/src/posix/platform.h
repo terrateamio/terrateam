@@ -28,6 +28,7 @@
 #define atomic_inc(p)   __sync_add_and_fetch((p), 1)
 #define atomic_dec(p)   __sync_sub_and_fetch((p), 1)
 #define atomic_cas(p, oval, nval) __sync_val_compare_and_swap(p, oval, nval)
+#define atomic_ptr_cas(p, oval, nval) __sync_val_compare_and_swap(p, oval, nval)
 
 /*
  * GCC-compatible branch prediction macros
