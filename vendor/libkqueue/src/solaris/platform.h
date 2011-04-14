@@ -29,6 +29,8 @@
 #define atomic_dec      atomic_dec_32_nv
 #undef atomic_cas
 #define atomic_cas      atomic_cas_ptr
+#undef atomic_ptr_cas
+#define atomic_ptr_cas      atomic_cas_ptr
 
 /*
  * Event ports
