@@ -185,11 +185,19 @@ kevent(int kq, const struct kevent *changelist, int nchanges,
 	    struct kevent *eventlist, int nevents,
 	    const struct timespec *timeout);
 
+#ifdef MAKE_STATIC
+__declspec(dllexport) int
+libkqueue_init();
+#endif
+
 #else
 int     kqueue(void);
 int     kevent(int kq, const struct kevent *changelist, int nchanges,
 	    struct kevent *eventlist, int nevents,
 	    const struct timespec *timeout);
+#ifdef MAKE_STATIC
+int     libkqueue_init();
+#endif
 #endif
 
 #ifdef  __cplusplus
