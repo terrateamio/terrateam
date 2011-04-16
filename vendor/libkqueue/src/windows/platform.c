@@ -33,6 +33,8 @@ const struct kqueue_vtable kqops = {
 	windows_filter_free,
 };
 
+#ifndef MAKE_STATIC
+
 BOOL WINAPI DllMain(
         HINSTANCE self,
         DWORD reason,
@@ -46,7 +48,7 @@ BOOL WINAPI DllMain(
             if (WSAStartup(MAKEWORD(2,2), NULL) != 0)
                 return (FALSE);
 #endif
-			if (_libkqueue_init() < 0)
+            if (libkqueue_init() < 0)
 				return (FALSE);
             break;
 
@@ -59,6 +61,8 @@ BOOL WINAPI DllMain(
 
     return (TRUE);
 }
+
+#endif
 
 int
 windows_kqueue_init(struct kqueue *kq)

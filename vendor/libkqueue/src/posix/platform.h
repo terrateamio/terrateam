@@ -36,7 +36,11 @@
 #define fastpath(x)     __builtin_expect((x), 1)
 #define slowpath(x)     __builtin_expect((x), 0)
 
-#define CONSTRUCTOR     __attribute__ ((constructor))
+#ifdef MAKE_STATIC
+# define CONSTRUCTOR
+#else
+# define CONSTRUCTOR     __attribute__ ((constructor))
+#endif
 #define VISIBLE         __attribute__((visibility("default")))
 #define HIDDEN          __attribute__((visibility("hidden")))
 

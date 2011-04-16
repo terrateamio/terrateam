@@ -200,6 +200,6 @@ void       *map_lookup(struct map *, int);
 void       *map_delete(struct map *, int);
 void        map_free(struct map *);
 
-int CONSTRUCTOR _libkqueue_init(void);
+int CONSTRUCTOR libkqueue_init(void);
 
 #endif  /* ! _KQUEUE_PRIVATE_H */
