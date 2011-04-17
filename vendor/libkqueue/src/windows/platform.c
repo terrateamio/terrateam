@@ -16,6 +16,12 @@
 
 #include "../common/private.h"
 
+/*
+ * Per-thread evt event buffer used to ferry data between
+ * kevent_wait() and kevent_copyout().
+ */
+static struct evt_event_s __thread pending_events[MAX_KEVENT];
+
 /* FIXME: remove these as filters are implemented */
 const struct filter evfilt_proc = EVFILT_NOTIMPL;
 const struct filter evfilt_vnode = EVFILT_NOTIMPL;
@@ -67,14 +73,14 @@ BOOL WINAPI DllMain(
 int
 windows_kqueue_init(struct kqueue *kq)
 {
-    kq->kq_handle = CreateEvent(NULL, FALSE, FALSE, NULL);
-    if (kq->kq_handle == NULL) {
-        dbg_perror("CreatEvent()");
+    kq->kq_loop = evt_create();
+    if (kq->kq_loop == NULL) {
+        dbg_perror("evt_create()");
         return (-1);
     }
 
 	if(filter_register_all(kq) < 0) {
-		CloseHandle(kq->kq_handle);
+		evt_destroy(kq->kq_loop);
 		return (-1);
 	}
 
@@ -84,7 +90,7 @@ windows_kqueue_init(struct kqueue *kq)
 void
 windows_kqueue_free(struct kqueue *kq)
 {
-    CloseHandle(kq->kq_handle);
+    evt_destroy(kq->kq_loop);
     free(kq);
 }
 
@@ -108,20 +114,19 @@ windows_kevent_wait(struct kqueue *kq, int no, const struct timespec *timeout)
 
 	/* Wait for an event */
     dbg_printf("waiting for %u events (timeout=%u ms)", kq->kq_filt_count, (unsigned int)timeout_ms);
-    rv = WaitForMultipleObjectsEx(kq->kq_filt_count, kq->kq_filt_handle, FALSE, timeout_ms, TRUE);
+	rv = evt_run(kq->kq_loop, pending_events, MAX_KEVENT, timeout); 
 	switch (rv) {
-	case WAIT_TIMEOUT:
+	case EVT_TIMEDOUT:
 		dbg_puts("no events within the given timeout");
 		retval = 0;
 		break;
 
-	case WAIT_FAILED:
-		dbg_lasterror("WaitForMultipleEvents()");
+	case EVT_ERR:
+		dbg_lasterror("WaitForSingleEvent()");
 		retval = -1;
 
 	default:
-		kq->kq_filt_signalled = rv;
-		retval = 1;
+		retval = rv;
 	}
 	
     return (retval);
@@ -133,42 +138,50 @@ windows_kevent_copyout(struct kqueue *kq, int nready,
 {
     struct filter *filt;
 	struct knote* kn;
-    int rv;
+	evt_event_t evt;
+    int i, rv, nret;
 
-	/* KLUDGE: We are abusing the WAIT_FAILED constant to mean
-	that there are no filters with pending events.
-	*/
-	if (kq->kq_filt_signalled == WAIT_FAILED)
-		return (0);
-	filt = kq->kq_filt_ref[kq->kq_filt_signalled];
-	kn = knote_lookup(filt, eventlist->ident);
-	if(kn == NULL) {
-		dbg_puts("knote_lookup failed");
-		return (-1);
+	assert(nready < MAX_KEVENT);
+
+	nret = nready;
+	for(i = 0; i < nready; i++) {
+		evt = &(pending_events[i]);
+		kn = (struct knote*)evt->data;
+		knote_lock(kn);
+		filt = &kq->kq_filt[~(kn->kev.filter)];
+		rv = filt->kf_copyout(eventlist, kn, evt);
+		knote_unlock(kn);
+        if (slowpath(rv < 0)) {
+            dbg_puts("knote_copyout failed");
+            /* XXX-FIXME: hard to handle this without losing events */
+            abort();
+        }
+
+		/*
+         * Certain flags cause the associated knote to be deleted
+         * or disabled.
+         */
+        if (eventlist->flags & EV_DISPATCH) 
+            knote_disable(filt, kn); //TODO: Error checking
+        if (eventlist->flags & EV_ONESHOT) 
+            knote_release(filt, kn); //TODO: Error checking
+
+        /* If an empty kevent structure is returned, the event is discarded. */
+        if (fastpath(eventlist->filter != 0)) {
+            eventlist++;
+        } else {
+            dbg_puts("spurious wakeup, discarding event");
+            nret--;
+        }
 	}
-	kq->kq_filt_signalled = WAIT_FAILED;
-    rv = filt->kf_copyout(eventlist, kn, filt);
-    if (rv < 0) {
-        dbg_puts("kevent_copyout failed");
-        return (-1);
-    }
-	return (1);
+
+	return nret;
 }
 
 int
 windows_filter_init(struct kqueue *kq, struct filter *kf)
 {
-	HANDLE h;
 
-	h = CreateEvent(NULL, FALSE, FALSE, NULL);
-    if (h == NULL) {
-        dbg_perror("CreateEvent()");
-        return (-1);
-    }
-	kf->kf_event_handle = h;
-
-	/* Add the handle to the kqueue filter table */
-	kq->kq_filt_handle[kq->kq_filt_count] = h;
 	kq->kq_filt_ref[kq->kq_filt_count] = (struct filter *) kf;
     kq->kq_filt_count++;
 
@@ -178,6 +191,5 @@ windows_filter_init(struct kqueue *kq, struct filter *kf)
 void
 windows_filter_free(struct kqueue *kq, struct filter *kf)
 {
-	CloseHandle(kf->kf_event_handle);
-	/* FIXME: Remove the handle from the kqueue filter table */
+
 }

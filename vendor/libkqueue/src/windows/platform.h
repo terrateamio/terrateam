@@ -58,18 +58,21 @@
  *			Would be better to 
  */
 #define KQUEUE_PLATFORM_SPECIFIC \
-	HANDLE kq_handle; \
-	HANDLE kq_apc_dispatcher; \
-    HANDLE kq_filt_handle[EVFILT_SYSCOUNT]; \
+	evt_loop_t kq_loop; \
 	struct filter *kq_filt_ref[EVFILT_SYSCOUNT]; \
-    size_t kq_filt_count; \
-	DWORD  kq_filt_signalled
+    size_t kq_filt_count
 
 /*
  * Additional members of struct filter
  */
-#define FILTER_PLATFORM_SPECIFIC \
-	HANDLE kf_event_handle
+//#define FILTER_PLATFORM_SPECIFIC \
+//	HANDLE kf_event_handle
+
+/*
+ * Additional members for struct knote
+ */
+#define KNOTE_PLATFORM_SPECIFIC \
+	HANDLE kn_event_whandle
 
 /*
  * Some datatype forward declarations
@@ -150,5 +153,7 @@ typedef CRITICAL_SECTION pthread_rwlock_t;
 #define pthread_rwlock_wrlock _cs_lock
 #define pthread_rwlock_unlock _cs_unlock
 #define pthread_rwlock_init(x,y) _cs_init((x))
+
+#include "event_loop.h"
 
 #endif  /* ! _KQUEUE_WINDOWS_PLATFORM_H */
