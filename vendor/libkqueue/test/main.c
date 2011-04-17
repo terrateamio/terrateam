@@ -137,7 +137,9 @@ main(int argc, char **argv)
         { "proc", 1, test_evfilt_proc },
 #endif
 		{ "timer", 1, test_evfilt_timer },
+#ifndef _WIN32
 		{ "vnode", 1, test_evfilt_vnode },
+#endif
 #if HAVE_EVFILT_USER
         { "user", 1, test_evfilt_user },
 #endif

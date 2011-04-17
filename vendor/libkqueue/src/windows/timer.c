@@ -16,6 +16,9 @@
 
 #include "../common/private.h"
 
+/* Needed for safe termination of a pending timer */
+static struct knote __thread *about_to_delete = NULL;
+
 /* Convert milliseconds into negative increments of 100-nanoseconds */
 static void
 convert_msec_to_filetime(LARGE_INTEGER *dst, int src)
@@ -26,8 +29,15 @@ convert_msec_to_filetime(LARGE_INTEGER *dst, int src)
 static int
 ktimer_delete(struct filter *filt, struct knote *kn)
 {
-    if (kn->data.handle == NULL)
+
+    if (kn->data.handle == NULL || kn->kn_event_whandle == NULL)
         return (0);
+
+	about_to_delete = kn;
+	if(!UnregisterWaitEx(kn->kn_event_whandle, INVALID_HANDLE_VALUE)) {
+		dbg_lasterror("UnregisterWait()");
+		return (-1);
+	}
 
 	if (!CancelWaitableTimer(kn->data.handle)) {
 		dbg_lasterror("CancelWaitableTimer()");
@@ -38,8 +48,30 @@ ktimer_delete(struct filter *filt, struct knote *kn)
 		return (-1);
 	}
 
+	about_to_delete = NULL;
     kn->data.handle = NULL;
     return (0);
+}
+
+static VOID CALLBACK evfilt_timer_callback(void* param, BOOLEAN fired){
+	struct knote* kn;
+	struct kqueue* kq;
+
+	if(fired){
+		dbg_printf("called, but timer did not fire - this case should never be reached");
+		return;
+	}
+
+	assert(param);
+	kn = (struct knote*)param;
+	dbg_printf("called for knote at %p, rc=%d", kn, kn->kn_ref);
+	if(about_to_delete == kn) {
+		dbg_printf("knote marked for deletion, skipping event");
+		return;
+	}
+	kq = kn->kn_kq;
+	assert(kq);
+	evt_signal(kq->kq_loop, EVT_WAKEUP, kn);
 }
 
 int
@@ -56,7 +88,7 @@ evfilt_timer_destroy(struct filter *filt)
 int
 evfilt_timer_copyout(struct kevent* dst, struct knote* src, void* ptr)
 {
-    memcpy(dst, &src->kev, sizeof(struct kevent*));
+    memcpy(dst, &src->kev, sizeof(struct kevent));
 	// TODO: Timer error handling
 	
     /* We have no way to determine the number of times
@@ -85,13 +117,15 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
     convert_msec_to_filetime(&liDueTime, kn->kev.data);
 	
 	// XXX-FIXME add completion routine to this call
-    if (!SetWaitableTimer(th, &liDueTime, (kn->kev.flags & EV_ONESHOT), NULL, NULL, FALSE)) {
+    if (!SetWaitableTimer(th, &liDueTime, (kn->kev.flags & EV_ONESHOT) ? 0 : kn->kev.data, NULL, NULL, FALSE)) {
         dbg_lasterror("SetWaitableTimer()");
         CloseHandle(th);
         return (-1);
     }
 
     kn->data.handle = th;
+	RegisterWaitForSingleObject(&kn->kn_event_whandle, th, evfilt_timer_callback, kn, INFINITE, 0);
+
     return (0);
 }
 

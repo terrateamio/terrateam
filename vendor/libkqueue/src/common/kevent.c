@@ -144,6 +144,7 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
             memcpy(&kn->kev, src, sizeof(kn->kev));
             kn->kev.flags &= ~EV_ENABLE;
             kn->kev.flags |= EV_ADD;//FIXME why?
+			kn->kn_kq = kq;
             assert(filt->kn_create);
             if (filt->kn_create(filt, kn) < 0) {
                 knote_release(filt, kn);

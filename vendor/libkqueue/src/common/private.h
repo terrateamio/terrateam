@@ -77,6 +77,7 @@ struct knote {
 		void          *handle;      /* Used by win32 filters */
     } data;
     volatile uint32_t  kn_ref;
+	struct kqueue*	   kn_kq;
 #if defined(KNOTE_PLATFORM_SPECIFIC)
     KNOTE_PLATFORM_SPECIFIC;
 #endif
