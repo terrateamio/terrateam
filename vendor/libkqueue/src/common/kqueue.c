@@ -117,6 +117,8 @@ kqueue(void)
     if (kq == NULL)
         return (-1);
 
+	pthread_mutex_init(&kq->kq_mtx, NULL);
+
     if (kqops.kqueue_init(kq) < 0) {
         free(kq);
         return (-1);
