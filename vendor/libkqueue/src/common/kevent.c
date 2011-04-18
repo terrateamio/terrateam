@@ -262,7 +262,13 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
      * Process each kevent on the changelist.
      */
     if (nchanges > 0) {
+#if SERIALIZE_KEVENT
+        kqueue_lock(kq);
+#endif
         rv = kevent_copyin(kq, changelist, nchanges, eventlist, nevents);
+#if SERIALIZE_KEVENT
+        kqueue_unlock(kq);
+#endif
         dbg_printf("(%u) changelist: rv=%d", myid, rv);
         if (rv < 0)
             goto out;
@@ -283,7 +289,13 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         rv = kqops.kevent_wait(kq, nevents, timeout);
         dbg_printf("kqops.kevent_wait returned %d", rv);
         if (fastpath(rv > 0)) {
+#if SERIALIZE_KEVENT
+            kqueue_lock(kq);
+#endif
             rv = kqops.kevent_copyout(kq, rv, eventlist, nevents);
+#if SERIALIZE_KEVENT
+            kqueue_unlock(kq);
+#endif
         } else if (rv == 0) {
             /* Timeout reached */
         } else {

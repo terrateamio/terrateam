@@ -49,6 +49,7 @@ knote_new(void)
 	if (res == NULL)
         return (NULL);
 
+#if ! SERIALIZE_KEVENT
 #ifdef _WIN32
 	pthread_mutex_init(&res->mtx, NULL);
 #else
@@ -58,30 +59,47 @@ knote_new(void)
         return (NULL);
     }
 #endif
+#endif
 
     return res;
 }
 
-static inline void
+void
 knote_retain(struct knote *kn)
 {
+#if ! SERIALIZE_KEVENT
     atomic_inc(&kn->kn_ref);
+#endif
 }
 
 void
 knote_release(struct filter *filt, struct knote *kn)
 {
+#if SERIALIZE_KEVENT
+    knote_free(filt, kn);
+#else
     int ref;
 
-    ref = atomic_dec(&kn->kn_ref);
-    if (ref <= 0) {
+    assert (kn->kn_ref >= 0);
+
+    /*
+     * Optimize for the case where only a single thread is accessing
+     * the knote structure.
+     */
+    if (fastpath(kn->kn_ref == 0))
+        ref = 0;
+    else
+        ref = atomic_dec(&kn->kn_ref);
+
+    if (ref == 0) {
         dbg_printf("freeing knote at %p, rc=%d", kn, ref);
         pthread_rwlock_wrlock(&filt->kf_knote_mtx);
         knote_free(filt, kn);
         pthread_rwlock_unlock(&filt->kf_knote_mtx);
     } else {
-        dbg_printf("NOT freeing knote %p rc=%d", kn, ref);
+        dbg_printf("decrementing refcount of knote %p rc=%d", kn, ref);
     }
+#endif
 }
 
 void
@@ -97,7 +115,9 @@ knote_free(struct filter *filt, struct knote *kn)
 {
     RB_REMOVE(knt, &filt->kf_knote, kn);
     filt->kn_delete(filt, kn);
+#if ! SERIALIZE_KEVENT
     pthread_mutex_destroy(&kn->mtx);
+#endif
     free(kn);
 //    mem_free(kn);
 }
@@ -131,8 +151,10 @@ knote_lookup(struct filter *filt, short ident)
 
     pthread_rwlock_rdlock(&filt->kf_knote_mtx);
     ent = RB_FIND(knt, &filt->kf_knote, &query);
+#if ! SERIALIZE_KEVENT
     if (ent != NULL) 
         knote_lock(ent);
+#endif
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
 
     dbg_printf("id=%d ent=%p", ident, ent);
@@ -150,8 +172,10 @@ knote_lookup_data(struct filter *filt, intptr_t data)
         if (data == kn->kev.data) 
             break;
     }
+#if ! SERIALIZE_KEVENT
     if (kn != NULL)
         knote_lock(kn);
+#endif
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
 
     return (kn);
