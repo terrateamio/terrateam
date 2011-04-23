@@ -58,15 +58,16 @@ static VOID CALLBACK evfilt_timer_callback(void* param, BOOLEAN fired){
 	struct kqueue* kq;
 
 	if(fired){
-		dbg_printf("called, but timer did not fire - this case should never be reached");
+		dbg_puts("called, but timer did not fire - this case should never be reached");
 		return;
 	}
 
 	assert(param);
 	kn = (struct knote*)param;
-	dbg_printf("called for knote at %p, rc=%d", kn, kn->kn_ref);
+// FIXME: depends on ! SERIALIZE_KEVENT
+// dbg_printf("called for knote at %p, rc=%d", kn, kn->kn_ref);
 	if(about_to_delete == kn) {
-		dbg_printf("knote marked for deletion, skipping event");
+		dbg_puts("knote marked for deletion, skipping event");
 		return;
 	}
 	kq = kn->kn_kq;

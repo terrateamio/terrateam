@@ -104,7 +104,6 @@ int pthread_cond_timedwait(pthread_cond_t *cv,
 	// being called or <pthread_cond_broadcast> being called.
 	rv = WaitForMultipleObjects (2, cv->events_, FALSE, timeout_ms);
 	if( rv == WAIT_TIMEOUT) {
-		int r = 0;
 		return EVT_TIMEDOUT;
 	} else if(rv == WAIT_FAILED) {
 		dbg_lasterror("cond_timedwait failed");

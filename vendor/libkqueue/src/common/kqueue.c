@@ -56,21 +56,19 @@ libkqueue_init(void)
 {
 #ifdef NDEBUG
     DEBUG_ACTIVE = 0;
-#elif _WIN32
-	/* Experimental port, always debug */
-	DEBUG_ACTIVE = 1;
-# ifndef __GNUC__
+#else
+    char *s = getenv("KQUEUE_DEBUG");
+    if (s != NULL && strlen(s) > 0) {
+        DEBUG_ACTIVE = 1;
+# if defined(_WIN32) && !defined(__GNUC__)
 	/* Enable heap surveillance */
 	{
 		int tmpFlag = _CrtSetDbgFlag( _CRTDBG_REPORT_FLAG );
 		tmpFlag |= _CRTDBG_CHECK_ALWAYS_DF;
 		_CrtSetDbgFlag(tmpFlag);
 	}
-# endif
-#else
-    char *s = getenv("KQUEUE_DEBUG");
-    if (s != NULL && strlen(s) > 0)
-        DEBUG_ACTIVE = 1;
+# endif /* _WIN32 */
+    }
 #endif
 
    kqmap = map_new(get_fd_limit()); // INT_MAX

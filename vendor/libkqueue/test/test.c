@@ -27,6 +27,7 @@ static int error_flag = 1;
 static char * cur_test_id = NULL;
 
 /* FIXME: not portable beyond linux */
+#ifndef _WIN32
 static void
 error_handler(int signum)
 {
@@ -41,6 +42,7 @@ error_handler(int signum)
 #endif
     exit(1);
 }
+#endif /* ! _WIN32 */
 
 static void
 testing_atexit(void)
