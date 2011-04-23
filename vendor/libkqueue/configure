@@ -186,7 +186,7 @@ check_target() {
     "gnu/kfreebsd")
             default_target="freebsd"
             ;;
-    "mingw*")
+    mingw*)
             default_target="windows"
             default_api="windows"
             ;;

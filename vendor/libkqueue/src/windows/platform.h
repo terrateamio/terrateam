@@ -17,6 +17,10 @@
 #ifndef  _KQUEUE_WINDOWS_PLATFORM_H
 #define  _KQUEUE_WINDOWS_PLATFORM_H
 
+/* Require Windows XP or later */
+#define WINVER 0x0501
+#define _WIN32_WINNT 0x0501
+
 /* Reduces build time by omitting extra system headers */
 #define WIN32_LEAN_AND_MEAN
 
@@ -43,8 +47,8 @@
 #ifdef __GNUC__
 # define atomic_inc(p)   __sync_add_and_fetch((p), 1)
 # define atomic_dec(p)   __sync_sub_and_fetch((p), 1)
-# define atomic_cas(p, oval, nval) __sync_val_compare_and_swap(p, oval, nval)
-# define atomic_ptr_cas(p, oval, nval) __sync_val_compare_and_swap(p, oval, nval)
+# define atomic_cas(p, v0, v1) __sync_val_compare_and_swap((p), (v0), (v1))
+# define atomic_ptr_cas(p, v0, v1) __sync_val_compare_and_swap((p), (v0), (v1))
 #else
 # define atomic_inc   InterlockedIncrement
 # define atomic_dec   InterlockedDecrement
@@ -65,8 +69,10 @@
 /*
  * Additional members of struct filter
  */
-//#define FILTER_PLATFORM_SPECIFIC \
-//	HANDLE kf_event_handle
+/*
+#define FILTER_PLATFORM_SPECIFIC \
+	HANDLE kf_event_handle
+*/
 
 /*
  * Additional members for struct knote

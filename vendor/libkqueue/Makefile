@@ -58,14 +58,17 @@ uninstall:
 	rm -f $(MANDIR)/man2/kevent.2 
 	rmdir $(INCLUDEDIR)/kqueue/sys $(INCLUDEDIR)/kqueue
 
-check: clean $(PROGRAM).so.$(ABI_VERSION)
-	cd test && ./configure && make check
+test/config.mk:
+	cd test && ../configure
 
-debug: clean $(PROGRAM).so.$(ABI_VERSION)
-	cd test && ./configure && make debug
+check: clean $(PROGRAM).so.$(ABI_VERSION) test/config.mk
+	cd test && make check
 
-debug-check: clean
-	cd test && ./configure && KQUEUE_DEBUG=y make check
+debug: clean $(PROGRAM).so.$(ABI_VERSION) test/config.mk
+	cd test && make debug
+
+debug-check: clean test/config.mk
+	cd test && KQUEUE_DEBUG=y make check
 
 $(DISTFILE): $(SOURCES) $(HEADERS)
 	mkdir $(PROGRAM)-$(VERSION)

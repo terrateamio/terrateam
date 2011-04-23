@@ -22,7 +22,7 @@ kqtest: $(SOURCES)
 	$(CC) -o kqtest $(CFLAGS) $(SOURCES) $(LDADD)
 
 check: kqtest
-	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" ./kqtest
+	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" PATH="$$PATH:.." ./kqtest
 
 debug: kqtest
 	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" gdb ./kqtest

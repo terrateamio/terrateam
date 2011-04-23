@@ -3,7 +3,7 @@ version="2.0a"
 abi_major="0"
 abi_minor="0"
 abi_version="$abi_major.$abi_minor"
-cflags="-fpic -Wall -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600"
+cflags="-Wall -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600"
 ldflags=""
 sources="src/common/filter.c src/common/knote.c src/common/map.c
          src/common/kevent.c src/common/kqueue.c" 
@@ -25,6 +25,10 @@ pre_configure_hook() {
       cflags="$cflags -g3 -O0 -rdynamic"
   fi
 
+  if [ "$target" != "windows" ] ; then
+      cflags="$cflags -fpic"
+  fi
+
   optional_headers="err.h"
 
   libdepends=" -L$libdir"
@@ -32,7 +36,7 @@ pre_configure_hook() {
 
       check_symbol sys/epoll.h EPOLLRDHUP
 
-      # Actually a GCC 4.X dependency
+      # TODO - note this as a GCC 4.X dependency
       cflags="$cflags -fvisibility=hidden"
 
       libdepends="$libdepends -lpthread -lrt"
@@ -93,6 +97,18 @@ post_configure_hook() {
           evfilt_vnode=""
     fi
 
+    if [ $target = "windows" ] ; then
+          platform="src/windows/platform.c src/windows/event_loop.c"
+	  cflags="$cflags -march=i686"
+	  ldflags="$ldflags -march=i686"
+          evfilt_proc=""
+          evfilt_signal=""
+          evfilt_socket=""
+          evfilt_timer="src/windows/timer.c"
+          evfilt_user=""
+          evfilt_vnode=""
+    fi
+    
     sources="$sources $platform  
             $evfilt_signal $evfilt_proc 
              $evfilt_socket $evfilt_timer $evfilt_user $evfilt_vnode"
