@@ -103,7 +103,7 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
         return (0);
     }
 
-    epoll_event_dump(ev);
+    dbg_printf("epoll: %s", epoll_event_dump(ev));
     memcpy(dst, &src->kev, sizeof(*dst));
 #if defined(HAVE_EPOLLRDHUP)
     if (ev->events & EPOLLRDHUP || ev->events & EPOLLHUP)
@@ -128,6 +128,9 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
             /* race condition with socket close, so ignore this error */
             dbg_puts("ioctl(2) of socket failed");
             dst->data = 0;
+        } else {
+            if (dst->data == 0)
+                dst->flags |= EV_EOF;
         }
     }
 
