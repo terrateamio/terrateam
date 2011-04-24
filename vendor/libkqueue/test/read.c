@@ -18,7 +18,48 @@
 #include "common.h"
 
 static int __thread kqfd;
-static int __thread sockfd[2];
+static int __thread client_fd;
+static int __thread server_fd;
+
+/*
+ * Create a connected TCP socket.
+ */
+static void
+create_socket_connection(int *client, int *server, const short port) 
+{ 
+    struct sockaddr_in sain;
+    socklen_t sa_len = sizeof(sain);
+    int one = 1;
+    int clnt, srvr, accepted;
+
+    /* Create a passive socket */
+    memset(&sain, 0, sizeof(sain));
+    sain.sin_family = AF_INET;
+    sain.sin_port = htons(port);
+    if ((srvr = socket(PF_INET, SOCK_STREAM, 0)) < 0) 
+	err(1, "socket");
+    if (setsockopt(srvr, SOL_SOCKET, SO_REUSEADDR, 
+                (char *) &one, sizeof(one)) != 0) 
+	err(1, "setsockopt");
+    if (bind(srvr, (struct sockaddr *) &sain, sa_len) < 0)
+	err(1, "bind");
+    if (listen(srvr, 100) < 0)
+	err(1, "listen");
+
+    /* Simulate a client connecting to the server */
+    sain.sin_family = AF_INET;
+    sain.sin_port = htons(port);
+    sain.sin_addr.s_addr = inet_addr("127.0.0.1");
+    if ((clnt = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+       err(1, "clnt: socket"); 
+    if (connect(clnt, (struct sockaddr *) &sain, sa_len) < 0)
+       err(1, "clnt: connect"); 
+    if ((accepted = accept(srvr, NULL, 0)) < 0)
+       err(1, "srvr: accept"); 
+
+    *client = clnt;
+    *server = accepted;
+}
 
 static void
 kevent_socket_drain(void)
@@ -26,15 +67,15 @@ kevent_socket_drain(void)
     char buf[1];
 
     /* Drain the read buffer, then make sure there are no more events. */
-    if (read(sockfd[0], &buf[0], 1) < 1)
-        die("read(2)");
+    if (recv(client_fd, &buf[0], 1, 0) < 1)
+        die("recv(2)");
 }
 
 static void
 kevent_socket_fill(void)
 {
-    if (write(sockfd[1], ".", 1) < 1)
-        die("write(2)");
+    if (send(server_fd, ".", 1, 0) < 1)
+        die("send(2)");
 }
 
 
@@ -43,7 +84,7 @@ test_kevent_socket_add(void)
 {
     struct kevent kev;
 
-    kevent_add(kqfd, &kev, sockfd[0], EVFILT_READ, EV_ADD, 0, 0, &sockfd[0]);
+    kevent_add(kqfd, &kev, client_fd, EVFILT_READ, EV_ADD, 0, 0, &client_fd);
 }
 
 void
@@ -52,7 +93,7 @@ test_kevent_socket_add_without_ev_add(void)
     struct kevent kev;
 
     /* Try to add a kevent without specifying EV_ADD */
-    EV_SET(&kev, sockfd[0], EVFILT_READ, 0, 0, 0, &sockfd[0]);
+    EV_SET(&kev, client_fd, EVFILT_READ, 0, 0, 0, &client_fd);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) == 0)
         die("kevent should have failed");
 
@@ -71,9 +112,9 @@ test_kevent_socket_get(void)
 {
     struct kevent kev;
 
-    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_ADD, 0, 0, &sockfd[0]);
+    EV_SET(&kev, client_fd, EVFILT_READ, EV_ADD, 0, 0, &client_fd);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        die("kevent");
+        die("kevent:1");
 
     kevent_socket_fill();
 
@@ -85,7 +126,7 @@ test_kevent_socket_get(void)
 
     kev.flags = EV_DELETE;
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        die("kevent");
+        die("kevent:2");
 }
 
 void
@@ -96,7 +137,7 @@ test_kevent_socket_clear(void)
     test_no_kevents(kqfd);
     kevent_socket_drain();
 
-    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, &sockfd[0]);
+    EV_SET(&kev, client_fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, &client_fd);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         die("kevent1");
 
@@ -118,7 +159,7 @@ test_kevent_socket_clear(void)
     test_no_kevents(kqfd);
 
     kevent_socket_drain();
-    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_DELETE, 0, 0, &sockfd[0]);
+    EV_SET(&kev, client_fd, EVFILT_READ, EV_DELETE, 0, 0, &client_fd);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         die("kevent2");
 }
@@ -129,10 +170,10 @@ test_kevent_socket_disable_and_enable(void)
     struct kevent kev;
 
     /* Add an event, then disable it. */
-    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_ADD, 0, 0, &sockfd[0]);
+    EV_SET(&kev, client_fd, EVFILT_READ, EV_ADD, 0, 0, &client_fd);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         die("kevent");
-    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_DISABLE, 0, 0, &sockfd[0]);
+    EV_SET(&kev, client_fd, EVFILT_READ, EV_DISABLE, 0, 0, &client_fd);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         die("kevent");
 
@@ -159,7 +200,7 @@ test_kevent_socket_del(void)
 {
     struct kevent kev;
 
-    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_DELETE, 0, 0, &sockfd[0]);
+    EV_SET(&kev, client_fd, EVFILT_READ, EV_DELETE, 0, 0, &client_fd);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         die("kevent");
 
@@ -174,7 +215,7 @@ test_kevent_socket_oneshot(void)
     struct kevent kev;
 
     /* Re-add the watch and make sure no events are pending */
-    kevent_add(kqfd, &kev, sockfd[0], EVFILT_READ, EV_ADD | EV_ONESHOT, 0, 0, &sockfd[0]);
+    kevent_add(kqfd, &kev, client_fd, EVFILT_READ, EV_ADD | EV_ONESHOT, 0, 0, &client_fd);
     test_no_kevents(kqfd);
 
     kevent_socket_fill();
@@ -243,7 +284,7 @@ test_kevent_socket_dispatch(void)
     struct kevent kev;
 
     /* Re-add the watch and make sure no events are pending */
-    kevent_add(kqfd, &kev, sockfd[0], EVFILT_READ, EV_ADD | EV_DISPATCH, 0, 0, &sockfd[0]);
+    kevent_add(kqfd, &kev, client_fd, EVFILT_READ, EV_ADD | EV_DISPATCH, 0, 0, &client_fd);
     test_no_kevents(kqfd);
 
     /* The event will occur only once, even though EV_CLEAR is not
@@ -255,14 +296,14 @@ test_kevent_socket_dispatch(void)
 
     /* Re-enable the kevent */
     /* FIXME- is EV_DISPATCH needed when rearming ? */
-    kevent_add(kqfd, &kev, sockfd[0], EVFILT_READ, EV_ENABLE | EV_DISPATCH, 0, 0, &sockfd[0]);
+    kevent_add(kqfd, &kev, client_fd, EVFILT_READ, EV_ENABLE | EV_DISPATCH, 0, 0, &client_fd);
     kev.data = 1;
     kev.flags = EV_ADD | EV_DISPATCH;   /* FIXME: may not be portable */
     kevent_cmp(&kev, kevent_get(kqfd));
     test_no_kevents(kqfd);
 
     /* Since the knote is disabled, the EV_DELETE operation succeeds. */
-    kevent_add(kqfd, &kev, sockfd[0], EVFILT_READ, EV_DELETE, 0, 0, &sockfd[0]);
+    kevent_add(kqfd, &kev, client_fd, EVFILT_READ, EV_DELETE, 0, 0, &client_fd);
 
     kevent_socket_drain();
 }
@@ -278,7 +319,7 @@ test_kevent_socket_lowat(void)
 
     /* Re-add the watch and make sure no events are pending */
     puts("-- re-adding knote, setting low watermark to 2 bytes");
-    EV_SET(&kev, sockfd[0], EVFILT_READ, EV_ADD | EV_ONESHOT, NOTE_LOWAT, 2, &sockfd[0]);
+    EV_SET(&kev, client_fd, EVFILT_READ, EV_ADD | EV_ONESHOT, NOTE_LOWAT, 2, &client_fd);
     if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
         die("%s", test_id);
     test_no_kevents();
@@ -291,7 +332,7 @@ test_kevent_socket_lowat(void)
     kevent_socket_fill();
     if (kevent(kqfd, NULL, 0, &kev, 1, NULL) != 1)
         die("%s", test_id);
-    KEV_CMP(kev, sockfd[0], EVFILT_READ, 0);
+    KEV_CMP(kev, client_fd, EVFILT_READ, 0);
     test_no_kevents();
 
     kevent_socket_drain();
@@ -305,17 +346,19 @@ test_kevent_socket_eof(void)
     struct kevent kev;
 
     /* Re-add the watch and make sure no events are pending */
-    kevent_add(kqfd, &kev, sockfd[0], EVFILT_READ, EV_ADD, 0, 0, &sockfd[0]);
+    kevent_add(kqfd, &kev, client_fd, EVFILT_READ, EV_ADD, 0, 0, &client_fd);
     test_no_kevents(kqfd);
 
-    if (close(sockfd[1]) < 0)
+    //if (shutdown(server_fd, SHUT_RDWR) < 0)
+    //    die("close(2)");
+    if (close(server_fd) < 0)
         die("close(2)");
 
     kev.flags |= EV_EOF;
     kevent_cmp(&kev, kevent_get(kqfd));
 
     /* Delete the watch */
-    kevent_add(kqfd, &kev, sockfd[0], EVFILT_READ, EV_DELETE, 0, 0, &sockfd[0]);
+    kevent_add(kqfd, &kev, client_fd, EVFILT_READ, EV_DELETE, 0, 0, &client_fd);
 }
 
 /* Test if EVFILT_READ works with regular files */
@@ -365,13 +408,7 @@ test_kevent_regular_file(void)
 void
 test_evfilt_read(int _kqfd)
 {
-#ifdef _WIN32
-	die("XXX-FIXME");
-#else
-    /* Create a connected pair of full-duplex sockets for testing socket events */
-    if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd) < 0) 
-        die("socketpair");
-#endif
+    create_socket_connection(&client_fd, &server_fd, 23456);
 
     kqfd = _kqfd;
     test(kevent_socket_add);
@@ -387,6 +424,6 @@ test_evfilt_read(int _kqfd)
     test(kevent_socket_listen_backlog);
     test(kevent_socket_eof);
     test(kevent_regular_file);
-    close(sockfd[0]);
-    close(sockfd[1]);
+    close(client_fd);
+    close(server_fd);
 }
