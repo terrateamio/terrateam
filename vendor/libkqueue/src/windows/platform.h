@@ -58,10 +58,10 @@
 
 /*
  * Additional members of struct kqueue
- * FIXME: This forces a thread-per-filter model
- *			Would be better to 
  */
 #define KQUEUE_PLATFORM_SPECIFIC \
+	HANDLE kq_iocp; \
+	HANDLE kq_synthetic_event; \
 	evt_loop_t kq_loop; \
 	struct filter *kq_filt_ref[EVFILT_SYSCOUNT]; \
     size_t kq_filt_count

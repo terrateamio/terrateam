@@ -16,27 +16,32 @@
 
 #include "../common/private.h"
 
+struct event_buf {
+    DWORD       bytes;
+    ULONG_PTR   key;
+    OVERLAPPED *overlap;
+};
+
 /*
  * Per-thread evt event buffer used to ferry data between
  * kevent_wait() and kevent_copyout().
  */
-static struct evt_event_s __thread pending_events[MAX_KEVENT];
+static __thread struct event_buf iocp_buf;
 
 /* FIXME: remove these as filters are implemented */
 const struct filter evfilt_proc = EVFILT_NOTIMPL;
 const struct filter evfilt_vnode = EVFILT_NOTIMPL;
 const struct filter evfilt_signal = EVFILT_NOTIMPL;
 const struct filter evfilt_write = EVFILT_NOTIMPL;
-const struct filter evfilt_read = EVFILT_NOTIMPL;
 const struct filter evfilt_user = EVFILT_NOTIMPL;
 
 const struct kqueue_vtable kqops = {
     windows_kqueue_init,
     windows_kqueue_free,
-	windows_kevent_wait,
-	windows_kevent_copyout,
-	windows_filter_init,
-	windows_filter_free,
+    windows_kevent_wait,
+    windows_kevent_copyout,
+    windows_filter_init,
+    windows_filter_free,
 };
 
 #ifndef MAKE_STATIC
@@ -73,11 +78,29 @@ BOOL WINAPI DllMain(
 int
 windows_kqueue_init(struct kqueue *kq)
 {
+    kq->kq_iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 
+                                         (ULONG_PTR) 0, 0);
+    if (kq->kq_iocp == NULL) {
+        dbg_lasterror("CreateIoCompletionPort");
+        return (-1);
+    }
+
+    /* Create a handle whose sole purpose is to indicate a synthetic
+     * IO event. */
+    kq->kq_synthetic_event = CreateSemaphore(NULL, 0, 1, NULL);
+    if (kq->kq_synthetic_event == NULL) {
+        /* FIXME: close kq_iocp */
+        dbg_lasterror("CreateSemaphore");
+        return (-1);
+    }
+
+#if DEADWOOD
     kq->kq_loop = evt_create();
     if (kq->kq_loop == NULL) {
         dbg_perror("evt_create()");
         return (-1);
     }
+#endif
 
 	if(filter_register_all(kq) < 0) {
 		evt_destroy(kq->kq_loop);
@@ -98,7 +121,8 @@ int
 windows_kevent_wait(struct kqueue *kq, int no, const struct timespec *timeout)
 {
 	int retval;
-    DWORD rv, timeout_ms;
+    DWORD       timeout_ms;
+    BOOL        success;
     
 	/* Convert timeout to milliseconds */
 	/* NOTE: loss of precision for timeout values less than 1ms */
@@ -111,6 +135,25 @@ windows_kevent_wait(struct kqueue *kq, int no, const struct timespec *timeout)
 		if (timeout->tv_sec > 0)
 			timeout_ms += timeout->tv_nsec / 1000000;
 	}
+
+    dbg_printf("waiting for events (timeout=%u ms)", (unsigned int) timeout_ms);
+    memset(&iocp_buf, 0, sizeof(iocp_buf));
+    success = GetQueuedCompletionStatus(kq->kq_iocp, 
+            &iocp_buf.bytes, &iocp_buf.key, &iocp_buf.overlap, 
+            timeout_ms);
+    if (success) {
+        return (1);
+    } else {
+        if (GetLastError() == WAIT_TIMEOUT) {
+            dbg_puts("no events within the given timeout");
+            return (0);
+        }
+        dbg_lasterror("GetQueuedCompletionStatus");
+        return (-1);
+    }
+    
+#if DEADWOOD
+    DWORD rv;
 
 	/* Wait for an event */
     dbg_printf("waiting for %u events (timeout=%u ms)", kq->kq_filt_count, (unsigned int)timeout_ms);
@@ -128,7 +171,8 @@ windows_kevent_wait(struct kqueue *kq, int no, const struct timespec *timeout)
 	default:
 		retval = rv;
 	}
-	
+#endif
+
     return (retval);
 }
 
@@ -138,42 +182,38 @@ windows_kevent_copyout(struct kqueue *kq, int nready,
 {
     struct filter *filt;
 	struct knote* kn;
-	evt_event_t evt;
-    int i, rv, nret;
+    int rv, nret;
 
-	assert(nready < MAX_KEVENT);
+    //FIXME: not true for EVFILT_IOCP
+    kn = (struct knote *) iocp_buf.overlap;
+    knote_lock(kn);
+    filt = &kq->kq_filt[~(kn->kev.filter)];
+    rv = filt->kf_copyout(eventlist, kn, &iocp_buf);
+    knote_unlock(kn);
+    if (slowpath(rv < 0)) {
+        dbg_puts("knote_copyout failed");
+        /* XXX-FIXME: hard to handle this without losing events */
+        abort();
+    } else {
+        nret = 1;
+    }
 
-	nret = nready;
-	for(i = 0; i < nready; i++) {
-		evt = &(pending_events[i]);
-		kn = (struct knote*)evt->data;
-		knote_lock(kn);
-		filt = &kq->kq_filt[~(kn->kev.filter)];
-		rv = filt->kf_copyout(eventlist, kn, evt);
-		knote_unlock(kn);
-        if (slowpath(rv < 0)) {
-            dbg_puts("knote_copyout failed");
-            /* XXX-FIXME: hard to handle this without losing events */
-            abort();
-        }
+    /*
+     * Certain flags cause the associated knote to be deleted
+     * or disabled.
+     */
+    if (eventlist->flags & EV_DISPATCH) 
+        knote_disable(filt, kn); //TODO: Error checking
+    if (eventlist->flags & EV_ONESHOT) 
+        knote_release(filt, kn); //TODO: Error checking
 
-		/*
-         * Certain flags cause the associated knote to be deleted
-         * or disabled.
-         */
-        if (eventlist->flags & EV_DISPATCH) 
-            knote_disable(filt, kn); //TODO: Error checking
-        if (eventlist->flags & EV_ONESHOT) 
-            knote_release(filt, kn); //TODO: Error checking
-
-        /* If an empty kevent structure is returned, the event is discarded. */
-        if (fastpath(eventlist->filter != 0)) {
-            eventlist++;
-        } else {
-            dbg_puts("spurious wakeup, discarding event");
-            nret--;
-        }
-	}
+    /* If an empty kevent structure is returned, the event is discarded. */
+    if (fastpath(eventlist->filter != 0)) {
+        eventlist++;
+    } else {
+        dbg_puts("spurious wakeup, discarding event");
+        nret--;
+    }
 
 	return nret;
 }
