@@ -128,8 +128,8 @@ int
 main(int argc, char **argv)
 {
     struct unit_test tests[] = {
+        { "socket", 1, test_evfilt_read },
 #ifndef _WIN32
-		{ "socket", 1, test_evfilt_read },
 
         { "signal", 1, test_evfilt_signal },
 #endif
@@ -148,6 +148,14 @@ main(int argc, char **argv)
     struct unit_test *test;
     char *arg;
     int match, kqfd;
+
+
+#ifdef _WIN32
+    /* Initialize the Winsock library */
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) 
+        err(1, "WSAStartup failed");
+#endif
 
     /* If specific tests are requested, disable all tests by default */
     if (argc > 1) {

@@ -99,11 +99,13 @@ post_configure_hook() {
 
     if [ $target = "windows" ] ; then
           platform="src/windows/platform.c src/windows/event_loop.c"
-	  cflags="$cflags -march=i686"
+	  cflags="$cflags -march=i686 -lws2_32"
 	  ldflags="$ldflags -march=i686"
+          ldadd="-lws2_32"
           evfilt_proc=""
           evfilt_signal=""
-          evfilt_socket=""
+	  #evfilt_socket="src/windows/read.c src/linux/write.c"
+	  evfilt_socket="src/windows/read.c"
           evfilt_timer="src/windows/timer.c"
           evfilt_user=""
           evfilt_vnode=""

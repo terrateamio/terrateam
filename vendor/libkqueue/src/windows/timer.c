@@ -72,7 +72,15 @@ static VOID CALLBACK evfilt_timer_callback(void* param, BOOLEAN fired){
 	}
 	kq = kn->kn_kq;
 	assert(kq);
+
+    if (!PostQueuedCompletionStatus(kq->kq_iocp, 1, (ULONG_PTR) 0, (LPOVERLAPPED) kn)) {
+        dbg_lasterror("PostQueuedCompletionStatus()");
+        return;
+        /* FIXME: need more extreme action */
+    }
+#if DEADWOOD
 	evt_signal(kq->kq_loop, EVT_WAKEUP, kn);
+#endif
 }
 
 int

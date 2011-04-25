@@ -61,16 +61,24 @@ extern char *DEBUG_IDENT;
       fprintf(stderr, "%s: [%d] %s(): %s: (LastError=%d)\n",        \
               DEBUG_IDENT, THREAD_ID, __func__, str, (int)GetLastError());            \
 } while (0)
+
+#  define dbg_wsalasterror(str)  do {                                \
+    if (DEBUG_ACTIVE)                                                      \
+      fprintf(stderr, "%s: [%d] %s(): %s: (WSALastError=%d)\n",        \
+              DEBUG_IDENT, THREAD_ID, __func__, str, (int)WSAGetLastError());            \
+} while (0)
 # else
 #  define dbg_lasterror(str)     ;
+#  define dbg_wsalasterror(str)  ;
 # endif
 
 #else /* NDEBUG */
-# define dbg_puts(str)           ;
-# define dbg_printf(fmt,...)     ;
-# define dbg_perror(str)         ;
-# define dbg_lasterror(str)      ;
-# define reset_errno()           ;
+# define dbg_puts(str)           do {} while (0)
+# define dbg_printf(fmt,...)     do {} while (0)
+# define dbg_perror(str)         do {} while (0)
+# define dbg_lasterror(str)      do {} while (0)
+# define dbg_wsalasterror(str)   do {} while (0)
+# define reset_errno()           do {} while (0)
 #endif 
 
 #endif  /* ! _DEBUG_H */
