@@ -33,7 +33,6 @@ const struct filter evfilt_proc = EVFILT_NOTIMPL;
 const struct filter evfilt_vnode = EVFILT_NOTIMPL;
 const struct filter evfilt_signal = EVFILT_NOTIMPL;
 const struct filter evfilt_write = EVFILT_NOTIMPL;
-const struct filter evfilt_user = EVFILT_NOTIMPL;
 
 const struct kqueue_vtable kqops = {
     windows_kqueue_init,

@@ -78,6 +78,7 @@
     <ClCompile Include="src\windows\platform.c" />
     <ClCompile Include="src\windows\read.c" />
     <ClCompile Include="src\windows\timer.c" />
+    <ClCompile Include="src\windows\user.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\kqueue.h" />

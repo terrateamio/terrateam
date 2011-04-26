@@ -51,6 +51,7 @@
 #else
 # include "../include/sys/event.h"
 # include "../src/windows/platform.h"
+# define HAVE_EVFILT_USER 1
 #endif
 
 
