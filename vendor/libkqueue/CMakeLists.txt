@@ -24,7 +24,7 @@ if(KQUEUE_TESTS)
 	add_subdirectory(test)
 endif()
 
-project(libkqueue)
+project(kqueue)
 
 #files
 file(GLOB_RECURSE INCL include/*.h)
@@ -62,6 +62,8 @@ else()
 		src/linux/timer.c
 		src/linux/user.c
 		src/linux/vnode.c
+		src/linux/write.c
+		src/linux/read.c
 		src/common/*.h
 		src/common/filter.c
 		src/common/knote.c
@@ -91,14 +93,19 @@ include_directories(
 option(STATIC_KQUEUE "Enable to build libkqueue as static lib" OFF)
 if(STATIC_WORKQUEUE)
     add_definitions(-DMAKE_STATIC)
-    add_library(libkqueue STATIC ${SRC} ${INCL})
+    add_library(kqueue STATIC ${SRC} ${INCL})
 else()
-    add_library(libkqueue SHARED ${SRC} ${INCL})
+    add_library(kqueue SHARED ${SRC} ${INCL})
+endif()
+
+if(WIN32)
+	set(LIB ${LIB} Ws2_32)
 endif()
 if(NOT WIN32)
-	target_link_libraries(libkqueue pthread)
+	set(LIB ${LIB} pthread)
 endif()
-set_target_properties(libkqueue PROPERTIES DEBUG_POSTFIX "D")
+target_link_libraries(kqueue ${LIB})
+set_target_properties(kqueue PROPERTIES DEBUG_POSTFIX "D")
 
 #tests
 option(KQUEUE_TESTS "Enable to build tests for libkqueue" OFF)
