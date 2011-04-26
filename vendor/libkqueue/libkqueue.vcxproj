@@ -50,7 +50,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>msvcrtd.lib;Libcmtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>msvcrtd.lib;Libcmtd.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -76,6 +76,7 @@
     <ClCompile Include="src\common\map.c" />
     <ClCompile Include="src\windows\event_loop.c" />
     <ClCompile Include="src\windows\platform.c" />
+    <ClCompile Include="src\windows\read.c" />
     <ClCompile Include="src\windows\timer.c" />
   </ItemGroup>
   <ItemGroup>

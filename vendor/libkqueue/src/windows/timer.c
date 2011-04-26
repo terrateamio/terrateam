@@ -17,6 +17,7 @@
 #include "../common/private.h"
 
 /* Needed for safe termination of a pending timer */
+// FIXME: This is not a threadsafe solution but can be fixed by using ref count and the upcoming KNOTE_DELETED
 static struct knote __thread *about_to_delete = NULL;
 
 /* Convert milliseconds into negative increments of 100-nanoseconds */
