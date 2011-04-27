@@ -1,3 +1,30 @@
+ * There are very likely to be lock-related bugs stemming from when the
+   kevent_copyin() and kevent_copyout() functions stopped holding the
+   kqueue lock. It would be nice to have a lock testing mechanism to 
+   check that the correct locks are held.. something like:
+
+      #define MTX_LOCKED 1
+      #define MTX_UNLOCKED 0
+      #if NDEBUG
+      #define LOCK_MONITOR(x)  int x
+      #define lock_assert(x,y) assert((x) == (y))
+      #define lock_acquire(x,y) do { pthread_mutex_lock((x)); y = MTX_LOCKED } while (0)
+      #define lock_release(x,y) do { pthread_mutex_unlock((x)); y = MTX_UNLOCKED } while (0)
+      #else
+      #define LOCK_MONITOR(x)  /**/
+      #define lock_assert(x,y) do {} while (0)
+      #define lock_acquire(x,y) do { pthread_mutex_lock((x)); } while (0)
+      #define lock_release(x,y) do { pthread_mutex_unlock((x)); } while (0)
+      #endif
+
+      struct foo {
+         LOCK_MONITOR(foo_lockstat);
+      }
+      ...
+
+      lock_assert(&kn->kn_lockmon, MTX_LOCKED);
+      lock_assert(&kn->kn_lockmon, MTX_UNLOCKED);
+
  * Add a counter that increments on each each kevent() call. When printing
    debug information within kevent(), display the value of the counter.
    This will be helpful when debugging a multithreaded program that may have

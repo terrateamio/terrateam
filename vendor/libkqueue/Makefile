@@ -68,7 +68,7 @@ debug: clean $(PROGRAM).so.$(ABI_VERSION) test/config.mk
 	cd test && make debug
 
 debug-check: clean test/config.mk
-	cd test && KQUEUE_DEBUG=y make check
+	cd test && KQUEUE_DEBUG=yes make check
 
 $(DISTFILE): $(SOURCES) $(HEADERS)
 	mkdir $(PROGRAM)-$(VERSION)

@@ -207,7 +207,7 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
         if (eventlist->flags & EV_DISPATCH) 
             knote_disable(filt, kn); //TODO: Error checking
         if (eventlist->flags & EV_ONESHOT) 
-            knote_release(filt, kn); //TODO: Error checking
+            knote_delete(filt, kn); //TODO: Error checking
 
         eventlist++;
     }

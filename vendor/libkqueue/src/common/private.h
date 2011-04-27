@@ -63,12 +63,16 @@ struct eventfd {
 #endif
 };
 
-/* TODO: Make this a variable length structure and allow
-   each filter to add custom fields at the end.
+/* 
+ * Flags used by knote->kn_flags
  */
+#define KNFL_PASSIVE_SOCKET  (0x01)  /* Socket is in listen(2) mode */
+#define KNFL_REGULAR_FILE    (0x02)  /* File descriptor is a regular file */
+#define KNFL_KNOTE_DELETED   (0x10)  /* The knote object is no longer valid */
+ 
 struct knote {
     struct kevent     kev;
-    int               flags;       
+    int               kn_flags;       
     union {
         /* OLD */
         int           pfd;       /* Used by timerfd */
@@ -82,15 +86,12 @@ struct knote {
 		void          *handle;      /* Used by win32 filters */
     } data;
 	struct kqueue*	   kn_kq;
-#if ! SERIALIZE_KEVENT
-    pthread_mutex_t   mtx;
+    pthread_mutex_t    kn_mtx;
     volatile uint32_t  kn_ref;
-#endif
 #if defined(KNOTE_PLATFORM_SPECIFIC)
     KNOTE_PLATFORM_SPECIFIC;
 #endif
-    TAILQ_ENTRY(knote) event_ent;    /* Used by filter->kf_event */
-    RB_ENTRY(knote)   kntree_ent;   /* Used by filter->kntree */
+    RB_ENTRY(knote)   kn_entries;
 };
 
 #define KNOTE_ENABLE(ent)           do {                            \
@@ -185,12 +186,11 @@ extern const struct kqueue_vtable kqops;
  * knote internal API
  */
 struct knote * knote_lookup(struct filter *, short);
-struct knote * knote_lookup_data(struct filter *filt, intptr_t);
+//DEADWOOD: struct knote * knote_get_by_data(struct filter *filt, intptr_t);
 struct knote * knote_new(void);
 void knote_release(struct filter *, struct knote *);
-void knote_retain(struct knote *);
-void knote_free_all(struct filter *);
 void knote_insert(struct filter *, struct knote *);
+int  knote_delete(struct filter *, struct knote *);
 int  knote_init(void);
 int  knote_disable(struct filter *, struct knote *);
 #if ! SERIALIZE_KEVENT

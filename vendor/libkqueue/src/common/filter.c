@@ -124,7 +124,8 @@ filter_unregister_all(struct kqueue *kq)
         if (kq->kq_filt[i].kf_destroy != NULL) 
             kq->kq_filt[i].kf_destroy(&kq->kq_filt[i]);
 
-        knote_free_all(&kq->kq_filt[i]);
+        //XXX-FIXME
+        //knote_free_all(&kq->kq_filt[i]);
 
         if (kqops.filter_free != NULL)
             kqops.filter_free(kq, &kq->kq_filt[i]);

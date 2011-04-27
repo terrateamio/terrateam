@@ -39,12 +39,6 @@ extern long int syscall (long int __sysno, ...);
 #define kqueue_epfd(kq)     ((kq)->kq_id)
 #define filter_epfd(filt)   ((filt)->kf_kqueue->kq_id)
 
-/* 
- * Flags used by knote->flags
- */
-#define KNFL_PASSIVE_SOCKET  (0x01)  /* Socket is in listen(2) mode */
-#define KNFL_REGULAR_FILE    (0x02)  /* File descriptor is a regular file */
- 
 /*
  * Additional members of struct filter
  */

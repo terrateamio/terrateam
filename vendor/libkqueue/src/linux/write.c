@@ -66,7 +66,7 @@ evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
         return (-1);
 
     /* TODO: return EBADF? */
-    if (kn->flags & KNFL_REGULAR_FILE)
+    if (kn->kn_flags & KNFL_REGULAR_FILE)
         return (-1);
 
     /* Convert the kevent into an epoll_event */
