@@ -173,8 +173,9 @@ linux_kevent_copyout(struct kqueue *kq, int nready,
          */
         if (eventlist->flags & EV_DISPATCH) 
             knote_disable(filt, kn); //TODO: Error checking
+                     //^^^^^^^^ FIXME, shouldn't this need the lock held?
         if (eventlist->flags & EV_ONESHOT) 
-            knote_release(filt, kn); //TODO: Error checking
+            knote_delete(filt, kn); //TODO: Error checking
 
         /* If an empty kevent structure is returned, the event is discarded. */
         /* TODO: add these semantics to windows + solaris platform.c */
@@ -290,7 +291,7 @@ linux_get_descriptor_type(struct knote *kn)
     }
     if (! S_ISSOCK(sb.st_mode)) {
         //FIXME: could be a pipe, device file, or other non-regular file
-        kn->flags |= KNFL_REGULAR_FILE;
+        kn->kn_flags |= KNFL_REGULAR_FILE;
         dbg_printf("fd %d is a regular file\n", (int)kn->kev.ident);
         return (0);
     }
@@ -312,7 +313,7 @@ linux_get_descriptor_type(struct knote *kn)
         }
     } else {
         if (lsock) 
-            kn->flags |= KNFL_PASSIVE_SOCKET;
+            kn->kn_flags |= KNFL_PASSIVE_SOCKET;
         return (0);
     }
 }

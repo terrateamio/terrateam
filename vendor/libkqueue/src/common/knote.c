@@ -22,8 +22,6 @@
 
 #include "alloc.h"
 
-static void knote_free(struct filter *, struct knote *);
-
 int
 knote_init(void)
 {
@@ -37,7 +35,7 @@ knote_cmp(struct knote *a, struct knote *b)
     return memcmp(&a->kev.ident, &b->kev.ident, sizeof(a->kev.ident)); 
 }
 
-RB_GENERATE(knt, knote, kntree_ent, knote_cmp)
+RB_GENERATE(knt, knote, kn_entries, knote_cmp)
 
 struct knote *
 knote_new(void)
@@ -49,57 +47,39 @@ knote_new(void)
 	if (res == NULL)
         return (NULL);
 
-#if ! SERIALIZE_KEVENT
 #ifdef _WIN32
-	pthread_mutex_init(&res->mtx, NULL);
+	pthread_mutex_init(&res->kn_mtx, NULL);
 #else
-    if (pthread_mutex_init(&res->mtx, NULL)){
+    if (pthread_mutex_init(&res->kn_mtx, NULL)){
         dbg_perror("pthread_mutex_init");
         free(res);
         return (NULL);
     }
 #endif
-#endif
+    res->kn_ref = 1;
 
-    return res;
+    return (res);
 }
 
-void
-knote_retain(struct knote *kn)
-{
-#if ! SERIALIZE_KEVENT
-    atomic_inc(&kn->kn_ref);
-#endif
-}
-
+/* Must be called while holding the knote lock */
 void
 knote_release(struct filter *filt, struct knote *kn)
 {
-#if SERIALIZE_KEVENT
-    knote_free(filt, kn);
-#else
-    int ref;
+    assert (kn->kn_ref > 0);
 
-    assert (kn->kn_ref >= 0);
-
-    /*
-     * Optimize for the case where only a single thread is accessing
-     * the knote structure.
-     */
-    if (fastpath(kn->kn_ref == 0))
-        ref = 0;
-    else
-        ref = atomic_dec(&kn->kn_ref);
-
-    if (ref == 0) {
-        dbg_printf("freeing knote at %p, rc=%d", kn, ref);
-        pthread_rwlock_wrlock(&filt->kf_knote_mtx);
-        knote_free(filt, kn);
-        pthread_rwlock_unlock(&filt->kf_knote_mtx);
+    if (--kn->kn_ref == 0) {
+        if (kn->kn_flags & KNFL_KNOTE_DELETED) {
+            dbg_printf("freeing knote at %p", kn);
+            knote_unlock(kn);
+            pthread_mutex_destroy(&kn->kn_mtx);
+            free(kn);
+        } else {
+            dbg_puts("this should never happen");
+        }
     } else {
-        dbg_printf("decrementing refcount of knote %p rc=%d", kn, ref);
+        dbg_printf("decrementing refcount of knote %p rc=%d", kn, kn->kn_ref);
+        knote_unlock(kn);
     }
-#endif
 }
 
 void
@@ -110,37 +90,41 @@ knote_insert(struct filter *filt, struct knote *kn)
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
 }
 
-static void
-knote_free(struct filter *filt, struct knote *kn)
+/* Must be called while holding the knote lock */
+int
+knote_delete(struct filter *filt, struct knote *kn)
 {
-    RB_REMOVE(knt, &filt->kf_knote, kn);
-    filt->kn_delete(filt, kn);
-#if ! SERIALIZE_KEVENT
-    pthread_mutex_destroy(&kn->mtx);
-#endif
-    free(kn);
-//    mem_free(kn);
-}
+    struct knote query;
+    struct knote *tmp;
 
-/* XXX-FIXME this is broken and should be removed */
-void
-knote_free_all(struct filter *filt)
-{
-    struct knote *n1, *n2;
+    if (kn->kn_flags & KNFL_KNOTE_DELETED) {
+        dbg_puts("ERROR: double deletion detected");
+        return (-1);
+    }
 
-    abort();
-
-    /* Destroy all knotes */
+    /*
+     * Drop the knote lock, and acquire both the knotelist write lock
+     * and the knote lock. Verify that the knote wasn't removed by another
+     * thread before we acquired the knotelist lock.
+     */
+    query.kev.ident = kn->kev.ident;
+    knote_unlock(kn);
     pthread_rwlock_wrlock(&filt->kf_knote_mtx);
-    for (n1 = RB_MIN(knt, &filt->kf_knote); n1 != NULL; n1 = n2) {
-        n2 = RB_NEXT(knt, filt->kf_knote, n1);
-        RB_REMOVE(knt, &filt->kf_knote, n1);
-        free(n1);
+    tmp = RB_FIND(knt, &filt->kf_knote, &query);
+    if (tmp == kn) {
+        RB_REMOVE(knt, &filt->kf_knote, kn);
     }
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
+
+    filt->kn_delete(filt, kn); //XXX-FIXME check return value
+
+    kn->kn_flags |= KNFL_KNOTE_DELETED;
+
+    knote_release(filt, kn);
+
+    return (0);
 }
 
-/* TODO: rename to knote_lookup_ident */
 struct knote *
 knote_lookup(struct filter *filt, short ident)
 {
@@ -151,10 +135,8 @@ knote_lookup(struct filter *filt, short ident)
 
     pthread_rwlock_rdlock(&filt->kf_knote_mtx);
     ent = RB_FIND(knt, &filt->kf_knote, &query);
-#if ! SERIALIZE_KEVENT
     if (ent != NULL) 
         knote_lock(ent);
-#endif
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
 
     dbg_printf("id=%d ent=%p", ident, ent);
@@ -162,8 +144,9 @@ knote_lookup(struct filter *filt, short ident)
     return (ent);
 }
     
+#if DEADWOOD
 struct knote *
-knote_lookup_data(struct filter *filt, intptr_t data)
+knote_get_by_data(struct filter *filt, intptr_t data)
 {
     struct knote *kn;
 
@@ -172,14 +155,15 @@ knote_lookup_data(struct filter *filt, intptr_t data)
         if (data == kn->kev.data) 
             break;
     }
-#if ! SERIALIZE_KEVENT
-    if (kn != NULL)
+    if (kn != NULL) {
         knote_lock(kn);
-#endif
+        knote_retain(kn);
+    }
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
 
     return (kn);
 }
+#endif
 
 int
 knote_disable(struct filter *filt, struct knote *kn)

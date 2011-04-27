@@ -154,7 +154,6 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
             knote_insert(filt, kn);
             dbg_printf("created kevent %s", kevent_dump(src));
 
-
 /* XXX- FIXME Needs to be handled in kn_create() to prevent races */
             if (src->flags & EV_DISABLE) {
                 kn->kev.flags |= EV_DISABLE;
@@ -162,33 +161,33 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
             }
             //........................................
 
-
-
             return (0);
         } else {
+            dbg_printf("no entry found for ident=%u", (unsigned int)src->ident); 
             errno = ENOENT;
             return (-1);
         }
     }
 
     if (src->flags & EV_DELETE) {
-		knote_unlock(kn);
-        knote_release(filt, kn);
+        rv = knote_delete(filt, kn);
+        dbg_printf("knote_delete returned %d", rv);
+        /* NOTE: the knote lock was dropped by knote_delete() */
     } else if (src->flags & EV_DISABLE) {
         kn->kev.flags |= EV_DISABLE;
         rv = filt->kn_disable(filt, kn);
         dbg_printf("kn_disable returned %d", rv);
-		knote_unlock(kn);
+        knote_unlock(kn);
     } else if (src->flags & EV_ENABLE) {
         kn->kev.flags &= ~EV_DISABLE;
         rv = filt->kn_enable(filt, kn);
         dbg_printf("kn_enable returned %d", rv);
-		knote_unlock(kn);
+        knote_unlock(kn);
     } else if (src->flags & EV_ADD || src->flags == 0 || src->flags & EV_RECEIPT) {
         kn->kev.udata = src->udata;
         rv = filt->kn_modify(filt, kn, src);
         dbg_printf("kn_modify returned %d", rv);
-		knote_unlock(kn);
+        knote_unlock(kn);
     }
 
     return (rv);
