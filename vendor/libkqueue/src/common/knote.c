@@ -67,7 +67,7 @@ knote_release(struct filter *filt, struct knote *kn)
 {
     assert (kn->kn_ref > 0);
 
-    if (--kn->kn_ref == 0) {
+	if (atomic_dec(&kn->kn_ref) == 0) {
         if (kn->kn_flags & KNFL_KNOTE_DELETED) {
             dbg_printf("freeing knote at %p", kn);
             knote_unlock(kn);
