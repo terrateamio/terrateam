@@ -16,10 +16,6 @@
 
 #include "../common/private.h"
 
-/* Needed for safe termination of a pending timer */
-// FIXME: This is not a threadsafe solution but can be fixed by using ref count and the upcoming KNOTE_DELETED
-static struct knote __thread *about_to_delete = NULL;
-
 /* Convert milliseconds into negative increments of 100-nanoseconds */
 static void
 convert_msec_to_filetime(LARGE_INTEGER *dst, int src)
@@ -34,7 +30,6 @@ ktimer_delete(struct filter *filt, struct knote *kn)
     if (kn->data.handle == NULL || kn->kn_event_whandle == NULL)
         return (0);
 
-	about_to_delete = kn;
 	if(!UnregisterWaitEx(kn->kn_event_whandle, INVALID_HANDLE_VALUE)) {
 		dbg_lasterror("UnregisterWait()");
 		return (-1);
@@ -49,9 +44,11 @@ ktimer_delete(struct filter *filt, struct knote *kn)
 		return (-1);
 	}
 
-	about_to_delete = NULL;
-    kn->data.handle = NULL;
-    return (0);
+	if( !(kn->kev.flags & EV_ONESHOT) )
+		knote_release(filt, kn);
+
+	kn->data.handle = NULL;
+	return (0);
 }
 
 static VOID CALLBACK evfilt_timer_callback(void* param, BOOLEAN fired){
@@ -65,23 +62,29 @@ static VOID CALLBACK evfilt_timer_callback(void* param, BOOLEAN fired){
 
 	assert(param);
 	kn = (struct knote*)param;
-// FIXME: depends on ! SERIALIZE_KEVENT
-// dbg_printf("called for knote at %p, rc=%d", kn, kn->kn_ref);
-	if(about_to_delete == kn) {
+
+	if(kn->kn_flags & KNFL_KNOTE_DELETED) {
 		dbg_puts("knote marked for deletion, skipping event");
 		return;
-	}
-	kq = kn->kn_kq;
-	assert(kq);
+	} else {
+		kq = kn->kn_kq;
+		assert(kq);
 
-    if (!PostQueuedCompletionStatus(kq->kq_iocp, 1, (ULONG_PTR) 0, (LPOVERLAPPED) kn)) {
-        dbg_lasterror("PostQueuedCompletionStatus()");
-        return;
-        /* FIXME: need more extreme action */
-    }
+		if (!PostQueuedCompletionStatus(kq->kq_iocp, 1, (ULONG_PTR) 0, (LPOVERLAPPED) kn)) {
+			dbg_lasterror("PostQueuedCompletionStatus()");
+			return;
+			/* FIXME: need more extreme action */
+		}
 #if DEADWOOD
-	evt_signal(kq->kq_loop, EVT_WAKEUP, kn);
+		evt_signal(kq->kq_loop, EVT_WAKEUP, kn);
 #endif
+	}
+	if(kn->kev.flags & EV_ONESHOT) {
+		struct filter* filt;
+		if( filter_lookup(&filt, kq, kn->kev.filter) )
+			dbg_perror("filter_lookup()");
+		knote_release(filt, kn);
+	}
 }
 
 int
@@ -135,6 +138,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 
     kn->data.handle = th;
 	RegisterWaitForSingleObject(&kn->kn_event_whandle, th, evfilt_timer_callback, kn, INFINITE, 0);
+	knote_retain(kn);
 
     return (0);
 }
