@@ -16,7 +16,10 @@
 
 include config.mk
 
-all: kqtest
+all: kqtest lockstat
+
+lockstat: lockstat.c
+	$(CC) -o lockstat $(CFLAGS) lockstat.c $(LDADD)
 
 kqtest: $(SOURCES)
 	$(CC) -o kqtest $(CFLAGS) $(SOURCES) $(LDADD)
@@ -56,5 +59,5 @@ edit:
 	$(EDITOR) *.[ch]
 
 clean:
-	rm -f *.o *.a kqtest
+	rm -f *.o *.a kqtest lockstat
 	for x in libdispatch stress; do cd $$x && make clean && cd ..; done

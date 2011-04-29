@@ -18,11 +18,14 @@
 #define  _DEBUG_H
 
 #include <assert.h>
+#include <stdio.h>
+#include <unistd.h>
 
 extern int DEBUG_ACTIVE;
 extern char *DEBUG_IDENT;
 
 #if defined(__linux__)
+# include <sys/syscall.h>
 # define THREAD_ID ((pid_t)  syscall(__NR_gettid))
 #elif defined(__sun)
 # define THREAD_ID (pthread_self())
@@ -31,7 +34,6 @@ extern char *DEBUG_IDENT;
 #else 
 # error Unsupported platform
 #endif
-
 
 #ifndef NDEBUG
 #define dbg_puts(str)           do {                                \
@@ -67,11 +69,46 @@ extern char *DEBUG_IDENT;
       fprintf(stderr, "%s: [%d] %s(): %s: (WSALastError=%d)\n",        \
               DEBUG_IDENT, THREAD_ID, __func__, str, (int)WSAGetLastError());            \
 } while (0)
+
 # else
 #  define dbg_lasterror(str)     ;
 #  define dbg_wsalasterror(str)  ;
 # endif
 
+/*
+ * Tracing mutexes are a thin wrapper around the pthread_mutex_t 
+ * datatype that tracks and reports when a mutex is locked or unlocked.
+ * It also allows you to assert that a mutex has (or has not) been locked
+ * by calling tracing_mutex_assert().
+ */
+
+# define MTX_UNLOCKED    0
+# define MTX_LOCKED      1
+
+typedef struct {
+    pthread_mutex_t mtx_lock; 
+    int mtx_status; 
+} tracing_mutex_t; 
+
+# define tracing_mutex_init(mtx, attr) do { \
+    pthread_mutex_init(&(mtx)->mtx_lock, (attr)); \
+    (mtx)->mtx_status = MTX_UNLOCKED; \
+} while (0)
+
+# define tracing_mutex_assert(x,y)   assert((x)->mtx_status == (y))
+
+# define tracing_mutex_lock(x)  do { \
+    dbg_printf("waiting for %s", #x); \
+    pthread_mutex_lock(&((x)->mtx_lock)); \
+    dbg_printf("locked %s", #x); \
+    (x)->mtx_status = MTX_LOCKED; \
+} while (0)
+
+# define tracing_mutex_unlock(x)  do { \
+    (x)->mtx_status = MTX_UNLOCKED; \
+    pthread_mutex_unlock(&((x)->mtx_lock)); \
+    dbg_printf("unlocked %s", # x); \
+} while (0)
 #else /* NDEBUG */
 # define dbg_puts(str)           do {} while (0)
 # define dbg_printf(fmt,...)     do {} while (0)
@@ -79,6 +116,13 @@ extern char *DEBUG_IDENT;
 # define dbg_lasterror(str)      do {} while (0)
 # define dbg_wsalasterror(str)   do {} while (0)
 # define reset_errno()           do {} while (0)
+# define MTX_UNLOCKED                
+# define MTX_LOCKED                 
+# define tracing_mutex_t            pthread_mutex_t
+# define tracing_mutex_init         pthread_mutex_init
+# define tracing_mutex_assert(x,y)  do {} while (0)
+# define tracing_mutex_lock         pthread_mutex_lock
+# define tracing_mutex_unlock       pthread_mutex_unlock
 #endif 
 
 #endif  /* ! _DEBUG_H */
