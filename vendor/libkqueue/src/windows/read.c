@@ -19,8 +19,10 @@
 static VOID CALLBACK
 evfilt_read_callback(void *param, BOOLEAN fired)
 {
+    WSANETWORKEVENTS events;
     struct kqueue *kq;
     struct knote *kn;
+    int rv;
 
     assert(param);
 
@@ -29,11 +31,26 @@ evfilt_read_callback(void *param, BOOLEAN fired)
         return;
     }
     
-	assert(param);
-	kn = (struct knote*)param;
+    assert(param);
+    kn = (struct knote*)param;
     // FIXME: check if knote is pending destroyed
-	kq = kn->kn_kq;
-	assert(kq);
+    kq = kn->kn_kq;
+    assert(kq);
+
+    /* Retrieve the socket events and update the knote */
+    rv = WSAEnumNetworkEvents(
+            (SOCKET) kn->kev.ident, 
+            kn->data.handle,
+                &events);
+    if (rv != 0) {
+        dbg_wsalasterror("WSAEnumNetworkEvents");
+        return; //fIXME: should crash or invalidate the knote
+    }
+    /* FIXME: check for errors somehow..
+    if (events.lNetworkEvents & FD_ACCEPT) 
+        kn->kev.flags |= EV
+    */
+
 
     if (!PostQueuedCompletionStatus(kq->kq_iocp, 1, (ULONG_PTR) 0, (LPOVERLAPPED) param)) {
         dbg_lasterror("PostQueuedCompletionStatus()");
@@ -72,40 +89,22 @@ get_eof_offset(int fd)
 int
 evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
 {
-#if FIXME
-    struct event_buf * const ev = (struct event_buf *) ptr;
+    //struct event_buf * const ev = (struct event_buf *) ptr;
 
-    /* FIXME: for regular files, return the offset from current position to end of file */
-    //if (src->flags & KNFL_REGULAR_FILE) { ... }
+    /* TODO: handle regular files 
+       if (src->flags & KNFL_REGULAR_FILE) { ... } */
 
-    epoll_event_dump(ev);
-    memcpy(dst, &src->kev, sizeof(*dst));
-#if defined(HAVE_EPOLLRDHUP)
-    if (ev->events & EPOLLRDHUP || ev->events & EPOLLHUP)
-        dst->flags |= EV_EOF;
-#else
-    if (ev->events & EPOLLHUP)
-        dst->flags |= EV_EOF;
-#endif
-    if (ev->events & EPOLLERR)
-        dst->fflags = 1; /* FIXME: Return the actual socket error */
-          
-    if (src->flags & KNFL_PASSIVE_SOCKET) {
-        /* On return, data contains the length of the 
-           socket backlog. This is not available under Linux.
-         */
+    memcpy(dst, &src->kev, sizeof(*dst));          
+    if (src->kn_flags & KNFL_PASSIVE_SOCKET) {
+        /* TODO: should contains the length of the socket backlog */
         dst->data = 1;
     } else {
         /* On return, data contains the number of bytes of protocol
            data available to read.
          */
-        if (ioctl(dst->ident, SIOCINQ, &dst->data) < 0) {
-            /* race condition with socket close, so ignore this error */
-            dbg_puts("ioctl(2) of socket failed");
-            dst->data = 0;
-        }
+        /* FIXME: use WSAIoctl and FIONREAD to get the actual value */
+        dst->data = 1;
     }
-#endif
 
     return (0);
 }
@@ -142,14 +141,14 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
         kn->data.events |= EPOLLET;
     */
 
-	if (RegisterWaitForSingleObject(&kn->kn_event_whandle, evt, 
-                evfilt_read_callback, kn, INFINITE, 0) == 0) {
+    kn->data.handle = evt;
+
+    if (RegisterWaitForSingleObject(&kn->kn_event_whandle, evt, 
+	    evfilt_read_callback, kn, INFINITE, 0) == 0) {
         dbg_puts("RegisterWaitForSingleObject failed");
         CloseHandle(evt);
         return (-1);
     }
-
-    kn->data.handle = evt;
 
     return (0);
 }
