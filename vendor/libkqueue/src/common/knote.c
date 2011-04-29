@@ -42,36 +42,28 @@ knote_new(void)
 {
 	struct knote *res;
 
-	// return (mem_calloc());
     res = calloc(1, sizeof(struct knote));
 	if (res == NULL)
         return (NULL);
 
-#ifdef _WIN32
-	pthread_mutex_init(&res->kn_mtx, NULL);
-#else
-    if (pthread_mutex_init(&res->kn_mtx, NULL)){
-        dbg_perror("pthread_mutex_init");
-        free(res);
-        return (NULL);
-    }
-#endif
+	tracing_mutex_init(&res->kn_mtx, NULL); //TODO: error checking
     res->kn_ref = 1;
 
     return (res);
 }
 
-/* Must be called while holding the knote lock */
 void
 knote_release(struct filter *filt, struct knote *kn)
 {
     assert (kn->kn_ref > 0);
 
+    tracing_mutex_assert(&kn->kn_mtx, MTX_LOCKED);
+
 	if (atomic_dec(&kn->kn_ref) == 0) {
         if (kn->kn_flags & KNFL_KNOTE_DELETED) {
             dbg_printf("freeing knote at %p", kn);
             knote_unlock(kn);
-            pthread_mutex_destroy(&kn->kn_mtx);
+            tracing_mutex_destroy(&kn->kn_mtx);
             free(kn);
         } else {
             dbg_puts("this should never happen");
@@ -90,12 +82,13 @@ knote_insert(struct filter *filt, struct knote *kn)
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
 }
 
-/* Must be called while holding the knote lock */
 int
 knote_delete(struct filter *filt, struct knote *kn)
 {
     struct knote query;
     struct knote *tmp;
+
+    tracing_mutex_assert(&kn->kn_mtx, MTX_LOCKED);
 
     if (kn->kn_flags & KNFL_KNOTE_DELETED) {
         dbg_puts("ERROR: double deletion detected");
@@ -112,6 +105,7 @@ knote_delete(struct filter *filt, struct knote *kn)
     pthread_rwlock_wrlock(&filt->kf_knote_mtx);
     tmp = RB_FIND(knt, &filt->kf_knote, &query);
     if (tmp == kn) {
+        knote_lock(kn);
         RB_REMOVE(knt, &filt->kf_knote, kn);
     }
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
@@ -169,6 +163,8 @@ int
 knote_disable(struct filter *filt, struct knote *kn)
 {
     assert(!(kn->kev.flags & EV_DISABLE));
+
+    tracing_mutex_assert(&kn->kn_mtx, MTX_LOCKED);
 
     filt->kn_disable(filt, kn); //TODO: Error checking
     KNOTE_DISABLE(kn);
