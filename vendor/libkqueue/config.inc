@@ -107,7 +107,7 @@ post_configure_hook() {
 	  #evfilt_socket="src/windows/read.c src/linux/write.c"
 	  evfilt_socket="src/windows/read.c"
           evfilt_timer="src/windows/timer.c"
-          evfilt_user=""
+          evfilt_user="src/windows/user.c"
           evfilt_vnode=""
     fi
     
