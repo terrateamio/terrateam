@@ -160,7 +160,6 @@ linux_kevent_copyout(struct kqueue *kq, int nready,
         knote_lock(kn);
         filt = &kq->kq_filt[~(kn->kev.filter)];
         rv = filt->kf_copyout(eventlist, kn, ev);
-        knote_unlock(kn);
         if (slowpath(rv < 0)) {
             dbg_puts("knote_copyout failed");
             /* XXX-FIXME: hard to handle this without losing events */
@@ -172,10 +171,11 @@ linux_kevent_copyout(struct kqueue *kq, int nready,
          * or disabled.
          */
         if (eventlist->flags & EV_DISPATCH) 
-            knote_disable(filt, kn); //TODO: Error checking
-                     //^^^^^^^^ FIXME, shouldn't this need the lock held?
+            knote_disable(filt, kn); //FIXME: Error checking
         if (eventlist->flags & EV_ONESHOT) 
-            knote_delete(filt, kn); //TODO: Error checking
+            knote_delete(filt, kn); //FIXME: Error checking
+
+        knote_unlock(kn);
 
         /* If an empty kevent structure is returned, the event is discarded. */
         /* TODO: add these semantics to windows + solaris platform.c */

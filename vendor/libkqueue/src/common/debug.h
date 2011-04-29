@@ -95,6 +95,8 @@ typedef struct {
     (mtx)->mtx_status = MTX_UNLOCKED; \
 } while (0)
 
+# define tracing_mutex_destroy(mtx) pthread_mutex_destroy(&(mtx)->mtx_lock)
+
 # define tracing_mutex_assert(x,y)   assert((x)->mtx_status == (y))
 
 # define tracing_mutex_lock(x)  do { \
@@ -109,6 +111,7 @@ typedef struct {
     pthread_mutex_unlock(&((x)->mtx_lock)); \
     dbg_printf("unlocked %s", # x); \
 } while (0)
+
 #else /* NDEBUG */
 # define dbg_puts(str)           do {} while (0)
 # define dbg_printf(fmt,...)     do {} while (0)
@@ -120,6 +123,7 @@ typedef struct {
 # define MTX_LOCKED                 
 # define tracing_mutex_t            pthread_mutex_t
 # define tracing_mutex_init         pthread_mutex_init
+# define tracing_mutex_destroy      pthread_mutex_destroy
 # define tracing_mutex_assert(x,y)  do {} while (0)
 # define tracing_mutex_lock         pthread_mutex_lock
 # define tracing_mutex_unlock       pthread_mutex_unlock

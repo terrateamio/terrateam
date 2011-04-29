@@ -86,7 +86,7 @@ struct knote {
 		void          *handle;      /* Used by win32 filters */
     } data;
 	struct kqueue*	   kn_kq;
-    pthread_mutex_t    kn_mtx;
+    tracing_mutex_t    kn_mtx;
     volatile uint32_t  kn_ref;
 #if defined(KNOTE_PLATFORM_SPECIFIC)
     KNOTE_PLATFORM_SPECIFIC;
@@ -145,7 +145,7 @@ struct kqueue {
     struct filter   kq_filt[EVFILT_SYSCOUNT];
     fd_set          kq_fds, kq_rfds; 
     int             kq_nfds;
-    pthread_mutex_t kq_mtx;
+    tracing_mutex_t kq_mtx;
     volatile uint32_t kq_ref;
 #if defined(KQUEUE_PLATFORM_SPECIFIC)
     KQUEUE_PLATFORM_SPECIFIC;
@@ -179,8 +179,8 @@ extern const struct kqueue_vtable kqops;
 /*
  * kqueue internal API
  */
-#define kqueue_lock(kq)     pthread_mutex_lock(&(kq)->kq_mtx)
-#define kqueue_unlock(kq)   pthread_mutex_unlock(&(kq)->kq_mtx)
+#define kqueue_lock(kq)     tracing_mutex_lock(&(kq)->kq_mtx)
+#define kqueue_unlock(kq)   tracing_mutex_unlock(&(kq)->kq_mtx)
 
 /*
  * knote internal API
@@ -194,13 +194,8 @@ void knote_insert(struct filter *, struct knote *);
 int  knote_delete(struct filter *, struct knote *);
 int  knote_init(void);
 int  knote_disable(struct filter *, struct knote *);
-#if ! SERIALIZE_KEVENT
-#define knote_lock(kn)     pthread_mutex_lock(&(kn)->mtx)
-#define knote_unlock(kn)   pthread_mutex_unlock(&(kn)->mtx)
-#else
-#define knote_lock(kn)     do {} while (0)
-#define knote_unlock(kn)   do {} while (0)
-#endif
+#define knote_lock(kn)     tracing_mutex_lock(&(kn)->kn_mtx)
+#define knote_unlock(kn)   tracing_mutex_unlock(&(kn)->kn_mtx)
 
 int         filter_lookup(struct filter **, struct kqueue *, short);
 int      	filter_register_all(struct kqueue *);
