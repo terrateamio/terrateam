@@ -31,6 +31,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
  
 #define _CRT_SECURE_NO_WARNINGS 1
 /* The #define doesn't seem to work, but the #pragma does.. */
@@ -95,6 +97,7 @@ int     windows_kevent_wait(struct kqueue *, int, const struct timespec *);
 int     windows_kevent_copyout(struct kqueue *, int, struct kevent *, int);
 int     windows_filter_init(struct kqueue *, struct filter *);
 void    windows_filter_free(struct kqueue *, struct filter *);
+int     windows_get_descriptor_type(struct knote *);
 
 /* Windows does not support this attribute.
    DllMain() is the only available constructor function.

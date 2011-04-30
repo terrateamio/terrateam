@@ -84,6 +84,7 @@ windows_kqueue_init(struct kqueue *kq)
         return (-1);
     }
 
+#if DEADWOOD
     /* Create a handle whose sole purpose is to indicate a synthetic
      * IO event. */
     kq->kq_synthetic_event = CreateSemaphore(NULL, 0, 1, NULL);
@@ -93,7 +94,6 @@ windows_kqueue_init(struct kqueue *kq)
         return (-1);
     }
 
-#if DEADWOOD
     kq->kq_loop = evt_create();
     if (kq->kq_loop == NULL) {
         dbg_perror("evt_create()");
@@ -188,7 +188,6 @@ windows_kevent_copyout(struct kqueue *kq, int nready,
     knote_lock(kn);
     filt = &kq->kq_filt[~(kn->kev.filter)];
     rv = filt->kf_copyout(eventlist, kn, &iocp_buf);
-    knote_unlock(kn);
     if (slowpath(rv < 0)) {
         dbg_puts("knote_copyout failed");
         /* XXX-FIXME: hard to handle this without losing events */
@@ -205,6 +204,8 @@ windows_kevent_copyout(struct kqueue *kq, int nready,
         knote_disable(filt, kn); //TODO: Error checking
     if (eventlist->flags & EV_ONESHOT) 
         knote_delete(filt, kn); //TODO: Error checking
+
+    knote_unlock(kn);
 
     /* If an empty kevent structure is returned, the event is discarded. */
     if (fastpath(eventlist->filter != 0)) {
@@ -231,4 +232,34 @@ void
 windows_filter_free(struct kqueue *kq, struct filter *kf)
 {
 
+}
+
+int
+windows_get_descriptor_type(struct knote *kn)
+{
+    socklen_t slen;
+    struct stat sb;
+    int i, lsock;
+
+    /*
+     * Test if the descriptor is a socket.
+     */
+    if (fstat(kn->kev.ident, &sb) == 0) {
+        dbg_printf("HANDLE %d appears to a be regular file", kn->kev.ident);
+        kn->kn_flags |= KNFL_REGULAR_FILE;
+    } else {
+        /* Assume that the HANDLE is a socket. */
+        /* TODO: we could do a WSAIoctl and check for WSAENOTSOCK */
+
+        /*
+         * Test if the socket is active or passive.
+         */
+        slen = sizeof(lsock);
+        lsock = 0;
+        i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_ACCEPTCONN, (char *) &lsock, &slen);
+        if (i == 0 && lsock) 
+            kn->kn_flags |= KNFL_PASSIVE_SOCKET;
+    }
+
+    return (0);
 }

@@ -89,6 +89,8 @@ get_eof_offset(int fd)
 int
 evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
 {
+    unsigned long bufsize;
+
     //struct event_buf * const ev = (struct event_buf *) ptr;
 
     /* TODO: handle regular files 
@@ -102,8 +104,11 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
         /* On return, data contains the number of bytes of protocol
            data available to read.
          */
-        /* FIXME: use WSAIoctl and FIONREAD to get the actual value */
-        dst->data = 1;
+        if (ioctlsocket(src->kev.ident, FIONREAD, &bufsize) != 0) {
+            dbg_wsalasterror("ioctlsocket");
+            return (-1);
+        }
+        dst->data = bufsize;
     }
 
     return (0);
@@ -114,6 +119,9 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
 {
     HANDLE evt;
     int rv;
+
+    if (windows_get_descriptor_type(kn) < 0)
+            return (-1);
 
     /* Create an auto-reset event object */
     evt = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -163,9 +171,6 @@ evfilt_read_knote_modify(struct filter *filt, struct knote *kn,
 int
 evfilt_read_knote_delete(struct filter *filt, struct knote *kn)
 {
-    if (kn->kev.flags & EV_DISABLE)
-        return (0);
-
     if (kn->data.handle == NULL || kn->kn_event_whandle == NULL)
         return (0);
 
