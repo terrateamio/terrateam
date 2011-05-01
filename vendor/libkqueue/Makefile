@@ -20,7 +20,7 @@ DISTFILE=$(PROGRAM)-$(VERSION).tar.gz
 
 include config.mk
 
-.PHONY :: install uninstall check dist dist-upload publish-www clean merge distclean fresh-build rpm edit cscope
+.PHONY :: install uninstall check dist dist-upload clean merge distclean fresh-build rpm edit cscope
 
 all: $(PROGRAM).so.$(ABI_VERSION)
 
@@ -93,7 +93,6 @@ clean:
 	find src -name '*.o' -exec rm {} \;
 	rm -rf pkg
 	cd test && make clean || true
-	if [ -d www ] ; then cd www && make clean ; fi
 
 distclean: clean
 	rm -f *.tar.gz config.mk config.h $(PROGRAM).pc $(PROGRAM).la rpm.spec
