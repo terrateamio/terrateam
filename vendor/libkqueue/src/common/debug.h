@@ -19,7 +19,9 @@
 
 #include <assert.h>
 #include <stdio.h>
-#include <unistd.h>
+#ifndef _WIN32
+# include <unistd.h>
+#endif
 
 extern int DEBUG_ACTIVE;
 extern char *DEBUG_IDENT;

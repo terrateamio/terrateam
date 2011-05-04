@@ -56,5 +56,5 @@ else()
 endif()
 
 add_executable(libkqueue-test ${SRC})
-target_link_libraries(libkqueue-test libkqueue ${LIBS})
+target_link_libraries(libkqueue-test kqueue ${LIBS})
 set_target_properties(libkqueue-test PROPERTIES DEBUG_POSTFIX "D")

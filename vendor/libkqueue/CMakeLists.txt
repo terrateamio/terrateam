@@ -17,13 +17,6 @@
 cmake_minimum_required(VERSION 2.8)
 INCLUDE (CheckIncludeFiles)
 
-#tests
-option(KQUEUE_TESTS "Enable to build tests for libkqueue" OFF)
-if(KQUEUE_TESTS)
-    message("-- Adding tests for libkqueue")
-	add_subdirectory(test)
-endif()
-
 project(kqueue)
 
 #files
