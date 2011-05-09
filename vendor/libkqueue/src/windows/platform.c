@@ -102,7 +102,7 @@ windows_kqueue_init(struct kqueue *kq)
 #endif
 
 	if(filter_register_all(kq) < 0) {
-		evt_destroy(kq->kq_loop);
+		CloseHandle(kq->kq_iocp);
 		return (-1);
 	}
 
@@ -112,7 +112,7 @@ windows_kqueue_init(struct kqueue *kq)
 void
 windows_kqueue_free(struct kqueue *kq)
 {
-    evt_destroy(kq->kq_loop);
+    CloseHandle(kq->kq_iocp);
     free(kq);
 }
 
@@ -150,27 +150,6 @@ windows_kevent_wait(struct kqueue *kq, int no, const struct timespec *timeout)
         dbg_lasterror("GetQueuedCompletionStatus");
         return (-1);
     }
-    
-#if DEADWOOD
-    DWORD rv;
-
-	/* Wait for an event */
-    dbg_printf("waiting for %u events (timeout=%u ms)", kq->kq_filt_count, (unsigned int)timeout_ms);
-	rv = evt_run(kq->kq_loop, pending_events, MAX_KEVENT, timeout); 
-	switch (rv) {
-	case EVT_TIMEDOUT:
-		dbg_puts("no events within the given timeout");
-		retval = 0;
-		break;
-
-	case EVT_ERR:
-		dbg_lasterror("WaitForSingleEvent()");
-		retval = -1;
-
-	default:
-		retval = rv;
-	}
-#endif
 
     return (retval);
 }
