@@ -64,7 +64,6 @@
 #define KQUEUE_PLATFORM_SPECIFIC \
 	HANDLE kq_iocp; \
 	HANDLE kq_synthetic_event; \
-	evt_loop_t kq_loop; \
 	struct filter *kq_filt_ref[EVFILT_SYSCOUNT]; \
     size_t kq_filt_count
 
@@ -163,6 +162,5 @@ typedef CRITICAL_SECTION pthread_rwlock_t;
 #define pthread_rwlock_unlock _cs_unlock
 #define pthread_rwlock_init(x,y) _cs_init((x))
 
-#include "event_loop.h"
 
 #endif  /* ! _KQUEUE_WINDOWS_PLATFORM_H */
