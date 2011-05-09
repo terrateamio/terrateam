@@ -23,8 +23,8 @@
 # include <unistd.h>
 #endif
 
-extern int DEBUG_ACTIVE;
-extern char *DEBUG_IDENT;
+extern int DEBUG_KQUEUE;
+extern char *KQUEUE_DEBUG_IDENT;
 
 #if defined(__linux__)
 # include <sys/syscall.h>
@@ -39,21 +39,21 @@ extern char *DEBUG_IDENT;
 
 #ifndef NDEBUG
 #define dbg_puts(str)           do {                                \
-    if (DEBUG_ACTIVE)                                                      \
+    if (DEBUG_KQUEUE)                                                      \
       fprintf(stderr, "%s [%d]: %s(): %s\n",                        \
-              DEBUG_IDENT, THREAD_ID, __func__, str);               \
+              KQUEUE_DEBUG_IDENT, THREAD_ID, __func__, str);               \
 } while (0)
 
 #define dbg_printf(fmt,...)     do {                                \
-    if (DEBUG_ACTIVE)                                                      \
+    if (DEBUG_KQUEUE)                                                      \
       fprintf(stderr, "%s [%d]: %s(): "fmt"\n",                     \
-              DEBUG_IDENT, THREAD_ID, __func__, __VA_ARGS__);       \
+              KQUEUE_DEBUG_IDENT, THREAD_ID, __func__, __VA_ARGS__);       \
 } while (0)
 
 #define dbg_perror(str)         do {                                \
-    if (DEBUG_ACTIVE)                                                      \
+    if (DEBUG_KQUEUE)                                                      \
       fprintf(stderr, "%s [%d]: %s(): %s: %s (errno=%d)\n",         \
-              DEBUG_IDENT, THREAD_ID, __func__, str,                \
+              KQUEUE_DEBUG_IDENT, THREAD_ID, __func__, str,                \
               strerror(errno), errno);                              \
 } while (0)
 
@@ -61,15 +61,15 @@ extern char *DEBUG_IDENT;
 
 # if defined(_WIN32)
 #  define dbg_lasterror(str)     do {                                \
-    if (DEBUG_ACTIVE)                                                      \
+    if (DEBUG_KQUEUE)                                                      \
       fprintf(stderr, "%s: [%d] %s(): %s: (LastError=%d)\n",        \
-              DEBUG_IDENT, THREAD_ID, __func__, str, (int)GetLastError());            \
+              KQUEUE_DEBUG_IDENT, THREAD_ID, __func__, str, (int)GetLastError());            \
 } while (0)
 
 #  define dbg_wsalasterror(str)  do {                                \
-    if (DEBUG_ACTIVE)                                                      \
+    if (DEBUG_KQUEUE)                                                      \
       fprintf(stderr, "%s: [%d] %s(): %s: (WSALastError=%d)\n",        \
-              DEBUG_IDENT, THREAD_ID, __func__, str, (int)WSAGetLastError());            \
+              KQUEUE_DEBUG_IDENT, THREAD_ID, __func__, str, (int)WSAGetLastError());            \
 } while (0)
 
 # else

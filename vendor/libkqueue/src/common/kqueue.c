@@ -24,8 +24,8 @@
 
 #include "private.h"
 
-int DEBUG_ACTIVE = 0;
-char *DEBUG_IDENT = "KQ";
+int DEBUG_KQUEUE = 0;
+char *KQUEUE_DEBUG_IDENT = "KQ";
 
 static unsigned int
 get_fd_limit(void)
@@ -58,11 +58,11 @@ int CONSTRUCTOR
 libkqueue_init(void)
 {
 #ifdef NDEBUG
-    DEBUG_ACTIVE = 0;
+    DEBUG_KQUEUE = 0;
 #else
     char *s = getenv("KQUEUE_DEBUG");
     if (s != NULL && strlen(s) > 0) {
-        DEBUG_ACTIVE = 1;
+        DEBUG_KQUEUE = 1;
 # if defined(_WIN32) && !defined(__GNUC__)
 	/* Enable heap surveillance */
 	{
