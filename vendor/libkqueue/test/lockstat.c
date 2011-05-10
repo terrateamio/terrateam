@@ -14,11 +14,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <pthread.h>
-#include "../src/common/debug.h"
+#include "../src/common/private.h"
 
-int DEBUG_ACTIVE = 1;
-char * DEBUG_IDENT = "lockstat";
+int DEBUG_KQUEUE = 1;
+char * KQUEUE_DEBUG_IDENT = "lockstat";
 
 struct foo {
     tracing_mutex_t foo_lock;
@@ -36,5 +35,6 @@ int main() {
     tracing_mutex_unlock(&x.foo_lock);
     tracing_mutex_assert(&x.foo_lock, MTX_UNLOCKED);
 
+    puts("+OK");
     return (0);
 }

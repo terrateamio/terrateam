@@ -98,7 +98,7 @@ post_configure_hook() {
     fi
 
     if [ $target = "windows" ] ; then
-          platform="src/windows/platform.c src/windows/event_loop.c"
+          platform="src/windows/platform.c"
 	  cflags="$cflags -march=i686 -lws2_32"
 	  ldflags="$ldflags -march=i686"
           ldadd="-lws2_32"

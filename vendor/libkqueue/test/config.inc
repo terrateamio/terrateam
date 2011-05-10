@@ -46,7 +46,7 @@ pre_configure_hook() {
       ldflags="$ldflags -march=i686"
       ldadd="$ldadd -lws2_32"
       # KLUDGE: to remove signal.c, proc.c
-      sources="main.c kevent.c test.c read.c timer.c vnode.c"
+      sources="main.c kevent.c test.c read.c timer.c user.c vnode.c"
   fi
 
 }

@@ -253,11 +253,15 @@ test_kevent_socket_listen_backlog(void)
     memset(&sain, 0, sizeof(sain));
     sain.sin_family = AF_INET;
     sain.sin_port = htons(port);
-    if ((srvr = socket(PF_INET, SOCK_STREAM, 0)) < 0) abort();
+    if ((srvr = socket(PF_INET, SOCK_STREAM, 0)) < 0) 
+        err(1, "socket()");
     if (setsockopt(srvr, SOL_SOCKET, SO_REUSEADDR, 
-                (char *) &one, sizeof(one)) != 0) abort();
-    if (bind(srvr, (struct sockaddr *) &sain, sa_len) < 0) abort();
-    if (listen(srvr, 100) < 0) abort();
+                (char *) &one, sizeof(one)) != 0)
+        err(1, "setsockopt()");
+    if (bind(srvr, (struct sockaddr *) &sain, sa_len) < 0)
+        err(1, "bind()");
+    if (listen(srvr, 100) < 0)
+        err(1, "listen()");
 
     /* Watch for events on the socket */
     test_no_kevents(kqfd);
@@ -268,8 +272,10 @@ test_kevent_socket_listen_backlog(void)
     sain.sin_family = AF_INET;
     sain.sin_port = htons(port);
     sain.sin_addr.s_addr = inet_addr("127.0.0.1");
-    if ((clnt = socket(AF_INET, SOCK_STREAM, 0)) < 0) abort();
-    if (connect(clnt, (struct sockaddr *) &sain, sa_len) < 0) abort();
+    if ((clnt = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+        err(1, "socket()");
+    if (connect(clnt, (struct sockaddr *) &sain, sa_len) < 0)
+        err(1, "connect()");
 
     /* Verify that data=1 */
     kev.data = 1;

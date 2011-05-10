@@ -19,7 +19,9 @@
 
 #include <assert.h>
 #include <stdio.h>
-#ifndef _WIN32
+#ifdef _WIN32
+# include <Windows.h>
+#else
 # include <unistd.h>
 #endif
 
