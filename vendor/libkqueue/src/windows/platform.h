@@ -86,6 +86,7 @@
  */
 struct filter;
 struct kqueue;
+struct knote;
 
 /*
  * Hooks and prototypes

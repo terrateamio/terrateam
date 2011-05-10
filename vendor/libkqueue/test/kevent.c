@@ -29,10 +29,10 @@ _test_no_kevents(int kqfd, const char *file, int line)
     memset(&timeo, 0, sizeof(timeo));
     nfds = kevent(kqfd, NULL, 0, &kev, 1, &timeo);
     if (nfds < 0)
-        die("kevent(2)");
+        err(1, "kevent(2)");
     if (nfds > 0) {
         printf("\n[%s:%d]: Unexpected event:", file, line);
-        die(kevent_to_str(&kev));
+        err(1, kevent_to_str(&kev));
     }
 }
 
@@ -45,7 +45,7 @@ kevent_get(int kqfd)
 
     nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
     if (nfds < 1)
-        die("kevent(2)");
+        err(1, "kevent(2)");
 
     return (&kev);
 }
