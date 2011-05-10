@@ -28,7 +28,7 @@ check: kqtest
 	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" PATH="$$PATH:.." ./kqtest
 
 debug: kqtest
-	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" gdb ./kqtest
+	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" PATH="$$PATH:.." gdb ./kqtest
 
 valgrind: kqtest
 	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" \
