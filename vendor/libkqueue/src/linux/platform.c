@@ -172,10 +172,11 @@ linux_kevent_copyout(struct kqueue *kq, int nready,
          */
         if (eventlist->flags & EV_DISPATCH) 
             knote_disable(filt, kn); //FIXME: Error checking
-        if (eventlist->flags & EV_ONESHOT) 
+        if (eventlist->flags & EV_ONESHOT) {
             knote_delete(filt, kn); //FIXME: Error checking
-
-        knote_unlock(kn);
+        } else {
+            knote_unlock(kn);
+        }
 
         /* If an empty kevent structure is returned, the event is discarded. */
         /* TODO: add these semantics to windows + solaris platform.c */

@@ -194,8 +194,8 @@ void knote_insert(struct filter *, struct knote *);
 int  knote_delete(struct filter *, struct knote *);
 int  knote_init(void);
 int  knote_disable(struct filter *, struct knote *);
-#define knote_lock(kn)     tracing_mutex_lock(&(kn)->kn_mtx)
-#define knote_unlock(kn)   tracing_mutex_unlock(&(kn)->kn_mtx)
+void knote_lock(struct knote *);
+void knote_unlock(struct knote *);
 
 int         filter_lookup(struct filter **, struct kqueue *, short);
 int      	filter_register_all(struct kqueue *);

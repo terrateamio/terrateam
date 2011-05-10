@@ -172,3 +172,17 @@ knote_disable(struct filter *filt, struct knote *kn)
 }
 
 //TODO: knote_enable()
+
+void
+knote_lock(struct knote *kn)
+{
+    tracing_mutex_assert(&kn->kn_mtx, MTX_UNLOCKED);
+    tracing_mutex_lock(&(kn)->kn_mtx);
+}
+
+void
+knote_unlock(struct knote *kn)
+{
+    tracing_mutex_assert(&kn->kn_mtx, MTX_LOCKED);
+    tracing_mutex_unlock(&(kn)->kn_mtx);
+}
