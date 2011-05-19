@@ -156,7 +156,7 @@ filter_lookup(struct filter **filt, struct kqueue *kq, short id)
 const char *
 filter_name(short filt)
 {
-    unsigned int id;
+    int id;
     const char *fname[EVFILT_SYSCOUNT] = {
         "EVFILT_READ",
         "EVFILT_WRITE",
