@@ -148,11 +148,12 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
     port_event_t  *evt;
     struct knote  *kn;
     struct filter *filt;
-    int i, rv;
+    int i, rv, skip_event, skipped_events = 0;
 
     for (i = 0; i < nready; i++) {
         evt = &evbuf[i];
         kn = evt->portev_user;
+        skip_event = 0;
         dbg_printf("event=%s", port_event_dump(evt));
         switch (evt->portev_source) {
             case PORT_SOURCE_FD:
@@ -166,7 +167,10 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
                             || kn->kev.flags & EV_ONESHOT)) {
                     rv = filt->kn_create(filt, kn);
                 }
-
+                
+                if (eventlist->data == 0) // if zero data is returned, we raced with a read of data from the socket, skip event to have proper semantics
+                    skip_event = 1;
+                
                 break;
 
             case PORT_SOURCE_TIMER:
@@ -209,10 +213,13 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
         if (eventlist->flags & EV_ONESHOT) 
             knote_delete(filt, kn); //TODO: Error checking
 
-        eventlist++;
+        if (skip_event)
+            skipped_events++;
+        else
+            eventlist++;
     }
 
-    return (nready);
+    return (nready - skipped_events);
 }
 
 const struct kqueue_vtable kqops =
