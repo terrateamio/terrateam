@@ -33,9 +33,12 @@ signal_handler(int sig)
 {
     struct sentry *s;
    
-    if (sig < 0 || sig > SIGNAL_MAX)
-        return; //TODO: DEBUG OUTPUT
-
+    if (sig < 0 || sig >= SIGNAL_MAX) // 0..31 are valid
+    {    
+        dbg_printf("Received unexpected signal %d", sig);
+        return;
+    }
+    
     s = &sigtbl[sig];
     dbg_printf("sig=%d %d", sig, s->st_signum);
     atomic_inc((volatile uint32_t *) &s->st_count);
