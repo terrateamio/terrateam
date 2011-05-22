@@ -20,7 +20,7 @@
 static char *
 itimerspec_dump(struct itimerspec *ts)
 {
-    static char __thread buf[1024];
+    static __thread char buf[1024];
 
     snprintf(buf, sizeof(buf),
             "itimer: [ interval=%lu s %lu ns, next expire=%lu s %lu ns ]",
@@ -73,7 +73,7 @@ evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr)
        timer has been trigered.
      */
     n = read(src->data.pfd, &expired, sizeof(expired));
-    if (n < 0 || n < sizeof(expired)) {
+    if (n != sizeof(expired)) {
         dbg_puts("invalid read from timerfd");
         expired = 1;  /* Fail gracefully */
     } 
@@ -122,6 +122,9 @@ int
 evfilt_timer_knote_modify(struct filter *filt, struct knote *kn, 
         const struct kevent *kev)
 {
+    (void)filt;
+    (void)kn;
+    (void)kev;
     return (0); /* STUB */
 }
 

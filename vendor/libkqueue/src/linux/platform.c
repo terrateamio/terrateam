@@ -23,7 +23,7 @@ const struct filter evfilt_proc = EVFILT_NOTIMPL;
  * Per-thread epoll event buffer used to ferry data between
  * kevent_wait() and kevent_copyout().
  */
-static struct epoll_event __thread epevt[MAX_KEVENT];
+static __thread struct epoll_event epevt[MAX_KEVENT];
 
 const struct kqueue_vtable kqops = {
     linux_kqueue_init,
@@ -80,7 +80,7 @@ linux_kqueue_init(struct kqueue *kq)
 }
 
 void
-linux_kqueue_free(struct kqueue *kq)
+linux_kqueue_free(struct kqueue *kq UNUSED)
 {
     abort();//FIXME
 }
@@ -146,7 +146,7 @@ linux_kevent_wait(
 
 int
 linux_kevent_copyout(struct kqueue *kq, int nready,
-        struct kevent *eventlist, int nevents)
+        struct kevent *eventlist, int nevents UNUSED)
 {
     struct epoll_event *ev;
     struct filter *filt;
@@ -247,11 +247,13 @@ int
 linux_eventfd_lower(struct eventfd *e)
 {
     uint64_t cur;
+    ssize_t n;
     int rv = 0;
 
     /* Reset the counter */
     dbg_puts("lowering event level");
-    if (read(e->ef_id, &cur, sizeof(cur)) < sizeof(cur)) {
+    n = read(e->ef_id, &cur, sizeof(cur));
+    if (n < 0) {
         switch (errno) {
             case EAGAIN:    
                 /* Not considered an error */
@@ -265,7 +267,10 @@ linux_eventfd_lower(struct eventfd *e)
                 dbg_printf("read(2): %s", strerror(errno));
                 rv = -1;
         }
-    } 
+    } else if (n != sizeof(cur)) {
+        dbg_puts("short read");
+        rv = -1;
+    }
 
     return (rv);
 }
@@ -322,7 +327,7 @@ linux_get_descriptor_type(struct knote *kn)
 char *
 epoll_event_dump(struct epoll_event *evt)
 {
-    static char __thread buf[128];
+    static __thread char buf[128];
 
     if (evt == NULL)
         return "(null)";
