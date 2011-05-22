@@ -61,11 +61,13 @@ static int
 eventfd_lower(int evfd)
 {
     uint64_t cur;
+    ssize_t n;
     int rv = 0;
 
     /* Reset the counter */
     dbg_puts("lowering event level");
-    if (read(evfd, &cur, sizeof(cur)) < sizeof(cur)) {
+    n = read(evfd, &cur, sizeof(cur));
+    if (n < 0) {
         switch (errno) {
             case EAGAIN:    
                 /* Not considered an error */
@@ -79,13 +81,16 @@ eventfd_lower(int evfd)
                 dbg_printf("read(2): %s", strerror(errno));
                 rv = -1;
         }
-    } 
+    } else if (n != sizeof(cur)) {
+        dbg_puts("short read");
+        rv = -1;
+    }
 
     return (rv);
 }
 
 int
-evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr)
+evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
 {
     memcpy(dst, &src->kev, sizeof(*dst));
     dst->fflags &= ~NOTE_FFCTRLMASK;     //FIXME: Not sure if needed
@@ -140,7 +145,7 @@ errout:
 }
 
 int
-evfilt_user_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_user_knote_modify(struct filter *filt UNUSED, struct knote *kn, 
         const struct kevent *kev)
 {
     unsigned int ffctrl;

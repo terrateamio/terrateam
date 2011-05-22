@@ -189,7 +189,7 @@ struct knote * knote_lookup(struct filter *, short);
 //DEADWOOD: struct knote * knote_get_by_data(struct filter *filt, intptr_t);
 struct knote * knote_new(void);
 #define knote_retain(kn) atomic_inc(&kn->kn_ref)
-void knote_release(struct filter *, struct knote *);
+void knote_release(struct knote *);
 void knote_insert(struct filter *, struct knote *);
 int  knote_delete(struct filter *, struct knote *);
 int  knote_init(void);

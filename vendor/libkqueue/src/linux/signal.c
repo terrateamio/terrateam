@@ -24,7 +24,7 @@ signalfd_reset(int sigfd)
 
     /* Discard any pending signal */
     n = read(sigfd, &sig, sizeof(sig));
-    if (n < sizeof(sig)) {
+    if (n < 0 || n != sizeof(sig)) {
         if (errno == EWOULDBLOCK)
             return;
         //FIXME: eintr?
@@ -94,7 +94,7 @@ errout:
 }
 
 int
-evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *unused)
+evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *x UNUSED)
 {
     int sigfd;
 
@@ -128,8 +128,9 @@ evfilt_signal_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_signal_knote_modify(struct filter *filt, struct knote *kn, 
-        const struct kevent *kev)
+evfilt_signal_knote_modify(struct filter *filt UNUSED, 
+        struct knote *kn UNUSED, 
+        const struct kevent *kev UNUSED)
 {
     /* Nothing to do since the signal number does not change. */
 

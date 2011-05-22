@@ -17,13 +17,13 @@
 #include "../common/private.h"
 
 int
-posix_kqueue_init(struct kqueue *kq)
+posix_kqueue_init(struct kqueue *kq UNUSED)
 {
     return (0);
 }
 
 void
-posix_kqueue_free(struct kqueue *kq)
+posix_kqueue_free(struct kqueue *kq UNUSED)
 {
 }
 

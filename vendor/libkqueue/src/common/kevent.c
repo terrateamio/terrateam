@@ -31,7 +31,7 @@
 static const char *
 kevent_filter_dump(const struct kevent *kev)
 {
-    static char __thread buf[64];
+    static __thread char buf[64];
 
     snprintf(&buf[0], sizeof(buf), "%d (%s)", 
             kev->filter, filter_name(kev->filter));
@@ -41,7 +41,7 @@ kevent_filter_dump(const struct kevent *kev)
 static const char *
 kevent_fflags_dump(const struct kevent *kev)
 {
-    static char __thread buf[1024];
+    static __thread char buf[1024];
 
 #define KEVFFL_DUMP(attrib) \
     if (kev->fflags & attrib) \
@@ -74,7 +74,7 @@ kevent_fflags_dump(const struct kevent *kev)
 static const char *
 kevent_flags_dump(const struct kevent *kev)
 {
-    static char __thread buf[1024];
+    static __thread char buf[1024];
 
 #define KEVFL_DUMP(attrib) \
     if (kev->flags & attrib) \
@@ -101,7 +101,7 @@ kevent_flags_dump(const struct kevent *kev)
 const char *
 kevent_dump(const struct kevent *kev)
 {
-    static char __thread buf[1024];
+    static __thread char buf[1024];
 
     snprintf((char *) &buf[0], sizeof(buf), 
             "{ ident=%d, filter=%s, %s, %s, data=%d, udata=%p }",
@@ -147,7 +147,7 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
 			kn->kn_kq = kq;
             assert(filt->kn_create);
             if (filt->kn_create(filt, kn) < 0) {
-                knote_release(filt, kn);
+                knote_release(kn);
                 errno = EFAULT;
                 return (-1);
             } 

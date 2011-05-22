@@ -3,7 +3,7 @@ version="2.0a"
 abi_major="0"
 abi_minor="0"
 abi_version="$abi_major.$abi_minor"
-cflags="-Wall -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600"
+cflags="-Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600"
 ldflags=""
 sources="src/common/filter.c src/common/knote.c src/common/map.c
          src/common/kevent.c src/common/kqueue.c" 

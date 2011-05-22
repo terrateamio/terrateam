@@ -53,7 +53,7 @@ knote_new(void)
 }
 
 void
-knote_release(struct filter *filt, struct knote *kn)
+knote_release(struct knote *kn)
 {
     assert (kn->kn_ref > 0);
 
@@ -114,7 +114,7 @@ knote_delete(struct filter *filt, struct knote *kn)
 
     kn->kn_flags |= KNFL_KNOTE_DELETED;
 
-    knote_release(filt, kn);
+    knote_release(kn);
 
     return (0);
 }

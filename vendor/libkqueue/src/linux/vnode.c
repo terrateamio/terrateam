@@ -19,7 +19,7 @@
 static char *
 inotify_mask_dump(uint32_t mask)
 {
-    static char __thread buf[1024];
+    static __thread char buf[1024];
 
 #define INEVT_MASK_DUMP(attrib) \
     if (mask & attrib) \
@@ -46,7 +46,7 @@ inotify_mask_dump(uint32_t mask)
 static char *
 inotify_event_dump(struct inotify_event *evt)
 {
-    static char __thread buf[1024];
+    static __thread char buf[1024];
 
     snprintf(buf, sizeof(buf), "wd=%d mask=%s", 
             evt->wd,
@@ -165,7 +165,7 @@ delete_watch(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_vnode_copyout(struct kevent *dst, struct knote *src, void *ptr)
+evfilt_vnode_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
 {
     struct inotify_event evt;
     struct stat sb;
@@ -241,6 +241,9 @@ int
 evfilt_vnode_knote_modify(struct filter *filt, struct knote *kn, 
         const struct kevent *kev)
 {
+    (void)filt;
+    (void)kn;
+    (void)kev;
     return (-1); /* FIXME - STUB */
 }
 

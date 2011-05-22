@@ -191,6 +191,9 @@ int
 evfilt_read_knote_modify(struct filter *filt, struct knote *kn, 
         const struct kevent *kev)
 {
+    (void) filt;
+    (void) kn;
+    (void) kev;
     return (-1); /* STUB */
 }
 

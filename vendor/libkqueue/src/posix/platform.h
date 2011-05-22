@@ -36,6 +36,9 @@
 #define fastpath(x)     __builtin_expect((x), 1)
 #define slowpath(x)     __builtin_expect((x), 0)
 
+/*
+ * GCC-compatible attributes
+ */
 #ifdef MAKE_STATIC
 # define CONSTRUCTOR
 #else
@@ -43,6 +46,7 @@
 #endif
 #define VISIBLE         __attribute__((visibility("default")))
 #define HIDDEN          __attribute__((visibility("hidden")))
+#define UNUSED          __attribute__((unused))
 
 #include <fcntl.h>
 #include <limits.h>

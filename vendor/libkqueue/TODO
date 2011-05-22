@@ -1,4 +1,10 @@
 
+ * Create a FILTER_DECL() macro that initializes the 'struct filter' object,
+   with all members properly initialized. Then -Wno-missing-field-initializers
+   can be removed from CFLAGS.
+
+ * Implement the knote_modify() hook for all filters.
+
  * Add a dbg_printf() statement within kevent_wait() to report the value
    of the timeout.
 
