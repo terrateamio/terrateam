@@ -24,7 +24,7 @@ make_exports="program version target api distfile \
               cflags ldflags ldadd libdepends \
               sources objs deps mans headers extra_dist subdirs \
               abi_major abi_minor abi_version \
-              cc cpp ld ln ar install diff"
+              cc cpp ld ln ar install diff strip"
 
 required_headers=
 optional_headers=
@@ -252,6 +252,16 @@ check_diff() {
     echo "found"
 }
 
+check_strip() {
+    printf "checking for a suitable strip(1) command.. "
+    if [ "`uname -s`" = "SunOS" ] ; then
+      finalize strip "/usr/sfw/bin/gstrip --strip-unneeded"
+    else    
+      finalize strip "/usr/bin/strip --strip-unneeded"
+    fi
+    echo "found"
+}
+
 subst_vars() {
   outfile=$1
 
@@ -312,6 +322,7 @@ check_linker
 check_archiver
 check_install
 check_diff
+check_strip
 
 finalize program    "$program"
 finalize version    "$version"

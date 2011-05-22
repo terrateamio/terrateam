@@ -19,43 +19,19 @@
 const struct filter evfilt_vnode = EVFILT_NOTIMPL;
 const struct filter evfilt_proc  = EVFILT_NOTIMPL;
 
-static char * port_event_dump(port_event_t *evt);
-
 /*
  * Per-thread port event buffer used to ferry data between
  * kevent_wait() and kevent_copyout().
  */
-static port_event_t __thread evbuf[MAX_KEVENT];
+static __thread port_event_t evbuf[MAX_KEVENT];
 
-int
-solaris_kqueue_init(struct kqueue *kq)
-{
-    if ((kq->kq_id = port_create()) < 0) {
-        dbg_perror("port_create(2)");
-        return (-1);
-    }
-    dbg_printf("created event port; fd=%d", kq->kq_id);
-
-    if (filter_register_all(kq) < 0) {
-        close(kq->kq_id);
-        return (-1);
-    }
-
-    return (0);
-}
-
-void
-solaris_kqueue_free(struct kqueue *kq)
-{
-    (void) close(kq->kq_id);
-    dbg_printf("closed event port; fd=%d", kq->kq_id);
-}
+#ifndef NDEBUG
 
 /* Dump a poll(2) events bitmask */
 static char *
 poll_events_dump(short events)
 {
-    static char __thread buf[512];
+    static __thread char buf[512];
 
 #define _PL_DUMP(attrib) \
     if (events == attrib) \
@@ -81,7 +57,7 @@ poll_events_dump(short events)
 static char *
 port_event_dump(port_event_t *evt)
 {
-    static char __thread buf[512];
+    static __thread char buf[512];
 
     if (evt == NULL) {
         snprintf(&buf[0], sizeof(buf), "NULL ?!?!\n");
@@ -110,10 +86,36 @@ out:
     return (&buf[0]);
 }
 
+#endif /* !NDEBUG */
+
+int
+solaris_kqueue_init(struct kqueue *kq)
+{
+    if ((kq->kq_id = port_create()) < 0) {
+        dbg_perror("port_create(2)");
+        return (-1);
+    }
+    dbg_printf("created event port; fd=%d", kq->kq_id);
+
+    if (filter_register_all(kq) < 0) {
+        close(kq->kq_id);
+        return (-1);
+    }
+
+    return (0);
+}
+
+void
+solaris_kqueue_free(struct kqueue *kq)
+{
+    (void) close(kq->kq_id);
+    dbg_printf("closed event port; fd=%d", kq->kq_id);
+}
+
 int
 solaris_kevent_wait(
         struct kqueue *kq, 
-        int nevents,
+        int nevents UNUSED,
         const struct timespec *ts)
 
 {
@@ -143,7 +145,7 @@ solaris_kevent_wait(
 
 int
 solaris_kevent_copyout(struct kqueue *kq, int nready,
-        struct kevent *eventlist, int nevents)
+        struct kevent *eventlist, int nevents UNUSED)
 {
     port_event_t  *evt;
     struct knote  *kn;

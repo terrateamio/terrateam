@@ -31,12 +31,12 @@ $(PROGRAM).a:
 	rm -f *.o
 	$(CC) -c -I./include -I./src/common -DNDEBUG -DMAKE_STATIC=1 -static $(CFLAGS) $(SOURCES) $(LDADD)
 	$(AR) rcs $(PROGRAM).a *.o
-	strip --strip-unneeded $(PROGRAM).a
+	$(STRIP) $(PROGRAM).a
 	rm *.o
 
 $(PROGRAM).so.$(ABI_VERSION): $(OBJS)
 	$(CC) -o $@ -I./include -I./src/common -shared $(LDFLAGS) -DNDEBUG $(CFLAGS) $(SOURCES) $(LDADD)
-	strip --strip-unneeded $(PROGRAM).so.$(ABI_VERSION)
+	$(STRIP) $(PROGRAM).so.$(ABI_VERSION)
 	$(LN) -sf $(PROGRAM).so.$(ABI_VERSION) $(PROGRAM).so.$(ABI_MAJOR)
 	$(LN) -sf $(PROGRAM).so.$(ABI_VERSION) $(PROGRAM).so
 

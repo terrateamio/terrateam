@@ -34,7 +34,7 @@
 static char *
 itimerspec_dump(struct itimerspec *ts)
 {
-    static char __thread buf[1024];
+    static __thread char buf[1024];
 
     snprintf(buf, sizeof(buf),
             "itimer: [ interval=%lu s %lu ns, next expire=%lu s %lu ns ]",
@@ -73,19 +73,19 @@ convert_msec_to_itimerspec(struct itimerspec *dst, int src, int oneshot)
 }
 
 int
-evfilt_timer_init(struct filter *filt)
+evfilt_timer_init(struct filter *filt UNUSED)
 {
     return (0);
 }
 
 void
-evfilt_timer_destroy(struct filter *filt)
+evfilt_timer_destroy(struct filter *filt UNUSED)
 {
     return;
 }
 
 int
-evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr)
+evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
 {
     /* port_event_t *pe = (port_event_t *) ptr; */
 
@@ -147,11 +147,14 @@ int
 evfilt_timer_knote_modify(struct filter *filt, struct knote *kn, 
         const struct kevent *kev)
 {
+    (void)filt;
+    (void)kn;
+    (void)kev;
     return (-1); /* STUB */
 }
 
 int
-evfilt_timer_knote_delete(struct filter *filt, struct knote *kn)
+evfilt_timer_knote_delete(struct filter *filt UNUSED, struct knote *kn)
 {
     if (kn->kev.flags & EV_DISABLE)
         return (0);
