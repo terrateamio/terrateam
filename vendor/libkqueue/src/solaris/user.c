@@ -17,7 +17,7 @@
 #include "private.h"
 
 int
-evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr)
+evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
 {
     //port_event_t *pe = (port_event_t *) ptr;
   
@@ -49,7 +49,7 @@ evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr)
 
 
 int
-evfilt_user_knote_create(struct filter *filt, struct knote *kn)
+evfilt_user_knote_create(struct filter *filt UNUSED, struct knote *kn UNUSED)
 {
 #if TODO
     u_int ffctrl;
@@ -104,13 +104,13 @@ evfilt_user_knote_modify(struct filter *filt, struct knote *kn,
 }
 
 int
-evfilt_user_knote_delete(struct filter *filt, struct knote *kn)
+evfilt_user_knote_delete(struct filter *filt UNUSED, struct knote *kn UNUSED)
 {
     return (0);
 }
 
 int
-evfilt_user_knote_enable(struct filter *filt, struct knote *kn)
+evfilt_user_knote_enable(struct filter *filt UNUSED, struct knote *kn UNUSED)
 {
     /* FIXME: what happens if NOTE_TRIGGER is in fflags?
        should the event fire? */
@@ -118,7 +118,7 @@ evfilt_user_knote_enable(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_user_knote_disable(struct filter *filt, struct knote *kn)
+evfilt_user_knote_disable(struct filter *filt UNUSED, struct knote *kn UNUSED)
 {
     return (0);
 }

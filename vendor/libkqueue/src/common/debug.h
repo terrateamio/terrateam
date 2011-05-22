@@ -32,7 +32,7 @@ extern char *KQUEUE_DEBUG_IDENT;
 # include <sys/syscall.h>
 # define THREAD_ID ((pid_t)  syscall(__NR_gettid))
 #elif defined(__sun)
-# define THREAD_ID (pthread_self())
+# define THREAD_ID ((int) pthread_self())
 #elif defined(_WIN32)
 # define THREAD_ID (int)(GetCurrentThreadId())
 #else 

@@ -108,7 +108,7 @@ evfilt_signal_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_signal_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_signal_knote_modify(struct filter *filt UNUSED, struct knote *kn, 
                 const struct kevent *kev)
 {
     kn->kev.flags = kev->flags | EV_CLEAR;
@@ -116,7 +116,7 @@ evfilt_signal_knote_modify(struct filter *filt, struct knote *kn,
 }
 
 int
-evfilt_signal_knote_delete(struct filter *filt, struct knote *kn)
+evfilt_signal_knote_delete(struct filter *filt UNUSED, struct knote *kn)
 {   
     return ignore_signal(kn->kev.ident);
 }
@@ -128,7 +128,7 @@ evfilt_signal_knote_enable(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_signal_knote_disable(struct filter *filt, struct knote *kn)
+evfilt_signal_knote_disable(struct filter *filt UNUSED, struct knote *kn)
 {
     return ignore_signal(kn->kev.ident);
 }
