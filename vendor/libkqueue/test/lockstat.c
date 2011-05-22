@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <err.h>
+#include <pthread.h>
 #include "../src/common/private.h"
 
 int DEBUG_KQUEUE = 1;
@@ -23,17 +25,36 @@ struct foo {
     tracing_mutex_t foo_lock;
 };
 
+void *test_assertion(void *_x)
+{
+    struct foo *x = (struct foo *) _x;
+   tracing_mutex_assert(&x->foo_lock, MTX_UNLOCKED);
+   pthread_exit(NULL);
+}
+
 /*
  * Test the lockstat.h API
  */
 int main() {
     struct foo x;
+    pthread_t tid;
+    void *rv;
     
     tracing_mutex_init(&x.foo_lock, NULL);
     tracing_mutex_lock(&x.foo_lock);
     tracing_mutex_assert(&x.foo_lock, MTX_LOCKED);
     tracing_mutex_unlock(&x.foo_lock);
     tracing_mutex_assert(&x.foo_lock, MTX_UNLOCKED);
+
+    /*
+     * Ensure that the assert() function works when there
+     * are multiple threads contenting for the mutex.
+     */
+    tracing_mutex_lock(&x.foo_lock);
+    if (pthread_create(&tid, NULL, test_assertion, &x) != 0)
+        err(1, "pthread_create");
+    pthread_join(tid, &rv);
+    tracing_mutex_unlock(&x.foo_lock);
 
     puts("+OK");
     return (0);
