@@ -27,9 +27,12 @@ all: $(PROGRAM).so.$(ABI_VERSION) $(PROGRAM)_debug.so $(PROGRAM).a
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ -I./include -I./src/common -DNDEBUG $(CFLAGS) $<
 
-$(PROGRAM).a: $(OBJS)
-	$(AR) rcs $(PROGRAM).a $(OBJS)
+$(PROGRAM).a:
+	rm -f *.o
+	$(CC) -c -I./include -I./src/common -DNDEBUG -DMAKE_STATIC=1 -static $(CFLAGS) $(SOURCES) $(LDADD)
+	$(AR) rcs $(PROGRAM).a *.o
 	strip --strip-unneeded $(PROGRAM).a
+	rm *.o
 
 $(PROGRAM).so.$(ABI_VERSION): $(OBJS)
 	$(CC) -o $@ -I./include -I./src/common -shared $(LDFLAGS) -DNDEBUG $(CFLAGS) $(SOURCES) $(LDADD)

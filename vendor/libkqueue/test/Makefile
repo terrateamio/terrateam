@@ -14,15 +14,20 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
+tests=kqtest lockstat static-lib-test
+
 include config.mk
 
-all: kqtest lockstat
+all: $(tests)
 
 lockstat: lockstat.c
 	$(CC) -o lockstat $(CFLAGS) lockstat.c $(LDADD)
 
 kqtest: $(SOURCES)
 	$(CC) -o kqtest $(CFLAGS) $(SOURCES) $(LDADD)
+
+static-lib-test: $(SOURCES)
+	$(CC) -o static-lib-test -DMAKE_STATIC=1 $(CFLAGS) $(SOURCES) ../libkqueue.a -lpthread
 
 check: kqtest
 	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" PATH="$$PATH:.." ./kqtest
@@ -59,5 +64,5 @@ edit:
 	$(EDITOR) *.[ch]
 
 clean:
-	rm -f *.o *.a kqtest lockstat
+	rm -f *.o *.a $(tests)
 	for x in libdispatch stress; do cd $$x && make clean && cd ..; done

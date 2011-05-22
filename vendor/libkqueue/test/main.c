@@ -149,6 +149,9 @@ main(int argc, char **argv)
     char *arg;
     int match, kqfd;
 
+#ifdef MAKE_STATIC
+    libkqueue_init();
+#endif
 
 #ifdef _WIN32
     /* Initialize the Winsock library */
