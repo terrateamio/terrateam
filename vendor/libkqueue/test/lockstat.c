@@ -25,11 +25,19 @@ struct foo {
     tracing_mutex_t foo_lock;
 };
 
-void *test_assertion(void *_x)
+void *test_assert_unlocked(void *_x)
 {
     struct foo *x = (struct foo *) _x;
-   tracing_mutex_assert(&x->foo_lock, MTX_UNLOCKED);
-   pthread_exit(NULL);
+    tracing_mutex_assert(&x->foo_lock, MTX_UNLOCKED);
+    pthread_exit(NULL);
+}
+
+void *test_assert_locked(void *_x)
+{
+    struct foo *x = (struct foo *) _x;
+    puts("The following assertion should fail");
+    tracing_mutex_assert(&x->foo_lock, MTX_LOCKED);
+    pthread_exit(NULL);
 }
 
 /*
@@ -51,8 +59,14 @@ int main() {
      * are multiple threads contenting for the mutex.
      */
     tracing_mutex_lock(&x.foo_lock);
-    if (pthread_create(&tid, NULL, test_assertion, &x) != 0)
+    if (pthread_create(&tid, NULL, test_assert_unlocked, &x) != 0)
         err(1, "pthread_create");
+    pthread_join(tid, &rv);
+    tracing_mutex_unlock(&x.foo_lock);
+    tracing_mutex_lock(&x.foo_lock);
+    if (pthread_create(&tid, NULL, test_assert_locked, &x) != 0)
+        err(1, "pthread_create");
+    sleep(3); // Crude way to ensure the other thread is scheduled
     pthread_join(tid, &rv);
     tracing_mutex_unlock(&x.foo_lock);
 

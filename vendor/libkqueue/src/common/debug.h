@@ -107,7 +107,9 @@ typedef struct {
   if ((y) == MTX_UNLOCKED) \
       assert((x)->mtx_status == MTX_UNLOCKED || (x)->mtx_owner != THREAD_ID); \
   else if ((y) == MTX_LOCKED) \
-      assert((x)->mtx_status == MTX_LOCKED); \
+      assert((x)->mtx_status == MTX_LOCKED && (x)->mtx_owner == THREAD_ID); \
+  else \
+    abort(); \
 } while (0)
 
 # define tracing_mutex_lock(x)  do { \
