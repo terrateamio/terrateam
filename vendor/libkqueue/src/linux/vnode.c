@@ -16,6 +16,7 @@
 
 #include "private.h"
 
+#ifndef NDEBUG
 static char *
 inotify_mask_dump(uint32_t mask)
 {
@@ -54,6 +55,8 @@ inotify_event_dump(struct inotify_event *evt)
 
     return (buf);
 }
+
+#endif /* !NDEBUG */
 
 
 /* TODO: USE this to get events with name field */

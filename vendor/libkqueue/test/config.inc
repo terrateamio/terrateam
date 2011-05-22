@@ -17,7 +17,7 @@ pre_configure_hook() {
             then
               ldadd="$ldadd ../libkqueue.so"
             else
-              ldadd="$ldadd -lkqueue -lpthread -lrt"
+              ldadd="$ldadd -lkqueue_debug -lpthread -lrt"
             fi
          }
 
