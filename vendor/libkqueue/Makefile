@@ -41,7 +41,7 @@ $(PROGRAM).so.$(ABI_VERSION): $(OBJS)
 	$(LN) -sf $(PROGRAM).so.$(ABI_VERSION) $(PROGRAM).so
 
 $(PROGRAM)_debug.so:
-	$(CC) -o $@ -I./include -I./src/common -shared $(CFLAGS) -O0 $(SOURCES) $(LDADD)
+	$(CC) -o $@ -I./include -I./src/common -shared -rdynamic $(CFLAGS) -g3 -O0 $(SOURCES) $(LDADD)
 
 install: all
 	$(INSTALL) -d -m 755 $(INCLUDEDIR)/kqueue/sys

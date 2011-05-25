@@ -37,37 +37,35 @@ _test_no_kevents(int kqfd, const char *file, int line)
 }
 
 /* Retrieve a single kevent */
-struct kevent *
-kevent_get(int kqfd)
+void
+kevent_get(struct kevent *kev, int kqfd)
 {
+    struct kevent buf;
     int nfds;
-    static struct kevent __thread kev;
 
-    nfds = kevent(kqfd, NULL, 0, &kev, 1, NULL);
+    if (kev == NULL)
+       kev = &buf;
+
+    nfds = kevent(kqfd, NULL, 0, kev, 1, NULL);
     if (nfds < 1)
         err(1, "kevent(2)");
-
-    return (&kev);
 }
 
 /* In Linux, a kevent() call with less than 1ms resolution
    will perform a pselect() call to obtain the higer resolution.
    This test exercises that codepath.
  */
-struct kevent *
-kevent_get_hires(int kqfd)
+void
+kevent_get_hires(struct kevent *kev, int kqfd)
 {
     int nfds;
     struct timespec timeo;
-    static struct kevent __thread kev;
 
     timeo.tv_sec = 0;
     timeo.tv_nsec = 500000;
-    nfds = kevent(kqfd, NULL, 0, &kev, 1, &timeo);
+    nfds = kevent(kqfd, NULL, 0, kev, 1, &timeo);
     if (nfds < 1)
         die("kevent(2)");
-
-    return (&kev);
 }
 
 char *

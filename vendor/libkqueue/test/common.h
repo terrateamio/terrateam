@@ -46,6 +46,7 @@
 #include <unistd.h>
 #include <sys/event.h>
 #include <arpa/inet.h>
+#include <pthread.h>
 #include <poll.h>
 #include "config.h"
 #else
@@ -54,27 +55,48 @@
 # define HAVE_EVFILT_USER 1
 #endif
 
+struct test_context;
 
-void test_evfilt_read(int);
-void test_evfilt_signal(int);
-void test_evfilt_vnode(int);
-void test_evfilt_timer(int);
-void test_evfilt_proc(int);
+struct unit_test {
+    const char *ut_name;
+    int         ut_enabled;
+    void      (*ut_func)(struct test_context *);
+};
+
+struct test_context {
+    struct unit_test tests[50]; //TODO: use MAX_TESTS instead of magic number 
+    int iterations;
+    int concurrency;
+    int iteration;
+    int kqfd;
+
+    /* EVFILT_READ and EVFILT_WRITE */
+    int client_fd;
+    int server_fd;
+
+    /* EVFILT_VNODE */
+    int vnode_fd;
+    char testfile[1024];
+};
+
+void test_evfilt_read(struct test_context *);
+void test_evfilt_signal(struct test_context *);
+void test_evfilt_vnode(struct test_context *);
+void test_evfilt_timer(struct test_context *);
+void test_evfilt_proc(struct test_context *);
 #if HAVE_EVFILT_USER
-void test_evfilt_user(int);
+void test_evfilt_user(struct test_context *);
 #endif
 
-#define test(f,...) do {                                             \
+#define test(f,ctx,...) do {                                             \
     test_begin("test_"#f"()\t"__VA_ARGS__);                                                  \
-    test_##f();\
+    test_##f(ctx);\
     test_end();                                                     \
 } while (/*CONSTCOND*/0)
 
 extern const char * kevent_to_str(struct kevent *);
-struct kevent * kevent_get(int);
-struct kevent * kevent_get_hires(int);
-
-
+void kevent_get(struct kevent *, int);
+void kevent_get_hires(struct kevent *, int);
 void kevent_update(int kqfd, struct kevent *kev);
 
 #define kevent_cmp(a,b) _kevent_cmp(a,b, __FILE__, __LINE__)

@@ -24,16 +24,16 @@ lockstat: lockstat.c
 	$(CC) -o lockstat $(CFLAGS) lockstat.c $(LDADD)
 
 kqtest: $(SOURCES)
-	$(CC) -o kqtest $(CFLAGS) $(SOURCES) $(LDADD)
+	$(CC) -rdynamic -o kqtest $(CFLAGS) $(SOURCES) $(LDADD)
 
 static-lib-test: $(SOURCES)
 	$(CC) -o static-lib-test -DMAKE_STATIC=1 $(CFLAGS) $(SOURCES) ../libkqueue.a -lpthread
 
 check: kqtest
-	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" PATH="$$PATH:.." ./kqtest
+	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" PATH="$$PATH:.." ./kqtest $(KQTEST_OPTS)
 
 debug: kqtest
-	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" PATH="$$PATH:.." gdb ./kqtest
+	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" PATH="$$PATH:.." gdb ./kqtest $(KQTEST_OPTS)
 
 valgrind: kqtest
 	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" \
