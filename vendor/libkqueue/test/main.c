@@ -16,12 +16,8 @@
 
 #include "common.h"
 
-struct unit_test {
-    const char *ut_name;
-    int         ut_enabled;
-    void      (*ut_func)(int);
-};
-
+/* Maximum number of threads that can be created */
+#define MAX_THREADS 100
 
 void
 test_kqueue_descriptor_is_pollable(void)
@@ -59,7 +55,7 @@ test_kqueue_descriptor_is_pollable(void)
  * has been closed. This technique is used in kqueue_validate()
  */
 static void
-test_peer_close_detection(void)
+test_peer_close_detection(void *unused)
 {
 #ifdef _WIN32
 	return;
@@ -90,7 +86,7 @@ test_peer_close_detection(void)
 }
 
 void
-test_kqueue(void)
+test_kqueue(void *unused)
 {
     int kqfd;
 
@@ -102,7 +98,7 @@ test_kqueue(void)
 }
 
 void
-test_ev_receipt(void)
+test_ev_receipt(void *unused)
 {
     int kq;
     struct kevent kev;
@@ -124,14 +120,91 @@ test_ev_receipt(void)
 #endif
 }
 
+void
+run_iteration(struct test_context *ctx)
+{
+    struct unit_test *test;
+
+    for (test = &ctx->tests[0]; test->ut_name != NULL; test++) {
+        if (test->ut_enabled)
+            test->ut_func(ctx);
+    }
+    free(ctx);
+}
+
+void
+test_harness(struct unit_test tests[], int iterations, int concurrency)
+{
+    int i, j, n, kqfd;
+    pthread_t tid[MAX_THREADS];
+    struct test_context *ctx;
+    int rv;
+
+    if (concurrency >= MAX_THREADS)
+        errx(1, "Too many threads");
+
+    printf("Running %d iterations using %d worker threads\n",
+            iterations, concurrency);
+
+    testing_begin();
+
+    test(peer_close_detection, NULL);
+
+    test(kqueue, NULL);
+
+    if ((kqfd = kqueue()) < 0)
+        die("kqueue()");
+
+    test(ev_receipt, NULL);
+    /* TODO: this fails now, but would be good later 
+    test(kqueue_descriptor_is_pollable);
+    */
+
+    n = 0;
+    for (i = 0; i < iterations; i++) {
+        for (j = 0; j < concurrency; j++) {
+            /* Create a unique context object for each thread */
+            ctx = calloc(1, sizeof(*ctx));
+            if (ctx == NULL)
+                abort();
+            ctx->iteration = n++;
+            ctx->kqfd = kqfd;
+            memcpy(&ctx->tests, tests, sizeof(ctx->tests)); //FIXME: invalid read
+            ctx->iterations = iterations;
+            ctx->concurrency = concurrency;
+
+            rv = pthread_create(&tid[j], NULL, (void * (*)(void *)) run_iteration, ctx);
+            if (rv != 0)
+                err(1, "pthread_create");
+        }
+        for (j = 0; j < concurrency; j++) {
+            pthread_join(tid[j], NULL);
+        }
+    }
+    testing_end();
+
+    close(kqfd);
+}
+
+void
+usage(void)
+{
+    printf("usage:\n"
+           "  -h        This message\n"
+           "  -n        Number of iterations (default: 1)\n"
+           "  -c        Number of threads running concurrently (default: 1)\n"
+           "\n\n"
+          );   
+    exit(1);
+}
+
 int 
 main(int argc, char **argv)
 {
     struct unit_test tests[] = {
         { "socket", 1, test_evfilt_read },
 #ifndef _WIN32
-
-        { "signal", 1, test_evfilt_signal },
+        { "signal", 0, test_evfilt_signal },
 #endif
 #if FIXME
         { "proc", 1, test_evfilt_proc },
@@ -146,8 +219,9 @@ main(int argc, char **argv)
         { NULL, 0, NULL },
     };
     struct unit_test *test;
+    int c, i, concurrency, iterations;
     char *arg;
-    int match, kqfd;
+    int match;
 
 #ifdef MAKE_STATIC
     libkqueue_init();
@@ -160,16 +234,33 @@ main(int argc, char **argv)
         err(1, "WSAStartup failed");
 #endif
 
+    iterations = 1;
+    concurrency = 1;
+    while ((c = getopt (argc, argv, "hc:n:")) != -1) {
+        switch (c) {
+            case 'c':
+                concurrency = atoi(optarg);
+                break;
+            case 'h':
+                usage();
+                break;
+            case 'n':
+                iterations = atoi(optarg);
+                break;
+            default:
+                usage();
+        }
+    }
+
     /* If specific tests are requested, disable all tests by default */
-    if (argc > 1) {
+    if (optind < argc) {
         for (test = &tests[0]; test->ut_name != NULL; test++) {
             test->ut_enabled = 0;
         }
     }
-
-    while (argc > 1) {
+    for (i = optind; i < argc; i++) {
         match = 0;
-        arg = argv[1];
+        arg = argv[i];
         for (test = &tests[0]; test->ut_name != NULL; test++) {
             if (strcmp(arg, test->ut_name) == 0) {
                 test->ut_enabled = 1;
@@ -183,30 +274,9 @@ main(int argc, char **argv)
         } else {
             printf("enabled test: %s\n", arg);
         }
-        argv++;
-        argc--;
     }
 
-    testing_begin();
-
-    test(peer_close_detection);
-
-    test(kqueue);
-
-    if ((kqfd = kqueue()) < 0)
-        die("kqueue()");
-
-    for (test = &tests[0]; test->ut_name != NULL; test++) {
-        if (test->ut_enabled)
-            test->ut_func(kqfd);
-    }
-
-    test(ev_receipt);
-    /* TODO: this fails now, but would be good later 
-    test(kqueue_descriptor_is_pollable);
-    */
-
-    testing_end();
+    test_harness(tests, iterations, concurrency);
 
     return (0);
 }

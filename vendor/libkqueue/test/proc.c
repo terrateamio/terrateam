@@ -27,7 +27,7 @@ sig_handler(int signum)
 }
 
 static void
-test_kevent_proc_add(void)
+test_kevent_proc_add(struct test_context *ctx)
 {
     struct kevent kev;
 
@@ -37,7 +37,7 @@ test_kevent_proc_add(void)
 }
 
 static void
-test_kevent_proc_delete(void)
+test_kevent_proc_delete(struct test_context *ctx)
 {
     struct kevent kev;
 
@@ -50,9 +50,9 @@ test_kevent_proc_delete(void)
 }
 
 static void
-test_kevent_proc_get(void)
+test_kevent_proc_get(struct test_context *ctx)
 {
-    struct kevent kev;
+    struct kevent kev, buf;
 
     /* Create a child that waits to be killed and then exits */
     pid = fork();
@@ -70,13 +70,14 @@ test_kevent_proc_get(void)
     printf(" -- killing process %d\n", (int) pid);
     if (kill(pid, SIGUSR1) < 0)
         die("kill");
-    kevent_cmp(&kev, kevent_get(kqfd));
+    kevent_get(&buf, kqfd);
+    kevent_cmp(&kev, &buf);
     test_no_kevents(kqfd);
 }
 
 #ifdef TODO
 void
-test_kevent_signal_disable(void)
+test_kevent_signal_disable(struct test_context *ctx)
 {
     const char *test_id = "kevent(EVFILT_SIGNAL, EV_DISABLE)";
     struct kevent kev;
@@ -102,7 +103,7 @@ test_kevent_signal_disable(void)
 }
 
 void
-test_kevent_signal_enable(void)
+test_kevent_signal_enable(struct test_context *ctx)
 {
     const char *test_id = "kevent(EVFILT_SIGNAL, EV_ENABLE)";
     struct kevent kev;
@@ -139,7 +140,7 @@ test_kevent_signal_enable(void)
 }
 
 void
-test_kevent_signal_del(void)
+test_kevent_signal_del(struct test_context *ctx)
 {
     const char *test_id = "kevent(EVFILT_SIGNAL, EV_DELETE)";
     struct kevent kev;
@@ -165,7 +166,7 @@ test_kevent_signal_del(void)
 }
 
 void
-test_kevent_signal_oneshot(void)
+test_kevent_signal_oneshot(struct test_context *ctx)
 {
     const char *test_id = "kevent(EVFILT_SIGNAL, EV_ONESHOT)";
     struct kevent kev;
@@ -199,10 +200,8 @@ test_kevent_signal_oneshot(void)
 #endif
 
 void
-test_evfilt_proc(int _kqfd)
+test_evfilt_proc(struct test_context *ctx)
 {
-    kqfd = _kqfd;
-
     signal(SIGUSR1, sig_handler);
 
     /* Create a child that waits to be killed and then exits */
@@ -213,9 +212,9 @@ test_evfilt_proc(int _kqfd)
     }
     printf(" -- child created (pid %d)\n", (int) pid);
 
-    test(kevent_proc_add);
-    test(kevent_proc_delete);
-    test(kevent_proc_get);
+    test(kevent_proc_add, ctx);
+    test(kevent_proc_delete, ctx);
+    test(kevent_proc_get, ctx);
 
     signal(SIGUSR1, SIG_DFL);
 
