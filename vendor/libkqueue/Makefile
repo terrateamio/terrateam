@@ -22,7 +22,7 @@ include config.mk
 
 .PHONY :: install uninstall check dist dist-upload clean merge distclean fresh-build rpm edit cscope
 
-all: $(PROGRAM).so.$(ABI_VERSION) $(PROGRAM)_debug.so $(PROGRAM).a
+all: $(PROGRAM).so.$(ABI_VERSION) $(PROGRAM)_debug.so $(PROGRAM).a $(PROGRAM)_debug.a
 
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ -I./include -I./src/common -DNDEBUG $(CFLAGS) $<
@@ -32,6 +32,12 @@ $(PROGRAM).a:
 	$(CC) -c -I./include -I./src/common -DNDEBUG -DMAKE_STATIC=1 -static $(CFLAGS) $(SOURCES) $(LDADD)
 	$(AR) rcs $(PROGRAM).a *.o
 	$(STRIP) $(PROGRAM).a
+	rm *.o
+
+$(PROGRAM)_debug.a:
+	rm -f *.o
+	$(CC) -c -I./include -I./src/common -DMAKE_STATIC=1 -pg -static $(CFLAGS) $(SOURCES) $(LDADD)
+	$(AR) rcs $(PROGRAM)_debug.a *.o
 	rm *.o
 
 $(PROGRAM).so.$(ABI_VERSION): $(OBJS)
@@ -69,8 +75,11 @@ uninstall:
 test/config.mk:
 	cd test && ../configure
 
-check: clean all test/config.mk
+check: test/config.mk
 	cd test && make check
+
+profile: clean $(PROGRAM)_debug.a
+	cd test && ./kqtest
 
 debug: clean all test/config.mk
 	cd test && make debug
