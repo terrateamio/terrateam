@@ -255,6 +255,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         dbg_printf("--- kevent %u --- (nchanges = %d, nevents = %d)", myid, nchanges, nevents);
     } else {
         myid = 0;
+        (void) myid;
     }
 
     /*

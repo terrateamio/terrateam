@@ -14,7 +14,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-tests=kqtest lockstat static-lib-test
+tests=kqtest kqtest_debug lockstat static-lib-test
 
 include config.mk
 
@@ -24,28 +24,38 @@ lockstat: lockstat.c
 	$(CC) -o lockstat $(CFLAGS) lockstat.c $(LDADD)
 
 kqtest: $(SOURCES)
-	$(CC) -rdynamic -o kqtest $(CFLAGS) $(SOURCES) $(LDADD)
+	$(CC) -pg -o kqtest -DMAKE_STATIC=1 $(CFLAGS) $(SOURCES) ../libkqueue.a -lpthread
+
+kqtest_debug: $(SOURCES)
+	$(CC) -pg -o kqtest_debug -DMAKE_STATIC=1 $(CFLAGS) $(SOURCES) ../libkqueue_debug.a -lpthread
 
 static-lib-test: $(SOURCES)
 	$(CC) -o static-lib-test -DMAKE_STATIC=1 $(CFLAGS) $(SOURCES) ../libkqueue.a -lpthread
 
 check: kqtest
-	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" PATH="$$PATH:.." ./kqtest $(KQTEST_OPTS)
+	./kqtest $(KQTEST_OPTS)
 
 debug: kqtest
-	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" PATH="$$PATH:.." gdb ./kqtest $(KQTEST_OPTS)
+	gdb ./kqtest $(KQTEST_OPTS)
 
 valgrind: kqtest
-	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" \
 	valgrind --tool=memcheck --leak-check=full --show-reachable=yes --num-callers=20 --track-fds=yes ./kqtest
 
 helgrind: kqtest
-	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" \
-	valgrind --tool=helgrind ./kqtest
+	valgrind --tool=helgrind ./kqtest -c 25 -n 1
+
+callgrind: kqtest
+	rm -f callgrind.*
+	valgrind --tool=callgrind --branch-sim=yes ./kqtest || true
+	kcachegrind callgrind.*
 
 cachegrind: kqtest
-	LD_LIBRARY_PATH="..:/usr/sfw/lib/64" \
-	valgrind --tool=cachegrind --branch-sim=yes ./kqtest
+	rm -f cachegrind.*
+	valgrind --tool=cachegrind --branch-sim=yes ./kqtest || true
+	#CLI:
+	#cg_annotate cachegrind.*
+	#GUI:
+	kcachegrind
 
 check-installed:
 	$(CC) -o kqtest $(CFLAGS) $(SOURCES) $(LDADD) -lkqueue

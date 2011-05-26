@@ -204,6 +204,7 @@ main(int argc, char **argv)
     struct unit_test tests[] = {
         { "socket", 1, test_evfilt_read },
 #ifndef _WIN32
+        // XXX-FIXME -- BROKEN ON LINUX WHEN RUN IN A SEPARATE THREAD
         { "signal", 0, test_evfilt_signal },
 #endif
 #if FIXME
