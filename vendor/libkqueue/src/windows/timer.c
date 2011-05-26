@@ -45,7 +45,7 @@ ktimer_delete(struct filter *filt, struct knote *kn)
 	}
 
 	if( !(kn->kev.flags & EV_ONESHOT) )
-		knote_release(filt, kn);
+		knote_release(kn);
 
 	kn->data.handle = NULL;
 	return (0);
@@ -83,7 +83,7 @@ static VOID CALLBACK evfilt_timer_callback(void* param, BOOLEAN fired){
 		struct filter* filt;
 		if( filter_lookup(&filt, kq, kn->kev.filter) )
 			dbg_perror("filter_lookup()");
-		knote_release(filt, kn);
+		knote_release(kn);
 	}
 }
 

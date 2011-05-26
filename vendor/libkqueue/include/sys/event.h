@@ -36,7 +36,11 @@
 #define intptr_t long
 #else
 #include <sys/types.h> 
-#include <stdint.h> 
+#if _MSC_VER < 1600
+# include "../../src/windows/stdint.h"
+#else
+# include <stdint.h>
+#endif
 #define LIBKQUEUE       1
 #endif
 
