@@ -65,6 +65,7 @@ struct unit_test {
 
 struct test_context {
     struct unit_test tests[50]; //TODO: use MAX_TESTS instead of magic number 
+    char *cur_test_id;
     int iterations;
     int concurrency;
     int iteration;
@@ -88,10 +89,11 @@ void test_evfilt_proc(struct test_context *);
 void test_evfilt_user(struct test_context *);
 #endif
 
-#define test(f,ctx,...) do {                                             \
-    test_begin("test_"#f"()\t"__VA_ARGS__);                                                  \
-    test_##f(ctx);\
-    test_end();                                                     \
+#define test(f,ctx,...) do {                                            \
+    assert(ctx != NULL); \
+    test_begin(ctx, "test_"#f"()\t"__VA_ARGS__); \
+    test_##f(ctx); \
+    test_end(ctx); \
 } while (/*CONSTCOND*/0)
 
 extern const char * kevent_to_str(struct kevent *);
@@ -126,8 +128,8 @@ kevent_add(int kqfd, struct kevent *kev,
 void _test_no_kevents(int, const char *, int);
 
 /* From test.c */
-void    test_begin(const char *);
-void    test_end(void);
+void    test_begin(struct test_context *, const char *);
+void    test_end(struct test_context *);
 void    test_atexit(void);
 void    testing_begin(void);
 void    testing_end(void);
