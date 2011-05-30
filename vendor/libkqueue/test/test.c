@@ -24,7 +24,6 @@
 
 static int testnum = 1;
 static int error_flag = 1;
-static char * cur_test_id = NULL;
 
 /* FIXME: not portable beyond linux */
 #ifndef _WIN32
@@ -48,7 +47,7 @@ static void
 testing_atexit(void)
 {
     if (error_flag) {
-        printf(" *** TEST FAILED: %s\n", cur_test_id);
+        printf(" *** TEST FAILED ***\n");
         //TODO: print detailed log
     } else {
         printf("\n---\n"
@@ -57,21 +56,21 @@ testing_atexit(void)
 }
 
 void
-test_begin(const char *func)
+test_begin(struct test_context *ctx, const char *func)
 {
-    if (cur_test_id)
-        free(cur_test_id);
-    cur_test_id = strdup(func);
+    if (ctx->cur_test_id)
+        free(ctx->cur_test_id);
+    ctx->cur_test_id = strdup(func);
 
-    printf("%d: %s\n", testnum++, cur_test_id);
+    printf("%d: %s\n", testnum++, ctx->cur_test_id);
     //TODO: redirect stdout/err to logfile
 }
 
 void
-test_end(void)
+test_end(struct test_context *ctx)
 {
-    free(cur_test_id);
-    cur_test_id = NULL;
+    free(ctx->cur_test_id);
+    ctx->cur_test_id = NULL;
 }
 
 void

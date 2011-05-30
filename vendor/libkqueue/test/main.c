@@ -148,17 +148,21 @@ test_harness(struct unit_test tests[], int iterations, int concurrency)
 
     testing_begin();
 
-    test(peer_close_detection, NULL);
+    ctx = calloc(1, sizeof(*ctx));
 
-    test(kqueue, NULL);
+    test(peer_close_detection, ctx);
+
+    test(kqueue, ctx);
 
     if ((kqfd = kqueue()) < 0)
         die("kqueue()");
 
-    test(ev_receipt, NULL);
+    test(ev_receipt, ctx);
     /* TODO: this fails now, but would be good later 
     test(kqueue_descriptor_is_pollable);
     */
+
+    free(ctx);
 
     n = 0;
     for (i = 0; i < iterations; i++) {
