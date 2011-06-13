@@ -18,7 +18,7 @@
 
 /* Convert milliseconds into negative increments of 100-nanoseconds */
 static void
-convert_msec_to_filetime(LARGE_INTEGER *dst, int src)
+convert_msec_to_filetime(LARGE_INTEGER *dst, intptr_t src)
 {
 	dst->QuadPart = -((int64_t) src * 1000 * 10);
 }
@@ -130,7 +130,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
     convert_msec_to_filetime(&liDueTime, kn->kev.data);
 	
 	// XXX-FIXME add completion routine to this call
-    if (!SetWaitableTimer(th, &liDueTime, (kn->kev.flags & EV_ONESHOT) ? 0 : kn->kev.data, NULL, NULL, FALSE)) {
+    if (!SetWaitableTimer(th, &liDueTime, (LONG)( (kn->kev.flags & EV_ONESHOT) ? 0 : kn->kev.data ), NULL, NULL, FALSE)) {
         dbg_lasterror("SetWaitableTimer()");
         CloseHandle(th);
         return (-1);
