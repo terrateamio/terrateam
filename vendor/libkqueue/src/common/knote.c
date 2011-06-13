@@ -120,7 +120,7 @@ knote_delete(struct filter *filt, struct knote *kn)
 }
 
 struct knote *
-knote_lookup(struct filter *filt, short ident)
+knote_lookup(struct filter *filt, uintptr_t ident)
 {
     struct knote query;
     struct knote *ent = NULL;

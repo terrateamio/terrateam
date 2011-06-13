@@ -224,7 +224,7 @@ windows_get_descriptor_type(struct knote *kn)
     /*
      * Test if the descriptor is a socket.
      */
-    if (fstat(kn->kev.ident, &sb) == 0) {
+    if (fstat( (int)kn->kev.ident, &sb) == 0) {
         dbg_printf("HANDLE %d appears to a be regular file", kn->kev.ident);
         kn->kn_flags |= KNFL_REGULAR_FILE;
     } else {
