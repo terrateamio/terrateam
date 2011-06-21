@@ -133,7 +133,11 @@ knote_lookup(struct filter *filt, uintptr_t ident)
         knote_lock(ent);
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
 
+#ifdef __x86_64__
     dbg_printf("id=%lu ent=%p", ident, ent);
+#else
+    dbg_printf("id=%u ent=%p", ident, ent);
+#endif
 
     return (ent);
 }
