@@ -1,0 +1,9 @@
+# OASIS_START
+# DO NOT EDIT (digest: db92f11e38123dd6dcc9fdee459f1526)
+version = "0.1-dev"
+description = "RFC3968 URI parsing library"
+archive(byte) = "uri.cma"
+archive(native) = "uri.cmxa"
+exists_if = "uri.cma"
+# OASIS_STOP
+
