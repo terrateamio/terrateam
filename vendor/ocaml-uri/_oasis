@@ -10,6 +10,7 @@ BuildTools:  ocamlbuild
 Library uri
   Path:       lib
   Modules:    Uri
+  BuildDepends: re
 
 Flag tests
   Description:        Build and run tests
