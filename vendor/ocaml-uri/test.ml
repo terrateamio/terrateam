@@ -17,7 +17,18 @@
 
 open Printf
 
+(*
 let _ =
   let lexbuf = Lexing.from_string "https://user:pass@foo.com/wh/at/ever?foo#5" in
   let uri = Parser.absolute_uri Lexer.token lexbuf in
   printf "%s\n%!" (Uri.absolute_uri_to_string uri)
+*)
+
+let abs_uri = "https://user:pass@foo.com:123/wh/at/ever?foo=1&bar=5#5"
+let rel_uri = "/wh/at/ever?foo#5"
+ 
+let _ =
+  let u = Uri.of_string abs_uri in
+  printf "%s\n%!" (Uri.to_string u);
+  let u = Uri.of_string rel_uri in
+  printf "%s\n%!" (Uri.to_string u)
