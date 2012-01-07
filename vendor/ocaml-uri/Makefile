@@ -1,6 +1,8 @@
 .PHONY: all clean install build
 all: build doc 
 
+NAME=uri
+
 export OCAMLRUNPARAM=b
 
 setup.bin: setup.ml
@@ -23,7 +25,7 @@ test: setup.bin build
 	./setup.bin -test
 
 reinstall: setup.bin
-	ocamlfind remove cohttp || true
+	ocamlfind remove $(NAME) || true
 	./setup.bin -reinstall
 
 clean:

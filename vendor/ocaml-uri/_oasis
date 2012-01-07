@@ -9,7 +9,7 @@ BuildTools:  ocamlbuild
 
 Library uri
   Path:       lib
-  Modules:    Uri
+  Modules:    Uri,Uri_re
   BuildDepends: re
 
 Flag tests
