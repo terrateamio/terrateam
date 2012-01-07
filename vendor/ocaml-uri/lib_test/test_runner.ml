@@ -15,20 +15,99 @@
  *
  *)
 
+open OUnit
 open Printf
 
-(*
-let _ =
-  let lexbuf = Lexing.from_string "https://user:pass@foo.com/wh/at/ever?foo#5" in
-  let uri = Parser.absolute_uri Lexer.token lexbuf in
-  printf "%s\n%!" (Uri.absolute_uri_to_string uri)
-*)
+(* Tuples of decoded and encoded strings. The first element is a number to
+   refer to the test, as the pcts_large version duplicates the second field 
+   to a large size, so it cant be used as the name of the test *)
+let pcts = [
+  (1, "hello world!", "hello%20world%21");
+  (2, "!", "%21");
+  (3, "!!!!!", "%21%21%21%21%21");
+  (4, "1!", "1%21");
+  (5, "%20", "%2520");
+  (6, "", "");
+  (7, "f", "f");
+]
 
-let abs_uri = "https://user:pass@foo.com:123/wh/at/ever?foo=1&bar=5#5"
-let rel_uri = "/wh/at/ever?foo#5"
+(* Make an artificially large string version of the pct strings *)
+let pcts_large =
+  List.map (fun (n,a,b) ->
+    let num = 100000 in
+    let a' = Buffer.create (String.length a * num) in
+    let b' = Buffer.create (String.length b * num) in
+    for i = 1 to num do
+      Buffer.add_string a' a;
+      Buffer.add_string b' b;
+    done;
+    (n, Buffer.contents a', Buffer.contents b')
+  ) pcts
  
+(* Tuple of string URI and the decoded version *)
+let uri_encodes = [
+  "https://user:pass@foo.com:123/wh/at/ever?foo=1&bar=5#5",
+    { Uri.scheme=Some "https"; userinfo=Some "user:pass"; host=Some "foo.com";
+      port=Some 123; path="/wh/at/ever"; query=Some "foo=1&bar=5"; fragment=Some "5" };
+  "http://foo.com",
+    { Uri.scheme=Some "http"; userinfo=None; host=Some "foo.com"; port=None; path="";
+      query=None; fragment=None };
+  "http://foo%21.com",
+    { Uri.scheme=Some "http"; userinfo=None; host=Some "foo!.com"; port=None; path="";
+      query=None; fragment=None };
+  "/wh/at/ev/er",
+    { Uri.scheme=None; userinfo=None; host=None; port=None; path="/wh/at/ev/er";
+      query=None; fragment=None };
+  "/wh/at%21/ev%20/er",
+    { Uri.scheme=None; userinfo=None; host=None; port=None; path="/wh/at!/ev /er";
+      query=None; fragment=None };
+]
+
+let map_pcts_tests size name test args =
+  List.map (fun (n, a,b) ->
+    let name = sprintf "pct_%s:%d:%s" size n a in
+    let a1, b1 = test a b in
+    let test () = assert_equal ~printer:(fun x -> x) a1 b1 in
+    name >:: test
+  ) args
+
+let test_pct_small =
+  (map_pcts_tests "small" "encode" (fun a b -> b, (Uri.pct_encode a)) pcts) @ 
+  (map_pcts_tests "small" "decode" (fun a b -> (Uri.pct_decode b), a) pcts)
+
+let test_pct_large =
+  (map_pcts_tests "large" "encode" (fun a b -> (Uri.pct_encode a), b) pcts_large) @
+  (map_pcts_tests "large" "decode" (fun a b -> (Uri.pct_decode b), a) pcts_large)
+
+(* Test that a URL encodes to the expected value *)
+let test_uri_encode =
+  List.map (fun (uri_str, uri) ->
+    let name = sprintf "uri:%s" uri_str in
+    let test () = assert_equal ~printer:(fun x -> x) uri_str (Uri.to_string uri) in
+    name >:: test
+  ) uri_encodes
+
+(* Returns true if the result list contains successes only.
+   Copied from oUnit source as it isnt exposed by the mli *)
+let rec was_successful =
+  function
+    | [] -> true
+    | RSuccess _::t
+    | RSkip _::t ->
+        was_successful t
+    | RFailure _::_
+    | RError _::_
+    | RTodo _::_ ->
+        false
+
 let _ =
-  let u = Uri.of_string abs_uri in
-  printf "%s\n%!" (Uri.to_string u);
-  let u = Uri.of_string rel_uri in
-  printf "%s\n%!" (Uri.to_string u)
+  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode) in
+  let verbose = ref false in
+  let set_verbose _ = verbose := true in
+  Arg.parse
+    [("-verbose", Arg.Unit set_verbose, "Run the test in verbose mode.");]
+    (fun x -> raise (Arg.Bad ("Bad argument : " ^ x)))
+    ("Usage: " ^ Sys.argv.(0) ^ " [-verbose]");
+  if not (was_successful (run_test_tt ~verbose:!verbose suite)) then
+  exit 1
+
