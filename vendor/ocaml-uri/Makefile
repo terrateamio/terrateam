@@ -1,22 +1,31 @@
 .PHONY: all clean install build
-all: build doc
+all: build doc 
 
-setup.data:
-	ocaml setup.ml -configure
+export OCAMLRUNPARAM=b
 
-build: setup.data
-	ocaml setup.ml -build
+setup.bin: setup.ml
+	ocamlopt.opt -o $@ $< || ocamlopt -o $@ $< || ocamlc -o $@ $<
+	rm -f setup.cmx setup.cmi setup.o setup.cmo
 
-doc: setup.data
-	ocaml setup.ml -doc
+setup.data: setup.bin
+	./setup.bin -configure
 
-install:
-	ocaml setup.ml -install
+build: setup.data setup.bin
+	./setup.bin -build
 
-reinstall:
+doc: setup.data setup.bin
+	./setup.bin -doc
+
+install: setup.bin
+	./setup.bin -install
+
+test: setup.bin build
+	./setup.bin -test
+
+reinstall: setup.bin
 	ocamlfind remove cohttp || true
-	ocaml setup.ml -reinstall
+	./setup.bin -reinstall
 
 clean:
 	ocamlbuild -clean
-	rm -f setup.data setup.log
+	rm -f setup.data setup.log setup.bin
