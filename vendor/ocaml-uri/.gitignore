@@ -3,5 +3,7 @@ _build/
 *.bak
 setup.data
 setup.log
+setup.bin
 *.native
-
+*.byte
+*.docdir

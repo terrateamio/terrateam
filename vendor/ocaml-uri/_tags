@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 9bdfaef894cc907916345cd2501bb7a1)
+# DO NOT EDIT (digest: d795adc57dc769483e88ee6336e531f0)
 # Ignore VCS directories, you can use the same kind of rule outside 
 # OASIS_START/STOP if you want to exclude directories that contains 
 # useless stuff for the build process
@@ -17,11 +17,11 @@
 "lib": include
 <lib/*.ml{,i}>: pkg_re
 # Executable test_runner
-"lib_test/test_runner.byte": use_uri
-"lib_test/test_runner.byte": pkg_re
-"lib_test/test_runner.byte": pkg_oUnit
+<lib_test/test_runner.{native,byte}>: use_uri
+<lib_test/test_runner.{native,byte}>: pkg_re
+<lib_test/test_runner.{native,byte}>: pkg_oUnit
 <lib_test/*.ml{,i}>: use_uri
 <lib_test/*.ml{,i}>: pkg_re
 <lib_test/*.ml{,i}>: pkg_oUnit
-"lib_test/test_runner.byte": custom
+<lib_test/test_runner.{native,byte}>: custom
 # OASIS_STOP
