@@ -154,8 +154,18 @@ let to_string uri =
       );
    |None -> ()
   );
-  if String.length uri.path > 0 && uri.path.[0] != '/' then Buffer.add_char buf '/';
-  Buffer.add_string buf (pct_encode ~safe_chars:safe_chars_for_path uri.path);
+  (match uri.path with 
+   |"" ->
+      (* If the buffer has no host, then always start URI with a slash *)
+      if uri.host = None then Buffer.add_char buf '/'
+   |path when path.[0] = '/' -> 
+      (* Path starts with a slash, so ok to add *)
+      Buffer.add_string buf (pct_encode ~safe_chars:safe_chars_for_path uri.path);  
+   |path ->
+      (* Path has no starting slash and is non-empty, so force a starting slash *)
+      Buffer.add_char buf '/';
+      Buffer.add_string buf (pct_encode ~safe_chars:safe_chars_for_path uri.path);
+  );
   (match uri.query with
    |None -> ()
    |Some q -> Buffer.(add_char buf '?'; add_string buf q)
