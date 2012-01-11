@@ -196,6 +196,7 @@ let query uri =
       | k::v::tl ->
           let acc = (plus_to_space k, plus_to_space v)::acc in
           loop acc tl
+      | [k] -> List.rev ((k,"") :: acc)
       |_ -> List.rev acc in
     loop [] bits
 

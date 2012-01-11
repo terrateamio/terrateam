@@ -90,7 +90,8 @@ let test_uri_encode =
 (* Test URI query decoding *)
 let uri_query = [
   "https://user:pass@foo.com:123/wh/at/ever?foo=1&bar=5#5", ["foo","1"; "bar","5"];
-  "/domain?f+1=bar&+f2=bar%212", ["f 1","bar";" f2","bar!2"]
+  "/domain?f+1=bar&+f2=bar%212", ["f 1","bar";" f2","bar!2"];
+  "/domain?foo=&bar=", ["foo","";"bar",""];
 ]
 
 let test_query_decode =
