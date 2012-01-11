@@ -87,6 +87,34 @@ let test_uri_encode =
     name >:: test
   ) uri_encodes
 
+(* Test URI query decoding *)
+let uri_query = [
+  "https://user:pass@foo.com:123/wh/at/ever?foo=1&bar=5#5", ["foo","1"; "bar","5"];
+  "/domain?f+1=bar&+f2=bar%212", ["f 1","bar";" f2","bar!2"]
+]
+
+let test_query_decode =
+  List.map (fun (uri_str,res) ->
+    let uri = Uri.of_string uri_str in
+    let test () = assert_equal ~printer:(fun l ->
+      String.concat " " (List.map (fun (k,v) -> sprintf "(%s=%s)" k v) l)) (Uri.query uri) res in
+    uri_str >:: test
+  ) uri_query
+
+(* Test URI query encoding. No pct encoding as that is done later by Uri.to_string *)
+let uri_query_make = [
+  [], "";
+  ["foo","bar"], "foo=bar";
+  ["foo1","bar1";"foo2","bar2"], "foo1=bar1&foo2=bar2";
+  ["foo1","bar1";"foo2","bar2";"foo3","bar3"], "foo1=bar1&foo2=bar2&foo3=bar3";
+]
+
+let test_query_encode =
+  List.map (fun (qs,res) ->
+    let test () = assert_equal ~printer:(fun l -> l) (Uri.make_query qs) res in
+    res >:: test
+  ) uri_query_make
+
 (* Returns true if the result list contains successes only.
    Copied from oUnit source as it isnt exposed by the mli *)
 let rec was_successful =
@@ -101,7 +129,7 @@ let rec was_successful =
         false
 
 let _ =
-  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode) in
+  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_query_decode @ test_query_encode) in
   let verbose = ref false in
   let set_verbose _ = verbose := true in
   Arg.parse

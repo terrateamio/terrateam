@@ -175,3 +175,45 @@ let to_string uri =
    |Some f -> Buffer.(add_char buf '#'; add_string buf f)
   );
   Buffer.contents buf
+
+(** Regular expression to separate out the query string components *)
+let query_re = Re_str.regexp "[&=]"
+
+(** Replace a + in a query string with a space in-place *)
+let plus_to_space s =
+  for i = 0 to String.length s - 1 do
+    if s.[i] = '+' then s.[i] <- ' '
+  done; 
+  s
+
+(** Parse a query string into an array of key/value pairs *)
+let query uri =
+  match uri.query with
+  |None -> []
+  |Some q ->
+    let bits = Re_str.split query_re q in
+    let rec loop acc = function
+      | k::v::tl ->
+          let acc = (plus_to_space k, plus_to_space v)::acc in
+          loop acc tl
+      |_ -> List.rev acc in
+    loop [] bits
+
+(* Assemble a query string suitable for putting into a URI *)
+let make_query l =
+  let len = List.fold_left (fun a (k,v) -> 
+    a + (String.length k) + (String.length v) + 2) (-1) l in
+  let buf = Buffer.create len in
+  let n = ref 0 in
+  let len = List.length l in
+  List.iter (fun (k,v) ->
+    incr n;
+    Buffer.add_string buf k;
+    Buffer.add_char buf '=';
+    Buffer.add_string buf v;
+    if !n < len then
+      Buffer.add_char buf '&';
+  ) l;
+  Buffer.contents buf
+    
+   
