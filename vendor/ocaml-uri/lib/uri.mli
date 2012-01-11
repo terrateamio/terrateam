@@ -60,9 +60,15 @@ val of_string : pct_encoded -> t
 (** Convert a URI structure into a percent-encoded URI string *)
 val to_string : t -> pct_encoded
 
-(** Parse a query string into its components *)
+(* Parse a query string into its components *)
+val parse_query : string -> (string * string) list
+
+(** Get a query string from a URI *)
 val query : t -> (string * string) list
 
 (** Construct a query string for placing into a URI. Will be percent-encoded
     later via [Url.to_string] *)
 val make_query : (string * string) list -> string
+
+(** Get the path component of a URI *)
+val path : t -> string

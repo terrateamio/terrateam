@@ -186,12 +186,9 @@ let plus_to_space s =
   done; 
   s
 
-(** Parse a query string into an array of key/value pairs *)
-let query uri =
-  match uri.query with
-  |None -> []
-  |Some q ->
-    let bits = Re_str.split query_re q in
+(** Parse a query string into a list of key/value pairs *)
+let parse_query qs =
+    let bits = Re_str.split query_re qs in
     let rec loop acc = function
       | k::v::tl ->
           let acc = (plus_to_space k, plus_to_space v)::acc in
@@ -199,6 +196,12 @@ let query uri =
       | [k] -> List.rev ((k,"") :: acc)
       |_ -> List.rev acc in
     loop [] bits
+
+(* Get a query string from a URI *)
+let query uri =
+  match uri.query with
+  |None -> []
+  |Some q -> parse_query q
 
 (* Assemble a query string suitable for putting into a URI *)
 let make_query l =
@@ -216,5 +219,11 @@ let make_query l =
       Buffer.add_char buf '&';
   ) l;
   Buffer.contents buf
-    
-   
+
+(* Return the path component, which is either relative and non-empty,
+   or an absolute path.
+   TODO: strip out ../. for normalisation *)
+let path uri =
+  match uri.path with
+  |"" -> "/"
+  |p -> p
