@@ -98,6 +98,18 @@ test_kqueue(void *unused)
 }
 
 void
+test_kevent(void *unused)
+{
+    struct kevent kev;
+
+    memset(&kev, 0, sizeof(kev));
+
+    /* Provide an invalid kqueue descriptor */
+    if (kevent(-1, &kev, 1, NULL, 0, NULL) == 0)
+        die("invalid kq parameter");
+}
+
+void
 test_ev_receipt(void *unused)
 {
     int kq;
@@ -126,6 +138,8 @@ run_iteration(struct test_context *ctx)
     struct unit_test *test;
 
     for (test = &ctx->tests[0]; test->ut_name != NULL; test++) {
+        if (ctx->concurrency > 1 && test->ut_concurrent == 0)
+            continue;
         if (test->ut_enabled)
             test->ut_func(ctx);
     }
@@ -153,6 +167,7 @@ test_harness(struct unit_test tests[], int iterations, int concurrency)
     test(peer_close_detection, ctx);
 
     test(kqueue, ctx);
+    test(kevent, ctx);
 
     if ((kqfd = kqueue()) < 0)
         die("kqueue()");
@@ -206,22 +221,23 @@ int
 main(int argc, char **argv)
 {
     struct unit_test tests[] = {
-        { "socket", 1, test_evfilt_read },
+        { "socket", 1, 0, test_evfilt_read },
 #ifndef _WIN32
         // XXX-FIXME -- BROKEN ON LINUX WHEN RUN IN A SEPARATE THREAD
-        { "signal", 0, test_evfilt_signal },
+        { "signal", 0, 0, test_evfilt_signal },
 #endif
 #if FIXME
-        { "proc", 1, test_evfilt_proc },
+        { "proc", 1, 0, test_evfilt_proc },
 #endif
-		{ "timer", 1, test_evfilt_timer },
+		{ "timer", 1, 0, test_evfilt_timer },
+		{ "timer_concurrent", 1, 1, test_evfilt_timer_concurrent },
 #ifndef _WIN32
-		{ "vnode", 1, test_evfilt_vnode },
+		{ "vnode", 1, 0, test_evfilt_vnode },
 #endif
 #if HAVE_EVFILT_USER
-        { "user", 1, test_evfilt_user },
+        { "user", 1, 0, test_evfilt_user },
 #endif
-        { NULL, 0, NULL },
+        { NULL, 0, 0, NULL },
     };
     struct unit_test *test;
     int c, i, concurrency, iterations;

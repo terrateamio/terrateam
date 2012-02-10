@@ -168,3 +168,15 @@ test_evfilt_timer(struct test_context *ctx)
     test(kevent_timer_dispatch, ctx);
 #endif
 }
+
+void
+test_evfilt_timer_concurrent(struct test_context *ctx)
+{
+    struct kevent kev, ret;
+
+    kevent_add(ctx->kqfd, &kev, ctx->iteration, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, 100, NULL);
+    kevent_get(&ret, ctx->kqfd);
+    /* Do not compare ret and kev, because it may be triggered by a
+       different thread's kevent stucture */
+
+}
