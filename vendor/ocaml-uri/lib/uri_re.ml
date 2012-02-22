@@ -42,7 +42,6 @@ module Raw = struct
   (* following RFC2234, RFC3986 and 
      http://people.spodhuis.org/phil.pennock/software/emit_ipv6_regexp-0.304 
   *)
-
   let ipv6_address = 
     let (=|) n a = repn a n (Some n) in
     let (<|) n a = repn a 0 (Some n) in
