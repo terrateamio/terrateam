@@ -38,9 +38,35 @@ module Raw = struct
   
   let dec_octet = Re_posix.re "25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?"
   let ipv4_address = (repn (dec_octet + c_dot) 3 (Some 3)) + dec_octet
+  
+  (* following RFC2234, RFC3986 and 
+     http://people.spodhuis.org/phil.pennock/software/emit_ipv6_regexp-0.304 
+  *)
+
+  let ipv6_address = 
+    let (=|) n a = repn a n (Some n) in
+    let (<|) n a = repn a 0 (Some n) in
+    let h16 = repn hexdig 1 (Some 4) in
+    let h16c = h16 + c_colon in
+    let cc = c_colon + c_colon in
+    let ls32 = (h16c + h16) / ipv4_address in
+    ( char '[' 
+      + (((6=|h16c) + ls32)
+         / (                         cc + (5=|h16c) + ls32)
+         / ((1<|             h16)  + cc + (4=|h16c) + ls32)
+         / ((1<|((1<|h16c) + h16)) + cc + (3=|h16c) + ls32)
+         / ((1<|((2<|h16c) + h16)) + cc + (2=|h16c) + ls32)
+         / ((1<|((3<|h16c) + h16)) + cc +     h16c  + ls32)
+         / ((1<|((4<|h16c) + h16)) + cc             + ls32)
+         / ((1<|((5<|h16c) + h16)) + cc             +  h16)
+         / ((1<|((6<|h16c) + h16)) + cc                   )
+      ) 
+      + char ']'
+    )
+  
   let reg_name = rep ( unreserved / pct_encoded / sub_delims )
   
-  let host = ipv4_address / reg_name (* | ipv4_literal TODO *)
+  let host = ipv6_address / ipv4_address / reg_name (* | ipv4_literal TODO *)
   let userinfo = rep (unreserved / pct_encoded / sub_delims / c_colon)
   let port = Re_posix.re "[0-9]*"
   let authority = (opt ((group userinfo) + c_at)) + (group host) + (opt (c_colon + (group port)))
