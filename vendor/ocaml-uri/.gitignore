@@ -7,3 +7,4 @@ setup.bin
 *.native
 *.byte
 *.docdir
+*.annot
