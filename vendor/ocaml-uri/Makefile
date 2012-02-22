@@ -2,12 +2,14 @@
 all: build doc 
 
 NAME=uri
-
+OFLAGS=-annot
 export OCAMLRUNPARAM=b
 
 setup.bin: setup.ml
-	ocamlopt.opt -o $@ $< || ocamlopt -o $@ $< || ocamlc -o $@ $<
-	rm -f setup.cmx setup.cmi setup.o setup.cmo
+	ocamlopt.opt $(OFLAGS) -o $@ $< 	\
+	  || ocamlopt $(OFLAGS) -o $@ $< 	\
+	  || ocamlc $(OFLAGS) -o $@ $<
+	$(RM) setup.cmx setup.cmi setup.o setup.cmo
 
 setup.data: setup.bin
 	./setup.bin -configure
@@ -30,4 +32,4 @@ reinstall: setup.bin
 
 clean:
 	ocamlbuild -clean
-	rm -f setup.data setup.log setup.bin
+	$(RM) setup.data setup.log setup.bin
