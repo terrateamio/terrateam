@@ -2,7 +2,7 @@
 all: build test doc
 
 NAME=uri
-OFLAGS=-annot
+OFLAGS=
 J=4
 
 export OCAMLRUNPARAM=b
