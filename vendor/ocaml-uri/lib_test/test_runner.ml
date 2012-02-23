@@ -47,20 +47,12 @@ let pcts_large =
 (* Tuple of string URI and the decoded version *)
 let uri_encodes = [
   "https://user:pass@foo.com:123/wh/at/ever?foo=1&bar=5#5",
-    { Uri.scheme=Some "https"; userinfo=Some "user:pass"; host=Some "foo.com";
-      port=Some 123; path="/wh/at/ever"; query=Some "foo=1&bar=5"; fragment=Some "5" };
-  "http://foo.com",
-    { Uri.scheme=Some "http"; userinfo=None; host=Some "foo.com"; port=None; path="";
-      query=None; fragment=None };
-  "http://foo%21.com",
-    { Uri.scheme=Some "http"; userinfo=None; host=Some "foo!.com"; port=None; path="";
-      query=None; fragment=None };
-  "/wh/at/ev/er",
-    { Uri.scheme=None; userinfo=None; host=None; port=None; path="/wh/at/ev/er";
-      query=None; fragment=None };
-  "/wh/at%21/ev%20/er",
-    { Uri.scheme=None; userinfo=None; host=None; port=None; path="/wh/at!/ev /er";
-      query=None; fragment=None };
+   (Uri.make ~scheme:"https" ~userinfo:"user:pass" ~host:"foo.com"
+      ~port:123 ~path:"/wh/at/ever" ~query:["foo","1";"bar","5"] ~fragment:"5" ());
+  "http://foo.com", (Uri.make ~scheme:"http" ~host:"foo.com" ());
+  "http://foo%21.com", (Uri.make ~scheme:"http" ~host:"foo!.com" ());
+  "/wh/at/ev/er", (Uri.make ~path:"/wh/at/ev/er" ());
+  "/wh/at%21/ev%20/er", (Uri.make ~path:"/wh/at!/ev /er" ());
 ]
 
 let map_pcts_tests size name test args =

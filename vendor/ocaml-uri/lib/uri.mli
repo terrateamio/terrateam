@@ -15,15 +15,7 @@
  *
  *)
 
-type t = {
-  scheme: string option;
-  userinfo: string option;
-  host: string option;
-  port: int option;
-  path: string;
-  query: string option;
-  fragment: string option;
-}  
+type t
 
 (** This absract type represents a set of safe characters allowed in
     a portion of a URI. Anything not allowed will be percent-encoded.
@@ -41,34 +33,49 @@ val safe_chars_for_path : safe_chars
 (** This is the set allowed for the user info component *)
 val safe_chars_for_userinfo : safe_chars
 
-(** Percent encoded strings should not be encoded twice, so this type
-    is an aliased hint to make it clear which functions operate on percent
-    encoded strings *)
-type pct_encoded = string
-
 (** Percent-encode a string. The [safe_chars] argument defaults to the
     set of characters for a path component, and should be set differently
     for other URI components *)
-val pct_encode : ?safe_chars:safe_chars -> string -> pct_encoded
+val pct_encode : ?safe_chars:safe_chars -> string -> string
 
 (** Percent-decode a percent-encoded string *)
-val pct_decode : pct_encoded -> string
+val pct_decode : string -> string
 
 (** Convert a percent-encoded string into a URI structure *)
-val of_string : pct_encoded -> t
+val of_string : string -> t
 
 (** Convert a URI structure into a percent-encoded URI string *)
-val to_string : t -> pct_encoded
-
-(* Parse a query string into its components *)
-val parse_query : string -> (string * string) list
+val to_string : t -> string
 
 (** Get a query string from a URI *)
 val query : t -> (string * string) list
 
-(** Construct a query string for placing into a URI. Will be percent-encoded
-    later via [Url.to_string] *)
+(** Make a percent-encoded query string from percent-decoded query tuple *)
 val make_query : (string * string) list -> string
+
+(** Parse a percent-encoded query string into a percent-decoded query tuple *)
+val parse_query : string -> (string * string) list
+
+val make : ?scheme:string -> ?userinfo:string -> ?host:string ->
+  ?port:int -> ?path:string -> ?query:(string * string) list -> ?fragment:string -> unit -> t
 
 (** Get the path component of a URI *)
 val path : t -> string
+
+(** Get the scheme component of a URI *)
+val scheme : t -> string option
+
+(** Get the userinfo component of a URI *)
+val userinfo : t -> string option
+
+(** Get the host component of a URI *)
+val host : t -> string option
+
+(** Get the port component of a URI *)
+val port : t -> int option
+
+(** Get the fragment component of a URI *)
+val fragment : t -> string option
+
+(** Get the query component of a URI *)
+val query : t -> (string * string) list
