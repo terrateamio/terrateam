@@ -53,6 +53,8 @@ let uri_encodes = [
   "http://foo%21.com", (Uri.make ~scheme:"http" ~host:"foo!.com" ());
   "/wh/at/ev/er", (Uri.make ~path:"/wh/at/ev/er" ());
   "/wh/at%21/ev%20/er", (Uri.make ~path:"/wh/at!/ev /er" ());
+  "http://%5Bdead%3Abeef%3A%3Adead%3A0%3Abeaf%5D",
+    (Uri.make ~scheme:"http" ~host:"[dead:beef::dead:0:beaf]" ())
 ]
 
 let map_pcts_tests size name test args =
