@@ -9,7 +9,7 @@ BuildTools:  ocamlbuild
 
 Library uri
   Path:       lib
-  Modules:    Uri,Uri_re,IP
+  Modules:    Uri,Uri_re,Uri_IP
   BuildDepends: re.posix,re.str
 
 Flag tests
