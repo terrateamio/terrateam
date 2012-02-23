@@ -15,8 +15,14 @@
  *
  *)
 
-open Operators
 open Re
+
+let (|>) x f = f x (* pipe *)
+let (&&&) x y = Int32.logand x y
+let (|||) x y = Int32.logor x y
+let (<<<) x y = Int32.shift_left x y
+let (>>>) x y = Int32.shift_right_logical x y
+let sp = Printf.sprintf
 
 type ipv4 = int32
 type ipv6 = int32 * int32 * int32 * int32
@@ -33,8 +39,7 @@ let ipv4_of_bytes bs =
     ||| (bs.[2] |> int32_of_byte <<< 8) ||| (bs.[3] |> int32_of_byte))
 
 let string_of_ipv6 i = 
-  (* should make this rfc 5952 compliant *)
-
+  (* TODO should make this rfc 5952 compliant *)
   let i1, i2, i3, i4 = i in
   let s = sp "%lx:%lx:%lx:%lx:%lx:%lx:%lx:%lx"
     ((i1 &&& 0x0_ffff0000_l) >>> 16) ((i1 &&& 0x0_0000ffff_l))
@@ -48,6 +53,8 @@ let ipv6_of_bytes bs =
   (ipv4_of_bytes (String.sub bs 0 4), ipv4_of_bytes (String.sub bs 4 4),
    ipv4_of_bytes (String.sub bs 8 4), ipv4_of_bytes (String.sub bs 12 4))
 
+(*
 let _ = 
   Printf.printf "++ %s" 
     (string_of_ipv6 (0xde000000_l, 0xdeadbeef_l, 0x00000000_l, 0xdeadbeef_l))
+*)
