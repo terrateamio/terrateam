@@ -129,47 +129,28 @@ let pct_encode ?safe_chars s = Pct.(uncast_encoded (encode ?safe_chars (cast_dec
 (* Percent decode a string *)
 let pct_decode s = Pct.(uncast_decoded (decode (cast_encoded s)))
 
-(** Regular expression to separate out the query string components *)
-let query_re = Re_str.regexp "[&=]"
+(* Query string handling, to and from an assoc list of key/values *)
+module Query = struct
 
-(* TODO: only make the query tuple parsing lazy and an additional
- * record in Url.t
- *)
+  type t = (string * string) list
 
-(* Make a query tuple list from a percent-decoded string *)
-let parse_query_from_decoded qs =
-  let bits = Re_str.split query_re (Pct.uncast_decoded qs) in
-  (** Replace a + in a query string with a space in-place *)
-  let plus_to_space s =
-    for i = 0 to String.length s - 1 do
-      if s.[i] = '+' then s.[i] <- ' '
-    done; 
-    Pct.cast_decoded s
-  in
-  let rec loop acc = function
-    | k::v::tl ->
-        let n = plus_to_space k, plus_to_space v in
-        loop (n::acc) tl
-    | [k] ->
-        let n = Pct.cast_decoded k, Pct.empty_decoded in
-        List.rev (n::acc)
-    |_ -> List.rev acc in
-  loop [] bits
+  (** Regular expression to separate out the query string components *)
+  let query_re = Re_str.regexp "[&=]"
 
-(* External interface to parse a prercent-encoded query string
- * into a percent-decoded string tuple.
- * TODO: quash code duplication with parse_query_from_decoded
- *)
-let parse_query qs =
-  let bits = Re_str.split query_re (pct_decode qs) in
-  (** Replace a + in a query string with a space in-place *)
-  let plus_to_space s =
-    for i = 0 to String.length s - 1 do
-      if s.[i] = '+' then s.[i] <- ' '
-    done; 
-    s
-  in
-  let rec loop acc = function
+  (* TODO: only make the query tuple parsing lazy and an additional
+   * record in Url.t ?  *)
+
+  (* Make a query tuple list from a percent-decoded string *)
+  let query_of_decoded qs =
+    let bits = Re_str.split query_re qs in
+    (** Replace a + in a query string with a space in-place *)
+    let plus_to_space s =
+      for i = 0 to String.length s - 1 do
+        if s.[i] = '+' then s.[i] <- ' '
+      done; 
+      s
+    in
+    let rec loop acc = function
     | k::v::tl ->
         let n = plus_to_space k, plus_to_space v in
         loop (n::acc) tl
@@ -177,26 +158,35 @@ let parse_query qs =
         let n = k, "" in
         List.rev (n::acc)
     |_ -> List.rev acc in
-  loop [] bits
+    loop [] bits
 
-(* Assemble a query string suitable for putting into a URI.
- * Inputs are NOT percent encoded and will be by this function
- *)
-let make_query l =
-  let len = List.fold_left (fun a (k,v) ->
-    a + (String.length k) + (String.length v) + 2) (-1) l in
-  let buf = Buffer.create len in
-  let n = ref 0 in
-  let len = List.length l in
-  List.iter (fun (k,v) ->
-    incr n;
-    Buffer.add_string buf (pct_encode k);
-    Buffer.add_char buf '=';
-    Buffer.add_string buf (pct_encode v);
-    if !n < len then
-      Buffer.add_char buf '&';
-  ) l;
-  Buffer.contents buf 
+  (* Make a query tuple list from a percent-encoded string *)
+  let query_of_encoded qs = query_of_decoded (pct_decode qs)
+
+  (* Assemble a query string suitable for putting into a URI.
+   * Tuple inputs are percent decoded and will be encoded by
+   * this function.
+   *)
+  let encoded_of_query l =
+    let len = List.fold_left (fun a (k,v) ->
+      a + (String.length k) + (String.length v) + 2) (-1) l in
+    let buf = Buffer.create len in
+    let n = ref 0 in
+    let len = List.length l in
+    List.iter (fun (k,v) ->
+      incr n;
+      Buffer.add_string buf (pct_encode k);
+      Buffer.add_char buf '=';
+      Buffer.add_string buf (pct_encode v);
+      if !n < len then
+        Buffer.add_char buf '&';
+    ) l;
+    Buffer.contents buf 
+end
+
+let query_of_decoded = Query.query_of_decoded
+let query_of_encoded = Query.query_of_encoded
+let encoded_of_query = Query.encoded_of_query
 
 (* Type of the URI, with most bits being optional
  *)
@@ -206,7 +196,7 @@ type t = {
   host: Pct.decoded option;
   port: int option;
   path: Pct.decoded;
-  query: (Pct.decoded * Pct.decoded) list;
+  query: Query.t;
   fragment: Pct.decoded option;
 }  
 
@@ -215,10 +205,9 @@ type t = {
  * no big deal for now.
  *)
 let make ?scheme ?userinfo ?host ?port ?path ?query ?fragment () =
-  let make_query_decoded l = List.map (fun (k,v) -> Pct.cast_decoded k, Pct.cast_decoded v) l in
   let decode x = match x with |Some x -> Some (Pct.cast_decoded x) |None -> None in
   let path = match path with |None -> Pct.empty_decoded |Some p -> Pct.cast_decoded p in
-  let query = match query with |None -> [] |Some p -> make_query_decoded p in
+  let query = match query with |None -> [] |Some p -> p in
   { scheme=decode scheme; userinfo=decode userinfo; host=decode host;
     port; path; query; fragment=decode fragment }
 
@@ -249,8 +238,16 @@ let of_string s =
        in
        userinfo, host, port
   in
-  let path = match get_opt subs 5 with |Some x -> x |None -> Pct.empty_decoded in
-  let query = match get_opt subs 7 with |Some x -> parse_query_from_decoded x |None -> [] in
+  let path =
+    match get_opt subs 5 with
+    | Some x -> x
+    | None -> Pct.empty_decoded 
+  in
+  let query =
+    match get_opt subs 7 with
+    | Some x -> Query.query_of_decoded (Pct.uncast_decoded x)
+    | None -> []
+  in
   let fragment  = get_opt subs 9 in
   { scheme; userinfo; host; port; path; query; fragment }
 
@@ -260,19 +257,6 @@ let to_string uri =
   (* Percent encode a decoded string and add it to the buffer *)
   let add_pct_string ?(safe_chars=safe_chars) x =
     Buffer.add_string buf (Pct.uncast_encoded (Pct.encode ~safe_chars x)) in
-  (* Percent encode a query tuple list and add it to the buffer *)
-  let add_pct_query l =
-    let n = ref 0 in
-    let len = List.length l in
-    List.iter (fun (k,v) ->
-      incr n;
-      add_pct_string k;
-      Buffer.add_char buf '=';
-      add_pct_string v;
-      if !n < len then
-        Buffer.add_char buf '&';
-    ) l
-  in
   (match uri.scheme with
    |None -> ()
    |Some x ->
@@ -311,7 +295,7 @@ let to_string uri =
   );
   (match uri.query with
    |[] -> ()
-   |q -> Buffer.(add_char buf '?'; add_pct_query q)
+   |q -> Buffer.(add_char buf '?'; add_string buf (Query.encoded_of_query q))
   );
   (match uri.fragment with
    |None -> ()
@@ -334,7 +318,8 @@ let userinfo uri = get_decoded_opt uri.userinfo
 let host uri = get_decoded_opt uri.host
 let port uri = uri.port
 let fragment uri = get_decoded_opt uri.fragment
-let query uri = List.map (fun (k,v) -> Pct.uncast_decoded k, Pct.uncast_decoded v) uri.query
+let query uri = uri.query
+let with_query uri query = { uri with query=query }
 
 (* TODO: functions to add and remove from a URI *)
 

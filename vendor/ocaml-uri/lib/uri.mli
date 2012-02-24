@@ -51,13 +51,22 @@ val to_string : t -> string
 val query : t -> (string * string) list
 
 (** Make a percent-encoded query string from percent-decoded query tuple *)
-val make_query : (string * string) list -> string
+val encoded_of_query : (string * string) list -> string
 
 (** Parse a percent-encoded query string into a percent-decoded query tuple *)
-val parse_query : string -> (string * string) list
+val query_of_encoded : string -> (string * string) list
+
+(** Parse a percent-decoded query string into a percent-decoded query tuple *)
+val query_of_decoded : string -> (string * string) list
+
+(** Replace the query URI with the supplied list.
+  * Input URI is not modified
+  *)
+val with_query : t -> (string * string) list -> t
 
 val make : ?scheme:string -> ?userinfo:string -> ?host:string ->
-  ?port:int -> ?path:string -> ?query:(string * string) list -> ?fragment:string -> unit -> t
+  ?port:int -> ?path:string -> ?query:(string * string) list -> 
+  ?fragment:string -> unit -> t
 
 (** Get the path component of a URI *)
 val path : t -> string
@@ -77,5 +86,3 @@ val port : t -> int option
 (** Get the fragment component of a URI *)
 val fragment : t -> string option
 
-(** Get the query component of a URI *)
-val query : t -> (string * string) list
