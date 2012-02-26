@@ -64,6 +64,16 @@ val query_of_decoded : string -> (string * string) list
   *)
 val with_query : t -> (string * string) list -> t
 
+(** Add a query parameter to the input query URI.
+  * Input URI is not modified
+  *)
+val add_query_param : t -> (string * string) -> t
+
+(** Add a query parameter list to the input query URI.
+  * Input URI is not modified
+  *)
+val add_query_params : t -> (string * string) list -> t
+
 val make : ?scheme:string -> ?userinfo:string -> ?host:string ->
   ?port:int -> ?path:string -> ?query:(string * string) list -> 
   ?fragment:string -> unit -> t

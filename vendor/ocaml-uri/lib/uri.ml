@@ -320,6 +320,8 @@ let port uri = uri.port
 let fragment uri = get_decoded_opt uri.fragment
 let query uri = uri.query
 let with_query uri query = { uri with query=query }
+let add_query_param uri p = { uri with query=p::uri.query }
+let add_query_params uri ps = { uri with query=ps@uri.query }
 
 (* TODO: functions to add and remove from a URI *)
 
