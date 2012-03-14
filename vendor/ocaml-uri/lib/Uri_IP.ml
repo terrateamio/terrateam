@@ -24,21 +24,33 @@ let (<<<) x y = Int32.shift_left x y
 let (>>>) x y = Int32.shift_right_logical x y
 let sp = Printf.sprintf
 
-type ipv4 = int32
-type ipv6 = int32 * int32 * int32 * int32
+type byte = char
+let byte_to_int32 b = b |> int_of_char |> Int32.of_int
 
-let int32_of_byte b = b |> int_of_char |> Int32.of_int
+type bytes = string
+let bytes (s:string) : bytes = s
+let bytes_to_string (bs:bytes) : string =
+  let s = ref [] in 
+  let l = String.length bs in
+  for i = 0 to (l-1) do 
+    s := (Printf.sprintf "%02lx" (byte_to_int32 bs.[i])) :: !s
+  done;
+  String.concat "." !s
 
-let string_of_ipv4 i =   
+type ipv4 = Int32.t
+
+let ipv4_to_string i =   
   sp "%ld.%ld.%ld.%ld" 
     ((i &&& 0x0_ff000000_l) >>> 24) ((i &&& 0x0_00ff0000_l) >>> 16)
     ((i &&& 0x0_0000ff00_l) >>>  8) ((i &&& 0x0_000000ff_l)       )
 
-let ipv4_of_bytes bs = 
-  ((bs.[0] |> int32_of_byte <<< 24) ||| (bs.[1] |> int32_of_byte <<< 16) 
-    ||| (bs.[2] |> int32_of_byte <<< 8) ||| (bs.[3] |> int32_of_byte))
+let bytes_to_ipv4 bs = 
+  ((bs.[0] |> byte_to_int32 <<< 24) ||| (bs.[1] |> byte_to_int32 <<< 16) 
+    ||| (bs.[2] |> byte_to_int32 <<< 8) ||| (bs.[3] |> byte_to_int32))
 
-let string_of_ipv6 i = 
+type ipv6 = int32 * int32 * int32 * int32
+
+let ipv6_to_string i = 
   (* TODO should make this rfc 5952 compliant *)
   let i1, i2, i3, i4 = i in
   let s = sp "%lx:%lx:%lx:%lx:%lx:%lx:%lx:%lx"
@@ -49,12 +61,16 @@ let string_of_ipv6 i =
   in
   s
 
-let ipv6_of_bytes bs = 
-  (ipv4_of_bytes (String.sub bs 0 4), ipv4_of_bytes (String.sub bs 4 4),
-   ipv4_of_bytes (String.sub bs 8 4), ipv4_of_bytes (String.sub bs 12 4))
+let bytes_to_ipv6 bs = 
+  (bytes_to_ipv4 (String.sub bs 0 4), bytes_to_ipv4 (String.sub bs 4 4),
+   bytes_to_ipv4 (String.sub bs 8 4), bytes_to_ipv4 (String.sub bs 12 4))
 
-(*
-let _ = 
-  Printf.printf "++ %s" 
-    (string_of_ipv6 (0xde000000_l, 0xdeadbeef_l, 0x00000000_l, 0xdeadbeef_l))
-*)
+
+
+
+
+
+
+
+
+

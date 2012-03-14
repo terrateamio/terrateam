@@ -17,14 +17,14 @@
 
 type t
 
-(** This absract type represents a set of safe characters allowed in
-    a portion of a URI. Anything not allowed will be percent-encoded.
-    Note that different portions of the URI permit a different set of
-    allowed characters. *)
+(** This abstract type represents a set of safe characters allowed in a
+    portion of a URI. Anything not allowed will be percent-encoded. Note that
+    different portions of the URI permit a different set of allowed
+    characters. *)
 type safe_chars
 
-(** This represents the minimal set of safe characters allowed in
-    a URI. `[A-Z][a-z]._-` *)
+(** This represents the minimal set of safe characters allowed in a URI.
+    `[A-Z][a-z]._-` *)
 val safe_chars : safe_chars
 
 (** This is the set allowed for the path component *)
@@ -33,9 +33,9 @@ val safe_chars_for_path : safe_chars
 (** This is the set allowed for the user info component *)
 val safe_chars_for_userinfo : safe_chars
 
-(** Percent-encode a string. The [safe_chars] argument defaults to the
-    set of characters for a path component, and should be set differently
-    for other URI components *)
+(** Percent-encode a string. The [safe_chars] argument defaults to the set of
+    characters for a path component, and should be set differently for other
+    URI components *)
 val pct_encode : ?safe_chars:safe_chars -> string -> string
 
 (** Percent-decode a percent-encoded string *)
