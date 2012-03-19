@@ -105,5 +105,7 @@ module Raw = struct
   let uri_reference = Re_posix.re "^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?"
 end
 
+let ipv4_address = Re_posix.compile Raw.ipv4_address
+let ipv6_address = Re_posix.compile Raw.ipv6_address
 let uri_reference = Re_posix.compile Raw.uri_reference
 let authority = Re_posix.compile Raw.authority

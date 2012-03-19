@@ -44,6 +44,19 @@ let ipv4_to_string i =
     ((i &&& 0x0_ff000000_l) >>> 24) ((i &&& 0x0_00ff0000_l) >>> 16)
     ((i &&& 0x0_0000ff00_l) >>>  8) ((i &&& 0x0_000000ff_l)       )
 
+let string_to_ipv4 (s:string) : ipv4 = 
+  match Re.execp Uri_re.ipv4_address s with
+    | true -> (match (Re_str.split_delim (Re_str.regexp "\\.") s) with
+        | [a; b; c; d] -> (
+          let a = Int32.of_string a in 
+          let b = Int32.of_string b in 
+          let c = Int32.of_string c in 
+          let d = Int32.of_string d in 
+          (a <<< 24) ||| (b <<< 16) ||| (c <<< 8) ||| d)
+        | _ -> failwith "invalid ipv4 address"
+      )
+    | false -> failwith "invalid ipv4 address"
+  
 let bytes_to_ipv4 bs = 
   ((bs.[0] |> byte_to_int32 <<< 24) ||| (bs.[1] |> byte_to_int32 <<< 16) 
     ||| (bs.[2] |> byte_to_int32 <<< 8) ||| (bs.[3] |> byte_to_int32))
@@ -64,13 +77,3 @@ let ipv6_to_string i =
 let bytes_to_ipv6 bs = 
   (bytes_to_ipv4 (String.sub bs 0 4), bytes_to_ipv4 (String.sub bs 4 4),
    bytes_to_ipv4 (String.sub bs 8 4), bytes_to_ipv4 (String.sub bs 12 4))
-
-
-
-
-
-
-
-
-
-

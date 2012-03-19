@@ -37,6 +37,9 @@ type ipv4 = Int32.t
 (** Standard dotted quad string representation of an IPv4 address. *)
 val ipv4_to_string : ipv4 -> string
 
+(** Parse standard dotted quad string representation of an IPv4 address. *)
+val string_to_ipv4 : string -> ipv4
+
 (** Generate numeric IPv4 address from a packed bytestring. *)
 val bytes_to_ipv4 : bytes -> ipv4
 
