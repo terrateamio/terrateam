@@ -110,6 +110,63 @@ let test_query_encode =
     res >:: test
   ) uri_query_make
 
+(* Test relative URI resolution
+   from <http://tools.ietf.org/html/rfc3986#section-5.4> *)
+let uri_rel_res = [
+  (* "normal" *)
+  "g:h",     "g:h";
+  "g",       "http://a/b/c/g";
+  "./g",     "http://a/b/c/g";
+  "g/",      "http://a/b/c/g/";
+  "/g",      "http://a/g";
+  "//g",     "http://g";
+  "?y",      "http://a/b/c/d;p?y";
+  "g?y",     "http://a/b/c/g?y";
+  "#s",      "http://a/b/c/d;p?q#s";
+  "g#s",     "http://a/b/c/g#s";
+  "g?y#s",   "http://a/b/c/g?y#s";
+  ";x",      "http://a/b/c/;x";
+  "g;x",     "http://a/b/c/g;x";
+  "g;x?y#s", "http://a/b/c/g;x?y#s";
+  "",        "http://a/b/c/d;p?q";
+  ".",       "http://a/b/c/";
+  "./",      "http://a/b/c/";
+  "..",      "http://a/b/";
+  "../",     "http://a/b/";
+  "../g",    "http://a/b/g";
+  "../..",   "http://a/";
+  "../../",  "http://a/";
+  "../../g", "http://a/g";
+  (* "abnormal" *)
+  "../../../g",    "http://a/g";
+  "../../../../g", "http://a/g";
+  "/./g",          "http://a/g";
+  "/../g",         "http://a/g";
+  "g.",            "http://a/b/c/g.";
+  ".g",            "http://a/b/c/.g";
+  "g..",           "http://a/b/c/g..";
+  "..g",           "http://a/b/c/..g";
+  "./../g",        "http://a/b/g";
+  "./g/.",         "http://a/b/c/g/";
+  "g/./h",         "http://a/b/c/g/h";
+  "g/../h",        "http://a/b/c/h";
+  "g;x=1/./y",     "http://a/b/c/g;x=1/y";
+  "g;x=1/../y",    "http://a/b/c/y";
+  "g?y/./x",       "http://a/b/c/g?y/./x";
+  "g?y/../x",      "http://a/b/c/g?y/../x";
+  "g#s/./x",       "http://a/b/c/g#s/./x";
+  "g#s/../x",      "http://a/b/c/g#s/../x";
+  "http:g",        "http:g";
+]
+
+let test_rel_res =
+  let base = Uri.of_string "http://a/b/c/d;p?q" in
+  List.map (fun (rel,abs) ->
+    let test () = assert_equal ~printer:(fun l -> l)
+      abs (Uri.to_string (Uri.resolve "http" base (Uri.of_string rel))) in
+    rel >:: test
+  ) uri_rel_res
+
 (* Returns true if the result list contains successes only.
    Copied from oUnit source as it isnt exposed by the mli *)
 let rec was_successful =
@@ -124,7 +181,7 @@ let rec was_successful =
         false
 
 let _ =
-  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_query_decode @ test_query_encode) in
+  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_query_decode @ test_query_encode @ test_rel_res) in
   let verbose = ref false in
   let set_verbose _ = verbose := true in
   Arg.parse

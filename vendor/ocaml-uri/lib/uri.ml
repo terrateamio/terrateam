@@ -303,8 +303,7 @@ let to_string uri =
   );
   Buffer.contents buf
 
-(* Return the path component
-   TODO: strip out ../. for normalisation *)
+(* Return the path component *)
 let path uri = Pct.uncast_decoded uri.path
 
 (* Various accessor functions, as the external uri type is abstract  *)
@@ -320,4 +319,48 @@ let add_query_param uri p = { uri with query=p::uri.query }
 let add_query_params uri ps = { uri with query=ps@uri.query }
 
 (* TODO: functions to add and remove from a URI *)
+
+(* Subroutine for resolve <http://tools.ietf.org/html/rfc3986#section-5.2.3> *)
+let merge base rpath =
+  match host base, path base with
+    | Some _, "" -> Pct.cast_decoded ("/"^rpath)
+    | _, bpath -> Pct.cast_decoded begin
+      try (String.sub bpath 0 (1+(String.rindex bpath '/')))^rpath
+      with Not_found -> rpath
+    end
+
+(* Subroutine for resolve <http://tools.ietf.org/html/rfc3986#section-5.2.4> *)
+let remove_dot_segments p =
+  let ascend = function [] -> [] | h::t -> t in
+  let p = Pct.uncast_decoded p in
+  let inp = Re_str.split_delim (Re_str.regexp "/") p in
+  let rec loop outp = function
+    | ".."::n::r | "."::n::r -> loop outp (n::r) (* A *)
+    | ""::"."::n::r -> loop outp (""::n::r) (* B *)
+    | ""::"."::[] -> loop outp ["";""] (* B *)
+    | ""::".."::n::r -> loop (ascend outp) (""::n::r) (* C *)
+    | ""::".."::[] -> loop (ascend outp) ["";""] (* C *)
+    | "."::[] | ".."::[] | [] -> String.concat "/" (List.rev outp) (* D *)
+    | ""::s::r -> loop (s::""::outp) r (* E *)
+    | s::r -> loop (s::outp) r (* E *)
+  in Pct.cast_decoded (loop [] inp)
+
+(* Resolve a URI wrt a base URI <http://tools.ietf.org/html/rfc3986#section-5.2> *)
+let resolve schem base uri =
+  let base = match scheme base with
+    | None -> {base with scheme=Some (Pct.cast_decoded schem)}
+    | Some _ -> base
+  in match scheme uri, host uri with
+    | Some _, _ ->
+      {uri with path=remove_dot_segments uri.path}
+    | None, Some _ ->
+      {uri with scheme=base.scheme; path=remove_dot_segments uri.path}
+    | None, None ->
+      let uri = {uri with scheme=base.scheme; host=base.host; port=base.port} in
+      if (path uri)=""
+      then {uri with path=base.path;
+        query=if uri.query=[] then base.query else uri.query}
+      else if (path uri).[0]='/'
+      then {uri with path=remove_dot_segments uri.path}
+      else {uri with path=remove_dot_segments (merge base (path uri))}
 

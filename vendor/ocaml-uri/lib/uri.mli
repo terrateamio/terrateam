@@ -47,6 +47,9 @@ val of_string : string -> t
 (** Convert a URI structure into a percent-encoded URI string *)
 val to_string : t -> string
 
+(** Resolve a URI against a default scheme and base URI *)
+val resolve : string -> t -> t -> t
+
 (** Get a query string from a URI *)
 val query : t -> (string * string) list
 
