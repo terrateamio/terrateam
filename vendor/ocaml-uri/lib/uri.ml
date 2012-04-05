@@ -303,13 +303,9 @@ let to_string uri =
   );
   Buffer.contents buf
 
-(* Return the path component, which is either relative and non-empty,
-   or an absolute path.
+(* Return the path component
    TODO: strip out ../. for normalisation *)
-let path uri =
-  match Pct.uncast_decoded uri.path with
-  |"" -> "/"
-  |p -> p
+let path uri = Pct.uncast_decoded uri.path
 
 (* Various accessor functions, as the external uri type is abstract  *)
 let get_decoded_opt = function None -> None |Some x -> Some (Pct.uncast_decoded x)
