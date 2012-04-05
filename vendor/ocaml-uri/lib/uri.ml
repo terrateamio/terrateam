@@ -176,8 +176,9 @@ module Query = struct
     List.iter (fun (k,v) ->
       incr n;
       Buffer.add_string buf (pct_encode k);
-      Buffer.add_char buf '=';
-      Buffer.add_string buf (pct_encode v);
+      if v<>""
+      then (Buffer.add_char buf '=';
+            Buffer.add_string buf (pct_encode v));
       if !n < len then
         Buffer.add_char buf '&';
     ) l;
