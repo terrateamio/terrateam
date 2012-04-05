@@ -332,17 +332,16 @@ let merge base rpath =
 
 (* Subroutine for resolve <http://tools.ietf.org/html/rfc3986#section-5.2.4> *)
 let remove_dot_segments p =
-  let ascend = function [] -> [] | h::t -> t in
+  let ascend = function [] -> [] | s::"/"::t | s::t -> t in
   let p = Pct.uncast_decoded p in
-  let inp = Re_str.split_delim (Re_str.regexp "/") p in
+  let inp = List.map (function Re_str.Text s | Re_str.Delim s -> s)
+    (Re_str.full_split (Re_str.regexp "/") p) in
   let rec loop outp = function
-    | ".."::n::r | "."::n::r -> loop outp (n::r) (* A *)
-    | ""::"."::n::r -> loop outp (""::n::r) (* B *)
-    | ""::"."::[] -> loop outp ["";""] (* B *)
-    | ""::".."::n::r -> loop (ascend outp) (""::n::r) (* C *)
-    | ""::".."::[] -> loop (ascend outp) ["";""] (* C *)
-    | "."::[] | ".."::[] | [] -> String.concat "/" (List.rev outp) (* D *)
-    | ""::s::r -> loop (s::""::outp) r (* E *)
+    | ".."::"/"::r | "."::"/"::r -> loop outp r (* A *)
+    | "/"::"."::"/"::r | "/"::"."::r -> loop outp ("/"::r) (* B *)
+    | "/"::".."::"/"::r | "/"::".."::r -> loop (ascend outp) ("/"::r) (* C *)
+    | "."::[] | ".."::[] | [] -> String.concat "" (List.rev outp) (* D *)
+    | "/"::s::r -> loop (s::"/"::outp) r
     | s::r -> loop (s::outp) r (* E *)
   in Pct.cast_decoded (loop [] inp)
 
