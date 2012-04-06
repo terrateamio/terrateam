@@ -37,6 +37,14 @@ module type Scheme = sig
 end
 
 module Generic : Scheme = struct
+  let sub_delims a =
+    let subd = "!$&'()*+,;=" in
+    for i = 0 to String.length subd - 1 do
+      let c = Char.code subd.[i] in
+      a.(c) <- true
+    done;
+    a
+
   let safe_chars : safe_chars = 
     let a = Array.create 256 false in
     let always_safe =
@@ -46,23 +54,43 @@ module Generic : Scheme = struct
       a.(c) <- true
     done;
     a
-      
-(** Safe characters for the path portion of a URI *)
-  let safe_chars_for_path : safe_chars =
-    let a = Array.copy safe_chars in
-    a.(Char.code '/') <- true;
+
+  let pchar : safe_chars =
+    let a = sub_delims (Array.copy safe_chars) in
+    a.(Char.code ':') <- true;
+    a.(Char.code '@') <- true;
     a
       
-(** Safe characters for the userinfo portion of a URI.
+(** Safe characters for the path component of a URI
+    TODO: sometimes ':' is unsafe (Sec 3.3 pchar vs segment-nz-nc) *)
+  let safe_chars_for_path : safe_chars =
+    let a = sub_delims (Array.copy safe_chars) in
+    (* delimiter: non-segment delimiting uses should be pct encoded *)
+    a.(Char.code '/') <- true;
+    a.(Char.code '@') <- true;
+    a
+
+  let safe_chars_for_query : safe_chars =
+    let a = Array.copy pchar in
+    a.(Char.code '/') <- true;
+    a.(Char.code '?') <- true;
+    a
+
+  let safe_chars_for_fragment : safe_chars = safe_chars_for_query
+
+(** Safe characters for the userinfo subcomponent of a URI.
     TODO: this needs more reserved characters added *)
   let safe_chars_for_userinfo : safe_chars =
     let a = Array.copy safe_chars in
+    (* delimiter: non-segment delimiting uses should be pct encoded *)
     a.(Char.code ':') <- true;
     a
 
   let safe_chars_for_component = function
     | `Path -> safe_chars_for_path
     | `Userinfo -> safe_chars_for_userinfo
+    | `Query -> safe_chars_for_query
+    | `Fragment -> safe_chars_for_fragment
     | _ -> safe_chars
 end
 
@@ -207,10 +235,10 @@ module Query = struct
     let len = List.length l in
     List.iter (fun (k,v) ->
       incr n;
-      Buffer.add_string buf (pct_encode k);
+      Buffer.add_string buf (pct_encode ~component:`Query k);
       if v<>""
       then (Buffer.add_char buf '=';
-            Buffer.add_string buf (pct_encode v));
+            Buffer.add_string buf (pct_encode ~component:`Query v));
       if !n < len then
         Buffer.add_char buf '&';
     ) l;
@@ -297,7 +325,7 @@ let to_string uri =
   (match uri.scheme with
    |None -> ()
    |Some x ->
-      add_pct_string x; 
+      add_pct_string ~component:`Scheme x; 
       Buffer.add_char buf ':' 
   );
   (match uri.host with
@@ -309,7 +337,7 @@ let to_string uri =
           add_pct_string ~component:`Userinfo userinfo;
           Buffer.add_char buf '@'
       );
-      add_pct_string host;
+      add_pct_string ~component:`Host host;
       (match uri.port with
        |None -> ()
        |Some port ->
@@ -336,7 +364,7 @@ let to_string uri =
   );
   (match uri.fragment with
    |None -> ()
-   |Some f -> Buffer.(add_char buf '#'; add_pct_string f)
+   |Some f -> Buffer.(add_char buf '#'; add_pct_string ~component:`Fragment f)
   );
   Buffer.contents buf
 

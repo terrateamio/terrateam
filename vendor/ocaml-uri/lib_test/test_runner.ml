@@ -22,10 +22,10 @@ open Printf
    refer to the test, as the pcts_large version duplicates the second field 
    to a large size, so it cant be used as the name of the test *)
 let pcts = [
-  (1, "hello world!", "hello%20world%21");
-  (2, "!", "%21");
-  (3, "!!!!!", "%21%21%21%21%21");
-  (4, "1!", "1%21");
+  (1, "hello world!", "hello%20world!");
+  (2, "[", "%5B");
+  (3, "[[[[[", "%5B%5B%5B%5B%5B");
+  (4, "1]", "1%5D");
   (5, "%20", "%2520");
   (6, "", "");
   (7, "f", "f");
@@ -52,7 +52,7 @@ let uri_encodes = [
   "http://foo.com", (Uri.make ~scheme:"http" ~host:"foo.com" ());
   "http://foo%21.com", (Uri.make ~scheme:"http" ~host:"foo!.com" ());
   "/wh/at/ev/er", (Uri.make ~path:"/wh/at/ev/er" ());
-  "/wh/at%21/ev%20/er", (Uri.make ~path:"/wh/at!/ev /er" ());
+  "/wh/at!/ev%20/er", (Uri.make ~path:"/wh/at!/ev /er" ());
   "http://%5Bdead%3Abeef%3A%3Adead%3A0%3Abeaf%5D",
     (Uri.make ~scheme:"http" ~host:"[dead:beef::dead:0:beaf]" ())
 ]
