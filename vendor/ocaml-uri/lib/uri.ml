@@ -102,7 +102,7 @@ end = struct
   let uncast_decoded x = x
   let uncast_encoded x = x
 
-  let module_of_scheme = function
+  let module_of_scheme s = match String.lowercase s with
     | "http" | "https" -> (module Http : Scheme)
     | _ -> (module Generic : Scheme)
 
@@ -238,25 +238,27 @@ type t = {
  * no big deal for now.
  *)
 let make ?scheme ?userinfo ?host ?port ?path ?query ?fragment () =
-  let decode x = match x with |Some x -> Some (Pct.cast_decoded x) |None -> None in
-  let path = match path with |None -> Pct.empty_decoded |Some p -> Pct.cast_decoded p in
+  let decode ?(f=fun x -> x) =function
+    |Some x -> Some (Pct.cast_decoded (f x)) |None -> None in
+  let path = match path with
+    |None -> Pct.empty_decoded |Some p -> Pct.cast_decoded p in
   let query = match query with |None -> [] |Some p -> p in
-  { scheme=decode scheme; userinfo=decode userinfo; host=decode host;
-    port; path; query; fragment=decode fragment }
+  { scheme=decode ~f:String.lowercase scheme; userinfo=decode userinfo;
+    host=decode host; port; path; query; fragment=decode fragment }
 
 (** Parse a URI string into a structure *)
 let of_string s =
   (* Given a series of Re substrings, cast each component
    * into a Pct.encoded and return an optional type (None if
    * the component is not present in the Uri *)
-  let get_opt s n =
+  let get_opt ?(f=fun x -> x) s n =
     try
-      let pct = Pct.cast_encoded (Re.get s n) in
+      let pct = Pct.cast_encoded (f (Re.get s n)) in
       Some (Pct.decode pct)
     with Not_found -> None
   in
   let subs = Re.exec Uri_re.uri_reference s in 
-  let scheme = get_opt subs 2 in
+  let scheme = get_opt ~f:String.lowercase subs 2 in
   let userinfo, host, port =
     match get_opt subs 4 with
     |None -> None, None, None
