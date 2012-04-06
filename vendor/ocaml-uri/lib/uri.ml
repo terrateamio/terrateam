@@ -15,6 +15,16 @@
  *
  *)
 
+type component = [
+  `Scheme
+| `Authority
+| `Userinfo (* subcomponent of authority in some schemes *)
+| `Host (* subcomponent of authority in some schemes *)
+| `Path
+| `Query
+| `Fragment
+]
+
 (** Safe characters that are always allowed in a URI 
   * Unfortunately, this varies depending on which bit of the URI
   * is being parsed, so there are multiple variants (and this
@@ -22,28 +32,43 @@
   *)
 type safe_chars = bool array
 
-let safe_chars : safe_chars = 
-  let a = Array.create 256 false in
-  let always_safe =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-" in
-   for i = 0 to String.length always_safe - 1 do
-     let c = Char.code always_safe.[i] in
-     a.(c) <- true
-   done;
-   a
+module type Scheme = sig
+  val safe_chars_for_component : component -> safe_chars
+end
 
+module Generic : Scheme = struct
+  let safe_chars : safe_chars = 
+    let a = Array.create 256 false in
+    let always_safe =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-" in
+    for i = 0 to String.length always_safe - 1 do
+      let c = Char.code always_safe.[i] in
+      a.(c) <- true
+    done;
+    a
+      
 (** Safe characters for the path portion of a URI *)
-let safe_chars_for_path : safe_chars =
-  let a = Array.copy safe_chars in
-  a.(Char.code '/') <- true;
-  a
-
+  let safe_chars_for_path : safe_chars =
+    let a = Array.copy safe_chars in
+    a.(Char.code '/') <- true;
+    a
+      
 (** Safe characters for the userinfo portion of a URI.
     TODO: this needs more reserved characters added *)
-let safe_chars_for_userinfo : safe_chars =
-  let a = Array.copy safe_chars in
-  a.(Char.code ':') <- true;
-  a
+  let safe_chars_for_userinfo : safe_chars =
+    let a = Array.copy safe_chars in
+    a.(Char.code ':') <- true;
+    a
+
+  let safe_chars_for_component = function
+    | `Path -> safe_chars_for_path
+    | `Userinfo -> safe_chars_for_userinfo
+    | _ -> safe_chars
+end
+
+module Http : Scheme = struct
+  include Generic
+end
 
 (** Portions of the URL must be converted to-and-from percent-encoding
   * and this really, really shouldn't be mixed up. So this Pct module
@@ -58,7 +83,7 @@ module Pct : sig
   type encoded
   type decoded
 
-  val encode : ?safe_chars:safe_chars -> decoded -> encoded
+  val encode : ?scheme:string -> ?component:component -> decoded -> encoded
   val decode : encoded -> decoded
 
   (* The empty decoded string *)
@@ -77,10 +102,16 @@ end = struct
   let uncast_decoded x = x
   let uncast_encoded x = x
 
+  let module_of_scheme = function
+    | "http" | "https" -> (module Http : Scheme)
+    | _ -> (module Generic : Scheme)
+
   (** Scan for reserved characters and replace them with 
       percent-encoded equivalents.
       @return a percent-encoded string *)
-  let encode ?(safe_chars=safe_chars_for_path) b =
+  let encode ?(scheme="http") ?(component=`Path) b =
+    let module Scheme = (val (module_of_scheme scheme) : Scheme) in
+    let safe_chars = Scheme.safe_chars_for_component component in
     let len = String.length b in
     let buf = Buffer.create len in
     let rec scan start cur =
@@ -124,7 +155,8 @@ end = struct
 end
 
 (* Percent encode a string *)
-let pct_encode ?safe_chars s = Pct.(uncast_encoded (encode ?safe_chars (cast_decoded s)))
+let pct_encode ?(scheme="http") ?(component=`Path) s =
+  Pct.(uncast_encoded (encode ~scheme ~component (cast_decoded s)))
 
 (* Percent decode a string *)
 let pct_decode s = Pct.(uncast_decoded (decode (cast_encoded s)))
@@ -253,11 +285,13 @@ let of_string s =
   { scheme; userinfo; host; port; path; query; fragment }
 
 (** Convert a URI structure into a percent-encoded string *)
-let to_string uri = 
+let to_string uri =
+  let scheme = match uri.scheme with
+    | None -> "http" | Some s -> Pct.uncast_decoded s in
   let buf = Buffer.create 128 in
   (* Percent encode a decoded string and add it to the buffer *)
-  let add_pct_string ?(safe_chars=safe_chars) x =
-    Buffer.add_string buf (Pct.uncast_encoded (Pct.encode ~safe_chars x)) in
+  let add_pct_string ?(component=`Path) x =
+    Buffer.add_string buf (Pct.uncast_encoded (Pct.encode ~scheme ~component x)) in
   (match uri.scheme with
    |None -> ()
    |Some x ->
@@ -270,7 +304,7 @@ let to_string uri =
       (match uri.userinfo with
        |None -> ()
        |Some userinfo ->
-          add_pct_string ~safe_chars:safe_chars_for_userinfo userinfo;
+          add_pct_string ~component:`Userinfo userinfo;
           Buffer.add_char buf '@'
       );
       add_pct_string host;
@@ -288,11 +322,11 @@ let to_string uri =
       if uri.host = None then Buffer.add_char buf '/'
    |path when path.[0] = '/' -> 
       (* Path starts with a slash, so ok to add *)
-      add_pct_string ~safe_chars:safe_chars_for_path uri.path;
+      add_pct_string ~component:`Path uri.path;
    |path ->
       (* Path has no starting slash and is non-empty, so force a starting slash *)
       Buffer.add_char buf '/';
-      add_pct_string ~safe_chars:safe_chars_for_path uri.path;
+      add_pct_string ~component:`Path uri.path;
   );
   (match uri.query with
    |[] -> ()

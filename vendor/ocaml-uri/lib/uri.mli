@@ -17,26 +17,19 @@
 
 type t
 
-(** This abstract type represents a set of safe characters allowed in a
-    portion of a URI. Anything not allowed will be percent-encoded. Note that
-    different portions of the URI permit a different set of allowed
-    characters. *)
-type safe_chars
+type component = [
+  `Scheme
+| `Authority
+| `Userinfo (* subcomponent of authority in some schemes *)
+| `Host (* subcomponent of authority in some schemes *)
+| `Path
+| `Query
+| `Fragment
+]
 
-(** This represents the minimal set of safe characters allowed in a URI.
-    `[A-Z][a-z]._-` *)
-val safe_chars : safe_chars
-
-(** This is the set allowed for the path component *)
-val safe_chars_for_path : safe_chars
-
-(** This is the set allowed for the user info component *)
-val safe_chars_for_userinfo : safe_chars
-
-(** Percent-encode a string. The [safe_chars] argument defaults to the set of
-    characters for a path component, and should be set differently for other
-    URI components *)
-val pct_encode : ?safe_chars:safe_chars -> string -> string
+(** Percent-encode a string. The [scheme] argument defaults to 'http' and
+    the [component] argument defaults to `Path *)
+val pct_encode : ?scheme:string -> ?component:component -> string -> string
 
 (** Percent-decode a percent-encoded string *)
 val pct_decode : string -> string
