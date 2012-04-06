@@ -40,7 +40,7 @@ module Generic : Scheme = struct
   let safe_chars : safe_chars = 
     let a = Array.create 256 false in
     let always_safe =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-" in
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-~" in
     for i = 0 to String.length always_safe - 1 do
       let c = Char.code always_safe.[i] in
       a.(c) <- true
