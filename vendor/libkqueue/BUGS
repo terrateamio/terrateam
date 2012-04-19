@@ -23,3 +23,25 @@
 
     [read.c:84]: Unexpected event:_test_no_kevents(): [ident=7, filter=-1, flags = 1 (EV_ADD), fflags = 0, data=0, udata=fffffd7fff08c6b4]: Error 0
 
+
+ * There are a number of stub functions that silently fail or succeed.
+   These need to be cleaned up; at a minimum, they should emit very loud
+   debugging output saying "FIXME -- UNIMPLEMENTED".
+
+      $ grep STUB src/*/*.c  
+      src/linux/proc.c:    return (-1); /*STUB*/
+      src/linux/proc.c:    return (0); /* STUB */
+      src/linux/proc.c:    return (0); /* STUB */
+      src/linux/proc.c:    return (0); /* STUB */
+      src/linux/proc.c:    return (0); /* STUB */
+      src/linux/proc.c:    return (0); /* STUB */
+      src/linux/read.c:    return (-1); /* STUB */
+      src/linux/timer.c:    return (0); /* STUB */
+      src/linux/vnode.c:    return (-1); /* FIXME - STUB */
+      src/linux/write.c:    return (-1); /* STUB */
+      src/posix/timer.c:    return (-1); /* STUB */
+      src/solaris/socket.c:    return (-1); /* STUB */
+      src/solaris/timer.c:    return (-1); /* STUB */
+      src/windows/read.c:    return (-1); /* STUB */
+      src/windows/timer.c:    return (0); /* STUB */
+
