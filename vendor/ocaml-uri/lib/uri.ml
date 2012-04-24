@@ -140,8 +140,7 @@ module Query = struct
   (* TODO: only make the query tuple parsing lazy and an additional
    * record in Url.t ?  *)
 
-  (* Make a query tuple list from a percent-decoded string *)
-  let query_of_decoded qs =
+  let split_query qs =
     let bits = Re_str.split query_re qs in
     (** Replace a + in a query string with a space in-place *)
     let plus_to_space s =
@@ -161,7 +160,8 @@ module Query = struct
     loop [] bits
 
   (* Make a query tuple list from a percent-encoded string *)
-  let query_of_encoded qs = query_of_decoded (pct_decode qs)
+  let query_of_encoded qs =
+    List.map (fun (k, v) -> (pct_decode k, pct_decode v)) (split_query qs)
 
   (* Assemble a query string suitable for putting into a URI.
    * Tuple inputs are percent decoded and will be encoded by
@@ -184,7 +184,6 @@ module Query = struct
     Buffer.contents buf 
 end
 
-let query_of_decoded = Query.query_of_decoded
 let query_of_encoded = Query.query_of_encoded
 let encoded_of_query = Query.encoded_of_query
 
@@ -216,6 +215,10 @@ let of_string s =
   (* Given a series of Re substrings, cast each component
    * into a Pct.encoded and return an optional type (None if
    * the component is not present in the Uri *)
+  let get_opt_encoded s n =
+    try Some (Pct.cast_encoded (Re.get s n))
+    with Not_found -> None
+  in
   let get_opt s n =
     try
       let pct = Pct.cast_encoded (Re.get s n) in
@@ -244,8 +247,8 @@ let of_string s =
     | None -> Pct.empty_decoded 
   in
   let query =
-    match get_opt subs 7 with
-    | Some x -> Query.query_of_decoded (Pct.uncast_decoded x)
+    match get_opt_encoded subs 7 with
+    | Some x -> Query.query_of_encoded (Pct.uncast_encoded x)
     | None -> []
   in
   let fragment  = get_opt subs 9 in
