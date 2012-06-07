@@ -167,6 +167,36 @@ let test_rel_res =
     rel >:: test
   ) uri_rel_res
 
+let file_uri_rel_res = [ (* http://tools.ietf.org/html/rfc1738#section-3.10 *)
+  "/foo/bar/baz", "file:///foo/bar/baz";
+  "//localhost/foo", "file:///foo";
+]
+
+let test_file_rel_res =
+  List.map (fun (rel,abs) ->
+    let test () = assert_equal ~printer:(fun l -> l)
+      abs (Uri.to_string (Uri.resolve "file" (Uri.of_string "")
+                            (Uri.of_string rel))) in
+    rel >:: test
+  ) file_uri_rel_res
+
+let generic_uri_norm = [
+  "HTTP://example.com/", "http://example.com/";
+  "http://example.com/%3a%3f", "http://example.com/%3A%3F";
+  "http://Example.Com/", "http://example.com/";
+  "http://example.com/%68%65%6c%6c%6f", "http://example.com/hello";
+  "http://example.com/../", "http://example.com/";
+  "http://example.com/./././", "http://example.com/";
+]
+
+let test_generic_uri_norm =
+  List.map (fun (o,n) ->
+    let test () = assert_equal ~printer:(fun l -> l)
+      n (Uri.to_string (Uri.resolve "http" (Uri.of_string "")
+                          (Uri.of_string o))) in
+    o >:: test
+  ) generic_uri_norm
+
 (* Returns true if the result list contains successes only.
    Copied from oUnit source as it isnt exposed by the mli *)
 let rec was_successful =
@@ -181,7 +211,7 @@ let rec was_successful =
         false
 
 let _ =
-  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_query_decode @ test_query_encode @ test_rel_res) in
+  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_query_decode @ test_query_encode @ test_rel_res @ test_file_rel_res @ test_generic_uri_norm) in
   let verbose = ref false in
   let set_verbose _ = verbose := true in
   Arg.parse
