@@ -34,6 +34,7 @@ type safe_chars = bool array
 
 module type Scheme = sig
   val safe_chars_for_component : component -> safe_chars
+  val normalize_host : string option -> string option
 end
 
 module Generic : Scheme = struct
@@ -92,11 +93,35 @@ module Generic : Scheme = struct
     | `Query -> safe_chars_for_query
     | `Fragment -> safe_chars_for_fragment
     | _ -> safe_chars
+
+  let normalize_host hso = hso
 end
 
 module Http : Scheme = struct
   include Generic
+
+  let normalize_host = function
+    | Some hs -> Some (String.lowercase hs)
+    | None -> None
 end
+
+module File : Scheme = struct
+  include Generic
+
+  let normalize_host = function
+    | Some hs ->
+      let hs = String.lowercase hs in
+      if hs="localhost" then Some "" else Some hs
+    | None -> Some ""
+end
+
+let module_of_scheme = function
+  | Some s -> begin match String.lowercase s with
+      | "http" | "https" -> (module Http : Scheme)
+      | "file" -> (module File : Scheme)
+      | _ -> (module Generic : Scheme)
+  end
+  | None -> (module Generic : Scheme)
 
 (** Portions of the URL must be converted to-and-from percent-encoding
   * and this really, really shouldn't be mixed up. So this Pct module
@@ -130,14 +155,10 @@ end = struct
   let uncast_decoded x = x
   let uncast_encoded x = x
 
-  let module_of_scheme s = match String.lowercase s with
-    | "http" | "https" -> (module Http : Scheme)
-    | _ -> (module Generic : Scheme)
-
   (** Scan for reserved characters and replace them with 
       percent-encoded equivalents.
       @return a percent-encoded string *)
-  let encode ?(scheme="http") ?(component=`Path) b =
+  let encode ?scheme ?(component=`Path) b =
     let module Scheme = (val (module_of_scheme scheme) : Scheme) in
     let safe_chars = Scheme.safe_chars_for_component component in
     let len = String.length b in
@@ -183,8 +204,8 @@ end = struct
 end
 
 (* Percent encode a string *)
-let pct_encode ?(scheme="http") ?(component=`Path) s =
-  Pct.(uncast_encoded (encode ~scheme ~component (cast_decoded s)))
+let pct_encode ?scheme ?(component=`Path) s =
+  Pct.(uncast_encoded (encode ?scheme ~component (cast_decoded s)))
 
 (* Percent decode a string *)
 let pct_decode s = Pct.(uncast_decoded (decode (cast_encoded s)))
@@ -261,32 +282,52 @@ type t = {
   fragment: Pct.decoded option;
 }  
 
+let normalize uri =
+  let uncast_opt = function
+    | Some h -> Some (Pct.uncast_decoded h)
+    | None -> None
+  in
+  let cast_opt = function
+    | Some h -> Some (Pct.cast_decoded h)
+    | None -> None
+  in
+  let module Scheme =
+        (val (module_of_scheme (uncast_opt uri.scheme)) : Scheme) in
+  let dob f = function
+    | Some x -> Some Pct.(cast_decoded (f (uncast_decoded x)))
+    | None -> None
+  in {uri with
+    scheme=dob String.lowercase uri.scheme;
+    host=cast_opt (Scheme.normalize_host (uncast_opt uri.host))
+  }
+
 (* Make a URI record. This is a bit more inefficient than it needs to be due to the
  * casting/uncasting (which isn't fully identity due to the option box), but it is
  * no big deal for now.
  *)
 let make ?scheme ?userinfo ?host ?port ?path ?query ?fragment () =
-  let decode ?(f=fun x -> x) =function
-    |Some x -> Some (Pct.cast_decoded (f x)) |None -> None in
+  let decode = function
+    |Some x -> Some (Pct.cast_decoded x) |None -> None in
   let path = match path with
     |None -> Pct.empty_decoded |Some p -> Pct.cast_decoded p in
   let query = match query with |None -> [] |Some p -> p in
-  { scheme=decode ~f:String.lowercase scheme; userinfo=decode userinfo;
-    host=decode host; port; path; query; fragment=decode fragment }
+  normalize
+    { scheme=decode scheme; userinfo=decode userinfo;
+      host=decode host; port; path; query; fragment=decode fragment }
 
 (** Parse a URI string into a structure *)
 let of_string s =
   (* Given a series of Re substrings, cast each component
    * into a Pct.encoded and return an optional type (None if
    * the component is not present in the Uri *)
-  let get_opt ?(f=fun x -> x) s n =
+  let get_opt s n =
     try
-      let pct = Pct.cast_encoded (f (Re.get s n)) in
+      let pct = Pct.cast_encoded (Re.get s n) in
       Some (Pct.decode pct)
     with Not_found -> None
   in
   let subs = Re.exec Uri_re.uri_reference s in 
-  let scheme = get_opt ~f:String.lowercase subs 2 in
+  let scheme = get_opt subs 2 in
   let userinfo, host, port =
     match get_opt subs 4 with
     |None -> None, None, None
@@ -311,17 +352,18 @@ let of_string s =
     | Some x -> Query.query_of_decoded (Pct.uncast_decoded x)
     | None -> []
   in
-  let fragment  = get_opt subs 9 in
-  { scheme; userinfo; host; port; path; query; fragment }
+  let fragment = get_opt subs 9 in
+  normalize { scheme; userinfo; host; port; path; query; fragment }
 
 (** Convert a URI structure into a percent-encoded string *)
 let to_string uri =
   let scheme = match uri.scheme with
-    | None -> "http" | Some s -> Pct.uncast_decoded s in
+    | Some s -> Some (Pct.uncast_decoded s)
+    | None -> None in
   let buf = Buffer.create 128 in
   (* Percent encode a decoded string and add it to the buffer *)
   let add_pct_string ?(component=`Path) x =
-    Buffer.add_string buf (Pct.uncast_encoded (Pct.encode ~scheme ~component x)) in
+    Buffer.add_string buf (Pct.uncast_encoded (Pct.encode ?scheme ~component x)) in
   (match uri.scheme with
    |None -> ()
    |Some x ->
@@ -414,7 +456,8 @@ let resolve schem base uri =
   let base = match scheme base with
     | None -> {base with scheme=Some (Pct.cast_decoded schem)}
     | Some _ -> base
-  in match scheme uri, host uri with
+  in
+  normalize begin match scheme uri, host uri with
     | Some _, _ ->
       {uri with path=remove_dot_segments uri.path}
     | None, Some _ ->
@@ -427,4 +470,4 @@ let resolve schem base uri =
       else if (path uri).[0]='/'
       then {uri with path=remove_dot_segments uri.path}
       else {uri with path=remove_dot_segments (merge base (path uri))}
-
+  end
