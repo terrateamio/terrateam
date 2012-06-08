@@ -84,15 +84,16 @@ let test_uri_encode =
 (* Test URI query decoding *)
 let uri_query = [
   "https://user:pass@foo.com:123/wh/at/ever?foo=1&bar=5#5", ["foo","1"; "bar","5"];
-  "/domain?f+1=bar&+f2=bar%212", ["f 1","bar";" f2","bar!2"];
-  "/domain?foo=&bar=", ["foo","";"bar",""];
+  "//domain?f+1=bar&+f2=bar%212", ["f 1","bar";" f2","bar!2"];
+  "//domain?foo=&bar=", ["foo","";"bar",""];
+  "//domain?a=b%26c%3Dd", ["a","b&c=d"];
 ]
 
 let test_query_decode =
   List.map (fun (uri_str,res) ->
     let uri = Uri.of_string uri_str in
     let test () = assert_equal ~printer:(fun l ->
-      String.concat " " (List.map (fun (k,v) -> sprintf "(%s=%s)" k v) l)) (Uri.query uri) res in
+      String.concat " " (List.map (fun (k,v) -> sprintf "(%s=%s)" k v) l)) res (Uri.query uri) in
     uri_str >:: test
   ) uri_query
 
