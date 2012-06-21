@@ -295,11 +295,11 @@ let to_string uri =
   );
   (match uri.query with
    |[] -> ()
-   |q -> Buffer.(add_char buf '?'; add_string buf (Query.encoded_of_query q))
+   |q -> Buffer.add_char buf '?'; Buffer.add_string buf (Query.encoded_of_query q)
   );
   (match uri.fragment with
    |None -> ()
-   |Some f -> Buffer.(add_char buf '#'; add_pct_string f)
+   |Some f -> Buffer.add_char buf '#'; add_pct_string f
   );
   Buffer.contents buf
 
