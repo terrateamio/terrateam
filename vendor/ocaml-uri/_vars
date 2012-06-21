@@ -1,0 +1,4 @@
+NAME=uri
+VERSION=0.3dev
+DEPS="re"
+LIB="uri"
