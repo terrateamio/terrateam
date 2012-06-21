@@ -1,10 +1,6 @@
-# OASIS_START
-# DO NOT EDIT (digest: 87a2fefae6cc16a8cf5426e10887890e)
-version = "0.1-dev"
+version = "0.3dev"
 description = "RFC3968 URI parsing library"
 requires = "re.posix re.str"
 archive(byte) = "uri.cma"
 archive(native) = "uri.cmxa"
 exists_if = "uri.cma"
-# OASIS_STOP
-
