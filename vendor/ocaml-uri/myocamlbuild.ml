@@ -54,7 +54,7 @@ module OS = struct
 
   let arch =
     match String.lowercase (Util.run_and_read "uname -m") with
-    | "x86_32" | "i686"  -> X86_32
+    | "armv5tel" | "x86_32" | "i686"  -> X86_32
     | "i386" -> (match host with Linux | FreeBSD -> X86_32 | Darwin -> X86_64)
     | "x86_64" | "amd64" -> X86_64
     | arch -> eprintf "`%s` is not a supported arch\n" arch; exit (-1)
