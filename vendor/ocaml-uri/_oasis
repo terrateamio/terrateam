@@ -1,6 +1,6 @@
-OASISFormat: 0.2
+OASISFormat: 0.3
 Name:        uri
-Version:     1.1
+Version:     1.2dev
 Synopsis:    RFC3968 URI parsing library
 Authors:     Anil Madhavapeddy
 License:     ISC
@@ -11,10 +11,6 @@ Library uri
   Path:       lib
   Modules:    Uri,Uri_re,Uri_IP
   BuildDepends: re.posix,re.str
-
-Flag tests
-  Description:        Build and run tests
-  Default:            true
 
 Document uri
   Title:                URI docs
