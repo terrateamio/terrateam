@@ -2,9 +2,7 @@
 all: build doc
 
 NAME=uri
-J=4
-
-export OCAMLRUNPARAM=b
+J ?= 2
 
 setup.bin: setup.ml
 	ocamlopt.opt -o $@ $< || ocamlopt -o $@ $< || ocamlc -o $@ $<
