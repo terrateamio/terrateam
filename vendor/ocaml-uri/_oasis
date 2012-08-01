@@ -1,9 +1,9 @@
 OASISFormat: 0.2
 Name:        uri
-Version:     0.1-dev
+Version:     1.0
 Synopsis:    RFC3968 URI parsing library
 Authors:     Anil Madhavapeddy
-License:     LGPL-2.0 with OCaml linking exception
+License:     ISC
 Plugins:     META (0.2)
 BuildTools:  ocamlbuild
 
