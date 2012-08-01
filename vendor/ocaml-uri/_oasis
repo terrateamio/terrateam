@@ -1,6 +1,6 @@
 OASISFormat: 0.2
 Name:        uri
-Version:     1.0
+Version:     1.1dev
 Synopsis:    RFC3968 URI parsing library
 Authors:     Anil Madhavapeddy
 License:     ISC
