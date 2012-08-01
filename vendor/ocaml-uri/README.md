@@ -12,5 +12,5 @@ TODO (at least):
 + form encoding (' ' to '+'). Python has a `quote_plus` for this as it is
   different behaviour from normal URL percent encoding.
 + query argument decoding
-+ path normalisation (`a/b/..` to `a/b`)
-+ relative url resolution
++ path normalisation (`a/b/..` to `a/`)
+

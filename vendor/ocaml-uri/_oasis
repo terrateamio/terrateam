@@ -1,0 +1,39 @@
+OASISFormat: 0.2
+Name:        uri
+Version:     1.1dev
+Synopsis:    RFC3968 URI parsing library
+Authors:     Anil Madhavapeddy
+License:     ISC
+Plugins:     META (0.2)
+BuildTools:  ocamlbuild
+
+Library uri
+  Path:       lib
+  Modules:    Uri,Uri_re,Uri_IP
+  BuildDepends: re.posix,re.str
+
+Flag tests
+  Description:        Build and run tests
+  Default:            true
+
+Document uri
+  Title:                URI docs
+  Type:                 ocamlbuild (0.2)
+  BuildTools+:          ocamldoc
+  XOCamlbuildPath:      lib
+  XOCamlbuildLibraries: uri
+
+Executable test_runner
+  Path:               lib_test
+  MainIs:             test_runner.ml
+  Build$:             flag(tests)
+  Custom:             true
+  CompiledObject:     best
+  Install:            false
+  BuildDepends:       uri,oUnit (>= 1.0.2)
+
+Test test_runner
+  Run$:               flag(tests)
+  Command:            $test_runner
+  WorkingDirectory:   lib_test
+

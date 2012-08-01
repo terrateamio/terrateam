@@ -1,6 +1,0 @@
-version = "0.3dev"
-description = "RFC3968 URI parsing library"
-requires = "re.posix re.str"
-archive(byte) = "uri.cma"
-archive(native) = "uri.cmxa"
-exists_if = "uri.cma"
