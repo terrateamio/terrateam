@@ -15,6 +15,16 @@
  *
  *)
 
+type component = [
+  `Scheme
+| `Authority
+| `Userinfo (* subcomponent of authority in some schemes *)
+| `Host (* subcomponent of authority in some schemes *)
+| `Path
+| `Query
+| `Fragment
+]
+
 (** Safe characters that are always allowed in a URI 
   * Unfortunately, this varies depending on which bit of the URI
   * is being parsed, so there are multiple variants (and this
@@ -22,28 +32,96 @@
   *)
 type safe_chars = bool array
 
-let safe_chars : safe_chars = 
-  let a = Array.create 256 false in
-  let always_safe =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-" in
-   for i = 0 to String.length always_safe - 1 do
-     let c = Char.code always_safe.[i] in
-     a.(c) <- true
-   done;
-   a
+module type Scheme = sig
+  val safe_chars_for_component : component -> safe_chars
+  val normalize_host : string option -> string option
+end
 
-(** Safe characters for the path portion of a URI *)
-let safe_chars_for_path : safe_chars =
-  let a = Array.copy safe_chars in
-  a.(Char.code '/') <- true;
-  a
+module Generic : Scheme = struct
+  let sub_delims a =
+    let subd = "!$&'()*+,;=" in
+    for i = 0 to String.length subd - 1 do
+      let c = Char.code subd.[i] in
+      a.(c) <- true
+    done;
+    a
 
-(** Safe characters for the userinfo portion of a URI.
+  let safe_chars : safe_chars = 
+    let a = Array.create 256 false in
+    let always_safe =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-~" in
+    for i = 0 to String.length always_safe - 1 do
+      let c = Char.code always_safe.[i] in
+      a.(c) <- true
+    done;
+    a
+
+  let pchar : safe_chars =
+    let a = sub_delims (Array.copy safe_chars) in
+    a.(Char.code ':') <- true;
+    a.(Char.code '@') <- true;
+    a
+      
+(** Safe characters for the path component of a URI
+    TODO: sometimes ':' is unsafe (Sec 3.3 pchar vs segment-nz-nc) *)
+  let safe_chars_for_path : safe_chars =
+    let a = sub_delims (Array.copy safe_chars) in
+    (* delimiter: non-segment delimiting uses should be pct encoded *)
+    a.(Char.code '/') <- true;
+    a.(Char.code '@') <- true;
+    a
+
+  let safe_chars_for_query : safe_chars =
+    let a = Array.copy pchar in
+    a.(Char.code '/') <- true;
+    a.(Char.code '?') <- true;
+    a
+
+  let safe_chars_for_fragment : safe_chars = safe_chars_for_query
+
+(** Safe characters for the userinfo subcomponent of a URI.
     TODO: this needs more reserved characters added *)
-let safe_chars_for_userinfo : safe_chars =
-  let a = Array.copy safe_chars in
-  a.(Char.code ':') <- true;
-  a
+  let safe_chars_for_userinfo : safe_chars =
+    let a = Array.copy safe_chars in
+    (* delimiter: non-segment delimiting uses should be pct encoded *)
+    a.(Char.code ':') <- true;
+    a
+
+  let safe_chars_for_component = function
+    | `Path -> safe_chars_for_path
+    | `Userinfo -> safe_chars_for_userinfo
+    | `Query -> safe_chars_for_query
+    | `Fragment -> safe_chars_for_fragment
+    | _ -> safe_chars
+
+  let normalize_host hso = hso
+end
+
+module Http : Scheme = struct
+  include Generic
+
+  let normalize_host = function
+    | Some hs -> Some (String.lowercase hs)
+    | None -> None
+end
+
+module File : Scheme = struct
+  include Generic
+
+  let normalize_host = function
+    | Some hs ->
+      let hs = String.lowercase hs in
+      if hs="localhost" then Some "" else Some hs
+    | None -> Some ""
+end
+
+let module_of_scheme = function
+  | Some s -> begin match String.lowercase s with
+      | "http" | "https" -> (module Http : Scheme)
+      | "file" -> (module File : Scheme)
+      | _ -> (module Generic : Scheme)
+  end
+  | None -> (module Generic : Scheme)
 
 (** Portions of the URL must be converted to-and-from percent-encoding
   * and this really, really shouldn't be mixed up. So this Pct module
@@ -58,7 +136,7 @@ module Pct : sig
   type encoded
   type decoded
 
-  val encode : ?safe_chars:safe_chars -> decoded -> encoded
+  val encode : ?scheme:string -> ?component:component -> decoded -> encoded
   val decode : encoded -> decoded
 
   (* The empty decoded string *)
@@ -80,7 +158,9 @@ end = struct
   (** Scan for reserved characters and replace them with 
       percent-encoded equivalents.
       @return a percent-encoded string *)
-  let encode ?(safe_chars=safe_chars_for_path) b =
+  let encode ?scheme ?(component=`Path) b =
+    let module Scheme = (val (module_of_scheme scheme) : Scheme) in
+    let safe_chars = Scheme.safe_chars_for_component component in
     let len = String.length b in
     let buf = Buffer.create len in
     let rec scan start cur =
@@ -124,7 +204,8 @@ end = struct
 end
 
 (* Percent encode a string *)
-let pct_encode ?safe_chars s = Pct.(uncast_encoded (encode ?safe_chars (cast_decoded s)))
+let pct_encode ?scheme ?(component=`Path) s =
+  Pct.(uncast_encoded (encode ?scheme ~component (cast_decoded s)))
 
 (* Percent decode a string *)
 let pct_decode s = Pct.(uncast_decoded (decode (cast_encoded s)))
@@ -175,9 +256,10 @@ module Query = struct
     let len = List.length l in
     List.iter (fun (k,v) ->
       incr n;
-      Buffer.add_string buf (pct_encode k);
-      Buffer.add_char buf '=';
-      Buffer.add_string buf (pct_encode v);
+      Buffer.add_string buf (pct_encode ~component:`Query k);
+      if v<>""
+      then (Buffer.add_char buf '=';
+            Buffer.add_string buf (pct_encode ~component:`Query v));
       if !n < len then
         Buffer.add_char buf '&';
     ) l;
@@ -200,16 +282,38 @@ type t = {
   fragment: Pct.decoded option;
 }  
 
+let normalize uri =
+  let uncast_opt = function
+    | Some h -> Some (Pct.uncast_decoded h)
+    | None -> None
+  in
+  let cast_opt = function
+    | Some h -> Some (Pct.cast_decoded h)
+    | None -> None
+  in
+  let module Scheme =
+        (val (module_of_scheme (uncast_opt uri.scheme)) : Scheme) in
+  let dob f = function
+    | Some x -> Some Pct.(cast_decoded (f (uncast_decoded x)))
+    | None -> None
+  in {uri with
+    scheme=dob String.lowercase uri.scheme;
+    host=cast_opt (Scheme.normalize_host (uncast_opt uri.host))
+  }
+
 (* Make a URI record. This is a bit more inefficient than it needs to be due to the
  * casting/uncasting (which isn't fully identity due to the option box), but it is
  * no big deal for now.
  *)
 let make ?scheme ?userinfo ?host ?port ?path ?query ?fragment () =
-  let decode x = match x with |Some x -> Some (Pct.cast_decoded x) |None -> None in
-  let path = match path with |None -> Pct.empty_decoded |Some p -> Pct.cast_decoded p in
+  let decode = function
+    |Some x -> Some (Pct.cast_decoded x) |None -> None in
+  let path = match path with
+    |None -> Pct.empty_decoded |Some p -> Pct.cast_decoded p in
   let query = match query with |None -> [] |Some p -> p in
-  { scheme=decode scheme; userinfo=decode userinfo; host=decode host;
-    port; path; query; fragment=decode fragment }
+  normalize
+    { scheme=decode scheme; userinfo=decode userinfo;
+      host=decode host; port; path; query; fragment=decode fragment }
 
 (** Parse a URI string into a structure *)
 let of_string s =
@@ -248,19 +352,22 @@ let of_string s =
     | Some x -> Query.query_of_decoded (Pct.uncast_decoded x)
     | None -> []
   in
-  let fragment  = get_opt subs 9 in
-  { scheme; userinfo; host; port; path; query; fragment }
+  let fragment = get_opt subs 9 in
+  normalize { scheme; userinfo; host; port; path; query; fragment }
 
 (** Convert a URI structure into a percent-encoded string *)
-let to_string uri = 
+let to_string uri =
+  let scheme = match uri.scheme with
+    | Some s -> Some (Pct.uncast_decoded s)
+    | None -> None in
   let buf = Buffer.create 128 in
   (* Percent encode a decoded string and add it to the buffer *)
-  let add_pct_string ?(safe_chars=safe_chars) x =
-    Buffer.add_string buf (Pct.uncast_encoded (Pct.encode ~safe_chars x)) in
+  let add_pct_string ?(component=`Path) x =
+    Buffer.add_string buf (Pct.uncast_encoded (Pct.encode ?scheme ~component x)) in
   (match uri.scheme with
    |None -> ()
    |Some x ->
-      add_pct_string x; 
+      add_pct_string ~component:`Scheme x; 
       Buffer.add_char buf ':' 
   );
   (match uri.host with
@@ -269,10 +376,10 @@ let to_string uri =
       (match uri.userinfo with
        |None -> ()
        |Some userinfo ->
-          add_pct_string ~safe_chars:safe_chars_for_userinfo userinfo;
+          add_pct_string ~component:`Userinfo userinfo;
           Buffer.add_char buf '@'
       );
-      add_pct_string host;
+      add_pct_string ~component:`Host host;
       (match uri.port with
        |None -> ()
        |Some port ->
@@ -287,11 +394,11 @@ let to_string uri =
       if uri.host = None then Buffer.add_char buf '/'
    |path when path.[0] = '/' -> 
       (* Path starts with a slash, so ok to add *)
-      add_pct_string ~safe_chars:safe_chars_for_path uri.path;
+      add_pct_string ~component:`Path uri.path;
    |path ->
       (* Path has no starting slash and is non-empty, so force a starting slash *)
       Buffer.add_char buf '/';
-      add_pct_string ~safe_chars:safe_chars_for_path uri.path;
+      add_pct_string ~component:`Path uri.path;
   );
   (match uri.query with
    |[] -> ()
@@ -299,17 +406,12 @@ let to_string uri =
   );
   (match uri.fragment with
    |None -> ()
-   |Some f -> Buffer.(add_char buf '#'; add_pct_string f)
+   |Some f -> Buffer.(add_char buf '#'; add_pct_string ~component:`Fragment f)
   );
   Buffer.contents buf
 
-(* Return the path component, which is either relative and non-empty,
-   or an absolute path.
-   TODO: strip out ../. for normalisation *)
-let path uri =
-  match Pct.uncast_decoded uri.path with
-  |"" -> "/"
-  |p -> p
+(* Return the path component *)
+let path uri = Pct.uncast_decoded uri.path
 
 (* Various accessor functions, as the external uri type is abstract  *)
 let get_decoded_opt = function None -> None |Some x -> Some (Pct.uncast_decoded x)
@@ -325,3 +427,47 @@ let add_query_params uri ps = { uri with query=ps@uri.query }
 
 (* TODO: functions to add and remove from a URI *)
 
+(* Subroutine for resolve <http://tools.ietf.org/html/rfc3986#section-5.2.3> *)
+let merge base rpath =
+  match host base, path base with
+    | Some _, "" -> Pct.cast_decoded ("/"^rpath)
+    | _, bpath -> Pct.cast_decoded begin
+      try (String.sub bpath 0 (1+(String.rindex bpath '/')))^rpath
+      with Not_found -> rpath
+    end
+
+(* Subroutine for resolve <http://tools.ietf.org/html/rfc3986#section-5.2.4> *)
+let remove_dot_segments p =
+  let ascend = function [] -> [] | s::"/"::t | s::t -> t in
+  let p = Pct.uncast_decoded p in
+  let inp = List.map (function Re_str.Text s | Re_str.Delim s -> s)
+    (Re_str.full_split (Re_str.regexp "/") p) in
+  let rec loop outp = function
+    | ".."::"/"::r | "."::"/"::r -> loop outp r (* A *)
+    | "/"::"."::"/"::r | "/"::"."::r -> loop outp ("/"::r) (* B *)
+    | "/"::".."::"/"::r | "/"::".."::r -> loop (ascend outp) ("/"::r) (* C *)
+    | "."::[] | ".."::[] | [] -> String.concat "" (List.rev outp) (* D *)
+    | "/"::s::r -> loop (s::"/"::outp) r
+    | s::r -> loop (s::outp) r (* E *)
+  in Pct.cast_decoded (loop [] inp)
+
+(* Resolve a URI wrt a base URI <http://tools.ietf.org/html/rfc3986#section-5.2> *)
+let resolve schem base uri =
+  let base = match scheme base with
+    | None -> {base with scheme=Some (Pct.cast_decoded schem)}
+    | Some _ -> base
+  in
+  normalize begin match scheme uri, host uri with
+    | Some _, _ ->
+      {uri with path=remove_dot_segments uri.path}
+    | None, Some _ ->
+      {uri with scheme=base.scheme; path=remove_dot_segments uri.path}
+    | None, None ->
+      let uri = {uri with scheme=base.scheme; host=base.host; port=base.port} in
+      if (path uri)=""
+      then {uri with path=base.path;
+        query=if uri.query=[] then base.query else uri.query}
+      else if (path uri).[0]='/'
+      then {uri with path=remove_dot_segments uri.path}
+      else {uri with path=remove_dot_segments (merge base (path uri))}
+  end
