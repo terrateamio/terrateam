@@ -428,6 +428,14 @@ let with_query uri query = { uri with query=query }
 let add_query_param uri p = { uri with query=p::uri.query }
 let add_query_params uri ps = { uri with query=ps@uri.query }
 
+(* Construct the path and query fragment portion *)
+let path_and_query uri =
+  match (path uri), (query uri) with
+  |"", [] -> "/"
+  |"", q -> Printf.sprintf "/?%s" (encoded_of_query q)
+  |p, [] -> p
+  |p, q -> Printf.sprintf "%s?%s" p (encoded_of_query q)
+
 (* TODO: functions to add and remove from a URI *)
 
 (* Subroutine for resolve <http://tools.ietf.org/html/rfc3986#section-5.2.3> *)

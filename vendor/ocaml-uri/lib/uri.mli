@@ -74,6 +74,9 @@ val make : ?scheme:string -> ?userinfo:string -> ?host:string ->
 (** Get the path component of a URI *)
 val path : t -> string
 
+(** Get the path and query components of a URI *)
+val path_and_query : t -> string
+
 (** Get the scheme component of a URI *)
 val scheme : t -> string option
 
