@@ -1,4 +1,0 @@
-NAME=uri
-VERSION=0.3dev
-DEPS="re"
-LIB="uri uri_re Uri_IP"
