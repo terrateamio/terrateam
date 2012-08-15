@@ -86,6 +86,10 @@ val userinfo : t -> string option
 (** Get the host component of a URI *)
 val host : t -> string option
 
+(** Get the host component of a URI, with a default
+  * supplied if one is not present *)
+val host_with_default: ?default:string -> t -> string
+
 (** Get the port component of a URI *)
 val port : t -> int option
 

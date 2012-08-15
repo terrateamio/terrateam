@@ -421,6 +421,12 @@ let get_decoded_opt = function None -> None |Some x -> Some (Pct.uncast_decoded 
 let scheme uri = get_decoded_opt uri.scheme
 let userinfo uri = get_decoded_opt uri.userinfo
 let host uri = get_decoded_opt uri.host
+
+let host_with_default ?(default="localhost") uri =
+  match host uri with
+  |None -> default
+  |Some h -> h
+
 let port uri = uri.port
 let fragment uri = get_decoded_opt uri.fragment
 let query uri = uri.query
