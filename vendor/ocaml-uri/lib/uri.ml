@@ -394,15 +394,15 @@ let to_string uri =
    |None -> ()
   );
   (match Pct.uncast_decoded uri.path with 
-   |"" ->
+    |"" ->
       (* If the buffer has no host, then always start URI with a slash *)
-      if uri.host = None then Buffer.add_char buf '/'
-   |path when path.[0] = '/' -> 
+      (*if uri.host = None then Buffer.add_char buf '/'*) ()
+    |path when path.[0] = '/' -> 
       (* Path starts with a slash, so ok to add *)
       add_pct_string ~component:`Path uri.path;
-   |path ->
+    |path ->
       (* Path has no starting slash and is non-empty, so force a starting slash *)
-      Buffer.add_char buf '/';
+      (*Buffer.add_char buf '/';*)
       add_pct_string ~component:`Path uri.path;
   );
   (match uri.query with
