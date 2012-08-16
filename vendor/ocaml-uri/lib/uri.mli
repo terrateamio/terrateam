@@ -77,6 +77,10 @@ val path : t -> string
 (** Get the path and query components of a URI *)
 val path_and_query : t -> string
 
+(** Replace the path URI with the supplied path.
+  * Input URI is not modified *)
+val with_path : t -> string -> t
+
 (** Get the scheme component of a URI *)
 val scheme : t -> string option
 

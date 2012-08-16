@@ -358,7 +358,9 @@ let of_string s =
   let fragment = get_opt subs 9 in
   normalize { scheme; userinfo; host; port; path; query; fragment }
 
-(** Convert a URI structure into a percent-encoded string *)
+(** Convert a URI structure into a percent-encoded string
+    <http://tools.ietf.org/html/rfc3986#section-5.3>
+ *)
 let to_string uri =
   let scheme = match uri.scheme with
     | Some s -> Some (Pct.uncast_decoded s)
@@ -415,6 +417,7 @@ let to_string uri =
 
 (* Return the path component *)
 let path uri = Pct.uncast_decoded uri.path
+let with_path uri path = { uri with path=Pct.cast_decoded path }
 
 (* Various accessor functions, as the external uri type is abstract  *)
 let get_decoded_opt = function None -> None |Some x -> Some (Pct.uncast_decoded x)
