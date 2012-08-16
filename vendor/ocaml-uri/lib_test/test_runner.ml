@@ -198,6 +198,21 @@ let test_generic_uri_norm =
     o >:: test
   ) generic_uri_norm
 
+let rel_id = [
+  "a/path/fragment";
+  "/an/absolute/path";
+  "?a&b&c";
+  "?a=&b=&c=";
+  "?a=b&b=c&c=a";
+]
+
+let test_rel_id =
+  List.map (fun id ->
+    let test () = assert_equal ~printer:(fun l -> l)
+      id (Uri.to_string (Uri.of_string id)) in
+    id >:: test
+  ) rel_id
+
 (* Returns true if the result list contains successes only.
    Copied from oUnit source as it isnt exposed by the mli *)
 let rec was_successful =
@@ -212,7 +227,7 @@ let rec was_successful =
         false
 
 let _ =
-  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_query_decode @ test_query_encode @ test_rel_res @ test_file_rel_res @ test_generic_uri_norm) in
+  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_query_decode @ test_query_encode @ test_rel_res @ test_file_rel_res @ test_generic_uri_norm @ test_rel_id) in
   let verbose = ref false in
   let set_verbose _ = verbose := true in
   Arg.parse
