@@ -247,8 +247,8 @@ module Query = struct
     let rec loop acc = function
       | (k::v::_)::tl ->
         let n = plus_to_space k,
-	  (match Re_str.split_delim qs_cm (plus_to_space v) with
-	    | [] -> [""] | l -> l) in
+          (match Re_str.split_delim qs_cm (plus_to_space v) with
+            | [] -> [""] | l -> l) in
         loop (n::acc) tl
       | [k]::tl ->
         let n = plus_to_space k, [] in
@@ -277,9 +277,9 @@ module Query = struct
       Buffer.add_string buf (pct_encode ~component:`Query k);
       if v <> []
       then (Buffer.add_char buf '=';
-	    Buffer.iter_concat (fun buf s ->
-	      Buffer.add_string buf (pct_encode ~component:`Query s)
-	    ) "," buf v)
+            Buffer.iter_concat (fun buf s ->
+              Buffer.add_string buf (pct_encode ~component:`Query s)
+            ) "," buf v)
     ) "&" buf l;
     Buffer.contents buf 
 end
