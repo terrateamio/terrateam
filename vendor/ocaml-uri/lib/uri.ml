@@ -234,7 +234,7 @@ module Query = struct
    * record in Url.t ?  *)
 
   let split_query qs =
-    let els = Re_str.split qs_amp qs in
+    let els = Re_str.split_delim qs_amp qs in
     (** Replace a + in a query string with a space in-place *)
     let plus_to_space s =
       for i = 0 to String.length s - 1 do
@@ -245,7 +245,7 @@ module Query = struct
     let rec loop acc = function
       | (k::v::_)::tl ->
         let n = plus_to_space k,
-	  (Re_str.split qs_cm (plus_to_space v)) in
+	  (Re_str.split_delim qs_cm (plus_to_space v)) in
         loop (n::acc) tl
       | [k]::tl ->
         let n = plus_to_space k, [] in
@@ -253,7 +253,7 @@ module Query = struct
       | []::tl -> loop (("", [])::acc) tl
       | [] -> acc
     in loop []
-    (List.rev_map (fun el -> Re_str.bounded_split qs_eq el 2) els)
+    (List.rev_map (fun el -> Re_str.bounded_split_delim qs_eq el 2) els)
 
   (* Make a query tuple list from a percent-encoded string *)
   let query_of_encoded qs =
