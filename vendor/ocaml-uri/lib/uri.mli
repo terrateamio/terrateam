@@ -44,31 +44,31 @@ val to_string : t -> string
 val resolve : string -> t -> t -> t
 
 (** Get a query string from a URI *)
-val query : t -> (string * string) list
+val query : t -> (string * string list) list
 
 (** Make a percent-encoded query string from percent-decoded query tuple *)
-val encoded_of_query : (string * string) list -> string
+val encoded_of_query : (string * string list) list -> string
 
 (** Parse a percent-encoded query string into a percent-decoded query tuple *)
-val query_of_encoded : string -> (string * string) list
+val query_of_encoded : string -> (string * string list) list
 
 (** Replace the query URI with the supplied list.
   * Input URI is not modified
   *)
-val with_query : t -> (string * string) list -> t
+val with_query : t -> (string * string list) list -> t
 
 (** Add a query parameter to the input query URI.
   * Input URI is not modified
   *)
-val add_query_param : t -> (string * string) -> t
+val add_query_param : t -> (string * string list) -> t
 
 (** Add a query parameter list to the input query URI.
   * Input URI is not modified
   *)
-val add_query_params : t -> (string * string) list -> t
+val add_query_params : t -> (string * string list) list -> t
 
 val make : ?scheme:string -> ?userinfo:string -> ?host:string ->
-  ?port:int -> ?path:string -> ?query:(string * string) list -> 
+  ?port:int -> ?path:string -> ?query:(string * string list) list -> 
   ?fragment:string -> unit -> t
 
 (** Get the path component of a URI *)
