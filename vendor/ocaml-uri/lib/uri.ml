@@ -85,6 +85,9 @@ module Generic : Scheme = struct
     let a = Array.copy pchar in
     a.(Char.code '/') <- true;
     a.(Char.code '?') <- true;
+    (* '&' is safe but we should encode literals to avoid ambiguity
+       with the already parsed qs params *)
+    a.(Char.code '&') <- false;
     a
 
   let safe_chars_for_fragment : safe_chars = safe_chars_for_query
