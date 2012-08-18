@@ -124,7 +124,7 @@ let uri_query_make = [
 
 let test_query_encode =
   List.map (fun (qs,res) ->
-    let test () = assert_equal ~printer:(fun l -> l) (Uri.encoded_of_query qs) res in
+    let test () = assert_equal ~printer:(fun l -> l) res (Uri.encoded_of_query qs) in
     res >:: test
   ) uri_query_make
 
