@@ -247,7 +247,8 @@ module Query = struct
     let rec loop acc = function
       | (k::v::_)::tl ->
         let n = plus_to_space k,
-	  (Re_str.split_delim qs_cm (plus_to_space v)) in
+	  (match Re_str.split_delim qs_cm (plus_to_space v) with
+	    | [] -> [""] | l -> l) in
         loop (n::acc) tl
       | [k]::tl ->
         let n = plus_to_space k, [] in
@@ -268,7 +269,6 @@ module Query = struct
    * this function.
    *)
   let encoded_of_query l =
-    (* broken with pct encoding??? *)
     let len = List.fold_left (fun a (k,v) ->
       a + (String.length k)
       + (List.fold_left (fun a s -> a+(String.length s)+1) 0 v) + 2) (-1) l in
