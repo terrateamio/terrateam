@@ -29,7 +29,9 @@ module Buffer = struct
   include Buffer
   let rec iter_concat fn sep buf = function
     | last::[] -> fn buf last
-    | el::rest -> fn buf el; Buffer.add_string buf sep
+    | el::rest ->
+      fn buf el; Buffer.add_string buf sep;
+      iter_concat fn sep buf rest
     | [] -> ()
 end
 
