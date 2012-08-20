@@ -55,6 +55,8 @@ let uri_encodes = [
   "/wh/at!/ev%20/er", (Uri.make ~path:"/wh/at!/ev /er" ());
   "http://%5Bdead%3Abeef%3A%3Adead%3A0%3Abeaf%5D",
     (Uri.make ~scheme:"http" ~host:"[dead:beef::dead:0:beaf]" ());
+  "foo+bar%3A", (Uri.make ~path:"foo+bar:" ());
+  "foo+bar:///", (Uri.make ~scheme:"foo+bar" ~host:"" ~path:"/" ());
 ]
 
 let map_pcts_tests size name test args =
@@ -226,6 +228,7 @@ let rel_id = [
   "?a&b&c";
   "?a=&b=&c=";
   "?a=b&b=c&c=a";
+  "foo+bar:///";
 ]
 
 let test_rel_id =
