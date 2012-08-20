@@ -71,6 +71,11 @@ module Generic : Scheme = struct
     a.(Char.code ':') <- true;
     a.(Char.code '@') <- true;
     a
+
+  let safe_chars_for_scheme : safe_chars =
+    let a = Array.copy safe_chars in
+    a.(Char.code '+') <- true;
+    a
       
 (** Safe characters for the path component of a URI
     TODO: sometimes ':' is unsafe (Sec 3.3 pchar vs segment-nz-nc) *)
@@ -105,6 +110,7 @@ module Generic : Scheme = struct
     | `Userinfo -> safe_chars_for_userinfo
     | `Query -> safe_chars_for_query
     | `Fragment -> safe_chars_for_fragment
+    | `Scheme -> safe_chars_for_scheme
     | _ -> safe_chars
 
   let normalize_host hso = hso
