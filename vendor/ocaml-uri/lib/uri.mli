@@ -24,6 +24,8 @@ type component = [
 | `Host (* subcomponent of authority in some schemes *)
 | `Path
 | `Query
+| `Query_key
+| `Query_value
 | `Fragment
 ]
 

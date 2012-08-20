@@ -22,6 +22,8 @@ type component = [
 | `Host (* subcomponent of authority in some schemes *)
 | `Path
 | `Query
+| `Query_key
+| `Query_value
 | `Fragment
 ]
 
@@ -95,6 +97,16 @@ module Generic : Scheme = struct
     a.(Char.code '&') <- false;
     a
 
+  let safe_chars_for_query_key : safe_chars =
+    let a = Array.copy safe_chars_for_query in
+    a.(Char.code '=') <- false;
+    a
+
+  let safe_chars_for_query_value : safe_chars =
+    let a = Array.copy safe_chars_for_query in
+    a.(Char.code ',') <- false;
+    a
+
   let safe_chars_for_fragment : safe_chars = safe_chars_for_query
 
 (** Safe characters for the userinfo subcomponent of a URI.
@@ -109,6 +121,8 @@ module Generic : Scheme = struct
     | `Path -> safe_chars_for_path
     | `Userinfo -> safe_chars_for_userinfo
     | `Query -> safe_chars_for_query
+    | `Query_key -> safe_chars_for_query_key
+    | `Query_value -> safe_chars_for_query_value
     | `Fragment -> safe_chars_for_fragment
     | `Scheme -> safe_chars_for_scheme
     | _ -> safe_chars
@@ -283,11 +297,11 @@ module Query = struct
       + (List.fold_left (fun a s -> a+(String.length s)+1) 0 v) + 2) (-1) l in
     let buf = Buffer.create len in
     Buffer.iter_concat (fun buf (k,v) ->
-      Buffer.add_string buf (pct_encode ~component:`Query k);
+      Buffer.add_string buf (pct_encode ~component:`Query_key k);
       if v <> []
       then (Buffer.add_char buf '=';
             Buffer.iter_concat (fun buf s ->
-              Buffer.add_string buf (pct_encode ~component:`Query s)
+              Buffer.add_string buf (pct_encode ~component:`Query_value s)
             ) "," buf v)
     ) "&" buf l;
     Buffer.contents buf 
