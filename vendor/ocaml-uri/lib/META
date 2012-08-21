@@ -1,6 +1,6 @@
 # OASIS_START
-# DO NOT EDIT (digest: a0a42ab231ae3bbe9c0361586d6ece37)
-version = "1.2dev"
+# DO NOT EDIT (digest: 5061f56aa1d6fd4953746628a6cc34c6)
+version = "1.2"
 description = "RFC3968 URI parsing library"
 requires = "re.posix re.str"
 archive(byte) = "uri.cma"
