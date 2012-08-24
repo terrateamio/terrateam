@@ -1,0 +1,18 @@
+===== 1.3dev =====
+
+  * Add Uri_services to lookup IANA the common well-known ports and services
+  * Add Uri_services_full with a complete database of the IANA database.
+
+===== 1.2 (2012-08-21)-=====
+
+ * Add Uri.path_and_query to retrieve a path/query combination string.
+ * Add Uri.host_with_default to retrieve a hostname string.
+
+===== 1.1 (2012-08-02) =====
+
+* Fix query parsing order.
+* Improve safe character handling across URI components.
+
+===== 1.0 (2012-08-01) =====
+
+* Initial public release.
