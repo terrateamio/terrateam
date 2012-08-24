@@ -6,11 +6,27 @@ Authors:     Anil Madhavapeddy
 License:     ISC
 Plugins:     META (0.2)
 BuildTools:  ocamlbuild
+PostConfCommand: sh etc/gen.sh
+PostDistCleanCommand: $rm lib/Uri_services.ml
 
 Library uri
   Path:       lib
   Modules:    Uri,Uri_re,Uri_IP
   BuildDepends: re.posix,re.str
+
+Library services
+  Path:       lib
+  Findlibname: services
+  FindlibParent: uri
+  Modules:    Uri_services
+  BuildDepends: uri
+
+Library services_full
+  Path:       lib
+  Findlibname: services_full
+  FindlibParent: uri
+  Modules:    Uri_services_full
+  BuildDepends: uri
 
 Document uri
   Title:                URI docs
@@ -18,6 +34,13 @@ Document uri
   BuildTools+:          ocamldoc
   XOCamlbuildPath:      lib
   XOCamlbuildLibraries: uri
+
+Document uri_services
+  Title:                URI services docs
+  Type:                 ocamlbuild (0.2)
+  BuildTools+:          ocamldoc
+  XOCamlbuildPath:      lib
+  XOCamlbuildLibraries: uri.services
 
 Executable test_runner
   Path:               lib_test
