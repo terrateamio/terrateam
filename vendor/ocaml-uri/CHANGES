@@ -1,4 +1,4 @@
-===== 1.3dev =====
+===== 1.3.0 (2012-08-24) =====
 
   * Add Uri_services to lookup IANA the common well-known ports and services
   * Add Uri_services_full with a complete database of the IANA database.
