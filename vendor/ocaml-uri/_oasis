@@ -8,6 +8,10 @@ Plugins:     META (0.2)
 BuildTools:  ocamlbuild
 PostConfCommand: sh etc/gen.sh
 
+Flag allservices
+  Description: build the full services library
+  Default: false
+
 Library uri
   Path:       lib
   Modules:    Uri,Uri_re,Uri_IP
@@ -21,6 +25,7 @@ Library services
   BuildDepends: uri
 
 Library services_full
+  Build$: flag(allservices)
   Path:       lib
   Findlibname: services_full
   FindlibParent: uri

@@ -1,12 +1,17 @@
+===== 1.3.1 (2012-09-12) =====
+
+* Make the full service library optional, as it takes a loooong time
+  to compile. It will return as a UNIX binding to getservent(2) also.
+
 ===== 1.3.0 (2012-08-24) =====
 
-  * Add Uri_services to lookup IANA the common well-known ports and services
-  * Add Uri_services_full with a complete database of the IANA database.
+* Add Uri_services to lookup IANA the common well-known ports and services
+* Add Uri_services_full with a complete database of the IANA database.
 
 ===== 1.2 (2012-08-21)-=====
 
- * Add Uri.path_and_query to retrieve a path/query combination string.
- * Add Uri.host_with_default to retrieve a hostname string.
+* Add Uri.path_and_query to retrieve a path/query combination string.
+* Add Uri.host_with_default to retrieve a hostname string.
 
 ===== 1.1 (2012-08-02) =====
 
