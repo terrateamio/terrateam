@@ -22,8 +22,20 @@ type component = [
 | `Host (* subcomponent of authority in some schemes *)
 | `Path
 | `Query
+| `Query_key
+| `Query_value
 | `Fragment
 ]
+
+module Buffer = struct
+  include Buffer
+  let rec iter_concat fn sep buf = function
+    | last::[] -> fn buf last
+    | el::rest ->
+      fn buf el; Buffer.add_string buf sep;
+      iter_concat fn sep buf rest
+    | [] -> ()
+end
 
 (** Safe characters that are always allowed in a URI 
   * Unfortunately, this varies depending on which bit of the URI
@@ -61,6 +73,11 @@ module Generic : Scheme = struct
     a.(Char.code ':') <- true;
     a.(Char.code '@') <- true;
     a
+
+  let safe_chars_for_scheme : safe_chars =
+    let a = Array.copy safe_chars in
+    a.(Char.code '+') <- true;
+    a
       
 (** Safe characters for the path component of a URI
     TODO: sometimes ':' is unsafe (Sec 3.3 pchar vs segment-nz-nc) *)
@@ -75,6 +92,19 @@ module Generic : Scheme = struct
     let a = Array.copy pchar in
     a.(Char.code '/') <- true;
     a.(Char.code '?') <- true;
+    (* '&' is safe but we should encode literals to avoid ambiguity
+       with the already parsed qs params *)
+    a.(Char.code '&') <- false;
+    a
+
+  let safe_chars_for_query_key : safe_chars =
+    let a = Array.copy safe_chars_for_query in
+    a.(Char.code '=') <- false;
+    a
+
+  let safe_chars_for_query_value : safe_chars =
+    let a = Array.copy safe_chars_for_query in
+    a.(Char.code ',') <- false;
     a
 
   let safe_chars_for_fragment : safe_chars = safe_chars_for_query
@@ -91,7 +121,10 @@ module Generic : Scheme = struct
     | `Path -> safe_chars_for_path
     | `Userinfo -> safe_chars_for_userinfo
     | `Query -> safe_chars_for_query
+    | `Query_key -> safe_chars_for_query_key
+    | `Query_value -> safe_chars_for_query_value
     | `Fragment -> safe_chars_for_fragment
+    | `Scheme -> safe_chars_for_scheme
     | _ -> safe_chars
 
   let normalize_host hso = hso
@@ -213,36 +246,46 @@ let pct_decode s = Pct.(uncast_decoded (decode (cast_encoded s)))
 (* Query string handling, to and from an assoc list of key/values *)
 module Query = struct
 
-  type t = (string * string) list
+  type t = (string * string list) list
 
-  (** Regular expression to separate out the query string components *)
-  let query_re = Re_str.regexp "[&=]"
+  (** Query element separator '&' *)
+  let qs_amp = Re_str.regexp_string "&"
+  (** Query value list constructor '=' *)
+  let qs_eq = Re_str.regexp_string "="
+  (** Query value list element separator ',' *)
+  let qs_cm = Re_str.regexp_string ","
 
   (* TODO: only make the query tuple parsing lazy and an additional
    * record in Url.t ?  *)
 
   let split_query qs =
-    let bits = Re_str.split query_re qs in
+    let els = Re_str.split_delim qs_amp qs in
     (** Replace a + in a query string with a space in-place *)
     let plus_to_space s =
       for i = 0 to String.length s - 1 do
         if s.[i] = '+' then s.[i] <- ' '
-      done; 
+      done;
       s
     in
     let rec loop acc = function
-    | k::v::tl ->
-        let n = plus_to_space k, plus_to_space v in
+      | (k::v::_)::tl ->
+        let n = plus_to_space k,
+          (match Re_str.split_delim qs_cm (plus_to_space v) with
+            | [] -> [""] | l -> l) in
         loop (n::acc) tl
-    | [k] ->
-        let n = k, "" in
-        List.rev (n::acc)
-    |_ -> List.rev acc in
-    loop [] bits
+      | [k]::tl ->
+        let n = plus_to_space k, [] in
+        loop (n::acc) tl
+      | []::tl -> loop (("", [])::acc) tl
+      | [] -> acc
+    in loop []
+    (List.rev_map (fun el -> Re_str.bounded_split_delim qs_eq el 2) els)
 
   (* Make a query tuple list from a percent-encoded string *)
   let query_of_encoded qs =
-    List.map (fun (k, v) -> (pct_decode k, pct_decode v)) (split_query qs)
+    List.map
+      (fun (k, v) -> (pct_decode k, List.map pct_decode v))
+      (split_query qs)
 
   (* Assemble a query string suitable for putting into a URI.
    * Tuple inputs are percent decoded and will be encoded by
@@ -250,19 +293,17 @@ module Query = struct
    *)
   let encoded_of_query l =
     let len = List.fold_left (fun a (k,v) ->
-      a + (String.length k) + (String.length v) + 2) (-1) l in
+      a + (String.length k)
+      + (List.fold_left (fun a s -> a+(String.length s)+1) 0 v) + 2) (-1) l in
     let buf = Buffer.create len in
-    let n = ref 0 in
-    let len = List.length l in
-    List.iter (fun (k,v) ->
-      incr n;
-      Buffer.add_string buf (pct_encode ~component:`Query k);
-      if v<>""
+    Buffer.iter_concat (fun buf (k,v) ->
+      Buffer.add_string buf (pct_encode ~component:`Query_key k);
+      if v <> []
       then (Buffer.add_char buf '=';
-            Buffer.add_string buf (pct_encode ~component:`Query v));
-      if !n < len then
-        Buffer.add_char buf '&';
-    ) l;
+            Buffer.iter_concat (fun buf s ->
+              Buffer.add_string buf (pct_encode ~component:`Query_value s)
+            ) "," buf v)
+    ) "&" buf l;
     Buffer.contents buf 
 end
 
@@ -358,7 +399,9 @@ let of_string s =
   let fragment = get_opt subs 9 in
   normalize { scheme; userinfo; host; port; path; query; fragment }
 
-(** Convert a URI structure into a percent-encoded string *)
+(** Convert a URI structure into a percent-encoded string
+    <http://tools.ietf.org/html/rfc3986#section-5.3>
+ *)
 let to_string uri =
   let scheme = match uri.scheme with
     | Some s -> Some (Pct.uncast_decoded s)
@@ -392,15 +435,15 @@ let to_string uri =
    |None -> ()
   );
   (match Pct.uncast_decoded uri.path with 
-   |"" ->
+    |"" ->
       (* If the buffer has no host, then always start URI with a slash *)
-      if uri.host = None then Buffer.add_char buf '/'
-   |path when path.[0] = '/' -> 
+      (*if uri.host = None then Buffer.add_char buf '/'*) ()
+    |path when path.[0] = '/' -> 
       (* Path starts with a slash, so ok to add *)
       add_pct_string ~component:`Path uri.path;
-   |path ->
+    |path ->
       (* Path has no starting slash and is non-empty, so force a starting slash *)
-      Buffer.add_char buf '/';
+      (*Buffer.add_char buf '/';*)
       add_pct_string ~component:`Path uri.path;
   );
   (match uri.query with
@@ -415,6 +458,7 @@ let to_string uri =
 
 (* Return the path component *)
 let path uri = Pct.uncast_decoded uri.path
+let with_path uri path = { uri with path=Pct.cast_decoded path }
 
 (* Various accessor functions, as the external uri type is abstract  *)
 let get_decoded_opt = function None -> None |Some x -> Some (Pct.uncast_decoded x)

@@ -48,13 +48,16 @@ let pcts_large =
 let uri_encodes = [
   "https://user:pass@foo.com:123/wh/at/ever?foo=1&bar=5#5",
    (Uri.make ~scheme:"https" ~userinfo:"user:pass" ~host:"foo.com"
-      ~port:123 ~path:"/wh/at/ever" ~query:["foo","1";"bar","5"] ~fragment:"5" ());
+      ~port:123 ~path:"/wh/at/ever" ~query:["foo",["1"];"bar",["5"]] ~fragment:"5" ());
   "http://foo.com", (Uri.make ~scheme:"http" ~host:"foo.com" ());
   "http://foo%21.com", (Uri.make ~scheme:"http" ~host:"foo!.com" ());
   "/wh/at/ev/er", (Uri.make ~path:"/wh/at/ev/er" ());
   "/wh/at!/ev%20/er", (Uri.make ~path:"/wh/at!/ev /er" ());
   "http://%5Bdead%3Abeef%3A%3Adead%3A0%3Abeaf%5D",
-    (Uri.make ~scheme:"http" ~host:"[dead:beef::dead:0:beaf]" ())
+    (Uri.make ~scheme:"http" ~host:"[dead:beef::dead:0:beaf]" ());
+  "foo+bar%3A", (Uri.make ~path:"foo+bar:" ());
+  "foo+bar:///", (Uri.make ~scheme:"foo+bar" ~host:"" ~path:"/" ());
+  "foo2-bar.baz:///", (Uri.make ~scheme:"foo2-bar.baz" ~host:"" ~path:"/" ());
 ]
 
 let map_pcts_tests size name test args =
@@ -83,31 +86,53 @@ let test_uri_encode =
 
 (* Test URI query decoding *)
 let uri_query = [
-  "https://user:pass@foo.com:123/wh/at/ever?foo=1&bar=5#5", ["foo","1"; "bar","5"];
-  "//domain?f+1=bar&+f2=bar%212", ["f 1","bar";" f2","bar!2"];
-  "//domain?foo=&bar=", ["foo","";"bar",""];
-  "//domain?a=b%26c%3Dd", ["a","b&c=d"];
+  "https://user:pass@foo.com:123/wh/at/ever?foo=1&bar=5#5", ["foo",["1"]; "bar",["5"]];
+  "//domain?f+1=bar&+f2=bar%212", ["f 1",["bar"];" f2",["bar!2"]];
+  "//domain?foo=&bar=", ["foo",[""];"bar",[""]];
+  "//domain?a=b%26c%3Dd", ["a",["b&c=d"]];
+  "?",[];
+  "?&",["",[];"",[]];
+  "?&&",["",[];"",[];"",[]];
+  "??&/&",["?",[];"/",[];"",[]];
+  "?#?/#",[];
+  "?%23",["#",[]];
+  "?=&==",["",[""];"",["="]];
+  "?==,&=,=",["",["=";""];"",["";"="]];
+  "?a=,,%26&,%2C=%2C,",["a",["";"";"&"];",,",[",";""]];
+  "?%3D=%3D",["=",["="]];
+  "?,",[",",[]];
 ]
 
 let test_query_decode =
   List.map (fun (uri_str,res) ->
     let uri = Uri.of_string uri_str in
     let test () = assert_equal ~printer:(fun l ->
-      String.concat " " (List.map (fun (k,v) -> sprintf "(%s=%s)" k v) l)) res (Uri.query uri) in
+      String.concat " "
+	(List.map
+	   (fun (k,v) -> sprintf "\"%s\" = \"%s\"" k (String.concat "," v)) l))
+      res (Uri.query uri) in
     uri_str >:: test
   ) uri_query
 
 (* Test URI query encoding. No pct encoding as that is done later by Uri.to_string *)
 let uri_query_make = [
   [], "";
-  ["foo","bar"], "foo=bar";
-  ["foo1","bar1";"foo2","bar2"], "foo1=bar1&foo2=bar2";
-  ["foo1","bar1";"foo2","bar2";"foo3","bar3"], "foo1=bar1&foo2=bar2&foo3=bar3";
+  ["foo",["bar"]], "foo=bar";
+  ["foo1",["bar1"];"foo2",["bar2"]], "foo1=bar1&foo2=bar2";
+  ["foo1",["bar1"];"foo2",["bar2"];"foo3",["bar3"]],
+  "foo1=bar1&foo2=bar2&foo3=bar3";
+  ["#",["#";"#"]], "%23=%23,%23";
+  ["",[]], "";
+  ["",[""]], "=";
+  ["",["";""]], "=,";
+  ["&",["&"]], "%26=%26";
+  ["=",["="]], "%3D==";
+  [",",[",";""]], ",=%2C,";
 ]
 
 let test_query_encode =
   List.map (fun (qs,res) ->
-    let test () = assert_equal ~printer:(fun l -> l) (Uri.encoded_of_query qs) res in
+    let test () = assert_equal ~printer:(fun l -> l) res (Uri.encoded_of_query qs) in
     res >:: test
   ) uri_query_make
 
@@ -198,6 +223,22 @@ let test_generic_uri_norm =
     o >:: test
   ) generic_uri_norm
 
+let rel_id = [
+  "a/path/fragment";
+  "/an/absolute/path";
+  "?a&b&c";
+  "?a=&b=&c=";
+  "?a=b&b=c&c=a";
+  "foo+bar:///";
+]
+
+let test_rel_id =
+  List.map (fun id ->
+    let test () = assert_equal ~printer:(fun l -> l)
+      id (Uri.to_string (Uri.of_string id)) in
+    id >:: test
+  ) rel_id
+
 (* Returns true if the result list contains successes only.
    Copied from oUnit source as it isnt exposed by the mli *)
 let rec was_successful =
@@ -212,7 +253,7 @@ let rec was_successful =
         false
 
 let _ =
-  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_query_decode @ test_query_encode @ test_rel_res @ test_file_rel_res @ test_generic_uri_norm) in
+  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_query_decode @ test_query_encode @ test_rel_res @ test_file_rel_res @ test_generic_uri_norm @ test_rel_id) in
   let verbose = ref false in
   let set_verbose _ = verbose := true in
   Arg.parse
