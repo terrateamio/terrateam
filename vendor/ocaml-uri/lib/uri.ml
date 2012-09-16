@@ -27,15 +27,13 @@ type component = [
 | `Fragment
 ]
 
-module Buffer = struct
-  include Buffer
-  let rec iter_concat fn sep buf = function
-    | last::[] -> fn buf last
-    | el::rest ->
-      fn buf el; Buffer.add_string buf sep;
-      iter_concat fn sep buf rest
-    | [] -> ()
-end
+let rec iter_concat fn sep buf = function
+ | last::[] -> fn buf last
+ | el::rest ->
+     fn buf el;
+     Buffer.add_string buf sep;
+     iter_concat fn sep buf rest
+ | [] -> ()
 
 (** Safe characters that are always allowed in a URI 
   * Unfortunately, this varies depending on which bit of the URI
@@ -296,13 +294,13 @@ module Query = struct
       a + (String.length k)
       + (List.fold_left (fun a s -> a+(String.length s)+1) 0 v) + 2) (-1) l in
     let buf = Buffer.create len in
-    Buffer.iter_concat (fun buf (k,v) ->
+    iter_concat (fun buf (k,v) ->
       Buffer.add_string buf (pct_encode ~component:`Query_key k);
-      if v <> []
-      then (Buffer.add_char buf '=';
-            Buffer.iter_concat (fun buf s ->
-              Buffer.add_string buf (pct_encode ~component:`Query_value s)
-            ) "," buf v)
+      if v <> [] then (
+        Buffer.add_char buf '=';
+        iter_concat (fun buf s ->
+          Buffer.add_string buf (pct_encode ~component:`Query_value s)
+        ) "," buf v)
     ) "&" buf l;
     Buffer.contents buf 
 end
@@ -332,7 +330,7 @@ let normalize uri =
     | None -> None
   in
   let module Scheme =
-        (val (module_of_scheme (uncast_opt uri.scheme)) : Scheme) in
+    (val (module_of_scheme (uncast_opt uri.scheme)) : Scheme) in
   let dob f = function
     | Some x -> Some Pct.(cast_decoded (f (uncast_decoded x)))
     | None -> None
