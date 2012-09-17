@@ -1,6 +1,4 @@
 let port_of_uri ?default lookupfn uri =
-  let port = Uri.port uri in
-  if port<>None then port else
   match Uri.scheme uri, default with
   |None, None -> None
   |None, Some scheme
