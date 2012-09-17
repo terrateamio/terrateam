@@ -198,6 +198,27 @@ let test_generic_uri_norm =
     o >:: test
   ) generic_uri_norm
 
+let default_scheme = "ftp"
+let tcp_port_of_uri = [
+  "a/relative/path",
+  List.hd (Uri_services.tcp_port_of_service default_scheme);
+  "https://foo.bar/", 443;
+  "ssh://user@host.tld/", 22;
+  "http://foo.bar/", 80;
+  "http://foo.bar:8000/", 8000;
+]
+
+let test_tcp_port_of_uri =
+  let string_of_int_option = function None -> "None"
+    | Some i -> Printf.sprintf "Some %d" i
+  in List.map (fun (uri,pn) ->
+    let test () = assert_equal ~printer:string_of_int_option
+      (Some pn)
+      (Uri_services.tcp_port_of_uri ~default:default_scheme
+         (Uri.of_string uri))
+    in uri >:: test
+  ) tcp_port_of_uri
+
 (* Returns true if the result list contains successes only.
    Copied from oUnit source as it isnt exposed by the mli *)
 let rec was_successful =
@@ -212,7 +233,7 @@ let rec was_successful =
         false
 
 let _ =
-  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_query_decode @ test_query_encode @ test_rel_res @ test_file_rel_res @ test_generic_uri_norm) in
+  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_query_decode @ test_query_encode @ test_rel_res @ test_file_rel_res @ test_generic_uri_norm @ test_tcp_port_of_uri) in
   let verbose = ref false in
   let set_verbose _ = verbose := true in
   Arg.parse
