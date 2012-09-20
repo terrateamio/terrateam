@@ -50,6 +50,7 @@ let uri_encodes = [
    (Uri.make ~scheme:"https" ~userinfo:"user:pass" ~host:"foo.com"
       ~port:123 ~path:"/wh/at/ever" ~query:["foo",["1"];"bar",["5"]] ~fragment:"5" ());
   "http://foo.com", (Uri.make ~scheme:"http" ~host:"foo.com" ());
+  "http://foo-bar.com", (Uri.make ~scheme:"http" ~host:"foo-bar.com" ());
   "http://foo%21.com", (Uri.make ~scheme:"http" ~host:"foo!.com" ());
   "/wh/at/ev/er", (Uri.make ~path:"/wh/at/ev/er" ());
   "/wh/at!/ev%20/er", (Uri.make ~path:"/wh/at!/ev /er" ());
@@ -81,6 +82,14 @@ let test_uri_encode =
   List.map (fun (uri_str, uri) ->
     let name = sprintf "uri:%s" uri_str in
     let test () = assert_equal ~printer:(fun x -> x) uri_str (Uri.to_string uri) in
+    name >:: test
+  ) uri_encodes
+
+(* Test that a URI decodes to the expected value *)
+let test_uri_decode =
+  List.map (fun (uri_str, uri) ->
+    let name = sprintf "uribi:%s" uri_str in
+    let test () = assert_equal ~printer:(fun x -> x) uri_str (Uri.(to_string (of_string (Uri.to_string uri)))) in
     name >:: test
   ) uri_encodes
 
@@ -274,7 +283,7 @@ let rec was_successful =
         false
 
 let _ =
-  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_query_decode @ test_query_encode @ test_rel_res @ test_file_rel_res @ test_generic_uri_norm @ test_rel_id @ test_tcp_port_of_uri) in
+  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_uri_decode @ test_query_decode @ test_query_encode @ test_rel_res @ test_file_rel_res @ test_generic_uri_norm @ test_rel_id @ test_tcp_port_of_uri) in
   let verbose = ref false in
   let set_verbose _ = verbose := true in
   Arg.parse
