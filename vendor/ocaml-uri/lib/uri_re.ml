@@ -32,7 +32,7 @@ module Raw = struct
   let c_hash = char '#'
   
   let reserved = gen_delims / sub_delims
-  let unreserved = Re_posix.re "[A-Za-z0-9\\-\\.\\_~]"
+  let unreserved = Re_posix.re "[A-Za-z0-9-._~]"
   let hexdig = Re_posix.re "[0-9A-Fa-f]"
   let pct_encoded = (char '%') + hexdig + hexdig
   
