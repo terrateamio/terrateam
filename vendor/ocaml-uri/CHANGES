@@ -1,5 +1,6 @@
-===== 1.3.2 (2012-09-17) =====
+===== 1.3.2 (2012-09-20) =====
 
+* Fix parsing of unreserved characters in hostnames (e.g. foo-bar.com).
 * Add unit tests for the Uri_services module.
 * Various URI parsing bugs and test cases for better RFC3986 compliance.
 * Fix port_of_uri to detect port overrides in a URI before doing a lookup.
