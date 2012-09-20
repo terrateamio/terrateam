@@ -51,6 +51,7 @@ let uri_encodes = [
       ~port:123 ~path:"/wh/at/ever" ~query:["foo",["1"];"bar",["5"]] ~fragment:"5" ());
   "http://foo.com", (Uri.make ~scheme:"http" ~host:"foo.com" ());
   "http://foo-bar.com", (Uri.make ~scheme:"http" ~host:"foo-bar.com" ());
+  "http://foo-bar.com:8080/h1", (Uri.make ~scheme:"http" ~host:"foo-bar.com" ~port:8080 ~path:"/h1" ());
   "http://foo%21.com", (Uri.make ~scheme:"http" ~host:"foo!.com" ());
   "/wh/at/ev/er", (Uri.make ~path:"/wh/at/ev/er" ());
   "/wh/at!/ev%20/er", (Uri.make ~path:"/wh/at!/ev /er" ());
