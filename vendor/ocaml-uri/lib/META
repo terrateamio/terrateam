@@ -1,6 +1,6 @@
 # OASIS_START
-# DO NOT EDIT (digest: 2d5b31c6df2045bad23e9d900c1e8d01)
-version = "1.3.2"
+# DO NOT EDIT (digest: d22bc192c42771334d21372e286d7722)
+version = "1.3.3"
 description = "RFC3968 URI parsing library"
 requires = "re.posix re.str"
 archive(byte) = "uri.cma"
@@ -9,7 +9,7 @@ archive(native) = "uri.cmxa"
 archive(native, plugin) = "uri.cmxs"
 exists_if = "uri.cma"
 package "services_full" (
- version = "1.3.2"
+ version = "1.3.3"
  description = "RFC3968 URI parsing library"
  requires = "uri"
  archive(byte) = "services_full.cma"
@@ -20,7 +20,7 @@ package "services_full" (
 )
 
 package "services" (
- version = "1.3.2"
+ version = "1.3.3"
  description = "RFC3968 URI parsing library"
  requires = "uri"
  archive(byte) = "services.cma"
