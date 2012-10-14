@@ -1,3 +1,8 @@
+===== 1.3.3 (2012-10-14) =====
+
+* Add singleton variants of query functions that accept a string->string
+  instead of a string list of values, for convenience.
+
 ===== 1.3.2 (2012-09-20) =====
 
 * Fix parsing of unreserved characters in hostnames (e.g. foo-bar.com).

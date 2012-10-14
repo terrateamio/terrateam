@@ -55,19 +55,34 @@ val encoded_of_query : (string * string list) list -> string
 val query_of_encoded : string -> (string * string list) list
 
 (** Replace the query URI with the supplied list.
-  * Input URI is not modified
+    Input URI is not modified
   *)
 val with_query : t -> (string * string list) list -> t
 
+(** Replace the query URI with the supplied singleton query list.
+    Input URI is not modified
+  *)
+val with_query' : t -> (string * string) list -> t
+
 (** Add a query parameter to the input query URI.
-  * Input URI is not modified
+    Input URI is not modified
   *)
 val add_query_param : t -> (string * string list) -> t
 
+(** Add a query parameter to the input singleton query URI.
+    Input URI is not modified
+  *)
+val add_query_param' : t -> (string * string) -> t
+
 (** Add a query parameter list to the input query URI.
-  * Input URI is not modified
+    Input URI is not modified
   *)
 val add_query_params : t -> (string * string list) list -> t
+
+(** Add a query singleton parameter list to the input query URI.
+    Input URI is not modified
+  *)
+val add_query_params' : t -> (string * string) list -> t
 
 val make : ?scheme:string -> ?userinfo:string -> ?host:string ->
   ?port:int -> ?path:string -> ?query:(string * string list) list -> 
