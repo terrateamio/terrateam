@@ -17,3 +17,4 @@
 
  * Check other filters for the EV_DISPATCH bug that was fixed in r252.
 
+ * Merge the fix from r546 in the stable branch.
