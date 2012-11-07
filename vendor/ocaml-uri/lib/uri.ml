@@ -93,6 +93,7 @@ module Generic : Scheme = struct
     (* '&' is safe but we should encode literals to avoid ambiguity
        with the already parsed qs params *)
     a.(Char.code '&') <- false;
+    a.(Char.code '+') <- false;
     a
 
   let safe_chars_for_query_key : safe_chars =
