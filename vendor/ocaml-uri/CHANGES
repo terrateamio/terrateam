@@ -1,3 +1,7 @@
+===== 1.3.3 (unreleased) =====
+
+* Always encode `+` in URLs to be more compatible with form encoding.
+
 ===== 1.3.2 (2012-09-20) =====
 
 * Fix parsing of unreserved characters in hostnames (e.g. foo-bar.com).
