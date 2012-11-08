@@ -1,4 +1,4 @@
-===== 1.3.4 (unreleased) =====
+===== 1.3.4 (2012-11-08) =====
 
 * Always encode `+` in URLs to be more compatible with form encoding.
 
