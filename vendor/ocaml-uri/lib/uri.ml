@@ -474,8 +474,12 @@ let port uri = uri.port
 let fragment uri = get_decoded_opt uri.fragment
 let query uri = uri.query
 let with_query uri query = { uri with query=query }
+let q_s q = List.map (fun (k,v) -> k,[v]) q
+let with_query' uri query = with_query uri (q_s query)
 let add_query_param uri p = { uri with query=p::uri.query }
+let add_query_param' uri (k,v) = { uri with query=(k,[v])::uri.query }
 let add_query_params uri ps = { uri with query=ps@uri.query }
+let add_query_params' uri ps = { uri with query=(q_s ps)@uri.query }
 
 (* Construct the path and query fragment portion *)
 let path_and_query uri =
