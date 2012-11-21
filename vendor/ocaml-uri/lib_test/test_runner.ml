@@ -29,6 +29,7 @@ let pcts = [
   (5, "%20", "%2520");
   (6, "", "");
   (7, "f", "f");
+  (8, "\n", "%0A");
 ]
 
 (* Make an artificially large string version of the pct strings *)
