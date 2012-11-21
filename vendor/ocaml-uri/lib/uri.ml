@@ -204,7 +204,7 @@ end = struct
           scan start (cur+1)
         else begin
           if cur > start then Buffer.add_substring buf b start (cur-start);
-          Buffer.add_string buf (Printf.sprintf "%%%2X" c);
+          Buffer.add_string buf (Printf.sprintf "%%%02X" c);
           scan (cur+1) (cur+1)
         end
       end
