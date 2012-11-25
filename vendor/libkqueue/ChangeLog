@@ -1,6 +1,9 @@
 HEAD
 ------------------------------------------------------------------------
 
+  * Ensure that calling close() on a file descriptor will remove any 
+    kevents that reference the descriptor. [merged from ^/branches/stable@551]
+
   * Remove the SERIALIZE_KEVENT macro, and always protect kevent_copyin() 
     and kevent_copyout() with a mutex.
 
