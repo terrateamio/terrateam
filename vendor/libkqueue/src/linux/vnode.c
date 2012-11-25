@@ -100,7 +100,7 @@ add_watch(struct filter *filt, struct knote *kn)
         return (-1);
 
     /* Convert the fflags to the inotify mask */
-    mask = 0;
+    mask = IN_CLOSE;
     if (kn->kev.fflags & NOTE_DELETE)
         mask |= IN_ATTRIB | IN_DELETE_SELF;
     if (kn->kev.fflags & NOTE_WRITE)      
@@ -179,6 +179,17 @@ evfilt_vnode_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
     dbg_printf("inotify event: %s", inotify_event_dump(&evt));
     if (evt.mask & IN_IGNORED) {
         /* TODO: possibly return error when fs is unmounted */
+        dst->filter = 0;
+        return (0);
+    }
+
+    /* Check if the watched file has been closed, and 
+       XXX-this may not exactly match the kevent() behavior if multiple file de
+scriptors reference the same file.
+    */
+    if (evt.mask & IN_CLOSE_WRITE || evt.mask & IN_CLOSE_NOWRITE) {
+        src->kn_flags |= EV_ONESHOT; /* KLUDGE: causes the knote to be deleted */
+        dst->filter = 0; /* KLUDGE: causes the event to be discarded */
         return (0);
     }
 

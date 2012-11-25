@@ -258,5 +258,7 @@ test_evfilt_vnode(struct test_context *ctx)
     test(kevent_vnode_note_attrib, ctx);
     test(kevent_vnode_note_rename, ctx);
     test(kevent_vnode_note_delete, ctx);
+    /* TODO: test r590 corner case where a descriptor is closed and
+             the associated knote is automatically freed. */
     unlink(ctx->testfile);
 }
