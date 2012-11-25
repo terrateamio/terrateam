@@ -26,11 +26,14 @@ posix_kevent_wait(
         struct kqueue *kq, 
         const struct timespec *timeout)
 {
-    int n;
+    int n, nfds;
+    fd_set rfds;
+
+    nfds = kq->kq_nfds;
+    rfds = kq->kq_fds;
 
     dbg_puts("waiting for events");
-    kq->kq_rfds = kq->kq_fds;
-    n = pselect(kq->kq_nfds, &kq->kq_rfds, NULL , NULL, timeout, NULL);
+    n = pselect(nfds, &rfds, NULL , NULL, timeout, NULL);
     if (n < 0) {
         if (errno == EINTR) {
             dbg_puts("signal caught");
@@ -39,6 +42,8 @@ posix_kevent_wait(
         dbg_perror("pselect(2)");
         return (-1);
     }
+
+    kq->kq_rfds = rfds;
 
     return (n);
 }
