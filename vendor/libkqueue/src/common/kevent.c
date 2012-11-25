@@ -234,10 +234,14 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         struct kevent *eventlist, int nevents,
         const struct timespec *timeout)
 {
-    static unsigned int _kevent_counter = 0;
     struct kqueue *kq;
     int rv = 0;
-    unsigned int myid;
+#ifndef NDEBUG
+    static unsigned int _kevent_counter = 0;
+    unsigned int myid = 0;
+
+    (void) myid;
+#endif
 
     /* Convert the descriptor into an object pointer */
     kq = kqueue_lookup(kqfd);
@@ -246,13 +250,12 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         return (-1);
     }
 
+#ifndef NDEBUG
     if (DEBUG_KQUEUE) {
         myid = atomic_inc(&_kevent_counter);
         dbg_printf("--- kevent %u --- (nchanges = %d, nevents = %d)", myid, nchanges, nevents);
-    } else {
-        myid = 0;
-        (void) myid;
     }
+#endif
 
     /*
      * Process each kevent on the changelist.
@@ -292,6 +295,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         }
     }
 
+#ifndef NDEBUG
     if (DEBUG_KQUEUE) {
         int n;
 
@@ -300,6 +304,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
 	    dbg_printf("(%u) eventlist[%d] = %s", myid, n, kevent_dump(&eventlist[n]));
         }
     }
+#endif
 
 out:
     dbg_printf("--- END kevent %u ret %d ---", myid, rv);
