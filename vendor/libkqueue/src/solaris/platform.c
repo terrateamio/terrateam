@@ -158,8 +158,6 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
         skip_event = 0;
         dbg_printf("event=%s", port_event_dump(evt));
 
-        knote_lock(kn);
-
         switch (evt->portev_source) {
             case PORT_SOURCE_FD:
 //XXX-FIXME WHAT ABOUT WRITE???
@@ -206,7 +204,6 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
 
         if (rv < 0) {
             dbg_puts("kevent_copyout failed");
-            knote_unlock(kn);
             return (-1);
         }
 
@@ -219,10 +216,6 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
         if (eventlist->flags & EV_ONESHOT) 
         {
             knote_delete(filt, kn); //TODO: Error checking
-        }
-        else
-        {
-            knote_unlock(kn);
         }
 
         if (skip_event)

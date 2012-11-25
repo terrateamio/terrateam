@@ -114,8 +114,6 @@ kqueue(void)
 	struct kqueue *kq;
     struct kqueue *tmp;
 
-#error The libkqueue trunk is broken, please use the stable branch instead
-
     kq = calloc(1, sizeof(*kq));
     if (kq == NULL)
         return (-1);
