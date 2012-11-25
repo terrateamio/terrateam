@@ -46,7 +46,6 @@ knote_new(void)
 	if (res == NULL)
         return (NULL);
 
-	tracing_mutex_init(&res->kn_mtx, NULL); //TODO: error checking
     res->kn_ref = 1;
 
     return (res);
@@ -57,20 +56,15 @@ knote_release(struct knote *kn)
 {
     assert (kn->kn_ref > 0);
 
-    tracing_mutex_assert(&kn->kn_mtx, MTX_LOCKED);
-
 	if (atomic_dec(&kn->kn_ref) == 0) {
         if (kn->kn_flags & KNFL_KNOTE_DELETED) {
             dbg_printf("freeing knote at %p", kn);
-            knote_unlock(kn);
-            tracing_mutex_destroy(&kn->kn_mtx);
             free(kn);
         } else {
             dbg_puts("this should never happen");
         }
     } else {
         dbg_printf("decrementing refcount of knote %p rc=%d", kn, kn->kn_ref);
-        knote_unlock(kn);
     }
 }
 
@@ -88,24 +82,19 @@ knote_delete(struct filter *filt, struct knote *kn)
     struct knote query;
     struct knote *tmp;
 
-    tracing_mutex_assert(&kn->kn_mtx, MTX_LOCKED);
-
     if (kn->kn_flags & KNFL_KNOTE_DELETED) {
         dbg_puts("ERROR: double deletion detected");
         return (-1);
     }
 
     /*
-     * Drop the knote lock, and acquire both the knotelist write lock
-     * and the knote lock. Verify that the knote wasn't removed by another
+     * Verify that the knote wasn't removed by another
      * thread before we acquired the knotelist lock.
      */
     query.kev.ident = kn->kev.ident;
-    knote_unlock(kn);
     pthread_rwlock_wrlock(&filt->kf_knote_mtx);
     tmp = RB_FIND(knt, &filt->kf_knote, &query);
     if (tmp == kn) {
-        knote_lock(kn);
         RB_REMOVE(knt, &filt->kf_knote, kn);
     }
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
@@ -129,8 +118,6 @@ knote_lookup(struct filter *filt, uintptr_t ident)
 
     pthread_rwlock_rdlock(&filt->kf_knote_mtx);
     ent = RB_FIND(knt, &filt->kf_knote, &query);
-    if (ent != NULL) 
-        knote_lock(ent);
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
 
 #ifdef __x86_64__
@@ -154,7 +141,6 @@ knote_get_by_data(struct filter *filt, intptr_t data)
             break;
     }
     if (kn != NULL) {
-        knote_lock(kn);
         knote_retain(kn);
     }
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
@@ -167,8 +153,6 @@ int
 knote_disable(struct filter *filt, struct knote *kn)
 {
     assert(!(kn->kev.flags & EV_DISABLE));
-
-    tracing_mutex_assert(&kn->kn_mtx, MTX_LOCKED);
 
     filt->kn_disable(filt, kn); //TODO: Error checking
     KNOTE_DISABLE(kn);

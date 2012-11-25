@@ -22,12 +22,6 @@
 #include <string.h>
 #include "tree.h"
 
-/* If true, calls to kevent() will be serialized so that only a 
-   single thread can copyin/copyout. This should go away once
-   fine-grained locking is fixed.
-*/
-#define SERIALIZE_KEVENT 1
-
 /* Maximum events returnable in a single kevent() call */
 #define MAX_KEVENT  512
 
@@ -86,7 +80,6 @@ struct knote {
 		void          *handle;      /* Used by win32 filters */
     } data;
 	struct kqueue*	   kn_kq;
-    tracing_mutex_t    kn_mtx;
     volatile uint32_t  kn_ref;
 #if defined(KNOTE_PLATFORM_SPECIFIC)
     KNOTE_PLATFORM_SPECIFIC;
@@ -194,17 +187,6 @@ void knote_insert(struct filter *, struct knote *);
 int  knote_delete(struct filter *, struct knote *);
 int  knote_init(void);
 int  knote_disable(struct filter *, struct knote *);
-void knote_lock(struct knote *);
-
-#define knote_lock(kn) do {                                         \
-    tracing_mutex_assert(&(kn)->kn_mtx, MTX_UNLOCKED);              \
-    tracing_mutex_lock(&(kn)->kn_mtx);                              \
-} while (0)
-
-#define knote_unlock(kn) do {                                       \
-    tracing_mutex_assert(&(kn)->kn_mtx, MTX_LOCKED);                \
-    tracing_mutex_unlock(&(kn)->kn_mtx);                            \
-} while (0)
 
 int         filter_lookup(struct filter **, struct kqueue *, short);
 int      	filter_register_all(struct kqueue *);

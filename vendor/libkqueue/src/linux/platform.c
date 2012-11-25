@@ -157,7 +157,6 @@ linux_kevent_copyout(struct kqueue *kq, int nready,
     for (i = 0; i < nready; i++) {
         ev = &epevt[i];
         kn = (struct knote *) ev->data.ptr;
-        knote_lock(kn);
         filt = &kq->kq_filt[~(kn->kev.filter)];
         rv = filt->kf_copyout(eventlist, kn, ev);
         if (slowpath(rv < 0)) {
@@ -174,8 +173,6 @@ linux_kevent_copyout(struct kqueue *kq, int nready,
             knote_disable(filt, kn); //FIXME: Error checking
         if (eventlist->flags & EV_ONESHOT) {
             knote_delete(filt, kn); //FIXME: Error checking
-        } else {
-            knote_unlock(kn);
         }
 
         /* If an empty kevent structure is returned, the event is discarded. */

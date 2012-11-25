@@ -172,22 +172,18 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
     if (src->flags & EV_DELETE) {
         rv = knote_delete(filt, kn);
         dbg_printf("knote_delete returned %d", rv);
-        /* NOTE: the knote lock was dropped by knote_delete() */
     } else if (src->flags & EV_DISABLE) {
         kn->kev.flags |= EV_DISABLE;
         rv = filt->kn_disable(filt, kn);
         dbg_printf("kn_disable returned %d", rv);
-        knote_unlock(kn);
     } else if (src->flags & EV_ENABLE) {
         kn->kev.flags &= ~EV_DISABLE;
         rv = filt->kn_enable(filt, kn);
         dbg_printf("kn_enable returned %d", rv);
-        knote_unlock(kn);
     } else if (src->flags & EV_ADD || src->flags == 0 || src->flags & EV_RECEIPT) {
         kn->kev.udata = src->udata;
         rv = filt->kn_modify(filt, kn, src);
         dbg_printf("kn_modify returned %d", rv);
-        knote_unlock(kn);
     }
 
     return (rv);
@@ -262,13 +258,9 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
      * Process each kevent on the changelist.
      */
     if (nchanges > 0) {
-#if SERIALIZE_KEVENT
         kqueue_lock(kq);
-#endif
         rv = kevent_copyin(kq, changelist, nchanges, eventlist, nevents);
-#if SERIALIZE_KEVENT
         kqueue_unlock(kq);
-#endif
         dbg_printf("(%u) changelist: rv=%d", myid, rv);
         if (rv < 0)
             goto out;
@@ -289,13 +281,9 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         rv = kqops.kevent_wait(kq, nevents, timeout);
         dbg_printf("kqops.kevent_wait returned %d", rv);
         if (fastpath(rv > 0)) {
-#if SERIALIZE_KEVENT
             kqueue_lock(kq);
-#endif
             rv = kqops.kevent_copyout(kq, rv, eventlist, nevents);
-#if SERIALIZE_KEVENT
             kqueue_unlock(kq);
-#endif
         } else if (rv == 0) {
             /* Timeout reached */
         } else {

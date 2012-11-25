@@ -170,7 +170,6 @@ windows_kevent_copyout(struct kqueue *kq, int nready,
 
     //FIXME: not true for EVFILT_IOCP
     kn = (struct knote *) iocp_buf.overlap;
-    knote_lock(kn);
     filt = &kq->kq_filt[~(kn->kev.filter)];
     rv = filt->kf_copyout(eventlist, kn, &iocp_buf);
     if (slowpath(rv < 0)) {
@@ -187,11 +186,8 @@ windows_kevent_copyout(struct kqueue *kq, int nready,
      */
     if (eventlist->flags & EV_DISPATCH) 
         knote_disable(filt, kn); //TODO: Error checking
-    if (eventlist->flags & EV_ONESHOT) { 
+    if (eventlist->flags & EV_ONESHOT)
         knote_delete(filt, kn); //TODO: Error checking
-    } else {
-        knote_unlock(kn);
-    }
 
     /* If an empty kevent structure is returned, the event is discarded. */
     if (fastpath(eventlist->filter != 0)) {
