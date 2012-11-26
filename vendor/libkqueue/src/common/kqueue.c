@@ -27,6 +27,11 @@
 int DEBUG_KQUEUE = 0;
 char *KQUEUE_DEBUG_IDENT = "KQ";
 
+#ifndef _WIN32
+pthread_mutex_t kq_mtx = PTHREAD_MUTEX_INITIALIZER;
+pthread_once_t kq_is_initialized = PTHREAD_ONCE_INIT;
+#endif
+
 static unsigned int
 get_fd_limit(void)
 {
@@ -51,10 +56,7 @@ get_fd_limit(void)
 
 static struct map *kqmap;
 
-int CONSTRUCTOR
-#ifdef MAKE_STATIC
-       VISIBLE
-#endif
+static void
 libkqueue_init(void)
 {
 #ifdef NDEBUG
@@ -80,7 +82,6 @@ libkqueue_init(void)
    if (knote_init() < 0)
        abort();
    dbg_puts("library initialization complete");
-   return (0);
 }
 
 #if DEADWOOD
@@ -113,6 +114,10 @@ kqueue(void)
 {
 	struct kqueue *kq;
     struct kqueue *tmp;
+
+    (void) pthread_mutex_lock(&kq_mtx);
+    (void) pthread_once(&kq_is_initialized, libkqueue_init);
+    (void) pthread_mutex_unlock(&kq_mtx);
 
     kq = calloc(1, sizeof(*kq));
     if (kq == NULL)

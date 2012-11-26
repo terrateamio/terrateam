@@ -39,11 +39,6 @@
 /*
  * GCC-compatible attributes
  */
-#ifdef MAKE_STATIC
-# define CONSTRUCTOR
-#else
-# define CONSTRUCTOR     __attribute__ ((constructor))
-#endif
 #define VISIBLE         __attribute__((visibility("default")))
 #define HIDDEN          __attribute__((visibility("hidden")))
 #define UNUSED          __attribute__((unused))

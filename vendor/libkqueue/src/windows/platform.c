@@ -58,8 +58,7 @@ BOOL WINAPI DllMain(
             if (WSAStartup(MAKEWORD(2,2), NULL) != 0)
                 return (FALSE);
 #endif
-            if (libkqueue_init() < 0)
-				return (FALSE);
+            libkqueue_init();
             break;
 
         case DLL_PROCESS_DETACH:

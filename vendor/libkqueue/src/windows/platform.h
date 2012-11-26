@@ -99,12 +99,6 @@ int     windows_filter_init(struct kqueue *, struct filter *);
 void    windows_filter_free(struct kqueue *, struct filter *);
 int     windows_get_descriptor_type(struct knote *);
 
-/* Windows does not support this attribute.
-   DllMain() is the only available constructor function.
-   This means the constructor must be called from within DllMain().
- */
-#define CONSTRUCTOR
-
 /*
  * GCC-compatible branch prediction macros
  */
