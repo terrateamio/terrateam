@@ -245,8 +245,16 @@ test_evfilt_vnode(struct test_context *ctx)
     return;
 #endif
 
-    snprintf(ctx->testfile, sizeof(ctx->testfile), "/tmp/kqueue-test%d.tmp",
-            testing_make_uid());
+    char *tmpdir = getenv("TMPDIR");
+    if (tmpdir == NULL)
+#ifdef __ANDROID__
+        tmpdir = "/data/local/tmp";
+#else
+        tmpdir = "/tmp";
+#endif
+
+    snprintf(ctx->testfile, sizeof(ctx->testfile), "%s/kqueue-test%d.tmp",
+            tmpdir, testing_make_uid());
 
     test(kevent_vnode_add, ctx);
     test(kevent_vnode_del, ctx);

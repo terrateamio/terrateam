@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include "config.h"
 #include "tree.h"
 
 /* Maximum events returnable in a single kevent() call */

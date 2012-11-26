@@ -23,9 +23,6 @@ struct filter;
 #include <sys/queue.h>
 #include <sys/inotify.h>
 #include <sys/eventfd.h>
-#if HAVE_SYS_SIGNALFD_H
-# include <sys/signalfd.h>
-#endif
 #if HAVE_SYS_TIMERFD_H
 # include <sys/timerfd.h>
 #endif
