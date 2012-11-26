@@ -14,7 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef __linux__
+#if defined(__linux__) && !defined(__ANDROID__)
 #include <execinfo.h>
 #endif
 #include <sys/types.h>
@@ -30,7 +30,7 @@ static int error_flag = 1;
 static void
 error_handler(int signum)
 {
-#ifdef __linux__
+#if defined(__linux__) && !defined(__ANDROID__)
 	void *buf[32];
 
     /* FIXME: the symbols aren't printing */

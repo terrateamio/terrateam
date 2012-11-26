@@ -50,6 +50,11 @@ struct evfilt_data;
 
 #include "debug.h"
 
+/* Workaround for Android */
+#ifndef EPOLLONESHOT
+# define EPOLLONESHOT (1 << 30)
+#endif
+
 struct eventfd {
     int ef_id;
 #if defined(EVENTFD_PLATFORM_SPECIFIC)

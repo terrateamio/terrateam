@@ -23,8 +23,12 @@ struct filter;
 #include <sys/queue.h>
 #include <sys/inotify.h>
 #include <sys/eventfd.h>
-#include <sys/signalfd.h>
-#include <sys/timerfd.h>
+#if HAVE_SYS_SIGNALFD_H
+# include <sys/signalfd.h>
+#endif
+#if HAVE_SYS_TIMERFD_H
+# include <sys/timerfd.h>
+#endif
 
 /*
  * Get the current thread ID
@@ -33,7 +37,9 @@ struct filter;
 # include <linux/unistd.h>
 # include <sys/syscall.h>
 # include <unistd.h>
+#ifndef __ANDROID__
 extern long int syscall (long int __sysno, ...);
+#endif
  
 /* Convenience macros to access the epoll descriptor for the kqueue */
 #define kqueue_epfd(kq)     ((kq)->kq_id)
