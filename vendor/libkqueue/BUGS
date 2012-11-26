@@ -1,3 +1,6 @@
+ * On Windows, you need to supply -DMAKE_STATIC in CFLAGS when building the
+   static library. This does not apply when using cmake.
+
  * When passing a knote pointer to the kernel, the reference count of
    the knote structure should be incremented. Conversely, when the pointer
    has been returned from the kernel and the event unregistered from the
