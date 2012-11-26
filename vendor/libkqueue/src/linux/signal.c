@@ -16,6 +16,12 @@
 
 #include "private.h"
 
+#if HAVE_SYS_SIGNALFD_H
+# include <sys/signalfd.h>
+#else
+# error signalfd is required
+#endif
+
 static void
 signalfd_reset(int sigfd)
 {
