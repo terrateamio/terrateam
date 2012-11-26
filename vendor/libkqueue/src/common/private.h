@@ -81,7 +81,7 @@ struct knote {
             off_t     size;   /* Used by vnode */
         } vnode;
         timer_t       timerid;  
-        pthread_t     tid;          /* Used by posix/timer.c */
+        struct sleepreq *sleepreq; /* Used by posix/timer.c */
 		void          *handle;      /* Used by win32 filters */
     } data;
 	struct kqueue*	   kn_kq;
@@ -120,11 +120,10 @@ struct filter {
 
     struct eventfd kf_efd;             /* Used by user.c */
 
-#if DEADWOOD
     //MOVE TO POSIX?
     int       kf_pfd;                   /* fd to poll(2) for readiness */
     int       kf_wfd;                   /* fd to write when an event occurs */
-#endif
+    //----?
 
     struct evfilt_data *kf_data;	    /* filter-specific data */
     RB_HEAD(knt, knote) kf_knote;
@@ -192,6 +191,7 @@ void knote_insert(struct filter *, struct knote *);
 int  knote_delete(struct filter *, struct knote *);
 int  knote_init(void);
 int  knote_disable(struct filter *, struct knote *);
+#define knote_get_filter(knt) &((knt)->kn_kq->kq_filt[(knt)->kev.filter])
 
 int         filter_lookup(struct filter **, struct kqueue *, short);
 int      	filter_register_all(struct kqueue *);

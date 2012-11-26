@@ -41,22 +41,25 @@ struct sentry {
 static pthread_mutex_t sigtbl_mtx = PTHREAD_MUTEX_INITIALIZER;
 static struct sentry sigtbl[SIGNAL_MAX];
 
+/* XXX-FIXME this will not work with multiple kqueue objects.
+   Need a linked list? Or should signals be delivered to all kqueue objects?
+   */
+static struct eventfd * sig_eventfd;
+
 static void
 signal_handler(int sig)
 {
     struct sentry *s = &sigtbl[sig];
-    ssize_t n;
 
     dbg_printf("caught sig=%d", sig);
     atomic_inc(&s->s_cnt);
 #if defined(__sun__)
-    n = 0;//FIXME: workaround
     if (port_send(s->s_filt->kf_kqueue->kq_port, 
                    X_PORT_SOURCE_SIGNAL, &sigtbl[sig]) < 0) {
         return; //FIXME: errorhandling
     }
 #else
-    n = write(s->s_filt->kf_wfd, &sig, sizeof(sig));//FIXME:errhandling
+    kqops.eventfd_raise(sig_eventfd);
 #endif
 }
 
@@ -111,13 +114,16 @@ ignore_signal(int sig)
 int
 evfilt_signal_init(struct filter *filt)
 {
-    return filter_socketpair(filt);
+    if (kqops.eventfd_init(&filt->kf_efd) < 0)
+        return (-1);
+    sig_eventfd = &filt->kf_efd; // XXX - does not work w/ multiple kqueues
+    return (0);
 }
 
 void
 evfilt_signal_destroy(struct filter *filt)
 {
-    close(filt->kf_pfd);
+    kqops.eventfd_close(&filt->kf_efd);
 }
 
 int
@@ -138,6 +144,7 @@ int
 evfilt_signal_knote_modify(struct filter *filt, struct knote *kn, 
                 const struct kevent *kev)
 {
+    (void) filt;
     kn->kev.flags = kev->flags | EV_CLEAR;
     return (0);
 }
@@ -145,6 +152,7 @@ evfilt_signal_knote_modify(struct filter *filt, struct knote *kn,
 int
 evfilt_signal_knote_delete(struct filter *filt, struct knote *kn)
 {   
+    (void) filt;
     return ignore_signal(kn->kev.ident);
 }
 
@@ -157,18 +165,18 @@ evfilt_signal_knote_enable(struct filter *filt, struct knote *kn)
 int
 evfilt_signal_knote_disable(struct filter *filt, struct knote *kn)
 {
+    (void) filt;
     return ignore_signal(kn->kev.ident);
 }
 
 int
-evfilt_signal_copyout(struct filter *filt, 
-            struct kevent *dst, 
-            int nevents)
+evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
 {
     struct sentry *s;
     struct knote *kn;
     int sig;
-    ssize_t n;
+
+    (void) src;
 
 #if defined(__sun__)
     port_event_t pe;
@@ -176,9 +184,9 @@ evfilt_signal_copyout(struct filter *filt,
     port_event_dequeue(&pe, filt->kf_kqueue);
     s = (struct sentry *) pe.portev_user;
     sig = s - &sigtbl[0];
-    n = 0; //FIXME: Workaround
 #else
-    n = read(filt->kf_pfd, &sig, sizeof(sig));//FIXME:errhandling
+    kqops.eventfd_lower(sig_eventfd);
+    sig = 1; //XXX-FIXME totally broken, workaround just to compile
     s = &sigtbl[sig];
 #endif
 
@@ -192,6 +200,7 @@ evfilt_signal_copyout(struct filter *filt,
     dst->fflags = 0;
     dst->data = 1;  
 
+#if DEADWOOD
     if (kn->kev.flags & EV_DISPATCH) {
         ignore_signal(kn->kev.ident);
         KNOTE_DISABLE(kn);
@@ -199,6 +208,7 @@ evfilt_signal_copyout(struct filter *filt,
         ignore_signal(kn->kev.ident);
         knote_free(filt, kn);
     }
+#endif
 
     return (1);
 }

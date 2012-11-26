@@ -16,6 +16,35 @@
 
 #include "private.h"
 
+/* Android 4.0 does not have this header, but the kernel supports timerfds */
+#ifndef HAVE_SYS_TIMERFD_H
+
+#ifdef __ARM_ARCH_5__
+#define __NR_timerfd_create             (__NR_SYSCALL_BASE+350)
+#define __NR_timerfd_settime            (__NR_SYSCALL_BASE+353)
+#define __NR_timerfd_gettime            (__NR_SYSCALL_BASE+354)
+#else
+#error Unsupported architecture, need to get the syscall numbers
+#endif
+
+int timerfd_create(int clockid, int flags)
+{
+  return syscall(__NR_timerfd_create, clockid, flags);
+}
+
+int timerfd_settime(int ufc, int flags, const struct itimerspec *utmr,
+                    struct itimerspec *otmr)
+{
+  return syscall(__NR_timerfd_settime, ufc, flags, utmr, otmr);
+}
+
+int timerfd_gettime(int ufc, struct itimerspec *otmr)
+{
+  return syscall(__NR_timerfd_gettime, ufc, otmr);
+}
+
+#endif
+
 #ifndef NDEBUG
 static char *
 itimerspec_dump(struct itimerspec *ts)
