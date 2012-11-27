@@ -129,26 +129,44 @@ end
 
 project.add(kq)
 
-project.add(
- Test.new(
-    :id => 'kqtest', 
-    :cflags => '-g -O0 -Wall -Werror -Iinclude',
-    :ldadd => "-lpthread -lrt",
-    :sources => %w{
-        test/main.c 
-        test/kevent.c
-        test/test.c
-        test/proc.c
-        test/read.c
-        test/signal.c
-        test/timer.c
-        test/vnode.c
-        test/user.c
-        },
-    :ldadd => %w{libkqueue.a -lpthread -lrt}
+if Platform.is_windows?
+  project.add(
+   Test.new(
+      :id => 'kqtest', 
+      :cflags => '-g -O0 -Wall -Werror -Iinclude',
+      :sources => %w{
+          test/main.c 
+          test/kevent.c
+          test/test.c
+          test/read.c
+          test/timer.c
+          test/vnode.c
+          test/user.c
+          },            # NOTE: signal.c and proc.c are removed
+      :ldadd => %w{libkqueue.lib ws2_32.lib}
+      )
     )
-  )
-
+else
+  project.add(
+   Test.new(
+      :id => 'kqtest', 
+      :cflags => '-g -O0 -Wall -Werror -Iinclude',
+      :ldadd => "-lpthread -lrt",
+      :sources => %w{
+          test/main.c 
+          test/kevent.c
+          test/test.c
+          test/proc.c
+          test/read.c
+          test/signal.c
+          test/timer.c
+          test/vnode.c
+          test/user.c
+          },
+      :ldadd => %w{libkqueue.a -lpthread -lrt}
+      )
+    )
+end
 
 mc = Makeconf.new()
 mc.configure(project)

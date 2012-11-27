@@ -192,13 +192,23 @@ test_harness(struct unit_test tests[], int iterations, int concurrency)
             ctx->iterations = iterations;
             ctx->concurrency = concurrency;
 
+#ifdef _WIN32
+            /* TODO: run in a separate thread */
+            run_iteration(ctx);
+            rv = 0;
+#else
             rv = pthread_create(&tid[j], NULL, (void * (*)(void *)) run_iteration, ctx);
+#endif
             if (rv != 0)
                 err(1, "pthread_create");
         }
+#ifdef _WIN32
+        // TODO: join threads
+#else
         for (j = 0; j < concurrency; j++) {
             pthread_join(tid[j], NULL);
         }
+#endif
     }
     testing_end();
 
@@ -255,6 +265,8 @@ main(int argc, char **argv)
         err(1, "WSAStartup failed");
 #endif
 
+/* Windows does not provide a POSIX-compatible getopt */
+#ifndef _WIN32
     iterations = 1;
     concurrency = 1;
     while ((c = getopt (argc, argv, "hc:n:")) != -1) {
@@ -296,6 +308,7 @@ main(int argc, char **argv)
             printf("enabled test: %s\n", arg);
         }
     }
+#endif
 
     test_harness(tests, iterations, concurrency);
 
