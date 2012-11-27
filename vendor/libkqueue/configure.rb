@@ -15,7 +15,12 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
+begin
 require 'makeconf'
+rescue LoadError
+  $LOAD_PATH << "makeconf"
+  require 'makeconf'
+end
 
 # Determine the list of compiler flags
 def get_cflags
