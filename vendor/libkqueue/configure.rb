@@ -73,6 +73,13 @@ def get_source_list(project)
     src.push 'src/linux/timer.c'
   end
 
+  if Platform.is_windows?
+    src.push 'src/windows/timer.c',
+             'src/windows/platform.c',
+             'src/windows/read.c',
+             'src/windows/user.c'
+  end
+
   src
 end
 
