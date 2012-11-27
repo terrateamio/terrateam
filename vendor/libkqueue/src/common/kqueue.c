@@ -115,9 +115,11 @@ kqueue(void)
 	struct kqueue *kq;
     struct kqueue *tmp;
 
+#ifndef _WIN32
     (void) pthread_mutex_lock(&kq_mtx);
     (void) pthread_once(&kq_is_initialized, libkqueue_init);
     (void) pthread_mutex_unlock(&kq_mtx);
+#endif
 
     kq = calloc(1, sizeof(*kq));
     if (kq == NULL)
