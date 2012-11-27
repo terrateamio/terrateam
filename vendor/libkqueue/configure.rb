@@ -95,6 +95,10 @@ def get_ldadd
     ldadd += ' -lrt'
   end
 
+  if Platform.is_windows?
+    ldadd += ' ws2_32.lib'
+  end
+
   ldadd
 end
 

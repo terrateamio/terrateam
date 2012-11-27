@@ -56,7 +56,8 @@ get_fd_limit(void)
 
 static struct map *kqmap;
 
-static void
+
+void
 libkqueue_init(void)
 {
 #ifdef NDEBUG
