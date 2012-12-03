@@ -24,7 +24,7 @@ end
 
 # Determine the list of compiler flags
 def get_cflags
-  cflags='-I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600'.split(/ /) 
+  cflags='-I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600'.split(/ /) 
 
   if Platform.is_linux?
     # TODO - note this as a GCC 4.X dependency
@@ -133,7 +133,7 @@ if Platform.is_windows?
   project.add(
    Test.new(
       :id => 'kqtest', 
-      :cflags => '-g -O0 -Wall -Werror -Iinclude',
+      :cflags => '-g -O0 -Wall -Werror -Iinclude -Itest',
       :sources => %w{
           test/main.c 
           test/kevent.c
@@ -150,8 +150,7 @@ else
   project.add(
    Test.new(
       :id => 'kqtest', 
-      :cflags => '-g -O0 -Wall -Werror -Iinclude',
-      :ldadd => "-lpthread -lrt",
+      :cflags => '-g -O0 -Wall -Werror -I./include -I./test',
       :sources => %w{
           test/main.c 
           test/kevent.c
@@ -163,7 +162,7 @@ else
           test/vnode.c
           test/user.c
           },
-      :ldadd => %w{libkqueue.a -lpthread -lrt}
+      :ldadd => %w{-lpthread -lrt -lkqueue}
       )
     )
 end
