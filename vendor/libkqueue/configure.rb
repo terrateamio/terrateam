@@ -129,6 +129,12 @@ end
 
 project.add(kq)
 
+test_ldadd = get_ldadd()
+if SystemType.host =~ /-androideabi$/
+  test_ldadd += ' libkqueue.a'
+else
+  test_ldadd += ' -lkqueue'
+end
 if Platform.is_windows?
   project.add(
    Test.new(
@@ -143,7 +149,7 @@ if Platform.is_windows?
           test/vnode.c
           test/user.c
           },            # NOTE: signal.c and proc.c are removed
-      :ldadd => %w{libkqueue.lib ws2_32.lib}
+      :ldadd => test_ldadd.split(' ')
       )
     )
 else
@@ -162,7 +168,7 @@ else
           test/vnode.c
           test/user.c
           },
-      :ldadd => %w{-lpthread -lrt -lkqueue}
+      :ldadd => test_ldadd.split(' ')
       )
     )
 end
