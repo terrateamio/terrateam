@@ -129,6 +129,12 @@ end
 
 project.add(kq)
 
+project.add(Header.new(
+            :id => 'event.h',
+            :sources => 'include/sys/event.h',
+            :namespace => 'kqueue/sys',
+            ))
+
 test_ldadd = get_ldadd()
 if SystemType.host =~ /-androideabi$/
   test_ldadd += ' libkqueue.a'
