@@ -123,22 +123,24 @@ linux_kevent_wait(
     /* Use pselect() if the timeout value is less than one millisecond.  */
     if (ts != NULL && ts->tv_sec == 0 && ts->tv_nsec < 1000000) {
         nret = linux_kevent_wait_hires(kq, ts);
+        if (nret <= 0)
+            return (nret);
 
-    /* Otherwise, use epoll_wait() directly */
+        /* pselect() told us epoll_wait() should have ready events */
+        timeout = 0;
     } else {
-
         /* Convert timeout to the format used by epoll_wait() */
         if (ts == NULL) 
             timeout = -1;
         else
             timeout = (1000 * ts->tv_sec) + (ts->tv_nsec / 1000000);
+    }
 
-        dbg_puts("waiting for events");
-        nret = epoll_wait(kqueue_epfd(kq), &epevt[0], nevents, timeout);
-        if (nret < 0) {
-            dbg_perror("epoll_wait");
-            return (-1);
-        }
+    dbg_puts("waiting for events");
+    nret = epoll_wait(kqueue_epfd(kq), &epevt[0], nevents, timeout);
+    if (nret < 0) {
+        dbg_perror("epoll_wait");
+        return (-1);
     }
 
     return (nret);
@@ -292,8 +294,7 @@ linux_get_descriptor_type(struct knote *kn)
         dbg_perror("fstat(2)");
         return (-1);
     }
-    if (! S_ISSOCK(sb.st_mode)) {
-        //FIXME: could be a pipe, device file, or other non-regular file
+    if (S_ISREG(sb.st_mode)) {
         kn->kn_flags |= KNFL_REGULAR_FILE;
         dbg_printf("fd %d is a regular file\n", (int)kn->kev.ident);
         return (0);
@@ -302,6 +303,9 @@ linux_get_descriptor_type(struct knote *kn)
     /*
      * Test if the socket is active or passive.
      */
+    if (! S_ISSOCK(sb.st_mode))
+        return (0);
+
     slen = sizeof(lsock);
     lsock = 0;
     i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_ACCEPTCONN, (char *) &lsock, &slen);
