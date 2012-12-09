@@ -1,6 +1,15 @@
 HEAD
 ------------------------------------------------------------------------
 
+  * Avoid calling getsockopt() on file descriptors that are not sockets.
+    (Credit: Eric Wong)
+
+  * Call epoll_wait after linux_kevent_wait_hires()
+    (Credit: Eric Wong)
+
+  * Detect regular files correctly 
+    (Credit: Eric Wong)
+
   * Ensure that calling close() on a file descriptor will remove any 
     kevents that reference the descriptor. [merged from ^/branches/stable@551]
 
