@@ -1,41 +1,33 @@
-===== 1.3.5 (unreleased) =====
+1.3.5 (unreleased):
 
-===== 1.3.4 (2012-11-08) =====
-
+1.3.4 (2012-11-08):
 * Always encode `+` in URLs to be more compatible with form encoding.
 
-===== 1.3.3 (2012-10-14) =====
-
+1.3.3 (2012-10-14):
 * Add singleton variants of query functions that accept a string->string
   instead of a string list of values, for convenience.
 
-===== 1.3.2 (2012-09-20) =====
-
-* Fix parsing of unreserved characters in hostnames (e.g. foo-bar.com).
+1.3.2 (2012-09-20):
+* Fix parsing of unreserved characters in hostnames (e.g. `foo-bar.com`).
 * Add unit tests for the Uri_services module.
 * Various URI parsing bugs and test cases for better RFC3986 compliance.
-* Fix port_of_uri to detect port overrides in a URI before doing a lookup.
+* Fix `port_of_uri` to detect port overrides in a URI before doing a lookup.
 
-===== 1.3.1 (2012-09-12) =====
-
-* Make the Uri_services_full library optional, as it takes a loooong time
+1.3.1 (2012-09-12):
+* Make the `Uri_services_full` library optional, as it takes a loooong time
   to compile. It will return as a UNIX binding to getservent(2) also.
 
-===== 1.3.0 (2012-08-24) =====
+1.3.0 (2012-08-24):
+* Add `Uri_services` to lookup IANA the common well-known ports and services
+* Add `Uri_services_full` with a complete database of the IANA database.
 
-* Add Uri_services to lookup IANA the common well-known ports and services
-* Add Uri_services_full with a complete database of the IANA database.
+1.2 (2012-08-21):
+* Add `Uri.path_and_query` to retrieve a path/query combination string.
+* Add `Uri.host_with_default` to retrieve a hostname string.
 
-===== 1.2 (2012-08-21)-=====
-
-* Add Uri.path_and_query to retrieve a path/query combination string.
-* Add Uri.host_with_default to retrieve a hostname string.
-
-===== 1.1 (2012-08-02) =====
-
+1.1 (2012-08-02):
 * Fix query parsing order.
 * Improve safe character handling across URI components.
 
-===== 1.0 (2012-08-01) =====
-
+1.0 (2012-08-01):
 * Initial public release.
