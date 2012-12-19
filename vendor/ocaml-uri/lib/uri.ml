@@ -480,6 +480,7 @@ let add_query_param uri p = { uri with query=p::uri.query }
 let add_query_param' uri (k,v) = { uri with query=(k,[v])::uri.query }
 let add_query_params uri ps = { uri with query=ps@uri.query }
 let add_query_params' uri ps = { uri with query=(q_s ps)@uri.query }
+let remove_query_param uri k = { uri with query=(List.filter (fun (k',_) -> k<>k') uri.query) }
 
 (* Construct the path and query fragment portion *)
 let path_and_query uri =

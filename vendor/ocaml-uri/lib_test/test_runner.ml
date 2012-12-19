@@ -272,6 +272,20 @@ let test_tcp_port_of_uri =
     in uri >:: test
   ) tcp_port_of_uri
 
+let query_key_add_remove =
+  let test () =
+  let uri = Uri.of_string "http://foo.com/?k1=1&k2=2" in
+  let printer x = Uri.(to_string (with_query uri x)) in
+  assert_equal ~printer (Uri.query uri) [("k1",["1"]);("k2",["2"])];
+  let uri = Uri.add_query_param uri ("k3",["3"]) in
+  assert_equal ~printer (Uri.query uri) [("k3",["3"]);("k1",["1"]);("k2",["2"])];
+  let uri = Uri.remove_query_param uri "k1" in
+  assert_equal ~printer (Uri.query uri) [("k3",["3"]);("k2",["2"])];
+  let uri = Uri.remove_query_param uri "k2" in
+  let uri = Uri.remove_query_param uri "k3" in
+  assert_equal ~printer (Uri.query uri) []
+  in ["query_key_add_remove" >:: test]
+  
 (* Returns true if the result list contains successes only.
    Copied from oUnit source as it isnt exposed by the mli *)
 let rec was_successful =
@@ -286,7 +300,7 @@ let rec was_successful =
         false
 
 let _ =
-  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_uri_decode @ test_query_decode @ test_query_encode @ test_rel_res @ test_file_rel_res @ test_generic_uri_norm @ test_rel_id @ test_tcp_port_of_uri) in
+  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_uri_decode @ test_query_decode @ test_query_encode @ test_rel_res @ test_file_rel_res @ test_generic_uri_norm @ test_rel_id @ test_tcp_port_of_uri @ query_key_add_remove) in
   let verbose = ref false in
   let set_verbose _ = verbose := true in
   Arg.parse

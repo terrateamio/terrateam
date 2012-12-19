@@ -84,6 +84,12 @@ val add_query_params : t -> (string * string list) list -> t
   *)
 val add_query_params' : t -> (string * string) list -> t
 
+(** Remove a query key from the input query URI.
+    Input URI is not modified, and no error is generated if the
+    key does not already exist in the URI.
+  *)
+val remove_query_param : t -> string -> t
+    
 val make : ?scheme:string -> ?userinfo:string -> ?host:string ->
   ?port:int -> ?path:string -> ?query:(string * string list) list -> 
   ?fragment:string -> unit -> t
