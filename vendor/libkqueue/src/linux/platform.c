@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+# define _GNU_SOURCE
+# include <poll.h>
 #include "../common/private.h"
 
 //XXX-FIXME TEMP
@@ -90,25 +92,37 @@ linux_kevent_wait_hires(
         struct kqueue *kq, 
         const struct timespec *timeout)
 {
-    fd_set fds;
     int n;
-    int epfd;
+#if HAVE_DECL_PPOLL
+    struct pollfd fds;
 
     dbg_printf("waiting for events (timeout=%ld sec %ld nsec)",
             timeout->tv_sec, timeout->tv_nsec);
+    fds.fd = kqueue_epfd(kq);
+    fds.events = POLLIN;
+
+    n = ppoll(&fds, 1, timeout, NULL);
+#else
+    int epfd;
+    fd_set fds;
+
+    dbg_printf("waiting for events (timeout=%ld sec %ld nsec)",
+            timeout->tv_sec, timeout->tv_nsec);
+
     epfd = kqueue_epfd(kq);
     FD_ZERO(&fds);
     FD_SET(epfd, &fds);
     n = pselect(epfd + 1, &fds, NULL , NULL, timeout, NULL);
+#endif
+
     if (n < 0) {
         if (errno == EINTR) {
             dbg_puts("signal caught");
             return (-1);
         }
-        dbg_perror("pselect(2)");
+        dbg_perror("ppoll(2) or pselect(2)");
         return (-1);
     }
-
     return (n);
 }
 
@@ -120,13 +134,13 @@ linux_kevent_wait(
 {
     int timeout, nret;
 
-    /* Use pselect() if the timeout value is less than one millisecond.  */
+    /* Use a high-resolution syscall if the timeout value is less than one millisecond.  */
     if (ts != NULL && ts->tv_sec == 0 && ts->tv_nsec > 0 && ts->tv_nsec < 1000000) {
         nret = linux_kevent_wait_hires(kq, ts);
         if (nret <= 0)
             return (nret);
 
-        /* pselect() told us epoll_wait() should have ready events */
+        /* epoll_wait() should have ready events */
         timeout = 0;
     } else {
         /* Convert timeout to the format used by epoll_wait() */
