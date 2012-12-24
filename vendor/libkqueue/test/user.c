@@ -62,7 +62,7 @@ test_kevent_user_get_hires(struct test_context *ctx)
     kev.fflags &= ~NOTE_FFCTRLMASK;
     kev.fflags &= ~NOTE_TRIGGER;
     kev.flags = EV_CLEAR;
-    kevent_get(&ret, ctx->kqfd); //FIXME: Shouldn't this be kevent_get_hires() ?
+    kevent_get_hires(&ret, ctx->kqfd);
     kevent_cmp(&kev, &ret);
 
     test_no_kevents(ctx->kqfd);
