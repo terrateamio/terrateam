@@ -121,7 +121,7 @@ linux_kevent_wait(
     int timeout, nret;
 
     /* Use pselect() if the timeout value is less than one millisecond.  */
-    if (ts != NULL && ts->tv_sec == 0 && ts->tv_nsec < 1000000) {
+    if (ts != NULL && ts->tv_sec == 0 && ts->tv_nsec > 0 && ts->tv_nsec < 1000000) {
         nret = linux_kevent_wait_hires(kq, ts);
         if (nret <= 0)
             return (nret);
