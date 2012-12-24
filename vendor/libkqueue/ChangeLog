@@ -1,6 +1,9 @@
 HEAD
 ------------------------------------------------------------------------
 
+  * Use ppoll(2) where possible to improve scalability.
+    (Credit: Eric Wong)
+
   * Optimize kevent() when it is called with a zero timeout.
     (Credit: Eric Wong)
 
