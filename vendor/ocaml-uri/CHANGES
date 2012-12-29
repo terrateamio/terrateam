@@ -1,3 +1,7 @@
+1.3.6 (trunk):
+* Add `with_host`, `with_port`, `with_fragment` and `with_host`, to modify
+  the respective fields of an input URI.
+
 1.3.5 (2012-12-19):
 * Fix percent encoding of characters from 0x0 to 0xf.
 * Add `Uri.remove_query_param` function to remove keys from query sets.

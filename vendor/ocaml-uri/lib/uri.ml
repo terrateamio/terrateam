@@ -464,6 +464,10 @@ let get_decoded_opt = function None -> None |Some x -> Some (Pct.uncast_decoded 
 let scheme uri = get_decoded_opt uri.scheme
 let userinfo uri = get_decoded_opt uri.userinfo
 let host uri = get_decoded_opt uri.host
+let with_host uri =
+  function
+  |Some host -> { uri with host=Some (Pct.cast_decoded host) }
+  |None -> { uri with host=None }
 
 let host_with_default ?(default="localhost") uri =
   match host uri with
@@ -471,7 +475,14 @@ let host_with_default ?(default="localhost") uri =
   |Some h -> h
 
 let port uri = uri.port
+let with_port uri port = { uri with port=port }
+
 let fragment uri = get_decoded_opt uri.fragment
+let with_fragment uri =
+  function
+  |None -> { uri with fragment=None }
+  |Some frag -> { uri with fragment=Some (Pct.cast_decoded frag) }
+
 let query uri = uri.query
 let with_query uri query = { uri with query=query }
 let q_s q = List.map (fun (k,v) -> k,[v]) q

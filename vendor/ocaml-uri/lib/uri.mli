@@ -113,6 +113,10 @@ val userinfo : t -> string option
 (** Get the host component of a URI *)
 val host : t -> string option
 
+(** Replace the host component of the URI.
+    Input URI is not modified. *)
+val with_host: t -> string option -> t
+
 (** Get the host component of a URI, with a default
   * supplied if one is not present *)
 val host_with_default: ?default:string -> t -> string
@@ -120,6 +124,13 @@ val host_with_default: ?default:string -> t -> string
 (** Get the port component of a URI *)
 val port : t -> int option
 
+(** Replace the port component of the URI with the supplied port.
+    Input URI is not modified *)
+val with_port : t -> int option -> t
+
 (** Get the fragment component of a URI *)
 val fragment : t -> string option
 
+(** Replace the fragment component of a URI with the supplied fragment.
+    Input URI is not modified *)
+val with_fragment : t -> string option -> t
