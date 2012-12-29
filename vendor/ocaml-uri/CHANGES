@@ -1,4 +1,4 @@
-1.3.6 (trunk):
+1.3.6 (2012-12-29):
 * Add `with_host`, `with_port`, `with_fragment` and `with_host`, to modify
   the respective fields of an input URI.
 
