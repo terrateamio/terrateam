@@ -118,6 +118,7 @@ kq = Library.new(
     )
                 
 
+project.check_header 'sys/event.h'
 if Platform.is_linux?                
   project.check_decl 'EPOLLRDHUP', :include => 'sys/epoll.h'
   project.check_decl 'ppoll', :cflags => '#define _GNU_SOURCE', :include => 'poll.h'
