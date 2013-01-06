@@ -52,7 +52,6 @@
 #else
 # include "../include/sys/event.h"
 # include "../src/windows/platform.h"
-# define HAVE_EVFILT_USER 1
 #endif
 
 struct test_context;
@@ -87,7 +86,7 @@ void test_evfilt_vnode(struct test_context *);
 void test_evfilt_timer(struct test_context *);
 void test_evfilt_timer_concurrent(struct test_context *);
 void test_evfilt_proc(struct test_context *);
-#if HAVE_EVFILT_USER
+#ifdef EVFILT_USER
 void test_evfilt_user(struct test_context *);
 #endif
 

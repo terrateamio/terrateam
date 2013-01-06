@@ -196,7 +196,7 @@ test_kevent_vnode_disable_and_enable(struct test_context *ctx)
                 test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
 }
 
-#if HAVE_EV_DISPATCH
+#ifdef EV_DISPATCH
 void
 test_kevent_vnode_dispatch(struct test_context *ctx)
 {
@@ -235,7 +235,7 @@ test_kevent_vnode_dispatch(struct test_context *ctx)
     /* Delete the watch */
     kevent_add(ctx->kqfd, &kev, ctx->vnode_fd, EVFILT_VNODE, EV_DELETE, NOTE_ATTRIB, 0, NULL);
 }
-#endif 	/* HAVE_EV_DISPATCH */
+#endif 	/* EV_DISPATCH */
 
 void
 test_evfilt_vnode(struct test_context *ctx)
@@ -259,7 +259,7 @@ test_evfilt_vnode(struct test_context *ctx)
     test(kevent_vnode_add, ctx);
     test(kevent_vnode_del, ctx);
     test(kevent_vnode_disable_and_enable, ctx);
-#if HAVE_EV_DISPATCH
+#ifdef EV_DISPATCH
     test(kevent_vnode_dispatch, ctx);
 #endif
     test(kevent_vnode_note_write, ctx);
