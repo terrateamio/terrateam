@@ -125,10 +125,10 @@ kevent_flags_dump(struct kevent *kev)
     KEVFL_DUMP(EV_CLEAR);
     KEVFL_DUMP(EV_EOF);
     KEVFL_DUMP(EV_ERROR);
-#if HAVE_EV_DISPATCH
+#ifdef EV_DISPATCH
     KEVFL_DUMP(EV_DISPATCH);
 #endif
-#if HAVE_EV_RECEIPT
+#ifdef EV_RECEIPT
     KEVFL_DUMP(EV_RECEIPT);
 #endif
     buf[strlen(buf) - 1] = ')';

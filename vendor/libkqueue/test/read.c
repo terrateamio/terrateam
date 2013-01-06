@@ -289,7 +289,7 @@ test_kevent_socket_listen_backlog(struct test_context *ctx)
     test_no_kevents(ctx->kqfd);
 }
 
-#if HAVE_EV_DISPATCH
+#ifdef EV_DISPATCH
 void
 test_kevent_socket_dispatch(struct test_context *ctx)
 {
@@ -321,7 +321,7 @@ test_kevent_socket_dispatch(struct test_context *ctx)
 
     kevent_socket_drain(ctx);
 }
-#endif  /* HAVE_EV_DISPATCH */
+#endif  /* EV_DISPATCH */
 
 #if BROKEN_ON_LINUX
 void
@@ -431,7 +431,7 @@ test_evfilt_read(struct test_context *ctx)
     test(kevent_socket_disable_and_enable, ctx);
     test(kevent_socket_oneshot, ctx);
     test(kevent_socket_clear, ctx);
-#if HAVE_EV_DISPATCH
+#ifdef EV_DISPATCH
     test(kevent_socket_dispatch, ctx);
 #endif
     test(kevent_socket_listen_backlog, ctx);

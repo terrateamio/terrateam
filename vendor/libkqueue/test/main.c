@@ -117,7 +117,7 @@ test_ev_receipt(void *unused)
 
     if ((kq = kqueue()) < 0)
         die("kqueue()");
-#if HAVE_EV_RECEIPT
+#ifdef EV_RECEIPT
 
     EV_SET(&kev, SIGUSR2, EVFILT_SIGNAL, EV_ADD | EV_RECEIPT, 0, 0, NULL);
     if (kevent(kq, &kev, 1, &kev, 1, NULL) < 0)
@@ -244,7 +244,7 @@ main(int argc, char **argv)
 #ifndef _WIN32
 		{ "vnode", 1, 0, test_evfilt_vnode },
 #endif
-#if HAVE_EVFILT_USER
+#ifdef EVFILT_USER
         { "user", 1, 0, test_evfilt_user },
 #endif
         { NULL, 0, 0, NULL },

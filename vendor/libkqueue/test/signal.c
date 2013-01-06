@@ -134,7 +134,7 @@ test_kevent_signal_modify(struct test_context *ctx)
     test_kevent_signal_del(ctx);
 }
 
-#if HAVE_EV_DISPATCH
+#ifdef EV_DISPATCH
 void
 test_kevent_signal_dispatch(struct test_context *ctx)
 {
@@ -174,7 +174,7 @@ test_kevent_signal_dispatch(struct test_context *ctx)
         die("kill");
     test_no_kevents(ctx->kqfd);
 }
-#endif  /* HAVE_EV_DISPATCH */
+#endif  /* EV_DISPATCH */
 
 void
 test_evfilt_signal(struct test_context *ctx)
@@ -188,7 +188,7 @@ test_evfilt_signal(struct test_context *ctx)
     test(kevent_signal_enable, ctx);
     test(kevent_signal_oneshot, ctx);
     test(kevent_signal_modify, ctx);
-#if HAVE_EV_DISPATCH
+#ifdef EV_DISPATCH
     test(kevent_signal_dispatch, ctx);
 #endif
 }

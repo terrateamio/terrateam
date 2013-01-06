@@ -113,7 +113,7 @@ test_kevent_user_oneshot(struct test_context *ctx)
     test_no_kevents(ctx->kqfd);
 }
 
-#if HAVE_EV_DISPATCH
+#ifdef EV_DISPATCH
 void
 test_kevent_user_dispatch(struct test_context *ctx)
 {
@@ -153,7 +153,7 @@ test_kevent_user_dispatch(struct test_context *ctx)
     kevent_add(ctx->kqfd, &kev, 1, EVFILT_USER, EV_DELETE, 0, 0, NULL);
     test_no_kevents(ctx->kqfd);
 }
-#endif 	/* HAVE_EV_DISPATCH */
+#endif 	/* EV_DISPATCH */
 
 void
 test_evfilt_user(struct test_context *ctx)
@@ -163,7 +163,7 @@ test_evfilt_user(struct test_context *ctx)
     test(kevent_user_get_hires, ctx);
     test(kevent_user_disable_and_enable, ctx);
     test(kevent_user_oneshot, ctx);
-#if HAVE_EV_DISPATCH
+#ifdef EV_DISPATCH
     test(kevent_user_dispatch, ctx);
 #endif
     /* TODO: try different fflags operations */

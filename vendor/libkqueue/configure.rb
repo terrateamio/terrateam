@@ -120,7 +120,7 @@ kq = Library.new(
 
 if Platform.is_linux?                
   project.check_decl 'EPOLLRDHUP', :include => 'sys/epoll.h'
-  project.check_decl 'ppoll', :cflags => '#define _GNU_SOURCE', :include => '<poll.h>'
+  project.check_decl 'ppoll', :cflags => '#define _GNU_SOURCE', :include => 'poll.h'
 
 
   project.check_header('sys/epoll.h') or throw 'epoll is required'
@@ -178,16 +178,6 @@ else
       :ldadd => test_ldadd.split(' ')
       )
     )
-end
-
-if project.check_header 'sys/event.h'
-  # TODO: test for non-standard kqueue things like EV_RECEIPT
-  #       This will allow running the testsuite against the native
-else
-  # Assume libkqueue
-  project.define 'HAVE_EVFILT_USER'
-  project.define 'HAVE_EV_RECEIPT'
-  project.define 'HAVE_EV_DISPATCH'
 end
 
 mc = Makeconf.new()
