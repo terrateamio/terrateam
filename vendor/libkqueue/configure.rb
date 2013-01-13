@@ -137,6 +137,8 @@ project.add(Header.new(
             :namespace => 'kqueue/sys',
             ))
 
+project.add(Manual.new('kqueue.2', :alias => 'kevent.2'))
+
 test_ldadd = get_ldadd()
 if SystemType.host =~ /-androideabi$/
   test_ldadd += ' libkqueue.a'

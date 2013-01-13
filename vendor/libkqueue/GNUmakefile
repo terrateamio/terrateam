@@ -132,7 +132,7 @@ distdir:
 	umask 22 ; mkdir -p '$(distdir)/test'
 	umask 22 ; mkdir -p '$(distdir)/test/..'
 	cp -RL src/common/filter.c src/common/private.h src/common/tree.h src/common/debug.h src/common/knote.c src/common/alloc.h src/common/map.c src/common/kevent.c src/common/kqueue.c $(distdir)/src/common
-	cp -RL config.h GNUmakefile configure configure.rb $(distdir)
+	cp -RL config.h GNUmakefile kqueue.2 configure configure.rb $(distdir)
 	cp -RL src/common/../posix/platform.h $(distdir)/src/common/../posix
 	cp -RL src/common/../posix/../../include/sys/event.h $(distdir)/src/common/../posix/../../include/sys
 	cp -RL src/common/../linux/platform.h $(distdir)/src/common/../linux
@@ -155,8 +155,11 @@ install:
 	$(INSTALL) -m 0644 libkqueue.so $(DESTDIR)$(LIBDIR)/libkqueue.so.0.0
 	/usr/bin/test -e $(DESTDIR)$(INCLUDEDIR)/kqueue/sys || $(INSTALL) -d -m 755 $(DESTDIR)$(INCLUDEDIR)/kqueue/sys
 	$(INSTALL) -m 644 include/sys/event.h $(DESTDIR)$(INCLUDEDIR)/kqueue/sys
+	/usr/bin/test -e $(DESTDIR)$(MANDIR)/man2 || $(INSTALL) -d -m 755 $(DESTDIR)$(MANDIR)/man2
+	$(INSTALL) -m 644 kqueue.2 $(DESTDIR)$(MANDIR)/man2
 	rm -f $(DESTDIR)$(LIBDIR)/libkqueue.so
 	ln -s libkqueue.so.0.0 $(DESTDIR)$(LIBDIR)/libkqueue.so
+	ln -s kqueue.2 $(DESTDIR)$(MANDIR)/man2/kevent.2
 
 kqtest: test/main.o test/kevent.o test/test.o test/proc.o test/read.o test/signal.o test/timer.o test/vnode.o test/user.o
 	$(LD)  -o kqtest -L . -Wl,-rpath,. -L . $(LDFLAGS) test/main.o test/kevent.o test/test.o test/proc.o test/read.o test/signal.o test/timer.o test/vnode.o test/user.o -lpthread -lrt -lkqueue $(LDADD)
@@ -259,3 +262,4 @@ test/vnode.o: test/vnode.c test/common.h include/sys/event.h test/../config.h GN
 uninstall: 
 	rm -f $(DESTDIR)$(LIBDIR)/libkqueue.so
 	rm -f $(DESTDIR)$(INCLUDEDIR)/kqueue/sys/include/sys/event.h
+	rm -f $(DESTDIR)$(MANDIR)/man2/kqueue.2
