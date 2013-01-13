@@ -155,6 +155,8 @@ install:
 	$(INSTALL) -m 0644 libkqueue.so $(DESTDIR)$(LIBDIR)/libkqueue.so.0.0
 	/usr/bin/test -e $(DESTDIR)$(INCLUDEDIR)/kqueue/sys || $(INSTALL) -d -m 755 $(DESTDIR)$(INCLUDEDIR)/kqueue/sys
 	$(INSTALL) -m 644 include/sys/event.h $(DESTDIR)$(INCLUDEDIR)/kqueue/sys
+	rm -f $(DESTDIR)$(LIBDIR)/libkqueue.so
+	ln -s libkqueue.so.0.0 $(DESTDIR)$(LIBDIR)/libkqueue.so
 
 kqtest: test/main.o test/kevent.o test/test.o test/proc.o test/read.o test/signal.o test/timer.o test/vnode.o test/user.o
 	$(LD)  -o kqtest -L . -Wl,-rpath,. -L . $(LDFLAGS) test/main.o test/kevent.o test/test.o test/proc.o test/read.o test/signal.o test/timer.o test/vnode.o test/user.o -lpthread -lrt -lkqueue $(LDADD)
