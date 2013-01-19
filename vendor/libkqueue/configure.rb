@@ -183,6 +183,16 @@ else
     )
 end
 
+
+project.add(PkgConfig.new(
+        :name => 'libkqueue',
+        :description => 'Emulates FreeBSD kqueue(2) on other platforms',
+        :requires => '',
+        :libs => '-lkqueue',
+        :libs_private => '-lpthread',
+        :export_cflags => '-I${includedir}/kqueue',
+        ))
+
 mc = Makeconf.new()
 mc.configure(project)
 

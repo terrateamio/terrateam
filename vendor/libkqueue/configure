@@ -33,6 +33,7 @@ Installation options:
         --localstatedir [DIRECTORY]  TODO describe this [$(PREFIX)/var]
         --mandir [DIRECTORY]         TODO describe this [$(DATAROOTDIR)/man]
         --oldincludedir [DIRECTORY]  TODO describe this [/usr/include]
+        --pkgconfigdir [DIRECTORY]   where to install pkg-config files [$(LIBDIR)/pkgconfig]
         --pkgdatadir [DIRECTORY]     TODO describe this [$(DATADIR)/$(PACKAGE)]
         --pkgincludedir [DIRECTORY]  TODO describe this [$(INCLUDEDIR)/$(PACKAGE)]
         --pkglibdir [DIRECTORY]      TODO describe this [$(LIBDIR)/$(PACKAGE)]
@@ -75,7 +76,7 @@ do
        usage
        exit 1
        ;;
-     bindir|datadir|datarootdir|docdir|includedir|infodir|libdir|libexecdir|localedir|localstatedir|mandir|pkgdatadir|pkgincludedir|pkglibdir|prefix|sbindir|sharedstatedir|sysconfdir)
+     bindir|datadir|datarootdir|docdir|includedir|infodir|libdir|libexecdir|localedir|localstatedir|mandir|pkgconfigdir|pkgdatadir|pkgincludedir|pkglibdir|prefix|sbindir|sharedstatedir|sysconfdir)
        echo "$uc_key=$val" >> config.mk
        ;;
      exec-prefix)
