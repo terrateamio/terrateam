@@ -15,6 +15,7 @@ LOCALEDIR = $(DATAROOTDIR)/locale
 LOCALSTATEDIR = $(PREFIX)/var
 MANDIR = $(DATAROOTDIR)/man
 OLDINCLUDEDIR = /usr/include
+PKGCONFIGDIR = $(LIBDIR)/pkgconfig
 PKGDATADIR = $(DATADIR)/$(PACKAGE)
 PKGINCLUDEDIR = $(INCLUDEDIR)/$(PACKAGE)
 PKGLIBDIR = $(LIBDIR)/$(PACKAGE)
@@ -45,7 +46,7 @@ HOST_TYPE=$(HOST_CPU)-$(HOST_VENDOR)-$(HOST_KERNEL)-$(HOST_SYSTEM)
 
 default: all
 
-all:  libkqueue.so libkqueue.a kqtest
+all:  libkqueue.so libkqueue.a kqtest libkqueue.pc
 
 check:  kqtest
 	./kqtest
@@ -132,7 +133,7 @@ distdir:
 	umask 22 ; mkdir -p '$(distdir)/test'
 	umask 22 ; mkdir -p '$(distdir)/test/..'
 	cp -RL src/common/filter.c src/common/private.h src/common/tree.h src/common/debug.h src/common/knote.c src/common/alloc.h src/common/map.c src/common/kevent.c src/common/kqueue.c $(distdir)/src/common
-	cp -RL config.h GNUmakefile kqueue.2 configure configure.rb $(distdir)
+	cp -RL config.h GNUmakefile kqueue.2 libkqueue.pc.in configure configure.rb $(distdir)
 	cp -RL src/common/../posix/platform.h $(distdir)/src/common/../posix
 	cp -RL src/common/../posix/../../include/sys/event.h $(distdir)/src/common/../posix/../../include/sys
 	cp -RL src/common/../linux/platform.h $(distdir)/src/common/../linux
@@ -157,6 +158,8 @@ install:
 	$(INSTALL) -m 644 include/sys/event.h $(DESTDIR)$(INCLUDEDIR)/kqueue/sys
 	/usr/bin/test -e $(DESTDIR)$(MANDIR)/man2 || $(INSTALL) -d -m 755 $(DESTDIR)$(MANDIR)/man2
 	$(INSTALL) -m 644 kqueue.2 $(DESTDIR)$(MANDIR)/man2
+	/usr/bin/test -e $(DESTDIR)$(PKGCONFIGDIR) || $(INSTALL) -d -m 755 $(DESTDIR)$(PKGCONFIGDIR)
+	$(INSTALL) -m 644 libkqueue.pc $(DESTDIR)$(PKGCONFIGDIR)
 	rm -f $(DESTDIR)$(LIBDIR)/libkqueue.so
 	ln -s libkqueue.so.0.0 $(DESTDIR)$(LIBDIR)/libkqueue.so
 	ln -s kqueue.2 $(DESTDIR)$(MANDIR)/man2/kevent.2
@@ -178,6 +181,11 @@ ifneq ($(DISABLE_STATIC),1)
 	ar cru libkqueue.a src/common/filter.o src/common/knote.o src/common/map.o src/common/kevent.o src/common/kqueue.o src/posix/platform.o src/linux/platform.o src/linux/read.o src/linux/write.o src/linux/user.o src/linux/vnode.o src/linux/signal.o src/linux/timer.o
 	ranlib libkqueue.a
 endif
+
+libkqueue.pc: config.h
+	@echo 'creating libkqueue.pc'
+	@printf "prefix=$(PREFIX)\nexec_prefix=$(EPREFIX)\nlibdir=$(LIBDIR)\nincludedir=$(INCLUDEDIR)\n" > libkqueue.pc
+	@cat libkqueue.pc.in >> libkqueue.pc
 
 libkqueue.so: src/common/filter.o src/common/knote.o src/common/map.o src/common/kevent.o src/common/kqueue.o src/posix/platform.o src/linux/platform.o src/linux/read.o src/linux/write.o src/linux/user.o src/linux/vnode.o src/linux/signal.o src/linux/timer.o
 	$(LD)  -o libkqueue.so -shared -fPIC -L . $(LDFLAGS) src/common/filter.o src/common/knote.o src/common/map.o src/common/kevent.o src/common/kqueue.o src/posix/platform.o src/linux/platform.o src/linux/read.o src/linux/write.o src/linux/user.o src/linux/vnode.o src/linux/signal.o src/linux/timer.o -lpthread -lrt $(LDADD)
@@ -263,3 +271,4 @@ uninstall:
 	rm -f $(DESTDIR)$(LIBDIR)/libkqueue.so
 	rm -f $(DESTDIR)$(INCLUDEDIR)/kqueue/sys/include/sys/event.h
 	rm -f $(DESTDIR)$(MANDIR)/man2/kqueue.2
+	rm -f $(DESTDIR)$(PKGCONFIGDIR)/libkqueue.pc
