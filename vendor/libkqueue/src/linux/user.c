@@ -29,6 +29,8 @@
 #include "sys/event.h"
 #include "private.h"
 
+#if HAVE_SYS_EVENTFD_H
+
 /* NOTE: copy+pasted from linux_eventfd_raise() */
 static int
 eventfd_raise(int evfd)
@@ -90,7 +92,7 @@ eventfd_lower(int evfd)
 }
 
 int
-evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
+linux_evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
 {
     memcpy(dst, &src->kev, sizeof(*dst));
     dst->fflags &= ~NOTE_FFCTRLMASK;     //FIXME: Not sure if needed
@@ -114,7 +116,7 @@ evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
 }
 
 int
-evfilt_user_knote_create(struct filter *filt, struct knote *kn)
+linux_evfilt_user_knote_create(struct filter *filt, struct knote *kn)
 {
     struct epoll_event ev;
     int evfd;
@@ -145,7 +147,7 @@ errout:
 }
 
 int
-evfilt_user_knote_modify(struct filter *filt UNUSED, struct knote *kn, 
+linux_evfilt_user_knote_modify(struct filter *filt UNUSED, struct knote *kn, 
         const struct kevent *kev)
 {
     unsigned int ffctrl;
@@ -185,7 +187,7 @@ evfilt_user_knote_modify(struct filter *filt UNUSED, struct knote *kn,
 }
 
 int
-evfilt_user_knote_delete(struct filter *filt, struct knote *kn)
+linux_evfilt_user_knote_delete(struct filter *filt, struct knote *kn)
 {
     if (epoll_ctl(filter_epfd(filt), EPOLL_CTL_DEL, 
                 kn->kdata.kn_eventfd, NULL) < 0) {
@@ -203,27 +205,17 @@ evfilt_user_knote_delete(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_user_knote_enable(struct filter *filt, struct knote *kn)
+linux_evfilt_user_knote_enable(struct filter *filt, struct knote *kn)
 {
     /* FIXME: what happens if NOTE_TRIGGER is in fflags?
        should the event fire? */
-    return evfilt_user_knote_create(filt, kn);
+    return linux_evfilt_user_knote_create(filt, kn);
 }
 
 int
-evfilt_user_knote_disable(struct filter *filt, struct knote *kn)
+linux_evfilt_user_knote_disable(struct filter *filt, struct knote *kn)
 {
-    return evfilt_user_knote_delete(filt, kn);
+    return linux_evfilt_user_knote_delete(filt, kn);
 }
 
-const struct filter evfilt_user = {
-    EVFILT_USER,
-    NULL,
-    NULL,
-    evfilt_user_copyout,
-    evfilt_user_knote_create,
-    evfilt_user_knote_modify,
-    evfilt_user_knote_delete,
-    evfilt_user_knote_enable,
-    evfilt_user_knote_disable,   
-};
+#endif /* HAVE_SYS_EVENTFD_H */

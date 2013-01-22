@@ -21,6 +21,27 @@
 //XXX-FIXME TEMP
 const struct filter evfilt_proc = EVFILT_NOTIMPL;
 
+const struct filter evfilt_user = {
+    EVFILT_USER,
+    NULL,
+    NULL,
+#if HAVE_SYS_EVENTFD_H
+    linux_evfilt_user_copyout,
+    linux_evfilt_user_knote_create,
+    linux_evfilt_user_knote_modify,
+    linux_evfilt_user_knote_delete,
+    linux_evfilt_user_knote_enable,
+    linux_evfilt_user_knote_disable,   
+#else
+    posix_evfilt_user_copyout,
+    posix_evfilt_user_knote_create,
+    posix_evfilt_user_knote_modify,
+    posix_evfilt_user_knote_delete,
+    posix_evfilt_user_knote_enable,
+    posix_evfilt_user_knote_disable,   
+#endif
+};
+
 /*
  * Per-thread epoll event buffer used to ferry data between
  * kevent_wait() and kevent_copyout().

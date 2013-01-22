@@ -30,7 +30,7 @@
 #include "private.h"
 
 int
-evfilt_user_init(struct filter *filt)
+posix_evfilt_user_init(struct filter *filt)
 {
     if (kqops.eventfd_init(&filt->kf_efd) < 0)
         return (-1);
@@ -41,56 +41,40 @@ evfilt_user_init(struct filter *filt)
 }
 
 void
-evfilt_user_destroy(struct filter *filt)
+posix_evfilt_user_destroy(struct filter *filt)
 {
     kqops.eventfd_close(&filt->kf_efd);
     return;
 }
 
 int
-evfilt_user_copyout(struct filter *filt, 
-            struct kevent *dst, 
-            int maxevents)
+posix_evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
 {
+    memcpy(dst, &src->kev, sizeof(*dst));
     struct knote *kn;
     int nevents = 0;
   
-    for (kn = knote_dequeue(filt); kn != NULL; kn = knote_dequeue(filt)) {
-        memcpy(dst, &kn->kev, sizeof(*dst));
-        dst->fflags &= ~NOTE_FFCTRLMASK;     //FIXME: Not sure if needed
-        dst->fflags &= ~NOTE_TRIGGER;
-        if (kn->kev.flags & EV_ADD) {
-            /* NOTE: True on FreeBSD but not consistent behavior with
-                      other filters. */
-            dst->flags &= ~EV_ADD;
-        }
-        if (kn->kev.flags & EV_CLEAR)
-            kn->kev.fflags &= ~NOTE_TRIGGER;
-        if (kn->kev.flags & (EV_DISPATCH | EV_CLEAR | EV_ONESHOT))
-            kqops.eventfd_lower(&filt->kf_efd);
-        if (kn->kev.flags & EV_DISPATCH) {
-            KNOTE_DISABLE(kn);
-            kn->kev.fflags &= ~NOTE_TRIGGER;
-        } else if (kn->kev.flags & EV_ONESHOT) {
-            knote_free(filt, kn);
-        }
-
-        dst++;
-        if (++nevents == maxevents)
-            break;
+    dst->fflags &= ~NOTE_FFCTRLMASK;     //FIXME: Not sure if needed
+    dst->fflags &= ~NOTE_TRIGGER;
+    if (src->kev.flags & EV_ADD) {
+        /* NOTE: True on FreeBSD but not consistent behavior with
+                  other filters. */
+        dst->flags &= ~EV_ADD;
+    }
+    if (src->kev.flags & EV_CLEAR)
+        src->kev.fflags &= ~NOTE_TRIGGER;
+    if (src->kev.flags & (EV_DISPATCH | EV_CLEAR | EV_ONESHOT)) {
+        kqops.eventfd_raise(&src->kdata.kn_eventfd);
     }
 
-    /* This should normally never happen but is here for debugging */
-    if (nevents == 0) {
-        dbg_puts("spurious wakeup");
-        kqops.eventfd_lower(&filt->kf_efd);
-    }
+    if (src->kev.flags & EV_DISPATCH) 
+        src->kev.fflags &= ~NOTE_TRIGGER;
 
-    return (nevents);
+    return (0);
 }
 
 int
-evfilt_user_knote_create(struct filter *filt, struct knote *kn)
+posix_evfilt_user_knote_create(struct filter *filt, struct knote *kn)
 {
 #if TODO
     u_int ffctrl;
@@ -106,7 +90,7 @@ evfilt_user_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_user_knote_modify(struct filter *filt, struct knote *kn, 
+posix_evfilt_user_knote_modify(struct filter *filt, struct knote *kn, 
         const struct kevent *kev)
 {
     unsigned int ffctrl;
@@ -146,13 +130,13 @@ evfilt_user_knote_modify(struct filter *filt, struct knote *kn,
 }
 
 int
-evfilt_user_knote_delete(struct filter *filt, struct knote *kn)
+posix_evfilt_user_knote_delete(struct filter *filt, struct knote *kn)
 {
     return (0);
 }
 
 int
-evfilt_user_knote_enable(struct filter *filt, struct knote *kn)
+posix_evfilt_user_knote_enable(struct filter *filt, struct knote *kn)
 {
     /* FIXME: what happens if NOTE_TRIGGER is in fflags?
        should the event fire? */
@@ -160,10 +144,12 @@ evfilt_user_knote_enable(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_user_knote_disable(struct filter *filt, struct knote *kn)
+posix_evfilt_user_knote_disable(struct filter *filt, struct knote *kn)
 {
     return (0);
 }
+
+/* FIXME: this conflicts with the struct in linux/platform.c
 
 const struct filter evfilt_user = {
     EVFILT_USER,
@@ -176,3 +162,5 @@ const struct filter evfilt_user = {
     evfilt_user_knote_enable,
     evfilt_user_knote_disable,   
 };
+
+*/
