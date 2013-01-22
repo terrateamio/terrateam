@@ -28,12 +28,12 @@ int timerfd_create(int clockid, int flags)
 int timerfd_settime(int ufc, int flags, const struct itimerspec *utmr,
                     struct itimerspec *otmr)
 {
-  return syscall(SYS_timerfd_settime, ufc, flags, utmr, otmr);
+  return syscall(SYS_timerfd_create + 1, ufc, flags, utmr, otmr);
 }
 
 int timerfd_gettime(int ufc, struct itimerspec *otmr)
 {
-  return syscall(SYS_timerfd_gettime, ufc, otmr);
+  return syscall(SYS_timerfd_create + 2, ufc, otmr);
 }
 
 #endif
