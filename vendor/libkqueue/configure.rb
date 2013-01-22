@@ -64,6 +64,9 @@ def get_source_list(project)
              'src/linux/user.c',
              'src/linux/vnode.c'
 
+    # FIXME: needed for RHEL5
+    #src.push 'src/posix/user.c'
+
     if project.check_header('sys/signalfd.h')
         src.push 'src/linux/signal.c'
     else
