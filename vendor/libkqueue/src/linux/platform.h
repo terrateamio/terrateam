@@ -22,7 +22,9 @@ struct filter;
 #include <sys/epoll.h>
 #include <sys/queue.h>
 #include <sys/inotify.h>
-#include <sys/eventfd.h>
+#if HAVE_SYS_EVENTFD_H
+# include <sys/eventfd.h>
+#endif
 #if HAVE_SYS_TIMERFD_H
 # include <sys/timerfd.h>
 #endif
