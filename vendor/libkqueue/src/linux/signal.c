@@ -19,7 +19,28 @@
 #if HAVE_SYS_SIGNALFD_H
 # include <sys/signalfd.h>
 #else
-# error signalfd is required
+#define signalfd(a,b,c) syscall(SYS_signalfd, (a), (b), (c))
+#define SFD_NONBLOCK 04000
+struct signalfd_siginfo
+{
+  uint32_t ssi_signo;
+  int32_t ssi_errno;
+  int32_t ssi_code;
+  uint32_t ssi_pid;
+  uint32_t ssi_uid;
+  int32_t ssi_fd;
+  uint32_t ssi_tid;
+  uint32_t ssi_band;
+  uint32_t ssi_overrun;
+  uint32_t ssi_trapno;
+  int32_t ssi_status;
+  int32_t ssi_int;
+  uint64_t ssi_ptr;
+  uint64_t ssi_utime;
+  uint64_t ssi_stime;
+  uint64_t ssi_addr;
+  uint8_t __pad[48];
+};
 #endif
 
 static void
@@ -69,6 +90,7 @@ signalfd_create(int epfd, void *ptr, int signum)
     sigemptyset(&sigmask);
     sigaddset(&sigmask, signum);
     sigfd = signalfd(-1, &sigmask, flags);
+
     /* WORKAROUND: Flags are broken on kernels older than Linux 2.6.27 */
     if (sigfd < 0 && errno == EINVAL && flags != 0) {
         flags = 0;
