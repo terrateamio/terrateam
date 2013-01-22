@@ -19,6 +19,7 @@
 
 struct filter;
 
+#include <syscall.h>
 #include <sys/epoll.h>
 #include <sys/queue.h>
 #include <sys/inotify.h>

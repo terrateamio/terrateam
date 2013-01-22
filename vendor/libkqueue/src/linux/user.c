@@ -29,8 +29,6 @@
 #include "sys/event.h"
 #include "private.h"
 
-#if HAVE_SYS_EVENTFD_H
-
 /* NOTE: copy+pasted from linux_eventfd_raise() */
 static int
 eventfd_raise(int evfd)
@@ -122,7 +120,12 @@ linux_evfilt_user_knote_create(struct filter *filt, struct knote *kn)
     int evfd;
 
     /* Create an eventfd */
-    if ((evfd = eventfd(0, 0)) < 0) {
+#if HAVE_SYS_EVENTFD_H
+    evfd = eventfd(0, 0);
+#else
+    evfd = syscall(SYS_eventfd, 0, 0);
+#endif
+    if (evfd < 0) {
         dbg_perror("eventfd");
         goto errout;
     }
@@ -218,4 +221,14 @@ linux_evfilt_user_knote_disable(struct filter *filt, struct knote *kn)
     return linux_evfilt_user_knote_delete(filt, kn);
 }
 
-#endif /* HAVE_SYS_EVENTFD_H */
+const struct filter evfilt_user = {
+    EVFILT_USER,
+    NULL,
+    NULL,
+    linux_evfilt_user_copyout,
+    linux_evfilt_user_knote_create,
+    linux_evfilt_user_knote_modify,
+    linux_evfilt_user_knote_delete,
+    linux_evfilt_user_knote_enable,
+    linux_evfilt_user_knote_disable,   
+};
