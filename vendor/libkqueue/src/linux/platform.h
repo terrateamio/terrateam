@@ -25,6 +25,16 @@ struct filter;
 #include <sys/inotify.h>
 #if HAVE_SYS_EVENTFD_H
 # include <sys/eventfd.h>
+#else
+# include <syscall.h>
+# define eventfd(a,b) syscall(SYS_eventfd, (a), (b))
+
+  static inline int eventfd_write(int fd, uint64_t val) {
+      if (write(fd, &val, sizeof(val)) < (ssize_t) sizeof(val))
+          return (-1);
+      else
+          return (0);
+  }
 #endif
 #if HAVE_SYS_TIMERFD_H
 # include <sys/timerfd.h>

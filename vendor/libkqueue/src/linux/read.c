@@ -165,7 +165,6 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
         int evfd;
 
         kn->kn_epollfd = filter_epfd(filt);
-#if HAVE_SYS_EVENTFD_H
         evfd = eventfd(0, 0);
         if (evfd < 0) {
             dbg_perror("eventfd(2)");
@@ -176,13 +175,7 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
             (void) close(evfd);
             return (-1);
         }
-#else
-        evfd = open("/dev/zero", O_RDONLY);
-        if (evfd < 0) {
-            dbg_perror("eventfd(2)");
-            return (-1);
-        }
-#endif
+
         kn->kdata.kn_eventfd = evfd;
 
         if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_ADD, kn->kdata.kn_eventfd, &ev) < 0) {

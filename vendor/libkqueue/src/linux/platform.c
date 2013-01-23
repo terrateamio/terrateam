@@ -34,19 +34,11 @@ const struct kqueue_vtable kqops = {
 	linux_kevent_copyout,
 	NULL,
 	NULL,
-#if HAVE_SYS_EVENTFD_H
     linux_eventfd_init,
     linux_eventfd_close,
     linux_eventfd_raise,
     linux_eventfd_lower,
     linux_eventfd_descriptor
-#else
-    posix_eventfd_init,
-    posix_eventfd_close,
-    posix_eventfd_raise,
-    posix_eventfd_lower,
-    posix_eventfd_descriptor
-#endif
 };
 
 int
@@ -212,13 +204,13 @@ linux_kevent_copyout(struct kqueue *kq, int nready,
     return (nret);
 }
 
-#if HAVE_SYS_EVENTFD_H
 int
 linux_eventfd_init(struct eventfd *e)
 {
     int evfd;
 
-    if ((evfd = eventfd(0, 0)) < 0) {
+    evfd = syscall(SYS_eventfd, 0, 0);
+    if (evfd < 0) {
         dbg_perror("eventfd");
         return (-1);
     }
@@ -302,7 +294,6 @@ linux_eventfd_descriptor(struct eventfd *e)
 {
     return (e->ef_id);
 }
-#endif /* HAVE_SYS_EVENTFD_H */
 
 int
 linux_get_descriptor_type(struct knote *kn)
