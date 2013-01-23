@@ -120,11 +120,7 @@ linux_evfilt_user_knote_create(struct filter *filt, struct knote *kn)
     int evfd;
 
     /* Create an eventfd */
-#if HAVE_SYS_EVENTFD_H
     evfd = eventfd(0, 0);
-#else
-    evfd = syscall(SYS_eventfd, 0, 0);
-#endif
     if (evfd < 0) {
         dbg_perror("eventfd");
         goto errout;
