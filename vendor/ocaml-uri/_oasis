@@ -32,6 +32,15 @@ Library services_full
   Modules:    Uri_services_full
   BuildDepends: uri
 
+Library uri_top
+  Path:               top
+  FindlibName:        top
+  FindlibParent:      uri
+  Modules:            Install_printers
+  BuildDepends:       compiler-libs.toplevel
+  XMETARequires:      uri
+  XMETADescription:   Toplevel printers for URIs
+
 Document uri
   Title:                URI docs
   Type:                 ocamlbuild (0.2)

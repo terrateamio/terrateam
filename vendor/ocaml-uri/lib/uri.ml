@@ -547,3 +547,5 @@ let resolve schem base uri =
       then {uri with path=remove_dot_segments uri.path}
       else {uri with path=remove_dot_segments (merge base (path uri))}
   end
+
+let pp_hum ppf uri = Format.fprintf ppf "%s" (to_string uri)

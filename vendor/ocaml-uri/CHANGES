@@ -1,3 +1,7 @@
+1.3.7 (2013-01-23):
+* Add a top-level printer for `Uri.t` that converts it to a string instead
+  of just displaying an `<abstract>` type.
+
 1.3.6 (2012-12-29):
 * Add `with_host`, `with_port`, `with_fragment` and `with_host`, to modify
   the respective fields of an input URI.

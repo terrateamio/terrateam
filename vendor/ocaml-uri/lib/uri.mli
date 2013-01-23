@@ -134,3 +134,5 @@ val fragment : t -> string option
 (** Replace the fragment component of a URI with the supplied fragment.
     Input URI is not modified *)
 val with_fragment : t -> string option -> t
+
+val pp_hum : Format.formatter -> t -> unit
