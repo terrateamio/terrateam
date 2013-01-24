@@ -209,7 +209,7 @@ linux_eventfd_init(struct eventfd *e)
 {
     int evfd;
 
-    evfd = syscall(SYS_eventfd, 0, 0);
+    evfd = eventfd(0, 0);
     if (evfd < 0) {
         dbg_perror("eventfd");
         return (-1);
