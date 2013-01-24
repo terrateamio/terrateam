@@ -92,6 +92,7 @@ do
        # TODO: we should split this up, and override the other Makeconf
        # variables like *_VENDOR, *_ARCH, *_CPU, *_KERNEL, *_SYSTEM 
        echo "$uc_key=$val" >> config.mk
+       eval "${key}_system_type=\"$val\""
        ;;
      disable-option-checking)
         # Not implemented, this behavior is the default (for now)
@@ -107,7 +108,7 @@ do
 done
 
 printf "checking for a C compiler... "
-for cmd in cc gcc gcc4 clang
+for cmd in ${host_system_type}-cc cc gcc gcc4 clang
 do
     $cmd --version >/dev/null 2>&1
     if [ $? -eq 0 ] ; then cc="$cmd" ; break ; fi

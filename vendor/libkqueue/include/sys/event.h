@@ -36,7 +36,7 @@
 #define intptr_t long
 #else
 #include <sys/types.h> 
-#if defined(_WIN32) && _MSC_VER < 1600
+#if defined(_WIN32) && _MSC_VER < 1600 && !defined(__MINGW32__)
 # include "../../src/windows/stdint.h"
 #else
 # include <stdint.h>
