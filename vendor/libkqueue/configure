@@ -124,6 +124,34 @@ else
     err "Please install a compiler and add it to your PATH"
 fi
 
+printf "checking for ar.. "
+for ar in ${host_system_type}-ar ar gar
+do
+    $ar --version >/dev/null 2>&1
+    if [ $? -eq 0 ] ; then ar="$ar" ; break ; fi
+done
+if [ -n "$ar" ] ; then
+  echo "$ar"
+  echo "AR=$ar" >> config.mk
+else
+    echo "not found"
+    err "Please install an archiver and add it to your PATH"
+fi
+
+printf "checking for ranlib.. "
+for ranlib in ${host_system_type}-ranlib ranlib
+do
+    $ar --version >/dev/null 2>&1
+    if [ $? -eq 0 ] ; then ranlib="$ranlib" ; break ; fi
+done
+if [ -n "$ranlib" ] ; then
+  echo "$ranlib"
+  echo "RANLIB=$ranlib" >> config.mk
+else
+    echo "not found"
+    err "Please install ranlib and add it to your PATH"
+fi
+
 printf "checking for a usable make command... "
 for cmd in make gmake
 do

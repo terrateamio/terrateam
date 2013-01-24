@@ -46,17 +46,10 @@
 /*
  * Atomic integer operations 
  */
-#ifdef __GNUC__
-# define atomic_inc(p)   __sync_add_and_fetch((p), 1)
-# define atomic_dec(p)   __sync_sub_and_fetch((p), 1)
-# define atomic_cas(p, v0, v1) __sync_val_compare_and_swap((p), (v0), (v1))
-# define atomic_ptr_cas(p, v0, v1) __sync_val_compare_and_swap((p), (v0), (v1))
-#else
-# define atomic_inc   InterlockedIncrement
-# define atomic_dec   InterlockedDecrement
-# define atomic_cas(p, oval, nval) InterlockedCompareExchange(p, nval, oval)
-# define atomic_ptr_cas(p, oval, nval) InterlockedCompareExchangePointer(p, nval, oval)
-#endif
+#define atomic_inc   InterlockedIncrement
+#define atomic_dec   InterlockedDecrement
+#define atomic_cas(p, oval, nval) InterlockedCompareExchange(p, nval, oval)
+#define atomic_ptr_cas(p, oval, nval) InterlockedCompareExchangePointer(p, nval, oval)
 
 /*
  * Additional members of struct kqueue
