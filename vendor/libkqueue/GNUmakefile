@@ -59,22 +59,16 @@ clean:
 	rm -f src/common/map.o
 	rm -f src/common/kevent.o
 	rm -f src/common/kqueue.o
-	rm -f src/posix/platform.o
-	rm -f src/linux/platform.o
-	rm -f src/linux/read.o
-	rm -f src/linux/write.o
-	rm -f src/linux/user.o
-	rm -f src/linux/vnode.o
-	rm -f src/linux/signal.o
-	rm -f src/linux/timer.o
+	rm -f src/windows/timer.o
+	rm -f src/windows/platform.o
+	rm -f src/windows/read.o
+	rm -f src/windows/user.o
 	rm -f libkqueue.so
 	rm -f libkqueue.a
 	rm -f test/main.o
 	rm -f test/kevent.o
 	rm -f test/test.o
-	rm -f test/proc.o
 	rm -f test/read.o
-	rm -f test/signal.o
 	rm -f test/timer.o
 	rm -f test/vnode.o
 	rm -f test/user.o
@@ -119,16 +113,11 @@ distdir:
 	umask 22 ; mkdir -p '$(distdir)/src/common/../posix'
 	umask 22 ; mkdir -p '$(distdir)/src/common/../posix/../../include/sys'
 	umask 22 ; mkdir -p '$(distdir)/src/common/../linux'
-	umask 22 ; mkdir -p '$(distdir)/src/posix'
-	umask 22 ; mkdir -p '$(distdir)/src/posix/../common'
-	umask 22 ; mkdir -p '$(distdir)/src/posix/../common/../posix'
-	umask 22 ; mkdir -p '$(distdir)/src/posix/../common/../posix/../../include/sys'
-	umask 22 ; mkdir -p '$(distdir)/src/posix/../common/../linux'
-	umask 22 ; mkdir -p '$(distdir)/src/linux'
-	umask 22 ; mkdir -p '$(distdir)/src/linux/../common'
-	umask 22 ; mkdir -p '$(distdir)/src/linux/../common/../posix'
-	umask 22 ; mkdir -p '$(distdir)/src/linux/../common/../posix/../../include/sys'
-	umask 22 ; mkdir -p '$(distdir)/src/linux/../common/../linux'
+	umask 22 ; mkdir -p '$(distdir)/src/windows'
+	umask 22 ; mkdir -p '$(distdir)/src/windows/../common'
+	umask 22 ; mkdir -p '$(distdir)/src/windows/../common/../posix'
+	umask 22 ; mkdir -p '$(distdir)/src/windows/../common/../posix/../../include/sys'
+	umask 22 ; mkdir -p '$(distdir)/src/windows/../common/../linux'
 	umask 22 ; mkdir -p '$(distdir)/include/sys'
 	umask 22 ; mkdir -p '$(distdir)/test'
 	umask 22 ; mkdir -p '$(distdir)/test/..'
@@ -137,18 +126,13 @@ distdir:
 	cp -RL src/common/../posix/platform.h $(distdir)/src/common/../posix
 	cp -RL src/common/../posix/../../include/sys/event.h $(distdir)/src/common/../posix/../../include/sys
 	cp -RL src/common/../linux/platform.h $(distdir)/src/common/../linux
-	cp -RL src/posix/platform.c $(distdir)/src/posix
-	cp -RL src/posix/../common/private.h src/posix/../common/tree.h src/posix/../common/debug.h $(distdir)/src/posix/../common
-	cp -RL src/posix/../common/../posix/platform.h $(distdir)/src/posix/../common/../posix
-	cp -RL src/posix/../common/../posix/../../include/sys/event.h $(distdir)/src/posix/../common/../posix/../../include/sys
-	cp -RL src/posix/../common/../linux/platform.h $(distdir)/src/posix/../common/../linux
-	cp -RL src/linux/platform.c src/linux/read.c src/linux/write.c src/linux/user.c src/linux/vnode.c src/linux/signal.c src/linux/timer.c $(distdir)/src/linux
-	cp -RL src/linux/../common/private.h src/linux/../common/tree.h src/linux/../common/debug.h $(distdir)/src/linux/../common
-	cp -RL src/linux/../common/../posix/platform.h $(distdir)/src/linux/../common/../posix
-	cp -RL src/linux/../common/../posix/../../include/sys/event.h $(distdir)/src/linux/../common/../posix/../../include/sys
-	cp -RL src/linux/../common/../linux/platform.h $(distdir)/src/linux/../common/../linux
+	cp -RL src/windows/timer.c src/windows/platform.c src/windows/read.c src/windows/user.c $(distdir)/src/windows
+	cp -RL src/windows/../common/private.h src/windows/../common/tree.h src/windows/../common/debug.h $(distdir)/src/windows/../common
+	cp -RL src/windows/../common/../posix/platform.h $(distdir)/src/windows/../common/../posix
+	cp -RL src/windows/../common/../posix/../../include/sys/event.h $(distdir)/src/windows/../common/../posix/../../include/sys
+	cp -RL src/windows/../common/../linux/platform.h $(distdir)/src/windows/../common/../linux
 	cp -RL include/sys/event.h $(distdir)/include/sys
-	cp -RL test/main.c test/common.h test/kevent.c test/test.c test/proc.c test/read.c test/signal.c test/timer.c test/vnode.c test/user.c $(distdir)/test
+	cp -RL test/main.c test/common.h test/kevent.c test/test.c test/read.c test/timer.c test/vnode.c test/user.c $(distdir)/test
 	cp -RL test/../config.h $(distdir)/test/..
 
 install: 
@@ -166,8 +150,8 @@ install:
 	ln -s libkqueue.so.0.0 $(DESTDIR)$(LIBDIR)/libkqueue.so.0
 	ln -s kqueue.2 $(DESTDIR)$(MANDIR)/man2/kevent.2
 
-kqtest: test/main.o test/kevent.o test/test.o test/proc.o test/read.o test/signal.o test/timer.o test/vnode.o test/user.o
-	$(LD)  -o kqtest -L . -Wl,-rpath,. -L . $(LDFLAGS) test/main.o test/kevent.o test/test.o test/proc.o test/read.o test/signal.o test/timer.o test/vnode.o test/user.o -lpthread -lrt -lkqueue $(LDADD)
+kqtest: test/main.o test/kevent.o test/test.o test/read.o test/timer.o test/vnode.o test/user.o
+	$(LD)  -o kqtest -L . -Wl,-rpath,. -L . $(LDFLAGS) test/main.o test/kevent.o test/test.o test/read.o test/timer.o test/vnode.o test/user.o -march=i686 -lws2_32 -lkqueue $(LDADD)
 
 libkqueue-2.0.tar.gz: 
 	rm -rf libkqueue-2.0
@@ -178,10 +162,10 @@ libkqueue-2.0.tar.gz:
 	gzip libkqueue-2.0.tar
 	rm -rf libkqueue-2.0
 
-libkqueue.a: src/common/filter.o src/common/knote.o src/common/map.o src/common/kevent.o src/common/kqueue.o src/posix/platform.o src/linux/platform.o src/linux/read.o src/linux/write.o src/linux/user.o src/linux/vnode.o src/linux/signal.o src/linux/timer.o
+libkqueue.a: src/common/filter.o src/common/knote.o src/common/map.o src/common/kevent.o src/common/kqueue.o src/windows/timer.o src/windows/platform.o src/windows/read.o src/windows/user.o
 ifneq ($(DISABLE_STATIC),1)
-	ar cru libkqueue.a src/common/filter.o src/common/knote.o src/common/map.o src/common/kevent.o src/common/kqueue.o src/posix/platform.o src/linux/platform.o src/linux/read.o src/linux/write.o src/linux/user.o src/linux/vnode.o src/linux/signal.o src/linux/timer.o
-	ranlib libkqueue.a
+	$(AR) cru libkqueue.a src/common/filter.o src/common/knote.o src/common/map.o src/common/kevent.o src/common/kqueue.o src/windows/timer.o src/windows/platform.o src/windows/read.o src/windows/user.o
+	$(RANLIB) libkqueue.a
 endif
 
 libkqueue.pc: config.h
@@ -189,8 +173,8 @@ libkqueue.pc: config.h
 	@printf "prefix=$(PREFIX)\nexec_prefix=$(EPREFIX)\nlibdir=$(LIBDIR)\nincludedir=$(INCLUDEDIR)\n" > libkqueue.pc
 	@cat libkqueue.pc.in >> libkqueue.pc
 
-libkqueue.so: src/common/filter.o src/common/knote.o src/common/map.o src/common/kevent.o src/common/kqueue.o src/posix/platform.o src/linux/platform.o src/linux/read.o src/linux/write.o src/linux/user.o src/linux/vnode.o src/linux/signal.o src/linux/timer.o
-	$(LD)  -o libkqueue.so -shared -fPIC -L . -Wl,-soname,libkqueue.so.0 $(LDFLAGS) src/common/filter.o src/common/knote.o src/common/map.o src/common/kevent.o src/common/kqueue.o src/posix/platform.o src/linux/platform.o src/linux/read.o src/linux/write.o src/linux/user.o src/linux/vnode.o src/linux/signal.o src/linux/timer.o -lpthread -lrt $(LDADD)
+libkqueue.so: src/common/filter.o src/common/knote.o src/common/map.o src/common/kevent.o src/common/kqueue.o src/windows/timer.o src/windows/platform.o src/windows/read.o src/windows/user.o
+	$(LD)  -o libkqueue.so -shared -fPIC -L . -Wl,-soname,libkqueue.so.0 $(LDFLAGS) src/common/filter.o src/common/knote.o src/common/map.o src/common/kevent.o src/common/kqueue.o src/windows/timer.o src/windows/platform.o src/windows/read.o src/windows/user.o -march=i686 -lws2_32 $(LDADD)
 
 package: clean libkqueue-2.0.tar.gz
 	rm -rf rpm *.rpm
@@ -204,70 +188,52 @@ package: clean libkqueue-2.0.tar.gz
 	rm -rf rpm
 
 src/common/filter.o: src/common/filter.c src/common/private.h config.h src/common/tree.h src/common/../posix/platform.h src/common/../posix/../../include/sys/event.h src/common/../linux/platform.h src/common/debug.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600  -fvisibility=hidden -o src/common/filter.o -fPIC -DPIC $(CFLAGS) -c src/common/filter.c
+	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -g -O2 -std=c99 -D_XOPEN_SOURCE=600 -o src/common/filter.o -fPIC -DPIC $(CFLAGS) -c src/common/filter.c
 
 src/common/kevent.o: src/common/kevent.c src/common/private.h config.h src/common/tree.h src/common/../posix/platform.h src/common/../posix/../../include/sys/event.h src/common/../linux/platform.h src/common/debug.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600  -fvisibility=hidden -o src/common/kevent.o -fPIC -DPIC $(CFLAGS) -c src/common/kevent.c
+	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -g -O2 -std=c99 -D_XOPEN_SOURCE=600 -o src/common/kevent.o -fPIC -DPIC $(CFLAGS) -c src/common/kevent.c
 
 src/common/knote.o: src/common/knote.c src/common/private.h config.h src/common/tree.h src/common/../posix/platform.h src/common/../posix/../../include/sys/event.h src/common/../linux/platform.h src/common/debug.h src/common/alloc.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600  -fvisibility=hidden -o src/common/knote.o -fPIC -DPIC $(CFLAGS) -c src/common/knote.c
+	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -g -O2 -std=c99 -D_XOPEN_SOURCE=600 -o src/common/knote.o -fPIC -DPIC $(CFLAGS) -c src/common/knote.c
 
 src/common/kqueue.o: src/common/kqueue.c src/common/private.h config.h src/common/tree.h src/common/../posix/platform.h src/common/../posix/../../include/sys/event.h src/common/../linux/platform.h src/common/debug.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600  -fvisibility=hidden -o src/common/kqueue.o -fPIC -DPIC $(CFLAGS) -c src/common/kqueue.c
+	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -g -O2 -std=c99 -D_XOPEN_SOURCE=600 -o src/common/kqueue.o -fPIC -DPIC $(CFLAGS) -c src/common/kqueue.c
 
 src/common/map.o: src/common/map.c src/common/private.h config.h src/common/tree.h src/common/../posix/platform.h src/common/../posix/../../include/sys/event.h src/common/../linux/platform.h src/common/debug.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600  -fvisibility=hidden -o src/common/map.o -fPIC -DPIC $(CFLAGS) -c src/common/map.c
+	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -g -O2 -std=c99 -D_XOPEN_SOURCE=600 -o src/common/map.o -fPIC -DPIC $(CFLAGS) -c src/common/map.c
 
-src/linux/platform.o: src/linux/platform.c src/linux/../common/private.h config.h src/linux/../common/tree.h src/linux/../common/../posix/platform.h src/linux/../common/../posix/../../include/sys/event.h src/linux/../common/../linux/platform.h src/linux/../common/debug.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600  -fvisibility=hidden -o src/linux/platform.o -fPIC -DPIC $(CFLAGS) -c src/linux/platform.c
+src/windows/platform.o: src/windows/platform.c src/windows/../common/private.h config.h src/windows/../common/tree.h src/windows/../common/../posix/platform.h src/windows/../common/../posix/../../include/sys/event.h src/windows/../common/../linux/platform.h src/windows/../common/debug.h GNUmakefile
+	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -g -O2 -std=c99 -D_XOPEN_SOURCE=600 -o src/windows/platform.o -fPIC -DPIC $(CFLAGS) -c src/windows/platform.c
 
-src/linux/read.o: src/linux/read.c src/common/private.h config.h src/common/tree.h src/common/../posix/platform.h src/common/../posix/../../include/sys/event.h src/common/../linux/platform.h src/common/debug.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600  -fvisibility=hidden -o src/linux/read.o -fPIC -DPIC $(CFLAGS) -c src/linux/read.c
+src/windows/read.o: src/windows/read.c src/windows/../common/private.h config.h src/windows/../common/tree.h src/windows/../common/../posix/platform.h src/windows/../common/../posix/../../include/sys/event.h src/windows/../common/../linux/platform.h src/windows/../common/debug.h GNUmakefile
+	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -g -O2 -std=c99 -D_XOPEN_SOURCE=600 -o src/windows/read.o -fPIC -DPIC $(CFLAGS) -c src/windows/read.c
 
-src/linux/signal.o: src/linux/signal.c src/common/private.h config.h src/common/tree.h src/common/../posix/platform.h src/common/../posix/../../include/sys/event.h src/common/../linux/platform.h src/common/debug.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600  -fvisibility=hidden -o src/linux/signal.o -fPIC -DPIC $(CFLAGS) -c src/linux/signal.c
+src/windows/timer.o: src/windows/timer.c src/windows/../common/private.h config.h src/windows/../common/tree.h src/windows/../common/../posix/platform.h src/windows/../common/../posix/../../include/sys/event.h src/windows/../common/../linux/platform.h src/windows/../common/debug.h GNUmakefile
+	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -g -O2 -std=c99 -D_XOPEN_SOURCE=600 -o src/windows/timer.o -fPIC -DPIC $(CFLAGS) -c src/windows/timer.c
 
-src/linux/timer.o: src/linux/timer.c src/common/private.h config.h src/common/tree.h src/common/../posix/platform.h src/common/../posix/../../include/sys/event.h src/common/../linux/platform.h src/common/debug.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600  -fvisibility=hidden -o src/linux/timer.o -fPIC -DPIC $(CFLAGS) -c src/linux/timer.c
-
-src/linux/user.o: src/linux/user.c include/sys/event.h src/common/private.h config.h src/common/tree.h src/common/../posix/platform.h src/common/../posix/../../include/sys/event.h src/common/../linux/platform.h src/common/debug.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600  -fvisibility=hidden -o src/linux/user.o -fPIC -DPIC $(CFLAGS) -c src/linux/user.c
-
-src/linux/vnode.o: src/linux/vnode.c src/common/private.h config.h src/common/tree.h src/common/../posix/platform.h src/common/../posix/../../include/sys/event.h src/common/../linux/platform.h src/common/debug.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600  -fvisibility=hidden -o src/linux/vnode.o -fPIC -DPIC $(CFLAGS) -c src/linux/vnode.c
-
-src/linux/write.o: src/linux/write.c src/common/private.h config.h src/common/tree.h src/common/../posix/platform.h src/common/../posix/../../include/sys/event.h src/common/../linux/platform.h src/common/debug.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600  -fvisibility=hidden -o src/linux/write.o -fPIC -DPIC $(CFLAGS) -c src/linux/write.c
-
-src/posix/platform.o: src/posix/platform.c src/posix/../common/private.h config.h src/posix/../common/tree.h src/posix/../common/../posix/platform.h src/posix/../common/../posix/../../include/sys/event.h src/posix/../common/../linux/platform.h src/posix/../common/debug.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600  -fvisibility=hidden -o src/posix/platform.o -fPIC -DPIC $(CFLAGS) -c src/posix/platform.c
+src/windows/user.o: src/windows/user.c src/windows/../common/private.h config.h src/windows/../common/tree.h src/windows/../common/../posix/platform.h src/windows/../common/../posix/../../include/sys/event.h src/windows/../common/../linux/platform.h src/windows/../common/debug.h GNUmakefile
+	$(CC) -DHAVE_CONFIG_H -I. -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -g -O2 -std=c99 -D_XOPEN_SOURCE=600 -o src/windows/user.o -fPIC -DPIC $(CFLAGS) -c src/windows/user.c
 
 test/kevent.o: test/kevent.c test/common.h include/sys/event.h test/../config.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -g -O0 -Wall -Werror -I./include -I./test -g -O0 -o test/kevent.o $(CFLAGS) -c test/kevent.c
+	$(CC) -DHAVE_CONFIG_H -I. -g -O0 -Wall -Iinclude -Itest -g -O0 -o test/kevent.o $(CFLAGS) -c test/kevent.c
 
 test/main.o: test/main.c test/common.h include/sys/event.h test/../config.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -g -O0 -Wall -Werror -I./include -I./test -g -O0 -o test/main.o $(CFLAGS) -c test/main.c
-
-test/proc.o: test/proc.c test/common.h include/sys/event.h test/../config.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -g -O0 -Wall -Werror -I./include -I./test -g -O0 -o test/proc.o $(CFLAGS) -c test/proc.c
+	$(CC) -DHAVE_CONFIG_H -I. -g -O0 -Wall -Iinclude -Itest -g -O0 -o test/main.o $(CFLAGS) -c test/main.c
 
 test/read.o: test/read.c test/common.h include/sys/event.h test/../config.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -g -O0 -Wall -Werror -I./include -I./test -g -O0 -o test/read.o $(CFLAGS) -c test/read.c
-
-test/signal.o: test/signal.c test/common.h include/sys/event.h test/../config.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -g -O0 -Wall -Werror -I./include -I./test -g -O0 -o test/signal.o $(CFLAGS) -c test/signal.c
+	$(CC) -DHAVE_CONFIG_H -I. -g -O0 -Wall -Iinclude -Itest -g -O0 -o test/read.o $(CFLAGS) -c test/read.c
 
 test/test.o: test/test.c test/common.h include/sys/event.h test/../config.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -g -O0 -Wall -Werror -I./include -I./test -g -O0 -o test/test.o $(CFLAGS) -c test/test.c
+	$(CC) -DHAVE_CONFIG_H -I. -g -O0 -Wall -Iinclude -Itest -g -O0 -o test/test.o $(CFLAGS) -c test/test.c
 
 test/timer.o: test/timer.c test/common.h include/sys/event.h test/../config.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -g -O0 -Wall -Werror -I./include -I./test -g -O0 -o test/timer.o $(CFLAGS) -c test/timer.c
+	$(CC) -DHAVE_CONFIG_H -I. -g -O0 -Wall -Iinclude -Itest -g -O0 -o test/timer.o $(CFLAGS) -c test/timer.c
 
 test/user.o: test/user.c test/common.h include/sys/event.h test/../config.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -g -O0 -Wall -Werror -I./include -I./test -g -O0 -o test/user.o $(CFLAGS) -c test/user.c
+	$(CC) -DHAVE_CONFIG_H -I. -g -O0 -Wall -Iinclude -Itest -g -O0 -o test/user.o $(CFLAGS) -c test/user.c
 
 test/vnode.o: test/vnode.c test/common.h include/sys/event.h test/../config.h GNUmakefile
-	$(CC) -DHAVE_CONFIG_H -I. -g -O0 -Wall -Werror -I./include -I./test -g -O0 -o test/vnode.o $(CFLAGS) -c test/vnode.c
+	$(CC) -DHAVE_CONFIG_H -I. -g -O0 -Wall -Iinclude -Itest -g -O0 -o test/vnode.o $(CFLAGS) -c test/vnode.c
 
 uninstall: 
 	rm -f $(DESTDIR)$(LIBDIR)/libkqueue.so

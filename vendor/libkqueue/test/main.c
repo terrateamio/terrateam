@@ -117,7 +117,7 @@ test_ev_receipt(void *unused)
 
     if ((kq = kqueue()) < 0)
         die("kqueue()");
-#ifdef EV_RECEIPT
+#if defined(EV_RECEIPT) && !defined(_WIN32)
 
     EV_SET(&kev, SIGUSR2, EVFILT_SIGNAL, EV_ADD | EV_RECEIPT, 0, 0, NULL);
     if (kevent(kq, &kev, 1, &kev, 1, NULL) < 0)
@@ -128,7 +128,7 @@ test_ev_receipt(void *unused)
     close(kq);
 #else
     memset(&kev, 0, sizeof(kev));
-    puts("Skipped -- EV_RECEIPT is not available");
+    puts("Skipped -- EV_RECEIPT is not available or running on Win32");
 #endif
 }
 
