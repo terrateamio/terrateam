@@ -18,7 +18,30 @@
 
 #ifndef HAVE_SYS_TIMERFD_H
 
-#include <syscall.h>
+/* Android 4.0 does not have this header, but the kernel supports timerfds */
+#ifndef SYS_timerfd_create
+#ifdef __ARM_ARCH_5__
+#define __NR_timerfd_create             (__NR_SYSCALL_BASE+350)
+#define __NR_timerfd_settime            (__NR_SYSCALL_BASE+353)
+#define __NR_timerfd_gettime            (__NR_SYSCALL_BASE+354)
+#else
+#error Unsupported architecture, need to get the syscall numbers
+#endif
+
+#define SYS_timerfd_create __NR_timerfd_create
+#define SYS_timerfd_settime __NR_timerfd_settime
+#define SYS_timerfd_gettime __NR_timerfd_gettime
+#endif /* ! SYS_timerfd_create */
+
+/* XXX-FIXME 
+   These are horrible hacks that are only known to be true on RHEL 5 x86.
+ */
+#ifndef SYS_timerfd_settime
+#define SYS_timerfd_settime (SYS_timerfd_create + 1)
+#endif 
+#ifndef SYS_timerfd_gettime
+#define SYS_timerfd_gettime (SYS_timerfd_create + 2)
+#endif
 
 int timerfd_create(int clockid, int flags)
 {
@@ -28,12 +51,12 @@ int timerfd_create(int clockid, int flags)
 int timerfd_settime(int ufc, int flags, const struct itimerspec *utmr,
                     struct itimerspec *otmr)
 {
-  return syscall(SYS_timerfd_create + 1, ufc, flags, utmr, otmr);
+  return syscall(SYS_timerfd_settime, ufc, flags, utmr, otmr);
 }
 
 int timerfd_gettime(int ufc, struct itimerspec *otmr)
 {
-  return syscall(SYS_timerfd_create + 2, ufc, otmr);
+  return syscall(SYS_timerfd_gettime, ufc, otmr);
 }
 
 #endif
