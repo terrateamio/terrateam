@@ -1,0 +1,19 @@
+INSTALLATION INSTRUCTIONS
+---
+
+To building on Android, run something like this:
+
+  ruby ./configure.rb --host=arm-linux-androideabi \
+                      --with-ndk=/opt/android-ndk-r8c \
+                      --with-sdk=/opt/android-sdks
+  make
+
+For building on Linux or Solaris, run:
+
+  ./configure
+  make
+  make install
+
+TODO -- Need to document for Windows
+
+
