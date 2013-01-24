@@ -162,6 +162,8 @@ install:
 	$(INSTALL) -m 644 libkqueue.pc $(DESTDIR)$(PKGCONFIGDIR)
 	rm -f $(DESTDIR)$(LIBDIR)/libkqueue.so
 	ln -s libkqueue.so.0.0 $(DESTDIR)$(LIBDIR)/libkqueue.so
+	rm -f $(DESTDIR)$(LIBDIR)/libkqueue.so.0
+	ln -s libkqueue.so.0.0 $(DESTDIR)$(LIBDIR)/libkqueue.so.0
 	ln -s kqueue.2 $(DESTDIR)$(MANDIR)/man2/kevent.2
 
 kqtest: test/main.o test/kevent.o test/test.o test/proc.o test/read.o test/signal.o test/timer.o test/vnode.o test/user.o
@@ -188,7 +190,7 @@ libkqueue.pc: config.h
 	@cat libkqueue.pc.in >> libkqueue.pc
 
 libkqueue.so: src/common/filter.o src/common/knote.o src/common/map.o src/common/kevent.o src/common/kqueue.o src/posix/platform.o src/linux/platform.o src/linux/read.o src/linux/write.o src/linux/user.o src/linux/vnode.o src/linux/signal.o src/linux/timer.o
-	$(LD)  -o libkqueue.so -shared -fPIC -L . $(LDFLAGS) src/common/filter.o src/common/knote.o src/common/map.o src/common/kevent.o src/common/kqueue.o src/posix/platform.o src/linux/platform.o src/linux/read.o src/linux/write.o src/linux/user.o src/linux/vnode.o src/linux/signal.o src/linux/timer.o -lpthread -lrt $(LDADD)
+	$(LD)  -o libkqueue.so -shared -fPIC -L . -Wl,-soname,libkqueue.so.0 $(LDFLAGS) src/common/filter.o src/common/knote.o src/common/map.o src/common/kevent.o src/common/kqueue.o src/posix/platform.o src/linux/platform.o src/linux/read.o src/linux/write.o src/linux/user.o src/linux/vnode.o src/linux/signal.o src/linux/timer.o -lpthread -lrt $(LDADD)
 
 package: clean libkqueue-2.0.tar.gz
 	rm -rf rpm *.rpm

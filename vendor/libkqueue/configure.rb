@@ -198,6 +198,7 @@ project.add(PkgConfig.new(
 
 mc = Makeconf.new()
 mc.configure(project)
+    throw Platform.is_windows?
 
 __END__
 #
