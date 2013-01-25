@@ -24,13 +24,13 @@ end
 
 # Determine the list of compiler flags
 def get_cflags
-  cflags='-I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -g -O2 -std=c99 -D_XOPEN_SOURCE=600'.split(/ /) 
+  cflags='-I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600'.split(/ /) 
 
-  if false
+  if Platform.is_linux?
     # TODO - note this as a GCC 4.X dependency
     cflags.push ' -fvisibility=hidden'
   end
-  if false
+  if Platform.is_solaris?
     cflags.push "-D__EXTENSIONS__"
   end
   cflags
@@ -46,18 +46,18 @@ def get_source_list(project)
        src/common/kqueue.c
   }
 
-  if false
+  if Platform.is_solaris?
     src.push 'src/solaris/signal.c',
              'src/solaris/timer.c',
              'src/solaris/platform.c',
              'src/solaris/user.c'
   end
 
-  if false
+  if Platform.is_linux? or Platform.is_solaris?
     src.push 'src/posix/platform.c'
   end
 
-  if false
+  if Platform.is_linux?
     src.push 'src/linux/platform.c',
              'src/linux/read.c',
              'src/linux/write.c',
@@ -76,7 +76,7 @@ def get_source_list(project)
     src.push 'src/linux/timer.c'
   end
 
-  if true
+  if Platform.is_windows?
     src.push 'src/windows/timer.c',
              'src/windows/platform.c',
              'src/windows/read.c',
@@ -90,7 +90,17 @@ end
 def get_ldadd
   ldadd = ''
 
+  if Platform.is_linux? or Platform.is_solaris?
+    ldadd += ' -lpthread'
+  end
+
+  if Platform.is_linux?
+    ldadd += ' -lrt'
+  end
+
+  if Platform.is_windows?
     ldadd += ' ws2_32.lib'
+  end
 
   ldadd
 end
@@ -98,8 +108,6 @@ end
 #
 # MAIN()
 #
-
-mc = Makeconf.new()
 
 project = Project.new \
  :id => 'libkqueue', 
@@ -140,10 +148,11 @@ if SystemType.host =~ /-androideabi$/
 else
   test_ldadd += ' -lkqueue'
 end
+if Platform.is_windows?
   project.add(
    Test.new(
       :id => 'kqtest', 
-      :cflags => '-g -O0 -Wall -Iinclude -Itest',
+      :cflags => '-g -O0 -Wall -Werror -Iinclude -Itest',
       :sources => %w{
           test/main.c 
           test/kevent.c
@@ -156,6 +165,27 @@ end
       :ldadd => test_ldadd.split(' ')
       )
     )
+else
+  project.add(
+   Test.new(
+      :id => 'kqtest', 
+      :cflags => '-g -O0 -Wall -Werror -I./include -I./test',
+      :sources => %w{
+          test/main.c 
+          test/kevent.c
+          test/test.c
+          test/proc.c
+          test/read.c
+          test/signal.c
+          test/timer.c
+          test/vnode.c
+          test/user.c
+          },
+      :ldadd => test_ldadd.split(' ')
+      )
+    )
+end
+
 
 project.add(PkgConfig.new(
         :name => 'libkqueue',
@@ -166,6 +196,7 @@ project.add(PkgConfig.new(
         :export_cflags => '-I${includedir}/kqueue',
         ))
 
+mc = Makeconf.new()
 mc.configure(project)
 
 __END__
