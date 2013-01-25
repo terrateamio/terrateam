@@ -138,8 +138,6 @@ run_iteration(struct test_context *ctx)
     struct unit_test *test;
 
     for (test = &ctx->tests[0]; test->ut_name != NULL; test++) {
-        if (ctx->concurrency > 1 && test->ut_concurrent == 0)
-            continue;
         if (test->ut_enabled)
             test->ut_func(ctx);
     }
@@ -147,18 +145,12 @@ run_iteration(struct test_context *ctx)
 }
 
 void
-test_harness(struct unit_test tests[], int iterations, int concurrency)
+test_harness(struct unit_test tests[MAX_TESTS], int iterations)
 {
-    int i, j, n, kqfd;
-    pthread_t tid[MAX_THREADS];
+    int i, n, kqfd;
     struct test_context *ctx;
-    int rv;
 
-    if (concurrency >= MAX_THREADS)
-        errx(1, "Too many threads");
-
-    printf("Running %d iterations using %d worker threads\n",
-            iterations, concurrency);
+    printf("Running %d iterations\n", iterations);
 
     testing_begin();
 
@@ -181,34 +173,15 @@ test_harness(struct unit_test tests[], int iterations, int concurrency)
 
     n = 0;
     for (i = 0; i < iterations; i++) {
-        for (j = 0; j < concurrency; j++) {
-            /* Create a unique context object for each thread */
-            ctx = calloc(1, sizeof(*ctx));
-            if (ctx == NULL)
-                abort();
-            ctx->iteration = n++;
-            ctx->kqfd = kqfd;
-            memcpy(&ctx->tests, tests, sizeof(*tests));
-            ctx->iterations = iterations;
-            ctx->concurrency = concurrency;
+        ctx = calloc(1, sizeof(*ctx));
+        if (ctx == NULL)
+            abort();
+        ctx->iteration = n++;
+        ctx->kqfd = kqfd;
+        memcpy(&ctx->tests, tests, sizeof(ctx->tests));
+        ctx->iterations = iterations;
 
-#ifdef _WIN32
-            /* TODO: run in a separate thread */
-            run_iteration(ctx);
-            rv = 0;
-#else
-            rv = pthread_create(&tid[j], NULL, (void * (*)(void *)) run_iteration, ctx);
-#endif
-            if (rv != 0)
-                err(1, "pthread_create");
-        }
-#ifdef _WIN32
-        // TODO: join threads
-#else
-        for (j = 0; j < concurrency; j++) {
-            pthread_join(tid[j], NULL);
-        }
-#endif
+        run_iteration(ctx);
     }
     testing_end();
 
@@ -221,7 +194,6 @@ usage(void)
     printf("usage:\n"
            "  -h        This message\n"
            "  -n        Number of iterations (default: 1)\n"
-           "  -c        Number of threads running concurrently (default: 1)\n"
            "\n\n"
           );   
     exit(1);
@@ -230,27 +202,26 @@ usage(void)
 int 
 main(int argc, char **argv)
 {
-    struct unit_test tests[] = {
-        { "socket", 1, 0, test_evfilt_read },
+    struct unit_test tests[MAX_TESTS] = {
+        { "socket", 1, test_evfilt_read },
 #ifndef _WIN32
         // XXX-FIXME -- BROKEN ON LINUX WHEN RUN IN A SEPARATE THREAD
-        { "signal", 0, 0, test_evfilt_signal },
+        { "signal", 1, test_evfilt_signal },
 #endif
 #if FIXME
-        { "proc", 1, 0, test_evfilt_proc },
+        { "proc", 1, test_evfilt_proc },
 #endif
-		{ "timer", 1, 0, test_evfilt_timer },
-		{ "timer_concurrent", 1, 1, test_evfilt_timer_concurrent },
+		{ "timer", 1, test_evfilt_timer },
 #ifndef _WIN32
-		{ "vnode", 1, 0, test_evfilt_vnode },
+		{ "vnode", 1, test_evfilt_vnode },
 #endif
 #ifdef EVFILT_USER
-        { "user", 1, 0, test_evfilt_user },
+        { "user", 1, test_evfilt_user },
 #endif
-        { NULL, 0, 0, NULL },
+        { NULL, 0, NULL },
     };
     struct unit_test *test;
-    int c, i, concurrency, iterations;
+    int c, i, iterations;
     char *arg;
     int match;
 
@@ -262,15 +233,11 @@ main(int argc, char **argv)
 #endif
 
     iterations = 1;
-    concurrency = 1;
 
 /* Windows does not provide a POSIX-compatible getopt */
 #ifndef _WIN32
-    while ((c = getopt (argc, argv, "hc:n:")) != -1) {
+    while ((c = getopt (argc, argv, "hn:")) != -1) {
         switch (c) {
-            case 'c':
-                concurrency = atoi(optarg);
-                break;
             case 'h':
                 usage();
                 break;
@@ -307,7 +274,7 @@ main(int argc, char **argv)
     }
 #endif
 
-    test_harness(tests, iterations, concurrency);
+    test_harness(tests, iterations);
 
     return (0);
 }
