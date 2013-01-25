@@ -86,7 +86,6 @@ include_directories(
 option(STATIC_KQUEUE "Enable to build libkqueue as static lib" OFF)
 if(STATIC_KQUEUE)
 	message("-- building libkqueue as static lib")
-    add_definitions(-DMAKE_STATIC)
     add_library(kqueue STATIC ${SRC} ${INCL})
 else()
     add_library(kqueue SHARED ${SRC} ${INCL})

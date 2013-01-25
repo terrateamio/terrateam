@@ -27,7 +27,10 @@
 int DEBUG_KQUEUE = 0;
 char *KQUEUE_DEBUG_IDENT = "KQ";
 
-#ifndef _WIN32
+#ifdef _WIN32
+static LONG kq_init_begin = 0;
+static int kq_init_complete = 0;
+#else
 pthread_mutex_t kq_mtx = PTHREAD_MUTEX_INITIALIZER;
 pthread_once_t kq_is_initialized = PTHREAD_ONCE_INIT;
 #endif
@@ -56,7 +59,6 @@ get_fd_limit(void)
 
 static struct map *kqmap;
 
-
 void
 libkqueue_init(void)
 {
@@ -66,6 +68,14 @@ libkqueue_init(void)
     char *s = getenv("KQUEUE_DEBUG");
     if (s != NULL && strlen(s) > 0) {
         DEBUG_KQUEUE = 1;
+
+#ifdef _WIN32
+    /* Initialize the Winsock library */
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) 
+        abort();
+#endif
+
 # if defined(_WIN32) && !defined(__GNUC__)
 	/* Enable heap surveillance */
 	{
@@ -83,6 +93,9 @@ libkqueue_init(void)
    if (knote_init() < 0)
        abort();
    dbg_puts("library initialization complete");
+#ifdef _WIN32
+   kq_init_complete = 1;
+#endif
 }
 
 #if DEADWOOD
@@ -116,7 +129,15 @@ kqueue(void)
 	struct kqueue *kq;
     struct kqueue *tmp;
 
-#ifndef _WIN32
+#ifdef _WIN32
+    if (InterlockedCompareExchange(&kq_init_begin, 0, 1) == 0) {
+        libkqueue_init();
+    } else {
+        while (kq_init_complete == 0) {
+            sleep(1);
+        }
+    }
+#else
     (void) pthread_mutex_lock(&kq_mtx);
     (void) pthread_once(&kq_is_initialized, libkqueue_init);
     (void) pthread_mutex_unlock(&kq_mtx);

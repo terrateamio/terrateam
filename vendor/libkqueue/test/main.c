@@ -188,7 +188,7 @@ test_harness(struct unit_test tests[], int iterations, int concurrency)
                 abort();
             ctx->iteration = n++;
             ctx->kqfd = kqfd;
-            memcpy(&ctx->tests, tests, sizeof(ctx->tests)); //FIXME: invalid read
+            memcpy(&ctx->tests, tests, sizeof(*tests));
             ctx->iterations = iterations;
             ctx->concurrency = concurrency;
 
@@ -254,10 +254,6 @@ main(int argc, char **argv)
     char *arg;
     int match;
 
-#ifdef MAKE_STATIC
-    libkqueue_init();
-#endif
-
 #ifdef _WIN32
     /* Initialize the Winsock library */
     WSADATA wsaData;
@@ -265,10 +261,11 @@ main(int argc, char **argv)
         err(1, "WSAStartup failed");
 #endif
 
-/* Windows does not provide a POSIX-compatible getopt */
-#ifndef _WIN32
     iterations = 1;
     concurrency = 1;
+
+/* Windows does not provide a POSIX-compatible getopt */
+#ifndef _WIN32
     while ((c = getopt (argc, argv, "hc:n:")) != -1) {
         switch (c) {
             case 'c':
