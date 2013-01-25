@@ -43,36 +43,6 @@ const struct kqueue_vtable kqops = {
     windows_filter_free,
 };
 
-#ifndef MAKE_STATIC
-
-BOOL WINAPI DllMain(
-        HINSTANCE self,
-        DWORD reason,
-        LPVOID unused)
-{
-    switch (reason) { 
-        case DLL_PROCESS_ATTACH:
-
-#if XXX
-			//move to EVFILT_READ?
-            if (WSAStartup(MAKEWORD(2,2), NULL) != 0)
-                return (FALSE);
-#endif
-            libkqueue_init();
-            break;
-
-        case DLL_PROCESS_DETACH:
-#if XXX
-            WSACleanup();
-#endif
-            break;
-    }
-
-    return (TRUE);
-}
-
-#endif
-
 int
 windows_kqueue_init(struct kqueue *kq)
 {
