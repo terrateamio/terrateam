@@ -137,7 +137,7 @@ project.add(kq)
 project.add(Header.new(
             :id => 'event.h',
             :sources => 'include/sys/event.h',
-            :namespace => 'kqueue/sys',
+            :namespace => 'kqueue/sys'
             ))
 
 project.add(Manual.new('kqueue.2', :alias => 'kevent.2'))
@@ -193,7 +193,7 @@ project.add(PkgConfig.new(
         :requires => '',
         :libs => '-lkqueue',
         :libs_private => '-lpthread',
-        :export_cflags => '-I${includedir}/kqueue',
+        :export_cflags => '-I${includedir}/kqueue'
         ))
 
 mc = Makeconf.new()
