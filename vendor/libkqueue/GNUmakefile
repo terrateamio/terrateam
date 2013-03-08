@@ -164,6 +164,7 @@ install:
 	ln -s libkqueue.so.0.0 $(DESTDIR)$(LIBDIR)/libkqueue.so
 	rm -f $(DESTDIR)$(LIBDIR)/libkqueue.so.0
 	ln -s libkqueue.so.0.0 $(DESTDIR)$(LIBDIR)/libkqueue.so.0
+	rm -f $(DESTDIR)$(MANDIR)/man2/kevent.2
 	ln -s kqueue.2 $(DESTDIR)$(MANDIR)/man2/kevent.2
 
 kqtest: test/main.o test/kevent.o test/test.o test/proc.o test/read.o test/signal.o test/timer.o test/vnode.o test/user.o
