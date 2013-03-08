@@ -132,23 +132,23 @@ distdir:
 	umask 22 ; mkdir -p '$(distdir)/include/sys'
 	umask 22 ; mkdir -p '$(distdir)/test'
 	umask 22 ; mkdir -p '$(distdir)/test/..'
-	cp -RL src/common/../posix/../../include/sys/event.h $(distdir)/src/common/../posix/../../include/sys
-	cp -RL src/linux/../common/private.h src/linux/../common/tree.h src/linux/../common/debug.h $(distdir)/src/linux/../common
-	cp -RL src/common/../linux/platform.h $(distdir)/src/common/../linux
-	cp -RL src/common/../posix/platform.h $(distdir)/src/common/../posix
-	cp -RL src/posix/../common/../linux/platform.h $(distdir)/src/posix/../common/../linux
 	cp -RL src/common/filter.c src/common/private.h src/common/tree.h src/common/debug.h src/common/knote.c src/common/alloc.h src/common/map.c src/common/kevent.c src/common/kqueue.c $(distdir)/src/common
-	cp -RL src/linux/../common/../posix/platform.h $(distdir)/src/linux/../common/../posix
-	cp -RL src/posix/platform.c $(distdir)/src/posix
-	cp -RL include/sys/event.h $(distdir)/include/sys
 	cp -RL config.h GNUmakefile kqueue.2 libkqueue.pc.in configure configure.rb $(distdir)
-	cp -RL src/linux/../common/../posix/../../include/sys/event.h $(distdir)/src/linux/../common/../posix/../../include/sys
-	cp -RL src/posix/../common/../posix/platform.h $(distdir)/src/posix/../common/../posix
-	cp -RL src/linux/../common/../linux/platform.h $(distdir)/src/linux/../common/../linux
+	cp -RL src/common/../posix/platform.h $(distdir)/src/common/../posix
+	cp -RL src/common/../posix/../../include/sys/event.h $(distdir)/src/common/../posix/../../include/sys
+	cp -RL src/common/../linux/platform.h $(distdir)/src/common/../linux
+	cp -RL src/posix/platform.c $(distdir)/src/posix
 	cp -RL src/posix/../common/private.h src/posix/../common/tree.h src/posix/../common/debug.h $(distdir)/src/posix/../common
-	cp -RL test/main.c test/common.h test/kevent.c test/test.c test/proc.c test/read.c test/signal.c test/timer.c test/vnode.c test/user.c $(distdir)/test
+	cp -RL src/posix/../common/../posix/platform.h $(distdir)/src/posix/../common/../posix
 	cp -RL src/posix/../common/../posix/../../include/sys/event.h $(distdir)/src/posix/../common/../posix/../../include/sys
+	cp -RL src/posix/../common/../linux/platform.h $(distdir)/src/posix/../common/../linux
 	cp -RL src/linux/platform.c src/linux/read.c src/linux/write.c src/linux/user.c src/linux/vnode.c src/linux/signal.c src/linux/timer.c $(distdir)/src/linux
+	cp -RL src/linux/../common/private.h src/linux/../common/tree.h src/linux/../common/debug.h $(distdir)/src/linux/../common
+	cp -RL src/linux/../common/../posix/platform.h $(distdir)/src/linux/../common/../posix
+	cp -RL src/linux/../common/../posix/../../include/sys/event.h $(distdir)/src/linux/../common/../posix/../../include/sys
+	cp -RL src/linux/../common/../linux/platform.h $(distdir)/src/linux/../common/../linux
+	cp -RL include/sys/event.h $(distdir)/include/sys
+	cp -RL test/main.c test/common.h test/kevent.c test/test.c test/proc.c test/read.c test/signal.c test/timer.c test/vnode.c test/user.c $(distdir)/test
 	cp -RL test/../config.h $(distdir)/test/..
 
 install: 
