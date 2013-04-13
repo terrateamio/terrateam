@@ -20,7 +20,7 @@
 
 /* Android 4.0 does not have this header, but the kernel supports timerfds */
 #ifndef SYS_timerfd_create
-#ifdef __ARM_ARCH_5__
+#ifdef __ARM_EABI__
 #define __NR_timerfd_create             (__NR_SYSCALL_BASE+350)
 #define __NR_timerfd_settime            (__NR_SYSCALL_BASE+353)
 #define __NR_timerfd_gettime            (__NR_SYSCALL_BASE+354)
