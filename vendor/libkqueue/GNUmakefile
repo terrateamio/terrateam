@@ -1,4 +1,5 @@
 # AUTOMATICALLY GENERATED -- DO NOT EDIT
+AR = ar
 BINDIR = $(EPREFIX)/bin
 CC = cc
 DATADIR = $(DATAROOTDIR)
@@ -20,6 +21,7 @@ PKGDATADIR = $(DATADIR)/$(PACKAGE)
 PKGINCLUDEDIR = $(INCLUDEDIR)/$(PACKAGE)
 PKGLIBDIR = $(LIBDIR)/$(PACKAGE)
 PREFIX = /usr/local
+RANLIB = ranlib
 SBINDIR = $(EPREFIX)/sbin
 SHAREDSTATEDIR = $(PREFIX)/com
 SYSCONFDIR = $(PREFIX)/etc
@@ -168,7 +170,7 @@ install:
 	ln -s kqueue.2 $(DESTDIR)$(MANDIR)/man2/kevent.2
 
 kqtest: test/main.o test/kevent.o test/test.o test/proc.o test/read.o test/signal.o test/timer.o test/vnode.o test/user.o
-	$(LD)  -o kqtest -L . -Wl,-rpath,. -L . $(LDFLAGS) test/main.o test/kevent.o test/test.o test/proc.o test/read.o test/signal.o test/timer.o test/vnode.o test/user.o -lpthread -lrt -lkqueue $(LDADD)
+	$(LD)  -o kqtest -L . -Wl,-rpath,. -L . $(LDFLAGS) test/main.o test/kevent.o test/test.o test/proc.o test/read.o test/signal.o test/timer.o test/vnode.o test/user.o libkqueue.a -lpthread -lrt $(LDADD)
 
 libkqueue-2.0.tar.gz: 
 	rm -rf libkqueue-2.0
