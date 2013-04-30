@@ -143,11 +143,7 @@ project.add(Header.new(
 project.add(Manual.new('kqueue.2', :alias => 'kevent.2'))
 
 test_ldadd = get_ldadd()
-if SystemType.host =~ /-androideabi$/
-  test_ldadd += ' libkqueue.a'
-else
-  test_ldadd += ' -lkqueue'
-end
+test_ldadd += ' libkqueue.a'
 if Platform.is_windows?
   project.add(
    Test.new(
