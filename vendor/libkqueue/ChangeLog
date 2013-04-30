@@ -1,4 +1,4 @@
-HEAD
+2013-04-29  v2.0  r639
 ------------------------------------------------------------------------
 
   * Use ppoll(2) where possible to improve scalability.
