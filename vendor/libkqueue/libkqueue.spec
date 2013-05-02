@@ -5,8 +5,8 @@ Release:    1
 # The entire source code is MIT, event.h which is BSD (2-clause)
 License:    MIT and BSD
 Group:      System Environment/Libraries
-URL:        http://mark.heily.com/project/libkqueue
-Source0:    http://static.eradman.com/src/%{name}-%{version}.tar.gz
+URL:        http://sourceforge.net/p/libkqueue/wiki/Home/
+Source0:    http://downloads.sourceforge.net/%{name}/%{name}-%{version}.tar.gz
 Provides:   libkqueue.so.0
 
 %description
