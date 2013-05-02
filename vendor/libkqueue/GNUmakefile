@@ -114,9 +114,8 @@ distclean: clean
 	rm -f libkqueue-2.0.tar.gz
 	rm -f config.h
 	rm -f config.yaml
-	rm -f rpm.spec
 
-distdir: 
+distdir: config.h
 	umask 22 ; mkdir -p '$(distdir)/src/common'
 	umask 22 ; mkdir -p '$(distdir)/src/common/../posix'
 	umask 22 ; mkdir -p '$(distdir)/src/common/../posix/../../include/sys'
@@ -135,7 +134,7 @@ distdir:
 	umask 22 ; mkdir -p '$(distdir)/test'
 	umask 22 ; mkdir -p '$(distdir)/test/..'
 	cp -RL src/common/filter.c src/common/private.h src/common/tree.h src/common/debug.h src/common/knote.c src/common/alloc.h src/common/map.c src/common/kevent.c src/common/kqueue.c $(distdir)/src/common
-	cp -RL config.h GNUmakefile kqueue.2 libkqueue.pc.in configure configure.rb $(distdir)
+	cp -RL config.h COPYING GNUmakefile kqueue.2 libkqueue.pc.in configure configure.rb $(distdir)
 	cp -RL src/common/../posix/platform.h $(distdir)/src/common/../posix
 	cp -RL src/common/../posix/../../include/sys/event.h $(distdir)/src/common/../posix/../../include/sys
 	cp -RL src/common/../linux/platform.h $(distdir)/src/common/../linux
@@ -200,9 +199,9 @@ package: clean libkqueue-2.0.tar.gz
 	mkdir -p rpm/BUILD rpm/RPMS rpm/SOURCES rpm/SPECS rpm/SRPMS
 	mkdir -p rpm/RPMS/i386 rpm/RPMS/x86_64
 	cp libkqueue-2.0.tar.gz rpm/SOURCES
-	rpmbuild --define "_topdir `pwd`/rpm" -bs rpm.spec
-	cp rpm.spec rpm/SPECS/rpm.spec
-	rpmbuild --define "_topdir `pwd`/rpm" -bb ./rpm/SPECS/rpm.spec
+	rpmbuild --define "_topdir `pwd`/rpm" -bs libkqueue.spec
+	cp libkqueue.spec rpm/SPECS/libkqueue.spec
+	rpmbuild --define "_topdir `pwd`/rpm" -bb ./rpm/SPECS/libkqueue.spec
 	mv ./rpm/SRPMS/* ./rpm/RPMS/*/*.rpm .
 	rm -rf rpm
 
