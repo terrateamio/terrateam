@@ -134,7 +134,7 @@ distdir: config.h
 	umask 22 ; mkdir -p '$(distdir)/test'
 	umask 22 ; mkdir -p '$(distdir)/test/..'
 	cp -RL src/common/filter.c src/common/private.h src/common/tree.h src/common/debug.h src/common/knote.c src/common/alloc.h src/common/map.c src/common/kevent.c src/common/kqueue.c $(distdir)/src/common
-	cp -RL config.h COPYING GNUmakefile kqueue.2 libkqueue.pc.in configure configure.rb $(distdir)
+	cp -RL config.h LICENSE GNUmakefile kqueue.2 libkqueue.pc.in configure configure.rb $(distdir)
 	cp -RL src/common/../posix/platform.h $(distdir)/src/common/../posix
 	cp -RL src/common/../posix/../../include/sys/event.h $(distdir)/src/common/../posix/../../include/sys
 	cp -RL src/common/../linux/platform.h $(distdir)/src/common/../linux

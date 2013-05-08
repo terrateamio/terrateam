@@ -41,7 +41,7 @@ make check
 %postun -p /sbin/ldconfig
 
 %files
-%doc COPYING
+%doc LICENSE
 %{_libdir}/libkqueue.so.*
 
 %files devel
