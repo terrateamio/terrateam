@@ -192,6 +192,8 @@ project.add(PkgConfig.new(
         :export_cflags => '-I${includedir}/kqueue'
         ))
 
+project.packager.add 'libkqueue.spec'
+
 mc = Makeconf.new()
 mc.configure(project)
 
