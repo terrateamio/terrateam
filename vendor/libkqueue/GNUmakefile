@@ -55,7 +55,7 @@ check:  kqtest
 
 clean: 
 	rm -f *.rpm
-	rm -f libkqueue-2.0.tar.gz
+	rm -f libkqueue-2.0.1.tar.gz
 	rm -f src/common/filter.o
 	rm -f src/common/knote.o
 	rm -f src/common/map.o
@@ -107,11 +107,11 @@ config.h:
 	@echo "creating config.h"
 	@mv config.h.tmp config.h
 
-dist: libkqueue-2.0.tar.gz
+dist: libkqueue-2.0.1.tar.gz
 
 distclean: clean 
 	rm -f GNUmakefile
-	rm -f libkqueue-2.0.tar.gz
+	rm -f libkqueue-2.0.1.tar.gz
 	rm -f config.h
 	rm -f config.yaml
 
@@ -171,14 +171,14 @@ install:
 kqtest: test/main.o test/kevent.o test/test.o test/proc.o test/read.o test/signal.o test/timer.o test/vnode.o test/user.o
 	$(LD)  -o kqtest -L . -Wl,-rpath,. -L . $(LDFLAGS) test/main.o test/kevent.o test/test.o test/proc.o test/read.o test/signal.o test/timer.o test/vnode.o test/user.o libkqueue.a -lpthread -lrt $(LDADD)
 
-libkqueue-2.0.tar.gz: 
-	rm -rf libkqueue-2.0
-	mkdir libkqueue-2.0
-	$(MAKE) distdir distdir=libkqueue-2.0
-	rm -rf libkqueue-2.0.tar libkqueue-2.0.tar.gz
-	tar cf libkqueue-2.0.tar libkqueue-2.0
-	gzip libkqueue-2.0.tar
-	rm -rf libkqueue-2.0
+libkqueue-2.0.1.tar.gz: 
+	rm -rf libkqueue-2.0.1
+	mkdir libkqueue-2.0.1
+	$(MAKE) distdir distdir=libkqueue-2.0.1
+	rm -rf libkqueue-2.0.1.tar libkqueue-2.0.1.tar.gz
+	tar cf libkqueue-2.0.1.tar libkqueue-2.0.1
+	gzip libkqueue-2.0.1.tar
+	rm -rf libkqueue-2.0.1
 
 libkqueue.a: src/common/filter.o src/common/knote.o src/common/map.o src/common/kevent.o src/common/kqueue.o src/posix/platform.o src/linux/platform.o src/linux/read.o src/linux/write.o src/linux/user.o src/linux/vnode.o src/linux/signal.o src/linux/timer.o
 ifneq ($(DISABLE_STATIC),1)
@@ -194,13 +194,13 @@ libkqueue.pc: config.h
 libkqueue.so: src/common/filter.o src/common/knote.o src/common/map.o src/common/kevent.o src/common/kqueue.o src/posix/platform.o src/linux/platform.o src/linux/read.o src/linux/write.o src/linux/user.o src/linux/vnode.o src/linux/signal.o src/linux/timer.o
 	$(LD)  -o libkqueue.so -shared -fPIC -L . -Wl,-soname,libkqueue.so.0 $(LDFLAGS) src/common/filter.o src/common/knote.o src/common/map.o src/common/kevent.o src/common/kqueue.o src/posix/platform.o src/linux/platform.o src/linux/read.o src/linux/write.o src/linux/user.o src/linux/vnode.o src/linux/signal.o src/linux/timer.o -lpthread -lrt $(LDADD)
 
-package: clean libkqueue-2.0.tar.gz
+package: clean libkqueue-2.0.1.tar.gz
 	rm -rf rpm *.rpm
 	mkdir -p rpm/BUILD rpm/RPMS rpm/SOURCES rpm/SPECS rpm/SRPMS
 	mkdir -p rpm/RPMS/`uname -m`
-	cp libkqueue-2.0.tar.gz rpm/SOURCES
+	cp libkqueue-2.0.1.tar.gz rpm/SOURCES
 	cp libkqueue.spec rpm/SPECS/libkqueue.spec
-	perl -pi -e 's/Version:.*/Version: 2.0/' rpm/SPECS/libkqueue.spec
+	perl -pi -e 's/^Version:.*/Version: 2.0.1/' rpm/SPECS/libkqueue.spec
 	rpmbuild --define "_topdir `pwd`/rpm" -bs rpm/SPECS/libkqueue.spec
 	rpmbuild --define "_topdir `pwd`/rpm" -bb rpm/SPECS/libkqueue.spec
 	mv ./rpm/SRPMS/* ./rpm/RPMS/*/*.rpm .

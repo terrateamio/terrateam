@@ -1,6 +1,6 @@
 Name:       libkqueue
 Summary:    Userspace implementation of the kqueue event notification mechanism
-Version:    2.0
+Version:    2.0.1
 Release:    1
 # The entire source code is MIT, event.h which is BSD (2-clause)
 License:    MIT and BSD
@@ -54,6 +54,9 @@ make check
 %{_mandir}/man2/kevent.2.*
 
 %changelog
+* Wed May 08 2013 Mark Heily <mark@heily.com> - 2.0.1-1
+- New upstream release
+
 * Wed May 01 2013 Eric Radman <ericshane@eradman.com> - 2.0-1
 - Adapt to libkqueue 2.0
 

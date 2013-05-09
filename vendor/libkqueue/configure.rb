@@ -111,7 +111,7 @@ end
 
 project = Project.new \
  :id => 'libkqueue', 
- :version => 2.0
+ :version => '2.0.1'
 
 kq = Library.new( 
  :id => 'libkqueue', 
