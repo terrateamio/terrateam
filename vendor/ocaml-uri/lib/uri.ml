@@ -247,7 +247,7 @@ module Query = struct
 
   type t = (string * string list) list
 
-  let find q k = try List.assoc k q with _ -> []
+  let find q k = try Some (List.assoc k q) with Not_found -> None
 
   (** Query element separator '&' *)
   let qs_amp = Re_str.regexp_string "&"
@@ -486,7 +486,12 @@ let with_fragment uri =
   |Some frag -> { uri with fragment=Some (Pct.cast_decoded frag) }
 
 let query uri = uri.query
-let get_query_param uri k = Query.find uri.query k
+let get_query_param' uri k = Query.find uri.query k
+let get_query_param uri k =
+  match get_query_param' uri k with
+  |None |Some [] -> None
+  |Some (hd::_) -> Some hd
+
 let with_query uri query = { uri with query=query }
 let q_s q = List.map (fun (k,v) -> k,[v]) q
 let with_query' uri query = with_query uri (q_s query)

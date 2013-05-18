@@ -68,9 +68,24 @@ val with_query : t -> (string * string list) list -> t
   *)
 val with_query' : t -> (string * string) list -> t
 
-(** [query q key] returns the list of values associated with the
-    [key] parameter in query [q] *)
-val get_query_param : t -> string -> string list
+(** [get_query_param' q key] returns the list of values for the
+    [key] parameter in query [q].  Note that an empty list is not the
+    same as a [None] return value.  For a query [foo], the mapping is:
+- [/] returns None
+- [/?foo] returns Some []
+- [/?foo=] returns [Some [""]]
+- [/?foo=bar] returns [Some ["bar"]]
+   
+    Query keys can be duplicated in the URI, in which case the first
+    one is returned.  If you want to resolve duplicate keys, obtain
+    the full result set with {! query } instead.
+  *)
+val get_query_param' : t -> string -> string list option
+
+(** [get_query_param q key] returns the value found for a [key] in
+     query [q].  If there are multiple values for the key, then the
+     first one is returned/ *)
+val get_query_param: t -> string -> string option
 
 (** Add a query parameter to the input query URI.
     Input URI is not modified

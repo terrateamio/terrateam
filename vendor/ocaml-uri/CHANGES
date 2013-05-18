@@ -1,5 +1,6 @@
 1.3.8 (trunk):
-* Add `Uri.get_query_param` which returns a list of values associated with a query key.
+* Add `Uri.get_query_param` which selects a single value for a query key.
+* Add `Uri.get_query_param'` which returns a list of values associated with a query key.
 * Fix ocamldoc in `Uri` module to have a header.
 
 1.3.7 (2013-01-23):
