@@ -15,13 +15,17 @@
  *
  *)
 
+(** Uniform Resource Identifier handling that is RFC3986-compliant. *)
+
+(** A single URI that is a compact sequence of characters that identifies
+    an abstract or physical resource. *)
 type t
 
 type component = [
   `Scheme
 | `Authority
-| `Userinfo (* subcomponent of authority in some schemes *)
-| `Host (* subcomponent of authority in some schemes *)
+| `Userinfo (** subcomponent of authority in some schemes *)
+| `Host (** subcomponent of authority in some schemes *)
 | `Path
 | `Query
 | `Query_key
