@@ -75,6 +75,7 @@ val with_query' : t -> (string * string) list -> t
 - [/?foo] returns Some []
 - [/?foo=] returns [Some [""]]
 - [/?foo=bar] returns [Some ["bar"]]
+- [/?foo=bar,chi] returns [Some ["bar","chi"]]
    
     Query keys can be duplicated in the URI, in which case the first
     one is returned.  If you want to resolve duplicate keys, obtain

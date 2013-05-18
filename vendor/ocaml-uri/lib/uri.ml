@@ -489,8 +489,8 @@ let query uri = uri.query
 let get_query_param' uri k = Query.find uri.query k
 let get_query_param uri k =
   match get_query_param' uri k with
-  |None |Some [] -> None
-  |Some (hd::_) -> Some hd
+  |None -> None
+  |Some v -> Some (String.concat "," v)
 
 let with_query uri query = { uri with query=query }
 let q_s q = List.map (fun (k,v) -> k,[v]) q
