@@ -279,6 +279,7 @@ let query_key_add_remove =
   assert_equal ~printer (Uri.query uri) [("k1",["1"]);("k2",["2"])];
   let uri = Uri.add_query_param uri ("k3",["3"]) in
   assert_equal ~printer (Uri.query uri) [("k3",["3"]);("k1",["1"]);("k2",["2"])];
+  assert_equal (Uri.get_query_param uri "k3") ["3"];
   let uri = Uri.remove_query_param uri "k1" in
   assert_equal ~printer (Uri.query uri) [("k3",["3"]);("k2",["2"])];
   let uri = Uri.remove_query_param uri "k2" in

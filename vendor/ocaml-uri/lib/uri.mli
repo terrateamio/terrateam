@@ -1,5 +1,5 @@
 (*
- * Copyright (c) 2012 Anil Madhavapeddy <anil@recoil.org>
+ * Copyright (c) 2012-2013 Anil Madhavapeddy <anil@recoil.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -67,6 +67,10 @@ val with_query : t -> (string * string list) list -> t
     Input URI is not modified
   *)
 val with_query' : t -> (string * string) list -> t
+
+(** [query q key] returns the list of values associated with the
+    [key] parameter in query [q] *)
+val get_query_param : t -> string -> string list
 
 (** Add a query parameter to the input query URI.
     Input URI is not modified
