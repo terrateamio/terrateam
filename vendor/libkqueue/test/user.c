@@ -100,8 +100,6 @@ test_kevent_user_oneshot(struct test_context *ctx)
     test_no_kevents(ctx->kqfd);
 
     kevent_add(ctx->kqfd, &kev, 2, EVFILT_USER, EV_ADD | EV_ONESHOT, 0, 0, NULL);
-
-    puts("  -- event 1");
     kevent_add(ctx->kqfd, &kev, 2, EVFILT_USER, 0, NOTE_TRIGGER, 0, NULL);    
 
     kev.flags = EV_ONESHOT;
