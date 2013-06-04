@@ -113,6 +113,28 @@ test_kevent_user_oneshot(struct test_context *ctx)
     test_no_kevents(ctx->kqfd);
 }
 
+static void
+test_kevent_user_multi_trigger_merged(struct test_context *ctx)
+{
+    struct kevent kev, ret;
+    int i;
+
+    test_no_kevents(ctx->kqfd);
+
+    kevent_add(ctx->kqfd, &kev, 2, EVFILT_USER, EV_ADD | EV_CLEAR, 0, 0, NULL);
+
+    for (i = 0; i < 10; i++)
+        kevent_add(ctx->kqfd, &kev, 2, EVFILT_USER, 0, NOTE_TRIGGER, 0, NULL);
+
+    kev.flags = EV_CLEAR;
+    kev.fflags &= ~NOTE_FFCTRLMASK;
+    kev.fflags &= ~NOTE_TRIGGER;
+    kevent_get(&ret, ctx->kqfd);
+    kevent_cmp(&kev, &ret);
+
+    test_no_kevents(ctx->kqfd);
+}
+
 #ifdef EV_DISPATCH
 void
 test_kevent_user_dispatch(struct test_context *ctx)
@@ -163,6 +185,7 @@ test_evfilt_user(struct test_context *ctx)
     test(kevent_user_get_hires, ctx);
     test(kevent_user_disable_and_enable, ctx);
     test(kevent_user_oneshot, ctx);
+    test(kevent_user_multi_trigger_merged, ctx);
 #ifdef EV_DISPATCH
     test(kevent_user_dispatch, ctx);
 #endif
