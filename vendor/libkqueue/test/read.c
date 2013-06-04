@@ -398,7 +398,7 @@ test_kevent_regular_file(struct test_context *ctx)
     ret.data--;
     if ((curpos = lseek(fd, ret.data, SEEK_SET)) != ret.data) {
         printf("seek to %u failed with rv=%lu\n", 
-                (unsigned int) ret.data, curpos);
+                (unsigned int) ret.data, (unsigned long) curpos);
         abort();
     }
 
@@ -407,7 +407,7 @@ test_kevent_regular_file(struct test_context *ctx)
     ret.data = curpos + 1;
     if ((curpos = lseek(fd, ret.data, SEEK_SET)) != ret.data) {
         printf("seek to %u failed with rv=%lu\n",
-                (unsigned int) ret.data, curpos);
+                (unsigned int) ret.data, (unsigned long) curpos);
         abort();
     }
 
