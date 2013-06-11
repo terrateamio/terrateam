@@ -117,8 +117,7 @@ test_ev_receipt(void *unused)
 
     if ((kq = kqueue()) < 0)
         die("kqueue()");
-#if defined(EV_RECEIPT) && !defined(_WIN32)
-
+#if !defined(_WIN32)
     EV_SET(&kev, SIGUSR2, EVFILT_SIGNAL, EV_ADD | EV_RECEIPT, 0, 0, NULL);
     if (kevent(kq, &kev, 1, &kev, 1, NULL) < 0)
         die("kevent");
@@ -191,11 +190,13 @@ test_harness(struct unit_test tests[MAX_TESTS], int iterations)
 void
 usage(void)
 {
-    printf("usage:\n"
-           "  -h        This message\n"
-           "  -n        Number of iterations (default: 1)\n"
-           "\n\n"
-          );   
+    printf("usage: [-hn] [testclass ...]\n"
+           " -h        This message\n"
+           " -n        Number of iterations (default: 1)\n"
+           " testclass Tests suites to run: [socket signal timer vnode user]\n"
+           "           All tests are run by default\n"
+           "\n"
+          );
     exit(1);
 }
 
