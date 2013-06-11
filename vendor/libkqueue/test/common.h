@@ -49,6 +49,7 @@
 #include <pthread.h>
 #include <poll.h>
 #include "../config.h"
+#include <netdb.h>
 #else
 # include "../include/sys/event.h"
 # include "../src/windows/platform.h"
