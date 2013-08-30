@@ -76,7 +76,7 @@ module Generic : Scheme = struct
     let a = Array.copy safe_chars in
     a.(Char.code '+') <- true;
     a
-      
+
 (** Safe characters for the path component of a URI
     TODO: sometimes ':' is unsafe (Sec 3.3 pchar vs segment-nz-nc) *)
   let safe_chars_for_path : safe_chars =
@@ -305,7 +305,7 @@ module Query = struct
           Buffer.add_string buf (pct_encode ~component:`Query_value s)
         ) "," buf v)
     ) "&" buf l;
-    Buffer.contents buf 
+    Buffer.contents buf
 end
 
 let query_of_encoded = Query.query_of_encoded
@@ -321,7 +321,7 @@ type t = {
   path: Pct.decoded;
   query: Query.t;
   fragment: Pct.decoded option;
-}  
+}
 
 let normalize uri =
   let uncast_opt = function
@@ -371,14 +371,14 @@ let of_string s =
       Some (Pct.decode pct)
     with Not_found -> None
   in
-  let subs = Re.exec Uri_re.uri_reference s in 
+  let subs = Re.exec Uri_re.uri_reference s in
   let scheme = get_opt subs 2 in
   let userinfo, host, port =
     match get_opt subs 4 with
     |None -> None, None, None
     |Some a ->
        let subs' = Re.exec Uri_re.authority (Pct.uncast_decoded a) in
-       let userinfo = get_opt subs' 1 in 
+       let userinfo = get_opt subs' 1 in
        let host = get_opt subs' 2 in
        let port =
          match get_opt subs' 3 with
@@ -390,7 +390,7 @@ let of_string s =
   let path =
     match get_opt subs 5 with
     | Some x -> x
-    | None -> Pct.empty_decoded 
+    | None -> Pct.empty_decoded
   in
   let query =
     match get_opt_encoded subs 7 with
@@ -414,8 +414,8 @@ let to_string uri =
   (match uri.scheme with
    |None -> ()
    |Some x ->
-      add_pct_string ~component:`Scheme x; 
-      Buffer.add_char buf ':' 
+      add_pct_string ~component:`Scheme x;
+      Buffer.add_char buf ':'
   );
   (match uri.host with
    |Some host ->
@@ -435,11 +435,11 @@ let to_string uri =
       );
    |None -> ()
   );
-  (match Pct.uncast_decoded uri.path with 
+  (match Pct.uncast_decoded uri.path with
     |"" ->
       (* If the buffer has no host, then always start URI with a slash *)
       (*if uri.host = None then Buffer.add_char buf '/'*) ()
-    |path when path.[0] = '/' -> 
+    |path when path.[0] = '/' ->
       (* Path starts with a slash, so ok to add *)
       add_pct_string ~component:`Path uri.path;
     |path ->
