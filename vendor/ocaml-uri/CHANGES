@@ -1,4 +1,4 @@
-1.3.9 (trunk):
+1.3.9 (2013-08-30):
 * Add back support for OCaml 3.12.1 by fixing the compiler-libs linking.
 
 1.3.8 (2013-05-19):
