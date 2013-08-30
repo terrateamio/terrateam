@@ -76,7 +76,7 @@ val with_query' : t -> (string * string) list -> t
 - [/?foo=] returns [Some [""]]
 - [/?foo=bar] returns [Some ["bar"]]
 - [/?foo=bar,chi] returns [Some ["bar","chi"]]
-   
+
     Query keys can be duplicated in the URI, in which case the first
     one is returned.  If you want to resolve duplicate keys, obtain
     the full result set with {! query } instead.
@@ -113,9 +113,9 @@ val add_query_params' : t -> (string * string) list -> t
     key does not already exist in the URI.
   *)
 val remove_query_param : t -> string -> t
-    
+
 val make : ?scheme:string -> ?userinfo:string -> ?host:string ->
-  ?port:int -> ?path:string -> ?query:(string * string list) list -> 
+  ?port:int -> ?path:string -> ?query:(string * string list) list ->
   ?fragment:string -> unit -> t
 
 (** Get the path component of a URI *)
@@ -159,4 +159,5 @@ val fragment : t -> string option
     Input URI is not modified *)
 val with_fragment : t -> string option -> t
 
+(*  Human-readable output, used by the toplevel printer *)
 val pp_hum : Format.formatter -> t -> unit
