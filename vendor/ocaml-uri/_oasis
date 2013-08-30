@@ -2,7 +2,11 @@ OASISFormat: 0.3
 Name:        uri
 Version:     1.3.8
 Synopsis:    RFC3968 URI parsing library
+Description: Uniform Resource Identifier (URI) parsing and encoding.
+  This is pure OCaml code.
 Authors:     Anil Madhavapeddy, David Sheets
+Maintainers: Anil Madhavapeddy <anil@recoil.org>
+Homepage:    https://github.com/avsm/ocaml-uri
 License:     ISC
 Plugins:     META (0.3)
 BuildTools:  ocamlbuild
@@ -37,20 +41,22 @@ Library uri_top
   FindlibName:        top
   FindlibParent:      uri
   Modules:            Install_printers
-  BuildDepends:       compiler-libs.toplevel
+  # Compiler libs do not exists for OCaml < 4.0.0 and otherwise always
+  # present.  Use _tags to set them up.
+  # BuildDepends:       compiler-libs.toplevel
   XMETARequires:      uri
   XMETADescription:   Toplevel printers for URIs
 
 Document uri
   Title:                URI docs
-  Type:                 ocamlbuild (0.2)
+  Type:                 ocamlbuild (0.3)
   BuildTools+:          ocamldoc
   XOCamlbuildPath:      lib
   XOCamlbuildLibraries: uri
 
 Document uri_services
   Title:                URI services docs
-  Type:                 ocamlbuild (0.2)
+  Type:                 ocamlbuild (0.3)
   BuildTools+:          ocamldoc
   XOCamlbuildPath:      lib
   XOCamlbuildLibraries: uri.services
