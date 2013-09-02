@@ -141,8 +141,8 @@ val host : t -> string option
     Input URI is not modified. *)
 val with_host: t -> string option -> t
 
-(** Get the host component of a URI, with a default
-  * supplied if one is not present *)
+(** Get the host component of a URI, with a default supplied if one is
+    not present *)
 val host_with_default: ?default:string -> t -> string
 
 (** Get the port component of a URI *)
