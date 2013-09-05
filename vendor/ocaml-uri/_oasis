@@ -1,6 +1,6 @@
 OASISFormat: 0.3
 Name:        uri
-Version:     1.3.9
+Version:     1.3.10
 Synopsis:    RFC3968 URI parsing library
 Description: Uniform Resource Identifier (URI) parsing and encoding.
   This is pure OCaml code.
@@ -40,7 +40,7 @@ Library uri_top
   Path:               top
   FindlibName:        top
   FindlibParent:      uri
-  Modules:            Install_printers
+  Modules:            Uri_top
   # Compiler libs do not exists for OCaml < 4.0.0 and otherwise always
   # present.  Use _tags to set them up.
   # BuildDepends:       compiler-libs.toplevel
