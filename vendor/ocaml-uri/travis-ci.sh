@@ -1,5 +1,5 @@
 # OPAM packages needed to build tests.
-OPAM_PACKAGES="re"
+OPAM_PACKAGES="re ounit"
 
 # Install OCaml and OPAM PPAs
 echo "yes" | sudo add-apt-repository ppa:avsm/ppa-testing
