@@ -27,4 +27,4 @@ opam install ${OPAM_DEPENDS}
 
 eval `opam config env`
 make
-cd lib_test && make
+make test
