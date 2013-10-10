@@ -206,8 +206,8 @@ let test_rel_res =
   ) uri_rel_res
 
 let file_uri_rel_res = [ (* http://tools.ietf.org/html/rfc1738#section-3.10 *)
-  "/foo/bar/baz", "file:///foo/bar/baz";
-  "//localhost/foo", "file:///foo";
+  "/foo/bar/baz", "///foo/bar/baz";
+  "//localhost/foo", "///foo";
 ]
 
 let test_file_rel_res =
@@ -217,6 +217,33 @@ let test_file_rel_res =
                             (Uri.of_string rel))) in
     rel >:: test
   ) file_uri_rel_res
+
+let uri_rel_rel_res = [ (* relative-relative resolution *)
+  "a", "b", "a";
+  "a", "/", "/a";
+  "a", "b/", "b/a";
+  "a", "//b", "//b/a";
+  "a", "//b/","//b/a";
+  "a", "///", "///a";
+  "?a", "b", "b?a";
+  "?a", "/", "/?a";
+  "?a", "//b", "//b?a";
+  "?a", "///", "///?a";
+  "#a", "b", "b#a";
+  "#a", "/", "/#a";
+  "#a", "//b", "//b#a";
+  "#a", "///", "///#a";
+  (* TODO: relative username, ... *)
+]
+
+let test_rel_rel_res =
+  List.map (fun (rel,base,res) ->
+    let rel = Uri.of_string rel in
+    let base = Uri.of_string base in
+    let test () = assert_equal ~printer:(fun l -> l)
+      res (Uri.to_string (Uri.resolve "" base rel)) in
+    res >:: test
+  ) uri_rel_rel_res
 
 let generic_uri_norm = [
   "HTTP://example.com/", "http://example.com/";
@@ -302,7 +329,7 @@ let rec was_successful =
         false
 
 let _ =
-  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_uri_decode @ test_query_decode @ test_query_encode @ test_rel_res @ test_file_rel_res @ test_generic_uri_norm @ test_rel_id @ test_tcp_port_of_uri @ query_key_add_remove) in
+  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_uri_decode @ test_query_decode @ test_query_encode @ test_rel_res @ test_file_rel_res @ test_rel_rel_res @ test_generic_uri_norm @ test_rel_id @ test_tcp_port_of_uri @ query_key_add_remove) in
   let verbose = ref false in
   let set_verbose _ = verbose := true in
   Arg.parse
