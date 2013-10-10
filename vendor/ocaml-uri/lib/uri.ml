@@ -323,7 +323,7 @@ type t = {
   fragment: Pct.decoded option;
 }
 
-let normalize uri =
+let normalize schem uri =
   let uncast_opt = function
     | Some h -> Some (Pct.uncast_decoded h)
     | None -> None
@@ -333,7 +333,7 @@ let normalize uri =
     | None -> None
   in
   let module Scheme =
-    (val (module_of_scheme (uncast_opt uri.scheme)) : Scheme) in
+    (val (module_of_scheme (uncast_opt schem)) : Scheme) in
   let dob f = function
     | Some x -> Some Pct.(cast_decoded (f (uncast_decoded x)))
     | None -> None
@@ -352,8 +352,9 @@ let make ?scheme ?userinfo ?host ?port ?path ?query ?fragment () =
   let path = match path with
     |None -> Pct.empty_decoded |Some p -> Pct.cast_decoded p in
   let query = match query with |None -> [] |Some p -> p in
-  normalize
-    { scheme=decode scheme; userinfo=decode userinfo;
+  let scheme = decode scheme in
+  normalize scheme
+    { scheme; userinfo=decode userinfo;
       host=decode host; port; path; query; fragment=decode fragment }
 
 (** Parse a URI string into a structure *)
@@ -398,7 +399,7 @@ let of_string s =
     | None -> []
   in
   let fragment = get_opt subs 9 in
-  normalize { scheme; userinfo; host; port; path; query; fragment }
+  normalize scheme { scheme; userinfo; host; port; path; query; fragment }
 
 (** Convert a URI structure into a percent-encoded string
     <http://tools.ietf.org/html/rfc3986#section-5.3>
@@ -537,11 +538,12 @@ let remove_dot_segments p =
 
 (* Resolve a URI wrt a base URI <http://tools.ietf.org/html/rfc3986#section-5.2> *)
 let resolve schem base uri =
-  let base = match scheme base with
-    | None -> {base with scheme=Some (Pct.cast_decoded schem)}
-    | Some _ -> base
-  in
-  normalize begin match scheme uri, host uri with
+  let schem = Some (Pct.cast_decoded (match scheme base with
+    | None ->  schem
+    | Some scheme -> scheme
+  )) in
+  normalize schem
+    begin match scheme uri, host uri with
     | Some _, _ ->
       {uri with path=remove_dot_segments uri.path}
     | None, Some _ ->
@@ -554,6 +556,6 @@ let resolve schem base uri =
       else if (path uri).[0]='/'
       then {uri with path=remove_dot_segments uri.path}
       else {uri with path=remove_dot_segments (merge base (path uri))}
-  end
+    end
 
 let pp_hum ppf uri = Format.fprintf ppf "%s" (to_string uri)
