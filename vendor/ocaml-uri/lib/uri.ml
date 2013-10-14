@@ -178,6 +178,11 @@ module Pct : sig
   val cast_decoded : string -> decoded
   val uncast_encoded : encoded -> string
   val uncast_decoded : decoded -> string
+  (* Lift HOFs for maps over encodings, decodings, and strings *)
+  val lift_encoded : (encoded -> encoded) -> string -> string
+  val lift_decoded : (decoded -> decoded) -> string -> string
+  val unlift_encoded : (string -> string) -> encoded -> encoded
+  val unlift_decoded : (string -> string) -> decoded -> decoded
 end = struct
   type encoded = string
   type decoded = string
@@ -186,6 +191,11 @@ end = struct
   let empty_decoded = ""
   let uncast_decoded x = x
   let uncast_encoded x = x
+
+  let lift_encoded f = f
+  let lift_decoded f = f
+  let unlift_encoded f = f
+  let unlift_decoded f = f
 
   (** Scan for reserved characters and replace them with 
       percent-encoded equivalents.
@@ -335,7 +345,7 @@ let normalize schem uri =
   let module Scheme =
     (val (module_of_scheme (uncast_opt schem)) : Scheme) in
   let dob f = function
-    | Some x -> Some Pct.(cast_decoded (f (uncast_decoded x)))
+    | Some x -> Some (Pct.unlift_decoded f x)
     | None -> None
   in {uri with
     scheme=dob String.lowercase uri.scheme;
@@ -521,20 +531,28 @@ let merge base rpath =
       with Not_found -> rpath
     end
 
+let tokenize_path p =
+  List.map (function Re_str.Text s | Re_str.Delim s -> s)
+    (Re_str.full_split (Re_str.regexp "/") p)
+
 (* Subroutine for resolve <http://tools.ietf.org/html/rfc3986#section-5.2.4> *)
 let remove_dot_segments p =
-  let ascend = function [] -> [] | s::"/"::t | s::t -> t in
-  let p = Pct.uncast_decoded p in
-  let inp = List.map (function Re_str.Text s | Re_str.Delim s -> s)
-    (Re_str.full_split (Re_str.regexp "/") p) in
-  let rec loop outp = function
-    | ".."::"/"::r | "."::"/"::r -> loop outp r (* A *)
-    | "/"::"."::"/"::r | "/"::"."::r -> loop outp ("/"::r) (* B *)
-    | "/"::".."::"/"::r | "/"::".."::r -> loop (ascend outp) ("/"::r) (* C *)
-    | "."::[] | ".."::[] | [] -> String.concat "" (List.rev outp) (* D *)
-    | "/"::s::r -> loop (s::"/"::outp) r
-    | s::r -> loop (s::outp) r (* E *)
-  in Pct.cast_decoded (loop [] inp)
+  let inp = tokenize_path (Pct.uncast_decoded p) in
+  let revp = List.rev inp in
+  let rec loop ascension outp = function
+    | "/"::".."::r | ".."::r -> loop (ascension + 1) outp r
+    | "/"::"."::r  | "."::r  -> loop ascension outp r
+    | "/"::[] | [] when List.(length inp > 0 && hd inp = "/") ->
+      "/" ^ (String.concat "" outp)
+    | [] when ascension > 0 -> String.concat ""
+      ((String.concat "/" Array.(to_list (make ascension ".."))
+        ^ "/") :: outp)
+    | [] -> String.concat "" List.(
+      if length outp > 0 && hd outp = "/"
+      then tl outp else outp)
+    | "/"::s::r when ascension > 0 -> loop (ascension - 1) outp r
+    | s::r -> loop 0 (s::outp) r
+  in Pct.cast_decoded (loop 0 [] revp)
 
 (* Resolve a URI wrt a base URI <http://tools.ietf.org/html/rfc3986#section-5.2> *)
 let resolve schem base uri =
