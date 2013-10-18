@@ -15,6 +15,12 @@
  */
 
 #include "./lite.h"
+#include "./utarray.h"
+
+/* The maximum number of events that can be returned in 
+   a single kq_event() call 
+ */
+#define EPEV_BUF_MAX 512
 
 #include <unistd.h>
 
@@ -52,11 +58,28 @@ struct kqueue {
     int epfd;            /* epoll */
     int wfd[EVFILT_SYSCOUNT]; /* an event wait descriptor for each EVFILT_* */
     sigset_t sigmask;
+    UT_array *kev;  /* All of the active kevents */
     pthread_mutex_t kq_mtx;
 #else
 #error Undefined event system
 #endif
 };
+
+static inline void
+kq_lock(kqueue_t kq)
+{
+    if (pthread_mutex_lock(&kq->kq_mtx) != 0) 
+        abort();
+}
+
+static inline void
+kq_unlock(kqueue_t kq)
+{
+    if (pthread_mutex_unlock(&kq->kq_mtx) != 0) 
+        abort();
+}
+
+UT_icd kevent_icd = { sizeof(struct kevent), NULL, NULL, NULL };
 
 /* Initialize the event descriptor */
 kqueue_t
@@ -83,6 +106,8 @@ kq_init(void)
     sigemptyset(&kq->sigmask);
     kq->wfd[EVFILT_SIGNAL] = signalfd(-1, &kq->sigmask, 0);
 
+    utarray_new(kq->kev, &kevent_icd);
+
     // FIXME: check that all members of kq->wfd are valid
 
     return (kq);
@@ -103,6 +128,8 @@ kq_free(kqueue_t kq)
     
 #elif defined(USE_EPOLL)
     close(kq->epfd);
+    utarray_free(kq->kev);
+    //FIXME: there are a more things to do
 #endif
     free(kq);
 }
@@ -118,21 +145,25 @@ kq_add(kqueue_t kq, const struct kevent *ev)
     struct kevent *evcopy;
     int sigfd;
 
-    /* Save a copy of the kevent so kq_wait() can use it later */
+    /* Save a copy of the kevent so kq_event() can use it after
+       the event occurs.
+     */
     evcopy = malloc(sizeof(*evcopy));
     if (evcopy == NULL)
         return (-1);
     memcpy (evcopy, ev, sizeof(*evcopy));
+    kq_lock(kq);
+    utarray_push_back(kq->kev, evcopy);
+    epev.data.u32 = utarray_len(kq->kev);
+    kq_unlock(kq);
 
     switch (ev->ident) {
         case EVFILT_READ:
             epev.events = EPOLLIN;
-            epev.data.ptr = evcopy;
             rv = epoll_ctl(kq->epfd, EPOLL_CTL_ADD, ev->ident, &epev);
 
         case EVFILT_WRITE:
             epev.events = EPOLLOUT;
-            epev.data.ptr = evcopy;
             rv = epoll_ctl(kq->epfd, EPOLL_CTL_ADD, ev->ident, &epev);
 
         case EVFILT_VNODE:
@@ -141,10 +172,10 @@ kq_add(kqueue_t kq, const struct kevent *ev)
             break;
 
         case EVFILT_SIGNAL:
-            pthread_mutex_lock(&kq->kq_mtx);
+            kq_lock(kq);
             sigaddset(&kq->sigmask, ev->ident);
             sigfd = signalfd(kq->wfd[EVFILT_SIGNAL], &kq->sigmask, 0);
-            pthread_mutex_unlock(&kq->kq_mtx);
+            kq_unlock(kq);
             if (sigfd < 0) {
                 rv = -1;
             } else {
@@ -186,10 +217,10 @@ kq_delete(kqueue_t kq, const struct kevent *ev)
             break;
 
         case EVFILT_SIGNAL:
-            pthread_mutex_lock(&kq->kq_mtx);
+            kq_lock(kq);
             sigdelset(&kq->sigmask, ev->ident);
             sigfd = signalfd(kq->wfd[EVFILT_SIGNAL], &kq->sigmask, 0);
-            pthread_mutex_unlock(&kq->kq_mtx);
+            kq_unlock(kq);
             if (sigfd < 0) {
                 rv = -1;
             } else {
@@ -216,12 +247,15 @@ int kq_event(kqueue_t kq, const struct kevent *changelist, int nchanges,
 	    const struct timespec *timeout)
 {
     int rv = 0;
+    struct kevent *kevp, *dst;
 
 #if defined(USE_KQUEUE)
     return kevent(kq->kqfd, changelist, nchanges, eventlist, nevents, timeout);
 
 #elif defined(USE_EPOLL)
-    struct epoll_event epev;
+    struct epoll_event epev_buf[EPEV_BUF_MAX];
+    struct epoll_event *epev;
+    size_t epev_wait_max, epev_cnt;
     int i, eptimeout;
 
     /* Process each item on the changelist */
@@ -243,18 +277,52 @@ int kq_event(kqueue_t kq, const struct kevent *changelist, int nchanges,
     else
         eptimeout = (1000 * timeout->tv_sec) + (timeout->tv_nsec / 1000000);
 
-    rv = epoll_wait(kq->epfd, &epev, 1, eptimeout);
-    //FIXME: handle timeout
-    if (rv > 0) {
-        //if (epev.data.fd == kq->sigfd) {
-            // FIXME: data.fd isn't actually set :(
-            // Special case: a signal was received
-            // ...
-        //} else {
-            // Normal case: data.ptr is a struct kevent (see evcopy from above)
-            // ...
-        //}
-    } 
+    /* Wait for events and put them into a buffer */
+    if (nevents > EPEV_BUF_MAX) {
+        epev_wait_max = EPEV_BUF_MAX;
+    } else {
+        epev_wait_max = nevents;
+    }
+    epev_cnt = epoll_wait(kq->epfd, (struct epoll_event *) &epev_buf, epev_wait_max, eptimeout);
+    if (epev_cnt < 0) {
+        return (-1);        //FIXME: handle timeout
+    }
+
+    /* Determine what events have occurred and copy the result to the caller */
+    for (i = 0; i < epev_cnt; i++) {
+        dst = &eventlist[i];
+        epev = &epev_buf[i];
+
+        /*
+           epev->data.u32 is an index into kq->kev that stores
+           a copy of the kevent structure.
+         */
+        kevp = (struct kevent *) utarray_eltptr(kq->kev, epev->data.u32);
+
+        /* Some filters require an extra level of indirection to get at
+           the real kevent. */
+        switch (kevp->ident) {
+            case EVFILT_SIGNAL:
+                //TODO
+                break;
+
+            case EVFILT_VNODE:
+                //TODO
+                break;
+
+            case EVFILT_TIMER:
+                //TODO
+                break;
+
+            case EVFILT_READ:
+            case EVFILT_WRITE:
+                memcpy(dst, kevp, sizeof(*dst));
+                break;
+
+            default:
+                abort();
+        }
+    }
 
     return (rv == 1 ? 0 : -1);
 #endif
