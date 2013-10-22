@@ -134,6 +134,14 @@ struct kevent {
 #define NOTE_LINKDOWN	0x0002			/* link is down */
 #define NOTE_LINKINV	0x0004			/* link state is invalid */
 
+/* Linux supports a subset of these filters. */
+#define EVFILT_READ     (0)
+#define EVFILT_WRITE    (1)
+#define EVFILT_VNODE    (2)
+#define EVFILT_SIGNAL   (3)
+#define EVFILT_TIMER    (4)
+#define EVFILT_SYSCOUNT (5)
+
 #endif /* defined(__FreeBSD__) etc.. */
 
 /* kqueue_t - the event descriptor */
