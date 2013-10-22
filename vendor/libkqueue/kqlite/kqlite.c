@@ -14,6 +14,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
  
+#include <stdio.h>
+#include <string.h>
+
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif /* _OPENMP */
@@ -28,6 +32,11 @@
 
 #include <unistd.h>
 
+/* Debugging macros */
+#define dbg_puts(s)    dbg_printf("%s", (s))
+#define dbg_printf(fmt,...)  fprintf(stderr, "kq [%d]: %s(): "fmt"\n",                     \
+             0 /*TODO: thread id */, __func__, __VA_ARGS__)
+
 /* Determine what type of kernel event system to use. */
 #if defined(__FreeBSD__) || defined(__APPLE__) || defined(__OpenBSD__) || defined(__NetBSD__)
 #define USE_KQUEUE
@@ -41,19 +50,10 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+
+static char * epoll_event_to_str(struct epoll_event *);
 #else
 #error Unsupported operating system type
-#endif
-
-
-/* Linux supports a subset of these filters. */
-#if defined(USE_EPOLL)
-#define EVFILT_READ     (0)
-#define EVFILT_WRITE    (1)
-#define EVFILT_VNODE    (2)
-#define EVFILT_SIGNAL   (3)
-#define EVFILT_TIMER    (4)
-#define EVFILT_SYSCOUNT (5)
 #endif
 
 struct kqueue {
@@ -63,6 +63,7 @@ struct kqueue {
     int epfd;           /* epoll */
     int inofd;          /* inotify */
     int sigfd;          /* signalfd */
+    UT_array *sighandler;  /* All of the active kevents for EVFILT_SIGNAL */
     sigset_t sigmask;
     UT_array *kev;  /* All of the active kevents */
     pthread_mutex_t kq_mtx;
@@ -115,6 +116,7 @@ kq_init(void)
 
     /* Create an index of kevents to allow lookups from epev.data.u32 */
     utarray_new(kq->kev, &kevent_icd);
+    utarray_new(kq->sighandler, &kevent_icd);
 
     /* Initialize all the event descriptors */
     sigemptyset(&kq->sigmask);
@@ -127,22 +129,24 @@ kq_init(void)
     /* Add the signalfd descriptor to the epollset */
     if ((kev = malloc(sizeof(*kev))) == NULL)
         goto errout;
-    EV_SET(kev, 0, EVFILT_SIGNAL, 0, 0, 0, NULL);
+    EV_SET(kev, EVFILT_SIGNAL, EVFILT_SIGNAL, 0, 0, 0, NULL);
     epev.events = EPOLLIN;
-    epev.data.u32 = 0;
+    epev.data.u32 = EVFILT_SIGNAL;
     utarray_push_back(kq->kev, kev);
     if (epoll_ctl(kq->epfd, EPOLL_CTL_ADD, kq->sigfd, &epev) < 0)
         goto errout;
 
     /* Add the inotify descriptor to the epollset */
+    /*
     if ((kev = malloc(sizeof(*kev))) == NULL)
         goto errout;
-    EV_SET(kev, 0, EVFILT_VNODE, 0, 0, 0, NULL);
+    EV_SET(kev, EVFILT_VNODE, EVFILT_VNODE, 0, 0, 0, NULL);
     epev.events = EPOLLIN;
     epev.data.u32 = 1;
     utarray_push_back(kq->kev, kev);
     if (epoll_ctl(kq->epfd, EPOLL_CTL_ADD, kq->inofd, &epev) < 0)
         goto errout;
+        */
 
     //TODO: consider applying FD_CLOEXEC to all descriptors
 
@@ -195,7 +199,7 @@ kq_add(kqueue_t kq, const struct kevent *ev)
     epev.data.u32 = utarray_len(kq->kev);
     kq_unlock(kq);
 
-    switch (ev->ident) {
+    switch (ev->filter) {
         case EVFILT_READ:
             epev.events = EPOLLIN;
             rv = epoll_ctl(kq->epfd, EPOLL_CTL_ADD, ev->ident, &epev);
@@ -220,6 +224,7 @@ kq_add(kqueue_t kq, const struct kevent *ev)
             } else {
                 rv = 0;
             }
+            dbg_printf("added signal %d, rv = %d", (int)ev->ident, rv);
             break;
 
         case EVFILT_TIMER:
@@ -232,6 +237,7 @@ kq_add(kqueue_t kq, const struct kevent *ev)
             return (-1);
     }
 
+    dbg_printf("done. rv = %d", rv);
 //    if (rv < 0)
 //        free(evcopy);
     return (rv);
@@ -280,6 +286,25 @@ kq_delete(kqueue_t kq, const struct kevent *ev)
 
 #endif /* defined(USE_EPOLL) */
 
+/* Read a signal from the signalfd */
+static inline int
+_get_signal(struct kevent *dst, kqueue_t kq)
+{
+    struct kevent *kev;
+    struct signalfd_siginfo sig;
+    ssize_t n;
+
+    n = read(kq->sigfd, &sig, sizeof(sig));
+    if (n < 0 || n != sizeof(sig)) {
+        abort();
+    }
+
+    kev = (struct kevent *) utarray_eltptr(kq->sighandler, sig.ssi_signo);
+    memcpy(dst, kev, sizeof(*dst));
+    
+    return (0);
+}
+
 /* Equivalent to kevent() */
 int kq_event(kqueue_t kq, const struct kevent *changelist, int nchanges,
 	    struct kevent *eventlist, int nevents,
@@ -322,27 +347,30 @@ int kq_event(kqueue_t kq, const struct kevent *changelist, int nchanges,
     } else {
         epev_wait_max = nevents;
     }
-    epev_cnt = epoll_wait(kq->epfd, (struct epoll_event *) &epev_buf, epev_wait_max, eptimeout);
+    epev_cnt = epoll_wait(kq->epfd, (struct epoll_event *) &epev_buf[0], epev_wait_max, eptimeout);
     if (epev_cnt < 0) {
         return (-1);        //FIXME: handle timeout
     }
+    else if (epev_cnt == 0) {
+        dbg_puts("timed out");
+    }
+
+    dbg_puts("whee -- got event");
 
     /* Determine what events have occurred and copy the result to the caller */
     for (i = 0; i < epev_cnt; i++) {
         dst = &eventlist[i];
         epev = &epev_buf[i];
 
-        /*
-           epev->data.u32 is an index into kq->kev that stores
-           a copy of the kevent structure.
-         */
+        dbg_printf("got event: %s", epoll_event_to_str(epev));
+        abort();
+
+        //FIXME: old design: 
         kevp = (struct kevent *) utarray_eltptr(kq->kev, epev->data.u32);
 
-        /* Some filters require an extra level of indirection to get at
-           the real kevent. */
-        switch (kevp->ident) {
+        switch (epev->data.u32) {
             case EVFILT_SIGNAL:
-                //TODO
+                (void)_get_signal(dst, kq);//FIXME: errorhandle
                 break;
 
             case EVFILT_VNODE:
@@ -391,3 +419,31 @@ kq_dispatch(kqueue_t kq, void (*cb)(kqueue_t, struct kevent))
         }
     }
 }
+
+#if defined(USE_EPOLL)
+static char *
+epoll_event_to_str(struct epoll_event *evt)
+{
+    static __thread char buf[128];
+
+    if (evt == NULL)
+        return "(null)";
+
+#define EPEVT_DUMP(attrib) \
+    if (evt->events & attrib) \
+       strcat(&buf[0], #attrib" ");
+
+    snprintf(&buf[0], 128, " { data = %p, events = ", evt->data.ptr);
+    EPEVT_DUMP(EPOLLIN);
+    EPEVT_DUMP(EPOLLOUT);
+#if defined(HAVE_EPOLLRDHUP)
+    EPEVT_DUMP(EPOLLRDHUP);
+#endif
+    EPEVT_DUMP(EPOLLONESHOT);
+    EPEVT_DUMP(EPOLLET);
+    strcat(&buf[0], "}\n");
+
+    return (&buf[0]);
+#undef EPEVT_DUMP
+}
+#endif
