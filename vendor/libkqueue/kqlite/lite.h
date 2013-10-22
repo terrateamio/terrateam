@@ -150,4 +150,7 @@ int kq_event(kqueue_t kq, const struct kevent *changelist, int nchanges,
 	    struct kevent *eventlist, int nevents,
 	    const struct timespec *timeout);
 
+/* Dispatch kevents using multiple threads */
+void kq_dispatch(kqueue_t, void (*)(kqueue_t, struct kevent));
+
 #endif  /* ! _KQUEUE_LITE_H */

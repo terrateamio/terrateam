@@ -13,6 +13,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+ 
+#ifdef _OPENMP
+#include <omp.h>
+#endif /* _OPENMP */
 
 #include "./lite.h"
 #include "./utarray.h"
@@ -32,6 +36,7 @@
 #define USE_EPOLL
 #include <pthread.h>
 #include <sys/epoll.h>
+#include <sys/inotify.h>
 #include <sys/signalfd.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -55,8 +60,9 @@ struct kqueue {
 #if defined(USE_KQUEUE)
     int kqfd;            /* kqueue(2) descriptor */
 #elif defined(USE_EPOLL)
-    int epfd;            /* epoll */
-    int wfd[EVFILT_SYSCOUNT]; /* an event wait descriptor for each EVFILT_* */
+    int epfd;           /* epoll */
+    int inofd;          /* inotify */
+    int sigfd;          /* signalfd */
     sigset_t sigmask;
     UT_array *kev;  /* All of the active kevents */
     pthread_mutex_t kq_mtx;
@@ -87,10 +93,10 @@ kq_init(void)
 {
     struct kqueue *kq;
 
+#if defined(USE_KQUEUE)
     if ((kq = malloc(sizeof(*kq))) == NULL)
         return (NULL);
 
-#if defined(USE_KQUEUE)
     kq->kqfd = kqueue();
     if (kq->kqfd < 0) {
         free(kq);
@@ -98,15 +104,47 @@ kq_init(void)
     }
     
 #elif defined(USE_EPOLL)
+    struct epoll_event epev;
+    struct kevent *kev;
+
+    if ((kq = malloc(sizeof(*kq))) == NULL)
+        return (NULL);
+
     if (pthread_mutex_init(&kq->kq_mtx, NULL) != 0)
         goto errout;
-    kq->epfd = epoll_create(10);
-    if (kq->epfd < 0)
-        goto errout;
-    sigemptyset(&kq->sigmask);
-    kq->wfd[EVFILT_SIGNAL] = signalfd(-1, &kq->sigmask, 0);
 
+    /* Create an index of kevents to allow lookups from epev.data.u32 */
     utarray_new(kq->kev, &kevent_icd);
+
+    /* Initialize all the event descriptors */
+    sigemptyset(&kq->sigmask);
+    kq->sigfd = signalfd(-1, &kq->sigmask, 0);
+    kq->inofd = inotify_init();
+    kq->epfd = epoll_create(10);
+    if (kq->sigfd < 0 || kq->inofd < 0 || kq->epfd < 0)
+        goto errout;
+
+    /* Add the signalfd descriptor to the epollset */
+    if ((kev = malloc(sizeof(*kev))) == NULL)
+        goto errout;
+    EV_SET(kev, 0, EVFILT_SIGNAL, 0, 0, 0, NULL);
+    epev.events = EPOLLIN;
+    epev.data.u32 = 0;
+    utarray_push_back(kq->kev, kev);
+    if (epoll_ctl(kq->epfd, EPOLL_CTL_ADD, kq->sigfd, &epev) < 0)
+        goto errout;
+
+    /* Add the inotify descriptor to the epollset */
+    if ((kev = malloc(sizeof(*kev))) == NULL)
+        goto errout;
+    EV_SET(kev, 0, EVFILT_VNODE, 0, 0, 0, NULL);
+    epev.events = EPOLLIN;
+    epev.data.u32 = 1;
+    utarray_push_back(kq->kev, kev);
+    if (epoll_ctl(kq->epfd, EPOLL_CTL_ADD, kq->inofd, &epev) < 0)
+        goto errout;
+
+    //TODO: consider applying FD_CLOEXEC to all descriptors
 
     // FIXME: check that all members of kq->wfd are valid
 
@@ -167,14 +205,15 @@ kq_add(kqueue_t kq, const struct kevent *ev)
             rv = epoll_ctl(kq->epfd, EPOLL_CTL_ADD, ev->ident, &epev);
 
         case EVFILT_VNODE:
-            //TODO: create an inotifyfd, create an epollfd, add the inotifyfd to the epollfd, set epollfd.data.ptr = evcopy, add epollfd to kq->epfd.
+            epev.events = EPOLLIN;
+            rv = epoll_ctl(kq->epfd, EPOLL_CTL_ADD, ev->ident, &epev);
             rv = -1;
             break;
 
         case EVFILT_SIGNAL:
             kq_lock(kq);
             sigaddset(&kq->sigmask, ev->ident);
-            sigfd = signalfd(kq->wfd[EVFILT_SIGNAL], &kq->sigmask, 0);
+            sigfd = signalfd(kq->sigfd, &kq->sigmask, 0);
             kq_unlock(kq);
             if (sigfd < 0) {
                 rv = -1;
@@ -219,7 +258,7 @@ kq_delete(kqueue_t kq, const struct kevent *ev)
         case EVFILT_SIGNAL:
             kq_lock(kq);
             sigdelset(&kq->sigmask, ev->ident);
-            sigfd = signalfd(kq->wfd[EVFILT_SIGNAL], &kq->sigmask, 0);
+            sigfd = signalfd(kq->sigfd, &kq->sigmask, 0);
             kq_unlock(kq);
             if (sigfd < 0) {
                 rv = -1;
@@ -326,4 +365,29 @@ int kq_event(kqueue_t kq, const struct kevent *changelist, int nchanges,
 
     return (rv == 1 ? 0 : -1);
 #endif
+}
+
+/*
+ * EXPERIMENTAL dispatching API
+ */
+void
+kq_dispatch(kqueue_t kq, void (*cb)(kqueue_t, struct kevent)) 
+{
+    const int maxevents = 64; /* Should be more like 2xNCPU */
+    struct kevent events[maxevents];
+    ssize_t nevents;
+    int i;
+
+    for (;;) {
+        nevents = kq_event(kq, NULL, 0, (struct kevent *) &events, maxevents, NULL);
+        if (nevents < 0)
+            abort();
+        #pragma omp parallel
+        {
+          for (i = 0; i < nevents; i++) {
+              #pragma omp single nowait
+              (*cb)(kq, events[i]);
+          }
+        }
+    }
 }
