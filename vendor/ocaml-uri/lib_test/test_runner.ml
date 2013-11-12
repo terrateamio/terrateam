@@ -246,6 +246,8 @@ let uri_rel_rel_res = [ (* relative-relative resolution *)
   "../a/..", "../", "../../";
   "../a/../", "../", "../../";
   "..", "b/c/", "b/";
+  "", "b", "b";
+  "a", "", "a";
   (* TODO: relative username, ... *)
 ]
 
@@ -265,6 +267,9 @@ let generic_uri_norm = [
   "http://example.com/%68%65%6c%6c%6f", "http://example.com/hello";
   "http://example.com/../", "http://example.com/";
   "http://example.com/./././", "http://example.com/";
+  "%", "%25";
+  "%3", "%253";
+  "%3z", "%253z";
 ]
 
 let test_generic_uri_norm =
