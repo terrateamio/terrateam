@@ -19,10 +19,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif /* _OPENMP */
-
 #include "./lite.h"
 #include "./utarray.h"
 
@@ -44,13 +40,16 @@
 #include <sys/event.h>
 #elif defined(__linux__)
 #define USE_EPOLL
-#include <pthread.h>
 #include <sys/epoll.h>
 #include <sys/inotify.h>
 #include <sys/signalfd.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef KQ_THREADSAFE
+#include <pthread.h>
+#endif
 
 static char * epoll_event_to_str(struct epoll_event *);
 #else
@@ -70,7 +69,17 @@ struct kqueue {
        the 'ident' parameter of the 'struct kevent' in the knote.
      */
     UT_array *knote[EVFILT_SYSCOUNT];
+
+    /* This allows all kevents to share a single inotify descriptor.
+     * Key: inotify watch descriptor returned by inotify_add_watch()
+     * Value: pointer to knote 
+     */
+    UT_array *ino_knote;
+
+#ifdef KQ_THREADSAFE
     pthread_mutex_t kq_mtx;
+#endif
+
 #else
 #error Undefined event system
 #endif
@@ -84,7 +93,7 @@ struct knote {
     struct kevent kev;
     union {
         int timerfd;        /* Each EVFILT_TIMER kevent has a timerfd */
-        int inofd;          /* Each EVFILT_VNODE kevent has an inotify fd */
+        int ino_wd;         /* EVFILT_VNODE: index within kq->ino_knote */
     } aux;
     int deleted;            /* When EV_DELETE is used, it marks the knote deleted instead of freeing the object. This helps with threadsafety by ensuring that threads don't try to access a freed object. It doesn't help with memory usage, as the memory is never reclaimed. */
 };
@@ -92,15 +101,19 @@ struct knote {
 static inline void
 kq_lock(kqueue_t kq)
 {
+#ifdef KQ_THREADSAFE
     if (pthread_mutex_lock(&kq->kq_mtx) != 0) 
         abort();
+#endif
 }
 
 static inline void
 kq_unlock(kqueue_t kq)
 {
+#ifdef KQ_THREADSAFE
     if (pthread_mutex_unlock(&kq->kq_mtx) != 0) 
         abort();
+#endif
 }
 
 UT_icd knote_icd = { sizeof(struct knote), NULL, NULL, NULL };
@@ -127,8 +140,10 @@ kq_init(void)
     if ((kq = malloc(sizeof(*kq))) == NULL)
         return (NULL);
 
+#ifdef KQ_THREADSAFE
     if (pthread_mutex_init(&kq->kq_mtx, NULL) != 0)
         goto errout;
+#endif
 
     /* Create an index of kevents to allow lookups from epev.data.u32 */
 
@@ -455,31 +470,6 @@ int kq_event(kqueue_t kq, const struct kevent *changelist, int nchanges,
 
     return (rv == 1 ? 0 : -1);
 #endif
-}
-
-/*
- * EXPERIMENTAL dispatching API
- */
-void
-kq_dispatch(kqueue_t kq, void (*cb)(kqueue_t, struct kevent)) 
-{
-    const int maxevents = 64; /* Should be more like 2xNCPU */
-    struct kevent events[maxevents];
-    ssize_t nevents;
-    int i;
-
-    for (;;) {
-        nevents = kq_event(kq, NULL, 0, (struct kevent *) &events, maxevents, NULL);
-        if (nevents < 0)
-            abort();
-        #pragma omp parallel
-        {
-          for (i = 0; i < nevents; i++) {
-              #pragma omp single nowait
-              (*cb)(kq, events[i]);
-          }
-        }
-    }
 }
 
 #if defined(USE_EPOLL)
