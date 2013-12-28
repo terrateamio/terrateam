@@ -40,7 +40,7 @@ val pct_encode : ?scheme:string -> ?component:component -> string -> string
 (** Percent-decode a percent-encoded string *)
 val pct_decode : string -> string
 
-(** Convert a percent-encoded string into a URI structure *)
+(** Parse a URI string literal into a URI structure *)
 val of_string : string -> t
 
 (** Convert a URI structure into a percent-encoded URI string *)
