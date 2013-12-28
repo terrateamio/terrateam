@@ -222,24 +222,42 @@ end = struct
     scan 0 0;
     Buffer.contents buf
 
+
+  let int_of_hex_char c = Scanf.sscanf (String.make 1 c) "%x" (fun x -> x)
+
   (** Scan for percent-encoding and convert them into ASCII.
       @return a percent-decoded string *)
-  let decode b = 
+  let decode b =
+    (* TODO: Should both strict and non-strict versions be exposed? *)
     let len = String.length b in
     let buf = Buffer.create len in
     let rec scan start cur =
-      if cur >= len then begin
+      if cur >= len then Buffer.add_substring buf b start (cur-start)
+      else if b.[cur] = '%' then begin
         Buffer.add_substring buf b start (cur-start);
-      end else begin
-        if b.[cur] = '%' then begin
-          Buffer.add_substring buf b start (cur-start);
-          let c = Scanf.sscanf (String.sub b (cur+1) 2 ^ " ") "%2x" (fun x -> x) in
-          Buffer.add_char buf (Char.chr c);
-          scan (cur+3) (cur+3)
-        end else begin
-          scan start (cur+1)
-        end
-      end
+        let cur = cur + 1 in
+        if cur >= len then Buffer.add_char buf '%'
+        else match (try Some (int_of_hex_char b.[cur])
+          with Scanf.Scan_failure _ ->
+            Buffer.add_char buf '%';
+            None) with
+        | None -> scan cur cur
+        | Some highbits ->
+          let cur = cur + 1 in
+          if cur >= len then Buffer.(add_char buf '%'; add_char buf b.[cur-1])
+          else begin
+            let start_at =
+              try
+                let lowbits = int_of_hex_char b.[cur] in
+                Buffer.add_char buf (Char.chr (highbits lsl 4 + lowbits));
+                cur+1
+              with Scanf.Scan_failure _ ->
+                Buffer.add_char buf '%';
+                Buffer.add_char buf b.[cur-1];
+                cur
+            in scan start_at start_at
+          end
+      end else scan start (cur+1)
     in
     scan 0 0;
     Buffer.contents buf
