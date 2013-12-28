@@ -2,6 +2,7 @@
 * Be lenient about decoding incorrect encoded percent-strings (#31).
 * Improve ocamldoc for `Uri.of_string`.
 * Regenerate build files with OASIS 0.4.1.
+* Add an `mldylib` to build the cmxs Natdynlink plugin properly (#29).
 
 1.3.11 (2013-10-13):
 * Add relative-relative URI resolution support.
