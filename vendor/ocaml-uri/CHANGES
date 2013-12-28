@@ -1,3 +1,8 @@
+1.3.12 (2013-12-28):
+* Be lenient about decoding incorrect encoded percent-strings (#31).
+* Improve ocamldoc for `Uri.of_string`.
+* Regenerate build files with OASIS 0.4.1.
+
 1.3.11 (2013-10-13):
 * Add relative-relative URI resolution support.
 * OCamldoc fixes.
