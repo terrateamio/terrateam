@@ -222,8 +222,15 @@ end = struct
     scan 0 0;
     Buffer.contents buf
 
-
-  let int_of_hex_char c = Scanf.sscanf (String.make 1 c) "%x" (fun x -> x)
+  let int_of_hex_char c =
+    let c = int_of_char (Char.uppercase c) - 48 in
+    if c > 9
+    then if c > 16 && c < 23
+      then c - 7
+      else raise (Failure "int_of_hex_char")
+    else if c >= 0
+    then c
+    else raise (Failure "int_of_hex_char")
 
   (** Scan for percent-encoding and convert them into ASCII.
       @return a percent-decoded string *)
@@ -238,7 +245,7 @@ end = struct
         let cur = cur + 1 in
         if cur >= len then Buffer.add_char buf '%'
         else match (try Some (int_of_hex_char b.[cur])
-          with Scanf.Scan_failure _ ->
+          with Failure "int_of_hex_char" ->
             Buffer.add_char buf '%';
             None) with
         | None -> scan cur cur
@@ -251,7 +258,7 @@ end = struct
                 let lowbits = int_of_hex_char b.[cur] in
                 Buffer.add_char buf (Char.chr (highbits lsl 4 + lowbits));
                 cur+1
-              with Scanf.Scan_failure _ ->
+              with Failure "int_of_hex_char" ->
                 Buffer.add_char buf '%';
                 Buffer.add_char buf b.[cur-1];
                 cur
