@@ -1,4 +1,4 @@
-1.3.13 (trunk):
+1.3.13 (2014-01-16):
 * Remove internal use of Scanf.
 * Expose `with sexp` for the Uri types.
 
