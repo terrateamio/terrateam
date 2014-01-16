@@ -15,6 +15,9 @@
  *
  *)
 
+open Sexplib.Std
+open Sexplib.Conv (* Workaround for bug in Sexplib when used without Core *)
+
 type component = [
     `Scheme
   | `Authority
@@ -25,7 +28,7 @@ type component = [
   | `Query_key
   | `Query_value
   | `Fragment
-]
+] with sexp
 
 let rec iter_concat fn sep buf = function
   | last::[] -> fn buf last
@@ -165,8 +168,8 @@ let module_of_scheme = function
   * probably not a lot of use to the average consumer of this library 
 *)
 module Pct : sig
-  type encoded
-  type decoded
+  type encoded with sexp
+  type decoded with sexp
 
   val encode : ?scheme:string -> ?component:component -> decoded -> encoded
   val decode : encoded -> decoded
@@ -184,8 +187,8 @@ module Pct : sig
   val unlift_encoded : (string -> string) -> encoded -> encoded
   val unlift_decoded : (string -> string) -> decoded -> decoded
 end = struct
-  type encoded = string
-  type decoded = string
+  type encoded = string with sexp
+  type decoded = string with sexp
   let cast_encoded x = x
   let cast_decoded x = x
   let empty_decoded = ""
@@ -283,7 +286,7 @@ let pct_decode s = Pct.(uncast_decoded (decode (cast_encoded s)))
 (* Query string handling, to and from an assoc list of key/values *)
 module Query = struct
 
-  type t = (string * string list) list
+  type t = (string * string list) list with sexp
 
   let find q k = try Some (List.assoc k q) with Not_found -> None
 
@@ -350,16 +353,17 @@ let query_of_encoded = Query.query_of_encoded
 let encoded_of_query = Query.encoded_of_query
 
 (* Type of the URI, with most bits being optional
-*)
+*) 
+
 type t = {
-  scheme: Pct.decoded option;
-  userinfo: Pct.decoded option;
-  host: Pct.decoded option;
-  port: int option;
+  scheme: Pct.decoded sexp_option;
+  userinfo: Pct.decoded sexp_option;
+  host: Pct.decoded sexp_option;
+  port: int sexp_option;
   path: Pct.decoded;
   query: Query.t;
-  fragment: Pct.decoded option;
-}
+  fragment: Pct.decoded sexp_option;
+} with sexp
 
 let normalize schem uri =
   let uncast_opt = function

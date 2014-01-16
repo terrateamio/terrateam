@@ -337,7 +337,21 @@ let query_key_add_remove =
   let uri = Uri.remove_query_param uri "k3" in
   assert_equal ~printer (Uri.query uri) []
   in ["query_key_add_remove" >:: test]
-  
+
+let test_sexping =
+  let tests = [
+    "1", "https://example.com/foo?bar=1#frag",
+      "((scheme https)(host example.com)(path /foo)(query((bar(1))))(fragment frag))";
+    "2", "", "((path\"\")(query()))";
+    "3", "/?foo=bar", "((path /)(query((foo(bar)))))"
+  ] in
+  let test uri exp =
+    let uri = Uri.of_string uri in
+    let s = Sexplib.Sexp.to_string (Uri.sexp_of_t uri) in
+    assert_equal s exp
+  in
+  List.map (fun (id,uri,exp) -> ("test_sexping_%s"^id) >:: (fun () -> test uri exp)) tests
+
 (* Returns true if the result list contains successes only.
    Copied from oUnit source as it isnt exposed by the mli *)
 let rec was_successful =
@@ -352,7 +366,7 @@ let rec was_successful =
         false
 
 let _ =
-  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_uri_decode @ test_query_decode @ test_query_encode @ test_rel_res @ test_file_rel_res @ test_rel_rel_res @ test_generic_uri_norm @ test_rel_id @ test_tcp_port_of_uri @ query_key_add_remove) in
+  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_uri_decode @ test_query_decode @ test_query_encode @ test_rel_res @ test_file_rel_res @ test_rel_rel_res @ test_generic_uri_norm @ test_rel_id @ test_tcp_port_of_uri @ query_key_add_remove @ test_sexping) in
   let verbose = ref false in
   let set_verbose _ = verbose := true in
   Arg.parse

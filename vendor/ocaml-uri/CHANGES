@@ -1,5 +1,6 @@
 1.3.13 (trunk):
-* Remove internal use of Scanf
+* Remove internal use of Scanf.
+* Expose `with sexp` for the Uri types.
 
 1.3.12 (2013-12-28):
 * Be lenient about decoding incorrect encoded percent-strings (#31).

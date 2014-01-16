@@ -19,7 +19,7 @@
 
 (** A single URI that is a compact sequence of characters that identifies
     an abstract or physical resource. *)
-type t
+type t with sexp
 
 type component = [
   `Scheme
@@ -31,7 +31,7 @@ type component = [
 | `Query_key
 | `Query_value
 | `Fragment
-]
+] with sexp
 
 (** Percent-encode a string. The [scheme] argument defaults to 'http' and
     the [component] argument defaults to `Path *)
