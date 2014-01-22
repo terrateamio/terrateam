@@ -47,6 +47,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+//XXX - TEMPORARY DURING DEVELOPMENT
+#define KQ_THREADSAFE 1
+
 #ifdef KQ_THREADSAFE
 #include <pthread.h>
 #endif

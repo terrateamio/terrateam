@@ -34,10 +34,15 @@ void test_evfilt_write(kqueue_t kq) {
     close(sockfd[1]);
 }
 
-void install_sighandler(kqueue_t kq) {
+void test_evfilt_signal(kqueue_t kq) {
     struct kevent kev;
+    sigset_t mask;
 
-    signal(SIGUSR1, SIG_IGN);
+    /* Block the normal signal handler mechanism */
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGUSR1);
+    if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
+        abort();
 
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD | EV_ENABLE, 0, 0, NULL);
     kq_event(kq, &kev, 1, 0, 0, NULL);
@@ -56,7 +61,7 @@ int main() {
     kqueue_t kq;
 
     kq = kq_init();
-    //install_sighandler(kq);
+    test_evfilt_signal(kq);
     test_evfilt_write(kq);
     kq_free(kq);
 
