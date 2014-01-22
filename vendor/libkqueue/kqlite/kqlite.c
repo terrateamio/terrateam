@@ -43,6 +43,7 @@
 #include <sys/epoll.h>
 #include <sys/inotify.h>
 #include <sys/signalfd.h>
+#include <sys/timerfd.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,6 +67,7 @@ struct kqueue {
     int epfd;           /* epoll */
     int inofd;          /* inotify */
     int sigfd;          /* signalfd */
+    int timefd;         /* timerfd */
     int readfd, writefd;  /* epoll descriptors for EVFILT_READ & EVFILT_WRITE */
     sigset_t sigmask;
     /* All of the active knotes for each filter. The index in the array matches
@@ -128,7 +130,7 @@ kq_init(void)
     struct kqueue *kq;
 
 #if defined(USE_KQUEUE)
-    if ((kq = malloc(sizeof(*kq))) == NULL)
+    if ((kq = calloc(1, sizeof(*kq))) == NULL)
         return (NULL);
 
     kq->kqfd = kqueue();
@@ -155,14 +157,14 @@ kq_init(void)
 
     /* Initialize all the event descriptors */
     sigemptyset(&kq->sigmask);
-    kq->sigfd = kq->inofd = kq->epfd = kq->readfd = kq->writefd = -1;
     kq->sigfd = signalfd(-1, &kq->sigmask, 0);
     kq->inofd = inotify_init();
     kq->epfd = epoll_create(10);
     kq->readfd = epoll_create(10);
     kq->writefd = epoll_create(10);
+    kq->timefd = timerfd_create(CLOCK_MONOTONIC, 0);
     if (kq->sigfd < 0 || kq->inofd < 0 || kq->epfd < 0 
-            || kq->readfd < 0 || kq->writefd < 0)
+            || kq->readfd < 0 || kq->writefd < 0 || kq->timefd < 0)
         goto errout;
 
     /* Add the signalfd descriptor to the epollset */
@@ -202,12 +204,7 @@ kq_init(void)
     return (kq);
 
 errout:
-    free(kq);
-    if (kq->epfd >= 0) close(kq->epfd);
-    if (kq->readfd >= 0) close(kq->readfd);
-    if (kq->writefd >= 0) close(kq->writefd);
-    if (kq->sigfd >= 0) close(kq->sigfd);
-    //FIXME: something like: if (kq->wfd[EVFILT_SIGNAL] >= 0) free(kq->epfd);
+    kq_free(kq);
     return (NULL);
 #endif
 }
@@ -219,11 +216,21 @@ kq_free(kqueue_t kq)
     close(kq.kqfd);
     
 #elif defined(USE_EPOLL)
+    close(kq->sigfd);
+    close(kq->inofd);
     close(kq->epfd);
+    close(kq->readfd);
+    close(kq->writefd);
+    close(kq->timefd);
+
     //FIXME: need to free each individual knote
     for (int i = 0; i < EVFILT_SYSCOUNT; i++)
         utarray_free(kq->knote[i]);
-    //FIXME: there are a more things to do
+
+# ifdef KQ_THREADSAFE
+    pthread_mutex_destroy(&kq->kq_mtx);
+# endif
+
 #endif
     free(kq);
 }
