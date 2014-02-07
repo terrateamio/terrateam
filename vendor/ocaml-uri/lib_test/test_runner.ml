@@ -62,6 +62,10 @@ let uri_encodes = [
   "foo+bar%3A", (Uri.make ~path:"foo+bar:" ());
   "foo+bar:///", (Uri.make ~scheme:"foo+bar" ~host:"" ~path:"/" ());
   "foo2-bar.baz:///", (Uri.make ~scheme:"foo2-bar.baz" ~host:"" ~path:"/" ());
+  (let p_q = "/foo%20bar/" in
+   Uri.(path_and_query (of_string p_q), of_string p_q));
+  (let p_slash = "/foo%2fbar/" in
+   p_slash, Uri.of_string p_slash);
 ]
 
 let map_pcts_tests size name test args =
