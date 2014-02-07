@@ -62,10 +62,6 @@ let uri_encodes = [
   "foo+bar%3A", (Uri.make ~path:"foo+bar:" ());
   "foo+bar:///", (Uri.make ~scheme:"foo+bar" ~host:"" ~path:"/" ());
   "foo2-bar.baz:///", (Uri.make ~scheme:"foo2-bar.baz" ~host:"" ~path:"/" ());
-  (let p_q = "/foo%20bar/" in
-   Uri.(path_and_query (of_string p_q), of_string p_q));
-  (let p_slash = "/foo%2fbar/" in
-   p_slash, Uri.of_string p_slash);
 ]
 
 let map_pcts_tests size name test args =
@@ -279,6 +275,11 @@ let generic_uri_norm = [
   "%3/", "%253/";
   "%%25", "%25%25";
   "%2%25", "%252%25";
+  "/foo%2fbar/", "/foo%2fbar/";
+  "//colon%3auser:colon%3apassword@example.net/",
+  "//colon%3auser:colon%3apassword@example.net/";
+  (let p_q = "/foo%20bar/" in
+   p_q, Uri.(path_and_query (of_string p_q)));
 ]
 
 let test_generic_uri_norm =
