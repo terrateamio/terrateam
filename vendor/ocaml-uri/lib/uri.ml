@@ -38,6 +38,14 @@ let rec iter_concat fn sep buf = function
     iter_concat fn sep buf rest
   | [] -> ()
 
+let rev_interject e lst =
+  let rec aux acc = function
+    | []  -> acc
+    | x::xs -> aux (x::e::acc) xs
+  in match lst with
+  | []  -> []
+  | h::t -> aux [h] t
+
 (** Safe characters that are always allowed in a URI 
   * Unfortunately, this varies depending on which bit of the URI
   * is being parsed, so there are multiple variants (and this
@@ -84,9 +92,9 @@ module Generic : Scheme = struct
       TODO: sometimes ':' is unsafe (Sec 3.3 pchar vs segment-nz-nc) *)
   let safe_chars_for_path : safe_chars =
     let a = sub_delims (Array.copy safe_chars) in
-    (* delimiter: non-segment delimiting uses should be pct encoded *)
-    a.(Char.code '/') <- true;
     a.(Char.code '@') <- true;
+    (* delimiter: non-segment delimiting uses should be pct encoded *)
+    a.(Char.code '/') <- false;
     a
 
   let safe_chars_for_query : safe_chars =
@@ -283,6 +291,59 @@ let pct_encode ?scheme ?(component=`Path) s =
 (* Percent decode a string *)
 let pct_decode s = Pct.(uncast_decoded (decode (cast_encoded s)))
 
+(* Path string handling, to and from a list of path tokens *)
+module Path = struct
+  (* Invariant: every element is non-zero, slashes (/) only occur alone. *)
+  (* Yes, it's better this way. This means you can retain separator
+     context in recursion (e.g. remove_dot_segments for relative resolution). *)
+  type t = string list with sexp
+
+  (* Path segment separator '/' *)
+  let ps_sep = Re_str.regexp_string "/"
+
+  let rev_tokenize_path p =
+    List.rev_map (function Re_str.Text s | Re_str.Delim s -> s)
+      (Re_str.full_split ps_sep p)
+
+  (* Make a path token list from a percent-encoded string *)
+  let path_of_encoded ps =
+    let rev_tokl = rev_tokenize_path ps in
+    List.rev_map pct_decode rev_tokl
+
+  (* Subroutine for resolve <http://tools.ietf.org/html/rfc3986#section-5.2.4> *)
+  let remove_dot_segments p =
+    let revp = List.rev p in
+    let rec loop ascension outp = function
+      | "/"::".."::r | ".."::r -> loop (ascension + 1) outp r
+      | "/"::"."::r  | "."::r  -> loop ascension outp r
+      | "/"::[] | [] when List.(length p > 0 && hd p = "/") -> "/"::outp
+      | [] when ascension > 0 -> List.rev_append
+        ("/"::(rev_interject "/" Array.(to_list (make ascension "..")))) outp
+      | [] -> List.(if length outp > 0 && hd outp = "/" then tl outp else outp)
+      | "/"::s::r when ascension > 0 -> loop (ascension - 1) outp r
+      | s::r -> loop 0 (s::outp) r
+    in loop 0 [] revp
+
+  let encoded_of_path ?scheme p =
+    let len = List.fold_left (fun c tok -> String.length tok + c) 0 p in
+    let buf = Buffer.create len in
+    iter_concat (fun buf -> function
+    | "/" -> Buffer.add_char buf '/'
+    | seg -> Buffer.add_string buf (pct_encode ?scheme ~component:`Path seg)
+    ) "" buf p;
+    Pct.cast_encoded (Buffer.contents buf)
+
+  (* Subroutine for resolve <http://tools.ietf.org/html/rfc3986#section-5.2.3> *)
+  let merge bhost bpath relpath =
+    match bhost, List.rev bpath with
+    | Some _, [] -> "/"::relpath
+    | _, ("/"::rbpath | _::"/"::rbpath) -> List.rev_append ("/"::rbpath) relpath
+    | _, _ -> relpath
+end
+
+let path_of_encoded = Path.path_of_encoded
+let encoded_of_path ?scheme = Path.encoded_of_path ?scheme
+
 (* Query string handling, to and from an assoc list of key/values *)
 module Query = struct
 
@@ -360,7 +421,7 @@ type t = {
   userinfo: Pct.decoded sexp_option;
   host: Pct.decoded sexp_option;
   port: int sexp_option;
-  path: Pct.decoded;
+  path: Path.t;
   query: Query.t;
   fragment: Pct.decoded sexp_option;
 } with sexp
@@ -392,7 +453,7 @@ let make ?scheme ?userinfo ?host ?port ?path ?query ?fragment () =
   let decode = function
     |Some x -> Some (Pct.cast_decoded x) |None -> None in
   let path = match path with
-    |None -> Pct.empty_decoded |Some p -> Pct.cast_decoded p in
+    |None -> [] | Some p -> path_of_encoded p in
   let query = match query with |None -> [] |Some p -> p in
   let scheme = decode scheme in
   normalize scheme
@@ -431,9 +492,9 @@ let of_string s =
       userinfo, host, port
   in
   let path =
-    match get_opt subs 5 with
-    | Some x -> x
-    | None -> Pct.empty_decoded
+    match get_opt_encoded subs 5 with
+    | Some x -> Path.path_of_encoded (Pct.uncast_encoded x)
+    | None -> []
   in
   let query =
     match get_opt_encoded subs 7 with
@@ -453,7 +514,8 @@ let to_string uri =
   let buf = Buffer.create 128 in
   (* Percent encode a decoded string and add it to the buffer *)
   let add_pct_string ?(component=`Path) x =
-    Buffer.add_string buf (Pct.uncast_encoded (Pct.encode ?scheme ~component x)) in
+    Buffer.add_string buf (Pct.uncast_encoded (Pct.encode ?scheme ~component x))
+  in
   (match uri.scheme with
    |None -> ()
    |Some x ->
@@ -478,17 +540,14 @@ let to_string uri =
      );
    |None -> ()
   );
-  (match Pct.uncast_decoded uri.path with
-   |"" ->
-     (* If the buffer has no host, then always start URI with a slash *)
-     (*if uri.host = None then Buffer.add_char buf '/'*) ()
-   |path when path.[0] = '/' ->
-     (* Path starts with a slash, so ok to add *)
-     add_pct_string ~component:`Path uri.path;
-   |path ->
-     (* Path has no starting slash and is non-empty, so force a starting slash *)
-     (*Buffer.add_char buf '/';*)
-     add_pct_string ~component:`Path uri.path;
+  (match uri.path with (* Handle relative paths correctly *)
+  | [] -> ()
+  | "/"::_ ->
+    Buffer.add_string buf (Pct.uncast_encoded (encoded_of_path ?scheme uri.path))
+  | _ ->
+    (if uri.host <> None then Buffer.add_char buf '/');
+    Buffer.add_string buf
+      (Pct.uncast_encoded (encoded_of_path ?scheme uri.path))
   );
   (match uri.query with
    |[] -> ()
@@ -501,8 +560,10 @@ let to_string uri =
   Buffer.contents buf
 
 (* Return the path component *)
-let path uri = Pct.uncast_decoded uri.path
-let with_path uri path = { uri with path=Pct.cast_decoded path }
+let path uri = Pct.uncast_encoded (match uri.scheme with
+  | None -> encoded_of_path uri.path
+  | Some s -> encoded_of_path ~scheme:(Pct.uncast_decoded s) uri.path)
+let with_path uri path = { uri with path=path_of_encoded path }
 
 (* Various accessor functions, as the external uri type is abstract  *)
 let get_decoded_opt = function None -> None |Some x -> Some (Pct.uncast_decoded x)
@@ -544,47 +605,16 @@ let add_query_params uri ps = { uri with query=ps@uri.query }
 let add_query_params' uri ps = { uri with query=(q_s ps)@uri.query }
 let remove_query_param uri k = { uri with query=(List.filter (fun (k',_) -> k<>k') uri.query) }
 
-(* Construct the path and query fragment portion *)
+(* Construct encoded path and query components *)
 let path_and_query uri =
   match (path uri), (query uri) with
-  |"", [] -> "/"
-  |"", q -> Printf.sprintf "/?%s" (encoded_of_query q)
+  |"", [] -> "/" (* TODO: What about same document? (/) *)
+  |"", q -> (* TODO: What about same document? (/) *)
+    Printf.sprintf "/?%s" (encoded_of_query q)
   |p, [] -> p
   |p, q -> Printf.sprintf "%s?%s" p (encoded_of_query q)
 
 (* TODO: functions to add and remove from a URI *)
-
-(* Subroutine for resolve <http://tools.ietf.org/html/rfc3986#section-5.2.3> *)
-let merge base rpath =
-  match host base, path base with
-  | Some _, "" -> Pct.cast_decoded ("/"^rpath)
-  | _, bpath -> Pct.cast_decoded begin
-      try (String.sub bpath 0 (1+(String.rindex bpath '/')))^rpath
-      with Not_found -> rpath
-    end
-
-let tokenize_path p =
-  List.map (function Re_str.Text s | Re_str.Delim s -> s)
-    (Re_str.full_split (Re_str.regexp "/") p)
-
-(* Subroutine for resolve <http://tools.ietf.org/html/rfc3986#section-5.2.4> *)
-let remove_dot_segments p =
-  let inp = tokenize_path (Pct.uncast_decoded p) in
-  let revp = List.rev inp in
-  let rec loop ascension outp = function
-    | "/"::".."::r | ".."::r -> loop (ascension + 1) outp r
-    | "/"::"."::r  | "."::r  -> loop ascension outp r
-    | "/"::[] | [] when List.(length inp > 0 && hd inp = "/") ->
-      "/" ^ (String.concat "" outp)
-    | [] when ascension > 0 -> String.concat ""
-                                 ((String.concat "/" Array.(to_list (make ascension ".."))
-                                   ^ "/") :: outp)
-    | [] -> String.concat "" List.(
-        if length outp > 0 && hd outp = "/"
-        then tl outp else outp)
-    | "/"::s::r when ascension > 0 -> loop (ascension - 1) outp r
-    | s::r -> loop 0 (s::outp) r
-  in Pct.cast_decoded (loop 0 [] revp)
 
 (* Resolve a URI wrt a base URI <http://tools.ietf.org/html/rfc3986#section-5.2> *)
 let resolve schem base uri =
@@ -593,19 +623,22 @@ let resolve schem base uri =
       | Some scheme -> scheme
     )) in
   normalize schem
-    begin match scheme uri, host uri with
-      | Some _, _ ->
-        {uri with path=remove_dot_segments uri.path}
-      | None, Some _ ->
-        {uri with scheme=base.scheme; path=remove_dot_segments uri.path}
-      | None, None ->
-        let uri = {uri with scheme=base.scheme; host=base.host; port=base.port} in
-        if (path uri)=""
-        then {uri with path=base.path;
-                       query=if uri.query=[] then base.query else uri.query}
-        else if (path uri).[0]='/'
-        then {uri with path=remove_dot_segments uri.path}
-        else {uri with path=remove_dot_segments (merge base (path uri))}
-    end
+    Path.(match scheme uri, host uri with
+    | Some _, _ ->
+      {uri with path=remove_dot_segments uri.path}
+    | None, Some _ ->
+      {uri with scheme=base.scheme; path=remove_dot_segments uri.path}
+    | None, None ->
+      let uri = {uri with scheme=base.scheme; host=base.host; port=base.port} in
+      let path_str = path uri in
+      if path_str=""
+      then {uri with path=base.path;
+        query=if uri.query=[] then base.query else uri.query}
+      else if path_str.[0]='/'
+      then {uri with path=remove_dot_segments uri.path}
+      else {uri with
+        path=remove_dot_segments (merge base.host base.path uri.path);
+      }
+    )
 
 let pp_hum ppf uri = Format.fprintf ppf "%s" (to_string uri)

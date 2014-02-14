@@ -62,6 +62,8 @@ let uri_encodes = [
   "foo+bar%3A", (Uri.make ~path:"foo+bar:" ());
   "foo+bar:///", (Uri.make ~scheme:"foo+bar" ~host:"" ~path:"/" ());
   "foo2-bar.baz:///", (Uri.make ~scheme:"foo2-bar.baz" ~host:"" ~path:"/" ());
+  "//foobar.com/quux", (Uri.make ~host:"foobar.com" ~path:"quux" ());
+  "quux%2F%20", (Uri.make ~path:"quux%2f " ());
 ]
 
 let map_pcts_tests size name test args =
@@ -275,7 +277,7 @@ let generic_uri_norm = [
   "%3/", "%253/";
   "%%25", "%25%25";
   "%2%25", "%252%25";
-  "/foo%2fbar/", "/foo%2fbar/";
+  "/foo%2fbar/", "/foo%2Fbar/";
   "//colon%3auser:colon%3apassword@example.net/",
   "//colon%3auser:colon%3apassword@example.net/";
   (let p_q = "/foo%20bar/" in
@@ -346,16 +348,19 @@ let query_key_add_remove =
 let test_sexping =
   let tests = [
     "1", "https://example.com/foo?bar=1#frag",
-      "((scheme https)(host example.com)(path /foo)(query((bar(1))))(fragment frag))";
-    "2", "", "((path\"\")(query()))";
-    "3", "/?foo=bar", "((path /)(query((foo(bar)))))"
+      "((scheme https)(host example.com)(path(/ foo))(query((bar(1))))(fragment frag))";
+    "2", "", "((path())(query()))";
+    "3", "/?foo=bar", "((path(/))(query((foo(bar)))))"
   ] in
   let test uri exp =
     let uri = Uri.of_string uri in
     let s = Sexplib.Sexp.to_string (Uri.sexp_of_t uri) in
-    assert_equal s exp
+    let msg = Printf.sprintf "%s <> %s" s exp in
+    assert_equal ~msg s exp
   in
-  List.map (fun (id,uri,exp) -> ("test_sexping_%s"^id) >:: (fun () -> test uri exp)) tests
+  List.map (fun (id,uri,exp) ->
+    ("test_sexping_"^id) >:: (fun () -> test uri exp)
+  ) tests
 
 (* Returns true if the result list contains successes only.
    Copied from oUnit source as it isnt exposed by the mli *)
