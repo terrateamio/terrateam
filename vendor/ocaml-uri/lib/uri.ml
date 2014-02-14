@@ -124,7 +124,7 @@ module Generic : Scheme = struct
   let safe_chars_for_userinfo : safe_chars =
     let a = Array.copy safe_chars in
     (* delimiter: non-segment delimiting uses should be pct encoded *)
-    a.(Char.code ':') <- true;
+    a.(Char.code ':') <- false;
     a
 
   let safe_chars_for_component = function
@@ -394,28 +394,27 @@ module Query = struct
    * Tuple inputs are percent decoded and will be encoded by
    * this function.
   *)
-  let encoded_of_query l =
+  let encoded_of_query ?scheme l =
     let len = List.fold_left (fun a (k,v) ->
         a + (String.length k)
         + (List.fold_left (fun a s -> a+(String.length s)+1) 0 v) + 2) (-1) l in
     let buf = Buffer.create len in
     iter_concat (fun buf (k,v) ->
-        Buffer.add_string buf (pct_encode ~component:`Query_key k);
+        Buffer.add_string buf (pct_encode ?scheme ~component:`Query_key k);
         if v <> [] then (
           Buffer.add_char buf '=';
           iter_concat (fun buf s ->
-              Buffer.add_string buf (pct_encode ~component:`Query_value s)
+              Buffer.add_string buf
+                (pct_encode ?scheme ~component:`Query_value s)
             ) "," buf v)
       ) "&" buf l;
     Buffer.contents buf
 end
 
 let query_of_encoded = Query.query_of_encoded
-let encoded_of_query = Query.encoded_of_query
+let encoded_of_query ?scheme = Query.encoded_of_query ?scheme
 
-(* Type of the URI, with most bits being optional
-*) 
-
+(* Type of the URI, with most bits being optional *)
 type t = {
   scheme: Pct.decoded sexp_option;
   userinfo: Pct.decoded sexp_option;
@@ -550,8 +549,10 @@ let to_string uri =
       (Pct.uncast_encoded (encoded_of_path ?scheme uri.path))
   );
   (match uri.query with
-   |[] -> ()
-   |q -> Buffer.add_char buf '?'; Buffer.add_string buf (Query.encoded_of_query q)
+  |[] -> ()
+  |q ->
+    Buffer.add_char buf '?';
+    Buffer.add_string buf (encoded_of_query ?scheme q)
   );
   (match uri.fragment with
    |None -> ()
