@@ -291,6 +291,35 @@ let pct_encode ?scheme ?(component=`Path) s =
 (* Percent decode a string *)
 let pct_decode s = Pct.(uncast_decoded (decode (cast_encoded s)))
 
+(* Userinfo string handling, to and from an id * credential pair *)
+module Userinfo = struct
+  type t = string * string option with sexp
+
+  let us_sep = Re_str.regexp_string ":"
+
+  let userinfo_of_encoded us =
+    match Re_str.bounded_split_delim us_sep us 2 with
+    | [] -> ("",None)
+    | [u] -> (pct_decode u,None)
+    | u::p::_ -> (pct_decode u,Some (pct_decode p))
+
+  let encoded_of_userinfo ?scheme (u,po) =
+    let len = String.(
+      1 + (length u) + (match po with None -> 0 | Some p -> length p))
+    in
+    let buf = Buffer.create len in
+    Buffer.add_string buf (pct_encode ?scheme ~component:`Userinfo u);
+    begin match po with None -> ();
+    | Some p ->
+      Buffer.add_char buf ':';
+      Buffer.add_string buf (pct_encode ?scheme ~component:`Userinfo p)
+    end;
+    Pct.cast_encoded (Buffer.contents buf)
+end
+
+let userinfo_of_encoded = Userinfo.userinfo_of_encoded
+let encoded_of_userinfo ?scheme = Userinfo.encoded_of_userinfo ?scheme
+
 (* Path string handling, to and from a list of path tokens *)
 module Path = struct
   (* Invariant: every element is non-zero, slashes (/) only occur alone. *)
@@ -417,7 +446,7 @@ let encoded_of_query ?scheme = Query.encoded_of_query ?scheme
 (* Type of the URI, with most bits being optional *)
 type t = {
   scheme: Pct.decoded sexp_option;
-  userinfo: Pct.decoded sexp_option;
+  userinfo: Userinfo.t sexp_option;
   host: Pct.decoded sexp_option;
   port: int sexp_option;
   path: Path.t;
@@ -451,12 +480,14 @@ let normalize schem uri =
 let make ?scheme ?userinfo ?host ?port ?path ?query ?fragment () =
   let decode = function
     |Some x -> Some (Pct.cast_decoded x) |None -> None in
+  let userinfo = match userinfo with
+    | None -> None | Some u -> Some (userinfo_of_encoded u) in
   let path = match path with
     |None -> [] | Some p -> path_of_encoded p in
   let query = match query with |None -> [] |Some p -> p in
   let scheme = decode scheme in
   normalize scheme
-    { scheme; userinfo=decode userinfo;
+    { scheme; userinfo;
       host=decode host; port; path; query; fragment=decode fragment }
 
 (** Parse a URI string into a structure *)
@@ -477,16 +508,22 @@ let of_string s =
   let subs = Re.exec Uri_re.uri_reference s in
   let scheme = get_opt subs 2 in
   let userinfo, host, port =
-    match get_opt subs 4 with
+    match get_opt_encoded subs 4 with
     |None -> None, None, None
     |Some a ->
-      let subs' = Re.exec Uri_re.authority (Pct.uncast_decoded a) in
-      let userinfo = get_opt subs' 1 in
+      let subs' = Re.exec Uri_re.authority (Pct.uncast_encoded a) in
+      let userinfo = match get_opt_encoded subs' 1 with
+        | Some x -> Some (Userinfo.userinfo_of_encoded (Pct.uncast_encoded x))
+        | None -> None
+      in
       let host = get_opt subs' 2 in
       let port =
         match get_opt subs' 3 with
         |None -> None
-        |Some x -> (try Some (int_of_string (Pct.uncast_decoded x)) with _ -> None)
+        |Some x ->
+          (try
+             Some (int_of_string (Pct.uncast_decoded x))
+           with _ -> None)
       in
       userinfo, host, port
   in
@@ -527,7 +564,8 @@ let to_string uri =
      (match uri.userinfo with
       |None -> ()
       |Some userinfo ->
-        add_pct_string ~component:`Userinfo userinfo;
+        Buffer.add_string buf
+          (Pct.uncast_encoded (encoded_of_userinfo ?scheme userinfo));
         Buffer.add_char buf '@'
      );
      add_pct_string ~component:`Host host;
@@ -569,7 +607,11 @@ let with_path uri path = { uri with path=path_of_encoded path }
 (* Various accessor functions, as the external uri type is abstract  *)
 let get_decoded_opt = function None -> None |Some x -> Some (Pct.uncast_decoded x)
 let scheme uri = get_decoded_opt uri.scheme
-let userinfo uri = get_decoded_opt uri.userinfo
+let userinfo uri = match uri.userinfo with
+  | None -> None
+  | Some userinfo -> Some (Pct.uncast_encoded (match uri.scheme with
+    | None -> encoded_of_userinfo userinfo
+    | Some s -> encoded_of_userinfo ~scheme:(Pct.uncast_decoded s) userinfo))
 let host uri = get_decoded_opt uri.host
 let with_host uri =
   function

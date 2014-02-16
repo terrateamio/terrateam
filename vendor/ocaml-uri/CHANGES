@@ -1,5 +1,6 @@
 1.4.0 (trunk):
 * Fix path and path_and_query encoding bugs (#35).
+* Fix userinfo percent-encoding/delimiter bug (#35).
 * Add optional scheme parameter to encoding_of_query.
 
 1.3.13 (2014-01-16):

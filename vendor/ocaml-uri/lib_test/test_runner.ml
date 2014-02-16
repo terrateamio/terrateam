@@ -278,8 +278,10 @@ let generic_uri_norm = [
   "%%25", "%25%25";
   "%2%25", "%252%25";
   "/foo%2fbar/", "/foo%2Fbar/";
-  "//colon%3auser:colon%3apassword@example.net/",
-  "//colon%3auser:colon%3apassword@example.net/";
+  "//colon%3Auser:colon%3Apassword@example.net/",
+  "//colon%3Auser:colon%3Apassword@example.net/";
+  "//colon%3Auser@example.net/",
+  "//colon%3Auser@example.net/";
   (let p_q = "/foo%20bar/" in
    p_q, Uri.(path_and_query (of_string p_q)));
 ]
