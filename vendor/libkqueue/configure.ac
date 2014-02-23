@@ -18,5 +18,5 @@ AC_CHECK_DECL([ppoll], [], [], [[
 AC_CHECK_HEADERS([[sys/epoll.h sys/inotify.h sys/signalfd.h sys/timerfd.h sys/eventfd.h]])
 
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile libkqueue.pc])
 AC_OUTPUT
