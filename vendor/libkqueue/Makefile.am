@@ -25,6 +25,9 @@ libkqueue_la_SOURCES = \
 
 libkqueue_la_LIBADD = -lpthread -lrt
 
+pkgconfigdir=$(libdir)/pkgconfig
+pkgconfig_DATA=libkqueue.pc
+
 check_PROGRAMS = kqtest
 
 TESTS = kqtest
