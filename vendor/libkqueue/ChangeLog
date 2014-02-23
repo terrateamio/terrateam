@@ -1,6 +1,8 @@
-HEAD
+2014-02-23  v2.0.2 
 ------------------------------------------------------------------------
 
+  * Switch from SVN to Git
+  * Switch hosting providers to Github
   * Switch to autoconf/automake
 
 2013-05-08  v2.0.1  r646
