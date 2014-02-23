@@ -1,7 +1,7 @@
 
 Name: libkqueue
 Description: Emulates FreeBSD kqueue(2) on other platforms
-Version: 0.1
+Version: @VERSION@
 Requires: 
 Libs: -lkqueue
 Libs.private: -lpthread
