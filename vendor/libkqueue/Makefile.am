@@ -48,7 +48,8 @@ kqtest_SOURCES = \
        test/signal.c \
        test/timer.c \
        test/vnode.c \
-       test/user.c
+       test/user.c \
+       test/common.h
 
 kqtest_CFLAGS = -g -O0 -Wall -Werror -I./include -I./test
 
