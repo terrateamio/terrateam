@@ -15,6 +15,7 @@ libkqueue_la_SOURCES = \
        src/common/kevent.c \
        src/common/kqueue.c \
        src/posix/platform.c \
+       src/posix/platform.h \
        src/linux/platform.c \
        src/linux/read.c \
        src/linux/write.c \
