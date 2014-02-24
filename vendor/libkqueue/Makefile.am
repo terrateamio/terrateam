@@ -21,7 +21,13 @@ libkqueue_la_SOURCES = \
        src/linux/user.c \
        src/linux/vnode.c \
        src/linux/signal.c \
-       src/linux/timer.c
+       src/linux/timer.c \
+       src/common/alloc.h \
+       src/common/debug.h \
+       src/common/private.h \
+       src/common/queue.h \
+       src/common/tree.h \
+       src/linux/platform.h
 
 libkqueue_la_LIBADD = -lpthread -lrt
 
