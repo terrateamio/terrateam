@@ -1,4 +1,4 @@
-OASISFormat: 0.3
+OASISFormat: 0.4
 Name:        uri
 Version:     1.4.0
 Synopsis:    RFC3986 URI parsing library
@@ -8,7 +8,7 @@ Authors:     Anil Madhavapeddy, David Sheets
 Maintainers: Anil Madhavapeddy <anil@recoil.org>
 Homepage:    https://github.com/avsm/ocaml-uri
 License:     ISC
-Plugins:     META (0.3)
+Plugins:     META (0.4)
 BuildTools:  ocamlbuild
 PostConfCommand: sh etc/gen.sh
 
@@ -49,14 +49,14 @@ Library uri_top
 
 Document uri
   Title:                URI docs
-  Type:                 ocamlbuild (0.3)
+  Type:                 ocamlbuild (0.4)
   BuildTools+:          ocamldoc
   XOCamlbuildPath:      lib
   XOCamlbuildLibraries: uri
 
 Document uri_services
   Title:                URI services docs
-  Type:                 ocamlbuild (0.3)
+  Type:                 ocamlbuild (0.4)
   BuildTools+:          ocamldoc
   XOCamlbuildPath:      lib
   XOCamlbuildLibraries: uri.services
