@@ -19,7 +19,7 @@ Flag allservices
 Library uri
   Path:       lib
   Modules:    Uri,Uri_re,Uri_IP
-  builddepends: re.posix,re.str,sexplib.syntax,sexplib
+  builddepends: re.posix,stringext,sexplib.syntax,sexplib
 
 Library services
   Path:       lib
