@@ -46,7 +46,7 @@ let ipv4_to_string i =
 
 let string_to_ipv4 (s:string) : ipv4 = 
   match Re.execp Uri_re.ipv4_address s with
-    | true -> (match (Re_str.split_delim (Re_str.regexp "\\.") s) with
+    | true -> (match (Stringext.split ~on:'.' s) with
         | [a; b; c; d] -> (
           let a = Int32.of_string a in 
           let b = Int32.of_string b in 

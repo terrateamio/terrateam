@@ -295,10 +295,8 @@ let pct_decode s = Pct.(uncast_decoded (decode (cast_encoded s)))
 module Userinfo = struct
   type t = string * string option with sexp
 
-  let us_sep = Re_str.regexp_string ":"
-
   let userinfo_of_encoded us =
-    match Re_str.bounded_split_delim us_sep us 2 with
+    match Stringext.split ~max:2 ~on:':' us with
     | [] -> ("",None)
     | [u] -> (pct_decode u,None)
     | u::p::_ -> (pct_decode u,Some (pct_decode p))
@@ -325,19 +323,13 @@ module Path = struct
   (* Invariant: every element is non-zero, slashes (/) only occur alone. *)
   (* Yes, it's better this way. This means you can retain separator
      context in recursion (e.g. remove_dot_segments for relative resolution). *)
+
   type t = string list with sexp
-
-  (* Path segment separator '/' *)
-  let ps_sep = Re_str.regexp_string "/"
-
-  let rev_tokenize_path p =
-    List.rev_map (function Re_str.Text s | Re_str.Delim s -> s)
-      (Re_str.full_split ps_sep p)
 
   (* Make a path token list from a percent-encoded string *)
   let path_of_encoded ps =
-    let rev_tokl = rev_tokenize_path ps in
-    List.rev_map pct_decode rev_tokl
+    let tokl = Stringext.full_split ps ~on:'/' in
+    List.map pct_decode tokl
 
   (* Subroutine for resolve <http://tools.ietf.org/html/rfc3986#section-5.2.4> *)
   let remove_dot_segments p =
@@ -380,18 +372,11 @@ module Query = struct
 
   let find q k = try Some (List.assoc k q) with Not_found -> None
 
-  (** Query element separator '&' *)
-  let qs_amp = Re_str.regexp_string "&"
-  (** Query value list constructor '=' *)
-  let qs_eq = Re_str.regexp_string "="
-  (** Query value list element separator ',' *)
-  let qs_cm = Re_str.regexp_string ","
-
   (* TODO: only make the query tuple parsing lazy and an additional
    * record in Url.t ?  *)
 
   let split_query qs =
-    let els = Re_str.split_delim qs_amp qs in
+    let els = Stringext.split ~on:'&' qs in
     (** Replace a + in a query string with a space in-place *)
     let plus_to_space s =
       for i = 0 to String.length s - 1 do
@@ -402,7 +387,7 @@ module Query = struct
     let rec loop acc = function
       | (k::v::_)::tl ->
         let n = plus_to_space k,
-                (match Re_str.split_delim qs_cm (plus_to_space v) with
+                (match Stringext.split ~on:',' (plus_to_space v) with
                  | [] -> [""] | l -> l) in
         loop (n::acc) tl
       | [k]::tl ->
@@ -411,7 +396,7 @@ module Query = struct
       | []::tl -> loop (("", [])::acc) tl
       | [] -> acc
     in loop []
-      (List.rev_map (fun el -> Re_str.bounded_split_delim qs_eq el 2) els)
+      (List.rev_map (fun el -> Stringext.split ~on:'=' el ~max:2) els)
 
   (* Make a query tuple list from a percent-encoded string *)
   let query_of_encoded qs =
