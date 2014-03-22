@@ -1,8 +1,8 @@
 # OASIS_START
-# DO NOT EDIT (digest: 120ead7dfca136415bdd32dfa77d9409)
+# DO NOT EDIT (digest: 4a209f09fdfd41f984afcf8208bee834)
 version = "1.4.0"
 description = "RFC3986 URI parsing library"
-requires = "re.posix re.str sexplib.syntax sexplib"
+requires = "re.posix stringext sexplib.syntax sexplib"
 archive(byte) = "uri.cma"
 archive(byte, plugin) = "uri.cma"
 archive(native) = "uri.cmxa"
