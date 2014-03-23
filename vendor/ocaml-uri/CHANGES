@@ -1,3 +1,8 @@
+1.5.0 (2014-03-24):
+* Remove `Uri_IP` and `Uri_re` modules as being obsolete now.
+  IP parsing should be done via the `ipaddr` library instead, and
+  the regular expressions in `Uri_re` were never completed.
+
 1.4.1 (2014-03-24):
 * Make library POSIX thread-safe by removing dependency on `Re_str`.
 
