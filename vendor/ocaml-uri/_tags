@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 6b9b81cb2a3af047a3adb484401d5a1f)
+# DO NOT EDIT (digest: 3ffa8b7834f0add1469c5a2406b960ee)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -19,6 +19,7 @@
 "lib/services.cmxs": use_services
 # Library services_full
 "lib/services_full.cmxs": use_services_full
+<lib/*.ml{,i}>: pkg_re.posix
 <lib/*.ml{,i}>: pkg_sexplib
 <lib/*.ml{,i}>: pkg_sexplib.syntax
 <lib/*.ml{,i}>: pkg_stringext
@@ -27,11 +28,13 @@
 "top/uri_top.cmxs": use_uri_top
 # Executable test_runner
 <lib_test/test_runner.{native,byte}>: pkg_oUnit
+<lib_test/test_runner.{native,byte}>: pkg_re.posix
 <lib_test/test_runner.{native,byte}>: pkg_sexplib
 <lib_test/test_runner.{native,byte}>: pkg_sexplib.syntax
 <lib_test/test_runner.{native,byte}>: pkg_stringext
 <lib_test/test_runner.{native,byte}>: use_uri
 <lib_test/*.ml{,i}>: pkg_oUnit
+<lib_test/*.ml{,i}>: pkg_re.posix
 <lib_test/*.ml{,i}>: pkg_sexplib
 <lib_test/*.ml{,i}>: pkg_sexplib.syntax
 <lib_test/*.ml{,i}>: pkg_stringext
