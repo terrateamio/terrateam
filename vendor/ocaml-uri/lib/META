@@ -1,6 +1,6 @@
 # OASIS_START
-# DO NOT EDIT (digest: 4a209f09fdfd41f984afcf8208bee834)
-version = "1.4.0"
+# DO NOT EDIT (digest: b5aca2bdf3382e7df6198beecaf8fa9c)
+version = "1.4.1"
 description = "RFC3986 URI parsing library"
 requires = "re.posix stringext sexplib.syntax sexplib"
 archive(byte) = "uri.cma"
@@ -9,7 +9,7 @@ archive(native) = "uri.cmxa"
 archive(native, plugin) = "uri.cmxs"
 exists_if = "uri.cma"
 package "top" (
- version = "1.4.0"
+ version = "1.4.1"
  description = "Toplevel printers for URIs"
  requires = "uri"
  archive(byte) = "uri_top.cma"
@@ -20,7 +20,7 @@ package "top" (
 )
 
 package "services_full" (
- version = "1.4.0"
+ version = "1.4.1"
  description = "RFC3986 URI parsing library"
  requires = "uri"
  archive(byte) = "services_full.cma"
@@ -31,7 +31,7 @@ package "services_full" (
 )
 
 package "services" (
- version = "1.4.0"
+ version = "1.4.1"
  description = "RFC3986 URI parsing library"
  requires = "uri"
  archive(byte) = "services.cma"

@@ -1,3 +1,6 @@
+1.4.1 (trunk):
+* Make library POSIX thread-safe by removing dependency on `Re_str`.
+
 1.4.0 (2014-02-16):
 * Fix path and path_and_query encoding bugs (#35).
 * Fix userinfo percent-encoding/delimiter bug (#35).
