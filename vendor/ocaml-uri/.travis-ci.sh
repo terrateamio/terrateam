@@ -21,7 +21,7 @@ echo OPAM versions
 opam --version
 opam --git-version
 
-opam init 
+opam init git://github.com/mirage/opam-repository
 
 opam install ${OPAM_DEPENDS}
 
