@@ -21,7 +21,7 @@ echo OPAM versions
 opam --version
 opam --git-version
 
-opam init git://github.com/mirage/opam-repository
+opam init
 
 opam install ${OPAM_DEPENDS}
 
@@ -29,4 +29,10 @@ eval `opam config env`
 make
 make test
 opam pin uri .
-opam install mirage-www
+
+case $OCAML_VERSION in
+3.12.*) ;;
+*)
+  opam install mirage-www
+  ;;
+esac
