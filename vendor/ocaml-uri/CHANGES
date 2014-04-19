@@ -1,3 +1,6 @@
+1.6.0 (trunk):
+* Remove `Uri_IP` module, superseded by the `ipaddr` package.
+
 1.5.0 (2014-03-24):
 * Make library POSIX thread-safe by removing dependency on `Re_str`.
 * Add Merlin IDE configuration.
