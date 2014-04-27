@@ -592,6 +592,11 @@ let with_path uri path = { uri with path=path_of_encoded path }
 (* Various accessor functions, as the external uri type is abstract  *)
 let get_decoded_opt = function None -> None |Some x -> Some (Pct.uncast_decoded x)
 let scheme uri = get_decoded_opt uri.scheme
+let with_scheme uri =
+  function
+  |Some scheme -> { uri with scheme=Some (Pct.cast_decoded scheme) }
+  |None -> { uri with scheme=None }
+
 let userinfo uri = match uri.userinfo with
   | None -> None
   | Some userinfo -> Some (Pct.uncast_encoded (match uri.scheme with
