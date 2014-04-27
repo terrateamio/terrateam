@@ -138,6 +138,10 @@ val with_scheme : t -> string option -> t
 (** Get the userinfo component of a URI *)
 val userinfo : t -> string option
 
+(** Replace the userinfo portion of the URI with the supplied [string option].
+    Input URI is not modified *)
+val with_userinfo : t -> string option -> t
+
 (** Get the host component of a URI *)
 val host : t -> string option
 
