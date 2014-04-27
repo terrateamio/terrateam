@@ -20,6 +20,7 @@ Library uri
   Path:       lib
   Modules:    Uri,Uri_re
   builddepends: re.posix,stringext,sexplib.syntax,sexplib
+  XMETARequires: re.posix,stringext,sexplib
 
 Library services
   Path:       lib
