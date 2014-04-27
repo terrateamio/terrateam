@@ -364,6 +364,17 @@ let test_sexping =
     ("test_sexping_"^id) >:: (fun () -> test uri exp)
   ) tests
 
+let test_with_change =
+  ["test_with_scheme" >:: (fun () ->
+    let uri = Uri.of_string "https://foo.bar/a/b/c" in
+    let uri2 = Uri.with_scheme uri (Some "https") in
+    let uri3 = Uri.with_scheme uri (Some "f o o") in
+    assert_equal uri uri2;
+    let exp = "f%20o%20o://foo.bar/a/b/c" in
+    let msg = Printf.sprintf "%s <> %s" (Uri.to_string uri3) exp in
+    assert_equal ~msg (Uri.to_string uri3) exp
+  )]
+
 (* Returns true if the result list contains successes only.
    Copied from oUnit source as it isnt exposed by the mli *)
 let rec was_successful =
@@ -378,7 +389,7 @@ let rec was_successful =
         false
 
 let _ =
-  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_uri_decode @ test_query_decode @ test_query_encode @ test_rel_res @ test_file_rel_res @ test_rel_rel_res @ test_generic_uri_norm @ test_rel_id @ test_tcp_port_of_uri @ query_key_add_remove @ test_sexping) in
+  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_uri_decode @ test_query_decode @ test_query_encode @ test_rel_res @ test_file_rel_res @ test_rel_rel_res @ test_generic_uri_norm @ test_rel_id @ test_tcp_port_of_uri @ query_key_add_remove @ test_sexping @ test_with_change) in
   let verbose = ref false in
   let set_verbose _ = verbose := true in
   Arg.parse
