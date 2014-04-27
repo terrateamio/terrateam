@@ -373,7 +373,18 @@ let test_with_change =
     let exp = "f%20o%20o://foo.bar/a/b/c" in
     let msg = Printf.sprintf "%s <> %s" (Uri.to_string uri3) exp in
     assert_equal ~msg (Uri.to_string uri3) exp
-  )]
+  );
+  "test_with_userinfo" >:: (fun () ->
+    let uri = Uri.of_string "https://foo.bar/a/b/c" in
+    let uri2 = Uri.with_userinfo uri (Some "avsm:pa:sswo%20rd") in
+    let uri3 = Uri.with_userinfo uri (Some "avsm:pa%3Asswo rd") in
+    let exp = "https://avsm:pa%3Asswo%20rd@foo.bar/a/b/c" in
+    let msg = Printf.sprintf "%s <> %s" (Uri.to_string uri2) exp in
+    assert_equal ~msg (Uri.to_string uri2) exp;
+    let msg = Printf.sprintf "%s <> %s" (Uri.to_string uri3) exp in
+    assert_equal ~msg (Uri.to_string uri3) exp
+  );
+  ]
 
 (* Returns true if the result list contains successes only.
    Copied from oUnit source as it isnt exposed by the mli *)
