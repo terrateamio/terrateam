@@ -1,5 +1,6 @@
 1.6.0 (trunk):
-* Remove `Uri_IP` module, superseded by the `ipaddr` package.
+* Remove `Uri_IP` module, superseded by the `ipaddr` package (#30).
+* Do not depend on `camlp4` for link-time, only compile time (#39).
 
 1.5.0 (2014-03-24):
 * Make library POSIX thread-safe by removing dependency on `Re_str`.
