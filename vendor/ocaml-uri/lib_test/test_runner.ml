@@ -135,6 +135,8 @@ let uri_query_make = [
   ["foo1",["bar1"];"foo2",["bar2"]], "foo1=bar1&foo2=bar2";
   ["foo1",["bar1"];"foo2",["bar2"];"foo3",["bar3"]],
   "foo1=bar1&foo2=bar2&foo3=bar3";
+  ["semicolon",[";"]],"semicolon=%3B";
+  [";",["semicolon"]],"%3B=semicolon";
   ["#",["#";"#"]], "%23=%23,%23";
   ["",[]], "";
   ["",[""]], "=";
