@@ -1,7 +1,8 @@
-1.6.0 (trunk):
+1.6.0 (2014-04-28):
 * Remove `Uri_IP` module, superseded by the `ipaddr` package (#30).
 * Do not depend on `camlp4` for link-time, only compile time (#39).
 * Add `with_scheme` and `with_userinfo` functional setters (#40).
+* Always percent-escape semicolon in structured query encoding (#44).
 
 1.5.0 (2014-03-24):
 * Make library POSIX thread-safe by removing dependency on `Re_str`.
