@@ -98,12 +98,14 @@ module Generic : Scheme = struct
     a
 
   let safe_chars_for_query : safe_chars =
+    (* TODO: What about {"!","$",","}? See <https://github.com/avsm/ocaml-uri/commit/1ef3f1dfb41bdb4f33f223ffe16e62a33975661a#diff-740f2de53c9eb36e9670ddfbdb9ba914R171> *)
     let a = Array.copy pchar in
     a.(Char.code '/') <- true;
     a.(Char.code '?') <- true;
     (* '&' is safe but we should encode literals to avoid ambiguity
        with the already parsed qs params *)
     a.(Char.code '&') <- false;
+    (* ';' is safe but some systems treat it like '&'. *)
     a.(Char.code ';') <- false;
     a.(Char.code '+') <- false;
     a
