@@ -34,3 +34,15 @@ val tcp_port_of_uri : ?default:string -> Uri.t -> int option
 
 val udp_port_of_uri : ?default:string -> Uri.t -> int option
 (** Extract a UDP port from a URI, using a default service if the URI does not contain a scheme *)
+
+val known_tcp_services : string list
+(** List of known TCP services.
+    These keys are guaranteed to match in the rest of the lookup functions. *)
+
+val known_udp_services : string list
+(** List of known UDP services.
+    These keys are guaranteed to match in the rest of the lookup functions. *)
+
+val known_services : (string * string list) list
+(** Association list of [protocol * service list].  Usually populated with
+    at least "tcp" and "udp" keys for those respective protocols. *)

@@ -22,7 +22,7 @@ let hashtbl_add_list h k v =
   try
     let l = Hashtbl.find h k in
     l := v :: !l
-   with Not_found -> Hashtbl.add h k (ref [v])
+  with Not_found -> Hashtbl.add h k (ref [v])
 
 let _ =
   let fin = open_in Sys.argv.(1) in
@@ -30,6 +30,8 @@ let _ =
   let udp_ports = Hashtbl.create 1 in
   let ports_tcp = Hashtbl.create 1 in
   let ports_udp = Hashtbl.create 1 in
+  let tcp_services = Hashtbl.create 1 in
+  let udp_services = Hashtbl.create 1 in
   (try while true do
     let line = input_line fin in
     match line.[0] with
@@ -40,9 +42,11 @@ let _ =
        |"tcp" ->
          hashtbl_add_list tcp_ports svc port;
          hashtbl_add_list ports_tcp port ("\""^svc^"\"");
+         Hashtbl.replace tcp_services svc ();
        |"udp" ->
          hashtbl_add_list udp_ports svc port;
          hashtbl_add_list ports_udp port ("\""^svc^"\"");
+         Hashtbl.replace udp_services svc ();
        |"ddp" | "sctp" | "divert" -> ()
        |x -> failwith ("unknown proto " ^ x)
       )
@@ -67,5 +71,14 @@ let _ =
   Hashtbl.iter (fun k v ->
    printf "  |%d -> [%s]\n" k (String.concat ";" !v)
   ) ports_udp;
+  let tcp_services = Hashtbl.fold (fun k () a -> ("\""^k^"\"") :: a) tcp_services [] in
+  let udp_services = Hashtbl.fold (fun k () a -> ("\""^k^"\"") :: a) udp_services [] in
   printf "  |_ -> []\n\n";
+  printf "let known_tcp_services =\n";
+  printf "  [ %s ]\n\n" (String.concat ";" tcp_services);
+  printf "let known_udp_services =\n";
+  printf "  [ %s ]\n\n" (String.concat ";" udp_services);
+  printf "let known_services = [\n";
+  printf "  (\"tcp\", known_tcp_services);\n";
+  printf "  (\"udp\", known_udp_services) ]\n\n";
   

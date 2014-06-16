@@ -1,3 +1,7 @@
+1.7.0 (2014-06-16):
+* Expose the list of known services in the `Uri_services` module via
+  new functions that list TCP, UDP and an association list of both.
+
 1.6.0 (2014-04-28):
 * Remove `Uri_IP` module, superseded by the `ipaddr` package (#30).
 * Do not depend on `camlp4` for link-time, only compile time (#39).
