@@ -39,9 +39,10 @@ module Raw = struct
   let dec_octet = Re_posix.re "25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?"
   let ipv4_address = (repn (dec_octet + c_dot) 3 (Some 3)) + dec_octet
 
-  (* following RFC2234, RFC3986 and
+  (* following RFC2234, RFC3986, RFC6874 and
      http://people.spodhuis.org/phil.pennock/software/emit_ipv6_regexp-0.304
   *)
+  let zone_id = unreserved / pct_encoded
   let ipv6_address =
     let (=|) n a = repn a n (Some n) in
     let (<|) n a = repn a 0 (Some n) in
@@ -60,6 +61,7 @@ module Raw = struct
          / ((1<|((5<|h16c) + h16)) + cc             +  h16)
          / ((1<|((6<|h16c) + h16)) + cc                   )
       )
+      + (opt (Re_posix.re "%25" + rep1 zone_id))
       + char ']'
     )
 
