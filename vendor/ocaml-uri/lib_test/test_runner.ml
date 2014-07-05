@@ -207,6 +207,9 @@ let uri_rel_res = [
   "g#s/./x",       "http://a/b/c/g#s/./x";
   "g#s/../x",      "http://a/b/c/g#s/../x";
   "http:g",        "http:g";
+  (* extra *)
+  (* From <http://lists.w3.org/Archives/Public/uri/2014Jun/0000.html> *)
+  ".%2E",          "http://a/b/";
 ]
 
 let test_rel_res =
