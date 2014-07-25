@@ -120,7 +120,7 @@ knote_lookup(struct filter *filt, uintptr_t ident)
     ent = RB_FIND(knt, &filt->kf_knote, &query);
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
 
-#ifdef __x86_64__
+#if defined(__x86_64__) || defined(__mips64)
     dbg_printf("id=%lu ent=%p", ident, ent);
 #else
     dbg_printf("id=%u ent=%p", ident, ent);
