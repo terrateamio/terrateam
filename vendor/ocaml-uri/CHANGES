@@ -1,8 +1,10 @@
 1.7.2 (trunk):
 * Fix empty-but-existing query ("?") parsing bug
-* Fix with_userinfo against hostless URI representation bug
-* Fix with_port against hostless URI representation bug
-* Fix with_path with relative path against hosted URI representation bug (#51)
+* Fix `with_userinfo` against hostless URI representation bug
+* Fix `with_port` against hostless URI representation bug
+* Fix `with_path` with relative path against hosted URI representation bug (#51)
+* Fix `make` without host but with userinfo or port representation bug
+* Fix `make` with host, userinfo, or port and relative path representation bug
 
 1.7.1 (2014-07-05):
 * Add RFC6874 compliance for IPv6 literals with zones (#48).
