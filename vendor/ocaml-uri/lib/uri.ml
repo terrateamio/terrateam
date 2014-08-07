@@ -471,10 +471,19 @@ let normalize schem uri =
 let make ?scheme ?userinfo ?host ?port ?path ?query ?fragment () =
   let decode = function
     |Some x -> Some (Pct.cast_decoded x) |None -> None in
+  let host = match userinfo, host, port with
+    | _, Some _, _ | None, None, None -> host
+    | Some _, None, _ | _, None, Some _ -> Some ""
+  in
   let userinfo = match userinfo with
     | None -> None | Some u -> Some (userinfo_of_encoded u) in
   let path = match path with
-    |None -> [] | Some p -> path_of_encoded p in
+    |None -> [] | Some p ->
+      let path = path_of_encoded p in
+      match host, path with
+      | None, _ | Some _, "/"::_ | Some _, [] -> path
+      | Some _, _  -> "/"::path
+  in
   let query = match query with |None -> [] |Some p -> p in
   let scheme = decode scheme in
   normalize scheme
@@ -639,8 +648,7 @@ let path uri = Pct.uncast_encoded (match uri.scheme with
 let with_path uri path =
   let path = path_of_encoded path in
   match host uri, path with
-  | None, _ | Some _, "/"::_ -> { uri with path=path }
-  | Some _, [] -> { uri with path=path }
+  | None, _ | Some _, "/"::_ | Some _, [] -> { uri with path=path }
   | Some _, _  -> { uri with path="/"::path }
 
 let fragment uri = get_decoded_opt uri.fragment

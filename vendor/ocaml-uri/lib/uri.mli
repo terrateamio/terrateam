@@ -114,6 +114,10 @@ val add_query_params' : t -> (string * string) list -> t
   *)
 val remove_query_param : t -> string -> t
 
+(** Make a URI from supplied components. If userinfo or port are
+    supplied without host, an empty host is added. If path is supplied
+    and userinfo, host, or port is also supplied, path is made
+    absolute but not resolved. *)
 val make : ?scheme:string -> ?userinfo:string -> ?host:string ->
   ?port:int -> ?path:string -> ?query:(string * string list) list ->
   ?fragment:string -> unit -> t
