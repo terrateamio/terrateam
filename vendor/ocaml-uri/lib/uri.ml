@@ -592,12 +592,6 @@ let to_string uri =
   );
   Buffer.contents buf
 
-(* Return the path component *)
-let path uri = Pct.uncast_encoded (match uri.scheme with
-  | None -> encoded_of_path uri.path
-  | Some s -> encoded_of_path ~scheme:(Pct.uncast_decoded s) uri.path)
-let with_path uri path = { uri with path=path_of_encoded path }
-
 (* Various accessor functions, as the external uri type is abstract  *)
 let get_decoded_opt = function None -> None |Some x -> Some (Pct.uncast_decoded x)
 let scheme uri = get_decoded_opt uri.scheme
@@ -637,6 +631,17 @@ let with_port uri port =
   match host uri with
   | None -> { uri with host=Some (Pct.cast_decoded ""); port=port }
   | Some _ -> { uri with port=port }
+
+(* Return the path component *)
+let path uri = Pct.uncast_encoded (match uri.scheme with
+  | None -> encoded_of_path uri.path
+  | Some s -> encoded_of_path ~scheme:(Pct.uncast_decoded s) uri.path)
+let with_path uri path =
+  let path = path_of_encoded path in
+  match host uri, path with
+  | None, _ | Some _, "/"::_ -> { uri with path=path }
+  | Some _, [] -> { uri with path=path }
+  | Some _, _  -> { uri with path="/"::path }
 
 let fragment uri = get_decoded_opt uri.fragment
 let with_fragment uri =

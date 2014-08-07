@@ -125,6 +125,8 @@ val path : t -> string
 val path_and_query : t -> string
 
 (** Replace the path URI with the supplied encoded path.
+    If a host is present in the supplied URI, the path is made absolute but not
+    resolved. If the path is empty, the path component is removed.
     Input URI is not modified *)
 val with_path : t -> string -> t
 
