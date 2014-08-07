@@ -1,5 +1,6 @@
 (*
- * Copyright (c) 2012 Anil Madhavapeddy <anil@recoil.org>
+ * Copyright (c) 2012-2014 Anil Madhavapeddy <anil@recoil.org>
+ * Copyright (c) 2012-2014 David Sheets <sheets@alum.mit.edu>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -548,24 +549,27 @@ let to_string uri =
      add_pct_string ~component:`Scheme x;
      Buffer.add_char buf ':'
   );
+  (* URI has a host if any host-related component is set. Defaults to "". *)
+  if (match uri.userinfo, uri.host, uri.port with
+  | Some _, _, _ | _, Some _, _ | _, _, Some _ -> true | _ -> false)
+  then Buffer.add_string buf "//";
+  (match uri.userinfo with
+  |None -> ()
+  |Some userinfo ->
+    Buffer.add_string buf
+      (Pct.uncast_encoded (encoded_of_userinfo ?scheme userinfo));
+    Buffer.add_char buf '@'
+  );
   (match uri.host with
-   |Some host ->
-     Buffer.add_string buf "//";
-     (match uri.userinfo with
-      |None -> ()
-      |Some userinfo ->
-        Buffer.add_string buf
-          (Pct.uncast_encoded (encoded_of_userinfo ?scheme userinfo));
-        Buffer.add_char buf '@'
-     );
-     add_pct_string ~component:`Host host;
-     (match uri.port with
-      |None -> ()
-      |Some port ->
-        Buffer.add_char buf ':';
-        Buffer.add_string buf (string_of_int port)
-     );
-   |None -> ()
+  |None -> ()
+  |Some host ->
+    add_pct_string ~component:`Host host;
+  );
+  (match uri.port with
+  |None -> ()
+  |Some port ->
+    Buffer.add_char buf ':';
+    Buffer.add_string buf (string_of_int port)
   );
   (match uri.path with (* Handle relative paths correctly *)
   | [] -> ()
@@ -608,11 +612,6 @@ let userinfo uri = match uri.userinfo with
     | None -> encoded_of_userinfo userinfo
     | Some s -> encoded_of_userinfo ~scheme:(Pct.uncast_decoded s) userinfo))
 
-let with_userinfo uri =
-  function
-  | Some u -> { uri with userinfo=Some (userinfo_of_encoded u) }
-  | None -> { uri with userinfo=None }
-
 let host uri = get_decoded_opt uri.host
 let with_host uri =
   function
@@ -623,6 +622,15 @@ let host_with_default ?(default="localhost") uri =
   match host uri with
   |None -> default
   |Some h -> h
+
+let with_userinfo uri userinfo =
+  let userinfo = match userinfo with
+    | Some u -> Some (userinfo_of_encoded u)
+    | None -> None
+  in
+  match host uri with
+  | None -> { uri with host=Some (Pct.cast_decoded ""); userinfo=userinfo }
+  | Some _ -> { uri with userinfo=userinfo }
 
 let port uri = uri.port
 let with_port uri port = { uri with port=port }

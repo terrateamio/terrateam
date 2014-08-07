@@ -139,7 +139,8 @@ val with_scheme : t -> string option -> t
 val userinfo : t -> string option
 
 (** Replace the userinfo portion of the URI with the supplied [string option].
-    Input URI is not modified *)
+    If no host is present in the supplied URI, an empty host is added.
+    Input URI is not modified. *)
 val with_userinfo : t -> string option -> t
 
 (** Get the host component of a URI *)
