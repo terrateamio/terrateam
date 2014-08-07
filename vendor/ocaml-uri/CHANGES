@@ -1,5 +1,6 @@
 1.7.2 (trunk):
 * Fix empty-but-existing query ("?") parsing bug
+* Fix with_userinfo against hostless URI representation bug
 
 1.7.1 (2014-07-05):
 * Add RFC6874 compliance for IPv6 literals with zones (#48).
