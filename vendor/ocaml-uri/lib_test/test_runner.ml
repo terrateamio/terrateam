@@ -1,5 +1,6 @@
 (*
- * Copyright (c) 2012 Anil Madhavapeddy <anil@recoil.org>
+ * Copyright (c) 2012-2014 Anil Madhavapeddy <anil@recoil.org>
+ * Copyright (c) 2012-2014 David Sheets <sheets@alum.mit.edu>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -112,11 +113,12 @@ let uri_query = [
   "//domain?f+1=bar&+f2=bar%212", ["f 1",["bar"];" f2",["bar!2"]];
   "//domain?foo=&bar=", ["foo",[""];"bar",[""]];
   "//domain?a=b%26c%3Dd", ["a",["b&c=d"]];
-  "?",[];
+  "",[];
+  "?",["",[]];
   "?&",["",[];"",[]];
   "?&&",["",[];"",[];"",[]];
   "??&/&",["?",[];"/",[];"",[]];
-  "?#?/#",[];
+  "?#?/#",["",[]];
   "?%23",["#",[]];
   "?=&==",["",[""];"",["="]];
   "?==,&=,=",["",["=";""];"",["";"="]];
@@ -335,7 +337,7 @@ let tcp_port_of_uri = [
 
 let test_tcp_port_of_uri =
   let string_of_int_option = function None -> "None"
-    | Some i -> Printf.sprintf "Some %d" i
+    | Some i -> sprintf "Some %d" i
   in List.map (fun (uri,pn) ->
     let test () = assert_equal ~printer:string_of_int_option
       (Some pn)
@@ -370,7 +372,7 @@ let test_sexping =
   let test uri exp =
     let uri = Uri.of_string uri in
     let s = Sexplib.Sexp.to_string (Uri.sexp_of_t uri) in
-    let msg = Printf.sprintf "%s <> %s" s exp in
+    let msg = sprintf "%s <> %s" s exp in
     assert_equal ~msg s exp
   in
   List.map (fun (id,uri,exp) ->
@@ -384,18 +386,141 @@ let test_with_change =
     let uri3 = Uri.with_scheme uri (Some "f o o") in
     assert_equal uri uri2;
     let exp = "f%20o%20o://foo.bar/a/b/c" in
-    let msg = Printf.sprintf "%s <> %s" (Uri.to_string uri3) exp in
+    let msg = sprintf "%s <> %s" (Uri.to_string uri3) exp in
     assert_equal ~msg (Uri.to_string uri3) exp
   );
+
   "test_with_userinfo" >:: (fun () ->
     let uri = Uri.of_string "https://foo.bar/a/b/c" in
     let uri2 = Uri.with_userinfo uri (Some "avsm:pa:sswo%20rd") in
     let uri3 = Uri.with_userinfo uri (Some "avsm:pa%3Asswo rd") in
     let exp = "https://avsm:pa%3Asswo%20rd@foo.bar/a/b/c" in
-    let msg = Printf.sprintf "%s <> %s" (Uri.to_string uri2) exp in
-    assert_equal ~msg (Uri.to_string uri2) exp;
-    let msg = Printf.sprintf "%s <> %s" (Uri.to_string uri3) exp in
-    assert_equal ~msg (Uri.to_string uri3) exp
+    let msg t = sprintf "%s %s <> %s" t (Uri.to_string uri2) exp in
+    assert_equal ~msg:(msg "string") (Uri.to_string uri2) exp;
+    assert_equal ~msg:(msg "rep") uri2 (Uri.of_string exp);
+    let msg t = sprintf "%s %s <> %s" t (Uri.to_string uri3) exp in
+    assert_equal ~msg:(msg "string") (Uri.to_string uri3) exp;
+    assert_equal ~msg:(msg "rep") uri3 (Uri.of_string exp);
+    let uri = Uri.of_string "" in
+    let uri_some = Uri.with_userinfo uri (Some "avsm") in
+    let exp = "//avsm@" in
+    let msg t = sprintf "%s %s <> %s" t (Uri.to_string uri_some) exp in
+    assert_equal ~msg:(msg "string") (Uri.to_string uri_some) exp;
+    assert_equal ~msg:(msg "rep") uri_some (Uri.of_string exp)
+  );
+
+  "test_with_host" >:: (fun () ->
+    let uri      = Uri.of_string "//www.meow.com" in
+    let uri_none = Uri.with_host uri None in
+    let uri_exp  = "" in
+    let msg = sprintf "host removal with None (%s <> %s)"
+      uri_exp (Uri.to_string uri_none) in
+    assert_equal ~msg (Uri.of_string uri_exp) uri_none;
+    let uri_exp  = "//" in
+    let uri_some_empty = Uri.with_host uri (Some "") in
+    let msg = sprintf "host removal with empty (%s <> %s)"
+      uri_exp (Uri.to_string uri_some_empty) in
+    assert_equal ~msg (Uri.of_string uri_exp) uri_some_empty;
+    let uri_some = Uri.with_host uri (Some "www.woof.com") in
+    let uri_woof = Uri.of_string "//www.woof.com" in
+    assert_equal ~msg:"host change" uri_woof uri_some;
+    let uri = Uri.of_string "" in
+    let uri_some = Uri.with_host uri (Some "www.woof.com") in
+    assert_equal ~msg:"create host" uri_woof uri_some
+  );
+
+  "test_with_port" >:: (fun () ->
+    let uri = Uri.of_string "" in
+    let uri_port = Uri.with_port uri (Some 80) in
+    let uri_exp = "//:80" in
+    let msg = sprintf "add port to empty (%s <> %s)"
+      uri_exp (Uri.to_string uri_port) in
+    assert_equal ~msg (Uri.of_string uri_exp) uri_port;
+    let uri = Uri.of_string "//foo.com" in
+    let uri_port = Uri.with_port uri (Some 80) in
+    assert_equal (Uri.of_string "//foo.com:80") uri_port;
+    let foo = Uri.of_string "http://foo.com" in
+    let foo_port = Uri.with_port foo (Some 80) in
+    assert_equal (Uri.of_string "http://foo.com:80") foo_port;
+    let uri_no_port = Uri.with_port foo_port None in
+    assert_equal foo uri_no_port
+  );
+
+  "test_with_path" >:: (fun () ->
+    let uri = Uri.of_string "" in
+    let uri_empty = Uri.with_path uri "" in
+    assert_equal ~msg:"empty host empty path" uri uri_empty;
+    let uri_some = Uri.with_path uri "a" in
+    assert_equal ~msg:"empty host some path" (Uri.of_string "a") uri_some;
+    let uri = Uri.of_string "//" in
+    let uri_empty = Uri.with_path uri "" in
+    let msg = sprintf "some host empty path (%s <> %s)"
+      (Uri.to_string uri) (Uri.to_string uri_empty) in
+    assert_equal ~msg uri uri_empty;
+    let uri_some = Uri.with_path uri "a" in
+    let uri_exp_s = "///a" in
+    let uri_exp = Uri.of_string uri_exp_s in
+    let uri_exp_sexp  = Sexplib.Sexp.to_string (Uri.sexp_of_t uri_exp) in
+    let uri_some_sexp = Sexplib.Sexp.to_string (Uri.sexp_of_t uri_some) in
+    let msg = sprintf "path relative host (%s <> %s)"
+      uri_exp_sexp uri_some_sexp in
+    assert_equal ~msg uri_exp uri_some
+  );
+
+  "test_with_query" >:: (fun () ->
+    let test_with_query prefix =
+      let uri = Uri.of_string prefix in
+      let uri_empty = Uri.with_query uri [] in
+      let msg = prefix ^ " empty" in
+      assert_equal ~msg (Uri.of_string prefix) uri_empty;
+      let uri_quest = Uri.with_query uri ["",[]] in
+      let uri_exp_s = prefix ^ "?" in
+      let uri_exp   = Uri.of_string uri_exp_s in
+      let uri_exp_sexp = Sexplib.Sexp.to_string (Uri.sexp_of_t uri_exp) in
+      let uri_quest_sexp = Sexplib.Sexp.to_string (Uri.sexp_of_t uri_quest) in
+      let msg = sprintf "'%s' quest (%s <> %s)"
+        prefix uri_exp_sexp uri_quest_sexp in
+      assert_equal ~msg uri_exp uri_quest;
+      let uri_equal = Uri.with_query uri ["",[""]] in
+      let msg = prefix ^ " equal" in
+      assert_equal ~msg (Uri.of_string (prefix^"?=")) uri_equal;
+      let uri_comma = Uri.with_query uri ["",["";""]] in
+      let msg = prefix ^ " comma" in
+      assert_equal ~msg (Uri.of_string (prefix^"?=,")) uri_comma;
+      let uri_empty = Uri.with_query' uri [] in
+      let msg = prefix ^ " empty'" in
+      assert_equal ~msg (Uri.of_string prefix) uri_empty;
+      let uri_equal = Uri.with_query' uri ["",""] in
+      let msg = prefix ^" equal'" in
+      assert_equal (Uri.of_string (prefix^"?=")) uri_equal;
+    in
+    test_with_query "";
+    test_with_query "//";
+    test_with_query "///";
+    let uri = Uri.of_string "//#" in
+    let uri_quest = Uri.with_query uri ["",[]] in
+    let msg = "?#" in
+    assert_equal ~msg (Uri.of_string "//?#") uri_quest;
+    let uri_equal = Uri.with_query' uri ["",""] in
+    let uri_exp_s = "//?=#" in
+    let uri_exp = Uri.of_string uri_exp_s in
+    let msg = sprintf "%s <> %s" uri_exp_s (Uri.to_string uri_equal) in
+    assert_equal ~msg (Uri.of_string "//?=#") uri_equal;
+  );
+
+  "test_with_fragment" >:: (fun () ->
+    let test_with_fragment prefix =
+      let uri = Uri.of_string prefix in
+      let uri_empty = Uri.with_fragment uri None in
+      assert_equal uri uri_empty;
+      let uri_some = Uri.with_fragment uri (Some "") in
+      assert_equal (Uri.of_string (prefix^"#")) uri_some
+    in
+    test_with_fragment "";
+    test_with_fragment "//";
+    let uri = Uri.of_string "//#" in
+    let uri_empty = Uri.with_fragment uri None in
+    assert_equal (Uri.of_string "//") uri_empty
   );
   ]
 
