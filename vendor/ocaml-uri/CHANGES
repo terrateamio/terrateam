@@ -2,6 +2,7 @@
 * Fix empty-but-existing query ("?") parsing bug
 * Fix with_userinfo against hostless URI representation bug
 * Fix with_port against hostless URI representation bug
+* Fix with_path with relative path against hosted URI representation bug (#51)
 
 1.7.1 (2014-07-05):
 * Add RFC6874 compliance for IPv6 literals with zones (#48).
