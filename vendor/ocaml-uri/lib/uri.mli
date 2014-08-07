@@ -158,7 +158,8 @@ val host_with_default: ?default:string -> t -> string
 val port : t -> int option
 
 (** Replace the port component of the URI with the supplied port.
-    Input URI is not modified *)
+    If no host is present in the supplied URI, an empty host is added.
+    Input URI is not modified. *)
 val with_port : t -> int option -> t
 
 (** Get the fragment component of a URI *)

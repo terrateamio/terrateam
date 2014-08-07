@@ -633,7 +633,10 @@ let with_userinfo uri userinfo =
   | Some _ -> { uri with userinfo=userinfo }
 
 let port uri = uri.port
-let with_port uri port = { uri with port=port }
+let with_port uri port =
+  match host uri with
+  | None -> { uri with host=Some (Pct.cast_decoded ""); port=port }
+  | Some _ -> { uri with port=port }
 
 let fragment uri = get_decoded_opt uri.fragment
 let with_fragment uri =
