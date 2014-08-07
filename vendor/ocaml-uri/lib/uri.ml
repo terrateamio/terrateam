@@ -400,8 +400,9 @@ module Query = struct
       | []::tl -> loop (("", [])::acc) tl
       | [] -> acc
     in
-    if els = [] then ["",[]]
-    else loop []
+    match els with
+    | []  -> ["",[]]
+    | els -> loop []
       (List.rev_map (fun el -> Stringext.split ~on:'=' el ~max:2) els)
 
   (* Make a query tuple list from a percent-encoded string *)
