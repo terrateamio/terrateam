@@ -387,7 +387,13 @@ let test_with_change =
     assert_equal uri uri2;
     let exp = "f%20o%20o://foo.bar/a/b/c" in
     let msg = sprintf "%s <> %s" (Uri.to_string uri3) exp in
-    assert_equal ~msg (Uri.to_string uri3) exp
+    assert_equal ~msg (Uri.to_string uri3) exp;
+    let uri_empty = Uri.of_string "" in
+    let uri = Uri.with_scheme uri_empty (Some "http") in
+    let uri_s = Uri.to_string uri in
+    let uri_exp = "http://" in
+    let msg = sprintf "with_scheme empty (%s <> %s).string" uri_s uri_exp in
+    assert_equal ~msg uri_s uri_exp
   );
 
   "test_with_userinfo" >:: (fun () ->
