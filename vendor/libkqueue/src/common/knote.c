@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -120,11 +121,7 @@ knote_lookup(struct filter *filt, uintptr_t ident)
     ent = RB_FIND(knt, &filt->kf_knote, &query);
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
 
-#if defined(__x86_64__) || defined(__mips64)
-    dbg_printf("id=%lu ent=%p", ident, ent);
-#else
-    dbg_printf("id=%u ent=%p", ident, ent);
-#endif
+    dbg_printf("id=%" PRIuPTR " ent=%p", ident, ent);
 
     return (ent);
 }
