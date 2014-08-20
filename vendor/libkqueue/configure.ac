@@ -15,7 +15,7 @@ AC_CHECK_DECL([ppoll], [], [], [[
 #define _GNU_SOURCE
 #include <poll.h>
 ]])
-AC_CHECK_HEADERS([[sys/epoll.h sys/inotify.h sys/signalfd.h sys/timerfd.h sys/eventfd.h]])
+AC_CHECK_HEADERS([sys/epoll.h sys/inotify.h sys/signalfd.h sys/timerfd.h sys/eventfd.h])
 
 
 AC_CONFIG_FILES([Makefile libkqueue.pc])
