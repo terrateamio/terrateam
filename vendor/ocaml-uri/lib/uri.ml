@@ -58,7 +58,7 @@ let rec compare_list f t t' = match t, t' with
   | _::_,  []    ->  1
   | [],    _::_  -> -1
   | x::xs, y::ys ->
-    let c = f x y in if c <> 0 then c else compare_list f xs ys
+    match f x y with 0 -> compare_list f xs ys | c -> c
 
 (** Safe characters that are always allowed in a URI 
   * Unfortunately, this varies depending on which bit of the URI
@@ -315,9 +315,9 @@ module Userinfo = struct
   type t = string * string option with sexp
 
   let compare (u,p) (u',p') =
-    let c = String.compare u u' in
-    if c <> 0 then c
-    else compare_opt String.compare p p'
+    match String.compare u u' with
+    | 0 -> compare_opt String.compare p p'
+    | c -> c
 
   let userinfo_of_encoded us =
     match Stringext.split ~max:2 ~on:':' us with
@@ -397,9 +397,9 @@ module Query = struct
   type t = (string * string list) list with sexp
 
   let compare = compare_list (fun (k,vl) (k',vl') ->
-    let c = String.compare k k' in
-    if c <> 0 then c
-    else compare_list String.compare vl vl'
+    match String.compare k k' with
+    | 0 -> compare_list String.compare vl vl'
+    | c -> c
   )
 
   let find q k = try Some (List.assoc k q) with Not_found -> None
@@ -477,27 +477,21 @@ type t = {
 let compare_decoded = Pct.unlift_decoded2 String.compare
 let compare_decoded_opt = compare_opt compare_decoded
 let compare t t' =
-  let c = compare_decoded_opt t.host t'.host in
-  if c <> 0 then c
-  else
-    let c = compare_decoded_opt t.scheme t'.scheme in
-    if c <> 0 then c
-    else
-      let c = compare_opt (fun p p' ->
-        if p < p' then -1 else if p > p' then 1 else 0
-      ) t.port t'.port in
-      if c <> 0 then c
-      else
-        let c = compare_opt Userinfo.compare t.userinfo t'.userinfo in
-        if c <> 0 then c
-        else
-          let c = Path.compare t.path t'.path in
-          if c <> 0 then c
-          else
-            let c = Query.compare t.query t'.query in
-            if c <> 0 then c
-            else
-              compare_decoded_opt t.fragment t'.fragment
+  (match compare_decoded_opt t.host t'.host with
+  | 0 -> (match compare_decoded_opt t.scheme t'.scheme with
+    | 0 -> (match compare_opt (fun p p' ->
+      if p < p' then -1 else if p > p' then 1 else 0
+    ) t.port t'.port with
+      | 0 -> (match compare_opt Userinfo.compare t.userinfo t'.userinfo with
+        | 0 -> (match Path.compare t.path t'.path with
+          | 0 -> (match Query.compare t.query t'.query with
+            | 0 -> compare_decoded_opt t.fragment t'.fragment
+            | c -> c)
+          | c -> c)
+        | c -> c)
+      | c -> c)
+    | c -> c)
+  | c -> c)
 
 let normalize schem uri =
   let uncast_opt = function
