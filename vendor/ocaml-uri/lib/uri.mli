@@ -33,6 +33,10 @@ type component = [
 | `Fragment
 ] with sexp
 
+(** Comparator ordering by host, scheme, port, userinfo, path, query,
+    and finally fragment. Designed to produce a reasonable sort order. *)
+val compare : t -> t -> int
+
 (** Percent-encode a string. The [scheme] argument defaults to 'http' and
     the [component] argument defaults to `Path *)
 val pct_encode : ?scheme:string -> ?component:component -> string -> string
