@@ -47,6 +47,19 @@ let rev_interject e lst =
   | []  -> []
   | h::t -> aux [h] t
 
+let compare_opt c t t' = match t, t' with
+  | None,   None   -> 0
+  | Some _, None   -> 1
+  | None,   Some _ -> -1
+  | Some a, Some b -> c a b
+
+let rec compare_list f t t' = match t, t' with
+  | [],    []    ->  0
+  | _::_,  []    ->  1
+  | [],    _::_  -> -1
+  | x::xs, y::ys ->
+    let c = f x y in if c <> 0 then c else compare_list f xs ys
+
 (** Safe characters that are always allowed in a URI 
   * Unfortunately, this varies depending on which bit of the URI
   * is being parsed, so there are multiple variants (and this
@@ -198,6 +211,7 @@ module Pct : sig
   val lift_decoded : (decoded -> decoded) -> string -> string
   val unlift_encoded : (string -> string) -> encoded -> encoded
   val unlift_decoded : (string -> string) -> decoded -> decoded
+  val unlift_decoded2 : (string -> string -> 'a) -> decoded -> decoded -> 'a
 end = struct
   type encoded = string with sexp
   type decoded = string with sexp
@@ -211,6 +225,7 @@ end = struct
   let lift_decoded f = f
   let unlift_encoded f = f
   let unlift_decoded f = f
+  let unlift_decoded2 f = f
 
   (** Scan for reserved characters and replace them with 
       percent-encoded equivalents.
@@ -299,6 +314,11 @@ let pct_decode s = Pct.(uncast_decoded (decode (cast_encoded s)))
 module Userinfo = struct
   type t = string * string option with sexp
 
+  let compare (u,p) (u',p') =
+    let c = String.compare u u' in
+    if c <> 0 then c
+    else compare_opt String.compare p p'
+
   let userinfo_of_encoded us =
     match Stringext.split ~max:2 ~on:':' us with
     | [] -> ("",None)
@@ -329,6 +349,8 @@ module Path = struct
      context in recursion (e.g. remove_dot_segments for relative resolution). *)
 
   type t = string list with sexp
+
+  let compare = compare_list String.compare
 
   (* Make a path token list from a percent-encoded string *)
   let path_of_encoded ps =
@@ -373,6 +395,12 @@ let encoded_of_path ?scheme = Path.encoded_of_path ?scheme
 module Query = struct
 
   type t = (string * string list) list with sexp
+
+  let compare = compare_list (fun (k,vl) (k',vl') ->
+    let c = String.compare k k' in
+    if c <> 0 then c
+    else compare_list String.compare vl vl'
+  )
 
   let find q k = try Some (List.assoc k q) with Not_found -> None
 
@@ -445,6 +473,31 @@ type t = {
   query: Query.t;
   fragment: Pct.decoded sexp_option;
 } with sexp
+
+let compare_decoded = Pct.unlift_decoded2 String.compare
+let compare_decoded_opt = compare_opt compare_decoded
+let compare t t' =
+  let c = compare_decoded_opt t.host t'.host in
+  if c <> 0 then c
+  else
+    let c = compare_decoded_opt t.scheme t'.scheme in
+    if c <> 0 then c
+    else
+      let c = compare_opt (fun p p' ->
+        if p < p' then -1 else if p > p' then 1 else 0
+      ) t.port t'.port in
+      if c <> 0 then c
+      else
+        let c = compare_opt Userinfo.compare t.userinfo t'.userinfo in
+        if c <> 0 then c
+        else
+          let c = Path.compare t.path t'.path in
+          if c <> 0 then c
+          else
+            let c = Query.compare t.query t'.query in
+            if c <> 0 then c
+            else
+              compare_decoded_opt t.fragment t'.fragment
 
 let normalize schem uri =
   let uncast_opt = function
