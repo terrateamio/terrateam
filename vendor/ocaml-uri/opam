@@ -1,0 +1,32 @@
+opam-version: "1"
+
+maintainer: "sheets@alum.mit.edu"
+authors: [
+  "Anil Madhavapeddy"
+  "David Sheets"
+  "Rudi Grinberg"
+]
+license: "ISC"
+tags: [
+  "url"
+  "uri"
+  "org:mirage"
+  "org:xapi-project"
+]
+build: [
+  ["ocaml" "setup.ml" "-configure" "--prefix" prefix]
+  ["ocaml" "setup.ml" "-build"]
+  ["ocaml" "setup.ml" "-install"]
+]
+build-doc: [["ocaml" "setup.ml" "-doc"]]
+remove: [["ocamlfind" "remove" "uri"]]
+depends: [
+  "ocamlfind"
+  "re"
+  "sexplib" {>="109.53.00"}
+  "base-bytes"
+  "type_conv"
+  "stringext"
+]
+depopts: ["ounit"]
+conflicts: ["ounit" {< "1.0.2"}]
