@@ -68,7 +68,7 @@ module Generic : Scheme = struct
     a
 
   let safe_chars : safe_chars = 
-    let a = Array.create 256 false in
+    let a = Array.make 256 false in
     let always_safe =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-~" in
     for i = 0 to String.length always_safe - 1 do
