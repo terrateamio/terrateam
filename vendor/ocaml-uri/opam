@@ -27,6 +27,7 @@ depends: [
   "base-bytes"
   "type_conv"
   "stringext"
+  "camlp4"
 ]
 depopts: ["ounit"]
 conflicts: ["ounit" {< "1.0.2"}]
