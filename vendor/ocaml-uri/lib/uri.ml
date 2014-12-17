@@ -82,7 +82,7 @@ module Generic : Scheme = struct
     a
 
   let safe_chars : safe_chars = 
-    let a = Array.create 256 false in
+    let a = Array.make 256 false in
     let always_safe =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-~" in
     for i = 0 to String.length always_safe - 1 do
@@ -411,10 +411,11 @@ module Query = struct
     let els = Stringext.split ~on:'&' qs in
     (** Replace a + in a query string with a space in-place *)
     let plus_to_space s =
-      for i = 0 to String.length s - 1 do
-        if s.[i] = '+' then s.[i] <- ' '
+      let s = Bytes.unsafe_of_string s in
+      for i = 0 to Bytes.length s - 1 do
+        if s.[i] = '+' then Bytes.set s i ' '
       done;
-      s
+      Bytes.unsafe_to_string s
     in
     let rec loop acc = function
       | (k::v::_)::tl ->
