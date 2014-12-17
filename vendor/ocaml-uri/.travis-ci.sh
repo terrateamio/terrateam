@@ -1,5 +1,3 @@
-OPAM_DEPENDS="ocamlfind ounit re sexplib stringext"
-
 case "$OCAML_VERSION,$OPAM_VERSION" in
 4.00.1,1.2.0) ppa=avsm/ocaml40+opam12 ;;
 4.01.0,1.2.0) ppa=avsm/ocaml41+opam12 ;;
@@ -19,10 +17,7 @@ opam --version
 opam --git-version
 
 opam init
-
-opam install ${OPAM_DEPENDS}
-
+opam pin add uri .
 eval `opam config env`
 make
 make test
-opam pin add uri .
