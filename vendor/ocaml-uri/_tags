@@ -1,8 +1,9 @@
 # OASIS_START
-# DO NOT EDIT (digest: 3ffa8b7834f0add1469c5a2406b960ee)
+# DO NOT EDIT (digest: 59080117cd63219fb5c15147e260ad57)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
+true: annot, bin_annot
 <**/.svn>: -traverse
 <**/.svn>: not_hygienic
 ".bzr": -traverse
@@ -19,27 +20,26 @@
 "lib/services.cmxs": use_services
 # Library services_full
 "lib/services_full.cmxs": use_services_full
-<lib/*.ml{,i}>: pkg_re.posix
-<lib/*.ml{,i}>: pkg_sexplib
-<lib/*.ml{,i}>: pkg_sexplib.syntax
-<lib/*.ml{,i}>: pkg_stringext
-<lib/*.ml{,i}>: use_uri
+<lib/*.ml{,i,y}>: package(re.posix)
+<lib/*.ml{,i,y}>: package(sexplib)
+<lib/*.ml{,i,y}>: package(sexplib.syntax)
+<lib/*.ml{,i,y}>: package(stringext)
+<lib/*.ml{,i,y}>: use_uri
 # Library uri_top
 "top/uri_top.cmxs": use_uri_top
+<top/*.ml{,i,y}>: package(compiler-libs.toplevel)
 # Executable test_runner
-<lib_test/test_runner.{native,byte}>: pkg_oUnit
-<lib_test/test_runner.{native,byte}>: pkg_re.posix
-<lib_test/test_runner.{native,byte}>: pkg_sexplib
-<lib_test/test_runner.{native,byte}>: pkg_sexplib.syntax
-<lib_test/test_runner.{native,byte}>: pkg_stringext
+<lib_test/test_runner.{native,byte}>: package(oUnit)
+<lib_test/test_runner.{native,byte}>: package(re.posix)
+<lib_test/test_runner.{native,byte}>: package(sexplib)
+<lib_test/test_runner.{native,byte}>: package(sexplib.syntax)
+<lib_test/test_runner.{native,byte}>: package(stringext)
 <lib_test/test_runner.{native,byte}>: use_uri
-<lib_test/*.ml{,i}>: pkg_oUnit
-<lib_test/*.ml{,i}>: pkg_re.posix
-<lib_test/*.ml{,i}>: pkg_sexplib
-<lib_test/*.ml{,i}>: pkg_sexplib.syntax
-<lib_test/*.ml{,i}>: pkg_stringext
-<lib_test/*.ml{,i}>: use_uri
+<lib_test/*.ml{,i,y}>: package(oUnit)
+<lib_test/*.ml{,i,y}>: package(re.posix)
+<lib_test/*.ml{,i,y}>: package(sexplib)
+<lib_test/*.ml{,i,y}>: package(sexplib.syntax)
+<lib_test/*.ml{,i,y}>: package(stringext)
+<lib_test/*.ml{,i,y}>: use_uri
 <lib_test/test_runner.{native,byte}>: custom
 # OASIS_STOP
-true: annot
-<top/*.ml>: I(+compiler-libs)

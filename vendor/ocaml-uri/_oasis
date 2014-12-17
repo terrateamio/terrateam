@@ -1,6 +1,7 @@
-OASISFormat: 0.4
+OASISFormat: 0.3
 Name:        uri
-Version:     1.7.2
+Version:     1.8.0
+OCamlVersion: >= 4.00
 Synopsis:    RFC3986 URI parsing library
 Description: Uniform Resource Identifier (URI) parsing and encoding.
   This is pure OCaml code.
@@ -19,7 +20,7 @@ Flag allservices
 Library uri
   Path:       lib
   Modules:    Uri,Uri_re
-  builddepends: re.posix,stringext,sexplib.syntax,sexplib
+  BuildDepends: re.posix,stringext,sexplib.syntax,sexplib
   XMETARequires: re.posix,stringext,sexplib
 
 Library services
@@ -42,9 +43,7 @@ Library uri_top
   FindlibName:        top
   FindlibParent:      uri
   Modules:            Uri_top
-  # Compiler libs do not exists for OCaml < 4.0.0 and otherwise always
-  # present.  Use _tags to set them up.
-  # BuildDepends:       compiler-libs.toplevel
+  BuildDepends:       compiler-libs.toplevel
   XMETARequires:      uri
   XMETADescription:   Toplevel printers for URIs
 
