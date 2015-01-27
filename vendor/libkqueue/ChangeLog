@@ -1,6 +1,9 @@
 UNRELEASED  HEAD
 ------------------------------------------------------------------------
 
+  * Fix incorrect boolean logic in src/linux/read.c
+    (Credit: marcos69, closes #5)
+
   * Fix a build failure on mips64el.
     (Credit: YunQiang Su, from Debian Bug #754376)
 

@@ -204,7 +204,7 @@ evfilt_read_knote_delete(struct filter *filt, struct knote *kn)
     if (kn->kev.flags & EV_DISABLE)
         return (0);
 
-    if ((kn->kn_flags & KNFL_REGULAR_FILE && kn->kdata.kn_eventfd != -1) < 0) {
+    if ((kn->kn_flags & KNFL_REGULAR_FILE) && (kn->kdata.kn_eventfd != -1)) {
         if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_DEL, kn->kdata.kn_eventfd, NULL) < 0) {
             dbg_perror("epoll_ctl(2)");
             return (-1);
