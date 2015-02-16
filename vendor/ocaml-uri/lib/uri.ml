@@ -687,8 +687,12 @@ let with_userinfo uri userinfo =
 let port uri = uri.port
 let with_port uri port =
   match host uri with
-  | None -> { uri with host=Some (Pct.cast_decoded ""); port=port }
   | Some _ -> { uri with port=port }
+  | None -> begin
+     match port with
+     | None -> { uri with host=None; port=None }
+     | Some _ -> { uri with host=Some (Pct.cast_decoded ""); port=port }
+  end
 
 (* Return the path component *)
 let path uri = Pct.uncast_encoded (match uri.scheme with
