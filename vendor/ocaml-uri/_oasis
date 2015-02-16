@@ -1,4 +1,4 @@
-OASISFormat: 0.3
+OASISFormat: 0.4
 Name:        uri
 Version:     1.8.0
 OCamlVersion: >= 4.00

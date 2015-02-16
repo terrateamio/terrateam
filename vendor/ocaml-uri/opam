@@ -1,5 +1,7 @@
-opam-version: "1"
-
+opam-version: "1.2"
+homepage: "https://github.com/mirage/ocaml-uri"
+bug-reports: "https://github.com/mirage/ocaml-uri/issues"
+dev-repo: "https://github.com/mirage/ocaml-uri.git"
 maintainer: "sheets@alum.mit.edu"
 authors: [
   "Anil Madhavapeddy"
@@ -16,6 +18,8 @@ tags: [
 build: [
   ["ocaml" "setup.ml" "-configure" "--prefix" prefix]
   ["ocaml" "setup.ml" "-build"]
+]
+install: [
   ["ocaml" "setup.ml" "-install"]
 ]
 build-doc: [["ocaml" "setup.ml" "-doc"]]
@@ -27,6 +31,5 @@ depends: [
   "base-bytes"
   "type_conv"
   "stringext"
-  "type_conv"
   "ounit" {>="1.0.2"}
 ]
