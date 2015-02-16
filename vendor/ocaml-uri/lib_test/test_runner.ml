@@ -449,7 +449,8 @@ let test_with_change =
     let foo_port = Uri.with_port foo (Some 80) in
     assert_equal (Uri.of_string "http://foo.com:80") foo_port;
     let uri_no_port = Uri.with_port foo_port None in
-    assert_equal foo uri_no_port
+    assert_equal foo uri_no_port;
+    assert_equal (Uri.of_string "/") (Uri.with_port (Uri.of_string "/") None)
   );
 
   "test_with_path" >:: (fun () ->
