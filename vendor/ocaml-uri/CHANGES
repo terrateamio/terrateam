@@ -1,9 +1,12 @@
-1.8.0 (2014-12-16):
-* Uri.compare imposes an ordering by host, scheme, port, userinfo, path,
+1.8.0 (2015-02-16):
+* `Uri.with_port` no longer sets the host fragment to a blank value if both
+   the host and port are empty (#63).
+* `Uri.compare` imposes an ordering by host, scheme, port, userinfo, path,
   query, and finally fragment. (#55).
 * Uri is now an `OrderedType` and can be used directly in Maps and Sets (#55).
 * Remove deprecation warnings with OCaml 4.02.0+ (#58).
 * Drop support for OCaml 3.12.1, and now require OCaml 4.00.1+.
+* Modernise Travis scripts to use OPAM 1.2 workflow.
 
 1.7.2 (2014-08-10):
 * Fix empty-but-existing query ("?") parsing bug
