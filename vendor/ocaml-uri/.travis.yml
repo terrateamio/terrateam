@@ -1,7 +1,7 @@
 language: c
-install: wget https://raw.githubusercontent.com/ocaml/ocaml-travisci-skeleton/master/.travis-opam.sh
+install: wget https://raw.githubusercontent.com/avsm/ocaml-travisci-skeleton/master/.travis-opam.sh
 script: bash -ex .travis-opam.sh
 env:
-  - OCAML_VERSION=latest PACKAGE=uri REVDEPS=1 TESTS=0
-  - OCAML_VERSION=4.01 PACKAGE=uri REVDEPS=1 TESTS=0
-  - OCAML_VERSION=4.00 PACKAGE=uri REVDEPS=1 TESTS=0
+  - OCAML_VERSION=latest PACKAGE=uri REVDEPS=1 TESTS=0 FORK_USER=avsm
+  - OCAML_VERSION=4.01 PACKAGE=uri REVDEPS=1 TESTS=0 FORK_USER=avsm
+  - OCAML_VERSION=4.00 PACKAGE=uri REVDEPS=1 TESTS=0 FORK_USER=avsm
