@@ -70,7 +70,6 @@ type safe_chars = bool array
 module type Scheme = sig
   val safe_chars_for_component : component -> safe_chars
   val normalize_host : string option -> string option
-  val uses_authority : bool
 end
 
 module Generic : Scheme = struct
@@ -154,8 +153,6 @@ module Generic : Scheme = struct
     | _ -> safe_chars
 
   let normalize_host hso = hso
-
-  let uses_authority = true
 end
 
 module Http : Scheme = struct
@@ -179,7 +176,6 @@ end
 module Urn : Scheme = struct
   include Generic
 
-  let uses_authority = false
 end
 
 let module_of_scheme = function
@@ -604,7 +600,6 @@ let to_string uri =
   let scheme = match uri.scheme with
     | Some s -> Some (Pct.uncast_decoded s)
     | None -> None in
-  let module Scheme = (val (module_of_scheme scheme) : Scheme) in
   let buf = Buffer.create 128 in
   (* Percent encode a decoded string and add it to the buffer *)
   let add_pct_string ?(component=`Path) x =
@@ -647,10 +642,11 @@ let to_string uri =
      | Some _ -> Buffer.add_char buf '/'
      | None ->
        (* ensure roundtrip by forcing relative path interpretation not scheme *)
-       if Scheme.uses_authority
-       then match Stringext.find_from first_segment ~pattern:":" with
-         | Some _ -> Buffer.add_string buf "./"
-         | None -> ()
+       match Stringext.find_from first_segment ~pattern:":" with
+       | None -> ()
+       | Some _ -> match scheme with
+         | Some _ -> ()
+         | None -> Buffer.add_string buf "./"
     );
     Buffer.add_string buf
       (Pct.uncast_encoded (encoded_of_path ?scheme uri.path))
