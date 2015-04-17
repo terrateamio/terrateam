@@ -479,6 +479,16 @@ type t = {
   fragment: Pct.decoded sexp_option;
 } with sexp
 
+let empty = {
+  scheme = None;
+  userinfo = None;
+  host = None;
+  port = None;
+  path = [];
+  query = [];
+  fragment = None;
+}
+
 let compare_decoded = Pct.unlift_decoded2 String.compare
 let compare_decoded_opt = compare_opt compare_decoded
 let compare t t' =

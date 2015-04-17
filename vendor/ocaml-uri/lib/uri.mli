@@ -33,6 +33,10 @@ type component = [
 | `Fragment
 ] with sexp
 
+(** The empty (zero length) URI reference. Useful for constructing
+    URIs piece-by-piece. *)
+val empty : t
+
 (** Comparator ordering by host, scheme, port, userinfo, path, query,
     and finally fragment. Designed to produce a reasonable sort order. *)
 val compare : t -> t -> int
