@@ -68,7 +68,7 @@ let uri_encodes = [
   "http://user:pass@%5B2001%3A41d1%3Afe67%3A500%3A227%3Ac6ff%3Afe5a%3Aefa0%25wlan0%5D:6789/wh/at/ever?foo=1&bar=5#5",
   (Uri.make ~scheme:"http" ~userinfo:"user:pass" ~host:"[2001:41d1:fe67:500:227:c6ff:fe5a:efa0%wlan0]"
      ~port:6789 ~path:"/wh/at/ever" ~query:["foo",["1"];"bar",["5"]] ~fragment:"5" ());
-  "foo+bar:", (Uri.make ~path:"foo+bar:" ());
+  "foo+bar:", (Uri.make ~scheme:"foo+bar" ());
   "foo+bar:///", (Uri.make ~scheme:"foo+bar" ~host:"" ~path:"/" ());
   "foo2-bar.baz:///", (Uri.make ~scheme:"foo2-bar.baz" ~host:"" ~path:"/" ());
   "//foobar.com/quux", (Uri.make ~host:"foobar.com" ~path:"quux" ());
