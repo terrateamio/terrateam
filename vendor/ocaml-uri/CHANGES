@@ -1,5 +1,7 @@
 1.9.0 (trunk):
-* Colon (":") is no longer percent-encoded in path segments; URNs are supported.
+* Colon (":") is no longer percent-encoded in path segments
+* URNs are now supported
+* Relative paths with colons in first segment have "./" prepended in to_string
 
 1.8.0 (2015-02-16):
 * `Uri.with_port` no longer sets the host fragment to a blank value if both
