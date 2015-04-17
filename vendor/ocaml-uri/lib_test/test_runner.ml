@@ -232,8 +232,7 @@ let file_uri_rel_res = [ (* http://tools.ietf.org/html/rfc1738#section-3.10 *)
 let test_file_rel_res =
   List.map (fun (rel,abs) ->
     let test () = assert_equal ~printer:(fun l -> l)
-      abs (Uri.to_string (Uri.resolve "file" (Uri.of_string "")
-                            (Uri.of_string rel))) in
+      abs (Uri.to_string (Uri.resolve "file" Uri.empty (Uri.of_string rel))) in
     rel >:: test
   ) file_uri_rel_res
 
@@ -307,8 +306,7 @@ let generic_uri_norm = [
 let test_generic_uri_norm =
   List.map (fun (o,n) ->
     let test () = assert_equal ~printer:(fun l -> l)
-      n (Uri.to_string (Uri.resolve "http" (Uri.of_string "")
-                          (Uri.of_string o))) in
+      n (Uri.to_string (Uri.resolve "http" Uri.empty (Uri.of_string o))) in
     o >:: test
   ) generic_uri_norm
 
@@ -392,8 +390,7 @@ let test_with_change =
     let msg = sprintf "%s <> %s" (Uri.to_string uri3) exp in
     assert_equal ~msg (Uri.to_string uri3) exp;
 
-    let uri_empty = Uri.of_string "" in
-    let uri = Uri.with_scheme uri_empty (Some "http") in
+    let uri = Uri.with_scheme Uri.empty (Some "http") in
     let uri_s = Uri.to_string uri in
     let uri_exp = "http:" in
     let msg = sprintf "with_scheme empty (%s <> %s).string" uri_s uri_exp in
@@ -404,7 +401,7 @@ let test_with_change =
     assert_equal urn urn2;
 
     let urn_path =
-      Uri.with_path uri_empty "uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
+      Uri.with_path Uri.empty "uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
     in
     let urn2 = Uri.with_scheme urn_path (Some "urn") in
     assert_equal urn urn2
@@ -421,8 +418,7 @@ let test_with_change =
     let msg t = sprintf "%s %s <> %s" t (Uri.to_string uri3) exp in
     assert_equal ~msg:(msg "string") (Uri.to_string uri3) exp;
     assert_equal ~msg:(msg "rep") uri3 (Uri.of_string exp);
-    let uri = Uri.of_string "" in
-    let uri_some = Uri.with_userinfo uri (Some "avsm") in
+    let uri_some = Uri.with_userinfo Uri.empty (Some "avsm") in
     let exp = "//avsm@" in
     let msg t = sprintf "%s %s <> %s" t (Uri.to_string uri_some) exp in
     assert_equal ~msg:(msg "string") (Uri.to_string uri_some) exp;
@@ -444,14 +440,12 @@ let test_with_change =
     let uri_some = Uri.with_host uri (Some "www.woof.com") in
     let uri_woof = Uri.of_string "//www.woof.com" in
     assert_equal ~msg:"host change" uri_woof uri_some;
-    let uri = Uri.of_string "" in
-    let uri_some = Uri.with_host uri (Some "www.woof.com") in
+    let uri_some = Uri.with_host Uri.empty (Some "www.woof.com") in
     assert_equal ~msg:"create host" uri_woof uri_some
   );
 
   "test_with_port" >:: (fun () ->
-    let uri = Uri.of_string "" in
-    let uri_port = Uri.with_port uri (Some 80) in
+    let uri_port = Uri.with_port Uri.empty (Some 80) in
     let uri_exp = "//:80" in
     let msg = sprintf "add port to empty (%s <> %s)"
       uri_exp (Uri.to_string uri_port) in
@@ -468,14 +462,13 @@ let test_with_change =
   );
 
   "test_with_path" >:: (fun () ->
-    let uri = Uri.of_string "" in
-    let uri_empty = Uri.with_path uri "" in
-    assert_equal ~msg:"empty host empty path" uri uri_empty;
-    let uri_pct = Uri.with_path uri "a%2F" in
+    let uri_empty = Uri.with_path Uri.empty "" in
+    assert_equal ~msg:"empty host empty path" Uri.empty uri_empty;
+    let uri_pct = Uri.with_path Uri.empty "a%2F" in
     let msg = sprintf "empty host percent / path (%s <> %s)"
       (Uri.to_string uri_pct) "a%2F" in
     assert_equal ~msg (Uri.to_string uri_pct) "a%2F";
-    let uri_some = Uri.with_path uri "a" in
+    let uri_some = Uri.with_path Uri.empty "a" in
     assert_equal ~msg:"empty host some path" (Uri.of_string "a") uri_some;
     let uri = Uri.of_string "//" in
     let uri_empty = Uri.with_path uri "" in
