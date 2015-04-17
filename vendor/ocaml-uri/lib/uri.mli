@@ -89,7 +89,7 @@ val get_query_param' : t -> string -> string list option
 
 (** [get_query_param q key] returns the value found for a [key] in
      query [q].  If there are multiple values for the key, then the
-     first one is returned/ *)
+     first one is returned. *)
 val get_query_param: t -> string -> string option
 
 (** Add a query parameter to the input query URI.
