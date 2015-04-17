@@ -457,10 +457,10 @@ let test_with_change =
     let uri = Uri.of_string "" in
     let uri_empty = Uri.with_path uri "" in
     assert_equal ~msg:"empty host empty path" uri uri_empty;
-    let uri_pct = Uri.with_path uri "%2F" in
+    let uri_pct = Uri.with_path uri "a%2F" in
     let msg = sprintf "empty host percent / path (%s <> %s)"
-      (Uri.to_string uri_pct) "%2F" in
-    assert_equal ~msg (Uri.to_string uri_pct) "%2F";
+      (Uri.to_string uri_pct) "a%2F" in
+    assert_equal ~msg (Uri.to_string uri_pct) "a%2F";
     let uri_some = Uri.with_path uri "a" in
     assert_equal ~msg:"empty host some path" (Uri.of_string "a") uri_some;
     let uri = Uri.of_string "//" in
