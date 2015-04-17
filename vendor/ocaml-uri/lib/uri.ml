@@ -102,11 +102,9 @@ module Generic : Scheme = struct
     a.(Char.code '+') <- true;
     a
 
-  (** Safe characters for the path component of a URI
-      TODO: sometimes ':' is unsafe (Sec 3.3 pchar vs segment-nz-nc) *)
+  (** Safe characters for the path component of a URI *)
   let safe_chars_for_path : safe_chars =
-    let a = sub_delims (Array.copy safe_chars) in
-    a.(Char.code '@') <- true;
+    let a = sub_delims (Array.copy pchar) in
     (* delimiter: non-segment delimiting uses should be pct encoded *)
     a.(Char.code '/') <- false;
     a
