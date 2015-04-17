@@ -73,6 +73,8 @@ let uri_encodes = [
   "foo2-bar.baz:///", (Uri.make ~scheme:"foo2-bar.baz" ~host:"" ~path:"/" ());
   "//foobar.com/quux", (Uri.make ~host:"foobar.com" ~path:"quux" ());
   "quux%2F%20", (Uri.make ~path:"quux%2f " ());
+  "urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6",
+  (Uri.make ~scheme:"urn" ~path:"uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6" ());
 ]
 
 let map_pcts_tests size name test args =
@@ -388,12 +390,23 @@ let test_with_change =
     let exp = "f%20o%20o://foo.bar/a/b/c" in
     let msg = sprintf "%s <> %s" (Uri.to_string uri3) exp in
     assert_equal ~msg (Uri.to_string uri3) exp;
+
     let uri_empty = Uri.of_string "" in
     let uri = Uri.with_scheme uri_empty (Some "http") in
     let uri_s = Uri.to_string uri in
     let uri_exp = "http:" in
     let msg = sprintf "with_scheme empty (%s <> %s).string" uri_s uri_exp in
-    assert_equal ~msg uri_s uri_exp
+    assert_equal ~msg uri_s uri_exp;
+
+    let urn = Uri.of_string "urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6" in
+    let urn2= Uri.with_scheme urn (Some "urn") in
+    assert_equal urn urn2;
+
+    let urn_path =
+      Uri.with_path uri_empty "uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
+    in
+    let urn2 = Uri.with_scheme urn_path (Some "urn") in
+    assert_equal urn urn2
   );
 
   "test_with_userinfo" >:: (fun () ->
@@ -548,7 +561,23 @@ let rec was_successful =
         false
 
 let _ =
-  let suite = "URI" >::: (test_pct_small @ test_pct_large @ test_uri_encode @ test_uri_decode @ test_query_decode @ test_query_encode @ test_rel_res @ test_file_rel_res @ test_rel_rel_res @ test_generic_uri_norm @ test_rel_id @ test_tcp_port_of_uri @ query_key_add_remove @ test_sexping @ test_with_change) in
+  let suite = "URI" >::: (
+    test_pct_small
+    @ test_pct_large
+    @ test_uri_encode
+    @ test_uri_decode
+    @ test_query_decode
+    @ test_query_encode
+    @ test_rel_res
+    @ test_file_rel_res
+    @ test_rel_rel_res
+    @ test_generic_uri_norm
+    @ test_rel_id
+    @ test_tcp_port_of_uri
+    @ query_key_add_remove
+    @ test_sexping
+    @ test_with_change
+  ) in
   let verbose = ref false in
   let set_verbose _ = verbose := true in
   Arg.parse

@@ -1,3 +1,6 @@
+1.9.0 (trunk):
+* Colon (":") is no longer percent-encoded in path segments; URNs are supported.
+
 1.8.0 (2015-02-16):
 * `Uri.with_port` no longer sets the host fragment to a blank value if both
    the host and port are empty (#63).
