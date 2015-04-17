@@ -391,7 +391,7 @@ let test_with_change =
     let uri_empty = Uri.of_string "" in
     let uri = Uri.with_scheme uri_empty (Some "http") in
     let uri_s = Uri.to_string uri in
-    let uri_exp = "http://" in
+    let uri_exp = "http:" in
     let msg = sprintf "with_scheme empty (%s <> %s).string" uri_s uri_exp in
     assert_equal ~msg uri_s uri_exp
   );
@@ -503,7 +503,7 @@ let test_with_change =
       assert_equal ~msg (Uri.of_string prefix) uri_empty;
       let uri_equal = Uri.with_query' uri ["",""] in
       let msg = prefix ^" equal'" in
-      assert_equal (Uri.of_string (prefix^"?=")) uri_equal;
+      assert_equal ~msg (Uri.of_string (prefix^"?=")) uri_equal;
     in
     test_with_query "";
     test_with_query "//";
@@ -514,7 +514,6 @@ let test_with_change =
     assert_equal ~msg (Uri.of_string "//?#") uri_quest;
     let uri_equal = Uri.with_query' uri ["",""] in
     let uri_exp_s = "//?=#" in
-    let uri_exp = Uri.of_string uri_exp_s in
     let msg = sprintf "%s <> %s" uri_exp_s (Uri.to_string uri_equal) in
     assert_equal ~msg (Uri.of_string "//?=#") uri_equal;
   );
