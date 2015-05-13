@@ -8,5 +8,5 @@ setup.bin
 *.byte
 *.docdir
 *.annot
-lib/Uri_services.ml
-lib/Uri_services_full.ml
+lib/uri_services.ml
+lib/uri_services_full.ml
