@@ -16,14 +16,21 @@ tags: [
   "org:xapi-project"
 ]
 build: [
-  ["ocaml" "setup.ml" "-configure" "--prefix" prefix]
+  ["ocaml" "setup.ml" "-configure" "--prefix" prefix "--%{ounit:enable}%-tests"]
   ["ocaml" "setup.ml" "-build"]
 ]
 install: [
   ["ocaml" "setup.ml" "-install"]
 ]
-build-doc: [["ocaml" "setup.ml" "-doc"]]
-remove: [["ocamlfind" "remove" "uri"]]
+build-test: [
+  ["ocaml" "setup.ml" "-test"]
+]
+build-doc: [
+  ["ocaml" "setup.ml" "-doc"]
+]
+remove: [
+  ["ocamlfind" "remove" "uri"]
+]
 depends: [
   "ocamlfind"
   "re"
@@ -31,5 +38,5 @@ depends: [
   "base-bytes"
   "type_conv"
   "stringext"
-  "ounit" {>="1.0.2"}
+  "ounit" {test & >="1.0.2"}
 ]
