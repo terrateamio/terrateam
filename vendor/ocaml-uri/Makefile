@@ -29,4 +29,4 @@ reinstall: setup.bin
 
 clean:
 	ocamlbuild -clean
-	rm -f setup.data setup.log setup.bin lib/Uri_services.ml lib/Uri_services_full.ml
+	rm -f setup.data setup.log setup.bin lib/uri_services.ml lib/uri_services_full.ml
