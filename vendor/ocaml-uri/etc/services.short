@@ -9,6 +9,7 @@ daytime          13/udp     # Daytime (RFC 867)
 daytime          13/tcp     # Daytime (RFC 867)
 msp              18/udp     # Message Send Protocol
 msp              18/tcp     # Message Send Protocol
+chargen          19/tcp     #
 ftp-data         20/udp     # File Transfer [Default Data]
 ftp-data         20/tcp     # File Transfer [Default Data]
 ftp              21/udp     # File Transfer [Control]

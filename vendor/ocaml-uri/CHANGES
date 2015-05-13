@@ -3,6 +3,8 @@
 * URNs are now supported
 * Relative paths with colons in first segment have "./" prepended in to_string
 * Add Uri.empty, the zero length URI reference
+* Uri_services now includes service aliases (e.g. www, www-http, http)
+* Uri_services now includes chargen
 
 1.8.0 (2015-02-16):
 * `Uri.with_port` no longer sets the host fragment to a blank value if both
