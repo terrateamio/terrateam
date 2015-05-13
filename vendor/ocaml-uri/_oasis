@@ -1,13 +1,13 @@
 OASISFormat: 0.4
 Name:        uri
-Version:     1.8.0
+Version:     1.9.0
 OCamlVersion: >= 4.00
 Synopsis:    RFC3986 URI parsing library
 Description: Uniform Resource Identifier (URI) parsing and encoding.
   This is pure OCaml code.
 Authors:     Anil Madhavapeddy, David Sheets, Rudy Grinberg
 Maintainers: David Sheets <sheets@alum.mit.edu>
-Homepage:    https://github.com/avsm/ocaml-uri
+Homepage:    https://github.com/mirage/ocaml-uri
 License:     ISC
 Plugins:     META (0.4)
 BuildTools:  ocamlbuild
