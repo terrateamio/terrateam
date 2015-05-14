@@ -191,6 +191,18 @@ val userinfo : t -> string option
     Input URI is not modified. *)
 val with_userinfo : t -> string option -> t
 
+(** Get the username component of a URI *)
+val user : t -> string option
+
+(** Get the password component of a URI *)
+val password : t -> string option
+
+(** Replace the password portion of the URI with the supplied [string option].
+    If no host is present in the supplied URI, an empty host is added.
+    Input URI is not modified.
+*)
+val with_password : t -> string option -> t
+
 (** Get the host component of a URI *)
 val host : t -> string option
 

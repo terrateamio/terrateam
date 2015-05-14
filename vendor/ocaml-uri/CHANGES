@@ -6,6 +6,8 @@
 * Uri_services now includes service aliases (e.g. www, www-http, http)
 * Uri_services now includes chargen and git
 * Add `Uri.canonicalize` for scheme-specific normalization
+* Add `Uri.user` and `Uri.password` accessors for subcomponents of userinfo
+* Add `Uri.with_password` functional setter for password subcomponent of userinfo
 
 1.8.0 (2015-02-16):
 * `Uri.with_port` no longer sets the host fragment to a blank value if both
