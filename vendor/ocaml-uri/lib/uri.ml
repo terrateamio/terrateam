@@ -70,6 +70,8 @@ type safe_chars = bool array
 module type Scheme = sig
   val safe_chars_for_component : component -> safe_chars
   val normalize_host : string option -> string option
+  val canonicalize_port : int option -> int option
+  val canonicalize_path : string list -> string list
 end
 
 module Generic : Scheme = struct
@@ -153,6 +155,9 @@ module Generic : Scheme = struct
     | _ -> safe_chars
 
   let normalize_host hso = hso
+
+  let canonicalize_port port = port
+  let canonicalize_path path = path
 end
 
 module Http : Scheme = struct
@@ -161,6 +166,24 @@ module Http : Scheme = struct
   let normalize_host = function
     | Some hs -> Some (String.lowercase hs)
     | None -> None
+
+  let canonicalize_port = function
+    | None -> None
+    | Some 80 -> None
+    | Some x -> Some x
+
+  let canonicalize_path = function
+    | [] -> ["/"]
+    | x  -> x
+end
+
+module Https : Scheme = struct
+  include Http
+
+  let canonicalize_port = function
+    | None -> None
+    | Some 443 -> None
+    | Some x -> Some x
 end
 
 module File : Scheme = struct
@@ -170,7 +193,7 @@ module File : Scheme = struct
     | Some hs ->
       let hs = String.lowercase hs in
       if hs="localhost" then Some "" else Some hs
-    | None -> Some ""
+    | None -> None
 end
 
 module Urn : Scheme = struct
@@ -180,7 +203,8 @@ end
 
 let module_of_scheme = function
   | Some s -> begin match String.lowercase s with
-      | "http" | "https" -> (module Http : Scheme)
+      | "http" -> (module Http : Scheme)
+      | "https"  -> (module Https : Scheme)
       | "file" -> (module File : Scheme)
       | "urn"  -> (module Urn : Scheme)
       | _ -> (module Generic : Scheme)
@@ -508,15 +532,15 @@ let compare t t' =
     | c -> c)
   | c -> c)
 
+let uncast_opt = function
+  | Some h -> Some (Pct.uncast_decoded h)
+  | None -> None
+
+let cast_opt = function
+  | Some h -> Some (Pct.cast_decoded h)
+  | None -> None
+
 let normalize schem uri =
-  let uncast_opt = function
-    | Some h -> Some (Pct.uncast_decoded h)
-    | None -> None
-  in
-  let cast_opt = function
-    | Some h -> Some (Pct.cast_decoded h)
-    | None -> None
-  in
   let module Scheme =
     (val (module_of_scheme (uncast_opt schem)) : Scheme) in
   let dob f = function
@@ -681,12 +705,6 @@ let with_scheme uri =
   |Some scheme -> { uri with scheme=Some (Pct.cast_decoded scheme) }
   |None -> { uri with scheme=None }
 
-let userinfo uri = match uri.userinfo with
-  | None -> None
-  | Some userinfo -> Some (Pct.uncast_encoded (match uri.scheme with
-    | None -> encoded_of_userinfo userinfo
-    | Some s -> encoded_of_userinfo ~scheme:(Pct.uncast_decoded s) userinfo))
-
 let host uri = get_decoded_opt uri.host
 let with_host uri =
   function
@@ -698,10 +716,31 @@ let host_with_default ?(default="localhost") uri =
   |None -> default
   |Some h -> h
 
+let userinfo uri = match uri.userinfo with
+  | None -> None
+  | Some userinfo -> Some (Pct.uncast_encoded (match uri.scheme with
+    | None -> encoded_of_userinfo userinfo
+    | Some s -> encoded_of_userinfo ~scheme:(Pct.uncast_decoded s) userinfo))
 let with_userinfo uri userinfo =
   let userinfo = match userinfo with
     | Some u -> Some (userinfo_of_encoded u)
     | None -> None
+  in
+  match host uri with
+  | None -> { uri with host=Some (Pct.cast_decoded ""); userinfo=userinfo }
+  | Some _ -> { uri with userinfo=userinfo }
+
+let user uri = match uri.userinfo with
+  | None -> None
+  | Some (user, _) -> Some user
+
+let password uri = match uri.userinfo with
+  | None | Some (_, None) -> None
+  | Some (_, Some pass) -> Some pass
+let with_password uri password =
+  let userinfo = match uri.userinfo with
+    | None -> Some ("",password)
+    | Some (user,_) -> Some (user, password)
   in
   match host uri with
   | None -> { uri with host=Some (Pct.cast_decoded ""); userinfo=userinfo }
@@ -784,5 +823,14 @@ let resolve schem base uri =
         path=remove_dot_segments (merge base.host base.path uri.path);
       }
     )
+
+let canonicalize uri =
+  let uri = resolve "" empty uri in
+  let module Scheme =
+    (val (module_of_scheme (uncast_opt uri.scheme)) : Scheme) in
+  { uri with
+    port=Scheme.canonicalize_port uri.port;
+    path=Scheme.canonicalize_path uri.path;
+  }
 
 let pp_hum ppf uri = Format.fprintf ppf "%s" (to_string uri)

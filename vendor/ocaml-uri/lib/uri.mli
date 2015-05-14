@@ -33,6 +33,8 @@ type component = [
 | `Fragment
 ] with sexp
 
+(** {3 Core functionality } *)
+
 (** The empty (zero length) URI reference. Useful for constructing
     URIs piece-by-piece. *)
 val empty : t
@@ -56,6 +58,44 @@ val to_string : t -> string
 
 (** Resolve a URI against a default scheme and base URI *)
 val resolve : string -> t -> t -> t
+
+(** Canonicalize a URI according to Sec 6.2.3 "Scheme-Based
+    Normalization". This transform is more aggressive than the
+    standard URI-generic normalization automatically done. In
+    particular, HTTP(S) URIs with empty path components will have
+    their path components set to "/". Some applications like web
+    servers may rely on the distinction between a path-less and a
+    root-path URI to distinguish request URIs (e.g. OPTIONS * vs
+    OPTIONS /).
+
+    @see <https://tools.ietf.org/html/rfc3986#section-6.2.3> RFC 3986.6.2.3
+*)
+val canonicalize : t -> t
+
+(** Make a URI from supplied components. If userinfo or port are
+    supplied without host, an empty host is added. If path is supplied
+    and userinfo, host, or port is also supplied, path is made
+    absolute but not resolved. *)
+val make : ?scheme:string -> ?userinfo:string -> ?host:string ->
+  ?port:int -> ?path:string -> ?query:(string * string list) list ->
+  ?fragment:string -> unit -> t
+
+(** {3 Query functions }
+
+    The query string API attempts to accommodate conventional query
+    string representations (i.e. [?key0=value0&key1=value1]) while
+    maximally exposing any meaning in those representations. For
+    example, it is not necessarily the case that [/] and [/?] are
+    equivalent to a web server. In the former case, we observe a zero
+    query string whereas in the latter case, we observe a query string
+    with a single key, [""] and a zero value. Compare this with [/?=]
+    which has a single key and a single empty value,
+    [""]. Additionally, some query functions return lists of values
+    for a key. These list values are extracted from a {b single} key
+    with a comma-separated value list. If a query string has multiple
+    identical keys, you must use {! query} to retrieve the entirety of
+    the structured query string.
+*)
 
 (** Get a query string from a URI *)
 val query : t -> (string * string list) list
@@ -122,13 +162,7 @@ val add_query_params' : t -> (string * string) list -> t
   *)
 val remove_query_param : t -> string -> t
 
-(** Make a URI from supplied components. If userinfo or port are
-    supplied without host, an empty host is added. If path is supplied
-    and userinfo, host, or port is also supplied, path is made
-    absolute but not resolved. *)
-val make : ?scheme:string -> ?userinfo:string -> ?host:string ->
-  ?port:int -> ?path:string -> ?query:(string * string list) list ->
-  ?fragment:string -> unit -> t
+(** {3 Component getters and setters } *)
 
 (** Get the encoded path component of a URI *)
 val path : t -> string
@@ -157,6 +191,18 @@ val userinfo : t -> string option
     Input URI is not modified. *)
 val with_userinfo : t -> string option -> t
 
+(** Get the username component of a URI *)
+val user : t -> string option
+
+(** Get the password component of a URI *)
+val password : t -> string option
+
+(** Replace the password portion of the URI with the supplied [string option].
+    If no host is present in the supplied URI, an empty host is added.
+    Input URI is not modified.
+*)
+val with_password : t -> string option -> t
+
 (** Get the host component of a URI *)
 val host : t -> string option
 
@@ -183,5 +229,7 @@ val fragment : t -> string option
     Input URI is not modified *)
 val with_fragment : t -> string option -> t
 
-(*  Human-readable output, used by the toplevel printer *)
+(** {3 Utilities } *)
+
+(**  Human-readable output, used by the toplevel printer *)
 val pp_hum : Format.formatter -> t -> unit
