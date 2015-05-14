@@ -129,3 +129,5 @@ ircs		994/udp     # irc protocol over TLS/SSL
 ircs		994/tcp     # irc protocol over TLS/SSL
 pop3s           995/udp     # pop3 protocol over TLS/SSL (was spop3)
 pop3s           995/tcp     # pop3 protocol over TLS/SSL (was spop3)
+git             9418/tcp    # git pack transfer service
+git             9418/udp    # git pack transfer service
