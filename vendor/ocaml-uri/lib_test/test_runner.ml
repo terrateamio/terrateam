@@ -541,6 +541,39 @@ let test_with_change =
   );
   ]
 
+let canonical_map = [
+  "http://foo.bar/a/b/c",      "http://foo.bar/a/b/c";
+  "http://foo.bar:/a/b/c",     "http://foo.bar/a/b/c";
+  "http://foo.bar:80/a/b/c",   "http://foo.bar/a/b/c";
+  "http://foo.bar:443/a/b/c",  "http://foo.bar:443/a/b/c";
+  "https://foo.bar/a/b/c",     "https://foo.bar/a/b/c";
+  "https://foo.bar:/a/b/c",    "https://foo.bar/a/b/c";
+  "https://foo.bar:80/a/b/c",  "https://foo.bar:80/a/b/c";
+  "https://foo.bar:443/a/b/c", "https://foo.bar/a/b/c";
+  "//example.net:80/a",        "//example.net:80/a";
+  "http://example.org",        "http://example.org/";
+  "https://example.org",       "https://example.org/";
+  "ftp://example.org",         "ftp://example.org";
+  "ssh://example.org",         "ssh://example.org";
+  "git://example.org",         "git://example.org";
+  "",                          "";
+  "..",                        "../";
+  "/..",                       "/";
+  "/foo/./bar",                "/foo/bar";
+  "/foo/../../",               "/";
+  "http://@bar:?#",            "http://@bar/?#";
+  (*"mailto:Joe@Example.COM",    "mailto:Joe@example.com";*)
+]
+
+let canonical uri_s = Uri.(to_string (canonicalize (of_string uri_s)))
+
+let test_canonicalize =
+  List.map (fun (input, output) ->
+    input >:: (fun () ->
+      assert_equal ~printer:(fun l -> l) output (canonical input)
+    )
+  ) canonical_map
+
 (* Returns true if the result list contains successes only.
    Copied from oUnit source as it isnt exposed by the mli *)
 let rec was_successful =
@@ -571,6 +604,7 @@ let _ =
     @ query_key_add_remove
     @ test_sexping
     @ test_with_change
+    @ test_canonicalize
   ) in
   let verbose = ref false in
   let set_verbose _ = verbose := true in

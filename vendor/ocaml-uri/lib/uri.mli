@@ -57,6 +57,19 @@ val to_string : t -> string
 (** Resolve a URI against a default scheme and base URI *)
 val resolve : string -> t -> t -> t
 
+(** Canonicalize a URI according to Sec 6.2.3 "Scheme-Based
+    Normalization". This transform is more aggressive than the
+    standard URI-generic normalization automatically done. In
+    particular, HTTP(S) URIs with empty path components will have
+    their path components set to "/". Some applications like web
+    servers may rely on the distinction between a path-less and a
+    root-path URI to distinguish request URIs (e.g. OPTIONS * vs
+    OPTIONS /).
+
+    @see <https://tools.ietf.org/html/rfc3986#section-6.2.3> RFC 3986.6.2.3
+*)
+val canonicalize : t -> t
+
 (** Get a query string from a URI *)
 val query : t -> (string * string list) list
 
