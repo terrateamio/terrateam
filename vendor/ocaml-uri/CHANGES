@@ -8,6 +8,7 @@
 * Add `Uri.canonicalize` for scheme-specific normalization
 * Add `Uri.user` and `Uri.password` accessors for subcomponents of userinfo
 * Add `Uri.with_password` functional setter for password subcomponent of userinfo
+* Fix file scheme host normalization bug which introduced empty host (#59)
 
 1.8.0 (2015-02-16):
 * `Uri.with_port` no longer sets the host fragment to a blank value if both

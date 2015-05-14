@@ -193,7 +193,7 @@ module File : Scheme = struct
     | Some hs ->
       let hs = String.lowercase hs in
       if hs="localhost" then Some "" else Some hs
-    | None -> Some ""
+    | None -> None
 end
 
 module Urn : Scheme = struct

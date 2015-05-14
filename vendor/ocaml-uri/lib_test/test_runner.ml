@@ -225,7 +225,7 @@ let test_rel_res =
   ) uri_rel_res
 
 let file_uri_rel_res = [ (* http://tools.ietf.org/html/rfc1738#section-3.10 *)
-  "/foo/bar/baz", "///foo/bar/baz";
+  "/foo/bar/baz", "/foo/bar/baz";
   "//localhost/foo", "///foo";
 ]
 
