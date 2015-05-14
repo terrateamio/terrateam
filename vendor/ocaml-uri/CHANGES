@@ -1,12 +1,12 @@
 1.9.0 (trunk):
 * Colon (":") is no longer percent-encoded in path segments
-* URNs are now supported
+* URNs are now supported (#67)
 * Relative paths with colons in first segment have "./" prepended in to_string
 * Add Uri.empty, the zero length URI reference
 * Uri_services now includes service aliases (e.g. www, www-http, http)
 * Uri_services now includes chargen and git
-* Add `Uri.canonicalize` for scheme-specific normalization
-* Add `Uri.user` and `Uri.password` accessors for subcomponents of userinfo
+* Add `Uri.canonicalize` for scheme-specific normalization (#70)
+* Add `Uri.user` and `Uri.password` accessors for subcomponents of userinfo (#62)
 * Add `Uri.with_password` functional setter for password subcomponent of userinfo
 * Fix file scheme host normalization bug which introduced empty host (#59)
 
