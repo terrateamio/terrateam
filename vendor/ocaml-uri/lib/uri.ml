@@ -705,12 +705,6 @@ let with_scheme uri =
   |Some scheme -> { uri with scheme=Some (Pct.cast_decoded scheme) }
   |None -> { uri with scheme=None }
 
-let userinfo uri = match uri.userinfo with
-  | None -> None
-  | Some userinfo -> Some (Pct.uncast_encoded (match uri.scheme with
-    | None -> encoded_of_userinfo userinfo
-    | Some s -> encoded_of_userinfo ~scheme:(Pct.uncast_decoded s) userinfo))
-
 let host uri = get_decoded_opt uri.host
 let with_host uri =
   function
@@ -722,10 +716,31 @@ let host_with_default ?(default="localhost") uri =
   |None -> default
   |Some h -> h
 
+let userinfo uri = match uri.userinfo with
+  | None -> None
+  | Some userinfo -> Some (Pct.uncast_encoded (match uri.scheme with
+    | None -> encoded_of_userinfo userinfo
+    | Some s -> encoded_of_userinfo ~scheme:(Pct.uncast_decoded s) userinfo))
 let with_userinfo uri userinfo =
   let userinfo = match userinfo with
     | Some u -> Some (userinfo_of_encoded u)
     | None -> None
+  in
+  match host uri with
+  | None -> { uri with host=Some (Pct.cast_decoded ""); userinfo=userinfo }
+  | Some _ -> { uri with userinfo=userinfo }
+
+let user uri = match uri.userinfo with
+  | None -> None
+  | Some (user, _) -> Some user
+
+let password uri = match uri.userinfo with
+  | None | Some (_, None) -> None
+  | Some (_, Some pass) -> Some pass
+let with_password uri password =
+  let userinfo = match uri.userinfo with
+    | None -> Some ("",password)
+    | Some (user,_) -> Some (user, password)
   in
   match host uri with
   | None -> { uri with host=Some (Pct.cast_decoded ""); userinfo=userinfo }

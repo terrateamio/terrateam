@@ -134,8 +134,8 @@ let test_query_decode =
     let uri = Uri.of_string uri_str in
     let test () = assert_equal ~printer:(fun l ->
       String.concat " "
-	(List.map
-	   (fun (k,v) -> sprintf "\"%s\" = \"%s\"" k (String.concat "," v)) l))
+        (List.map
+           (fun (k,v) -> sprintf "\"%s\" = \"%s\"" k (String.concat "," v)) l))
       res (Uri.query uri) in
     uri_str >:: test
   ) uri_query
@@ -380,8 +380,8 @@ let test_sexping =
     ("test_sexping_"^id) >:: (fun () -> test uri exp)
   ) tests
 
-let test_with_change =
-  ["test_with_scheme" >:: (fun () ->
+let test_with_change = [
+  "test_with_scheme" >:: (fun () ->
     let uri = Uri.of_string "https://foo.bar/a/b/c" in
     let uri2 = Uri.with_scheme uri (Some "https") in
     let uri3 = Uri.with_scheme uri (Some "f o o") in
@@ -423,6 +423,23 @@ let test_with_change =
     let msg t = sprintf "%s %s <> %s" t (Uri.to_string uri_some) exp in
     assert_equal ~msg:(msg "string") (Uri.to_string uri_some) exp;
     assert_equal ~msg:(msg "rep") uri_some (Uri.of_string exp)
+  );
+
+  "test_with_password" >:: (fun () ->
+    let uri = Uri.of_string "/" in
+    let uri_wp = Uri.with_password uri None in
+    assert_equal "//@/" (Uri.to_string uri_wp);
+    let uri_wp = Uri.with_password uri (Some "") in
+    assert_equal "//:@/" (Uri.to_string uri_wp);
+    let uri_wp = Uri.with_password uri (Some ":") in
+    assert_equal "//:%3A@/" (Uri.to_string uri_wp);
+    let uri = Uri.of_string "//user:pass@foo" in
+    let uri_wp = Uri.with_password uri None in
+    assert_equal "//user@foo" (Uri.to_string uri_wp);
+    let uri_wp = Uri.with_password uri (Some "") in
+    assert_equal "//user:@foo" (Uri.to_string uri_wp);
+    let uri_wp = Uri.with_password uri (Some ":") in
+    assert_equal "//user:%3A@foo" (Uri.to_string uri_wp)
   );
 
   "test_with_host" >:: (fun () ->
@@ -539,7 +556,7 @@ let test_with_change =
     let uri_empty = Uri.with_fragment uri None in
     assert_equal (Uri.of_string "//") uri_empty
   );
-  ]
+]
 
 let canonical_map = [
   "http://foo.bar/a/b/c",      "http://foo.bar/a/b/c";
