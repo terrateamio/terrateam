@@ -1,4 +1,4 @@
-1.9.0 (trunk):
+1.9.0 (2015-05-15):
 * Colon (":") is no longer percent-encoded in path segments
 * URNs are now supported (#67)
 * Relative paths with colons in first segment have "./" prepended in to_string

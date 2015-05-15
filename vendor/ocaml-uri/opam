@@ -32,7 +32,7 @@ remove: [
   ["ocamlfind" "remove" "uri"]
 ]
 depends: [
-  "ocamlfind"
+  "ocamlfind" {build}
   "re"
   "sexplib" {>="109.53.00"}
   "base-bytes"
