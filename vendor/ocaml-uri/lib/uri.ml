@@ -422,18 +422,27 @@ let encoded_of_path ?scheme = Path.encoded_of_path ?scheme
 (* Query string handling, to and from an assoc list of key/values *)
 module Query = struct
 
-  type t = (string * string list) list with sexp
+  type kv = (string * string list) list with sexp
 
-  let compare = compare_list (fun (k,vl) (k',vl') ->
-    match String.compare k k' with
-    | 0 -> compare_list String.compare vl vl'
-    | c -> c
-  )
+  type t =
+    | KV of kv
+    | Raw of string option * kv Lazy.t
+
+  let t_of_sexp sexp = KV (kv_of_sexp sexp)
+  let sexp_of_t = function Raw (_,lazy kv) | KV kv -> sexp_of_kv kv
+
+  let compare x y = match x, y with
+    | KV kvl, KV kvl'
+    | Raw (_, lazy kvl), KV kvl'
+    | KV kvl, Raw (_, lazy kvl') ->
+      compare_list (fun (k,vl) (k',vl') ->
+        match String.compare k k' with
+        | 0 -> compare_list String.compare vl vl'
+        | c -> c
+      ) kvl kvl'
+    | Raw (raw,_), Raw (raw',_) -> compare_opt String.compare raw raw'
 
   let find q k = try Some (List.assoc k q) with Not_found -> None
-
-  (* TODO: only make the query tuple parsing lazy and an additional
-   * record in Url.t ?  *)
 
   let split_query qs =
     let els = Stringext.split ~on:'&' qs in
@@ -487,6 +496,12 @@ module Query = struct
             ) "," buf v)
       ) "&" buf l;
     Buffer.contents buf
+
+  let of_raw qs =
+    let lazy_query = Lazy.from_fun (fun () -> query_of_encoded qs) in
+    Raw (Some qs, lazy_query)
+
+  let kv = function Raw (_, lazy kv) | KV kv -> kv
 end
 
 let query_of_encoded = Query.query_of_encoded
@@ -509,7 +524,7 @@ let empty = {
   host = None;
   port = None;
   path = [];
-  query = [];
+  query = Query.Raw (None, Lazy.from_val []);
   fragment = None;
 }
 
@@ -531,6 +546,8 @@ let compare t t' =
       | c -> c)
     | c -> c)
   | c -> c)
+
+let equal t t' = compare t t' = 0
 
 let uncast_opt = function
   | Some h -> Some (Pct.uncast_decoded h)
@@ -571,7 +588,10 @@ let make ?scheme ?userinfo ?host ?port ?path ?query ?fragment () =
       | None, _ | Some _, "/"::_ | Some _, [] -> path
       | Some _, _  -> "/"::path
   in
-  let query = match query with |None -> [] |Some p -> p in
+  let query = match query with
+    | None -> Query.KV []
+    | Some p -> Query.KV p
+  in
   let scheme = decode scheme in
   normalize scheme
     { scheme; userinfo;
@@ -621,8 +641,8 @@ let of_string s =
   in
   let query =
     match get_opt_encoded subs 7 with
-    | Some x -> Query.query_of_encoded (Pct.uncast_encoded x)
-    | None -> []
+    | Some x -> Query.of_raw (Pct.uncast_encoded x)
+    | None -> Query.Raw (None, Lazy.from_val [])
   in
   let fragment = get_opt subs 9 in
   normalize scheme { scheme; userinfo; host; port; path; query; fragment }
@@ -685,11 +705,11 @@ let to_string uri =
     Buffer.add_string buf
       (Pct.uncast_encoded (encoded_of_path ?scheme uri.path))
   );
-  (match uri.query with
-  |[] -> ()
-  |q ->
-    Buffer.add_char buf '?';
-    Buffer.add_string buf (encoded_of_query ?scheme q)
+  Query.(match uri.query with
+    | Raw (None,_) | KV [] -> ()
+    | Raw (_,lazy q) | KV q -> (* normalize e.g. percent capitalization *)
+      Buffer.add_char buf '?';
+      Buffer.add_string buf (encoded_of_query ?scheme q)
   );
   (match uri.fragment with
    |None -> ()
@@ -772,30 +792,42 @@ let with_fragment uri =
   |None -> { uri with fragment=None }
   |Some frag -> { uri with fragment=Some (Pct.cast_decoded frag) }
 
-let query uri = uri.query
-let get_query_param' uri k = Query.find uri.query k
+let query uri = Query.kv uri.query
+let verbatim_query uri = Query.(match uri.query with
+  | Raw (qs,_) -> qs
+  | KV [] -> None
+  | KV kv -> Some (encoded_of_query ?scheme:(scheme uri) kv)
+)
+let get_query_param' uri k = Query.(find (kv uri.query) k)
 let get_query_param uri k =
   match get_query_param' uri k with
   |None -> None
   |Some v -> Some (String.concat "," v)
 
-let with_query uri query = { uri with query=query }
+let with_query uri query = { uri with query=Query.KV query }
 let q_s q = List.map (fun (k,v) -> k,[v]) q
 let with_query' uri query = with_query uri (q_s query)
-let add_query_param uri p = { uri with query=p::uri.query }
-let add_query_param' uri (k,v) = { uri with query=(k,[v])::uri.query }
-let add_query_params uri ps = { uri with query=ps@uri.query }
-let add_query_params' uri ps = { uri with query=(q_s ps)@uri.query }
-let remove_query_param uri k = { uri with query=(List.filter (fun (k',_) -> k<>k') uri.query) }
+let add_query_param uri p = Query.({ uri with query=KV (p::(kv uri.query)) })
+let add_query_param' uri (k,v) =
+  Query.({ uri with query=KV ((k,[v])::(kv uri.query)) })
+let add_query_params uri ps = Query.({ uri with query=KV (ps@(kv uri.query)) })
+let add_query_params' uri ps =
+  Query.({ uri with query=KV ((q_s ps)@(kv uri.query)) })
+let remove_query_param uri k = Query.(
+  { uri with query=KV (List.filter (fun (k',_) -> k<>k') (kv uri.query)) }
+)
 
 (* Construct encoded path and query components *)
 let path_and_query uri =
   match (path uri), (query uri) with
   |"", [] -> "/" (* TODO: What about same document? (/) *)
   |"", q -> (* TODO: What about same document? (/) *)
-    Printf.sprintf "/?%s" (encoded_of_query q)
+    let scheme = uncast_opt uri.scheme in
+    Printf.sprintf "/?%s" (encoded_of_query ?scheme q)
   |p, [] -> p
-  |p, q -> Printf.sprintf "%s?%s" p (encoded_of_query q)
+  |p, q ->
+    let scheme = uncast_opt uri.scheme in
+    Printf.sprintf "%s?%s" p (encoded_of_query ?scheme q)
 
 (* TODO: functions to add and remove from a URI *)
 
@@ -815,8 +847,12 @@ let resolve schem base uri =
       let uri = {uri with scheme=base.scheme; host=base.host; port=base.port} in
       let path_str = path uri in
       if path_str=""
-      then {uri with path=base.path;
-        query=if uri.query=[] then base.query else uri.query}
+      then { uri with
+             path=base.path;
+             query=match uri.query with
+               | Query.Raw (None,_) | Query.KV [] -> base.query
+               | _ -> uri.query
+           }
       else if path_str.[0]='/'
       then {uri with path=remove_dot_segments uri.path}
       else {uri with
