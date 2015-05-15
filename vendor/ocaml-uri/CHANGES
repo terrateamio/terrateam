@@ -6,6 +6,8 @@
 * Uri_services now includes service aliases (e.g. www, www-http, http)
 * Uri_services now includes chargen and git
 * Add `Uri.canonicalize` for scheme-specific normalization (#70)
+* Add `Uri.verbatim_query` to extract literal query string (#57)
+* Add `Uri.equal`
 * Add `Uri.user` and `Uri.password` accessors for subcomponents of userinfo (#62)
 * Add `Uri.with_password` functional setter for password subcomponent of userinfo
 * Fix file scheme host normalization bug which introduced empty host (#59)

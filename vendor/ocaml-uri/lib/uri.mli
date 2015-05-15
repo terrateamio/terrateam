@@ -43,6 +43,9 @@ val empty : t
     and finally fragment. Designed to produce a reasonable sort order. *)
 val compare : t -> t -> int
 
+(** [equal a b] is [compare a b = 0]. *)
+val equal : t -> t -> bool
+
 (** Percent-encode a string. The [scheme] argument defaults to 'http' and
     the [component] argument defaults to `Path *)
 val pct_encode : ?scheme:string -> ?component:component -> string -> string
@@ -99,6 +102,12 @@ val make : ?scheme:string -> ?userinfo:string -> ?host:string ->
 
 (** Get a query string from a URI *)
 val query : t -> (string * string list) list
+
+(** Get a verbatim query string from a URI. If the provenance of the
+    URI is a string and its query component has not been updated, this
+    is the literal query string as parsed. Otherwise, this is the
+    composition of {!query} and {!encoded_of_query} *)
+val verbatim_query : t -> string option
 
 (** Make a percent-encoded query string from percent-decoded query tuple *)
 val encoded_of_query : ?scheme:string -> (string * string list) list -> string
