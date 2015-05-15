@@ -382,10 +382,11 @@ let test_sexping =
 
 let test_with_change = [
   "test_with_scheme" >:: (fun () ->
+    let printer = Uri.to_string in
     let uri = Uri.of_string "https://foo.bar/a/b/c" in
     let uri2 = Uri.with_scheme uri (Some "https") in
     let uri3 = Uri.with_scheme uri (Some "f o o") in
-    assert_equal uri uri2;
+    assert_equal ~printer uri uri2;
     let exp = "f%20o%20o://foo.bar/a/b/c" in
     let msg = sprintf "%s <> %s" (Uri.to_string uri3) exp in
     assert_equal ~msg (Uri.to_string uri3) exp;
@@ -398,13 +399,13 @@ let test_with_change = [
 
     let urn = Uri.of_string "urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6" in
     let urn2= Uri.with_scheme urn (Some "urn") in
-    assert_equal urn urn2;
+    assert_equal ~printer urn urn2;
 
     let urn_path =
       Uri.with_path Uri.empty "uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
     in
     let urn2 = Uri.with_scheme urn_path (Some "urn") in
-    assert_equal urn urn2
+    assert_equal ~printer urn urn2
   );
 
   "test_with_userinfo" >:: (fun () ->
@@ -503,11 +504,12 @@ let test_with_change = [
   );
 
   "test_with_query" >:: (fun () ->
+    let cmp = Uri.equal in
     let test_with_query prefix =
       let uri = Uri.of_string prefix in
       let uri_empty = Uri.with_query uri [] in
       let msg = prefix ^ " empty" in
-      assert_equal ~msg (Uri.of_string prefix) uri_empty;
+      assert_equal ~cmp ~msg (Uri.of_string prefix) uri_empty;
       let uri_quest = Uri.with_query uri ["",[]] in
       let uri_exp_s = prefix ^ "?" in
       let uri_exp   = Uri.of_string uri_exp_s in
@@ -515,19 +517,19 @@ let test_with_change = [
       let uri_quest_sexp = Sexplib.Sexp.to_string (Uri.sexp_of_t uri_quest) in
       let msg = sprintf "'%s' quest (%s <> %s)"
         prefix uri_exp_sexp uri_quest_sexp in
-      assert_equal ~msg uri_exp uri_quest;
+      assert_equal ~cmp ~msg uri_exp uri_quest;
       let uri_equal = Uri.with_query uri ["",[""]] in
       let msg = prefix ^ " equal" in
-      assert_equal ~msg (Uri.of_string (prefix^"?=")) uri_equal;
+      assert_equal ~cmp ~msg (Uri.of_string (prefix^"?=")) uri_equal;
       let uri_comma = Uri.with_query uri ["",["";""]] in
       let msg = prefix ^ " comma" in
-      assert_equal ~msg (Uri.of_string (prefix^"?=,")) uri_comma;
+      assert_equal ~cmp ~msg (Uri.of_string (prefix^"?=,")) uri_comma;
       let uri_empty = Uri.with_query' uri [] in
       let msg = prefix ^ " empty'" in
-      assert_equal ~msg (Uri.of_string prefix) uri_empty;
+      assert_equal ~cmp ~msg (Uri.of_string prefix) uri_empty;
       let uri_equal = Uri.with_query' uri ["",""] in
       let msg = prefix ^" equal'" in
-      assert_equal ~msg (Uri.of_string (prefix^"?=")) uri_equal;
+      assert_equal ~cmp ~msg (Uri.of_string (prefix^"?=")) uri_equal;
     in
     test_with_query "";
     test_with_query "//";
@@ -535,11 +537,26 @@ let test_with_change = [
     let uri = Uri.of_string "//#" in
     let uri_quest = Uri.with_query uri ["",[]] in
     let msg = "?#" in
-    assert_equal ~msg (Uri.of_string "//?#") uri_quest;
+    assert_equal ~cmp ~msg (Uri.of_string "//?#") uri_quest;
     let uri_equal = Uri.with_query' uri ["",""] in
     let uri_exp_s = "//?=#" in
     let msg = sprintf "%s <> %s" uri_exp_s (Uri.to_string uri_equal) in
-    assert_equal ~msg (Uri.of_string "//?=#") uri_equal;
+    assert_equal ~cmp ~msg (Uri.of_string "//?=#") uri_equal;
+
+    let printer x = x in
+    let uri_exp_s = "?name=3+4%20+%3a|" in
+    let uri = Uri.of_string uri_exp_s in
+    (match Uri.verbatim_query uri with
+     | None -> assert_failure "no query string! (1)"
+     | Some qs -> assert_equal uri_exp_s ("?"^qs)
+    );
+    assert_equal ~printer "?name=3%204%20%20:%7C" (Uri.to_string uri);
+    let uri_plus = Uri.add_query_param' uri ("time","now") in
+    let uri_exp_s = "?time=now&name=3%204%20%20:%7C" in
+    (match Uri.verbatim_query uri_plus with
+     | None -> assert_failure "no query string! (2)"
+     | Some qs -> assert_equal ~printer uri_exp_s ("?"^qs)
+    );
   );
 
   "test_with_fragment" >:: (fun () ->
