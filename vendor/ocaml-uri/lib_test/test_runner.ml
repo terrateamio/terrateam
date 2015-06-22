@@ -429,7 +429,7 @@ let test_with_change = [
   "test_with_password" >:: (fun () ->
     let uri = Uri.of_string "/" in
     let uri_wp = Uri.with_password uri None in
-    assert_equal "//@/" (Uri.to_string uri_wp);
+    assert_equal "/" (Uri.to_string uri_wp);
     let uri_wp = Uri.with_password uri (Some "") in
     assert_equal "//:@/" (Uri.to_string uri_wp);
     let uri_wp = Uri.with_password uri (Some ":") in
