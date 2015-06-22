@@ -758,13 +758,14 @@ let password uri = match uri.userinfo with
   | None | Some (_, None) -> None
   | Some (_, Some pass) -> Some pass
 let with_password uri password =
-  let userinfo = match uri.userinfo with
-    | None -> Some ("",password)
-    | Some (user,_) -> Some (user, password)
+  let result userinfo = match host uri with
+    | None -> { uri with host=Some (Pct.cast_decoded ""); userinfo=userinfo }
+    | Some _ -> { uri with userinfo=userinfo }
   in
-  match host uri with
-  | None -> { uri with host=Some (Pct.cast_decoded ""); userinfo=userinfo }
-  | Some _ -> { uri with userinfo=userinfo }
+  match uri.userinfo, password with
+  | None, None -> uri
+  | None, Some _ -> result (Some ("",password))
+  | Some (user,_), _ -> result (Some (user, password))
 
 let port uri = uri.port
 let with_port uri port =
