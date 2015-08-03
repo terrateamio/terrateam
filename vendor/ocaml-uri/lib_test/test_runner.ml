@@ -269,6 +269,20 @@ let uri_rel_rel_res = [ (* relative-relative resolution *)
   (* TODO: relative username, ... *)
 ]
 
+let rel_empty_path_res = [
+  "/foo/bar/..", "/foo/";
+  "/foo/bar//..", "/foo/bar/";
+  "/foo/bar///..", "/foo/bar//";
+  "/foo/bar//../baz", "/foo/bar/baz"
+]
+
+let test_rel_empty_path_res =
+  List.map (fun (rel, res) ->
+      let test () = assert_equal ~printer:(fun l -> l)
+          res (Uri.to_string (Uri.resolve "" Uri.empty (Uri.of_string rel))) in
+      rel >:: test
+    ) rel_empty_path_res
+
 let test_rel_rel_res =
   List.map (fun (rel,base,res) ->
     let rel = Uri.of_string rel in
@@ -632,6 +646,7 @@ let _ =
     @ test_rel_res
     @ test_file_rel_res
     @ test_rel_rel_res
+    @ test_rel_empty_path_res
     @ test_generic_uri_norm
     @ test_rel_id
     @ test_tcp_port_of_uri
