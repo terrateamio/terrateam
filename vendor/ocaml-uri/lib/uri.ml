@@ -395,8 +395,8 @@ module Path = struct
       | [] when ascension > 0 -> List.rev_append
         ("/"::(rev_interject "/" Array.(to_list (make ascension "..")))) outp
       | [] -> List.(if length outp > 0 && hd outp = "/" then tl outp else outp)
-      | "/"::s::r when ascension > 0 ->
-        (if s = "/" then (s::r) else r) |> loop (ascension - 1) outp
+      | "/"::"/"::r when ascension > 0 -> loop (ascension - 1) outp ("/"::r)
+      | "/"::_::r when ascension > 0 -> loop (ascension - 1) outp r
       | s::r -> loop 0 (s::outp) r
     in loop 0 [] revp
 
