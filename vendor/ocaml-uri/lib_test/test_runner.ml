@@ -279,7 +279,7 @@ let rel_empty_path_res = [
 let test_rel_empty_path_res =
   List.map (fun (rel, res) ->
       let test () = assert_equal ~printer:(fun l -> l)
-          res (Uri.to_string (Uri.resolve "" Uri.empty (Uri.of_string rel))) in
+          res Uri.(to_string (resolve "" empty (of_string rel))) in
       rel >:: test
     ) rel_empty_path_res
 
