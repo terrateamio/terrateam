@@ -1,4 +1,4 @@
-UNRELEASED  HEAD
+2016-02-06  v2.0.4
 ------------------------------------------------------------------------
 
   * Fix incorrect boolean logic in src/linux/read.c
