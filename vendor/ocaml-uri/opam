@@ -34,9 +34,11 @@ remove: [
 depends: [
   "ocamlfind" {build}
   "re"
-  "sexplib" {>="109.53.00"}
+  "sexplib" {>= "113.24.00"}
+  "ppx_sexp_conv"
   "base-bytes"
-  "type_conv"
-  "stringext"
-  "ounit" {test & >="1.0.2"}
+  "stringext" {>= "1.4.0"}
+  "ounit" {test & >= "1.0.2"}
+  "ocamlbuild" {build}
 ]
+available: [ ocaml-version >= "4.02.3" ]

@@ -1,7 +1,7 @@
 OASISFormat: 0.4
 Name:        uri
-Version:     1.9.1
-OCamlVersion: >= 4.00
+Version:     1.9.2
+OCamlVersion: >= 4.02.3
 Synopsis:    RFC3986 URI parsing library
 Description: Uniform Resource Identifier (URI) parsing and encoding.
   This is pure OCaml code.
@@ -20,7 +20,7 @@ Flag allservices
 Library uri
   Path:       lib
   Modules:    Uri,Uri_re
-  BuildDepends: re.posix,stringext,sexplib.syntax,sexplib
+  BuildDepends: re.posix,stringext,sexplib,ppx_sexp_conv
   XMETARequires: re.posix,stringext,sexplib
 
 Library services

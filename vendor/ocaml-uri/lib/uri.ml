@@ -20,7 +20,7 @@ open Sexplib.Std
 open Sexplib.Conv (* Workaround for bug in Sexplib when used without Core *)
 
 type component = [
-    `Scheme
+  | `Scheme
   | `Authority
   | `Userinfo (* subcomponent of authority in some schemes *)
   | `Host (* subcomponent of authority in some schemes *)
@@ -29,7 +29,7 @@ type component = [
   | `Query_key
   | `Query_value
   | `Fragment
-] with sexp
+] [@@deriving sexp]
 
 let rec iter_concat fn sep buf = function
   | last::[] -> fn buf last
@@ -221,8 +221,8 @@ let module_of_scheme = function
   * probably not a lot of use to the average consumer of this library 
 *)
 module Pct : sig
-  type encoded with sexp
-  type decoded with sexp
+  type encoded [@@deriving sexp]
+  type decoded [@@deriving sexp]
 
   val encode : ?scheme:string -> ?component:component -> decoded -> encoded
   val decode : encoded -> decoded
@@ -241,8 +241,8 @@ module Pct : sig
   val unlift_decoded : (string -> string) -> decoded -> decoded
   val unlift_decoded2 : (string -> string -> 'a) -> decoded -> decoded -> 'a
 end = struct
-  type encoded = string with sexp
-  type decoded = string with sexp
+  type encoded = string [@@deriving sexp]
+  type decoded = string [@@deriving sexp]
   let cast_encoded x = x
   let cast_decoded x = x
   let empty_decoded = ""
@@ -340,7 +340,7 @@ let pct_decode s = Pct.(uncast_decoded (decode (cast_encoded s)))
 
 (* Userinfo string handling, to and from an id * credential pair *)
 module Userinfo = struct
-  type t = string * string option with sexp
+  type t = string * string option [@@deriving sexp]
 
   let compare (u,p) (u',p') =
     match String.compare u u' with
@@ -376,7 +376,7 @@ module Path = struct
   (* Yes, it's better this way. This means you can retain separator
      context in recursion (e.g. remove_dot_segments for relative resolution). *)
 
-  type t = string list with sexp
+  type t = string list [@@deriving sexp]
 
   let compare = compare_list String.compare
 
@@ -423,7 +423,7 @@ let encoded_of_path ?scheme = Path.encoded_of_path ?scheme
 (* Query string handling, to and from an assoc list of key/values *)
 module Query = struct
 
-  type kv = (string * string list) list with sexp
+  type kv = (string * string list) list [@@deriving sexp]
 
   type t =
     | KV of kv
@@ -517,7 +517,7 @@ type t = {
   path: Path.t;
   query: Query.t;
   fragment: Pct.decoded sexp_option;
-} with sexp
+} [@@deriving sexp]
 
 let empty = {
   scheme = None;

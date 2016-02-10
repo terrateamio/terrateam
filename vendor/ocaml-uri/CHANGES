@@ -1,3 +1,8 @@
+1.9.2 (2016-02-10):
+* Remove sexplib.syntax, type_conv deps and camlp4 transitive dependency
+* Add ppx_sexp_conv dependency
+* Require OCaml 4.02.3+
+
 1.9.1 (2015-06-26):
 * Fix `with_password None` when no userinfo present (#78 from Hezekiah M. Carty)
 
