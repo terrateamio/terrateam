@@ -3,5 +3,3 @@ install: wget https://raw.githubusercontent.com/ocaml/ocaml-travisci-skeleton/ma
 script: bash -ex .travis-opam.sh
 env:
   - OCAML_VERSION=latest PACKAGE=uri POST_INSTALL_HOOK="opam install react ssl lwt" REVDEPS="cohttp git github irmin sociaml-facebook-api sociaml-oauth-client sociaml-tumblr-api spotify-web-api syndic"
-  - OCAML_VERSION=4.01 PACKAGE=uri POST_INSTALL_HOOK="opam install react ssl lwt" REVDEPS="cohttp git github irmin sociaml-facebook-api sociaml-oauth-client sociaml-tumblr-api spotify-web-api syndic"
-  - OCAML_VERSION=4.00 PACKAGE=uri POST_INSTALL_HOOK="opam install react ssl lwt" REVDEPS="cohttp git github irmin sociaml-facebook-api sociaml-oauth-client sociaml-tumblr-api spotify-web-api syndic"
