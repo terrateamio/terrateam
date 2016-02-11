@@ -1,5 +1,21 @@
 language: c
-install: wget https://raw.githubusercontent.com/ocaml/ocaml-travisci-skeleton/master/.travis-opam.sh
-script: bash -ex .travis-opam.sh
+sudo: false
+services:
+  - docker
+install: wget https://raw.githubusercontent.com/ocaml/ocaml-travisci-skeleton/master/.travis-docker.sh
+script: bash ./.travis-docker.sh
 env:
-  - OCAML_VERSION=latest PACKAGE=uri POST_INSTALL_HOOK="opam install react ssl lwt" REVDEPS="cohttp git github irmin sociaml-facebook-api sociaml-oauth-client sociaml-tumblr-api spotify-web-api syndic"
+ global:
+   - PACKAGE="uri"
+   - POST_INSTALL_HOOK="opam install -y react ssl lwt"
+   - REVDEPS="cohttp git github irmin sociaml-facebook-api sociaml-oauth-client sociaml-tumblr-api spotify-web-api syndic"
+ matrix:
+   - DISTRO=debian-stable OCAML_VERSION=4.02.3
+   - DISTRO=debian-testing OCAML_VERSION=4.02.3
+   - DISTRO=debian-unstable OCAML_VERSION=4.02.3
+   - DISTRO=ubuntu-12.04 OCAML_VERSION=4.02.3
+   - DISTRO=ubuntu-15.10 OCAML_VERSION=4.02.3
+   - DISTRO=ubuntu-16.04 OCAML_VERSION=4.02.3
+   - DISTRO=centos-6 OCAML_VERSION=4.02.3
+   - DISTRO=centos-7 OCAML_VERSION=4.02.3
+   - DISTRO=fedora-23 OCAML_VERSION=4.02.3
