@@ -7,7 +7,7 @@ script: bash ./.travis-docker.sh
 env:
  global:
    - PACKAGE="uri"
-   - POST_INSTALL_HOOK="opam install -y react ssl lwt"
+   - POST_INSTALL_HOOK="OPAMYES=true opam depext -i react ssl lwt"
    - REVDEPS="cohttp git github irmin sociaml-facebook-api sociaml-oauth-client sociaml-tumblr-api spotify-web-api syndic"
  matrix:
    - DISTRO=debian-stable OCAML_VERSION=4.02.3
