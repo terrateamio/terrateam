@@ -1,11 +1,2 @@
 * About
-To use:
-#+BEGIN_SRC
-# -n: required, name
-# -r: optional, will push branch to the remote if provided
-# -d: optional, description for generated README.org.
-#               Can be multi-line string.
-# Additional deps are optional.
-
-$ scripts/genesis -n <project name> -r <git remote> -d <description> [dep1 [dep2 ... depn]]
-#+END_SRC
+kqueue bindings
