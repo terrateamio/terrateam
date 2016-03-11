@@ -137,6 +137,29 @@ module Timeout = struct
   let create ~sec ~nsec = failwith "nyi"
 end
 
+module Binding = struct
+  module C = Ctypes
+  module F = Foreign
+
+  module Stubs = Kqueue_bindings.Stubs(Kqueue_stubs)
+
+  let kqueue =
+    F.foreign
+      "kqueue"
+      C.(void @-> returning int)
+
+  let kevent =
+    F.foreign
+      "kevent"
+      C.(int @->
+         ptr Stubs.Kevent.t @->
+         int @->
+         ptr Stubs.Kevent.t @->
+         int @->
+         ptr Stubs.Timespec.t @->
+         returning int)
+end
+
 type t
 
 let create () = failwith "nyi"
