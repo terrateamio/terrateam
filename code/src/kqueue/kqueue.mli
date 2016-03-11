@@ -1,5 +1,5 @@
 module Flags : sig
-  module Flag  : sig
+  module Flag : sig
     type t =
       | Add
       | Enable
@@ -119,9 +119,27 @@ module Eventlist : sig
   type t
 
   val create : int -> t
-    
+  val null : t
+
+  val of_list : Kevent.t list -> t
+  val to_list : t -> Kevent.t list
+
+  val fold : f:(Kevent.t -> 'a -> 'a) -> init:'a -> t -> 'a
+end
+
+module Timeout : sig
+  type t
+
+  val create : sec:int -> nsec:int -> t
 end
 
 type t
 
 val create : unit -> t
+
+val kevent :
+  t ->
+  changelist:Eventlist.t ->
+  eventlist:Eventlist.t ->
+  timeout:Timeout.t option ->
+  int
