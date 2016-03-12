@@ -1,3 +1,6 @@
+module C = Ctypes
+module F = Foreign
+
 module Stubs = Kqueue_bindings.Stubs(Kqueue_stubs)
 
 module Flags = struct
@@ -39,6 +42,12 @@ module Flags = struct
 end
 
 module Filter = struct
+  let flags_to_uint conv flags =
+    List.fold_left
+      (fun acc f -> Unsigned.UInt.logor acc (conv f))
+      Unsigned.UInt.zero
+      flags
+
   module Read = struct
     type t = int
   end
@@ -49,7 +58,7 @@ module Filter = struct
 
   module Vnode = struct
     module Flags = struct
-      type t =
+      type f =
         | Delete
         | Write
         | Extend
@@ -58,7 +67,9 @@ module Filter = struct
         | Rename
         | Revoke
 
-      let to_nativeint = function
+      type t = Unsigned.UInt.t
+
+      let f_to_uint = function
         | Delete -> Stubs.note_delete
         | Write  -> Stubs.note_write
         | Extend -> Stubs.note_extend
@@ -66,30 +77,40 @@ module Filter = struct
         | Link -> Stubs.note_link
         | Rename -> Stubs.note_rename
         | Revoke -> Stubs.note_revoke
+
+      let to_t = flags_to_uint f_to_uint
+
+      let of_t t = failwith "nyi"
     end
 
-    type t = { desc : int
-             ; flags : Flags.t list
+    type t = { descr : int
+             ; flags : Flags.t
              }
   end
 
   module Proc = struct
     module Flags = struct
-      type t =
+      type f =
         | Exit
         | Fork
         | Exec
         | Track
 
-      let to_nativeint = function
+      type t = Unsigned.UInt.t
+
+      let f_to_uint = function
         | Exit -> Stubs.note_exit
         | Fork -> Stubs.note_fork
         | Exec -> Stubs.note_exec
         | Track -> Stubs.note_track
+
+      let to_t = flags_to_uint f_to_uint
+
+      let of_t t = failwith "nyi"
     end
 
     type t = { pid : int
-             ; flags : Flags.t list
+             ; flags : Flags.t
              }
   end
 
@@ -99,17 +120,21 @@ module Filter = struct
 
   module Timer = struct
     module Unit = struct
-      type t =
+      type u =
         | Seconds
         | Mseconds
         | Useconds
         | Nseconds
 
-      let to_nativeint = function
+      type t = Unsigned.UInt.t
+
+      let to_t = function
         | Seconds -> Stubs.note_seconds
         | Mseconds -> Stubs.note_mseconds
         | Useconds -> Stubs.note_useconds
         | Nseconds -> Stubs.note_nseconds
+
+      let of_t t = failwith "nyi"
     end
 
     type t = { id : int
@@ -120,7 +145,7 @@ module Filter = struct
 
   module User = struct
     module Flags = struct
-      type t =
+      type f =
         | Nop
         | And
         | Or
@@ -129,7 +154,9 @@ module Filter = struct
         | Fflagsmask
         | Trigger
 
-      let to_nativeint = function
+      type t = Unsigned.UInt.t
+
+      let f_to_uint = function
         | Nop -> Stubs.note_ffnop
         | And -> Stubs.note_ffand
         | Or -> Stubs.note_ffor
@@ -137,10 +164,14 @@ module Filter = struct
         | Ctrlmask -> Stubs.note_ffctrlmask
         | Fflagsmask -> Stubs.note_fflagsmask
         | Trigger -> Stubs.note_trigger
+
+      let to_t = flags_to_uint f_to_uint
+
+      let of_t t = failwith "nyi"
     end
 
     type t = { id : int
-             ; flags : Flags.t list
+             ; flags : Flags.t
              }
   end
 
@@ -157,20 +188,72 @@ end
 module Kevent = struct
   type t = Stubs.Kevent.t
 
-  let of_filter = function
-    | Filter.Read _ -> failwith "nyi"
-    | Filter.Write _ -> failwith "nyi"
-    | Filter.Vnode _ -> failwith "nyi"
-    | Filter.Proc _ -> failwith "nyi"
-    | Filter.Signal _ -> failwith "nyi"
-    | Filter.Timer _ -> failwith "nyi"
-    | Filter.User _ -> failwith "nyi"
+  let set t ~ident ~filter ~fflags ~data ~udata =
+    C.setf t Stubs.Kevent.ident ident;
+    C.setf t Stubs.Kevent.filter filter;
+    C.setf t Stubs.Kevent.fflags fflags;
+    C.setf t Stubs.Kevent.data data;
+    C.setf t Stubs.Kevent.udata udata
+
+  let set_from_filter t = function
+    | Filter.Read read ->
+      set
+        t
+        ~ident:(C.Uintptr.of_int read)
+        ~filter:Stubs.evfilt_read
+        ~fflags:Unsigned.UInt.zero
+        ~data:C.Intptr.zero
+        ~udata:C.null
+    | Filter.Write write ->
+      set
+        t
+        ~ident:(C.Uintptr.of_int write)
+        ~filter:Stubs.evfilt_write
+        ~fflags:Unsigned.UInt.zero
+        ~data:C.Intptr.zero
+        ~udata:C.null
+    | Filter.Vnode vnode ->
+      set
+        t
+        ~ident:(C.Uintptr.of_int vnode.Filter.Vnode.descr)
+        ~filter:Stubs.evfilt_vnode
+        ~fflags:vnode.Filter.Vnode.flags
+        ~data:C.Intptr.zero
+        ~udata:C.null
+    | Filter.Proc proc ->
+      set
+        t
+        ~ident:(C.Uintptr.of_int proc.Filter.Proc.pid)
+        ~filter:Stubs.evfilt_proc
+        ~fflags:proc.Filter.Proc.flags
+        ~data:C.Intptr.zero
+        ~udata:C.null
+    | Filter.Signal signal ->
+      set
+        t
+        ~ident:(C.Uintptr.of_int signal)
+        ~filter:Stubs.evfilt_signal
+        ~fflags:Unsigned.UInt.zero
+        ~data:C.Intptr.zero
+        ~udata:C.null
+    | Filter.Timer timer ->
+      set
+        t
+        ~ident:(C.Uintptr.of_int timer.Filter.Timer.id)
+        ~filter:Stubs.evfilt_timer
+        ~fflags:timer.Filter.Timer.unit
+        ~data:(C.Intptr.of_int timer.Filter.Timer.time)
+        ~udata:C.null
+    | Filter.User user ->
+      set
+        t
+        ~ident:(C.Uintptr.of_int user.Filter.User.id)
+        ~filter:Stubs.evfilt_user
+        ~fflags:Unsigned.UInt.zero
+        ~data:C.Intptr.zero
+        ~udata:C.null
 
   let to_filter t = failwith "nyi"
-
-  let of_kevent_unsafe kevent = kevent
-
-  let to_kevent_unsafe t = t
 end
 
 module Eventlist = struct
@@ -194,9 +277,6 @@ module Timeout = struct
 end
 
 module Binding = struct
-  module C = Ctypes
-  module F = Foreign
-
   let kqueue =
     F.foreign
       "kqueue"

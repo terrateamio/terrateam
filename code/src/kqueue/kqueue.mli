@@ -30,7 +30,7 @@ module Filter : sig
 
   module Vnode : sig
     module Flags : sig
-      type t =
+      type f =
         | Delete
         | Write
         | Extend
@@ -38,24 +38,34 @@ module Filter : sig
         | Link
         | Rename
         | Revoke
+
+      type t
+
+      val to_t : f list -> t
+      val of_t : t -> f list
     end
 
-    type t = { desc : int
-             ; flags : Flags.t list
+    type t = { descr : int
+             ; flags : Flags.t
              }
   end
 
   module Proc : sig
     module Flags : sig
-      type t =
+      type f =
         | Exit
         | Fork
         | Exec
         | Track
+
+      type t
+
+      val to_t : f list -> t
+      val of_t : t -> f list
     end
 
     type t = { pid : int
-             ; flags : Flags.t list
+             ; flags : Flags.t
              }
   end
 
@@ -65,11 +75,16 @@ module Filter : sig
 
   module Timer : sig
     module Unit : sig
-      type t =
+      type u =
         | Seconds
         | Mseconds
         | Useconds
         | Nseconds
+
+      type t
+
+      val to_t : u -> t
+      val of_t : t -> u
     end
 
     type t = { id : int
@@ -80,7 +95,7 @@ module Filter : sig
 
   module User : sig
     module Flags : sig
-      type t =
+      type f =
         | Nop
         | And
         | Or
@@ -88,10 +103,15 @@ module Filter : sig
         | Ctrlmask
         | Fflagsmask
         | Trigger
+
+      type t
+
+      val to_t : f list -> t
+      val of_t : t -> f list
     end
 
     type t = { id : int
-             ; flags : Flags.t list
+             ; flags : Flags.t
              }
   end
 
@@ -106,13 +126,10 @@ module Filter : sig
 end
 
 module Kevent : sig
-  type t
+  type t = Kqueue_bindings.Stubs(Kqueue_stubs).Kevent.t
 
-  val of_filter : Filter.t -> t
+  val set_from_filter : t -> Filter.t -> unit
   val to_filter : t -> Filter.t
-
-  val of_kevent_unsafe : Kqueue_bindings.Stubs(Kqueue_stubs).Kevent.t -> t
-  val to_kevent_unsafe : t -> Kqueue_bindings.Stubs(Kqueue_stubs).Kevent.t
 end
 
 module Eventlist : sig
