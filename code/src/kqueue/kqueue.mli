@@ -19,7 +19,7 @@ module Flags : sig
   val of_t : t -> Flag.t list
 end
 
-module Filters : sig
+module Filter : sig
   module Read : sig
     type t = int
   end
@@ -108,8 +108,8 @@ end
 module Kevent : sig
   type t
 
-  val of_filter : Filters.t -> t
-  val to_filter : t -> Filters.t
+  val of_filter : Filter.t -> t
+  val to_filter : t -> Filter.t
 
   val of_kevent_unsafe : Kqueue_bindings.Stubs(Kqueue_stubs).Kevent.t -> t
   val to_kevent_unsafe : t -> Kqueue_bindings.Stubs(Kqueue_stubs).Kevent.t
