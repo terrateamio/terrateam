@@ -257,26 +257,52 @@ module Kevent = struct
 end
 
 module Eventlist = struct
-  type t
+  type t = { kevents : Stubs.Kevent.t C.ptr
+           ; count : int
+           }
 
-  let create size = failwith "nyi"
+  let create count =
+    { kevents = C.allocate_n Stubs.Kevent.t ~count; count}
 
-  let null = failwith "nyi"
+  let null = { kevents = C.(coerce (ptr void) (ptr Stubs.Kevent.t) null)
+             ; count = 0
+             }
 
-  let of_list kevents = failwith "nyi"
+  let set_from_list t kevents =
+    assert (t.count = List.length kevents);
+    List.iteri
+      (fun idx k ->
+        C.((t.kevents +@ idx) <-@ k))
+      kevents
+
+  let of_list kevents =
+    let count = List.length kevents in
+    let t = create count in
+    set_from_list t kevents;
+    t
 
   let to_list t = failwith "nyi"
 
-  let fold ~f ~init t = failwith "nyi"
+  let fold ~f ~init t =
+    let rec f' acc = function
+      | n when n < t.count ->
+        f' (f acc C.(!@ (t.kevents +@ n))) (n + 1)
+      | _ ->
+        acc
+    in
+    f' init 0
+
+  let iter ~f t =
+    fold ~f:(fun () -> f) ~init:() t
 end
 
 module Timeout = struct
-  type t
+  type t = Stubs.Timespec.t
 
   let create ~sec ~nsec = failwith "nyi"
 end
 
-module Binding = struct
+module Bindings = struct
   let kqueue =
     F.foreign
       "kqueue"
@@ -294,8 +320,20 @@ module Binding = struct
          returning int)
 end
 
-type t
+type t = int
 
-let create () = failwith "nyi"
+let create () = Bindings.kqueue ()
 
-let kevent t ~changelist ~eventlist ~timeout = failwith "nyi"
+let kevent t ~changelist ~eventlist ~timeout =
+  let timeout =
+    match timeout with
+      | Some _ -> failwith "nyi"
+      | None -> C.(from_voidp Stubs.Timespec.t null)
+  in
+  Bindings.kevent
+    t
+    changelist.Eventlist.kevents
+    changelist.Eventlist.count
+    eventlist.Eventlist.kevents
+    eventlist.Eventlist.count
+    timeout
