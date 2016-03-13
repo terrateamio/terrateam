@@ -272,21 +272,30 @@ end
 module Eventlist = struct
   type t = { kevents : Stubs.Kevent.t C.ptr
            ; capacity : int
+           ; mutable size : int
            }
 
   let create count =
     { kevents = C.allocate_n Stubs.Kevent.t ~count
     ; capacity = count
+    ; size = count
     }
 
   let capacity t = t.capacity
 
+  let size t = t.size
+
+  let set_size t size = t.size <- size
+
   let null = { kevents = C.(coerce (ptr void) (ptr Stubs.Kevent.t) null)
              ; capacity = 0
+             ; size = 0
              }
 
   let set_from_list t kevents =
-    assert (t.capacity = List.length kevents);
+    let l = List.length kevents in
+    assert (t.capacity <= l);
+    t.size <- l;
     List.iteri
       (fun idx k ->
         C.((t.kevents +@ idx) <-@ k))
@@ -298,20 +307,21 @@ module Eventlist = struct
     set_from_list t kevents;
     t
 
-  let to_list ~n t = failwith "nyi"
-
-  let fold ~n ~f ~init t =
-    assert (n <= t.capacity);
+  let fold ~f ~init t =
     let rec f' acc = function
-      | idx when idx < n ->
+      | idx when idx < t.size ->
         f' (f acc C.(!@ (t.kevents +@ idx))) (idx + 1)
       | _ ->
         acc
     in
     f' init 0
 
-  let iter ~n ~f t =
-    fold ~n ~f:(fun () -> f) ~init:() t
+  let to_list t =
+    List.rev
+      (fold ~f:(fun acc k -> k::acc) ~init:[] t)
+
+  let iter ~f t =
+    fold ~f:(fun () -> f) ~init:() t
 end
 
 module Timeout = struct
@@ -348,10 +358,17 @@ let kevent t ~changelist ~eventlist ~timeout =
       | Some _ -> failwith "nyi"
       | None -> C.(from_voidp Stubs.Timespec.t null)
   in
-  Bindings.kevent
-    t
-    changelist.Eventlist.kevents
-    changelist.Eventlist.capacity
-    eventlist.Eventlist.kevents
-    eventlist.Eventlist.capacity
-    timeout
+  let ret =
+    Bindings.kevent
+      t
+      changelist.Eventlist.kevents
+      changelist.Eventlist.capacity
+      eventlist.Eventlist.kevents
+      eventlist.Eventlist.size
+      timeout
+  in
+  if ret > -1 then
+    eventlist.Eventlist.size <- ret
+  else
+    eventlist.Eventlist.size <- 0;
+  ret

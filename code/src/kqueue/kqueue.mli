@@ -140,13 +140,17 @@ module Eventlist : sig
   val create : int -> t
   val null : t
 
+  val capacity : t -> int
+  val size : t -> int
+  val set_size : t -> int -> unit
+
   val set_from_list : t -> Kevent.t list -> unit
 
   val of_list : Kevent.t list -> t
-  val to_list : n:int -> t -> Kevent.t list
+  val to_list : t -> Kevent.t list
 
-  val fold : n:int -> f:('a -> Kevent.t -> 'a) -> init:'a -> t -> 'a
-  val iter : n:int -> f:(Kevent.t -> unit) -> t -> unit
+  val fold : f:('a -> Kevent.t -> 'a) -> init:'a -> t -> 'a
+  val iter : f:(Kevent.t -> unit) -> t -> unit
 end
 
 module Timeout : sig
