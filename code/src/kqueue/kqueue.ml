@@ -3,7 +3,7 @@ module F = Foreign
 
 module Stubs = Kqueue_bindings.Stubs(Kqueue_stubs)
 
-module Flags = struct
+module Action = struct
   module Flag = struct
     type t =
       | Add
@@ -17,7 +17,7 @@ module Flags = struct
       | Eof
       | Error
 
-    let to_nativeint = function
+    let to_ushort = function
       | Add -> Stubs.ev_add
       | Enable -> Stubs.ev_enable
       | Disable -> Stubs.ev_disable
@@ -30,12 +30,12 @@ module Flags = struct
       | Error -> Stubs.ev_error
   end
 
-  type t = nativeint
+  type t = Unsigned.UShort.t
 
   let to_t flags =
     List.fold_left
-      (fun acc e -> Nativeint.logor acc (Flag.to_nativeint e))
-      Nativeint.zero
+      (fun acc e -> Unsigned.UShort.logor acc (Flag.to_ushort e))
+      Unsigned.UShort.zero
       flags
 
   let of_t t = failwith "nyi"
@@ -188,19 +188,21 @@ end
 module Kevent = struct
   type t = Stubs.Kevent.t
 
-  let set t ~ident ~filter ~fflags ~data ~udata =
+  let set t ~ident ~filter ~flags ~fflags ~data ~udata =
     C.setf t Stubs.Kevent.ident ident;
     C.setf t Stubs.Kevent.filter filter;
+    C.setf t Stubs.Kevent.flags flags;
     C.setf t Stubs.Kevent.fflags fflags;
     C.setf t Stubs.Kevent.data data;
     C.setf t Stubs.Kevent.udata udata
 
-  let set_from_filter t = function
+  let set_from_filter t action = function
     | Filter.Read read ->
       set
         t
         ~ident:(C.Uintptr.of_int read)
         ~filter:Stubs.evfilt_read
+        ~flags:action
         ~fflags:Unsigned.UInt.zero
         ~data:C.Intptr.zero
         ~udata:C.null
@@ -209,6 +211,7 @@ module Kevent = struct
         t
         ~ident:(C.Uintptr.of_int write)
         ~filter:Stubs.evfilt_write
+        ~flags:action
         ~fflags:Unsigned.UInt.zero
         ~data:C.Intptr.zero
         ~udata:C.null
@@ -217,6 +220,7 @@ module Kevent = struct
         t
         ~ident:(C.Uintptr.of_int vnode.Filter.Vnode.descr)
         ~filter:Stubs.evfilt_vnode
+        ~flags:action
         ~fflags:vnode.Filter.Vnode.flags
         ~data:C.Intptr.zero
         ~udata:C.null
@@ -225,6 +229,7 @@ module Kevent = struct
         t
         ~ident:(C.Uintptr.of_int proc.Filter.Proc.pid)
         ~filter:Stubs.evfilt_proc
+        ~flags:action
         ~fflags:proc.Filter.Proc.flags
         ~data:C.Intptr.zero
         ~udata:C.null
@@ -233,6 +238,7 @@ module Kevent = struct
         t
         ~ident:(C.Uintptr.of_int signal)
         ~filter:Stubs.evfilt_signal
+        ~flags:action
         ~fflags:Unsigned.UInt.zero
         ~data:C.Intptr.zero
         ~udata:C.null
@@ -241,6 +247,7 @@ module Kevent = struct
         t
         ~ident:(C.Uintptr.of_int timer.Filter.Timer.id)
         ~filter:Stubs.evfilt_timer
+        ~flags:action
         ~fflags:timer.Filter.Timer.unit
         ~data:(C.Intptr.of_int timer.Filter.Timer.time)
         ~udata:C.null
@@ -249,27 +256,37 @@ module Kevent = struct
         t
         ~ident:(C.Uintptr.of_int user.Filter.User.id)
         ~filter:Stubs.evfilt_user
+        ~flags:action
         ~fflags:Unsigned.UInt.zero
         ~data:C.Intptr.zero
         ~udata:C.null
+
+  let of_filter action filter =
+    let t = C.make Stubs.Kevent.t in
+    set_from_filter t action filter;
+    t
 
   let to_filter t = failwith "nyi"
 end
 
 module Eventlist = struct
   type t = { kevents : Stubs.Kevent.t C.ptr
-           ; count : int
+           ; capacity : int
            }
 
   let create count =
-    { kevents = C.allocate_n Stubs.Kevent.t ~count; count}
+    { kevents = C.allocate_n Stubs.Kevent.t ~count
+    ; capacity = count
+    }
+
+  let capacity t = t.capacity
 
   let null = { kevents = C.(coerce (ptr void) (ptr Stubs.Kevent.t) null)
-             ; count = 0
+             ; capacity = 0
              }
 
   let set_from_list t kevents =
-    assert (t.count = List.length kevents);
+    assert (t.capacity = List.length kevents);
     List.iteri
       (fun idx k ->
         C.((t.kevents +@ idx) <-@ k))
@@ -281,19 +298,20 @@ module Eventlist = struct
     set_from_list t kevents;
     t
 
-  let to_list t = failwith "nyi"
+  let to_list ~n t = failwith "nyi"
 
-  let fold ~f ~init t =
+  let fold ~n ~f ~init t =
+    assert (n <= t.capacity);
     let rec f' acc = function
-      | n when n < t.count ->
-        f' (f acc C.(!@ (t.kevents +@ n))) (n + 1)
+      | idx when idx < n ->
+        f' (f acc C.(!@ (t.kevents +@ idx))) (idx + 1)
       | _ ->
         acc
     in
     f' init 0
 
-  let iter ~f t =
-    fold ~f:(fun () -> f) ~init:() t
+  let iter ~n ~f t =
+    fold ~n ~f:(fun () -> f) ~init:() t
 end
 
 module Timeout = struct
@@ -333,7 +351,7 @@ let kevent t ~changelist ~eventlist ~timeout =
   Bindings.kevent
     t
     changelist.Eventlist.kevents
-    changelist.Eventlist.count
+    changelist.Eventlist.capacity
     eventlist.Eventlist.kevents
-    eventlist.Eventlist.count
+    eventlist.Eventlist.capacity
     timeout

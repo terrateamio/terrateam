@@ -24,16 +24,16 @@ module Stubs = functor (S : Cstubs_structs.TYPE) -> struct
     let () = S.seal t
   end
 
-  let ev_add = S.(constant "EV_ADD" nativeint)
-  let ev_enable = S.(constant "EV_ENABLE" nativeint)
-  let ev_disable = S.(constant "EV_DISABLE" nativeint)
-  let ev_dispatch = S.(constant "EV_DISPATCH" nativeint)
-  let ev_delete = S.(constant "EV_DELETE" nativeint)
-  let ev_receipt = S.(constant "EV_RECEIPT" nativeint)
-  let ev_oneshot = S.(constant "EV_ONESHOT" nativeint)
-  let ev_clear = S.(constant "EV_CLEAR" nativeint)
-  let ev_eof = S.(constant "EV_EOF" nativeint)
-  let ev_error = S.(constant "EV_ERROR" nativeint)
+  let ev_add = S.(constant "EV_ADD" ushort)
+  let ev_enable = S.(constant "EV_ENABLE" ushort)
+  let ev_disable = S.(constant "EV_DISABLE" ushort)
+  let ev_dispatch = S.(constant "EV_DISPATCH" ushort)
+  let ev_delete = S.(constant "EV_DELETE" ushort)
+  let ev_receipt = S.(constant "EV_RECEIPT" ushort)
+  let ev_oneshot = S.(constant "EV_ONESHOT" ushort)
+  let ev_clear = S.(constant "EV_CLEAR" ushort)
+  let ev_eof = S.(constant "EV_EOF" ushort)
+  let ev_error = S.(constant "EV_ERROR" ushort)
 
   let evfilt_read = S.(constant "EVFILT_READ" short)
   let evfilt_write = S.(constant "EVFILT_WRITE" short)

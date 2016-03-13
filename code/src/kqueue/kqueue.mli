@@ -1,4 +1,4 @@
-module Flags : sig
+module Action : sig
   module Flag : sig
     type t =
       | Add
@@ -128,8 +128,10 @@ end
 module Kevent : sig
   type t = Kqueue_bindings.Stubs(Kqueue_stubs).Kevent.t
 
-  val set_from_filter : t -> Filter.t -> unit
-  val to_filter : t -> Filter.t
+  val set_from_filter : t -> Action.t -> Filter.t -> unit
+
+  val of_filter : Action.t -> Filter.t -> t
+  val to_filter : t -> (Action.t * Filter.t)
 end
 
 module Eventlist : sig
@@ -141,10 +143,10 @@ module Eventlist : sig
   val set_from_list : t -> Kevent.t list -> unit
 
   val of_list : Kevent.t list -> t
-  val to_list : t -> Kevent.t list
+  val to_list : n:int -> t -> Kevent.t list
 
-  val fold : f:('a -> Kevent.t -> 'a) -> init:'a -> t -> 'a
-  val iter : f:(Kevent.t -> unit) -> t -> unit
+  val fold : n:int -> f:('a -> Kevent.t -> 'a) -> init:'a -> t -> 'a
+  val iter : n:int -> f:(Kevent.t -> unit) -> t -> unit
 end
 
 module Timeout : sig
