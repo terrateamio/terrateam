@@ -161,8 +161,21 @@ end
 
 type t
 
+(*
+ * Create a new kqueue
+*)
 val create : unit -> t
 
+(*
+ * This is a direct mapping to the kqueue call in FreeBSD except that for how the
+ * size of [changelist] and [eventlist] are affected.  In the call, the [size] of
+ * [changelist] is used as input, and the [capacity] of [eventlist] is used as
+ * input.  In output, if the call to [kevent] was successful, the size of
+ * [eventlist] will be set to the return value of [kevent].  On error, the size
+ * of [eventlist] is set to 0.  This is to make it impossible to access outside
+ * those events that were set by the [kqueue] call.  In all cases, the return of
+ * [kevent] is returned unaltered.
+ *)
 val kevent :
   t ->
   changelist:Eventlist.t ->
