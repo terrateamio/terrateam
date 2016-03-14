@@ -84,7 +84,11 @@ module Timer = struct
     | Useconds -> Stubs.note_useconds
     | Nseconds -> Stubs.note_nseconds
 
-  let of_t t = failwith "nyi"
+  let of_t = function
+    | u when u = Stubs.note_seconds -> Seconds
+    | u when u = Stubs.note_mseconds -> Mseconds
+    | u when u = Stubs.note_useconds -> Useconds
+    | u when u = Stubs.note_nseconds -> Nseconds
 end
 
 module User = struct
