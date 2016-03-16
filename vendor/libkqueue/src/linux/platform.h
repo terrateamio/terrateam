@@ -26,7 +26,11 @@ struct filter;
 #if HAVE_SYS_EVENTFD_H
 # include <sys/eventfd.h>
 #else
-# define eventfd(a,b) syscall(SYS_eventfd, (a), (b))
+# ifdef SYS_eventfd2
+#  define eventfd(a,b) syscall(SYS_eventfd2, (a), (b))
+# else
+#  define eventfd(a,b) syscall(SYS_eventfd, (a), (b))
+# endif
 
   static inline int eventfd_write(int fd, uint64_t val) {
       if (write(fd, &val, sizeof(val)) < (ssize_t) sizeof(val))
