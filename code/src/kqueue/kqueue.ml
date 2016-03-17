@@ -1,5 +1,6 @@
 module C = Ctypes
 module F = Foreign
+module P = PosixTypes
 
 module Stubs = Kqueue_bindings.Stubs(Kqueue_stubs)
 
@@ -64,7 +65,11 @@ end
 module Timeout = struct
   type t = Stubs.Timespec.t
 
-  let create ~sec ~nsec = failwith "nyi"
+  let create ~sec ~nsec =
+    let ts = C.make Stubs.Timespec.t in
+    C.setf ts Stubs.Timespec.tv_sec (P.Time.of_int sec);
+    C.setf ts Stubs.Timespec.tv_nsec (Signed.Long.of_int nsec);
+    ts
 end
 
 module Bindings = struct
@@ -92,7 +97,7 @@ let create () = Bindings.kqueue ()
 let kevent t ~changelist ~eventlist ~timeout =
   let timeout =
     match timeout with
-      | Some _ -> failwith "nyi"
+      | Some ts -> C.addr ts
       | None -> C.(from_voidp Stubs.Timespec.t null)
   in
   let ret =
