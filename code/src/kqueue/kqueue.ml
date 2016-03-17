@@ -114,3 +114,6 @@ let kevent t ~changelist ~eventlist ~timeout =
   else
     eventlist.Eventlist.size <- 0;
   ret
+
+external unsafe_int_of_file_descr : Unix.file_descr -> int = "%identity"
+external unsafe_file_descr_of_int : int -> Unix.file_descr = "%identity"

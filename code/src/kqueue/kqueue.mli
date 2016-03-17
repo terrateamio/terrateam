@@ -49,3 +49,6 @@ val kevent :
   eventlist:Eventlist.t ->
   timeout:Timeout.t option ->
   int
+
+val unsafe_int_of_file_descr : Unix.file_descr -> int
+val unsafe_file_descr_of_int : int -> Unix.file_descr
