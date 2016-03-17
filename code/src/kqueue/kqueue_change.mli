@@ -96,6 +96,7 @@ module Filter : sig
         | Ctrlmask
         | Fflagsmask
         | Trigger
+        | Uflags of int
 
       type t
       val to_t : f list -> t

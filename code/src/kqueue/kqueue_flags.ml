@@ -100,8 +100,12 @@ module User = struct
     | Ctrlmask
     | Fflagsmask
     | Trigger
+    | Uflags of int
 
   type t = uint
+
+  let lower24 = lnot ((lnot 0) lsl 24)
+  let lower24_uint = Unsigned.UInt.of_int lower24
 
   let f_to_uint = function
     | Nop -> Stubs.note_ffnop
@@ -111,12 +115,17 @@ module User = struct
     | Ctrlmask -> Stubs.note_ffctrlmask
     | Fflagsmask -> Stubs.note_fflagsmask
     | Trigger -> Stubs.note_trigger
+    | Uflags f -> Unsigned.UInt.of_int (f land lower24)
 
   let to_t = flags_to_uint f_to_uint
 
   let of_t t =
-    uint_to_flags
-      f_to_uint
-      t
-      [Nop; And; Or; Copy; Ctrlmask; Fflagsmask; Trigger]
+    let uflags = Uflags Unsigned.UInt.(to_int (logand t lower24_uint)) in
+    let flags =
+      uint_to_flags
+        f_to_uint
+        t
+        [Nop; And; Or; Copy; Ctrlmask; Fflagsmask; Trigger]
+    in
+    uflags::flags
 end

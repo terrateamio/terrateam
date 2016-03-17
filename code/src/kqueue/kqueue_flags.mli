@@ -50,6 +50,7 @@ module User : sig
     | Ctrlmask
     | Fflagsmask
     | Trigger
+    | Uflags of int
 
   type t = uint
 
