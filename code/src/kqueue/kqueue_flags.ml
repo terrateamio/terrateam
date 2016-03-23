@@ -89,6 +89,7 @@ module Timer = struct
     | u when u = Stubs.note_mseconds -> Mseconds
     | u when u = Stubs.note_useconds -> Useconds
     | u when u = Stubs.note_nseconds -> Nseconds
+    | _ -> failwith "Unknown Timer unit"
 end
 
 module User = struct
