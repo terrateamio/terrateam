@@ -1,6 +1,6 @@
 * About
 kqueue bindings.  kqueue provides a scalable API for notifying on events.  A
-program creates a kqueue and registers which events for which it wants to be
+program creates a kqueue and registers the events for which it wants to be
 notified.  Subsequent calls to kqueue will then return which events have been
 triggered.  kqueue is available on most BSD's natively and on Linux through
 libkqueue.
