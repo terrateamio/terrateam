@@ -89,7 +89,10 @@ let timer_to_filter t =
   let count = C.(Intptr.to_int (getf t Stubs.Kevent.data)) in
   Some (Timer Timer.({id; count}))
 
-let user_to_filter t = failwith "nyi"
+let user_to_filter t =
+  let id = C.(Uintptr.to_int (getf t Stubs.Kevent.ident)) in
+  let flags = C.(getf t Stubs.Kevent.fflags) in
+  Some (User User.({id; flags}))
 
 let of_kevent t =
   match C.getf t Stubs.Kevent.filter with
