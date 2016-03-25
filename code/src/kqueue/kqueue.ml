@@ -14,6 +14,7 @@ module Eventlist = struct
            }
 
   let create count =
+    assert (count >= 0);
     { kevents = C.allocate_n Stubs.Kevent.t ~count
     ; capacity = count
     ; size = count
@@ -23,7 +24,9 @@ module Eventlist = struct
 
   let size t = t.size
 
-  let set_size t size = t.size <- size
+  let set_size t size =
+    assert (size <= t.capacity);
+    t.size <- size
 
   let null = { kevents = C.(coerce (ptr void) (ptr Stubs.Kevent.t) null)
              ; capacity = 0
@@ -66,6 +69,8 @@ module Timeout = struct
   type t = Stubs.Timespec.t
 
   let create ~sec ~nsec =
+    assert (sec >= 0);
+    assert (nsec >= 0);
     let ts = C.make Stubs.Timespec.t in
     C.setf ts Stubs.Timespec.tv_sec (P.Time.of_int sec);
     C.setf ts Stubs.Timespec.tv_nsec (Signed.Long.of_int nsec);
