@@ -1,3 +1,5 @@
+exception Unknown_filter of int
+
 module Read : sig
   type t = { descr : int
            ; len : int
@@ -89,4 +91,4 @@ type t =
   | Timer of Timer.t
   | User of User.t
 
-val of_kevent : Kqueue_bindings.Stubs(Kqueue_stubs).Kevent.t -> t option
+val of_kevent : Kqueue_bindings.Stubs(Kqueue_stubs).Kevent.t -> t

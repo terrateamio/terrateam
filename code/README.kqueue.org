@@ -70,8 +70,8 @@ turned to and from a list.
 This is a view on a ~struct kevent~ when the struct is an event.  The contains a
 number of sub-modules representing the values of different types of events.
 
-- ~of_kevent : Stubs.Kevent.t -> t option~ - Turns a ~Stubs.Kevent.t~ into a
-  typesafe view on it.
+- ~of_kevent : Stubs.Kevent.t -> t~ - Turns a ~Stubs.Kevent.t~ into a typesafe
+  view on it.  An exception is thrown if the event cannot be decoded.
 
 ** Kqueue.Change
 This allows a change to the kqueue to be represented in a typesafe way and

@@ -1,5 +1,7 @@
 module C = Ctypes
 
+exception Unknown_filter of int
+
 module Stubs = Kqueue_bindings.Stubs(Kqueue_stubs)
 
 module Read = struct
@@ -62,37 +64,37 @@ type t =
 let read_to_filter t =
   let descr = C.(Uintptr.to_int (getf t Stubs.Kevent.ident)) in
   let len = C.(Intptr.to_int (getf t Stubs.Kevent.data)) in
-  Some (Read Read.({descr; len}))
+  Read Read.({descr; len})
 
 let write_to_filter t =
   let descr = C.(Uintptr.to_int (getf t Stubs.Kevent.ident)) in
   let len = C.(Intptr.to_int (getf t Stubs.Kevent.data)) in
-  Some (Write Write.({descr; len}))
+  Write Write.({descr; len})
 
 let vnode_to_filter t =
   let descr = C.(Uintptr.to_int (getf t Stubs.Kevent.ident)) in
   let flags = C.(getf t Stubs.Kevent.fflags) in
-  Some (Vnode Vnode.({descr; flags}))
+  Vnode Vnode.({descr; flags})
 
 let proc_to_filter t =
   let pid = C.(Uintptr.to_int (getf t Stubs.Kevent.ident)) in
   let flags = C.(getf t Stubs.Kevent.fflags) in
-  Some (Proc Proc.({pid; flags}))
+  Proc Proc.({pid; flags})
 
 let signal_to_filter t =
   let signal = C.(Uintptr.to_int (getf t Stubs.Kevent.ident)) in
   let count = C.(Intptr.to_int (getf t Stubs.Kevent.data)) in
-  Some (Signal Signal.({signal; count}))
+  Signal Signal.({signal; count})
 
 let timer_to_filter t =
   let id = C.(Uintptr.to_int (getf t Stubs.Kevent.ident)) in
   let count = C.(Intptr.to_int (getf t Stubs.Kevent.data)) in
-  Some (Timer Timer.({id; count}))
+  Timer Timer.({id; count})
 
 let user_to_filter t =
   let id = C.(Uintptr.to_int (getf t Stubs.Kevent.ident)) in
   let flags = C.(getf t Stubs.Kevent.fflags) in
-  Some (User User.({id; flags}))
+  User User.({id; flags})
 
 let of_kevent t =
   match C.getf t Stubs.Kevent.filter with
@@ -103,5 +105,4 @@ let of_kevent t =
     | filter when filter = Stubs.evfilt_signal -> signal_to_filter t
     | filter when filter = Stubs.evfilt_timer -> timer_to_filter t
     | filter when filter = Stubs.evfilt_user -> user_to_filter t
-    | _ -> None
-
+    | filter -> raise (Unknown_filter filter)
