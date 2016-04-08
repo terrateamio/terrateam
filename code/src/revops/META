@@ -1,0 +1,6 @@
+name="revops"
+version="1.0.0"
+description="Reversible Operations"
+requires="core"
+archive(byte)="revops.cma"
+archive(native)="revops.cmxa"
