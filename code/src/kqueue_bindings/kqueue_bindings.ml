@@ -1,8 +1,10 @@
+(** Provides the [Ctypes] interface to kqueue *)
 module C = Ctypes
 module F = Foreign
 
 module Stubs = functor (S : Cstubs_structs.TYPE) -> struct
   module Kevent = struct
+    (** The complete, public, defintion of a [struct kqueue] *)
     type kevent
     type t = kevent C.structure
     let t : t S.typ = S.structure "kevent"
@@ -16,6 +18,7 @@ module Stubs = functor (S : Cstubs_structs.TYPE) -> struct
   end
 
   module Timespec = struct
+    (** The underlying [struct timespec] used for timeouts in [kqueue] *)
     type timespec
     type t = timespec C.structure
     let t : t S.typ = S.structure "timespec"

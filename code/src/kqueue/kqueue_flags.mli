@@ -1,3 +1,7 @@
+(** Flags are shared between the {!Kqueue_change} and {!Kqueue_event} modules,
+    however the desired signature is slightly different in each context.  This
+    module implements the commonalities and the other modules restrict the
+    interface *)
 type uint = Unsigned.UInt.t
 
 module Vnode : sig

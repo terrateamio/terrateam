@@ -1,3 +1,4 @@
+(** Types for events triggered by [kqueue] *)
 exception Unknown_filter of int
 
 module Read : sig
@@ -91,4 +92,5 @@ type t =
   | Timer of Timer.t
   | User of User.t
 
+(** Turn a [struct kqueue] into an [Event] *)
 val of_kevent : Kqueue_bindings.Stubs(Kqueue_stubs).Kevent.t -> t

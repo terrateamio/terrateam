@@ -9,80 +9,6 @@ These bindings try to find a balance between exposing the underlying API call
 and providing a typesafe interface.  The entry point is the ~Kqueue~ module,
 however the underlying bindings can be accessed through the ~Kqueue_bindings~
 functor.
-
-* Modules
-** Kqueue
-- ~create : unit -> t~ - Create a new kqueue.
-- ~kevent : t -> changelist:Eventlist.t -> eventlist:Eventlist.t ->~
-  ~timeout:Timeout.t option -> int~ - Modify the list of events be listen on
-  and/or wait for events to be triggered.  The ~changelist~ is the list of
-  changes to make to the list of events to be triggered on.  The ~eventlist~
-  will be filled in with the list of events that have been triggered.
-  Optionally, a timeout can be specified for the ~kqueue~ call.  In the event of
-  an error, ~-1~ is returned.  In the event of a timeout, ~0~ is returned,
-  otherwise the number of events that were triggered is returned.  The size of
-  the ~eventlist~ is set to reflect how many events were triggered.  If
-  ~eventlist~ has a capacity of ~0~ then ~kqueue~ returns immediately regardless
-  of if there is a timeout.  When passing to the underlying call, the ~size~ of
-  ~changelist~ is passed and the ~capacity~ of the ~eventlist~ is passed.  See
-  the ~kqueue~ manpage for more information.
-- ~unsafe_int_of_file_descr : Unix.file_descr -> int~ - The ~Unix~ module does
-  not expose the underlying type of a ~file_descr~ as an int, this converts it
-  to an ~int~.
-- ~unsafe_file_descr_of_int : int -> Unix.file_descr~ - The other direction.
-
-** Kqueue.Eventlist
-An ~Eventlist.t~ is an array of ~struct kqueue~ that is used to change the
-events to be triggered and get the events that have been triggered.  An
-~Eventlist.t~ has a capacity and a size.  The capacity is the amount of data
-that has been allocated for it and the size is how much of the allocated space
-should be used.  This is used in the case of a ~changelist~ where a large amount
-of space could be allocated but a fewer number of elements in the change list
-may be set.  An ~Eventlist.t~ can be iterated over with ~iter~ and ~fold~ and
-turned to and from a list.
-
-- ~create : int -> t~ - Create an ~Eventlist~ of the specified size.
-- ~null : t~ - An empty change list.  This corresponds to passing ~NULL~ and ~0~
-  into the underlying system call.  The ~capacity~ and ~size~ will be 0.  This
-  is not the same as ~create 0~ which will allocate a 0 amount of memory.
-- ~capacity : t -> int~ - The capacity of the ~Eventlist~.
-- ~size : t -> int~ - The size of the ~Eventlist~.
-- ~set_size : t -> int -> unit~ - Set the size of the ~Eventlist~, this must be
-  less than ~capacity~.
-- ~set_from_list : t -> Kevent.t list -> unit~ - Set the ~Eventlist~ from the
-  list of ~Stubs.Kevent.t~'s.  The length of the list must be less or equal to
-  the than the ~capacity~ and the ~size~ of the ~Eventlist.t~ is set to the
-  length of the list.
-- ~of_list : Stubs.Kevent.t list -> t~ - Create an ~Eventlist~ from a list of
-  ~Kevent.t~'s.
-- ~to_list : t -> Stubs.Kevent.t list~ - Turn an ~Eventlist.t~ to a list of
-  ~Kevent.t~'s.
-- ~fold : f:('a -> Stubs.Kevent.t -> 'a) -> init:'a -> t -> 'a~ - Fold over the
-  ~Eventlist~, up to the ~size~ of the ~Eventlist.t~.
-- ~iter : f:(Kevent.t -> unit) -> t -> unit~ - Iterate over the ~Eventlist~, up
-  to the ~size~ of the ~Eventlist.t~.
-
-** Kqueue.Timeout
-- ~create : sec:int -> nsec:int -> t~ - Create a timeout for the number of
-  seconds and nanoseconds.
-
-** Kqueue.Event
-This is a view on a ~struct kevent~ when the struct is an event.  The contains a
-number of sub-modules representing the values of different types of events.
-
-- ~of_kevent : Stubs.Kevent.t -> t~ - Turns a ~Stubs.Kevent.t~ into a typesafe
-  view on it.  An exception is thrown if the event cannot be decoded.
-
-** Kqueue.Change
-This allows a change to the kqueue to be represented in a typesafe way and
-converted into a ~Stubs.Kevent.t~.
-
-*** Filter
-- ~set_kevent : Stubs.Kevent.t -> Action.t -> t -> unit~ - Set the value of ~t~
-  with the action in specified by ~Action.t~ and set the ~Stubs.Kevent.t~.
-- ~to_kevent : Action.t -> t -> Stubs.Kevent.t~ - Turn an ~Action.t~ and a ~t~
-  into a ~Stubs.Kevent.t~.  This allocates the memory of the struct.
-
 * Changes and Events
 The ~Change~ and ~Event~ modules provide views on the same underlying data
 structure, a ~Stubs.Kevent.t~.  ~Change~ goes from an Ocaml value to a
@@ -91,7 +17,6 @@ and and ~Event~ are not symmetrical.  A change specifies certain fields and
 semantics that an event does not, and vice versa.  Therefore a ~Change~ does not
 have a function to convert a ~Stub.Kevent.t~ to a change and ~Event~ does not
 have a function to convert an ~Event~ to a ~Stub.Kevent.t~.
-
 * Raw Interface
 The ~Kqueue~ module provides a typesafe interface to the ~kqueue~ system call.
 It is possible that this interface is not performant in extreme cases because it
@@ -105,3 +30,9 @@ module Stubs = Kqueue_bindings.Stubs(Kqueue_stubs)
 #+END_SRC
 
 The ~Stubs~ module has the underlying ~Ctypes~ bindings of the data structures.
+* Unsupported Parts of the API
+The following aspects are unsupported by the type-safe ~Kqueue~ interface:
+- Specifying user data via ~udata~, this is because managing the memory safely
+  is not straight forward and difficult to debug.
+- AIO, this pulls in some extra dependencies and complicates the interface.
+  There is no reason not to add it if it is required.

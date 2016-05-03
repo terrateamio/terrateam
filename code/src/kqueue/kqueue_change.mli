@@ -1,3 +1,4 @@
+(** Types for applying changes to the events [kqueue] is listening one. *)
 module Action : sig
   module Flag : sig
     type t =
@@ -116,6 +117,9 @@ module Filter : sig
     | Timer of Timer.t
     | User of User.t
 
+  (** Fill in a [struct kqueue] with the values of an action. *)
   val set_kevent : Kqueue_bindings.Stubs(Kqueue_stubs).Kevent.t -> Action.t -> t -> unit
+
+  (** Take an action and allocate and create a [struct kqueue]. *)
   val to_kevent : Action.t -> t -> Kqueue_bindings.Stubs(Kqueue_stubs).Kevent.t
 end
