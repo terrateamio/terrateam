@@ -1,10 +1,15 @@
 
 # FIXME - Only supports Linux for now
 
-lib_LTLIBRARIES = libkqueue.la
 kqincludedir = $(includedir)/kqueue/sys
-kqinclude_HEADERS = include/sys/event.h
-dist_man_MANS = kqueue.2
+
+if INSTALL
+    lib_LTLIBRARIES = libkqueue.la
+    kqinclude_HEADERS = include/sys/event.h
+    dist_man_MANS = kqueue.2
+else
+    noinst_LTLIBRARIES = libkqueue.la
+endif
 
 libkqueue_la_CFLAGS = -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600 -fvisibility=hidden
 
