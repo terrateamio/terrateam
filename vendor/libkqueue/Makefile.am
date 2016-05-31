@@ -6,7 +6,7 @@ kqincludedir = $(includedir)/kqueue/sys
 kqinclude_HEADERS = include/sys/event.h
 dist_man_MANS = kqueue.2
 
-libkqueue_la_CFLAGS = -I./src/common -I./include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600 -fvisibility=hidden
+libkqueue_la_CFLAGS = -I$(top_srcdir)/src/common -I$(top_srcdir)/include -Wall -Wextra -Wno-missing-field-initializers -Werror -g -O2 -std=c99 -D_XOPEN_SOURCE=600 -fvisibility=hidden
 
 libkqueue_la_SOURCES = \
        src/common/filter.c \
@@ -51,7 +51,7 @@ kqtest_SOURCES = \
        test/user.c \
        test/common.h
 
-kqtest_CFLAGS = -g -O0 -Wall -Werror -I./include -I./test
+kqtest_CFLAGS = -g -O0 -Wall -Werror -I$(top_srcdir)/include -I$(top_srcdir)/test
 
 kqtest_LDADD = -lpthread -lrt libkqueue.la
 
