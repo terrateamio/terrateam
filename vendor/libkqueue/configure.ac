@@ -8,6 +8,13 @@ AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_HEADERS([config.h])
 AC_PROG_CC
 
+# When building as submodule allow selection of noinst targets
+AC_ARG_ENABLE([libkqueue-install],
+  [AS_HELP_STRING([--disable-libkqueue-install],
+    [Disable install rules and build noinst libtool library])],,
+  [enable_libkqueue_install=yes]
+)
+AM_CONDITIONAL([INSTALL],[test "x$enable_libkqueue_install" != "xno"])
 
 AC_CHECK_HEADER([sys/event.h])
 AC_CHECK_DECL([EPOLLRDHUP], [], [], [[#include <sys/epoll.h>]])
