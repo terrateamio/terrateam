@@ -109,9 +109,9 @@ let kevent t ~changelist ~eventlist ~timeout =
     Bindings.kevent
       t
       changelist.Eventlist.kevents
-      changelist.Eventlist.capacity
+      changelist.Eventlist.size
       eventlist.Eventlist.kevents
-      eventlist.Eventlist.size
+      eventlist.Eventlist.capacity
       timeout
   in
   if ret > -1 then
