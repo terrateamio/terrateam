@@ -94,6 +94,7 @@ module Filter = struct
     module Flags = Kqueue_flags.User
     type t = { id : int
              ; flags : Flags.t
+             ; data : int
              }
   end
 
@@ -123,7 +124,7 @@ module Filter = struct
         ~flags:action
         ~fflags:Unsigned.UInt.zero
         ~data:C.Intptr.zero
-        ~udata:C.null
+        ~udata:C.Uintptr.zero
     | Write write ->
       set
         kevent
@@ -132,7 +133,7 @@ module Filter = struct
         ~flags:action
         ~fflags:Unsigned.UInt.zero
         ~data:C.Intptr.zero
-        ~udata:C.null
+        ~udata:C.Uintptr.zero
     | Vnode vnode ->
       set
         kevent
@@ -141,7 +142,7 @@ module Filter = struct
         ~flags:action
         ~fflags:vnode.Vnode.flags
         ~data:C.Intptr.zero
-        ~udata:C.null
+        ~udata:C.Uintptr.zero
     | Proc proc ->
       set
         kevent
@@ -150,7 +151,7 @@ module Filter = struct
         ~flags:action
         ~fflags:proc.Proc.flags
         ~data:C.Intptr.zero
-        ~udata:C.null
+        ~udata:C.Uintptr.zero
     | Signal signal ->
       set
         kevent
@@ -159,7 +160,7 @@ module Filter = struct
         ~flags:action
         ~fflags:Unsigned.UInt.zero
         ~data:C.Intptr.zero
-        ~udata:C.null
+        ~udata:C.Uintptr.zero
     | Timer timer ->
       set
         kevent
@@ -168,16 +169,16 @@ module Filter = struct
         ~flags:action
         ~fflags:timer.Timer.unit
         ~data:(C.Intptr.of_int timer.Timer.time)
-        ~udata:C.null
+        ~udata:C.Uintptr.zero
     | User user ->
       set
         kevent
         ~ident:(C.Uintptr.of_int user.User.id)
         ~filter:Stubs.evfilt_user
         ~flags:action
-        ~fflags:Unsigned.UInt.zero
+        ~fflags:user.User.flags
         ~data:C.Intptr.zero
-        ~udata:C.null
+        ~udata:(C.Uintptr.of_int user.User.data)
 
   let to_kevent action filter =
     let kevent = C.make Stubs.Kevent.t in

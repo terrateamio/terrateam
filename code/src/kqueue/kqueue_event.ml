@@ -49,6 +49,7 @@ module User = struct
 
   type t = { id : int
            ; flags : Flags.t
+           ; data : int
            }
 end
 
@@ -94,7 +95,8 @@ let timer_to_filter t =
 let user_to_filter t =
   let id = C.(Uintptr.to_int (getf t Stubs.Kevent.ident)) in
   let flags = C.(getf t Stubs.Kevent.fflags) in
-  User User.({id; flags})
+  let data = C.(Uintptr.to_int (getf t Stubs.Kevent.udata)) in
+  User User.({id; flags; data})
 
 let of_kevent t =
   match C.getf t Stubs.Kevent.filter with

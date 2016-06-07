@@ -32,7 +32,7 @@ module Stubs = Kqueue_bindings.Stubs(Kqueue_stubs)
 The ~Stubs~ module has the underlying ~Ctypes~ bindings of the data structures.
 * Unsupported Parts of the API
 The following aspects are unsupported by the type-safe ~Kqueue~ interface:
-- Specifying user data via ~udata~, this is because managing the memory safely
-  is not straight forward and difficult to debug.
+- Specifying non-integer user data via ~udata~, this is because managing the
+  memory safely is not straight forward and difficult to debug.
 - AIO, this pulls in some extra dependencies and complicates the interface.
   There is no reason not to add it if it is required.

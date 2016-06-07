@@ -13,7 +13,7 @@ module Stubs = functor (S : Cstubs_structs.TYPE) -> struct
     let flags = S.(field t "flags" ushort)
     let fflags = S.(field t "fflags" uint)
     let data = S.(field t "data" intptr_t)
-    let udata = S.(field t "udata" (ptr void))
+    let udata = S.(field t "udata" uintptr_t)
     let () = S.seal t
   end
 

@@ -105,6 +105,7 @@ module Filter : sig
 
     type t = { id : int
              ; flags : Flags.t
+             ; data : int
              }
   end
 
