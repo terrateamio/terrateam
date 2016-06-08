@@ -151,7 +151,10 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
     }
 
     memset(&ev, 0, sizeof(ev));
-    ev.events = EPOLLIN;
+    ev.events = EPOLLIN | EPOLLET;
+    if (kn->kev.flags & (EV_ONESHOT | EV_DISPATCH))
+        ev.events |= EPOLLONESHOT;
+
     ev.data.ptr = kn;
     if (epoll_ctl(filter_epfd(filt), EPOLL_CTL_ADD, tfd, &ev) < 0) {
         dbg_printf("epoll_ctl(2): %d", errno);
