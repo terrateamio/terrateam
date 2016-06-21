@@ -56,7 +56,7 @@ kqtest_SOURCES = \
        test/user.c \
        test/common.h
 
-kqtest_CFLAGS = -g -O0 -Wall -Werror -I$(top_srcdir)/include -I$(top_srcdir)/test
+kqtest_CFLAGS = -g -O0 -Wall -Werror -I$(top_srcdir)/include -I$(top_srcdir)/test -I$(builddir)
 
 kqtest_LDADD = -lpthread -lrt libkqueue.la
 
