@@ -16,7 +16,7 @@
 
 #include <err.h>
 #include <pthread.h>
-#include "../src/common/private.h"
+#include "src/common/private.h"
 
 int DEBUG_KQUEUE = 1;
 char * KQUEUE_DEBUG_IDENT = "lockstat";
