@@ -79,14 +79,33 @@ itimerspec_dump(struct itimerspec *ts)
 }
 #endif
 
-/* Convert milliseconds into seconds+nanoseconds */
+/* Convert time data into seconds+nanoseconds */
+
+#define NOTE_TIMER_MASK (NOTE_ABSOLUTE-1)
+
 static void
-convert_msec_to_itimerspec(struct itimerspec *dst, int src, int oneshot)
+convert_timedata_to_itimerspec(struct itimerspec *dst, long src,
+						       unsigned int flags, int oneshot)
 {
     time_t sec, nsec;
 
-    sec = src / 1000;
-    nsec = (src % 1000) * 1000000;
+	switch (flags & NOTE_TIMER_MASK) {
+	case NOTE_USECONDS:
+        sec = src / 1000000;
+        nsec = (src % 1000000);
+        break;
+	case NOTE_NSECONDS:
+        sec = src / 1000000000;
+        nsec = (src % 1000000000);
+        break;
+	case NOTE_SECONDS:
+        sec = src;
+        nsec = 0;
+        break;
+	default: /* milliseconds */
+        sec = src / 1000;
+        nsec = (src % 1000) * 1000000;
+	}
 
     /* Set the interval */
     if (oneshot) {
@@ -133,6 +152,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
     struct epoll_event ev;
     struct itimerspec ts;
     int tfd;
+    int flags;
 
     kn->kev.flags |= EV_CLEAR;
 
@@ -143,8 +163,10 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
     }
     dbg_printf("created timerfd %d", tfd);
 
-    convert_msec_to_itimerspec(&ts, kn->kev.data, kn->kev.flags & EV_ONESHOT);
-    if (timerfd_settime(tfd, 0, &ts, NULL) < 0) {
+    convert_timedata_to_itimerspec(&ts, kn->kev.data, kn->kev.fflags,
+								   kn->kev.flags & EV_ONESHOT);
+	flags = (kn->kev.fflags & NOTE_ABSOLUTE) ? TFD_TIMER_ABSTIME : 0;
+    if (timerfd_settime(tfd, flags, &ts, NULL) < 0) {
         dbg_printf("timerfd_settime(2): %s", strerror(errno));
         close(tfd);
         return (-1);

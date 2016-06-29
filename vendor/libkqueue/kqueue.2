@@ -364,7 +364,21 @@ Establishes an arbitrary timer identified by
 .Va ident .
 When adding a timer,
 .Va data
-specifies the timeout period in milliseconds.
+specifies the timeout period and
+.Va fflags
+can be set to one of the following:
+.Bl -tag -width XXNOTE_RENAME
+.It NOTE_SECONDS
+data is in seconds
+.It NOTE_USECONDS
+data is in microseconds
+.It NOTE_NSECONDS
+data is in nanoseconds
+.It NOTE_ABSOLUTE
+data is an absolute timeout
+.El
+.Pp
+If fflags is not set, the default is milliseconds.
 The timer will be periodic unless EV_ONESHOT is specified.
 On return,
 .Va data
