@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([libkqueue], [2.0.4])
+AC_INIT([libkqueue], [2.1.0])
 LT_INIT
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 AC_CONFIG_SRCDIR([configure.ac])
