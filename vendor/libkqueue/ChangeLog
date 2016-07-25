@@ -1,9 +1,26 @@
-Unreleased  HEAD
+2016-07-24  v2.1.0
 ------------------------------------------------------------------------
+
+  * Fix an endianness issue when calling ioctl on Linux.
+    (Credit: Vivian Kong)
+
+  * Allow tests to be built from separate build directory.                            
+    (Credit: Chris Bailey)  
+
+  * Add support for kevent64(2) timers from Darwin.
+    (Credit: Hubertus Franke)
+
+  * Set EPOLLONESHOT for EPOLL_CTL_ADD after knote creation.
+    (Credit: Ian Partridge)
+
+  * Add configure arg to disable install and build noinst ltlibrary.
+    (Credit: Ian Partridge)
+
+  * Allow libkqueue to be used as a submodule within another build process.
+    (Credit: Ian Partridge)
 
   * Fix a build failure on Linux/AArch64 using Ubuntu 16.04.
     (Credit: Galen Rhodes)
-
 
 2016-02-06  v2.0.4
 ------------------------------------------------------------------------
