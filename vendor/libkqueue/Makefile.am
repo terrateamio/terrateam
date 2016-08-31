@@ -35,7 +35,9 @@ libkqueue_la_SOURCES = \
        src/common/tree.h \
        src/linux/platform.h
 
+if !BIONIC_LIBC
 libkqueue_la_LIBADD = -lpthread -lrt
+endif
 
 pkgconfigdir=$(libdir)/pkgconfig
 pkgconfig_DATA=libkqueue.pc
@@ -58,6 +60,10 @@ kqtest_SOURCES = \
 
 kqtest_CFLAGS = -g -O0 -Wall -Werror -I$(top_srcdir)/include -I$(top_srcdir)/test -I$(builddir)
 
+if BIONIC_LIBC
+kqtest_LDADD = -lpthread
+else
 kqtest_LDADD = -lpthread -lrt libkqueue.la
+endif
 
 
