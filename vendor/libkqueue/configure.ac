@@ -16,6 +16,14 @@ AC_ARG_ENABLE([libkqueue-install],
 )
 AM_CONDITIONAL([INSTALL],[test "x$enable_libkqueue_install" != "xno"])
 
+# Add option to provide Bionic Libc (Android) support
+AC_ARG_ENABLE([bionic-libc],
+  [AS_HELP_STRING([--enable-bionic-libc],
+    [Build for Bionic Libc (Android)])],,
+  [enable_bionic_libc=yes]
+)
+AM_CONDITIONAL(BIONIC_LIBC, [test "x$enable_bionic_libc" == "xyes"])
+
 AC_CHECK_HEADER([sys/event.h])
 AC_CHECK_DECL([EPOLLRDHUP], [], [], [[#include <sys/epoll.h>]])
 AC_CHECK_DECL([ppoll], [], [], [[
