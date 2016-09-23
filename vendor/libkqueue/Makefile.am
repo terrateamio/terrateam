@@ -61,7 +61,7 @@ kqtest_SOURCES = \
 kqtest_CFLAGS = -g -O0 -Wall -Werror -I$(top_srcdir)/include -I$(top_srcdir)/test -I$(builddir)
 
 if BIONIC_LIBC
-kqtest_LDADD = -lpthread
+kqtest_LDADD = libkqueue.la
 else
 kqtest_LDADD = -lpthread -lrt libkqueue.la
 endif
