@@ -20,7 +20,7 @@ AM_CONDITIONAL([INSTALL],[test "x$enable_libkqueue_install" != "xno"])
 AC_ARG_ENABLE([bionic-libc],
   [AS_HELP_STRING([--enable-bionic-libc],
     [Build for Bionic Libc (Android)])],,
-  [enable_bionic_libc=yes]
+  [enable_bionic_libc=no]
 )
 AM_CONDITIONAL(BIONIC_LIBC, [test "x$enable_bionic_libc" == "xyes"])
 
