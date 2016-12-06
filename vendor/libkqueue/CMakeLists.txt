@@ -19,33 +19,33 @@ INCLUDE (CheckIncludeFiles)
 
 project(kqueue)
 
-#files
+# files
 file(GLOB_RECURSE INCL include/*.h)
 source_group(includes FILES ${INCL})
 
 if(WIN32)
-	file(GLOB SRC 
+	file(GLOB SRC
 		src/windows/*.h
 		src/windows/*.c
-        src/common/*.h
+		src/common/*.h
 		src/*.c
-        src/common/map.c
-        src/common/filter.c
-        src/common/knote.c
-        src/common/kevent.c
-        src/common/kqueue.c
+		src/common/map.c
+		src/common/filter.c
+		src/common/knote.c
+		src/common/kevent.c
+		src/common/kqueue.c
 	)
 	add_definitions(
 		-DLIBKQUEUE_EXPORTS
 		-D_USRDLL
 		-D_WINDLL
 	)
-    if(MINGW)
-        SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}  -march=i486")
-        SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=i486")
-    endif()
+	if(MINGW)
+		SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}  -march=i486")
+		SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=i486")
+	endif()
 else()
-	file(GLOB SRC 
+	file(GLOB SRC
 		src/posix/*.h
 		src/posix/platform.c
 		src/linux/*.h
@@ -62,7 +62,7 @@ else()
 		src/common/knote.c
 		src/common/map.c
 		src/common/kevent.c
-		src/common/kqueue.c		
+		src/common/kqueue.c
 	)
 	include_directories(
 		src/common
@@ -86,9 +86,9 @@ include_directories(
 option(STATIC_KQUEUE "Enable to build libkqueue as static lib" OFF)
 if(STATIC_KQUEUE)
 	message("-- building libkqueue as static lib")
-    add_library(kqueue STATIC ${SRC} ${INCL})
+	add_library(kqueue STATIC ${SRC} ${INCL})
 else()
-    add_library(kqueue SHARED ${SRC} ${INCL})
+	add_library(kqueue SHARED ${SRC} ${INCL})
 endif()
 
 if(WIN32)
@@ -103,6 +103,6 @@ set_target_properties(kqueue PROPERTIES DEBUG_POSTFIX "D")
 #tests
 option(KQUEUE_TESTS "Enable to build tests for libkqueue" OFF)
 if(KQUEUE_TESTS)
-    message("-- Adding tests for libkqueue")
-    add_subdirectory(test)
+	message("-- Adding tests for libkqueue")
+	add_subdirectory(test)
 endif()
