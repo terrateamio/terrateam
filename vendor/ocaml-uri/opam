@@ -15,30 +15,20 @@ tags: [
   "org:mirage"
   "org:xapi-project"
 ]
-build: [
-  ["ocaml" "setup.ml" "-configure" "--prefix" prefix "--%{ounit:enable}%-tests"]
-  ["ocaml" "setup.ml" "-build"]
-]
-install: [
-  ["ocaml" "setup.ml" "-install"]
-]
+build: [ "ocaml" "pkg/pkg.ml" "build" "--pinned" "%{pinned}%" "--tests" "false" ]
 build-test: [
-  ["ocaml" "setup.ml" "-test"]
-]
-build-doc: [
-  ["ocaml" "setup.ml" "-doc"]
-]
-remove: [
-  ["ocamlfind" "remove" "uri"]
+  [ "ocaml" "pkg/pkg.ml" "build" "--pinned" "%{pinned}%" "--tests" "true" ]
+  [ "ocaml" "pkg/pkg.ml" "test" ]
 ]
 depends: [
+  "base-bytes"
+  "ocamlbuild" {build}
   "ocamlfind" {build}
+  "ounit" {test & >= "1.0.2"}
+  "ppx_sexp_conv" {>= "113.33.01"}
   "re"
   "sexplib" {>= "109.53.00"}
-  "ppx_sexp_conv" {>= "113.33.01"}
-  "base-bytes"
   "stringext" {>= "1.4.0"}
-  "ounit" {test & >= "1.0.2"}
-  "ocamlbuild" {build}
+  "topkg" {build}
 ]
 available: [ ocaml-version >= "4.02.2" ]
