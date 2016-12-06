@@ -1,0 +1,11 @@
+
+#cmakedefine01 HAVE_SYS_SIGNALFD_H
+#cmakedefine01 HAVE_SYS_TIMERFD_H
+#cmakedefine01 HAVE_SYS_EVENTFD_H
+#cmakedefine01 HAVE_ERR_H
+
+#cmakedefine01 HAVE_EPOLLRDHUP
+#cmakedefine01 HAVE_NOTE_TRUNCATE
+#cmakedefine01 HAVE_DECL_PPOLL
+#cmakedefine01 HAVE_NOTE_REVOKE
+
