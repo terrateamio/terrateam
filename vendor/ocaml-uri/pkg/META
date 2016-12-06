@@ -1,21 +1,19 @@
-# OASIS_START
-# DO NOT EDIT (digest: 5fe34bd6bb0d8d14eaaff7ecae39a76c)
 version = "1.9.2"
 description = "RFC3986 URI parsing library"
 requires = "re.posix stringext sexplib"
 archive(byte) = "uri.cma"
-archive(byte, plugin) = "uri.cma"
+plugin(byte) = "uri.cma"
 archive(native) = "uri.cmxa"
-archive(native, plugin) = "uri.cmxs"
+plugin(native) = "uri.cmxs"
 exists_if = "uri.cma"
 package "top" (
  version = "1.9.2"
  description = "Toplevel printers for URIs"
  requires = "uri"
  archive(byte) = "uri_top.cma"
- archive(byte, plugin) = "uri_top.cma"
+ plugin(byte) = "uri_top.cma"
  archive(native) = "uri_top.cmxa"
- archive(native, plugin) = "uri_top.cmxs"
+ plugin(native) = "uri_top.cmxs"
  exists_if = "uri_top.cma"
 )
 
@@ -24,9 +22,9 @@ package "services_full" (
  description = "RFC3986 URI parsing library"
  requires = "uri"
  archive(byte) = "services_full.cma"
- archive(byte, plugin) = "services_full.cma"
+ plugin(byte) = "services_full.cma"
  archive(native) = "services_full.cmxa"
- archive(native, plugin) = "services_full.cmxs"
+ plugin(native) = "services_full.cmxs"
  exists_if = "services_full.cma"
 )
 
@@ -35,10 +33,8 @@ package "services" (
  description = "RFC3986 URI parsing library"
  requires = "uri"
  archive(byte) = "services.cma"
- archive(byte, plugin) = "services.cma"
+ plugin(byte) = "services.cma"
  archive(native) = "services.cmxa"
- archive(native, plugin) = "services.cmxs"
+ plugin(native) = "services.cmxs"
  exists_if = "services.cma"
 )
-# OASIS_STOP
-
