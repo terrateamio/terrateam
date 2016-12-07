@@ -56,5 +56,17 @@ else()
 endif()
 
 add_executable(libkqueue-test ${SRC})
+target_include_directories(libkqueue-test PRIVATE ${CMAKE_SOURCE_DIR})
+if(WIN32)
+  target_compile_definitions(libkqueue-test
+                             PRIVATE
+                               _CRT_SECURE_NO_WARNINGS
+                               _CRT_NONSTDC_NO_WARNINGS
+                               _WINSOCK_DEPRECATED_NO_WARNINGS)
+  if(CMAKE_C_COMPILER_ID MATCHES Clang)
+    target_compile_options(libkqueue-test PRIVATE -Wno-unused-variable)
+  endif()
+endif()
 target_link_libraries(libkqueue-test kqueue ${LIBS})
 set_target_properties(libkqueue-test PROPERTIES DEBUG_POSTFIX "D")
+
