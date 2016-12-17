@@ -1,4 +1,4 @@
-open Core.Std
+module List = ListLabels
 
 let exec_mtch str pat =
   match Lua_pattern.mtch str pat with
