@@ -188,29 +188,25 @@ windows_filter_free(struct kqueue *kq, struct filter *kf)
 int
 windows_get_descriptor_type(struct knote *kn)
 {
+  switch (GetFileType((HANDLE)kn->kev.ident)) {
+  case FILE_TYPE_PIPE: {
     socklen_t slen;
+    int lsock, i;
+    slen = sizeof(lsock);
+    lsock = 0;
+    i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_ACCEPTCONN, (char *)&lsock, &slen);
+    if (i == 0 && lsock)
+      kn->kn_flags |= KNFL_PASSIVE_SOCKET;
+    break;
+  }
+  default: {
     struct stat sb;
-    int i, lsock;
-
-    /*
-     * Test if the descriptor is a socket.
-     */
-    if (fstat( (int)kn->kev.ident, &sb) == 0) {
-        dbg_printf("HANDLE %d appears to a be regular file", kn->kev.ident);
-        kn->kn_flags |= KNFL_REGULAR_FILE;
-    } else {
-        /* Assume that the HANDLE is a socket. */
-        /* TODO: we could do a WSAIoctl and check for WSAENOTSOCK */
-
-        /*
-         * Test if the socket is active or passive.
-         */
-        slen = sizeof(lsock);
-        lsock = 0;
-        i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_ACCEPTCONN, (char *) &lsock, &slen);
-        if (i == 0 && lsock) 
-            kn->kn_flags |= KNFL_PASSIVE_SOCKET;
+    if (fstat((int)kn->kev.ident, &sb) == 0) {
+      dbg_printf("HANDLE %d appears to be a regular file", kn->kev.ident);
+      kn->kn_flags |= KNFL_REGULAR_FILE;
     }
+  }
+  }
 
-    return (0);
+  return 0;
 }
