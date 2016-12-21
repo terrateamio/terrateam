@@ -46,8 +46,8 @@
 /*
  * Atomic integer operations 
  */
-#define atomic_inc   InterlockedIncrement
-#define atomic_dec   InterlockedDecrement
+#define atomic_inc(value) InterlockedIncrement((LONG volatile *)value)
+#define atomic_dec(value) InterlockedDecrement((LONG volatile *)value)
 #define atomic_cas(p, oval, nval) InterlockedCompareExchange(p, nval, oval)
 #define atomic_ptr_cas(p, oval, nval) InterlockedCompareExchangePointer(p, nval, oval)
 
