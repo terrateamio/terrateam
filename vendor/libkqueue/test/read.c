@@ -22,26 +22,30 @@
  * Create a connected TCP socket.
  */
 static void
-create_socket_connection(int *client, int *server, const short port) 
+create_socket_connection(int *client, int *server)
 { 
     struct sockaddr_in sain;
     socklen_t sa_len = sizeof(sain);
     int one = 1;
     int clnt, srvr, accepted;
+    short port;
 
     /* Create a passive socket */
     memset(&sain, 0, sizeof(sain));
     sain.sin_family = AF_INET;
-    sain.sin_port = htons(port);
+    sain.sin_port = 0;
     if ((srvr = socket(PF_INET, SOCK_STREAM, 0)) < 0) 
 	err(1, "socket");
     if (setsockopt(srvr, SOL_SOCKET, SO_REUSEADDR, 
                 (char *) &one, sizeof(one)) != 0) 
 	err(1, "setsockopt");
     if (bind(srvr, (struct sockaddr *) &sain, sa_len) < 0) {
-        printf("unable to bind to port %d\n", port);
+        printf("unable to bind to auto-assigned port\n");
         err(1, "bind-1");
     }
+    if (getsockname(srvr, (struct sockaddr *) &sain, &sa_len) < 0)
+        err(1, "getsockname-1");
+    port = ntohs(sain.sin_port);
     if (listen(srvr, 100) < 0)
 	err(1, "listen");
 
@@ -252,19 +256,20 @@ test_kevent_socket_listen_backlog(struct test_context *ctx)
     short port;
     int clnt, srvr;
 
-    port = 14973 + ctx->iteration;
-
     /* Create a passive socket */
     memset(&sain, 0, sizeof(sain));
     sain.sin_family = AF_INET;
-    sain.sin_port = htons(port);
+    sain.sin_port = 0;
     if ((srvr = socket(PF_INET, SOCK_STREAM, 0)) < 0) 
         err(1, "socket()");
     if (setsockopt(srvr, SOL_SOCKET, SO_REUSEADDR, 
                 (char *) &one, sizeof(one)) != 0)
         err(1, "setsockopt()");
     if (bind(srvr, (struct sockaddr *) &sain, sa_len) < 0)
-        err(1, "bind-2", port);
+        err(1, "bind-2");
+    if (getsockname(srvr, (struct sockaddr *) &sain, &sa_len) < 0)
+        err(1, "getsockname-2");
+    port = ntohs(sain.sin_port);
     if (listen(srvr, 100) < 0)
         err(1, "listen()");
 
@@ -422,7 +427,7 @@ test_kevent_regular_file(struct test_context *ctx)
 void
 test_evfilt_read(struct test_context *ctx)
 {
-    create_socket_connection(&ctx->client_fd, &ctx->server_fd, ctx->iteration + 23456);
+    create_socket_connection(&ctx->client_fd, &ctx->server_fd);
 
     test(kevent_socket_add, ctx);
     test(kevent_socket_del, ctx);
