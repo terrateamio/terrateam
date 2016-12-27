@@ -1,5 +1,3 @@
-open Core.Std
-
 (** Internal state of the test, explicitly passed around with some
     combinators. *)
 module State : sig
@@ -28,7 +26,7 @@ val serial : Test.t list -> Test.t
 val loop : int -> Test.t -> Test.t
 
 (** Run a test and timeout if it does not finish in a given amount of time *)
-val timeout : Core.Span.t -> Test.t -> Test.t
+val timeout : Duration.t -> Test.t -> Test.t
 
 (** Turn a function into a test *)
 val test : ?desc:string -> name:string -> (State.t -> unit) -> Test.t
@@ -40,7 +38,7 @@ val name : name:string -> Test.t -> Test.t
 (** Turn a test that returns a result into one that returns a unit.  This
     asserts that the result is on the 'Ok' path.  *)
 val result_test :
-  (State.t -> (unit, 'err) Result.t) ->
+  (State.t -> (unit, 'err) result) ->
   State.t ->
   unit
 

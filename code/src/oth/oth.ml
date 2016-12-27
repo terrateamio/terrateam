@@ -1,4 +1,4 @@
-open Core.Std
+module List = ListLabels
 
 (*
  * This isn't here actually but will be used to propogate
@@ -22,7 +22,7 @@ end
  *)
 let test_success = ref true
 
-let dev_null = Fn.const ()
+let dev_null = CCFun.const ()
 
 let run_tests state test =
   test state
@@ -33,47 +33,48 @@ let serial tests state =
 let parallel = serial
 
 let time_call f =
-  let start = Time.now () in
+  let start = Sys.time () in
   let res = f () in
-  let stop = Time.now () in
-  let sec = Core.Span.to_sec (Time.diff stop start) in
+  let stop = Sys.time () in
+  let sec = stop -. start in
   (sec, res)
 
 let test ?(desc = "") ~name f state =
-  let t = fun () -> Result.try_with (fun () -> f state) in
+  let t = fun () -> CCResult.guard (fun () -> f state) in
   match time_call t with
     | (time, Ok ()) -> begin
-      state.State.log (sprintf "Test: %s\t\tPASSED (%0.2f sec)\n" name time);
+      state.State.log (Printf.sprintf "Test: %s\t\tPASSED (%0.2f sec)\n" name time);
       ()
     end
     | (time, Error exn) -> begin
       state.State.log
-        (sprintf "Test: %s\t\tFAILED (%0.2f sec)\nDescription:\n%s\nExn:\n%s\n"
+        (Printf.sprintf "Test: %s\t\tFAILED (%0.2f sec)\nDescription:\n%s\nExn:\n%s\n"
            name
            time
            desc
-           (Exn.to_string exn));
+           (Printexc.to_string exn));
       test_success := false;
       ()
     end
 
 let name ~name tst state =
   let t = fun () -> run_tests state tst in
-  let (time, ()) =  time_call t in
+  let (time, ()) = time_call t in
   state.State.log
-    (sprintf "Test: %s\t\tELAPSED (%0.2f sec)\n" name time);
+    (Printf.sprintf "Test: %s\t\tELAPSED (%0.2f sec)\n" name time);
   ()
 
 let result_test rtest state =
   let res = rtest state in
-  assert (Result.is_ok res);
-  ()
+  match res with
+    | Ok _ -> ()
+    | Error _ -> assert false
 
 let test_with_revops ?desc ~name ~revops tst =
   test
     ?desc
     ~name
-    (fun state -> Revops.run_in_context revops (Fn.flip tst state))
+    (fun state -> Revops.run_in_context revops (CCFun.flip tst state))
 
 let exit_of_success () =
   match !test_success with
