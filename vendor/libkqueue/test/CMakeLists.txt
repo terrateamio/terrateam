@@ -56,7 +56,9 @@ if(WIN32)
                         PRIVATE
                           Ws2_32)
 endif()
-set_target_properties(libkqueue-test PROPERTIES DEBUG_POSTFIX "D")
+set_target_properties(libkqueue-test
+                      PROPERTIES
+                        DEBUG_POSTFIX "d")
 
 add_test(NAME libkqueue-test
          COMMAND libkqueue-test)
