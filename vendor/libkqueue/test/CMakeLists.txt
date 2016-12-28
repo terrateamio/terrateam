@@ -14,49 +14,25 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-#files
+set(LIBKQUEUE_TEST_SOURCES
+    kevent.c
+    main.c
+    read.c
+    test.c
+    timer.c
+    user.c
+    vnode.c)
 if(UNIX)
-    set(SRC
-        main.c
-        kevent.c
-        test.c
-        proc.c
-        read.c
-        signal.c
-        timer.c
-        vnode.c
-        user.c
-    )
-else()
-    set(SRC
-        common.h
-        kevent.c
-        main.c
-        read.c
-        test.c
-        timer.c
-        user.c
-        vnode.c
-    )
+  list(APPEND LIBKQUEUE_TEST_SOURCES
+       proc.c
+       signal.c)
 endif()
 
-
-#includes
-include_directories(
-	../include
-)
-
-if(UNIX)
-    add_definitions(
-        -rdynamic
-    )
-    set(LIBS pthread rt)
-else()
-    set(LIBS wsock32)
-endif()
-
-add_executable(libkqueue-test ${SRC})
-target_include_directories(libkqueue-test PRIVATE ${CMAKE_SOURCE_DIR})
+add_executable(libkqueue-test ${LIBKQUEUE_TEST_SOURCES})
+target_include_directories(libkqueue-test
+                           PRIVATE
+                             "${CMAKE_SOURCE_DIR}"
+                             "${CMAKE_SOURCE_DIR}/include")
 if(WIN32)
   target_compile_definitions(libkqueue-test
                              PRIVATE
@@ -66,7 +42,22 @@ if(WIN32)
   if(CMAKE_C_COMPILER_ID MATCHES Clang)
     target_compile_options(libkqueue-test PRIVATE -Wno-unused-variable)
   endif()
+elseif(UNIX)
+  target_compile_options(libkqueue-test
+                         PRIVATE
+                           -rdynamic)
 endif()
-target_link_libraries(libkqueue-test kqueue ${LIBS})
+target_link_libraries(libkqueue-test
+                      PRIVATE
+                        kqueue
+                        ${CMAKE_THREAD_LIBS_INIT})
+if(WIN32)
+  target_link_libraries(libkqueue-test
+                        PRIVATE
+                          Ws2_32)
+endif()
 set_target_properties(libkqueue-test PROPERTIES DEBUG_POSTFIX "D")
+
+add_test(NAME libkqueue-test
+         COMMAND libkqueue-test)
 
