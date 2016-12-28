@@ -203,7 +203,7 @@ let classend s pat_p =
   end
 
 let mtch_char_class c p =
-  let lp = Char.lowercase p in
+  let lp = Char.lowercase_ascii p in
   let f =
     match lp with
       | 'a' -> is_alpha
