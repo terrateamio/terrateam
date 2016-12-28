@@ -1,5 +1,3 @@
-open Core.Std
-
 let iterations = 100
 let loops = ref 0
 

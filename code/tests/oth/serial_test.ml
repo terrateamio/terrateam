@@ -1,4 +1,4 @@
-open Core.Std
+module List = ListLabels
 
 let not_in_test = 0
 let in_test = 1
