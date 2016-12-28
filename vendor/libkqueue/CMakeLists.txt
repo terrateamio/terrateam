@@ -28,7 +28,7 @@ set(CMAKE_C_STANDARD 99)
 option(STATIC_KQUEUE "build libkqueue as static library" OFF)
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-set(THREADS_PREFER_PTHREADS_FLAG TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 
 include(CheckIncludeFiles)
@@ -142,7 +142,7 @@ endif()
 if(WIN32)
   target_link_libraries(kqueue PRIVATE Ws2_32)
 endif()
-target_link_libraries(kqueue PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(kqueue PRIVATE Threads::Threads)
 
 if(ENABLE_TESTING)
   add_subdirectory(test)
