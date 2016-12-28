@@ -14,10 +14,10 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-cmake_minimum_required(VERSION 2.8.4)
+cmake_minimum_required(VERSION 3.4.3)
 cmake_policy(SET CMP0063 OLD)
 
-project(kqueue C)
+project(kqueue VERSION 2.1.1 LANGUAGES C)
 
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -33,6 +33,7 @@ find_package(Threads REQUIRED)
 
 include(CheckIncludeFiles)
 include(CheckSymbolExists)
+include(GNUInstallDirs)
 
 check_include_files(sys/signalfd.h HAVE_SYS_SIGNALFD_H)
 check_include_files(sys/timerfd.h HAVE_SYS_TIMERFD_H)
@@ -146,4 +147,25 @@ target_link_libraries(kqueue PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 if(ENABLE_TESTS)
   add_subdirectory(test)
 endif()
+
+configure_file("${CMAKE_SOURCE_DIR}/libkqueue.pc.in"
+               "${CMAKE_BINARY_DIR}/libkqueue.pc"
+               @ONLY)
+
+install(FILES
+          "include/sys/event.h"
+        DESTINATION
+          "${CMAKE_INSTALL_FULL_INCLUDEDIR}/sys")
+install(TARGETS
+          kqueue
+        DESTINATION
+          "${CMAKE_INSTALL_FULL_LIBDIR}")
+install(FILES
+          kqueue.2
+        DESTINATION
+          "${CMAKE_INSTALL_FULL_MANDIR}")
+install(FILES
+          "${CMAKE_BINARY_DIR}/libkqueue.pc"
+        DESTINATION
+          "${CMAKE_INSTALL_FULL_LIBDIR}/pkgconfig")
 
