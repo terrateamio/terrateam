@@ -1,5 +1,3 @@
-open Core.Std
-
 module type S = sig
   module R : Revops_intf.S
 

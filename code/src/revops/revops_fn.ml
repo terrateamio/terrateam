@@ -1,7 +1,5 @@
 (* Implementation for reversible operations. *)
 
-open Core.Std
-
 module Make = functor (Monad : Revops_intf.MONAD) -> struct
   module M = Monad
 
@@ -54,8 +52,8 @@ module Make = functor (Monad : Revops_intf.MONAD) -> struct
   let compose_tuple first second =
     compose
       (fun l r -> return (l, r))
-      (Fn.compose return fst)
-      (Fn.compose return snd)
+      (CCFun.compose fst return)
+      (CCFun.compose snd return)
       first
       second
 

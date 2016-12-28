@@ -1,5 +1,3 @@
-open Core.Std
-
 module Make = functor (Revops : Revops_intf.S) -> struct
   module R = Revops
 
@@ -11,8 +9,8 @@ module Make = functor (Revops : Revops_intf.S) -> struct
 
   let noop =
     Revops.Oprev.make
-      (Fn.const (M.return Univ_map.empty))
-      (Fn.const (M.return ()))
+      (CCFun.const (M.return Univ_map.empty))
+      (CCFun.const (M.return ()))
 
   let extend first (key, oprev) =
     let introduce map value = M.return (Univ_map.set map key value) in

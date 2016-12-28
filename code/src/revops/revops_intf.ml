@@ -3,7 +3,7 @@ module type MONAD = sig
 
   val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
   val return : 'a -> 'a t
-  val protect : f:(unit -> 'a t) -> finally:(unit -> unit t) -> 'a t
+  val protect : f:(unit -> 'a t) -> finally:(unit -> 'b) -> 'a t
 end
 
 module type S = sig
