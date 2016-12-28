@@ -408,10 +408,10 @@ let substitute ?(start = 0) ~s ~r t =
       let (start, stop) = Match.range m in
       let len = s_len - (stop - start) + rep_len in
       let ret = Bytes.create len in
-      Bytes.blit s 0 ret 0 start;
-      Bytes.blit rep 0 ret start rep_len;
-      Bytes.blit s stop ret (start + rep_len) (s_len - stop);
-      Some ret
+      Bytes.blit_string s 0 ret 0 start;
+      Bytes.blit_string rep 0 ret start rep_len;
+      Bytes.blit_string s stop ret (start + rep_len) (s_len - stop);
+      Some (Bytes.to_string ret)
     | None ->
       None
 
