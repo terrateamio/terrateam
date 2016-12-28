@@ -1,7 +1,5 @@
 (* Basic test for undo functionality of revops. *)
 
-open Core.Std
-
 let initial = "Initial"
 
 let changed = "Changed"
