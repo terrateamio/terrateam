@@ -118,7 +118,7 @@ else()
 endif()
 
 add_library(kqueue ${LIBRARY_TYPE} ${LIBKQUEUE_SOURCES} ${LIBKQUEUE_HEADERS})
-set_target_properties(kqueue PROPERTIES DEBUG_POSTFIX "D")
+set_target_properties(kqueue PROPERTIES DEBUG_POSTFIX "d")
 
 if(WIN32)
   target_compile_definitions(kqueue PRIVATE _USRDLL;_WINDLL)
