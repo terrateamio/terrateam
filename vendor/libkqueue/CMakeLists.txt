@@ -169,3 +169,8 @@ install(FILES
         DESTINATION
           "${CMAKE_INSTALL_FULL_LIBDIR}/pkgconfig")
 
+set(CPACK_PACKAGE_NAME ${PACKAGE_NAME})
+set(CPACK_PACKAGE_VERSION ${PACKAGE_VERSION})
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Mark Heily <mark@heily.com>")
+include(CPack)
+
