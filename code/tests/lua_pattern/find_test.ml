@@ -1,4 +1,4 @@
-open Core.Std
+module List = ListLabels
 
 let tests =
   [ ("foobar", "o", Some (1, 2))
@@ -36,7 +36,7 @@ let tests =
 let compare_res = (=)
 
 let test_pat str pat res _ =
-  let pat = Option.value_exn (Lua_pattern.of_string pat) in
+  let pat = CCOpt.get_exn (Lua_pattern.of_string pat) in
   let mtch = Lua_pattern.find str pat in
   assert (compare_res res mtch)
 

@@ -1,4 +1,4 @@
-open Core.Std
+module List = ListLabels
 
 let tests =
   [ ("o", true)
@@ -33,7 +33,7 @@ let tests =
   ]
 
 let test_pat pat res _ =
-  assert (res = Option.is_some (Lua_pattern.of_string pat))
+  assert (res = CCOpt.is_some (Lua_pattern.of_string pat))
 
 let create_test (pat, res) =
   Oth.test ~name:(Printf.sprintf "%s" pat) (test_pat pat res)

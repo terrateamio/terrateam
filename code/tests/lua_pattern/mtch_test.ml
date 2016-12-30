@@ -1,4 +1,4 @@
-open Core.Std
+module List = ListLabels
 
 let tests =
   [ ("foobar", "fo(ob)ar", Some (0, 6), [(2, 4)])
@@ -35,7 +35,7 @@ let compare_captures captures = function
     captures = mtch_captures
 
 let test_mtch str pat res captures _ =
-  let pat = Option.value_exn (Lua_pattern.of_string pat) in
+  let pat = CCOpt.get_exn (Lua_pattern.of_string pat) in
   let mtch = Lua_pattern.mtch str pat in
   assert (compare_mtch res mtch);
   assert (compare_captures captures mtch)
