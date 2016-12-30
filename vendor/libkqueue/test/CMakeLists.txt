@@ -50,7 +50,7 @@ endif()
 target_link_libraries(libkqueue-test
                       PRIVATE
                         kqueue
-                        ${CMAKE_THREAD_LIBS_INIT})
+                        Threads::Threads)
 if(WIN32)
   target_link_libraries(libkqueue-test
                         PRIVATE
