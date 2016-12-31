@@ -17,31 +17,53 @@ Supported Event Types
 Installation - Linux, Solaris
 -----------------------------
 
-    ./configure
+    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib <path to source>
     make
     make install
 
 Installation - Red Hat
 ----------------------
 
-    ./configure
-    make package
-    rpm -i *.rpm
+    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib <path to source>
+    make
+    cpack -G RPM
+
+Installation - Debian
+---------------------
+
+    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib <path to source>
+    make
+    cpack -G DEB
 
 Installation - Android
 ----------------------
 
-    ruby ./configure.rb --host=arm-linux-androideabi \
-                        --with-ndk=/opt/android-ndk-r8c \
-                        --with-sdk=/opt/android-sdks
+    cmake -G "Unix Makefiles" -DCMAKE_C_COMPILER=<path to NDK compiler> -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib <path to source>
     make
+
+Windows (Visual Studio Project)
+-------------------------------
+
+    cmake -G "Visual Studio 14 2015" <path to source>
+    cmake --build .
+
+Windows (clang/C2) (Visual Studio Project)
+------------------------------------------
+
+    cmake -G "Visual Studio 14 2015" -T "LLVM-vs2014" <path to source>
+    cmake --build .
+
+Xcode (project)
+---------------
+
+    cmake -G "Xcode" <path to source>
 
 Running Unit Tests
 ------------------
 
-    ./configure
+    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DENABLE_TESTING=YES <path to source>
     make
-    make check
+    make test
 
 Building Applications
 ---------------------
