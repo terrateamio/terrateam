@@ -3,16 +3,21 @@ type diff =
   | Added of string array
   | Equal of string array
 
+type t = diff list
 
 type subsequence_info =
-  { sub_start_new : int;
+  { (* Starting index of longest subsequence in the list of new values *)
+    sub_start_new : int;
+    (* Starting index of longest subsequence in the list of old values *)
     sub_start_old : int;
+    (* The length of the longest subsequence *)
     longest_subsequence : int; }
-
 
 module CounterMap = Map.Make(String)
 
 
+(* Returns a map with the line as key and a list of indices as value.
+   Represents counts of all the lines. *)
 let map_counter keys =
   let keys_and_indices = Array.mapi (fun index key -> index, key) keys in
   Array.fold_left (fun map (index, key) ->
@@ -21,6 +26,9 @@ let map_counter keys =
   ) CounterMap.empty keys_and_indices
 
 
+(* Computes longest subsequence and returns data on the length of longest
+   subsequence and the starting index for the longest subsequence in the old
+   and new versions. *)
 let get_longest_subsequence old_lines new_lines =
   let old_values_counter = map_counter old_lines in
   let overlap = Hashtbl.create 5000 in
@@ -49,7 +57,6 @@ let get_longest_subsequence old_lines new_lines =
     longest_subsequence = !longest_subsequence }
 
 
-
 let rec get_diff old_lines new_lines =
   match old_lines, new_lines with
   | [||], [||] -> []
@@ -63,17 +70,12 @@ let rec get_diff old_lines new_lines =
     else
       let old_lines_length = Array.length old_lines in
       let new_lines_length = Array.length new_lines in
-      Printf.printf "sub_start_old: %i\n" sub_start_old;
-      Printf.printf "sub_start_new: %i\n" sub_start_new;
       let old_lines_presubseq = Array.sub old_lines 0 sub_start_old in
       let new_lines_presubseq = Array.sub new_lines 0 sub_start_new in
-      Printf.printf "old_subsequence: %i\n" (sub_start_old + longest_subsequence);
-      Printf.printf "new_subsequence: %i\n" (sub_start_new + longest_subsequence);
       let old_lines_postsubseq =
         let starting_index = sub_start_old + longest_subsequence in
         Array.sub old_lines starting_index (old_lines_length - starting_index)
       in
-      Printf.printf "new_lines\n";
       let new_lines_postsubseq =
         let starting_index = sub_start_new + longest_subsequence in
         Array.sub new_lines starting_index (new_lines_length - starting_index)
