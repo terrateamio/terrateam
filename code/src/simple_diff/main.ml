@@ -20,21 +20,19 @@ let rec get_diff old_lines new_lines =
   | ([||], [||]) -> []
   | _ ->
     let old_values_counter = map_counter old_lines in
-    let overlap = ref (Hashtbl.create 0) in
+    let overlap = Hashtbl.create 5000 in
     let sub_start_old = ref 0 in
     let sub_start_new = ref 0 in
     let longest_subsequence = ref 0 in
 
-    for new_index = 0 to Array.length new_lines - 1 do
-      let new_overlap = Hashtbl.create 3000 in
-      let indices = try CounterMap.find new_lines.(new_index) old_values_counter with
+    Array.iteri (fun new_index new_value ->
+      let indices = try CounterMap.find new_value old_values_counter with
         | Not_found -> []
       in
       List.iter (fun old_index ->
-        let new_subsequence = (try Hashtbl.find !overlap (old_index - 1) with
-          | Not_found -> 0) + 1
-        in
-        Hashtbl.add new_overlap old_index new_subsequence;
+        let prev_subsequence = try Hashtbl.find overlap (old_index - 1) with | Not_found -> 0 in
+        let new_subsequence = prev_subsequence + 1 in
+        Hashtbl.add overlap old_index new_subsequence;
 
         if new_subsequence > !longest_subsequence then
           let () = Printf.printf "new_index - %i; old_index - %i; sub_start_new: %i\n" new_index old_index !sub_start_new in
@@ -42,16 +40,13 @@ let rec get_diff old_lines new_lines =
           sub_start_new := new_index - new_subsequence + 1;
           longest_subsequence := new_subsequence;
       ) indices;
-      overlap := new_overlap;
-    done;
+    ) new_lines;
 
     if !longest_subsequence == 0 then
       [Deleted old_lines; Added new_lines]
     else
       let old_lines_length = Array.length old_lines in
       let new_lines_length = Array.length new_lines in
-      let () = Printf.printf "old_lines_length: %i\n" old_lines_length in
-      let () = Printf.printf "new_lines_length: %i\n" new_lines_length in
       Printf.printf "sub_start_old: %i\n" !sub_start_old;
       Printf.printf "sub_start_new: %i\n" !sub_start_new;
       let old_lines_presubseq = Array.sub old_lines 0 !sub_start_old in
@@ -86,9 +81,9 @@ let string_of_diff diffs =
   in
   List.fold_left stringify "" diffs
 
-let old_value = "Foo bar baz\nTesticles"
+let old_value = "Foo bar baz\nTesticles\nmurder\nshe\nwrote\nend"
 
-let new_value = "Foo bar baz\nTest"
+let new_value = "Foo bar baz\nTest\nmurder\nshe\nwrote\ntrip"
 
 let () =
   let new_lines = Re_str.split (Re_str.regexp "\n") new_value |> Array.of_list in
