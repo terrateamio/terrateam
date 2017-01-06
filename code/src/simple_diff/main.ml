@@ -1,7 +1,13 @@
-type diff_lines_t =
+type diff =
   | Deleted of string array
   | Added of string array
   | Equal of string array
+
+
+type subsequence_info =
+  { sub_start_new : int;
+    sub_start_old : int;
+    longest_subsequence : int; }
 
 
 module CounterMap = Map.Make(String)
@@ -15,54 +21,64 @@ let map_counter keys =
   ) CounterMap.empty keys_and_indices
 
 
+let get_longest_subsequence old_lines new_lines =
+  let old_values_counter = map_counter old_lines in
+  let overlap = Hashtbl.create 5000 in
+  let sub_start_old = ref 0 in
+  let sub_start_new = ref 0 in
+  let longest_subsequence = ref 0 in
+
+  Array.iteri (fun new_index new_value ->
+    let indices = try CounterMap.find new_value old_values_counter with
+      | Not_found -> []
+    in
+    List.iter (fun old_index ->
+      let prev_subsequence = try Hashtbl.find overlap (old_index - 1) with | Not_found -> 0 in
+      let new_subsequence = prev_subsequence + 1 in
+      Hashtbl.add overlap old_index new_subsequence;
+
+      if new_subsequence > !longest_subsequence then
+        sub_start_old := old_index - new_subsequence + 1;
+        sub_start_new := new_index - new_subsequence + 1;
+        longest_subsequence := new_subsequence;
+    ) indices;
+  ) new_lines;
+
+  { sub_start_new = !sub_start_new;
+    sub_start_old = !sub_start_old;
+    longest_subsequence = !longest_subsequence }
+
+
+
 let rec get_diff old_lines new_lines =
-  match (old_lines, new_lines) with
-  | ([||], [||]) -> []
-  | _ ->
-    let old_values_counter = map_counter old_lines in
-    let overlap = Hashtbl.create 5000 in
-    let sub_start_old = ref 0 in
-    let sub_start_new = ref 0 in
-    let longest_subsequence = ref 0 in
+  match old_lines, new_lines with
+  | [||], [||] -> []
+  | _, _ ->
+    let { sub_start_new; sub_start_old; longest_subsequence } =
+      get_longest_subsequence old_lines new_lines
+    in
 
-    Array.iteri (fun new_index new_value ->
-      let indices = try CounterMap.find new_value old_values_counter with
-        | Not_found -> []
-      in
-      List.iter (fun old_index ->
-        let prev_subsequence = try Hashtbl.find overlap (old_index - 1) with | Not_found -> 0 in
-        let new_subsequence = prev_subsequence + 1 in
-        Hashtbl.add overlap old_index new_subsequence;
-
-        if new_subsequence > !longest_subsequence then
-          let () = Printf.printf "new_index - %i; old_index - %i; sub_start_new: %i\n" new_index old_index !sub_start_new in
-          sub_start_old := old_index - new_subsequence + 1;
-          sub_start_new := new_index - new_subsequence + 1;
-          longest_subsequence := new_subsequence;
-      ) indices;
-    ) new_lines;
-
-    if !longest_subsequence == 0 then
+    if longest_subsequence == 0 then
       [Deleted old_lines; Added new_lines]
     else
       let old_lines_length = Array.length old_lines in
       let new_lines_length = Array.length new_lines in
-      Printf.printf "sub_start_old: %i\n" !sub_start_old;
-      Printf.printf "sub_start_new: %i\n" !sub_start_new;
-      let old_lines_presubseq = Array.sub old_lines 0 !sub_start_old in
-      let new_lines_presubseq = Array.sub new_lines 0 !sub_start_new in
-      Printf.printf "old_subsequence: %i\n" (!sub_start_old + !longest_subsequence);
-      Printf.printf "new_subsequence: %i\n" (!sub_start_new + !longest_subsequence);
+      Printf.printf "sub_start_old: %i\n" sub_start_old;
+      Printf.printf "sub_start_new: %i\n" sub_start_new;
+      let old_lines_presubseq = Array.sub old_lines 0 sub_start_old in
+      let new_lines_presubseq = Array.sub new_lines 0 sub_start_new in
+      Printf.printf "old_subsequence: %i\n" (sub_start_old + longest_subsequence);
+      Printf.printf "new_subsequence: %i\n" (sub_start_new + longest_subsequence);
       let old_lines_postsubseq =
-        let starting_index = !sub_start_old + !longest_subsequence in
+        let starting_index = sub_start_old + longest_subsequence in
         Array.sub old_lines starting_index (old_lines_length - starting_index)
       in
       Printf.printf "new_lines\n";
       let new_lines_postsubseq =
-        let starting_index = !sub_start_new + !longest_subsequence in
+        let starting_index = sub_start_new + longest_subsequence in
         Array.sub new_lines starting_index (new_lines_length - starting_index)
       in
-      let unchanged_lines = Array.sub new_lines !sub_start_new !longest_subsequence in
+      let unchanged_lines = Array.sub new_lines sub_start_new longest_subsequence in
       get_diff old_lines_presubseq new_lines_presubseq @
       [Equal unchanged_lines] @
       get_diff old_lines_postsubseq new_lines_postsubseq
