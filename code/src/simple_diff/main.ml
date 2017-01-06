@@ -85,26 +85,3 @@ let rec get_diff old_lines new_lines =
       [Equal unchanged_lines] @
       get_diff old_lines_postsubseq new_lines_postsubseq
 
-
-let string_of_diff diffs =
-  let concat symbol lines =
-    let lines = List.map (fun line -> symbol ^ " " ^ line) (Array.to_list lines) in
-    String.concat "\n" lines
-  in
-  let stringify str diff =
-    match diff with
-    | Added lines   -> str ^ concat "+" lines
-    | Deleted lines   -> str ^ concat "-" lines
-    | Equal lines -> str
-  in
-  List.fold_left stringify "" diffs
-
-let old_value = "Foo bar baz\nTesticles\nmurder\nshe\nwrote\nend"
-
-let new_value = "Foo bar baz\nTest\nmurder\nshe\nwrote\ntrip"
-
-let () =
-  let new_lines = Re_str.split (Re_str.regexp "\n") new_value |> Array.of_list in
-  let old_lines = Re_str.split (Re_str.regexp "\n") old_value |> Array.of_list in
-  let content = get_diff old_lines new_lines |> string_of_diff in
-  Printf.printf "%s" content
