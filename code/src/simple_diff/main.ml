@@ -68,17 +68,17 @@ let rec get_diff old_lines new_lines =
     if longest_subsequence == 0 then
       [Deleted old_lines; Added new_lines]
     else
-      let old_lines_length = Array.length old_lines in
-      let new_lines_length = Array.length new_lines in
       let old_lines_presubseq = Array.sub old_lines 0 sub_start_old in
       let new_lines_presubseq = Array.sub new_lines 0 sub_start_new in
       let old_lines_postsubseq =
-        let starting_index = sub_start_old + longest_subsequence in
-        Array.sub old_lines starting_index (old_lines_length - starting_index)
+        let start_index = sub_start_old + longest_subsequence in
+        let end_index = Array.length old_lines - start_index in
+        Array.sub old_lines start_index end_index
       in
       let new_lines_postsubseq =
-        let starting_index = sub_start_new + longest_subsequence in
-        Array.sub new_lines starting_index (new_lines_length - starting_index)
+        let start_index = sub_start_new + longest_subsequence in
+        let end_index = Array.length new_lines - start_index in
+        Array.sub new_lines start_index end_index
       in
       let unchanged_lines = Array.sub new_lines sub_start_new longest_subsequence in
       get_diff old_lines_presubseq new_lines_presubseq @
