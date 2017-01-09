@@ -48,11 +48,12 @@ let test ?(desc = "") ~name f state =
     end
     | (time, Error exn) -> begin
       state.State.log
-        (Printf.sprintf "Test: %s\t\tFAILED (%0.2f sec)\nDescription:\n%s\nExn:\n%s\n"
+        (Printf.sprintf "Test: %s\t\tFAILED (%0.2f sec)\nDescription:\n%s\nExn:\n%s\n%s\n"
            name
            time
            desc
-           (Printexc.to_string exn));
+           (Printexc.to_string exn)
+           (Printexc.get_backtrace ()));
       test_success := false;
       ()
     end
