@@ -85,6 +85,7 @@ module Bindings = struct
 
   let kevent =
     F.foreign
+      ~release_runtime_lock:true
       "kevent"
       C.(int @->
          ptr Stubs.Kevent.t @->
