@@ -33,9 +33,9 @@ let serial tests state =
 let parallel = serial
 
 let time_call f =
-  let start = Sys.time () in
+  let start = Unix.gettimeofday () in
   let res = f () in
-  let stop = Sys.time () in
+  let stop = Unix.gettimeofday () in
   let sec = stop -. start in
   (sec, res)
 
