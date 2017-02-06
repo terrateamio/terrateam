@@ -819,6 +819,30 @@ let remove_query_param uri k = Query.(
   { uri with query=KV (List.filter (fun (k',_) -> k<>k') (kv uri.query)) }
 )
 
+let with_uri ?scheme ?userinfo ?host ?port ?path ?query ?fragment uri =
+  let with_path_opt u o =
+    match o with
+    | None -> with_path u ""
+    | Some p -> with_path u p
+  in
+  let with_query_opt u o =
+    match o with
+    | None -> with_query u []
+    | Some q -> with_query u q
+  in
+  let with_ f o u =
+    match o with
+    | None -> u
+    | Some x -> f u x
+  in
+  with_ with_scheme scheme uri
+  |> with_ with_userinfo userinfo
+  |> with_ with_host host
+  |> with_ with_port port
+  |> with_ with_path_opt path
+  |> with_ with_query_opt query
+  |> with_ with_fragment fragment
+
 (* Construct encoded path and query components *)
 let path_and_query uri =
   match (path uri), (query uri) with
