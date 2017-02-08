@@ -1,14 +1,30 @@
-module type Comparable = sig
-  type t
-  val compare: t -> t -> int
-end
+module type Comparable =
+  sig
+    type t
+    val compare: t -> t -> int
+  end
+
+module type S =
+  sig
+    type item
+
+    type diff =
+      | Deleted of item array
+      | Added of item array
+      | Equal of item array
+
+    type t = diff list
+
+    val get_diff : item array -> item array -> t
+  end
 
 module Make(Item : Comparable) = struct
+  type item = Item.t
 
   type diff =
-    | Deleted of Item.t array
-    | Added of Item.t array
-    | Equal of Item.t array
+    | Deleted of item array
+    | Added of item array
+    | Equal of item array
 
   type t = diff list
 
