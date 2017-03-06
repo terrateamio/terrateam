@@ -20,7 +20,7 @@ open OUnit
 open Printf
 
 (* Tuples of decoded and encoded strings. The first element is a number to
-   refer to the test, as the pcts_large version duplicates the second field 
+   refer to the test, as the pcts_large version duplicates the second field
    to a large size, so it cant be used as the name of the test *)
 let pcts = [
   (1, "hello world!", "hello%20world!");
@@ -46,7 +46,7 @@ let pcts_large =
     done;
     (n, Buffer.contents a', Buffer.contents b')
   ) pcts
- 
+
 (* Tuple of string URI and the decoded version *)
 let uri_encodes = [
   "https://user:pass@foo.com:123/wh/at/ever?foo=1&bar=5#5",
@@ -86,7 +86,7 @@ let map_pcts_tests size name test args =
   ) args
 
 let test_pct_small =
-  (map_pcts_tests "small" "encode" (fun a b -> b, (Uri.pct_encode a)) pcts) @ 
+  (map_pcts_tests "small" "encode" (fun a b -> b, (Uri.pct_encode a)) pcts) @
   (map_pcts_tests "small" "decode" (fun a b -> (Uri.pct_decode b), a) pcts)
 
 let test_pct_large =
@@ -663,4 +663,3 @@ let _ =
     ("Usage: " ^ Sys.argv.(0) ^ " [-verbose]");
   if not (was_successful (run_test_tt ~verbose:!verbose suite)) then
   exit 1
-

@@ -22,15 +22,15 @@
 type t [@@deriving sexp]
 
 type component = [
-  `Scheme
-| `Authority
-| `Userinfo (** subcomponent of authority in some schemes *)
-| `Host (** subcomponent of authority in some schemes *)
-| `Path
-| `Query
-| `Query_key
-| `Query_value
-| `Fragment
+    `Scheme
+  | `Authority
+  | `Userinfo (** subcomponent of authority in some schemes *)
+  | `Host (** subcomponent of authority in some schemes *)
+  | `Path
+  | `Query
+  | `Query_key
+  | `Query_value
+  | `Fragment
 ] [@@deriving sexp]
 
 (** {3 Core functionality } *)
@@ -53,7 +53,10 @@ val pct_encode : ?scheme:string -> ?component:component -> string -> string
 (** Percent-decode a percent-encoded string *)
 val pct_decode : string -> string
 
-(** Parse a URI string literal into a URI structure *)
+(** Parse a URI string literal into a URI structure. A bare string will be
+    interpreted as a path; a string prefixed with `//` will be interpreted as a
+    host.
+*)
 val of_string : string -> t
 
 (** Convert a URI structure into a percent-encoded URI string *)
@@ -117,27 +120,27 @@ val query_of_encoded : string -> (string * string list) list
 
 (** Replace the query URI with the supplied list.
     Input URI is not modified
-  *)
+*)
 val with_query : t -> (string * string list) list -> t
 
 (** Replace the query URI with the supplied singleton query list.
     Input URI is not modified
-  *)
+*)
 val with_query' : t -> (string * string) list -> t
 
 (** [get_query_param' q key] returns the list of values for the
     [key] parameter in query [q].  Note that an empty list is not the
     same as a [None] return value.  For a query [foo], the mapping is:
-- [/] returns None
-- [/?foo] returns Some []
-- [/?foo=] returns [Some [""]]
-- [/?foo=bar] returns [Some ["bar"]]
-- [/?foo=bar,chi] returns [Some ["bar","chi"]]
+    - [/] returns None
+    - [/?foo] returns Some []
+    - [/?foo=] returns [Some [""]]
+    - [/?foo=bar] returns [Some ["bar"]]
+    - [/?foo=bar,chi] returns [Some ["bar","chi"]]
 
     Query keys can be duplicated in the URI, in which case the first
     one is returned.  If you want to resolve duplicate keys, obtain
     the full result set with {! query } instead.
-  *)
+*)
 val get_query_param' : t -> string -> string list option
 
 (** [get_query_param q key] returns the value found for a [key] in
@@ -147,28 +150,28 @@ val get_query_param: t -> string -> string option
 
 (** Add a query parameter to the input query URI.
     Input URI is not modified
-  *)
+*)
 val add_query_param : t -> (string * string list) -> t
 
 (** Add a query parameter to the input singleton query URI.
     Input URI is not modified
-  *)
+*)
 val add_query_param' : t -> (string * string) -> t
 
 (** Add a query parameter list to the input query URI.
     Input URI is not modified
-  *)
+*)
 val add_query_params : t -> (string * string list) list -> t
 
 (** Add a query singleton parameter list to the input query URI.
     Input URI is not modified
-  *)
+*)
 val add_query_params' : t -> (string * string) list -> t
 
 (** Remove a query key from the input query URI.
     Input URI is not modified, and no error is generated if the
     key does not already exist in the URI.
-  *)
+*)
 val remove_query_param : t -> string -> t
 
 (** {3 Component getters and setters } *)

@@ -60,7 +60,7 @@ let rec compare_list f t t' = match t, t' with
   | x::xs, y::ys ->
     match f x y with 0 -> compare_list f xs ys | c -> c
 
-(** Safe characters that are always allowed in a URI 
+(** Safe characters that are always allowed in a URI
   * Unfortunately, this varies depending on which bit of the URI
   * is being parsed, so there are multiple variants (and this
   * set is probably not exhaustive. TODO: check.
@@ -83,7 +83,7 @@ module Generic : Scheme = struct
     done;
     a
 
-  let safe_chars : safe_chars = 
+  let safe_chars : safe_chars =
     let a = Array.make 256 false in
     let always_safe =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-~" in
@@ -215,10 +215,10 @@ let module_of_scheme = function
   * and this really, really shouldn't be mixed up. So this Pct module
   * defines abstract Pct.encoded and Pct.decoded types which sets the
   * state of the underlying string.  There are functions to "cast" to
-  * and from these and normal strings, and this promotes a bit of 
-  * internal safety.  These types are not exposed to the external 
+  * and from these and normal strings, and this promotes a bit of
+  * internal safety.  These types are not exposed to the external
   * interface, as casting to-and-from is quite a bit of hassle and
-  * probably not a lot of use to the average consumer of this library 
+  * probably not a lot of use to the average consumer of this library
 *)
 module Pct : sig
   type encoded [@@deriving sexp]
@@ -255,7 +255,7 @@ end = struct
   let unlift_decoded f = f
   let unlift_decoded2 f = f
 
-  (** Scan for reserved characters and replace them with 
+  (** Scan for reserved characters and replace them with
       percent-encoded equivalents.
       @return a percent-encoded string *)
   let encode ?scheme ?(component=`Path) b =
