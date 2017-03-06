@@ -3,6 +3,7 @@
 * Add a tighter opam constraint on ppx_sexp (#94)
 * Explicitly depend on `ppx_deriving` for improving future compatibility
   with Jane Street upstream (#98).
+* Update Travis CI to include OCaml 4.04 and 4.03 in the matrix.
 
 1.9.2 (2016-02-12):
 * Remove sexplib.syntax, type_conv deps and camlp4 transitive dependency
