@@ -15,21 +15,16 @@ tags: [
   "org:mirage"
   "org:xapi-project"
 ]
-build: [ "ocaml" "pkg/pkg.ml" "build" "--pinned" "%{pinned}%" "--tests" "false" ]
-build-test: [
-  [ "ocaml" "pkg/pkg.ml" "build" "--pinned" "%{pinned}%" "--tests" "true" ]
-  [ "ocaml" "pkg/pkg.ml" "test" ]
-]
+build: [ "jbuilder" "build" "@install" ]
+build-test: [ "jbuilder" "build" "@runtest" ]
 depends: [
   "base-bytes"
-  "ocamlbuild" {build}
   "ocamlfind" {build}
+  "jbuilder" {build}
   "ounit" {test & >= "1.0.2"}
-  "ppx_deriving"
   "ppx_sexp_conv" {>= "113.33.01"}
   "re"
   "sexplib" {>= "109.53.00"}
-  "stringext" {>= "1.4.0"}
-  "topkg" {build}
+  "stringext"
 ]
 available: [ ocaml-version >= "4.02.2" ]

@@ -1,9 +1,0 @@
-true: bin_annot
-
-<lib>: include
-
-<lib/**>: package(ppx_sexp_conv re sexplib stringext)
-
-<lib_test/**>: package(oUnit re re.posix sexplib stringext)
-
-<top/**>: package(compiler-libs.toplevel)
