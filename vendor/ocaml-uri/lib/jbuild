@@ -1,20 +1,9 @@
-(rule
- ((targets (uri_services.ml uri_services_full.ml))
-  (deps    (services.short services.full gen_services.ml uri_services_raw.ml gen.sh))
-  (action  (system "sh gen.sh"))))
-
 (library
  ((name        uri)
   (public_name uri)
   (modules (uri uri_re))
   (preprocess (pps (ppx_sexp_conv)))
   (libraries (sexplib re.posix stringext))))
-
-(library
- ((name        uri_services)
-  (public_name uri.services)
-  (modules (uri_services))
-  (libraries (uri))))
 
 (library
  ((name        uri_top)
