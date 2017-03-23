@@ -25,6 +25,6 @@ depends: [
   "ppx_sexp_conv" {>= "113.33.01"}
   "re"
   "sexplib" {>= "109.53.00"}
-  "stringext"
+  "stringext" {>= "1.4.0"}
 ]
 available: [ ocaml-version >= "4.02.2" ]
