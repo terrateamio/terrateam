@@ -5,65 +5,155 @@ module List = ListLabels
  * options at some point
  *)
 module State = struct
-  type t = { log : string -> unit }
+  type t = unit
 
-  let create () =
-    { log = print_string }
+  let create () = ()
+end
+
+module Test_result = struct
+  type t = { name : string
+           ; desc : string option
+           ; duration : Duration.t
+           ; res : [ `Ok | `Exn of (exn * Printexc.raw_backtrace option) | `Timedout ]
+           }
+end
+
+module Run_result = struct
+  type t = Test_result.t list
+  let test_results = CCFun.id
 end
 
 module Test = struct
-  type t = (State.t -> unit)
+  type t = (State.t -> Run_result.t)
 end
 
-(*
- * Global state, boo, but refactorable later.
- *
- * Used to track if the run of tests was successful
- *)
-let test_success = ref true
+module Outputter = struct
+  type t = (Run_result.t -> unit)
 
-let dev_null = CCFun.const ()
+  let basic_stdout =
+    List.iter
+      ~f:(fun tr ->
+          match tr.Test_result.res with
+            | `Timedout ->
+              Printf.printf "Test: %s\t\tTIMEDOUT\n" tr.Test_result.name
+            | `Ok ->
+              Printf.printf "Test: %s\t\tPASSED (%0.02f sec)\n"
+                tr.Test_result.name
+                (Duration.to_f tr.Test_result.duration)
+            | `Exn (exn, bt_opt) ->
+              Printf.printf "Test: %s\t\tFAILED (%0.02f sec)\n"
+                tr.Test_result.name
+                (Duration.to_f tr.Test_result.duration);
+              CCOpt.iter (Printf.printf "Description: %s\n") tr.Test_result.desc;
+              Printf.printf "Exn: %s\n" (Printexc.to_string exn);
+              CCOpt.iter
+                (Printf.printf "Backtrace: %s\n")
+                (CCOpt.map Printexc.raw_backtrace_to_string bt_opt))
 
-let run_tests state test =
-  test state
+  let basic_tap out rr =
+    let (oc, close) =
+      match out with
+        | `Filename s -> (open_out s, close_out)
+        | `Out_channel oc -> (oc, CCFun.const ())
+    in
+    let num_tests = List.length rr in
+    let start_test = 1 in
+    let end_test = num_tests in
+    Printf.fprintf oc "%d..%d\n" start_test end_test;
+    let rec output_test n = function
+      | [] ->
+        ()
+      | tr::trs ->
+        assert (n <= end_test);
+        begin match tr.Test_result.res with
+          | `Ok ->
+            Printf.fprintf
+              oc
+              "ok %d %s (%0.02f sec)\n"
+              n
+              tr.Test_result.name
+              (Duration.to_f tr.Test_result.duration)
+          | `Timedout ->
+            Printf.fprintf
+              oc
+              "not ok %d %s (%0.02f sec)\n"
+              n
+              tr.Test_result.name
+              (Duration.to_f tr.Test_result.duration);
+            Printf.fprintf oc "# TIMEDOUT\n"
+          | `Exn (exn, bt_opt) ->
+            Printf.fprintf
+              oc
+              "not ok %d %s (%0.02f sec)\n"
+              n
+              tr.Test_result.name
+              (Duration.to_f tr.Test_result.duration);
+            Printf.fprintf
+              oc
+              "# Description: %s\n"
+              (CCString.replace
+                 ~which:`All
+                 ~sub:"\n"
+                 ~by:"\n# "
+                 (CCOpt.get_or ~default:"" tr.Test_result.desc));
+            Printf.fprintf
+              oc
+              "# Exn: %s\n"
+              (CCString.replace ~which:`All ~sub:"\n" ~by:"\n# " (Printexc.to_string exn));
+            Printf.fprintf
+              oc
+              "# Backtrace: %s\n"
+              (CCString.replace
+                 ~which:`All
+                 ~sub:"\n"
+                 ~by:"\n# "
+                 (CCOpt.get_or ~default:"" (CCOpt.map Printexc.raw_backtrace_to_string bt_opt)))
+        end;
+        output_test (n + 1) trs
+    in
+    output_test start_test rr;
+    close oc
+
+  let of_env ?(default = []) env_name outputter_map rr =
+    let outputters =
+      let outputter_names =
+        try
+          CCString.Split.list_cpy ~by:" " (Sys.getenv env_name)
+        with
+          | Not_found ->
+            default
+      in
+      List.map
+        ~f:(fun on -> CCList.Assoc.get_exn on outputter_map)
+        outputter_names
+    in
+    List.iter
+      ~f:(fun outputter -> outputter rr)
+      outputters
+end
+
+let time_test s f =
+  let start = Unix.gettimeofday () in
+  let res =
+    match CCResult.guard (fun () -> f s) with
+      | Ok () -> `Ok
+      | Error exn -> `Exn (exn, Some (Printexc.get_raw_backtrace ()))
+  in
+  let stop = Unix.gettimeofday () in
+  let duration = Duration.of_f (stop -. start) in
+  (duration, res)
 
 let serial tests state =
-  List.iter ~f:(run_tests state) tests
+  List.concat
+    (List.map
+       ~f:(fun test -> test state)
+       tests)
 
 let parallel = serial
 
-let time_call f =
-  let start = Unix.gettimeofday () in
-  let res = f () in
-  let stop = Unix.gettimeofday () in
-  let sec = stop -. start in
-  (sec, res)
-
-let test ?(desc = "") ~name f state =
-  let t = fun () -> CCResult.guard (fun () -> f state) in
-  match time_call t with
-    | (time, Ok ()) -> begin
-      state.State.log (Printf.sprintf "Test: %s\t\tPASSED (%0.2f sec)\n" name time);
-      ()
-    end
-    | (time, Error exn) -> begin
-      state.State.log
-        (Printf.sprintf "Test: %s\t\tFAILED (%0.2f sec)\nDescription:\n%s\nExn:\n%s\n%s\n"
-           name
-           time
-           desc
-           (Printexc.to_string exn)
-           (Printexc.get_backtrace ()));
-      test_success := false;
-      ()
-    end
-
-let name ~name tst state =
-  let t = fun () -> run_tests state tst in
-  let (time, ()) = time_call t in
-  state.State.log
-    (Printf.sprintf "Test: %s\t\tELAPSED (%0.2f sec)\n" name time);
-  ()
+let test ?desc ~name f state =
+  let (duration, res) = time_test state f in
+  Test_result.([{ name; desc; duration; res }])
 
 let result_test rtest state =
   let res = rtest state in
@@ -77,34 +167,44 @@ let test_with_revops ?desc ~name ~revops tst =
     ~name
     (fun state -> Revops.run_in_context revops (CCFun.flip tst state))
 
-let exit_of_success () =
-  match !test_success with
-    | true -> 0
-    | false -> 1
+let eval test =
+  test (State.create ())
 
-let run_all_tests state t =
-  run_tests state t;
-  exit (exit_of_success ())
+let main outputter test =
+  let rr = eval test in
+  outputter rr;
+  List.iter
+    (fun tr ->
+       match tr.Test_result.res with
+         | `Ok -> ()
+         | _ -> exit 1)
+    rr;
+  exit 0
 
-let run t =
-  run_all_tests (State.create ()) t
-
-let loop n t =
-  let rec loop state = function
-    | i when i >= n ->
-      ()
-    | i ->
-      let () = run_tests state t in
-      loop state (i + 1)
+let run test =
+  let tap_output_base_name =
+    try
+      let dir = Sys.getenv "OTH_TAP_DIR" in
+      Filename.concat dir (Filename.basename Sys.executable_name)
+    with
+      | Not_found ->
+        Filename.basename Sys.executable_name
   in
-  (fun state -> loop state 0)
+  let tap_output_name = tap_output_base_name ^ ".tap" in
+  let outputter =
+    Outputter.of_env
+      ~default:["stdout"; "tap"]
+      "OTH_OUTPUTTER"
+      [ ("stdout", Outputter.basic_stdout)
+      ; ("tap", Outputter.basic_tap (`Filename tap_output_name))
+      ]
+  in
+  main outputter test
 
 let timeout span t = failwith "timeout not implemented"
 
-let verbose t state =
-  let state = { State.log = print_string } in
-  t state
+let name ~name test = failwith "nyi"
+let loop n test = failwith "nyi"
 
-let silent t state =
-  let state = { State.log = dev_null } in
-  t state
+let verbose t = failwith "nyi"
+let silent t = failwith "nyi"

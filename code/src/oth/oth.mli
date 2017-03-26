@@ -4,14 +4,63 @@ module State : sig
   type t
 end
 
-(** A test. *)
+(** A test. Like moose, a plural of tests is called a test.  A single test can
+    wrap multiple tests inside of it. *)
 module Test : sig
   type t
 end
 
-(** Run a test and terminate the process when complete.  The exit code will be 0
-    on success and non zero on failure. Information will only be printed in the
-    case of a test failure *)
+(** The result of a single test. *)
+module Test_result : sig
+  type t = { name : string
+           ; desc : string option
+           ; duration : Duration.t
+           ; res : [ `Ok | `Exn of (exn * Printexc.raw_backtrace option) | `Timedout ]
+           }
+end
+
+(** The result of a run, which is a list of tests.  The order of the tests is
+    undefined. *)
+module Run_result : sig
+  type t
+  val test_results : t -> Test_result.t list
+end
+
+module Outputter : sig
+  type t = (Run_result.t -> unit)
+
+  (** An outputter that writes a basic format to stdout. *)
+  val basic_stdout : t
+
+  (** An outputter that writes to a file. The [out_channel] specifies where to
+      write the results to. *)
+  val basic_tap : [`Filename of string | `Out_channel of out_channel] -> t
+
+  (** Takes an environment variable name and a list of tuples mapping a string
+      name to an Outputter.  The environment variable will be compared to the
+      list of tuples and outputters listed in the environment variable will be
+      used.  The names in the environment variable are separated by spaces and
+      checked against the tuples.  Multiple outputters may be specified in the
+      environment variable.  Default outputters can also be specified which will
+      be used if the environment variable is not present. By default, nothing is
+      specified. *)
+  val of_env : ?default:string list -> string -> (string * t) list -> t
+end
+
+(** Evaluate a test and return the result. *)
+val eval : Test.t -> Run_result.t
+
+(** Execute a test and output its results with the outputter and terminates the
+    process when complete.  If any tests have failed it will call [exit 1],
+    otherwise [exit 0]. *)
+val main : Outputter.t -> Test.t -> unit
+
+(** This is a wrapper for a call to {!main} with an Outputter which can output
+    TAP and stdout (and does both by default).  The output channel is a file, by
+    default, in the current working directory named the same as the executable
+    with a [".tap"] added to the end.  The output directory can be modified with
+    the [OTH_TAP_DIR] environment variable.  The environment variable used to
+    modify this behaviour is [OTH_OUTPUTTER]. *)
 val run : Test.t -> unit
 
 (** Takes a list of tests and make them runnable in parallel.
