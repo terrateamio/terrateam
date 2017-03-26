@@ -20,6 +20,7 @@ end
 
 module Run_result = struct
   type t = Test_result.t list
+  let of_test_results = CCFun.id
   let test_results = CCFun.id
 end
 
@@ -154,6 +155,8 @@ let parallel = serial
 let test ?desc ~name f state =
   let (duration, res) = time_test state f in
   Test_result.([{ name; desc; duration; res }])
+
+let raw_test f state = f state
 
 let result_test rtest state =
   let res = rtest state in

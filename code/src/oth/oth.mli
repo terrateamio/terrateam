@@ -23,6 +23,7 @@ end
     undefined. *)
 module Run_result : sig
   type t
+  val of_test_results : Test_result.t list -> t
   val test_results : t -> Test_result.t list
 end
 
@@ -79,6 +80,8 @@ val timeout : Duration.t -> Test.t -> Test.t
 
 (** Turn a function into a test *)
 val test : ?desc:string -> name:string -> (State.t -> unit) -> Test.t
+
+val raw_test : (State.t -> Run_result.t) -> Test.t
 
 (** Name a test. This is useful for naming loops or grouped tests in order to
     see the time and a named output but not for each individual run.
