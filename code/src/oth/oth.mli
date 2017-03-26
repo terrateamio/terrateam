@@ -81,7 +81,9 @@ val timeout : Duration.t -> Test.t -> Test.t
 val test : ?desc:string -> name:string -> (State.t -> unit) -> Test.t
 
 (** Name a test. This is useful for naming loops or grouped tests in order to
-    see the time and a named output but not for each individual run *)
+    see the time and a named output but not for each individual run.
+
+    @deprecated This no longer does anything. *)
 val name : name:string -> Test.t -> Test.t
 
 (** Turn a test that returns a result into one that returns a unit.  This
@@ -100,8 +102,12 @@ val test_with_revops :
   Test.t
 
 (** Turn verbose logging on.  This is the default but can be turned off with
-    {!silent}, this will turn it back on. *)
+    {!silent}, this will turn it back on.
+
+    @deprecated This no longer does anything. *)
 val verbose : Test.t -> Test.t
 
-(** Turn logging off in the test, this is useful in combination with {!loop}. *)
+(** Turn logging off in the test, this is useful in combination with {!loop}.
+
+    @deprecated This no longer does anything. *)
 val silent  : Test.t -> Test.t

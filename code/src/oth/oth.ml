@@ -203,8 +203,14 @@ let run test =
 
 let timeout span t = failwith "timeout not implemented"
 
-let name ~name test = failwith "nyi"
-let loop n test = failwith "nyi"
+let name ~name test = test
 
-let verbose t = failwith "nyi"
-let silent t = failwith "nyi"
+let loop n test state =
+  let rec loop' = function
+    | 0 -> []
+    | n -> test state @ loop' (n - 1)
+  in
+  loop' n
+
+let verbose = CCFun.id
+let silent = CCFun.id
