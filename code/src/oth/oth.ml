@@ -70,14 +70,14 @@ module Outputter = struct
           | `Ok ->
             Printf.fprintf
               oc
-              "ok %d %s (%0.02f sec)\n"
+              "ok %d %s\n# Elapsed %0.02f sec\n"
               n
               tr.Test_result.name
               (Duration.to_f tr.Test_result.duration)
           | `Timedout ->
             Printf.fprintf
               oc
-              "not ok %d %s (%0.02f sec)\n"
+              "not ok %d %s\n# Elapsed %0.02f sec\n"
               n
               tr.Test_result.name
               (Duration.to_f tr.Test_result.duration);
@@ -85,7 +85,7 @@ module Outputter = struct
           | `Exn (exn, bt_opt) ->
             Printf.fprintf
               oc
-              "not ok %d %s (%0.02f sec)\n"
+              "not ok %d %s\n# Elapsed %0.02f sec\n"
               n
               tr.Test_result.name
               (Duration.to_f tr.Test_result.duration);
