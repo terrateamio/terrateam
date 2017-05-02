@@ -75,6 +75,9 @@ module Template = struct
       | String s::At ln::Left_trim::xs ->
         (* @- ... *)
         at (At ln::String (trim_trailing_ws s)::acc) xs
+      | String s::At ln::Comment::Left_trim::xs ->
+        (* @%- ... *)
+        at (Comment::At ln::String (trim_trailing_ws s)::acc) xs
       | Left_trim::xs ->
         (* ... - ... *)
         at acc xs
@@ -91,13 +94,25 @@ module Template = struct
     in
     List.rev (at [] tokens)
 
+  let remove_comments tokens =
+    let open Snabela_lexer.Token in
+    let rec rc acc = function
+      | At _::Comment::At _::xs ->
+        rc acc xs
+      | x::xs ->
+        rc (x::acc) xs
+      | [] ->
+        acc
+    in
+    List.rev (rc [] tokens)
+
   let of_utf8_string s =
     let open CCResult.Infix in
     try
       let lexbuf = Sedlexing.Utf8.from_string s in
       Snabela_lexer.tokenize lexbuf
       >>= fun tokens ->
-      Ok (apply_trims tokens)
+      Ok (remove_comments (apply_trims tokens))
     with
       | exn ->
         Error (`Exn exn)

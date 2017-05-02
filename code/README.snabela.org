@@ -241,6 +241,10 @@ End of the world party party has a minimum age of 21.
   No guests have signed up.
 #+END_EXAMPLE
 
+*** Comments
+A template can have a comments.  Comments start with ~@%~ or ~@%-~ and can
+contain any character other than ~@~.  A command ends with ~@~ or ~-@~.
+
 *** Transformers
 Any template replacement may include one or more transformers.  A transformer is
 a function which takes the value of a template and converts can perform any

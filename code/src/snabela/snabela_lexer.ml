@@ -11,6 +11,7 @@ module Token = struct
     | Transformer of string
     | String of string
     | End_section
+    | Comment
   [@@deriving show,eq]
 
   type t = token list [@@deriving show,eq]
@@ -47,6 +48,10 @@ let rec token ln bldr buf =
   match%sedlex buf with
     | "@@" ->
       token ln (Tb.add Escaped_at bldr) buf
+    | "@%-" ->
+      comment ln (Tb.add_l [At ln; Comment; Left_trim] bldr) buf
+    | "@%" ->
+      comment ln (Tb.add_l [At ln; Comment] bldr) buf
     | "@#?-" ->
       replacement ln (Tb.add_l [At ln; List; Test; Left_trim] bldr) buf
     | "@#-" ->
@@ -125,6 +130,18 @@ and replacement_close ln bldr buf =
       token ln (Tb.add (At ln) bldr) buf
     | _ ->
       raise (Tokenize_error (`Invalid_replacement ln))
+and comment ln bldr buf =
+  match%sedlex buf with
+    | "-@" ->
+      token ln (Tb.add_l [Right_trim; At ln] bldr) buf
+    | "@" ->
+      token ln (Tb.add (At ln) bldr) buf
+    | '\n' ->
+      comment (ln + 1) bldr buf
+    | any ->
+      comment ln bldr buf
+    | _ ->
+      assert false
 
 let tokenize s =
   try
