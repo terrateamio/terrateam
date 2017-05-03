@@ -206,7 +206,7 @@ Template:
 @name@ has a minimum age of @min_age@.
 @#?guest_list-@
   Guest list:
-  @#-guest_list-@
+  @-#guest_list-@
     @name@
   @-/guest_list-@
 @/guest_list-@
@@ -242,7 +242,7 @@ End of the world party party has a minimum age of 21.
 #+END_EXAMPLE
 
 *** Comments
-A template can have a comments.  Comments start with ~@%~ or ~@%-~ and can
+A template can have a comments.  Comments start with ~@%~ or ~@-%~ and can
 contain any character other than ~@~.  A command ends with ~@~ or ~-@~.
 
 *** Transformers

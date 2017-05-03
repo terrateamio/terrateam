@@ -60,33 +60,18 @@ module Template = struct
   let apply_trims tokens =
     let open Snabela_lexer.Token in
     let rec at acc = function
-      | String s::At ln::List::Test::Left_trim::xs ->
-        (* @#?- ... *)
-        at (Test::List::At ln::String (trim_trailing_ws s)::acc) xs
-      | String s::At ln::List::Left_trim::xs ->
-        (* @#- ... *)
-        at (List::At ln::String (trim_trailing_ws s)::acc) xs
-      | String s::At ln::Test::Left_trim::xs ->
-        (* @?- ... *)
-        at (Test::At ln::String (trim_trailing_ws s)::acc) xs
-      | String s::At ln::Neg_test::Left_trim::xs ->
-        (* @!- ... *)
-        at (Neg_test::At ln::String (trim_trailing_ws s)::acc) xs
       | String s::At ln::Left_trim::xs ->
-        (* @- ... *)
+        (* @-... *)
         at (At ln::String (trim_trailing_ws s)::acc) xs
-      | String s::At ln::Comment::Left_trim::xs ->
-        (* @%- ... *)
-        at (Comment::At ln::String (trim_trailing_ws s)::acc) xs
-      | Left_trim::xs ->
-        (* ... - ... *)
-        at acc xs
+      | At ln::Left_trim::xs ->
+        (* Left trim is the first thing *)
+        at (At ln::acc) xs
       | Right_trim::At ln::String s::xs ->
         (* ... -@ ... *)
         at (At ln::acc) (String (trim_leading_ws s)::xs)
-      | Right_trim::xs ->
+      | Right_trim::At ln::xs ->
         (** ... -@ ... *)
-        at acc xs
+        at (At ln::acc) xs
       | x::xs ->
         at (x::acc) xs
       | [] ->

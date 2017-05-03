@@ -48,24 +48,24 @@ let rec token ln bldr buf =
   match%sedlex buf with
     | "@@" ->
       token ln (Tb.add Escaped_at bldr) buf
-    | "@%-" ->
-      comment ln (Tb.add_l [At ln; Comment; Left_trim] bldr) buf
+    | "@-%" ->
+      comment ln (Tb.add_l [At ln; Left_trim; Comment] bldr) buf
     | "@%" ->
       comment ln (Tb.add_l [At ln; Comment] bldr) buf
-    | "@#?-" ->
-      replacement ln (Tb.add_l [At ln; List; Test; Left_trim] bldr) buf
-    | "@#-" ->
-      replacement ln (Tb.add_l [At ln; List; Left_trim] bldr) buf
+    | "@-#?" ->
+      replacement ln (Tb.add_l [At ln; Left_trim; List; Test] bldr) buf
+    | "@-#" ->
+      replacement ln (Tb.add_l [At ln; Left_trim; List] bldr) buf
     | "@#?" ->
       replacement ln (Tb.add_l [At ln; List; Test] bldr) buf
     | "@#!" ->
       replacement ln (Tb.add_l [At ln; List; Neg_test] bldr) buf
     | "@#" ->
       replacement ln (Tb.add_l [At ln; List] bldr) buf
-    | "@?-" ->
-      replacement ln (Tb.add_l [At ln; Test; Left_trim] bldr)  buf
-    | "@!-" ->
-      replacement ln (Tb.add_l [At ln; Neg_test; Left_trim] bldr) buf
+    | "@-?" ->
+      replacement ln (Tb.add_l [At ln; Left_trim; Test] bldr)  buf
+    | "@-!" ->
+      replacement ln (Tb.add_l [At ln; Left_trim; Neg_test] bldr) buf
     | "@?" ->
       replacement ln (Tb.add_l [At ln; Test] bldr) buf
     | "@!" ->

@@ -82,7 +82,7 @@ let test_tokenizer8 =
 @name@ has a minimum age of @min_age@.
 @#?guest_list-@
   Guest list:
-  @#-guest_list-@
+  @-#guest_list-@
     @name@
   @-/guest_list-@
 @/guest_list-@
@@ -104,7 +104,7 @@ let test_tokenizer8 =
              ; String ".\n"
              ; At 3; List; Test; Key "guest_list"; Right_trim; At 3
              ; String "\n  Guest list:\n  "
-             ; At 5; List; Left_trim; Key "guest_list"; Right_trim; At 5
+             ; At 5; Left_trim; List; Key "guest_list"; Right_trim; At 5
              ; String "\n    "
              ; At 6; Key "name"; At 6
              ; String "\n  "
@@ -236,7 +236,7 @@ let test_apply9 =
 @name@ has a minimum age of @min_age@.
 @#?guest_list-@
   Guest list:
-  @#-guest_list-@
+  @-#guest_list-@
     @name@
   @-/guest_list-@
 @/guest_list-@
