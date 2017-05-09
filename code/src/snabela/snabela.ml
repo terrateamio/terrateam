@@ -1,3 +1,5 @@
+open Result
+
 module Kv = struct
   module Map = CCMap.Make(String)
 

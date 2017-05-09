@@ -1,3 +1,5 @@
+open Result
+
 module SMap = CCMap.Make(String)
 
 module Cmdline = struct
