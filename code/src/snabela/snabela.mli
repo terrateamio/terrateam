@@ -6,8 +6,6 @@
 
     Convenience function are provided for constructing a value of type [t] as
     well as pretty printing. *)
-open Result
-
 module Kv : sig
   module Map : CCMap.S with type key = string
 

@@ -1,5 +1,3 @@
-open Result
-
 module Token = struct
   type token =
     | Escaped_at
