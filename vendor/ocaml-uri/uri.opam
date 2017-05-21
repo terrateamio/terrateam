@@ -27,4 +27,4 @@ depends: [
   "sexplib" {>= "109.53.00"}
   "stringext" {>= "1.4.0"}
 ]
-available: [ ocaml-version >= "4.02.2" ]
+available: [ ocaml-version >= "4.03.0" ]
