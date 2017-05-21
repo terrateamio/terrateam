@@ -1,3 +1,6 @@
+1.9.4 (2017-05-22):
+* Port build system to jbuilder (#100 @vbmithr @rgrinberg @avsm @dsheets)
+
 1.9.3 (2017-03-06):
 * Port build system to topkg (#95 by @fgimenez)
 * Add a tighter opam constraint on ppx_sexp (#94)
