@@ -7,16 +7,15 @@ script: bash ./.travis-docker.sh
 env:
  global:
    - PACKAGE="uri"
-   - PRE_INSTALL_HOOK="OPAMYES=true opam install ocaml-migrate-parsetree"
    - POST_INSTALL_HOOK="OPAMYES=true opam depext -i react ssl lwt"
    - REVDEPS="cohttp git github irmin sociaml-facebook-api sociaml-oauth-client sociaml-tumblr-api spotify-web-api syndic"
  matrix:
-   - DISTRO=debian-stable OCAML_VERSION=4.02.3
+   - DISTRO=debian-stable OCAML_VERSION=4.03.0
    - DISTRO=debian-testing OCAML_VERSION=4.03.0
    - DISTRO=debian-unstable OCAML_VERSION=4.04.0
-   - DISTRO=ubuntu-12.04 OCAML_VERSION=4.02.3
+   - DISTRO=ubuntu-12.04 OCAML_VERSION=4.03.0
    - DISTRO=ubuntu-16.04 OCAML_VERSION=4.04.0
    - DISTRO=centos-6 OCAML_VERSION=4.03.0
    - DISTRO=centos-7 OCAML_VERSION=4.03.0
-   - DISTRO=fedora-25 OCAML_VERSION=4.02.3
+   - DISTRO=fedora-25 OCAML_VERSION=4.03.0
    - DISTRO=alpine OCAML_VERSION=4.04.0
