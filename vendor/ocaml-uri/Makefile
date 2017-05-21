@@ -1,7 +1,10 @@
 .PHONY: all clean
 
 all:
-	jbuilder build @install @runtest
+	jbuilder build
+
+test:
+	jbuilder test
 
 clean:
-	rm -rf _build
+	rm -rf _build *.install lib/uri_services.ml lib/uri_services_full.ml
