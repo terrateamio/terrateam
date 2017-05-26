@@ -622,6 +622,31 @@ let test_canonicalize =
     )
   ) canonical_map
 
+let with_uri =
+  let base = Uri.of_string "scheme://user:pass@host:0/path?query=arg#fragment" in
+  [Uri.with_uri base,                              Uri.to_string base;
+   Uri.with_uri ~scheme:None base,                 "//user:pass@host:0/path?query=arg#fragment";
+   Uri.with_uri ~scheme:(Some "new") base,         "new://user:pass@host:0/path?query=arg#fragment";
+   Uri.with_uri ~userinfo:None base,               "scheme://host:0/path?query=arg#fragment";
+   Uri.with_uri ~userinfo:(Some "new") base,       "scheme://new@host:0/path?query=arg#fragment";
+   Uri.with_uri ~host:None base,                   "scheme://user:pass@:0/path?query=arg#fragment";
+   Uri.with_uri ~host:(Some "new") base,           "scheme://user:pass@new:0/path?query=arg#fragment";
+   Uri.with_uri ~port:None base,                   "scheme://user:pass@host/path?query=arg#fragment";
+   Uri.with_uri ~port:(Some 1) base,               "scheme://user:pass@host:1/path?query=arg#fragment";
+   Uri.with_uri ~path:None base,                   "scheme://user:pass@host:0?query=arg#fragment";
+   Uri.with_uri ~path:(Some "new") base,           "scheme://user:pass@host:0/new?query=arg#fragment";
+   Uri.with_uri ~query:None base,                  "scheme://user:pass@host:0/path#fragment";
+   Uri.with_uri ~query:(Some ["new", ["a"]]) base, "scheme://user:pass@host:0/path?new=a#fragment";
+   Uri.with_uri ~fragment:None base,               "scheme://user:pass@host:0/path?query=arg";
+   Uri.with_uri ~fragment:(Some "new") base,       "scheme://user:pass@host:0/path?query=arg#new"]
+
+let test_with_uri =
+  List.map (fun (input, output) ->
+    input >:: (fun () ->
+          assert_equal ~printer:(fun l -> l) output input
+    )
+  ) (List.map (fun (i, o) -> Uri.to_string i, o) with_uri)
+
 (* Returns true if the result list contains successes only.
    Copied from oUnit source as it isnt exposed by the mli *)
 let rec was_successful =
@@ -654,6 +679,7 @@ let _ =
     @ test_sexping
     @ test_with_change
     @ test_canonicalize
+    @ test_with_uri
   ) in
   let verbose = ref false in
   let set_verbose _ = verbose := true in
