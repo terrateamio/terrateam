@@ -15,12 +15,15 @@ tags: [
   "org:mirage"
   "org:xapi-project"
 ]
-build: [ "jbuilder" "build" "@install" ]
-build-test: [ "jbuilder" "build" "@runtest" ]
+build: [
+  ["jbuilder" "subst"] {pinned}
+  ["jbuilder" "build" "-p" name "-j" jobs]
+]
+build-test: [ "jbuilder" "runtest" "-p" name "-j" jobs ]
 depends: [
   "base-bytes"
   "ocamlfind" {build}
-  "jbuilder" {build}
+  "jbuilder" {build & >="1.0+beta7"}
   "ounit" {test & >= "1.0.2"}
   "ppx_sexp_conv" {>= "113.33.01"}
   "re"
