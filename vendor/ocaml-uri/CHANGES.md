@@ -1,4 +1,4 @@
-1.9.4 (2017-05-22):
+1.9.4 (2017-05-26):
 * Port build system to jbuilder (#100 @vbmithr @rgrinberg @avsm @dsheets)
 * Restrict build to OCaml 4.03.0+ (was formerly OCaml 4.02.0+).
 
