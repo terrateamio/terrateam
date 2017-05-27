@@ -1,6 +1,7 @@
 1.9.4 (2017-05-26):
 * Port build system to jbuilder (#100 @vbmithr @rgrinberg @avsm @dsheets)
 * Restrict build to OCaml 4.03.0+ (was formerly OCaml 4.02.0+).
+* Add Appveyor tests for Windows compilation.
 
 1.9.3 (2017-03-06):
 * Port build system to topkg (#95 by @fgimenez)
