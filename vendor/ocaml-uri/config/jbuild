@@ -1,0 +1,5 @@
+(executable
+  ((name "gen_services")
+   (modules (gen_services))
+   (libraries (bytes stringext))
+))
