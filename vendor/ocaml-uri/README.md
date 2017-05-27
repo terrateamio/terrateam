@@ -30,8 +30,8 @@ Once installed, there are three ocamlfind packages available for your use:
 
 - `uri` - the base `Uri` module
 - `uri.top` - the toplevel printers for use with [utop](https://github.com/diml/utop)
-- `uri.services` - the `Uri_services` modules that provide the equivalent of *[services(5)](http://man7.org/linux/man-pages/man5/services.5.html)*
-- `uri.services_full` - the `Uri_services_full` module that provide a complete copy of the `/etc/services` file. This is quite large and normally not needed.
+- `uri.services` - the `Uri_services` module that provides the equivalent of *[services(5)](http://man7.org/linux/man-pages/man5/services.5.html)*
+- `uri.services_full` - the `Uri_services_full` module that provides a complete copy of the `/etc/services` file. This is quite large and normally not needed.
 
 ## Contact
 
