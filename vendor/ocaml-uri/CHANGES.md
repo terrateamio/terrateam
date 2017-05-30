@@ -1,7 +1,12 @@
 v1.9.4 2017-05-30
 -----------------
 
-* Port build system to jbuilder (#100 @vbmithr @rgrinberg @avsm @dsheets)
+* Port build system to jbuilder (#100 @vbmithr @rgrinberg @avsm @dsheets).
+  There should be no observable changes, except that `Uri_services` is now
+  in a separate subdirectory. This means that packages that implicitly
+  depended on the module without including the ocamlfind `uri.services`
+  package may now fail. Just adding the ocamlfind dependency will fix it,
+  and is backwards compatible with older Uri releases.
 * Restrict build to OCaml 4.03.0+ (was formerly OCaml 4.02.0+).
 * Add Appveyor tests for Windows compilation.
 
