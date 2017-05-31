@@ -86,6 +86,15 @@ val make : ?scheme:string -> ?userinfo:string -> ?host:string ->
   ?port:int -> ?path:string -> ?query:(string * string list) list ->
   ?fragment:string -> unit -> t
 
+(** Functional update for a URI using the supplied components.  If a component
+    is unspecified then it will be unchanged.  If a component is supplied as
+    [None] then the component will be removed in the returned URI.  If a
+    component is supplied as [Some x] then [x] will be added if it does not
+    exist in the source URI or replaced if it does exist. *)
+val with_uri : ?scheme:string option -> ?userinfo:string option ->
+  ?host:string option -> ?port:int option -> ?path:string option ->
+  ?query:(string * string list) list option -> ?fragment:string option -> t -> t
+
 (** {3 Query functions }
 
     The query string API attempts to accommodate conventional query
