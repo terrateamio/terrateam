@@ -25,9 +25,9 @@ depends: [
   "ocamlfind" {build}
   "jbuilder" {build & >="1.0+beta7"}
   "ounit" {test & >= "1.0.2"}
-  "ppx_sexp_conv" {>= "113.33.01"}
+  "ppx_sexp_conv" {>= "v0.9.0"}
   "re"
-  "sexplib" {>= "109.53.00"}
+  "sexplib" {>= "v0.9.0"}
   "stringext" {>= "1.4.0"}
 ]
 available: [ ocaml-version >= "4.03.0" ]
