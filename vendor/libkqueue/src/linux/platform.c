@@ -301,6 +301,7 @@ linux_get_descriptor_type(struct knote *kn)
     socklen_t slen;
     struct stat sb;
     int i, lsock;
+    socklen_t out_len;
 
     /*
      * Test if the descriptor is a socket.
@@ -327,7 +328,6 @@ linux_get_descriptor_type(struct knote *kn)
     if (i < 0) {
         switch (errno) {
             case ENOTSOCK:   /* same as lsock = 0 */
-                return (0);
                 break;
             default:
                 dbg_perror("getsockopt(3)");
@@ -336,8 +336,30 @@ linux_get_descriptor_type(struct knote *kn)
     } else {
         if (lsock) 
             kn->kn_flags |= KNFL_PASSIVE_SOCKET;
-        return (0);
     }
+
+    /*
+     * Test if socket has a filter
+     * pcap file descriptors need to be considered as passive sockets as
+     * SIOCINQ always returns 0 even if data is available.
+     * Looking at SO_GET_FILTER is a good way of doing this.
+     */
+    out_len = 0;
+    i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_GET_FILTER, NULL, &out_len);
+    if (i < 0) {
+        switch (errno) {
+            case ENOTSOCK:   /* same as lsock = 0 */
+                break;
+            default:
+                dbg_perror("getsockopt(3)");
+                return (-1);
+        }
+    } else {
+        if (out_len)
+            kn->kn_flags |= KNFL_PASSIVE_SOCKET;
+    }
+
+    return (0);
 }
 
 char *
