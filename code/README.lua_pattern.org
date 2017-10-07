@@ -1,2 +1,9 @@
 * About
-Template for my usual ocaml projects
+An implementation of Lua Patterns, which are like regexp but designed to be a
+bit simpler, both to implement and use.  They also provide some non-regexp
+functionality like matching bracketed strings.
+
+Read more about them here:
+
+
+https://www.lua.org/pil/20.2.html
