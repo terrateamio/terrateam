@@ -451,7 +451,7 @@ module Query = struct
     let plus_to_space s =
       let s = Bytes.unsafe_of_string s in
       for i = 0 to Bytes.length s - 1 do
-        if s.[i] = '+' then Bytes.set s i ' '
+        if Bytes.get s i = '+' then Bytes.set s i ' '
       done;
       Bytes.unsafe_to_string s
     in
