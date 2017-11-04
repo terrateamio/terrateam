@@ -9,7 +9,7 @@ env:
    - PACKAGE="uri"
    - POST_INSTALL_HOOK="OPAMYES=true opam depext -i react ssl lwt"
    - REVDEPS="cohttp git github irmin sociaml-facebook-api sociaml-oauth-client sociaml-tumblr-api spotify-web-api syndic"
-   - PINS="hex" # needed until hex.1.2.0 is released
+   - PINS="hex irmin" # needed until hex.1.2.0 and irmin > 1.3.1 are released
  matrix:
    - DISTRO=debian-stable OCAML_VERSION=4.03.0
    - DISTRO=debian-testing OCAML_VERSION=4.03.0
