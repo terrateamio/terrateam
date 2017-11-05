@@ -1,3 +1,10 @@
+v1.9.5 2017-11-05
+-----------------
+
+* Fix build with OCaml 4.06 (and -safe-string) (#108 @hcarty)
+* Set (wrapped false) in jbuilder (#105 @avsm)
+* Add OCaml 4.06 to the travis CI matrix (#109 @djs55)
+
 v1.9.4 2017-05-30
 -----------------
 
