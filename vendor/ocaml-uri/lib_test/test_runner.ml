@@ -292,6 +292,25 @@ let test_rel_rel_res =
     res >:: test
   ) uri_rel_rel_res
 
+let userinfo_res = [
+    "http://user:pwd@bar.com/foo",
+      ["bar", "http://user:pwd@bar.com/bar";
+       "/", "http://user:pwd@bar.com/";
+      "http://boo:bar@bar.com/foo", "http://boo:bar@bar.com/foo";
+      ]
+]
+
+let test_userinfo_res =
+  userinfo_res |> List.map (fun (base,tests) ->
+        let base = Uri.of_string base in
+        List.map (fun (uri,res) ->
+            let uri = Uri.of_string uri in
+            let test () = assert_equal ~printer:(fun l -> l)
+                res (Uri.to_string (Uri.resolve "" base uri)) in
+            res >::test
+        ) tests
+  ) |> List.fold_left List.rev_append []
+
 let generic_uri_norm = [
   "HTTP://example.com/", "http://example.com/";
   "http://example.com/%3a%3f", "http://example.com/:%3F";
@@ -671,6 +690,7 @@ let _ =
     @ test_rel_res
     @ test_file_rel_res
     @ test_rel_rel_res
+    @ test_userinfo_res
     @ test_rel_empty_path_res
     @ test_generic_uri_norm
     @ test_rel_id
