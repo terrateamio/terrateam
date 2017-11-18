@@ -865,13 +865,15 @@ let resolve schem base uri =
       | Some scheme -> scheme
     )) in
   normalize schem
-    Path.(match scheme uri, host uri with
-    | Some _, _ ->
+    Path.(match scheme uri, userinfo uri, host uri with
+    | Some _, _, _ ->
       {uri with path=remove_dot_segments uri.path}
-    | None, Some _ ->
+    | None, Some _, _
+    | None, _, Some _ ->
       {uri with scheme=base.scheme; path=remove_dot_segments uri.path}
-    | None, None ->
-      let uri = {uri with scheme=base.scheme; host=base.host; port=base.port} in
+    | None, None, None ->
+      let uri = {uri with scheme=base.scheme; userinfo=base.userinfo;
+                          host=base.host; port=base.port} in
       let path_str = path uri in
       if path_str=""
       then { uri with
