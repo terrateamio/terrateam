@@ -14,6 +14,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
+# Note: In order for RPM packaging to work correctly version >= 3.8 is required
 cmake_minimum_required(VERSION 3.4.3)
 cmake_policy(SET CMP0063 OLD)
 
@@ -155,19 +156,23 @@ configure_file("${CMAKE_SOURCE_DIR}/libkqueue.pc.in"
 install(FILES
           "include/sys/event.h"
         DESTINATION
-          "${CMAKE_INSTALL_FULL_INCLUDEDIR}/sys")
+          "${CMAKE_INSTALL_FULL_INCLUDEDIR}/sys"
+        COMPONENT headers)
 install(TARGETS
           kqueue
         DESTINATION
-          "${CMAKE_INSTALL_FULL_LIBDIR}")
+          "${CMAKE_INSTALL_FULL_LIBDIR}"
+        COMPONENT libraries)
 install(FILES
           kqueue.2
         DESTINATION
-          "${CMAKE_INSTALL_FULL_MANDIR}")
+          "${CMAKE_INSTALL_FULL_MANDIR}"
+        COMPONENT man)
 install(FILES
           "${CMAKE_BINARY_DIR}/libkqueue.pc"
         DESTINATION
-          "${CMAKE_INSTALL_FULL_LIBDIR}/pkgconfig")
+          "${CMAKE_INSTALL_FULL_LIBDIR}/pkgconfig"
+        COMPONENT pkgconfig)
 
 set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
 set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
@@ -175,5 +180,51 @@ set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Mark Heily <mark@heily.com>")
+
+# Specify the location of source files to be installed by the debuginfo package
+set(CPACK_BUILD_SOURCE_DIRS ${CMAKE_SOURCE_DIR}/src)
+
+# Group the components into packages
+# - devel contains header files and becomes libkqueue-devel
+# - main contains everything else and becomes libkqueue
+set(CPACK_COMPONENT_HEADERS_GROUP "devel")
+set(CPACK_COMPONENT_LIBRARIES_GROUP "main")
+set(CPACK_COMPONENT_MAN_GROUP "main")
+set(CPACK_COMPONENT_PKGCONFIG_GROUP "main")
+set(CPACK_COMPONENT_HEADERS_DEPENDS "main")
+
+#
+#  Metadata common to all packaging systems
+#
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Userspace implementation of the kqueue event notification mechanism")
+
+set(CPACK_COMPONENT_MAIN_DESCRIPTION "A user space implementation of the kqueue(2) kernel event notification
+mechanism. libkqueue acts as a translator between the kevent structure and the
+native kernel facilities.")
+set(CPACK_COMPONENT_DEVEL_DESCRIPTION "Development files for ${PROJECT_NAME}-${PROJECT_VERSION}")
+
+#
+#  RPM Specific configuration
+#
+set(CPACK_RPM_PACKAGE_LICENSE "MIT and BSD")
+set(CPACK_RPM_PACKAGE_URL "http://sourceforge.net/p/libkqueue/wiki/Home/")
+
+set(CPACK_RPM_MAIN_PACKAGE_GROUP "System Environment/Libraries")
+set(CPACK_RPM_MAIN_PACKAGE_DESCRIPTION ${CPACK_COMPONENT_MAIN_DESCRIPTION})
+
+set(CPACK_RPM_DEVEL_PACKAGE_GROUP "Development/Libraries")
+set(CPACK_RPM_DEVEL_PACKAGE_SUMMARY ${CPACK_COMPONENT_DEVEL_DESCRIPTION})
+set(CPACK_RPM_DEVEL_PACKAGE_REQUIRES "${CPACK_PACKAGE_NAME} = %{version}-%{release}")
+
+set(CPACK_RPM_MAIN_COMPONENT "main")            # Nominate the component to be packed into libkqueue
+set(CPACK_RPM_COMPONENT_INSTALL ON)             # Enable component based packaging (generate multiple packages)
+set(CPACK_RPM_FILE_NAME RPM-DEFAULT)            # Use rpmbuild's package naming scheme
+
+#
+#  Build a debuginfo package containing the source an debugging symbols
+#
+set(CPACK_RPM_MAIN_DEBUGINFO_PACKAGE ON)
+set(CPACK_RPM_DEBUGINFO_SINGLE_PACKAGE ON)
+set(CPACK_RPM_MAIN_BUILD_SOURCE_DIRS_PREFIX /usr/src/debug/${PROJECT_NAME}-${PROJECT_VERSION})
 include(CPack)
 
