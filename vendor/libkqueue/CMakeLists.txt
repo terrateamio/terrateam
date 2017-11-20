@@ -17,7 +17,7 @@
 cmake_minimum_required(VERSION 3.4.3)
 cmake_policy(SET CMP0063 OLD)
 
-project(kqueue VERSION 2.1.1 LANGUAGES C)
+project(libkqueue VERSION 2.1.1 LANGUAGES C)
 enable_testing()
 
 set(CMAKE_C_VISIBILITY_PRESET hidden)
