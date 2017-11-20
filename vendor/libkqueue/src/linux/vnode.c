@@ -49,7 +49,7 @@ inotify_event_dump(struct inotify_event *evt)
 {
     static __thread char buf[1024];
 
-    snprintf(buf, sizeof(buf), "wd=%d mask=%s", 
+    snprintf(buf, sizeof(buf), "wd=%d mask=%s",
             evt->wd,
             inotify_mask_dump(evt->mask));
 
@@ -80,7 +80,7 @@ get_one_event(struct inotify_event *dst, int inofd)
     dbg_printf("read(2) from inotify wd: %ld bytes", (long) n);
 
     /* FIXME-TODO: if len > 0, read(len) */
-    if (dst->len != 0) 
+    if (dst->len != 0)
         abort();
 
 
@@ -103,11 +103,11 @@ add_watch(struct filter *filt, struct knote *kn)
     mask = IN_CLOSE;
     if (kn->kev.fflags & NOTE_DELETE)
         mask |= IN_ATTRIB | IN_DELETE_SELF;
-    if (kn->kev.fflags & NOTE_WRITE)      
+    if (kn->kev.fflags & NOTE_WRITE)
         mask |= IN_MODIFY | IN_ATTRIB;
     if (kn->kev.fflags & NOTE_EXTEND)
         mask |= IN_MODIFY | IN_ATTRIB;
-    if ((kn->kev.fflags & NOTE_ATTRIB) || 
+    if ((kn->kev.fflags & NOTE_ATTRIB) ||
             (kn->kev.fflags & NOTE_LINK))
         mask |= IN_ATTRIB;
     if (kn->kev.fflags & NOTE_RENAME)
@@ -123,7 +123,7 @@ add_watch(struct filter *filt, struct knote *kn)
     }
 
     /* Add the watch */
-    dbg_printf("inotify_add_watch(2); inofd=%d, %s, path=%s", 
+    dbg_printf("inotify_add_watch(2); inofd=%d, %s, path=%s",
             ifd, inotify_mask_dump(mask), path);
     kn->kev.data = inotify_add_watch(ifd, path, mask);
     if (kn->kev.data < 0) {
@@ -183,7 +183,7 @@ evfilt_vnode_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
         return (0);
     }
 
-    /* Check if the watched file has been closed, and 
+    /* Check if the watched file has been closed, and
        XXX-this may not exactly match the kevent() behavior if multiple file de
 scriptors reference the same file.
     */
@@ -198,38 +198,38 @@ scriptors reference the same file.
 
     /* No error checking because fstat(2) should rarely fail */
     //FIXME: EINTR
-    if ((evt.mask & IN_ATTRIB || evt.mask & IN_MODIFY) 
+    if ((evt.mask & IN_ATTRIB || evt.mask & IN_MODIFY)
         && fstat(src->kev.ident, &sb) == 0) {
-        if (sb.st_nlink == 0 && src->kev.fflags & NOTE_DELETE) 
+        if (sb.st_nlink == 0 && src->kev.fflags & NOTE_DELETE)
             dst->fflags |= NOTE_DELETE;
-        if (sb.st_nlink != src->data.vnode.nlink && src->kev.fflags & NOTE_LINK) 
+        if (sb.st_nlink != src->data.vnode.nlink && src->kev.fflags & NOTE_LINK)
             dst->fflags |= NOTE_LINK;
 #if HAVE_NOTE_TRUNCATE
-        if (sb.st_nsize == 0 && src->kev.fflags & NOTE_TRUNCATE) 
+        if (sb.st_nsize == 0 && src->kev.fflags & NOTE_TRUNCATE)
             dst->fflags |= NOTE_TRUNCATE;
 #endif
-        if (sb.st_size > src->data.vnode.size && src->kev.fflags & NOTE_WRITE) 
+        if (sb.st_size > src->data.vnode.size && src->kev.fflags & NOTE_WRITE)
             dst->fflags |= NOTE_EXTEND;
        src->data.vnode.nlink = sb.st_nlink;
        src->data.vnode.size = sb.st_size;
     }
 
-    if (evt.mask & IN_MODIFY && src->kev.fflags & NOTE_WRITE) 
+    if (evt.mask & IN_MODIFY && src->kev.fflags & NOTE_WRITE)
         dst->fflags |= NOTE_WRITE;
-    if (evt.mask & IN_ATTRIB && src->kev.fflags & NOTE_ATTRIB) 
+    if (evt.mask & IN_ATTRIB && src->kev.fflags & NOTE_ATTRIB)
         dst->fflags |= NOTE_ATTRIB;
-    if (evt.mask & IN_MOVE_SELF && src->kev.fflags & NOTE_RENAME) 
+    if (evt.mask & IN_MOVE_SELF && src->kev.fflags & NOTE_RENAME)
         dst->fflags |= NOTE_RENAME;
-    if (evt.mask & IN_DELETE_SELF && src->kev.fflags & NOTE_DELETE) 
+    if (evt.mask & IN_DELETE_SELF && src->kev.fflags & NOTE_DELETE)
         dst->fflags |= NOTE_DELETE;
 
-    if (evt.mask & IN_MODIFY && src->kev.fflags & NOTE_WRITE) 
+    if (evt.mask & IN_MODIFY && src->kev.fflags & NOTE_WRITE)
         dst->fflags |= NOTE_WRITE;
-    if (evt.mask & IN_ATTRIB && src->kev.fflags & NOTE_ATTRIB) 
+    if (evt.mask & IN_ATTRIB && src->kev.fflags & NOTE_ATTRIB)
         dst->fflags |= NOTE_ATTRIB;
-    if (evt.mask & IN_MOVE_SELF && src->kev.fflags & NOTE_RENAME) 
+    if (evt.mask & IN_MOVE_SELF && src->kev.fflags & NOTE_RENAME)
         dst->fflags |= NOTE_RENAME;
-    if (evt.mask & IN_DELETE_SELF && src->kev.fflags & NOTE_DELETE) 
+    if (evt.mask & IN_DELETE_SELF && src->kev.fflags & NOTE_DELETE)
         dst->fflags |= NOTE_DELETE;
 
     return (0);
@@ -252,7 +252,7 @@ evfilt_vnode_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_vnode_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_vnode_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     (void)filt;
@@ -263,7 +263,7 @@ evfilt_vnode_knote_modify(struct filter *filt, struct knote *kn,
 
 int
 evfilt_vnode_knote_delete(struct filter *filt, struct knote *kn)
-{   
+{
     return delete_watch(filt, kn);
 }
 
@@ -288,5 +288,5 @@ const struct filter evfilt_vnode = {
     evfilt_vnode_knote_modify,
     evfilt_vnode_knote_delete,
     evfilt_vnode_knote_enable,
-    evfilt_vnode_knote_disable,        
+    evfilt_vnode_knote_disable,
 };
