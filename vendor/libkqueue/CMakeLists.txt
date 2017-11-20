@@ -25,6 +25,7 @@ set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
+set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
 option(STATIC_KQUEUE "build libkqueue as static library" OFF)
 
