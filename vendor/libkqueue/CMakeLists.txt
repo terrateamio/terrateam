@@ -154,6 +154,11 @@ configure_file("${CMAKE_SOURCE_DIR}/libkqueue.pc.in"
                "${CMAKE_BINARY_DIR}/libkqueue.pc"
                @ONLY)
 
+#
+#  Avoid conflicts by not trying to create /usr/share/man directory
+#
+set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION ${CMAKE_INSTALL_FULL_MANDIR})
+
 install(FILES
           "include/sys/event.h"
         DESTINATION
