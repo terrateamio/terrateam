@@ -191,12 +191,23 @@ windows_get_descriptor_type(struct knote *kn)
   switch (GetFileType((HANDLE)kn->kev.ident)) {
   case FILE_TYPE_PIPE: {
     socklen_t slen;
-    int lsock, i;
+    int lsock, stype, i;
+
     slen = sizeof(lsock);
     lsock = 0;
     i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_ACCEPTCONN, (char *)&lsock, &slen);
     if (i == 0 && lsock)
       kn->kn_flags |= KNFL_PASSIVE_SOCKET;
+
+    slen = sizeof(stype);
+    stype = 0;
+    i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_TYPE, (char *) &lsock, &slen);
+    if (i < 0) {
+      dbg_perror("getsockopt(3)");
+      return (-1);
+    }
+    if (stype == SOCK_STREAM)
+        kn->kn_flags |= KNFL_STREAM_SOCKET;
     break;
   }
   default: {

@@ -300,7 +300,7 @@ linux_get_descriptor_type(struct knote *kn)
 {
     socklen_t slen;
     struct stat sb;
-    int i, lsock;
+    int i, lsock, stype;
 
     /*
      * Test if the descriptor is a socket.
@@ -336,8 +336,19 @@ linux_get_descriptor_type(struct knote *kn)
     } else {
         if (lsock)
             kn->kn_flags |= KNFL_PASSIVE_SOCKET;
-        return (0);
     }
+
+    slen = sizeof(stype);
+    stype = 0;
+    i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_TYPE, (char *) &lsock, &slen);
+    if (i < 0) {
+        dbg_perror("getsockopt(3)");
+        return (-1);
+    }
+    if (stype == SOCK_STREAM)
+        kn->kn_flags |= KNFL_STREAM_SOCKET;
+
+    return (0);
 }
 
 char *

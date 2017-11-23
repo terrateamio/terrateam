@@ -131,7 +131,7 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
             dst->data = 0;
         } else {
             dst->data = i;
-            if (dst->data == 0)
+            if (dst->data == 0 && src->kn_flags & KNFL_STREAM_SOCKET)
                 dst->flags |= EV_EOF;
         }
     }
