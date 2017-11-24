@@ -1,10 +1,13 @@
-
-# cmake output
+.vagrant/
+config.h
+*.pc
+*.log
 CMakeCache.txt
 CMakeFiles/
 CPackConfig.cmake
-CPackSourcenfig.cmake
+CPackSourceConfig.cmake
 CTestTestfile.cmake
+Makefile
 Testing/
 _CPack_Packages/
 cmake_install.cmake
@@ -14,6 +17,4 @@ libkqueue.so
 test/CMakeCache.txt
 test/CMakeFiles/
 test/cmake_install.cmake
-
-*.o
-
+test/libkqueue-test
