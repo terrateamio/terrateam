@@ -84,7 +84,7 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
                 dbg_perror("inotify_init(2)");
                 (void) close(inofd);
                 return (-1);
-            } 
+            }
             src->kdata.kn_inotifyfd = inofd;
             if (linux_fd_to_path(&path[0], sizeof(path), src->kev.ident) < 0)
                 return (-1);
@@ -114,9 +114,9 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
 #endif
     if (ev->events & EPOLLERR)
         dst->fflags = 1; /* FIXME: Return the actual socket error */
-          
+
     if (src->kn_flags & KNFL_PASSIVE_SOCKET) {
-        /* On return, data contains the length of the 
+        /* On return, data contains the length of the
            socket backlog. This is not available under Linux.
          */
         dst->data = 1;
@@ -131,7 +131,7 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
             dst->data = 0;
         } else {
             dst->data = i;
-            if (dst->data == 0)
+            if (dst->data == 0 && src->kn_flags & KNFL_STREAM_SOCKET)
                 dst->flags |= EV_EOF;
         }
     }
@@ -191,7 +191,7 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_read_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_read_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     (void) filt;
@@ -267,5 +267,5 @@ const struct filter evfilt_read = {
     evfilt_read_knote_modify,
     evfilt_read_knote_delete,
     evfilt_read_knote_enable,
-    evfilt_read_knote_disable,         
+    evfilt_read_knote_disable,
 };
