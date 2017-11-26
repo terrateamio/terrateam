@@ -63,16 +63,17 @@ struct eventfd {
 #endif
 };
 
-/* 
+/*
  * Flags used by knote->kn_flags
  */
 #define KNFL_PASSIVE_SOCKET  (0x01)  /* Socket is in listen(2) mode */
 #define KNFL_REGULAR_FILE    (0x02)  /* File descriptor is a regular file */
+#define KNFL_STREAM_SOCKET   (0x03)  /* File descriptor is a stream socket */
 #define KNFL_KNOTE_DELETED   (0x10)  /* The knote object is no longer valid */
- 
+
 struct knote {
     struct kevent     kev;
-    int               kn_flags;       
+    int               kn_flags;
     union {
         /* OLD */
         int           pfd;       /* Used by timerfd */
@@ -81,7 +82,7 @@ struct knote {
             nlink_t   nlink;  /* Used by vnode */
             off_t     size;   /* Used by vnode */
         } vnode;
-        timer_t       timerid;  
+        timer_t       timerid;
         struct sleepreq *sleepreq; /* Used by posix/timer.c */
 		void          *handle;      /* Used by win32 filters */
     } data;
@@ -113,7 +114,7 @@ struct filter {
     /* knote operations */
 
     int     (*kn_create)(struct filter *, struct knote *);
-    int     (*kn_modify)(struct filter *, struct knote *, 
+    int     (*kn_modify)(struct filter *, struct knote *,
                             const struct kevent *);
     int     (*kn_delete)(struct filter *, struct knote *);
     int     (*kn_enable)(struct filter *, struct knote *);
@@ -141,7 +142,7 @@ struct filter {
 struct kqueue {
     int             kq_id;
     struct filter   kq_filt[EVFILT_SYSCOUNT];
-    fd_set          kq_fds, kq_rfds; 
+    fd_set          kq_fds, kq_rfds;
     int             kq_nfds;
     tracing_mutex_t kq_mtx;
     volatile uint32_t kq_ref;

@@ -46,7 +46,7 @@ const struct kqueue_vtable kqops = {
 int
 windows_kqueue_init(struct kqueue *kq)
 {
-    kq->kq_iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 
+    kq->kq_iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL,
                                          (ULONG_PTR) 0, 0);
     if (kq->kq_iocp == NULL) {
         dbg_lasterror("CreateIoCompletionPort");
@@ -91,7 +91,7 @@ windows_kevent_wait(struct kqueue *kq, int no, const struct timespec *timeout)
 	int retval;
     DWORD       timeout_ms;
     BOOL        success;
-    
+
     if (timeout == NULL) {
         timeout_ms = INFINITE;
     } else if ( timeout->tv_sec == 0 && timeout->tv_nsec < 1000000 ) {
@@ -110,10 +110,10 @@ windows_kevent_wait(struct kqueue *kq, int no, const struct timespec *timeout)
 #if 0
     if(timeout_ms <= 0)
         dbg_printf("Woop, not waiting !?");
-#endif        
+#endif
     memset(&iocp_buf, 0, sizeof(iocp_buf));
-    success = GetQueuedCompletionStatus(kq->kq_iocp, 
-            &iocp_buf.bytes, &iocp_buf.key, &iocp_buf.overlap, 
+    success = GetQueuedCompletionStatus(kq->kq_iocp,
+            &iocp_buf.bytes, &iocp_buf.key, &iocp_buf.overlap,
             timeout_ms);
     if (success) {
         return (1);
@@ -153,7 +153,7 @@ windows_kevent_copyout(struct kqueue *kq, int nready,
      * Certain flags cause the associated knote to be deleted
      * or disabled.
      */
-    if (eventlist->flags & EV_DISPATCH) 
+    if (eventlist->flags & EV_DISPATCH)
         knote_disable(filt, kn); //TODO: Error checking
     if (eventlist->flags & EV_ONESHOT)
         knote_delete(filt, kn); //TODO: Error checking
@@ -191,12 +191,23 @@ windows_get_descriptor_type(struct knote *kn)
   switch (GetFileType((HANDLE)kn->kev.ident)) {
   case FILE_TYPE_PIPE: {
     socklen_t slen;
-    int lsock, i;
+    int lsock, stype, i;
+
     slen = sizeof(lsock);
     lsock = 0;
     i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_ACCEPTCONN, (char *)&lsock, &slen);
     if (i == 0 && lsock)
       kn->kn_flags |= KNFL_PASSIVE_SOCKET;
+
+    slen = sizeof(stype);
+    stype = 0;
+    i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_TYPE, (char *) &lsock, &slen);
+    if (i < 0) {
+      dbg_perror("getsockopt(3)");
+      return (-1);
+    }
+    if (stype == SOCK_STREAM)
+        kn->kn_flags |= KNFL_STREAM_SOCKET;
     break;
   }
   default: {
