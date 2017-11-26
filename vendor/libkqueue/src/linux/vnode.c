@@ -210,33 +210,32 @@ scriptors reference the same file.
 
     memcpy(dst, &src->kev, sizeof(*dst));
     dst->data = 0;
+    dst->fflags = 0;
 
     /* No error checking because fstat(2) should rarely fail */
     //FIXME: EINTR
-    if ((evt->mask & IN_ATTRIB || evt->mask & IN_MODIFY)
-        && fstat(src->kev.ident, &sb) == 0) {
-        if (sb.st_nlink == 0 && src->kev.fflags & NOTE_DELETE)
+    if (fstat(src->kev.ident, &sb) < 0 && errno == ENOENT) {
+        if (src->kev.fflags & NOTE_DELETE)
             dst->fflags |= NOTE_DELETE;
-        if (sb.st_nlink != src->data.vnode.nlink && src->kev.fflags & NOTE_LINK)
-            dst->fflags |= NOTE_LINK;
+    } else {
+        if ((evt->mask & IN_ATTRIB || evt->mask & IN_MODIFY)) {
+            if (sb.st_nlink == 0 && src->kev.fflags & NOTE_DELETE)
+                dst->fflags |= NOTE_DELETE;
+            if (sb.st_nlink != src->data.vnode.nlink &&
+                src->kev.fflags & NOTE_LINK)
+                dst->fflags |= NOTE_LINK;
 #if HAVE_NOTE_TRUNCATE
-        if (sb.st_nsize == 0 && src->kev.fflags & NOTE_TRUNCATE)
-            dst->fflags |= NOTE_TRUNCATE;
+            if (sb.st_nsize == 0 && src->kev.fflags & NOTE_TRUNCATE)
+                dst->fflags |= NOTE_TRUNCATE;
 #endif
-        if (sb.st_size > src->data.vnode.size && src->kev.fflags & NOTE_WRITE)
-            dst->fflags |= NOTE_EXTEND;
-       src->data.vnode.nlink = sb.st_nlink;
-       src->data.vnode.size = sb.st_size;
+            if (sb.st_size > src->data.vnode.size &&
+                src->kev.fflags & NOTE_WRITE)
+                dst->fflags |= NOTE_EXTEND;
+            src->data.vnode.nlink = sb.st_nlink;
+            src->data.vnode.size = sb.st_size;
+        }
     }
 
-    if (evt->mask & IN_MODIFY && src->kev.fflags & NOTE_WRITE)
-        dst->fflags |= NOTE_WRITE;
-    if (evt->mask & IN_ATTRIB && src->kev.fflags & NOTE_ATTRIB)
-        dst->fflags |= NOTE_ATTRIB;
-    if (evt->mask & IN_MOVE_SELF && src->kev.fflags & NOTE_RENAME)
-        dst->fflags |= NOTE_RENAME;
-    if (evt->mask & IN_DELETE_SELF && src->kev.fflags & NOTE_DELETE)
-        dst->fflags |= NOTE_DELETE;
 
     if (evt->mask & IN_MODIFY && src->kev.fflags & NOTE_WRITE)
         dst->fflags |= NOTE_WRITE;
