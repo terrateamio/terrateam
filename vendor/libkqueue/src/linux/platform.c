@@ -30,10 +30,10 @@ static __thread struct epoll_event epevt[MAX_KEVENT];
 const struct kqueue_vtable kqops = {
     linux_kqueue_init,
     linux_kqueue_free,
-	linux_kevent_wait,
-	linux_kevent_copyout,
-	NULL,
-	NULL,
+    linux_kevent_wait,
+    linux_kevent_copyout,
+    NULL,
+    NULL,
     linux_eventfd_init,
     linux_eventfd_close,
     linux_eventfd_raise,
@@ -89,7 +89,7 @@ linux_kqueue_free(struct kqueue *kq UNUSED)
 
 static int
 linux_kevent_wait_hires(
-        struct kqueue *kq, 
+        struct kqueue *kq,
         const struct timespec *timeout)
 {
     int n;
@@ -128,7 +128,7 @@ linux_kevent_wait_hires(
 
 int
 linux_kevent_wait(
-        struct kqueue *kq, 
+        struct kqueue *kq,
         int nevents,
         const struct timespec *ts)
 {
@@ -144,7 +144,7 @@ linux_kevent_wait(
         timeout = 0;
     } else {
         /* Convert timeout to the format used by epoll_wait() */
-        if (ts == NULL) 
+        if (ts == NULL)
             timeout = -1;
         else
             timeout = (1000 * ts->tv_sec) + (ts->tv_nsec / 1000000);
@@ -185,7 +185,7 @@ linux_kevent_copyout(struct kqueue *kq, int nready,
          * Certain flags cause the associated knote to be deleted
          * or disabled.
          */
-        if (eventlist->flags & EV_DISPATCH) 
+        if (eventlist->flags & EV_DISPATCH)
             knote_disable(filt, kn); //FIXME: Error checking
         if (eventlist->flags & EV_ONESHOT) {
             knote_delete(filt, kn); //FIXME: Error checking
@@ -241,7 +241,7 @@ linux_eventfd_raise(struct eventfd *e)
     counter = 1;
     if (write(e->ef_id, &counter, sizeof(counter)) < 0) {
         switch (errno) {
-            case EAGAIN:    
+            case EAGAIN:
                 /* Not considered an error */
                 break;
 
@@ -269,7 +269,7 @@ linux_eventfd_lower(struct eventfd *e)
     n = read(e->ef_id, &cur, sizeof(cur));
     if (n < 0) {
         switch (errno) {
-            case EAGAIN:    
+            case EAGAIN:
                 /* Not considered an error */
                 break;
 
@@ -300,7 +300,7 @@ linux_get_descriptor_type(struct knote *kn)
 {
     socklen_t slen;
     struct stat sb;
-    int i, lsock;
+    int i, lsock, stype;
     socklen_t out_len;
 
     /*
@@ -334,7 +334,7 @@ linux_get_descriptor_type(struct knote *kn)
                 return (-1);
         }
     } else {
-        if (lsock) 
+        if (lsock)
             kn->kn_flags |= KNFL_PASSIVE_SOCKET;
     }
 
@@ -358,6 +358,16 @@ linux_get_descriptor_type(struct knote *kn)
         if (out_len)
             kn->kn_flags |= KNFL_PASSIVE_SOCKET;
     }
+
+    slen = sizeof(stype);
+    stype = 0;
+    i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_TYPE, (char *) &lsock, &slen);
+    if (i < 0) {
+        dbg_perror("getsockopt(3)");
+        return (-1);
+    }
+    if (stype == SOCK_STREAM)
+        kn->kn_flags |= KNFL_STREAM_SOCKET;
 
     return (0);
 }
@@ -391,7 +401,7 @@ epoll_event_dump(struct epoll_event *evt)
 int
 epoll_update(int op, struct filter *filt, struct knote *kn, struct epoll_event *ev)
 {
-    dbg_printf("op=%d fd=%d events=%s", op, (int)kn->kev.ident, 
+    dbg_printf("op=%d fd=%d events=%s", op, (int)kn->kev.ident,
             epoll_event_dump(ev));
     if (epoll_ctl(filter_epfd(filt), op, kn->kev.ident, ev) < 0) {
         dbg_printf("epoll_ctl(2): %s", strerror(errno));
