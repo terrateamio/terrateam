@@ -1,3 +1,18 @@
+2017-11-26  v2.2.0
+------------------------------------------------------------------------
+
+ * Fixed: the EOF flag should only be set on stream sockets with a zero length r
+ead
+   Author: Arran Cudbard-Bell <a.cudbardb@freeradius.org>
+
+ * Fix to deal with inotify events containing filenames correctly.
+   Author: Arran Cudbard-Bell <a.cudbardb@freeradius.org>
+
+ * Fix to allow libpcap FDs to be used.
+   Author: Philippe Wooding <philippe.wooding@networkradius.com>
+    
+ * Switch to CMake as the build and packaging system.
+
 2016-07-24  v2.1.0
 ------------------------------------------------------------------------
 
