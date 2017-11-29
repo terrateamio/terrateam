@@ -1,6 +1,8 @@
 libkqueue
 =========
 
+[![Travis CI build status][BuildStatus]][BuildStatusLink]
+
 A user space implementation of the kqueue(2) kernel event notification mechanism
 libkqueue acts as a translator between the kevent structure and the native
 kernel facilities on Linux, Android, Solaris, and Windows.
@@ -84,3 +86,6 @@ Releases History
 2.0 add support for Android _2013-04-29_
 
 1.0 stable relesae for Linux, Solaris, and Windows _2010-09-18_
+
+[BuildStatus]: https://travis-ci.org/mheily/libkqueue.svg?branch=master "Travis CI status"
+[BuildStatusLink]: https://travis-ci.org/mheily/libkqueue
