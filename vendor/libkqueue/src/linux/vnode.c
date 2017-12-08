@@ -203,7 +203,7 @@ evfilt_vnode_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
 scriptors reference the same file.
     */
     if (evt->mask & IN_CLOSE_WRITE || evt->mask & IN_CLOSE_NOWRITE) {
-        src->kn_flags |= EV_ONESHOT; /* KLUDGE: causes the knote to be deleted */
+        src->kev.flags |= EV_ONESHOT; /* KLUDGE: causes the knote to be deleted */
         dst->filter = 0; /* KLUDGE: causes the event to be discarded */
         return (0);
     }
