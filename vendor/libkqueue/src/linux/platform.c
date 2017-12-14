@@ -18,6 +18,10 @@
 # include <poll.h>
 #include "../common/private.h"
 
+#ifndef SO_GET_FILTER
+#define SO_GET_FILTER SO_ATTACH_FILTER
+#endif
+
 //XXX-FIXME TEMP
 const struct filter evfilt_proc = EVFILT_NOTIMPL;
 
