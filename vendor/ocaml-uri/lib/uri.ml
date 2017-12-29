@@ -164,7 +164,7 @@ module Http : Scheme = struct
   include Generic
 
   let normalize_host = function
-    | Some hs -> Some (String.lowercase hs)
+    | Some hs -> Some (String.lowercase_ascii hs)
     | None -> None
 
   let canonicalize_port = function
@@ -191,7 +191,7 @@ module File : Scheme = struct
 
   let normalize_host = function
     | Some hs ->
-      let hs = String.lowercase hs in
+      let hs = String.lowercase_ascii hs in
       if hs="localhost" then Some "" else Some hs
     | None -> None
 end
@@ -202,7 +202,7 @@ module Urn : Scheme = struct
 end
 
 let module_of_scheme = function
-  | Some s -> begin match String.lowercase s with
+  | Some s -> begin match String.lowercase_ascii s with
       | "http" -> (module Http : Scheme)
       | "https"  -> (module Https : Scheme)
       | "file" -> (module File : Scheme)
@@ -281,14 +281,14 @@ end = struct
     Buffer.contents buf
 
   let int_of_hex_char c =
-    let c = int_of_char (Char.uppercase c) - 48 in
+    let c = int_of_char (Char.uppercase_ascii c) - 48 in
     if c > 9
     then if c > 16 && c < 23
       then c - 7
-      else raise (Failure "int_of_hex_char")
+      else failwith "int_of_hex_char"
     else if c >= 0
     then c
-    else raise (Failure "int_of_hex_char")
+    else failwith "int_of_hex_char"
 
   (** Scan for percent-encoding and convert them into ASCII.
       @return a percent-decoded string *)
@@ -303,7 +303,7 @@ end = struct
         let cur = cur + 1 in
         if cur >= len then Buffer.add_char buf '%'
         else match (try Some (int_of_hex_char b.[cur])
-                    with Failure "int_of_hex_char" ->
+                    with _ ->
                       Buffer.add_char buf '%';
                       None) with
         | None -> scan cur cur
@@ -318,7 +318,7 @@ end = struct
                 let lowbits = int_of_hex_char b.[cur] in
                 Buffer.add_char buf (Char.chr (highbits lsl 4 + lowbits));
                 cur+1
-              with Failure "int_of_hex_char" ->
+              with _ ->
                 Buffer.add_char buf '%';
                 Buffer.add_char buf b.[cur-1];
                 cur
@@ -565,7 +565,7 @@ let normalize schem uri =
     | Some x -> Some (Pct.unlift_decoded f x)
     | None -> None
   in {uri with
-      scheme=dob String.lowercase uri.scheme;
+      scheme=dob String.lowercase_ascii uri.scheme;
       host=cast_opt (Scheme.normalize_host (uncast_opt uri.host))
      }
 
