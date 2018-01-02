@@ -16,6 +16,8 @@
  *
  *)
 
+[@@@ocaml.warning "-32"]
+
 open Sexplib.Std
 open Sexplib.Conv (* Workaround for bug in Sexplib when used without Core *)
 
@@ -164,7 +166,7 @@ module Http : Scheme = struct
   include Generic
 
   let normalize_host = function
-    | Some hs -> Some (String.lowercase hs)
+    | Some hs -> Some (String.lowercase_ascii hs)
     | None -> None
 
   let canonicalize_port = function
@@ -191,7 +193,7 @@ module File : Scheme = struct
 
   let normalize_host = function
     | Some hs ->
-      let hs = String.lowercase hs in
+      let hs = String.lowercase_ascii hs in
       if hs="localhost" then Some "" else Some hs
     | None -> None
 end
@@ -202,7 +204,7 @@ module Urn : Scheme = struct
 end
 
 let module_of_scheme = function
-  | Some s -> begin match String.lowercase s with
+  | Some s -> begin match String.lowercase_ascii s with
       | "http" -> (module Http : Scheme)
       | "https"  -> (module Https : Scheme)
       | "file" -> (module File : Scheme)
@@ -281,7 +283,7 @@ end = struct
     Buffer.contents buf
 
   let int_of_hex_char c =
-    let c = int_of_char (Char.uppercase c) - 48 in
+    let c = int_of_char (Char.uppercase_ascii c) - 48 in
     if c > 9
     then if c > 16 && c < 23
       then c - 7
@@ -302,23 +304,22 @@ end = struct
         Buffer.add_substring buf b start (cur-start);
         let cur = cur + 1 in
         if cur >= len then Buffer.add_char buf '%'
-        else match (try Some (int_of_hex_char b.[cur])
-                    with Failure "int_of_hex_char" ->
-                      Buffer.add_char buf '%';
-                      None) with
-        | None -> scan cur cur
-        | Some highbits -> begin
+        else match int_of_hex_char b.[cur] with
+        | exception _ ->
+          Buffer.add_char buf '%';
+          scan cur cur
+        | highbits -> begin
           let cur = cur + 1 in
           if cur >= len then begin
             Buffer.add_char buf '%';
             Buffer.add_char buf b.[cur-1]
           end else begin
             let start_at =
-              try
-                let lowbits = int_of_hex_char b.[cur] in
+              match int_of_hex_char b.[cur] with
+              | lowbits ->
                 Buffer.add_char buf (Char.chr (highbits lsl 4 + lowbits));
                 cur+1
-              with Failure "int_of_hex_char" ->
+              | exception _ ->
                 Buffer.add_char buf '%';
                 Buffer.add_char buf b.[cur-1];
                 cur
@@ -565,7 +566,7 @@ let normalize schem uri =
     | Some x -> Some (Pct.unlift_decoded f x)
     | None -> None
   in {uri with
-      scheme=dob String.lowercase uri.scheme;
+      scheme=dob String.lowercase_ascii uri.scheme;
       host=cast_opt (Scheme.normalize_host (uncast_opt uri.host))
      }
 

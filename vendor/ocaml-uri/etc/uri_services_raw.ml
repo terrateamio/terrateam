@@ -1,6 +1,6 @@
 let port_of_uri ?default lookupfn uri =
   match Uri.port uri with
-  |Some port as x -> x
+  |Some _port as x -> x
   |None -> begin
     match Uri.scheme uri, default with
     |None, None -> None
