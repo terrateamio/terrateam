@@ -15,6 +15,8 @@
  *
  *)
 
+[@@@ocaml.warning "-32"]
+
 open Re
 
 module Raw = struct
