@@ -1,3 +1,11 @@
+v1.9.6 2018-01-11
+-----------------
+
+* Change code generation strategy to avoid big switches in
+  the services file; improves build time by 10x (#114 by @gasche).
+* Remove deprecated function use (`String.lowercase`)
+* Add development Makefile with more targets.
+
 v1.9.5 2017-11-05
 -----------------
 
