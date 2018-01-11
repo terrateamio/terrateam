@@ -287,10 +287,10 @@ end = struct
     if c > 9
     then if c > 16 && c < 23
       then c - 7
-      else raise (Failure "int_of_hex_char")
+      else failwith "int_of_hex_char"
     else if c >= 0
     then c
-    else raise (Failure "int_of_hex_char")
+    else failwith "int_of_hex_char"
 
   (** Scan for percent-encoding and convert them into ASCII.
       @return a percent-decoded string *)
