@@ -1,5 +1,4 @@
 *.install
 **/*.merlin
 _build/
-lib/uri_services.ml
-lib/uri_services_full.ml
+_opam/
