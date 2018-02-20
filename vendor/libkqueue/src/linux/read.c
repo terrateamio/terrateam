@@ -69,6 +69,7 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
                 dbg_perror("epoll_ctl(2)");
                 return (-1);
             }
+            src->kn_registered = 0;
 
 #if FIXME
             /* XXX-FIXME Switch to using kn_inotifyfd to monitor for IN_ATTRIB events
@@ -184,6 +185,9 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
             dbg_printf("epoll_ctl(2): %s", strerror(errno));
             return (-1);
         }
+
+        kn->kn_registered = 1;
+
         return (0);
     }
 
@@ -207,10 +211,11 @@ evfilt_read_knote_delete(struct filter *filt, struct knote *kn)
         return (0);
 
     if ((kn->kn_flags & KNFL_REGULAR_FILE) && (kn->kdata.kn_eventfd != -1)) {
-        if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_DEL, kn->kdata.kn_eventfd, NULL) < 0) {
+        if (kn->kn_registered && epoll_ctl(kn->kn_epollfd, EPOLL_CTL_DEL, kn->kdata.kn_eventfd, NULL) < 0) {
             dbg_perror("epoll_ctl(2)");
             return (-1);
         }
+        kn->kn_registered = 0;
         (void) close(kn->kdata.kn_eventfd);
         kn->kdata.kn_eventfd = -1;
         return (0);
@@ -236,6 +241,7 @@ evfilt_read_knote_enable(struct filter *filt, struct knote *kn)
             dbg_perror("epoll_ctl(2)");
             return (-1);
         }
+        kn->kn_registered = 1;
         return (0);
     } else {
         return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
@@ -253,6 +259,7 @@ evfilt_read_knote_disable(struct filter *filt, struct knote *kn)
             dbg_perror("epoll_ctl(2)");
             return (-1);
         }
+        kn->kn_registered = 1;
         return (0);
     } else {
         return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
