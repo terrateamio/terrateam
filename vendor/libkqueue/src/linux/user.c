@@ -136,12 +136,14 @@ linux_evfilt_user_knote_create(struct filter *filt, struct knote *kn)
     }
 
     kn->kdata.kn_eventfd = evfd;
+    kn->kn_registered = 1;
 
     return (0);
 
 errout:
     (void) close(evfd);
     kn->kdata.kn_eventfd = -1;
+    kn->kn_registered = 0;
     return (-1);
 }
 
@@ -188,11 +190,12 @@ linux_evfilt_user_knote_modify(struct filter *filt UNUSED, struct knote *kn,
 int
 linux_evfilt_user_knote_delete(struct filter *filt, struct knote *kn)
 {
-    if (epoll_ctl(filter_epfd(filt), EPOLL_CTL_DEL, 
-                kn->kdata.kn_eventfd, NULL) < 0) {
+    if (kn->kn_registered && epoll_ctl(filter_epfd(filt), EPOLL_CTL_DEL,
+                                       kn->kdata.kn_eventfd, NULL) < 0) {
         dbg_perror("epoll_ctl(2)");
         return (-1);
     }
+    kn->kn_registered = 0;
     if (close(kn->kdata.kn_eventfd) < 0) {
         dbg_perror("close(2)");
         return (-1);

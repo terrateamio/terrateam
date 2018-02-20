@@ -67,6 +67,7 @@ extern long int syscall (long int __sysno, ...);
  */
 #define KNOTE_PLATFORM_SPECIFIC \
     int kn_epollfd; /* A copy of filter->epfd */      \
+    int kn_registered; /* Is FD registered with epoll */ \
     union { \
         int kn_timerfd; \
         int kn_signalfd; \
