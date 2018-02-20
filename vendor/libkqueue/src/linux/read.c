@@ -213,6 +213,7 @@ evfilt_read_knote_delete(struct filter *filt, struct knote *kn)
         }
         (void) close(kn->kdata.kn_eventfd);
         kn->kdata.kn_eventfd = -1;
+        return (0);
     } else {
         return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
     }
