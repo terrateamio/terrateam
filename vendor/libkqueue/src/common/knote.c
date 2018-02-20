@@ -100,7 +100,8 @@ knote_delete(struct filter *filt, struct knote *kn)
     }
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
 
-    filt->kn_delete(filt, kn); //XXX-FIXME check return value
+    if (filt->kn_delete(filt, kn) < 0)
+        return (-1);
 
     kn->kn_flags |= KNFL_KNOTE_DELETED;
 
