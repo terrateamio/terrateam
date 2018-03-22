@@ -35,7 +35,7 @@ pthread_mutex_t kq_mtx = PTHREAD_MUTEX_INITIALIZER;
 pthread_once_t kq_is_initialized = PTHREAD_ONCE_INIT;
 #endif
 
-static unsigned int
+unsigned int
 get_fd_limit(void)
 {
 #ifdef _WIN32
