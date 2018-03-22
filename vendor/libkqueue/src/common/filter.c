@@ -39,7 +39,7 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
     int rv = 0;
 
     filt = (-1 * filter) - 1;
-    if (filt >= EVFILT_SYSCOUNT) 
+    if (filt >= EVFILT_SYSCOUNT)
         return (-1);
 
     dst = &kq->kq_filt[filt];
@@ -73,7 +73,7 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
     /* Add the filter's event descriptor to the main fdset */
     if (dst->kf_pfd > 0) {
         FD_SET(dst->kf_pfd, &kq->kq_fds);
-        if (dst->kf_pfd > kq->kq_nfds)  
+        if (dst->kf_pfd > kq->kq_nfds)
             kq->kq_nfds = dst->kf_pfd;
         dbg_printf("fds: added %d (nfds=%d)", dst->kf_pfd, kq->kq_nfds);
     }
@@ -121,7 +121,7 @@ filter_unregister_all(struct kqueue *kq)
         if (kq->kq_filt[i].kf_id == 0)
             continue;
 
-        if (kq->kq_filt[i].kf_destroy != NULL) 
+        if (kq->kq_filt[i].kf_destroy != NULL)
             kq->kq_filt[i].kf_destroy(&kq->kq_filt[i]);
 
         //XXX-FIXME
@@ -160,14 +160,14 @@ filter_name(short filt)
     const char *fname[EVFILT_SYSCOUNT] = {
         "EVFILT_READ",
         "EVFILT_WRITE",
-        "EVFILT_AIO", 
+        "EVFILT_AIO",
         "EVFILT_VNODE",
         "EVFILT_PROC",
-        "EVFILT_SIGNAL", 
-        "EVFILT_TIMER", 
-        "EVFILT_NETDEV", 
-        "EVFILT_FS",    
-        "EVFILT_LIO",  
+        "EVFILT_SIGNAL",
+        "EVFILT_TIMER",
+        "EVFILT_NETDEV",
+        "EVFILT_FS",
+        "EVFILT_LIO",
         "EVFILT_USER"
     };
 
