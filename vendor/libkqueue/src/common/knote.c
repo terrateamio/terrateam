@@ -147,6 +147,23 @@ knote_get_by_data(struct filter *filt, intptr_t data)
 }
 #endif
 
+int knote_free_all(struct filter *filt)
+{
+    struct knote *kn;
+
+    pthread_rwlock_rdlock(&filt->kf_knote_mtx);
+    RB_FOREACH(kn, knt, &filt->kf_knote) {
+        /* Check return code */
+        filt->kn_delete(filt, kn);
+
+        kn->kn_flags |= KNFL_KNOTE_DELETED;
+
+        knote_release(kn);
+    }
+    pthread_rwlock_unlock(&filt->kf_knote_mtx);
+    return (0);
+}
+
 int
 knote_disable(struct filter *filt, struct knote *kn)
 {
