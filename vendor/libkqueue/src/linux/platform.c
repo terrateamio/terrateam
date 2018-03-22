@@ -16,6 +16,8 @@
 
 # define _GNU_SOURCE
 # include <poll.h>
+#include <sys/types.h>
+#include <sys/resource.h>
 #include "../common/private.h"
 
 #ifndef SO_GET_FILTER
@@ -31,6 +33,34 @@ const struct filter evfilt_proc = EVFILT_NOTIMPL;
  */
 static __thread struct epoll_event epevt[MAX_KEVENT];
 
+extern pthread_mutex_t kq_mtx;
+/*
+ * Monitoring thread that takes care of cleaning up kqueues (on linux only)
+ */
+static pthread_t monitoring_thread;
+static pid_t monitoring_tid; /* Monitoring thread */
+pthread_once_t monitoring_thread_initialized = PTHREAD_ONCE_INIT;
+pthread_cond_t monitoring_thread_cond = PTHREAD_COND_INITIALIZER;
+
+/*
+ * Number of active kqueues.
+ * When the last kqueue is closed, the monitoring thread can be stopped.
+ */
+static unsigned int kqueue_cnt = 0;
+
+/*
+ * Map for kqueue pipes where index is the read side (for which signals are received)
+ * and value is the write side that gets closed and corresponds to the kqueue id.
+ */
+static unsigned int *fd_map;
+
+/*
+ * Map kqueue id to counter for kq cleanups.
+ * When cleanup counter is at 0, cleanup can be performed by signal handler.
+ * Otherwise, it means cleanup was already performed for this FD in linux_kqueue_free.
+ */
+static unsigned int *fd_cleanup_cnt;
+
 const struct kqueue_vtable kqops = {
     linux_kqueue_init,
     linux_kqueue_free,
@@ -45,20 +75,180 @@ const struct kqueue_vtable kqops = {
     linux_eventfd_descriptor
 };
 
+static void
+linux_kqueue_cleanup(struct kqueue *kq);
+
+unsigned int get_fd_limit(void);
+/*
+ * Monitoring thread that loops on waiting for signals to be received
+ */
+static void *
+monitoring_thread_start(void *arg)
+{
+    short end_thread = 0;
+    int res = 0;
+    siginfo_t info;
+    int fd;
+    int nb_max_fd;
+    struct kqueue *kq;
+    sigset_t monitoring_sig_set;
+
+    nb_max_fd = get_fd_limit();
+
+    sigemptyset(&monitoring_sig_set);
+    sigaddset(&monitoring_sig_set, SIGRTMIN + 1);
+
+    pthread_sigmask(SIG_BLOCK, &monitoring_sig_set, NULL);
+
+    (void) pthread_mutex_lock(&kq_mtx);
+
+    monitoring_tid = syscall(SYS_gettid);
+
+    fd_map = calloc(nb_max_fd, sizeof(unsigned int));
+
+    if (fd_map == NULL)
+        return NULL;
+
+    fd_cleanup_cnt = calloc(nb_max_fd, sizeof(unsigned int));
+
+    if (fd_cleanup_cnt == NULL)
+        return NULL;
+
+    /*
+	 * Now that thread is initialized, let kqueue init resume
+	 */
+    pthread_cond_broadcast(&monitoring_thread_cond);
+    (void) pthread_mutex_unlock(&kq_mtx);
+
+    pthread_detach(pthread_self());
+
+    while (!end_thread) {
+        /*
+         * Wait for signal notifying us that a change has occured on the pipe
+         * It's not possible to only listen on FD close but no other operation
+         * should be performed on the kqueue.
+         */
+        res = sigwaitinfo(&monitoring_sig_set, &info);
+        if( res != -1 ) {
+            (void) pthread_mutex_lock(&kq_mtx);
+            /*
+             * Signal is received for read side of pipe
+             * Get FD for write side as it's the kqueue identifier
+             */
+            fd = fd_map[info.si_fd];
+            if (fd) {
+                kq = kqueue_lookup(fd);
+                if (kq) {
+                    /* If kqueue instance for this FD hasn't been cleaned yet */
+                    if (fd_cleanup_cnt[kq->kq_id] == 0) {
+                        linux_kqueue_cleanup(kq);
+                    }
+
+                    /* Decrement cleanup counter as signal handler has been run for this FD */
+                    fd_cleanup_cnt[kq->kq_id]--;
+                } else {
+                    /* Should not happen */
+                    dbg_puts("Failed to lookup FD");
+                }
+            } else {
+                /* Should not happen */
+                dbg_puts("Got signal from unknown FD");
+            }
+
+            /*
+             * Stop thread if all kqueues have been closed
+             */
+            if (kqueue_cnt == 0) {
+                end_thread = 1;
+
+                /* Reset so that thread can be restarted */
+                monitoring_thread_initialized = PTHREAD_ONCE_INIT;
+
+                /* Free thread resources */
+                free(fd_map);
+                free(fd_cleanup_cnt);
+            }
+
+            (void) pthread_mutex_unlock(&kq_mtx);
+        } else {
+            dbg_perror("sigwait()");
+        }
+    }
+
+    return NULL;
+}
+
+static void
+linux_kqueue_start_thread()
+{
+    if (pthread_create(&monitoring_thread, NULL, &monitoring_thread_start, NULL)) {
+         dbg_perror("linux_kqueue_start_thread failure");
+    }
+
+    /* Wait for thread creating to be done as we need monitoring_tid to be available */
+    pthread_cond_wait(&monitoring_thread_cond, &kq_mtx);
+}
+
 int
 linux_kqueue_init(struct kqueue *kq)
 {
-    kq->kq_id = epoll_create(1);
-    if (kq->kq_id < 0) {
+    struct f_owner_ex sig_owner;
+
+    kq->epollfd = epoll_create(1);
+    if (kq->epollfd < 0) {
         dbg_perror("epoll_create(2)");
         return (-1);
     }
 
+    /*
+     * The standard behaviour when closing a kqueue fd is for the underlying resources to be freed.
+     * In order to catch the close on the libkqueue fd, we use a pipe and return the write end as kq_id.
+     * Closing the end will cause the pipe to be close which will be caught by the monitoring thread.
+     */
+    if (pipe(kq->pipefd)) {
+        close(kq->epollfd);
+        return (-1);		
+    }
+
     if (filter_register_all(kq) < 0) {
-        close(kq->kq_id);
+        error:
+        close(kq->epollfd);
+        close(kq->pipefd[0]);
+        close(kq->pipefd[1]);
         return (-1);
     }
 
+    kq->kq_id = kq->pipefd[1];
+
+    if (fcntl(kq->pipefd[0], F_SETFL, fcntl(kq->pipefd[0], F_GETFL, 0) | O_ASYNC) < 0) {
+        dbg_perror("failed setting O_ASYNC");
+        goto error;
+    }
+
+    if (fcntl(kq->pipefd[0], F_SETSIG, SIGRTMIN + 1) < 0) {
+        dbg_perror("failed settting F_SETSIG");
+        goto error;
+    }
+
+    (void) pthread_mutex_lock(&kq_mtx);
+
+    /* Start monitoring thread during first initialization */
+    (void) pthread_once(&monitoring_thread_initialized, linux_kqueue_start_thread);
+
+    /* Update pipe FD map */
+    fd_map[kq->pipefd[0]] = kq->pipefd[1];
+
+    /* Increment kqueue counter */
+    kqueue_cnt++;
+
+    sig_owner.type = F_OWNER_TID;
+    sig_owner.pid = monitoring_tid;
+    if (fcntl(kq->pipefd[0], F_SETOWN_EX, &sig_owner) < 0) {
+        dbg_perror("failed settting F_SETOWN");
+        goto error;
+    }
+
+    (void) pthread_mutex_unlock(&kq_mtx);
 
  #if DEADWOOD
     //might be useful in posix
@@ -85,10 +275,56 @@ linux_kqueue_init(struct kqueue *kq)
     return (0);
 }
 
-void
-linux_kqueue_free(struct kqueue *kq UNUSED)
+/*
+ * Cleanup kqueue resources
+ * Should be done while holding kq_mtx
+ */
+static void
+linux_kqueue_cleanup(struct kqueue *kq)
 {
-    abort();//FIXME
+    char buffer;
+    ssize_t ret;
+    filter_unregister_all(kq);
+    if (kq->epollfd > 0) {
+        close(kq->epollfd);
+        kq->epollfd = -1;
+    }
+
+    /*
+     * read will return 0 on pipe EOF (i.e. if the write end of the pipe has been closed)
+     */
+    ret = read(kq->pipefd[0], &buffer, 1);
+    if (ret == -1 && errno == EWOULDBLOCK) {
+        // Shoudn't happen unless kqops.kqueue_free is called on an open FD
+        dbg_puts("kqueue wasn't closed");
+        close(kq->pipefd[1]);
+        kq->pipefd[1] = -1;
+    } else if (ret > 0) {
+        // Shouldn't happen unless data is written to kqueue FD
+        // Ignore write and continue with close
+        dbg_puts("Unexpected data available on kqueue FD");
+    }
+
+    if (kq->pipefd[0] > 0) {
+        close(kq->pipefd[0]);
+        kq->pipefd[0] = -1;
+    }
+
+    fd_map[kq->pipefd[0]] = 0;
+
+    /* Decrement kqueue counter */
+    kqueue_cnt--;
+}
+
+void
+linux_kqueue_free(struct kqueue *kq)
+{
+    linux_kqueue_cleanup(kq);
+
+    /* Increment cleanup counter as cleanup is being performed outside signal handler */
+    fd_cleanup_cnt[kq->kq_id]++;
+
+    free(kq);
 }
 
 static int
@@ -429,4 +665,3 @@ linux_fd_to_path(char *buf, size_t bufsz, int fd)
     memset(buf, 0, bufsz);
     return (readlink(path, buf, bufsz));
 }
-
