@@ -66,7 +66,7 @@ extern long int syscall (long int __sysno, ...);
  * Additional members of struct knote
  */
 #define KNOTE_PLATFORM_SPECIFIC \
-    int kn_epollfd; /* A copy of filter->epfd */      \
+    int kn_epollfd;    /* A copy of filter->epfd */ \
     int kn_registered; /* Is FD registered with epoll */ \
     union { \
         int kn_timerfd; \

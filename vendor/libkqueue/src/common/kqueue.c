@@ -126,7 +126,7 @@ kqueue_lookup(int kq)
 int VISIBLE
 kqueue(void)
 {
-	struct kqueue *kq;
+    struct kqueue *kq;
     struct kqueue *tmp;
 
 #ifdef _WIN32
@@ -147,7 +147,7 @@ kqueue(void)
     if (kq == NULL)
         return (-1);
 
-	tracing_mutex_init(&kq->kq_mtx, NULL);
+    tracing_mutex_init(&kq->kq_mtx, NULL);
 
     if (kqops.kqueue_init(kq) < 0) {
         free(kq);
