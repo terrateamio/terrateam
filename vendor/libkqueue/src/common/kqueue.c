@@ -156,16 +156,22 @@ kqueue(void)
 
     dbg_printf("created kqueue, fd=%d", kq->kq_id);
 
+    /* Delete and insert should be atomic */
+    (void) pthread_mutex_lock(&kq_mtx);
+
     tmp = map_delete(kqmap, kq->kq_id);
     if (tmp != NULL) {
-        dbg_puts("FIXME -- memory leak here");
         // TODO: kqops.kqueue_free(tmp), or (better yet) decrease it's refcount
+        kqops.kqueue_free(tmp);
     }
+
     if (map_insert(kqmap, kq->kq_id, kq) < 0) {
         dbg_puts("map insertion failed");
         kqops.kqueue_free(kq);
         return (-1);
     }
+
+    pthread_mutex_unlock(&kq_mtx);
 
     return (kq->kq_id);
 }
