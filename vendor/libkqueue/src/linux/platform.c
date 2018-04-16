@@ -75,7 +75,7 @@ const struct kqueue_vtable kqops = {
     linux_eventfd_descriptor
 };
 
-static void
+static bool
 linux_kqueue_cleanup(struct kqueue *kq);
 
 unsigned int get_fd_limit(void);
@@ -210,7 +210,7 @@ linux_kqueue_init(struct kqueue *kq)
      */
     if (pipe(kq->pipefd)) {
         close(kq->epollfd);
-        return (-1);		
+        return (-1);
     }
 
     if (filter_register_all(kq) < 0) {
@@ -281,8 +281,11 @@ linux_kqueue_init(struct kqueue *kq)
 /*
  * Cleanup kqueue resources
  * Should be done while holding kq_mtx
+ * return
+ * - true if epoll fd and pipes were closed
+ * - false if epoll fd was already closed
  */
-static void
+static bool
 linux_kqueue_cleanup(struct kqueue *kq)
 {
     char buffer;
@@ -291,6 +294,9 @@ linux_kqueue_cleanup(struct kqueue *kq)
     if (kq->epollfd > 0) {
         close(kq->epollfd);
         kq->epollfd = -1;
+    } else {
+        // Don't do cleanup if epollfd has already been closed
+        return false;
     }
 
     /*
@@ -317,15 +323,18 @@ linux_kqueue_cleanup(struct kqueue *kq)
 
     /* Decrement kqueue counter */
     kqueue_cnt--;
+
+    return true;
 }
 
 void
 linux_kqueue_free(struct kqueue *kq)
 {
-    linux_kqueue_cleanup(kq);
-
     /* Increment cleanup counter as cleanup is being performed outside signal handler */
-    fd_cleanup_cnt[kq->kq_id]++;
+    if (linux_kqueue_cleanup(kq))
+        fd_cleanup_cnt[kq->kq_id]++;
+    else /* Reset counter as FD had already been cleaned */
+        fd_cleanup_cnt[kq->kq_id] = 0;
 
     free(kq);
 }
