@@ -14,6 +14,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#if defined(__linux__)
+#include <sys/time.h>
+#include <sys/resource.h>
+#endif
 #include "common.h"
 
 /* Maximum number of threads that can be created */
@@ -51,7 +55,7 @@ test_kqueue_descriptor_is_pollable(void)
 }
 
 /*
- * Test the method for detecting when one end of a socketpair 
+ * Test the method for detecting when one end of a socketpair
  * has been closed. This technique is used in kqueue_validate()
  */
 static void
@@ -72,14 +76,14 @@ test_peer_close_detection(void *unused)
     pfd.events = POLLIN | POLLHUP;
     pfd.revents = 0;
 
-    if (poll(&pfd, 1, 0) > 0) 
+    if (poll(&pfd, 1, 0) > 0)
         die("unexpected data");
 
     if (close(sockfd[1]) < 0)
         die("close");
 
     if (poll(&pfd, 1, 0) > 0) {
-        if (recv(sockfd[0], buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT) != 0) 
+        if (recv(sockfd[0], buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT) != 0)
             die("failed to detect peer shutdown");
     }
 #endif
@@ -108,6 +112,78 @@ test_kevent(void *unused)
     if (kevent(-1, &kev, 1, NULL, 0, NULL) == 0)
         die("invalid kq parameter");
 }
+
+#if defined(__linux__)
+/* Maximum number of FD for current process */
+#define MAX_FDS 32
+/*
+ * Test the cleanup process for Linux
+ */
+void
+test_cleanup(void *unused)
+{
+    int i;
+    int max_fds = MAX_FDS;
+    struct rlimit curr_rlim, rlim;
+    int kqfd1, kqfd2;
+    struct kevent kev;
+
+    /* Remeber current FD limit */
+    if (getrlimit(RLIMIT_NOFILE, &curr_rlim) < 0) {
+        die("getrlimit failed");
+    }
+
+    /* lower FD limit to 32 */
+    if (max_fds < rlim.rlim_cur) {
+        /* Set FD limit to MAX_FDS */
+        rlim = curr_rlim;
+        rlim.rlim_cur = 32;
+        if (setrlimit(RLIMIT_NOFILE, &rlim) < 0) {
+            die("setrlimit failed");
+        }
+    } else {
+        max_fds = rlim.rlim_cur;
+    }
+
+    /* Create initial kqueue to avoid cleanup thread being destroyed on each close */
+    if ((kqfd1 = kqueue()) < 0)
+        die("kqueue()");
+
+    /* Create and close 2 * max fd number of kqueues */
+    for (i=0; i < 2 * max_fds + 1; i++) {
+        if ((kqfd2 = kqueue()) < 0)
+            die("kqueue()");
+
+        kevent_add(kqfd2, &kev, 1, EVFILT_TIMER, EV_ADD, 0, 1000,NULL);
+
+        if (close(kqfd2) < 0)
+            die("close()");
+    }
+
+    if (close(kqfd1) < 0)
+        die("close()");
+
+    /*
+     * Run same test again but without extra kqueue
+     * Cleanup thread will be destroyed
+     * Create and close 2 * max fd number of kqueues
+     */
+    for (i=0; i < 2 * max_fds + 1; i++) {
+        if ((kqfd2 = kqueue()) < 0)
+            die("kqueue()");
+
+        kevent_add(kqfd2, &kev, 1, EVFILT_TIMER, EV_ADD, 0, 1000,NULL);
+
+        if (close(kqfd2) < 0)
+            die("close()");
+    }
+
+    /* Restore FD limit */
+    if (setrlimit(RLIMIT_NOFILE, &curr_rlim) < 0) {
+        die("setrlimit failed");
+    }
+}
+#endif
 
 void
 test_ev_receipt(void *unused)
@@ -160,11 +236,15 @@ test_harness(struct unit_test tests[MAX_TESTS], int iterations)
     test(kqueue, ctx);
     test(kevent, ctx);
 
+#if defined(__linux__)
+    test(cleanup, ctx);
+#endif
+
     if ((kqfd = kqueue()) < 0)
         die("kqueue()");
 
     test(ev_receipt, ctx);
-    /* TODO: this fails now, but would be good later 
+    /* TODO: this fails now, but would be good later
     test(kqueue_descriptor_is_pollable);
     */
 
@@ -200,7 +280,7 @@ usage(void)
     exit(1);
 }
 
-int 
+int
 main(int argc, char **argv)
 {
     struct unit_test tests[MAX_TESTS] = {
@@ -229,7 +309,7 @@ main(int argc, char **argv)
 #ifdef _WIN32
     /* Initialize the Winsock library */
     WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) 
+    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0)
         err(1, "WSAStartup failed");
 #endif
 
