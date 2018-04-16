@@ -96,9 +96,12 @@ monitoring_thread_start(void *arg)
     nb_max_fd = get_fd_limit();
 
     sigemptyset(&monitoring_sig_set);
-    sigaddset(&monitoring_sig_set, SIGRTMIN + 1);
+    sigfillset(&monitoring_sig_set);
 
     pthread_sigmask(SIG_BLOCK, &monitoring_sig_set, NULL);
+
+    sigemptyset(&monitoring_sig_set);
+    sigaddset(&monitoring_sig_set, SIGRTMIN + 1);
 
     (void) pthread_mutex_lock(&kq_mtx);
 
