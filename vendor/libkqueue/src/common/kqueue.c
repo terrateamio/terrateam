@@ -161,7 +161,6 @@ kqueue(void)
 
     tmp = map_delete(kqmap, kq->kq_id);
     if (tmp != NULL) {
-        // TODO: kqops.kqueue_free(tmp), or (better yet) decrease it's refcount
         kqops.kqueue_free(tmp);
     }
 
