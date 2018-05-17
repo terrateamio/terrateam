@@ -18,9 +18,6 @@
 
 [@@@ocaml.warning "-32"]
 
-open Sexplib.Std
-open Sexplib.Conv (* Workaround for bug in Sexplib when used without Core *)
-
 type component = [
   | `Scheme
   | `Authority
@@ -31,7 +28,7 @@ type component = [
   | `Query_key
   | `Query_value
   | `Fragment
-] [@@deriving sexp]
+]
 
 let rec iter_concat fn sep buf = function
   | last::[] -> fn buf last
@@ -223,8 +220,8 @@ let module_of_scheme = function
   * probably not a lot of use to the average consumer of this library
 *)
 module Pct : sig
-  type encoded [@@deriving sexp]
-  type decoded [@@deriving sexp]
+  type encoded
+  type decoded
 
   val encode : ?scheme:string -> ?component:component -> decoded -> encoded
   val decode : encoded -> decoded
@@ -243,8 +240,8 @@ module Pct : sig
   val unlift_decoded : (string -> string) -> decoded -> decoded
   val unlift_decoded2 : (string -> string -> 'a) -> decoded -> decoded -> 'a
 end = struct
-  type encoded = string [@@deriving sexp]
-  type decoded = string [@@deriving sexp]
+  type encoded = string
+  type decoded = string
   let cast_encoded x = x
   let cast_decoded x = x
   let empty_decoded = ""
@@ -341,7 +338,7 @@ let pct_decode s = Pct.(uncast_decoded (decode (cast_encoded s)))
 
 (* Userinfo string handling, to and from an id * credential pair *)
 module Userinfo = struct
-  type t = string * string option [@@deriving sexp]
+  type t = string * string option
 
   let compare (u,p) (u',p') =
     match String.compare u u' with
@@ -377,7 +374,7 @@ module Path = struct
   (* Yes, it's better this way. This means you can retain separator
      context in recursion (e.g. remove_dot_segments for relative resolution). *)
 
-  type t = string list [@@deriving sexp]
+  type t = string list
 
   let compare = compare_list String.compare
 
@@ -424,14 +421,11 @@ let encoded_of_path ?scheme = Path.encoded_of_path ?scheme
 (* Query string handling, to and from an assoc list of key/values *)
 module Query = struct
 
-  type kv = (string * string list) list [@@deriving sexp]
+  type kv = (string * string list) list
 
   type t =
     | KV of kv
     | Raw of string option * kv Lazy.t
-
-  let t_of_sexp sexp = KV (kv_of_sexp sexp)
-  let sexp_of_t = function Raw (_,lazy kv) | KV kv -> sexp_of_kv kv
 
   let compare x y = match x, y with
     | KV kvl, KV kvl'
@@ -511,14 +505,14 @@ let encoded_of_query ?scheme = Query.encoded_of_query ?scheme
 
 (* Type of the URI, with most bits being optional *)
 type t = {
-  scheme: Pct.decoded sexp_option;
-  userinfo: Userinfo.t sexp_option;
-  host: Pct.decoded sexp_option;
-  port: int sexp_option;
+  scheme: Pct.decoded option;
+  userinfo: Userinfo.t option;
+  host: Pct.decoded option;
+  port: int option;
   path: Path.t;
   query: Query.t;
-  fragment: Pct.decoded sexp_option;
-} [@@deriving sexp]
+  fragment: Pct.decoded option;
+}
 
 let empty = {
   scheme = None;
