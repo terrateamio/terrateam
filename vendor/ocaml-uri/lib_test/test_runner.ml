@@ -405,7 +405,7 @@ let test_sexping =
   ] in
   let test uri exp =
     let uri = Uri.of_string uri in
-    let s = Sexplib.Sexp.to_string (Uri.sexp_of_t uri) in
+    let s = Sexplib.Sexp.to_string (Uri_sexp.sexp_of_t uri) in
     let msg = sprintf "%s <> %s" s exp in
     assert_equal ~msg s exp
   in
@@ -529,8 +529,8 @@ let test_with_change = [
     let uri_some = Uri.with_path uri "a" in
     let uri_exp_s = "///a" in
     let uri_exp = Uri.of_string uri_exp_s in
-    let uri_exp_sexp  = Sexplib.Sexp.to_string (Uri.sexp_of_t uri_exp) in
-    let uri_some_sexp = Sexplib.Sexp.to_string (Uri.sexp_of_t uri_some) in
+    let uri_exp_sexp  = Sexplib.Sexp.to_string (Uri_sexp.sexp_of_t uri_exp) in
+    let uri_some_sexp = Sexplib.Sexp.to_string (Uri_sexp.sexp_of_t uri_some) in
     let msg = sprintf "path relative host (%s <> %s)"
       uri_exp_sexp uri_some_sexp in
     assert_equal ~msg uri_exp uri_some
@@ -546,8 +546,8 @@ let test_with_change = [
       let uri_quest = Uri.with_query uri ["",[]] in
       let uri_exp_s = prefix ^ "?" in
       let uri_exp   = Uri.of_string uri_exp_s in
-      let uri_exp_sexp = Sexplib.Sexp.to_string (Uri.sexp_of_t uri_exp) in
-      let uri_quest_sexp = Sexplib.Sexp.to_string (Uri.sexp_of_t uri_quest) in
+      let uri_exp_sexp = Sexplib.Sexp.to_string (Uri_sexp.sexp_of_t uri_exp) in
+      let uri_quest_sexp = Sexplib.Sexp.to_string (Uri_sexp.sexp_of_t uri_quest) in
       let msg = sprintf "'%s' quest (%s <> %s)"
         prefix uri_exp_sexp uri_quest_sexp in
       assert_equal ~cmp ~msg uri_exp uri_quest;
