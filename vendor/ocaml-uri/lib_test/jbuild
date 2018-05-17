@@ -1,6 +1,6 @@
 (executables
  ((names (test_runner))
-  (libraries (uri uri_services oUnit))))
+  (libraries (uri uri.sexp uri_services oUnit sexplib))))
 
 (alias
  ((name    runtest)
