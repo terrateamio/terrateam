@@ -19,7 +19,7 @@
 
 (** A single URI that is a compact sequence of characters that identifies
     an abstract or physical resource. *)
-type t [@@deriving sexp]
+type t
 
 type component = [
     `Scheme
@@ -31,7 +31,7 @@ type component = [
   | `Query_key
   | `Query_value
   | `Fragment
-] [@@deriving sexp]
+]
 
 (** {3 Core functionality } *)
 

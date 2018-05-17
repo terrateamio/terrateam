@@ -3,8 +3,15 @@
   (public_name uri)
   (wrapped false)
   (modules (uri uri_re))
+  (libraries (re.posix stringext))))
+
+(library
+ ((name			uri_sexp)
+  (public_name	uri.sexp)
+  (wrapped false)
+  (modules (uri_sexp))
   (preprocess (pps (ppx_sexp_conv)))
-  (libraries (sexplib re.posix stringext))))
+  (libraries (sexplib uri))))
 
 (library
  ((name        uri_top)
