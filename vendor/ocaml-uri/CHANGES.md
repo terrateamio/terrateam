@@ -1,3 +1,8 @@
+dev
+---
+
+* Use latest interfaces in Re >=1.7.2
+
 v1.9.6 2018-01-11
 -----------------
 
