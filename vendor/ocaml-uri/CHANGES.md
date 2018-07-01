@@ -1,7 +1,8 @@
 v1.9.7 2018-07-01
 -----------------
 
-* Use latest interfaces in Re >=1.7.2
+* Use latest interfaces in Re >=1.7.2 (#122)
+* When resolving URI inherit userinfo from the base URI (#116)
 
 v1.9.6 2018-01-11
 -----------------
