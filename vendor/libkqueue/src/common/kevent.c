@@ -101,7 +101,7 @@ kevent_flags_dump(const struct kevent *kev)
 const char *
 kevent_dump(const struct kevent *kev)
 {
-    static __thread char buf[4096];
+    static __thread char buf[2049];
 
     snprintf((char *) &buf[0], sizeof(buf), 
             "{ ident=%d, filter=%s, %s, %s, data=%d, udata=%p }",
