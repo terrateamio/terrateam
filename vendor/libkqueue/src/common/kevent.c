@@ -62,7 +62,7 @@ kevent_fflags_dump(const struct kevent *kev)
         KEVFFL_DUMP(NOTE_FFCOPY);
         KEVFFL_DUMP(NOTE_TRIGGER);
     }  else {
-        strncat((char *) &buf[0], " ", 1);
+        buf[0] = ' ';
     }
     buf[strlen(buf) - 1] = ')';
 
@@ -101,7 +101,7 @@ kevent_flags_dump(const struct kevent *kev)
 const char *
 kevent_dump(const struct kevent *kev)
 {
-    static __thread char buf[1024];
+    static __thread char buf[4096];
 
     snprintf((char *) &buf[0], sizeof(buf), 
             "{ ident=%d, filter=%s, %s, %s, data=%d, udata=%p }",
