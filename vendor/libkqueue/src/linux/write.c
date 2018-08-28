@@ -31,7 +31,7 @@
 #include "private.h"
 
 int
-evfilt_socket_copyout(struct kevent *dst, struct knote *src, void *ptr)
+evfilt_write_copyout(struct kevent *dst, struct knote *src, void *ptr)
 {
     struct epoll_event * const ev = (struct epoll_event *) ptr;
 
@@ -58,7 +58,7 @@ evfilt_socket_copyout(struct kevent *dst, struct knote *src, void *ptr)
 }
 
 int
-evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
+evfilt_write_knote_create(struct filter *filt, struct knote *kn)
 {
     struct epoll_event ev;
 
@@ -84,7 +84,7 @@ evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_socket_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_write_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     (void) filt;
@@ -94,7 +94,7 @@ evfilt_socket_knote_modify(struct filter *filt, struct knote *kn,
 }
 
 int
-evfilt_socket_knote_delete(struct filter *filt, struct knote *kn)
+evfilt_write_knote_delete(struct filter *filt, struct knote *kn)
 {
     if (kn->kev.flags & EV_DISABLE)
         return (0);
@@ -103,7 +103,7 @@ evfilt_socket_knote_delete(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_socket_knote_enable(struct filter *filt, struct knote *kn)
+evfilt_write_knote_enable(struct filter *filt, struct knote *kn)
 {
     struct epoll_event ev;
 
@@ -115,7 +115,7 @@ evfilt_socket_knote_enable(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_socket_knote_disable(struct filter *filt, struct knote *kn)
+evfilt_write_knote_disable(struct filter *filt, struct knote *kn)
 {
     return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
 }
@@ -124,10 +124,10 @@ const struct filter evfilt_write = {
     EVFILT_WRITE,
     NULL,
     NULL,
-    evfilt_socket_copyout,
-    evfilt_socket_knote_create,
-    evfilt_socket_knote_modify,
-    evfilt_socket_knote_delete,
-    evfilt_socket_knote_enable,
-    evfilt_socket_knote_disable,         
+    evfilt_write_copyout,
+    evfilt_write_knote_create,
+    evfilt_write_knote_modify,
+    evfilt_write_knote_delete,
+    evfilt_write_knote_enable,
+    evfilt_write_knote_disable,
 };
