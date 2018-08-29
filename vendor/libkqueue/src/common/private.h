@@ -68,15 +68,18 @@ struct eventfd {
  */
 #define KNFL_FILE                (1U << 0U)
 #define KNFL_PIPE                (1U << 1U)
-#define KNFL_SOCKET              (1U << 2U)
-#define KNFL_BLOCKDEV            (1U << 3U)
-#define KNFL_CHARDEV             (1U << 4U)
-#define KNFL_SOCKET_PASSIVE      (KNFL_SOCKET | (1U << 5U))
-#define KNFL_SOCKET_STREAM       (KNFL_SOCKET | (1U << 6U))
-#define KNFL_SOCKET_DGRAM        (KNFL_SOCKET | (1U << 7U))
-#define KNFL_SOCKET_RDM          (KNFL_SOCKET | (1U << 8U))
-#define KNFL_SOCKET_SEQPACKET    (KNFL_SOCKET | (1U << 9U))
+#define KNFL_BLOCKDEV            (1U << 2U)
+#define KNFL_CHARDEV             (1U << 3U)
+#define KNFL_SOCKET_PASSIVE      (1U << 4U)
+#define KNFL_SOCKET_STREAM       (1U << 5U)
+#define KNFL_SOCKET_DGRAM        (1U << 6U)
+#define KNFL_SOCKET_RDM          (1U << 7U)
+#define KNFL_SOCKET_SEQPACKET    (1U << 8U)
 #define KNFL_KNOTE_DELETED       (1U << 31U)
+#define KNFL_SOCKET              (KNFL_SOCKET_STREAM |\
+                                  KNFL_SOCKET_DGRAM |\
+                                  KNFL_SOCKET_RDM |\
+                                  KNFL_SOCKET_SEQPACKET)
 
 struct knote {
     struct kevent     kev;

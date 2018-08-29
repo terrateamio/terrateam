@@ -586,8 +586,7 @@ linux_get_descriptor_type(struct knote *kn)
 
         case S_IFSOCK:
             dbg_printf("fd %d is a socket\n", fd);
-            kn->kn_flags |= KNFL_SOCKET;
-            break;
+            break; /* deferred type determination */
 
         default:
             errno = EBADF;
