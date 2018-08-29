@@ -33,6 +33,9 @@
 int
 evfilt_write_copyout(struct kevent *dst, struct knote *src, void *ptr)
 {
+    int ret;
+    int serr;
+    socklen_t slen = sizeof(serr);
     struct epoll_event * const ev = (struct epoll_event *) ptr;
 
     epoll_event_dump(ev);
@@ -44,8 +47,12 @@ evfilt_write_copyout(struct kevent *dst, struct knote *src, void *ptr)
     if (ev->events & EPOLLHUP)
         dst->flags |= EV_EOF;
 #endif
-    if (ev->events & EPOLLERR)
-        dst->fflags = 1; /* FIXME: Return the actual socket error */
+    if (ev->events & EPOLLERR) {
+        if (src->kn_flags & KNFL_SOCKET) {
+            ret = getsockopt(src->kev.ident, SOL_SOCKET, SO_ERROR, &serr, &slen);
+            dst->fflags = ((ret < 0) ? errno : serr);
+        } else { dst->fflags = EIO; }
+    }
           
     /* On return, data contains the the amount of space remaining in the write buffer */
     if (ioctl(dst->ident, SIOCOUTQ, &dst->data) < 0) {
@@ -65,9 +72,10 @@ evfilt_write_knote_create(struct filter *filt, struct knote *kn)
     if (linux_get_descriptor_type(kn) < 0)
         return (-1);
 
-    /* TODO: return EBADF? */
-    if (kn->kn_flags & KNFL_REGULAR_FILE)
+    if (kn->kn_flags & KNFL_FILE) {
+        errno = EBADF;
         return (-1);
+    }
 
     /* Convert the kevent into an epoll_event */
     kn->data.events = EPOLLOUT;
