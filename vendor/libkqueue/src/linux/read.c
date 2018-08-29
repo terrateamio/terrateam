@@ -56,10 +56,13 @@ get_eof_offset(int fd)
 int
 evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
 {
+    int ret;
+    int serr;
+    socklen_t slen = sizeof(serr);
     struct epoll_event * const ev = (struct epoll_event *) ptr;
 
     /* Special case: for regular files, return the offset from current position to end of file */
-    if (src->kn_flags & KNFL_REGULAR_FILE) {
+    if (src->kn_flags & KNFL_FILE) {
         memcpy(dst, &src->kev, sizeof(*dst));
         dst->data = get_eof_offset(src->kev.ident);
 
@@ -113,10 +116,14 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
     if (ev->events & EPOLLHUP)
         dst->flags |= EV_EOF;
 #endif
-    if (ev->events & EPOLLERR)
-        dst->fflags = 1; /* FIXME: Return the actual socket error */
+    if (ev->events & EPOLLERR) {
+        if (src->kn_flags & KNFL_SOCKET) {
+            ret = getsockopt(src->kev.ident, SOL_SOCKET, SO_ERROR, &serr, &slen);
+            dst->fflags = ((ret < 0) ? errno : serr);
+        } else { dst->fflags = EIO; }
+    }
 
-    if (src->kn_flags & KNFL_PASSIVE_SOCKET) {
+    if (src->kn_flags & KNFL_SOCKET_PASSIVE) {
         /* On return, data contains the length of the
            socket backlog. This is not available under Linux.
          */
@@ -132,7 +139,7 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
             dst->data = 0;
         } else {
             dst->data = i;
-            if (dst->data == 0 && src->kn_flags & KNFL_STREAM_SOCKET)
+            if (dst->data == 0 && src->kn_flags & KNFL_SOCKET_STREAM)
                 dst->flags |= EV_EOF;
         }
     }
@@ -164,7 +171,7 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
     ev.data.ptr = kn;
 
     /* Special case: for regular files, add a surrogate eventfd that is always readable */
-    if (kn->kn_flags & KNFL_REGULAR_FILE) {
+    if (kn->kn_flags & KNFL_FILE) {
         int evfd;
 
         kn->kn_epollfd = filter_epfd(filt);
@@ -210,7 +217,7 @@ evfilt_read_knote_delete(struct filter *filt, struct knote *kn)
     if (kn->kev.flags & EV_DISABLE)
         return (0);
 
-    if ((kn->kn_flags & KNFL_REGULAR_FILE) && (kn->kdata.kn_eventfd != -1)) {
+    if ((kn->kn_flags & KNFL_FILE) && (kn->kdata.kn_eventfd != -1)) {
         if (kn->kn_registered && epoll_ctl(kn->kn_epollfd, EPOLL_CTL_DEL, kn->kdata.kn_eventfd, NULL) < 0) {
             dbg_perror("epoll_ctl(2)");
             return (-1);
@@ -236,7 +243,7 @@ evfilt_read_knote_enable(struct filter *filt, struct knote *kn)
     ev.events = kn->data.events;
     ev.data.ptr = kn;
 
-    if (kn->kn_flags & KNFL_REGULAR_FILE) {
+    if (kn->kn_flags & KNFL_FILE) {
         if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_ADD, kn->kdata.kn_eventfd, &ev) < 0) {
             dbg_perror("epoll_ctl(2)");
             return (-1);
@@ -254,7 +261,7 @@ evfilt_read_knote_enable(struct filter *filt, struct knote *kn)
 int
 evfilt_read_knote_disable(struct filter *filt, struct knote *kn)
 {
-    if (kn->kn_flags & KNFL_REGULAR_FILE) {
+    if (kn->kn_flags & KNFL_FILE) {
         if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_DEL, kn->kdata.kn_eventfd, NULL) < 0) {
             dbg_perror("epoll_ctl(2)");
             return (-1);
