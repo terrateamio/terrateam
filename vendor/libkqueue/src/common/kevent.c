@@ -198,23 +198,17 @@ kevent_copyin(struct kqueue *kq, const struct kevent *src, int nchanges,
 
     dbg_printf("nchanges=%d nevents=%d", nchanges, nevents);
 
-    /* TODO: refactor, this has become convoluted to support EV_RECEIPT */
     for (nret = 0; nchanges > 0; src++, nchanges--) {
 
         if (kevent_copyin_one(kq, src) < 0) {
             dbg_printf("errno=%s",strerror(errno));
             status = errno;
-            goto err_path;
+        } else if (src->flags & EV_RECEIPT) {
+            status = 0;
         } else {
-            if (src->flags & EV_RECEIPT) {
-                status = 0;
-                goto err_path;
-            }
+            continue;
         }
 
-        continue;
-
-err_path:
         if (nevents > 0) {
             memcpy(eventlist, src, sizeof(*src));
             eventlist->data = status;

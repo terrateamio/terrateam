@@ -8,8 +8,6 @@
  * Add a dbg_printf() statement within kevent_wait() to report the value
    of the timeout.
 
- * Refactor kevent_copyin() to remove the goto statements.
-
  * Fix the crasher w/ corruption in test/vnode.c
 
  * Add the kevent64() syscall as implemented on MacOS X. This guarantees
