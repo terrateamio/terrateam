@@ -3,8 +3,7 @@ open Uri
 module Derived =
 struct
 
-	open Sexplib.Std
-	open Sexplib.Conv
+	open Sexplib0.Sexp_conv
 
 	type component = [
 	  | `Scheme

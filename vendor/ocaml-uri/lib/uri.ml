@@ -442,7 +442,7 @@ module Query = struct
 
   let split_query qs =
     let els = Stringext.split ~on:'&' qs in
-    (** Replace a + in a query string with a space in-place *)
+    (* Replace a + in a query string with a space in-place *)
     let plus_to_space s =
       let s = Bytes.unsafe_of_string s in
       for i = 0 to Bytes.length s - 1 do
