@@ -1,4 +1,4 @@
-open Sexplib
+open Sexplib0
 
 val component_of_sexp : Sexp.t -> Uri.component
 val sexp_of_component : Uri.component -> Sexp.t

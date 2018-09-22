@@ -23,22 +23,22 @@ module Raw = struct
   let (+) a b = seq [a;b]
   let (/) a b = alt [a;b]
 
-  let gen_delims = Re_posix.re "[:/?#\\[\\]@]"
-  let sub_delims = Re_posix.re "[!$&'()*+,;=]"
+  let gen_delims = Re.Posix.re "[:/?#\\[\\]@]"
+  let sub_delims = Re.Posix.re "[!$&'()*+,;=]"
   let c_at = char '@'
   let c_colon = char ':'
   let c_slash = char '/'
-  let c_slash2 = Re_posix.re "//"
+  let c_slash2 = Re.Posix.re "//"
   let c_dot = char '.'
   let c_question = char '?'
   let c_hash = char '#'
 
   let reserved = gen_delims / sub_delims
-  let unreserved = Re_posix.re "[A-Za-z0-9-._~]"
-  let hexdig = Re_posix.re "[0-9A-Fa-f]"
+  let unreserved = Re.Posix.re "[A-Za-z0-9-._~]"
+  let hexdig = Re.Posix.re "[0-9A-Fa-f]"
   let pct_encoded = (char '%') + hexdig + hexdig
 
-  let dec_octet = Re_posix.re "25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?"
+  let dec_octet = Re.Posix.re "25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?"
   let ipv4_address = (repn (dec_octet + c_dot) 3 (Some 3)) + dec_octet
 
   (* following RFC2234, RFC3986, RFC6874 and
@@ -63,7 +63,7 @@ module Raw = struct
          / ((1<|((5<|h16c) + h16)) + cc             +  h16)
          / ((1<|((6<|h16c) + h16)) + cc                   )
       )
-      + (opt (Re_posix.re "%25" + rep1 zone_id))
+      + (opt (Re.Posix.re "%25" + rep1 zone_id))
       + char ']'
     )
 
@@ -71,7 +71,7 @@ module Raw = struct
 
   let host = ipv6_address / ipv4_address / reg_name (* | ipv4_literal TODO *)
   let userinfo = rep (unreserved / pct_encoded / sub_delims / c_colon)
-  let port = Re_posix.re "[0-9]*"
+  let port = Re.Posix.re "[0-9]*"
   let authority = (opt ((group userinfo) + c_at)) + (group host) + (opt (c_colon + (group port)))
   let null_authority = (group empty) + (group empty) + (group empty)
 
@@ -94,7 +94,7 @@ module Raw = struct
   let hier_part = (c_slash2 + authority + path_abempty)
              / (path_absolute / path_rootless / path_empty)
 
-  let scheme = Re_posix.re "[A-Za-z][A-Za-z0-9+\\\\-\\.]*"
+  let scheme = Re.Posix.re "[A-Za-z][A-Za-z0-9+\\\\-\\.]*"
   let query = group (rep ( pchar / c_slash / c_question))
   let fragment = group (rep (pchar / c_slash / c_question))
 
@@ -106,11 +106,11 @@ module Raw = struct
 
   let relative_ref = relative_part + (opt (c_question + query)) + (opt (c_hash + fragment))
 
-  let uri_reference = Re_posix.re "^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?"
+  let uri_reference = Re.Posix.re "^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?"
 end
 
-let ipv4_address = Re_posix.compile Raw.ipv4_address
-let ipv6_address = Re_posix.compile Raw.ipv6_address
-let uri_reference = Re_posix.compile Raw.uri_reference
-let authority = Re_posix.compile Raw.authority
-let host = Re_posix.compile Raw.host
+let ipv4_address = Re.Posix.compile Raw.ipv4_address
+let ipv6_address = Re.Posix.compile Raw.ipv6_address
+let uri_reference = Re.Posix.compile Raw.uri_reference
+let authority = Re.Posix.compile Raw.authority
+let host = Re.Posix.compile Raw.host

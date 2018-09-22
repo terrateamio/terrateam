@@ -11,7 +11,7 @@
   (wrapped false)
   (modules (uri_sexp))
   (preprocess (pps (ppx_sexp_conv)))
-  (libraries (sexplib uri))))
+  (libraries (sexplib0 uri))))
 
 (library
  ((name        uri_top)
