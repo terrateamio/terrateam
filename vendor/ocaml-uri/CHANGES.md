@@ -1,3 +1,11 @@
+dev
+---
+
+* Create a new subpackage `uri.sexp` for the sexpression converters, so
+  that the base Uri package is more dependency free (#121 by @Julow)
+* Switch to using sexplib0 instead of sexplib for easier dependencies
+  (based on #123 by @mseri)
+* Port build to Dune from jbuilder.
 v1.9.6 2018-01-11
 -----------------
 

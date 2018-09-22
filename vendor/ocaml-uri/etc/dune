@@ -1,0 +1,25 @@
+(rule
+ (targets uri_services.ml)
+  (deps    services.short ../config/gen_services.exe uri_services_raw.ml)
+  (action  (with-stdout-to %{targets}
+             (progn (run ../config/gen_services.exe %{deps})
+                    (cat uri_services_raw.ml)))))
+
+(rule
+ (targets uri_services_full.ml)
+  (deps    services.full ../config/gen_services.exe uri_services_raw.ml)
+  (action  (with-stdout-to %{targets}
+             (progn (run ../config/gen_services.exe %{deps})
+                    (cat uri_services_raw.ml)))))
+
+(library
+ (name        uri_services)
+ (public_name uri.services)
+ (modules uri_services)
+ (libraries uri))
+
+(library
+ (name        uri_services_full)
+ (public_name uri.services_full)
+ (modules uri_services_full)
+ (libraries uri))
