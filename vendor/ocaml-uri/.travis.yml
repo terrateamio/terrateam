@@ -9,13 +9,12 @@ env:
    - PACKAGE="uri"
    - POST_INSTALL_HOOK="opam --yes depext -yui react ssl lwt"
    - REVDEPS="cohttp git github irmin syndic"
->>>>>>> master
  matrix:
    - DISTRO=debian-stable OCAML_VERSION=4.07
-   - DISTRO=debian-testing OCAML_VERSION=4.03
-   - DISTRO=debian-unstable OCAML_VERSION=4.04
-   - DISTRO=ubuntu-16.04 OCAML_VERSION=4.05
-   - DISTRO=ubuntu-18.04 OCAML_VERSION=4.05
+   - DISTRO=debian-testing OCAML_VERSION=4.04
+   - DISTRO=debian-unstable OCAML_VERSION=4.05
+   - DISTRO=ubuntu-16.04 OCAML_VERSION=4.04
+   - DISTRO=ubuntu-18.04 OCAML_VERSION=4.07
    - DISTRO=centos-7 OCAML_VERSION=4.06
-   - DISTRO=fedora-28 OCAML_VERSION=4.03
-   - DISTRO=alpine OCAML_VERSION=4.06.0
+   - DISTRO=fedora-28 OCAML_VERSION=4.06
+   - DISTRO=alpine OCAML_VERSION=4.06
