@@ -1,7 +1,7 @@
 (library
  (name        uri)
   (public_name uri)
-  (wrapped false)
+  (wrapped (transition "Please switch to using Uri.Re instead of Uri_re"))
   (modules uri uri_re)
   (libraries re.posix stringext))
 
