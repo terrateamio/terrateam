@@ -57,4 +57,5 @@ let sexp_of_t t =
 		fragment = fragment t
 	}
 
+type component = Uri.component
 type t = Uri.t
