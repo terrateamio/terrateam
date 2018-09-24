@@ -8,7 +8,6 @@
 (library
  (name			uri_sexp)
   (public_name	uri.sexp)
-  (wrapped false)
   (modules uri_sexp)
   (preprocess (pps ppx_sexp_conv))
   (libraries sexplib0 uri))
