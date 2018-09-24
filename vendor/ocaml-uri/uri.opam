@@ -21,7 +21,7 @@ build: [
 ]
 build-test: [ "dune" "runtest" "-p" name "-j" jobs ]
 depends: [
-  "dune" {build}
+  "dune" {build & >="1.2.0"}
   "ounit" {test & >= "1.0.2"}
   "ppx_sexp_conv" {build & >= "v0.9.0"}
   "re" {>="1.7.2"}
