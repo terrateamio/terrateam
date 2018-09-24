@@ -1,0 +1,8 @@
+(executables
+ (names test_runner)
+ (libraries uri uri.sexp uri_services oUnit sexplib0))
+
+(alias
+ (name    runtest)
+ (deps    test_runner.exe)
+ (action  (run %{deps})))
