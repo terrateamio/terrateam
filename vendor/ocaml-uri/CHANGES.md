@@ -2,7 +2,11 @@ dev
 ---
 
 * Create a new subpackage `uri.sexp` for the sexpression converters, so
-  that the base Uri package is more dependency free (#121 by @Julow)
+  that the base Uri package is more dependency free (based on #121 by @Julow).
+  To convert old code, simply use `Uri_sexp.t` instead of `Uri.t` in a record
+  type for which you are using `[@@deriving sexp]`.  This is a type alias to
+  `Uri.t` but also has the right sexp-conversion functions in scope.
+
 * Switch to using sexplib0 instead of sexplib for easier dependencies
   (based on #123 by @mseri)
 * Port build to Dune from jbuilder.
