@@ -56,3 +56,5 @@ let sexp_of_t t =
 		s_query = query t;
 		s_fragment = fragment t
 	}
+
+type t = Uri.t
