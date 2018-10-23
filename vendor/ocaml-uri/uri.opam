@@ -2,7 +2,7 @@ opam-version: "1.2"
 homepage: "https://github.com/mirage/ocaml-uri"
 bug-reports: "https://github.com/mirage/ocaml-uri/issues"
 dev-repo: "https://github.com/mirage/ocaml-uri.git"
-maintainer: "sheets@alum.mit.edu"
+maintainer: "anil@recoil.org"
 authors: [
   "Anil Madhavapeddy"
   "David Sheets"
@@ -16,12 +16,12 @@ tags: [
   "org:xapi-project"
 ]
 build: [
-  ["jbuilder" "subst"] {pinned}
-  ["jbuilder" "build" "-p" name "-j" jobs]
+  ["dune" "subst"] {pinned}
+  ["dune" "build" "-p" name "-j" jobs]
 ]
-build-test: [ "jbuilder" "runtest" "-p" name "-j" jobs ]
+build-test: [ "dune" "runtest" "-p" name "-j" jobs ]
 depends: [
-  "jbuilder" {build & >="1.0+beta7"}
+  "dune" {build & >="1.2.0"}
   "ounit" {test & >= "1.0.2"}
   "ppx_sexp_conv" {build & >= "v0.9.0"}
   "re" {>="1.7.2"}

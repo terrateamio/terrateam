@@ -40,7 +40,7 @@ let pcts_large =
     let num = 100000 in
     let a' = Buffer.create (String.length a * num) in
     let b' = Buffer.create (String.length b * num) in
-    for i = 1 to num do
+    for _ = 1 to num do
       Buffer.add_string a' a;
       Buffer.add_string b' b;
     done;
@@ -77,7 +77,7 @@ let uri_encodes = [
   (Uri.make ~scheme:"urn" ~path:"uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6" ());
 ]
 
-let map_pcts_tests size name test args =
+let map_pcts_tests size _name test args =
   List.map (fun (n, a,b) ->
     let name = sprintf "pct_%s:%d:%s" size n a in
     let a1, b1 = test a b in
@@ -399,13 +399,13 @@ let query_key_add_remove =
 let test_sexping =
   let tests = [
     "1", "https://example.com/foo?bar=1#frag",
-      "((scheme https)(host example.com)(path(/ foo))(query((bar(1))))(fragment frag))";
-    "2", "", "((path())(query()))";
-    "3", "/?foo=bar", "((path(/))(query((foo(bar)))))"
+      "((scheme(https))(host(example.com))(path /foo)(query((bar(1))))(fragment(frag)))";
+    "2", "", "()";
+    "3", "/?foo=bar", "((path /)(query((foo(bar)))))";
   ] in
   let test uri exp =
     let uri = Uri.of_string uri in
-    let s = Sexplib.Sexp.to_string (Uri.sexp_of_t uri) in
+    let s = Sexplib0.Sexp.to_string (Uri_sexp.sexp_of_t uri) in
     let msg = sprintf "%s <> %s" s exp in
     assert_equal ~msg s exp
   in
@@ -529,8 +529,8 @@ let test_with_change = [
     let uri_some = Uri.with_path uri "a" in
     let uri_exp_s = "///a" in
     let uri_exp = Uri.of_string uri_exp_s in
-    let uri_exp_sexp  = Sexplib.Sexp.to_string (Uri.sexp_of_t uri_exp) in
-    let uri_some_sexp = Sexplib.Sexp.to_string (Uri.sexp_of_t uri_some) in
+    let uri_exp_sexp  = Sexplib0.Sexp.to_string (Uri_sexp.sexp_of_t uri_exp) in
+    let uri_some_sexp = Sexplib0.Sexp.to_string (Uri_sexp.sexp_of_t uri_some) in
     let msg = sprintf "path relative host (%s <> %s)"
       uri_exp_sexp uri_some_sexp in
     assert_equal ~msg uri_exp uri_some
@@ -546,8 +546,8 @@ let test_with_change = [
       let uri_quest = Uri.with_query uri ["",[]] in
       let uri_exp_s = prefix ^ "?" in
       let uri_exp   = Uri.of_string uri_exp_s in
-      let uri_exp_sexp = Sexplib.Sexp.to_string (Uri.sexp_of_t uri_exp) in
-      let uri_quest_sexp = Sexplib.Sexp.to_string (Uri.sexp_of_t uri_quest) in
+      let uri_exp_sexp = Sexplib0.Sexp.to_string (Uri_sexp.sexp_of_t uri_exp) in
+      let uri_quest_sexp = Sexplib0.Sexp.to_string (Uri_sexp.sexp_of_t uri_quest) in
       let msg = sprintf "'%s' quest (%s <> %s)"
         prefix uri_exp_sexp uri_quest_sexp in
       assert_equal ~cmp ~msg uri_exp uri_quest;
