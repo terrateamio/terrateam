@@ -6,4 +6,5 @@ val t_of_sexp : Sexp.t -> Uri.t
 val sexp_of_t : Uri.t -> Sexp.t
 
 type component = Uri.component
+val compare : Uri.t -> Uri.t -> int
 type t = Uri.t

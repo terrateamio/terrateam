@@ -58,4 +58,5 @@ let sexp_of_t t =
 	}
 
 type component = Uri.component
+let compare a b = Uri.compare a b
 type t = Uri.t
