@@ -1,0 +1,9 @@
+* Brtl
+
+Pronounced "brutal", is an Ocaml web framework.  It offers the following
+functionality:
+
+- URL routing.
+- Middleware that runs before and after a handler has been executed.
+- Template rendering.
+
