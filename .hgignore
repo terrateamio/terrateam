@@ -1,0 +1,13 @@
+.*~
+pds.mk
+Ocamlrules.mk.in
+build/
+.merlin
+
+longform_files/longform_js.js
+src/longform_tmpl/longform_tmpl.ml
+
+okr_files/okr_js.js
+src/okr_files/okr_files.ml
+src/okr_js_files/okr_js_files.ml
+src/okr_js_files/okr_files.ml
