@@ -1,7 +1,20 @@
-Unreleased
+2018-11-25  v2.3.0 
 ------------------------------------------------------------------------
 
- * Enable continuous integration testing via travis-ci.org
+  * kevent: refactor to remove goto statement
+    (Credit: Cameron Nemo)
+
+  * Multiple fixes for compilation issues with GCC 8.1
+    (Credit: Arran Cudbard-Bell)
+
+  * Add a monitoring thread that takes care of cleaning up closed kqueues
+    (Credit: Philippe Wooding)
+
+  * Multiple bug fixes for leaking descriptors in kn_delete() 
+    (Credit: Philippe Wooding)
+
+  * Fix build errors on Linux systems that do not use glibc
+    (Credit: maxice8)
 
 2017-11-26  v2.2.0
 ------------------------------------------------------------------------
