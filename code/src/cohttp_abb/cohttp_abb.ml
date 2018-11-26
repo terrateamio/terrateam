@@ -179,10 +179,15 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
        Response_io.IO.oc ->
        [ `Stop | `Ok ] Abb.Future.t)
 
+    type on_handler_exn =
+      (Request.t ->
+       (exn * Printexc.raw_backtrace option) ->
+       [ `Stop | `Ok ] Abb.Future.t)
+
     module Config = struct
       module View = struct
         type t = { scheme : Scheme.t
-                 ; on_handler_exn : [ `Ignore | `Error ]
+                 ; on_handler_exn : on_handler_exn
                  ; port : int
                  ; handler : handler
                  ; read_header_timeout : Duration.t option
@@ -227,23 +232,38 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       let open Abb.Future.Infix_monad in
       read_request (Config.read_header_timeout config) r
       >>= function
-      | `Req (`Ok req) ->
-        begin try
-            config.Config.View.handler req r w
-            >>= function
-            | `Ok
-            | `Stop as ret ->
+      | `Req (`Ok req) -> begin
+        Abb.Future.await
+          (Fut_comb.on_failure
+             (fun () -> config.Config.View.handler req r w)
+             ~failure:(fun () -> Fut_comb.ignore (Abb.Socket.close conn)))
+           >>= function
+           | `Det (`Ok as ret)
+           | `Det (`Stop as ret) ->
               Fut_comb.ignore (Buffered.flushed w)
               >>= fun () ->
-              Abb.Future.fork (Fut_comb.ignore (Channel.send wc ret))
+              Fut_comb.ignore (Channel.send wc ret)
               >>= fun () ->
               run_handler config conn r w wc
-          with
-            | exn ->
-              Fut_comb.ignore (Abb.Socket.close conn)
-              >>= fun () ->
-              Abb.Future.fork (Fut_comb.ignore (Channel.send wc (`Exn exn)))
-        end
+           | `Exn (exn, bt_opt) -> begin
+             Abb.Future.await
+               (Fut_comb.on_failure
+                  (fun () -> config.Config.View.on_handler_exn req (exn, bt_opt))
+                  ~failure:(fun () -> Fut_comb.unit))
+                >>= function
+                | `Det (`Ok as ret)
+                | `Det (`Stop as ret) ->
+                  Fut_comb.ignore (Channel.send wc ret)
+                  >>= fun () ->
+                  run_handler config conn r w wc
+                | `Aborted ->
+                  Fut_comb.ignore (Channel.send wc `Stop)
+                | `Exn (exn, _) ->
+                  Fut_comb.ignore (Channel.send wc (`Exn exn))
+           end
+           | `Aborted ->
+             Fut_comb.ignore (Abb.Socket.close conn)
+      end
       | `Req `Eof ->
         Fut_comb.ignore (Abb.Socket.close conn)
         >>= fun () ->
@@ -295,8 +315,6 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         handler_response_loop config rc
       | `Ok `Stop ->
         Abb.Future.return (Ok ())
-      | `Ok (`Exn _) when config.Config.View.on_handler_exn = `Ignore ->
-        handler_response_loop config rc
       | `Ok (`Exn exn) ->
         Abb.Future.return (Error (`Exn exn))
       | `Closed ->

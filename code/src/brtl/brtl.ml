@@ -22,6 +22,7 @@ let rec read_body_chunks r b =
   | Cohttp.Transfer.Done ->
     Fut_comb.unit
 
+(* TODO: Limit size of body *)
 let read_body req ic =
   let b = Buffer.create 1024 in
   match Http.Request_io.has_body req with
@@ -81,11 +82,18 @@ let handler mw rtng req ic oc =
     >>= fun () ->
     Abb.Future.return `Ok
 
+let on_handler_exn req (exn, bt_opt) =
+    Logs.err (fun m -> m "Exception: %s" (Printexc.to_string exn));
+    CCOpt.iter
+      (fun bt -> Logs.err (fun m -> m "Backtrace: %s" (Printexc.raw_backtrace_to_string bt)))
+      bt_opt;
+    Abb.Future.return `Ok
+
 let run cfg mw rtng =
   let config =
     Http.Server.(Config.of_view
                    { Config.View.scheme = Scheme.Http
-                   ; on_handler_exn = `Ignore
+                   ; on_handler_exn = on_handler_exn
                    ; port = Cfg.port cfg
                    ; handler = handler mw rtng
                    ; read_header_timeout = Cfg.read_header_timeout cfg
