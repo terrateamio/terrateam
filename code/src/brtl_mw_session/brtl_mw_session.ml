@@ -49,7 +49,6 @@ let store_cookie config v ctx =
       (config.Config.cookie_name, cookie_id)
   in
   let (cookie_header, cookie_value) = Cohttp.Cookie.Set_cookie_hdr.serialize cookie in
-  Logs.info (fun m -> m "Setting cookie %s %s" cookie_header cookie_value);
   ctx
   |> Brtl_ctx.response
   |> Brtl_rspnc.add_header cookie_header cookie_value
@@ -74,7 +73,6 @@ let pre_handler config ctx =
 let post_handler config ctx =
   match Brtl_ctx.(md_find Is_dirty.key ctx, md_find config.Config.key ctx) with
     | (Some dirty, Some v) when Is_dirty.is_dirty dirty -> begin
-      Logs.info (fun m -> m "Storing cookie");
       store_cookie config v ctx
     end
     | (_, _) ->
@@ -91,3 +89,5 @@ let set_session_value key v ctx =
   |> Brtl_ctx.md_add key v
 
 let get_session_value = Brtl_ctx.md_find
+
+let rem_session_value = Brtl_ctx.md_rem
