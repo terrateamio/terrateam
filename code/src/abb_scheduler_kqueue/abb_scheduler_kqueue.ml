@@ -1135,7 +1135,7 @@ module Socket = struct
       Future.Promise.set
         p
         (try
-           let (fd, _) = Unix.accept t in
+           let (fd, _) = Unix.accept ~cloexec:true t in
            Unix.set_nonblock fd;
            Ok fd
          with

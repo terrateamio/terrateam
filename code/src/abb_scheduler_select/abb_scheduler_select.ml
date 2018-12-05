@@ -1039,7 +1039,7 @@ module Socket = struct
 
   let accept t =
     try
-      let (fd, _) = Unix.accept t in
+      let (fd, _) = Unix.accept ~cloexec:true t in
       Unix.set_nonblock fd;
       Future.return (Ok fd)
     with
