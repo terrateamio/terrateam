@@ -143,6 +143,14 @@ module Make (Fut : Abb_intf.Future.S) = struct
     >>= fun v ->
     Fut.return (Ok v)
 
+  let of_option = function
+    | Some fut ->
+      fut
+      >>| fun r ->
+      Some r
+    | None ->
+      Fut.return None
+
   module Infix_result_monad = struct
     type ('a, 'b) t = ('a, 'b) result Fut.t
 

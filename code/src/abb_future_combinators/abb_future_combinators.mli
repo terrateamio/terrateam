@@ -73,7 +73,13 @@ module Make (Fut : Abb_intf.Future.S) : sig
       be aborted or failed. *)
   val link : 'a Fut.t -> 'b Fut.t -> unit
 
+  (** Given a future, return a future containing a result that is always
+     successful. *)
   val to_result : 'a Fut.t -> ('a, 'b) result Fut.t
+
+  (** Given an option containing a future, return a future containing an
+     option. *)
+  val of_option : 'a Fut.t option -> 'a option Fut.t
 
   module List : sig
     val map : f:('a -> 'b Fut.t) -> 'a list -> 'b list Fut.t
