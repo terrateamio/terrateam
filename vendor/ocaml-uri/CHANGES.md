@@ -1,6 +1,8 @@
 dev
 ---
 
+* Expose a `compare` function in `Uri_sexp` so that it will work
+  with `deriving compare,sexp`.
 * Upgrade the opam metadata to the 2.0 format.
 * Update Travis to test OCaml 4.03->4.07.
 * Minimum OCaml version is now 4.04.0+ due to sexplib0 dependency.
