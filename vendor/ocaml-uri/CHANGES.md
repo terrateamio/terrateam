@@ -3,6 +3,7 @@ dev
 
 * Upgrade the opam metadata to the 2.0 format.
 * Update Travis to test OCaml 4.03->4.07.
+* Minimum OCaml version is now 4.04.0+ due to sexplib0 dependency.
 
 v2.0.0 2018-10-15
 -----------------
