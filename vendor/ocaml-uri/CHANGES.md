@@ -1,6 +1,12 @@
 dev
 ---
 
+* Upgrade the opam metadata to the 2.0 format.
+* Update Travis to test OCaml 4.03->4.07.
+
+v2.0.0 2018-10-15
+-----------------
+
 * Create a new subpackage `uri.sexp` for the sexpression converters, so
   that the base Uri package is more dependency free (based on #121 by @Julow).
   To convert old code, simply use `Uri_sexp.t` instead of `Uri.t` in a record
