@@ -10,7 +10,7 @@ env:
    - POST_INSTALL_HOOK="opam --yes depext -yui react ssl lwt"
    - REVDEPS="cohttp git github irmin syndic"
  matrix:
-   - DISTRO=centos OCAML_VERSION=4.03
+   - DISTRO=centos OCAML_VERSION=4.04
    - DISTRO=fedora OCAML_VERSION=4.04
    - DISTRO=debian-testing OCAML_VERSION=4.05
    - DISTRO=alpine OCAML_VERSION=4.06
