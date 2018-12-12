@@ -16,4 +16,4 @@
  (name        uri_top)
   (public_name uri.top)
   (modules uri_top)
-  (libraries uri compiler-libs.toplevel))
+  (libraries uri compiler-libs))
