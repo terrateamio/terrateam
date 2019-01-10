@@ -204,9 +204,7 @@ set(CPACK_COMPONENT_HEADERS_DEPENDS "libraries")
 #
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Userspace implementation of the kqueue event notification mechanism")
 
-set(CPACK_COMPONENT_MAIN_DESCRIPTION "A user space implementation of the kqueue(2) kernel event notification
-mechanism. libkqueue acts as a translator between the kevent structure and the
-native kernel facilities.")
+set(CPACK_COMPONENT_MAIN_DESCRIPTION "A user space implementation of the kqueue(2) kernel event notification mechanism. libkqueue acts as a translator between the kevent structure and the native kernel facilities.")
 set(CPACK_COMPONENT_DEVEL_DESCRIPTION "Development files for ${PROJECT_NAME}-${PROJECT_VERSION}")
 
 #
