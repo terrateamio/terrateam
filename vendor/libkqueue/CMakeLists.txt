@@ -191,11 +191,11 @@ set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Mark Heily <mark@heily.com>")
 set(CPACK_BUILD_SOURCE_DIRS ${CMAKE_SOURCE_DIR}/src)
 
 # Group the components into packages
-# - devel contains header files and becomes libkqueue-devel
+# - devel contains header files and man pages and becomes libkqueue-devel
 # - main contains everything else and becomes libkqueue
 set(CPACK_COMPONENT_HEADERS_GROUP "devel")
 set(CPACK_COMPONENT_LIBRARIES_GROUP "main")
-set(CPACK_COMPONENT_MAN_GROUP "main")
+set(CPACK_COMPONENT_MAN_GROUP "devel")
 set(CPACK_COMPONENT_PKGCONFIG_GROUP "main")
 set(CPACK_COMPONENT_HEADERS_DEPENDS "libraries")
 
