@@ -15,7 +15,7 @@
 #
 
 # Note: In order for RPM packaging to work correctly version >= 3.8 is required
-cmake_minimum_required(VERSION 3.4.3)
+cmake_minimum_required(VERSION 3.8.0)
 cmake_policy(SET CMP0063 OLD)
 
 project(libkqueue VERSION 2.1.1 LANGUAGES C)
