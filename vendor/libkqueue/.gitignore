@@ -11,7 +11,7 @@ Makefile
 Testing/
 _CPack_Packages/
 cmake_install.cmake
-install_manifest.txt
+install_manifest*.txt
 kqueue-*.deb
 libkqueue.so
 test/CMakeCache.txt
