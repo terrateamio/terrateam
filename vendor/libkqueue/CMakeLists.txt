@@ -230,5 +230,18 @@ set(CPACK_RPM_FILE_NAME RPM-DEFAULT)            # Use rpmbuild's package naming 
 set(CPACK_RPM_MAIN_DEBUGINFO_PACKAGE ON)
 set(CPACK_RPM_DEBUGINFO_SINGLE_PACKAGE ON)
 set(CPACK_RPM_MAIN_BUILD_SOURCE_DIRS_PREFIX /usr/src/debug/${PROJECT_NAME}-${PROJECT_VERSION})
-include(CPack)
 
+#
+#  DEB Specific configuration
+#
+set(CPACK_DEBIAN_MAIN_PACKAGE_NAME "${CPACK_PACKAGE_NAME}")
+set(CPACK_DEBIAN_MAIN_PACKAGE_SECTION "libs")
+
+set(CPACK_DEBIAN_DEVEL_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-dev")
+set(CPACK_DEBIAN_DEVEL_PACKAGE_SECTION "libdevel")
+set(CPACK_DEBIAN_DEVEL_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME} (= ${PROJECT_VERSION})")
+
+set(CPACK_DEB_COMPONENT_INSTALL ON)             # Enable component based packaging (generate multiple packages)
+set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)         # Use default Debian package naming scheme
+
+include(CPack)
