@@ -197,24 +197,24 @@ windows_get_descriptor_type(struct knote *kn)
     lsock = 0;
     i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_ACCEPTCONN, (char *)&lsock, &slen);
     if (i == 0 && lsock)
-      kn->kn_flags |= KNFL_PASSIVE_SOCKET;
+      kn->kn_flags |= KNFL_SOCKET_PASSIVE;
 
     slen = sizeof(stype);
     stype = 0;
-    i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_TYPE, (char *) &lsock, &slen);
+    i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_TYPE, (char *)&stype, &slen);
     if (i < 0) {
       dbg_perror("getsockopt(3)");
       return (-1);
     }
     if (stype == SOCK_STREAM)
-        kn->kn_flags |= KNFL_STREAM_SOCKET;
+        kn->kn_flags |= KNFL_SOCKET_STREAM;
     break;
   }
   default: {
     struct stat sb;
     if (fstat((int)kn->kev.ident, &sb) == 0) {
       dbg_printf("HANDLE %d appears to be a regular file", kn->kev.ident);
-      kn->kn_flags |= KNFL_REGULAR_FILE;
+      kn->kn_flags |= KNFL_FILE;
     }
   }
   }
