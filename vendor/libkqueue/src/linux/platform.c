@@ -552,32 +552,94 @@ linux_get_descriptor_type(struct knote *kn)
 {
     socklen_t slen;
     struct stat sb;
-    int i, lsock, stype;
+    int ret, lsock, stype;
     socklen_t out_len;
+    const int fd = (int)kn->kev.ident;
 
     /*
-     * Test if the descriptor is a socket.
+     * Determine the actual descriptor type.
      */
-    if (fstat(kn->kev.ident, &sb) < 0) {
+    if (fstat(fd, &sb) < 0) {
         dbg_perror("fstat(2)");
         return (-1);
     }
-    if (S_ISREG(sb.st_mode)) {
-        kn->kn_flags |= KNFL_REGULAR_FILE;
-        dbg_printf("fd %d is a regular file\n", (int)kn->kev.ident);
-        return (0);
+    switch (sb.st_mode & S_IFMT) {
+        case S_IFREG:
+            dbg_printf("fd %d is a regular file\n", fd);
+            kn->kn_flags |= KNFL_FILE;
+            break;
+
+        case S_IFIFO:
+            dbg_printf("fd %d is a pipe\n", fd);
+            kn->kn_flags |= KNFL_PIPE;
+            break;
+
+        case S_IFBLK:
+            dbg_printf("fd %d is a block device\n", fd);
+            kn->kn_flags |= KNFL_BLOCKDEV;
+            break;
+
+        case S_IFCHR:
+            dbg_printf("fd %d is a character device\n", fd);
+            kn->kn_flags |= KNFL_CHARDEV;
+            break;
+
+        case S_IFSOCK:
+            dbg_printf("fd %d is a socket\n", fd);
+            break; /* deferred type determination */
+
+        default:
+            errno = EBADF;
+            dbg_perror("unknown fd type");
+            return -1;
     }
 
     /*
      * Test if the socket is active or passive.
      */
-    if (! S_ISSOCK(sb.st_mode))
+    if (!S_ISSOCK(sb.st_mode))
         return (0);
 
+    /*
+     * Determine socket type.
+     */
+    slen = sizeof(stype);
+    stype = 0;
+    ret = getsockopt(fd, SOL_SOCKET, SO_TYPE, &stype, &slen);
+    if (ret < 0) {
+        dbg_perror("getsockopt(3)");
+        return (-1);
+    }
+    switch (stype) {
+        case SOCK_STREAM:
+            dbg_printf("fd %d is a stream socket\n", fd);
+            kn->kn_flags |= KNFL_SOCKET_STREAM;
+            break;
+
+        case SOCK_DGRAM:
+            dbg_printf("fd %d is a datagram socket\n", fd);
+            kn->kn_flags |= KNFL_SOCKET_DGRAM;
+            break;
+
+        case SOCK_RDM:
+            dbg_printf("fd %d is a reliable datagram socket\n", fd);
+            kn->kn_flags |= KNFL_SOCKET_RDM;
+            break;
+
+        case SOCK_SEQPACKET:
+            dbg_printf("fd %d is a sequenced and reliable datagram socket\n", fd);
+            kn->kn_flags |= KNFL_SOCKET_SEQPACKET;
+            break;
+
+        default:
+            errno = EBADF;
+            dbg_perror("unknown socket type");
+            return (-1);
+    }
     slen = sizeof(lsock);
     lsock = 0;
-    i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_ACCEPTCONN, (char *) &lsock, &slen);
-    if (i < 0) {
+    ret = getsockopt(fd, SOL_SOCKET, SO_ACCEPTCONN, &lsock, &slen);
+    if (ret < 0) {
         switch (errno) {
             case ENOTSOCK:   /* same as lsock = 0 */
                 break;
@@ -587,7 +649,7 @@ linux_get_descriptor_type(struct knote *kn)
         }
     } else {
         if (lsock)
-            kn->kn_flags |= KNFL_PASSIVE_SOCKET;
+            kn->kn_flags |= KNFL_SOCKET_PASSIVE;
     }
 
     /*
@@ -597,8 +659,8 @@ linux_get_descriptor_type(struct knote *kn)
      * Looking at SO_GET_FILTER is a good way of doing this.
      */
     out_len = 0;
-    i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_GET_FILTER, NULL, &out_len);
-    if (i < 0) {
+    ret = getsockopt(fd, SOL_SOCKET, SO_GET_FILTER, NULL, &out_len);
+    if (ret < 0) {
         switch (errno) {
             case ENOTSOCK:   /* same as lsock = 0 */
                 break;
@@ -608,18 +670,8 @@ linux_get_descriptor_type(struct knote *kn)
         }
     } else {
         if (out_len)
-            kn->kn_flags |= KNFL_PASSIVE_SOCKET;
+            kn->kn_flags |= KNFL_SOCKET_PASSIVE;
     }
-
-    slen = sizeof(stype);
-    stype = 0;
-    i = getsockopt(kn->kev.ident, SOL_SOCKET, SO_TYPE, (char *) &lsock, &slen);
-    if (i < 0) {
-        dbg_perror("getsockopt(3)");
-        return (-1);
-    }
-    if (stype == SOCK_STREAM)
-        kn->kn_flags |= KNFL_STREAM_SOCKET;
 
     return (0);
 }

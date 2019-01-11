@@ -66,14 +66,24 @@ struct eventfd {
 /*
  * Flags used by knote->kn_flags
  */
-#define KNFL_PASSIVE_SOCKET  (0x01)  /* Socket is in listen(2) mode */
-#define KNFL_REGULAR_FILE    (0x02)  /* File descriptor is a regular file */
-#define KNFL_STREAM_SOCKET   (0x03)  /* File descriptor is a stream socket */
-#define KNFL_KNOTE_DELETED   (0x10)  /* The knote object is no longer valid */
+#define KNFL_FILE                (1U << 0U)
+#define KNFL_PIPE                (1U << 1U)
+#define KNFL_BLOCKDEV            (1U << 2U)
+#define KNFL_CHARDEV             (1U << 3U)
+#define KNFL_SOCKET_PASSIVE      (1U << 4U)
+#define KNFL_SOCKET_STREAM       (1U << 5U)
+#define KNFL_SOCKET_DGRAM        (1U << 6U)
+#define KNFL_SOCKET_RDM          (1U << 7U)
+#define KNFL_SOCKET_SEQPACKET    (1U << 8U)
+#define KNFL_KNOTE_DELETED       (1U << 31U)
+#define KNFL_SOCKET              (KNFL_SOCKET_STREAM |\
+                                  KNFL_SOCKET_DGRAM |\
+                                  KNFL_SOCKET_RDM |\
+                                  KNFL_SOCKET_SEQPACKET)
 
 struct knote {
     struct kevent     kev;
-    int               kn_flags;
+    unsigned int      kn_flags;
     union {
         /* OLD */
         int           pfd;       /* Used by timerfd */

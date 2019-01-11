@@ -94,7 +94,7 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
     //struct event_buf * const ev = (struct event_buf *) ptr;
 
     /* TODO: handle regular files 
-       if (src->flags & KNFL_REGULAR_FILE) { ... } */
+    if (src->flags & KNFL_FILE) { ... } */
 
     memcpy(dst, &src->kev, sizeof(*dst));          
     if (src->kn_flags & KNFL_PASSIVE_SOCKET) {
