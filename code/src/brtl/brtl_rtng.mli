@@ -4,8 +4,7 @@ module Handler : sig
 end
 
 module Route : sig
-  include module type of Furl
-  include module type of Furl_capture
+  include module type of Furi
 end
 
 module Method : sig
@@ -16,7 +15,7 @@ type t
 
 val create :
   default:Handler.t ->
-  (Method.t * Handler.t Route.route) list ->
+  (Method.t * Handler.t Route.Route.t) list ->
   t
 
 val route : ('a, 'b) Brtl_ctx.t -> t -> Handler.t

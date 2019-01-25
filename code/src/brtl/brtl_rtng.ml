@@ -6,8 +6,7 @@ module Handler = struct
 end
 
 module Route = struct
-  include Furl
-  include Furl_capture
+  include Furi
 end
 
 module Method = struct
@@ -26,7 +25,7 @@ let create ~default routes_list =
     routes_list;
   let routes = Hashtbl.create 10 in
   Hashtbl.iter
-    (fun meth rts -> Hashtbl.add routes meth (Route.match_url ~default:route_default rts))
+    (fun meth rts -> Hashtbl.add routes meth (Route.match_uri ~default:route_default rts))
     tmp;
   { default; routes }
 
