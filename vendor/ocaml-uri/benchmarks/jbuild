@@ -1,8 +1,0 @@
-(executables
- ((names (benchmark))
-  (libraries (uri core_bench))))
-
-(alias
- ((name    bench)
-  (deps    (benchmark.exe))
-  (action  (run ${<}))))

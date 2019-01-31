@@ -3,9 +3,9 @@ v2.1.0 2019-01-31
 
 * Add `Uri.pp` as an alias to `Uri.pp_hum`, as the `pp` form
   is more commonly used. (@avsm)
-
 * Add an `[@@ocaml.toplevel_printer]` attribute to Uri.pp
   so that it will be automatically loaded on modern Utop versions. (@avsm)
+* Upgrade last remaining `jbuild` file to `dune` (@avsm)
 
 v2.0.0 2018-10-15
 -----------------
