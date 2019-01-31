@@ -892,4 +892,5 @@ let canonicalize uri =
     path=Scheme.canonicalize_path uri.path;
   }
 
-let pp_hum ppf uri = Format.fprintf ppf "%s" (to_string uri)
+let pp ppf uri = Format.pp_print_string ppf (to_string uri)
+let pp_hum ppf uri = Format.pp_print_string ppf (to_string uri)
