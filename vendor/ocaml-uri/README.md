@@ -14,13 +14,13 @@ The [OPAM](https://opam.ocaml.org) package manager can be used to install this l
 
 ### Locally
 
-You can build the source code locally via the [Jbuilder](https://github.com/janestreet/jbuilder)
+You can build the source code locally via the [dune](https://github.com/ocaml/dune)
 build system.
 
     opam install uri --deps-only
     eval `opam config env`
-    jbuilder build --dev
-    jbuilder runtest
+    dune build
+    dune runtest
 
 will install the dependencies via OPAM, build the library and then run the tests in the [lib_test/](lib_test/) directory.
 
@@ -30,6 +30,7 @@ Once installed, there are three ocamlfind packages available for your use:
 
 - `uri` - the base `Uri` module
 - `uri.top` - the toplevel printers for use with [utop](https://github.com/diml/utop)
+- `uri.sexp` - provides converters to and from s-expressions (via a `Uri_sexp.t` type alias)
 - `uri.services` - the `Uri_services` module that provides the equivalent of *[services(5)](http://man7.org/linux/man-pages/man5/services.5.html)*
 - `uri.services_full` - the `Uri_services_full` module that provides a complete copy of the `/etc/services` file. This is quite large and normally not needed.
 
