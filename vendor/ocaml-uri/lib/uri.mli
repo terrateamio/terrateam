@@ -252,5 +252,10 @@ val with_fragment : t -> string option -> t
 
 (** {3 Utilities } *)
 
-(**  Human-readable output, used by the toplevel printer *)
+(**  [pp ppf t] will output a human readable version of the Uri [t]
+    to the formatter [ppf] *)
+val pp : Format.formatter -> t -> unit [@@ocaml.toplevel_printer]
+
+(**  [pp_hum] is now an alias for the {!pp} function. *)
 val pp_hum : Format.formatter -> t -> unit [@@ocaml.toplevel_printer]
+
