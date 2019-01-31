@@ -253,4 +253,4 @@ val with_fragment : t -> string option -> t
 (** {3 Utilities } *)
 
 (**  Human-readable output, used by the toplevel printer *)
-val pp_hum : Format.formatter -> t -> unit
+val pp_hum : Format.formatter -> t -> unit [@@ocaml.toplevel_printer]
