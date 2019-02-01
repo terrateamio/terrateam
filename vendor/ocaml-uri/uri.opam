@@ -6,6 +6,7 @@ tags: ["url" "uri" "org:mirage" "org:xapi-project"]
 homepage: "https://github.com/mirage/ocaml-uri"
 bug-reports: "https://github.com/mirage/ocaml-uri/issues"
 dev-repo: "git+https://github.com/mirage/ocaml-uri.git"
+doc: "https://mirage.github.io/ocaml-uri/"
 synopsis: "An RFC3986 URI/URL parsing library"
 description: """
 This is an OCaml implementation of the [RFC3986](http://tools.ietf.org/html/rfc3986) specification 
