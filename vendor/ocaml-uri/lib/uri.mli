@@ -257,5 +257,4 @@ val with_fragment : t -> string option -> t
 val pp : Format.formatter -> t -> unit [@@ocaml.toplevel_printer]
 
 (**  [pp_hum] is now an alias for the {!pp} function. *)
-val pp_hum : Format.formatter -> t -> unit [@@ocaml.toplevel_printer]
-
+val pp_hum : Format.formatter -> t -> unit
