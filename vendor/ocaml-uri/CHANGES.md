@@ -2,10 +2,11 @@ v2.1.0 2019-01-31
 -----------------
 
 * Add `Uri.pp` as an alias to `Uri.pp_hum`, as the `pp` form
-  is more commonly used. (@avsm)
+  is more commonly used. (#133 @avsm)
 * Add an `[@@ocaml.toplevel_printer]` attribute to Uri.pp
-  so that it will be automatically loaded on modern Utop versions. (@avsm)
-* Upgrade last remaining `jbuild` file to `dune` (@avsm)
+  so that it will be automatically loaded on modern Utop versions. (#133 @avsm)
+* Upgrade last remaining `jbuild` file to `dune` (#133 @avsm)
+* OCamldoc improvements in section headers (@avsm)
 
 v2.0.0 2018-10-15
 -----------------
