@@ -1,4 +1,4 @@
-v2.1.0 2019-01-31
+v2.2.0 2019-01-31
 -----------------
 
 * Add `Uri.pp` as an alias to `Uri.pp_hum`, as the `pp` form
@@ -8,7 +8,7 @@ v2.1.0 2019-01-31
 * Upgrade last remaining `jbuild` file to `dune` (#133 @avsm)
 * OCamldoc improvements in section headers (@avsm)
 
-v2.0.0 2018-10-15
+v2.1.0 2018-12-12
 -----------------
 
 * Expose a `compare` function in `Uri_sexp` so that it will work
