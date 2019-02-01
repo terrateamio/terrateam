@@ -33,7 +33,7 @@ type component = [
   | `Fragment
 ]
 
-(** {3 Core functionality } *)
+(** {2 Core functionality } *)
 
 (** The empty (zero length) URI reference. Useful for constructing
     URIs piece-by-piece. *)
@@ -95,7 +95,7 @@ val with_uri : ?scheme:string option -> ?userinfo:string option ->
   ?host:string option -> ?port:int option -> ?path:string option ->
   ?query:(string * string list) list option -> ?fragment:string option -> t -> t
 
-(** {3 Query functions }
+(** {2 Query functions }
 
     The query string API attempts to accommodate conventional query
     string representations (i.e. [?key0=value0&key1=value1]) while
@@ -183,7 +183,7 @@ val add_query_params' : t -> (string * string) list -> t
 *)
 val remove_query_param : t -> string -> t
 
-(** {3 Component getters and setters } *)
+(** {2 Component getters and setters } *)
 
 (** Get the encoded path component of a URI *)
 val path : t -> string
@@ -250,7 +250,7 @@ val fragment : t -> string option
     Input URI is not modified *)
 val with_fragment : t -> string option -> t
 
-(** {3 Utilities } *)
+(** {2 Formatters } *)
 
 (**  [pp ppf t] will output a human readable version of the Uri [t]
     to the formatter [ppf] *)
