@@ -64,10 +64,10 @@ let handler mw rtng req ic oc =
   Mw.exec_pre_handler ctx mw
   >>= function
   | Mw.Pre_handler.Cont ctx ->
-    let hndlr = Rtng.route ctx rtng in
     read_body req ic
     >>= fun body ->
     let ctx = Ctx.set_body body ctx in
+    let hndlr = Rtng.route ctx rtng in
     run_handler hndlr ctx
     >>= fun ctx ->
     Mw.exec_post_handler ctx mw
