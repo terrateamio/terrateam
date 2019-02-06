@@ -113,7 +113,8 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
         [`Stop].  If a handler throws an exception, the behaviour depends on the
         value of [on_handler_exn] in the {!Config.t}. *)
     type handler =
-      (Request.t ->
+      (Abb.Socket.tcp Abb.Socket.t ->
+       Request.t ->
        Request_io.IO.ic ->
        Response_io.IO.oc ->
        [ `Stop | `Ok ] Abb.Future.t)

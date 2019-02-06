@@ -5,7 +5,15 @@ let post_handler ctx =
   let request = Brtl_ctx.request ctx in
   let uri = Brtl_ctx.Request.uri request in
   let status = Cohttp.Code.string_of_status (Brtl_rspnc.status rspnc) in
-  Logs.info (fun m -> m "%s %s" (Uri.to_string uri) status);
+  let meth = Cohttp.Code.string_of_method (Brtl_ctx.Request.meth request) in
+  let remote_addr = Brtl_ctx.remote_addr ctx in
+  let token = Brtl_ctx.token ctx in
+  Logs.info (fun m -> m "%s %s %s %s %s"
+                remote_addr
+                token
+                meth
+                (Uri.to_string uri)
+                status);
   Abb.Future.return ctx
 
 let early_exit_handler = Brtl_mw.early_exit_handler_noop

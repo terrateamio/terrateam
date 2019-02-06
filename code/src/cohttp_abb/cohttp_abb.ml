@@ -174,7 +174,8 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
     end
 
     type handler =
-      (Request.t ->
+      (Abb.Socket.tcp Abb.Socket.t ->
+       Request.t ->
        Request_io.IO.ic ->
        Response_io.IO.oc ->
        [ `Stop | `Ok ] Abb.Future.t)
@@ -235,7 +236,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       | `Req (`Ok req) -> begin
         Abb.Future.await
           (Fut_comb.on_failure
-             (fun () -> config.Config.View.handler req r w)
+             (fun () -> config.Config.View.handler conn req r w)
              ~failure:(fun () -> Fut_comb.ignore (Abb.Socket.close conn)))
            >>= function
            | `Det (`Ok as ret)

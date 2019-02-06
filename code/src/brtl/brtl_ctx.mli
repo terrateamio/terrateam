@@ -13,7 +13,7 @@ module Request : Cohttp.S.Request with type t = Cohttp.Request.t
 
 (** Create a context with a [unit] body and a [unit] response.  This convention
    means that they have not been set . *)
-val create : Request.t -> (unit, unit) t
+val create : string -> Request.t -> (unit, unit) t
 
 (** {1 Metadata}
 
@@ -54,3 +54,11 @@ val set_response : 'b -> ('a, 'c) t -> ('a, 'b) t
 
 (** Get the request value. *)
 val request : ('a, 'b) t -> Request.t
+
+(** Address of the remote machine *)
+val remote_addr : ('a, 'b) t -> string
+
+(** Context unique identifier.  Every context created gets a unique
+   identifier. *)
+val token : ('a, 'b) t -> string
+

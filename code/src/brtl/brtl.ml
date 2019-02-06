@@ -58,9 +58,17 @@ let run_handler hndlr ctx =
       bt_opt;
     Abb.Future.return (Ctx.set_response (Rspnc.create ~status:`Internal_server_error "") ctx)
 
-let handler mw rtng req ic oc =
+let compute_remote_addr conn =
+  match Abb.Socket.getpeername conn with
+    | Abb_intf.Socket.Sockaddr.Unix s ->
+      s
+    | Abb_intf.Socket.Sockaddr.Inet {Abb_intf.Socket.Sockaddr.addr; _} ->
+      Unix.string_of_inet_addr addr
+
+let handler mw rtng conn req ic oc =
   let open Abb.Future.Infix_monad in
-  let ctx = Ctx.create req in
+  let remote_addr = compute_remote_addr conn in
+  let ctx = Ctx.create remote_addr req in
   Mw.exec_pre_handler ctx mw
   >>= function
   | Mw.Pre_handler.Cont ctx ->

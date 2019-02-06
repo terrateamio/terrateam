@@ -4,9 +4,18 @@ type ('a, 'b) t = { request : Request.t
                   ; metadata : Hmap.t
                   ; body: 'a
                   ; response : 'b
+                  ; remote_addr : string
+                  ; token : string
                   }
 
-let create request = { request; metadata = Hmap.empty; body = (); response = () }
+let create remote_addr request =
+  { request
+  ; metadata = Hmap.empty
+  ; body = ()
+  ; response = ()
+  ; remote_addr
+  ; token = Uuidm.(to_string ~upper:false (create `V4))
+  }
 
 let request t = t.request
 
@@ -21,3 +30,7 @@ let set_body b t = { t with body = b }
 
 let response t = t.response
 let set_response r t = { t with response = r }
+
+let remote_addr t = t.remote_addr
+
+let token t = t.token
