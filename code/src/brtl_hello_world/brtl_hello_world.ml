@@ -46,7 +46,7 @@ let () =
   Logs.set_level ~all:true (Some Logs.Debug);
   let run () =
     let cfg = Brtl_cfg.create ~port:8888 ~read_header_timeout:None ~handler_timeout:None in
-    let mw = Brtl_mw.create [Mw_log.create ()] in
+    let mw = Brtl_mw.create [Mw_log.(create {Config.remote_ip_header = None})] in
     Brtl.run cfg mw rtng
   in
   match Abb.Scheduler.run (Abb.Scheduler.create ()) run with
