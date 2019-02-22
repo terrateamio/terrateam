@@ -91,6 +91,12 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "(Solaris|SunOS)")
        src/solaris/timer.c
        src/solaris/user.c)
 elseif(CMAKE_SYSTEM_NAME STREQUAL Linux)
+  #
+  #  Set the default prefix to something sane
+  #
+  if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set (CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "default install path" FORCE )
+  endif()
   list(APPEND LIBKQUEUE_SOURCES
        src/posix/platform.c
        src/posix/platform.h
