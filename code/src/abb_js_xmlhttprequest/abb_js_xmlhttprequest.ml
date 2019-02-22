@@ -1,3 +1,5 @@
+open Js_of_ocaml
+
 let state = Abb_fut.State.create ()
 
 let send ?body ~meth ~url () =
