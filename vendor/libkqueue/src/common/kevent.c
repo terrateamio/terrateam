@@ -147,7 +147,11 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
             kn->kn_kq = kq;
             assert(filt->kn_create);
             if (filt->kn_create(filt, kn) < 0) {
+                dbg_puts("kn_create failed");
+
+                kn->kn_flags |= KNFL_KNOTE_DELETED;
                 knote_release(kn);
+
                 errno = EFAULT;
                 return (-1);
             }
