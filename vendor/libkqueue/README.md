@@ -26,9 +26,9 @@ Installation - Linux, Solaris
 Installation - Red Hat
 ----------------------
 
-    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib <path to source>
+    cmake3 -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib <path to source>
     make
-    cpack -G RPM
+    cpack3 -G RPM
 
 Installation - Debian
 ---------------------
