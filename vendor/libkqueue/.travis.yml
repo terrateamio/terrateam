@@ -14,9 +14,9 @@ before_install:
 - $CC --version
 before_script:
 # Cmake that ships with Trusty (v3.2.2) is too old, we need at least v3.4.3
-- mkdir /tmp/cmake && wget -O cmake.sh https://cmake.org/files/v3.10/cmake-3.10.0-Linux-x86_64.sh && chmod +x cmake.sh && ./cmake.sh --prefix=/tmp/cmake --skip-license 
+- mkdir /tmp/cmake && wget -O cmake.sh https://cmake.org/files/v3.10/cmake-3.10.0-Linux-x86_64.sh && chmod +x cmake.sh && ./cmake.sh --prefix=/tmp/cmake --skip-license
 - /tmp/cmake/bin/cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DENABLE_TESTING=YES ./
 - make -j2
-- /tmp/cmake/bin/cpack -G DEB 
+- /tmp/cmake/bin/cpack -G DEB
 script:
 - make test

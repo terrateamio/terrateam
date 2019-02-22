@@ -32,13 +32,13 @@ static void
 signal_handler(int sig)
 {
     struct sentry *s;
-   
+
     if (sig < 0 || sig >= SIGNAL_MAX) // 0..31 are valid
-    {    
+    {
         dbg_printf("Received unexpected signal %d", sig);
         return;
     }
-    
+
     s = &sigtbl[sig];
     dbg_printf("sig=%d %d", sig, s->st_signum);
     atomic_inc((volatile uint32_t *) &s->st_count);
@@ -51,7 +51,7 @@ catch_signal(struct filter *filt, struct knote *kn)
 {
 	int sig;
 	struct sigaction sa;
-    
+
     sig = kn->kev.ident;
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = signal_handler;
@@ -79,7 +79,7 @@ static int
 ignore_signal(int sig)
 {
 	struct sigaction sa;
-    
+
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = SIG_IGN;
 	sigemptyset(&sa.sa_mask);
@@ -97,7 +97,7 @@ int
 evfilt_signal_knote_create(struct filter *filt, struct knote *kn)
 {
     if (kn->kev.ident >= SIGNAL_MAX) {
-        dbg_printf("unsupported signal number %u", 
+        dbg_printf("unsupported signal number %u",
                     (unsigned int) kn->kev.ident);
         return (-1);
     }
@@ -108,7 +108,7 @@ evfilt_signal_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_signal_knote_modify(struct filter *filt UNUSED, struct knote *kn, 
+evfilt_signal_knote_modify(struct filter *filt UNUSED, struct knote *kn,
                 const struct kevent *kev)
 {
     kn->kev.flags = kev->flags | EV_CLEAR;
@@ -117,7 +117,7 @@ evfilt_signal_knote_modify(struct filter *filt UNUSED, struct knote *kn,
 
 int
 evfilt_signal_knote_delete(struct filter *filt UNUSED, struct knote *kn)
-{   
+{
     return ignore_signal(kn->kev.ident);
 }
 
@@ -144,12 +144,12 @@ evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *ptr)
     dst->ident = ent->st_kev.ident;
     dst->filter = EVFILT_SIGNAL;
     dst->udata = ent->st_kev.udata;
-    dst->flags = ent->st_kev.flags; 
+    dst->flags = ent->st_kev.flags;
     dst->fflags = 0;
     dst->data = 1;
     pthread_mutex_unlock(&sigtbl_mtx);
 
-    if (src->kev.flags & EV_DISPATCH || src->kev.flags & EV_ONESHOT) 
+    if (src->kev.flags & EV_DISPATCH || src->kev.flags & EV_ONESHOT)
         ignore_signal(src->kev.ident);
 
     return (1);
@@ -164,5 +164,5 @@ const struct filter evfilt_signal = {
     evfilt_signal_knote_modify,
     evfilt_signal_knote_delete,
     evfilt_signal_knote_enable,
-    evfilt_signal_knote_disable,     
+    evfilt_signal_knote_disable,
 };

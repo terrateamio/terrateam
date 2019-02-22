@@ -29,7 +29,7 @@ test_kevent_signal_get(struct test_context *ctx)
 {
     struct kevent kev, ret;
 
-    kevent_add(ctx->kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);    
+    kevent_add(ctx->kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 
     if (kill(getpid(), SIGUSR1) < 0)
         die("kill");
@@ -82,7 +82,7 @@ void
 test_kevent_signal_del(struct test_context *ctx)
 {
     struct kevent kev;
-  
+
     /* Delete the kevent */
     kevent_add(ctx->kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_DELETE, 0, 0, NULL);
 

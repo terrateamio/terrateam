@@ -20,7 +20,7 @@ int
 evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
 {
     //port_event_t *pe = (port_event_t *) ptr;
-  
+
     memcpy(dst, &src->kev, sizeof(*dst));
     dst->fflags &= ~NOTE_FFCTRLMASK;     //FIXME: Not sure if needed
     dst->fflags &= ~NOTE_TRIGGER;
@@ -65,7 +65,7 @@ evfilt_user_knote_create(struct filter *filt UNUSED, struct knote *kn UNUSED)
 }
 
 int
-evfilt_user_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_user_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     unsigned int ffctrl;
@@ -97,7 +97,7 @@ evfilt_user_knote_modify(struct filter *filt, struct knote *kn,
 
     if ((!(kn->kev.flags & EV_DISABLE)) && kev->fflags & NOTE_TRIGGER) {
         kn->kev.fflags |= NOTE_TRIGGER;
-        return (port_send(filter_epfd(filt), X_PORT_SOURCE_USER, kn)); 
+        return (port_send(filter_epfd(filt), X_PORT_SOURCE_USER, kn));
     }
 
     return (0);
@@ -132,5 +132,5 @@ const struct filter evfilt_user = {
     evfilt_user_knote_modify,
     evfilt_user_knote_delete,
     evfilt_user_knote_enable,
-    evfilt_user_knote_disable,   
+    evfilt_user_knote_disable,
 };

@@ -35,7 +35,7 @@ extern char *KQUEUE_DEBUG_IDENT;
 # define THREAD_ID ((int) pthread_self())
 #elif defined(_WIN32)
 # define THREAD_ID (int)(GetCurrentThreadId())
-#else 
+#else
 # error Unsupported platform
 #endif
 
@@ -80,7 +80,7 @@ extern char *KQUEUE_DEBUG_IDENT;
 # endif
 
 /*
- * Tracing mutexes are a thin wrapper around the pthread_mutex_t 
+ * Tracing mutexes are a thin wrapper around the pthread_mutex_t
  * datatype that tracks and reports when a mutex is locked or unlocked.
  * It also allows you to assert that a mutex has (or has not) been locked
  * by calling tracing_mutex_assert().
@@ -90,10 +90,10 @@ extern char *KQUEUE_DEBUG_IDENT;
 # define MTX_LOCKED      1
 
 typedef struct {
-    pthread_mutex_t mtx_lock; 
-    int mtx_status; 
+    pthread_mutex_t mtx_lock;
+    int mtx_status;
     int mtx_owner;
-} tracing_mutex_t; 
+} tracing_mutex_t;
 
 # define tracing_mutex_init(mtx, attr) do { \
     pthread_mutex_init(&(mtx)->mtx_lock, (attr)); \
@@ -134,14 +134,14 @@ typedef struct {
 # define dbg_lasterror(str)      do {} while (0)
 # define dbg_wsalasterror(str)   do {} while (0)
 # define reset_errno()           do {} while (0)
-# define MTX_UNLOCKED                
-# define MTX_LOCKED                 
+# define MTX_UNLOCKED
+# define MTX_LOCKED
 # define tracing_mutex_t            pthread_mutex_t
 # define tracing_mutex_init         pthread_mutex_init
 # define tracing_mutex_destroy      pthread_mutex_destroy
 # define tracing_mutex_assert(x,y)  do {} while (0)
 # define tracing_mutex_lock         pthread_mutex_lock
 # define tracing_mutex_unlock       pthread_mutex_unlock
-#endif 
+#endif
 
 #endif  /* ! _DEBUG_H */

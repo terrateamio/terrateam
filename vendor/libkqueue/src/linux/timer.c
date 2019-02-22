@@ -33,12 +33,12 @@
 #define SYS_timerfd_gettime __NR_timerfd_gettime
 #endif /* ! SYS_timerfd_create */
 
-/* XXX-FIXME 
+/* XXX-FIXME
    These are horrible hacks that are only known to be true on RHEL 5 x86.
  */
 #ifndef SYS_timerfd_settime
 #define SYS_timerfd_settime (SYS_timerfd_create + 1)
-#endif 
+#endif
 #ifndef SYS_timerfd_gettime
 #define SYS_timerfd_gettime (SYS_timerfd_create + 2)
 #endif
@@ -132,7 +132,7 @@ evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr)
     memcpy(dst, &src->kev, sizeof(*dst));
     if (ev->events & EPOLLERR)
         dst->fflags = 1; /* FIXME: Return the actual timer error */
-          
+
     /* On return, data contains the number of times the
        timer has been trigered.
      */
@@ -140,7 +140,7 @@ evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr)
     if (n != sizeof(expired)) {
         dbg_puts("invalid read from timerfd");
         expired = 1;  /* Fail gracefully */
-    } 
+    }
     dst->data = expired;
 
     return (0);
@@ -189,7 +189,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_timer_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_timer_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     (void)filt;
@@ -240,5 +240,5 @@ const struct filter evfilt_timer = {
     evfilt_timer_knote_modify,
     evfilt_timer_knote_delete,
     evfilt_timer_knote_enable,
-    evfilt_timer_knote_disable,     
+    evfilt_timer_knote_disable,
 };

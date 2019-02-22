@@ -94,11 +94,11 @@ evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
     //if (ev->events & EPOLLERR)
     //    dst->fflags = 1; /* FIXME: Return the actual timer error */
 
-    dst->data = timer_getoverrun(src->data.timerid) + 1; 
+    dst->data = timer_getoverrun(src->data.timerid) + 1;
 
 #if FIXME
     timerid = src->data.timerid;
-    //should be done in kqops.copyout() 
+    //should be done in kqops.copyout()
     if (src->kev.flags & EV_DISPATCH) {
         timer_delete(src->data.timerid);
     } else if (src->kev.flags & EV_ONESHOT) {
@@ -126,10 +126,10 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
     se.sigev_value.sival_ptr = &pn;
 
     if (timer_create (CLOCK_MONOTONIC, &se, &timerid) < 0) {
-        dbg_perror("timer_create(2)"); 
+        dbg_perror("timer_create(2)");
         return (-1);
     }
-   
+
     convert_msec_to_itimerspec(&ts, kn->kev.data, kn->kev.flags & EV_ONESHOT);
     if (timer_settime(timerid, 0, &ts, NULL) < 0) {
         dbg_perror("timer_settime(2)");
@@ -144,7 +144,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_timer_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_timer_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     (void)filt;
@@ -184,5 +184,5 @@ const struct filter evfilt_timer = {
     evfilt_timer_knote_modify,
     evfilt_timer_knote_delete,
     evfilt_timer_knote_enable,
-    evfilt_timer_knote_disable,     
+    evfilt_timer_knote_disable,
 };

@@ -40,7 +40,7 @@ eventfd_raise(int evfd)
     counter = 1;
     if (write(evfd, &counter, sizeof(counter)) < 0) {
         switch (errno) {
-            case EAGAIN:    
+            case EAGAIN:
                 /* Not considered an error */
                 break;
 
@@ -69,7 +69,7 @@ eventfd_lower(int evfd)
     n = read(evfd, &cur, sizeof(cur));
     if (n < 0) {
         switch (errno) {
-            case EAGAIN:    
+            case EAGAIN:
                 /* Not considered an error */
                 break;
 
@@ -148,7 +148,7 @@ errout:
 }
 
 int
-linux_evfilt_user_knote_modify(struct filter *filt UNUSED, struct knote *kn, 
+linux_evfilt_user_knote_modify(struct filter *filt UNUSED, struct knote *kn,
         const struct kevent *kev)
 {
     unsigned int ffctrl;
@@ -200,7 +200,7 @@ linux_evfilt_user_knote_delete(struct filter *filt, struct knote *kn)
         dbg_perror("close(2)");
         return (-1);
     }
-    dbg_printf("removed eventfd %d from the epollfd", kn->kdata.kn_eventfd); 
+    dbg_printf("removed eventfd %d from the epollfd", kn->kdata.kn_eventfd);
     kn->kdata.kn_eventfd = -1;
 
     return (0);
@@ -229,5 +229,5 @@ const struct filter evfilt_user = {
     linux_evfilt_user_knote_modify,
     linux_evfilt_user_knote_delete,
     linux_evfilt_user_knote_enable,
-    linux_evfilt_user_knote_disable,   
+    linux_evfilt_user_knote_disable,
 };

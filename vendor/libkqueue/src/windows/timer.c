@@ -103,7 +103,7 @@ evfilt_timer_copyout(struct kevent* dst, struct knote* src, void* ptr)
 {
     memcpy(dst, &src->kev, sizeof(struct kevent));
 	// TODO: Timer error handling
-	
+
     /* We have no way to determine the number of times
        the timer triggered, thus we assume it was only once
     */
@@ -128,7 +128,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
     dbg_printf("created timer handle %p", th);
 
     convert_msec_to_filetime(&liDueTime, kn->kev.data);
-	
+
 	// XXX-FIXME add completion routine to this call
     if (!SetWaitableTimer(th, &liDueTime, (LONG)( (kn->kev.flags & EV_ONESHOT) ? 0 : kn->kev.data ), NULL, NULL, FALSE)) {
         dbg_lasterror("SetWaitableTimer()");
@@ -144,7 +144,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_timer_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_timer_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     return (0); /* STUB */
@@ -177,5 +177,5 @@ const struct filter evfilt_timer = {
     evfilt_timer_knote_modify,
     evfilt_timer_knote_delete,
     evfilt_timer_knote_enable,
-    evfilt_timer_knote_disable,     
+    evfilt_timer_knote_disable,
 };

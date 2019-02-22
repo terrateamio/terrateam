@@ -134,7 +134,7 @@ evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *x UNUSED)
     /* NOTE: dst->data should be the number of times the signal occurred,
        but that information is not available.
      */
-    dst->data = 1;  
+    dst->data = 1;
 
     return (0);
 }
@@ -156,8 +156,8 @@ evfilt_signal_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_signal_knote_modify(struct filter *filt UNUSED, 
-        struct knote *kn UNUSED, 
+evfilt_signal_knote_modify(struct filter *filt UNUSED,
+        struct knote *kn UNUSED,
         const struct kevent *kev UNUSED)
 {
     /* Nothing to do since the signal number does not change. */
@@ -214,5 +214,5 @@ const struct filter evfilt_signal = {
     evfilt_signal_knote_modify,
     evfilt_signal_knote_delete,
     evfilt_signal_knote_enable,
-    evfilt_signal_knote_disable,         
+    evfilt_signal_knote_disable,
 };

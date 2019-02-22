@@ -108,6 +108,6 @@ testing_make_uid(void)
     if (id == INT_MAX)
         abort();
     id++;
-    
+
     return (id);
 }

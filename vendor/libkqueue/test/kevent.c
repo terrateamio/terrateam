@@ -19,7 +19,7 @@
 extern int kqfd;
 
 /* Checks if any events are pending, which is an error. */
-void 
+void
 _test_no_kevents(int kqfd, const char *file, int line)
 {
     int nfds;
@@ -142,7 +142,7 @@ kevent_to_str(struct kevent *kev)
 {
     char buf[512];
 
-    snprintf(&buf[0], sizeof(buf), 
+    snprintf(&buf[0], sizeof(buf),
             "[ident=%d, filter=%d, %s, %s, data=%d, udata=%p]",
             (u_int) kev->ident,
             kev->filter,
@@ -165,7 +165,7 @@ kevent_update(int kqfd, struct kevent *kev)
 }
 
 void
-kevent_add(int kqfd, struct kevent *kev, 
+kevent_add(int kqfd, struct kevent *kev,
         uintptr_t ident,
         short     filter,
         u_short   flags,
@@ -173,7 +173,7 @@ kevent_add(int kqfd, struct kevent *kev,
         intptr_t  data,
         void      *udata)
 {
-    EV_SET(kev, ident, filter, flags, fflags, data, NULL);    
+    EV_SET(kev, ident, filter, flags, fflags, data, NULL);
     if (kevent(kqfd, kev, 1, NULL, 0, NULL) < 0) {
         printf("Unable to add the following kevent:\n%s\n",
                 kevent_to_str(kev));
@@ -185,14 +185,14 @@ void
 _kevent_cmp(struct kevent *k1, struct kevent *k2, const char *file, int line)
 {
 /* XXX-
-   Workaround for inconsistent implementation of kevent(2) 
+   Workaround for inconsistent implementation of kevent(2)
  */
-#if defined (__FreeBSD_kernel__) || defined (__FreeBSD__) 
+#if defined (__FreeBSD_kernel__) || defined (__FreeBSD__)
     if (k1->flags & EV_ADD)
         k2->flags |= EV_ADD;
 #endif
     if (memcmp(k1, k2, sizeof(*k1)) != 0) {
-        printf("[%s:%d]: kevent_cmp() failed:\n  expected %s\n  but got  %s\n", 
+        printf("[%s:%d]: kevent_cmp() failed:\n  expected %s\n  but got  %s\n",
               file, line, kevent_to_str(k1), kevent_to_str(k2));
         abort();
     }

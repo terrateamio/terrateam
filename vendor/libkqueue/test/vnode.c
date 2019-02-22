@@ -34,7 +34,7 @@ testfile_touch(const char *path)
 
     snprintf(&buf[0], sizeof(buf), "touch %s", path);
     if (system(buf) != 0)
-        die("system"); 
+        die("system");
 }
 
 static void
@@ -44,7 +44,7 @@ testfile_write(const char *path)
 
     snprintf(&buf[0], sizeof(buf), "echo hi >> %s", path);
     if (system(buf) != 0)
-        die("system"); 
+        die("system");
 }
 
 static void
@@ -60,10 +60,10 @@ testfile_rename(const char *path, int step)
             */
     if (step == 0) {
         if (rename(path, buf) != 0)
-            err(1,"rename"); 
+            err(1,"rename");
     } else {
         if (rename(buf, path) != 0)
-            err(1,"rename"); 
+            err(1,"rename");
     }
 }
 
@@ -78,7 +78,7 @@ test_kevent_vnode_add(struct test_context *ctx)
     if (ctx->vnode_fd < 0)
         err(1, "open of %s", ctx->testfile);
 
-    kevent_add(ctx->kqfd, &kev, ctx->vnode_fd, EVFILT_VNODE, EV_ADD, 
+    kevent_add(ctx->kqfd, &kev, ctx->vnode_fd, EVFILT_VNODE, EV_ADD,
             NOTE_WRITE | NOTE_ATTRIB | NOTE_RENAME | NOTE_DELETE, 0, NULL);
 }
 
@@ -127,9 +127,9 @@ test_kevent_vnode_note_attrib(struct test_context *ctx)
     if (nfds < 1)
         die("kevent");
     if (kev.ident != ctx->vnode_fd ||
-            kev.filter != EVFILT_VNODE || 
+            kev.filter != EVFILT_VNODE ||
             kev.fflags != NOTE_ATTRIB)
-        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)", 
+        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)",
                 test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
 }
 
@@ -147,9 +147,9 @@ test_kevent_vnode_note_rename(struct test_context *ctx)
     if (nfds < 1)
         die("kevent");
     if (kev.ident != ctx->vnode_fd ||
-            kev.filter != EVFILT_VNODE || 
+            kev.filter != EVFILT_VNODE ||
             kev.fflags != NOTE_RENAME)
-        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)", 
+        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)",
                 test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
 
     testfile_rename(ctx->testfile, 1);
@@ -190,9 +190,9 @@ test_kevent_vnode_disable_and_enable(struct test_context *ctx)
     if (nfds < 1)
         die("kevent");
     if (kev.ident != ctx->vnode_fd ||
-            kev.filter != EVFILT_VNODE || 
+            kev.filter != EVFILT_VNODE ||
             kev.fflags != NOTE_ATTRIB)
-        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)", 
+        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)",
                 test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
 }
 
@@ -213,9 +213,9 @@ test_kevent_vnode_dispatch(struct test_context *ctx)
     if (nfds < 1)
         die("kevent");
     if (kev.ident != ctx->vnode_fd ||
-            kev.filter != EVFILT_VNODE || 
+            kev.filter != EVFILT_VNODE ||
             kev.fflags != NOTE_ATTRIB)
-        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)", 
+        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)",
                 test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
 
     /* Confirm that the watch is disabled automatically */

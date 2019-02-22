@@ -47,7 +47,7 @@ int main() {
     struct foo x;
     pthread_t tid;
     void *rv;
-    
+
     tracing_mutex_init(&x.foo_lock, NULL);
     tracing_mutex_lock(&x.foo_lock);
     tracing_mutex_assert(&x.foo_lock, MTX_LOCKED);

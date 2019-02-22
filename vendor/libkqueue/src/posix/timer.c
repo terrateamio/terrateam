@@ -126,8 +126,8 @@ sleeper_thread(void *arg)
                 /* FIXME: handle EAGAIN */
                 dbg_perror("write(2)");
             } else if ((size_t)cnt < sizeof(si)) {
-                dbg_puts("FIXME: handle short write"); 
-            } 
+                dbg_puts("FIXME: handle short write");
+            }
             cts = false;
             si.counter = 0;
         }
@@ -269,7 +269,7 @@ evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
     } else if (kn->kev.flags & EV_ONESHOT) {
         _timer_delete(kn);
         knote_free(filt, kn);
-    } 
+    }
 #endif
 
     return (1);
@@ -282,7 +282,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_timer_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_timer_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     (void) filt;
@@ -323,5 +323,5 @@ const struct filter evfilt_timer = {
     evfilt_timer_knote_modify,
     evfilt_timer_knote_delete,
     evfilt_timer_knote_enable,
-    evfilt_timer_knote_disable,     
+    evfilt_timer_knote_disable,
 };

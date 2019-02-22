@@ -24,7 +24,7 @@
  * EXPERIMENTAL dispatching API
  */
 void
-kq_dispatch(kqueue_t kq, void (*cb)(kqueue_t, struct kevent)) 
+kq_dispatch(kqueue_t kq, void (*cb)(kqueue_t, struct kevent))
 {
     const int maxevents = 64; /* Should be more like 2xNCPU */
     struct kevent events[maxevents];

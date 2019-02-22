@@ -50,7 +50,7 @@ wait_thread(void *arg)
 {
     struct filter *filt = (struct filter *) arg;
     uint64_t counter = 1;
-    const int options = WEXITED | WNOWAIT; 
+    const int options = WEXITED | WNOWAIT;
     struct knote *kn;
     siginfo_t si;
     sigset_t sigmask;
@@ -76,12 +76,12 @@ wait_thread(void *arg)
             if (errno == EINTR)
                 continue;
             dbg_perror("waitid(2)");
-            break; 
+            break;
         }
 
         /* Scan the wait queue to see if anyone is interested */
         kn = knote_lookup(filt, si.si_pid);
-        if (kn == NULL) 
+        if (kn == NULL)
             continue;
 
         /* Create a proc_event */
@@ -90,11 +90,11 @@ wait_thread(void *arg)
         } else if (si.si_code == CLD_KILLED) {
             /* FIXME: probably not true on BSD */
             /* FIXME: arbitrary non-zero number */
-            kn->kev.data = 254; 
+            kn->kev.data = 254;
         } else {
             /* Should never happen. */
             /* FIXME: arbitrary non-zero number */
-            kn->kev.data = 1; 
+            kn->kev.data = 1;
         }
 
         knote_enqueue(filt, kn);
@@ -127,12 +127,12 @@ evfilt_proc_init(struct filter *filt)
 
     pthread_mutex_init(&ed->wait_mtx, NULL);
     pthread_cond_init(&ed->wait_cond, NULL);
-    if ((efd = eventfd(0, 0)) < 0) 
+    if ((efd = eventfd(0, 0)) < 0)
         goto errout;
-    if (fcntl(filt->kf_pfd, F_SETFL, O_NONBLOCK) < 0) 
+    if (fcntl(filt->kf_pfd, F_SETFL, O_NONBLOCK) < 0)
         goto errout;
     filt->kf_pfd = efd;
-    if (pthread_create(&ed->wthr_id, NULL, wait_thread, filt) != 0) 
+    if (pthread_create(&ed->wthr_id, NULL, wait_thread, filt) != 0)
         goto errout;
 
 
@@ -156,8 +156,8 @@ evfilt_proc_destroy(struct filter *filt)
 }
 
 int
-evfilt_proc_copyout(struct filter *filt, 
-            struct kevent *dst, 
+evfilt_proc_copyout(struct filter *filt,
+            struct kevent *dst,
             int maxevents)
 {
     struct knote *kn;
@@ -191,14 +191,14 @@ evfilt_proc_copyout(struct filter *filt,
     }
 
     if (knote_events_pending(filt)) {
-    /* XXX-FIXME: If there are leftover events on the waitq, 
+    /* XXX-FIXME: If there are leftover events on the waitq,
        re-arm the eventfd. list */
         abort();
     }
 
     return (nevents);
 }
- 
+
 int
 evfilt_proc_knote_create(struct filter *filt, struct knote *kn)
 {
@@ -206,7 +206,7 @@ evfilt_proc_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_proc_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_proc_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     return (0); /* STUB */

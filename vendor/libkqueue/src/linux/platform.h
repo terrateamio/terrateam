@@ -52,7 +52,7 @@ struct filter;
 #ifndef __ANDROID__
 extern long int syscall (long int __sysno, ...);
 #endif
- 
+
 /* Convenience macros to access the epoll descriptor for the kqueue */
 #define kqueue_epfd(kq)     ((kq)->epollfd)
 #define filter_epfd(filt)   ((filt)->kf_kqueue->epollfd)
@@ -60,7 +60,7 @@ extern long int syscall (long int __sysno, ...);
 /*
  * Additional members of struct filter
  */
-#undef FILTER_PLATFORM_SPECIFIC 
+#undef FILTER_PLATFORM_SPECIFIC
 
 /*
  * Additional members of struct knote

@@ -7,7 +7,7 @@
   * Debian packaging updates
     (Credit: Matthew Newton)
 
-2018-11-25  v2.3.0 
+2018-11-25  v2.3.0
 ------------------------------------------------------------------------
 
   * kevent: refactor to remove goto statement
@@ -19,7 +19,7 @@
   * Add a monitoring thread that takes care of cleaning up closed kqueues
     (Credit: Philippe Wooding)
 
-  * Multiple bug fixes for leaking descriptors in kn_delete() 
+  * Multiple bug fixes for leaking descriptors in kn_delete()
     (Credit: Philippe Wooding)
 
   * Fix build errors on Linux systems that do not use glibc
@@ -37,7 +37,7 @@ ead
 
  * Fix to allow libpcap FDs to be used.
    Author: Philippe Wooding <philippe.wooding@networkradius.com>
-    
+
  * Switch to CMake as the build and packaging system.
 
 2016-07-24  v2.1.0
@@ -46,8 +46,8 @@ ead
   * Fix an endianness issue when calling ioctl on Linux.
     (Credit: Vivian Kong)
 
-  * Allow tests to be built from separate build directory.                            
-    (Credit: Chris Bailey)  
+  * Allow tests to be built from separate build directory.
+    (Credit: Chris Bailey)
 
   * Add support for kevent64(2) timers from Darwin.
     (Credit: Hubertus Franke)
@@ -73,12 +73,12 @@ ead
   * Fix a build failure on mips64el.
     (Credit: YunQiang Su, from Debian Bug #754376)
 
-2014-03-09  v2.0.3 
+2014-03-09  v2.0.3
 ------------------------------------------------------------------------
 
   * Fix the generation of libkqueue.pc
 
-2014-02-23  v2.0.2 
+2014-02-23  v2.0.2
 ------------------------------------------------------------------------
 
   * Switch from SVN to Git
@@ -106,13 +106,13 @@ ead
   * Call epoll_wait after linux_kevent_wait_hires()
     (Credit: Eric Wong)
 
-  * Detect regular files correctly 
+  * Detect regular files correctly
     (Credit: Eric Wong)
 
-  * Ensure that calling close() on a file descriptor will remove any 
+  * Ensure that calling close() on a file descriptor will remove any
     kevents that reference the descriptor. [merged from ^/branches/stable@551]
 
-  * Remove the SERIALIZE_KEVENT macro, and always protect kevent_copyin() 
+  * Remove the SERIALIZE_KEVENT macro, and always protect kevent_copyin()
     and kevent_copyout() with a mutex.
 
   * Remove fine-grained locking at the knote level.
@@ -139,7 +139,7 @@ ead
 ------------------------------------------------------------------------
 
   * Fix a typo in kevent_copyin() that caused EV_RECEIPT to set the
-    data field incorrectly in some cases. 
+    data field incorrectly in some cases.
     (Credit to Julien Blache for discovering and fixing this bug)
 
 2010-08-05  v0.9.2  r289
@@ -159,7 +159,7 @@ ead
 ------------------------------------------------------------------------
 
   * Set kevent.data = 1 for passive sockets that have at least one pending
-    connection.  
+    connection.
     (Credit to Julien Blache for finding and researching this bug)
 
   * Fix various compilation errors under Solaris.
@@ -171,7 +171,7 @@ ead
 ------------------------------------------------------------------------
 
   * Fix a bug that prevented a knote with the EV_DISPATCH flag from
-    being re-enabled after an event had been triggered. 
+    being re-enabled after an event had been triggered.
     (Credit to Julien Blache for finding and researching this bug)
 
 2010-06-08  v0.7    r248
@@ -191,12 +191,12 @@ ead
 
   * Implement knote modification for signals.
 
-  * Implement POSIX signal.c 
+  * Implement POSIX signal.c
 
 2010-02-09  v0.5    r200
 ------------------------------------------------------------------------
 
-  * Prevent namespace pollution by hiding all ELF symbols except for 
+  * Prevent namespace pollution by hiding all ELF symbols except for
     kqueue() and kevent().
 
   * Add reference counting to the garbage collection mechanism so that
@@ -205,7 +205,7 @@ ead
 
   * Improve scalability by using red-black trees instead of linked lists.
 
-  * Refactor the internal API to promote modularity and code reuse. 
+  * Refactor the internal API to promote modularity and code reuse.
     Five methods are added to each filter: create, modify, delete,
     enable, disable. These replace the copyin() method, which was
     overly complicated.
@@ -250,7 +250,7 @@ ead
     function under OpenBSD 4.4 using the native kqueue(2) and kevent(2)
     system calls.
 
-  * The kqueue_free() function has been removed. 
+  * The kqueue_free() function has been removed.
 
   * A helper thread performs garbage collection when close(2) is called
     on the file descriptor returned by kqueue().

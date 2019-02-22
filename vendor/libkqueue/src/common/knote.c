@@ -33,7 +33,7 @@ knote_init(void)
 static int
 knote_cmp(struct knote *a, struct knote *b)
 {
-    return memcmp(&a->kev.ident, &b->kev.ident, sizeof(a->kev.ident)); 
+    return memcmp(&a->kev.ident, &b->kev.ident, sizeof(a->kev.ident));
 }
 
 RB_GENERATE(knt, knote, kn_entries, knote_cmp)
@@ -126,7 +126,7 @@ knote_lookup(struct filter *filt, uintptr_t ident)
 
     return (ent);
 }
-    
+
 #if DEADWOOD
 struct knote *
 knote_get_by_data(struct filter *filt, intptr_t data)
@@ -135,7 +135,7 @@ knote_get_by_data(struct filter *filt, intptr_t data)
 
     pthread_rwlock_rdlock(&filt->kf_knote_mtx);
     RB_FOREACH(kn, knt, &filt->kf_knote) {
-        if (data == kn->kev.data) 
+        if (data == kn->kev.data)
             break;
     }
     if (kn != NULL) {

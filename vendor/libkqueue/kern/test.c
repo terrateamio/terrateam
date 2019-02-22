@@ -24,7 +24,7 @@
 
 #include "../include/sys/event.h"
 
-int 
+int
 main(int argc, char **argv)
 {
     struct kevent kev;

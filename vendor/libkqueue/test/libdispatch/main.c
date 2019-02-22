@@ -18,9 +18,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <pthread.h> 
-#include <sys/event.h> 
-#include <dispatch/dispatch.h> 
+#include <pthread.h>
+#include <sys/event.h>
+#include <dispatch/dispatch.h>
 
 pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 int testnum;
@@ -61,7 +61,7 @@ test_timer()
 	dispatch_source_t timer;
 	dispatch_time_t now;
 
-    timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, 
+    timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0,
 			dispatch_get_current_queue()); //NOTE: q_default doesn't work
    	now = dispatch_walltime(DISPATCH_TIME_NOW, 0);
 	dispatch_source_set_timer(timer, now, 1, 1);
@@ -78,7 +78,7 @@ test_countdown(void)
 }
 
 
-int 
+int
 main(int argc, char **argv)
 {
     while (argc) {

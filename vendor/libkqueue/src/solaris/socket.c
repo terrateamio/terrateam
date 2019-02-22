@@ -47,10 +47,10 @@ evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
             dbg_puts("invalid filter");
             return (-1);
     }
-    
+
     dbg_printf("port_associate kq fd %d with actual fd %ld", filter_epfd(filt), kn->kev.ident);
 
-    rv = port_associate(filter_epfd(filt), PORT_SOURCE_FD, kn->kev.ident, 
+    rv = port_associate(filter_epfd(filt), PORT_SOURCE_FD, kn->kev.ident,
             events, kn);
     if (rv < 0) {
             dbg_perror("port_associate(2)");
@@ -61,7 +61,7 @@ evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_socket_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_socket_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     dbg_puts("XXX-FIXME");
@@ -106,7 +106,7 @@ evfilt_socket_copyout(struct kevent *dst, struct knote *src, void *ptr)
 {
     port_event_t *pe = (port_event_t *) ptr;
     unsigned int pending_data = 0;
-    
+
     memcpy(dst, &src->kev, sizeof(*dst));
     if (pe->portev_events == 8) //XXX-FIXME Should be POLLHUP)
         dst->flags |= EV_EOF;
@@ -123,12 +123,12 @@ evfilt_socket_copyout(struct kevent *dst, struct knote *src, void *ptr)
             /* race condition with socket close, so ignore this error */
             dbg_puts("ioctl(2) of socket failed");
             dst->data = 0;
-        }   
+        }
         else
             dst->data = pending_data;
     }
-    
-    /* FIXME: make sure this is in kqops.copyout() 
+
+    /* FIXME: make sure this is in kqops.copyout()
     if (src->kev.flags & EV_DISPATCH || src->kev.flags & EV_ONESHOT) {
         socket_knote_delete(filt->kf_kqueue->kq_port, kn->kev.ident);
     }
@@ -146,7 +146,7 @@ const struct filter evfilt_read = {
     evfilt_socket_knote_modify,
     evfilt_socket_knote_delete,
     evfilt_socket_knote_enable,
-    evfilt_socket_knote_disable,         
+    evfilt_socket_knote_disable,
 };
 
 const struct filter evfilt_write = {
@@ -158,5 +158,5 @@ const struct filter evfilt_write = {
     evfilt_socket_knote_modify,
     evfilt_socket_knote_delete,
     evfilt_socket_knote_enable,
-    evfilt_socket_knote_disable,         
+    evfilt_socket_knote_disable,
 };

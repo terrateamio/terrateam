@@ -69,7 +69,7 @@ wait_thread(void *arg)
                 continue;
             dbg_printf("wait(2): %s", strerror(errno));
             break;
-        } 
+        }
 
         /* Create a proc_event */
         if (WIFEXITED(status)) {
@@ -87,7 +87,7 @@ wait_thread(void *arg)
         kn = knote_lookup(filt, pid);
         if (kn != NULL) {
             kn->kev.data = result;
-            kn->kev.fflags = NOTE_EXIT; 
+            kn->kev.fflags = NOTE_EXIT;
             LIST_REMOVE(kn, entries);
             LIST_INSERT_HEAD(&filt->kf_eventlist, kn, entries);
             /* Indicate read(2) readiness */
@@ -110,9 +110,9 @@ evfilt_proc_init(struct filter *filt)
     if ((ed = calloc(1, sizeof(*ed))) == NULL)
         return (-1);
 
-    if (filter_socketpair(filt) < 0) 
+    if (filter_socketpair(filt) < 0)
         goto errout;
-    if (pthread_create(&ed->wthr_id, NULL, wait_thread, filt) != 0) 
+    if (pthread_create(&ed->wthr_id, NULL, wait_thread, filt) != 0)
         goto errout;
 
     return (0);
@@ -130,7 +130,7 @@ evfilt_proc_destroy(struct filter *filt)
 }
 
 int
-evfilt_proc_copyin(struct filter *filt, 
+evfilt_proc_copyin(struct filter *filt,
         struct knote *dst, const struct kevent *src)
 {
     if (src->flags & EV_ADD && KNOTE_EMPTY(dst)) {
@@ -147,8 +147,8 @@ evfilt_proc_copyin(struct filter *filt,
 }
 
 int
-evfilt_proc_copyout(struct filter *filt, 
-            struct kevent *dst, 
+evfilt_proc_copyout(struct filter *filt,
+            struct kevent *dst,
             int maxevents)
 {
     struct knote *kn;
@@ -166,7 +166,7 @@ evfilt_proc_copyout(struct filter *filt,
         }
 #if FIXME
         /* XXX - NEED TO use safe foreach instead */
-        if (kn->kev.flags & EV_ONESHOT) 
+        if (kn->kev.flags & EV_ONESHOT)
             knote_free(kn);
 #endif
 
@@ -175,7 +175,7 @@ evfilt_proc_copyout(struct filter *filt,
         dst++;
     }
 
-    if (!LIST_EMPTY(&filt->kf_eventlist)) 
+    if (!LIST_EMPTY(&filt->kf_eventlist))
         filter_raise(filt);
 
     return (nevents);

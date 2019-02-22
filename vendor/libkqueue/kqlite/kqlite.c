@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
- 
+
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
@@ -22,8 +22,8 @@
 #include "./lite.h"
 #include "./utarray.h"
 
-/* The maximum number of events that can be returned in 
-   a single kq_event() call 
+/* The maximum number of events that can be returned in
+   a single kq_event() call
  */
 #define EPEV_BUF_MAX 512
 
@@ -77,7 +77,7 @@ struct kqueue {
 
     /* This allows all kevents to share a single inotify descriptor.
      * Key: inotify watch descriptor returned by inotify_add_watch()
-     * Value: pointer to knote 
+     * Value: pointer to knote
      */
     UT_array *ino_knote;
 
@@ -107,7 +107,7 @@ static inline void
 kq_lock(kqueue_t kq)
 {
 #ifdef KQ_THREADSAFE
-    if (pthread_mutex_lock(&kq->kq_mtx) != 0) 
+    if (pthread_mutex_lock(&kq->kq_mtx) != 0)
         abort();
 #endif
 }
@@ -116,7 +116,7 @@ static inline void
 kq_unlock(kqueue_t kq)
 {
 #ifdef KQ_THREADSAFE
-    if (pthread_mutex_unlock(&kq->kq_mtx) != 0) 
+    if (pthread_mutex_unlock(&kq->kq_mtx) != 0)
         abort();
 #endif
 }
@@ -138,7 +138,7 @@ kq_init(void)
         free(kq);
         return (NULL);
     }
-    
+
 #elif defined(USE_EPOLL)
     struct epoll_event epev;
 
@@ -163,7 +163,7 @@ kq_init(void)
     kq->readfd = epoll_create(10);
     kq->writefd = epoll_create(10);
     kq->timefd = timerfd_create(CLOCK_MONOTONIC, 0);
-    if (kq->sigfd < 0 || kq->inofd < 0 || kq->epfd < 0 
+    if (kq->sigfd < 0 || kq->inofd < 0 || kq->epfd < 0
             || kq->readfd < 0 || kq->writefd < 0 || kq->timefd < 0)
         goto errout;
 
@@ -214,7 +214,7 @@ kq_free(kqueue_t kq)
 {
 #if defined(USE_KQUEUE)
     close(kq.kqfd);
-    
+
 #elif defined(USE_EPOLL)
     close(kq->sigfd);
     close(kq->inofd);
@@ -391,7 +391,7 @@ _get_signal(struct kevent *dst, kqueue_t kq)
 
     kn = knote_lookup(kq, EVFILT_SIGNAL, sig.ssi_signo);
     memcpy(dst, &kn->kev, sizeof(*dst));
-    
+
     return (0);
 }
 
@@ -427,7 +427,7 @@ int kq_event(kqueue_t kq, const struct kevent *changelist, int nchanges,
     }
 
     /* Convert timeout to the format used by epoll_wait() */
-    if (timeout == NULL) 
+    if (timeout == NULL)
         eptimeout = -1;
     else
         eptimeout = (1000 * timeout->tv_sec) + (timeout->tv_nsec / 1000000);

@@ -23,7 +23,7 @@
  */
 static void
 create_socket_connection(int *client, int *server)
-{ 
+{
     struct sockaddr_in sain;
     socklen_t sa_len = sizeof(sain);
     int one = 1;
@@ -34,10 +34,10 @@ create_socket_connection(int *client, int *server)
     memset(&sain, 0, sizeof(sain));
     sain.sin_family = AF_INET;
     sain.sin_port = 0;
-    if ((srvr = socket(PF_INET, SOCK_STREAM, 0)) < 0) 
+    if ((srvr = socket(PF_INET, SOCK_STREAM, 0)) < 0)
 	err(1, "socket");
-    if (setsockopt(srvr, SOL_SOCKET, SO_REUSEADDR, 
-                (char *) &one, sizeof(one)) != 0) 
+    if (setsockopt(srvr, SOL_SOCKET, SO_REUSEADDR,
+                (char *) &one, sizeof(one)) != 0)
 	err(1, "setsockopt");
     if (bind(srvr, (struct sockaddr *) &sain, sa_len) < 0) {
         printf("unable to bind to auto-assigned port\n");
@@ -54,11 +54,11 @@ create_socket_connection(int *client, int *server)
     sain.sin_port = htons(port);
     sain.sin_addr.s_addr = inet_addr("127.0.0.1");
     if ((clnt = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-       err(1, "clnt: socket"); 
+       err(1, "clnt: socket");
     if (connect(clnt, (struct sockaddr *) &sain, sa_len) < 0)
-       err(1, "clnt: connect"); 
+       err(1, "clnt: connect");
     if ((accepted = accept(srvr, NULL, 0)) < 0)
-       err(1, "srvr: accept"); 
+       err(1, "srvr: accept");
 
     *client = clnt;
     *server = accepted;
@@ -155,7 +155,7 @@ test_kevent_socket_clear(struct test_context *ctx)
     kev.data = 2;
 #endif
     kevent_get(&ret, ctx->kqfd);
-    kevent_cmp(&kev, &ret); 
+    kevent_cmp(&kev, &ret);
 
     /* We filled twice, but drain once. Edge-triggered would not generate
        additional events.
@@ -192,7 +192,7 @@ test_kevent_socket_disable_and_enable(struct test_context *ctx)
     kev.flags = EV_ADD;
     kev.data = 1;
     kevent_get(&ret, ctx->kqfd);
-    kevent_cmp(&kev, &ret); 
+    kevent_cmp(&kev, &ret);
 
     kevent_socket_drain(ctx);
 
@@ -227,7 +227,7 @@ test_kevent_socket_oneshot(struct test_context *ctx)
     kevent_socket_fill(ctx);
     kev.data = 1;
     kevent_get(&ret, ctx->kqfd);
-    kevent_cmp(&kev, &ret); 
+    kevent_cmp(&kev, &ret);
 
     test_no_kevents(ctx->kqfd);
 
@@ -260,9 +260,9 @@ test_kevent_socket_listen_backlog(struct test_context *ctx)
     memset(&sain, 0, sizeof(sain));
     sain.sin_family = AF_INET;
     sain.sin_port = 0;
-    if ((srvr = socket(PF_INET, SOCK_STREAM, 0)) < 0) 
+    if ((srvr = socket(PF_INET, SOCK_STREAM, 0)) < 0)
         err(1, "socket()");
-    if (setsockopt(srvr, SOL_SOCKET, SO_REUSEADDR, 
+    if (setsockopt(srvr, SOL_SOCKET, SO_REUSEADDR,
                 (char *) &one, sizeof(one)) != 0)
         err(1, "setsockopt()");
     if (bind(srvr, (struct sockaddr *) &sain, sa_len) < 0)
@@ -290,7 +290,7 @@ test_kevent_socket_listen_backlog(struct test_context *ctx)
     /* Verify that data=1 */
     kev.data = 1;
     kevent_get(&ret, ctx->kqfd);
-    kevent_cmp(&kev, &ret); 
+    kevent_cmp(&kev, &ret);
     test_no_kevents(ctx->kqfd);
 }
 
@@ -309,7 +309,7 @@ test_kevent_socket_dispatch(struct test_context *ctx)
     kevent_socket_fill(ctx);
     kev.data = 1;
     kevent_get(&ret, ctx->kqfd);
-    kevent_cmp(&kev, &ret); 
+    kevent_cmp(&kev, &ret);
     test_no_kevents(ctx->kqfd);
 
     /* Re-enable the kevent */
@@ -318,7 +318,7 @@ test_kevent_socket_dispatch(struct test_context *ctx)
     kev.data = 1;
     kev.flags = EV_ADD | EV_DISPATCH;   /* FIXME: may not be portable */
     kevent_get(&ret, ctx->kqfd);
-    kevent_cmp(&kev, &ret); 
+    kevent_cmp(&kev, &ret);
     test_no_kevents(ctx->kqfd);
 
     /* Since the knote is disabled, the EV_DELETE operation succeeds. */
@@ -375,7 +375,7 @@ test_kevent_socket_eof(struct test_context *ctx)
 
     kev.flags |= EV_EOF;
     kevent_get(&ret, ctx->kqfd);
-    kevent_cmp(&kev, &ret); 
+    kevent_cmp(&kev, &ret);
 
     /* Delete the watch */
     kevent_add(ctx->kqfd, &kev, ctx->client_fd, EVFILT_READ, EV_DELETE, 0, 0, &ctx->client_fd);
@@ -402,7 +402,7 @@ test_kevent_regular_file(struct test_context *ctx)
     /* Set file position to EOF-1 */
     ret.data--;
     if ((curpos = lseek(fd, ret.data, SEEK_SET)) != ret.data) {
-        printf("seek to %u failed with rv=%lu\n", 
+        printf("seek to %u failed with rv=%lu\n",
                 (unsigned int) ret.data, (unsigned long) curpos);
         abort();
     }

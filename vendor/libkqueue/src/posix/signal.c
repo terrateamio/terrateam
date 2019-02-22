@@ -54,7 +54,7 @@ signal_handler(int sig)
     dbg_printf("caught sig=%d", sig);
     atomic_inc(&s->s_cnt);
 #if defined(__sun__)
-    if (port_send(s->s_filt->kf_kqueue->kq_port, 
+    if (port_send(s->s_filt->kf_kqueue->kq_port,
                    X_PORT_SOURCE_SIGNAL, &sigtbl[sig]) < 0) {
         return; //FIXME: errorhandling
     }
@@ -68,7 +68,7 @@ catch_signal(struct filter *filt, struct knote *kn)
 {
 	int sig;
 	struct sigaction sa;
-    
+
     sig = kn->kev.ident;
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = signal_handler;
@@ -93,7 +93,7 @@ static int
 ignore_signal(int sig)
 {
 	struct sigaction sa;
-    
+
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = SIG_IGN;
 	sigemptyset(&sa.sa_mask);
@@ -130,7 +130,7 @@ int
 evfilt_signal_knote_create(struct filter *filt, struct knote *kn)
 {
     if (kn->kev.ident >= SIGNAL_MAX) {
-        dbg_printf("unsupported signal number %u", 
+        dbg_printf("unsupported signal number %u",
                     (unsigned int) kn->kev.ident);
         return (-1);
     }
@@ -141,7 +141,7 @@ evfilt_signal_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_signal_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_signal_knote_modify(struct filter *filt, struct knote *kn,
                 const struct kevent *kev)
 {
     (void) filt;
@@ -151,7 +151,7 @@ evfilt_signal_knote_modify(struct filter *filt, struct knote *kn,
 
 int
 evfilt_signal_knote_delete(struct filter *filt, struct knote *kn)
-{   
+{
     (void) filt;
     return ignore_signal(kn->kev.ident);
 }
@@ -196,9 +196,9 @@ evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
     dst->ident = sig;
     dst->filter = EVFILT_SIGNAL;
     dst->udata = kn->kev.udata;
-    dst->flags = kn->kev.flags; 
+    dst->flags = kn->kev.flags;
     dst->fflags = 0;
-    dst->data = 1;  
+    dst->data = 1;
 
 #if DEADWOOD
     if (kn->kev.flags & EV_DISPATCH) {
@@ -222,5 +222,5 @@ const struct filter evfilt_signal = {
     evfilt_signal_knote_modify,
     evfilt_signal_knote_delete,
     evfilt_signal_knote_enable,
-    evfilt_signal_knote_disable,     
+    evfilt_signal_knote_disable,
 };

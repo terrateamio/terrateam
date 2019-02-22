@@ -42,7 +42,7 @@ test_kevent_timer_get(struct test_context *ctx)
     kevent_add(ctx->kqfd, &kev, 1, EVFILT_TIMER, EV_ADD, 0, 1000, NULL);
 
     kev.flags |= EV_CLEAR;
-    kev.data = 1; 
+    kev.data = 1;
     kevent_get(&ret, ctx->kqfd);
     kevent_cmp(&kev, &ret);
 
@@ -60,7 +60,7 @@ test_kevent_timer_oneshot(struct test_context *ctx)
 
     /* Retrieve the event */
     kev.flags = EV_ADD | EV_CLEAR | EV_ONESHOT;
-    kev.data = 1; 
+    kev.data = 1;
     kevent_get(&ret, ctx->kqfd);
     kevent_cmp(&kev, &ret);
 
@@ -80,7 +80,7 @@ test_kevent_timer_periodic(struct test_context *ctx)
 
     /* Retrieve the event */
     kev.flags = EV_ADD | EV_CLEAR;
-    kev.data = 1; 
+    kev.data = 1;
     kevent_get(&ret, ctx->kqfd);
     kevent_cmp(&kev, &ret);
 
@@ -112,7 +112,7 @@ test_kevent_timer_disable_and_enable(struct test_context *ctx)
     kevent_update(ctx->kqfd, &kev);
 
     kev.flags = EV_ADD | EV_CLEAR | EV_ONESHOT;
-    kev.data = 1; 
+    kev.data = 1;
     kevent_get(&ret, ctx->kqfd);
     kevent_cmp(&kev, &ret);
 }
@@ -129,7 +129,7 @@ test_kevent_timer_dispatch(struct test_context *ctx)
 
     /* Get one event */
     kev.flags = EV_ADD | EV_CLEAR | EV_DISPATCH;
-    kev.data = 1; 
+    kev.data = 1;
     kevent_get(&ret, ctx->kqfd);
     kevent_cmp(&kev, &ret);
 
@@ -144,7 +144,7 @@ test_kevent_timer_dispatch(struct test_context *ctx)
     /* Get the next event */
     sleep(1);
     kev.flags = EV_ADD | EV_CLEAR | EV_DISPATCH;
-    kev.data = 1; 
+    kev.data = 1;
     kevent_get(&ret, ctx->kqfd);
     kevent_cmp(&kev, &ret);
 

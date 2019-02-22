@@ -23,7 +23,7 @@
 #include "../../include/sys/event.h"
 
 /*
- * GCC-compatible atomic operations 
+ * GCC-compatible atomic operations
  */
 #define atomic_inc(p)   __sync_add_and_fetch((p), 1)
 #define atomic_dec(p)   __sync_sub_and_fetch((p), 1)

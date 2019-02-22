@@ -20,7 +20,7 @@
  *
  * Each translation unit in a program can include this header and
  * have access to it's own private memory allocator. This can be useful
- * for improving the performance of programs which frequently allocate 
+ * for improving the performance of programs which frequently allocate
  * and deallocate objects with a fixed size.
  *
  * The allocator must be initialized by calling mem_init(). This
@@ -57,9 +57,9 @@ mem_init(size_t objsize, size_t cachesize)
 static inline void *
 mem_alloc(void)
 {
-    if (_ma.ac_count > 0) 
+    if (_ma.ac_count > 0)
         return (_ma.ac_cache[_ma.ac_count--]);
-    else 
+    else
         return (malloc(_ma.ac_size));
 }
 
@@ -79,6 +79,6 @@ mem_free(void *ptr)
 {
     if (_ma.ac_count < _ma.ac_max)
         _ma.ac_cache[_ma.ac_count++] = ptr;
-    else 
+    else
         free(ptr);
 }

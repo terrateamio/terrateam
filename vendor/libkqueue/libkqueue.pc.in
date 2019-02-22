@@ -6,7 +6,7 @@ includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
 Name: libkqueue
 Description: Emulates FreeBSD kqueue(2) on other platforms
 Version: @PROJECT_VERSION@
-Requires: 
+Requires:
 Libs: -lkqueue
 Libs.private: -lpthread -lrt
 Cflags: -I${includedir}/kqueue

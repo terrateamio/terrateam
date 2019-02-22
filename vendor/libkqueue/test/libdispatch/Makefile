@@ -13,4 +13,4 @@ clean:
 	rm -f *.o
 
 distclean: clean
-	rm -f disptest 
+	rm -f disptest

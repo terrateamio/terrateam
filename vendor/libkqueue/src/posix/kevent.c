@@ -23,7 +23,7 @@ const struct filter evfilt_proc = EVFILT_NOTIMPL;
 
 int
 posix_kevent_wait(
-        struct kqueue *kq, 
+        struct kqueue *kq,
         const struct timespec *timeout)
 {
     int n, nfds;
@@ -58,7 +58,7 @@ posix_kevent_copyout(struct kqueue *kq, int nready,
     nret = 0;
     for (i = 0; (i < EVFILT_SYSCOUNT && nready > 0 && nevents > 0); i++) {
 //        dbg_printf("eventlist: n = %d nevents = %d", nready, nevents);
-        filt = &kq->kq_filt[i]; 
+        filt = &kq->kq_filt[i];
 //        dbg_printf("pfd[%d] = %d", i, filt->kf_pfd);
         if (FD_ISSET(filt->kf_pfd, &kq->kq_rfds)) {
             dbg_printf("pending events for filter %d (%s)", filt->kf_id, filter_name(filt->kf_id));

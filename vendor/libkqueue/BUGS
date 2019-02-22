@@ -15,14 +15,14 @@
  * need to uninitialize library after fork() using pthread_atfork()
 
  * Solaris unit test failure.
-    
+
     LD_LIBRARY_PATH="..:/usr/sfw/lib/64" ./kqtest
-    1: test_peer_close_detection()  
-    2: test_kqueue()        
-    3: test_kevent_socket_add()     
-    4: test_kevent_socket_del()     
-    5: test_kevent_socket_add_without_ev_add()      
-    6: test_kevent_socket_get()     
+    1: test_peer_close_detection()
+    2: test_kqueue()
+    3: test_kevent_socket_add()
+    4: test_kevent_socket_del()
+    5: test_kevent_socket_add_without_ev_add()
+    6: test_kevent_socket_get()
 
     [read.c:84]: Unexpected event:_test_no_kevents(): [ident=7, filter=-1, flags = 1 (EV_ADD), fflags = 0, data=0, udata=fffffd7fff08c6b4]: Error 0
 
@@ -31,7 +31,7 @@
    These need to be cleaned up; at a minimum, they should emit very loud
    debugging output saying "FIXME -- UNIMPLEMENTED".
 
-      $ grep STUB src/*/*.c  
+      $ grep STUB src/*/*.c
       src/linux/proc.c:    return (-1); /*STUB*/
       src/linux/proc.c:    return (0); /* STUB */
       src/linux/proc.c:    return (0); /* STUB */
@@ -50,7 +50,7 @@
 
  * kqueue() should defer thread cancellation until the end.
 
- * kevent() should defer thread cancellation and call pthread_testcancel() 
-   before and after the call to kevent_wait(). This may require changing the 
-   way that EINTR is handled, to make sure that the EINTR is propagated up 
+ * kevent() should defer thread cancellation and call pthread_testcancel()
+   before and after the call to kevent_wait(). This may require changing the
+   way that EINTR is handled, to make sure that the EINTR is propagated up
    the call stack to kevent().

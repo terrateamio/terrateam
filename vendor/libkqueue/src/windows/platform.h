@@ -33,7 +33,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
- 
+
 #define _CRT_SECURE_NO_WARNINGS 1
 /* The #define doesn't seem to work, but the #pragma does.. */
 #ifdef _MSC_VER
@@ -44,7 +44,7 @@
 
 
 /*
- * Atomic integer operations 
+ * Atomic integer operations
  */
 #define atomic_inc(value) InterlockedIncrement((LONG volatile *)value)
 #define atomic_dec(value) InterlockedDecrement((LONG volatile *)value)
@@ -105,7 +105,7 @@ int     windows_get_descriptor_type(struct knote *);
 
 /* Function visibility macros */
 #define VISIBLE __declspec(dllexport)
-#define HIDDEN  
+#define HIDDEN
 
 #if !defined(__func__) && !defined(__GNUC__)
 #define __func__ __FUNCDNAME__

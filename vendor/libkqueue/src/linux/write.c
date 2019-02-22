@@ -53,7 +53,7 @@ evfilt_write_copyout(struct kevent *dst, struct knote *src, void *ptr)
             dst->fflags = ((ret < 0) ? errno : serr);
         } else { dst->fflags = EIO; }
     }
-          
+
     /* On return, data contains the the amount of space remaining in the write buffer */
     if (ioctl(dst->ident, SIOCOUTQ, &dst->data) < 0) {
             /* race condition with socket close, so ignore this error */

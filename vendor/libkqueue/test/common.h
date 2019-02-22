@@ -105,7 +105,7 @@ void kevent_update(int kqfd, struct kevent *kev);
 void _kevent_cmp(struct kevent *, struct kevent *, const char *, int);
 
 void
-kevent_add(int kqfd, struct kevent *kev, 
+kevent_add(int kqfd, struct kevent *kev,
         uintptr_t ident,
         short     filter,
         u_short   flags,

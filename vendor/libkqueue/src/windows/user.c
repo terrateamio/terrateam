@@ -31,7 +31,7 @@ int
 evfilt_user_copyout(struct kevent* dst, struct knote* src, void* ptr)
 {
     memcpy(dst, &src->kev, sizeof(struct kevent));
-	
+
     dst->fflags &= ~NOTE_FFCTRLMASK;     //FIXME: Not sure if needed
     dst->fflags &= ~NOTE_TRIGGER;
     if (src->kev.flags & EV_ADD) {
@@ -55,7 +55,7 @@ evfilt_user_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_user_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_user_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     unsigned int ffctrl;
@@ -123,5 +123,5 @@ const struct filter evfilt_user = {
     evfilt_user_knote_modify,
     evfilt_user_knote_delete,
     evfilt_user_knote_enable,
-    evfilt_user_knote_disable,     
+    evfilt_user_knote_disable,
 };

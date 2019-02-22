@@ -56,11 +56,11 @@ static int kqueue_open (struct inode *inode, struct file *file);
 static int kqueue_release (struct inode *inode, struct file *file);
 static int kqueue_ioctl(struct inode *inode, struct file *file,
         unsigned int cmd, unsigned long arg);
-static ssize_t kqueue_read(struct file *file, char __user *buf, 
+static ssize_t kqueue_read(struct file *file, char __user *buf,
         size_t lbuf, loff_t *ppos);
-static ssize_t kqueue_write(struct file *file, const char __user *buf, 
+static ssize_t kqueue_write(struct file *file, const char __user *buf,
         size_t lbuf, loff_t *ppos);
- 
+
 struct file_operations fops = {
     .owner  =   THIS_MODULE,
     .ioctl	=   kqueue_ioctl,
@@ -113,7 +113,7 @@ static struct task_struct *kq_thread;
 static struct kfilter *
 kfilter_lookup(struct kqueue *kq, int filt)
 {
-    if (filt > 0 || filt + EVFILT_SYSCOUNT < 0)  
+    if (filt > 0 || filt + EVFILT_SYSCOUNT < 0)
         return NULL;
     return &kq->kq_filt[~filt];
 }
@@ -132,7 +132,7 @@ static int kqueue_main(void *arg)
     return 0;
 }
 
-static int kqueue_open (struct inode *inode, struct file *file) 
+static int kqueue_open (struct inode *inode, struct file *file)
 {
     struct kqueue *kq;
     int i;
@@ -145,14 +145,14 @@ static int kqueue_open (struct inode *inode, struct file *file)
         return -1;
     }
     spin_lock_init(&kq->kq_lock);
-    for (i = 0; i < EVFILT_SYSCOUNT; i++) 
+    for (i = 0; i < EVFILT_SYSCOUNT; i++)
         kq->kq_filt[i].kf_note = RB_ROOT;
     file->private_data = kq;
 
     return 0;
 }
 
-static int kqueue_release (struct inode *inode, struct file *file) 
+static int kqueue_release (struct inode *inode, struct file *file)
 {
     printk("kqueue_release\n");
     kfree(file->private_data);
@@ -161,7 +161,7 @@ static int kqueue_release (struct inode *inode, struct file *file)
 }
 
 static int kqueue_ioctl(struct inode *inode, struct file *file,
-        unsigned int cmd, unsigned long arg) 
+        unsigned int cmd, unsigned long arg)
 {
     int fd;
 
@@ -173,7 +173,7 @@ static int kqueue_ioctl(struct inode *inode, struct file *file,
     return 0;
 }
 
-static ssize_t kqueue_read(struct file *file, char __user *buf, 
+static ssize_t kqueue_read(struct file *file, char __user *buf,
         size_t lbuf, loff_t *ppos)
 {
     struct kqueue *kq = file->private_data;
@@ -185,7 +185,7 @@ static ssize_t kqueue_read(struct file *file, char __user *buf,
     return sizeof(struct kevent);
 }
 
-static ssize_t kqueue_write(struct file *file, const char __user *buf, 
+static ssize_t kqueue_write(struct file *file, const char __user *buf,
         size_t lbuf, loff_t *ppos)
 {
     struct kqueue *kq = file->private_data;

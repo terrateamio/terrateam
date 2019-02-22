@@ -114,7 +114,7 @@ solaris_kqueue_free(struct kqueue *kq)
 
 int
 solaris_kevent_wait(
-        struct kqueue *kq, 
+        struct kqueue *kq,
         int nevents UNUSED,
         const struct timespec *ts)
 
@@ -166,14 +166,14 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
 
                 /* For sockets, the event port object must be reassociated
                    after each event is retrieved. */
-                if (rv == 0 && !(kn->kev.flags & EV_DISPATCH 
+                if (rv == 0 && !(kn->kev.flags & EV_DISPATCH
                             || kn->kev.flags & EV_ONESHOT)) {
                     rv = filt->kn_create(filt, kn);
                 }
-                
+
                 if (eventlist->data == 0) // if zero data is returned, we raced with a read of data from the socket, skip event to have proper semantics
                     skip_event = 1;
-                
+
                 break;
 
             case PORT_SOURCE_TIMER:
@@ -211,9 +211,9 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
          * Certain flags cause the associated knote to be deleted
          * or disabled.
          */
-        if (eventlist->flags & EV_DISPATCH) 
+        if (eventlist->flags & EV_DISPATCH)
             knote_disable(filt, kn); //TODO: Error checking
-        if (eventlist->flags & EV_ONESHOT) 
+        if (eventlist->flags & EV_ONESHOT)
         {
             knote_delete(filt, kn); //TODO: Error checking
         }

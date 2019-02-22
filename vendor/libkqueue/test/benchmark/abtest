@@ -17,14 +17,14 @@ sub create_client {
             PeerAddr  => '127.0.0.1',
             PeerPort  =>  8080,
             Proto => 'tcp',
-            )                
+            )
         or die $!;
     push @CLIENT, $socket;
 }
 
 GetOptions("baseline" => \$BASELINE, "idle=i" => \$NCLIENT) or die;
 
-for (my $i = 0; $i < $NCLIENT; $i++) { 
+for (my $i = 0; $i < $NCLIENT; $i++) {
     create_client();
 }
 print "====> Created $NCLIENT idle connections <=====\n";

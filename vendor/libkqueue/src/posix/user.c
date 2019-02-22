@@ -53,7 +53,7 @@ posix_evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSE
     memcpy(dst, &src->kev, sizeof(*dst));
     struct knote *kn;
     int nevents = 0;
-  
+
     dst->fflags &= ~NOTE_FFCTRLMASK;     //FIXME: Not sure if needed
     dst->fflags &= ~NOTE_TRIGGER;
     if (src->kev.flags & EV_ADD) {
@@ -67,7 +67,7 @@ posix_evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSE
         kqops.eventfd_raise(&src->kdata.kn_eventfd);
     }
 
-    if (src->kev.flags & EV_DISPATCH) 
+    if (src->kev.flags & EV_DISPATCH)
         src->kev.fflags &= ~NOTE_TRIGGER;
 
     return (0);
@@ -90,7 +90,7 @@ posix_evfilt_user_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-posix_evfilt_user_knote_modify(struct filter *filt, struct knote *kn, 
+posix_evfilt_user_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     unsigned int ffctrl;
@@ -160,7 +160,7 @@ const struct filter evfilt_user = {
     evfilt_user_knote_modify,
     evfilt_user_knote_delete,
     evfilt_user_knote_enable,
-    evfilt_user_knote_disable,   
+    evfilt_user_knote_disable,
 };
 
 */
