@@ -1,0 +1,4 @@
+usr/lib/*/libkqueue.so
+usr/lib/*/pkgconfig/libkqueue.pc
+usr/include/kqueue/sys/event.h
+usr/share/man/man2/*

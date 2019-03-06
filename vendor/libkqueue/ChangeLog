@@ -1,3 +1,10 @@
+Unreleased
+------------------------------------------------------------------------
+
+  * Install event.h in $INCLUDEDIR/kqueue/sys, rather than $INCLUDEDIR/sys
+
+  * Add support for building native Debian packages using Docker
+
 2019-02-06  v2.3.1
 ------------------------------------------------------------------------
 

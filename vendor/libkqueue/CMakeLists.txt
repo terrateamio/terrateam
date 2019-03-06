@@ -14,11 +14,16 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-# Note: In order for RPM packaging to work correctly version >= 3.8 is required
-cmake_minimum_required(VERSION 3.8.0)
+if(EXISTS "/etc/debian_version")
+  cmake_minimum_required(VERSION 3.7.2)
+else()
+  # KLUDGE: assumes RPM here
+  # For RPM packaging to work correctly version >= 3.8 is required
+  cmake_minimum_required(VERSION 3.8.0)
+endif()
 cmake_policy(SET CMP0063 OLD)
 
-project(libkqueue VERSION 2.3.1 LANGUAGES C)
+project(libkqueue VERSION 2.4.0 LANGUAGES C)
 enable_testing()
 
 set(CMAKE_C_VISIBILITY_PRESET hidden)
@@ -182,7 +187,7 @@ set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION ${CMAKE_INSTALL_FULL_MANDIR}
 install(FILES
           "include/sys/event.h"
         DESTINATION
-          "${CMAKE_INSTALL_FULL_INCLUDEDIR}/sys"
+          "${CMAKE_INSTALL_FULL_INCLUDEDIR}/kqueue/sys"
         COMPONENT headers)
 install(TARGETS
           kqueue
@@ -265,3 +270,5 @@ set(CPACK_DEB_COMPONENT_INSTALL ON)             # Enable component based packagi
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)         # Use default Debian package naming scheme
 
 include(CPack)
+
+add_custom_target(tarball git archive -o "libkqueue-${PROJECT_VERSION}.tar.gz" --prefix "libkqueue-${PROJECT_VERSION}/" HEAD)

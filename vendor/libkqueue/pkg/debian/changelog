@@ -1,0 +1,95 @@
+libkqueue (2.4.0-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Remove autoconf dependencies, as this project uses CMake.
+  * Remove all Debian patches, as they have been incorporated upstream.
+
+ -- Mark Heily <mark@heily.com>  Wed, 18 Feb 2019 18:24:48 +0000
+
+libkqueue (2.3.1-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Mark Heily <mark@heily.com>  Wed, 06 Feb 2019 18:14:10 +0000
+
+libkqueue (2.3.0-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Mark Heily <mark@heily.com>  Tue, 15 Jan 2019 22:11:11 +0000
+
+libkqueue (2.0.3-1.1) unstable; urgency=medium
+
+  * Non maintainer upload.
+  * Fix build failures on 64bit architectures. Closes: #760302, #754376.
+    - Replacing preprocessor macro X86_64 to LP64 in knote.c, since
+      it is used to treat pointer rather than processor specifics (Fernando
+      Seiti Furusat).
+
+ -- Matthias Klose <doko@debian.org>  Thu, 11 Sep 2014 13:52:07 +0200
+
+libkqueue (2.0.3-1) unstable; urgency=low
+
+  * New upstream release (closes: #741009)
+
+ -- Mark Heily <mark@heily.com>  Sun, 09 Mar 2014 20:45:35 -0400
+
+libkqueue (2.0.2-1) unstable; urgency=low
+
+  * New upstream release (closes: #724170, #669572, #729591)
+
+ -- Mark Heily <mark@heily.com>  Sun, 23 Feb 2014 16:04:08 -0500
+
+libkqueue (1.0.4-2) unstable; urgency=low
+  * Integrate patches from Matthias Klose (Closes: #640029)
+    * Add -Wno-error=unused-result to CFLAGS
+    * Fix header checks for multiarch locations.
+
+ -- Mark Heily <mark@heily.com>  Thu, 27 Oct 2011 20:58:03 -0400
+
+libkqueue (1.0.4-1) unstable; urgency=low
+
+  * Fix a FTBFS on 32-bit platforms caused by the use of /usr/lib64
+  * Fix a lintian warning related to the copyright file
+
+ -- Mark Heily <mark@heily.com>  Wed, 13 Jul 2011 20:52:41 -0400
+
+libkqueue (1.0.3-1) unstable; urgency=low
+
+  * New upstream release (Closes: #625639)
+  * Update control file with new website and standards version
+  * Simplify the debian/rules file using debhelper for everything
+  * Upgrade source/format to "3.0 (quilt)"
+  * Remove the debian/watch file
+
+ -- Mark Heily <mark@heily.com>  Sat, 09 Jul 2011 18:56:19 -0400
+
+libkqueue (0.9.2-2) unstable; urgency=low
+
+  * Apply patch to fix a bug in EV_RECEIPT (Closes: #595648)
+
+ -- Mark Heily <mark@heily.com>  Sun, 05 Sep 2010 13:57:45 -0400
+
+libkqueue (0.9.2-1) unstable; urgency=low
+
+  * New upstream release (Closes: #591818)
+
+ -- Mark Heily <mark@heily.com>  Thu, 05 Aug 2010 23:31:18 -0400
+
+libkqueue (0.9.1-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Mark Heily <mark@heily.com>  Wed, 04 Aug 2010 21:35:01 -0400
+
+libkqueue (0.8-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Mark Heily <mark@heily.com>  Sun, 25 Jul 2010 10:09:35 -0400
+
+libkqueue (0.7-1) unstable; urgency=low
+
+  * Initial release (Closes: #576317)
+
+ -- Mark Heily <mark@heily.com>  Sun, 28 Mar 2010 18:58:58 -0400
