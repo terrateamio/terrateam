@@ -396,23 +396,6 @@ let query_key_add_remove =
   assert_equal ~printer (Uri.query uri) []
   in ["query_key_add_remove" >:: test]
 
-let test_sexping =
-  let tests = [
-    "1", "https://example.com/foo?bar=1#frag",
-      "((scheme(https))(host(example.com))(path /foo)(query((bar(1))))(fragment(frag)))";
-    "2", "", "()";
-    "3", "/?foo=bar", "((path /)(query((foo(bar)))))";
-  ] in
-  let test uri exp =
-    let uri = Uri.of_string uri in
-    let s = Sexplib0.Sexp.to_string (Uri_sexp.sexp_of_t uri) in
-    let msg = sprintf "%s <> %s" s exp in
-    assert_equal ~msg s exp
-  in
-  List.map (fun (id,uri,exp) ->
-    ("test_sexping_"^id) >:: (fun () -> test uri exp)
-  ) tests
-
 let test_with_change = [
   "test_with_scheme" >:: (fun () ->
     let printer = Uri.to_string in
@@ -529,10 +512,10 @@ let test_with_change = [
     let uri_some = Uri.with_path uri "a" in
     let uri_exp_s = "///a" in
     let uri_exp = Uri.of_string uri_exp_s in
-    let uri_exp_sexp  = Sexplib0.Sexp.to_string (Uri_sexp.sexp_of_t uri_exp) in
-    let uri_some_sexp = Sexplib0.Sexp.to_string (Uri_sexp.sexp_of_t uri_some) in
-    let msg = sprintf "path relative host (%s <> %s)"
-      uri_exp_sexp uri_some_sexp in
+    let uri_exp_str = Uri.to_string uri_exp in
+    let uri_some_str = Uri.to_string uri_some in
+    let msg = sprintf "path relative host (%S <> %S)"
+      uri_exp_str uri_some_str in
     assert_equal ~msg uri_exp uri_some
   );
 
@@ -546,10 +529,10 @@ let test_with_change = [
       let uri_quest = Uri.with_query uri ["",[]] in
       let uri_exp_s = prefix ^ "?" in
       let uri_exp   = Uri.of_string uri_exp_s in
-      let uri_exp_sexp = Sexplib0.Sexp.to_string (Uri_sexp.sexp_of_t uri_exp) in
-      let uri_quest_sexp = Sexplib0.Sexp.to_string (Uri_sexp.sexp_of_t uri_quest) in
-      let msg = sprintf "'%s' quest (%s <> %s)"
-        prefix uri_exp_sexp uri_quest_sexp in
+      let uri_exp_str = Uri.to_string uri_exp in
+      let uri_quest_str = Uri.to_string uri_quest in
+      let msg = sprintf "'%s' quest (%S <> %S)"
+        prefix uri_exp_str uri_quest_str in
       assert_equal ~cmp ~msg uri_exp uri_quest;
       let uri_equal = Uri.with_query uri ["",[""]] in
       let msg = prefix ^ " equal" in
@@ -696,7 +679,6 @@ let _ =
     @ test_rel_id
     @ test_tcp_port_of_uri
     @ query_key_add_remove
-    @ test_sexping
     @ test_with_change
     @ test_canonicalize
     @ test_with_uri

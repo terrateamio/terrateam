@@ -1,8 +1,10 @@
-(executables
- (names test_runner)
- (libraries uri uri.sexp uri_services oUnit sexplib0))
+(test
+ (name test_runner)
+ (package uri)
+ (modules test_runner)
+ (libraries uri uri.services oUnit))
 
-(alias
- (name    runtest)
- (deps    test_runner.exe)
- (action  (run %{deps})))
+(test
+ (name test_runner_sexp)
+ (package uri-sexp)
+ (libraries uri uri.services uri-sexp oUnit))
