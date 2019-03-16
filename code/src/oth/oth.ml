@@ -125,7 +125,7 @@ module Outputter = struct
             default
       in
       List.map
-        ~f:(fun on -> CCList.Assoc.get_exn on outputter_map)
+        ~f:(fun on -> CCList.Assoc.get_exn ~eq:CCString.equal on outputter_map)
         outputter_names
     in
     List.iter
