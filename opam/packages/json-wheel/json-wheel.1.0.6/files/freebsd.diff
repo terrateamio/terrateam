@@ -1,0 +1,25 @@
+diff --git a/Makefile b/Makefile
+index b3d999c..83a64b9 100644
+--- a/Makefile
++++ b/Makefile
+@@ -11,7 +11,10 @@ SOURCES = \
+   json_io.mli json_io.ml \
+   json_compat.ml
+ 
+-PACKS = netstring
++THREADS=yes
++
++LOCAL_PACKS = netstring
++PACKS = $(LOCAL_PACKS)
+ 
+ STDBIN = $(shell dirname `which ocamlfind`)
+ ifndef PREFIX
+@@ -53,7 +56,7 @@ version.ml: Makefile
+ 	echo 'let version = "$(VERSION)"' > version.ml
+ jsoncat: version.ml jsoncat.ml
+ 	$(MAKE) ncl
+-	ocamlfind ocamlopt -o jsoncat -package $(PACKS) -linkpkg \
++	ocamlfind ocamlopt -o jsoncat -package $(LOCAL_PACKS) -thread -linkpkg \
+ 		$(RESULT).cmxa version.ml jsoncat.ml
+ 
+ test: jsoncat

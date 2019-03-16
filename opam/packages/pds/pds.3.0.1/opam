@@ -1,0 +1,8 @@
+opam-version: "2.0"
+maintainer: "orbitz@gmail.com"
+depends: ["ocaml" "ocamlfind" "toml"]
+build: [
+  [make "-j%{jobs}%"]
+  [make "PREFIX=%{prefix}%" "install"]
+]
+remove: [make "PREFIX=%{prefix}%" "remove"]

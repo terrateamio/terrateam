@@ -1,0 +1,7 @@
+opam-version: "2.0"
+maintainer: "orbitz@gmail.com"
+depends: ["ocaml" "async" "core" "ocamlfind" "pds" "revops_async"]
+flags: light-uninstall
+build: [make "-j%{jobs}%"]
+install: [make "install"]
+remove: ["ocamlfind" "remove" "oth_async"]

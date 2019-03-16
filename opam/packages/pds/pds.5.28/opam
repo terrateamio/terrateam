@@ -1,0 +1,42 @@
+opam-version: "2.0"
+maintainer: "orbitz@gmail.com"
+build: [
+	[make "-j%{jobs}%"]
+	[make "-j%{jobs}%" "test"] {with-test}
+]
+
+install: [
+	[make "PREFIX=%{prefix}%" "install"]
+]
+
+remove: [
+	[make "PREFIX=%{prefix}%" "remove"]
+]
+
+depends: [
+	"cmdliner"
+	"crunch"
+	"ocaml" { >= "4.02" }
+	"ocamlfind"
+	"process"
+	"toml"
+]
+
+authors: [
+	"dklee@dklee.org"
+	"orbitz@gmail.com"
+]
+
+description: """
+A tool to build Makefiles for Ocaml projects
+"""
+
+homepage: "https://bitbucket.org/mimirops/pds"
+
+url {
+	src: "https://bitbucket.org/mimirops/pds/get/5.28.tar.gz"
+	checksum: "a1a94dd35709ce40efb4e4afeba2946c"
+}
+bug-reports: "https://bitbucket.org/mimirops/pds/issues"
+dev-repo: "git@bitbucket.org:mimirops/pds.git"
+

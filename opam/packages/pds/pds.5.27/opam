@@ -1,0 +1,20 @@
+opam-version: "2.0"
+maintainer: "orbitz@gmail.com"
+authors: ["dklee@dklee.org" "orbitz@gmail.com"]
+homepage: "https://bitbucket.org/mimirops/pds"
+bug-reports: "https://bitbucket.org/mimirops/pds/issues"
+depends: [
+  "ocaml" {>= "4.02"}
+  "cmdliner"
+  "crunch"
+  "ocamlfind"
+  "process"
+  "toml"
+]
+build: [
+  [make "-j%{jobs}%"]
+  [make "-j%{jobs}%" "test"] {with-test}
+]
+install: [make "PREFIX=%{prefix}%" "install"]
+remove: [make "PREFIX=%{prefix}%" "remove"]
+dev-repo: "git+ssh://git@bitbucket.org/mimirops/pds.git"

@@ -1,0 +1,46 @@
+opam-version: "2.0"
+maintainer: "mmatalka@gmail.com"
+build: [
+	[make "-j%{jobs}%"]
+	[make "-j%{jobs}%" "test"] {with-test}
+]
+
+install: [
+	[make "PREFIX=%{prefix}%" "install"]
+]
+
+remove: [
+	[make "PREFIX=%{prefix}%" "remove"]
+]
+
+depends: [
+	"cmdliner"
+	"containers"
+	"merlin-of-pds"
+	"ocaml" { >= "4.03" }
+	"ocamlfind"
+	"oth" { with-test }
+	"pds" { build & (>= "5" & < "6") }
+	"ppx_deriving"
+	"process"
+	"sedlex"
+	"toml"
+]
+
+authors: [
+	"mmatalka@gmail.com"
+]
+
+description: """
+Logic-less template system
+"""
+
+homepage: "https://bitbucket.org/acslab/snabela"
+
+url {
+	src: "https://bitbucket.org/acslab/snabela/get/1.0.tar.gz"
+	checksum: "ec193de344812a1a93380ecf14e26ba8"
+}
+bug-reports: "https://bitbucket.org/acslab/snabela/issues"
+dev-repo: "git@bitbucket.org:acslab/snabela.git"
+

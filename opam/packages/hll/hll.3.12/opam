@@ -1,0 +1,42 @@
+opam-version: "2.0"
+maintainer: "orbitz@gmail.com"
+build: [
+	[make "-j%{jobs}%"]
+	[make "-j%{jobs}%" "test"] {with-test}
+]
+
+install: [
+	[make "PREFIX=%{prefix}%" "install"]
+]
+
+remove: [
+	[make "PREFIX=%{prefix}%" "remove"]
+]
+
+depends: [
+	"cmdliner"
+	"containers"
+	"ocamlfind"
+	"pds" { build & (>= "5" & < "6") }
+	"process"
+	"toml" { >= "4" }
+]
+
+authors: [
+	"dklee@dklee.org"
+	"orbitz@gmail.com"
+]
+
+description: """
+Create opam package files from a repository
+"""
+
+homepage: "https://bitbucket.org/mimirops/hll"
+
+url {
+	src: "https://bitbucket.org/mimirops/hll/get/3.12.tar.gz"
+	checksum: "a77cf807bafd95e8b587c463c4ddff41"
+}
+bug-reports: "https://bitbucket.org/mimirops/hll/issues"
+dev-repo: "git@bitbucket.org:mimirops/hll.git"
+

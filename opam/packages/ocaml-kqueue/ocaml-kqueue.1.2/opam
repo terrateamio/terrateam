@@ -1,0 +1,10 @@
+opam-version: "2.0"
+maintainer: "orbitz@gmail.com"
+authors: "orbitz@gmail.com"
+homepage: "https://bitbucket.org/acslab/ocaml-kqueue"
+bug-reports: "https://bitbucket.org/acslab/ocaml-kqueue/issues"
+depends: ["ocaml"]
+build: [make "-j%{jobs}%"]
+install: [make "PREFIX=%{prefix}%" "install"]
+remove: [make "PREFIX=%{prefix}%" "remove"]
+dev-repo: "git+ssh://git@bitbucket.org/acslab/ocaml-kqueue.git"

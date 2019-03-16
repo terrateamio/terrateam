@@ -1,0 +1,7 @@
+opam-version: "2.0"
+maintainer: "orbitz@gmail.com"
+depends: ["ocaml" "crunch" "toml"]
+flags: light-uninstall
+build: [make "-j%{jobs}%"]
+install: [make "PREFIX=%{prefix}%" "install"]
+remove: ["rm" "-v" "%{prefix}%/bin/pds"]

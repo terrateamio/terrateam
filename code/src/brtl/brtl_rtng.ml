@@ -96,7 +96,7 @@ module Route = struct
           if idx < String.length path then begin
             let s = "/" ^ s in
             let len = String.length s in
-            if CCString.is_sub ~sub:s 0 path idx ~len then
+            if CCString.is_sub ~sub:s 0 path idx ~sub_len:len then
               Some (idx + len, wit)
             else
               None

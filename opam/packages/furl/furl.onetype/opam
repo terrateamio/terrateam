@@ -1,0 +1,28 @@
+opam-version: "2.0"
+maintainer: "Gabriel Radanne <drupyog@zoho.com>"
+authors: "Gabriel Radanne <drupyog@zoho.com>"
+license: "MIT"
+tags: ["url" "routing" "http"]
+homepage: "https://github.com/Drup/furl"
+bug-reports: "https://github.com/Drup/furl/issues"
+depends: [
+  "ocaml"
+  "ocamlfind" {build}
+  "uri"
+  "re" {>= "1.4.0"}
+  "oasis" {dev & build}
+  "gen"
+]
+flags: light-uninstall
+build: [
+  ["ocaml" "setup.ml" "-configure" "--prefix" prefix]
+  ["ocaml" "setup.ml" "-build"]
+  ["ocaml" "setup.ml" "-configure" "--prefix" prefix "--enable-tests"]
+    {with-test}
+  ["ocaml" "setup.ml" "-build"] {with-test}
+  ["ocaml" "setup.ml" "-test"] {with-test}
+  ["ocaml" "setup.ml" "-doc"] {with-doc}
+]
+install: ["ocaml" "setup.ml" "-install"]
+remove: ["ocamlfind" "remove" "furl"]
+dev-repo: "git+https://github.com/Drup/furl.git"

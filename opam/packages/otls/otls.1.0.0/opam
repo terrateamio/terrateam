@@ -1,0 +1,22 @@
+opam-version: "2.0"
+maintainer: "orbitz@gmail.com"
+authors: "orbitz@gmail.com"
+homepage: "https://bitbucket.org/acslab/otls"
+bug-reports: "https://bitbucket.org/acslab/otls/issues"
+depends: [
+  "ocaml"
+  "containers"
+  "ctypes"
+  "ctypes-foreign"
+  "merlin-of-pds"
+  "ocamlfind"
+  "oth" {with-test}
+  "pds" {build & (>= "5" & < "6")}
+]
+build: [
+  [make "-j%{jobs}%"]
+  [make "-j%{jobs}%" "test"] {with-test}
+]
+install: [make "PREFIX=%{prefix}%" "install"]
+remove: [make "PREFIX=%{prefix}%" "remove"]
+dev-repo: "git+ssh://git@bitbucket.org/acslab/otls.git"

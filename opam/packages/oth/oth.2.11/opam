@@ -1,0 +1,43 @@
+opam-version: "2.0"
+maintainer: "orbitz@gmail.com"
+build: [
+	[make "-j%{jobs}%"]
+	[make "-j%{jobs}%" "test"] {with-test}
+]
+
+install: [
+	[make "PREFIX=%{prefix}%" "install"]
+]
+
+remove: [
+	[make "PREFIX=%{prefix}%" "remove"]
+]
+
+depends: [
+	"containers"
+	"duration"
+	"merlin-of-pds"
+	"ocamlfind"
+	"pds" { build & (>= "5" & < "6") }
+	"revops"
+]
+
+authors: [
+	"dklee@dklee.org"
+	"orbitz@gmail.com"
+]
+
+description: """
+Ocaml Test Harness - Simple library for running tests
+"""
+
+homepage: "https://bitbucket.org/mimirops/oth"
+
+url {
+	src: "https://bitbucket.org/mimirops/oth/get/2.11.tar.gz"
+	checksum: "0fc90764a1660717df9e53f50037b783"
+}
+bug-reports: "https://bitbucket.org/mimirops/oth/issues"
+dev-repo: "git@bitbucket.org:mimirops/oth.git"
+
+
