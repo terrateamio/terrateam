@@ -1,7 +1,22 @@
-val send : ?body:string -> meth:string -> url:string -> unit -> string Abb_fut.t
+module Method : sig
+  type t = [ `GET
+           | `POST
+           | `DELETE
+           ]
+end
 
-val send_formdata :
-  meth:string ->
+module Response : sig
+  type t = { status : int
+           ; text : string
+           }
+end
+
+(** Send a request to [url] with [body] using [meth].  A successful response
+   means that the destination responded with a valid HTTP response, even if the
+   HTTP response constitutes an error. *)
+val send :
+  ?body:string ->
+  meth:Method.t ->
   url:string ->
-  Js_of_ocaml.Form.formData Js_of_ocaml.Js.t ->
-  unit Abb_fut.t
+  unit ->
+  (Response.t, [> `Error ]) result Abb_fut.t
