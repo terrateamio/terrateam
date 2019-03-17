@@ -10,7 +10,7 @@ module Kv = struct
 
   type t =
     | V of scalar
-    | L of t Map.t list [@printer CCList.pp (Map.pp CCString.print pp)]
+    | L of t Map.t list [@printer CCList.pp (Map.pp CCString.pp pp)]
     [@@deriving show,eq]
 
   let list m = L m
