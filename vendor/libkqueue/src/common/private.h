@@ -86,18 +86,19 @@ struct knote {
     unsigned int      kn_flags;
     union {
         /* OLD */
-        int           pfd;       /* Used by timerfd */
-        int           events;    /* Used by socket */
+        int             pfd;         //!< Used by timerfd.
+        int             events;      //!< Used by socket.
         struct {
-            nlink_t   nlink;  /* Used by vnode */
-            off_t     size;   /* Used by vnode */
+            nlink_t         nlink;       //!< Used by vnode.
+            off_t           size;        //!< Used by vnode.
         } vnode;
-        timer_t       timerid;
-        struct sleepreq *sleepreq; /* Used by posix/timer.c */
-		void          *handle;      /* Used by win32 filters */
+        timer_t         timerid;
+        struct sleepreq *sleepreq;  //!< Used by posix/timer.c.
+        void            *handle;    //!< Used by win32 filters.
     } data;
-	struct kqueue*	   kn_kq;
-    volatile uint32_t  kn_ref;
+
+    struct kqueue       *kn_kq;
+    volatile uint32_t   kn_ref;
 #if defined(KNOTE_PLATFORM_SPECIFIC)
     KNOTE_PLATFORM_SPECIFIC;
 #endif
@@ -112,6 +113,24 @@ struct knote {
             (ent)->kev.flags |=  EV_DISABLE;                        \
 } while (0/*CONSTCOND*/)
 
+/** A filter within a kqueue notification channel
+ *
+ * Filters are discreet event notification facilities within a kqueue.
+ * Filters do not usually interact with each other, and maintain separate states.
+ *
+ * Filters handle notifications from different event sources.
+ * The EVFILT_READ filter, for example, provides notifications when an FD is
+ * readable, and EVFILT_SIGNAL filter provides notifications when a particular
+ * signal is received by the process/thread.
+ *
+ * Many of the fields in this struct are callbacks for functions which operate
+ * on the filer.
+ *
+ * Callbacks either change the state of the filter itself, or create new
+ * knotes associated with the filter.  The knotes describe a filter-specific
+ * event the application is interested in receiving.
+ *
+ */
 struct filter {
     short     kf_id;
 
@@ -137,7 +156,7 @@ struct filter {
     int       kf_wfd;                   /* fd to write when an event occurs */
     //----?
 
-    struct evfilt_data *kf_data;	    /* filter-specific data */
+    struct evfilt_data *kf_data;        /* filter-specific data */
     RB_HEAD(knt, knote) kf_knote;
     pthread_rwlock_t    kf_knote_mtx;
     struct kqueue      *kf_kqueue;
@@ -149,9 +168,16 @@ struct filter {
 /* Use this to declare a filter that is not implemented */
 #define EVFILT_NOTIMPL { 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 
+/** Structure representing a notification channel
+ *
+ * Structure used to track the events that an application is interesting
+ * in receiving notifications for.
+ */
 struct kqueue {
-    int             kq_id;
-    struct filter   kq_filt[EVFILT_SYSCOUNT];
+    int             kq_id;                    //!< File descriptor used to identify this kqueue.
+    struct filter   kq_filt[EVFILT_SYSCOUNT]; //!< Filters supported by the kqueue.  Each
+                                              ///< kqueue maintains one filter state structure
+                                              ///< per filter type.
     fd_set          kq_fds, kq_rfds;
     int             kq_nfds;
     tracing_mutex_t kq_mtx;
@@ -168,7 +194,7 @@ struct kqueue_vtable {
     // @param timespec can be given as timeout
     // @param int the number of events to wait for
     // @param kqueue the queue to wait on
-	int  (*kevent_wait)(struct kqueue *, int, const struct timespec *);
+    int  (*kevent_wait)(struct kqueue *, int, const struct timespec *);
     // @param kqueue the queue to look at
     // @param int The number of events that should be ready
     // @param kevent the structure to copy the events into
@@ -207,13 +233,13 @@ int  knote_disable(struct filter *, struct knote *);
 #define knote_get_filter(knt) &((knt)->kn_kq->kq_filt[(knt)->kev.filter])
 
 int         filter_lookup(struct filter **, struct kqueue *, short);
-int      	filter_register_all(struct kqueue *);
-void     	filter_unregister_all(struct kqueue *);
+int          filter_register_all(struct kqueue *);
+void         filter_unregister_all(struct kqueue *);
 const char *filter_name(short);
 
 int         kevent_wait(struct kqueue *, const struct timespec *);
 int         kevent_copyout(struct kqueue *, int, struct kevent *, int);
-void 		kevent_free(struct kqueue *);
+void         kevent_free(struct kqueue *);
 const char *kevent_dump(const struct kevent *);
 struct kqueue * kqueue_lookup(int);
 int         kqueue_validate(struct kqueue *);
