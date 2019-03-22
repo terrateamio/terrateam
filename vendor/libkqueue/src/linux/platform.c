@@ -118,8 +118,8 @@ monitoring_thread_start(void *arg)
         return NULL;
 
     /*
-	 * Now that thread is initialized, let kqueue init resume
-	 */
+     * Now that thread is initialized, let kqueue init resume
+     */
     pthread_cond_broadcast(&monitoring_thread_cond);
     (void) pthread_mutex_unlock(&kq_mtx);
 
@@ -547,6 +547,29 @@ linux_eventfd_descriptor(struct eventfd *e)
     return (e->ef_id);
 }
 
+/** Determine what type of file descriptor the knote describes
+ *
+ * Sets the kn_flags field of the knote to one of:
+ * - KNFL_FILE               FD is a regular file.
+ * - KNFL_PIPE               FD is one end of a pipe.
+ * - KNFL_BLK                FD is a block device.
+ * - KNFL_CHR                FD is a character device.
+ * - KNFL_SOCKET_STREAM      FD is a streaming socket(reliable connection-oriented byte streams).
+ * - KNFL_SOCKET_DGRAM       FD is a datagram socket (unreliable connectionless messages).
+ * - KNFL_SOCKET_RDM         FD is a reliable datagram socket (reliable connectionless messages).
+ * - KNFL_SOCKET_SEQPACKET   FD is a sequenced packet socket (reliable connection-oriented messages).
+ *
+ * Additionally KNFL_SOCKET_* types may have the KNFL_SOCKET_PASSIVE flag set if they
+ * are never expected to return data, but only provide an indication of whether data is available.
+ *
+ * We currently check whether the socket is a 'listening' socket (SO_ACCEPTCONN) or has a BPF rule
+ * attached (SO_GET_FILTER) to determine if it's passive.
+ *
+ * @param[in] kn    holding the file descriptor.
+ * @return
+ *    - 0 on success.
+ *    - -1 on failure.
+ */
 int
 linux_get_descriptor_type(struct knote *kn)
 {
@@ -563,42 +586,37 @@ linux_get_descriptor_type(struct knote *kn)
         dbg_perror("fstat(2)");
         return (-1);
     }
+
     switch (sb.st_mode & S_IFMT) {
+        default:
+            errno = EBADF;
+            dbg_perror("unknown fd type");
+            return (-1);
+
         case S_IFREG:
             dbg_printf("fd %d is a regular file\n", fd);
             kn->kn_flags |= KNFL_FILE;
-            break;
+            return (0);
 
         case S_IFIFO:
             dbg_printf("fd %d is a pipe\n", fd);
             kn->kn_flags |= KNFL_PIPE;
-            break;
+            return (0);
 
         case S_IFBLK:
             dbg_printf("fd %d is a block device\n", fd);
             kn->kn_flags |= KNFL_BLOCKDEV;
-            break;
+            return (0);
 
         case S_IFCHR:
             dbg_printf("fd %d is a character device\n", fd);
             kn->kn_flags |= KNFL_CHARDEV;
-            break;
+            return (0);
 
         case S_IFSOCK:
             dbg_printf("fd %d is a socket\n", fd);
             break; /* deferred type determination */
-
-        default:
-            errno = EBADF;
-            dbg_perror("unknown fd type");
-            return -1;
     }
-
-    /*
-     * Test if the socket is active or passive.
-     */
-    if (!S_ISSOCK(sb.st_mode))
-        return (0);
 
     /*
      * Determine socket type.
@@ -636,6 +654,7 @@ linux_get_descriptor_type(struct knote *kn)
             dbg_perror("unknown socket type");
             return (-1);
     }
+
     slen = sizeof(lsock);
     lsock = 0;
     ret = getsockopt(fd, SOL_SOCKET, SO_ACCEPTCONN, &lsock, &slen);
@@ -643,14 +662,13 @@ linux_get_descriptor_type(struct knote *kn)
         switch (errno) {
             case ENOTSOCK:   /* same as lsock = 0 */
                 break;
+
             default:
                 dbg_perror("getsockopt(3)");
                 return (-1);
         }
-    } else {
-        if (lsock)
-            kn->kn_flags |= KNFL_SOCKET_PASSIVE;
-    }
+    } else if (lsock)
+        kn->kn_flags |= KNFL_SOCKET_PASSIVE;
 
     /*
      * Test if socket has a filter
@@ -668,10 +686,8 @@ linux_get_descriptor_type(struct knote *kn)
                 dbg_perror("getsockopt(3)");
                 return (-1);
         }
-    } else {
-        if (out_len)
-            kn->kn_flags |= KNFL_SOCKET_PASSIVE;
-    }
+    } else if (out_len)
+        kn->kn_flags |= KNFL_SOCKET_PASSIVE;
 
     return (0);
 }
