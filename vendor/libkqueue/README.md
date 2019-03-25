@@ -66,6 +66,13 @@ Running Unit Tests
     cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DENABLE_TESTING=YES <path to source>
     make
     make test
+    
+Debugging
+---------
+
+Ensure -DNDEBUG is *NOT* passed during compilation, otherwise all debug output will be disabled.
+
+    KQUEUE_DEBUG=1 <your application>
 
 Building Applications
 ---------------------
