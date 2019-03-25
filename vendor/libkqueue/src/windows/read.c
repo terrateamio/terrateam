@@ -152,7 +152,7 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
     kn->data.handle = evt;
 
     if (RegisterWaitForSingleObject(&kn->kn_event_whandle, evt,
-	    evfilt_read_callback, kn, INFINITE, 0) == 0) {
+        evfilt_read_callback, kn, INFINITE, 0) == 0) {
         dbg_puts("RegisterWaitForSingleObject failed");
         CloseHandle(evt);
         return (-1);
@@ -174,14 +174,14 @@ evfilt_read_knote_delete(struct filter *filt, struct knote *kn)
     if (kn->data.handle == NULL || kn->kn_event_whandle == NULL)
         return (0);
 
-	if(!UnregisterWaitEx(kn->kn_event_whandle, INVALID_HANDLE_VALUE)) {
-		dbg_lasterror("UnregisterWait()");
-		return (-1);
-	}
-	if (!WSACloseEvent(kn->data.handle)) {
-		dbg_wsalasterror("WSACloseEvent()");
-		return (-1);
-	}
+    if(!UnregisterWaitEx(kn->kn_event_whandle, INVALID_HANDLE_VALUE)) {
+        dbg_lasterror("UnregisterWait()");
+        return (-1);
+    }
+    if (!WSACloseEvent(kn->data.handle)) {
+        dbg_wsalasterror("WSACloseEvent()");
+        return (-1);
+    }
 
     kn->data.handle = NULL;
     return (0);

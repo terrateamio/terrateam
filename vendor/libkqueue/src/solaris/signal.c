@@ -49,19 +49,19 @@ signal_handler(int sig)
 static int
 catch_signal(struct filter *filt, struct knote *kn)
 {
-	int sig;
-	struct sigaction sa;
+    int sig;
+    struct sigaction sa;
 
     sig = kn->kev.ident;
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = signal_handler;
-	sa.sa_flags |= SA_RESTART;
-	sigfillset(&sa.sa_mask);
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = signal_handler;
+    sa.sa_flags |= SA_RESTART;
+    sigfillset(&sa.sa_mask);
 
-	if (sigaction(kn->kev.ident, &sa, NULL) == -1) {
-		dbg_perror("sigaction");
-		return (-1);
-	}
+    if (sigaction(kn->kev.ident, &sa, NULL) == -1) {
+        dbg_perror("sigaction");
+        return (-1);
+    }
 
     pthread_mutex_lock(&sigtbl_mtx);
     sigtbl[sig].st_signum = sig;
@@ -78,16 +78,16 @@ catch_signal(struct filter *filt, struct knote *kn)
 static int
 ignore_signal(int sig)
 {
-	struct sigaction sa;
+    struct sigaction sa;
 
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = SIG_IGN;
-	sigemptyset(&sa.sa_mask);
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = SIG_IGN;
+    sigemptyset(&sa.sa_mask);
 
-	if (sigaction(sig, &sa, NULL) == -1) {
-		dbg_perror("sigaction");
-		return (-1);
-	}
+    if (sigaction(sig, &sa, NULL) == -1) {
+        dbg_perror("sigaction");
+        return (-1);
+    }
 
     dbg_printf("removed handler for signal %d", sig);
     return (0);

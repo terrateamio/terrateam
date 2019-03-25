@@ -55,9 +55,9 @@
  * Additional members of struct kqueue
  */
 #define KQUEUE_PLATFORM_SPECIFIC \
-	HANDLE kq_iocp; \
-	HANDLE kq_synthetic_event; \
-	struct filter *kq_filt_ref[EVFILT_SYSCOUNT]; \
+    HANDLE kq_iocp; \
+    HANDLE kq_synthetic_event; \
+    struct filter *kq_filt_ref[EVFILT_SYSCOUNT]; \
     size_t kq_filt_count
 
 /*
@@ -65,14 +65,14 @@
  */
 /*
 #define FILTER_PLATFORM_SPECIFIC \
-	HANDLE kf_event_handle
+    HANDLE kf_event_handle
 */
 
 /*
  * Additional members for struct knote
  */
 #define KNOTE_PLATFORM_SPECIFIC \
-	HANDLE kn_event_whandle
+    HANDLE kn_event_whandle
 
 /*
  * Some datatype forward declarations

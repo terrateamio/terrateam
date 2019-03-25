@@ -59,7 +59,7 @@ sleeper_thread(void *arg)
     ssize_t         cnt;
     bool            cts = true;     /* Clear To Send */
     char            buf[1];
-	int rv;
+    int rv;
 
 #if 0
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
@@ -85,7 +85,7 @@ sleeper_thread(void *arg)
 
         /* Sleep */
         dbg_printf("sleeping for %ld ms", (unsigned long) sr->interval);
-		rv = pthread_cond_timedwait(&sr->cond, &sr->mtx, &req);
+        rv = pthread_cond_timedwait(&sr->cond, &sr->mtx, &req);
         pthread_mutex_unlock(&sr->mtx);
         if (rv == 0) {
             /* _timer_delete() has requested that we terminate */
@@ -93,10 +93,10 @@ sleeper_thread(void *arg)
             break;
         } else if (rv != 0) {
             dbg_printf("rv=%d %s", rv, strerror(rv));
-			if (rv == EINTR)
+            if (rv == EINTR)
                 abort(); //FIXME should not happen
 
-			//ASSUME: rv == ETIMEDOUT
+            //ASSUME: rv == ETIMEDOUT
         }
         si.counter++;
         dbg_printf(" -------- sleep over (CTS=%d)----------", cts);

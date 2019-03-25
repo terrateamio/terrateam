@@ -70,10 +70,10 @@ windows_kqueue_init(struct kqueue *kq)
     }
 #endif
 
-	if(filter_register_all(kq) < 0) {
-		CloseHandle(kq->kq_iocp);
-		return (-1);
-	}
+    if(filter_register_all(kq) < 0) {
+        CloseHandle(kq->kq_iocp);
+        return (-1);
+    }
 
     return (0);
 }
@@ -88,7 +88,7 @@ windows_kqueue_free(struct kqueue *kq)
 int
 windows_kevent_wait(struct kqueue *kq, int no, const struct timespec *timeout)
 {
-	int retval;
+    int retval;
     DWORD       timeout_ms;
     BOOL        success;
 
@@ -134,7 +134,7 @@ windows_kevent_copyout(struct kqueue *kq, int nready,
         struct kevent *eventlist, int nevents)
 {
     struct filter *filt;
-	struct knote* kn;
+    struct knote* kn;
     int rv, nret;
 
     //FIXME: not true for EVFILT_IOCP
@@ -166,17 +166,17 @@ windows_kevent_copyout(struct kqueue *kq, int nready,
         nret--;
     }
 
-	return nret;
+    return nret;
 }
 
 int
 windows_filter_init(struct kqueue *kq, struct filter *kf)
 {
 
-	kq->kq_filt_ref[kq->kq_filt_count] = (struct filter *) kf;
+    kq->kq_filt_ref[kq->kq_filt_count] = (struct filter *) kf;
     kq->kq_filt_count++;
 
-	return (0);
+    return (0);
 }
 
 void

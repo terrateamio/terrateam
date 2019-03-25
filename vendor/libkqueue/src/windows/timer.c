@@ -20,7 +20,7 @@
 static void
 convert_msec_to_filetime(LARGE_INTEGER *dst, intptr_t src)
 {
-	dst->QuadPart = -((int64_t) src * 1000 * 10);
+    dst->QuadPart = -((int64_t) src * 1000 * 10);
 }
 
 static int
@@ -30,61 +30,61 @@ ktimer_delete(struct filter *filt, struct knote *kn)
     if (kn->data.handle == NULL || kn->kn_event_whandle == NULL)
         return (0);
 
-	if(!UnregisterWaitEx(kn->kn_event_whandle, INVALID_HANDLE_VALUE)) {
-		dbg_lasterror("UnregisterWait()");
-		return (-1);
-	}
+    if(!UnregisterWaitEx(kn->kn_event_whandle, INVALID_HANDLE_VALUE)) {
+        dbg_lasterror("UnregisterWait()");
+        return (-1);
+    }
 
-	if (!CancelWaitableTimer(kn->data.handle)) {
-		dbg_lasterror("CancelWaitableTimer()");
-		return (-1);
-	}
-	if (!CloseHandle(kn->data.handle)) {
-		dbg_lasterror("CloseHandle()");
-		return (-1);
-	}
+    if (!CancelWaitableTimer(kn->data.handle)) {
+        dbg_lasterror("CancelWaitableTimer()");
+        return (-1);
+    }
+    if (!CloseHandle(kn->data.handle)) {
+        dbg_lasterror("CloseHandle()");
+        return (-1);
+    }
 
-	if( !(kn->kev.flags & EV_ONESHOT) )
-		knote_release(kn);
+    if( !(kn->kev.flags & EV_ONESHOT) )
+        knote_release(kn);
 
-	kn->data.handle = NULL;
-	return (0);
+    kn->data.handle = NULL;
+    return (0);
 }
 
 static VOID CALLBACK evfilt_timer_callback(void* param, BOOLEAN fired){
-	struct knote* kn;
-	struct kqueue* kq;
+    struct knote* kn;
+    struct kqueue* kq;
 
-	if(fired){
-		dbg_puts("called, but timer did not fire - this case should never be reached");
-		return;
-	}
+    if(fired){
+        dbg_puts("called, but timer did not fire - this case should never be reached");
+        return;
+    }
 
-	assert(param);
-	kn = (struct knote*)param;
+    assert(param);
+    kn = (struct knote*)param;
 
-	if(kn->kn_flags & KNFL_KNOTE_DELETED) {
-		dbg_puts("knote marked for deletion, skipping event");
-		return;
-	} else {
-		kq = kn->kn_kq;
-		assert(kq);
+    if(kn->kn_flags & KNFL_KNOTE_DELETED) {
+        dbg_puts("knote marked for deletion, skipping event");
+        return;
+    } else {
+        kq = kn->kn_kq;
+        assert(kq);
 
-		if (!PostQueuedCompletionStatus(kq->kq_iocp, 1, (ULONG_PTR) 0, (LPOVERLAPPED) kn)) {
-			dbg_lasterror("PostQueuedCompletionStatus()");
-			return;
-			/* FIXME: need more extreme action */
-		}
+        if (!PostQueuedCompletionStatus(kq->kq_iocp, 1, (ULONG_PTR) 0, (LPOVERLAPPED) kn)) {
+            dbg_lasterror("PostQueuedCompletionStatus()");
+            return;
+            /* FIXME: need more extreme action */
+        }
 #if DEADWOOD
-		evt_signal(kq->kq_loop, EVT_WAKEUP, kn);
+        evt_signal(kq->kq_loop, EVT_WAKEUP, kn);
 #endif
-	}
-	if(kn->kev.flags & EV_ONESHOT) {
-		struct filter* filt;
-		if( filter_lookup(&filt, kq, kn->kev.filter) )
-			dbg_perror("filter_lookup()");
-		knote_release(kn);
-	}
+    }
+    if(kn->kev.flags & EV_ONESHOT) {
+        struct filter* filt;
+        if( filter_lookup(&filt, kq, kn->kev.filter) )
+            dbg_perror("filter_lookup()");
+        knote_release(kn);
+    }
 }
 
 int
@@ -102,21 +102,21 @@ int
 evfilt_timer_copyout(struct kevent* dst, struct knote* src, void* ptr)
 {
     memcpy(dst, &src->kev, sizeof(struct kevent));
-	// TODO: Timer error handling
+    // TODO: Timer error handling
 
     /* We have no way to determine the number of times
        the timer triggered, thus we assume it was only once
     */
     dst->data = 1;
 
-	return (0);
+    return (0);
 }
 
 int
 evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 {
     HANDLE th;
-	LARGE_INTEGER liDueTime;
+    LARGE_INTEGER liDueTime;
 
     kn->kev.flags |= EV_CLEAR;
 
@@ -129,7 +129,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 
     convert_msec_to_filetime(&liDueTime, kn->kev.data);
 
-	// XXX-FIXME add completion routine to this call
+    // XXX-FIXME add completion routine to this call
     if (!SetWaitableTimer(th, &liDueTime, (LONG)( (kn->kev.flags & EV_ONESHOT) ? 0 : kn->kev.data ), NULL, NULL, FALSE)) {
         dbg_lasterror("SetWaitableTimer()");
         CloseHandle(th);
@@ -137,8 +137,8 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
     }
 
     kn->data.handle = th;
-	RegisterWaitForSingleObject(&kn->kn_event_whandle, th, evfilt_timer_callback, kn, INFINITE, 0);
-	knote_retain(kn);
+    RegisterWaitForSingleObject(&kn->kn_event_whandle, th, evfilt_timer_callback, kn, INFINITE, 0);
+    knote_retain(kn);
 
     return (0);
 }
