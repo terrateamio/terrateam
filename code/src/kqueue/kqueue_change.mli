@@ -36,7 +36,8 @@ module Filter : sig
         | Attrib
         | Link
         | Rename
-        | Revoke
+        (* libkqueue does not support Revoke *)
+        (* | Revoke *)
 
       type t
       val to_t : f list -> t
@@ -73,7 +74,8 @@ module Filter : sig
     module Unit : sig
       type u =
         | Seconds
-        | Mseconds
+        (* libkqueue does not support Mseconds *)
+        (* | Mseconds *)
         | Useconds
         | Nseconds
 

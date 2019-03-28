@@ -22,7 +22,8 @@ module Vnode : sig
       | Attrib
       | Link
       | Rename
-      | Revoke
+      (* libkqueue does not support Revoke *)
+      (* | Revoke *)
 
     type t
     val of_t : t -> f list

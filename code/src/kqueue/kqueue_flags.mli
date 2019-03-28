@@ -12,7 +12,8 @@ module Vnode : sig
     | Attrib
     | Link
     | Rename
-    | Revoke
+    (* libkqueue does not support Revoke *)
+    (* | Revoke *)
 
   type t = uint
 
@@ -36,7 +37,8 @@ end
 module Timer : sig
   type u =
     | Seconds
-    | Mseconds
+    (* libkqueue does not support Mseconds *)
+    (* | Mseconds *)
     | Useconds
     | Nseconds
 

@@ -52,7 +52,8 @@ module Stubs = functor (S : Cstubs_structs.TYPE) -> struct
   let note_attrib = S.(constant "NOTE_ATTRIB" uint)
   let note_link = S.(constant "NOTE_LINK" uint)
   let note_rename = S.(constant "NOTE_RENAME" uint)
-  let note_revoke = S.(constant "NOTE_REVOKE" uint)
+  (* libkqueue does not support NOTE_REVOKE *)
+  (* let note_revoke = S.(constant "NOTE_REVOKE" uint) *)
 
   let note_exit = S.(constant "NOTE_EXIT" uint)
   let note_fork = S.(constant "NOTE_FORK" uint)
@@ -60,7 +61,8 @@ module Stubs = functor (S : Cstubs_structs.TYPE) -> struct
   let note_track = S.(constant "NOTE_TRACK" uint)
 
   let note_seconds = S.(constant "NOTE_SECONDS" uint)
-  let note_mseconds = S.(constant "NOTE_MSECONDS" uint)
+  (* libkqueue does not support MSECONDS *)
+  (* let note_mseconds = S.(constant "NOTE_MSECONDS" uint) *)
   let note_useconds = S.(constant "NOTE_USECONDS" uint)
   let note_nseconds = S.(constant "NOTE_NSECONDS" uint)
 

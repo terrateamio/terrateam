@@ -23,7 +23,8 @@ module Vnode = struct
     | Attrib
     | Link
     | Rename
-    | Revoke
+    (* libkqueue does not support Revoke *)
+    (* | Revoke *)
 
   type t = uint
 
@@ -34,7 +35,8 @@ module Vnode = struct
     | Attrib -> Stubs.note_attrib
     | Link -> Stubs.note_link
     | Rename -> Stubs.note_rename
-    | Revoke -> Stubs.note_revoke
+    (* libkqueue does not support Revoke *)
+    (* | Revoke -> Stubs.note_revoke *)
 
   let to_t = flags_to_uint f_to_uint
 
@@ -42,7 +44,7 @@ module Vnode = struct
     uint_to_flags
       f_to_uint
       t
-      [Delete; Write; Extend; Attrib; Link; Rename; Revoke]
+      [Delete; Write; Extend; Attrib; Link; Rename]
 end
 
 module Proc = struct
@@ -72,7 +74,8 @@ end
 module Timer = struct
   type u =
     | Seconds
-    | Mseconds
+    (* libkqueue does not support Mseconds *)
+    (* | Mseconds *)
     | Useconds
     | Nseconds
 
@@ -80,13 +83,15 @@ module Timer = struct
 
   let to_t = function
     | Seconds -> Stubs.note_seconds
-    | Mseconds -> Stubs.note_mseconds
+    (* libkqueue does not support Mseconds *)
+    (* | Mseconds -> Stubs.note_mseconds *)
     | Useconds -> Stubs.note_useconds
     | Nseconds -> Stubs.note_nseconds
 
   let of_t = function
     | u when u = Stubs.note_seconds -> Seconds
-    | u when u = Stubs.note_mseconds -> Mseconds
+    (* libkqueue does not support Mseconds *)
+    (* | u when u = Stubs.note_mseconds -> Mseconds *)
     | u when u = Stubs.note_useconds -> Useconds
     | u when u = Stubs.note_nseconds -> Nseconds
     | _ -> failwith "Unknown Timer unit"
