@@ -37,8 +37,8 @@ A tool to build Makefiles for Ocaml projects
 homepage: "https://bitbucket.org/mimirops/pds"
 
 url {
-	src: "https://hg.sr.ht/~mmatalka/pds/archive/5.31.tar.gz"
-	checksum: "fe8515ed650e0b7747752a11c6e66d5e"
+	src: "ssh://hg@hg.sr.ht/~mmatalka/pds#5.31"
+
 }
 bug-reports: "https://bitbucket.org/mimirops/pds/issues"
 dev-repo: "git@bitbucket.org:mimirops/pds.git"
