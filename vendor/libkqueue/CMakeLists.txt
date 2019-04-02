@@ -142,7 +142,7 @@ endif()
 
 add_library(kqueue ${LIBRARY_TYPE} ${LIBKQUEUE_SOURCES} ${LIBKQUEUE_HEADERS})
 set_target_properties(kqueue PROPERTIES DEBUG_POSTFIX "d")
-set_target_properties(kqueue PROPERTIES SOVERSION 0)
+set_target_properties(kqueue PROPERTIES SOVERSION 1)
 
 if(WIN32)
   target_compile_definitions(kqueue PRIVATE _USRDLL;_WINDLL)
@@ -268,6 +268,8 @@ set(CPACK_DEBIAN_DEVEL_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME} (= ${PROJECT_VERSI
 
 set(CPACK_DEB_COMPONENT_INSTALL ON)             # Enable component based packaging (generate multiple packages)
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)         # Use default Debian package naming scheme
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+set(CPACK_DEBIAN_PACKAGE_GENERATE_SHLIBS ON)
 
 include(CPack)
 
