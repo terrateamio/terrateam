@@ -737,9 +737,9 @@ epoll_update(int op, struct filter *filt, struct knote *kn, struct epoll_event *
 int
 linux_fd_to_path(char *buf, size_t bufsz, int fd)
 {
-    char path[1024];    //TODO: Maxpathlen, etc.
+    char path[51];    // 6 + 20 + 4 + 20 + 1
 
-    if (snprintf(&path[0], sizeof(path), "/proc/%d/fd/%d", getpid(), fd) < 0)
+    if (snprintf(path, sizeof(path), "/proc/%d/fd/%d", getpid(), fd) < 0)
         return (-1);
 
     memset(buf, 0, bufsz);
