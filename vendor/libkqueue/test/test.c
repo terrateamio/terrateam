@@ -19,7 +19,6 @@
 #endif
 #include <sys/types.h>
 #include <limits.h>
-#include <execinfo.h>
 
 #include "common.h"
 

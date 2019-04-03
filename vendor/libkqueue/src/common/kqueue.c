@@ -137,6 +137,8 @@ kqueue(void)
             sleep(1);
         }
     }
+
+    pthread_mutex_init(&kq_mtx, NULL);
 #else
     (void) pthread_mutex_lock(&kq_mtx);
     (void) pthread_once(&kq_is_initialized, libkqueue_init);

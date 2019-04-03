@@ -39,6 +39,7 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "config.h"
 #ifndef _WIN32
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -48,7 +49,6 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <poll.h>
-#include "config.h"
 #include <netdb.h>
 #else
 # include "include/sys/event.h"
