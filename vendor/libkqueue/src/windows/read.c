@@ -97,7 +97,7 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
     if (src->flags & KNFL_FILE) { ... } */
 
     memcpy(dst, &src->kev, sizeof(*dst));
-    if (src->kn_flags & KNFL_PASSIVE_SOCKET) {
+    if (src->kn_flags & KNFL_SOCKET_PASSIVE) {
         /* TODO: should contains the length of the socket backlog */
         dst->data = 1;
     } else {
