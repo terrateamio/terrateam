@@ -17,9 +17,11 @@
 #ifndef  _KQUEUE_WINDOWS_PLATFORM_H
 #define  _KQUEUE_WINDOWS_PLATFORM_H
 
-/* Require Windows XP or later */
-#define WINVER 0x0501
-#define _WIN32_WINNT 0x0501
+/* Require Windows Server 2003 or later */
+#define WINVER 0x0502
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0502
+#endif
 
 /* Reduces build time by omitting extra system headers */
 #define WIN32_LEAN_AND_MEAN

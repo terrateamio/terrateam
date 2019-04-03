@@ -55,6 +55,16 @@ Windows (clang/C2) (Visual Studio Project)
     cmake -G "Visual Studio 14 2015" -T "LLVM-vs2014" <path to source>
     cmake --build .
 
+Windows (cross-compiling on Ubuntu using MinGW)
+-----------------------------------------------
+
+    sudo apt-get install mingw-w64
+    rm -rf CMakeCache.txt CMakeFiles
+    mkdir build
+    cd build
+    cmake -DCMAKE_TOOLCHAIN_FILE=Toolchain-mingw32.cmake ..
+    make
+
 Xcode (project)
 ---------------
 
