@@ -225,6 +225,10 @@ let rec eval_template buf t kv template section =
     | At ln::List::Neg_test::Key k::At _::ts ->
       (* @#!key@ ... @/key@ *)
       eval_list_test_section ln buf t kv ts section k `Empty
+    | At ln::Exists::Test::Key k::At _::ts ->
+      eval_exists_test_section ln buf t kv ts section k `Exists
+    | At ln::Exists::Neg_test::Key k::At _::ts ->
+      eval_exists_test_section ln buf t kv ts section k `Not_exists
     | At _::End_section::Key k::At _::ts when k = section ->
       (* @/key@ *)
       ts
@@ -279,6 +283,15 @@ and eval_list_test_section ln buf t kv ts section key empty =
       raise (Apply_error (`Expected_list (key, ln)))
     | None ->
       raise (Apply_error (`Missing_key (key, ln)))
+and eval_exists_test_section ln buf t kv ts section key exists =
+  match (Kv.Map.get key kv, exists) with
+    | (Some _, `Exists)
+    | (None, `Not_exists) ->
+      let ts = eval_template buf t kv ts key in
+      eval_template buf t kv ts section
+    | _ ->
+      let ts = skip_section key ts in
+      eval_template buf t kv ts section
 
 let apply t kv =
   let buf = Buffer.create 100 in

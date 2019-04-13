@@ -118,6 +118,9 @@ My name is Arthur Digby Sellers and I have a business proposition for you.
 Like Mustache, Snabela has sections.  The identifier to enter a section depends
 on the type of section however each section is exited with ~@/~.
 
+*** Testing for existence of a key
+Testing for the existence of a key is done with ~@^~ and ~@^!~ if the key does
+not exist.
 *** Boolean testing
 A boolean value in the template can be tested for ~true~ with ~@?~ and ~false~
 with ~@!~.
