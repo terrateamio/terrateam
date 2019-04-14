@@ -34,8 +34,8 @@ Create opam package files from a repository
 homepage: "https://bitbucket.org/mimirops/hll"
 
 url {
-	src: "https://bitbucket.org/mimirops/hll/get/3.12.tar.gz"
-	checksum: "a77cf807bafd95e8b587c463c4ddff41"
+	src: "http://acsl-pkgs.s3.amazonaws.com/hll-3.12.tar.gz"
+	checksum: "3b14945bc9f62dd1ae69799ae20c3d53"
 }
 bug-reports: "https://bitbucket.org/mimirops/hll/issues"
 dev-repo: "git@bitbucket.org:mimirops/hll.git"
