@@ -1,0 +1,42 @@
+opam-version: "2.0"
+maintainer: "orbitz@gmail.com"
+build: [
+	[make "-j%{jobs}%"]
+	[make "-j%{jobs}%" "test"] {with-test}
+]
+
+install: [
+	[make "PREFIX=%{prefix}%" "install"]
+]
+
+remove: [
+	[make "PREFIX=%{prefix}%" "remove"]
+]
+
+depends: [
+	"containers"
+	"ctypes"
+	"ctypes-foreign"
+	"merlin-of-pds"
+	"ocamlfind"
+	"oth" { with-test }
+	"pds" { build & (>= "5" & < "6") }
+]
+
+authors: [
+	"orbitz@gmail.com"
+]
+
+description: """
+Bindings for libtls, part of LibreSSL
+"""
+
+homepage: "https://bitbucket.org/acslab/otls"
+
+url {
+	src: "http://acsl-pkgs.s3.amazonaws.com/otls-1.1.tar.gz"
+	checksum: "9ec89994a4e04fc86de69c553a970503"
+}
+bug-reports: "https://bitbucket.org/acslab/otls/issues"
+dev-repo: "git@bitbucket.org:acslab/otls.git"
+
