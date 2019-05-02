@@ -266,11 +266,14 @@ subject to the
 value of the socket buffer.
 This may be overridden with a per-filter low water mark at the
 time the filter is added by setting the
-NOTE_LOWAT
+.Dv NOTE_LOWAT
 flag in
 .Va fflags ,
 and specifying the new low water mark in
 .Va data .
+.Sy This is not supported by libkqueue .
+.Dv SO_RCVLOWAT
+may be ignored on Linux.
 On return,
 .Va data
 contains the number of bytes of protocol data available to read.
