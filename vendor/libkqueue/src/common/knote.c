@@ -149,10 +149,10 @@ knote_get_by_data(struct filter *filt, intptr_t data)
 
 int knote_free_all(struct filter *filt)
 {
-    struct knote *kn;
+    struct knote *kn, *tmp;
 
     pthread_rwlock_rdlock(&filt->kf_knote_mtx);
-    RB_FOREACH(kn, knt, &filt->kf_knote) {
+    RB_FOREACH_SAFE(kn, knt, &filt->kf_knote, tmp) {
         /* Check return code */
         filt->kn_delete(filt, kn);
 
