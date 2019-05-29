@@ -599,12 +599,12 @@ let of_string s =
    * into a Pct.encoded and return an optional type (None if
    * the component is not present in the Uri *)
   let get_opt_encoded s n =
-    try Some (Pct.cast_encoded (Re.get s n))
+    try Some (Pct.cast_encoded (Re.Group.get s n))
     with Not_found -> None
   in
   let get_opt s n =
     try
-      let pct = Pct.cast_encoded (Re.get s n) in
+      let pct = Pct.cast_encoded (Re.Group.get s n) in
       Some (Pct.decode pct)
     with Not_found -> None
   in

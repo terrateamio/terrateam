@@ -1,3 +1,8 @@
+dev
+---
+
+* Fix deprecation warnings in Re 1.9.0 (@avsm).
+
 v2.2.0 2019-01-31
 -----------------
 
