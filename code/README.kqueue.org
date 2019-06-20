@@ -1,9 +1,12 @@
 * About
-kqueue bindings.  kqueue provides a scalable API for notifying on events.  A
-program creates a kqueue and registers the events for which it wants to be
-notified.  Subsequent calls to kqueue will then return which events have been
-triggered.  kqueue is available on most BSD's natively and on Linux through
-libkqueue.
+kqueue bindings for FreeBSD and Linux (through libkqueue).  The bindings have
+been restricted to match the lowest common denominator, in this case libkqueue
+which does not support NOTE_REVOKE and MSECONDS.
+
+kqueue provides a scalable API for notifying on events.  A program creates a
+kqueue and registers the events for which it wants to be notified.  Subsequent
+calls to kqueue will then return which events have been triggered.  kqueue is
+available on most BSD's natively and on Linux through libkqueue.
 
 These bindings try to find a balance between exposing the underlying API call
 and providing a typesafe interface.  The entry point is the ~Kqueue~ module,
