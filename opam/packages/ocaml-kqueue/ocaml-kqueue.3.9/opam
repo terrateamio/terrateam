@@ -1,0 +1,41 @@
+opam-version: "2.0"
+maintainer: "orbitz@gmail.com"
+build: [
+	[make "-j%{jobs}%"]
+	[make "-j%{jobs}%" "test"] {with-test}
+]
+
+install: [
+	[make "PREFIX=%{prefix}%" "install"]
+]
+
+remove: [
+	[make "PREFIX=%{prefix}%" "remove"]
+]
+
+depends: [
+	"ctypes"
+	"ctypes-foreign"
+	"merlin-of-pds"
+	"ocamlfind"
+	"oth" { with-test }
+	"pds" { build & (>= "5" & < "6") }
+]
+
+authors: [
+	"orbitz@gmail.com"
+]
+
+description: """
+kqueue bindings for Ocaml
+"""
+
+homepage: "https://bitbucket.org/acslab/ocaml-kqueue"
+
+url {
+	src: "http://acsl-pkgs.s3.amazonaws.com/ocaml-kqueue-3.9.tar.gz"
+	checksum: "610599749253c98b8efc352ce6741dc9"
+}
+bug-reports: "https://bitbucket.org/acslab/ocaml-kqueue/issues"
+dev-repo: "git@bitbucket.org:acslab/ocaml-kqueue.git"
+

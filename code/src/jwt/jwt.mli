@@ -32,11 +32,11 @@ module Header : sig
 
   val to_string : t -> string
 
-  val to_json : t -> Yojson.Basic.json
+  val to_json : t -> Yojson.Basic.t
 
   val of_string : string -> t option
 
-  val of_json : Yojson.Basic.json -> t option
+  val of_json : Yojson.Basic.t -> t option
 end
 
 module Claim : sig
@@ -72,9 +72,9 @@ module Payload : sig
   val find_claim_float : Claim.t -> t -> float option
   val find_claim_int : Claim.t -> t -> int option
 
-  val of_json : Yojson.Basic.json -> t option
+  val of_json : Yojson.Basic.t -> t option
 
-  val to_json : t -> Yojson.Basic.json
+  val to_json : t -> Yojson.Basic.t
 
   val to_string : t -> string
 

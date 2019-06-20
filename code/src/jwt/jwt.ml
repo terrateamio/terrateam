@@ -112,7 +112,7 @@ module Payload = struct
   type t = typs Claim_map.t
 
   (* [typs] is a subset of yojson's types, so force the conversion between. *)
-  external to_yojson_json : (Claim.t * typs) list -> (Claim.t * Yojson.Basic.json) list = "%identity"
+  external to_yojson_json : (Claim.t * typs) list -> (Claim.t * Yojson.Basic.t) list = "%identity"
 
   let empty = Claim_map.empty
 
