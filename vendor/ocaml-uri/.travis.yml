@@ -15,5 +15,5 @@ env:
    - DISTRO=fedora OCAML_VERSION=4.04
    - DISTRO=debian-testing OCAML_VERSION=4.05
    - DISTRO=alpine OCAML_VERSION=4.06
-   - DISTRO=debian-stable OCAML_VERSION=4.07
-   - DISTRO=debian-stable PACKAGE=uri-sexp OCAML_VERSION=4.07.1
+   - DISTRO=debian-stable OCAML_VERSION=4.07 DEPOPTS="uri-sexp"
+   - DISTRO=alpine OCAML_VGERSION=4.08
