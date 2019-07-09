@@ -1,3 +1,16 @@
+v3.0.0 2019-07-06
+-----------------
+
+* Complete the migration of making sexp an optional dependency that was
+  started in 2.0.0. We now remove the `uri.sexp` ocamlfind package and
+  have `uri` and `uri-sexp` for both the ocamlfind and opam packages.
+  Code that was formerly using `uri.sexp` in its build will now need to
+  move to `uri-sexp` instead (#134 @Julow @dinosaure).
+
+* Create a `Uri.Re` module instead of the toplevel `Uri_re`, and
+  deprecate the latter.  The `Uri_re` toplevel module will be removed
+  in the next major release of this library (#134 @Julow @dinosaure).
+
 v2.2.1 2019-06-02
 -----------------
 
