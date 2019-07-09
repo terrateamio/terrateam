@@ -7,9 +7,11 @@ v3.0.0 2019-07-06
   Code that was formerly using `uri.sexp` in its build will now need to
   move to `uri-sexp` instead (#134 @Julow @dinosaure).
 
-* Create a `Uri.Re` module instead of the toplevel `Uri_re`, and
-  deprecate the latter.  The `Uri_re` toplevel module will be removed
-  in the next major release of this library (#134 @Julow @dinosaure).
+* Remove the deprecated `Uri_re` module. All code should be using the
+  `Uri.Re` module instead (@avsm @Julow).
+
+* Remove the `uri.top` library, since we install the toplevel printer
+  automatically since 2.2.0 via an attribute.
 
 v2.2.1 2019-06-02
 -----------------
