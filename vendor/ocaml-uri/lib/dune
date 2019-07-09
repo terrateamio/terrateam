@@ -1,12 +1,4 @@
 (library
  (name uri)
  (public_name uri)
- (wrapped (transition "Please switch to using Uri.Re instead of Uri_re, which will be removed in Uri.4.0.0 and higher."))
- (modules uri uri_re)
  (libraries re.posix stringext))
-
-(library
- (name uri_top)
- (public_name uri.top)
- (modules uri_top)
- (libraries uri compiler-libs))
