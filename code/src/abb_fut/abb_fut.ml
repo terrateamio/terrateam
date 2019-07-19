@@ -1,4 +1,4 @@
-(* TODO Reduces extra pattern matching, for example set to determine.
+(* TODO Reduce extra pattern matching, for example set to determine.
 
    TODO Reduce amount of duplication in abort/abort_exn/cancel.
 
@@ -396,14 +396,13 @@ let map : ('a -> 'b) -> 'a t -> 'b t = fun f t ->
     | `Alias _ ->
       assert false
 
-(** Create a watcher which is watching on a future who's value will be another
-    future then alias an internal future it.  So the parameter [fut] has the
-    type ['a t] and this watcher is watching a future with the type ['a t t].
-    Again, any undetermined futures needs to be executed to kick off any work
-    that will lead to them becoming determined.  Care also needs to be taken
-    if either future is aborted. *)
-let make_watcher w fut st s =
-  w := None;
+(** Create a watcher which is watching on a future whose value will be another
+   future then alias an internal future it.  So the parameter [fut] has the type
+   ['a t] and this watcher is watching a future with the type ['a t t].  Again,
+   any undetermined futures needs to be executed to kick off any work that will
+   lead to them becoming determined.  Care also needs to be taken if either
+   future is aborted. *)
+let make_watcher fut st s =
   begin match st with
     | `Det t ->
       let u = collapse_alias (u_of_t t) in
@@ -460,7 +459,7 @@ let join : 'a t t -> 'a t = fun tt ->
           (Self w)
           [Dep u]
       in
-      let watcher = make_watcher w fut in
+      let watcher = make_watcher fut in
       w := Some watcher;
       add_watcher undet w;
       t_of_u fut
