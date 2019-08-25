@@ -261,6 +261,7 @@ let test15 =
       match Fut.state fut2 with
         | `Det _ | `Aborted | `Undet -> assert false
         | `Exn _                     -> ())
+
 let () =
   Oth.(
     run

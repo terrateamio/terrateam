@@ -1,9 +1,11 @@
 module Fut = Abb_fut.Make (struct
   type t = unit
 end)
+
 open Fut.Infix_monad
 open Fut.Infix_app
 module Fut_comb = Abb_future_combinators.Make (Fut)
+
 let dummy_state = Abb_fut.State.create ()
 
 let first1 =
