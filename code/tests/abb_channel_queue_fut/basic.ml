@@ -1,7 +1,6 @@
 module Fut = Abb_fut.Make (struct
   type t = unit
 end)
-
 module Channel = Abb_channel.Make (Fut)
 module Channel_queue = Abb_channel_queue.Make (Fut)
 

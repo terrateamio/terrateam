@@ -72,10 +72,12 @@ module Make (Fut : Abb_intf.Future.S) : sig
       guaranteed that, on success, [bufs] is completely consumed. *)
   val write : writer t -> bufs:Abb_intf.Write_buf.t list -> (int, [> write_err ]) result Fut.t
 
-  (** Close a reader, any bytes in the buffer are discarded. *)
+  (** Close a reader, any bytes in the buffer are discarded. The underlying
+     object is closed.*)
   val close : reader t -> (unit, [> close_err ]) result Fut.t
 
-  (** Close a writer, this guarantees that all of the bytes in the buffer are flushed. *)
+  (** Close a writer, this guarantees that all of the bytes in the buffer are
+     flushed. The underlying object is closed. *)
   val close_writer : writer t -> (unit, [> write_err | close_err ]) result Fut.t
 
   (** Flush any values in the buffer the underlying I/O object and evaluate when done. *)

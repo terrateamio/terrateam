@@ -1,11 +1,9 @@
 module Fut = Abb_fut.Make (struct
   type t = unit
 end)
-
 open Fut.Infix_monad
 open Fut.Infix_app
 module Fut_comb = Abb_future_combinators.Make (Fut)
-
 let dummy_state = Abb_fut.State.create ()
 
 let first1 =
@@ -222,7 +220,99 @@ let with_finally_aborted_from_outside =
       ignore (Fut.run_with_state (Fut.abort fut) dummy_state);
       assert !finally_exec;
       assert (Fut.state fut = `Aborted);
-      assert (Fut.state (Fut.Promise.future p) = `Undet))
+      assert (Fut.state (Fut.Promise.future p) = `Aborted))
+
+let on_failure_success =
+  Oth.test ~desc:"Test the failure block is not run on success" ~name:"on_failure success" (fun _ ->
+      let failure_exec = ref false in
+      let p = Fut.Promise.create () in
+      let fut =
+        Fut_comb.on_failure
+          (fun () -> Fut.Promise.future p)
+          ~failure:(fun () ->
+            failure_exec := true;
+            Fut.return ())
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.Promise.set p ()) dummy_state);
+      assert (not !failure_exec);
+      assert (Fut.state fut = `Det ()))
+
+let on_failure_aborted =
+  Oth.test ~desc:"Test the failure block is run on abort" ~name:"on_failure aborted" (fun _ ->
+      let failure_exec = ref false in
+      let p = Fut.Promise.create () in
+      let fut =
+        Fut_comb.on_failure
+          (fun () -> Fut.Promise.future p)
+          ~failure:(fun () ->
+            failure_exec := true;
+            Fut.return ())
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.abort (Fut.Promise.future p)) dummy_state);
+      assert !failure_exec;
+      assert (Fut.state fut = `Aborted))
+
+let on_failure_aborted_from_outside =
+  Oth.test
+    ~desc:"Test the failure block is run on abort from the outside"
+    ~name:"on_failure aborted outside"
+    (fun _ ->
+      let failure_exec = ref false in
+      let p = Fut.Promise.create () in
+      let fut =
+        Fut_comb.on_failure
+          (fun () -> Fut.Promise.future p)
+          ~failure:(fun () ->
+            failure_exec := true;
+            Fut.return ())
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.abort fut) dummy_state);
+      assert !failure_exec;
+      assert (Fut.state fut = `Aborted);
+      assert (Fut.state (Fut.Promise.future p) = `Aborted))
+
+let on_failure_exn =
+  Oth.test
+    ~desc:"Test the failure block is run on a fut determining to an exn"
+    ~name:"on_failure exn"
+    (fun _ ->
+      let failure_exec = ref false in
+      let p = Fut.Promise.create () in
+      let fut =
+        Fut_comb.on_failure
+          (fun () -> Fut.Promise.future p)
+          ~failure:(fun () ->
+            failure_exec := true;
+            Fut.return ())
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.Promise.set_exn p (Failure "foo", None)) dummy_state);
+      assert !failure_exec;
+      match Fut.state fut with
+        | `Exn (Failure _, None) -> ()
+        | _                      -> assert false)
+
+let on_failure_raise =
+  Oth.test
+    ~desc:"Test the failure block is run on raising in the function"
+    ~name:"on_failure raise"
+    (fun _ ->
+      let failure_exec = ref false in
+      let fut =
+        Fut_comb.on_failure
+          (fun () -> failwith "foo")
+          ~failure:(fun () ->
+            failure_exec := true;
+            Fut.return ())
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      assert !failure_exec;
+      match Fut.state fut with
+        | `Exn (Failure _, Some _) -> ()
+        | _                        -> assert false)
 
 let () =
   Oth.(
@@ -244,4 +334,9 @@ let () =
            with_finally_exn;
            with_finally_raise;
            with_finally_aborted_from_outside;
+           on_failure_success;
+           on_failure_aborted;
+           on_failure_aborted_from_outside;
+           on_failure_exn;
+           on_failure_raise;
          ]))

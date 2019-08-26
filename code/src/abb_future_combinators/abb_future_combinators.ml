@@ -77,6 +77,7 @@ module Make (Fut : Abb_intf.Future.S) = struct
     try
       let fut = f () in
       let p = Fut.Promise.create ~abort:finally () in
+      Fut.add_dep ~dep:fut (Fut.Promise.future p);
       Fut.fork
         (Fut.await_bind
            (fun r ->

@@ -1,7 +1,6 @@
 module Fut = Abb_fut.Make (struct
   type t = unit
 end)
-
 module Service = Abb_service_local.Make (Fut)
 module Channel = Abb_channel.Make (Fut)
 module Channel_c = Channel.Combinators
