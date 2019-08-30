@@ -1,7 +1,0 @@
-opam-version: "2.0"
-maintainer: "orbitz@gmail.com"
-depends: ["ocaml" "core" "ocamlfind" "oth" "pds" "qcheck"]
-flags: light-uninstall
-build: [make "-j%{jobs}%"]
-install: [make "install"]
-remove: ["ocamlfind" "remove" "lua_pattern"]
