@@ -1,0 +1,284 @@
+* About
+Logic-less template system.  Snabela (pronounced snob-el-aw) is based on
+Mustache with an intent to fix the issues the author found with it.
+
+Specifically:
+
+- Mustache is geared very specifically at web development, by default everything
+  is HTML escaped.  Snabela does not escape anything by default and allows
+  extensible escaping.
+- Mustache has no direct way to escape template replacement but has a convoluted
+  mechanism based on changing the syntax of the delimiter on the fly.  Snabela
+  does not allow changing the syntax of the template delimiter on the fly and
+  has a simple mechanism for escaping template replacement.
+- Mustache supports changing the syntax of the template delimiter on the fly,
+  Snabela does not support this.
+- Mustache has many implicit conversions, for example iterating a list and
+  testing boolean values use the same operator.  Snabela has specific operators
+  for each type.
+- Mustache does not allow arbitrary conversion of a template to a defined
+  format.  For example if you want to represent a number as money, you have to
+  either convert it to a string before the replacement or use whatever numeric
+  representation the template engine does.  Similarly, in some context a string
+  should be a title or capitalized/lowercased.  In Mustache that value must have
+  each version represented.
+
+* Description
+A typical Snabela template:
+
+#+BEGIN_EXAMPLE
+Hello @name@
+You have just won @value@ dollars!
+@?in_ca-@
+Well, @taxed_value | money@ dollars, after taxes.
+@/in_ca-@
+
+Email me at foo@@bar.com for more details.
+#+END_EXAMPLE
+
+Given the following value:
+
+#+BEGIN_EXAMPLE
+{
+  "name": "Chris",
+  "value": 10000,
+  "taxed_value": 10000 - (10000 * 0.4),
+  "in_ca": true
+}
+#+END_EXAMPLE
+
+Will produce the following, assuming there is a transformer named ~money~:
+
+#+BEGIN_EXAMPLE
+Hello Chris
+You have just won 10000 dollars!
+Well, 6000.00 dollars, after taxes
+
+Email me at foo@bar.com for more details.
+#+END_EXAMPLE
+
+Snabela takes a Unicode template string and a key-value object and replaces keys
+referenced in the template string with the value in the object.  Keys are
+separated by the ~@~ symbol.  The ~@~ can be escaped with two ~@~ symbols.  The
+key-value object can contain UTF-8 encoded strings, integers, floats, lists, and
+key-value objects.  Symbols directly after the opening ~@~ allow the key-value
+object to be traversed in different ways.
+
+** Restrictions on key identifiers
+A key identifier must correspond to the regexp: ~[a-zA-Z_][a-zA-Z0-9_]*~.
+
+** A note on strictness
+A conforming Snabela implementation must, by default, error if a key is accessed
+in a template but does not exist in the key-value object.  Likewise, it must
+error if a transformer is accessed but does not exist in the context.  The
+implementation must also error if a test operator is used on a value of the
+incorrect type.
+
+** Template replacements
+Replacing a key with a value is called template replacement.  Template
+replacement is began with a ~@~ and ended with a ~@~.  Modifiers may directly
+follow the ~@~, such as ~?~, ~!~, and ~#~.  After those may be any number of
+white space characters followed by a key identifier, followed by any number of
+white space characters, followed by a closing ~@~.  By default, all white space
+is preserved in the template, however this can be modified with the ~-~
+modifier, which is always the inner-most modifier.
+
+** Types of template replacements
+*** Removing white space
+White space is removed up to the preceding or following new line using the ~-~
+modifier.  A ~-~ in the opening of a template replacement trims any white space
+up to the new line.  A ~-~ in the closing template replacement trims any white
+space up to and including the first new line.
+
+Template:
+
+#+BEGIN_EXAMPLE
+    @-them@
+My name is @me-@
+and I have a business proposition for you.
+#+END_EXAMPLE
+
+Key-value object:
+
+#+BEGIN_EXAMPLE
+{
+  "them": "Sir/Madam",
+  "me": "Arthur Digby Sellers"
+}
+#+END_EXAMPLE
+
+Output:
+
+#+BEGIN_EXAMPLE
+Sir/Madam
+My name is Arthur Digby Sellers and I have a business proposition for you.
+#+END_EXAMPLE
+
+*** Sections
+Like Mustache, Snabela has sections.  The identifier to enter a section depends
+on the type of section however each section is exited with ~@/~.
+
+*** Boolean testing
+A boolean value in the template can be tested for ~true~ with ~@?~ and ~false~
+with ~@!~.
+
+Template:
+
+#+BEGIN_EXAMPLE
+Shown.
+@?person-@
+  Never shown!
+@/person@
+@!person-@
+  Always shown!
+@/person-@
+#+END_EXAMPLE
+
+Key-value object:
+
+#+BEGIN_EXAMPLE
+{
+  "person": false
+}
+#+END_EXAMPLE
+
+Output:
+
+#+BEGIN_EXAMPLE
+Shown.
+Always shown!
+#+END_EXAMPLE
+
+*** Iterating lists
+The key-value object can have keys which correspond to a list of objects.
+Iterating is done with ~@#~.  Each object in the list creates a new, inner,
+context which includes the outer contexts but shadows keys with the same name.
+
+Template:
+
+#+BEGIN_EXAMPLE
+@#parties-@
+@name@ has a minimum age of @min_age@.
+  Guest list:
+  @#guest_list-@
+    @name@
+  @/guest_list-@
+@/parties-@
+#+END_EXAMPLE
+
+Hash:
+
+#+BEGIN_EXAMPLE
+{
+  "min_age": 18,
+  "guest_list": [],
+  "parties": [
+    { "name": "End of the world party", "guest_list": [{"name": "me"}, {"name": "myself"}, {"name: "i"}] },
+    { "name": "End of the world party party", "min_age": 21 },
+  ]
+}
+#+END_EXAMPLE
+
+Output:
+
+#+BEGIN_EXAMPLE
+End of the world party has a minimum age of 18.
+  Guest list:
+    me
+    myself
+    i
+End of the world party party has a minimum age of 21.
+  Guest list:
+#+END_EXAMPLE
+
+*** Testing lists for empty/non-empty
+A list can be tested for if it is empty or not.  The value must be a list.
+Testing if a list is empty or not is done with ~@#?~ and ~@#!~ respectively.
+This does not create a new context inside the list with shadowed variables.
+
+The previous example done such it does not give an empty "Guest list" section
+would look like:
+
+Template:
+
+#+BEGIN_EXAMPLE
+@#parties-@
+@name@ has a minimum age of @min_age@.
+@#?guest_list-@
+  Guest list:
+  @-#guest_list-@
+    @name@
+  @-/guest_list-@
+@/guest_list-@
+@#!guest_list-@
+  No guests have signed up.
+@/guest_list-@
+@/parties-@
+#+END_EXAMPLE
+
+Hash:
+
+#+BEGIN_EXAMPLE
+{
+  "min_age": 18,
+  "guest_list": [],
+  "parties": [
+    { "name": "End of the world party", "guest_list": [{"name": "me"}, {"name": "myself"}, {"name: "i"}] },
+    { "name": "End of the world party party", "min_age": 21 },
+  ]
+}
+#+END_EXAMPLE
+
+Output:
+
+#+BEGIN_EXAMPLE
+End of the world party has a minimum age of 18.
+  Guest list:
+    me
+    myself
+    i
+End of the world party party has a minimum age of 21.
+  No guests have signed up.
+#+END_EXAMPLE
+
+*** Comments
+A template can have a comments.  Comments start with ~@%~ or ~@-%~ and can
+contain any character other than ~@~.  A command ends with ~@~ or ~-@~.
+
+*** Transformers
+Any template replacement may include one or more transformers.  A transformer is
+a function which takes the value of a template and converts can perform any
+operation on it.  It may also throw an error.  Transformers can be used to
+encode a value to ensure it is safe to output or ensure a value has a particular
+structure.  Transformers come after the name of the key, with optional white
+space, separated by the ~|~ symbol.  Transformers are only valid for key
+replacements, not testing a value or iterating a list.  An implementation is
+allowed to execute a template with a default transformer on all template
+replacements.  For example, in a web context the template execution might put
+all values through an transformer which HTML escapes.
+
+Template:
+
+#+BEGIN_EXAMPLE
+- @name@
+- @company | html@
+- @company@
+#+END_EXAMPLE
+
+Hash:
+
+#+BEGIN_EXAMPLE
+{
+  "name": "Chris",
+  "company": "<b>GitHub</b>"
+}
+#+END_EXAMPLE
+
+Output, presuming a transformer called ~html~ exists which takes any value end turns it
+into an HTML-escaped string, the following:
+
+#+BEGIN_EXAMPLE
+- Chris
+- &lt;b&gt;GitHub&lt;/b&gt;
+- <b>GitHub</b>
+#+END_EXAMPLE
