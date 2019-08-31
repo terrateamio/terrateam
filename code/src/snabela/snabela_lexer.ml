@@ -12,6 +12,7 @@ module Token = struct
     | String of string
     | End_section
     | Comment
+    | Exists
   [@@deriving show,eq]
 
   type t = token list [@@deriving show,eq]
@@ -54,12 +55,22 @@ let rec token ln bldr buf =
       comment ln (Tb.add_l [At ln; Comment] bldr) buf
     | "@-#?" ->
       replacement ln (Tb.add_l [At ln; Left_trim; List; Test] bldr) buf
+    | "@-#!" ->
+      replacement ln (Tb.add_l [At ln; Left_trim; List; Neg_test] bldr) buf
     | "@-#" ->
       replacement ln (Tb.add_l [At ln; Left_trim; List] bldr) buf
+    | "@-^!" ->
+      replacement ln (Tb.add_l [At ln; Left_trim; Exists; Neg_test] bldr) buf
+    | "@-^" ->
+      replacement ln (Tb.add_l [At ln; Left_trim; Exists; Test] bldr) buf
     | "@#?" ->
       replacement ln (Tb.add_l [At ln; List; Test] bldr) buf
     | "@#!" ->
       replacement ln (Tb.add_l [At ln; List; Neg_test] bldr) buf
+    | "@^!" ->
+      replacement ln (Tb.add_l [At ln; Exists; Neg_test] bldr) buf
+    | "@^" ->
+      replacement ln (Tb.add_l [At ln; Exists; Test] bldr) buf
     | "@#" ->
       replacement ln (Tb.add_l [At ln; List] bldr) buf
     | "@-?" ->

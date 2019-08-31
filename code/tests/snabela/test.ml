@@ -119,6 +119,23 @@ let test_tokenizer8 =
              ; At 12; End_section; Key "parties"; Right_trim; At 12
              ]))
 
+let test_tokenizer9 =
+  Oth.test
+    ~name:"Tokenizer: Key test"
+    (fun _ ->
+       let template = "Hello, @^name@@name@@/name@" in
+       let lexbuf = Sedlexing.Utf8.from_string template in
+       let tokens = CCResult.get_exn (Snabela_lexer.tokenize lexbuf) in
+       assert
+         Snabela_lexer.Token.(
+           equal
+             tokens
+             [ String "Hello, "
+             ; At 1; Exists; Test; Key "name"; At 1
+             ; At 1; Key "name"; At 1
+             ; At 1; End_section; Key "name"; At 1
+             ]))
+
 let test_apply1 =
   Oth.test
     ~name:"Apply: Simple"
@@ -319,6 +336,28 @@ let test_apply12 =
        let applied = CCResult.get_exn (Snabela.apply compile kv) in
        assert ("Hello, foo" = applied))
 
+let test_apply13 =
+  Oth.test
+    ~name:"Apply: Key test"
+    (fun _ ->
+       let template = "Hello, @^name@@name@@/name@" in
+       let kv = Snabela.Kv.(Map.of_list [("name", string "foo")]) in
+       let t = CCResult.get_exn (Snabela.Template.of_utf8_string template) in
+       let compile = Snabela.of_template t [] in
+       let applied = CCResult.get_exn (Snabela.apply compile kv) in
+       assert ("Hello, foo" = applied))
+
+let test_apply14 =
+  Oth.test
+    ~name:"Apply: Neg key test"
+    (fun _ ->
+       let template = "Hello, @^!name@bar@/name@" in
+       let kv = Snabela.Kv.(Map.of_list []) in
+       let t = CCResult.get_exn (Snabela.Template.of_utf8_string template) in
+       let compile = Snabela.of_template t [] in
+       let applied = CCResult.get_exn (Snabela.apply compile kv) in
+       assert ("Hello, bar" = applied))
+
 let test_apply_fail1 =
   Oth.test
     ~name:"Apply Fail: Missing key"
@@ -483,6 +522,7 @@ let test =
     ; test_tokenizer6
     ; test_tokenizer7
     ; test_tokenizer8
+    ; test_tokenizer9
     ; test_apply1
     ; test_apply2
     ; test_apply3
@@ -495,6 +535,8 @@ let test =
     ; test_apply10
     ; test_apply11
     ; test_apply12
+    ; test_apply13
+    ; test_apply14
     ; test_apply_fail1
     ; test_apply_fail2
     ; test_apply_fail3
