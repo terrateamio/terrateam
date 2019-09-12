@@ -4,17 +4,20 @@ type read_err =
   [ `E_io
   | Abb_intf.Errors.unexpected
   ]
+[@@deriving show, eq]
 
 type write_err =
   [ `E_io
   | `E_no_space
   | Abb_intf.Errors.unexpected
   ]
+[@@deriving show, eq]
 
 type close_err =
   [ `E_io
   | Abb_intf.Errors.unexpected
   ]
+[@@deriving show, eq]
 
 module Make (Fut : Abb_intf.Future.S) = struct
   module Fut_comb = Abb_future_combinators.Make (Fut)

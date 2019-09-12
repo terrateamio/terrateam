@@ -23,6 +23,26 @@ type close_err =
   | Abb_intf.Errors.unexpected
   ]
 
+(** Printers *)
+val pp_read_err : Format.formatter -> read_err -> unit
+
+val show_read_err : read_err -> string
+
+val pp_write_err : Format.formatter -> write_err -> unit
+
+val show_write_err : write_err -> string
+
+val pp_close_err : Format.formatter -> close_err -> unit
+
+val show_close_err : close_err -> string
+
+(** Equality *)
+val equal_read_err : read_err -> read_err -> bool
+
+val equal_write_err : write_err -> write_err -> bool
+
+val equal_close_err : close_err -> close_err -> bool
+
 (** Primary interface for a buffered reader and writer.  Only depends on a
     futures implementation. *)
 module Make (Fut : Abb_intf.Future.S) : sig
