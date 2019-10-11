@@ -13,7 +13,7 @@ ocaml-uri with sexp support
 """
 depends: [
   "uri" {= version}
-  "dune" {build & >= "1.2.0"}
+  "dune" {>= "1.2.0"}
   "ppx_sexp_conv" {>= "v0.9.0"}
   "sexplib0"
   "ounit" {with-test}
