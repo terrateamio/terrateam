@@ -37,10 +37,32 @@ let test2 =
        assert (Fut.state fut1 = `Det ());
        assert (Fut.state fut2 = `Det ()))
 
+let test3 =
+  Oth.test
+    ~desc:"Testing aborting a fork"
+    ~name:"Fork abort"
+    (fun _ ->
+       let promise = Fut.Promise.create () in
+       let fut1 = Fut.Promise.future promise in
+       let fut2 =
+         Fut.fork fut1
+         >>= fun () ->
+         fut1
+         >>| fun () ->
+         ()
+       in
+       ignore (Fut.run_with_state fut2 (Fut.State.create ()));
+       assert (Fut.state fut2 = `Undet);
+       assert (Fut.state fut1 = `Undet);
+       ignore (Fut.abort fut2);
+       assert (Fut.state fut1 = `Undet);
+       assert (Fut.state fut2 = `Aborted))
+
 let () =
   Random.self_init ();
   Oth.(
     run
       (parallel [ test1
                 ; test2
+                ; test3
                 ]))

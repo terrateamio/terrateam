@@ -298,7 +298,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         (* This should never happen. *)
         assert false
       | Error `E_file_table_full ->
-        (* FIXME: Find a better way to handle this.  It would be nice to be able
+        (* TODO: Find a better way to handle this.  It would be nice to be able
            to propogate this error up. *)
         failwith "file table full"
       | Error `E_invalid ->
@@ -345,30 +345,29 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
 
     let run config =
       let open Abb.Future.Infix_monad in
-      let bf =
+      let bf conn =
         match Config.scheme config with
         | Scheme.Http ->
-          fun conn -> Abb.Future.return (Buffered_of.of_tcp_socket ~size:4096 conn)
+          Abb.Future.return (Buffered_of.of_tcp_socket ~size:4096 conn)
         | Scheme.Https tls_config ->
           let server = Otls.Tls.server () in
-          (* FIXME: This can error *)
+          (* TODO: This can error *)
           ignore (Otls.configure server tls_config);
-          fun conn ->
-            match Abb_tls.server_tcp server conn with
-              | Ok rw -> Abb.Future.return rw
-              | Error `Error -> assert false
-              (* | Ok rw -> Abb.Future.return rw *)
-              (* | Error `E_bad_file *)
-              (* | Error `E_invalid *)
-              (* | Error `E_io *)
-              (* | Error `E_is_dir *)
-              (* | Error `E_no_space *)
-              (* | Error `E_permission *)
-              (* | Error `E_pipe *)
-              (* | Error `Error *)
-              (* | Error (`Unexpected _) -> *)
-              (*   (\* Should be impossible *\) *)
-              (*   assert false *)
+          match Abb_tls.server_tcp server conn with
+            | Ok rw -> Abb.Future.return rw
+            | Error `Error -> assert false
+            (* | Ok rw -> Abb.Future.return rw *)
+            (* | Error `E_bad_file *)
+            (* | Error `E_invalid *)
+            (* | Error `E_io *)
+            (* | Error `E_is_dir *)
+            (* | Error `E_no_space *)
+            (* | Error `E_permission *)
+            (* | Error `E_pipe *)
+            (* | Error `Error *)
+            (* | Error (`Unexpected _) -> *)
+            (*   (\* Should be impossible *\) *)
+            (*   assert false *)
       in
       run_tcp_server config bf
       >>| function
@@ -392,7 +391,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         | Error `E_op_not_supported
         | Error `E_permission
         | Error (`Unexpected _) ->
-          (* FIXME: Handle these. *)
+          (* TODO: Handle these. *)
           assert false
   end
 end
