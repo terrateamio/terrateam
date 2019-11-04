@@ -5,14 +5,20 @@ module Native = struct
   type t = unit
 end
 
-module Future = Abb_fut
+module Future = Abb_fut.Make (struct
+  type t = unit
+end)
 
 module Scheduler = struct
   type t = unit
 
   let create () = failwith "nyi"
 
+  let destroy t = failwith "nyi"
+
   let run t f = failwith "nyi"
+
+  let run_with_state f = failwith "nyi"
 
   let exec_duration t = failwith "nyi"
 end

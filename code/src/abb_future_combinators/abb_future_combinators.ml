@@ -32,26 +32,26 @@ module Make (Fut : Abb_intf.Future.S) = struct
 
   let unit = Fut.return ()
 
-  let background = Fut.fork
+  let ignore fut = fut >>= fun _ -> unit
+
+  let background fut = ignore (Fut.fork fut)
 
   let first f1 f2 =
     let p = Fut.Promise.create () in
     link f1 (Fut.Promise.future p);
     link f2 (Fut.Promise.future p);
-    let r1 = f1 >>= fun v -> Fut.Promise.set p (v, f2) in
-    let r2 = f2 >>= fun v -> Fut.Promise.set p (v, f1) in
-    Fut.fork r1
-    >>= fun () ->
-    Fut.fork r2
-    >>= fun () ->
+    Fut.fork (f1 >>= fun v -> Fut.Promise.set p (v, f2))
+    >>= fun r1 ->
+    Fut.fork (f2 >>= fun v -> Fut.Promise.set p (v, f1))
+    >>= fun r2 ->
     Fut.fork (r1 >>= fun () -> Fut.cancel r2)
-    >>= fun () -> Fut.fork (r2 >>= fun () -> Fut.cancel r1) >>= fun () -> Fut.Promise.future p
+    >>= fun _ -> Fut.fork (r2 >>= fun () -> Fut.cancel r1) >>= fun _ -> Fut.Promise.future p
 
   let firstl l =
     let p = Fut.Promise.create () in
     Std_list.iter ~f:(fun dep -> link dep (Fut.Promise.future p)) l;
     let futl = Std_list.mapi ~f:(fun idx fut -> fut >>= fun v -> Fut.Promise.set p (idx, v)) l in
-    List.iter ~f:Fut.fork futl
+    List.iter ~f:(fun fut -> ignore (Fut.fork fut)) futl
     >>= fun () ->
     Fut.Promise.future p
     >>= fun (idx, v) ->
@@ -76,7 +76,16 @@ module Make (Fut : Abb_intf.Future.S) = struct
   let with_finally f ~finally =
     try
       let fut = f () in
-      Fut.await_bind (fun _ -> finally () >>= fun () -> fut) fut
+      let p = Fut.Promise.create ~abort:finally () in
+      Fut.fork
+        (Fut.await_bind
+           (fun r ->
+             match r with
+               | `Det v   -> finally () >>= fun () -> Fut.Promise.set p v
+               | `Exn exn -> finally () >>= fun () -> Fut.Promise.set_exn p exn
+               | `Aborted -> Fut.abort (Fut.Promise.future p))
+           fut)
+      >>= fun _ -> Fut.Promise.future p
     with exn ->
       finally ()
       >>= fun () ->
@@ -97,8 +106,6 @@ module Make (Fut : Abb_intf.Future.S) = struct
           failure ()
         else
           unit)
-
-  let ignore fut = fut >>= fun _ -> unit
 
   let to_result fut = fut >>= fun v -> Fut.return (Ok v)
 

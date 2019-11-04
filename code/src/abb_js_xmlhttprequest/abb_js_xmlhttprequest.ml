@@ -18,17 +18,15 @@ module Response = struct
   }
 end
 
-let state = Abb_fut.State.create ()
-
 let send ?body ~meth ~url () =
   let open Js_of_ocaml in
   let meth = Method.string_of_t meth in
   let req = XmlHttpRequest.create () in
   let promise =
-    Abb_fut.Promise.create
+    Abb_fut_js.Promise.create
       ~abort:(fun () ->
         req##abort;
-        Abb_fut.return ())
+        Abb_fut_js.return ())
       ()
   in
   req##.onload :=
@@ -41,12 +39,12 @@ let send ?body ~meth ~url () =
               text = Js.to_string (Js.Opt.get req##.responseText (fun () -> Js.string ""));
             }
         in
-        ignore (Abb_fut.run_with_state (Abb_fut.Promise.set promise (Ok response)) state);
+        Abb_fut_js.run (Abb_fut_js.Promise.set promise (Ok response));
         Js._true);
   req##.onerror :=
     Dom.handler (fun _ ->
-        ignore (Abb_fut.run_with_state (Abb_fut.Promise.set promise (Error `Error)) state);
+        Abb_fut_js.run (Abb_fut_js.Promise.set promise (Error `Error));
         Js._true);
   req##_open (Js.string meth) (Js.string url) Js._true;
   req##send (Js.Opt.map (Js.Opt.option body) Js.string);
-  Abb_fut.Promise.future promise
+  Abb_fut_js.Promise.future promise

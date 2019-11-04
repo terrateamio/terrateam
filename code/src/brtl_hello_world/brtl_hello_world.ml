@@ -7,7 +7,7 @@ let name name ctx =
   let body =
     CCResult.get_exn
       (Brtl_tmpl.render_string
-         "<html><title>Hello</title><body>Welcome, @name@</body></html>"
+         "<html><title>Hello</title><body>Welcome, @name@</body></html>\n"
          Brtl_tmpl.Kv.(Map.singleton "name" (string name)))
   in
   Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx)
@@ -16,7 +16,7 @@ let age age ctx =
   let body =
     CCResult.get_exn
       (Brtl_tmpl.render_string
-         "<html><title>Hello</title><body>You are @age@ years old.</body></html>"
+         "<html><title>Hello</title><body>You are @age@ years old.</body></html>\n"
          Brtl_tmpl.Kv.(Map.singleton "age" (int age)))
   in
   Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx)
@@ -41,6 +41,6 @@ let () =
     in
     Brtl.run cfg mw rtng
   in
-  match Abb.Scheduler.run (Abb.Scheduler.create ()) run with
+  match Abb.Scheduler.run_with_state run with
     | `Det () -> ()
     | _       -> assert false

@@ -14,5 +14,5 @@ module Make (Fut : Abb_intf.Future.S) = struct
     Channel_queue.T.create ~fast_count:100 ()
     >>= fun queue ->
     let (r_chan, w_chan) = Channel_queue.to_abb_channel queue in
-    Fut.fork (run f w_chan r_chan) >>| fun () -> w_chan
+    Fut.fork (run f w_chan r_chan) >>| fun _ -> w_chan
 end

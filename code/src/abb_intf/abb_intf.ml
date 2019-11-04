@@ -391,7 +391,8 @@ module Future = struct
     type abort = unit -> unit t
 
     (** A promise is the value used to set a [Future].  The promise can be
-        aborted by calling {!Promise.future} and {!abort}. *)
+       aborted by turning it into a future with {!Promise.future} and then
+       calling {!abort}. *)
     module Promise : sig
       type 'a fut = 'a t
 
@@ -434,15 +435,16 @@ module Future = struct
 
     val map : ('a -> 'b) -> 'a t -> 'b t
 
-    (** Execute a future in without waiting for it.  The future can be applied
-        with [bind], [app], or [map] later in order to get the value. *)
-    val fork : 'a t -> unit t
+    (** Execute a future without waiting for it to complete.  The future can be
+       applied with [bind], [app], or [map] later in order to get the value. *)
+    val fork : 'a t -> 'a t t
 
     (** Query the state of the Future *)
     val state : 'a t -> 'a State.t
 
     (** Create a future that will evaluate to the determined state of the
-        queried future. *)
+       queried future.  If the await is aborted, the input future is aborted as
+       well. *)
     val await : 'a t -> 'a Set.t t
 
     val await_map : ('a Set.t -> 'b) -> 'a t -> 'b t
@@ -668,7 +670,11 @@ module type S = sig
 
     val create : unit -> t
 
-    val run : t -> (unit -> 'a Future.t) -> 'a Future_set.t
+    val destroy : t -> unit
+
+    val run : t -> (unit -> 'a Future.t) -> t * 'a Future_set.t
+
+    val run_with_state : (unit -> 'a Future.t) -> 'a Future_set.t
 
     val exec_duration : t -> float array
   end

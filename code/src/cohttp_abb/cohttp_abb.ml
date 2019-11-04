@@ -249,16 +249,16 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
           | `Aborted -> Fut_comb.ignore (Abb.Socket.close conn) )
       | `Req `Eof           ->
           Fut_comb.ignore (Abb.Socket.close conn)
-          >>= fun () -> Abb.Future.fork (Fut_comb.ignore (Channel.send wc `Ok))
+          >>= fun () -> Fut_comb.ignore (Abb.Future.fork (Channel.send wc `Ok))
       | `Req (`Invalid str) ->
           Fut_comb.ignore (Abb.Socket.close conn)
           >>= fun () ->
-          Abb.Future.fork
-            (Fut_comb.ignore
+          Fut_comb.ignore
+            (Abb.Future.fork
                (Channel.send wc (`Exn (Failure (Printf.sprintf "Invalid str: %s" str)))))
       | `Timeout            ->
           Fut_comb.ignore (Abb.Socket.close conn)
-          >>= fun () -> Abb.Future.fork (Fut_comb.ignore (Channel.send wc `Ok))
+          >>= fun () -> Fut_comb.ignore (Abb.Future.fork (Channel.send wc `Ok))
 
     let rec tcp_accept_loop sock config bf wc =
       let open Abb.Future.Infix_monad in
@@ -267,8 +267,8 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       | Ok conn                     ->
           bf conn
           >>= fun (r, w) ->
-          Abb.Future.fork (Fut_comb.ignore (run_handler config conn r w wc))
-          >>= fun () -> tcp_accept_loop sock config bf wc
+          Abb.Future.fork (run_handler config conn r w wc)
+          >>= fun _ -> tcp_accept_loop sock config bf wc
       | Error `E_connection_aborted ->
           (* In the case the client disconnected between accepting and getting
              here, just ignore the error. *)
@@ -313,7 +313,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       Fut_comb.with_finally
         (fun () ->
           let open Abb.Future.Infix_monad in
-          Abb.Future.fork accept_loop >>= fun () -> handler_response_loop config rc)
+          Abb.Future.fork accept_loop >>= fun _ -> handler_response_loop config rc)
         ~finally:(fun () -> Channel.close_reader rc)
 
     let run config =

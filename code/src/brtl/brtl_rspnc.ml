@@ -7,6 +7,7 @@ type t = {
 
 let create ?version ?(headers = Cohttp.Header.init ()) ~status body =
   let headers = Cohttp.Header.add_unless_exists headers "content-type" "text/html" in
+  let headers = Cohttp.Header.add_unless_exists headers "connection" "keep-alive" in
   { response = Response.make ?version ~headers ~status (); body }
 
 let version t = Response.version t.response

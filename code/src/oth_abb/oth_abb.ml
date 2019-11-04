@@ -45,8 +45,7 @@ module Make (Abb : Abb_intf.S) = struct
 
   let to_sync_test test =
     Oth.raw_test (fun state ->
-        let sched = Abb.Scheduler.create () in
-        let res = Abb.Scheduler.run sched (fun () -> test state) in
+        let res = Abb.Scheduler.run_with_state (fun () -> test state) in
         match res with
           | `Det rr -> rr
           | _       -> assert false)

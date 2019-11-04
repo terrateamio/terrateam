@@ -113,7 +113,7 @@ module Make (Fut : Abb_intf.Future.S) = struct
              | `Exn exn -> Fut.Promise.set_exn promise exn
              | `Aborted -> Fut.abort (Fut.Promise.future promise))
            (Fut.Promise.future t.closed_promise))
-      >>= fun () -> Fut.Promise.future promise
+      >>= fun _ -> Fut.Promise.future promise
   end
 
   module type S = module type of T

@@ -59,5 +59,5 @@ module Make (Abb : Abb_intf.S) = struct
     >>= fun queue ->
     let (rc, wc) = Channel_queue.to_abb_channel queue in
     Fut_comb.to_result (Abb.Future.fork (tcp_accept_loop tcp wc))
-    >>= fun () -> Abb.Future.return (Ok rc)
+    >>= fun _ -> Abb.Future.return (Ok rc)
 end

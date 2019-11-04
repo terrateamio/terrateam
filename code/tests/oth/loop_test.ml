@@ -1,4 +1,5 @@
 let iterations = 100
+
 let loops = ref 0
 
 let loop_test _ =
@@ -13,7 +14,7 @@ let () =
   Oth.(
     run
       (serial
-         [ name ~name:"Loop Test"
-             (silent (loop iterations (test ~name:"Loop test" loop_test)))
-         ; test ~name:"Validate loop" validate_loops
+         [
+           name ~name:"Loop Test" (silent (loop iterations (test ~name:"Loop test" loop_test)));
+           test ~name:"Validate loop" validate_loops;
          ]))
