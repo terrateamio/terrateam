@@ -7,4 +7,5 @@ val sexp_of_t : Uri.t -> Sexp.t
 
 type component = Uri.component
 val compare : Uri.t -> Uri.t -> int
+val equal : Uri.t -> Uri.t -> bool
 type t = Uri.t
