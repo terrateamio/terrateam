@@ -1,3 +1,9 @@
+v3.1.0 2019-11-23
+-----------------
+
+* Add `Uri_sexp.equal` (#139 @vbmithr)
+* Update opam files to remove dune as a build-only dep (@craigfe #140)
+
 v3.0.0 2019-07-06
 -----------------
 
