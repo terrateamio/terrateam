@@ -31,6 +31,7 @@ type component = [
   | `Query_key
   | `Query_value
   | `Fragment
+  | `Generic
 ]
 
 (** {2 Core functionality } *)

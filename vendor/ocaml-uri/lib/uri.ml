@@ -129,6 +129,7 @@ type component = [
   | `Query_key
   | `Query_value
   | `Fragment
+  | `Generic
 ]
 
 let rec iter_concat fn sep buf = function
@@ -252,6 +253,7 @@ module Generic : Scheme = struct
     | `Query_value -> safe_chars_for_query_value
     | `Fragment -> safe_chars_for_fragment
     | `Scheme -> safe_chars_for_scheme
+    | `Generic
     | _ -> safe_chars
 
   let normalize_host hso = hso
