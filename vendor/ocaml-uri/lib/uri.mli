@@ -46,8 +46,7 @@ val compare : t -> t -> int
 (** [equal a b] is [compare a b = 0]. *)
 val equal : t -> t -> bool
 
-(** Percent-encode a string. The [scheme] argument defaults to 'http' and
-    the [component] argument defaults to `Path *)
+(** Percent-encode a string. The [component] argument defaults to `Path *)
 val pct_encode : ?scheme:string -> ?component:component -> string -> string
 
 (** Percent-decode a percent-encoded string *)
