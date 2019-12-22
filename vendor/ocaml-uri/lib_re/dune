@@ -1,0 +1,4 @@
+(library
+ (name uri_re)
+ (public_name uri-re)
+ (libraries re.posix stringext))
