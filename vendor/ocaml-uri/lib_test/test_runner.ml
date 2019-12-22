@@ -649,6 +649,31 @@ let test_with_uri =
     )
   ) (List.map (fun (i, o) -> Uri.to_string i, o) with_uri)
 
+let ipv6_addresses =
+  ["::", "::"
+  ; "::1", "::1"
+  ;"fe02::1","fe02::1"
+  ;"::ffff:192.0.2.1", "::ffff:192.0.2.1"
+  ;"2001:DB8::42","2001:DB8::42"
+  ;"2001:DB8:1234:5678:90ab:cdef:0123:4567","2001:DB8:1234:5678:90ab:cdef:0123:4567"
+  ;"2001:DB8:1234:5678:90ab:cdef:0123::","2001:DB8:1234:5678:90ab:cdef:0123::"
+  ;"2001:DB8:1234:5678:90ab:cdef::0123","2001:DB8:1234:5678:90ab:cdef::0123"
+  ;"2001:DB8:1234:5678:90ab:cdef:192.0.2.1","2001:DB8:1234:5678:90ab:cdef:192.0.2.1"
+  ;"2001:DB8:1234:5678:90ab:cdef:192.0.2.1","2001:DB8:1234:5678:90ab:cdef:192.0.2.1"
+  ]
+
+let test_ipv6_parsing =
+  List.map (fun (input, expected) ->
+    let name = sprintf "ipv6:%s" input in
+    let test () =
+      match Angstrom.parse_string Uri.Parser.ipv6 input with
+      | Ok parsed ->
+        assert_equal ~printer:(fun x -> x) expected parsed
+      | Error msg -> assert_failure msg
+    in
+    name >:: test
+  ) ipv6_addresses
+
 (* Returns true if the result list contains successes only.
    Copied from oUnit source as it isnt exposed by the mli *)
 let rec was_successful =
@@ -682,6 +707,7 @@ let _ =
     @ test_with_change
     @ test_canonicalize
     @ test_with_uri
+    @ test_ipv6_parsing
   ) in
   let verbose = ref false in
   let set_verbose _ = verbose := true in

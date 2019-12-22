@@ -18,107 +18,6 @@
 
 [@@@ocaml.warning "-32"]
 
-module Uri_re = struct
-  open Re
-
-  module Raw = struct
-    let (+) a b = seq [a;b]
-    let (/) a b = alt [a;b]
-
-    let gen_delims = Posix.re "[:/?#\\[\\]@]"
-    let sub_delims = Posix.re "[!$&'()*+,;=]"
-    let c_at = char '@'
-    let c_colon = char ':'
-    let c_slash = char '/'
-    let c_slash2 = Posix.re "//"
-    let c_dot = char '.'
-    let c_question = char '?'
-    let c_hash = char '#'
-
-    let reserved = gen_delims / sub_delims
-    let unreserved = Posix.re "[A-Za-z0-9-._~]"
-    let hexdig = Posix.re "[0-9A-Fa-f]"
-    let pct_encoded = (char '%') + hexdig + hexdig
-
-    let dec_octet = Posix.re "25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?"
-    let ipv4_address = (repn (dec_octet + c_dot) 3 (Some 3)) + dec_octet
-
-    (* following RFC2234, RFC3986, RFC6874 and
-       http://people.spodhuis.org/phil.pennock/software/emit_ipv6_regexp-0.304
-    *)
-    let zone_id = unreserved / pct_encoded
-    let ipv6_address =
-      let (=|) n a = repn a n (Some n) in
-      let (<|) n a = repn a 0 (Some n) in
-      let h16 = repn hexdig 1 (Some 4) in
-      let h16c = h16 + c_colon in
-      let cc = c_colon + c_colon in
-      let ls32 = (h16c + h16) / ipv4_address in
-      ( char '['
-        + (((6=|h16c) + ls32)
-           / (                         cc + (5=|h16c) + ls32)
-           / ((1<|             h16)  + cc + (4=|h16c) + ls32)
-           / ((1<|((1<|h16c) + h16)) + cc + (3=|h16c) + ls32)
-           / ((1<|((2<|h16c) + h16)) + cc + (2=|h16c) + ls32)
-           / ((1<|((3<|h16c) + h16)) + cc +     h16c  + ls32)
-           / ((1<|((4<|h16c) + h16)) + cc             + ls32)
-           / ((1<|((5<|h16c) + h16)) + cc             +  h16)
-           / ((1<|((6<|h16c) + h16)) + cc                   )
-          )
-        + (opt (Posix.re "%25" + rep1 zone_id))
-        + char ']'
-      )
-
-    let reg_name = rep ( unreserved / pct_encoded / sub_delims )
-
-    let host = ipv6_address / ipv4_address / reg_name (* | ipv4_literal TODO *)
-    let userinfo = rep (unreserved / pct_encoded / sub_delims / c_colon)
-    let port = Posix.re "[0-9]*"
-    let authority = (opt ((group userinfo) + c_at)) + (group host) + (opt (c_colon + (group port)))
-    let null_authority = (group empty) + (group empty) + (group empty)
-
-    let pchar = unreserved / pct_encoded / sub_delims / c_colon / c_at
-    let segment = rep pchar
-    let segment_nz = rep1 pchar
-    let segment_nz_nc = repn (unreserved / pct_encoded / sub_delims / c_at) 1 None 
-    let path_abempty = rep (c_slash + segment)
-    let path_absolute = c_slash + (opt (segment_nz + (rep (c_slash + segment))))
-    let path_noscheme = segment_nz_nc + (rep (c_slash + segment ))
-    let path_rootless = segment_nz + (rep (c_slash + segment ))
-    let path_empty = empty
-
-    let path = path_abempty  (* begins with "/" or is empty *)
-               / path_absolute (* begins with "/" but not "//" *)
-               / path_noscheme (* begins with a non-colon segment *)
-               / path_rootless (* begins with a segment *)
-               / path_empty    (* zero characters *)
-
-    let hier_part = (c_slash2 + authority + path_abempty)
-                    / (path_absolute / path_rootless / path_empty)
-
-    let scheme = Posix.re "[A-Za-z][A-Za-z0-9+\\\\-\\.]*"
-    let query = group (rep ( pchar / c_slash / c_question))
-    let fragment = group (rep (pchar / c_slash / c_question))
-
-    let absolute_uri = scheme + c_colon + hier_part + (opt (c_question + query))
-
-    let uri = scheme + c_colon + hier_part + (opt (c_question + query)) + (opt (c_hash + fragment))
-
-    let relative_part = (c_slash2 + authority + path_abempty) / (path_absolute / path_noscheme / path_empty)
-
-    let relative_ref = relative_part + (opt (c_question + query)) + (opt (c_hash + fragment))
-
-    let uri_reference = Posix.re "^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?"
-  end
-
-  let ipv4_address = Posix.compile Raw.ipv4_address
-  let ipv6_address = Posix.compile Raw.ipv6_address
-  let uri_reference = Posix.compile Raw.uri_reference
-  let authority = Posix.compile Raw.authority
-
-  let host = Posix.compile Raw.host
-end
-
 type component = [
   | `Scheme
   | `Authority
@@ -694,56 +593,6 @@ let make ?scheme ?userinfo ?host ?port ?path ?query ?fragment () =
     { scheme; userinfo;
       host=decode host; port; path; query; fragment=decode fragment }
 
-(** Parse a URI string into a structure *)
-let of_string s =
-  (* Given a series of Re substrings, cast each component
-   * into a Pct.encoded and return an optional type (None if
-   * the component is not present in the Uri *)
-  let get_opt_encoded s n =
-    try Some (Pct.cast_encoded (Re.Group.get s n))
-    with Not_found -> None
-  in
-  let get_opt s n =
-    try
-      let pct = Pct.cast_encoded (Re.Group.get s n) in
-      Some (Pct.decode pct)
-    with Not_found -> None
-  in
-  let subs = Re.exec Uri_re.uri_reference s in
-  let scheme = get_opt subs 2 in
-  let userinfo, host, port =
-    match get_opt_encoded subs 4 with
-    |None -> None, None, None
-    |Some a ->
-      let subs' = Re.exec Uri_re.authority (Pct.uncast_encoded a) in
-      let userinfo = match get_opt_encoded subs' 1 with
-        | Some x -> Some (Userinfo.userinfo_of_encoded (Pct.uncast_encoded x))
-        | None -> None
-      in
-      let host = get_opt subs' 2 in
-      let port =
-        match get_opt subs' 3 with
-        |None -> None
-        |Some x ->
-          (try
-             Some (int_of_string (Pct.uncast_decoded x))
-           with _ -> None)
-      in
-      userinfo, host, port
-  in
-  let path =
-    match get_opt_encoded subs 5 with
-    | Some x -> Path.path_of_encoded (Pct.uncast_encoded x)
-    | None -> []
-  in
-  let query =
-    match get_opt_encoded subs 7 with
-    | Some x -> Query.of_raw (Pct.uncast_encoded x)
-    | None -> Query.Raw (None, Lazy.from_val [])
-  in
-  let fragment = get_opt subs 9 in
-  normalize scheme { scheme; userinfo; host; port; path; query; fragment }
-
 (** Convert a URI structure into a percent-encoded string
     <http://tools.ietf.org/html/rfc3986#section-5.3>
 *)
@@ -996,5 +845,218 @@ let canonicalize uri =
 let pp ppf uri = Format.pp_print_string ppf (to_string uri)
 let pp_hum ppf uri = Format.pp_print_string ppf (to_string uri)
 
-module Re = Uri_re
+module Parser = struct
+  open Angstrom
 
+  let string_of_char_list chars =
+    String.concat "" (List.map (String.make 1) chars)
+
+  let string_of_char = String.make 1
+
+  let scheme =
+    lift
+      (fun s -> Some (Pct.decode (Pct.cast_encoded s)))
+      (take_while (fun c -> c <> ':' && c <> '/' && c <> '?' && c <> '#')
+      <* char ':')
+    <|> return None
+
+  let is_digit = function '0' .. '9' -> true | _ -> false
+
+  let hex_digit =
+    satisfy (function
+        | '0' .. '9' | 'A' .. 'F' | 'a' .. 'f' ->
+          true
+        | _ ->
+          false)
+
+  let hexadecimal = lift string_of_char_list (many hex_digit)
+
+  let c_dot = char '.'
+
+  let c_at = char '@'
+
+  let c_colon = char ':'
+
+  let dec_octet =
+    take_while1 (function '0' .. '9' -> true | _ -> false) >>= fun num ->
+    if int_of_string num < 256 then
+      return num
+    else
+      fail "invalid octect"
+
+  let ipv4_address =
+    lift2
+      (fun three one -> String.concat "." three ^ "." ^ one)
+      (count 3 (dec_octet <* c_dot))
+      dec_octet
+
+  (* -- after double colon, IPv4 dotted notation could appear anywhere *)
+  let after_double_colon =
+    fix (fun f ->
+        list [ ipv4_address ]
+        <|> lift2 (fun x y -> x :: y) hexadecimal (c_colon *> f <|> return []))
+
+  let double_colon count =
+    after_double_colon <|> return [] >>= fun rest ->
+    let filler_length = 8 - count - List.length rest in
+    if filler_length <= 0 then
+      fail "too many parts in IPv6 address"
+    else
+      return ("" :: rest)
+
+  let rec part = function
+    | 7 ->
+      (* max 8 parts in an IPv6 address *)
+      lift (fun x -> [ x ]) hexadecimal
+    | 6 ->
+      (* after 6 parts it could end in IPv4 dotted notation *)
+      list [ ipv4_address ] <|> hex_part 6
+    | n ->
+      hex_part n
+
+  and hex_part n =
+    lift2
+      (fun x y -> x :: y)
+      hexadecimal
+      (c_colon *> (c_colon *> double_colon (n + 1) <|> part (n + 1)))
+
+  let rec split_with f xs =
+    match xs with
+    | [] ->
+      [], []
+    | y :: ys ->
+      if f y then
+        let zs, ts = split_with f ys in
+        y :: zs, ts
+      else
+        [], xs
+
+  let ipv6 =
+    let format_addr segments =
+      let before_double_colon, after_double_colon =
+        split_with (fun segment -> segment <> "") segments
+      in
+      let before = String.concat ":" before_double_colon in
+      let res =
+        match after_double_colon with
+        | "" :: xs ->
+          before ^ "::" ^ String.concat ":" xs
+        | _ ->
+          before
+      in
+      res
+    in
+    lift format_addr (c_colon *> c_colon *> double_colon 0 <|> part 0)
+
+  let ipv6_address =
+    lift3
+      (fun lb ip rb ->
+        String.concat "" [ String.make 1 lb; ip; String.make 1 rb ])
+      (char '[')
+      ipv6
+      (char ']')
+
+  let pct_encoded =
+    lift2
+      (fun pct digits -> string_of_char_list (pct :: digits))
+      (char '%')
+      (count 2 hex_digit)
+
+  let sub_delims =
+    satisfy (function
+        | '!' | '$' | '&' | '\'' | '(' | ')' | '*' | '+' | ',' | ';' | '=' ->
+          true
+        | _ ->
+          false)
+
+  let unreserved =
+    (* "[A-Za-z0-9-._~]" *)
+    satisfy (function
+        | 'A' .. 'Z' | 'a' .. 'z' | '0' .. '9' | '-' | '.' | '_' | '~' ->
+          true
+        | _ ->
+          false)
+
+  let reg_name =
+    lift
+      (String.concat "")
+      (many
+         (choice
+            [ string_of_char <$> unreserved
+            ; pct_encoded
+            ; string_of_char <$> sub_delims
+            ]))
+
+  let host =
+    lift
+      (fun s -> Pct.decode (Pct.cast_encoded s))
+      (choice
+         [ reg_name; ipv4_address; ipv6_address (* | ipv4_literal TODO *) ])
+
+  let userinfo =
+    lift
+      (fun x ->
+        let s = String.concat "" x in
+        Some (Userinfo.userinfo_of_encoded s))
+      (many
+         (choice
+            [ string_of_char <$> unreserved
+            ; pct_encoded
+            ; string_of_char <$> sub_delims
+            ; string_of_char <$> c_colon
+            ])
+      <* c_at)
+    <|> return None
+
+  let port =
+    peek_char >>= function
+    | Some ':' ->
+      c_colon *> take_while is_digit >>| fun port ->
+      let decoded = Pct.decode (Pct.cast_encoded port) in
+      (try Some (int_of_string (Pct.uncast_decoded decoded)) with _ -> None)
+    | Some _ | None ->
+      return None
+
+  let authority =
+    string "//"
+    *> lift3
+         (fun userinfo host port -> userinfo, Some host, port)
+         userinfo
+         host
+         port
+    <|> return (None, None, None)
+
+  let path =
+    lift
+      Path.path_of_encoded
+      (take_while (function '?' | '#' -> false | _ -> true))
+
+  let query =
+    lift
+      Query.of_raw
+      (char '?' *> take_till (function '#' -> true | _ -> false))
+    <|> return (Query.Raw (None, Lazy.from_val []))
+
+  let fragment =
+    lift
+      (fun s -> Some (Pct.decode (Pct.cast_encoded s)))
+      (char '#' *> take_while (fun _ -> true))
+    <|> return None
+
+  let uri_reference =
+    lift4
+      (fun scheme (userinfo, host, port) path query fragment ->
+        normalize scheme { scheme; userinfo; host; port; path; query; fragment })
+      scheme
+      authority
+      path
+      query
+    <*> fragment
+end
+
+let of_string s =
+  match Angstrom.parse_string Parser.uri_reference s with
+  | Ok t -> t
+  | Error _ ->
+    (* Shouldn't really happen if the parser is forgiving. *)
+    empty

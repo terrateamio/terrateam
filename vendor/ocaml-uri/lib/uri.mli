@@ -259,11 +259,7 @@ val pp : Format.formatter -> t -> unit [@@ocaml.toplevel_printer]
 (**  [pp_hum] is now an alias for the {!pp} function. *)
 val pp_hum : Format.formatter -> t -> unit
 
-(** Regular expressions for URI parsing. *)
-module Re : sig
-  val ipv4_address : Re.re
-  val ipv6_address : Re.re
-  val uri_reference : Re.re
-  val authority : Re.re
-  val host : Re.re
+module Parser : sig
+  val ipv6 : string Angstrom.t
+  val uri_reference : t Angstrom.t
 end
