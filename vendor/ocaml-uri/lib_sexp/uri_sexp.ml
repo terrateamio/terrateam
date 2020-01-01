@@ -18,13 +18,13 @@ struct
 	] [@@deriving sexp]
 
 	type t = {
-          scheme: string option [@default None] [@sexp_drop_default];
-          userinfo: string option [@default None] [@sexp_drop_default];
-          host: string option [@default None] [@sexp_drop_default];
-          port: int option [@default None] [@sexp_drop_default];
-          path: string [@default ""] [@sexp_drop_default];
-          query: (string * string list) sexp_list;
-          fragment: string option [@default None] [@sexp_drop_default]
+          scheme: string option [@default None] [@sexp_drop_default.sexp];
+          userinfo: string option [@default None] [@sexp_drop_default.sexp];
+          host: string option [@default None] [@sexp_drop_default.sexp];
+          port: int option [@default None] [@sexp_drop_default.sexp];
+          path: string [@default ""] [@sexp_drop_default.sexp];
+          query: (string * string list) list [@sexp.list];
+          fragment: string option [@default None] [@sexp_drop_default.sexp]
 	} [@@deriving sexp]
 
 end
