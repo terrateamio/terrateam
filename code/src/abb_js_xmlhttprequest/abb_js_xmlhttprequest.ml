@@ -29,8 +29,9 @@ let send ?body ~meth ~url () =
   in
   req##.onload := Dom.handler
       (fun _ ->
+         (* TODO: Verify this responseText behaviour is correct *)
          let response = Response.({ status = req##.status
-                                  ; text = Js.to_string req##.responseText
+                                  ; text = Js.to_string (Js.Opt.get req##.responseText (fun () -> Js.string ""))
                                   })
          in
          ignore
