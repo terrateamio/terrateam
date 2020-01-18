@@ -75,11 +75,13 @@ struct eventfd {
 #define KNFL_SOCKET_DGRAM        (1U << 6U)
 #define KNFL_SOCKET_RDM          (1U << 7U)
 #define KNFL_SOCKET_SEQPACKET    (1U << 8U)
+#define KNFL_SOCKET_RAW          (1U << 9U)
 #define KNFL_KNOTE_DELETED       (1U << 31U)
 #define KNFL_SOCKET              (KNFL_SOCKET_STREAM |\
                                   KNFL_SOCKET_DGRAM |\
                                   KNFL_SOCKET_RDM |\
-                                  KNFL_SOCKET_SEQPACKET)
+                                  KNFL_SOCKET_SEQPACKET |\
+                                  KNFL_SOCKET_RAW)
 
 struct knote {
     struct kevent     kev;

@@ -649,6 +649,11 @@ linux_get_descriptor_type(struct knote *kn)
             kn->kn_flags |= KNFL_SOCKET_SEQPACKET;
             break;
 
+        case SOCK_RAW:
+            dbg_printf("fd %d is a raw socket\n", fd);
+            kn->kn_flags |= KNFL_SOCKET_RAW;
+            break;
+
         default:
             errno = EBADF;
             dbg_perror("unknown socket type");
