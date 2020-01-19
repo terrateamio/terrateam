@@ -558,6 +558,7 @@ linux_eventfd_descriptor(struct eventfd *e)
  * - KNFL_SOCKET_DGRAM       FD is a datagram socket (unreliable connectionless messages).
  * - KNFL_SOCKET_RDM         FD is a reliable datagram socket (reliable connectionless messages).
  * - KNFL_SOCKET_SEQPACKET   FD is a sequenced packet socket (reliable connection-oriented messages).
+ * - KNFL_SOCKET_RAW         FD is a raw socket as documented in raw(7).
  *
  * Additionally KNFL_SOCKET_* types may have the KNFL_SOCKET_PASSIVE flag set if they
  * are never expected to return data, but only provide an indication of whether data is available.
