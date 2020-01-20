@@ -424,6 +424,34 @@ test_kevent_regular_file(struct test_context *ctx)
     close(fd);
 }
 
+/* Test transitioning a socket from EVFILT_WRITE to EVFILT_READ */
+void
+test_transition_from_write_to_read(struct test_context *ctx)
+{
+    struct kevent kev, ret;
+    int kqfd;
+    int sd[2];
+
+    (void) ctx;
+    if ((kqfd = kqueue()) < 0)
+        err(1, "kqueue");
+
+    if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sd))
+        err(1, "socketpair");
+
+    EV_SET(&kev, sd[0], EVFILT_WRITE, EV_ADD, 0, 0, NULL);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1,"kevent");
+
+    EV_SET(&kev, sd[0], EVFILT_READ, EV_ADD, 0, 0, NULL);
+    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+        err(1,"kevent");
+
+    close(sd[0]);
+    close(sd[1]);
+    close(kqfd);
+}
+
 void
 test_evfilt_read(struct test_context *ctx)
 {
@@ -442,6 +470,11 @@ test_evfilt_read(struct test_context *ctx)
     test(kevent_socket_listen_backlog, ctx);
     test(kevent_socket_eof, ctx);
     test(kevent_regular_file, ctx);
+    close(ctx->client_fd);
+    close(ctx->server_fd);
+
+    create_socket_connection(&ctx->client_fd, &ctx->server_fd);
+    test(transition_from_write_to_read, ctx);
     close(ctx->client_fd);
     close(ctx->server_fd);
 }
