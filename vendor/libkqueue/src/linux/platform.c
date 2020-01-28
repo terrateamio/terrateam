@@ -386,8 +386,9 @@ linux_kevent_wait(
 {
     int timeout, nret;
 
-    /* Use a high-resolution syscall if the timeout value is less than one millisecond.  */
-    if (ts != NULL && ts->tv_sec == 0 && ts->tv_nsec > 0 && ts->tv_nsec < 1000000) {
+    /* Use a high-resolution syscall if the timeout value's tv_nsec value has a resolution
+     * finer than a millisecond. */
+    if (ts != NULL && (ts->tv_nsec % 1000000 != 0)) {
         nret = linux_kevent_wait_hires(kq, ts);
         if (nret <= 0)
             return (nret);
