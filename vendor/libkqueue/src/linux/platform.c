@@ -290,6 +290,8 @@ linux_kqueue_cleanup(struct kqueue *kq)
 {
     char buffer;
     ssize_t ret;
+    int pipefd;
+
     filter_unregister_all(kq);
     if (kq->epollfd > 0) {
         close(kq->epollfd);
@@ -314,12 +316,13 @@ linux_kqueue_cleanup(struct kqueue *kq)
         dbg_puts("Unexpected data available on kqueue FD");
     }
 
-    if (kq->pipefd[0] > 0) {
-        close(kq->pipefd[0]);
+    pipefd = kq->pipefd[0];
+    if (pipefd > 0) {
+        close(pipefd);
         kq->pipefd[0] = -1;
     }
 
-    fd_map[kq->pipefd[0]] = 0;
+    fd_map[pipefd] = 0;
 
     /* Decrement kqueue counter */
     kqueue_cnt--;
