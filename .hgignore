@@ -3,6 +3,7 @@ pds.mk
 Ocamlrules.mk.in
 build/
 .merlin
+.*__pycache__.*
 
 longform_files/longform_js.js
 src/longform_tmpl/longform_tmpl.ml
