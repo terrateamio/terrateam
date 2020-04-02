@@ -330,7 +330,12 @@ end
     within  these types. *)
 module Future = struct
   module State = struct
-    type 'a t = [ `Det of 'a | `Undet | `Aborted | `Exn of (exn * Printexc.raw_backtrace option) ]
+    type 'a t = [ `Det of 'a
+                | `Undet
+                | `Aborted
+                | `Exn of (exn * Printexc.raw_backtrace option [@opaque])
+                ]
+    [@@deriving show]
   end
 
   module Set = struct

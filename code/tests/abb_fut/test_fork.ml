@@ -54,8 +54,8 @@ let test3 =
        ignore (Fut.run_with_state fut2 (Fut.State.create ()));
        assert (Fut.state fut2 = `Undet);
        assert (Fut.state fut1 = `Undet);
-       ignore (Fut.abort fut2);
-       assert (Fut.state fut1 = `Undet);
+       ignore (Fut.run_with_state (Fut.abort fut2) (Fut.State.create ()));
+       assert (Fut.state fut1 = `Aborted);
        assert (Fut.state fut2 = `Aborted))
 
 let () =
