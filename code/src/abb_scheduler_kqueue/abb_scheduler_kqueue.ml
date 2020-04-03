@@ -814,7 +814,7 @@ module File = struct
     Thread.run
       (fun () ->
          try
-           Ok (Unix.link ~src ~dst)
+           Ok (Unix.link ~follow:true ~src ~dst)
          with
            | Unix.Unix_error (err, _, _) as exn ->
              let open Unix in
