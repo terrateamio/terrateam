@@ -1,12 +1,9 @@
-.PHONY: .merlin
-
 all: .merlin
-	pds
-	$(MAKE) -f pds.mk all
 
-%: .merlin
-	pds
-	$(MAKE) -f pds.mk $*
-
-.merlin:
+.merlin: pds.conf
 	 pds -f | merlin-of-pds > .merlin
+
+pds.mk: pds.conf
+	pds
+
+-include pds.mk
