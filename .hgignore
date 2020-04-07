@@ -4,8 +4,3 @@ Ocamlrules.mk.in
 build/
 .merlin
 .*__pycache__.*
-
-src/longform_tmpl/longform_tmpl.ml
-
-src/okr_files/okr_files.ml
-src/okr_js_files/okr_js_files.ml
