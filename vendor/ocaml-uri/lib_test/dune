@@ -2,7 +2,7 @@
  (name test_runner)
  (package uri)
  (modules test_runner)
- (libraries uri uri.services oUnit))
+ (libraries uri uri-re uri.services oUnit))
 
 (test
  (name test_runner_sexp)

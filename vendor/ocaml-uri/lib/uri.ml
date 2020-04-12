@@ -848,10 +848,10 @@ let pp_hum ppf uri = Format.pp_print_string ppf (to_string uri)
 module Parser = struct
   open Angstrom
 
-  let string_of_char_list chars =
-    String.concat "" (List.map (String.make 1) chars)
-
   let string_of_char = String.make 1
+
+  let string_of_char_list chars =
+    String.concat "" (List.map string_of_char chars)
 
   let scheme =
     lift
@@ -951,7 +951,7 @@ module Parser = struct
   let ipv6_address =
     lift3
       (fun lb ip rb ->
-        String.concat "" [ String.make 1 lb; ip; String.make 1 rb ])
+        String.concat "" [ string_of_char lb; ip; string_of_char rb ])
       (char '[')
       ipv6
       (char ']')
@@ -1043,7 +1043,7 @@ module Parser = struct
       (char '#' *> take_while (fun _ -> true))
     <|> return None
 
-  let uri_reference =
+  let _uri_reference =
     lift4
       (fun scheme (userinfo, host, port) path query fragment ->
         normalize scheme { scheme; userinfo; host; port; path; query; fragment })
@@ -1052,6 +1052,17 @@ module Parser = struct
       path
       query
     <*> fragment
+
+  (* XXX(anmonteiro): For compatibility reasons with the old regex parser, we
+   * only parse until the first newline character and drop everything else
+   * after that *)
+  let uri_reference =
+    take_while (function | '\n' -> false | _ -> true) >>| fun s ->
+      match Angstrom.parse_string _uri_reference s with
+      | Ok t -> t
+      | Error _ ->
+        (* Shouldn't really happen if the parser is forgiving. *)
+        empty
 end
 
 let of_string s =
