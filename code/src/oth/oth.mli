@@ -12,30 +12,33 @@ end
 
 (** The result of a single test. *)
 module Test_result : sig
-  type t = { name : string
-           ; desc : string option
-           ; duration : Duration.t
-           ; res : [ `Ok | `Exn of (exn * Printexc.raw_backtrace option) | `Timedout ]
-           }
+  type t = {
+    name : string;
+    desc : string option;
+    duration : Duration.t;
+    res : [ `Ok | `Exn      of exn * Printexc.raw_backtrace option | `Timedout ];
+  }
 end
 
 (** The result of a run, which is a list of tests.  The order of the tests is
     undefined. *)
 module Run_result : sig
   type t
+
   val of_test_results : Test_result.t list -> t
+
   val test_results : t -> Test_result.t list
 end
 
 module Outputter : sig
-  type t = (Run_result.t -> unit)
+  type t = Run_result.t -> unit
 
   (** An outputter that writes a basic format to stdout. *)
   val basic_stdout : t
 
   (** An outputter that writes to a file. The [out_channel] specifies where to
       write the results to. *)
-  val basic_tap : [`Filename of string | `Out_channel of out_channel] -> t
+  val basic_tap : [ `Filename    of string | `Out_channel of out_channel ] -> t
 
   (** Takes an environment variable name and a list of tuples mapping a string
       name to an Outputter.  The environment variable will be compared to the
@@ -91,18 +94,11 @@ val name : name:string -> Test.t -> Test.t
 
 (** Turn a test that returns a result into one that returns a unit.  This
     asserts that the result is on the 'Ok' path.  *)
-val result_test :
-  (State.t -> (unit, 'err) result) ->
-  State.t ->
-  unit
+val result_test : (State.t -> (unit, 'err) result) -> State.t -> unit
 
 (** Turn a function into a test with a setup and teardown phase *)
 val test_with_revops :
-  ?desc:string ->
-  name:string ->
-  revops:'a Revops.Oprev.t ->
-  ('a -> State.t -> unit) ->
-  Test.t
+  ?desc:string -> name:string -> revops:'a Revops.Oprev.t -> ('a -> State.t -> unit) -> Test.t
 
 (** Turn verbose logging on.  This is the default but can be turned off with
     {!silent}, this will turn it back on.
@@ -113,4 +109,4 @@ val verbose : Test.t -> Test.t
 (** Turn logging off in the test, this is useful in combination with {!loop}.
 
     @deprecated This no longer does anything. *)
-val silent  : Test.t -> Test.t
+val silent : Test.t -> Test.t

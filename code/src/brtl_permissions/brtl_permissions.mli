@@ -1,5 +1,5 @@
 module Permission : sig
-  type ('a, 'b) t = ((string, 'a) Brtl_ctx.t -> 'b -> bool Abb.Future.t)
+  type ('a, 'b) t = (string, 'a) Brtl_ctx.t -> 'b -> bool Abb.Future.t
 end
 
 val with_permissions :

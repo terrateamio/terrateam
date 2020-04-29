@@ -20,10 +20,12 @@ let max_ops = 20
 
 module Watchers = struct
   type 'a watcher = ('a Abb_intf.Future.Set.t -> State.t -> State.t) option ref
+
   type 'a t = 'a watcher list
 
-  let add watcher t = watcher::t
-  let union = (@)
+  let add watcher t = watcher :: t
+
+  let union = ( @ )
 
   let gc t = List.filter ~f:(fun w -> !w <> None) t
 end
@@ -39,13 +41,13 @@ end = struct
 
   let rec loop s =
     if not (Queue.is_empty queue) then
-      let Exec (watchers, v) = Queue.pop queue in
+      let (Exec (watchers, v)) = Queue.pop queue in
       let s =
         List.fold_left
           ~f:(fun s watcher ->
-              match !watcher with
-                | Some w -> w v s
-                | None -> s)
+            match !watcher with
+              | Some w -> w v s
+              | None   -> s)
           ~init:s
           watchers
       in
@@ -57,12 +59,12 @@ end = struct
     Queue.add (Exec (watchers, v)) queue;
     if !executing then
       s
-    else begin
+    else (
       executing := true;
       let s = loop s in
       executing := false;
       s
-    end
+    )
 end
 
 (** A future contains a mutable state value, which will be updated as the
@@ -119,50 +121,61 @@ end
 *)
 type +'a t
 
-type abort = (unit -> unit t)
+type abort = unit -> unit t
 
-type abort' = [ `Exn of (exn * Printexc.raw_backtrace option) | `Aborted ]
+type abort' =
+  [ `Exn     of exn * Printexc.raw_backtrace option
+  | `Aborted
+  ]
 
 type 'a u = { mutable state : 'a state }
-and 'a state = [ 'a Abb_intf.Future.Set.t
-               | `Undet of 'a undet
-               | `Alias of 'a u
-               ]
-and 'a undet = { mutable watchers : 'a Watchers.t
-               ; mutable deps : dep list
-               ; abort : abort
-               ; mutable defer : ('a t -> 'a undet -> State.t -> State.t) option
-               ; mutable num_ops : int
-               ; self : self
-               }
+
+and 'a state =
+  [ 'a Abb_intf.Future.Set.t
+  | `Undet of 'a undet
+  | `Alias of 'a u
+  ]
+
+and 'a undet = {
+  mutable watchers : 'a Watchers.t;
+  mutable deps : dep list;
+  abort : abort;
+  mutable defer : ('a t -> 'a undet -> State.t -> State.t) option;
+  mutable num_ops : int;
+  self : self;
+}
+
 and dep = Dep : 'a u -> dep
+
 and self = Self : 'a Watchers.watcher -> self
 
 external t_of_u : 'a u -> 'a t = "%identity"
+
 external u_of_t : 'a t -> 'a u = "%identity"
 
 module Deps = struct
   type t = dep list
 
-  let add dep t = dep::t
-  let union = (@)
+  let add dep t = dep :: t
+
+  let union = ( @ )
 
   let gc t =
     (* Only keep the undetermined deps as those are the ones that can affect
        have an affect *)
     List.filter
       ~f:(function
-          | Dep {state = `Undet _} -> true
-          | _ -> false)
+        | Dep { state = `Undet _ } -> true
+        | _                        -> false)
       t
 end
 
 let add_watcher t w =
-  if t.num_ops > max_ops then begin
+  if t.num_ops > max_ops then (
     t.num_ops <- 0;
     t.watchers <- Watchers.gc t.watchers;
     t.deps <- Deps.gc t.deps
-  end;
+  );
   t.num_ops <- t.num_ops + 1;
   t.watchers <- Watchers.add w t.watchers
 
@@ -171,14 +184,7 @@ let return v = t_of_u { state = `Det v }
 let noop_abort () = return ()
 
 let undetermined ?defer s deps =
-  { state = `Undet { watchers = []
-                   ; abort = noop_abort
-                   ; defer = defer
-                   ; deps = deps
-                   ; num_ops = 0
-                   ; self = s
-                   }
-  }
+  { state = `Undet { watchers = []; abort = noop_abort; defer; deps; num_ops = 0; self = s } }
 
 (* This should be modified to collapse down the alias if it's too long *)
 let rec collapse_alias t =
@@ -189,9 +195,9 @@ let rec collapse_alias t =
 let determine u v =
   match u.state with
     | `Undet undet ->
-      t_of_u
-        (undetermined
-           ~defer:(fun t und s ->
+        t_of_u
+          (undetermined
+             ~defer:(fun t und s ->
                u.state <- (v : 'a Abb_intf.Future.Set.t :> 'a state);
                let watchers = undet.watchers in
                let s = Exec_queue.exec watchers v s in
@@ -199,144 +205,113 @@ let determine u v =
                u.state <- `Det ();
                let watchers = und.watchers in
                Exec_queue.exec watchers (`Det ()) s)
-           (Self (ref None))
-           [])
-    | `Alias _ ->
-      assert false
-    | _ ->
-      assert false
+             (Self (ref None))
+             [])
+    | `Alias _     -> assert false
+    | _            -> assert false
 
 let run_with_state t s =
   let u = collapse_alias (u_of_t t) in
   match u.state with
-    | `Undet ({defer = Some f; _ } as undet) ->
-      undet.defer <- None;
-      f (t_of_u u) undet s
-    | `Undet _
-    | `Det _
-    | `Aborted
-    | `Exn _ ->
-      s
-    | `Alias _ ->
-      assert false
+    | `Undet ({ defer = Some f; _ } as undet) ->
+        undet.defer <- None;
+        f (t_of_u u) undet s
+    | `Undet _ | `Det _ | `Aborted | `Exn _ -> s
+    | `Alias _ -> assert false
 
 (* TODO Figure out how to make this generic to the [abort'] type. *)
-let rec abort' : 'a. 'a u -> State.t -> State.t = fun u s ->
+let rec abort' : 'a. 'a u -> State.t -> State.t =
+ fun u s ->
   let u = collapse_alias u in
   match u.state with
-    | `Undet undet ->
-      u.state <- `Aborted;
-      let abort_f = undet.abort in
-      let watchers = undet.watchers in
-      let deps = undet.deps in
-      let s = run_with_state (abort_f ()) s in
-      let s = Exec_queue.exec watchers `Aborted s in
-      List.fold_left
-        ~init:s
-        ~f:(fun s (Dep u) -> abort' u s)
-        deps
-    | `Det _
-    | `Aborted
-    | `Exn _ ->
-      s
-    | `Alias _ ->
-      assert false
+    | `Undet undet               ->
+        u.state <- `Aborted;
+        let abort_f = undet.abort in
+        let watchers = undet.watchers in
+        let deps = undet.deps in
+        let s = run_with_state (abort_f ()) s in
+        let s = Exec_queue.exec watchers `Aborted s in
+        List.fold_left ~init:s ~f:(fun s (Dep u) -> abort' u s) deps
+    | `Det _ | `Aborted | `Exn _ -> s
+    | `Alias _                   -> assert false
 
-let rec abort_exn' :
-  'a. 'a u ->
-  (exn * Printexc.raw_backtrace option) ->
-  State.t ->
-  State.t = fun u exn s ->
+let rec abort_exn' : 'a. 'a u -> exn * Printexc.raw_backtrace option -> State.t -> State.t =
+ fun u exn s ->
   let u = collapse_alias u in
   match u.state with
-    | `Undet undet ->
-      u.state <- `Exn exn;
-      let abort_f = undet.abort in
-      let watchers = undet.watchers in
-      let deps = undet.deps in
-      let s = run_with_state (abort_f ()) s in
-      let s = Exec_queue.exec watchers (`Exn exn) s in
-      List.fold_left
-        ~init:s
-        ~f:(fun s (Dep u) -> abort_exn' u exn s)
-        deps
-    | `Det _
-    | `Aborted
-    | `Exn _ ->
-      s
-    | `Alias _ ->
-      assert false
+    | `Undet undet               ->
+        u.state <- `Exn exn;
+        let abort_f = undet.abort in
+        let watchers = undet.watchers in
+        let deps = undet.deps in
+        let s = run_with_state (abort_f ()) s in
+        let s = Exec_queue.exec watchers (`Exn exn) s in
+        List.fold_left ~init:s ~f:(fun s (Dep u) -> abort_exn' u exn s) deps
+    | `Det _ | `Aborted | `Exn _ -> s
+    | `Alias _                   -> assert false
 
 let abort t =
   let u = collapse_alias (u_of_t t) in
   match u.state with
-    | `Undet undet ->
-      t_of_u
-        (undetermined
-           ~defer:(fun t _ s ->
+    | `Undet undet               ->
+        t_of_u
+          (undetermined
+             ~defer:(fun t _ s ->
                let s = abort' u s in
                (* TODO Make this not create a whole new deferred to determine this *)
                run_with_state (determine (u_of_t t) (`Det ())) s)
-           (Self (ref None))
-           [])
-    | `Aborted | `Exn _ | `Det _ ->
-      return ()
-    | `Alias _ ->
-      assert false
+             (Self (ref None))
+             [])
+    | `Aborted | `Exn _ | `Det _ -> return ()
+    | `Alias _                   -> assert false
 
 let abort_exn t exn =
   let u = collapse_alias (u_of_t t) in
   match u.state with
-    | `Undet undet ->
-      t_of_u
-        (undetermined
-           ~defer:(fun t _ s ->
+    | `Undet undet               ->
+        t_of_u
+          (undetermined
+             ~defer:(fun t _ s ->
                let sp = abort_exn' u exn s in
                (* TODO Make this not create a whole new deferred to determine this *)
                run_with_state (determine (u_of_t t) (`Det ())) s)
-           (Self (ref None))
-           [])
-    | `Aborted | `Exn _ | `Det _ ->
-      return ()
-    | `Alias _ ->
-      assert false
+             (Self (ref None))
+             [])
+    | `Aborted | `Exn _ | `Det _ -> return ()
+    | `Alias _                   -> assert false
 
 let cancel t =
   let u = collapse_alias (u_of_t t) in
   match u.state with
-    | `Undet undet ->
-      t_of_u
-        (undetermined
-           ~defer:(fun t _ s ->
+    | `Undet undet               ->
+        t_of_u
+          (undetermined
+             ~defer:(fun t _ s ->
                u.state <- `Aborted;
                let abort_f = undet.abort in
-               let Self w = undet.self in
+               let (Self w) = undet.self in
                w := None;
                let watchers = undet.watchers in
                let s = run_with_state (abort_f ()) s in
+
                (* TODO Verify this behaviour is correct.
 
                   This behaviour might actually be wrong.  This will cause the watchers to act
                   like regular aborts. *)
                let s = Exec_queue.exec watchers `Aborted s in
                run_with_state (determine (u_of_t t) (`Det ())) s)
-           (Self (ref None))
-           [])
-    | `Aborted | `Exn _ | `Det _ ->
-      return ()
-    | `Alias _ ->
-      assert false
+             (Self (ref None))
+             [])
+    | `Aborted | `Exn _ | `Det _ -> return ()
+    | `Alias _                   -> assert false
 
 let add_dep ~dep t =
   let dep = u_of_t dep in
   let t = u_of_t t in
   match (collapse_alias t).state with
-    | `Undet undet ->
-      undet.deps <- Deps.add (Dep dep) undet.deps;
-    | `Aborted | `Exn _ | `Det _ ->
-      ()
-    | `Alias _ ->
-      assert false
+    | `Undet undet               -> undet.deps <- Deps.add (Dep dep) undet.deps
+    | `Aborted | `Exn _ | `Det _ -> ()
+    | `Alias _                   -> assert false
 
 (** Aliasing takes a future and makes it an alias to another future. Generally
     one future is what a user is waiting on but it depends on a series of
@@ -357,44 +332,28 @@ let alias (internal_fut, internal_state) (src, src_state) =
 
     The undetermined future has to be run so any work that needs to be
     executed in order to kick off the path to becoming determined. *)
-let map : ('a -> 'b) -> 'a t -> 'b t = fun f t ->
+let map : ('a -> 'b) -> 'a t -> 'b t =
+ fun f t ->
   let u = collapse_alias (u_of_t t) in
   match u.state with
-    | `Det v ->
-      return (f v)
-    | `Aborted
-    | `Exn _ as st ->
-      t_of_u { state = st }
-    | `Undet undet ->
-      let w = ref None in
-      let fut =
-        undetermined
-          ~defer:(fun _ _ -> run_with_state (t_of_u u))
-          (Self w)
-          [Dep u]
-      in
-      let watcher st s =
-        w := None;
-        begin match st with
-          | `Det v ->
-            begin
-              try
-                run_with_state (determine fut (`Det (f v))) s
-              with
-                | exn ->
-                  abort_exn' fut (exn, Some (Printexc.get_raw_backtrace ())) s
-            end
-          | `Aborted->
-            abort' fut s
-          | `Exn exn ->
-            abort_exn' fut exn s
-        end
-      in
-      w := Some watcher;
-      add_watcher undet w;
-      t_of_u fut
-    | `Alias _ ->
-      assert false
+    | `Det v                    -> return (f v)
+    | (`Aborted | `Exn _) as st -> t_of_u { state = st }
+    | `Undet undet              ->
+        let w = ref None in
+        let fut = undetermined ~defer:(fun _ _ -> run_with_state (t_of_u u)) (Self w) [ Dep u ] in
+        let watcher st s =
+          w := None;
+          match st with
+            | `Det v   -> (
+                try run_with_state (determine fut (`Det (f v))) s
+                with exn -> abort_exn' fut (exn, Some (Printexc.get_raw_backtrace ())) s )
+            | `Aborted -> abort' fut s
+            | `Exn exn -> abort_exn' fut exn s
+        in
+        w := Some watcher;
+        add_watcher undet w;
+        t_of_u fut
+    | `Alias _                  -> assert false
 
 (** Create a watcher which is watching on a future whose value will be another
    future then alias an internal future it.  So the parameter [fut] has the type
@@ -403,71 +362,47 @@ let map : ('a -> 'b) -> 'a t -> 'b t = fun f t ->
    lead to them becoming determined.  Care also needs to be taken if either
    future is aborted. *)
 let make_watcher fut st s =
-  begin match st with
-    | `Det t ->
-      let u = collapse_alias (u_of_t t) in
-      begin match (u.state, fut.state) with
-        | ((`Det _ as v), `Undet _) ->
-          run_with_state (determine fut v) s
-        | (`Undet us, `Undet fs) ->
-          (* Make our future an alias to the ts *)
-          alias (fut, fs) (u, us);
-          run_with_state (t_of_u u) s
-        | (`Undet _, `Aborted) ->
-          abort' u s
-        | (`Undet _, `Exn exn) ->
-          abort_exn' u exn s
-        | (`Aborted, `Undet _) ->
-          abort' fut s
-        | (`Exn exn, `Undet _) ->
-          abort_exn' fut exn s
-        | (_, `Aborted)
-        | (_, `Exn _) ->
-          s
-        | (_, `Det _) ->
-          assert false
-        | (`Alias _, _)
-        | (_, `Alias _) ->
-          assert false
-      end
-    | `Aborted ->
-      abort' fut s
-    | `Exn exn ->
-      abort_exn' fut exn s
-  end
+  match st with
+    | `Det t   -> (
+        let u = collapse_alias (u_of_t t) in
+        match (u.state, fut.state) with
+          | ((`Det _ as v), `Undet _)     -> run_with_state (determine fut v) s
+          | (`Undet us, `Undet fs)        ->
+              (* Make our future an alias to the ts *)
+              alias (fut, fs) (u, us);
+              run_with_state (t_of_u u) s
+          | (`Undet _, `Aborted)          -> abort' u s
+          | (`Undet _, `Exn exn)          -> abort_exn' u exn s
+          | (`Aborted, `Undet _)          -> abort' fut s
+          | (`Exn exn, `Undet _)          -> abort_exn' fut exn s
+          | (_, `Aborted) | (_, `Exn _)   -> s
+          | (_, `Det _)                   -> assert false
+          | (`Alias _, _) | (_, `Alias _) -> assert false )
+    | `Aborted -> abort' fut s
+    | `Exn exn -> abort_exn' fut exn s
 
 (** Join takes a future of type ['a t t] and turns it into a future of type
     ['a t].  This makes implementing {!bind} in terms of {!map} easier. *)
-let join : 'a t t -> 'a t = fun tt ->
+let join : 'a t t -> 'a t =
+ fun tt ->
   let u = collapse_alias (u_of_t tt) in
   match u.state with
-    | `Det t ->
-      let u = collapse_alias (u_of_t t) in
-      begin match u.state with
-        | `Undet _ ->
-          map (fun x -> x) (t_of_u u)
-        | _ ->
-          t
-      end
-    | `Aborted | `Exn _ as st ->
-      t_of_u { state = st }
-    | `Undet undet ->
-      let w = ref None in
-      let fut =
-        undetermined
-          ~defer:(fun _ _ -> run_with_state tt)
-          (Self w)
-          [Dep u]
-      in
-      let watcher = make_watcher fut in
-      w := Some watcher;
-      add_watcher undet w;
-      t_of_u fut
-    | `Alias _ ->
-      assert false
+    | `Det t                    -> (
+        let u = collapse_alias (u_of_t t) in
+        match u.state with
+          | `Undet _ -> map (fun x -> x) (t_of_u u)
+          | _        -> t )
+    | (`Aborted | `Exn _) as st -> t_of_u { state = st }
+    | `Undet undet              ->
+        let w = ref None in
+        let fut = undetermined ~defer:(fun _ _ -> run_with_state tt) (Self w) [ Dep u ] in
+        let watcher = make_watcher fut in
+        w := Some watcher;
+        add_watcher undet w;
+        t_of_u fut
+    | `Alias _                  -> assert false
 
-let bind : 'a t -> ('a -> 'b t) -> 'b t = fun t f ->
-  join (map f t)
+let bind : 'a t -> ('a -> 'b t) -> 'b t = fun t f -> join (map f t)
 
 (** Each one needs to depend on the other for aborts to work properly.  If we
     have something like:
@@ -514,121 +449,92 @@ let fork fut =
   t_of_u
     (undetermined
        ~defer:(fun t _ s ->
-           let s = run_with_state fut s in
-           run_with_state (determine (u_of_t t) (`Det ())) s)
+         let s = run_with_state fut s in
+         run_with_state (determine (u_of_t t) (`Det ())) s)
        (Self (ref None))
        [])
 
 let state t =
   let t = u_of_t t in
   match (collapse_alias t).state with
-    | `Det _ | `Aborted | `Exn _ as s -> s
-    | `Undet _ -> `Undet
-    | `Alias _ -> assert false
+    | (`Det _ | `Aborted | `Exn _) as s -> s
+    | `Undet _                          -> `Undet
+    | `Alias _                          -> assert false
 
 let await t =
   let u = collapse_alias (u_of_t t) in
   match u.state with
-    | `Det _ | `Aborted | `Exn _ as s ->
-      return s
-    | `Undet undet ->
-      let w = ref None in
-      let fut =
-        undetermined
-          ~defer:(fun _ _ -> run_with_state (t_of_u u))
-          (Self w)
-          [Dep u]
-      in
-      let watcher det s =
-        w := None;
-        begin match fut.state with
-          | `Undet _ ->
-            run_with_state (determine fut (`Det det)) s
-          | `Det _ | `Aborted | `Exn _ ->
-            s
-          | `Alias _ ->
-            assert false
-        end
-      in
-      w := Some watcher;
-      add_watcher undet w;
-      t_of_u fut
-    | `Alias _ ->
-      assert false
+    | (`Det _ | `Aborted | `Exn _) as s -> return s
+    | `Undet undet                      ->
+        let w = ref None in
+        let fut = undetermined ~defer:(fun _ _ -> run_with_state (t_of_u u)) (Self w) [ Dep u ] in
+        let watcher det s =
+          w := None;
+          match fut.state with
+            | `Undet _                   -> run_with_state (determine fut (`Det det)) s
+            | `Det _ | `Aborted | `Exn _ -> s
+            | `Alias _                   -> assert false
+        in
+        w := Some watcher;
+        add_watcher undet w;
+        t_of_u fut
+    | `Alias _                          -> assert false
 
 (* TODO Determine if this actually needs to exist.  Just await should be fine.
    Something about being canceled or aborted? *)
 let await_map f t =
   let u = collapse_alias (u_of_t t) in
   match u.state with
-    | `Det _ | `Exn _ | `Aborted as v ->
-      return (f v)
-    | `Undet undet ->
-      let w = ref None in
-      let fut =
-        undetermined
-          ~defer:(fun _ _ -> run_with_state (t_of_u u))
-          (Self w)
-          [Dep u]
-      in
-      let watcher det s =
-        w := None;
-        begin
-          try
-            run_with_state (determine fut (`Det (f det))) s
-          with
-            | exn ->
-              abort_exn' fut (exn, Some (Printexc.get_raw_backtrace ())) s
-        end
-      in
-      w := Some watcher;
-      add_watcher undet w;
-      t_of_u fut
-    | `Alias _ ->
-      assert false
+    | (`Det _ | `Exn _ | `Aborted) as v -> return (f v)
+    | `Undet undet                      ->
+        let w = ref None in
+        let fut = undetermined ~defer:(fun _ _ -> run_with_state (t_of_u u)) (Self w) [ Dep u ] in
+        let watcher det s =
+          w := None;
+          try run_with_state (determine fut (`Det (f det))) s
+          with exn -> abort_exn' fut (exn, Some (Printexc.get_raw_backtrace ())) s
+        in
+        w := Some watcher;
+        add_watcher undet w;
+        t_of_u fut
+    | `Alias _                          -> assert false
 
-let await_bind f t =
-  join (await_map f t)
+let await_bind f t = join (await_map f t)
 
 module Infix_monad = struct
-  let (>>=) t f = bind t f
-  let (>>|) t f = map f t
+  let ( >>= ) t f = bind t f
+
+  let ( >>| ) t f = map f t
 end
 
 module Infix_app = struct
-  let (<*>) = app
-  let (<$>) f v = return f <*> v
+  let ( <*> ) = app
+
+  let ( <$> ) f v = return f <*> v
 end
 
 module Promise = struct
   type 'a fut = 'a t
+
   type 'a t = 'a fut
 
   let create ?(abort = noop_abort) () =
     let self = Self (ref None) in
-    t_of_u { state = `Undet { watchers = []
-                            ; abort = abort
-                            ; defer = None
-                            ; deps = []
-                            ; num_ops = 0
-                            ; self = self
-                            }
-           }
+    t_of_u { state = `Undet { watchers = []; abort; defer = None; deps = []; num_ops = 0; self } }
 
   external future : 'a t -> 'a fut = "%identity"
 
   let set t v =
     let u = collapse_alias (u_of_t t) in
     match u.state with
-      | `Undet _ -> determine u (`Det v)
+      | `Undet _                   -> determine u (`Det v)
       | `Det _ | `Aborted | `Exn _ -> return ()
-      | `Alias _ -> assert false
+      | `Alias _                   -> assert false
 
   let set_exn t exn =
     let u = collapse_alias (u_of_t t) in
     match u.state with
-      | `Undet _ -> determine u (`Exn exn)
+      | `Undet _                   -> determine u (`Exn exn)
       | `Det _ | `Aborted | `Exn _ -> return ()
-      | `Alias _ -> assert false
-
+      | `Alias _                   -> assert false
 end

@@ -33,7 +33,9 @@ module File = struct
   let of_native t = t
 
   let stdin = ()
+
   let stdout = ()
+
   let stderr = ()
 
   let open_file ~flags path = failwith "nyi"
@@ -87,6 +89,7 @@ end
 
 module Socket = struct
   type tcp
+
   type udp
 
   type 'a t = unit
@@ -145,9 +148,11 @@ module Process = struct
 
   module Pid = struct
     type t = unit
+
     type native = unit
 
     let of_native () = ()
+
     let to_native () = ()
   end
 

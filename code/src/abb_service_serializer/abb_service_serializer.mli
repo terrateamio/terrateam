@@ -11,9 +11,11 @@ module Make (Fut : Abb_intf.Future.S) : sig
 
   module Mutex : sig
     type serializer = t
+
     type 'a t
 
     val create : serializer -> 'a -> 'a t
+
     val run : 'a t -> f:('a -> 'b Fut.t) -> 'b Abb_channel_intf.channel_ret Fut.t
   end
 end

@@ -22,7 +22,7 @@ end
 module Header : sig
   type t
 
-  val create : ?rest:(string * string) list -> ?typ:string -> string ->  t
+  val create : ?rest:(string * string) list -> ?typ:string -> string -> t
 
   val algorithm : t -> string
 
@@ -43,22 +43,40 @@ module Claim : sig
   type t = string
 
   val iss : t
+
   val sub : t
+
   val aud : t
+
   val exp : t
+
   val nbf : t
+
   val iat : t
+
   val jti : t
+
   val ctyp : t
+
   val auth_time : t
+
   val nonce : t
+
   val acr : t
+
   val amr : t
+
   val azp : t
 end
 
 module Payload : sig
-  type typs = [ `Bool of bool | `Float of float | `Int of int | `String of string ]
+  type typs =
+    [ `Bool   of bool
+    | `Float  of float
+    | `Int    of int
+    | `String of string
+    ]
+
   type t
 
   val empty : t
@@ -68,8 +86,11 @@ module Payload : sig
   val find_claim : Claim.t -> t -> typs option
 
   val find_claim_string : Claim.t -> t -> string option
+
   val find_claim_bool : Claim.t -> t -> bool option
+
   val find_claim_float : Claim.t -> t -> float option
+
   val find_claim_int : Claim.t -> t -> int option
 
   val of_json : Yojson.Basic.t -> t option

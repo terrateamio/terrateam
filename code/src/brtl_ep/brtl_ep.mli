@@ -6,7 +6,7 @@ val run :
   Brtl_rtng.Handler.t
 
 module Infix : sig
-  val (@-->) :
+  val ( @--> ) :
     ((string, 'a) Brtl_ctx.t -> ('s1, 'f) t Abb.Future.t) ->
     ((string, 's1) Brtl_ctx.t -> ('s2, 'f) t Abb.Future.t) ->
     (string, 'a) Brtl_ctx.t ->

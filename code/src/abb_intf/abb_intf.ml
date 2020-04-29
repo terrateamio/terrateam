@@ -7,350 +7,394 @@
 
 module Errors = struct
   let pp_exn fmt exn = Format.fprintf fmt "%s" (Printexc.to_string exn)
-  let equal_exn = (=)
 
-  type unexpected = [`Unexpected of exn] [@@deriving show,eq]
+  let equal_exn = ( = )
 
-  type open_file = [ `E_not_dir
-                   | `E_name_too_long
-                   | `E_no_entity
-                   | `E_access
-                   | `E_permission
-                   | `E_loop
-                   | `E_file_table_full
-                   | `E_no_space
-                   | `E_io
-                   | `E_exists
-                   | `E_invalid
-                   | unexpected
-                   ]
-  [@@deriving show,eq]
+  type unexpected = [ `Unexpected of exn ] [@@deriving show, eq]
 
-  type read = [ `E_bad_file
-              | `E_io
-              | `E_invalid
-              | `E_is_dir
-              | unexpected
-              ]
-  [@@deriving show,eq]
+  type open_file =
+    [ `E_not_dir
+    | `E_name_too_long
+    | `E_no_entity
+    | `E_access
+    | `E_permission
+    | `E_loop
+    | `E_file_table_full
+    | `E_no_space
+    | `E_io
+    | `E_exists
+    | `E_invalid
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type pread = [ `E_nxio | read ]
+  type read =
+    [ `E_bad_file
+    | `E_io
+    | `E_invalid
+    | `E_is_dir
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type write = [ `E_bad_file
-               | `E_pipe
-               | `E_invalid
-               | `E_no_space
-               | `E_io
-               | `E_permission
-               | unexpected
-               ]
-  [@@deriving show,eq]
+  type pread =
+    [ `E_nxio
+    | read
+    ]
 
-  type pwrite = [ `E_nxio | write ]
+  type write =
+    [ `E_bad_file
+    | `E_pipe
+    | `E_invalid
+    | `E_no_space
+    | `E_io
+    | `E_permission
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type lseek = [ `E_bad_file
-               | `E_nxio
-               | `E_invalid
-               | unexpected
-               ]
-  [@@deriving show,eq]
+  type pwrite =
+    [ `E_nxio
+    | write
+    ]
 
-  type close = [ `E_bad_file
-               | `E_no_space
-               | unexpected
-               ]
-  [@@deriving show,eq]
+  type lseek =
+    [ `E_bad_file
+    | `E_nxio
+    | `E_invalid
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type unlink = [ `E_not_dir
-                | `E_is_dir
-                | `E_name_too_long
-                | `E_no_entity
-                | `E_access
-                | `E_loop
-                | `E_permission
-                | `E_io
-                | `E_no_space
-                | unexpected
-                ]
-  [@@deriving show,eq]
+  type close =
+    [ `E_bad_file
+    | `E_no_space
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type mkdir = [ `E_not_dir
-               | `E_is_dir
-               | `E_name_too_long
-               | `E_no_entity
-               | `E_access
-               | `E_loop
-               | `E_permission
-               | `E_io
-               | `E_no_space
-               | `E_exists
-               | unexpected
-               ]
-  [@@deriving show,eq]
+  type unlink =
+    [ `E_not_dir
+    | `E_is_dir
+    | `E_name_too_long
+    | `E_no_entity
+    | `E_access
+    | `E_loop
+    | `E_permission
+    | `E_io
+    | `E_no_space
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type rmdir = [ `E_not_dir
-               | `E_name_too_long
-               | `E_no_entity
-               | `E_not_empty
-               | `E_access
-               | `E_loop
-               | `E_permission
-               | `E_invalid
-               | `E_busy
-               | `E_io
-               | `E_exists
-               | unexpected
-               ]
-  [@@deriving show,eq]
+  type mkdir =
+    [ `E_not_dir
+    | `E_is_dir
+    | `E_name_too_long
+    | `E_no_entity
+    | `E_access
+    | `E_loop
+    | `E_permission
+    | `E_io
+    | `E_no_space
+    | `E_exists
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type readdir = unexpected [@@deriving show,eq]
+  type rmdir =
+    [ `E_not_dir
+    | `E_name_too_long
+    | `E_no_entity
+    | `E_not_empty
+    | `E_access
+    | `E_loop
+    | `E_permission
+    | `E_invalid
+    | `E_busy
+    | `E_io
+    | `E_exists
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type stat = [ `E_access
-              | `E_io
-              | `E_loop
-              | `E_name_too_long
-              | `E_no_entity
-              | `E_not_dir
-              | unexpected
-              ]
-  [@@deriving show,eq]
+  type readdir = unexpected [@@deriving show, eq]
 
-  type fstat = [ `E_bad_file
-               | `E_invalid
-               | stat
-               ]
-  [@@deriving show,eq]
+  type stat =
+    [ `E_access
+    | `E_io
+    | `E_loop
+    | `E_name_too_long
+    | `E_no_entity
+    | `E_not_dir
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type rename = [ `E_name_too_long
-                | `E_no_entity
-                | `E_access
-                | `E_permission
-                | `E_loop
-                | `E_not_dir
-                | `E_is_dir
-                | `E_no_space
-                | `E_io
-                | `E_invalid
-                | `E_not_empty
-                | unexpected
-                ]
-  [@@deriving show,eq]
+  type fstat =
+    [ `E_bad_file
+    | `E_invalid
+    | stat
+    ]
+  [@@deriving show, eq]
 
-  type truncate = [ `E_not_dir
-                  | `E_name_too_long
-                  | `E_no_entity
-                  | `E_access
-                  | `E_loop
-                  | `E_permission
-                  | `E_is_dir
-                  | `E_invalid
-                  | `E_io
-                  | unexpected
-                  ]
-  [@@deriving show,eq]
+  type rename =
+    [ `E_name_too_long
+    | `E_no_entity
+    | `E_access
+    | `E_permission
+    | `E_loop
+    | `E_not_dir
+    | `E_is_dir
+    | `E_no_space
+    | `E_io
+    | `E_invalid
+    | `E_not_empty
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type ftruncate = [ `E_bad_file
-                   | truncate
-                   ]
-  [@@deriving show,eq]
+  type truncate =
+    [ `E_not_dir
+    | `E_name_too_long
+    | `E_no_entity
+    | `E_access
+    | `E_loop
+    | `E_permission
+    | `E_is_dir
+    | `E_invalid
+    | `E_io
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type chmod = [ `E_not_dir
-               | `E_name_too_long
-               | `E_no_entity
-               | `E_access
-               | `E_loop
-               | `E_permission
-               | `E_io
-               | unexpected
-               ]
-  [@@deriving show,eq]
+  type ftruncate =
+    [ `E_bad_file
+    | truncate
+    ]
+  [@@deriving show, eq]
 
-  type fchmod = [ `E_bad_file
-                | `E_invalid
-                | chmod
-                ]
-  [@@deriving show,eq]
+  type chmod =
+    [ `E_not_dir
+    | `E_name_too_long
+    | `E_no_entity
+    | `E_access
+    | `E_loop
+    | `E_permission
+    | `E_io
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type symlink = [ `E_not_dir
-                 | `E_name_too_long
-                 | `E_no_entity
-                 | `E_access
-                 | `E_loop
-                 | `E_exists
-                 | `E_permission
-                 | `E_io
-                 | `E_no_space
-                 | unexpected
-                 ]
-  [@@deriving show,eq]
+  type fchmod =
+    [ `E_bad_file
+    | `E_invalid
+    | chmod
+    ]
+  [@@deriving show, eq]
 
-  type link = [ `E_not_dir
-              | `E_name_too_long
-              | `E_no_entity
-              | `E_op_not_supported
-              | `E_access
-              | `E_loop
-              | `E_exists
-              | `E_permission
-              | `E_no_space
-              | `E_io
-              | unexpected
-              ]
-  [@@deriving show,eq]
+  type symlink =
+    [ `E_not_dir
+    | `E_name_too_long
+    | `E_no_entity
+    | `E_access
+    | `E_loop
+    | `E_exists
+    | `E_permission
+    | `E_io
+    | `E_no_space
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type chown = [ `E_not_dir
-               | `E_name_too_long
-               | `E_no_entity
-               | `E_access
-               | `E_loop
-               | `E_permission
-               | `E_io
-               | unexpected
-               ]
-  [@@deriving show,eq]
+  type link =
+    [ `E_not_dir
+    | `E_name_too_long
+    | `E_no_entity
+    | `E_op_not_supported
+    | `E_access
+    | `E_loop
+    | `E_exists
+    | `E_permission
+    | `E_no_space
+    | `E_io
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type fchown = [ `E_bad_file
-                | chown
-                ]
-  [@@deriving show,eq]
+  type chown =
+    [ `E_not_dir
+    | `E_name_too_long
+    | `E_no_entity
+    | `E_access
+    | `E_loop
+    | `E_permission
+    | `E_io
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type recvfrom = [ `E_bad_file
-                  | `E_connection_reset
-                  | unexpected
-                  ]
-  [@@deriving show,eq]
+  type fchown =
+    [ `E_bad_file
+    | chown
+    ]
+  [@@deriving show, eq]
 
-  type sendto = [ `E_bad_file
-                | `E_access
-                | `E_no_buffers
-                | `E_host_unreachable
-                | `E_host_down
-                | `E_connection_refused
-                | unexpected
-                ]
-  [@@deriving show,eq]
+  type recvfrom =
+    [ `E_bad_file
+    | `E_connection_reset
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type sock_close = [ `E_bad_file
-                    | `E_connection_reset
-                    | unexpected
-                    ]
-  [@@deriving show,eq]
+  type sendto =
+    [ `E_bad_file
+    | `E_access
+    | `E_no_buffers
+    | `E_host_unreachable
+    | `E_host_down
+    | `E_connection_refused
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type listen = [ `E_bad_file
-                | `E_dest_address_required
-                | `E_invalid
-                | `E_op_not_supported
-                | unexpected
-                ]
-  [@@deriving show,eq]
+  type sock_close =
+    [ `E_bad_file
+    | `E_connection_reset
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type accept = [ `E_bad_file
-                | `E_file_table_full
-                | `E_invalid
-                | `E_connection_aborted
-                | unexpected
-                ]
-  [@@deriving show,eq]
+  type listen =
+    [ `E_bad_file
+    | `E_dest_address_required
+    | `E_invalid
+    | `E_op_not_supported
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type sock_create = [ `E_access
-                     | `E_address_family_not_supported
-                     | `E_file_table_full
-                     | `E_no_buffers
-                     | `E_permission
-                     | `E_protocol_not_supported
-                     | `E_protocol_type
-                     | unexpected
-                     ]
-  [@@deriving show,eq]
+  type accept =
+    [ `E_bad_file
+    | `E_file_table_full
+    | `E_invalid
+    | `E_connection_aborted
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type bind = [ `E_bad_file
-              | `E_again
-              | `E_invalid
-              | `E_address_not_available
-              | `E_address_in_use
-              | `E_address_family_not_supported
-              | `E_access
-              | `E_permission
-              | `E_not_dir
-              | `E_name_too_long
-              | `E_no_entity
-              | `E_loop
-              | `E_io
-              | `E_is_dir
-              | unexpected
-              ]
-  [@@deriving show,eq]
+  type sock_create =
+    [ `E_access
+    | `E_address_family_not_supported
+    | `E_file_table_full
+    | `E_no_buffers
+    | `E_permission
+    | `E_protocol_not_supported
+    | `E_protocol_type
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type tcp_sock_connect = [ `E_bad_file
-                          | `E_invalid
-                          | `E_address_not_available
-                          | `E_address_family_not_supported
-                          | `E_is_connected
-                          | `E_connection_refused
-                          | `E_connection_reset
-                          | `E_network_unreachable
-                          | `E_host_unreachable
-                          | `E_address_in_use
-                          | `E_access
-                          | unexpected
-                          ]
-  [@@deriving show,eq]
+  type bind =
+    [ `E_bad_file
+    | `E_again
+    | `E_invalid
+    | `E_address_not_available
+    | `E_address_in_use
+    | `E_address_family_not_supported
+    | `E_access
+    | `E_permission
+    | `E_not_dir
+    | `E_name_too_long
+    | `E_no_entity
+    | `E_loop
+    | `E_io
+    | `E_is_dir
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type recv = [ `E_bad_file
-              | `E_connection_reset
-              | `E_not_connected
-              | unexpected
-              ]
-  [@@deriving show,eq]
+  type tcp_sock_connect =
+    [ `E_bad_file
+    | `E_invalid
+    | `E_address_not_available
+    | `E_address_family_not_supported
+    | `E_is_connected
+    | `E_connection_refused
+    | `E_connection_reset
+    | `E_network_unreachable
+    | `E_host_unreachable
+    | `E_address_in_use
+    | `E_access
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type send = [ `E_bad_file
-              | `E_access
-              | `E_no_buffers
-              | `E_host_unreachable
-              | `E_host_down
-              | `E_network_down
-              | `E_pipe
-              | unexpected
-              ]
-  [@@deriving show,eq]
+  type recv =
+    [ `E_bad_file
+    | `E_connection_reset
+    | `E_not_connected
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type nodelay = [ `E_bad_file
-                 | unexpected
-                 ]
-  [@@deriving show,eq]
+  type send =
+    [ `E_bad_file
+    | `E_access
+    | `E_no_buffers
+    | `E_host_unreachable
+    | `E_host_down
+    | `E_network_down
+    | `E_pipe
+    | unexpected
+    ]
+  [@@deriving show, eq]
 
-  type spawn = [ `E_again
-               | `E_no_memory
-               | unexpected
-               ]
-  [@@deriving show,eq]
+  type nodelay =
+    [ `E_bad_file
+    | unexpected
+    ]
+  [@@deriving show, eq]
+
+  type spawn =
+    [ `E_again
+    | `E_no_memory
+    | unexpected
+    ]
+  [@@deriving show, eq]
 end
 
 (** An implementation of future must provide an interface which works
     within  these types. *)
 module Future = struct
   module State = struct
-    type 'a t = [ `Det of 'a
-                | `Undet
-                | `Aborted
-                | `Exn of (exn * Printexc.raw_backtrace option [@opaque])
-                ]
+    type 'a t =
+      [ `Det     of 'a
+      | `Undet
+      | `Aborted
+      | `Exn     of (exn * Printexc.raw_backtrace option[@opaque])
+      ]
     [@@deriving show]
   end
 
   module Set = struct
-    type 'a t = [ `Det of 'a | `Aborted | `Exn of (exn * Printexc.raw_backtrace option) ]
+    type 'a t =
+      [ `Det     of 'a
+      | `Aborted
+      | `Exn     of exn * Printexc.raw_backtrace option
+      ]
   end
 
   module type S = sig
     type +'a t
 
-    type abort = (unit -> unit t)
+    type abort = unit -> unit t
 
     (** A promise is the value used to set a [Future].  The promise can be
         aborted by calling {!Promise.future} and {!abort}. *)
     module Promise : sig
       type 'a fut = 'a t
+
       type 'a t
 
       val create : ?abort:abort -> unit -> 'a t
@@ -365,24 +409,29 @@ module Future = struct
       (** Set the promise to an exception, this will fail all of the connected
           futures with the exception.  This is a no-op if the promise has
           already been determined. *)
-      val set_exn : 'a t -> (exn * Printexc.raw_backtrace option) -> unit fut
+      val set_exn : 'a t -> exn * Printexc.raw_backtrace option -> unit fut
     end
 
     (** Infix operators for the monadic interface *)
     module Infix_monad : sig
-      val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
-      val (>>|) : 'a t -> ('a -> 'b) -> 'b t
+      val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
+
+      val ( >>| ) : 'a t -> ('a -> 'b) -> 'b t
     end
 
     (** Infix operators for applicative interface *)
     module Infix_app : sig
-      val (<$>) : ('a -> 'b) -> 'a t -> 'b t
-      val (<*>) : ('a -> 'b) t -> 'a t -> 'b t
+      val ( <$> ) : ('a -> 'b) -> 'a t -> 'b t
+
+      val ( <*> ) : ('a -> 'b) t -> 'a t -> 'b t
     end
 
     val return : 'a -> 'a t
+
     val bind : 'a t -> ('a -> 'b t) -> 'b t
+
     val app : ('a -> 'b) t -> 'a t -> 'b t
+
     val map : ('a -> 'b) -> 'a t -> 'b t
 
     (** Execute a future in without waiting for it.  The future can be applied
@@ -417,10 +466,11 @@ end
 module Future_set = Future.Set
 
 module Write_buf = struct
-  type t = { buf : bytes
-           ; pos : int
-           ; len : int
-           }
+  type t = {
+    buf : bytes;
+    pos : int;
+    len : int;
+  }
 end
 
 (** Flags and structures related to the file system *)
@@ -434,56 +484,57 @@ module File = struct
       | Read_only
       | Write_only
       | Read_write
-      | Create of Permissions.t (** Create the file with the specified permissions *)
+      | Create     of Permissions.t  (** Create the file with the specified permissions *)
       | Append
       | Truncate
   end
 
   module File_kind = struct
     type t =
-      | Regular (** Regular file *)
-      | Directory (** Directory *)
-      | Char (** Character device *)
-      | Block (** Block device *)
-      | Symlink (** Symbolic link *)
-      | Fifo (** Named pipe *)
-      | Socket (** Socket *)
-
+      | Regular  (** Regular file *)
+      | Directory  (** Directory *)
+      | Char  (** Character device *)
+      | Block  (** Block device *)
+      | Symlink  (** Symbolic link *)
+      | Fifo  (** Named pipe *)
+      | Socket  (** Socket *)
   end
 
   (** The result of a file stat *)
   module Stat = struct
-    type t =
-        { dev : int (** Device number *)
-        ; inode : int (** Inode number *)
-        ; kind : File_kind.t (** Kind of the file *)
-        ; perm : Permissions.t (** Access rights *)
-        ; num_links : int (** Number of links *)
-        ; uid : int (** User id of the owner *)
-        ; gid : int (** Group ID of the file's group *)
-        ; rdev : int (** Device minor number *)
-        ; size : int (** Size in bytes *)
-        ; atime : float (** Last access time *)
-        ; mtime : float (** Last modification time *)
-        ; ctime : float (** Last status change time *)
-        }
+    type t = {
+      dev : int;  (** Device number *)
+      inode : int;  (** Inode number *)
+      kind : File_kind.t;  (** Kind of the file *)
+      perm : Permissions.t;  (** Access rights *)
+      num_links : int;  (** Number of links *)
+      uid : int;  (** User id of the owner *)
+      gid : int;  (** Group ID of the file's group *)
+      rdev : int;  (** Device minor number *)
+      size : int;  (** Size in bytes *)
+      atime : float;  (** Last access time *)
+      mtime : float;  (** Last modification time *)
+      ctime : float;  (** Last status change time *)
+    }
   end
 
   (** Seek commands for read and write *)
   module Seek = struct
     type t =
-      | Cur (** Relative to the current location *)
-      | Set (** Relative to the beginning *)
-      | End (** Relative to the end *)
+      | Cur  (** Relative to the current location *)
+      | Set  (** Relative to the beginning *)
+      | End  (** Relative to the end *)
   end
 end
 
 (** Flags and structures related to sockets *)
 module Socket = struct
   module Sockaddr = struct
-    type inet = { addr : Unix.inet_addr
-                ; port : int
-                }
+    type inet = {
+      addr : Unix.inet_addr;
+      port : int;
+    }
+
     type t =
       | Unix of string
       | Inet of inet
@@ -506,30 +557,29 @@ module Socket = struct
 
   module Addrinfo_query = struct
     type t =
-      | Host of string
-      | Service of string
+      | Host         of string
+      | Service      of string
       | Host_service of (string * string)
   end
 
   module Addrinfo_hints = struct
     type t =
-      | Family of Domain.t (** Impose the given socket domain *)
-      | Socket_type of Socket_type.t (** Impose the given socket type *)
-      | Protocol of int (** Impose the given protocol *)
-      | Numeric_host (** Do not call name resolver, expect numeric IP address *)
-      | Canon_name (** Fill the ai_canonname field of the result *)
-      | Passive (** Set address to ``any'' address for use with Unix.bind *)
-
+      | Family       of Domain.t  (** Impose the given socket domain *)
+      | Socket_type  of Socket_type.t  (** Impose the given socket type *)
+      | Protocol     of int  (** Impose the given protocol *)
+      | Numeric_host  (** Do not call name resolver, expect numeric IP address *)
+      | Canon_name  (** Fill the ai_canonname field of the result *)
+      | Passive  (** Set address to ``any'' address for use with Unix.bind *)
   end
 
   module Addrinfo = struct
-    type t =
-        { family : Domain.t (** protocol family for socket *)
-        ; sock_type : Socket_type.t (** socket type *)
-        ; protocol : int (** protocol for socket *)
-        ; addr : Sockaddr.t (** socket-address for socket *)
-        ; canon_name : string (** canonical name for service location *)
-        }
+    type t = {
+      family : Domain.t;  (** protocol family for socket *)
+      sock_type : Socket_type.t;  (** socket type *)
+      protocol : int;  (** protocol for socket *)
+      addr : Sockaddr.t;  (** socket-address for socket *)
+      canon_name : string;  (** canonical name for service location *)
+    }
   end
 end
 
@@ -552,14 +602,14 @@ module Process = struct
       | SIGCHLD
       | SIGUSR1
       | SIGUSR2
-      | Num of int (** If the signal cannot be put into any of the predefined ones *)
+      | Num     of int  (** If the signal cannot be put into any of the predefined ones *)
   end
 
   module Exit_code = struct
     type t =
-      | Exited of int
+      | Exited   of int
       | Signaled of Signal.t
-      | Stopped of Signal.t
+      | Stopped  of Signal.t
   end
 
   (** A Dup represents a relationship between two values.  This is purely a
@@ -575,27 +625,30 @@ module Process = struct
     val create : src:'a -> dst:'a -> 'a t
 
     val src : 'a t -> 'a
+
     val dst : 'a t -> 'a
   end = struct
-    type 'a t = ('a * 'a)
+    type 'a t = 'a * 'a
+
     let create ~src ~dst = (src, dst)
+
     let src = fst
+
     let dst = snd
   end
 
-  type t =
-      { exec_name : string
-      ; args : string list
-      ; env : (string * string) list option
-      ; cwd : string option
-      }
+  type t = {
+    exec_name : string;
+    args : string list;
+    env : (string * string) list option;
+    cwd : string option;
+  }
 end
 
 (** The scheduler interface.  This only has those types and value that the
     implementation must specify.  Common values across all schedulers are pulled
     out of the module type *)
 module type S = sig
-
   (** The Native module represents the underlying native platform type of files
       and sockets.  This does assume that files and sockets have the same
       underlying representation.  The type, [Native.t] must be available to the
@@ -612,15 +665,17 @@ module type S = sig
 
   module Scheduler : sig
     type t
+
     val create : unit -> t
+
     val run : t -> (unit -> 'a Future.t) -> 'a Future_set.t
+
     val exec_duration : t -> float array
   end
 
   (** {2 System operations} *)
 
   module Sys : sig
-
     (** Sleep for the given number of seconds, fractional sections allowed. *)
     val sleep : float -> unit Future.t
 
@@ -651,15 +706,14 @@ module type S = sig
     val of_native : Native.t -> t
 
     val stdin : t
-    val stdout :t
+
+    val stdout : t
+
     val stderr : t
 
     (** Open a file path with the specified flags.  The file created will be
         automatically closed during {!Process.spawn}. *)
-    val open_file :
-      flags:File.Flag.t list ->
-      string ->
-      (t, [> Errors.open_file ]) result Future.t
+    val open_file : flags:File.Flag.t list -> string -> (t, [> Errors.open_file ]) result Future.t
 
     (** Read bytes from a {!File.t}.
 
@@ -670,12 +724,7 @@ module type S = sig
         @param len the length of the buffer that can be used, starting at [pos]
 
         @return the number of bytes read *)
-    val read :
-      t ->
-      buf:bytes ->
-      pos:int ->
-      len:int ->
-      (int, [> Errors.read ]) result Future.t
+    val read : t -> buf:bytes -> pos:int -> len:int -> (int, [> Errors.read ]) result Future.t
 
     (** Read bytes from a {!File.t} from a particular offset within the file.
         It is undefined if the cursor within the file is modified after this
@@ -692,12 +741,7 @@ module type S = sig
 
         @return the number of bytes read *)
     val pread :
-      t ->
-      offset:int ->
-      buf:bytes ->
-      pos:int ->
-      len:int ->
-      (int, [> Errors.pread ]) result Future.t
+      t -> offset:int -> buf:bytes -> pos:int -> len:int -> (int, [> Errors.pread ]) result Future.t
 
     (** Write the list of buffers to the file in the order they are specified.
         Not all bytes are guaranteed to be written.
@@ -727,10 +771,7 @@ module type S = sig
 
     (** Make a directory with the specified permissions.  This will fail if the
         directory already exists but does not have the correct permissions. *)
-    val mkdir :
-      string ->
-      File.Permissions.t ->
-      (unit, [> Errors.mkdir ]) result Future.t
+    val mkdir : string -> File.Permissions.t -> (unit, [> Errors.mkdir ]) result Future.t
 
     (** Deleted a directory, this may fail if the directory is not empty. *)
     val rmdir : string -> (unit, [> Errors.rmdir ]) result Future.t
@@ -772,10 +813,7 @@ module type S = sig
 
     (** Make a symbolic link to a file or directory in [src] to the destination
         [dst], specified as a path. *)
-    val symlink :
-      src:string ->
-      dst:string ->
-      (unit, [> Errors.symlink ]) result Future.t
+    val symlink : src:string -> dst:string -> (unit, [> Errors.symlink ]) result Future.t
 
     (** Hard link a file or directory in [src] to the destination [dst],
         specified as a path. *)
@@ -783,11 +821,7 @@ module type S = sig
 
     (** Change the owner of a file, specified as a path, to a uid and a gid
         encoded as an int *)
-    val chown :
-      string ->
-      uid:int ->
-      gid:int ->
-      (unit, [> Errors.chown ]) result Future.t
+    val chown : string -> uid:int -> gid:int -> (unit, [> Errors.chown ]) result Future.t
 
     (** Change the owner of a {!File.t} to a uid and a gid encoded as an int *)
     val fchown : t -> uid:int -> gid:int -> (unit, [> Errors.fchown ]) result Future.t
@@ -797,6 +831,7 @@ module type S = sig
 
   module Socket : sig
     type tcp
+
     type udp
 
     (** A socket is parameterized over what type of socket it is. *)
@@ -831,7 +866,7 @@ module type S = sig
       buf:bytes ->
       pos:int ->
       len:int ->
-      ((int * Socket.Sockaddr.t), [> Errors.recvfrom ]) result Future.t
+      (int * Socket.Sockaddr.t, [> Errors.recvfrom ]) result Future.t
 
     (** @param socket tcp the socket to send on
 
@@ -846,7 +881,6 @@ module type S = sig
       bufs:Write_buf.t list ->
       Socket.Sockaddr.t ->
       (int, [> Errors.sendto ]) result Future.t
-
 
     (** Close a socket, block until the close is finished. *)
     val close : 'a t -> (unit, [> Errors.sock_close ]) result Future.t
@@ -883,9 +917,7 @@ module type S = sig
 
       (** Connect to an address. *)
       val connect :
-        tcp t ->
-        Socket.Sockaddr.t ->
-        (unit, [> Errors.tcp_sock_connect ]) result Future.t
+        tcp t -> Socket.Sockaddr.t -> (unit, [> Errors.tcp_sock_connect ]) result Future.t
 
       (** @param socket the tcp socket to receive on
 
@@ -896,12 +928,7 @@ module type S = sig
           @param len length of the buffer available for storing data
 
           @return on success, the number of bytes read *)
-      val recv :
-        tcp t ->
-        buf:bytes ->
-        pos:int ->
-        len:int ->
-        (int, [> Errors.recv ]) result Future.t
+      val recv : tcp t -> buf:bytes -> pos:int -> len:int -> (int, [> Errors.recv ]) result Future.t
 
       (** @param socket tcp the socket to send on
 
@@ -929,6 +956,7 @@ module type S = sig
       (** Create a new UDP socket.  The socket will be automatically closed
           during {!Process.spawn}. *)
       val create : domain:Socket.Domain.t -> (udp t, [> Errors.sock_create ]) result
+
       val bind : udp t -> Socket.Sockaddr.t -> (unit, [> Errors.bind ]) result
     end
   end
@@ -947,6 +975,7 @@ module type S = sig
       type native
 
       val of_native : native -> t
+
       val to_native : t -> native
     end
 

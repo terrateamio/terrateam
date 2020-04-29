@@ -1,1 +1,1 @@
-include Abb_channel.Make(Abb.Future)
+include Abb_channel.Make (Abb.Future)

@@ -5,38 +5,25 @@ module Make (Fut : Abb_intf.Future.S) = struct
 
   module List = struct
     let rec fold_left ~f ~init = function
-      | [] ->
-        Fut.return init
-      | l::ls ->
-        f init l
-        >>= fun acc ->
-        fold_left ~f ~init:acc ls
+      | []      -> Fut.return init
+      | l :: ls -> f init l >>= fun acc -> fold_left ~f ~init:acc ls
 
     let map ~f l =
-      fold_left
-        ~f:(fun acc l ->
-          f l
-          >>= fun v ->
-          Fut.return (v::acc))
-        ~init:[]
-        l
-      >>= fun l ->
-      Fut.return (Std_list.rev l)
+      fold_left ~f:(fun acc l -> f l >>= fun v -> Fut.return (v :: acc)) ~init:[] l
+      >>= fun l -> Fut.return (Std_list.rev l)
 
-    let iter ~f l =
-      fold_left ~f:(fun () l -> f l) ~init:() l
+    let iter ~f l = fold_left ~f:(fun () l -> f l) ~init:() l
 
     let filter ~f l =
       fold_left
         ~f:(fun acc v ->
-            f v
-            >>= function
-            | true -> Fut.return (v::acc)
-            | false -> Fut.return acc)
+          f v
+          >>= function
+          | true  -> Fut.return (v :: acc)
+          | false -> Fut.return acc)
         ~init:[]
         l
-      >>| fun ls ->
-      List.rev ls
+      >>| fun ls -> List.rev ls
   end
 
   let link f1 f2 =
@@ -51,35 +38,19 @@ module Make (Fut : Abb_intf.Future.S) = struct
     let p = Fut.Promise.create () in
     link f1 (Fut.Promise.future p);
     link f2 (Fut.Promise.future p);
-    let r1 =
-      f1
-      >>= fun v ->
-      Fut.Promise.set p (v, f2)
-    in
-    let r2 =
-      f2
-      >>= fun v ->
-      Fut.Promise.set p (v, f1)
-    in
+    let r1 = f1 >>= fun v -> Fut.Promise.set p (v, f2) in
+    let r2 = f2 >>= fun v -> Fut.Promise.set p (v, f1) in
     Fut.fork r1
     >>= fun () ->
     Fut.fork r2
     >>= fun () ->
     Fut.fork (r1 >>= fun () -> Fut.cancel r2)
-    >>= fun () ->
-    Fut.fork (r2 >>= fun () -> Fut.cancel r1)
-    >>= fun () ->
-    Fut.Promise.future p
+    >>= fun () -> Fut.fork (r2 >>= fun () -> Fut.cancel r1) >>= fun () -> Fut.Promise.future p
 
   let firstl l =
     let p = Fut.Promise.create () in
     Std_list.iter ~f:(fun dep -> link dep (Fut.Promise.future p)) l;
-    let futl =
-      Std_list.mapi
-        ~f:(fun idx fut ->
-            fut >>= fun v -> Fut.Promise.set p (idx, v))
-        l
-    in
+    let futl = Std_list.mapi ~f:(fun idx fut -> fut >>= fun v -> Fut.Promise.set p (idx, v)) l in
     List.iter ~f:Fut.fork futl
     >>= fun () ->
     Fut.Promise.future p
@@ -90,14 +61,12 @@ module Make (Fut : Abb_intf.Future.S) = struct
           if i = idx then
             (i + 1, l)
           else
-            (i + 1, fut::l))
+            (i + 1, fut :: l))
         ~init:(0, [])
         l
     in
     (* Cancel those other ones *)
-    List.iter ~f:Fut.cancel futl
-    >>| fun () ->
-    (v, Std_list.rev rest_rev)
+    List.iter ~f:Fut.cancel futl >>| fun () -> (v, Std_list.rev rest_rev)
 
   let all l =
     let fut = List.map ~f:(fun x -> x) l in
@@ -107,67 +76,49 @@ module Make (Fut : Abb_intf.Future.S) = struct
   let with_finally f ~finally =
     try
       let fut = f () in
-      Fut.await_bind
-        (fun _ ->
-           finally ()
-           >>= fun () ->
-           fut)
-        fut
-    with
-      | exn ->
-        finally ()
-        >>= fun () ->
-        let p = Fut.Promise.create () in
-        Fut.Promise.set_exn p (exn, Some (Printexc.get_raw_backtrace ()))
-        >>= fun () ->
-        Fut.Promise.future p
+      Fut.await_bind (fun _ -> finally () >>= fun () -> fut) fut
+    with exn ->
+      finally ()
+      >>= fun () ->
+      let p = Fut.Promise.create () in
+      Fut.Promise.set_exn p (exn, Some (Printexc.get_raw_backtrace ()))
+      >>= fun () -> Fut.Promise.future p
 
   let on_failure f ~failure =
     let succeeded = ref false in
     with_finally
       (fun () ->
-         f ()
-         >>| fun ret ->
-         succeeded := true;
-         ret)
+        f ()
+        >>| fun ret ->
+        succeeded := true;
+        ret)
       ~finally:(fun () ->
-          if not !succeeded then
-            failure ()
-          else
-            unit)
+        if not !succeeded then
+          failure ()
+        else
+          unit)
 
   let ignore fut = fut >>= fun _ -> unit
 
-  let to_result fut =
-    fut
-    >>= fun v ->
-    Fut.return (Ok v)
+  let to_result fut = fut >>= fun v -> Fut.return (Ok v)
 
   let of_option = function
-    | Some fut ->
-      fut
-      >>| fun r ->
-      Some r
-    | None ->
-      Fut.return None
+    | Some fut -> fut >>| fun r -> Some r
+    | None     -> Fut.return None
 
   module Infix_result_monad = struct
     type ('a, 'b) t = ('a, 'b) result Fut.t
 
-    let (>>=) t f =
+    let ( >>= ) t f =
       t
       >>= function
-        | Ok v ->
-          f v
-        | Error _ as err ->
-          Fut.return err
+      | Ok v           -> f v
+      | Error _ as err -> Fut.return err
 
-    let (>>|) t f =
+    let ( >>| ) t f =
       t
       >>| function
-        | Ok v ->
-          Ok (f v)
-        | Error _ as err ->
-          err
+      | Ok v           -> Ok (f v)
+      | Error _ as err -> err
   end
 end

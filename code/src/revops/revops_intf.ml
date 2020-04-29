@@ -2,7 +2,9 @@ module type MONAD = sig
   type 'a t
 
   val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
+
   val return : 'a -> 'a t
+
   val protect : f:(unit -> 'a t) -> finally:(unit -> 'b) -> 'a t
 end
 
@@ -11,6 +13,7 @@ module type S = sig
 
   module Oprev : sig
     type 'a t
+
     val make : (unit -> 'a M.t) -> ('a -> unit M.t) -> 'a t
   end
 
@@ -29,12 +32,13 @@ module type S = sig
    * oprev is setup and then the second. The order of evaluation on an undo is the
    * second oprev is torn-down and then the first.
    *)
-  val compose : introduce:('a -> 'b -> 'c M.t) ->
-                eliminate_first:('c -> 'a M.t) ->
-                eliminate_second:('c -> 'b M.t) ->
-                first:'a Oprev.t ->
-                second:'b Oprev.t ->
-                'c Oprev.t
+  val compose :
+    introduce:('a -> 'b -> 'c M.t) ->
+    eliminate_first:('c -> 'a M.t) ->
+    eliminate_second:('c -> 'b M.t) ->
+    first:'a Oprev.t ->
+    second:'b Oprev.t ->
+    'c Oprev.t
 
   val compose_tuple : 'a Oprev.t -> 'b Oprev.t -> ('a * 'b) Oprev.t
 

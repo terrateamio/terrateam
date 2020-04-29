@@ -1,6 +1,5 @@
 module Handler : sig
-  type t = ((string, unit) Brtl_ctx.t ->
-            (string, Brtl_rspnc.t) Brtl_ctx.t Abb.Future.t)
+  type t = (string, unit) Brtl_ctx.t -> (string, Brtl_rspnc.t) Brtl_ctx.t Abb.Future.t
 end
 
 module Route : sig
@@ -48,31 +47,28 @@ module Route : sig
   val rel : ('r, 'r) t
 
   (** Match a string portion of the path. *)
-  val (/) : ('f, 'r) t -> string -> ('f, 'r) t
+  val ( / ) : ('f, 'r) t -> string -> ('f, 'r) t
 
   (** Extract a variable from the path. *)
-  val (/%) : ('f, 'a -> 'r) t -> 'a Path.t -> ('f, 'r) t
+  val ( /% ) : ('f, 'a -> 'r) t -> 'a Path.t -> ('f, 'r) t
 
   (** Extract a variable from the query. *)
-  val (/?) : ('f, 'a -> 'r) t -> 'a Query.t -> ('f, 'r) t
+  val ( /? ) : ('f, 'a -> 'r) t -> 'a Query.t -> ('f, 'r) t
 
   (** Extract a variable from the body *)
-  val (/*) : ('f, 'a -> 'r) t -> 'a Query.t -> ('f, 'r) t
+  val ( /* ) : ('f, 'a -> 'r) t -> 'a Query.t -> ('f, 'r) t
 
   (** Create a route of a URL and a function that matches the types being
       extracted. *)
   val route : ('f, 'r) t -> 'f -> 'r Route.t
 
   (** Infix operator for {!route}. *)
-  val (-->) : ('f, 'r) t -> 'f -> 'r Route.t
+  val ( --> ) : ('f, 'r) t -> 'f -> 'r Route.t
 
   (** Given a list of routes, match an input URI and execute the associated route
       function.  If no matches are found, execute the [default] function. *)
   val match_ctx :
-    default:((string, unit) Brtl_ctx.t -> 'r) ->
-    'r Route.t list ->
-    (string, unit) Brtl_ctx.t ->
-    'r
+    default:((string, unit) Brtl_ctx.t -> 'r) -> 'r Route.t list -> (string, unit) Brtl_ctx.t -> 'r
 end
 
 module Method : sig
@@ -81,9 +77,6 @@ end
 
 type t
 
-val create :
-  default:Handler.t ->
-  (Method.t * Handler.t Route.Route.t) list ->
-  t
+val create : default:Handler.t -> (Method.t * Handler.t Route.Route.t) list -> t
 
 val route : (string, unit) Brtl_ctx.t -> t -> Handler.t

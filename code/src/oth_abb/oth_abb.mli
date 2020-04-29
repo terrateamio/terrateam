@@ -1,4 +1,4 @@
-module Make (Abb : Abb_intf.S ) : sig
+module Make (Abb : Abb_intf.S) : sig
   (** A test. Like moose, a plural of tests is called a test.  A single test can
       wrap multiple tests inside of it. *)
   module Test : sig
@@ -20,9 +20,7 @@ module Make (Abb : Abb_intf.S ) : sig
   (** Turn a test that returns a result into one that returns a unit.  This
       asserts that the result is on the 'Ok' path.  *)
   val result_test :
-    (Oth.State.t -> (unit, 'err) result Abb.Future.t) ->
-    Oth.State.t ->
-    unit Abb.Future.t
+    (Oth.State.t -> (unit, 'err) result Abb.Future.t) -> Oth.State.t -> unit Abb.Future.t
 
   (** Convert an asynchronous test into a synchronous test.  This requires
       running the ever loop. *)

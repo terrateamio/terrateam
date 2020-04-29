@@ -7,10 +7,7 @@ type 'a t
 
     @param wait a function which generates a value to wait on.  This is executed
     in the main thread. *)
-val create :
-  capacity:int ->
-  wait:(unit -> 'a) ->
-  'a t
+val create : capacity:int -> wait:(unit -> 'a) -> 'a t
 
 (** Add a new piece of work to the queue.  Threads will consume the work
     as they become available.
@@ -26,7 +23,7 @@ val create :
 val enqueue :
   'a t ->
   f:(unit -> 'b) ->
-  trigger:('a -> ('b, (exn * Printexc.raw_backtrace option)) result -> unit) ->
+  trigger:('a -> ('b, exn * Printexc.raw_backtrace option) result -> unit) ->
   'a
 
 (** Destroy the thread pool.  Destroy does not wait for any work executing in

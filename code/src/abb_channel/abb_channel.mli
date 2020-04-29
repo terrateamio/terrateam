@@ -9,6 +9,7 @@
 
 module Make (Fut : Abb_intf.Future.S) : sig
   type reader
+
   type writer
 
   (** The channel type, where the first type variable is if it is a reader or
@@ -21,7 +22,7 @@ module Make (Fut : Abb_intf.Future.S) : sig
   val create :
     (module Abb_channel_intf.Make(Fut).S with type t = 't and type msg = 'msg) ->
     't ->
-    ((reader, 'msg) t * (writer, 'msg) t)
+    (reader, 'msg) t * (writer, 'msg) t
 
   val send : (writer, 'msg) t -> 'msg -> unit Abb_channel_intf.channel_ret Fut.t
 
@@ -49,11 +50,7 @@ module Make (Fut : Abb_intf.Future.S) : sig
     (** Fold over the channel and when it is closed execute the close function
         and return its value. *)
     val fold_with_close :
-      init:'a ->
-      f:('a -> 'b -> 'a Fut.t) ->
-      close:('a -> 'c Fut.t) ->
-      (reader, 'b) t ->
-      'c Fut.t
+      init:'a -> f:('a -> 'b -> 'a Fut.t) -> close:('a -> 'c Fut.t) -> (reader, 'b) t -> 'c Fut.t
 
     (** Send a message to a channel where the message contains the promise.  The
         function will then return the value of the promise when it is evaluated.
@@ -61,10 +58,7 @@ module Make (Fut : Abb_intf.Future.S) : sig
         call that has a return value.  The promise passed in is what the
         receiver side will set as the return value. *)
     val send_promise :
-      (writer, 'a) t ->
-      'a ->
-      'b Fut.Promise.t ->
-      'b Abb_channel_intf.channel_ret Fut.t
+      (writer, 'a) t -> 'a -> 'b Fut.Promise.t -> 'b Abb_channel_intf.channel_ret Fut.t
 
     val to_result : 'a Abb_channel_intf.channel_ret Fut.t -> ('a, [> `Closed ]) result Fut.t
   end

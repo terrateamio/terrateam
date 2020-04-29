@@ -14,15 +14,19 @@ module Make (Fut : Abb_intf.Future.S) : sig
     val create : ?fast_count:int -> unit -> 'a t Fut.t
 
     val send : 'a t -> 'a -> unit Abb_channel_intf.channel_ret Fut.t
+
     val recv : 'a t -> 'a Abb_channel_intf.channel_ret Fut.t
 
     val close : 'a t -> unit Fut.t
+
     val close_with_abort : 'a t -> unit Fut.t
+
     val closed : 'a t -> unit Fut.t
   end
 
   type 'a reader = (Abb_channel.Make(Fut).reader, 'a) Abb_channel.Make(Fut).t
+
   type 'a writer = (Abb_channel.Make(Fut).writer, 'a) Abb_channel.Make(Fut).t
 
-  val to_abb_channel : 'a T.t -> ('a reader * 'a writer)
+  val to_abb_channel : 'a T.t -> 'a reader * 'a writer
 end

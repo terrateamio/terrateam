@@ -61,4 +61,3 @@ val remote_addr : ('a, 'b) t -> string
 (** Context unique identifier.  Every context created gets a unique
    identifier. *)
 val token : ('a, 'b) t -> string
-

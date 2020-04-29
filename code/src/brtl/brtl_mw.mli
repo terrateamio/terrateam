@@ -20,22 +20,20 @@ module Pre_handler : sig
     | Cont of (unit, unit) Brtl_ctx.t
     | Stop of (unit, Brtl_rspnc.t) Brtl_ctx.t
 
-  type t = ((unit, unit) Brtl_ctx.t -> ret Abb.Future.t)
+  type t = (unit, unit) Brtl_ctx.t -> ret Abb.Future.t
 end
 
 (** The post-handler is executed after executing the handler, if the handler
    executed successfully, but before writing the response out. *)
 module Post_handler : sig
-  type t = ((string, Brtl_rspnc.t) Brtl_ctx.t ->
-            (string, Brtl_rspnc.t) Brtl_ctx.t Abb.Future.t)
+  type t = (string, Brtl_rspnc.t) Brtl_ctx.t -> (string, Brtl_rspnc.t) Brtl_ctx.t Abb.Future.t
 end
 
 (** The early-exit-handler is executed if the pre-handler has short-circuited
    processing of the request but before writing the response out..  It is run
    without a body but with a response. *)
 module Early_exit_handler : sig
-  type t = ((unit, Brtl_rspnc.t) Brtl_ctx.t ->
-            (unit, Brtl_rspnc.t) Brtl_ctx.t Abb.Future.t)
+  type t = (unit, Brtl_rspnc.t) Brtl_ctx.t -> (unit, Brtl_rspnc.t) Brtl_ctx.t Abb.Future.t
 end
 
 (** Represents a single middleware instance. *)
@@ -76,9 +74,7 @@ val exec_pre_handler : (unit, unit) Brtl_ctx.t -> t -> Pre_handler.ret Abb.Futur
    effort is made to handle errors and an error will result in remaining
    handlers not being executed. *)
 val exec_post_handler :
-  (string, Brtl_rspnc.t) Brtl_ctx.t ->
-  t ->
-  (string, Brtl_rspnc.t) Brtl_ctx.t Abb.Future.t
+  (string, Brtl_rspnc.t) Brtl_ctx.t -> t -> (string, Brtl_rspnc.t) Brtl_ctx.t Abb.Future.t
 
 (** Execute early-exit-handlers in the same order as those executed by
    pre-handler. No effort is made to handle errors and an error will result in
@@ -88,7 +84,4 @@ val exec_post_handler :
    a request.  Except in the case of an error, all handlers will be executed
    even if it was not executed as during pre-handling. *)
 val exec_early_exit_handler :
-  (unit, Brtl_rspnc.t) Brtl_ctx.t ->
-  t ->
-  (unit, Brtl_rspnc.t) Brtl_ctx.t Abb.Future.t
-
+  (unit, Brtl_rspnc.t) Brtl_ctx.t -> t -> (unit, Brtl_rspnc.t) Brtl_ctx.t Abb.Future.t

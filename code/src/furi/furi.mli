@@ -116,6 +116,7 @@ let handle_age_height age height = ...]}
    be the string ["baz"].
 
 *)
+
 (** A URL pattern. *)
 type ('f, 'r) t
 
@@ -160,20 +161,20 @@ end
 val rel : ('r, 'r) t
 
 (** Match a string portion of the path. *)
-val (/) : ('f, 'r) t -> string -> ('f, 'r) t
+val ( / ) : ('f, 'r) t -> string -> ('f, 'r) t
 
 (** Extract a variable from the path. *)
-val (/%) : ('f, 'a -> 'r) t -> 'a Path.t -> ('f, 'r) t
+val ( /% ) : ('f, 'a -> 'r) t -> 'a Path.t -> ('f, 'r) t
 
 (** Extract a variable from the query. *)
-val (/?) : ('f, 'a -> 'r) t -> 'a Query.t -> ('f, 'r) t
+val ( /? ) : ('f, 'a -> 'r) t -> 'a Query.t -> ('f, 'r) t
 
 (** Create a route of a URL and a function that matches the types being
    extracted. *)
 val route : ('f, 'r) t -> 'f -> 'r Route.t
 
 (** Infix operator for {!route}. *)
-val (-->) : ('f, 'r) t -> 'f -> 'r Route.t
+val ( --> ) : ('f, 'r) t -> 'f -> 'r Route.t
 
 (** Given a list of routes, match an input URI and execute the associated route
    function.  If no matches are found, execute the [default] function. *)

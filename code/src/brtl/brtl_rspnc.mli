@@ -9,11 +9,14 @@ val create :
   string ->
   t
 
-val version: t -> Cohttp.Code.version
-val status: t -> Cohttp.Code.status_code
-val body: t -> string
+val version : t -> Cohttp.Code.version
 
-val headers: t -> Cohttp.Header.t
-val add_header: string -> string -> t -> t
+val status : t -> Cohttp.Code.status_code
 
-val response: t -> Response.t
+val body : t -> string
+
+val headers : t -> Cohttp.Header.t
+
+val add_header : string -> string -> t -> t
+
+val response : t -> Response.t

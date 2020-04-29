@@ -1,22 +1,37 @@
 (** Cohttp-based client and server. *)
 
-type connect_http_err = [ Abb_intf.Errors.sock_create | Abb_intf.Errors.tcp_sock_connect ]
-type connect_https_err = [ connect_http_err | `Error ]
-type request_err = [ connect_https_err | `Invalid_scheme of string ]
+type connect_http_err =
+  [ Abb_intf.Errors.sock_create
+  | Abb_intf.Errors.tcp_sock_connect
+  ]
 
-type run_err = [ `Exn of exn
-               | `E_address_family_not_supported
-               | `E_address_in_use
-               | `E_address_not_available
-               ]
+type connect_https_err =
+  [ connect_http_err
+  | `Error
+  ]
+
+type request_err =
+  [ connect_https_err
+  | `Invalid_scheme of string
+  ]
+
+type run_err =
+  [ `Exn                            of exn
+  | `E_address_family_not_supported
+  | `E_address_in_use
+  | `E_address_not_available
+  ]
 
 val show_request_err : request_err -> string
+
 val pp_request_err : Format.formatter -> request_err -> unit
 
 val show_connect_https_err : connect_https_err -> string
+
 val pp_connect_https_err : Format.formatter -> connect_https_err -> unit
 
 val show_connect_http_err : connect_http_err -> string
+
 val pp_connect_http_err : Format.formatter -> connect_http_err -> unit
 
 module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
@@ -30,13 +45,13 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
   module Body : Cohttp.S.Body with type t = Cohttp.Body.t
 
   (** Underlying I/O operations. *)
-  module Io : module type of Cohttp_abb_io.Make(Abb)
+  module Io : module type of Cohttp_abb_io.Make (Abb)
 
   (** Side-effectful API for working with requests. *)
-  module Request_io : module type of Cohttp.Request.Make(Io) with type t = Request.t
+  module Request_io : module type of Cohttp.Request.Make (Io) with type t = Request.t
 
   (** Side-effectful API for working with responses. *)
-  module Response_io : module type of Cohttp.Response.Make(Io) with type t = Response.t
+  module Response_io : module type of Cohttp.Response.Make (Io) with type t = Response.t
 
   (** An HTTP and HTTPs client.  Provides a high-level API for doing complete
       requests in one call down to the underlying APIs for managing a
@@ -54,14 +69,14 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
     val connect_http :
       Abb_intf.Socket.Addrinfo.t ->
       Uri.t ->
-      ((Io.ic * Io.oc), [> connect_http_err ]) result Abb.Future.t
+      (Io.ic * Io.oc, [> connect_http_err ]) result Abb.Future.t
 
     (** Open an HTTPs connection using the provided TLS configuration. *)
     val connect_https :
       Abb_intf.Socket.Addrinfo.t ->
       Otls.Tls_config.t ->
       Uri.t ->
-      ((Io.ic * Io.oc), [> connect_https_err ]) result Abb.Future.t
+      (Io.ic * Io.oc, [> connect_https_err ]) result Abb.Future.t
 
     (** With an open connection, either HTTP or HTTPs, perform a request on the
         connection. *)
@@ -81,7 +96,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
       ?body:Body.t ->
       Scheme.t ->
       Request.t ->
-      ((Response.t * Io.ic), [> request_err ]) result Abb.Future.t
+      (Response.t * Io.ic, [> request_err ]) result Abb.Future.t
 
     (** A friendly wrapper over {!request}. *)
     val call :
@@ -92,13 +107,12 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
       ?tls_config:Otls.Tls_config.t ->
       Cohttp.Code.meth ->
       Uri.t ->
-      ((Response.t * string), [> request_err ]) result Abb.Future.t
+      (Response.t * string, [> request_err ]) result Abb.Future.t
   end
 
   (** Simple HTTP and HTTPs server.  The server runs a configuration and returns
       when the server has stopped. *)
   module Server : sig
-
     (** The scheme type to serve. *)
     module Scheme : sig
       type t =
@@ -113,11 +127,11 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
         [`Stop].  If a handler throws an exception, the behaviour depends on the
         value of [on_handler_exn] in the {!Config.t}. *)
     type handler =
-      (Abb.Socket.tcp Abb.Socket.t ->
-       Request.t ->
-       Request_io.IO.ic ->
-       Response_io.IO.oc ->
-       [ `Stop | `Ok ] Abb.Future.t)
+      Abb.Socket.tcp Abb.Socket.t ->
+      Request.t ->
+      Request_io.IO.ic ->
+      Response_io.IO.oc ->
+      [ `Stop | `Ok ] Abb.Future.t
 
     (** The type of a failure handler.  A failure handler is run if a handler
        fails with an exception.  A failure handler returning [`Stop] means that
@@ -125,19 +139,18 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
        means to continue.  If the handler fails, by throwing an exception or
        aborting, it is the equivalent of returning [`Stop]. *)
     type on_handler_exn =
-      (Request.t ->
-       (exn * Printexc.raw_backtrace option) ->
-       [ `Stop | `Ok ] Abb.Future.t)
+      Request.t -> exn * Printexc.raw_backtrace option -> [ `Stop | `Ok ] Abb.Future.t
 
     module Config : sig
       module View : sig
-        type t = { scheme : Scheme.t (** HTTP or HTTPS server. *)
-                 ; on_handler_exn : on_handler_exn (** Function to execute on error. *)
-                 ; port : int (** Port ot listen on. *)
-                 ; handler : handler (** The handler to execute per requests. *)
-                 ; read_header_timeout : Duration.t option (** Time to wait to read all headers. *)
-                 ; handler_timeout : Duration.t option (** Time to allow a handler to run. *)
-                 }
+        type t = {
+          scheme : Scheme.t;  (** HTTP or HTTPS server. *)
+          on_handler_exn : on_handler_exn;  (** Function to execute on error. *)
+          port : int;  (** Port ot listen on. *)
+          handler : handler;  (** The handler to execute per requests. *)
+          read_header_timeout : Duration.t option;  (** Time to wait to read all headers. *)
+          handler_timeout : Duration.t option;  (** Time to allow a handler to run. *)
+        }
       end
 
       type t
@@ -151,4 +164,4 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
         a handler returns [`Stop]. *)
     val run : Config.t -> (unit, [> run_err ]) result Abb.Future.t
   end
-end
+  end

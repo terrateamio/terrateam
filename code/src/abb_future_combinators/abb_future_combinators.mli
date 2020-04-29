@@ -1,6 +1,5 @@
 (** Some common combinators over futures. *)
 module Make (Fut : Abb_intf.Future.S) : sig
-
   (** A future that has been determined to the unit value. *)
   val unit : unit Fut.t
 
@@ -83,14 +82,19 @@ module Make (Fut : Abb_intf.Future.S) : sig
 
   module List : sig
     val map : f:('a -> 'b Fut.t) -> 'a list -> 'b list Fut.t
+
     val fold_left : f:('a -> 'b -> 'a Fut.t) -> init:'a -> 'b list -> 'a Fut.t
+
     val iter : f:('a -> unit Fut.t) -> 'a list -> unit Fut.t
+
     val filter : f:('a -> bool Fut.t) -> 'a list -> 'a list Fut.t
   end
 
   module Infix_result_monad : sig
     type ('a, 'b) t = ('a, 'b) result Fut.t
-    val (>>=) : ('a, 'c) t -> ('a -> ('b, 'c) t) -> ('b, 'c) t
-    val (>>|) : ('a, 'c) t -> ('a -> 'b) -> ('b, 'c) t
+
+    val ( >>= ) : ('a, 'c) t -> ('a -> ('b, 'c) t) -> ('b, 'c) t
+
+    val ( >>| ) : ('a, 'c) t -> ('a -> 'b) -> ('b, 'c) t
   end
 end

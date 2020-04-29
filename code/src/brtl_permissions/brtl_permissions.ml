@@ -1,5 +1,5 @@
 module Permission = struct
-  type ('a, 'b) t = ((string, 'a) Brtl_ctx.t -> 'b -> bool Abb.Future.t)
+  type ('a, 'b) t = (string, 'a) Brtl_ctx.t -> 'b -> bool Abb.Future.t
 end
 
 let with_permissions perms ctx v f =
@@ -9,10 +9,7 @@ let with_permissions perms ctx v f =
   if CCList.for_all CCFun.id res then
     f ()
   else
-    Abb.Future.return
-      (Brtl_ctx.set_response
-         (Brtl_rspnc.create ~status:`Forbidden "")
-         ctx)
+    Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx)
 
 let with_permissions_ep perms v ctx =
   let open Abb.Future.Infix_monad in
@@ -21,7 +18,4 @@ let with_permissions_ep perms v ctx =
   if CCList.for_all CCFun.id res then
     Ok ctx
   else
-    Error
-      (Brtl_ctx.set_response
-         `Forbidden
-         ctx)
+    Error (Brtl_ctx.set_response `Forbidden ctx)

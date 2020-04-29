@@ -59,6 +59,7 @@
     a multi-threaded environment. *)
 module State : sig
   type t
+
   val create : unit -> t
 end
 

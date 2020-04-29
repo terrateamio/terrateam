@@ -10,10 +10,10 @@ module Capture : sig
   val start : t -> int
 
   (** The index into the search string one past where the capture stops. *)
-  val stop  : t -> int
+  val stop : t -> int
 
   (** Extract the string of the capture.*)
-  val to_string  : t -> string
+  val to_string : t -> string
 end
 
 (** Matches that the pattern has matched into the search strings. *)
@@ -21,13 +21,13 @@ module Match : sig
   type t
 
   (** Indices into the search string that has been matched. *)
-  val range     : t -> (int * int)
+  val range : t -> int * int
 
   (** The string the capture matches. *)
   val to_string : t -> string
 
   (** List of the captures. *)
-  val captures  : t -> Capture.t list
+  val captures : t -> Capture.t list
 end
 
 (** Compile a pattern.
@@ -43,7 +43,6 @@ val of_string : string -> t option
     found, where the range is \[s, e) *)
 val find : ?start:int -> string -> t -> (int * int) option
 
-
 (** Match a pattern in the search string.
 
     @param start optional place in the search string to start
@@ -51,7 +50,6 @@ val find : ?start:int -> string -> t -> (int * int) option
     @return [None] if the pattern was not found, [Some m] if the pattern was
     found. *)
 val mtch : ?start:int -> string -> t -> Match.t option
-
 
 (** Replace a matches in a string.  Replacing is a function on the {!Match.t}
     returning a new string.
@@ -64,12 +62,7 @@ val mtch : ?start:int -> string -> t -> Match.t option
 
     @return [None] if the pattern was not found, [Some str] where [str] is the
     string with replacements applied *)
-val substitute :
-  ?start:int ->
-  s:string ->
-  r:(Match.t -> string) ->
-  t ->
-  string option
+val substitute : ?start:int -> s:string -> r:(Match.t -> string) -> t -> string option
 
 (** Helper function for the common case where {!substitute} is to replace a
     pattern with a static string.  [rep_str] also supports access captures

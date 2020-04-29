@@ -7,13 +7,14 @@
     how the channel is implemented. *)
 
 (** A channel can be closed *)
-type 'a channel_ret = [ `Ok of 'a | `Closed ]
+type 'a channel_ret =
+  [ `Ok     of 'a
+  | `Closed
+  ]
 
 module Make (Fut : Abb_intf.Future.S) = struct
-
   (** Module type in terms of the future implementation. *)
   module type S = sig
-
     (** The message type the channel takes. *)
     type msg
 
