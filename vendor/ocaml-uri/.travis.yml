@@ -9,7 +9,7 @@ env:
    - PACKAGE="uri"
    - PRE_INSTALL_HOOK="cd /home/opam/opam-repository && git pull origin master && opam update -uy"
    - POST_INSTALL_HOOK="opam --yes depext -yui react ssl lwt"
-   - PINS="uri.dev:. uri-sexp.dev:."
+   - PINS="uri.dev:. uri-sexp.dev:. uri-re.dev:."
    - REVDEPS="cohttp git github irmin syndic"
  matrix:
    - DISTRO=centos OCAML_VERSION=4.04

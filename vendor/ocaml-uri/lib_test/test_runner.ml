@@ -666,7 +666,7 @@ let test_ipv6_parsing =
   List.map (fun (input, expected) ->
     let name = sprintf "ipv6:%s" input in
     let test () =
-      match Angstrom.parse_string Uri.Parser.ipv6 input with
+      match Angstrom.parse_string ~consume:All Uri.Parser.ipv6 input with
       | Ok parsed ->
         assert_equal ~printer:(fun x -> x) expected parsed
       | Error msg -> assert_failure msg

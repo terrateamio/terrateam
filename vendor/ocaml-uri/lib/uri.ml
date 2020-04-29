@@ -897,12 +897,13 @@ module Parser = struct
         <|> lift2 (fun x y -> x :: y) hexadecimal (c_colon *> f <|> return []))
 
   let double_colon count =
-    after_double_colon <|> return [] >>= fun rest ->
+    after_double_colon >>= (fun rest ->
     let filler_length = 8 - count - List.length rest in
     if filler_length <= 0 then
       fail "too many parts in IPv6 address"
     else
-      return ("" :: rest)
+      return ("" :: rest))
+    <|> return [""]
 
   let rec part = function
     | 7 ->
@@ -1058,7 +1059,7 @@ module Parser = struct
    * after that *)
   let uri_reference =
     take_while (function | '\n' -> false | _ -> true) >>| fun s ->
-      match Angstrom.parse_string _uri_reference s with
+      match Angstrom.parse_string ~consume:All _uri_reference s with
       | Ok t -> t
       | Error _ ->
         (* Shouldn't really happen if the parser is forgiving. *)
@@ -1066,7 +1067,9 @@ module Parser = struct
 end
 
 let of_string s =
-  match Angstrom.parse_string Parser.uri_reference s with
+  (* To preserve the old regex parser's behavior, we only parse a prefix, and
+   * stop whenever we can't parse more. *)
+  match Angstrom.parse_string ~consume:Prefix Parser.uri_reference s with
   | Ok t -> t
   | Error _ ->
     (* Shouldn't really happen if the parser is forgiving. *)
