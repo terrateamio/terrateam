@@ -20,9 +20,6 @@
 #include <sys/resource.h>
 #include "../common/private.h"
 
-#ifndef SO_GET_FILTER
-#define SO_GET_FILTER SO_ATTACH_FILTER
-#endif
 
 //XXX-FIXME TEMP
 const struct filter evfilt_proc = EVFILT_NOTIMPL;
@@ -581,7 +578,6 @@ linux_get_descriptor_type(struct knote *kn)
     socklen_t slen;
     struct stat sb;
     int ret, lsock, stype;
-    socklen_t out_len;
     const int fd = (int)kn->kev.ident;
 
     /*
@@ -680,13 +676,14 @@ linux_get_descriptor_type(struct knote *kn)
     } else if (lsock)
         kn->kn_flags |= KNFL_SOCKET_PASSIVE;
 
+#ifdef SO_GET_FILTER
     /*
      * Test if socket has a filter
      * pcap file descriptors need to be considered as passive sockets as
      * SIOCINQ always returns 0 even if data is available.
      * Looking at SO_GET_FILTER is a good way of doing this.
      */
-    out_len = 0;
+    socklen_t out_len = 0;
     ret = getsockopt(fd, SOL_SOCKET, SO_GET_FILTER, NULL, &out_len);
     if (ret < 0) {
         switch (errno) {
@@ -698,6 +695,7 @@ linux_get_descriptor_type(struct knote *kn)
         }
     } else if (out_len)
         kn->kn_flags |= KNFL_SOCKET_PASSIVE;
+#endif /* SO_GET_FILTER */
 
     return (0);
 }
