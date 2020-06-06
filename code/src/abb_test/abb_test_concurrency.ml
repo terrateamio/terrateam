@@ -13,7 +13,7 @@ module Make (Abb : Abb_intf.S) = struct
         <*> fut2
         >>| fun () ->
         let end_time = Unix.time () in
-        assert (end_time -. start_time < 1.5))
+        assert (end_time -. start_time < 1.8))
 
   let test = Oth_abb.serial [ test_applicative ]
 end
