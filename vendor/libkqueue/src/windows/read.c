@@ -200,13 +200,11 @@ evfilt_read_knote_disable(struct filter *filt, struct knote *kn)
 }
 
 const struct filter evfilt_read = {
-    EVFILT_READ,
-    NULL,
-    NULL,
-    evfilt_read_copyout,
-    evfilt_read_knote_create,
-    evfilt_read_knote_modify,
-    evfilt_read_knote_delete,
-    evfilt_read_knote_enable,
-    evfilt_read_knote_disable,
+    .kf_id      = EVFILT_READ,
+    .kf_copyout = evfilt_read_copyout,
+    .kn_create  = evfilt_read_knote_create,
+    .kn_modify  = evfilt_read_knote_modify,
+    .kn_delete  = evfilt_read_knote_delete,
+    .kn_enable  = evfilt_read_knote_enable,
+    .kn_disable = evfilt_read_knote_disable,
 };

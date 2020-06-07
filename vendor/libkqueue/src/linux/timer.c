@@ -235,13 +235,11 @@ evfilt_timer_knote_disable(struct filter *filt, struct knote *kn)
 }
 
 const struct filter evfilt_timer = {
-    EVFILT_TIMER,
-    NULL,
-    NULL,
-    evfilt_timer_copyout,
-    evfilt_timer_knote_create,
-    evfilt_timer_knote_modify,
-    evfilt_timer_knote_delete,
-    evfilt_timer_knote_enable,
-    evfilt_timer_knote_disable,
+    .kf_id      = EVFILT_TIMER,
+    .kf_copyout = evfilt_timer_copyout,
+    .kn_create  = evfilt_timer_knote_create,
+    .kn_modify  = evfilt_timer_knote_modify,
+    .kn_delete  = evfilt_timer_knote_delete,
+    .kn_enable  = evfilt_timer_knote_enable,
+    .kn_disable = evfilt_timer_knote_disable,
 };

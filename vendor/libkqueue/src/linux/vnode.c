@@ -294,13 +294,11 @@ evfilt_vnode_knote_disable(struct filter *filt, struct knote *kn)
 }
 
 const struct filter evfilt_vnode = {
-    EVFILT_VNODE,
-    NULL,
-    NULL,
-    evfilt_vnode_copyout,
-    evfilt_vnode_knote_create,
-    evfilt_vnode_knote_modify,
-    evfilt_vnode_knote_delete,
-    evfilt_vnode_knote_enable,
-    evfilt_vnode_knote_disable,
+    .kf_id      = EVFILT_VNODE,
+    .kf_copyout = evfilt_vnode_copyout,
+    .kn_create  = evfilt_vnode_knote_create,
+    .kn_modify  = evfilt_vnode_knote_modify,
+    .kn_delete  = evfilt_vnode_knote_delete,
+    .kn_enable  = evfilt_vnode_knote_enable,
+    .kn_disable = evfilt_vnode_knote_disable,
 };

@@ -130,7 +130,7 @@ evfilt_proc_destroy(struct filter *filt)
 }
 
 int
-evfilt_proc_copyin(struct filter *filt,
+evfilt_proc_create(struct filter *filt,
         struct knote *dst, const struct kevent *src)
 {
     if (src->flags & EV_ADD && KNOTE_EMPTY(dst)) {
@@ -182,9 +182,9 @@ evfilt_proc_copyout(struct filter *filt,
 }
 
 const struct filter evfilt_proc = {
-    EVFILT_PROC,
-    evfilt_proc_init,
-    evfilt_proc_destroy,
-    evfilt_proc_copyin,
-    evfilt_proc_copyout,
+    .kf_id      = EVFILT_PROC,
+    .kf_init    = evfilt_proc_init,
+    .kf_destroy = evfilt_proc_destroy,
+    .kf_copyout = evfilt_proc_copyout,
+    .kn_create  = evfilt_proc_create,
 };

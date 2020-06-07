@@ -231,13 +231,11 @@ evfilt_proc_knote_disable(struct filter *filt, struct knote *kn)
 }
 
 const struct filter evfilt_proc_DEADWOOD = {
-    0, //XXX-FIXME broken: EVFILT_PROC,
-    evfilt_proc_init,
-    evfilt_proc_destroy,
-    evfilt_proc_copyout,
-    evfilt_proc_knote_create,
-    evfilt_proc_knote_modify,
-    evfilt_proc_knote_delete,
-    evfilt_proc_knote_enable,
-    evfilt_proc_knote_disable,
+    .kf_id      = 0,  //XXX-FIXME broken: EVFILT_PROC,
+    .kf_copyout = evfilt_proc_copyout,
+    .kn_create  = evfilt_proc_knote_create,
+    .kn_modify  = evfilt_proc_knote_modify,
+    .kn_delete  = evfilt_proc_knote_delete,
+    .kn_enable  = evfilt_proc_knote_enable,
+    .kn_disable = evfilt_proc_knote_disable,
 };

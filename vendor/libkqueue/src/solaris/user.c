@@ -124,13 +124,11 @@ evfilt_user_knote_disable(struct filter *filt UNUSED, struct knote *kn UNUSED)
 }
 
 const struct filter evfilt_user = {
-    EVFILT_USER,
-    NULL,
-    NULL,
-    evfilt_user_copyout,
-    evfilt_user_knote_create,
-    evfilt_user_knote_modify,
-    evfilt_user_knote_delete,
-    evfilt_user_knote_enable,
-    evfilt_user_knote_disable,
+    .kf_id      = EVFILT_USER,
+    .kf_copyout = evfilt_user_copyout,
+    .kn_create  = evfilt_user_knote_create,
+    .kn_modify  = evfilt_user_knote_modify,
+    .kn_delete  = evfilt_user_knote_delete,
+    .kn_enable  = evfilt_user_knote_enable,
+    .kn_disable = evfilt_user_knote_disable,
 };

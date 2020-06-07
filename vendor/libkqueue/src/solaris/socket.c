@@ -138,25 +138,21 @@ evfilt_socket_copyout(struct kevent *dst, struct knote *src, void *ptr)
 }
 
 const struct filter evfilt_read = {
-    EVFILT_READ,
-    NULL,
-    NULL,
-    evfilt_socket_copyout,
-    evfilt_socket_knote_create,
-    evfilt_socket_knote_modify,
-    evfilt_socket_knote_delete,
-    evfilt_socket_knote_enable,
-    evfilt_socket_knote_disable,
+    .kf_id      = EVFILT_READ,
+    .kf_copyout = evfilt_socket_copyout,
+    .kn_create  = evfilt_socket_knote_create,
+    .kn_modify  = evfilt_socket_knote_modify,
+    .kn_delete  = evfilt_socket_knote_delete,
+    .kn_enable  = evfilt_socket_knote_enable,
+    .kn_disable = evfilt_socket_knote_disable,
 };
 
 const struct filter evfilt_write = {
-    EVFILT_WRITE,
-    NULL,
-    NULL,
-    evfilt_socket_copyout,
-    evfilt_socket_knote_create,
-    evfilt_socket_knote_modify,
-    evfilt_socket_knote_delete,
-    evfilt_socket_knote_enable,
-    evfilt_socket_knote_disable,
+    .kf_id      = EVFILT_WRITE,
+    .kf_copyout = evfilt_socket_copyout,
+    .kn_create  = evfilt_socket_knote_create,
+    .kn_modify  = evfilt_socket_knote_modify,
+    .kn_delete  = evfilt_socket_knote_delete,
+    .kn_enable  = evfilt_socket_knote_enable,
+    .kn_disable = evfilt_socket_knote_disable,
 };

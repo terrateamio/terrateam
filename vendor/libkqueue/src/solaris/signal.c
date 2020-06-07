@@ -156,13 +156,11 @@ evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *ptr)
 }
 
 const struct filter evfilt_signal = {
-    EVFILT_SIGNAL,
-    NULL,
-    NULL,
-    evfilt_signal_copyout,
-    evfilt_signal_knote_create,
-    evfilt_signal_knote_modify,
-    evfilt_signal_knote_delete,
-    evfilt_signal_knote_enable,
-    evfilt_signal_knote_disable,
+    .kf_id      = EVFILT_SIGNAL,
+    .kf_copyout = evfilt_signal_copyout,
+    .kn_create  = evfilt_signal_knote_create,
+    .kn_modify  = evfilt_signal_knote_modify,
+    .kn_delete  = evfilt_signal_knote_delete,
+    .kn_enable  = evfilt_signal_knote_enable,
+    .kn_disable = evfilt_signal_knote_disable,
 };

@@ -168,7 +168,7 @@ struct filter {
 };
 
 /* Use this to declare a filter that is not implemented */
-#define EVFILT_NOTIMPL { 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+#define EVFILT_NOTIMPL { .kf_id = 0 }
 
 /** Structure representing a notification channel
  *

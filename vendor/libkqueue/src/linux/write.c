@@ -129,13 +129,11 @@ evfilt_write_knote_disable(struct filter *filt, struct knote *kn)
 }
 
 const struct filter evfilt_write = {
-    EVFILT_WRITE,
-    NULL,
-    NULL,
-    evfilt_write_copyout,
-    evfilt_write_knote_create,
-    evfilt_write_knote_modify,
-    evfilt_write_knote_delete,
-    evfilt_write_knote_enable,
-    evfilt_write_knote_disable,
+    .kf_id      = EVFILT_WRITE,
+    .kf_copyout = evfilt_write_copyout,
+    .kn_create  = evfilt_write_knote_create,
+    .kn_modify  = evfilt_write_knote_modify,
+    .kn_delete  = evfilt_write_knote_delete,
+    .kn_enable  = evfilt_write_knote_enable,
+    .kn_disable = evfilt_write_knote_disable,
 };
