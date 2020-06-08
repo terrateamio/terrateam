@@ -127,26 +127,6 @@ knote_lookup(struct filter *filt, uintptr_t ident)
     return (ent);
 }
 
-#if DEADWOOD
-struct knote *
-knote_get_by_data(struct filter *filt, intptr_t data)
-{
-    struct knote *kn;
-
-    pthread_rwlock_rdlock(&filt->kf_knote_mtx);
-    RB_FOREACH(kn, knt, &filt->kf_knote) {
-        if (data == kn->kev.data)
-            break;
-    }
-    if (kn != NULL) {
-        knote_retain(kn);
-    }
-    pthread_rwlock_unlock(&filt->kf_knote_mtx);
-
-    return (kn);
-}
-#endif
-
 int knote_free_all(struct filter *filt)
 {
     struct knote *kn, *tmp;

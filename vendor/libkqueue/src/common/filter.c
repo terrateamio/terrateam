@@ -69,21 +69,9 @@ filter_register(struct kqueue *kq, short filter, const struct filter *src)
         }
     }
 
-#if DEADWOOD
-    /* Add the filter's event descriptor to the main fdset */
-    if (dst->kf_pfd > 0) {
-        FD_SET(dst->kf_pfd, &kq->kq_fds);
-        if (dst->kf_pfd > kq->kq_nfds)
-            kq->kq_nfds = dst->kf_pfd;
-        dbg_printf("fds: added %d (nfds=%d)", dst->kf_pfd, kq->kq_nfds);
-    }
-    dbg_printf("filter %d (%s) registered", filter, filter_name(filter));
-#endif
-
-	/* FIXME: should totally remove const from src */
-	if (kqops.filter_init != NULL
-            && kqops.filter_init(kq, dst) < 0)
-		return (-1);
+    /* FIXME: should totally remove const from src */
+    if ((kqops.filter_init != NULL) && (kqops.filter_init(kq, dst) < 0))
+        return (-1);
 
     return (0);
 }

@@ -224,7 +224,6 @@ extern const struct kqueue_vtable kqops;
  */
 int knote_free_all(struct filter *filt);
 struct knote * knote_lookup(struct filter *, uintptr_t);
-//DEADWOOD: struct knote * knote_get_by_data(struct filter *filt, intptr_t);
 struct knote * knote_new(void);
 #define knote_retain(kn) atomic_inc(&kn->kn_ref)
 void knote_release(struct knote *);
