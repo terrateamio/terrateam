@@ -132,6 +132,15 @@ filter_unregister_all(struct kqueue *kq)
     memset(&kq->kq_filt[0], 0, sizeof(kq->kq_filt));
 }
 
+/** Lookup filters in the array of filters registered for kq
+ *
+ * @param[out] filt    the specified ID resolves to.
+ * @param[in] kq       to lookup the filter in.
+ * @param[in] id       of the filter to lookup.
+ * @return
+ *    - 0 on success.
+ *    - -1 on failure (filter not implemented).
+ */
 int
 filter_lookup(struct filter **filt, struct kqueue *kq, short id)
 {
