@@ -212,7 +212,7 @@ run_iteration(struct test_context *ctx)
 {
     struct unit_test *test;
 
-    for (test = &ctx->tests[0]; test->ut_name != NULL; test++) {
+    for (test = ctx->tests; test->ut_name != NULL; test++) {
         if (test->ut_enabled)
             test->ut_func(ctx);
     }
@@ -332,14 +332,14 @@ main(int argc, char **argv)
 
     /* If specific tests are requested, disable all tests by default */
     if (optind < argc) {
-        for (test = &tests[0]; test->ut_name != NULL; test++) {
+        for (test = tests; test->ut_name != NULL; test++) {
             test->ut_enabled = 0;
         }
     }
     for (i = optind; i < argc; i++) {
         match = 0;
         arg = argv[i];
-        for (test = &tests[0]; test->ut_name != NULL; test++) {
+        for (test = tests; test->ut_name != NULL; test++) {
             if (strcmp(arg, test->ut_name) == 0) {
                 test->ut_enabled = 1;
                 match = 1;

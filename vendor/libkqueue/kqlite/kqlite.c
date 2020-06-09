@@ -438,7 +438,7 @@ int kq_event(kqueue_t kq, const struct kevent *changelist, int nchanges,
     } else {
         epev_wait_max = nevents;
     }
-    epev_cnt = epoll_wait(kq->epfd, &epev_buf[0], epev_wait_max, eptimeout);
+    epev_cnt = epoll_wait(kq->epfd, epev_buf, epev_wait_max, eptimeout);
     if (epev_cnt < 0) {
         return (-1);        //FIXME: handle timeout
     }
@@ -493,9 +493,9 @@ epoll_event_to_str(struct epoll_event *evt)
 
 #define EPEVT_DUMP(attrib) \
     if (evt->events & attrib) \
-       strcat(&buf[0], #attrib" ");
+       strcat(buf, #attrib" ");
 
-    snprintf(&buf[0], 128, " { data = %p, events = ", evt->data.ptr);
+    snprintf(buf, 128, " { data = %p, events = ", evt->data.ptr);
     EPEVT_DUMP(EPOLLIN);
     EPEVT_DUMP(EPOLLOUT);
 #if defined(HAVE_EPOLLRDHUP)
@@ -503,9 +503,9 @@ epoll_event_to_str(struct epoll_event *evt)
 #endif
     EPEVT_DUMP(EPOLLONESHOT);
     EPEVT_DUMP(EPOLLET);
-    strcat(&buf[0], "}\n");
+    strcat(buf, "}\n");
 
-    return (&buf[0]);
+    return (buf);
 #undef EPEVT_DUMP
 }
 #endif

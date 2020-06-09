@@ -32,7 +32,7 @@ testfile_touch(const char *path)
 {
     char buf[1024];
 
-    snprintf(&buf[0], sizeof(buf), "touch %s", path);
+    snprintf(buf, sizeof(buf), "touch %s", path);
     if (system(buf) != 0)
         die("system");
 }
@@ -42,7 +42,7 @@ testfile_write(const char *path)
 {
     char buf[1024];
 
-    snprintf(&buf[0], sizeof(buf), "echo hi >> %s", path);
+    snprintf(buf, sizeof(buf), "echo hi >> %s", path);
     if (system(buf) != 0)
         die("system");
 }
@@ -52,7 +52,7 @@ testfile_rename(const char *path, int step)
 {
     char buf[1024];
 
-    snprintf(&buf[0], sizeof(buf), "%s.tmp", path);
+    snprintf(buf, sizeof(buf), "%s.tmp", path);
     /* XXX-FIXME use of 'step' conceals a major memory corruption
             when the file is renamed twice.
             To replicate, remove "if step" conditional so

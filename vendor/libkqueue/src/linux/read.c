@@ -90,7 +90,7 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
                 return (-1);
             }
             src->kdata.kn_inotifyfd = inofd;
-            if (linux_fd_to_path(&path[0], sizeof(path), src->kev.ident) < 0)
+            if (linux_fd_to_path(path, sizeof(path), src->kev.ident) < 0)
                 return (-1);
             if (inotify_add_watch(inofd, path, IN_ATTRIB) < 0) {
                 dbg_perror("inotify_add_watch");

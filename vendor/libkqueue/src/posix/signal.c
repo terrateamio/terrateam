@@ -183,7 +183,7 @@ evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
 
     port_event_dequeue(&pe, filt->kf_kqueue);
     s = (struct sentry *) pe.portev_user;
-    sig = s - &sigtbl[0];
+    sig = s - sigtbl;
 #else
     kqops.eventfd_lower(sig_eventfd);
     sig = 1; //XXX-FIXME totally broken, workaround just to compile

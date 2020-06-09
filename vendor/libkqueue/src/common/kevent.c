@@ -33,9 +33,9 @@ kevent_filter_dump(const struct kevent *kev)
 {
     static __thread char buf[64];
 
-    snprintf(&buf[0], sizeof(buf), "%d (%s)",
+    snprintf(buf, sizeof(buf), "%d (%s)",
             kev->filter, filter_name(kev->filter));
-    return ((const char *) &buf[0]);
+    return ((const char *) buf);
 }
 
 static const char *
@@ -45,7 +45,7 @@ kevent_fflags_dump(const struct kevent *kev)
 
 #define KEVFFL_DUMP(attrib) \
     if (kev->fflags & attrib) \
-    strncat((char *) &buf[0], #attrib" ", 64);
+    strncat((char *) buf, #attrib" ", 64);
 
     snprintf(buf, sizeof(buf), "fflags=0x%04x (", kev->fflags);
     if (kev->filter == EVFILT_VNODE) {
@@ -68,7 +68,7 @@ kevent_fflags_dump(const struct kevent *kev)
 
 #undef KEVFFL_DUMP
 
-    return ((const char *) &buf[0]);
+    return ((const char *) buf);
 }
 
 static const char *
@@ -78,7 +78,7 @@ kevent_flags_dump(const struct kevent *kev)
 
 #define KEVFL_DUMP(attrib) \
     if (kev->flags & attrib) \
-	strncat((char *) &buf[0], #attrib" ", 64);
+	strncat((char *) buf, #attrib" ", 64);
 
     snprintf(buf, sizeof(buf), "flags=0x%04x (", kev->flags);
     KEVFL_DUMP(EV_ADD);
@@ -95,7 +95,7 @@ kevent_flags_dump(const struct kevent *kev)
 
 #undef KEVFL_DUMP
 
-    return ((const char *) &buf[0]);
+    return ((const char *) buf);
 }
 
 const char *
@@ -103,7 +103,7 @@ kevent_dump(const struct kevent *kev)
 {
     static __thread char buf[2147];
 
-    snprintf((char *) &buf[0], sizeof(buf),
+    snprintf((char *) buf, sizeof(buf),
             "{ ident=%d, filter=%s, %s, %s, data=%d, udata=%p }",
             (u_int) kev->ident,
             kevent_filter_dump(kev),
@@ -112,7 +112,7 @@ kevent_dump(const struct kevent *kev)
             (int) kev->data,
             kev->udata);
 
-    return ((const char *) &buf[0]);
+    return ((const char *) buf);
 }
 
 static int

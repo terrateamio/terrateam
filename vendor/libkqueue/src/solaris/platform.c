@@ -35,9 +35,9 @@ poll_events_dump(short events)
 
 #define _PL_DUMP(attrib) \
     if (events == attrib) \
-       strcat(&buf[0], " "#attrib);
+       strcat(buf, " "#attrib);
 
-    snprintf(&buf[0], 512, "events = %hd 0x%o (", events, events);
+    snprintf(buf, 512, "events = %hd 0x%o (", events, events);
     _PL_DUMP(POLLIN);
     _PL_DUMP(POLLPRI);
     _PL_DUMP(POLLOUT);
@@ -47,9 +47,9 @@ poll_events_dump(short events)
     _PL_DUMP(POLLERR);
     _PL_DUMP(POLLHUP);
     _PL_DUMP(POLLNVAL);
-    strcat(&buf[0], ")");
+    strcat(buf, ")");
 
-    return (&buf[0]);
+    return (buf);
 
 #undef _PL_DUMP
 }
@@ -60,15 +60,15 @@ port_event_dump(port_event_t *evt)
     static __thread char buf[512];
 
     if (evt == NULL) {
-        snprintf(&buf[0], sizeof(buf), "NULL ?!?!\n");
+        snprintf(buf, sizeof(buf), "NULL ?!?!\n");
         goto out;
     }
 
 #define PE_DUMP(attrib) \
     if (evt->portev_source == attrib) \
-       strcat(&buf[0], #attrib);
+       strcat(buf, #attrib);
 
-    snprintf(&buf[0], 512,
+    snprintf(buf, 512,
                 " { object = %u, user = %p, %s, source = %d (",
                 (unsigned int) evt->portev_object,
                 evt->portev_user,
@@ -79,11 +79,11 @@ port_event_dump(port_event_t *evt)
     PE_DUMP(PORT_SOURCE_TIMER);
     PE_DUMP(PORT_SOURCE_USER);
     PE_DUMP(PORT_SOURCE_ALERT);
-    strcat(&buf[0], ") }");
+    strcat(buf, ") }");
 #undef PE_DUMP
 
 out:
-    return (&buf[0]);
+    return (buf);
 }
 
 #endif /* !NDEBUG */
@@ -124,7 +124,7 @@ solaris_kevent_wait(
 
     reset_errno();
     dbg_puts("waiting for events");
-    rv = port_getn(kq->kq_id, &evbuf[0], 1, &nget, (struct timespec *) ts);
+    rv = port_getn(kq->kq_id, evbuf, 1, &nget, (struct timespec *) ts);
 
     dbg_printf("rv=%d errno=%d (%s) nget=%d", rv, errno, strerror(errno), nget);
     if ((rv < 0) && (nget < 1)) {

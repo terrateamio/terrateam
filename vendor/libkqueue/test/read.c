@@ -70,7 +70,7 @@ kevent_socket_drain(struct test_context *ctx)
     char buf[1];
 
     /* Drain the read buffer, then make sure there are no more events. */
-    if (recv(ctx->client_fd, &buf[0], 1, 0) < 1)
+    if (recv(ctx->client_fd, buf, 1, 0) < 1)
         die("recv(2)");
 }
 

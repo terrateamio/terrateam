@@ -142,7 +142,7 @@ kevent_to_str(struct kevent *kev)
 {
     char buf[512];
 
-    snprintf(&buf[0], sizeof(buf),
+    snprintf(buf, sizeof(buf),
             "[ident=%d, filter=%d, %s, %s, data=%d, udata=%p]",
             (u_int) kev->ident,
             kev->filter,

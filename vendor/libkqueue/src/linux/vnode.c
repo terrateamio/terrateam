@@ -109,7 +109,7 @@ add_watch(struct filter *filt, struct knote *kn)
     uint32_t mask;
 
     /* Convert the fd to a pathname */
-    if (linux_fd_to_path(&path[0], sizeof(path), kn->kev.ident) < 0)
+    if (linux_fd_to_path(path, sizeof(path), kn->kev.ident) < 0)
         return (-1);
 
     /* Convert the fflags to the inotify mask */

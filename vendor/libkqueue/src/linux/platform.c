@@ -406,7 +406,7 @@ linux_kevent_wait(
     }
 
     dbg_puts("waiting for events");
-    nret = epoll_wait(kqueue_epoll_fd(kq), &epevt[0], nevents, timeout);
+    nret = epoll_wait(kqueue_epoll_fd(kq), epevt, nevents, timeout);
     if (nret < 0) {
         dbg_perror("epoll_wait");
         return (-1);
@@ -715,9 +715,9 @@ epoll_event_dump(struct epoll_event *evt)
 
 #define EPEVT_DUMP(attrib) \
     if (evt->events & attrib) \
-       strcat(&buf[0], #attrib" ");
+       strcat(buf, #attrib" ");
 
-    snprintf(&buf[0], 128, " { data = %p, events = ", evt->data.ptr);
+    snprintf(buf, 128, " { data = %p, events = ", evt->data.ptr);
     EPEVT_DUMP(EPOLLIN);
     EPEVT_DUMP(EPOLLOUT);
 #if defined(HAVE_EPOLLRDHUP)
@@ -725,9 +725,9 @@ epoll_event_dump(struct epoll_event *evt)
 #endif
     EPEVT_DUMP(EPOLLONESHOT);
     EPEVT_DUMP(EPOLLET);
-    strcat(&buf[0], "}\n");
+    strcat(buf, "}\n");
 
-    return (&buf[0]);
+    return (buf);
 #undef EPEVT_DUMP
 }
 
