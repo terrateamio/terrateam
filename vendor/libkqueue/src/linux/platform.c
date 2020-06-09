@@ -245,6 +245,7 @@ linux_kqueue_init(struct kqueue *kq)
     sig_owner.pid = monitoring_tid;
     if (fcntl(kq->pipefd[0], F_SETOWN_EX, &sig_owner) < 0) {
         dbg_perror("failed settting F_SETOWN");
+        (void) pthread_mutex_unlock(&kq_mtx);
         goto error;
     }
 
