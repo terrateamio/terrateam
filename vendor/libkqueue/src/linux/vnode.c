@@ -158,6 +158,7 @@ add_watch(struct filter *filt, struct knote *kn)
     return (0);
 
 errout:
+    inotify_rm_watch(ifd, kn->kev.data);
     kn->kdata.kn_inotifyfd = -1;
     (void) close(ifd);
     return (-1);
