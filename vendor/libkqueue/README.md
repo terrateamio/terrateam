@@ -70,7 +70,10 @@ Running Unit Tests
 Debugging
 ---------
 
-Ensure -DNDEBUG is *NOT* passed during compilation, otherwise all debug output will be disabled.
+For best results add `-DCMAKE_BUILD_TYPE=Debug` to your cmake invocation.
+At a minimum ensure -DNDEBUG is *NOT* passed during compilation, otherwise all debug output will be disabled.
+
+The environmental variable `KQUEUE_DEBUG` can then be set to enable debug output from libkqueue.
 
     KQUEUE_DEBUG=1 <your application>
 
