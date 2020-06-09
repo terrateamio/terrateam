@@ -103,14 +103,17 @@ monitoring_thread_start(void *arg)
     monitoring_tid = syscall(SYS_gettid);
 
     fd_map = calloc(nb_max_fd, sizeof(unsigned int));
-
-    if (fd_map == NULL)
+    if (fd_map == NULL) {
+    error:
+        (void) pthread_mutex_unlock(&kq_mtx);
         return NULL;
+    }
 
     fd_cleanup_cnt = calloc(nb_max_fd, sizeof(unsigned int));
-
-    if (fd_cleanup_cnt == NULL)
-        return NULL;
+    if (fd_cleanup_cnt == NULL){
+        free(fd_map);
+        goto error;
+    }
 
     /*
      * Now that thread is initialized, let kqueue init resume
