@@ -141,7 +141,7 @@ windows_kevent_copyout(struct kqueue *kq, int nready,
     kn = (struct knote *) iocp_buf.overlap;
     filt = &kq->kq_filt[~(kn->kev.filter)];
     rv = filt->kf_copyout(eventlist, kn, &iocp_buf);
-    if (slowpath(rv < 0)) {
+    if (unlikely(rv < 0)) {
         dbg_puts("knote_copyout failed");
         /* XXX-FIXME: hard to handle this without losing events */
         abort();
@@ -159,7 +159,7 @@ windows_kevent_copyout(struct kqueue *kq, int nready,
         knote_delete(filt, kn); //TODO: Error checking
 
     /* If an empty kevent structure is returned, the event is discarded. */
-    if (fastpath(eventlist->filter != 0)) {
+    if (likely(eventlist->filter != 0)) {
         eventlist++;
     } else {
         dbg_puts("spurious wakeup, discarding event");

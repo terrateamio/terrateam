@@ -96,11 +96,11 @@ int     windows_get_descriptor_type(struct knote *);
  * GCC-compatible branch prediction macros
  */
 #ifdef __GNUC__
-# define fastpath(x)     __builtin_expect((x), 1)
-# define slowpath(x)     __builtin_expect((x), 0)
+# define likely(x)       __builtin_expect((x), 1)
+# define unlikely(x)     __builtin_expect((x), 0)
 #else
-# define fastpath(x) (x)
-# define slowpath(x) (x)
+# define likely(x) (x)
+# define unlikely(x) (x)
 #endif
 
 /* Function visibility macros */

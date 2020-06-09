@@ -281,7 +281,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
     if (nevents > 0) {
         rv = kqops.kevent_wait(kq, nevents, timeout);
         dbg_printf("kqops.kevent_wait returned %d", rv);
-        if (fastpath(rv > 0)) {
+        if (likely(rv > 0)) {
             kqueue_lock(kq);
             rv = kqops.kevent_copyout(kq, rv, eventlist, nevents);
             kqueue_unlock(kq);
