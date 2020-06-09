@@ -32,13 +32,18 @@ extern const struct filter evfilt_timer;
 extern const struct filter evfilt_user;
 
 static int
-filter_register(struct kqueue *kq, short filter, const struct filter *src)
+filter_register(struct kqueue *kq, const struct filter *src)
 {
     struct filter *dst;
     unsigned int filt;
     int rv = 0;
 
-    filt = (-1 * filter) - 1;
+    /*
+     * This filter is not implemented, see EVFILT_NOTIMPL.
+     */
+    if (src->kf_id == 0) return (0);
+
+    filt = (-1 * src->kf_id) - 1; /* flip sign, and convert to array offset */
     if (filt >= EVFILT_SYSCOUNT)
         return (-1);
 
@@ -83,13 +88,13 @@ filter_register_all(struct kqueue *kq)
 
     FD_ZERO(&kq->kq_fds);
     rv = 0;
-    rv += filter_register(kq, EVFILT_READ, &evfilt_read);
-    rv += filter_register(kq, EVFILT_WRITE, &evfilt_write);
-    rv += filter_register(kq, EVFILT_SIGNAL, &evfilt_signal);
-    rv += filter_register(kq, EVFILT_VNODE, &evfilt_vnode);
-    rv += filter_register(kq, EVFILT_PROC, &evfilt_proc);
-    rv += filter_register(kq, EVFILT_TIMER, &evfilt_timer);
-    rv += filter_register(kq, EVFILT_USER, &evfilt_user);
+    rv += filter_register(kq, &evfilt_read);
+    rv += filter_register(kq, &evfilt_write);
+    rv += filter_register(kq, &evfilt_signal);
+    rv += filter_register(kq, &evfilt_vnode);
+    rv += filter_register(kq, &evfilt_proc);
+    rv += filter_register(kq, &evfilt_timer);
+    rv += filter_register(kq, &evfilt_user);
     kq->kq_nfds++;
     if (rv != 0) {
         filter_unregister_all(kq);
