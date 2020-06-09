@@ -49,6 +49,11 @@ struct evfilt_data;
 # error Unknown platform
 #endif
 
+/** Convenience macros
+ *
+ */
+#define NUM_ELEMENTS(_t) (sizeof((_t)) / sizeof(*(_t)))
+
 #include "debug.h"
 
 /* Workaround for Android */

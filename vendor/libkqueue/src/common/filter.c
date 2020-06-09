@@ -110,7 +110,7 @@ filter_unregister_all(struct kqueue *kq)
 {
     int i;
 
-    for (i = 0; i < EVFILT_SYSCOUNT; i++) {
+    for (i = 0; i < NUM_ELEMENTS(kq->kq_filt); i++) {
         if (kq->kq_filt[i].kf_id == 0)
             continue;
 
@@ -173,7 +173,7 @@ filter_name(short filt)
     };
 
     id = ~filt;
-    if (id < 0 || id >= EVFILT_SYSCOUNT)
+    if (id < 0 || id >= NUM_ELEMENTS(fname))
         return "EVFILT_INVALID";
     else
         return fname[id];

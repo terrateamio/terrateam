@@ -145,7 +145,7 @@ static int kqueue_open (struct inode *inode, struct file *file)
         return -1;
     }
     spin_lock_init(&kq->kq_lock);
-    for (i = 0; i < EVFILT_SYSCOUNT; i++)
+    for (i = 0; i < NUM_ELEMENTS(kq->kq_filt); i++)
         kq->kq_filt[i].kf_note = RB_ROOT;
     file->private_data = kq;
 

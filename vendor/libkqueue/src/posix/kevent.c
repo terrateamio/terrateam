@@ -56,7 +56,7 @@ posix_kevent_copyout(struct kqueue *kq, int nready,
     int i, rv, nret;
 
     nret = 0;
-    for (i = 0; (i < EVFILT_SYSCOUNT && nready > 0 && nevents > 0); i++) {
+    for (i = 0; (i < NUM_ELEMENTS(kq->kq_filt) && nready > 0 && nevents > 0); i++) {
 //        dbg_printf("eventlist: n = %d nevents = %d", nready, nevents);
         filt = &kq->kq_filt[i];
 //        dbg_printf("pfd[%d] = %d", i, filt->kf_pfd);

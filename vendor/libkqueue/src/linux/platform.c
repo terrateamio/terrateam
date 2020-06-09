@@ -256,7 +256,7 @@ linux_kqueue_init(struct kqueue *kq)
     //might be useful in posix
 
     /* Add each filter's pollable descriptor to the epollset */
-    for (i = 0; i < EVFILT_SYSCOUNT; i++) {
+    for (i = 0; i < NUM_ELEMENTS(kq->kq_filt); i++) {
         filt = &kq->kq_filt[i];
 
         if (filt->kf_id == 0)
@@ -681,7 +681,7 @@ linux_get_descriptor_type(struct knote *kn)
 #ifdef SO_GET_FILTER
     {
         socklen_t out_len = 0;
-        
+
         /*
          * Test if socket has a filter
          * pcap file descriptors need to be considered as passive sockets as
