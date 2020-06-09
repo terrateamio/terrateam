@@ -190,6 +190,7 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
 
         if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_ADD, kn->kdata.kn_eventfd, &ev) < 0) {
             dbg_printf("epoll_ctl(2): %s", strerror(errno));
+            (void) close(evfd);
             return (-1);
         }
 

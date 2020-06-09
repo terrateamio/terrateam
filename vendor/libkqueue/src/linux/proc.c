@@ -105,7 +105,7 @@ wait_thread(void *arg)
                 dbg_printf("write(2): %s", strerror(errno));
                 /* TODO: set filter error flag */
                 break;
-                }
+            }
         }
     }
 
