@@ -63,7 +63,7 @@ Xcode (project)
 Running Unit Tests
 ------------------
 
-    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DENABLE_TESTING=YES <path to source>
+    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DENABLE_TESTING=YES -DCMAKE_BUILD_TYPE=Debug <path to source>
     make
     make test
     
