@@ -41,10 +41,10 @@ RB_GENERATE(knt, knote, kn_entries, knote_cmp)
 struct knote *
 knote_new(void)
 {
-	struct knote *res;
+    struct knote *res;
 
     res = calloc(1, sizeof(struct knote));
-	if (res == NULL)
+    if (res == NULL)
         return (NULL);
 
     res->kn_ref = 1;
@@ -57,7 +57,7 @@ knote_release(struct knote *kn)
 {
     assert (kn->kn_ref > 0);
 
-	if (atomic_dec(&kn->kn_ref) == 0) {
+    if (atomic_dec(&kn->kn_ref) == 0) {
         if (kn->kn_flags & KNFL_KNOTE_DELETED) {
             dbg_printf("freeing knote at %p", kn);
             free(kn);
