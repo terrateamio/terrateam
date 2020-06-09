@@ -134,28 +134,29 @@ struct knote {
  *
  */
 struct filter {
-    short     kf_id;
+    short           kf_id;               //!< EVFILT_* facility this filter provides.
 
     /* filter operations */
 
-    int     (*kf_init)(struct filter *);
-    void    (*kf_destroy)(struct filter *);
-    int     (*kf_copyout)(struct kevent *, struct knote *, void *);
+    int            (*kf_init)(struct filter *);
+    void           (*kf_destroy)(struct filter *);
+    int            (*kf_copyout)(struct kevent *, struct knote *, void *);
 
     /* knote operations */
 
-    int     (*kn_create)(struct filter *, struct knote *);
-    int     (*kn_modify)(struct filter *, struct knote *,
+
+    int            (*kn_create)(struct filter *, struct knote *);
+    int            (*kn_modify)(struct filter *, struct knote *,
                             const struct kevent *);
-    int     (*kn_delete)(struct filter *, struct knote *);
-    int     (*kn_enable)(struct filter *, struct knote *);
-    int     (*kn_disable)(struct filter *, struct knote *);
+    int            (*kn_delete)(struct filter *, struct knote *);
+    int            (*kn_enable)(struct filter *, struct knote *);
+    int            (*kn_disable)(struct filter *, struct knote *);
 
     struct eventfd kf_efd;             /* Used by user.c */
 
     //MOVE TO POSIX?
-    int       kf_pfd;                   /* fd to poll(2) for readiness */
-    int       kf_wfd;                   /* fd to write when an event occurs */
+    int           kf_pfd;                   /* fd to poll(2) for readiness */
+    int           kf_wfd;                   /* fd to write when an event occurs */
     //----?
 
     struct evfilt_data *kf_data;        /* filter-specific data */
