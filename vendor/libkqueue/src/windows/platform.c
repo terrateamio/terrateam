@@ -35,12 +35,12 @@ const struct filter evfilt_signal = EVFILT_NOTIMPL;
 const struct filter evfilt_write = EVFILT_NOTIMPL;
 
 const struct kqueue_vtable kqops = {
-    windows_kqueue_init,
-    windows_kqueue_free,
-    windows_kevent_wait,
-    windows_kevent_copyout,
-    windows_filter_init,
-    windows_filter_free,
+    .kqueue_init        = windows_kqueue_init,
+    .kqueue_free        = windows_kqueue_free,
+    .kevent_wait        = windows_kevent_wait,
+    .kevent_copyout     = windows_kevent_copyout,
+    .filter_init        = windows_filter_init,
+    .filter_free        = windows_filter_free
 };
 
 int

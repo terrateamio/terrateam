@@ -229,15 +229,13 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
 
 const struct kqueue_vtable kqops =
 {
-    solaris_kqueue_init,
-    solaris_kqueue_free,
-    solaris_kevent_wait,
-    solaris_kevent_copyout,
-    NULL,
-    NULL,
-    posix_eventfd_init,
-    posix_eventfd_close,
-    posix_eventfd_raise,
-    posix_eventfd_lower,
-    posix_eventfd_descriptor
+    .kqueue_init        = solaris_kqueue_init,
+    .kqueue_free        = solaris_kqueue_free,
+    .kevent_wait        = solaris_kevent_wait,
+    .kevent_copyout     = solaris_kevent_copyout,
+    .eventfd_init       = posix_eventfd_init,
+    .eventfd_close      = posix_eventfd_close,
+    .eventfd_raise      = posix_eventfd_raise,
+    .eventfd_lower      = posix_eventfd_lower,
+    .eventfd_descriptor = posix_eventfd_descriptor,
 };

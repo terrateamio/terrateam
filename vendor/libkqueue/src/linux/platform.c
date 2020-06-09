@@ -59,17 +59,15 @@ static unsigned int *fd_map;
 static unsigned int *fd_cleanup_cnt;
 
 const struct kqueue_vtable kqops = {
-    linux_kqueue_init,
-    linux_kqueue_free,
-    linux_kevent_wait,
-    linux_kevent_copyout,
-    NULL,
-    NULL,
-    linux_eventfd_init,
-    linux_eventfd_close,
-    linux_eventfd_raise,
-    linux_eventfd_lower,
-    linux_eventfd_descriptor
+    .kqueue_init        = linux_kqueue_init,
+    .kqueue_free        = linux_kqueue_free,
+    .kevent_wait        = linux_kevent_wait,
+    .kevent_copyout     = linux_kevent_copyout,
+    .eventfd_init       = linux_eventfd_init,
+    .eventfd_close      = linux_eventfd_close,
+    .eventfd_raise      = linux_eventfd_raise,
+    .eventfd_lower      = linux_eventfd_lower,
+    .eventfd_descriptor = linux_eventfd_descriptor,
 };
 
 static bool
