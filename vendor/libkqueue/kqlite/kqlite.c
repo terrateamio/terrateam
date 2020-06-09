@@ -64,7 +64,7 @@ struct kqueue {
 #if defined(USE_KQUEUE)
     int kqfd;            /* kqueue(2) descriptor */
 #elif defined(USE_EPOLL)
-    int epfd;           /* epoll */
+    int epoll_fd;           /* epoll */
     int inofd;          /* inotify */
     int sigfd;          /* signalfd */
     int timefd;         /* timerfd */
@@ -159,30 +159,30 @@ kq_init(void)
     sigemptyset(&kq->sigmask);
     kq->sigfd = signalfd(-1, &kq->sigmask, 0);
     kq->inofd = inotify_init();
-    kq->epfd = epoll_create(10);
+    kq->epoll_fd = epoll_create(10);
     kq->readfd = epoll_create(10);
     kq->writefd = epoll_create(10);
     kq->timefd = timerfd_create(CLOCK_MONOTONIC, 0);
-    if (kq->sigfd < 0 || kq->inofd < 0 || kq->epfd < 0
+    if (kq->sigfd < 0 || kq->inofd < 0 || kq->epoll_fd < 0
             || kq->readfd < 0 || kq->writefd < 0 || kq->timefd < 0)
         goto errout;
 
     /* Add the signalfd descriptor to the epollset */
     epev.events = EPOLLIN;
     epev.data.u32 = EVFILT_SIGNAL;
-    if (epoll_ctl(kq->epfd, EPOLL_CTL_ADD, kq->sigfd, &epev) < 0)
+    if (epoll_ctl(kq->epoll_fd, EPOLL_CTL_ADD, kq->sigfd, &epev) < 0)
         goto errout;
 
     /* Add the readfd descriptor to the epollset */
     epev.events = EPOLLIN;
     epev.data.u32 = EVFILT_READ;
-    if (epoll_ctl(kq->epfd, EPOLL_CTL_ADD, kq->readfd, &epev) < 0)
+    if (epoll_ctl(kq->epoll_fd, EPOLL_CTL_ADD, kq->readfd, &epev) < 0)
         goto errout;
 
     /* Add the writefd descriptor to the epollset */
     epev.events = EPOLLIN;
     epev.data.u32 = EVFILT_WRITE;
-    if (epoll_ctl(kq->epfd, EPOLL_CTL_ADD, kq->writefd, &epev) < 0)
+    if (epoll_ctl(kq->epoll_fd, EPOLL_CTL_ADD, kq->writefd, &epev) < 0)
         goto errout;
 
     /* Add the inotify descriptor to the epollset */
@@ -193,7 +193,7 @@ kq_init(void)
     epev.events = EPOLLIN;
     epev.data.u32 = 1;
     utarray_push_back(kq->kev, kev);
-    if (epoll_ctl(kq->epfd, EPOLL_CTL_ADD, kq->inofd, &epev) < 0)
+    if (epoll_ctl(kq->epoll_fd, EPOLL_CTL_ADD, kq->inofd, &epev) < 0)
         goto errout;
         */
 
@@ -218,7 +218,7 @@ kq_free(kqueue_t kq)
 #elif defined(USE_EPOLL)
     close(kq->sigfd);
     close(kq->inofd);
-    close(kq->epfd);
+    close(kq->epoll_fd);
     close(kq->readfd);
     close(kq->writefd);
     close(kq->timefd);
@@ -296,7 +296,7 @@ kq_add(kqueue_t kq, const struct kevent *ev)
 
         case EVFILT_VNODE:
             epev.events = EPOLLIN;
-            rv = epoll_ctl(kq->epfd, EPOLL_CTL_ADD, ev->ident, &epev);
+            rv = epoll_ctl(kq->epoll_fd, EPOLL_CTL_ADD, ev->ident, &epev);
             rv = -1;
             break;
 
@@ -344,7 +344,7 @@ kq_delete(kqueue_t kq, const struct kevent *ev)
     switch (ev->ident) {
         case EVFILT_READ:
         case EVFILT_WRITE:
-            rv = epoll_ctl(kq->epfd, EPOLL_CTL_DEL, ev->ident, &epev);
+            rv = epoll_ctl(kq->epoll_fd, EPOLL_CTL_DEL, ev->ident, &epev);
             break;
 
         case EVFILT_VNODE:
@@ -438,7 +438,7 @@ int kq_event(kqueue_t kq, const struct kevent *changelist, int nchanges,
     } else {
         epev_wait_max = nevents;
     }
-    epev_cnt = epoll_wait(kq->epfd, epev_buf, epev_wait_max, eptimeout);
+    epev_cnt = epoll_wait(kq->epoll_fd, epev_buf, epev_wait_max, eptimeout);
     if (epev_cnt < 0) {
         return (-1);        //FIXME: handle timeout
     }

@@ -61,7 +61,7 @@ signalfd_reset(int sigfd)
 }
 
 static int
-signalfd_add(int epfd, int sigfd, void *ptr)
+signalfd_add(int epoll_fd, int sigfd, void *ptr)
 {
     struct epoll_event ev;
     int rv;
@@ -70,7 +70,7 @@ signalfd_add(int epfd, int sigfd, void *ptr)
     memset(&ev, 0, sizeof(ev));
     ev.events = EPOLLIN;
     ev.data.ptr = ptr;
-    rv = epoll_ctl(epfd, EPOLL_CTL_ADD, sigfd, &ev);
+    rv = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sigfd, &ev);
     if (rv < 0) {
         dbg_perror("epoll_ctl(2)");
         return (-1);
@@ -80,7 +80,7 @@ signalfd_add(int epfd, int sigfd, void *ptr)
 }
 
 static int
-signalfd_create(int epfd, void *ptr, int signum)
+signalfd_create(int epoll_fd, void *ptr, int signum)
 {
     static int flags = SFD_NONBLOCK;
     sigset_t sigmask;
@@ -109,10 +109,10 @@ signalfd_create(int epfd, void *ptr, int signum)
 
     signalfd_reset(sigfd);
 
-    if (signalfd_add(epfd, sigfd, ptr) < 0)
+    if (signalfd_add(epoll_fd, sigfd, ptr) < 0)
         goto errout;
 
-    dbg_printf("added sigfd %d to epfd %d (signum=%d)", sigfd, epfd, signum);
+    dbg_printf("added sigfd %d to epoll_fd %d (signum=%d)", sigfd, epoll_fd, signum);
 
     return (sigfd);
 
@@ -144,7 +144,7 @@ evfilt_signal_knote_create(struct filter *filt, struct knote *kn)
 {
     int fd;
 
-    fd = signalfd_create(filter_epfd(filt), kn, kn->kev.ident);
+    fd = signalfd_create(filter_epoll_fd(filt), kn, kn->kev.ident);
     if (fd > 0) {
         kn->kev.flags |= EV_CLEAR;
         kn->kdata.kn_signalfd = fd;
@@ -174,7 +174,7 @@ evfilt_signal_knote_delete(struct filter *filt, struct knote *kn)
     if (kn->kdata.kn_signalfd == -1)
         return (0);
 
-    if (epoll_ctl(filter_epfd(filt), EPOLL_CTL_DEL, sigfd, NULL) < 0) {
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, sigfd, NULL) < 0) {
         dbg_perror("epoll_ctl(2)");
         return (-1);
     }

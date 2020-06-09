@@ -148,7 +148,7 @@ add_watch(struct filter *filt, struct knote *kn)
     memset(&ev, 0, sizeof(ev));
     ev.events = EPOLLIN;
     ev.data.ptr = kn;
-    if (epoll_ctl(filter_epfd(filt), EPOLL_CTL_ADD, ifd, &ev) < 0) {
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_ADD, ifd, &ev) < 0) {
         dbg_perror("epoll_ctl(2)");
         goto errout;
     }
@@ -171,7 +171,7 @@ delete_watch(struct filter *filt, struct knote *kn)
 
     if (ifd < 0)
         return (0);
-    if (epoll_ctl(filter_epfd(filt), EPOLL_CTL_DEL, ifd, NULL) < 0) {
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, ifd, NULL) < 0) {
         dbg_perror("epoll_ctl(2)");
         return (-1);
     }

@@ -97,7 +97,7 @@ evfilt_user_knote_modify(struct filter *filt, struct knote *kn,
 
     if ((!(kn->kev.flags & EV_DISABLE)) && kev->fflags & NOTE_TRIGGER) {
         kn->kev.fflags |= NOTE_TRIGGER;
-        return (port_send(filter_epfd(filt), X_PORT_SOURCE_USER, kn));
+        return (port_send(filter_epoll_fd(filt), X_PORT_SOURCE_USER, kn));
     }
 
     return (0);

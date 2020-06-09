@@ -130,7 +130,7 @@ linux_evfilt_user_knote_create(struct filter *filt, struct knote *kn)
     memset(&ev, 0, sizeof(ev));
     ev.events = EPOLLIN;
     ev.data.ptr = kn;
-    if (epoll_ctl(filter_epfd(filt), EPOLL_CTL_ADD, evfd, &ev) < 0) {
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_ADD, evfd, &ev) < 0) {
         dbg_perror("epoll_ctl(2)");
         goto errout;
     }
@@ -190,7 +190,7 @@ linux_evfilt_user_knote_modify(struct filter *filt UNUSED, struct knote *kn,
 int
 linux_evfilt_user_knote_delete(struct filter *filt, struct knote *kn)
 {
-    if (kn->kn_registered && epoll_ctl(filter_epfd(filt), EPOLL_CTL_DEL,
+    if (kn->kn_registered && epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL,
                                        kn->kdata.kn_eventfd, NULL) < 0) {
         dbg_perror("epoll_ctl(2)");
         return (-1);

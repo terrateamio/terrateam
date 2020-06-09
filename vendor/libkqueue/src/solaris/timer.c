@@ -119,7 +119,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 
     kn->kev.flags |= EV_CLEAR;
 
-    pn.portnfy_port = filter_epfd(filt);
+    pn.portnfy_port = filter_epoll_fd(filt);
     pn.portnfy_user = (void *) kn;
 
     se.sigev_notify = SIGEV_PORT;

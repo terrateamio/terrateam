@@ -65,7 +65,7 @@ catch_signal(struct filter *filt, struct knote *kn)
 
     pthread_mutex_lock(&sigtbl_mtx);
     sigtbl[sig].st_signum = sig;
-    sigtbl[sig].st_port = filter_epfd(filt);
+    sigtbl[sig].st_port = filter_epoll_fd(filt);
     sigtbl[sig].st_count = 0;
     memcpy(&sigtbl[sig].st_kev, &kn->kev, sizeof(struct kevent));
     pthread_mutex_unlock(&sigtbl_mtx);

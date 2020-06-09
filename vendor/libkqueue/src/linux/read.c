@@ -174,7 +174,7 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
     if (kn->kn_flags & KNFL_FILE) {
         int evfd;
 
-        kn->kn_epollfd = filter_epfd(filt);
+        kn->kn_epollfd = filter_epoll_fd(filt);
         evfd = eventfd(0, 0);
         if (evfd < 0) {
             dbg_perror("eventfd(2)");

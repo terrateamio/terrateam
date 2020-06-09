@@ -42,7 +42,7 @@
 
 /* Convenience macros to access the event port descriptor for the kqueue */
 #define kqueue_epoll_fd(kq)     ((kq)->kq_id)
-#define filter_epfd(filt)   ((filt)->kf_kqueue->kq_id)
+#define filter_epoll_fd(filt)   ((filt)->kf_kqueue->kq_id)
 
 void    solaris_kqueue_free(struct kqueue *);
 int     solaris_kqueue_init(struct kqueue *);

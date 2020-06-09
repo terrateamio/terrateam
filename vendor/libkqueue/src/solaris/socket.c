@@ -48,9 +48,9 @@ evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
             return (-1);
     }
 
-    dbg_printf("port_associate kq fd %d with actual fd %ld", filter_epfd(filt), kn->kev.ident);
+    dbg_printf("port_associate kq fd %d with actual fd %ld", filter_epoll_fd(filt), kn->kev.ident);
 
-    rv = port_associate(filter_epfd(filt), PORT_SOURCE_FD, kn->kev.ident,
+    rv = port_associate(filter_epoll_fd(filt), PORT_SOURCE_FD, kn->kev.ident,
             events, kn);
     if (rv < 0) {
             dbg_perror("port_associate(2)");
@@ -79,7 +79,7 @@ evfilt_socket_knote_delete(struct filter *filt, struct knote *kn)
         return (0);
     */
 
-    if (port_dissociate(filter_epfd(filt), PORT_SOURCE_FD, kn->kev.ident) < 0) {
+    if (port_dissociate(filter_epoll_fd(filt), PORT_SOURCE_FD, kn->kev.ident) < 0) {
         dbg_perror("port_dissociate(2)");
         return (-1);
     }

@@ -181,7 +181,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
         ev.events |= EPOLLONESHOT;
 
     ev.data.ptr = kn;
-    if (epoll_ctl(filter_epfd(filt), EPOLL_CTL_ADD, tfd, &ev) < 0) {
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_ADD, tfd, &ev) < 0) {
         dbg_printf("epoll_ctl(2): %d", errno);
         close(tfd);
         return (-1);
@@ -209,7 +209,7 @@ evfilt_timer_knote_delete(struct filter *filt, struct knote *kn)
     if (kn->data.pfd == -1)
         return (0);
 
-    if (epoll_ctl(filter_epfd(filt), EPOLL_CTL_DEL, kn->data.pfd, NULL) < 0) {
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, kn->data.pfd, NULL) < 0) {
         dbg_printf("epoll_ctl(2): %s", strerror(errno));
         rv = -1;
     }

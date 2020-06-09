@@ -55,7 +55,7 @@ extern long int syscall (long int __sysno, ...);
 
 /* Convenience macros to access the epoll descriptor for the kqueue */
 #define kqueue_epoll_fd(kq)     ((kq)->epollfd)
-#define filter_epfd(filt)   ((filt)->kf_kqueue->epollfd)
+#define filter_epoll_fd(filt)   ((filt)->kf_kqueue->epollfd)
 
 /*
  * Additional members of struct filter
@@ -66,7 +66,7 @@ extern long int syscall (long int __sysno, ...);
  * Additional members of struct knote
  */
 #define KNOTE_PLATFORM_SPECIFIC \
-    int kn_epollfd;    /* A copy of filter->epfd */ \
+    int kn_epollfd;    /* A copy of filter->epoll_fd */ \
     int kn_registered; /* Is FD registered with epoll */ \
     union { \
         int kn_timerfd; \

@@ -357,16 +357,16 @@ linux_kevent_wait_hires(
 
     n = ppoll(&fds, 1, timeout, NULL);
 #else
-    int epfd;
+    int epoll_fd;
     fd_set fds;
 
     dbg_printf("waiting for events (timeout=%ld sec %ld nsec)",
             timeout->tv_sec, timeout->tv_nsec);
 
-    epfd = kqueue_epoll_fd(kq);
+    epoll_fd = kqueue_epoll_fd(kq);
     FD_ZERO(&fds);
-    FD_SET(epfd, &fds);
-    n = pselect(epfd + 1, &fds, NULL , NULL, timeout, NULL);
+    FD_SET(epoll_fd, &fds);
+    n = pselect(epoll_fd + 1, &fds, NULL , NULL, timeout, NULL);
 #endif
 
     if (n < 0) {
@@ -736,7 +736,7 @@ epoll_update(int op, struct filter *filt, struct knote *kn, struct epoll_event *
 {
     dbg_printf("op=%d fd=%d events=%s", op, (int)kn->kev.ident,
             epoll_event_dump(ev));
-    if (epoll_ctl(filter_epfd(filt), op, kn->kev.ident, ev) < 0) {
+    if (epoll_ctl(filter_epoll_fd(filt), op, kn->kev.ident, ev) < 0) {
         dbg_printf("epoll_ctl(2): %s", strerror(errno));
         return (-1);
     }
