@@ -54,7 +54,7 @@ extern long int syscall (long int __sysno, ...);
 #endif
 
 /* Convenience macros to access the epoll descriptor for the kqueue */
-#define kqueue_epfd(kq)     ((kq)->epollfd)
+#define kqueue_epoll_fd(kq)     ((kq)->epollfd)
 #define filter_epfd(filt)   ((filt)->kf_kqueue->epollfd)
 
 /*

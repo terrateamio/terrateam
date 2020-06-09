@@ -352,7 +352,7 @@ linux_kevent_wait_hires(
 
     dbg_printf("waiting for events (timeout=%ld sec %ld nsec)",
             timeout->tv_sec, timeout->tv_nsec);
-    fds.fd = kqueue_epfd(kq);
+    fds.fd = kqueue_epoll_fd(kq);
     fds.events = POLLIN;
 
     n = ppoll(&fds, 1, timeout, NULL);
@@ -363,7 +363,7 @@ linux_kevent_wait_hires(
     dbg_printf("waiting for events (timeout=%ld sec %ld nsec)",
             timeout->tv_sec, timeout->tv_nsec);
 
-    epfd = kqueue_epfd(kq);
+    epfd = kqueue_epoll_fd(kq);
     FD_ZERO(&fds);
     FD_SET(epfd, &fds);
     n = pselect(epfd + 1, &fds, NULL , NULL, timeout, NULL);
@@ -406,7 +406,7 @@ linux_kevent_wait(
     }
 
     dbg_puts("waiting for events");
-    nret = epoll_wait(kqueue_epfd(kq), &epevt[0], nevents, timeout);
+    nret = epoll_wait(kqueue_epoll_fd(kq), &epevt[0], nevents, timeout);
     if (nret < 0) {
         dbg_perror("epoll_wait");
         return (-1);

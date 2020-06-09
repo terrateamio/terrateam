@@ -41,7 +41,7 @@
 #define X_PORT_SOURCE_USER    102
 
 /* Convenience macros to access the event port descriptor for the kqueue */
-#define kqueue_epfd(kq)     ((kq)->kq_id)
+#define kqueue_epoll_fd(kq)     ((kq)->kq_id)
 #define filter_epfd(filt)   ((filt)->kf_kqueue->kq_id)
 
 void    solaris_kqueue_free(struct kqueue *);
