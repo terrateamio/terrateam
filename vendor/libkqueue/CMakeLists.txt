@@ -144,7 +144,6 @@ else()
 endif()
 
 add_library(kqueue ${LIBRARY_TYPE} ${LIBKQUEUE_SOURCES} ${LIBKQUEUE_HEADERS})
-set_target_properties(kqueue PROPERTIES DEBUG_POSTFIX "d")
 set_target_properties(kqueue PROPERTIES SOVERSION 1)
 
 if(WIN32)
