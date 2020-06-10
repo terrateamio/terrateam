@@ -43,9 +43,7 @@ if(WIN32)
     target_compile_options(libkqueue-test PRIVATE -Wno-unused-variable)
   endif()
 elseif(UNIX)
-  target_compile_options(libkqueue-test
-                         PRIVATE
-                           -rdynamic)
+  target_link_libraries(libkqueue-test PRIVATE -rdynamic)
 endif()
 target_link_libraries(libkqueue-test
                       PRIVATE
