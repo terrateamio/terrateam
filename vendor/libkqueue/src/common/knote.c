@@ -131,7 +131,7 @@ int knote_free_all(struct filter *filt)
 {
     struct knote *kn, *tmp;
 
-    pthread_rwlock_rdlock(&filt->kf_knote_mtx);
+    pthread_rwlock_wrlock(&filt->kf_knote_mtx);
     RB_FOREACH_SAFE(kn, knt, &filt->kf_knote, tmp) {
         /* Check return code */
         filt->kn_delete(filt, kn);
