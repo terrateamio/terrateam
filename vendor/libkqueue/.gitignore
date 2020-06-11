@@ -2,6 +2,7 @@
 config.h
 *.pc
 *.log
+*.deb
 CMakeCache.txt
 CMakeFiles/
 CPackConfig.cmake
@@ -12,7 +13,6 @@ Testing/
 _CPack_Packages/
 cmake_install.cmake
 install_manifest*.txt
-kqueue-*.deb
 libkqueue.so*
 tags
 test/CMakeCache.txt
