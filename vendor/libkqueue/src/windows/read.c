@@ -81,7 +81,7 @@ get_eof_offset(int fd)
         sb.st_size = 1;
     }
 
-    dbg_printf("curpos=%zu size=%zu\n", curpos, sb.st_size);
+    dbg_printf("curpos=%zu size=%zu", curpos, sb.st_size);
     return (sb.st_size - curpos); //FIXME: can overflow
 }
 #endif

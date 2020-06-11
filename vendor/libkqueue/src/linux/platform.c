@@ -597,27 +597,27 @@ linux_get_descriptor_type(struct knote *kn)
             return (-1);
 
         case S_IFREG:
-            dbg_printf("fd %d is a regular file\n", fd);
+            dbg_printf("fd %d is a regular file", fd);
             kn->kn_flags |= KNFL_FILE;
             return (0);
 
         case S_IFIFO:
-            dbg_printf("fd %d is a pipe\n", fd);
+            dbg_printf("fd %d is a pipe", fd);
             kn->kn_flags |= KNFL_PIPE;
             return (0);
 
         case S_IFBLK:
-            dbg_printf("fd %d is a block device\n", fd);
+            dbg_printf("fd %d is a block device", fd);
             kn->kn_flags |= KNFL_BLOCKDEV;
             return (0);
 
         case S_IFCHR:
-            dbg_printf("fd %d is a character device\n", fd);
+            dbg_printf("fd %d is a character device", fd);
             kn->kn_flags |= KNFL_CHARDEV;
             return (0);
 
         case S_IFSOCK:
-            dbg_printf("fd %d is a socket\n", fd);
+            dbg_printf("fd %d is a socket", fd);
             break; /* deferred type determination */
     }
 
@@ -633,27 +633,27 @@ linux_get_descriptor_type(struct knote *kn)
     }
     switch (stype) {
         case SOCK_STREAM:
-            dbg_printf("fd %d is a stream socket\n", fd);
+            dbg_printf("fd %d is a stream socket", fd);
             kn->kn_flags |= KNFL_SOCKET_STREAM;
             break;
 
         case SOCK_DGRAM:
-            dbg_printf("fd %d is a datagram socket\n", fd);
+            dbg_printf("fd %d is a datagram socket", fd);
             kn->kn_flags |= KNFL_SOCKET_DGRAM;
             break;
 
         case SOCK_RDM:
-            dbg_printf("fd %d is a reliable datagram socket\n", fd);
+            dbg_printf("fd %d is a reliable datagram socket", fd);
             kn->kn_flags |= KNFL_SOCKET_RDM;
             break;
 
         case SOCK_SEQPACKET:
-            dbg_printf("fd %d is a sequenced and reliable datagram socket\n", fd);
+            dbg_printf("fd %d is a sequenced and reliable datagram socket", fd);
             kn->kn_flags |= KNFL_SOCKET_SEQPACKET;
             break;
 
         case SOCK_RAW:
-            dbg_printf("fd %d is a raw socket\n", fd);
+            dbg_printf("fd %d is a raw socket", fd);
             kn->kn_flags |= KNFL_SOCKET_RAW;
             break;
 
