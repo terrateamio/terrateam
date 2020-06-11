@@ -173,7 +173,7 @@ test_kevent_user_dispatch(struct test_context *ctx)
     kevent_add(ctx->kqfd, &kev, 1, EVFILT_USER, EV_DELETE, 0, 0, NULL);
     test_no_kevents(ctx->kqfd);
 }
-#endif 	/* EV_DISPATCH */
+#endif     /* EV_DISPATCH */
 
 void
 test_evfilt_user(struct test_context *ctx)

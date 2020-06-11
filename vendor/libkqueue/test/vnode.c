@@ -235,7 +235,7 @@ test_kevent_vnode_dispatch(struct test_context *ctx)
     /* Delete the watch */
     kevent_add(ctx->kqfd, &kev, ctx->vnode_fd, EVFILT_VNODE, EV_DELETE, NOTE_ATTRIB, 0, NULL);
 }
-#endif 	/* EV_DISPATCH */
+#endif     /* EV_DISPATCH */
 
 void
 test_evfilt_vnode(struct test_context *ctx)

@@ -121,7 +121,7 @@ filter_unregister_all(struct kqueue *kq)
 
         if (kqops.filter_free != NULL)
             kqops.filter_free(kq, &kq->kq_filt[i]);
-	}
+    }
     memset(&kq->kq_filt[0], 0, sizeof(kq->kq_filt));
 }
 

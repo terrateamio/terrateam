@@ -78,7 +78,7 @@ kevent_flags_dump(const struct kevent *kev)
 
 #define KEVFL_DUMP(attrib) \
     if (kev->flags & attrib) \
-	strncat((char *) buf, #attrib" ", 64);
+    strncat((char *) buf, #attrib" ", 64);
 
     snprintf(buf, sizeof(buf), "flags=0x%04x (", kev->flags);
     KEVFL_DUMP(EV_ADD);
@@ -299,7 +299,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
 
         dbg_printf("(%u) returning %d events", myid, rv);
         for (n = 0; n < rv; n++) {
-	    dbg_printf("(%u) eventlist[%d] = %s", myid, n, kevent_dump(&eventlist[n]));
+        dbg_printf("(%u) eventlist[%d] = %s", myid, n, kevent_dump(&eventlist[n]));
         }
     }
 #endif

@@ -30,26 +30,26 @@ void test_countdown(void);
 void
 say_hello(void *arg)
 {
-	puts("hello");
-	test_countdown();
+    puts("hello");
+    test_countdown();
 }
 
 void
 final_countdown(void *arg, size_t count)
 {
-	static int europe = 10;
+    static int europe = 10;
 
-	if (europe == 0) {
-		printf("It's the final countdown..\n");
-		exit(0);
-	} else {
-		printf("%d.. ", europe);
-		fflush(stdout);
-	}
+    if (europe == 0) {
+        printf("It's the final countdown..\n");
+        exit(0);
+    } else {
+        printf("%d.. ", europe);
+        fflush(stdout);
+    }
 
-	pthread_mutex_lock(&mtx);
-	europe--;
-	pthread_mutex_unlock(&mtx);
+    pthread_mutex_lock(&mtx);
+    europe--;
+    pthread_mutex_unlock(&mtx);
 }
 
 /* Adapted from:
@@ -58,23 +58,23 @@ final_countdown(void *arg, size_t count)
 void
 test_timer()
 {
-	dispatch_source_t timer;
-	dispatch_time_t now;
+    dispatch_source_t timer;
+    dispatch_time_t now;
 
     timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0,
-			dispatch_get_current_queue()); //NOTE: q_default doesn't work
-   	now = dispatch_walltime(DISPATCH_TIME_NOW, 0);
-	dispatch_source_set_timer(timer, now, 1, 1);
-	dispatch_source_set_event_handler_f(timer, say_hello);
-	puts("starting timer\n");
+    dispatch_get_current_queue()); //NOTE: q_default doesn't work
+    now = dispatch_walltime(DISPATCH_TIME_NOW, 0);
+    dispatch_source_set_timer(timer, now, 1, 1);
+    dispatch_source_set_event_handler_f(timer, say_hello);
+    puts("starting timer\n");
 }
 
 void
 test_countdown(void)
 {
-	dispatch_apply_f(15,
-			dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,0),
-			NULL, final_countdown);
+    dispatch_apply_f(15,
+            dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,0),
+            NULL, final_countdown);
 }
 
 
@@ -90,9 +90,9 @@ main(int argc, char **argv)
         argc--;
     }
 
-	test_timer();
+    test_timer();
 
-	dispatch_main();
+    dispatch_main();
     printf("\n---\n"
             "+OK All %d tests completed.\n", testnum - 1);
     return (0);

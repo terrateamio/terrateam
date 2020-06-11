@@ -35,10 +35,10 @@ create_socket_connection(int *client, int *server)
     sain.sin_family = AF_INET;
     sain.sin_port = 0;
     if ((srvr = socket(PF_INET, SOCK_STREAM, 0)) < 0)
-	err(1, "socket");
+    err(1, "socket");
     if (setsockopt(srvr, SOL_SOCKET, SO_REUSEADDR,
                 (char *) &one, sizeof(one)) != 0)
-	err(1, "setsockopt");
+    err(1, "setsockopt");
     if (bind(srvr, (struct sockaddr *) &sain, sa_len) < 0) {
         printf("unable to bind to auto-assigned port\n");
         err(1, "bind-1");
@@ -47,7 +47,7 @@ create_socket_connection(int *client, int *server)
         err(1, "getsockname-1");
     port = ntohs(sain.sin_port);
     if (listen(srvr, 100) < 0)
-	err(1, "listen");
+    err(1, "listen");
 
     /* Simulate a client connecting to the server */
     sain.sin_family = AF_INET;

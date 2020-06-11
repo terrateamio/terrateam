@@ -790,26 +790,26 @@ char *epoll_event_op_dump(int op)
 {
     static __thread char buf[14];
 
-	buf[0] = '\0';
+    buf[0] = '\0';
 
 #define EPOP_DUMP(attrib) \
-	if (op == attrib) { \
-		strcpy(buf, #attrib); \
-		return buf; \
-	}
+    if (op == attrib) { \
+        strcpy(buf, #attrib); \
+        return buf; \
+    }
 
-	EPOP_DUMP(EPOLL_CTL_MOD);
-	EPOP_DUMP(EPOLL_CTL_ADD);
-	EPOP_DUMP(EPOLL_CTL_DEL);
+    EPOP_DUMP(EPOLL_CTL_MOD);
+    EPOP_DUMP(EPOLL_CTL_ADD);
+    EPOP_DUMP(EPOLL_CTL_DEL);
 
-	return buf;
+    return buf;
 }
 
 char *epoll_event_flags_dump(int events)
 {
     static __thread char buf[128];
 
-	buf[0] = '\0';
+    buf[0] = '\0';
 
 #define EPEVT_DUMP(attrib) \
     if (events & attrib) strcat(buf, #attrib" ");
@@ -822,7 +822,7 @@ char *epoll_event_flags_dump(int events)
     EPEVT_DUMP(EPOLLONESHOT);
     EPEVT_DUMP(EPOLLET);
 
-    if (buf[0] != '\0') buf[strlen(buf) - 1] = '\0';	/* Trim trailing space */
+    if (buf[0] != '\0') buf[strlen(buf) - 1] = '\0';    /* Trim trailing space */
 
     return buf;
 }
@@ -885,7 +885,7 @@ int epoll_fd_state(struct fd_state **fds_p, struct knote *kn, bool disabled)
     struct fd_state *fds = *fds_p;
 
     if (!fds) {
-    	fds = kn->kn_fds;
+        fds = kn->kn_fds;
         if(fds) dbg_printf("fd_state: from-kn fd=%i", fd);
     }
     if (!fds) {

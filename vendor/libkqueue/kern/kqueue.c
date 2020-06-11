@@ -63,11 +63,11 @@ static ssize_t kqueue_write(struct file *file, const char __user *buf,
 
 struct file_operations fops = {
     .owner  =   THIS_MODULE,
-    .ioctl	=   kqueue_ioctl,
-    .open	=   kqueue_open,
+    .ioctl    =   kqueue_ioctl,
+    .open    =   kqueue_open,
     .release =  kqueue_release,
-    .read	=   kqueue_read,
-    .write	=   kqueue_write,
+    .read    =   kqueue_read,
+    .write    =   kqueue_write,
 };
 
 struct kfilter {

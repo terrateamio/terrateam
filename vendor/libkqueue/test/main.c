@@ -62,8 +62,8 @@ static void
 test_peer_close_detection(void *unused)
 {
 #ifdef _WIN32
-	return;
-	//FIXME
+    return;
+    //FIXME
 #else
     int sockfd[2];
     char buf[1];
@@ -292,9 +292,9 @@ main(int argc, char **argv)
 #if FIXME
         { "proc", 1, test_evfilt_proc },
 #endif
-		{ "timer", 1, test_evfilt_timer },
+        { "timer", 1, test_evfilt_timer },
 #ifndef _WIN32
-		{ "vnode", 1, test_evfilt_vnode },
+        { "vnode", 1, test_evfilt_vnode },
 #endif
 #ifdef EVFILT_USER
         { "user", 1, test_evfilt_user },

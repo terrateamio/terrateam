@@ -30,13 +30,13 @@ map_new(size_t len)
     if (dst == NULL)
         return (NULL);
 #ifdef _WIN32
-	dst->data = calloc(len, sizeof(void*));
-	if(dst->data == NULL) {
-		dbg_perror("calloc()");
-		free(dst);
-		return NULL;
-	}
-	dst->len = len;
+    dst->data = calloc(len, sizeof(void*));
+    if(dst->data == NULL) {
+        dbg_perror("calloc()");
+        free(dst);
+        return NULL;
+    }
+    dst->len = len;
 #else
     dst->data = mmap(NULL, len * sizeof(void *), PROT_READ | PROT_WRITE,
             MAP_PRIVATE | MAP_NORESERVE | MAP_ANON, -1, 0);

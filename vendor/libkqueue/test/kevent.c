@@ -75,15 +75,15 @@ kevent_fflags_dump(struct kevent *kev)
 
 #define KEVFFL_DUMP(attrib) \
     if (kev->fflags & attrib) \
-	strncat(buf, #attrib" ", 64);
+    strncat(buf, #attrib" ", 64);
 
     if ((buf = calloc(1, 1024)) == NULL)
-	abort();
+    abort();
 
     /* Not every filter has meaningful fflags */
     if (kev->filter != EVFILT_VNODE) {
-    	snprintf(buf, 1024, "fflags = %d", kev->fflags);
-	return (buf);
+        snprintf(buf, 1024, "fflags = %d", kev->fflags);
+        return (buf);
     }
 
     snprintf(buf, 1024, "fflags = %d (", kev->fflags);
@@ -111,10 +111,10 @@ kevent_flags_dump(struct kevent *kev)
 
 #define KEVFL_DUMP(attrib) \
     if (kev->flags & attrib) \
-	strncat(buf, #attrib" ", 64);
+    strncat(buf, #attrib" ", 64);
 
     if ((buf = calloc(1, 1024)) == NULL)
-	abort();
+    abort();
 
     snprintf(buf, 1024, "flags = %d (", kev->flags);
     KEVFL_DUMP(EV_ADD);

@@ -77,12 +77,12 @@ libkqueue_init(void)
 #endif
 
 # if defined(_WIN32) && !defined(__GNUC__)
-	/* Enable heap surveillance */
-	{
-		int tmpFlag = _CrtSetDbgFlag( _CRTDBG_REPORT_FLAG );
-		tmpFlag |= _CRTDBG_CHECK_ALWAYS_DF;
-		_CrtSetDbgFlag(tmpFlag);
-	}
+    /* Enable heap surveillance */
+    {
+        int tmpFlag = _CrtSetDbgFlag( _CRTDBG_REPORT_FLAG );
+        tmpFlag |= _CRTDBG_CHECK_ALWAYS_DF;
+        _CrtSetDbgFlag(tmpFlag);
+    }
 # endif /* _WIN32 */
     }
 #endif

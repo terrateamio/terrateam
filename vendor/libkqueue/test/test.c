@@ -32,13 +32,13 @@ static void
 error_handler(int signum)
 {
 #if defined(__linux__) && (defined(__GLIBC__) && !defined(__UCLIBC__))
-	void *buf[32];
+    void *buf[32];
 
     /* FIXME: the symbols aren't printing */
-	printf("***** ERROR: Program received signal %d *****\n", signum);
-	backtrace_symbols_fd(buf, sizeof(buf) / sizeof(void *), 2);
+    printf("***** ERROR: Program received signal %d *****\n", signum);
+    backtrace_symbols_fd(buf, sizeof(buf) / sizeof(void *), 2);
 #else
-	printf("***** ERROR: Program received signal %d *****\n", signum);
+    printf("***** ERROR: Program received signal %d *****\n", signum);
 #endif
     exit(1);
 }
