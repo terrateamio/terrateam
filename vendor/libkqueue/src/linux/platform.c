@@ -989,13 +989,10 @@ void epoll_fd_state_del(struct fd_state **fds_p, struct knote *kn, int ev)
 {
     struct fd_state     *fds = kn->kn_fds;
     struct kqueue       *kq = kn->kn_kq;
-    int                 fd;
 
     assert(ev & (EPOLLIN | EPOLLOUT));
     assert(fds); /* There ~must~ be an entry else something has gone horribly wrong */
     assert(!*fds_p || (*fds_p == kn->kn_fds));
-
-    fd = fds->fds_fd;
 
     /*
      * copyin/copyout lock means we don't need
@@ -1012,12 +1009,12 @@ void epoll_fd_state_del(struct fd_state **fds_p, struct knote *kn, int ev)
     }
 
     if (!fds->fds_read && !fds->fds_write) {
-        dbg_printf("fd_state: rm fd=%i", fd);
+        dbg_printf("fd_state: rm fd=%i", fds->fds_fd);
         RB_REMOVE(fd_st, &kq->kq_fd_st, fds);
         free(fds);
         *fds_p = NULL;
     } else {
-        dbg_printf("fd_state: mod fd=%i events=0x%04x (%s)", fd, ev, epoll_event_flags_dump(ev));
+        dbg_printf("fd_state: mod fd=%i events=0x%04x (%s)", fds->fds_fd, ev, epoll_event_flags_dump(ev));
     }
     kn->kn_fds = NULL;
 }
