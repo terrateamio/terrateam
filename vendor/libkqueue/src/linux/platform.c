@@ -28,7 +28,7 @@ const struct filter evfilt_proc = EVFILT_NOTIMPL;
  * Per-thread epoll event buffer used to ferry data between
  * kevent_wait() and kevent_copyout().
  */
-static __thread struct epoll_event epevt[MAX_KEVENT];
+static __thread struct epoll_event epoll_events[MAX_KEVENT];
 
 extern pthread_mutex_t kq_mtx;
 /*
@@ -212,7 +212,7 @@ linux_kqueue_init(struct kqueue *kq)
     }
 
     if (filter_register_all(kq) < 0) {
-        error:
+    error:
         close(kq->epollfd);
         close(kq->pipefd[0]);
         close(kq->pipefd[1]);
@@ -381,10 +381,7 @@ linux_kevent_wait_hires(
 }
 
 int
-linux_kevent_wait(
-        struct kqueue *kq,
-        int nevents,
-        const struct timespec *ts)
+linux_kevent_wait(struct kqueue *kq, int nevents, const struct timespec *ts)
 {
     int timeout, nret;
 
@@ -406,7 +403,7 @@ linux_kevent_wait(
     }
 
     dbg_puts("waiting for events");
-    nret = epoll_wait(kqueue_epoll_fd(kq), epevt, nevents, timeout);
+    nret = epoll_wait(kqueue_epoll_fd(kq), epoll_events, nevents, timeout);
     if (nret < 0) {
         dbg_perror("epoll_wait");
         return (-1);
@@ -415,50 +412,134 @@ linux_kevent_wait(
     return (nret);
 }
 
-int
-linux_kevent_copyout(struct kqueue *kq, int nready,
-        struct kevent *eventlist, int nevents UNUSED)
+static inline int linux_kevent_copyout_ev(struct kevent **el_p, struct epoll_event *ev,
+                                          struct filter *filt, struct knote *kn)
 {
-    struct epoll_event *ev;
-    struct filter *filt;
-    struct knote *kn;
-    int i, nret, rv;
+    int rv;
+    struct kevent *el = *el_p;
 
-    nret = nready;
+    rv = filt->kf_copyout(el, kn, ev);
+    if (unlikely(rv < 0)) {
+        dbg_puts("knote_copyout failed");
+        assert(0);
+        return rv;
+    }
+
+    /*
+     *    Advance to the next el entry
+     */
+    if (likely(el->filter != 0)) {
+        (*el_p)++;
+    } else {
+        dbg_puts("spurious wakeup, discarding event");
+    }
+
+    /*
+     * Certain flags cause the associated knote to be deleted
+     * or disabled.
+     */
+    if (el->flags & EV_DISPATCH)
+        knote_disable(filt, kn); //FIXME: Error checking
+    if (el->flags & EV_ONESHOT) {
+        knote_delete(filt, kn); //FIXME: Error checking
+    }
+
+    return rv;
+}
+
+int
+linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int nevents)
+{
+    struct kevent   *el_p = el, *el_end = el + nevents;
+    int             i;
+
     for (i = 0; i < nready; i++) {
-        ev = &epevt[i];
-        kn = (struct knote *) ev->data.ptr;
-        filt = &kq->kq_filt[~(kn->kev.filter)];
-        rv = filt->kf_copyout(eventlist, kn, ev);
-        if (unlikely(rv < 0)) {
-            dbg_puts("knote_copyout failed");
-            /* XXX-FIXME: hard to handle this without losing events */
-            abort();
+        struct epoll_event    *ev = &epoll_events[i];    /* Thread local storage populated in linux_kevent_wait */
+        struct epoll_udata    *epoll_udata = ev->data.ptr;
+        int                   rv;
+
+        if (!epoll_udata) {
+            dbg_puts("event has no filter, skipping...");
+            continue;
         }
+
+        switch (epoll_udata->ud_type) {
+        /*
+         * epoll event is associated with a single filter
+         * so we just have the one knote.
+         */
+        case EPOLL_UDATA_KNOTE:
+        {
+            struct knote *kn = epoll_udata->ud_kn;
+
+            if (el_p >= el_end) {
+            oos:
+                dbg_printf("no more available kevent slots, used %zu", el_p - el);
+                goto done;
+            }
+
+            rv = linux_kevent_copyout_ev(&el_p, ev, &kq->kq_filt[~(kn->kev.filter)], kn);
+            if (rv < 0) goto done;
+        }
+            break;
 
         /*
-         * Certain flags cause the associated knote to be deleted
-         * or disabled.
+         * epoll event is associated with one filter for
+         * reading and one filter for writing.
          */
-        if (eventlist->flags & EV_DISPATCH)
-            knote_disable(filt, kn); //FIXME: Error checking
-        if (eventlist->flags & EV_ONESHOT) {
-            knote_delete(filt, kn); //FIXME: Error checking
-        }
+        case EPOLL_UDATA_FD_STATE:
+        {
+            struct fd_state      *fds = epoll_udata->ud_fds;
+            struct knote         *kn;
 
-        /* If an empty kevent structure is returned, the event is discarded. */
-        /* TODO: add these semantics to windows + solaris platform.c */
-        if (likely(eventlist->filter != 0)) {
-            eventlist++;
-        } else {
-            dbg_puts("spurious wakeup, discarding event");
-            nret--;
+            /*
+             *    FD is readable
+             */
+            if (ev->events & EPOLLIN) {
+                if (el_p >= el_end) goto oos;
+
+                kn = fds->fds_read;
+
+                /*
+                 * We shouldn't receive events we didn't register for
+                 * This assume's the Linux's epoll implementation isn't
+                 * complete garbage... so um... this assert may need
+                 * to be removed later.
+                 */
+                assert(kn);
+
+                rv = linux_kevent_copyout_ev(&el_p, ev, &kq->kq_filt[~(kn->kev.filter)], kn);
+                if (rv < 0) goto done;
+            }
+
+            /*
+             *    FD is writable
+             */
+            if (ev->events & EPOLLOUT) {
+                if (el_p >= el_end) goto oos;
+
+                kn = fds->fds_write;
+
+                assert(kn);    /* We shouldn't receive events we didn't request */
+
+                rv = linux_kevent_copyout_ev(&el_p, ev, &kq->kq_filt[~(kn->kev.filter)], kn);
+                if (rv < 0) goto done;
+            }
+        }
+            break;
+
+        /*
+         *    Bad udata value. Maybe use after free?
+         */
+        default:
+            assert(0);
+            return (-1);
         }
     }
 
-    return (nret);
+done:
+    return el_p - el;
 }
-
 int
 linux_eventfd_init(struct eventfd *e)
 {
@@ -496,17 +577,17 @@ linux_eventfd_raise(struct eventfd *e)
     counter = 1;
     if (write(e->ef_id, &counter, sizeof(counter)) < 0) {
         switch (errno) {
-            case EAGAIN:
-                /* Not considered an error */
-                break;
+        case EAGAIN:
+            /* Not considered an error */
+            break;
 
-            case EINTR:
-                rv = -EINTR;
-                break;
+        case EINTR:
+            rv = -EINTR;
+            break;
 
-            default:
-                dbg_printf("write(2): %s", strerror(errno));
-                rv = -1;
+        default:
+            dbg_printf("write(2): %s", strerror(errno));
+            rv = -1;
         }
     }
     return (rv);
@@ -524,17 +605,17 @@ linux_eventfd_lower(struct eventfd *e)
     n = read(e->ef_id, &cur, sizeof(cur));
     if (n < 0) {
         switch (errno) {
-            case EAGAIN:
-                /* Not considered an error */
-                break;
+        case EAGAIN:
+            /* Not considered an error */
+            break;
 
-            case EINTR:
-                rv = -EINTR;
-                break;
+        case EINTR:
+            rv = -EINTR;
+            break;
 
-            default:
-                dbg_printf("read(2): %s", strerror(errno));
-                rv = -1;
+        default:
+            dbg_printf("read(2): %s", strerror(errno));
+            rv = -1;
         }
     } else if (n != sizeof(cur)) {
         dbg_puts("short read");
@@ -705,6 +786,47 @@ linux_get_descriptor_type(struct knote *kn)
     return (0);
 }
 
+char *epoll_event_op_dump(int op)
+{
+    static __thread char buf[14];
+
+	buf[0] = '\0';
+
+#define EPOP_DUMP(attrib) \
+	if (op == attrib) { \
+		strcpy(buf, #attrib); \
+		return buf; \
+	}
+
+	EPOP_DUMP(EPOLL_CTL_MOD);
+	EPOP_DUMP(EPOLL_CTL_ADD);
+	EPOP_DUMP(EPOLL_CTL_DEL);
+
+	return buf;
+}
+
+char *epoll_event_flags_dump(int events)
+{
+    static __thread char buf[128];
+
+	buf[0] = '\0';
+
+#define EPEVT_DUMP(attrib) \
+    if (events & attrib) strcat(buf, #attrib" ");
+
+    EPEVT_DUMP(EPOLLIN);
+    EPEVT_DUMP(EPOLLOUT);
+#if defined(HAVE_EPOLLRDHUP)
+    EPEVT_DUMP(EPOLLRDHUP);
+#endif
+    EPEVT_DUMP(EPOLLONESHOT);
+    EPEVT_DUMP(EPOLLET);
+
+    if (buf[0] != '\0') buf[strlen(buf) - 1] = '\0';	/* Trim trailing space */
+
+    return buf;
+}
+
 char *
 epoll_event_dump(struct epoll_event *evt)
 {
@@ -713,32 +835,319 @@ epoll_event_dump(struct epoll_event *evt)
     if (evt == NULL)
         return "(null)";
 
-#define EPEVT_DUMP(attrib) \
-    if (evt->events & attrib) \
-       strcat(buf, #attrib" ");
-
-    snprintf(buf, 128, " { data = %p, events = ", evt->data.ptr);
-    EPEVT_DUMP(EPOLLIN);
-    EPEVT_DUMP(EPOLLOUT);
-#if defined(HAVE_EPOLLRDHUP)
-    EPEVT_DUMP(EPOLLRDHUP);
-#endif
-    EPEVT_DUMP(EPOLLONESHOT);
-    EPEVT_DUMP(EPOLLET);
-    strcat(buf, "}\n");
+    snprintf(buf, sizeof(buf), "{ data = %p, events = %s }", evt->data.ptr, epoll_event_flags_dump(evt->events));
 
     return (buf);
 #undef EPEVT_DUMP
 }
 
-int
-epoll_update(int op, struct filter *filt, struct knote *kn, struct epoll_event *ev)
+
+
+/** Determine if two fd state entries are equal
+ *
+ * @param[in] a           first entry.
+ * @param[in] b           second entry.
+ * @return
+ *        - 0 if fd is equal.
+ *        - 1 if fd_a > fd_b
+ *        - -1 if fd_a < fd_b
+ */
+static int
+epoll_fd_state_cmp(struct fd_state *a, struct fd_state *b)
 {
-    dbg_printf("op=%d fd=%d events=%s", op, (int)kn->kev.ident,
-            epoll_event_dump(ev));
-    if (epoll_ctl(filter_epoll_fd(filt), op, kn->kev.ident, ev) < 0) {
-        dbg_printf("epoll_ctl(2): %s", strerror(errno));
+    return (a->fds_fd > b->fds_fd) - (a->fds_fd < b->fds_fd); /* branchless comparison */
+}
+
+/** Create type specific rbtree functions
+ *
+ */
+RB_GENERATE(fd_st, fd_state, fds_entries, epoll_fd_state_cmp)
+
+/** Determine current fd_state/knote associations
+ *
+ * @param[in,out] fds_p   to query.  If *fds_p is NULL and
+ *                          kn->kn_fds is NULL, we attempt a
+ *                          lookup based on the FD associated with
+ *                          the kn.
+ * @param[in] kn          to return EPOLLIN|EPOLLOUT flags for.
+ * @param[in] disabled    if true, only disabled knotes will
+ *                        be included in the set.
+ *                        if false, only enabled knotes will
+ *                        be included in the set.
+ * @return
+ *    - EPOLLIN     if the FD has a read knote associated with it.
+ *    - EPOLLOUT    if the FD has a write knote associated with it.
+ */
+int epoll_fd_state(struct fd_state **fds_p, struct knote *kn, bool disabled)
+{
+    int             state = 0;
+    int             fd = kn->kev.ident;
+    struct fd_state *fds = *fds_p;
+
+    if (!fds) {
+    	fds = kn->kn_fds;
+        if(fds) dbg_printf("fd_state: from-kn fd=%i", fd);
+    }
+    if (!fds) {
+        dbg_printf("fd_state: find fd=%i", fd);
+
+        fds = RB_FIND(fd_st, &kn->kn_kq->kq_fd_st, &(struct fd_state){ .fds_fd = fd });
+        if (!fds) return (0);
+    }
+
+    *fds_p = fds;
+
+    if (fds->fds_read && (disabled == ((kn->kev.flags & EV_DISABLE) != 0))) state |= EPOLLIN;
+    if (fds->fds_write && (disabled == ((kn->kev.flags & EV_DISABLE) != 0))) state |= EPOLLOUT;
+
+    return state;
+}
+
+/** Associate a knote with the fd_state
+ *
+ * @param[in,out] fds_p   to modify knote associations for.
+ *                        If *fds_p is NULL and kn->kn_fds is
+ *                        NULL, we attempt a lookup based on
+ *                        the FD associated with the kn.
+ * @param[in] kn          to add FD tracking entry for.
+ * @param[in] ev          the file descriptor was registered for,
+ *                        either EPOLLIN or EPOLLOUT.
+ * @return
+ *    - 0 on success.
+ *    - -1 on failure.
+ */
+int epoll_fd_state_mod(struct fd_state **fds_p, struct knote *kn, int ev)
+{
+    struct kqueue       *kq = kn->kn_kq;
+    int                    fd = kn->kev.ident;
+    struct fd_state     *fds = *fds_p;
+
+    assert(ev & (EPOLLIN | EPOLLOUT));
+
+    /*
+     * The kqueue_lock around copyin and copyout
+     * operations means we don't need mutexes
+     * around tree access.
+     *
+     * Only one thread can be copying in or copying
+     * out at a time.
+     *
+     * The only potential issue we have were
+     * modifying the tree in kevent_wait
+     * (which we're not).
+     */
+    if (!fds) fds = kn->kn_fds;
+    if (!fds) {
+        /*
+         * Also used as an initialiser if we can't find
+         * an existing fd_state.
+         */
+        struct fd_state     query = { .fds_fd = fd };
+
+        fds = RB_FIND(fd_st, &kq->kq_fd_st, &query);
+        if (!fds) {
+            dbg_printf("fd_state: new fd=%i events=0x%04x (%s)", fd, ev, epoll_event_flags_dump(ev));
+
+            fds = malloc(sizeof(struct fd_state));
+            if (!fds) return (-1);
+
+            *fds = query;
+            FDS_UDATA(fds);    /* Prepare for insertion into epoll */
+            RB_INSERT(fd_st, &kq->kq_fd_st, fds);
+
+        } else {
+        mod:
+            dbg_printf("fd_state: mod fd=%i events=0x%04x (%s)", fd, ev, epoll_event_flags_dump(ev));
+        }
+    } else goto mod;
+
+    /*
+     * Place the knote in the correct slot.
+     */
+    if (ev & EPOLLIN) {
+        assert(!fds->fds_read || (fds->fds_read == kn));
+        fds->fds_read = kn;
+    }
+    if (ev & EPOLLOUT) {
+        assert(!fds->fds_write || (fds->fds_write == kn));
+        fds->fds_write = kn;
+    }
+
+    kn->kn_fds = fds;
+    *fds_p = fds;
+
+    return (0);
+}
+
+/** Disassociate a knote from an fd_ev possibly freeing the fd_ev
+ *
+ * @param[in] kn   to remove FD tracking entry for.
+ * @param[in] ev   the file descriptor was de-registered for,
+ *                 either EPOLLIN or EPOLLOUT.
+ */
+void epoll_fd_state_del(struct fd_state **fds_p, struct knote *kn, int ev)
+{
+    struct fd_state     *fds = kn->kn_fds;
+    struct kqueue       *kq = kn->kn_kq;
+    int                 fd;
+
+    assert(ev & (EPOLLIN | EPOLLOUT));
+    assert(fds); /* There ~must~ be an entry else something has gone horribly wrong */
+    assert(!*fds_p || (*fds_p == kn->kn_fds));
+
+    fd = fds->fds_fd;
+
+    /*
+     * copyin/copyout lock means we don't need
+     * to protect operations here.
+     */
+    if (ev & EPOLLIN) {
+        assert(fds->fds_read);
+        fds->fds_read = NULL;
+    }
+
+    if (ev & EPOLLOUT) {
+        assert(fds->fds_write);
+        fds->fds_write = NULL;
+    }
+
+    if (!fds->fds_read && !fds->fds_write) {
+        dbg_printf("fd_state: rm fd=%i", fd);
+        RB_REMOVE(fd_st, &kq->kq_fd_st, fds);
+        free(fds);
+        *fds_p = NULL;
+    } else {
+        dbg_printf("fd_state: mod fd=%i events=0x%04x (%s)", fd, ev, epoll_event_flags_dump(ev));
+    }
+    kn->kn_fds = NULL;
+}
+
+int
+epoll_update(int op, struct filter *filt, struct knote *kn, int ev, bool delete)
+{
+    struct fd_state *fds = NULL;
+    int have_ev, want, want_ev;
+    int opn;
+    int fd;
+
+    fd = kn->kev.ident;
+
+#define EV_EPOLLINOUT(_x) ((_x) & (EPOLLIN | EPOLLOUT))
+
+    if (kn->kev.flags & EV_DISABLE) dbg_printf("fd=%i kn is disabled", fd);
+
+    /*
+     * Determine the current state of the file descriptor
+     * and see if we need to make changes.
+     */
+    have_ev = epoll_fd_state(&fds, kn, false);            /* ...enabled only */
+
+    dbg_printf("fd=%i have_ev=0x%04x (%s)", fd, have_ev, epoll_event_flags_dump(have_ev));
+    switch (op) {
+    case EPOLL_CTL_ADD:
+        want = have_ev | ev;            /* This also preserves other option flags */
+        break;
+
+    case EPOLL_CTL_DEL:
+        want = have_ev & ~ev;           /* No options for delete */
+
+        /*
+         * If we're performing a delete we need
+         * to check for previously disabled
+         * knotes that may now be being deleted.
+         */
+        if (delete) {
+            int to_delete;
+
+            to_delete = epoll_fd_state(&fds, kn, true); /* ...disabled only */
+            dbg_printf("fd=%i disabled_ev=0x%04x (%s)", fd, to_delete, epoll_event_flags_dump(to_delete));
+            to_delete &= EV_EPOLLINOUT(ev);
+
+            if (to_delete) {
+                dbg_printf("fd=%i ev=%i removing disabled fd state", fd, op);
+                epoll_fd_state_del(&fds, kn, to_delete);
+            }
+        }
+        break;
+
+    case EPOLL_CTL_MOD:
+        want = ev;                   /* We assume the caller knows what its doing... */
+
+        if (delete) {
+            int to_delete;
+
+            to_delete = epoll_fd_state(&fds, kn, true); /* ...disabled only */
+            dbg_printf("fd=%i disabled_ev=0x%04x (%s)", fd, to_delete, epoll_event_flags_dump(to_delete));
+            to_delete &= ~ev;
+
+            if (to_delete) {
+                dbg_printf("fd=%i ev=%i removing disabled fd state", fd, op);
+                epoll_fd_state_del(&fds, kn, to_delete);
+            }
+        }
+        break;
+
+    default:
+        assert(0);
         return (-1);
+    }
+
+    /*
+     * We only want the read/write flags for comparisons.
+     */
+    want_ev = EV_EPOLLINOUT(want);
+     if (!have_ev && want_ev) {        /* There's no events registered and we want some */
+        opn = EPOLL_CTL_ADD;
+        epoll_fd_state_mod(&fds, kn, want_ev & ~have_ev);
+    }
+    else if (have_ev && !want_ev)       /* We have events registered but don't want any */
+        opn = EPOLL_CTL_DEL;
+    else if (have_ev != want_ev)        /* There's events but they're not what we want */
+        opn = EPOLL_CTL_MOD;
+    else
+        return (0);
+
+    dbg_printf("fd=%i op=0x%04x (%s) opn=0x%04x (%s) %s",
+               fd,
+               op, epoll_event_op_dump(op),
+               opn, epoll_event_op_dump(opn),
+               epoll_event_dump(EPOLL_EV_FDS(want, fds)));
+
+    if (epoll_ctl(filter_epoll_fd(filt), opn, fd, EPOLL_EV_FDS(want, fds)) < 0) {
+        dbg_printf("epoll_ctl(2): %s", strerror(errno));
+
+        if (opn == EPOLL_CTL_ADD) epoll_fd_state_del(&fds, kn, want_ev & ~have_ev);
+
+        return (-1);
+    }
+
+    /*
+     * Only change fd state for del and mod on success
+     * we need to 'add' before so that we get the fd_state
+     * structure to pass in to epoll.
+     */
+    switch (opn) {
+    case EPOLL_CTL_DEL:
+        if (delete) {
+            dbg_printf("fd=%i ev=%i removing fd state", fd, op);
+            epoll_fd_state_del(&fds, kn, have_ev & ~want_ev);      /* We rely on the caller to mark the knote as disabled */
+        }
+        break;
+
+    case EPOLL_CTL_MOD:
+    {
+        int add, del;
+
+        add = want_ev & ~have_ev;
+        del = have_ev & ~want_ev;
+
+        if (add) epoll_fd_state_mod(&fds, kn, add);
+        if (del && delete) {
+            dbg_printf("fd=%i ev=%i removing fd state", fd, op);
+            epoll_fd_state_del(&fds, kn, del);                 /* We rely on the caller to mark the knote as disabled */
+        }
+    }
+        break;
     }
 
     return (0);

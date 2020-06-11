@@ -177,12 +177,12 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
         rv = knote_delete(filt, kn);
         dbg_printf("knote_delete returned %d", rv);
     } else if (src->flags & EV_DISABLE) {
-        kn->kev.flags |= EV_DISABLE;
         rv = filt->kn_disable(filt, kn);
+        if (rv == 0) kn->kev.flags |= EV_DISABLE;
         dbg_printf("kn_disable returned %d", rv);
     } else if (src->flags & EV_ENABLE) {
-        kn->kev.flags &= ~EV_DISABLE;
         rv = filt->kn_enable(filt, kn);
+        if (rv == 0) kn->kev.flags &= ~EV_DISABLE;
         dbg_printf("kn_enable returned %d", rv);
     } else if (src->flags & EV_ADD || src->flags == 0 || src->flags & EV_RECEIPT) {
         kn->kev.udata = src->udata;

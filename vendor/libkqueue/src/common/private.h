@@ -139,7 +139,7 @@ struct knote {
  *
  */
 struct filter {
-    short           kf_id;               //!< EVFILT_* facility this filter provides.
+    short           kf_id;						//!< EVFILT_* facility this filter provides.
 
     /* filter operations */
 
@@ -151,20 +151,19 @@ struct filter {
 
 
     int            (*kn_create)(struct filter *, struct knote *);
-    int            (*kn_modify)(struct filter *, struct knote *,
-                            const struct kevent *);
+    int            (*kn_modify)(struct filter *, struct knote *, const struct kevent *);
     int            (*kn_delete)(struct filter *, struct knote *);
     int            (*kn_enable)(struct filter *, struct knote *);
     int            (*kn_disable)(struct filter *, struct knote *);
 
-    struct eventfd kf_efd;             /* Used by user.c */
+    struct eventfd kf_efd;						//!< Used by user.c
 
     //MOVE TO POSIX?
-    int           kf_pfd;                   /* fd to poll(2) for readiness */
-    int           kf_wfd;                   /* fd to write when an event occurs */
+    int           kf_pfd;						//!< fd to poll(2) for readiness
+    int           kf_wfd;						//!< fd to write when an event occurs
     //----?
 
-    struct evfilt_data *kf_data;        /* filter-specific data */
+    struct evfilt_data *kf_data;				//!< filter-specific data */
     RB_HEAD(knt, knote) kf_knote;
     pthread_rwlock_t    kf_knote_mtx;
     struct kqueue      *kf_kqueue;
@@ -182,10 +181,10 @@ struct filter {
  * in receiving notifications for.
  */
 struct kqueue {
-    int             kq_id;                    //!< File descriptor used to identify this kqueue.
-    struct filter   kq_filt[EVFILT_SYSCOUNT]; //!< Filters supported by the kqueue.  Each
-                                              ///< kqueue maintains one filter state structure
-                                              ///< per filter type.
+    int             kq_id;                   	//!< File descriptor used to identify this kqueue.
+    struct filter   kq_filt[EVFILT_SYSCOUNT];	//!< Filters supported by the kqueue.  Each
+                    							///< kqueue maintains one filter state structure
+                                            	///< per filter type.
     fd_set          kq_fds, kq_rfds;
     int             kq_nfds;
     tracing_mutex_t kq_mtx;

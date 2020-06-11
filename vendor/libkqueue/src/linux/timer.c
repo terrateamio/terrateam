@@ -152,10 +152,10 @@ evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr)
 int
 evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 {
-    struct epoll_event ev;
     struct itimerspec ts;
     int tfd;
     int flags;
+    int events;
 
     kn->kev.flags |= EV_CLEAR;
 
@@ -175,13 +175,12 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
         return (-1);
     }
 
-    memset(&ev, 0, sizeof(ev));
-    ev.events = EPOLLIN | EPOLLET;
+    events = EPOLLIN | EPOLLET;
     if (kn->kev.flags & (EV_ONESHOT | EV_DISPATCH))
-        ev.events |= EPOLLONESHOT;
+        events |= EPOLLONESHOT;
 
-    ev.data.ptr = kn;
-    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_ADD, tfd, &ev) < 0) {
+    KN_UDATA(kn);   /* populate this knote's kn_udata field */
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_ADD, tfd, EPOLL_EV_KN(events, kn)) < 0) {
         dbg_printf("epoll_ctl(2): %d", errno);
         close(tfd);
         return (-1);

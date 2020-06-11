@@ -116,7 +116,6 @@ linux_evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSE
 int
 linux_evfilt_user_knote_create(struct filter *filt, struct knote *kn)
 {
-    struct epoll_event ev;
     int evfd;
 
     /* Create an eventfd */
@@ -127,10 +126,8 @@ linux_evfilt_user_knote_create(struct filter *filt, struct knote *kn)
     }
 
     /* Add the eventfd to the epoll set */
-    memset(&ev, 0, sizeof(ev));
-    ev.events = EPOLLIN;
-    ev.data.ptr = kn;
-    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_ADD, evfd, &ev) < 0) {
+    KN_UDATA(kn);   /* populate this knote's kn_udata field */
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_ADD, evfd, EPOLL_EV_KN(EPOLLIN, kn)) < 0) {
         dbg_perror("epoll_ctl(2)");
         goto errout;
     }

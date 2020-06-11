@@ -61,16 +61,13 @@ signalfd_reset(int sigfd)
 }
 
 static int
-signalfd_add(int epoll_fd, int sigfd, void *ptr)
+signalfd_add(int epoll_fd, int sigfd, struct knote *kn)
 {
-    struct epoll_event ev;
     int rv;
 
     /* Add the signalfd to the kqueue's epoll descriptor set */
-    memset(&ev, 0, sizeof(ev));
-    ev.events = EPOLLIN;
-    ev.data.ptr = ptr;
-    rv = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sigfd, &ev);
+    KN_UDATA(kn);   /* populate this knote's kn_udata field */
+    rv = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sigfd, EPOLL_EV_KN(EPOLLIN, kn));
     if (rv < 0) {
         dbg_perror("epoll_ctl(2)");
         return (-1);
@@ -80,7 +77,7 @@ signalfd_add(int epoll_fd, int sigfd, void *ptr)
 }
 
 static int
-signalfd_create(int epoll_fd, void *ptr, int signum)
+signalfd_create(int epoll_fd, struct knote *kn, int signum)
 {
     static int flags = SFD_NONBLOCK;
     sigset_t sigmask;
@@ -109,7 +106,7 @@ signalfd_create(int epoll_fd, void *ptr, int signum)
 
     signalfd_reset(sigfd);
 
-    if (signalfd_add(epoll_fd, sigfd, ptr) < 0)
+    if (signalfd_add(epoll_fd, sigfd, kn) < 0)
         goto errout;
 
     dbg_printf("added sigfd %d to epoll_fd %d (signum=%d)", sigfd, epoll_fd, signum);

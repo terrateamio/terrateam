@@ -67,8 +67,6 @@ evfilt_write_copyout(struct kevent *dst, struct knote *src, void *ptr)
 int
 evfilt_write_knote_create(struct filter *filt, struct knote *kn)
 {
-    struct epoll_event ev;
-
     if (linux_get_descriptor_type(kn) < 0)
         return (-1);
 
@@ -77,18 +75,22 @@ evfilt_write_knote_create(struct filter *filt, struct knote *kn)
         return (-1);
     }
 
-    /* Convert the kevent into an epoll_event */
+    /*
+     * Convert the kevent into an epoll_event
+     */
     kn->data.events = EPOLLOUT;
-    if (kn->kev.flags & EV_ONESHOT || kn->kev.flags & EV_DISPATCH)
-        kn->data.events |= EPOLLONESHOT;
+
+    /*
+     * For EV_ONESHOT, EV_DISPATCH we rely on common code
+     * disabling/deleting the event after it's fired once.
+     *
+     * See this SO post for details:
+     * https://stackoverflow.com/questions/59517961/how-should-i-use-epoll-to-read-and-write-from-the-same-fd
+     */
     if (kn->kev.flags & EV_CLEAR)
         kn->data.events |= EPOLLET;
 
-    memset(&ev, 0, sizeof(ev));
-    ev.events = kn->data.events;
-    ev.data.ptr = kn;
-
-    return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
+    return epoll_update(EPOLL_CTL_ADD, filt, kn, kn->data.events, false);
 }
 
 int
@@ -104,28 +106,19 @@ evfilt_write_knote_modify(struct filter *filt, struct knote *kn,
 int
 evfilt_write_knote_delete(struct filter *filt, struct knote *kn)
 {
-    if (kn->kev.flags & EV_DISABLE)
-        return (0);
-    else
-        return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
+    return epoll_update(EPOLL_CTL_DEL, filt, kn, EPOLLOUT, true);
 }
 
 int
 evfilt_write_knote_enable(struct filter *filt, struct knote *kn)
 {
-    struct epoll_event ev;
-
-    memset(&ev, 0, sizeof(ev));
-    ev.events = kn->data.events;
-    ev.data.ptr = kn;
-
-    return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
+    return epoll_update(EPOLL_CTL_ADD, filt, kn, kn->data.events, false);
 }
 
 int
 evfilt_write_knote_disable(struct filter *filt, struct knote *kn)
 {
-    return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
+    return epoll_update(EPOLL_CTL_DEL, filt, kn, EPOLLOUT, false);
 }
 
 const struct filter evfilt_write = {

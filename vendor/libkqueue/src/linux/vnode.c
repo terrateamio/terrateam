@@ -103,7 +103,6 @@ get_one_event(struct inotify_event *dst, size_t len, int inofd)
 static int
 add_watch(struct filter *filt, struct knote *kn)
 {
-    struct epoll_event ev;
     int ifd;
     char path[PATH_MAX];
     uint32_t mask;
@@ -145,10 +144,8 @@ add_watch(struct filter *filt, struct knote *kn)
     }
 
     /* Add the inotify fd to the epoll set */
-    memset(&ev, 0, sizeof(ev));
-    ev.events = EPOLLIN;
-    ev.data.ptr = kn;
-    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_ADD, ifd, &ev) < 0) {
+    KN_UDATA(kn);   /* populate this knote's kn_udata field */
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_ADD, ifd, EPOLL_EV_KN(EPOLLIN, kn)) < 0) {
         dbg_perror("epoll_ctl(2)");
         goto errout;
     }

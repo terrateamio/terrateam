@@ -150,8 +150,6 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
 int
 evfilt_read_knote_create(struct filter *filt, struct knote *kn)
 {
-    struct epoll_event ev;
-
     if (linux_get_descriptor_type(kn) < 0)
         return (-1);
 
@@ -161,18 +159,25 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
 #else
     kn->data.events = EPOLLIN;
 #endif
-    if (kn->kev.flags & EV_ONESHOT || kn->kev.flags & EV_DISPATCH)
-        kn->data.events |= EPOLLONESHOT;
     if (kn->kev.flags & EV_CLEAR)
         kn->data.events |= EPOLLET;
-
-    memset(&ev, 0, sizeof(ev));
-    ev.events = kn->data.events;
-    ev.data.ptr = kn;
 
     /* Special case: for regular files, add a surrogate eventfd that is always readable */
     if (kn->kn_flags & KNFL_FILE) {
         int evfd;
+
+        /*
+         * We only set oneshot for cases where we're not going to
+         * be using EPOLL_CTL_MOD.
+         *
+         * We rely on the common code disabling the event after
+         * it's fired once.
+         *
+         * See this SO post for details:
+         * https://stackoverflow.com/questions/59517961/how-should-i-use-epoll-to-read-and-write-from-the-same-fd
+         */
+        if (kn->kev.flags & EV_ONESHOT || kn->kev.flags & EV_DISPATCH)
+            kn->data.events |= EPOLLONESHOT;
 
         kn->kn_epollfd = filter_epoll_fd(filt);
         evfd = eventfd(0, 0);
@@ -188,7 +193,8 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
 
         kn->kdata.kn_eventfd = evfd;
 
-        if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_ADD, kn->kdata.kn_eventfd, &ev) < 0) {
+        KN_UDATA(kn);   /* populate this knote's kn_udata field */
+        if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_ADD, kn->kdata.kn_eventfd, EPOLL_EV_KN(kn->data.events, kn)) < 0) {
             dbg_printf("epoll_ctl(2): %s", strerror(errno));
             (void) close(evfd);
             return (-1);
@@ -199,7 +205,7 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
         return (0);
     }
 
-    return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
+    return epoll_update(EPOLL_CTL_ADD, filt, kn, kn->data.events, false);
 }
 
 int
@@ -215,9 +221,6 @@ evfilt_read_knote_modify(struct filter *filt, struct knote *kn,
 int
 evfilt_read_knote_delete(struct filter *filt, struct knote *kn)
 {
-    if (kn->kev.flags & EV_DISABLE)
-        return (0);
-
     if ((kn->kn_flags & KNFL_FILE) && (kn->kdata.kn_eventfd != -1)) {
         if (kn->kn_registered && epoll_ctl(kn->kn_epollfd, EPOLL_CTL_DEL, kn->kdata.kn_eventfd, NULL) < 0) {
             dbg_perror("epoll_ctl(2)");
@@ -227,36 +230,24 @@ evfilt_read_knote_delete(struct filter *filt, struct knote *kn)
         (void) close(kn->kdata.kn_eventfd);
         kn->kdata.kn_eventfd = -1;
         return (0);
-    } else {
-        return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
     }
 
-    // clang will complain about not returning a value otherwise
-    return (-1);
+    return epoll_update(EPOLL_CTL_DEL, filt, kn, EPOLLIN, true);
 }
 
 int
 evfilt_read_knote_enable(struct filter *filt, struct knote *kn)
 {
-    struct epoll_event ev;
-
-    memset(&ev, 0, sizeof(ev));
-    ev.events = kn->data.events;
-    ev.data.ptr = kn;
-
     if (kn->kn_flags & KNFL_FILE) {
-        if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_ADD, kn->kdata.kn_eventfd, &ev) < 0) {
+        if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_ADD, kn->kdata.kn_eventfd, EPOLL_EV_KN(kn->data.events, kn)) < 0) {
             dbg_perror("epoll_ctl(2)");
             return (-1);
         }
         kn->kn_registered = 1;
         return (0);
-    } else {
-        return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
     }
 
-    // clang will complain about not returning a value otherwise
-    return (-1);
+    return epoll_update(EPOLL_CTL_ADD, filt, kn, kn->data.events, false);
 }
 
 int
@@ -269,9 +260,9 @@ evfilt_read_knote_disable(struct filter *filt, struct knote *kn)
         }
         kn->kn_registered = 1;
         return (0);
-    } else {
-        return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
     }
+
+    return epoll_update(EPOLL_CTL_DEL, filt, kn, EPOLLIN, false);
 }
 
 const struct filter evfilt_read = {
