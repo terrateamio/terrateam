@@ -2,21 +2,48 @@ language: c
 compiler:
 - clang
 - gcc
-dist: trusty
+cache:
+  apt: true
+dist: bionic
 env:
   global:
+  - KQUEUE_DEBUG="yes"
   - M_PERTURB=0x42
+  - CTEST_OUTPUT_ON_FAILURE=1
+  - ASAN_OPTIONS="symbolize=1 detect_leaks=1 detect_stack_use_after_return=1"
+  - LSAN_OPTIONS="fast_unwind_on_malloc=0:malloc_context_size=50"
+  matrix:
+  - BUILD_TYPE=Release
+  - BUILD_TYPE=Debug ENABLE_ASAN=NO ENABLE_LSAN=NO ENABLE_UBSAN=NO
+  - BUILD_TYPE=Debug ENABLE_ASAN=YES ENABLE_LSAN=YES ENABLE_UBSAN=YES
 addons:
   apt:
+    config:
+      retries: true
+    sources:
+    - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main'
+      key_url: https://apt.llvm.org/llvm-snapshot.gpg.key
+    # For newer GCC
+    - ubuntu-toolchain-r-test
     packages:
-    - doxygen
+    - build-essential
+    - clang-10
+    - debhelper
+    - devscripts
+    - dh-make
+    - fakeroot
+    - gcc-7
+    - gccgo-7
+    - gdb
+    # Needed for llvm-symbolizer
+    - llvm-10
 before_install:
-- $CC --version
+- if [ "${CC}" == 'gcc' ]; then sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 9999 && sudo update-alternatives --config gcc; fi
+- if [ "${CC}" == 'clang' ]; then sudo rm -rf /usr/local/clang-*; fi
+- if [ "${CC}" == 'clang' ]; then sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-10 9999 && sudo update-alternatives --config clang; fi
+- if [ "${CC}" == 'clang' ]; then sudo update-alternatives --install /usr/bin/llvm-symbolizer llvm-symbolizer /usr/bin/llvm-symbolizer-10 9999 && sudo update-alternatives --config llvm-symbolizer; fi
 before_script:
-# Cmake that ships with Trusty (v3.2.2) is too old, we need at least v3.4.3
-- mkdir /tmp/cmake && wget -O cmake.sh https://cmake.org/files/v3.10/cmake-3.10.0-Linux-x86_64.sh && chmod +x cmake.sh && ./cmake.sh --prefix=/tmp/cmake --skip-license
-- /tmp/cmake/bin/cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DENABLE_TESTING=YES ./
-- make -j2
-- /tmp/cmake/bin/cpack -G DEB
+- ./scripts/travis/build.sh
 script:
-- make test
+- make ARGS="-V" test
+
