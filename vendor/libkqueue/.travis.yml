@@ -14,7 +14,7 @@ env:
   - LSAN_OPTIONS="fast_unwind_on_malloc=0:malloc_context_size=50"
   matrix:
   - BUILD_TYPE=Release
-  - BUILD_TYPE=Debug ENABLE_ASAN=NO ENABLE_LSAN=NO ENABLE_UBSAN=NO
+  - BUILD_TYPE=Debug
   - BUILD_TYPE=Debug ENABLE_ASAN=YES ENABLE_LSAN=YES ENABLE_UBSAN=YES
 addons:
   apt:

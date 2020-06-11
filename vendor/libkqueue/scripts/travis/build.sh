@@ -16,9 +16,9 @@ if ! cmake . -G "Unix Makefiles" \
     -DCMAKE_INSTALL_LIBDIR="lib"  \
     -DCMAKE_VERBOSE_MAKEFILE:BOOL="ON" \
     -DENABLE_TESTING="YES" \
-    -DENABLE_ASAN="${DENABLE_ASAN:-YES}" \
-    -DENABLE_LSAN="${DENABLE_LSAN:-YES}" \
-    -DENABLE_UBSAN="${DENABLE_UBSAN:-YES}" \
+    -DENABLE_ASAN="${ENABLE_ASAN:-NO}" \
+    -DENABLE_LSAN="${ENABLE_LSAN:-NO}" \
+    -DENABLE_UBSAN="${ENABLE_UBSAN:-NO}" \
     -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"; then
     fatal "Failed during cmake build configuration"
 fi
