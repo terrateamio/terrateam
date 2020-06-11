@@ -167,6 +167,7 @@ kqueue(void)
     if (map_insert(kqmap, kq->kq_id, kq) < 0) {
         dbg_puts("map insertion failed");
         kqops.kqueue_free(kq);
+        free(kq);
         return (-1);
     }
 
