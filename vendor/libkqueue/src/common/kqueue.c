@@ -150,6 +150,8 @@ kqueue(void)
     tracing_mutex_init(&kq->kq_mtx, NULL);
 
     if (kqops.kqueue_init(kq) < 0) {
+    error:
+        tracing_mutex_destroy(&kq->kq_mtx);
         free(kq);
         return (-1);
     }
@@ -167,8 +169,8 @@ kqueue(void)
     if (map_insert(kqmap, kq->kq_id, kq) < 0) {
         dbg_puts("map insertion failed");
         kqops.kqueue_free(kq);
-        free(kq);
-        return (-1);
+        pthread_mutex_unlock(&kq_mtx);
+        goto error;
     }
 
     pthread_mutex_unlock(&kq_mtx);
