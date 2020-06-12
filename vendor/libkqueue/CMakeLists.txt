@@ -35,6 +35,48 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
+#
+# Address Sanitize
+#
+if(ENABLE_ASAN)
+  #
+  # -fsanitize=address           - Build with address sanitizer support
+  # -fno-omit-frame-pointer      - Always keep the frame pointer in a register
+  # -fno-optimize-sibling-calls  - Don't optimize away tail recursion.
+  #
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fno-omit-frame-pointer -fno-optimize-sibling-calls")
+  list(APPEND DEBUG_FSANITIZERFLAGS "address")
+endif()
+
+#
+# LeakSanitizer
+#
+if(ENABLE_LSAN)
+  #
+  # -fsanitize=leak  - Build with lsan support
+  #
+  list(APPEND DEBUG_FSANITIZERFLAGS "leak")
+endif()
+
+#
+# UndefinedBehaviour
+#
+if(ENABLE_UBSAN)
+  #
+  # -fsanitize=undefined    - Build with ubsan support
+  # -fno-omit-frame-pointer - Always keep the frame pointer in a register
+  #
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fno-sanitize-recover=undefined -fno-omit-frame-pointer")
+  set(CMAKE_LD_FLAGS_DEBUG "${CMAKE_LD_FLAGS_DEBUG} -fno-sanitize-recover=undefined")
+  list(APPEND DEBUG_FSANITIZERFLAGS "undefined")
+endif()
+
+if(DEBUG_FSANITIZERFLAGS)
+  string (REPLACE ";" "," DEBUG_FSANITIZERFLAGS "${DEBUG_FSANITIZERFLAGS}")
+  set(CMAKE_C_FLAGS_DEBUG "-fsanitize=${DEBUG_FSANITIZERFLAGS} ${CMAKE_C_FLAGS_DEBUG}")
+  set(CMAKE_LD_FLAGS_DEBUG "-fsanitize=${DEBUG_FSANITIZERFLAGS} ${CMAKE_LD_FLAGS_DEBUG}")
+endif()
+
 option(STATIC_KQUEUE "build libkqueue as static library" OFF)
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
