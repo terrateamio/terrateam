@@ -42,29 +42,50 @@ static const char *
 kevent_fflags_dump(const struct kevent *kev)
 {
     static __thread char buf[1024];
+    size_t len;
 
 #define KEVFFL_DUMP(attrib) \
     if (kev->fflags & attrib) \
     strncat((char *) buf, #attrib" ", 64);
 
     snprintf(buf, sizeof(buf), "fflags=0x%04x (", kev->fflags);
-    if (kev->filter == EVFILT_VNODE) {
+    switch (kev->filter) {
+    case EVFILT_VNODE:
         KEVFFL_DUMP(NOTE_DELETE);
         KEVFFL_DUMP(NOTE_WRITE);
         KEVFFL_DUMP(NOTE_EXTEND);
         KEVFFL_DUMP(NOTE_ATTRIB);
         KEVFFL_DUMP(NOTE_LINK);
         KEVFFL_DUMP(NOTE_RENAME);
-    } else if (kev->filter == EVFILT_USER) {
+        break;
+
+    case EVFILT_USER:
         KEVFFL_DUMP(NOTE_FFNOP);
         KEVFFL_DUMP(NOTE_FFAND);
         KEVFFL_DUMP(NOTE_FFOR);
         KEVFFL_DUMP(NOTE_FFCOPY);
         KEVFFL_DUMP(NOTE_TRIGGER);
-    }  else {
-        buf[0] = ' ';
+        break;
+
+    case EVFILT_READ:
+    case EVFILT_WRITE:
+#ifdef NOTE_LOWAT
+        KEVFFL_DUMP(NOTE_LOWAT);
+#endif
+        break;
+
+    case EVFILT_PROC:
+        KEVFFL_DUMP(NOTE_EXIT);
+        KEVFFL_DUMP(NOTE_FORK);
+        KEVFFL_DUMP(NOTE_EXEC);
+        break;
+
+    default:
+        break;
     }
-    buf[strlen(buf) - 1] = ')';
+    len = strlen(buf);
+    if (buf[len - 1] == ' ') buf[len - 1] = '\0';    /* Trim trailing space */
+    strcat(buf, ")");
 
 #undef KEVFFL_DUMP
 
@@ -75,6 +96,7 @@ static const char *
 kevent_flags_dump(const struct kevent *kev)
 {
     static __thread char buf[1024];
+    size_t len;
 
 #define KEVFL_DUMP(attrib) \
     if (kev->flags & attrib) \
@@ -91,7 +113,10 @@ kevent_flags_dump(const struct kevent *kev)
     KEVFL_DUMP(EV_ERROR);
     KEVFL_DUMP(EV_DISPATCH);
     KEVFL_DUMP(EV_RECEIPT);
-    buf[strlen(buf) - 1] = ')';
+
+    len = strlen(buf);
+    if (buf[len - 1] == ' ') buf[len - 1] = '\0';    /* Trim trailing space */
+    strcat(buf, ")");
 
 #undef KEVFL_DUMP
 
