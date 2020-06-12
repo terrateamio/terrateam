@@ -73,6 +73,8 @@ test_harness(void *arg)
         printf("thread %d round %d / %d\n", id, i, nrounds);
     }
     printf("thread %d done\n", id);
+
+    close(kqfd);
 }
 
 int
