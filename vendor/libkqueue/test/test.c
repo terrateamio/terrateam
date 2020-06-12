@@ -13,32 +13,31 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#if defined(__linux__) && (defined(__GLIBC__) && !defined(__UCLIBC__))
-#include <execinfo.h>
-#endif
 #include <sys/types.h>
 #include <limits.h>
+
+#if defined(__linux__) && (defined(__GLIBC__) && !defined(__UCLIBC__))
+#  include <execinfo.h>
+#endif
 
 #include "common.h"
 
 static int testnum = 1;
 static int error_flag = 1;
 
-/* FIXME: not portable beyond linux */
 #ifndef _WIN32
 static void
 error_handler(int signum)
 {
-#if defined(__linux__) && (defined(__GLIBC__) && !defined(__UCLIBC__))
+#  if defined(__linux__) && (defined(__GLIBC__) && !defined(__UCLIBC__))
     void *buf[32];
 
     /* FIXME: the symbols aren't printing */
     printf("***** ERROR: Program received signal %d *****\n", signum);
     backtrace_symbols_fd(buf, sizeof(buf) / sizeof(void *), 2);
-#else
+#  else
     printf("***** ERROR: Program received signal %d *****\n", signum);
-#endif
+#  endif
     exit(1);
 }
 #endif /* ! _WIN32 */
