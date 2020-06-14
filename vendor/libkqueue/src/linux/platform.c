@@ -252,28 +252,6 @@ linux_kqueue_init(struct kqueue *kq)
 
     (void) pthread_mutex_unlock(&kq_mtx);
 
- #if DEADWOOD
-    //might be useful in posix
-
-    /* Add each filter's pollable descriptor to the epollset */
-    for (i = 0; i < NUM_ELEMENTS(kq->kq_filt); i++) {
-        filt = &kq->kq_filt[i];
-
-        if (filt->kf_id == 0)
-            continue;
-
-        memset(&ev, 0, sizeof(ev));
-        ev.events = EPOLLIN;
-        ev.data.ptr = filt;
-
-        if (epoll_ctl(kq->kq_id, EPOLL_CTL_ADD, filt->kf_pfd, &ev) < 0) {
-            dbg_perror("epoll_ctl(2)");
-            close(kq->kq_id);
-            return (-1);
-        }
-    }
-#endif
-
     return (0);
 }
 
