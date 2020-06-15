@@ -76,18 +76,75 @@ static bool
 linux_kqueue_cleanup(struct kqueue *kq);
 
 unsigned int get_fd_limit(void);
+
+static bool end_monitoring_thread = false;
+
+static void
+monitoring_thread_kq_cleanup(int signal_fd)
+{
+    int fd;
+    struct kqueue *kq;
+
+    (void) pthread_mutex_lock(&kq_mtx);
+    /*
+     * Signal is received for read side of pipe
+     * Get FD for write side as it's the kqueue identifier
+     */
+    fd = fd_map[signal_fd];
+    if (!fd) {
+       /* Should not happen */
+        dbg_printf("got signal for unknown FD %i", fd);
+        goto check_count;
+    }
+
+    kq = kqueue_lookup(fd);
+    if (!kq) {
+        /* Should not happen */
+        dbg_printf("no kqueue associated with FD %i", fd);
+        goto check_count;
+    }
+
+    /* If kqueue instance for this FD hasn't been cleaned yet */
+    if (fd_cleanup_cnt[kq->kq_id] == 0) {
+        dbg_printf("cleanup count for kqueue FD %u is 0, cleaning up...", kq->kq_id);
+        linux_kqueue_cleanup(kq);
+
+        /* Decrement cleanup counter as signal handler has been run for this FD */
+        fd_cleanup_cnt[kq->kq_id]--;
+    } else {
+        dbg_printf("cleanup count for kqueue FD %u is %u, skipping...", kq->kq_id, fd_cleanup_cnt[kq->kq_id]);
+    }
+
+check_count:
+    /*
+     * Stop thread if all kqueues have been closed
+     */
+    if (kqueue_cnt == 0) {
+        dbg_printf("monitoring thread %u exiting", monitoring_tid);
+
+        end_monitoring_thread = true;
+
+        /* Reset so that thread can be restarted */
+        monitoring_thread_initialized = PTHREAD_ONCE_INIT;
+
+        /* Free thread resources */
+        free(fd_map);
+        free(fd_cleanup_cnt);
+    }
+
+    (void) pthread_mutex_unlock(&kq_mtx);
+}
+
 /*
  * Monitoring thread that loops on waiting for signals to be received
  */
 static void *
-monitoring_thread_start(void *arg)
+monitoring_thread_loop(void *arg)
 {
-    short end_thread = 0;
     int res = 0;
     siginfo_t info;
-    int fd;
     int nb_max_fd;
-    struct kqueue *kq;
+
     sigset_t monitoring_sig_set;
 
     nb_max_fd = get_fd_limit();
@@ -102,7 +159,11 @@ monitoring_thread_start(void *arg)
 
     (void) pthread_mutex_lock(&kq_mtx);
 
+    end_monitoring_thread = false;    /* reset */
+
     monitoring_tid = syscall(SYS_gettid);
+
+    dbg_printf("monitoring thread %u started", monitoring_tid);
 
     fd_map = calloc(nb_max_fd, sizeof(unsigned int));
     if (fd_map == NULL) {
@@ -125,57 +186,15 @@ monitoring_thread_start(void *arg)
 
     pthread_detach(pthread_self());
 
-    while (!end_thread) {
+    while (!end_monitoring_thread) {
         /*
          * Wait for signal notifying us that a change has occured on the pipe
          * It's not possible to only listen on FD close but no other operation
          * should be performed on the kqueue.
          */
         res = sigwaitinfo(&monitoring_sig_set, &info);
-        if( res != -1 ) {
-            (void) pthread_mutex_lock(&kq_mtx);
-            /*
-             * Signal is received for read side of pipe
-             * Get FD for write side as it's the kqueue identifier
-             */
-            fd = fd_map[info.si_fd];
-            if (fd) {
-                kq = kqueue_lookup(fd);
-                if (kq) {
-                    /* If kqueue instance for this FD hasn't been cleaned yet */
-                    if (fd_cleanup_cnt[kq->kq_id] == 0) {
-                        linux_kqueue_cleanup(kq);
-                    }
-
-                    /* Decrement cleanup counter as signal handler has been run for this FD */
-                    fd_cleanup_cnt[kq->kq_id]--;
-                } else {
-                    /* Should not happen */
-                    dbg_puts("Failed to lookup FD");
-                }
-            } else {
-                /* Should not happen */
-                dbg_puts("Got signal from unknown FD");
-            }
-
-            /*
-             * Stop thread if all kqueues have been closed
-             */
-            if (kqueue_cnt == 0) {
-                end_thread = 1;
-
-                /* Reset so that thread can be restarted */
-                monitoring_thread_initialized = PTHREAD_ONCE_INIT;
-
-                /* Free thread resources */
-                free(fd_map);
-                free(fd_cleanup_cnt);
-            }
-
-            (void) pthread_mutex_unlock(&kq_mtx);
-        } else {
-            dbg_perror("sigwait()");
-        }
+        if (res != -1)
+            monitoring_thread_kq_cleanup(info.si_fd);
     }
 
     return NULL;
@@ -184,7 +203,7 @@ monitoring_thread_start(void *arg)
 static void
 linux_kqueue_start_thread()
 {
-    if (pthread_create(&monitoring_thread, NULL, &monitoring_thread_start, NULL)) {
+    if (pthread_create(&monitoring_thread, NULL, &monitoring_thread_loop, NULL)) {
          dbg_perror("linux_kqueue_start_thread failure");
     }
 
@@ -234,7 +253,7 @@ linux_kqueue_init(struct kqueue *kq)
      */
     flags = fcntl(kq->pipefd[0], F_GETFL, 0);
     if (fcntl(kq->pipefd[0], F_SETFL, flags | O_ASYNC) < 0) {
-        dbg_perror("failed setting O_ASYNC");
+        dbg_printf("failed setting O_ASYNC on FD %i: %s", kq->pipefd[0], strerror(errno));
         goto error;
     }
 
@@ -247,11 +266,19 @@ linux_kqueue_init(struct kqueue *kq)
      * so we won't conflict with the application.
      */
     if (fcntl(kq->pipefd[0], F_SETSIG, MONITORING_THREAD_SIGNAL) < 0) {
-        dbg_perror("failed settting F_SETSIG");
+        dbg_printf("failed settting F_SETSIG on FD %i: %s", kq->pipefd[0], strerror(errno));
         goto error;
     }
 
     (void) pthread_mutex_lock(&kq_mtx);
+
+    /*
+     * Increment kqueue counter - must be incremented before
+     * starting the monitoring thread in case there's a spurious
+     * wakeup and the thread immediately checks that there
+     * are no kqueues, and exits.
+     */
+    kqueue_cnt++;
 
     /* Start monitoring thread during first initialization */
     (void) pthread_once(&monitoring_thread_initialized, linux_kqueue_start_thread);
@@ -259,8 +286,7 @@ linux_kqueue_init(struct kqueue *kq)
     /* Update pipe FD map */
     fd_map[kq->pipefd[0]] = kq->pipefd[1];
 
-    /* Increment kqueue counter */
-    kqueue_cnt++;
+    dbg_printf("there are now %u active kqueue(s)", kqueue_cnt);
 
     /*
      * Finally, ensure that signals generated by I/O operations
@@ -270,10 +296,12 @@ linux_kqueue_init(struct kqueue *kq)
     sig_owner.type = F_OWNER_TID;
     sig_owner.pid = monitoring_tid;
     if (fcntl(kq->pipefd[0], F_SETOWN_EX, &sig_owner) < 0) {
-        dbg_perror("failed settting F_SETOWN");
+        dbg_printf("failed settting F_SETOWN to TID %u on FD %i: %s", monitoring_tid, kq->pipefd[0], strerror(errno));
+        kqueue_cnt--;
         (void) pthread_mutex_unlock(&kq_mtx);
         goto error;
     }
+    dbg_printf("kqueue FD %i now monitored", kq->pipefd[0]);
 
     (void) pthread_mutex_unlock(&kq_mtx);
 
@@ -315,7 +343,7 @@ linux_kqueue_cleanup(struct kqueue *kq)
     } else if (ret > 0) {
         // Shouldn't happen unless data is written to kqueue FD
         // Ignore write and continue with close
-        dbg_puts("Unexpected data available on kqueue FD");
+        dbg_puts("unexpected data available on kqueue FD");
     }
 
     pipefd = kq->pipefd[0];
@@ -328,6 +356,7 @@ linux_kqueue_cleanup(struct kqueue *kq)
 
     /* Decrement kqueue counter */
     kqueue_cnt--;
+    dbg_printf("cleaned up kqueue %i, there are now %u active kqueue(s)", pipefd, kqueue_cnt);
 
     return true;
 }
@@ -336,9 +365,10 @@ void
 linux_kqueue_free(struct kqueue *kq)
 {
     /* Increment cleanup counter as cleanup is being performed outside signal handler */
-    if (linux_kqueue_cleanup(kq))
+    if (linux_kqueue_cleanup(kq)) {
         fd_cleanup_cnt[kq->kq_id]++;
-    else /* Reset counter as FD had already been cleaned */
+        dbg_printf("cleanup count for kqueue FD %u increased to %u", kq->kq_id, fd_cleanup_cnt[kq->kq_id]);
+    } else /* Reset counter as FD had already been cleaned */
         fd_cleanup_cnt[kq->kq_id] = 0;
 
     free(kq);
