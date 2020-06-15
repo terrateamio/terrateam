@@ -51,7 +51,7 @@ static unsigned int kqueue_cnt = 0;
  * Map for kqueue pipes where index is the read side (for which signals are received)
  * and value is the write side that gets closed and corresponds to the kqueue id.
  */
-static unsigned int *fd_map;
+static int *fd_map;
 
 /*
  * Map kqueue id to counter for kq cleanups.
@@ -91,7 +91,7 @@ monitoring_thread_kq_cleanup(int signal_fd)
      * Get FD for write side as it's the kqueue identifier
      */
     fd = fd_map[signal_fd];
-    if (!fd) {
+    if (fd < 0) {
        /* Should not happen */
         dbg_printf("got signal for unknown FD %i", fd);
         goto check_count;
@@ -165,12 +165,14 @@ monitoring_thread_loop(void *arg)
 
     dbg_printf("monitoring thread %u started", monitoring_tid);
 
-    fd_map = calloc(nb_max_fd, sizeof(unsigned int));
+    fd_map = calloc(nb_max_fd, sizeof(int));
     if (fd_map == NULL) {
     error:
         (void) pthread_mutex_unlock(&kq_mtx);
         return NULL;
     }
+	for (i = 0; i < nb_max_fd; i++)
+		fd_map[i] = -1;
 
     fd_cleanup_cnt = calloc(nb_max_fd, sizeof(unsigned int));
     if (fd_cleanup_cnt == NULL){
@@ -353,7 +355,7 @@ linux_kqueue_cleanup(struct kqueue *kq)
         kq->pipefd[0] = -1;
     }
 
-    fd_map[pipefd] = 0;
+    fd_map[pipefd] = -1;
 
     /* Decrement kqueue counter */
     kqueue_cnt--;
