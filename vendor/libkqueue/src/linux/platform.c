@@ -327,6 +327,7 @@ linux_kqueue_cleanup(struct kqueue *kq)
         close(kq->epollfd);
         kq->epollfd = -1;
     } else {
+        dbg_puts("epollfd already closed, not performing cleanup");
         // Don't do cleanup if epollfd has already been closed
         return false;
     }
@@ -356,7 +357,7 @@ linux_kqueue_cleanup(struct kqueue *kq)
 
     /* Decrement kqueue counter */
     kqueue_cnt--;
-    dbg_printf("cleaned up kqueue %i, there are now %u active kqueue(s)", pipefd, kqueue_cnt);
+    dbg_printf("cleaned up kqueue FD %i, there are now %u active kqueue(s)", pipefd, kqueue_cnt);
 
     return true;
 }
@@ -367,7 +368,7 @@ linux_kqueue_free(struct kqueue *kq)
     /* Increment cleanup counter as cleanup is being performed outside signal handler */
     if (linux_kqueue_cleanup(kq)) {
         fd_cleanup_cnt[kq->kq_id]++;
-        dbg_printf("cleanup count for kqueue FD %u increased to %u", kq->kq_id, fd_cleanup_cnt[kq->kq_id]);
+        dbg_printf("cleanup count for kqueue FD %i increased to %u", kq->kq_id, fd_cleanup_cnt[kq->kq_id]);
     } else /* Reset counter as FD had already been cleaned */
         fd_cleanup_cnt[kq->kq_id] = 0;
 
