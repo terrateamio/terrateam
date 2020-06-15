@@ -105,14 +105,14 @@ monitoring_thread_kq_cleanup(int signal_fd)
     }
 
     /* If kqueue instance for this FD hasn't been cleaned yet */
-    if (fd_cleanup_cnt[kq->kq_id] == 0) {
-        dbg_printf("cleanup count for kqueue FD %u is 0, cleaning up...", kq->kq_id);
+    if (fd_cleanup_cnt[fd] == 0) {
+        dbg_printf("cleanup count for kqueue FD %u is 0, cleaning up...", fd);
         linux_kqueue_cleanup(kq);
 
         /* Decrement cleanup counter as signal handler has been run for this FD */
-        fd_cleanup_cnt[kq->kq_id]--;
+        fd_cleanup_cnt[fd]--;
     } else {
-        dbg_printf("cleanup count for kqueue FD %u is %u, skipping...", kq->kq_id, fd_cleanup_cnt[kq->kq_id]);
+        dbg_printf("cleanup count for kqueue FD %u is %u, skipping...", fd, fd_cleanup_cnt[fd]);
     }
 
 check_count:
