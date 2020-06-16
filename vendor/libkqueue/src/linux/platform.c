@@ -95,26 +95,26 @@ monitoring_thread_kq_cleanup(int signal_fd)
     fd = fd_map[signal_fd];
     if (fd < 0) {
        /* Should not happen */
-        dbg_printf("got signal for unknown FD %i", fd);
+        dbg_printf("got signal for unknown FD, fd=%i", fd);
         goto check_count;
     }
 
     kq = kqueue_lookup(fd);
     if (!kq) {
         /* Should not happen */
-        dbg_printf("no kqueue associated with FD %i", fd);
+        dbg_printf("no kqueue associated, fd=%i", fd);
         goto check_count;
     }
 
     /* If kqueue instance for this FD hasn't been cleaned yet */
     if (fd_use_cnt[fd] == 0) {
-        dbg_printf("use count for kqueue FD %u is 0, cleaning up...", fd);
+        dbg_printf("kqueue fd=%u, use_count=%u, cleaning up...", fd, fd_use_cnt[fd]);
         linux_kqueue_cleanup(kq);
 
         /* Decrement use counter as signal handler has been run for this FD */
         fd_use_cnt[fd]--;
     } else {
-        dbg_printf("use count for kqueue FD %u is %u, skipping...", fd, fd_use_cnt[fd]);
+        dbg_printf("kqueue fd=%u, use_count=%u, skipping...", fd, fd_use_cnt[fd]);
     }
 
 check_count:
@@ -122,7 +122,7 @@ check_count:
      * Stop thread if all kqueues have been closed
      */
     if (kqueue_cnt == 0) {
-        dbg_printf("monitoring thread %u exiting", monitoring_tid);
+        dbg_printf("monitoring thread tid=%u exiting", monitoring_tid);
 
         end_monitoring_thread = true;
 
@@ -164,7 +164,7 @@ monitoring_thread_loop(void *arg)
 
     monitoring_tid = syscall(SYS_gettid);
 
-    dbg_printf("monitoring thread %u started", monitoring_tid);
+    dbg_printf("monitoring thread tid=%u started", monitoring_tid);
 
     fd_map = calloc(nb_max_fd, sizeof(int));
     if (fd_map == NULL) {
@@ -258,7 +258,7 @@ linux_kqueue_init(struct kqueue *kq)
      */
     flags = fcntl(kq->pipefd[0], F_GETFL, 0);
     if (fcntl(kq->pipefd[0], F_SETFL, flags | O_ASYNC) < 0) {
-        dbg_printf("failed setting O_ASYNC on FD %i: %s", kq->pipefd[0], strerror(errno));
+        dbg_printf("failed setting O_ASYNC fd=%i: %s", kq->pipefd[0], strerror(errno));
         goto error;
     }
 
@@ -271,7 +271,7 @@ linux_kqueue_init(struct kqueue *kq)
      * so we won't conflict with the application.
      */
     if (fcntl(kq->pipefd[0], F_SETSIG, MONITORING_THREAD_SIGNAL) < 0) {
-        dbg_printf("failed settting F_SETSIG on FD %i: %s", kq->pipefd[0], strerror(errno));
+        dbg_printf("failed settting F_SETSIG fd=%i: %s", kq->pipefd[0], strerror(errno));
         goto error;
     }
 
@@ -301,12 +301,12 @@ linux_kqueue_init(struct kqueue *kq)
     sig_owner.type = F_OWNER_TID;
     sig_owner.pid = monitoring_tid;
     if (fcntl(kq->pipefd[0], F_SETOWN_EX, &sig_owner) < 0) {
-        dbg_printf("failed settting F_SETOWN to TID %u on FD %i: %s", monitoring_tid, kq->pipefd[0], strerror(errno));
+        dbg_printf("failed settting F_SETOWN, tid=%u fd=%i: %s", monitoring_tid, kq->pipefd[0], strerror(errno));
         kqueue_cnt--;
         (void) pthread_mutex_unlock(&kq_mtx);
         goto error;
     }
-    dbg_printf("kqueue FD %i now monitored", kq->pipefd[0]);
+    dbg_printf("kqueue now monitored kq=%p fd=%i", kq, kq->pipefd[0]);
 
     (void) pthread_mutex_unlock(&kq_mtx);
 
