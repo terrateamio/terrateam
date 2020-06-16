@@ -375,7 +375,6 @@ linux_kqueue_free(struct kqueue *kq)
     } else /* Reset counter as FD had already been cleaned */
         fd_cleanup_cnt[kq->kq_id] = 0;
 
-    free(kq);
 }
 
 static int

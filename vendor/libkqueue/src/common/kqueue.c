@@ -104,18 +104,43 @@ kqueue_cmp(struct kqueue *a, struct kqueue *b)
 {
     return memcmp(&a->kq_id, &b->kq_id, sizeof(int));
 }
+#endif
 
 /* Must hold the kqtree_mtx when calling this */
 void
 kqueue_free(struct kqueue *kq)
 {
-    RB_REMOVE(kqt, &kqtree, kq);
+    dbg_printf("freeing kqueue %p, fd=%d", kq, kq->kq_id);
+
+    /*
+     * Ensure the current map entry points to
+     * this kqueue.  We don't want to remove
+     * the entry for another kqueue.
+     */
+    if (map_lookup(kqmap, kq->kq_id) == kq)
+        map_delete(kqmap, kq->kq_id);
+
     filter_unregister_all(kq);
     kqops.kqueue_free(kq);
+    tracing_mutex_destroy(&kq->kq_mtx);
     free(kq);
 }
 
-#endif
+void
+kqueue_free_by_id(int id)
+{
+    struct kqueue *kq;
+
+    kq = map_delete(kqmap, id);
+    if (!kq) return;
+
+    dbg_printf("freeing kqueue %p, fd=%d", kq, kq->kq_id);
+
+    filter_unregister_all(kq);
+    kqops.kqueue_free(kq);
+    tracing_mutex_destroy(&kq->kq_mtx);
+    free(kq);
+}
 
 struct kqueue *
 kqueue_lookup(int kq)
@@ -127,7 +152,6 @@ int VISIBLE
 kqueue(void)
 {
     struct kqueue *kq;
-    struct kqueue *tmp;
 
 #ifdef _WIN32
     if (InterlockedCompareExchange(&kq_init_begin, 0, 1) == 0) {
@@ -158,19 +182,16 @@ kqueue(void)
         return (-1);
     }
 
-    dbg_printf("created kqueue, fd=%d", kq->kq_id);
+    dbg_printf("alloced kqueue %p, fd=%d", kq, kq->kq_id);
 
     /* Delete and insert should be atomic */
     (void) pthread_mutex_lock(&kq_mtx);
 
-    tmp = map_delete(kqmap, kq->kq_id);
-    if (tmp != NULL) {
-        kqops.kqueue_free(tmp);
-    }
+    kqueue_free_by_id(kq->kq_id);   /* Free any old map entries */
 
     if (map_insert(kqmap, kq->kq_id, kq) < 0) {
-        dbg_puts("map insertion failed");
-        kqops.kqueue_free(kq);
+        dbg_printf("map insertion failed, freeing kqueue %p, fd=%d", kq, kq->kq_id);
+        filter_unregister_all(kq);
         pthread_mutex_unlock(&kq_mtx);
         goto error;
     }

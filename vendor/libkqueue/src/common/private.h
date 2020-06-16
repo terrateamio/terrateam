@@ -248,6 +248,8 @@ int         kevent_copyout(struct kqueue *, int, struct kevent *, int);
 void         kevent_free(struct kqueue *);
 const char *kevent_dump(const struct kevent *);
 struct kqueue * kqueue_lookup(int);
+void        kqueue_free(struct kqueue *);
+void        kqueue_free_by_id(int id);
 int         kqueue_validate(struct kqueue *);
 
 struct map *map_new(size_t);

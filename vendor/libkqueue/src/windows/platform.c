@@ -82,7 +82,6 @@ void
 windows_kqueue_free(struct kqueue *kq)
 {
     CloseHandle(kq->kq_iocp);
-    free(kq);
 }
 
 int
