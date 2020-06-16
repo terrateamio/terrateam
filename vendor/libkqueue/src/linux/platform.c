@@ -50,6 +50,9 @@ static unsigned int kqueue_cnt = 0;
 /*
  * Map for kqueue pipes where index is the read side (for which signals are received)
  * and value is the write side that gets closed and corresponds to the kqueue id.
+ *
+ * @note Values in the fd_map are never cleared, as we still need to decrement
+ * fd_use_cnt when signals for a particular FD are received.
  */
 static int *fd_map;
 
@@ -168,8 +171,8 @@ monitoring_thread_loop(void *arg)
     error:
         return NULL;
     }
-	for (i = 0; i < nb_max_fd; i++)
-		fd_map[i] = -1;
+    for (i = 0; i < nb_max_fd; i++)
+        fd_map[i] = -1;
 
     fd_use_cnt = calloc(nb_max_fd, sizeof(unsigned int));
     if (fd_use_cnt == NULL){
@@ -354,8 +357,6 @@ linux_kqueue_cleanup(struct kqueue *kq)
         close(pipefd);
         kq->pipefd[0] = -1;
     }
-
-    fd_map[pipefd] = -1;
 
     /* Decrement kqueue counter */
     kqueue_cnt--;
