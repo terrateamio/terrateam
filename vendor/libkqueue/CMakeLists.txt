@@ -14,6 +14,8 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
+set(PROJECT_VERSION 2.4.0)
+
 if(EXISTS "/etc/debian_version")
   cmake_minimum_required(VERSION 3.7.2)
 else()
@@ -23,7 +25,9 @@ else()
 endif()
 cmake_policy(SET CMP0063 OLD)
 
-project(libkqueue VERSION 2.4.0 LANGUAGES C)
+project(libkqueue VERSION ${PROJECT_VERSION}
+                  LANGUAGES C)
+
 enable_testing()
 
 set(CMAKE_C_VISIBILITY_PRESET hidden)
@@ -187,7 +191,7 @@ else()
 endif()
 
 add_library(kqueue ${LIBRARY_TYPE} ${LIBKQUEUE_SOURCES} ${LIBKQUEUE_HEADERS})
-set_target_properties(kqueue PROPERTIES SOVERSION 1)
+set_target_properties(kqueue PROPERTIES SOVERSION ${PROJECT_VERSION})
 
 if(WIN32)
   target_compile_definitions(kqueue PRIVATE _USRDLL;_WINDLL)
