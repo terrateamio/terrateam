@@ -41,6 +41,7 @@
 #else
 # include <stdint.h>
 #endif
+# include <sys/libkqueue_version.h>
 #define LIBKQUEUE       1
 #endif
 

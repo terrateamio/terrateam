@@ -19,3 +19,4 @@ test/CMakeCache.txt
 test/CMakeFiles/
 test/cmake_install.cmake
 test/libkqueue-test
+include/sys/libkqueue_version.h

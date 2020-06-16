@@ -27,6 +27,8 @@ cmake_policy(SET CMP0063 OLD)
 
 project(libkqueue VERSION ${PROJECT_VERSION}
                   LANGUAGES C)
+configure_file(include/sys/libkqueue_version.h.in
+               include/sys/libkqueue_version.h @ONLY)
 
 enable_testing()
 
@@ -239,7 +241,7 @@ set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION ${CMAKE_INSTALL_FULL_MANDIR}
                                                   ${CMAKE_INSTALL_FULL_LIBDIR}${LIB_SUFFIX}/pkgconfig)
 
 install(FILES
-          "include/sys/event.h"
+          "include/sys/event.h" "include/sys/libkqueue_version.h"
         DESTINATION
           "${CMAKE_INSTALL_FULL_INCLUDEDIR}/kqueue/sys"
         COMPONENT headers)
