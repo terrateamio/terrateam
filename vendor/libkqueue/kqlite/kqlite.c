@@ -397,8 +397,8 @@ _get_signal(struct kevent *dst, kqueue_t kq)
 
 /* Equivalent to kevent() */
 int kq_event(kqueue_t kq, const struct kevent *changelist, int nchanges,
-	    struct kevent *eventlist, int nevents,
-	    const struct timespec *timeout)
+        struct kevent *eventlist, int nevents,
+        const struct timespec *timeout)
 {
     int rv = 0;
     struct kevent *dst;

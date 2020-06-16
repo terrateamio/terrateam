@@ -40,13 +40,13 @@ main(int argc, char **argv)
     int x;
 
     x = 1;
-	if (ioctl(fd, 1234, (char *) &x) < 0)
+    if (ioctl(fd, 1234, (char *) &x) < 0)
         err(1, "ioctl");
     x = 2;
-	if (ioctl(fd, 1234, (char *) &x) < 0)
+    if (ioctl(fd, 1234, (char *) &x) < 0)
         err(1, "ioctl");
 #endif
-	if (write(fd, &kev, sizeof(kev)) < 0)
+    if (write(fd, &kev, sizeof(kev)) < 0)
         err(1, "write");
 
     close(fd);
