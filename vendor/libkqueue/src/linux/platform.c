@@ -85,7 +85,6 @@ monitoring_thread_kq_cleanup(int signal_fd)
     int fd;
     struct kqueue *kq;
 
-    (void) pthread_mutex_lock(&kq_mtx);
     /*
      * Signal is received for read side of pipe
      * Get FD for write side as it's the kqueue identifier
@@ -158,8 +157,6 @@ monitoring_thread_loop(void *arg)
     sigemptyset(&monitoring_sig_set);
     sigaddset(&monitoring_sig_set, MONITORING_THREAD_SIGNAL);
 
-    (void) pthread_mutex_lock(&kq_mtx);
-
     end_monitoring_thread = false;    /* reset */
 
     monitoring_tid = syscall(SYS_gettid);
@@ -169,7 +166,6 @@ monitoring_thread_loop(void *arg)
     fd_map = calloc(nb_max_fd, sizeof(int));
     if (fd_map == NULL) {
     error:
-        (void) pthread_mutex_unlock(&kq_mtx);
         return NULL;
     }
 	for (i = 0; i < nb_max_fd; i++)
@@ -184,9 +180,7 @@ monitoring_thread_loop(void *arg)
     /*
      * Now that thread is initialized, let kqueue init resume
      */
-    pthread_cond_broadcast(&monitoring_thread_cond);
-    (void) pthread_mutex_unlock(&kq_mtx);
-
+    pthread_cond_signal(&monitoring_thread_cond);
     pthread_detach(pthread_self());
 
     while (!end_monitoring_thread) {
@@ -204,14 +198,19 @@ monitoring_thread_loop(void *arg)
 }
 
 static void
-linux_kqueue_start_thread()
+linux_kqueue_start_thread(void)
 {
+    static pthread_mutex_t  mt_mtx = PTHREAD_MUTEX_INITIALIZER;
+
+    pthread_mutex_lock(&mt_mtx);
+
     if (pthread_create(&monitoring_thread, NULL, &monitoring_thread_loop, NULL)) {
          dbg_perror("linux_kqueue_start_thread failure");
     }
 
     /* Wait for thread creating to be done as we need monitoring_tid to be available */
-    pthread_cond_wait(&monitoring_thread_cond, &kq_mtx);
+    pthread_cond_wait(&monitoring_thread_cond, &mt_mtx);
+    pthread_mutex_unlock(&mt_mtx);
 }
 
 int
