@@ -55,10 +55,10 @@ static int *fd_map;
 
 /*
  * Map kqueue id to counter for kq cleanups.
- * When cleanup counter is at 0, cleanup can be performed by signal handler.
+ * When use counter is at 0, cleanup can be performed by signal handler.
  * Otherwise, it means cleanup was already performed for this FD in linux_kqueue_free.
  */
-static unsigned int *fd_cleanup_cnt;
+static unsigned int *fd_use_cnt;
 
 const struct kqueue_vtable kqops = {
     .kqueue_init        = linux_kqueue_init,
@@ -105,14 +105,14 @@ monitoring_thread_kq_cleanup(int signal_fd)
     }
 
     /* If kqueue instance for this FD hasn't been cleaned yet */
-    if (fd_cleanup_cnt[fd] == 0) {
-        dbg_printf("cleanup count for kqueue FD %u is 0, cleaning up...", fd);
+    if (fd_use_cnt[fd] == 0) {
+        dbg_printf("use count for kqueue FD %u is 0, cleaning up...", fd);
         linux_kqueue_cleanup(kq);
 
-        /* Decrement cleanup counter as signal handler has been run for this FD */
-        fd_cleanup_cnt[fd]--;
+        /* Decrement use counter as signal handler has been run for this FD */
+        fd_use_cnt[fd]--;
     } else {
-        dbg_printf("cleanup count for kqueue FD %u is %u, skipping...", fd, fd_cleanup_cnt[fd]);
+        dbg_printf("use count for kqueue FD %u is %u, skipping...", fd, fd_use_cnt[fd]);
     }
 
 check_count:
@@ -129,7 +129,7 @@ check_count:
 
         /* Free thread resources */
         free(fd_map);
-        free(fd_cleanup_cnt);
+        free(fd_use_cnt);
     }
 
     (void) pthread_mutex_unlock(&kq_mtx);
@@ -175,8 +175,8 @@ monitoring_thread_loop(void *arg)
 	for (i = 0; i < nb_max_fd; i++)
 		fd_map[i] = -1;
 
-    fd_cleanup_cnt = calloc(nb_max_fd, sizeof(unsigned int));
-    if (fd_cleanup_cnt == NULL){
+    fd_use_cnt = calloc(nb_max_fd, sizeof(unsigned int));
+    if (fd_use_cnt == NULL){
         free(fd_map);
         goto error;
     }
@@ -368,12 +368,12 @@ linux_kqueue_cleanup(struct kqueue *kq)
 void
 linux_kqueue_free(struct kqueue *kq)
 {
-    /* Increment cleanup counter as cleanup is being performed outside signal handler */
+    /* Increment use counter as cleanup is being performed outside signal handler */
     if (linux_kqueue_cleanup(kq)) {
-        fd_cleanup_cnt[kq->kq_id]++;
-        dbg_printf("cleanup count for kqueue FD %i increased to %u", kq->kq_id, fd_cleanup_cnt[kq->kq_id]);
+        fd_use_cnt[kq->kq_id]++;
+        dbg_printf("use count for kqueue FD %i increased to %u", kq->kq_id, fd_use_cnt[kq->kq_id]);
     } else /* Reset counter as FD had already been cleaned */
-        fd_cleanup_cnt[kq->kq_id] = 0;
+        fd_use_cnt[kq->kq_id] = 0;
 
 }
 
