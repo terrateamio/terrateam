@@ -22,7 +22,7 @@
  * Create a connected TCP socket.
  */
 static void
-create_socket_connection(int *client, int *server)
+create_socket_connection(int *client_fd, int *server_fd, int *listen_fd)
 {
     struct sockaddr_in sain;
     socklen_t sa_len = sizeof(sain);
@@ -60,8 +60,9 @@ create_socket_connection(int *client, int *server)
     if ((accepted = accept(srvr, NULL, 0)) < 0)
        err(1, "srvr: accept");
 
-    *client = clnt;
-    *server = accepted;
+    *client_fd = clnt;
+    *server_fd = accepted;
+    *listen_fd = srvr;
 }
 
 static void
@@ -292,6 +293,9 @@ test_kevent_socket_listen_backlog(struct test_context *ctx)
     kevent_get(&ret, ctx->kqfd);
     kevent_cmp(&kev, &ret);
     test_no_kevents(ctx->kqfd);
+
+    close(clnt);
+    close(srvr);
 }
 
 #ifdef EV_DISPATCH
@@ -455,7 +459,7 @@ test_transition_from_write_to_read(struct test_context *ctx)
 void
 test_evfilt_read(struct test_context *ctx)
 {
-    create_socket_connection(&ctx->client_fd, &ctx->server_fd);
+    create_socket_connection(&ctx->client_fd, &ctx->server_fd, &ctx->listen_fd);
 
     test(kevent_socket_add, ctx);
     test(kevent_socket_del, ctx);
@@ -472,9 +476,11 @@ test_evfilt_read(struct test_context *ctx)
     test(kevent_regular_file, ctx);
     close(ctx->client_fd);
     close(ctx->server_fd);
+    close(ctx->listen_fd);
 
-    create_socket_connection(&ctx->client_fd, &ctx->server_fd);
+    create_socket_connection(&ctx->client_fd, &ctx->server_fd, &ctx->listen_fd);
     test(transition_from_write_to_read, ctx);
     close(ctx->client_fd);
     close(ctx->server_fd);
+    close(ctx->listen_fd);
 }

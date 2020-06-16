@@ -144,6 +144,7 @@ monitoring_thread_loop(void *arg)
     int res = 0;
     siginfo_t info;
     int nb_max_fd;
+    int i;
 
     sigset_t monitoring_sig_set;
 

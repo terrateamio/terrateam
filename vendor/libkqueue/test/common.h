@@ -74,6 +74,7 @@ struct test_context {
     /* EVFILT_READ and EVFILT_WRITE */
     int client_fd;
     int server_fd;
+    int listen_fd;
 
     /* EVFILT_VNODE */
     int vnode_fd;
