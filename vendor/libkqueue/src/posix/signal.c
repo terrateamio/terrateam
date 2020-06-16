@@ -206,7 +206,7 @@ evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
         KNOTE_DISABLE(kn);
     } else if (kn->kev.flags & EV_ONESHOT) {
         ignore_signal(kn->kev.ident);
-        knote_free(filt, kn);
+        knote_delete(filt, kn);
     }
 #endif
 

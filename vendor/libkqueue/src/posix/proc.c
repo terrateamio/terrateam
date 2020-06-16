@@ -167,7 +167,7 @@ evfilt_proc_copyout(struct filter *filt,
 #if FIXME
         /* XXX - NEED TO use safe foreach instead */
         if (kn->kev.flags & EV_ONESHOT)
-            knote_free(kn);
+            knote_delete(filt, kn);
 #endif
 
         if (++nevents > maxevents)

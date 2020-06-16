@@ -179,7 +179,7 @@ evfilt_proc_copyout(struct filter *filt,
             KNOTE_DISABLE(kn);
         }
         if (kn->kev.flags & EV_ONESHOT) {
-            knote_free(filt, kn);
+            knote_delete(filt, kn);
         } else {
             kn->kev.data = 0; //why??
         }

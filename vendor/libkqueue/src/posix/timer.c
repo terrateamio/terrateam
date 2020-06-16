@@ -268,7 +268,7 @@ evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
         _timer_delete(kn);
     } else if (kn->kev.flags & EV_ONESHOT) {
         _timer_delete(kn);
-        knote_free(filt, kn);
+        knote_delete(filt, kn);
     }
 #endif
 

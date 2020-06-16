@@ -40,7 +40,7 @@ evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
             KNOTE_DISABLE(src);
             src->kev.fflags &= ~NOTE_TRIGGER;
         } else if (src->kev.flags & EV_ONESHOT) {
-            knote_free(filt, src);
+            knote_delete(filt, src);
         }
      */
 

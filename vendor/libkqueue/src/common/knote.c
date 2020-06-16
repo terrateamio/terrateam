@@ -127,7 +127,7 @@ knote_lookup(struct filter *filt, uintptr_t ident)
     return (ent);
 }
 
-int knote_free_all(struct filter *filt)
+int knote_delete_all(struct filter *filt)
 {
     struct knote *kn, *tmp;
 
