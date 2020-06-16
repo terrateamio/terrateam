@@ -197,14 +197,11 @@ test_ev_receipt(void *unused)
     EV_SET(&kev, SIGUSR2, EVFILT_SIGNAL, EV_ADD | EV_RECEIPT, 0, 0, NULL);
     if (kevent(kq, &kev, 1, &kev, 1, NULL) < 0)
         die("kevent");
-
-    /* TODO: check the receipt */
-
-    close(kq);
 #else
     memset(&kev, 0, sizeof(kev));
     puts("Skipped -- EV_RECEIPT is not available or running on Win32");
 #endif
+    close(kq);
 }
 
 void
