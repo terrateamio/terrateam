@@ -877,8 +877,6 @@ epoll_event_dump(struct epoll_event *evt)
 #undef EPEVT_DUMP
 }
 
-
-
 /** Determine if two fd state entries are equal
  *
  * @param[in] a           first entry.
@@ -1174,7 +1172,35 @@ epoll_update(int op, struct filter *filt, struct knote *kn, int ev, bool delete)
     if (epoll_ctl(filter_epoll_fd(filt), opn, fd, EPOLL_EV_FDS(want, fds)) < 0) {
         dbg_printf("epoll_ctl(2): %s", strerror(errno));
 
-        if (opn == EPOLL_CTL_ADD) epoll_fd_state_del(&fds, kn, want_ev & ~have_ev);
+        switch (opn) {
+        case EPOLL_CTL_ADD:
+            epoll_fd_state_del(&fds, kn, want_ev & ~have_ev);
+            break;
+
+        case EPOLL_CTL_DEL:
+        case EPOLL_CTL_MOD:
+            /*
+             * File descriptor went away and we weren't notified
+             * not necessarily an error.
+             */
+            if (errno == EBADF) {
+                int kn_ev = 0;
+
+                if (kn == fds->fds_read) {
+                    kn_ev = EPOLLIN;
+                } else if (kn == fds->fds_write) {
+                    kn_ev = EPOLLOUT;
+                }
+                kn_ev &= ~want_ev;    /* If it wasn't wanted... */
+
+                if (kn_ev) {
+                    dbg_printf("clearing fd=%i fds=%p ev=%s", fds, fd, epoll_event_flags_dump(kn_ev));
+                    epoll_fd_state_del(&fds, kn, kn_ev);
+                    return (0);
+                }
+            }
+            break;
+        }
 
         return (-1);
     }
