@@ -269,4 +269,6 @@ test_evfilt_vnode(struct test_context *ctx)
     /* TODO: test r590 corner case where a descriptor is closed and
              the associated knote is automatically freed. */
     unlink(ctx->testfile);
+    close(ctx->vnode_fd);
+    ctx->vnode_fd = -1;
 }
