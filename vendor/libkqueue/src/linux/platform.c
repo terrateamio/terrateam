@@ -14,8 +14,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-# define _GNU_SOURCE
-# include <poll.h>
+#define _GNU_SOURCE
+#include <poll.h>
+#include <pthread.h>
 #include <sys/types.h>
 #include <sys/resource.h>
 #include "../common/private.h"
@@ -63,6 +64,8 @@ static int *fd_map;
  */
 static unsigned int *fd_use_cnt;
 
+static int nb_max_fd;
+
 const struct kqueue_vtable kqops = {
     .kqueue_init        = linux_kqueue_init,
     .kqueue_free        = linux_kqueue_free,
@@ -83,7 +86,7 @@ unsigned int get_fd_limit(void);
 static bool end_monitoring_thread = false;
 
 static void
-monitoring_thread_kq_cleanup(int signal_fd)
+monitoring_thread_kq_cleanup(int signal_fd, bool ignore_use_count)
 {
     int fd;
     struct kqueue *kq;
@@ -106,33 +109,78 @@ monitoring_thread_kq_cleanup(int signal_fd)
         goto check_count;
     }
 
-    /* If kqueue instance for this FD hasn't been cleaned yet */
-    if (fd_use_cnt[fd] == 0) {
+    /*
+     * If kqueue instance for this FD hasn't been cleaned yet
+     *
+     * The issue the fd_use_cnt array prevents, is where kqueue
+     * allocates a KQ, and takes the opportunity to cleanup an
+     * old KQ instance, and this happens before the monitoring
+     * thread is woken up to reap the KQ itself.
+     *
+     * If the KQ has already been freed, we don't want to do
+     * anything here, as that will destroy the newly allocated
+     * KQ that shares an identifier with the old KQ.
+     *
+     * It's a counter because multiple signals may be queued.
+     */
+    if (ignore_use_count || (fd_use_cnt[fd] == 0)) {
         dbg_printf("kqueue fd=%u, use_count=%u, cleaning up...", fd, fd_use_cnt[fd]);
-        linux_kqueue_cleanup(kq);
-
-        /* Decrement use counter as signal handler has been run for this FD */
-        fd_use_cnt[fd]--;
+        kqueue_free(kq);
     } else {
         dbg_printf("kqueue fd=%u, use_count=%u, skipping...", fd, fd_use_cnt[fd]);
     }
 
 check_count:
     /*
+     * Forcefully cleaning up like this breaks use counting
+     * so we reset the use count to 0, and don't allow it to
+     * go below 0 if we later receive delayed signals.
+     */
+    if (ignore_use_count) {
+        fd_use_cnt[fd] = 0;
+    } else if (fd_use_cnt[fd] > 0) {
+        fd_use_cnt[fd]--; /* Decrement use counter as signal handler has been run for this FD */
+    }
+
+    /*
      * Stop thread if all kqueues have been closed
      */
-    if (kqueue_cnt == 0) {
-        dbg_printf("monitoring thread tid=%u exiting", monitoring_tid);
+    if (kqueue_cnt == 0) end_monitoring_thread = true;
+}
 
-        end_monitoring_thread = true;
+static void
+monitoring_thread_cleanup(void *arg)
+{
+	int i;
 
-        /* Reset so that thread can be restarted */
-        monitoring_thread_initialized = PTHREAD_ONCE_INIT;
+    /* Reset so that thread can be restarted */
+    monitoring_thread_initialized = PTHREAD_ONCE_INIT;
 
-        /* Free thread resources */
-        free(fd_map);
-        free(fd_use_cnt);
+    /*
+     *
+     */
+    for (i = 0; i < nb_max_fd; i++) {
+        if (fd_use_cnt[i] > 0) {
+            int fd;
+
+            fd = fd_map[i];
+            dbg_printf("Checking fd=%i, fd=%i", i, fd);
+            if (fcntl(fd, F_GETFD) < 0) {
+                dbg_printf("forcefully cleaning up fd=%i use_count=%u: %s",
+                           fd, fd_use_cnt[fd], strerror(errno));
+                fd_use_cnt[fd] = 0;
+                monitoring_thread_kq_cleanup(i, true);
+                fd_use_cnt[fd] = 0;
+             }
+        }
     }
+
+    dbg_printf("monitoring thread %u exiting", monitoring_tid);
+    /* Free thread resources */
+    free(fd_map);
+    fd_map = NULL;
+    free(fd_use_cnt);
+    fd_use_cnt = NULL;
 
     (void) pthread_mutex_unlock(&kq_mtx);
 }
@@ -145,7 +193,7 @@ monitoring_thread_loop(void *arg)
 {
     int res = 0;
     siginfo_t info;
-    int nb_max_fd;
+
     int i;
 
     sigset_t monitoring_sig_set;
@@ -186,16 +234,28 @@ monitoring_thread_loop(void *arg)
     pthread_cond_signal(&monitoring_thread_cond);
     pthread_detach(pthread_self());
 
-    while (!end_monitoring_thread) {
+    pthread_cleanup_push(monitoring_thread_cleanup, NULL)
+    while (true) {
         /*
          * Wait for signal notifying us that a change has occured on the pipe
          * It's not possible to only listen on FD close but no other operation
          * should be performed on the kqueue.
          */
         res = sigwaitinfo(&monitoring_sig_set, &info);
-        if (res != -1)
-            monitoring_thread_kq_cleanup(info.si_fd);
+        (void) pthread_mutex_lock(&kq_mtx);
+        if (res != -1) {
+            dbg_printf("freeing kqueue due to closure, fd=%i", fd_map[info.si_fd]);
+            monitoring_thread_kq_cleanup(info.si_fd, false);
+        } else {
+            dbg_perror("sigwaitinfo returned early");
+        }
+
+        if (end_monitoring_thread)
+            break;
+
+        (void) pthread_mutex_unlock(&kq_mtx);
     }
+    pthread_cleanup_pop(true);
 
     return NULL;
 }
@@ -238,6 +298,7 @@ linux_kqueue_init(struct kqueue *kq)
      */
     if (pipe(kq->pipefd)) {
         close(kq->epollfd);
+        kq->epollfd = -1;
         return (-1);
     }
 
@@ -245,7 +306,9 @@ linux_kqueue_init(struct kqueue *kq)
     error:
         close(kq->epollfd);
         close(kq->pipefd[0]);
+        kq->pipefd[0] = -1;
         close(kq->pipefd[1]);
+        kq->pipefd[1] = -1;
         return (-1);
     }
 
@@ -329,7 +392,6 @@ linux_kqueue_cleanup(struct kqueue *kq)
     ssize_t ret;
     int pipefd;
 
-    filter_unregister_all(kq);
     if (kq->epollfd > 0) {
         close(kq->epollfd);
         kq->epollfd = -1;
@@ -367,6 +429,13 @@ linux_kqueue_cleanup(struct kqueue *kq)
     return true;
 }
 
+/** Explicitly free the kqueue
+ *
+ * This is only called from the public kqueue function when a map
+ * slot is going to be re-used, so it's an indicator that the
+ * KQ fd is in use, and we shouldn't attempt to free it if we
+ * receive a signal in the monitoring thread.
+ */
 void
 linux_kqueue_free(struct kqueue *kq)
 {
@@ -376,7 +445,6 @@ linux_kqueue_free(struct kqueue *kq)
         dbg_printf("use count for kqueue FD %i increased to %u", kq->kq_id, fd_use_cnt[kq->kq_id]);
     } else /* Reset counter as FD had already been cleaned */
         fd_use_cnt[kq->kq_id] = 0;
-
 }
 
 static int
@@ -1196,7 +1264,7 @@ epoll_update(int op, struct filter *filt, struct knote *kn, int ev, bool delete)
                 kn_ev &= ~want_ev;    /* If it wasn't wanted... */
 
                 if (kn_ev) {
-                    dbg_printf("clearing fd=%i fds=%p ev=%s", fds, fd, epoll_event_flags_dump(kn_ev));
+                    dbg_printf("clearing fd=%i fds=%p ev=%s", fd, fds, epoll_event_flags_dump(kn_ev));
                     epoll_fd_state_del(&fds, kn, kn_ev);
                     return (0);
                 }
