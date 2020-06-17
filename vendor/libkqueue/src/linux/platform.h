@@ -200,5 +200,6 @@ int     epoll_fd_state(struct fd_state **, struct knote *, bool);
 int     epoll_fd_state_init(struct fd_state **, struct knote *, int);
 void    epoll_fd_state_free(struct fd_state **, struct knote *, int);
 
+bool    epoll_fd_registered(struct filter *filt, struct knote *kn);
 int     epoll_update(int op, struct filter *filt, struct knote *kn, int ev, bool delete);
 #endif  /* ! _KQUEUE_LINUX_PLATFORM_H */

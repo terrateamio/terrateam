@@ -1055,6 +1055,31 @@ void epoll_fd_state_del(struct fd_state **fds_p, struct knote *kn, int ev)
     kn->kn_fds = NULL;
 }
 
+bool
+epoll_fd_registered(struct filter *filt, struct knote *kn)
+{
+    struct fd_state    *fds = NULL;
+    int fd = kn->kev.ident;
+    int have_ev;
+
+    /*
+     * The vast majority of the time if the knote
+     * has already been removed then kn->kn_fds
+     * will be false.
+     */
+    if (!kn->kn_fds) return false;        /* No file descriptor state, can't be in epoll */
+
+    have_ev = epoll_fd_state(&fds, kn, false);            /* ...enabled only */
+    if (!have_ev) return false;
+
+    /*
+     * This *SHOULD* be a noop if the FD is already
+     * registered.
+     */
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_MOD, fd, EPOLL_EV_FDS(have_ev, fds)) < 0) return false;
+
+    return true;
+}
 int
 epoll_update(int op, struct filter *filt, struct knote *kn, int ev, bool delete)
 {
