@@ -86,6 +86,7 @@ test_peer_close_detection(void *unused)
         if (recv(sockfd[0], buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT) != 0)
             die("failed to detect peer shutdown");
     }
+    close(sockfd[0]);
 #endif
 }
 
