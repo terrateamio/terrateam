@@ -280,9 +280,6 @@ test_harness(struct unit_test tests[MAX_TESTS], int iterations)
     test(cleanup, ctx);
 #endif
 
-    if ((kqfd = kqueue()) < 0)
-        die("kqueue()");
-
     test(ev_receipt, ctx);
     /* TODO: this fails now, but would be good later
     test(kqueue_descriptor_is_pollable);
@@ -290,6 +287,8 @@ test_harness(struct unit_test tests[MAX_TESTS], int iterations)
 
     free(ctx);
 
+    if ((kqfd = kqueue()) < 0)
+        die("kqueue()");
     n = 0;
     for (i = 0; i < iterations; i++) {
         ctx = calloc(1, sizeof(*ctx));
