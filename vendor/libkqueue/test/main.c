@@ -49,6 +49,7 @@ print_fd_table(void)
     unsigned int fd_max = get_fd_limit();
     unsigned int i;
     unsigned int used = 0;
+    int our_errno = errno; /* Preserve errno */
 
 #ifdef __linux__
     for (i = 0; i < fd_max; i++) {
@@ -58,6 +59,8 @@ print_fd_table(void)
         }
     }
 #endif
+
+    errno = our_errno;
 
     return used;
 }
