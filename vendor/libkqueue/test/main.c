@@ -18,7 +18,49 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #endif
+
 #include "common.h"
+
+unsigned int
+get_fd_limit(void)
+{
+#ifdef _WIN32
+    /* actually windows should be able to hold
+       way more, as they use HANDLEs for everything.
+       Still this number should still be sufficient for
+       the provided number of kqueue fds.
+       */
+    return 65536;
+#else
+    struct rlimit rlim;
+
+    if (getrlimit(RLIMIT_NOFILE, &rlim) < 0) {
+        perror("getrlimit(2)");
+        return (65536);
+    } else {
+        return (rlim.rlim_max);
+    }
+#endif
+}
+
+unsigned int
+print_fd_table(void)
+{
+    unsigned int fd_max = get_fd_limit();
+    unsigned int i;
+    unsigned int used = 0;
+
+#ifdef __linux__
+    for (i = 0; i < fd_max; i++) {
+        if (fcntl(i, F_GETFD) == 0) {
+            printf("fd=%i used\n", i);
+            used++;
+        }
+    }
+#endif
+
+    return used;
+}
 
 /* Maximum number of threads that can be created */
 #define MAX_THREADS 100
@@ -148,12 +190,12 @@ test_cleanup(void *unused)
 
     /* Create initial kqueue to avoid cleanup thread being destroyed on each close */
     if ((kqfd1 = kqueue()) < 0)
-        die("kqueue() - max_fds=%u", max_fds);
+        die("kqueue() - used_fds=%u max_fds=%u", print_fd_table(), max_fds);
 
     /* Create and close 2 * max fd number of kqueues */
     for (i=0; i < 2 * max_fds + 1; i++) {
         if ((kqfd2 = kqueue()) < 0)
-            die("kqueue() - i=%i max_fds=%u", i, max_fds);
+            die("kqueue() - i=%i used_fds=%u max_fds=%u", i, print_fd_table(), max_fds);
 
         kevent_add(kqfd2, &kev, 1, EVFILT_TIMER, EV_ADD, 0, 1000,NULL);
 

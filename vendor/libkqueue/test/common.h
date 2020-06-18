@@ -128,6 +128,9 @@ kevent_add(int kqfd, struct kevent *kev,
 #define test_no_kevents(a) _test_no_kevents(a, __FILE__, __LINE__)
 void _test_no_kevents(int, const char *, int);
 
+unsigned int print_fd_table(void);
+unsigned int get_fd_limit(void);
+
 /* From test.c */
 void    test_begin(struct test_context *, const char *);
 void    test_end(struct test_context *);
