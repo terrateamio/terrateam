@@ -66,7 +66,7 @@ libkqueue_init(void)
     DEBUG_KQUEUE = 0;
 #else
     char *s = getenv("KQUEUE_DEBUG");
-    if (s != NULL && strlen(s) > 0) {
+    if ((s != NULL) && (strlen(s) > 0) && (*s != '0')) {
         DEBUG_KQUEUE = 1;
 
 #ifdef _WIN32
