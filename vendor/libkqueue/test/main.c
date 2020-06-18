@@ -148,12 +148,12 @@ test_cleanup(void *unused)
 
     /* Create initial kqueue to avoid cleanup thread being destroyed on each close */
     if ((kqfd1 = kqueue()) < 0)
-        die("kqueue()");
+        die("kqueue() - max_fds=%u", max_fds);
 
     /* Create and close 2 * max fd number of kqueues */
     for (i=0; i < 2 * max_fds + 1; i++) {
         if ((kqfd2 = kqueue()) < 0)
-            die("kqueue()");
+            die("kqueue() - i=%i max_fds=%u", i, max_fds);
 
         kevent_add(kqfd2, &kev, 1, EVFILT_TIMER, EV_ADD, 0, 1000,NULL);
 
