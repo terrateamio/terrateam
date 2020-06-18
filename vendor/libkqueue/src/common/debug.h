@@ -128,18 +128,18 @@ typedef struct {
 } while (0)
 
 #else /* NDEBUG */
-# define dbg_puts(str)           do {} while (0)
-# define dbg_printf(fmt,...)     do {} while (0)
-# define dbg_perror(str)         do {} while (0)
-# define dbg_lasterror(str)      do {} while (0)
-# define dbg_wsalasterror(str)   do {} while (0)
-# define reset_errno()           do {} while (0)
+# define dbg_puts(str)
+# define dbg_printf(fmt, ...)
+# define dbg_perror(str, ...)
+# define dbg_lasterror(str)
+# define dbg_wsalasterror(str)
+# define reset_errno()
 # define MTX_UNLOCKED
 # define MTX_LOCKED
 # define tracing_mutex_t            pthread_mutex_t
 # define tracing_mutex_init         pthread_mutex_init
 # define tracing_mutex_destroy      pthread_mutex_destroy
-# define tracing_mutex_assert(x,y)  do {} while (0)
+# define tracing_mutex_assert(x,y)
 # define tracing_mutex_lock         pthread_mutex_lock
 # define tracing_mutex_unlock       pthread_mutex_unlock
 #endif

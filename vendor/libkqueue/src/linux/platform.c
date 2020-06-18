@@ -149,7 +149,7 @@ check_count:
 static void
 monitoring_thread_cleanup(void *arg)
 {
-	int i;
+    int i;
 
     /* Reset so that thread can be restarted */
     monitoring_thread_initialized = PTHREAD_ONCE_INIT;
