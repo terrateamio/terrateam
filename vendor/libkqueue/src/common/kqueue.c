@@ -57,6 +57,23 @@ get_fd_limit(void)
 #endif
 }
 
+unsigned int
+get_fd_used(void)
+{
+    unsigned int fd_max = get_fd_limit();
+    unsigned int i;
+    unsigned int used = 0;
+
+#ifdef __linux__
+    for (i = 0; i < fd_max; i++) {
+        if (fcntl(i, F_GETFD) == 0)
+            used++;
+    }
+#endif
+
+    return used;
+}
+
 static struct map *kqmap;
 
 void
