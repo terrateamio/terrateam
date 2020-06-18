@@ -140,7 +140,7 @@ kevent_flags_dump(struct kevent *kev)
 const char *
 kevent_to_str(struct kevent *kev)
 {
-    char buf[512];
+    static __thread char buf[512];
 
     snprintf(buf, sizeof(buf),
             "[ident=%d, filter=%d, %s, %s, data=%d, udata=%p]",
@@ -151,7 +151,7 @@ kevent_to_str(struct kevent *kev)
             (int) kev->data,
             kev->udata);
 
-    return (strdup(buf));
+    return buf;
 }
 
 void
