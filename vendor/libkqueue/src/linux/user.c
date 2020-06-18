@@ -187,20 +187,25 @@ linux_evfilt_user_knote_modify(struct filter *filt UNUSED, struct knote *kn,
 int
 linux_evfilt_user_knote_delete(struct filter *filt, struct knote *kn)
 {
-    if (kn->kn_registered && epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL,
-                                       kn->kdata.kn_eventfd, NULL) < 0) {
-        dbg_perror("epoll_ctl(2)");
-        return (-1);
+    int rv = 0;
+
+    if (kn->kn_registered) {
+        rv = epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, kn->kdata.kn_eventfd, NULL);
+        if (rv < 0) {
+            dbg_perror("epoll_ctl(2)");
+        } else {
+            dbg_printf("removed eventfd fd=%d from the epollfd", kn->kdata.kn_eventfd);
+        }
     }
+
     kn->kn_registered = 0;
     if (close(kn->kdata.kn_eventfd) < 0) {
         dbg_perror("close(2)");
         return (-1);
     }
-    dbg_printf("removed eventfd %d from the epollfd", kn->kdata.kn_eventfd);
     kn->kdata.kn_eventfd = -1;
 
-    return (0);
+    return rv;
 }
 
 int
