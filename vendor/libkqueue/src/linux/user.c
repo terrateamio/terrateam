@@ -122,26 +122,26 @@ linux_evfilt_user_knote_create(struct filter *filt, struct knote *kn)
     evfd = eventfd(0, 0);
     if (evfd < 0) {
         dbg_perror("eventfd");
-        goto errout;
+error:
+        if (evfd >= 0) close(evfd);
+        kn->kdata.kn_eventfd = -1;
+        kn->kn_registered = 0;
+        return (-1);
     }
+
+    dbg_printf("created eventfd fd=%i", evfd);
 
     /* Add the eventfd to the epoll set */
     KN_UDATA(kn);   /* populate this knote's kn_udata field */
     if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_ADD, evfd, EPOLL_EV_KN(EPOLLIN, kn)) < 0) {
         dbg_perror("epoll_ctl(2)");
-        goto errout;
+        goto error;
     }
 
     kn->kdata.kn_eventfd = evfd;
     kn->kn_registered = 1;
 
     return (0);
-
-errout:
-    (void) close(evfd);
-    kn->kdata.kn_eventfd = -1;
-    kn->kn_registered = 0;
-    return (-1);
 }
 
 int
