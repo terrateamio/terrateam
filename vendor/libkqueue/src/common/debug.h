@@ -49,13 +49,13 @@ extern char *KQUEUE_DEBUG_IDENT;
 #define dbg_printf(fmt,...)     do {                                \
     if (DEBUG_KQUEUE)                                                      \
       fprintf(stderr, "%s [%d]: %s(): "fmt"\n",                     \
-              KQUEUE_DEBUG_IDENT, THREAD_ID, __func__, __VA_ARGS__);       \
+              KQUEUE_DEBUG_IDENT, THREAD_ID, __func__, ##__VA_ARGS__);       \
 } while (0)
 
-#define dbg_perror(str)         do {                                \
+#define dbg_perror(fmt,...)         do {                                \
     if (DEBUG_KQUEUE)                                                      \
-      fprintf(stderr, "%s [%d]: %s(): %s: %s (errno=%d)\n",         \
-              KQUEUE_DEBUG_IDENT, THREAD_ID, __func__, str,                \
+      fprintf(stderr, "%s [%d]: %s(): "fmt": %s (errno=%d)\n",         \
+              KQUEUE_DEBUG_IDENT, THREAD_ID, __func__, ##__VA_ARGS__,    \
               strerror(errno), errno);                              \
 } while (0)
 

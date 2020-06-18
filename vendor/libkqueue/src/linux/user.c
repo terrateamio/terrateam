@@ -121,7 +121,11 @@ linux_evfilt_user_knote_create(struct filter *filt, struct knote *kn)
     /* Create an eventfd */
     evfd = eventfd(0, 0);
     if (evfd < 0) {
-        dbg_perror("eventfd");
+        if ((errno == EMFILE) || (errno == ENFILE)) {
+            dbg_perror("eventfd(2) fd_used=%u fd_max=%u", get_fd_used(), get_fd_limit());
+        } else {
+            dbg_perror("eventfd(2)");
+        }
 error:
         if (evfd >= 0) close(evfd);
         kn->kdata.kn_eventfd = -1;

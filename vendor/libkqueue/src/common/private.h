@@ -239,6 +239,7 @@ int             knote_delete(struct filter *, struct knote *);
 int             knote_init(void);
 int             knote_disable(struct filter *, struct knote *);
 int             knote_enable(struct filter *, struct knote *);
+int             knote_modify(struct filter *, struct knote *);
 
 #define knote_get_filter(knt) &((knt)->kn_kq->kq_filt[(knt)->kev.filter])
 
@@ -248,6 +249,8 @@ void            filter_unregister_all(struct kqueue *);
 const char      *filter_name(short);
 
 unsigned int    get_fd_limit(void);
+unsigned int    get_fd_used(void);
+
 int             kevent_wait(struct kqueue *, const struct timespec *);
 int             kevent_copyout(struct kqueue *, int, struct kevent *, int);
 void            kevent_free(struct kqueue *);

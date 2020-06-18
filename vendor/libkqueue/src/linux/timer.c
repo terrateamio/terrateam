@@ -161,7 +161,11 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 
     tfd = timerfd_create(CLOCK_MONOTONIC, 0);
     if (tfd < 0) {
-        dbg_printf("timerfd_create(2): %s", strerror(errno));
+        if ((errno == EMFILE) || (errno == ENFILE)) {
+            dbg_perror("timerfd_create(2) fd_used=%u fd_max=%u", get_fd_used(), get_fd_limit());
+        } else {
+            dbg_perror("timerfd_create(2)");
+        }
         return (-1);
     }
     dbg_printf("timer_fd=%i - created", tfd);

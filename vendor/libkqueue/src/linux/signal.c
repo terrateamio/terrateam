@@ -94,7 +94,11 @@ signalfd_create(int epoll_fd, struct knote *kn, int signum)
         sigfd = signalfd(-1, &sigmask, flags);
     }
     if (sigfd < 0) {
-        dbg_perror("signalfd(2)");
+        if ((errno == EMFILE) || (errno == ENFILE)) {
+            dbg_perror("signalfd(2) fd_used=%u fd_max=%u", get_fd_used(), get_fd_limit());
+        } else {
+            dbg_perror("signalfd(2)");
+        }
         goto errout;
     }
 
