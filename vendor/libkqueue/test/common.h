@@ -25,8 +25,8 @@
 # define errx(rc,msg,...) do { puts(msg); exit(rc); } while (0)
 #endif
 
-#define die(str)   do { \
-    fprintf(stderr, "%s(): %s: %s\n", __func__,str, strerror(errno));\
+#define die(str, ...)   do { \
+    fprintf(stderr, "%s(): %s: %s\n", __func__,str, strerror(errno), ##__VA_ARGS__);\
     abort();\
 } while (0)
 
