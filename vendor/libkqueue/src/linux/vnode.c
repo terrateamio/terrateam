@@ -135,7 +135,7 @@ add_watch(struct filter *filt, struct knote *kn)
     }
 
     /* Add the watch */
-    dbg_printf("inotify_add_watch(2); inofd=%d, %s, path=%s",
+    dbg_printf("inotify_add_watch(2); inofd=%d flags=%s path=%s",
             ifd, inotify_mask_dump(mask), path);
     kn->kev.data = inotify_add_watch(ifd, path, mask);
     if (kn->kev.data < 0) {

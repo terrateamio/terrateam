@@ -58,12 +58,11 @@ map_insert(struct map *m, int idx, void *ptr)
            return (-1);
 
     if (atomic_ptr_cas(&(m->data[idx]), 0, ptr) == NULL) {
-        dbg_printf("inserted %p in location %d", ptr, idx);
+        dbg_printf("idx=%i - inserted ptr=%p into map", idx, ptr);
         return (0);
     } else {
-        dbg_printf("tried to insert a value into a non-empty location %d (value=%p)",
-                idx,
-                m->data[idx]);
+        dbg_printf("idx=%i - tried to insert ptr=%p into a non-empty location (cur_ptr=%p)",
+                   idx, ptr, m->data[idx]);
         return (-1);
     }
 }
@@ -75,10 +74,10 @@ map_remove(struct map *m, int idx, void *ptr)
            return (-1);
 
     if (atomic_ptr_cas(&(m->data[idx]), ptr, 0) == NULL) {
-        dbg_printf("removed %p from location %d", ptr, idx);
+        dbg_printf("idx=%i - removed ptr=%p from map", idx, ptr);
         return (0);
     } else {
-        dbg_printf("removal failed: location %d does not contain value %p", idx, m->data[idx]);
+        dbg_printf("idx=%i - removal failed, ptr=%p != cur_ptr=%p", idx, ptr, m->data[idx]);
         return (-1);
     }
 }
@@ -93,12 +92,11 @@ map_replace(struct map *m, int idx, void *oldp, void *newp)
 
     tmp = atomic_ptr_cas(&(m->data[idx]), oldp, newp);
     if (tmp == oldp) {
-        dbg_printf("replaced value %p in location %d with value %p",
-                oldp, idx, newp);
+        dbg_printf("idx=%i - replaced item in map with ptr=%p", idx, newp);
+
         return (0);
     } else {
-        dbg_printf("item in location %d does not match expected value %p",
-                idx, oldp);
+        dbg_printf("idx=%i - replace failed, ptr=%p != cur_ptr=%p", idx, newp, m->data[idx]);
         return (-1);
     }
 }

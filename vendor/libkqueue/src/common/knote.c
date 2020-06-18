@@ -59,13 +59,13 @@ knote_release(struct knote *kn)
 
     if (atomic_dec(&kn->kn_ref) == 0) {
         if (kn->kn_flags & KNFL_KNOTE_DELETED) {
-            dbg_printf("freeing knote at %p", kn);
+            dbg_printf("kn=%p - freeing", kn);
             free(kn);
         } else {
-            dbg_puts("this should never happen");
+            dbg_puts("kn=%p - attempted to free knote without marking it as deleted");
         }
     } else {
-        dbg_printf("decrementing refcount of knote %p rc=%d", kn, kn->kn_ref);
+        dbg_printf("kn=%p rc=%d - decrementing refcount", kn, kn->kn_ref);
     }
 }
 
@@ -75,39 +75,6 @@ knote_insert(struct filter *filt, struct knote *kn)
     pthread_rwlock_wrlock(&filt->kf_knote_mtx);
     RB_INSERT(knt, &filt->kf_knote, kn);
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
-}
-
-int
-knote_delete(struct filter *filt, struct knote *kn)
-{
-    struct knote query;
-    struct knote *tmp;
-
-    if (kn->kn_flags & KNFL_KNOTE_DELETED) {
-        dbg_puts("ERROR: double deletion detected");
-        return (-1);
-    }
-
-    /*
-     * Verify that the knote wasn't removed by another
-     * thread before we acquired the knotelist lock.
-     */
-    query.kev.ident = kn->kev.ident;
-    pthread_rwlock_wrlock(&filt->kf_knote_mtx);
-    tmp = RB_FIND(knt, &filt->kf_knote, &query);
-    if (tmp == kn) {
-        RB_REMOVE(knt, &filt->kf_knote, kn);
-    }
-    pthread_rwlock_unlock(&filt->kf_knote_mtx);
-
-    if (filt->kn_delete(filt, kn) < 0)
-        return (-1);
-
-    kn->kn_flags |= KNFL_KNOTE_DELETED;
-
-    knote_release(kn);
-
-    return (0);
 }
 
 struct knote *
@@ -121,8 +88,6 @@ knote_lookup(struct filter *filt, uintptr_t ident)
     pthread_rwlock_rdlock(&filt->kf_knote_mtx);
     ent = RB_FIND(knt, &filt->kf_knote, &query);
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
-
-    dbg_printf("id=%" PRIuPTR " ent=%p", ident, ent);
 
     return (ent);
 }
@@ -145,14 +110,61 @@ int knote_delete_all(struct filter *filt)
 }
 
 int
-knote_disable(struct filter *filt, struct knote *kn)
+knote_delete(struct filter *filt, struct knote *kn)
 {
-    assert(!(kn->kev.flags & EV_DISABLE));
+    struct knote query;
+    struct knote *tmp;
+    int rv;
 
-    filt->kn_disable(filt, kn); //TODO: Error checking
-    KNOTE_DISABLE(kn);
-    return (0);
+    dbg_printf("kn=%p - calling kn_delete", kn);
+    if (kn->kn_flags & KNFL_KNOTE_DELETED) {
+        dbg_printf("kn=%p - double deletion detected", kn);
+        return (-1);
+    }
+
+    /*
+     * Verify that the knote wasn't removed by another
+     * thread before we acquired the knotelist lock.
+     */
+    query.kev.ident = kn->kev.ident;
+    pthread_rwlock_wrlock(&filt->kf_knote_mtx);
+    tmp = RB_FIND(knt, &filt->kf_knote, &query);
+    if (tmp == kn) {
+        RB_REMOVE(knt, &filt->kf_knote, kn);
+    }
+    pthread_rwlock_unlock(&filt->kf_knote_mtx);
+
+    rv = filt->kn_delete(filt, kn);
+    dbg_printf("kn=%p - kn_delete rv=%i", kn, rv);
+
+    kn->kn_flags |= KNFL_KNOTE_DELETED;
+    knote_release(kn);
+
+    return (rv);
 }
 
-//TODO: knote_enable()
+int
+knote_disable(struct filter *filt, struct knote *kn)
+{
+    int rv = 0;
 
+    assert(!(kn->kev.flags & EV_DISABLE));
+
+    dbg_printf("kn=%p - calling kn_disable", kn);
+    rv = filt->kn_disable(filt, kn);
+    dbg_printf("kn=%p - kn_disable rv=%i", kn, rv);
+    if (rv == 0) KNOTE_DISABLE(kn);
+    return (rv);
+}
+
+int
+knote_enable(struct filter *filt, struct knote *kn)
+{
+    int rv = 0;
+
+    dbg_printf("kn=%p - calling kn_enable", kn);
+    rv = filt->kn_enable(filt, kn);
+    dbg_printf("kn=%p - kn_enable rv=%i", kn, rv);
+    if (rv == 0) KNOTE_ENABLE(kn);
+    return (rv);
+}

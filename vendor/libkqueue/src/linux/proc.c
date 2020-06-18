@@ -72,7 +72,7 @@ wait_thread(void *arg)
                 continue;
             }
 
-            dbg_puts("  waitid(2) returned");
+            dbg_puts("waitid(2) returned");
             if (errno == EINTR)
                 continue;
             dbg_perror("waitid(2)");

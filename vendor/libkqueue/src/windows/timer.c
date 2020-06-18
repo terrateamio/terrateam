@@ -125,7 +125,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
         dbg_lasterror("CreateWaitableTimer()");
         return (-1);
     }
-    dbg_printf("created timer handle %p", th);
+    dbg_printf("th=%p - created timer handle", th);
 
     convert_msec_to_filetime(&liDueTime, kn->kev.data);
 

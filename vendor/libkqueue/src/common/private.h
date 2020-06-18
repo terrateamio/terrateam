@@ -227,38 +227,43 @@ extern const struct kqueue_vtable kqops;
 /*
  * knote internal API
  */
-int knote_delete_all(struct filter *filt);
-struct knote * knote_lookup(struct filter *, uintptr_t);
-struct knote * knote_new(void);
+int             knote_delete_all(struct filter *filt);
+struct knote    *knote_lookup(struct filter *, uintptr_t);
+struct knote    *knote_new(void);
+
 #define knote_retain(kn) atomic_inc(&kn->kn_ref)
-void knote_release(struct knote *);
-void knote_insert(struct filter *, struct knote *);
-int  knote_delete(struct filter *, struct knote *);
-int  knote_init(void);
-int  knote_disable(struct filter *, struct knote *);
+
+void            knote_release(struct knote *);
+void            knote_insert(struct filter *, struct knote *);
+int             knote_delete(struct filter *, struct knote *);
+int             knote_init(void);
+int             knote_disable(struct filter *, struct knote *);
+int             knote_enable(struct filter *, struct knote *);
+
 #define knote_get_filter(knt) &((knt)->kn_kq->kq_filt[(knt)->kev.filter])
 
-int         filter_lookup(struct filter **, struct kqueue *, short);
-int          filter_register_all(struct kqueue *);
-void         filter_unregister_all(struct kqueue *);
-const char *filter_name(short);
+int             filter_lookup(struct filter **, struct kqueue *, short);
+int             filter_register_all(struct kqueue *);
+void            filter_unregister_all(struct kqueue *);
+const char      *filter_name(short);
 
-int         kevent_wait(struct kqueue *, const struct timespec *);
-int         kevent_copyout(struct kqueue *, int, struct kevent *, int);
-void         kevent_free(struct kqueue *);
-const char *kevent_dump(const struct kevent *);
-struct kqueue * kqueue_lookup(int);
-void        kqueue_free(struct kqueue *);
-void        kqueue_free_by_id(int id);
-int         kqueue_validate(struct kqueue *);
+unsigned int    get_fd_limit(void);
+int             kevent_wait(struct kqueue *, const struct timespec *);
+int             kevent_copyout(struct kqueue *, int, struct kevent *, int);
+void            kevent_free(struct kqueue *);
+const char      *kevent_dump(const struct kevent *);
+struct kqueue   *kqueue_lookup(int);
+void            kqueue_free(struct kqueue *);
+void            kqueue_free_by_id(int id);
+int             kqueue_validate(struct kqueue *);
 
-struct map *map_new(size_t);
-int         map_insert(struct map *, int, void *);
-int         map_remove(struct map *, int, void *);
-int         map_replace(struct map *, int, void *, void *);
-void       *map_lookup(struct map *, int);
-void       *map_delete(struct map *, int);
-void        map_free(struct map *);
+struct map      *map_new(size_t);
+int             map_insert(struct map *, int, void *);
+int             map_remove(struct map *, int, void *);
+int             map_replace(struct map *, int, void *, void *);
+void            *map_lookup(struct map *, int);
+void            *map_delete(struct map *, int);
+void            map_free(struct map *);
 
 /* DEADWOOD: No longer needed due to the un-smerging of POSIX and Linux
 

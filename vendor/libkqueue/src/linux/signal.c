@@ -109,7 +109,7 @@ signalfd_create(int epoll_fd, struct knote *kn, int signum)
     if (signalfd_add(epoll_fd, sigfd, kn) < 0)
         goto errout;
 
-    dbg_printf("added sigfd %d to epoll_fd %d (signum=%d)", sigfd, epoll_fd, signum);
+    dbg_printf("sig_fd=%d - sigfd added to epoll_fd=%d (signum=%d)", sigfd, epoll_fd, signum);
 
     return (sigfd);
 
@@ -166,16 +166,20 @@ int
 evfilt_signal_knote_delete(struct filter *filt, struct knote *kn)
 {
     const int sigfd = kn->kdata.kn_signalfd;
+    int       rv = 0;
 
     /* Needed so that delete() can be called after disable() */
     if (kn->kdata.kn_signalfd == -1)
         return (0);
 
-    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, sigfd, NULL) < 0) {
+    rv = epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, sigfd, NULL);
+    if (rv < 0) {
         dbg_perror("epoll_ctl(2)");
-        return (-1);
+    } else {
+        dbg_printf("sig_fd=%i - removed from epoll_fd=%i", sigfd, filter_epoll_fd(filt));
     }
 
+    dbg_printf("sig_fd=%d - closed", sigfd);
     if (close(sigfd) < 0) {
         dbg_perror("close(2)");
         return (-1);
@@ -184,20 +188,18 @@ evfilt_signal_knote_delete(struct filter *filt, struct knote *kn)
     /* NOTE: This does not call sigprocmask(3) to unblock the signal. */
     kn->kdata.kn_signalfd = -1;
 
-    return (0);
+    return (rv);
 }
 
 int
 evfilt_signal_knote_enable(struct filter *filt, struct knote *kn)
 {
-    dbg_printf("enabling ident %u", (unsigned int) kn->kev.ident);
     return evfilt_signal_knote_create(filt, kn);
 }
 
 int
 evfilt_signal_knote_disable(struct filter *filt, struct knote *kn)
 {
-    dbg_printf("disabling ident %u", (unsigned int) kn->kev.ident);
     return evfilt_signal_knote_delete(filt, kn);
 }
 

@@ -138,14 +138,14 @@ int
 filter_lookup(struct filter **filt, struct kqueue *kq, short id)
 {
     if (~id < 0 || ~id >= EVFILT_SYSCOUNT) {
-        dbg_printf("invalid id: id %d ~id %d", id, (~id));
+        dbg_printf("filt=%d inv_filt=%d - invalid id", id, (~id));
         errno = EINVAL;
         *filt = NULL;
         return (-1);
     }
     *filt = &kq->kq_filt[~id];
     if ((*filt)->kf_copyout == NULL) {
-        dbg_printf("filter %s is not implemented", filter_name(id));
+        dbg_printf("filt=%d - filt_name=%s not implemented", id, filter_name(id));
         errno = ENOSYS;
         *filt = NULL;
         return (-1);

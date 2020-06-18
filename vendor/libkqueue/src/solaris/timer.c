@@ -138,7 +138,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
     }
 
     kn->data.timerid = timerid;
-    dbg_printf("created timer with id #%lu", (unsigned long) timerid);
+    dbg_printf("th=%lu - created timer", (unsigned long) timerid);
 
     return (0);
 }
@@ -159,7 +159,7 @@ evfilt_timer_knote_delete(struct filter *filt UNUSED, struct knote *kn)
     if (kn->kev.flags & EV_DISABLE)
         return (0);
 
-    dbg_printf("deleting timer # %d", kn->data.timerid);
+    dbg_printf("th=%d - deleting timer", kn->data.timerid);
     return timer_delete(kn->data.timerid);
 }
 

@@ -129,7 +129,7 @@ kevent_dump(const struct kevent *kev)
     static __thread char buf[2147];
 
     snprintf((char *) buf, sizeof(buf),
-            "{ ident=%d, filter=%s, %s, %s, data=%d, udata=%p }",
+            "{ ident=%i, filter=%s, %s, %s, data=%d, udata=%p }",
             (u_int) kev->ident,
             kevent_filter_dump(kev),
             kevent_flags_dump(kev),
@@ -159,7 +159,6 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
     dbg_printf("src=%s", kevent_dump(src));
 
     kn = knote_lookup(filt, src->ident);
-    dbg_printf("knote_lookup: ident %d == %p", (int)src->ident, kn);
     if (kn == NULL) {
         if (src->flags & EV_ADD) {
             if ((kn = knote_new()) == NULL) {
@@ -181,7 +180,7 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
                 return (-1);
             }
             knote_insert(filt, kn);
-            dbg_printf("created kevent %s", kevent_dump(src));
+            dbg_printf("kn=%p - created knote %s", kn, kevent_dump(src));
 
 /* XXX- FIXME Needs to be handled in kn_create() to prevent races */
             if (src->flags & EV_DISABLE) {
@@ -192,27 +191,24 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
 
             return (0);
         } else {
-            dbg_printf("no entry found for ident=%u", (unsigned int)src->ident);
+            dbg_printf("ident=%u - no knote found", (unsigned int)src->ident);
             errno = ENOENT;
             return (-1);
         }
+    } else {
+        dbg_printf("kn=%p - resolved ident=%i to knote", kn, (int)src->ident);
     }
 
     if (src->flags & EV_DELETE) {
         rv = knote_delete(filt, kn);
-        dbg_printf("knote_delete returned %d", rv);
     } else if (src->flags & EV_DISABLE) {
-        rv = filt->kn_disable(filt, kn);
-        if (rv == 0) kn->kev.flags |= EV_DISABLE;
-        dbg_printf("kn_disable returned %d", rv);
+        rv = knote_disable(filt, kn);
     } else if (src->flags & EV_ENABLE) {
-        rv = filt->kn_enable(filt, kn);
-        if (rv == 0) kn->kev.flags &= ~EV_DISABLE;
-        dbg_printf("kn_enable returned %d", rv);
+        rv = knote_enable(filt, kn);
     } else if (src->flags & EV_ADD || src->flags == 0 || src->flags & EV_RECEIPT) {
         kn->kev.udata = src->udata;
         rv = filt->kn_modify(filt, kn, src);
-        dbg_printf("kn_modify returned %d", rv);
+        dbg_printf("kn=%p - kn_modify rv=%d", kn, rv);
     }
 
     return (rv);
@@ -276,7 +272,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
 #ifndef NDEBUG
     if (DEBUG_KQUEUE) {
         myid = atomic_inc(&_kevent_counter);
-        dbg_printf("--- kevent %u --- (nchanges = %d, nevents = %d)", myid, nchanges, nevents);
+        dbg_printf("--- kevent %u --- (nchanges = %d nevents = %d)", myid, nchanges, nevents);
     }
 #endif
 
@@ -287,7 +283,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         kqueue_lock(kq);
         rv = kevent_copyin(kq, changelist, nchanges, eventlist, nevents);
         kqueue_unlock(kq);
-        dbg_printf("(%u) changelist: rv=%d", myid, rv);
+        dbg_printf("(%u) kevent_copyin rv=%d", myid, rv);
         if (rv < 0)
             goto out;
         if (rv > 0) {
@@ -305,7 +301,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         nevents = MAX_KEVENT;
     if (nevents > 0) {
         rv = kqops.kevent_wait(kq, nevents, timeout);
-        dbg_printf("kqops.kevent_wait returned %d", rv);
+        dbg_printf("kqops.kevent_wait rv=%i", rv);
         if (likely(rv > 0)) {
             kqueue_lock(kq);
             rv = kqops.kevent_copyout(kq, rv, eventlist, nevents);

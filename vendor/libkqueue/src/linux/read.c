@@ -107,7 +107,7 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
         return (0);
     }
 
-    dbg_printf("epoll: %s", epoll_event_dump(ev));
+    dbg_printf("epoll_ev=%s", epoll_event_dump(ev));
     memcpy(dst, &src->kev, sizeof(*dst));
 #if defined(HAVE_EPOLLRDHUP)
     if (ev->events & EPOLLRDHUP || ev->events & EPOLLHUP)

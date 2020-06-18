@@ -81,8 +81,6 @@ const struct kqueue_vtable kqops = {
 static bool
 linux_kqueue_cleanup(struct kqueue *kq);
 
-unsigned int get_fd_limit(void);
-
 static bool end_monitoring_thread = false;
 
 static void
@@ -98,14 +96,14 @@ monitoring_thread_kq_cleanup(int signal_fd, bool ignore_use_count)
     fd = fd_map[signal_fd];
     if (fd < 0) {
        /* Should not happen */
-        dbg_printf("got signal for unknown FD, fd=%i", fd);
+        dbg_printf("fd=%i - not a known FD", fd);
         goto check_count;
     }
 
     kq = kqueue_lookup(fd);
     if (!kq) {
         /* Should not happen */
-        dbg_printf("no kqueue associated, fd=%i", fd);
+        dbg_printf("fd=%i - no kqueue associated", fd);
         goto check_count;
     }
 
@@ -124,10 +122,10 @@ monitoring_thread_kq_cleanup(int signal_fd, bool ignore_use_count)
      * It's a counter because multiple signals may be queued.
      */
     if (ignore_use_count || (fd_use_cnt[fd] == 0)) {
-        dbg_printf("kqueue fd=%u, use_count=%u, cleaning up...", fd, fd_use_cnt[fd]);
+        dbg_printf("kq=%p - fd=%i use_count=%u cleaning up...", kq, fd, fd_use_cnt[fd]);
         kqueue_free(kq);
     } else {
-        dbg_printf("kqueue fd=%u, use_count=%u, skipping...", fd, fd_use_cnt[fd]);
+        dbg_printf("kq=%p - fd=%i use_count=%u skipping...", kq, fd, fd_use_cnt[fd]);
     }
 
 check_count:
@@ -156,17 +154,14 @@ monitoring_thread_cleanup(void *arg)
     /* Reset so that thread can be restarted */
     monitoring_thread_initialized = PTHREAD_ONCE_INIT;
 
-    /*
-     *
-     */
     for (i = 0; i < nb_max_fd; i++) {
         if (fd_use_cnt[i] > 0) {
             int fd;
 
             fd = fd_map[i];
-            dbg_printf("Checking fd=%i, fd=%i", i, fd);
+            dbg_printf("Checking rfd=%i wfd=%i", i, fd);
             if (fcntl(fd, F_GETFD) < 0) {
-                dbg_printf("forcefully cleaning up fd=%i use_count=%u: %s",
+                dbg_printf("fd=%i - forcefully cleaning up, use_count=%u: %s",
                            fd, fd_use_cnt[fd], strerror(errno));
                 fd_use_cnt[fd] = 0;
                 monitoring_thread_kq_cleanup(i, true);
@@ -175,7 +170,7 @@ monitoring_thread_cleanup(void *arg)
         }
     }
 
-    dbg_printf("monitoring thread %u exiting", monitoring_tid);
+    dbg_printf("tid=%u - monitoring thread exiting", monitoring_tid);
     /* Free thread resources */
     free(fd_map);
     fd_map = NULL;
@@ -212,7 +207,7 @@ monitoring_thread_loop(void *arg)
 
     monitoring_tid = syscall(SYS_gettid);
 
-    dbg_printf("monitoring thread tid=%u started", monitoring_tid);
+    dbg_printf("tid=%u - monitoring thread started", monitoring_tid);
 
     fd_map = calloc(nb_max_fd, sizeof(int));
     if (fd_map == NULL) {
@@ -244,7 +239,7 @@ monitoring_thread_loop(void *arg)
         res = sigwaitinfo(&monitoring_sig_set, &info);
         (void) pthread_mutex_lock(&kq_mtx);
         if (res != -1) {
-            dbg_printf("freeing kqueue due to closure, fd=%i", fd_map[info.si_fd]);
+            dbg_printf("fd=%i - freeing kqueue due to fd closure", fd_map[info.si_fd]);
             monitoring_thread_kq_cleanup(info.si_fd, false);
         } else {
             dbg_perror("sigwaitinfo returned early");
@@ -321,7 +316,7 @@ linux_kqueue_init(struct kqueue *kq)
      */
     flags = fcntl(kq->pipefd[0], F_GETFL, 0);
     if (fcntl(kq->pipefd[0], F_SETFL, flags | O_ASYNC) < 0) {
-        dbg_printf("failed setting O_ASYNC fd=%i: %s", kq->pipefd[0], strerror(errno));
+        dbg_printf("fd=%i - failed setting FSETFL O_ASYNC (%i): %s", kq->pipefd[0], flags, strerror(errno));
         goto error;
     }
 
@@ -334,7 +329,8 @@ linux_kqueue_init(struct kqueue *kq)
      * so we won't conflict with the application.
      */
     if (fcntl(kq->pipefd[0], F_SETSIG, MONITORING_THREAD_SIGNAL) < 0) {
-        dbg_printf("failed settting F_SETSIG fd=%i: %s", kq->pipefd[0], strerror(errno));
+        dbg_printf("fd=%i - failed settting F_SETSIG sig=%u: %s",
+                   kq->pipefd[0], MONITORING_THREAD_SIGNAL, strerror(errno));
         goto error;
     }
 
@@ -354,7 +350,7 @@ linux_kqueue_init(struct kqueue *kq)
     /* Update pipe FD map */
     fd_map[kq->pipefd[0]] = kq->pipefd[1];
 
-    dbg_printf("there are now %u active kqueue(s)", kqueue_cnt);
+    dbg_printf("active_kqueues=%u", kqueue_cnt);
 
     assert(monitoring_tid != 0);
 
@@ -366,12 +362,12 @@ linux_kqueue_init(struct kqueue *kq)
     sig_owner.type = F_OWNER_TID;
     sig_owner.pid = monitoring_tid;
     if (fcntl(kq->pipefd[0], F_SETOWN_EX, &sig_owner) < 0) {
-        dbg_printf("failed settting F_SETOWN, tid=%u fd=%i: %s", monitoring_tid, kq->pipefd[0], strerror(errno));
+        dbg_printf("fd=%i - failed settting F_SETOWN to tid=%u: %s", monitoring_tid, kq->pipefd[0], strerror(errno));
         kqueue_cnt--;
         (void) pthread_mutex_unlock(&kq_mtx);
         goto error;
     }
-    dbg_printf("kqueue now monitored kq=%p fd=%i", kq, kq->pipefd[0]);
+    dbg_printf("kq=%p - monitoring fd=%i for closure", kq, kq->pipefd[0]);
 
     (void) pthread_mutex_unlock(&kq_mtx);
 
@@ -424,7 +420,7 @@ linux_kqueue_cleanup(struct kqueue *kq)
 
     /* Decrement kqueue counter */
     kqueue_cnt--;
-    dbg_printf("cleaned up kqueue FD %i, there are now %u active kqueue(s)", pipefd, kqueue_cnt);
+    dbg_printf("kq=%p - cleaned up kqueue, active_kqueues=%u", kq, kqueue_cnt);
 
     return true;
 }
@@ -442,7 +438,7 @@ linux_kqueue_free(struct kqueue *kq)
     /* Increment use counter as cleanup is being performed outside signal handler */
     if (linux_kqueue_cleanup(kq)) {
         fd_use_cnt[kq->kq_id]++;
-        dbg_printf("use count for kqueue FD %i increased to %u", kq->kq_id, fd_use_cnt[kq->kq_id]);
+        dbg_printf("kq=%p - increased fd=%i use_count=%u", kq, kq->kq_id, fd_use_cnt[kq->kq_id]);
     } else /* Reset counter as FD had already been cleaned */
         fd_use_cnt[kq->kq_id] = 0;
 }
@@ -784,27 +780,27 @@ linux_get_descriptor_type(struct knote *kn)
             return (-1);
 
         case S_IFREG:
-            dbg_printf("fd %d is a regular file", fd);
+            dbg_printf("fd=%i is a regular file", fd);
             kn->kn_flags |= KNFL_FILE;
             return (0);
 
         case S_IFIFO:
-            dbg_printf("fd %d is a pipe", fd);
+            dbg_printf("fd=%i is a pipe", fd);
             kn->kn_flags |= KNFL_PIPE;
             return (0);
 
         case S_IFBLK:
-            dbg_printf("fd %d is a block device", fd);
+            dbg_printf("fd=%i is a block device", fd);
             kn->kn_flags |= KNFL_BLOCKDEV;
             return (0);
 
         case S_IFCHR:
-            dbg_printf("fd %d is a character device", fd);
+            dbg_printf("fd=%i is a character device", fd);
             kn->kn_flags |= KNFL_CHARDEV;
             return (0);
 
         case S_IFSOCK:
-            dbg_printf("fd %d is a socket", fd);
+            dbg_printf("fd=%i is a socket", fd);
             break; /* deferred type determination */
     }
 
@@ -820,27 +816,27 @@ linux_get_descriptor_type(struct knote *kn)
     }
     switch (stype) {
         case SOCK_STREAM:
-            dbg_printf("fd %d is a stream socket", fd);
+            dbg_printf("fd=%i is a stream socket", fd);
             kn->kn_flags |= KNFL_SOCKET_STREAM;
             break;
 
         case SOCK_DGRAM:
-            dbg_printf("fd %d is a datagram socket", fd);
+            dbg_printf("fd=%i is a datagram socket", fd);
             kn->kn_flags |= KNFL_SOCKET_DGRAM;
             break;
 
         case SOCK_RDM:
-            dbg_printf("fd %d is a reliable datagram socket", fd);
+            dbg_printf("fd=%i is a reliable datagram socket", fd);
             kn->kn_flags |= KNFL_SOCKET_RDM;
             break;
 
         case SOCK_SEQPACKET:
-            dbg_printf("fd %d is a sequenced and reliable datagram socket", fd);
+            dbg_printf("fd=%i is a sequenced and reliable datagram socket", fd);
             kn->kn_flags |= KNFL_SOCKET_SEQPACKET;
             break;
 
         case SOCK_RAW:
-            dbg_printf("fd %d is a raw socket", fd);
+            dbg_printf("fd=%i is a raw socket", fd);
             kn->kn_flags |= KNFL_SOCKET_RAW;
             break;
 
@@ -1160,7 +1156,7 @@ epoll_update(int op, struct filter *filt, struct knote *kn, int ev, bool delete)
 
 #define EV_EPOLLINOUT(_x) ((_x) & (EPOLLIN | EPOLLOUT))
 
-    if (kn->kev.flags & EV_DISABLE) dbg_printf("fd=%i kn is disabled", fd);
+    if (kn->kev.flags & EV_DISABLE) dbg_printf("fd=%i kn=%p is disabled", fd, kn);
 
     /*
      * Determine the current state of the file descriptor

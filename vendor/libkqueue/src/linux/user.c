@@ -36,7 +36,7 @@ eventfd_raise(int evfd)
     uint64_t counter;
     int rv = 0;
 
-    dbg_puts("raising event level");
+    dbg_printf("event_fd=%i - raising event level", evfd);
     counter = 1;
     if (write(evfd, &counter, sizeof(counter)) < 0) {
         switch (errno) {
@@ -65,7 +65,7 @@ eventfd_lower(int evfd)
     int rv = 0;
 
     /* Reset the counter */
-    dbg_puts("lowering event level");
+    dbg_printf("event_fd=%i - lowering event level", evfd);
     n = read(evfd, &cur, sizeof(cur));
     if (n < 0) {
         switch (errno) {
@@ -129,7 +129,7 @@ error:
         return (-1);
     }
 
-    dbg_printf("created eventfd fd=%i", evfd);
+    dbg_printf("event_fd=%i - created", evfd);
 
     /* Add the eventfd to the epoll set */
     KN_UDATA(kn);   /* populate this knote's kn_udata field */
@@ -145,8 +145,7 @@ error:
 }
 
 int
-linux_evfilt_user_knote_modify(struct filter *filt UNUSED, struct knote *kn,
-        const struct kevent *kev)
+linux_evfilt_user_knote_modify(struct filter *filt UNUSED, struct knote *kn, const struct kevent *kev)
 {
     unsigned int ffctrl;
     unsigned int fflags;
@@ -194,11 +193,14 @@ linux_evfilt_user_knote_delete(struct filter *filt, struct knote *kn)
         if (rv < 0) {
             dbg_perror("epoll_ctl(2)");
         } else {
-            dbg_printf("removed eventfd fd=%d from the epollfd", kn->kdata.kn_eventfd);
+            dbg_printf("event_fd=%i - removed from epoll_fd=%i",
+                       kn->kdata.kn_eventfd, filter_epoll_fd(filt));
         }
     }
 
     kn->kn_registered = 0;
+
+    dbg_printf("event_fd=%i - closed", kn->kdata.kn_eventfd);
     if (close(kn->kdata.kn_eventfd) < 0) {
         dbg_perror("close(2)");
         return (-1);

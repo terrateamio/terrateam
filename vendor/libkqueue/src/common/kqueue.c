@@ -110,7 +110,7 @@ kqueue_cmp(struct kqueue *a, struct kqueue *b)
 void
 kqueue_free(struct kqueue *kq)
 {
-    dbg_printf("freeing kqueue %p, fd=%d", kq, kq->kq_id);
+    dbg_printf("kq=%p - freeing", kq);
 
     /*
      * Ensure the current map entry points to
@@ -134,7 +134,7 @@ kqueue_free_by_id(int id)
     kq = map_delete(kqmap, id);
     if (!kq) return;
 
-    dbg_printf("freeing kqueue %p, fd=%d", kq, kq->kq_id);
+    dbg_printf("kq=%p - freeing", kq);
 
     filter_unregister_all(kq);
     kqops.kqueue_free(kq);
@@ -182,7 +182,7 @@ kqueue(void)
         return (-1);
     }
 
-    dbg_printf("alloced kqueue %p, fd=%d", kq, kq->kq_id);
+    dbg_printf("kq=%p - alloced with fd=%d", kq, kq->kq_id);
 
     /* Delete and insert should be atomic */
     (void) pthread_mutex_lock(&kq_mtx);
@@ -190,7 +190,7 @@ kqueue(void)
     kqueue_free_by_id(kq->kq_id);   /* Free any old map entries */
 
     if (map_insert(kqmap, kq->kq_id, kq) < 0) {
-        dbg_printf("map insertion failed, freeing kqueue %p, fd=%d", kq, kq->kq_id);
+        dbg_printf("kq=%p - map insertion failed, freeing", kq);
         filter_unregister_all(kq);
         pthread_mutex_unlock(&kq_mtx);
         goto error;

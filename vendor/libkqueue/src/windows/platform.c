@@ -105,10 +105,10 @@ windows_kevent_wait(struct kqueue *kq, int no, const struct timespec *timeout)
             timeout_ms += timeout->tv_nsec / 1000000;
     }
 
-    dbg_printf("waiting for events (timeout=%u ms)", (unsigned int) timeout_ms);
+    dbg_printf("timeout=%u ms - waiting for events", (unsigned int) timeout_ms);
 #if 0
     if(timeout_ms <= 0)
-        dbg_printf("Woop, not waiting !?");
+        dbg_puts("Woop, not waiting !?");
 #endif
     memset(&iocp_buf, 0, sizeof(iocp_buf));
     success = GetQueuedCompletionStatus(kq->kq_iocp,
@@ -212,7 +212,7 @@ windows_get_descriptor_type(struct knote *kn)
   default: {
     struct stat sb;
     if (fstat((int)kn->kev.ident, &sb) == 0) {
-      dbg_printf("HANDLE %d appears to be a regular file", kn->kev.ident);
+      dbg_printf("handle=%d - appears to be a regular file", kn->kev.ident);
       kn->kn_flags |= KNFL_FILE;
     }
   }
