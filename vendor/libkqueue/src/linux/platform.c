@@ -389,6 +389,7 @@ linux_kqueue_cleanup(struct kqueue *kq)
     int pipefd;
 
     if (kq->epollfd > 0) {
+        dbg_printf("epoll_fd=%i - closed", kq->epollfd);
         close(kq->epollfd);
         kq->epollfd = -1;
     }
