@@ -227,7 +227,7 @@ if(MINGW AND CMAKE_C_COMPILER_ID MATCHES GNU)
 endif()
 
 if(WIN32)
-  target_link_libraries(kqueue PRIVATE Ws2_32)
+  target_link_libraries(kqueue PRIVATE ws2_32)
 endif()
 target_link_libraries(kqueue PRIVATE Threads::Threads)
 
