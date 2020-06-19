@@ -225,8 +225,11 @@ monitoring_thread_loop(void *arg)
 
     /*
      * Now that thread is initialized, let kqueue init resume
+     *
+     * For some obscure reason this needs to be a broadcast
+     * not a signal, else we occasionally get hangs.
      */
-    pthread_cond_signal(&monitoring_thread_cond);
+    pthread_cond_broadcast(&monitoring_thread_cond);
     pthread_detach(pthread_self());
 
     pthread_cleanup_push(monitoring_thread_cleanup, NULL)
