@@ -319,6 +319,16 @@ linux_kqueue_init(struct kqueue *kq)
         return (-1);
     }
 
+    /*
+     * Ensure pipe ends are non-blocking so that there's
+     * no chance of them delaying close().
+     */
+    if ((fcntl(kq->pipefd[0], F_SETFL, O_NONBLOCK) < 0) ||
+        (fcntl(kq->pipefd[1], F_SETFL, O_NONBLOCK) < 0)) {
+        dbg_perror("fcntl(2)");
+        goto error;
+    }
+
     kq->kq_id = kq->pipefd[1];
 
     /*
