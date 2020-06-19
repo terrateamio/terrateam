@@ -222,6 +222,8 @@ test_cleanup(void *unused)
 
         if (close(kqfd2) < 0)
             die("close()");
+
+        nanosleep(&(struct timespec) { .tv_nsec = 25000000 }, NULL);   /* deschedule thread */
     }
 
     /* Restore FD limit */
