@@ -292,18 +292,27 @@ linux_kqueue_init(struct kqueue *kq)
      * will be caught by the monitoring thread.
      */
     if (pipe(kq->pipefd)) {
-        close(kq->epollfd);
+        if (close(kq->epollfd) < 0)
+            dbg_perror("close(2)");
         kq->epollfd = -1;
+
         return (-1);
     }
 
     if (filter_register_all(kq) < 0) {
     error:
-        close(kq->epollfd);
-        close(kq->pipefd[0]);
+        if (close(kq->epollfd) < 0)
+            dbg_perror("close(2)");
+        kq->epollfd = -1;
+
+        if (close(kq->pipefd[0]) < 0)
+            dbg_perror("close(2)");
         kq->pipefd[0] = -1;
-        close(kq->pipefd[1]);
+
+        if (close(kq->pipefd[1]) < 0)
+            dbg_perror("close(2)");
         kq->pipefd[1] = -1;
+
         return (-1);
     }
 
@@ -390,7 +399,9 @@ linux_kqueue_cleanup(struct kqueue *kq)
 
     if (kq->epollfd > 0) {
         dbg_printf("epoll_fd=%i - closed", kq->epollfd);
-        close(kq->epollfd);
+
+        if (close(kq->epollfd) < 0)
+            dbg_perror("close(2)");
         kq->epollfd = -1;
     }
 
@@ -404,7 +415,9 @@ linux_kqueue_cleanup(struct kqueue *kq)
     if (ret == -1 && errno == EWOULDBLOCK) {
         // Shoudn't happen unless kqops.kqueue_free is called on an open FD
         dbg_puts("kqueue wasn't closed");
-        close(kq->pipefd[1]);
+
+        if (close(kq->pipefd[1]) < 0)
+            dbg_perror("close(2)");
         kq->pipefd[1] = -1;
     } else if (ret > 0) {
         // Shouldn't happen unless data is written to kqueue FD
@@ -416,7 +429,9 @@ linux_kqueue_cleanup(struct kqueue *kq)
     pipefd = kq->pipefd[0];
     if (pipefd > 0) {
         dbg_printf("kq_fd=%i - closed", pipefd);
-        close(pipefd);
+
+        if (close(pipefd) < 0)
+            dbg_perror("close(2)");
         kq->pipefd[0] = -1;
     }
 
@@ -651,7 +666,8 @@ linux_eventfd_init(struct eventfd *e)
     }
     if (fcntl(evfd, F_SETFL, O_NONBLOCK) < 0) {
         dbg_perror("fcntl");
-        close(evfd);
+        if (close(evfd) < 0)
+            dbg_perror("close(2)");
         return (-1);
     }
     e->ef_id = evfd;
@@ -662,7 +678,8 @@ linux_eventfd_init(struct eventfd *e)
 void
 linux_eventfd_close(struct eventfd *e)
 {
-    close(e->ef_id);
+    if (close(e->ef_id) < 0)
+        dbg_perror("close(2)");
     e->ef_id = -1;
 }
 
