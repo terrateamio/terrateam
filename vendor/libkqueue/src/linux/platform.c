@@ -78,7 +78,7 @@ const struct kqueue_vtable kqops = {
     .eventfd_descriptor = linux_eventfd_descriptor,
 };
 
-static bool
+static void
 linux_kqueue_cleanup(struct kqueue *kq);
 
 static bool end_monitoring_thread = false;
@@ -381,7 +381,7 @@ linux_kqueue_init(struct kqueue *kq)
  * - true if epoll fd and pipes were closed
  * - false if epoll fd was already closed
  */
-static bool
+static void
 linux_kqueue_cleanup(struct kqueue *kq)
 {
     char buffer;
@@ -391,14 +391,13 @@ linux_kqueue_cleanup(struct kqueue *kq)
     if (kq->epollfd > 0) {
         close(kq->epollfd);
         kq->epollfd = -1;
-    } else {
-        dbg_puts("epollfd already closed, not performing cleanup");
-        // Don't do cleanup if epollfd has already been closed
-        return false;
     }
 
     /*
      * read will return 0 on pipe EOF (i.e. if the write end of the pipe has been closed)
+     *
+     * kq->pipefd[1] should have already been called outside of libkqueue
+     * as a signal the kqueue should be closed.
      */
     ret = read(kq->pipefd[0], &buffer, 1);
     if (ret == -1 && errno == EWOULDBLOCK) {
@@ -410,10 +409,12 @@ linux_kqueue_cleanup(struct kqueue *kq)
         // Shouldn't happen unless data is written to kqueue FD
         // Ignore write and continue with close
         dbg_puts("unexpected data available on kqueue FD");
+        assert(0);
     }
 
     pipefd = kq->pipefd[0];
     if (pipefd > 0) {
+        dbg_printf("kq_fd=%i - closed", pipefd);
         close(pipefd);
         kq->pipefd[0] = -1;
     }
@@ -421,8 +422,6 @@ linux_kqueue_cleanup(struct kqueue *kq)
     /* Decrement kqueue counter */
     kqueue_cnt--;
     dbg_printf("kq=%p - cleaned up kqueue, active_kqueues=%u", kq, kqueue_cnt);
-
-    return true;
 }
 
 /** Explicitly free the kqueue
@@ -435,12 +434,9 @@ linux_kqueue_cleanup(struct kqueue *kq)
 void
 linux_kqueue_free(struct kqueue *kq)
 {
-    /* Increment use counter as cleanup is being performed outside signal handler */
-    if (linux_kqueue_cleanup(kq)) {
-        fd_use_cnt[kq->kq_id]++;
-        dbg_printf("kq=%p - increased fd=%i use_count=%u", kq, kq->kq_id, fd_use_cnt[kq->kq_id]);
-    } else /* Reset counter as FD had already been cleaned */
-        fd_use_cnt[kq->kq_id] = 0;
+    linux_kqueue_cleanup(kq);
+    fd_use_cnt[kq->kq_id]++;
+    dbg_printf("kq=%p - increased fd=%i use_count=%u", kq, kq->kq_id, fd_use_cnt[kq->kq_id]);
 }
 
 static int
