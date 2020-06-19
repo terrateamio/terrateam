@@ -225,11 +225,10 @@ monitoring_thread_loop(void *arg)
 
     /*
      * Now that thread is initialized, let kqueue init resume
-     *
-     * For some obscure reason this needs to be a broadcast
-     * not a signal, else we occasionally get hangs.
      */
-    pthread_cond_broadcast(&monitoring_thread_cond);
+    pthread_mutex_lock(arg);    /* Must try to lock to ensure parent is waiting on signal */
+    pthread_cond_signal(&monitoring_thread_cond);
+    pthread_mutex_unlock(arg);
     pthread_detach(pthread_self());
 
     pthread_cleanup_push(monitoring_thread_cleanup, NULL)
@@ -265,12 +264,12 @@ linux_kqueue_start_thread(void)
 
     pthread_mutex_lock(&mt_mtx);
 
-    if (pthread_create(&monitoring_thread, NULL, &monitoring_thread_loop, NULL)) {
+    if (pthread_create(&monitoring_thread, NULL, &monitoring_thread_loop, &mt_mtx)) {
          dbg_perror("linux_kqueue_start_thread failure");
     }
 
     /* Wait for thread creating to be done as we need monitoring_tid to be available */
-    pthread_cond_wait(&monitoring_thread_cond, &mt_mtx);
+    pthread_cond_wait(&monitoring_thread_cond, &mt_mtx); /* unlocks mt_mtx allowing child to lock it */
     pthread_mutex_unlock(&mt_mtx);
 }
 
