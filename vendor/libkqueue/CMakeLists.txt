@@ -119,7 +119,8 @@ check_symbol_exists(ppoll poll.h HAVE_DECL_PPOLL)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR}
+                    ${CMAKE_CURRENT_BINARY_DIR}/include)
 
 set(LIBKQUEUE_HEADERS
     include/sys/event.h)
@@ -248,7 +249,8 @@ set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION ${CMAKE_INSTALL_FULL_MANDIR}
                                                   ${CMAKE_INSTALL_FULL_LIBDIR}${LIB_SUFFIX}/pkgconfig)
 
 install(FILES
-          "include/sys/event.h" "include/sys/libkqueue_version.h"
+          "${CMAKE_SOURCE_DIR}/include/sys/event.h"
+          "${CMAKE_CURRENT_BINARY_DIR}/include/sys/libkqueue_version.h"
         DESTINATION
           "${CMAKE_INSTALL_FULL_INCLUDEDIR}/kqueue/sys"
         COMPONENT headers)
@@ -258,7 +260,7 @@ install(TARGETS
           "${CMAKE_INSTALL_FULL_LIBDIR}${LIB_SUFFIX}"
         COMPONENT libraries)
 install(FILES
-          kqueue.2
+          "${CMAKE_SOURCE_DIR}/kqueue.2"
         DESTINATION
           "${CMAKE_INSTALL_FULL_MANDIR}/man2"
         COMPONENT man)
