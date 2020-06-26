@@ -3,6 +3,7 @@ config.h
 *.pc
 *.log
 *.deb
+*.swp
 CMakeCache.txt
 CMakeFiles/
 CPackConfig.cmake
