@@ -1,15 +1,19 @@
 .PHONY: all release debug clean
 
+VERSION = 1.4.6
+
 all: release
 
-release: install-tailwindcss
+release: .installed-$(VERSION)
 
-debug: install-tailwindcss
+debug: .installed-$(VERSION)
 
-profile: install-tailwindcss
+profile: .installed-$(VERSION)
 
-install-tailwindcss:
+.installed-$(VERSION):
 	mkdir -p node_modules
-	npm install tailwindcss@1.4.6
+	npm install tailwindcss@$(VERSION)
+	touch $@
 
 clean:
+	-rm .installed-$(VERSION)
