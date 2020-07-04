@@ -5,6 +5,11 @@ module Io : sig
   type err = [ `Parse_error of Pgsql_codec.Decode.err ]
 end
 
+type frame_err =
+  [ `Unmatching_frame of Pgsql_codec.Frame.Backend.t
+  | Io.err
+  ]
+
 module Typed_sql : sig
   module Var : sig
     type 'a t
@@ -102,15 +107,39 @@ end
 module Row_func : sig
   type ('f, 'fr, 'r) t
 
-  (* val map : ('q, 'qr, 'f, 'r) Typed_sql.t -> f:'f -> ('f, 'r list) t
-   * val ignore : ('q, 'qr, 'f, 'r) Typed_sql.t -> ('f, unit) t *)
-
   val make :
     ('q, 'qr, 'p, 'pr) Typed_sql.t ->
     init:'pr ->
     f:('pr -> 'p) ->
-    fin:('pr -> 'qr) ->
-    ('p, 'pr, 'qr) t
+    fin:('pr -> 'r) ->
+    ('p, 'pr, 'r) t
+
+  val ignore : ('q, 'qr, unit, unit) Typed_sql.t -> (unit, unit, unit) t
+
+  val map : ('q, 'qr, 'p, 'r list) Typed_sql.t -> ('r list -> 'p) -> ('p, 'r list, 'r list) t
+end
+
+module Cursor : sig
+  type err =
+    [ Abb_io_buffered.read_err
+    | Abb_io_buffered.write_err
+    | Io.err
+    | frame_err
+    | `Msgs of (char * string) list
+    ]
+
+  type ('p, 'pr, 'qr) t
+
+  val execute : ('p, 'pr, unit) t -> (unit, [> err ]) result Abb.Future.t
+
+  val fetch : ?n:int -> ('p, 'pr, 'r list) t -> ('r list, [> err ]) result Abb.Future.t
+
+  val destroy : ('p, 'pr, 'qr) t -> (unit, [> err ]) result Abb.Future.t
+
+  val with_cursor :
+    ('p, 'pr, 'qr) t ->
+    f:(('p, 'pr, 'qr) t -> ('a, ([> err ] as 'e)) result Abb.Future.t) ->
+    ('a, 'e) result Abb.Future.t
 end
 
 module Prepared_stmt : sig
@@ -119,18 +148,23 @@ module Prepared_stmt : sig
     | Abb_io_buffered.write_err
     | Io.err
     | `Msgs of (char * string) list
+    | frame_err
     ]
 
-  type exec_err =
+  type bind_err =
     [ Abb_io_buffered.read_err
     | Abb_io_buffered.write_err
     | Io.err
+    | frame_err
+    | `Msgs of (char * string) list
     ]
 
   type destroy_err =
     [ Abb_io_buffered.read_err
     | Abb_io_buffered.write_err
     | Io.err
+    | frame_err
+    | `Msgs of (char * string) list
     ]
 
   type conn = t
@@ -142,9 +176,9 @@ module Prepared_stmt : sig
     ('q, 'qr, 'p, 'pr) Typed_sql.t ->
     (('q, 'qr, 'p, 'pr) t, [> create_err ]) result Abb.Future.t
 
-  val execute :
-    ('q, ('r, exec_err) result Abb.Future.t, 'p, 'pr) t ->
-    ('p, 'pr, ('r, exec_err) result Abb.Future.t) Row_func.t ->
+  val bind :
+    ('q, (('p, 'pr, 'r) Cursor.t, [> bind_err ]) result Abb.Future.t, 'p, 'pr) t ->
+    ('p, 'pr, 'r) Row_func.t ->
     'q
 
   val destroy : ('q, 'qr, 'p, 'pr) t -> (unit, [> destroy_err ]) result Abb.Future.t
@@ -154,9 +188,9 @@ module Prepared_stmt : sig
 
   val show_create_err : create_err -> string
 
-  val pp_exec_err : Format.formatter -> exec_err -> unit
+  val pp_bind_err : Format.formatter -> bind_err -> unit
 
-  val show_exec_err : exec_err -> string
+  val show_bind_err : bind_err -> string
 
   val pp_destroy_err : Format.formatter -> destroy_err -> unit
 
@@ -165,7 +199,7 @@ module Prepared_stmt : sig
   (** Equality *)
   val equal_create_err : create_err -> create_err -> bool
 
-  val equal_exec_err : exec_err -> exec_err -> bool
+  val equal_bind_err : bind_err -> bind_err -> bool
 
   val equal_destroy_err : destroy_err -> destroy_err -> bool
 end
@@ -202,7 +236,7 @@ val destroy : t -> (unit, [> `E_io | `E_no_space | `Unexpected of exn ]) result 
 
 val tx :
   t ->
-  f:(unit -> ('a, ([> Abb_io_buffered.write_err ] as 'e)) result Abb.Future.t) ->
+  f:(unit -> ('a, ([> Abb_io_buffered.write_err | frame_err ] as 'e)) result Abb.Future.t) ->
   ('a, 'e) result Abb.Future.t
 
 (** Printers *)

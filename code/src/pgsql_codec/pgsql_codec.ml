@@ -418,12 +418,12 @@ module Decode = struct
           int32 >>= fun len -> dispatch_backend_msg (Int32.to_int len - 4) msg_typ.[0])
     in
     match res with
-      | Ok (frame, pos')  -> (
+      | Ok (frame, pos') -> (
           match backend_msg' pos' buf (len - (pos' - pos)) with
             | Ok (frames, pos)           -> Ok (frame :: frames, pos)
             | Error (frames, `Length, _) -> Ok (frame :: frames, pos')
             | Error (frames, err, pos)   -> Error (frame :: frames, err, pos) )
-      | Error (err, pos') -> Error ([], err, pos')
+      | Error (err, _)   -> Error ([], err, pos)
 
   let backend_msg t ~pos ~len buf =
     let (buf, pos, len) =

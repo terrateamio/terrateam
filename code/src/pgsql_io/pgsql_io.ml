@@ -13,6 +13,7 @@ type t = {
   w : Abbs_io_buffered.writer Abbs_io_buffered.t;
   backend_key_data : Backend_key_data.t;
   mutable unique_id : int;
+  notice_response : (char * string) list -> unit;
 }
 
 let gen_unique_id t prefix =
@@ -31,6 +32,7 @@ module Io = struct
   let write_buf bytes = Abb_intf.Write_buf.{ buf = bytes; pos = 0; len = Bytes.length bytes }
 
   let send_frame conn frame =
+    (* Printf.printf "Tx %s\n%!" (Pgsql_codec.Frame.Frontend.show frame); *)
     let open Abbs_future_combinators.Infix_result_monad in
     let bytes = encode_frame conn.scratch frame in
     Abbs_io_buffered.write conn.w ~bufs:Abb_intf.Write_buf.[ write_buf bytes ]
@@ -42,14 +44,34 @@ module Io = struct
       | Ok [] ->
           Abbs_io_buffered.read conn.r ~buf:conn.buf ~pos:0 ~len:(Bytes.length conn.buf)
           >>= fun n ->
+          (* Printf.printf "Rx = %S\n%!" (Bytes.to_string (Bytes.sub conn.buf 0 n)); *)
           wait_for_frames' conn (Pgsql_codec.Decode.backend_msg conn.decoder ~pos:0 ~len:n conn.buf)
       | r     -> wait_for_frames' conn r
 
   and wait_for_frames' conn = function
-    | Ok []     -> wait_for_frames conn
-    | Ok _ as r -> Abb.Future.return r
-    | Error err -> Abb.Future.return (Error (`Parse_error err))
+    | Ok []      -> wait_for_frames conn
+    | Ok fs as r ->
+        (* List.iter (fun frame -> Printf.printf "Rx %s\n%!" (Pgsql_codec.Frame.Backend.show frame)) fs; *)
+        Abb.Future.return r
+    | Error err  -> Abb.Future.return (Error (`Parse_error err))
+
+  let rec consume_matching conn fs =
+    let open Abbs_future_combinators.Infix_result_monad in
+    wait_for_frames conn >>= fun received_fs -> match_frames conn fs received_fs
+
+  and match_frames conn fs received_fs =
+    match (fs, received_fs) with
+      | ([], _) -> Abb.Future.return (Ok received_fs)
+      | (_, []) -> consume_matching conn fs
+      | (f :: fs, r_f :: r_fs) when f r_f -> match_frames conn fs r_fs
+      | (_, r_f :: _) -> Abb.Future.return (Error (`Unmatching_frame r_f))
 end
+
+type frame_err =
+  [ `Unmatching_frame of Pgsql_codec.Frame.Backend.t
+  | Io.err
+  ]
+[@@deriving show, eq]
 
 module Typed_sql = struct
   module Var = struct
@@ -210,12 +232,131 @@ module Row_func = struct
     fin : 'fr -> 'r;
   }
 
-  (* let map sql ~f = failwith "nyi"
-   * let ignore sql = failwith "nyi" *)
-
   let make sql ~init ~f ~fin =
     let func = F.t_of_sql sql in
     { func; f; init; fin }
+
+  let ignore sql = make sql ~init:() ~f:(fun () -> ()) ~fin:(fun () -> ())
+
+  let map sql f = make sql ~init:[] ~f ~fin:(fun v -> v)
+end
+
+module Cursor = struct
+  type err =
+    [ Abb_io_buffered.read_err
+    | Abb_io_buffered.write_err
+    | Io.err
+    | frame_err
+    | `Msgs of (char * string) list
+    ]
+
+  type conn = t
+
+  type ('p, 'pr, 'qr) t = {
+    conn : conn;
+    row_func : ('p, 'pr, 'qr) Row_func.t;
+    portal : string;
+  }
+
+  let make conn row_func portal = { conn; row_func; portal }
+
+  let rec consume_exec conn row_func st =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Io.wait_for_frames conn >>= fun frames -> consume_exec_frames conn row_func st frames
+
+  and consume_exec_frames conn row_func st = function
+    | [] -> consume_exec conn row_func st
+    | Pgsql_codec.Frame.Backend.NoticeResponse { msgs } :: fs ->
+        conn.notice_response msgs;
+        consume_exec_frames conn row_func st fs
+    | Pgsql_codec.Frame.Backend.CommandComplete _ :: fs -> consume_exec_end conn row_func st fs
+    | Pgsql_codec.Frame.Backend.DataRow _ :: _ -> assert false
+    | _ -> assert false
+
+  and consume_exec_end conn row_func st = function
+    | [] ->
+        let open Abbs_future_combinators.Infix_result_monad in
+        Io.wait_for_frames conn >>= fun frames -> consume_exec_end conn row_func st frames
+    | [ Pgsql_codec.Frame.Backend.ReadyForQuery _ ] ->
+        Abb.Future.return (Ok (row_func.Row_func.fin st))
+    | _ -> assert false
+
+  let execute t =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Io.send_frame
+      t.conn
+      Pgsql_codec.Frame.Frontend.(Execute { portal = t.portal; max_rows = Int32.zero })
+    >>= fun () ->
+    Io.send_frame t.conn Pgsql_codec.Frame.Frontend.Sync
+    >>= fun () ->
+    Io.consume_matching t.conn Pgsql_codec.Frame.Backend.[ equal ParseComplete; equal BindComplete ]
+    >>= fun fs ->
+    let st = t.row_func.Row_func.init in
+    ( consume_exec_frames t.conn t.row_func st fs
+      : (unit, err) result Abb.Future.t
+      :> (unit, [> err ]) result Abb.Future.t )
+
+  let rec consume_fetch conn row_func st =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Io.wait_for_frames conn >>= fun frames -> consume_fetch_frames conn row_func st frames
+
+  and consume_fetch_frames conn row_func st = function
+    | [] -> consume_fetch conn row_func st
+    | Pgsql_codec.Frame.Backend.CommandComplete _ :: fs -> consume_fetch_end conn row_func st fs
+    | Pgsql_codec.Frame.Backend.DataRow { data } :: fs ->
+        consume_fetch_process_frame conn row_func st fs data
+    | _ -> assert false
+
+  and consume_fetch_process_frame conn row_func st fs data =
+    match Row_func.F.kbind (row_func.Row_func.f st) data row_func.Row_func.func with
+      | Some st -> consume_fetch_frames conn row_func st fs
+      | None    -> failwith "nyi"
+
+  and consume_fetch_end conn row_func st = function
+    | [] ->
+        let open Abbs_future_combinators.Infix_result_monad in
+        Io.wait_for_frames conn >>= fun frames -> consume_fetch_end conn row_func st frames
+    | [ Pgsql_codec.Frame.Backend.ReadyForQuery _ ] ->
+        Abb.Future.return (Ok (row_func.Row_func.fin st))
+    | _ -> assert false
+
+  let fetch ?(n = 1000) t =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Io.send_frame
+      t.conn
+      Pgsql_codec.Frame.Frontend.(Execute { portal = t.portal; max_rows = Int32.of_int n })
+    >>= fun () ->
+    Io.send_frame t.conn Pgsql_codec.Frame.Frontend.Sync
+    >>= fun () ->
+    Io.consume_matching t.conn Pgsql_codec.Frame.Backend.[ equal ParseComplete; equal BindComplete ]
+    >>= fun fs ->
+    let st = t.row_func.Row_func.init in
+    ( consume_fetch_frames t.conn t.row_func st fs
+      : ('a list, err) result Abb.Future.t
+      :> ('a list, [> err ]) result Abb.Future.t )
+
+  let destroy t =
+    let open Abbs_future_combinators.Infix_result_monad in
+    let frame = Pgsql_codec.Frame.Frontend.(Close { typ = 'P'; name = t.portal }) in
+    Io.send_frame t.conn frame
+    >>= fun () ->
+    Io.send_frame t.conn Pgsql_codec.Frame.Frontend.Sync
+    >>= fun () ->
+    Io.consume_matching
+      t.conn
+      Pgsql_codec.Frame.Backend.
+        [
+          equal CloseComplete;
+          (function
+          | ReadyForQuery _ -> true
+          | _               -> false);
+        ]
+    >>= fun _ -> Abb.Future.return (Ok ())
+
+  let with_cursor t ~f =
+    Abbs_future_combinators.with_finally
+      (fun () -> f t)
+      ~finally:(fun () -> Abbs_future_combinators.ignore (destroy t))
 end
 
 module Prepared_stmt = struct
@@ -224,13 +365,16 @@ module Prepared_stmt = struct
     | Abb_io_buffered.write_err
     | Io.err
     | `Msgs of (char * string) list
+    | frame_err
     ]
   [@@deriving show, eq]
 
-  type exec_err =
+  type bind_err =
     [ Abb_io_buffered.read_err
     | Abb_io_buffered.write_err
     | Io.err
+    | frame_err
+    | `Msgs of (char * string) list
     ]
   [@@deriving show, eq]
 
@@ -238,6 +382,8 @@ module Prepared_stmt = struct
     [ Abb_io_buffered.read_err
     | Abb_io_buffered.write_err
     | Io.err
+    | frame_err
+    | `Msgs of (char * string) list
     ]
   [@@deriving show, eq]
 
@@ -250,66 +396,15 @@ module Prepared_stmt = struct
   }
 
   (* Create *)
-  let rec create_wait_for_frames conn =
-    let open Abbs_future_combinators.Infix_result_monad in
-    Io.wait_for_frames conn >>= fun frames -> create_process_frames conn frames
-
-  and create_process_frames conn = function
-    | Pgsql_codec.Frame.Backend.ParseComplete :: fs -> create_process_frames conn fs
-    | [ Pgsql_codec.Frame.Backend.ReadyForQuery _ ] -> Abb.Future.return (Ok ())
-    | [ Pgsql_codec.Frame.Backend.ErrorResponse { msgs } ] -> Abb.Future.return (Error (`Msgs msgs))
-    | _ -> assert false
-
-  let create' conn sql =
+  let create conn sql =
     let open Abbs_future_combinators.Infix_result_monad in
     let stmt = gen_unique_id conn "s" in
     let query = Typed_sql.to_query sql in
     let frame = Pgsql_codec.Frame.Frontend.(Parse { stmt; query; data_types = [] }) in
-    Io.send_frame conn frame
-    >>= fun () ->
-    Io.send_frame conn Pgsql_codec.Frame.Frontend.Sync
-    >>= fun () ->
-    create_wait_for_frames conn >>= fun () -> Abb.Future.return (Ok { conn; sql; id = stmt })
-
-  let create conn sql =
-    let open Abb.Future.Infix_monad in
-    create' conn sql
-    >>= function
-    | Ok _ as r      -> Abb.Future.return r
-    | Error _ as err -> Abb.Future.return err
+    Io.send_frame conn frame >>= fun () -> Abb.Future.return (Ok { conn; sql; id = stmt })
 
   (* Execute *)
-  let rec sync_complete t rf st =
-    let open Abbs_future_combinators.Infix_result_monad in
-    Io.wait_for_frames t.conn >>= fun frames -> sync_complete' t rf st frames
-
-  and sync_complete' t rf st = function
-    | [] -> sync_complete t rf st
-    | Pgsql_codec.Frame.Backend.BindComplete :: fs -> process_row_frames t rf st fs
-    | Pgsql_codec.Frame.Backend.ParseComplete :: fs -> sync_complete' t rf st fs
-    | _ -> failwith "nyi"
-
-  and recv_rows t rf st =
-    let open Abbs_future_combinators.Infix_result_monad in
-    Io.wait_for_frames t.conn >>= fun frames -> process_row_frames t rf st frames
-
-  and process_row_frames t rf st = function
-    | [] -> recv_rows t rf st
-    | Pgsql_codec.Frame.Backend.CommandComplete _ :: _ ->
-        (* TODO: Handle tag *)
-        rf.Row_func.fin st
-    | Pgsql_codec.Frame.Backend.DataRow { data } :: fs -> process_data_frame t rf st fs data
-    | Pgsql_codec.Frame.Backend.NoticeResponse _ :: fs ->
-        (* TODO: Handle notices *)
-        process_row_frames t rf st fs
-    | _ -> failwith "nyi"
-
-  and process_data_frame t rf st fs data =
-    match Row_func.F.kbind (rf.Row_func.f st) data rf.Row_func.func with
-      | Some st -> process_row_frames t rf st fs
-      | None    -> failwith "nyi"
-
-  let execute t rf =
+  let bind t rf =
     Typed_sql.kbind
       (fun vs ->
         let open Abbs_future_combinators.Infix_result_monad in
@@ -319,13 +414,7 @@ module Prepared_stmt = struct
             Bind { portal; stmt = t.id; format_codes = []; values = vs; result_format_codes = [] })
         in
         Io.send_frame t.conn bind_frame
-        >>= fun () ->
-        Io.send_frame t.conn Pgsql_codec.Frame.Frontend.(Execute { portal; max_rows = Int32.zero })
-        >>= fun () ->
-        Io.send_frame t.conn Pgsql_codec.Frame.Frontend.Sync
-        >>= fun () ->
-        let st = rf.Row_func.init in
-        sync_complete t rf st)
+        >>= fun () -> Abb.Future.return (Ok (Cursor.make t.conn rf portal)))
       t.sql
 
   let destroy t =
@@ -335,11 +424,16 @@ module Prepared_stmt = struct
     >>= fun () ->
     Io.send_frame t.conn Pgsql_codec.Frame.Frontend.Sync
     >>= fun () ->
-    Io.wait_for_frames t.conn
-    >>= function
-    | [ Pgsql_codec.Frame.Backend.CloseComplete; Pgsql_codec.Frame.Backend.ReadyForQuery _ ] ->
-        Abb.Future.return (Ok ())
-    | _ -> failwith "nyi"
+    Io.consume_matching
+      t.conn
+      Pgsql_codec.Frame.Backend.
+        [
+          equal CloseComplete;
+          (function
+          | ReadyForQuery _ -> true
+          | _               -> false);
+        ]
+    >>= fun _ -> Abb.Future.return (Ok ())
 end
 
 type create_err =
@@ -418,24 +512,43 @@ and create_sm_perform_login r w ?passwd ~user database =
       w;
       backend_key_data = Backend_key_data.{ pid = Int32.zero; secret_key = Int32.zero };
       unique_id = 0;
+      notice_response = (fun _ -> ());
     }
   in
   let msgs = [ ("user", user); ("database", database) ] in
   let startup = Pgsql_codec.Frame.Frontend.(StartupMessage { msgs }) in
-  Io.send_frame t startup >>= fun () -> create_sm_login t
+  Io.send_frame t startup >>= fun () -> create_sm_login ?passwd ~user t
 
-and create_sm_login t =
+and create_sm_login ?passwd ~user t =
   let open Abbs_future_combinators.Infix_result_monad in
-  Io.wait_for_frames t >>= fun frames -> create_sm_process_login_frames t frames
+  Io.wait_for_frames t >>= fun frames -> create_sm_process_login_frames ?passwd ~user t frames
 
-and create_sm_process_login_frames t =
+and create_sm_process_login_frames ?passwd ~user t =
   let open Pgsql_codec.Frame.Backend in
   function
-  | AuthenticationOk :: fs -> create_sm_process_login_frames t fs
-  | ParameterStatus _ :: fs -> create_sm_process_login_frames t fs
+  | [] -> create_sm_login ?passwd ~user t
+  | AuthenticationOk :: fs -> create_sm_process_login_frames ?passwd ~user t fs
+  | AuthenticationCleartextPassword :: fs -> (
+      let open Abbs_future_combinators.Infix_result_monad in
+      match passwd with
+        | Some password ->
+            Io.send_frame t Pgsql_codec.Frame.Frontend.(PasswordMessage { password })
+            >>= fun () -> create_sm_process_login_frames ?passwd ~user t fs
+        | None          -> failwith "nyi" )
+  | AuthenticationMD5Password { salt } :: fs -> (
+      let open Abbs_future_combinators.Infix_result_monad in
+      match passwd with
+        | Some password ->
+            let passuser = Digest.to_hex (Digest.string (password ^ user)) in
+            let passusersalt = Digest.to_hex (Digest.string (passuser ^ salt)) in
+            let password = "md5" ^ passusersalt in
+            Io.send_frame t Pgsql_codec.Frame.Frontend.(PasswordMessage { password })
+            >>= fun () -> create_sm_process_login_frames ?passwd ~user t fs
+        | None          -> failwith "nyi" )
+  | ParameterStatus _ :: fs -> create_sm_process_login_frames ?passwd ~user t fs
   | BackendKeyData { pid; secret_key } :: fs ->
       let t = { t with backend_key_data = Backend_key_data.{ pid; secret_key } } in
-      create_sm_process_login_frames t fs
+      create_sm_process_login_frames ?passwd ~user t fs
   | [ ReadyForQuery _ ] -> Abb.Future.return (Ok t)
   | _ -> failwith "nyi"
 
@@ -455,27 +568,36 @@ let destroy t = Abbs_io_buffered.close_writer t.w
 
 let tx_commit t =
   let open Abbs_future_combinators.Infix_result_monad in
-  Io.send_frame t Pgsql_codec.Frame.Frontend.(Query { query = "COMMIT;" })
+  Io.send_frame t Pgsql_codec.Frame.Frontend.(Query { query = "COMMIT" })
   >>= fun () -> Io.send_frame t Pgsql_codec.Frame.Frontend.Sync
 
 let tx_rollback t =
   let open Abbs_future_combinators.Infix_result_monad in
-  Io.send_frame t Pgsql_codec.Frame.Frontend.(Query { query = "ROLLBACK;" })
+  Io.send_frame t Pgsql_codec.Frame.Frontend.(Query { query = "ROLLBACK" })
   >>= fun () -> Io.send_frame t Pgsql_codec.Frame.Frontend.Sync
 
 let tx t ~f =
   Abbs_future_combinators.on_failure
     (fun () ->
       let open Abb.Future.Infix_monad in
-      Io.send_frame t Pgsql_codec.Frame.Frontend.(Query { query = "BEGIN;" })
+      Io.send_frame t Pgsql_codec.Frame.Frontend.(Query { query = "BEGIN" })
       >>= fun _ ->
-      Io.send_frame t Pgsql_codec.Frame.Frontend.Sync
-      >>= fun _ ->
-      (* TODO: Handle send_frame error *)
-      f ()
+      Io.consume_matching
+        t
+        Pgsql_codec.Frame.Backend.
+          [ equal (CommandComplete { tag = "BEGIN" }); equal (ReadyForQuery { status = 'T' }) ]
       >>= function
-      | Ok _ as r    ->
-          let open Abbs_future_combinators.Infix_result_monad in
-          tx_commit t >>= fun () -> Abb.Future.return r
+      | Ok _         -> (
+          Io.send_frame t Pgsql_codec.Frame.Frontend.Sync
+          >>= fun _ ->
+          Io.consume_matching t Pgsql_codec.Frame.Backend.[ equal (ReadyForQuery { status = 'T' }) ]
+          >>= fun _ ->
+          (* TODO: Handle send_frame error *)
+          f ()
+          >>= function
+          | Ok _ as r    ->
+              let open Abbs_future_combinators.Infix_result_monad in
+              tx_commit t >>= fun () -> Abb.Future.return r
+          | Error _ as r -> tx_rollback t >>= fun _ -> Abb.Future.return r )
       | Error _ as r -> tx_rollback t >>= fun _ -> Abb.Future.return r)
     ~failure:(fun () -> Abbs_future_combinators.ignore (tx_rollback t))
