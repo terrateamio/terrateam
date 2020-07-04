@@ -83,7 +83,7 @@ module Make (Fut : Abb_intf.Future.S) = struct
            (fun r ->
              match r with
                | `Det v   -> finally () >>= fun () -> Fut.Promise.set p v
-               | `Exn exn -> finally () >>= fun () -> Fut.Promise.set_exn p exn
+               | `Exn exn -> Fut.Promise.set_exn p exn
                | `Aborted -> Fut.abort (Fut.Promise.future p))
            fut)
       >>= fun _ -> Fut.Promise.future p

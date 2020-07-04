@@ -134,34 +134,36 @@ let first4 =
 
 let with_finally_success =
   Oth.test ~desc:"Test the finally block is run on success" ~name:"with_finally success" (fun _ ->
-      let finally_exec = ref false in
+      let finally_exec = ref 0 in
       let p = Fut.Promise.create () in
       let fut =
         Fut_comb.with_finally
           (fun () -> Fut.Promise.future p)
           ~finally:(fun () ->
-            finally_exec := true;
+            incr finally_exec;
             Fut.return ())
       in
       ignore (Fut.run_with_state fut dummy_state);
       ignore (Fut.run_with_state (Fut.Promise.set p ()) dummy_state);
-      assert !finally_exec;
+      assert (!finally_exec > 0);
+      assert (!finally_exec = 1);
       assert (Fut.state fut = `Det ()))
 
 let with_finally_aborted =
   Oth.test ~desc:"Test the finally block is run on abort" ~name:"with_finally aborted" (fun _ ->
-      let finally_exec = ref false in
+      let finally_exec = ref 0 in
       let p = Fut.Promise.create () in
       let fut =
         Fut_comb.with_finally
           (fun () -> Fut.Promise.future p)
           ~finally:(fun () ->
-            finally_exec := true;
+            incr finally_exec;
             Fut.return ())
       in
       ignore (Fut.run_with_state fut dummy_state);
       ignore (Fut.run_with_state (Fut.abort (Fut.Promise.future p)) dummy_state);
-      assert !finally_exec;
+      assert (!finally_exec > 0);
+      assert (!finally_exec = 1);
       assert (Fut.state fut = `Aborted))
 
 let with_finally_exn =
@@ -169,18 +171,19 @@ let with_finally_exn =
     ~desc:"Test the finally block is run on a fut determining to an exn"
     ~name:"with_finally exn"
     (fun _ ->
-      let finally_exec = ref false in
+      let finally_exec = ref 0 in
       let p = Fut.Promise.create () in
       let fut =
         Fut_comb.with_finally
           (fun () -> Fut.Promise.future p)
           ~finally:(fun () ->
-            finally_exec := true;
+            incr finally_exec;
             Fut.return ())
       in
       ignore (Fut.run_with_state fut dummy_state);
       ignore (Fut.run_with_state (Fut.Promise.set_exn p (Failure "foo", None)) dummy_state);
-      assert !finally_exec;
+      assert (!finally_exec > 0);
+      assert (!finally_exec = 1);
       match Fut.state fut with
         | `Exn (Failure _, None) -> ()
         | _                      -> assert false)
@@ -190,16 +193,17 @@ let with_finally_raise =
     ~desc:"Test the finally block is run on raising in the function"
     ~name:"with_finally raise"
     (fun _ ->
-      let finally_exec = ref false in
+      let finally_exec = ref 0 in
       let fut =
         Fut_comb.with_finally
           (fun () -> failwith "foo")
           ~finally:(fun () ->
-            finally_exec := true;
+            incr finally_exec;
             Fut.return ())
       in
       ignore (Fut.run_with_state fut dummy_state);
-      assert !finally_exec;
+      assert (!finally_exec > 0);
+      assert (!finally_exec = 1);
       match Fut.state fut with
         | `Exn (Failure _, Some _) -> ()
         | _                        -> assert false)
@@ -209,51 +213,53 @@ let with_finally_aborted_from_outside =
     ~desc:"Test the finally block is run on abort from the outside"
     ~name:"with_finally aborted outside"
     (fun _ ->
-      let finally_exec = ref false in
+      let finally_exec = ref 0 in
       let p = Fut.Promise.create () in
       let fut =
         Fut_comb.with_finally
           (fun () -> Fut.Promise.future p)
           ~finally:(fun () ->
-            finally_exec := true;
+            incr finally_exec;
             Fut.return ())
       in
       ignore (Fut.run_with_state fut dummy_state);
       ignore (Fut.run_with_state (Fut.abort fut) dummy_state);
-      assert !finally_exec;
+      assert (!finally_exec > 0);
+      assert (!finally_exec = 1);
       assert (Fut.state fut = `Aborted);
       assert (Fut.state (Fut.Promise.future p) = `Aborted))
 
 let on_failure_success =
   Oth.test ~desc:"Test the failure block is not run on success" ~name:"on_failure success" (fun _ ->
-      let failure_exec = ref false in
+      let failure_exec = ref 0 in
       let p = Fut.Promise.create () in
       let fut =
         Fut_comb.on_failure
           (fun () -> Fut.Promise.future p)
           ~failure:(fun () ->
-            failure_exec := true;
+            incr failure_exec;
             Fut.return ())
       in
       ignore (Fut.run_with_state fut dummy_state);
       ignore (Fut.run_with_state (Fut.Promise.set p ()) dummy_state);
-      assert (not !failure_exec);
+      assert (!failure_exec = 0);
       assert (Fut.state fut = `Det ()))
 
 let on_failure_aborted =
   Oth.test ~desc:"Test the failure block is run on abort" ~name:"on_failure aborted" (fun _ ->
-      let failure_exec = ref false in
+      let failure_exec = ref 0 in
       let p = Fut.Promise.create () in
       let fut =
         Fut_comb.on_failure
           (fun () -> Fut.Promise.future p)
           ~failure:(fun () ->
-            failure_exec := true;
+            incr failure_exec;
             Fut.return ())
       in
       ignore (Fut.run_with_state fut dummy_state);
       ignore (Fut.run_with_state (Fut.abort (Fut.Promise.future p)) dummy_state);
-      assert !failure_exec;
+      assert (!failure_exec > 0);
+      assert (!failure_exec = 1);
       assert (Fut.state fut = `Aborted))
 
 let on_failure_aborted_from_outside =
@@ -261,18 +267,19 @@ let on_failure_aborted_from_outside =
     ~desc:"Test the failure block is run on abort from the outside"
     ~name:"on_failure aborted outside"
     (fun _ ->
-      let failure_exec = ref false in
+      let failure_exec = ref 0 in
       let p = Fut.Promise.create () in
       let fut =
         Fut_comb.on_failure
           (fun () -> Fut.Promise.future p)
           ~failure:(fun () ->
-            failure_exec := true;
+            incr failure_exec;
             Fut.return ())
       in
       ignore (Fut.run_with_state fut dummy_state);
       ignore (Fut.run_with_state (Fut.abort fut) dummy_state);
-      assert !failure_exec;
+      assert (!failure_exec > 0);
+      assert (!failure_exec = 1);
       assert (Fut.state fut = `Aborted);
       assert (Fut.state (Fut.Promise.future p) = `Aborted))
 
@@ -281,18 +288,19 @@ let on_failure_exn =
     ~desc:"Test the failure block is run on a fut determining to an exn"
     ~name:"on_failure exn"
     (fun _ ->
-      let failure_exec = ref false in
+      let failure_exec = ref 0 in
       let p = Fut.Promise.create () in
       let fut =
         Fut_comb.on_failure
           (fun () -> Fut.Promise.future p)
           ~failure:(fun () ->
-            failure_exec := true;
+            incr failure_exec;
             Fut.return ())
       in
       ignore (Fut.run_with_state fut dummy_state);
       ignore (Fut.run_with_state (Fut.Promise.set_exn p (Failure "foo", None)) dummy_state);
-      assert !failure_exec;
+      assert (!failure_exec > 0);
+      assert (!failure_exec = 1);
       match Fut.state fut with
         | `Exn (Failure _, None) -> ()
         | _                      -> assert false)
@@ -302,16 +310,17 @@ let on_failure_raise =
     ~desc:"Test the failure block is run on raising in the function"
     ~name:"on_failure raise"
     (fun _ ->
-      let failure_exec = ref false in
+      let failure_exec = ref 0 in
       let fut =
         Fut_comb.on_failure
           (fun () -> failwith "foo")
           ~failure:(fun () ->
-            failure_exec := true;
+            incr failure_exec;
             Fut.return ())
       in
       ignore (Fut.run_with_state fut dummy_state);
-      assert !failure_exec;
+      assert (!failure_exec > 0);
+      assert (!failure_exec = 1);
       match Fut.state fut with
         | `Exn (Failure _, Some _) -> ()
         | _                        -> assert false)
