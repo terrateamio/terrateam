@@ -20,7 +20,9 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         | Error `Want_pollout ->
             let open Abb.Future.Infix_monad in
             Abb.Socket.writable sock >>= fun () -> read ~buf ~pos ~len
-        | Error `Error        -> assert false
+        | Error `Error        ->
+            let err = Otls.Tls.error tls in
+            failwith err
     in
     let rec write ~bufs =
       match bufs with
@@ -42,7 +44,9 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
               | Error `Want_pollout ->
                   let open Abb.Future.Infix_monad in
                   Abb.Socket.writable sock >>= fun () -> write ~bufs
-              | Error `Error -> assert false )
+              | Error `Error ->
+                  let err = Otls.Tls.error tls in
+                  failwith err )
     in
     let close () =
       let open Abb.Future.Infix_monad in
