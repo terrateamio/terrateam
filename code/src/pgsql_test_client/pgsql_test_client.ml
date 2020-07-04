@@ -197,7 +197,6 @@ let test_tx_success =
             >>= fun create_stmt ->
             Pgsql_io.Prepared_stmt.create conn insert_sql
             >>= fun insert_stmt ->
-            print_endline "here";
             ( Pgsql_io.Prepared_stmt.execute create_stmt create_rf
               : ('a, Pgsql_io.Prepared_stmt.exec_err) result Abb.Future.t
               :> ( 'a,
@@ -205,7 +204,6 @@ let test_tx_success =
                  result
                  Abb.Future.t )
             >>= fun () ->
-            print_endline "there";
             ( Pgsql_io.Prepared_stmt.execute
                 insert_stmt
                 insert_rf
