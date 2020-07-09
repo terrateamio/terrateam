@@ -45,10 +45,17 @@ if(WIN32)
 elseif(UNIX)
   target_link_libraries(libkqueue-test PRIVATE -rdynamic)
 endif()
-target_link_libraries(libkqueue-test
-                      PRIVATE
+
+#
+# Don't link against -lkqueue on OSX and FreeBSD
+#
+if(NOT "${CMAKE_SYSTEM_NAME}" MATCHES "(Darwin|FreeBSD)")
+  target_link_libraries(libkqueue-test
+                        PRIVATE
                         kqueue
                         Threads::Threads)
+endif()
+
 if(WIN32)
   target_link_libraries(libkqueue-test
                         PRIVATE
