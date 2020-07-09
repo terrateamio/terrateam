@@ -68,6 +68,12 @@ print_fd_table(void)
 /* Maximum number of threads that can be created */
 #define MAX_THREADS 100
 
+/**
+ * Don't build the below function on OSX due to a known-issue
+ * breakking the build with FD_SET()/FD_ISSET() + OSX.
+ * e.g: https://www.google.com/search?q=___darwin_check_fd_set_overflow
+ */
+#ifndef __APPLE__
 void
 test_kqueue_descriptor_is_pollable(void)
 {
@@ -98,6 +104,7 @@ test_kqueue_descriptor_is_pollable(void)
 
     close(kq);
 }
+#endif
 
 /*
  * Test the method for detecting when one end of a socketpair
