@@ -107,16 +107,13 @@ kevent_fflags_dump(struct kevent *kev)
 char *
 kevent_flags_dump(struct kevent *kev)
 {
-    char *buf;
+    static __thread char buf[512];
 
 #define KEVFL_DUMP(attrib) \
     if (kev->flags & attrib) \
     strncat(buf, #attrib" ", 64);
 
-    if ((buf = calloc(1, 1024)) == NULL)
-    abort();
-
-    snprintf(buf, 1024, "flags = %d (", kev->flags);
+    snprintf(buf, sizeof(buf), "flags = %d (", kev->flags);
     KEVFL_DUMP(EV_ADD);
     KEVFL_DUMP(EV_ENABLE);
     KEVFL_DUMP(EV_DISABLE);
