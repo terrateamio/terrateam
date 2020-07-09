@@ -76,7 +76,15 @@ Running Unit Tests
     cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DENABLE_TESTING=YES -DCMAKE_BUILD_TYPE=Debug <path to source>
     make
     make test
-    
+
+Build & Running only the test suite
+-----------------------------------
+Helpful to see the behavior of the tests on systems with native `kqueue`, e.g: OSX, FreeBSD
+
+    cmake . --config test/CMakeLists.txt
+    make -C test/
+    ./test/libkqueue-test
+
 Debugging
 ---------
 
