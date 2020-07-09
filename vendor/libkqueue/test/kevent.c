@@ -51,6 +51,27 @@ kevent_get(struct kevent *kev, int kqfd)
         err(1, "kevent(2)");
 }
 
+/**
+ * Retrieve a single kevent, specifying a maximum time to wait for it.
+ * Result:
+ * 0 = Timeout
+ * 1 = Success
+ */
+int
+kevent_get_timeout(struct kevent *kev, int fd, struct timespec *ts)
+{
+    int nfds;
+
+    nfds = kevent(fd, NULL, 0, kev, 1, ts);
+    if (nfds < 0) {
+        err(1, "kevent(2)");
+    } else if (nfds == 0) {
+        return 0;
+    }
+
+    return 1;
+}
+
 /* In Linux, a kevent() call with less than 1ms resolution
    will perform a pselect() call to obtain the higer resolution.
    This test exercises that codepath.

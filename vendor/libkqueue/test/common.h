@@ -116,6 +116,7 @@ void test_evfilt_user(struct test_context *);
 extern const char * kevent_to_str(struct kevent *);
 void kevent_get(struct kevent *, int);
 void kevent_get_hires(struct kevent *, int, struct timespec *);
+int kevent_get_timeout(struct kevent *, int, struct timespec *);
 void kevent_update(int kqfd, struct kevent *kev);
 
 #define kevent_cmp(a,b) _kevent_cmp(a,b, __FILE__, __LINE__)
