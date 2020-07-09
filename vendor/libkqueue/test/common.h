@@ -39,7 +39,10 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "config.h"
+#if !defined(__APPLE__) && !defined(__FreeBSD__)
+#   include "config.h"
+#endif
+
 #ifndef _WIN32
 #include <sys/socket.h>
 #include <sys/stat.h>
