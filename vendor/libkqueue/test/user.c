@@ -52,6 +52,10 @@ static void
 test_kevent_user_get_hires(struct test_context *ctx)
 {
     struct kevent kev, ret;
+    struct timespec timeo = {
+        .tv_sec = 0,
+        .tv_nsec = 500000
+    };
 
     test_no_kevents(ctx->kqfd);
 
@@ -62,7 +66,7 @@ test_kevent_user_get_hires(struct test_context *ctx)
     kev.fflags &= ~NOTE_FFCTRLMASK;
     kev.fflags &= ~NOTE_TRIGGER;
     kev.flags = EV_CLEAR;
-    kevent_get_hires(&ret, ctx->kqfd);
+    kevent_get_hires(&ret, ctx->kqfd, &timeo);
     kevent_cmp(&kev, &ret);
 
     test_no_kevents(ctx->kqfd);

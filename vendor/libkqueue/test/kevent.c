@@ -56,14 +56,11 @@ kevent_get(struct kevent *kev, int kqfd)
    This test exercises that codepath.
  */
 void
-kevent_get_hires(struct kevent *kev, int kqfd)
+kevent_get_hires(struct kevent *kev, int kqfd, struct timespec *ts)
 {
     int nfds;
-    struct timespec timeo;
 
-    timeo.tv_sec = 0;
-    timeo.tv_nsec = 500000;
-    nfds = kevent(kqfd, NULL, 0, kev, 1, &timeo);
+    nfds = kevent(kqfd, NULL, 0, kev, 1, ts);
     if (nfds < 1)
         die("kevent(2)");
 }
