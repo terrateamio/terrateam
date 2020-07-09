@@ -52,6 +52,10 @@
 #   include "config.h"
 #endif
 
+#if defined(__FreeBSD__)
+#   include <netinet/in.h>
+#endif
+
 #ifndef _WIN32
 #include <sys/socket.h>
 #include <sys/stat.h>
