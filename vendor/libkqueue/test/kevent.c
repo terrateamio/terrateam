@@ -192,8 +192,9 @@ _kevent_cmp(struct kevent *k1, struct kevent *k2, const char *file, int line)
         k2->flags |= EV_ADD;
 #endif
     if (memcmp(k1, k2, sizeof(*k1)) != 0) {
-        printf("[%s:%d]: kevent_cmp() failed:\n  expected %s\n  but got  %s\n",
-              file, line, kevent_to_str(k1), kevent_to_str(k2));
+        printf("[%s:%d]: kevent_cmp() failed:\n", file, line);
+        printf("expected %s\n", kevent_to_str(k1));
+        printf("but got  %s\n", kevent_to_str(k2));
         abort();
     }
 }
