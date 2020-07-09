@@ -21,8 +21,17 @@
 #if HAVE_ERR_H
 # include <err.h>
 #else
-# define err(rc,msg,...) do { perror(msg); exit(rc); } while (0)
-# define errx(rc,msg,...) do { puts(msg); exit(rc); } while (0)
+# define err(rc, fmt, ...) do { \
+    char buf[128]; \
+    snprintf(buf, sizeof(buf), fmt, ##__VA_ARGS__);\
+    perror(buf); \
+    exit(rc); \
+} while (0)
+
+# define errx(rc, msg, ...) do { \
+    fprintf(stderr, msg"\n", ##__VA_ARGS__);\
+    exit(rc); \
+} while (0)
 #endif
 
 #define die(fmt, ...)   do { \

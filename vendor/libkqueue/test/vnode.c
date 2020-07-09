@@ -130,7 +130,7 @@ test_kevent_vnode_note_attrib(struct test_context *ctx)
             kev.filter != EVFILT_VNODE ||
             kev.fflags != NOTE_ATTRIB)
         err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)",
-                test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
+                ctx->cur_test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
 }
 
 void
@@ -150,7 +150,7 @@ test_kevent_vnode_note_rename(struct test_context *ctx)
             kev.filter != EVFILT_VNODE ||
             kev.fflags != NOTE_RENAME)
         err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)",
-                test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
+                ctx->cur_test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
 
     testfile_rename(ctx->testfile, 1);
 
@@ -193,7 +193,7 @@ test_kevent_vnode_disable_and_enable(struct test_context *ctx)
             kev.filter != EVFILT_VNODE ||
             kev.fflags != NOTE_ATTRIB)
         err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)",
-                test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
+                ctx->cur_test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
 }
 
 #ifdef EV_DISPATCH
@@ -216,7 +216,7 @@ test_kevent_vnode_dispatch(struct test_context *ctx)
             kev.filter != EVFILT_VNODE ||
             kev.fflags != NOTE_ATTRIB)
         err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)",
-                test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
+                ctx->cur_test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
 
     /* Confirm that the watch is disabled automatically */
     testfile_touch(ctx->testfile);

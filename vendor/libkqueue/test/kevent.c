@@ -32,7 +32,7 @@ _test_no_kevents(int kqfd, const char *file, int line)
         err(1, "kevent(2)");
     if (nfds > 0) {
         printf("\n[%s:%d]: Unexpected event:", file, line);
-        err(1, kevent_to_str(&kev));
+        err(1, "%s", kevent_to_str(&kev));
     }
 }
 
