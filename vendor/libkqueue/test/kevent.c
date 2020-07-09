@@ -71,22 +71,19 @@ kevent_get_hires(struct kevent *kev, int kqfd)
 char *
 kevent_fflags_dump(struct kevent *kev)
 {
-    char *buf;
+    static __thread char buf[512];
 
 #define KEVFFL_DUMP(attrib) \
     if (kev->fflags & attrib) \
     strncat(buf, #attrib" ", 64);
 
-    if ((buf = calloc(1, 1024)) == NULL)
-    abort();
-
     /* Not every filter has meaningful fflags */
     if (kev->filter != EVFILT_VNODE) {
-        snprintf(buf, 1024, "fflags = %d", kev->fflags);
+        snprintf(buf, sizeof(buf), "fflags = %d", kev->fflags);
         return (buf);
     }
 
-    snprintf(buf, 1024, "fflags = %d (", kev->fflags);
+    snprintf(buf, sizeof(buf), "fflags = %d (", kev->fflags);
     KEVFFL_DUMP(NOTE_DELETE);
     KEVFFL_DUMP(NOTE_WRITE);
     KEVFFL_DUMP(NOTE_EXTEND);
