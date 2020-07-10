@@ -69,31 +69,59 @@ char *
 kevent_fflags_dump(struct kevent *kev)
 {
     static __thread char buf[512];
+    size_t len;
 
 #define KEVFFL_DUMP(attrib) \
     if (kev->fflags & attrib) \
-    strncat(buf, #attrib" ", 64);
+    strncat((char *) buf, #attrib" ", 64);
 
-    /* Not every filter has meaningful fflags */
-    if (kev->filter != EVFILT_VNODE) {
-        snprintf(buf, sizeof(buf), "fflags = %d", kev->fflags);
-        return (buf);
+    snprintf(buf, sizeof(buf), "fflags=0x%04x (", kev->fflags);
+    switch (kev->filter) {
+    case EVFILT_VNODE:
+        KEVFFL_DUMP(NOTE_DELETE);
+        KEVFFL_DUMP(NOTE_WRITE);
+        KEVFFL_DUMP(NOTE_EXTEND);
+        KEVFFL_DUMP(NOTE_ATTRIB);
+        KEVFFL_DUMP(NOTE_LINK);
+        KEVFFL_DUMP(NOTE_RENAME);
+        break;
+
+    case EVFILT_USER:
+        KEVFFL_DUMP(NOTE_FFNOP);
+        KEVFFL_DUMP(NOTE_FFAND);
+        KEVFFL_DUMP(NOTE_FFOR);
+        KEVFFL_DUMP(NOTE_FFCOPY);
+        KEVFFL_DUMP(NOTE_TRIGGER);
+        break;
+
+    case EVFILT_READ:
+    case EVFILT_WRITE:
+#ifdef NOTE_LOWAT
+        KEVFFL_DUMP(NOTE_LOWAT);
+#endif
+        break;
+
+    case EVFILT_PROC:
+        KEVFFL_DUMP(NOTE_CHILD);
+        KEVFFL_DUMP(NOTE_EXIT);
+#ifdef NOTE_EXITSTATUS
+        KEVFFL_DUMP(NOTE_EXITSTATUS);
+#endif
+        KEVFFL_DUMP(NOTE_FORK);
+        KEVFFL_DUMP(NOTE_EXEC);
+#ifdef NOTE_SIGNAL
+        KEVFFL_DUMP(NOTE_SIGNAL);
+#endif
+        break;
+
+    default:
+        break;
     }
+    len = strlen(buf);
+    if (buf[len - 1] == ' ') buf[len - 1] = '\0';    /* Trim trailing space */
+    strcat(buf, ")");
 
-    snprintf(buf, sizeof(buf), "fflags = %d (", kev->fflags);
-    KEVFFL_DUMP(NOTE_DELETE);
-    KEVFFL_DUMP(NOTE_WRITE);
-    KEVFFL_DUMP(NOTE_EXTEND);
-#if HAVE_NOTE_TRUNCATE
-    KEVFFL_DUMP(NOTE_TRUNCATE);
-#endif
-    KEVFFL_DUMP(NOTE_ATTRIB);
-    KEVFFL_DUMP(NOTE_LINK);
-    KEVFFL_DUMP(NOTE_RENAME);
-#if HAVE_NOTE_REVOKE
-    KEVFFL_DUMP(NOTE_REVOKE);
-#endif
-    buf[strlen(buf) - 1] = ')';
+#undef KEVFFL_DUMP
 
     return (buf);
 }
