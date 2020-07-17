@@ -4,4 +4,3 @@ Ocamlrules.mk.in
 build/
 .merlin
 .*__pycache__.*
-code/src/otls/otls_stubs.ml
