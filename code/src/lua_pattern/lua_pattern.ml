@@ -118,12 +118,6 @@ and validate_bracket captures p s len =
 
 let of_string s = validate_pattern 0 0 s (String.length s)
 
-let is_special _ = false
-
-let is_alpha = function
-  | 'A' .. 'Z' | 'a' .. 'z' -> true
-  | _                       -> false
-
 (* Taken from the definition of the man page of iscntrl *)
 let is_cntrl = function
   | '\000'

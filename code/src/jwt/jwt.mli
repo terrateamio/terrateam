@@ -120,8 +120,7 @@ val payload : 'a t -> Payload.t
 
 val signature : verified t -> string
 
-(* Not implemented yet *)
-(* val token : verified t -> string *)
+val token : verified t -> string
 
 val of_token : string -> decoded t option
 

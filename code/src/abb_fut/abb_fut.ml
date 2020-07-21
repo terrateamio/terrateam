@@ -70,11 +70,6 @@ module Make (Sched_state : S) = struct
 
   type abort = unit -> unit t
 
-  type abort' =
-    [ `Exn     of exn * Printexc.raw_backtrace option
-    | `Aborted
-    ]
-
   (* The concrete type of a future.  Future's are mutable, but once they are
      determined they become immutable.  A future has a state which starts as
      undetermined, can become determined or an alias.  An alias is a future that

@@ -229,7 +229,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       | `Req (`Ok req)      -> (
           Abb.Future.await
             (Fut_comb.on_failure
-               (fun () -> config.Config.View.handler conn req r w)
+               (fun () -> Config.handler config conn req r w)
                ~failure:(fun () -> Fut_comb.ignore (Abb.Socket.close conn)))
           >>= function
           | `Det (`Ok as ret) | `Det (`Stop as ret) ->
@@ -239,7 +239,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
           | `Exn (exn, bt_opt) -> (
               Abb.Future.await
                 (Fut_comb.on_failure
-                   (fun () -> config.Config.View.on_handler_exn req (exn, bt_opt))
+                   (fun () -> Config.on_handler_exn config req (exn, bt_opt))
                    ~failure:(fun () -> Fut_comb.unit))
               >>= function
               | `Det (`Ok as ret) | `Det (`Stop as ret) ->

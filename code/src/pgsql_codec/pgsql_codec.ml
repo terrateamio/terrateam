@@ -447,8 +447,6 @@ module Decode = struct
 end
 
 module Encode = struct
-  type err = [ `Insufficient_buffer_length ]
-
   let backend_msg buf frame = failwith "nyi"
 
   let frontend_msg' =

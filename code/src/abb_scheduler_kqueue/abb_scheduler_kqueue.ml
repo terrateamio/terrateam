@@ -140,10 +140,6 @@ module El = struct
     let spot = Random.int (Array.length exec_duration) in
     exec_duration.(spot) <- time
 
-  let read_fds t = Iter.to_list (Fd_map.keys t.reads)
-
-  let write_fds t = Iter.to_list (Fd_map.keys t.writes)
-
   let dispatch fd get set s =
     let m = get s in
     let f = Fd_map.find fd m in
@@ -1202,7 +1198,6 @@ module Socket = struct
         | exn -> Error (`Unexpected exn)
 
     let connect t addr =
-      let open Future.Infix_monad in
       let sa = unix_sockaddr_of_sockaddr addr in
       try
         Unix.connect t ~addr:sa;

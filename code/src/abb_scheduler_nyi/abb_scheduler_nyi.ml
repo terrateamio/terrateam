@@ -74,8 +74,6 @@ module File = struct
 
   let rename ~src ~dst = failwith "nyi"
 
-  let fsync () = failwith "nyi"
-
   let truncate path offset = failwith "nyi"
 
   let ftruncate t offset = failwith "nyi"

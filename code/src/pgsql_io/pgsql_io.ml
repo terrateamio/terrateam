@@ -35,7 +35,7 @@ module Io = struct
     (* Printf.printf "Tx %s\n%!" (Pgsql_codec.Frame.Frontend.show frame); *)
     let open Abbs_future_combinators.Infix_result_monad in
     let bytes = encode_frame conn.scratch frame in
-    Abbs_io_buffered.write conn.w ~bufs:Abb_intf.Write_buf.[ write_buf bytes ]
+    Abbs_io_buffered.write conn.w ~bufs:[ write_buf bytes ]
     >>= fun _ -> Abbs_io_buffered.flushed conn.w
 
   let rec wait_for_frames conn =
@@ -483,7 +483,7 @@ and create_sm_ssl_conn ?passwd ~required ~host ~port ~user tls_config tcp databa
   let buf = Buffer.create 5 in
   let bytes = Io.encode_frame buf Pgsql_codec.Frame.Frontend.SSLRequest in
   let (r, w) = Abbs_io_buffered.Of.of_tcp_socket ~size:4096 tcp in
-  Abbs_io_buffered.write w ~bufs:Abb_intf.Write_buf.[ Io.write_buf bytes ]
+  Abbs_io_buffered.write w ~bufs:[ Io.write_buf bytes ]
   >>= fun _ ->
   Abbs_io_buffered.flushed w
   >>= fun () ->
