@@ -74,11 +74,14 @@ let handler mw rtng conn req ic oc =
       Mw.exec_early_exit_handler ctx mw
       >>= fun ctx -> write_response oc (Ctx.response ctx) >>= fun () -> Abb.Future.return `Ok
 
-let on_handler_exn req (exn, bt_opt) =
-  Logs.err (fun m -> m "Exception: %s" (Printexc.to_string exn));
-  CCOpt.iter
-    (fun bt -> Logs.err (fun m -> m "Backtrace: %s" (Printexc.raw_backtrace_to_string bt)))
-    bt_opt;
+let on_handler_err req err =
+  ( match err with
+    | `Exn (exn, bt_opt) ->
+        Logs.err (fun m -> m "Exception: %s" (Printexc.to_string exn));
+        CCOpt.iter
+          (fun bt -> Logs.err (fun m -> m "Backtrace: %s" (Printexc.raw_backtrace_to_string bt)))
+          bt_opt
+    | `Timeout           -> Logs.err (fun m -> m "Timeout") );
   Abb.Future.return `Ok
 
 let run cfg mw rtng =
@@ -87,7 +90,7 @@ let run cfg mw rtng =
       Config.of_view
         {
           Config.View.scheme = Scheme.Http;
-          on_handler_exn;
+          on_handler_err;
           port = Cfg.port cfg;
           handler = handler mw rtng;
           read_header_timeout = Cfg.read_header_timeout cfg;

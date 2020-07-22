@@ -4,7 +4,7 @@ type t = {
   handler_timeout : Duration.t option;
 }
 
-let create ~port ~read_header_timeout ~handler_timeout =
+let create ?read_header_timeout ?handler_timeout port =
   { port; read_header_timeout; handler_timeout }
 
 let port t = t.port

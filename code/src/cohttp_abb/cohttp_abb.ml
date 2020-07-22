@@ -4,19 +4,19 @@ type connect_http_err =
   [ Abb_intf.Errors.sock_create
   | Abb_intf.Errors.tcp_sock_connect
   ]
-[@@deriving show, eq]
+[@@deriving show]
 
 type connect_https_err =
   [ connect_http_err
   | `Error
   ]
-[@@deriving show, eq]
+[@@deriving show]
 
 type request_err =
   [ connect_https_err
   | `Invalid_scheme of string
   ]
-[@@deriving show, eq]
+[@@deriving show]
 
 type run_err =
   [ `Exn                            of exn
@@ -174,14 +174,16 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       Response_io.IO.oc ->
       [ `Stop | `Ok ] Abb.Future.t
 
-    type on_handler_exn =
-      Request.t -> exn * Printexc.raw_backtrace option -> [ `Stop | `Ok ] Abb.Future.t
+    type on_handler_err =
+      Request.t ->
+      [ `Timeout | `Exn     of exn * Printexc.raw_backtrace option ] ->
+      [ `Stop | `Ok ] Abb.Future.t
 
     module Config = struct
       module View = struct
         type t = {
           scheme : Scheme.t;
-          on_handler_exn : on_handler_exn;
+          on_handler_err : on_handler_err;
           port : int;
           handler : handler;
           read_header_timeout : Duration.t option;
@@ -199,7 +201,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
 
       let scheme t = t.View.scheme
 
-      let on_handler_exn t = t.View.on_handler_exn
+      let on_handler_err t = t.View.on_handler_err
 
       let port t = t.View.port
 
@@ -217,7 +219,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             let req_read = Request_io.read r >>| fun req -> `Req req in
             let timeout = Abb.Sys.sleep (Duration.to_f timeout) >>| fun () -> `Timeout in
             Fut_comb.first req_read timeout
-            >>= fun (ret, fut) -> Abb.Future.abort fut >>| fun () -> ret
+            >>= fun (ret, fut) -> Abb.Future.cancel fut >>| fun () -> ret
         | None         ->
             let open Abb.Future.Infix_monad in
             Request_io.read r >>| fun req -> `Req req
@@ -229,20 +231,37 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       | `Req (`Ok req)      -> (
           Abb.Future.await
             (Fut_comb.on_failure
-               (fun () -> Config.handler config conn req r w)
+               (fun () ->
+                 match Config.handler_timeout config with
+                   | Some timeout ->
+                       let timeout = Abb.Sys.sleep (Duration.to_f timeout) >>| fun () -> `Timeout in
+                       let handler = Config.handler config conn req r w >>| fun res -> `Res res in
+                       Fut_comb.first timeout handler
+                       >>= fun (ret, fut) -> Abb.Future.cancel fut >>| fun () -> ret
+                   | None         -> Config.handler config conn req r w >>| fun res -> `Res res)
                ~failure:(fun () -> Fut_comb.ignore (Abb.Socket.close conn)))
           >>= function
-          | `Det (`Ok as ret) | `Det (`Stop as ret) ->
+          | `Det (`Res (`Ok as ret)) | `Det (`Res (`Stop as ret)) ->
               Fut_comb.ignore (Buffered.flushed w)
               >>= fun () ->
               Fut_comb.ignore (Channel.send wc ret) >>= fun () -> run_handler config conn r w wc
-          | `Exn (exn, bt_opt) -> (
+          | `Det (`Timeout as err) | (`Exn _ as err) -> (
+              (* On timeout or error, run the error handler, which can only make
+                 decisions about whether to continue or stop the server. *)
               Abb.Future.await
                 (Fut_comb.on_failure
-                   (fun () -> Config.on_handler_exn config req (exn, bt_opt))
+                   (fun () -> Config.on_handler_err config req err)
                    ~failure:(fun () -> Fut_comb.unit))
               >>= function
               | `Det (`Ok as ret) | `Det (`Stop as ret) ->
+                  (* Send an HTTP 500 response. *)
+                  Response_io.write
+                    (fun writer -> Response_io.write_body writer "")
+                    (Cohttp.Response.make ~status:`Internal_server_error ())
+                    w
+                  >>= fun () ->
+                  Fut_comb.ignore (Buffered.flushed w)
+                  >>= fun () ->
                   Fut_comb.ignore (Channel.send wc ret) >>= fun () -> run_handler config conn r w wc
               | `Aborted -> Fut_comb.ignore (Channel.send wc `Stop)
               | `Exn (exn, _) -> Fut_comb.ignore (Channel.send wc (`Exn exn)) )

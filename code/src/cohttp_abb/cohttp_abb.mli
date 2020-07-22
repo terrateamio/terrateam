@@ -138,14 +138,16 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
        the error was so severe that the server should be stopped.  An [`Ok]
        means to continue.  If the handler fails, by throwing an exception or
        aborting, it is the equivalent of returning [`Stop]. *)
-    type on_handler_exn =
-      Request.t -> exn * Printexc.raw_backtrace option -> [ `Stop | `Ok ] Abb.Future.t
+    type on_handler_err =
+      Request.t ->
+      [ `Timeout | `Exn     of exn * Printexc.raw_backtrace option ] ->
+      [ `Stop | `Ok ] Abb.Future.t
 
     module Config : sig
       module View : sig
         type t = {
           scheme : Scheme.t;  (** HTTP or HTTPS server. *)
-          on_handler_exn : on_handler_exn;  (** Function to execute on error. *)
+          on_handler_err : on_handler_err;  (** Function to execute on error. *)
           port : int;  (** Port ot listen on. *)
           handler : handler;  (** The handler to execute per requests. *)
           read_header_timeout : Duration.t option;  (** Time to wait to read all headers. *)

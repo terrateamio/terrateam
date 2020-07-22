@@ -1,7 +1,6 @@
 type t
 
-val create :
-  port:int -> read_header_timeout:Duration.t option -> handler_timeout:Duration.t option -> t
+val create : ?read_header_timeout:Duration.t -> ?handler_timeout:Duration.t -> int -> t
 
 val port : t -> int
 
