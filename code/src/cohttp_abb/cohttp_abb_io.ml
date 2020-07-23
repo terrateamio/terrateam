@@ -18,9 +18,10 @@ module Make (Abb : Abb_intf.S) = struct
     let open Abb.Future.Infix_monad in
     Buffered.read_line ic
     >>| function
-    | Ok s                            -> Some s
-    | Error (`Unexpected End_of_file) -> None
-    | Error _                         -> assert false
+    | Ok s -> Some s
+    | Error (`Unexpected End_of_file)
+    | Error (`Unexpected (Unix.Unix_error (Unix.ECONNREFUSED, _, _))) -> None
+    | Error _ -> assert false
 
   let read ic n =
     let open Abb.Future.Infix_monad in

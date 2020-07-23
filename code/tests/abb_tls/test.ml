@@ -40,7 +40,8 @@ let google =
       | Error `E_protocol_type -> assert false
       | Error `Error -> assert false
       | Error (`Invalid_scheme _) -> assert false
-      | Error (`Unexpected _) -> assert false)
+      | Error (`Unexpected _) -> assert false
+      | Error (`Invalid _) -> assert false)
 
 let test = Oth_abb.(to_sync_test (parallel [ google ]))
 

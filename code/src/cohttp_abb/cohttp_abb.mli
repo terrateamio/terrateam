@@ -13,6 +13,7 @@ type connect_https_err =
 type request_err =
   [ connect_https_err
   | `Invalid_scheme of string
+  | `Invalid of string
   ]
 
 type run_err =
@@ -86,7 +87,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
       Request.t ->
       Cohttp_abb_io.Make(Abb).ic ->
       Cohttp_abb_io.Make(Abb).oc ->
-      (Response.t * Io.ic) Abb.Future.t
+      (Response.t * Io.ic, [> request_err ]) result Abb.Future.t
 
     (** Perform an HTTP or HTTPs request.  If the URI in Request has no scheme
         it is assumed to be HTTP.  The [tls_config] will be used only for HTTPS

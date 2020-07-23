@@ -15,6 +15,7 @@ type connect_https_err =
 type request_err =
   [ connect_https_err
   | `Invalid_scheme of string
+  | `Invalid of string
   ]
 [@@deriving show]
 
@@ -89,9 +90,9 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       >>= fun () ->
       Response_io.read ic
       >>| function
-      | `Ok res         -> (res, ic)
-      | `Eof            -> assert false
-      | `Invalid reason -> failwith reason
+      | `Ok res                -> Ok (res, ic)
+      | `Eof                   -> Error `E_connection_refused
+      | `Invalid reason as err -> Error err
 
     let sort_by_family addrinfos =
       let module Addrinfo = Abb_intf.Socket.Addrinfo in
@@ -122,9 +123,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       connect addrinfo scheme (Request.uri req)
       >>= fun (ic, oc) ->
       Fut_comb.on_failure
-        (fun () ->
-          let open Abb.Future.Infix_monad in
-          do_request ?flush ~body req ic oc >>| fun ret -> Ok ret)
+        (fun () -> do_request ?flush ~body req ic oc)
         ~failure:(fun () -> Fut_comb.ignore (Buffered.close_writer oc))
 
     let rec read_body r b =
