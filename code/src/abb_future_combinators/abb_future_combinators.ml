@@ -18,12 +18,12 @@ module Make (Fut : Abb_intf.Future.S) = struct
       fold_left
         ~f:(fun acc v ->
           f v
-          >>= function
-          | true  -> Fut.return (v :: acc)
-          | false -> Fut.return acc)
+          >>| function
+          | true  -> v :: acc
+          | false -> acc)
         ~init:[]
         l
-      >>| fun ls -> List.rev ls
+      >>| fun ls -> Std_list.rev ls
   end
 
   let link f1 f2 =
@@ -128,5 +128,30 @@ module Make (Fut : Abb_intf.Future.S) = struct
       >>| function
       | Ok v           -> Ok (f v)
       | Error _ as err -> err
+  end
+
+  module List_result = struct
+    open Infix_result_monad
+
+    let rec fold_left ~f ~init = function
+      | []      -> Fut.return (Ok init)
+      | l :: ls -> f init l >>= fun acc -> fold_left ~f ~init:acc ls
+
+    let map ~f l =
+      fold_left ~f:(fun acc l -> f l >>= fun v -> Fut.return (Ok (v :: acc))) ~init:[] l
+      >>| fun l -> Std_list.rev l
+
+    let iter ~f l = fold_left ~f:(fun () l -> f l) ~init:() l
+
+    let filter ~f l =
+      fold_left
+        ~f:(fun acc v ->
+          f v
+          >>| function
+          | true  -> v :: acc
+          | false -> acc)
+        ~init:[]
+        l
+      >>| fun ls -> Std_list.rev ls
   end
 end

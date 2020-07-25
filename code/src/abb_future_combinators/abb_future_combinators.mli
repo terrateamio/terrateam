@@ -90,6 +90,17 @@ module Make (Fut : Abb_intf.Future.S) : sig
     val filter : f:('a -> bool Fut.t) -> 'a list -> 'a list Fut.t
   end
 
+  module List_result : sig
+    val map : f:('a -> ('b, 'e) result Fut.t) -> 'a list -> ('b list, 'e) result Fut.t
+
+    val fold_left :
+      f:('a -> 'b -> ('a, 'e) result Fut.t) -> init:'a -> 'b list -> ('a, 'e) result Fut.t
+
+    val iter : f:('a -> (unit, 'e) result Fut.t) -> 'a list -> (unit, 'e) result Fut.t
+
+    val filter : f:('a -> (bool, 'e) result Fut.t) -> 'a list -> ('a list, 'e) result Fut.t
+  end
+
   module Infix_result_monad : sig
     type ('a, 'b) t = ('a, 'b) result Fut.t
 
