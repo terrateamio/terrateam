@@ -28,6 +28,7 @@ type component = [
   | `Query_key
   | `Query_value
   | `Fragment
+  | `Custom of (component * string * string)
 ]
 
 let rec iter_concat fn sep buf = function
@@ -143,7 +144,7 @@ module Generic : Scheme = struct
     a.(Char.code ':') <- false;
     a
 
-  let safe_chars_for_component = function
+  let rec safe_chars_for_component = function
     | `Path -> safe_chars_for_path
     | `Userinfo -> safe_chars_for_userinfo
     | `Query -> safe_chars_for_query
@@ -151,6 +152,17 @@ module Generic : Scheme = struct
     | `Query_value -> safe_chars_for_query_value
     | `Fragment -> safe_chars_for_fragment
     | `Scheme -> safe_chars_for_scheme
+    | `Custom ((component : component), safe, unsafe) ->
+       let safe_chars = safe_chars_for_component component in
+       for i = 0 to String.length safe - 1 do
+         let c = Char.code safe.[i] in
+         safe_chars.(c) <- true
+       done;
+       for i = 0 to String.length unsafe - 1 do
+         let c = Char.code unsafe.[i] in
+         safe_chars.(c) <- false
+       done;
+       safe_chars
     | _ -> safe_chars
 
   let normalize_host hso = hso

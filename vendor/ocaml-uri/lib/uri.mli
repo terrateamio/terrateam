@@ -31,6 +31,7 @@ type component = [
   | `Query_key
   | `Query_value
   | `Fragment
+  | `Custom of (component * string * string) (* (component * safe chars * unsafe chars) *)
 ]
 
 (** {2 Core functionality } *)
