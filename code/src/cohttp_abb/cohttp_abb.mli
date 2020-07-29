@@ -126,7 +126,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
         is called per request however there can be multiple requests per
         connection.  A handler can decide to stop the TCP server by returning
         [`Stop].  If a handler throws an exception, the behaviour depends on the
-        value of [on_handler_exn] in the {!Config.t}. *)
+        value of [on_handler_err] in the {!Config.t}. *)
     type handler =
       Abb.Socket.tcp Abb.Socket.t ->
       Request.t ->
@@ -144,11 +144,16 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
       [ `Timeout | `Exn     of exn * Printexc.raw_backtrace option ] ->
       [ `Stop | `Ok ] Abb.Future.t
 
+    (** The type of a protocol error handler.  This is called if the underlying
+       HTTP request is malformed or timeout during read. *)
+    type on_protocol_err = [ `Timeout | `Error   of string ] -> [ `Stop | `Ok ] Abb.Future.t
+
     module Config : sig
       module View : sig
         type t = {
           scheme : Scheme.t;  (** HTTP or HTTPS server. *)
-          on_handler_err : on_handler_err;  (** Function to execute on error. *)
+          on_handler_err : on_handler_err;  (** Function to execute on handler error. *)
+          on_protocol_err : on_protocol_err;  (** Function to execute on protocol error. *)
           port : int;  (** Port ot listen on. *)
           handler : handler;  (** The handler to execute per requests. *)
           read_header_timeout : Duration.t option;  (** Time to wait to read all headers. *)

@@ -43,12 +43,13 @@ let () =
   Logs.set_reporter (Logs_fmt.reporter ());
   Logs.set_level ~all:true (Some Logs.Debug);
   let run () =
+    let open Abb.Future.Infix_monad in
     let cfg = Brtl_cfg.create ~handler_timeout:(Duration.of_sec 5) 8888 in
     let mw =
       Brtl_mw.create
         [ Mw_log.(create { Config.remote_ip_header = None; extra_key = CCFun.const None }) ]
     in
-    Brtl.run cfg mw rtng
+    Brtl.run cfg mw rtng >>| fun _ -> ()
   in
   match Abb.Scheduler.run_with_state run with
     | `Det () -> ()

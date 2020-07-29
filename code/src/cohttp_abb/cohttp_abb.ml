@@ -178,11 +178,14 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       [ `Timeout | `Exn     of exn * Printexc.raw_backtrace option ] ->
       [ `Stop | `Ok ] Abb.Future.t
 
+    type on_protocol_err = [ `Timeout | `Error   of string ] -> [ `Stop | `Ok ] Abb.Future.t
+
     module Config = struct
       module View = struct
         type t = {
           scheme : Scheme.t;
           on_handler_err : on_handler_err;
+          on_protocol_err : on_protocol_err;
           port : int;
           handler : handler;
           read_header_timeout : Duration.t option;
@@ -201,6 +204,8 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       let scheme t = t.View.scheme
 
       let on_handler_err t = t.View.on_handler_err
+
+      let on_protocol_err t = t.View.on_protocol_err
 
       let port t = t.View.port
 
@@ -268,15 +273,20 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       | `Req `Eof           ->
           Fut_comb.ignore (Abb.Socket.close conn)
           >>= fun () -> Fut_comb.ignore (Abb.Future.fork (Channel.send wc `Ok))
-      | `Req (`Invalid str) ->
+      | `Req (`Invalid str) -> (
           Fut_comb.ignore (Abb.Socket.close conn)
           >>= fun () ->
-          Fut_comb.ignore
-            (Abb.Future.fork
-               (Channel.send wc (`Exn (Failure (Printf.sprintf "Invalid str: %s" str)))))
-      | `Timeout            ->
+          Config.on_protocol_err config (`Error str)
+          >>= function
+          | `Ok   -> Fut_comb.ignore (Channel.send wc `Ok)
+          | `Stop -> Fut_comb.ignore (Channel.send wc `Stop) )
+      | `Timeout            -> (
           Fut_comb.ignore (Abb.Socket.close conn)
-          >>= fun () -> Fut_comb.ignore (Abb.Future.fork (Channel.send wc `Ok))
+          >>= fun () ->
+          Config.on_protocol_err config `Timeout
+          >>= function
+          | `Ok   -> Fut_comb.ignore (Channel.send wc `Ok)
+          | `Stop -> Fut_comb.ignore (Channel.send wc `Stop) )
 
     let rec tcp_accept_loop sock config bf wc =
       let open Abb.Future.Infix_monad in

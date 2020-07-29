@@ -84,6 +84,14 @@ let on_handler_err req err =
     | `Timeout           -> Logs.err (fun m -> m "Timeout") );
   Abb.Future.return `Ok
 
+let on_protocol_err = function
+  | `Error str ->
+      Logs.warn (fun m -> m "Bad request: %s" str);
+      Abb.Future.return `Ok
+  | `Timeout   ->
+      Logs.warn (fun m -> m "Timed out reading request");
+      Abb.Future.return `Ok
+
 let run cfg mw rtng =
   let config =
     Http.Server.(
@@ -91,11 +99,11 @@ let run cfg mw rtng =
         {
           Config.View.scheme = Scheme.Http;
           on_handler_err;
+          on_protocol_err;
           port = Cfg.port cfg;
           handler = handler mw rtng;
           read_header_timeout = Cfg.read_header_timeout cfg;
           handler_timeout = Cfg.handler_timeout cfg;
         })
   in
-  let open Abb.Future.Infix_monad in
-  Http.Server.run (CCResult.get_exn config) >>| fun _ -> ()
+  Http.Server.run (CCResult.get_exn config)
