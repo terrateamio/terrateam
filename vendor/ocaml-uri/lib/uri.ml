@@ -28,8 +28,18 @@ type component = [
   | `Query_key
   | `Query_value
   | `Fragment
-  | `Custom of (component * string * string)
+  | `Custom of (component * string * string) (* (component * safe chars * unsafe chars) *)
 ]
+
+type pct_encoder = {
+    scheme: component;
+    userinfo: component;
+    host: component;
+    path: component;
+    query_key: component;
+    query_value: component;
+    fragment: component;
+  }
 
 let rec iter_concat fn sep buf = function
   | last::[] -> fn buf last
@@ -345,6 +355,17 @@ end
 let pct_encode ?scheme ?(component=`Path) s =
   Pct.(uncast_encoded (encode ?scheme ~component (cast_decoded s)))
 
+let pct_encoder
+      ?(scheme=`Scheme)
+      ?(userinfo=`Userinfo)
+      ?(host=`Host)
+      ?(path=`Path)
+      ?(query_key=`Query_key)
+      ?(query_value=`Query_value)
+      ?(fragment=`Fragment)
+      () =
+  { scheme; userinfo; host; path; query_key; query_value; fragment }
+
 (* Percent decode a string *)
 let pct_decode s = Pct.(uncast_decoded (decode (cast_encoded s)))
 
@@ -363,22 +384,22 @@ module Userinfo = struct
     | [u] -> (pct_decode u,None)
     | u::p::_ -> (pct_decode u,Some (pct_decode p))
 
-  let encoded_of_userinfo ?scheme (u,po) =
+  let encoded_of_userinfo ?scheme ~component (u,po) =
     let len = String.(
       1 + (length u) + (match po with None -> 0 | Some p -> length p))
     in
     let buf = Buffer.create len in
-    Buffer.add_string buf (pct_encode ?scheme ~component:`Userinfo u);
+    Buffer.add_string buf (pct_encode ?scheme ~component u);
     begin match po with None -> ();
     | Some p ->
       Buffer.add_char buf ':';
-      Buffer.add_string buf (pct_encode ?scheme ~component:`Userinfo p)
+      Buffer.add_string buf (pct_encode ?scheme ~component p)
     end;
     Pct.cast_encoded (Buffer.contents buf)
 end
 
 let userinfo_of_encoded = Userinfo.userinfo_of_encoded
-let encoded_of_userinfo ?scheme = Userinfo.encoded_of_userinfo ?scheme
+let encoded_of_userinfo ?scheme ~component = Userinfo.encoded_of_userinfo ?scheme ~component
 
 (* Path string handling, to and from a list of path tokens *)
 module Path = struct
@@ -410,12 +431,12 @@ module Path = struct
       | s::r -> loop 0 (s::outp) r
     in loop 0 [] revp
 
-  let encoded_of_path ?scheme p =
+  let encoded_of_path ?scheme ~component p =
     let len = List.fold_left (fun c tok -> String.length tok + c) 0 p in
     let buf = Buffer.create len in
     iter_concat (fun buf -> function
     | "/" -> Buffer.add_char buf '/'
-    | seg -> Buffer.add_string buf (pct_encode ?scheme ~component:`Path seg)
+    | seg -> Buffer.add_string buf (pct_encode ?scheme ~component seg)
     ) "" buf p;
     Pct.cast_encoded (Buffer.contents buf)
 
@@ -428,7 +449,7 @@ module Path = struct
 end
 
 let path_of_encoded = Path.path_of_encoded
-let encoded_of_path ?scheme = Path.encoded_of_path ?scheme
+let encoded_of_path ?scheme ~component = Path.encoded_of_path ?scheme ~component
 
 (* Query string handling, to and from an assoc list of key/values *)
 module Query = struct
@@ -489,18 +510,18 @@ module Query = struct
    * Tuple inputs are percent decoded and will be encoded by
    * this function.
   *)
-  let encoded_of_query ?scheme l =
+  let encoded_of_query ?scheme ?(pct_encoder=pct_encoder ()) l =
     let len = List.fold_left (fun a (k,v) ->
         a + (String.length k)
         + (List.fold_left (fun a s -> a+(String.length s)+1) 0 v) + 2) (-1) l in
     let buf = Buffer.create len in
     iter_concat (fun buf (k,v) ->
-        Buffer.add_string buf (pct_encode ?scheme ~component:`Query_key k);
+        Buffer.add_string buf (pct_encode ?scheme ~component:pct_encoder.query_key k);
         if v <> [] then (
           Buffer.add_char buf '=';
           iter_concat (fun buf s ->
               Buffer.add_string buf
-                (pct_encode ?scheme ~component:`Query_value s)
+                (pct_encode ?scheme ~component:pct_encoder.query_value s)
             ) "," buf v)
       ) "&" buf l;
     Buffer.contents buf
@@ -608,7 +629,7 @@ let make ?scheme ?userinfo ?host ?port ?path ?query ?fragment () =
 (** Convert a URI structure into a percent-encoded string
     <http://tools.ietf.org/html/rfc3986#section-5.3>
 *)
-let to_string uri =
+let to_string ?(pct_encoder=pct_encoder ()) uri =
   let scheme = match uri.scheme with
     | Some s -> Some (Pct.uncast_decoded s)
     | None -> None in
@@ -620,7 +641,7 @@ let to_string uri =
   (match uri.scheme with
    |None -> ()
    |Some x ->
-     add_pct_string ~component:`Scheme x;
+     add_pct_string ~component:pct_encoder.scheme x;
      Buffer.add_char buf ':'
   );
   (* URI has a host if any host-related component is set. Defaults to "". *)
@@ -631,13 +652,13 @@ let to_string uri =
   |None -> ()
   |Some userinfo ->
     Buffer.add_string buf
-      (Pct.uncast_encoded (encoded_of_userinfo ?scheme userinfo));
+      (Pct.uncast_encoded (encoded_of_userinfo ?scheme ~component:pct_encoder.userinfo userinfo));
     Buffer.add_char buf '@'
   );
   (match uri.host with
   |None -> ()
   |Some host ->
-    add_pct_string ~component:`Host host;
+    add_pct_string ~component:pct_encoder.host host;
   );
   (match uri.port with
   |None -> ()
@@ -648,7 +669,8 @@ let to_string uri =
   (match uri.path with (* Handle relative paths correctly *)
   | [] -> ()
   | "/"::_ ->
-    Buffer.add_string buf (Pct.uncast_encoded (encoded_of_path ?scheme uri.path))
+    Buffer.add_string buf (Pct.uncast_encoded
+                              (encoded_of_path ?scheme ~component:pct_encoder.path uri.path))
   | first_segment::_ ->
     (match uri.host with
      | Some _ -> Buffer.add_char buf '/'
@@ -661,17 +683,17 @@ let to_string uri =
          | None -> Buffer.add_string buf "./"
     );
     Buffer.add_string buf
-      (Pct.uncast_encoded (encoded_of_path ?scheme uri.path))
+      (Pct.uncast_encoded (encoded_of_path ?scheme ~component:pct_encoder.path uri.path))
   );
   Query.(match uri.query with
     | Raw (None,_) | KV [] -> ()
     | Raw (_,lazy q) | KV q -> (* normalize e.g. percent capitalization *)
       Buffer.add_char buf '?';
-      Buffer.add_string buf (encoded_of_query ?scheme q)
+      Buffer.add_string buf (encoded_of_query ?scheme ~pct_encoder q)
   );
   (match uri.fragment with
    |None -> ()
-   |Some f -> Buffer.add_char buf '#'; add_pct_string ~component:`Fragment f
+   |Some f -> Buffer.add_char buf '#'; add_pct_string ~component:pct_encoder.fragment f
   );
   Buffer.contents buf
 
@@ -694,11 +716,11 @@ let host_with_default ?(default="localhost") uri =
   |None -> default
   |Some h -> h
 
-let userinfo uri = match uri.userinfo with
+let userinfo ?(pct_encoder=pct_encoder ()) uri = match uri.userinfo with
   | None -> None
   | Some userinfo -> Some (Pct.uncast_encoded (match uri.scheme with
-    | None -> encoded_of_userinfo userinfo
-    | Some s -> encoded_of_userinfo ~scheme:(Pct.uncast_decoded s) userinfo))
+    | None -> encoded_of_userinfo ~component:pct_encoder.userinfo userinfo
+    | Some s -> encoded_of_userinfo ~scheme:(Pct.uncast_decoded s) ~component:pct_encoder.userinfo userinfo))
 let with_userinfo uri userinfo =
   let userinfo = match userinfo with
     | Some u -> Some (userinfo_of_encoded u)
@@ -736,9 +758,9 @@ let with_port uri port =
   end
 
 (* Return the path component *)
-let path uri = Pct.uncast_encoded (match uri.scheme with
-  | None -> encoded_of_path uri.path
-  | Some s -> encoded_of_path ~scheme:(Pct.uncast_decoded s) uri.path)
+let path ?(pct_encoder=pct_encoder ()) uri = Pct.uncast_encoded (match uri.scheme with
+  | None -> encoded_of_path ~component:pct_encoder.path uri.path
+  | Some s -> encoded_of_path ~scheme:(Pct.uncast_decoded s) ~component:pct_encoder.path uri.path)
 let with_path uri path =
   let path = path_of_encoded path in
   match host uri, path with
@@ -752,10 +774,10 @@ let with_fragment uri =
   |Some frag -> { uri with fragment=Some (Pct.cast_decoded frag) }
 
 let query uri = Query.kv uri.query
-let verbatim_query uri = Query.(match uri.query with
+let verbatim_query ?(pct_encoder=pct_encoder ()) uri = Query.(match uri.query with
   | Raw (qs,_) -> qs
   | KV [] -> None
-  | KV kv -> Some (encoded_of_query ?scheme:(scheme uri) kv)
+  | KV kv -> Some (encoded_of_query ?scheme:(scheme uri) ~pct_encoder kv)
 )
 let get_query_param' uri k = Query.(find (kv uri.query) k)
 let get_query_param uri k =

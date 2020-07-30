@@ -99,7 +99,13 @@ let test_uri_encode =
     let name = sprintf "uri:%s" uri_str in
     let test () = assert_equal ~printer:(fun x -> x) uri_str (Uri.to_string uri) in
     name >:: test
-  ) uri_encodes
+   ) uri_encodes
+
+let test_uri_custom_encode =
+  let str = "https://google.com?test=@" in
+  let uri = Uri.of_string str in
+  let pct_encoder = Uri.pct_encoder ~query_value:(`Custom (`Query_value, "", "@")) () in
+  assert_equal ~printer:(fun x -> x) "https://google.com?test=%40" (Uri.to_string ~pct_encoder uri)
 
 (* Test that a URI decodes to the expected value *)
 let test_uri_decode =
