@@ -689,31 +689,6 @@ let compat_uris =
   ; "http://user:password@\nhost/path"
   ]
 
-let uri_of_legacy_uri : Uri_legacy.t -> Uri.t = fun ul ->
-  let open Uri_legacy in
-  Uri.make
-    ?scheme:(scheme ul)
-    ?userinfo:(userinfo ul)
-    ?host:(host ul)
-    ?port:(port ul)
-    ~path:(path ul)
-    ~query:(query ul)
-    ?fragment:(fragment ul)
-    ()
-
-let test_legacy_compat =
-  List.map (fun input ->
-    let name = sprintf "compat_uri:%s" input in
-    let test () =
-      assert_equal
-        ~cmp:Uri.equal
-        (Uri.of_string input)
-        (uri_of_legacy_uri (Uri_legacy.of_string input))
-    in
-    name >:: test)
-  compat_uris
-
-
 (* Returns true if the result list contains successes only.
    Copied from oUnit source as it isnt exposed by the mli *)
 let rec was_successful =
@@ -748,7 +723,6 @@ let _ =
     @ test_canonicalize
     @ test_with_uri
     @ test_ipv6_parsing
-    @ test_legacy_compat
   ) in
   let verbose = ref false in
   let set_verbose _ = verbose := true in
