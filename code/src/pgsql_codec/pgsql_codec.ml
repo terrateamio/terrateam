@@ -67,7 +67,7 @@ end = struct
       (Error `Length, st)
 
   let bytes n st =
-    assert (n > 0);
+    assert (n >= 0);
     if st.State.pos + n <= st.State.stop then
       let s = Bytes.sub_string st.State.buf st.State.pos n in
       (Ok s, { st with State.pos = st.State.pos + n })
@@ -209,7 +209,7 @@ module Frame = struct
       | CopyInResponse (* TODO *)
       | CopyOutResponse (* TODO *)
       | CopyBothResponse (* TODO *)
-      | DataRow                         of { data : string list }
+      | DataRow                         of { data : string option list }
       | EmptyQueryResponse
       | ErrorResponse                   of { msgs : (char * string) list }
       | FunctionCallResponse (* TODO *)
@@ -242,7 +242,7 @@ module Frame = struct
           portal : string;
           stmt : string;
           format_codes : bool list;
-          values : string list;
+          values : string option list;
           result_format_codes : bool list;
         }
       | CancelRequest       of {
@@ -330,7 +330,13 @@ module Decode = struct
         int16
         >>= fun columns ->
         assert (columns > 0);
-        repeat columns (int32 >>= fun n -> bytes (Int32.to_int n))
+        repeat
+          columns
+          ( int32
+          >>= fun n ->
+          match Int32.to_int n with
+            | -1 -> return None
+            | n  -> bytes n >>= fun s -> return (Some s) )
         >>= fun data -> return (DataRow { data })
     | 'I' -> return EmptyQueryResponse
     | 'E' ->
@@ -473,7 +479,11 @@ module Encode = struct
         >>= fun () ->
         int16 (List.length values)
         >>= fun () ->
-        iter (fun s -> int32 (Int32.of_int (String.length s)) >>= fun () -> bytes s) values
+        iter
+          (function
+            | None   -> int32 (Int32.of_int (-1))
+            | Some s -> int32 (Int32.of_int (String.length s)) >>= fun () -> bytes s)
+          values
         >>= fun () ->
         int16 (List.length result_format_codes)
         >>= fun () ->

@@ -6,9 +6,21 @@ module Io : sig
 end
 
 type frame_err =
-  [ `Unmatching_frame of Pgsql_codec.Frame.Backend.t
+  [ `Unmatching_frame of Pgsql_codec.Frame.Backend.t list
   | Io.err
+  | `Disconnected
   ]
+
+val show_frame_err : frame_err -> string
+
+type err =
+  [ `Msgs of (char * string) list
+  | frame_err
+  | `Disconnected
+  | `Bad_result of string option list
+  ]
+
+val show_err : err -> string
 
 module Typed_sql : sig
   module Var : sig
@@ -45,16 +57,32 @@ module Typed_sql : sig
 
     val char : string t
 
+    val tsquery : string t
+
+    val uuid : Uuidm.t t
+
     (** Boolean types *)
     val boolean : bool t
 
-    val ud : ('a -> string list) -> 'a t
+    val timestamp : string t
+
+    val timestamptz : string t
+
+    val ud : 'b t -> ('a -> 'b) -> 'a t
+
+    val option : 'a t -> 'a option t
+
+    (** Type for any array that is NOT a string.  Strings require a special
+       representation that this does not account for. *)
+    val array : 'a t -> 'a list t
+
+    (** Any kind of string array. *)
+    val str_array : 'a t -> 'a list t
   end
 
   module Ret : sig
     type 'a t
 
-    (** Numeric types *)
     val smallint : int t
 
     val integer : int32 t
@@ -75,20 +103,21 @@ module Typed_sql : sig
 
     val bigserial : int64 t
 
-    (** Monetary *)
     val money : int64 t
 
-    (** Text types *)
     val text : string t
 
     val varchar : string t
 
     val char : string t
 
-    (** Boolean types *)
+    val uuid : Uuidm.t t
+
     val boolean : bool t
 
-    val ud : (string list -> ('a * string list) option) -> 'a t
+    val ud : (string option list -> ('a * string option list) option) -> 'a t
+
+    val option : 'a t -> 'a option t
   end
 
   type ('q, 'qr, 'p, 'pr) t
@@ -105,121 +134,68 @@ module Typed_sql : sig
 end
 
 module Row_func : sig
-  type ('f, 'fr, 'r) t
+  type ('f, 'fr, 'acc, 'r) t
 
   val make :
     ('q, 'qr, 'p, 'pr) Typed_sql.t ->
-    init:'pr ->
-    f:('pr -> 'p) ->
-    fin:('pr -> 'r) ->
-    ('p, 'pr, 'r) t
+    init:'acc ->
+    f:('acc -> 'p) ->
+    post_f:('acc -> 'pr -> 'acc) ->
+    fin:('acc -> 'r) ->
+    ('p, 'pr, 'acc, 'r) t
 
-  val ignore : ('q, 'qr, unit, unit) Typed_sql.t -> (unit, unit, unit) t
+  val ignore : ('q, 'qr, unit, unit) Typed_sql.t -> (unit, unit, unit, unit) t
 
-  val map : ('q, 'qr, 'p, 'r list) Typed_sql.t -> ('r list -> 'p) -> ('p, 'r list, 'r list) t
+  val fold : ('q, 'qr, 'p, 'r) Typed_sql.t -> init:'r -> f:('r -> 'p) -> ('p, 'r, 'r, 'r) t
+
+  val map : ('q, 'qr, 'p, 'r) Typed_sql.t -> f:'p -> ('p, 'r, 'r list, 'r list) t
 end
 
 module Cursor : sig
-  type err =
-    [ Abb_io_buffered.read_err
-    | Abb_io_buffered.write_err
-    | Io.err
-    | frame_err
-    | `Msgs of (char * string) list
-    ]
+  type ('p, 'pr, 'acc, 'qr) t
 
-  type ('p, 'pr, 'qr) t
+  val execute : ('p, 'pr, 'acc, unit) t -> (unit, [> err ]) result Abb.Future.t
 
-  val execute : ('p, 'pr, unit) t -> (unit, [> err ]) result Abb.Future.t
+  val fetch : ?n:int -> ('p, 'pr, 'acc, 'r list) t -> ('r list, [> err ]) result Abb.Future.t
 
-  val fetch : ?n:int -> ('p, 'pr, 'r list) t -> ('r list, [> err ]) result Abb.Future.t
-
-  val destroy : ('p, 'pr, 'qr) t -> (unit, [> err ]) result Abb.Future.t
+  val destroy : ('p, 'pr, 'acc, 'qr) t -> (unit, [> err ]) result Abb.Future.t
 
   val with_cursor :
-    ('p, 'pr, 'qr) t ->
-    f:(('p, 'pr, 'qr) t -> ('a, ([> err ] as 'e)) result Abb.Future.t) ->
+    ('p, 'pr, 'acc, 'qr) t ->
+    f:(('p, 'pr, 'acc, 'qr) t -> ('a, ([> err ] as 'e)) result Abb.Future.t) ->
     ('a, 'e) result Abb.Future.t
 end
 
 module Prepared_stmt : sig
-  type create_err =
-    [ Abb_io_buffered.read_err
-    | Abb_io_buffered.write_err
-    | Io.err
-    | `Msgs of (char * string) list
-    | frame_err
-    ]
-
-  type bind_err =
-    [ Abb_io_buffered.read_err
-    | Abb_io_buffered.write_err
-    | Io.err
-    | frame_err
-    | `Msgs of (char * string) list
-    ]
-
-  type destroy_err =
-    [ Abb_io_buffered.read_err
-    | Abb_io_buffered.write_err
-    | Io.err
-    | frame_err
-    | `Msgs of (char * string) list
-    ]
-
   type conn = t
 
   type ('q, 'qr, 'p, 'pr) t
 
   val create :
-    conn ->
-    ('q, 'qr, 'p, 'pr) Typed_sql.t ->
-    (('q, 'qr, 'p, 'pr) t, [> create_err ]) result Abb.Future.t
+    conn -> ('q, 'qr, 'p, 'pr) Typed_sql.t -> (('q, 'qr, 'p, 'pr) t, [> err ]) result Abb.Future.t
 
   val bind :
-    ('q, (('p, 'pr, 'r) Cursor.t, [> bind_err ]) result Abb.Future.t, 'p, 'pr) t ->
-    ('p, 'pr, 'r) Row_func.t ->
+    ('q, (('p, 'pr, 'acc, 'r) Cursor.t, [> err ]) result Abb.Future.t, 'p, 'pr) t ->
+    ('p, 'pr, 'acc, 'r) Row_func.t ->
     'q
 
-  val destroy : ('q, 'qr, 'p, 'pr) t -> (unit, [> destroy_err ]) result Abb.Future.t
+  (** Perform the create, bind, cursor execute, and cleanup of an SQL statement. *)
+  val execute : conn -> ('q, (unit, [> err ]) result Abb.Future.t, unit, unit) Typed_sql.t -> 'q
 
-  (** Printers *)
-  val pp_create_err : Format.formatter -> create_err -> unit
+  (** Perform the bind and execute, useful when executing the same statement
+     multiple times. *)
+  val bind_execute : ('q, (unit, [> err ]) result Abb.Future.t, unit, unit) t -> 'q
 
-  val show_create_err : create_err -> string
+  (** Perform the create, bind, cursor fetch, and cleanup of an SQL statement. *)
+  val fetch :
+    conn -> ('q, ('r list, [> err ]) result Abb.Future.t, 'p, 'r) Typed_sql.t -> f:'p -> 'q
 
-  val pp_bind_err : Format.formatter -> bind_err -> unit
-
-  val show_bind_err : bind_err -> string
-
-  val pp_destroy_err : Format.formatter -> destroy_err -> unit
-
-  val show_destroy_err : destroy_err -> string
-
-  (** Equality *)
-  val equal_create_err : create_err -> create_err -> bool
-
-  val equal_bind_err : bind_err -> bind_err -> bool
-
-  val equal_destroy_err : destroy_err -> destroy_err -> bool
+  val destroy : ('q, 'qr, 'p, 'pr) t -> (unit, [> err ]) result Abb.Future.t
 end
 
 type create_err =
   [ `Unexpected of exn
   | `Connection_failed
-  | `E_access
-  | `E_address_family_not_supported
-  | `E_address_in_use
-  | `E_address_not_available
-  | `E_bad_file
-  | `E_connection_refused
-  | `E_connection_reset
-  | `E_host_unreachable
-  | `E_invalid
-  | `E_io
-  | `E_is_connected
-  | `E_network_unreachable
-  | `E_no_space
   | Io.err
   ]
 
@@ -232,12 +208,12 @@ val create :
   string ->
   (t, [> create_err ]) result Abb.Future.t
 
-val destroy : t -> (unit, [> `E_io | `E_no_space | `Unexpected of exn ]) result Abb.Future.t
+val destroy : t -> unit Abb.Future.t
+
+val connected : t -> bool
 
 val tx :
-  t ->
-  f:(unit -> ('a, ([> Abb_io_buffered.write_err | frame_err ] as 'e)) result Abb.Future.t) ->
-  ('a, 'e) result Abb.Future.t
+  t -> f:(unit -> ('a, ([> frame_err ] as 'e)) result Abb.Future.t) -> ('a, 'e) result Abb.Future.t
 
 (** Printers *)
 val pp_create_err : Format.formatter -> create_err -> unit

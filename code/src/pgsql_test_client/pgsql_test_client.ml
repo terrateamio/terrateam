@@ -80,6 +80,40 @@ let test_insert_row =
       assert (r = Ok ());
       Abb.Future.return ())
 
+let test_insert_row_null =
+  Oth_abb.test ~desc:"Insert row with null" ~name:"insert_row_null" (fun () ->
+      let open Abb.Future.Infix_monad in
+      let f conn =
+        let open Abbs_future_combinators.Infix_result_monad in
+        let create_sql =
+          Pgsql_io.Typed_sql.(sql /^ "CREATE TABLE IF NOT EXISTS foo_null (name TEXT, age INTEGER)")
+        in
+        let insert_sql =
+          Pgsql_io.Typed_sql.(
+            sql /^ "INSERT INTO foo_null VALUES($1, $2)" /% Var.text /% Var.option Var.integer)
+        in
+        let create_rf = Pgsql_io.Row_func.ignore create_sql in
+        let insert_rf = Pgsql_io.Row_func.ignore insert_sql in
+        Pgsql_io.Prepared_stmt.create conn create_sql
+        >>= fun create_stmt ->
+        Pgsql_io.Prepared_stmt.bind create_stmt create_rf
+        >>= fun cursor ->
+        Pgsql_io.Cursor.execute cursor
+        >>= fun () ->
+        Pgsql_io.Prepared_stmt.create conn insert_sql
+        >>= fun insert_stmt ->
+        Pgsql_io.Prepared_stmt.bind insert_stmt insert_rf "Testy McTestface" None
+        >>= fun cursor ->
+        Pgsql_io.Cursor.execute cursor
+        >>= fun () ->
+        Pgsql_io.Prepared_stmt.destroy create_stmt
+        >>= fun () -> Pgsql_io.Prepared_stmt.destroy insert_stmt
+      in
+      with_conn f
+      >>= fun r ->
+      assert (r = Ok ());
+      Abb.Future.return ())
+
 let test_fetch_row =
   Oth_abb.test ~desc:"Fetch row" ~name:"fetch_row" (fun () ->
       let open Abb.Future.Infix_monad in
@@ -102,7 +136,7 @@ let test_fetch_row =
         let make_rf sql = Pgsql_io.Row_func.ignore sql in
         let create_rf = make_rf create_sql in
         let insert_rf = make_rf insert_sql in
-        let fetch_rf = Pgsql_io.Row_func.map fetch_sql (fun acc name -> name :: acc) in
+        let fetch_rf = Pgsql_io.Row_func.map fetch_sql ~f:(fun name -> name) in
         Pgsql_io.Prepared_stmt.create conn create_sql
         >>= fun create_stmt ->
         Pgsql_io.Prepared_stmt.bind create_stmt create_rf
@@ -128,9 +162,12 @@ let test_fetch_row =
         Pgsql_io.Prepared_stmt.destroy fetch_stmt >>= fun () -> Abb.Future.return (Ok acc)
       in
       with_conn f
-      >>= fun r ->
-      assert (r = Ok [ "Testy McTestface" ]);
-      Abb.Future.return ())
+      >>= function
+      | Ok r                       ->
+          assert (r = [ "Testy McTestface" ]);
+          Abb.Future.return ()
+      | Error #Pgsql_io.create_err -> assert false
+      | Error #Pgsql_io.err        -> assert false)
 
 let test_fetch_all_rows =
   Oth_abb.test ~desc:"Fetch all rows" ~name:"fetch_rows" (fun () ->
@@ -140,7 +177,7 @@ let test_fetch_all_rows =
         let fetch_sql =
           Pgsql_io.Typed_sql.(sql // Ret.text // Ret.integer /^ "SELECT name, age FROM foo")
         in
-        let fetch_rf = Pgsql_io.Row_func.map fetch_sql (fun acc name age -> (name, age) :: acc) in
+        let fetch_rf = Pgsql_io.Row_func.map fetch_sql ~f:(fun name age -> (name, age)) in
         Pgsql_io.Prepared_stmt.create conn fetch_sql
         >>= fun fetch_stmt ->
         Pgsql_io.Prepared_stmt.bind fetch_stmt fetch_rf
@@ -187,6 +224,53 @@ let test_tx_success =
       assert (r = Ok ());
       Abb.Future.return ())
 
+let test_multiple_tx_success =
+  Oth_abb.test ~desc:"Multiple transaction success" ~name:"multiple_tx_success" (fun () ->
+      let open Abb.Future.Infix_monad in
+      let f conn =
+        let open Abbs_future_combinators.Infix_result_monad in
+        let create_sql =
+          Pgsql_io.Typed_sql.(sql /^ "CREATE TABLE IF NOT EXISTS foo (name TEXT, age INTEGER)")
+        in
+        let insert_sql =
+          Pgsql_io.Typed_sql.(sql /^ "INSERT INTO foo VALUES($1, $2)" /% Var.text /% Var.integer)
+        in
+        let create_rf = Pgsql_io.Row_func.ignore create_sql in
+        let insert_rf = Pgsql_io.Row_func.ignore insert_sql in
+        Pgsql_io.(
+          tx conn ~f:(fun () ->
+              Prepared_stmt.create conn create_sql
+              >>= fun create_stmt ->
+              Prepared_stmt.bind create_stmt create_rf
+              >>= fun cursor ->
+              Cursor.execute cursor
+              >>= fun () ->
+              Prepared_stmt.create conn insert_sql
+              >>= fun insert_stmt ->
+              Prepared_stmt.bind insert_stmt insert_rf "Testy McTestface" (Int32.of_int 36)
+              >>= fun cursor -> Cursor.execute cursor))
+        >>= fun () ->
+        Pgsql_io.(
+          tx conn ~f:(fun () ->
+              Prepared_stmt.create conn create_sql
+              >>= fun create_stmt ->
+              Prepared_stmt.bind create_stmt create_rf
+              >>= fun cursor ->
+              Cursor.execute cursor
+              >>= fun () ->
+              Prepared_stmt.create conn insert_sql
+              >>= fun insert_stmt ->
+              Prepared_stmt.bind insert_stmt insert_rf "Testy McTestface" (Int32.of_int 36)
+              >>= fun cursor -> Cursor.execute cursor))
+      in
+      with_conn f
+      >>= function
+      | Ok r                       ->
+          assert (r = ());
+          Abb.Future.return ()
+      | Error #Pgsql_io.create_err -> assert false
+      | Error #Pgsql_io.err        -> assert false)
+
 let test_with_cursor =
   Oth_abb.test ~desc:"With Cursor" ~name:"with_cursor" (fun () ->
       let open Abb.Future.Infix_monad in
@@ -195,7 +279,7 @@ let test_with_cursor =
         let fetch_sql =
           Pgsql_io.Typed_sql.(sql // Ret.text // Ret.integer /^ "SELECT name, age FROM foo")
         in
-        let fetch_rf = Pgsql_io.Row_func.map fetch_sql (fun acc name age -> (name, age) :: acc) in
+        let fetch_rf = Pgsql_io.Row_func.map fetch_sql ~f:(fun name age -> (name, age)) in
         Pgsql_io.Prepared_stmt.create conn fetch_sql
         >>= fun fetch_stmt ->
         Pgsql_io.Prepared_stmt.bind fetch_stmt fetch_rf
@@ -240,29 +324,89 @@ let test_bad_bind_too_few_args =
       with_conn f
       >>= function
       | Ok _ -> assert false
-      | Error (`Unmatching_frame (Pgsql_codec.Frame.Backend.ErrorResponse { msgs })) ->
+      | Error (`Unmatching_frame [ Pgsql_codec.Frame.Backend.ErrorResponse { msgs } ]) ->
           assert (CCList.Assoc.get_exn ~eq:Char.equal 'S' msgs = "ERROR");
           assert (CCList.Assoc.get_exn ~eq:Char.equal 'V' msgs = "ERROR");
           assert (CCList.Assoc.get_exn ~eq:Char.equal 'C' msgs = "08P01");
           Abb.Future.return ()
-      | Error (`Unmatching_frame _)
-      | Error (`Msgs _)
-      | Error `E_no_space
-      | Error (`Parse_error _)
-      | Error `E_address_family_not_supported
-      | Error `E_address_not_available
-      | Error `Connection_failed
-      | Error (`Unexpected _)
-      | Error `E_bad_file
-      | Error `E_connection_reset
-      | Error `E_address_in_use
-      | Error `E_invalid
-      | Error `E_host_unreachable
-      | Error `E_io
-      | Error `E_is_connected
-      | Error `E_network_unreachable
-      | Error `E_access
-      | Error `E_connection_refused -> assert false)
+      | Error #Pgsql_io.create_err -> assert false
+      | Error #Pgsql_io.err -> assert false)
+
+let test_array =
+  Oth_abb.test ~desc:"Array" ~name:"array" (fun () ->
+      let open Abb.Future.Infix_monad in
+      let f conn =
+        let open Abbs_future_combinators.Infix_result_monad in
+        let sql =
+          Pgsql_io.Typed_sql.(
+            sql
+            // Ret.text
+            // Ret.integer
+            // Ret.option Ret.integer
+            /^ "select * from unnest ($1, $2, $3)"
+            /% Var.str_array Var.varchar
+            /% Var.array Var.integer
+            /% Var.array (Var.option Var.integer))
+        in
+        let rf =
+          Pgsql_io.Row_func.map sql ~f:(fun name age other ->
+              (name, Int32.to_int age, CCOpt.map Int32.to_int other))
+        in
+        Pgsql_io.Prepared_stmt.create conn sql
+        >>= fun stmt ->
+        Pgsql_io.Prepared_stmt.bind
+          stmt
+          rf
+          [ "na\\\"me1"; "name2" ]
+          [ Int32.of_int 4; Int32.of_int 5 ]
+          [ None; Some (Int32.of_int 10) ]
+        >>= fun cursor -> Pgsql_io.Cursor.with_cursor cursor ~f:Pgsql_io.Cursor.fetch
+      in
+      with_conn f
+      >>= function
+      | Ok r                       ->
+          assert (r = [ ("na\\\"me1", 4, None); ("name2", 5, Some 10) ]);
+          Abb.Future.return ()
+      | Error #Pgsql_io.create_err -> assert false
+      | Error #Pgsql_io.err        -> assert false)
+
+let test_insert_execute =
+  Oth_abb.test ~desc:"Insert row execute" ~name:"insert_row_execute" (fun () ->
+      let open Abb.Future.Infix_monad in
+      let f conn =
+        let open Abbs_future_combinators.Infix_result_monad in
+        let create_sql =
+          Pgsql_io.Typed_sql.(sql /^ "CREATE TABLE IF NOT EXISTS foo (name TEXT, age INTEGER)")
+        in
+        let insert_sql =
+          Pgsql_io.Typed_sql.(sql /^ "INSERT INTO foo VALUES($1, $2)" /% Var.text /% Var.integer)
+        in
+        Pgsql_io.Prepared_stmt.execute conn create_sql
+        >>= fun () ->
+        Pgsql_io.Prepared_stmt.execute conn insert_sql "Testy McTestface" (Int32.of_int 36)
+      in
+      with_conn f
+      >>= fun r ->
+      assert (r = Ok ());
+      Abb.Future.return ())
+
+let test_stmt_fetch =
+  Oth_abb.test ~desc:"Statement_fetch" ~name:"Statement fetch" (fun () ->
+      let open Abb.Future.Infix_monad in
+      let f conn =
+        let open Abbs_future_combinators.Infix_result_monad in
+        let fetch_sql =
+          Pgsql_io.Typed_sql.(sql // Ret.text // Ret.integer /^ "SELECT name, age FROM foo")
+        in
+        Pgsql_io.Prepared_stmt.fetch conn fetch_sql ~f:(fun name age -> (name, age))
+        >>= fun acc -> Abb.Future.return (Ok acc)
+      in
+      with_conn f
+      >>= function
+      | Ok r      ->
+          assert (List.length r >= 1);
+          Abb.Future.return ()
+      | Error err -> assert false)
 
 let test =
   Oth_abb.(
@@ -271,11 +415,16 @@ let test =
          [
            test_create_table;
            test_insert_row;
+           test_insert_row_null;
            test_fetch_row;
            test_fetch_all_rows;
            test_tx_success;
+           test_multiple_tx_success;
            test_with_cursor;
            test_bad_bind_too_few_args;
+           test_array;
+           test_insert_execute;
+           test_stmt_fetch;
          ]))
 
 let reporter ppf =

@@ -34,7 +34,7 @@ module Frame : sig
       | CopyInResponse (* TODO *)
       | CopyOutResponse (* TODO *)
       | CopyBothResponse (* TODO *)
-      | DataRow                         of { data : string list }
+      | DataRow                         of { data : string option list }
       | EmptyQueryResponse
       | ErrorResponse                   of { msgs : (char * string) list }
       | FunctionCallResponse (* TODO *)
@@ -80,7 +80,7 @@ module Frame : sig
           portal : string;
           stmt : string;
           format_codes : bool list;
-          values : string list;
+          values : string option list;
           result_format_codes : bool list;
         }
       | CancelRequest       of {

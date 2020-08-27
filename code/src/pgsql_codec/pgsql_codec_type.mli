@@ -1,325 +1,124 @@
-val booloid : int
+module Oid : sig
+  type t = {
+    oid : int;
+    array_oid : int;
+  }
 
-val byteaoid : int
+  val abstime : t
 
-val charoid : int
+  val aclitem : t
 
-val nameoid : int
+  val any : t
 
-val int8oid : int
+  val anyrange : t
 
-val int2oid : int
+  val bit : t
 
-val int2vectoroid : int
+  val bool : t
 
-val int4oid : int
+  val bpchar : t
 
-val regprocoid : int
+  val bytea : t
 
-val textoid : int
+  val char : t
 
-val oidoid : int
+  val cid : t
 
-val tidoid : int
+  val cidr : t
 
-val xidoid : int
+  val cstring : t
 
-val cidoid : int
+  val date : t
 
-val oidvectoroid : int
+  val daterange : t
 
-val jsonoid : int
+  val float4 : t
 
-val xmloid : int
+  val float8 : t
 
-val xmlarrayoid : int
+  val gtsvector : t
 
-val jsonarrayoid : int
+  val inet : t
 
-val pgnodetreeoid : int
+  val int2 : t
 
-val pgndistinctoid : int
+  val int2vector : t
 
-val pgdependenciesoid : int
+  val int4 : t
 
-val pgddlcommandoid : int
+  val int4range : t
 
-val smgroid : int
+  val int8 : t
 
-val pointoid : int
+  val int8range : t
 
-val lsegoid : int
+  val internal : t
 
-val pathoid : int
+  val json : t
 
-val boxoid : int
+  val jsonb : t
 
-val polygonoid : int
+  val macaddr : t
 
-val lineoid : int
+  val macaddr8 : t
 
-val linearrayoid : int
+  val money : t
 
-val float4oid : int
+  val name : t
 
-val float8oid : int
+  val numeric : t
 
-val abstimeoid : int
+  val numrange : t
 
-val reltimeoid : int
+  val oid : t
 
-val tintervaloid : int
+  val oidvector : t
 
-val unknownoid : int
+  val opaque : t
 
-val circleoid : int
+  val record : t
 
-val circlearrayoid : int
+  val regproc : t
 
-val cashoid : int
+  val reltime : t
 
-val moneyarrayoid : int
+  val text : t
 
-val macaddroid : int
+  val tid : t
 
-val inetoid : int
+  val time : t
 
-val cidroid : int
+  val timestamp : t
 
-val macaddr8oid : int
+  val timestamptz : t
 
-val boolarrayoid : int
+  val timetz : t
 
-val byteaarrayoid : int
+  val tinterval : t
 
-val chararrayoid : int
+  val trigger : t
 
-val namearrayoid : int
+  val tsquery : t
 
-val int2arrayoid : int
+  val tsrange : t
 
-val int2vectorarrayoid : int
+  val tstzrange : t
 
-val int4arrayoid : int
+  val tsvector : t
 
-val regprocarrayoid : int
+  val txid_snapshot : t
 
-val textarrayoid : int
+  val unknown : t
 
-val oidarrayoid : int
+  val uuid : t
 
-val tidarrayoid : int
+  val varbit : t
 
-val xidarrayoid : int
+  val varchar : t
 
-val cidarrayoid : int
+  val void : t
 
-val oidvectorarrayoid : int
+  val xid : t
 
-val bpchararrayoid : int
-
-val varchararrayoid : int
-
-val int8arrayoid : int
-
-val pointarrayoid : int
-
-val lsegarrayoid : int
-
-val patharrayoid : int
-
-val boxarrayoid : int
-
-val float4arrayoid : int
-
-val float8arrayoid : int
-
-val abstimearrayoid : int
-
-val reltimearrayoid : int
-
-val tintervalarrayoid : int
-
-val polygonarrayoid : int
-
-val aclitemoid : int
-
-val aclitemarrayoid : int
-
-val macaddrarrayoid : int
-
-val macaddr8arrayoid : int
-
-val inetarrayoid : int
-
-val cidrarrayoid : int
-
-val cstringarrayoid : int
-
-val bpcharoid : int
-
-val varcharoid : int
-
-val dateoid : int
-
-val timeoid : int
-
-val timestampoid : int
-
-val timestamparrayoid : int
-
-val datearrayoid : int
-
-val timearrayoid : int
-
-val timestamptzoid : int
-
-val timestamptzarrayoid : int
-
-val intervaloid : int
-
-val intervalarrayoid : int
-
-val numericarrayoid : int
-
-val timetzoid : int
-
-val timetzarrayoid : int
-
-val bitoid : int
-
-val bitarrayoid : int
-
-val varbitoid : int
-
-val varbitarrayoid : int
-
-val numericoid : int
-
-val refcursoroid : int
-
-val refcursorarrayoid : int
-
-val regprocedureoid : int
-
-val regoperoid : int
-
-val regoperatoroid : int
-
-val regclassoid : int
-
-val regtypeoid : int
-
-val regroleoid : int
-
-val regnamespaceoid : int
-
-val regprocedurearrayoid : int
-
-val regoperarrayoid : int
-
-val regoperatorarrayoid : int
-
-val regclassarrayoid : int
-
-val regtypearrayoid : int
-
-val regrolearrayoid : int
-
-val regnamespacearrayoid : int
-
-val uuidoid : int
-
-val uuidarrayoid : int
-
-val lsnoid : int
-
-val pg_lsnarrayoid : int
-
-val tsvectoroid : int
-
-val gtsvectoroid : int
-
-val tsqueryoid : int
-
-val regconfigoid : int
-
-val regdictionaryoid : int
-
-val tsvectorarrayoid : int
-
-val gtsvectorarrayoid : int
-
-val tsqueryarrayoid : int
-
-val regconfigarrayoid : int
-
-val regdictionaryarrayoid : int
-
-val jsonboid : int
-
-val jsonbarrayoid : int
-
-val txid_snapshotoid : int
-
-val txid_snapshotarrayoid : int
-
-val int4rangeoid : int
-
-val int4rangearrayoid : int
-
-val numrangeoid : int
-
-val numrangearrayoid : int
-
-val tsrangeoid : int
-
-val tsrangearrayoid : int
-
-val tstzrangeoid : int
-
-val tstzrangearrayoid : int
-
-val daterangeoid : int
-
-val daterangearrayoid : int
-
-val int8rangeoid : int
-
-val int8rangearrayoid : int
-
-val recordoid : int
-
-val recordarrayoid : int
-
-val cstringoid : int
-
-val anyoid : int
-
-val anyarrayoid : int
-
-val voidoid : int
-
-val triggeroid : int
-
-val evttriggeroid : int
-
-val language_handleroid : int
-
-val internaloid : int
-
-val opaqueoid : int
-
-val anyelementoid : int
-
-val anynonarrayoid : int
-
-val anyenumoid : int
-
-val fdw_handleroid : int
-
-val index_am_handleroid : int
-
-val tsm_handleroid : int
-
-val anyrangeoid : int
+  val xml : t
+end
