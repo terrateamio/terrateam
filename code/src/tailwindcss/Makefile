@@ -1,4 +1,4 @@
-.PHONY: all release debug clean
+.PHONY: all release debug clean docs
 
 VERSION = 1.4.6
 
@@ -9,6 +9,8 @@ release: .installed-$(VERSION)
 debug: .installed-$(VERSION)
 
 profile: .installed-$(VERSION)
+
+docs:
 
 .installed-$(VERSION):
 	mkdir -p node_modules
