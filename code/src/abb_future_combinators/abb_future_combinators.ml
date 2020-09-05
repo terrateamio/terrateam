@@ -76,23 +76,44 @@ module Make (Fut : Abb_intf.Future.S) = struct
   let with_finally f ~finally =
     try
       let fut = f () in
+      let finally_called = ref false in
+      let finally () =
+        if not !finally_called then (
+          finally_called := true;
+          finally ()
+        ) else
+          Fut.return ()
+      in
       let p = Fut.Promise.create ~abort:finally () in
       Fut.add_dep ~dep:fut (Fut.Promise.future p);
       Fut.fork
         (Fut.await_bind
-           (fun r ->
-             match r with
-               | `Det v   -> finally () >>= fun () -> Fut.Promise.set p v
-               | `Exn exn -> Fut.Promise.set_exn p exn
-               | `Aborted -> Fut.abort (Fut.Promise.future p))
+           (function
+             | `Det v   -> (
+                 try
+                   Fut.await_bind
+                     (function
+                       | `Det ()  -> Fut.Promise.set p v
+                       | `Exn exn -> Fut.Promise.set_exn p exn
+                       | `Aborted -> Fut.abort (Fut.Promise.future p))
+                     (finally ())
+                 with exn -> Fut.Promise.set_exn p (exn, Some (Printexc.get_raw_backtrace ())) )
+             | `Exn exn -> Fut.Promise.set_exn p exn
+             | `Aborted -> Fut.abort (Fut.Promise.future p))
            fut)
       >>= fun _ -> Fut.Promise.future p
-    with exn ->
-      finally ()
-      >>= fun () ->
-      let p = Fut.Promise.create () in
-      Fut.Promise.set_exn p (exn, Some (Printexc.get_raw_backtrace ()))
-      >>= fun () -> Fut.Promise.future p
+    with exn -> (
+      try
+        finally ()
+        >>= fun () ->
+        let p = Fut.Promise.create () in
+        Fut.Promise.set_exn p (exn, Some (Printexc.get_raw_backtrace ()))
+        >>= fun () -> Fut.Promise.future p
+      with exn ->
+        (* Calling the finally function failed *)
+        let p = Fut.Promise.create () in
+        Fut.Promise.set_exn p (exn, Some (Printexc.get_raw_backtrace ()))
+        >>= fun () -> Fut.Promise.future p )
 
   let on_failure f ~failure =
     let succeeded = ref false in

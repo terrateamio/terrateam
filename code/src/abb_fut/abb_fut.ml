@@ -191,24 +191,29 @@ module Make (Sched_state : S) = struct
   let undetermined ?f ?(abort = noop_abort) ?(watchers = []) ?(deps = []) () =
     { state = `Undet { f; watchers; deps; abort; num_ops = 0 } }
 
+  let safe_call_abort undet s =
+    try (run_with_state (undet.abort ()) s, `Aborted)
+    with exn -> (s, `Exn (exn, Some (Printexc.get_raw_backtrace ())))
+
   let set' undet v s =
     let st = `Det v in
     ListLabels.fold_left ~f:(fun s w -> Watcher.call w s st) ~init:s undet.watchers
 
   let cancel' undet s =
-    let s = run_with_state (undet.abort ()) s in
-    ListLabels.fold_left ~f:(fun s w -> Watcher.call w s `Aborted) ~init:s undet.watchers
+    let (s, det) = safe_call_abort undet s in
+    ListLabels.fold_left ~f:(fun s w -> Watcher.call w s det) ~init:s undet.watchers
 
   let rec abort' : 'a. 'a undet -> State.t -> State.t =
    fun undet s ->
-    let s = cancel' undet s in
+    let (s, det) = safe_call_abort undet s in
+    let s = ListLabels.fold_left ~f:(fun s w -> Watcher.call w s det) ~init:s undet.watchers in
     ListLabels.fold_left
       ~f:(fun s (Dep u) ->
         let u = collapse_alias u in
         match u.state with
           | `Alias _                   -> assert false
           | `Undet undet               ->
-              u.state <- `Aborted;
+              u.state <- det;
               abort' undet s
           | `Aborted | `Exn _ | `Det _ -> s)
       ~init:s
@@ -216,8 +221,11 @@ module Make (Sched_state : S) = struct
 
   let rec abort_exn' : 'a. 'a undet -> exn * Printexc.raw_backtrace option -> State.t -> State.t =
    fun undet exn s ->
-    let s = run_with_state (undet.abort ()) s in
-    let st = `Exn exn in
+    let (s, st) =
+      match safe_call_abort undet s with
+        | (s, `Aborted) -> (s, `Exn exn)
+        | (s, st)       -> (s, st)
+    in
     let s = ListLabels.fold_left ~f:(fun s w -> Watcher.call w s st) ~init:s undet.watchers in
     ListLabels.fold_left
       ~f:(fun s (Dep u) ->

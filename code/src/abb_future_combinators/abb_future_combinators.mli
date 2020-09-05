@@ -41,18 +41,22 @@ module Make (Fut : Abb_intf.Future.S) : sig
   val all : 'a Fut.t list -> 'a list Fut.t
 
   (** Execute a function which returns a future.  The [finally] function is
-      executed:
+     executed:
 
       - If the function throws an exception.
+
       - If the Fut the function returns is successfully evaluated.
+
       - If the Fut is aborted or fails because of an exception.
 
       In all cases, the Fut is returned.  In the case of the function throwing
-      an exception, a Fut will be returned that has been failed with the
-      exception.
+     an exception, a Fut will be returned that has been failed with the
+     exception.
 
-      {b Note} it is undefined what happens if [finally] throws an exception or
-      fails. *)
+      If [finally] throws an exception then the future is failed with that
+     exception.  In the case that the future had failed and calling [finally]
+     throws an exception, the exception thrown by [finally] replaced the failure
+     of the body and is propagated. *)
   val with_finally : (unit -> 'a Fut.t) -> finally:(unit -> unit Fut.t) -> 'a Fut.t
 
   (** Like {!with_finally} but it only execute the [failure] function if the

@@ -208,6 +208,42 @@ let with_finally_raise =
         | `Exn (Failure _, Some _) -> ()
         | _                        -> assert false)
 
+let with_finally_exn_in_finally =
+  Oth.test
+    ~desc:"Test the finally block where the finally throws an exception"
+    ~name:"with_finally exn in finally"
+    (fun _ ->
+      let fut =
+        Fut_comb.with_finally (fun () -> Fut.return ()) ~finally:(fun () -> failwith "finally")
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      match Fut.state fut with
+        | `Exn (Failure msg, Some _) ->
+            assert (msg = "finally");
+            ()
+        | `Aborted                   -> assert false
+        | `Undet                     -> assert false
+        | `Exn _                     -> assert false
+        | `Det _                     -> assert false)
+
+let with_finally_exn_in_body_and_finally =
+  Oth.test
+    ~desc:"Test the finally block where the body and finally throws an exception"
+    ~name:"with_finally exn in body and finally"
+    (fun _ ->
+      let fut =
+        Fut_comb.with_finally (fun () -> failwith "body") ~finally:(fun () -> failwith "finally")
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      match Fut.state fut with
+        | `Exn (Failure msg, Some _) ->
+            assert (msg = "finally");
+            ()
+        | `Aborted                   -> assert false
+        | `Undet                     -> assert false
+        | `Exn _                     -> assert false
+        | `Det _                     -> assert false)
+
 let with_finally_aborted_from_outside =
   Oth.test
     ~desc:"Test the finally block is run on abort from the outside"
@@ -344,6 +380,8 @@ let () =
            with_finally_aborted;
            with_finally_exn;
            with_finally_raise;
+           with_finally_exn_in_finally;
+           with_finally_exn_in_body_and_finally;
            with_finally_aborted_from_outside;
            on_failure_success;
            on_failure_aborted;
