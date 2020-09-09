@@ -5,6 +5,12 @@ val run :
   f:((string, unit) Brtl_ctx.t -> (Brtl_rspnc.t, 'f) t Abb.Future.t) ->
   Brtl_rtng.Handler.t
 
+val run_result :
+  f:
+    ((string, unit) Brtl_ctx.t ->
+    (Brtl_rspnc.t, [< `Location  of Uri.t | `Forbidden ]) t Abb.Future.t) ->
+  Brtl_rtng.Handler.t
+
 module Infix : sig
   val ( @--> ) :
     ((string, 'a) Brtl_ctx.t -> ('s1, 'f) t Abb.Future.t) ->
