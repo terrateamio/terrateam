@@ -1,25 +1,9 @@
-(* TODO: Make the dirty check be more specific to the actual session key being
-     updated.  Right now if one session data is updated, it's all updated. *)
-module Is_dirty : sig
-  type t
-
-  val key : t Hmap.key
-
-  val is_dirty : t -> bool
-
-  val dirty : t
-
-  val not_dirty : t
-end = struct
-  type t = bool
-
-  let key = Hmap.Key.create ()
-
-  let is_dirty t = t
-
-  let dirty = true
-
-  let not_dirty = false
+module Value = struct
+  type 'a t = {
+    is_dirty : bool;
+    is_create : bool;
+    v : 'a;
+  }
 end
 
 type id = string
@@ -32,7 +16,7 @@ type 'a store = id option -> 'a -> id Abb.Future.t
 
 module Config = struct
   type 'a t = {
-    key : 'a Hmap.key;
+    key : 'a Value.t Hmap.key;
     cookie_name : cookie_name;
     load : 'a load;
     store : 'a store;
@@ -49,8 +33,13 @@ let load_cookie cookie_name ctx =
 
 let store_cookie config v ctx =
   let open Abb.Future.Infix_monad in
-  let cookie_id = load_cookie config.Config.cookie_name ctx in
-  config.Config.store cookie_id v
+  let cookie_id =
+    if v.Value.is_create then
+      None
+    else
+      load_cookie config.Config.cookie_name ctx
+  in
+  config.Config.store cookie_id v.Value.v
   >>| fun cookie_id ->
   let cookie =
     Cohttp.Cookie.Set_cookie_hdr.make
@@ -66,7 +55,6 @@ let store_cookie config v ctx =
   |> CCFun.flip Brtl_ctx.set_response ctx
 
 let pre_handler config ctx =
-  let ctx = Brtl_ctx.md_add Is_dirty.key Is_dirty.not_dirty ctx in
   match load_cookie config.Config.cookie_name ctx with
     | Some cookie_id ->
         let open Abb.Future.Infix_monad in
@@ -74,24 +62,32 @@ let pre_handler config ctx =
         >>= fun v_opt ->
         let ctx =
           match v_opt with
-            | Some v -> Brtl_ctx.md_add config.Config.key v ctx
+            | Some v ->
+                Brtl_ctx.md_add
+                  config.Config.key
+                  Value.{ is_dirty = false; is_create = false; v }
+                  ctx
             | None   -> ctx
         in
         Abb.Future.return (Brtl_mw.Pre_handler.Cont ctx)
     | None           -> Abb.Future.return (Brtl_mw.Pre_handler.Cont ctx)
 
 let post_handler config ctx =
-  match Brtl_ctx.(md_find Is_dirty.key ctx, md_find config.Config.key ctx) with
-    | (Some dirty, Some v) when Is_dirty.is_dirty dirty -> store_cookie config v ctx
-    | (_, _) -> Abb.Future.return ctx
+  match Brtl_ctx.md_find config.Config.key ctx with
+    | Some v when v.Value.is_dirty -> store_cookie config v ctx
+    | _ -> Abb.Future.return ctx
 
 let early_exit_handler = Brtl_mw.early_exit_handler_noop
 
 let create config = Brtl_mw.Mw.create (pre_handler config) (post_handler config) early_exit_handler
 
 let set_session_value key v ctx =
-  ctx |> Brtl_ctx.md_add Is_dirty.key Is_dirty.dirty |> Brtl_ctx.md_add key v
+  match Brtl_ctx.md_find key ctx with
+    | Some value -> ctx |> Brtl_ctx.md_add key Value.{ value with is_dirty = true; v }
+    | None       -> ctx |> Brtl_ctx.md_add key Value.{ is_dirty = true; is_create = true; v }
 
-let get_session_value = Brtl_ctx.md_find
+let get_session_value key ctx = Brtl_ctx.md_find key ctx |> CCOpt.map (fun v -> v.Value.v)
 
 let rem_session_value = Brtl_ctx.md_rem
+
+let create_key () = Hmap.Key.create ()
