@@ -84,6 +84,11 @@ module Make (Fut : Abb_intf.Future.S) : sig
      option. *)
   val of_option : 'a Fut.t option -> 'a option Fut.t
 
+  (** Perform an operation with a cancel future.  If the cancel future is
+     determined first, the work is cancelled, if the work completes first the
+     cancel future is cancelled. *)
+  val with_cancel : cancel:unit Fut.t -> 'a Fut.t -> ('a, [> `Cancelled ]) result Fut.t
+
   module List : sig
     val map : f:('a -> 'b Fut.t) -> 'a list -> 'b list Fut.t
 

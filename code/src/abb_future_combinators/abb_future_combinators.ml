@@ -135,6 +135,13 @@ module Make (Fut : Abb_intf.Future.S) = struct
     | Some fut -> fut >>| fun r -> Some r
     | None     -> Fut.return None
 
+  let with_cancel ~cancel fut =
+    let open Fut.Infix_monad in
+    let cancel_fut = cancel >>| fun () -> Error `Cancelled in
+    first cancel_fut (fut >>| fun r -> Ok r)
+    >>= function
+    | (ret, fut) -> Fut.cancel fut >>| fun () -> ret
+
   module Infix_result_monad = struct
     type ('a, 'b) t = ('a, 'b) result Fut.t
 
