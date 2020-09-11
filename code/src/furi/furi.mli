@@ -144,11 +144,25 @@ module Query : sig
      convert it to the type. *)
   val ud : string -> (string -> 'a option) -> 'a t
 
+  val ud_array : string -> (string list -> 'a option) -> 'a t
+
+  (** An optional parameter *)
+  val option : 'a t -> 'a option t
+
+  (** An optional parameter with a default value *)
+  val option_default : 'a -> 'a t -> 'a t
+
   (** Extract a string from the query parameter. *)
   val string : string -> string t
 
   (** Extract an int from the query parameters. *)
   val int : string -> int t
+
+  (** Extract an array of elements *)
+  val array : 'a t -> 'a list t
+
+  (** If a value is present with no value *)
+  val present : string -> unit t
 end
 
 (** Represents a route, which is a URL pattern and the function it should be

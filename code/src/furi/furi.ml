@@ -19,13 +19,57 @@ module Path = struct
 end
 
 module Query = struct
-  type 'a t = string * (string -> 'a option)
+  type 'a t = string * (string list option -> 'a option)
 
-  let ud n f = (n, f)
+  let ud n f =
+    ( n,
+      function
+      | Some (v :: _)  -> CCOpt.(flatten (wrap f v))
+      | Some [] | None -> None )
 
-  let string n = (n, CCOpt.return)
+  let ud_array n f =
+    ( n,
+      function
+      | Some vs -> CCOpt.(flatten (wrap f vs))
+      | None    -> None )
 
-  let int n = (n, CCOpt.wrap int_of_string)
+  let option (n, f) =
+    ( n,
+      function
+      | Some _ as v -> (
+          match f v with
+            | None -> None
+            | r    -> Some r )
+      | None        -> Some None )
+
+  let option_default def (n, f) =
+    ( n,
+      function
+      | Some _ as v -> f v
+      | None        -> Some def )
+
+  let string n = ud n CCOpt.return
+
+  let int n = ud n CCFun.(int_of_string %> CCOpt.return)
+
+  let rec apply_arr' acc f = function
+    | []      -> Some (List.rev acc)
+    | v :: vs -> (
+        match f (Some [ v ]) with
+          | Some r -> apply_arr' (r :: acc) f vs
+          | None   -> None )
+
+  let array (n, f) =
+    ( n,
+      function
+      | Some vs -> apply_arr' [] f vs
+      | None    -> None )
+
+  let present n =
+    ( n,
+      function
+      | Some []       -> Some ()
+      | Some _ | None -> None )
 end
 
 type ('f, 'r) t =
@@ -55,9 +99,14 @@ let route t f = Route.Route (t, f)
 let ( --> ) = route
 
 module Witness = struct
+  (* Used to extract the original value from the witness *)
+  type v_type =
+    | Path
+    | Query of (string * string list option)
+
   type ('f, 'r) t =
     | Start : ('r, 'r) t
-    | Var   : (('f, 'a -> 'r) t * 'a) -> ('f, 'r) t
+    | Var   : (('f, 'a -> 'r) t * 'a * v_type) -> ('f, 'r) t
 end
 
 let rec test_uri : type f r. Uri.t -> (f, r) t -> (int * (f, r) Witness.t) option =
@@ -83,22 +132,22 @@ let rec test_uri : type f r. Uri.t -> (f, r) t -> (int * (f, r) Witness.t) optio
         test_uri uri t
         >>= fun (idx, wit) ->
         if idx < String.length path then
-          v idx path >>= fun (idx, value) -> Some (idx, Witness.Var (wit, value))
+          v idx path >>= fun (idx, value) -> Some (idx, Witness.Var (wit, value, Witness.Path))
         else
           None
     | Query_var (t, (n, v)) ->
         let open CCOpt.Infix in
         test_uri uri t
         >>= fun (idx, wit) ->
-        Uri.get_query_param uri n
-        >>= fun q -> v q >>= fun value -> Some (idx, Witness.Var (wit, value))
+        let q = Uri.get_query_param' uri n in
+        v q >>= fun value -> Some (idx, Witness.Var (wit, value, Witness.Query (n, q)))
 
 let rec apply_uri' : type f r x. (f, x) Witness.t -> (x -> r) -> f -> r =
  fun w k ->
   let open Witness in
   match w with
-    | Start        -> k
-    | Var (wit, v) ->
+    | Start           -> k
+    | Var (wit, v, _) ->
         let k f = k (f v) in
         apply_uri' wit k
 
