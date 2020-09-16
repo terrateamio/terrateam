@@ -20,6 +20,12 @@ module Route : sig
 
     (** Extract an int from the path. *)
     val int : int t
+
+    (** Extract whatever remains of the path.  There must be something left on the
+     rest of the path.  For example, if a route only as [Path.any] and the URI
+     is [http://test.com], this will not match the [Path.any], but
+     [http://test.com/] will.  This applies for any point in the path. *)
+    val any : string t
   end
 
   (** Extractions for query parameters. *)

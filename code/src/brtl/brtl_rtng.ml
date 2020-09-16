@@ -24,6 +24,13 @@ module Route = struct
     let string = ud CCOpt.return
 
     let int = ud (CCFun.compose int_of_string CCOpt.return)
+
+    let any idx s =
+      if s.[idx] = '/' then
+        let len = String.length s - idx - 1 in
+        Some (String.length s, CCString.sub s (idx + 1) len)
+      else
+        None
   end
 
   module Query = struct
