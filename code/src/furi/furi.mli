@@ -38,7 +38,8 @@ let hello_rt = Furi.(rel / "hello" /% Path.string /% Path.string)
 
 let age_rt = Furi.(rel / "age" /% Path.int)
 
-let age_height_rt = Furi.(rel / "age_height" /? Query.int "age" /? Query.int "height")]}
+let age_height_rt = Furi.(rel / "age_height" /? Query.int "age" /? Query.int
+   "height")]}
 
    And the following handler functions:
 
@@ -52,11 +53,8 @@ let handle_age_height age height = ...]}
 
    They can be combined into a routing table like:
 
-   {[let routes = [ search_rt --> handle_search
-             ; hello_rt --> handle_hello
-             ; age_rt --> handle_age
-             ; age_height_rt --> handle_age_height
-             ]]}
+   {[let routes = [ search_rt --> handle_search ; hello_rt --> handle_hello ;
+   age_rt --> handle_age ; age_height_rt --> handle_age_height ]]}
 
    Finally, given a URI, they can be matched with:
 
@@ -66,8 +64,8 @@ let handle_age_height age height = ...]}
 
    URIs are matched in the order they appear in the [routes] list.
 
-   The path portion of a URI must be completely consumed for the match to be
-   considered successful.
+   By default, the path portion of a URI must be completely consumed for the
+   match to be considered successful, but this is configurable.
 
    All specified query parameters must match however extra query parameters are
    ignored.  For example if a URI in the above example had a query parameter
@@ -77,8 +75,9 @@ let handle_age_height age height = ...]}
 
    Furi does nothing special to handle URIs with a trailing slash.  A pattern
    such as [Furi.(rel / "foo")] will only match a URI like
-   [http://localhost/foo].  If one wants to match [http://localhost/foo/] the
-   URI pattern can be written as [Furi.(rel / "foo" / "")].
+   [http://localhost/foo] using default settings.  If one wants to match
+   [http://localhost/foo/] the URI pattern can be written as [Furi.(rel / "foo"
+   / "")].
 
    Beware query matches with the same path.  Because query values are not
    exhausted during the test for a matching pattern, if the path is the same
@@ -93,6 +92,12 @@ let handle_age_height age height = ...]}
    Similarly, if there are multiple query searches with the same path but
    different numbers of query parameters, they must be in order of most specific
    to least specific.
+
+   Finally, when using setting [must_consume_path] to [false], the order of path
+   matches is even more important.  For example, [Furi.(rel / "foo")] followed
+   by [Furi.(rel / "foo" /% Path.string)] and the URI [http://localhost/foo/bar]
+   will always match the first route and not the second because the first route
+   can consume the [foo] portion with the [/bar] portion left over.
 
    {2 Path and Query values}
 
@@ -134,6 +139,12 @@ module Path : sig
 
   (** Extract an int from the path. *)
   val int : int t
+
+  (** Extract whatever remains of the path.  There must be something left on the
+     rest of the path.  For example, if a route only as [Path.any] and the URI
+     is [http://test.com], this will not match the [Path.any], but
+     [http://test.com/] will.  This applies for any point in the path. *)
+  val any : string t
 end
 
 (** Extractions for query parameters. *)
@@ -171,8 +182,40 @@ module Route : sig
   type 'r t
 end
 
+module Witness : sig
+  type ('f, 'r) t
+end
+
+module Match : sig
+  type 'r t
+
+  val apply : 'r t -> 'r
+
+  val consumed_path : 'r t -> string
+
+  val remaining_path : 'r t -> string
+
+  (** Compare to matches for equality.  This matches that the same amount of
+     path was consumed and the same query parameters were consumed.  The order
+     of query values in the URL does not matter for consumption but it does
+     matter in the route.  For example: the routes [(rel /? Query.string "a" /?
+     Query.string "b")] and [(rel /? Query.string "b" /? Query.string "a")] will
+     never compare equal.  There is one caveat:
+
+     Even if a query only consumes the first element of a query parameter, if
+     the query parameter is provided a list value where the non-consumed portion
+     of the list is changed, the match will fail.  For example, [(rel /?
+     Query.string "q")] will match [?q=foo] and [?q=foo,bar] and despite these
+     being the same from the perspective of the route function, the match would
+     not compare equal. *)
+  val equal : 'r t -> 'r t -> bool
+end
+
 (** The start of a path. *)
 val rel : ('r, 'r) t
+
+(** Start of the path matching a root. Trailing '/' is removed. *)
+val root : string -> ('r, 'r) t
 
 (** Match a string portion of the path. *)
 val ( / ) : ('f, 'r) t -> string -> ('f, 'r) t
@@ -191,5 +234,15 @@ val route : ('f, 'r) t -> 'f -> 'r Route.t
 val ( --> ) : ('f, 'r) t -> 'f -> 'r Route.t
 
 (** Given a list of routes, match an input URI and execute the associated route
-   function.  If no matches are found, execute the [default] function. *)
-val match_uri : default:(Uri.t -> 'r) -> 'r Route.t list -> Uri.t -> 'r
+   function.  If [must_consume_path] is set to [false], the entire URI path is
+   not required to be consumed.  It is [true] by default.  See the module
+   description for why this can be tricky.  If no matches are found, execute the
+   [default] function. *)
+val route_uri : ?must_consume_path:bool -> default:(Uri.t -> 'r) -> 'r Route.t list -> Uri.t -> 'r
+
+(** Match a single route and return the match value.  Allows for accessing some
+   metadata about the path. *)
+val match_uri : ?must_consume_path:bool -> 'r Route.t -> Uri.t -> 'r Match.t option
+
+(** Return the first match for the URI. *)
+val first_match : ?must_consume_path:bool -> 'r Route.t list -> Uri.t -> 'r Match.t option

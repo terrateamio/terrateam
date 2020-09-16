@@ -16,6 +16,13 @@ module Path = struct
   let string = ud CCOpt.return
 
   let int = ud (CCFun.compose int_of_string CCOpt.return)
+
+  let any idx s =
+    if s.[idx] = '/' then
+      let len = String.length s - idx - 1 in
+      Some (String.length s, CCString.sub s (idx + 1) len)
+    else
+      None
 end
 
 module Query = struct
@@ -74,7 +81,7 @@ end
 
 type ('f, 'r) t =
   (* | Host : string -> ('r, 'r) t *)
-  | Rel : ('r, 'r) t
+  | Rel        : string -> ('r, 'r) t
   | Path_const : (('f, 'r) t * string) -> ('f, 'r) t
   | Path_var   : (('f, 'a -> 'r) t * 'a Path.t) -> ('f, 'r) t
   | Query_var  : (('f, 'a -> 'r) t * 'a Query.t) -> ('f, 'r) t
@@ -86,7 +93,9 @@ module Route = struct
   type 'r t = Route : (('f, 'r) _t * 'f) -> 'r t
 end
 
-let rel = Rel
+let rel = Rel ""
+
+let root s = Rel (CCString.rdrop_while (( = ) '/') s)
 
 let ( / ) t s = Path_const (t, s)
 
@@ -113,8 +122,10 @@ let rec test_uri : type f r. Uri.t -> (f, r) t -> (int * (f, r) Witness.t) optio
  fun uri t ->
   let path = Uri.path uri in
   match t with
-    | Rel                   -> Some (0, Witness.Start)
-    | Path_const (t, s)     ->
+    | Rel s when CCString.is_sub ~sub:s 0 path 0 ~sub_len:(CCString.length s) ->
+        Some (CCString.length s, Witness.Start)
+    | Rel _ -> None
+    | Path_const (t, s) ->
         let open CCOpt.Infix in
         test_uri uri t
         >>= fun (idx, wit) ->
@@ -127,7 +138,7 @@ let rec test_uri : type f r. Uri.t -> (f, r) t -> (int * (f, r) Witness.t) optio
             None
         else
           None
-    | Path_var (t, v)       ->
+    | Path_var (t, v) ->
         let open CCOpt.Infix in
         test_uri uri t
         >>= fun (idx, wit) ->
@@ -151,14 +162,48 @@ let rec apply_uri' : type f r x. (f, x) Witness.t -> (x -> r) -> f -> r =
         let k f = k (f v) in
         apply_uri' wit k
 
-let apply_uri : type f r. (f, r) Witness.t -> f -> r = fun wit -> apply_uri' wit (fun x -> x)
+let apply : type f r. (f, r) Witness.t -> f -> r = fun wit -> apply_uri' wit (fun x -> x)
 
-let rec match_uri ~default rs uri =
+module Match = struct
+  type 'r t = Match : (int * Uri.t * 'f * ('f, 'r) Witness.t) -> 'r t
+
+  let apply (Match (_, _, f, wit)) = apply wit f
+
+  let consumed_path (Match (idx, uri, _, _)) =
+    let path = Uri.path uri in
+    String.sub path 0 idx
+
+  let remaining_path (Match (idx, uri, _, _)) =
+    let path = Uri.path uri in
+    String.sub path idx (String.length path - idx)
+
+  let rec equal' : type f1 r1 f2 r2. (f1, r1) Witness.t -> (f2, r2) Witness.t -> bool =
+   fun wit1 wit2 ->
+    let open Witness in
+    match (wit1, wit2) with
+      | (Start, Start) -> true
+      | (Var (wit1', _, v1), Var (wit2', _, v2)) when v1 = v2 -> equal' wit1' wit2'
+      | _ -> false
+
+  let equal (Match (_, _, _, wit1) as t1) (Match (_, _, _, wit2) as t2) =
+    consumed_path t1 = consumed_path t2 && equal' wit1 wit2
+end
+
+let match_uri ?(must_consume_path = true) (Route.Route (t, f)) uri =
+  match test_uri uri t with
+    | Some (idx, wit) when (not must_consume_path) || String.length (Uri.path uri) = idx ->
+        Some (Match.Match (idx, uri, f, wit))
+    | Some _ | None -> None
+
+let rec first_match ?(must_consume_path = true) rs uri =
   match rs with
-    | []                       -> default uri
-    | Route.Route (t, f) :: rs -> (
-        match test_uri uri t with
-          | Some (idx, wit) when String.length (Uri.path uri) = idx ->
-              (* Ensure the whole URI path has been consumed *)
-              apply_uri wit f
-          | Some _ | None -> match_uri ~default rs uri )
+    | []      -> None
+    | r :: rs -> (
+        match match_uri ~must_consume_path r uri with
+          | Some _ as r -> r
+          | None        -> first_match ~must_consume_path rs uri )
+
+let route_uri ?(must_consume_path = true) ~default rs uri =
+  match first_match ~must_consume_path rs uri with
+    | Some m -> Match.apply m
+    | None   -> default uri

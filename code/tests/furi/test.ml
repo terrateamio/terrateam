@@ -6,11 +6,17 @@ let hello_rt = Furi.(rel / "hello" /% Path.string)
 
 let goodbye_rt = Furi.(rel / "goodbye" /% Path.string)
 
+let extra_rt = Furi.(rel / "extra" /% Path.any)
+
+let any_rt = Furi.(rel /% Path.any)
+
 let query_rt = Furi.(rel /? Query.string "name")
 
 let handle_hello_name = Printf.sprintf "Hello %s"
 
 let handle_goodbye_name = Printf.sprintf "Goodbye %s"
+
+let handle_extra = Printf.sprintf "Extra %s"
 
 let handle_homepage = Printf.sprintf "Homepage"
 
@@ -18,17 +24,23 @@ let handle_homepage_slash = Printf.sprintf "Homepage Slash"
 
 let handle_query = Printf.sprintf "Query %s"
 
-let router =
+let router ?must_consume_path =
   Furi.(
-    match_uri
+    route_uri
+      ?must_consume_path
       ~default:(fun _ -> failwith "This is not a valid path.")
       [
         query_rt --> handle_query;
-        homepage_rt --> handle_homepage;
-        homepage_slash_rt --> handle_homepage_slash;
         hello_rt --> handle_hello_name;
         goodbye_rt --> handle_goodbye_name;
+        extra_rt --> handle_extra;
+        homepage_rt --> handle_homepage;
+        homepage_slash_rt --> handle_homepage_slash;
       ])
+
+let any_router =
+  Furi.(
+    route_uri ~default:(fun _ -> failwith "This is not a valid path.") [ any_rt --> handle_extra ])
 
 let route_hello =
   Oth.test ~desc:"Route to the hello path" ~name:"Route hello" (fun _ ->
@@ -36,11 +48,66 @@ let route_hello =
       let resp = router uri in
       assert (resp = "Hello there"))
 
+let route_hello_no_host =
+  Oth.test ~desc:"Route to the hello path no host" ~name:"Route hello no host" (fun _ ->
+      let uri = Uri.of_string "/hello/there" in
+      let resp = router uri in
+      assert (resp = "Hello there"))
+
+let route_no_must_consume_path =
+  Oth.test ~desc:"Must not consume path" ~name:"No Consume Path" (fun _ ->
+      let uri = Uri.of_string "http://test.com/hello/there/test" in
+      let resp = router ~must_consume_path:false uri in
+      assert (resp = "Hello there"))
+
 let route_goodbye =
   Oth.test ~desc:"Route to the goodbye path" ~name:"Route goodbye" (fun _ ->
       let uri = Uri.of_string "http://test.com/goodbye/you" in
       let resp = router uri in
       assert (resp = "Goodbye you"))
+
+let route_extra =
+  Oth.test ~desc:"Route with extra path" ~name:"Route extra" (fun _ ->
+      let uri = Uri.of_string "http://test.com/extra/there/boss/man" in
+      let resp = router uri in
+      assert (resp = "Extra there/boss/man"))
+
+let route_extra_no_extra =
+  Oth.test
+    ~desc:"Route with extra path but none exists in URL"
+    ~name:"Route extra no extra"
+    (fun _ ->
+      let uri = Uri.of_string "http://test.com/extra" in
+      try
+        ignore (router uri);
+        assert false
+      with Failure msg -> assert (msg = "This is not a valid path."))
+
+let route_extra_just_slash =
+  Oth.test ~desc:"Route with extra path but just ends in slash" ~name:"Route extra slash" (fun _ ->
+      let uri = Uri.of_string "http://test.com/extra/" in
+      let resp = router uri in
+      assert (resp = "Extra "))
+
+let route_any =
+  Oth.test ~desc:"Route any" ~name:"Route any" (fun _ ->
+      let uri = Uri.of_string "http://test.com/any/there/boss/man" in
+      let resp = any_router uri in
+      assert (resp = "Extra any/there/boss/man"))
+
+let route_any_no_extra =
+  Oth.test ~desc:"Route with just host" ~name:"Route any just host" (fun _ ->
+      let uri = Uri.of_string "http://test.com" in
+      try
+        ignore (any_router uri);
+        assert false
+      with Failure msg -> assert (msg = "This is not a valid path."))
+
+let route_any_just_slash =
+  Oth.test ~desc:"Route with any with slash" ~name:"Route any just slash" (fun _ ->
+      let uri = Uri.of_string "http://test.com/" in
+      let resp = any_router uri in
+      assert (resp = "Extra "))
 
 let route_homepage =
   Oth.test ~desc:"Route to the homepage path" ~name:"Route homepage" (fun _ ->
@@ -63,8 +130,133 @@ let route_query =
       let resp = router uri in
       assert (resp = "Query foobar"))
 
+let match_hello =
+  Oth.test ~desc:"Match hello path" ~name:"Match hello" (fun _ ->
+      let uri = Uri.of_string "http://test.com/hello/there" in
+      match Furi.(match_uri (hello_rt --> handle_hello_name) uri) with
+        | Some m ->
+            let resp = Furi.Match.apply m in
+            assert (resp = "Hello there")
+        | None   -> assert false)
+
+let match_fail =
+  Oth.test ~desc:"Ensure match fails" ~name:"Match fail" (fun _ ->
+      let uri = Uri.of_string "http://test.com/goodbye/there" in
+      let ret = Furi.(match_uri (hello_rt --> handle_hello_name) uri) in
+      assert (ret = None))
+
+let match_no_consume_path =
+  Oth.test ~desc:"Match without consuming entire path" ~name:"Match no consume" (fun _ ->
+      let uri = Uri.of_string "http://test.com/hello/there/bar/baz" in
+      match Furi.(match_uri ~must_consume_path:false (hello_rt --> handle_hello_name) uri) with
+        | Some m ->
+            let resp = Furi.Match.apply m in
+            assert (resp = "Hello there");
+            assert (Furi.Match.consumed_path m = "/hello/there");
+            assert (Furi.Match.remaining_path m = "/bar/baz")
+        | None   -> assert false)
+
+let match_prefix =
+  Oth.test ~desc:"Match prefix" ~name:"Match prefix" (fun _ ->
+      let uri = Uri.of_string "http://test.com/hello/there" in
+      let rt = Furi.(root "/hello" /% Path.string) in
+      match Furi.(match_uri (rt --> handle_hello_name) uri) with
+        | Some m ->
+            let resp = Furi.Match.apply m in
+            assert (resp = "Hello there")
+        | None   -> assert false)
+
+let match_path_equal =
+  Oth.test ~name:"Match path equal" (fun _ ->
+      let uri = Uri.of_string "http://test.com/hello/there" in
+      let rt = Furi.(root "/hello" /% Path.string) in
+      match Furi.(match_uri (rt --> handle_hello_name) uri) with
+        | Some m -> assert (Furi.Match.equal m m)
+        | None   -> assert false)
+
+let match_path_not_equal =
+  Oth.test ~name:"Match path not equal" (fun _ ->
+      let uri1 = Uri.of_string "http://test.com/hello/there" in
+      let uri2 = Uri.of_string "http://test.com/hello/you" in
+      let rt = Furi.(root "/hello" /% Path.string) in
+      match
+        Furi.(match_uri (rt --> handle_hello_name) uri1, match_uri (rt --> handle_hello_name) uri2)
+      with
+        | (Some m1, Some m2) -> assert (not (Furi.Match.equal m1 m2))
+        | _                  -> assert false)
+
+let match_query_equal =
+  Oth.test ~name:"Match query equal" (fun _ ->
+      let uri = Uri.of_string "http://test.com?q=foo" in
+      let rt = Furi.(rel /? Query.string "q") in
+      match Furi.(match_uri (rt --> fun _ -> ()) uri) with
+        | Some m -> assert (Furi.Match.equal m m)
+        | None   -> assert false)
+
+let match_query_not_equal =
+  Oth.test ~name:"Match query not equal" (fun _ ->
+      let uri1 = Uri.of_string "http://test.com?q=foo" in
+      let uri2 = Uri.of_string "http://test.com?q=bar" in
+      let rt = Furi.(rel /? Query.string "q") in
+      match Furi.(match_uri (rt --> fun _ -> ()) uri1, match_uri (rt --> fun _ -> ()) uri2) with
+        | (Some m1, Some m2) -> assert (not (Furi.Match.equal m1 m2))
+        | _                  -> assert false)
+
+let match_query_equal_but_different =
+  Oth.test ~name:"Match query equal but different" (fun _ ->
+      let uri1 = Uri.of_string "http://test.com?q=foo" in
+      let uri2 = Uri.of_string "http://test.com?q=foo,bar" in
+      let rt = Furi.(rel /? Query.string "q") in
+      match Furi.(match_uri (rt --> fun _ -> ()) uri1, match_uri (rt --> fun _ -> ()) uri2) with
+        | (Some m1, Some m2) -> assert (not (Furi.Match.equal m1 m2))
+        | _                  -> assert false)
+
+let match_query_order_does_not_matter =
+  Oth.test ~name:"Match query order does not matter" (fun _ ->
+      let uri1 = Uri.of_string "http://test.com?a=foo&b=bar" in
+      let uri2 = Uri.of_string "http://test.com?b=bar&a=foo" in
+      let rt = Furi.(rel /? Query.string "a" /? Query.string "b") in
+      match Furi.(match_uri (rt --> fun _ _ -> ()) uri1, match_uri (rt --> fun _ _ -> ()) uri2) with
+        | (Some m1, Some m2) -> assert (Furi.Match.equal m1 m2)
+        | _                  -> assert false)
+
+let match_path_consumption =
+  Oth.test ~name:"Match path consumption not equal" (fun _ ->
+      let uri = Uri.of_string "http://test.com/foo/bar" in
+      let rt1 = Furi.(rel / "foo" / "bar") in
+      let rt2 = Furi.(rel /% Path.string /% Path.string) in
+      match Furi.(match_uri (rt1 --> ()) uri, match_uri (rt2 --> fun _ _ -> ()) uri) with
+        | (Some m1, Some m2) -> assert (not (Furi.Match.equal m1 m2))
+        | _                  -> assert false)
+
 let test =
-  Oth.parallel [ route_hello; route_goodbye; route_homepage; route_homepage_slash; route_query ]
+  Oth.parallel
+    [
+      route_hello;
+      route_hello_no_host;
+      route_no_must_consume_path;
+      route_goodbye;
+      route_extra;
+      route_extra_no_extra;
+      route_extra_just_slash;
+      route_any;
+      route_any_no_extra;
+      route_any_no_extra;
+      route_homepage;
+      route_homepage_slash;
+      route_query;
+      match_hello;
+      match_fail;
+      match_no_consume_path;
+      match_prefix;
+      match_path_equal;
+      match_path_not_equal;
+      match_query_equal;
+      match_query_not_equal;
+      match_query_equal_but_different;
+      match_query_order_does_not_matter;
+      match_path_consumption;
+    ]
 
 let () =
   Random.self_init ();
