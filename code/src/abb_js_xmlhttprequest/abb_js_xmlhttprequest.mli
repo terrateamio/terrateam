@@ -11,6 +11,10 @@ module Response : sig
     status : int;
     text : string;
   }
+
+  val text : t -> string
+
+  val status : t -> int
 end
 
 (** Send a request to [url] with [body] using [meth].  A successful response

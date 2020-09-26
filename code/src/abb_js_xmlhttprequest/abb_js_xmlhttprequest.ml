@@ -16,6 +16,10 @@ module Response = struct
     status : int;
     text : string;
   }
+
+  let text t = t.text
+
+  let status t = t.status
 end
 
 let send ?body ~meth ~url () =
