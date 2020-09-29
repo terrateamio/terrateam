@@ -1,0 +1,133 @@
+echo              4/ddp    #AppleTalk Echo Protocol
+echo              7/udp     # Echo
+echo              7/tcp     # Echo
+discard           9/udp     # Discard
+discard           9/tcp     # Discard
+systat           11/udp     # Active Users
+systat           11/tcp     # Active Users
+daytime          13/udp     # Daytime (RFC 867)
+daytime          13/tcp     # Daytime (RFC 867)
+msp              18/udp     # Message Send Protocol
+msp              18/tcp     # Message Send Protocol
+chargen          19/tcp     #
+ftp-data         20/udp     # File Transfer [Default Data]
+ftp-data         20/tcp     # File Transfer [Default Data]
+ftp              21/udp     # File Transfer [Control]
+ftp              21/tcp     # File Transfer [Control]
+ssh              22/udp     # SSH Remote Login Protocol
+ssh              22/tcp     # SSH Remote Login Protocol
+telnet           23/udp     # Telnet
+telnet           23/tcp     # Telnet
+smtp             25/udp     # Simple Mail Transfer
+smtp             25/tcp     # Simple Mail Transfer
+time             37/udp     # Time
+time             37/tcp     # Time
+domain           53/udp     # Domain Name Server
+domain           53/tcp     # Domain Name Server
+bootps           67/udp     # Bootstrap Protocol Server
+bootps           67/tcp     # Bootstrap Protocol Server
+bootpc           68/udp     # Bootstrap Protocol Client
+bootpc           68/tcp     # Bootstrap Protocol Client
+tftp             69/udp     # Trivial File Transfer
+tftp             69/tcp     # Trivial File Transfer
+gopher           70/udp     # Gopher
+gopher           70/tcp     # Gopher
+finger           79/udp     # Finger
+finger           79/tcp     # Finger
+http             80/udp     www www-http # World Wide Web HTTP
+http             80/tcp     www www-http # World Wide Web HTTP
+kerberos         88/udp     # Kerberos
+kerberos         88/tcp     # Kerberos
+pop3            110/udp     # Post Office Protocol - Version 3
+pop3            110/tcp     # Post Office Protocol - Version 3
+sunrpc          111/udp     # SUN Remote Procedure Call
+sunrpc          111/tcp     # SUN Remote Procedure Call
+auth            113/udp     # Authentication Service
+auth            113/tcp     ident # 
+nntp            119/udp     # Network News Transfer Protocol
+nntp            119/tcp     # Network News Transfer Protocol
+ntp             123/udp     # Network Time Protocol
+ntp             123/tcp     # Network Time Protocol
+netbios-ns      137/udp     # NETBIOS Name Service    
+netbios-ns      137/tcp     # NETBIOS Name Service    
+netbios-dgm     138/udp     # NETBIOS Datagram Service
+netbios-dgm     138/tcp     # NETBIOS Datagram Service
+netbios-ssn     139/udp     # NETBIOS Session Service
+netbios-ssn     139/tcp     # NETBIOS Session Service
+imap            143/udp     # Internet Message Access Protocol
+imap            143/tcp     # Internet Message Access Protocol
+genrad-mux      176/tcp     # GENRAD-MUX                      
+xdmcp           177/udp     # X Display Manager Control Protocol  
+xdmcp           177/tcp     # X Display Manager Control Protocol  
+bgp             179/udp     # Border Gateway Protocol             
+bgp             179/tcp     # Border Gateway Protocol             
+irc             194/udp     # Internet Relay Chat Protocol        
+irc             194/tcp     # Internet Relay Chat Protocol        
+qmtp            209/udp     # The Quick Mail Transfer Protocol
+qmtp            209/tcp     # The Quick Mail Transfer Protocol
+ipx             213/udp     # IPX                                
+ipx             213/tcp     # IPX         	                      
+ldap            389/udp     # Lightweight Directory Access Protocol
+ldap            389/tcp     # Lightweight Directory Access Protocol
+https           443/udp     # http protocol over TLS/SSL
+https           443/tcp     # http protocol over TLS/SSL
+kpasswd         464/udp     # kpasswd
+kpasswd         464/tcp     # kpasswd
+syslog          514/udp # 
+printer         515/udp     # spooler
+printer         515/tcp     # spooler
+talk            517/tcp     # like tenex link, but across
+talk            517/udp     # like tenex link, but across
+ntalk           518/udp # 
+ntalk           518/tcp # 
+utime           519/udp     # unixtime
+utime           519/tcp     # unixtime
+efs             520/tcp     # extended file name server
+irc-serv        529/udp     # IRC-SERV
+irc-serv        529/tcp     # IRC-SERV
+klogin          543/udp # 
+klogin          543/tcp # 
+kshell 	        544/udp     # krcmd
+kshell 	        544/tcp     # krcmd
+dhcpv6-client   546/udp     # DHCPv6 Client
+dhcpv6-client   546/tcp     # DHCPv6 Client
+dhcpv6-server   547/udp     # DHCPv6 Server
+dhcpv6-server   547/tcp     # DHCPv6 Server
+pirp            553/udp     # pirp
+pirp            553/tcp     # pirp
+rtsp            554/udp     # Real Time Stream Control Protocol
+rtsp            554/tcp     # Real Time Stream Control Protocol
+9pfs            564/udp     # plan 9 file service
+9pfs            564/tcp     # plan 9 file service
+keyserver	584/udp	    # Key Server
+keyserver	584/tcp     # Key Server
+imap4-ssl	585/udp     # IMAP4+SSL (use 993 instead)
+imap4-ssl	585/tcp     # IMAP4+SSL (use 993 instead)
+syslog-conn     601/udp     # Reliable Syslog Service
+syslog-conn     601/tcp     # Reliable Syslog Service
+acap            674/udp	    # ACAP
+acap            674/tcp     # ACAP
+dctp		675/udp     # DCTP
+dctp		675/tcp     # DCTP
+nmap		689/udp     # NMAP
+nmap		689/tcp     # NMAP
+silc            706/udp     # SILC
+silc		706/tcp     # SILC
+kerberos-adm    749/udp     # kerberos administration
+kerberos-adm    749/tcp     # kerberos administration
+rsync           873/udp     # rsync
+rsync           873/tcp     # rsync
+ftps-data	989/udp     # ftp protocol, data, over TLS/SSL
+ftps-data	989/tcp     # ftp protocol, data, over TLS/SSL
+ftps		990/udp     # ftp protocol, control, over TLS/SSL
+ftps		990/tcp     # ftp protocol, control, over TLS/SSL
+telnets		992/udp     # telnet protocol over TLS/SSL
+telnets		992/tcp     # telnet protocol over TLS/SSL
+imaps		993/udp     # imap4 protocol over TLS/SSL
+imaps		993/tcp     # imap4 protocol over TLS/SSL
+ircs		994/udp     # irc protocol over TLS/SSL
+ircs		994/tcp     # irc protocol over TLS/SSL
+pop3s           995/udp     # pop3 protocol over TLS/SSL (was spop3)
+pop3s           995/tcp     # pop3 protocol over TLS/SSL (was spop3)
+git             9418/tcp    # git pack transfer service
+git             9418/udp    # git pack transfer service

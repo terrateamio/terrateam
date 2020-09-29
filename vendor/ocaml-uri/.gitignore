@@ -1,0 +1,5 @@
+*.install
+.*.swp
+.merlin
+_build/
+_opam/

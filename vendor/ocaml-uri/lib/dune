@@ -1,0 +1,4 @@
+(library
+ (name uri)
+ (public_name uri)
+ (libraries stringext angstrom))

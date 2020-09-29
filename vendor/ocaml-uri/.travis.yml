@@ -1,0 +1,21 @@
+language: c
+sudo: false
+services:
+  - docker
+install: wget https://raw.githubusercontent.com/ocaml/ocaml-travisci-skeleton/master/.travis-docker.sh
+script: bash ./.travis-docker.sh
+env:
+ global:
+   - PACKAGE="uri"
+   - PRE_INSTALL_HOOK="cd /home/opam/opam-repository && git pull origin master && opam update -uy"
+   - POST_INSTALL_HOOK="opam --yes depext -yui react ssl lwt"
+   - PINS="uri.dev:. uri-sexp.dev:. uri-re.dev:."
+   - REVDEPS="cohttp git github irmin syndic"
+ matrix:
+   - DISTRO=centos OCAML_VERSION=4.04
+   - DISTRO=fedora OCAML_VERSION=4.04
+   - DISTRO=debian-testing OCAML_VERSION=4.05
+   - DISTRO=alpine OCAML_VERSION=4.06
+   - DISTRO=debian-stable OCAML_VERSION=4.07 DEPOPTS="uri-sexp"
+   - DISTRO=alpine OCAML_VERSION=4.08
+   - DISTRO=alpine OCAML_VERSION=4.09

@@ -1,0 +1,11 @@
+(test
+ (name test_runner)
+ (package uri)
+ (modules test_runner)
+ (libraries uri uri.services oUnit))
+
+(test
+ (name test_runner_sexp)
+ (package uri-sexp)
+ (modules test_runner_sexp)
+ (libraries uri uri.services uri-sexp oUnit))
