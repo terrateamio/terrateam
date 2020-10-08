@@ -1,0 +1,11 @@
+(executable
+ (name fuzz)
+ (libraries uri uri-re uri-sexp crowbar fmt))
+
+(alias
+ (name fuzz)
+ (deps fuzz.exe (source_tree input))
+ (action (run
+    timeout --preserve-status 50m
+    bun -v --input=input --output=output -s
+    -- ./fuzz.exe)))

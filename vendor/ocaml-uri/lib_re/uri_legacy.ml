@@ -18,6 +18,107 @@
 
 [@@@ocaml.warning "-32"]
 
+module Uri_re = struct
+  open Re
+
+  module Raw = struct
+    let (+) a b = seq [a;b]
+    let (/) a b = alt [a;b]
+
+    let gen_delims = Posix.re "[:/?#\\[\\]@]"
+    let sub_delims = Posix.re "[!$&'()*+,;=]"
+    let c_at = char '@'
+    let c_colon = char ':'
+    let c_slash = char '/'
+    let c_slash2 = Posix.re "//"
+    let c_dot = char '.'
+    let c_question = char '?'
+    let c_hash = char '#'
+
+    let reserved = gen_delims / sub_delims
+    let unreserved = Posix.re "[A-Za-z0-9-._~]"
+    let hexdig = Posix.re "[0-9A-Fa-f]"
+    let pct_encoded = (char '%') + hexdig + hexdig
+
+    let dec_octet = Posix.re "25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?"
+    let ipv4_address = (repn (dec_octet + c_dot) 3 (Some 3)) + dec_octet
+
+    (* following RFC2234, RFC3986, RFC6874 and
+       http://people.spodhuis.org/phil.pennock/software/emit_ipv6_regexp-0.304
+    *)
+    let zone_id = unreserved / pct_encoded
+    let ipv6_address =
+      let (=|) n a = repn a n (Some n) in
+      let (<|) n a = repn a 0 (Some n) in
+      let h16 = repn hexdig 1 (Some 4) in
+      let h16c = h16 + c_colon in
+      let cc = c_colon + c_colon in
+      let ls32 = (h16c + h16) / ipv4_address in
+      ( char '['
+        + (((6=|h16c) + ls32)
+           / (                         cc + (5=|h16c) + ls32)
+           / ((1<|             h16)  + cc + (4=|h16c) + ls32)
+           / ((1<|((1<|h16c) + h16)) + cc + (3=|h16c) + ls32)
+           / ((1<|((2<|h16c) + h16)) + cc + (2=|h16c) + ls32)
+           / ((1<|((3<|h16c) + h16)) + cc +     h16c  + ls32)
+           / ((1<|((4<|h16c) + h16)) + cc             + ls32)
+           / ((1<|((5<|h16c) + h16)) + cc             +  h16)
+           / ((1<|((6<|h16c) + h16)) + cc                   )
+          )
+        + (opt (Posix.re "%25" + rep1 zone_id))
+        + char ']'
+      )
+
+    let reg_name = rep ( unreserved / pct_encoded / sub_delims )
+
+    let host = ipv6_address / ipv4_address / reg_name (* | ipv4_literal TODO *)
+    let userinfo = rep (unreserved / pct_encoded / sub_delims / c_colon)
+    let port = Posix.re "[0-9]*"
+    let authority = (opt ((group userinfo) + c_at)) + (group host) + (opt (c_colon + (group port)))
+    let null_authority = (group empty) + (group empty) + (group empty)
+
+    let pchar = unreserved / pct_encoded / sub_delims / c_colon / c_at
+    let segment = rep pchar
+    let segment_nz = rep1 pchar
+    let segment_nz_nc = repn (unreserved / pct_encoded / sub_delims / c_at) 1 None 
+    let path_abempty = rep (c_slash + segment)
+    let path_absolute = c_slash + (opt (segment_nz + (rep (c_slash + segment))))
+    let path_noscheme = segment_nz_nc + (rep (c_slash + segment ))
+    let path_rootless = segment_nz + (rep (c_slash + segment ))
+    let path_empty = empty
+
+    let path = path_abempty  (* begins with "/" or is empty *)
+               / path_absolute (* begins with "/" but not "//" *)
+               / path_noscheme (* begins with a non-colon segment *)
+               / path_rootless (* begins with a segment *)
+               / path_empty    (* zero characters *)
+
+    let hier_part = (c_slash2 + authority + path_abempty)
+                    / (path_absolute / path_rootless / path_empty)
+
+    let scheme = Posix.re "[A-Za-z][A-Za-z0-9+\\\\-\\.]*"
+    let query = group (rep ( pchar / c_slash / c_question))
+    let fragment = group (rep (pchar / c_slash / c_question))
+
+    let absolute_uri = scheme + c_colon + hier_part + (opt (c_question + query))
+
+    let uri = scheme + c_colon + hier_part + (opt (c_question + query)) + (opt (c_hash + fragment))
+
+    let relative_part = (c_slash2 + authority + path_abempty) / (path_absolute / path_noscheme / path_empty)
+
+    let relative_ref = relative_part + (opt (c_question + query)) + (opt (c_hash + fragment))
+
+    let uri_reference = Posix.re "^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?"
+  end
+
+  let ipv4_address = Posix.compile Raw.ipv4_address
+  let ipv6_address = Posix.compile Raw.ipv6_address
+  let uri_reference = Posix.compile Raw.uri_reference
+  let authority = Posix.compile Raw.authority
+
+  let host = Posix.compile Raw.host
+end
+
 type component = [
   | `Scheme
   | `Authority
@@ -28,18 +129,7 @@ type component = [
   | `Query_key
   | `Query_value
   | `Fragment
-  | `Custom of (component * string * string) (* (component * safe chars * unsafe chars) *)
 ]
-
-type pct_encoder = {
-    scheme: component;
-    userinfo: component;
-    host: component;
-    path: component;
-    query_key: component;
-    query_value: component;
-    fragment: component;
-  }
 
 let rec iter_concat fn sep buf = function
   | last::[] -> fn buf last
@@ -154,7 +244,7 @@ module Generic : Scheme = struct
     a.(Char.code ':') <- false;
     a
 
-  let rec safe_chars_for_component = function
+  let safe_chars_for_component = function
     | `Path -> safe_chars_for_path
     | `Userinfo -> safe_chars_for_userinfo
     | `Query -> safe_chars_for_query
@@ -162,17 +252,6 @@ module Generic : Scheme = struct
     | `Query_value -> safe_chars_for_query_value
     | `Fragment -> safe_chars_for_fragment
     | `Scheme -> safe_chars_for_scheme
-    | `Custom ((component : component), safe, unsafe) ->
-       let safe_chars = safe_chars_for_component component in
-       for i = 0 to String.length safe - 1 do
-         let c = Char.code safe.[i] in
-         safe_chars.(c) <- true
-       done;
-       for i = 0 to String.length unsafe - 1 do
-         let c = Char.code unsafe.[i] in
-         safe_chars.(c) <- false
-       done;
-       safe_chars
     | _ -> safe_chars
 
   let normalize_host hso = hso
@@ -355,17 +434,6 @@ end
 let pct_encode ?scheme ?(component=`Path) s =
   Pct.(uncast_encoded (encode ?scheme ~component (cast_decoded s)))
 
-let pct_encoder
-      ?(scheme=`Scheme)
-      ?(userinfo=`Userinfo)
-      ?(host=`Host)
-      ?(path=`Path)
-      ?(query_key=`Query_key)
-      ?(query_value=`Query_value)
-      ?(fragment=`Fragment)
-      () =
-  { scheme; userinfo; host; path; query_key; query_value; fragment }
-
 (* Percent decode a string *)
 let pct_decode s = Pct.(uncast_decoded (decode (cast_encoded s)))
 
@@ -384,22 +452,22 @@ module Userinfo = struct
     | [u] -> (pct_decode u,None)
     | u::p::_ -> (pct_decode u,Some (pct_decode p))
 
-  let encoded_of_userinfo ?scheme ~component (u,po) =
+  let encoded_of_userinfo ?scheme (u,po) =
     let len = String.(
       1 + (length u) + (match po with None -> 0 | Some p -> length p))
     in
     let buf = Buffer.create len in
-    Buffer.add_string buf (pct_encode ?scheme ~component u);
+    Buffer.add_string buf (pct_encode ?scheme ~component:`Userinfo u);
     begin match po with None -> ();
     | Some p ->
       Buffer.add_char buf ':';
-      Buffer.add_string buf (pct_encode ?scheme ~component p)
+      Buffer.add_string buf (pct_encode ?scheme ~component:`Userinfo p)
     end;
     Pct.cast_encoded (Buffer.contents buf)
 end
 
 let userinfo_of_encoded = Userinfo.userinfo_of_encoded
-let encoded_of_userinfo ?scheme ~component = Userinfo.encoded_of_userinfo ?scheme ~component
+let encoded_of_userinfo ?scheme = Userinfo.encoded_of_userinfo ?scheme
 
 (* Path string handling, to and from a list of path tokens *)
 module Path = struct
@@ -431,12 +499,12 @@ module Path = struct
       | s::r -> loop 0 (s::outp) r
     in loop 0 [] revp
 
-  let encoded_of_path ?scheme ~component p =
+  let encoded_of_path ?scheme p =
     let len = List.fold_left (fun c tok -> String.length tok + c) 0 p in
     let buf = Buffer.create len in
     iter_concat (fun buf -> function
     | "/" -> Buffer.add_char buf '/'
-    | seg -> Buffer.add_string buf (pct_encode ?scheme ~component seg)
+    | seg -> Buffer.add_string buf (pct_encode ?scheme ~component:`Path seg)
     ) "" buf p;
     Pct.cast_encoded (Buffer.contents buf)
 
@@ -449,7 +517,7 @@ module Path = struct
 end
 
 let path_of_encoded = Path.path_of_encoded
-let encoded_of_path ?scheme ~component = Path.encoded_of_path ?scheme ~component
+let encoded_of_path ?scheme = Path.encoded_of_path ?scheme
 
 (* Query string handling, to and from an assoc list of key/values *)
 module Query = struct
@@ -510,18 +578,18 @@ module Query = struct
    * Tuple inputs are percent decoded and will be encoded by
    * this function.
   *)
-  let encoded_of_query ?scheme ?(pct_encoder=pct_encoder ()) l =
+  let encoded_of_query ?scheme l =
     let len = List.fold_left (fun a (k,v) ->
         a + (String.length k)
         + (List.fold_left (fun a s -> a+(String.length s)+1) 0 v) + 2) (-1) l in
     let buf = Buffer.create len in
     iter_concat (fun buf (k,v) ->
-        Buffer.add_string buf (pct_encode ?scheme ~component:pct_encoder.query_key k);
+        Buffer.add_string buf (pct_encode ?scheme ~component:`Query_key k);
         if v <> [] then (
           Buffer.add_char buf '=';
           iter_concat (fun buf s ->
               Buffer.add_string buf
-                (pct_encode ?scheme ~component:pct_encoder.query_value s)
+                (pct_encode ?scheme ~component:`Query_value s)
             ) "," buf v)
       ) "&" buf l;
     Buffer.contents buf
@@ -626,10 +694,60 @@ let make ?scheme ?userinfo ?host ?port ?path ?query ?fragment () =
     { scheme; userinfo;
       host=decode host; port; path; query; fragment=decode fragment }
 
+(** Parse a URI string into a structure *)
+let of_string s =
+  (* Given a series of Re substrings, cast each component
+   * into a Pct.encoded and return an optional type (None if
+   * the component is not present in the Uri *)
+  let get_opt_encoded s n =
+    try Some (Pct.cast_encoded (Re.Group.get s n))
+    with Not_found -> None
+  in
+  let get_opt s n =
+    try
+      let pct = Pct.cast_encoded (Re.Group.get s n) in
+      Some (Pct.decode pct)
+    with Not_found -> None
+  in
+  let subs = Re.exec Uri_re.uri_reference s in
+  let scheme = get_opt subs 2 in
+  let userinfo, host, port =
+    match get_opt_encoded subs 4 with
+    |None -> None, None, None
+    |Some a ->
+      let subs' = Re.exec Uri_re.authority (Pct.uncast_encoded a) in
+      let userinfo = match get_opt_encoded subs' 1 with
+        | Some x -> Some (Userinfo.userinfo_of_encoded (Pct.uncast_encoded x))
+        | None -> None
+      in
+      let host = get_opt subs' 2 in
+      let port =
+        match get_opt subs' 3 with
+        |None -> None
+        |Some x ->
+          (try
+             Some (int_of_string (Pct.uncast_decoded x))
+           with _ -> None)
+      in
+      userinfo, host, port
+  in
+  let path =
+    match get_opt_encoded subs 5 with
+    | Some x -> Path.path_of_encoded (Pct.uncast_encoded x)
+    | None -> []
+  in
+  let query =
+    match get_opt_encoded subs 7 with
+    | Some x -> Query.of_raw (Pct.uncast_encoded x)
+    | None -> Query.Raw (None, Lazy.from_val [])
+  in
+  let fragment = get_opt subs 9 in
+  normalize scheme { scheme; userinfo; host; port; path; query; fragment }
+
 (** Convert a URI structure into a percent-encoded string
     <http://tools.ietf.org/html/rfc3986#section-5.3>
 *)
-let to_string ?(pct_encoder=pct_encoder ()) uri =
+let to_string uri =
   let scheme = match uri.scheme with
     | Some s -> Some (Pct.uncast_decoded s)
     | None -> None in
@@ -641,7 +759,7 @@ let to_string ?(pct_encoder=pct_encoder ()) uri =
   (match uri.scheme with
    |None -> ()
    |Some x ->
-     add_pct_string ~component:pct_encoder.scheme x;
+     add_pct_string ~component:`Scheme x;
      Buffer.add_char buf ':'
   );
   (* URI has a host if any host-related component is set. Defaults to "". *)
@@ -652,13 +770,13 @@ let to_string ?(pct_encoder=pct_encoder ()) uri =
   |None -> ()
   |Some userinfo ->
     Buffer.add_string buf
-      (Pct.uncast_encoded (encoded_of_userinfo ?scheme ~component:pct_encoder.userinfo userinfo));
+      (Pct.uncast_encoded (encoded_of_userinfo ?scheme userinfo));
     Buffer.add_char buf '@'
   );
   (match uri.host with
   |None -> ()
   |Some host ->
-    add_pct_string ~component:pct_encoder.host host;
+    add_pct_string ~component:`Host host;
   );
   (match uri.port with
   |None -> ()
@@ -669,8 +787,7 @@ let to_string ?(pct_encoder=pct_encoder ()) uri =
   (match uri.path with (* Handle relative paths correctly *)
   | [] -> ()
   | "/"::_ ->
-    Buffer.add_string buf (Pct.uncast_encoded
-                              (encoded_of_path ?scheme ~component:pct_encoder.path uri.path))
+    Buffer.add_string buf (Pct.uncast_encoded (encoded_of_path ?scheme uri.path))
   | first_segment::_ ->
     (match uri.host with
      | Some _ -> Buffer.add_char buf '/'
@@ -683,17 +800,17 @@ let to_string ?(pct_encoder=pct_encoder ()) uri =
          | None -> Buffer.add_string buf "./"
     );
     Buffer.add_string buf
-      (Pct.uncast_encoded (encoded_of_path ?scheme ~component:pct_encoder.path uri.path))
+      (Pct.uncast_encoded (encoded_of_path ?scheme uri.path))
   );
   Query.(match uri.query with
     | Raw (None,_) | KV [] -> ()
     | Raw (_,lazy q) | KV q -> (* normalize e.g. percent capitalization *)
       Buffer.add_char buf '?';
-      Buffer.add_string buf (encoded_of_query ?scheme ~pct_encoder q)
+      Buffer.add_string buf (encoded_of_query ?scheme q)
   );
   (match uri.fragment with
    |None -> ()
-   |Some f -> Buffer.add_char buf '#'; add_pct_string ~component:pct_encoder.fragment f
+   |Some f -> Buffer.add_char buf '#'; add_pct_string ~component:`Fragment f
   );
   Buffer.contents buf
 
@@ -716,11 +833,11 @@ let host_with_default ?(default="localhost") uri =
   |None -> default
   |Some h -> h
 
-let userinfo ?(pct_encoder=pct_encoder ()) uri = match uri.userinfo with
+let userinfo uri = match uri.userinfo with
   | None -> None
   | Some userinfo -> Some (Pct.uncast_encoded (match uri.scheme with
-    | None -> encoded_of_userinfo ~component:pct_encoder.userinfo userinfo
-    | Some s -> encoded_of_userinfo ~scheme:(Pct.uncast_decoded s) ~component:pct_encoder.userinfo userinfo))
+    | None -> encoded_of_userinfo userinfo
+    | Some s -> encoded_of_userinfo ~scheme:(Pct.uncast_decoded s) userinfo))
 let with_userinfo uri userinfo =
   let userinfo = match userinfo with
     | Some u -> Some (userinfo_of_encoded u)
@@ -758,9 +875,9 @@ let with_port uri port =
   end
 
 (* Return the path component *)
-let path ?(pct_encoder=pct_encoder ()) uri = Pct.uncast_encoded (match uri.scheme with
-  | None -> encoded_of_path ~component:pct_encoder.path uri.path
-  | Some s -> encoded_of_path ~scheme:(Pct.uncast_decoded s) ~component:pct_encoder.path uri.path)
+let path uri = Pct.uncast_encoded (match uri.scheme with
+  | None -> encoded_of_path uri.path
+  | Some s -> encoded_of_path ~scheme:(Pct.uncast_decoded s) uri.path)
 let with_path uri path =
   let path = path_of_encoded path in
   match host uri, path with
@@ -774,10 +891,10 @@ let with_fragment uri =
   |Some frag -> { uri with fragment=Some (Pct.cast_decoded frag) }
 
 let query uri = Query.kv uri.query
-let verbatim_query ?(pct_encoder=pct_encoder ()) uri = Query.(match uri.query with
+let verbatim_query uri = Query.(match uri.query with
   | Raw (qs,_) -> qs
   | KV [] -> None
-  | KV kv -> Some (encoded_of_query ?scheme:(scheme uri) ~pct_encoder kv)
+  | KV kv -> Some (encoded_of_query ?scheme:(scheme uri) kv)
 )
 let get_query_param' uri k = Query.(find (kv uri.query) k)
 let get_query_param uri k =
@@ -879,232 +996,5 @@ let canonicalize uri =
 let pp ppf uri = Format.pp_print_string ppf (to_string uri)
 let pp_hum ppf uri = Format.pp_print_string ppf (to_string uri)
 
-module Parser = struct
-  open Angstrom
+module Re = Uri_re
 
-  let string_of_char = String.make 1
-
-  let string_of_char_list chars =
-    String.concat "" (List.map string_of_char chars)
-
-  let scheme =
-    lift
-      (fun s -> Some (Pct.decode (Pct.cast_encoded s)))
-      (take_while (fun c -> c <> ':' && c <> '/' && c <> '?' && c <> '#')
-      <* char ':')
-    <|> return None
-
-  let is_digit = function '0' .. '9' -> true | _ -> false
-
-  let hex_digit =
-    satisfy (function
-        | '0' .. '9' | 'A' .. 'F' | 'a' .. 'f' ->
-          true
-        | _ ->
-          false)
-
-  let hexadecimal = lift string_of_char_list (many hex_digit)
-
-  let c_dot = char '.'
-
-  let c_at = char '@'
-
-  let c_colon = char ':'
-
-  let dec_octet =
-    take_while1 (function '0' .. '9' -> true | _ -> false) >>= fun num ->
-    if int_of_string num < 256 then
-      return num
-    else
-      fail "invalid octect"
-
-  let ipv4_address =
-    lift2
-      (fun three one -> String.concat "." three ^ "." ^ one)
-      (count 3 (dec_octet <* c_dot))
-      dec_octet
-
-  (* -- after double colon, IPv4 dotted notation could appear anywhere *)
-  let after_double_colon =
-    fix (fun f ->
-        list [ ipv4_address ]
-        <|> lift2 (fun x y -> x :: y) hexadecimal (c_colon *> f <|> return []))
-
-  let double_colon count =
-    after_double_colon >>= (fun rest ->
-    let filler_length = 8 - count - List.length rest in
-    if filler_length <= 0 then
-      fail "too many parts in IPv6 address"
-    else
-      return ("" :: rest))
-    <|> return [""]
-
-  let rec part = function
-    | 7 ->
-      (* max 8 parts in an IPv6 address *)
-      lift (fun x -> [ x ]) hexadecimal
-    | 6 ->
-      (* after 6 parts it could end in IPv4 dotted notation *)
-      list [ ipv4_address ] <|> hex_part 6
-    | n ->
-      hex_part n
-
-  and hex_part n =
-    lift2
-      (fun x y -> x :: y)
-      hexadecimal
-      (c_colon *> (c_colon *> double_colon (n + 1) <|> part (n + 1)))
-
-  let rec split_with f xs =
-    match xs with
-    | [] ->
-      [], []
-    | y :: ys ->
-      if f y then
-        let zs, ts = split_with f ys in
-        y :: zs, ts
-      else
-        [], xs
-
-  let ipv6 =
-    let format_addr segments =
-      let before_double_colon, after_double_colon =
-        split_with (fun segment -> segment <> "") segments
-      in
-      let before = String.concat ":" before_double_colon in
-      let res =
-        match after_double_colon with
-        | "" :: xs ->
-          before ^ "::" ^ String.concat ":" xs
-        | _ ->
-          before
-      in
-      res
-    in
-    lift format_addr (c_colon *> c_colon *> double_colon 0 <|> part 0)
-
-  let ipv6_address =
-    lift3
-      (fun lb ip rb ->
-        String.concat "" [ string_of_char lb; ip; string_of_char rb ])
-      (char '[')
-      ipv6
-      (char ']')
-
-  let pct_encoded =
-    lift2
-      (fun pct digits -> string_of_char_list (pct :: digits))
-      (char '%')
-      (count 2 hex_digit)
-
-  let sub_delims =
-    satisfy (function
-        | '!' | '$' | '&' | '\'' | '(' | ')' | '*' | '+' | ',' | ';' | '=' ->
-          true
-        | _ ->
-          false)
-
-  let unreserved =
-    (* "[A-Za-z0-9-._~]" *)
-    satisfy (function
-        | 'A' .. 'Z' | 'a' .. 'z' | '0' .. '9' | '-' | '.' | '_' | '~' ->
-          true
-        | _ ->
-          false)
-
-  let reg_name =
-    lift
-      (String.concat "")
-      (many
-         (choice
-            [ string_of_char <$> unreserved
-            ; pct_encoded
-            ; string_of_char <$> sub_delims
-            ]))
-
-  let host =
-    lift
-      (fun s -> Pct.decode (Pct.cast_encoded s))
-      (choice
-         [ reg_name; ipv4_address; ipv6_address (* | ipv4_literal TODO *) ])
-
-  let userinfo =
-    lift
-      (fun x ->
-        let s = String.concat "" x in
-        Some (Userinfo.userinfo_of_encoded s))
-      (many
-         (choice
-            [ string_of_char <$> unreserved
-            ; pct_encoded
-            ; string_of_char <$> sub_delims
-            ; string_of_char <$> c_colon
-            ])
-      <* c_at)
-    <|> return None
-
-  let port =
-    peek_char >>= function
-    | Some ':' ->
-      c_colon *> take_while is_digit >>| fun port ->
-      let decoded = Pct.decode (Pct.cast_encoded port) in
-      (try Some (int_of_string (Pct.uncast_decoded decoded)) with _ -> None)
-    | Some _ | None ->
-      return None
-
-  let authority =
-    string "//"
-    *> lift3
-         (fun userinfo host port -> userinfo, Some host, port)
-         userinfo
-         host
-         port
-    <|> return (None, None, None)
-
-  let path =
-    lift
-      Path.path_of_encoded
-      (take_while (function '?' | '#' -> false | _ -> true))
-
-  let query =
-    lift
-      Query.of_raw
-      (char '?' *> take_till (function '#' -> true | _ -> false))
-    <|> return (Query.Raw (None, Lazy.from_val []))
-
-  let fragment =
-    lift
-      (fun s -> Some (Pct.decode (Pct.cast_encoded s)))
-      (char '#' *> take_while (fun _ -> true))
-    <|> return None
-
-  let _uri_reference =
-    lift4
-      (fun scheme (userinfo, host, port) path query fragment ->
-        normalize scheme { scheme; userinfo; host; port; path; query; fragment })
-      scheme
-      authority
-      path
-      query
-    <*> fragment
-
-  (* XXX(anmonteiro): For compatibility reasons with the old regex parser, we
-   * only parse until the first newline character and drop everything else
-   * after that *)
-  let uri_reference =
-    take_while (function | '\n' -> false | _ -> true) >>| fun s ->
-      match Angstrom.parse_string ~consume:All _uri_reference s with
-      | Ok t -> t
-      | Error _ ->
-        (* Shouldn't really happen if the parser is forgiving. *)
-        empty
-end
-
-let of_string s =
-  (* To preserve the old regex parser's behavior, we only parse a prefix, and
-   * stop whenever we can't parse more. *)
-  match Angstrom.parse_string ~consume:Prefix Parser.uri_reference s with
-  | Ok t -> t
-  | Error _ ->
-    (* Shouldn't really happen if the parser is forgiving. *)
-    empty
