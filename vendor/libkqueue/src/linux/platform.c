@@ -802,7 +802,7 @@ linux_get_descriptor_type(struct knote *kn)
     switch (sb.st_mode & S_IFMT) {
         default:
             errno = EBADF;
-            dbg_perror("unknown fd type");
+            dbg_perror("fd=%i unknown fd type, st_mode=0x%x", fd, sb.st_mode & S_IFMT);
             return (-1);
 
         case S_IFREG:
