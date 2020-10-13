@@ -828,6 +828,12 @@ linux_get_descriptor_type(struct knote *kn)
         case S_IFSOCK:
             dbg_printf("fd=%i is a socket", fd);
             break; /* deferred type determination */
+
+        case 0:	/* seen with eventfd */
+            dbg_printf("fd=%i fstat() provided no S_IFMT flags, treating fd as passive socket", fd);
+            kn->kn_flags |= KNFL_SOCKET;
+            kn->kn_flags |= KNFL_SOCKET_PASSIVE;
+            return (0);
     }
 
     /*
