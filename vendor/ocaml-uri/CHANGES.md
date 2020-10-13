@@ -1,7 +1,11 @@
 v3.2.0 2020-01-01
 -----------------
 
-* sexp: use the sexplib v0.13 ppx directives (@avsm).
+* sexp: use the sexplib v0.13 ppx directives (@avsm, #143).
+* rework the URI parser with `angstrom` (@anmonteiro, review @avsm & @dinosaure, #142).
+* add simple fuzzer tests between `angstrom` parser and _legacy_ parser (with `re.posix`, #142)
+* add support of modifying pct encoding (with a custom one) (@orbitz, review @anmonteiro, @tmcgilchrist, @avsm & @dinosaure, #147)
+* allow the selection of generic set of safe characters (with `Generic`) (@madroach, review @dinosaure, #141)
 
 v3.1.0 2019-11-23
 -----------------
