@@ -31,12 +31,7 @@ type component = [
   | `Query_key
   | `Query_value
   | `Fragment
-  | `Generic
-  | `Custom of (component * string * string) (* (component * safe chars * unsafe chars) *)
-  ]
-
-(** For pct encoding customization when converting a URI to a string. *)
-type pct_encoder
+]
 
 (** {2 Core functionality } *)
 
@@ -51,20 +46,9 @@ val compare : t -> t -> int
 (** [equal a b] is [compare a b = 0]. *)
 val equal : t -> t -> bool
 
-(** Percent-encode a string. The [component] argument defaults to `Path *)
+(** Percent-encode a string. The [scheme] argument defaults to 'http' and
+    the [component] argument defaults to `Path *)
 val pct_encode : ?scheme:string -> ?component:component -> string -> string
-
-(** Construct a pct_encoder. *)
-val pct_encoder :
-  ?scheme:component ->
-  ?userinfo:component ->
-  ?host:component ->
-  ?path:component ->
-  ?query_key:component ->
-  ?query_value:component ->
-  ?fragment:component ->
-  unit ->
-  pct_encoder
 
 (** Percent-decode a percent-encoded string *)
 val pct_decode : string -> string
@@ -76,7 +60,7 @@ val pct_decode : string -> string
 val of_string : string -> t
 
 (** Convert a URI structure into a percent-encoded URI string *)
-val to_string : ?pct_encoder:pct_encoder -> t -> string
+val to_string : t -> string
 
 (** Resolve a URI against a default scheme and base URI *)
 val resolve : string -> t -> t -> t
@@ -135,14 +119,10 @@ val query : t -> (string * string list) list
     URI is a string and its query component has not been updated, this
     is the literal query string as parsed. Otherwise, this is the
     composition of {!query} and {!encoded_of_query} *)
-val verbatim_query : ?pct_encoder:pct_encoder -> t -> string option
+val verbatim_query : t -> string option
 
 (** Make a percent-encoded query string from percent-decoded query tuple *)
-val encoded_of_query :
-  ?scheme:string ->
-  ?pct_encoder:pct_encoder ->
-  (string * string list) list ->
-  string
+val encoded_of_query : ?scheme:string -> (string * string list) list -> string
 
 (** Parse a percent-encoded query string into a percent-decoded query tuple *)
 val query_of_encoded : string -> (string * string list) list
@@ -206,7 +186,7 @@ val remove_query_param : t -> string -> t
 (** {2 Component getters and setters } *)
 
 (** Get the encoded path component of a URI *)
-val path : ?pct_encoder:pct_encoder -> t -> string
+val path : t -> string
 
 (** Get the encoded path and query components of a URI *)
 val path_and_query : t -> string
@@ -225,7 +205,7 @@ val scheme : t -> string option
 val with_scheme : t -> string option -> t
 
 (** Get the userinfo component of a URI *)
-val userinfo : ?pct_encoder:pct_encoder -> t -> string option
+val userinfo : t -> string option
 
 (** Replace the userinfo portion of the URI with the supplied [string option].
     If no host is present in the supplied URI, an empty host is added.
@@ -279,7 +259,11 @@ val pp : Format.formatter -> t -> unit [@@ocaml.toplevel_printer]
 (**  [pp_hum] is now an alias for the {!pp} function. *)
 val pp_hum : Format.formatter -> t -> unit
 
-module Parser : sig
-  val ipv6 : string Angstrom.t
-  val uri_reference : t Angstrom.t
+(** Regular expressions for URI parsing. *)
+module Re : sig
+  val ipv4_address : Re.re
+  val ipv6_address : Re.re
+  val uri_reference : Re.re
+  val authority : Re.re
+  val host : Re.re
 end

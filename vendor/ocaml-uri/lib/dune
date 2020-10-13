@@ -1,4 +1,4 @@
 (library
  (name uri)
  (public_name uri)
- (libraries re.posix stringext))
+ (libraries stringext angstrom))
