@@ -1,4 +1,4 @@
-v3.2.0 2020-01-01
+v4.0.0 2020-01-01
 -----------------
 
 * sexp: use the sexplib v0.13 ppx directives (@avsm, #143).
