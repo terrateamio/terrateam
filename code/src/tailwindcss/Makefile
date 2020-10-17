@@ -1,6 +1,6 @@
 .PHONY: all release debug clean docs
 
-VERSION = 1.4.6
+VERSION = 1.9.4
 
 all: release
 
