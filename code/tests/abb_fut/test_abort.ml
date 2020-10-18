@@ -262,6 +262,27 @@ let test15 =
         | `Det _ | `Aborted | `Undet -> assert false
         | `Exn _                     -> ())
 
+let test_cancel =
+  Oth.test ~desc:"Canceling a future aborts it" ~name:"Cancel #1" (fun _ ->
+      let state = Abb_fut.State.create () in
+      let p1 = Fut.Promise.create () in
+      let fut = Fut.Promise.future p1 in
+      ignore (fut >>| Printf.printf "Hi, %s\n");
+      ignore (Fut.run_with_state (Fut.cancel fut) state);
+      assert (Fut.state fut = `Aborted))
+
+let test_cancel_deep =
+  Oth.test ~desc:"Canceling a future aborts its watchers" ~name:"Cancel #2" (fun _ ->
+      let state = Abb_fut.State.create () in
+      let p1 = Fut.Promise.create () in
+      let fut1 = Fut.Promise.future p1 in
+      let fut2 = fut1 >>| fun s -> "Hi, " ^ s in
+      let fut3 = fut2 >>| fun s -> Printf.printf "You said: %s\n" s in
+      ignore (Fut.run_with_state (Fut.cancel fut2) state);
+      assert (Fut.state fut1 = `Undet);
+      assert (Fut.state fut2 = `Aborted);
+      assert (Fut.state fut3 = `Aborted))
+
 let () =
   Oth.(
     run
@@ -282,4 +303,6 @@ let () =
            test13;
            test14;
            test15;
+           test_cancel;
+           test_cancel_deep;
          ]))
