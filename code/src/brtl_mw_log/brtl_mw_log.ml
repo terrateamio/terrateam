@@ -5,15 +5,22 @@ module Config = struct
   }
 end
 
-let pre_handler = Brtl_mw.pre_handler_noop
+let req_start_time = Hmap.Key.create ()
+
+let pre_handler ctx =
+  let open Abb.Future.Infix_monad in
+  Abb.Sys.monotonic ()
+  >>= fun start_time ->
+  let ctx = Brtl_ctx.md_add req_start_time start_time ctx in
+  Abb.Future.return (Brtl_mw.Pre_handler.Cont ctx)
 
 let post_handler config ctx =
+  let open Abb.Future.Infix_monad in
   let rspnc = Brtl_ctx.response ctx in
   let request = Brtl_ctx.request ctx in
   let uri = Brtl_ctx.Request.uri request in
   let status = Cohttp.Code.string_of_status (Brtl_rspnc.status rspnc) in
   let meth = Cohttp.Code.string_of_method (Brtl_ctx.Request.meth request) in
-
   let token = Brtl_ctx.token ctx in
   let headers = Brtl_ctx.Request.headers request in
   let remote_addr =
@@ -26,8 +33,23 @@ let post_handler config ctx =
       | Some s -> s
       | None   -> ""
   in
+  Abb.Sys.monotonic ()
+  >>= fun end_time ->
+  let duration =
+    match Brtl_ctx.md_find req_start_time ctx with
+      | Some start_time -> end_time -. start_time
+      | None            -> 0.0
+  in
   Logs.info (fun m ->
-      m "%s : %s : %s : %s : %s : %s" extra_key remote_addr token meth (Uri.to_string uri) status);
+      m
+        "%s : %s : %s : %s : %f : %s : %s"
+        extra_key
+        remote_addr
+        token
+        meth
+        duration
+        (Uri.to_string uri)
+        status);
   Abb.Future.return ctx
 
 let early_exit_handler = Brtl_mw.early_exit_handler_noop
