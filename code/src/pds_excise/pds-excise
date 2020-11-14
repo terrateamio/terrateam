@@ -1,0 +1,126 @@
+#! /usr/bin/env python3.7
+import argparse
+import itertools
+import os
+import subprocess
+import tempfile
+import toml
+
+
+def make_parser():
+    parser = argparse.ArgumentParser(description='Excise elements from an hg pds build')
+
+    parser.add_argument('-s',
+                        '--src',
+                        default=[],
+                        help='src build to excise',
+                        action='append')
+    parser.add_argument('--filter-src',
+                        default=[],
+                        action='append',
+                        help='Filter out dependencies from src build')
+    parser.add_argument('-t',
+                        '--test',
+                        default=[],
+                        help='test build to excise',
+                        action='append')
+    parser.add_argument('--filter-test',
+                        default=[],
+                        action='append',
+                        help='Filter out dependencies from test build')
+    parser.add_argument('--pds',
+                        default='pds.conf',
+                        help='pds config (default pds.conf)')
+    parser.add_argument('--base',
+                        default='.',
+                        help='Path in the repo the src directory is in')
+    parser.add_argument('--rename',
+                        help='Path to rename base into, "." to make root')
+    parser.add_argument('-o',
+                        '--output',
+                        required=True,
+                        help='Directory to output')
+    parser.add_argument('--book',
+                        required=True,
+                        help='Bookmark to convert')
+    parser.add_argument('--input',
+                        required=True,
+                        help='Path to base of repo to be converted from')
+    parser.add_argument('--match-tests',
+                        default=False,
+                        action='store_true',
+                        help='Assume test names are the same as src build names')
+
+    return parser
+
+
+def collect_src_deps(pds, b):
+    deps = set(pds['src'].get(b, {}).get('deps', [])
+               + pds['src'].get(b, {}).get('compile_deps', [])
+               + pds['src'].get(b, {}).get('debug', {}).get('deps', [])
+               + pds['src'].get(b, {}).get('debug', {}).get('compile_deps', [])
+               + pds['src'].get(b, {}).get('profile', {}).get('deps', [])
+               + pds['src'].get(b, {}).get('profile', {}).get('compile_deps', [])
+               + pds['src'].get(b, {}).get('release', {}).get('deps', [])
+               + pds['src'].get(b, {}).get('release', {}).get('compile_deps', []))
+    return set([b]).union(deps).union(itertools.chain.from_iterable(collect_src_deps(pds, b) for b in deps))
+
+
+def collect_tests_deps(pds, b):
+    deps = set(pds['tests'].get(b, {}).get('deps', [])
+               + pds['tests'].get(b, {}).get('debug', {}).get('deps', [])
+               + pds['tests'].get(b, {}).get('profile', {}).get('deps', [])
+               + pds['tests'].get(b, {}).get('release', {}).get('deps', []))
+    return set([b]).union(deps).union(itertools.chain.from_iterable(collect_src_deps(pds, b)
+                                                                    for b in list(deps) + [b]))
+
+
+def main():
+    parser = make_parser()
+    args = parser.parse_args()
+
+    pds = toml.load(args.pds)
+    all_src_deps = set(itertools.chain.from_iterable(
+        collect_src_deps(pds, b)
+        for b in args.src)).difference(set(args.filter_src))
+
+    tests = set(args.test).union(all_src_deps if args.match_tests else set())
+
+    all_test_deps = set(itertools.chain.from_iterable(
+        collect_tests_deps(pds, b)
+        for b in tests)).difference(set(args.filter_test))
+    src_deps = [b for b in all_src_deps.union(all_test_deps) if b in pds['src']]
+    test_deps = [b for b in tests if b in pds['tests']]
+
+    out_pds_conf = {
+        'global': pds['global'],
+        'src': {k: pds['src'][k] for k in src_deps},
+        'tests': {k: pds['tests'][k] for k in test_deps}
+    }
+
+    filemap = (['include ' + os.path.join(args.base, 'src', b) for b in src_deps]
+               + ['include ' + os.path.join(args.base, 'tests', b) for b in test_deps])
+
+    if args.rename:
+        filemap += ['rename {} {}'.format(args.base, args.rename)]
+
+    filemap = '\n'.join(filemap)
+
+    with tempfile.NamedTemporaryFile() as convert_f:
+        convert_f.write(filemap.encode('utf-8'))
+        convert_f.flush()
+
+        subprocess.check_call(['hg',
+                               'convert',
+                               '--filemap',
+                               convert_f.name,
+                               args.input,
+                               args.output])
+        subprocess.check_call(['hg', 'up', '-r', args.book], cwd=args.output)
+        pds_conf_path = (os.path.join(args.output, args.rename, 'pds.conf')
+                         if args.rename else os.path.join(args.output, args.base, 'pds.conf'))
+        toml.dump(out_pds_conf, open(pds_conf_path, 'w'))
+
+
+if __name__ == '__main__':
+    main()
