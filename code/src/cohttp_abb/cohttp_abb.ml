@@ -152,10 +152,13 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       >>= fun (resp, ic) ->
       Fut_comb.with_finally
         (fun () ->
-          let open Abb.Future.Infix_monad in
-          let b = Buffer.create 1024 in
-          read_body (Response_io.make_body_reader resp ic) b
-          >>| fun () -> Ok (resp, Buffer.contents b))
+          match Response_io.has_body resp with
+            | `Yes | `Unknown ->
+                let open Abb.Future.Infix_monad in
+                let b = Buffer.create 1024 in
+                read_body (Response_io.make_body_reader resp ic) b
+                >>| fun () -> Ok (resp, Buffer.contents b)
+            | `No             -> Abb.Future.return (Ok (resp, "")))
         ~finally:(fun () -> Fut_comb.ignore (Buffered.close ic))
   end
 
