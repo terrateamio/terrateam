@@ -205,19 +205,21 @@ module Make (Sched_state : S) = struct
 
   let rec abort' : 'a. 'a undet -> State.t -> State.t =
    fun undet s ->
+    let s =
+      ListLabels.fold_left
+        ~f:(fun s (Dep u) ->
+          let u = collapse_alias u in
+          match u.state with
+            | `Alias _                   -> assert false
+            | `Undet undet               ->
+                u.state <- `Aborted;
+                abort' undet s
+            | `Aborted | `Exn _ | `Det _ -> s)
+        ~init:s
+        undet.deps
+    in
     let (s, det) = safe_call_abort undet s in
-    let s = ListLabels.fold_left ~f:(fun s w -> Watcher.call w s det) ~init:s undet.watchers in
-    ListLabels.fold_left
-      ~f:(fun s (Dep u) ->
-        let u = collapse_alias u in
-        match u.state with
-          | `Alias _                   -> assert false
-          | `Undet undet               ->
-              u.state <- det;
-              abort' undet s
-          | `Aborted | `Exn _ | `Det _ -> s)
-      ~init:s
-      undet.deps
+    ListLabels.fold_left ~f:(fun s w -> Watcher.call w s det) ~init:s undet.watchers
 
   let rec abort_exn' : 'a. 'a undet -> exn * Printexc.raw_backtrace option -> State.t -> State.t =
    fun undet exn s ->
