@@ -25,20 +25,16 @@ let main () =
   let client = Otls.Tls.client () in
   match run_client client with
     | Ok () ->
-      Otls.Tls.destroy client;
-      Ok ()
+        Otls.Tls.destroy client;
+        Ok ()
     | Error `Error ->
-      let error = Otls.Tls.error client in
-      print_endline error;
-      Otls.Tls.destroy client;
-      Error `Error
-    | Error `Want_pollin
-    | Error `Want_pollout ->
-      assert false
+        let error = Otls.Tls.error client in
+        print_endline error;
+        Otls.Tls.destroy client;
+        Error `Error
+    | Error `Want_pollin | Error `Want_pollout -> assert false
 
 let () =
   match main () with
-    | Ok () ->
-      print_endline "Great success"
-    | Error `Error ->
-      print_endline "Giant failure"
+    | Ok ()        -> print_endline "Great success"
+    | Error `Error -> print_endline "Giant failure"

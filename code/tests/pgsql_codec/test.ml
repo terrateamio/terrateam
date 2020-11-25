@@ -47,7 +47,8 @@ let test_msg_decode =
            (adapted from Shiffman's processing code) doesn't work correctly because the drawable \
            height of the created window is 178 pixels instead of 200 as coded. It does work \
            correctly when the height parameters are changed to 222. It looks suspiciously like the \
-           missing 22 pixels are hiding under the window title bar since it is about the same size.\n\n\
+           missing 22 pixels are hiding under the window title bar since it is about the same \
+           size.\n\n\
            Using the prebuilt zip.\n\n\
            Java version \"1.6.0_20\" on OS X 10.6.3. Running using script/swank and Emacs.\n\n\
            ```\n";
@@ -265,7 +266,8 @@ let test_msg_decode =
            \255\255\255\255D\000\000\000\210\000\004\000\000\000\007riak_kv\000\000\000\017Bz937 \
            filter keys\000\000\000\164Just needed an extra fu";
           "";
-          "nction clause to match the format of the key filter produced by riak_client:filter_keys.\n\n\
+          "nction clause to match the format of the key filter produced by \
+           riak_client:filter_keys.\n\n\
            Fixes https://issues.basho.com/show_bug.cgi?id=937\n\
            \255\255\255\255D\000\000\001C\000\004\000\000\000\007riak_kv\000\000\0003Fix for Issue \
            937 regarding riak_client:filter_keys\000\000\000\243riak_client:filter_keys produces a \
@@ -323,7 +325,8 @@ let test_msg_decode =
            \255\255\255\255D\000\000\001\159\000\004\000\000\000\bincanter\000\000\000!factorial \
            broken on (factorial 0)\000\000\001`According to Wikipedia, factorial(0) is \
            special-cased to be 0. incanter.core/factorial has an incorrect pre-condition, it \
-           checks for (pos? k) rather than (not (neg? k)), throwing an exception on (factorial 0). \n\n\
+           checks for (pos? k) rather than (not (neg? k)), throwing an exception on (factorial 0). \
+           \n\n\
            I've tested that (cern.jet.math.tdouble.DoubleArithmetic/factorial 0) handles it \
            correctly, so only the precondition needs to be modified. \n\
            \255\255\255\255D\000\000\002\138\000\004\000\000\000\007riak_kv\000\000\000\025Key \

@@ -4,11 +4,10 @@ let rec read_all_bytes tls buf =
   let open CCResult.Infix in
   Otls.Tls.read tls ~pos:0 ~len:(Bytes.length buf) buf
   >>= function
-  | 0 ->
-    Ok ()
+  | 0 -> Ok ()
   | n ->
-    output_substring stdout (Bytes.to_string buf) 0 n;
-    read_all_bytes tls buf
+      output_substring stdout (Bytes.to_string buf) 0 n;
+      read_all_bytes tls buf
 
 let main () =
   let open CCResult.Infix in
@@ -38,10 +37,6 @@ let main () =
 
 let () =
   match main () with
-    | Ok () ->
-      print_endline "Great success"
-    | Error `Error ->
-      print_endline "Giant failure"
-    | Error `Want_pollin
-    | Error `Want_pollout ->
-      assert false
+    | Ok () -> print_endline "Great success"
+    | Error `Error -> print_endline "Giant failure"
+    | Error `Want_pollin | Error `Want_pollout -> assert false
