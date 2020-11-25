@@ -3,10 +3,23 @@
 # Modifying NON_LIB_MODULES, so make it serial
 .NOTPARALLEL:
 
+OLD_SRC_DIR := $(SRC_DIR)
+
+SRC_DIR = src
+
 NON_LIB_MODULES += kqueue_stubs.ml
 
 $(SRC_DIR)/kqueue_stubs.ml: kqueue_bindings_gen
+	mkdir -p "$(SRC_DIR)"
 	./$^ > $@.$$$$ && mv $@.$$$$ $@
+
+$(SRC_DIR)/%.ml: $(OLD_SRC_DIR)/%.ml
+	mkdir -p "$(SRC_DIR)"
+	cp $^ $@
+
+$(SRC_DIR)/%.mli: $(OLD_SRC_DIR)/%.mli
+	mkdir -p "$(SRC_DIR)"
+	cp $^ $@
 
 kqueue_bindings_gen: kqueue_bindings_stubs.o
 	$(CC) -o $@ $^
