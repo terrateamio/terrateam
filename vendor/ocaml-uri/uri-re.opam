@@ -25,3 +25,4 @@ build: [
   ["dune" "build" "-p" name "-j" jobs]
   ["dune" "runtest" "-p" name "-j" jobs] {with-test}
 ]
+messages: [ "Deprecated. This package is outdated, you should consider using uri instead" ]
