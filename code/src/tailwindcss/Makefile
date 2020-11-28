@@ -1,21 +1,23 @@
 .PHONY: all release debug clean docs
 
-VERSION = 1.9.4
+TAILWIND_CLI_VERSION = 2.0.1
+
+INSTALL_FILES = .installed-tailwind-cli-$(TAILWIND_CLI_VERSION)
 
 all: release
 
-release: .installed-$(VERSION)
+release: $(INSTALL_FILES)
 
-debug: .installed-$(VERSION)
+debug: $(INSTALL_FILES)
 
-profile: .installed-$(VERSION)
+profile: $(INSTALL_FILES)
 
 docs:
 
-.installed-$(VERSION):
+.installed-tailwind-cli-$(TAILWIND_CLI_VERSION):
 	mkdir -p node_modules
-	npm install tailwindcss@$(VERSION)
+	npm install tailwindcss-cli@$(TAILWIND_VERSION)
 	touch $@
 
 clean:
-	-rm .installed-$(VERSION)
+	-rm $(INSTALL_FILES) || true
