@@ -67,6 +67,12 @@ module Route = struct
 
     let int n = ud n CCFun.(int_of_string %> CCOpt.return)
 
+    let bool n =
+      ud n (function
+          | "true"  -> Some true
+          | "false" -> Some false
+          | _       -> None)
+
     let rec apply_arr' acc f = function
       | []      -> Some (List.rev acc)
       | v :: vs -> (

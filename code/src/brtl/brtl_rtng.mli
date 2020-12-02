@@ -50,6 +50,9 @@ module Route : sig
     (** Extract an int from the query parameters. *)
     val int : string -> int t
 
+    (** Extract a bool from the query parameters. *)
+    val bool : string -> bool t
+
     (** Extract an array of elements *)
     val array : 'a t -> 'a list t
 
