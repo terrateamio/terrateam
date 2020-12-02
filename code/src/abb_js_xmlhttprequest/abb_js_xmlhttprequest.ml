@@ -1,12 +1,14 @@
 module Method = struct
   type t =
     [ `GET
+    | `PUT
     | `POST
     | `DELETE
     ]
 
   let string_of_t = function
     | `GET    -> "GET"
+    | `PUT    -> "PUT"
     | `POST   -> "POST"
     | `DELETE -> "DELETE"
 end

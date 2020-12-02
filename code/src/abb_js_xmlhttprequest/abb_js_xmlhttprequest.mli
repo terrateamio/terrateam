@@ -1,6 +1,7 @@
 module Method : sig
   type t =
     [ `GET
+    | `PUT
     | `POST
     | `DELETE
     ]
