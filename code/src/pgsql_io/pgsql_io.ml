@@ -269,9 +269,9 @@ module Typed_sql = struct
 
     let boolean =
       take_one (function
-          | "true"  -> Some true
-          | "false" -> Some false
-          | _       -> None)
+          | "true" | "t"  -> Some true
+          | "false" | "f" -> Some false
+          | _             -> None)
 
     let ud f xs = f xs
 
