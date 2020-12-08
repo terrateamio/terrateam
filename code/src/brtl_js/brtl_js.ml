@@ -9,6 +9,8 @@ module To_dom = Js_of_ocaml_tyxml.Tyxml_js.To_dom
 
 let select_by_id id coerce = Option.get (Dom_html.getElementById_coerce id coerce)
 
+let select_by_id_opt id coerce = Dom_html.getElementById_coerce id coerce
+
 module Router = struct
   type t = {
     uri : Uri.t React.signal;

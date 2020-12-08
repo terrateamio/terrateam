@@ -55,6 +55,8 @@ val handler_sync : ?continue:bool -> ('a -> unit) -> 'a -> bool
 
 val select_by_id : string -> (Dom_html.element Js.t -> 'a Js.opt) -> 'a
 
+val select_by_id_opt : string -> (Dom_html.element Js.t -> 'a Js.opt) -> 'a option
+
 val scroll_into_view : ?block:string -> ?inline:string -> Dom_html.element Js.t -> unit
 
 val replace_child : ?p:#Dom.node Js.t -> old:#Dom.node Js.t -> #Dom.node Js.t -> unit
