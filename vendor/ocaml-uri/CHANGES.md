@@ -1,3 +1,10 @@
+v4.1.0 2021-01-04
+-----------------
+
+* `uri-re` is deprecated, it is a legacy implementation that is now outdated. 
+  `uri` should be used instead (@dinosaure, #152).
+* Fix build system for cross-compilation (@TheLortex, #151).
+
 v4.0.0 2020-01-01
 -----------------
 
