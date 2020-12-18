@@ -408,6 +408,36 @@ let test_stmt_fetch =
           Abb.Future.return ()
       | Error err -> assert false)
 
+let test_integrity_fail =
+  Oth_abb.test ~desc:"Integrity fail" ~name:"integrity_fail" (fun () ->
+      let open Abb.Future.Infix_monad in
+      let f conn =
+        let create_sql =
+          Pgsql_io.Typed_sql.(
+            sql /^ "CREATE TABLE IF NOT EXISTS foo1 (name TEXT PRIMARY KEY, age INTEGER)")
+        in
+        let insert_sql =
+          Pgsql_io.Typed_sql.(sql /^ "INSERT INTO foo1 VALUES($1, $2)" /% Var.text /% Var.integer)
+        in
+        Pgsql_io.tx conn ~f:(fun () ->
+            let open Abbs_future_combinators.Infix_result_monad in
+            Pgsql_io.Prepared_stmt.execute conn create_sql
+            >>= fun () ->
+            Abbs_future_combinators.to_result (Abb.Sys.sleep 1.0)
+            >>= fun () ->
+            Pgsql_io.Prepared_stmt.execute conn insert_sql "Testy McTestface" (Int32.of_int 36))
+      in
+      let check_err r1 r2 =
+        match (r1, r2) with
+          | (_, Error (`Integrity_err _)) | (Error (`Integrity_err _), _) -> Ok ()
+          | _ -> Error ()
+      in
+
+      Abb.Future.Infix_app.(check_err <$> with_conn f <*> with_conn f)
+      >>= fun r ->
+      assert (r = Ok ());
+      Abb.Future.return ())
+
 let test =
   Oth_abb.(
     to_sync_test
@@ -425,6 +455,7 @@ let test =
            test_array;
            test_insert_execute;
            test_stmt_fetch;
+           test_integrity_fail;
          ]))
 
 let reporter ppf =

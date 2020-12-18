@@ -13,11 +13,19 @@ type frame_err =
 
 val show_frame_err : frame_err -> string
 
+type integrity_err = {
+  message : string;
+  detail : string option;
+}
+
+val show_integrity_err : integrity_err -> string
+
 type err =
   [ `Msgs of (char * string) list
   | frame_err
   | `Disconnected
   | `Bad_result of string option list
+  | `Integrity_err of integrity_err
   ]
 
 val show_err : err -> string
@@ -212,8 +220,7 @@ val destroy : t -> unit Abb.Future.t
 
 val connected : t -> bool
 
-val tx :
-  t -> f:(unit -> ('a, ([> frame_err ] as 'e)) result Abb.Future.t) -> ('a, 'e) result Abb.Future.t
+val tx : t -> f:(unit -> ('a, ([> err ] as 'e)) result Abb.Future.t) -> ('a, 'e) result Abb.Future.t
 
 (** Printers *)
 val pp_create_err : Format.formatter -> create_err -> unit

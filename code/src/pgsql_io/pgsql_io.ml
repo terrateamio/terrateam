@@ -32,6 +32,12 @@ let gen_unique_id t prefix =
   t.unique_id <- t.unique_id + 1;
   ret
 
+type integrity_err = {
+  message : string;
+  detail : string option;
+}
+[@@deriving show]
+
 module Io = struct
   type err = [ `Parse_error of Pgsql_codec.Decode.err ] [@@deriving show, eq]
 
@@ -109,6 +115,27 @@ module Io = struct
     assert (res = []);
     Abb.Future.return (Ok ())
 
+  let handle_err_frame msgs fs =
+    let c = CCList.Assoc.get_exn ~eq:Char.equal 'C' msgs in
+    let m = CCList.Assoc.get_exn ~eq:Char.equal 'M' msgs in
+    let d = CCList.Assoc.get ~eq:Char.equal 'D' msgs in
+    match c with
+      | "23000"
+      (* integrity_constraint_violation *)
+      | "23001"
+      (* restrict_violation *)
+      | "23502"
+      (* not_null_violation *)
+      | "23503"
+      (* foreign_key_violation *)
+      | "23505"
+      (* unique_violation *)
+      | "23514"
+      (* check_violation *)
+      | "23P01"
+      (* exclusion_violation *) -> `Integrity_err { message = m; detail = d }
+      | _ -> `Unmatching_frame fs
+
   let rec consume_matching conn fs =
     let open Abbs_future_combinators.Infix_result_monad in
     wait_for_frames conn >>= fun received_fs -> match_frames conn fs received_fs
@@ -118,6 +145,8 @@ module Io = struct
       | ([], _) -> Abb.Future.return (Ok received_fs)
       | (_, []) -> consume_matching conn fs
       | (f :: fs, r_f :: r_fs) when f r_f -> match_frames conn fs r_fs
+      | (_, (Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as r_fs)) ->
+          Abb.Future.return (Error (handle_err_frame msgs r_fs))
       | (_, _) -> Abb.Future.return (Error (`Unmatching_frame received_fs))
 end
 
@@ -133,6 +162,7 @@ type err =
   | frame_err
   | `Disconnected
   | `Bad_result of string option list
+  | `Integrity_err of integrity_err
   ]
 [@@deriving show]
 
@@ -398,6 +428,8 @@ module Cursor = struct
         consume_exec_frames conn row_func st fs
     | Pgsql_codec.Frame.Backend.CommandComplete _ :: fs -> consume_exec_end conn row_func st fs
     | Pgsql_codec.Frame.Backend.DataRow _ :: _ -> assert false
+    | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->
+        Abb.Future.return (Error (Io.handle_err_frame msgs fs))
     | fs -> Abb.Future.return (Error (`Unmatching_frame fs))
 
   and consume_exec_end conn row_func st = function
@@ -432,6 +464,8 @@ module Cursor = struct
     | Pgsql_codec.Frame.Backend.CommandComplete _ :: fs -> consume_fetch_end conn row_func st fs
     | Pgsql_codec.Frame.Backend.DataRow { data } :: fs ->
         consume_fetch_process_frame conn row_func st fs data
+    | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->
+        Abb.Future.return (Error (Io.handle_err_frame msgs fs))
     | fs -> Abb.Future.return (Error (`Unmatching_frame fs))
 
   and consume_fetch_process_frame conn row_func st fs data =
