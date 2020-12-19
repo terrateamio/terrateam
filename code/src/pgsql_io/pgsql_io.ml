@@ -133,7 +133,11 @@ module Io = struct
       | "23514"
       (* check_violation *)
       | "23P01"
-      (* exclusion_violation *) -> `Integrity_err { message = m; detail = d }
+      (* exclusion_violation *)
+      | "40002"
+      (* transaction_integrity_constraint_violation *)
+      | "40001"
+      (* serialization_failure *) -> `Integrity_err { message = m; detail = d }
       | _ -> `Unmatching_frame fs
 
   let rec consume_matching conn fs =
