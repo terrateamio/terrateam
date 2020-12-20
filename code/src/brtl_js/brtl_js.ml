@@ -160,7 +160,7 @@ module Router_output = struct
     let mtch =
       match match_uri routes (React.S.value uri) with
         | Some mtch -> mtch
-        | None      -> assert false
+        | None      -> (* TODO: Do something useful here *) assert false
     in
     let with_cleanup = ref None in
     let prev_match = ref mtch in

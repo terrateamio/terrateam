@@ -8,7 +8,7 @@ module Key_map = struct
   include CCMap.Make (Key_combo)
 end
 
-let valid_keys = "abcdefghijklmnipqrstuvwxyz0123456789!@#$%^&*()=-+_/?.,><';\":][}{\|"
+let valid_keys = "abcdefghijklmnipqrstuvwxyz0123456789!@#$%^&*()=-+_/?.,><';\":][}{\\|"
 
 let all_modifiers = Key_combo.of_list [ "Alt"; "Shift"; "Ctrl"; "Meta" ]
 
