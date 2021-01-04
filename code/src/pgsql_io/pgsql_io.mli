@@ -211,6 +211,7 @@ val create :
   ?tls_config:[ `Require of Otls.Tls_config.t | `Prefer  of Otls.Tls_config.t ] ->
   ?passwd:string ->
   ?port:int ->
+  ?notice_response:((char * string) list -> unit) ->
   host:string ->
   user:string ->
   string ->

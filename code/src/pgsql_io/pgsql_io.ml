@@ -149,6 +149,9 @@ module Io = struct
       | ([], _) -> Abb.Future.return (Ok received_fs)
       | (_, []) -> consume_matching conn fs
       | (f :: fs, r_f :: r_fs) when f r_f -> match_frames conn fs r_fs
+      | (_, Pgsql_codec.Frame.Backend.NoticeResponse { msgs } :: rfs) ->
+          conn.notice_response msgs;
+          match_frames conn fs rfs
       | (_, (Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as r_fs)) ->
           Abb.Future.return (Error (handle_err_frame msgs r_fs))
       | (_, _) -> Abb.Future.return (Error (`Unmatching_frame received_fs))
@@ -427,13 +430,15 @@ module Cursor = struct
 
   and consume_exec_frames conn row_func st = function
     | [] -> consume_exec conn row_func st
+    | Pgsql_codec.Frame.Backend.CommandComplete _ :: fs -> consume_exec_end conn row_func st fs
+    | (Pgsql_codec.Frame.Backend.DataRow _ as frame) :: _ ->
+        Printf.printf "Frame = %s\n%!" (Pgsql_codec.Frame.Backend.show frame);
+        assert false
+    | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->
+        Abb.Future.return (Error (Io.handle_err_frame msgs fs))
     | Pgsql_codec.Frame.Backend.NoticeResponse { msgs } :: fs ->
         conn.notice_response msgs;
         consume_exec_frames conn row_func st fs
-    | Pgsql_codec.Frame.Backend.CommandComplete _ :: fs -> consume_exec_end conn row_func st fs
-    | Pgsql_codec.Frame.Backend.DataRow _ :: _ -> assert false
-    | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->
-        Abb.Future.return (Error (Io.handle_err_frame msgs fs))
     | fs -> Abb.Future.return (Error (`Unmatching_frame fs))
 
   and consume_exec_end conn row_func st = function
@@ -465,11 +470,15 @@ module Cursor = struct
 
   and consume_fetch_frames conn row_func st = function
     | [] -> consume_fetch conn row_func st
-    | Pgsql_codec.Frame.Backend.CommandComplete _ :: fs -> consume_fetch_end conn row_func st fs
+    | (Pgsql_codec.Frame.Backend.CommandComplete _ as frame) :: fs ->
+        consume_fetch_end conn row_func st fs
     | Pgsql_codec.Frame.Backend.DataRow { data } :: fs ->
         consume_fetch_process_frame conn row_func st fs data
     | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->
         Abb.Future.return (Error (Io.handle_err_frame msgs fs))
+    | Pgsql_codec.Frame.Backend.NoticeResponse { msgs } :: fs ->
+        conn.notice_response msgs;
+        consume_fetch_frames conn row_func st fs
     | fs -> Abb.Future.return (Error (`Unmatching_frame fs))
 
   and consume_fetch_process_frame conn row_func st fs data =
@@ -662,7 +671,7 @@ type create_err =
   ]
 [@@deriving show, eq]
 
-let rec create_sm ?tls_config ?passwd ~host ~port ~user database tcp =
+let rec create_sm ?tls_config ?passwd ~notice_response ~host ~port ~user database tcp =
   let open Abbs_future_combinators.Infix_result_monad in
   Abb.Socket.getaddrinfo
     ~hints:
@@ -678,13 +687,32 @@ let rec create_sm ?tls_config ?passwd ~host ~port ~user database tcp =
       match tls_config with
         | None                       ->
             let (r, w) = Abbs_io_buffered.Of.of_tcp_socket ~size:4096 tcp in
-            create_sm_perform_login r w ?passwd ~user database
+            create_sm_perform_login r w ?passwd ~notice_response ~user database
         | Some (`Require tls_config) ->
-            create_sm_ssl_conn ?passwd ~required:true ~host ~port ~user tls_config tcp database
+            create_sm_ssl_conn
+              ?passwd
+              ~required:true
+              ~notice_response
+              ~host
+              ~port
+              ~user
+              tls_config
+              tcp
+              database
         | Some (`Prefer tls_config)  ->
-            create_sm_ssl_conn ?passwd ~required:false ~host ~port ~user tls_config tcp database )
+            create_sm_ssl_conn
+              ?passwd
+              ~required:false
+              ~notice_response
+              ~host
+              ~port
+              ~user
+              tls_config
+              tcp
+              database )
 
-and create_sm_ssl_conn ?passwd ~required ~host ~port ~user tls_config tcp database =
+and create_sm_ssl_conn ?passwd ~required ~notice_response ~host ~port ~user tls_config tcp database
+    =
   let open Abbs_future_combinators.Infix_result_monad in
   let buf = Buffer.create 5 in
   let bytes = Io.encode_frame buf Pgsql_codec.Frame.Frontend.SSLRequest in
@@ -698,13 +726,13 @@ and create_sm_ssl_conn ?passwd ~required ~host ~port ~user tls_config tcp databa
   >>= function
   | n when n = 1 && Bytes.get bytes 0 = 'S' -> (
       match Abbs_tls.client_tcp tcp tls_config host with
-        | Ok (r, w) -> create_sm_perform_login r w ?passwd ~user database
+        | Ok (r, w) -> create_sm_perform_login r w ?passwd ~notice_response ~user database
         | Error _   -> failwith "nyi" )
   | n when n = 1 && Bytes.get bytes 0 = 'N' && not required -> failwith "nyi"
   | n when n = 1 && Bytes.get bytes 0 = 'N' && required -> failwith "nyi"
   | _ -> failwith "nyi"
 
-and create_sm_perform_login r w ?passwd ~user database =
+and create_sm_perform_login r w ?passwd ~notice_response ~user database =
   let open Abbs_future_combinators.Infix_result_monad in
   let decoder = Pgsql_codec.Decode.create () in
   let buf = Bytes.create 4096 in
@@ -719,7 +747,7 @@ and create_sm_perform_login r w ?passwd ~user database =
       w;
       backend_key_data = Backend_key_data.{ pid = Int32.zero; secret_key = Int32.zero };
       unique_id = 0;
-      notice_response = (fun _ -> ());
+      notice_response;
       expected_frames = [];
     }
   in
@@ -760,12 +788,13 @@ and create_sm_process_login_frames ?passwd ~user t =
   | [ ReadyForQuery _ ] -> Abb.Future.return (Ok t)
   | _ -> failwith "nyi"
 
-let create ?tls_config ?passwd ?(port = 5432) ~host ~user database =
+let create ?tls_config ?passwd ?(port = 5432) ?(notice_response = fun _ -> ()) ~host ~user database
+    =
   let open Abb.Future.Infix_monad in
   let tcp = CCResult.get_exn (Abb.Socket.Tcp.create ~domain:Abb_intf.Socket.Domain.Inet4) in
   Abbs_future_combinators.on_failure
     (fun () ->
-      create_sm ?tls_config ?passwd ~host ~port ~user database tcp
+      create_sm ?tls_config ?passwd ~notice_response ~host ~port ~user database tcp
       >>= function
       | Ok _ as r -> Abb.Future.return r
       | Error `Disconnected
