@@ -48,3 +48,27 @@ let checkbox ?(a = []) ?(value = false) () =
     elem_set_value ?step b
   in
   ({ signal = elem_value; set = set_value }, elem)
+
+let range ?(a = []) ?(value = 0) () =
+  let (elem_value, elem_set_value) = Brtl_js.React.S.create value in
+  let onchange =
+    Brtl_js.handler_sync (fun event ->
+        Js.Opt.iter event##.target (fun target ->
+            Js.Opt.iter (Dom_html.CoerceTo.input target) (fun inp ->
+                elem_set_value (int_of_string (Js.to_string inp##.value)))))
+  in
+  let elem =
+    Brtl_js.Html.input
+      ~a:
+        ( Brtl_js.Html.a_input_type `Range
+        :: Brtl_js.Html.a_value (CCInt.to_string value)
+        :: Brtl_js.Html.a_onchange onchange
+        :: a )
+      ()
+  in
+  let set_value ?step v =
+    let elem = Brtl_js.To_dom.of_input elem in
+    elem##.value := Js.string (CCInt.to_string v);
+    elem_set_value ?step v
+  in
+  ({ signal = elem_value; set = set_value }, elem)

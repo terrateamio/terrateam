@@ -15,3 +15,9 @@ val checkbox :
   ?value:bool ->
   unit ->
   bool t * [> Html_types.input ] Brtl_js.Html.elt
+
+val range :
+  ?a:Html_types.input_attrib Brtl_js.Html.attrib list ->
+  ?value:int ->
+  unit ->
+  int t * [> Html_types.input ] Brtl_js.Html.elt
