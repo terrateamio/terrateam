@@ -11,14 +11,14 @@ let set ?step t v = t.set ?step v
 
 let input ?(a = []) ?(value = "") () =
   let (elem_value, elem_set_value) = Brtl_js.React.S.create value in
-  let onkeyup =
+  let onchange =
     Brtl_js.handler_sync (fun event ->
         Js.Opt.iter event##.target (fun target ->
             Js.Opt.iter (Dom_html.CoerceTo.input target) (fun inp ->
                 elem_set_value (Js.to_string inp##.value))))
   in
   let elem =
-    Brtl_js.Html.input ~a:(Brtl_js.Html.a_value value :: Brtl_js.Html.a_onkeyup onkeyup :: a) ()
+    Brtl_js.Html.input ~a:(Brtl_js.Html.a_value value :: Brtl_js.Html.a_onchange onchange :: a) ()
   in
   let set_value ?step s =
     let elem = Brtl_js.To_dom.of_input elem in
