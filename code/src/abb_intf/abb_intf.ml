@@ -496,6 +496,7 @@ module File = struct
       | Create     of Permissions.t  (** Create the file with the specified permissions *)
       | Append
       | Truncate
+      | Exclusive
   end
 
   module File_kind = struct

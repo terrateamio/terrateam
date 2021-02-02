@@ -284,7 +284,8 @@ module File = struct
         | Create _   -> Unix.O_CREAT
         | Read_write -> Unix.O_RDWR
         | Append     -> Unix.O_APPEND
-        | Truncate   -> Unix.O_TRUNC)
+        | Truncate   -> Unix.O_TRUNC
+        | Exclusive  -> Unix.O_EXCL)
       flags
 
   let perm_of_flags flags =
