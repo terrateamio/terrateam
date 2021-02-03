@@ -1,14 +1,18 @@
+module Http = Cohttp_abb.Make (Abb)
 module Response = Cohttp.Response
 
 type t = {
   response : Response.t;
-  body : string;
+  body : Http.Response_io.writer -> unit Abb.Future.t;
 }
 
-let create ?version ?(headers = Cohttp.Header.init ()) ~status body =
+let create_stream ?version ?(headers = Cohttp.Header.init ()) ~status body =
   let headers = Cohttp.Header.add_unless_exists headers "content-type" "text/html" in
   let headers = Cohttp.Header.add_unless_exists headers "connection" "keep-alive" in
   { response = Response.make ?version ~headers ~status (); body }
+
+let create ?version ?(headers = Cohttp.Header.init ()) ~status body =
+  create_stream ?version ~headers ~status (fun writer -> Http.Response_io.write_body writer body)
 
 let version t = Response.version t.response
 

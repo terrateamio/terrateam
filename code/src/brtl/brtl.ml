@@ -1,5 +1,5 @@
 module Fut_comb = Abbs_future_combinators
-module Http = Cohttp_abb.Make (Abb)
+module Http = Brtl_rspnc.Http
 module Cfg = Brtl_cfg
 module Ctx = Brtl_ctx
 module Mw = Brtl_mw
@@ -30,10 +30,7 @@ let read_body req ic =
     | `No             -> Abb.Future.return ""
 
 let write_response oc rspnc =
-  Http.Response_io.write
-    (fun writer -> Http.Response_io.write_body writer (Rspnc.body rspnc))
-    (Rspnc.response rspnc)
-    oc
+  Http.Response_io.write (fun writer -> Rspnc.body rspnc writer) (Rspnc.response rspnc) oc
 
 let run_handler hndlr ctx =
   let open Abb.Future.Infix_monad in
