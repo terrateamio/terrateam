@@ -1,5 +1,3 @@
-module Unix = UnixLabels
-
 module Make (Abb : Abb_intf.S) = struct
   module Oth_abb = Oth_abb.Make (Abb)
 

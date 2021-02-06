@@ -994,9 +994,10 @@ module type S = sig
     end
 
     (** Spawn a process with a list of Dups.  The [src] side of the Dup will be
-        closed once the [dst] has been replaced.  In this case the Dups are
-        {!Native}s because any descriptor type can be inherited by a spawned
-        process.
+       closed once the [dst] has been replaced in the spawned process and the
+       [src] will be closed in the parent process after forking.  In this case
+       the Dups are {!Native}s because any descriptor type can be inherited by a
+       spawned process.
 
         @return on success, the handle to the running process *)
     val spawn : Process.t -> Native.t Process.Dup.t list -> (t, [> Errors.spawn ]) result

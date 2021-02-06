@@ -1436,9 +1436,10 @@ module Process = struct
   let spawn init_args dups =
     try
       let pid = Unix.fork () in
-      if pid > 0 then
+      if pid > 0 then (
+        List.iter ~f:(fun dup -> Unix.close (Abb_intf.Process.Dup.src dup)) dups;
         Ok { pid; exit_code = wait_on_pid pid }
-      else (
+      ) else (
         ignore (init_child_process init_args dups);
         assert false
       )
