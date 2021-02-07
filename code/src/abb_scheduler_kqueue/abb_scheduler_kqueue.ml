@@ -388,101 +388,184 @@ module File = struct
       | _ -> 0
 
   let open_file ~flags path =
-    Thread.run (fun () ->
-        try
-          let t = Unix.openfile path ~mode:(mode_of_flags flags) ~perm:(perm_of_flags flags) in
-          Unix.set_close_on_exec t;
-          Ok t
-        with
-          | Unix.Unix_error (err, _, _) as exn ->
-              let open Unix in
-              Error
-                ( match err with
-                  | ENOTDIR         -> `E_not_dir
-                  | ENAMETOOLONG    -> `E_name_too_long
-                  | ENOENT          -> `E_no_entity
-                  | EACCES          -> `E_access
-                  | EROFS | EPERM   -> `E_permission
-                  | ELOOP           -> `E_loop
-                  | ENFILE | EMFILE -> `E_file_table_full
-                  | ENOSPC          -> `E_no_space
-                  | EIO             -> `E_io
-                  | EEXIST          -> `E_exists
-                  | EINVAL          -> `E_invalid
-                  | _               -> `Unexpected exn )
-          | exn -> Error (`Unexpected exn))
-
-  let safe_read t ~buf ~pos ~len =
-    try Ok (Unix.read t ~buf ~pos ~len) with
+    try
+      let t =
+        Unix.openfile
+          path
+          ~mode:(Unix.O_CLOEXEC :: Unix.O_NONBLOCK :: mode_of_flags flags)
+          ~perm:(perm_of_flags flags)
+      in
+      Future.return (Ok t)
+    with
       | Unix.Unix_error (err, _, _) as exn ->
           let open Unix in
-          Error
-            ( match err with
-              | EBADF  -> `E_bad_file
-              | EIO    -> `E_io
-              | EINVAL -> `E_invalid
-              | EISDIR -> `E_is_dir
-              | _      -> `Unexpected exn )
-      | exn -> Error (`Unexpected exn)
+          Future.return
+            (Error
+               ( match err with
+                 | ENOTDIR         -> `E_not_dir
+                 | ENAMETOOLONG    -> `E_name_too_long
+                 | ENOENT          -> `E_no_entity
+                 | EACCES          -> `E_access
+                 | EROFS | EPERM   -> `E_permission
+                 | ELOOP           -> `E_loop
+                 | ENFILE | EMFILE -> `E_file_table_full
+                 | ENOSPC          -> `E_no_space
+                 | EIO             -> `E_io
+                 | EEXIST          -> `E_exists
+                 | EINVAL          -> `E_invalid
+                 | _               -> `Unexpected exn ))
+      | exn -> Future.return (Error (`Unexpected exn))
 
-  let read t ~buf ~pos ~len = Thread.run (fun () -> safe_read t ~buf ~pos ~len)
+  let read t ~buf ~pos ~len =
+    try Future.return (Ok (Unix.read t ~buf ~pos ~len)) with
+      | Unix.Unix_error (Unix.EAGAIN, _, _) | Unix.Unix_error (Unix.EWOULDBLOCK, _, _) ->
+          Future.with_state (fun s ->
+              let el = Abb_fut.State.state s in
+              let p =
+                Future.Promise.create
+                  ~abort:(fun () ->
+                    Future.with_state (fun s ->
+                        let el = Abb_fut.State.state s in
+                        let el = El.remove_read t el in
+                        let s = Abb_fut.State.set_state el s in
+                        (s, Future.return ())))
+                  ()
+              in
+              let handler s =
+                Future.run_with_state
+                  (Future.Promise.set
+                     p
+                     ( try Ok (Unix.read t ~buf ~pos ~len) with
+                       | Unix.Unix_error (err, _, _) as exn ->
+                           let open Unix in
+                           Error
+                             ( match err with
+                               | EBADF  -> `E_bad_file
+                               | EIO    -> `E_io
+                               | EINVAL -> `E_invalid
+                               | EISDIR -> `E_is_dir
+                               | _      -> `Unexpected exn )
+                       | exn -> Error (`Unexpected exn) ))
+                  s
+              in
+              let el = El.add_read t handler el in
+              let s = Abb_fut.State.set_state el s in
+              (s, Future.Promise.future p))
+      | Unix.Unix_error (err, _, _) as exn ->
+          let open Unix in
+          Future.return
+            (Error
+               ( match err with
+                 | EBADF  -> `E_bad_file
+                 | EIO    -> `E_io
+                 | EINVAL -> `E_invalid
+                 | EISDIR -> `E_is_dir
+                 | _      -> `Unexpected exn ))
+      | exn -> Future.return (Error (`Unexpected exn))
 
   let pread t ~offset ~buf ~pos ~len =
-    Thread.run (fun () ->
-        try
-          let n = Unix.lseek t offset ~mode:Unix.SEEK_SET in
-          assert (n = offset);
-          safe_read t ~buf ~pos ~len
-        with
-          | Unix.Unix_error (Unix.ENXIO, _, _) -> Error `E_nxio
-          | exn -> Error (`Unexpected exn))
+    try
+      let n = Unix.lseek t offset ~mode:Unix.SEEK_SET in
+      assert (n = offset);
+      read t ~buf ~pos ~len
+    with
+      | Unix.Unix_error (Unix.ENXIO, _, _) -> Future.return (Error `E_nxio)
+      | exn -> Future.return (Error (`Unexpected exn))
+
+  let write' ~buf ~pos ~len t =
+    try Future.return (Ok (Unix.write t ~buf ~pos ~len)) with
+      | Unix.Unix_error (Unix.EAGAIN, _, _) | Unix.Unix_error (Unix.EWOULDBLOCK, _, _) ->
+          Future.with_state (fun s ->
+              let el = Abb_fut.State.state s in
+              let p =
+                Future.Promise.create
+                  ~abort:(fun () ->
+                    Future.with_state (fun s ->
+                        let el = Abb_fut.State.state s in
+                        let el = El.remove_write t el in
+                        let s = Abb_fut.State.set_state el s in
+                        (s, Future.return ())))
+                  ()
+              in
+              let handler s =
+                Future.run_with_state
+                  (Future.Promise.set
+                     p
+                     ( try Ok (Unix.write t ~buf ~pos ~len) with
+                       | Unix.Unix_error (err, _, _) as exn ->
+                           let open Unix in
+                           Error
+                             ( match err with
+                               | EBADF  -> `E_bad_file
+                               | EPIPE  -> `E_pipe
+                               | EINVAL -> `E_invalid
+                               | ENOSPC -> `E_no_space
+                               | EIO    -> `E_io
+                               | EROFS  -> `E_permission
+                               | _      -> `Unexpected exn )
+                       | exn -> Error (`Unexpected exn) ))
+                  s
+              in
+              let el = El.add_write t handler el in
+              let s = Abb_fut.State.set_state el s in
+              (s, Future.Promise.future p))
+      | Unix.Unix_error (err, _, _) as exn ->
+          let open Unix in
+          Future.return
+            (Error
+               ( match err with
+                 | EBADF  -> `E_bad_file
+                 | EPIPE  -> `E_pipe
+                 | EINVAL -> `E_invalid
+                 | ENOSPC -> `E_no_space
+                 | EIO    -> `E_io
+                 | EROFS  -> `E_permission
+                 | _      -> `Unexpected exn ))
+      | exn -> Future.return (Error (`Unexpected exn))
 
   let rec write_buf t buf =
-    let n =
-      Unix.write
-        t
-        ~buf:buf.Abb_intf.Write_buf.buf
-        ~pos:buf.Abb_intf.Write_buf.pos
-        ~len:buf.Abb_intf.Write_buf.len
-    in
-    match n with
-      | n when n < buf.Abb_intf.Write_buf.len ->
-          let buf = Abb_intf.Write_buf.{ buf with pos = buf.pos + n; len = buf.len - n } in
-          n + write_buf t buf
-      | n -> n
+    let open Future.Infix_monad in
+    write'
+      t
+      ~buf:buf.Abb_intf.Write_buf.buf
+      ~pos:buf.Abb_intf.Write_buf.pos
+      ~len:buf.Abb_intf.Write_buf.len
+    >>= function
+    | Ok n when n < buf.Abb_intf.Write_buf.len -> (
+        let buf = Abb_intf.Write_buf.{ buf with pos = buf.pos + n; len = buf.len - n } in
+        write_buf t buf
+        >>= function
+        | Ok n'          -> Future.return (Ok (n + n'))
+        | Error _ as err -> Future.return err )
+    | Ok n -> Future.return (Ok n)
+    | Error _ as err -> Future.return err
 
   let write_bufs t bufs =
     let rec write_bufs' t = function
-      | []      -> 0
-      | b :: bs ->
-          let n = write_buf t b in
-          n + write_bufs' t bs
+      | []      -> Future.return (Ok 0)
+      | b :: bs -> (
+          let open Future.Infix_monad in
+          write_buf t b
+          >>= function
+          | Ok n           -> (
+              write_bufs' t bs
+              >>= function
+              | Ok n'          -> Future.return (Ok (n + n'))
+              | Error _ as err -> Future.return err )
+          | Error _ as err -> Future.return err )
     in
-    try Ok (write_bufs' t bufs) with
-      | Unix.Unix_error (err, _, _) as exn ->
-          let open Unix in
-          Error
-            ( match err with
-              | EBADF  -> `E_bad_file
-              | EPIPE  -> `E_pipe
-              | EINVAL -> `E_invalid
-              | ENOSPC -> `E_no_space
-              | EIO    -> `E_io
-              | EROFS  -> `E_permission
-              | _      -> `Unexpected exn )
-      | exn -> Error (`Unexpected exn)
+    write_bufs' t bufs
 
-  let write t bufs = Thread.run (fun () -> write_bufs t bufs)
+  let write t bufs = write_bufs t bufs
 
   let pwrite t ~offset bufs =
-    Thread.run (fun () ->
-        try
-          let n = Unix.lseek t offset Unix.SEEK_SET in
-          assert (n = offset);
-          write_bufs t bufs
-        with
-          | Unix.Unix_error (Unix.ENXIO, _, _) -> Error `E_nxio
-          | exn -> Error (`Unexpected exn))
+    try
+      let n = Unix.lseek t offset Unix.SEEK_SET in
+      assert (n = offset);
+      write_bufs t bufs
+    with
+      | Unix.Unix_error (Unix.ENXIO, _, _) -> Future.return (Error `E_nxio)
+      | exn -> Future.return (Error (`Unexpected exn))
 
   let lseek' t ~offset = function
     | Abb_intf.File.Seek.Cur ->
@@ -508,35 +591,35 @@ module File = struct
       | exn -> Error (`Unexpected exn)
 
   let close t =
-    Thread.run (fun () ->
-        try Ok (Unix.close t) with
-          | Unix.Unix_error (err, _, _) as exn ->
-              let open Unix in
-              Error
-                ( match err with
-                  | EBADF  -> `E_bad_file
-                  | ENOSPC -> `E_no_space
-                  | _      -> `Unexpected exn )
-          | exn -> Error (`Unexpected exn))
+    try Future.return (Ok (Unix.close t)) with
+      | Unix.Unix_error (err, _, _) as exn ->
+          let open Unix in
+          Future.return
+            (Error
+               ( match err with
+                 | EBADF  -> `E_bad_file
+                 | ENOSPC -> `E_no_space
+                 | _      -> `Unexpected exn ))
+      | exn -> Future.return (Error (`Unexpected exn))
 
   let unlink path =
-    Thread.run (fun () ->
-        try Ok (Unix.unlink path) with
-          | Unix.Unix_error (err, _, _) as exn ->
-              let open Unix in
-              Error
-                ( match err with
-                  | ENOTDIR      -> `E_not_dir
-                  | EISDIR       -> `E_is_dir
-                  | ENAMETOOLONG -> `E_name_too_long
-                  | ENOENT       -> `E_no_entity
-                  | EACCES       -> `E_access
-                  | ELOOP        -> `E_loop
-                  | EPERM        -> `E_permission
-                  | EIO          -> `E_io
-                  | ENOSPC       -> `E_no_space
-                  | _            -> `Unexpected exn )
-          | exn -> Error (`Unexpected exn))
+    try Future.return (Ok (Unix.unlink path)) with
+      | Unix.Unix_error (err, _, _) as exn ->
+          let open Unix in
+          Future.return
+            (Error
+               ( match err with
+                 | ENOTDIR      -> `E_not_dir
+                 | EISDIR       -> `E_is_dir
+                 | ENAMETOOLONG -> `E_name_too_long
+                 | ENOENT       -> `E_no_entity
+                 | EACCES       -> `E_access
+                 | ELOOP        -> `E_loop
+                 | EPERM        -> `E_permission
+                 | EIO          -> `E_io
+                 | ENOSPC       -> `E_no_space
+                 | _            -> `Unexpected exn ))
+      | exn -> Future.return (Error (`Unexpected exn))
 
   let mkdir path perm =
     Thread.run (fun () ->
