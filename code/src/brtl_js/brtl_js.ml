@@ -108,27 +108,35 @@ module Router_output = struct
     let open Abb_fut_js.Infix_monad in
     Abb_fut_js.run
       ( state.State.consumed_path <- Brtl_js_rtng.Match.consumed_path mtch;
-        Brtl_js_rtng.Match.apply mtch state
-        >>= function
-        | `Render r                  -> (
-            res_set r;
-            match !with_cleanup with
-              | Some f ->
-                  with_cleanup := None;
-                  f state
-              | None   -> Abb_fut_js.return () )
-        | `With_cleanup (r, cleanup) -> (
-            res_set r;
-            match !with_cleanup with
-              | Some f ->
-                  with_cleanup := Some cleanup;
-                  f state
-              | None   ->
-                  with_cleanup := Some cleanup;
-                  Abb_fut_js.return () )
-        | `Navigate uri              ->
-            Router.navigate (State.router state) uri;
-            Abb_fut_js.return () )
+        Abb_fut_js.await_bind
+          (function
+            | `Det (`Render r)                  -> (
+                res_set r;
+                match !with_cleanup with
+                  | Some f ->
+                      with_cleanup := None;
+                      f state
+                  | None   -> Abb_fut_js.return () )
+            | `Det (`With_cleanup (r, cleanup)) -> (
+                res_set r;
+                match !with_cleanup with
+                  | Some f ->
+                      with_cleanup := Some cleanup;
+                      f state
+                  | None   ->
+                      with_cleanup := Some cleanup;
+                      Abb_fut_js.return () )
+            | `Det (`Navigate uri)              ->
+                Router.navigate (State.router state) uri;
+                Abb_fut_js.return ()
+            | `Aborted                          ->
+                res_set [];
+                Abb_fut_js.return ()
+            | `Exn exn                          ->
+                Firebug.console##log_2 (Js.string "Unhandled exn") exn;
+                res_set [];
+                Abb_fut_js.return ())
+          (Brtl_js_rtng.Match.apply mtch state) )
 
   let route_uri state routes with_cleanup prev_match res_set uri =
     let match_opt = match_uri routes uri in
