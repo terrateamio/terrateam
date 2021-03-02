@@ -21,3 +21,10 @@ val range :
   ?value:int ->
   unit ->
   int t * [> Html_types.input ] Brtl_js.Html.elt
+
+val select :
+  ?a:Html_types.select_attrib Brtl_js.Html.attrib list ->
+  ?value:string ->
+  options:(string * string) list ->
+  unit ->
+  string t * [> Html_types.select ] Brtl_js.Html.elt

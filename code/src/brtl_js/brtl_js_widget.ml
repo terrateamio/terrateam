@@ -72,3 +72,27 @@ let range ?(a = []) ?(value = 0) () =
     elem_set_value ?step v
   in
   ({ signal = elem_value; set = set_value }, elem)
+
+let select ?(a = []) ?(value = "") ~options () =
+  let (elem_value, elem_set_value) = Brtl_js.React.S.create value in
+  let onchange =
+    Brtl_js.handler_sync (fun event ->
+        Js.Opt.iter event##.target (fun target ->
+            Js.Opt.iter (Dom_html.CoerceTo.select target) (fun inp ->
+                elem_set_value (Js.to_string inp##.value))))
+  in
+  let elem =
+    Brtl_js.Html.select ~a:(Brtl_js.Html.a_onchange onchange :: a)
+    @@ CCList.map
+         (fun (value, label) ->
+           Brtl_js.Html.option
+             ~a:
+               [
+                 Brtl_js.Html.a_value value;
+                 Brtl_js.filter_attrib (Brtl_js.Html.a_selected ())
+                 @@ Brtl_js.React.S.map (( = ) value) elem_value;
+               ]
+             (Brtl_js.Html.txt label))
+         options
+  in
+  ({ signal = elem_value; set = elem_set_value }, elem)
