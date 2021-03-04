@@ -18,7 +18,13 @@ let input ?(a = []) ?(value = "") () =
                 elem_set_value (Js.to_string inp##.value))))
   in
   let elem =
-    Brtl_js.Html.input ~a:(Brtl_js.Html.a_value value :: Brtl_js.Html.a_onchange onchange :: a) ()
+    Brtl_js.Html.input
+      ~a:
+        ( Brtl_js.Html.a_value value
+        :: Brtl_js.Html.a_onchange onchange
+        :: Brtl_js.Html.a_oninput onchange
+        :: a )
+      ()
   in
   let set_value ?step s =
     let elem = Brtl_js.To_dom.of_input elem in
