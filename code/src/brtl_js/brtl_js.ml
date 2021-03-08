@@ -43,7 +43,7 @@ module State = struct
     router : Router.t;
     mutable consumed_path : string;
     (* TODO: Make consumed_path immutable *)
-    cleanup : (string, t -> unit Abb_fut_js.t) Hashtbl.t;
+    cleanup : (string, t -> unit Abb_js.Future.t) Hashtbl.t;
   }
 
   let rec iter_nodes t node =
@@ -55,7 +55,7 @@ module State = struct
                 | Some f ->
                     Hashtbl.remove t.cleanup id;
                     (* TODO: Should all these run in parallel? *)
-                    Abb_fut_js.run (f t)
+                    Abb_js.Future.run (f t)
                 | None   -> () )
           | None    -> () );
         for i = 0 to node##.childNodes##.length do
@@ -94,21 +94,21 @@ end
 module Handler = struct
   type ret =
     [ `Render       of Html_types.div_content_fun Html.elt list
-    | `With_cleanup of Html_types.div_content_fun Html.elt list * (State.t -> unit Abb_fut_js.t)
+    | `With_cleanup of Html_types.div_content_fun Html.elt list * (State.t -> unit Abb_js.Future.t)
     | `Navigate     of Uri.t
     ]
 
-  type t = State.t -> ret Abb_fut_js.t
+  type t = State.t -> ret Abb_js.Future.t
 end
 
 module Router_output = struct
   let match_uri routes uri = Brtl_js_rtng.first_match ~must_consume_path:false routes uri
 
   let apply_match mtch state with_cleanup res_set =
-    let open Abb_fut_js.Infix_monad in
-    Abb_fut_js.run
+    let open Abb_js.Future.Infix_monad in
+    Abb_js.Future.run
       ( state.State.consumed_path <- Brtl_js_rtng.Match.consumed_path mtch;
-        Abb_fut_js.await_bind
+        Abb_js.Future.await_bind
           (function
             | `Det (`Render r)                  -> (
                 res_set r;
@@ -116,7 +116,7 @@ module Router_output = struct
                   | Some f ->
                       with_cleanup := None;
                       f state
-                  | None   -> Abb_fut_js.return () )
+                  | None   -> Abb_js.Future.return () )
             | `Det (`With_cleanup (r, cleanup)) -> (
                 res_set r;
                 match !with_cleanup with
@@ -125,17 +125,17 @@ module Router_output = struct
                       f state
                   | None   ->
                       with_cleanup := Some cleanup;
-                      Abb_fut_js.return () )
+                      Abb_js.Future.return () )
             | `Det (`Navigate uri)              ->
                 Router.navigate (State.router state) uri;
-                Abb_fut_js.return ()
+                Abb_js.Future.return ()
             | `Aborted                          ->
                 res_set [];
-                Abb_fut_js.return ()
+                Abb_js.Future.return ()
             | `Exn exn                          ->
                 Firebug.console##log_2 (Js.string "Unhandled exn") exn;
                 res_set [];
-                Abb_fut_js.return ())
+                Abb_js.Future.return ())
           (Brtl_js_rtng.Match.apply mtch state) )
 
   let route_uri state routes with_cleanup prev_match res_set uri =
@@ -155,7 +155,7 @@ module Router_output = struct
             match !with_cleanup with
             | Some f ->
                 with_cleanup := None;
-                Abb_fut_js.run (f state)
+                Abb_js.Future.run (f state)
             | None   -> () )
 
   let create ?(a = []) state routes =
@@ -192,7 +192,7 @@ module Router_output = struct
       React.S.stop ~strong:true res;
       match !with_cleanup with
         | Some f -> f state
-        | None   -> Abb_fut_js.return ()
+        | None   -> Abb_js.Future.return ()
     in
     State.cleanup state id cleanup;
     Rhtml.div ~a:(Html.a_id id :: a) v
@@ -201,8 +201,8 @@ end
 let comp ?(a = []) state handler =
   let id = Uuidm.to_string (Uuidm.create `V4) in
   let (ret, handle) = Rlist.create [] in
-  Abb_fut_js.run
-    (let open Abb_fut_js.Infix_monad in
+  Abb_js.Future.run
+    (let open Abb_js.Future.Infix_monad in
     handler state
     >>| function
     | `Render r            -> Rlist.set handle r
@@ -214,13 +214,13 @@ let comp ?(a = []) state handler =
 
 let dom_html_handler ?(continue = false) f =
   let wrapper event =
-    Abb_fut_js.run (f event);
+    Abb_js.Future.run (f event);
     Js.bool continue
   in
   Dom_html.handler wrapper
 
 let handler ?(continue = false) f event =
-  Abb_fut_js.run (f event);
+  Abb_js.Future.run (f event);
   continue
 
 let handler_sync ?(continue = false) f event =

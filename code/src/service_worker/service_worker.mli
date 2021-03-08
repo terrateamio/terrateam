@@ -29,7 +29,7 @@ end
 module Response : sig
   type t
 
-  val blob : t -> Blob.t Abb_fut_js.t
+  val blob : t -> Blob.t Abb_js.Future.t
 
   val create : body:Blob.t -> headers:Headers.t -> status:int -> t
 
@@ -48,7 +48,7 @@ module Background_fetch_registration : sig
 
     val request : t -> Request.t
 
-    val response_ready : t -> Response.t Abb_fut_js.t
+    val response_ready : t -> Response.t Abb_js.Future.t
   end
 
   type t
@@ -67,13 +67,13 @@ module Background_fetch_registration : sig
 
   val records_available : t -> bool
 
-  val abort : t -> bool Abb_fut_js.t
+  val abort : t -> bool Abb_js.Future.t
 
-  val match_all : t -> Record.t list Abb_fut_js.t
+  val match_all : t -> Record.t list Abb_js.Future.t
 
-  val match_ : t -> Request.t -> Record.t option Abb_fut_js.t
+  val match_ : t -> Request.t -> Record.t option Abb_js.Future.t
 
-  val set_onprogress : t -> (unit -> unit Abb_fut_js.t) -> unit
+  val set_onprogress : t -> (unit -> unit Abb_js.Future.t) -> unit
 
   val rem_onprogress : t -> unit
 end
@@ -81,7 +81,7 @@ end
 module Background_fetch_event : sig
   type t
 
-  val wait_until : t -> unit Abb_fut_js.t -> unit
+  val wait_until : t -> unit Abb_js.Future.t -> unit
 
   val registration : t -> Background_fetch_registration.t
 
@@ -106,56 +106,56 @@ module Registration : sig
   val installing : t -> bool
 
   val background_fetch :
-    t -> string -> string list -> Options.t -> Background_fetch_registration.t Abb_fut_js.t
+    t -> string -> string list -> Options.t -> Background_fetch_registration.t Abb_js.Future.t
 
-  val background_fetch_ids : t -> string list Abb_fut_js.t
+  val background_fetch_ids : t -> string list Abb_js.Future.t
 
-  val background_fetch_get : t -> string -> Background_fetch_registration.t option Abb_fut_js.t
+  val background_fetch_get : t -> string -> Background_fetch_registration.t option Abb_js.Future.t
 end
 
 module Service_worker_container : sig
   type t
 
-  val register : t -> scope:string -> string -> Registration.t Abb_fut_js.t
+  val register : t -> scope:string -> string -> Registration.t Abb_js.Future.t
 
-  val ready : t -> Registration.t Abb_fut_js.t
+  val ready : t -> Registration.t Abb_js.Future.t
 end
 
 module Cache : sig
   type t
 
-  val add_all : t -> string list -> unit Abb_fut_js.t
+  val add_all : t -> string list -> unit Abb_js.Future.t
 
-  val put : t -> Request.t -> Response.t -> unit Abb_fut_js.t
+  val put : t -> Request.t -> Response.t -> unit Abb_js.Future.t
 
-  val delete : t -> string -> bool Abb_fut_js.t
+  val delete : t -> string -> bool Abb_js.Future.t
 end
 
 module Cache_storage : sig
   type t
 
-  val open_ : t -> string -> Cache.t Abb_fut_js.t
+  val open_ : t -> string -> Cache.t Abb_js.Future.t
 
-  val match_ : t -> Request.t -> Response.t Js_of_ocaml.Js.optdef Abb_fut_js.t
+  val match_ : t -> Request.t -> Response.t Js_of_ocaml.Js.optdef Abb_js.Future.t
 
-  val match_str : t -> string -> Response.t Js_of_ocaml.Js.optdef Abb_fut_js.t
+  val match_str : t -> string -> Response.t Js_of_ocaml.Js.optdef Abb_js.Future.t
 
-  val keys : t -> string list Abb_fut_js.t
+  val keys : t -> string list Abb_js.Future.t
 
-  val delete : t -> string -> unit Abb_fut_js.t
+  val delete : t -> string -> unit Abb_js.Future.t
 end
 
 module Global_scope : sig
   module Event : sig
     type t
 
-    val wait_until : t -> unit Abb_fut_js.t -> unit
+    val wait_until : t -> unit Abb_js.Future.t -> unit
   end
 
   module Install_event : sig
     type t
 
-    val wait_until : t -> unit Abb_fut_js.t -> unit
+    val wait_until : t -> unit Abb_js.Future.t -> unit
   end
 
   module Fetch_event : sig
@@ -163,13 +163,13 @@ module Global_scope : sig
 
     val request : t -> Request.t
 
-    val respond_with : t -> Response.t Abb_fut_js.t -> unit
+    val respond_with : t -> Response.t Abb_js.Future.t -> unit
   end
 
   module Clients : sig
     type t
 
-    val claim : t -> unit Abb_fut_js.t
+    val claim : t -> unit Abb_js.Future.t
   end
 
   type t
@@ -180,7 +180,7 @@ module Global_scope : sig
 
   val clients : Clients.t
 
-  val fetch : Request.t -> Response.t Abb_fut_js.t
+  val fetch : Request.t -> Response.t Abb_js.Future.t
 
   val skip_waiting : t -> unit
 

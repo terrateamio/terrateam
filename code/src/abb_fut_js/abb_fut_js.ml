@@ -37,13 +37,12 @@ let unsafe_to_promise : 'a t -> 'a promise Js_of_ocaml.Js.t =
     new%js promise_ctor
       (Js.wrap_callback (fun succ reject ->
            run
-             (let open Infix_monad in
-             await_map
-               (function
-                 | `Det r                 -> succ r
-                 | `Aborted               -> reject (Js.Unsafe.inject (Js.string "Aborted"))
-                 | `Exn (Js.Error err, _) -> reject (Js.Unsafe.inject err)
-                 | `Exn (exn, _)          -> reject (Js.Unsafe.inject exn))
-               t)))
+             (await_map
+                (function
+                  | `Det r                 -> succ r
+                  | `Aborted               -> reject (Js.Unsafe.inject (Js.string "Aborted"))
+                  | `Exn (Js.Error err, _) -> reject (Js.Unsafe.inject err)
+                  | `Exn (exn, _)          -> reject (Js.Unsafe.inject exn))
+                t)))
   in
   promise

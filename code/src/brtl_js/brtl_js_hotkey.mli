@@ -20,4 +20,4 @@ module Key_map : sig
   val get : Key_combo.t -> 'a t -> 'a option
 end
 
-val create : (Key_combo.t -> unit Abb_fut_js.t) -> unit
+val create : (Key_combo.t -> unit Abb_js.Future.t) -> unit

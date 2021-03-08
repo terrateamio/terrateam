@@ -26,11 +26,11 @@ end
 module Handler : sig
   type ret =
     [ `Render       of Html_types.div_content_fun Html.elt list
-    | `With_cleanup of Html_types.div_content_fun Html.elt list * (State.t -> unit Abb_fut_js.t)
+    | `With_cleanup of Html_types.div_content_fun Html.elt list * (State.t -> unit Abb_js.Future.t)
     | `Navigate     of Uri.t
     ]
 
-  type t = State.t -> ret Abb_fut_js.t
+  type t = State.t -> ret Abb_js.Future.t
 end
 
 module Router_output : sig
@@ -46,10 +46,10 @@ val comp :
 
 val dom_html_handler :
   ?continue:bool ->
-  ((#Dom_html.event Js.t as 'b) -> unit Abb_fut_js.t) ->
+  ((#Dom_html.event Js.t as 'b) -> unit Abb_js.Future.t) ->
   ('a, 'b) Dom_html.event_listener
 
-val handler : ?continue:bool -> ('a -> unit Abb_fut_js.t) -> 'a -> bool
+val handler : ?continue:bool -> ('a -> unit Abb_js.Future.t) -> 'a -> bool
 
 val handler_sync : ?continue:bool -> ('a -> unit) -> 'a -> bool
 
@@ -67,4 +67,4 @@ val remove_child : p:#Dom.node Js.t -> #Dom.node Js.t -> unit
 
 val filter_attrib : 'a Rhtml.attrib -> bool React.signal -> 'a Rhtml.attrib
 
-val main : string -> (State.t -> Dom_html.divElement Js.t -> unit Abb_fut_js.t) -> unit
+val main : string -> (State.t -> Dom_html.divElement Js.t -> unit Abb_js.Future.t) -> unit

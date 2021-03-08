@@ -76,7 +76,7 @@ let onkeyup f peak_keys current_keys (event : Dom_html.keyboardEvent Js.t) =
             let pk = !peak_keys in
             peak_keys := Key_combo.empty;
             current_keys := Key_combo.empty;
-            Abb_fut_js.run (f pk)
+            Abb_js.Future.run (f pk)
           );
           Js._true
       | _                   -> Js._true
