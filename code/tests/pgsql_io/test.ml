@@ -15,6 +15,26 @@ let test_to_query_with_ret =
       let s = Ts.to_query query in
       assert (s = "SELECT foo, bar FROM baz WHERE x = $1"))
 
-let test = Oth.parallel [ test_to_query; test_to_query_with_ret ]
+let test_query_concat_strings =
+  Oth.test ~desc:"Test query concat just strings" ~name:"/^^ strings" (fun _ ->
+      let module Ts = Pgsql_io.Typed_sql in
+      let q1 = Ts.(sql /^ "hello") in
+      let q2 = Ts.(sql /^ "world") in
+      let q3 = Ts.(q1 /^^ q2) in
+      let s = Ts.to_query q3 in
+      assert (s = "hello world"))
+
+let test_query_concat =
+  Oth.test ~desc:"Test query concat" ~name:"/^^" (fun _ ->
+      let module Ts = Pgsql_io.Typed_sql in
+      let q1 = Ts.(sql // Ret.text // Ret.integer /^ "hello" /% Var.integer) in
+      let q2 = Ts.(sql // Ret.boolean /^ "world" /% Var.text) in
+      let q3 = Ts.(q1 /^^ q2) in
+      let s = Ts.to_query q3 in
+      assert (s = "hello world"))
+
+let test =
+  Oth.parallel
+    [ test_to_query; test_to_query_with_ret; test_query_concat_strings; test_query_concat ]
 
 let () = Oth.run test

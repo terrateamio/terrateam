@@ -334,6 +334,17 @@ module Typed_sql = struct
 
   let ( // ) t r = Ret (t, r)
 
+  let rec concat :
+      type q qr p pr qr' pr'. (q, qr, p, pr) t -> (qr, qr', pr, pr') t -> (q, qr', p, pr') t =
+   fun t1 t2 ->
+    match t2 with
+      | Sql             -> t1
+      | Ret (t, r)      -> Ret (concat t1 t, r)
+      | Const (t, s)    -> Const (concat t1 t, s)
+      | Variable (t, v) -> Variable (concat t1 t, v)
+
+  let ( /^^ ) t1 t2 = concat t1 t2
+
   let rec kbind' : type q qr p pr. (string option list -> qr) -> (q, qr, p, pr) t -> q =
    fun k t ->
     match t with
@@ -470,8 +481,7 @@ module Cursor = struct
 
   and consume_fetch_frames conn row_func st = function
     | [] -> consume_fetch conn row_func st
-    | (Pgsql_codec.Frame.Backend.CommandComplete _ as frame) :: fs ->
-        consume_fetch_end conn row_func st fs
+    | Pgsql_codec.Frame.Backend.CommandComplete _ :: fs -> consume_fetch_end conn row_func st fs
     | Pgsql_codec.Frame.Backend.DataRow { data } :: fs ->
         consume_fetch_process_frame conn row_func st fs data
     | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->

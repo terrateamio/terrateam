@@ -134,6 +134,9 @@ module Typed_sql : sig
 
   val ( /^ ) : ('q, 'qr, 'p, 'pr) t -> string -> ('q, 'qr, 'p, 'pr) t
 
+  (** Concatenate the right query to the left. *)
+  val ( /^^ ) : ('q, 'qr, 'p, 'pr) t -> ('qr, 'qqr, 'pr, 'ppr) t -> ('q, 'qqr, 'p, 'ppr) t
+
   val ( /% ) : ('q, 'a -> 'qr, 'p, 'pr) t -> 'a Var.t -> ('q, 'qr, 'p, 'pr) t
 
   val ( // ) : ('q, 'qr, 'p, 'a -> 'pr) t -> 'a Ret.t -> ('q, 'qr, 'p, 'pr) t
