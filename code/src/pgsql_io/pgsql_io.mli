@@ -20,12 +20,21 @@ type integrity_err = {
 
 val show_integrity_err : integrity_err -> string
 
+type sql_parse_err =
+  [ `Empty_variable_name
+  | `Unclosed_quote      of string
+  | `Unknown_variable    of string
+  ]
+
+val show_sql_parse_err : sql_parse_err -> string
+
 type err =
   [ `Msgs of (char * string) list
   | frame_err
   | `Disconnected
   | `Bad_result of string option list
   | `Integrity_err of integrity_err
+  | sql_parse_err
   ]
 
 val show_err : err -> string
@@ -34,47 +43,50 @@ module Typed_sql : sig
   module Var : sig
     type 'a t
 
+    (** Little wrapper type to include the name *)
+    type 'a v = string -> 'a t
+
     (** Numeric types *)
-    val smallint : int t
+    val smallint : int v
 
-    val integer : int32 t
+    val integer : int32 v
 
-    val bigint : int64 t
+    val bigint : int64 v
 
-    val decimal : Z.t t
+    val decimal : Z.t v
 
-    val numeric : Z.t t
+    val numeric : Z.t v
 
-    val real : float t
+    val real : float v
 
-    val double : float t
+    val double : float v
 
-    val smallserial : int t
+    val smallserial : int v
 
-    val serial : int32 t
+    val serial : int32 v
 
-    val bigserial : int64 t
+    val bigserial : int64 v
 
     (** Monetary *)
-    val money : int64 t
+    val money : int64 v
 
     (** Text types *)
-    val text : string t
+    val text : string v
 
-    val varchar : string t
+    val varchar : string v
 
-    val char : string t
+    val char : string v
 
-    val tsquery : string t
+    val tsquery : string v
 
-    val uuid : Uuidm.t t
+    val uuid : Uuidm.t v
 
     (** Boolean types *)
-    val boolean : bool t
+    val boolean : bool v
 
-    val timestamp : string t
+    val timestamp : string v
 
-    val timestamptz : string t
+    val timestamptz : string v
 
     val ud : 'b t -> ('a -> 'b) -> 'a t
 
@@ -141,7 +153,7 @@ module Typed_sql : sig
 
   val ( // ) : ('q, 'qr, 'p, 'a -> 'pr) t -> 'a Ret.t -> ('q, 'qr, 'p, 'pr) t
 
-  val to_query : ('q, 'qr, 'p, 'pr) t -> string
+  val to_query : ('q, 'qr, 'p, 'pr) t -> (string, sql_parse_err) result
 end
 
 module Row_func : sig

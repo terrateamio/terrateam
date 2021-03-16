@@ -164,12 +164,20 @@ type frame_err =
   ]
 [@@deriving show]
 
+type sql_parse_err =
+  [ `Empty_variable_name
+  | `Unclosed_quote      of string
+  | `Unknown_variable    of string
+  ]
+[@@deriving show]
+
 type err =
   [ `Msgs of (char * string) list
   | frame_err
   | `Disconnected
   | `Bad_result of string option list
   | `Integrity_err of integrity_err
+  | sql_parse_err
   ]
 [@@deriving show]
 
@@ -178,14 +186,17 @@ module Typed_sql = struct
     module Oid = Pgsql_codec_type.Oid
 
     type 'a t = {
+      name : string;
       oid : Pgsql_codec_type.Oid.t;
       oid_num : int;
       f : 'a -> string option list -> string option list;
     }
 
-    let make oid f = { oid; f; oid_num = oid.Pgsql_codec_type.Oid.oid }
+    type 'a v = string -> 'a t
 
-    let make_array oid f = { oid; f; oid_num = oid.Pgsql_codec_type.Oid.array_oid }
+    let make oid f name = { name; oid; f; oid_num = oid.Pgsql_codec_type.Oid.oid }
+
+    let make_array oid f name = { name; oid; f; oid_num = oid.Pgsql_codec_type.Oid.array_oid }
 
     let smallint = make Oid.int2 (fun n vs -> Some (string_of_int n) :: vs)
 
@@ -231,16 +242,21 @@ module Typed_sql = struct
 
     let timestamptz = make Oid.timestamptz (fun s vs -> Some s :: vs)
 
-    let ud t f = make t.oid (fun v vs -> t.f (f v) vs)
+    let ud t f = make t.oid (fun v vs -> t.f (f v) vs) t.name
 
     let option t =
-      make t.oid (fun o vs ->
+      make
+        t.oid
+        (fun o vs ->
           match o with
             | None   -> None :: vs
             | Some v -> t.f v vs)
+        t.name
 
     let array t =
-      make_array t.oid (fun arr vs ->
+      make_array
+        t.oid
+        (fun arr vs ->
           arr
           |> CCListLabels.map ~f:(fun v ->
                  match t.f v [] with
@@ -249,9 +265,12 @@ module Typed_sql = struct
                    | _          -> assert false)
           |> CCString.concat ","
           |> fun s -> Some ("{" ^ s ^ "}") :: vs)
+        t.name
 
     let str_array t =
-      make_array t.oid (fun arr vs ->
+      make_array
+        t.oid
+        (fun arr vs ->
           arr
           |> CCListLabels.map ~f:(fun v ->
                  match t.f v [] with
@@ -265,6 +284,7 @@ module Typed_sql = struct
                    | _          -> assert false)
           |> CCString.concat ","
           |> fun s -> Some ("{" ^ s ^ "}") :: vs)
+        t.name
   end
 
   module Ret = struct
@@ -361,16 +381,88 @@ module Typed_sql = struct
   let kbind : type q qr p pr. (string option list -> qr) -> (q, qr, p, pr) t -> q =
    fun f t -> kbind' (fun vs -> f (List.rev vs)) t
 
-  let rec to_query : type q qr p pr. (q, qr, p, pr) t -> string = function
+  let rec extract_variables : type q qr p pr. (q, qr, p, pr) t -> string list = function
+    | Sql             -> []
+    | Ret (t, _)      -> extract_variables t
+    | Variable (t, v) -> v.Var.name :: extract_variables t
+    | Const (t, s)    -> extract_variables t
+
+  let rec to_query' : type q qr p pr. (q, qr, p, pr) t -> string = function
     | Sql             -> ""
-    | Ret (t, _)      -> to_query t
-    | Variable (t, _) -> to_query t
+    | Ret (t, _)      -> to_query' t
+    | Variable (t, _) -> to_query' t
     | Const (t, s)    ->
-        let str = to_query t in
+        let str = to_query' t in
         if str <> "" then
           str ^ " " ^ s
         else
           s
+
+  let read_variable_name str idx len =
+    let rec rvn' idx =
+      if idx < len then
+        match str.[idx] with
+          | ('_' | 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9') as ch -> ch :: rvn' (idx + 1)
+          | _ -> []
+      else
+        []
+    in
+    match rvn' idx with
+      | []   -> Error `Empty_variable_name
+      | name -> Ok (CCString.of_list name)
+
+  let rec replace_variables vars query buf idx len =
+    if idx < len then (
+      match query.[idx] with
+        | ('"' | '\'') as ch ->
+            Buffer.add_char buf ch;
+            consume_until ch vars query buf (idx + 1) len
+        | '\\'               ->
+            Buffer.add_char buf '\\';
+            Buffer.add_char buf query.[idx + 1];
+            replace_variables vars query buf (idx + 2) len
+        | '$'                -> replace_variable_name vars query buf (idx + 1) len
+        | ch                 ->
+            Buffer.add_char buf ch;
+            replace_variables vars query buf (idx + 1) len
+    ) else
+      Ok (Buffer.contents buf)
+
+  and consume_until chr vars query buf idx len =
+    if idx < len then (
+      match query.[idx] with
+        | '\\' ->
+            Buffer.add_char buf '\\';
+            Buffer.add_char buf query.[idx + 1];
+            consume_until chr vars query buf (idx + 2) len
+        | ch when ch = chr ->
+            Buffer.add_char buf ch;
+            replace_variables vars query buf (idx + 1) len
+        | ch ->
+            Buffer.add_char buf ch;
+            consume_until chr vars query buf (idx + 1) len
+    ) else
+      Error (`Unclosed_quote (Buffer.contents buf))
+
+  and replace_variable_name vars query buf idx len =
+    let open CCResult.Infix in
+    read_variable_name query idx len
+    >>= fun name ->
+    match CCArray.find_idx (CCString.equal name) vars with
+      | Some (var_idx, _) ->
+          Buffer.add_string buf ("$" ^ CCInt.to_string (var_idx + 1));
+          replace_variables vars query buf (idx + CCString.length name) len
+      | None              -> Error (`Unknown_variable name)
+
+  let to_query t =
+    let query = to_query' t in
+    let variables = CCArray.of_list (CCList.rev (extract_variables t)) in
+    replace_variables
+      variables
+      query
+      (Buffer.create (CCString.length query))
+      0
+      (CCString.length query)
 
   let rec to_data_type_list' : type q qr p pr. (q, qr, p, pr) t -> int32 list = function
     | Sql             -> []
@@ -557,7 +649,8 @@ module Prepared_stmt = struct
   let create conn sql =
     let open Abbs_future_combinators.Infix_result_monad in
     let stmt = gen_unique_id conn "s" in
-    let query = Typed_sql.to_query sql in
+    Abb.Future.return (Typed_sql.to_query sql)
+    >>= fun query ->
     let frame =
       Pgsql_codec.Frame.Frontend.(
         Parse { stmt; query; data_types = Typed_sql.to_data_type_list sql })

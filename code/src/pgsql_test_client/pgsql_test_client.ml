@@ -56,7 +56,8 @@ let test_insert_row =
           Pgsql_io.Typed_sql.(sql /^ "CREATE TABLE IF NOT EXISTS foo (name TEXT, age INTEGER)")
         in
         let insert_sql =
-          Pgsql_io.Typed_sql.(sql /^ "INSERT INTO foo VALUES($1, $2)" /% Var.text /% Var.integer)
+          Pgsql_io.Typed_sql.(
+            sql /^ "INSERT INTO foo VALUES($name, $age)" /% Var.text "name" /% Var.integer "age")
         in
         let create_rf = Pgsql_io.Row_func.ignore create_sql in
         let insert_rf = Pgsql_io.Row_func.ignore insert_sql in
@@ -90,7 +91,10 @@ let test_insert_row_null =
         in
         let insert_sql =
           Pgsql_io.Typed_sql.(
-            sql /^ "INSERT INTO foo_null VALUES($1, $2)" /% Var.text /% Var.option Var.integer)
+            sql
+            /^ "INSERT INTO foo_null VALUES($name, $age)"
+            /% Var.text "name"
+            /% Var.option (Var.integer "age"))
         in
         let create_rf = Pgsql_io.Row_func.ignore create_sql in
         let insert_rf = Pgsql_io.Row_func.ignore insert_sql in
@@ -123,15 +127,16 @@ let test_fetch_row =
           Pgsql_io.Typed_sql.(sql /^ "CREATE TABLE IF NOT EXISTS foo (name TEXT, age INTEGER)")
         in
         let insert_sql =
-          Pgsql_io.Typed_sql.(sql /^ "INSERT INTO foo VALUES($1, $2)" /% Var.text /% Var.integer)
+          Pgsql_io.Typed_sql.(
+            sql /^ "INSERT INTO foo VALUES($name, $age)" /% Var.text "name" /% Var.integer "age")
         in
         let fetch_sql =
           Pgsql_io.Typed_sql.(
             sql
             // Ret.text
-            /^ "SELECT DISTINCT name FROM foo WHERE name = $1 AND age = $2"
-            /% Var.text
-            /% Var.integer)
+            /^ "SELECT DISTINCT name FROM foo WHERE name = $name AND age = $age"
+            /% Var.text "name"
+            /% Var.integer "age")
         in
         let make_rf sql = Pgsql_io.Row_func.ignore sql in
         let create_rf = make_rf create_sql in
@@ -202,7 +207,8 @@ let test_tx_success =
           Pgsql_io.Typed_sql.(sql /^ "CREATE TABLE IF NOT EXISTS foo (name TEXT, age INTEGER)")
         in
         let insert_sql =
-          Pgsql_io.Typed_sql.(sql /^ "INSERT INTO foo VALUES($1, $2)" /% Var.text /% Var.integer)
+          Pgsql_io.Typed_sql.(
+            sql /^ "INSERT INTO foo VALUES($name, $age)" /% Var.text "name" /% Var.integer "age")
         in
         let create_rf = Pgsql_io.Row_func.ignore create_sql in
         let insert_rf = Pgsql_io.Row_func.ignore insert_sql in
@@ -233,7 +239,8 @@ let test_multiple_tx_success =
           Pgsql_io.Typed_sql.(sql /^ "CREATE TABLE IF NOT EXISTS foo (name TEXT, age INTEGER)")
         in
         let insert_sql =
-          Pgsql_io.Typed_sql.(sql /^ "INSERT INTO foo VALUES($1, $2)" /% Var.text /% Var.integer)
+          Pgsql_io.Typed_sql.(
+            sql /^ "INSERT INTO foo VALUES($name, $age)" /% Var.text "name" /% Var.integer "age")
         in
         let create_rf = Pgsql_io.Row_func.ignore create_sql in
         let insert_rf = Pgsql_io.Row_func.ignore insert_sql in
@@ -297,13 +304,14 @@ let test_with_cursor =
 
 let test_bad_bind_too_few_args =
   Oth_abb.test ~desc:"Bad Bind Too Few Arguments" ~name:"bad_bind_too_few" (fun () ->
-      let open Abb.Future.Infix_monad in
       let f conn =
         let open Abbs_future_combinators.Infix_result_monad in
         let create_sql =
           Pgsql_io.Typed_sql.(sql /^ "CREATE TABLE IF NOT EXISTS foo (name TEXT, age INTEGER)")
         in
-        let insert_sql = Pgsql_io.Typed_sql.(sql /^ "INSERT INTO foo VALUES($1, $2)" /% Var.text) in
+        let insert_sql =
+          Pgsql_io.Typed_sql.(sql /^ "INSERT INTO foo VALUES($name, $age)" /% Var.text "name")
+        in
         let create_rf = Pgsql_io.Row_func.ignore create_sql in
         let insert_rf = Pgsql_io.Row_func.ignore insert_sql in
         Pgsql_io.Prepared_stmt.create conn create_sql
@@ -321,13 +329,12 @@ let test_bad_bind_too_few_args =
         Pgsql_io.Prepared_stmt.destroy create_stmt
         >>= fun () -> Pgsql_io.Prepared_stmt.destroy insert_stmt
       in
+      let open Abb.Future.Infix_monad in
       with_conn f
       >>= function
       | Ok _ -> assert false
-      | Error (`Unmatching_frame [ Pgsql_codec.Frame.Backend.ErrorResponse { msgs } ]) ->
-          assert (CCList.Assoc.get_exn ~eq:Char.equal 'S' msgs = "ERROR");
-          assert (CCList.Assoc.get_exn ~eq:Char.equal 'V' msgs = "ERROR");
-          assert (CCList.Assoc.get_exn ~eq:Char.equal 'C' msgs = "08P01");
+      | Error (#Pgsql_io.sql_parse_err as err) ->
+          assert (err = `Unknown_variable "age");
           Abb.Future.return ()
       | Error #Pgsql_io.create_err -> assert false
       | Error #Pgsql_io.err -> assert false)
@@ -343,10 +350,10 @@ let test_array =
             // Ret.text
             // Ret.integer
             // Ret.option Ret.integer
-            /^ "select * from unnest ($1, $2, $3)"
-            /% Var.str_array Var.varchar
-            /% Var.array Var.integer
-            /% Var.array (Var.option Var.integer))
+            /^ "select * from unnest ($name, $age, $other)"
+            /% Var.str_array (Var.varchar "name")
+            /% Var.array (Var.integer "age")
+            /% Var.array (Var.option (Var.integer "other")))
         in
         let rf =
           Pgsql_io.Row_func.map sql ~f:(fun name age other ->
@@ -379,7 +386,8 @@ let test_insert_execute =
           Pgsql_io.Typed_sql.(sql /^ "CREATE TABLE IF NOT EXISTS foo (name TEXT, age INTEGER)")
         in
         let insert_sql =
-          Pgsql_io.Typed_sql.(sql /^ "INSERT INTO foo VALUES($1, $2)" /% Var.text /% Var.integer)
+          Pgsql_io.Typed_sql.(
+            sql /^ "INSERT INTO foo VALUES($name, $age)" /% Var.text "name" /% Var.integer "age")
         in
         Pgsql_io.Prepared_stmt.execute conn create_sql
         >>= fun () ->
@@ -417,7 +425,8 @@ let test_integrity_fail =
             sql /^ "CREATE TABLE IF NOT EXISTS foo1 (name TEXT PRIMARY KEY, age INTEGER)")
         in
         let insert_sql =
-          Pgsql_io.Typed_sql.(sql /^ "INSERT INTO foo1 VALUES($1, $2)" /% Var.text /% Var.integer)
+          Pgsql_io.Typed_sql.(
+            sql /^ "INSERT INTO foo1 VALUES($name, $age)" /% Var.text "name" /% Var.integer "age")
         in
         Pgsql_io.tx conn ~f:(fun () ->
             let open Abbs_future_combinators.Infix_result_monad in
