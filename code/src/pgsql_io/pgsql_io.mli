@@ -154,6 +154,8 @@ module Typed_sql : sig
   val ( // ) : ('q, 'qr, 'p, 'a -> 'pr) t -> 'a Ret.t -> ('q, 'qr, 'p, 'pr) t
 
   val to_query : ('q, 'qr, 'p, 'pr) t -> (string, sql_parse_err) result
+
+  val kbind : (string option list -> 'qr) -> ('q, 'qr, 'p, 'pr) t -> 'q
 end
 
 module Row_func : sig
@@ -214,6 +216,13 @@ module Prepared_stmt : sig
     conn -> ('q, ('r list, [> err ]) result Abb.Future.t, 'p, 'r) Typed_sql.t -> f:'p -> 'q
 
   val destroy : ('q, 'qr, 'p, 'pr) t -> (unit, [> err ]) result Abb.Future.t
+
+  val kbind :
+    conn ->
+    ('q, ('ret, ([> err ] as 'err)) result Abb.Future.t, 'p, 'pr) Typed_sql.t ->
+    ('p, 'pr, 'acc, 'r) Row_func.t ->
+    (('p, 'pr, 'acc, 'r) Cursor.t -> ('ret, 'err) result Abb.Future.t) ->
+    'q
 end
 
 type create_err =

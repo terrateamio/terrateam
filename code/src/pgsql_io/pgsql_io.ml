@@ -765,6 +765,40 @@ module Prepared_stmt = struct
             Cursor.fetch cursor)
           ~finally:(fun () -> Abbs_future_combinators.ignore (destroy stmt)))
       sql
+
+  let kbind :
+      conn ->
+      ('q, ('ret, [> err ]) result Abb.Future.t, 'p, 'pr) Typed_sql.t ->
+      ('p, 'pr, 'acc, 'r) Row_func.t ->
+      (('p, 'pr, 'acc, 'r) Cursor.t -> ('ret, [> err ]) result Abb.Future.t) ->
+      'q =
+   fun conn sql rf f ->
+    Typed_sql.kbind
+      (fun vs ->
+        let open Abbs_future_combinators.Infix_result_monad in
+        create conn sql
+        >>= fun stmt ->
+        Abbs_future_combinators.with_finally
+          (fun () ->
+            let portal = gen_unique_id conn "p" in
+            let bind_frame =
+              Pgsql_codec.Frame.Frontend.(
+                Bind
+                  {
+                    portal;
+                    stmt = stmt.id;
+                    format_codes = [];
+                    values = vs;
+                    result_format_codes = [];
+                  })
+            in
+            Io.send_frame conn bind_frame
+            >>= fun () ->
+            add_expected_frame conn Pgsql_codec.Frame.Backend.(equal BindComplete);
+            let cursor = Cursor.make conn rf portal in
+            f cursor)
+          ~finally:(fun () -> Abbs_future_combinators.ignore (destroy stmt)))
+      sql
 end
 
 type create_err =
