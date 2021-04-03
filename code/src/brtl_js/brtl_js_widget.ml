@@ -5,7 +5,30 @@ type 'a t = {
   set : ?step:Brtl_js.React.step -> 'a -> unit;
 }
 
+module Radio_gen = struct
+  type 'a t = {
+    name : string;
+    signal_ : 'a Brtl_js.React.signal;
+    set_ : ?step:Brtl_js.React.step -> 'a -> unit;
+    mutable buttons : ('a * Html_types.input Brtl_js.Html.elt) list;
+  }
+
+  let signal t = t.signal_
+
+  let set ?step t v =
+    CCList.iter
+      (fun (v', elem) ->
+        let elem = Brtl_js.To_dom.of_input elem in
+        elem##.checked := Js.bool (v = v'))
+      t.buttons;
+    t.set_ ?step v
+end
+
+let create signal set = { signal; set }
+
 let signal t = t.signal
+
+let get t = Brtl_js.React.S.value (signal t)
 
 let set ?step t v = t.set ?step v
 
@@ -33,6 +56,26 @@ let input ?(a = []) ?(value = "") () =
   in
   ({ signal = elem_value; set = set_value }, elem)
 
+let textarea ?(a = []) ?(value = "") () =
+  let (elem_value, elem_set_value) = Brtl_js.React.S.create value in
+  let onchange =
+    Brtl_js.handler_sync (fun event ->
+        Js.Opt.iter event##.target (fun target ->
+            Js.Opt.iter (Dom_html.CoerceTo.textarea target) (fun inp ->
+                elem_set_value (Js.to_string inp##.value))))
+  in
+  let elem =
+    Brtl_js.Html.textarea
+      ~a:(Brtl_js.Html.a_onchange onchange :: Brtl_js.Html.a_oninput onchange :: a)
+      (Brtl_js.Html.txt value)
+  in
+  let set_value ?step s =
+    let elem = Brtl_js.To_dom.of_textarea elem in
+    elem##.value := Js.string s;
+    elem_set_value ?step s
+  in
+  ({ signal = elem_value; set = set_value }, elem)
+
 let checkbox ?(a = []) ?(value = false) () =
   let (elem_value, elem_set_value) = Brtl_js.React.S.create value in
   let onchange =
@@ -54,6 +97,27 @@ let checkbox ?(a = []) ?(value = false) () =
     elem_set_value ?step b
   in
   ({ signal = elem_value; set = set_value }, elem)
+
+let radio ?(a = []) ~select_value radio_gen =
+  let onchange = Brtl_js.handler_sync (fun _ -> Radio_gen.set radio_gen select_value) in
+  let elem =
+    Brtl_js.Html.input
+      ~a:
+        ( Brtl_js.Html.a_input_type `Radio
+        :: Brtl_js.Html.a_name radio_gen.Radio_gen.name
+        :: Brtl_js.Html.a_onchange onchange
+        :: a )
+      ()
+  in
+  radio_gen.Radio_gen.buttons <- (select_value, elem) :: radio_gen.Radio_gen.buttons;
+  elem
+
+let radio_gen ?(a = []) ~value name =
+  let (signal_, set_) = Brtl_js.React.S.create value in
+  let gen = Radio_gen.{ name; buttons = []; signal_; set_ } in
+  let elem = radio ~a ~select_value:value gen in
+  (Brtl_js.To_dom.of_input elem)##.checked := Js._true;
+  (gen, elem)
 
 let range ?(a = []) ?(value = 0) () =
   let (elem_value, elem_set_value) = Brtl_js.React.S.create value in

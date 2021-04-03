@@ -1,6 +1,18 @@
+module Radio_gen : sig
+  type 'a t
+
+  val signal : 'a t -> 'a Brtl_js.React.signal
+
+  val set : ?step:Brtl_js.React.step -> 'a t -> 'a -> unit
+end
+
 type 'a t
 
+val create : 'a Brtl_js.React.signal -> (?step:Brtl_js.React.step -> 'a -> unit) -> 'a t
+
 val signal : 'a t -> 'a Brtl_js.React.signal
+
+val get : 'a t -> 'a
 
 val set : ?step:Brtl_js.React.step -> 'a t -> 'a -> unit
 
@@ -10,11 +22,32 @@ val input :
   unit ->
   string t * [> Html_types.input ] Brtl_js.Html.elt
 
+val textarea :
+  ?a:Html_types.textarea_attrib Brtl_js.Html.attrib list ->
+  ?value:string ->
+  unit ->
+  string t * [> Html_types.textarea ] Brtl_js.Html.elt
+
 val checkbox :
   ?a:Html_types.input_attrib Brtl_js.Html.attrib list ->
   ?value:bool ->
   unit ->
   bool t * [> Html_types.input ] Brtl_js.Html.elt
+
+(** Create a radio button from a radio generator.  *)
+val radio :
+  ?a:Html_types.input_attrib Brtl_js.Html.attrib list ->
+  select_value:'a ->
+  'a Radio_gen.t ->
+  [> Html_types.input ] Brtl_js.Html.elt
+
+(** Create radio button generator.  This ensures that when one button is chosen
+   all others are deselected.  Also returns a radio button that is selected. *)
+val radio_gen :
+  ?a:Html_types.input_attrib Brtl_js.Html.attrib list ->
+  value:'a ->
+  string ->
+  'a Radio_gen.t * [> Html_types.input ] Brtl_js.Html.elt
 
 val range :
   ?a:Html_types.input_attrib Brtl_js.Html.attrib list ->
@@ -22,6 +55,7 @@ val range :
   unit ->
   int t * [> Html_types.input ] Brtl_js.Html.elt
 
+(** Create a select.  Options are of the form (value * label) *)
 val select :
   ?a:Html_types.select_attrib Brtl_js.Html.attrib list ->
   ?value:string ->
