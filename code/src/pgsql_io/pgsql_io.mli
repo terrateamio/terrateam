@@ -84,6 +84,8 @@ module Typed_sql : sig
     (** Boolean types *)
     val boolean : bool v
 
+    val date : string v
+
     val timestamp : string v
 
     val timestamptz : string v

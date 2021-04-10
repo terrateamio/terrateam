@@ -238,6 +238,8 @@ module Typed_sql = struct
             Some "false" )
           :: vs)
 
+    let date = make Oid.date (fun s vs -> Some s :: vs)
+
     let timestamp = make Oid.timestamp (fun s vs -> Some s :: vs)
 
     let timestamptz = make Oid.timestamptz (fun s vs -> Some s :: vs)
