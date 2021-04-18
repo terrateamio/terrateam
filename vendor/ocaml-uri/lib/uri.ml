@@ -164,7 +164,7 @@ module Generic : Scheme = struct
     | `Fragment -> safe_chars_for_fragment
     | `Scheme -> safe_chars_for_scheme
     | `Custom ((component : component), safe, unsafe) ->
-       let safe_chars = safe_chars_for_component component in
+       let safe_chars = Array.copy (safe_chars_for_component component) in
        for i = 0 to String.length safe - 1 do
          let c = Char.code safe.[i] in
          safe_chars.(c) <- true
