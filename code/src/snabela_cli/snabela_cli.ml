@@ -26,7 +26,7 @@ let result_of_toml_result = function
 
 let rec kv_of_toml_table_exn tbl =
   let module Kv = Snabela.Kv in
-  let open TomlTypes in
+  let open Toml.Types in
   Table.fold
     (fun k v acc ->
       let k = Table.Key.to_string k in
@@ -41,7 +41,7 @@ let rec kv_of_toml_table_exn tbl =
     Kv.Map.empty
 
 and kv_of_toml_array_exn arr =
-  let open TomlTypes in
+  let open Toml.Types in
   match arr with
     | NodeEmpty -> []
     | NodeTable tbls -> ListLabels.map ~f:kv_of_toml_table_exn tbls

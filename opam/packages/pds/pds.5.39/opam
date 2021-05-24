@@ -1,0 +1,44 @@
+opam-version: "2.0"
+maintainer: "orbitz@gmail.com"
+build: [
+	[make "-j%{jobs}%"]
+	[make "-j%{jobs}%" "test"] {with-test}
+]
+
+install: [
+	[make "PREFIX=%{prefix}%" "install"]
+]
+
+remove: [
+	[make "PREFIX=%{prefix}%" "remove"]
+]
+
+depends: [
+	"cmdliner"
+	"containers"
+	"crunch"
+	"ocaml" { > "4.02" }
+	"ocamlfind"
+	"ppx_deriving"
+	"process"
+	"sedlex"
+	"toml"
+]
+
+authors: [
+	"orbitz@gmail.com"
+]
+
+description: """
+A tool to build Makefiles for Ocaml projects.
+"""
+
+homepage: "https://hg.sr.ht/~mmatalka/pds"
+
+url {
+	src: "http://acsl-pkgs.s3.amazonaws.com/pds-5.39.tar.gz"
+	checksum: "dcee1a0c9c452fa9daabf5dd8f251d71"
+}
+bug-reports: "https://todo.sr.ht/~mmatalka/pds"
+dev-repo: "hg+ssh://hg@hg.sr.ht/~mmatalka/pds"
+
