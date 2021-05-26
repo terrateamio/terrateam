@@ -37,7 +37,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
     let stderr_r = Abb.File.of_native stderr_r in
     match Abb.Process.spawn process [ stdin_dup; stdout_dup; stderr_dup ] with
       | Ok process     -> (
-          ( match input with
+          (match input with
             | Some input ->
                 Abb.File.write
                   stdin_w
@@ -46,7 +46,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
                 >>= fun n ->
                 assert (n = String.length input);
                 Abb.Future.return (Ok ())
-            | None       -> Abb.Future.return (Ok ()) )
+            | None       -> Abb.Future.return (Ok ()))
           >>= fun () ->
           Abb.File.close stdin_w
           >>= fun () ->
@@ -58,6 +58,6 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             <*> Abb.Process.wait process)
           >>| function
           | (Ok stdout, Ok stderr, exit_code) -> Ok (stdout, stderr, exit_code)
-          | ((Error _ as err), _, _) | (_, (Error _ as err), _) -> err )
+          | ((Error _ as err), _, _) | (_, (Error _ as err), _) -> err)
       | Error _ as err -> Abb.Future.return err
 end

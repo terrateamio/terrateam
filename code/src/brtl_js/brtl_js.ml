@@ -48,7 +48,7 @@ module State = struct
 
   let rec iter_nodes t node =
     Js.Opt.iter (Dom_html.CoerceTo.element node) (fun node ->
-        ( match Js.Opt.to_option (node##getAttribute (Js.string "id")) with
+        (match Js.Opt.to_option (node##getAttribute (Js.string "id")) with
           | Some id -> (
               let id = Js.to_string id in
               match Hashtbl.find_opt t.cleanup id with
@@ -56,8 +56,8 @@ module State = struct
                     Hashtbl.remove t.cleanup id;
                     (* TODO: Should all these run in parallel? *)
                     Abb_js.Future.run (f t)
-                | None   -> () )
-          | None    -> () );
+                | None   -> ())
+          | None    -> ());
         for i = 0 to node##.childNodes##.length do
           Js.Opt.iter (node##.childNodes##item i) (iter_nodes t)
         done)
@@ -107,36 +107,36 @@ module Router_output = struct
   let apply_match mtch state with_cleanup res_set =
     let open Abb_js.Future.Infix_monad in
     Abb_js.Future.run
-      ( state.State.consumed_path <- Brtl_js_rtng.Match.consumed_path mtch;
-        Abb_js.Future.await_bind
-          (function
-            | `Det (`Render r)                  -> (
-                res_set r;
-                match !with_cleanup with
-                  | Some f ->
-                      with_cleanup := None;
-                      f state
-                  | None   -> Abb_js.Future.return () )
-            | `Det (`With_cleanup (r, cleanup)) -> (
-                res_set r;
-                match !with_cleanup with
-                  | Some f ->
-                      with_cleanup := Some cleanup;
-                      f state
-                  | None   ->
-                      with_cleanup := Some cleanup;
-                      Abb_js.Future.return () )
-            | `Det (`Navigate uri)              ->
-                Router.navigate (State.router state) uri;
-                Abb_js.Future.return ()
-            | `Aborted                          ->
-                res_set [];
-                Abb_js.Future.return ()
-            | `Exn exn                          ->
-                Firebug.console##log_2 (Js.string "Unhandled exn") exn;
-                res_set [];
-                Abb_js.Future.return ())
-          (Brtl_js_rtng.Match.apply mtch state) )
+      (state.State.consumed_path <- Brtl_js_rtng.Match.consumed_path mtch;
+       Abb_js.Future.await_bind
+         (function
+           | `Det (`Render r)                  -> (
+               res_set r;
+               match !with_cleanup with
+                 | Some f ->
+                     with_cleanup := None;
+                     f state
+                 | None   -> Abb_js.Future.return ())
+           | `Det (`With_cleanup (r, cleanup)) -> (
+               res_set r;
+               match !with_cleanup with
+                 | Some f ->
+                     with_cleanup := Some cleanup;
+                     f state
+                 | None   ->
+                     with_cleanup := Some cleanup;
+                     Abb_js.Future.return ())
+           | `Det (`Navigate uri)              ->
+               Router.navigate (State.router state) uri;
+               Abb_js.Future.return ()
+           | `Aborted                          ->
+               res_set [];
+               Abb_js.Future.return ()
+           | `Exn exn                          ->
+               Firebug.console##log_2 (Js.string "Unhandled exn") exn;
+               res_set [];
+               Abb_js.Future.return ())
+         (Brtl_js_rtng.Match.apply mtch state))
 
   let route_uri state routes with_cleanup prev_match res_set uri =
     let match_opt = match_uri routes uri in
@@ -152,11 +152,11 @@ module Router_output = struct
           state.State.consumed_path <- Brtl_js_rtng.Match.consumed_path mtch
       | None -> (
           (* This router doesn't match, so cleanup *)
-            match !with_cleanup with
+          match !with_cleanup with
             | Some f ->
                 with_cleanup := None;
                 Abb_js.Future.run (f state)
-            | None   -> () )
+            | None   -> ())
 
   let create ?(a = []) state routes =
     (* TODO: Consumed path immutable *)

@@ -65,18 +65,18 @@ module Server = struct
                   Abb.Future.Promise.set p (Ok conn)
                   >>= fun () -> loop { t with num_conns = t.num_conns + 1 } w r
               | Ok (Error _) | Error `Cancelled ->
-                  Abb.Future.Promise.set p (Error ()) >>= fun () -> loop t w r ) )
+                  Abb.Future.Promise.set p (Error ()) >>= fun () -> loop t w r))
     | `Ok (Msg.Return conn) when Pgsql_io.connected conn -> (
         match take_until_undet t.waiting with
           | Some p -> Abb.Future.Promise.set p (Ok conn) >>= fun () -> loop t w r
-          | None   -> loop { t with conns = conn :: t.conns } w r )
+          | None   -> loop { t with conns = conn :: t.conns } w r)
     | `Ok (Msg.Return conn) -> (
         Pgsql_io.destroy conn
         >>= fun () ->
         let t = { t with num_conns = t.num_conns - 1 } in
         match take_until_undet t.waiting with
           | Some p -> handle_msg t w r (`Ok (Msg.Get p))
-          | None   -> loop t w r )
+          | None   -> loop t w r)
     | `Closed ->
         Abbs_future_combinators.List.iter
           ~f:(fun conn -> Abbs_future_combinators.ignore (Pgsql_io.destroy conn))
@@ -124,5 +124,5 @@ let with_conn t ~f =
               >>= function
               | `Ok ()  -> Abb.Future.return ()
               | `Closed -> Abbs_future_combinators.ignore (Pgsql_io.destroy conn))
-      | Error () -> Abb.Future.return (Error `Pgsql_pool_error) )
+      | Error () -> Abb.Future.return (Error `Pgsql_pool_error))
   | `Closed -> raise Pgsql_pool_closed

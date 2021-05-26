@@ -68,7 +68,7 @@ module Outputter = struct
       | []        -> ()
       | tr :: trs ->
           assert (n <= end_test);
-          ( match tr.Test_result.res with
+          (match tr.Test_result.res with
             | `Ok                ->
                 Printf.fprintf
                   oc
@@ -110,8 +110,7 @@ module Outputter = struct
                      ~which:`All
                      ~sub:"\n"
                      ~by:"\n# "
-                     (CCOpt.get_or ~default:"" (CCOpt.map Printexc.raw_backtrace_to_string bt_opt)))
-            );
+                     (CCOpt.get_or ~default:"" (CCOpt.map Printexc.raw_backtrace_to_string bt_opt))));
           output_test (n + 1) trs
     in
     output_test start_test rr;

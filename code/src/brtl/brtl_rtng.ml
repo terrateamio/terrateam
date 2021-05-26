@@ -54,7 +54,7 @@ module Route = struct
         | Some _ as v -> (
             match f v with
               | None -> None
-              | r    -> Some r )
+              | r    -> Some r)
         | None        -> Some None )
 
     let option_default def (n, f) =
@@ -78,7 +78,7 @@ module Route = struct
       | v :: vs -> (
           match f (Some [ v ]) with
             | Some r -> apply_arr' (r :: acc) f vs
-            | None   -> None )
+            | None   -> None)
 
     let array (n, f) =
       ( n,
@@ -189,7 +189,7 @@ module Route = struct
             | Some (idx, wit) when String.length (Uri.path uri) = idx ->
                 (* Ensure the whole URI path has been consumed *)
                 apply_ctx wit f
-            | Some _ | None -> match_ctx' ~default rs ctx body )
+            | Some _ | None -> match_ctx' ~default rs ctx body)
 
   let match_ctx ~default rs ctx =
     let body = Uri.of_string ("?" ^ Brtl_ctx.body ctx) in

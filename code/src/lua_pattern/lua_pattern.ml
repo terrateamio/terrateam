@@ -380,7 +380,7 @@ let rec mtch ?(start = 0) str t =
     | s -> (
         match do_mtch src_p pat_p s with
           | Some m -> Some m
-          | None   -> mtch ~start:(start + 1) str t )
+          | None   -> mtch ~start:(start + 1) str t)
 
 let find ?(start = 0) str t =
   match mtch ~start str t with

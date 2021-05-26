@@ -29,10 +29,10 @@ let run ~eq ~nav_class ~selected ~unselected ~choices routes state =
                          [
                            a_class
                              [
-                               ( if compare choice.Choice.value then
+                               (if compare choice.Choice.value then
                                  selected
                                else
-                                 unselected );
+                                 unselected);
                              ];
                            a_onclick
                            @@ Brtl_js.handler_sync (fun _ ->

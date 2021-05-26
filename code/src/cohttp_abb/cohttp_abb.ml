@@ -271,8 +271,8 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
                   >>= fun () ->
                   Fut_comb.ignore (Channel.send wc ret) >>= fun () -> run_handler config conn r w wc
               | `Aborted -> Fut_comb.ignore (Channel.send wc `Stop)
-              | `Exn (exn, _) -> Fut_comb.ignore (Channel.send wc (`Exn exn)) )
-          | `Aborted -> Fut_comb.ignore (Abb.Socket.close conn) )
+              | `Exn (exn, _) -> Fut_comb.ignore (Channel.send wc (`Exn exn)))
+          | `Aborted -> Fut_comb.ignore (Abb.Socket.close conn))
       | `Req `Eof           ->
           Fut_comb.ignore (Abb.Socket.close conn)
           >>= fun () -> Fut_comb.ignore (Abb.Future.fork (Channel.send wc `Ok))
@@ -282,14 +282,14 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
           Config.on_protocol_err config (`Error str)
           >>= function
           | `Ok   -> Fut_comb.ignore (Channel.send wc `Ok)
-          | `Stop -> Fut_comb.ignore (Channel.send wc `Stop) )
+          | `Stop -> Fut_comb.ignore (Channel.send wc `Stop))
       | `Timeout            -> (
           Fut_comb.ignore (Abb.Socket.close conn)
           >>= fun () ->
           Config.on_protocol_err config `Timeout
           >>= function
           | `Ok   -> Fut_comb.ignore (Channel.send wc `Ok)
-          | `Stop -> Fut_comb.ignore (Channel.send wc `Stop) )
+          | `Stop -> Fut_comb.ignore (Channel.send wc `Stop))
 
     let rec tcp_accept_loop sock config bf wc =
       let open Abb.Future.Infix_monad in
@@ -358,7 +358,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
               ignore (Otls.configure server tls_config);
               match Abb_tls.server_tcp server conn with
                 | Ok rw        -> Abb.Future.return rw
-                | Error `Error -> assert false )
+                | Error `Error -> assert false)
         (* | Ok rw -> Abb.Future.return rw *)
         (* | Error `E_bad_file *)
         (* | Error `E_invalid *)

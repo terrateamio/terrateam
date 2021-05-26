@@ -174,7 +174,7 @@ let rec eval_template buf t kv template section =
           | Snabela_lexer.Token.Transformer name -> (
               match TMap.get name t.transformers with
                 | Some f -> f
-                | None   -> raise (Apply_error (`Missing_transformer (name, ln))) )
+                | None   -> raise (Apply_error (`Missing_transformer (name, ln))))
           | _ -> assert false
         in
         let trans = CCList.take_while t_test ts in
@@ -183,7 +183,7 @@ let rec eval_template buf t kv template section =
           match Kv.Map.get k kv with
             | Some (Kv.V v) -> (
                 match v with
-                  | (Kv.I _ | Kv.F _ | Kv.S _ | Kv.B _) as scalar -> scalar )
+                  | (Kv.I _ | Kv.F _ | Kv.S _ | Kv.B _) as scalar -> scalar)
             | Some (Kv.L _) -> raise (Apply_error (`Non_scalar_key (k, ln)))
             | None          -> raise (Apply_error (`Missing_key (k, ln)))
         in

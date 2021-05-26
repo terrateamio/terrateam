@@ -39,8 +39,8 @@ module Make (Abb : Abb_intf.S) = struct
                 Abb.Socket.close tcp
             | Error _ ->
                 Printf.printf "Failed to send\n%!";
-                Abb.Socket.close tcp )
-        | Error _ -> failwith "connect error" )
+                Abb.Socket.close tcp)
+        | Error _ -> failwith "connect error")
     | Error _ -> failwith "getaddrinfo error"
 
   let start_server cb =

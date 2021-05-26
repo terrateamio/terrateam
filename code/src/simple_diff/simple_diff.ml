@@ -66,7 +66,7 @@ module Make (Item : Comparable) = struct
           let trace = Array.copy v :: trace in
           match inner (-d) with
             | `Cont   -> outer trace (d + 1)
-            | `Stop _ -> trace )
+            | `Stop _ -> trace)
     in
     outer [] 0
 

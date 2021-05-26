@@ -97,7 +97,7 @@ module Make (Fut : Abb_intf.Future.S) = struct
                        | `Exn exn -> Fut.Promise.set_exn p exn
                        | `Aborted -> Fut.abort (Fut.Promise.future p))
                      (finally ())
-                 with exn -> Fut.Promise.set_exn p (exn, Some (Printexc.get_raw_backtrace ())) )
+                 with exn -> Fut.Promise.set_exn p (exn, Some (Printexc.get_raw_backtrace ())))
              | `Exn exn -> Fut.Promise.set_exn p exn
              | `Aborted -> Fut.abort (Fut.Promise.future p))
            fut)
@@ -113,7 +113,7 @@ module Make (Fut : Abb_intf.Future.S) = struct
         (* Calling the finally function failed *)
         let p = Fut.Promise.create () in
         Fut.Promise.set_exn p (exn, Some (Printexc.get_raw_backtrace ()))
-        >>= fun () -> Fut.Promise.future p )
+        >>= fun () -> Fut.Promise.future p)
 
   let on_failure f ~failure =
     let succeeded = ref false in

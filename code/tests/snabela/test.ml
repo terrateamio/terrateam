@@ -135,7 +135,7 @@ let test_tokenizer8 =
               Key "parties";
               Right_trim;
               At 12;
-            ]) ))
+            ])))
 
 let test_tokenizer9 =
   Oth.test ~name:"Tokenizer: Key test" (fun _ ->
@@ -160,7 +160,7 @@ let test_tokenizer9 =
               End_section;
               Key "name";
               At 1;
-            ]) ))
+            ])))
 
 let test_apply1 =
   Oth.test ~name:"Apply: Simple" (fun _ ->

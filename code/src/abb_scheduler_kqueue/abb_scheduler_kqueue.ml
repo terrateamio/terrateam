@@ -401,7 +401,7 @@ module File = struct
           let open Unix in
           Future.return
             (Error
-               ( match err with
+               (match err with
                  | ENOTDIR         -> `E_not_dir
                  | ENAMETOOLONG    -> `E_name_too_long
                  | ENOENT          -> `E_no_entity
@@ -413,7 +413,7 @@ module File = struct
                  | EIO             -> `E_io
                  | EEXIST          -> `E_exists
                  | EINVAL          -> `E_invalid
-                 | _               -> `Unexpected exn ))
+                 | _               -> `Unexpected exn))
       | exn -> Future.return (Error (`Unexpected exn))
 
   let read t ~buf ~pos ~len =
@@ -435,17 +435,17 @@ module File = struct
                 Future.run_with_state
                   (Future.Promise.set
                      p
-                     ( try Ok (Unix.read t ~buf ~pos ~len) with
+                     (try Ok (Unix.read t ~buf ~pos ~len) with
                        | Unix.Unix_error (err, _, _) as exn ->
                            let open Unix in
                            Error
-                             ( match err with
+                             (match err with
                                | EBADF  -> `E_bad_file
                                | EIO    -> `E_io
                                | EINVAL -> `E_invalid
                                | EISDIR -> `E_is_dir
-                               | _      -> `Unexpected exn )
-                       | exn -> Error (`Unexpected exn) ))
+                               | _      -> `Unexpected exn)
+                       | exn -> Error (`Unexpected exn)))
                   s
               in
               let el = El.add_read t handler el in
@@ -455,12 +455,12 @@ module File = struct
           let open Unix in
           Future.return
             (Error
-               ( match err with
+               (match err with
                  | EBADF  -> `E_bad_file
                  | EIO    -> `E_io
                  | EINVAL -> `E_invalid
                  | EISDIR -> `E_is_dir
-                 | _      -> `Unexpected exn ))
+                 | _      -> `Unexpected exn))
       | exn -> Future.return (Error (`Unexpected exn))
 
   let pread t ~offset ~buf ~pos ~len =
@@ -491,19 +491,19 @@ module File = struct
                 Future.run_with_state
                   (Future.Promise.set
                      p
-                     ( try Ok (Unix.write t ~buf ~pos ~len) with
+                     (try Ok (Unix.write t ~buf ~pos ~len) with
                        | Unix.Unix_error (err, _, _) as exn ->
                            let open Unix in
                            Error
-                             ( match err with
+                             (match err with
                                | EBADF  -> `E_bad_file
                                | EPIPE  -> `E_pipe
                                | EINVAL -> `E_invalid
                                | ENOSPC -> `E_no_space
                                | EIO    -> `E_io
                                | EROFS  -> `E_permission
-                               | _      -> `Unexpected exn )
-                       | exn -> Error (`Unexpected exn) ))
+                               | _      -> `Unexpected exn)
+                       | exn -> Error (`Unexpected exn)))
                   s
               in
               let el = El.add_write t handler el in
@@ -513,14 +513,14 @@ module File = struct
           let open Unix in
           Future.return
             (Error
-               ( match err with
+               (match err with
                  | EBADF  -> `E_bad_file
                  | EPIPE  -> `E_pipe
                  | EINVAL -> `E_invalid
                  | ENOSPC -> `E_no_space
                  | EIO    -> `E_io
                  | EROFS  -> `E_permission
-                 | _      -> `Unexpected exn ))
+                 | _      -> `Unexpected exn))
       | exn -> Future.return (Error (`Unexpected exn))
 
   let rec write_buf t buf =
@@ -536,7 +536,7 @@ module File = struct
         write_buf t buf
         >>= function
         | Ok n'          -> Future.return (Ok (n + n'))
-        | Error _ as err -> Future.return err )
+        | Error _ as err -> Future.return err)
     | Ok n -> Future.return (Ok n)
     | Error _ as err -> Future.return err
 
@@ -551,8 +551,8 @@ module File = struct
               write_bufs' t bs
               >>= function
               | Ok n'          -> Future.return (Ok (n + n'))
-              | Error _ as err -> Future.return err )
-          | Error _ as err -> Future.return err )
+              | Error _ as err -> Future.return err)
+          | Error _ as err -> Future.return err)
     in
     write_bufs' t bufs
 
@@ -583,11 +583,11 @@ module File = struct
       | Unix.Unix_error (err, _, _) as exn ->
           let open Unix in
           Error
-            ( match err with
+            (match err with
               | EBADF  -> `E_bad_file
               | ENXIO  -> `E_nxio
               | EINVAL -> `E_invalid
-              | _      -> `Unexpected exn )
+              | _      -> `Unexpected exn)
       | exn -> Error (`Unexpected exn)
 
   let close t =
@@ -596,10 +596,10 @@ module File = struct
           let open Unix in
           Future.return
             (Error
-               ( match err with
+               (match err with
                  | EBADF  -> `E_bad_file
                  | ENOSPC -> `E_no_space
-                 | _      -> `Unexpected exn ))
+                 | _      -> `Unexpected exn))
       | exn -> Future.return (Error (`Unexpected exn))
 
   let unlink path =
@@ -608,7 +608,7 @@ module File = struct
           let open Unix in
           Future.return
             (Error
-               ( match err with
+               (match err with
                  | ENOTDIR      -> `E_not_dir
                  | EISDIR       -> `E_is_dir
                  | ENAMETOOLONG -> `E_name_too_long
@@ -618,7 +618,7 @@ module File = struct
                  | EPERM        -> `E_permission
                  | EIO          -> `E_io
                  | ENOSPC       -> `E_no_space
-                 | _            -> `Unexpected exn ))
+                 | _            -> `Unexpected exn))
       | exn -> Future.return (Error (`Unexpected exn))
 
   let mkdir path perm =
@@ -627,7 +627,7 @@ module File = struct
           | Unix.Unix_error (err, _, _) as exn ->
               let open Unix in
               Error
-                ( match err with
+                (match err with
                   | ENOTDIR      -> `E_not_dir
                   | EISDIR       -> `E_is_dir
                   | ENAMETOOLONG -> `E_name_too_long
@@ -638,7 +638,7 @@ module File = struct
                   | EIO          -> `E_io
                   | ENOSPC       -> `E_no_space
                   | EEXIST       -> `E_exists
-                  | _            -> `Unexpected exn )
+                  | _            -> `Unexpected exn)
           | exn -> Error (`Unexpected exn))
 
   let rmdir path =
@@ -647,7 +647,7 @@ module File = struct
           | Unix.Unix_error (err, _, _) as exn ->
               let open Unix in
               Error
-                ( match err with
+                (match err with
                   | ENOTDIR      -> `E_not_dir
                   | ENAMETOOLONG -> `E_name_too_long
                   | ENOENT       -> `E_no_entity
@@ -659,7 +659,7 @@ module File = struct
                   | EBUSY        -> `E_busy
                   | EIO          -> `E_io
                   | EEXIST       -> `E_exists
-                  | _            -> `Unexpected exn )
+                  | _            -> `Unexpected exn)
           | exn -> Error (`Unexpected exn))
 
   let readdir path =
@@ -697,14 +697,14 @@ module File = struct
           | Unix.Unix_error (err, _, _) as exn ->
               let open Unix in
               Error
-                ( match err with
+                (match err with
                   | EACCES       -> `E_access
                   | EIO          -> `E_io
                   | ELOOP        -> `E_loop
                   | ENAMETOOLONG -> `E_name_too_long
                   | ENOENT       -> `E_no_entity
                   | ENOTDIR      -> `E_not_dir
-                  | _            -> `Unexpected exn )
+                  | _            -> `Unexpected exn)
           | exn -> Error (`Unexpected exn))
 
   let fstat t =
@@ -713,7 +713,7 @@ module File = struct
           | Unix.Unix_error (err, _, _) as exn ->
               let open Unix in
               Error
-                ( match err with
+                (match err with
                   | EBADF        -> `E_bad_file
                   | EINVAL       -> `E_invalid
                   | EACCES       -> `E_access
@@ -722,7 +722,7 @@ module File = struct
                   | ENAMETOOLONG -> `E_name_too_long
                   | ENOENT       -> `E_no_entity
                   | ENOTDIR      -> `E_not_dir
-                  | _            -> `Unexpected exn )
+                  | _            -> `Unexpected exn)
           | exn -> Error (`Unexpected exn))
 
   let lstat path =
@@ -731,14 +731,14 @@ module File = struct
           | Unix.Unix_error (err, _, _) as exn ->
               let open Unix in
               Error
-                ( match err with
+                (match err with
                   | EACCES       -> `E_access
                   | EIO          -> `E_io
                   | ELOOP        -> `E_loop
                   | ENAMETOOLONG -> `E_name_too_long
                   | ENOENT       -> `E_no_entity
                   | ENOTDIR      -> `E_not_dir
-                  | _            -> `Unexpected exn )
+                  | _            -> `Unexpected exn)
           | exn -> Error (`Unexpected exn))
 
   let rename ~src ~dst =
@@ -747,7 +747,7 @@ module File = struct
           | Unix.Unix_error (err, _, _) as exn ->
               let open Unix in
               Error
-                ( match err with
+                (match err with
                   | ENAMETOOLONG  -> `E_name_too_long
                   | ENOENT        -> `E_no_entity
                   | EACCES        -> `E_access
@@ -759,7 +759,7 @@ module File = struct
                   | EIO           -> `E_io
                   | EINVAL        -> `E_invalid
                   | ENOTEMPTY     -> `E_not_empty
-                  | _             -> `Unexpected exn )
+                  | _             -> `Unexpected exn)
           | exn -> Error (`Unexpected exn))
 
   let truncate path len =
@@ -768,7 +768,7 @@ module File = struct
           | Unix.Unix_error (err, _, _) as exn ->
               let open Unix in
               Error
-                ( match err with
+                (match err with
                   | ENOTDIR       -> `E_not_dir
                   | ENAMETOOLONG  -> `E_name_too_long
                   | ENOENT        -> `E_no_entity
@@ -778,7 +778,7 @@ module File = struct
                   | EISDIR        -> `E_is_dir
                   | EINVAL        -> `E_invalid
                   | EIO           -> `E_io
-                  | _             -> `Unexpected exn )
+                  | _             -> `Unexpected exn)
           | exn -> Error (`Unexpected exn))
 
   let ftruncate t len =
@@ -787,7 +787,7 @@ module File = struct
           | Unix.Unix_error (err, _, _) as exn ->
               let open Unix in
               Error
-                ( match err with
+                (match err with
                   | EBADF         -> `E_bad_file
                   | ENOTDIR       -> `E_not_dir
                   | ENAMETOOLONG  -> `E_name_too_long
@@ -798,7 +798,7 @@ module File = struct
                   | EISDIR        -> `E_is_dir
                   | EINVAL        -> `E_invalid
                   | EIO           -> `E_io
-                  | _             -> `Unexpected exn )
+                  | _             -> `Unexpected exn)
           | exn -> Error (`Unexpected exn))
 
   let chmod path mode =
@@ -807,7 +807,7 @@ module File = struct
           | Unix.Unix_error (err, _, _) as exn ->
               let open Unix in
               Error
-                ( match err with
+                (match err with
                   | ENOTDIR       -> `E_not_dir
                   | ENAMETOOLONG  -> `E_name_too_long
                   | ENOENT        -> `E_no_entity
@@ -815,7 +815,7 @@ module File = struct
                   | ELOOP         -> `E_loop
                   | EROFS | EPERM -> `E_permission
                   | EIO           -> `E_io
-                  | _             -> `Unexpected exn )
+                  | _             -> `Unexpected exn)
           | exn -> Error (`Unexpected exn))
 
   let fchmod t mode =
@@ -824,7 +824,7 @@ module File = struct
           | Unix.Unix_error (err, _, _) as exn ->
               let open Unix in
               Error
-                ( match err with
+                (match err with
                   | EBADF         -> `E_bad_file
                   | EINVAL        -> `E_invalid
                   | ENOTDIR       -> `E_not_dir
@@ -834,7 +834,7 @@ module File = struct
                   | ELOOP         -> `E_loop
                   | EROFS | EPERM -> `E_permission
                   | EIO           -> `E_io
-                  | _             -> `Unexpected exn )
+                  | _             -> `Unexpected exn)
           | exn -> Error (`Unexpected exn))
 
   let symlink ~src ~dst =
@@ -843,7 +843,7 @@ module File = struct
           | Unix.Unix_error (err, _, _) as exn ->
               let open Unix in
               Error
-                ( match err with
+                (match err with
                   | ENOTDIR       -> `E_not_dir
                   | ENAMETOOLONG  -> `E_name_too_long
                   | ENOENT        -> `E_no_entity
@@ -853,7 +853,7 @@ module File = struct
                   | EROFS | EPERM -> `E_permission
                   | EIO           -> `E_io
                   | ENOSPC        -> `E_no_space
-                  | _             -> `Unexpected exn )
+                  | _             -> `Unexpected exn)
           | exn -> Error (`Unexpected exn))
 
   let link ~src ~dst =
@@ -862,7 +862,7 @@ module File = struct
           | Unix.Unix_error (err, _, _) as exn ->
               let open Unix in
               Error
-                ( match err with
+                (match err with
                   | ENOTDIR       -> `E_not_dir
                   | ENAMETOOLONG  -> `E_name_too_long
                   | ENOENT        -> `E_no_entity
@@ -873,7 +873,7 @@ module File = struct
                   | EROFS | EPERM -> `E_permission
                   | EIO           -> `E_io
                   | ENOSPC        -> `E_no_space
-                  | _             -> `Unexpected exn )
+                  | _             -> `Unexpected exn)
           | exn -> Error (`Unexpected exn))
 
   let chown path ~uid ~gid =
@@ -882,7 +882,7 @@ module File = struct
           | Unix.Unix_error (err, _, _) as exn ->
               let open Unix in
               Error
-                ( match err with
+                (match err with
                   | ENOTDIR       -> `E_not_dir
                   | ENAMETOOLONG  -> `E_name_too_long
                   | ENOENT        -> `E_no_entity
@@ -890,7 +890,7 @@ module File = struct
                   | ELOOP         -> `E_loop
                   | EROFS | EPERM -> `E_permission
                   | EIO           -> `E_io
-                  | _             -> `Unexpected exn )
+                  | _             -> `Unexpected exn)
           | exn -> Error (`Unexpected exn))
 
   let fchown t ~uid ~gid =
@@ -899,7 +899,7 @@ module File = struct
           | Unix.Unix_error (err, _, _) as exn ->
               let open Unix in
               Error
-                ( match err with
+                (match err with
                   | EBADF         -> `E_bad_file
                   | ENOTDIR       -> `E_not_dir
                   | ENAMETOOLONG  -> `E_name_too_long
@@ -908,7 +908,7 @@ module File = struct
                   | ELOOP         -> `E_loop
                   | EROFS | EPERM -> `E_permission
                   | EIO           -> `E_io
-                  | _             -> `Unexpected exn )
+                  | _             -> `Unexpected exn)
           | exn -> Error (`Unexpected exn))
 end
 
@@ -1024,18 +1024,18 @@ module Socket = struct
                 Future.run_with_state
                   (Future.Promise.set
                      p
-                     ( try
-                         let (n, addr) = Unix.recvfrom t ~buf ~pos ~len ~mode:[] in
-                         Ok (n, sockaddr_of_unix_sockaddr addr)
-                       with
+                     (try
+                        let (n, addr) = Unix.recvfrom t ~buf ~pos ~len ~mode:[] in
+                        Ok (n, sockaddr_of_unix_sockaddr addr)
+                      with
                        | Unix.Unix_error (err, _, _) as exn ->
                            let open Unix in
                            Error
-                             ( match err with
+                             (match err with
                                | EBADF      -> `E_bad_file
                                | ECONNRESET -> `E_connection_reset
-                               | _          -> `Unexpected exn )
-                       | exn -> Error (`Unexpected exn) ))
+                               | _          -> `Unexpected exn)
+                       | exn -> Error (`Unexpected exn)))
                   s
               in
               let el = El.add_read t handler el in
@@ -1045,10 +1045,10 @@ module Socket = struct
           let open Unix in
           Future.return
             (Error
-               ( match err with
+               (match err with
                  | EBADF      -> `E_bad_file
                  | ECONNRESET -> `E_connection_reset
-                 | _          -> `Unexpected exn ))
+                 | _          -> `Unexpected exn))
       | exn -> Future.return (Error (`Unexpected exn))
 
   let sendto t ~bufs sockaddr =
@@ -1092,15 +1092,15 @@ module Socket = struct
                 Future.Promise.set
                   p
                   (Error
-                     ( match err with
+                     (match err with
                        | EBADF        -> `E_bad_file
                        | EACCES       -> `E_access
                        | ENOBUFS      -> `E_no_buffers
                        | EHOSTUNREACH -> `E_host_unreachable
                        | EHOSTDOWN    -> `E_host_down
                        | ECONNREFUSED -> `E_connection_refused
-                       | _            -> `Unexpected exn ))
-            | exn -> Future.Promise.set p (Error (`Unexpected exn)) )
+                       | _            -> `Unexpected exn))
+            | exn -> Future.Promise.set p (Error (`Unexpected exn)))
     in
     let open Future.Infix_monad in
     send' 0 bufs >>= fun () -> Future.Promise.future p
@@ -1129,10 +1129,10 @@ module Socket = struct
               ( s,
                 Future.return
                   (Error
-                     ( match err with
+                     (match err with
                        | EBADF      -> `E_bad_file
                        | ECONNRESET -> `E_connection_reset
-                       | _          -> `Unexpected exn )) )
+                       | _          -> `Unexpected exn)) )
           | exn -> (s, Future.return (Error (`Unexpected exn))))
 
   let listen t ~backlog =
@@ -1143,12 +1143,12 @@ module Socket = struct
       | Unix.Unix_error (err, _, _) as exn ->
           let open Unix in
           Error
-            ( match err with
+            (match err with
               | EBADF        -> `E_bad_file
               | EDESTADDRREQ -> `E_dest_address_required
               | EINVAL       -> `E_invalid
               | EOPNOTSUPP   -> `E_op_not_supported
-              | _            -> `Unexpected exn )
+              | _            -> `Unexpected exn)
       | exn -> Error (`Unexpected exn)
 
   let accept t =
@@ -1168,21 +1168,21 @@ module Socket = struct
           Future.run_with_state
             (Future.Promise.set
                p
-               ( try
-                   let (fd, _) = Unix.accept ~cloexec:true t in
-                   Unix.set_nonblock fd;
-                   Ok fd
-                 with
+               (try
+                  let (fd, _) = Unix.accept ~cloexec:true t in
+                  Unix.set_nonblock fd;
+                  Ok fd
+                with
                  | Unix.Unix_error (err, _, _) as exn ->
                      let open Unix in
                      Error
-                       ( match err with
+                       (match err with
                          | EBADF           -> `E_bad_file
                          | EMFILE | ENFILE -> `E_file_table_full
                          | EINVAL          -> `E_invalid
                          | ECONNABORTED    -> `E_connection_aborted
-                         | _               -> `Unexpected exn )
-                 | exn -> Error (`Unexpected exn) ))
+                         | _               -> `Unexpected exn)
+                 | exn -> Error (`Unexpected exn)))
             s
         in
         let el = El.add_read t handler el in
@@ -1199,7 +1199,7 @@ module Socket = struct
       | Unix.Unix_error (err, _, _) as exn ->
           let open Unix in
           Error
-            ( match err with
+            (match err with
               | EACCES          -> `E_access
               | EAFNOSUPPORT    -> `E_address_family_not_supported
               | EMFILE | ENFILE -> `E_file_table_full
@@ -1207,7 +1207,7 @@ module Socket = struct
               | EPERM           -> `E_permission
               | EPROTONOSUPPORT -> `E_protocol_not_supported
               | EPROTOTYPE      -> `E_protocol_type
-              | _               -> `Unexpected exn )
+              | _               -> `Unexpected exn)
       | exn -> Error (`Unexpected exn)
 
   let readable t =
@@ -1263,7 +1263,7 @@ module Socket = struct
         | Unix.Unix_error (err, _, _) as exn ->
             let open Unix in
             Error
-              ( match err with
+              (match err with
                 | ENOTSOCK | EBADF -> `E_bad_file
                 | EAGAIN           -> `E_again
                 | EINVAL           -> `E_invalid
@@ -1278,7 +1278,7 @@ module Socket = struct
                 | ELOOP            -> `E_loop
                 | EIO              -> `E_io
                 | EISDIR           -> `E_is_dir
-                | _                -> `Unexpected exn )
+                | _                -> `Unexpected exn)
         | exn -> Error (`Unexpected exn)
 
     let connect t addr =
@@ -1308,7 +1308,7 @@ module Socket = struct
             let open Unix in
             Future.return
               (Error
-                 ( match err with
+                 (match err with
                    | EBADF         -> `E_bad_file
                    | EINVAL        -> `E_invalid
                    | EADDRNOTAVAIL -> `E_address_not_available
@@ -1320,7 +1320,7 @@ module Socket = struct
                    | EHOSTUNREACH  -> `E_host_unreachable
                    | EADDRINUSE    -> `E_address_in_use
                    | EACCES        -> `E_access
-                   | _             -> `Unexpected exn ))
+                   | _             -> `Unexpected exn))
         | exn -> Future.return (Error (`Unexpected exn))
 
     let recv t ~buf ~pos ~len =
@@ -1342,16 +1342,16 @@ module Socket = struct
                   Future.run_with_state
                     (Future.Promise.set
                        p
-                       ( try Ok (Unix.recv t ~buf ~pos ~len ~mode:[]) with
+                       (try Ok (Unix.recv t ~buf ~pos ~len ~mode:[]) with
                          | Unix.Unix_error (err, _, _) as exn ->
                              let open Unix in
                              Error
-                               ( match err with
+                               (match err with
                                  | ENOTSOCK | EBADF -> `E_bad_file
                                  | ECONNRESET       -> `E_connection_reset
                                  | ENOTCONN         -> `E_not_connected
-                                 | _                -> `Unexpected exn )
-                         | exn -> Error (`Unexpected exn) ))
+                                 | _                -> `Unexpected exn)
+                         | exn -> Error (`Unexpected exn)))
                     s
                 in
                 let el = El.add_read t handler el in
@@ -1361,11 +1361,11 @@ module Socket = struct
             let open Unix in
             Future.return
               (Error
-                 ( match err with
+                 (match err with
                    | ENOTSOCK | EBADF -> `E_bad_file
                    | ECONNRESET       -> `E_connection_reset
                    | ENOTCONN         -> `E_not_connected
-                   | _                -> `Unexpected exn ))
+                   | _                -> `Unexpected exn))
         | exn -> Future.return (Error (`Unexpected exn))
 
     let send t ~bufs =
@@ -1405,15 +1405,15 @@ module Socket = struct
                   Future.Promise.set
                     p
                     (Error
-                       ( match err with
+                       (match err with
                          | ENOTSOCK | EBADF -> `E_bad_file
                          | EACCES           -> `E_access
                          | ENOBUFS          -> `E_no_buffers
                          | EHOSTUNREACH     -> `E_host_unreachable
                          | EHOSTDOWN        -> `E_host_down
                          | EPIPE            -> `E_pipe
-                         | _                -> `Unexpected exn ))
-              | exn -> Future.Promise.set p (Error (`Unexpected exn)) )
+                         | _                -> `Unexpected exn))
+              | exn -> Future.Promise.set p (Error (`Unexpected exn)))
       in
       let open Future.Infix_monad in
       send' 0 bufs >>= fun () -> Future.Promise.future p
@@ -1426,9 +1426,9 @@ module Socket = struct
         | Unix.Unix_error (err, _, _) as exn ->
             let open Unix in
             Error
-              ( match err with
+              (match err with
                 | ENOTSOCK | EBADF -> `E_bad_file
-                | _                -> `Unexpected exn )
+                | _                -> `Unexpected exn)
         | exn -> Error (`Unexpected exn)
   end
 
@@ -1530,10 +1530,10 @@ module Process = struct
       | Unix.Unix_error (err, _, _) as exn ->
           let open Unix in
           Error
-            ( match err with
+            (match err with
               | EAGAIN -> `E_again
               | ENOMEM -> `E_no_memory
-              | _      -> `Unexpected exn )
+              | _      -> `Unexpected exn)
       | exn -> Error (`Unexpected exn)
 
   let pid t = t.pid

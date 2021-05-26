@@ -43,10 +43,8 @@ let input ?(a = []) ?(value = "") () =
   let elem =
     Brtl_js.Html.input
       ~a:
-        ( Brtl_js.Html.a_value value
-        :: Brtl_js.Html.a_onchange onchange
-        :: Brtl_js.Html.a_oninput onchange
-        :: a )
+        (Brtl_js.Html.a_value value
+         :: Brtl_js.Html.a_onchange onchange :: Brtl_js.Html.a_oninput onchange :: a)
       ()
   in
   let set_value ?step s =
@@ -103,10 +101,8 @@ let radio ?(a = []) ~select_value radio_gen =
   let elem =
     Brtl_js.Html.input
       ~a:
-        ( Brtl_js.Html.a_input_type `Radio
-        :: Brtl_js.Html.a_name radio_gen.Radio_gen.name
-        :: Brtl_js.Html.a_onchange onchange
-        :: a )
+        (Brtl_js.Html.a_input_type `Radio
+         :: Brtl_js.Html.a_name radio_gen.Radio_gen.name :: Brtl_js.Html.a_onchange onchange :: a)
       ()
   in
   radio_gen.Radio_gen.buttons <- (select_value, elem) :: radio_gen.Radio_gen.buttons;
@@ -130,10 +126,8 @@ let range ?(a = []) ?(value = 0) () =
   let elem =
     Brtl_js.Html.input
       ~a:
-        ( Brtl_js.Html.a_input_type `Range
-        :: Brtl_js.Html.a_value (CCInt.to_string value)
-        :: Brtl_js.Html.a_onchange onchange
-        :: a )
+        (Brtl_js.Html.a_input_type `Range
+         :: Brtl_js.Html.a_value (CCInt.to_string value) :: Brtl_js.Html.a_onchange onchange :: a)
       ()
   in
   let set_value ?step v =

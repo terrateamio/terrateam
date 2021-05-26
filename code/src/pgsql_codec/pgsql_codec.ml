@@ -95,7 +95,7 @@ end = struct
         | (Ok v, st)             -> (
             match repeat (n - 1) t st with
               | (Ok vs, st)            -> (Ok (v :: vs), st)
-              | ((Error _ as err), st) -> (err, st) )
+              | ((Error _ as err), st) -> (err, st))
         | ((Error _ as err), st) -> (err, st)
     else
       (Ok [], st)
@@ -109,7 +109,7 @@ end = struct
             let len = len - consumed in
             match consume len t st with
               | (Ok vs, st)            -> (Ok (v :: vs), st)
-              | ((Error _ as err), st) -> (err, st) )
+              | ((Error _ as err), st) -> (err, st))
         | ((Error _ as err), st) -> (err, st)
     else
       (Ok [], st)
@@ -317,7 +317,7 @@ module Decode = struct
           | 10 -> string >>= fun auth_mechanism -> return (AuthenticationSASL { auth_mechanism })
           | 11 -> bytes (len - 4) >>= fun data -> return (AuthenticationSASLContinue { data })
           | 12 -> bytes (len - 4) >>= fun data -> return (AuthenticationSASLFinal { data })
-          | _  -> fail `Invalid_frame )
+          | _  -> fail `Invalid_frame)
     | 'K' ->
         int32 >>= fun pid -> int32 >>= fun secret_key -> return (BackendKeyData { pid; secret_key })
     | '2' -> return BindComplete
@@ -332,11 +332,11 @@ module Decode = struct
         assert (columns > 0);
         repeat
           columns
-          ( int32
+          (int32
           >>= fun n ->
           match Int32.to_int n with
             | -1 -> return None
-            | n  -> bytes n >>= fun s -> return (Some s) )
+            | n  -> bytes n >>= fun s -> return (Some s))
         >>= fun data -> return (DataRow { data })
     | 'I' -> return EmptyQueryResponse
     | 'E' ->
@@ -382,7 +382,7 @@ module Decode = struct
         >>= fun num_fields ->
         repeat
           num_fields
-          ( string
+          (string
           >>= fun name ->
           int32
           >>= fun table_id ->
@@ -405,7 +405,7 @@ module Decode = struct
               data_type_size;
               data_type_mod;
               format_code;
-            } )
+            })
         >>= fun rows -> return (RowDescription { rows })
     | t   -> fail (`Unknown_type t)
 
@@ -428,7 +428,7 @@ module Decode = struct
           match backend_msg' pos' buf (len - (pos' - pos)) with
             | Ok (frames, pos)           -> Ok (frame :: frames, pos)
             | Error (frames, `Length, _) -> Ok (frame :: frames, pos')
-            | Error (frames, err, pos)   -> Error (frame :: frames, err, pos) )
+            | Error (frames, err, pos)   -> Error (frame :: frames, err, pos))
       | Error (err, _)   -> Error ([], err, pos)
 
   let backend_msg t ~pos ~len buf =
@@ -471,10 +471,10 @@ module Encode = struct
         iter
           (fun b ->
             int16
-              ( if b then
+              (if b then
                 1
               else
-                0 ))
+                0))
           format_codes
         >>= fun () ->
         int16 (List.length values)
@@ -490,10 +490,10 @@ module Encode = struct
         iter
           (fun b ->
             int16
-              ( if b then
+              (if b then
                 1
               else
-                0 ))
+                0))
           result_format_codes
     | CancelRequest { pid; secret_key } ->
         int32 (Int32.of_string "80877102") >>= fun () -> int32 pid >>= fun () -> int32 secret_key

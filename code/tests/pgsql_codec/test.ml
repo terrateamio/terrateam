@@ -22,8 +22,7 @@ let test_partial_msg_decode =
       let res = Pgsql_codec.Decode.backend_msg decoder msg2 ~pos:0 ~len:(Bytes.length msg2) in
       assert (
         res
-        = Ok Pgsql_codec.Frame.Backend.[ DataRow { data = [ Some "Testy McTestface"; Some "36" ] } ]
-      ))
+        = Ok Pgsql_codec.Frame.Backend.[ DataRow { data = [ Some "Testy McTestface"; Some "36" ] } ]))
 
 let test_msg_decode =
   Oth.test ~desc:"MSG" ~name:"MSG" (fun _ ->

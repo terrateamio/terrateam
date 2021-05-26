@@ -111,8 +111,8 @@ let expand_value spec v value =
           | ({ kv = true; encode; lead_char; _ }, { name; _ }) -> (
               match lead_char with
                 | Some ';' when s = "" -> name
-                | _ -> Printf.sprintf "%s=%s" name (encode s) )
-          | ({ kv = false; encode; _ }, _) -> encode s )
+                | _ -> Printf.sprintf "%s=%s" name (encode s))
+          | ({ kv = false; encode; _ }, _) -> encode s)
     | Var.A l -> (
         match (spec, v) with
           | ({ kv = true; encode; _ }, { name; explode = false; _ }) ->
@@ -122,7 +122,7 @@ let expand_value spec v value =
           | ({ kv = false; encode; _ }, { name; explode = false; _ }) ->
               String.concat "," (List.map encode l)
           | ({ kv = false; encode; sep; _ }, { name; explode = true; _ }) ->
-              String.concat sep (List.map encode l) )
+              String.concat sep (List.map encode l))
     | Var.M m -> (
         match (spec, v) with
           | ({ kv = true; encode; _ }, { name; explode = false; _ }) ->
@@ -135,7 +135,7 @@ let expand_value spec v value =
           | ({ kv = false; encode; _ }, { name; explode = false; _ }) ->
               String.concat "," (List.map (fun (k, v) -> encode k ^ "," ^ encode v) m)
           | ({ kv = false; encode; sep; _ }, { name; explode = true; _ }) ->
-              String.concat sep (List.map (fun (k, v) -> encode k ^ "=" ^ encode v) m) )
+              String.concat sep (List.map (fun (k, v) -> encode k ^ "=" ^ encode v) m))
 
 let expand_var spec vars v =
   match List.assoc_opt v.name vars with
@@ -237,6 +237,6 @@ let expand t vars =
                     ~default:""
                 in
                 Buffer.add_string buf lead;
-                Buffer.add_string buf s ))
+                Buffer.add_string buf s))
     t;
   Buffer.contents buf

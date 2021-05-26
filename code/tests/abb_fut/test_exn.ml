@@ -47,9 +47,9 @@ let test2 =
       assert !raising;
       assert (not !executed_anyways);
       assert (Fut.state fut1 = `Det ());
-      ( match Fut.state fut2 with
+      (match Fut.state fut2 with
         | `Exn (Foo, Some _) -> ()
-        | _                  -> assert false );
+        | _                  -> assert false);
       match Fut.state fut3 with
         | `Exn (Foo, Some _) -> ()
         | _                  -> assert false)
@@ -75,12 +75,12 @@ let test3 =
       assert !raising;
       assert (not !executed_anyways);
       assert (Fut.state fut1 = `Det ());
-      ( match Fut.state fut2 with
+      (match Fut.state fut2 with
         | `Exn (Foo, Some _) -> ()
-        | _                  -> assert false );
-      ( match Fut.state fut3 with
+        | _                  -> assert false);
+      (match Fut.state fut3 with
         | `Exn (Foo, Some _) -> ()
-        | _                  -> assert false );
+        | _                  -> assert false);
       match Fut.state fut4 with
         | `Det (`Exn (Foo, Some _)) -> ()
         | _                         -> assert false)
@@ -108,15 +108,15 @@ let test4 =
       ignore (Fut.run_with_state (Fut.Promise.set_exn p1 (Foo, None)) state);
       assert (not !raising);
       assert (not !executed_anyways);
-      ( match Fut.state fut1 with
+      (match Fut.state fut1 with
         | `Exn (Foo, None) -> ()
-        | _                -> assert false );
-      ( match Fut.state fut2 with
+        | _                -> assert false);
+      (match Fut.state fut2 with
         | `Exn (Foo, None) -> ()
-        | _                -> assert false );
-      ( match Fut.state fut3 with
+        | _                -> assert false);
+      (match Fut.state fut3 with
         | `Exn (Foo, None) -> ()
-        | _                -> assert false );
+        | _                -> assert false);
       match Fut.state fut4 with
         | `Det (`Exn (Foo, None)) -> ()
         | _                       -> assert false)
@@ -143,13 +143,13 @@ let test5 =
       ignore (Fut.run_with_state (Fut.Promise.set p2 ()) state);
       assert !raising;
       assert (not !executed_anyways);
-      ( match Fut.state fut1 with
+      (match Fut.state fut1 with
         | `Exn (Foo, Some _) -> ()
-        | _                  -> assert false );
+        | _                  -> assert false);
       assert (Fut.state fut2 = `Det ());
-      ( match Fut.state fut3 with
+      (match Fut.state fut3 with
         | `Exn (Foo, Some _) -> ()
-        | _                  -> assert false );
+        | _                  -> assert false);
       match Fut.state fut4 with
         | `Det (`Exn (Foo, Some _)) -> ()
         | _                         -> assert false)

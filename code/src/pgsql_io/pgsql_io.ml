@@ -80,7 +80,7 @@ module Io = struct
               (* Printf.printf "Rx = %S\n%!" (Bytes.to_string (Bytes.sub conn.buf 0 n)); *)
               wait_for_frames'
                 conn
-                (Pgsql_codec.Decode.backend_msg conn.decoder ~pos:0 ~len:n conn.buf) )
+                (Pgsql_codec.Decode.backend_msg conn.decoder ~pos:0 ~len:n conn.buf))
       | r     -> wait_for_frames' conn r
 
   and wait_for_frames' conn = function
@@ -136,8 +136,7 @@ module Io = struct
       (* exclusion_violation *)
       | "40002"
       (* transaction_integrity_constraint_violation *)
-      | "40001"
-      (* serialization_failure *) -> `Integrity_err { message = m; detail = d }
+      | "40001" (* serialization_failure *) -> `Integrity_err { message = m; detail = d }
       | _ -> `Unmatching_frame fs
 
   let rec consume_matching conn fs =
@@ -232,10 +231,10 @@ module Typed_sql = struct
 
     let boolean =
       make Oid.bool (fun b vs ->
-          ( if b then
+          (if b then
             Some "true"
           else
-            Some "false" )
+            Some "false")
           :: vs)
 
     let date = make Oid.date (fun s vs -> Some s :: vs)
@@ -278,9 +277,9 @@ module Typed_sql = struct
                  match t.f v [] with
                    | [ Some v ] ->
                        "\""
-                       ^ ( v
+                       ^ (v
                          |> CCString.replace ~which:`All ~sub:"\\" ~by:"\\\\"
-                         |> CCString.replace ~which:`All ~sub:"\"" ~by:"\\\"" )
+                         |> CCString.replace ~which:`All ~sub:"\"" ~by:"\\\"")
                        ^ "\""
                    | [ None ]   -> "null"
                    | _          -> assert false)
@@ -339,7 +338,7 @@ module Typed_sql = struct
       | xs         -> (
           match t xs with
             | Some (v, xs) -> Some (Some v, xs)
-            | None         -> None )
+            | None         -> None)
   end
 
   type ('q, 'qr, 'p, 'pr) t =
@@ -565,9 +564,9 @@ module Cursor = struct
     Io.consume_matching t.conn (consume_expected_frames t.conn)
     >>= fun fs ->
     let st = t.row_func.Row_func.init in
-    ( consume_exec_frames t.conn t.row_func st fs
+    (consume_exec_frames t.conn t.row_func st fs
       : (unit, err) result Abb.Future.t
-      :> (unit, [> err ]) result Abb.Future.t )
+      :> (unit, [> err ]) result Abb.Future.t)
 
   let rec consume_fetch conn row_func st =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -609,9 +608,9 @@ module Cursor = struct
     Io.consume_matching t.conn (consume_expected_frames t.conn)
     >>= fun fs ->
     let st = t.row_func.Row_func.init in
-    ( consume_fetch_frames t.conn t.row_func st fs
+    (consume_fetch_frames t.conn t.row_func st fs
       : ('a list, err) result Abb.Future.t
-      :> ('a list, [> err ]) result Abb.Future.t )
+      :> ('a list, [> err ]) result Abb.Future.t)
 
   let destroy t =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -848,7 +847,7 @@ let rec create_sm ?tls_config ?passwd ~notice_response ~host ~port ~user databas
               ~user
               tls_config
               tcp
-              database )
+              database)
 
 and create_sm_ssl_conn ?passwd ~required ~notice_response ~host ~port ~user tls_config tcp database
     =
@@ -866,7 +865,7 @@ and create_sm_ssl_conn ?passwd ~required ~notice_response ~host ~port ~user tls_
   | n when n = 1 && Bytes.get bytes 0 = 'S' -> (
       match Abbs_tls.client_tcp tcp tls_config host with
         | Ok (r, w) -> create_sm_perform_login r w ?passwd ~notice_response ~user database
-        | Error _   -> failwith "nyi" )
+        | Error _   -> failwith "nyi")
   | n when n = 1 && Bytes.get bytes 0 = 'N' && not required -> failwith "nyi"
   | n when n = 1 && Bytes.get bytes 0 = 'N' && required -> failwith "nyi"
   | _ -> failwith "nyi"
@@ -909,7 +908,7 @@ and create_sm_process_login_frames ?passwd ~user t =
         | Some password ->
             Io.send_frame t Pgsql_codec.Frame.Frontend.(PasswordMessage { password })
             >>= fun () -> create_sm_process_login_frames ?passwd ~user t fs
-        | None          -> failwith "nyi" )
+        | None          -> failwith "nyi")
   | AuthenticationMD5Password { salt } :: fs -> (
       let open Abbs_future_combinators.Infix_result_monad in
       match passwd with
@@ -919,7 +918,7 @@ and create_sm_process_login_frames ?passwd ~user t =
             let password = "md5" ^ passusersalt in
             Io.send_frame t Pgsql_codec.Frame.Frontend.(PasswordMessage { password })
             >>= fun () -> create_sm_process_login_frames ?passwd ~user t fs
-        | None          -> failwith "nyi" )
+        | None          -> failwith "nyi")
   | ParameterStatus _ :: fs -> create_sm_process_login_frames ?passwd ~user t fs
   | BackendKeyData { pid; secret_key } :: fs ->
       let t = { t with backend_key_data = Backend_key_data.{ pid; secret_key } } in

@@ -72,13 +72,13 @@ let handler mw rtng conn req ic oc =
       >>= fun ctx -> write_response oc (Ctx.response ctx) >>= fun () -> Abb.Future.return `Ok
 
 let on_handler_err req err =
-  ( match err with
+  (match err with
     | `Exn (exn, bt_opt) ->
         Logs.err (fun m -> m "Exception: %s" (Printexc.to_string exn));
         CCOpt.iter
           (fun bt -> Logs.err (fun m -> m "Backtrace: %s" (Printexc.raw_backtrace_to_string bt)))
           bt_opt
-    | `Timeout           -> Logs.err (fun m -> m "Timeout") );
+    | `Timeout           -> Logs.err (fun m -> m "Timeout"));
   Abb.Future.return `Ok
 
 let on_protocol_err = function

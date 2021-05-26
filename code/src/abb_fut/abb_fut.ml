@@ -332,7 +332,7 @@ module Make (Sched_state : S) = struct
                 concat_deps inner outer.deps;
                 inner.num_ops <- inner.num_ops + outer.num_ops;
                 maybe_gc s.State'.max_ops inner;
-                s )
+                s)
 
   let join : 'a t t -> 'a t =
    fun t ->
@@ -378,7 +378,7 @@ module Make (Sched_state : S) = struct
                                abort' undet s
                            | `Exn exn ->
                                u'.state <- `Exn exn;
-                               abort_exn' undet exn s )
+                               abort_exn' undet exn s)
                      | `Aborted | `Exn _ -> s
                      | `Det _            -> assert false
                      | `Alias _          -> assert false))
@@ -435,7 +435,7 @@ module Make (Sched_state : S) = struct
                 abort' undet s
             | `Exn exn ->
                 u'.state <- `Exn exn;
-                abort_exn' undet exn s )
+                abort_exn' undet exn s)
 
   let app_v_watcher u' f v s =
     match u'.state with
@@ -450,7 +450,7 @@ module Make (Sched_state : S) = struct
                 abort' undet s
             | `Exn exn ->
                 u'.state <- `Exn exn;
-                abort_exn' undet exn s )
+                abort_exn' undet exn s)
 
   let maybe_abort u u_undet u' v s =
     match v with
@@ -466,7 +466,7 @@ module Make (Sched_state : S) = struct
             | `Det _ | `Aborted | `Exn _ -> s
             | `Undet undet               ->
                 u'.state <- `Exn exn;
-                abort_exn' undet exn s )
+                abort_exn' undet exn s)
       | `Aborted -> (
           u.state <- `Aborted;
           s
@@ -478,7 +478,7 @@ module Make (Sched_state : S) = struct
             | `Det _ | `Aborted | `Exn _ -> s
             | `Undet undet               ->
                 u'.state <- `Aborted;
-                abort' undet s )
+                abort' undet s)
 
   (* Applicative implementation that ensures both futures are executing
      concurrently.  The implementation is rather annoying and requires a bunch
@@ -496,7 +496,7 @@ module Make (Sched_state : S) = struct
           try return (f v)
           with exn ->
             let exn' = (exn, Some (Printexc.get_raw_backtrace ())) in
-            t_of_u { state = `Exn exn' } )
+            t_of_u { state = `Exn exn' })
       | _                             ->
           let rec u' =
             {
@@ -597,7 +597,7 @@ module Make (Sched_state : S) = struct
           try return (f v)
           with exn ->
             let exn' = (exn, Some (Printexc.get_raw_backtrace ())) in
-            t_of_u { state = `Exn exn' } )
+            t_of_u { state = `Exn exn' })
       | `Undet undet                      ->
           let rec w =
             ref
@@ -825,7 +825,7 @@ module Make (Sched_state : S) = struct
                           with exn ->
                             let exn' = (exn, Some (Printexc.get_raw_backtrace ())) in
                             u.state <- `Exn exn';
-                            abort_exn' undet exn' s ));
+                            abort_exn' undet exn' s));
               watchers = [];
               deps = [];
               abort = noop_abort;

@@ -46,7 +46,7 @@ module Query = struct
       | Some _ as v -> (
           match f v with
             | None -> None
-            | r    -> Some r )
+            | r    -> Some r)
       | None        -> Some None )
 
   let option_default def (n, f) =
@@ -64,7 +64,7 @@ module Query = struct
     | v :: vs -> (
         match f (Some [ v ]) with
           | Some r -> apply_arr' (r :: acc) f vs
-          | None   -> None )
+          | None   -> None)
 
   let array (n, f) =
     ( n,
@@ -201,7 +201,7 @@ let rec first_match ?(must_consume_path = true) rs uri =
     | r :: rs -> (
         match match_uri ~must_consume_path r uri with
           | Some _ as r -> r
-          | None        -> first_match ~must_consume_path rs uri )
+          | None        -> first_match ~must_consume_path rs uri)
 
 let route_uri ?(must_consume_path = true) ~default rs uri =
   match first_match ~must_consume_path rs uri with

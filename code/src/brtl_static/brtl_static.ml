@@ -17,6 +17,6 @@ let run lookup path ctx =
                   ]
               in
               Abb.Future.return
-                (Brtl_ctx.set_response (Brtl_rspnc.create ~headers ~status:`OK v) ctx) )
+                (Brtl_ctx.set_response (Brtl_rspnc.create ~headers ~status:`OK v) ctx))
     | None   ->
         Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx)

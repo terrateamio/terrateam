@@ -20,10 +20,10 @@ let rec thread (work_queue, mutex, cond, shutdown) =
   if not !shutdown then (
     let (Work (wait_token, f, trigger)) = Queue.pop work_queue in
     Mutex.unlock mutex;
-    ( try
-        let v = f () in
-        trigger wait_token (Ok v)
-      with exn -> trigger wait_token (Error (exn, Some (Printexc.get_raw_backtrace ()))) );
+    (try
+       let v = f () in
+       trigger wait_token (Ok v)
+     with exn -> trigger wait_token (Error (exn, Some (Printexc.get_raw_backtrace ()))));
     thread (work_queue, mutex, cond, shutdown)
   ) else
     Mutex.unlock mutex

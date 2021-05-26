@@ -34,7 +34,7 @@ let first2 =
             assert (v = 1);
             match Fut.state fut with
               | `Det v                     -> assert (v = 2)
-              | `Undet | `Aborted | `Exn _ -> assert false )
+              | `Undet | `Aborted | `Exn _ -> assert false)
         | `Undet | `Aborted | `Exn _ -> assert false)
 
 let first3 =
@@ -75,7 +75,7 @@ let firstl2 =
             assert (v = 1);
             match Fut.state fut with
               | `Det v                     -> assert (v = 2)
-              | `Undet | `Aborted | `Exn _ -> assert false )
+              | `Undet | `Aborted | `Exn _ -> assert false)
         | `Det _                     -> assert false
         | `Undet | `Aborted | `Exn _ -> assert false)
 

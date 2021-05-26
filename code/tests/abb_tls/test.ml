@@ -21,7 +21,7 @@ let google =
           assert (
             301 = Cohttp.Code.code_of_status status
             || 302 = Cohttp.Code.code_of_status status
-            || 200 = Cohttp.Code.code_of_status status )
+            || 200 = Cohttp.Code.code_of_status status)
       | Error `E_access -> assert false
       | Error `E_address_family_not_supported -> assert false
       | Error `E_address_in_use -> assert false

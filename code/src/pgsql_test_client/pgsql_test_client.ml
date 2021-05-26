@@ -13,7 +13,8 @@ let tls_config =
   cfg
 
 let with_conn :
-      'e. (Pgsql_io.t -> ('a, ([> Pgsql_io.create_err ] as 'e)) result Abb.Future.t) ->
+      'e.
+      (Pgsql_io.t -> ('a, ([> Pgsql_io.create_err ] as 'e)) result Abb.Future.t) ->
       ('a, 'e) result Abb.Future.t =
  fun f ->
   let open Abb.Future.Infix_monad in

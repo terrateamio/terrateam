@@ -190,7 +190,9 @@ module Background_fetch_registration = struct
     Abb_js.Future.unsafe_of_promise (t##match_ req) >>| Js.Optdef.to_option
 
   let set_onprogress (t : t) cb =
-    t##addEventListener (Js.string "progress") (Js.wrap_callback (fun () -> Abb_js.Future.run (cb ())))
+    t##addEventListener
+      (Js.string "progress")
+      (Js.wrap_callback (fun () -> Abb_js.Future.run (cb ())))
 
   let rem_onprogress (t : t) = t##removeEventListener (Js.string "progress")
 end
@@ -319,7 +321,9 @@ module Service_worker_container = struct
     class type t =
       object
         method register :
-          Js.js_string Js.t -> register_opts Js.t -> Registration.t Abb_js.Future.promise Js.t Js.meth
+          Js.js_string Js.t ->
+          register_opts Js.t ->
+          Registration.t Abb_js.Future.promise Js.t Js.meth
 
         method ready : Registration.t Abb_js.Future.promise Js.t Js.readonly_prop
       end
@@ -344,7 +348,8 @@ module Cache = struct
   module J = struct
     class type t =
       object
-        method addAll : Js.js_string Js.t Js.js_array Js.t -> unit Abb_js.Future.promise Js.t Js.meth
+        method addAll :
+          Js.js_string Js.t Js.js_array Js.t -> unit Abb_js.Future.promise Js.t Js.meth
 
         method put : Request.t -> Response.t -> unit Abb_js.Future.promise Js.t Js.meth
 

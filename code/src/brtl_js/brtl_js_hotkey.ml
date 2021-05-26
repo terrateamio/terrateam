@@ -31,22 +31,22 @@ let map_key event =
 let map_modifiers event =
   CCList.flatten
     [
-      ( if Js.to_bool event##.altKey then
+      (if Js.to_bool event##.altKey then
         [ "Alt" ]
       else
-        [] );
-      ( if Js.to_bool event##.shiftKey then
+        []);
+      (if Js.to_bool event##.shiftKey then
         [ "Shift" ]
       else
-        [] );
-      ( if Js.to_bool event##.ctrlKey then
+        []);
+      (if Js.to_bool event##.ctrlKey then
         [ "Ctrl" ]
       else
-        [] );
-      ( if Js.to_bool event##.metaKey then
+        []);
+      (if Js.to_bool event##.metaKey then
         [ "Meta" ]
       else
-        [] );
+        []);
     ]
 
 let is_ignored_target event =

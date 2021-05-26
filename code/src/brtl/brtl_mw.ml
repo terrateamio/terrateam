@@ -45,7 +45,7 @@ let rec exec_pre_handler ctx = function
       h.Mw.pre_handler ctx
       >>= function
       | Pre_handler.Cont ctx      -> exec_pre_handler ctx hs
-      | Pre_handler.Stop _ as ret -> Abb.Future.return ret )
+      | Pre_handler.Stop _ as ret -> Abb.Future.return ret)
 
 let rec exec_post_handler ctx = function
   | []      -> Abb.Future.return ctx

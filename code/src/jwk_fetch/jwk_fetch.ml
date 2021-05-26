@@ -33,5 +33,5 @@ let fetch uri =
       let max_age = get_max_age cache_control in
       match Jwk.of_string body with
         | Some jwk -> Abb.Future.return (Ok (jwk, max_age))
-        | None     -> Abb.Future.return (Error `Bad_response) )
+        | None     -> Abb.Future.return (Error `Bad_response))
   | _ -> Abb.Future.return (Error `Bad_response)

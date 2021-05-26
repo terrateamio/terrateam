@@ -46,7 +46,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
                   Abb.Socket.writable sock >>= fun () -> write ~bufs
               | Error `Error ->
                   let err = Otls.Tls.error tls in
-                  Abb.Future.return (Error (`Unexpected (Failure err))) )
+                  Abb.Future.return (Error (`Unexpected (Failure err))))
     in
     let close () =
       let open Abb.Future.Infix_monad in

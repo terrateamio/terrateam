@@ -62,7 +62,7 @@ module Make (Fut : Abb_intf.Future.S) = struct
               write ~bufs:bs
               >>| function
               | Ok n    -> Ok (len + n)
-              | Error _ -> assert false )
+              | Error _ -> assert false)
       in
       let close () = Fut.return (Ok ()) in
       View.{ read; write; close }
@@ -125,7 +125,7 @@ module Make (Fut : Abb_intf.Future.S) = struct
           fill_buffer t
           >>= function
           | 0 -> Fut.return (Ok ())
-          | _ -> read_line_buffer' t b )
+          | _ -> read_line_buffer' t b)
       | 0 ->
           t.pos <- 1;
           Fut.return (Ok ())
@@ -173,7 +173,7 @@ module Make (Fut : Abb_intf.Future.S) = struct
               assert (n < buf.Abb_intf.Write_buf.len);
               t.pos <- t.pos + n;
               t.length <- t.length - n;
-              flushed' t )
+              flushed' t)
 
   let flushed t =
     (flushed' t : (unit, write_err) result Fut.t :> (unit, [> write_err ]) result Fut.t)
@@ -207,9 +207,9 @@ module Make (Fut : Abb_intf.Future.S) = struct
     flushed t >>= fun _ -> close t
 
   let close_writer t =
-    ( close_writer' t
+    (close_writer' t
       : (unit, [ close_err | write_err ]) result Fut.t
-      :> (unit, [> close_err | write_err ]) result Fut.t )
+      :> (unit, [> close_err | write_err ]) result Fut.t)
 end
 
 module Of (Abb : Abb_intf.S) = struct

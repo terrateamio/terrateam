@@ -34,7 +34,7 @@ let myers_test =
               Deleted [| "B" |];
               Equal [| "A" |];
               Added [| "C" |];
-            ] ))
+            ]))
 
 let simple_equal_test =
   Oth.test ~desc:"No changes" ~name:"Simple equal" (fun _ ->
@@ -73,7 +73,7 @@ let simple_conflict_test =
         diff
         = [
             Diff.Equal [| "1" |]; Diff.Deleted [| "2" |]; Diff.Added [| "4" |]; Diff.Equal [| "3" |];
-          ] ))
+          ]))
 
 let beginning_conflict_test =
   Oth.test ~desc:"Conflict in beginning" ~name:"Beginning conflict" (fun _ ->
@@ -194,7 +194,7 @@ let complex_test =
               Added [| "  - True Blood" |];
               Equal [| "Anwan Glover:"; "  - Treme"; "  - The Wire" |];
               Added [| "Clarke Peters: null" |];
-            ] ))
+            ]))
 
 let test =
   Oth.parallel

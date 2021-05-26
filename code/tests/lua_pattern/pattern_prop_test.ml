@@ -22,7 +22,7 @@ let pattern_does_not_crash_prop =
         | Some p -> (
             match CCResult.guard (fun () -> Lua_pattern.mtch str p) with
               | Ok _    -> true
-              | Error _ -> false ))
+              | Error _ -> false))
 
 let prop_tests =
   Oth.test ~name:"Prop Tests" (fun _ ->
