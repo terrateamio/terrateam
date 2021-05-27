@@ -1,7 +1,14 @@
+module Title = struct
+  type t =
+    [ `Txt of string
+    | `Elt of Html_types.div_content Brtl_js.Html.elt list
+    ]
+end
+
 module Choice = struct
   type 'a t = {
     value : 'a;
-    title : string;
+    title : Title.t;
     uri : Uri.t;
   }
 
@@ -40,7 +47,9 @@ let run ~eq ~nav_class ~selected ~unselected ~choices routes state =
                                     (Brtl_js.State.router state)
                                     choice.Choice.uri);
                          ]
-                       [ txt choice.Choice.title ])
+                       (match choice.Choice.title with
+                         | `Txt title -> [ txt title ]
+                         | `Elt elt   -> elt))
                    choices)
                (Brtl_js.Router.uri (Brtl_js.State.router state));
         ],
