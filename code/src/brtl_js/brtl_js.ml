@@ -162,13 +162,14 @@ module Router_output = struct
     (* TODO: Consumed path immutable *)
     let state = State.{ state with consumed_path = "" } in
     let uri = state |> State.router |> Router.uri in
-    (* let (res, res_set) = React.E.create () in *)
     let (res, res_set) = React.S.create [] in
     (* Perform initial routing *)
     let mtch =
       match match_uri routes (React.S.value uri) with
         | Some mtch -> mtch
-        | None      -> (* TODO: Do something useful here *) assert false
+        | None      ->
+            (* TODO: Do something useful here *)
+            assert false
     in
     let with_cleanup = ref None in
     let prev_match = ref mtch in
@@ -201,16 +202,20 @@ end
 let comp ?(a = []) state handler =
   let id = Uuidm.to_string (Uuidm.create `V4) in
   let (ret, handle) = Rlist.create [] in
-  Abb_js.Future.run
-    (let open Abb_js.Future.Infix_monad in
-    handler state
-    >>| function
-    | `Render r            -> Rlist.set handle r
-    | `With_cleanup (r, f) ->
-        Rlist.set handle r;
-        State.cleanup state id f
-    | `Navigate uri        -> Router.navigate (State.router state) uri);
-  Rhtml.div ~a:(Html.a_id id :: a) ret
+  try
+    Abb_js.Future.run
+      (let open Abb_js.Future.Infix_monad in
+      handler state
+      >>| function
+      | `Render r            -> Rlist.set handle r
+      | `With_cleanup (r, f) ->
+          Rlist.set handle r;
+          State.cleanup state id f
+      | `Navigate uri        -> Router.navigate (State.router state) uri);
+    Rhtml.div ~a:(Html.a_id id :: a) ret
+  with exn ->
+    Js_of_ocaml.(Firebug.console##log_2 (Js.string "Component failure") exn);
+    assert false
 
 let dom_html_handler ?(continue = false) f =
   let wrapper event =

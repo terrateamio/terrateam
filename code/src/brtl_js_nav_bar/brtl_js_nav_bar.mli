@@ -1,7 +1,7 @@
 module Title : sig
   type t =
-    [ `Txt of string
-    | `Elt of Html_types.div_content Brtl_js.Html.elt list
+    [ `Txt  of string
+    | `Html of unit -> Html_types.div_content Brtl_js.Html.elt list
     ]
 end
 

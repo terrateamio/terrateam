@@ -124,6 +124,15 @@ let route_homepage_slash =
       let resp = router uri in
       assert (resp = "Homepage Slash"))
 
+let route_homepage_slash_rel =
+  Oth.test
+    ~desc:"Route to the homepage path with ending slash"
+    ~name:"Route homepage slash Rel"
+    (fun _ ->
+      let uri = Uri.of_string "/" in
+      let resp = router uri in
+      assert (resp = "Homepage Slash"))
+
 let route_query =
   Oth.test ~desc:"Route with query" ~name:"Route query" (fun _ ->
       let uri = Uri.of_string "http://test.com?name=foobar" in
@@ -229,6 +238,25 @@ let match_path_consumption =
         | (Some m1, Some m2) -> assert (not (Furi.Match.equal m1 m2))
         | _                  -> assert false)
 
+let first_match_slash_rel =
+  Oth.test ~desc:"first_match" ~name:"First match homepage slash Rel" (fun _ ->
+      let uri = Uri.of_string "/" in
+      match
+        Furi.first_match
+          Furi.
+            [
+              query_rt --> handle_query;
+              hello_rt --> handle_hello_name;
+              goodbye_rt --> handle_goodbye_name;
+              extra_rt --> handle_extra;
+              homepage_rt --> handle_homepage;
+              homepage_slash_rt --> handle_homepage_slash;
+            ]
+          uri
+      with
+        | Some v -> assert (Furi.Match.apply v = handle_homepage_slash)
+        | None   -> assert false)
+
 let test =
   Oth.parallel
     [
@@ -244,6 +272,7 @@ let test =
       route_any_no_extra;
       route_homepage;
       route_homepage_slash;
+      route_homepage_slash_rel;
       route_query;
       match_hello;
       match_fail;
@@ -256,6 +285,7 @@ let test =
       match_query_equal_but_different;
       match_query_order_does_not_matter;
       match_path_consumption;
+      first_match_slash_rel;
     ]
 
 let () =

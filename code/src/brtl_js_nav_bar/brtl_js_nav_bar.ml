@@ -1,7 +1,7 @@
 module Title = struct
   type t =
-    [ `Txt of string
-    | `Elt of Html_types.div_content Brtl_js.Html.elt list
+    [ `Txt  of string
+    | `Html of unit -> Html_types.div_content Brtl_js.Html.elt list
     ]
 end
 
@@ -17,6 +17,12 @@ end
 
 let run ~eq ~nav_class ~selected ~unselected ~choices routes state =
   let open Brtl_js.Html in
+  let (uri, set_uri) =
+    Brtl_js.React.S.(create (value (Brtl_js.Router.uri (Brtl_js.State.router state))))
+  in
+  let workaround =
+    Brtl_js.React.S.map (fun uri -> set_uri uri) (Brtl_js.Router.uri (Brtl_js.State.router state))
+  in
   Abb_js.Future.return
     (`With_cleanup
       ( [
@@ -49,8 +55,10 @@ let run ~eq ~nav_class ~selected ~unselected ~choices routes state =
                          ]
                        (match choice.Choice.title with
                          | `Txt title -> [ txt title ]
-                         | `Elt elt   -> elt))
+                         | `Html elt  -> elt ()))
                    choices)
-               (Brtl_js.Router.uri (Brtl_js.State.router state));
+               uri;
         ],
-        fun _ -> Abb_js.Future.return () ))
+        fun _ ->
+          Brtl_js.React.S.stop ~strong:true workaround;
+          Abb_js.Future.return () ))
