@@ -24,7 +24,7 @@ module Response = struct
   let status t = t.status
 end
 
-let send ?body ~meth ~url () =
+let send ?(headers = []) ?body ~meth ~url () =
   let open Js_of_ocaml in
   let meth = Method.string_of_t meth in
   let req = XmlHttpRequest.create () in
@@ -52,5 +52,6 @@ let send ?body ~meth ~url () =
         Abb_fut_js.run (Abb_fut_js.Promise.set promise (Error `Error));
         Js._true);
   req##_open (Js.string meth) (Js.string url) Js._true;
+  List.iter (fun (h, s) -> req##setRequestHeader (Js.string h) (Js.string s)) headers;
   req##send (Js.Opt.map (Js.Opt.option body) Js.string);
   Abb_fut_js.Promise.future promise

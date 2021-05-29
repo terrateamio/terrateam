@@ -22,6 +22,7 @@ end
    means that the destination responded with a valid HTTP response, even if the
    HTTP response constitutes an error. *)
 val send :
+  ?headers:(string * string) list ->
   ?body:string ->
   meth:Method.t ->
   url:string ->
