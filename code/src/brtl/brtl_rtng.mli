@@ -60,6 +60,48 @@ module Route : sig
     val present : string -> unit t
   end
 
+  (** Extractions for the body. *)
+  module Body : sig
+    type 'a t
+
+    type 'a v
+
+    (* Extract a value based o its key and convert it *)
+    val k : string -> 'a v -> 'a t
+
+    (* val array : 'a v -> 'a list t *)
+
+    val ud : 'a v -> ('a -> 'b option) -> 'b v
+
+    (** Extract a string from the query parameter. *)
+    val string : string v
+
+    (** Extract an int from the query parameters. *)
+    val int : int v
+
+    (** Extract a bool from the query parameters. *)
+    val bool : bool v
+
+    (** Optional value.  This only applies if the value is there and is
+       successfully extracted or it is not present at all.  If the key is found
+       but does not successfully convert, it this fails. *)
+    val option : string -> 'a v -> 'a option t
+
+    (** Same but applies a default value in the case that the key is no found at
+       all. *)
+    val option_default : string -> 'a -> 'a v -> 'a t
+
+    (** Convert the whole body to an object using the various decoders.  This
+       works by reviewing the [content-type] of the request and dispatching the
+       correct decoder.  If the coder for the [content-type] is not present, the
+       request fails to match this route. *)
+    val decode :
+      ?json:(Yojson.Safe.t -> ('a, string) result) ->
+      ?form:((string * string list) list -> 'a option) ->
+      unit ->
+      'a t
+  end
+
   (** Represents a route, which is a URL pattern and the function it should be
       applied to. *)
   module Route : sig
@@ -79,7 +121,7 @@ module Route : sig
   val ( /? ) : ('f, 'a -> 'r) t -> 'a Query.t -> ('f, 'r) t
 
   (** Extract a variable from the body *)
-  val ( /* ) : ('f, 'a -> 'r) t -> 'a Query.t -> ('f, 'r) t
+  val ( /* ) : ('f, 'a -> 'r) t -> 'a Body.t -> ('f, 'r) t
 
   (** Create a route of a URL and a function that matches the types being
       extracted. *)

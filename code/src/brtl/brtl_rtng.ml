@@ -5,6 +5,28 @@ module Handler = struct
   type t = (string, unit) Ctx.t -> (string, Rspnc.t) Ctx.t Abb.Future.t
 end
 
+module type BODY_DECODER = sig
+  type v
+
+  val get : string -> v option
+
+  val string : v -> string option
+
+  val int : v -> int option
+
+  val bool : v -> bool option
+
+  val array : v -> v list option
+
+  (* This is awkward.  The actual implementation will only consume one of these
+     but we have to pass them all in because I can't think of a better way to
+     accomplish this with the API *)
+  val decode :
+    (Yojson.Safe.t -> ('a, string) result) ->
+    ((string * string list) list -> 'a option) ->
+    'a option
+end
+
 module Route = struct
   module Path = struct
     type 'a t = int -> string -> (int * 'a) option
@@ -93,13 +115,141 @@ module Route = struct
         | Some _ | None -> None )
   end
 
+  module Body = struct
+    type 'a t = (module BODY_DECODER) -> 'a option
+
+    type 'a v = { v : 'v. (module BODY_DECODER with type v = 'v) -> 'v -> 'a option }
+
+    let k n { v } (module D : BODY_DECODER) =
+      match D.get n with
+        | Some value -> v (module D) value
+        | None       -> None
+
+    (* let array (type v) { v } =
+     *   {
+     *     v =
+     *       (fun (module D : BODY_DECODER with type v = v) (arr : v) ->
+     *         let open CCOpt.Infix in
+     *         D.array arr
+     *         >>= fun values -> CCOpt.sequence_l (CCList.map (v (module D : BODY_DECODER)) values));
+     *   } *)
+
+    let ud { v } f =
+      {
+        v =
+          (fun (type v) (module D : BODY_DECODER with type v = v) value ->
+            let open CCOpt.Infix in
+            v (module D : BODY_DECODER with type v = v) value >>= fun value -> f value);
+      }
+
+    let string =
+      { v = (fun (type v) (module D : BODY_DECODER with type v = v) (v : v) -> D.string v) }
+
+    let int = { v = (fun (type v) (module D : BODY_DECODER with type v = v) (v : v) -> D.int v) }
+
+    let bool = { v = (fun (type v) (module D : BODY_DECODER with type v = v) (v : v) -> D.bool v) }
+
+    let option n { v } (module D : BODY_DECODER) =
+      match D.get n with
+        | Some value -> (
+            (* Only pass on if the extraction works *)
+            match v (module D) value with
+              | None -> None
+              | x    -> Some x)
+        | None       -> Some None
+
+    let option_default n default { v } (module D : BODY_DECODER) =
+      match D.get n with
+        | Some value -> (
+            (* Only pass on if the extraction works *)
+            match v (module D) value with
+              | None -> None
+              | x    -> x)
+        | None       -> Some default
+
+    let decode
+        ?(json = fun _ -> Error "not implemented")
+        ?(form = fun _ -> None)
+        ()
+        (module D : BODY_DECODER) =
+      D.decode json form
+  end
+
+  module Body_form = struct
+    let make s =
+      let body = Uri.of_string ("?" ^ s) in
+      Some
+        (module struct
+          type v = string list
+
+          let get k = Uri.get_query_param' body k
+
+          let array vs = Some (CCList.map (fun v -> [ v ]) vs)
+
+          let string = CCList.head_opt
+
+          let int = function
+            | v :: _ -> CCInt.of_string v
+            | _      -> None
+
+          let bool = function
+            | "true" :: _  -> Some true
+            | "false" :: _ -> Some false
+            | _            -> None
+
+          let decode _ form = form (Uri.query body)
+        end : BODY_DECODER)
+  end
+
+  module Body_json = struct
+    let make s =
+      try
+        let body = Yojson.Safe.from_string s in
+        Some
+          (module struct
+            type v = Yojson.Safe.t
+
+            let get k =
+              match Yojson.Safe.Util.member k body with
+                | `Null -> None
+                | v     -> Some v
+
+            let array v = try Some (Yojson.Safe.Util.to_list v) with _ -> None
+
+            let string = Yojson.Safe.Util.to_string_option
+
+            let int = Yojson.Safe.Util.to_int_option
+
+            let bool = Yojson.Safe.Util.to_bool_option
+
+            let decode json _ = CCResult.to_opt (json body)
+          end : BODY_DECODER)
+      with _ -> None
+  end
+
+  module Body_noop = struct
+    type v = unit
+
+    let get _ = None
+
+    let array () = raise (Failure "Body_noop - array - not implemented")
+
+    let string () = raise (Failure "Body_noop - string - not implemented")
+
+    let int () = raise (Failure "Body_noop - int - not implemented")
+
+    let bool () = raise (Failure "Body_noop - bool - not implemented")
+
+    let decode _ _ = raise (Failure "Body_noop - decode - not implemented")
+  end
+
   type ('f, 'r) t =
     (* | Host : string -> ('r, 'r) t *)
     | Rel : ('r, 'r) t
     | Path_const : (('f, 'r) t * string) -> ('f, 'r) t
     | Path_var   : (('f, 'a -> 'r) t * 'a Path.t) -> ('f, 'r) t
     | Query_var  : (('f, 'a -> 'r) t * 'a Query.t) -> ('f, 'r) t
-    | Post_var   : (('f, 'a -> 'r) t * 'a Query.t) -> ('f, 'r) t
+    | Body_var   : (('f, 'a -> 'r) t * 'a Body.t) -> ('f, 'r) t
 
   module Route = struct
     (* Remember the name of Furi.t first *)
@@ -116,7 +266,7 @@ module Route = struct
 
   let ( /? ) t v = Query_var (t, v)
 
-  let ( /* ) t v = Post_var (t, v)
+  let ( /* ) t v = Body_var (t, v)
 
   let route t f = Route.Route (t, f)
 
@@ -129,13 +279,14 @@ module Route = struct
   end
 
   let rec test_ctx :
-      type f r. ('a, 'b) Brtl_ctx.t -> Uri.t -> (f, r) t -> (int * (f, r) Witness.t) option =
+      type f r.
+      ('a, 'b) Brtl_ctx.t -> (module BODY_DECODER) -> (f, r) t -> (int * (f, r) Witness.t) option =
    fun ctx body t ->
     let uri = Brtl_ctx.Request.uri (Brtl_ctx.request ctx) in
     let path = Uri.path uri in
     match t with
-      | Rel                   -> Some (0, Witness.Start)
-      | Path_const (t, s)     ->
+      | Rel                    -> Some (0, Witness.Start)
+      | Path_const (t, s)      ->
           let open CCOpt.Infix in
           test_ctx ctx body t
           >>= fun (idx, wit) ->
@@ -148,7 +299,7 @@ module Route = struct
               None
           else
             None
-      | Path_var (t, v)       ->
+      | Path_var (t, v)        ->
           let open CCOpt.Infix in
           test_ctx ctx body t
           >>= fun (idx, wit) ->
@@ -156,18 +307,16 @@ module Route = struct
             v idx path >>= fun (idx, value) -> Some (idx, Witness.Var (wit, value))
           else
             None
-      | Query_var (t, (n, v)) ->
+      | Query_var (t, (n, v))  ->
           let open CCOpt.Infix in
           test_ctx ctx body t
           >>= fun (idx, wit) ->
           let q = Uri.get_query_param' uri n in
           v q >>= fun value -> Some (idx, Witness.Var (wit, value))
-      | Post_var (t, (n, v))  ->
+      | Body_var (t, body_var) ->
           let open CCOpt.Infix in
           test_ctx ctx body t
-          >>= fun (idx, wit) ->
-          let q = Uri.get_query_param' body n in
-          v q >>= fun value -> Some (idx, Witness.Var (wit, value))
+          >>= fun (idx, wit) -> body_var body >>= fun value -> Some (idx, Witness.Var (wit, value))
 
   let rec apply_ctx' : type f r x. (f, x) Witness.t -> (x -> r) -> f -> r =
    fun w k ->
@@ -192,8 +341,25 @@ module Route = struct
             | Some _ | None -> match_ctx' ~default rs ctx body)
 
   let match_ctx ~default rs ctx =
-    let body = Uri.of_string ("?" ^ Brtl_ctx.body ctx) in
-    match_ctx' ~default rs ctx body
+    match Brtl_ctx.Request.meth (Brtl_ctx.request ctx) with
+      | `POST -> (
+          match
+            Cohttp.Header.get (Brtl_ctx.Request.headers (Brtl_ctx.request ctx)) "content-type"
+          with
+            | Some
+                ( "application/json"
+                | "application/x-javascript"
+                | "text/javascript"
+                | "text/x-javascript"
+                | "text/x-json" ) -> (
+                match Body_json.make (Brtl_ctx.body ctx) with
+                  | Some body -> match_ctx' ~default rs ctx body
+                  | None      -> raise (Failure "nyi json"))
+            | _ -> (
+                match Body_form.make (Brtl_ctx.body ctx) with
+                  | Some body -> match_ctx' ~default rs ctx body
+                  | None      -> raise (Failure "nyi form")))
+      | _     -> match_ctx' ~default rs ctx (module Body_noop)
 end
 
 module Method = struct
