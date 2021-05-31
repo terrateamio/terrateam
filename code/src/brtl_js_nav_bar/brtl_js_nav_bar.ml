@@ -25,7 +25,7 @@ let run ~eq ~nav_class ~selected ~unselected ~choices routes state =
           @@ Brtl_js.React.S.map
                (fun uri ->
                  let compare =
-                   match Brtl_js_rtng.first_match routes uri with
+                   match Brtl_js_rtng.first_match ~must_consume_path:false routes uri with
                      | Some v -> eq (Brtl_js_rtng.Match.apply v)
                      | None   -> fun _ -> false
                  in
