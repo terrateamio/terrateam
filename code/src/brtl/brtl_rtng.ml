@@ -377,7 +377,8 @@ let create ~default routes_list =
   ListLabels.iter ~f:(fun (meth, route) -> CCHashtbl.add_list tmp meth route) routes_list;
   let routes = Hashtbl.create 10 in
   Hashtbl.iter
-    (fun meth rts -> Hashtbl.add routes meth (Route.match_ctx ~default:route_default rts))
+    (fun meth rts ->
+      Hashtbl.add routes meth (Route.match_ctx ~default:route_default (CCList.rev rts)))
     tmp;
   { default; routes }
 
