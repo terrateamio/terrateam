@@ -130,8 +130,13 @@ module Route : sig
   (** Infix operator for {!route}. *)
   val ( --> ) : ('f, 'r) t -> 'f -> 'r Route.t
 
-  (** Given a list of routes, match an input URI and execute the associated route
-      function.  If no matches are found, execute the [default] function. *)
+  (** Given a list of routes, match an input URI and execute the associated
+     route function.  If no matches are found, execute the [default] function.
+
+     If the request type is [POST], the body will be decoded based on the
+     content-type.  Only JSON and form encoded are supported.  If the body fails
+     to decode then the request matching will continue on without the decoded
+     body. *)
   val match_ctx :
     default:((string, unit) Brtl_ctx.t -> 'r) -> 'r Route.t list -> (string, unit) Brtl_ctx.t -> 'r
 end

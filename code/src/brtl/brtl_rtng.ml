@@ -354,11 +354,11 @@ module Route = struct
                 | "text/x-json" ) -> (
                 match Body_json.make (Brtl_ctx.body ctx) with
                   | Some body -> match_ctx' ~default rs ctx body
-                  | None      -> raise (Failure "nyi json"))
+                  | None      -> match_ctx' ~default rs ctx (module Body_noop))
             | _ -> (
                 match Body_form.make (Brtl_ctx.body ctx) with
                   | Some body -> match_ctx' ~default rs ctx body
-                  | None      -> raise (Failure "nyi form")))
+                  | None      -> match_ctx' ~default rs ctx (module Body_noop)))
       | _     -> match_ctx' ~default rs ctx (module Body_noop)
 end
 
