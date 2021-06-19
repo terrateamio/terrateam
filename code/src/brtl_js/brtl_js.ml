@@ -105,7 +105,6 @@ module Router_output = struct
   let match_uri routes uri = Brtl_js_rtng.first_match ~must_consume_path:false routes uri
 
   let apply_match mtch state with_cleanup res_set =
-    let open Abb_js.Future.Infix_monad in
     Abb_js.Future.run
       (state.State.consumed_path <- Brtl_js_rtng.Match.consumed_path mtch;
        Abb_js.Future.await_bind
