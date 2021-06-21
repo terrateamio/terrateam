@@ -24,7 +24,7 @@ module Router = struct
 
   let create () =
     let current_uri = Dom_html.window##.location##.href |> Js.to_string |> Uri.of_string in
-    let (uri, uri_set) = React.S.create current_uri in
+    let (uri, uri_set) = React.S.create ~eq:Uri.equal current_uri in
     Dom_html.window##.onpopstate := Dom_html.handler (on_pop_state uri_set);
     { uri; uri_set }
 

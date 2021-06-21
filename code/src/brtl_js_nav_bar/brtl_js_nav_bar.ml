@@ -18,7 +18,7 @@ end
 let run ~eq ~nav_class ~selected ~unselected ~choices routes state =
   let open Brtl_js.Html in
   let (uri, set_uri) =
-    Brtl_js.React.S.(create (value (Brtl_js.Router.uri (Brtl_js.State.router state))))
+    Brtl_js.React.S.(create ~eq:Uri.equal (value (Brtl_js.Router.uri (Brtl_js.State.router state))))
   in
   let workaround =
     Brtl_js.React.S.map (fun uri -> set_uri uri) (Brtl_js.Router.uri (Brtl_js.State.router state))
