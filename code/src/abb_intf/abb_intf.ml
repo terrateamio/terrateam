@@ -485,7 +485,7 @@ end
 (** Flags and structures related to the file system *)
 module File = struct
   module Permissions = struct
-    type t = int
+    type t = int [@@deriving show, eq]
   end
 
   module Flag = struct
@@ -497,6 +497,7 @@ module File = struct
       | Append
       | Truncate
       | Exclusive
+    [@@deriving show, eq]
   end
 
   module File_kind = struct
@@ -508,6 +509,7 @@ module File = struct
       | Symlink  (** Symbolic link *)
       | Fifo  (** Named pipe *)
       | Socket  (** Socket *)
+    [@@deriving show, eq]
   end
 
   (** The result of a file stat *)
@@ -526,6 +528,7 @@ module File = struct
       mtime : float;  (** Last modification time *)
       ctime : float;  (** Last status change time *)
     }
+    [@@deriving show, eq]
   end
 
   (** Seek commands for read and write *)
@@ -534,6 +537,7 @@ module File = struct
       | Cur  (** Relative to the current location *)
       | Set  (** Relative to the beginning *)
       | End  (** Relative to the end *)
+    [@@deriving show, eq]
   end
 end
 
@@ -613,6 +617,7 @@ module Process = struct
       | SIGUSR1
       | SIGUSR2
       | Num     of int  (** If the signal cannot be put into any of the predefined ones *)
+    [@@deriving show, eq]
   end
 
   module Exit_code = struct
@@ -620,6 +625,7 @@ module Process = struct
       | Exited   of int
       | Signaled of Signal.t
       | Stopped  of Signal.t
+    [@@deriving show, eq]
   end
 
   (** A Dup represents a relationship between two values.  This is purely a
@@ -653,6 +659,7 @@ module Process = struct
     env : (string * string) list option;
     cwd : string option;
   }
+  [@@deriving show, eq]
 end
 
 (** The scheduler interface.  This only has those types and value that the

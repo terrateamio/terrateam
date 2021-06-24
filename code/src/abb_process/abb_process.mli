@@ -5,6 +5,10 @@ type output_err =
   | Abb_intf.Errors.close
   ]
 
+val pp_output_err : Format.formatter -> output_err -> unit
+
+val show_output_err : output_err -> string
+
 module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
   (** Run a process, writing in an optional input string, and collecting its stdout and stderr, and return code *)
   val output :
