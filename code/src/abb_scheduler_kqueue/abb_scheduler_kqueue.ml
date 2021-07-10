@@ -1152,42 +1152,56 @@ module Socket = struct
       | exn -> Error (`Unexpected exn)
 
   let accept t =
-    Future.with_state (fun s ->
-        let el = Abb_fut.State.state s in
-        let p =
-          Future.Promise.create
-            ~abort:(fun () ->
-              Future.with_state (fun s ->
-                  let el = Abb_fut.State.state s in
-                  let el = El.remove_read t el in
-                  let s = Abb_fut.State.set_state el s in
-                  (s, Future.return ())))
-            ()
-        in
-        let handler s =
-          Future.run_with_state
-            (Future.Promise.set
-               p
-               (try
-                  let (fd, _) = Unix.accept ~cloexec:true t in
-                  Unix.set_nonblock fd;
-                  Ok fd
-                with
-                 | Unix.Unix_error (err, _, _) as exn ->
-                     let open Unix in
-                     Error
-                       (match err with
-                         | EBADF           -> `E_bad_file
-                         | EMFILE | ENFILE -> `E_file_table_full
-                         | EINVAL          -> `E_invalid
-                         | ECONNABORTED    -> `E_connection_aborted
-                         | _               -> `Unexpected exn)
-                 | exn -> Error (`Unexpected exn)))
-            s
-        in
-        let el = El.add_read t handler el in
-        let s = Abb_fut.State.set_state el s in
-        (s, Future.Promise.future p))
+    try
+      let (fd, _) = Unix.accept ~cloexec:true t in
+      Unix.set_nonblock fd;
+      Future.return (Ok fd)
+    with
+      | Unix.Unix_error (Unix.EAGAIN, _, _) | Unix.Unix_error (Unix.EWOULDBLOCK, _, _) ->
+          Future.with_state (fun s ->
+              let el = Abb_fut.State.state s in
+              let p =
+                Future.Promise.create
+                  ~abort:(fun () ->
+                    Future.with_state (fun s ->
+                        let el = Abb_fut.State.state s in
+                        let el = El.remove_read t el in
+                        let s = Abb_fut.State.set_state el s in
+                        (s, Future.return ())))
+                  ()
+              in
+              let handler s =
+                Future.run_with_state
+                  (Future.Promise.set
+                     p
+                     (try
+                        let (fd, _) = Unix.accept ~cloexec:true t in
+                        Unix.set_nonblock fd;
+                        Ok fd
+                      with
+                       | Unix.Unix_error (err, _, _) as exn ->
+                           let open Unix in
+                           Error
+                             (match err with
+                               | EBADF           -> `E_bad_file
+                               | EMFILE | ENFILE -> `E_file_table_full
+                               | EINVAL          -> `E_invalid
+                               | ECONNABORTED    -> `E_connection_aborted
+                               | _               -> `Unexpected exn)
+                       | exn -> Error (`Unexpected exn)))
+                  s
+              in
+              let el = El.add_read t handler el in
+              let s = Abb_fut.State.set_state el s in
+              (s, Future.Promise.future p))
+      | Unix.Unix_error (err, _, _) as exn ->
+          let open Unix in
+          Future.return
+            (Error
+               (match err with
+                 | ENOTSOCK | EBADF -> `E_bad_file
+                 | _                -> `Unexpected exn))
+      | exn -> Future.return (Error (`Unexpected exn))
 
   let create_sock ~kind ~domain =
     (* FIXME Possible leak here? *)
