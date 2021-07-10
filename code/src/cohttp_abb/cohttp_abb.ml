@@ -226,7 +226,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             let req_read = Request_io.read r >>| fun req -> `Req req in
             let timeout = Abb.Sys.sleep (Duration.to_f timeout) >>| fun () -> `Timeout in
             Fut_comb.first req_read timeout
-            >>= fun (ret, fut) -> Abb.Future.cancel fut >>| fun () -> ret
+            >>= fun (ret, fut) -> Abb.Future.abort fut >>| fun () -> ret
         | None         ->
             let open Abb.Future.Infix_monad in
             Request_io.read r >>| fun req -> `Req req
@@ -244,7 +244,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
                        let timeout = Abb.Sys.sleep (Duration.to_f timeout) >>| fun () -> `Timeout in
                        let handler = Config.handler config conn req r w >>| fun res -> `Res res in
                        Fut_comb.first timeout handler
-                       >>= fun (ret, fut) -> Abb.Future.cancel fut >>| fun () -> ret
+                       >>= fun (ret, fut) -> Abb.Future.abort fut >>| fun () -> ret
                    | None         -> Config.handler config conn req r w >>| fun res -> `Res res)
                ~failure:(fun () -> Fut_comb.ignore (Abb.Socket.close conn)))
           >>= function
