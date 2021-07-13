@@ -162,16 +162,6 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL Linux)
   if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set (CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "default install path" FORCE )
   endif()
-
-  #
-  #  Set library directory correctly if we're building 64bit libraries
-  #
-  get_property(LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
-  if ("${LIB64}" STREQUAL "TRUE")
-    set(LIB_SUFFIX 64)
-  else()
-    set(LIB_SUFFIX "")
-  endif()
   list(APPEND LIBKQUEUE_SOURCES
        src/posix/platform.c
        src/posix/platform.h
@@ -245,8 +235,7 @@ configure_file("${CMAKE_SOURCE_DIR}/libkqueue.pc.in"
 #
 set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION ${CMAKE_INSTALL_FULL_MANDIR}
                                                   ${CMAKE_INSTALL_FULL_MANDIR}/man2
-                                                  ${CMAKE_INSTALL_FULL_INCLUDEDIR}/sys
-                                                  ${CMAKE_INSTALL_FULL_LIBDIR}${LIB_SUFFIX}/pkgconfig)
+                                                  ${CMAKE_INSTALL_FULL_INCLUDEDIR}/sys)
 
 install(FILES
           "${CMAKE_SOURCE_DIR}/include/sys/event.h"
@@ -257,7 +246,7 @@ install(FILES
 install(TARGETS
           kqueue
         DESTINATION
-          "${CMAKE_INSTALL_FULL_LIBDIR}${LIB_SUFFIX}"
+          "${CMAKE_INSTALL_FULL_LIBDIR}"
         COMPONENT libraries)
 install(FILES
           "${CMAKE_SOURCE_DIR}/kqueue.2"
@@ -267,7 +256,7 @@ install(FILES
 install(FILES
           "${CMAKE_BINARY_DIR}/libkqueue.pc"
         DESTINATION
-          "${CMAKE_INSTALL_FULL_LIBDIR}${LIB_SUFFIX}/pkgconfig"
+          "${CMAKE_INSTALL_FULL_LIBDIR}/pkgconfig"
         COMPONENT pkgconfig)
 
 set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
