@@ -1,7 +1,26 @@
-v3.2.0 2020-01-01
+v4.2.0 2021-04-26
 -----------------
 
-* sexp: use the sexplib v0.13 ppx directives (@avsm).
+* Do not mutate the base encoder when using custom percent encoders.
+  This was a bug introduced in #147. (#156 @aantron)
+* Disable Travis CI tests and switch Win/Mac tests to GitHub Actions and
+  Linux ones to ocaml-ci (@avsm).
+
+v4.1.0 2021-01-04
+-----------------
+
+* `uri-re` is deprecated, it is a legacy implementation that is now outdated. 
+  `uri` should be used instead (@dinosaure, #152).
+* Fix build system for cross-compilation (@TheLortex, #151).
+
+v4.0.0 2020-01-01
+-----------------
+
+* sexp: use the sexplib v0.13 ppx directives (@avsm, #143).
+* rework the URI parser with `angstrom` (@anmonteiro, review @avsm & @dinosaure, #142).
+* add simple fuzzer tests between `angstrom` parser and _legacy_ parser (with `re.posix`, #142)
+* add support of modifying pct encoding (with a custom one) (@orbitz, review @anmonteiro, @tmcgilchrist, @avsm & @dinosaure, #147)
+* allow the selection of generic set of safe characters (with `Generic`) (@madroach, review @dinosaure, #141)
 
 v3.1.0 2019-11-23
 -----------------

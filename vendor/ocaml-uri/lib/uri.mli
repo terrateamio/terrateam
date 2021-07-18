@@ -31,6 +31,7 @@ type component = [
   | `Query_key
   | `Query_value
   | `Fragment
+  | `Generic
   | `Custom of (component * string * string) (* (component * safe chars * unsafe chars) *)
   ]
 
@@ -50,8 +51,7 @@ val compare : t -> t -> int
 (** [equal a b] is [compare a b = 0]. *)
 val equal : t -> t -> bool
 
-(** Percent-encode a string. The [scheme] argument defaults to 'http' and
-    the [component] argument defaults to `Path *)
+(** Percent-encode a string. The [component] argument defaults to `Path *)
 val pct_encode : ?scheme:string -> ?component:component -> string -> string
 
 (** Construct a pct_encoder. *)

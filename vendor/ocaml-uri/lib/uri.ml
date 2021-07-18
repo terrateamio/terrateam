@@ -28,6 +28,7 @@ type component = [
   | `Query_key
   | `Query_value
   | `Fragment
+  | `Generic
   | `Custom of (component * string * string) (* (component * safe chars * unsafe chars) *)
 ]
 
@@ -163,7 +164,7 @@ module Generic : Scheme = struct
     | `Fragment -> safe_chars_for_fragment
     | `Scheme -> safe_chars_for_scheme
     | `Custom ((component : component), safe, unsafe) ->
-       let safe_chars = safe_chars_for_component component in
+       let safe_chars = Array.copy (safe_chars_for_component component) in
        for i = 0 to String.length safe - 1 do
          let c = Char.code safe.[i] in
          safe_chars.(c) <- true
@@ -173,6 +174,7 @@ module Generic : Scheme = struct
          safe_chars.(c) <- false
        done;
        safe_chars
+    | `Generic
     | _ -> safe_chars
 
   let normalize_host hso = hso

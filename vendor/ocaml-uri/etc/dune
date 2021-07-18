@@ -1,13 +1,13 @@
 (rule
  (targets uri_services.ml)
-  (deps    services.short ../config/gen_services.exe uri_services_raw.ml)
+  (deps    services.short uri_services_raw.ml)
   (action  (with-stdout-to %{targets}
              (progn (run ../config/gen_services.exe %{deps})
                     (cat uri_services_raw.ml)))))
 
 (rule
  (targets uri_services_full.ml)
-  (deps    services.full ../config/gen_services.exe uri_services_raw.ml)
+  (deps    services.full uri_services_raw.ml)
   (action  (with-stdout-to %{targets}
              (progn (run ../config/gen_services.exe %{deps})
                     (cat uri_services_raw.ml)))))

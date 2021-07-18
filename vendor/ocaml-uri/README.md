@@ -29,6 +29,11 @@ will install the dependencies via OPAM, build the library and then run the tests
 Once installed, there are three ocamlfind packages available for your use:
 
 - `uri` - the base `Uri` module
+- `uri-re` - the _legacy_ implementation
+  At the beginning, `uri` used `re` to parse a `string`. Since 4.0.0,
+  we use `angstrom` - if something breaks with `uri.4.0.0`, you should compare
+  with `uri-re` and submit an issue. `uri-re` is deprecated and it will be
+  removed on the next release (see #150)
 - `uri.top` - the toplevel printers for use with [utop](https://github.com/diml/utop)
 - `uri-sexp` - provides converters to and from s-expressions (via a `Uri_sexp.t` type alias)
 - `uri.services` - the `Uri_services` module that provides the equivalent of *[services(5)](http://man7.org/linux/man-pages/man5/services.5.html)*

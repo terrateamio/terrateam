@@ -175,7 +175,7 @@ let expand t vars =
                       kv = false;
                       sep = ",";
                       lead_char = Some '#';
-                      encode = (fun s -> Uri.pct_encode s);
+                      encode = (fun s -> Uri.pct_encode ~component:(`Custom (`Fragment, ";", "")) s);
                     }
               | Some '.' ->
                   Expandspec.
