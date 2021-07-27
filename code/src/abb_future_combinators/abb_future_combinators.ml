@@ -142,6 +142,15 @@ module Make (Fut : Abb_intf.Future.S) = struct
     >>= function
     | (ret, fut) -> Fut.cancel fut >>| fun () -> ret
 
+  let timeout ~timeout fut =
+    let open Fut.Infix_monad in
+    let t_fut = timeout >>| fun () -> `Timeout in
+    let call = fut >>| fun r -> `Ok r in
+    first call t_fut
+    >>= function
+    | ((`Ok _ as r), fut) -> Fut.abort fut >>| fun () -> r
+    | (`Timeout, fut)     -> Fut.abort fut >>| fun () -> `Timeout
+
   module Infix_result_monad = struct
     type ('a, 'b) t = ('a, 'b) result Fut.t
 

@@ -89,6 +89,10 @@ module Make (Fut : Abb_intf.Future.S) : sig
      cancel future is cancelled. *)
   val with_cancel : cancel:unit Fut.t -> 'a Fut.t -> ('a, [> `Cancelled ]) result Fut.t
 
+  (** Wait for a future to complete and if it does not in a specified time,
+     abort it *)
+  val timeout : timeout:unit Fut.t -> 'a Fut.t -> [ `Ok      of 'a | `Timeout ] Fut.t
+
   module List : sig
     val map : f:('a -> 'b Fut.t) -> 'a list -> 'b list Fut.t
 

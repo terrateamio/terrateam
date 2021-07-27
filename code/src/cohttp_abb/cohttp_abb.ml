@@ -221,12 +221,12 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
 
     let read_request timeout_opt r =
       match timeout_opt with
-        | Some timeout ->
+        | Some timeout -> (
             let open Abb.Future.Infix_monad in
-            let req_read = Request_io.read r >>| fun req -> `Req req in
-            let timeout = Abb.Sys.sleep (Duration.to_f timeout) >>| fun () -> `Timeout in
-            Fut_comb.first req_read timeout
-            >>= fun (ret, fut) -> Abb.Future.abort fut >>| fun () -> ret
+            Fut_comb.timeout ~timeout:(Abb.Sys.sleep (Duration.to_f timeout)) (Request_io.read r)
+            >>| function
+            | `Ok r    -> `Req r
+            | `Timeout -> `Timeout)
         | None         ->
             let open Abb.Future.Infix_monad in
             Request_io.read r >>| fun req -> `Req req

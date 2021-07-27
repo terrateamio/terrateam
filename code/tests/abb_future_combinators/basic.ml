@@ -361,6 +361,28 @@ let on_failure_raise =
         | `Exn (Failure _, Some _) -> ()
         | _                        -> assert false)
 
+let timeout_timeout =
+  Oth.test ~desc:"Test timeout when the timeout function fires" ~name:"timeout timeout" (fun _ ->
+      let timeout = Fut.Promise.create () in
+      let call = Fut.Promise.create () in
+      let wait = Fut_comb.timeout ~timeout:(Fut.Promise.future timeout) (Fut.Promise.future call) in
+      ignore (Fut.run_with_state wait dummy_state);
+      assert (Fut.state wait = `Undet);
+      ignore (Fut.run_with_state (Fut.Promise.set timeout ()) dummy_state);
+      assert (Fut.state wait = `Det `Timeout);
+      assert (Fut.state (Fut.Promise.future call) = `Aborted))
+
+let timeout_success =
+  Oth.test ~desc:"Test timeout when the operation succeeds" ~name:"timeout success" (fun _ ->
+      let timeout = Fut.Promise.create () in
+      let call = Fut.Promise.create () in
+      let wait = Fut_comb.timeout ~timeout:(Fut.Promise.future timeout) (Fut.Promise.future call) in
+      ignore (Fut.run_with_state wait dummy_state);
+      assert (Fut.state wait = `Undet);
+      ignore (Fut.run_with_state (Fut.Promise.set call ()) dummy_state);
+      assert (Fut.state wait = `Det (`Ok ()));
+      assert (Fut.state (Fut.Promise.future timeout) = `Aborted))
+
 let () =
   Oth.(
     run
@@ -388,4 +410,6 @@ let () =
            on_failure_aborted_from_outside;
            on_failure_exn;
            on_failure_raise;
+           timeout_timeout;
+           timeout_success;
          ]))
