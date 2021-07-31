@@ -1343,7 +1343,7 @@ module Process = struct
     try
       let pid = Unix.fork () in
       if pid > 0 then (
-        List.iter ~f:(fun dup -> Unix.close (Abb_intf.Process.Dup.dst dup)) dups;
+        List.iter ~f:(fun dup -> Unix.close (Abb_intf.Process.Dup.src dup)) dups;
         Ok { pid; exit_code = wait_on_pid pid }
       ) else (
         ignore (init_child_process init_args dups);
