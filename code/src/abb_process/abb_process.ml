@@ -17,7 +17,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       let open Fut_comb.Infix_result_monad in
       Abb.File.read file ~buf:bytes ~pos:0 ~len
       >>= function
-      | 0 -> Abb.Future.return (Ok (Buffer.contents buffer))
+      | 0 -> Abb.File.close file >>= fun _ -> Abb.Future.return (Ok (Buffer.contents buffer))
       | n ->
           Buffer.add_subbytes buffer bytes 0 n;
           read_data buffer file bytes
@@ -29,6 +29,9 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
     let (stdin_r, stdin_w) = Unix.pipe ~cloexec:false () in
     let (stdout_r, stdout_w) = Unix.pipe ~cloexec:false () in
     let (stderr_r, stderr_w) = Unix.pipe ~cloexec:false () in
+    Unix.set_close_on_exec stdin_w;
+    Unix.set_close_on_exec stdout_r;
+    Unix.set_close_on_exec stderr_r;
     let stdin_dup = Abb_intf.Process.Dup.create ~src:stdin_r ~dst:Unix.stdin in
     let stdout_dup = Abb_intf.Process.Dup.create ~src:stdout_w ~dst:Unix.stdout in
     let stderr_dup = Abb_intf.Process.Dup.create ~src:stderr_w ~dst:Unix.stderr in
