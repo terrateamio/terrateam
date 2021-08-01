@@ -300,6 +300,12 @@ module Thread = struct
         let ret = ref None in
         let trigger (_, trigger) res =
           ret := Some res;
+          (* Send something on the pipe to trigger the read side *)
+          (try ignore (Unix.write trigger ~buf:(Bytes.of_string "0") ~pos:0 ~len:1)
+           with Unix.Unix_error _ ->
+             (* If the other side has closed the trigger, this write will fail,
+                so ignore any write error. *)
+             ());
           Unix.close trigger
         in
         let (wait, d) = Abb_thread_pool.enqueue t.El.thread_pool ~f ~trigger in
