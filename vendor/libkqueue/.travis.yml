@@ -12,6 +12,7 @@ env:
   matrix:
   - BUILD_TYPE=Release
   - BUILD_TYPE=Debug ENABLE_ASAN=YES ENABLE_LSAN=YES ENABLE_UBSAN=YES ASAN_OPTIONS="symbolize=1 detect_leaks=1 detect_stack_use_after_return=1" LSAN_OPTIONS="fast_unwind_on_malloc=0:malloc_context_size=50"
+  - BUILD_TYPE=Debug ENABLE_TSAN=YES
 addons:
   apt:
     config:
@@ -42,4 +43,3 @@ before_script:
 - ./scripts/travis/build.sh
 script:
 - make ARGS="-V" test
-

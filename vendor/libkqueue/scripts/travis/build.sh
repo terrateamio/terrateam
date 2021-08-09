@@ -19,6 +19,7 @@ if ! cmake . -G "Unix Makefiles" \
     -DENABLE_ASAN="${ENABLE_ASAN:-NO}" \
     -DENABLE_LSAN="${ENABLE_LSAN:-NO}" \
     -DENABLE_UBSAN="${ENABLE_UBSAN:-NO}" \
+    -DENABLE_TSAN="${ENABLE_TSAN:-NO}" \
     -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"; then
     fatal "Failed during cmake build configuration"
 fi

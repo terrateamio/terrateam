@@ -84,6 +84,16 @@ if(ENABLE_UBSAN)
   list(APPEND DEBUG_FSANITIZERFLAGS "undefined")
 endif()
 
+#
+# ThreadSanitizer
+#
+if(ENABLE_TSAN)
+  #
+  # -fsanitize=thread  - Build with tsan support
+  #
+  list(APPEND DEBUG_FSANITIZERFLAGS "thread")
+endif()
+
 if(DEBUG_FSANITIZERFLAGS)
   string (REPLACE ";" "," DEBUG_FSANITIZERFLAGS "${DEBUG_FSANITIZERFLAGS}")
   set(CMAKE_C_FLAGS_DEBUG "-fsanitize=${DEBUG_FSANITIZERFLAGS} ${CMAKE_C_FLAGS_DEBUG}")
