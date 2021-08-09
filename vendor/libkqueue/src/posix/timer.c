@@ -20,6 +20,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/prctl.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -166,6 +167,10 @@ _timer_create(struct filter *filt, struct knote *kn)
         free(req);
         return (-1);
     }
+    /* Set the thread's name to something descriptive so it shows up in gdb,
+     * etc. Max name length is 16 bytes. */
+    prctl(PR_SET_NAME, "libkqueue_sleep", 0, 0, 0);
+
     pthread_attr_destroy(&attr);
 
     return (0);

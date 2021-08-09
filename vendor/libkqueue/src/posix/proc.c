@@ -21,6 +21,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/prctl.h>
 #include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -114,6 +115,10 @@ evfilt_proc_init(struct filter *filt)
         goto errout;
     if (pthread_create(&ed->wthr_id, NULL, wait_thread, filt) != 0)
         goto errout;
+
+    /* Set the thread's name to something descriptive so it shows up in gdb,
+     * etc. Max name length is 16 bytes. */
+    prctl(PR_SET_NAME, "libkqueue_wait", 0, 0, 0);
 
     return (0);
 
