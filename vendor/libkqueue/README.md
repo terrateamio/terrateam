@@ -1,7 +1,7 @@
 libkqueue
 =========
 
-[![Travis CI build status][BuildStatus]][BuildStatusLink]
+[![Build Status](https://travis-ci.com/mheily/fs123.svg?branch=master)](https://travis-ci.com/mheily/fs123)
 
 A user space implementation of the kqueue(2) kernel event notification mechanism
 libkqueue acts as a translator between the kevent structure and the native
