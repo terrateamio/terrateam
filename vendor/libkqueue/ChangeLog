@@ -1,9 +1,44 @@
 Unreleased
 ------------------------------------------------------------------------
 
+Nothing here yet.
+
+2021-08-14  v2.4.0
+------------------------------------------------------------------------
+
+  * Fix: avoid segfaults when kqueue descriptors are cleaned up.
+
+  * Fix: Prevent potential dead-lock in linux_kqueue_init()
+
+  * Fix: slight deadlock in thread_start()
+
+  * Fix: missing inotify_rm_watch()
+
+  * Fix: call close() in an error handling path
+
+  * Fix: take the write lock when freeing knotes
+
+  * Keep a separate state tree for file descriptors inserted into epoll to avoid conflicts between
+    EVFILT_READ and EVFILT_WRITE  (Closes #29 Closes #59)
+
+  * Fix: deadlock and memory leak in kqueue()
+
+  * Fix: use after free issue in decrementing kq reference counts
+
+  * Default to marking file descriptors as passive sockets if fstat() doesn't hint at the type
+    (Closes #97)
+
+  * Fix various leaks and issues found by LSAN
+
   * Install event.h in $INCLUDEDIR/kqueue/sys, rather than $INCLUDEDIR/sys
 
   * Add support for building native Debian packages using Docker
+
+  * Detect raw sockets.
+
+  * Use high-resolution wait on Linux for timeouts finer than a millisecond.
+
+  * Various CMake improvements.
 
 2019-02-06  v2.3.1
 ------------------------------------------------------------------------
