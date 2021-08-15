@@ -84,6 +84,9 @@ type t = int
 let create () = Bindings.kqueue ()
 
 let kevent t ~changelist ~eventlist ~timeout =
+  (* Start by setting size to 0 in case this gets interrupted *)
+  eventlist.Eventlist.size <- 0;
+
   let timeout =
     match timeout with
       | Some ts -> C.addr ts
@@ -98,10 +101,7 @@ let kevent t ~changelist ~eventlist ~timeout =
       eventlist.Eventlist.capacity
       timeout
   in
-  if ret > -1 then
-    eventlist.Eventlist.size <- ret
-  else
-    eventlist.Eventlist.size <- 0;
+  if ret > -1 then eventlist.Eventlist.size <- ret;
   ret
 
 external unsafe_int_of_file_descr : Unix.file_descr -> int = "%identity"
