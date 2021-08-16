@@ -187,7 +187,11 @@ module Sys = struct
     Future.with_state (fun s ->
         let t = Abb_fut.State.state s in
         let timer_id = t.El.next_timer_id in
-        let ts = duration +. t.El.mono_time in
+        (* [Float.succ] to guarantee that this happens within the next event
+           loop iteration.  This ensure that [sleep 0.0] will cause an event
+           loop to happen between sleeping and running.  Otherwise a tight loop
+           with [sleep 0.0] would never let the scheduler do other work. *)
+        let ts = duration +. Float.succ t.El.mono_time in
         let p =
           Future.Promise.create
             ~abort:(fun () ->

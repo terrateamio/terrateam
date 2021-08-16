@@ -80,7 +80,10 @@ module El = struct
     { t with reads = Fd_map.add fd handler t.reads; change_read = Fd_map.add fd `Add t.change_read }
 
   let remove_read fd t =
-    { t with reads = Fd_map.remove fd t.reads; change_read = Fd_map.add fd `Del t.change_read }
+    if Fd_map.mem fd t.reads then
+      { t with reads = Fd_map.remove fd t.reads; change_read = Fd_map.add fd `Del t.change_read }
+    else
+      t
 
   let add_write fd handler t =
     {
@@ -90,7 +93,14 @@ module El = struct
     }
 
   let remove_write fd t =
-    { t with writes = Fd_map.remove fd t.writes; change_write = Fd_map.add fd `Del t.change_write }
+    if Fd_map.mem fd t.writes then
+      {
+        t with
+        writes = Fd_map.remove fd t.writes;
+        change_write = Fd_map.add fd `Del t.change_write;
+      }
+    else
+      t
 
   let create_changelist t =
     let changelist =
@@ -266,7 +276,11 @@ module Sys = struct
         let t = Abb_fut.State.state s in
         let timer_id = t.El.next_timer_id in
         let t = { t with El.next_timer_id = t.El.next_timer_id + 1 } in
-        let ts = duration +. t.El.mono_time in
+        (* [Float.succ] to guarantee that this happens within the next event
+           loop iteration.  This ensure that [sleep 0.0] will cause an event
+           loop to happen between sleeping and running.  Otherwise a tight loop
+           with [sleep 0.0] would never let the scheduler do other work. *)
+        let ts = duration +. Float.succ t.El.mono_time in
         let p =
           Future.Promise.create
             ~abort:(fun () ->
@@ -1112,34 +1126,39 @@ module Socket = struct
     send' 0 bufs >>= fun () -> Future.Promise.future p
 
   let close t =
+    (* This scheduler is used in FreeBSD and Linux, with linux support via
+       libkqueue.  In FreeBSD, if an fd is closed, it is removed from the kqueue
+       by the kernel.  However, libkqueue tracks what is being tracked through
+       its own internal data structure that represents the kqueue and then it
+       translates that to epoll calls.  epoll has similar semantics to kqueue
+       concerning when an fd is closed being cleaned up from epoll, however
+       libkqueue's data structure doesn't have access to this information, so it
+       still thinks the fd is being tracked via kqueue.  If you then try to add
+       the filter to kqueue again, libkqueue fails adding it because it thinks
+       it's already being tracked.  Therefore, we need to ensure the cleanup is
+       done on our own
+
+       To do this, we need to ensure that if the fd being closed is being
+       tracked by kqueue, a [kevent] is run that removes it via the changelist,
+       and then we can close the fd.  In order to do this we utilize the timer
+       functionality, and make a timer that will run at the nearest increment
+       after "now", we add the removes to the changeset, and then perform the
+       close in the next event loop iteration. *)
     Future.with_state (fun s ->
         let el = Abb_fut.State.state s in
-        (* Closing an fd removes it from the event list.  We need to delete it from
-           here because between the now and the changelist being applied a new fd
-           might be created with the same value as this one so our changelist would
-           not make sense. *)
-        let el =
-          {
-            el with
-            El.change_read = Fd_map.remove t el.El.change_read;
-            change_write = Fd_map.remove t el.El.change_write;
-          }
+        let timer_id = el.El.next_timer_id in
+        let el = { el with El.next_timer_id = el.El.next_timer_id + 1 } in
+        let ts = Float.succ el.El.mono_time in
+        let f s =
+          try
+            Unix.close t;
+            s
+          with _ -> s
         in
+        let el = { el with El.timers = Timers.add timer_id ts f el.El.timers } in
+        let el = El.remove_read t (El.remove_write t el) in
         let s = Abb_fut.State.set_state el s in
-        try
-          Unix.close t;
-          (s, Future.return (Ok ()))
-        with
-          | Unix.Unix_error (err, _, _) as exn ->
-              let open Unix in
-              ( s,
-                Future.return
-                  (Error
-                     (match err with
-                       | EBADF      -> `E_bad_file
-                       | ECONNRESET -> `E_connection_reset
-                       | _          -> `Unexpected exn)) )
-          | exn -> (s, Future.return (Error (`Unexpected exn))))
+        (s, Future.return (Ok ())))
 
   let listen t ~backlog =
     try

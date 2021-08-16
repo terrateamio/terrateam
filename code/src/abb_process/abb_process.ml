@@ -29,6 +29,8 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
     let (stdin_r, stdin_w) = Unix.pipe ~cloexec:false () in
     let (stdout_r, stdout_w) = Unix.pipe ~cloexec:false () in
     let (stderr_r, stderr_w) = Unix.pipe ~cloexec:false () in
+    Unix.set_nonblock stdout_r;
+    Unix.set_nonblock stderr_r;
     Unix.set_close_on_exec stdin_w;
     Unix.set_close_on_exec stdout_r;
     Unix.set_close_on_exec stderr_r;
