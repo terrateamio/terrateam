@@ -42,6 +42,11 @@
 #define VISIBLE         __attribute__((visibility("default")))
 #define HIDDEN          __attribute__((visibility("hidden")))
 #define UNUSED          __attribute__((unused))
+#ifndef NDEBUG
+#define UNUSED_NDEBUG   __attribute__((unused))
+#else
+#define UNUSED_NDEBUG
+#endif
 
 #include <fcntl.h>
 #include <limits.h>
