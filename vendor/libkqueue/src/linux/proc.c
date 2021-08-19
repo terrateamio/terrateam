@@ -14,229 +14,148 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/syscall.h>
+
+/* We depend on the SYS_pidfd_open call to determine when a process has exited
+ *
+ * The SYS_pidfd_open call is only available in Kernels >= 5.3.  If this call
+ * isn't available there's currently no good fallback.  We could implement
+ * some code around netlink in future, but for now just mark the proc filter
+ * as not implemented.
+ */
+#ifndef SYS_pidfd_open
+#include "private.h"
+const struct filter evfilt_proc = EVFILT_NOTIMPL;
+#else
 #include <errno.h>
 #include <err.h>
 #include <fcntl.h>
-#include <pthread.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/prctl.h>
-#include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <string.h>
 #include <unistd.h>
 
 #include <limits.h>
-#include <sys/inotify.h>
 #include <sys/epoll.h>
 
 #include "sys/event.h"
 #include "private.h"
 
-
-/* XXX-FIXME Should only have one wait_thread per process.
-   Now, there is one thread per kqueue
- */
-struct evfilt_data {
-    pthread_t       wthr_id;
-    pthread_cond_t   wait_cond;
-    pthread_mutex_t  wait_mtx;
-};
-
-//FIXME: WANT: static void *
-void *
-wait_thread(void *arg)
-{
-    struct filter *filt = (struct filter *) arg;
-    uint64_t counter = 1;
-    const int options = WEXITED | WNOWAIT;
-    struct knote *kn;
-    siginfo_t si;
-    sigset_t sigmask;
-
-    /* Block all signals */
-    sigfillset (&sigmask);
-    pthread_sigmask(SIG_BLOCK, &sigmask, NULL);
-
-    for (;;) {
-
-        /* Wait for a child process to exit(2) */
-        if (waitid(P_ALL, 0, &si, options) != 0) {
-            if (errno == ECHILD) {
-                dbg_puts("got ECHILD, waiting for wakeup condition");
-                pthread_mutex_lock(&filt->kf_data->wait_mtx);
-                pthread_cond_wait(&filt->kf_data->wait_cond, &filt->kf_data->wait_mtx);
-                pthread_mutex_unlock(&filt->kf_data->wait_mtx);
-                dbg_puts("awoken from ECHILD-induced sleep");
-                continue;
-            }
-
-            dbg_puts("waitid(2) returned");
-            if (errno == EINTR)
-                continue;
-            dbg_perror("waitid(2)");
-            break;
-        }
-
-        /* Scan the wait queue to see if anyone is interested */
-        kn = knote_lookup(filt, si.si_pid);
-        if (kn == NULL)
-            continue;
-
-        /* Create a proc_event */
-        if (si.si_code == CLD_EXITED) {
-            kn->kev.data = si.si_status;
-        } else if (si.si_code == CLD_KILLED) {
-            /* FIXME: probably not true on BSD */
-            /* FIXME: arbitrary non-zero number */
-            kn->kev.data = 254;
-        } else {
-            /* Should never happen. */
-            /* FIXME: arbitrary non-zero number */
-            kn->kev.data = 1;
-        }
-
-        knote_enqueue(filt, kn);
-
-        /* Indicate read(2) readiness */
-        if (write(filt->kf_pfd, &counter, sizeof(counter)) < 0) {
-            if (errno != EAGAIN) {
-                dbg_printf("write(2): %s", strerror(errno));
-                /* TODO: set filter error flag */
-                break;
-            }
-        }
-    }
-
-    /* TODO: error handling */
-
-    return (NULL);
-}
-
 int
-evfilt_proc_init(struct filter *filt)
+evfilt_proc_copyout(struct kevent *dst, struct knote *src, UNUSED_NDEBUG void *ptr)
 {
-#if FIXME
-    struct evfilt_data *ed;
-    int efd = -1;
+    siginfo_t info;
+    struct epoll_event * const ev = (struct epoll_event *) ptr;
 
-    if ((ed = calloc(1, sizeof(*ed))) == NULL)
-        return (-1);
-    filt->kf_data = ed;
+    dbg_printf("epoll_ev=%s", epoll_event_dump(ev));
+    memcpy(dst, &src->kev, sizeof(*dst)); /* Populate flags from the src kevent */
 
-    pthread_mutex_init(&ed->wait_mtx, NULL);
-    pthread_cond_init(&ed->wait_cond, NULL);
-    if ((efd = eventfd(0, 0)) < 0)
-        goto errout;
-    if (fcntl(filt->kf_pfd, F_SETFL, O_NONBLOCK) < 0)
-        goto errout;
-    filt->kf_pfd = efd;
-    if (pthread_create(&ed->wthr_id, NULL, wait_thread, filt) != 0)
-        goto errout;
-
-    /* Set the thread's name to something descriptive so it shows up in gdb,
-     * etc. glibc >= 2.1.2 supports pthread_setname_np, but this is a safer way
-     * to do it for backwards compatibility. Max name length is 16 bytes. */
-    prctl(PR_SET_NAME, "libkqueue_wait", 0, 0, 0);
-
-    return (0);
-
-errout:
-    if (efd >= 0)
-        close(efd);
-    free(ed);
-    close(filt->kf_pfd);
-    return (-1);
-#endif
-    return (-1); /*STUB*/
-}
-
-void
-evfilt_proc_destroy(struct filter *filt)
-{
-//TODO:    pthread_cancel(filt->kf_data->wthr_id);
-    close(filt->kf_pfd);
-}
-
-int
-evfilt_proc_copyout(struct filter *filt,
-            struct kevent *dst,
-            int maxevents)
-{
-    struct knote *kn;
-    int nevents = 0;
-    uint64_t cur;
-
-    /* Reset the counter */
-    if (read(filt->kf_pfd, &cur, sizeof(cur)) < sizeof(cur)) {
-        dbg_printf("read(2): %s", strerror(errno));
+    /* Get the exit status _without_ reaping the process, waitpid() should still work in the caller */
+    if (waitid(P_PID, (id_t)src->kev.ident, &info, WEXITED | WNOHANG | WNOWAIT) < 0) {
+        dbg_printf("waitid(2): %s", strerror(errno));
         return (-1);
     }
-    dbg_printf("  counter=%llu", (unsigned long long) cur);
 
-    for (kn = knote_dequeue(filt); kn != NULL; kn = knote_dequeue(filt)) {
-        kevent_dump(&kn->kev);
-        memcpy(dst, &kn->kev, sizeof(*dst));
-
-        if (kn->kev.flags & EV_DISPATCH) {
-            KNOTE_DISABLE(kn);
-        }
-        if (kn->kev.flags & EV_ONESHOT) {
-            knote_delete(filt, kn);
-        } else {
-            kn->kev.data = 0; //why??
-        }
-
-
-        if (++nevents > maxevents)
-            break;
-        dst++;
+    if (info.si_code == CLD_EXITED) {
+        dst->data = WIFEXITED(info.si_status);
+    	dbg_printf("pid=%u exited, status %u", (unsigned int)src->kev.ident, (unsigned int)dst->data);
+    } else if (info.si_code == CLD_KILLED || info.si_code == CLD_DUMPED) {
+        dst->data = WTERMSIG(info.si_status);
+    	dbg_printf("pid=%u killed, status %u", (unsigned int)src->kev.ident, (unsigned int)dst->data);
+    } else {
+        dst->data = 0;
     }
+    dst->flags |= EV_EOF; /* Set in macOS and FreeBSD kqueue implementations */
 
-    if (knote_events_pending(filt)) {
-    /* XXX-FIXME: If there are leftover events on the waitq,
-       re-arm the eventfd. list */
-        abort();
-    }
-
-    return (nevents);
-}
-
-int
-evfilt_proc_knote_create(struct filter *filt, struct knote *kn)
-{
-    return (0); /* STUB */
-}
-
-int
-evfilt_proc_knote_modify(struct filter *filt, struct knote *kn,
-        const struct kevent *kev)
-{
-    return (0); /* STUB */
-}
-
-int
-evfilt_proc_knote_delete(struct filter *filt, struct knote *kn)
-{
-    return (0); /* STUB */
+    return (1);
 }
 
 int
 evfilt_proc_knote_enable(struct filter *filt, struct knote *kn)
 {
-    return (0); /* STUB */
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_ADD, kn->kdata.kn_procfd, EPOLL_EV_KN(EPOLLIN, kn)) < 0) {
+        dbg_printf("epoll_ctl(2): %s", strerror(errno));
+        return -1;
+    }
+    return (0);
 }
 
 int
 evfilt_proc_knote_disable(struct filter *filt, struct knote *kn)
 {
-    return (0); /* STUB */
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, kn->kdata.kn_procfd, NULL) < 0) {
+        dbg_printf("epoll_ctl(2): %s", strerror(errno));
+        return (-1);
+    }
+    return (0);
 }
 
-const struct filter evfilt_proc_DEADWOOD = {
-    .kf_id      = 0,  //XXX-FIXME broken: EVFILT_PROC,
+int
+evfilt_proc_knote_create(struct filter *filt, struct knote *kn)
+{
+    int pfd;
+
+    /* This mirrors the behaviour of kqueue if fflags doesn't specify any events */
+    if (!(kn->kev.fflags & NOTE_EXIT)) {
+        dbg_printf("not monitoring pid=%u as no NOTE_* fflags set", (unsigned int)kn->kev.ident);
+        kn->kdata.kn_procfd = -1;
+        return 0;
+    }
+
+    /* Returns an FD, which, when readable, indicates the process has exited */
+    pfd = syscall(SYS_pidfd_open, (pid_t)kn->kev.ident, 0);
+    if (pfd < 0) {
+        dbg_printf("pidfd_open(2): %s", strerror(errno));
+        return (-1);
+    }
+    dbg_printf("created pidfd=%i monitoring pid=%u", pfd, (unsigned int)kn->kev.ident);
+
+    kn->kdata.kn_procfd = pfd;
+
+    /*
+     * These get added by default on macOS (and likely FreeBSD)
+     * which make sense considering a process exiting is an
+     * edge triggered event, not a level triggered one.
+     */
+    kn->kev.flags |= EV_ONESHOT;
+    kn->kev.flags |= EV_CLEAR;
+
+    KN_UDATA(kn);   /* populate this knote's kn_udata field */
+
+    return evfilt_proc_knote_enable(filt, kn);
+}
+
+int
+evfilt_proc_knote_modify(struct filter *filt, struct knote *kn, const struct kevent *kev)
+{
+    /* We don't need to make any changes to the pidfd, just record the new flags */
+    kn->kev.flags = kev->flags;
+    kn->kev.fflags = kev->fflags;
+
+    if (kn->kdata.kn_procfd < 0) return evfilt_proc_knote_create(filt, kn);
+
+    return (0);
+}
+
+int
+evfilt_proc_knote_delete(struct filter *filt, struct knote *kn)
+{
+    int rv = 0;
+
+    /* If it's enabled, we need to remove the pidfd from epoll */
+    if (KNOTE_ENABLED(kn) && (evfilt_proc_knote_disable(filt, kn) < 0)) rv = -1;
+
+    dbg_printf("closed pidfd=%i", kn->kdata.kn_procfd);
+    if (close(kn->kdata.kn_procfd) < 0) rv = -1;
+    kn->kdata.kn_procfd = -1;
+
+    return (rv);
+}
+
+const struct filter evfilt_proc = {
+    .kf_id      = EVFILT_PROC,
     .kf_copyout = evfilt_proc_copyout,
     .kn_create  = evfilt_proc_knote_create,
     .kn_modify  = evfilt_proc_knote_modify,
@@ -244,3 +163,4 @@ const struct filter evfilt_proc_DEADWOOD = {
     .kn_enable  = evfilt_proc_knote_enable,
     .kn_disable = evfilt_proc_knote_disable,
 };
+#endif

@@ -19,6 +19,7 @@ set(LIBKQUEUE_TEST_SOURCES
     kevent.c
     main.c
     read.c
+    proc.c
     test.c
     timer.c
     user.c

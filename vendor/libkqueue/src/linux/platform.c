@@ -24,10 +24,6 @@
 
 #define MONITORING_THREAD_SIGNAL  (SIGRTMIN + 1)
 
-
-//XXX-FIXME TEMP
-const struct filter evfilt_proc = EVFILT_NOTIMPL;
-
 /*
  * Per-thread epoll event buffer used to ferry data between
  * kevent_wait() and kevent_copyout().

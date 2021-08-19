@@ -19,6 +19,19 @@
 #include <sys/resource.h>
 #endif
 
+#if defined(__linux__)
+#include <sys/syscall.h>
+#endif
+
+/*
+ *  We need a fairly late kernel (>= 5.3) to have
+ *  pidfd available on Linux which is required for
+ *  EVFILT_PROC to function.
+ */
+#if !defined(__linux__) || defined(SYS_pidfd_open)
+#define DO_PROC_TEST 1
+#endif
+
 #include "common.h"
 
 unsigned int
@@ -324,7 +337,16 @@ usage(void)
     printf("usage: [-hn] [testclass ...]\n"
            " -h        This message\n"
            " -n        Number of iterations (default: 1)\n"
-           " testclass Tests suites to run: [kqueue socket signal timer vnode user]\n"
+           " testclass Tests suites to run: ["
+           "kqueue "
+           "socket "
+           "signal "
+#ifdef DO_PROC_TEST
+           "proc "
+#endif
+           "timer "
+           "vnode "
+           "user]\n"
            "           All tests are run by default\n"
            "\n"
           );
@@ -342,7 +364,7 @@ main(int argc, char **argv)
         // XXX-FIXME -- BROKEN ON LINUX WHEN RUN IN A SEPARATE THREAD
         { "signal", 1, test_evfilt_signal },
 #endif
-#if FIXME
+#ifdef DO_PROC_TEST
         { "proc", 1, test_evfilt_proc },
 #endif
         { "timer", 1, test_evfilt_timer },

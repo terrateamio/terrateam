@@ -177,6 +177,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL Linux)
        src/posix/platform.h
        src/linux/platform.c
        src/linux/platform.h
+       src/linux/proc.c
        src/linux/read.c
        src/linux/signal.c
        src/linux/timer.c

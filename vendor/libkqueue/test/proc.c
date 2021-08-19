@@ -18,7 +18,6 @@
 
 static int sigusr1_caught = 0;
 static pid_t pid;
-static int kqfd;
 
 static void
 sig_handler(int signum)
@@ -31,9 +30,9 @@ test_kevent_proc_add(struct test_context *ctx)
 {
     struct kevent kev;
 
-    test_no_kevents(kqfd);
-    kevent_add(kqfd, &kev, pid, EVFILT_PROC, EV_ADD, 0, 0, NULL);
-    test_no_kevents(kqfd);
+    test_no_kevents(ctx->kqfd);
+    kevent_add(ctx->kqfd, &kev, pid, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
+    test_no_kevents(ctx->kqfd);
 }
 
 static void
@@ -41,18 +40,30 @@ test_kevent_proc_delete(struct test_context *ctx)
 {
     struct kevent kev;
 
-    test_no_kevents(kqfd);
-    kevent_add(kqfd, &kev, pid, EVFILT_PROC, EV_DELETE, 0, 0, NULL);
+    test_no_kevents(ctx->kqfd);
+    kevent_add(ctx->kqfd, &kev, pid, EVFILT_PROC, EV_DELETE, NOTE_EXIT, 0, NULL);
     if (kill(pid, SIGKILL) < 0)
         die("kill");
     sleep(1);
-    test_no_kevents(kqfd);
+    test_no_kevents(ctx->kqfd);
 }
 
 static void
 test_kevent_proc_get(struct test_context *ctx)
 {
     struct kevent kev, buf;
+    int fflags;
+
+    /*
+     *  macOS requires NOTE_EXITSTATUS to get the
+     *  exit code of the process, FreeBSD always
+     *  provides it.
+     */
+#ifdef __APPLE__
+    fflags = NOTE_EXIT | NOTE_EXITSTATUS;
+#else
+    fflags = NOTE_EXIT;
+#endif
 
     /* Create a child that waits to be killed and then exits */
     pid = fork();
@@ -63,16 +74,20 @@ test_kevent_proc_get(struct test_context *ctx)
     }
     printf(" -- child created (pid %d)\n", (int) pid);
 
-    test_no_kevents(kqfd);
-    kevent_add(kqfd, &kev, pid, EVFILT_PROC, EV_ADD, 0, 0, NULL);
+    test_no_kevents(ctx->kqfd);
+    kevent_add(ctx->kqfd, &kev, pid, EVFILT_PROC, EV_ADD, fflags, 0, NULL);
 
     /* Cause the child to exit, then retrieve the event */
     printf(" -- killing process %d\n", (int) pid);
-    if (kill(pid, SIGUSR1) < 0)
+    if (kill(pid, SIGKILL) < 0)
         die("kill");
-    kevent_get(&buf, kqfd);
+    kevent_get(&buf, ctx->kqfd);
+
+    kev.data = SIGKILL; /* What we expected the process exit code to be */
+    kev.flags = EV_ADD | EV_ONESHOT | EV_CLEAR | EV_EOF;
+
     kevent_cmp(&kev, &buf);
-    test_no_kevents(kqfd);
+    test_no_kevents(ctx->kqfd);
 }
 
 #ifdef TODO
@@ -85,13 +100,13 @@ test_kevent_signal_disable(struct test_context *ctx)
     test_begin(test_id);
 
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_DISABLE, 0, 0, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+    if (kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL) < 0)
         die("%s", test_id);
 
     /* Block SIGUSR1, then send it to ourselves */
     sigset_t mask;
     sigemptyset(&mask);
-    sigaddset(&mask, SIGUSR1);
+    sigaddset(&mask, SIGKILL);
     if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
         die("sigprocmask");
     if (kill(getpid(), SIGKILL) < 0)
@@ -111,7 +126,7 @@ test_kevent_signal_enable(struct test_context *ctx)
     test_begin(test_id);
 
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_ENABLE, 0, 0, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+    if (kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL) < 0)
         die("%s", test_id);
 
     /* Block SIGUSR1, then send it to ourselves */
@@ -129,11 +144,11 @@ test_kevent_signal_enable(struct test_context *ctx)
 #else
     kev.data = 2; // one extra time from test_kevent_signal_disable()
 #endif
-    kevent_cmp(&kev, kevent_get(kqfd));
+    kevent_cmp(&kev, kevent_get(ctx->kqfd));
 
     /* Delete the watch */
     kev.flags = EV_DELETE;
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+    if (kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL) < 0)
         die("%s", test_id);
 
     success();
@@ -149,7 +164,7 @@ test_kevent_signal_del(struct test_context *ctx)
 
     /* Delete the kevent */
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_DELETE, 0, 0, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+    if (kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL) < 0)
         die("%s", test_id);
 
     /* Block SIGUSR1, then send it to ourselves */
@@ -174,7 +189,7 @@ test_kevent_signal_oneshot(struct test_context *ctx)
     test_begin(test_id);
 
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD | EV_ONESHOT, 0, 0, NULL);
-    if (kevent(kqfd, &kev, 1, NULL, 0, NULL) < 0)
+    if (kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL) < 0)
         die("%s", test_id);
 
     /* Block SIGUSR1, then send it to ourselves */
@@ -188,7 +203,7 @@ test_kevent_signal_oneshot(struct test_context *ctx)
 
     kev.flags |= EV_CLEAR;
     kev.data = 1;
-    kevent_cmp(&kev, kevent_get(kqfd));
+    kevent_cmp(&kev, kevent_get(ctx->kqfd));
 
     /* Send another one and make sure we get no events */
     if (kill(getpid(), SIGUSR1) < 0)

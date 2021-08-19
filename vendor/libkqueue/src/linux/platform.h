@@ -162,6 +162,7 @@ struct fd_state {
         int kn_timerfd; \
         int kn_signalfd; \
         int kn_inotifyfd; \
+        int kn_procfd; \
         int kn_eventfd; \
     } kdata; \
     struct epoll_udata    kn_udata       /* Common struct passed to epoll */
