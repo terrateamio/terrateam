@@ -143,7 +143,7 @@ test_peer_close_detection(void *unused)
 }
 
 void
-test_kqueue(void *unused)
+test_kqueue_alloc(void *unused)
 {
     int kqfd;
 
@@ -260,6 +260,24 @@ test_ev_receipt(void *unused)
 }
 
 void
+test_kqueue(struct test_context *ctx)
+{
+    test(peer_close_detection, ctx);
+
+    test(kqueue_alloc, ctx);
+    test(kevent, ctx);
+
+#if defined(__linux__)
+    test(cleanup, ctx);
+#endif
+
+    test(ev_receipt, ctx);
+    /* TODO: this fails now, but would be good later
+    test(kqueue_descriptor_is_pollable);
+    */
+}
+
+void
 run_iteration(struct test_context *ctx)
 {
     struct unit_test *test;
@@ -280,24 +298,6 @@ test_harness(struct unit_test tests[MAX_TESTS], int iterations)
     printf("Running %d iterations\n", iterations);
 
     testing_begin();
-
-    ctx = calloc(1, sizeof(*ctx));
-
-    test(peer_close_detection, ctx);
-
-    test(kqueue, ctx);
-    test(kevent, ctx);
-
-#if defined(__linux__)
-    test(cleanup, ctx);
-#endif
-
-    test(ev_receipt, ctx);
-    /* TODO: this fails now, but would be good later
-    test(kqueue_descriptor_is_pollable);
-    */
-
-    free(ctx);
 
     if ((kqfd = kqueue()) < 0)
         die("kqueue()");
@@ -324,7 +324,7 @@ usage(void)
     printf("usage: [-hn] [testclass ...]\n"
            " -h        This message\n"
            " -n        Number of iterations (default: 1)\n"
-           " testclass Tests suites to run: [socket signal timer vnode user]\n"
+           " testclass Tests suites to run: [kqueue socket signal timer vnode user]\n"
            "           All tests are run by default\n"
            "\n"
           );
@@ -335,6 +335,8 @@ int
 main(int argc, char **argv)
 {
     struct unit_test tests[MAX_TESTS] = {
+        { "kqueue", 1, test_kqueue },
+
         { "socket", 1, test_evfilt_read },
 #if !defined(_WIN32) && !defined(__ANDROID__)
         // XXX-FIXME -- BROKEN ON LINUX WHEN RUN IN A SEPARATE THREAD
