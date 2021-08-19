@@ -56,7 +56,12 @@ extern long int syscall (long int __sysno, ...);
 #define kqueue_epoll_fd(kq)     ((kq)->epollfd)
 #define filter_epoll_fd(filt)   ((filt)->kf_kqueue->epollfd)
 
-/** Macro for populating the kn udata structure
+/** Macro for populating the kn_udata structure
+ *
+ * We set the udata for the epoll event so we can retrieve the knote associated
+ * with the event when the event occurs.
+ *
+ * This should be called before adding a new epoll event associated with a knote.
  *
  * @param[in] _kn            to populate.
  */

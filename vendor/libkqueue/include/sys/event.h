@@ -72,11 +72,15 @@ struct timespec;
  * to set which notifications the application wishes to received.
  *
  * A list of kevent structures are passed back to the application as the <em>eventlist</em>
- * to inform the application of events which occurred or filter states.
+ * to inform the application of events which occurred or of filter states.
  */
 struct kevent {
-    uintptr_t           ident;         //!< The unique identifier for this event.
-    short               filter;        //!< The unique identifier for this event.
+    uintptr_t           ident;         //!< The unique identifier (within a given filter)
+                                       ///< for this event, usually a PID, FD, signal or
+                                       ///< other unique identifier.
+                                       ///< The type of identifier passed depends on the
+                                       ///< filter.
+    short               filter;        //!< Filter for this event.
     unsigned short      flags;         //!< One or more of the EV_* macros or'd together.
     unsigned int        fflags;        //!< Filter specific flags.
     intptr_t            data;          //!< Additional data for the filter.

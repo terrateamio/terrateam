@@ -89,8 +89,14 @@ struct eventfd {
                                   KNFL_SOCKET_RAW)
 
 struct knote {
-    struct kevent     kev;
-    unsigned int      kn_flags;
+    struct kevent     kev;           //!< kevent used to create this knote.
+                                     ///< Contains flags/fflags/data/udata etc.
+
+    unsigned int      kn_flags;      //!< Internal flags used to record additional
+                                     ///< information about the knote.  i.e. whether
+                                     ///< it is enabled and what type of
+                                     ///< socket/file/device it refers to.
+                                     ///< See the KNFL_* macros for more details.
     union {
         /* OLD */
         int             pfd;         //!< Used by timerfd.
@@ -104,7 +110,7 @@ struct knote {
         void            *handle;    //!< Used by win32 filters.
     } data;
 
-    struct kqueue       *kn_kq;
+    struct kqueue       *kn_kq;     //!< kqueue this knote is associated with.
     volatile uint32_t   kn_ref;
 #if defined(KNOTE_PLATFORM_SPECIFIC)
     KNOTE_PLATFORM_SPECIFIC;
@@ -112,13 +118,20 @@ struct knote {
     RB_ENTRY(knote)   kn_entries;
 };
 
-#define KNOTE_ENABLE(ent)           do {                            \
-            (ent)->kev.flags &= ~EV_DISABLE;                        \
+/** Mark a knote as enabled
+ */
+#define KNOTE_ENABLE(_kn)           do {                            \
+            (_kn)->kev.flags &= ~EV_DISABLE;                       \
 } while (0/*CONSTCOND*/)
 
-#define KNOTE_DISABLE(ent)          do {                            \
-            (ent)->kev.flags |=  EV_DISABLE;                        \
+/** Mark a knote as disabled
+ */
+#define KNOTE_DISABLE(_kn)          do {                            \
+            (_kn)->kev.flags |=  EV_DISABLE;                       \
 } while (0/*CONSTCOND*/)
+
+#define KNOTE_ENABLED(_kn)    (!((_kn)->kev.flags & EV_DISABLE))
+#define KNOTE_DISABLED(_kn)   ((_kn)->kev.flags & EV_DISABLE)
 
 /** A filter within a kqueue notification channel
  *
@@ -144,7 +157,18 @@ struct filter {
     /* filter operations */
     int            (*kf_init)(struct filter *);
     void           (*kf_destroy)(struct filter *);
-    int            (*kf_copyout)(struct kevent *, struct knote *, void *);
+
+    /** Copy an event from the eventing system to a kevent structure
+     *
+     * @param[in] dst    kevent to populate.
+     * @param[in] kn     the event was triggered on.
+     * @param[in] ev     event system specific structure representing the event,
+     *                   i.e. for Linux this would be a `struct epoll_event *`.
+     * @return
+     *    - 0 on success.
+     *    - -1 on failure.
+     */
+    int            (*kf_copyout)(struct kevent *dst, struct knote *kn, void *ev);
 
     /* knote operations */
     int            (*kn_create)(struct filter *, struct knote *);
@@ -192,21 +216,56 @@ struct kqueue {
     RB_ENTRY(kqueue) entries;
 };
 
+/** Platform specific support functions
+ *
+ */
 struct kqueue_vtable {
-    int  (*kqueue_init)(struct kqueue *);
-    void (*kqueue_free)(struct kqueue *);
-    // @param timespec can be given as timeout
-    // @param int the number of events to wait for
-    // @param kqueue the queue to wait on
-    int  (*kevent_wait)(struct kqueue *, int, const struct timespec *);
-    // @param kqueue the queue to look at
-    // @param int The number of events that should be ready
-    // @param kevent the structure to copy the events into
-    // @param int The number of events to copy
-    // @return the actual number of events copied
-    int  (*kevent_copyout)(struct kqueue *, int, struct kevent *, int);
-    int  (*filter_init)(struct kqueue *, struct filter *);
-    void (*filter_free)(struct kqueue *, struct filter *);
+    /** Called once for every kqueue created
+     *
+     */
+    int  (*kqueue_init)(struct kqueue *kq);
+
+    /** Called when a kqueue is destroyed
+     *
+     */
+    void (*kqueue_free)(struct kqueue *kq);
+
+    /** Wait on this platform's eventing system to produce events
+     *
+     * ...or return if there are no events within the timeout period.
+     *
+     * @param[in] kq            The queue to wait on.
+     * @param[in] numevents     The number of events to wait for.
+     * @param[in] ts            How long to wait before returning.
+     *                          May be NULL if no timeout is required.
+     * @return The number of events that ocurred.
+     */
+    int  (*kevent_wait)(struct kqueue *kq, int numevents, const struct timespec *ts);
+
+    /** Translate events produced by the eventing system to kevents
+     *
+     * @param[in] kq            to retrieve events from.
+     * @param[in] nready        The number of events kevent_wait indicated were ready.
+     * @param[out] el           The structure to copy the events into.
+     * @param[in] nevents       The maximum number of events we're allowed to produce.
+     *                          This indicates how much free space is available in the
+     *                          kevent structure.
+     * @return The number of events we copied.
+     */
+    int  (*kevent_copyout)(struct kqueue *kq, int nready, struct kevent *el, int);
+
+    /** Perform platform specific initialisation for filters
+     *
+     * Called once per kqueue per filter.
+     */
+    int  (*filter_init)(struct kqueue *kq, struct filter *filt);
+
+    /** Perform platform specific de-initialisation for filters
+     *
+     * Called once per kqueue per filter.
+     */
+    void (*filter_free)(struct kqueue *kq, struct filter *filt);
+
     int  (*eventfd_init)(struct eventfd *);
     void (*eventfd_close)(struct eventfd *);
     int  (*eventfd_raise)(struct eventfd *);

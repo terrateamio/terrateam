@@ -591,15 +591,19 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
         int                   rv;
 
         if (!epoll_udata) {
-            dbg_puts("event has no filter, skipping...");
+            dbg_puts("event has no knote, skipping..."); /* Forgot to call KN_UDATA()? */
             continue;
         }
 
-        switch (epoll_udata->ud_type) {
         /*
          * epoll event is associated with a single filter
-         * so we just have the one knote.
+         * so we just have one knote per event.
+         *
+         * As different filters store pointers to different
+         * structures, we need to examine ud_type to figure
+         * out what epoll_data contains.
          */
+        switch (epoll_udata->ud_type) {
         case EPOLL_UDATA_KNOTE:
         {
             struct knote *kn = epoll_udata->ud_kn;
