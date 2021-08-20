@@ -23,14 +23,23 @@
  * Atomic operations that override the ones in posix/platform.h
  */
 #include <atomic.h>
+
+#undef atomic_uintptr_t
+#define atomic_uintptr_t                  uintptr_t
+#undef atomic_unit
+#define atomic_uint                       unsigned int
 #undef atomic_inc
-#define atomic_inc      atomic_inc_32_nv
+#define atomic_inc                        atomic_inc_32_nv
 #undef atomic_dec
-#define atomic_dec      atomic_dec_32_nv
+#define atomic_dec                        atomic_dec_32_nv
 #undef atomic_cas
-#define atomic_cas      atomic_cas_ptr
+#define atomic_cas(p, oval, nval)         (atomic_cas(p, oval, nval) == oval)
 #undef atomic_ptr_cas
-#define atomic_ptr_cas      atomic_cas_ptr
+#define atomic_ptr_cas(p, oval, nval)     (atomic_cas_ptr(p, oval, nval) == oval)
+#undef atomic_ptr_swap
+#define atomic_ptr_swap(p, nval)          (atomic_swap_ptr(p, nval)
+#undef atomic_ptr_load
+#define atomic_ptr_load(p)                (*p)
 
 /*
  * Event ports

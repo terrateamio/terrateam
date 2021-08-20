@@ -256,7 +256,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
     struct kqueue *kq;
     int rv = 0;
 #ifndef NDEBUG
-    static unsigned int _kevent_counter = 0;
+    static atomic_uint _kevent_counter = 0;
     unsigned int myid = 0;
 
     (void) myid;

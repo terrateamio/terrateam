@@ -120,27 +120,19 @@ libkqueue_init(void)
 #endif
 }
 
-#if DEADWOOD
-static int
-kqueue_cmp(struct kqueue *a, struct kqueue *b)
-{
-    return memcmp(&a->kq_id, &b->kq_id, sizeof(int));
-}
-#endif
-
-/* Must hold the kqtree_mtx when calling this */
 void
 kqueue_free(struct kqueue *kq)
 {
     dbg_printf("kq=%p - freeing", kq);
 
     /*
-     * Ensure the current map entry points to
-     * this kqueue.  We don't want to remove
-     * the entry for another kqueue.
+     * map_remove ensures the current map entry
+     * points to this kqueue.
+     *
+     * If it doesn't we leave it alone and just
+     * free the kq.
      */
-    if (map_lookup(kqmap, kq->kq_id) == kq)
-        map_delete(kqmap, kq->kq_id);
+    map_remove(kqmap, kq->kq_id, kq);
 
     filter_unregister_all(kq);
     kqops.kqueue_free(kq);

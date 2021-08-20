@@ -111,7 +111,7 @@ struct knote {
     } data;
 
     struct kqueue       *kn_kq;     //!< kqueue this knote is associated with.
-    volatile uint32_t   kn_ref;
+    atomic_uint         kn_ref;
 #if defined(KNOTE_PLATFORM_SPECIFIC)
     KNOTE_PLATFORM_SPECIFIC;
 #endif

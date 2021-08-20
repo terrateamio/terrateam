@@ -17,23 +17,30 @@
 #ifndef  _KQUEUE_POSIX_PLATFORM_H
 #define  _KQUEUE_POSIX_PLATFORM_H
 
+#include <stdatomic.h>
+
 /* Required by glibc for MAP_ANON */
 #define __USE_MISC 1
 
 #include "../../include/sys/event.h"
 
 /*
- * GCC-compatible atomic operations
+ * C11 atomic operations
  */
-#define atomic_inc(p)   __sync_add_and_fetch((p), 1)
-#define atomic_dec(p)   __sync_sub_and_fetch((p), 1)
-#define atomic_cas(p, oval, nval) __sync_val_compare_and_swap(p, oval, nval)
-#define atomic_ptr_cas(p, oval, nval) __sync_val_compare_and_swap(p, oval, nval)
+#define atomic_inc(p)                 (atomic_fetch_add((p), 1) + 1)
+#define atomic_dec(p)                 (atomic_fetch_sub((p), 1) - 1)
+
+/* We use compound literals here to stop the 'expected' values from being overwritten */
+#define atomic_cas(p, oval, nval)     atomic_compare_exchange_strong(p, &(__typeof__(oval)){ oval }, nval)
+#define atomic_ptr_cas(p, oval, nval) atomic_compare_exchange_strong(p, (&(uintptr_t){ (uintptr_t)oval }), (uintptr_t)nval)
+#define atomic_ptr_swap(p, nval)      atomic_exchange(p, (uintptr_t)nval)
+#define atomic_ptr_load(p)            atomic_load(p)
+
 
 /*
  * GCC-compatible branch prediction macros
  */
-#define likely(x)     __builtin_expect((x), 1)
+#define likely(x)       __builtin_expect((x), 1)
 #define unlikely(x)     __builtin_expect((x), 0)
 
 /*
