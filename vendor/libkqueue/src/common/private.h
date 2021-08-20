@@ -54,6 +54,32 @@ struct evfilt_data;
  */
 #define NUM_ELEMENTS(_t) (sizeof((_t)) / sizeof(*(_t)))
 
+#if defined(__clang__) || defined(__GNUC__)
+/*
+ * Branch prediction macros
+ */
+#define likely(x)       __builtin_expect((x), 1)
+#define unlikely(x)     __builtin_expect((x), 0)
+
+/*
+ * Compiler attributes
+ */
+#define VISIBLE         __attribute__((visibility("default")))
+#define HIDDEN          __attribute__((visibility("hidden")))
+#define UNUSED          __attribute__((unused))
+#ifndef NDEBUG
+#define UNUSED_NDEBUG   __attribute__((unused))
+#else
+#define UNUSED_NDEBUG
+#endif
+#else
+#define likely(x)       (x)
+#define unlikely(x)     (x)
+#define VISIBLE
+#define HIDDEN
+#define UNUSED_NDEBUG
+#endif
+
 #include "debug.h"
 
 /* Workaround for Android */

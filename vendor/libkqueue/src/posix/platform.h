@@ -22,24 +22,6 @@
 
 #include "../../include/sys/event.h"
 
-/*
- * GCC-compatible branch prediction macros
- */
-#define likely(x)       __builtin_expect((x), 1)
-#define unlikely(x)     __builtin_expect((x), 0)
-
-/*
- * GCC-compatible attributes
- */
-#define VISIBLE         __attribute__((visibility("default")))
-#define HIDDEN          __attribute__((visibility("hidden")))
-#define UNUSED          __attribute__((unused))
-#ifndef NDEBUG
-#define UNUSED_NDEBUG   __attribute__((unused))
-#else
-#define UNUSED_NDEBUG
-#endif
-
 #include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
