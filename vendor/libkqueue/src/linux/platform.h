@@ -42,6 +42,20 @@ struct filter;
 # include <sys/timerfd.h>
 #endif
 
+#include <stdatomic.h>
+
+/*
+ * C11 atomic operations
+ */
+#define atomic_inc(p)                 (atomic_fetch_add((p), 1) + 1)
+#define atomic_dec(p)                 (atomic_fetch_sub((p), 1) - 1)
+
+/* We use compound literals here to stop the 'expected' values from being overwritten */
+#define atomic_cas(p, oval, nval)     atomic_compare_exchange_strong(p, &(__typeof__(oval)){ oval }, nval)
+#define atomic_ptr_cas(p, oval, nval) atomic_compare_exchange_strong(p, (&(uintptr_t){ (uintptr_t)oval }), (uintptr_t)nval)
+#define atomic_ptr_swap(p, nval)      atomic_exchange(p, (uintptr_t)nval)
+#define atomic_ptr_load(p)            atomic_load(p)
+
 /*
  * Get the current thread ID
  */
