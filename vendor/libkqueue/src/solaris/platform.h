@@ -19,9 +19,6 @@
 
 #include <sys/queue.h>
 
-/*
- * Atomic operations that override the ones in posix/platform.h
- */
 #include <atomic.h>
 
 #define atomic_uintptr_t                  uintptr_t
