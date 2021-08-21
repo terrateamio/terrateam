@@ -37,7 +37,7 @@ let tests =
 let compare_res = ( = )
 
 let test_pat str pat res _ =
-  let pat = CCOpt.get_exn (Lua_pattern.of_string pat) in
+  let pat = CCOpt.get_exn_or "lua_pattern_of_string" (Lua_pattern.of_string pat) in
   let mtch = Lua_pattern.find str pat in
   assert (compare_res res mtch)
 

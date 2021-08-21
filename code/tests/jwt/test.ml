@@ -16,21 +16,23 @@ let test_decode =
 
 let test_algo =
   Oth.test ~desc:"Verify algorithm" ~name:"Algo" (fun _ ->
-      let t = CCOpt.get_exn (Jwt.of_token jwt) in
+      let t = CCOpt.get_exn_or "jwt_of_token" (Jwt.of_token jwt) in
       let header = Jwt.header t in
       assert ("RS256" = Jwt.Header.algorithm header))
 
 let test_kid =
   Oth.test ~desc:"kid matches expected kid" ~name:"kid match" (fun _ ->
-      let t = CCOpt.get_exn (Jwt.of_token jwt) in
+      let t = CCOpt.get_exn_or "jwt_of_token" (Jwt.of_token jwt) in
       let header = Jwt.header t in
-      let kid = CCOpt.get_exn (Jwt.Header.get "kid" header) in
+      let kid = CCOpt.get_exn_or "jwt_header_get" (Jwt.Header.get "kid" header) in
       assert ("7d680d8c70d44e947133cbd499ebc1a61c3d5abc" = kid))
 
 let test_verify =
   Oth.test ~desc:"Verify signature" ~name:"Verify signature" (fun _ ->
-      let t = CCOpt.get_exn (Jwt.of_token jwt) in
-      let pub_key = CCOpt.get_exn (Jwt.Verifier.Pub_key.create ~e ~n) in
+      let t = CCOpt.get_exn_or "jwt_of_token" (Jwt.of_token jwt) in
+      let pub_key =
+        CCOpt.get_exn_or "jwt_verifier_pub_key_create" (Jwt.Verifier.Pub_key.create ~e ~n)
+      in
       let verifier = Jwt.Verifier.RS256 pub_key in
       let verified = Jwt.verify verifier t in
       assert (None <> verified))
@@ -41,7 +43,7 @@ let test_basic_decode =
 
 let test_basic_verify =
   Oth.test ~desc:"Verify basic signature" ~name:"Verify basic signature" (fun _ ->
-      let t = CCOpt.get_exn (Jwt.of_token basic_jwt) in
+      let t = CCOpt.get_exn_or "jwt_of_token" (Jwt.of_token basic_jwt) in
       let verifier = Jwt.Verifier.HS256 basic_secret in
       let verified = Jwt.verify verifier t in
       assert (None <> verified))

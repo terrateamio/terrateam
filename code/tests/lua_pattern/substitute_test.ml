@@ -13,7 +13,7 @@ let tests =
 let compare_res = ( = )
 
 let test_subs str pat subs res _ =
-  let pat = CCOpt.get_exn (Lua_pattern.of_string pat) in
+  let pat = CCOpt.get_exn_or "lua_pattern_of_string" (Lua_pattern.of_string pat) in
   let ret = Lua_pattern.substitute ~s:str ~r:(Lua_pattern.rep_str subs) pat in
   assert (compare_res ret res)
 
