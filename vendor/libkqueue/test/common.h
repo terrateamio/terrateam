@@ -114,6 +114,7 @@ void test_evfilt_user(struct test_context *);
 #define test(f,ctx,...) do {                                            \
     assert(ctx != NULL); \
     test_begin(ctx, "test_"#f"()\t"__VA_ARGS__); \
+    errno = 0; \
     test_##f(ctx); \
     test_end(ctx); \
 } while (/*CONSTCOND*/0)
