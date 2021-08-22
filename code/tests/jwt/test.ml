@@ -11,6 +11,46 @@ let basic_jwt =
 
 let basic_secret = "your-256-bit-secret"
 
+let public_key =
+  "-----BEGIN PUBLIC KEY-----\n\
+   MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnzyis1ZjfNB0bBgKFMSv\n\
+   vkTtwlvBsaJq7S5wA+kzeVOVpVWwkWdVha4s38XM/pa/yr47av7+z3VTmvDRyAHc\n\
+   aT92whREFpLv9cj5lTeJSibyr/Mrm/YtjCZVWgaOYIhwrXwKLqPr/11inWsAkfIy\n\
+   tvHWTxZYEcXLgAXFuUuaS3uF9gEiNQwzGTU1v0FqkqTBr4B8nW3HCN47XUu0t8Y0\n\
+   e+lf4s4OxQawWD79J9/5d3Ry0vbV3Am1FtGJiJvOwRsIfVChDpYStTcHTCMqtvWb\n\
+   V6L11BWkpzGXSW4Hv43qa+GSYOD2QU68Mb59oSk2OB+BtOLpJofmbGEGgvmwyCI9\n\
+   MwIDAQAB\n\
+   -----END PUBLIC KEY-----"
+
+let private_key =
+  "-----BEGIN RSA PRIVATE KEY-----\n\
+   MIIEogIBAAKCAQEAnzyis1ZjfNB0bBgKFMSvvkTtwlvBsaJq7S5wA+kzeVOVpVWw\n\
+   kWdVha4s38XM/pa/yr47av7+z3VTmvDRyAHcaT92whREFpLv9cj5lTeJSibyr/Mr\n\
+   m/YtjCZVWgaOYIhwrXwKLqPr/11inWsAkfIytvHWTxZYEcXLgAXFuUuaS3uF9gEi\n\
+   NQwzGTU1v0FqkqTBr4B8nW3HCN47XUu0t8Y0e+lf4s4OxQawWD79J9/5d3Ry0vbV\n\
+   3Am1FtGJiJvOwRsIfVChDpYStTcHTCMqtvWbV6L11BWkpzGXSW4Hv43qa+GSYOD2\n\
+   QU68Mb59oSk2OB+BtOLpJofmbGEGgvmwyCI9MwIDAQABAoIBACiARq2wkltjtcjs\n\
+   kFvZ7w1JAORHbEufEO1Eu27zOIlqbgyAcAl7q+/1bip4Z/x1IVES84/yTaM8p0go\n\
+   amMhvgry/mS8vNi1BN2SAZEnb/7xSxbflb70bX9RHLJqKnp5GZe2jexw+wyXlwaM\n\
+   +bclUCrh9e1ltH7IvUrRrQnFJfh+is1fRon9Co9Li0GwoN0x0byrrngU8Ak3Y6D9\n\
+   D8GjQA4Elm94ST3izJv8iCOLSDBmzsPsXfcCUZfmTfZ5DbUDMbMxRnSo3nQeoKGC\n\
+   0Lj9FkWcfmLcpGlSXTO+Ww1L7EGq+PT3NtRae1FZPwjddQ1/4V905kyQFLamAA5Y\n\
+   lSpE2wkCgYEAy1OPLQcZt4NQnQzPz2SBJqQN2P5u3vXl+zNVKP8w4eBv0vWuJJF+\n\
+   hkGNnSxXQrTkvDOIUddSKOzHHgSg4nY6K02ecyT0PPm/UZvtRpWrnBjcEVtHEJNp\n\
+   bU9pLD5iZ0J9sbzPU/LxPmuAP2Bs8JmTn6aFRspFrP7W0s1Nmk2jsm0CgYEAyH0X\n\
+   +jpoqxj4efZfkUrg5GbSEhf+dZglf0tTOA5bVg8IYwtmNk/pniLG/zI7c+GlTc9B\n\
+   BwfMr59EzBq/eFMI7+LgXaVUsM/sS4Ry+yeK6SJx/otIMWtDfqxsLD8CPMCRvecC\n\
+   2Pip4uSgrl0MOebl9XKp57GoaUWRWRHqwV4Y6h8CgYAZhI4mh4qZtnhKjY4TKDjx\n\
+   QYufXSdLAi9v3FxmvchDwOgn4L+PRVdMwDNms2bsL0m5uPn104EzM6w1vzz1zwKz\n\
+   5pTpPI0OjgWN13Tq8+PKvm/4Ga2MjgOgPWQkslulO/oMcXbPwWC3hcRdr9tcQtn9\n\
+   Imf9n2spL/6EDFId+Hp/7QKBgAqlWdiXsWckdE1Fn91/NGHsc8syKvjjk1onDcw0\n\
+   NvVi5vcba9oGdElJX3e9mxqUKMrw7msJJv1MX8LWyMQC5L6YNYHDfbPF1q5L4i8j\n\
+   8mRex97UVokJQRRA452V2vCO6S5ETgpnad36de3MUxHgCOX3qL382Qx9/THVmbma\n\
+   3YfRAoGAUxL/Eu5yvMK8SAt/dJK6FedngcM3JEFNplmtLYVLWhkIlNRGDwkg3I5K\n\
+   y18Ae9n7dHVueyslrb6weq7dTkYDi3iOYRW8HRkIQh06wEdbxt0shTzAJvvCQfrB\n\
+   jg/3747WSsf/zBTcHihTRBdAv6OmdhV4/dD5YBfLAkLrd+mX7iE=\n\
+   -----END RSA PRIVATE KEY-----"
+
 let test_decode =
   Oth.test ~desc:"Decode JWT" ~name:"Decode" (fun _ -> assert (None <> Jwt.of_token jwt))
 
@@ -48,10 +88,88 @@ let test_basic_verify =
       let verified = Jwt.verify verifier t in
       assert (None <> verified))
 
+let test_sign_hs256 =
+  Oth.test ~name:"Sign HS256" (fun _ ->
+      let header = Jwt.Header.create ~typ:"JWT" "HS256" in
+      let payload =
+        Jwt.Payload.(
+          empty
+          |> add_claim Jwt.Claim.sub (`String "1234567890")
+          |> add_claim Jwt.Claim.iat (`Int 1516239022)
+          |> add_claim "name" (`String "John Doe"))
+      in
+      let signer = Jwt.Signer.HS256 basic_secret in
+      match Jwt.of_header_and_payload signer header payload with
+        | Some verified ->
+            let t = CCOpt.get_exn_or "jwt_of_token" (Jwt.of_token (Jwt.token verified)) in
+            let verifier = Jwt.Verifier.HS256 basic_secret in
+            let verified = Jwt.verify verifier t in
+            assert (None <> verified)
+        | _             -> assert false)
+
+let test_sign_hs512 =
+  Oth.test ~name:"Sign HS512" (fun _ ->
+      let header = Jwt.Header.create ~typ:"JWT" "HS512" in
+      let payload =
+        Jwt.Payload.(
+          empty
+          |> add_claim Jwt.Claim.sub (`String "1234567890")
+          |> add_claim Jwt.Claim.iat (`Int 1516239022)
+          |> add_claim "name" (`String "John Doe"))
+      in
+      let signer = Jwt.Signer.HS512 basic_secret in
+      match Jwt.of_header_and_payload signer header payload with
+        | Some verified ->
+            let t = CCOpt.get_exn_or "jwt_of_token" (Jwt.of_token (Jwt.token verified)) in
+            let verifier = Jwt.Verifier.HS512 basic_secret in
+            let verified = Jwt.verify verifier t in
+            assert (None <> verified)
+        | _             -> assert false)
+
+let test_sign_rs256 =
+  Oth.test ~name:"Sign RS256" (fun _ ->
+      let private_key =
+        match CCResult.get_exn (X509.Private_key.decode_pem (Cstruct.of_string private_key)) with
+          | `RSA priv_key -> priv_key
+          | _             -> assert false
+      in
+      let public_key =
+        match CCResult.get_exn (X509.Public_key.decode_pem (Cstruct.of_string public_key)) with
+          | `RSA pub_key -> pub_key
+          | _            -> assert false
+      in
+      let header = Jwt.Header.create ~typ:"JWT" "RS256" in
+      let payload =
+        Jwt.Payload.(
+          empty
+          |> add_claim Jwt.Claim.sub (`String "1234567890")
+          |> add_claim Jwt.Claim.iat (`Int 1516239022)
+          |> add_claim "name" (`String "John Doe"))
+      in
+      let signer = Jwt.Signer.(RS256 (Priv_key.of_priv_key private_key)) in
+      match Jwt.of_header_and_payload signer header payload with
+        | Some verified ->
+            let t = CCOpt.get_exn_or "jwt_of_token" (Jwt.of_token (Jwt.token verified)) in
+            let verifier = Jwt.Verifier.(RS256 (Pub_key.of_pub_key public_key)) in
+            let verified = Jwt.verify verifier t in
+            assert (None <> verified)
+        | _             -> assert false)
+
 let test =
   Oth.parallel
-    [ test_decode; test_algo; test_kid; test_verify; test_basic_decode; test_basic_verify ]
+    [
+      test_decode;
+      test_algo;
+      test_kid;
+      test_verify;
+      test_basic_decode;
+      test_basic_verify;
+      test_sign_hs256;
+      test_sign_hs512;
+      test_sign_rs256;
+    ]
 
 let () =
+  Mirage_crypto_rng_unix.initialize ();
   Random.self_init ();
   Oth.run test

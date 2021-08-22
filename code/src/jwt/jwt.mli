@@ -9,12 +9,30 @@ module Verifier : sig
 
     (** [e] and [n] are encoded as they would show up in a JWK. *)
     val create : e:string -> n:string -> t option
+
+    val of_pub_key : Mirage_crypto_pk.Rsa.pub -> t
   end
 
   type t =
     | HS256 of string
     | HS512 of string
     | RS256 of Pub_key.t
+
+  val to_string : t -> string
+end
+
+(** Sign a JWT *)
+module Signer : sig
+  module Priv_key : sig
+    type t
+
+    val of_priv_key : Mirage_crypto_pk.Rsa.priv -> t
+  end
+
+  type t =
+    | HS256 of string
+    | HS512 of string
+    | RS256 of Priv_key.t
 
   val to_string : t -> string
 end
@@ -111,8 +129,10 @@ type verified
 
 type 'a t
 
-(* Not implemented yet *)
-(* val of_header_and_payload : Verifier.t -> Header.t -> Payload.t -> verified t option *)
+(** Create a verified token.  This may throw an exception if the random number
+   generator has not been initialized.  To initialize it, run
+   [Mirage_crypto_rng_unix.initialize] or [Mirage_crypto_rng_lwt.initialize] *)
+val of_header_and_payload : Signer.t -> Header.t -> Payload.t -> verified t option
 
 val header : 'a t -> Header.t
 
@@ -120,8 +140,12 @@ val payload : 'a t -> Payload.t
 
 val signature : verified t -> string
 
+(** Convert the JWT into the string representation.  Only a verified token can
+   be converted to a string. *)
 val token : verified t -> string
 
+(** Convert a string representing a JWT into a decoded, but unverified, value.
+   This can further be verified using {!verify}. *)
 val of_token : string -> decoded t option
 
 (** Verify a decoded JWT against a particular verifier.  The alg in the JWT must

@@ -18,6 +18,8 @@ module Verifier = struct
           (* TODO: Handle errors *)
           CCResult.get_exn (Mirage_crypto_pk.Rsa.pub ~e ~n))
         ()
+
+    let of_pub_key = CCFun.id
   end
 
   type t =
@@ -40,6 +42,39 @@ module Verifier = struct
         | RS256 x -> rs256_verify x
     in
     f hp signature
+
+  let to_string = function
+    | HS256 _ -> "HS256"
+    | HS512 _ -> "HS512"
+    | RS256 _ -> "RS256"
+end
+
+module Signer = struct
+  module Priv_key = struct
+    type t = Mirage_crypto_pk.Rsa.priv
+
+    let of_priv_key = CCFun.id
+  end
+
+  type t =
+    | HS256 of string
+    | HS512 of string
+    | RS256 of Priv_key.t
+
+  let rs256_sign key hp =
+    Cstruct.to_string
+      (Mirage_crypto_pk.Rsa.PKCS1.sign ~hash:`SHA256 ~key (`Message (Cstruct.of_string hp)))
+
+  let mac_sign algo hp = Cstruct.to_string (algo (Cstruct.of_string hp))
+
+  let sign t hp =
+    let f =
+      match t with
+        | HS256 x -> mac_sign (Mirage_crypto.Hash.SHA256.hmac ~key:(Cstruct.of_string x))
+        | HS512 x -> mac_sign (Mirage_crypto.Hash.SHA512.hmac ~key:(Cstruct.of_string x))
+        | RS256 x -> rs256_sign x
+    in
+    f hp
 
   let to_string = function
     | HS256 _ -> "HS256"
@@ -196,18 +231,16 @@ let b64_url_encode str = Base64.encode_exn ~pad:false ~alphabet:Base64.uri_safe_
 let b64_url_decode str =
   CCOpt.wrap (Base64.decode_exn ~pad:false ~alphabet:Base64.uri_safe_alphabet) str
 
-(* let of_header_and_payload algorithm header payload = failwith "nyi" *)
-(* CCOpt.wrap
- *   (fun () ->
- *      let b64_header = b64_url_encode (Header.to_string header) in
- *      let b64_payload = b64_url_encode (Payload.to_string payload) in
- *      let algo = Algorithm.fn_of_algorithm (Header.algorithm header) in
- *      let unsigned_token = b64_header ^ "." ^ b64_payload in
- *      let signature =
- *        Cryptokit.hash_string algo unsigned_token
- *      in
- *      { header; payload; signature })
- *   () *)
+let of_header_and_payload signer header payload =
+  (* CCOpt.wrap
+   *   (fun () -> *)
+  let b64_header = b64_url_encode (Header.to_string header) in
+  let b64_payload = b64_url_encode (Payload.to_string payload) in
+  let unsigned_token = b64_header ^ "." ^ b64_payload in
+  let signature = Signer.sign signer unsigned_token in
+  Some { header; payload; signature; hp = () }
+(* )
+   * () *)
 
 let header t = t.header
 
