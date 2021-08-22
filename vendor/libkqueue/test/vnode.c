@@ -93,6 +93,17 @@ test_kevent_vnode_note_delete(struct test_context *ctx)
         die("unlink");
 
     kevent_get(&ret, ctx->kqfd);
+
+    /*
+     *  FIXME - macOS 11.5.2 also sets NOTE_LINK.
+     *  This seems redundant, but behaviour should be
+     *  checked on FreeBSD/OpenBSD to determine the
+     *  correct behaviour for libkqueue.
+     */
+#ifdef __APPLE__
+    kev.fflags |= NOTE_LINK;
+#endif
+
     kevent_cmp(&kev, &ret);
 }
 
@@ -105,13 +116,9 @@ test_kevent_vnode_note_write(struct test_context *ctx)
 
     testfile_write(ctx->testfile);
 
-    /* BSD kqueue adds NOTE_EXTEND even though it was not requested */
-    /* BSD kqueue removes EV_ENABLE */
-    kev.flags &= ~EV_ENABLE; // XXX-FIXME compatibility issue
-
     /*
-     * macOS 11.5.2 does not add NOTE_EXTEND, BSD kqueue
-     * does, as does libkqueue.
+     * macOS 11.5.2 does not add NOTE_EXTEND,
+     * BSD kqueue does, as does libkqueue.
      */
 #ifndef __APPLE__
     kev.fflags |= NOTE_EXTEND;
