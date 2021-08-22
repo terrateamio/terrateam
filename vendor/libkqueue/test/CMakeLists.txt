@@ -17,6 +17,7 @@ project(libkqueue-test LANGUAGES C)
 
 set(LIBKQUEUE_TEST_SOURCES
     kevent.c
+    kqueue.c
     main.c
     read.c
     proc.c

@@ -17,7 +17,6 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
-
 #if HAVE_ERR_H
 # include <err.h>
 #else
@@ -97,6 +96,7 @@ struct test_context {
     char testfile[1024];
 };
 
+void test_kqueue(struct test_context *);
 void test_evfilt_read(struct test_context *);
 void test_evfilt_signal(struct test_context *);
 void test_evfilt_vnode(struct test_context *);
