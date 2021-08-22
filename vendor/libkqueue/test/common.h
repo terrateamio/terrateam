@@ -70,6 +70,11 @@
 # include "src/windows/platform.h"
 #endif
 
+/** Convenience macros
+ *
+ */
+#define NUM_ELEMENTS(_t) (sizeof((_t)) / sizeof(*(_t)))
+
 struct test_context;
 
 struct unit_test {

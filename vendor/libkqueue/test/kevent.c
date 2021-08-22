@@ -86,6 +86,41 @@ kevent_get_hires(struct kevent *kev, int kqfd, struct timespec *ts)
         die("kevent(2)");
 }
 
+static const char *
+filter_name(short filt)
+{
+    int id;
+    const char *fname[EVFILT_SYSCOUNT] = {
+        "EVFILT_READ",
+        "EVFILT_WRITE",
+        "EVFILT_AIO",
+        "EVFILT_VNODE",
+        "EVFILT_PROC",
+        "EVFILT_SIGNAL",
+        "EVFILT_TIMER",
+        "EVFILT_NETDEV",
+        "EVFILT_FS",
+        "EVFILT_LIO",
+        "EVFILT_USER"
+    };
+
+    id = ~filt;
+    if (id < 0 || id >= NUM_ELEMENTS(fname))
+        return "EVFILT_INVALID";
+    else
+        return fname[id];
+}
+
+static const char *
+kevent_filter_dump(const struct kevent *kev)
+{
+    static __thread char buf[64];
+
+    snprintf(buf, sizeof(buf), "%d (%s)",
+            kev->filter, filter_name(kev->filter));
+    return ((const char *) buf);
+}
+
 char *
 kevent_fflags_dump(struct kevent *kev)
 {
@@ -183,9 +218,9 @@ kevent_to_str(struct kevent *kev)
     static __thread char buf[512];
 
     snprintf(buf, sizeof(buf),
-            "[ident=%d, filter=%d, %s, %s, data=%d, udata=%p]",
+            "[ident=%d, filter=%s, %s, %s, data=%d, udata=%p]",
             (u_int) kev->ident,
-            kev->filter,
+            kevent_filter_dump(kev),
             kevent_flags_dump(kev),
             kevent_fflags_dump(kev),
             (int) kev->data,
