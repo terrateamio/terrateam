@@ -76,10 +76,17 @@ kevent_socket_drain(struct test_context *ctx)
 }
 
 static void
-kevent_socket_fill(struct test_context *ctx)
+kevent_socket_fill(struct test_context *ctx, size_t len)
 {
-    if (send(ctx->server_fd, ".", 1, 0) < 1)
+    uint8_t *data;
+
+    data = malloc(len);
+    memset(data, '.', len);
+
+    if (send(ctx->server_fd, data, len, 0) < 1)
         die("send(2)");
+
+    free(data);
 }
 
 
@@ -101,7 +108,7 @@ test_kevent_socket_add_without_ev_add(struct test_context *ctx)
     if (kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL) == 0)
         die("kevent should have failed");
 
-    kevent_socket_fill(ctx);
+    kevent_socket_fill(ctx, 1);
     test_no_kevents(ctx->kqfd);
     kevent_socket_drain(ctx);
 
@@ -120,7 +127,7 @@ test_kevent_socket_get(struct test_context *ctx)
     if (kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL) < 0)
         die("kevent:1");
 
-    kevent_socket_fill(ctx);
+    kevent_socket_fill(ctx, 1);
 
     kev.data = 1;
     kevent_get(&ret, ctx->kqfd);
@@ -146,8 +153,16 @@ test_kevent_socket_clear(struct test_context *ctx)
     if (kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL) < 0)
         die("kevent1");
 
-    kevent_socket_fill(ctx);
-    kevent_socket_fill(ctx);
+    /*
+     * write two bytes in one call.
+     * This used to be two calls writing one byte, but macOS didn't
+     * always reliably report the amount of pending data correctly
+     * (1 byte instead of 2).
+     *
+     * Adding usleep(1000) on macOS also solved the issue, but this
+     * seemed like a cleaner fix.
+     */
+    kevent_socket_fill(ctx, 2);
 
 /* Solaris does not offer a way to get the amount of data pending */
 #if defined(__sun__)
@@ -155,14 +170,15 @@ test_kevent_socket_clear(struct test_context *ctx)
 #else
     kev.data = 2;
 #endif
-    kevent_get(&ret, ctx->kqfd);
+
+    kevent_get(&ret, ctx->kqfd); /* data is pending, so we should get an event */
     kevent_cmp(&kev, &ret);
 
     /* We filled twice, but drain once. Edge-triggered would not generate
        additional events.
      */
-    kevent_socket_drain(ctx);
-    test_no_kevents(ctx->kqfd);
+    kevent_socket_drain(ctx);   /* drain one byte, data is still pending... */
+    test_no_kevents(ctx->kqfd); /* ...but because this is edge triggered we should get no events */
 
     kevent_socket_drain(ctx);
     EV_SET(&kev, ctx->client_fd, EVFILT_READ, EV_DELETE, 0, 0, &ctx->client_fd);
@@ -183,7 +199,7 @@ test_kevent_socket_disable_and_enable(struct test_context *ctx)
     if (kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL) < 0)
         die("kevent");
 
-    kevent_socket_fill(ctx);
+    kevent_socket_fill(ctx, 1);
     test_no_kevents(ctx->kqfd);
 
     /* Re-enable the knote, then see if an event is generated */
@@ -211,7 +227,7 @@ test_kevent_socket_del(struct test_context *ctx)
     if (kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL) < 0)
         die("kevent");
 
-    kevent_socket_fill(ctx);
+    kevent_socket_fill(ctx, 1);
     test_no_kevents(ctx->kqfd);
     kevent_socket_drain(ctx);
 }
@@ -225,7 +241,7 @@ test_kevent_socket_oneshot(struct test_context *ctx)
     kevent_add(ctx->kqfd, &kev, ctx->client_fd, EVFILT_READ, EV_ADD | EV_ONESHOT, 0, 0, &ctx->client_fd);
     test_no_kevents(ctx->kqfd);
 
-    kevent_socket_fill(ctx);
+    kevent_socket_fill(ctx, 1);
     kev.data = 1;
     kevent_get(&ret, ctx->kqfd);
     kevent_cmp(&kev, &ret);
@@ -233,7 +249,7 @@ test_kevent_socket_oneshot(struct test_context *ctx)
     test_no_kevents(ctx->kqfd);
 
     /* Verify that the kernel watch has been deleted */
-    kevent_socket_fill(ctx);
+    kevent_socket_fill(ctx, 1);
     test_no_kevents(ctx->kqfd);
     kevent_socket_drain(ctx);
 
@@ -310,7 +326,7 @@ test_kevent_socket_dispatch(struct test_context *ctx)
 
     /* The event will occur only once, even though EV_CLEAR is not
        specified. */
-    kevent_socket_fill(ctx);
+    kevent_socket_fill(ctx, 1);
     kev.data = 1;
     kevent_get(&ret, ctx->kqfd);
     kevent_cmp(&kev, &ret);
@@ -348,11 +364,11 @@ test_kevent_socket_lowat(struct test_context *ctx)
     test_no_kevents();
 
     puts("-- checking that one byte does not trigger an event..");
-    kevent_socket_fill(ctx);
+    kevent_socket_fill(ctx, 1);
     test_no_kevents();
 
     puts("-- checking that two bytes triggers an event..");
-    kevent_socket_fill(ctx);
+    kevent_socket_fill(ctx, 1);
     if (kevent(ctx->kqfd, NULL, 0, &kev, 1, NULL) != 1)
         die("%s", test_id);
     KEV_CMP(kev, ctx->client_fd, EVFILT_READ, 0);
