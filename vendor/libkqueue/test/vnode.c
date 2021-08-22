@@ -108,7 +108,14 @@ test_kevent_vnode_note_write(struct test_context *ctx)
     /* BSD kqueue adds NOTE_EXTEND even though it was not requested */
     /* BSD kqueue removes EV_ENABLE */
     kev.flags &= ~EV_ENABLE; // XXX-FIXME compatibility issue
-    kev.fflags |= NOTE_EXTEND; // XXX-FIXME compatibility issue
+
+    /*
+     * macOS 11.5.2 does not add NOTE_EXTEND, BSD kqueue
+     * does, as does libkqueue.
+     */
+#ifndef __APPLE__
+    kev.fflags |= NOTE_EXTEND;
+#endif
     kevent_get(&ret, ctx->kqfd);
     kevent_cmp(&kev, &ret);
 }
