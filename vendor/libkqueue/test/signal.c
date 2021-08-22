@@ -142,19 +142,30 @@ test_kevent_signal_dispatch(struct test_context *ctx)
 
     test_no_kevents(ctx->kqfd);
 
-    kevent_add(ctx->kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD | EV_CLEAR | EV_DISPATCH, 0, 0, NULL);
+    /* EV_CLEAR should be set internally */
+    kevent_add(ctx->kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD | EV_DISPATCH, 0, 0, NULL);
 
     /* Get one event */
     if (kill(getpid(), SIGUSR1) < 0)
         die("kill");
+    kev.flags |= EV_CLEAR;
     kev.data = 1;
     kevent_get(&ret, ctx->kqfd);
     kevent_cmp(&kev, &ret);
 
+    /*
+     * On macOS 11.5.2 the signal generated below is still
+     * delivered when the filter is next re-enabled.
+     *
+     * It's not clear if this is expected behaviour or not.
+     * EV_DISPATCH isn't even mentioned in man kqueue...
+     */
+#ifndef __APPLE__
     /* Confirm that the knote is disabled */
     if (kill(getpid(), SIGUSR1) < 0)
         die("kill");
     test_no_kevents(ctx->kqfd);
+#endif
 
     /* Enable the knote and make sure no events are pending */
     kevent_add(ctx->kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_ENABLE | EV_DISPATCH, 0, 0, NULL);
