@@ -8,14 +8,15 @@ module Verifier = struct
     |> Z.of_string_base 16
 
   module Pub_key = struct
-    type t = Nocrypto.Rsa.pub
+    type t = Mirage_crypto_pk.Rsa.pub
 
     let create ~e ~n =
       CCOpt.wrap
         (fun () ->
           let e = z_of_string e in
           let n = z_of_string n in
-          Nocrypto.Rsa.{ e; n })
+          (* TODO: Handle errors *)
+          CCResult.get_exn (Mirage_crypto_pk.Rsa.pub ~e ~n))
         ()
   end
 
@@ -27,15 +28,15 @@ module Verifier = struct
   let rs256_verify key hp signature =
     let cs = Cstruct.of_string signature in
     let hs = Cstruct.of_string hp in
-    Nocrypto.Rsa.PKCS1.verify ~hashp:(( = ) `SHA256) ~key ~signature:cs (`Message hs)
+    Mirage_crypto_pk.Rsa.PKCS1.verify ~hashp:(( = ) `SHA256) ~key ~signature:cs (`Message hs)
 
-  let mac_verify algo hp signature = Cryptokit.hash_string algo hp = signature
+  let mac_verify algo hp signature = Cstruct.to_string (algo (Cstruct.of_string hp)) = signature
 
   let verify t hp signature =
     let f =
       match t with
-        | HS256 x -> mac_verify (Cryptokit.MAC.hmac_sha256 x)
-        | HS512 x -> mac_verify (Cryptokit.MAC.hmac_sha512 x)
+        | HS256 x -> mac_verify (Mirage_crypto.Hash.SHA256.hmac ~key:(Cstruct.of_string x))
+        | HS512 x -> mac_verify (Mirage_crypto.Hash.SHA512.hmac ~key:(Cstruct.of_string x))
         | RS256 x -> rs256_verify x
     in
     f hp signature
