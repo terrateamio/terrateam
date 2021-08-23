@@ -279,7 +279,6 @@ int
 linux_kqueue_init(struct kqueue *kq)
 {
     struct f_owner_ex sig_owner;
-    int flags;
 
     kq->epollfd = epoll_create(1);
     if (kq->epollfd < 0) {
@@ -321,27 +320,19 @@ linux_kqueue_init(struct kqueue *kq)
     }
 
     /*
-     * Ensure pipe ends are non-blocking so that there's
-     * no chance of them delaying close().
+     * O_NONBLOCK - Ensure pipe ends are non-blocking so that
+     * there's no chance of them delaying close().
+     *
+     * O_ASYNC - Raise a SIGIO signal if the file descriptor
+     * becomes readable or is closed.
      */
-    if ((fcntl(kq->pipefd[0], F_SETFL, O_NONBLOCK) < 0) ||
+    if ((fcntl(kq->pipefd[0], F_SETFL, O_NONBLOCK | O_ASYNC ) < 0) ||
         (fcntl(kq->pipefd[1], F_SETFL, O_NONBLOCK) < 0)) {
         dbg_perror("fcntl(2)");
         goto error;
     }
 
     kq->kq_id = kq->pipefd[1];
-
-    /*
-     * Setting O_ASYNC means a signal (SIGIO) will be sent
-     * whenever I/O is possible OR when the other end of the
-     * pipe has been closed.
-     */
-    flags = fcntl(kq->pipefd[0], F_GETFL, 0);
-    if (fcntl(kq->pipefd[0], F_SETFL, flags | O_ASYNC) < 0) {
-        dbg_printf("fd=%i - failed setting FSETFL O_ASYNC (%i): %s", kq->pipefd[0], flags, strerror(errno));
-        goto error;
-    }
 
     /*
      * SIGIO may be used by the application, so we use F_SETSIG
