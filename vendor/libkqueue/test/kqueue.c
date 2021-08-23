@@ -157,17 +157,17 @@ test_cleanup(void *unused)
 /* EV_RECEIPT is not available or running on Win32 */
 #if !defined(_WIN32)
 void
-test_ev_receipt(void *unused)
+test_ev_receipt(struct test_context *ctx)
 {
-    int kq;
     struct kevent kev;
+    struct kevent buf;
 
-    if ((kq = kqueue()) < 0)
-        die("kqueue()");
-    EV_SET(&kev, SIGUSR2, EVFILT_SIGNAL, EV_ADD | EV_RECEIPT, 0, 0, NULL);
-    if (kevent(kq, &kev, 1, &kev, 1, NULL) < 0)
-        die("kevent");
-    close(kq);
+    EV_SET(&kev, SIGUSR2, EVFILT_SIGNAL, EV_ADD | EV_ERROR | EV_RECEIPT, 0, 0, NULL);
+    buf = kev;
+
+    kevent_rv_cmp(1, kevent(ctx->kqfd, &kev, 1, &buf, 1, NULL));
+
+    kevent_cmp(&kev, &buf);
 }
 #endif
 

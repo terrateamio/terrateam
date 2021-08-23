@@ -28,6 +28,8 @@
 
 #include "private.h"
 
+static struct kevent null_kev; /* null kevent for when we get passed a NULL eventlist */
+
 static const char *
 kevent_filter_dump(const struct kevent *kev)
 {
@@ -216,36 +218,46 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
 
 /** @return number of events added to the eventlist */
 static int
-kevent_copyin(struct kqueue *kq, const struct kevent *src, int nchanges,
+kevent_copyin(struct kqueue *kq, const struct kevent *changelist, int nchanges,
         struct kevent *eventlist, int nevents)
 {
-    int status, nret;
+    int status;
+    struct kevent *el_p = eventlist, *el_end = el_p + nevents;
 
     dbg_printf("nchanges=%d nevents=%d", nchanges, nevents);
 
-    for (nret = 0; nchanges > 0; src++, nchanges--) {
-
-        if (kevent_copyin_one(kq, src) < 0) {
-            dbg_printf("errno=%s",strerror(errno));
+    for (struct kevent const *cl_p = changelist, *cl_end = cl_p + nchanges;
+         cl_p < cl_end;
+         cl_p++) {
+        if (kevent_copyin_one(kq, cl_p) < 0) {
+            dbg_printf("errno=%s", strerror(errno));
             status = errno;
-        } else if (src->flags & EV_RECEIPT) {
+        } else if (cl_p->flags & EV_RECEIPT) {
             status = 0;
         } else {
             continue;
         }
 
-        if (nevents > 0) {
-            memcpy(eventlist, src, sizeof(*src));
-            eventlist->data = status;
-            nevents--;
-            eventlist++;
-            nret++;
-        } else {
+        /*
+         * We're out of kevent entries, just return -1 and leave
+         * the errno set.  This is... odd, because it means the
+         * caller won't have any idea which entries in the
+         * changelist were processed.  But I guess the
+         * requirement here is for the caller to always provide
+         * a kevent array with >= entries as the changelist.
+         */
+        if (el_p == el_end)
             return (-1);
-        }
+
+        memcpy(el_p, cl_p, sizeof(*cl_p));
+        el_p->flags |= EV_ERROR; /* This is set both on error and for EV_RECEIPT */
+        el_p->data = status;
+        el_p++;
+
+        errno = 0; /* Reset back to 0 if we recorded the error as a kevent */
     }
 
-    return (nret);
+    return (el_p - eventlist);
 }
 
 int VISIBLE
@@ -254,6 +266,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         const struct timespec *timeout)
 {
     struct kqueue *kq;
+    struct kevent *el_p, *el_end;
     int rv = 0;
 #ifndef NDEBUG
     static atomic_uint _kevent_counter = 0;
@@ -261,6 +274,17 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
 
     (void) myid;
 #endif
+
+    /* deal with ubsan "runtime error: applying zero offset to null pointer" */
+    if (eventlist) {
+        if (nevents > MAX_KEVENT)
+            nevents = MAX_KEVENT;
+
+        el_p = eventlist;
+        el_end = el_p + nevents;
+    } else {
+        eventlist = el_p = el_end = &null_kev;
+    }
 
     /* Convert the descriptor into an object pointer */
     kq = kqueue_lookup(kqfd);
@@ -281,46 +305,54 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
      */
     if (nchanges > 0) {
         kqueue_lock(kq);
-        rv = kevent_copyin(kq, changelist, nchanges, eventlist, nevents);
         kqueue_unlock(kq);
+        rv = kevent_copyin(kq, changelist, nchanges, el_p, el_end - el_p);
         dbg_printf("(%u) kevent_copyin rv=%d", myid, rv);
         if (rv < 0)
             goto out;
         if (rv > 0) {
-            eventlist += rv;
-            nevents -= rv;
+            el_p += rv; /* EV_RECEIPT and EV_ERROR entries */
         }
     }
 
-    rv = 0;
-
     /*
-     * Wait for events and copy them to the eventlist
+     * If we have space remaining after processing
+     * the changelist, copy events out.
      */
-    if (nevents > MAX_KEVENT)
-        nevents = MAX_KEVENT;
-    if (nevents > 0) {
+    if ((el_end - el_p) > 0) {
         rv = kqops.kevent_wait(kq, nevents, timeout);
         dbg_printf("kqops.kevent_wait rv=%i", rv);
         if (likely(rv > 0)) {
             kqueue_lock(kq);
-            rv = kqops.kevent_copyout(kq, rv, eventlist, nevents);
+            rv = kqops.kevent_copyout(kq, rv, el_p, el_end - el_p);
             kqueue_unlock(kq);
+            dbg_printf("(%u) kevent_copyout rv=%i", myid, rv);
+            if (rv >= 0) {
+                el_p += rv;              /* Add events from copyin */
+                rv += el_p - eventlist;  /* recalculate rv to be the total events in the eventlist */
+            }
         } else if (rv == 0) {
             /* Timeout reached */
+            dbg_printf("(%u) kevent_wait timedout", myid);
         } else {
             dbg_printf("(%u) kevent_wait failed", myid);
             goto out;
         }
+    /*
+     * If we have no space, return how many kevents
+     * were added by copyin.
+     */
+    } else {
+        rv = el_p - eventlist;
     }
 
 #ifndef NDEBUG
-    if (DEBUG_KQUEUE) {
+    if (DEBUG_KQUEUE && (rv > 0)) {
         int n;
 
-        dbg_printf("(%u) returning %d events", myid, rv);
-        for (n = 0; n < rv; n++) {
-        dbg_printf("(%u) eventlist[%d] = %s", myid, n, kevent_dump(&eventlist[n]));
+        dbg_printf("(%u) returning %zu events", myid, el_p - eventlist);
+        for (n = 0; n < el_p - eventlist; n++) {
+            dbg_printf("(%u) eventlist[%d] = %s", myid, n, kevent_dump(&eventlist[n]));
         }
     }
 #endif
