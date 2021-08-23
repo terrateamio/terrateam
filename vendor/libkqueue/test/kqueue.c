@@ -183,7 +183,7 @@ test_ev_receipt(void *unused)
  */
 #ifndef __APPLE__
 void
-test_kqueue_descriptor_is_pollable(void)
+test_kqueue_descriptor_is_pollable(void *unused)
 {
     int kq, rv;
     struct kevent kev;
@@ -228,7 +228,7 @@ test_kqueue(struct test_context *ctx)
 
     test(ev_receipt, ctx);
     /* TODO: this fails now, but would be good later
-    test(kqueue_descriptor_is_pollable);
+    test(kqueue_descriptor_is_pollable, ctx);
     */
 }
 
