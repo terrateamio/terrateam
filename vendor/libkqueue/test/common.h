@@ -126,7 +126,10 @@ int kevent_get_timeout(struct kevent *, int, struct timespec *);
 void kevent_update(int kqfd, struct kevent *kev);
 
 #define kevent_cmp(a,b) _kevent_cmp(a,b, __FILE__, __LINE__)
-void _kevent_cmp(struct kevent *, struct kevent *, const char *, int);
+void _kevent_cmp(struct kevent *expected, struct kevent *got, const char *file, int line);
+
+#define kevent_rv_cmp(a,b) _kevent_rv_cmp(a,b, __FILE__, __LINE__)
+void _kevent_rv_cmp(int expected, int got, const char *file, int line);
 
 void
 kevent_add(int kqfd, struct kevent *kev,

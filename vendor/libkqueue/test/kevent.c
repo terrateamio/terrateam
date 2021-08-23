@@ -261,19 +261,30 @@ kevent_add(int kqfd, struct kevent *kev,
 }
 
 void
-_kevent_cmp(struct kevent *k1, struct kevent *k2, const char *file, int line)
+_kevent_cmp(struct kevent *expected, struct kevent *got, const char *file, int line)
 {
 /* XXX-
    Workaround for inconsistent implementation of kevent(2)
  */
 #if defined (__FreeBSD_kernel__) || defined (__FreeBSD__)
-    if (k1->flags & EV_ADD)
-        k2->flags |= EV_ADD;
+    if (expected->flags & EV_ADD)
+        got->flags |= EV_ADD;
 #endif
-    if (memcmp(k1, k2, sizeof(*k1)) != 0) {
+    if (memcmp(expected, got, sizeof(*expected)) != 0) {
         printf("[%s:%d]: kevent_cmp() failed:\n", file, line);
-        printf("expected %s\n", kevent_to_str(k1));
-        printf("but got  %s\n", kevent_to_str(k2));
+        printf("expected %s\n", kevent_to_str(expected));
+        printf("but got  %s\n", kevent_to_str(got));
+        abort();
+    }
+}
+
+void
+_kevent_rv_cmp(int expected, int got, const char *file, int line)
+{
+    if (expected != got) {
+        printf("[%s:%d]: kevent_rv_cmp() failed:\n", file, line);
+        printf("expected %u\n", expected);
+        printf("but got  %u\n", got);
         abort();
     }
 }
