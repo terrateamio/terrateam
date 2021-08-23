@@ -3,6 +3,11 @@ Unreleased
 
 Nothing here yet.
 
+  * Add support for monitoring process exit with EVFILT_PROC via pidfd for Linux >= 5.3
+
+  * Fix: Include errors (EV_ERROR), and changelist entries with EV_RECEIPT in eventlist.
+    (Reported by: orbitz)
+
 2021-08-14  v2.4.0
 ------------------------------------------------------------------------
 
