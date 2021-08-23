@@ -306,8 +306,8 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
      */
     if (nchanges > 0) {
         kqueue_lock(kq);
-        kqueue_unlock(kq);
         rv = kevent_copyin(kq, changelist, nchanges, el_p, el_end - el_p);
+        kqueue_unlock(kq);
         dbg_printf("(%u) kevent_copyin rv=%d", myid, rv);
         if (rv < 0)
             goto out;
