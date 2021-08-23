@@ -285,6 +285,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
     } else {
         eventlist = el_p = el_end = &null_kev;
     }
+    if (!changelist) changelist = &null_kev;
 
     /* Convert the descriptor into an object pointer */
     kq = kqueue_lookup(kqfd);
