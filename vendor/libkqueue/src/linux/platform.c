@@ -190,6 +190,11 @@ monitoring_thread_loop(void *arg)
 
     sigset_t monitoring_sig_set;
 
+    /* Set the thread's name to something descriptive so it shows up in gdb,
+     * etc. glibc >= 2.1.2 supports pthread_setname_np, but this is a safer way
+     * to do it for backwards compatibility. Max name length is 16 bytes. */
+    prctl(PR_SET_NAME, "libkqueue_mon", 0, 0, 0);
+
     nb_max_fd = get_fd_limit();
 
     sigemptyset(&monitoring_sig_set);
@@ -264,11 +269,6 @@ linux_kqueue_start_thread(void)
     if (pthread_create(&monitoring_thread, NULL, &monitoring_thread_loop, &mt_mtx)) {
          dbg_perror("linux_kqueue_start_thread failure");
     }
-
-    /* Set the thread's name to something descriptive so it shows up in gdb,
-     * etc. glibc >= 2.1.2 supports pthread_setname_np, but this is a safer way
-     * to do it for backwards compatibility. Max name length is 16 bytes. */
-    prctl(PR_SET_NAME, "libkqueue_mon", 0, 0, 0);
 
     /* Wait for thread creating to be done as we need monitoring_tid to be available */
     pthread_cond_wait(&monitoring_thread_cond, &mt_mtx); /* unlocks mt_mtx allowing child to lock it */
