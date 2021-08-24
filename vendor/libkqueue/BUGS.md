@@ -12,7 +12,7 @@
    in the fork.
    
  * Some functions should crash instead of silently printing a debug
-   message.. for example, knote_release().
+   message.. for example, `note_release()`.
    
  * There are a number of stub functions that silently fail or succeed.
    These need to be cleaned up; at a minimum, they should emit very loud
@@ -30,12 +30,12 @@
    src/windows/timer.c:    return (0); /* STUB */
    ```
       
- * kqueue() should defer thread cancellation until the end.
+ * `kqueue()` should defer thread cancellation until the end.
 
- * kevent() should defer thread cancellation and call pthread_testcancel()
-   before and after the call to kevent_wait(). This may require changing the
-   way that EINTR is handled, to make sure that the EINTR is propagated up
-   the call stack to kevent().
+ * `kevent()` should defer thread cancellation and call `pthread_testcancel()`
+   before and after the call to `kevent_wait()`. This may require changing the
+   way that `EINTR` is handled, to make sure that the `EINTR` is propagated up
+   the call stack to `kevent()`.
       
  ## Linux
  
@@ -67,7 +67,7 @@
    
  ## Windows
  
- * On Windows, you need to supply -DMAKE_STATIC in CFLAGS when building the
+ * On Windows, you need to supply `-DMAKE_STATIC` in `CFLAGS` when building the
    static library. This does not apply when using cmake.
    
  * If a file descriptor outside of kqueue is closed, the internal kqueue
