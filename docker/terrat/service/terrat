@@ -1,0 +1,10 @@
+#! /bin/sh
+
+sleep 5
+
+export TERRAT_FRONTEND_PORT=8180
+export TERRAT_BACKEND_PORT=8181
+
+/usr/local/bin/terrat migrate --verbosity=debug
+
+exec /usr/local/bin/terrat server --verbosity=debug

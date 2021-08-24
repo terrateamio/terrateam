@@ -1,0 +1,7 @@
+#! /bin/sh
+
+sleep 5
+
+mkdir -p /run/nginx
+
+exec /usr/sbin/nginx -c /etc/nginx/nginx.conf

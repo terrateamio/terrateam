@@ -1,0 +1,1 @@
+select version from terraform_versions
