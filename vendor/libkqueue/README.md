@@ -8,7 +8,7 @@ libkqueue acts as a translator between the kevent structure and the native
 kernel facilities on Linux, Android, Solaris, and Windows.
 
 libkqueue is not perfect, and you may need to change the behaviour of your application
-to work around limitations on a given platform. Please see [BUGS](bugs.md) for known 
+to work around limitations on a given platform. Please see [BUGS](BUGS.md) for known 
 behavioural differences between libkqueue and BSD kqueues.
 
 Supported Event Types
