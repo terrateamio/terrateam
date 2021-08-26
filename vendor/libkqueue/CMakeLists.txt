@@ -59,6 +59,7 @@ if(ENABLE_ASAN)
   #
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fno-omit-frame-pointer -fno-optimize-sibling-calls")
   list(APPEND DEBUG_FSANITIZERFLAGS "address")
+  MESSAGE("ENABLING ASAN")
 endif()
 
 #
@@ -69,6 +70,7 @@ if(ENABLE_LSAN)
   # -fsanitize=leak  - Build with lsan support
   #
   list(APPEND DEBUG_FSANITIZERFLAGS "leak")
+  MESSAGE("ENABLING LSAN")
 endif()
 
 #
@@ -82,6 +84,7 @@ if(ENABLE_UBSAN)
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fno-sanitize-recover=undefined -fno-omit-frame-pointer")
   set(CMAKE_LD_FLAGS_DEBUG "${CMAKE_LD_FLAGS_DEBUG} -fno-sanitize-recover=undefined")
   list(APPEND DEBUG_FSANITIZERFLAGS "undefined")
+  MESSAGE("ENABLING UBSAN")
 endif()
 
 #
@@ -92,6 +95,7 @@ if(ENABLE_TSAN)
   # -fsanitize=thread  - Build with tsan support
   #
   list(APPEND DEBUG_FSANITIZERFLAGS "thread")
+  MESSAGE("ENABLING TSAN")
 endif()
 
 if(DEBUG_FSANITIZERFLAGS)
@@ -339,3 +343,17 @@ set(CPACK_DEBIAN_PACKAGE_GENERATE_SHLIBS ON)
 include(CPack)
 
 add_custom_target(tarball git archive -o "libkqueue-${PROJECT_VERSION}.tar.gz" --prefix "libkqueue-${PROJECT_VERSION}/" HEAD)
+
+#
+#  Ensure variables which represent arguments are not
+#  cached. This provides more of a sane interface where
+#  cmake will build with the arguments you last specified
+#  not all the arguments provided since the beginning of
+#  the lifetime of CMakeCache.txt.
+#
+unset(ENABLE_ASAN CACHE)
+unset(ENABLE_LSAN CACHE)
+unset(ENABLE_UBSAN CACHE)
+unset(ENABLE_TSAN CACHE)
+unset(ENABLE_TESTING CACHE)
+unset(CMAKE_BUILD_TYPE CACHE)
