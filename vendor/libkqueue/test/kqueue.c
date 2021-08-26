@@ -121,10 +121,12 @@ test_cleanup(void *unused)
         if ((kqfd2 = kqueue()) < 0)
             die("kqueue() - i=%i used_fds=%u max_fds=%u", i, print_fd_table(), max_fds);
 
-        kevent_add(kqfd2, &kev, 1, EVFILT_TIMER, EV_ADD, 0, 1000,NULL);
+        kevent_add(kqfd2, &kev, 1, EVFILT_TIMER, EV_ADD, 0, 1000, NULL);
 
         if (close(kqfd2) < 0)
             die("close()");
+
+        nanosleep(&(struct timespec) { .tv_nsec = 25000000 }, NULL);   /* deschedule thread */
     }
 
     if (close(kqfd1) < 0)
@@ -139,7 +141,7 @@ test_cleanup(void *unused)
         if ((kqfd2 = kqueue()) < 0)
             die("kqueue()");
 
-        kevent_add(kqfd2, &kev, 1, EVFILT_TIMER, EV_ADD, 0, 1000,NULL);
+        kevent_add(kqfd2, &kev, 1, EVFILT_TIMER, EV_ADD, 0, 1000, NULL);
 
         if (close(kqfd2) < 0)
             die("close()");

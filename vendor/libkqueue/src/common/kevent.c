@@ -329,7 +329,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
             kqueue_unlock(kq);
             dbg_printf("(%u) kevent_copyout rv=%i", myid, rv);
             if (rv >= 0) {
-                el_p += rv;              /* Add events from copyin */
+                el_p += rv;             /* Add events from copyin */
                 rv = el_p - eventlist;  /* recalculate rv to be the total events in the eventlist */
             }
         } else if (rv == 0) {
