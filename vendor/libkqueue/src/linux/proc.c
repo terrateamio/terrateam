@@ -47,7 +47,9 @@ int
 evfilt_proc_copyout(struct kevent *dst, struct knote *src, UNUSED_NDEBUG void *ptr)
 {
     siginfo_t info;
+#ifndef NDEBUG    
     struct epoll_event * const ev = (struct epoll_event *) ptr;
+#endif
 
     dbg_printf("epoll_ev=%s", epoll_event_dump(ev));
     memcpy(dst, &src->kev, sizeof(*dst)); /* Populate flags from the src kevent */
