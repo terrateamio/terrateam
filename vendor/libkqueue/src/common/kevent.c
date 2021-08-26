@@ -330,7 +330,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
             dbg_printf("(%u) kevent_copyout rv=%i", myid, rv);
             if (rv >= 0) {
                 el_p += rv;              /* Add events from copyin */
-                rv += el_p - eventlist;  /* recalculate rv to be the total events in the eventlist */
+                rv = el_p - eventlist;  /* recalculate rv to be the total events in the eventlist */
             }
         } else if (rv == 0) {
             /* Timeout reached */
