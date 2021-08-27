@@ -153,6 +153,7 @@ void    test_end(struct test_context *);
 void    test_atexit(void);
 void    testing_begin(void);
 void    testing_end(void);
+void    testing_end_quiet(void);
 int     testing_make_uid(void);
 
 #endif  /* _COMMON_H */

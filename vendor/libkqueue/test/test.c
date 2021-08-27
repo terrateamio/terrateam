@@ -45,10 +45,10 @@ error_handler(int signum)
 static void
 testing_atexit(void)
 {
-    if (error_flag) {
+    if (error_flag == 1) {
         printf(" *** TEST FAILED ***\n");
         //TODO: print detailed log
-    } else {
+    } else if (error_flag == 0) {
         printf("\n---\n"
                 "+OK All %d tests completed.\n", testnum - 1);
     }
@@ -89,6 +89,12 @@ testing_begin(void)
 
     atexit(testing_atexit);
 
+}
+
+void
+testing_end_quiet(void)
+{
+    error_flag = 2;
 }
 
 void

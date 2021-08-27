@@ -60,11 +60,12 @@ evfilt_proc_copyout(struct kevent *dst, struct knote *src, UNUSED_NDEBUG void *p
         return (-1);
     }
 
+    /* It appears we don't need to use the W* macros here */
     if (info.si_code == CLD_EXITED) {
-        dst->data = WEXITSTATUS(info.si_status);
+        dst->data = info.si_status;
     	dbg_printf("pid=%u exited, status %u", (unsigned int)src->kev.ident, (unsigned int)dst->data);
     } else if (info.si_code == CLD_KILLED || info.si_code == CLD_DUMPED) {
-        dst->data = WTERMSIG(info.si_status);
+        dst->data = info.si_status;
     	dbg_printf("pid=%u killed, status %u", (unsigned int)src->kev.ident, (unsigned int)dst->data);
     } else {
         dst->data = 0;
