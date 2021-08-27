@@ -120,7 +120,7 @@ void test_evfilt_user(struct test_context *);
 } while (/*CONSTCOND*/0)
 
 extern const char * kevent_to_str(struct kevent *);
-void kevent_get(struct kevent *, int);
+void kevent_get(struct kevent *, int, int);
 void kevent_get_hires(struct kevent *, int, struct timespec *);
 int kevent_get_timeout(struct kevent *, int, struct timespec *);
 void kevent_update(int kqfd, struct kevent *kev);
@@ -139,16 +139,6 @@ kevent_add(int kqfd, struct kevent *kev,
         u_int     fflags,
         intptr_t  data,
         void      *udata);
-
-/* DEPRECATED: */
-#define KEV_CMP(kev,_ident,_filter,_flags) do {                 \
-    if (kev.ident != (_ident) ||                                \
-            kev.filter != (_filter) ||                          \
-            kev.flags != (_flags)) \
-        err(1, "kevent mismatch: got [%d,%d,%d] but expecting [%d,%d,%d]", \
-                (int)_ident, (int)_filter, (int)_flags,\
-                (int)kev.ident, kev.filter, kev.flags);\
-} while (0);
 
 /* Checks if any events are pending, which is an error. */
 #define test_no_kevents(a) _test_no_kevents(a, __FILE__, __LINE__)

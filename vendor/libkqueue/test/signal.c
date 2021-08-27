@@ -36,7 +36,7 @@ test_kevent_signal_get(struct test_context *ctx)
 
     kev.flags |= EV_CLEAR;
     kev.data = 1;
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 }
 
@@ -69,13 +69,12 @@ test_kevent_signal_enable(struct test_context *ctx)
 #else
     kev.data = 2; // one extra time from test_kevent_signal_disable()
 #endif
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 
     /* Delete the watch */
     kev.flags = EV_DELETE;
-    if (kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        die("kevent");
+    kevent_rv_cmp(0, kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL));
 }
 
 void
@@ -105,7 +104,7 @@ test_kevent_signal_oneshot(struct test_context *ctx)
 
     kev.flags |= EV_CLEAR;
     kev.data = 1;
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 
     /* Send another one and make sure we get no events */
@@ -128,7 +127,7 @@ test_kevent_signal_modify(struct test_context *ctx)
 
     kev.flags |= EV_CLEAR;
     kev.data = 1;
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 
     test_kevent_signal_del(ctx);
@@ -150,7 +149,7 @@ test_kevent_signal_dispatch(struct test_context *ctx)
         die("kill");
     kev.flags |= EV_CLEAR;
     kev.data = 1;
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 
     /*
@@ -176,7 +175,7 @@ test_kevent_signal_dispatch(struct test_context *ctx)
         die("kill");
     kev.flags = EV_ADD | EV_CLEAR | EV_DISPATCH;
     kev.data = 1;
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 
     /* Remove the knote and ensure the event no longer fires */

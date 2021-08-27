@@ -38,7 +38,7 @@ _test_no_kevents(int kqfd, const char *file, int line)
 
 /* Retrieve a single kevent */
 void
-kevent_get(struct kevent *kev, int kqfd)
+kevent_get(struct kevent *kev, int kqfd, int expect)
 {
     struct kevent buf;
     int nfds;
@@ -46,9 +46,7 @@ kevent_get(struct kevent *kev, int kqfd)
     if (kev == NULL)
        kev = &buf;
 
-    nfds = kevent(kqfd, NULL, 0, kev, 1, NULL);
-    if (nfds < 1)
-        err(1, "kevent(2)");
+    kevent_rv_cmp(expect, kevent(kqfd, NULL, 0, kev, 1, NULL));
 }
 
 /**

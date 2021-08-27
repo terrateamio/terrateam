@@ -42,7 +42,7 @@ test_kevent_user_get(struct test_context *ctx)
     kev.fflags &= ~NOTE_FFCTRLMASK;
     kev.fflags &= ~NOTE_TRIGGER;
     kev.flags = EV_CLEAR;
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 
     test_no_kevents(ctx->kqfd);
@@ -92,7 +92,7 @@ test_kevent_user_disable_and_enable(struct test_context *ctx)
     kev.flags = EV_CLEAR;
     kev.fflags &= ~NOTE_FFCTRLMASK;
     kev.fflags &= ~NOTE_TRIGGER;
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 }
 
@@ -109,7 +109,7 @@ test_kevent_user_oneshot(struct test_context *ctx)
     kev.flags = EV_ONESHOT;
     kev.fflags &= ~NOTE_FFCTRLMASK;
     kev.fflags &= ~NOTE_TRIGGER;
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 
     test_no_kevents(ctx->kqfd);
@@ -131,7 +131,7 @@ test_kevent_user_multi_trigger_merged(struct test_context *ctx)
     kev.flags = EV_CLEAR;
     kev.fflags &= ~NOTE_FFCTRLMASK;
     kev.fflags &= ~NOTE_TRIGGER;
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 
     test_no_kevents(ctx->kqfd);
@@ -153,7 +153,7 @@ test_kevent_user_dispatch(struct test_context *ctx)
     kev.fflags &= ~NOTE_FFCTRLMASK;
     kev.fflags &= ~NOTE_TRIGGER;
     kev.flags = EV_CLEAR;
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 
     /* Confirm that the knote is disabled automatically */
@@ -169,7 +169,7 @@ test_kevent_user_dispatch(struct test_context *ctx)
     kev.fflags &= ~NOTE_FFCTRLMASK;
     kev.fflags &= ~NOTE_TRIGGER;
     kev.flags = EV_CLEAR;
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
     test_no_kevents(ctx->kqfd);
 

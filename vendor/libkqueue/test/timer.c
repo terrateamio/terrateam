@@ -43,7 +43,7 @@ test_kevent_timer_get(struct test_context *ctx)
 
     kev.flags |= EV_CLEAR;
     kev.data = 1;
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 
     kevent_add(ctx->kqfd, &kev, 1, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
@@ -61,7 +61,7 @@ test_kevent_timer_oneshot(struct test_context *ctx)
     /* Retrieve the event */
     kev.flags = EV_ADD | EV_CLEAR | EV_ONESHOT;
     kev.data = 1;
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 
     /* Check if the event occurs again */
@@ -81,12 +81,12 @@ test_kevent_timer_periodic(struct test_context *ctx)
     /* Retrieve the event */
     kev.flags = EV_ADD | EV_CLEAR;
     kev.data = 1;
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 
     /* Check if the event occurs again */
     sleep(1);
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 
     /* Delete the event */
@@ -113,7 +113,7 @@ test_kevent_timer_disable_and_enable(struct test_context *ctx)
 
     kev.flags = EV_ADD | EV_CLEAR | EV_ONESHOT;
     kev.data = 1;
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 }
 
@@ -130,7 +130,7 @@ test_kevent_timer_dispatch(struct test_context *ctx)
     /* Get one event */
     kev.flags = EV_ADD | EV_CLEAR | EV_DISPATCH;
     kev.data = 1;
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 
     /* Confirm that the knote is disabled */
@@ -145,7 +145,7 @@ test_kevent_timer_dispatch(struct test_context *ctx)
     sleep(1);
     kev.flags = EV_ADD | EV_CLEAR | EV_DISPATCH;
     kev.data = 1;
-    kevent_get(&ret, ctx->kqfd);
+    kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 
     /* Remove the knote and ensure the event no longer fires */

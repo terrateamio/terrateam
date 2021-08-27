@@ -81,7 +81,7 @@ test_kevent_proc_get(struct test_context *ctx)
     printf(" -- killing process %d\n", (int) pid);
     if (kill(pid, SIGKILL) < 0)
         die("kill");
-    kevent_get(&buf, ctx->kqfd);
+    kevent_get(&buf, ctx->kqfd, 1);
 
     kev.data = SIGKILL; /* What we expected the process exit code to be */
     kev.flags = EV_ADD | EV_ONESHOT | EV_CLEAR | EV_EOF;
@@ -100,8 +100,7 @@ test_kevent_signal_disable(struct test_context *ctx)
     test_begin(test_id);
 
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_DISABLE, 0, 0, NULL);
-    if (kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        die("%s", test_id);
+    kevent_rv_cmp(0, kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL));
 
     /* Block SIGUSR1, then send it to ourselves */
     sigset_t mask;
@@ -121,13 +120,12 @@ void
 test_kevent_signal_enable(struct test_context *ctx)
 {
     const char *test_id = "kevent(EVFILT_SIGNAL, EV_ENABLE)";
-    struct kevent kev;
+    struct kevent kev, buf;
 
     test_begin(test_id);
 
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_ENABLE, 0, 0, NULL);
-    if (kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        die("%s", test_id);
+    kevent_rv_cmp(0, kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL));
 
     /* Block SIGUSR1, then send it to ourselves */
     sigset_t mask;
@@ -144,12 +142,12 @@ test_kevent_signal_enable(struct test_context *ctx)
 #else
     kev.data = 2; // one extra time from test_kevent_signal_disable()
 #endif
-    kevent_cmp(&kev, kevent_get(ctx->kqfd));
+    kevent_get(&buf, ctx->kqfd, 1)
+    kevent_cmp(&kev, &buf);
 
     /* Delete the watch */
     kev.flags = EV_DELETE;
-    if (kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        die("%s", test_id);
+    kevent_rv_cmp(0, kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL));
 
     success();
 }
@@ -164,8 +162,7 @@ test_kevent_signal_del(struct test_context *ctx)
 
     /* Delete the kevent */
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_DELETE, 0, 0, NULL);
-    if (kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        die("%s", test_id);
+    kevent_rv_cmp(0, kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL));
 
     /* Block SIGUSR1, then send it to ourselves */
     sigset_t mask;
@@ -184,13 +181,12 @@ void
 test_kevent_signal_oneshot(struct test_context *ctx)
 {
     const char *test_id = "kevent(EVFILT_SIGNAL, EV_ONESHOT)";
-    struct kevent kev;
+    struct kevent kev, buf;
 
     test_begin(test_id);
 
     EV_SET(&kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD | EV_ONESHOT, 0, 0, NULL);
-    if (kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL) < 0)
-        die("%s", test_id);
+    kevent_rv_cmp(0, kevent(ctx->kqfd, &kev, 1, NULL, 0, NULL));
 
     /* Block SIGUSR1, then send it to ourselves */
     sigset_t mask;
@@ -203,7 +199,8 @@ test_kevent_signal_oneshot(struct test_context *ctx)
 
     kev.flags |= EV_CLEAR;
     kev.data = 1;
-    kevent_cmp(&kev, kevent_get(ctx->kqfd));
+    kevent_get(&buf, ctx->kqfd, 1)
+    kevent_cmp(&kev, &buf);
 
     /* Send another one and make sure we get no events */
     if (kill(getpid(), SIGUSR1) < 0)
