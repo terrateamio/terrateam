@@ -49,7 +49,7 @@ module Make (Abb : Abb_intf.S) = struct
           !min_inprecision
           !count
           (!total /. float !count);
-        assert (!max_inprecision <= 1.0))
+        assert (!max_inprecision <= 1.1))
 
   let timeout_test =
     Oth_abb.test ~desc:"Timeout test" ~name:"Timeout test" (fun () ->
