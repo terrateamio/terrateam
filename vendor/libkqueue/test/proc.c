@@ -162,7 +162,7 @@ test_kevent_proc_exit_status_error(struct test_context *ctx)
 
     kevent_get(&buf, ctx->kqfd, 1);
 
-    kev.data = 64; /* What we expected the process exit code to be */
+    kev.data = 64 << 8; /* What we expected the process exit code to be */
     kev.flags = EV_ADD | EV_ONESHOT | EV_CLEAR | EV_EOF;
 
     kevent_cmp(&kev, &buf);

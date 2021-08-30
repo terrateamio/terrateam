@@ -47,6 +47,7 @@ int
 evfilt_proc_copyout(struct kevent *dst, struct knote *src, UNUSED_NDEBUG void *ptr)
 {
     siginfo_t info;
+    unsigned int status = 0;
 #ifndef NDEBUG
     struct epoll_event * const ev = (struct epoll_event *) ptr;
 #endif
@@ -60,16 +61,34 @@ evfilt_proc_copyout(struct kevent *dst, struct knote *src, UNUSED_NDEBUG void *p
         return (-1);
     }
 
-    /* It appears we don't need to use the W* macros here */
-    if (info.si_code == CLD_EXITED) {
-        dst->data = info.si_status;
-    	dbg_printf("pid=%u exited, status %u", (unsigned int)src->kev.ident, (unsigned int)dst->data);
-    } else if (info.si_code == CLD_KILLED || info.si_code == CLD_DUMPED) {
-        dst->data = info.si_status;
-    	dbg_printf("pid=%u killed, status %u", (unsigned int)src->kev.ident, (unsigned int)dst->data);
-    } else {
-        dst->data = 0;
+    /*
+     *  Try and reconstruct the status code that would have been
+     *  returned by waitpid.  The OpenBSD man pages
+     *  and observations of the macOS kqueue confirm this is what
+     *  we should be returning in the data field of the kevent.
+     */
+    switch (info.si_code) {
+    case CLD_EXITED:    /* WIFEXITED - High byte contains status, low byte zeroed */
+        status = info.si_status << 8;
+        dbg_printf("pid=%u exited, status %u", (unsigned int)src->kev.ident, status);
+        break;
+
+    case CLD_DUMPED:    /* WIFSIGNALED/WCOREDUMP - Core flag set - Low 7 bits contains fatal signal */
+        status |= 0x80; /* core flag */
+        status = info.si_status & 0x7f;
+        dbg_printf("pid=%u dumped, status %u", (unsigned int)src->kev.ident, status);
+        break;
+
+    case CLD_KILLED:    /* WIFSIGNALED - Low 7 bits contains fatal signal */
+        status = info.si_status & 0x7f;
+        dbg_printf("pid=%u signalled, status %u", (unsigned int)src->kev.ident, status);
+        break;
+
+    default: /* The rest aren't valid exit states */
+        return (0);
     }
+
+    dst->data = status;
     dst->flags |= EV_EOF; /* Set in macOS and FreeBSD kqueue implementations */
 
     return (1);
