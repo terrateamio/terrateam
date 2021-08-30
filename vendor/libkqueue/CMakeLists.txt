@@ -130,6 +130,7 @@ endif()
 
 set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
 check_symbol_exists(ppoll poll.h HAVE_DECL_PPOLL)
+check_symbol_exists(SYS_pidfd_open sys/syscall.h HAVE_SYS_PIDFD_OPEN)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/config.h)
@@ -181,13 +182,18 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL Linux)
        src/posix/platform.h
        src/linux/platform.c
        src/linux/platform.h
-       src/linux/proc.c
        src/linux/read.c
        src/linux/signal.c
        src/linux/timer.c
        src/linux/user.c
        src/linux/vnode.c
        src/linux/write.c)
+
+    if (HAVE_SYS_PIDFD_OPEN)
+        list(APPEND LIBKQUEUE_SOURCES src/linux/proc.c)
+    else()
+        list(APPEND LIBKQUEUE_SOURCES src/posix/proc.c)
+    endif()
 else()
   message(FATAL_ERROR "unsupported host os")
 endif()

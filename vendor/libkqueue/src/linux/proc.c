@@ -19,14 +19,11 @@
 /* We depend on the SYS_pidfd_open call to determine when a process has exited
  *
  * The SYS_pidfd_open call is only available in Kernels >= 5.3.  If this call
- * isn't available there's currently no good fallback.  We could implement
- * some code around netlink in future, but for now just mark the proc filter
- * as not implemented.
+ * isn't available there's currently no good fallback.
+ *
+ * If the build system detects SYS_pidfd_open is not available it will fall back
+ * to using posix/proc.c and not build this source file.
  */
-#ifndef SYS_pidfd_open
-#include "private.h"
-const struct filter evfilt_proc = EVFILT_NOTIMPL;
-#else
 #include <errno.h>
 #include <err.h>
 #include <fcntl.h>
@@ -185,4 +182,3 @@ const struct filter evfilt_proc = {
     .kn_enable  = evfilt_proc_knote_enable,
     .kn_disable = evfilt_proc_knote_disable,
 };
-#endif
