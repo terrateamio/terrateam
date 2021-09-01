@@ -85,7 +85,7 @@ evfilt_timer_destroy(struct filter *filt UNUSED)
 }
 
 int
-evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
+evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *ptr UNUSED)
 {
     /* port_event_t *pe = (port_event_t *) ptr; */
 

@@ -28,7 +28,7 @@ evfilt_user_destroy(struct filter *filt)
 }
 
 int
-evfilt_user_copyout(struct kevent* dst, struct knote* src, void* ptr)
+evfilt_user_copyout(struct kevent *dst, UNUSED int nevents, struct knote* src, void* ptr)
 {
     memcpy(dst, &src->kev, sizeof(struct kevent));
 
@@ -45,7 +45,7 @@ evfilt_user_copyout(struct kevent* dst, struct knote* src, void* ptr)
     if (src->kev.flags & EV_DISPATCH)
         src->kev.fflags &= ~NOTE_TRIGGER;
 
-    return (0);
+    return (1);
 }
 
 int

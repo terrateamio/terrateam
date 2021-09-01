@@ -17,7 +17,7 @@
 #include "private.h"
 
 int
-evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
+evfilt_user_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *ptr UNUSED)
 {
     //port_event_t *pe = (port_event_t *) ptr;
 

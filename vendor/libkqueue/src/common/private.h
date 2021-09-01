@@ -186,15 +186,17 @@ struct filter {
 
     /** Copy an event from the eventing system to a kevent structure
      *
-     * @param[in] dst    kevent to populate.
+     * @param[in] el     array of `struct kevent` to populate.  Most filters
+     *                   will insert a single event, but some may insert multiple.
+     * @param[in] nevents The maximum number of events to copy to el.
      * @param[in] kn     the event was triggered on.
      * @param[in] ev     event system specific structure representing the event,
      *                   i.e. for Linux this would be a `struct epoll_event *`.
      * @return
-     *    - 0 on success.
+     *    - >=0 the number of events copied to el.
      *    - -1 on failure.
      */
-    int            (*kf_copyout)(struct kevent *dst, struct knote *kn, void *ev);
+    int            (*kf_copyout)(struct kevent *el, int nevents, struct knote *kn, void *ev);
 
     /* knote operations */
     int            (*kn_create)(struct filter *, struct knote *);

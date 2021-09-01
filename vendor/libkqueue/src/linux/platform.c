@@ -531,13 +531,12 @@ linux_kevent_wait(struct kqueue *kq, int nevents, const struct timespec *ts)
     return (nret);
 }
 
-static inline int linux_kevent_copyout_ev(struct kevent **el_p, struct epoll_event *ev,
+static inline int linux_kevent_copyout_ev(struct kevent *el, int nevents, struct epoll_event *ev,
                                           struct filter *filt, struct knote *kn)
 {
     int rv;
-    struct kevent *el = *el_p;
 
-    rv = filt->kf_copyout(el, kn, ev);
+    rv = filt->kf_copyout(el, nevents, kn, ev);
     if (unlikely(rv < 0)) {
         dbg_puts("knote_copyout failed");
         assert(0);
@@ -545,12 +544,14 @@ static inline int linux_kevent_copyout_ev(struct kevent **el_p, struct epoll_eve
     }
 
     /*
-     *    Advance to the next el entry
+     * Don't emit bad events...
+     *
+     * Fixme - We shouldn't be emitting bad events
+     * in the first place?
      */
-    if (likely(el->filter != 0)) {
-        (*el_p)++;
-    } else {
+    if (unlikely(el->filter == 0)) {
         dbg_puts("spurious wakeup, discarding event");
+        rv = 0;
     }
 
     /*
@@ -601,8 +602,9 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
                 goto done;
             }
 
-            rv = linux_kevent_copyout_ev(&el_p, ev, &kq->kq_filt[~(kn->kev.filter)], kn);
+            rv = linux_kevent_copyout_ev(el_p, (el_end - el_p), ev, &kq->kq_filt[~(kn->kev.filter)], kn);
             if (rv < 0) goto done;
+            el_p += rv;
         }
             break;
 
@@ -612,8 +614,8 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
          */
         case EPOLL_UDATA_FD_STATE:
         {
-            struct fd_state      *fds = epoll_udata->ud_fds;
-            struct knote         *kn;
+            struct fd_state   *fds = epoll_udata->ud_fds;
+            struct knote      *kn;
 
             /*
              *    FD is readable
@@ -631,8 +633,9 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
                  */
                 assert(kn);
 
-                rv = linux_kevent_copyout_ev(&el_p, ev, &kq->kq_filt[~(kn->kev.filter)], kn);
+                rv = linux_kevent_copyout_ev(el_p, (el_end - el_p), ev, &kq->kq_filt[~(kn->kev.filter)], kn);
                 if (rv < 0) goto done;
+                el_p += rv;
             }
 
             /*
@@ -645,8 +648,9 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
 
                 assert(kn);    /* We shouldn't receive events we didn't request */
 
-                rv = linux_kevent_copyout_ev(&el_p, ev, &kq->kq_filt[~(kn->kev.filter)], kn);
+                rv = linux_kevent_copyout_ev(el_p, (el_end - el_p), ev, &kq->kq_filt[~(kn->kev.filter)], kn);
                 if (rv < 0) goto done;
+                el_p += rv;
             }
         }
             break;
@@ -826,7 +830,7 @@ linux_get_descriptor_type(struct knote *kn)
             dbg_printf("fd=%i is a socket", fd);
             break; /* deferred type determination */
 
-        case 0:	/* seen with eventfd */
+        case 0: /* seen with eventfd */
             dbg_printf("fd=%i fstat() provided no S_IFMT flags, treating fd as passive socket", fd);
             kn->kn_flags |= KNFL_SOCKET;
             kn->kn_flags |= KNFL_SOCKET_PASSIVE;

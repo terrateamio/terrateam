@@ -134,7 +134,7 @@ evfilt_signal_knote_disable(struct filter *filt UNUSED, struct knote *kn)
 }
 
 int
-evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *ptr)
+evfilt_signal_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *ptr)
 {
     port_event_t *pe = (port_event_t *) ptr;
     struct sentry *ent = (struct sentry *) pe->portev_user;

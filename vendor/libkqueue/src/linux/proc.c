@@ -41,7 +41,7 @@
 #include "private.h"
 
 int
-evfilt_proc_copyout(struct kevent *dst, struct knote *src, UNUSED_NDEBUG void *ptr)
+evfilt_proc_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, UNUSED_NDEBUG void *ptr)
 {
     siginfo_t info;
     unsigned int status = 0;

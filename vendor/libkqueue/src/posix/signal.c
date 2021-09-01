@@ -170,7 +170,7 @@ evfilt_signal_knote_disable(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
+evfilt_signal_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *ptr UNUSED)
 {
     struct sentry *s;
     struct knote *kn;

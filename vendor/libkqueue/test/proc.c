@@ -111,7 +111,7 @@ test_kevent_proc_exit_status_ok(struct test_context *ctx)
     /* Create a child that waits to be killed and then exits */
     pid = fork();
     if (pid == 0) {
-	usleep(100000);
+        usleep(100000);
         printf(" -- child done sleeping, exiting (0)\n");
         testing_end_quiet();
         exit(0);
@@ -150,7 +150,7 @@ test_kevent_proc_exit_status_error(struct test_context *ctx)
     /* Create a child that waits to be killed and then exits */
     pid = fork();
     if (pid == 0) {
-	usleep(100000);
+        usleep(100000);
         printf(" -- child done sleeping, exiting (64)\n");
         testing_end_quiet();
         exit(64);

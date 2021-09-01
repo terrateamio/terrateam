@@ -139,7 +139,7 @@ windows_kevent_copyout(struct kqueue *kq, int nready,
     //FIXME: not true for EVFILT_IOCP
     kn = (struct knote *) iocp_buf.overlap;
     filt = &kq->kq_filt[~(kn->kev.filter)];
-    rv = filt->kf_copyout(eventlist, kn, &iocp_buf);
+    rv = filt->kf_copyout(eventlist, nevents, kn, &iocp_buf);
     if (unlikely(rv < 0)) {
         dbg_puts("knote_copyout failed");
         /* XXX-FIXME: hard to handle this without losing events */

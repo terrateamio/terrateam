@@ -90,7 +90,7 @@ eventfd_lower(int evfd)
 }
 
 int
-linux_evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
+linux_evfilt_user_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *ptr UNUSED)
 {
     memcpy(dst, &src->kev, sizeof(*dst));
     dst->fflags &= ~NOTE_FFCTRLMASK;     //FIXME: Not sure if needed
@@ -110,7 +110,7 @@ linux_evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSE
     if (src->kev.flags & EV_DISPATCH)
         src->kev.fflags &= ~NOTE_TRIGGER;
 
-    return (0);
+    return (1);
 }
 
 int

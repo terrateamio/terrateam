@@ -54,7 +54,7 @@ get_eof_offset(int fd)
 }
 
 int
-evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
+evfilt_read_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *ptr)
 {
     int ret;
     int serr;
@@ -104,7 +104,7 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
 #endif
         }
 
-        return (0);
+        return (1);
     }
 
     dbg_printf("epoll_ev=%s", epoll_event_dump(ev));
@@ -144,7 +144,7 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
         }
     }
 
-    return (0);
+    return (1);
 }
 
 int

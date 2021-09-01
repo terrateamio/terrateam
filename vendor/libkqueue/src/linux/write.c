@@ -31,7 +31,7 @@
 #include "private.h"
 
 int
-evfilt_write_copyout(struct kevent *dst, struct knote *src, void *ptr)
+evfilt_write_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *ptr)
 {
     int ret;
     int serr;
@@ -61,7 +61,7 @@ evfilt_write_copyout(struct kevent *dst, struct knote *src, void *ptr)
             dst->data = 0;
     }
 
-    return (0);
+    return (1);
 }
 
 int

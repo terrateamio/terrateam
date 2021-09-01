@@ -101,7 +101,7 @@ evfilt_socket_knote_disable(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_socket_copyout(struct kevent *dst, struct knote *src, void *ptr)
+evfilt_socket_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *ptr)
 {
     port_event_t *pe = (port_event_t *) ptr;
     unsigned int pending_data = 0;
@@ -133,7 +133,7 @@ evfilt_socket_copyout(struct kevent *dst, struct knote *src, void *ptr)
     }
     */
 
-    return (0);
+    return (1);
 }
 
 const struct filter evfilt_read = {

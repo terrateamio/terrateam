@@ -222,7 +222,7 @@ evfilt_timer_destroy(struct filter *filt)
 }
 
 int
-evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
+evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *ptr UNUSED)
 {
     struct filter *filt;
     struct sleepinfo    si;

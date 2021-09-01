@@ -123,7 +123,7 @@ errout:
 }
 
 int
-evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *x UNUSED)
+evfilt_signal_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *x UNUSED)
 {
     int sigfd;
 
@@ -137,7 +137,7 @@ evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *x UNUSED)
      */
     dst->data = 1;
 
-    return (0);
+    return (1);
 }
 
 int
