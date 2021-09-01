@@ -46,7 +46,7 @@ filter_register(struct kqueue *kq, const struct filter *src)
     dst = &kq->kq_filt[filt];
     memcpy(dst, src, sizeof(*src));
     dst->kf_kqueue = kq;
-    RB_INIT(&dst->kf_knote);
+    RB_INIT(&dst->kf_index);
     pthread_rwlock_init(&dst->kf_knote_mtx, NULL);
     if (src->kf_id == 0) {
         dbg_puts("filter is not implemented");

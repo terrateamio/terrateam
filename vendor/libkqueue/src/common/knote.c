@@ -45,7 +45,7 @@ knote_cmp(struct knote *a, struct knote *b)
     return (a->kev.ident > b->kev.ident) - (a->kev.ident < b->kev.ident);
 }
 
-RB_GENERATE(knt, knote, kn_entries, knote_cmp)
+RB_GENERATE(knote_index, knote, kn_index, knote_cmp)
 
 struct knote *
 knote_new(void)
@@ -82,7 +82,7 @@ void
 knote_insert(struct filter *filt, struct knote *kn)
 {
     pthread_rwlock_wrlock(&filt->kf_knote_mtx);
-    RB_INSERT(knt, &filt->kf_knote, kn);
+    RB_INSERT(knote_index, &filt->kf_index, kn);
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
 }
 
@@ -95,7 +95,7 @@ knote_lookup(struct filter *filt, uintptr_t ident)
     query.kev.ident = ident;
 
     pthread_rwlock_rdlock(&filt->kf_knote_mtx);
-    ent = RB_FIND(knt, &filt->kf_knote, &query);
+    ent = RB_FIND(knote_index, &filt->kf_index, &query);
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
 
     return (ent);
@@ -106,14 +106,8 @@ int knote_delete_all(struct filter *filt)
     struct knote *kn, *tmp;
 
     pthread_rwlock_wrlock(&filt->kf_knote_mtx);
-    RB_FOREACH_SAFE(kn, knt, &filt->kf_knote, tmp) {
-        /* Check return code */
-        filt->kn_delete(filt, kn);
-
-        kn->kn_flags |= KNFL_KNOTE_DELETED;
-
-        knote_release(kn);
-    }
+    RB_FOREACH_SAFE(kn, knote_index, &filt->kf_index, tmp)
+        knote_delete(filt, kn);
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
     return (0);
 }
@@ -137,10 +131,9 @@ knote_delete(struct filter *filt, struct knote *kn)
      */
     query.kev.ident = kn->kev.ident;
     pthread_rwlock_wrlock(&filt->kf_knote_mtx);
-    tmp = RB_FIND(knt, &filt->kf_knote, &query);
-    if (tmp == kn) {
-        RB_REMOVE(knt, &filt->kf_knote, kn);
-    }
+    tmp = RB_FIND(knote_index, &filt->kf_index, &query);
+    if (tmp == kn)
+        RB_REMOVE(knote_index, &filt->kf_index, kn);
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
 
     rv = filt->kn_delete(filt, kn);

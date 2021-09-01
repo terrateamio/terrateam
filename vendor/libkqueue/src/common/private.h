@@ -149,11 +149,14 @@ struct knote {
     } data;
 
     struct kqueue       *kn_kq;     //!< kqueue this knote is associated with.
-    atomic_uint         kn_ref;
+    atomic_uint         kn_ref;     //!< Reference counter for this knote.
+
+    RB_ENTRY(knote)     kn_index;   //!< Entry in tree holding all knotes associated
+                                    ///< with a given filter.
 #if defined(KNOTE_PLATFORM_SPECIFIC)
     KNOTE_PLATFORM_SPECIFIC;
 #endif
-    RB_ENTRY(knote)   kn_entries;
+
 };
 
 /** Mark a knote as enabled
@@ -178,7 +181,7 @@ struct knote {
  *
  * Filters handle notifications from different event sources.
  * The EVFILT_READ filter, for example, provides notifications when an FD is
- * readable, and EVFILT_SIGNAL filter provides notifications when a particular
+ * readable, and the EVFILT_SIGNAL filter provides notifications when a particular
  * signal is received by the process/thread.
  *
  * Many of the fields in this struct are callbacks for functions which operate
@@ -217,17 +220,33 @@ struct filter {
     int            (*kn_enable)(struct filter *, struct knote *);
     int            (*kn_disable)(struct filter *, struct knote *);
 
-    struct eventfd kf_efd;                       //!< Used by user.c
-
     //MOVE TO POSIX?
     int           kf_pfd;                        //!< fd to poll(2) for readiness
     int           kf_wfd;                        //!< fd to write when an event occurs
     //----?
 
-    struct evfilt_data *kf_data;                 //!< filter-specific data */
-    RB_HEAD(knt, knote) kf_knote;
-    pthread_rwlock_t    kf_knote_mtx;
-    struct kqueue      *kf_kqueue;
+    struct evfilt_data *kf_data;                 //!< Filter-specific data.
+
+    RB_HEAD(knote_index, knote) kf_index;        //!< Tree of knotes. This is for easy lookup
+                                                 ///< and removal of knotes.  All knotes are
+                                                 ///< directly owned by a filter.
+
+    struct eventfd kf_efd;                       //!< An eventfd associated with the filter.
+                                                 ///< This is used in conjunction with the
+                                                 ///< kf_ready list.  When the eventfd is
+                                                 ///< "raised", and the platform's eventing
+                                                 ///< is blocked (waiting for events), the
+                                                 ///< current epoll/select/etc... call returns
+                                                 ///< and we process the knotes in the kf_ready
+                                                 ///< list.
+                                                 ///< This is not used by all filters.
+
+
+    pthread_rwlock_t    kf_knote_mtx;            //!< Used to synchronise knote operations
+                                                 ///< on this filter.
+
+    struct kqueue      *kf_kqueue;               //!< kqueue this filter is associated with.
+
 #if defined(FILTER_PLATFORM_SPECIFIC)
     FILTER_PLATFORM_SPECIFIC;
 #endif
