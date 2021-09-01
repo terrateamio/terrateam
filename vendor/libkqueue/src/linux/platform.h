@@ -197,19 +197,7 @@ struct fd_state {
     struct epoll_event kq_plist[MAX_KEVENT]; \
     size_t kq_nplist
 
-int     linux_kqueue_init(struct kqueue *);
-void    linux_kqueue_free(struct kqueue *);
-
-int     linux_kevent_wait(struct kqueue *, int, const struct timespec *);
-int     linux_kevent_copyout(struct kqueue *, int, struct kevent *, int);
-
 int     linux_knote_copyout(struct kevent *, struct knote *);
-
-int     linux_eventfd_init(struct eventfd *);
-void    linux_eventfd_close(struct eventfd *);
-int     linux_eventfd_raise(struct eventfd *);
-int     linux_eventfd_lower(struct eventfd *);
-int     linux_eventfd_descriptor(struct eventfd *);
 
 /* utility functions */
 

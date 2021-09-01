@@ -63,18 +63,6 @@ static unsigned int *fd_use_cnt;
 
 static int nb_max_fd;
 
-const struct kqueue_vtable kqops = {
-    .kqueue_init        = linux_kqueue_init,
-    .kqueue_free        = linux_kqueue_free,
-    .kevent_wait        = linux_kevent_wait,
-    .kevent_copyout     = linux_kevent_copyout,
-    .eventfd_init       = linux_eventfd_init,
-    .eventfd_close      = linux_eventfd_close,
-    .eventfd_raise      = linux_eventfd_raise,
-    .eventfd_lower      = linux_eventfd_lower,
-    .eventfd_descriptor = linux_eventfd_descriptor,
-};
-
 static void
 linux_kqueue_cleanup(struct kqueue *kq);
 
@@ -275,7 +263,7 @@ linux_kqueue_start_thread(void)
     pthread_mutex_unlock(&mt_mtx);
 }
 
-int
+static int
 linux_kqueue_init(struct kqueue *kq)
 {
     struct f_owner_ex sig_owner;
@@ -452,7 +440,7 @@ linux_kqueue_cleanup(struct kqueue *kq)
  * KQ fd is in use, and we shouldn't attempt to free it if we
  * receive a signal in the monitoring thread.
  */
-void
+static void
 linux_kqueue_free(struct kqueue *kq)
 {
     linux_kqueue_cleanup(kq);
@@ -499,7 +487,7 @@ linux_kevent_wait_hires(
     return (n);
 }
 
-int
+static int
 linux_kevent_wait(struct kqueue *kq, int nevents, const struct timespec *ts)
 {
     int timeout, nret;
@@ -688,7 +676,7 @@ linux_eventfd_init(struct eventfd *e)
     return (0);
 }
 
-void
+static void
 linux_eventfd_close(struct eventfd *e)
 {
     if (close(e->ef_id) < 0)
@@ -696,7 +684,7 @@ linux_eventfd_close(struct eventfd *e)
     e->ef_id = -1;
 }
 
-int
+static int
 linux_eventfd_raise(struct eventfd *e)
 {
     uint64_t counter;
@@ -722,7 +710,7 @@ linux_eventfd_raise(struct eventfd *e)
     return (rv);
 }
 
-int
+static int
 linux_eventfd_lower(struct eventfd *e)
 {
     uint64_t cur;
@@ -754,7 +742,7 @@ linux_eventfd_lower(struct eventfd *e)
     return (rv);
 }
 
-int
+static int
 linux_eventfd_descriptor(struct eventfd *e)
 {
     return (e->ef_id);
@@ -1350,3 +1338,15 @@ linux_fd_to_path(char *buf, size_t bufsz, int fd)
     memset(buf, 0, bufsz);
     return (readlink(path, buf, bufsz));
 }
+
+const struct kqueue_vtable kqops = {
+    .kqueue_init        = linux_kqueue_init,
+    .kqueue_free        = linux_kqueue_free,
+    .kevent_wait        = linux_kevent_wait,
+    .kevent_copyout     = linux_kevent_copyout,
+    .eventfd_init       = linux_eventfd_init,
+    .eventfd_close      = linux_eventfd_close,
+    .eventfd_raise      = linux_eventfd_raise,
+    .eventfd_lower      = linux_eventfd_lower,
+    .eventfd_descriptor = linux_eventfd_descriptor,
+};
