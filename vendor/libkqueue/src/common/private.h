@@ -277,7 +277,6 @@ struct kqueue {
                                                  ///< kqueue maintains one filter state structure
                                                  ///< per filter type.
     tracing_mutex_t kq_mtx;
-    volatile uint32_t kq_ref;
 
 #if defined(KQUEUE_PLATFORM_SPECIFIC)
     KQUEUE_PLATFORM_SPECIFIC;
