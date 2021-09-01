@@ -19,7 +19,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "sys/event.h"
 #include "private.h"
 
 #ifndef NDEBUG

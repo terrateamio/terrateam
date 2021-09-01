@@ -21,7 +21,6 @@
 
 #include <port.h>
 
-#include "sys/event.h"
 #include "private.h"
 
 int

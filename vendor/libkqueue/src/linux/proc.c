@@ -25,7 +25,6 @@
 #include <sys/syscall.h>
 #include <sys/wait.h>
 
-#include "sys/event.h"
 #include "private.h"
 
 int

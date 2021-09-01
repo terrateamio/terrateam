@@ -30,6 +30,7 @@
 
 #include "config.h"
 #include "tree.h"
+#include "sys/event.h"
 
 /* Maximum events returnable in a single kevent() call */
 #define MAX_KEVENT  512

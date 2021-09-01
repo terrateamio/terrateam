@@ -17,7 +17,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "sys/event.h"
 #include "private.h"
 
 /* Highest signal number supported. POSIX standard signals are < 32 */

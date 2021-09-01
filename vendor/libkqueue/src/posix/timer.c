@@ -20,7 +20,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "sys/event.h"
 #include "private.h"
 
 /* A request to sleep for a certain time */

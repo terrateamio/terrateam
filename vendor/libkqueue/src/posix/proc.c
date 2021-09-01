@@ -21,7 +21,6 @@
 
 #include <limits.h>
 
-#include "sys/event.h"
 #include "private.h"
 
 pthread_cond_t   wait_cond = PTHREAD_COND_INITIALIZER;

@@ -40,9 +40,6 @@
 # pragma warning( disable : 4996 )
 #endif
 
-#include "../../include/sys/event.h"
-
-
 /*
  * Atomic integer operations
  */
