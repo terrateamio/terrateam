@@ -294,11 +294,48 @@ struct kqueue_vtable {
      */
     void (*filter_free)(struct kqueue *kq, struct filter *filt);
 
-    int  (*eventfd_init)(struct eventfd *);
-    void (*eventfd_close)(struct eventfd *);
-    int  (*eventfd_raise)(struct eventfd *);
-    int  (*eventfd_lower)(struct eventfd *);
-    int  (*eventfd_descriptor)(struct eventfd *);
+    /** Initialise a new eventfd
+     *
+     * @param[in] efd           structure to initialise.
+     * @return
+     *      - 0 on success.
+     *      - -1 on failure.
+     */
+    int  (*eventfd_init)(struct eventfd *efd);
+
+    /** Close an eventfd
+     *
+     * @param[in] efd           to close.
+     * @return
+     *      - 0 on success.
+     *      - -1 on failure.
+     */
+    void (*eventfd_close)(struct eventfd *efd);
+
+    /** "raise" an eventfd, i.e. signal it as pending
+     *
+     * @param[in] efd           to raise.
+     * @return
+     *      - 0 on success.
+     *      - -1 on failure.
+     */
+    int  (*eventfd_raise)(struct eventfd *efd);
+
+    /** "lower" an eventfd, consume the pending signal
+     *
+     * @param[in] efd           to lower.
+     * @return
+     *      - 0 on success.
+     *      - -1 on failure.
+     */
+    int  (*eventfd_lower)(struct eventfd *efd);
+
+    /** Return the file descriptor associated with an eventfd
+     *
+     * @param[in] efd           to return the file descriptor for.
+     * @return The file descriptor.
+     */
+    int  (*eventfd_descriptor)(struct eventfd *efd);
 };
 extern const struct kqueue_vtable kqops;
 
