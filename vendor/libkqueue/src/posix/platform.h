@@ -51,10 +51,4 @@ int     posix_kqueue_init(struct kqueue *);
 int     posix_kevent_wait(struct kqueue *, const struct timespec *);
 int     posix_kevent_copyout(struct kqueue *, int, struct kevent *, int);
 
-int     posix_eventfd_init(struct eventfd *);
-void    posix_eventfd_close(struct eventfd *);
-int     posix_eventfd_raise(struct eventfd *);
-int     posix_eventfd_lower(struct eventfd *);
-int     posix_eventfd_descriptor(struct eventfd *);
-
 #endif  /* ! _KQUEUE_POSIX_PLATFORM_H */

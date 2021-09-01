@@ -162,6 +162,8 @@ if(CMAKE_SYSTEM_NAME MATCHES Windows)
        src/windows/user.c)
 elseif(CMAKE_SYSTEM_NAME MATCHES "(Solaris|SunOS)")
   list(APPEND LIBKQUEUE_SOURCES
+       src/posix/eventfd.c
+       src/posix/eventfd.h
        src/solaris/platform.c
        src/solaris/platform.h
        src/solaris/signal.c

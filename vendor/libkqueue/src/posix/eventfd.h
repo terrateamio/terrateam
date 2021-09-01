@@ -13,19 +13,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
 #include "../common/private.h"
-#include "platform.h"
 
-int
-posix_kqueue_init(struct kqueue *kq)
-{
-    FD_ZERO(&kq->kq_fds);
-    kq->kq_nfds++;
-    return (0);
-}
-
-void
-posix_kqueue_free(struct kqueue *kq UNUSED)
-{
-}
+int     posix_eventfd_init(struct eventfd *);
+void    posix_eventfd_close(struct eventfd *);
+int     posix_eventfd_raise(struct eventfd *);
+int     posix_eventfd_lower(struct eventfd *);
+int     posix_eventfd_descriptor(struct eventfd *);

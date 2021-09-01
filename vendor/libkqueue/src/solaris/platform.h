@@ -25,6 +25,8 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 
+#include "../posix/eventfd.h"
+
 #define atomic_uintptr_t                  uintptr_t
 #define atomic_uint                       unsigned int
 #define atomic_inc                        atomic_inc_32_nv
