@@ -134,6 +134,9 @@ knote_delete(struct filter *filt, struct knote *kn)
     tmp = RB_FIND(knote_index, &filt->kf_index, &query);
     if (tmp == kn)
         RB_REMOVE(knote_index, &filt->kf_index, kn);
+
+    if (LIST_INSERTED(kn, kn_ready))
+        LIST_REMOVE(kn, kn_ready);
     pthread_rwlock_unlock(&filt->kf_knote_mtx);
 
     rv = filt->kn_delete(filt, kn);
@@ -155,7 +158,14 @@ knote_disable(struct filter *filt, struct knote *kn)
     dbg_printf("kn=%p - calling kn_disable", kn);
     rv = filt->kn_disable(filt, kn);
     dbg_printf("kn=%p - kn_disable rv=%i", kn, rv);
-    if (rv == 0) KNOTE_DISABLE(kn);
+    if (rv == 0) {
+        pthread_rwlock_wrlock(&filt->kf_knote_mtx);
+        if (LIST_INSERTED(kn, kn_ready)) /* No longer marked as ready if disabled */
+            LIST_REMOVE(kn, kn_ready);
+        pthread_rwlock_unlock(&filt->kf_knote_mtx);
+        KNOTE_DISABLE(kn); /* set the disable flag */
+    }
+
     return (rv);
 }
 

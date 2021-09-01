@@ -153,6 +153,11 @@ struct knote {
 
     RB_ENTRY(knote)     kn_index;   //!< Entry in tree holding all knotes associated
                                     ///< with a given filter.
+
+    LIST_ENTRY(knote)   kn_ready;   //!< Entry in a linked list of knotes which are
+                                    ///< ready for copyout.  This isn't used for all
+                                    ///< filters.
+
 #if defined(KNOTE_PLATFORM_SPECIFIC)
     KNOTE_PLATFORM_SPECIFIC;
 #endif
@@ -241,6 +246,12 @@ struct filter {
                                                  ///< list.
                                                  ///< This is not used by all filters.
 
+    LIST_HEAD(knote_ready, knote) kf_ready;      //!< knotes which are ready for copyout.
+                                                 ///< This is used for filters which don't
+                                                 ///< raise events using the platform's
+                                                 ///< eventing system, and instead signal
+                                                 ///< with eventfds.
+                                                 ///< This is not used by all filters.
 
     pthread_rwlock_t    kf_knote_mtx;            //!< Used to synchronise knote operations
                                                  ///< on this filter.
