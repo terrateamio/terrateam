@@ -16,10 +16,10 @@
 
 #define _GNU_SOURCE
 #include <poll.h>
-#include <pthread.h>
+#include <signal.h>
 #include <sys/prctl.h>
-#include <sys/types.h>
 #include <sys/resource.h>
+
 #include "../common/private.h"
 
 #define MONITORING_THREAD_SIGNAL  (SIGRTMIN + 1)

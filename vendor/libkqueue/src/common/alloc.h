@@ -32,9 +32,6 @@
  * is that mem_alloc() does not allow you to specify a specific size.
  *
  */
-
-#include <stdlib.h>
-
 #ifndef _WIN32
 # include <unistd.h>
 #endif

@@ -14,8 +14,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/syscall.h>
-
 /* We depend on the SYS_pidfd_open call to determine when a process has exited
  *
  * The SYS_pidfd_open call is only available in Kernels >= 5.3.  If this call
@@ -24,18 +22,8 @@
  * If the build system detects SYS_pidfd_open is not available it will fall back
  * to using posix/proc.c and not build this source file.
  */
-#include <errno.h>
-#include <err.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
+#include <sys/syscall.h>
 #include <sys/wait.h>
-#include <string.h>
-#include <unistd.h>
-
-#include <limits.h>
-#include <sys/epoll.h>
 
 #include "sys/event.h"
 #include "private.h"

@@ -13,19 +13,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <errno.h>
 #include <err.h>
-#include <fcntl.h>
-#include <pthread.h>
 #include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <sys/prctl.h>
-#include <sys/queue.h>
-#include <sys/types.h>
 #include <sys/wait.h>
-#include <string.h>
 #include <unistd.h>
 
 #include <limits.h>
@@ -44,8 +35,9 @@ static void *
 wait_thread(void *arg)
 {
     struct filter *filt = (struct filter *) arg;
-    struct knote *kn;
-    int status, result;
+    struct knote *dst;
+    int status;
+    siginfo_t info;
     pid_t pid;
     sigset_t sigmask;
 
@@ -55,9 +47,8 @@ wait_thread(void *arg)
     pthread_sigmask(SIG_BLOCK, &sigmask, NULL);
 
     for (;;) {
-
-        /* Wait for a child process to exit(2) */
-        if ((pid = waitpid(-1, &status, 0)) < 0) {
+        /* Get the exit status _without_ reaping the process, waitpid() should still work in the caller */
+        if (waitid(P_ALL, 0, &info, WEXITED | WNOWAIT) < 0) {
             if (errno == ECHILD) {
                 dbg_puts("got ECHILD, waiting for wakeup condition");
                 pthread_mutex_lock(&wait_mtx);
@@ -68,33 +59,50 @@ wait_thread(void *arg)
             }
             if (errno == EINTR)
                 continue;
-            dbg_printf("wait(2): %s", strerror(errno));
-            break;
-        }
-
-        /* Create a proc_event */
-        if (WIFEXITED(status)) {
-            result = WEXITSTATUS(status);
-        } else if (WIFSIGNALED(status)) {
-            /* FIXME: probably not true on BSD */
-            result = WTERMSIG(status);
-        } else {
-            dbg_puts("unexpected code path");
-            result = 234;           /* arbitrary error value */
+            dbg_printf("waitid(2): %s", strerror(errno));
         }
 
         /* Scan the wait queue to see if anyone is interested */
         pthread_mutex_lock(&filt->kf_mtx);
-        kn = knote_lookup(filt, pid);
-        if (kn != NULL) {
-            kn->kev.data = result;
-            kn->kev.fflags = NOTE_EXIT;
-            LIST_REMOVE(kn, entries);
-            LIST_INSERT_HEAD(&filt->kf_eventlist, kn, entries);
-            /* Indicate read(2) readiness */
-            /* TODO: error handling */
-            filter_raise(filt);
+        dst = knote_lookup(filt, pid);
+        if (!dst)
+            goto next;
+
+        /*
+         *  Try and reconstruct the status code that would have been
+         *  returned by waitpid.  The OpenBSD man pages
+         *  and observations of the macOS kqueue confirm this is what
+         *  we should be returning in the data field of the kevent.
+         */
+        switch (info.si_code) {
+        case CLD_EXITED:    /* WIFEXITED - High byte contains status, low byte zeroed */
+        status = info.si_status << 8;
+            dbg_printf("pid=%u exited, status %u", (unsigned int)info.si_pid, status);
+            break;
+
+        case CLD_DUMPED:    /* WIFSIGNALED/WCOREDUMP - Core flag set - Low 7 bits contains fatal signal */
+            status |= 0x80; /* core flag */
+            status = info.si_status & 0x7f;
+            dbg_printf("pid=%u dumped, status %u", (unsigned int)info.si_pid, status);
+            break;
+
+        case CLD_KILLED:    /* WIFSIGNALED - Low 7 bits contains fatal signal */
+            status = info.si_status & 0x7f;
+            dbg_printf("pid=%u signalled, status %u", (unsigned int)info.si_pid, status);
+            break;
+
+        default: /* The rest aren't valid exit states */
+            goto next;
         }
+
+        dst->kev.data = status;
+        dst->flags |= EV_EOF; /* Set in macOS and FreeBSD kqueue implementations */
+
+        LIST_REMOVE(dst, kn_list);
+        LIST_INSERT_HEAD(&filt->kf_eventlist, kn, kn_list);
+        filter_raise(filt);
+
+    next:
         pthread_mutex_unlock(&filt->kf_mtx);
     }
 
@@ -103,7 +111,7 @@ wait_thread(void *arg)
     return (NULL);
 }
 
-int
+static int
 evfilt_proc_init(struct filter *filt)
 {
     struct evfilt_data *ed;
@@ -127,14 +135,14 @@ errout:
     return (-1);
 }
 
-void
+static void
 evfilt_proc_destroy(struct filter *filt)
 {
-//TODO:    pthread_cancel(filt->kf_data->wthr_id);
+    pthread_cancel(filt->kf_data->wthr_id);
     close(filt->kf_pfd);
 }
 
-int
+static int
 evfilt_proc_create(struct filter *filt,
         struct knote *dst, const struct kevent *src)
 {
@@ -151,32 +159,26 @@ evfilt_proc_create(struct filter *filt,
     return (0);
 }
 
-int
-evfilt_proc_copyout(struct filter *filt,
-            struct kevent *dst,
-            int maxevents)
+static int
+evfilt_proc_copyout(struct kevent *dst, int nevents, struct knote *kn, void *ev)
 {
     struct knote *kn;
-    int nevents = 0;
+    int events = 0;
 
-    filter_lower(filt);
+    LIST_FOREACH_SAFE(kn, &filt->kf_eventlist, kn_list) {
+        if (++events > nevents)
+            break;
 
-    LIST_FOREACH(kn, &filt->kf_eventlist, entries) {
         kevent_dump(&kn->kev);
         memcpy(dst, &kn->kev, sizeof(*dst));
         dst->fflags = NOTE_EXIT;
 
-        if (kn->kev.flags & EV_DISPATCH) {
+        if (kn->kev.flags & EV_DISPATCH)
             KNOTE_DISABLE(kn);
-        }
-#if FIXME
-        /* XXX - NEED TO use safe foreach instead */
+
         if (kn->kev.flags & EV_ONESHOT)
             knote_delete(filt, kn);
-#endif
 
-        if (++nevents > maxevents)
-            break;
         dst++;
     }
 

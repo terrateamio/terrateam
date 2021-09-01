@@ -14,19 +14,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <errno.h>
-#include <fcntl.h>
 #include <linux/sockios.h>
-#include <pthread.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <sys/ioctl.h>
-#include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/types.h>
-#include <string.h>
-#include <unistd.h>
 
 #include "private.h"
 

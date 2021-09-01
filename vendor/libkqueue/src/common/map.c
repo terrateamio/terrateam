@@ -16,6 +16,10 @@
 
 #include "private.h"
 
+#ifndef _WIN32
+#include <sys/mman.h>
+#endif
+
 struct map {
     size_t len;
     atomic_uintptr_t *data;

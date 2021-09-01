@@ -17,9 +17,17 @@
 #ifndef  _KQUEUE_PRIVATE_H
 #define  _KQUEUE_PRIVATE_H
 
-#include <errno.h>
+/** Frequently used headers that should be standard on all platforms
+ *
+ */
+#include <fcntl.h>
+#include <stdbool.h>
 #include <stdio.h>
-#include <string.h>
+#include <sys/types.h>
+/* Required by glibc for MAP_ANON */
+#define __USE_MISC 1
+#include <stdlib.h>
+
 #include "config.h"
 #include "tree.h"
 
@@ -35,7 +43,7 @@ struct evfilt_data;
 
 #if defined(_WIN32)
 # include "../windows/platform.h"
-# include "../common/queue.h"
+
 # if !defined(NDEBUG) && !defined(__GNUC__)
 #  include <crtdbg.h>
 # endif
@@ -48,6 +56,11 @@ struct evfilt_data;
 #else
 # error Unknown platform
 #endif
+
+/** Additional macro to check if an item is in a doubly linked list
+ *
+ */
+#define LIST_INSERTED(elm, field) (((elm)->field.le_next) || ((elm)->field.le_prev))
 
 /** Convenience macros
  *

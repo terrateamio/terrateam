@@ -58,7 +58,8 @@ int timerfd_gettime(int ufc, struct itimerspec *otmr)
 {
   return syscall(SYS_timerfd_gettime, ufc, otmr);
 }
-
+#else
+#include <sys/timerfd.h>
 #endif
 
 #ifndef NDEBUG

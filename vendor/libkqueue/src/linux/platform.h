@@ -38,11 +38,17 @@ struct filter;
           return (0);
   }
 #endif
-#if HAVE_SYS_TIMERFD_H
-# include <sys/timerfd.h>
-#endif
-
+#include <errno.h>
+#include <linux/limits.h>
+#include <pthread.h>
 #include <stdatomic.h>
+#include <string.h>
+#include <sys/resource.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/queue.h>
+#include <unistd.h>
 
 /*
  * C11 atomic operations

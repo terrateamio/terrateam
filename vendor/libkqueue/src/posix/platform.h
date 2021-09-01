@@ -20,23 +20,19 @@
 /* Required by glibc for MAP_ANON */
 #define __USE_MISC 1
 
-#include "../../include/sys/event.h"
-
+#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <signal.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <pthread.h>
 #include <poll.h>
+#include <pthread.h>
+#include <signal.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/queue.h>
 #include <sys/resource.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/mman.h>
 #include <unistd.h>
 
 /*

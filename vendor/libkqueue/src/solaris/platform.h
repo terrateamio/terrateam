@@ -17,9 +17,13 @@
 #ifndef  _KQUEUE_SOLARIS_PLATFORM_H
 #define  _KQUEUE_SOLARIS_PLATFORM_H
 
-#include <sys/queue.h>
-
 #include <atomic.h>
+#include <errno.h>
+#include <pthread.h>
+#include <string.h>
+#include <sys/queue.h>
+#include <sys/resource.h>
+#include <sys/time.h>
 
 #define atomic_uintptr_t                  uintptr_t
 #define atomic_uint                       unsigned int

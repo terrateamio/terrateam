@@ -30,11 +30,9 @@
 #include <ws2tcpip.h>
 #include <io.h>
 #include <malloc.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <fcntl.h>
 #include <sys/stat.h>
-#include <sys/types.h>
+
+#include "../common/queue.h"
 
 #define _CRT_SECURE_NO_WARNINGS 1
 /* The #define doesn't seem to work, but the #pragma does.. */

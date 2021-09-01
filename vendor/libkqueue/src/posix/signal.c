@@ -13,17 +13,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <errno.h>
-#include <fcntl.h>
-#include <pthread.h>
 #include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/types.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "sys/event.h"

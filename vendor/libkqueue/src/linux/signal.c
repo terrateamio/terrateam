@@ -16,6 +16,8 @@
 
 #include "private.h"
 
+#include <signal.h>
+
 #if HAVE_SYS_SIGNALFD_H
 # include <sys/signalfd.h>
 #else
