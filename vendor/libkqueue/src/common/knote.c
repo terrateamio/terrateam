@@ -27,10 +27,22 @@ knote_init(void)
 //    return (mem_init(sizeof(struct knote), 1024));
 }
 
+/** Comparator for the knote_index
+ *
+ * FIXME - Should respect EV_UDATA_SPECIFIC but that's a whole
+ * lot of additional work.
+ *
+ * @param[in] a    First knote to compare.
+ * @param[in] b    Second knote to compare.
+ * @return
+ *    - +1 if a's ident is > than b's.
+ *    - 0 if a and b's ident are equal.
+ *    - -1 if a's ident is < than b's.
+ */
 static int
 knote_cmp(struct knote *a, struct knote *b)
 {
-    return memcmp(&a->kev.ident, &b->kev.ident, sizeof(a->kev.ident));
+    return (a->kev.ident > b->kev.ident) - (a->kev.ident < b->kev.ident);
 }
 
 RB_GENERATE(knt, knote, kn_entries, knote_cmp)
