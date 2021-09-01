@@ -162,8 +162,6 @@ if(CMAKE_SYSTEM_NAME MATCHES Windows)
        src/windows/user.c)
 elseif(CMAKE_SYSTEM_NAME MATCHES "(Solaris|SunOS)")
   list(APPEND LIBKQUEUE_SOURCES
-       src/posix/platform.c
-       src/posix/platform.h
        src/solaris/platform.c
        src/solaris/platform.h
        src/solaris/signal.c
@@ -178,8 +176,6 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL Linux)
     set (CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "default install path" FORCE )
   endif()
   list(APPEND LIBKQUEUE_SOURCES
-       src/posix/platform.c
-       src/posix/platform.h
        src/linux/platform.c
        src/linux/platform.h
        src/linux/read.c

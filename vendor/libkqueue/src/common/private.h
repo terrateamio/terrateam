@@ -49,10 +49,8 @@ struct evfilt_data;
 #  include <crtdbg.h>
 # endif
 #elif defined(__linux__)
-# include "../posix/platform.h"
 # include "../linux/platform.h"
 #elif defined(__sun)
-# include "../posix/platform.h"
 # include "../solaris/platform.h"
 #else
 # error Unknown platform
@@ -248,10 +246,9 @@ struct kqueue {
     struct filter   kq_filt[EVFILT_SYSCOUNT];    //!< Filters supported by the kqueue.  Each
                                                  ///< kqueue maintains one filter state structure
                                                  ///< per filter type.
-    fd_set          kq_fds, kq_rfds;
-    int             kq_nfds;
     tracing_mutex_t kq_mtx;
     volatile uint32_t kq_ref;
+
 #if defined(KQUEUE_PLATFORM_SPECIFIC)
     KQUEUE_PLATFORM_SPECIFIC;
 #endif

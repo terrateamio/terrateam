@@ -41,6 +41,10 @@
 #define EVENTFD_PLATFORM_SPECIFIC \
     int ef_wfd
 
+#define KQUEUE_PLATFORM_SPECIFIC \
+    fd_set          kq_fds, kq_rfds; \
+    int             kq_nfds
+
 void    posix_kqueue_free(struct kqueue *);
 int     posix_kqueue_init(struct kqueue *);
 

@@ -82,7 +82,6 @@ filter_register_all(struct kqueue *kq)
 {
     int rv;
 
-    FD_ZERO(&kq->kq_fds);
     rv = 0;
     rv += filter_register(kq, &evfilt_read);
     rv += filter_register(kq, &evfilt_write);
@@ -91,7 +90,6 @@ filter_register_all(struct kqueue *kq)
     rv += filter_register(kq, &evfilt_proc);
     rv += filter_register(kq, &evfilt_timer);
     rv += filter_register(kq, &evfilt_user);
-    kq->kq_nfds++;
     if (rv != 0) {
         filter_unregister_all(kq);
         return (-1);

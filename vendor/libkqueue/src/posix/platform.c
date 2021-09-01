@@ -15,10 +15,13 @@
  */
 
 #include "../common/private.h"
+#include "platform.h"
 
 int
-posix_kqueue_init(struct kqueue *kq UNUSED)
+posix_kqueue_init(struct kqueue *kq)
 {
+    FD_ZERO(&kq->kq_fds);
+    kq->kq_nfds++;
     return (0);
 }
 
