@@ -126,25 +126,36 @@ struct eventfd {
                                   KNFL_SOCKET_SEQPACKET |\
                                   KNFL_SOCKET_RAW)
 
+/** A knote representing an event we need to notify a caller of `kevent() ` about
+ *
+ * Knotes are usually associated with a single filter, and hold information about
+ * an event that the caller (of `kevent()`) is interested in receiving.
+ *
+ * Knotes often hold a lot of platform specific data such as file descriptors and
+ * handles for different eventing/notification systems.
+ *
+ * Knotes are reference counted, meaning multiple filters (may in theory) hold a
+ * reference to them.  Deleting a knote from one filter may not free it entirely.
+ */
 struct knote {
-    struct kevent     kev;           //!< kevent used to create this knote.
-                                     ///< Contains flags/fflags/data/udata etc.
+    struct kevent          kev;                //!< kevent used to create this knote.
+                                               ///< Contains flags/fflags/data/udata etc.
 
-    unsigned int      kn_flags;      //!< Internal flags used to record additional
-                                     ///< information about the knote.  i.e. whether
-                                     ///< it is enabled and what type of
-                                     ///< socket/file/device it refers to.
-                                     ///< See the KNFL_* macros for more details.
+    unsigned int           kn_flags;           //!< Internal flags used to record additional
+                                               ///< information about the knote.  i.e. whether
+                                               ///< it is enabled and what type of
+                                               ///< socket/file/device it refers to.
+                                               ///< See the KNFL_* macros for more details.
 
-    struct kqueue       *kn_kq;     //!< kqueue this knote is associated with.
-    atomic_uint         kn_ref;     //!< Reference counter for this knote.
+    struct kqueue          *kn_kq;             //!< kqueue this knote is associated with.
+    atomic_uint            kn_ref;             //!< Reference counter for this knote.
 
-    RB_ENTRY(knote)     kn_index;   //!< Entry in tree holding all knotes associated
-                                    ///< with a given filter.
+    RB_ENTRY(knote)        kn_index;           //!< Entry in tree holding all knotes associated
+                                               ///< with a given filter.
 
-    LIST_ENTRY(knote)   kn_ready;   //!< Entry in a linked list of knotes which are
-                                    ///< ready for copyout.  This isn't used for all
-                                    ///< filters.
+    LIST_ENTRY(knote)      kn_ready;           //!< Entry in a linked list of knotes which are
+                                               ///< ready for copyout.  This isn't used for all
+                                               ///< filters.
 
 #if defined(KNOTE_PLATFORM_SPECIFIC)
     KNOTE_PLATFORM_SPECIFIC;
@@ -154,20 +165,25 @@ struct knote {
 
 /** Mark a knote as enabled
  */
-#define KNOTE_ENABLE(_kn)           do {                            \
-            (_kn)->kev.flags &= ~EV_DISABLE;                       \
+#define KNOTE_ENABLE(_kn)           do {    \
+            (_kn)->kev.flags &= ~EV_DISABLE;\
 } while (0/*CONSTCOND*/)
 
 /** Mark a knote as disabled
  */
-#define KNOTE_DISABLE(_kn)          do {                            \
-            (_kn)->kev.flags |=  EV_DISABLE;                       \
+#define KNOTE_DISABLE(_kn)          do {     \
+            (_kn)->kev.flags |=  EV_DISABLE; \
 } while (0/*CONSTCOND*/)
 
+/** Check if a knote is enabled
+ */
 #define KNOTE_ENABLED(_kn)    (!((_kn)->kev.flags & EV_DISABLE))
+
+/** Check if a knote is disabled
+ */
 #define KNOTE_DISABLED(_kn)   ((_kn)->kev.flags & EV_DISABLE)
 
-/** A filter within a kqueue notification channel
+/** A filter (discreet notification channel) within a kqueue
  *
  * Filters are discreet event notification facilities within a kqueue.
  * Filters do not usually interact with each other, and maintain separate states.
@@ -178,19 +194,36 @@ struct knote {
  * signal is received by the process/thread.
  *
  * Many of the fields in this struct are callbacks for functions which operate
- * on the filer.
+ * on the filer or its knotes.
  *
- * Callbacks either change the state of the filter itself, or create new
- * knotes associated with the filter.  The knotes describe a filter-specific
- * event the application is interested in receiving.
+ * Callbacks either change the state of the filter itself, or
+ * create/modify/delete knotes associated with the filter.
+ * The knotes describe a filter-specific event the application is interested in
+ * receiving.
  *
  */
 struct filter {
-    short           kf_id;                        //!< EVFILT_* facility this filter provides.
+    short                  kf_id;              //!< EVFILT_* facility this filter provides.
 
-    /* filter operations */
-    int            (*kf_init)(struct filter *);
-    void           (*kf_destroy)(struct filter *);
+    /** Perform initialisation for this filter
+     *
+     * This is called once per filer per kqueue as the kqueue is initialised.
+     *
+     * @param[in] filt    to initialise.
+     * @return
+     *    - 0 on success.
+     *    - -1 on failure.
+     */
+    int                    (*kf_init)(struct filter *filt);
+
+    /** Perform de-initialisation for this filter
+     *
+     * This is called once per filter per kqueue as the kqueue is freed.
+     *
+     * This function should free/release any handles or other resources
+     * held by the filter.
+     */
+    void                   (*kf_destroy)(struct filter *filt);
 
     /** Copy an event from the eventing system to a kevent structure
      *
@@ -202,44 +235,161 @@ struct filter {
      *                   i.e. for Linux this would be a `struct epoll_event *`.
      * @return
      *    - >=0 the number of events copied to el.
-     *    - -1 on failure.
+     *    - -1 on failure setting errno.
      */
-    int            (*kf_copyout)(struct kevent *el, int nevents, struct knote *kn, void *ev);
+    int                    (*kf_copyout)(struct kevent *el, int nevents, struct knote *kn, void *ev);
 
-    /* knote operations */
-    int            (*kn_create)(struct filter *, struct knote *);
-    int            (*kn_modify)(struct filter *, struct knote *, const struct kevent *);
-    int            (*kn_delete)(struct filter *, struct knote *);
-    int            (*kn_enable)(struct filter *, struct knote *);
-    int            (*kn_disable)(struct filter *, struct knote *);
+    /** Complete filter-specific initialisation of a knote
+     *
+     * @note This function should not allocate a `struct knote`, zero out the
+     *       `struct knote`, or insert the knote into the kf_index.
+     *       This is done in common code.
+     *
+     * This function should allocate any handles or other resources required for
+     * the knote, and fill in any filter specific data in the knote's structure.
+     *
+     * @note Currently all knotes are created "enabled" by the various filters.
+     *       This is arguably a bug, and should be fixed in a future release.
+     *
+     * @param[in] filt     the knote is associated with.
+     * @param[in] kn       to initialise.
+     * @return
+     *    - 0 on success.
+     *    - -1 on failure setting errno.
+     */
+    int                    (*kn_create)(struct filter *filt, struct knote *kn);
 
-    struct evfilt_data *kf_data;                 //!< Filter-specific data.
+    /** Modify a knote
+     *
+     * This is called when an entry in a changelist is found which has the same
+     * identifier as a knote associated with this filter.
+     *
+     * This function should examine kev and kn->kev for differences and make
+     * appropriate changes to the knote's event registrations and internal
+     * state.
+     *
+     * This function should also copy the contents of kev to kn->kev if all
+     * changes were successful.
+     *
+     * Changes must be atomic, that is, if this function experiences an error
+     * making the requested modifications to the knote, the knote should revert
+     * to the state it was in (and with the same registations) as when this
+     * function was called.
+     *
+     * @param[in] filt     the knote is associated with.
+     * @param[in] kn       to modify.
+     * @param[in] kev      the entry in the changelist which triggered the
+     *                     modification.
+     *
+     * @return
+     *    - 0 on success.
+     *    - -1 on failure setting errno.
+     */
+    int                    (*kn_modify)(struct filter *filt, struct knote *kn, const struct kevent *kev);
 
-    RB_HEAD(knote_index, knote) kf_index;        //!< Tree of knotes. This is for easy lookup
-                                                 ///< and removal of knotes.  All knotes are
-                                                 ///< directly owned by a filter.
+    /** Delete a knote
+     *
+     * This is called either when a kqueue is being freed or when a relevant
+     * EV_DELETE flag is found in the changelist.
+     *
+     * @note This function should not free the `struct knote` of remove the
+     *       knote from the kf_index.  This is done in common code.
+     *
+     * This function should deregister any file descriptors associated with
+     * this knote from the platform's eventing system.
+     *
+     * This function should close all file descriptors and free any other
+     * resources used by this knote.
+     *
+     * Changes must be atomic, that is, if this function experiences an error
+     * deleting the knote, the knote should revert to the state it was in
+     * (and with the same registations) as when this function was called.
+     *
+     * @param[in] filt     the knote is associated with.
+     * @param[in] kn       to delete.
+     * @return
+     *    - 0 on success.
+     *    - -1 on failure setting errno.
+     */
+    int                    (*kn_delete)(struct filter *filt, struct knote *kn);
 
-    struct eventfd kf_efd;                       //!< An eventfd associated with the filter.
-                                                 ///< This is used in conjunction with the
-                                                 ///< kf_ready list.  When the eventfd is
-                                                 ///< "raised", and the platform's eventing
-                                                 ///< is blocked (waiting for events), the
-                                                 ///< current epoll/select/etc... call returns
-                                                 ///< and we process the knotes in the kf_ready
-                                                 ///< list.
-                                                 ///< This is not used by all filters.
+    /** Enable a knote
+     *
+     * This is called when a knote is enabled (after first being disabled).
+     *
+     * The idea behind having the enable/disable flags for knotes is that it
+     * allows the caller of `kevent()` to temporarily pause (and later re-enable)
+     * delivery of notifications without allocating, freeing or releasing any
+     * resources.
+     *
+     * Enabling a knote should re-add any previously removed file descriptors
+     * from the platform's eventing system.
+     *
+     * Changes must be atomic, that is, if this function experiences an
+     * error deleting the knote, the knote should revert to the state it
+     * was in (and with the same registations) as when this function was
+     * called.
+     *
+     * @param[in] filt     the knote is associated with.
+     * @param[in] kn       to enable.
+     * @return
+     *    - 0 on success.
+     *    - -1 on failure setting errno.
+     */
+    int                    (*kn_enable)(struct filter *filt, struct knote *kn);
 
-    LIST_HEAD(knote_ready, knote) kf_ready;      //!< knotes which are ready for copyout.
-                                                 ///< This is used for filters which don't
-                                                 ///< raise events using the platform's
-                                                 ///< eventing system, and instead signal
-                                                 ///< with eventfds.
-                                                 ///< This is not used by all filters.
+    /** Disable a knote
+     *
+     * This is called when a knote is disabled (after first being created or
+     * enabled).
+     *
+     * Disabling a knote should remove any previously added file descriptors
+     * from the platform's eventing system.
+     *
+     * @note This function should not remove the knote from the filter's
+     *       ready list (if used), as this is done in common code.
+     *
+     * Changes must be atomic, that is, if this function experiences an
+     * error disabling the knote, the knote should revert to the state it
+     * was in (and with the same registations) as when this function was
+     * called.
+     *
+     * @param[in] filt     the knote is associated with.
+     * @param[in] kn       to disable.
+     * @return
+     *    - 0 on success.
+     *    - -1 on failure setting errno.
+     */
+    int                    (*kn_disable)(struct filter *filt, struct knote *kn);
 
-    pthread_rwlock_t    kf_knote_mtx;            //!< Used to synchronise knote operations
-                                                 ///< on this filter.
+    struct evfilt_data     *kf_data;           //!< Filter-specific data.
 
-    struct kqueue      *kf_kqueue;               //!< kqueue this filter is associated with.
+    RB_HEAD(knote_index, knote) kf_index;      //!< Tree of knotes. This is for easy lookup
+                                               ///< and removal of knotes.  All knotes are
+                                               ///< directly owned by a filter.
+
+    struct eventfd         kf_efd;             //!< An eventfd associated with the filter.
+                                               ///< This is used in conjunction with the
+                                               ///< kf_ready list.  When the eventfd is
+                                               ///< "raised", and the platform's eventing
+                                               ///< is blocked (waiting for events), the
+                                               ///< current epoll/select/etc... call returns
+                                               ///< and we process the knotes in the kf_ready
+                                               ///< list.
+                                               ///< This is not used by all filters.
+
+    LIST_HEAD(knote_ready, knote) kf_ready;    //!< knotes which are ready for copyout.
+                                               ///< This is used for filters which don't
+                                               ///< raise events using the platform's
+                                               ///< eventing system, and instead signal
+                                               ///< with eventfds.
+                                               ///< This is not used by all filters.
+
+    pthread_rwlock_t       kf_knote_mtx;       //!< Used to synchronise knote operations
+                                               ///< (addition, removal, modification etc...)
+                                               ///< on this filter.
+
+    struct kqueue          *kf_kqueue;         //!< kqueue this filter is associated with.
 
 #if defined(FILTER_PLATFORM_SPECIFIC)
     FILTER_PLATFORM_SPECIFIC;
@@ -255,11 +405,11 @@ struct filter {
  * in receiving notifications for.
  */
 struct kqueue {
-    int             kq_id;                       //!< File descriptor used to identify this kqueue.
-    struct filter   kq_filt[EVFILT_SYSCOUNT];    //!< Filters supported by the kqueue.  Each
-                                                 ///< kqueue maintains one filter state structure
-                                                 ///< per filter type.
-    tracing_mutex_t kq_mtx;
+    int                    kq_id;              //!< File descriptor used to identify this kqueue.
+    struct filter          kq_filt[EVFILT_SYSCOUNT];    //!< Filters supported by the kqueue.  Each
+                                               ///< kqueue maintains one filter state structure
+                                               ///< per filter type.
+    tracing_mutex_t        kq_mtx;
 
 #if defined(KQUEUE_PLATFORM_SPECIFIC)
     KQUEUE_PLATFORM_SPECIFIC;
@@ -273,12 +423,12 @@ struct kqueue_vtable {
     /** Called once for every kqueue created
      *
      */
-    int  (*kqueue_init)(struct kqueue *kq);
+    int    (*kqueue_init)(struct kqueue *kq);
 
     /** Called when a kqueue is destroyed
      *
      */
-    void (*kqueue_free)(struct kqueue *kq);
+    void   (*kqueue_free)(struct kqueue *kq);
 
     /** Wait on this platform's eventing system to produce events
      *
@@ -290,7 +440,7 @@ struct kqueue_vtable {
      *                          May be NULL if no timeout is required.
      * @return The number of events that ocurred.
      */
-    int  (*kevent_wait)(struct kqueue *kq, int numevents, const struct timespec *ts);
+    int    (*kevent_wait)(struct kqueue *kq, int numevents, const struct timespec *ts);
 
     /** Translate events produced by the eventing system to kevents
      *
@@ -302,19 +452,19 @@ struct kqueue_vtable {
      *                          kevent structure.
      * @return The number of events we copied.
      */
-    int  (*kevent_copyout)(struct kqueue *kq, int nready, struct kevent *el, int);
+    int    (*kevent_copyout)(struct kqueue *kq, int nready, struct kevent *el, int);
 
     /** Perform platform specific initialisation for filters
      *
      * Called once per kqueue per filter.
      */
-    int  (*filter_init)(struct kqueue *kq, struct filter *filt);
+    int    (*filter_init)(struct kqueue *kq, struct filter *filt);
 
     /** Perform platform specific de-initialisation for filters
      *
      * Called once per kqueue per filter.
      */
-    void (*filter_free)(struct kqueue *kq, struct filter *filt);
+    void   (*filter_free)(struct kqueue *kq, struct filter *filt);
 
     /** Initialise a new eventfd
      *
@@ -323,7 +473,7 @@ struct kqueue_vtable {
      *      - 0 on success.
      *      - -1 on failure.
      */
-    int  (*eventfd_init)(struct eventfd *efd);
+    int    (*eventfd_init)(struct eventfd *efd);
 
     /** Close an eventfd
      *
@@ -332,7 +482,7 @@ struct kqueue_vtable {
      *      - 0 on success.
      *      - -1 on failure.
      */
-    void (*eventfd_close)(struct eventfd *efd);
+    void   (*eventfd_close)(struct eventfd *efd);
 
     /** "raise" an eventfd, i.e. signal it as pending
      *
@@ -341,7 +491,7 @@ struct kqueue_vtable {
      *      - 0 on success.
      *      - -1 on failure.
      */
-    int  (*eventfd_raise)(struct eventfd *efd);
+    int    (*eventfd_raise)(struct eventfd *efd);
 
     /** "lower" an eventfd, consume the pending signal
      *
@@ -350,14 +500,14 @@ struct kqueue_vtable {
      *      - 0 on success.
      *      - -1 on failure.
      */
-    int  (*eventfd_lower)(struct eventfd *efd);
+    int    (*eventfd_lower)(struct eventfd *efd);
 
     /** Return the file descriptor associated with an eventfd
      *
      * @param[in] efd           to return the file descriptor for.
      * @return The file descriptor.
      */
-    int  (*eventfd_descriptor)(struct eventfd *efd);
+    int    (*eventfd_descriptor)(struct eventfd *efd);
 };
 extern const struct kqueue_vtable kqops;
 
