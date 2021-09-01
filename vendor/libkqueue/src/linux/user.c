@@ -92,7 +92,7 @@ linux_evfilt_user_copyout(struct kevent *dst, UNUSED int nevents, struct knote *
     if (src->kev.flags & EV_CLEAR)
         src->kev.fflags &= ~NOTE_TRIGGER;
     if (src->kev.flags & (EV_DISPATCH | EV_CLEAR | EV_ONESHOT)) {
-        if (eventfd_lower(src->kdata.kn_eventfd) < 0)
+        if (eventfd_lower(src->kn_eventfd) < 0)
             return (-1);
     }
 
@@ -117,7 +117,7 @@ linux_evfilt_user_knote_create(struct filter *filt, struct knote *kn)
         }
 error:
         if (evfd >= 0) close(evfd);
-        kn->kdata.kn_eventfd = -1;
+        kn->kn_eventfd = -1;
         kn->kn_registered = 0;
         return (-1);
     }
@@ -131,7 +131,7 @@ error:
         goto error;
     }
 
-    kn->kdata.kn_eventfd = evfd;
+    kn->kn_eventfd = evfd;
     kn->kn_registered = 1;
 
     return (0);
@@ -169,7 +169,7 @@ linux_evfilt_user_knote_modify(struct filter *filt UNUSED, struct knote *kn, con
 
     if ((!(kn->kev.flags & EV_DISABLE)) && kev->fflags & NOTE_TRIGGER) {
         kn->kev.fflags |= NOTE_TRIGGER;
-        if (eventfd_raise(kn->kdata.kn_eventfd) < 0)
+        if (eventfd_raise(kn->kn_eventfd) < 0)
             return (-1);
     }
 
@@ -182,23 +182,23 @@ linux_evfilt_user_knote_delete(struct filter *filt, struct knote *kn)
     int rv = 0;
 
     if (kn->kn_registered) {
-        rv = epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, kn->kdata.kn_eventfd, NULL);
+        rv = epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, kn->kn_eventfd, NULL);
         if (rv < 0) {
             dbg_perror("epoll_ctl(2)");
         } else {
             dbg_printf("event_fd=%i - removed from epoll_fd=%i",
-                       kn->kdata.kn_eventfd, filter_epoll_fd(filt));
+                       kn->kn_eventfd, filter_epoll_fd(filt));
         }
     }
 
     kn->kn_registered = 0;
 
-    dbg_printf("event_fd=%i - closed", kn->kdata.kn_eventfd);
-    if (close(kn->kdata.kn_eventfd) < 0) {
+    dbg_printf("event_fd=%i - closed", kn->kn_eventfd);
+    if (close(kn->kn_eventfd) < 0) {
         dbg_perror("close(2)");
         return (-1);
     }
-    kn->kdata.kn_eventfd = -1;
+    kn->kn_eventfd = -1;
 
     return rv;
 }

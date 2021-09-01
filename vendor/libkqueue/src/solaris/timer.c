@@ -85,15 +85,15 @@ evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, 
     //if (ev->events & EPOLLERR)
     //    dst->fflags = 1; /* FIXME: Return the actual timer error */
 
-    dst->data = timer_getoverrun(src->data.timerid) + 1;
+    dst->data = timer_getoverrun(src->kn_timerid) + 1;
 
 #if FIXME
-    timerid = src->data.timerid;
+    timerid = src->kn_timerid;
     //should be done in kqops.copyout()
     if (src->kev.flags & EV_DISPATCH) {
-        timer_delete(src->data.timerid);
+        timer_delete(src->kn_timerid);
     } else if (src->kev.flags & EV_ONESHOT) {
-        timer_delete(src->data.timerid);
+        timer_delete(src->kn_timerid);
     }
 #endif
 
@@ -128,7 +128,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
         return (-1);
     }
 
-    kn->data.timerid = timerid;
+    kn->kn_timerid = timerid;
     dbg_printf("th=%lu - created timer", (unsigned long) timerid);
 
     return (0);
@@ -150,8 +150,8 @@ evfilt_timer_knote_delete(struct filter *filt UNUSED, struct knote *kn)
     if (kn->kev.flags & EV_DISABLE)
         return (0);
 
-    dbg_printf("th=%d - deleting timer", kn->data.timerid);
-    return timer_delete(kn->data.timerid);
+    dbg_printf("th=%d - deleting timer", kn->kn_timerid);
+    return timer_delete(kn->kn_timerid);
 }
 
 int

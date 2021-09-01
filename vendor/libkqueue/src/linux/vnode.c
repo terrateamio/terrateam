@@ -154,13 +154,13 @@ add_watch(struct filter *filt, struct knote *kn)
         goto errout;
     }
 
-    kn->kdata.kn_inotifyfd = ifd;
+    kn->kn_vnode.inotifyfd = ifd;
 
     return (0);
 
 errout:
     inotify_rm_watch(ifd, kn->kev.data);
-    kn->kdata.kn_inotifyfd = -1;
+    kn->kn_vnode.inotifyfd = -1;
     (void) close(ifd);
     return (-1);
 }
@@ -168,7 +168,7 @@ errout:
 static int
 delete_watch(struct filter *filt, struct knote *kn)
 {
-    int ifd = kn->kdata.kn_inotifyfd;
+    int ifd = kn->kn_vnode.inotifyfd;
 
     if (ifd < 0)
         return (0);
@@ -177,7 +177,7 @@ delete_watch(struct filter *filt, struct knote *kn)
         return (-1);
     }
     (void) close(ifd);
-    kn->kdata.kn_inotifyfd = -1;
+    kn->kn_vnode.inotifyfd = -1;
 
     return (0);
 }
@@ -190,7 +190,7 @@ evfilt_vnode_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, 
     struct stat sb;
 
     evt = (struct inotify_event *)buf;
-    if (get_one_event(evt, sizeof(buf), src->kdata.kn_inotifyfd) < 0)
+    if (get_one_event(evt, sizeof(buf), src->kn_vnode.inotifyfd) < 0)
         return (-1);
 
     dbg_printf("inotify event: %s", inotify_event_dump(evt));
@@ -223,18 +223,18 @@ scriptors reference the same file.
         if ((evt->mask & IN_ATTRIB || evt->mask & IN_MODIFY)) {
             if (sb.st_nlink == 0 && src->kev.fflags & NOTE_DELETE)
                 dst->fflags |= NOTE_DELETE;
-            if (sb.st_nlink != src->data.vnode.nlink &&
+            if (sb.st_nlink != src->kn_vnode.nlink &&
                 src->kev.fflags & NOTE_LINK)
                 dst->fflags |= NOTE_LINK;
 #if HAVE_NOTE_TRUNCATE
             if (sb.st_nsize == 0 && src->kev.fflags & NOTE_TRUNCATE)
                 dst->fflags |= NOTE_TRUNCATE;
 #endif
-            if (sb.st_size > src->data.vnode.size &&
+            if (sb.st_size > src->kn_vnode.size &&
                 src->kev.fflags & NOTE_WRITE)
                 dst->fflags |= NOTE_EXTEND;
-            src->data.vnode.nlink = sb.st_nlink;
-            src->data.vnode.size = sb.st_size;
+            src->kn_vnode.nlink = sb.st_nlink;
+            src->kn_vnode.size = sb.st_size;
         }
     }
 
@@ -260,8 +260,8 @@ evfilt_vnode_knote_create(struct filter *filt, struct knote *kn)
         dbg_puts("fstat failed");
         return (-1);
     }
-    kn->data.vnode.nlink = sb.st_nlink;
-    kn->data.vnode.size = sb.st_size;
+    kn->kn_vnode.nlink = sb.st_nlink;
+    kn->kn_vnode.size = sb.st_size;
     kn->kev.data = -1;
 
     return (add_watch(filt, kn));

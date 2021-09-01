@@ -140,7 +140,7 @@ evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, 
     /* On return, data contains the number of times the
        timer has been trigered.
      */
-    n = read(src->kdata.kn_timerfd, &expired, sizeof(expired));
+    n = read(src->kn_timerfd, &expired, sizeof(expired));
     if (n != sizeof(expired)) {
         dbg_puts("invalid read from timerfd");
         expired = 1;  /* Fail gracefully */
@@ -191,7 +191,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
         return (-1);
     }
 
-    kn->kdata.kn_timerfd = tfd;
+    kn->kn_timerfd = tfd;
     return (0);
 }
 
@@ -210,21 +210,21 @@ evfilt_timer_knote_delete(struct filter *filt, struct knote *kn)
 {
     int rv = 0;
 
-    if (kn->kdata.kn_timerfd == -1)
+    if (kn->kn_timerfd == -1)
         return (0);
 
-    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, kn->kdata.kn_timerfd, NULL) < 0) {
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, kn->kn_timerfd, NULL) < 0) {
         dbg_printf("epoll_ctl(2): %s", strerror(errno));
         rv = -1;
     }
 
-    dbg_printf("timer_fd=%i - closed", kn->kdata.kn_timerfd);
-    if (close(kn->kdata.kn_timerfd) < 0) {
+    dbg_printf("timer_fd=%i - closed", kn->kn_timerfd);
+    if (close(kn->kn_timerfd) < 0) {
         dbg_printf("close(2): %s", strerror(errno));
         rv = -1;
     }
 
-    kn->kdata.kn_timerfd = -1;
+    kn->kn_timerfd = -1;
     return (rv);
 }
 

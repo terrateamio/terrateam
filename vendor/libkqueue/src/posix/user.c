@@ -53,7 +53,7 @@ posix_evfilt_user_copyout(struct kevent *dst, UNUSED int nevents, struct knote *
     if (src->kev.flags & EV_CLEAR)
         src->kev.fflags &= ~NOTE_TRIGGER;
     if (src->kev.flags & (EV_DISPATCH | EV_CLEAR | EV_ONESHOT)) {
-        kqops.eventfd_raise(&src->kdata.kn_eventfd);
+        kqops.eventfd_raise(&src->kn_eventfd);
     }
 
     if (src->kev.flags & EV_DISPATCH)

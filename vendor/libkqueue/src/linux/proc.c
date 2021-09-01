@@ -81,7 +81,7 @@ evfilt_proc_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, U
 int
 evfilt_proc_knote_enable(struct filter *filt, struct knote *kn)
 {
-    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_ADD, kn->kdata.kn_procfd, EPOLL_EV_KN(EPOLLIN, kn)) < 0) {
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_ADD, kn->kn_procfd, EPOLL_EV_KN(EPOLLIN, kn)) < 0) {
         dbg_printf("epoll_ctl(2): %s", strerror(errno));
         return -1;
     }
@@ -91,7 +91,7 @@ evfilt_proc_knote_enable(struct filter *filt, struct knote *kn)
 int
 evfilt_proc_knote_disable(struct filter *filt, struct knote *kn)
 {
-    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, kn->kdata.kn_procfd, NULL) < 0) {
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, kn->kn_procfd, NULL) < 0) {
         dbg_printf("epoll_ctl(2): %s", strerror(errno));
         return (-1);
     }
@@ -106,7 +106,7 @@ evfilt_proc_knote_create(struct filter *filt, struct knote *kn)
     /* This mirrors the behaviour of kqueue if fflags doesn't specify any events */
     if (!(kn->kev.fflags & NOTE_EXIT)) {
         dbg_printf("not monitoring pid=%u as no NOTE_* fflags set", (unsigned int)kn->kev.ident);
-        kn->kdata.kn_procfd = -1;
+        kn->kn_procfd = -1;
         return 0;
     }
 
@@ -118,7 +118,7 @@ evfilt_proc_knote_create(struct filter *filt, struct knote *kn)
     }
     dbg_printf("created pidfd=%i monitoring pid=%u", pfd, (unsigned int)kn->kev.ident);
 
-    kn->kdata.kn_procfd = pfd;
+    kn->kn_procfd = pfd;
 
     /*
      * These get added by default on macOS (and likely FreeBSD)
@@ -140,7 +140,7 @@ evfilt_proc_knote_modify(struct filter *filt, struct knote *kn, const struct kev
     kn->kev.flags = kev->flags;
     kn->kev.fflags = kev->fflags;
 
-    if (kn->kdata.kn_procfd < 0) return evfilt_proc_knote_create(filt, kn);
+    if (kn->kn_procfd < 0) return evfilt_proc_knote_create(filt, kn);
 
     return (0);
 }
@@ -153,9 +153,9 @@ evfilt_proc_knote_delete(struct filter *filt, struct knote *kn)
     /* If it's enabled, we need to remove the pidfd from epoll */
     if (KNOTE_ENABLED(kn) && (evfilt_proc_knote_disable(filt, kn) < 0)) rv = -1;
 
-    dbg_printf("closed pidfd=%i", kn->kdata.kn_procfd);
-    if (close(kn->kdata.kn_procfd) < 0) rv = -1;
-    kn->kdata.kn_procfd = -1;
+    dbg_printf("closed pidfd=%i", kn->kn_procfd);
+    if (close(kn->kn_procfd) < 0) rv = -1;
+    kn->kn_procfd = -1;
 
     return (rv);
 }

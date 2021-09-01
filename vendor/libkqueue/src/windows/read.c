@@ -40,7 +40,7 @@ evfilt_read_callback(void *param, BOOLEAN fired)
     /* Retrieve the socket events and update the knote */
     rv = WSAEnumNetworkEvents(
             (SOCKET) kn->kev.ident,
-            kn->data.handle,
+            kn->kn_handle,
                 &events);
     if (rv != 0) {
         dbg_wsalasterror("WSAEnumNetworkEvents");
@@ -144,12 +144,12 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
 
     /* TODO: handle in copyout
     if (kn->kev.flags & EV_ONESHOT || kn->kev.flags & EV_DISPATCH)
-        kn->data.events |= EPOLLONESHOT;
+        kn->epoll_events |= EPOLLONESHOT;
     if (kn->kev.flags & EV_CLEAR)
-        kn->data.events |= EPOLLET;
+        kn->epoll_events |= EPOLLET;
     */
 
-    kn->data.handle = evt;
+    kn->kn_handle = evt;
 
     if (RegisterWaitForSingleObject(&kn->kn_event_whandle, evt,
         evfilt_read_callback, kn, INFINITE, 0) == 0) {
@@ -171,19 +171,19 @@ evfilt_read_knote_modify(struct filter *filt, struct knote *kn,
 int
 evfilt_read_knote_delete(struct filter *filt, struct knote *kn)
 {
-    if (kn->data.handle == NULL || kn->kn_event_whandle == NULL)
+    if (kn->kn_handle == NULL || kn->kn_event_whandle == NULL)
         return (0);
 
     if(!UnregisterWaitEx(kn->kn_event_whandle, INVALID_HANDLE_VALUE)) {
         dbg_lasterror("UnregisterWait()");
         return (-1);
     }
-    if (!WSACloseEvent(kn->data.handle)) {
+    if (!WSACloseEvent(kn->kn_handle)) {
         dbg_wsalasterror("WSACloseEvent()");
         return (-1);
     }
 
-    kn->data.handle = NULL;
+    kn->kn_handle = NULL;
     return (0);
 }
 

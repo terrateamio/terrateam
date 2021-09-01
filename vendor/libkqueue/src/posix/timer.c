@@ -145,7 +145,7 @@ _timer_create(struct filter *filt, struct knote *kn)
     req->wfd = filt->kf_wfd;
     req->ident = kn->kev.ident;
     req->interval = kn->kev.data;
-    kn->data.sleepreq = req;
+    kn->kn_sleepreq = req;
     pthread_cond_init(&req->cond, NULL);
     pthread_mutex_init(&req->mtx, NULL);
 
@@ -169,14 +169,14 @@ _timer_create(struct filter *filt, struct knote *kn)
 static int
 _timer_delete(struct knote *kn)
 {
-    if (kn->data.sleepreq != NULL) {
+    if (kn->kn_sleepreq != NULL) {
         dbg_puts("deleting timer");
-        pthread_mutex_lock(&kn->data.sleepreq->mtx); //FIXME - error check
-        pthread_cond_signal(&kn->data.sleepreq->cond); //FIXME - error check
-        pthread_mutex_unlock(&kn->data.sleepreq->mtx); //FIXME - error check
-        pthread_cond_destroy(&kn->data.sleepreq->cond); //FIXME - error check
-        free(kn->data.sleepreq);
-        kn->data.sleepreq = NULL;
+        pthread_mutex_lock(&kn->kn_sleepreq->mtx); //FIXME - error check
+        pthread_cond_signal(&kn->kn_sleepreq->cond); //FIXME - error check
+        pthread_mutex_unlock(&kn->kn_sleepreq->mtx); //FIXME - error check
+        pthread_cond_destroy(&kn->kn_sleepreq->cond); //FIXME - error check
+        free(kn->kn_sleepreq);
+        kn->kn_sleepreq = NULL;
     }
     return (0);
 }

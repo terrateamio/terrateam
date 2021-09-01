@@ -178,13 +178,18 @@ struct fd_state {
     int kn_epollfd;                       /* A copy of filter->epoll_fd */ \
     int kn_registered;                    /* Is FD registered with epoll */ \
     struct fd_state        *kn_fds;       /* File descriptor's registration state */ \
+    int epoll_events;                     /* Which events this file descriptor is registered for */ \
     union { \
         int kn_timerfd; \
         int kn_signalfd; \
-        int kn_inotifyfd; \
         int kn_procfd; \
         int kn_eventfd; \
-    } kdata; \
+        struct { \
+            nlink_t         nlink;  \
+            off_t           size;   \
+            int             inotifyfd; \
+        } kn_vnode; \
+    }; \
     struct epoll_udata    kn_udata       /* Common struct passed to epoll */
 
 /** Additional members of struct kqueue

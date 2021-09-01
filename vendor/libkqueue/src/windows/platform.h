@@ -74,7 +74,8 @@
  * Additional members for struct knote
  */
 #define KNOTE_PLATFORM_SPECIFIC \
-    HANDLE kn_event_whandle
+    HANDLE          kn_event_whandle; \
+    void            *kn_handle
 
 /*
  * Some datatype forward declarations

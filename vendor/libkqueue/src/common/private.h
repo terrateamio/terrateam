@@ -135,18 +135,6 @@ struct knote {
                                      ///< it is enabled and what type of
                                      ///< socket/file/device it refers to.
                                      ///< See the KNFL_* macros for more details.
-    union {
-        /* OLD */
-        int             pfd;         //!< Used by timerfd.
-        int             events;      //!< Used by socket.
-        struct {
-            nlink_t         nlink;       //!< Used by vnode.
-            off_t           size;        //!< Used by vnode.
-        } vnode;
-        timer_t         timerid;
-        struct sleepreq *sleepreq;  //!< Used by posix/timer.c.
-        void            *handle;    //!< Used by win32 filters.
-    } data;
 
     struct kqueue       *kn_kq;     //!< kqueue this knote is associated with.
     atomic_uint         kn_ref;     //!< Reference counter for this knote.
@@ -224,11 +212,6 @@ struct filter {
     int            (*kn_delete)(struct filter *, struct knote *);
     int            (*kn_enable)(struct filter *, struct knote *);
     int            (*kn_disable)(struct filter *, struct knote *);
-
-    //MOVE TO POSIX?
-    int           kf_pfd;                        //!< fd to poll(2) for readiness
-    int           kf_wfd;                        //!< fd to write when an event occurs
-    //----?
 
     struct evfilt_data *kf_data;                 //!< Filter-specific data.
 

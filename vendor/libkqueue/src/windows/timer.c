@@ -27,7 +27,7 @@ static int
 ktimer_delete(struct filter *filt, struct knote *kn)
 {
 
-    if (kn->data.handle == NULL || kn->kn_event_whandle == NULL)
+    if (kn->kn_handle == NULL || kn->kn_event_whandle == NULL)
         return (0);
 
     if(!UnregisterWaitEx(kn->kn_event_whandle, INVALID_HANDLE_VALUE)) {
@@ -35,11 +35,11 @@ ktimer_delete(struct filter *filt, struct knote *kn)
         return (-1);
     }
 
-    if (!CancelWaitableTimer(kn->data.handle)) {
+    if (!CancelWaitableTimer(kn->kn_handle)) {
         dbg_lasterror("CancelWaitableTimer()");
         return (-1);
     }
-    if (!CloseHandle(kn->data.handle)) {
+    if (!CloseHandle(kn->kn_handle)) {
         dbg_lasterror("CloseHandle()");
         return (-1);
     }
@@ -47,7 +47,7 @@ ktimer_delete(struct filter *filt, struct knote *kn)
     if( !(kn->kev.flags & EV_ONESHOT) )
         knote_release(kn);
 
-    kn->data.handle = NULL;
+    kn->kn_handle = NULL;
     return (0);
 }
 
@@ -136,7 +136,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
         return (-1);
     }
 
-    kn->data.handle = th;
+    kn->kn_handle = th;
     RegisterWaitForSingleObject(&kn->kn_event_whandle, th, evfilt_timer_callback, kn, INFINITE, 0);
     knote_retain(kn);
 

@@ -68,7 +68,7 @@ evfilt_write_knote_create(struct filter *filt, struct knote *kn)
     /*
      * Convert the kevent into an epoll_event
      */
-    kn->data.events = EPOLLOUT;
+    kn->epoll_events = EPOLLOUT;
 
     /*
      * For EV_ONESHOT, EV_DISPATCH we rely on common code
@@ -78,9 +78,9 @@ evfilt_write_knote_create(struct filter *filt, struct knote *kn)
      * https://stackoverflow.com/questions/59517961/how-should-i-use-epoll-to-read-and-write-from-the-same-fd
      */
     if (kn->kev.flags & EV_CLEAR)
-        kn->data.events |= EPOLLET;
+        kn->epoll_events |= EPOLLET;
 
-    return epoll_update(EPOLL_CTL_ADD, filt, kn, kn->data.events, false);
+    return epoll_update(EPOLL_CTL_ADD, filt, kn, kn->epoll_events, false);
 }
 
 int
@@ -102,7 +102,7 @@ evfilt_write_knote_delete(struct filter *filt, struct knote *kn)
 int
 evfilt_write_knote_enable(struct filter *filt, struct knote *kn)
 {
-    return epoll_update(EPOLL_CTL_ADD, filt, kn, kn->data.events, false);
+    return epoll_update(EPOLL_CTL_ADD, filt, kn, kn->epoll_events, false);
 }
 
 int

@@ -129,7 +129,7 @@ evfilt_signal_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src,
 {
     int sigfd;
 
-    sigfd = src->kdata.kn_signalfd;
+    sigfd = src->kn_signalfd;
 
     signalfd_reset(sigfd);
 
@@ -150,10 +150,10 @@ evfilt_signal_knote_create(struct filter *filt, struct knote *kn)
     fd = signalfd_create(filter_epoll_fd(filt), kn, kn->kev.ident);
     if (fd > 0) {
         kn->kev.flags |= EV_CLEAR;
-        kn->kdata.kn_signalfd = fd;
+        kn->kn_signalfd = fd;
         return (0);
     } else {
-        kn->kdata.kn_signalfd = -1;
+        kn->kn_signalfd = -1;
         return (-1);
     }
 }
@@ -171,11 +171,11 @@ evfilt_signal_knote_modify(struct filter *filt UNUSED,
 int
 evfilt_signal_knote_delete(struct filter *filt, struct knote *kn)
 {
-    const int sigfd = kn->kdata.kn_signalfd;
+    const int sigfd = kn->kn_signalfd;
     int       rv = 0;
 
     /* Needed so that delete() can be called after disable() */
-    if (kn->kdata.kn_signalfd == -1)
+    if (kn->kn_signalfd == -1)
         return (0);
 
     rv = epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, sigfd, NULL);
@@ -192,7 +192,7 @@ evfilt_signal_knote_delete(struct filter *filt, struct knote *kn)
     }
 
     /* NOTE: This does not call sigprocmask(3) to unblock the signal. */
-    kn->kdata.kn_signalfd = -1;
+    kn->kn_signalfd = -1;
 
     return (rv);
 }

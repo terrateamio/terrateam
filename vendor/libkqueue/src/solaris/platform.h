@@ -59,4 +59,10 @@ struct event_buf {
     TAILQ_ENTRY(event_buf) entries;
 };
 
+#define KNOTE_PLATFORM_SPECIFIC \
+    timer_t         kn_timerid
+
+#define FILTER_PLATFORM_SPECIFIC \
+    int             kf_pfd
+
 #endif  /* ! _KQUEUE_SOLARIS_PLATFORM_H */

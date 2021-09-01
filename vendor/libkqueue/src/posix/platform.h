@@ -39,11 +39,18 @@
  * Additional members of 'struct eventfd'
  */
 #define EVENTFD_PLATFORM_SPECIFIC \
-    int ef_wfd
+    int             ef_wfd
+
+#define FILTER_PLATFORM_SPECIFIC \
+    int             kf_pfd; /* fd to poll(2) for readiness */ \
+    int             kf_wfd
 
 #define KQUEUE_PLATFORM_SPECIFIC \
     fd_set          kq_fds, kq_rfds; \
     int             kq_nfds
+
+#define KNOTE_PLATFORM_SPECIFIC \
+    struct sleepreq *kn_sleepreq
 
 void    posix_kqueue_free(struct kqueue *);
 int     posix_kqueue_init(struct kqueue *);
