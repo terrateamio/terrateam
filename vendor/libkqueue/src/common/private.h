@@ -241,7 +241,6 @@ struct kqueue {
 #if defined(KQUEUE_PLATFORM_SPECIFIC)
     KQUEUE_PLATFORM_SPECIFIC;
 #endif
-    RB_ENTRY(kqueue) entries;
 };
 
 /** Platform specific support functions
