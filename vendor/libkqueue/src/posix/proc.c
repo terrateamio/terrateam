@@ -45,6 +45,10 @@ wait_thread(void *arg)
     sigdelset(&sigmask, SIGCHLD);
     pthread_sigmask(SIG_BLOCK, &sigmask, NULL);
 
+    /* Set the thread's name to something descriptive so it shows up in gdb,
+     * etc. Max name length is 16 bytes. */
+    prctl(PR_SET_NAME, "libkqueue_wait", 0, 0, 0);
+
     for (;;) {
         /* Get the exit status _without_ reaping the process, waitpid() should still work in the caller */
         if (waitid(P_ALL, 0, &info, WEXITED | WNOWAIT) < 0) {
@@ -122,10 +126,6 @@ evfilt_proc_init(struct filter *filt)
         goto errout;
     if (pthread_create(&ed->wthr_id, NULL, wait_thread, filt) != 0)
         goto errout;
-
-    /* Set the thread's name to something descriptive so it shows up in gdb,
-     * etc. Max name length is 16 bytes. */
-    prctl(PR_SET_NAME, "libkqueue_wait", 0, 0, 0);
 
     return (0);
 
