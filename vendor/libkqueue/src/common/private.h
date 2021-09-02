@@ -61,6 +61,16 @@ struct evfilt_data;
  */
 #define LIST_INSERTED(elm, field) (((elm)->field.le_next) || ((elm)->field.le_prev))
 
+/** On Linux LIST_FOREACH_SAFE isn't provided
+ *
+ */
+#ifndef LIST_FOREACH_SAFE
+#define	LIST_FOREACH_SAFE(var, head, field, tvar)			\
+	for ((var) = LIST_FIRST((head));				\
+	    (var) && ((tvar) = LIST_NEXT((var), field), 1);		\
+	    (var) = (tvar))
+#endif
+
 /** Convenience macros
  *
  */
