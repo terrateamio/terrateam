@@ -43,12 +43,25 @@ struct filter;
 #include <pthread.h>
 #include <stdatomic.h>
 #include <string.h>
+#include <sys/queue.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 #include <sys/time.h>
-#include <sys/queue.h>
 #include <unistd.h>
+
+
+/*
+ * Check to see if we have SYS_pidfd_open support if we don't,
+ * fall back to the POSIX EVFILT_PROC code.
+ */
+#ifdef SYS_pidfd_open
+#define FILTER_PROC_PLATFORM_SPECIFIC int kn_procfd
+#else
+#include "../posix/platform.h"
+#define FILTER_PROC_PLATFORM_SPECIFIC POSIX_FILTER_PROC_PLATFORM_SPECIFIC
+#endif
 
 /*
  * C11 atomic operations
@@ -177,13 +190,13 @@ struct fd_state {
     union { \
         int kn_timerfd; \
         int kn_signalfd; \
-        int kn_procfd; \
         int kn_eventfd; \
         struct { \
             nlink_t         nlink;  \
             off_t           size;   \
             int             inotifyfd; \
         } kn_vnode; \
+        FILTER_PROC_PLATFORM_SPECIFIC; \
     }; \
     struct epoll_udata    kn_udata       /* Common struct passed to epoll */
 
