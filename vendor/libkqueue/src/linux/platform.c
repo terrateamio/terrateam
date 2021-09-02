@@ -650,15 +650,9 @@ linux_eventfd_init(struct eventfd *e)
 {
     int evfd;
 
-    evfd = eventfd(0, 0);
+    evfd = eventfd(0, EFD_NONBLOCK);
     if (evfd < 0) {
         dbg_perror("eventfd");
-        return (-1);
-    }
-    if (fcntl(evfd, F_SETFL, O_NONBLOCK) < 0) {
-        dbg_perror("fcntl");
-        if (close(evfd) < 0)
-            dbg_perror("close(2)");
         return (-1);
     }
     e->ef_id = evfd;
@@ -707,7 +701,16 @@ linux_eventfd_lower(struct eventfd *e)
     ssize_t n;
     int rv = 0;
 
-    /* Reset the counter */
+    /*
+     * Reset the counter
+     * Because we're not using EFD_SEMPAHOR the level
+     * state of the eventfd is cleared.
+     *
+     * Thus if there were multiple calls to
+     * linux_eventfd_raise, and a single call to
+     * linux_eventfd_lower, the eventfd state would
+     * still be lowered.
+     */
     dbg_puts("lowering event level");
     n = read(e->ef_id, &cur, sizeof(cur));
     if (n < 0) {
