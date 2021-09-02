@@ -212,7 +212,8 @@ evfilt_timer_destroy(struct filter *filt)
 }
 
 int
-evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *ptr UNUSED)
+evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr UNUSED)
 {
     struct filter *filt;
     struct sleepinfo    si;
@@ -266,6 +267,8 @@ evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, 
         knote_delete(filt, kn);
     }
 #endif
+
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
 
     return (1);
 }

@@ -87,7 +87,8 @@ get_eof_offset(int fd)
 #endif
 
 int
-evfilt_read_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *ptr)
+evfilt_read_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr)
 {
     unsigned long bufsize;
 
@@ -110,6 +111,8 @@ evfilt_read_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, v
         }
         dst->data = bufsize;
     }
+
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
 
     return (1);
 }

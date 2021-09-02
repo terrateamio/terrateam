@@ -43,7 +43,8 @@ get_eof_offset(int fd)
 }
 
 int
-evfilt_read_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *ptr)
+evfilt_read_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr)
 {
     int ret;
     int serr;
@@ -132,6 +133,8 @@ evfilt_read_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, v
                 dst->flags |= EV_EOF;
         }
     }
+
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
 
     return (1);
 }

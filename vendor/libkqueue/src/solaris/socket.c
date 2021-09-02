@@ -93,7 +93,8 @@ evfilt_socket_knote_disable(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_socket_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *ptr)
+evfilt_socket_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr)
 {
     port_event_t *pe = (port_event_t *) ptr;
     unsigned int pending_data = 0;
@@ -119,11 +120,7 @@ evfilt_socket_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src,
             dst->data = pending_data;
     }
 
-    /* FIXME: make sure this is in kqops.copyout()
-    if (src->kev.flags & EV_DISPATCH || src->kev.flags & EV_ONESHOT) {
-        socket_knote_delete(filt->kf_kqueue->kq_port, kn->kev.ident);
-    }
-    */
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
 
     return (1);
 }

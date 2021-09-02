@@ -230,6 +230,7 @@ struct filter {
      * @param[in] el     array of `struct kevent` to populate.  Most filters
      *                   will insert a single event, but some may insert multiple.
      * @param[in] nevents The maximum number of events to copy to el.
+     * @param[in] filt   we're copying out events from.
      * @param[in] kn     the event was triggered on.
      * @param[in] ev     event system specific structure representing the event,
      *                   i.e. for Linux this would be a `struct epoll_event *`.
@@ -237,7 +238,7 @@ struct filter {
      *    - >=0 the number of events copied to el.
      *    - -1 on failure setting errno.
      */
-    int                    (*kf_copyout)(struct kevent *el, int nevents, struct knote *kn, void *ev);
+    int                    (*kf_copyout)(struct kevent *el, int nevents, struct filter *filt, struct knote *kn, void *ev);
 
     /** Complete filter-specific initialisation of a knote
      *
@@ -533,6 +534,35 @@ int             knote_init(void);
 int             knote_disable(struct filter *, struct knote *);
 int             knote_enable(struct filter *, struct knote *);
 int             knote_modify(struct filter *, struct knote *);
+
+/** Common code for respecting EV_DISPATCH and EV_ONESHOT
+ *
+ * This should be called by every filter for every knote
+ * processed.
+ *
+ * Unfortunately we can't do this internally as `struct kevent`
+ * does not contain references to the knotes which created
+ * the kevents.
+ *
+ * - EV_DISPATCH disable the knote after an event occurs.
+ * - EV_ONESHOT delete the knote after an event occurs.
+ */
+static inline int knote_copyout_flag_actions(struct filter *filt, struct knote *kn)
+{
+    int rv = 0;
+
+    /*
+     * Certain flags cause the associated knote to be deleted
+     * or disabled.
+     */
+    if (kn->kev.flags & EV_DISPATCH)
+        rv = knote_disable(filt, kn);
+    if (kn->kev.flags & EV_ONESHOT) {
+        rv = knote_delete(filt, kn);
+    }
+
+    return rv;
+}
 
 #define knote_get_filter(knt) &((knt)->kn_kq->kq_filt[(knt)->kev.filter])
 

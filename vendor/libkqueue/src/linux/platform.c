@@ -524,7 +524,7 @@ static inline int linux_kevent_copyout_ev(struct kevent *el, int nevents, struct
 {
     int rv;
 
-    rv = filt->kf_copyout(el, nevents, kn, ev);
+    rv = filt->kf_copyout(el, nevents, filt, kn, ev);
     if (unlikely(rv < 0)) {
         dbg_puts("knote_copyout failed");
         assert(0);
@@ -540,16 +540,6 @@ static inline int linux_kevent_copyout_ev(struct kevent *el, int nevents, struct
     if (unlikely(el->filter == 0)) {
         dbg_puts("spurious wakeup, discarding event");
         rv = 0;
-    }
-
-    /*
-     * Certain flags cause the associated knote to be deleted
-     * or disabled.
-     */
-    if (el->flags & EV_DISPATCH)
-        knote_disable(filt, kn); //FIXME: Error checking
-    if (el->flags & EV_ONESHOT) {
-        knote_delete(filt, kn); //FIXME: Error checking
     }
 
     return rv;

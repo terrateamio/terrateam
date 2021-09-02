@@ -99,7 +99,8 @@ evfilt_timer_destroy(struct filter *filt)
 }
 
 int
-evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct knote* src, void* ptr)
+evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote* src, void* ptr)
 {
     memcpy(dst, &src->kev, sizeof(struct kevent));
     // TODO: Timer error handling
@@ -108,6 +109,8 @@ evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct knote* src, 
        the timer triggered, thus we assume it was only once
     */
     dst->data = 1;
+
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
 
     return (1);
 }

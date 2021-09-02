@@ -127,7 +127,8 @@ convert_timedata_to_itimerspec(struct itimerspec *dst, long src,
 }
 
 int
-evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *ptr)
+evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr)
 {
     struct epoll_event * const ev = (struct epoll_event *) ptr;
     uint64_t expired;
@@ -146,6 +147,8 @@ evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, 
         expired = 1;  /* Fail gracefully */
     }
     dst->data = expired;
+
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
 
     return (1);
 }

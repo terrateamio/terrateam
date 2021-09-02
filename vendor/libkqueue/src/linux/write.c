@@ -21,7 +21,8 @@
 #include "private.h"
 
 int
-evfilt_write_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *ptr)
+evfilt_write_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr)
 {
     int ret;
     int serr;
@@ -50,6 +51,8 @@ evfilt_write_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, 
             dbg_puts("ioctl(2) of socket failed");
             dst->data = 0;
     }
+
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
 
     return (1);
 }

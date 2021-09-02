@@ -162,7 +162,7 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
             case PORT_SOURCE_FD:
 //XXX-FIXME WHAT ABOUT WRITE???
                 filter_lookup(&filt, kq, EVFILT_READ);
-                rv = filt->kf_copyout(eventlist, nevents, kn, evt);
+                rv = filt->kf_copyout(eventlist, nevents, filt, kn, evt);
 
                 /* For sockets, the event port object must be reassociated
                    after each event is retrieved. */
@@ -178,18 +178,18 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
 
             case PORT_SOURCE_TIMER:
                 filter_lookup(&filt, kq, EVFILT_TIMER);
-                rv = filt->kf_copyout(eventlist, nevents, kn, evt);
+                rv = filt->kf_copyout(eventlist, nevents, filt, kn, evt);
                 break;
 
             case PORT_SOURCE_USER:
                 switch (evt->portev_events) {
                     case X_PORT_SOURCE_SIGNAL:
                         filter_lookup(&filt, kq, EVFILT_SIGNAL);
-                        rv = filt->kf_copyout(eventlist, nevents, kn, evt);
+                        rv = filt->kf_copyout(eventlist, nevents, filt, kn, evt);
                         break;
                     case X_PORT_SOURCE_USER:
                         filter_lookup(&filt, kq, EVFILT_USER);
-                        rv = filt->kf_copyout(eventlist, nevents, kn, evt);
+                        rv = filt->kf_copyout(eventlist, nevents, filt, kn, evt);
                         break;
                     default:
                 dbg_puts("unsupported portev_events");

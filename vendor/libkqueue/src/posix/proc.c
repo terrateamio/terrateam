@@ -159,7 +159,8 @@ evfilt_proc_create(struct filter *filt,
 }
 
 static int
-evfilt_proc_copyout(struct kevent *dst, int nevents, struct knote *kn, void *ev)
+evfilt_proc_copyout(struct kevent *dst, int nevents, struct filter *filt,
+    struct knote *kn, void *ev)
 {
     struct knote *kn;
     int events = 0;
@@ -172,11 +173,8 @@ evfilt_proc_copyout(struct kevent *dst, int nevents, struct knote *kn, void *ev)
         memcpy(dst, &kn->kev, sizeof(*dst));
         dst->fflags = NOTE_EXIT;
 
-        if (kn->kev.flags & EV_DISPATCH)
-            KNOTE_DISABLE(kn);
 
-        if (kn->kev.flags & EV_ONESHOT)
-            knote_delete(filt, kn);
+        if (knote_copyout_flag_actions(filt, kn) < 0) return -1;
 
         dst++;
     }

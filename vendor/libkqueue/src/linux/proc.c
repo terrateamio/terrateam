@@ -28,7 +28,8 @@
 #include "private.h"
 
 int
-evfilt_proc_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, UNUSED_NDEBUG void *ptr)
+evfilt_proc_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, UNUSED_NDEBUG void *ptr)
 {
     siginfo_t info;
     unsigned int status = 0;
@@ -74,6 +75,8 @@ evfilt_proc_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, U
 
     dst->data = status;
     dst->flags |= EV_EOF; /* Set in macOS and FreeBSD kqueue implementations */
+
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
 
     return (1);
 }

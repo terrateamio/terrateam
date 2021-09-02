@@ -125,7 +125,8 @@ errout:
 }
 
 int
-evfilt_signal_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *x UNUSED)
+evfilt_signal_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *x UNUSED)
 {
     int sigfd;
 
@@ -138,6 +139,8 @@ evfilt_signal_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src,
        but that information is not available.
      */
     dst->data = 1;
+
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
 
     return (1);
 }

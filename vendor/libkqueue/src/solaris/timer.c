@@ -76,7 +76,8 @@ evfilt_timer_destroy(struct filter *filt UNUSED)
 }
 
 int
-evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *ptr UNUSED)
+evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr UNUSED)
 {
     /* port_event_t *pe = (port_event_t *) ptr; */
 
@@ -96,6 +97,8 @@ evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, 
         timer_delete(src->kn_timerid);
     }
 #endif
+
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
 
     return (1);
 }

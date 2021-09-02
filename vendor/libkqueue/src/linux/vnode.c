@@ -183,7 +183,8 @@ delete_watch(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_vnode_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *ptr UNUSED)
+evfilt_vnode_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr UNUSED)
 {
     uint8_t buf[sizeof(struct inotify_event) + NAME_MAX + 1] __attribute__ ((aligned(__alignof__(struct inotify_event))));
     struct inotify_event *evt;
@@ -238,7 +239,6 @@ scriptors reference the same file.
         }
     }
 
-
     if (evt->mask & IN_MODIFY && src->kev.fflags & NOTE_WRITE)
         dst->fflags |= NOTE_WRITE;
     if (evt->mask & IN_ATTRIB && src->kev.fflags & NOTE_ATTRIB)
@@ -247,6 +247,8 @@ scriptors reference the same file.
         dst->fflags |= NOTE_RENAME;
     if (evt->mask & IN_DELETE_SELF && src->kev.fflags & NOTE_DELETE)
         dst->fflags |= NOTE_DELETE;
+
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
 
     return (1);
 }

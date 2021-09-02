@@ -17,7 +17,8 @@
 #include "private.h"
 
 int
-evfilt_user_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, void *ptr UNUSED)
+evfilt_user_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr UNUSED)
 {
     //port_event_t *pe = (port_event_t *) ptr;
 
@@ -43,6 +44,8 @@ evfilt_user_copyout(struct kevent *dst, UNUSED int nevents, struct knote *src, v
             knote_delete(filt, src);
         }
      */
+
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
 
     return (1);
 }
