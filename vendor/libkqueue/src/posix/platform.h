@@ -17,9 +17,6 @@
 #ifndef  _KQUEUE_POSIX_PLATFORM_H
 #define  _KQUEUE_POSIX_PLATFORM_H
 
-/* Required by glibc for MAP_ANON */
-#define __USE_MISC 1
-
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -35,21 +32,45 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-/*
- * Additional members of 'struct eventfd'
+/** Additional members of 'struct eventfd'
+ *
+ * These should be included in the platform's EVENTFD_PLATFORM_SPECIFIC
+ * macro definition if using the POSIX eventfd functions.
  */
-#define EVENTFD_PLATFORM_SPECIFIC \
+#define POSIX_EVENTFD_PLATFORM_SPECIFIC \
     int             ef_wfd
 
-#define FILTER_PLATFORM_SPECIFIC \
-    int             kf_pfd; /* fd to poll(2) for readiness */ \
-    int             kf_wfd
+/** Additional members of 'struct eventfd'
+ *
+ * These should be included in the platform's FILTER_PLATFORM_SPECIFIC
+ * macro definition if using the POSIX proc filter.
+ */
+#define POSIX_FILTER_PROC_PLATFORM_SPECIFIC \
+    struct eventfd  kf_proc_eventfd
 
-#define KQUEUE_PLATFORM_SPECIFIC \
+/** Additional members of 'struct filter'
+ *
+ * These should be included in the platform's FILTER_PLATFORM_SPECIFIC
+ * macro definition if using all the POSIX filters.
+ */
+#define POSIX_FILTER_PLATFORM_SPECIFIC \
+    int             kf_pfd; /* fd to poll(2) for readiness */ \
+    int             kf_wfd; \
+    POSIX_FILTER_PROC_PLATFORM_SPECIFIC
+
+/** Additional members of 'struct kqueue'
+ *
+ * These should be included in the platform's KQUEUE_PLATFORM_SPECIFIC
+ * macro definition.
+ */
+#define POSIX_KQUEUE_PLATFORM_SPECIFIC \
     fd_set          kq_fds, kq_rfds; \
     int             kq_nfds
 
-#define KNOTE_PLATFORM_SPECIFIC \
+/** Additional members of 'struct knote'
+ *
+ */
+#define POSIX_KNOTE_PLATFORM_SPECIFIC \
     struct sleepreq *kn_sleepreq
 
 void    posix_kqueue_free(struct kqueue *);
