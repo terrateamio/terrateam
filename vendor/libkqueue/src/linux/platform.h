@@ -166,11 +166,6 @@ struct fd_state {
     struct epoll_udata    fds_udata;      //!< Common struct passed to epoll
 };
 
-/** Additional members of struct filter
- *
- */
-#define FILTER_PLATFORM_SPECIFIC
-
 /** Additional members of struct knote
  *
  */
