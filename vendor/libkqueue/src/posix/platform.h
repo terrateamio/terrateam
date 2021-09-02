@@ -40,13 +40,35 @@
 #define POSIX_EVENTFD_PLATFORM_SPECIFIC \
     int             ef_wfd
 
-/** Additional members of 'struct eventfd'
+/** Additional members of 'struct knote'
+ *
+ * These should be included in the platform's KNOTE_PLATFORM_SPECIFIC
+ * macro definition if using the POSIX proc filter.
+ */
+#define POSIX_KNOTE_PROC_PLATFORM_SPECIFIC \
+    struct { \
+        LIST_ENTRY(knote) kn_proc_waiter; \
+        int kn_proc_status; \
+    }
+
+/** Additional members of 'struct knote'
+ *
+ * These should be included in the platform's KNOTE_PLATFORM_SPECIFIC
+ * macro definition if using the POSIX filters.
+ */
+#define POSIX_PROC_PLATFORM_SPECIFIC \
+    POSIX_KNOTE_PROC_PLATFORM_SPECIFIC
+
+/** Additional members of 'struct filter'
  *
  * These should be included in the platform's FILTER_PLATFORM_SPECIFIC
  * macro definition if using the POSIX proc filter.
  */
 #define POSIX_FILTER_PROC_PLATFORM_SPECIFIC \
-    struct eventfd  kf_proc_eventfd
+    struct { \
+        struct eventfd  kf_proc_eventfd; \
+        pthread_t kf_proc_thread_id; \
+    }
 
 /** Additional members of 'struct filter'
  *

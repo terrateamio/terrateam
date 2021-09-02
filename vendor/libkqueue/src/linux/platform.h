@@ -57,9 +57,11 @@ struct filter;
  * fall back to the POSIX EVFILT_PROC code.
  */
 #ifdef SYS_pidfd_open
-#define FILTER_PROC_PLATFORM_SPECIFIC int kn_procfd
+#define KNOTE_PROC_PLATFORM_SPECIFIC  int kn_procfd;
+#define FILTER_PROC_PLATFORM_SPECIFIC
 #else
 #include "../posix/platform.h"
+#define KNOTE_PROC_PLATFORM_SPECIFIC  POSIX_KNOTE_PROC_PLATFORM_SPECIFIC
 #define FILTER_PROC_PLATFORM_SPECIFIC POSIX_FILTER_PROC_PLATFORM_SPECIFIC
 #endif
 
@@ -217,9 +219,15 @@ struct fd_state {
             off_t           size;   \
             int             inotifyfd; \
         } kn_vnode; \
-        FILTER_PROC_PLATFORM_SPECIFIC; \
+        KNOTE_PROC_PLATFORM_SPECIFIC; \
     }; \
     struct epoll_udata    kn_udata       /* Common struct passed to epoll */
+
+/** Additional members of struct filter
+ *
+ */
+#define FILTER_PLATFORM_SPECIFIC \
+    FILTER_PROC_PLATFORM_SPECIFIC
 
 /** Additional members of struct kqueue
  *
