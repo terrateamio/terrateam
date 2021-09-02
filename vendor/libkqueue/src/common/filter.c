@@ -47,7 +47,17 @@ filter_register(struct kqueue *kq, const struct filter *src)
     memcpy(dst, src, sizeof(*src));
     dst->kf_kqueue = kq;
     RB_INIT(&dst->kf_index);
-    pthread_rwlock_init(&dst->kf_knote_mtx, NULL);
+
+    /*
+     * This allows disable and/or delete to be called from any
+     * of the other knote processing functions.
+     *
+     * It's probably not a great idea, but it makes the code
+     * simpler.
+     */
+    pthread_mutexattr_init(&dst->kf_knote_mtx_attr);
+    pthread_mutexattr_settype(&dst->kf_knote_mtx_attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&dst->kf_knote_mtx, &dst->kf_knote_mtx_attr);
     if (src->kf_id == 0) {
         dbg_puts("filter is not implemented");
         return (0);
@@ -105,16 +115,24 @@ filter_unregister_all(struct kqueue *kq)
     int i;
 
     for (i = 0; i < NUM_ELEMENTS(kq->kq_filt); i++) {
-        if (kq->kq_filt[i].kf_id == 0)
+        struct filter *filt = &kq->kq_filt[i];
+
+        if (filt->kf_id == 0)
             continue;
 
-        if (kq->kq_filt[i].kf_destroy != NULL)
-            kq->kq_filt[i].kf_destroy(&kq->kq_filt[i]);
+        if (filt->kf_destroy != NULL)
+            filt->kf_destroy(&kq->kq_filt[i]);
 
-        knote_delete_all(&kq->kq_filt[i]);
+        knote_delete_all(filt);
 
         if (kqops.filter_free != NULL)
-            kqops.filter_free(kq, &kq->kq_filt[i]);
+            kqops.filter_free(kq, filt);
+
+        /*
+         *  ...and destroy the mutexes.
+         */
+        pthread_mutex_destroy(&filt->kf_knote_mtx);
+        pthread_mutexattr_destroy(&filt->kf_knote_mtx_attr);
     }
     memset(&kq->kq_filt[0], 0, sizeof(kq->kq_filt));
 }

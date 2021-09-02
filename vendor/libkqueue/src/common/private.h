@@ -386,9 +386,10 @@ struct filter {
                                                ///< with eventfds.
                                                ///< This is not used by all filters.
 
-    pthread_rwlock_t       kf_knote_mtx;       //!< Used to synchronise knote operations
+    pthread_mutex_t        kf_knote_mtx;       //!< Used to synchronise knote operations
                                                ///< (addition, removal, modification etc...)
                                                ///< on this filter.
+    pthread_mutexattr_t    kf_knote_mtx_attr;
 
     struct kqueue          *kf_kqueue;         //!< kqueue this filter is associated with.
 
