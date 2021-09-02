@@ -6,6 +6,15 @@ type output_err =
   ]
 [@@deriving show]
 
+type check_output_err =
+  [ output_err
+  | `Run_error of Abb_intf.Process.t * string * string * Abb_intf.Process.Exit_code.t
+  ]
+[@@deriving show]
+
+let args program args =
+  Abb_intf.Process.{ exec_name = program; args = program :: args; env = None; cwd = None }
+
 module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
   module Fut_comb = Abb_future_combinators.Make (Abb.Future)
 
@@ -65,4 +74,14 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
           | (Ok stdout, Ok stderr, exit_code) -> Ok (stdout, stderr, exit_code)
           | ((Error _ as err), _, _) | (_, (Error _ as err), _) -> err)
       | Error _ as err -> Abb.Future.return err
+
+  let check_output ?input process =
+    let open Abb.Future.Infix_monad in
+    output ?input process
+    >>= function
+    | Ok (stdout, stderr, Abb_intf.Process.Exit_code.Exited 0) ->
+        Abb.Future.return (Ok (stdout, stderr))
+    | Ok (stdout, stderr, exit_code) ->
+        Abb.Future.return (Error (`Run_error (process, stdout, stderr, exit_code)))
+    | Error err -> Abb.Future.return (Error err)
 end
