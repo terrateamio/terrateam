@@ -574,6 +574,7 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
         {
             struct knote *kn = epoll_udata->ud_kn;
 
+            assert(kn);
             if (el_p >= el_end) {
             oos:
                 dbg_printf("no more available kevent slots, used %zu", el_p - el);
@@ -595,6 +596,7 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
             struct fd_state   *fds = epoll_udata->ud_fds;
             struct knote      *kn;
 
+            assert(fds);
             /*
              *    FD is readable
              */
