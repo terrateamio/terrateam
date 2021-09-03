@@ -46,6 +46,26 @@
    Applications should ensure that file descriptors are removed from
    the kqueue before they are closed.
 
+  * `EVFILT_PROC` - Only `NOTE_EXIT` is currently supported.  Other
+   functionality is possible, but it requires integrating with netlink to
+   receive notifications.
+   If building against Kernels < 5.3 (where `pidfd_open()` is not available)
+   the POSIX `EVFILT_PROC` code is used.  The posix code requires that `SIGCHLD`
+   be delivered to its global waiter thread, so that the waiter can discover a
+   when child process exits.
+   `sigprocmask(2)` is used to mask `SIGCHLD` at a process level.  If the
+   application unmasks `SIGCHLD` or installs a handler for it, the POSIX
+   `EVFILT_PROC` code will not function.
+   Native kqueue provides notifications for any process that is visible to the
+   application process, on Linux/POSIX platforms only direct children of the
+   application process can be monitored for exit.
+   If using the POSIX `EVFILT_PROC` the number of monitored processes should be
+   kept low (< 100).  Because the Linux kernel coalesces `SIGCHLD`
+   (and other signals), the only way to reliably determine if a monitored process
+   has exited, is to loop through all PIDs registered by any kqueue when we
+   receive a `SIGCHLD`.  This involves many calls to `waitid(2)` and may have
+   a negative performance impact.
+
  ## Solaris
 
  * Solaris unit test failure.
