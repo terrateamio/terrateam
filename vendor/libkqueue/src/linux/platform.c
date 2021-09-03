@@ -690,28 +690,31 @@ linux_eventfd_init(struct eventfd *efd, struct filter *filt)
         dbg_perror("eventfd");
         return (-1);
     }
-    e->ef_id = evfd;
+    dbg_printf("eventfd=%i - created", evfd);
+    efd->ef_id = evfd;
+    efd->ef_filt = filt;
 
     return (0);
 }
 
 static void
-linux_eventfd_close(struct eventfd *e)
+linux_eventfd_close(struct eventfd *efd)
 {
-    if (close(e->ef_id) < 0)
+    dbg_printf("eventfd=%i - closed", efd->ef_id);
+    if (close(efd->ef_id) < 0)
         dbg_perror("close(2)");
-    e->ef_id = -1;
+    efd->ef_id = -1;
 }
 
 static int
-linux_eventfd_raise(struct eventfd *e)
+linux_eventfd_raise(struct eventfd *efd)
 {
     uint64_t counter;
     int rv = 0;
 
-    dbg_puts("raising event level");
+    dbg_printf("eventfd=%i - raising event level", efd->ef_id);
     counter = 1;
-    if (write(e->ef_id, &counter, sizeof(counter)) < 0) {
+    if (write(efd->ef_id, &counter, sizeof(counter)) < 0) {
         switch (errno) {
         case EAGAIN:
             /* Not considered an error */
@@ -730,7 +733,7 @@ linux_eventfd_raise(struct eventfd *e)
 }
 
 static int
-linux_eventfd_lower(struct eventfd *e)
+linux_eventfd_lower(struct eventfd *efd)
 {
     uint64_t cur;
     ssize_t n;
@@ -746,8 +749,8 @@ linux_eventfd_lower(struct eventfd *e)
      * linux_eventfd_lower, the eventfd state would
      * still be lowered.
      */
-    dbg_puts("lowering event level");
-    n = read(e->ef_id, &cur, sizeof(cur));
+    dbg_printf("eventfd=%i - lowering event level", efd->ef_id);
+    n = read(efd->ef_id, &cur, sizeof(cur));
     if (n < 0) {
         switch (errno) {
         case EAGAIN:
@@ -771,9 +774,9 @@ linux_eventfd_lower(struct eventfd *e)
 }
 
 static int
-linux_eventfd_descriptor(struct eventfd *e)
+linux_eventfd_descriptor(struct eventfd *efd)
 {
-    return (e->ef_id);
+    return (efd->ef_id);
 }
 
 /** Determine what type of file descriptor the knote describes
