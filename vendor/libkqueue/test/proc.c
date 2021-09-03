@@ -169,6 +169,56 @@ test_kevent_proc_exit_status_error(struct test_context *ctx)
     test_no_kevents(ctx->kqfd);
 }
 
+static void
+test_kevent_proc_multiple_kqueue(struct test_context *ctx)
+{
+    struct kevent kev, buf_a, buf_b;
+    int fflags;
+    int kq_b;
+
+    /*
+     *  macOS requires NOTE_EXITSTATUS to get the
+     *  exit code of the process, FreeBSD always
+     *  provides it.
+     */
+#ifdef __APPLE__
+    fflags = NOTE_EXIT | NOTE_EXITSTATUS;
+#else
+    fflags = NOTE_EXIT;
+#endif
+
+    kq_b = kqueue();
+
+    /* Create a child that waits to be killed and then exits */
+    pid = fork();
+    if (pid == 0) {
+        usleep(100000);
+        printf(" -- child done sleeping, exiting (64)\n");
+        testing_end_quiet();
+        exit(64);
+    }
+    printf(" -- child created (pid %d)\n", (int) pid);
+
+    test_no_kevents(ctx->kqfd);
+    test_no_kevents(kq_b);
+
+    kevent_add(ctx->kqfd, &kev, pid, EVFILT_PROC, EV_ADD, fflags, 0, NULL);
+    kevent_add(kq_b, &kev, pid, EVFILT_PROC, EV_ADD, fflags, 0, NULL);
+
+    kevent_get(&buf_a, ctx->kqfd, 1);
+    kevent_get(&buf_b, kq_b, 1);
+
+    kev.data = 64 << 8; /* What we expected the process exit code to be */
+    kev.flags = EV_ADD | EV_ONESHOT | EV_CLEAR | EV_EOF;
+
+    kevent_cmp(&kev, &buf_a);
+    kevent_cmp(&kev, &buf_b);
+    test_no_kevents(ctx->kqfd);
+    test_no_kevents(kq_b);
+
+    close(kq_b);
+}
+
 #ifdef TODO
 void
 test_kevent_signal_disable(struct test_context *ctx)
@@ -309,6 +359,7 @@ test_evfilt_proc(struct test_context *ctx)
     test(kevent_proc_get, ctx);
     test(kevent_proc_exit_status_ok, ctx);
     test(kevent_proc_exit_status_error, ctx);
+    test(kevent_proc_multiple_kqueue, ctx);
 
     signal(SIGUSR1, SIG_DFL);
 
