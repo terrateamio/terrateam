@@ -575,7 +575,7 @@ static inline int knote_copyout_flag_actions(struct filter *filt, struct knote *
     return rv;
 }
 
-#define knote_get_filter(knt) &((knt)->kn_kq->kq_filt[(knt)->kev.filter])
+#define knote_get_filter(knt) &((knt)->kn_kq->kq_filt[~(knt)->kev.filter])
 
 int             filter_lookup(struct filter **, struct kqueue *, short);
 int             filter_register_all(struct kqueue *);
