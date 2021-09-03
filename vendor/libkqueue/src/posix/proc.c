@@ -163,26 +163,74 @@ wait_thread(UNUSED void *arg)
     dbg_printf("started and waiting for SIGCHLD");
 
     /*
-     * To avoid messing up the application linked to libkqueue
-     * and reaping all child processes we must use WNOWAIT in
-     * any *wait*() calls.  Even for PIDs registered with the
-     * EV_PROC filter we're not meant to reap the process because
-     * we're trying to behave identically to BSD kqueue and BSD
-     * kqueue doesn't do this.
+     * Native kqueue implementations leave processes monitored
+     * with EVFILT_PROC + NOTE_EXIT un-reaped when they exit.
      *
+     * Applications using kqueue expect to be able to retrieve
+     * the process exit state using one of the *wait*() calls.
+     *
+     * So that these applications don't experience errors,
+     * processes must remain un-reaped so those subsequent
+     * *wait*() calls can succeed.
+     *
+     * Because processes must remain un-reaped we can only use
+     * calls which accept the WNOWAIT flag, and do not reap
+     * processes.
+     *
+     * The obvious solution is to use waitid(P_ALL,,,WNOWAIT),
+     * and only notify on the PIDs we're interested in.
      * Unfortunately waitid() will return the same PID repeatedly
-     * if passed P_ALL/WNOWAIT if the previously returned PID
-     * is not reaped.
+     * if the previously returned PID was not reaped.
      *
-     * We can use SIGCHLD to get notified when a child process
-     * exits.  Unfortunately Linux (in particular) will coalesce
-     * multiple signals sent to the same process, so we can't
-     * rely on sigwaitinfo alone.
+     * At first glance sigwaitinfo([SIGCHLD], ) appears to be
+     * another promising option.  The siginfo_t populated by
+     * sigwaitinfo() contains all the information we need to
+     * raise a notification that a process has exited, and a
+     * SIGCHLD signal is raised every time a process exits.
      *
-     * The final solution is to use sigwaitinfo() as a
-     * notification that a child exited, and then scan through
-     * the list of PIDs we're waiting on using waitid to see if
-     * any of those exited.
+     * Unfortunately on Linux, SIGCHLD signals, along with all
+     * other signals, are coalesced.  This means if two children
+     * exited before the wait thread was woken up from waiting
+     * on sigwaitinfo(), we'd only get the siginfo_t structure
+     * populated for one child.
+     *
+     * The only apparent fully kqueue compatible and POSIX
+     * compatible solution is to use sigwatinfo() to determine
+     * that _A_ child had exited, and then scan all PIDs we're
+     * interested in, passing them to waitid() in turn.
+     *
+     * This isn't a great solution for the following reasons:
+     *
+     * - SIGCHLD must be delivered to the wait thread in order
+     *   for notifications to be sent out.
+     *   If the application installs its own signal handler
+     *   for SIGCHLD, or changes the process signal mask,
+     *   we may never get notified when a child exits.
+     *
+     * - Scanning through all the monitored PIDs doesn't scale
+     *   well, and involves many system calls.
+     *
+     * - Because only one thread can receive the SIGCHLD
+     *   signal, all monitoring must be done in a single
+     *   waiter thread.  This introduces code complexity and
+     *   contention around the global tree that holds the PIDs
+     *   that are being monitored.
+     *
+     * Because of these limitations, on Linux >= 5.3 we use
+     * pidfd_open() to get a FD bound to a PID that we can
+     * monitor.  Testing shows that multiple pidfds bound to
+     * the same PID will each receive a notification when
+     * that process exits.  Using pidfd avoids the messiness
+     * of signals, the linear scans, and the global structures.
+     *
+     * Unfortunately at the time of writing Linux 5.3 is still
+     * relatively new, and the feasibility of writing native
+     * solutions for platforms like Solaris hasn't been
+     * investigated.
+     *
+     * Until Linux 5.3 becomes more widely used, and we have
+     * a native solution for Solaris this POSIX EVFILT_PROC
+     * code must remain to provide a fallback mechanism.
      */
     while ((ret = sigwaitinfo(&sigmask, &info))) {
         if (ret < 0) {
@@ -256,8 +304,9 @@ evfilt_proc_init(struct filter *filt)
          * that the wait thread is the only thing
          * that receives SIGCHLD.
          *
-         * The wait thread does not receive the
-         * SIGCHLD without this code.
+         * The wait thread will not reliably receive
+         * a SIGCHLD signal if SIGCHLD is not
+         * blocked in all other threads.
          */
         sigemptyset(&sigmask);
         sigaddset(&sigmask, SIGCHLD);
@@ -371,7 +420,7 @@ evfilt_proc_knote_disable(UNUSED struct filter *filt, struct knote *kn)
      * is disabled and the other is deleted,
      * then the `struct proc_pid` will be freed,
      * which is why we need to run the same logic
-     * as on create when re-enabling.
+     * as knote_create when re-enabling.
      */
     pthread_mutex_lock(&proc_pid_index_mtx);
     if (LIST_INSERTED(kn, kn_proc_waiter)) LIST_REMOVE(kn, kn_proc_waiter);

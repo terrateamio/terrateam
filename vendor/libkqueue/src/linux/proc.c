@@ -20,7 +20,7 @@
  * isn't available there's currently no good fallback.
  *
  * If the build system detects SYS_pidfd_open is not available it will fall back
- * to using posix/proc.c and not build this source file.
+ * to using posix/proc.c and won't build this source file.
  */
 #include <sys/syscall.h>
 #include <sys/wait.h>
