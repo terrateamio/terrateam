@@ -345,7 +345,7 @@ evfilt_proc_knote_delete(UNUSED struct filter *filt, struct knote *kn)
      */
     ppd = RB_FIND(pid_index, &proc_pid_index, &(struct proc_pid){ .ppd_pid = kn->kev.ident });
     if (ppd) {
-        if (!LIST_FIRST(&ppd->ppd_proc_waiters)) {
+        if (LIST_EMPTY(&ppd->ppd_proc_waiters)) {
             dbg_printf("pid=%u removing waiter list", (unsigned int)ppd->ppd_pid);
             RB_REMOVE(pid_index, &proc_pid_index, ppd);
             free(ppd);
