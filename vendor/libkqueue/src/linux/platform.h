@@ -89,6 +89,15 @@ extern long int syscall (long int __sysno, ...);
 #define kqueue_epoll_fd(kq)     ((kq)->epollfd)
 #define filter_epoll_fd(filt)   ((filt)->kf_kqueue->epollfd)
 
+/** What type of udata was passed to epoll
+ *
+ */
+enum epoll_udata_type {
+    EPOLL_UDATA_KNOTE = 1,           //!< Udata is a pointer to a knote.
+    EPOLL_UDATA_FD_STATE,            //!< Udata is a pointer to a fd state structure.
+    EPOLL_UDATA_EVENT_FD             //!< Udata is a pointer to an eventfd.
+};
+
 /** Macro for populating the kn_udata structure
  *
  * We set the udata for the epoll event so we can retrieve the knote associated
@@ -106,6 +115,12 @@ extern long int syscall (long int __sysno, ...);
  */
 #define FDS_UDATA(_fds)      ((_fds)->fds_udata = (struct epoll_udata){ .ud_type = EPOLL_UDATA_FD_STATE, .ud_fds = _fds })
 
+/* Macro for populating an eventfd udata structure
+ *
+ * @param[in] _efd           to populate.
+ */
+#define EVENTFD_UDATA(_efd)  ((_efd)->efd_udata = (struct epoll_udata){ .ud_type = EPOLL_UDATA_EVENT_FD, .ud_efd = _efd })
+
 /** Macro for building a temporary kn epoll_event
  *
  * @param[in] _events        One or more event flags EPOLLIN, EPOLLOUT etc...
@@ -113,7 +128,7 @@ extern long int syscall (long int __sysno, ...);
  *                           determine the correct filter to notify
  *                           if the event fires.
  */
-#define EPOLL_EV_KN(_events, _kn)    &(struct epoll_event){ .events = _events, .data = { .ptr = &(_kn)->kn_udata } }
+#define EPOLL_EV_KN(_events, _kn) &(struct epoll_event){ .events = _events, .data = { .ptr = &(_kn)->kn_udata }}
 
 /** Macro for building a temporary fds epoll_event
  *
@@ -122,21 +137,20 @@ extern long int syscall (long int __sysno, ...);
  *                           event. Is used during event demuxing to inform
  *                           multiple filters of read/write events on the fd.
  */
-#define EPOLL_EV_FDS(_events, _fds)  &(struct epoll_event){ .events = _events, .data = { .ptr = &(_fds)->fds_udata } }
+#define EPOLL_EV_FDS(_events, _fds) &(struct epoll_event){ .events = _events, .data = { .ptr = &(_fds)->fds_udata }}
+
+/** Macro for building a temporary eventfd epoll_event
+ *
+ * @param[in] _events        One or more event flags EPOLLIN, EPOLLOUT etc...
+ * @param[in] _efd           eventfd to build event for.
+ */
+#define EPOLL_EV_EVENTFD(_events, _efd) &(struct epoll_event){ .events = _events, .data = { .ptr = &(_efd)->efd_udata }}
 
 /** Macro for building a temporary epoll_event
  *
  * @param[in] _events        One or more event flags EPOLLIN, EPOLLOUT etc...
  */
 #define EPOLL_EV(_events) &(struct epoll_event){ .events = _events }
-
-/** What type of udata is in the event loop
- *
- */
-enum epoll_udata_type {
-    EPOLL_UDATA_KNOTE       = 0x01,     //!< Udata is a pointer to a knote.
-    EPOLL_UDATA_FD_STATE    = 0x02      //!< Udata is a pointer to a fd state structure.
-};
 
 /** Common structure that's provided as the epoll data.ptr
  *
@@ -151,6 +165,7 @@ struct epoll_udata {
     union {
         struct knote        *ud_kn;     //!< Pointer back to the containing knote.
         struct fd_state     *ud_fds;    //!< Pointer back to the containing fd_state.
+        struct eventfd      *ud_efd;    //!< Pointer back to the containing eventfd.
     };
     enum epoll_udata_type   ud_type;    //!< Which union member to use.
 };
@@ -178,6 +193,12 @@ struct fd_state {
     struct knote          *fds_write;     //!< Knote that should be informed of write events.
     struct epoll_udata    fds_udata;      //!< Common struct passed to epoll
 };
+
+/** Additional members of struct eventfd
+ *
+ */
+#define EVENTFD_PLATFORM_SPECIFIC \
+    struct epoll_udata    efd_udata
 
 /** Additional members of struct knote
  *

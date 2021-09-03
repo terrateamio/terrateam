@@ -633,6 +633,20 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
         }
             break;
 
+        case EPOLL_UDATA_EVENT_FD:
+        {
+            struct eventfd    *efd = epoll_udata->ud_efd;
+
+            assert(efd);
+
+            dbg_printf("eventfd=%u - received event", (unsigned int)efd->ef_id);
+
+            rv = linux_kevent_copyout_ev(el_p, (el_end - el_p), ev, efd->ef_filt, NULL);
+            if (rv < 0) goto done;
+            el_p += rv;
+            break;
+        }
+
         /*
          *    Bad udata value. Maybe use after free?
          */
@@ -645,8 +659,29 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
 done:
     return el_p - el;
 }
+
 int
-linux_eventfd_init(struct eventfd *e)
+linux_eventfd_register(struct kqueue *kq, struct eventfd *efd)
+{
+    EVENTFD_UDATA(efd); /* setup udata for the efd */
+
+    if (epoll_ctl(kq->epollfd, EPOLL_CTL_ADD, kqops.eventfd_descriptor(efd), EPOLL_EV_EVENTFD(EPOLLIN, efd)) < 0) {
+        dbg_perror("epoll_ctl(2)");
+        return -1;
+    }
+
+    return 0;
+}
+
+void
+linux_eventfd_unregister(struct kqueue *kq, struct eventfd *efd)
+{
+    if (epoll_ctl(kq->epollfd, EPOLL_CTL_DEL, kqops.eventfd_descriptor(efd), NULL) < 0)
+        dbg_perror("epoll_ctl(2)");
+}
+
+static int
+linux_eventfd_init(struct eventfd *efd, struct filter *filt)
 {
     int evfd;
 
@@ -1337,6 +1372,8 @@ const struct kqueue_vtable kqops = {
     .kqueue_free        = linux_kqueue_free,
     .kevent_wait        = linux_kevent_wait,
     .kevent_copyout     = linux_kevent_copyout,
+    .eventfd_register   = linux_eventfd_register,
+    .eventfd_unregister = linux_eventfd_unregister,
     .eventfd_init       = linux_eventfd_init,
     .eventfd_close      = linux_eventfd_close,
     .eventfd_raise      = linux_eventfd_raise,

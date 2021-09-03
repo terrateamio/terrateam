@@ -109,8 +109,16 @@ struct evfilt_data;
 # define EPOLLONESHOT (1 << 30)
 #endif
 
+/** An eventfd provides a mechanism to signal the eventing system that an event has occurred
+ *
+ * This is usually that a filter has pending events that it wants handled during the
+ * next call to copyout.
+ */
 struct eventfd {
-    int ef_id;
+    int ef_id;                                   //!< The file descriptor associated
+                                                 ///< with this eventfd.
+    struct filter *ef_filt;                      //!< The filter associated with this eventfd.
+
 #if defined(EVENTFD_PLATFORM_SPECIFIC)
     EVENTFD_PLATFORM_SPECIFIC;
 #endif
@@ -478,14 +486,32 @@ struct kqueue_vtable {
      */
     void   (*filter_free)(struct kqueue *kq, struct filter *filt);
 
-    /** Initialise a new eventfd
+    /** Register an eventfd with the eventing system associated with this kqueue
      *
-     * @param[in] efd           structure to initialise.
+     * @param[in] kq            To register the event fd for.
+     * @param[in] efd           to register.
      * @return
      *      - 0 on success.
      *      - -1 on failure.
      */
-    int    (*eventfd_init)(struct eventfd *efd);
+    int    (*eventfd_register)(struct kqueue *kq, struct eventfd *efd);
+
+    /** Remove an eventfd from the eventing system associated with this kqueue
+     *
+     * @param[in] kq            To remove the event fd from.
+     * @param[in] efd           Eventfd to remove.
+     */
+    void   (*eventfd_unregister)(struct kqueue *kq, struct eventfd *efd);
+
+    /** Initialise a new eventfd
+     *
+     * @param[in] efd           structure to initialise.
+     * @param[in] filt          Filter to associate this eventfd with.
+     * @return
+     *      - 0 on success.
+     *      - -1 on failure.
+     */
+    int    (*eventfd_init)(struct eventfd *efd, struct filter *filt);
 
     /** Close an eventfd
      *

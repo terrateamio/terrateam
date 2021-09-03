@@ -104,7 +104,7 @@ ignore_signal(int sig)
 int
 evfilt_signal_init(struct filter *filt)
 {
-    if (kqops.eventfd_init(&filt->kf_efd) < 0)
+    if (kqops.eventfd_init(&filt->kf_efd, filt) < 0)
         return (-1);
     sig_eventfd = &filt->kf_efd; // XXX - does not work w/ multiple kqueues
     return (0);

@@ -22,7 +22,7 @@
 int
 posix_evfilt_user_init(struct filter *filt)
 {
-    if (kqops.eventfd_init(&filt->kf_efd) < 0)
+    if (kqops.eventfd_init(&filt->kf_efd, filt) < 0)
         return (-1);
 
     filt->kf_pfd = kqops.eventfd_descriptor(&filt->kf_efd);
