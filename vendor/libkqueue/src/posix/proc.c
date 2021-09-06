@@ -457,12 +457,17 @@ evfilt_proc_knote_copyout(struct kevent *dst, int nevents, struct filter *filt,
         dst->flags |= EV_EOF;
         dst->data = kn->kn_proc_status;
 
-        if (knote_copyout_flag_actions(filt, kn) < 0) return -1;
+        if (knote_copyout_flag_actions(filt, kn) < 0) {
+            pthread_mutex_unlock(&filt->kf_knote_mtx);
+            return -1;
+        }
 
         dst++;
     }
+
     if (LIST_EMPTY(&filt->kf_ready))
         kqops.eventfd_lower(&filt->kf_proc_eventfd);
+
     pthread_mutex_unlock(&filt->kf_knote_mtx);
 
     return (nevents);
