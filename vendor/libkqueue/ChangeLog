@@ -3,7 +3,7 @@ Unreleased
 
 Nothing here yet.
 
-0000-00-00  v2.4.1
+2021-09-06  v2.5.0
 ------------------------------------------------------------------------
 
   * Add back support for monitoring process exit with EVFILT_PROC.
