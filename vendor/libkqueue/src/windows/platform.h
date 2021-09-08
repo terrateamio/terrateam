@@ -136,24 +136,23 @@ typedef int pid_t;
 /* Emulation of pthreads mutex functionality */
 #define PTHREAD_PROCESS_SHARED 1
 #define PTHREAD_PROCESS_PRIVATE 2
-typedef CRITICAL_SECTION pthread_mutex_t;
-typedef CRITICAL_SECTION pthread_spinlock_t;
-typedef CRITICAL_SECTION pthread_rwlock_t;
-#define _cs_init(x)  InitializeCriticalSection((x))
-#define _cs_lock(x)  EnterCriticalSection ((x))
-#define _cs_unlock(x)  LeaveCriticalSection ((x))
-#define pthread_mutex_lock _cs_lock
-#define pthread_mutex_unlock _cs_unlock
-#define pthread_mutex_init(x,y) _cs_init((x))
-#define pthread_spin_lock _cs_lock
-#define pthread_spin_unlock _cs_unlock
-#define pthread_spin_init(x,y) _cs_init((x))
-#define pthread_mutex_init(x,y) _cs_init((x))
+typedef CRITICAL_SECTION           pthread_mutex_t;
+typedef CRITICAL_SECTION           pthread_spinlock_t;
+typedef CRITICAL_SECTION           pthread_rwlock_t;
+
+#define EnterCriticalSection(x)    EnterCriticalSection ((x))
+#define pthread_mutex_lock         EnterCriticalSection
+#define pthread_mutex_unlock       LeaveCriticalSection
+#define pthread_mutex_init(x,y)    InitializeCriticalSection((x))
+#define pthread_spin_lock          EnterCriticalSection
+#define pthread_spin_unlock        LeaveCriticalSection
+#define pthread_spin_init(x,y)     InitializeCriticalSection((x))
+#define pthread_mutex_init(x,y)    InitializeCriticalSection((x))
 #define pthread_mutex_destroy(x)
-#define pthread_rwlock_rdlock _cs_lock
-#define pthread_rwlock_wrlock _cs_lock
-#define pthread_rwlock_unlock _cs_unlock
-#define pthread_rwlock_init(x,y) _cs_init((x))
+#define pthread_rwlock_rdlock      EnterCriticalSection
+#define pthread_rwlock_wrlock      EnterCriticalSection
+#define pthread_rwlock_unlock      LeaveCriticalSection
+#define pthread_rwlock_init(x,y)   InitializeCriticalSection((x))
 
 
 #endif  /* ! _KQUEUE_WINDOWS_PLATFORM_H */
