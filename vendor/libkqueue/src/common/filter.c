@@ -55,8 +55,10 @@ filter_register(struct kqueue *kq, const struct filter *src)
      * It's probably not a great idea, but it makes the code
      * simpler.
      */
+#ifndef _WIN32
     pthread_mutexattr_init(&dst->kf_knote_mtx_attr);
     pthread_mutexattr_settype(&dst->kf_knote_mtx_attr, PTHREAD_MUTEX_RECURSIVE);
+#endif
     pthread_mutex_init(&dst->kf_knote_mtx, &dst->kf_knote_mtx_attr);
     if (src->kf_id == 0) {
         dbg_puts("filter is not implemented");
@@ -132,7 +134,9 @@ filter_unregister_all(struct kqueue *kq)
          *  ...and destroy the mutexes.
          */
         pthread_mutex_destroy(&filt->kf_knote_mtx);
+#ifndef _WIN32
         pthread_mutexattr_destroy(&filt->kf_knote_mtx_attr);
+#endif
     }
     memset(&kq->kq_filt[0], 0, sizeof(kq->kq_filt));
 }

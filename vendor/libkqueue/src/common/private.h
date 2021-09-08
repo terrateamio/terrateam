@@ -407,7 +407,9 @@ struct filter {
     pthread_mutex_t        kf_knote_mtx;       //!< Used to synchronise knote operations
                                                ///< (addition, removal, modification etc...)
                                                ///< on this filter.
+#ifndef _WIN32
     pthread_mutexattr_t    kf_knote_mtx_attr;
+#endif
 
     struct kqueue          *kf_kqueue;         //!< kqueue this filter is associated with.
 
