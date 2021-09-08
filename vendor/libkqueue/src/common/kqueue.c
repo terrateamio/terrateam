@@ -84,7 +84,7 @@ libkqueue_init(void)
         DEBUG_KQUEUE = 1;
 
 #ifdef _WIN32
-    pthread_mutex_init(&kq_mtx);
+    pthread_mutex_init(&kq_mtx, NULL);
     /* Initialize the Winsock library */
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0)
