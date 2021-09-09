@@ -248,9 +248,9 @@ int     linux_fd_to_path(char *, size_t, int);
 
 /* epoll-related functions */
 
-char *  epoll_event_op_dump(int);
-char *  epoll_event_flags_dump(int);
-char *  epoll_event_dump(struct epoll_event *);
+char const *  epoll_op_dump(int);
+char const *  epoll_event_flags_dump(const struct epoll_event *);
+char const *  epoll_event_dump(const struct epoll_event *);
 
 int     epoll_fd_state(struct fd_state **, struct knote *, bool);
 int     epoll_fd_state_init(struct fd_state **, struct knote *, int);

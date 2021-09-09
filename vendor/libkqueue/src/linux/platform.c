@@ -545,6 +545,25 @@ static inline int linux_kevent_copyout_ev(struct kevent *el, int nevents, struct
     return rv;
 }
 
+char const *epoll_op_dump(int op)
+{
+    static __thread char buf[14];
+
+    buf[0] = '\0';
+
+#define EPOP_DUMP(attrib) \
+    if (op == attrib) { \
+        strcpy(buf, #attrib); \
+        return buf; \
+    }
+
+    EPOP_DUMP(EPOLL_CTL_MOD);
+    EPOP_DUMP(EPOLL_CTL_ADD);
+    EPOP_DUMP(EPOLL_CTL_DEL);
+
+    return buf;
+}
+
 static const char *
 udata_type(enum epoll_udata_type ud_type)
 {
@@ -561,7 +580,7 @@ udata_type(enum epoll_udata_type ud_type)
 }
 
 static const char *
-linux_epoll_udata_type_dump(const struct epoll_event *ev)
+epoll_udata_type_dump(const struct epoll_event *ev)
 {
     static __thread char buf[64];
     enum epoll_udata_type ud_type;
@@ -574,16 +593,16 @@ linux_epoll_udata_type_dump(const struct epoll_event *ev)
 }
 
 static const char *
-linux_epoll_events_dump(const struct epoll_event *ev)
+epoll_flags_dump(uint32_t events)
 {
     static __thread char buf[1024];
     size_t len;
 
 #define EEVENT_DUMP(attrib) \
-    if (ev->events & attrib) \
+    if (events & attrib) \
     strncat((char *) buf, #attrib" ", 64);
 
-    snprintf(buf, sizeof(buf), "events=0x%08x (", ev->events);
+    snprintf(buf, sizeof(buf), "events=0x%08x (", events);
     EEVENT_DUMP(EPOLLIN);
     EEVENT_DUMP(EPOLLPRI);
     EEVENT_DUMP(EPOLLOUT);
@@ -608,15 +627,21 @@ linux_epoll_events_dump(const struct epoll_event *ev)
 }
 
 const char *
-linux_epoll_dump(const struct epoll_event *ev)
+epoll_event_flags_dump(const struct epoll_event *ev)
+{
+    return epoll_flags_dump(ev->events);
+}
+
+const char *
+epoll_event_dump(const struct epoll_event *ev)
 {
     static __thread char buf[2147];
 
     snprintf((char *) buf, sizeof(buf),
              "{ %s, udata=%p, udata_type=%s }",
-             linux_epoll_events_dump(ev),
+             epoll_event_flags_dump(ev),
              ev->data.ptr,
-             linux_epoll_udata_type_dump(ev));
+             epoll_udata_type_dump(ev));
 
     return ((const char *) buf);
 }
@@ -639,7 +664,7 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
             continue;
         }
 
-        dbg_printf("[%i] %s", i, linux_epoll_dump(ev));
+        dbg_printf("[%i] %s", i, epoll_event_dump(ev));
 
         /*
          * epoll event is associated with a single filter
@@ -1020,61 +1045,6 @@ linux_get_descriptor_type(struct knote *kn)
     return (0);
 }
 
-char *epoll_event_op_dump(int op)
-{
-    static __thread char buf[14];
-
-    buf[0] = '\0';
-
-#define EPOP_DUMP(attrib) \
-    if (op == attrib) { \
-        strcpy(buf, #attrib); \
-        return buf; \
-    }
-
-    EPOP_DUMP(EPOLL_CTL_MOD);
-    EPOP_DUMP(EPOLL_CTL_ADD);
-    EPOP_DUMP(EPOLL_CTL_DEL);
-
-    return buf;
-}
-
-char *epoll_event_flags_dump(int events)
-{
-    static __thread char buf[128];
-
-    buf[0] = '\0';
-
-#define EPEVT_DUMP(attrib) \
-    if (events & attrib) strcat(buf, #attrib" ");
-
-    EPEVT_DUMP(EPOLLIN);
-    EPEVT_DUMP(EPOLLOUT);
-#if defined(HAVE_EPOLLRDHUP)
-    EPEVT_DUMP(EPOLLRDHUP);
-#endif
-    EPEVT_DUMP(EPOLLONESHOT);
-    EPEVT_DUMP(EPOLLET);
-
-    if (buf[0] != '\0') buf[strlen(buf) - 1] = '\0';    /* Trim trailing space */
-
-    return buf;
-}
-
-char *
-epoll_event_dump(struct epoll_event *evt)
-{
-    static __thread char buf[128];
-
-    if (evt == NULL)
-        return "(null)";
-
-    snprintf(buf, sizeof(buf), "{ data = %p, events = %s }", evt->data.ptr, epoll_event_flags_dump(evt->events));
-
-    return (buf);
-#undef EPEVT_DUMP
-}
-
 /** Determine if two fd state entries are equal
  *
  * @param[in] a           first entry.
@@ -1178,7 +1148,7 @@ int epoll_fd_state_mod(struct fd_state **fds_p, struct knote *kn, int ev)
 
         fds = RB_FIND(fd_st, &kq->kq_fd_st, &query);
         if (!fds) {
-            dbg_printf("fd_state: new fd=%i events=0x%04x (%s)", fd, ev, epoll_event_flags_dump(ev));
+            dbg_printf("fd_state: new fd=%i events=0x%08x (%s)", fd, ev, epoll_flags_dump(ev));
 
             fds = malloc(sizeof(struct fd_state));
             if (!fds) return (-1);
@@ -1189,7 +1159,7 @@ int epoll_fd_state_mod(struct fd_state **fds_p, struct knote *kn, int ev)
 
         } else {
         mod:
-            dbg_printf("fd_state: mod fd=%i events=0x%04x (%s)", fd, ev, epoll_event_flags_dump(ev));
+            dbg_printf("fd_state: mod fd=%i events=0x%08x (%s)", fd, ev, epoll_flags_dump(ev));
         }
     } else goto mod;
 
@@ -1246,7 +1216,7 @@ void epoll_fd_state_del(struct fd_state **fds_p, struct knote *kn, int ev)
         free(fds);
         *fds_p = NULL;
     } else {
-        dbg_printf("fd_state: mod fd=%i events=0x%04x (%s)", fds->fds_fd, ev, epoll_event_flags_dump(ev));
+        dbg_printf("fd_state: mod fd=%i events=0x%08x (%s)", fds->fds_fd, ev, epoll_flags_dump(ev));
     }
     kn->kn_fds = NULL;
 }
@@ -1296,7 +1266,7 @@ epoll_update(int op, struct filter *filt, struct knote *kn, int ev, bool delete)
      */
     have_ev = epoll_fd_state(&fds, kn, false);            /* ...enabled only */
 
-    dbg_printf("fd=%i have_ev=0x%04x (%s)", fd, have_ev, epoll_event_flags_dump(have_ev));
+    dbg_printf("fd=%i have_ev=0x%04x (%s)", fd, have_ev, epoll_flags_dump(have_ev));
     switch (op) {
     case EPOLL_CTL_ADD:
         want = have_ev | ev;            /* This also preserves other option flags */
@@ -1314,7 +1284,7 @@ epoll_update(int op, struct filter *filt, struct knote *kn, int ev, bool delete)
             int to_delete;
 
             to_delete = epoll_fd_state(&fds, kn, true); /* ...disabled only */
-            dbg_printf("fd=%i disabled_ev=0x%04x (%s)", fd, to_delete, epoll_event_flags_dump(to_delete));
+            dbg_printf("fd=%i disabled_ev=0x%04x (%s)", fd, to_delete, epoll_flags_dump(to_delete));
             to_delete &= EV_EPOLLINOUT(ev);
 
             if (to_delete) {
@@ -1331,7 +1301,7 @@ epoll_update(int op, struct filter *filt, struct knote *kn, int ev, bool delete)
             int to_delete;
 
             to_delete = epoll_fd_state(&fds, kn, true); /* ...disabled only */
-            dbg_printf("fd=%i disabled_ev=0x%04x (%s)", fd, to_delete, epoll_event_flags_dump(to_delete));
+            dbg_printf("fd=%i disabled_ev=0x%04x (%s)", fd, to_delete, epoll_flags_dump(to_delete));
             to_delete &= ~ev;
 
             if (to_delete) {
@@ -1363,8 +1333,8 @@ epoll_update(int op, struct filter *filt, struct knote *kn, int ev, bool delete)
 
     dbg_printf("fd=%i op=0x%04x (%s) opn=0x%04x (%s) %s",
                fd,
-               op, epoll_event_op_dump(op),
-               opn, epoll_event_op_dump(opn),
+               op, epoll_op_dump(op),
+               opn, epoll_op_dump(opn),
                epoll_event_dump(EPOLL_EV_FDS(want, fds)));
 
     if (epoll_ctl(filter_epoll_fd(filt), opn, fd, EPOLL_EV_FDS(want, fds)) < 0) {
@@ -1392,7 +1362,7 @@ epoll_update(int op, struct filter *filt, struct knote *kn, int ev, bool delete)
                 kn_ev &= ~want_ev;    /* If it wasn't wanted... */
 
                 if (kn_ev) {
-                    dbg_printf("clearing fd=%i fds=%p ev=%s", fd, fds, epoll_event_flags_dump(kn_ev));
+                    dbg_printf("clearing fd=%i fds=%p ev=%s", fd, fds, epoll_flags_dump(kn_ev));
                     epoll_fd_state_del(&fds, kn, kn_ev);
                     return (0);
                 }
