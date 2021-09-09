@@ -69,6 +69,9 @@ knote_release(struct knote *kn)
     if (atomic_dec(&kn->kn_ref) == 0) {
         if (kn->kn_flags & KNFL_KNOTE_DELETED) {
             dbg_printf("kn=%p - freeing", kn);
+#ifndef NDEBUG
+            memset(kn, 0x42, sizeof(*kn));
+#endif
             free(kn);
         } else {
             dbg_puts("kn=%p - attempted to free knote without marking it as deleted");

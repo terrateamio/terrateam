@@ -130,6 +130,10 @@ kqueue_free(struct kqueue *kq)
     filter_unregister_all(kq);
     kqops.kqueue_free(kq);
     tracing_mutex_destroy(&kq->kq_mtx);
+
+#ifndef NDEBUG
+    memset(kq, 0x42, sizeof(*kq));
+#endif
     free(kq);
 }
 
@@ -141,12 +145,7 @@ kqueue_free_by_id(int id)
     kq = map_delete(kqmap, id);
     if (!kq) return;
 
-    dbg_printf("kq=%p - freeing", kq);
-
-    filter_unregister_all(kq);
-    kqops.kqueue_free(kq);
-    tracing_mutex_destroy(&kq->kq_mtx);
-    free(kq);
+    kqueue_free(kq);
 }
 
 struct kqueue *
