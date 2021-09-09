@@ -3,6 +3,22 @@ Unreleased
 
 Nothing here yet.
 
+000-00-00  v2.5.1
+------------------------------------------------------------------------
+
+  * Fix: Compilation on Windows (Closes #111).
+    (Reported by: brechtsanders)
+
+  * Fix: On Linux EPOLLHUP and EPOLLRDHUP did not set the EOF flag in kn->kev
+    and did not remove the EOF'd socket from epoll.  The result was kevent
+    would return immediately.  Additionally, where EPOLLIN was not set by
+    epoll, no kevent would be returned, and no EOF indication would be provided
+    to the caller.
+    linux/read.c and linux/write.c now exhibit the same behaviour as kqueue,
+    and will remove EOF'd sockets from EPOLL.  The EOF condition can be cleared
+    by passing passing EV_ADD | EV_CLEAR, at which point notifications for the
+    socket will be produced once again.
+
 2021-09-06  v2.5.0
 ------------------------------------------------------------------------
 
