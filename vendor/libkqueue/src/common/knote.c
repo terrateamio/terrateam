@@ -132,8 +132,10 @@ knote_delete(struct filter *filt, struct knote *kn)
     query.kev.ident = kn->kev.ident;
     pthread_mutex_lock(&filt->kf_knote_mtx);
     tmp = RB_FIND(knote_index, &filt->kf_index, &query);
-    if (tmp == kn)
-        RB_REMOVE(knote_index, &filt->kf_index, kn);
+    if (tmp != kn)
+        dbg_printf("kn=%p - conflicting entry in filter tree", kn);
+
+    RB_REMOVE(knote_index, &filt->kf_index, kn);
 
     if (LIST_INSERTED(kn, kn_ready))
         LIST_REMOVE(kn, kn_ready);

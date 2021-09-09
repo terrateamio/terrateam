@@ -291,7 +291,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
 #ifndef NDEBUG
     if (DEBUG_KQUEUE) {
         myid = atomic_inc(&_kevent_counter);
-        dbg_printf("--- kevent %u --- (nchanges = %d nevents = %d)", myid, nchanges, nevents);
+        dbg_printf("--- START kevent %u --- (nchanges = %d nevents = %d)", myid, nchanges, nevents);
     }
 #endif
 
