@@ -55,8 +55,11 @@ struct filter;
 /*
  * Check to see if we have SYS_pidfd_open support if we don't,
  * fall back to the POSIX EVFILT_PROC code.
+ *
+ * Using the build system macro makes it slightly easier to
+ * toggle between POSIX/Linux implementations.
  */
-#ifdef SYS_pidfd_open
+#if HAVE_SYS_PIDFD_OPEN
 #define KNOTE_PROC_PLATFORM_SPECIFIC  int kn_procfd;
 #define FILTER_PROC_PLATFORM_SPECIFIC
 #else

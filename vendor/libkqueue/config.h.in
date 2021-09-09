@@ -8,5 +8,5 @@
 #cmakedefine01 HAVE_EPOLLRDHUP
 #cmakedefine01 HAVE_NOTE_TRUNCATE
 #cmakedefine01 HAVE_DECL_PPOLL
+#cmakedefine01 HAVE_SYS_PIDFD_OPEN
 #cmakedefine01 HAVE_NOTE_REVOKE
-

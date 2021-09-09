@@ -125,7 +125,7 @@ typedef int nlink_t;
 typedef int timer_t;
 typedef int pthread_t;
 typedef int sigset_t;
-#ifndef HAVE_SYS_TYPES_H
+#if HAVE_SYS_TYPES_H != 1
 typedef int pid_t;
 #endif
 

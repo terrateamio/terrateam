@@ -16,7 +16,7 @@
 
 #include "private.h"
 
-#ifndef HAVE_SYS_TIMERFD_H
+#if HAVE_SYS_TIMERFD_H != 1
 
 /* Android 4.0 does not have this header, but the kernel supports timerfds */
 #ifndef SYS_timerfd_create
