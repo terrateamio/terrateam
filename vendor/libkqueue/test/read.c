@@ -374,11 +374,31 @@ test_kevent_socket_eof(struct test_context *ctx)
     kevent_add(ctx->kqfd, &kev, ctx->client_fd, EVFILT_READ, EV_ADD, 0, 0, &ctx->client_fd);
     test_no_kevents(ctx->kqfd);
 
-    //if (shutdown(ctx->server_fd, SHUT_RDWR) < 0)
-    //    die("close(2)");
+    if (shutdown(ctx->server_fd, SHUT_RDWR) < 0)
+        die("close(2)");
     if (close(ctx->server_fd) < 0)
         die("close(2)");
 
+    kev.flags |= EV_EOF;
+    kevent_get(&ret, ctx->kqfd, 1);
+    kevent_cmp(&kev, &ret);
+
+    /*
+     * When the last writer disconnects, the filter will
+     * set EV_EOF in flags.  This may be cleared by passing
+     * in EV_CLEAR, at which point the filter will resume
+     * waiting for data to become available before return-
+     * ing.
+     *
+     * i.e. Once it's marked as EOF once, EOF should not be
+     * returned repeatedly.
+     */
+    test_no_kevents(ctx->kqfd);
+
+    /* modify the knote, setting EV_CLEAR - We should get another EOF */
+    kevent_add(ctx->kqfd, &kev, ctx->client_fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, &ctx->client_fd);
+
+    kev.flags ^= EV_CLEAR;
     kev.flags |= EV_EOF;
     kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);

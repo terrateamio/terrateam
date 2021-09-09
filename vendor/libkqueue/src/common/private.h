@@ -183,14 +183,14 @@ struct knote {
 
 /** Mark a knote as enabled
  */
-#define KNOTE_ENABLE(_kn)           do {    \
-            (_kn)->kev.flags &= ~EV_DISABLE;\
+#define KNOTE_ENABLE(_kn) do {    \
+                              (_kn)->kev.flags &= ~EV_DISABLE;\
 } while (0/*CONSTCOND*/)
 
 /** Mark a knote as disabled
  */
-#define KNOTE_DISABLE(_kn)          do {     \
-            (_kn)->kev.flags |=  EV_DISABLE; \
+#define KNOTE_DISABLE(_kn) do {     \
+                              (_kn)->kev.flags |=  EV_DISABLE; \
 } while (0/*CONSTCOND*/)
 
 /** Check if a knote is enabled
@@ -200,6 +200,26 @@ struct knote {
 /** Check if a knote is disabled
  */
 #define KNOTE_DISABLED(_kn)   ((_kn)->kev.flags & EV_DISABLE)
+
+/** Clear the EOF flags
+ */
+#define KNOTE_EOF_CLEAR(_kn) do {    \
+                              (_kn)->kev.flags &= ~EV_EOF;\
+} while (0/*CONSTCOND*/)
+
+/** Mark a knote as EOF
+ */
+#define KNOTE_EOF_SET(_kn) do {     \
+                              (_kn)->kev.flags |=  EV_EOF; \
+} while (0/*CONSTCOND*/)
+
+/** Check if a knote is EOF
+ */
+#define KNOTE_IS_EOF(_kn)     ((_kn)->kev.flags & EV_EOF)
+
+/** Check if a knote is EOF
+ */
+#define KNOTE_NOT_EOF(_kn)    (!((_kn)->kev.flags & EV_EOF))
 
 /** A filter (discreet notification channel) within a kqueue
  *

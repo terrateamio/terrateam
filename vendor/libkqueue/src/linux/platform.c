@@ -700,8 +700,49 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
         {
             struct fd_state   *fds = epoll_udata->ud_fds;
             struct knote      *kn;
-
+            struct filter     *filt;
             assert(fds);
+
+            /*
+             *  Other side hung up.  We assume this is
+             *  for both reading and writing?
+             */
+            if (ev->events & EPOLLHUP) {
+                if (fds->fds_read && KNOTE_NOT_EOF(fds->fds_read)) {
+                    kn = fds->fds_read;
+                    filt = knote_get_filter(kn);
+
+                    filt->kn_disable(filt, kn);
+                    KNOTE_EOF_SET(kn);
+                }
+                if (fds->fds_write && KNOTE_NOT_EOF(fds->fds_write)) {
+                    kn = fds->fds_write;
+                    filt = knote_get_filter(kn);
+
+                    /*
+                     * Set the EOF flag, and unregister the knote.
+                     */
+                    filt->kn_disable(filt, kn);
+                    KNOTE_EOF_SET(kn);
+                }
+            }
+
+            /*
+             *  Other side shutdown writing, but may still
+             *  read... so we can still write?
+             *
+             *  No idea why this event exists..
+             */
+            if (ev->events & EPOLLRDHUP) {
+                if (fds->fds_read && KNOTE_NOT_EOF(fds->fds_read)) {
+                    kn = fds->fds_read;
+                    filt = knote_get_filter(kn);
+
+                    filt->kn_disable(filt, kn);
+                    KNOTE_EOF_SET(kn);
+                }
+            }
+
             /*
              *    FD is readable
              */
@@ -1099,8 +1140,8 @@ int epoll_fd_state(struct fd_state **fds_p, struct knote *kn, bool disabled)
 
     *fds_p = fds;
 
-    if (fds->fds_read && (disabled == ((kn->kev.flags & EV_DISABLE) != 0))) state |= EPOLLIN;
-    if (fds->fds_write && (disabled == ((kn->kev.flags & EV_DISABLE) != 0))) state |= EPOLLOUT;
+    state |= (fds->fds_read && (disabled == ((fds->fds_read->kev.flags & (EV_DISABLE | EV_EOF)) != 0))) * EPOLLIN;
+    state |= (fds->fds_write && (disabled == ((fds->fds_write->kev.flags & (EV_DISABLE | EV_EOF)) != 0))) * EPOLLOUT;
 
     return state;
 }
@@ -1258,7 +1299,8 @@ epoll_update(int op, struct filter *filt, struct knote *kn, int ev, bool delete)
 
 #define EV_EPOLLINOUT(_x) ((_x) & (EPOLLIN | EPOLLOUT))
 
-    if (kn->kev.flags & EV_DISABLE) dbg_printf("fd=%i kn=%p is disabled", fd, kn);
+    if (KNOTE_DISABLED(kn)) dbg_printf("fd=%i kn=%p is disabled", fd, kn);
+    if (KNOTE_IS_EOF(kn)) dbg_printf("fd=%i kn=%p is EOF", fd, kn);
 
     /*
      * Determine the current state of the file descriptor

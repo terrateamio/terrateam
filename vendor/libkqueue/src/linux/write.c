@@ -90,10 +90,21 @@ int
 evfilt_write_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
-    (void) filt;
-    (void) kn;
-    (void) kev;
-    return (-1); /* STUB */
+    /*
+     * re-enable a socket that was previously EOF'd
+     *
+     * restricted to sockets as this hasn't been tested with files.
+     */
+    if (!(kn->kn_flags & KNFL_FILE)) {
+        if ((kev->flags & EV_CLEAR) && (KNOTE_IS_EOF(kn))) {
+            if (filt->kn_enable(filt, kn) < 0)
+                return -1;
+            KNOTE_EOF_CLEAR(kn);
+        }
+        return (0);
+    }
+
+    return (-1);
 }
 
 int
