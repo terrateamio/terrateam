@@ -545,11 +545,89 @@ static inline int linux_kevent_copyout_ev(struct kevent *el, int nevents, struct
     return rv;
 }
 
+static const char *
+udata_type(enum epoll_udata_type ud_type)
+{
+    const char *ud_name[] = {
+        [EPOLL_UDATA_KNOTE] = "EPOLL_UDATA_KNOTE",
+        [EPOLL_UDATA_FD_STATE] = "EPOLL_UDATA_FD_STATE",
+        [EPOLL_UDATA_EVENT_FD] = "EPOLL_UDATA_EVENT_FD",
+    };
+
+    if (ud_type < 0 || ud_type >= NUM_ELEMENTS(ud_name))
+        return "EPOLL_UDATA_INVALID";
+    else
+        return ud_name[ud_type];
+}
+
+static const char *
+linux_epoll_udata_type_dump(const struct epoll_event *ev)
+{
+    static __thread char buf[64];
+    enum epoll_udata_type ud_type;
+
+    ud_type = ((struct epoll_udata *)(ev->data.ptr))->ud_type;
+
+    snprintf(buf, sizeof(buf), "%d (%s)",
+             ud_type, udata_type(ud_type));
+    return ((const char *) buf);
+}
+
+static const char *
+linux_epoll_events_dump(const struct epoll_event *ev)
+{
+    static __thread char buf[1024];
+    size_t len;
+
+#define EEVENT_DUMP(attrib) \
+    if (ev->events & attrib) \
+    strncat((char *) buf, #attrib" ", 64);
+
+    snprintf(buf, sizeof(buf), "events=0x%08x (", ev->events);
+    EEVENT_DUMP(EPOLLIN);
+    EEVENT_DUMP(EPOLLPRI);
+    EEVENT_DUMP(EPOLLOUT);
+    EEVENT_DUMP(EPOLLRDNORM);
+    EEVENT_DUMP(EPOLLRDBAND);
+    EEVENT_DUMP(EPOLLWRNORM);
+    EEVENT_DUMP(EPOLLWRBAND);
+    EEVENT_DUMP(EPOLLMSG);
+    EEVENT_DUMP(EPOLLERR);
+    EEVENT_DUMP(EPOLLHUP);
+    EEVENT_DUMP(EPOLLRDHUP);
+    EEVENT_DUMP(EPOLLONESHOT);
+    EEVENT_DUMP(EPOLLET);
+
+    len = strlen(buf);
+    if (buf[len - 1] == ' ') buf[len - 1] = '\0';    /* Trim trailing space */
+    strcat(buf, ")");
+
+#undef EEVENT_DUMP
+
+    return ((const char *) buf);
+}
+
+const char *
+linux_epoll_dump(const struct epoll_event *ev)
+{
+    static __thread char buf[2147];
+
+    snprintf((char *) buf, sizeof(buf),
+             "{ %s, udata=%p, udata_type=%s }",
+             linux_epoll_events_dump(ev),
+             ev->data.ptr,
+             linux_epoll_udata_type_dump(ev));
+
+    return ((const char *) buf);
+}
+
 int
 linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int nevents)
 {
     struct kevent   *el_p = el, *el_end = el + nevents;
     int             i;
+
+    dbg_printf("got %i events from epoll", nevents);
 
     for (i = 0; i < nready; i++) {
         struct epoll_event    *ev = &epoll_events[i];    /* Thread local storage populated in linux_kevent_wait */
@@ -560,6 +638,8 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
             dbg_puts("event has no knote, skipping..."); /* Forgot to call KN_UDATA()? */
             continue;
         }
+
+        dbg_printf("[%i] %s", i, linux_epoll_dump(ev));
 
         /*
          * epoll event is associated with a single filter
@@ -640,8 +720,6 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
             struct eventfd    *efd = epoll_udata->ud_efd;
 
             assert(efd);
-
-            dbg_printf("eventfd=%u - received event", (unsigned int)efd->ef_id);
 
             rv = linux_kevent_copyout_ev(el_p, (el_end - el_p), ev, efd->ef_filt, NULL);
             if (rv < 0) goto done;
