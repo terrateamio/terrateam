@@ -37,7 +37,7 @@ struct proc_pid {
 };
 
 static pthread_mutex_t     proc_init_mtx = PTHREAD_MUTEX_INITIALIZER;
-static unsigned int        proc_count = 0;
+static int                 proc_count = 0;
 static pthread_t           proc_wait_thread_id;
 
 /** The global PID tree
@@ -144,23 +144,11 @@ wait_thread(UNUSED void *arg)
     sigset_t sigmask;
     struct proc_pid *ppd, *ppd_tmp;
 
-    /* Block all signals except SIGCHLD */
-    sigfillset(&sigmask);
-    sigdelset(&sigmask, SIGCHLD);
-    pthread_sigmask(SIG_BLOCK, &sigmask, NULL);
-
     /* Set the thread's name to something descriptive so it shows up in gdb,
      * etc. Max name length is 16 bytes. */
     prctl(PR_SET_NAME, "libkqueue_wait", 0, 0, 0);
 
-    /*
-     * Only listen on SIGCHLD
-     */
-    sigemptyset(&sigmask);
-    sigaddset(&sigmask, SIGCHLD);
-    pthread_sigmask(SIG_UNBLOCK, &sigmask, NULL);
-
-    dbg_printf("started and waiting for SIGCHLD");
+    dbg_printf("waiter thread started");
 
     /*
      * Native kqueue implementations leave processes monitored
@@ -232,12 +220,23 @@ wait_thread(UNUSED void *arg)
      * a native solution for Solaris this POSIX EVFILT_PROC
      * code must remain to provide a fallback mechanism.
      */
+
+    /*
+     * Block all signals - sigwaitinfo isn't affected by this
+     */
+    sigfillset(&sigmask);
+    pthread_sigmask(SIG_BLOCK, &sigmask, NULL);
+
+    /*
+     * Only listen on SIGCHLD wait sigwaitinfo
+     */
+    sigemptyset(&sigmask);
+    sigaddset(&sigmask, SIGCHLD);
     do {
         if (ret < 0) {
             dbg_printf("sigwaitinfo(2): %s", strerror(errno));
             continue;
         }
-        dbg_printf("waiting for SIGCHLD");
 
         pthread_mutex_lock(&proc_pid_index_mtx);
 
@@ -331,8 +330,8 @@ evfilt_proc_init(struct filter *filt)
             pthread_mutex_unlock(&proc_init_mtx);
             goto error_1;
         }
-        proc_count++;
     }
+    proc_count++;
     pthread_mutex_unlock(&proc_init_mtx);
 
     return (0);
@@ -346,8 +345,17 @@ evfilt_proc_destroy(struct filter *filt)
      * and PID tree.
      */
     pthread_mutex_lock(&proc_init_mtx);
+    assert(proc_count > 0);
     if (--proc_count == 0) {
+        void *retval;
+
         pthread_cancel(proc_wait_thread_id);
+        if (pthread_join(proc_wait_thread_id, &retval) < 0) {
+            dbg_printf("pthread_join(2) %s", strerror(errno));
+        } else {
+            assert(retval == PTHREAD_CANCELED);
+            dbg_puts("waiter thread joined");
+        }
     }
     pthread_mutex_unlock(&proc_init_mtx);
 
