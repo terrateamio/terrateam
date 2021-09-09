@@ -139,7 +139,7 @@ static void *
 wait_thread(UNUSED void *arg)
 {
     int status;
-    int ret;
+    int ret = 0;
     siginfo_t info;
     sigset_t sigmask;
     struct proc_pid *ppd, *ppd_tmp;
@@ -232,22 +232,33 @@ wait_thread(UNUSED void *arg)
      * a native solution for Solaris this POSIX EVFILT_PROC
      * code must remain to provide a fallback mechanism.
      */
-    while ((ret = sigwaitinfo(&sigmask, &info))) {
+    do {
         if (ret < 0) {
             dbg_printf("sigwaitinfo(2): %s", strerror(errno));
             continue;
         }
-
-        dbg_printf("received SIGCHLD");
+        dbg_printf("waiting for SIGCHLD");
 
         pthread_mutex_lock(&proc_pid_index_mtx);
+
         /*
-         * Check if this is a process we want to monitor
+         * Sig 0 is the NULL signal.  This means it's the first
+         * iteration through the loop, and we just want to scan
+         * any existing PIDs.
+         *
+         * This fixes a potential race between the thread
+         * starting, EVFILT_PROC kevents being added, and a
+         * process exiting.
          */
-        ppd = RB_FIND(pid_index, &proc_pid_index, &(struct proc_pid){ .ppd_pid = info.si_pid });
-        if (ppd) {
-            status = waiter_siginfo_to_status(&info);
-            if (status >= 0) waiter_notify(ppd, status);  /* If < 0 notification is spurious */
+        if (ret > 0) {
+            /*
+             * Check if this is a process we want to monitor
+             */
+            ppd = RB_FIND(pid_index, &proc_pid_index, &(struct proc_pid){ .ppd_pid = info.si_pid });
+            if (ppd) {
+                status = waiter_siginfo_to_status(&info);
+                if (status >= 0) waiter_notify(ppd, status);  /* If < 0 notification is spurious */
+            }
         }
 
         /*
@@ -271,7 +282,9 @@ wait_thread(UNUSED void *arg)
             if (status >= 0) waiter_notify(ppd, status);  /* If < 0 notification is spurious */
         }
         pthread_mutex_unlock(&proc_pid_index_mtx);
-    }
+
+        dbg_printf("waiting for SIGCHLD");
+    } while ((ret = sigwaitinfo(&sigmask, &info)));
 
     dbg_printf("exited");
 
