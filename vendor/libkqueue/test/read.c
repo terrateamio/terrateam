@@ -366,9 +366,10 @@ test_kevent_socket_lowat(struct test_context *ctx)
 #endif
 
 void
-test_kevent_socket_eof(struct test_context *ctx)
+test_kevent_socket_eof_shutdown(struct test_context *ctx)
 {
     struct kevent kev, ret;
+    uint8_t buff[1024];
 
     /* Re-add the watch and make sure no events are pending */
     kevent_add(ctx->kqfd, &kev, ctx->client_fd, EVFILT_READ, EV_ADD, 0, 0, &ctx->client_fd);
@@ -405,6 +406,105 @@ test_kevent_socket_eof(struct test_context *ctx)
 
     /* Delete the watch */
     kevent_add(ctx->kqfd, &kev, ctx->client_fd, EVFILT_READ, EV_DELETE, 0, 0, &ctx->client_fd);
+
+    close(ctx->client_fd);
+    close(ctx->listen_fd);
+
+    /* Recreate the socket pair */
+    create_socket_connection(&ctx->client_fd, &ctx->server_fd, &ctx->listen_fd);
+}
+
+void
+test_kevent_socket_eof_close(struct test_context *ctx)
+{
+    struct kevent kev, ret;
+
+    /* Re-add the watch and make sure no events are pending */
+    kevent_add(ctx->kqfd, &kev, ctx->client_fd, EVFILT_READ, EV_ADD, 0, 0, &ctx->client_fd);
+    test_no_kevents(ctx->kqfd);
+
+    if (close(ctx->server_fd) < 0)
+        die("close(2)");
+
+    kev.flags |= EV_EOF;
+    kevent_get(&ret, ctx->kqfd, 1);
+    kevent_cmp(&kev, &ret);
+
+    /*
+     * When the last writer disconnects, the filter will
+     * set EV_EOF in flags.  This may be cleared by passing
+     * in EV_CLEAR, at which point the filter will resume
+     * waiting for data to become available before return-
+     * ing.
+     *
+     * i.e. Once it's marked as EOF once, EOF should not be
+     * returned repeatedly.
+     */
+    test_no_kevents(ctx->kqfd);
+
+    /* modify the knote, setting EV_CLEAR - We should get another EOF */
+    kevent_add(ctx->kqfd, &kev, ctx->client_fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, &ctx->client_fd);
+
+    kev.flags ^= EV_CLEAR;
+    kev.flags |= EV_EOF;
+    kevent_get(&ret, ctx->kqfd, 1);
+    kevent_cmp(&kev, &ret);
+
+    /* Delete the watch */
+    kevent_add(ctx->kqfd, &kev, ctx->client_fd, EVFILT_READ, EV_DELETE, 0, 0, &ctx->client_fd);
+
+    close(ctx->client_fd);
+    close(ctx->listen_fd);
+
+    /* Recreate the socket pair */
+    create_socket_connection(&ctx->client_fd, &ctx->server_fd, &ctx->listen_fd);
+}
+
+void
+test_kevent_socket_eof_shutdown_local(struct test_context *ctx)
+{
+    struct kevent kev, ret;
+
+    /* Re-add the watch and make sure no events are pending */
+    kevent_add(ctx->kqfd, &kev, ctx->client_fd, EVFILT_READ, EV_ADD, 0, 0, &ctx->client_fd);
+    test_no_kevents(ctx->kqfd);
+
+    if (shutdown(ctx->client_fd, SHUT_RDWR) < 0)
+        die("shutdown(2)");
+
+    kev.flags |= EV_EOF;
+    kevent_get(&ret, ctx->kqfd, 1);
+    kevent_cmp(&kev, &ret);
+
+    /*
+     * When the last writer disconnects, the filter will
+     * set EV_EOF in flags.  This may be cleared by passing
+     * in EV_CLEAR, at which point the filter will resume
+     * waiting for data to become available before return-
+     * ing.
+     *
+     * i.e. Once it's marked as EOF once, EOF should not be
+     * returned repeatedly.
+     */
+    test_no_kevents(ctx->kqfd);
+
+    /* modify the knote, setting EV_CLEAR - We should get another EOF */
+    kevent_add(ctx->kqfd, &kev, ctx->client_fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, &ctx->client_fd);
+
+    kev.flags ^= EV_CLEAR;
+    kev.flags |= EV_EOF;
+    kevent_get(&ret, ctx->kqfd, 1);
+    kevent_cmp(&kev, &ret);
+
+    /* Delete the watch */
+    kevent_add(ctx->kqfd, &kev, ctx->client_fd, EVFILT_READ, EV_DELETE, 0, 0, &ctx->client_fd);
+
+    close(ctx->client_fd);
+    close(ctx->server_fd);
+    close(ctx->listen_fd);
+
+    /* Recreate the socket pair */
+    create_socket_connection(&ctx->client_fd, &ctx->server_fd, &ctx->listen_fd);
 }
 
 /* Test if EVFILT_READ works with regular files */
@@ -490,7 +590,9 @@ test_evfilt_read(struct test_context *ctx)
     test(kevent_socket_dispatch, ctx);
 #endif
     test(kevent_socket_listen_backlog, ctx);
-    test(kevent_socket_eof, ctx);
+    test(kevent_socket_eof_shutdown, ctx);
+    test(kevent_socket_eof_close, ctx);
+    test(kevent_socket_eof_shutdown_local, ctx);
     test(kevent_regular_file, ctx);
     close(ctx->client_fd);
     close(ctx->server_fd);

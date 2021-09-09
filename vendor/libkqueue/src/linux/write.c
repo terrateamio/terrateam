@@ -31,22 +31,26 @@ evfilt_write_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt
 
     epoll_event_dump(ev);
     memcpy(dst, &src->kev, sizeof(*dst));
-#if defined(HAVE_EPOLLRDHUP)
-    if (ev->events & EPOLLRDHUP || ev->events & EPOLLHUP)
-        dst->flags |= EV_EOF;
-#else
+
     if (ev->events & EPOLLHUP)
         dst->flags |= EV_EOF;
-#endif
+
     if (ev->events & EPOLLERR) {
         if (src->kn_flags & KNFL_SOCKET) {
             ret = getsockopt(src->kev.ident, SOL_SOCKET, SO_ERROR, &serr, &slen);
             dst->fflags = ((ret < 0) ? errno : serr);
-        } else { dst->fflags = EIO; }
+        } else
+            dst->fflags = EIO;
+
+        /*
+         * The only way we seem to be able to signal an error
+         * is by setting EOF on the socket.
+         */
+        dst->flags |= EV_EOF;
     }
 
     /* On return, data contains the the amount of space remaining in the write buffer */
-    if (ioctl(dst->ident, SIOCOUTQ, &dst->data) < 0) {
+    if (!(dst->flags & EV_EOF) && (ioctl(dst->ident, SIOCOUTQ, &dst->data) < 0)) {
             /* race condition with socket close, so ignore this error */
             dbg_puts("ioctl(2) of socket failed");
             dst->data = 0;

@@ -110,7 +110,14 @@ evfilt_read_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
         if (src->kn_flags & KNFL_SOCKET) {
             ret = getsockopt(src->kev.ident, SOL_SOCKET, SO_ERROR, &serr, &slen);
             dst->fflags = ((ret < 0) ? errno : serr);
-        } else { dst->fflags = EIO; }
+        } else
+            dst->fflags = EIO;
+
+        /*
+         * The only way we seem to be able to signal an error
+         * is by setting EOF on the socket.
+         */
+        dst->flags |= EV_EOF;
     }
 
     if (src->kn_flags & KNFL_SOCKET_PASSIVE) {
