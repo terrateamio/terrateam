@@ -8,7 +8,7 @@ libkqueue acts as a translator between the kevent structure and the native
 kernel facilities on Linux, Android, Solaris, and Windows.
 
 libkqueue is not perfect, and you may need to change the behaviour of your application
-to work around limitations on a given platform. Please see [BUGS](BUGS.md) for known 
+to work around limitations on a given platform. Please see [BUGS](BUGS.md) for known
 behavioural differences between libkqueue and BSD kqueues.
 
 Supported Event Types
@@ -83,11 +83,14 @@ Running Unit Tests
 
 Build & Running only the test suite
 -----------------------------------
-Helpful to see the behavior of the tests on systems with native `kqueue`, e.g: OSX, FreeBSD
+Helpful to see the behavior of the tests on systems with native `kqueue`, e.g: macOS, FreeBSD
 
-    cmake . --config test/CMakeLists.txt
+    cmake . test/CMakeLists.txt
     make -C test/
     ./test/libkqueue-test
+
+To enable tests which expose bugs in native kqueue implementations pass `-DWITH_NATIVE_KQUEUE_BUGS=1` to cmake.
+i.e. `cmake . test/CMakeLists.txt -DWITH_NATIVE_KQUEUE_BUGS=1`.
 
 Debugging
 ---------

@@ -70,6 +70,8 @@
 #  include "src/windows/platform.h"
 #endif
 
+#include "config.h"
+
 /** Convenience macros
  *
  */

@@ -125,7 +125,7 @@ test_kevent_timer_dispatch(struct test_context *ctx)
 
     test_no_kevents(ctx->kqfd);
 
-    kevent_add(ctx->kqfd, &kev, 4, EVFILT_TIMER, EV_ADD | EV_DISPATCH, 0, 800, NULL);
+    kevent_add(ctx->kqfd, &kev, 4, EVFILT_TIMER, EV_ADD | EV_DISPATCH, 0, 200, NULL);
 
     /* Get one event */
     kev.flags = EV_ADD | EV_CLEAR | EV_DISPATCH;
@@ -133,24 +133,36 @@ test_kevent_timer_dispatch(struct test_context *ctx)
     kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 
-    /* Confirm that the knote is disabled */
-    sleep(1);
+    /* Confirm that the knote is disabled due to EV_DISPATCH */
+    usleep(500000); /* 500 ms */
     test_no_kevents(ctx->kqfd);
 
+#if WITH_NATIVE_KQUEUE_BUGS || (!defined(__APPLE__) && !defined(__FreeBSD__))
+    /*
+     * macOS and FreeBSD both share the same bug.
+     *
+     * When a timer event with EV_DISPATCH is re-enabled
+     * although the EV_DISPATCH flag is high in the
+     * returned event the timer filter behaves as if
+     * EV_DISPATCH it's not set and will fire multiple
+     * times.
+     */
+
     /* Enable the knote and make sure no events are pending */
-    kevent_add(ctx->kqfd, &kev, 4, EVFILT_TIMER, EV_ENABLE | EV_DISPATCH, 0, 800, NULL);
+    kevent_add(ctx->kqfd, &kev, 4, EVFILT_TIMER, EV_ENABLE | EV_DISPATCH, 0, 200, NULL);
     test_no_kevents(ctx->kqfd);
 
     /* Get the next event */
-    sleep(1);
+    usleep(1000000); /* 1000 ms */
     kev.flags = EV_ADD | EV_CLEAR | EV_DISPATCH;
     kev.data = 1;
     kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
+#endif
 
     /* Remove the knote and ensure the event no longer fires */
     kevent_add(ctx->kqfd, &kev, 4, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
-    sleep(1);
+    usleep(500000); /* 500 ms */
     test_no_kevents(ctx->kqfd);
 }
 #endif  /* EV_DISPATCH */
