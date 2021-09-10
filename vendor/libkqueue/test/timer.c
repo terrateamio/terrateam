@@ -137,7 +137,7 @@ test_kevent_timer_dispatch(struct test_context *ctx)
     usleep(500000); /* 500 ms */
     test_no_kevents(ctx->kqfd);
 
-#if WITH_NATIVE_KQUEUE_BUGS || (!defined(__APPLE__) && !defined(__FreeBSD__))
+#if WITH_NATIVE_KQUEUE_BUGS || !defined(__FreeBSD__)
     /*
      * macOS and FreeBSD both share the same bug.
      *
@@ -153,9 +153,9 @@ test_kevent_timer_dispatch(struct test_context *ctx)
     test_no_kevents(ctx->kqfd);
 
     /* Get the next event */
-    usleep(1000000); /* 1000 ms */
+    usleep(1100000); /* 1100 ms */
     kev.flags = EV_ADD | EV_CLEAR | EV_DISPATCH;
-    kev.data = 1;
+    kev.data = 5;
     kevent_get(&ret, ctx->kqfd, 1);
     kevent_cmp(&kev, &ret);
 #endif
