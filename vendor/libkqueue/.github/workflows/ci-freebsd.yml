@@ -1,0 +1,33 @@
+name: CI tests FreeBSD
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'test/*'
+
+jobs:
+  freebsd-tests:
+    runs-on: macos-latest
+    name: "FreeBSD tests"
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        path: libkqueue
+
+    - name: libkqueue test suite
+      uses: vmactions/freebsd-vm@v0.1.5
+      with:
+        usesh: true
+        sync: sshfs
+        prepare: |
+          pkg install -y         \
+            cmake                \
+            llvm                 \
+        run: |
+          freebsd-version
+          cd libkqueue
+          cmake . test/CMakeLists.txt
+          make -C ./test
+          test/libkqueue-test

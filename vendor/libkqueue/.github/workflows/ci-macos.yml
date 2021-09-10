@@ -1,0 +1,24 @@
+name: CI tests macOS
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'test/*'
+
+jobs:
+  macos-tests:
+    runs-on: macos-latest
+    name: "macOS tests"
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build and configure
+      run: |
+        cmake . test/CMakeLists.txt
+        make -C test/
+
+    - name: libkqueue test suite
+      run: |
+        ./test/libkqueue-test
