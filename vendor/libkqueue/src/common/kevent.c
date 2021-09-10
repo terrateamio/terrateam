@@ -202,8 +202,8 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
     } else if (src->flags & EV_ENABLE) {
         rv = knote_enable(filt, kn);
     } else if (src->flags & EV_ADD || src->flags == 0 || src->flags & EV_RECEIPT) {
-        kn->kev.udata = src->udata;
         rv = filt->kn_modify(filt, kn, src);
+        if (rv == 0) kn->kev.udata = src->udata;
         dbg_printf("kn=%p - kn_modify rv=%d", kn, rv);
     }
 
