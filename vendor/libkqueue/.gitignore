@@ -1,4 +1,5 @@
 .vagrant/
+.DS_Store
 config.h
 *.pc
 *.log
