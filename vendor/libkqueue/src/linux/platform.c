@@ -700,52 +700,12 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
         {
             struct fd_state   *fds = epoll_udata->ud_fds;
             struct knote      *kn;
-            struct filter     *filt;
             assert(fds);
 
             /*
-             *    FD errored or the other side hung up
-             *
-             * kqueue doesn't seem to distinguish between
-             * EOF and ERROR, except that on error the data
-             * field is filled in.
+             *    FD, or errored, or other side shutdown
              */
-            if (ev->events & (EPOLLHUP | EPOLLRDHUP | EPOLLERR)) {
-                if (fds->fds_read && KNOTE_NOT_EOF(fds->fds_read)) {
-                    if (el_p >= el_end) goto oos;
-
-                    kn = fds->fds_read;
-                    filt = knote_get_filter(kn);
-
-                    filt->kn_disable(filt, kn);
-                    KNOTE_EOF_SET(kn);
-
-                    rv = linux_kevent_copyout_ev(el_p, (el_end - el_p), ev, &kq->kq_filt[~(kn->kev.filter)], kn);
-                    if (rv < 0) goto done;
-                    el_p += rv;
-                }
-
-                /* Don't set write to EOF if we only got EPOLLRDHUP */
-                if (fds->fds_write && KNOTE_NOT_EOF(fds->fds_write) && (ev->events & (EPOLLHUP | EPOLLERR))) {
-                    if (el_p >= el_end) goto oos;
-
-                    kn = fds->fds_write;
-                    filt = knote_get_filter(kn);
-
-                    filt->kn_disable(filt, kn);
-                    KNOTE_EOF_SET(kn);
-
-                    rv = linux_kevent_copyout_ev(el_p, (el_end - el_p), ev, &kq->kq_filt[~(kn->kev.filter)], kn);
-                    if (rv < 0) goto done;
-                    el_p += rv;
-                }
-                continue;
-            }
-
-            /*
-             *    FD is readable
-             */
-            if (ev->events & EPOLLIN) {
+            if (ev->events & (EPOLLIN | EPOLLHUP | EPOLLRDHUP | EPOLLERR)) {
                 if (el_p >= el_end) goto oos;
 
                 kn = fds->fds_read;
@@ -764,9 +724,9 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
             }
 
             /*
-             *    FD is writable
+             *    FD is writable, or errored, or other side shutdown
              */
-            if (ev->events & EPOLLOUT) {
+            if (ev->events & (EPOLLOUT | POLLHUP | EPOLLERR)) {
                 if (el_p >= el_end) goto oos;
 
                 kn = fds->fds_write;
