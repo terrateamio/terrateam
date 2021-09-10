@@ -85,11 +85,6 @@ linux_evfilt_user_copyout(struct kevent *dst, UNUSED int nevents, struct filter 
     memcpy(dst, &src->kev, sizeof(*dst));
     dst->fflags &= ~NOTE_FFCTRLMASK;     //FIXME: Not sure if needed
     dst->fflags &= ~NOTE_TRIGGER;
-    if (src->kev.flags & EV_ADD) {
-        /* NOTE: True on FreeBSD but not consistent behavior with
-           other filters. */
-        dst->flags &= ~EV_ADD;
-    }
     if (src->kev.flags & EV_CLEAR)
         src->kev.fflags &= ~NOTE_TRIGGER;
     if (src->kev.flags & (EV_DISPATCH | EV_CLEAR | EV_ONESHOT)) {
