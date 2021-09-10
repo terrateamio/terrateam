@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <limits.h>
+
 #if defined(__linux__) || defined(__FreeBSD__)
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -75,8 +77,10 @@ run_iteration(struct test_context *ctx)
     struct unit_test *test;
 
     for (test = ctx->tests; test->ut_name != NULL; test++) {
-        if (test->ut_enabled)
+        if (test->ut_enabled) {
+            ctx->test = test; /* Record the current test */
             test->ut_func(ctx);
+        }
     }
     free(ctx);
 }
@@ -90,7 +94,6 @@ test_harness(struct unit_test tests[MAX_TESTS], int iterations)
     printf("Running %d iterations\n", iterations);
 
     testing_begin();
-
     if ((kqfd = kqueue()) < 0)
         die("kqueue()");
     n = 0;
@@ -116,7 +119,8 @@ usage(void)
     printf("usage: [-hn] [testclass ...]\n"
            " -h        This message\n"
            " -n        Number of iterations (default: 1)\n"
-           " testclass Tests suites to run: ["
+           " testclass[:<num>|:<start>-<end>] Tests suites to run:\n"
+           "           ["
            "kqueue "
            "socket "
            "signal "
@@ -134,20 +138,41 @@ int
 main(int argc, char **argv)
 {
     struct unit_test tests[MAX_TESTS] = {
-        { "kqueue", 1, test_kqueue },
+        { .ut_name = "kqueue",
+          .ut_enabled = 1,
+          .ut_func = test_kqueue,
+          .ut_end = INT_MAX },
 
-        { "socket", 1, test_evfilt_read },
+        { .ut_name = "socket",
+          .ut_enabled = 1,
+          .ut_func = test_evfilt_read,
+          .ut_end = INT_MAX },
 #if !defined(_WIN32) && !defined(__ANDROID__)
         // XXX-FIXME -- BROKEN ON LINUX WHEN RUN IN A SEPARATE THREAD
-        { "signal", 1, test_evfilt_signal },
+        { .ut_name = "signal",
+          .ut_enabled = 1,
+          .ut_func = test_evfilt_signal,
+          .ut_end = INT_MAX },
 #endif
-        { "proc", 1, test_evfilt_proc },
-        { "timer", 1, test_evfilt_timer },
+        { .ut_name = "proc",
+          .ut_enabled = 1,
+          .ut_func = test_evfilt_proc,
+          .ut_end = INT_MAX },
+        { .ut_name = "timer",
+          .ut_enabled = 1,
+          .ut_func = test_evfilt_timer,
+          .ut_end = INT_MAX },
 #ifndef _WIN32
-        { "vnode", 1, test_evfilt_vnode },
+        { .ut_name = "vnode",
+          .ut_enabled = 1,
+          .ut_func = test_evfilt_vnode,
+          .ut_end = INT_MAX },
 #endif
 #ifdef EVFILT_USER
-        { "user", 1, test_evfilt_user },
+        { .ut_name = "user",
+          .ut_enabled = 1,
+          .ut_func = test_evfilt_user,
+          .ut_end = INT_MAX },
 #endif
         { NULL, 0, NULL },
     };
@@ -190,17 +215,63 @@ main(int argc, char **argv)
         match = 0;
         arg = argv[i];
         for (test = tests; test->ut_name != NULL; test++) {
-            if (strcmp(arg, test->ut_name) == 0) {
+            size_t namelen = strlen(test->ut_name);
+            char const *p;
+            char *q;
+
+            if (strncmp(arg, test->ut_name, strlen(test->ut_name)) == 0) {
                 test->ut_enabled = 1;
                 match = 1;
+
+                p = arg + namelen;
+
+                /*
+                 * Test name includes a test range
+                 */
+                if (*p == ':') {
+                    p++;
+
+                    test->ut_start = strtoul(p, &q, 10);
+                    if (p == q)
+                        goto invalid_option;
+                    p = q;
+
+                    /*
+                     * Range is in the format <start>-<end>
+                     */
+                    if (*p == '-') {
+                        p++;
+                        test->ut_end = strtoul(p, &q, 10);
+                        if (p == q)
+                            goto invalid_option;
+                        printf("enabled test: %s (%u-%u)\n", test->ut_name, test->ut_start, test->ut_end);
+                    /*
+                     * Range is in the format <num>
+                     */
+                    } else if (*p == '\0') {
+                        test->ut_end = test->ut_start;
+                        printf("enabled test: %s (%u)\n", test->ut_name, test->ut_start);
+                    /*
+                     * Range is invalid
+                     */
+                    } else
+                        goto invalid_option;
+                /*
+                 * Test name does not include a range
+                 */
+                } else if (*p == '\0') {
+                    test->ut_start = 0;
+                    test->ut_end = INT_MAX;
+                    printf("enabled test: %s\n", test->ut_name);
+                } else
+                    goto invalid_option;
                 break;
             }
         }
         if (!match) {
+        invalid_option:
             printf("ERROR: invalid option: %s\n", arg);
             exit(1);
-        } else {
-            printf("enabled test: %s\n", arg);
         }
     }
 #endif

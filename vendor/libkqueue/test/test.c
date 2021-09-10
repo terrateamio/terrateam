@@ -61,8 +61,9 @@ test_begin(struct test_context *ctx, const char *func)
         free(ctx->cur_test_id);
     ctx->cur_test_id = strdup(func);
 
-    printf("%d: %s\n", testnum++, ctx->cur_test_id);
+    printf("%d: %s\n", ctx->test->ut_num, ctx->cur_test_id);
     //TODO: redirect stdout/err to logfile
+    testnum++;
 }
 
 void

@@ -80,14 +80,19 @@
 struct test_context;
 
 struct unit_test {
-    const char *ut_name;
-    int         ut_enabled;
-    void      (*ut_func)(struct test_context *);
+    const char   *ut_name;
+    int          ut_enabled;
+    void         (*ut_func)(struct test_context *);
+    int          ut_start;
+    int          ut_end;
+    unsigned int ut_num;
 };
 
 #define MAX_TESTS 50
 struct test_context {
     struct unit_test tests[MAX_TESTS];
+    struct unit_test *test; /* Current test being run */
+
     char *cur_test_id;
     int iterations;
     int iteration;
@@ -113,12 +118,15 @@ void test_evfilt_proc(struct test_context *);
 void test_evfilt_user(struct test_context *);
 #endif
 
-#define test(f,ctx,...) do {                                            \
-    assert(ctx != NULL); \
-    test_begin(ctx, "test_"#f"()\t"__VA_ARGS__); \
-    errno = 0; \
-    test_##f(ctx); \
-    test_end(ctx); \
+#define test(f, ctx ,...) do {                                            \
+    if ((ctx->test->ut_num >= ctx->test->ut_start) && (ctx->test->ut_num <= ctx->test->ut_end)) {\
+        assert(ctx != NULL); \
+        test_begin(ctx, "test_"#f"()\t"__VA_ARGS__); \
+        errno = 0; \
+        test_##f(ctx); \
+        test_end(ctx); \
+    } \
+    ctx->test->ut_num++; \
 } while (/*CONSTCOND*/0)
 
 extern const char * kevent_to_str(struct kevent *);
