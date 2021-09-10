@@ -41,6 +41,23 @@ test_kevent_signal_get(struct test_context *ctx)
 }
 
 void
+test_kevent_signal_get_pending(struct test_context *ctx)
+{
+    struct kevent kev, ret;
+
+    /* A pending signal should be reported as soon as the event is added */
+    if (kill(getpid(), SIGUSR1) < 0)
+        die("kill");
+
+    kevent_add(ctx->kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+
+    kev.flags |= EV_CLEAR;
+    kev.data = 1;
+    kevent_get(&ret, ctx->kqfd, 1);
+    kevent_cmp(&kev, &ret);
+}
+
+void
 test_kevent_signal_disable(struct test_context *ctx)
 {
     struct kevent kev;
@@ -183,6 +200,7 @@ test_evfilt_signal(struct test_context *ctx)
     test(kevent_signal_add, ctx);
     test(kevent_signal_del, ctx);
     test(kevent_signal_get, ctx);
+    test(kevent_signal_get_pending, ctx);
     test(kevent_signal_disable, ctx);
     test(kevent_signal_enable, ctx);
     test(kevent_signal_oneshot, ctx);

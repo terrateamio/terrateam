@@ -88,6 +88,7 @@ signalfd_create(int epoll_fd, struct knote *kn, int signum)
     /* Create a signalfd */
     sigemptyset(&sigmask);
     sigaddset(&sigmask, signum);
+
     sigfd = signalfd(-1, &sigmask, flags);
 
     /* WORKAROUND: Flags are broken on kernels older than Linux 2.6.27 */
@@ -109,8 +110,6 @@ signalfd_create(int epoll_fd, struct knote *kn, int signum)
         dbg_perror("sigprocmask(2)");
         goto errout;
     }
-
-    signalfd_reset(sigfd);
 
     if (signalfd_add(epoll_fd, sigfd, kn) < 0)
         goto errout;
