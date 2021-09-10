@@ -258,6 +258,32 @@ kevent_add(int kqfd, struct kevent *kev,
     }
 }
 
+/** Check kqueue echo's the event back to use correctly
+ *
+ */
+void
+kevent_add_with_receipt(int kqfd, struct kevent *kev,
+        uintptr_t ident,
+        short     filter,
+        u_short   flags,
+        u_int     fflags,
+        intptr_t  data,
+        void      *udata)
+{
+    struct kevent receipt;
+
+    EV_SET(kev, ident, filter, flags | EV_RECEIPT, fflags, data, NULL);
+    if (kevent(kqfd, kev, 1, &receipt, 1, NULL) < 0) {
+        printf("Unable to add the following kevent:\n%s\n",
+                kevent_to_str(kev));
+        die("kevent");
+    }
+
+    kev->flags |= EV_ERROR;
+    kevent_cmp(kev, &receipt);
+    kev->flags ^= EV_ERROR; /* We don't expect this in future events */
+}
+
 void
 _kevent_cmp(struct kevent *expected, struct kevent *got, const char *file, int line)
 {

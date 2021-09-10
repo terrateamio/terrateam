@@ -140,6 +140,15 @@ kevent_add(int kqfd, struct kevent *kev,
         intptr_t  data,
         void      *udata);
 
+void
+kevent_add_with_receipt(int kqfd, struct kevent *kev,
+        uintptr_t ident,
+        short     filter,
+        u_short   flags,
+        u_int     fflags,
+        intptr_t  data,
+        void      *udata);
+
 /* Checks if any events are pending, which is an error. */
 #define test_no_kevents(a) _test_no_kevents(a, __FILE__, __LINE__)
 void _test_no_kevents(int, const char *, int);
