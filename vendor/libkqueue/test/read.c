@@ -424,8 +424,9 @@ test_kevent_socket_eof(struct test_context *ctx)
      * been added does nothing, even though kqueue returns
      * the flag with EV_RECEIPT.
      */
-    kevent_add_with_receipt(ctx->kqfd, &kev, ctx->client_fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, &ctx->client_fd);
+    kevent_add(ctx->kqfd, &kev, ctx->client_fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, &ctx->client_fd);
 
+    kev.flags |= EV_RECEIPT;
     kev.flags |= EV_EOF;
     kev.flags ^= EV_CLEAR;
 

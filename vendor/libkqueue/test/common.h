@@ -48,11 +48,11 @@
 #include <stdint.h>
 
 #if !defined(__APPLE__) && !defined(__FreeBSD__)
-#   include "config.h"
+#  include "config.h"
 #endif
 
 #if defined(__FreeBSD__)
-#   include <netinet/in.h>
+#  include <netinet/in.h>
 #endif
 
 #ifndef _WIN32
@@ -66,8 +66,8 @@
 #include <poll.h>
 #include <netdb.h>
 #else
-# include "include/sys/event.h"
-# include "src/windows/platform.h"
+#  include "include/sys/event.h"
+#  include "src/windows/platform.h"
 #endif
 
 /** Convenience macros
@@ -140,17 +140,21 @@ kevent_add(int kqfd, struct kevent *kev,
         intptr_t  data,
         void      *udata);
 
+
+#define kevent_add_with_receipt(...) _kevent_add_with_receipt(__VA_ARGS__, __FILE__, __LINE__)
 void
-kevent_add_with_receipt(int kqfd, struct kevent *kev,
+_kevent_add_with_receipt(int kqfd, struct kevent *kev,
         uintptr_t ident,
         short     filter,
         u_short   flags,
         u_int     fflags,
         intptr_t  data,
-        void      *udata);
+        void      *udata,
+        char const *file,
+        int line);
 
 /* Checks if any events are pending, which is an error. */
-#define test_no_kevents(a) _test_no_kevents(a, __FILE__, __LINE__)
+#define test_no_kevents(_kq) _test_no_kevents(_kq, __FILE__, __LINE__)
 void _test_no_kevents(int, const char *, int);
 
 unsigned int print_fd_table(void);

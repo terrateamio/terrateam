@@ -260,15 +260,28 @@ kevent_add(int kqfd, struct kevent *kev,
 
 /** Check kqueue echo's the event back to use correctly
  *
+ * @param[in] kqfd    we're adding events to.
+ * @param[out] kev    the event we got passed back in
+ *                    the receipt.
+ * @param[in] ident   Identifier for the event.
+ * @param[in] filter  to add event to.
+ * @param[in] flags   to set.
+ * @param[in] fflags  to set.
+ * @param[in] data    to set.
+ * @param[in] udata   to set.
+ * @param[in] file    this function was called from.
+ * @param[in] line    this function was called from.
  */
 void
-kevent_add_with_receipt(int kqfd, struct kevent *kev,
+_kevent_add_with_receipt(int kqfd, struct kevent *kev,
         uintptr_t ident,
         short     filter,
         u_short   flags,
         u_int     fflags,
         intptr_t  data,
-        void      *udata)
+        void      *udata,
+        char const *file,
+        int       line)
 {
     struct kevent receipt;
 
@@ -279,9 +292,26 @@ kevent_add_with_receipt(int kqfd, struct kevent *kev,
         die("kevent");
     }
 
+
+#ifdef __FreeBSD__
+    /*
+     * FreeBSD doesn't return EV_RECEIPT in the receipt
+     * but does return it in all future kevents.
+     */
+    kev->flags ^= EV_RECEIPT;
+#endif
+
     kev->flags |= EV_ERROR;
-    kevent_cmp(kev, &receipt);
+    _kevent_cmp(kev, &receipt, file, line);
     kev->flags ^= EV_ERROR; /* We don't expect this in future events */
+
+#ifdef __FreeBSD__
+    /*
+     * Add this back as it'll be returned in future
+     * kevents.
+     */
+    kev->flags |= EV_RECEIPT;
+#endif
 }
 
 void

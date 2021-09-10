@@ -174,7 +174,7 @@ test_ev_receipt(struct test_context *ctx)
      *  macOS and libkqueue both return
      *  EV_RECEIPT here FreeBSD does not.
      */
-    kev->flags ^= EV_RECEIPT;
+    kev.flags ^= EV_RECEIPT;
 #endif
 
     kevent_cmp(&kev, &buf);
