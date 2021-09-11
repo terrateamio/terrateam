@@ -203,7 +203,17 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
         rv = knote_enable(filt, kn);
     } else if (src->flags & EV_ADD || src->flags == 0 || src->flags & EV_RECEIPT) {
         rv = filt->kn_modify(filt, kn, src);
-        if (rv == 0) kn->kev.udata = src->udata;
+
+        /*
+         * Implement changes common to all filters
+         */
+        if (rv == 0) {
+            /* update udata */
+            kn->kev.udata = src->udata;
+
+            /* sync up the dispatch bit */
+            COPY_FLAGS_BIT(kn->kev, (*src), EV_DISPATCH);
+        }
         dbg_printf("kn=%p - kn_modify rv=%d", kn, rv);
     }
 

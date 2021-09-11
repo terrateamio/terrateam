@@ -102,8 +102,13 @@ struct evfilt_data;
 #define UNUSED_NDEBUG
 #endif
 
-#include "debug.h"
+/*
+ * Bit twiddling
+ */
+#define COPY_FLAGS_BIT(_dst, _src, _flag) (_dst).flags = ((_dst).flags & ~(_flag)) | ((_src).flags & (_flag))
+#define COPY_FFLAGS_BIT(_dst, _src, _flag) (_dst).fflags = ((_dst).fflags & ~(_flag)) | ((_src).fflags & (_flag))
 
+#include "debug.h"
 
 /** An eventfd provides a mechanism to signal the eventing system that an event has occurred
  *
