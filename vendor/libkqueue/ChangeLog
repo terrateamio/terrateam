@@ -9,8 +9,23 @@ Nothing here yet.
   * Fix: Compilation on Windows (Closes #111).
     (Reported by: brechtsanders)
 
-  * Fix: On Linux EPOLLERR, EPOLLHUP and EPOLLRDHUP on sockets would not
-    produce a kevent and no EOF indication would be provided to the caller.
+  * Fix: linux/read linux/write EPOLLERR, EPOLLHUP and EPOLLRDHUP on 
+    sockets would not produce a kevent and no EOF indication would be 
+    provided to the caller.
+    
+  * Fix: linux/signal pending signals of the type specified in a new
+    signal event were reset when that event was added to a kqueue.
+    
+  * Fix: Multiple instances of posix/proc wait thread may have been 
+    spawned on repeated kqueue creation/destruction.  This may have 
+    lead to missed process exit notifications.
+    
+  * Fix: Potential race between posix/proc waiter thread starting and
+    events being added.
+    
+  * Fix: udata should not be modified if the knote modification fails.
+  
+  * Test suites now pass on macOS 11.5.2 and FreeBSD 13.
 
 2021-09-06  v2.5.0
 ------------------------------------------------------------------------
