@@ -104,10 +104,6 @@ struct evfilt_data;
 
 #include "debug.h"
 
-/* Workaround for Android */
-#ifndef EPOLLONESHOT
-# define EPOLLONESHOT (1 << 30)
-#endif
 
 /** An eventfd provides a mechanism to signal the eventing system that an event has occurred
  *

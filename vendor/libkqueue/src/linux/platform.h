@@ -51,7 +51,6 @@ struct filter;
 #include <sys/time.h>
 #include <unistd.h>
 
-
 /*
  * Check to see if we have SYS_pidfd_open support if we don't,
  * fall back to the POSIX EVFILT_PROC code.
@@ -88,6 +87,11 @@ struct filter;
 # include <unistd.h>
 #ifndef __ANDROID__
 extern long int syscall (long int __sysno, ...);
+#endif
+
+/* Workaround for Android */
+#ifndef EPOLLONESHOT
+# define EPOLLONESHOT (1 << 30)
 #endif
 
 /* Convenience macros to access the epoll descriptor for the kqueue */
