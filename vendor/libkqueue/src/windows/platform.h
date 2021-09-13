@@ -49,7 +49,7 @@
 #define atomic_dec(value)             InterlockedDecrement((LONG volatile *)value)
 #define atomic_cas(p, oval, nval)     (InterlockedCompareExchange(p, nval, oval) == oval)
 #define atomic_ptr_cas(p, oval, nval) (InterlockedCompareExchangePointer(p, nval, oval) == oval)
-#define atomic_ptr_swap(p, oval)      InterlockedExchangePointer(p, nval)
+#define atomic_ptr_swap(p, oval)      InterlockedExchangePointer(p, oval)
 #define atomic_ptr_load(p)            (*p)
 
 
