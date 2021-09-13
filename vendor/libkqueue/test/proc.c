@@ -51,7 +51,7 @@ test_kevent_proc_delete(struct test_context *ctx)
 static void
 test_kevent_proc_get(struct test_context *ctx)
 {
-    struct kevent kev, buf;
+    struct kevent kev, buf[1];
     int fflags;
 
     /*
@@ -82,19 +82,19 @@ test_kevent_proc_get(struct test_context *ctx)
     printf(" -- killing process %d\n", (int) pid);
     if (kill(pid, SIGKILL) < 0)
         die("kill");
-    kevent_get(&buf, ctx->kqfd, 1);
+    kevent_get(buf, NUM_ELEMENTS(buf), ctx->kqfd, 1);
 
     kev.data = SIGKILL; /* What we expected the process exit code to be */
     kev.flags = EV_ADD | EV_ONESHOT | EV_CLEAR | EV_EOF;
 
-    kevent_cmp(&kev, &buf);
+    kevent_cmp(&kev, buf);
     test_no_kevents(ctx->kqfd);
 }
 
 static void
 test_kevent_proc_exit_status_ok(struct test_context *ctx)
 {
-    struct kevent kev, buf;
+    struct kevent kev, buf[1];
     int fflags;
 
     /*
@@ -121,19 +121,19 @@ test_kevent_proc_exit_status_ok(struct test_context *ctx)
     test_no_kevents(ctx->kqfd);
     kevent_add(ctx->kqfd, &kev, pid, EVFILT_PROC, EV_ADD, fflags, 0, NULL);
 
-    kevent_get(&buf, ctx->kqfd, 1);
+    kevent_get(buf, NUM_ELEMENTS(buf), ctx->kqfd, 1);
 
     kev.data = 0; /* What we expected the process exit code to be */
     kev.flags = EV_ADD | EV_ONESHOT | EV_CLEAR | EV_EOF;
 
-    kevent_cmp(&kev, &buf);
+    kevent_cmp(&kev, buf);
     test_no_kevents(ctx->kqfd);
 }
 
 static void
 test_kevent_proc_exit_status_error(struct test_context *ctx)
 {
-    struct kevent kev, buf;
+    struct kevent kev, buf[1];
     int fflags;
 
     /*
@@ -160,19 +160,19 @@ test_kevent_proc_exit_status_error(struct test_context *ctx)
     test_no_kevents(ctx->kqfd);
     kevent_add(ctx->kqfd, &kev, pid, EVFILT_PROC, EV_ADD, fflags, 0, NULL);
 
-    kevent_get(&buf, ctx->kqfd, 1);
+    kevent_get(buf, NUM_ELEMENTS(buf), ctx->kqfd, 1);
 
     kev.data = 64 << 8; /* What we expected the process exit code to be */
     kev.flags = EV_ADD | EV_ONESHOT | EV_CLEAR | EV_EOF;
 
-    kevent_cmp(&kev, &buf);
+    kevent_cmp(&kev, buf);
     test_no_kevents(ctx->kqfd);
 }
 
 static void
 test_kevent_proc_multiple_kqueue(struct test_context *ctx)
 {
-    struct kevent kev, buf_a, buf_b;
+    struct kevent kev, buf_a[1], buf_b[1];
     int fflags;
     int kq_b;
 
@@ -205,14 +205,14 @@ test_kevent_proc_multiple_kqueue(struct test_context *ctx)
     kevent_add(ctx->kqfd, &kev, pid, EVFILT_PROC, EV_ADD, fflags, 0, NULL);
     kevent_add(kq_b, &kev, pid, EVFILT_PROC, EV_ADD, fflags, 0, NULL);
 
-    kevent_get(&buf_a, ctx->kqfd, 1);
-    kevent_get(&buf_b, kq_b, 1);
+    kevent_get(buf_a, NUM_ELEMENTS(buf_a), ctx->kqfd, 1);
+    kevent_get(buf_b, NUM_ELEMENTS(buf_b), kq_b, 1);
 
     kev.data = 64 << 8; /* What we expected the process exit code to be */
     kev.flags = EV_ADD | EV_ONESHOT | EV_CLEAR | EV_EOF;
 
-    kevent_cmp(&kev, &buf_a);
-    kevent_cmp(&kev, &buf_b);
+    kevent_cmp(&kev, buf_a);
+    kevent_cmp(&kev, buf_b);
     test_no_kevents(ctx->kqfd);
     test_no_kevents(kq_b);
 
@@ -271,7 +271,7 @@ test_kevent_signal_enable(struct test_context *ctx)
 #else
     kev.data = 2; // one extra time from test_kevent_signal_disable()
 #endif
-    kevent_get(&buf, ctx->kqfd, 1)
+    kevent_get(buf, NUM_ELEMENTS(buf), ctx->kqfd, 1)
     kevent_cmp(&kev, &buf);
 
     /* Delete the watch */
@@ -328,7 +328,7 @@ test_kevent_signal_oneshot(struct test_context *ctx)
 
     kev.flags |= EV_CLEAR;
     kev.data = 1;
-    kevent_get(&buf, ctx->kqfd, 1)
+    kevent_get(buf, NUM_ELEMENTS(buf), ctx->kqfd, 1)
     kevent_cmp(&kev, &buf);
 
     /* Send another one and make sure we get no events */

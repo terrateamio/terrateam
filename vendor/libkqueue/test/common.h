@@ -130,9 +130,10 @@ void test_evfilt_user(struct test_context *);
 } while (/*CONSTCOND*/0)
 
 extern const char * kevent_to_str(struct kevent *);
-void kevent_get(struct kevent *, int, int);
-void kevent_get_hires(struct kevent *, int, struct timespec *);
-int kevent_get_timeout(struct kevent *, int, struct timespec *);
+void kevent_get(struct kevent kev[], int numevents, int kqfd, int expect_rv);
+void kevent_get_hires(struct kevent kev[], int numevents, int kqfd, struct timespec *timeout);
+int kevent_get_timeout(struct kevent kev[], int numevents, int kqfd, struct timespec *timeout);
+
 void kevent_update(int kqfd, struct kevent *kev);
 
 #define kevent_cmp(a,b) _kevent_cmp(a,b, __FILE__, __LINE__)

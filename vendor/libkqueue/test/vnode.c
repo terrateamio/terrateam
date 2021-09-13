@@ -85,14 +85,14 @@ test_kevent_vnode_add(struct test_context *ctx)
 void
 test_kevent_vnode_note_delete(struct test_context *ctx)
 {
-    struct kevent kev, ret;
+    struct kevent kev, ret[1];
 
     kevent_add(ctx->kqfd, &kev, ctx->vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_DELETE, 0, NULL);
 
     if (unlink(ctx->testfile) < 0)
         die("unlink");
 
-    kevent_get(&ret, ctx->kqfd, 1);
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
 
     /*
      *  FIXME - macOS 11.5.2 also sets NOTE_LINK.
@@ -104,13 +104,13 @@ test_kevent_vnode_note_delete(struct test_context *ctx)
     kev.fflags |= NOTE_LINK;
 #endif
 
-    kevent_cmp(&kev, &ret);
+    kevent_cmp(&kev, ret);
 }
 
 void
 test_kevent_vnode_note_write(struct test_context *ctx)
 {
-    struct kevent kev, ret;
+    struct kevent kev, ret[1];
 
     kevent_add(ctx->kqfd, &kev, ctx->vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_WRITE, 0, NULL);
 
@@ -123,8 +123,8 @@ test_kevent_vnode_note_write(struct test_context *ctx)
 #ifndef __APPLE__
     kev.fflags |= NOTE_EXTEND;
 #endif
-    kevent_get(&ret, ctx->kqfd, 1);
-    kevent_cmp(&kev, &ret);
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
 }
 
 void
@@ -205,7 +205,7 @@ test_kevent_vnode_disable_and_enable(struct test_context *ctx)
 void
 test_kevent_vnode_dispatch(struct test_context *ctx)
 {
-    struct kevent kev, ret;
+    struct kevent kev, ret[1];
 
     test_no_kevents(ctx->kqfd);
 
@@ -230,8 +230,8 @@ test_kevent_vnode_dispatch(struct test_context *ctx)
     kev.flags = EV_ADD | EV_DISPATCH;   /* FIXME: may not be portable */
     kev.fflags = NOTE_ATTRIB;
     testfile_touch(ctx->testfile);
-    kevent_get(&ret, ctx->kqfd, 1);
-    kevent_cmp(&kev, &ret);
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
     test_no_kevents(ctx->kqfd);
 
     /* Delete the watch */

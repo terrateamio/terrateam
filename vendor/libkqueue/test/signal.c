@@ -27,7 +27,7 @@ test_kevent_signal_add(struct test_context *ctx)
 void
 test_kevent_signal_get(struct test_context *ctx)
 {
-    struct kevent kev, ret;
+    struct kevent kev, ret[1];
 
     kevent_add(ctx->kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 
@@ -36,14 +36,14 @@ test_kevent_signal_get(struct test_context *ctx)
 
     kev.flags |= EV_CLEAR;
     kev.data = 1;
-    kevent_get(&ret, ctx->kqfd, 1);
-    kevent_cmp(&kev, &ret);
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
 }
 
 void
 test_kevent_signal_get_pending(struct test_context *ctx)
 {
-    struct kevent kev, ret;
+    struct kevent kev, ret[1];
 
     /* A pending signal should be reported as soon as the event is added */
     if (kill(getpid(), SIGUSR1) < 0)
@@ -53,8 +53,8 @@ test_kevent_signal_get_pending(struct test_context *ctx)
 
     kev.flags |= EV_CLEAR;
     kev.data = 1;
-    kevent_get(&ret, ctx->kqfd, 1);
-    kevent_cmp(&kev, &ret);
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
 }
 
 void
@@ -73,7 +73,7 @@ test_kevent_signal_disable(struct test_context *ctx)
 void
 test_kevent_signal_enable(struct test_context *ctx)
 {
-    struct kevent kev, ret;
+    struct kevent kev, ret[1];
 
     kevent_add(ctx->kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_ENABLE, 0, 0, NULL);
 
@@ -86,8 +86,8 @@ test_kevent_signal_enable(struct test_context *ctx)
 #else
     kev.data = 2; // one extra time from test_kevent_signal_disable()
 #endif
-    kevent_get(&ret, ctx->kqfd, 1);
-    kevent_cmp(&kev, &ret);
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
 
     /* Delete the watch */
     kev.flags = EV_DELETE;
@@ -112,7 +112,7 @@ test_kevent_signal_del(struct test_context *ctx)
 void
 test_kevent_signal_oneshot(struct test_context *ctx)
 {
-    struct kevent kev, ret;
+    struct kevent kev, ret[1];
 
     kevent_add(ctx->kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD | EV_ONESHOT, 0, 0, NULL);
 
@@ -121,8 +121,8 @@ test_kevent_signal_oneshot(struct test_context *ctx)
 
     kev.flags |= EV_CLEAR;
     kev.data = 1;
-    kevent_get(&ret, ctx->kqfd, 1);
-    kevent_cmp(&kev, &ret);
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
 
     /* Send another one and make sure we get no events */
     test_no_kevents(ctx->kqfd);
@@ -134,7 +134,7 @@ test_kevent_signal_oneshot(struct test_context *ctx)
 void
 test_kevent_signal_modify(struct test_context *ctx)
 {
-    struct kevent kev, ret;
+    struct kevent kev, ret[1];
 
     kevent_add(ctx->kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
     kevent_add(ctx->kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, ((void *)-1));
@@ -144,8 +144,8 @@ test_kevent_signal_modify(struct test_context *ctx)
 
     kev.flags |= EV_CLEAR;
     kev.data = 1;
-    kevent_get(&ret, ctx->kqfd, 1);
-    kevent_cmp(&kev, &ret);
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
 
     test_kevent_signal_del(ctx);
 }
@@ -154,7 +154,7 @@ test_kevent_signal_modify(struct test_context *ctx)
 void
 test_kevent_signal_dispatch(struct test_context *ctx)
 {
-    struct kevent kev, ret;
+    struct kevent kev, ret[1];
 
     test_no_kevents(ctx->kqfd);
 
@@ -166,8 +166,8 @@ test_kevent_signal_dispatch(struct test_context *ctx)
         die("kill");
     kev.flags |= EV_CLEAR;
     kev.data = 1;
-    kevent_get(&ret, ctx->kqfd, 1);
-    kevent_cmp(&kev, &ret);
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
 
     /* Generate a pending signal, this should get delivered once the filter is enabled again */
     if (kill(getpid(), SIGUSR1) < 0)
@@ -181,8 +181,8 @@ test_kevent_signal_dispatch(struct test_context *ctx)
     kev.flags |= EV_ADD;
     kev.flags |= EV_CLEAR;
     kev.data = 1;
-    kevent_get(&ret, ctx->kqfd, 1);
-    kevent_cmp(&kev, &ret);
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
 
     /* Remove the knote and ensure the event no longer fires */
     kevent_add(ctx->kqfd, &kev, SIGUSR1, EVFILT_SIGNAL, EV_DELETE, 0, 0, NULL);

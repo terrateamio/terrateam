@@ -38,15 +38,17 @@ _test_no_kevents(int kqfd, const char *file, int line)
 
 /* Retrieve a single kevent */
 void
-kevent_get(struct kevent *kev, int kqfd, int expect)
+kevent_get(struct kevent kev[], int numevents, int kqfd, int expect)
 {
     struct kevent buf;
     int nfds;
 
-    if (kev == NULL)
+    if (kev == NULL) {
        kev = &buf;
+       numevents = 1;
+    }
 
-    kevent_rv_cmp(expect, kevent(kqfd, NULL, 0, kev, 1, NULL));
+    kevent_rv_cmp(expect, kevent(kqfd, NULL, 0, kev, numevents, NULL));
 }
 
 /**
@@ -56,11 +58,11 @@ kevent_get(struct kevent *kev, int kqfd, int expect)
  * 1 = Success
  */
 int
-kevent_get_timeout(struct kevent *kev, int fd, struct timespec *ts)
+kevent_get_timeout(struct kevent kev[], int numevents, int fd, struct timespec *ts)
 {
     int nfds;
 
-    nfds = kevent(fd, NULL, 0, kev, 1, ts);
+    nfds = kevent(fd, NULL, 0, kev, numevents, ts);
     if (nfds < 0) {
         err(1, "kevent(2)");
     } else if (nfds == 0) {
@@ -75,11 +77,11 @@ kevent_get_timeout(struct kevent *kev, int fd, struct timespec *ts)
    This test exercises that codepath.
  */
 void
-kevent_get_hires(struct kevent *kev, int kqfd, struct timespec *ts)
+kevent_get_hires(struct kevent kev[], int numevents, int kqfd, struct timespec *ts)
 {
     int nfds;
 
-    nfds = kevent(kqfd, NULL, 0, kev, 1, ts);
+    nfds = kevent(kqfd, NULL, 0, kev, numevents, ts);
     if (nfds < 1)
         die("kevent(2)");
 }
