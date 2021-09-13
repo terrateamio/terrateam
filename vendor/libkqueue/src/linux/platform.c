@@ -525,6 +525,8 @@ static inline int linux_kevent_copyout_ev(struct kevent *el, int nevents, struct
     int rv;
 
     rv = filt->kf_copyout(el, nevents, filt, kn, ev);
+    dbg_printf("rv=%i", rv);
+
     if (unlikely(rv < 0)) {
         dbg_puts("knote_copyout failed");
         assert(0);
@@ -686,7 +688,7 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
                 goto done;
             }
 
-            rv = linux_kevent_copyout_ev(el_p, (el_end - el_p), ev, &kq->kq_filt[~(kn->kev.filter)], kn);
+            rv = linux_kevent_copyout_ev(el_p, (el_end - el_p), ev, knote_get_filter(kn), kn);
             if (rv < 0) goto done;
             el_p += rv;
         }
@@ -708,7 +710,7 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
             if ((kn = fds->fds_read) && (ev->events & (EPOLLIN | EPOLLHUP | EPOLLRDHUP | EPOLLERR))) {
                 if (el_p >= el_end) goto oos;
 
-                rv = linux_kevent_copyout_ev(el_p, (el_end - el_p), ev, &kq->kq_filt[~(kn->kev.filter)], kn);
+                rv = linux_kevent_copyout_ev(el_p, (el_end - el_p), ev, knote_get_filter(kn), kn);
                 if (rv < 0) goto done;
                 el_p += rv;
             }
@@ -719,7 +721,7 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
             if ((kn = fds->fds_write) && (ev->events & (EPOLLOUT | POLLHUP | EPOLLERR))) {
                 if (el_p >= el_end) goto oos;
 
-                rv = linux_kevent_copyout_ev(el_p, (el_end - el_p), ev, &kq->kq_filt[~(kn->kev.filter)], kn);
+                rv = linux_kevent_copyout_ev(el_p, (el_end - el_p), ev, knote_get_filter(kn), kn);
                 if (rv < 0) goto done;
                 el_p += rv;
             }
