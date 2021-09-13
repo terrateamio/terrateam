@@ -652,7 +652,7 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
     struct kevent   *el_p = el, *el_end = el + nevents;
     int             i;
 
-    dbg_printf("got %i events from epoll", nevents);
+    dbg_printf("got %i events from epoll", nready);
 
     for (i = 0; i < nready; i++) {
         struct epoll_event    *ev = &epoll_events[i];    /* Thread local storage populated in linux_kevent_wait */
