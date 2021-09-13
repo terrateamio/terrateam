@@ -617,9 +617,9 @@ static inline int knote_copyout_flag_actions(struct filter *filt, struct knote *
      */
     if (kn->kev.flags & EV_DISPATCH)
         rv = knote_disable(filt, kn);
-    if (kn->kev.flags & EV_ONESHOT) {
+
+    if (kn->kev.flags & EV_ONESHOT)
         rv = knote_delete(filt, kn);
-    }
 
     return rv;
 }

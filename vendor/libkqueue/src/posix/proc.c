@@ -454,7 +454,6 @@ static int
 evfilt_proc_knote_copyout(struct kevent *dst, int nevents, struct filter *filt,
     struct knote *kn, void *ev)
 {
-    struct knote *tmp;
     struct kevent *dst_p = dst, *dst_end = dst_p + nevents;
 
     /*
@@ -464,11 +463,13 @@ evfilt_proc_knote_copyout(struct kevent *dst, int nevents, struct filter *filt,
      */
     pthread_mutex_lock(&filt->kf_knote_mtx);
 
+    assert(!LIST_EMPTY(&filt->kf_ready));
+
     /*
      * kn arg is always NULL here, so we just reuse it
      * for the loop.
      */
-    LIST_FOREACH_SAFE(kn, &filt->kf_ready, kn_ready, tmp) {
+    while ((kn = LIST_FIRST(&filt->kf_ready))) {
         if (dst_p >= dst_end)
             break;
 
@@ -478,12 +479,13 @@ evfilt_proc_knote_copyout(struct kevent *dst, int nevents, struct filter *filt,
         dst_p->flags |= EV_EOF;
         dst_p->data = kn->kn_proc_status;
 
+        LIST_REMOVE(kn, kn_ready); /* knote_copyout_flag_actions may free the knote */
+
         if (knote_copyout_flag_actions(filt, kn) < 0) {
+            LIST_INSERT_HEAD(&filt->kf_ready, kn, kn_ready);
             pthread_mutex_unlock(&filt->kf_knote_mtx);
             return -1;
         }
-
-        LIST_REMOVE(kn, kn_ready); /* do this last */
 
         dst_p++;
     }
