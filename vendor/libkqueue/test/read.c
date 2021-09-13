@@ -375,7 +375,7 @@ test_kevent_socket_eof_clear(struct test_context *ctx)
     test_no_kevents(ctx->kqfd);
 
     if (shutdown(ctx->server_fd, SHUT_RDWR) < 0)
-        die("close(2)");
+        die("shutdown(2)");
     if (close(ctx->server_fd) < 0)
         die("close(2)");
 
@@ -395,17 +395,21 @@ test_kevent_socket_eof_clear(struct test_context *ctx)
     create_socket_connection(&ctx->client_fd, &ctx->server_fd, &ctx->listen_fd);
 }
 
+/*
+ * Different from the pipe eof test, as we get EPOLLRDHUP with EPOLLIN on close
+ * on Linux.
+ */
 void
 test_kevent_socket_eof(struct test_context *ctx)
 {
-    struct kevent kev, ret[1];
+    struct kevent kev, ret[10];
     uint8_t buff[1024];
 
     kevent_add_with_receipt(ctx->kqfd, &kev, ctx->client_fd, EVFILT_READ, EV_ADD, 0, 0, &ctx->client_fd);
     test_no_kevents(ctx->kqfd);
 
     if (shutdown(ctx->server_fd, SHUT_RDWR) < 0)
-        die("close(2)");
+        die("shutdown(2)");
 
     kev.flags |= EV_EOF;
     kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
@@ -433,11 +437,115 @@ test_kevent_socket_eof(struct test_context *ctx)
     kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
     kevent_cmp(&kev, ret);
 
+    kevent_add(ctx->kqfd, &kev, ctx->client_fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+
     close(ctx->client_fd);
+    close(ctx->server_fd);
     close(ctx->listen_fd);
 
     /* Recreate the socket pair */
     create_socket_connection(&ctx->client_fd, &ctx->server_fd, &ctx->listen_fd);
+}
+
+/*
+ * Different from the socket eof test, as we get EPOLLHUP with no EPOLLIN on close
+ * on Linux.
+ */
+void
+test_kevent_pipe_eof(struct test_context *ctx)
+{
+    struct kevent kev, ret[256];
+    int pipefd[2];
+    uint8_t buff[1024];
+
+    if (pipe(pipefd) < 0)
+        die("pipe(2)");
+
+    kevent_add_with_receipt(ctx->kqfd, &kev, pipefd[0], EVFILT_READ, EV_ADD, 0, 0, &pipefd[0]);
+    test_no_kevents(ctx->kqfd);
+
+    if (close(pipefd[1]) < 0)
+        die("close(2)");
+
+    kev.flags |= EV_EOF;
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
+
+    /* Will repeatedly return EOF */
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
+
+    /*
+     * The kqueue man page on FreeBSD states that EV_CLEAR
+     * can be used to clear EOF, but in practice this appears
+     * to do nothing with sockets...
+     *
+     * Additionally setting EV_CLEAR on a socket after it's
+     * been added does nothing, even though kqueue returns
+     * the flag with EV_RECEIPT.
+     */
+    kevent_add(ctx->kqfd, &kev, pipefd[0], EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, &pipefd[0]);
+
+    kev.flags |= EV_RECEIPT;
+    kev.flags |= EV_EOF;
+    kev.flags ^= EV_CLEAR;
+
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
+
+    kevent_add(ctx->kqfd, &kev, pipefd[0], EVFILT_READ, EV_DELETE, 0, 0, NULL);
+
+    close(pipefd[0]);
+    close(pipefd[1]);
+}
+
+void
+test_kevent_pipe_eof_multi(struct test_context *ctx)
+{
+    struct kevent kev, ret[256];
+    int pipefd_a[2], pipefd_b[2];
+    uint8_t buff[1024];
+
+    if (pipe(pipefd_a) < 0)
+        die("pipe(2)");
+
+    if (pipe(pipefd_b) < 0)
+        die("pipe(2)");
+
+    kevent_add_with_receipt(ctx->kqfd, &kev, pipefd_a[0], EVFILT_READ, EV_ADD, 0, 0, &pipefd_a[0]);
+    kevent_add_with_receipt(ctx->kqfd, &kev, pipefd_b[0], EVFILT_READ, EV_ADD, 0, 0, &pipefd_b[0]);
+    test_no_kevents(ctx->kqfd);
+
+    if (close(pipefd_a[1]) < 0)
+        die("close(2)");
+    if (close(pipefd_b[1]) < 0)
+        die("close(2)");
+
+    kev.flags |= EV_EOF;
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 2);
+
+    kev.ident = ret[0].ident;
+    kevent_cmp(&kev, &ret[0]);
+
+    kev.ident = ret[1].ident;
+    kevent_cmp(&kev, &ret[1]);
+
+    /* Will repeatedly return EOF */
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 2);
+
+    kev.ident = ret[0].ident;
+    kevent_cmp(&kev, &ret[0]);
+
+    kev.ident = ret[1].ident;
+    kevent_cmp(&kev, &ret[1]);
+
+    kevent_add(ctx->kqfd, &kev, pipefd_a[0], EVFILT_READ, EV_DELETE, 0, 0, NULL);
+    kevent_add(ctx->kqfd, &kev, pipefd_b[0], EVFILT_READ, EV_DELETE, 0, 0, NULL);
+
+    close(pipefd_a[0]);
+    close(pipefd_a[1]);
+    close(pipefd_b[0]);
+    close(pipefd_b[1]);
 }
 
 /* Test if EVFILT_READ works with regular files */
@@ -525,6 +633,8 @@ test_evfilt_read(struct test_context *ctx)
     test(kevent_socket_listen_backlog, ctx);
     test(kevent_socket_eof_clear, ctx);
     test(kevent_socket_eof, ctx);
+    test(kevent_pipe_eof, ctx);
+    test(kevent_pipe_eof_multi, ctx);
     test(kevent_regular_file, ctx);
     close(ctx->client_fd);
     close(ctx->server_fd);

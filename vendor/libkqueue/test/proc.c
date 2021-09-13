@@ -51,7 +51,7 @@ test_kevent_proc_delete(struct test_context *ctx)
 static void
 test_kevent_proc_get(struct test_context *ctx)
 {
-    struct kevent kev, buf[1];
+    struct kevent kev, buf[2];
     int fflags;
 
     /*
@@ -94,7 +94,7 @@ test_kevent_proc_get(struct test_context *ctx)
 static void
 test_kevent_proc_exit_status_ok(struct test_context *ctx)
 {
-    struct kevent kev, buf[1];
+    struct kevent kev, buf[2];
     int fflags;
 
     /*
@@ -133,7 +133,7 @@ test_kevent_proc_exit_status_ok(struct test_context *ctx)
 static void
 test_kevent_proc_exit_status_error(struct test_context *ctx)
 {
-    struct kevent kev, buf[1];
+    struct kevent kev, buf[2];
     int fflags;
 
     /*
@@ -172,7 +172,7 @@ test_kevent_proc_exit_status_error(struct test_context *ctx)
 static void
 test_kevent_proc_multiple_kqueue(struct test_context *ctx)
 {
-    struct kevent kev, buf_a[1], buf_b[1];
+    struct kevent kev, buf_a[2], buf_b[2];
     int fflags;
     int kq_b;
 
