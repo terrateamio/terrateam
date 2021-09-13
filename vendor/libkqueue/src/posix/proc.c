@@ -455,7 +455,7 @@ evfilt_proc_knote_copyout(struct kevent *dst, int nevents, struct filter *filt,
     struct knote *kn, void *ev)
 {
     struct knote *tmp;
-    int events = 0;
+    struct kevent *dst_p = dst, *dst_end = dst_p + nevents;
 
     /*
      * Prevent the waiter thread from modifying
@@ -469,21 +469,23 @@ evfilt_proc_knote_copyout(struct kevent *dst, int nevents, struct filter *filt,
      * for the loop.
      */
     LIST_FOREACH_SAFE(kn, &filt->kf_ready, kn_ready, tmp) {
-        if (++events > nevents)
+        if (dst_p >= dst_end)
             break;
 
         kevent_dump(&kn->kev);
-        memcpy(dst, &kn->kev, sizeof(*dst));
-        dst->fflags = NOTE_EXIT;
-        dst->flags |= EV_EOF;
-        dst->data = kn->kn_proc_status;
+        memcpy(dst_p, &kn->kev, sizeof(*dst));
+        dst_p->fflags = NOTE_EXIT;
+        dst_p->flags |= EV_EOF;
+        dst_p->data = kn->kn_proc_status;
 
         if (knote_copyout_flag_actions(filt, kn) < 0) {
             pthread_mutex_unlock(&filt->kf_knote_mtx);
             return -1;
         }
 
-        dst++;
+        LIST_REMOVE(kn, kn_ready); /* do this last */
+
+        dst_p++;
     }
 
     if (LIST_EMPTY(&filt->kf_ready))
@@ -491,7 +493,7 @@ evfilt_proc_knote_copyout(struct kevent *dst, int nevents, struct filter *filt,
 
     pthread_mutex_unlock(&filt->kf_knote_mtx);
 
-    return (nevents);
+    return (dst_p - dst);
 }
 
 const struct filter evfilt_proc = {
