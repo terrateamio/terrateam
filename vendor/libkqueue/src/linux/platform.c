@@ -705,18 +705,8 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
             /*
              *    FD, or errored, or other side shutdown
              */
-            if (ev->events & (EPOLLIN | EPOLLHUP | EPOLLRDHUP | EPOLLERR)) {
+            if ((kn = fds->fds_read) && (ev->events & (EPOLLIN | EPOLLHUP | EPOLLRDHUP | EPOLLERR))) {
                 if (el_p >= el_end) goto oos;
-
-                kn = fds->fds_read;
-
-                /*
-                 * We shouldn't receive events we didn't register for
-                 * This assume's the Linux's epoll implementation isn't
-                 * complete garbage... so um... this assert may need
-                 * to be removed later.
-                 */
-                assert(kn);
 
                 rv = linux_kevent_copyout_ev(el_p, (el_end - el_p), ev, &kq->kq_filt[~(kn->kev.filter)], kn);
                 if (rv < 0) goto done;
@@ -726,12 +716,8 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
             /*
              *    FD is writable, or errored, or other side shutdown
              */
-            if (ev->events & (EPOLLOUT | POLLHUP | EPOLLERR)) {
+            if ((kn = fds->fds_write) && (ev->events & (EPOLLOUT | POLLHUP | EPOLLERR))) {
                 if (el_p >= el_end) goto oos;
-
-                kn = fds->fds_write;
-
-                assert(kn);    /* We shouldn't receive events we didn't request */
 
                 rv = linux_kevent_copyout_ev(el_p, (el_end - el_p), ev, &kq->kq_filt[~(kn->kev.filter)], kn);
                 if (rv < 0) goto done;
