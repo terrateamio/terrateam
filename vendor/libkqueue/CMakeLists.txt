@@ -245,8 +245,8 @@ if(ENABLE_TESTING)
   add_subdirectory(test)
 endif()
 
-configure_file("${CMAKE_SOURCE_DIR}/libkqueue.pc.in"
-               "${CMAKE_BINARY_DIR}/libkqueue.pc"
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/libkqueue.pc.in"
+               "${CMAKE_CURRENT_BINARY_DIR}/libkqueue.pc"
                @ONLY)
 
 #
