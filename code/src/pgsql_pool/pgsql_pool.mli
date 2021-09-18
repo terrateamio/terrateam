@@ -34,3 +34,7 @@ val destroy : t -> unit Abb.Future.t
    This error is temporarily and retrying the operation may succeed. *)
 val with_conn :
   t -> f:(Pgsql_io.t -> ('a, ([> err ] as 'e)) result Abb.Future.t) -> ('a, 'e) result Abb.Future.t
+
+val pp_err : Format.formatter -> err -> unit
+
+val show_err : err -> string

@@ -1,6 +1,6 @@
 exception Pgsql_pool_closed
 
-type err = [ `Pgsql_pool_error ]
+type err = [ `Pgsql_pool_error ] [@@deriving show]
 
 module Msg = struct
   type t =

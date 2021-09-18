@@ -37,6 +37,8 @@ type err =
   | sql_parse_err
   ]
 
+val pp_err : Format.formatter -> err -> unit
+
 val show_err : err -> string
 
 module Typed_sql : sig
