@@ -40,6 +40,7 @@ end
 module Header : sig
   type t
 
+  (** Create a header with the algorithm and type *)
   val create : ?rest:(string * string) list -> ?typ:string -> string -> t
 
   val algorithm : t -> string
@@ -132,7 +133,7 @@ type 'a t
 (** Create a verified token.  This may throw an exception if the random number
    generator has not been initialized.  To initialize it, run
    [Mirage_crypto_rng_unix.initialize] or [Mirage_crypto_rng_lwt.initialize] *)
-val of_header_and_payload : Signer.t -> Header.t -> Payload.t -> verified t option
+val of_header_and_payload : Signer.t -> Header.t -> Payload.t -> verified t
 
 val header : 'a t -> Header.t
 

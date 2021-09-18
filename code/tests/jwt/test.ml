@@ -99,13 +99,11 @@ let test_sign_hs256 =
           |> add_claim "name" (`String "John Doe"))
       in
       let signer = Jwt.Signer.HS256 basic_secret in
-      match Jwt.of_header_and_payload signer header payload with
-        | Some verified ->
-            let t = CCOpt.get_exn_or "jwt_of_token" (Jwt.of_token (Jwt.token verified)) in
-            let verifier = Jwt.Verifier.HS256 basic_secret in
-            let verified = Jwt.verify verifier t in
-            assert (None <> verified)
-        | _             -> assert false)
+      let verified = Jwt.of_header_and_payload signer header payload in
+      let t = CCOpt.get_exn_or "jwt_of_token" (Jwt.of_token (Jwt.token verified)) in
+      let verifier = Jwt.Verifier.HS256 basic_secret in
+      let verified = Jwt.verify verifier t in
+      assert (None <> verified))
 
 let test_sign_hs512 =
   Oth.test ~name:"Sign HS512" (fun _ ->
@@ -118,13 +116,11 @@ let test_sign_hs512 =
           |> add_claim "name" (`String "John Doe"))
       in
       let signer = Jwt.Signer.HS512 basic_secret in
-      match Jwt.of_header_and_payload signer header payload with
-        | Some verified ->
-            let t = CCOpt.get_exn_or "jwt_of_token" (Jwt.of_token (Jwt.token verified)) in
-            let verifier = Jwt.Verifier.HS512 basic_secret in
-            let verified = Jwt.verify verifier t in
-            assert (None <> verified)
-        | _             -> assert false)
+      let verified = Jwt.of_header_and_payload signer header payload in
+      let t = CCOpt.get_exn_or "jwt_of_token" (Jwt.of_token (Jwt.token verified)) in
+      let verifier = Jwt.Verifier.HS512 basic_secret in
+      let verified = Jwt.verify verifier t in
+      assert (None <> verified))
 
 let test_sign_rs256 =
   Oth.test ~name:"Sign RS256" (fun _ ->
@@ -147,13 +143,11 @@ let test_sign_rs256 =
           |> add_claim "name" (`String "John Doe"))
       in
       let signer = Jwt.Signer.(RS256 (Priv_key.of_priv_key private_key)) in
-      match Jwt.of_header_and_payload signer header payload with
-        | Some verified ->
-            let t = CCOpt.get_exn_or "jwt_of_token" (Jwt.of_token (Jwt.token verified)) in
-            let verifier = Jwt.Verifier.(RS256 (Pub_key.of_pub_key public_key)) in
-            let verified = Jwt.verify verifier t in
-            assert (None <> verified)
-        | _             -> assert false)
+      let verified = Jwt.of_header_and_payload signer header payload in
+      let t = CCOpt.get_exn_or "jwt_of_token" (Jwt.of_token (Jwt.token verified)) in
+      let verifier = Jwt.Verifier.(RS256 (Pub_key.of_pub_key public_key)) in
+      let verified = Jwt.verify verifier t in
+      assert (None <> verified))
 
 let test =
   Oth.parallel

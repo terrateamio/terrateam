@@ -232,15 +232,11 @@ let b64_url_decode str =
   CCOpt.wrap (Base64.decode_exn ~pad:false ~alphabet:Base64.uri_safe_alphabet) str
 
 let of_header_and_payload signer header payload =
-  (* CCOpt.wrap
-   *   (fun () -> *)
   let b64_header = b64_url_encode (Header.to_string header) in
   let b64_payload = b64_url_encode (Payload.to_string payload) in
   let unsigned_token = b64_header ^ "." ^ b64_payload in
   let signature = Signer.sign signer unsigned_token in
-  Some { header; payload; signature; hp = () }
-(* )
-   * () *)
+  { header; payload; signature; hp = () }
 
 let header t = t.header
 
