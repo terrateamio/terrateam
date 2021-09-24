@@ -34,7 +34,7 @@ module Make (M : S) = struct
   let to_next t =
     let results_len = List.length (M.items t.page) in
     match t.dir with
-      | Next when results_len > 1 && M.has_another_page t.page ->
+      | Next when results_len > 0 && M.has_another_page t.page ->
           let last = M.items t.page |> CCList.rev |> CCList.hd in
           t.uri
           |> CCFun.flip Uri.remove_query_param "page"
@@ -59,7 +59,7 @@ module Make (M : S) = struct
           |> CCFun.flip Uri.remove_query_param "page"
           |> CCFun.flip Uri.add_query_param ("page", "p" :: M.to_paginate last)
           |> CCOpt.return
-      | Prev when results_len > 1 && M.has_another_page t.page ->
+      | Prev when results_len > 0 && M.has_another_page t.page ->
           let first = M.items t.page |> CCList.hd in
           t.uri
           |> CCFun.flip Uri.remove_query_param "page"
