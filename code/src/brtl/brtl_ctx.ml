@@ -19,6 +19,18 @@ let create remote_addr request =
     token = Uuidm.(to_string ~upper:false (create `V4));
   }
 
+let uri t =
+  let uri = Request.uri t.request in
+  match Uri.scheme uri with
+    | Some _ -> uri
+    | None   ->
+        Uri.with_scheme
+          uri
+          (Some
+             (CCOpt.get_or
+                ~default:"http"
+                (Cohttp.Header.get (Request.headers t.request) "x-forwarded-proto")))
+
 let request t = t.request
 
 let md_find key t = Hmap.find key t.metadata

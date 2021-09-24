@@ -40,6 +40,10 @@ val md_rem : 'k Hmap.key -> ('a, 'b) t -> ('a, 'b) t
 
 (** {1 Getters and Setters} *)
 
+(** Get the URI of the request.  If the scheme is not in the URI, check if there
+   is an [x-forwarded-proto] header and use that otherwise set to [http] *)
+val uri : ('a, 'b) t -> Uri.t
+
 (** Get the body. *)
 val body : ('a, 'b) t -> 'a
 
