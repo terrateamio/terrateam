@@ -342,7 +342,7 @@ module Route = struct
 
   let match_ctx ~default rs ctx =
     match Brtl_ctx.Request.meth (Brtl_ctx.request ctx) with
-      | `POST -> (
+      | `DELETE | `PATCH | `POST | `PUT -> (
           match
             Cohttp.Header.get (Brtl_ctx.Request.headers (Brtl_ctx.request ctx)) "content-type"
           with
@@ -359,7 +359,7 @@ module Route = struct
                 match Body_form.make (Brtl_ctx.body ctx) with
                   | Some body -> match_ctx' ~default rs ctx body
                   | None      -> match_ctx' ~default rs ctx (module Body_noop)))
-      | _     -> match_ctx' ~default rs ctx (module Body_noop)
+      | _                               -> match_ctx' ~default rs ctx (module Body_noop)
 end
 
 module Method = struct
