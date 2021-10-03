@@ -42,6 +42,8 @@ val set_session_value : 'a Value.t Hmap.key -> 'a -> ('b, 'c) Brtl_ctx.t -> ('b,
 
 val get_session_value : 'a Value.t Hmap.key -> ('b, 'c) Brtl_ctx.t -> 'a option
 
+val get_cookie_value : string -> ('a, 'b) Brtl_ctx.t -> string option
+
 val rem_session_value : 'a Value.t Hmap.key -> ('b, 'c) Brtl_ctx.t -> ('b, 'c) Brtl_ctx.t
 
 val create_key : unit -> 'a Value.t Hmap.key

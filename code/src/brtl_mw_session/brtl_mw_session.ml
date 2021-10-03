@@ -88,6 +88,8 @@ let set_session_value key v ctx =
 
 let get_session_value key ctx = Brtl_ctx.md_find key ctx |> CCOpt.map (fun v -> v.Value.v)
 
+let get_cookie_value = load_cookie
+
 let rem_session_value = Brtl_ctx.md_rem
 
 let create_key () = Hmap.Key.create ()
