@@ -1,0 +1,19 @@
+# base image
+FROM alpine:3.13
+
+# packages
+RUN apk add --no-cache ca-certificates aws-cli bsd-compat-headers cmake coreutils git gmp-dev libffi-dev libressl-dev m4 make mercurial musl-dev npm opam openssh openssl-dev perl sqlite-dev zlib-dev
+
+# opam-init
+RUN opam init -ay --disable-sandboxing
+
+# build-compiler
+RUN eval $(opam env) && \
+    opam switch create -y 4.12.0
+
+# build-libkqueue
+COPY ./vendor/libkqueue /mono/vendor/libkqueue
+WORKDIR /mono/vendor/libkqueue
+RUN cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib $PWD && \
+    make && \
+    make install
