@@ -8,6 +8,15 @@ end
 
 type 'a t
 
+module React : sig
+  val select :
+    ?a:Html_types.select_attrib Brtl_js.Html.attrib list ->
+    ?value:string ->
+    options:(string * string) Brtl_js.Rlist.t ->
+    unit ->
+    string t * [> Html_types.select ] Brtl_js.Html.elt
+end
+
 val create : 'a Brtl_js.React.signal -> (?step:Brtl_js.React.step -> 'a -> unit) -> 'a t
 
 val signal : 'a t -> 'a Brtl_js.React.signal

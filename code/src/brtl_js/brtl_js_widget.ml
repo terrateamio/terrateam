@@ -5,6 +5,33 @@ type 'a t = {
   set : ?step:Brtl_js.React.step -> 'a -> unit;
 }
 
+module React = struct
+  let select ?(a = []) ?(value = "") ~options () =
+    let (elem_value, elem_set_value) = Brtl_js.React.S.create value in
+    let onchange =
+      Brtl_js.handler_sync (fun event ->
+          Js.Opt.iter event##.target (fun target ->
+              Js.Opt.iter (Dom_html.CoerceTo.select target) (fun inp ->
+                  elem_set_value (Js.to_string inp##.value))))
+    in
+    let options_rlist =
+      Brtl_js.Rlist.map
+        (fun (value, label) ->
+          Brtl_js.Html.option
+            ~a:
+              [
+                Brtl_js.Html.a_value value;
+                Brtl_js.filter_attrib (Brtl_js.Html.a_selected ())
+                @@ Brtl_js.React.S.map (( = ) value) elem_value;
+              ]
+            (Brtl_js.Html.txt label))
+        options
+    in
+    let elem = Brtl_js.Rhtml.select ~a:(Brtl_js.Html.a_onchange onchange :: a) options_rlist in
+
+    ({ signal = elem_value; set = elem_set_value }, elem)
+end
+
 module Radio_gen = struct
   type 'a t = {
     name : string;
@@ -44,7 +71,9 @@ let input ?(a = []) ?(value = "") () =
     Brtl_js.Html.input
       ~a:
         (Brtl_js.Html.a_value value
-         :: Brtl_js.Html.a_onchange onchange :: Brtl_js.Html.a_oninput onchange :: a)
+        :: Brtl_js.Html.a_onchange onchange
+        :: Brtl_js.Html.a_oninput onchange
+        :: a)
       ()
   in
   let set_value ?step s =
@@ -102,7 +131,9 @@ let radio ?(a = []) ~select_value radio_gen =
     Brtl_js.Html.input
       ~a:
         (Brtl_js.Html.a_input_type `Radio
-         :: Brtl_js.Html.a_name radio_gen.Radio_gen.name :: Brtl_js.Html.a_onchange onchange :: a)
+        :: Brtl_js.Html.a_name radio_gen.Radio_gen.name
+        :: Brtl_js.Html.a_onchange onchange
+        :: a)
       ()
   in
   radio_gen.Radio_gen.buttons <- (select_value, elem) :: radio_gen.Radio_gen.buttons;
@@ -127,7 +158,9 @@ let range ?(a = []) ?(value = 0) () =
     Brtl_js.Html.input
       ~a:
         (Brtl_js.Html.a_input_type `Range
-         :: Brtl_js.Html.a_value (CCInt.to_string value) :: Brtl_js.Html.a_onchange onchange :: a)
+        :: Brtl_js.Html.a_value (CCInt.to_string value)
+        :: Brtl_js.Html.a_onchange onchange
+        :: a)
       ()
   in
   let set_value ?step v =
@@ -137,26 +170,6 @@ let range ?(a = []) ?(value = 0) () =
   in
   ({ signal = elem_value; set = set_value }, elem)
 
-let select ?(a = []) ?(value = "") ~options () =
-  let (elem_value, elem_set_value) = Brtl_js.React.S.create value in
-  let onchange =
-    Brtl_js.handler_sync (fun event ->
-        Js.Opt.iter event##.target (fun target ->
-            Js.Opt.iter (Dom_html.CoerceTo.select target) (fun inp ->
-                elem_set_value (Js.to_string inp##.value))))
-  in
-  let elem =
-    Brtl_js.Html.select ~a:(Brtl_js.Html.a_onchange onchange :: a)
-    @@ CCList.map
-         (fun (value, label) ->
-           Brtl_js.Html.option
-             ~a:
-               [
-                 Brtl_js.Html.a_value value;
-                 Brtl_js.filter_attrib (Brtl_js.Html.a_selected ())
-                 @@ Brtl_js.React.S.map (( = ) value) elem_value;
-               ]
-             (Brtl_js.Html.txt label))
-         options
-  in
-  ({ signal = elem_value; set = elem_set_value }, elem)
+let select ?a ?value ~options () =
+  let (options, _) = Brtl_js.Rlist.create options in
+  React.select ?a ?value ~options ()
