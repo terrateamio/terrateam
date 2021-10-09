@@ -12,7 +12,7 @@ type cookie_name = string
 
 type 'a load = id -> 'a option Abb.Future.t
 
-type 'a store = id option -> 'a -> id Abb.Future.t
+type 'a store = id option -> 'a -> (string, Brtl_rspnc.t) Brtl_ctx.t -> id Abb.Future.t
 
 module Config = struct
   type 'a t = {
@@ -39,7 +39,7 @@ let store_cookie config v ctx =
     else
       load_cookie config.Config.cookie_name ctx
   in
-  config.Config.store cookie_id v.Value.v
+  config.Config.store cookie_id v.Value.v ctx
   >>| fun cookie_id ->
   let cookie =
     Cohttp.Cookie.Set_cookie_hdr.make

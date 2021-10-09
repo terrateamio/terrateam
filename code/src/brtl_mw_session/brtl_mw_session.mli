@@ -19,7 +19,7 @@ type 'a load = id -> 'a option Abb.Future.t
    [id] is [None] then generate an [id].  The [id] does not have to be the same
    as the [id] passed in, this allows for the hash to be some encoding of the
    application representation. *)
-type 'a store = id option -> 'a -> id Abb.Future.t
+type 'a store = id option -> 'a -> (string, Brtl_rspnc.t) Brtl_ctx.t -> id Abb.Future.t
 
 module Config : sig
   type 'a t = {
