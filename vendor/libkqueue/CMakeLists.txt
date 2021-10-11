@@ -35,7 +35,7 @@ execute_process(COMMAND git rev-parse --short=8 HEAD
 project(libkqueue VERSION ${PROJECT_VERSION}
                   LANGUAGES C)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sys/libkqueue_version.h.in
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/sys/libkqueue_version.h @ONLY)
+               ${CMAKE_CURRENT_BINARY_DIR}/include/sys/libkqueue_version.h @ONLY)
 
 enable_testing()
 
