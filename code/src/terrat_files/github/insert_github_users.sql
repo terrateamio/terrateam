@@ -4,7 +4,8 @@ insert into github_users (
        token,
        refresh_token,
        expiration,
-       refresh_expiration
+       refresh_expiration,
+       email
 )
 values (
        $user_id,
@@ -12,11 +13,13 @@ values (
        $token,
        $refresh_token,
        $expiration,
-       $refresh_expiration
+       $refresh_expiration,
+       $email
 )
 on conflict (user_id) do update set (
    expiration,
    refresh_expiration,
    refresh_token,
-   token
-) = (excluded.expiration, excluded.refresh_expiration, excluded.refresh_token, excluded.token)
+   token,
+   email
+) = (excluded.expiration, excluded.refresh_expiration, excluded.refresh_token, excluded.token, excluded.email)

@@ -8,6 +8,7 @@ module Sql = struct
       sql
       /^ read_sql "insert_github_users.sql"
       /% Var.varchar "user_id"
+      /% Var.(option (varchar "email"))
       /% Var.varchar "avatar_url"
       /% Var.varchar "token"
       /% Var.(option (varchar "refresh_token"))
@@ -24,10 +25,18 @@ let perform_auth storage github_schema client_id client_secret code =
   >>= fun gh ->
   Gh.call gh (Gh.current_user gh)
   >>= fun current_user ->
+  Gh.collect_all gh (Gh.user_public_emails gh)
+  >>= fun public_emails ->
   Abbs_future_combinators.to_result (Abb.Sys.time ())
   >>= fun now ->
   let current_user = Gh.Response.value current_user in
   let user_id = Gh.Response.Current_user.login current_user in
+  let email =
+    public_emails
+    |> CCList.filter Gh.Response.User_public_email.primary
+    |> CCList.head_opt
+    |> CCOpt.map Gh.Response.User_public_email.email
+  in
   let avatar_url = Uri.to_string (Gh.Response.Current_user.avatar_url current_user) in
   let expiration =
     CCOpt.map
@@ -44,6 +53,7 @@ let perform_auth storage github_schema client_id client_secret code =
         db
         Sql.insert_github_users
         user_id
+        email
         avatar_url
         token
         (Gh.Response.Oauth_access_token.refresh_token oauth_access_token)
