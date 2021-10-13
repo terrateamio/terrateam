@@ -19,6 +19,7 @@ RUN cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR
     make install
 
 # setup
+COPY ./ /mono
 WORKDIR /
 RUN eval $(opam env) && \
     opam repository add opam-acsl mono/opam && \
@@ -35,4 +36,5 @@ RUN eval $(opam env) && \
     opam pin add -n uri-sexp ../vendor/ocaml-uri && \
     opam install -y uri uri-sexp && \
     opam info monorepo && \
-    opam install -j4 -y --strict --deps-only monorepo
+    opam install -j4 -y --strict --deps-only monorepo && \
+    rm -rf /mono
