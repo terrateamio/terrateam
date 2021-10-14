@@ -1,6 +1,7 @@
 select
         name,
         value,
+        is_file
         modified_by,
         to_char(modified_time, 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
 from installation_env_vars

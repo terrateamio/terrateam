@@ -26,6 +26,7 @@ module Response = struct
     type t = {
       name : string;
       value : string;
+      is_file : bool;
       modified_by : string;
       modified_time : string;
     }
@@ -45,6 +46,7 @@ module Response = struct
     type t = {
       name : string;
       encrypted_value : string;
+      is_file : bool;
       modified_by : string;
       modified_time : string;
     }

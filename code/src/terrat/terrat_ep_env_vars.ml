@@ -10,6 +10,7 @@ module Sql = struct
       /% Var.bigint "installation_id"
       /% Var.varchar "name"
       /% Var.varchar "value"
+      /% Var.boolean "is_file"
       /% Var.varchar "modified_by")
 
   let delete_env =
@@ -25,6 +26,7 @@ module Sql = struct
       sql
       // (* name *) Ret.varchar
       // (* value *) Ret.varchar
+      // (* is_file *) Ret.boolean
       // (* modified_by *) Ret.varchar
       // (* modified_time *) Ret.varchar
       /^ read "select_installation_env_pagination.sql"
@@ -78,6 +80,7 @@ let store storage installation_id user_id env =
         installation_id
         env.E.name
         env.E.value
+        env.E.is_file
         user_id)
 
 let perform_get storage installation_id user_id limit prev_name pagination =
@@ -90,8 +93,8 @@ let perform_get storage installation_id user_id limit prev_name pagination =
         search
         db
         Sql.select_installation_env
-        ~f:(fun name value modified_by modified_time ->
-          Terrat_data.Response.Env_var.{ name; value; modified_by; modified_time })
+        ~f:(fun name value is_file modified_by modified_time ->
+          Terrat_data.Response.Env_var.{ name; value; is_file; modified_by; modified_time })
         user_id
         installation_id
         prev_name)

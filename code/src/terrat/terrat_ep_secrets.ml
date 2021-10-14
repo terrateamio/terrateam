@@ -15,6 +15,7 @@ module Sql = struct
       /% Var.bigint "installation_id"
       /% Var.varchar "name"
       /% Var.varchar "value"
+      /% Var.boolean "is_file"
       /% Var.varchar "modified_by")
 
   let delete_secret =
@@ -29,6 +30,7 @@ module Sql = struct
     Pgsql_io.Typed_sql.(
       sql
       // (* name *) Ret.varchar
+      // (* is_file *) Ret.boolean
       // (* modified_by *) Ret.varchar
       // (* modified_time *) Ret.varchar
       /^ read "select_installation_secrets_pagination.sql"
@@ -97,6 +99,7 @@ let encrypt_and_store storage installation_id user_id secret =
                       installation_id
                       secret.S.name
                       value_encrypted
+                      secret.S.is_file
                       user_id
                 | _                 -> assert false)
           | _                -> Abb.Future.return (Error `Missing_installation_error)))
@@ -111,8 +114,8 @@ let perform_get storage installation_id user_id limit prev_name pagination =
         search
         db
         Sql.select_installation_secrets
-        ~f:(fun name modified_by modified_time ->
-          Terrat_data.Response.Secret.{ name; modified_by; modified_time })
+        ~f:(fun name is_file modified_by modified_time ->
+          Terrat_data.Response.Secret.{ name; is_file; modified_by; modified_time })
         user_id
         installation_id
         prev_name)
