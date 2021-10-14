@@ -9,7 +9,8 @@ asset_files := \
 	$(wildcard ../../../../vendor/material-icons/mdi-v20210302.*) \
 	$(wildcard ../terrat_site/*.html) \
 	$(wildcard ../terrat_site/*.png) \
-	$(wildcard ../terrat_site/*.json)
+	$(wildcard ../terrat_site/*.json) \
+	$(wildcard ../terrat_site/*.svg)
 
 migrations_files := $(wildcard $(SRC_DIR)/migrations/*.sql)
 
