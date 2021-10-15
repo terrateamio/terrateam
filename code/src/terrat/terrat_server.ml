@@ -4,6 +4,12 @@ let assets_rt () = Brtl_rtng.Route.(rel / "assets" /% Path.string)
 
 let index_rt () = Brtl_rtng.Route.(rel / "index.html")
 
+let cookies_rt () = Brtl_rtng.Route.(rel / "cookies.html")
+
+let privacy_rt () = Brtl_rtng.Route.(rel / "privacy.html")
+
+let terms_rt () = Brtl_rtng.Route.(rel / "terms.html")
+
 let root_rt () = Brtl_rtng.Route.(rel / "")
 
 let github_rt () = Brtl_rtng.Route.(rel / "github")
@@ -87,6 +93,9 @@ let rtng config storage schema =
       [
         (`GET, assets_rt () --> Brtl_static.run Terrat_files_assets.read);
         (`GET, index_rt () --> Brtl_static.run Terrat_files_assets.read "index.html");
+        (`GET, cookies_rt () --> Brtl_static.run Terrat_files_assets.read "cookies.html");
+        (`GET, privacy_rt () --> Brtl_static.run Terrat_files_assets.read "privacy.html");
+        (`GET, terms_rt () --> Brtl_static.run Terrat_files_assets.read "terms.html");
         (`GET, root_rt () --> Brtl_static.run Terrat_files_assets.read "index.html");
         (`POST, github_events_rt () --> Terrat_ep_github_events.post config storage);
         (`GET, health_rt () --> Terrat_ep_health.get);
