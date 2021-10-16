@@ -28,10 +28,9 @@ let run ~eq ~nav_class ~selected ~unselected ~choices routes state =
       ( [
           Brtl_js.Rhtml.div ~a:[ a_class [ nav_class ] ]
           @@ Brtl_js.Rlist.from_signal
-          @@ Brtl_js.React.S.map
-               (fun uri ->
+          @@ Brtl_js.React.S.map (fun mtch ->
                  let compare =
-                   match Brtl_js_rtng.first_match ~must_consume_path:false routes uri with
+                   match mtch with
                      | Some v -> eq (Brtl_js_rtng.Match.apply v)
                      | None   -> fun _ -> false
                  in
@@ -57,6 +56,13 @@ let run ~eq ~nav_class ~selected ~unselected ~choices routes state =
                          | `Txt title -> [ txt title ]
                          | `Html elt  -> elt ()))
                    choices)
+          @@ Brtl_js.React.S.map
+               ~eq:(fun m1 m2 ->
+                 match (m1, m2) with
+                   | (Some m1, Some m2) -> Brtl_js_rtng.Match.equal m1 m2
+                   | (None, None)       -> true
+                   | (_, _)             -> false)
+               (Brtl_js_rtng.first_match ~must_consume_path:false routes)
                uri;
         ],
         fun _ ->
