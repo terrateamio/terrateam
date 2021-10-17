@@ -28,9 +28,9 @@ RUN eval $(opam env) && \
     make -j4 release_terrat
 
 # test
-WORKDIR /mono
+WORKDIR /mono/code
 RUN eval $(opam env) && \
-    env OCAMLRUNPARAM=b make -j4 -k cicd-test && \
+    env OCAMLRUNPARAM=b make -j4 -k test && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # app image
