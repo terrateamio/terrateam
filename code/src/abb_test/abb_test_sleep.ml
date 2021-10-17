@@ -30,7 +30,7 @@ module Make (Abb : Abb_intf.S) = struct
         let rec timer_loop = function
           | 0 -> []
           | n ->
-              let duration = Random.float 10.0 in
+              let duration = Random.float 1.0 in
               let fut =
                 Abb.Sys.time ()
                 >>= fun scheduled_time ->
@@ -38,7 +38,7 @@ module Make (Abb : Abb_intf.S) = struct
               in
               fut :: timer_loop (n - 1)
         in
-        let futures = timer_loop 10000 in
+        let futures = timer_loop 5000 in
         Fut_comb.List.iter ~f:(fun fut -> Fut_comb.ignore (Abb.Future.fork fut)) futures
         >>= fun () ->
         Fut_comb.all futures
@@ -49,7 +49,7 @@ module Make (Abb : Abb_intf.S) = struct
           !min_inprecision
           !count
           (!total /. float !count);
-        assert (!max_inprecision <= 1.5))
+        assert (!max_inprecision <= 0.5))
 
   let timeout_test =
     Oth_abb.test ~desc:"Timeout test" ~name:"Timeout test" (fun () ->
