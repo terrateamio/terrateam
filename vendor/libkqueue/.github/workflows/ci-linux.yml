@@ -87,6 +87,8 @@ jobs:
       run: make -j2
 
     - name: Run tests
+      env:
+        KQUEUE_DEBUG: 1
       run: test/libkqueue-test
 
     - name: Build debian packages
