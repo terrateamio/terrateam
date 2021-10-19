@@ -97,6 +97,32 @@ waiter_notify(struct proc_pid *ppd, int status)
     free(ppd);
 }
 
+static void
+waiter_notify_error(struct proc_pid *ppd, int wait_errno)
+{
+    struct knote *kn;
+    struct filter *filt;
+
+    while ((kn = LIST_FIRST(&ppd->ppd_proc_waiters))) {
+        kn->kev.flags |= EV_ERROR;
+        kn->kev.data = wait_errno;
+
+        filt = knote_get_filter(kn);
+        dbg_printf("pid=%u errored (%s), notifying kq=%u filter=%p kn=%p",
+                   (unsigned int)ppd->ppd_pid, strerror(errno), kn->kn_kq->kq_id, filt, kn);
+        pthread_mutex_lock(&filt->kf_knote_mtx);
+        kqops.eventfd_raise(&filt->kf_proc_eventfd);
+        LIST_INSERT_HEAD(&filt->kf_ready, kn, kn_ready);
+        pthread_mutex_unlock(&filt->kf_knote_mtx);
+
+        LIST_REMOVE(kn, kn_proc_waiter);
+    }
+
+    dbg_printf("pid=%u removing waiter list", (unsigned int)ppd->ppd_pid);
+    RB_REMOVE(pid_index, &proc_pid_index, ppd);
+    free(ppd);
+}
+
 static int
 waiter_siginfo_to_status(siginfo_t *info)
 {
@@ -270,8 +296,12 @@ wait_thread(UNUSED void *arg)
                 switch (errno) {
                 case ECHILD:
                     dbg_printf("waitid(2): pid=%u reaped too early - %s", ppd->ppd_pid, strerror(errno));
+
+                    waiter_notify_error(ppd, errno);
+
                     pthread_mutex_unlock(&proc_pid_index_mtx);
-                    continue; /* FIXME - Maybe produce an EV_ERROR for each of the knotes? */
+
+                    continue;
 
                 case EINTR:
                     goto again;
@@ -370,6 +400,12 @@ evfilt_proc_knote_create(struct filter *filt, struct knote *kn)
     struct proc_pid *ppd;
 
     pthread_mutex_lock(&proc_pid_index_mtx);
+    /*
+     * Fixme - We should probably check to see if the PID exists
+     * here and error out early instead of waiting for the waiter
+     * loop to tell us.
+     */
+
     ppd = RB_FIND(pid_index, &proc_pid_index, &(struct proc_pid){ .ppd_pid = kn->kev.ident });
     if (!ppd) {
         dbg_printf("pid=%u adding waiter list", (unsigned int)kn->kev.ident);
