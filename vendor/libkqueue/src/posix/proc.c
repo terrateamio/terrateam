@@ -270,6 +270,7 @@ wait_thread(UNUSED void *arg)
                 switch (errno) {
                 case ECHILD:
                     dbg_printf("waitid(2): pid=%u reaped too early - %s", ppd->ppd_pid, strerror(errno));
+                    pthread_mutex_unlock(&proc_pid_index_mtx);
                     continue; /* FIXME - Maybe produce an EV_ERROR for each of the knotes? */
 
                 case EINTR:
