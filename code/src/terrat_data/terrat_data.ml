@@ -36,6 +36,10 @@ module Request = struct
     [@@deriving yojson, show, eq]
   end
 
+  module User_feedback = struct
+    type t = { msg : string } [@@deriving yojson, show, eq]
+  end
+
   module User_prefs = struct
     type t = { receive_marketing_emails : bool option [@default None] }
     [@@deriving yojson, show, eq]

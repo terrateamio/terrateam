@@ -83,6 +83,12 @@ let terraform_rt () = Brtl_rtng.Route.(api_v1_rt () / "terraform")
 
 let terraform_versions_rt () = Brtl_rtng.Route.(terraform_rt () / "versions")
 
+let feedback_rt () =
+  Brtl_rtng.Route.(
+    installation_rt ()
+    / "feedback"
+    /* Body.decode ~json:Terrat_data.Request.User_feedback.of_yojson ())
+
 let response_404 ctx =
   Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx)
 
@@ -122,6 +128,7 @@ let rtng config storage schema =
         (`GET, user_rt () --> Terrat_ep_user.Prefs.get storage);
         (`PUT, user_update_rt () --> Terrat_ep_user.Prefs.put storage);
         (`POST, logout_rt () --> Terrat_ep_logout.post storage);
+        (`POST, feedback_rt () --> Terrat_ep_feedback.post config storage schema);
         (* API 404s.  This is needed because for any and only UI endpoint we
            want to return the HTML *)
         (`GET, api_v1_404_rt () --> fun _ ctx -> response_404 ctx);
