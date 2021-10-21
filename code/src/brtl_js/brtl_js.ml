@@ -104,19 +104,19 @@ end
 module Router_output = struct
   let match_uri routes uri = Brtl_js_rtng.first_match ~must_consume_path:false routes uri
 
-  let apply_match mtch state with_cleanup res_set =
+  let apply_match mtch iteration curr_iteration state with_cleanup res_set =
     Abb_js.Future.run
       (state.State.consumed_path <- Brtl_js_rtng.Match.consumed_path mtch;
        Abb_js.Future.await_bind
          (function
-           | `Det (`Render r)                  -> (
+           | `Det (`Render r) when iteration = !curr_iteration -> (
                res_set r;
                match !with_cleanup with
                  | Some f ->
                      with_cleanup := None;
                      f state
                  | None   -> Abb_js.Future.return ())
-           | `Det (`With_cleanup (r, cleanup)) -> (
+           | `Det (`With_cleanup (r, cleanup)) when iteration = !curr_iteration -> (
                res_set r;
                match !with_cleanup with
                  | Some f ->
@@ -125,24 +125,44 @@ module Router_output = struct
                  | None   ->
                      with_cleanup := Some cleanup;
                      Abb_js.Future.return ())
-           | `Det (`Navigate uri)              ->
+           | `Det (`With_cleanup (_, cleanup)) ->
+               (* If the iterations do not match, ensure we perform the cleanup  *)
+               Firebug.console##log_3
+                 (Js.string "Not updating due to iteration mismatch, cleaning up")
+                 iteration
+                 !curr_iteration;
+               cleanup state
+           | `Det (`Navigate uri) when iteration = !curr_iteration ->
                Router.navigate (State.router state) uri;
                Abb_js.Future.return ()
-           | `Aborted                          ->
+           | `Aborted when iteration = !curr_iteration ->
                res_set [];
                Abb_js.Future.return ()
-           | `Exn exn                          ->
+           | `Exn exn when iteration = !curr_iteration ->
                Firebug.console##log_2 (Js.string "Unhandled exn") exn;
                res_set [];
+               Abb_js.Future.return ()
+           | _ ->
+               Firebug.console##log_3
+                 (Js.string "Not updating due to iteration mismatch")
+                 iteration
+                 !curr_iteration;
                Abb_js.Future.return ())
          (Brtl_js_rtng.Match.apply mtch state))
 
-  let route_uri state routes with_cleanup prev_match res_set uri =
+  let route_uri iteration state routes with_cleanup prev_match res_set uri =
     let match_opt = match_uri routes uri in
+    (* Check the URL match.  If the match does not match the previous one but
+       there still is a match then increment the iteration and apply that match.
+       If we don't match anything then also increment the iteration and clean
+       up.  We increment the iteration when a match changes so any renders that
+       could be running will know to perform a cleanup (if there is anything to
+       clean up). *)
     match match_opt with
       | Some mtch when not (Brtl_js_rtng.Match.equal mtch !prev_match) ->
           prev_match := mtch;
-          apply_match mtch state with_cleanup res_set
+          incr iteration;
+          apply_match mtch !iteration iteration state with_cleanup res_set
       | Some mtch ->
           (* TODO: make consumed path immutable.
 
@@ -150,6 +170,7 @@ module Router_output = struct
              path. *)
           state.State.consumed_path <- Brtl_js_rtng.Match.consumed_path mtch
       | None -> (
+          incr iteration;
           (* This router doesn't match, so cleanup *)
           match !with_cleanup with
             | Some f ->
@@ -159,62 +180,91 @@ module Router_output = struct
 
   let create ?(a = []) state routes =
     (* TODO: Consumed path immutable *)
+    (* Rendering a page can take an unbounded amount of time and in that time a
+       user may choose to navigate to a different page.  To ensure the latest
+       page is the one that gets rendered, we track iterations and only assign
+       the results in the case of the iteration being rendering being the
+       current iteration.  For example, a user has navigated to page P1 which
+       takes 2 seconds to render and in that time they navigate to P2 which
+       takes 1 second to render.  P2 would be rendered at 1 second and then at 2
+       seconds P1 would finish rendering and replace the contents of P2
+       (assuming the component it applies to still exists on the page).  But by
+       tracking iterations, P1's iteration would be 1 and P2's iteration would
+       be 2.  Once P2 starts it the current iteration would be 2 because there
+       have been two navigations.  When P2 goes to render, it would see that the
+       current iteration is 2 and its iteration is 2, therefore it can set the
+       results of its render.  When P1 finishes, it would see that its iteration
+       is 1 and the current iteration is 2, therefore it cannot set its results.
+
+       There is a similar issue when rendering a page kicks off things that need
+       to be cleaned up.  For example if there is a recurring background task to
+       update some element of the page, we will know the clean up that task
+       because the iteration it was created on does not match the current
+       iteration.
+
+       There are a few things to note in this implementation.
+
+       The first is that this allows unnecessary work to be executed.  Because
+       we do not stop P1 from rendering when we know they are navigating away
+       from it, P1 will still run to completion.  This is chosen because it's
+       easy to think about and it becomes painfully hard to implement a renderer
+       that can be aborted at any point.  Cleaning up work becomes hard to think
+       about.
+
+       This means the UI can be confusing to a user.  For example, a loading
+       indicator can be active despite P2 not loading any data.
+
+       It also means that when P1 finishes, we do need to perform its cleanup
+       operation even though we won't be rendering it.
+
+       With all this, a user of Brtl_js should strive to make rendering happen
+       as quickly as possible, use [Abb_js.fork] to background any long running
+       work and aborting that work in with a [`With_cleanup]. *)
+    let iteration = ref 0 in
     let state = State.{ state with consumed_path = "" } in
     let uri = state |> State.router |> Router.uri in
     let (res, res_set) = React.S.create [] in
     (* Perform initial routing *)
-    let mtch =
-      match match_uri routes (React.S.value uri) with
-        | Some mtch -> mtch
-        | None      ->
-            (* TODO: Do something useful here *)
-            assert false
-    in
-    let with_cleanup = ref None in
-    let prev_match = ref mtch in
-    let id = Uuidm.to_string (Uuidm.create `V4) in
-    let iter =
-      React.S.fmap
-        (fun uri ->
-          route_uri state routes with_cleanup prev_match res_set uri;
-          None)
-        []
-        uri
-    in
-    let v = Rlist.from_signal res in
-    (* This needs to happen after creating [v] because events are transient so
-       we need to create the plumbing and then set the first value of routing,
-       otherwise we'll get the default value given to [hold], which is the empty
-       list. *)
-    apply_match mtch state with_cleanup res_set;
-    let cleanup state =
-      React.S.stop ~strong:true iter;
-      React.S.stop ~strong:true res;
-      match !with_cleanup with
-        | Some f -> f state
-        | None   -> Abb_js.Future.return ()
-    in
-    State.cleanup state id cleanup;
-    Rhtml.div ~a:(Html.a_id id :: a) v
+    match match_uri routes (React.S.value uri) with
+      | Some mtch ->
+          let with_cleanup = ref None in
+          let prev_match = ref mtch in
+          let id = Uuidm.to_string (Uuidm.create `V4) in
+          let iter =
+            React.S.fmap
+              (fun uri ->
+                route_uri iteration state routes with_cleanup prev_match res_set uri;
+                None)
+              []
+              uri
+          in
+          let v = Rlist.from_signal res in
+          apply_match mtch 0 iteration state with_cleanup res_set;
+          let cleanup state =
+            React.S.stop ~strong:true iter;
+            React.S.stop ~strong:true res;
+            match !with_cleanup with
+              | Some f -> f state
+              | None   -> Abb_js.Future.return ()
+          in
+          State.cleanup state id cleanup;
+          Rhtml.div ~a:(Html.a_id id :: a) v
+      | None      ->
+          (* TODO: Do something useful here.  Here we give an empty div.  Perhaps
+             should give a div that can change if the URL eventually matches.  But
+             perhaps its better to just do this and a user of [Router_output]
+             should always match every URL that is valid on that page. *)
+          Firebug.console##log (Js.string "URL does not match any route");
+          Html.div []
 end
 
-let comp ?(a = []) state handler =
-  let id = Uuidm.to_string (Uuidm.create `V4) in
-  let (ret, handle) = Rlist.create [] in
-  try
-    Abb_js.Future.run
-      (let open Abb_js.Future.Infix_monad in
-      handler state
-      >>| function
-      | `Render r            -> Rlist.set handle r
-      | `With_cleanup (r, f) ->
-          Rlist.set handle r;
-          State.cleanup state id f
-      | `Navigate uri        -> Router.navigate (State.router state) uri);
-    Rhtml.div ~a:(Html.a_id id :: a) ret
-  with exn ->
-    Js_of_ocaml.(Firebug.console##log_2 (Js.string "Component failure") exn);
-    assert false
+let comp ?a state handler =
+  (* A component is implemented just as a router output with one route.  There
+     are a bunch of edge cases around navigating while rendering that router
+     output takes care of. *)
+  let consumed_path = State.consumed_path state in
+  let curr_location () = Brtl_js_rtng.(root consumed_path) in
+  Router_output.create ?a state Brtl_js_rtng.[ curr_location () --> handler ]
 
 let dom_html_handler ?(continue = false) f =
   let wrapper event =
