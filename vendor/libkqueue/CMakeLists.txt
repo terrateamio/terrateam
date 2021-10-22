@@ -212,7 +212,10 @@ else()
 endif()
 
 add_library(kqueue ${LIBRARY_TYPE} ${LIBKQUEUE_SOURCES} ${LIBKQUEUE_HEADERS})
-set_target_properties(kqueue PROPERTIES SOVERSION ${PROJECT_VERSION})
+
+# We should have absolute ABI compatibility between versions as none 
+# of the public function signatures of variables will change.
+set_target_properties(kqueue PROPERTIES SOVERSION 0)
 
 if(WIN32)
   target_compile_definitions(kqueue PRIVATE _USRDLL;_WINDLL)
