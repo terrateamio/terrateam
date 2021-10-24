@@ -123,6 +123,11 @@ test_kevent_timer_periodic_modify(struct test_context *ctx)
     kevent_update(ctx->kqfd, &kev);
 }
 
+/*
+ * This appears to be a bug in the Linux/FreeBSD implementation where
+ * it won't allow you to modify an existing event to make it oneshot.
+ */
+#if WITH_NATIVE_KQUEUE_BUGS
 static void
 test_kevent_timer_periodic_to_oneshot(struct test_context *ctx)
 {
@@ -157,6 +162,7 @@ test_kevent_timer_periodic_to_oneshot(struct test_context *ctx)
     kev.flags = EV_DELETE;
     kevent_update_expect_fail(ctx->kqfd, &kev);
 }
+#endif
 
 static void
 test_kevent_timer_disable_and_enable(struct test_context *ctx)
@@ -240,7 +246,9 @@ test_evfilt_timer(struct test_context *ctx)
     test(kevent_timer_oneshot, ctx);
     test(kevent_timer_periodic, ctx);
     test(kevent_timer_periodic_modify, ctx);
+#if WITH_NATIVE_KQUEUE_BUGS
     test(kevent_timer_periodic_to_oneshot, ctx);
+#endif
     test(kevent_timer_disable_and_enable, ctx);
 #ifdef EV_DISPATCH
     test(kevent_timer_dispatch, ctx);
