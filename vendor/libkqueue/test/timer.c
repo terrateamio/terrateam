@@ -111,6 +111,7 @@ test_kevent_timer_periodic_modify(struct test_context *ctx)
 
     /* Check if the event occurs again */
     kevent_add(ctx->kqfd, &kev, 3, EVFILT_TIMER, EV_ADD, 0, 500, NULL);
+    kev.flags = EV_ADD | EV_CLEAR;
     sleep(1);
     kev.data = 2;	/* Should have fired twice */
 
@@ -144,6 +145,7 @@ test_kevent_timer_periodic_to_oneshot(struct test_context *ctx)
 
     /* Switch to oneshot */
     kevent_add(ctx->kqfd, &kev, 3, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, 500, NULL);
+    kev.flags = EV_ADD | EV_CLEAR;
 
     sleep(1);
     kev.data = 1;	/* Should have fired one */
