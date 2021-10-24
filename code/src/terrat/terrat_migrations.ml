@@ -92,6 +92,7 @@ let migrations =
     ("add-user-emails", Terrat_migrations_2021_10_11_add_user_prefs.run);
     ("add-file-support-env-vars", run_file_sql "2021-10-14-add-file-support-env-vars.sql");
     ("add-installation-feedback", run_file_sql "2021-10-20-add-installation-feedback.sql");
+    ("add-installation-run-id", run_file_sql "2021-10-24-add-installation-run-id.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations

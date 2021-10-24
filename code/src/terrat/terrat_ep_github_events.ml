@@ -51,13 +51,50 @@ module Sql = struct
   let delete_installation_repositories =
     Pgsql_io.Typed_sql.(sql /^ read_sql "delete_installation_repositories.sql" /% Var.bigint "id")
 
+  let delete_user_installations =
+    Pgsql_io.Typed_sql.(
+      sql /^ read_sql "delete_user_installations.sql" /% Var.bigint "installation_id")
+
+  let delete_installation_config =
+    Pgsql_io.Typed_sql.(
+      sql /^ read_sql "delete_installation_config.sql" /% Var.bigint "installation_id")
+
+  let delete_installation_env_vars =
+    Pgsql_io.Typed_sql.(
+      sql /^ read_sql "delete_installation_env_vars.sql" /% Var.bigint "installation_id")
+
+  let delete_installation_feedback =
+    Pgsql_io.Typed_sql.(
+      sql /^ read_sql "delete_installation_feedback.sql" /% Var.bigint "installation_id")
+
   let select_installation_secret =
     Pgsql_io.Typed_sql.(
       sql
       // (* secret *) Ret.uuid
       /^ read_sql "select_installation_secret.sql"
       /% Var.bigint "installation_id")
+
+  let select_next_installation_run_id =
+    Pgsql_io.Typed_sql.(
+      sql
+      // (* run id *) Ret.smallint
+      /^ read_sql "select_next_installation_run_id.sql"
+      /% Var.integer "min"
+      /% Var.integer "max")
+
+  let insert_installation_run_id =
+    Pgsql_io.Typed_sql.(
+      sql
+      /^ read_sql "insert_installation_run_id.sql"
+      /% Var.smallint "id"
+      /% Var.bigint "installation_id")
+
+  let delete_installation_run_id =
+    Pgsql_io.Typed_sql.(
+      sql /^ read_sql "delete_installation_run_id.sql" /% Var.bigint "installation_id")
 end
+
+let max_run_id = Int32.of_int 1000
 
 module Aws_cli = struct
   module Ecs = struct
@@ -119,7 +156,13 @@ let run_with_json_output decoder args =
       | Error err -> Abb.Future.return (Error (`Json_error (args, stdout, err)))
   with Yojson.Json_error err -> Abb.Future.return (Error (`Json_error (args, stdout, err)))
 
-let aws_create_installation github_app_id installation_id org_name private_key installation_secret =
+let aws_create_installation
+    github_app_id
+    installation_id
+    org_name
+    private_key
+    installation_secret
+    run_id =
   let open Abbs_future_combinators.Infix_result_monad in
   let ecs_task_role_name = Printf.sprintf "terrateam-%Ld-atlantis" installation_id in
   let assume_role_policy_document =
@@ -287,6 +330,7 @@ let aws_create_installation github_app_id installation_id org_name private_key i
           ("cpu", `Int 64);
           ("memory", `Int 512);
           ("memoryReservation", `Int 32);
+          ("user", `String (Printf.sprintf "tt_%d:tt_%d" run_id run_id));
           ( "portMappings",
             `List
               [
@@ -504,6 +548,27 @@ let aws_destroy_installation installation_id =
   let args = Abb_process.args "aws" [ "iam"; "delete-role"; "--role-name"; ecs_task_role_name ] in
   Process.check_output args >>= fun _ -> Abb.Future.return (Ok ())
 
+let rec acquire_run_id db inst_id =
+  let open Abb.Future.Infix_monad in
+  Pgsql_io.tx db ~f:(fun () ->
+      let open Abbs_future_combinators.Infix_result_monad in
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        Sql.select_next_installation_run_id
+        ~f:CCFun.id
+        Int32.zero
+        max_run_id
+      >>= function
+      | []          -> Abb.Future.return (Error `No_run_ids_available)
+      | run_id :: _ ->
+          Pgsql_io.Prepared_stmt.execute db Sql.insert_installation_run_id run_id inst_id
+          >>= fun () -> Abb.Future.return (Ok run_id))
+  >>= function
+  | Ok run_id                    -> Abb.Future.return (Ok run_id)
+  | Error `No_run_ids_available  -> Abb.Future.return (Error `No_run_ids_available)
+  | Error (`Integrity_err _)     -> Abb.Sys.sleep 1.0 >>= fun () -> acquire_run_id db inst_id
+  | Error (#Pgsql_io.err as err) -> Abb.Future.return (Error err)
+
 let process_installation config storage =
   let open Abbs_future_combinators.Infix_result_monad in
   let module Gwei = Githubc_webhook.Event.Installation in
@@ -549,20 +614,34 @@ let process_installation config storage =
                     (Repo.node_id repo)
                     (Repo.private_ repo)
                     (Uri.to_string url))
-                repos))
-      >>= fun repo_urls ->
+                repos)
+          >>= fun repo_urls ->
+          acquire_run_id db (Inst.id installation)
+          >>= fun run_id -> Abb.Future.return (Ok (repo_urls, run_id)))
+      >>= fun (repo_urls, run_id) ->
       aws_create_installation
         (Terrat_config.github_app_id config)
         (Inst.id installation)
         (R.User.login (Inst.account installation))
         priv_key_pem
         installation_secret
+        run_id
   | Gwei.{ action = `Deleted; installation } ->
       let installation_id = Inst.id installation in
       aws_destroy_installation installation_id
       >>= fun () ->
       Pgsql_pool.with_conn storage ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
+              Pgsql_io.Prepared_stmt.execute db Sql.delete_installation_run_id installation_id
+              >>= fun () ->
+              Pgsql_io.Prepared_stmt.execute db Sql.delete_user_installations installation_id
+              >>= fun () ->
+              Pgsql_io.Prepared_stmt.execute db Sql.delete_installation_config installation_id
+              >>= fun () ->
+              Pgsql_io.Prepared_stmt.execute db Sql.delete_installation_env_vars installation_id
+              >>= fun () ->
+              Pgsql_io.Prepared_stmt.execute db Sql.delete_installation_feedback installation_id
+              >>= fun () ->
               Pgsql_io.Prepared_stmt.execute db Sql.delete_installation_repositories installation_id
               >>= fun () ->
               Pgsql_io.Prepared_stmt.execute db Sql.delete_installation installation_id))
@@ -773,7 +852,25 @@ let post config storage ctx =
             Logs.err (fun m -> m "GITHUB_EVENT : INSTALLATION : FAILED : %s" stderr);
             Abb.Future.return
               (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-        | Error _ ->
+        | Error (#Abb_process.check_output_err as err) ->
+            Logs.err (fun m ->
+                m
+                  "GITHUB_EVENT : INSTALLATION : FAILED : %s"
+                  (Abb_process.show_check_output_err err));
+            Abb.Future.return
+              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+        | Error `No_run_ids_available ->
+            Logs.err (fun m -> m "GITHUB_EVENT : INSTALLATION : FAILED : NO_AVAILABLE_RUN_ID");
+            Abb.Future.return
+              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+        | Error (#Pgsql_pool.err as err) ->
+            Logs.err (fun m ->
+                m "GITHUB_EVENT : INSTALLATION : FAILED : %s" (Pgsql_pool.show_err err));
+            Abb.Future.return
+              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+        | Error (#Pgsql_io.err as err) ->
+            Logs.err (fun m ->
+                m "GITHUB_EVENT : INSTALLATION : FAILED : %s" (Pgsql_io.show_err err));
             Abb.Future.return
               (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
     | Ok Githubc_webhook.{ payload = `Installation_repositories installation_repositories; _ } -> (
