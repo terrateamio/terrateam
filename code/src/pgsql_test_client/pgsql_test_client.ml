@@ -6,6 +6,10 @@ let user = Sys.argv.(2)
 
 let database = Sys.argv.(3)
 
+module Sql = struct
+  let drop_foo = Pgsql_io.Typed_sql.(sql /^ "drop table if exists foo")
+end
+
 let tls_config =
   let cfg = Otls.Tls_config.create () in
   Otls.Tls_config.insecure_noverifycert cfg;
@@ -22,7 +26,13 @@ let with_conn :
   >>= function
   | Ok conn   ->
       Abbs_future_combinators.with_finally
-        (fun () -> f conn)
+        (fun () ->
+          Pgsql_io.Prepared_stmt.execute conn Sql.drop_foo
+          >>= function
+          | Ok ()     -> f conn
+          | Error err ->
+              Logs.err (fun m -> m "%s" (Pgsql_io.show_err err));
+              assert false)
         ~finally:(fun () -> Abbs_future_combinators.ignore (Pgsql_io.destroy conn))
   | Error err ->
       Logs.err (fun m -> m "%s" (Pgsql_io.show_create_err err));
@@ -180,10 +190,24 @@ let test_fetch_all_rows =
       let open Abb.Future.Infix_monad in
       let f conn =
         let open Abbs_future_combinators.Infix_result_monad in
+        let create_sql =
+          Pgsql_io.Typed_sql.(sql /^ "create table foo (name text primary key, age integer)")
+        in
+        let insert_sql =
+          Pgsql_io.Typed_sql.(
+            sql
+            /^ "insert into foo (name, age) values($name, $age)"
+            /% Var.text "name"
+            /% Var.smallint "age")
+        in
         let fetch_sql =
           Pgsql_io.Typed_sql.(sql // Ret.text // Ret.integer /^ "SELECT name, age FROM foo")
         in
         let fetch_rf = Pgsql_io.Row_func.map fetch_sql ~f:(fun name age -> (name, age)) in
+        Pgsql_io.Prepared_stmt.execute conn create_sql
+        >>= fun () ->
+        Pgsql_io.Prepared_stmt.execute conn insert_sql "Test" 26
+        >>= fun () ->
         Pgsql_io.Prepared_stmt.create conn fetch_sql
         >>= fun fetch_stmt ->
         Pgsql_io.Prepared_stmt.bind fetch_stmt fetch_rf
@@ -195,7 +219,7 @@ let test_fetch_all_rows =
       with_conn f
       >>= function
       | Ok r      ->
-          assert (List.length r >= 1);
+          assert (List.length r = 1);
           Abb.Future.return ()
       | Error err -> assert false)
 
@@ -284,10 +308,24 @@ let test_with_cursor =
       let open Abb.Future.Infix_monad in
       let f conn =
         let open Abbs_future_combinators.Infix_result_monad in
+        let create_sql =
+          Pgsql_io.Typed_sql.(sql /^ "create table foo (name text primary key, age integer)")
+        in
+        let insert_sql =
+          Pgsql_io.Typed_sql.(
+            sql
+            /^ "insert into foo (name, age) values($name, $age)"
+            /% Var.text "name"
+            /% Var.smallint "age")
+        in
         let fetch_sql =
           Pgsql_io.Typed_sql.(sql // Ret.text // Ret.integer /^ "SELECT name, age FROM foo")
         in
         let fetch_rf = Pgsql_io.Row_func.map fetch_sql ~f:(fun name age -> (name, age)) in
+        Pgsql_io.Prepared_stmt.execute conn create_sql
+        >>= fun () ->
+        Pgsql_io.Prepared_stmt.execute conn insert_sql "Test" 26
+        >>= fun () ->
         Pgsql_io.Prepared_stmt.create conn fetch_sql
         >>= fun fetch_stmt ->
         Pgsql_io.Prepared_stmt.bind fetch_stmt fetch_rf
@@ -299,7 +337,7 @@ let test_with_cursor =
       with_conn f
       >>= function
       | Ok r      ->
-          assert (List.length r >= 1);
+          assert (List.length r = 1);
           Abb.Future.return ()
       | Error err -> assert false)
 
@@ -404,16 +442,30 @@ let test_stmt_fetch =
       let open Abb.Future.Infix_monad in
       let f conn =
         let open Abbs_future_combinators.Infix_result_monad in
+        let create_sql =
+          Pgsql_io.Typed_sql.(sql /^ "create table foo (name text primary key, age integer)")
+        in
+        let insert_sql =
+          Pgsql_io.Typed_sql.(
+            sql
+            /^ "insert into foo (name, age) values($name, $age)"
+            /% Var.text "name"
+            /% Var.smallint "age")
+        in
         let fetch_sql =
           Pgsql_io.Typed_sql.(sql // Ret.text // Ret.integer /^ "SELECT name, age FROM foo")
         in
+        Pgsql_io.Prepared_stmt.execute conn create_sql
+        >>= fun () ->
+        Pgsql_io.Prepared_stmt.execute conn insert_sql "Test" 26
+        >>= fun () ->
         Pgsql_io.Prepared_stmt.fetch conn fetch_sql ~f:(fun name age -> (name, age))
         >>= fun acc -> Abb.Future.return (Ok acc)
       in
       with_conn f
       >>= function
       | Ok r      ->
-          assert (List.length r >= 1);
+          assert (List.length r = 1);
           Abb.Future.return ()
       | Error err -> assert false)
 
@@ -442,7 +494,6 @@ let test_integrity_fail =
           | (_, Error (`Integrity_err _)) | (Error (`Integrity_err _), _) -> Ok ()
           | _ -> Error ()
       in
-
       Abb.Future.Infix_app.(check_err <$> with_conn f <*> with_conn f)
       >>= fun r ->
       assert (r = Ok ());
