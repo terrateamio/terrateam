@@ -56,7 +56,7 @@ test_kevent_timer_oneshot(struct test_context *ctx)
 
     test_no_kevents(ctx->kqfd);
 
-    kevent_add(ctx->kqfd, &kev, 2, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, 500,NULL);
+    kevent_add(ctx->kqfd, &kev, 2, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, 500, NULL);
 
     /* Retrieve the event */
     kev.flags = EV_ADD | EV_CLEAR | EV_ONESHOT;
@@ -76,7 +76,7 @@ test_kevent_timer_periodic(struct test_context *ctx)
 
     test_no_kevents(ctx->kqfd);
 
-    kevent_add(ctx->kqfd, &kev, 3, EVFILT_TIMER, EV_ADD, 0, 1000,NULL);
+    kevent_add(ctx->kqfd, &kev, 3, EVFILT_TIMER, EV_ADD, 0, 1000, NULL);
 
     /* Retrieve the event */
     kev.flags = EV_ADD | EV_CLEAR;
@@ -92,6 +92,68 @@ test_kevent_timer_periodic(struct test_context *ctx)
     /* Delete the event */
     kev.flags = EV_DELETE;
     kevent_update(ctx->kqfd, &kev);
+}
+
+static void
+test_kevent_timer_periodic_modify(struct test_context *ctx)
+{
+    struct kevent kev, ret[1];
+
+    test_no_kevents(ctx->kqfd);
+
+    kevent_add(ctx->kqfd, &kev, 3, EVFILT_TIMER, EV_ADD, 0, 1000, NULL);
+
+    /* Retrieve the event */
+    kev.flags = EV_ADD | EV_CLEAR;
+    kev.data = 1;
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
+
+    /* Check if the event occurs again */
+    kevent_add(ctx->kqfd, &kev, 3, EVFILT_TIMER, EV_ADD, 0, 500, NULL);
+    sleep(1);
+    kev.data = 2;	/* Should have fired twice */
+
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
+
+    /* Delete the event */
+    kev.flags = EV_DELETE;
+    kevent_update(ctx->kqfd, &kev);
+}
+
+static void
+test_kevent_timer_periodic_to_oneshot(struct test_context *ctx)
+{
+    struct kevent kev, ret[1];
+
+    test_no_kevents(ctx->kqfd);
+
+    kevent_add(ctx->kqfd, &kev, 3, EVFILT_TIMER, EV_ADD, 0, 1000, NULL);
+
+    /* Retrieve the event */
+    kev.flags = EV_ADD | EV_CLEAR;
+    kev.data = 1;
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
+
+    /* Check if the event occurs again */
+    sleep(1);
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
+
+    /* Switch to oneshot */
+    kevent_add(ctx->kqfd, &kev, 3, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, 500, NULL);
+
+    sleep(1);
+    kev.data = 1;	/* Should have fired one */
+
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
+
+    /* Delete the event */
+    kev.flags = EV_DELETE;
+    kevent_update_expect_fail(ctx->kqfd, &kev);
 }
 
 static void
@@ -175,6 +237,8 @@ test_evfilt_timer(struct test_context *ctx)
     test(kevent_timer_get, ctx);
     test(kevent_timer_oneshot, ctx);
     test(kevent_timer_periodic, ctx);
+    test(kevent_timer_periodic_modify, ctx);
+    test(kevent_timer_periodic_to_oneshot, ctx);
     test(kevent_timer_disable_and_enable, ctx);
 #ifdef EV_DISPATCH
     test(kevent_timer_dispatch, ctx);

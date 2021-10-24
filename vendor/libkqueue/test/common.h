@@ -135,6 +135,7 @@ void kevent_get_hires(struct kevent kev[], int numevents, int kqfd, struct times
 int kevent_get_timeout(struct kevent kev[], int numevents, int kqfd, struct timespec *timeout);
 
 void kevent_update(int kqfd, struct kevent *kev);
+void kevent_update_expect_fail(int kqfd, struct kevent *kev);
 
 #define kevent_cmp(a,b) _kevent_cmp(a,b, __FILE__, __LINE__)
 void _kevent_cmp(struct kevent *expected, struct kevent *got, const char *file, int line);

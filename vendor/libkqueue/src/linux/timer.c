@@ -202,10 +202,24 @@ int
 evfilt_timer_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
-    (void)filt;
-    (void)kn;
-    (void)kev;
-    return (0); /* STUB */
+    struct itimerspec ts;
+    int flags;
+
+    dbg_printf("timer_fd=%i - modified", kn->kn_timerfd);
+
+    convert_timedata_to_itimerspec(&ts, kev->data, kev->fflags,
+                                   kev->flags & EV_ONESHOT);
+    flags = (kev->fflags & NOTE_ABSOLUTE) ? TFD_TIMER_ABSTIME : 0;
+    if (timerfd_settime(kn->kn_timerfd, flags, &ts, NULL) < 0) {
+        dbg_printf("timerfd_settime(2): %s", strerror(errno));
+        return (-1);
+    }
+
+    kn->kev.fflags = kev->fflags;
+    kn->kev.flags = kev->flags;
+    kn->kev.data = kev->data;
+
+    return (0);
 }
 
 int

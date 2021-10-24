@@ -244,6 +244,15 @@ kevent_update(int kqfd, struct kevent *kev)
 }
 
 void
+kevent_update_expect_fail(int kqfd, struct kevent *kev)
+{
+    if (kevent(kqfd, kev, 1, NULL, 0, NULL) >= 0) {
+        printf("Performing update should fail");
+        die("kevent");
+    }
+}
+
+void
 kevent_add(int kqfd, struct kevent *kev,
         uintptr_t ident,
         short     filter,
