@@ -1,7 +1,8 @@
 Unreleased
 ------------------------------------------------------------------------
 
-Nothing here yet.
+  * Fix: Set the library search path in libkqueue.pc (Closes #117)
+    (Reported by: Grant Erickson)
 
 000-00-00  v2.5.1
 ------------------------------------------------------------------------

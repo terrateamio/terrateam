@@ -7,6 +7,6 @@ Name: libkqueue
 Description: Emulates FreeBSD kqueue(2) on other platforms
 Version: @PROJECT_VERSION@
 Requires:
-Libs: -lkqueue
+Libs: -L${libdir} -lkqueue
 Libs.private: -lpthread -lrt
 Cflags: -I${includedir}/kqueue
