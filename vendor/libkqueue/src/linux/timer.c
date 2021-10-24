@@ -215,8 +215,8 @@ evfilt_timer_knote_modify(struct filter *filt, struct knote *kn,
         return (-1);
     }
 
+    kn->kev.flags = kev->flags | EV_CLEAR;
     kn->kev.fflags = kev->fflags;
-    kn->kev.flags = kev->flags;
     kn->kev.data = kev->data;
 
     return (0);
