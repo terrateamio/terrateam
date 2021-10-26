@@ -336,7 +336,7 @@ let aws_create_installation
               [
                 `Assoc
                   [
-                    ("containerPort", `Int 4141); ("hostPort", `Int 0); ("protocol", `String "tcp");
+                    ("containerPort", `Int 8080); ("hostPort", `Int 0); ("protocol", `String "tcp");
                   ];
               ] );
           ("essential", `Bool true);
