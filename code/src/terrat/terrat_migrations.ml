@@ -93,6 +93,8 @@ let migrations =
     ("add-file-support-env-vars", run_file_sql "2021-10-14-add-file-support-env-vars.sql");
     ("add-installation-feedback", run_file_sql "2021-10-20-add-installation-feedback.sql");
     ("add-installation-run-id", run_file_sql "2021-10-24-add-installation-run-id.sql");
+    ("fix-secret-encryption-length", run_file_sql "2021-10-25-fix-secret-encryption-length.sql");
+    ("fix-env-vars-value-length", run_file_sql "2021-10-26-fix-env-vars-value-length.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations

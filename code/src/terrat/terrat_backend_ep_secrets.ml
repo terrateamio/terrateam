@@ -6,6 +6,8 @@ module Sql = struct
       sql
       // (* name *) Ret.varchar
       // (* encrypted_value *) Ret.varchar
+      // (* session_key *) Ret.varchar
+      // (* nonce *) Ret.varchar
       // (* is_file *) Ret.boolean
       // (* modified_by *) Ret.varchar
       // (* modified_time *) Ret.varchar
@@ -20,9 +22,9 @@ let fetch_secrets storage installation_id =
       Pgsql_io.Prepared_stmt.fetch
         db
         Sql.select_installation_secrets
-        ~f:(fun name encrypted_value is_file modified_by modified_time ->
+        ~f:(fun name encrypted_value session_key nonce is_file modified_by modified_time ->
           Terrat_data_backend.Response.Secret.
-            { name; encrypted_value; is_file; modified_by; modified_time })
+            { name; encrypted_value; session_key; nonce; is_file; modified_by; modified_time })
         installation_id)
 
 let get storage ctx =

@@ -46,6 +46,8 @@ module Response = struct
     type t = {
       name : string;
       encrypted_value : string;
+      session_key : string;
+      nonce : string;
       is_file : bool;
       modified_by : string;
       modified_time : string;

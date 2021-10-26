@@ -15,6 +15,8 @@ module Sql = struct
       /% Var.bigint "installation_id"
       /% Var.varchar "name"
       /% Var.varchar "value"
+      /% Var.varchar "session_key"
+      /% Var.varchar "nonce"
       /% Var.boolean "is_file"
       /% Var.varchar "modified_by")
 
@@ -88,17 +90,31 @@ let encrypt_and_store storage installation_id user_id secret =
           | pub_key_pem :: _ -> (
               match X509.Public_key.decode_pem (Cstruct.of_string pub_key_pem) with
                 | Ok (`RSA pub_key) ->
+                    let session_key_plaintext = Mirage_crypto_rng.generate 16 in
+                    let nonce = Mirage_crypto_rng.generate 12 in
+                    let key = Mirage_crypto.Cipher_block.AES.GCM.of_secret session_key_plaintext in
                     let value_encrypted =
                       Base64.encode_string
                         (Cstruct.to_string
-                           (Encrypter.encrypt ~key:pub_key (Cstruct.of_string secret.S.value)))
+                           (Mirage_crypto.Cipher_block.AES.GCM.authenticate_encrypt
+                              ~key
+                              ~nonce
+                              ~adata:(Cstruct.of_string secret.S.name)
+                              (Cstruct.of_string secret.S.value)))
                     in
+                    let session_key_encrypted =
+                      Base64.encode_string
+                        (Cstruct.to_string (Encrypter.encrypt ~key:pub_key session_key_plaintext))
+                    in
+                    let nonce_encoded = Base64.encode_string (Cstruct.to_string nonce) in
                     Pgsql_io.Prepared_stmt.execute
                       db
                       Sql.insert_installation_secret
                       installation_id
                       secret.S.name
                       value_encrypted
+                      session_key_encrypted
+                      nonce_encoded
                       secret.S.is_file
                       user_id
                 | _                 -> assert false)
