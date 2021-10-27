@@ -31,6 +31,17 @@ module Server = struct
       | Some _ -> take_until_undet waiting
       | None -> None
 
+  let verify_conns t =
+    Abbs_future_combinators.List.fold_left
+      ~f:(fun t conn ->
+        let open Abb.Future.Infix_monad in
+        Pgsql_io.ping conn
+        >>= function
+        | true  -> Abb.Future.return { t with conns = conn :: t.conns; num_conns = t.num_conns + 1 }
+        | false -> Pgsql_io.destroy conn >>= fun () -> Abb.Future.return t)
+      ~init:{ t with conns = []; num_conns = 0 }
+      t.conns
+
   let rec loop t w r =
     let open Abb.Future.Infix_monad in
     Abbs_channel.recv r >>= handle_msg t w r
@@ -45,11 +56,13 @@ module Server = struct
         match t.conns with
           | c :: cs when Pgsql_io.connected c ->
               Abb.Future.Promise.set p (Ok c) >>= fun () -> loop { t with conns = cs } w r
-          | c :: cs ->
-              Pgsql_io.destroy c
-              >>= fun () ->
-              let t = { t with num_conns = t.num_conns - 1 } in
-              handle_msg t w r (`Ok (Msg.Get p))
+          | _ :: _ ->
+              (* If one connection is disconnected, maybe all of them are, so
+                 verify all the connections before handing out the next one.
+
+                 TODO: Find the next valid connection and hand it over and check
+                 valid connections in the background *)
+              verify_conns t >>= fun t -> handle_msg t w r (`Ok (Msg.Get p))
           | [] -> (
               Abbs_future_combinators.timeout
                 ~timeout:(Abb.Sys.sleep t.connect_timeout)
@@ -73,7 +86,8 @@ module Server = struct
     | `Ok (Msg.Return conn) -> (
         Pgsql_io.destroy conn
         >>= fun () ->
-        let t = { t with num_conns = t.num_conns - 1 } in
+        verify_conns t
+        >>= fun t ->
         match take_until_undet t.waiting with
           | Some p -> handle_msg t w r (`Ok (Msg.Get p))
           | None   -> loop t w r)

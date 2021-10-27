@@ -247,7 +247,15 @@ val create :
 
 val destroy : t -> unit Abb.Future.t
 
+(** Return if the connection is considered connected.  A connection can be set
+   to disconnected by an earlier operation failing.  This does not perform any
+   network operations to test if the connection is still alive. *)
 val connected : t -> bool
+
+(** Perform a network operation to test if the connection is alive.  Return
+   [true] if it succeeds and [false] if it not.  This also sets [connected] to
+   [false] if the connection is not alive. *)
+val ping : t -> bool Abb.Future.t
 
 val tx : t -> f:(unit -> ('a, ([> err ] as 'e)) result Abb.Future.t) -> ('a, 'e) result Abb.Future.t
 

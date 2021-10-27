@@ -968,6 +968,19 @@ let destroy t =
 
 let connected t = t.connected
 
+let ping t =
+  if t.connected then
+    let open Abb.Future.Infix_monad in
+    Io.reset t
+    >>= function
+    | Ok ()               -> Abb.Future.return true
+    | Error `Disconnected ->
+        t.connected <- false;
+        Abb.Future.return false
+    | Error _             -> Abb.Future.return true
+  else
+    Abb.Future.return false
+
 let tx_commit t =
   let open Abbs_future_combinators.Infix_result_monad in
   Io.send_frame t Pgsql_codec.Frame.Frontend.(Query { query = "COMMIT" })
