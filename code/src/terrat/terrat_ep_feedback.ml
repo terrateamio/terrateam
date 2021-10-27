@@ -1,5 +1,7 @@
 module Process = Abb_process.Make (Abb)
 
+let region = "us-west-2"
+
 module Sql = struct
   let select_installation =
     Pgsql_io.Typed_sql.(
@@ -35,6 +37,8 @@ let send_email storage user_id installation_id msg =
         Abb_process.args
           "aws"
           [
+            "--region";
+            region;
             "ses";
             "send-email";
             "--to";
@@ -67,7 +71,7 @@ let post config storage github_schema installation_id feedback =
       Terrat_session.with_session ctx
       >>= fun user_id ->
       let open Abb.Future.Infix_monad in
-      Terrat_github.verify_admin_installation_access
+      Terrat_github.verify_user_installation_access
         config
         storage
         github_schema
