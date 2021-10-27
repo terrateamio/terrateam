@@ -145,14 +145,18 @@ let get_user_installations config storage github_schema user_id =
         let installations = Gh.Response.value installations in
         Gh.collect_all gh (Gh.user_org_membership gh)
         >>= fun org_memberships ->
+        (* Filter out any org that is not active.  We do not want people with
+           pending memberships to get access. *)
+        let org_memberships =
+          CCList.filter
+            (fun org_membership -> Gh.Response.Org_membership.state org_membership = "active")
+            org_memberships
+        in
         let org_admin =
           Org_admin.of_list
             (CCList.map
                (fun org_membership ->
-                 let admin =
-                   Gh.Response.Org_membership.(
-                     state org_membership = "active" && role org_membership = "admin")
-                 in
+                 let admin = Gh.Response.Org_membership.role org_membership = "admin" in
                  let id = Gh.Response.(Org_simple.id (Org_membership.org org_membership)) in
                  (id, admin))
                org_memberships)
