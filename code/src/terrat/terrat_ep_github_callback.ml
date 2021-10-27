@@ -61,7 +61,7 @@ let perform_auth storage github_schema client_id client_secret code =
         refresh_expiration)
   >>= fun () -> Abb.Future.return (Ok user_id)
 
-let get config storage github_schema code ctx =
+let get config storage github_schema code installation_id ctx =
   let open Abb.Future.Infix_monad in
   perform_auth
     storage
@@ -72,7 +72,14 @@ let get config storage github_schema code ctx =
   >>= function
   | Ok user_id                     ->
       let ctx = Terrat_session.create_user_session user_id ctx in
-      let headers = Cohttp.Header.of_list [ ("location", "/") ] in
+      let uri =
+        Uri.to_string
+          (Uri.make
+             ~path:"/"
+             ~query:[ ("installation_id", [ Int64.to_string installation_id ]) ]
+             ())
+      in
+      let headers = Cohttp.Header.of_list [ ("location", uri) ] in
       Abb.Future.return
         (Brtl_ctx.set_response (Brtl_rspnc.create ~headers ~status:`See_other "") ctx)
   | Error (#Pgsql_pool.err as err) ->

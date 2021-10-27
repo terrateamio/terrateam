@@ -14,7 +14,12 @@ let root_rt () = Brtl_rtng.Route.(rel / "")
 
 let github_rt () = Brtl_rtng.Route.(rel / "github")
 
-let github_callback_rt () = Brtl_rtng.Route.(github_rt () / "callback" /? Query.string "code")
+let github_callback_rt () =
+  Brtl_rtng.Route.(
+    github_rt ()
+    / "callback"
+    /? Query.string "code"
+    /? Query.ud "installation_id" (CCOpt.wrap Int64.of_string))
 
 let github_events_rt () = Brtl_rtng.Route.(github_rt () / "events")
 
