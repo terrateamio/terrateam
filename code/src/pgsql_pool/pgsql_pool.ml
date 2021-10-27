@@ -51,8 +51,8 @@ module Server = struct
               let t = { t with num_conns = t.num_conns - 1 } in
               handle_msg t w r (`Ok (Msg.Get p))
           | [] -> (
-              Abbs_future_combinators.with_cancel
-                ~cancel:(Abb.Sys.sleep t.connect_timeout)
+              Abbs_future_combinators.timeout
+                ~timeout:(Abb.Sys.sleep t.connect_timeout)
                 (Pgsql_io.create
                    ?tls_config:t.tls_config
                    ?passwd:t.passwd
@@ -61,10 +61,10 @@ module Server = struct
                    ~user:t.user
                    t.database)
               >>= function
-              | Ok (Ok conn)                    ->
+              | `Ok (Ok conn)            ->
                   Abb.Future.Promise.set p (Ok conn)
                   >>= fun () -> loop { t with num_conns = t.num_conns + 1 } w r
-              | Ok (Error _) | Error `Cancelled ->
+              | `Ok (Error _) | `Timeout ->
                   Abb.Future.Promise.set p (Error ()) >>= fun () -> loop t w r))
     | `Ok (Msg.Return conn) when Pgsql_io.connected conn -> (
         match take_until_undet t.waiting with
