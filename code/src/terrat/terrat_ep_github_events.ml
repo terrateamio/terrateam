@@ -577,11 +577,15 @@ let process_installation config storage =
   let module Repo = Githubc_webhook.Repo in
   function
   | Gwei.{ action = `Created; repos; installation } ->
+      let installation_id = Inst.id installation in
+      Logs.info (fun m -> m "GITHUB_EVENT : INSTALLATION : %Ld : CREATING" installation_id);
       let priv_key = Mirage_crypto_pk.Rsa.generate ~bits:2048 () in
       let pub_key = Mirage_crypto_pk.Rsa.pub_of_priv priv_key in
       let priv_key_pem = Cstruct.to_string (X509.Private_key.encode_pem (`RSA priv_key)) in
       let pub_key_pem = Cstruct.to_string (X509.Public_key.encode_pem (`RSA pub_key)) in
       let installation_secret = Uuidm.create `V4 in
+      Logs.debug (fun m ->
+          m "GITHUB_EVENT : INSTALLATION : %Ld : ADDING_TO_DATABASE" installation_id);
       Pgsql_pool.with_conn storage ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
               Pgsql_io.Prepared_stmt.execute
@@ -590,7 +594,7 @@ let process_installation config storage =
                 (Uri.to_string (Inst.access_tokens_url installation))
                 (Inst.created_at installation)
                 (Uri.to_string (Inst.html_url installation))
-                (Inst.id installation)
+                installation_id
                 (R.User.login (Inst.account installation))
                 (Inst.suspended_at installation)
                 (Inst.target_type installation)
@@ -609,25 +613,37 @@ let process_installation config storage =
                     Sql.insert_installation_repository
                     (Repo.full_name repo)
                     (Repo.id repo)
-                    (Inst.id installation)
+                    installation_id
                     (Repo.name repo)
                     (Repo.node_id repo)
                     (Repo.private_ repo)
                     (Uri.to_string url))
                 repos)
           >>= fun repo_urls ->
-          acquire_run_id db (Inst.id installation)
-          >>= fun run_id -> Abb.Future.return (Ok (repo_urls, run_id)))
+          Logs.debug (fun m ->
+              m "GITHUB_EVENT : INSTALLATION : %Ld : ACQUIRING_RUN_ID" installation_id);
+          acquire_run_id db installation_id
+          >>= fun run_id ->
+          Logs.debug (fun m ->
+              m "GITHUB_EVENT : INSTALLATION : %Ld : ACQUIRED_RUN_ID : %d" installation_id run_id);
+          Abb.Future.return (Ok (repo_urls, run_id)))
       >>= fun (repo_urls, run_id) ->
+      Logs.debug (fun m ->
+          m "GITHUB_EVENT : INSTALLATION : %Ld : ADDED_TO_DATABASE" installation_id);
+      Logs.debug (fun m -> m "GITHUB_EVENT : INSTALLATION : %Ld : AWS_START" installation_id);
       aws_create_installation
         (Terrat_config.github_app_id config)
-        (Inst.id installation)
+        installation_id
         (R.User.login (Inst.account installation))
         priv_key_pem
         installation_secret
         run_id
+      >>= fun () ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : INSTALLATION : %Ld : AWS_COMPLETE" installation_id);
+      Abb.Future.return (Ok ())
   | Gwei.{ action = `Deleted; installation } ->
       let installation_id = Inst.id installation in
+      Logs.info (fun m -> m "GITHUB_EVENT : INSTALLATION : %Ld : DELETING" installation_id);
       aws_destroy_installation installation_id
       >>= fun () ->
       Pgsql_pool.with_conn storage ~f:(fun db ->
@@ -841,36 +857,46 @@ let post config storage ctx =
         process_installation config storage installation
         >>= function
         | Ok () ->
-            Logs.info (fun m -> m "GITHUB_EVENT : INSTALLATION : SUCCESS : %Ld" (Inst.id inst));
+            Logs.info (fun m -> m "GITHUB_EVENT : INSTALLATION : %Ld : SUCCESS" (Inst.id inst));
             Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
         | Error (`Run_error (args, stdout, stderr, _)) ->
             Logs.err (fun m ->
                 m
                   "GITHUB_EVENT : INSTALLATION : FAILED : %s"
                   (CCString.concat " " args.Abb_intf.Process.args));
-            Logs.err (fun m -> m "GITHUB_EVENT : INSTALLATION : FAILED : %s" stdout);
-            Logs.err (fun m -> m "GITHUB_EVENT : INSTALLATION : FAILED : %s" stderr);
+            Logs.err (fun m ->
+                m "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : %s" (Inst.id inst) stdout);
+            Logs.err (fun m ->
+                m "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : %s" (Inst.id inst) stderr);
             Abb.Future.return
               (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
         | Error (#Abb_process.check_output_err as err) ->
             Logs.err (fun m ->
                 m
-                  "GITHUB_EVENT : INSTALLATION : FAILED : %s"
+                  "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : %s"
+                  (Inst.id inst)
                   (Abb_process.show_check_output_err err));
             Abb.Future.return
               (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
         | Error `No_run_ids_available ->
-            Logs.err (fun m -> m "GITHUB_EVENT : INSTALLATION : FAILED : NO_AVAILABLE_RUN_ID");
+            Logs.err (fun m ->
+                m "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : NO_AVAILABLE_RUN_ID" (Inst.id inst));
             Abb.Future.return
               (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
         | Error (#Pgsql_pool.err as err) ->
             Logs.err (fun m ->
-                m "GITHUB_EVENT : INSTALLATION : FAILED : %s" (Pgsql_pool.show_err err));
+                m
+                  "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : %s"
+                  (Inst.id inst)
+                  (Pgsql_pool.show_err err));
             Abb.Future.return
               (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
         | Error (#Pgsql_io.err as err) ->
             Logs.err (fun m ->
-                m "GITHUB_EVENT : INSTALLATION : FAILED : %s" (Pgsql_io.show_err err));
+                m
+                  "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : %s"
+                  (Inst.id inst)
+                  (Pgsql_io.show_err err));
             Abb.Future.return
               (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
     | Ok Githubc_webhook.{ payload = `Installation_repositories installation_repositories; _ } -> (
