@@ -475,11 +475,11 @@ let test_integrity_fail =
       let f conn =
         let create_sql =
           Pgsql_io.Typed_sql.(
-            sql /^ "CREATE TABLE IF NOT EXISTS foo1 (name TEXT PRIMARY KEY, age INTEGER)")
+            sql /^ "CREATE TABLE IF NOT EXISTS foo (name TEXT PRIMARY KEY, age INTEGER)")
         in
         let insert_sql =
           Pgsql_io.Typed_sql.(
-            sql /^ "INSERT INTO foo1 VALUES($name, $age)" /% Var.text "name" /% Var.integer "age")
+            sql /^ "INSERT INTO foo VALUES($name, $age)" /% Var.text "name" /% Var.integer "age")
         in
         Pgsql_io.tx conn ~f:(fun () ->
             let open Abbs_future_combinators.Infix_result_monad in
@@ -495,6 +495,82 @@ let test_integrity_fail =
           | _ -> Error ()
       in
       Abb.Future.Infix_app.(check_err <$> with_conn f <*> with_conn f)
+      >>= fun r ->
+      assert (r = Ok ());
+      Abb.Future.return ())
+
+let test_integrity_recover =
+  Oth_abb.test ~desc:"Integrity error recover" ~name:"integrity_recover" (fun () ->
+      let open Abb.Future.Infix_monad in
+      let f conn =
+        let create_sql =
+          Pgsql_io.Typed_sql.(
+            sql /^ "CREATE TABLE IF NOT EXISTS foo (name TEXT PRIMARY KEY, age INTEGER)")
+        in
+        let insert_sql =
+          Pgsql_io.Typed_sql.(
+            sql /^ "INSERT INTO foo VALUES($name, $age)" /% Var.text "name" /% Var.integer "age")
+        in
+        Pgsql_io.tx conn ~f:(fun () ->
+            let open Abbs_future_combinators.Infix_result_monad in
+            Pgsql_io.Prepared_stmt.execute conn create_sql
+            >>= fun () ->
+            Abbs_future_combinators.to_result (Abb.Sys.sleep 1.0)
+            >>= fun () ->
+            Pgsql_io.Prepared_stmt.execute conn insert_sql "Testy McTestface" (Int32.of_int 36))
+        >>= function
+        | Ok ()                    -> Abb.Future.return (Ok `Ok)
+        | Error (`Integrity_err _) ->
+            let open Abbs_future_combinators.Infix_result_monad in
+            Pgsql_io.Prepared_stmt.execute conn insert_sql "Testy RecoverFace" (Int32.of_int 36)
+            >>= fun () -> Abb.Future.return (Ok `Integrity)
+        | Error _ as err           -> Abb.Future.return err
+      in
+      let check_err r1 r2 =
+        match (r1, r2) with
+          | (_, Ok `Integrity) | (Ok `Integrity, _) -> Ok ()
+          | (_, Error (#Pgsql_io.err as err)) | (Error (#Pgsql_io.err as err), _) ->
+              failwith (Pgsql_io.show_err err)
+          | (_, _) -> failwith "missing integrity failure"
+      in
+      Abb.Future.Infix_app.(check_err <$> with_conn f <*> with_conn f)
+      >>= fun r ->
+      assert (r = Ok ());
+      Abb.Future.return ())
+
+let test_rollback =
+  Oth_abb.test ~desc:"Rollback" ~name:"rollback" (fun () ->
+      let open Abb.Future.Infix_monad in
+      let f conn =
+        let create_sql =
+          Pgsql_io.Typed_sql.(
+            sql /^ "CREATE TABLE IF NOT EXISTS foo (name TEXT PRIMARY KEY, age INTEGER)")
+        in
+        let insert_sql =
+          Pgsql_io.Typed_sql.(
+            sql /^ "INSERT INTO foo VALUES($name, $age)" /% Var.text "name" /% Var.integer "age")
+        in
+        let select_sql =
+          Pgsql_io.Typed_sql.(
+            sql // (* name *) Ret.varchar // (* age *) Ret.integer /^ "SELECT * FROM foo")
+        in
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_io.Prepared_stmt.execute conn create_sql
+        >>= fun () ->
+        let open Abb.Future.Infix_monad in
+        Pgsql_io.tx conn ~f:(fun () ->
+            let open Abbs_future_combinators.Infix_result_monad in
+            Pgsql_io.Prepared_stmt.execute conn insert_sql "Testy McTestface" (Int32.of_int 36)
+            >>= fun () -> Abb.Future.return (Error `Foo))
+        >>= fun _ ->
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_io.tx conn ~f:(fun () ->
+            Pgsql_io.Prepared_stmt.fetch conn select_sql ~f:(fun name age -> (name, age)))
+        >>= fun r ->
+        assert (r = []);
+        Abb.Future.return (Ok ())
+      in
+      with_conn f
       >>= fun r ->
       assert (r = Ok ());
       Abb.Future.return ())
@@ -517,6 +593,8 @@ let test =
            test_insert_execute;
            test_stmt_fetch;
            test_integrity_fail;
+           test_integrity_recover;
+           test_rollback;
          ]))
 
 let reporter ppf =

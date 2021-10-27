@@ -16,6 +16,7 @@ type t = {
   mutable unique_id : int;
   notice_response : (char * string) list -> unit;
   mutable expected_frames : (Pgsql_codec.Frame.Backend.t -> bool) list;
+  mutable in_tx : bool;
 }
 
 let add_expected_frame t frame = t.expected_frames <- frame :: t.expected_frames
@@ -105,11 +106,12 @@ module Io = struct
 
   let reset conn =
     let open Abbs_future_combinators.Infix_result_monad in
-    (* send_frame conn Pgsql_codec.Frame.Frontend.Sync
-     * >>= fun () -> *)
+    send_frame conn Pgsql_codec.Frame.Frontend.Sync
+    >>= fun () ->
     conn.expected_frames <- [];
     consume_until conn (function
-        | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'I' } -> true
+        | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'T' | 'E' } when conn.in_tx -> true
+        | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'I' } when not conn.in_tx -> true
         | _ -> false)
     >>= fun res ->
     assert (res = []);
@@ -152,8 +154,11 @@ module Io = struct
           conn.notice_response msgs;
           match_frames conn fs rfs
       | (_, (Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as r_fs)) ->
-          Abb.Future.return (Error (handle_err_frame msgs r_fs))
-      | (_, _) -> Abb.Future.return (Error (`Unmatching_frame received_fs))
+          let open Abb.Future.Infix_monad in
+          reset conn >>= fun _ -> Abb.Future.return (Error (handle_err_frame msgs r_fs))
+      | (_, _) ->
+          let open Abb.Future.Infix_monad in
+          reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame received_fs))
 end
 
 type frame_err =
@@ -887,6 +892,7 @@ and create_sm_perform_login r w ?passwd ~notice_response ~user database =
       unique_id = 0;
       notice_response;
       expected_frames = [];
+      in_tx = false;
     }
   in
   let msgs = [ ("user", user); ("database", database) ] in
@@ -966,6 +972,7 @@ let tx_commit t =
   let open Abbs_future_combinators.Infix_result_monad in
   Io.send_frame t Pgsql_codec.Frame.Frontend.(Query { query = "COMMIT" })
   >>= fun () ->
+  t.in_tx <- false;
   add_expected_frames
     t
     Pgsql_codec.Frame.Backend.
@@ -974,19 +981,26 @@ let tx_commit t =
 
 let tx_rollback t =
   let open Abbs_future_combinators.Infix_result_monad in
+  Io.reset t
+  >>= fun () ->
   Io.send_frame t Pgsql_codec.Frame.Frontend.(Query { query = "ROLLBACK" })
   >>= fun () ->
-  (* add_expected_frames
-   *   t
-   *   Pgsql_codec.Frame.Backend.
-   *     [ equal (CommandComplete { tag = "ROLLBACK" }); equal (ReadyForQuery { status = 'I' }) ];
-   * Io.consume_matching t (consume_expected_frames t) *)
-  Io.reset t
+  t.in_tx <- false;
+  add_expected_frames
+    t
+    Pgsql_codec.Frame.Backend.
+      [
+        equal (ReadyForQuery { status = 'E' });
+        equal (CommandComplete { tag = "ROLLBACK" });
+        equal (ReadyForQuery { status = 'I' });
+      ];
+  Io.consume_matching t (consume_expected_frames t)
 
 let tx t ~f =
   Abbs_future_combinators.on_failure
     (fun () ->
       let open Abb.Future.Infix_monad in
+      t.in_tx <- true;
       Io.send_frame t Pgsql_codec.Frame.Frontend.(Query { query = "BEGIN" })
       >>= fun _ ->
       add_expected_frames
