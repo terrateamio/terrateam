@@ -9,9 +9,8 @@ module Migrate = struct
   let create_migrations_table_sql =
     Pgsql_io.Typed_sql.(
       sql
-      /^ "create table if not exists migrations (date timestamp default now(), "
-      /^ "name varchar(256) not null, "
-      /^ "primary key (date, name))")
+      /^ "create table if not exists migrations (date timestamp default now(), name varchar(256) \
+          primary key)")
 
   let add_migration_sql =
     Pgsql_io.Typed_sql.(sql /^ "insert into migrations (name) values($name)" /% Var.varchar "name")
