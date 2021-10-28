@@ -143,6 +143,27 @@ module Aws_cli = struct
       [@@deriving yojson { strict = false }]
     end
   end
+
+  let send_email installation_id =
+    let args =
+      Abb_process.args
+        "aws"
+        [
+          "--region";
+          region;
+          "ses";
+          "send-email";
+          "--to";
+          "alerts@terrateam.io";
+          "--from";
+          "alerts@terrateam.io";
+          "--subject";
+          Printf.sprintf "New Installation: %Ld" installation_id;
+          "--text";
+          Int64.to_string installation_id;
+        ]
+    in
+    Process.check_output args
 end
 
 let run_with_json_output decoder args =
@@ -640,7 +661,8 @@ let process_installation config storage =
         run_id
       >>= fun () ->
       Logs.debug (fun m -> m "GITHUB_EVENT : INSTALLATION : %Ld : AWS_COMPLETE" installation_id);
-      Abb.Future.return (Ok ())
+      Abbs_future_combinators.(to_result (ignore (Aws_cli.send_email installation_id)))
+      >>= fun () -> Abb.Future.return (Ok ())
   | Gwei.{ action = `Deleted; installation } ->
       let installation_id = Inst.id installation in
       Logs.info (fun m -> m "GITHUB_EVENT : INSTALLATION : %Ld : DELETING" installation_id);
