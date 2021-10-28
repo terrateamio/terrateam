@@ -866,121 +866,119 @@ let post config storage ctx =
   let request = Brtl_ctx.request ctx in
   let headers = Brtl_ctx.Request.headers request in
   let body = Brtl_ctx.body ctx in
-  match
-    Githubc_webhook.decode ?secret:(Terrat_config.github_webhook_secret config) headers body
-  with
-    | Ok
-        Githubc_webhook.
-          {
-            payload = `Installation (Event.Installation.{ installation = inst; _ } as installation);
-            _;
-          } -> (
-        let module Inst = Githubc_v3.Response.Installation in
-        process_installation config storage installation
-        >>= function
-        | Ok () ->
-            Logs.info (fun m -> m "GITHUB_EVENT : INSTALLATION : %Ld : SUCCESS" (Inst.id inst));
-            Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-        | Error (`Run_error (args, stdout, stderr, _)) ->
-            Logs.err (fun m ->
-                m
-                  "GITHUB_EVENT : INSTALLATION : FAILED : %s"
-                  (CCString.concat " " args.Abb_intf.Process.args));
-            Logs.err (fun m ->
-                m "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : %s" (Inst.id inst) stdout);
-            Logs.err (fun m ->
-                m "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : %s" (Inst.id inst) stderr);
-            Abb.Future.return
-              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-        | Error (#Abb_process.check_output_err as err) ->
-            Logs.err (fun m ->
-                m
-                  "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : %s"
-                  (Inst.id inst)
-                  (Abb_process.show_check_output_err err));
-            Abb.Future.return
-              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-        | Error `No_run_ids_available ->
-            Logs.err (fun m ->
-                m "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : NO_AVAILABLE_RUN_ID" (Inst.id inst));
-            Abb.Future.return
-              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-        | Error (#Pgsql_pool.err as err) ->
-            Logs.err (fun m ->
-                m
-                  "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : %s"
-                  (Inst.id inst)
-                  (Pgsql_pool.show_err err));
-            Abb.Future.return
-              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-        | Error (#Pgsql_io.err as err) ->
-            Logs.err (fun m ->
-                m
-                  "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : %s"
-                  (Inst.id inst)
-                  (Pgsql_io.show_err err));
-            Abb.Future.return
-              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-    | Ok Githubc_webhook.{ payload = `Installation_repositories installation_repositories; _ } -> (
-        process_installation_repositories config storage installation_repositories
-        >>= function
-        | Ok _ -> Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-        | Error (`Run_error (args, stdout, stderr, _)) ->
-            Logs.err (fun m ->
-                m
-                  "GITHUB_EVENT : INSTALLATION_REPOSITORY : FAILED : %s"
-                  (CCString.concat " " args.Abb_intf.Process.args));
-            Logs.err (fun m -> m "GITHUB_EVENT : INSTALLATION_REPOSITORY : FAILED : %s" stdout);
-            Logs.err (fun m -> m "GITHUB_EVENT : INSTALLATION_REPOSITORY : FAILED : %s" stderr);
-            Abb.Future.return
-              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-        | Error _ ->
-            Abb.Future.return
-              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-    | Ok
-        (Githubc_webhook.
-           { payload = `Issue_comment _ | `Pull_request _ | `Pull_request_review _ | `Push _; _ } as
-        event) -> (
-        proxy_event config storage headers body event
-        >>= function
-        | Ok _ -> Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-        | Error (#Abb_process.check_output_err as err) ->
-            Logs.err (fun m ->
-                m "GITHUB_EVENT : PROXY : FAILED : AWS : %s" (Abb_process.show_check_output_err err));
-            Logs.err (fun m -> m "%s" Githubc_webhook.(show Payload.pp event));
-            Abb.Future.return
-              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-        | Error (#Cohttp_abb.request_err as err) ->
-            Logs.err (fun m ->
-                m "GITHUB_EVENT : PROXY : FAILED : HTTP : %s" (Cohttp_abb.show_request_err err));
-            Logs.err (fun m -> m "%s" Githubc_webhook.(show Payload.pp event));
-            Abb.Future.return
-              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-        | Error (#Pgsql_pool.err as err) ->
-            Logs.err (fun m -> m "GITHUB_EVENT : PROXY : ERROR : DB : %s" (Pgsql_pool.show_err err));
-            Abb.Future.return
-              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-        | Error (#Pgsql_io.err as err) ->
-            Logs.err (fun m -> m "GITHUB_EVENT : PROXY : ERROR : DB : %s" (Pgsql_io.show_err err));
-            Abb.Future.return
-              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-        | Error (`Json_error (args, stdout, err)) ->
-            Logs.err (fun m ->
-                m
-                  "GITHUB_EVENT : PROXY : FAILED : JSON : %s : %s : %s"
-                  (Abb_intf.Process.show args)
-                  stdout
-                  err);
-            Logs.err (fun m -> m "%s" Githubc_webhook.(show Payload.pp event));
-            Abb.Future.return
-              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-    | Ok Githubc_webhook.{ payload = `Unknown ((("create" | "check_suite") as event_name), _); _ }
-      ->
-        Logs.info (fun m -> m "GITHUB_EVENT : IGNORE_EVENT : %s" event_name);
-        Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-    | Ok event ->
-        Logs.info (fun m -> m "%s" Githubc_webhook.(show Payload.pp event));
-        Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-    | Error (#Githubc_webhook.err as err) ->
-        Logs.warn (fun m -> m "GITHUB_EVENT : ERROR : %s" (Githubc_webhook.show_err err));
-        Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)
+  (* Background all webhook handling because it can take longer than github is
+     going to wait for us *)
+  Abb.Future.fork
+    (match
+       Githubc_webhook.decode ?secret:(Terrat_config.github_webhook_secret config) headers body
+     with
+      | Ok
+          Githubc_webhook.
+            {
+              payload =
+                `Installation (Event.Installation.{ installation = inst; _ } as installation);
+              _;
+            } -> (
+          let module Inst = Githubc_v3.Response.Installation in
+          process_installation config storage installation
+          >>= function
+          | Ok () ->
+              Logs.info (fun m -> m "GITHUB_EVENT : INSTALLATION : %Ld : SUCCESS" (Inst.id inst));
+              Abb.Future.return ()
+          | Error (`Run_error (args, stdout, stderr, _)) ->
+              Logs.err (fun m ->
+                  m
+                    "GITHUB_EVENT : INSTALLATION : FAILED : %s"
+                    (CCString.concat " " args.Abb_intf.Process.args));
+              Logs.err (fun m ->
+                  m "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : %s" (Inst.id inst) stdout);
+              Logs.err (fun m ->
+                  m "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : %s" (Inst.id inst) stderr);
+              Abb.Future.return ()
+          | Error (#Abb_process.check_output_err as err) ->
+              Logs.err (fun m ->
+                  m
+                    "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : %s"
+                    (Inst.id inst)
+                    (Abb_process.show_check_output_err err));
+              Abb.Future.return ()
+          | Error `No_run_ids_available ->
+              Logs.err (fun m ->
+                  m
+                    "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : NO_AVAILABLE_RUN_ID"
+                    (Inst.id inst));
+              Abb.Future.return ()
+          | Error (#Pgsql_pool.err as err) ->
+              Logs.err (fun m ->
+                  m
+                    "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : %s"
+                    (Inst.id inst)
+                    (Pgsql_pool.show_err err));
+              Abb.Future.return ()
+          | Error (#Pgsql_io.err as err) ->
+              Logs.err (fun m ->
+                  m
+                    "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : %s"
+                    (Inst.id inst)
+                    (Pgsql_io.show_err err));
+              Abb.Future.return ())
+      | Ok Githubc_webhook.{ payload = `Installation_repositories installation_repositories; _ }
+        -> (
+          process_installation_repositories config storage installation_repositories
+          >>= function
+          | Ok _ -> Abb.Future.return ()
+          | Error (`Run_error (args, stdout, stderr, _)) ->
+              Logs.err (fun m ->
+                  m
+                    "GITHUB_EVENT : INSTALLATION_REPOSITORY : FAILED : %s"
+                    (CCString.concat " " args.Abb_intf.Process.args));
+              Logs.err (fun m -> m "GITHUB_EVENT : INSTALLATION_REPOSITORY : FAILED : %s" stdout);
+              Logs.err (fun m -> m "GITHUB_EVENT : INSTALLATION_REPOSITORY : FAILED : %s" stderr);
+              Abb.Future.return ()
+          | Error _ -> Abb.Future.return ())
+      | Ok
+          (Githubc_webhook.
+             { payload = `Issue_comment _ | `Pull_request _ | `Pull_request_review _ | `Push _; _ }
+          as event) -> (
+          proxy_event config storage headers body event
+          >>= function
+          | Ok _ -> Abb.Future.return ()
+          | Error (#Abb_process.check_output_err as err) ->
+              Logs.err (fun m ->
+                  m
+                    "GITHUB_EVENT : PROXY : FAILED : AWS : %s"
+                    (Abb_process.show_check_output_err err));
+              Logs.err (fun m -> m "%s" Githubc_webhook.(show Payload.pp event));
+              Abb.Future.return ()
+          | Error (#Cohttp_abb.request_err as err) ->
+              Logs.err (fun m ->
+                  m "GITHUB_EVENT : PROXY : FAILED : HTTP : %s" (Cohttp_abb.show_request_err err));
+              Logs.err (fun m -> m "%s" Githubc_webhook.(show Payload.pp event));
+              Abb.Future.return ()
+          | Error (#Pgsql_pool.err as err) ->
+              Logs.err (fun m ->
+                  m "GITHUB_EVENT : PROXY : ERROR : DB : %s" (Pgsql_pool.show_err err));
+              Abb.Future.return ()
+          | Error (#Pgsql_io.err as err) ->
+              Logs.err (fun m -> m "GITHUB_EVENT : PROXY : ERROR : DB : %s" (Pgsql_io.show_err err));
+              Abb.Future.return ()
+          | Error (`Json_error (args, stdout, err)) ->
+              Logs.err (fun m ->
+                  m
+                    "GITHUB_EVENT : PROXY : FAILED : JSON : %s : %s : %s"
+                    (Abb_intf.Process.show args)
+                    stdout
+                    err);
+              Logs.err (fun m -> m "%s" Githubc_webhook.(show Payload.pp event));
+              Abb.Future.return ())
+      | Ok Githubc_webhook.{ payload = `Unknown ((("create" | "check_suite") as event_name), _); _ }
+        ->
+          Logs.info (fun m -> m "GITHUB_EVENT : IGNORE_EVENT : %s" event_name);
+          Abb.Future.return ()
+      | Ok event ->
+          Logs.info (fun m -> m "%s" Githubc_webhook.(show Payload.pp event));
+          Abb.Future.return ()
+      | Error (#Githubc_webhook.err as err) ->
+          Logs.warn (fun m -> m "GITHUB_EVENT : ERROR : %s" (Githubc_webhook.show_err err));
+          Abb.Future.return ())
+  >>= fun _ -> Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
