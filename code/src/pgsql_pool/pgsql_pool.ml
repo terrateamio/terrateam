@@ -37,9 +37,11 @@ module Server = struct
         let open Abb.Future.Infix_monad in
         Pgsql_io.ping conn
         >>= function
-        | true  -> Abb.Future.return { t with conns = conn :: t.conns; num_conns = t.num_conns + 1 }
-        | false -> Pgsql_io.destroy conn >>= fun () -> Abb.Future.return t)
-      ~init:{ t with conns = []; num_conns = 0 }
+        | true  -> Abb.Future.return { t with conns = conn :: t.conns }
+        | false ->
+            Pgsql_io.destroy conn
+            >>= fun () -> Abb.Future.return { t with num_conns = t.num_conns - 1 })
+      ~init:{ t with conns = [] }
       t.conns
 
   let rec loop t w r =
