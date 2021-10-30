@@ -76,6 +76,13 @@ kevent_fflags_dump(const struct kevent *kev)
         KEVFFL_DUMP(NOTE_EXEC);
         break;
 
+    case EVFILT_TIMER:
+        KEVFFL_DUMP(NOTE_SECONDS);
+        KEVFFL_DUMP(NOTE_USECONDS);
+        KEVFFL_DUMP(NOTE_NSECONDS);
+        KEVFFL_DUMP(NOTE_ABSOLUTE);
+        break;
+
     default:
         break;
     }
