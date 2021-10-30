@@ -93,7 +93,7 @@ convert_timedata_to_itimerspec(struct itimerspec *dst, long src,
     switch (flags & NOTE_TIMER_MASK) {
     case NOTE_USECONDS:
         sec = src / 1000000;
-        nsec = (src % 1000000);
+        nsec = (src % 1000000) * 1000;
         break;
 
     case NOTE_NSECONDS:
