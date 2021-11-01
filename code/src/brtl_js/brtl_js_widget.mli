@@ -15,6 +15,14 @@ module React : sig
     options:(string * string) Brtl_js.Rlist.t ->
     unit ->
     string t * [> Html_types.select ] Brtl_js.Html.elt
+
+  (** An input box combined with select *)
+  val combobox :
+    ?a:Html_types.input_attrib Brtl_js.Html.attrib list ->
+    ?value:string ->
+    options:string Brtl_js.Rlist.t ->
+    unit ->
+    string t * [> Html_types.input ] Brtl_js.Html.elt * [> Html_types.datalist ] Brtl_js.Rhtml.elt
 end
 
 val create : 'a Brtl_js.React.signal -> (?step:Brtl_js.React.step -> 'a -> unit) -> 'a t

@@ -28,8 +28,44 @@ module React = struct
         options
     in
     let elem = Brtl_js.Rhtml.select ~a:(Brtl_js.Html.a_onchange onchange :: a) options_rlist in
-
     ({ signal = elem_value; set = elem_set_value }, elem)
+
+  let combobox ?(a = []) ?(value = "") ~options () =
+    let datalist_id = Uuidm.(to_string (create `V4)) in
+    let (elem_value, elem_set_value) = Brtl_js.React.S.create value in
+    let onchange =
+      Brtl_js.handler_sync (fun event ->
+          Js.Opt.iter event##.target (fun target ->
+              Js.Opt.iter (Dom_html.CoerceTo.input target) (fun inp ->
+                  elem_set_value (Js.to_string inp##.value))))
+    in
+    let elem =
+      Brtl_js.Html.input
+        ~a:
+          (Brtl_js.Html.a_value value
+          :: Brtl_js.Html.a_onchange onchange
+          :: Brtl_js.Html.a_oninput onchange
+          :: Brtl_js.Html.a_list datalist_id
+          :: a)
+        ()
+    in
+    let datalist =
+      Brtl_js.Rhtml.datalist
+        ~a:[ Brtl_js.Html.a_id datalist_id ]
+        ~children:
+          (`Options
+            (Brtl_js.Rlist.map
+               (fun item ->
+                 Brtl_js.Html.option ~a:[ Brtl_js.Html.a_value item ] (Brtl_js.Html.txt ""))
+               options))
+        ()
+    in
+    let set_value ?step s =
+      let elem = Brtl_js.To_dom.of_input elem in
+      elem##.value := Js.string s;
+      elem_set_value ?step s
+    in
+    ({ signal = elem_value; set = set_value }, elem, datalist)
 end
 
 module Radio_gen = struct
