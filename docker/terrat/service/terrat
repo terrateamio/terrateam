@@ -2,6 +2,8 @@
 
 set -e
 
+exec 2>&1
+
 sleep 5
 
 export TERRAT_FRONTEND_PORT=8180
