@@ -19,7 +19,7 @@ let github_callback_rt () =
     github_rt ()
     / "callback"
     /? Query.string "code"
-    /? Query.ud "installation_id" (CCOpt.wrap Int64.of_string))
+    /? Query.(option (ud "installation_id" (CCOpt.wrap Int64.of_string))))
 
 let github_events_rt () = Brtl_rtng.Route.(github_rt () / "events")
 

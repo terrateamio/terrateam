@@ -61,7 +61,7 @@ let perform_auth storage github_schema client_id client_secret code =
         refresh_expiration)
   >>= fun () -> Abb.Future.return (Ok user_id)
 
-let get config storage github_schema code installation_id ctx =
+let get config storage github_schema code installation_id_opt ctx =
   let open Abb.Future.Infix_monad in
   perform_auth
     storage
@@ -76,7 +76,12 @@ let get config storage github_schema code installation_id ctx =
         Uri.to_string
           (Uri.make
              ~path:"/"
-             ~query:[ ("installation_id", [ Int64.to_string installation_id ]) ]
+             ~query:
+               (CCOpt.map_or
+                  ~default:[]
+                  (fun installation_id ->
+                    [ ("installation_id", [ Int64.to_string installation_id ]) ])
+                  installation_id_opt)
              ())
       in
       let headers = Cohttp.Header.of_list [ ("location", uri) ] in

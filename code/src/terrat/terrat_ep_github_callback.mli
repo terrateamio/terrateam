@@ -3,5 +3,5 @@ val get :
   Terrat_storage.t ->
   Githubc_v3.Schema.t ->
   string ->
-  int64 ->
+  int64 option ->
   Brtl_rtng.Handler.t
