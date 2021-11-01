@@ -117,6 +117,17 @@ module Io = struct
     assert (res = []);
     Abb.Future.return (Ok ())
 
+  let error_response conn =
+    let open Abbs_future_combinators.Infix_result_monad in
+    conn.expected_frames <- [];
+    consume_until conn (function
+        | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'T' | 'E' } when conn.in_tx -> true
+        | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'I' } when not conn.in_tx -> true
+        | _ -> false)
+    >>= fun res ->
+    assert (res = []);
+    Abb.Future.return (Ok ())
+
   let handle_err_frame msgs fs =
     let c = CCList.Assoc.get_exn ~eq:Char.equal 'C' msgs in
     let m = CCList.Assoc.get_exn ~eq:Char.equal 'M' msgs in
@@ -155,7 +166,7 @@ module Io = struct
           match_frames conn fs rfs
       | (_, (Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as r_fs)) ->
           let open Abb.Future.Infix_monad in
-          reset conn >>= fun _ -> Abb.Future.return (Error (handle_err_frame msgs r_fs))
+          error_response conn >>= fun _ -> Abb.Future.return (Error (handle_err_frame msgs r_fs))
       | (_, _) ->
           let open Abb.Future.Infix_monad in
           reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame received_fs))
@@ -544,11 +555,14 @@ module Cursor = struct
         Printf.printf "Frame = %s\n%!" (Pgsql_codec.Frame.Backend.show frame);
         assert false
     | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->
-        Abb.Future.return (Error (Io.handle_err_frame msgs fs))
+        let open Abb.Future.Infix_monad in
+        Io.error_response conn >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs fs))
     | Pgsql_codec.Frame.Backend.NoticeResponse { msgs } :: fs ->
         conn.notice_response msgs;
         consume_exec_frames conn row_func st fs
-    | fs -> Abb.Future.return (Error (`Unmatching_frame fs))
+    | fs ->
+        let open Abb.Future.Infix_monad in
+        Io.reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
 
   and consume_exec_end conn row_func st = function
     | [] ->
@@ -583,11 +597,14 @@ module Cursor = struct
     | Pgsql_codec.Frame.Backend.DataRow { data } :: fs ->
         consume_fetch_process_frame conn row_func st fs data
     | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->
-        Abb.Future.return (Error (Io.handle_err_frame msgs fs))
+        let open Abb.Future.Infix_monad in
+        Io.error_response conn >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs fs))
     | Pgsql_codec.Frame.Backend.NoticeResponse { msgs } :: fs ->
         conn.notice_response msgs;
         consume_fetch_frames conn row_func st fs
-    | fs -> Abb.Future.return (Error (`Unmatching_frame fs))
+    | fs ->
+        let open Abb.Future.Infix_monad in
+        Io.reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
 
   and consume_fetch_process_frame conn row_func st fs data =
     match Row_func.F.kbind (row_func.Row_func.f st) data row_func.Row_func.func with

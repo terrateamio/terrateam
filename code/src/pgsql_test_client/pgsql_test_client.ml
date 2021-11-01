@@ -575,6 +575,45 @@ let test_rollback =
       assert (r = Ok ());
       Abb.Future.return ())
 
+let test_bad_state =
+  Oth_abb.test ~desc:"Conn in bad state" ~name:"bad_state" (fun () ->
+      let open Abb.Future.Infix_monad in
+      let f conn =
+        let open Abbs_future_combinators.Infix_result_monad in
+        let create_sql =
+          Pgsql_io.Typed_sql.(sql /^ "CREATE TABLE IF NOT EXISTS foo (name TEXT, age INTEGER)")
+        in
+        let insert_bad_sql =
+          Pgsql_io.Typed_sql.(
+            sql
+            /^ "INSERT INTO foo (name, age) VALUES($name, age)"
+            /% Var.text "name"
+            /% Var.integer "age")
+        in
+        let insert_good_sql =
+          Pgsql_io.Typed_sql.(
+            sql
+            /^ "INSERT INTO foo (name, age) VALUES($name, $age)"
+            /% Var.text "name"
+            /% Var.integer "age")
+        in
+        Pgsql_io.Prepared_stmt.execute conn create_sql
+        >>= fun () ->
+        let open Abb.Future.Infix_monad in
+        Pgsql_io.Prepared_stmt.execute conn insert_bad_sql "Testy McTestface" (Int32.of_int 36)
+        >>= function
+        | Error _ ->
+            Pgsql_io.Prepared_stmt.execute conn insert_good_sql "Testy McTestface" (Int32.of_int 36)
+        | Ok _    -> assert false
+      in
+      with_conn f
+      >>= function
+      | Ok ()                        -> Abb.Future.return ()
+      | Error (#Pgsql_io.err as err) ->
+          print_endline (Pgsql_io.show_err err);
+          assert false
+      | Error _                      -> assert false)
+
 let test =
   Oth_abb.(
     to_sync_test
@@ -595,6 +634,7 @@ let test =
            test_integrity_fail;
            test_integrity_recover;
            test_rollback;
+           test_bad_state;
          ]))
 
 let reporter ppf =
