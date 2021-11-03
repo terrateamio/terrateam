@@ -166,6 +166,10 @@ module Aws_cli = struct
     Process.check_output args
 end
 
+module Aws = struct
+  let make_arn prefix account_id postfix = Printf.sprintf "%s:%s:%s" prefix account_id postfix
+end
+
 let run_with_json_output decoder args =
   let open Abbs_future_combinators.Infix_result_monad in
   Process.check_output args
@@ -178,6 +182,8 @@ let run_with_json_output decoder args =
   with Yojson.Json_error err -> Abb.Future.return (Error (`Json_error (args, stdout, err)))
 
 let aws_create_installation
+    aws_account_id
+    backend_address
     github_app_id
     installation_id
     org_name
@@ -261,9 +267,10 @@ let aws_create_installation
     Printf.sprintf "terrateam-%Ld-atlantis-task-execution" installation_id
   in
   let atlantis_task_exec_policy_arn =
-    Printf.sprintf
-      "arn:aws:iam::654862118936:policy/terrateam-%Ld-atlantis-task-execution"
-      installation_id
+    Aws.make_arn
+      "arn:aws:iam:"
+      aws_account_id
+      (Printf.sprintf "policy/terrateam-%Ld-atlantis-task-execution" installation_id)
   in
   let atlantis_task_exec_policy =
     Yojson.Safe.to_string
@@ -279,9 +286,12 @@ let aws_create_installation
                     ("Effect", `String "Allow");
                     ( "Resource",
                       `String
-                        (Printf.sprintf
-                           "arn:aws:ssm:us-west-2:654862118936:parameter/terrateam/installation/%Ld/private_key"
-                           installation_id) );
+                        (Aws.make_arn
+                           "arn:aws:ssm:us-west-2"
+                           aws_account_id
+                           (Printf.sprintf
+                              "parameter/terrateam/installation/%Ld/private_key"
+                              installation_id)) );
                   ];
                 `Assoc
                   [
@@ -294,7 +304,11 @@ let aws_create_installation
                         ] );
                     ("Effect", `String "Allow");
                     ( "Resource",
-                      `String "arn:aws:ecr:us-west-2:654862118936:repository/terrateam-atlantis" );
+                      `String
+                        (Aws.make_arn
+                           "arn:aws:ecr:us-west-2"
+                           aws_account_id
+                           "repository/terrateam-atlantis") );
                   ];
                 `Assoc
                   [
@@ -336,18 +350,25 @@ let aws_create_installation
   Abbs_future_combinators.to_result (Abb.Sys.sleep 15.0)
   >>= fun () ->
   let ecs_task_definition = Printf.sprintf "terrateam-%Ld-atlantis" installation_id in
-  let ecs_task_role_arn = Printf.sprintf "arn:aws:iam::654862118936:role/%s" ecs_task_definition in
+  let ecs_task_role_arn =
+    Aws.make_arn "arn:aws:iam:" aws_account_id (Printf.sprintf "role/%s" ecs_task_definition)
+  in
   let ecs_execution_role_arn =
-    Printf.sprintf
-      "arn:aws:iam::654862118936:role/terrateam-%Ld-atlantis-ecs-task-execution"
-      installation_id
+    Aws.make_arn
+      "arn:aws:iam:"
+      aws_account_id
+      (Printf.sprintf "role/terrateam-%Ld-atlantis-ecs-task-execution" installation_id)
   in
   let container_definitions =
     Yojson.Safe.to_string
       (`Assoc
         [
           ("name", `String ecs_task_definition);
-          ("image", `String "654862118936.dkr.ecr.us-west-2.amazonaws.com/terrateam-atlantis:latest");
+          ( "image",
+            `String
+              (Printf.sprintf
+                 "%s.dkr.ecr.us-west-2.amazonaws.com/terrateam-atlantis:latest"
+                 region) );
           ("cpu", `Int 64);
           ("memory", `Int 512);
           ("memoryReservation", `Int 32);
@@ -383,9 +404,10 @@ let aws_create_installation
                   ];
                 `Assoc [ ("name", `String "ATLANTIS_REPO_ALLOWLIST"); ("value", `String "*") ];
                 `Assoc
+                  [ ("name", `String "ATLANTIS_GH_HOSTNAME"); ("value", `String backend_address) ];
+                `Assoc
                   [
-                    ("name", `String "ATLANTIS_GH_HOSTNAME");
-                    ("value", `String "app.terrateam.io:8081");
+                    ("name", `String "TERRATEAM_BACKEND_ADDRESS"); ("value", `String backend_address);
                   ];
               ] );
           ( "secrets",
@@ -396,18 +418,24 @@ let aws_create_installation
                     ("name", `String "TERRATEAM_PRIVATE_KEY");
                     ( "valueFrom",
                       `String
-                        (Printf.sprintf
-                           "arn:aws:ssm:us-west-2:654862118936:parameter/terrateam/installation/%Ld/private_key"
-                           installation_id) );
+                        (Aws.make_arn
+                           "arn:aws:ssm:us-west-2"
+                           aws_account_id
+                           (Printf.sprintf
+                              "parameter/terrateam/installation/%Ld/private_key"
+                              installation_id)) );
                   ];
                 `Assoc
                   [
                     ("name", `String "ATLANTIS_GH_APP_KEY");
                     ( "valueFrom",
                       `String
-                        (Printf.sprintf
-                           "arn:aws:ssm:us-west-2:654862118936:parameter/terrateam/installation/%Ld/private_key"
-                           installation_id) );
+                        (Aws.make_arn
+                           "arn:aws:ssm:us-west-2"
+                           aws_account_id
+                           (Printf.sprintf
+                              "parameter/terrateam/installation/%Ld/private_key"
+                              installation_id)) );
                   ];
               ] );
         ])
@@ -482,7 +510,7 @@ let aws_create_installation
   in
   Process.check_output args >>= fun _ -> Abb.Future.return (Ok ())
 
-let aws_destroy_installation installation_id =
+let aws_destroy_installation aws_account_id installation_id =
   let open Abbs_future_combinators.Infix_result_monad in
   let ecs_service_name = Printf.sprintf "terrateam-%Ld-atlantis" installation_id in
   let ecs_task_role_name = Printf.sprintf "terrateam-%Ld-atlantis" installation_id in
@@ -538,9 +566,10 @@ let aws_destroy_installation installation_id =
     Printf.sprintf "terrateam-%Ld-atlantis-ecs-task-execution" installation_id
   in
   let atlantis_task_exec_policy_arn =
-    Printf.sprintf
-      "arn:aws:iam::654862118936:policy/terrateam-%Ld-atlantis-task-execution"
-      installation_id
+    Aws.make_arn
+      "arn:aws:iam:"
+      aws_account_id
+      (Printf.sprintf "policy/terrateam-%Ld-atlantis-task-execution" installation_id)
   in
   let args =
     Abb_process.args
@@ -653,6 +682,8 @@ let process_installation config storage =
           m "GITHUB_EVENT : INSTALLATION : %Ld : ADDED_TO_DATABASE" installation_id);
       Logs.debug (fun m -> m "GITHUB_EVENT : INSTALLATION : %Ld : AWS_START" installation_id);
       aws_create_installation
+        (Terrat_config.aws_account_id config)
+        (Terrat_config.backend_address config)
         (Terrat_config.github_app_id config)
         installation_id
         (R.User.login (Inst.account installation))
@@ -666,7 +697,7 @@ let process_installation config storage =
   | Gwei.{ action = `Deleted; installation } ->
       let installation_id = Inst.id installation in
       Logs.info (fun m -> m "GITHUB_EVENT : INSTALLATION : %Ld : DELETING" installation_id);
-      aws_destroy_installation installation_id
+      aws_destroy_installation (Terrat_config.backend_address config) installation_id
       >>= fun () ->
       Pgsql_pool.with_conn storage ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->

@@ -10,6 +10,8 @@ type t = {
   github_webhook_secret : string option;
   github_app_client_secret : string;
   github_app_client_id : string;
+  aws_account_id : string;
+  backend_address : string;
 }
 
 type err =
@@ -56,6 +58,10 @@ let create () =
   >>= fun github_app_client_secret ->
   env_str "GITHUB_APP_CLIENT_ID"
   >>= fun github_app_client_id ->
+  env_str "AWS_ACCOUNT_ID"
+  >>= fun aws_account_id ->
+  env_str "BACKEND_ADDRESS"
+  >>= fun backend_address ->
   Ok
     {
       frontend_port;
@@ -69,6 +75,8 @@ let create () =
       github_webhook_secret;
       github_app_client_secret;
       github_app_client_id;
+      aws_account_id;
+      backend_address;
     }
 
 let frontend_port t = t.frontend_port
@@ -92,3 +100,7 @@ let github_webhook_secret t = t.github_webhook_secret
 let github_app_client_secret t = t.github_app_client_secret
 
 let github_app_client_id t = t.github_app_client_id
+
+let aws_account_id t = t.aws_account_id
+
+let backend_address t = t.backend_address
