@@ -8,6 +8,38 @@ end
 
 type 'a t
 
+module Validator : sig
+  type 'a v =
+    [ `Ok      of 'a
+    | `Unset
+    | `Invalid
+    ]
+
+  type ('a, 'b) t
+
+  val create : ('a -> 'b option) -> ('b -> 'a) -> ('a, 'b) t
+
+  val ( %> ) : ('a, 'b) t -> ('b, 'c) t -> ('a, 'c) t
+
+  val int : (string, int) t
+
+  val min_int : int -> (int, int) t
+
+  val max_int : int -> (int, int) t
+
+  val float : (string, float) t
+
+  val min_float : float -> (float, float) t
+
+  val max_float : float -> (float, float) t
+
+  val optional : (string, 'b) t -> (string, 'b option) t
+
+  val required : (string, string) t
+
+  val to_option : 'a v -> 'a option
+end
+
 module React : sig
   val select :
     ?a:Html_types.select_attrib Brtl_js.Html.attrib list ->
@@ -32,6 +64,13 @@ val signal : 'a t -> 'a Brtl_js.React.signal
 val get : 'a t -> 'a
 
 val set : ?step:Brtl_js.React.step -> 'a t -> 'a -> unit
+
+val valid_input :
+  ?af:(bool Brtl_js.React.signal -> Html_types.input_attrib Brtl_js.Html.attrib list) ->
+  ?value:'b Validator.v ->
+  valid:(string, 'b) Validator.t ->
+  unit ->
+  'b Validator.v t * [> Html_types.input ] Brtl_js.Html.elt
 
 val input :
   ?a:Html_types.input_attrib Brtl_js.Html.attrib list ->

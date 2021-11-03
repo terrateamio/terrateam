@@ -5,6 +5,79 @@ type 'a t = {
   set : ?step:Brtl_js.React.step -> 'a -> unit;
 }
 
+module Validator = struct
+  type 'a v =
+    [ `Ok      of 'a
+    | `Unset
+    | `Invalid
+    ]
+
+  type ('a, 'b) t = {
+    encode : 'a -> 'b option;
+    decode : 'b -> 'a;
+  }
+
+  let create encode decode = { encode; decode }
+
+  let ( %> ) a b =
+    create (fun v -> CCOpt.(a.encode v >>= b.encode)) (fun v -> a.decode (b.decode v))
+
+  let int = create CCInt.of_string CCInt.to_string
+
+  let min_int v =
+    create
+      (function
+        | value when value >= v -> Some value
+        | _ -> None)
+      CCFun.id
+
+  let max_int v =
+    create
+      (function
+        | value when value <= v -> Some value
+        | _ -> None)
+      CCFun.id
+
+  let float = create CCFloat.of_string_opt CCFloat.to_string
+
+  let min_float v =
+    create
+      (function
+        | value when value >= v -> Some value
+        | _ -> None)
+      CCFun.id
+
+  let max_float v =
+    create
+      (function
+        | value when value <= v -> Some value
+        | _ -> None)
+      CCFun.id
+
+  let optional t =
+    create
+      (function
+        | "" -> Some None
+        | v  -> (
+            match t.encode v with
+              | Some r -> Some (Some r)
+              | None   -> None))
+      (function
+        | None   -> ""
+        | Some v -> t.decode v)
+
+  let required =
+    create
+      (function
+        | "" -> None
+        | v  -> Some v)
+      CCFun.id
+
+  let to_option = function
+    | `Ok v -> Some v
+    | _     -> None
+end
+
 module React = struct
   let select ?(a = []) ?(value = "") ~options () =
     let (elem_value, elem_set_value) = Brtl_js.React.S.create value in
@@ -94,6 +167,49 @@ let signal t = t.signal
 let get t = Brtl_js.React.S.value (signal t)
 
 let set ?step t v = t.set ?step v
+
+let valid_input ?(af = fun _ -> []) ?(value = `Unset) ~valid () =
+  let (elem_value, elem_set_value) = Brtl_js.React.S.create value in
+  let (blurred, set_blurred) = Brtl_js.React.S.create false in
+  let onchange =
+    Brtl_js.handler_sync (fun event ->
+        Js.Opt.iter event##.target (fun target ->
+            Js.Opt.iter (Dom_html.CoerceTo.input target) (fun inp ->
+                elem_set_value
+                  (match valid.Validator.encode (Js.to_string inp##.value) with
+                    | Some v -> `Ok v
+                    | None   -> `Invalid))))
+  in
+  let elem =
+    Brtl_js.Html.input
+      ~a:
+        (Brtl_js.Html.a_value
+           (match value with
+             | `Ok v -> valid.Validator.decode v
+             | _     -> "")
+        :: Brtl_js.Html.a_onchange onchange
+        :: Brtl_js.Html.a_oninput onchange
+        :: (Brtl_js.Html.a_onblur @@ Brtl_js.handler_sync (fun _ -> set_blurred true))
+        :: (af
+           @@ Brtl_js.React.S.l2
+                (fun v blurred ->
+                  (* Only mark as validated or not if it has been modified *)
+                  (not blurred) || v <> `Invalid)
+                elem_value
+                blurred))
+      ()
+  in
+  let set_value ?step s =
+    let elem = Brtl_js.To_dom.of_input elem in
+    (match s with
+      | `Ok v    -> elem##.value := Js.string (valid.Validator.decode v)
+      | `Unset   ->
+          set_blurred false;
+          elem##.value := Js.string ""
+      | `Invalid -> set_blurred true);
+    elem_set_value ?step s
+  in
+  ({ signal = elem_value; set = set_value }, elem)
 
 let input ?(a = []) ?(value = "") () =
   let (elem_value, elem_set_value) = Brtl_js.React.S.create value in
