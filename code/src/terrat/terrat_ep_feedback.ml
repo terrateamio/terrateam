@@ -1,7 +1,5 @@
 module Process = Abb_process.Make (Abb)
 
-let region = "us-west-2"
-
 module Sql = struct
   let select_installation =
     Pgsql_io.Typed_sql.(
@@ -21,7 +19,7 @@ module Sql = struct
       /% Var.text "msg")
 end
 
-let send_email storage user_id installation_id msg =
+let send_email storage region user_id installation_id msg =
   let open Abbs_future_combinators.Infix_result_monad in
   Pgsql_pool.with_conn storage ~f:(fun db ->
       Pgsql_io.Prepared_stmt.execute db Sql.insert_installation_feedback installation_id user_id msg
@@ -79,7 +77,12 @@ let post config storage github_schema installation_id feedback =
         user_id
       >>= function
       | Ok () -> (
-          send_email storage user_id installation_id feedback.Terrat_data.Request.User_feedback.msg
+          send_email
+            storage
+            (Terrat_config.aws_region config)
+            user_id
+            installation_id
+            feedback.Terrat_data.Request.User_feedback.msg
           >>= function
           | Ok () ->
               Abb.Future.return (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx))

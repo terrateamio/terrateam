@@ -33,4 +33,6 @@ val github_app_client_id : t -> string
 
 val aws_account_id : t -> string
 
+val aws_region : t -> string
+
 val backend_address : t -> string

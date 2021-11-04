@@ -1,8 +1,6 @@
 module Http = Cohttp_abb.Make (Abb)
 module Process = Abb_process.Make (Abb)
 
-let region = "us-west-2"
-
 let ecs_cluster = "terrateam-atlantis"
 
 let terrateam_host = "https://app.terrateam.io/"
@@ -144,7 +142,7 @@ module Aws_cli = struct
     end
   end
 
-  let send_email installation_id =
+  let send_email region installation_id =
     let args =
       Abb_process.args
         "aws"
@@ -183,6 +181,7 @@ let run_with_json_output decoder args =
 
 let aws_create_installation
     aws_account_id
+    region
     backend_address
     github_app_id
     installation_id
@@ -287,7 +286,7 @@ let aws_create_installation
                     ( "Resource",
                       `String
                         (Aws.make_arn
-                           "arn:aws:ssm:us-west-2"
+                           (Printf.sprintf "arn:aws:ssm:%s" region)
                            aws_account_id
                            (Printf.sprintf
                               "parameter/terrateam/installation/%Ld/private_key"
@@ -306,7 +305,7 @@ let aws_create_installation
                     ( "Resource",
                       `String
                         (Aws.make_arn
-                           "arn:aws:ecr:us-west-2"
+                           (Printf.sprintf "arn:aws:ecr:%s" region)
                            aws_account_id
                            "repository/terrateam-atlantis") );
                   ];
@@ -367,7 +366,8 @@ let aws_create_installation
           ( "image",
             `String
               (Printf.sprintf
-                 "%s.dkr.ecr.us-west-2.amazonaws.com/terrateam-atlantis:latest"
+                 "%s.dkr.ecr.%s.amazonaws.com/terrateam-atlantis:latest"
+                 aws_account_id
                  region) );
           ("cpu", `Int 64);
           ("memory", `Int 512);
@@ -419,7 +419,7 @@ let aws_create_installation
                     ( "valueFrom",
                       `String
                         (Aws.make_arn
-                           "arn:aws:ssm:us-west-2"
+                           (Printf.sprintf "arn:aws:ssm:%s" region)
                            aws_account_id
                            (Printf.sprintf
                               "parameter/terrateam/installation/%Ld/private_key"
@@ -431,7 +431,7 @@ let aws_create_installation
                     ( "valueFrom",
                       `String
                         (Aws.make_arn
-                           "arn:aws:ssm:us-west-2"
+                           (Printf.sprintf "arn:aws:ssm:%s" region)
                            aws_account_id
                            (Printf.sprintf
                               "parameter/terrateam/installation/%Ld/private_key"
@@ -510,7 +510,7 @@ let aws_create_installation
   in
   Process.check_output args >>= fun _ -> Abb.Future.return (Ok ())
 
-let aws_destroy_installation aws_account_id installation_id =
+let aws_destroy_installation aws_account_id region installation_id =
   let open Abbs_future_combinators.Infix_result_monad in
   let ecs_service_name = Printf.sprintf "terrateam-%Ld-atlantis" installation_id in
   let ecs_task_role_name = Printf.sprintf "terrateam-%Ld-atlantis" installation_id in
@@ -683,6 +683,7 @@ let process_installation config storage =
       Logs.debug (fun m -> m "GITHUB_EVENT : INSTALLATION : %Ld : AWS_START" installation_id);
       aws_create_installation
         (Terrat_config.aws_account_id config)
+        (Terrat_config.aws_region config)
         (Terrat_config.backend_address config)
         (Terrat_config.github_app_id config)
         installation_id
@@ -692,12 +693,16 @@ let process_installation config storage =
         run_id
       >>= fun () ->
       Logs.debug (fun m -> m "GITHUB_EVENT : INSTALLATION : %Ld : AWS_COMPLETE" installation_id);
-      Abbs_future_combinators.(to_result (ignore (Aws_cli.send_email installation_id)))
+      Abbs_future_combinators.(
+        to_result (ignore (Aws_cli.send_email (Terrat_config.aws_region config) installation_id)))
       >>= fun () -> Abb.Future.return (Ok ())
   | Gwei.{ action = `Deleted; installation } ->
       let installation_id = Inst.id installation in
       Logs.info (fun m -> m "GITHUB_EVENT : INSTALLATION : %Ld : DELETING" installation_id);
-      aws_destroy_installation (Terrat_config.backend_address config) installation_id
+      aws_destroy_installation
+        (Terrat_config.aws_account_id config)
+        (Terrat_config.aws_region config)
+        installation_id
       >>= fun () ->
       Pgsql_pool.with_conn storage ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
@@ -765,6 +770,7 @@ let proxy_event config storage req_headers req_body event =
   let open Abbs_future_combinators.Infix_result_monad in
   let module E = Githubc_webhook.Event in
   let module Inst = Githubc_webhook.Installation in
+  let region = Terrat_config.aws_region config in
   let installation =
     match event with
       | Githubc_webhook.

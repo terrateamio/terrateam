@@ -11,6 +11,7 @@ type t = {
   github_app_client_secret : string;
   github_app_client_id : string;
   aws_account_id : string;
+  aws_region : string;
   backend_address : string;
 }
 
@@ -60,6 +61,8 @@ let create () =
   >>= fun github_app_client_id ->
   env_str "AWS_ACCOUNT_ID"
   >>= fun aws_account_id ->
+  env_str "AWS_REGION"
+  >>= fun aws_region ->
   env_str "BACKEND_ADDRESS"
   >>= fun backend_address ->
   Ok
@@ -76,6 +79,7 @@ let create () =
       github_app_client_secret;
       github_app_client_id;
       aws_account_id;
+      aws_region;
       backend_address;
     }
 
@@ -102,5 +106,7 @@ let github_app_client_secret t = t.github_app_client_secret
 let github_app_client_id t = t.github_app_client_id
 
 let aws_account_id t = t.aws_account_id
+
+let aws_region t = t.aws_region
 
 let backend_address t = t.backend_address
