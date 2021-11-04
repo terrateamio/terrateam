@@ -1,4 +1,4 @@
-name: terrateam-base
+name: base-build-deploy-staging
 
 on:
   workflow_dispatch:

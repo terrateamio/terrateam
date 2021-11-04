@@ -1,4 +1,4 @@
-name: terrateam-app
+name: app-build-deploy-production
 
 on:
   push:
