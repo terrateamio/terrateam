@@ -26,6 +26,7 @@ jobs:
         DOCKER_BUILDKIT: 1
       run: |
         docker pull 654862118936.dkr.ecr.us-west-2.amazonaws.com/terrateam-base:latest
+        docker tag 654862118936.dkr.ecr.us-west-2.amazonaws.com/terrateam-base:latest terrateam-base
         docker build -t 654862118936.dkr.ecr.us-west-2.amazonaws.com/terrateam-app:latest -f docker/terrat/Dockerfile .
         docker push 654862118936.dkr.ecr.us-west-2.amazonaws.com/terrateam-app:latest
         aws --region us-west-2 ecs update-service --cluster terrateam-frontend --service terrateam-app --force-new-deployment
