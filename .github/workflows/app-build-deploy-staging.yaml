@@ -1,0 +1,28 @@
+name: terrateam-app
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.STAGING_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.STAGING_AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-north-1
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+    - name: Build, tag, and push image to Amazon ECR
+      env:
+        DOCKER_BUILDKIT: 1
+      run: |
+        docker pull 857389960157.dkr.ecr.eu-north-1.amazonaws.com/terrateam-base:latest
+        docker build -t 857389960157.dkr.ecr.eu-north-1.amazonaws.com/terrateam-app:latest -f docker/terrat/Dockerfile .
+        docker push 857389960157.dkr.ecr.eu-north-1.amazonaws.com/terrateam-app:latest
+        aws --region eu-north-1 ecs update-service --cluster terrateam-frontend --service terrateam-app --force-new-deployment
