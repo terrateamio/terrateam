@@ -1,5 +1,5 @@
 # build image
-FROM 654862118936.dkr.ecr.us-west-2.amazonaws.com/terrateam-base:latest as build
+FROM terrateam-base as build
 
 COPY ./ /mono
 

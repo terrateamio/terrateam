@@ -1,4 +1,4 @@
-name: terrateam-app
+name: app-build-deploy-production
 
 on:
   push:
@@ -15,8 +15,8 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-access-key-id: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}
         aws-region: us-west-2
     - name: Login to Amazon ECR
       id: login-ecr
@@ -26,6 +26,7 @@ jobs:
         DOCKER_BUILDKIT: 1
       run: |
         docker pull 654862118936.dkr.ecr.us-west-2.amazonaws.com/terrateam-base:latest
+        docker tag 654862118936.dkr.ecr.us-west-2.amazonaws.com/terrateam-base:latest terrateam-base
         docker build -t 654862118936.dkr.ecr.us-west-2.amazonaws.com/terrateam-app:latest -f docker/terrat/Dockerfile .
         docker push 654862118936.dkr.ecr.us-west-2.amazonaws.com/terrateam-app:latest
         aws --region us-west-2 ecs update-service --cluster terrateam-frontend --service terrateam-app --force-new-deployment
