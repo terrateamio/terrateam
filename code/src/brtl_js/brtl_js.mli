@@ -67,4 +67,13 @@ val remove_child : p:#Dom.node Js.t -> #Dom.node Js.t -> unit
 
 val filter_attrib : 'a Rhtml.attrib -> bool React.signal -> 'a Rhtml.attrib
 
+(** Given a [base], merge [on_true] in when the bool signal is [true] and
+   [on_false] when it is [false] *)
+val tri_merge :
+  'a list -> on_true:'a list -> on_false:'a list -> bool React.signal -> 'a list React.signal
+
+(** Merge the second list with the first list when the signal is [true] or just
+   the first list when [false].  [flip] applies [not] to the signal's value *)
+val merge : ?flip:bool -> 'a list -> 'a list -> bool React.signal -> 'a list React.signal
+
 val main : string -> (State.t -> Dom_html.divElement Js.t -> unit Abb_js.Future.t) -> unit

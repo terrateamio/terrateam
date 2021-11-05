@@ -304,6 +304,28 @@ let remove_child ~p r = Dom.removeChild p r
 
 let filter_attrib = Js_of_ocaml_tyxml.Tyxml_js.R.filter_attrib
 
+let tri_merge base ~on_true ~on_false signal =
+  React.S.map
+    (function
+      | true  -> base @ on_true
+      | false -> base @ on_false)
+    signal
+
+let merge ?(flip = false) steady optional signal =
+  tri_merge
+    steady
+    ~on_true:
+      (if not flip then
+        optional
+      else
+        [])
+    ~on_false:
+      (if not flip then
+        []
+      else
+        optional)
+    signal
+
 let main id f =
   let wrapper _ =
     let id_div = select_by_id id Dom_html.CoerceTo.div in
