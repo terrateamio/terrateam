@@ -1,6 +1,5 @@
 module Make (Abb : Abb_intf.S) = struct
   module Abb_fut_comb = Abb_future_combinators.Make (Abb.Future)
-  module Abb_buffered = Abb_io_buffered.Make (Abb.Future)
   module Of = Abb_io_buffered.Of (Abb)
 
   (* Based on the Lwt implementation but without TLS support *)
@@ -22,9 +21,8 @@ module Make (Abb : Abb_intf.S) = struct
     }
 
     type context = {
-      conn_w : Abb_buffered.writer Abb_buffered.t;
-      conn_r : Abb_buffered.reader Abb_buffered.t;
-      timeout_ns : int64;
+      sock : Abb.Socket.udp Abb.Socket.t;
+      sockaddr : Abb_intf.Socket.Sockaddr.t;
     }
 
     let read_file file =
@@ -45,8 +43,8 @@ module Make (Abb : Abb_intf.S) = struct
 
     let create ?(nameservers : (Dns.proto * io_addr list) option) ~timeout stack =
       match nameservers with
-        | Some (`Udp, _)           -> invalid_arg "UDP not supported"
-        | Some (`Tcp, nameservers) -> { nameservers; preferred_ns = None; timeout_ns = timeout }
+        | Some (`Udp, nameservers) -> { nameservers; preferred_ns = None; timeout_ns = timeout }
+        | Some (`Tcp, _)           -> invalid_arg "tcp not supported"
         | None                     -> (
             let nameservers =
               let open CCResult.Infix in
@@ -64,7 +62,7 @@ module Make (Abb : Abb_intf.S) = struct
                   in
                   { nameservers; preferred_ns = None; timeout_ns = timeout })
 
-    let nameservers t = (`Tcp, t.nameservers)
+    let nameservers t = (`Udp, t.nameservers)
 
     let rng = Mirage_crypto_rng.generate ?g:None
 
@@ -72,7 +70,7 @@ module Make (Abb : Abb_intf.S) = struct
 
     let rec connect_to_ns t errors = function
       | [] -> Abb.Future.return (Error errors)
-      | (`Plaintext (addr, port) as ns) :: nameservers -> (
+      | `Plaintext (addr, port) :: nameservers -> (
           let (domain, addr) =
             match addr with
               | Ipaddr.V4 addr ->
@@ -80,19 +78,9 @@ module Make (Abb : Abb_intf.S) = struct
               | Ipaddr.V6 addr ->
                   (Abb_intf.Socket.Domain.Inet6, Unix.inet_addr_of_string (Ipaddr.V6.to_string addr))
           in
-          match Abb.Socket.Tcp.create ~domain with
-            | Ok sock -> (
-                let open Abb.Future.Infix_monad in
-                Abb.Socket.Tcp.connect sock Abb_intf.Socket.Sockaddr.(Inet { addr; port })
-                >>= function
-                | Ok () ->
-                    t.preferred_ns <- Some ns;
-                    Abb.Future.return (Ok sock)
-                | Error (#Abb_intf.Errors.tcp_sock_connect as err) ->
-                    connect_to_ns
-                      t
-                      (Abb_intf.Errors.show_tcp_sock_connect err :: errors)
-                      nameservers)
+          match Abb.Socket.Udp.create ~domain with
+            | Ok sock ->
+                Abb.Future.return (Ok (sock, Abb_intf.Socket.Sockaddr.(Inet { addr; port })))
             | Error (#Abb_intf.Errors.sock_create as err) ->
                 connect_to_ns t (Abb_intf.Errors.show_sock_create err :: errors) nameservers)
 
@@ -107,41 +95,35 @@ module Make (Abb : Abb_intf.S) = struct
         ~timeout:(Abb.Sys.sleep (Duration.to_f t.timeout_ns))
         (connect_to_ns t [] nameservers)
       >>= function
-      | `Ok (Ok conn)      ->
-          let (conn_r, conn_w) = Of.of_tcp_socket conn in
-          Abb.Future.return (Ok { conn_w; conn_r; timeout_ns = t.timeout_ns })
-      | `Ok (Error errors) -> Abb.Future.return (Error (`Msg (CCString.concat "," errors)))
-      | `Timeout           -> Abb.Future.return (Error (`Msg "Timeout"))
+      | `Ok (Ok (sock, sockaddr)) -> Abb.Future.return (Ok { sock; sockaddr })
+      | `Ok (Error errors)        -> Abb.Future.return (Error (`Msg (CCString.concat "," errors)))
+      | `Timeout                  -> Abb.Future.return (Error (`Msg "Timeout"))
 
     let send ctx data =
-      let write =
-        let open Abb_fut_comb.Infix_result_monad in
-        Abb_buffered.write
-          ctx.conn_w
-          ~bufs:
-            Abb_intf.Write_buf.
-              [ { buf = Cstruct.to_bytes data; pos = 0; len = Cstruct.length data } ]
-        >>= fun _ -> Abb_buffered.flushed ctx.conn_w
-      in
       let open Abb.Future.Infix_monad in
-      write
+      Abb.Socket.sendto
+        ctx.sock
+        ~bufs:
+          Abb_intf.Write_buf.[ { buf = Cstruct.to_bytes data; pos = 0; len = Cstruct.length data } ]
+        ctx.sockaddr
       >>= function
-      | Ok _ -> Abb.Future.return (Ok ())
-      | Error (#Abb_io_buffered.write_err as err) ->
-          Abb.Future.return (Error (`Msg (Abb_io_buffered.show_write_err err)))
+      | Ok n when n = Cstruct.length data -> Abb.Future.return (Ok ())
+      | Ok _ -> Abb.Future.return (Error (`Msg "Failed to write whole query"))
+      | Error (#Abb_intf.Errors.sendto as err) ->
+          Abb.Future.return (Error (`Msg (Abb_intf.Errors.show_sendto err)))
 
     let recv ctx =
       let open Abb.Future.Infix_monad in
-      let buf = Bytes.create 1024 in
-      Abb_buffered.read ctx.conn_r ~buf ~pos:0 ~len:(Bytes.length buf)
+      let buf = Bytes.create (64 * 1024) in
+      Abb.Socket.recvfrom ctx.sock ~buf ~pos:0 ~len:(Bytes.length buf)
       >>= function
-      | Ok n ->
+      | Ok (n, _) ->
           let data = Cstruct.of_bytes ~len:n buf in
           Abb.Future.return (Ok data)
-      | Error (#Abb_io_buffered.read_err as err) ->
-          Abb.Future.return (Error (`Msg (Abb_io_buffered.show_read_err err)))
+      | Error (#Abb_intf.Errors.recvfrom as err) ->
+          Abb.Future.return (Error (`Msg (Abb_intf.Errors.show_recvfrom err)))
 
-    let close ctx = Abb_fut_comb.ignore (Abb_buffered.close ctx.conn_r)
+    let close ctx = Abb_fut_comb.ignore (Abb.Socket.close ctx.sock)
   end
 
   include Dns_client.Make (Transport)
