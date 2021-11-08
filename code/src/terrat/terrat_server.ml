@@ -97,7 +97,7 @@ let feedback_rt () =
 let response_404 ctx =
   Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx)
 
-let rtng config storage schema =
+let rtng config storage schema dns =
   Brtl_rtng.create
     ~default:(Brtl_static.run Terrat_files_assets.read "index.html")
     Brtl_rtng.Route.
@@ -108,7 +108,7 @@ let rtng config storage schema =
         (`GET, privacy_rt () --> Brtl_static.run Terrat_files_assets.read "privacy.html");
         (`GET, terms_rt () --> Brtl_static.run Terrat_files_assets.read "terms.html");
         (`GET, root_rt () --> Brtl_static.run Terrat_files_assets.read "index.html");
-        (`POST, github_events_rt () --> Terrat_ep_github_events.post config storage);
+        (`POST, github_events_rt () --> Terrat_ep_github_events.post config storage dns);
         (`GET, health_rt () --> Terrat_ep_health.get);
         (* Secrets *)
         (`GET, secrets_list_rt () --> Terrat_ep_secrets.get config storage schema);
@@ -158,12 +158,13 @@ let run config storage =
   in
   let mw_session = Terrat_session.create storage in
   let mw = Brtl_mw.create [ mw_log; mw_session ] in
+  let dns = Terrat_dns.create () in
   Logs.info (fun m -> m "Loading frontend github schema");
   Githubc_v3.Schema.create ()
   >>= function
   | Ok schema -> (
       Logs.info (fun m -> m "Starting server");
-      Brtl.run cfg mw (rtng config storage schema)
+      Brtl.run cfg mw (rtng config storage schema dns)
       >>| function
       | Ok ()            -> ()
       | Error (`Exn exn) ->
