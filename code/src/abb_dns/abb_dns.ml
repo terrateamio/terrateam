@@ -50,7 +50,7 @@ module Make (Abb : Abb_intf.S) = struct
         | None                     -> (
             let nameservers =
               let open CCResult.Infix in
-              read_file "/etc/resolve.conf"
+              read_file "/etc/resolv.conf"
               >>= fun content ->
               Dns_resolvconf.parse content
               >>= fun nameservers ->
