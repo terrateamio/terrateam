@@ -221,6 +221,7 @@ let aws_create_installation
     aws_account_id
     region
     backend_address
+    atlantis_syslog_address
     github_app_id
     installation_id
     org_name
@@ -457,7 +458,10 @@ let aws_create_installation
               [
                 ("logDriver", `String "syslog");
                 ( "options",
-                  `Assoc [ ("syslog-address", `String "udp://logs6.papertrailapp.com:39309") ] );
+                  `Assoc
+                    (match atlantis_syslog_address with
+                      | Some addr -> [ ("syslog-address", `String addr) ]
+                      | None      -> []) );
               ] );
           ( "environment",
             `List
@@ -786,6 +790,7 @@ let process_installation config storage =
         (Terrat_config.aws_account_id config)
         (Terrat_config.aws_region config)
         (Terrat_config.backend_address config)
+        (Terrat_config.atlantis_syslog_address config)
         (Terrat_config.github_app_id config)
         installation_id
         (R.User.login (Inst.account installation))

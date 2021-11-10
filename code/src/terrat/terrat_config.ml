@@ -13,6 +13,7 @@ type t = {
   aws_account_id : string;
   aws_region : string;
   backend_address : string;
+  atlantis_syslog_address : string option;
 }
 
 type err =
@@ -65,6 +66,7 @@ let create () =
   >>= fun aws_region ->
   env_str "BACKEND_ADDRESS"
   >>= fun backend_address ->
+  let atlantis_syslog_address = Sys.getenv_opt "SYSLOG_ADDRESS" in
   Ok
     {
       frontend_port;
@@ -81,6 +83,7 @@ let create () =
       aws_account_id;
       aws_region;
       backend_address;
+      atlantis_syslog_address;
     }
 
 let frontend_port t = t.frontend_port
@@ -110,3 +113,5 @@ let aws_account_id t = t.aws_account_id
 let aws_region t = t.aws_region
 
 let backend_address t = t.backend_address
+
+let atlantis_syslog_address t = t.atlantis_syslog_address

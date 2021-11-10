@@ -36,3 +36,5 @@ val aws_account_id : t -> string
 val aws_region : t -> string
 
 val backend_address : t -> string
+
+val atlantis_syslog_address : t -> string option
