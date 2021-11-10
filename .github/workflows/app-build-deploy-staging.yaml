@@ -21,6 +21,7 @@ jobs:
     - name: Build, tag, and push image to Amazon ECR
       env:
         DOCKER_BUILDKIT: 1
+        MATRIX_PASSWORD: ${{ secrets.MATRIX_PASSWORD }}
       run: |
         docker pull 857389960157.dkr.ecr.eu-north-1.amazonaws.com/terrateam-base:latest
         docker tag 857389960157.dkr.ecr.eu-north-1.amazonaws.com/terrateam-base:latest terrateam-base
