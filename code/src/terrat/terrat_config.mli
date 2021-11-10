@@ -30,3 +30,11 @@ val github_webhook_secret : t -> string option
 val github_app_client_secret : t -> string
 
 val github_app_client_id : t -> string
+
+val aws_account_id : t -> string
+
+val aws_region : t -> string
+
+val backend_address : t -> string
+
+val atlantis_syslog_address : t -> string option

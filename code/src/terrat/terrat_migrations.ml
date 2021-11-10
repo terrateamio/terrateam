@@ -94,6 +94,7 @@ let migrations =
     ("add-installation-run-id", run_file_sql "2021-10-24-add-installation-run-id.sql");
     ("fix-secret-encryption-length", run_file_sql "2021-10-25-fix-secret-encryption-length.sql");
     ("fix-env-vars-value-length", run_file_sql "2021-10-26-fix-env-vars-value-length.sql");
+    ("add-service-discovery", run_file_sql "2021-11-08-add-service-discovery-to-run-id.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations

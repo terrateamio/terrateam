@@ -93,6 +93,14 @@ module Make (Fut : Abb_intf.Future.S) : sig
      abort it *)
   val timeout : timeout:unit Fut.t -> 'a Fut.t -> [ `Ok      of 'a | `Timeout ] Fut.t
 
+  (** Retry an operation multiple times, running a program between failures.
+      [times] must be greater than 0. *)
+  val retry_times :
+    times:int ->
+    on_failure:('b -> unit Fut.t) ->
+    (unit -> ('a, 'b) result Fut.t) ->
+    ('a, 'b) result Fut.t
+
   module List : sig
     val map : f:('a -> 'b Fut.t) -> 'a list -> 'b list Fut.t
 

@@ -10,6 +10,10 @@ type t = {
   github_webhook_secret : string option;
   github_app_client_secret : string;
   github_app_client_id : string;
+  aws_account_id : string;
+  aws_region : string;
+  backend_address : string;
+  atlantis_syslog_address : string option;
 }
 
 type err =
@@ -56,6 +60,13 @@ let create () =
   >>= fun github_app_client_secret ->
   env_str "GITHUB_APP_CLIENT_ID"
   >>= fun github_app_client_id ->
+  env_str "AWS_ACCOUNT_ID"
+  >>= fun aws_account_id ->
+  env_str "AWS_REGION"
+  >>= fun aws_region ->
+  env_str "BACKEND_ADDRESS"
+  >>= fun backend_address ->
+  let atlantis_syslog_address = Sys.getenv_opt "SYSLOG_ADDRESS" in
   Ok
     {
       frontend_port;
@@ -69,6 +80,10 @@ let create () =
       github_webhook_secret;
       github_app_client_secret;
       github_app_client_id;
+      aws_account_id;
+      aws_region;
+      backend_address;
+      atlantis_syslog_address;
     }
 
 let frontend_port t = t.frontend_port
@@ -92,3 +107,11 @@ let github_webhook_secret t = t.github_webhook_secret
 let github_app_client_secret t = t.github_app_client_secret
 
 let github_app_client_id t = t.github_app_client_id
+
+let aws_account_id t = t.aws_account_id
+
+let aws_region t = t.aws_region
+
+let backend_address t = t.backend_address
+
+let atlantis_syslog_address t = t.atlantis_syslog_address

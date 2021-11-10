@@ -1,8 +1,6 @@
 module Http = Cohttp_abb.Make (Abb)
 module Process = Abb_process.Make (Abb)
 
-let region = "us-west-2"
-
 let ecs_cluster = "terrateam-atlantis"
 
 let terrateam_host = "https://app.terrateam.io/"
@@ -92,6 +90,20 @@ module Sql = struct
   let delete_installation_run_id =
     Pgsql_io.Typed_sql.(
       sql /^ read_sql "delete_installation_run_id.sql" /% Var.bigint "installation_id")
+
+  let update_service_discovery =
+    Pgsql_io.Typed_sql.(
+      sql
+      /^ read_sql "update_service_discovery.sql"
+      /% Var.bigint "installation_id"
+      /% Var.(option (varchar "service_discovery_id")))
+
+  let select_service_discovery =
+    Pgsql_io.Typed_sql.(
+      sql
+      // (* service_discovery_id *) Ret.(option varchar)
+      /^ read_sql "select_service_discovery.sql"
+      /% Var.bigint "installation_id")
 end
 
 let max_run_id = Int32.of_int 1000
@@ -144,7 +156,31 @@ module Aws_cli = struct
     end
   end
 
-  let send_email installation_id =
+  module Service_discovery = struct
+    module List_namespaces = struct
+      type namespace = {
+        id : string; [@key "Id"]
+        arn : string; [@key "Arn"]
+        name : string; [@key "Name"]
+      }
+      [@@deriving yojson { strict = false }]
+
+      type output = { namespaces : namespace list [@key "Namespaces"] }
+      [@@deriving yojson { strict = false }]
+    end
+
+    module Create_service = struct
+      type service = {
+        id : string; [@key "Id"]
+        arn : string; [@key "Arn"]
+      }
+      [@@deriving yojson { strict = false }]
+
+      type output = { service : service [@key "Service"] } [@@deriving yojson { strict = false }]
+    end
+  end
+
+  let send_email region installation_id =
     let args =
       Abb_process.args
         "aws"
@@ -166,6 +202,10 @@ module Aws_cli = struct
     Process.check_output args
 end
 
+module Aws = struct
+  let make_arn prefix account_id postfix = Printf.sprintf "%s:%s:%s" prefix account_id postfix
+end
+
 let run_with_json_output decoder args =
   let open Abbs_future_combinators.Infix_result_monad in
   Process.check_output args
@@ -178,6 +218,10 @@ let run_with_json_output decoder args =
   with Yojson.Json_error err -> Abb.Future.return (Error (`Json_error (args, stdout, err)))
 
 let aws_create_installation
+    aws_account_id
+    region
+    backend_address
+    atlantis_syslog_address
     github_app_id
     installation_id
     org_name
@@ -185,6 +229,38 @@ let aws_create_installation
     installation_secret
     run_id =
   let open Abbs_future_combinators.Infix_result_monad in
+  let args = Abb_process.args "aws" [ "--region"; region; "servicediscovery"; "list-namespaces" ] in
+  run_with_json_output Aws_cli.Service_discovery.List_namespaces.output_of_yojson args
+  >>= fun sd_namespaces ->
+  let namespace_id =
+    CCList.(
+      hd
+      @@ map (fun ns -> ns.Aws_cli.Service_discovery.List_namespaces.id)
+      @@ filter
+           (fun ns -> ns.Aws_cli.Service_discovery.List_namespaces.name = "terrateam.local")
+           sd_namespaces.Aws_cli.Service_discovery.List_namespaces.namespaces)
+  in
+  let service_name = Printf.sprintf "atlantis-%Ld" installation_id in
+  let args =
+    Abb_process.args
+      "aws"
+      [
+        "--region";
+        region;
+        "servicediscovery";
+        "create-service";
+        "--name";
+        service_name;
+        "--namespace-id";
+        namespace_id;
+        "--dns-config";
+        Printf.sprintf
+          "NamespaceId=%s,RoutingPolicy=MULTIVALUE,DnsRecords=[{Type=SRV,TTL=10}]"
+          namespace_id;
+      ]
+  in
+  run_with_json_output Aws_cli.Service_discovery.Create_service.output_of_yojson args
+  >>= fun sd_create_service ->
   let ecs_task_role_name = Printf.sprintf "terrateam-%Ld-atlantis" installation_id in
   let assume_role_policy_document =
     Yojson.Safe.to_string
@@ -261,9 +337,10 @@ let aws_create_installation
     Printf.sprintf "terrateam-%Ld-atlantis-task-execution" installation_id
   in
   let atlantis_task_exec_policy_arn =
-    Printf.sprintf
-      "arn:aws:iam::654862118936:policy/terrateam-%Ld-atlantis-task-execution"
-      installation_id
+    Aws.make_arn
+      "arn:aws:iam:"
+      aws_account_id
+      (Printf.sprintf "policy/terrateam-%Ld-atlantis-task-execution" installation_id)
   in
   let atlantis_task_exec_policy =
     Yojson.Safe.to_string
@@ -279,9 +356,12 @@ let aws_create_installation
                     ("Effect", `String "Allow");
                     ( "Resource",
                       `String
-                        (Printf.sprintf
-                           "arn:aws:ssm:us-west-2:654862118936:parameter/terrateam/installation/%Ld/private_key"
-                           installation_id) );
+                        (Aws.make_arn
+                           (Printf.sprintf "arn:aws:ssm:%s" region)
+                           aws_account_id
+                           (Printf.sprintf
+                              "parameter/terrateam/installation/%Ld/private_key"
+                              installation_id)) );
                   ];
                 `Assoc
                   [
@@ -294,7 +374,11 @@ let aws_create_installation
                         ] );
                     ("Effect", `String "Allow");
                     ( "Resource",
-                      `String "arn:aws:ecr:us-west-2:654862118936:repository/terrateam-atlantis" );
+                      `String
+                        (Aws.make_arn
+                           (Printf.sprintf "arn:aws:ecr:%s" region)
+                           aws_account_id
+                           "repository/terrateam-atlantis") );
                   ];
                 `Assoc
                   [
@@ -336,18 +420,26 @@ let aws_create_installation
   Abbs_future_combinators.to_result (Abb.Sys.sleep 15.0)
   >>= fun () ->
   let ecs_task_definition = Printf.sprintf "terrateam-%Ld-atlantis" installation_id in
-  let ecs_task_role_arn = Printf.sprintf "arn:aws:iam::654862118936:role/%s" ecs_task_definition in
+  let ecs_task_role_arn =
+    Aws.make_arn "arn:aws:iam:" aws_account_id (Printf.sprintf "role/%s" ecs_task_definition)
+  in
   let ecs_execution_role_arn =
-    Printf.sprintf
-      "arn:aws:iam::654862118936:role/terrateam-%Ld-atlantis-ecs-task-execution"
-      installation_id
+    Aws.make_arn
+      "arn:aws:iam:"
+      aws_account_id
+      (Printf.sprintf "role/terrateam-%Ld-atlantis-ecs-task-execution" installation_id)
   in
   let container_definitions =
     Yojson.Safe.to_string
       (`Assoc
         [
           ("name", `String ecs_task_definition);
-          ("image", `String "654862118936.dkr.ecr.us-west-2.amazonaws.com/terrateam-atlantis:latest");
+          ( "image",
+            `String
+              (Printf.sprintf
+                 "%s.dkr.ecr.%s.amazonaws.com/terrateam-atlantis:latest"
+                 aws_account_id
+                 region) );
           ("cpu", `Int 64);
           ("memory", `Int 512);
           ("memoryReservation", `Int 32);
@@ -366,7 +458,10 @@ let aws_create_installation
               [
                 ("logDriver", `String "syslog");
                 ( "options",
-                  `Assoc [ ("syslog-address", `String "udp://logs6.papertrailapp.com:39309") ] );
+                  `Assoc
+                    (match atlantis_syslog_address with
+                      | Some addr -> [ ("syslog-address", `String addr) ]
+                      | None      -> []) );
               ] );
           ( "environment",
             `List
@@ -383,9 +478,10 @@ let aws_create_installation
                   ];
                 `Assoc [ ("name", `String "ATLANTIS_REPO_ALLOWLIST"); ("value", `String "*") ];
                 `Assoc
+                  [ ("name", `String "ATLANTIS_GH_HOSTNAME"); ("value", `String backend_address) ];
+                `Assoc
                   [
-                    ("name", `String "ATLANTIS_GH_HOSTNAME");
-                    ("value", `String "app.terrateam.io:8081");
+                    ("name", `String "TERRATEAM_BACKEND_ADDRESS"); ("value", `String backend_address);
                   ];
               ] );
           ( "secrets",
@@ -396,18 +492,24 @@ let aws_create_installation
                     ("name", `String "TERRATEAM_PRIVATE_KEY");
                     ( "valueFrom",
                       `String
-                        (Printf.sprintf
-                           "arn:aws:ssm:us-west-2:654862118936:parameter/terrateam/installation/%Ld/private_key"
-                           installation_id) );
+                        (Aws.make_arn
+                           (Printf.sprintf "arn:aws:ssm:%s" region)
+                           aws_account_id
+                           (Printf.sprintf
+                              "parameter/terrateam/installation/%Ld/private_key"
+                              installation_id)) );
                   ];
                 `Assoc
                   [
                     ("name", `String "ATLANTIS_GH_APP_KEY");
                     ( "valueFrom",
                       `String
-                        (Printf.sprintf
-                           "arn:aws:ssm:us-west-2:654862118936:parameter/terrateam/installation/%Ld/private_key"
-                           installation_id) );
+                        (Aws.make_arn
+                           (Printf.sprintf "arn:aws:ssm:%s" region)
+                           aws_account_id
+                           (Printf.sprintf
+                              "parameter/terrateam/installation/%Ld/private_key"
+                              installation_id)) );
                   ];
               ] );
         ])
@@ -450,6 +552,7 @@ let aws_create_installation
   in
   Process.check_output args
   >>= fun _ ->
+  let sd_service_arn = Aws_cli.Service_discovery.Create_service.(sd_create_service.service.arn) in
   let ecs_service_name = Printf.sprintf "terrateam-%Ld-atlantis" installation_id in
   let deployment_configuration =
     Yojson.Safe.to_string
@@ -478,11 +581,21 @@ let aws_create_installation
         deployment_configuration;
         "--placement-strategy";
         placement_strategy;
+        "--service-registries";
+        Printf.sprintf
+          "registryArn=%s,containerName=%s,containerPort=8080"
+          sd_service_arn
+          ecs_task_definition;
       ]
   in
-  Process.check_output args >>= fun _ -> Abb.Future.return (Ok ())
+  Process.check_output args
+  >>= fun _ ->
+  let service_discovery_id =
+    Aws_cli.Service_discovery.Create_service.(sd_create_service.service.id)
+  in
+  Abb.Future.return (Ok service_discovery_id)
 
-let aws_destroy_installation installation_id =
+let aws_destroy_installation aws_account_id region installation_id service_discovery_id =
   let open Abbs_future_combinators.Infix_result_monad in
   let ecs_service_name = Printf.sprintf "terrateam-%Ld-atlantis" installation_id in
   let ecs_task_role_name = Printf.sprintf "terrateam-%Ld-atlantis" installation_id in
@@ -520,6 +633,26 @@ let aws_destroy_installation installation_id =
   in
   Process.check_output args
   >>= fun _ ->
+  (match service_discovery_id with
+    | Some service_discovery_id ->
+        let args =
+          Abb_process.args
+            "aws"
+            [
+              "--region"; region; "servicediscovery"; "delete-service"; "--id"; service_discovery_id;
+            ]
+        in
+        Abbs_future_combinators.retry_times
+          ~times:10
+          ~on_failure:(fun _ ->
+            Logs.info (fun m -> m "Delete service failed, retrying");
+            Abb.Sys.sleep 20.0)
+          (fun () ->
+            Logs.info (fun m -> m "Deleting services");
+            Process.check_output args)
+        >>= fun _ -> Abb.Future.return (Ok ())
+    | None                      -> Abb.Future.return (Ok ()))
+  >>= fun () ->
   let args =
     Abb_process.args
       "aws"
@@ -538,9 +671,10 @@ let aws_destroy_installation installation_id =
     Printf.sprintf "terrateam-%Ld-atlantis-ecs-task-execution" installation_id
   in
   let atlantis_task_exec_policy_arn =
-    Printf.sprintf
-      "arn:aws:iam::654862118936:policy/terrateam-%Ld-atlantis-task-execution"
-      installation_id
+    Aws.make_arn
+      "arn:aws:iam:"
+      aws_account_id
+      (Printf.sprintf "policy/terrateam-%Ld-atlantis-task-execution" installation_id)
   in
   let args =
     Abb_process.args
@@ -653,20 +787,42 @@ let process_installation config storage =
           m "GITHUB_EVENT : INSTALLATION : %Ld : ADDED_TO_DATABASE" installation_id);
       Logs.debug (fun m -> m "GITHUB_EVENT : INSTALLATION : %Ld : AWS_START" installation_id);
       aws_create_installation
+        (Terrat_config.aws_account_id config)
+        (Terrat_config.aws_region config)
+        (Terrat_config.backend_address config)
+        (Terrat_config.atlantis_syslog_address config)
         (Terrat_config.github_app_id config)
         installation_id
         (R.User.login (Inst.account installation))
         priv_key_pem
         installation_secret
         run_id
+      >>= fun service_discovery_id ->
+      Pgsql_pool.with_conn storage ~f:(fun db ->
+          Pgsql_io.Prepared_stmt.execute
+            db
+            Sql.update_service_discovery
+            installation_id
+            (Some service_discovery_id))
       >>= fun () ->
       Logs.debug (fun m -> m "GITHUB_EVENT : INSTALLATION : %Ld : AWS_COMPLETE" installation_id);
-      Abbs_future_combinators.(to_result (ignore (Aws_cli.send_email installation_id)))
+      Abbs_future_combinators.(
+        to_result (ignore (Aws_cli.send_email (Terrat_config.aws_region config) installation_id)))
       >>= fun () -> Abb.Future.return (Ok ())
   | Gwei.{ action = `Deleted; installation } ->
       let installation_id = Inst.id installation in
       Logs.info (fun m -> m "GITHUB_EVENT : INSTALLATION : %Ld : DELETING" installation_id);
-      aws_destroy_installation installation_id
+      Pgsql_pool.with_conn storage ~f:(fun db ->
+          Pgsql_io.Prepared_stmt.fetch db Sql.select_service_discovery ~f:CCFun.id installation_id
+          >>= function
+          | []                       -> Abb.Future.return (Ok None)
+          | service_discover_id :: _ -> Abb.Future.return (Ok service_discover_id))
+      >>= fun service_discovery_id ->
+      aws_destroy_installation
+        (Terrat_config.aws_account_id config)
+        (Terrat_config.aws_region config)
+        installation_id
+        service_discovery_id
       >>= fun () ->
       Pgsql_pool.with_conn storage ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
@@ -730,7 +886,7 @@ let compute_signature secret body =
   CCString.iter (fun c -> Buffer.add_string buf (Printf.sprintf "%02x" (Char.code c))) computed_sig;
   "sha256=" ^ Buffer.contents buf
 
-let proxy_event config storage req_headers req_body event =
+let proxy_event config storage dns req_headers req_body event =
   let open Abbs_future_combinators.Infix_result_monad in
   let module E = Githubc_webhook.Event in
   let module Inst = Githubc_webhook.Installation in
@@ -746,84 +902,8 @@ let proxy_event config storage req_headers req_body event =
             _;
           } -> installation
   in
-  let ecs_service_name = Printf.sprintf "terrateam-%Ld-atlantis" (Inst.id installation) in
-  let args =
-    Abb_process.args
-      "aws"
-      [
-        "ecs";
-        "list-tasks";
-        "--region";
-        region;
-        "--cluster";
-        ecs_cluster;
-        "--service-name";
-        ecs_service_name;
-        "--desired-status";
-        "RUNNING";
-      ]
-  in
-  run_with_json_output Aws_cli.Ecs.List_tasks.output_of_yojson args
-  >>= fun tasks ->
-  let task_arn =
-    match CCString.Split.right ~by:"/" (CCList.hd tasks.Aws_cli.Ecs.List_tasks.task_arns) with
-      | Some (_, arn) -> arn
-      | None          -> assert false
-  in
-  let args =
-    Abb_process.args
-      "aws"
-      [ "ecs"; "describe-tasks"; "--region"; region; "--cluster"; ecs_cluster; "--tasks"; task_arn ]
-  in
-  run_with_json_output Aws_cli.Ecs.Describe_tasks.output_of_yojson args
-  >>= fun tasks ->
-  let atlantis_name = Printf.sprintf "terrateam-%Ld-atlantis" (Inst.id installation) in
-  let atlantis_container =
-    tasks.Aws_cli.Ecs.Describe_tasks.tasks
-    |> CCList.hd
-    |> (fun task -> task.Aws_cli.Ecs.Describe_tasks.containers)
-    |> CCList.filter (fun c -> CCString.equal atlantis_name c.Aws_cli.Ecs.Describe_tasks.name)
-    |> CCList.hd
-  in
-  let host_port =
-    atlantis_container
-    |> (fun c -> c.Aws_cli.Ecs.Describe_tasks.network_bindings)
-    |> CCList.hd
-    |> fun nb -> nb.Aws_cli.Ecs.Describe_tasks.host_port
-  in
-  let container_inst_arn =
-    tasks.Aws_cli.Ecs.Describe_tasks.tasks
-    |> CCList.hd
-    |> fun c -> c.Aws_cli.Ecs.Describe_tasks.container_inst_arn
-  in
-  let args =
-    Abb_process.args
-      "aws"
-      [
-        "ecs";
-        "describe-container-instances";
-        "--region";
-        region;
-        "--cluster";
-        ecs_cluster;
-        "--container-instances";
-        container_inst_arn;
-      ]
-  in
-  run_with_json_output Aws_cli.Ecs.Describe_container_instances.output_of_yojson args
-  >>= fun container_instances ->
-  let ec2_instance_id =
-    container_instances.Aws_cli.Ecs.Describe_container_instances.containers
-    |> CCList.hd
-    |> fun c -> c.Aws_cli.Ecs.Describe_container_instances.ec2_instance_id
-  in
-  let args =
-    Abb_process.args
-      "aws"
-      [ "ec2"; "describe-instances"; "--region"; region; "--instance-ids"; ec2_instance_id ]
-  in
-  run_with_json_output Aws_cli.Ec2.Describe_instances.output_of_yojson args
-  >>= fun instance ->
+  Terrat_dns.srv dns (Inst.id installation)
+  >>= fun (host, port) ->
   Pgsql_pool.with_conn storage ~f:(fun db ->
       Pgsql_io.Prepared_stmt.fetch
         db
@@ -833,16 +913,7 @@ let proxy_event config storage req_headers req_body event =
   >>= function
   | secret :: _ ->
       let computed_sig = compute_signature (Uuidm.to_string secret) req_body in
-      let private_ip_addr =
-        instance.Aws_cli.Ec2.Describe_instances.reservations
-        |> CCList.hd
-        |> (fun c -> c.Aws_cli.Ec2.Describe_instances.instances)
-        |> CCList.hd
-        |> fun inst -> inst.Aws_cli.Ec2.Describe_instances.private_ip_address
-      in
-      let endpoint =
-        Uri.make ~scheme:"http" ~host:private_ip_addr ~port:host_port ~path:"/events" ()
-      in
+      let endpoint = Uri.make ~scheme:"http" ~host ~port ~path:"/events" () in
       let headers =
         [
           "content-type";
@@ -861,7 +932,7 @@ let proxy_event config storage req_headers req_body event =
       Http.Client.call ~headers ~body:(`String req_body) `POST endpoint
   | []          -> assert false
 
-let post config storage ctx =
+let post config storage dns ctx =
   let open Abb.Future.Infix_monad in
   let request = Brtl_ctx.request ctx in
   let headers = Brtl_ctx.Request.headers request in
@@ -921,6 +992,14 @@ let post config storage ctx =
                     "GITHUB_EVENT : INSTALLATION : %Ld : FAILED : %s"
                     (Inst.id inst)
                     (Pgsql_io.show_err err));
+              Abb.Future.return ()
+          | Error (`Json_error (args, stdout, err)) ->
+              Logs.err (fun m ->
+                  m
+                    "GITHUB_EVENT : INSTALLATION : FAILED : JSON : %s : %s : %s"
+                    (Abb_intf.Process.show args)
+                    stdout
+                    err);
               Abb.Future.return ())
       | Ok Githubc_webhook.{ payload = `Installation_repositories installation_repositories; _ }
         -> (
@@ -940,15 +1019,11 @@ let post config storage ctx =
           (Githubc_webhook.
              { payload = `Issue_comment _ | `Pull_request _ | `Pull_request_review _ | `Push _; _ }
           as event) -> (
-          proxy_event config storage headers body event
+          proxy_event config storage dns headers body event
           >>= function
           | Ok _ -> Abb.Future.return ()
-          | Error (#Abb_process.check_output_err as err) ->
-              Logs.err (fun m ->
-                  m
-                    "GITHUB_EVENT : PROXY : FAILED : AWS : %s"
-                    (Abb_process.show_check_output_err err));
-              Logs.err (fun m -> m "%s" Githubc_webhook.(show Payload.pp event));
+          | Error `Dns_error ->
+              Logs.err (fun m -> m "GITHUB_EVENT : PROXY : FAILED : DNS");
               Abb.Future.return ()
           | Error (#Cohttp_abb.request_err as err) ->
               Logs.err (fun m ->
