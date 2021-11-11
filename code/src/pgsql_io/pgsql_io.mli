@@ -88,6 +88,8 @@ module Typed_sql : sig
 
     val date : string v
 
+    val time : string v
+
     val timestamp : string v
 
     val timestamptz : string v
