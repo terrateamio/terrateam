@@ -12,6 +12,8 @@ let of_string s = new%js of_str_constr (Js.string s)
 
 let to_iso_string t = Js.to_string t##toISOString
 
+let to_hh_mm d = Printf.sprintf "%02d:%02d" d##getHours d##getMinutes
+
 let to_yyyy_mm_dd_hh_mm d =
   Printf.sprintf
     "%04d-%02d-%02d %02d:%02d"
