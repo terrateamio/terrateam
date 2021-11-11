@@ -21,9 +21,21 @@ jobs:
     - name: Build, tag, and push image to Amazon ECR
       env:
         DOCKER_BUILDKIT: 1
+        MATRIX_PASSWORD: ${{ secrets.MATRIX_PASSWORD }}
       run: |
         docker pull 857389960157.dkr.ecr.eu-north-1.amazonaws.com/terrateam-base:latest
         docker tag 857389960157.dkr.ecr.eu-north-1.amazonaws.com/terrateam-base:latest terrateam-base
         docker build -t 857389960157.dkr.ecr.eu-north-1.amazonaws.com/terrateam-app:latest -f docker/terrat/Dockerfile .
         docker push 857389960157.dkr.ecr.eu-north-1.amazonaws.com/terrateam-app:latest
         aws --region eu-north-1 ecs update-service --cluster terrateam --service terrateam-app --force-new-deployment
+        for ((i=1;i<=20;i++)); do
+          COUNT=$(aws --region eu-north-1 ecs describe-services --cluster terrateam --services terrateam-app --output text | grep DEPLOYMENTS | grep -c IN_PROGRESS || true)
+          if [ "$COUNT" == "0" ]; then
+            MATRIX_ACCESS_TOKEN=$(curl -s -XPOST -d '{"type":"m.login.password", "user":"terrateam", "password":'\"$MATRIX_PASSWORD\"'}' "https://matrix.org/_matrix/client/r0/login" | grep -Po '"access_token":.*?[^\\]",' | cut -d'"' -f4)
+            MATRIX_MESSAGE="GitHub Actions [$GITHUB_WORKFLOW]: Deployed $GITHUB_SHA"
+            curl 'https://matrix.org/_matrix/client/r0/rooms/!AJlEMsztoOToHdwijN%3Amatrix.org/send/m.room.message/?access_token='$MATRIX_ACCESS_TOKEN -X PUT --data '{"msgtype":"m.text","body":"'"$MATRIX_MESSAGE"'"}'
+            break
+          else
+            sleep 30
+          fi
+        done
