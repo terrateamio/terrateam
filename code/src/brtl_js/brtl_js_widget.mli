@@ -27,7 +27,7 @@ module Validator : sig
 
   val max_int : int -> (int, int) t
 
-  val float : (string, float) t
+  val float : (float -> string, unit, string) format -> (string, float) t
 
   val min_float : float -> (float, float) t
 

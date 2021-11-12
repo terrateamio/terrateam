@@ -38,7 +38,7 @@ module Validator = struct
         | _ -> None)
       CCFun.id
 
-  let float = create CCFloat.of_string_opt CCFloat.to_string
+  let float fmt = create CCFloat.of_string_opt (Printf.sprintf fmt)
 
   let min_float v =
     create
