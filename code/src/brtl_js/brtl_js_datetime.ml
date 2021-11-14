@@ -38,3 +38,7 @@ let add_milliseconds d ms = new%js Js.date_fromTimeValue (d##getTime +. ms)
 let now () = new%js Js.date_now
 
 let get_time d = d##getTime
+
+let set_hours t hours = ignore (t##setHours hours)
+
+let set_minutes t minutes = ignore (t##setMinutes minutes)
