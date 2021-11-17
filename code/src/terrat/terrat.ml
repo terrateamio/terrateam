@@ -41,14 +41,8 @@ let server () =
   | Ok config -> (
       let run () =
         let open Abb.Future.Infix_monad in
-        Terrat_storage.create config
-        >>= fun storage ->
-        Abbs_future_combinators.ignore
-          (Abbs_future_combinators.first
-             (Terrat_server.run config storage)
-             (Terrat_backend_server.run config storage))
+        Terrat_storage.create config >>= fun storage -> Terrat_server.run config storage
       in
-
       match Abb.Scheduler.run_with_state run with
       | `Det () -> ()
       | `Aborted -> assert false

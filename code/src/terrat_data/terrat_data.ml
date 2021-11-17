@@ -169,4 +169,29 @@ module Response = struct
     }
     [@@deriving yojson { strict = false }, show, eq]
   end
+
+  module Work_manifest = struct
+    module Base = struct
+      type t = {
+        typ : string; [@key "type"]
+        payload : Yojson.Safe.t;
+      }
+      [@@deriving yojson { strict = false }, show, eq]
+    end
+
+    module Plan = struct
+      module Dir = struct
+        type t = {
+          path : string;
+          workspace : string;
+          workflow_idx : int option;  (** If [None] then use default workflow *)
+        }
+        [@@deriving yojson { strict = false }, show, eq]
+      end
+
+      type t = { dirs : Dir.t list } [@@deriving yojson { strict = false }, show, eq]
+    end
+
+    module Apply = Plan
+  end
 end

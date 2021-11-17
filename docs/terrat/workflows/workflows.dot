@@ -1,0 +1,908 @@
+digraph G {
+        subgraph cluster_installation {
+                label="Installation";
+                color=blue;
+
+                landing_page [shape=ellipse label="User on Landing Page"];
+                click_install [shape=invtrapezium label="Click Install"];
+                github_install [shape=box label="Directed to Github Landing Page"];
+                user_install [shape=invtrapezium label="User installs"];
+                bounced_landing [shape=box label="Bounce to Post Install Landing Page"];
+                is_backend_install_complete [shape=diamond label="Is Backend Install Complete?"];
+
+                show_welcome_screen [shape=ellipse label="Show Welcome Screen"];
+
+                landing_page -> click_install;
+                click_install -> github_install;
+                github_install -> user_install;
+                user_install -> bounced_landing;
+                bounced_landing -> is_backend_install_complete;
+                is_backend_install_complete -> bounced_landing [label="No"];
+                is_backend_install_complete -> show_welcome_screen [label="Yes"];
+        }
+
+        subgraph cluster_add_repos {
+                label="Add Repositories";
+                color=blue;
+
+                ar_user_selects_repos [shape=invtrapezium label="User Selects Repos"];
+                ar_do_automerge_pr [shape=diamond label="Automerge PRs?"];
+                ar_did_state_migrations_succeed [shape=diamond label="Did State Migrations Succeed?"]
+                ar_ask_retry_state_migrations [shape=diamond label="Retry State Migrations?"];
+                ar_do_retry_state_migrations [shape=box label="Do Retry State Migrations"];
+                ar_is_retry_because_state_migration [shape=diamond label="Is Retry Because State Migration Fail?"];
+                ar_do_state_migrations [shape=box label="Perform Any State Migrations"];
+                ar_did_merge_succeed [shape=diamond label="Did Merge Succeed?"];
+                ar_add_repo_token [shape=box label="Add Token"];
+                ar_do_create_pr [shape=box label="Create PRs"];
+                ar_do_merge_pr [shape=box label="Merge PR"];
+                ar_wait_for_merge [shape=box label="Wait For Merge"];
+
+                ar_show_repository_list [shape=ellipse label="Show Repo List"];
+                ar_show_success [shape=ellipse label="Show Success"];
+
+                show_welcome_screen -> ar_show_repository_list [style=dotted];
+
+                ar_show_repository_list -> ar_user_selects_repos;
+                ar_user_selects_repos -> asr_inspect_repo;
+
+                subgraph cluster_add_single_repo {
+                        label="per Repo";
+                        color=blue;
+
+                        asr_exists_atlantis_yaml [shape=diamond label="Exists Atlantis YAML?"];
+                        asr_migrate_atlantis_yaml [shape=invtrapezium label="Toggle Migrate Atlantis YAML"];
+                        asr_list_tf_dirs [shape=box label="List TF Dirs"];
+                        asr_exists_terrateam_config [shape=diamond label="Exists Terrateam Config?"];
+
+                        asr_inspect_repo [shape=ellipse label="Inspect Repo"];
+                        asr_complete [shape=ellipse label="Complete"];
+
+                        asr_inspect_repo -> asr_exists_terrateam_config;
+
+                        asr_exists_terrateam_config -> asr_exists_atlantis_yaml [label="No"];
+                        asr_exists_terrateam_config -> asr_list_tf_dirs [label="Yes"];
+
+                        asr_exists_atlantis_yaml -> asr_migrate_atlantis_yaml [label="Yes"];
+                        asr_exists_atlantis_yaml -> asr_list_tf_dirs [label="No"];
+
+                        asr_migrate_atlantis_yaml -> asr_list_tf_dirs;
+
+                        asr_list_tf_dirs -> asrd_is_state_dir;
+
+                        asrd_complete -> asr_complete;
+
+                        subgraph cluster_add_single_repo_dir {
+                                label="per Dir";
+                                color=blue;
+
+                                asrd_do_add_workspace [shape=diamond label="Add Workspace?"];
+                                asrd_upload_state_for_workspace [shape=invtrapezium label="Upload State"];
+                                asrd_is_state_dir [shape=diamond label="Is State Dir?"];
+                                asrd_want_perform_state_migration [shape=diamond label="Want To Migrate State?"];
+                                asrd_is_migration_retry [shape=diamond label="Did Automatic State Migration Fail?"];
+                                asrd_want_automatic_state_migration [shape=diamond label="Automatic State Migration?"];
+
+                                asrd_complete [shape=ellipse label="Complete"];
+
+                                asrd_is_state_dir -> asrd_want_perform_state_migration [label="Yes"];
+                                asrd_is_state_dir -> asrd_complete [label="No"];
+
+                                asrd_want_perform_state_migration -> asrd_is_migration_retry [label="Yes"];
+                                asrd_want_perform_state_migration -> asrd_complete [label="No"];
+
+                                asrd_is_migration_retry -> asrd_do_add_workspace [label="Yes"];
+                                asrd_is_migration_retry -> asrd_want_automatic_state_migration [label="No"];
+
+                                asrd_want_automatic_state_migration -> asrd_do_add_workspace [label="No"];
+                                asrd_want_automatic_state_migration -> asrd_complete [label="Yes"];
+
+                                asrd_do_add_workspace -> asrd_upload_state_for_workspace [label="Yes"];
+                                asrd_do_add_workspace -> asrd_complete [label="No"];
+                                asrd_upload_state_for_workspace -> asrd_do_add_workspace;
+                        }
+                }
+
+                asr_complete -> ar_is_retry_because_state_migration;
+
+                ar_is_retry_because_state_migration -> ar_add_repo_token [label="No"];
+                ar_is_retry_because_state_migration -> ar_do_state_migrations [label="Yes"];
+
+                ar_add_repo_token -> ar_do_create_pr;
+
+                ar_do_state_migrations -> ar_did_state_migrations_succeed;
+
+                ar_do_create_pr -> ar_do_automerge_pr;
+
+                ar_do_automerge_pr -> ar_do_merge_pr [label="Yes"];
+                ar_do_automerge_pr -> ar_wait_for_merge [label="No"];
+
+                ar_do_merge_pr -> ar_did_merge_succeed;
+
+                ar_did_merge_succeed -> ar_did_state_migrations_succeed [label="Yes"];
+                ar_did_merge_succeed -> ar_wait_for_merge [label="No"];
+
+                ar_wait_for_merge -> ar_do_state_migrations;
+
+                ar_did_state_migrations_succeed -> ar_ask_retry_state_migrations [label="No"];
+                ar_did_state_migrations_succeed -> ar_show_success [label="Yes"];
+
+                ar_ask_retry_state_migrations -> ar_do_retry_state_migrations [label="Yes"];
+                ar_ask_retry_state_migrations -> asr_inspect_repo [label="No"];
+                ar_do_retry_state_migrations -> ar_did_state_migrations_succeed;
+        }
+
+        subgraph cluster_determine_tf_state_dirs {
+                label="Determine TF State Dirs";
+                color=blue;
+
+                dsd_exists_repo_yaml [shape=diamond label="Terrateam YAML Exists?"];
+                dsd_has_tf_state_dir_pat_list [shape=diamond label="Has State Dir File Pattern List?"];
+                dsd_set_default_tf_state_dir_pat_list [shape=box label="Set Default State Dir Pat List"];
+                dsd_set_tf_state_dir_pat_list [shape=box label="Set State Dir Pat List"];
+                dsd_has_module_fragement [shape=diamond label="Has Module Fragement?"];
+                dsd_set_default_module_fragement [shape=box label="Set Default Module Fragement"];
+                dsd_set_module_fragement [shape=box label="Set Module Fragement"];
+
+                dsd_repo [shape=ellipse label="TF Repo"];
+
+                dsd_repo -> dsd_exists_repo_yaml;
+
+                dsd_exists_repo_yaml -> dsd_has_tf_state_dir_pat_list [label="Yes"];
+
+                dsd_has_tf_state_dir_pat_list -> dsd_set_default_tf_state_dir_pat_list [label="No"];
+                dsd_has_tf_state_dir_pat_list -> dsd_set_tf_state_dir_pat_list [label="Yes"];
+
+                dsd_set_default_tf_state_dir_pat_list -> dsd_has_module_fragement;
+                dsd_set_tf_state_dir_pat_list -> dsd_has_module_fragement;
+
+                dsd_has_module_fragement -> dsd_set_default_module_fragement [label="No"];
+                dsd_has_module_fragement -> dsd_set_module_fragement [label="Yes"];
+        }
+
+        subgraph cluster_github_events {
+                label="Github Events";
+                color=blue;
+
+                did_plan_succeed [shape=diamond label="Did Plan Succeed?"];
+                event_apply_to_managed_repo [shape=diamond label="Event Applies To Managed Repo?"];
+                github_send_event [shape=ellipse label="GitHub Sends Event"];
+                merge_configs [shape=box label="Merge Local and Known Config"];
+                parse_payload [shape=box label="Parse Payload"];
+                run_plan [shape=box label="Run Plan"];
+                run_pre_plan_hook [shape=box label="Run pre_plan_hook"];
+                start_github_action [shape=box label="Start GitHub Action"];
+                is_create_pull_request [shape=diamond label="Is Create PR?"];
+                is_modify_pull_request [shape=diamond label="Is Modify PR (code update)?"];
+                is_plan_comment [shape=diamond label="Is plan Comment?"];
+                is_merge_event [shape=diamond label="Is Merge Event?"];
+                is_apply_comment [shape=diamond label="Is Apply Comment?"];
+                set_run_type_plan [shape=box label="Set Run Type: Plan"];
+                set_run_token [shape=box label="Set Run Token"];
+                set_run_type_apply [shape=box label="Set Run Type: Apply"];
+                set_run_type_automatic_import [shape=box label="Set Run Type: Automatic Import"];
+                set_run_type_key_rotate [shape=box label="Set Run Type: Key Rotate"];
+                is_apply_after_merge_enabled [shape=diamond label="Is Apply After Merge Enabled?"];
+                is_plan_dir_specified [shape=diamond label="User Specified plan Dir/Project?"];
+                collect_enabled_autoplan_globs [shape=box label="Collect Autoplan Globs"];
+                do_changed_files_match_globs [shape=diamond label="Do Changed Files Match Globs?"];
+                collect_when_modified_globs [shape=box label="Collect when_modified Globs"];
+                does_user_have_plan_permission [shape=diamond label="User Have Plan Permission?"];
+                can_user_apply_plans [shape=diamond label="Can User Apply Plans?"];
+                is_apply_dir_specified [shape=diamond label="User Specified apply Dir/Project?"];
+                directories_locked_by_this_pr [shape=diamond label="All Locks Owned by this PR?"];
+                are_any_directories_locked [shape=diamond label="Are Any Changed Dirs Locked?"];
+                apply_locks_to_changed_dirs [shape=box label="Apply Locks To All Changed Dirs"];
+                collect_all_changed_dirs [shape=box label="Collect All Changed Dirs in PR"];
+                does_pr_own_locks_on_all_plans [shape=diamond label="PR Owns All Plan Locks?"];
+                all_changed_dirs_in_database [shape=diamond label="All Changed Dirs In DB?"];
+                filter_all_applied_plans [shape=box label="Filter All Applied Plans"];
+                are_all_plans_applied [shape=diamond label="Are All Plans Applied?"];
+                run_post_plan_hook [shape=box label="Run post_plan_hook"];
+                run_pre_apply_hook [shape=box label="Run pre_apply_hook"];
+                pre_apply_hook_success [shape=diamond label="pre_apply_hook Succeeded?"];
+                run_apply [shape=box label="Run Apply"];
+                run_post_apply_hook [shape=box label="Run post_apply_hook"];
+                update_database_with_yaml [shape=box label="Update Database From YAML"];
+                download_plan [shape=box label="Download Stored Plan"];
+                collect_all_plans_for_pr [shape=box label="Collect All Plans For PR"];
+                are_all_plans_for_this_version_of_pr [shape=diamond label="All Plans Match This PR Revision?"];
+                collect_modify_autoplan_globs [shape=box label="Collect Autoplan Globs"];
+                comment_must_update_some_plans [shape=box label="Comment Must Update Some Plans"];
+                collect_modify_existing_plans [shape=box label="Collect Existing Plans"];
+                remove_autoplan_from_list_of_plans [shape=box label="Filter Matching Autoplan Matches from Existing Plans"];
+                are_there_remaining_plans [shape=diamond label="Are There Remaining Plans?"];
+                is_unlock_comment [shape=diamond label="Is unlock Comment?"];
+                collect_locks_for_pull_request [shape=box label="Collect Locks for PR"];
+                delete_locks [shape=box label="Delete Locks"];
+                is_close_pr [shape=diamond label="Is Close PR?"];
+                is_state_migration_pr [shape=diamond label="Is State Migration PR?"];
+                is_reopen_pull_request [shape=diamond label="Is Reopen PR?"];
+                is_existing_state_migration_pr [shape=diamond label="Is Existing State Migration PR?"];
+                is_create_state_migration_pr [shape=diamond label="Is State Migration PR?"];
+                exists_create_automatic_imports [shape=diamond label="Exists Automatic State Imports?"];
+                apply_locks_for_pr [shape=box label="Apply Locks For PR"];
+                is_install_event [shape=diamond label="Is Install Event?"];
+                is_add_repo_event [shape=diamond label="Is Add Repo Event?"];
+                is_repo_in_setup_phase [shape=diamond label="Is Repo In Setup Phase?"];
+                is_setup_merge_event [shape=diamond label="Is Merge Setup PR?"];
+                install_client_token [shape=box label="Install Client Token in Repo Secrets"];
+                after_merge_collect_pr_locks [shape=box label="Collect PR Locks"];
+                exists_after_merge_unapplied_plans [shape=diamond label="Exists Unapplied Plans?"];
+                after_merge_delete_all_pr_locks [shape=box label="Delete All PR Locks"];
+                is_merge_key_rotate_pr [shape=diamond label="Is Key Rotate PR?"];
+
+                is_run_token_valid [shape=diamond label="Is Run Token Valid?"];
+                fetch_work_manifest [shape=box label="Fetch Work Manifest"];
+                is_plan_action [shape=diamond label="Is Plan Action?"];
+                is_apply_action [shape=diamond label="Is Apply Action?"];
+                run_pre_workflow [shape=box label="Run pre_workflow"];
+                run_pre_plan_hook [shape=box label="Run pre_plan_hook"];
+                pre_plan_hook_success [shape=diamond label="pre_plan_hook Succeeded?"];
+                run_infracost [shape=box label="Run InfraCost"];
+                is_infracost_enabled [shape=diamond label="Is InfraCost Enabled?"];
+                is_state_migration_action [shape=diamond label="Is State Migration Action?"];
+                is_e2e_key_updated [shape=diamond label="Is e2e key update?"];
+                is_e2e_key_update_only_change [shape=diamond label="Is e2e key update only change?"];
+                is_allow_key_rotate_on_merge_comment [shape=diamond label="Is Allow Key Rotate On Merge Comment?"];
+                is_apply_key_rotate_immediately_comment [shape=diamond label="Is Apply Key Rotate Immediately Comment?"];
+                is_valid_key_rotate_pr [shape=diamond label="Is Valid Key Rotate PR?"];
+                has_key_rotate_permissions [shape=diamond label="User Has Key Rotate Permissions?"];
+                has_key_rotate_pr_repo_lock [shape=diamond label="PR Has Repo Lock?"];
+                acquire_key_rotate_repo_lock [shape=box label="Acquire Repo-level Lock"];
+                acquire_key_rotate_repo_lock_success [shape=diamond label="Acquired Lock?"];
+                is_merge_key_rotate_pr_with_lock [shape=diamond label="Has Repo-level Lock?"];
+                has_key_rotate_immediately_permissions [shape=diamond label="Has Key Rotate Permissions"];
+                has_pr_key_rotate_immediately_lock [shape=diamond label="Has Repo-level Lock?"];
+                is_key_rotation_action [shape=diamond label="Is Key Rotation Action?"];
+
+                comment_and_exit [shape=ellipse label="Comment And Exit"];
+                comment_apply_access_denied [shape=ellipse label="Comment Apply Access Denied"];
+                comment_plan_access_denied [shape=ellipse label="Comment Plan Access Denied"];
+                discard_event [shape=ellipse label="Discard"];
+                discard_event_create [shape=ellipse label="Discard"];
+                discard_event_plan [shape=ellipse label="Discard"];
+                discard_event_merge [shape=ellipse label="Discard"];
+                discard_event_unknown [shape=ellipse label="Discard"];
+                fail_action_with_message [shape=ellipse label="Fail Action"];
+                comment_dirs_locked_and_exit [shape=ellipse label="Comment Dirs Locked and Exit"];
+                comment_must_run_plan [shape=ellipse label="Comment Must Run Plan"];
+                comment_missing_owned_locks [shape=ellipse label="Comment Missing Locks"];
+                comment_no_plans_to_apply [shape=ellipse label="Comment No Plans To Apply"];
+                comment_plans_out_of_date [shape=ellipse label="Comment Plans Out Of Date"];
+                comment_unlock_success [shape=ellipse label="Comment Unlock Success"];
+                do_unlock_locks [shape=ellipse label="Unlock This PR's Locks"];
+                comment_pr_not_valid [shape=ellipse label="Comment PR Not Valid"];
+                store_installation_data [shape=ellipse label="Store Installation Data"];
+                update_repo_list [shape=ellipse label="Update Repo List"];
+                mark_repo_as_managed [shape=ellipse label="Mark Repo As Managed"];
+                after_merge_comment_unapplied_plans [shape=ellipse label="Comment Unapplied Plans"];
+                send_applied_data_to_us [shape=ellipse label="Send Applied Data To Us"];
+                send_planning_data_to_us [shape=ellipse label="Send Planning Data To Us"];
+                notify_user_e2e_key_rotation_pr_bad [shape=ellipse label="Notify user e2e PR bad"];
+                notify_user_e2e_key_rotation_pr_good [shape=ellipse label="Notify user e2e PR good"];
+                notify_user_missing_key_rotate_permissions [shape=ellipse label="Notify User Missing Key Rotate Permissions"];
+                notify_user_key_rotation_next_steps [shape=ellipse label="Notify User Key Rotation Next Steps"];
+                notify_user_key_rotation_lock_failure [shape=ellipse label="Notify User Key Rotation Lock Failure"];
+                notify_user_in_bad_key_rotation_state [shape=ellipse label="Notify User Bad Key Rotation State"];
+                notify_user_key_rotation_merge_next_steps [shape=ellipse label="Notify User Key Rotation Next Steps"];
+                notify_user_key_rotation_failure [shape=ellipse label="Notify User Key Rotation Failure"];
+
+                user_install -> github_send_event [style=dotted];
+                ar_do_create_pr -> github_send_event [style=dotted];
+                ar_wait_for_merge -> github_send_event [style=dotted];
+
+                // Start
+                github_send_event -> parse_payload;
+
+                parse_payload -> is_install_event;
+
+                is_install_event -> is_add_repo_event [label="No"];
+                is_install_event -> store_installation_data [label="Yes"];
+
+                is_add_repo_event -> event_apply_to_managed_repo [label="No"];
+                is_add_repo_event -> update_repo_list [label="Yes"];
+
+                event_apply_to_managed_repo -> is_repo_in_setup_phase [label="No"];
+
+                is_repo_in_setup_phase -> discard_event [label="No"];
+                is_repo_in_setup_phase -> is_setup_merge_event [label="Yes"];
+
+                is_setup_merge_event -> install_client_token [label="Yes"];
+                is_setup_merge_event -> discard_event [label="No"];
+
+                install_client_token -> mark_repo_as_managed;
+
+                event_apply_to_managed_repo -> is_create_pull_request [label="Yes"];
+
+                is_create_pull_request -> is_create_state_migration_pr [label="Yes"];
+
+                is_create_state_migration_pr -> is_e2e_key_updated [label="No"];
+                is_create_state_migration_pr -> apply_locks_for_pr [label="Yes"];
+
+                is_e2e_key_updated -> collect_enabled_autoplan_globs [label="No"];
+                is_e2e_key_updated -> is_e2e_key_update_only_change [label="Yes"];
+
+                is_e2e_key_update_only_change -> notify_user_e2e_key_rotation_pr_bad [label="No"];
+                is_e2e_key_update_only_change -> notify_user_e2e_key_rotation_pr_good [label="Yes"];
+
+                apply_locks_for_pr -> exists_create_automatic_imports;
+
+                exists_create_automatic_imports -> discard_event_create [label="No"];
+                exists_create_automatic_imports -> set_run_type_automatic_import [label="Yes"];
+                set_run_type_automatic_import -> set_run_token;
+
+                collect_enabled_autoplan_globs -> do_changed_files_match_globs;
+
+                do_changed_files_match_globs -> does_user_have_plan_permission [label="Yes"];
+                do_changed_files_match_globs -> discard_event_plan [label="No"];
+
+                does_user_have_plan_permission -> are_any_directories_locked [label="Yes"];
+                does_user_have_plan_permission -> comment_plan_access_denied [label="No"];
+
+                are_any_directories_locked -> apply_locks_to_changed_dirs [label="No"];
+                are_any_directories_locked -> directories_locked_by_this_pr [label="Yes"];
+
+                directories_locked_by_this_pr -> comment_dirs_locked_and_exit [label="No"];
+                directories_locked_by_this_pr -> apply_locks_to_changed_dirs [label="Yes"];
+
+                apply_locks_to_changed_dirs -> set_run_type_plan;
+
+                is_create_pull_request -> is_reopen_pull_request [label="No"];
+
+                is_reopen_pull_request -> is_existing_state_migration_pr [label="Yes"];
+
+                is_existing_state_migration_pr -> comment_pr_not_valid [label="Yes"];
+                is_existing_state_migration_pr -> collect_enabled_autoplan_globs [label="No"];
+
+                is_reopen_pull_request -> is_modify_pull_request [label="No"];
+
+                is_modify_pull_request -> is_plan_comment [label="No"];
+                is_modify_pull_request -> collect_modify_autoplan_globs [label="Yes"];
+
+                collect_modify_autoplan_globs -> collect_modify_existing_plans;
+                collect_modify_existing_plans -> remove_autoplan_from_list_of_plans;
+
+                remove_autoplan_from_list_of_plans -> are_there_remaining_plans;
+
+                are_there_remaining_plans -> comment_must_update_some_plans [label="Yes"];
+                are_there_remaining_plans -> collect_enabled_autoplan_globs [label="No"];
+
+                comment_must_update_some_plans -> collect_enabled_autoplan_globs;
+
+                is_plan_comment -> is_plan_dir_specified [label="Yes"];
+
+                is_plan_dir_specified -> does_user_have_plan_permission [label="Yes"];
+                is_plan_dir_specified -> collect_when_modified_globs [label="No"];
+
+                collect_when_modified_globs -> do_changed_files_match_globs;
+
+                is_plan_comment -> is_close_pr [label="No"];
+
+                is_close_pr -> is_unlock_comment [label="No"];
+
+                is_close_pr -> collect_locks_for_pull_request [label="Yes"];
+                is_unlock_comment -> collect_locks_for_pull_request [label="Yes"];
+
+                collect_locks_for_pull_request -> delete_locks;
+
+                delete_locks -> comment_unlock_success;
+
+                is_unlock_comment -> is_merge_event [label="No"];
+
+                is_merge_event -> update_database_with_yaml [label="Yes"];
+
+                update_database_with_yaml -> is_state_migration_pr;
+                is_state_migration_pr -> is_merge_key_rotate_pr [label="No"];
+                is_state_migration_pr -> do_unlock_locks [label="Yes"];
+
+                is_merge_key_rotate_pr -> is_apply_after_merge_enabled [label="No"];
+                is_merge_key_rotate_pr -> is_merge_key_rotate_pr_with_lock [label="Yes"];
+
+                is_merge_key_rotate_pr_with_lock -> notify_user_in_bad_key_rotation_state [label="No"];
+                is_merge_key_rotate_pr_with_lock -> notify_user_key_rotation_merge_next_steps [label="Yes"];
+
+                is_apply_after_merge_enabled -> collect_all_changed_dirs [label="Yes"];
+
+                collect_all_changed_dirs -> all_changed_dirs_in_database;
+
+                all_changed_dirs_in_database -> comment_must_run_plan [label="No"];
+                all_changed_dirs_in_database -> filter_all_applied_plans [label="Yes"];
+
+                filter_all_applied_plans -> collect_all_plans_for_pr;
+
+                collect_all_plans_for_pr -> are_all_plans_applied;
+
+                are_all_plans_applied -> does_pr_own_locks_on_all_plans [label="No"];
+                are_all_plans_applied -> comment_no_plans_to_apply [label="Yes"];
+
+                does_pr_own_locks_on_all_plans -> comment_missing_owned_locks [label="No"];
+                does_pr_own_locks_on_all_plans -> are_all_plans_for_this_version_of_pr [label="Yes"];
+
+                are_all_plans_for_this_version_of_pr -> can_user_apply_plans [label="Yes"];
+                are_all_plans_for_this_version_of_pr -> comment_plans_out_of_date [label="No"];
+
+                can_user_apply_plans -> set_run_type_apply [label="Yes"];
+                can_user_apply_plans -> comment_apply_access_denied [label="No"];
+
+                is_apply_after_merge_enabled -> after_merge_collect_pr_locks [label="No"];
+                after_merge_collect_pr_locks -> exists_after_merge_unapplied_plans;
+                exists_after_merge_unapplied_plans -> after_merge_delete_all_pr_locks [label="No"];
+
+                after_merge_delete_all_pr_locks -> discard_event_merge;
+
+                exists_after_merge_unapplied_plans -> after_merge_comment_unapplied_plans [label="Yes"];
+
+                is_merge_event -> is_apply_comment [label="No"];
+
+                is_apply_comment -> is_apply_dir_specified [label="Yes"];
+                is_apply_comment -> is_allow_key_rotate_on_merge_comment [label="No"];
+
+                is_allow_key_rotate_on_merge_comment -> is_apply_key_rotate_immediately_comment [label="No"];
+                is_allow_key_rotate_on_merge_comment -> is_valid_key_rotate_pr [label="Yes"];
+
+                is_valid_key_rotate_pr -> discard_event_unknown [label="No"];
+                is_valid_key_rotate_pr -> has_key_rotate_permissions [label="Yes"];
+
+                has_key_rotate_permissions -> notify_user_missing_key_rotate_permissions [label="No"];
+                has_key_rotate_permissions -> has_key_rotate_pr_repo_lock [label="Yes"];
+
+                has_key_rotate_pr_repo_lock -> notify_user_key_rotation_next_steps [label="Yes"];
+                has_key_rotate_pr_repo_lock -> acquire_key_rotate_repo_lock [label="No"];
+
+                acquire_key_rotate_repo_lock -> acquire_key_rotate_repo_lock_success;
+
+                acquire_key_rotate_repo_lock_success -> notify_user_key_rotation_next_steps [label="Yes"];
+                acquire_key_rotate_repo_lock_success -> notify_user_key_rotation_lock_failure [label="No"];
+
+                is_apply_key_rotate_immediately_comment -> discard_event_unknown [label="No"];
+                is_apply_key_rotate_immediately_comment -> has_key_rotate_immediately_permissions [label="Yes"];
+
+                has_key_rotate_immediately_permissions -> notify_user_missing_key_rotate_permissions [label="No"];
+                has_key_rotate_immediately_permissions -> has_pr_key_rotate_immediately_lock [label="Yes"];
+
+                has_pr_key_rotate_immediately_lock -> notify_user_key_rotation_failure [label="No"];
+                has_pr_key_rotate_immediately_lock -> set_run_type_key_rotate [label="Yes"];
+
+                set_run_type_key_rotate -> start_github_action;
+
+                is_apply_dir_specified -> collect_all_changed_dirs [label="No"];
+                is_apply_dir_specified -> filter_all_applied_plans [label="Yes"];
+
+                set_run_type_plan -> set_run_token;
+                set_run_type_apply -> set_run_token;
+
+                set_run_token -> start_github_action;
+
+                start_github_action -> is_run_token_valid;
+
+                subgraph cluster_github_action {
+                        label="GitHub Action";
+                        color=blue;
+
+                        is_run_token_valid -> merge_configs [label="Yes"];
+                        is_run_token_valid -> fail_action_with_message [label="No"];
+
+                        merge_configs -> fetch_work_manifest;
+
+                        fetch_work_manifest -> run_pre_workflow;
+
+                        run_pre_workflow -> is_plan_action;
+
+                        is_plan_action -> is_apply_action [label="No"];
+
+                        is_apply_action -> is_state_migration_action [label="No"];
+
+                        is_state_migration_action -> is_key_rotation_action [label="No"];
+                        is_state_migration_action -> move_terrateam_backend_file_away [label="Yes"];
+
+                        is_key_rotation_action -> comment_and_exit [label="No"];
+                        is_key_rotation_action -> kra_do_both_keys_exist [label="Yes"];
+
+                        is_plan_action -> run_pre_plan_hook [label="Yes"];
+
+                        run_pre_plan_hook -> pre_plan_hook_success;
+
+                        pre_plan_hook_success -> comment_and_exit [label="No"];
+                        pre_plan_hook_success -> run_plan [label="Yes"];
+
+                        is_apply_action -> run_pre_apply_hook [label="Yes"];
+
+                        run_pre_apply_hook -> pre_apply_hook_success;
+
+                        pre_apply_hook_success -> comment_and_exit [label="No"];
+                        pre_apply_hook_success -> download_plan [label="Yes"];
+
+                        subgraph cluster_run_plan {
+                                label="Run Plan On Changed Dirs";
+                                color=blue;
+
+                                run_plan -> did_plan_succeed;
+
+                                did_plan_succeed -> is_infracost_enabled [label="Yes"];
+
+                                is_infracost_enabled -> run_infracost [label="Yes"];
+                        }
+
+                        did_plan_succeed -> run_post_plan_hook [label="No"];
+                        run_infracost -> run_post_plan_hook;
+                        is_infracost_enabled -> run_post_plan_hook [label="No"];
+                        run_post_plan_hook -> send_planning_data_to_us;
+
+                        subgraph cluster_run_apply {
+                                label="Run Apply On Changed Dirs";
+                                color=blue;
+
+                                download_plan -> run_apply;
+                        }
+
+                        run_apply -> run_post_apply_hook;
+                        run_post_apply_hook -> send_applied_data_to_us;
+
+                        subgraph cluster_state_migration_action {
+                                label="Run Migration per Dir";
+                                color=blue;
+
+                                move_terrateam_backend_file_away [shape=box label="Move Terrateam Backend File Away"];
+                                do_tf_state_pull [shape=box label="Terraform State Pull"];
+                                do_terrateam_upload_state [shape=box label="Do Terrateam Upload State"];
+                                did_terrateam_upload_state_succeed [shape=diamond label="Did Upload State Succeed?"];
+                                did_tf_state_pull_succeed [shape=diamond label="Did State Pull Succeed?"];
+                                do_tell_terrateam_pull_failed [shape=box label="Tell Terrateam Import Failed"];
+                                did_tell_terrateam_import_failed_succeed [shape=diamond label="Telling Terrateam Succeed?"];
+
+                                comment_state_migration_failed [shape=ellipse label="Comment PR State Migration Failed"];
+                                upload_state_do_nothing [shape=ellipse label="Do Nothing"];
+
+                                move_terrateam_backend_file_away -> do_tf_state_pull;
+
+                                do_tf_state_pull -> did_tf_state_pull_succeed;
+
+                                did_tf_state_pull_succeed -> do_tell_terrateam_pull_failed [label="No"];
+                                did_tf_state_pull_succeed -> do_terrateam_upload_state [label="Yes"];
+
+                                do_tell_terrateam_pull_failed -> did_tell_terrateam_import_failed_succeed;
+
+                                did_tell_terrateam_import_failed_succeed -> comment_state_migration_failed [label="No"];
+                                did_tell_terrateam_import_failed_succeed -> upload_state_do_nothing [label="Yes"];
+
+                                do_terrateam_upload_state -> did_terrateam_upload_state_succeed;
+
+                                did_terrateam_upload_state_succeed -> comment_state_migration_failed [label="No"];
+                                did_terrateam_upload_state_succeed -> upload_state_do_nothing [label="Yes"];
+                        }
+
+                        subgraph cluster_key_rotation_action {
+                                label="Run Key Rotation";
+                                color=blue;
+
+                                kra_do_both_keys_exist [shape=diamond label="Do New And Old Key Exist?"];
+
+                                kra_report_failure_to_us [shape=ellipse label="Report Failure to Us"];
+                                kra_report_result_to_us [shape=ellipse label="Report Result to Us"];
+
+                                kra_do_both_keys_exist -> kra_report_failure_to_us [label="No"];
+                                kra_do_both_keys_exist -> kra_tf_pull [label="Yes"];
+
+                                subgraph cluster_key_rotation_action_per_dir {
+                                        label="Key Rotation per Dir";
+                                        color=blue;
+
+                                        subgraph cluster_key_rotation_action_per_workspace {
+                                                label="Key Rotation per Workspace";
+                                                color=blue;
+
+                                                kra_tf_pull [shape=box label="Terrafrom State Pull"];
+                                                kra_tf_push [shape=box label="Terraform State Push"];
+
+                                                kra_tf_pull -> kra_tf_push;
+                                        }
+                                }
+
+                                kra_tf_push -> kra_report_result_to_us;
+                        }
+                }
+        }
+
+        subgraph cluster_apply_complete {
+                label="Apply Complete";
+                color=blue;
+
+                ac_is_pr_merged [shape=diamond label="Is PR Merged?"];
+                ac_unlock_all_successfully_applied_dirs [shape=box label="Unlock All Successfully Applied Dirs"];
+                ac_exists_failed_applies [shape=diamond label="Exists Failed Applies?"];
+
+                ac_comment_must_merge_to_unlock [shape=ellipse label="Comment Must Merge To Unlock"];
+                ac_comment_failed_applies [shape=ellipse label="Comment Failed Applies"];
+                ac_comment_success [shape=ellipse label="Comment Success"];
+
+                send_applied_data_to_us -> ac_is_pr_merged [style=dotted];
+
+                ac_is_pr_merged -> ac_unlock_all_successfully_applied_dirs [label="Yes"];
+                ac_is_pr_merged -> ac_comment_must_merge_to_unlock [label="No"];
+
+                ac_unlock_all_successfully_applied_dirs -> ac_exists_failed_applies;
+
+                ac_exists_failed_applies -> ac_comment_failed_applies [label="Yes"];
+                ac_exists_failed_applies -> ac_comment_success [label="No"];
+        }
+
+        subgraph cluster_plan_complete {
+                label="Plan Complete";
+                color=blue;
+
+                pc_store_plans [shape=box label="Store Plans"];
+
+                send_planning_data_to_us -> pc_store_plans [style=dotted];
+                pc_store_plans -> pc_is_plan_success;
+
+                subgraph cluster_per_plan_complete {
+                        label="per Plan";
+                        color=blue;
+
+                        pc_is_plan_success [shape=diamond label="Is Plan Success?"];
+                        pc_comment_plan [shape=box label="Comment Plan"];
+                        pc_is_infracost_enabled [shape=diamond label="Is InfraCost Enabled?"];
+
+                        pc_comment_failure [shape=ellipse label="Comment Failure"];
+                        pc_comment_infracost [shape=ellipse label="Comment Infracost"];
+                        pc_do_nothing [shape=ellipse label="Do Nothing"];
+
+                        pc_is_plan_success -> pc_comment_plan [label="Yes"];
+                        pc_is_plan_success -> pc_comment_failure [label="No"];
+
+                        pc_comment_plan -> pc_is_infracost_enabled;
+
+                        pc_is_infracost_enabled -> pc_comment_infracost [label="Yes"];
+                        pc_is_infracost_enabled -> pc_do_nothing [label="No"];
+                }
+        }
+
+        subgraph cluster_e2e_key_rotation_complete {
+                label="E2E Key Rotation Complete";
+                color=blue;
+
+                e2e_krc_is_success [shape=diamond label="Is Success?"];
+                e2e_krc_unlock_repo [shape=box label="Unlock Repo"];
+
+                e2e_krc_notify_user_success [shape=ellipse label="Notify User Success"];
+                e2e_krc_notify_user_failure [shape=ellipse label="Notify User Failure"];
+
+                kra_report_failure_to_us -> e2e_krc_is_success [style=dotted];
+                kra_report_result_to_us -> e2e_krc_is_success [style=dotted];
+
+                e2e_krc_is_success -> e2e_krc_notify_user_failure [label="No"];
+                e2e_krc_is_success -> e2e_krc_unlock_repo [label="Yes"];
+
+                e2e_krc_unlock_repo -> e2e_krc_notify_user_success;
+        }
+
+        subgraph cluster_server_side_key_rotation {
+                label="Server-Side Key Rotation";
+                color=blue;
+
+                subgraph cluster_server_side_master_key_rotation {
+                        label="Server-Side Master Key Rotation";
+                        color=blue;
+
+                        ssmkr_restart_backends_with_added_key [shape=invtrapezium label="Restart Backend Servers With Added Key"];
+                        ssmkr_update_database_with_new_key_name [shape=invtrapezium label="Update DB With New Key Name"];
+                        ssmkr_start_background_rotation_job [shape=invtrapezium label="Start Background Rotation Job";];
+                        ssmkr_generate_new_key [shape=invtrapezium label="Generate New Key"];
+                        ssmkr_backup_keys [shape=invtrapezium label="Backup Keys"];
+                        ssmkr_validate_all_backends_have_both_keys [shape=invtrapezium label="Validate All Backends Have Boh Keys"];
+
+                        ssmkr_verify_previous_key_rotation_complete [shape=ellipse label="Verify Previous Rotation Complete"];
+                        ssmkr_notify_complete [shape=ellipse label="Notify Complete"];
+                        ssmkr_notify_error [shape=ellipse label="Notify Error"];
+
+                        ssmkr_verify_previous_key_rotation_complete -> ssmkr_backup_keys;
+                        ssmkr_backup_keys -> ssmkr_generate_new_key;
+                        ssmkr_generate_new_key -> ssmkr_restart_backends_with_added_key;
+                        ssmkr_restart_backends_with_added_key -> ssmkr_validate_all_backends_have_both_keys;
+                        ssmkr_validate_all_backends_have_both_keys -> ssmkr_update_database_with_new_key_name;
+
+                        ssmkr_update_database_with_new_key_name -> ssmkr_start_background_rotation_job;
+                        ssmkr_start_background_rotation_job -> ssmkrs_fetch_existing_key;
+
+                        subgraph cluster_server_side_master_key_rotation_per_state {
+                                label="per State";
+                                color=blue;
+
+                                ssmkrs_does_decrypt_with_old_key [shape=diamond label="Decrypts with Old Key?"];
+                                ssmkrs_does_decrypt_with_new_key [shape=diamond label="Decrypts with New Key?"];
+                                ssmkrs_encrypt_with_new_key [shape=box label="Encrypt with New Key"];
+
+                                ssmkrs_fetch_existing_key [shape=ellipse label="Fetch Existing Key"];
+                                ssmkrs_do_nothing [shape=ellipse label="Do Nothing"];
+                                ssmkrs_write_to_db [shape=ellipse label="Write to DB"];
+
+                                ssmkrs_fetch_existing_key -> ssmkrs_does_decrypt_with_old_key;
+
+                                ssmkrs_does_decrypt_with_old_key -> ssmkrs_encrypt_with_new_key [label="Yes"];
+                                ssmkrs_does_decrypt_with_old_key -> ssmkrs_does_decrypt_with_new_key [label="No"];
+
+                                ssmkrs_does_decrypt_with_new_key -> ssmkrs_do_nothing [label="Yes"];
+
+                                ssmkrs_encrypt_with_new_key -> ssmkrs_write_to_db;
+                        }
+
+                        ssmkrs_does_decrypt_with_new_key -> ssmkr_notify_error [label="No"];
+                        ssmkrs_write_to_db -> ssmkr_notify_complete;
+                        ssmkrs_do_nothing -> ssmkr_notify_complete;
+
+                }
+
+                subgraph cluster_server_side_customer_key_rotation {
+                        label="Server-Side Customer Key Rotation";
+                        colo=blue;
+
+                        ssckr_generate_new_key [shape=box label="Generate New Key"];
+                        ssckr_update_curr_prev_keys [shape=box label="Update Curr & Prev Keys & Updated_at in DB"];
+                        ssckr_fetch_curr_state_file [shape=box label="Fetch Curr State File"];
+                        ssckr_decrypt_with_prev_key [shape=box label="Decrypt with Prev Key"];
+                        ssckr_decrypt_with_prev_key_success [shape=diamond label="Decrypt Success?"];
+                        ssckr_decrypt_with_curr_key [shape=box label="Decrypt with Curr Key"];
+                        ssckr_decrypt_with_curr_key_success [shape=diamond label="Decrypt Success?"];
+                        ssckr_encrypt_with_curr_key [shape=box label="Encrypt with Curr Key"];
+                        ssckr_write_state_file_to_storage [shape=box label="Write State File To Storage"];
+                        ssckr_is_state_file_valid [shape=diamond label="Is State File Valid?"];
+                        ssckr_delete_state_file_backups [shape=box label="Delete State File Backups"];
+
+                        ssckr_api_call [shape=ellipse label="Key Rotation API Call"];
+                        ssckr_notify_error [shape=ellipse label="Notify Error"];
+                        ssckr_do_nothing [shape=ellipse label="Do Nothing"];
+                        ssckr_notify_complete [shape=ellipse label="Notify Complete"];
+
+                        ssckr_api_call -> ssckr_generate_new_key;
+
+                        ssckr_generate_new_key -> ssckr_update_curr_prev_keys;
+
+                        ssckr_update_curr_prev_keys -> ssckr_fetch_curr_state_file;
+                        ssckr_fetch_curr_state_file -> ssckr_decrypt_with_prev_key;
+
+                        ssckr_decrypt_with_prev_key -> ssckr_decrypt_with_prev_key_success;
+
+                        ssckr_decrypt_with_prev_key_success -> ssckr_decrypt_with_curr_key [label="No"];
+                        ssckr_decrypt_with_prev_key_success -> ssckr_encrypt_with_curr_key [label="Yes"];
+
+                        ssckr_decrypt_with_curr_key -> ssckr_decrypt_with_curr_key_success;
+
+                        ssckr_encrypt_with_curr_key -> ssckr_write_state_file_to_storage;
+
+                        ssckr_write_state_file_to_storage -> ssckr_is_state_file_valid;
+
+                        ssckr_is_state_file_valid -> ssckr_delete_state_file_backups [label="Yes"];
+                        ssckr_is_state_file_valid -> ssckr_notify_error [label="No"];
+
+                        ssckr_delete_state_file_backups -> ssckr_notify_complete;
+
+                        ssckr_decrypt_with_curr_key_success -> ssckr_notify_error [label="No"];
+                        ssckr_decrypt_with_curr_key_success -> ssckr_do_nothing [label="Yes"];
+                }
+        }
+
+        subgraph cluster_state_storage {
+                label="State Storage API";
+                color=blue;
+
+                subgraph cluster_state_storage_fetch_state {
+                        label="Fetch State";
+                        color=blue;
+
+                        ssfs_is_request_authorized [shape=diamond label="Is Request Authorized?"];
+                        ssfs_notify_us_unauth_access_attempt [shape=box label="Notify Us Unauth Access Attempt"];
+                        ssfs_does_state_id_exist [shape=diamond label="Does State ID Exist?"];
+                        ssfs_does_token_have_read_access_to_state_prefix [shape=diamond label="Token can Read State Prefix?"];
+                        ssfs_fetch_state_file [shape=box label="Fetch State File"];
+                        ssfs_is_state_file_encrypted_server_side [shape=diamond label="Is State File Encrypted Server-side?"];
+                        ssfs_decrypt_customer_key_with_curr_key [shape=box label="Decrypt Customer Key with Curr Key"];
+                        ssfs_decrypt_customer_key_with_prev_key [shape=box label="Decrypt Customer Key with Prev Key"];
+                        ssfs_decrypt_customer_key_with_curr_key_success [shape=diamond label="Decrypt Successful?"];
+                        ssfs_decrypt_customer_key_with_prev_key_success [shape=diamond label="Decrypt Successful?"];
+                        ssfs_decrypt_state_file_with_customer_key [shape=box label="Decrypt State With Customer Key"];
+                        ssfs_decrypt_state_file_with_customer_key_success [shape=diamond label="Decrypt Successful?"];
+                        ssfs_notify_us_decrypt_error [shape=box label="Notify Us Decrypt Error"];
+
+                        ssfs_fetch_request [shape=ellipse label="Fetch Request"];
+                        ssfs_return_404 [shape=ellipse label="Return 404"];
+                        ssfs_return_403 [shape=ellipse label="Return 403"];
+                        ssfs_return_state [shape=ellipse label="Return State"];
+                        ssfs_return_500 [shape=ellipse label="Return 500"];
+
+                        ssfs_fetch_request -> ssfs_is_request_authorized;
+
+                        ssfs_is_request_authorized -> ssfs_notify_us_unauth_access_attempt [label="No"];
+                        ssfs_is_request_authorized -> ssfs_does_token_have_read_access_to_state_prefix [label="Yes"];
+
+                        ssfs_does_token_have_read_access_to_state_prefix -> ssfs_does_state_id_exist [label="Yes"];
+                        ssfs_does_token_have_read_access_to_state_prefix -> ssfs_return_403 [label="No"];
+
+                        ssfs_does_state_id_exist -> ssfs_fetch_state_file [label="Yes"];
+                        ssfs_does_state_id_exist -> ssfs_return_404 [label="No"];
+
+                        ssfs_fetch_state_file -> ssfs_is_state_file_encrypted_server_side;
+
+                        ssfs_is_state_file_encrypted_server_side -> ssfs_decrypt_customer_key_with_curr_key [label="Yes"];
+                        ssfs_is_state_file_encrypted_server_side -> ssfs_return_state [label="No"];
+
+                        ssfs_decrypt_customer_key_with_curr_key -> ssfs_decrypt_customer_key_with_curr_key_success;
+
+                        ssfs_decrypt_customer_key_with_curr_key_success -> ssfs_decrypt_state_file_with_customer_key [label="Yes"];
+                        ssfs_decrypt_customer_key_with_curr_key_success -> ssfs_decrypt_customer_key_with_prev_key [label="No"];
+
+                        ssfs_decrypt_state_file_with_customer_key -> ssfs_decrypt_state_file_with_customer_key_success;
+
+                        ssfs_decrypt_state_file_with_customer_key_success -> ssfs_return_state [label="Yes"];
+                        ssfs_decrypt_state_file_with_customer_key_success -> ssfs_notify_us_decrypt_error [label="No"];
+
+                        ssfs_notify_us_decrypt_error -> ssfs_return_500;
+
+                        ssfs_decrypt_customer_key_with_prev_key -> ssfs_decrypt_customer_key_with_prev_key_success;
+
+                        ssfs_decrypt_customer_key_with_prev_key_success -> ssfs_decrypt_state_file_with_customer_key [label="Yes"];
+
+                        ssfs_notify_us_unauth_access_attempt -> ssfs_return_403;
+                }
+
+                subgraph cluster_state_storage_store_state {
+                        label="Store State";
+                        color=blue;
+
+                        s4_is_request_authorized [shape=diamond label="Is Requested Authorized?"];
+                        s4_notify_us_unauth_access_attempt [shape=box label="Notify Us Unauth Access Attempt"];
+                        s4_token_can_write_state [shape=diamond label="Tokan Can Write State Prefix?"];
+                        s4_is_state_e2e_encrypted [shape=diamond label="Is State E2E Encrypted?"];
+                        s4_store_state [shape=box label="Store State"];
+                        s4_fetch_enc_customer_key [shape=box label="Fetch Encrypted Customer Key"];
+                        s4_decrypt_with_curr_key [shape=box label="Decrypt with Curr Master Key"];
+                        s4_decrypt_with_curr_key_success [shape=diamond label="Decrypt Successful?"];
+                        s4_decrypt_with_prev_key [shape=box label="Decrypt with Prev Master Key"];
+                        s4_decrypt_with_prev_key_success [shape=diamond label="Decrypt Successful?"];
+                        s4_notify_us_error [shape=box label="Notify Us Error"];
+                        s4_enc_state_file_with_customer_key [shape=box label="Encrypt State File with Customer Key"];
+                        s4_enc_customer_key_with_curr_key [shape=box label="Encrypt Customer Key With Curr Master Key"];
+                        s4_store_enc_customer_key [shape=box label="Store Encrypted Customer Key"];
+
+                        s4_store_request [shape=ellipse label="Store Request"];
+                        s4_return_403 [shape=ellipse label="Return 403"];
+                        s4_return_success [shape=ellipse label="Return Success"];
+                        s4_return_500 [shape=ellipse label="Return 500"];
+
+                        s4_store_request -> s4_is_request_authorized;
+
+                        s4_is_request_authorized -> s4_notify_us_unauth_access_attempt [label="No"];
+                        s4_is_request_authorized -> s4_token_can_write_state [label="Yes"];
+
+                        s4_token_can_write_state -> s4_return_403 [label="No"];
+                        s4_token_can_write_state -> s4_is_state_e2e_encrypted [label="Yes"];
+
+                        s4_is_state_e2e_encrypted -> s4_store_state [label="Yes"];
+                        s4_is_state_e2e_encrypted -> s4_fetch_enc_customer_key [label="No"];
+
+                        s4_fetch_enc_customer_key -> s4_decrypt_with_curr_key;
+
+                        s4_decrypt_with_curr_key -> s4_decrypt_with_curr_key_success;
+
+                        s4_decrypt_with_curr_key_success -> s4_decrypt_with_prev_key [label="No"];
+                        s4_decrypt_with_curr_key_success -> s4_enc_state_file_with_customer_key [label="Yes"];
+
+                        s4_enc_state_file_with_customer_key -> s4_store_state;
+
+                        s4_decrypt_with_prev_key -> s4_decrypt_with_prev_key_success;
+
+                        s4_decrypt_with_prev_key_success -> s4_notify_us_error [label="No"];
+                        s4_decrypt_with_prev_key_success -> s4_enc_customer_key_with_curr_key [label="Yes"];
+
+                        s4_enc_customer_key_with_curr_key -> s4_store_enc_customer_key;
+
+                        s4_store_enc_customer_key -> s4_enc_state_file_with_customer_key;
+
+                        s4_notify_us_error -> s4_return_500;
+
+                        s4_store_state -> s4_return_success;
+
+                        s4_notify_us_unauth_access_attempt -> s4_return_403;
+                }
+        }
+}

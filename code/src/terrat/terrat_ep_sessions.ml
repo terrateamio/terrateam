@@ -1,7 +1,7 @@
 let response_headers = Cohttp.Header.of_list [ ("content-type", "application/json") ]
 
 module Sql = struct
-  let read fname = CCOpt.get_exn_or fname (Terrat_files_github.read fname)
+  let read fname = CCOpt.get_exn_or fname (Terrat_files_sql.read fname)
 
   let select_user_sessions =
     Pgsql_io.Typed_sql.(

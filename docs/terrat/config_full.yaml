@@ -1,0 +1,101 @@
+enabled: true
+version: 1
+tf_state_dir_pattern_list: ["**/*.tf"]
+module_dir_fragment: ["modules"]
+module_root_dir_file_pattern: "main.tf"
+automerge: true
+autoplan:
+  when_modified: ["**/*.tf", "**/*.tfvars"]
+  enabled: true
+checkout_strategy: merge
+default_tf_version: latest
+apply_requirements: [mergable, approved]
+cost_estimation:
+  enabled: true
+drift_detection_schedule:
+  enabled: true
+  schedule: monthly
+permissions:
+  - tag-query: iam
+    apply:
+      - id: team:security
+        permissions: allow
+  - tag-query: production
+    apply:
+      - id: team:sre
+        permissions: allow
+hooks:
+  plan:
+    pre:
+      - type: run
+        cmd: ["some-setup"]
+      - type: run
+        cmd: ["echo", "start plan"]
+      - type: slack
+        msg: "Failed before plan on $tags, not planning"
+        run_on: failure
+    post:
+      - type: run
+        cmd: ["echo", "done plan"]
+        run_on: always
+      - type: slack
+        msg: "Failed after plan on $tags"
+        run_on: failure
+  apply:
+    pre:
+      - type: run
+        cmd: ["echo", "start apply"]
+    post:
+      - type: run
+        cmd: ["echo", "done apply"]
+        run_on: always
+workflows:
+  - tag-query: staging
+    plan:
+      - type: init
+      - type: plan
+        extra_args: ["-var-file", "staging.tfvars"]
+  - tag-query: production
+    plan:
+      - type: init
+      - type: plan
+        extra_args: ["-var-file", "production.tfvars"]
+  - tag-query: testing
+    apply:
+      - type: init
+      - type: apply
+      - type: slack
+        msg: "Failed to apply $dir $tags"
+        ignore_errors: true
+        run_on: failure
+dirs:
+  aws/us-west-2/ecs:
+    tags: [ecs, us-west-2]
+    workspaces:
+      staging:
+        tags: [staging]
+      production:
+        tags: [production]
+  aws/us-east-2/ecs:
+    tags: [ecs, us-east-2]
+    workspaces:
+      staging:
+        tags: [staging]
+      production:
+        tags: [production]
+    autoplan:
+      when_modified:
+        - **/*.json
+        - **/*.tf
+        - **/*.tfvars
+  aws/iam:
+    tags: [iam]
+    workspaces:
+      staging:
+        tags: [staging]
+      production:
+        tags: [production]
+    autoplan:
+      when_modified:
+        - **/*.tf
+        - ../modules/iam/*.tf

@@ -63,38 +63,6 @@ let run_file_sql fname (config, storage) =
                 stmts))
   | None -> failwith ("Could not load file: " ^ fname)
 
-let migrations =
-  [
-    ("create-tables", run_file_sql "2021-08-28-initial-tables.sql");
-    ("create-user-tables", run_file_sql "2021-09-19-add-users.sql");
-    ("create-secrets-tables", run_file_sql "2021-09-21-add-secrets.sql");
-    ( "add-github-user-installations-expire",
-      run_file_sql "2021-09-23-add-github-user-installations-expire.sql" );
-    ("add-installation-config", run_file_sql "2021-09-25-add-config.sql");
-    ("add-more-installation-config", run_file_sql "2021-09-28-add-more-installation-config.sql");
-    ("add-user-installation-admin", run_file_sql "2021-10-01-add-github-installation-admin.sql");
-    ("rename-github-installation", run_file_sql "2021-10-01-rename-github-installation.sql");
-    ("add-auto-merge-default", run_file_sql "2021-10-01-add-auto-merge-default.sql");
-    ("add-avatar-url", run_file_sql "2021-10-03-add-avatar-url.sql");
-    ("add-avatar-urls-to-users", Terrat_migrations_2021_10_03_add_avatar_url.run);
-    ("remove-avatar-url-default", run_file_sql "2021-10-03-remove-avatar-url-default.sql");
-    ("add-avatar-url-non-null", run_file_sql "2021-10-03-add-avatar-url-non-null.sql");
-    ("merge-env-and-secrets", run_file_sql "2021-10-05-merge-env-and-secrets.sql");
-    ( "add-env-vars-secret-null-constraint",
-      run_file_sql "2021-10-05-add-env-vars-secret-add-null-constraint.sql" );
-    ("add-terraform-versions", run_file_sql "2021-10-06-add-terraform-versions.sql");
-    ("fix-autoplan-file-list", run_file_sql "2021-10-06-fix-autoplan-file-list.sql");
-    ("insert-terraform-versions", run_file_sql "2021-10-06-insert-terraform-versions.sql");
-    ( "add-updated-and-user-agent-to-session",
-      run_file_sql "2021-10-09-add-updated-and-user-agent-to-sessions.sql" );
-    ("add-user-prefs", run_file_sql "2021-10-11-add-user-prefs.sql");
-    ("add-user-emails", Terrat_migrations_2021_10_11_add_user_prefs.run);
-    ("add-file-support-env-vars", run_file_sql "2021-10-14-add-file-support-env-vars.sql");
-    ("add-installation-feedback", run_file_sql "2021-10-20-add-installation-feedback.sql");
-    ("add-installation-run-id", run_file_sql "2021-10-24-add-installation-run-id.sql");
-    ("fix-secret-encryption-length", run_file_sql "2021-10-25-fix-secret-encryption-length.sql");
-    ("fix-env-vars-value-length", run_file_sql "2021-10-26-fix-env-vars-value-length.sql");
-    ("add-service-discovery", run_file_sql "2021-11-08-add-service-discovery-to-run-id.sql");
-  ]
+let migrations = [ ("initial-tables", run_file_sql "2021-12-03-initial-tables.sql") ]
 
 let run config storage = Mig.run (config, storage) migrations
