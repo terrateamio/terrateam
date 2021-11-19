@@ -99,6 +99,7 @@ struct evfilt_data;
 #define unlikely(x)     (x)
 #define VISIBLE
 #define HIDDEN
+#define UNUSED
 #define UNUSED_NDEBUG
 #endif
 
