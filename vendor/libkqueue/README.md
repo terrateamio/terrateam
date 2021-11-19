@@ -4,6 +4,7 @@ libkqueue
 [![CI Linux](https://github.com/mheily/libkqueue/actions/workflows/ci-linux.yml/badge.svg)](https://github.com/mheily/libkqueue/actions/workflows/ci-linux.yml)
 [![CI tests FreeBSD](https://github.com/mheily/libkqueue/actions/workflows/ci-freebsd.yml/badge.svg)](https://github.com/mheily/libkqueue/actions/workflows/ci-freebsd.yml)
 [![CI tests macOS](https://github.com/mheily/libkqueue/actions/workflows/ci-macos.yml/badge.svg)](https://github.com/mheily/libkqueue/actions/workflows/ci-macos.yml)
+[![CI tests Windows](https://github.com/mheily/libkqueue/actions/workflows/ci-windows.yml/badge.svg)](https://github.com/mheily/libkqueue/actions/workflows/ci-windows.yml)
 
 A user space implementation of the kqueue(2) kernel event notification mechanism
 libkqueue acts as a translator between the kevent structure and the native

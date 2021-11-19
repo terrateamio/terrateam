@@ -1,0 +1,28 @@
+name: CI Windows
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+env:
+  KQUEUE_DEBUG: yes
+
+jobs:
+  windows-build:
+    runs-on: windows-2019
+    name: CI-windows (build)
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Configure build system
+        run: |
+          cmake --version
+          cmake -S . -B build_x64 -A x64 -G "Visual Studio 16 2019" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=ON
+
+      - name: Build libkqueue
+        run: |
+          cmake --build build_x64 --target install --config Release --parallel 1
+
