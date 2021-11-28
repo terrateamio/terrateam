@@ -44,6 +44,7 @@ module State = struct
     mutable consumed_path : string;
     (* TODO: Make consumed_path immutable *)
     cleanup : (string, t -> unit Abb_js.Future.t) Hashtbl.t;
+    visibility : [ `Visible | `Hidden | `Unknown of string ] React.signal;
   }
 
   let rec iter_nodes t node =
@@ -72,8 +73,10 @@ module State = struct
         done)
       records
 
-  let create id =
-    let t = { router = Router.create (); consumed_path = ""; cleanup = Hashtbl.create 10 } in
+  let create id visibility =
+    let t =
+      { router = Router.create (); consumed_path = ""; cleanup = Hashtbl.create 10; visibility }
+    in
     let id_div = select_by_id id Dom_html.CoerceTo.div in
     ignore
       (MutationObserver.observe
@@ -89,6 +92,8 @@ module State = struct
   let consumed_path t = t.consumed_path
 
   let cleanup t id f = Hashtbl.replace t.cleanup id f
+
+  let app_visibility t = t.visibility
 end
 
 module Handler = struct
@@ -329,7 +334,24 @@ let merge ?(flip = false) steady optional signal =
 let main id f =
   let wrapper _ =
     let id_div = select_by_id id Dom_html.CoerceTo.div in
-    let state = State.create id in
+    let visibility_change_event = Dom.Event.make "visibilitychange" in
+    let (visibility, set_visibility) = React.S.create `Visible in
+    ignore
+      (Dom_html.addEventListener
+         Dom_html.document
+         visibility_change_event
+         (dom_html_handler (fun _ ->
+              let visibility_state : Js.js_string Js.t Js.optdef =
+                Js.Unsafe.js_expr "document.visibilityState"
+              in
+              Js.Optdef.iter visibility_state (fun s ->
+                  match Js.to_string s with
+                    | "visible" -> set_visibility `Visible
+                    | "hidden"  -> set_visibility `Hidden
+                    | s         -> set_visibility (`Unknown s));
+              Abb_js.Future.return ()))
+         Js._true);
+    let state = State.create id visibility in
     f state id_div
   in
   Dom_html.window##.onload := dom_html_handler wrapper

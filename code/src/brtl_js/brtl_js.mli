@@ -21,6 +21,8 @@ module State : sig
   val router : t -> Router.t
 
   val consumed_path : t -> string
+
+  val app_visibility : t -> [ `Visible | `Hidden | `Unknown of string ] React.signal
 end
 
 module Handler : sig
