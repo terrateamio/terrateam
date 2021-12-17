@@ -70,6 +70,7 @@ module Typed_sql : sig
     val char : string v
     val tsquery : string v
     val uuid : Uuidm.t v
+    val json : string v
 
     (** Boolean types *)
     val boolean : bool v
@@ -106,6 +107,7 @@ module Typed_sql : sig
     val text : string t
     val varchar : string t
     val char : string t
+    val json : string t
     val uuid : Uuidm.t t
     val boolean : bool t
     val ud : (string option list -> ('a * string option list) option) -> 'a t

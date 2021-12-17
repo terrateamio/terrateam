@@ -223,6 +223,7 @@ module Typed_sql = struct
     let text = make Oid.text (fun s vs -> Some s :: vs)
     let varchar = make Oid.varchar (fun s vs -> Some s :: vs)
     let char = make Oid.char (fun s vs -> Some s :: vs)
+    let json = make Oid.json (fun s vs -> Some s :: vs)
     let tsquery = make Oid.tsquery (fun s vs -> Some s :: vs)
     let uuid = make Oid.uuid (fun uuid vs -> Some (Uuidm.to_string uuid) :: vs)
     let boolean = make Oid.bool (fun b vs -> (if b then Some "true" else Some "false") :: vs)
@@ -296,6 +297,7 @@ module Typed_sql = struct
     let text = take_one CCOpt.return
     let varchar = text
     let char = text
+    let json = text
     let uuid = take_one Uuidm.of_string
 
     let boolean =
