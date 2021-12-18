@@ -1,0 +1,43 @@
+@?overall_success-@
+Running plans **succeeded**.
+@/overall_success-@
+@!overall_success-@
+Running plans **failed**.
+@/overall_success-@
+
+@#results-@
+**Dir**: @dir@
+**Workspace**: @workspace@
+**Success**: @?success@:heavy_check_mark:@/success@@!success@:heavy_multiplication_x:@/success@
+
+@#output-@
+@?success-@
+```
+@plan_text@
+```
+
+To apply this directory and workspace, comment:
+
+```
+terrateam apply dir:@dir@ workspace:@workspace@
+```
+
+@/success-@
+@!success-@
+```
+@^init-@
+@init@
+@/init-@
+@^plan-@
+@plan@
+@/plan-@
+```
+@/success-@
+@/output-@
+@/results-@
+
+To apply all these changes, comment:
+
+```
+terrateam apply
+```

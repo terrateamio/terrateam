@@ -1,0 +1,323 @@
+{
+  "openapi": "3.0.3",
+  "paths": {
+    "/api/v1/work-manifests/{work_manifest_id}/initiate": {
+      "post": {
+        "operationId": "work-manifest/initiate",
+        "parameters": [
+          {
+            "name": "work_manifest_id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/work-manifest"
+                }
+              }
+            }
+          },
+          "403": {
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/work-manifest-initiate"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/work-manifests/{work_manifest_id}/plans": {
+      "post": {
+        "operationId": "work-manifest/plan-create",
+        "parameters": [
+          {
+            "name": "work_manifest_id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {},
+          "403": {}
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/plan-create"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "work-manifest/plan-get",
+        "parameters": [
+          {
+            "name": "work_manifest_id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dir",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "workspace",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/work-manifests/{work_manifest_id}": {
+      "put": {
+        "operationId": "work-manifest/results",
+        "parameters": [
+          {
+            "name": "work_manifest_id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {},
+          "403": {}
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "dirspaces": {
+                    "$ref": "#/components/schemas/work-manifest-results"
+                  },
+                  "overall": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "msg": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["success"]
+                  }
+                },
+                "required": ["dirspaces", "overall"]
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "work-manifest-dir": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "workspace": {
+            "type": "string"
+          },
+          "workflow": {
+            "type": "integer"
+          },
+          "rank": {
+            "type": "integer",
+            "description": "Starts at 0, relative dependency order to perform operation on dir."
+          }
+        },
+        "required": [
+          "path",
+          "workspace",
+          "rank"
+        ]
+      },
+      "work-manifest-plan": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "plan"
+          },
+          "base_ref": {
+            "type": "string"
+          },
+          "dirs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/work-manifest-dir"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "base_ref",
+          "dirs"
+        ]
+      },
+      "work-manifest-apply": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "apply"
+          },
+          "base_ref": {
+            "type": "string"
+          },
+          "dirs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/work-manifest-dir"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "base_ref",
+          "dirs"
+        ]
+      },
+      "work-manifest": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/work-manifest-plan" },
+          { "$ref": "#/components/schemas/work-manifest-apply" }
+        ]
+      },
+      "work-manifest-initiate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "run_id": {
+            "type": "string"
+          },
+          "sha": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "sha"
+        ]
+      },
+      "plan-create": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "workspace": {
+            "type": "string"
+          },
+          "plan_data": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "workspace",
+          "plan_data"
+        ]
+      },
+      "work-manifest-result": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "workspace": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "output": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "path",
+          "workspace",
+          "success",
+          "output"
+        ]
+      },
+      "work-manifest-results": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/work-manifest-result"
+        }
+      }
+    },
+    "responses": {
+    },
+    "parameters": {
+    }
+  }
+}

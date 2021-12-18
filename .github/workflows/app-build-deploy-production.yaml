@@ -15,8 +15,8 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-west-2
     - name: Login to Amazon ECR
       id: login-ecr
@@ -30,12 +30,12 @@ jobs:
         docker tag 654862118936.dkr.ecr.us-west-2.amazonaws.com/terrateam-base:latest terrateam-base
         docker build -t 654862118936.dkr.ecr.us-west-2.amazonaws.com/terrateam-app:latest -f docker/terrat/Dockerfile .
         docker push 654862118936.dkr.ecr.us-west-2.amazonaws.com/terrateam-app:latest
-        aws --region us-west-2 ecs update-service --cluster terrateam-frontend --service terrateam-app --force-new-deployment
+        aws --region us-west-2 ecs update-service --cluster terrateam-app --service terrateam-app --force-new-deployment
         for ((i=1;i<=20;i++)); do
-          COUNT=$(aws --region us-west-2 ecs describe-services --cluster terrateam-frontend --services terrateam-app --output text | grep DEPLOYMENTS | grep -c IN_PROGRESS || true)
+          COUNT=$(aws --region us-west-2 ecs describe-services --cluster terrateam-app --services terrateam-app --output text | grep DEPLOYMENTS | grep -c IN_PROGRESS || true)
           if [ "$COUNT" == "0" ]; then
             MATRIX_ACCESS_TOKEN=$(curl -s -XPOST -d '{"type":"m.login.password", "user":"terrateam", "password":'\"$MATRIX_PASSWORD\"'}' "https://matrix.org/_matrix/client/r0/login" | grep -Po '"access_token":.*?[^\\]",' | cut -d'"' -f4)
-            MATRIX_MESSAGE="GitHub Actions [$GITHUB_WORKFLOW]: Deployed $GITHUB_SHA"
+            MATRIX_MESSAGE="GitHub Actions [$GITHUB_WORKFLOW]: [PRODUCTION] Deployed $GITHUB_SHA"
             curl 'https://matrix.org/_matrix/client/r0/rooms/!AJlEMsztoOToHdwijN%3Amatrix.org/send/m.room.message/?access_token='$MATRIX_ACCESS_TOKEN -X PUT --data '{"msgtype":"m.text","body":"'"$MATRIX_MESSAGE"'"}'
             break
           else

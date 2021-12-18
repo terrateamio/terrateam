@@ -594,7 +594,7 @@ let rec convert_str_schema (config : Config.t) =
       ]
   | { S.typ = Some "array"; items = None; _ } as schema ->
       convert_str_schema config { schema with S.items = Some (Value.V (S.make_t_ ())) }
-  | { S.typ = Some "array"; items = Some (Value.V items); nullable; _ } -> (
+  | { S.items = Some (Value.V items); nullable; _ } -> (
       match extract_prim_type items with
       | Some prim when CCOpt.is_none items.Schema.enum ->
           [
@@ -620,7 +620,7 @@ let rec convert_str_schema (config : Config.t) =
                 (Config.tidx_to_string config)
                 (list [ qualified_type [ "Items"; "t" ] ]));
           ])
-  | { S.typ = Some "array"; items = Some (Value.Ref ref_); _ } ->
+  | { S.items = Some (Value.Ref ref_); _ } ->
       let module_name = Config.module_name_of_ref config ref_ in
       [
         Gen.(

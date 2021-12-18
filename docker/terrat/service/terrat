@@ -2,12 +2,11 @@
 
 set -e
 
+export TERRAT_PYTHON_EXEC=python3
+
 exec 2>&1
 
 sleep 5
-
-export TERRAT_FRONTEND_PORT=8180
-export TERRAT_BACKEND_PORT=8181
 
 /usr/local/bin/terrat migrate --verbosity=debug
 

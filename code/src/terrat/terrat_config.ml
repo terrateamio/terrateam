@@ -1,6 +1,5 @@
 type t = {
-  frontend_port : int;
-  backend_port : int;
+  port : int;
   db_host : string;
   db_user : string;
   db_password : string;
@@ -10,10 +9,8 @@ type t = {
   github_webhook_secret : string option;
   github_app_client_secret : string;
   github_app_client_id : string;
-  aws_account_id : string;
-  aws_region : string;
-  backend_address : string;
-  atlantis_syslog_address : string option;
+  api_base : string;
+  python_exec : string;
 }
 
 type err =
@@ -31,13 +28,9 @@ let env_str key = of_opt (`Key_error key) (Sys.getenv_opt key)
 let create () =
   let open CCResult.Infix in
   of_opt
-    (`Key_error "TERRAT_FRONTEND_PORT")
-    (CCInt.of_string (CCOpt.get_or ~default:"8080" (Sys.getenv_opt "TERRAT_FRONTEND_PORT")))
-  >>= fun frontend_port ->
-  of_opt
-    (`Key_error "TERRAT_BACKEND_PORT")
-    (CCInt.of_string (CCOpt.get_or ~default:"8081" (Sys.getenv_opt "TERRAT_BACKEND_PORT")))
-  >>= fun backend_port ->
+    (`Key_error "TERRAT_PORT")
+    (CCInt.of_string (CCOpt.get_or ~default:"8080" (Sys.getenv_opt "TERRAT_PORT")))
+  >>= fun port ->
   env_str "DB_HOST"
   >>= fun db_host ->
   env_str "DB_USER"
@@ -60,17 +53,13 @@ let create () =
   >>= fun github_app_client_secret ->
   env_str "GITHUB_APP_CLIENT_ID"
   >>= fun github_app_client_id ->
-  env_str "AWS_ACCOUNT_ID"
-  >>= fun aws_account_id ->
-  env_str "AWS_REGION"
-  >>= fun aws_region ->
-  env_str "BACKEND_ADDRESS"
-  >>= fun backend_address ->
-  let atlantis_syslog_address = Sys.getenv_opt "SYSLOG_ADDRESS" in
+  env_str "TERRAT_API_BASE"
+  >>= fun api_base ->
+  env_str "TERRAT_PYTHON_EXEC"
+  >>= fun python_exec ->
   Ok
     {
-      frontend_port;
-      backend_port;
+      port;
       db_host;
       db_user;
       db_password;
@@ -80,14 +69,11 @@ let create () =
       github_webhook_secret;
       github_app_client_secret;
       github_app_client_id;
-      aws_account_id;
-      aws_region;
-      backend_address;
-      atlantis_syslog_address;
+      api_base;
+      python_exec;
     }
 
-let frontend_port t = t.frontend_port
-let backend_port t = t.backend_port
+let port t = t.port
 let db_host t = t.db_host
 let db_user t = t.db_user
 let db_password t = t.db_password
@@ -97,7 +83,5 @@ let github_app_pem t = t.github_app_pem
 let github_webhook_secret t = t.github_webhook_secret
 let github_app_client_secret t = t.github_app_client_secret
 let github_app_client_id t = t.github_app_client_id
-let aws_account_id t = t.aws_account_id
-let aws_region t = t.aws_region
-let backend_address t = t.backend_address
-let atlantis_syslog_address t = t.atlantis_syslog_address
+let api_base t = t.api_base
+let python_exec t = t.python_exec

@@ -10440,7 +10440,7 @@ module Check_run = struct
     end
 
     module Pull_requests = struct
-      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
+      type t = Pull_request_minimal.t list [@@deriving yojson { strict = false; meta = true }, show]
     end
 
     module Status_ = struct

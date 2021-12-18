@@ -63,6 +63,14 @@ let run_file_sql fname (config, storage) =
                 stmts))
   | None -> failwith ("Could not load file: " ^ fname)
 
-let migrations = [ ("initial-tables", run_file_sql "2021-12-03-initial-tables.sql") ]
+let migrations =
+  [
+    ("initial-tables", run_file_sql "2021-12-03-initial-tables.sql");
+    ("add-github-installation", run_file_sql "2021-12-29-add-github-installation.sql");
+    ("add-github-unlock", run_file_sql "2022-04-19-add-github-unlock.sql");
+    ("add-github-merged-sha", run_file_sql "2022-04-26-add-merged-sha.sql");
+    ("add-github-merged_at", run_file_sql "2022-04-26-add-merged_at.sql");
+    ("drop-plan-text", run_file_sql "2022-05-01-remove-plan-text.sql");
+  ]
 
 let run config storage = Mig.run (config, storage) migrations

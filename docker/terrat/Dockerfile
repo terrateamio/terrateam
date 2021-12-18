@@ -6,6 +6,7 @@ COPY ./ /mono
 # setup
 WORKDIR /
 RUN eval $(opam env) && \
+    opam update && \
     opam repository add opam-acsl mono/opam && \
     opam pin add -y containers 3.4 && \
     opam install -y hll pds && \
@@ -24,8 +25,8 @@ RUN eval $(opam env) && \
 
 # compile
 WORKDIR /mono/code
-RUN eval $(opam env) && \
-    make -j4 release_terrat
+RUN ulimit -s 524288 && ulimit -a && eval $(opam env) && \
+    (make -j4 release_terrat_cli || make -j1 release_terrat_cli)
 
 # test
 WORKDIR /mono/code
@@ -37,7 +38,15 @@ RUN eval $(opam env) && \
 FROM alpine:3.13
 
 # packages
-RUN apk add --no-cache aws-cli gmp libffi libressl3.1-libtls libtls-standalone nginx runit
+RUN apk add --no-cache \
+    gmp \
+    libffi \
+    libressl3.1-libtls \
+    libtls-standalone \
+    nginx \
+    py3-yaml \
+    python3 \
+    runit
 
 # configs
 RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx
@@ -47,11 +56,10 @@ COPY docker/terrat/nginx.conf /etc/nginx/nginx.conf
 
 # artifacts
 COPY --from=build /usr/lib/libkqueue.so /usr/lib/libkqueue.so
-COPY --from=build /mono/code/build/release/terrat/terrat.native /usr/local/bin/terrat
+COPY --from=build /mono/code/build/release/terrat_cli/terrat_cli.native /usr/local/bin/terrat
 
 # expose
 EXPOSE 8080
-EXPOSE 8081
 
 # run
 CMD ["runsvdir", "/etc/service"]

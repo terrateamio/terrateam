@@ -2,7 +2,28 @@
 FROM alpine:3.13
 
 # packages
-RUN apk add --no-cache ca-certificates aws-cli bsd-compat-headers cmake coreutils git gmp-dev libffi-dev libressl-dev m4 make mercurial musl-dev npm opam openssh openssl-dev perl sqlite-dev zlib-dev
+RUN apk add --no-cache \
+    bsd-compat-headers \
+    ca-certificates \
+    cmake \
+    coreutils \
+    git \
+    gmp-dev \
+    libffi-dev \
+    libressl-dev \
+    m4 \
+    make \
+    mercurial \
+    musl-dev \
+    npm \
+    opam \
+    openssh \
+    openssl-dev \
+    perl \
+    py3-yaml \
+    python3 \
+    sqlite-dev \
+    zlib-dev
 
 # opam-init
 RUN opam init -ay --disable-sandboxing
