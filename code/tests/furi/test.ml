@@ -12,6 +12,12 @@ let any_rt = Furi.(rel /% Path.any)
 
 let query_rt = Furi.(rel /? Query.string "name")
 
+let path_var = Furi.(rel / "test" /% Path.string)
+
+let query_var = Furi.(rel / "test" /? Query.string "test")
+
+let path_with_slash = Furi.(rel / "with/slash")
+
 let handle_hello_name = Printf.sprintf "Hello %s"
 
 let handle_goodbye_name = Printf.sprintf "Goodbye %s"
@@ -24,12 +30,17 @@ let handle_homepage_slash = Printf.sprintf "Homepage Slash"
 
 let handle_query = Printf.sprintf "Query %s"
 
+let get_value = CCFun.id
+
 let router ?must_consume_path =
   Furi.(
     route_uri
       ?must_consume_path
       ~default:(fun _ -> failwith "This is not a valid path.")
       [
+        query_var --> get_value;
+        path_var --> get_value;
+        path_with_slash --> "path_with_slash";
         query_rt --> handle_query;
         hello_rt --> handle_hello_name;
         goodbye_rt --> handle_goodbye_name;
@@ -71,6 +82,12 @@ let route_extra =
       let uri = Uri.of_string "http://test.com/extra/there/boss/man" in
       let resp = router uri in
       assert (resp = "Extra there/boss/man"))
+
+let route_extra_with_encoded_chars =
+  Oth.test ~desc:"Route with extra path with encoded chares" ~name:"Route extra encoded" (fun _ ->
+      let uri = Uri.of_string "http://test.com/extra/there/boss/m an" in
+      let resp = router uri in
+      assert (resp = "Extra there/boss/m an"))
 
 let route_extra_no_extra =
   Oth.test
@@ -257,6 +274,49 @@ let first_match_slash_rel =
         | Some v -> assert (Furi.Match.apply v = handle_homepage_slash)
         | None   -> assert false)
 
+let test_path_const_with_slash =
+  Oth.test ~desc:"Test path const with slash" ~name:"Path const slash" (fun _ ->
+      let uri =
+        Uri.(with_path (of_string "http://test.com") (pct_encode ~component:`Path "with/slash"))
+      in
+      assert (router uri = "path_with_slash"))
+
+let test_path_with_space =
+  Oth.test ~desc:"Test path var with space" ~name:"Path var space" (fun _ ->
+      let uri = Uri.of_string "http://test.com/test/with space" in
+      assert (router uri = "with space"))
+
+let test_path_with_slash =
+  Oth.test ~desc:"Test path var with slash" ~name:"Path var slash" (fun _ ->
+      let uri =
+        Uri.(
+          with_path
+            (of_string "http://test.com")
+            ("/test/" ^ pct_encode ~component:`Path "with/slash"))
+      in
+      assert (router uri = "with/slash"))
+
+let test_query_with_space =
+  Oth.test ~desc:"Test query var with space" ~name:"Query var space" (fun _ ->
+      let uri =
+        Uri.add_query_param' (Uri.of_string "http://test.com/test") ("test", "with space")
+      in
+      assert (router uri = "with space"))
+
+let test_query_with_plus =
+  Oth.test ~desc:"Test query var with plus" ~name:"Query var plus" (fun _ ->
+      let uri =
+        Uri.add_query_param' (Uri.of_string "http://test.com/test") ("test", "with + plus")
+      in
+      assert (router uri = "with + plus"))
+
+let test_query_with_and =
+  Oth.test ~desc:"Test query var with &" ~name:"Query var ampersand" (fun _ ->
+      let uri =
+        Uri.add_query_param' (Uri.of_string "http://test.com/test") ("test", "with & and")
+      in
+      assert (router uri = "with & and"))
+
 let test =
   Oth.parallel
     [
@@ -265,6 +325,7 @@ let test =
       route_no_must_consume_path;
       route_goodbye;
       route_extra;
+      route_extra_with_encoded_chars;
       route_extra_no_extra;
       route_extra_just_slash;
       route_any;
@@ -286,6 +347,12 @@ let test =
       match_query_order_does_not_matter;
       match_path_consumption;
       first_match_slash_rel;
+      test_path_const_with_slash;
+      test_path_with_space;
+      test_path_with_slash;
+      test_query_with_space;
+      test_query_with_plus;
+      test_query_with_and;
     ]
 
 let () =

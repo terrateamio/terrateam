@@ -4,8 +4,11 @@ module Path = struct
   let extract idx s =
     if s.[idx] = '/' then
       match CCString.index_from_opt s (idx + 1) '/' with
-        | Some eidx -> Some (eidx, CCString.sub s (idx + 1) (eidx - idx - 1))
-        | None      -> Some (String.length s, CCString.sub s (idx + 1) (String.length s - idx - 1))
+        | Some eidx -> Some (eidx, Uri.pct_decode (CCString.sub s (idx + 1) (eidx - idx - 1)))
+        | None      ->
+            Some
+              ( String.length s,
+                Uri.pct_decode (CCString.sub s (idx + 1) (String.length s - idx - 1)) )
     else
       None
 
@@ -20,7 +23,7 @@ module Path = struct
   let any idx s =
     if s.[idx] = '/' then
       let len = String.length s - idx - 1 in
-      Some (String.length s, CCString.sub s (idx + 1) len)
+      Some (String.length s, Uri.pct_decode (CCString.sub s (idx + 1) len))
     else
       None
 end
@@ -97,7 +100,7 @@ let rel = Rel ""
 
 let root s = Rel (CCString.rdrop_while (( = ) '/') s)
 
-let ( / ) t s = Path_const (t, s)
+let ( / ) t s = Path_const (t, Uri.pct_encode ~component:`Path s)
 
 let ( /% ) t v = Path_var (t, v)
 
