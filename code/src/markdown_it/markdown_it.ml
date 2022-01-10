@@ -2,6 +2,8 @@ open Js_of_ocaml
 
 class type options =
   object
+    method linkify : bool Js.t Js.readonly_prop
+
     method highlight :
       (Js.js_string Js.t -> Js.js_string Js.t -> Js.js_string Js.t) Js.callback Js.readonly_prop
   end
@@ -32,6 +34,8 @@ let render str =
   let hljs : highlight Js.t = Js.Unsafe.global##.hljs in
   let options : options Js.t =
     object%js
+      val linkify = Js._true
+
       val highlight =
         Js.wrap_callback (fun str lang ->
             if Js.to_string lang <> "" && Js.Optdef.test (hljs##getLanguage lang) then
