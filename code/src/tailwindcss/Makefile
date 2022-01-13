@@ -1,6 +1,6 @@
 .PHONY: all release debug clean docs
 
-TAILWIND_CLI_VERSION = 3.0.0
+TAILWIND_CLI_VERSION = 3.0.13
 
 INSTALL_FILES = .installed-tailwind-cli-$(TAILWIND_CLI_VERSION)
 
