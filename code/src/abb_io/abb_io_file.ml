@@ -5,6 +5,7 @@ module Make (Abb : Abb_intf.S) = struct
     [ Abb_intf.Errors.open_file
     | Abb_intf.Errors.close
     ]
+  [@@deriving show]
 
   let with_file_in ~f fname =
     let open Fut_comb.Infix_result_monad in

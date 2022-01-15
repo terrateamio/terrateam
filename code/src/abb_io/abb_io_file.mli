@@ -3,6 +3,7 @@ module Make (Abb : Abb_intf.S) : sig
     [ Abb_intf.Errors.open_file
     | Abb_intf.Errors.close
     ]
+  [@@deriving show]
 
   val with_file_in :
     f:(Abb.File.t -> ('a, 'e) result Abb.Future.t) ->
