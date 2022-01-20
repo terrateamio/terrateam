@@ -86,10 +86,8 @@ waiter_notify(struct proc_pid *ppd, int status)
         filt = knote_get_filter(kn);
         dbg_printf("pid=%u exited, notifying kq=%u filter=%p kn=%p",
                    (unsigned int)ppd->ppd_pid, kn->kn_kq->kq_id, filt, kn);
-        tracing_mutex_lock(&filt->kf_knote_mtx);
         kqops.eventfd_raise(&filt->kf_proc_eventfd);
-        LIST_INSERT_HEAD(&filt->kf_ready, kn, kn_ready);
-        tracing_mutex_unlock(&filt->kf_knote_mtx);
+        LIST_INSERT_HEAD(&filt->kf_ready, kn, kn_ready); /* protected by proc_pid_index_mtx */
 
         LIST_REMOVE(kn, kn_proc_waiter);
     }
@@ -112,10 +110,8 @@ waiter_notify_error(struct proc_pid *ppd, int wait_errno)
         filt = knote_get_filter(kn);
         dbg_printf("pid=%u errored (%s), notifying kq=%u filter=%p kn=%p",
                    (unsigned int)ppd->ppd_pid, strerror(errno), kn->kn_kq->kq_id, filt, kn);
-        tracing_mutex_lock(&filt->kf_knote_mtx);
         kqops.eventfd_raise(&filt->kf_proc_eventfd);
-        LIST_INSERT_HEAD(&filt->kf_ready, kn, kn_ready);
-        tracing_mutex_unlock(&filt->kf_knote_mtx);
+        LIST_INSERT_HEAD(&filt->kf_ready, kn, kn_ready); /* protected by proc_pid_index_mtx */
 
         LIST_REMOVE(kn, kn_proc_waiter);
     }
@@ -266,6 +262,15 @@ wait_thread(UNUSED void *arg)
             continue;
         }
 
+        /*
+         * The knote_* functions (i.e. those that could free a
+         * knote).
+         *
+         * All attempt to take this lock before modifying the
+         * knotes, wo we shouldn't have any issues here with
+         * knotes being freed out from underneath the waiter
+         * thread.
+         */
         tracing_mutex_lock(&proc_pid_index_mtx);
 
         /*
@@ -518,9 +523,27 @@ evfilt_proc_knote_copyout(struct kevent *dst, int nevents, struct filter *filt,
      * Prevent the waiter thread from modifying
      * the knotes in the ready list whilst we're
      * processing them.
+     *
+     * At first glance this wouldn't appear to
+     * require a global lock.  The issue is that
+     * if we use filter-specific locks to protect
+     * the kf_ready list, we can get into a deadlock
+     * where the waiter thread holds the lock on
+     * proc_pid_index_mtx, and it attempting to lock
+     * the filter lock to insert new ready
+     * notifications, and we're holding the filter
+     * lock, and attempting to delete a knote,
+     * which requires holding the proc_pid_index_mtx.
+     *
+     * This was seen in the real world and caused
+     * major issues.
+     *
+     * By using a single lock we ensure either the
+     * waiter thread is notifying kqueue isntances
+     * data is ready, or a kqueue is copying out
+     * notifications, so no deadlock can occur.
      */
-    tracing_mutex_lock(&filt->kf_knote_mtx);
-
+    tracing_mutex_lock(&proc_pid_index_mtx);
     assert(!LIST_EMPTY(&filt->kf_ready));
 
     /*
@@ -541,7 +564,7 @@ evfilt_proc_knote_copyout(struct kevent *dst, int nevents, struct filter *filt,
 
         if (knote_copyout_flag_actions(filt, kn) < 0) {
             LIST_INSERT_HEAD(&filt->kf_ready, kn, kn_ready);
-            tracing_mutex_unlock(&filt->kf_knote_mtx);
+            tracing_mutex_unlock(&proc_pid_index_mtx);
             return -1;
         }
 
@@ -550,8 +573,7 @@ evfilt_proc_knote_copyout(struct kevent *dst, int nevents, struct filter *filt,
 
     if (LIST_EMPTY(&filt->kf_ready))
         kqops.eventfd_lower(&filt->kf_proc_eventfd);
-
-    tracing_mutex_unlock(&filt->kf_knote_mtx);
+    tracing_mutex_unlock(&proc_pid_index_mtx);
 
     return (dst_p - dst);
 }
