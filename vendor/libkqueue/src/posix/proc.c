@@ -36,7 +36,7 @@ struct proc_pid {
     LIST_HEAD(pid_waiters, knote) ppd_proc_waiters; //!< knotes that are waiting on this PID.
 };
 
-static pthread_mutex_t     proc_init_mtx = PTHREAD_MUTEX_INITIALIZER;
+static tracing_mutex_t     proc_init_mtx = TRACING_MUTEX_INITIALIZER;
 static int                 proc_count = 0;
 static pthread_t           proc_wait_thread_id;
 
@@ -45,8 +45,10 @@ static pthread_t           proc_wait_thread_id;
  * Contains all the PIDs any kqueue is interested in waiting on
  */
 static RB_HEAD(pid_index, proc_pid) proc_pid_index;
-static pthread_mutex_t              proc_pid_index_mtx = PTHREAD_MUTEX_INITIALIZER;
-
+static tracing_mutex_t    proc_pid_index_mtx = TRACING_MUTEX_INITIALIZER;
+#ifndef _WIN32
+pthread_mutexattr_t       proc_pid_index_mtx_attr;
+#endif
 
 static int
 proc_pid_cmp(struct proc_pid *a, struct proc_pid *b)
@@ -264,7 +266,7 @@ wait_thread(UNUSED void *arg)
             continue;
         }
 
-        pthread_mutex_lock(&proc_pid_index_mtx);
+        tracing_mutex_lock(&proc_pid_index_mtx);
 
         /*
          * Sig 0 is the NULL signal.  This means it's the first
@@ -299,7 +301,7 @@ wait_thread(UNUSED void *arg)
 
                     waiter_notify_error(ppd, errno);
 
-                    pthread_mutex_unlock(&proc_pid_index_mtx);
+                    tracing_mutex_unlock(&proc_pid_index_mtx);
 
                     continue;
 
@@ -311,7 +313,7 @@ wait_thread(UNUSED void *arg)
             status = waiter_siginfo_to_status(&info);
             if (status >= 0) waiter_notify(ppd, status);  /* If < 0 notification is spurious */
         }
-        pthread_mutex_unlock(&proc_pid_index_mtx);
+        tracing_mutex_unlock(&proc_pid_index_mtx);
 
         dbg_printf("waiting for SIGCHLD");
     } while ((ret = sigwaitinfo(&sigmask, &info)));
@@ -324,6 +326,8 @@ wait_thread(UNUSED void *arg)
 static int
 evfilt_proc_init(struct filter *filt)
 {
+    static bool global_init = false;
+
     if (kqops.eventfd_init(&filt->kf_proc_eventfd, filt) < 0) {
     error_0:
         return (-1);
@@ -338,7 +342,24 @@ evfilt_proc_init(struct filter *filt)
     /*
      * Initialise global resources (wait thread and PID tree).
      */
-    pthread_mutex_lock(&proc_init_mtx);
+    tracing_mutex_lock(&proc_init_mtx);
+
+    /*
+     * Initialise the global PID index tree.  This needs to be
+     * recursive as the delete/enable/disable functions all
+     * need to lock the mutex, and they may be called indirectly
+     * in the copyout function (which already locks this mutex),
+     * as well as by other kqueue code.
+     */
+    if (!global_init) {
+#ifndef _WIN32
+        pthread_mutexattr_init(&proc_pid_index_mtx_attr);
+        pthread_mutexattr_settype(&proc_pid_index_mtx_attr, PTHREAD_MUTEX_RECURSIVE);
+#endif
+        tracing_mutex_init(&proc_pid_index_mtx, &proc_pid_index_mtx_attr);
+        global_init = true;
+    }
+
     if (proc_count == 0) {
         sigset_t sigmask;
 
@@ -358,12 +379,12 @@ evfilt_proc_init(struct filter *filt)
         dbg_printf("creating wait thread");
 
         if (pthread_create(&proc_wait_thread_id, NULL, wait_thread, NULL) != 0) {
-            pthread_mutex_unlock(&proc_init_mtx);
+            tracing_mutex_unlock(&proc_init_mtx);
             goto error_1;
         }
     }
     proc_count++;
-    pthread_mutex_unlock(&proc_init_mtx);
+    tracing_mutex_unlock(&proc_init_mtx);
 
     return (0);
 }
@@ -375,7 +396,7 @@ evfilt_proc_destroy(struct filter *filt)
      * Free global resources like the wait thread
      * and PID tree.
      */
-    pthread_mutex_lock(&proc_init_mtx);
+    tracing_mutex_lock(&proc_init_mtx);
     assert(proc_count > 0);
     if (--proc_count == 0) {
         void *retval;
@@ -388,7 +409,7 @@ evfilt_proc_destroy(struct filter *filt)
             dbg_puts("waiter thread joined");
         }
     }
-    pthread_mutex_unlock(&proc_init_mtx);
+    tracing_mutex_unlock(&proc_init_mtx);
 
     kqops.eventfd_unregister(filt->kf_kqueue, &filt->kf_proc_eventfd);
     kqops.eventfd_close(&filt->kf_proc_eventfd);
@@ -399,7 +420,7 @@ evfilt_proc_knote_create(struct filter *filt, struct knote *kn)
 {
     struct proc_pid *ppd;
 
-    pthread_mutex_lock(&proc_pid_index_mtx);
+    tracing_mutex_lock(&proc_pid_index_mtx);
     /*
      * Fixme - We should probably check to see if the PID exists
      * here and error out early instead of waiting for the waiter
@@ -411,14 +432,14 @@ evfilt_proc_knote_create(struct filter *filt, struct knote *kn)
         dbg_printf("pid=%u adding waiter list", (unsigned int)kn->kev.ident);
         ppd = calloc(1, sizeof(struct proc_pid));
         if (unlikely(!ppd)) {
-            pthread_mutex_unlock(&proc_pid_index_mtx);
+            tracing_mutex_unlock(&proc_pid_index_mtx);
             return -1;
         }
         ppd->ppd_pid = kn->kev.ident;
         RB_INSERT(pid_index, &proc_pid_index, ppd);
     }
     LIST_INSERT_HEAD(&ppd->ppd_proc_waiters, kn, kn_proc_waiter);
-    pthread_mutex_unlock(&proc_pid_index_mtx);
+    tracing_mutex_unlock(&proc_pid_index_mtx);
 
     /*
      * These get added by default on macOS (and likely FreeBSD)
@@ -443,7 +464,7 @@ evfilt_proc_knote_delete(UNUSED struct filter *filt, struct knote *kn)
 {
     struct proc_pid *ppd;
 
-    pthread_mutex_lock(&proc_pid_index_mtx);
+    tracing_mutex_lock(&proc_pid_index_mtx);
     if (LIST_INSERTED(kn, kn_proc_waiter)) LIST_REMOVE(kn, kn_proc_waiter);
 
     /*
@@ -462,7 +483,7 @@ evfilt_proc_knote_delete(UNUSED struct filter *filt, struct knote *kn)
     } else {
         dbg_printf("pid=%u waiter list already removed", (unsigned int)kn->kev.ident);
     }
-    pthread_mutex_unlock(&proc_pid_index_mtx);
+    tracing_mutex_unlock(&proc_pid_index_mtx);
 
     return (0);
 }
@@ -480,9 +501,9 @@ evfilt_proc_knote_disable(UNUSED struct filter *filt, struct knote *kn)
      * which is why we need to run the same logic
      * as knote_create when re-enabling.
      */
-    pthread_mutex_lock(&proc_pid_index_mtx);
+    tracing_mutex_lock(&proc_pid_index_mtx);
     if (LIST_INSERTED(kn, kn_proc_waiter)) LIST_REMOVE(kn, kn_proc_waiter);
-    pthread_mutex_unlock(&proc_pid_index_mtx);
+    tracing_mutex_unlock(&proc_pid_index_mtx);
 
     return (0);
 }

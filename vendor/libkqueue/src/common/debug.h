@@ -95,6 +95,8 @@ typedef struct {
     int mtx_owner;
 } tracing_mutex_t;
 
+# define TRACING_MUTEX_INITIALIZER { .mtx_lock = PTHREAD_MUTEX_INITIALIZER, .mtx_status = MTX_UNLOCKED, .mtx_owner = -1 }
+
 # define tracing_mutex_init(mtx, attr) do { \
     pthread_mutex_init(&(mtx)->mtx_lock, (attr)); \
     (mtx)->mtx_status = MTX_UNLOCKED; \
@@ -137,6 +139,7 @@ typedef struct {
 # define MTX_UNLOCKED
 # define MTX_LOCKED
 # define tracing_mutex_t            pthread_mutex_t
+# define TRACING_MUTEX_INITIALIZER  PTHREAD_MUTEX_INITIALIZER
 # define tracing_mutex_init         pthread_mutex_init
 # define tracing_mutex_destroy      pthread_mutex_destroy
 # define tracing_mutex_assert(x,y)
