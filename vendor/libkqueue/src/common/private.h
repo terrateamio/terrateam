@@ -426,7 +426,7 @@ struct filter {
                                                ///< with eventfds.
                                                ///< This is not used by all filters.
 
-    pthread_mutex_t        kf_knote_mtx;       //!< Used to synchronise knote operations
+    tracing_mutex_t        kf_knote_mtx;       //!< Used to synchronise knote operations
                                                ///< (addition, removal, modification etc...)
                                                ///< on this filter.
 #ifndef _WIN32

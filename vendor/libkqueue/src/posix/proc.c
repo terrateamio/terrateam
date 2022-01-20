@@ -84,10 +84,10 @@ waiter_notify(struct proc_pid *ppd, int status)
         filt = knote_get_filter(kn);
         dbg_printf("pid=%u exited, notifying kq=%u filter=%p kn=%p",
                    (unsigned int)ppd->ppd_pid, kn->kn_kq->kq_id, filt, kn);
-        pthread_mutex_lock(&filt->kf_knote_mtx);
+        tracing_mutex_lock(&filt->kf_knote_mtx);
         kqops.eventfd_raise(&filt->kf_proc_eventfd);
         LIST_INSERT_HEAD(&filt->kf_ready, kn, kn_ready);
-        pthread_mutex_unlock(&filt->kf_knote_mtx);
+        tracing_mutex_unlock(&filt->kf_knote_mtx);
 
         LIST_REMOVE(kn, kn_proc_waiter);
     }
@@ -110,10 +110,10 @@ waiter_notify_error(struct proc_pid *ppd, int wait_errno)
         filt = knote_get_filter(kn);
         dbg_printf("pid=%u errored (%s), notifying kq=%u filter=%p kn=%p",
                    (unsigned int)ppd->ppd_pid, strerror(errno), kn->kn_kq->kq_id, filt, kn);
-        pthread_mutex_lock(&filt->kf_knote_mtx);
+        tracing_mutex_lock(&filt->kf_knote_mtx);
         kqops.eventfd_raise(&filt->kf_proc_eventfd);
         LIST_INSERT_HEAD(&filt->kf_ready, kn, kn_ready);
-        pthread_mutex_unlock(&filt->kf_knote_mtx);
+        tracing_mutex_unlock(&filt->kf_knote_mtx);
 
         LIST_REMOVE(kn, kn_proc_waiter);
     }
@@ -498,7 +498,7 @@ evfilt_proc_knote_copyout(struct kevent *dst, int nevents, struct filter *filt,
      * the knotes in the ready list whilst we're
      * processing them.
      */
-    pthread_mutex_lock(&filt->kf_knote_mtx);
+    tracing_mutex_lock(&filt->kf_knote_mtx);
 
     assert(!LIST_EMPTY(&filt->kf_ready));
 
@@ -520,7 +520,7 @@ evfilt_proc_knote_copyout(struct kevent *dst, int nevents, struct filter *filt,
 
         if (knote_copyout_flag_actions(filt, kn) < 0) {
             LIST_INSERT_HEAD(&filt->kf_ready, kn, kn_ready);
-            pthread_mutex_unlock(&filt->kf_knote_mtx);
+            tracing_mutex_unlock(&filt->kf_knote_mtx);
             return -1;
         }
 
@@ -530,7 +530,7 @@ evfilt_proc_knote_copyout(struct kevent *dst, int nevents, struct filter *filt,
     if (LIST_EMPTY(&filt->kf_ready))
         kqops.eventfd_lower(&filt->kf_proc_eventfd);
 
-    pthread_mutex_unlock(&filt->kf_knote_mtx);
+    tracing_mutex_unlock(&filt->kf_knote_mtx);
 
     return (dst_p - dst);
 }
