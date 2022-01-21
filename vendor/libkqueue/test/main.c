@@ -127,7 +127,8 @@ usage(void)
            "proc "
            "timer "
            "vnode "
-           "user]\n"
+           "user "
+           "libkqueue]\n"
            "           All tests are run by default\n"
            "\n"
           );
@@ -174,7 +175,13 @@ main(int argc, char **argv)
           .ut_func = test_evfilt_user,
           .ut_end = INT_MAX },
 #endif
+#ifdef EVFILT_LIBKQUEUE
+        { .ut_name = "libkqueue",
+          .ut_enabled = 1,
+          .ut_func = test_evfilt_libkqueue,
+          .ut_end = INT_MAX },
         { NULL, 0, NULL },
+#endif
     };
     struct unit_test *test;
     int c, i, iterations;

@@ -26,6 +26,7 @@ extern const struct filter evfilt_vnode;
 extern const struct filter evfilt_proc;
 extern const struct filter evfilt_timer;
 extern const struct filter evfilt_user;
+extern const struct filter evfilt_libkqueue;
 
 static int
 filter_register(struct kqueue *kq, const struct filter *src)
@@ -102,6 +103,7 @@ filter_register_all(struct kqueue *kq)
     rv += filter_register(kq, &evfilt_proc);
     rv += filter_register(kq, &evfilt_timer);
     rv += filter_register(kq, &evfilt_user);
+    rv += filter_register(kq, &evfilt_libkqueue);
     if (rv != 0) {
         filter_unregister_all(kq);
         return (-1);

@@ -29,8 +29,9 @@
 #include <stdlib.h>
 
 #include "config.h"
-#include "tree.h"
 #include "sys/event.h"
+#include "tree.h"
+#include "version.h"
 
 /* Maximum events returnable in a single kevent() call */
 #define MAX_KEVENT  512
@@ -75,6 +76,9 @@ struct evfilt_data;
  *
  */
 #define NUM_ELEMENTS(_t) (sizeof((_t)) / sizeof(*(_t)))
+
+#define XSTRINGIFY(x) #x
+#define STRINGIFY(x) XSTRINGIFY(x)
 
 #if defined(__clang__) || defined(__GNUC__)
 /*
@@ -295,6 +299,8 @@ struct filter {
      * @param[in] filt     the knote is associated with.
      * @param[in] kn       to initialise.
      * @return
+     *    - 1 to create an entry in the eventlist using the contents
+     *      of kn->kev.
      *    - 0 on success.
      *    - -1 on failure setting errno.
      */
@@ -323,6 +329,8 @@ struct filter {
      *                     modification.
      *
      * @return
+     *    - 1 to create an entry in the eventlist using the contents
+     *      of kn->kev.
      *    - 0 on success.
      *    - -1 on failure setting errno.
      */
@@ -349,6 +357,8 @@ struct filter {
      * @param[in] filt     the knote is associated with.
      * @param[in] kn       to delete.
      * @return
+     *    - 1 to create an entry in the eventlist using the contents
+     *      of kn->kev.
      *    - 0 on success.
      *    - -1 on failure setting errno.
      */
@@ -374,6 +384,8 @@ struct filter {
      * @param[in] filt     the knote is associated with.
      * @param[in] kn       to enable.
      * @return
+     *    - 1 to create an entry in the eventlist using the contents
+     *      of kn->kev.
      *    - 0 on success.
      *    - -1 on failure setting errno.
      */
@@ -398,6 +410,8 @@ struct filter {
      * @param[in] filt     the knote is associated with.
      * @param[in] kn       to disable.
      * @return
+     *    - 1 to create an entry in the eventlist using the contents
+     *      of kn->kev.
      *    - 0 on success.
      *    - -1 on failure setting errno.
      */

@@ -41,7 +41,6 @@
 #else
 # include <stdint.h>
 #endif
-# include <sys/libkqueue_version.h>
 #define LIBKQUEUE       1
 #endif
 
@@ -102,7 +101,8 @@ struct kevent {
 #define EVFILT_FS            (-9)      //!< Filesystem events.
 #define EVFILT_LIO           (-10)     //!< Attached to lio requests.
 #define EVFILT_USER          (-11)     //!< User events.
-#define EVFILT_SYSCOUNT        11
+#define EVFILT_LIBKQUEUE     (-12)     //!< libkqueue specific filter.
+#define EVFILT_SYSCOUNT      12
 /** @} */
 
 /** @name Actions
@@ -230,6 +230,14 @@ struct kevent {
 #define NOTE_USECONDS   0x0002         //!< Time specified in micro seconds.
 #define NOTE_NSECONDS   0x0004         //!< Time specified in nano seconds.
 #define NOTE_ABSOLUTE   0x0008         //!< Data is an absolute timeout.
+/** @} */
+
+/** @name Data/hint flags for EVFILT_TIMER as suported and defined in kevent64
+ *
+ * @{
+ */
+#define NOTE_VERSION    0x0001         //!< Version number as MMmmpprr.
+#define NOTE_VERSION_STR 0x0002        //!< Version number string.
 /** @} */
 
 #ifndef __KERNEL__

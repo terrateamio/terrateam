@@ -18,9 +18,10 @@ project(libkqueue-test LANGUAGES C)
 set(LIBKQUEUE_TEST_SOURCES
     common.c
     kqueue.c
+    libkqueue.c
     main.c
-    read.c
     proc.c
+    read.c
     test.c
     timer.c
     user.c

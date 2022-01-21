@@ -25,12 +25,16 @@ else()
 endif()
 cmake_policy(SET CMP0063 OLD)
 
-# Both variables used in include/sys/libkqueue_version.h.in
+# Both variables used in src/common/version.h.in
 string(TIMESTAMP PROJECT_VERSION_DATE "%b %d %Y at %H:%M:%S")
 
 execute_process(COMMAND git rev-parse --short=8 HEAD
                 OUTPUT_VARIABLE LIBKQUEUE_VERSION_COMMIT
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+if(LIBKQUEUE_VERSION_COMMIT STREQUAL "")
+	unset(LIBKQUEUE_VERSION_COMMIT)
+endif()
 
 execute_process(COMMAND sh -c "git describe --tags --match 'v*' | grep '-' | cut -d- -f2"
 		OUTPUT_VARIABLE PROJECT_VERSION_RELEASE
@@ -43,12 +47,13 @@ else()
 	# Release 1 is the default, so we need to start at release 2
 	MATH(EXPR PROJECT_VERSION_RELEASE "${PROJECT_VERSION_RELEASE}+1")
 	MESSAGE("Version ${PROJECT_VERSION}-${PROJECT_VERSION_RELEASE} (${LIBKQUEUE_VERSION_COMMIT})")
+        set(LIBKQUEUE_VERSION_RELEASE ${PROJECT_VERSION_RELEASE})
 endif()
 
 project(libkqueue VERSION ${PROJECT_VERSION}
                   LANGUAGES C)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sys/libkqueue_version.h.in
-               ${CMAKE_CURRENT_BINARY_DIR}/include/sys/libkqueue_version.h @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/common/version.h.in
+               ${CMAKE_CURRENT_BINARY_DIR}/src/common/version.h @ONLY)
 
 enable_testing()
 
@@ -162,10 +167,12 @@ set(LIBKQUEUE_SOURCES
     src/common/kevent.c
     src/common/knote.c
     src/common/kqueue.c
+    src/common/libkqueue.c
     src/common/map.c
     src/common/private.h
     src/common/queue.h
-    src/common/tree.h)
+    src/common/tree.h
+    src/common/version.h)
 
 if(CMAKE_SYSTEM_NAME MATCHES Windows)
   list(APPEND LIBKQUEUE_SOURCES
@@ -226,7 +233,7 @@ endif()
 
 add_library(kqueue ${LIBRARY_TYPE} ${LIBKQUEUE_SOURCES} ${LIBKQUEUE_HEADERS})
 
-# We should have absolute ABI compatibility between versions as none 
+# We should have absolute ABI compatibility between versions as none
 # of the public function signatures of variables will change.
 set_target_properties(kqueue PROPERTIES SOVERSION 0)
 
@@ -276,7 +283,6 @@ set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION ${CMAKE_INSTALL_FULL_MANDIR}
 
 install(FILES
           "${CMAKE_SOURCE_DIR}/include/sys/event.h"
-          "${CMAKE_CURRENT_BINARY_DIR}/include/sys/libkqueue_version.h"
         DESTINATION
           "${CMAKE_INSTALL_FULL_INCLUDEDIR}/kqueue/sys"
         COMPONENT headers)

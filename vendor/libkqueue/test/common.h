@@ -117,6 +117,7 @@ void test_evfilt_proc(struct test_context *);
 #ifdef EVFILT_USER
 void test_evfilt_user(struct test_context *);
 #endif
+void test_evfilt_libkqueue(struct test_context *);
 
 #define test(f, ctx ,...) do {                                            \
     if ((ctx->test->ut_num >= ctx->test->ut_start) && (ctx->test->ut_num <= ctx->test->ut_end)) {\

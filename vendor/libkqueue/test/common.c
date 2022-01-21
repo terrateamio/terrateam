@@ -105,7 +105,11 @@ filter_name(short filt)
 #ifdef EVFILT_LIO
         [~EVFILT_LIO] = "EVFILT_LIO",
 #endif
-        [~EVFILT_USER] = "EVFILT_USER"
+        [~EVFILT_USER] = "EVFILT_USER",
+
+#ifdef EVFILT_LIBKQUEUE
+        [~EVFILT_LIBKQUEUE] = "EVFILT_LIBKQUEUE"
+#endif
     };
 
     id = ~filt;
@@ -173,6 +177,13 @@ kevent_fflags_dump(struct kevent *kev)
         KEVFFL_DUMP(NOTE_SIGNAL);
 #endif
         break;
+
+#ifdef EVFILT_LIBKQUEUE
+    case EVFILT_LIBKQUEUE:
+        KEVFFL_DUMP(NOTE_VERSION);
+        KEVFFL_DUMP(NOTE_VERSION_STR);
+        break;
+#endif
 
     default:
         break;

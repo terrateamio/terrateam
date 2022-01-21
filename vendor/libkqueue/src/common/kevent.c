@@ -83,6 +83,10 @@ kevent_fflags_dump(const struct kevent *kev)
         KEVFFL_DUMP(NOTE_ABSOLUTE);
         break;
 
+    case EVFILT_LIBKQUEUE:
+        KEVFFL_DUMP(NOTE_VERSION);
+        break;
+
     default:
         break;
     }
@@ -143,8 +147,22 @@ kevent_dump(const struct kevent *kev)
     return ((const char *) buf);
 }
 
+/** Process a single entry in the changelist
+ *
+ * @param[out] out    The knote the src kevent resolved to (if any).
+ * @param[in] kq      to apply the change against.
+ * @param[in] src     the change being applied.
+ * @return
+ *     - 1 on success.  Caller should add a receipt entry based on the kev
+ *       contained within the knote.  This is used for the EVFILT_LIBKQUEUE
+ *       to support its use as a query interface.
+ *     - 0 on success.  Caller should add a receipt entry if EV_RECEIPT was
+ *       set in the src kevent.
+ *     - -1 on failure.  Caller should add a receipt entry containing the error.
+ *       in the data field.
+ */
 static int
-kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
+kevent_copyin_one(const struct knote **out, struct kqueue *kq, const struct kevent *src)
 {
     struct knote  *kn = NULL;
     struct filter *filt;
@@ -166,36 +184,39 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
         if (src->flags & EV_ADD) {
             if ((kn = knote_new()) == NULL) {
                 errno = ENOENT;
+                *out = NULL;
                 return (-1);
             }
             memcpy(&kn->kev, src, sizeof(kn->kev));
             kn->kev.flags &= ~EV_ENABLE;
-            kn->kev.flags |= EV_ADD;//FIXME why?
             kn->kn_kq = kq;
             assert(filt->kn_create);
-            if (filt->kn_create(filt, kn) < 0) {
+            rv = filt->kn_create(filt, kn);
+            if (rv < 0) {
                 dbg_puts("kn_create failed");
 
                 kn->kn_flags |= KNFL_KNOTE_DELETED;
                 knote_release(kn);
 
                 errno = EFAULT;
+                *out = NULL;
                 return (-1);
             }
             knote_insert(filt, kn);
             dbg_printf("kn=%p - created knote %s", kn, kevent_dump(src));
+            *out = kn;
 
 /* XXX- FIXME Needs to be handled in kn_create() to prevent races */
             if (src->flags & EV_DISABLE) {
                 kn->kev.flags |= EV_DISABLE;
-                return (filt->kn_disable(filt, kn));
+                return filt->kn_disable(filt, kn);
             }
             //........................................
-
-            return (0);
+            return (rv);
         } else {
             dbg_printf("ident=%u - no knote found", (unsigned int)src->ident);
             errno = ENOENT;
+            *out = NULL;
             return (-1);
         }
     } else {
@@ -210,7 +231,6 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
         rv = knote_enable(filt, kn);
     } else if (src->flags & EV_ADD || src->flags == 0 || src->flags & EV_RECEIPT) {
         rv = filt->kn_modify(filt, kn, src);
-
         /*
          * Implement changes common to all filters
          */
@@ -223,6 +243,7 @@ kevent_copyin_one(struct kqueue *kq, const struct kevent *src)
         }
         dbg_printf("kn=%p - kn_modify rv=%d", kn, rv);
     }
+    *out = kn;
 
     return (rv);
 }
@@ -233,39 +254,68 @@ kevent_copyin(struct kqueue *kq, const struct kevent *changelist, int nchanges,
         struct kevent *eventlist, int nevents)
 {
     int status;
+    int rv;
     struct kevent *el_p = eventlist, *el_end = el_p + nevents;
 
     dbg_printf("nchanges=%d nevents=%d", nchanges, nevents);
 
+
+#define CHECK_EVENTLIST_SPACE \
+    do { \
+        if (el_p == el_end) { \
+            if (errno == 0) errno = EFAULT; \
+            return (-1); \
+        } \
+    } while (0)
+
     for (struct kevent const *cl_p = changelist, *cl_end = cl_p + nchanges;
          cl_p < cl_end;
          cl_p++) {
-        if (kevent_copyin_one(kq, cl_p) < 0) {
+        const struct knote *kn;
+
+        rv = kevent_copyin_one(&kn, kq, cl_p);
+        if (rv == 1) {
+            if (el_p == el_end) {
+                errno = EFAULT;
+                return (-1);
+            }
+            memcpy(el_p, &kn->kev, sizeof(*el_p));
+            el_p->flags |= EV_RECEIPT;
+            el_p++;
+
+        } else if (rv < 0) {
             dbg_printf("errno=%s", strerror(errno));
+            /*
+             * We're out of kevent entries, just return -1 and leave
+             * the errno set.  This is... odd, because it means the
+             * caller won't have any idea which entries in the
+             * changelist were processed.  But I guess the
+             * requirement here is for the caller to always provide
+             * a kevent array with >= entries as the changelist.
+             */
+            if (el_p == el_end)
+                return (-1);
             status = errno;
-        } else if (cl_p->flags & EV_RECEIPT) {
-            status = 0;
-        } else {
-            continue;
-        }
+            errno = 0; /* Reset back to 0 if we recorded the error as a kevent */
+
+        receipt:
+            memcpy(el_p, cl_p, sizeof(*el_p));
+            el_p->flags |= EV_ERROR; /* This is set both on error and for EV_RECEIPT */
+            el_p->data = status;
+            el_p++;
 
         /*
-         * We're out of kevent entries, just return -1 and leave
-         * the errno set.  This is... odd, because it means the
-         * caller won't have any idea which entries in the
-         * changelist were processed.  But I guess the
-         * requirement here is for the caller to always provide
-         * a kevent array with >= entries as the changelist.
+         * This allows our custom filter to create eventlist
+         * entries in response to queries.
          */
-        if (el_p == el_end)
-            return (-1);
-
-        memcpy(el_p, cl_p, sizeof(*cl_p));
-        el_p->flags |= EV_ERROR; /* This is set both on error and for EV_RECEIPT */
-        el_p->data = status;
-        el_p++;
-
-        errno = 0; /* Reset back to 0 if we recorded the error as a kevent */
+        } else if (cl_p->flags & EV_RECEIPT) {
+            status = 0;
+            if (el_p == el_end) {
+                errno = EFAULT;
+                return (-1);
+            }
+            goto receipt;
+        }
     }
 
     return (el_p - eventlist);
