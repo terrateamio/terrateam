@@ -112,6 +112,26 @@ When building under clang and some later versions of GCC, you can add the follow
 - `-DENABLE_TSAN=YES`, enables thread sanitizer (detects races).
 - `-DENABLE_UBSAN=YES`, enables undefined behaviour sanitizer (detects misaligned accesses, interger wrap, divide by zero etc...).
 
+libkqueue filter
+----------------
+
+The libkqueue filter `EVFILT_LIBKQUEUE` exposes runtime configuration options and data.  When querying/configuring libkqueue
+using `EVFILT_LIBKQUEUE` the `flags` field should be set to `EV_ADD`, and the `fflags` field should be one of the
+following:
+
+- `NOTE_VERSION` return the current version as a 32 unsigned integer in the format `MMmmpprr` (`Major`, `minor`, `patch`, `release`) in the `data` field of an entry in the eventlist.
+- `NOTE_VERSION_STR` return the current version as a string in the `udata` field of an entry in the eventlist.
+
+Example - retrieving version string:
+
+    struct kevent kev, receipt;
+
+    EV_SET(&kev, 0, EVFILT_LIBKQUEUE, EV_ADD, NOTE_VERSION_STR, 0, NULL);
+    if (kevent(kqfd, &kev, 1, &receipt, 1, &(struct timespec){}) != 1) {
+        //error
+    }
+    printf("libkqueue version - %s", (char *)receipt.udata);
+
 Building Applications
 ---------------------
 
