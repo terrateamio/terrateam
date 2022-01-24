@@ -1,45 +1,50 @@
 Unreleased
 ------------------------------------------------------------------------
 
-  * Fix: Allow EVFILT_TIMER filters to be modified on Linux 
+  * Fix: Allow EVFILT_TIMER filters to be modified on Linux
     (Closes #116) (Reported by: Grant Erickson).
-    
+
   * Fix: Set the library search path in libkqueue.pc (Closes #117)
     (Reported by: Grant Erickson)
-    
-  * Fix: posix/proc will now no longer deadlock if the PID being 
-    monitored is reaped outside of libkqueue, or has exited before 
+
+  * Fix: posix/proc will now no longer deadlock if the PID being
+    monitored is reaped outside of libkqueue, or has exited before
     we start monitoring.
-    
+
   * Fix: posix/proc all waiters will now be informed if monitoring
     a PID fails, i.e. if the PID is reaped outside of libkqueue.
 
   * Fix: Compilation on Windows (Closes #111).
     (Reported by: brechtsanders)
 
-  * Fix: linux/read linux/write EPOLLERR, EPOLLHUP and EPOLLRDHUP on 
-    sockets would not produce a kevent and no EOF indication would be 
+  * Fix: linux/read linux/write EPOLLERR, EPOLLHUP and EPOLLRDHUP on
+    sockets would not produce a kevent and no EOF indication would be
     provided to the caller.
-    
+
   * Fix: linux/signal pending signals of the type specified in a new
     signal event were reset when that event was added to a kqueue.
-    
-  * Fix: Multiple instances of posix/proc wait thread may have been 
-    spawned on repeated kqueue creation/destruction.  This may have 
+
+  * Fix: Multiple instances of posix/proc wait thread may have been
+    spawned on repeated kqueue creation/destruction.  This may have
     lead to missed process exit notifications.
-    
+
   * Fix: Potential race between posix/proc waiter thread starting and
     events being added.
-    
+
+  * Fix: Deadlock between posix/proc waiter thread and kqueues.
+
   * Fix: udata should not be modified if the knote modification fails.
-  
+
   * Test suites now pass on macOS 11.5.2 and FreeBSD 13.
-  
-  * Packaging: We now set the release number if the current checked 
-    out commit does not match a release tag.  For example if the 
+
+  * Packaging: We now set the release number if the current checked
+    out commit does not match a release tag.  For example if the
     current number of commits between the last release tag and HEAD
     is 2, then the release will be `-3`.  This allows easy upgrading
     of packages between releases.
+
+  * Add EVFILT_LIBKQUEUE to expose libkqueue specific configuration
+    options.
 
 2021-09-06  v2.5.0
 ------------------------------------------------------------------------
