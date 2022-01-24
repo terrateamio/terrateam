@@ -25,7 +25,7 @@ else()
 endif()
 cmake_policy(SET CMP0063 OLD)
 
-# Both variables used in src/common/version.h.in
+# Both variables used in src/version.h.in
 string(TIMESTAMP PROJECT_VERSION_DATE "%b %d %Y at %H:%M:%S")
 
 execute_process(COMMAND git rev-parse --short=8 HEAD
@@ -52,8 +52,8 @@ endif()
 
 project(libkqueue VERSION ${PROJECT_VERSION}
                   LANGUAGES C)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/common/version.h.in
-               ${CMAKE_CURRENT_BINARY_DIR}/src/common/version.h @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.h.in
+               ${CMAKE_CURRENT_BINARY_DIR}/version.h @ONLY)
 
 enable_testing()
 
@@ -171,8 +171,7 @@ set(LIBKQUEUE_SOURCES
     src/common/map.c
     src/common/private.h
     src/common/queue.h
-    src/common/tree.h
-    src/common/version.h)
+    src/common/tree.h)
 
 if(CMAKE_SYSTEM_NAME MATCHES Windows)
   list(APPEND LIBKQUEUE_SOURCES

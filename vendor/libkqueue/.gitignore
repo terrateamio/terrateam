@@ -23,4 +23,4 @@ test/CMakeCache.txt
 test/CMakeFiles/
 test/cmake_install.cmake
 test/libkqueue-test
-src/common/version.h
+version.h
