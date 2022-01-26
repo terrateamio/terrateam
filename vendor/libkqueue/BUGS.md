@@ -41,7 +41,7 @@
  
  * `EVFILT_PROC` - The POSIX implmentation requires that `SIGCHLD`
     be delivered to its global waiter thread so that the waiter can discover a
-    when child process `exits.sigprocmask(2)` is used to mask `SIGCHLD` at a process 
+    when child process exits  `sigprocmask(2)` is used to mask `SIGCHLD` at a process 
     level.  If the application unmasks `SIGCHLD` or installs a handler for it, 
     the POSIX `EVFILT_PROC` code will not function.
   
