@@ -302,7 +302,7 @@ install(FILES
         COMPONENT pkgconfig)
 
 set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
-set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+# CPACK_PACKAGE_VERSION is set automatically
 set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
@@ -363,18 +363,26 @@ set(CPACK_DEBIAN_MAIN_PACKAGE_SECTION "libs")
 
 set(CPACK_DEBIAN_DEVEL_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-dev")
 set(CPACK_DEBIAN_DEVEL_PACKAGE_SECTION "libdevel")
-set(CPACK_DEBIAN_DEVEL_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME} (= ${PROJECT_VERSION})")
 
 set(CPACK_DEB_COMPONENT_INSTALL ON)             # Enable component based packaging (generate multiple packages)
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)         # Use default Debian package naming scheme
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_PACKAGE_GENERATE_SHLIBS ON)
 
+#
+#  We need to setup the package dependencies manually
+#  when we're using a release version to ensure the
+#  library package is in sync with the headers.
+#
 if (PROJECT_VERSION_RELEASE)
+set(CPACK_DEBIAN_DEVEL_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME} (= ${PROJECT_VERSION}-${PROJECT_VERSION_RELEASE})")
 set(CPACK_DEBIAN_PACKAGE_RELEASE ${PROJECT_VERSION_RELEASE})
+else()
+set(CPACK_DEBIAN_DEVEL_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME} (= ${PROJECT_VERSION})")
 endif()
 
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Mark Heily <mark@heily.com>")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/mheily/libkqueue")
 include(CPack)
 
 add_custom_target(tarball git archive -o "libkqueue-${PROJECT_VERSION}.tar.gz" --prefix "libkqueue-${PROJECT_VERSION}/" HEAD)
