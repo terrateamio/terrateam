@@ -3,7 +3,6 @@ include Abb_fut.Make (struct
 end)
 
 let dummy_state = Abb_fut.State.create ()
-
 let run t = ignore (run_with_state t dummy_state)
 
 class type ['a] promise =
@@ -23,7 +22,7 @@ let unsafe_of_promise : 'a promise Js_of_ocaml.Js.t -> 'b t =
   ignore ((Js.Unsafe.coerce v)##then_ (Js.wrap_callback (fun v -> run (Promise.set p v))));
   ignore
     ((Js.Unsafe.coerce v)##catch
-       (Js.wrap_callback (fun err -> run (Promise.set_exn p (Js.Error err, None)))));
+       (Js.wrap_callback (fun err -> run (Promise.set_exn p (Js.Js_error.Exn err, None)))));
   Promise.future p
 
 let unsafe_to_promise : 'a t -> 'a promise Js_of_ocaml.Js.t =
@@ -39,10 +38,10 @@ let unsafe_to_promise : 'a t -> 'a promise Js_of_ocaml.Js.t =
            run
              (await_map
                 (function
-                  | `Det r                 -> succ r
-                  | `Aborted               -> reject (Js.Unsafe.inject (Js.string "Aborted"))
-                  | `Exn (Js.Error err, _) -> reject (Js.Unsafe.inject err)
-                  | `Exn (exn, _)          -> reject (Js.Unsafe.inject exn))
+                  | `Det r                        -> succ r
+                  | `Aborted                      -> reject (Js.Unsafe.inject (Js.string "Aborted"))
+                  | `Exn (Js.Js_error.Exn err, _) -> reject (Js.Unsafe.inject err)
+                  | `Exn (exn, _)                 -> reject (Js.Unsafe.inject exn))
                 t)))
   in
   promise
