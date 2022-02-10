@@ -25,18 +25,15 @@ module Cmdline = struct
 
   let server_cmd f =
     let doc = "Run server." in
-    let exits = C.Term.default_exits in
-    C.Term.(const f $ logs, info "server" ~doc ~exits)
+    let exits = C.Cmd.Exit.defaults in
+    C.Cmd.v (C.Cmd.info "server" ~doc ~exits) C.Term.(const f $ logs)
 
   let migrate_cmd f =
     let doc = "Perform migration" in
-    let exits = C.Term.default_exits in
-    C.Term.(const f $ logs, info "migrate" ~doc ~exits)
+    let exits = C.Cmd.Exit.defaults in
+    C.Cmd.v (C.Cmd.info "migrate" ~doc ~exits) C.Term.(const f $ logs)
 
-  let default_cmd =
-    let doc = "terrateam" in
-    let exits = C.Term.default_exits in
-    C.Term.(ret (const (`Help (`Pager, None))), info "terrateam" ~doc ~exits)
+  let default_cmd = C.Term.(ret (const (`Help (`Pager, None))))
 end
 
 let server () =
@@ -100,4 +97,5 @@ let cmds = Cmdline.[ server_cmd server; migrate_cmd migrate ]
 
 let () =
   Mirage_crypto_rng_unix.initialize ();
-  Cmdliner.Term.(exit @@ eval_choice Cmdline.default_cmd cmds)
+  let info = Cmdliner.Cmd.info "terrat" in
+  exit @@ Cmdliner.Cmd.eval @@ Cmdliner.Cmd.group ~default:Cmdline.default_cmd info cmds

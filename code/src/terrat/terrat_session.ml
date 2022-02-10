@@ -62,7 +62,7 @@ let store storage id_opt user_id ctx =
         |> CCFun.flip Cohttp.Header.get "user-agent"
         |> CCOpt.get_or ~default:"Unknown"
       in
-      let uuid = Uuidm.create `V4 in
+      let uuid = Uuidm.v `V4 in
       Pgsql_pool.with_conn storage ~f:(fun db ->
           Pgsql_io.Prepared_stmt.execute db Sql.store user_id uuid user_agent)
       >>= function

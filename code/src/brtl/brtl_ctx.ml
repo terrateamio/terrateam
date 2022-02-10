@@ -16,7 +16,7 @@ let create remote_addr request =
     body = ();
     response = ();
     remote_addr;
-    token = Uuidm.(to_string ~upper:false (create `V4));
+    token = Uuidm.(to_string ~upper:false (v `V4));
   }
 
 let uri t =

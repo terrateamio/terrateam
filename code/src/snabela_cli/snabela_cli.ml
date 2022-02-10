@@ -124,9 +124,9 @@ let snabela kv_file transformers append_transformers =
 
 let cmd =
   let doc = "Execute replacements in a template." in
-  let exits = Cmdliner.Term.default_exits in
-  Cmdliner.Term.
-    ( ret Cmdline.(const snabela $ kv $ transformers $ append_transformers),
-      info "snabela" ~version:"1.0" ~doc ~exits )
+  let exits = Cmdliner.Cmd.Exit.defaults in
+  Cmdliner.Cmd.v
+    (Cmdliner.Cmd.info "snabela" ~version:"1.0" ~doc ~exits)
+    Cmdliner.Term.(ret Cmdline.(const snabela $ kv $ transformers $ append_transformers))
 
-let () = Cmdliner.Term.(exit @@ eval cmd)
+let () = exit @@ Cmdliner.Cmd.eval cmd

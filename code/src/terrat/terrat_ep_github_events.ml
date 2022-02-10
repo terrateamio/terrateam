@@ -735,7 +735,7 @@ let process_installation config storage =
       let pub_key = Mirage_crypto_pk.Rsa.pub_of_priv priv_key in
       let priv_key_pem = Cstruct.to_string (X509.Private_key.encode_pem (`RSA priv_key)) in
       let pub_key_pem = Cstruct.to_string (X509.Public_key.encode_pem (`RSA pub_key)) in
-      let installation_secret = Uuidm.create `V4 in
+      let installation_secret = Uuidm.v `V4 in
       Logs.debug (fun m ->
           m "GITHUB_EVENT : INSTALLATION : %Ld : ADDING_TO_DATABASE" installation_id);
       Pgsql_pool.with_conn storage ~f:(fun db ->
