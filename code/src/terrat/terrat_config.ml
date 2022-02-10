@@ -18,13 +18,13 @@ type t = {
 
 type err =
   [ `Key_error of string
-  | `Bad_pem   of string
+  | `Bad_pem of string
   ]
 [@@deriving show]
 
 let of_opt fail = function
   | Some v -> Ok v
-  | None   -> Error fail
+  | None -> Error fail
 
 let env_str key = of_opt (`Key_error key) (Sys.getenv_opt key)
 
@@ -52,9 +52,9 @@ let create () =
   env_str "GITHUB_APP_PEM"
   >>= fun github_app_pem_content ->
   (match X509.Private_key.decode_pem (Cstruct.of_string github_app_pem_content) with
-    | Ok (`RSA v)    -> Ok v
-    | Ok _           -> Error (`Bad_pem "Expected RSA")
-    | Error (`Msg s) -> Error (`Bad_pem s))
+  | Ok (`RSA v) -> Ok v
+  | Ok _ -> Error (`Bad_pem "Expected RSA")
+  | Error (`Msg s) -> Error (`Bad_pem s))
   >>= fun github_app_pem ->
   env_str "GITHUB_APP_CLIENT_SECRET"
   >>= fun github_app_client_secret ->
@@ -87,31 +87,17 @@ let create () =
     }
 
 let frontend_port t = t.frontend_port
-
 let backend_port t = t.backend_port
-
 let db_host t = t.db_host
-
 let db_user t = t.db_user
-
 let db_password t = t.db_password
-
 let db t = t.db
-
 let github_app_id t = t.github_app_id
-
 let github_app_pem t = t.github_app_pem
-
 let github_webhook_secret t = t.github_webhook_secret
-
 let github_app_client_secret t = t.github_app_client_secret
-
 let github_app_client_id t = t.github_app_client_id
-
 let aws_account_id t = t.aws_account_id
-
 let aws_region t = t.aws_region
-
 let backend_address t = t.backend_address
-
 let atlantis_syslog_address t = t.atlantis_syslog_address

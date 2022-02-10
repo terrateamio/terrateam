@@ -26,9 +26,7 @@ let slow ctx =
   Abb.Sys.sleep 10.0 >>| fun () -> Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx
 
 let name_route () = Brtl_rtng.Route.(rel / "name" /% Path.string)
-
 let age_route () = Brtl_rtng.Route.(rel / "age" /% Path.int)
-
 let slow_route () = Brtl_rtng.Route.(rel / "slow")
 
 let rtng =
@@ -52,5 +50,5 @@ let () =
     Brtl.run cfg mw rtng >>| fun _ -> ()
   in
   match Abb.Scheduler.run_with_state run with
-    | `Det () -> ()
-    | _       -> assert false
+  | `Det () -> ()
+  | _ -> assert false

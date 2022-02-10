@@ -1,6 +1,5 @@
 module Make (Fut : Abb_intf.Future.S) = struct
   type reader
-
   type writer
 
   type ('a, 'msg) t = {
@@ -27,13 +26,9 @@ module Make (Fut : Abb_intf.Future.S) = struct
     (t, t)
 
   let send t m = t.send m
-
   let recv t = t.recv ()
-
   let close t = t.close ()
-
   let close_reader t = t.close_reader ()
-
   let closed t = t.closed ()
 
   module Combinators = struct
@@ -46,19 +41,18 @@ module Make (Fut : Abb_intf.Future.S) = struct
       | `Closed -> close init
 
     let fold ~init ~f reader = fold_with_close ~init ~f ~close:Fut.return reader
-
     let iter ~f = fold ~init:() ~f:(fun () m -> f m)
 
     let send_promise writer msg p =
       send writer msg
       >>= function
       | `Closed -> Fut.return `Closed
-      | `Ok ()  -> Fut.Promise.future p >>| fun v -> `Ok v
+      | `Ok () -> Fut.Promise.future p >>| fun v -> `Ok v
 
     let to_result fut =
       fut
       >>| function
-      | `Ok v   -> Ok v
+      | `Ok v -> Ok v
       | `Closed -> Error `Closed
   end
 end

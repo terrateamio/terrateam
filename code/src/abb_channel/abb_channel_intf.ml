@@ -8,7 +8,7 @@
 
 (** A channel can be closed *)
 type 'a channel_ret =
-  [ `Ok     of 'a
+  [ `Ok of 'a
   | `Closed
   ]
 

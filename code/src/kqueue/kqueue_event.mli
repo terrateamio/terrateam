@@ -82,7 +82,7 @@ module User : sig
       | Ctrlmask
       | Fflagsmask
       | Trigger
-      | Uflags     of int
+      | Uflags of int
 
     type t
 
@@ -97,13 +97,13 @@ module User : sig
 end
 
 type t =
-  | Read   of Read.t
-  | Write  of Write.t
-  | Vnode  of Vnode.t
-  | Proc   of Proc.t
+  | Read of Read.t
+  | Write of Write.t
+  | Vnode of Vnode.t
+  | Proc of Proc.t
   | Signal of Signal.t
-  | Timer  of Timer.t
-  | User   of User.t
+  | Timer of Timer.t
+  | User of User.t
 
 (** Turn a [struct kqueue] into an [Event] *)
 val of_kevent : Kqueue_bindings.Stubs(Kqueue_stubs).Kevent.t -> t

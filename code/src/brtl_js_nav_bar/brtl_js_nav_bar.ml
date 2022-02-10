@@ -1,6 +1,6 @@
 module Title = struct
   type t =
-    [ `Txt  of string
+    [ `Txt of string
     | `Html of unit -> Html_types.div_content Brtl_js.Html.elt list
     ]
 end
@@ -17,7 +17,7 @@ end
 
 let run ~eq ~nav_class ~selected ~unselected ~choices routes state =
   let open Brtl_js.Html in
-  let (uri, set_uri) =
+  let uri, set_uri =
     Brtl_js.React.S.(create ~eq:Uri.equal (value (Brtl_js.Router.uri (Brtl_js.State.router state))))
   in
   let workaround =
@@ -31,8 +31,8 @@ let run ~eq ~nav_class ~selected ~unselected ~choices routes state =
           @@ Brtl_js.React.S.map (fun mtch ->
                  let compare =
                    match mtch with
-                     | Some v -> eq (Brtl_js_rtng.Match.apply v)
-                     | None   -> fun _ -> false
+                   | Some v -> eq (Brtl_js_rtng.Match.apply v)
+                   | None -> fun _ -> false
                  in
                  CCList.map
                    (fun choice ->
@@ -40,12 +40,7 @@ let run ~eq ~nav_class ~selected ~unselected ~choices routes state =
                        ~a:
                          [
                            a_class
-                             [
-                               (if compare choice.Choice.value then
-                                 selected
-                               else
-                                 unselected);
-                             ];
+                             [ (if compare choice.Choice.value then selected else unselected) ];
                            a_onclick
                            @@ Brtl_js.handler_sync (fun _ ->
                                   Brtl_js.Router.navigate
@@ -53,15 +48,15 @@ let run ~eq ~nav_class ~selected ~unselected ~choices routes state =
                                     choice.Choice.uri);
                          ]
                        (match choice.Choice.title with
-                         | `Txt title -> [ txt title ]
-                         | `Html elt  -> elt ()))
+                       | `Txt title -> [ txt title ]
+                       | `Html elt -> elt ()))
                    choices)
           @@ Brtl_js.React.S.map
                ~eq:(fun m1 m2 ->
                  match (m1, m2) with
-                   | (Some m1, Some m2) -> Brtl_js_rtng.Match.equal m1 m2
-                   | (None, None)       -> true
-                   | (_, _)             -> false)
+                 | Some m1, Some m2 -> Brtl_js_rtng.Match.equal m1 m2
+                 | None, None -> true
+                 | _, _ -> false)
                (Brtl_js_rtng.first_match ~must_consume_path:false routes)
                uri;
         ],

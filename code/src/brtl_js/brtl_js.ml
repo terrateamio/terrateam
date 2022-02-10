@@ -8,7 +8,6 @@ module Svg = Js_of_ocaml_tyxml.Tyxml_js.Svg
 module To_dom = Js_of_ocaml_tyxml.Tyxml_js.To_dom
 
 let select_by_id id coerce = Option.get (Dom_html.getElementById_coerce id coerce)
-
 let select_by_id_opt id coerce = Dom_html.getElementById_coerce id coerce
 
 module Router = struct
@@ -24,7 +23,7 @@ module Router = struct
 
   let create () =
     let current_uri = Dom_html.window##.location##.href |> Js.to_string |> Uri.of_string in
-    let (uri, uri_set) = React.S.create ~eq:Uri.equal current_uri in
+    let uri, uri_set = React.S.create ~eq:Uri.equal current_uri in
     Dom_html.window##.onpopstate := Dom_html.handler (on_pop_state uri_set);
     { uri; uri_set }
 
@@ -50,15 +49,15 @@ module State = struct
   let rec iter_nodes t node =
     Js.Opt.iter (Dom_html.CoerceTo.element node) (fun node ->
         (match Js.Opt.to_option (node##getAttribute (Js.string "id")) with
-          | Some id -> (
-              let id = Js.to_string id in
-              match Hashtbl.find_opt t.cleanup id with
-                | Some f ->
-                    Hashtbl.remove t.cleanup id;
-                    (* TODO: Should all these run in parallel? *)
-                    Abb_js.Future.run (f t)
-                | None   -> ())
-          | None    -> ());
+        | Some id -> (
+            let id = Js.to_string id in
+            match Hashtbl.find_opt t.cleanup id with
+            | Some f ->
+                Hashtbl.remove t.cleanup id;
+                (* TODO: Should all these run in parallel? *)
+                Abb_js.Future.run (f t)
+            | None -> ())
+        | None -> ());
         for i = 0 to node##.childNodes##.length do
           Js.Opt.iter (node##.childNodes##item i) (iter_nodes t)
         done)
@@ -88,19 +87,16 @@ module State = struct
     t
 
   let router t = t.router
-
   let consumed_path t = t.consumed_path
-
   let cleanup t id f = Hashtbl.replace t.cleanup id f
-
   let app_visibility t = t.visibility
 end
 
 module Handler = struct
   type ret =
-    [ `Render       of Html_types.div_content_fun Html.elt list
+    [ `Render of Html_types.div_content_fun Html.elt list
     | `With_cleanup of Html_types.div_content_fun Html.elt list * (State.t -> unit Abb_js.Future.t)
-    | `Navigate     of Uri.t
+    | `Navigate of Uri.t
     ]
 
   type t = State.t -> ret Abb_js.Future.t
@@ -117,19 +113,19 @@ module Router_output = struct
            | `Det (`Render r) when iteration = !curr_iteration -> (
                res_set r;
                match !with_cleanup with
-                 | Some f ->
-                     with_cleanup := None;
-                     f state
-                 | None   -> Abb_js.Future.return ())
+               | Some f ->
+                   with_cleanup := None;
+                   f state
+               | None -> Abb_js.Future.return ())
            | `Det (`With_cleanup (r, cleanup)) when iteration = !curr_iteration -> (
                res_set r;
                match !with_cleanup with
-                 | Some f ->
-                     with_cleanup := Some cleanup;
-                     f state
-                 | None   ->
-                     with_cleanup := Some cleanup;
-                     Abb_js.Future.return ())
+               | Some f ->
+                   with_cleanup := Some cleanup;
+                   f state
+               | None ->
+                   with_cleanup := Some cleanup;
+                   Abb_js.Future.return ())
            | `Det (`With_cleanup (_, cleanup)) ->
                (* If the iterations do not match, ensure we perform the cleanup  *)
                Firebug.console##log_3
@@ -164,24 +160,24 @@ module Router_output = struct
        could be running will know to perform a cleanup (if there is anything to
        clean up). *)
     match match_opt with
-      | Some mtch when not (Brtl_js_rtng.Match.equal mtch !prev_match) ->
-          prev_match := mtch;
-          incr iteration;
-          apply_match mtch !iteration iteration state with_cleanup res_set
-      | Some mtch ->
-          (* TODO: make consumed path immutable.
+    | Some mtch when not (Brtl_js_rtng.Match.equal mtch !prev_match) ->
+        prev_match := mtch;
+        incr iteration;
+        apply_match mtch !iteration iteration state with_cleanup res_set
+    | Some mtch ->
+        (* TODO: make consumed path immutable.
 
-             If the matched route didn't change, just update the consumed
-             path. *)
-          state.State.consumed_path <- Brtl_js_rtng.Match.consumed_path mtch
-      | None -> (
-          incr iteration;
-          (* This router doesn't match, so cleanup *)
-          match !with_cleanup with
-            | Some f ->
-                with_cleanup := None;
-                Abb_js.Future.run (f state)
-            | None   -> ())
+           If the matched route didn't change, just update the consumed
+           path. *)
+        state.State.consumed_path <- Brtl_js_rtng.Match.consumed_path mtch
+    | None -> (
+        incr iteration;
+        (* This router doesn't match, so cleanup *)
+        match !with_cleanup with
+        | Some f ->
+            with_cleanup := None;
+            Abb_js.Future.run (f state)
+        | None -> ())
 
   let create ?(a = []) state routes =
     (* TODO: Consumed path immutable *)
@@ -228,39 +224,39 @@ module Router_output = struct
     let iteration = ref 0 in
     let state = State.{ state with consumed_path = "" } in
     let uri = state |> State.router |> Router.uri in
-    let (res, res_set) = React.S.create [] in
+    let res, res_set = React.S.create [] in
     (* Perform initial routing *)
     match match_uri routes (React.S.value uri) with
-      | Some mtch ->
-          let with_cleanup = ref None in
-          let prev_match = ref mtch in
-          let id = Uuidm.to_string (Uuidm.create `V4) in
-          let iter =
-            React.S.fmap
-              (fun uri ->
-                route_uri iteration state routes with_cleanup prev_match res_set uri;
-                None)
-              []
-              uri
-          in
-          let v = Rlist.from_signal res in
-          apply_match mtch 0 iteration state with_cleanup res_set;
-          let cleanup state =
-            React.S.stop ~strong:true iter;
-            React.S.stop ~strong:true res;
-            match !with_cleanup with
-              | Some f -> f state
-              | None   -> Abb_js.Future.return ()
-          in
-          State.cleanup state id cleanup;
-          Rhtml.div ~a:(Html.a_id id :: a) v
-      | None      ->
-          (* TODO: Do something useful here.  Here we give an empty div.  Perhaps
-             should give a div that can change if the URL eventually matches.  But
-             perhaps its better to just do this and a user of [Router_output]
-             should always match every URL that is valid on that page. *)
-          Firebug.console##log (Js.string "URL does not match any route");
-          Html.div []
+    | Some mtch ->
+        let with_cleanup = ref None in
+        let prev_match = ref mtch in
+        let id = Uuidm.to_string (Uuidm.create `V4) in
+        let iter =
+          React.S.fmap
+            (fun uri ->
+              route_uri iteration state routes with_cleanup prev_match res_set uri;
+              None)
+            []
+            uri
+        in
+        let v = Rlist.from_signal res in
+        apply_match mtch 0 iteration state with_cleanup res_set;
+        let cleanup state =
+          React.S.stop ~strong:true iter;
+          React.S.stop ~strong:true res;
+          match !with_cleanup with
+          | Some f -> f state
+          | None -> Abb_js.Future.return ()
+        in
+        State.cleanup state id cleanup;
+        Rhtml.div ~a:(Html.a_id id :: a) v
+    | None ->
+        (* TODO: Do something useful here.  Here we give an empty div.  Perhaps
+           should give a div that can change if the URL eventually matches.  But
+           perhaps its better to just do this and a user of [Router_output]
+           should always match every URL that is valid on that page. *)
+        Firebug.console##log (Js.string "URL does not match any route");
+        Html.div []
 end
 
 let comp ?a state handler =
@@ -290,9 +286,7 @@ let scroll_into_view ?(block = "start") ?(inline = "nearest") (elem : Dom_html.e
   let behaviour =
     object%js
       val behavior = Js.string "smooth"
-
       val block = Js.string block
-
       val inline = Js.string inline
     end
   in
@@ -300,42 +294,32 @@ let scroll_into_view ?(block = "start") ?(inline = "nearest") (elem : Dom_html.e
 
 let replace_child ?p ~old n =
   match p with
-    | None   -> Js.Opt.iter old##.parentNode (fun p -> Dom.replaceChild p n old)
-    | Some p -> Dom.replaceChild p n old
+  | None -> Js.Opt.iter old##.parentNode (fun p -> Dom.replaceChild p n old)
+  | Some p -> Dom.replaceChild p n old
 
 let append_child ~p n = Dom.appendChild p n
-
 let remove_child ~p r = Dom.removeChild p r
-
 let filter_attrib = Js_of_ocaml_tyxml.Tyxml_js.R.filter_attrib
 
 let tri_merge base ~on_true ~on_false signal =
   React.S.map
     (function
-      | true  -> base @ on_true
+      | true -> base @ on_true
       | false -> base @ on_false)
     signal
 
 let merge ?(flip = false) steady optional signal =
   tri_merge
     steady
-    ~on_true:
-      (if not flip then
-        optional
-      else
-        [])
-    ~on_false:
-      (if not flip then
-        []
-      else
-        optional)
+    ~on_true:(if not flip then optional else [])
+    ~on_false:(if not flip then [] else optional)
     signal
 
 let main id f =
   let wrapper _ =
     let id_div = select_by_id id Dom_html.CoerceTo.div in
     let visibility_change_event = Dom.Event.make "visibilitychange" in
-    let (visibility, set_visibility) = React.S.create `Visible in
+    let visibility, set_visibility = React.S.create `Visible in
     ignore
       (Dom_html.addEventListener
          Dom_html.document
@@ -346,9 +330,9 @@ let main id f =
               in
               Js.Optdef.iter visibility_state (fun s ->
                   match Js.to_string s with
-                    | "visible" -> set_visibility `Visible
-                    | "hidden"  -> set_visibility `Hidden
-                    | s         -> set_visibility (`Unknown s));
+                  | "visible" -> set_visibility `Visible
+                  | "hidden" -> set_visibility `Hidden
+                  | s -> set_visibility (`Unknown s));
               Abb_js.Future.return ()))
          Js._true);
     let state = State.create id visibility in

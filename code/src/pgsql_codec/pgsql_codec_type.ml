@@ -6,601 +6,303 @@ module Oid = struct
   }
 
   let make oid array_oid = { oid; array_oid }
-
   let bool = make 16 1000
-
   let bytea = make 17 1001
-
   let char = make 18 1002
-
   let name = make 19 1003
-
   let int8 = make 20 1016
-
   let int2 = make 21 1005
-
   let int2vector = make 22 1006
-
   let int4 = make 23 1007
-
   let regproc = make 24 1008
-
   let text = make 25 1009
-
   let oid = make 26 1028
-
   let tid = make 27 1010
-
   let xid = make 28 1011
-
   let cid = make 29 1012
-
   let oidvector = make 30 1013
-
   let pg_type = make 71 0
-
   let pg_attribute = make 75 0
-
   let pg_proc = make 81 0
-
   let pg_class = make 83 0
-
   let json = make 114 199
-
   let xml = make 142 143
-
   let pg_node_tree = make 194 0
-
   let pg_ndistinct = make 3361 0
-
   let pg_dependencies = make 3402 0
-
   let pg_ddl_command = make 32 0
-
   let smgr = make 210 0
-
   let point = make 600 1017
-
   let lseg = make 601 1018
-
   let path = make 602 1019
-
   let box = make 603 1020
-
   let polygon = make 604 1027
-
   let line = make 628 629
-
   let float4 = make 700 1021
-
   let float8 = make 701 1022
-
   let abstime = make 702 1023
-
   let reltime = make 703 1024
-
   let tinterval = make 704 1025
-
   let unknown = make 705 0
-
   let circle = make 718 719
-
   let money = make 790 791
-
   let macaddr = make 829 1040
-
   let inet = make 869 1041
-
   let cidr = make 650 651
-
   let macaddr8 = make 774 775
-
   let aclitem = make 1033 1034
-
   let bpchar = make 1042 1014
-
   let varchar = make 1043 1015
-
   let date = make 1082 1182
-
   let time = make 1083 1183
-
   let timestamp = make 1114 1115
-
   let timestamptz = make 1184 1185
-
   let timetz = make 1266 1270
-
   let bit = make 1560 1561
-
   let varbit = make 1562 1563
-
   let numeric = make 1700 1231
-
   let refcursor = make 1790 2201
-
   let regprocedure = make 2202 2207
-
   let regoper = make 2203 2208
-
   let regoperator = make 2204 2209
-
   let regclass = make 2205 2210
-
   let regtype = make 2206 2211
-
   let regrole = make 4096 4097
-
   let regnamespace = make 4089 4090
-
   let uuid = make 2950 2951
-
   let pg_lsn = make 3220 3221
-
   let tsvector = make 3614 3643
-
   let gtsvector = make 3642 3644
-
   let tsquery = make 3615 3645
-
   let regconfig = make 3734 3735
-
   let regdictionary = make 3769 3770
-
   let jsonb = make 3802 3807
-
   let txid_snapshot = make 2970 2949
-
   let int4range = make 3904 3905
-
   let numrange = make 3906 3907
-
   let tsrange = make 3908 3909
-
   let tstzrange = make 3910 3911
-
   let daterange = make 3912 3913
-
   let int8range = make 3926 3927
-
   let record = make 2249 2287
-
   let cstring = make 2275 1263
-
   let any = make 2276 0
-
   let anyarray = make 2277 0
-
   let void = make 2278 0
-
   let trigger = make 2279 0
-
   let event_trigger = make 3838 0
-
   let language_handler = make 2280 0
-
   let internal = make 2281 0
-
   let opaque = make 2282 0
-
   let anyelement = make 2283 0
-
   let anynonarray = make 2776 0
-
   let anyenum = make 3500 0
-
   let fdw_handler = make 3115 0
-
   let index_am_handler = make 325 0
-
   let tsm_handler = make 3310 0
-
   let anyrange = make 3831 0
-
   let pg_attrdef = make 10000 0
-
   let pg_constraint = make 10001 0
-
   let pg_inherits = make 10002 0
-
   let pg_index = make 10003 0
-
   let pg_operator = make 10004 0
-
   let pg_opfamily = make 10005 0
-
   let pg_opclass = make 10006 0
-
   let pg_am = make 10131 0
-
   let pg_amop = make 10132 0
-
   let pg_amproc = make 10855 0
-
   let pg_language = make 11314 0
-
   let pg_largeobject_metadata = make 11315 0
-
   let pg_largeobject = make 11316 0
-
   let pg_aggregate = make 11317 0
-
   let pg_statistic_ext = make 11318 0
-
   let pg_statistic = make 11319 0
-
   let pg_rewrite = make 11320 0
-
   let pg_trigger = make 11321 0
-
   let pg_event_trigger = make 11322 0
-
   let pg_description = make 11323 0
-
   let pg_cast = make 11324 0
-
   let pg_enum = make 11551 0
-
   let pg_namespace = make 11552 0
-
   let pg_conversion = make 11553 0
-
   let pg_depend = make 11554 0
-
   let pg_database = make 1248 0
-
   let pg_db_role_setting = make 11555 0
-
   let pg_tablespace = make 11556 0
-
   let pg_pltemplate = make 11557 0
-
   let pg_authid = make 2842 0
-
   let pg_auth_members = make 2843 0
-
   let pg_shdepend = make 11558 0
-
   let pg_shdescription = make 11559 0
-
   let pg_ts_config = make 11560 0
-
   let pg_ts_config_map = make 11561 0
-
   let pg_ts_dict = make 11562 0
-
   let pg_ts_parser = make 11563 0
-
   let pg_ts_template = make 11564 0
-
   let pg_extension = make 11565 0
-
   let pg_foreign_data_wrapper = make 11566 0
-
   let pg_foreign_server = make 11567 0
-
   let pg_user_mapping = make 11568 0
-
   let pg_foreign_table = make 11569 0
-
   let pg_policy = make 11570 0
-
   let pg_replication_origin = make 11571 0
-
   let pg_default_acl = make 11572 0
-
   let pg_init_privs = make 11573 0
-
   let pg_seclabel = make 11574 0
-
   let pg_shseclabel = make 4066 0
-
   let pg_collation = make 11575 0
-
   let pg_partitioned_table = make 11576 0
-
   let pg_range = make 11577 0
-
   let pg_transform = make 11578 0
-
   let pg_sequence = make 11579 0
-
   let pg_publication = make 11580 0
-
   let pg_publication_rel = make 11581 0
-
   let pg_subscription = make 6101 0
-
   let pg_subscription_rel = make 11582 0
-
   let pg_toast_2604 = make 11583 0
-
   let pg_toast_2606 = make 11584 0
-
   let pg_toast_2609 = make 11585 0
-
   let pg_toast_1255 = make 11586 0
-
   let pg_toast_2618 = make 11587 0
-
   let pg_toast_3596 = make 11588 0
-
   let pg_toast_2619 = make 11589 0
-
   let pg_toast_3381 = make 11590 0
-
   let pg_toast_2620 = make 11591 0
-
   let pg_toast_2396 = make 11592 0
-
   let pg_toast_2964 = make 11593 0
-
   let pg_toast_3592 = make 11594 0
-
   let pg_roles = make 11596 0
-
   let pg_shadow = make 11600 0
-
   let pg_group = make 11604 0
-
   let pg_user = make 11607 0
-
   let pg_policies = make 11610 0
-
   let pg_rules = make 11614 0
-
   let pg_views = make 11618 0
-
   let pg_tables = make 11622 0
-
   let pg_matviews = make 11626 0
-
   let pg_indexes = make 11630 0
-
   let pg_sequences = make 11634 0
-
   let pg_stats = make 11638 0
-
   let pg_publication_tables = make 11642 0
-
   let pg_locks = make 11646 0
-
   let pg_cursors = make 11649 0
-
   let pg_available_extensions = make 11652 0
-
   let pg_available_extension_versions = make 11655 0
-
   let pg_prepared_xacts = make 11658 0
-
   let pg_prepared_statements = make 11662 0
-
   let pg_seclabels = make 11665 0
-
   let pg_settings = make 11669 0
-
   let pg_file_settings = make 11674 0
-
   let pg_hba_file_rules = make 11677 0
-
   let pg_timezone_abbrevs = make 11680 0
-
   let pg_timezone_names = make 11683 0
-
   let pg_config = make 11686 0
-
   let pg_stat_all_tables = make 11689 0
-
   let pg_stat_xact_all_tables = make 11693 0
-
   let pg_stat_sys_tables = make 11697 0
-
   let pg_stat_xact_sys_tables = make 11701 0
-
   let pg_stat_user_tables = make 11704 0
-
   let pg_stat_xact_user_tables = make 11708 0
-
   let pg_statio_all_tables = make 11711 0
-
   let pg_statio_sys_tables = make 11715 0
-
   let pg_statio_user_tables = make 11718 0
-
   let pg_stat_all_indexes = make 11721 0
-
   let pg_stat_sys_indexes = make 11725 0
-
   let pg_stat_user_indexes = make 11728 0
-
   let pg_statio_all_indexes = make 11731 0
-
   let pg_statio_sys_indexes = make 11735 0
-
   let pg_statio_user_indexes = make 11738 0
-
   let pg_statio_all_sequences = make 11741 0
-
   let pg_statio_sys_sequences = make 11745 0
-
   let pg_statio_user_sequences = make 11748 0
-
   let pg_stat_activity = make 11751 0
-
   let pg_stat_replication = make 11755 0
-
   let pg_stat_wal_receiver = make 11759 0
-
   let pg_stat_subscription = make 11762 0
-
   let pg_stat_ssl = make 11765 0
-
   let pg_replication_slots = make 11768 0
-
   let pg_stat_database = make 11772 0
-
   let pg_stat_database_conflicts = make 11775 0
-
   let pg_stat_user_functions = make 11778 0
-
   let pg_stat_xact_user_functions = make 11782 0
-
   let pg_stat_archiver = make 11786 0
-
   let pg_stat_bgwriter = make 11789 0
-
   let pg_stat_progress_vacuum = make 11792 0
-
   let pg_user_mappings = make 11796 0
-
   let pg_replication_origin_status = make 11800 0
-
   let cardinal_number = make 13189 13188
-
   let character_data = make 13192 13191
-
   let sql_identifier = make 13194 13193
-
   let information_schema_catalog_name = make 13196 0
-
   let time_stamp = make 13199 13198
-
   let yes_or_no = make 13201 13200
-
   let applicable_roles = make 13204 0
-
   let administrable_role_authorizations = make 13208 0
-
   let attributes = make 13211 0
-
   let character_sets = make 13215 0
-
   let check_constraint_routine_usage = make 13219 0
-
   let check_constraints = make 13223 0
-
   let collations = make 13227 0
-
   let collation_character_set_applicability = make 13231 0
-
   let column_domain_usage = make 13235 0
-
   let column_privileges = make 13239 0
-
   let column_udt_usage = make 13243 0
-
   let columns = make 13247 0
-
   let constraint_column_usage = make 13251 0
-
   let constraint_table_usage = make 13255 0
-
   let domain_constraints = make 13259 0
-
   let domain_udt_usage = make 13263 0
-
   let domains = make 13267 0
-
   let enabled_roles = make 13271 0
-
   let key_column_usage = make 13274 0
-
   let parameters = make 13278 0
-
   let referential_constraints = make 13282 0
-
   let role_column_grants = make 13286 0
-
   let routine_privileges = make 13289 0
-
   let role_routine_grants = make 13293 0
-
   let routines = make 13296 0
-
   let schemata = make 13300 0
-
   let sequences = make 13303 0
-
   let sql_features = make 13307 0
-
   let pg_toast_13306 = make 13309 0
-
   let sql_implementation_info = make 13312 0
-
   let pg_toast_13311 = make 13314 0
-
   let sql_languages = make 13317 0
-
   let pg_toast_13316 = make 13319 0
-
   let sql_packages = make 13322 0
-
   let pg_toast_13321 = make 13324 0
-
   let sql_parts = make 13327 0
-
   let pg_toast_13326 = make 13329 0
-
   let sql_sizing = make 13332 0
-
   let pg_toast_13331 = make 13334 0
-
   let sql_sizing_profiles = make 13337 0
-
   let pg_toast_13336 = make 13339 0
-
   let table_constraints = make 13342 0
-
   let table_privileges = make 13346 0
-
   let role_table_grants = make 13350 0
-
   let tables = make 13353 0
-
   let transforms = make 13357 0
-
   let triggered_update_columns = make 13361 0
-
   let triggers = make 13365 0
-
   let udt_privileges = make 13369 0
-
   let role_udt_grants = make 13373 0
-
   let usage_privileges = make 13376 0
-
   let role_usage_grants = make 13380 0
-
   let user_defined_types = make 13383 0
-
   let view_column_usage = make 13387 0
-
   let view_routine_usage = make 13391 0
-
   let view_table_usage = make 13395 0
-
   let views = make 13399 0
-
   let data_type_privileges = make 13403 0
-
   let element_types = make 13407 0
-
   let column_options = make 13415 0
-
   let foreign_data_wrapper_options = make 13421 0
-
   let foreign_data_wrappers = make 13424 0
-
   let foreign_server_options = make 13431 0
-
   let foreign_servers = make 13434 0
-
   let foreign_table_options = make 13441 0
-
   let foreign_tables = make 13444 0
-
   let user_mapping_options = make 13451 0
-
   let user_mappings = make 13455 0
 end
 [@@ocaml.warning "-32"]

@@ -30,15 +30,15 @@ let post_handler config ctx =
   in
   let extra_key =
     match config.Config.extra_key ctx with
-      | Some s -> s
-      | None   -> ""
+    | Some s -> s
+    | None -> ""
   in
   Abb.Sys.monotonic ()
   >>= fun end_time ->
   let duration =
     match Brtl_ctx.md_find req_start_time ctx with
-      | Some start_time -> end_time -. start_time
-      | None            -> 0.0
+    | Some start_time -> end_time -. start_time
+    | None -> 0.0
   in
   Logs.info (fun m ->
       m
@@ -53,5 +53,4 @@ let post_handler config ctx =
   Abb.Future.return ctx
 
 let early_exit_handler = Brtl_mw.early_exit_handler_noop
-
 let create config = Brtl_mw.Mw.create pre_handler (post_handler config) early_exit_handler

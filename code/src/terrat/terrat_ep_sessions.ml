@@ -29,7 +29,7 @@ let get storage =
               Terrat_data.Response.Session.{ created_at; user_agent })
             user_id)
       >>= function
-      | Ok sessions                    ->
+      | Ok sessions ->
           let body =
             Terrat_data.Response.Session_list.(
               { results = sessions; next = None; prev = None } |> to_yojson |> Yojson.Safe.to_string)
@@ -43,7 +43,7 @@ let get storage =
           Logs.err (fun m -> m "SESSIONS : GET : ERROR : %s" (Pgsql_pool.show_err err));
           Abb.Future.return
             (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-      | Error (#Pgsql_io.err as err)   ->
+      | Error (#Pgsql_io.err as err) ->
           Logs.err (fun m -> m "SESSIONS : GET : ERROR : %s" (Pgsql_io.show_err err));
           Abb.Future.return
             (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))
@@ -57,13 +57,13 @@ let delete storage =
       Pgsql_pool.with_conn storage ~f:(fun db ->
           Pgsql_io.Prepared_stmt.execute db Sql.delete_user_sessions user_id)
       >>= function
-      | Ok ()                          ->
+      | Ok () ->
           Abb.Future.return (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx))
       | Error (#Pgsql_pool.err as err) ->
           Logs.err (fun m -> m "SESSIONS : DELETE : ERROR : %s" (Pgsql_pool.show_err err));
           Abb.Future.return
             (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-      | Error (#Pgsql_io.err as err)   ->
+      | Error (#Pgsql_io.err as err) ->
           Logs.err (fun m -> m "SESSIONS : DELETE : ERROR : %s" (Pgsql_io.show_err err));
           Abb.Future.return
             (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))

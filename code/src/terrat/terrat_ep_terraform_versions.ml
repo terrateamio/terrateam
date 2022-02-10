@@ -22,13 +22,13 @@ let perform_get storage =
               >>= fun versions ->
               Abb.Future.return
                 (Ok Terrat_data.Response.Terraform_versions.{ default_version; versions })
-          | []                   -> assert false))
+          | [] -> assert false))
 
 let get storage ctx =
   let open Abb.Future.Infix_monad in
   perform_get storage
   >>= function
-  | Ok versions                    ->
+  | Ok versions ->
       let body =
         versions |> Terrat_data.Response.Terraform_versions.to_yojson |> Yojson.Safe.to_string
       in
@@ -38,7 +38,7 @@ let get storage ctx =
       Logs.err (fun m -> m "TERRAFORM VERSIONS : GET : ERROR : %s" (Pgsql_pool.show_err err));
       Abb.Future.return
         (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-  | Error (#Pgsql_io.err as err)   ->
+  | Error (#Pgsql_io.err as err) ->
       Logs.err (fun m -> m "TERRAFORM VERSIONS : GET : ERROR : %s" (Pgsql_io.show_err err));
       Abb.Future.return
         (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)

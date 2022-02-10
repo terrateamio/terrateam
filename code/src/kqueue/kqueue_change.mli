@@ -17,7 +17,6 @@ module Action : sig
   type t
 
   val to_t : Flag.t list -> t
-
   val of_t : t -> Flag.t list
 end
 
@@ -108,7 +107,7 @@ module Filter : sig
         | Ctrlmask
         | Fflagsmask
         | Trigger
-        | Uflags     of int
+        | Uflags of int
 
       type t
 
@@ -123,13 +122,13 @@ module Filter : sig
   end
 
   type t =
-    | Read   of Read.t
-    | Write  of Write.t
-    | Vnode  of Vnode.t
-    | Proc   of Proc.t
+    | Read of Read.t
+    | Write of Write.t
+    | Vnode of Vnode.t
+    | Proc of Proc.t
     | Signal of Signal.t
-    | Timer  of Timer.t
-    | User   of User.t
+    | Timer of Timer.t
+    | User of User.t
 
   (** Fill in a [struct kqueue] with the values of an action. *)
   val set_kevent : Kqueue_bindings.Stubs(Kqueue_stubs).Kevent.t -> Action.t -> t -> unit

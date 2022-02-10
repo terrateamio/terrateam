@@ -2,7 +2,6 @@ module Radio_gen : sig
   type 'a t
 
   val signal : 'a t -> 'a Brtl_js.React.signal
-
   val set : ?step:Brtl_js.React.step -> 'a t -> 'a -> unit
 end
 
@@ -10,7 +9,7 @@ type 'a t
 
 module Validator : sig
   type 'a v =
-    [ `Ok      of 'a
+    [ `Ok of 'a
     | `Unset
     | `Invalid
     ]
@@ -18,25 +17,15 @@ module Validator : sig
   type ('a, 'b) t
 
   val create : ('a -> 'b option) -> ('b -> 'a) -> ('a, 'b) t
-
   val ( %> ) : ('a, 'b) t -> ('b, 'c) t -> ('a, 'c) t
-
   val int : (string, int) t
-
   val min_int : int -> (int, int) t
-
   val max_int : int -> (int, int) t
-
   val float : (float -> string, unit, string) format -> (string, float) t
-
   val min_float : float -> (float, float) t
-
   val max_float : float -> (float, float) t
-
   val optional : (string, 'b) t -> (string, 'b option) t
-
   val required : (string, string) t
-
   val to_option : 'a v -> 'a option
 end
 
@@ -58,11 +47,8 @@ module React : sig
 end
 
 val create : 'a Brtl_js.React.signal -> (?step:Brtl_js.React.step -> 'a -> unit) -> 'a t
-
 val signal : 'a t -> 'a Brtl_js.React.signal
-
 val get : 'a t -> 'a
-
 val set : ?step:Brtl_js.React.step -> 'a t -> 'a -> unit
 
 val valid_input :

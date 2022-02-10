@@ -14,7 +14,6 @@ module Response : sig
   }
 
   val text : t -> string
-
   val status : t -> int
 end
 

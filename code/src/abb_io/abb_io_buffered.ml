@@ -44,9 +44,8 @@ module Make (Fut : Abb_intf.Future.S) = struct
           t.r_buf <- Buffer.to_bytes t.w_buf;
           t.r_pos <- 0;
           Buffer.reset t.w_buf;
-          read ~buf ~pos ~len
-        ) else if t.r_pos = Bytes.length t.r_buf then
-          Fut.return (Ok 0)
+          read ~buf ~pos ~len)
+        else if t.r_pos = Bytes.length t.r_buf then Fut.return (Ok 0)
         else
           let len = min len (Bytes.length t.r_buf - t.r_pos) in
           Bytes.blit ~src:t.r_buf ~src_pos:t.r_pos ~dst:buf ~dst_pos:pos ~len;
@@ -55,14 +54,14 @@ module Make (Fut : Abb_intf.Future.S) = struct
       in
       let rec write ~bufs =
         match bufs with
-          | [] -> Fut.return (Ok 0)
-          | { Abb_intf.Write_buf.buf; pos; len } :: bs -> (
-              let open Fut.Infix_monad in
-              Buffer.add_subbytes t.w_buf buf pos len;
-              write ~bufs:bs
-              >>| function
-              | Ok n    -> Ok (len + n)
-              | Error _ -> assert false)
+        | [] -> Fut.return (Ok 0)
+        | { Abb_intf.Write_buf.buf; pos; len } :: bs -> (
+            let open Fut.Infix_monad in
+            Buffer.add_subbytes t.w_buf buf pos len;
+            write ~bufs:bs
+            >>| function
+            | Ok n -> Ok (len + n)
+            | Error _ -> assert false)
       in
       let close () = Fut.return (Ok ()) in
       View.{ read; write; close }
@@ -76,7 +75,6 @@ module Make (Fut : Abb_intf.Future.S) = struct
   }
 
   type reader
-
   type writer
 
   let of_view ?(size = 1024) cb =
@@ -117,29 +115,29 @@ module Make (Fut : Abb_intf.Future.S) = struct
 
   let rec read_line_buffer' t b =
     match CCString.find ~start:t.pos ~sub:"\n" (Bytes.unsafe_to_string t.buf) with
-      | n when n = -1 || n >= t.length -> (
-          let open Fut_comb.Infix_result_monad in
-          let len = t.length - t.pos in
-          Buffer.add_subbytes b t.buf t.pos len;
-          t.pos <- t.pos + len;
-          fill_buffer t
-          >>= function
-          | 0 -> Fut.return (Ok ())
-          | _ -> read_line_buffer' t b)
-      | 0 ->
-          t.pos <- 1;
-          Fut.return (Ok ())
-      | 1 when Bytes.get t.buf 0 = '\r' ->
-          t.pos <- 2;
-          Fut.return (Ok ())
-      | n when Bytes.get t.buf (n - 1) = '\r' ->
-          Buffer.add_subbytes b t.buf t.pos (n - t.pos - 1);
-          t.pos <- n + 1;
-          Fut.return (Ok ())
-      | n ->
-          Buffer.add_subbytes b t.buf t.pos (n - t.pos);
-          t.pos <- n + 1;
-          Fut.return (Ok ())
+    | n when n = -1 || n >= t.length -> (
+        let open Fut_comb.Infix_result_monad in
+        let len = t.length - t.pos in
+        Buffer.add_subbytes b t.buf t.pos len;
+        t.pos <- t.pos + len;
+        fill_buffer t
+        >>= function
+        | 0 -> Fut.return (Ok ())
+        | _ -> read_line_buffer' t b)
+    | 0 ->
+        t.pos <- 1;
+        Fut.return (Ok ())
+    | 1 when Bytes.get t.buf 0 = '\r' ->
+        t.pos <- 2;
+        Fut.return (Ok ())
+    | n when Bytes.get t.buf (n - 1) = '\r' ->
+        Buffer.add_subbytes b t.buf t.pos (n - t.pos - 1);
+        t.pos <- n + 1;
+        Fut.return (Ok ())
+    | n ->
+        Buffer.add_subbytes b t.buf t.pos (n - t.pos);
+        t.pos <- n + 1;
+        Fut.return (Ok ())
 
   let read_line_buffer t b =
     (read_line_buffer' t b : (unit, read_err) result Fut.t :> (unit, [> read_err ]) result Fut.t)
@@ -159,45 +157,44 @@ module Make (Fut : Abb_intf.Future.S) = struct
   let rec flushed' t =
     let open Fut_comb.Infix_result_monad in
     match t.length with
-      | 0 -> Fut.return (Ok ())
-      | n -> (
-          assert (n > 0);
-          let buf = Abb_intf.Write_buf.{ buf = t.buf; pos = t.pos; len = t.length } in
-          t.cb.View.write ~bufs:[ buf ]
-          >>= function
-          | n when n = buf.Abb_intf.Write_buf.len ->
-              t.pos <- 0;
-              t.length <- 0;
-              Fut.return (Ok ())
-          | n ->
-              assert (n < buf.Abb_intf.Write_buf.len);
-              t.pos <- t.pos + n;
-              t.length <- t.length - n;
-              flushed' t)
+    | 0 -> Fut.return (Ok ())
+    | n -> (
+        assert (n > 0);
+        let buf = Abb_intf.Write_buf.{ buf = t.buf; pos = t.pos; len = t.length } in
+        t.cb.View.write ~bufs:[ buf ]
+        >>= function
+        | n when n = buf.Abb_intf.Write_buf.len ->
+            t.pos <- 0;
+            t.length <- 0;
+            Fut.return (Ok ())
+        | n ->
+            assert (n < buf.Abb_intf.Write_buf.len);
+            t.pos <- t.pos + n;
+            t.length <- t.length - n;
+            flushed' t)
 
   let flushed t =
     (flushed' t : (unit, write_err) result Fut.t :> (unit, [> write_err ]) result Fut.t)
 
   let rec write t ~bufs =
     let open Fut_comb.Infix_result_monad in
-    if t.length = Bytes.length t.buf then
-      flushed t >>= fun () -> write t ~bufs
+    if t.length = Bytes.length t.buf then flushed t >>= fun () -> write t ~bufs
     else
       let open Abb_intf.Write_buf in
       match bufs with
-        | [] -> Fut.return (Ok 0)
-        | { buf; pos; len } :: bs when len <= Bytes.length t.buf - t.length ->
-            (* The entire input buffer can fit in the buffer we are maintaining *)
-            Bytes.blit ~src:buf ~src_pos:pos ~dst:t.buf ~dst_pos:t.length ~len;
-            t.length <- t.length + len;
-            write t ~bufs:bs >>| fun n -> len + n
-        | { buf; pos; len } :: bs ->
-            assert (len > Bytes.length t.buf - t.length);
-            let blit_len = Bytes.length t.buf - t.length in
-            Bytes.blit ~src:buf ~src_pos:pos ~dst:t.buf ~dst_pos:t.length ~len:blit_len;
-            t.length <- t.length + blit_len;
-            write t ~bufs:({ buf; pos = pos + blit_len; len = len - blit_len } :: bs)
-            >>| fun n -> blit_len + n
+      | [] -> Fut.return (Ok 0)
+      | { buf; pos; len } :: bs when len <= Bytes.length t.buf - t.length ->
+          (* The entire input buffer can fit in the buffer we are maintaining *)
+          Bytes.blit ~src:buf ~src_pos:pos ~dst:t.buf ~dst_pos:t.length ~len;
+          t.length <- t.length + len;
+          write t ~bufs:bs >>| fun n -> len + n
+      | { buf; pos; len } :: bs ->
+          assert (len > Bytes.length t.buf - t.length);
+          let blit_len = Bytes.length t.buf - t.length in
+          Bytes.blit ~src:buf ~src_pos:pos ~dst:t.buf ~dst_pos:t.length ~len:blit_len;
+          t.length <- t.length + blit_len;
+          write t ~bufs:({ buf; pos = pos + blit_len; len = len - blit_len } :: bs)
+          >>| fun n -> blit_len + n
 
   let close t =
     (t.cb.View.close () : (unit, close_err) result Fut.t :> (unit, [> close_err ]) result Fut.t)
@@ -235,7 +232,7 @@ module Of (Abb : Abb_intf.S) = struct
     let close () =
       Abb.File.close file
       >>| function
-      | Ok ()   -> Ok ()
+      | Ok () -> Ok ()
       | Error _ -> Error `E_io
     in
     let cb = T.View.{ read; write; close } in
@@ -266,7 +263,7 @@ module Of (Abb : Abb_intf.S) = struct
     let close () =
       Abb.Socket.close sock
       >>| function
-      | Ok ()   -> Ok ()
+      | Ok () -> Ok ()
       | Error _ -> Error `E_io
     in
     let cb = T.View.{ read; write; close } in

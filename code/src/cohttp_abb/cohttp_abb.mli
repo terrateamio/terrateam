@@ -17,22 +17,17 @@ type request_err =
   ]
 
 type run_err =
-  [ `Exn                            of exn
+  [ `Exn of exn
   | `E_address_family_not_supported
   | `E_address_in_use
   | `E_address_not_available
   ]
 
 val show_request_err : request_err -> string
-
 val pp_request_err : Format.formatter -> request_err -> unit
-
 val show_connect_https_err : connect_https_err -> string
-
 val pp_connect_https_err : Format.formatter -> connect_https_err -> unit
-
 val show_connect_http_err : connect_http_err -> string
-
 val pp_connect_http_err : Format.formatter -> connect_http_err -> unit
 
 module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
@@ -141,12 +136,12 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
        aborting, it is the equivalent of returning [`Stop]. *)
     type on_handler_err =
       Request.t ->
-      [ `Timeout | `Exn     of exn * Printexc.raw_backtrace option ] ->
+      [ `Timeout | `Exn of exn * Printexc.raw_backtrace option ] ->
       [ `Stop | `Ok ] Abb.Future.t
 
     (** The type of a protocol error handler.  This is called if the underlying
        HTTP request is malformed or timeout during read. *)
-    type on_protocol_err = [ `Timeout | `Error   of string ] -> [ `Stop | `Ok ] Abb.Future.t
+    type on_protocol_err = [ `Timeout | `Error of string ] -> [ `Stop | `Ok ] Abb.Future.t
 
     module Config : sig
       module View : sig
@@ -162,7 +157,6 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
       end
 
       type t
-
       type err = [ `Invalid_port ]
 
       val of_view : View.t -> (t, [> err ]) result

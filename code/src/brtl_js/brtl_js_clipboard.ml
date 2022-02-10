@@ -36,7 +36,6 @@ module Clipboard_item = struct
     class type t =
       object
         method types : Js.js_string Js.t Js.js_array Js.t Js.readonly_prop
-
         method getType : Js.js_string Js.t -> Blob.t Abb_js.Future.promise Js.t Js.meth
       end
 
@@ -50,7 +49,6 @@ module Clipboard_item = struct
       (Js.Unsafe.obj (CCArray.of_list (CCList.map (fun (n, v) -> (n, Js.Unsafe.inject v)) typs)))
 
   let types t = t##.types |> Js.to_array |> CCArray.to_list |> CCList.map Js.to_string
-
   let get_type t s = Abb_js.Future.unsafe_of_promise (t##getType (Js.string s))
 end
 
@@ -58,7 +56,6 @@ module J = struct
   class type t =
     object
       method read : Clipboard_item.t Js.js_array Js.t Abb_js.Future.promise Js.t Js.meth
-
       method readText : Js.js_string Js.t Abb_js.Future.promise Js.t Js.meth
 
       method write :

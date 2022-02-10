@@ -1,13 +1,12 @@
 exception Pgsql_pool_closed
 
 type err = [ `Pgsql_pool_error ]
-
 type t
 
 (** Create a pool which will create [Pgsql] connections with the given
    configuration.  No connections are made on creation. *)
 val create :
-  ?tls_config:[ `Require of Otls.Tls_config.t | `Prefer  of Otls.Tls_config.t ] ->
+  ?tls_config:[ `Require of Otls.Tls_config.t | `Prefer of Otls.Tls_config.t ] ->
   ?passwd:string ->
   ?port:int ->
   connect_timeout:float ->
@@ -36,5 +35,4 @@ val with_conn :
   t -> f:(Pgsql_io.t -> ('a, ([> err ] as 'e)) result Abb.Future.t) -> ('a, 'e) result Abb.Future.t
 
 val pp_err : Format.formatter -> err -> unit
-
 val show_err : err -> string

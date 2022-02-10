@@ -46,22 +46,22 @@ module Mig = Data_mig.Make (Migrate)
 
 let run_file_sql fname (config, storage) =
   match Terrat_files_migrations.read fname with
-    | Some file ->
-        let stmts =
-          file
-          |> CCString.split ~by:";\n\n"
-          |> CCList.filter CCFun.(CCString.trim %> CCString.is_empty %> not)
-        in
-        Pgsql_pool.with_conn storage ~f:(fun db ->
-            Pgsql_io.tx db ~f:(fun () ->
-                Abbs_future_combinators.List_result.iter
-                  ~f:(fun stmt ->
-                    let open Pgsql_io in
-                    Logs.info (fun m -> m "Performing SQL operation: %s" stmt);
-                    let stmt_sql = Typed_sql.(sql /^ stmt) in
-                    Prepared_stmt.execute db stmt_sql)
-                  stmts))
-    | None      -> failwith ("Could not load file: " ^ fname)
+  | Some file ->
+      let stmts =
+        file
+        |> CCString.split ~by:";\n\n"
+        |> CCList.filter CCFun.(CCString.trim %> CCString.is_empty %> not)
+      in
+      Pgsql_pool.with_conn storage ~f:(fun db ->
+          Pgsql_io.tx db ~f:(fun () ->
+              Abbs_future_combinators.List_result.iter
+                ~f:(fun stmt ->
+                  let open Pgsql_io in
+                  Logs.info (fun m -> m "Performing SQL operation: %s" stmt);
+                  let stmt_sql = Typed_sql.(sql /^ stmt) in
+                  Prepared_stmt.execute db stmt_sql)
+                stmts))
+  | None -> failwith ("Could not load file: " ^ fname)
 
 let migrations =
   [

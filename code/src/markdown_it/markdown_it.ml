@@ -21,7 +21,6 @@ class type highlight_res =
 class type highlight =
   object
     method getLanguage : Js.js_string Js.t -> unit Js.optdef Js.meth
-
     method highlight : Js.js_string Js.t -> lang Js.t -> highlight_res Js.t Js.meth
   end
 
@@ -44,8 +43,7 @@ let render str =
                  (object%js
                     val language = lang
                  end))##.value
-            else
-              Js.string "")
+            else Js.string "")
     end
   in
   let constr : (options Js.t -> markdownit Js.t) Js.constr = Js.Unsafe.global##.markdownit in

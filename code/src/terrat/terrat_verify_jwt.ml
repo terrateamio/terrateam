@@ -24,7 +24,7 @@ let decode_jwt headers =
   >>= fun auth ->
   CCString.Split.left ~by:" " auth
   >>= function
-  | (bearer, token) when CCString.(equal (lowercase_ascii bearer) "bearer") ->
+  | bearer, token when CCString.(equal (lowercase_ascii bearer) "bearer") ->
       Jwt.of_token token
       >>= fun jwt ->
       let payload = Jwt.payload jwt in
@@ -43,24 +43,23 @@ let verify_jwt storage jwt installation_id =
   >>= function
   | [ pub_key_pem ] -> (
       match X509.Public_key.decode_pem (Cstruct.of_string pub_key_pem) with
-        | Ok (`RSA pub_key) ->
-            let verifier = Jwt.Verifier.(RS256 (Pub_key.of_pub_key pub_key)) in
-            Abb.Future.return (Ok (Jwt.verify verifier jwt))
-        | _                 -> assert false)
-  | _               -> (* There can be only one matching id *) assert false
+      | Ok (`RSA pub_key) ->
+          let verifier = Jwt.Verifier.(RS256 (Pub_key.of_pub_key pub_key)) in
+          Abb.Future.return (Ok (Jwt.verify verifier jwt))
+      | _ -> assert false)
+  | _ -> (* There can be only one matching id *) assert false
 
 let verify storage headers =
   let open Abb.Future.Infix_monad in
   match decode_jwt headers with
-    | Some (jwt, iat, exp, iss) ->
-        Abb.Sys.time ()
-        >>= fun now ->
-        if float iat <= now && now <= float exp then
-          verify_jwt storage jwt iss
-          >>= function
-          | Ok (Some verified) -> Abb.Future.return (Ok (verified, iat, exp, iss))
-          | Ok _ -> Abb.Future.return (Error `Verify_error)
-          | Error (#Pgsql_pool.err | #Pgsql_io.err) as err -> Abb.Future.return err
-        else
-          Abb.Future.return (Error `Expired)
-    | None                      -> Abb.Future.return (Error `Decode_error)
+  | Some (jwt, iat, exp, iss) ->
+      Abb.Sys.time ()
+      >>= fun now ->
+      if float iat <= now && now <= float exp then
+        verify_jwt storage jwt iss
+        >>= function
+        | Ok (Some verified) -> Abb.Future.return (Ok (verified, iat, exp, iss))
+        | Ok _ -> Abb.Future.return (Error `Verify_error)
+        | Error (#Pgsql_pool.err | #Pgsql_io.err) as err -> Abb.Future.return err
+      else Abb.Future.return (Error `Expired)
+  | None -> Abb.Future.return (Error `Decode_error)

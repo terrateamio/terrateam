@@ -35,9 +35,9 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
 
   let output ?input process =
     let open Fut_comb.Infix_result_monad in
-    let (stdin_r, stdin_w) = Unix.pipe ~cloexec:false () in
-    let (stdout_r, stdout_w) = Unix.pipe ~cloexec:false () in
-    let (stderr_r, stderr_w) = Unix.pipe ~cloexec:false () in
+    let stdin_r, stdin_w = Unix.pipe ~cloexec:false () in
+    let stdout_r, stdout_w = Unix.pipe ~cloexec:false () in
+    let stderr_r, stderr_w = Unix.pipe ~cloexec:false () in
     Unix.set_nonblock stdout_r;
     Unix.set_nonblock stderr_r;
     Unix.set_close_on_exec stdin_w;
@@ -50,30 +50,30 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
     let stdout_r = Abb.File.of_native stdout_r in
     let stderr_r = Abb.File.of_native stderr_r in
     match Abb.Process.spawn process [ stdin_dup; stdout_dup; stderr_dup ] with
-      | Ok process     -> (
-          (match input with
-            | Some input ->
-                Abb.File.write
-                  stdin_w
-                  Abb_intf.Write_buf.
-                    [ { buf = Bytes.of_string input; pos = 0; len = String.length input } ]
-                >>= fun n ->
-                assert (n = String.length input);
-                Abb.Future.return (Ok ())
-            | None       -> Abb.Future.return (Ok ()))
-          >>= fun () ->
-          Abb.File.close stdin_w
-          >>= fun () ->
-          let open Abb.Future.Infix_monad in
-          Abb.Future.Infix_app.(
-            (fun stdout stderr exit_code -> (stdout, stderr, exit_code))
-            <$> read_all stdout_r
-            <*> read_all stderr_r
-            <*> Abb.Process.wait process)
-          >>| function
-          | (Ok stdout, Ok stderr, exit_code) -> Ok (stdout, stderr, exit_code)
-          | ((Error _ as err), _, _) | (_, (Error _ as err), _) -> err)
-      | Error _ as err -> Abb.Future.return err
+    | Ok process -> (
+        (match input with
+        | Some input ->
+            Abb.File.write
+              stdin_w
+              Abb_intf.Write_buf.
+                [ { buf = Bytes.of_string input; pos = 0; len = String.length input } ]
+            >>= fun n ->
+            assert (n = String.length input);
+            Abb.Future.return (Ok ())
+        | None -> Abb.Future.return (Ok ()))
+        >>= fun () ->
+        Abb.File.close stdin_w
+        >>= fun () ->
+        let open Abb.Future.Infix_monad in
+        Abb.Future.Infix_app.(
+          (fun stdout stderr exit_code -> (stdout, stderr, exit_code))
+          <$> read_all stdout_r
+          <*> read_all stderr_r
+          <*> Abb.Process.wait process)
+        >>| function
+        | Ok stdout, Ok stderr, exit_code -> Ok (stdout, stderr, exit_code)
+        | (Error _ as err), _, _ | _, (Error _ as err), _ -> err)
+    | Error _ as err -> Abb.Future.return err
 
   let check_output ?input process =
     let open Abb.Future.Infix_monad in

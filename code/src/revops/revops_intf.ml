@@ -2,9 +2,7 @@ module type MONAD = sig
   type 'a t
 
   val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
-
   val return : 'a -> 'a t
-
   val protect : f:(unit -> 'a t) -> finally:(unit -> 'b) -> 'a t
 end
 
@@ -22,9 +20,7 @@ module type S = sig
   end
 
   val doop : 'a Oprev.t -> 'a Revop.t M.t
-
   val undo : 'a Revop.t -> unit M.t
-
   val peek : 'a Revop.t -> 'a
 
   (*

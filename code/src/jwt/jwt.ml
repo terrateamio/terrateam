@@ -37,9 +37,9 @@ module Verifier = struct
   let verify t hp signature =
     let f =
       match t with
-        | HS256 x -> mac_verify (Mirage_crypto.Hash.SHA256.hmac ~key:(Cstruct.of_string x))
-        | HS512 x -> mac_verify (Mirage_crypto.Hash.SHA512.hmac ~key:(Cstruct.of_string x))
-        | RS256 x -> rs256_verify x
+      | HS256 x -> mac_verify (Mirage_crypto.Hash.SHA256.hmac ~key:(Cstruct.of_string x))
+      | HS512 x -> mac_verify (Mirage_crypto.Hash.SHA512.hmac ~key:(Cstruct.of_string x))
+      | RS256 x -> rs256_verify x
     in
     f hp signature
 
@@ -70,9 +70,9 @@ module Signer = struct
   let sign t hp =
     let f =
       match t with
-        | HS256 x -> mac_sign (Mirage_crypto.Hash.SHA256.hmac ~key:(Cstruct.of_string x))
-        | HS512 x -> mac_sign (Mirage_crypto.Hash.SHA512.hmac ~key:(Cstruct.of_string x))
-        | RS256 x -> rs256_sign x
+      | HS256 x -> mac_sign (Mirage_crypto.Hash.SHA256.hmac ~key:(Cstruct.of_string x))
+      | HS512 x -> mac_sign (Mirage_crypto.Hash.SHA512.hmac ~key:(Cstruct.of_string x))
+      | RS256 x -> rs256_sign x
     in
     f hp
 
@@ -86,11 +86,8 @@ module Header = struct
   type t = (string * string) list
 
   let create ?(rest = []) ?(typ = "JWT") alg = ("typ", typ) :: ("alg", alg) :: rest
-
   let algorithm = CCList.Assoc.get_exn ~eq:String.equal "alg"
-
   let typ = CCList.Assoc.get_exn ~eq:String.equal "typ"
-
   let get = CCList.Assoc.get ~eq:String.equal
 
   let to_json t =
@@ -109,8 +106,8 @@ module Header = struct
         CCList.map
           (fun (c, v) ->
             match v with
-              | `String s -> (c, s)
-              | _         -> failwith "bad json")
+            | `String s -> (c, s)
+            | _ -> failwith "bad json")
           assoc)
 
   let of_string str =
@@ -122,29 +119,17 @@ module Claim = struct
   type t = string
 
   let iss = "iss"
-
   let sub = "sub"
-
   let aud = "aud"
-
   let exp = "exp"
-
   let nbf = "nbf"
-
   let iat = "iat"
-
   let jti = "jti"
-
   let ctyp = "ctyp"
-
   let auth_time = "auth_time"
-
   let nonce = "nonce"
-
   let acr = "acr"
-
   let amr = "amr"
-
   let azp = "azp"
 end
 
@@ -152,9 +137,9 @@ module Payload = struct
   module Claim_map = CCMap.Make (CCString)
 
   type typs =
-    [ `Bool   of bool
-    | `Float  of float
-    | `Int    of int
+    [ `Bool of bool
+    | `Float of float
+    | `Int of int
     | `String of string
     ]
 
@@ -164,41 +149,39 @@ module Payload = struct
   external to_yojson_json : (Claim.t * typs) list -> (Claim.t * Yojson.Basic.t) list = "%identity"
 
   let empty = Claim_map.empty
-
   let add_claim claim value t = Claim_map.add claim value t
-
   let find_claim claim t = Claim_map.get claim t
 
   let find_claim_string claim t =
     match find_claim claim t with
-      | Some (`String v) -> Some v
-      | _                -> None
+    | Some (`String v) -> Some v
+    | _ -> None
 
   let find_claim_bool claim t =
     match find_claim claim t with
-      | Some (`Bool v) -> Some v
-      | _              -> None
+    | Some (`Bool v) -> Some v
+    | _ -> None
 
   let find_claim_float claim t =
     match find_claim claim t with
-      | Some (`Float v) -> Some v
-      | _               -> None
+    | Some (`Float v) -> Some v
+    | _ -> None
 
   let find_claim_int claim t =
     match find_claim claim t with
-      | Some (`Int v) -> Some v
-      | _             -> None
+    | Some (`Int v) -> Some v
+    | _ -> None
 
   let of_json =
     CCOpt.wrap (fun json ->
         CCListLabels.fold_left
           ~f:(fun acc v ->
             match v with
-              | (claim, (`String _ as v))
-              | (claim, (`Int _ as v))
-              | (claim, (`Float _ as v))
-              | (claim, (`Bool _ as v)) -> add_claim claim v acc
-              | _ -> failwith "bad json")
+            | claim, (`String _ as v)
+            | claim, (`Int _ as v)
+            | claim, (`Float _ as v)
+            | claim, (`Bool _ as v) -> add_claim claim v acc
+            | _ -> failwith "bad json")
           ~init:empty
           (Yojson.Basic.Util.to_assoc json))
 
@@ -216,7 +199,6 @@ module Payload = struct
 end
 
 type decoded = string
-
 type verified = unit
 
 type 'a t = {
@@ -239,9 +221,7 @@ let of_header_and_payload signer header payload =
   { header; payload; signature; hp = () }
 
 let header t = t.header
-
 let payload t = t.payload
-
 let signature t = t.signature
 
 let token t =
@@ -253,24 +233,23 @@ let token t =
 let of_token token =
   let token_splitted = CCString.split_on_char '.' token in
   match token_splitted with
-    | [ header_encoded; payload_encoded; signature_encoded ] ->
-        let open CCOpt.Infix in
-        b64_url_decode header_encoded
-        >>= fun header_decoded ->
-        Header.of_string header_decoded
-        >>= fun header ->
-        b64_url_decode payload_encoded
-        >>= fun payload_decoded ->
-        Payload.of_string payload_decoded
-        >>= fun payload ->
-        b64_url_decode signature_encoded
-        >>= fun signature ->
-        Some { header; payload; signature; hp = header_encoded ^ "." ^ payload_encoded }
-    | _ -> None
+  | [ header_encoded; payload_encoded; signature_encoded ] ->
+      let open CCOpt.Infix in
+      b64_url_decode header_encoded
+      >>= fun header_decoded ->
+      Header.of_string header_decoded
+      >>= fun header ->
+      b64_url_decode payload_encoded
+      >>= fun payload_decoded ->
+      Payload.of_string payload_decoded
+      >>= fun payload ->
+      b64_url_decode signature_encoded
+      >>= fun signature ->
+      Some { header; payload; signature; hp = header_encoded ^ "." ^ payload_encoded }
+  | _ -> None
 
 let verify verifier t =
   let alg = Header.algorithm t.header in
   if alg = Verifier.to_string verifier && Verifier.verify verifier t.hp t.signature then
     Some { header = t.header; payload = t.payload; signature = t.signature; hp = () }
-  else
-    None
+  else None

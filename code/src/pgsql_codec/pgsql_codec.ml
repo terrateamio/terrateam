@@ -1,6 +1,6 @@
 module Reader : sig
   type err =
-    [ `Unknown_type  of char
+    [ `Unknown_type of char
     | `Length
     | `Invalid_frame
     ]
@@ -8,23 +8,14 @@ module Reader : sig
   type 'a t
 
   val run : buf:Bytes.t -> pos:int -> len:int -> 'a t -> ('a * int, err * int) result
-
   val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
-
   val return : 'a -> 'a t
-
   val fail : err -> 'a t
-
   val int32 : int32 t
-
   val bytes : int -> string t
-
   val string : string t
-
   val int16 : int t
-
   val repeat : int -> 'a t -> 'a list t
-
   val consume : int -> 'a t -> 'a list t
 end = struct
   module State = struct
@@ -36,7 +27,7 @@ end = struct
   end
 
   type err =
-    [ `Unknown_type  of char
+    [ `Unknown_type of char
     | `Length
     | `Invalid_frame
     ]
@@ -45,95 +36,81 @@ end = struct
 
   let ( >>= ) t f st =
     match t st with
-      | (Ok v, st)        -> f v st
-      | (Error _, _) as r -> r
+    | Ok v, st -> f v st
+    | (Error _, _) as r -> r
 
   let return v st = (Ok v, st)
-
   let fail err st = (Error err, st)
 
   let run ~buf ~pos ~len t =
     let st = State.{ buf; pos; stop = pos + len } in
     assert (st.State.stop <= Bytes.length buf);
     match t st with
-      | (Error (_ as err), st) -> Error (err, st.State.pos)
-      | (Ok v, st)             -> Ok (v, st.State.pos)
+    | Error (_ as err), st -> Error (err, st.State.pos)
+    | Ok v, st -> Ok (v, st.State.pos)
 
   let int32 st =
     if st.State.pos + 4 <= st.State.stop then
       let n = EndianBytes.BigEndian.get_int32 st.State.buf st.State.pos in
       (Ok n, { st with State.pos = st.State.pos + 4 })
-    else
-      (Error `Length, st)
+    else (Error `Length, st)
 
   let bytes n st =
     assert (n >= 0);
     if st.State.pos + n <= st.State.stop then
       let s = Bytes.sub_string st.State.buf st.State.pos n in
       (Ok s, { st with State.pos = st.State.pos + n })
-    else
-      (Error `Length, st)
+    else (Error `Length, st)
 
   let string st =
     match Bytes.index_from_opt st.State.buf st.State.pos '\000' with
-      | Some idx when idx + 1 < st.State.stop ->
-          let s = Bytes.sub_string st.State.buf st.State.pos (idx - st.State.pos) in
-          (* +1 to consume the end null byte *)
-          (Ok s, { st with State.pos = st.State.pos + (idx - st.State.pos) + 1 })
-      | _ -> (Error `Length, st)
+    | Some idx when idx + 1 < st.State.stop ->
+        let s = Bytes.sub_string st.State.buf st.State.pos (idx - st.State.pos) in
+        (* +1 to consume the end null byte *)
+        (Ok s, { st with State.pos = st.State.pos + (idx - st.State.pos) + 1 })
+    | _ -> (Error `Length, st)
 
   let int16 st =
     if st.State.pos + 2 <= st.State.stop then
       let n = EndianBytes.BigEndian.get_int16 st.State.buf st.State.pos in
       (Ok n, { st with State.pos = st.State.pos + 2 })
-    else
-      (Error `Length, st)
+    else (Error `Length, st)
 
   let rec repeat n t st =
     if n > 0 then
       match t st with
-        | (Ok v, st)             -> (
-            match repeat (n - 1) t st with
-              | (Ok vs, st)            -> (Ok (v :: vs), st)
-              | ((Error _ as err), st) -> (err, st))
-        | ((Error _ as err), st) -> (err, st)
-    else
-      (Ok [], st)
+      | Ok v, st -> (
+          match repeat (n - 1) t st with
+          | Ok vs, st -> (Ok (v :: vs), st)
+          | (Error _ as err), st -> (err, st))
+      | (Error _ as err), st -> (err, st)
+    else (Ok [], st)
 
   let rec consume len t st =
     if len > 0 then
       let pos = st.State.pos in
       match t st with
-        | (Ok v, st)             -> (
-            let consumed = st.State.pos - pos in
-            let len = len - consumed in
-            match consume len t st with
-              | (Ok vs, st)            -> (Ok (v :: vs), st)
-              | ((Error _ as err), st) -> (err, st))
-        | ((Error _ as err), st) -> (err, st)
-    else
-      (Ok [], st)
+      | Ok v, st -> (
+          let consumed = st.State.pos - pos in
+          let len = len - consumed in
+          match consume len t st with
+          | Ok vs, st -> (Ok (v :: vs), st)
+          | (Error _ as err), st -> (err, st))
+      | (Error _ as err), st -> (err, st)
+    else (Ok [], st)
 end
 
 module Writer : sig
   type t
 
   val run : Buffer.t -> t -> unit
-
   val msg_code : char -> t
-
   val int32 : int32 -> t
-
   val int16 : int -> t
-
   val bytes : string -> t
-
   val string : string -> t
-
   val chr : char -> t
-
   val iter : ('a -> t) -> 'a list -> t
-
   val ( >>= ) : t -> (unit -> t) -> t
 end = struct
   type t = Buffer.t * Buffer.t -> unit
@@ -157,7 +134,6 @@ end = struct
     Buffer.add_char buf '\000'
 
   let chr ch (_, buf) = Buffer.add_char buf ch
-
   let iter f xs bs = List.iter (fun x -> f x bs) xs
 
   let run prepend_buf t =
@@ -189,98 +165,98 @@ module Frame = struct
       | AuthenticationOk
       | AuthenticationKerberosV5
       | AuthenticationCleartextPassword
-      | AuthenticationMD5Password       of { salt : string }
+      | AuthenticationMD5Password of { salt : string }
       | AuthenticationSCMCredential
       | AuthenticationGSS
       | AuthenticationSSPI
-      | AuthenticationGSSContinue       of { data : string }
-      | AuthenticationSASL              of { auth_mechanism : string }
-      | AuthenticationSASLContinue      of { data : string }
-      | AuthenticationSASLFinal         of { data : string }
-      | BackendKeyData                  of {
+      | AuthenticationGSSContinue of { data : string }
+      | AuthenticationSASL of { auth_mechanism : string }
+      | AuthenticationSASLContinue of { data : string }
+      | AuthenticationSASLFinal of { data : string }
+      | BackendKeyData of {
           pid : int32;
           secret_key : int32;
         }
       | BindComplete
       | CloseComplete
-      | CommandComplete                 of { tag : string }
-      | CopyData                        of { data : string }
+      | CommandComplete of { tag : string }
+      | CopyData of { data : string }
       | CopyDone
       | CopyInResponse (* TODO *)
       | CopyOutResponse (* TODO *)
       | CopyBothResponse (* TODO *)
-      | DataRow                         of { data : string option list }
+      | DataRow of { data : string option list }
       | EmptyQueryResponse
-      | ErrorResponse                   of { msgs : (char * string) list }
+      | ErrorResponse of { msgs : (char * string) list }
       | FunctionCallResponse (* TODO *)
-      | NegotiateProtocolVersion        of {
+      | NegotiateProtocolVersion of {
           minor_version : int32;
           unrecognized_options : string list;
         }
       | NoData
-      | NoticeResponse                  of { msgs : (char * string) list }
-      | NotificationResponse            of {
+      | NoticeResponse of { msgs : (char * string) list }
+      | NotificationResponse of {
           pid : int32;
           channel : string;
           payload : string;
         }
-      | ParameterDescription            of { object_ids : int32 list }
-      | ParameterStatus                 of {
+      | ParameterDescription of { object_ids : int32 list }
+      | ParameterStatus of {
           name : string;
           value : string;
         }
       | ParseComplete
       | PortalSuspended
-      | ReadyForQuery                   of { status : char }
-      | RowDescription                  of { rows : row list }
+      | ReadyForQuery of { status : char }
+      | RowDescription of { rows : row list }
     [@@deriving show, eq]
   end
 
   module Frontend = struct
     type t =
-      | Bind                of {
+      | Bind of {
           portal : string;
           stmt : string;
           format_codes : bool list;
           values : string option list;
           result_format_codes : bool list;
         }
-      | CancelRequest       of {
+      | CancelRequest of {
           pid : int32;
           secret_key : int32;
         }
-      | Close               of {
+      | Close of {
           typ : char;
           name : string;
         }
       | CopyData (* TODO *)
       | CopyDone (* TODO *)
       | CopyFail (* TODO *)
-      | Describe            of {
+      | Describe of {
           typ : char;
           name : string;
         }
-      | Execute             of {
+      | Execute of {
           portal : string;
           max_rows : int32;
         }
       | Flush
       | FunctionCall (* TODO *)
-      | GSSResponse         of { data : string }
-      | Parse               of {
+      | GSSResponse of { data : string }
+      | Parse of {
           stmt : string;
           query : string;
           data_types : int32 list;
         }
-      | PasswordMessage     of { password : string }
-      | Query               of { query : string }
+      | PasswordMessage of { password : string }
+      | Query of { query : string }
       | SASLInitialResponse of {
           auth_mechanism : string;
           data : string;
         }
-      | SASLResponse        of { data : string }
+      | SASLResponse of { data : string }
       | SSLRequest
-      | StartupMessage      of { msgs : (string * string) list }
+      | StartupMessage of { msgs : (string * string) list }
       | Sync
       | Terminate
     [@@deriving show, eq]
@@ -289,7 +265,7 @@ end
 
 module Decode = struct
   type err =
-    [ `Unknown_type  of char
+    [ `Unknown_type of char
     | `Invalid_frame
     ]
   [@@deriving show, eq]
@@ -306,18 +282,18 @@ module Decode = struct
         int32
         >>= fun n ->
         match Int32.to_int n with
-          | 0  -> return AuthenticationOk
-          | 2  -> return AuthenticationKerberosV5
-          | 3  -> return AuthenticationCleartextPassword
-          | 5  -> bytes 4 >>= fun salt -> return (AuthenticationMD5Password { salt })
-          | 6  -> return AuthenticationSCMCredential
-          | 7  -> return AuthenticationGSS
-          | 9  -> return AuthenticationSSPI
-          | 8  -> bytes (len - 4) >>= fun data -> return (AuthenticationGSSContinue { data })
-          | 10 -> string >>= fun auth_mechanism -> return (AuthenticationSASL { auth_mechanism })
-          | 11 -> bytes (len - 4) >>= fun data -> return (AuthenticationSASLContinue { data })
-          | 12 -> bytes (len - 4) >>= fun data -> return (AuthenticationSASLFinal { data })
-          | _  -> fail `Invalid_frame)
+        | 0 -> return AuthenticationOk
+        | 2 -> return AuthenticationKerberosV5
+        | 3 -> return AuthenticationCleartextPassword
+        | 5 -> bytes 4 >>= fun salt -> return (AuthenticationMD5Password { salt })
+        | 6 -> return AuthenticationSCMCredential
+        | 7 -> return AuthenticationGSS
+        | 9 -> return AuthenticationSSPI
+        | 8 -> bytes (len - 4) >>= fun data -> return (AuthenticationGSSContinue { data })
+        | 10 -> string >>= fun auth_mechanism -> return (AuthenticationSASL { auth_mechanism })
+        | 11 -> bytes (len - 4) >>= fun data -> return (AuthenticationSASLContinue { data })
+        | 12 -> bytes (len - 4) >>= fun data -> return (AuthenticationSASLFinal { data })
+        | _ -> fail `Invalid_frame)
     | 'K' ->
         int32 >>= fun pid -> int32 >>= fun secret_key -> return (BackendKeyData { pid; secret_key })
     | '2' -> return BindComplete
@@ -335,8 +311,8 @@ module Decode = struct
           (int32
           >>= fun n ->
           match Int32.to_int n with
-            | -1 -> return None
-            | n  -> bytes n >>= fun s -> return (Some s))
+          | -1 -> return None
+          | n -> bytes n >>= fun s -> return (Some s))
         >>= fun data -> return (DataRow { data })
     | 'I' -> return EmptyQueryResponse
     | 'E' ->
@@ -407,7 +383,7 @@ module Decode = struct
               format_code;
             })
         >>= fun rows -> return (RowDescription { rows })
-    | t   -> fail (`Unknown_type t)
+    | t -> fail (`Unknown_type t)
 
   let rec backend_msg' pos buf len =
     assert (pos >= 0);
@@ -424,30 +400,27 @@ module Decode = struct
           int32 >>= fun len -> dispatch_backend_msg (Int32.to_int len - 4) msg_typ.[0])
     in
     match res with
-      | Ok (frame, pos') -> (
-          match backend_msg' pos' buf (len - (pos' - pos)) with
-            | Ok (frames, pos)           -> Ok (frame :: frames, pos)
-            | Error (frames, `Length, _) -> Ok (frame :: frames, pos')
-            | Error (frames, err, pos)   -> Error (frame :: frames, err, pos))
-      | Error (err, _)   -> Error ([], err, pos)
+    | Ok (frame, pos') -> (
+        match backend_msg' pos' buf (len - (pos' - pos)) with
+        | Ok (frames, pos) -> Ok (frame :: frames, pos)
+        | Error (frames, `Length, _) -> Ok (frame :: frames, pos')
+        | Error (frames, err, pos) -> Error (frame :: frames, err, pos))
+    | Error (err, _) -> Error ([], err, pos)
 
   let backend_msg t ~pos ~len buf =
-    let (buf, pos, len) =
-      if Buffer.length t = 0 then
-        (buf, pos, len)
+    let buf, pos, len =
+      if Buffer.length t = 0 then (buf, pos, len)
       else (
         Buffer.add_subbytes t buf pos len;
         let b = Buffer.to_bytes t in
-        (b, 0, Bytes.length b)
-      )
+        (b, 0, Bytes.length b))
     in
     match backend_msg' pos buf len with
-      | Error ([], (`Unknown_type _ as err), _) | Error ([], (`Invalid_frame as err), _) ->
-          Error err
-      | Error (frames, _, pos) | Ok (frames, pos) ->
-          Buffer.clear t;
-          Buffer.add_subbytes t buf pos (len - pos);
-          Ok frames
+    | Error ([], (`Unknown_type _ as err), _) | Error ([], (`Invalid_frame as err), _) -> Error err
+    | Error (frames, _, pos) | Ok (frames, pos) ->
+        Buffer.clear t;
+        Buffer.add_subbytes t buf pos (len - pos);
+        Ok frames
 
   let frontend_msg t ~pos ~len buf = failwith "nyi"
 end
@@ -468,33 +441,18 @@ module Encode = struct
         >>= fun () ->
         int16 (List.length format_codes)
         >>= fun () ->
-        iter
-          (fun b ->
-            int16
-              (if b then
-                1
-              else
-                0))
-          format_codes
+        iter (fun b -> int16 (if b then 1 else 0)) format_codes
         >>= fun () ->
         int16 (List.length values)
         >>= fun () ->
         iter
           (function
-            | None   -> int32 (Int32.of_int (-1))
+            | None -> int32 (Int32.of_int (-1))
             | Some s -> int32 (Int32.of_int (String.length s)) >>= fun () -> bytes s)
           values
         >>= fun () ->
         int16 (List.length result_format_codes)
-        >>= fun () ->
-        iter
-          (fun b ->
-            int16
-              (if b then
-                1
-              else
-                0))
-          result_format_codes
+        >>= fun () -> iter (fun b -> int16 (if b then 1 else 0)) result_format_codes
     | CancelRequest { pid; secret_key } ->
         int32 (Int32.of_string "80877102") >>= fun () -> int32 pid >>= fun () -> int32 secret_key
     | Close { typ; name } -> msg_code 'C' >>= fun () -> chr typ >>= fun () -> string name

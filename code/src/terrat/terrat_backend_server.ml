@@ -1,20 +1,14 @@
 let health_rt () = Brtl_rtng.Route.(rel / "health")
-
 let app_rt () = Brtl_rtng.Route.(rel / "api/v3/app")
-
 let installations_rt () = Brtl_rtng.Route.(app_rt () / "installations")
 
 let access_tokens_rt () =
   Brtl_rtng.Route.(installations_rt () /% Path.ud CCInt64.of_string / "access_tokens")
 
 let api_v1_rt () = Brtl_rtng.Route.(rel / "api" / "v1")
-
 let installation_rt () = Brtl_rtng.Route.(api_v1_rt () / "installation")
-
 let secrets_rt () = Brtl_rtng.Route.(installation_rt () / "secrets")
-
 let env_vars_rt () = Brtl_rtng.Route.(installation_rt () / "env-vars")
-
 let config_rt () = Brtl_rtng.Route.(installation_rt () / "config")
 
 let rtng config storage schema =
@@ -54,13 +48,13 @@ let run config storage =
       Logs.info (fun m -> m "Starting backend server");
       Brtl.run cfg mw (rtng config storage schema)
       >>| function
-      | Ok ()            -> ()
+      | Ok () -> ()
       | Error (`Exn exn) ->
           Logs.err (fun m -> m "%s" (Printexc.to_string exn));
           ()
-      | Error _          ->
+      | Error _ ->
           Logs.err (fun m -> m "Failed to run server for some reason");
           ())
-  | Error _   ->
+  | Error _ ->
       Logs.err (fun m -> m "Failed to load github schema");
       Abb.Future.return ()

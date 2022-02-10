@@ -190,9 +190,7 @@ module Match : sig
   type 'r t
 
   val apply : 'r t -> 'r
-
   val consumed_path : 'r t -> string
-
   val remaining_path : 'r t -> string
 
   (** Compare to matches for equality.  This matches that the same amount of

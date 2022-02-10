@@ -15,8 +15,8 @@ module type S = sig
 
   type diff =
     | Deleted of item array
-    | Added   of item array
-    | Equal   of item array
+    | Added of item array
+    | Equal of item array
         (** Represents the change or lack of change in a line or character
         between the old and new version. *)
 

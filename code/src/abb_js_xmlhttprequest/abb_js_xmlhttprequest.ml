@@ -7,9 +7,9 @@ module Method = struct
     ]
 
   let string_of_t = function
-    | `GET    -> "GET"
-    | `PUT    -> "PUT"
-    | `POST   -> "POST"
+    | `GET -> "GET"
+    | `PUT -> "PUT"
+    | `POST -> "POST"
     | `DELETE -> "DELETE"
 end
 
@@ -20,7 +20,6 @@ module Response = struct
   }
 
   let text t = t.text
-
   let status t = t.status
 end
 

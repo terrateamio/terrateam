@@ -32,8 +32,8 @@ let run' config storage =
           >>= fun current_user ->
           let current_user = Githubc_v3.Response.value current_user in
           match Githubc_v3.Response.Current_user.email current_user with
-            | Some email -> Pgsql_io.Prepared_stmt.execute db Sql.update_user_email user_id email
-            | None       -> Abb.Future.return (Ok ()))
+          | Some email -> Pgsql_io.Prepared_stmt.execute db Sql.update_user_email user_id email
+          | None -> Abb.Future.return (Ok ()))
         users)
 
 let run (config, storage) =

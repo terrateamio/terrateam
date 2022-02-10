@@ -70,7 +70,7 @@ let get config storage github_schema code installation_id_opt ctx =
     (Terrat_config.github_app_client_secret config)
     code
   >>= function
-  | Ok user_id                     ->
+  | Ok user_id ->
       let ctx = Terrat_session.create_user_session user_id ctx in
       let uri =
         Uri.to_string
@@ -91,11 +91,11 @@ let get config storage github_schema code installation_id_opt ctx =
       Logs.err (fun m -> m "GITHUB_CALLBACK : FAIL : %s" (Pgsql_pool.show_err err));
       Abb.Future.return
         (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-  | Error (#Pgsql_io.err as err)   ->
+  | Error (#Pgsql_io.err as err) ->
       Logs.err (fun m -> m "GITHUB_CALLBACK : FAIL : %s" (Pgsql_io.show_err err));
       Abb.Future.return
         (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-  | Error (#Gh.call_err as err)    ->
+  | Error (#Gh.call_err as err) ->
       Logs.err (fun m -> m "GITHUB_CALLBACK : FAIL : %s" (Gh.show_call_err err));
       Abb.Future.return
         (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)

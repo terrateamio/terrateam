@@ -3,7 +3,7 @@ val run :
   Brtl_mw.t ->
   Brtl_rtng.t ->
   ( unit,
-    [> `Exn                            of exn
+    [> `Exn of exn
     | `E_address_family_not_supported
     | `E_address_in_use
     | `E_address_not_available

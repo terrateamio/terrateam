@@ -17,7 +17,6 @@ module Eventlist = struct
     { kevents = C.allocate_n Stubs.Kevent.t ~count; capacity = count; size = count }
 
   let capacity t = t.capacity
-
   let size t = t.size
 
   let set_size t size =
@@ -46,7 +45,6 @@ module Eventlist = struct
     f' init 0
 
   let to_list t = List.rev (fold ~f:(fun acc k -> k :: acc) ~init:[] t)
-
   let iter ~f t = fold ~f:(fun () -> f) ~init:() t
 end
 
@@ -89,8 +87,8 @@ let kevent t ~changelist ~eventlist ~timeout =
 
   let timeout =
     match timeout with
-      | Some ts -> C.addr ts
-      | None    -> C.(from_voidp Stubs.Timespec.t null)
+    | Some ts -> C.addr ts
+    | None -> C.(from_voidp Stubs.Timespec.t null)
   in
   let ret =
     Bindings.kevent
@@ -105,5 +103,4 @@ let kevent t ~changelist ~eventlist ~timeout =
   ret
 
 external unsafe_int_of_file_descr : Unix.file_descr -> int = "%identity"
-
 external unsafe_file_descr_of_int : int -> Unix.file_descr = "%identity"

@@ -28,17 +28,16 @@ module Vnode = struct
 
   let f_to_uint = function
     | Delete -> Stubs.note_delete
-    | Write  -> Stubs.note_write
+    | Write -> Stubs.note_write
     | Extend -> Stubs.note_extend
     | Attrib -> Stubs.note_attrib
-    | Link   -> Stubs.note_link
+    | Link -> Stubs.note_link
     | Rename -> Stubs.note_rename
 
   (* libkqueue does not support Revoke *)
   (* | Revoke -> Stubs.note_revoke *)
 
   let to_t = flags_to_uint f_to_uint
-
   let of_t t = uint_to_flags f_to_uint t [ Delete; Write; Extend; Attrib; Link; Rename ]
 end
 
@@ -52,13 +51,12 @@ module Proc = struct
   type t = uint
 
   let f_to_uint = function
-    | Exit  -> Stubs.note_exit
-    | Fork  -> Stubs.note_fork
-    | Exec  -> Stubs.note_exec
+    | Exit -> Stubs.note_exit
+    | Fork -> Stubs.note_fork
+    | Exec -> Stubs.note_exec
     | Track -> Stubs.note_track
 
   let to_t = flags_to_uint f_to_uint
-
   let of_t t = uint_to_flags f_to_uint t [ Exit; Fork; Exec; Track ]
 end
 
@@ -97,23 +95,22 @@ module User = struct
     | Ctrlmask
     | Fflagsmask
     | Trigger
-    | Uflags     of int
+    | Uflags of int
 
   type t = uint
 
   let lower24 = lnot (lnot 0 lsl 24)
-
   let lower24_uint = Unsigned.UInt.of_int lower24
 
   let f_to_uint = function
-    | Nop        -> Stubs.note_ffnop
-    | And        -> Stubs.note_ffand
-    | Or         -> Stubs.note_ffor
-    | Copy       -> Stubs.note_ffcopy
-    | Ctrlmask   -> Stubs.note_ffctrlmask
+    | Nop -> Stubs.note_ffnop
+    | And -> Stubs.note_ffand
+    | Or -> Stubs.note_ffor
+    | Copy -> Stubs.note_ffcopy
+    | Ctrlmask -> Stubs.note_ffctrlmask
     | Fflagsmask -> Stubs.note_fflagsmask
-    | Trigger    -> Stubs.note_trigger
-    | Uflags f   -> Unsigned.UInt.of_int (f land lower24)
+    | Trigger -> Stubs.note_trigger
+    | Uflags f -> Unsigned.UInt.of_int (f land lower24)
 
   let to_t = flags_to_uint f_to_uint
 

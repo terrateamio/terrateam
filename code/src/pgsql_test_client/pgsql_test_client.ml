@@ -1,9 +1,7 @@
 module Oth_abb = Oth_abb.Make (Abb)
 
 let host = Sys.argv.(1)
-
 let user = Sys.argv.(2)
-
 let database = Sys.argv.(3)
 
 module Sql = struct
@@ -24,12 +22,12 @@ let with_conn :
   let open Abb.Future.Infix_monad in
   Pgsql_io.create ~tls_config:(`Require tls_config) ~host ~user database
   >>= function
-  | Ok conn   ->
+  | Ok conn ->
       Abbs_future_combinators.with_finally
         (fun () ->
           Pgsql_io.Prepared_stmt.execute conn Sql.drop_foo
           >>= function
-          | Ok ()     -> f conn
+          | Ok () -> f conn
           | Error err ->
               Logs.err (fun m -> m "%s" (Pgsql_io.show_err err));
               assert false)
@@ -179,11 +177,11 @@ let test_fetch_row =
       in
       with_conn f
       >>= function
-      | Ok r                       ->
+      | Ok r ->
           assert (r = [ "Testy McTestface" ]);
           Abb.Future.return ()
       | Error #Pgsql_io.create_err -> assert false
-      | Error #Pgsql_io.err        -> assert false)
+      | Error #Pgsql_io.err -> assert false)
 
 let test_fetch_all_rows =
   Oth_abb.test ~desc:"Fetch all rows" ~name:"fetch_rows" (fun () ->
@@ -218,7 +216,7 @@ let test_fetch_all_rows =
       in
       with_conn f
       >>= function
-      | Ok r      ->
+      | Ok r ->
           assert (List.length r = 1);
           Abb.Future.return ()
       | Error err -> assert false)
@@ -297,11 +295,11 @@ let test_multiple_tx_success =
       in
       with_conn f
       >>= function
-      | Ok r                       ->
+      | Ok r ->
           assert (r = ());
           Abb.Future.return ()
       | Error #Pgsql_io.create_err -> assert false
-      | Error #Pgsql_io.err        -> assert false)
+      | Error #Pgsql_io.err -> assert false)
 
 let test_with_cursor =
   Oth_abb.test ~desc:"With Cursor" ~name:"with_cursor" (fun () ->
@@ -336,7 +334,7 @@ let test_with_cursor =
       in
       with_conn f
       >>= function
-      | Ok r      ->
+      | Ok r ->
           assert (List.length r = 1);
           Abb.Future.return ()
       | Error err -> assert false)
@@ -410,11 +408,11 @@ let test_array =
       in
       with_conn f
       >>= function
-      | Ok r                       ->
+      | Ok r ->
           assert (r = [ ("na\\\"me1", 4, None); ("name2", 5, Some 10) ]);
           Abb.Future.return ()
       | Error #Pgsql_io.create_err -> assert false
-      | Error #Pgsql_io.err        -> assert false)
+      | Error #Pgsql_io.err -> assert false)
 
 let test_insert_execute =
   Oth_abb.test ~desc:"Insert row execute" ~name:"insert_row_execute" (fun () ->
@@ -464,7 +462,7 @@ let test_stmt_fetch =
       in
       with_conn f
       >>= function
-      | Ok r      ->
+      | Ok r ->
           assert (List.length r = 1);
           Abb.Future.return ()
       | Error err -> assert false)
@@ -491,8 +489,8 @@ let test_integrity_fail =
       in
       let check_err r1 r2 =
         match (r1, r2) with
-          | (_, Error (`Integrity_err _)) | (Error (`Integrity_err _), _) -> Ok ()
-          | _ -> Error ()
+        | _, Error (`Integrity_err _) | Error (`Integrity_err _), _ -> Ok ()
+        | _ -> Error ()
       in
       Abb.Future.Infix_app.(check_err <$> with_conn f <*> with_conn f)
       >>= fun r ->
@@ -519,19 +517,19 @@ let test_integrity_recover =
             >>= fun () ->
             Pgsql_io.Prepared_stmt.execute conn insert_sql "Testy McTestface" (Int32.of_int 36))
         >>= function
-        | Ok ()                    -> Abb.Future.return (Ok `Ok)
+        | Ok () -> Abb.Future.return (Ok `Ok)
         | Error (`Integrity_err _) ->
             let open Abbs_future_combinators.Infix_result_monad in
             Pgsql_io.Prepared_stmt.execute conn insert_sql "Testy RecoverFace" (Int32.of_int 36)
             >>= fun () -> Abb.Future.return (Ok `Integrity)
-        | Error _ as err           -> Abb.Future.return err
+        | Error _ as err -> Abb.Future.return err
       in
       let check_err r1 r2 =
         match (r1, r2) with
-          | (_, Ok `Integrity) | (Ok `Integrity, _) -> Ok ()
-          | (_, Error (#Pgsql_io.err as err)) | (Error (#Pgsql_io.err as err), _) ->
-              failwith (Pgsql_io.show_err err)
-          | (_, _) -> failwith "missing integrity failure"
+        | _, Ok `Integrity | Ok `Integrity, _ -> Ok ()
+        | _, Error (#Pgsql_io.err as err) | Error (#Pgsql_io.err as err), _ ->
+            failwith (Pgsql_io.show_err err)
+        | _, _ -> failwith "missing integrity failure"
       in
       Abb.Future.Infix_app.(check_err <$> with_conn f <*> with_conn f)
       >>= fun r ->
@@ -604,15 +602,15 @@ let test_bad_state =
         >>= function
         | Error _ ->
             Pgsql_io.Prepared_stmt.execute conn insert_good_sql "Testy McTestface" (Int32.of_int 36)
-        | Ok _    -> assert false
+        | Ok _ -> assert false
       in
       with_conn f
       >>= function
-      | Ok ()                        -> Abb.Future.return ()
+      | Ok () -> Abb.Future.return ()
       | Error (#Pgsql_io.err as err) ->
           print_endline (Pgsql_io.show_err err);
           assert false
-      | Error _                      -> assert false)
+      | Error _ -> assert false)
 
 let test =
   Oth_abb.(

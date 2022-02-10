@@ -27,7 +27,6 @@ module Span : sig
   type t
 
   val of_sec : float -> t
-
   val to_sec : t -> float
 
   (** Compare two spans, however beware that the underlying representation might
@@ -56,7 +55,6 @@ module Make (M : Monad.S) (Time : Time_make(M).S) : sig
     val add : t -> Span.t -> t
 
     val to_sec : t -> float
-
     val of_sec : float -> t
 
     (** Compare two wall-clock times, however beware that the underlying
@@ -87,7 +85,6 @@ module Make (M : Monad.S) (Time : Time_make(M).S) : sig
     val add : t -> Span.t -> t
 
     val to_sec : t -> float
-
     val of_sec : float -> t
 
     (** Compare two monotonic times, however beware that the underlying

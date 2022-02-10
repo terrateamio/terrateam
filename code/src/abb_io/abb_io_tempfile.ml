@@ -15,7 +15,7 @@ module Make (Abb : Abb_intf.S) = struct
     let open Abb.Future.Infix_monad in
     Abb.File.readdir dir_name
     >>= function
-    | Ok files       -> (
+    | Ok files -> (
         Fut_comb.List_result.iter
           ~f:(fun fname ->
             Abb.File.unlink (Filename.concat dir_name fname)
@@ -33,7 +33,7 @@ module Make (Abb : Abb_intf.S) = struct
               | Error `E_access ) as err -> Abb.Future.return err)
           files
         >>= function
-        | Ok ()          -> Abb.File.rmdir dir_name
+        | Ok () -> Abb.File.rmdir dir_name
         | Error _ as err -> Abb.Future.return err)
     | Error _ as err -> Abb.Future.return err
 

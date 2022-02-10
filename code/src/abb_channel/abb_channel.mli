@@ -9,7 +9,6 @@
 
 module Make (Fut : Abb_intf.Future.S) : sig
   type reader
-
   type writer
 
   (** The channel type, where the first type variable is if it is a reader or

@@ -20,14 +20,12 @@ functor
     open M
 
     let doop (do_fun, undo_fun) = do_fun () >>= fun undo_state -> return (undo_state, undo_fun)
-
     let undo (undo_state, undo_fun) = undo_fun undo_state
-
     let peek (undo_state, undo_fun) = undo_state
 
     let compose ~introduce ~eliminate_first ~eliminate_second ~first ~second =
-      let (_, undo_first) = first in
-      let (_, undo_second) = second in
+      let _, undo_first = first in
+      let _, undo_second = second in
       let do_fun () =
         doop first
         >>= fun first_revop ->

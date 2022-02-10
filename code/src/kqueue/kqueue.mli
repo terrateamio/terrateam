@@ -23,7 +23,6 @@ module Eventlist : sig
   val null : t
 
   val capacity : t -> int
-
   val size : t -> int
 
   (** Set the size of the [Eventlist].
@@ -40,11 +39,8 @@ module Eventlist : sig
   val set_from_list : t -> Kqueue_bindings.Stubs(Kqueue_stubs).Kevent.t list -> unit
 
   val of_list : Kqueue_bindings.Stubs(Kqueue_stubs).Kevent.t list -> t
-
   val to_list : t -> Kqueue_bindings.Stubs(Kqueue_stubs).Kevent.t list
-
   val fold : f:('a -> Kqueue_bindings.Stubs(Kqueue_stubs).Kevent.t -> 'a) -> init:'a -> t -> 'a
-
   val iter : f:(Kqueue_bindings.Stubs(Kqueue_stubs).Kevent.t -> unit) -> t -> unit
 end
 
@@ -79,5 +75,4 @@ val create : unit -> t
 val kevent : t -> changelist:Eventlist.t -> eventlist:Eventlist.t -> timeout:Timeout.t option -> int
 
 val unsafe_int_of_file_descr : Unix.file_descr -> int
-
 val unsafe_file_descr_of_int : int -> Unix.file_descr

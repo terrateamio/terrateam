@@ -20,19 +20,12 @@ module Kv : sig
     | L of t Map.t list
 
   val list : t Map.t list -> t
-
   val int : int -> t
-
   val float : float -> t
-
   val string : string -> t
-
   val bool : bool -> t
-
   val pp : Format.formatter -> t -> unit
-
   val show : t -> string
-
   val equal : t -> t -> bool
 end
 
@@ -57,11 +50,11 @@ type line_number = int
 (** Error type when applying a key-value to a template.  When necessary, the
     line number in the template is included in the error. *)
 type err =
-  [ `Missing_key             of string * line_number  (** Key was missing on the line *)
-  | `Expected_boolean        of string * line_number  (** Expected a boolean in a section. *)
-  | `Expected_list           of string * line_number  (** Expected a list in a section. *)
-  | `Missing_transformer     of string * line_number  (** Transformer was not found. *)
-  | `Non_scalar_key          of string * line_number  (** Non-scalar value used in  replacement *)
+  [ `Missing_key of string * line_number  (** Key was missing on the line *)
+  | `Expected_boolean of string * line_number  (** Expected a boolean in a section. *)
+  | `Expected_list of string * line_number  (** Expected a list in a section. *)
+  | `Missing_transformer of string * line_number  (** Transformer was not found. *)
+  | `Non_scalar_key of string * line_number  (** Non-scalar value used in  replacement *)
   | `Premature_eof  (** Reached an unexpected EOF. *)
   | `Missing_closing_section of string  (** Failed to provide a close for the section. *)
   ]

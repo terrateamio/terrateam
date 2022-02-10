@@ -61,7 +61,7 @@ let send_email storage region user_id installation_id msg =
           ]
       in
       Process.check_output args >>= fun _ -> Abb.Future.return (Ok ())
-  | []                -> assert false
+  | [] -> assert false
 
 let post config storage github_schema installation_id feedback =
   Brtl_ep.run_result ~f:(fun ctx ->

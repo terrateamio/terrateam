@@ -14,58 +14,56 @@ module Frame : sig
       | AuthenticationOk
       | AuthenticationKerberosV5
       | AuthenticationCleartextPassword
-      | AuthenticationMD5Password       of { salt : string }
+      | AuthenticationMD5Password of { salt : string }
       | AuthenticationSCMCredential
       | AuthenticationGSS
       | AuthenticationSSPI
-      | AuthenticationGSSContinue       of { data : string }
-      | AuthenticationSASL              of { auth_mechanism : string }
-      | AuthenticationSASLContinue      of { data : string }
-      | AuthenticationSASLFinal         of { data : string }
-      | BackendKeyData                  of {
+      | AuthenticationGSSContinue of { data : string }
+      | AuthenticationSASL of { auth_mechanism : string }
+      | AuthenticationSASLContinue of { data : string }
+      | AuthenticationSASLFinal of { data : string }
+      | BackendKeyData of {
           pid : int32;
           secret_key : int32;
         }
       | BindComplete
       | CloseComplete
-      | CommandComplete                 of { tag : string }
-      | CopyData                        of { data : string }
+      | CommandComplete of { tag : string }
+      | CopyData of { data : string }
       | CopyDone
       | CopyInResponse (* TODO *)
       | CopyOutResponse (* TODO *)
       | CopyBothResponse (* TODO *)
-      | DataRow                         of { data : string option list }
+      | DataRow of { data : string option list }
       | EmptyQueryResponse
-      | ErrorResponse                   of { msgs : (char * string) list }
+      | ErrorResponse of { msgs : (char * string) list }
       | FunctionCallResponse (* TODO *)
-      | NegotiateProtocolVersion        of {
+      | NegotiateProtocolVersion of {
           minor_version : int32;
           unrecognized_options : string list;
         }
       | NoData
-      | NoticeResponse                  of { msgs : (char * string) list }
-      | NotificationResponse            of {
+      | NoticeResponse of { msgs : (char * string) list }
+      | NotificationResponse of {
           pid : int32;
           channel : string;
           payload : string;
         }
-      | ParameterDescription            of { object_ids : int32 list }
-      | ParameterStatus                 of {
+      | ParameterDescription of { object_ids : int32 list }
+      | ParameterStatus of {
           name : string;
           value : string;
         }
       | ParseComplete
       | PortalSuspended
-      | ReadyForQuery                   of { status : char }
-      | RowDescription                  of { rows : row list }
+      | ReadyForQuery of { status : char }
+      | RowDescription of { rows : row list }
 
     (** Printers *)
     val pp : Format.formatter -> t -> unit
 
     val show : t -> string
-
     val pp_row : Format.formatter -> row -> unit
-
     val show_row : row -> string
 
     (** Equality *)
@@ -76,49 +74,49 @@ module Frame : sig
 
   module Frontend : sig
     type t =
-      | Bind                of {
+      | Bind of {
           portal : string;
           stmt : string;
           format_codes : bool list;
           values : string option list;
           result_format_codes : bool list;
         }
-      | CancelRequest       of {
+      | CancelRequest of {
           pid : int32;
           secret_key : int32;
         }
-      | Close               of {
+      | Close of {
           typ : char;
           name : string;
         }
       | CopyData (* TODO *)
       | CopyDone (* TODO *)
       | CopyFail (* TODO *)
-      | Describe            of {
+      | Describe of {
           typ : char;
           name : string;
         }
-      | Execute             of {
+      | Execute of {
           portal : string;
           max_rows : int32;
         }
       | Flush
       | FunctionCall (* TODO *)
-      | GSSResponse         of { data : string }
-      | Parse               of {
+      | GSSResponse of { data : string }
+      | Parse of {
           stmt : string;
           query : string;
           data_types : int32 list;
         }
-      | PasswordMessage     of { password : string }
-      | Query               of { query : string }
+      | PasswordMessage of { password : string }
+      | Query of { query : string }
       | SASLInitialResponse of {
           auth_mechanism : string;
           data : string;
         }
-      | SASLResponse        of { data : string }
+      | SASLResponse of { data : string }
       | SSLRequest
-      | StartupMessage      of { msgs : (string * string) list }
+      | StartupMessage of { msgs : (string * string) list }
       | Sync
       | Terminate
 
@@ -134,7 +132,7 @@ end
 
 module Decode : sig
   type err =
-    [ `Unknown_type  of char
+    [ `Unknown_type of char
     | `Invalid_frame
     ]
 
@@ -165,6 +163,5 @@ end
 
 module Encode : sig
   val backend_msg : Buffer.t -> Frame.Backend.t -> unit
-
   val frontend_msg : Buffer.t -> Frame.Frontend.t -> unit
 end

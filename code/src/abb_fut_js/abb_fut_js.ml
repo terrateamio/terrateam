@@ -38,10 +38,10 @@ let unsafe_to_promise : 'a t -> 'a promise Js_of_ocaml.Js.t =
            run
              (await_map
                 (function
-                  | `Det r                        -> succ r
-                  | `Aborted                      -> reject (Js.Unsafe.inject (Js.string "Aborted"))
+                  | `Det r -> succ r
+                  | `Aborted -> reject (Js.Unsafe.inject (Js.string "Aborted"))
                   | `Exn (Js.Js_error.Exn err, _) -> reject (Js.Unsafe.inject err)
-                  | `Exn (exn, _)                 -> reject (Js.Unsafe.inject exn))
+                  | `Exn (exn, _) -> reject (Js.Unsafe.inject exn))
                 t)))
   in
   promise

@@ -9,7 +9,6 @@ type err =
   ]
 
 val pp_err : Format.formatter -> err -> unit
-
 val show_err : err -> string
 
 (** Takes a JWT from headers and verifies that it is validly signed with the

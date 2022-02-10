@@ -88,7 +88,7 @@ let get_access_token storage client_id client_secret user_id =
       Logs.debug (fun m -> m "ACCESS_TOKEN : REFRESH : %s" user_id);
       Gh.oauth_refresh ~user_agent:"Terrateam" ~client_id ~client_secret ~refresh_token
       >>= function
-      | Ok oauth_access_token       -> (
+      | Ok oauth_access_token -> (
           let token = Gh.Response.Oauth_access_token.access_token oauth_access_token in
           let expiration =
             CCOpt.map
@@ -126,7 +126,7 @@ let get_user_installations config storage github_schema user_id =
           ~f:(fun login installation_id admin -> (login, installation_id, admin))
           user_id)
     >>= function
-    | []            ->
+    | [] ->
         get_access_token
           storage
           (Terrat_config.github_app_client_id config)
@@ -212,10 +212,8 @@ let verify_user_installation_access config storage github_schema installation_id
       CCList.exists
         (fun inst -> CCString.equal installation_id inst.Terrat_data.Response.Installation.id)
         installations
-    then
-      Abb.Future.return (Ok ())
-    else
-      Abb.Future.return (Error `Forbidden)
+    then Abb.Future.return (Ok ())
+    else Abb.Future.return (Error `Forbidden)
   in
   let open Abb.Future.Infix_monad in
   f'
@@ -236,10 +234,8 @@ let verify_admin_installation_access config storage github_schema installation_i
               CCString.equal installation_id id
           | _ -> false)
         installations
-    then
-      Abb.Future.return (Ok ())
-    else
-      Abb.Future.return (Error `Forbidden)
+    then Abb.Future.return (Ok ())
+    else Abb.Future.return (Error `Forbidden)
   in
   let open Abb.Future.Infix_monad in
   f'

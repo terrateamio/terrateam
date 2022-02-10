@@ -3,15 +3,11 @@ module Make (Abb : Abb_intf.S) = struct
   module Buffered = Abb_io_buffered.Make (Abb.Future)
 
   type +'a t = 'a Abb.Future.t
-
   type ic = Buffered.reader Buffered.t
-
   type oc = Buffered.writer Buffered.t
-
   type conn = unit
 
   let ( >>= ) = Abb.Future.Infix_monad.( >>= )
-
   let return = Abb.Future.return
 
   let read_line ic =
@@ -28,8 +24,8 @@ module Make (Abb : Abb_intf.S) = struct
     let buf = Bytes.create n in
     Buffered.read ic ~buf ~pos:0 ~len:n
     >>| function
-    | Ok 0    -> ""
-    | Ok n    -> Bytes.sub_string buf 0 n
+    | Ok 0 -> ""
+    | Ok n -> Bytes.sub_string buf 0 n
     | Error _ -> assert false
 
   let flush oc =
@@ -41,6 +37,6 @@ module Make (Abb : Abb_intf.S) = struct
     let buf = Bytes.unsafe_of_string s in
     Buffered.write oc ~bufs:Abb_intf.Write_buf.[ { buf; pos = 0; len = Bytes.length buf } ]
     >>= function
-    | Ok _    -> Fut_comb.unit
+    | Ok _ -> Fut_comb.unit
     | Error _ -> assert false
 end

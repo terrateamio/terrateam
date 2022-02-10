@@ -18,7 +18,7 @@ let get config storage github_schema =
       Pgsql_pool.with_conn storage ~f:(fun db ->
           Pgsql_io.Prepared_stmt.fetch db Sql.select_user_avatar_url ~f:CCFun.id user_id)
       >>= function
-      | Ok (avatar_url :: _)           ->
+      | Ok (avatar_url :: _) ->
           let body =
             let open Terrat_data.Response.Whoami in
             { user_id; avatar_url } |> to_yojson |> Yojson.Safe.to_string
@@ -28,14 +28,14 @@ let get config storage github_schema =
                (Brtl_ctx.set_response
                   (Brtl_rspnc.create ~headers:response_headers ~status:`OK body)
                   ctx))
-      | Ok []                          ->
+      | Ok [] ->
           Logs.err (fun m -> m "WHOAMI : ERROR : No avatar URL found");
           assert false
       | Error (#Pgsql_pool.err as err) ->
           Logs.err (fun m -> m "WHOAMI : ERROR : %s" (Pgsql_pool.show_err err));
           Abb.Future.return
             (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-      | Error (#Pgsql_io.err as err)   ->
+      | Error (#Pgsql_io.err as err) ->
           Logs.err (fun m -> m "WHOAMI : ERROR : %s" (Pgsql_io.show_err err));
           Abb.Future.return
             (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))

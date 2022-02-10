@@ -5,7 +5,6 @@ module Blob = struct
     class type t =
       object
         method slice : int -> int -> t Js.t Js.meth
-
         method size : int Js.readonly_prop
       end
   end
@@ -13,7 +12,6 @@ module Blob = struct
   type t = J.t Js.t
 
   let slice (t : t) ~start ~stop = t##slice start stop
-
   let size (t : t) = t##.size
 end
 
@@ -22,7 +20,6 @@ module Headers = struct
     class type t =
       object
         method get : Js.js_string Js.t -> Js.js_string Js.t Js.opt Js.meth
-
         method set : Js.js_string Js.t -> Js.js_string Js.t -> unit Js.meth
       end
 
@@ -32,9 +29,7 @@ module Headers = struct
   type t = J.t Js.t
 
   let create (t : t) = new%js J.constr t
-
   let get (t : t) name = CCOpt.map Js.to_string (Js.Opt.to_option (t##get (Js.string name)))
-
   let set (t : t) name value = t##set (Js.string name) (Js.string value)
 end
 
@@ -43,9 +38,7 @@ module Request = struct
     class type t =
       object
         method method_ : Js.js_string Js.t Js.readonly_prop
-
         method url : Js.js_string Js.t Js.readonly_prop
-
         method headers : Headers.t Js.readonly_prop
       end
   end
@@ -53,9 +46,7 @@ module Request = struct
   type t = J.t Js.t
 
   let url (t : t) = Js.to_string t##.url
-
   let meth (t : t) = Js.to_string t##.method_
-
   let headers (t : t) = t##.headers
 end
 
@@ -64,18 +55,14 @@ module Response = struct
     class type t =
       object
         method clone : t Js.t Js.meth
-
         method blob : Blob.t Abb_js.Future.promise Js.t Js.meth
-
         method status : int Js.readonly_prop
-
         method headers : Headers.t Js.readonly_prop
       end
 
     class type opts =
       object
         method headers : Headers.t Js.readonly_prop
-
         method status : int Js.readonly_prop
       end
 
@@ -89,16 +76,12 @@ module Response = struct
       body
       (object%js
          val headers = headers
-
          val status = status
       end)
 
   let clone (t : t) = t##clone
-
   let blob (t : t) = Abb_js.Future.unsafe_of_promise t##blob
-
   let status (t : t) = t##.status
-
   let headers (t : t) = t##.headers
 end
 
@@ -108,9 +91,7 @@ module Background_fetch_registration = struct
       class type t =
         object
           method id : Js.js_string Js.t Js.readonly_prop
-
           method request : Request.t Js.readonly_prop
-
           method responseReady : Response.t Abb_js.Future.promise Js.t Js.readonly_prop
         end
     end
@@ -118,9 +99,7 @@ module Background_fetch_registration = struct
     type t = J.t Js.t
 
     let id (t : t) = Js.to_string t##.id
-
     let request (t : t) = t##.request
-
     let response_ready (t : t) = Abb_js.Future.unsafe_of_promise t##.responseReady
   end
 
@@ -128,25 +107,15 @@ module Background_fetch_registration = struct
     class type t =
       object
         method id : Js.js_string Js.t Js.readonly_prop
-
         method uploadTotal : int Js.readonly_prop
-
         method uploaded : int Js.readonly_prop
-
         method downloadTotal : int Js.readonly_prop
-
         method downloaded : int Js.readonly_prop
-
         method result : Js.js_string Js.t Js.readonly_prop
-
         method failureReason : Js.js_string Js.t Js.readonly_prop
-
         method recordsAvailable : bool Js.t Js.readonly_prop
-
         method abort : bool Js.t Abb_js.Future.promise Js.t Js.meth
-
         method matchAll : Record.t Js.js_array Js.t Abb_js.Future.promise Js.t Js.meth
-
         method match_ : Request.t -> Record.t Js.optdef Abb_js.Future.promise Js.t Js.meth
 
         method addEventListener :
@@ -159,20 +128,16 @@ module Background_fetch_registration = struct
   type t = J.t Js.t
 
   let id (t : t) = Js.to_string t##.id
-
   let upload_total (t : t) = t##.uploadTotal
-
   let uploaded (t : t) = t##.uploaded
-
   let download_total (t : t) = t##.downloadTotal
-
   let downloaded (t : t) = t##.downloaded
 
   let result (t : t) =
     match Js.to_string t##.result with
-      | "success" -> `Success
-      | "failure" -> `Failure (Js.to_string t##.failureReason)
-      | _         -> (* Assuming anything else is active.  Could be a bad decision *) `Active
+    | "success" -> `Success
+    | "failure" -> `Failure (Js.to_string t##.failureReason)
+    | _ -> (* Assuming anything else is active.  Could be a bad decision *) `Active
 
   let records_available (t : t) = Js.to_bool t##.recordsAvailable
 
@@ -202,7 +167,6 @@ module Background_fetch_event = struct
     class type t =
       object
         method waitUntil : unit Abb_js.Future.promise Js.t -> unit Js.meth
-
         method registration : Background_fetch_registration.t Js.readonly_prop
       end
   end
@@ -214,7 +178,6 @@ module Background_fetch_event = struct
     t##waitUntil (Abb_js.Future.unsafe_to_promise fut)
 
   let registration (t : t) = t##.registration
-
   let update_ui (t : t) = raise (Failure "nyi")
 end
 
@@ -224,9 +187,7 @@ module Registration = struct
       class type t =
         object
           method sizes : Js.js_string Js.t Js.readonly_prop
-
           method src : Js.js_string Js.t Js.readonly_prop
-
           method type_ : Js.js_string Js.t Js.optdef Js.readonly_prop
         end
     end
@@ -236,9 +197,7 @@ module Registration = struct
     let create ?typ ~sizes src =
       object%js
         val sizes = Js.string sizes
-
         val src = Js.string src
-
         val type_ = Js.Optdef.option (CCOpt.map Js.string typ)
       end
   end
@@ -248,9 +207,7 @@ module Registration = struct
       class type t =
         object
           method title : Js.js_string Js.t Js.readonly_prop
-
           method icons : Icon_def.t Js.js_array Js.t Js.readonly_prop
-
           method downloadTotal : int Js.readonly_prop
         end
     end
@@ -260,9 +217,7 @@ module Registration = struct
     let create ~title ~icons ~total_size =
       object%js
         val title = Js.string title
-
         val icons = icons |> Array.of_list |> Js.array
-
         val downloadTotal = total_size
       end
   end
@@ -286,7 +241,6 @@ module Registration = struct
     class type t =
       object
         method installing : bool Js.t Js.readonly_prop
-
         method backgroundFetch : bf Js.t Js.readonly_prop
       end
   end
@@ -352,7 +306,6 @@ module Cache = struct
           Js.js_string Js.t Js.js_array Js.t -> unit Abb_js.Future.promise Js.t Js.meth
 
         method put : Request.t -> Response.t -> unit Abb_js.Future.promise Js.t Js.meth
-
         method delete : Js.js_string Js.t -> bool Js.t Abb_js.Future.promise Js.t Js.meth
       end
   end
@@ -375,14 +328,12 @@ module Cache_storage = struct
     class type t =
       object
         method open_ : Js.js_string Js.t -> Cache.t Abb_js.Future.promise Js.t Js.meth
-
         method match_ : Request.t -> Response.t Js.optdef Abb_js.Future.promise Js.t Js.meth
 
         method match_string :
           Js.js_string Js.t -> Response.t Js.optdef Abb_js.Future.promise Js.t Js.meth
 
         method keys : Js.js_string Js.t Js.js_array Js.t Abb_js.Future.promise Js.t Js.meth
-
         method delete : Js.js_string Js.t -> unit Abb_js.Future.promise Js.t Js.meth
       end
   end
@@ -390,9 +341,7 @@ module Cache_storage = struct
   type t = J.t Js.t
 
   let open_ t name = Abb_js.Future.unsafe_of_promise (t##open_ (Js.string name))
-
   let match_ (t : t) request = Abb_js.Future.unsafe_of_promise (t##match_ request)
-
   let match_str (t : t) str = Abb_js.Future.unsafe_of_promise (t##match_string (Js.string str))
 
   let keys (t : t) =
@@ -439,7 +388,6 @@ module Global_scope = struct
       class type t =
         object
           method request : Request.t Js.readonly_prop
-
           method respondWith : Response.t Abb_js.Future.promise Js.t -> unit Js.meth
         end
     end
@@ -484,9 +432,7 @@ module Global_scope = struct
   type t = J.t Js.t
 
   let self = Js.Unsafe.global##.self
-
   let caches = Js.Unsafe.global##.caches
-
   let clients = Js.Unsafe.global##.clients
 
   let fetch request =
@@ -494,11 +440,8 @@ module Global_scope = struct
       (Js.Unsafe.fun_call Js.Unsafe.global##.fetch [| Js.Unsafe.inject request |])
 
   let skip_waiting (t : t) = ignore t##skipWaiting
-
   let set_oninstall (t : t) cb = t##.oninstall := Js.some (Js.wrap_callback cb)
-
   let set_onactivate (t : t) cb = t##.onactivate := Js.some (Js.wrap_callback cb)
-
   let set_onfetch (t : t) cb = t##.onfetch := Js.some (Js.wrap_callback cb)
 end
 

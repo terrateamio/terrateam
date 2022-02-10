@@ -69,9 +69,7 @@ module State : sig
   type 'a t
 
   val create : 'a -> 'a t
-
   val state : 'a t -> 'a
-
   val set_state : 'a -> 'a t -> 'a t
 end
 

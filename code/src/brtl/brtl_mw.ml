@@ -29,9 +29,7 @@ module Mw = struct
 end
 
 let pre_handler_noop ctx = Abb.Future.return (Pre_handler.Cont ctx)
-
 let post_handler_noop = Abb.Future.return
-
 let early_exit_handler_noop = Abb.Future.return
 
 type t = Mw.t list
@@ -39,22 +37,22 @@ type t = Mw.t list
 let create t = t
 
 let rec exec_pre_handler ctx = function
-  | []      -> Abb.Future.return (Pre_handler.Cont ctx)
+  | [] -> Abb.Future.return (Pre_handler.Cont ctx)
   | h :: hs -> (
       let open Abb.Future.Infix_monad in
       h.Mw.pre_handler ctx
       >>= function
-      | Pre_handler.Cont ctx      -> exec_pre_handler ctx hs
+      | Pre_handler.Cont ctx -> exec_pre_handler ctx hs
       | Pre_handler.Stop _ as ret -> Abb.Future.return ret)
 
 let rec exec_post_handler ctx = function
-  | []      -> Abb.Future.return ctx
+  | [] -> Abb.Future.return ctx
   | h :: hs ->
       let open Abb.Future.Infix_monad in
       h.Mw.post_handler ctx >>= fun ctx -> exec_post_handler ctx hs
 
 let rec exec_early_exit_handler ctx = function
-  | []      -> Abb.Future.return ctx
+  | [] -> Abb.Future.return ctx
   | h :: hs ->
       let open Abb.Future.Infix_monad in
       h.Mw.early_exit_handler ctx >>= fun ctx -> exec_early_exit_handler ctx hs

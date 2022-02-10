@@ -61,13 +61,13 @@ module User = struct
 end
 
 type t =
-  | Read   of Read.t
-  | Write  of Write.t
-  | Vnode  of Vnode.t
-  | Proc   of Proc.t
+  | Read of Read.t
+  | Write of Write.t
+  | Vnode of Vnode.t
+  | Proc of Proc.t
   | Signal of Signal.t
-  | Timer  of Timer.t
-  | User   of User.t
+  | Timer of Timer.t
+  | User of User.t
 
 let read_to_filter t =
   let descr = C.(Uintptr.to_int (getf t Stubs.Kevent.ident)) in
@@ -107,11 +107,11 @@ let user_to_filter t =
 
 let of_kevent t =
   match C.getf t Stubs.Kevent.filter with
-    | filter when filter = Stubs.evfilt_read -> read_to_filter t
-    | filter when filter = Stubs.evfilt_write -> write_to_filter t
-    | filter when filter = Stubs.evfilt_vnode -> vnode_to_filter t
-    | filter when filter = Stubs.evfilt_proc -> proc_to_filter t
-    | filter when filter = Stubs.evfilt_signal -> signal_to_filter t
-    | filter when filter = Stubs.evfilt_timer -> timer_to_filter t
-    | filter when filter = Stubs.evfilt_user -> user_to_filter t
-    | filter -> raise (Unknown_filter filter)
+  | filter when filter = Stubs.evfilt_read -> read_to_filter t
+  | filter when filter = Stubs.evfilt_write -> write_to_filter t
+  | filter when filter = Stubs.evfilt_vnode -> vnode_to_filter t
+  | filter when filter = Stubs.evfilt_proc -> proc_to_filter t
+  | filter when filter = Stubs.evfilt_signal -> signal_to_filter t
+  | filter when filter = Stubs.evfilt_timer -> timer_to_filter t
+  | filter when filter = Stubs.evfilt_user -> user_to_filter t
+  | filter -> raise (Unknown_filter filter)

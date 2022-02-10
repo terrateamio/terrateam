@@ -19,7 +19,6 @@ module Vnode : sig
   type t = uint
 
   val of_t : t -> f list
-
   val to_t : f list -> t
 end
 
@@ -33,7 +32,6 @@ module Proc : sig
   type t = uint
 
   val of_t : t -> f list
-
   val to_t : f list -> t
 end
 
@@ -48,7 +46,6 @@ module Timer : sig
   type t = uint
 
   val of_t : t -> u
-
   val to_t : u -> t
 end
 
@@ -61,11 +58,10 @@ module User : sig
     | Ctrlmask
     | Fflagsmask
     | Trigger
-    | Uflags     of int
+    | Uflags of int
 
   type t = uint
 
   val of_t : t -> f list
-
   val to_t : f list -> t
 end

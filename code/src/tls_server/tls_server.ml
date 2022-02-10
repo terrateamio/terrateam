@@ -22,7 +22,7 @@ let main () =
   let socket = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
   Unix.bind socket Unix.(ADDR_INET (inet_addr_any, 8080));
   Unix.listen socket 25;
-  let (client, _) = Unix.accept socket in
+  let client, _ = Unix.accept socket in
   let fd = int_of_fd client in
   Otls.Tls.accept_socket server fd
   >>= fun client_tls ->
@@ -37,6 +37,6 @@ let main () =
 
 let () =
   match main () with
-    | Ok () -> print_endline "Great success"
-    | Error `Error -> print_endline "Giant failure"
-    | Error `Want_pollin | Error `Want_pollout -> assert false
+  | Ok () -> print_endline "Great success"
+  | Error `Error -> print_endline "Giant failure"
+  | Error `Want_pollin | Error `Want_pollout -> assert false

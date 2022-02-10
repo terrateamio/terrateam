@@ -14,9 +14,9 @@ module Make (Abb : Abb_intf.S) = struct
       let stop = Unix.gettimeofday () in
       let duration = Duration.of_f (stop -. start) in
       match res with
-        | `Det res      -> Abb.Future.return (duration, `Ok)
-        | `Aborted      -> assert false
-        | `Exn _ as err -> Abb.Future.return (duration, err)
+      | `Det res -> Abb.Future.return (duration, `Ok)
+      | `Aborted -> assert false
+      | `Exn _ as err -> Abb.Future.return (duration, err)
     with exn ->
       let stop = Unix.gettimeofday () in
       let duration = Duration.of_f (stop -. start) in
@@ -31,7 +31,6 @@ module Make (Abb : Abb_intf.S) = struct
     Abb.Future.return (Oth.Run_result.of_test_results flat_rr)
 
   let parallel = serial
-
   let timeout duration test = failwith "nyi"
 
   let test ?desc ~name f state =
@@ -47,6 +46,6 @@ module Make (Abb : Abb_intf.S) = struct
     Oth.raw_test (fun state ->
         let res = Abb.Scheduler.run_with_state (fun () -> test state) in
         match res with
-          | `Det rr -> rr
-          | _       -> assert false)
+        | `Det rr -> rr
+        | _ -> assert false)
 end

@@ -5,7 +5,7 @@ module Make (Fut : Abb_intf.Future.S) = struct
 
   module List = struct
     let rec fold_left ~f ~init = function
-      | []      -> Fut.return init
+      | [] -> Fut.return init
       | l :: ls -> f init l >>= fun acc -> fold_left ~f ~init:acc ls
 
     let map ~f l =
@@ -19,7 +19,7 @@ module Make (Fut : Abb_intf.Future.S) = struct
         ~f:(fun acc v ->
           f v
           >>| function
-          | true  -> v :: acc
+          | true -> v :: acc
           | false -> acc)
         ~init:[]
         l
@@ -31,9 +31,7 @@ module Make (Fut : Abb_intf.Future.S) = struct
     Fut.add_dep ~dep:f2 f1
 
   let unit = Fut.return ()
-
   let ignore fut = fut >>= fun _ -> unit
-
   let background fut = ignore (Fut.fork fut)
 
   let first f1 f2 =
@@ -55,13 +53,9 @@ module Make (Fut : Abb_intf.Future.S) = struct
     >>= fun () ->
     Fut.Promise.future p
     >>= fun (idx, v) ->
-    let (_, rest_rev) =
+    let _, rest_rev =
       Std_list.fold_left
-        ~f:(fun (i, l) fut ->
-          if i = idx then
-            (i + 1, l)
-          else
-            (i + 1, fut :: l))
+        ~f:(fun (i, l) fut -> if i = idx then (i + 1, l) else (i + 1, fut :: l))
         ~init:(0, [])
         l
     in
@@ -80,20 +74,19 @@ module Make (Fut : Abb_intf.Future.S) = struct
       let finally () =
         if not !finally_called then (
           finally_called := true;
-          finally ()
-        ) else
-          Fut.return ()
+          finally ())
+        else Fut.return ()
       in
       let p = Fut.Promise.create ~abort:finally () in
       Fut.add_dep ~dep:fut (Fut.Promise.future p);
       Fut.fork
         (Fut.await_bind
            (function
-             | `Det v   -> (
+             | `Det v -> (
                  try
                    Fut.await_bind
                      (function
-                       | `Det ()  -> Fut.Promise.set p v
+                       | `Det () -> Fut.Promise.set p v
                        | `Exn exn -> Fut.Promise.set_exn p exn
                        | `Aborted -> Fut.abort (Fut.Promise.future p))
                      (finally ())
@@ -123,24 +116,20 @@ module Make (Fut : Abb_intf.Future.S) = struct
         >>| fun ret ->
         succeeded := true;
         ret)
-      ~finally:(fun () ->
-        if not !succeeded then
-          failure ()
-        else
-          unit)
+      ~finally:(fun () -> if not !succeeded then failure () else unit)
 
   let to_result fut = fut >>= fun v -> Fut.return (Ok v)
 
   let of_option = function
     | Some fut -> fut >>| fun r -> Some r
-    | None     -> Fut.return None
+    | None -> Fut.return None
 
   let with_cancel ~cancel fut =
     let open Fut.Infix_monad in
     let cancel_fut = cancel >>| fun () -> Error `Cancelled in
     first cancel_fut (fut >>| fun r -> Ok r)
     >>= function
-    | (ret, fut) -> Fut.cancel fut >>| fun () -> ret
+    | ret, fut -> Fut.cancel fut >>| fun () -> ret
 
   let timeout ~timeout fut =
     let open Fut.Infix_monad in
@@ -148,8 +137,8 @@ module Make (Fut : Abb_intf.Future.S) = struct
     let call = fut >>| fun r -> `Ok r in
     first call t_fut
     >>= function
-    | ((`Ok _ as r), fut) -> Fut.abort fut >>| fun () -> r
-    | (`Timeout, fut)     -> Fut.abort fut >>| fun () -> `Timeout
+    | (`Ok _ as r), fut -> Fut.abort fut >>| fun () -> r
+    | `Timeout, fut -> Fut.abort fut >>| fun () -> `Timeout
 
   let rec retry_times ~times ~on_failure f =
     let open Fut.Infix_monad in
@@ -159,8 +148,7 @@ module Make (Fut : Abb_intf.Future.S) = struct
       | Ok r -> Fut.return (Ok r)
       | Error err when times = 1 -> Fut.return (Error err)
       | Error err -> on_failure err >>= fun () -> retry_times ~times:(times - 1) ~on_failure f
-    else
-      invalid_arg "times must be greater than 0"
+    else invalid_arg "times must be greater than 0"
 
   module Infix_result_monad = struct
     type ('a, 'b) t = ('a, 'b) result Fut.t
@@ -168,13 +156,13 @@ module Make (Fut : Abb_intf.Future.S) = struct
     let ( >>= ) t f =
       t
       >>= function
-      | Ok v           -> f v
+      | Ok v -> f v
       | Error _ as err -> Fut.return err
 
     let ( >>| ) t f =
       t
       >>| function
-      | Ok v           -> Ok (f v)
+      | Ok v -> Ok (f v)
       | Error _ as err -> err
   end
 
@@ -182,7 +170,7 @@ module Make (Fut : Abb_intf.Future.S) = struct
     open Infix_result_monad
 
     let rec fold_left ~f ~init = function
-      | []      -> Fut.return (Ok init)
+      | [] -> Fut.return (Ok init)
       | l :: ls -> f init l >>= fun acc -> fold_left ~f ~init:acc ls
 
     let map ~f l =
@@ -196,7 +184,7 @@ module Make (Fut : Abb_intf.Future.S) = struct
         ~f:(fun acc v ->
           f v
           >>| function
-          | true  -> v :: acc
+          | true -> v :: acc
           | false -> acc)
         ~init:[]
         l

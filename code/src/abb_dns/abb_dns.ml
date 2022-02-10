@@ -8,9 +8,7 @@ module Make (Abb : Abb_intf.S) = struct
        and type +'a io = 'a Abb.Future.t
        and type stack = unit = struct
     type io_addr = [ `Plaintext of Ipaddr.t * int ]
-
     type +'a io = 'a Abb.Future.t
-
     type stack = unit
 
     type t = {
@@ -37,66 +35,62 @@ module Make (Abb : Abb_intf.S) = struct
       with _ -> Error (`Open_file file)
 
     let bind = Abb.Future.bind
-
     let lift = Abb.Future.return
 
     let create ?(nameservers : (Dns.proto * io_addr list) option) ~timeout stack =
       match nameservers with
-        | Some (`Udp, nameservers) -> { nameservers; preferred_ns = None; timeout_ns = timeout }
-        | Some (`Tcp, _)           -> invalid_arg "tcp not supported"
-        | None                     -> (
-            let nameservers =
-              let open CCResult.Infix in
-              read_file "/etc/resolv.conf"
-              >>= fun content ->
-              Dns_resolvconf.parse content
-              >>= fun nameservers ->
-              Ok (CCList.map (fun (`Nameserver ip) -> `Plaintext (ip, 53)) nameservers)
-            in
-            match nameservers with
-              | Ok nameservers -> { nameservers; preferred_ns = None; timeout_ns = timeout }
-              | Error _        ->
-                  let nameservers =
-                    CCList.map (fun ip -> `Plaintext (ip, 53)) Dns_client.default_resolvers
-                  in
-                  { nameservers; preferred_ns = None; timeout_ns = timeout })
+      | Some (`Udp, nameservers) -> { nameservers; preferred_ns = None; timeout_ns = timeout }
+      | Some (`Tcp, _) -> invalid_arg "tcp not supported"
+      | None -> (
+          let nameservers =
+            let open CCResult.Infix in
+            read_file "/etc/resolv.conf"
+            >>= fun content ->
+            Dns_resolvconf.parse content
+            >>= fun nameservers ->
+            Ok (CCList.map (fun (`Nameserver ip) -> `Plaintext (ip, 53)) nameservers)
+          in
+          match nameservers with
+          | Ok nameservers -> { nameservers; preferred_ns = None; timeout_ns = timeout }
+          | Error _ ->
+              let nameservers =
+                CCList.map (fun ip -> `Plaintext (ip, 53)) Dns_client.default_resolvers
+              in
+              { nameservers; preferred_ns = None; timeout_ns = timeout })
 
     let nameservers t = (`Udp, t.nameservers)
-
     let rng = Mirage_crypto_rng.generate ?g:None
-
     let clock = Mtime_clock.elapsed_ns
 
     let rec connect_to_ns t errors = function
       | [] -> Abb.Future.return (Error errors)
       | `Plaintext (addr, port) :: nameservers -> (
-          let (domain, addr) =
+          let domain, addr =
             match addr with
-              | Ipaddr.V4 addr ->
-                  (Abb_intf.Socket.Domain.Inet4, Unix.inet_addr_of_string (Ipaddr.V4.to_string addr))
-              | Ipaddr.V6 addr ->
-                  (Abb_intf.Socket.Domain.Inet6, Unix.inet_addr_of_string (Ipaddr.V6.to_string addr))
+            | Ipaddr.V4 addr ->
+                (Abb_intf.Socket.Domain.Inet4, Unix.inet_addr_of_string (Ipaddr.V4.to_string addr))
+            | Ipaddr.V6 addr ->
+                (Abb_intf.Socket.Domain.Inet6, Unix.inet_addr_of_string (Ipaddr.V6.to_string addr))
           in
           match Abb.Socket.Udp.create ~domain with
-            | Ok sock ->
-                Abb.Future.return (Ok (sock, Abb_intf.Socket.Sockaddr.(Inet { addr; port })))
-            | Error (#Abb_intf.Errors.sock_create as err) ->
-                connect_to_ns t (Abb_intf.Errors.show_sock_create err :: errors) nameservers)
+          | Ok sock -> Abb.Future.return (Ok (sock, Abb_intf.Socket.Sockaddr.(Inet { addr; port })))
+          | Error (#Abb_intf.Errors.sock_create as err) ->
+              connect_to_ns t (Abb_intf.Errors.show_sock_create err :: errors) nameservers)
 
     let connect t =
       let open Abb.Future.Infix_monad in
       let nameservers =
         match t.preferred_ns with
-          | Some ns -> ns :: t.nameservers
-          | None    -> t.nameservers
+        | Some ns -> ns :: t.nameservers
+        | None -> t.nameservers
       in
       Abb_fut_comb.timeout
         ~timeout:(Abb.Sys.sleep (Duration.to_f t.timeout_ns))
         (connect_to_ns t [] nameservers)
       >>= function
       | `Ok (Ok (sock, sockaddr)) -> Abb.Future.return (Ok { sock; sockaddr })
-      | `Ok (Error errors)        -> Abb.Future.return (Error (`Msg (CCString.concat "," errors)))
-      | `Timeout                  -> Abb.Future.return (Error (`Msg "Timeout"))
+      | `Ok (Error errors) -> Abb.Future.return (Error (`Msg (CCString.concat "," errors)))
+      | `Timeout -> Abb.Future.return (Error (`Msg "Timeout"))
 
     let send ctx data =
       let open Abb.Future.Infix_monad in

@@ -22,8 +22,8 @@ val show_integrity_err : integrity_err -> string
 
 type sql_parse_err =
   [ `Empty_variable_name
-  | `Unclosed_quote      of string
-  | `Unknown_variable    of string
+  | `Unclosed_quote of string
+  | `Unknown_variable of string
   ]
 
 val show_sql_parse_err : sql_parse_err -> string
@@ -38,7 +38,6 @@ type err =
   ]
 
 val pp_err : Format.formatter -> err -> unit
-
 val show_err : err -> string
 
 module Typed_sql : sig
@@ -52,21 +51,13 @@ module Typed_sql : sig
     val smallint : int v
 
     val integer : int32 v
-
     val bigint : int64 v
-
     val decimal : Z.t v
-
     val numeric : Z.t v
-
     val real : float v
-
     val double : float v
-
     val smallserial : int v
-
     val serial : int32 v
-
     val bigserial : int64 v
 
     (** Monetary *)
@@ -76,26 +67,18 @@ module Typed_sql : sig
     val text : string v
 
     val varchar : string v
-
     val char : string v
-
     val tsquery : string v
-
     val uuid : Uuidm.t v
 
     (** Boolean types *)
     val boolean : bool v
 
     val date : string v
-
     val time : string v
-
     val timestamp : string v
-
     val timestamptz : string v
-
     val ud : 'b t -> ('a -> 'b) -> 'a t
-
     val option : 'a t -> 'a option t
 
     (** Type for any array that is NOT a string.  Strings require a special
@@ -110,57 +93,36 @@ module Typed_sql : sig
     type 'a t
 
     val smallint : int t
-
     val integer : int32 t
-
     val bigint : int64 t
-
     val decimal : Z.t t
-
     val numeric : Z.t t
-
     val real : float t
-
     val double : float t
-
     val smallserial : int t
-
     val serial : int32 t
-
     val bigserial : int64 t
-
     val money : int64 t
-
     val text : string t
-
     val varchar : string t
-
     val char : string t
-
     val uuid : Uuidm.t t
-
     val boolean : bool t
-
     val ud : (string option list -> ('a * string option list) option) -> 'a t
-
     val option : 'a t -> 'a option t
   end
 
   type ('q, 'qr, 'p, 'pr) t
 
   val sql : ('qr, 'qr, 'pr, 'pr) t
-
   val ( /^ ) : ('q, 'qr, 'p, 'pr) t -> string -> ('q, 'qr, 'p, 'pr) t
 
   (** Concatenate the right query to the left. *)
   val ( /^^ ) : ('q, 'qr, 'p, 'pr) t -> ('qr, 'qqr, 'pr, 'ppr) t -> ('q, 'qqr, 'p, 'ppr) t
 
   val ( /% ) : ('q, 'a -> 'qr, 'p, 'pr) t -> 'a Var.t -> ('q, 'qr, 'p, 'pr) t
-
   val ( // ) : ('q, 'qr, 'p, 'a -> 'pr) t -> 'a Ret.t -> ('q, 'qr, 'p, 'pr) t
-
   val to_query : ('q, 'qr, 'p, 'pr) t -> (string, sql_parse_err) result
-
   val kbind : (string option list -> 'qr) -> ('q, 'qr, 'p, 'pr) t -> 'q
 end
 
@@ -176,9 +138,7 @@ module Row_func : sig
     ('p, 'pr, 'acc, 'r) t
 
   val ignore : ('q, 'qr, unit, unit) Typed_sql.t -> (unit, unit, unit, unit) t
-
   val fold : ('q, 'qr, 'p, 'r) Typed_sql.t -> init:'r -> f:('r -> 'p) -> ('p, 'r, 'r, 'r) t
-
   val map : ('q, 'qr, 'p, 'r) Typed_sql.t -> f:'p -> ('p, 'r, 'r list, 'r list) t
 end
 
@@ -186,9 +146,7 @@ module Cursor : sig
   type ('p, 'pr, 'acc, 'qr) t
 
   val execute : ('p, 'pr, 'acc, unit) t -> (unit, [> err ]) result Abb.Future.t
-
   val fetch : ?n:int -> ('p, 'pr, 'acc, 'r list) t -> ('r list, [> err ]) result Abb.Future.t
-
   val destroy : ('p, 'pr, 'acc, 'qr) t -> (unit, [> err ]) result Abb.Future.t
 
   val with_cursor :
@@ -199,7 +157,6 @@ end
 
 module Prepared_stmt : sig
   type conn = t
-
   type ('q, 'qr, 'p, 'pr) t
 
   val create :
@@ -238,7 +195,7 @@ type create_err =
   ]
 
 val create :
-  ?tls_config:[ `Require of Otls.Tls_config.t | `Prefer  of Otls.Tls_config.t ] ->
+  ?tls_config:[ `Require of Otls.Tls_config.t | `Prefer of Otls.Tls_config.t ] ->
   ?passwd:string ->
   ?port:int ->
   ?notice_response:((char * string) list -> unit) ->

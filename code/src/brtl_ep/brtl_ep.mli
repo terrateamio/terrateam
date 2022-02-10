@@ -8,7 +8,7 @@ val run :
 val run_result :
   f:
     ((string, unit) Brtl_ctx.t ->
-    (Brtl_rspnc.t, [< `Location  of Uri.t | `Forbidden ]) t Abb.Future.t) ->
+    (Brtl_rspnc.t, [< `Location of Uri.t | `Forbidden ]) t Abb.Future.t) ->
   Brtl_rtng.Handler.t
 
 module Infix : sig

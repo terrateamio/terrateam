@@ -7,7 +7,6 @@
 
 module Errors = struct
   let pp_exn fmt exn = Format.fprintf fmt "%s" (Printexc.to_string exn)
-
   let equal_exn = ( = )
 
   type unexpected = [ `Unexpected of exn ] [@@deriving show, eq]
@@ -369,25 +368,24 @@ end
 module Future = struct
   module State = struct
     type 'a t =
-      [ `Det     of 'a
+      [ `Det of 'a
       | `Undet
       | `Aborted
-      | `Exn     of (exn * Printexc.raw_backtrace option[@opaque])
+      | `Exn of (exn * Printexc.raw_backtrace option[@opaque])
       ]
     [@@deriving show]
   end
 
   module Set = struct
     type 'a t =
-      [ `Det     of 'a
+      [ `Det of 'a
       | `Aborted
-      | `Exn     of exn * Printexc.raw_backtrace option
+      | `Exn of exn * Printexc.raw_backtrace option
       ]
   end
 
   module type S = sig
     type +'a t
-
     type abort = unit -> unit t
 
     (** A promise is the value used to set a [Future].  The promise can be
@@ -395,7 +393,6 @@ module Future = struct
        calling {!abort}. *)
     module Promise : sig
       type 'a fut = 'a t
-
       type 'a t
 
       (** Create a promise with an optional function to call on abort.  When
@@ -423,23 +420,18 @@ module Future = struct
     (** Infix operators for the monadic interface *)
     module Infix_monad : sig
       val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
-
       val ( >>| ) : 'a t -> ('a -> 'b) -> 'b t
     end
 
     (** Infix operators for applicative interface *)
     module Infix_app : sig
       val ( <$> ) : ('a -> 'b) -> 'a t -> 'b t
-
       val ( <*> ) : ('a -> 'b) t -> 'a t -> 'b t
     end
 
     val return : 'a -> 'a t
-
     val bind : 'a t -> ('a -> 'b t) -> 'b t
-
     val app : ('a -> 'b) t -> 'a t -> 'b t
-
     val map : ('a -> 'b) -> 'a t -> 'b t
 
     (** Execute a future without waiting for it to complete.  The future can be
@@ -455,7 +447,6 @@ module Future = struct
     val await : 'a t -> 'a Set.t t
 
     val await_map : ('a Set.t -> 'b) -> 'a t -> 'b t
-
     val await_bind : ('a Set.t -> 'b t) -> 'a t -> 'b t
 
     (** Abort a future and of its undetermined dependencies.  If a future has
@@ -493,7 +484,7 @@ module File = struct
       | Read_only
       | Write_only
       | Read_write
-      | Create     of Permissions.t  (** Create the file with the specified permissions *)
+      | Create of Permissions.t  (** Create the file with the specified permissions *)
       | Append
       | Truncate
       | Exclusive
@@ -571,16 +562,16 @@ module Socket = struct
 
   module Addrinfo_query = struct
     type t =
-      | Host         of string
-      | Service      of string
+      | Host of string
+      | Service of string
       | Host_service of (string * string)
   end
 
   module Addrinfo_hints = struct
     type t =
-      | Family       of Domain.t  (** Impose the given socket domain *)
-      | Socket_type  of Socket_type.t  (** Impose the given socket type *)
-      | Protocol     of int  (** Impose the given protocol *)
+      | Family of Domain.t  (** Impose the given socket domain *)
+      | Socket_type of Socket_type.t  (** Impose the given socket type *)
+      | Protocol of int  (** Impose the given protocol *)
       | Numeric_host  (** Do not call name resolver, expect numeric IP address *)
       | Canon_name  (** Fill the ai_canonname field of the result *)
       | Passive  (** Set address to ``any'' address for use with Unix.bind *)
@@ -616,15 +607,15 @@ module Process = struct
       | SIGCHLD
       | SIGUSR1
       | SIGUSR2
-      | Num     of int  (** If the signal cannot be put into any of the predefined ones *)
+      | Num of int  (** If the signal cannot be put into any of the predefined ones *)
     [@@deriving show, eq]
   end
 
   module Exit_code = struct
     type t =
-      | Exited   of int
+      | Exited of int
       | Signaled of Signal.t
-      | Stopped  of Signal.t
+      | Stopped of Signal.t
     [@@deriving show, eq]
   end
 
@@ -639,17 +630,13 @@ module Process = struct
     type 'a t
 
     val create : src:'a -> dst:'a -> 'a t
-
     val src : 'a t -> 'a
-
     val dst : 'a t -> 'a
   end = struct
     type 'a t = 'a * 'a
 
     let create ~src ~dst = (src, dst)
-
     let src = fst
-
     let dst = snd
   end
 
@@ -684,13 +671,9 @@ module type S = sig
     type t
 
     val create : unit -> t
-
     val destroy : t -> unit
-
     val run : t -> (unit -> 'a Future.t) -> t * 'a Future_set.t
-
     val run_with_state : (unit -> 'a Future.t) -> 'a Future_set.t
-
     val exec_duration : t -> float array
   end
 
@@ -727,9 +710,7 @@ module type S = sig
     val of_native : Native.t -> t
 
     val stdin : t
-
     val stdout : t
-
     val stderr : t
 
     (** Open a file path with the specified flags.  The file created will be
@@ -852,7 +833,6 @@ module type S = sig
 
   module Socket : sig
     type tcp
-
     type udp
 
     (** A socket is parameterized over what type of socket it is. *)
@@ -869,7 +849,6 @@ module type S = sig
       (Socket.Addrinfo.t list, [> Errors.unexpected ]) result Future.t
 
     val getsockname : 'a t -> Socket.Sockaddr.t
-
     val getpeername : 'a t -> Socket.Sockaddr.t
 
     (** @param socket the tcp socket to receive on
@@ -996,7 +975,6 @@ module type S = sig
       type native
 
       val of_native : native -> t
-
       val to_native : t -> native
     end
 

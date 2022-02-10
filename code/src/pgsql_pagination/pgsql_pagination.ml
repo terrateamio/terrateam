@@ -94,56 +94,55 @@ let next search conn query ~f =
   assert (search.Search.cols <> []);
   assert (search.Search.limit > 0);
   match search.Search.dir with
-    | `Asc  ->
-        let sql = next_query search query in
-        Pgsql_io.Prepared_stmt.kbind
-          conn
-          sql
-          (Pgsql_io.Row_func.map sql ~f)
-          (fun cursor ->
-            let open Abbs_future_combinators.Infix_result_monad in
-            Pgsql_io.Cursor.fetch cursor
-            >>= fun results -> Abb.Future.return (Ok (make_result search results)))
-          (search.Search.limit + 1)
-    | `Desc ->
-        let sql = prev_query search query in
-        Pgsql_io.Prepared_stmt.kbind
-          conn
-          sql
-          (Pgsql_io.Row_func.map sql ~f)
-          (fun cursor ->
-            let open Abbs_future_combinators.Infix_result_monad in
-            Pgsql_io.Cursor.fetch cursor
-            >>= fun results -> Abb.Future.return (Ok (make_result search results)))
-          (search.Search.limit + 1)
+  | `Asc ->
+      let sql = next_query search query in
+      Pgsql_io.Prepared_stmt.kbind
+        conn
+        sql
+        (Pgsql_io.Row_func.map sql ~f)
+        (fun cursor ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          Pgsql_io.Cursor.fetch cursor
+          >>= fun results -> Abb.Future.return (Ok (make_result search results)))
+        (search.Search.limit + 1)
+  | `Desc ->
+      let sql = prev_query search query in
+      Pgsql_io.Prepared_stmt.kbind
+        conn
+        sql
+        (Pgsql_io.Row_func.map sql ~f)
+        (fun cursor ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          Pgsql_io.Cursor.fetch cursor
+          >>= fun results -> Abb.Future.return (Ok (make_result search results)))
+        (search.Search.limit + 1)
 
 let prev search conn query ~f =
   assert (search.Search.cols <> []);
   assert (search.Search.limit > 0);
   match search.Search.dir with
-    | `Asc  ->
-        let sql = prev_query search query in
-        Pgsql_io.Prepared_stmt.kbind
-          conn
-          sql
-          (Pgsql_io.Row_func.map sql ~f)
-          (fun cursor ->
-            let open Abbs_future_combinators.Infix_result_monad in
-            Pgsql_io.Cursor.fetch cursor
-            >>= fun results -> Abb.Future.return (Ok (make_result_rev search results)))
-          (search.Search.limit + 1)
-    | `Desc ->
-        let sql = next_query search query in
-        Pgsql_io.Prepared_stmt.kbind
-          conn
-          sql
-          (Pgsql_io.Row_func.map sql ~f)
-          (fun cursor ->
-            let open Abbs_future_combinators.Infix_result_monad in
-            Pgsql_io.Cursor.fetch cursor
-            >>= fun results -> Abb.Future.return (Ok (make_result_rev search results)))
-          (search.Search.limit + 1)
+  | `Asc ->
+      let sql = prev_query search query in
+      Pgsql_io.Prepared_stmt.kbind
+        conn
+        sql
+        (Pgsql_io.Row_func.map sql ~f)
+        (fun cursor ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          Pgsql_io.Cursor.fetch cursor
+          >>= fun results -> Abb.Future.return (Ok (make_result_rev search results)))
+        (search.Search.limit + 1)
+  | `Desc ->
+      let sql = next_query search query in
+      Pgsql_io.Prepared_stmt.kbind
+        conn
+        sql
+        (Pgsql_io.Row_func.map sql ~f)
+        (fun cursor ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          Pgsql_io.Cursor.fetch cursor
+          >>= fun results -> Abb.Future.return (Ok (make_result_rev search results)))
+        (search.Search.limit + 1)
 
 let results t = t.results
-
 let has_next_page t = t.next_page

@@ -24,20 +24,16 @@ module Make (Fut : Abb_intf.Future.S) = struct
       }
 
     let compute_send_promise fast_count len fast_send_promise =
-      if len >= fast_count then
-        Fut.Promise.create ()
-      else
-        fast_send_promise
+      if len >= fast_count then Fut.Promise.create () else fast_send_promise
 
     let replace_recv_promise_if_aborted t =
       match Fut.state (Fut.Promise.future t.recv_promise) with
-        | `Aborted                 -> t.recv_promise <- Fut.Promise.create ()
-        | `Undet | `Exn _ | `Det _ -> ()
+      | `Aborted -> t.recv_promise <- Fut.Promise.create ()
+      | `Undet | `Exn _ | `Det _ -> ()
 
     let send t msg =
       let open Fut.Infix_monad in
-      if t.closed then
-        Fut.return `Closed
+      if t.closed then Fut.return `Closed
       else if Queue.is_empty t.queue then (
         let promise =
           compute_send_promise t.fast_count (Queue.length t.queue) t.fast_send_promise
@@ -53,8 +49,8 @@ module Make (Fut : Abb_intf.Future.S) = struct
         replace_recv_promise_if_aborted t;
         let recv_promise = t.recv_promise in
         t.recv_promise <- Fut.Promise.create ();
-        Fut.Promise.set recv_promise () >>= fun () -> Fut.Promise.future promise >>| fun v -> `Ok v
-      ) else
+        Fut.Promise.set recv_promise () >>= fun () -> Fut.Promise.future promise >>| fun v -> `Ok v)
+      else
         let promise =
           compute_send_promise t.fast_count (Queue.length t.queue) t.fast_send_promise
         in
@@ -63,23 +59,19 @@ module Make (Fut : Abb_intf.Future.S) = struct
 
     let recv t =
       let open Fut.Infix_monad in
-      if Queue.is_empty t.queue && t.closed then
-        Fut.return `Closed
+      if Queue.is_empty t.queue && t.closed then Fut.return `Closed
       else if not (Queue.is_empty t.queue) then
-        let (msg, promise) = Queue.pop t.queue in
+        let msg, promise = Queue.pop t.queue in
         Fut.Promise.set promise () >>| fun () -> `Ok msg
       else (
         replace_recv_promise_if_aborted t;
         Fut.Promise.future t.recv_promise
         >>= fun () ->
-        if Queue.is_empty t.queue && t.closed then
-          Fut.return `Closed
-        else if Queue.is_empty t.queue then
-          assert false
+        if Queue.is_empty t.queue && t.closed then Fut.return `Closed
+        else if Queue.is_empty t.queue then assert false
         else
-          let (msg, promise) = Queue.pop t.queue in
-          Fut.Promise.set promise () >>| fun () -> `Ok msg
-      )
+          let msg, promise = Queue.pop t.queue in
+          Fut.Promise.set promise () >>| fun () -> `Ok msg)
 
     let close t =
       let open Fut.Infix_monad in
@@ -96,10 +88,9 @@ module Make (Fut : Abb_intf.Future.S) = struct
       >>= fun () ->
       let rec abort_until_empty () =
         if not (Queue.is_empty t.queue) then
-          let (_, promise) = Queue.pop t.queue in
+          let _, promise = Queue.pop t.queue in
           Fut.abort (Fut.Promise.future promise) >>= fun () -> abort_until_empty ()
-        else
-          Fut.return ()
+        else Fut.return ()
       in
       abort_until_empty () >>| fun () -> ()
 
@@ -109,7 +100,7 @@ module Make (Fut : Abb_intf.Future.S) = struct
       Fut.fork
         (Fut.await_map
            (function
-             | `Det ()  -> Fut.Promise.set promise ()
+             | `Det () -> Fut.Promise.set promise ()
              | `Exn exn -> Fut.Promise.set_exn promise exn
              | `Aborted -> Fut.abort (Fut.Promise.future promise))
            (Fut.Promise.future t.closed_promise))
@@ -125,24 +116,18 @@ module Make (Fut : Abb_intf.Future.S) = struct
   module Channel (Q : S) (Msg : Msg) :
     Abb_channel_intf.Make(Fut).S with type t = Msg.t Q.t and type msg = Msg.t = struct
     type msg = Msg.t
-
     type t = msg Q.t
 
     let send = Q.send
-
     let recv = Q.recv
-
     let close = Q.close
-
     let close_with_abort = Q.close_with_abort
-
     let closed = Q.closed
   end
 
   module Abbc = Abb_channel.Make (Fut)
 
   type 'a reader = (Abbc.reader, 'a) Abbc.t
-
   type 'a writer = (Abbc.writer, 'a) Abbc.t
 
   let to_abb_channel (type m) (t : m T.t) =

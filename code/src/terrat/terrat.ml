@@ -41,60 +41,60 @@ end
 
 let server () =
   match Terrat_config.create () with
-    | Ok config -> (
-        let run () =
-          let open Abb.Future.Infix_monad in
-          Terrat_storage.create config
-          >>= fun storage ->
-          Abbs_future_combinators.ignore
-            (Abbs_future_combinators.first
-               (Terrat_server.run config storage)
-               (Terrat_backend_server.run config storage))
-        in
+  | Ok config -> (
+      let run () =
+        let open Abb.Future.Infix_monad in
+        Terrat_storage.create config
+        >>= fun storage ->
+        Abbs_future_combinators.ignore
+          (Abbs_future_combinators.first
+             (Terrat_server.run config storage)
+             (Terrat_backend_server.run config storage))
+      in
 
-        match Abb.Scheduler.run_with_state run with
-          | `Det ()            -> ()
-          | `Aborted           -> assert false
-          | `Exn (exn, bt_opt) ->
-              Logs.err (fun m -> m "%s" (Printexc.to_string exn));
-              CCOpt.iter
-                (fun bt -> Logs.err (fun m -> m "%s" (Printexc.raw_backtrace_to_string bt)))
-                bt_opt;
-              assert false)
-    | Error err ->
-        Logs.err (fun m -> m "CONFIG : ERROR : %s" (Terrat_config.show_err err));
-        exit 1
+      match Abb.Scheduler.run_with_state run with
+      | `Det () -> ()
+      | `Aborted -> assert false
+      | `Exn (exn, bt_opt) ->
+          Logs.err (fun m -> m "%s" (Printexc.to_string exn));
+          CCOpt.iter
+            (fun bt -> Logs.err (fun m -> m "%s" (Printexc.raw_backtrace_to_string bt)))
+            bt_opt;
+          assert false)
+  | Error err ->
+      Logs.err (fun m -> m "CONFIG : ERROR : %s" (Terrat_config.show_err err));
+      exit 1
 
 let migrate () =
   match Terrat_config.create () with
-    | Ok config                         -> (
-        let run () =
-          let open Abb.Future.Infix_monad in
-          Terrat_storage.create config >>= fun storage -> Terrat_migrations.run config storage
-        in
-        match Abb.Scheduler.run_with_state run with
-          | `Det (Ok ()) -> Logs.info (fun m -> m "Migration complete")
-          | `Det (Error (`Migration_err (#Pgsql_io.err as err))) ->
-              Logs.err (fun m -> m "Migration failed");
-              Logs.err (fun m -> m "%s" (Pgsql_io.show_err err));
-              exit 1
-          | `Det (Error (`Migration_err (#Pgsql_pool.err as err))) ->
-              Logs.err (fun m -> m "Migration failed");
-              Logs.err (fun m -> m "%s" (Pgsql_pool.show_err err));
-              exit 1
-          | `Det (Error `Consistency_err) ->
-              Logs.err (fun m -> m "Migration failed - inconsistent migrations");
-              exit 1
-          | `Aborted -> assert false
-          | `Exn (exn, bt_opt) ->
-              Logs.err (fun m -> m "%s" (Printexc.to_string exn));
-              CCOpt.iter
-                (fun bt -> Logs.err (fun m -> m "%s" (Printexc.raw_backtrace_to_string bt)))
-                bt_opt;
-              assert false)
-    | Error (#Terrat_config.err as err) ->
-        Logs.err (fun m -> m "Config file failed to load %s" (Terrat_config.show_err err));
-        exit 1
+  | Ok config -> (
+      let run () =
+        let open Abb.Future.Infix_monad in
+        Terrat_storage.create config >>= fun storage -> Terrat_migrations.run config storage
+      in
+      match Abb.Scheduler.run_with_state run with
+      | `Det (Ok ()) -> Logs.info (fun m -> m "Migration complete")
+      | `Det (Error (`Migration_err (#Pgsql_io.err as err))) ->
+          Logs.err (fun m -> m "Migration failed");
+          Logs.err (fun m -> m "%s" (Pgsql_io.show_err err));
+          exit 1
+      | `Det (Error (`Migration_err (#Pgsql_pool.err as err))) ->
+          Logs.err (fun m -> m "Migration failed");
+          Logs.err (fun m -> m "%s" (Pgsql_pool.show_err err));
+          exit 1
+      | `Det (Error `Consistency_err) ->
+          Logs.err (fun m -> m "Migration failed - inconsistent migrations");
+          exit 1
+      | `Aborted -> assert false
+      | `Exn (exn, bt_opt) ->
+          Logs.err (fun m -> m "%s" (Printexc.to_string exn));
+          CCOpt.iter
+            (fun bt -> Logs.err (fun m -> m "%s" (Printexc.raw_backtrace_to_string bt)))
+            bt_opt;
+          assert false)
+  | Error (#Terrat_config.err as err) ->
+      Logs.err (fun m -> m "Config file failed to load %s" (Terrat_config.show_err err));
+      exit 1
 
 let cmds = Cmdline.[ server_cmd server; migrate_cmd migrate ]
 

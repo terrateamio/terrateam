@@ -5,13 +5,13 @@ let () =
     let open Abb.Future.Infix_monad in
     let dns = Abb_dns.create () in
     (match Abb_dns.nameservers dns with
-      | (`Tcp, nameservers) ->
-          CCList.iter
-            (function
-              | `Plaintext (addr, port) ->
-                  Printf.printf "addr = %s port = %d\n" (Ipaddr.to_string addr) port)
-            nameservers
-      | _                   -> ());
+    | `Tcp, nameservers ->
+        CCList.iter
+          (function
+            | `Plaintext (addr, port) ->
+                Printf.printf "addr = %s port = %d\n" (Ipaddr.to_string addr) port)
+          nameservers
+    | _ -> ());
     (* Abb_dns.getaddrinfo dns Dns.Rr_map.Srv Domain_name.(of_string_exn "_http._tcp.mxtoolbox.com") *)
     Abb_dns.gethostbyname dns Domain_name.(host_exn (of_string_exn "acsl.se."))
     >>= function

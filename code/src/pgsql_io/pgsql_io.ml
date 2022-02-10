@@ -20,7 +20,6 @@ type t = {
 }
 
 let add_expected_frame t frame = t.expected_frames <- frame :: t.expected_frames
-
 let add_expected_frames t frames = t.expected_frames <- List.rev frames @ t.expected_frames
 
 let consume_expected_frames t =
@@ -64,45 +63,44 @@ module Io = struct
       | Ok _ as r -> r
       | Error `E_io | Error `E_no_space | Error (`Unexpected _) ->
           conn.connected <- false;
-          Error `Disconnected
-    ) else
-      Abb.Future.return (Error `Disconnected)
+          Error `Disconnected)
+    else Abb.Future.return (Error `Disconnected)
 
   let rec wait_for_frames conn =
     let open Abb.Future.Infix_monad in
     match Pgsql_codec.Decode.backend_msg conn.decoder ~pos:0 ~len:0 conn.buf with
-      | Ok [] -> (
-          Abbs_io_buffered.read conn.r ~buf:conn.buf ~pos:0 ~len:(Bytes.length conn.buf)
-          >>= function
-          | Ok 0 | Error `E_io | Error (`Unexpected _) ->
-              conn.connected <- false;
-              Abb.Future.return (Error `Disconnected)
-          | Ok n ->
-              (* Printf.printf "Rx = %S\n%!" (Bytes.to_string (Bytes.sub conn.buf 0 n)); *)
-              wait_for_frames'
-                conn
-                (Pgsql_codec.Decode.backend_msg conn.decoder ~pos:0 ~len:n conn.buf))
-      | r     -> wait_for_frames' conn r
+    | Ok [] -> (
+        Abbs_io_buffered.read conn.r ~buf:conn.buf ~pos:0 ~len:(Bytes.length conn.buf)
+        >>= function
+        | Ok 0 | Error `E_io | Error (`Unexpected _) ->
+            conn.connected <- false;
+            Abb.Future.return (Error `Disconnected)
+        | Ok n ->
+            (* Printf.printf "Rx = %S\n%!" (Bytes.to_string (Bytes.sub conn.buf 0 n)); *)
+            wait_for_frames'
+              conn
+              (Pgsql_codec.Decode.backend_msg conn.decoder ~pos:0 ~len:n conn.buf))
+    | r -> wait_for_frames' conn r
 
   and wait_for_frames' conn = function
-    | Ok []      -> wait_for_frames conn
+    | Ok [] -> wait_for_frames conn
     | Ok fs as r ->
         (* List.iter (fun frame -> Printf.printf "Rx %s\n%!" (Pgsql_codec.Frame.Backend.show frame)) fs; *)
         Abb.Future.return r
-    | Error err  -> Abb.Future.return (Error (`Parse_error err))
+    | Error err -> Abb.Future.return (Error (`Parse_error err))
 
   let rec consume_until conn f =
     let open Abbs_future_combinators.Infix_result_monad in
     wait_for_frames conn
     >>= fun received_fs ->
     match CCList.drop_while (fun fr -> not (f fr)) received_fs with
-      | []       -> consume_until conn f
-      | fr :: fs ->
-          (* Printf.printf "fr = %s\n%!" (Pgsql_codec.Frame.Backend.show fr);
-           * List.iter
-           *   (fun frame -> Printf.printf "Fs %s\n%!" (Pgsql_codec.Frame.Backend.show frame))
-           *   fs; *)
-          Abb.Future.return (Ok fs)
+    | [] -> consume_until conn f
+    | fr :: fs ->
+        (* Printf.printf "fr = %s\n%!" (Pgsql_codec.Frame.Backend.show fr);
+         * List.iter
+         *   (fun frame -> Printf.printf "Fs %s\n%!" (Pgsql_codec.Frame.Backend.show frame))
+         *   fs; *)
+        Abb.Future.return (Ok fs)
 
   let reset conn =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -133,24 +131,24 @@ module Io = struct
     let m = CCList.Assoc.get_exn ~eq:Char.equal 'M' msgs in
     let d = CCList.Assoc.get ~eq:Char.equal 'D' msgs in
     match c with
-      | "23000"
-      (* integrity_constraint_violation *)
-      | "23001"
-      (* restrict_violation *)
-      | "23502"
-      (* not_null_violation *)
-      | "23503"
-      (* foreign_key_violation *)
-      | "23505"
-      (* unique_violation *)
-      | "23514"
-      (* check_violation *)
-      | "23P01"
-      (* exclusion_violation *)
-      | "40002"
-      (* transaction_integrity_constraint_violation *)
-      | "40001" (* serialization_failure *) -> `Integrity_err { message = m; detail = d }
-      | _ -> `Unmatching_frame fs
+    | "23000"
+    (* integrity_constraint_violation *)
+    | "23001"
+    (* restrict_violation *)
+    | "23502"
+    (* not_null_violation *)
+    | "23503"
+    (* foreign_key_violation *)
+    | "23505"
+    (* unique_violation *)
+    | "23514"
+    (* check_violation *)
+    | "23P01"
+    (* exclusion_violation *)
+    | "40002"
+    (* transaction_integrity_constraint_violation *)
+    | "40001" (* serialization_failure *) -> `Integrity_err { message = m; detail = d }
+    | _ -> `Unmatching_frame fs
 
   let rec consume_matching conn fs =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -158,18 +156,18 @@ module Io = struct
 
   and match_frames conn fs received_fs =
     match (fs, received_fs) with
-      | ([], _) -> Abb.Future.return (Ok received_fs)
-      | (_, []) -> consume_matching conn fs
-      | (f :: fs, r_f :: r_fs) when f r_f -> match_frames conn fs r_fs
-      | (_, Pgsql_codec.Frame.Backend.NoticeResponse { msgs } :: rfs) ->
-          conn.notice_response msgs;
-          match_frames conn fs rfs
-      | (_, (Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as r_fs)) ->
-          let open Abb.Future.Infix_monad in
-          error_response conn >>= fun _ -> Abb.Future.return (Error (handle_err_frame msgs r_fs))
-      | (_, _) ->
-          let open Abb.Future.Infix_monad in
-          reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame received_fs))
+    | [], _ -> Abb.Future.return (Ok received_fs)
+    | _, [] -> consume_matching conn fs
+    | f :: fs, r_f :: r_fs when f r_f -> match_frames conn fs r_fs
+    | _, Pgsql_codec.Frame.Backend.NoticeResponse { msgs } :: rfs ->
+        conn.notice_response msgs;
+        match_frames conn fs rfs
+    | _, (Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as r_fs) ->
+        let open Abb.Future.Infix_monad in
+        error_response conn >>= fun _ -> Abb.Future.return (Error (handle_err_frame msgs r_fs))
+    | _, _ ->
+        let open Abb.Future.Infix_monad in
+        reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame received_fs))
 end
 
 type frame_err =
@@ -181,8 +179,8 @@ type frame_err =
 
 type sql_parse_err =
   [ `Empty_variable_name
-  | `Unclosed_quote      of string
-  | `Unknown_variable    of string
+  | `Unclosed_quote of string
+  | `Unknown_variable of string
   ]
 [@@deriving show]
 
@@ -210,57 +208,28 @@ module Typed_sql = struct
     type 'a v = string -> 'a t
 
     let make oid f name = { name; oid; f; oid_num = oid.Pgsql_codec_type.Oid.oid }
-
     let make_array oid f name = { name; oid; f; oid_num = oid.Pgsql_codec_type.Oid.array_oid }
-
     let smallint = make Oid.int2 (fun n vs -> Some (string_of_int n) :: vs)
-
     let integer = make Oid.int4 (fun n vs -> Some (Int32.to_string n) :: vs)
-
     let bigint = make Oid.int8 (fun n vs -> Some (Int64.to_string n) :: vs)
-
     let decimal = make Oid.numeric (fun n vs -> Some (Z.to_string n) :: vs)
-
     let numeric = decimal
-
     let real = make Oid.float4 (fun n vs -> Some (string_of_float n) :: vs)
-
     let double = make Oid.float8 (fun n vs -> Some (string_of_float n) :: vs)
-
     let smallserial = smallint
-
     let serial = integer
-
     let bigserial = bigint
-
     let money = make Oid.money (fun n vs -> Some (Int64.to_string n) :: vs)
-
     let text = make Oid.text (fun s vs -> Some s :: vs)
-
     let varchar = make Oid.varchar (fun s vs -> Some s :: vs)
-
     let char = make Oid.char (fun s vs -> Some s :: vs)
-
     let tsquery = make Oid.tsquery (fun s vs -> Some s :: vs)
-
     let uuid = make Oid.uuid (fun uuid vs -> Some (Uuidm.to_string uuid) :: vs)
-
-    let boolean =
-      make Oid.bool (fun b vs ->
-          (if b then
-            Some "true"
-          else
-            Some "false")
-          :: vs)
-
+    let boolean = make Oid.bool (fun b vs -> (if b then Some "true" else Some "false") :: vs)
     let date = make Oid.date (fun s vs -> Some s :: vs)
-
     let time = make Oid.time (fun s vs -> Some s :: vs)
-
     let timestamp = make Oid.timestamp (fun s vs -> Some s :: vs)
-
     let timestamptz = make Oid.timestamptz (fun s vs -> Some s :: vs)
-
     let ud t f = make t.oid (fun v vs -> t.f (f v) vs) t.name
 
     let option t =
@@ -268,8 +237,8 @@ module Typed_sql = struct
         t.oid
         (fun o vs ->
           match o with
-            | None   -> None :: vs
-            | Some v -> t.f v vs)
+          | None -> None :: vs
+          | Some v -> t.f v vs)
         t.name
 
     let array t =
@@ -279,9 +248,9 @@ module Typed_sql = struct
           arr
           |> CCListLabels.map ~f:(fun v ->
                  match t.f v [] with
-                   | [ Some v ] -> v
-                   | [ None ]   -> "null"
-                   | _          -> assert false)
+                 | [ Some v ] -> v
+                 | [ None ] -> "null"
+                 | _ -> assert false)
           |> CCString.concat ","
           |> fun s -> Some ("{" ^ s ^ "}") :: vs)
         t.name
@@ -293,14 +262,14 @@ module Typed_sql = struct
           arr
           |> CCListLabels.map ~f:(fun v ->
                  match t.f v [] with
-                   | [ Some v ] ->
-                       "\""
-                       ^ (v
-                         |> CCString.replace ~which:`All ~sub:"\\" ~by:"\\\\"
-                         |> CCString.replace ~which:`All ~sub:"\"" ~by:"\\\"")
-                       ^ "\""
-                   | [ None ]   -> "null"
-                   | _          -> assert false)
+                 | [ Some v ] ->
+                     "\""
+                     ^ (v
+                       |> CCString.replace ~which:`All ~sub:"\\" ~by:"\\\\"
+                       |> CCString.replace ~which:`All ~sub:"\"" ~by:"\\\"")
+                     ^ "\""
+                 | [ None ] -> "null"
+                 | _ -> assert false)
           |> CCString.concat ","
           |> fun s -> Some ("{" ^ s ^ "}") :: vs)
         t.name
@@ -311,167 +280,144 @@ module Typed_sql = struct
 
     let take_one f = function
       | [] | None :: _ -> None
-      | Some x :: xs   -> CCOpt.map (fun v -> (v, xs)) (f x)
+      | Some x :: xs -> CCOpt.map (fun v -> (v, xs)) (f x)
 
     let smallint = take_one (CCOpt.wrap int_of_string)
-
     let integer = take_one Int32.of_string_opt
-
     let bigint = take_one Int64.of_string_opt
-
     let decimal = take_one (CCOpt.wrap Z.of_string)
-
     let numeric = decimal
-
     let real = take_one (CCOpt.wrap float_of_string)
-
     let double = real
-
     let smallserial = take_one (CCOpt.wrap int_of_string)
-
     let serial = take_one Int32.of_string_opt
-
     let bigserial = take_one Int64.of_string_opt
-
     let money = take_one Int64.of_string_opt
-
     let text = take_one CCOpt.return
-
     let varchar = text
-
     let char = text
-
     let uuid = take_one Uuidm.of_string
 
     let boolean =
       take_one (function
-          | "true" | "t"  -> Some true
+          | "true" | "t" -> Some true
           | "false" | "f" -> Some false
-          | _             -> None)
+          | _ -> None)
 
     let ud f xs = f xs
 
     let option t = function
       | None :: xs -> Some (None, xs)
-      | xs         -> (
+      | xs -> (
           match t xs with
-            | Some (v, xs) -> Some (Some v, xs)
-            | None         -> None)
+          | Some (v, xs) -> Some (Some v, xs)
+          | None -> None)
   end
 
   type ('q, 'qr, 'p, 'pr) t =
     | Sql : ('qr, 'qr, 'pr, 'pr) t
-    | Const    : (('q, 'qr, 'p, 'pr) t * string) -> ('q, 'qr, 'p, 'pr) t
+    | Const : (('q, 'qr, 'p, 'pr) t * string) -> ('q, 'qr, 'p, 'pr) t
     | Variable : (('q, 'a -> 'qr, 'p, 'pr) t * 'a Var.t) -> ('q, 'qr, 'p, 'pr) t
-    | Ret      : (('q, 'qr, 'p, 'a -> 'pr) t * 'a Ret.t) -> ('q, 'qr, 'p, 'pr) t
+    | Ret : (('q, 'qr, 'p, 'a -> 'pr) t * 'a Ret.t) -> ('q, 'qr, 'p, 'pr) t
 
   let sql = Sql
-
   let ( /^ ) t s = Const (t, s)
-
   let ( /% ) t v = Variable (t, v)
-
   let ( // ) t r = Ret (t, r)
 
   let rec concat :
       type q qr p pr qr' pr'. (q, qr, p, pr) t -> (qr, qr', pr, pr') t -> (q, qr', p, pr') t =
    fun t1 t2 ->
     match t2 with
-      | Sql             -> t1
-      | Ret (t, r)      -> Ret (concat t1 t, r)
-      | Const (t, s)    -> Const (concat t1 t, s)
-      | Variable (t, v) -> Variable (concat t1 t, v)
+    | Sql -> t1
+    | Ret (t, r) -> Ret (concat t1 t, r)
+    | Const (t, s) -> Const (concat t1 t, s)
+    | Variable (t, v) -> Variable (concat t1 t, v)
 
   let ( /^^ ) t1 t2 = concat t1 t2
 
   let rec kbind' : type q qr p pr. (string option list -> qr) -> (q, qr, p, pr) t -> q =
    fun k t ->
     match t with
-      | Sql             -> k []
-      | Ret (t, _)      -> kbind' k t
-      | Const (t, s)    -> kbind' k t
-      | Variable (t, v) ->
-          kbind'
-            (fun vs v' ->
-              let ret = v.Var.f v' vs in
-              k ret)
-            t
+    | Sql -> k []
+    | Ret (t, _) -> kbind' k t
+    | Const (t, s) -> kbind' k t
+    | Variable (t, v) ->
+        kbind'
+          (fun vs v' ->
+            let ret = v.Var.f v' vs in
+            k ret)
+          t
 
   let kbind : type q qr p pr. (string option list -> qr) -> (q, qr, p, pr) t -> q =
    fun f t -> kbind' (fun vs -> f (List.rev vs)) t
 
   let rec extract_variables : type q qr p pr. (q, qr, p, pr) t -> string list = function
-    | Sql             -> []
-    | Ret (t, _)      -> extract_variables t
+    | Sql -> []
+    | Ret (t, _) -> extract_variables t
     | Variable (t, v) -> v.Var.name :: extract_variables t
-    | Const (t, s)    -> extract_variables t
+    | Const (t, s) -> extract_variables t
 
   let rec to_query' : type q qr p pr. (q, qr, p, pr) t -> string = function
-    | Sql             -> ""
-    | Ret (t, _)      -> to_query' t
+    | Sql -> ""
+    | Ret (t, _) -> to_query' t
     | Variable (t, _) -> to_query' t
-    | Const (t, s)    ->
+    | Const (t, s) ->
         let str = to_query' t in
-        if str <> "" then
-          str ^ " " ^ s
-        else
-          s
+        if str <> "" then str ^ " " ^ s else s
 
   let read_variable_name str idx len =
     let rec rvn' idx =
       if idx < len then
         match str.[idx] with
-          | ('_' | 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9') as ch -> ch :: rvn' (idx + 1)
-          | _ -> []
-      else
-        []
+        | ('_' | 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9') as ch -> ch :: rvn' (idx + 1)
+        | _ -> []
+      else []
     in
     match rvn' idx with
-      | []   -> Error `Empty_variable_name
-      | name -> Ok (CCString.of_list name)
+    | [] -> Error `Empty_variable_name
+    | name -> Ok (CCString.of_list name)
 
   let rec replace_variables vars query buf idx len =
     if idx < len then (
       match query.[idx] with
-        | ('"' | '\'') as ch ->
-            Buffer.add_char buf ch;
-            consume_until ch vars query buf (idx + 1) len
-        | '\\'               ->
-            Buffer.add_char buf '\\';
-            Buffer.add_char buf query.[idx + 1];
-            replace_variables vars query buf (idx + 2) len
-        | '$'                -> replace_variable_name vars query buf (idx + 1) len
-        | ch                 ->
-            Buffer.add_char buf ch;
-            replace_variables vars query buf (idx + 1) len
-    ) else
-      Ok (Buffer.contents buf)
+      | ('"' | '\'') as ch ->
+          Buffer.add_char buf ch;
+          consume_until ch vars query buf (idx + 1) len
+      | '\\' ->
+          Buffer.add_char buf '\\';
+          Buffer.add_char buf query.[idx + 1];
+          replace_variables vars query buf (idx + 2) len
+      | '$' -> replace_variable_name vars query buf (idx + 1) len
+      | ch ->
+          Buffer.add_char buf ch;
+          replace_variables vars query buf (idx + 1) len)
+    else Ok (Buffer.contents buf)
 
   and consume_until chr vars query buf idx len =
     if idx < len then (
       match query.[idx] with
-        | '\\' ->
-            Buffer.add_char buf '\\';
-            Buffer.add_char buf query.[idx + 1];
-            consume_until chr vars query buf (idx + 2) len
-        | ch when ch = chr ->
-            Buffer.add_char buf ch;
-            replace_variables vars query buf (idx + 1) len
-        | ch ->
-            Buffer.add_char buf ch;
-            consume_until chr vars query buf (idx + 1) len
-    ) else
-      Error (`Unclosed_quote (Buffer.contents buf))
+      | '\\' ->
+          Buffer.add_char buf '\\';
+          Buffer.add_char buf query.[idx + 1];
+          consume_until chr vars query buf (idx + 2) len
+      | ch when ch = chr ->
+          Buffer.add_char buf ch;
+          replace_variables vars query buf (idx + 1) len
+      | ch ->
+          Buffer.add_char buf ch;
+          consume_until chr vars query buf (idx + 1) len)
+    else Error (`Unclosed_quote (Buffer.contents buf))
 
   and replace_variable_name vars query buf idx len =
     let open CCResult.Infix in
     read_variable_name query idx len
     >>= fun name ->
     match CCArray.find_idx (CCString.equal name) vars with
-      | Some (var_idx, _) ->
-          Buffer.add_string buf ("$" ^ CCInt.to_string (var_idx + 1));
-          replace_variables vars query buf (idx + CCString.length name) len
-      | None              -> Error (`Unknown_variable name)
+    | Some (var_idx, _) ->
+        Buffer.add_string buf ("$" ^ CCInt.to_string (var_idx + 1));
+        replace_variables vars query buf (idx + CCString.length name) len
+    | None -> Error (`Unknown_variable name)
 
   let to_query t =
     let query = to_query' t in
@@ -484,10 +430,10 @@ module Typed_sql = struct
       (CCString.length query)
 
   let rec to_data_type_list' : type q qr p pr. (q, qr, p, pr) t -> int32 list = function
-    | Sql             -> []
-    | Ret (t, _)      -> to_data_type_list' t
+    | Sql -> []
+    | Ret (t, _) -> to_data_type_list' t
     | Variable (t, v) -> Int32.of_int v.Var.oid_num :: to_data_type_list' t
-    | Const (t, s)    -> to_data_type_list' t
+    | Const (t, s) -> to_data_type_list' t
 
   let to_data_type_list t = List.rev (to_data_type_list' t)
 end
@@ -499,19 +445,19 @@ module Row_func = struct
       | Ret : (('f, 'a -> 'r) t * 'a Typed_sql.Ret.t) -> ('f, 'r) t
 
     let rec t_of_sql : type q qr f r. (q, qr, f, r) Typed_sql.t -> (f, r) t = function
-      | Typed_sql.Sql             -> Sql
-      | Typed_sql.Ret (t, r)      -> Ret (t_of_sql t, r)
-      | Typed_sql.Const (t, _)    -> t_of_sql t
+      | Typed_sql.Sql -> Sql
+      | Typed_sql.Ret (t, r) -> Ret (t_of_sql t, r)
+      | Typed_sql.Const (t, _) -> t_of_sql t
       | Typed_sql.Variable (t, _) -> t_of_sql t
 
     let rec kbind' : type f r. f -> string option list -> (f, r) t -> r option =
      fun f vs t ->
       match t with
-        | Sql when vs = [] -> Some f
-        | Sql -> None
-        | Ret (t', r) ->
-            let open CCOpt.Infix in
-            r vs >>= fun (v, vs') -> kbind' f vs' t' >>= fun f' -> Some (f' v)
+      | Sql when vs = [] -> Some f
+      | Sql -> None
+      | Ret (t', r) ->
+          let open CCOpt.Infix in
+          r vs >>= fun (v, vs') -> kbind' f vs' t' >>= fun f' -> Some (f' v)
 
     let kbind f data t = kbind' f (List.rev data) t
   end
@@ -529,9 +475,7 @@ module Row_func = struct
     { func; f; init; post_f; fin }
 
   let ignore sql = make sql ~init:() ~f:(fun () -> ()) ~post_f:(fun () () -> ()) ~fin:(fun () -> ())
-
   let fold sql ~init ~f = make sql ~init ~f ~post_f:(fun _ acc -> acc) ~fin:(fun v -> v)
-
   let map sql ~f = make sql ~init:[] ~f:(fun _ -> f) ~post_f:(fun acc fr -> fr :: acc) ~fin:List.rev
 end
 
@@ -610,8 +554,8 @@ module Cursor = struct
 
   and consume_fetch_process_frame conn row_func st fs data =
     match Row_func.F.kbind (row_func.Row_func.f st) data row_func.Row_func.func with
-      | Some fr -> consume_fetch_frames conn row_func (row_func.Row_func.post_f st fr) fs
-      | None    -> Abb.Future.return (Error (`Bad_result data))
+    | Some fr -> consume_fetch_frames conn row_func (row_func.Row_func.post_f st fr) fs
+    | None -> Abb.Future.return (Error (`Bad_result data))
 
   and consume_fetch_end conn row_func st = function
     | [] ->
@@ -650,7 +594,7 @@ module Cursor = struct
           equal CloseComplete;
           (function
           | ReadyForQuery _ -> true
-          | _               -> false);
+          | _ -> false);
         ];
     Io.consume_matching t.conn (consume_expected_frames t.conn)
     >>= fun _ -> Abb.Future.return (Ok ())
@@ -714,7 +658,7 @@ module Prepared_stmt = struct
           equal CloseComplete;
           (function
           | ReadyForQuery _ -> true
-          | _               -> false);
+          | _ -> false);
         ];
     Io.consume_matching t.conn (consume_expected_frames t.conn)
     >>= fun _ -> Abb.Future.return (Ok ())
@@ -841,44 +785,44 @@ let rec create_sm ?tls_config ?passwd ~notice_response ~host ~port ~user databas
         [ Addrinfo_hints.Socket_type Socket_type.Stream; Addrinfo_hints.Family Domain.Inet4 ]
     Abb_intf.Socket.Addrinfo_query.(Host_service (host, string_of_int port))
   >>= function
-  | []     -> Abb.Future.return (Error `Connection_failed)
+  | [] -> Abb.Future.return (Error `Connection_failed)
   | r :: _ -> (
       let addr = r.Abb_intf.Socket.Addrinfo.addr in
       Abb.Socket.Tcp.connect tcp addr
       >>= fun () ->
       match tls_config with
-        | None                       ->
-            let (r, w) = Abbs_io_buffered.Of.of_tcp_socket ~size:4096 tcp in
-            create_sm_perform_login r w ?passwd ~notice_response ~user database
-        | Some (`Require tls_config) ->
-            create_sm_ssl_conn
-              ?passwd
-              ~required:true
-              ~notice_response
-              ~host
-              ~port
-              ~user
-              tls_config
-              tcp
-              database
-        | Some (`Prefer tls_config)  ->
-            create_sm_ssl_conn
-              ?passwd
-              ~required:false
-              ~notice_response
-              ~host
-              ~port
-              ~user
-              tls_config
-              tcp
-              database)
+      | None ->
+          let r, w = Abbs_io_buffered.Of.of_tcp_socket ~size:4096 tcp in
+          create_sm_perform_login r w ?passwd ~notice_response ~user database
+      | Some (`Require tls_config) ->
+          create_sm_ssl_conn
+            ?passwd
+            ~required:true
+            ~notice_response
+            ~host
+            ~port
+            ~user
+            tls_config
+            tcp
+            database
+      | Some (`Prefer tls_config) ->
+          create_sm_ssl_conn
+            ?passwd
+            ~required:false
+            ~notice_response
+            ~host
+            ~port
+            ~user
+            tls_config
+            tcp
+            database)
 
 and create_sm_ssl_conn ?passwd ~required ~notice_response ~host ~port ~user tls_config tcp database
     =
   let open Abbs_future_combinators.Infix_result_monad in
   let buf = Buffer.create 5 in
   let bytes = Io.encode_frame buf Pgsql_codec.Frame.Frontend.SSLRequest in
-  let (r, w) = Abbs_io_buffered.Of.of_tcp_socket ~size:4096 tcp in
+  let r, w = Abbs_io_buffered.Of.of_tcp_socket ~size:4096 tcp in
   Abbs_io_buffered.write w ~bufs:[ Io.write_buf bytes ]
   >>= fun _ ->
   Abbs_io_buffered.flushed w
@@ -888,8 +832,8 @@ and create_sm_ssl_conn ?passwd ~required ~notice_response ~host ~port ~user tls_
   >>= function
   | n when n = 1 && Bytes.get bytes 0 = 'S' -> (
       match Abbs_tls.client_tcp tcp tls_config host with
-        | Ok (r, w) -> create_sm_perform_login r w ?passwd ~notice_response ~user database
-        | Error _   -> failwith "nyi")
+      | Ok (r, w) -> create_sm_perform_login r w ?passwd ~notice_response ~user database
+      | Error _ -> failwith "nyi")
   | n when n = 1 && Bytes.get bytes 0 = 'N' && not required -> failwith "nyi"
   | n when n = 1 && Bytes.get bytes 0 = 'N' && required -> failwith "nyi"
   | _ -> failwith "nyi"
@@ -930,20 +874,20 @@ and create_sm_process_login_frames ?passwd ~user t =
   | AuthenticationCleartextPassword :: fs -> (
       let open Abbs_future_combinators.Infix_result_monad in
       match passwd with
-        | Some password ->
-            Io.send_frame t Pgsql_codec.Frame.Frontend.(PasswordMessage { password })
-            >>= fun () -> create_sm_process_login_frames ?passwd ~user t fs
-        | None          -> failwith "nyi")
+      | Some password ->
+          Io.send_frame t Pgsql_codec.Frame.Frontend.(PasswordMessage { password })
+          >>= fun () -> create_sm_process_login_frames ?passwd ~user t fs
+      | None -> failwith "nyi")
   | AuthenticationMD5Password { salt } :: fs -> (
       let open Abbs_future_combinators.Infix_result_monad in
       match passwd with
-        | Some password ->
-            let passuser = Digest.to_hex (Digest.string (password ^ user)) in
-            let passusersalt = Digest.to_hex (Digest.string (passuser ^ salt)) in
-            let password = "md5" ^ passusersalt in
-            Io.send_frame t Pgsql_codec.Frame.Frontend.(PasswordMessage { password })
-            >>= fun () -> create_sm_process_login_frames ?passwd ~user t fs
-        | None          -> failwith "nyi")
+      | Some password ->
+          let passuser = Digest.to_hex (Digest.string (password ^ user)) in
+          let passusersalt = Digest.to_hex (Digest.string (passuser ^ salt)) in
+          let password = "md5" ^ passusersalt in
+          Io.send_frame t Pgsql_codec.Frame.Frontend.(PasswordMessage { password })
+          >>= fun () -> create_sm_process_login_frames ?passwd ~user t fs
+      | None -> failwith "nyi")
   | ParameterStatus _ :: fs -> create_sm_process_login_frames ?passwd ~user t fs
   | BackendKeyData { pid; secret_key } :: fs ->
       let t = { t with backend_key_data = Backend_key_data.{ pid; secret_key } } in
@@ -992,13 +936,12 @@ let ping t =
     let open Abb.Future.Infix_monad in
     Io.reset t
     >>= function
-    | Ok ()               -> Abb.Future.return true
+    | Ok () -> Abb.Future.return true
     | Error `Disconnected ->
         t.connected <- false;
         Abb.Future.return false
-    | Error _             -> Abb.Future.return true
-  else
-    Abb.Future.return false
+    | Error _ -> Abb.Future.return true
+  else Abb.Future.return false
 
 let tx_commit t =
   let open Abbs_future_combinators.Infix_result_monad in
@@ -1041,7 +984,7 @@ let tx t ~f =
           [ equal (CommandComplete { tag = "BEGIN" }); equal (ReadyForQuery { status = 'T' }) ];
       f ()
       >>= function
-      | Ok _ as r    ->
+      | Ok _ as r ->
           let open Abbs_future_combinators.Infix_result_monad in
           tx_commit t >>= fun _ -> Abb.Future.return r
       | Error _ as r -> tx_rollback t >>= fun _ -> Abb.Future.return r)

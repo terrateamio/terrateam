@@ -33,7 +33,7 @@ let get storage ctx =
   | Ok (_, _, _, iss) -> (
       fetch_env_vars storage iss
       >>= function
-      | Ok secrets                     ->
+      | Ok secrets ->
           let body =
             Terrat_data_backend.Response.Env_var_list.
               { results = secrets; next = None; prev = None }
@@ -48,7 +48,7 @@ let get storage ctx =
           Logs.err (fun m -> m "BACKEND_ENV_VARS : GET : FAILED : %s" (Pgsql_pool.show_err err));
           Abb.Future.return
             (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-      | Error (#Pgsql_io.err as err)   ->
+      | Error (#Pgsql_io.err as err) ->
           Logs.err (fun m -> m "BACKEND_ENV_VARS : GET : FAILED : %s" (Pgsql_io.show_err err));
           Abb.Future.return
             (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))

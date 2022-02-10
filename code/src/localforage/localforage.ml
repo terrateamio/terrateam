@@ -8,19 +8,12 @@ class type create_options =
 class type store =
   object
     method createInstance : create_options Js.t -> store Js.t Js.meth
-
     method dropInstance : unit Abb_fut_js.promise Js.t Js.meth
-
     method setItem : Js.js_string Js.t -> Js.Unsafe.any -> unit Abb_fut_js.promise Js.t Js.meth
-
     method getItem : Js.js_string Js.t -> Js.Unsafe.any Js.opt Abb_fut_js.promise Js.t Js.meth
-
     method removeItem : Js.js_string Js.t -> unit Abb_fut_js.promise Js.t Js.meth
-
     method clear : unit Abb_fut_js.promise Js.t Js.meth
-
     method length : int Abb_fut_js.promise Js.t Js.meth
-
     method keys : Js.js_string Js.js_array Js.t Abb_fut_js.promise Js.t Js.meth
   end
 
@@ -55,9 +48,7 @@ module Typed = struct
     CCOpt.flat_map CCFun.(Js.Unsafe.coerce %> Js.to_string %> t.decode) (Js.Opt.to_option s)
 
   let remove_item t key = Abb_fut_js.unsafe_of_promise (t.store##removeItem (Js.string key))
-
   let clear t = Abb_fut_js.unsafe_of_promise t.store##clear
-
   let length t = Abb_fut_js.unsafe_of_promise t.store##length
 
   let keys t =

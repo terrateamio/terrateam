@@ -16,7 +16,7 @@ module Test_result : sig
     name : string;
     desc : string option;
     duration : Duration.t;
-    res : [ `Ok | `Exn      of exn * Printexc.raw_backtrace option | `Timedout ];
+    res : [ `Ok | `Exn of exn * Printexc.raw_backtrace option | `Timedout ];
   }
 end
 
@@ -26,7 +26,6 @@ module Run_result : sig
   type t
 
   val of_test_results : Test_result.t list -> t
-
   val test_results : t -> Test_result.t list
 end
 
@@ -38,7 +37,7 @@ module Outputter : sig
 
   (** An outputter that writes to a file. The [out_channel] specifies where to
       write the results to. *)
-  val basic_tap : [ `Filename    of string | `Out_channel of out_channel ] -> t
+  val basic_tap : [ `Filename of string | `Out_channel of out_channel ] -> t
 
   (** Takes an environment variable name and a list of tuples mapping a string
       name to an Outputter.  The environment variable will be compared to the

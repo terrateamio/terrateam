@@ -57,16 +57,16 @@ let response_headers = Cohttp.Header.of_list [ ("content-type", "application/jso
 
 let apply v f c =
   match v with
-    | Some v -> f v c
-    | None   -> c
+  | Some v -> f v c
+  | None -> c
 
 let apply_opt_opt v f c =
   (* Because JSON cannot represents ['a option option] we use that is the
      default value if no value was input *)
   match v with
-    | Some None -> c
-    | Some v    -> f v c
-    | None      -> f None c
+  | Some None -> c
+  | Some v -> f v c
+  | None -> f None c
 
 let merge_config_update config config_update =
   let module C = Terrat_data.Response.Config in
@@ -134,7 +134,7 @@ let rec get_config storage installation_id user_id =
         user_id)
   >>= function
   | config :: _ -> Abb.Future.return (Ok config)
-  | []          ->
+  | [] ->
       (* Not there, so insert it and query again *)
       Pgsql_pool.with_conn storage ~f:(fun db ->
           (* Add it with None user as this is really just inserting the defaults *)
@@ -188,7 +188,7 @@ let get config storage github_schema installation_id =
       | Ok () -> (
           get_config storage installation_id user_id
           >>= function
-          | Ok config                      ->
+          | Ok config ->
               let body = config |> Terrat_data.Response.Config.to_yojson |> Yojson.Safe.to_string in
               Abb.Future.return
                 (Ok
@@ -200,7 +200,7 @@ let get config storage github_schema installation_id =
               Abb.Future.return
                 (Ok
                    (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-          | Error (#Pgsql_io.err as err)   ->
+          | Error (#Pgsql_io.err as err) ->
               Logs.err (fun m -> m "CONFIG : GET : ERROR : DB : %s" (Pgsql_io.show_err err));
               Abb.Future.return
                 (Ok
@@ -244,7 +244,7 @@ let put config storage github_schema installation_id installation_config_update 
       | Ok () -> (
           update_config storage installation_id user_id installation_config_update
           >>= function
-          | Ok config                      ->
+          | Ok config ->
               let body = config |> Terrat_data.Response.Config.to_yojson |> Yojson.Safe.to_string in
               Abb.Future.return
                 (Ok
@@ -256,7 +256,7 @@ let put config storage github_schema installation_id installation_config_update 
               Abb.Future.return
                 (Ok
                    (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-          | Error (#Pgsql_io.err as err)   ->
+          | Error (#Pgsql_io.err as err) ->
               Logs.err (fun m -> m "CONFIG : PUT : ERROR : DB : %s" (Pgsql_io.show_err err));
               Abb.Future.return
                 (Ok

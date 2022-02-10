@@ -37,16 +37,13 @@ end
 
 module Pagination = Brtl_pagination.Make (struct
   type elt = Terrat_data.Response.Env_var.t
-
   type t = elt Pgsql_pagination.t
 
   let compare x y =
     CCString.compare x.Terrat_data.Response.Env_var.name y.Terrat_data.Response.Env_var.name
 
   let to_paginate v = [ v.Terrat_data.Response.Env_var.name ]
-
   let has_another_page = Pgsql_pagination.has_next_page
-
   let items = Pgsql_pagination.results
 end)
 
@@ -56,17 +53,15 @@ let validate_name name =
   if
     CCString.length name > 0
     && (match name.[0] with
-         | '0' .. '9' -> false
-         | _          -> true)
+       | '0' .. '9' -> false
+       | _ -> true)
     && CCString.for_all
          (function
            | 'A' .. 'Z' | 'a' .. 'z' | '_' | '0' .. '9' -> true
            | _ -> false)
          name
-  then
-    Ok ()
-  else
-    Error `Invalid_env_name
+  then Ok ()
+  else Error `Invalid_env_name
 
 let store storage installation_id user_id env =
   let module E = Terrat_data.Request.Env_var in
@@ -100,9 +95,9 @@ let perform_get storage installation_id user_id limit prev_name pagination =
         prev_name)
 
 let dispatch_get storage installation_id user_id limit = function
-  | (`Next, prev_name) ->
+  | `Next, prev_name ->
       perform_get storage installation_id user_id limit prev_name Pgsql_pagination.next
-  | (`Prev, prev_name) ->
+  | `Prev, prev_name ->
       perform_get storage installation_id user_id limit prev_name Pgsql_pagination.prev
 
 let get config storage github_schema installation_id limit page =
@@ -122,13 +117,13 @@ let get config storage github_schema installation_id limit page =
           let limit = CCInt.min 100 limit in
           let page =
             match page with
-              | Some ("n", name) -> (`Next, Some name)
-              | Some ("p", name) -> (`Prev, Some name)
-              | Some _ | None    -> (`Next, None)
+            | Some ("n", name) -> (`Next, Some name)
+            | Some ("p", name) -> (`Prev, Some name)
+            | Some _ | None -> (`Next, None)
           in
           dispatch_get storage installation_id user_id limit page
           >>= function
-          | Ok env_vars                    ->
+          | Ok env_vars ->
               let uri = Brtl_ctx.uri ctx in
               let pagination = CCOpt.get_exn_or "pagination" (Pagination.make env_vars uri) in
               let next = CCOpt.map Uri.to_string (Pagination.to_next pagination) in
@@ -149,7 +144,7 @@ let get config storage github_schema installation_id limit page =
               Abb.Future.return
                 (Ok
                    (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-          | Error (#Pgsql_io.err as err)   ->
+          | Error (#Pgsql_io.err as err) ->
               Logs.err (fun m -> m "ENV_VARS : LIST : ERROR : DB : %s" (Pgsql_io.show_err err));
               Abb.Future.return
                 (Ok
@@ -195,20 +190,20 @@ let put config storage github_schema installation_id env =
       | Ok () -> (
           store storage installation_id user_id env
           >>= function
-          | Ok ()                             ->
+          | Ok () ->
               Abb.Future.return
                 (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Created "") ctx))
-          | Error `Invalid_env_name           ->
+          | Error `Invalid_env_name ->
               Logs.err (fun m ->
                   m "ENV_VARS : PUT: ERROR : INVALID_NAME : %s" env.Terrat_data.Request.Env_var.name);
               Abb.Future.return
                 (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx))
-          | Error (#Pgsql_pool.err as err)    ->
+          | Error (#Pgsql_pool.err as err) ->
               Logs.err (fun m -> m "ENV_VARS : PUT : ERROR : DB : %s" (Pgsql_pool.show_err err));
               Abb.Future.return
                 (Ok
                    (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-          | Error (#Pgsql_io.err as err)      ->
+          | Error (#Pgsql_io.err as err) ->
               Logs.err (fun m -> m "ENV_VARS : PUT : ERROR : DB : %s" (Pgsql_io.show_err err));
               Abb.Future.return
                 (Ok
@@ -256,14 +251,14 @@ let delete config storage github_schema installation_id name =
           Pgsql_pool.with_conn storage ~f:(fun db ->
               Pgsql_io.Prepared_stmt.execute db Sql.delete_env installation_id name)
           >>= function
-          | Ok ()                          ->
+          | Ok () ->
               Abb.Future.return (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx))
           | Error (#Pgsql_pool.err as err) ->
               Logs.err (fun m -> m "ENV_VARS : DELETE : ERROR : DB : %s" (Pgsql_pool.show_err err));
               Abb.Future.return
                 (Ok
                    (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-          | Error (#Pgsql_io.err as err)   ->
+          | Error (#Pgsql_io.err as err) ->
               Logs.err (fun m -> m "ENV_VARS : DELETE : ERROR : DB : %s" (Pgsql_io.show_err err));
               Abb.Future.return
                 (Ok

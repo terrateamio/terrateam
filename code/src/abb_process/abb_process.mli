@@ -11,13 +11,9 @@ type check_output_err =
   ]
 
 val pp_output_err : Format.formatter -> output_err -> unit
-
 val show_output_err : output_err -> string
-
 val pp_check_output_err : Format.formatter -> check_output_err -> unit
-
 val show_check_output_err : check_output_err -> string
-
 val args : string -> string list -> Abb_intf.Process.t
 
 module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig

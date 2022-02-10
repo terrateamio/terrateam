@@ -17,16 +17,13 @@ type get_user_installations_err =
   ]
 
 val show_get_access_token_err : get_access_token_err -> string
-
 val pp_get_access_token_err : Format.formatter -> get_access_token_err -> unit
-
 val show_verify_user_installation_access_err : verify_user_installation_access_err -> string
 
 val pp_verify_user_installation_access_err :
   Format.formatter -> verify_user_installation_access_err -> unit
 
 val show_get_user_installations_err : get_user_installations_err -> string
-
 val pp_get_user_installations_err : Format.formatter -> get_user_installations_err -> unit
 
 val create :

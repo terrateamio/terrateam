@@ -8,7 +8,5 @@ let create ?read_header_timeout ?handler_timeout port =
   { port; read_header_timeout; handler_timeout }
 
 let port t = t.port
-
 let read_header_timeout t = t.read_header_timeout
-
 let handler_timeout t = t.handler_timeout

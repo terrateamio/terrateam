@@ -1,12 +1,10 @@
 module Http : module type of Cohttp_abb.Make (Abb)
-
 module Response : Cohttp.S.Response with type t = Cohttp.Response.t
 
 module Encoding : sig
   type t
 
   val fixed : t
-
   val chunked : t
 end
 
@@ -29,13 +27,8 @@ val create_stream :
   t
 
 val version : t -> Cohttp.Code.version
-
 val status : t -> Cohttp.Code.status_code
-
 val body : t -> Http.Response_io.writer -> unit Abb.Future.t
-
 val headers : t -> Cohttp.Header.t
-
 val add_header : string -> string -> t -> t
-
 val response : t -> Response.t

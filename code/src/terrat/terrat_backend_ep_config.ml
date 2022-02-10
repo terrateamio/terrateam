@@ -85,10 +85,10 @@ let rec get_config storage installation_id =
                 })
             installation_id
             None
-      | []          -> assert false)
+      | [] -> assert false)
   >>= function
   | config :: _ -> Abb.Future.return (Ok config)
-  | []          ->
+  | [] ->
       (* Not there, so insert it and query again *)
       Pgsql_pool.with_conn storage ~f:(fun db ->
           (* Add it with None user as this is really just inserting the defaults *)
@@ -108,7 +108,7 @@ let get storage ctx =
   | Ok (_, _, _, installation_id) -> (
       get_config storage installation_id
       >>= function
-      | Ok config                      ->
+      | Ok config ->
           let body =
             config |> Terrat_data_backend.Response.Config.to_yojson |> Yojson.Safe.to_string
           in
@@ -120,7 +120,7 @@ let get storage ctx =
           Logs.err (fun m -> m "CONFIG : GET : ERROR : DB : %s" (Pgsql_pool.show_err err));
           Abb.Future.return
             (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-      | Error (#Pgsql_io.err as err)   ->
+      | Error (#Pgsql_io.err as err) ->
           Logs.err (fun m -> m "CONFIG : GET : ERROR : DB : %s" (Pgsql_io.show_err err));
           Abb.Future.return
             (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))

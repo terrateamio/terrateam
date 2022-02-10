@@ -43,16 +43,13 @@ end
 
 module Pagination = Brtl_pagination.Make (struct
   type elt = Terrat_data.Response.Secret.t
-
   type t = elt Pgsql_pagination.t
 
   let compare x y =
     CCString.compare x.Terrat_data.Response.Secret.name y.Terrat_data.Response.Secret.name
 
   let to_paginate v = [ v.Terrat_data.Response.Secret.name ]
-
   let has_another_page = Pgsql_pagination.has_next_page
-
   let items = Pgsql_pagination.results
 end)
 
@@ -62,17 +59,15 @@ let validate_name name =
   if
     CCString.length name > 0
     && (match name.[0] with
-         | '0' .. '9' -> false
-         | _          -> true)
+       | '0' .. '9' -> false
+       | _ -> true)
     && CCString.for_all
          (function
            | 'A' .. 'Z' | 'a' .. 'z' | '_' | '0' .. '9' -> true
            | _ -> false)
          name
-  then
-    Ok ()
-  else
-    Error `Invalid_secret_name
+  then Ok ()
+  else Error `Invalid_secret_name
 
 let encrypt_and_store storage installation_id user_id secret =
   let module S = Terrat_data.Request.Secret in
@@ -89,36 +84,36 @@ let encrypt_and_store storage installation_id user_id secret =
           >>= function
           | pub_key_pem :: _ -> (
               match X509.Public_key.decode_pem (Cstruct.of_string pub_key_pem) with
-                | Ok (`RSA pub_key) ->
-                    let session_key_plaintext = Mirage_crypto_rng.generate 16 in
-                    let nonce = Mirage_crypto_rng.generate 12 in
-                    let key = Mirage_crypto.Cipher_block.AES.GCM.of_secret session_key_plaintext in
-                    let value_encrypted =
-                      Base64.encode_string
-                        (Cstruct.to_string
-                           (Mirage_crypto.Cipher_block.AES.GCM.authenticate_encrypt
-                              ~key
-                              ~nonce
-                              ~adata:(Cstruct.of_string secret.S.name)
-                              (Cstruct.of_string secret.S.value)))
-                    in
-                    let session_key_encrypted =
-                      Base64.encode_string
-                        (Cstruct.to_string (Encrypter.encrypt ~key:pub_key session_key_plaintext))
-                    in
-                    let nonce_encoded = Base64.encode_string (Cstruct.to_string nonce) in
-                    Pgsql_io.Prepared_stmt.execute
-                      db
-                      Sql.insert_installation_secret
-                      installation_id
-                      secret.S.name
-                      value_encrypted
-                      session_key_encrypted
-                      nonce_encoded
-                      secret.S.is_file
-                      user_id
-                | _                 -> assert false)
-          | _                -> Abb.Future.return (Error `Missing_installation_error)))
+              | Ok (`RSA pub_key) ->
+                  let session_key_plaintext = Mirage_crypto_rng.generate 16 in
+                  let nonce = Mirage_crypto_rng.generate 12 in
+                  let key = Mirage_crypto.Cipher_block.AES.GCM.of_secret session_key_plaintext in
+                  let value_encrypted =
+                    Base64.encode_string
+                      (Cstruct.to_string
+                         (Mirage_crypto.Cipher_block.AES.GCM.authenticate_encrypt
+                            ~key
+                            ~nonce
+                            ~adata:(Cstruct.of_string secret.S.name)
+                            (Cstruct.of_string secret.S.value)))
+                  in
+                  let session_key_encrypted =
+                    Base64.encode_string
+                      (Cstruct.to_string (Encrypter.encrypt ~key:pub_key session_key_plaintext))
+                  in
+                  let nonce_encoded = Base64.encode_string (Cstruct.to_string nonce) in
+                  Pgsql_io.Prepared_stmt.execute
+                    db
+                    Sql.insert_installation_secret
+                    installation_id
+                    secret.S.name
+                    value_encrypted
+                    session_key_encrypted
+                    nonce_encoded
+                    secret.S.is_file
+                    user_id
+              | _ -> assert false)
+          | _ -> Abb.Future.return (Error `Missing_installation_error)))
 
 let perform_get storage installation_id user_id limit prev_name pagination =
   let search =
@@ -137,9 +132,9 @@ let perform_get storage installation_id user_id limit prev_name pagination =
         prev_name)
 
 let dispatch_get storage installation_id user_id limit = function
-  | (`Next, prev_name) ->
+  | `Next, prev_name ->
       perform_get storage installation_id user_id limit prev_name Pgsql_pagination.next
-  | (`Prev, prev_name) ->
+  | `Prev, prev_name ->
       perform_get storage installation_id user_id limit prev_name Pgsql_pagination.prev
 
 let get config storage github_schema installation_id limit page =
@@ -159,13 +154,13 @@ let get config storage github_schema installation_id limit page =
           let limit = CCInt.min 100 limit in
           let page =
             match page with
-              | Some ("n", name) -> (`Next, Some name)
-              | Some ("p", name) -> (`Prev, Some name)
-              | Some _ | None    -> (`Next, None)
+            | Some ("n", name) -> (`Next, Some name)
+            | Some ("p", name) -> (`Prev, Some name)
+            | Some _ | None -> (`Next, None)
           in
           dispatch_get storage installation_id user_id limit page
           >>= function
-          | Ok secrets                     ->
+          | Ok secrets ->
               let uri = Brtl_ctx.uri ctx in
               let pagination = CCOpt.get_exn_or "pagination" (Pagination.make secrets uri) in
               let next = CCOpt.map Uri.to_string (Pagination.to_next pagination) in
@@ -186,7 +181,7 @@ let get config storage github_schema installation_id limit page =
               Abb.Future.return
                 (Ok
                    (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-          | Error (#Pgsql_io.err as err)   ->
+          | Error (#Pgsql_io.err as err) ->
               Logs.err (fun m -> m "SECRETS : LIST : ERROR : DB : %s" (Pgsql_io.show_err err));
               Abb.Future.return
                 (Ok
@@ -230,22 +225,22 @@ let put config storage github_schema installation_id secret =
       | Ok () -> (
           encrypt_and_store storage installation_id user_id secret
           >>= function
-          | Ok ()                             ->
+          | Ok () ->
               Abb.Future.return
                 (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Created "") ctx))
-          | Error `Invalid_secret_name        ->
+          | Error `Invalid_secret_name ->
               Logs.err (fun m ->
                   m
                     "SECRETS : PUT: ERROR : INVALID_NAME : %s"
                     secret.Terrat_data.Request.Secret.name);
               Abb.Future.return
                 (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx))
-          | Error (#Pgsql_pool.err as err)    ->
+          | Error (#Pgsql_pool.err as err) ->
               Logs.err (fun m -> m "SECRETS : PUT : ERROR : DB : %s" (Pgsql_pool.show_err err));
               Abb.Future.return
                 (Ok
                    (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-          | Error (#Pgsql_io.err as err)      ->
+          | Error (#Pgsql_io.err as err) ->
               Logs.err (fun m -> m "SECRETS : PUT : ERROR : DB : %s" (Pgsql_io.show_err err));
               Abb.Future.return
                 (Ok
@@ -293,14 +288,14 @@ let delete config storage github_schema installation_id name =
           Pgsql_pool.with_conn storage ~f:(fun db ->
               Pgsql_io.Prepared_stmt.execute db Sql.delete_secret installation_id name)
           >>= function
-          | Ok ()                          ->
+          | Ok () ->
               Abb.Future.return (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx))
           | Error (#Pgsql_pool.err as err) ->
               Logs.err (fun m -> m "SECRETS : DELETE : ERROR : DB : %s" (Pgsql_pool.show_err err));
               Abb.Future.return
                 (Ok
                    (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-          | Error (#Pgsql_io.err as err)   ->
+          | Error (#Pgsql_io.err as err) ->
               Logs.err (fun m -> m "SECRETS : DELETE : ERROR : DB : %s" (Pgsql_io.show_err err));
               Abb.Future.return
                 (Ok

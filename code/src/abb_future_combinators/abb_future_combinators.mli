@@ -91,7 +91,7 @@ module Make (Fut : Abb_intf.Future.S) : sig
 
   (** Wait for a future to complete and if it does not in a specified time,
      abort it *)
-  val timeout : timeout:unit Fut.t -> 'a Fut.t -> [ `Ok      of 'a | `Timeout ] Fut.t
+  val timeout : timeout:unit Fut.t -> 'a Fut.t -> [ `Ok of 'a | `Timeout ] Fut.t
 
   (** Retry an operation multiple times, running a program between failures.
       [times] must be greater than 0. *)
@@ -103,11 +103,8 @@ module Make (Fut : Abb_intf.Future.S) : sig
 
   module List : sig
     val map : f:('a -> 'b Fut.t) -> 'a list -> 'b list Fut.t
-
     val fold_left : f:('a -> 'b -> 'a Fut.t) -> init:'a -> 'b list -> 'a Fut.t
-
     val iter : f:('a -> unit Fut.t) -> 'a list -> unit Fut.t
-
     val filter : f:('a -> bool Fut.t) -> 'a list -> 'a list Fut.t
   end
 
@@ -118,7 +115,6 @@ module Make (Fut : Abb_intf.Future.S) : sig
       f:('a -> 'b -> ('a, 'e) result Fut.t) -> init:'a -> 'b list -> ('a, 'e) result Fut.t
 
     val iter : f:('a -> (unit, 'e) result Fut.t) -> 'a list -> (unit, 'e) result Fut.t
-
     val filter : f:('a -> (bool, 'e) result Fut.t) -> 'a list -> ('a list, 'e) result Fut.t
   end
 
@@ -126,7 +122,6 @@ module Make (Fut : Abb_intf.Future.S) : sig
     type ('a, 'b) t = ('a, 'b) result Fut.t
 
     val ( >>= ) : ('a, 'c) t -> ('a -> ('b, 'c) t) -> ('b, 'c) t
-
     val ( >>| ) : ('a, 'c) t -> ('a -> 'b) -> ('b, 'c) t
   end
 end

@@ -1,17 +1,10 @@
 let health_rt () = Brtl_rtng.Route.(rel / "health")
-
 let assets_rt () = Brtl_rtng.Route.(rel / "assets" /% Path.string)
-
 let index_rt () = Brtl_rtng.Route.(rel / "index.html")
-
 let cookies_rt () = Brtl_rtng.Route.(rel / "cookies.html")
-
 let privacy_rt () = Brtl_rtng.Route.(rel / "privacy.html")
-
 let terms_rt () = Brtl_rtng.Route.(rel / "terms.html")
-
 let root_rt () = Brtl_rtng.Route.(rel / "")
-
 let github_rt () = Brtl_rtng.Route.(rel / "github")
 
 let github_callback_rt () =
@@ -22,24 +15,17 @@ let github_callback_rt () =
     /? Query.(option (ud "installation_id" (CCOpt.wrap Int64.of_string))))
 
 let github_events_rt () = Brtl_rtng.Route.(github_rt () / "events")
-
 let api_v1_rt () = Brtl_rtng.Route.(rel / "api" / "v1")
-
 let api_v1_404_rt () = Brtl_rtng.Route.(api_v1_rt () /% Path.any)
-
 let logout_rt () = Brtl_rtng.Route.(api_v1_rt () / "logout")
-
 let whoami_rt () = Brtl_rtng.Route.(api_v1_rt () / "whoami")
-
 let user_rt () = Brtl_rtng.Route.(api_v1_rt () / "user")
 
 let user_update_rt () =
   Brtl_rtng.Route.(user_rt () /* Body.decode ~json:Terrat_data.Request.User_prefs.of_yojson ())
 
 let user_sessions_rt () = Brtl_rtng.Route.(user_rt () / "sessions")
-
 let oauth_config_rt () = Brtl_rtng.Route.(api_v1_rt () / "oauth" / "config")
-
 let installations_rt () = Brtl_rtng.Route.(api_v1_rt () / "installations")
 
 let installation_rt () =
@@ -50,7 +36,7 @@ let secrets_rt () = Brtl_rtng.Route.(installation_rt () / "secrets")
 let secrets_list_rt () =
   let pagination = function
     | [ direction; name ] -> Some (direction, name)
-    | _                   -> None
+    | _ -> None
   in
   Brtl_rtng.Route.(
     secrets_rt ()
@@ -67,7 +53,7 @@ let env_vars_rt () = Brtl_rtng.Route.(installation_rt () / "env-vars")
 let env_vars_list_rt () =
   let pagination = function
     | [ direction; name ] -> Some (direction, name)
-    | _                   -> None
+    | _ -> None
   in
   Brtl_rtng.Route.(
     env_vars_rt ()
@@ -85,7 +71,6 @@ let config_set_rt () =
   Brtl_rtng.Route.(config_rt () /* Body.decode ~json:Terrat_data.Request.Config.of_yojson ())
 
 let terraform_rt () = Brtl_rtng.Route.(api_v1_rt () / "terraform")
-
 let terraform_versions_rt () = Brtl_rtng.Route.(terraform_rt () / "versions")
 
 let feedback_rt () =
@@ -166,13 +151,13 @@ let run config storage =
       Logs.info (fun m -> m "Starting server");
       Brtl.run cfg mw (rtng config storage schema dns)
       >>| function
-      | Ok ()            -> ()
+      | Ok () -> ()
       | Error (`Exn exn) ->
           Logs.err (fun m -> m "%s" (Printexc.to_string exn));
           ()
-      | Error _          ->
+      | Error _ ->
           Logs.err (fun m -> m "Failed to run server for some reason");
           ())
-  | Error _   ->
+  | Error _ ->
       Logs.err (fun m -> m "Failed to load frontend github schema");
       Abb.Future.return ()

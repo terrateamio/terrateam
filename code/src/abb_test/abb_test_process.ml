@@ -12,8 +12,8 @@ module Make (Abb : Abb_intf.S) = struct
           Abb_intf.Process.{ exec_name = "true"; args = []; env = None; cwd = None }
         in
         match Abb.Process.spawn init_args [] with
-          | Ok t    -> Abb.Process.wait t >>= fun _ -> Abb.Future.return ()
-          | Error _ -> failwith "process error")
+        | Ok t -> Abb.Process.wait t >>= fun _ -> Abb.Future.return ()
+        | Error _ -> failwith "process error")
 
   let test = Oth_abb.serial [ process_test ]
 end

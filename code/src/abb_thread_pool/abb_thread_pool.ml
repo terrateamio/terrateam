@@ -1,7 +1,5 @@
 type 'a f = unit -> 'a
-
 type ('a, 'b) trigger = 'a -> ('b, exn * Printexc.raw_backtrace option) result -> unit
-
 type work = Work : ('b * 'a f * ('b, 'a) trigger) -> work
 
 type 'a t = {
@@ -24,9 +22,8 @@ let rec thread (work_queue, mutex, cond, shutdown) =
        let v = f () in
        trigger wait_token (Ok v)
      with exn -> trigger wait_token (Error (exn, Some (Printexc.get_raw_backtrace ()))));
-    thread (work_queue, mutex, cond, shutdown)
-  ) else
-    Mutex.unlock mutex
+    thread (work_queue, mutex, cond, shutdown))
+  else Mutex.unlock mutex
 
 let rec create_threads work_queue mutex cond shutdown = function
   | 0 -> ()

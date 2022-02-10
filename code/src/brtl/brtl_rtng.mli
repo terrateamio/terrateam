@@ -63,7 +63,6 @@ module Route : sig
   (** Extractions for the body. *)
   module Body : sig
     type 'a t
-
     type 'a v
 
     (* Extract a value based o its key and convert it *)
@@ -148,5 +147,4 @@ end
 type t
 
 val create : default:Handler.t -> (Method.t * Handler.t Route.Route.t) list -> t
-
 val route : (string, unit) Brtl_ctx.t -> t -> Handler.t

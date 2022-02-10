@@ -8,7 +8,6 @@ module Key_combo : sig
   type t
 
   val of_list : string list -> t
-
   val compare : t -> t -> int
 end
 
@@ -16,7 +15,6 @@ module Key_map : sig
   type 'a t
 
   val of_list : (Key_combo.t * 'a) list -> 'a t
-
   val get : Key_combo.t -> 'a t -> 'a option
 end
 

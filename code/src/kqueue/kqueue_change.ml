@@ -16,16 +16,16 @@ module Action = struct
       | Error
 
     let to_ushort = function
-      | Add      -> Stubs.ev_add
-      | Enable   -> Stubs.ev_enable
-      | Disable  -> Stubs.ev_disable
+      | Add -> Stubs.ev_add
+      | Enable -> Stubs.ev_enable
+      | Disable -> Stubs.ev_disable
       | Dispatch -> Stubs.ev_dispatch
-      | Delete   -> Stubs.ev_delete
-      | Receipt  -> Stubs.ev_receipt
-      | Oneshot  -> Stubs.ev_oneshot
-      | Clear    -> Stubs.ev_clear
-      | Eof      -> Stubs.ev_eof
-      | Error    -> Stubs.ev_error
+      | Delete -> Stubs.ev_delete
+      | Receipt -> Stubs.ev_receipt
+      | Oneshot -> Stubs.ev_oneshot
+      | Clear -> Stubs.ev_clear
+      | Eof -> Stubs.ev_eof
+      | Error -> Stubs.ev_error
   end
 
   type t = Unsigned.UShort.t
@@ -96,13 +96,13 @@ module Filter = struct
   end
 
   type t =
-    | Read   of Read.t
-    | Write  of Write.t
-    | Vnode  of Vnode.t
-    | Proc   of Proc.t
+    | Read of Read.t
+    | Write of Write.t
+    | Vnode of Vnode.t
+    | Proc of Proc.t
     | Signal of Signal.t
-    | Timer  of Timer.t
-    | User   of User.t
+    | Timer of Timer.t
+    | User of User.t
 
   let set kevent ~ident ~filter ~flags ~fflags ~data ~udata =
     C.setf kevent Stubs.Kevent.ident ident;
@@ -113,7 +113,7 @@ module Filter = struct
     C.setf kevent Stubs.Kevent.udata udata
 
   let set_kevent kevent action = function
-    | Read read     ->
+    | Read read ->
         set
           kevent
           ~ident:(C.Uintptr.of_int read)
@@ -122,7 +122,7 @@ module Filter = struct
           ~fflags:Unsigned.UInt.zero
           ~data:C.Intptr.zero
           ~udata:C.Uintptr.zero
-    | Write write   ->
+    | Write write ->
         set
           kevent
           ~ident:(C.Uintptr.of_int write)
@@ -131,7 +131,7 @@ module Filter = struct
           ~fflags:Unsigned.UInt.zero
           ~data:C.Intptr.zero
           ~udata:C.Uintptr.zero
-    | Vnode vnode   ->
+    | Vnode vnode ->
         set
           kevent
           ~ident:(C.Uintptr.of_int vnode.Vnode.descr)
@@ -140,7 +140,7 @@ module Filter = struct
           ~fflags:vnode.Vnode.flags
           ~data:C.Intptr.zero
           ~udata:C.Uintptr.zero
-    | Proc proc     ->
+    | Proc proc ->
         set
           kevent
           ~ident:(C.Uintptr.of_int proc.Proc.pid)
@@ -158,7 +158,7 @@ module Filter = struct
           ~fflags:Unsigned.UInt.zero
           ~data:C.Intptr.zero
           ~udata:C.Uintptr.zero
-    | Timer timer   ->
+    | Timer timer ->
         set
           kevent
           ~ident:(C.Uintptr.of_int timer.Timer.id)
@@ -167,7 +167,7 @@ module Filter = struct
           ~fflags:timer.Timer.unit
           ~data:(C.Intptr.of_int timer.Timer.time)
           ~udata:C.Uintptr.zero
-    | User user     ->
+    | User user ->
         set
           kevent
           ~ident:(C.Uintptr.of_int user.User.id)
