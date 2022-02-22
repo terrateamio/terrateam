@@ -52,12 +52,11 @@ module Additional_properties : sig
   module Make (P : Primary) (A : Additional) : sig
     type t [@@deriving yojson, show]
 
+    val make : ?additional:A.t String_map.t -> P.t -> t
     val value : t -> P.t
-
     val additional : t -> A.t String_map.t
   end
 end
 
 val one_of : (Yojson.Safe.t -> ('a, string) result) list -> Yojson.Safe.t -> ('a, string) result
-
 val any_of : (Yojson.Safe.t -> ('a, string) result) list -> Yojson.Safe.t -> ('a, string) result

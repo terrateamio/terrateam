@@ -45,6 +45,7 @@ module Additional_properties = struct
         (`Assoc
           (CCList.map (fun (name, v) -> (name, A.to_yojson v)) (String_map.to_list additional)))
 
+    let make ?(additional = String_map.empty) primary = { primary; additional }
     let value { primary; _ } = primary
     let additional { additional; _ } = additional
   end

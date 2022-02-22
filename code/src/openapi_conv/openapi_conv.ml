@@ -231,7 +231,15 @@ let field_default_of_value = function
       Some Ast_helper.(Exp.construct (Location.mknoloc (Gen.ident [ Bool.to_string b ])) None)
   | `Float fl -> Some Ast_helper.(Exp.constant (Const.float (CCFloat.to_string fl)))
   | `Int int -> Some Ast_helper.(Exp.constant (Const.integer (CCInt.to_string int)))
-  | `List _ -> (* TODO: Handle list *) None
+  | `List [] -> Some Json_schema_conv.Gen.(make_list [])
+  | `List (`String _ :: _ as v) ->
+      Some
+        Json_schema_conv.Gen.(
+          make_list
+            (CCList.map
+               (fun s -> Ast_helper.(Exp.constant (Const.string s)))
+               (Yojson.Safe.Util.filter_string v)))
+  | `List _ -> (* TODO: Add more *) None
   | json -> failwith (Printf.sprintf "Unknown field default value: %s" (Yojson.Safe.to_string json))
 
 let record_field_attrs schema name required =

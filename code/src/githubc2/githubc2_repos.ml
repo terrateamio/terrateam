@@ -5097,7 +5097,7 @@ module Create_webhook = struct
     type t = {
       active : bool; [@default true]
       config : Config.t option; [@default None]
-      events : Events.t;
+      events : Events.t; [@default [ "push" ]]
       name : string option; [@default None]
     }
     [@@deriving yojson { strict = true; meta = true }, show]
@@ -5239,7 +5239,7 @@ module Update_webhook = struct
         active : bool; [@default true]
         add_events : Add_events.t option; [@default None]
         config : Config.t option; [@default None]
-        events : Events.t;
+        events : Events.t; [@default [ "push" ]]
         remove_events : Remove_events.t option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show]

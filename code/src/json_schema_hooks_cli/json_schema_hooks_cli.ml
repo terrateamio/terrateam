@@ -55,7 +55,13 @@ let field_name_of_schema s =
   | s when CCString.prefix ~pre:"@" s -> CCString.drop_while (( = ) '@') s ^ "_"
   | "+1" -> "plus_one"
   | "-1" -> "minus_one"
-  | s -> s
+  | s -> (
+      s
+      |> CCString.replace ~sub:"-" ~by:"_"
+      |> CCString.replace ~sub:"$" ~by:"_"
+      |> function
+      | s when CCString.prefix ~pre:"_" s -> CCString.drop_while (( = ) '_') s ^ "_"
+      | s -> s)
 
 let field_default_of_value =
   let module Gen = Json_schema_conv.Gen in
@@ -66,7 +72,15 @@ let field_default_of_value =
         Ast_helper.(Exp.construct (Location.mknoloc (Gen.ident [ Bool.to_string b ])) None)
   | `Float fl -> Gen.field_default Ast_helper.(Exp.constant (Const.float (CCFloat.to_string fl)))
   | `Int int -> Gen.field_default Ast_helper.(Exp.constant (Const.integer (CCInt.to_string int)))
-  | `List _ -> (* TODO: Handle list *) []
+  | `List [] -> Gen.(field_default (make_list []))
+  | `List (`String _ :: _ as v) ->
+      Gen.(
+        field_default
+          (make_list
+             (CCList.map
+                (fun s -> Ast_helper.(Exp.constant (Const.string s)))
+                (Yojson.Safe.Util.filter_string v))))
+  | `List _ -> (* TODO: Add more *) []
   | json -> failwith (Printf.sprintf "Unknown field default value: %s" (Yojson.Safe.to_string json))
 
 let rec resolve_ref definitions ref_ =

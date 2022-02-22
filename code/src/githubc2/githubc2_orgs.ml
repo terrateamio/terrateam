@@ -561,7 +561,7 @@ module Create_webhook = struct
       type t = {
         active : bool; [@default true]
         config : Config.t;
-        events : Events.t;
+        events : Events.t; [@default [ "push" ]]
         name : string;
       }
       [@@deriving yojson { strict = false; meta = true }, show]
@@ -689,7 +689,7 @@ module Update_webhook = struct
       type t = {
         active : bool; [@default true]
         config : Config.t option; [@default None]
-        events : Events.t;
+        events : Events.t; [@default [ "push" ]]
         name : string option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show]
