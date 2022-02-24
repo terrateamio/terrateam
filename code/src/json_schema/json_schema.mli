@@ -50,7 +50,11 @@ module Additional_properties : sig
   end
 
   module Make (P : Primary) (A : Additional) : sig
-    type t [@@deriving yojson, show]
+    type t = {
+      primary : P.t;
+      additional : A.t String_map.t;
+    }
+    [@@deriving yojson, show]
 
     val make : ?additional:A.t String_map.t -> P.t -> t
     val value : t -> P.t
