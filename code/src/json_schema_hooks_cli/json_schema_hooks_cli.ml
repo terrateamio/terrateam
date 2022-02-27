@@ -168,7 +168,8 @@ let convert_definitions definitions =
                                        deriving [ yojson_deriver (); show_deriver ])
                                    ~record_type_attrs:(fun strict ->
                                      Json_schema_conv.Gen.(
-                                       deriving [ yojson_deriver ~strict (); show_deriver ]))
+                                       deriving
+                                         [ yojson_deriver ~strict (); make_deriver; show_deriver ]))
                                    ~record_field_attrs:(fun schema name required ->
                                      let field_name = field_name_of_schema name in
                                      CCList.flatten

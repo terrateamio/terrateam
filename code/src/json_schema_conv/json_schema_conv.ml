@@ -839,7 +839,7 @@ let rec convert_str_schema (config : Config.t) =
   | {
       S.typ = Some "object";
       properties;
-      additional_properties = Additional_properties.V (Value.V additional_schema);
+      additional_properties = Additional_properties.V additional_schema;
       _;
     } as schema ->
       let is_empty = String_map.is_empty properties in
@@ -858,12 +858,18 @@ let rec convert_str_schema (config : Config.t) =
                      (Mod.structure
                         (convert_str_schema Config.(set_strict false (tidx_reset config)) schema))));
             ]);
+          (match additional_schema with
+          | Value.V additional_schema ->
+              [
+                Ast_helper.(
+                  Str.module_
+                    (Mb.mk
+                       (Location.mknoloc (Some "Additional"))
+                       (Mod.structure
+                          (convert_str_schema (Config.tidx_reset config) additional_schema))));
+              ]
+          | Value.Ref _ -> []);
           [
-            Ast_helper.(
-              Str.module_
-                (Mb.mk
-                   (Location.mknoloc (Some "Additional"))
-                   (Mod.structure (convert_str_schema (Config.tidx_reset config) additional_schema))));
             Ast_helper.(
               Str.include_
                 (Incl.mk
@@ -877,7 +883,12 @@ let rec convert_str_schema (config : Config.t) =
                                (Gen.ident
                                   (if is_empty then [ "Json_schema"; "Empty_obj" ]
                                   else [ "Primary" ])))))
-                      (Mod.ident (Location.mknoloc (Gen.ident [ "Additional" ]))))));
+                      (Mod.ident
+                         (Location.mknoloc
+                            (Gen.ident
+                               (match additional_schema with
+                               | Value.V _ -> [ "Additional" ]
+                               | Value.Ref ref_ -> Config.module_name_of_ref config ref_)))))));
           ];
         ]
   | { S.typ = Some "object"; properties; _ } when String_map.is_empty properties ->
