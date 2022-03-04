@@ -33,7 +33,7 @@ module Create_in_org = struct
         is_template : bool; [@default false]
         license_template : string option; [@default None]
         name : string;
-        private_ : bool; [@default false]
+        private_ : bool; [@default false] [@key "private"]
         team_id : int option; [@default None]
         visibility : Visibility.t option; [@default None]
       }
@@ -126,7 +126,7 @@ module List_for_org = struct
       page : int; [@default 1]
       per_page : int; [@default 30]
       sort : Sort.t; [@default "created"]
-      type_ : Type.t option; [@default None]
+      type_ : Type.t option; [@default None] [@key "type"]
     }
     [@@deriving make, show]
   end
@@ -233,7 +233,7 @@ module Update = struct
         homepage : string option; [@default None]
         is_template : bool; [@default false]
         name : string option; [@default None]
-        private_ : bool; [@default false]
+        private_ : bool; [@default false] [@key "private"]
         security_and_analysis : Security_and_analysis.t option; [@default None]
         visibility : Visibility.t option; [@default None]
       }
@@ -3548,7 +3548,7 @@ module Get_commit = struct
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
-      ref_ : string;
+      ref_ : string; [@key "ref"]
       repo : string;
     }
     [@@deriving make, show]
@@ -3615,7 +3615,7 @@ module Get_combined_status_for_ref = struct
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
-      ref_ : string;
+      ref_ : string; [@key "ref"]
       repo : string;
     }
     [@@deriving make, show]
@@ -3667,7 +3667,7 @@ module List_commit_statuses_for_ref = struct
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
-      ref_ : string;
+      ref_ : string; [@key "ref"]
       repo : string;
     }
     [@@deriving make, show]
@@ -4096,7 +4096,7 @@ module Get_content = struct
     type t = {
       owner : string;
       path : string;
-      ref_ : string option; [@default None]
+      ref_ : string option; [@default None] [@key "ref"]
       repo : string;
     }
     [@@deriving make, show]
@@ -4283,7 +4283,7 @@ module Create_deployment = struct
         environment : string; [@default "production"]
         payload : Payload.t option; [@default None]
         production_environment : bool option; [@default None]
-        ref_ : string;
+        ref_ : string; [@key "ref"]
         required_contexts : Required_contexts.t option; [@default None]
         task : string; [@default "deploy"]
         transient_environment : bool; [@default false]
@@ -4349,7 +4349,7 @@ module List_deployments = struct
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
-      ref_ : string; [@default "none"]
+      ref_ : string; [@default "none"] [@key "ref"]
       repo : string;
       sha : string; [@default "none"]
       task : string; [@default "none"]
@@ -4835,7 +4835,8 @@ module Create_or_update_environment = struct
         module Primary = struct
           type t = {
             id : int option; [@default None]
-            type_ : Githubc2_components.Deployment_reviewer_type.t option; [@default None]
+            type_ : Githubc2_components.Deployment_reviewer_type.t option;
+                [@default None] [@key "type"]
           }
           [@@deriving yojson { strict = false; meta = true }, show]
         end
@@ -6959,7 +6960,7 @@ module Get_readme = struct
   module Parameters = struct
     type t = {
       owner : string;
-      ref_ : string option; [@default None]
+      ref_ : string option; [@default None] [@key "ref"]
       repo : string;
     }
     [@@deriving make, show]
@@ -7013,7 +7014,7 @@ module Get_readme_in_directory = struct
     type t = {
       dir : string;
       owner : string;
-      ref_ : string option; [@default None]
+      ref_ : string option; [@default None] [@key "ref"]
       repo : string;
     }
     [@@deriving make, show]
@@ -8030,7 +8031,7 @@ module Download_tarball_archive = struct
   module Parameters = struct
     type t = {
       owner : string;
-      ref_ : string;
+      ref_ : string; [@key "ref"]
       repo : string;
     }
     [@@deriving make, show]
@@ -8579,7 +8580,7 @@ module Download_zipball_archive = struct
   module Parameters = struct
     type t = {
       owner : string;
-      ref_ : string;
+      ref_ : string; [@key "ref"]
       repo : string;
     }
     [@@deriving make, show]
@@ -8626,7 +8627,7 @@ module Create_using_template = struct
         include_all_branches : bool; [@default false]
         name : string;
         owner : string option; [@default None]
-        private_ : bool; [@default false]
+        private_ : bool; [@default false] [@key "private"]
       }
       [@@deriving yojson { strict = false; meta = true }, show]
     end
@@ -8726,7 +8727,7 @@ module Create_for_authenticated_user = struct
         is_template : bool; [@default false]
         license_template : string option; [@default None]
         name : string;
-        private_ : bool; [@default false]
+        private_ : bool; [@default false] [@key "private"]
         team_id : int option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show]
@@ -8846,7 +8847,7 @@ module List_for_authenticated_user = struct
       per_page : int; [@default 30]
       since : string option; [@default None]
       sort : Sort.t; [@default "full_name"]
-      type_ : Type.t; [@default "all"]
+      type_ : Type.t; [@default "all"] [@key "type"]
       visibility : Visibility.t; [@default "all"]
     }
     [@@deriving make, show]
@@ -9103,7 +9104,7 @@ module List_for_user = struct
       page : int; [@default 1]
       per_page : int; [@default 30]
       sort : Sort.t; [@default "full_name"]
-      type_ : Type.t; [@default "owner"]
+      type_ : Type.t; [@default "owner"] [@key "type"]
       username : string;
     }
     [@@deriving make, show]

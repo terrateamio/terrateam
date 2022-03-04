@@ -58,6 +58,8 @@ end
 module Empty_obj = struct
   type t = unit
 
+  let t = ()
+
   let of_yojson = function
     | `Assoc _ -> Ok ()
     | _ -> Error "not an object"

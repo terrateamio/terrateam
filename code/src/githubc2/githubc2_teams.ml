@@ -327,7 +327,7 @@ module Create_discussion_in_org = struct
     module Primary = struct
       type t = {
         body : string;
-        private_ : bool; [@default false]
+        private_ : bool; [@default false] [@key "private"]
         title : string;
       }
       [@@deriving yojson { strict = false; meta = true }, show]
@@ -1685,7 +1685,7 @@ module Create_discussion_legacy = struct
     module Primary = struct
       type t = {
         body : string;
-        private_ : bool; [@default false]
+        private_ : bool; [@default false] [@key "private"]
         title : string;
       }
       [@@deriving yojson { strict = false; meta = true }, show]

@@ -280,7 +280,7 @@ module List_matching_refs = struct
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
-      ref_ : string;
+      ref_ : string; [@key "ref"]
       repo : string;
     }
     [@@deriving make, show]
@@ -321,7 +321,7 @@ module Get_ref = struct
   module Parameters = struct
     type t = {
       owner : string;
-      ref_ : string;
+      ref_ : string; [@key "ref"]
       repo : string;
     }
     [@@deriving make, show]
@@ -377,7 +377,7 @@ module Create_ref = struct
     module Primary = struct
       type t = {
         key : string option; [@default None]
-        ref_ : string;
+        ref_ : string; [@key "ref"]
         sha : string;
       }
       [@@deriving yojson { strict = false; meta = true }, show]
@@ -425,7 +425,7 @@ module Update_ref = struct
   module Parameters = struct
     type t = {
       owner : string;
-      ref_ : string;
+      ref_ : string; [@key "ref"]
       repo : string;
     }
     [@@deriving make, show]
@@ -486,7 +486,7 @@ module Delete_ref = struct
   module Parameters = struct
     type t = {
       owner : string;
-      ref_ : string;
+      ref_ : string; [@key "ref"]
       repo : string;
     }
     [@@deriving make, show]
@@ -564,10 +564,10 @@ module Create_tag = struct
 
       type t = {
         message : string;
-        object_ : string;
+        object_ : string; [@key "object"]
         tag : string;
         tagger : Tagger.t option; [@default None]
-        type_ : Type.t;
+        type_ : Type.t; [@key "type"]
       }
       [@@deriving yojson { strict = false; meta = true }, show]
     end
@@ -700,7 +700,7 @@ module Create_tree = struct
               mode : Mode.t option; [@default None]
               path : string option; [@default None]
               sha : string option; [@default None]
-              type_ : Type.t option; [@default None]
+              type_ : Type.t option; [@default None] [@key "type"]
             }
             [@@deriving yojson { strict = false; meta = true }, show]
           end

@@ -26,6 +26,8 @@ end
 module Empty_obj : sig
   type t [@@deriving yojson, show]
 
+  val t : t
+
   module Yojson_meta : sig
     val keys : string list
   end

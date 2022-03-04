@@ -4,7 +4,7 @@ module List_alerts_for_repo = struct
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
-      ref_ : string option; [@default None]
+      ref_ : string option; [@default None] [@key "ref"]
       repo : string;
       state : Githubc2_components.Code_scanning_alert_state.t option; [@default None]
       tool_guid : string option;
@@ -231,7 +231,7 @@ module List_alert_instances = struct
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
-      ref_ : string option; [@default None]
+      ref_ : string option; [@default None] [@key "ref"]
       repo : string;
     }
     [@@deriving make, show]
@@ -307,7 +307,7 @@ module List_recent_analyses = struct
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
-      ref_ : string option; [@default None]
+      ref_ : string option; [@default None] [@key "ref"]
       repo : string;
       sarif_id : string option; [@default None]
       tool_guid : string option;
@@ -537,7 +537,7 @@ module Upload_sarif = struct
       type t = {
         checkout_uri : string option; [@default None]
         commit_sha : string;
-        ref_ : string;
+        ref_ : string; [@key "ref"]
         sarif : string;
         started_at : string option; [@default None]
         tool_name : string option; [@default None]

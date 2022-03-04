@@ -216,7 +216,7 @@ module Get_audit_log = struct
     type t = {
       after : string option; [@default None]
       before : string option; [@default None]
-      include_ : Include.t option; [@default None]
+      include_ : Include.t option; [@default None] [@key "include"]
       order : Order.t option; [@default None]
       org : string;
       page : int; [@default 1]

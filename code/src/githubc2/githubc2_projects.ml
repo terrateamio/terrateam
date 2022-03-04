@@ -895,7 +895,7 @@ module Update = struct
         body : string option; [@default None]
         name : string option; [@default None]
         organization_permission : Organization_permission.t option; [@default None]
-        private_ : bool option; [@default None]
+        private_ : bool option; [@default None] [@key "private"]
         state : string option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show]

@@ -1083,7 +1083,7 @@ module Get_audit_log = struct
       after : string option; [@default None]
       before : string option; [@default None]
       enterprise : string;
-      include_ : Include.t option; [@default None]
+      include_ : Include.t option; [@default None] [@key "include"]
       order : Order.t option; [@default None]
       page : int; [@default 1]
       per_page : int; [@default 30]
@@ -1151,7 +1151,7 @@ module Provision_and_invite_enterprise_group = struct
       end
 
       type t = {
-        displayname : string;
+        displayname : string; [@key "displayName"]
         members : Members.t option; [@default None]
         schemas : Schemas.t;
       }
@@ -1191,9 +1191,9 @@ module List_provisioned_groups_enterprise = struct
     type t = {
       count : int option; [@default None]
       enterprise : string;
-      excludedattributes : string option; [@default None]
+      excludedattributes : string option; [@default None] [@key "excludedAttributes"]
       filter : string option; [@default None]
-      startindex : int option; [@default None]
+      startindex : int option; [@default None] [@key "startIndex"]
     }
     [@@deriving make, show]
   end
@@ -1316,7 +1316,7 @@ module Update_attribute_for_enterprise_group = struct
       end
 
       type t = {
-        operations : Operations.t;
+        operations : Operations.t; [@key "Operations"]
         schemas : Schemas.t;
       }
       [@@deriving yojson { strict = false; meta = true }, show]
@@ -1414,7 +1414,7 @@ module Set_information_for_provisioned_enterprise_group = struct
       end
 
       type t = {
-        displayname : string;
+        displayname : string; [@key "displayName"]
         members : Members.t option; [@default None]
         schemas : Schemas.t;
       }
@@ -1456,7 +1456,7 @@ module Get_provisioning_information_for_enterprise_group = struct
   module Parameters = struct
     type t = {
       enterprise : string;
-      excludedattributes : string option; [@default None]
+      excludedattributes : string option; [@default None] [@key "excludedAttributes"]
       scim_group_id : string;
     }
     [@@deriving make, show]
@@ -1504,7 +1504,7 @@ module Provision_and_invite_enterprise_user = struct
           module Primary = struct
             type t = {
               primary : bool;
-              type_ : string;
+              type_ : string; [@key "type"]
               value : string;
             }
             [@@deriving yojson { strict = false; meta = true }, show]
@@ -1532,8 +1532,8 @@ module Provision_and_invite_enterprise_user = struct
       module Name = struct
         module Primary = struct
           type t = {
-            familyname : string;
-            givenname : string;
+            familyname : string; [@key "familyName"]
+            givenname : string; [@key "givenName"]
           }
           [@@deriving yojson { strict = false; meta = true }, show]
         end
@@ -1550,7 +1550,7 @@ module Provision_and_invite_enterprise_user = struct
         groups : Groups.t option; [@default None]
         name : Name.t;
         schemas : Schemas.t;
-        username : string;
+        username : string; [@key "userName"]
       }
       [@@deriving yojson { strict = false; meta = true }, show]
     end
@@ -1589,7 +1589,7 @@ module List_provisioned_identities_enterprise = struct
       count : int option; [@default None]
       enterprise : string;
       filter : string option; [@default None]
-      startindex : int option; [@default None]
+      startindex : int option; [@default None] [@key "startIndex"]
     }
     [@@deriving make, show]
   end
@@ -1649,7 +1649,7 @@ module Update_attribute_for_enterprise_user = struct
       end
 
       type t = {
-        operations : Operations.t;
+        operations : Operations.t; [@key "Operations"]
         schemas : Schemas.t;
       }
       [@@deriving yojson { strict = false; meta = true }, show]
@@ -1735,7 +1735,7 @@ module Set_information_for_provisioned_enterprise_user = struct
           module Primary = struct
             type t = {
               primary : bool;
-              type_ : string;
+              type_ : string; [@key "type"]
               value : string;
             }
             [@@deriving yojson { strict = false; meta = true }, show]
@@ -1763,8 +1763,8 @@ module Set_information_for_provisioned_enterprise_user = struct
       module Name = struct
         module Primary = struct
           type t = {
-            familyname : string;
-            givenname : string;
+            familyname : string; [@key "familyName"]
+            givenname : string; [@key "givenName"]
           }
           [@@deriving yojson { strict = false; meta = true }, show]
         end
@@ -1781,7 +1781,7 @@ module Set_information_for_provisioned_enterprise_user = struct
         groups : Groups.t option; [@default None]
         name : Name.t;
         schemas : Schemas.t;
-        username : string;
+        username : string; [@key "userName"]
       }
       [@@deriving yojson { strict = false; meta = true }, show]
     end

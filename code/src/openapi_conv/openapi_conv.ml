@@ -16,13 +16,13 @@ module Parameter = struct
     allow_empty_value : bool; [@default false]
     schema : Schema.t;
   }
-  [@@deriving yojson { strict = false }, show]
+  [@@deriving yojson { strict = false }]
 
-  type t = t_ Value.t [@@deriving yojson, show]
+  type t = t_ Value.t [@@deriving yojson]
 end
 
 module Media_type = struct
-  type t = { schema : Schema.t } [@@deriving yojson { strict = false }, show]
+  type t = { schema : Schema.t } [@@deriving yojson { strict = false }]
 end
 
 module Request_body = struct
@@ -31,16 +31,16 @@ module Request_body = struct
     content : Media_type.t Properties.t;
     required : bool; [@default false]
   }
-  [@@deriving yojson { strict = false }, show]
+  [@@deriving yojson { strict = false }]
 
-  type t = t_ Value.t [@@deriving yojson, show]
+  type t = t_ Value.t [@@deriving yojson]
 end
 
 module Response = struct
   type t_ = { content : Media_type.t Properties.t [@default String_map.empty] }
-  [@@deriving yojson { strict = false }, show]
+  [@@deriving yojson { strict = false }]
 
-  type t = t_ Value.t [@@deriving yojson, show]
+  type t = t_ Value.t [@@deriving yojson]
 end
 
 module Operation = struct
@@ -52,7 +52,7 @@ module Operation = struct
     request_body : Request_body.t option; [@default None] [@key "requestBody"]
     responses : Response.t Properties.t;
   }
-  [@@deriving yojson { strict = false }, show]
+  [@@deriving yojson { strict = false }]
 end
 
 module Path = struct
@@ -66,7 +66,7 @@ module Path = struct
     patch : Operation.t option; [@default None]
     parameters : Parameter.t list Value.t option; [@default None]
   }
-  [@@deriving yojson { strict = false }, show]
+  [@@deriving yojson { strict = false }]
 end
 
 module Components = struct
@@ -76,7 +76,7 @@ module Components = struct
     parameters : Parameter.t Properties.t; [@default String_map.empty]
     request_bodies : Request_body.t Properties.t; [@default String_map.empty] [@key "requestBodies"]
   }
-  [@@deriving yojson { strict = false }, show]
+  [@@deriving yojson { strict = false }]
 end
 
 module Document = struct
@@ -84,7 +84,7 @@ module Document = struct
     paths : Path.t Properties.t;
     components : Components.t;
   }
-  [@@deriving yojson { strict = false }, show]
+  [@@deriving yojson { strict = false }]
 end
 
 let module_name_of_string s =
@@ -243,21 +243,25 @@ let field_default_of_value = function
   | json -> failwith (Printf.sprintf "Unknown field default value: %s" (Yojson.Safe.to_string json))
 
 let record_field_attrs schema name required =
-  match schema.Schema.default with
-  | Some default when schema.Schema.nullable ->
-      CCOpt.map_or
-        ~default:[]
-        (fun default ->
-          Gen.field_default
-            (Ast_helper.Exp.construct (Location.mknoloc (Gen.ident [ "Some" ])) (Some default)))
-        (field_default_of_value default)
-  | Some default ->
-      CCOpt.map_or
-        ~default:[]
-        (fun default -> Gen.field_default default)
-        (field_default_of_value default)
-  | None when not (String_set.mem name required) -> Gen.field_default_none
-  | None -> []
+  CCList.flatten
+    [
+      (match schema.Schema.default with
+      | Some default when schema.Schema.nullable ->
+          CCOpt.map_or
+            ~default:[]
+            (fun default ->
+              Gen.field_default
+                (Ast_helper.Exp.construct (Location.mknoloc (Gen.ident [ "Some" ])) (Some default)))
+            (field_default_of_value default)
+      | Some default ->
+          CCOpt.map_or
+            ~default:[]
+            (fun default -> Gen.field_default default)
+            (field_default_of_value default)
+      | None when not (String_set.mem name required) -> Gen.field_default_none
+      | None -> []);
+      (if CCString.equal (field_name_of_schema name) name then [] else Gen.yojson_key_name name);
+    ]
 
 let request_param_of_op_params components param_in params =
   let params =
@@ -744,13 +748,7 @@ let convert_str_document output_base { Document.paths; components } =
          ~prim_type_attrs:Gen.(deriving [ yojson_deriver (); show_deriver ])
          ~record_type_attrs:(fun strict ->
            Gen.(deriving [ yojson_deriver ~strict (); show_deriver ]))
-         ~record_field_attrs:(fun schema name required ->
-           let field_name = field_name_of_schema name in
-           CCList.flatten
-             [
-               (if CCString.equal field_name name then [] else Gen.yojson_key_name name);
-               record_field_attrs schema name required;
-             ])
+         ~record_field_attrs
          ~resolve_ref:(resolve_schema_ref components)
          ())
       components

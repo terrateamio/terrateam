@@ -105,7 +105,7 @@ module File_commit = struct
         end
 
         type t = {
-          links_ : Links_.t option; [@key "_links"] [@default None]
+          links_ : Links_.t option; [@default None] [@key "_links"]
           download_url : string option; [@default None]
           git_url : string option; [@default None]
           html_url : string option; [@default None]
@@ -113,7 +113,7 @@ module File_commit = struct
           path : string option; [@default None]
           sha : string option; [@default None]
           size : int option; [@default None]
-          type_ : string option; [@key "type"] [@default None]
+          type_ : string option; [@default None] [@key "type"]
           url : string option; [@default None]
         }
         [@@deriving yojson { strict = false; meta = true }, show]
@@ -211,7 +211,7 @@ module Branch_restriction_policy = struct
                 site_admin : bool option; [@default None]
                 starred_url : string option; [@default None]
                 subscriptions_url : string option; [@default None]
-                type_ : string option; [@key "type"] [@default None]
+                type_ : string option; [@default None] [@key "type"]
                 url : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show]
@@ -303,7 +303,7 @@ module Branch_restriction_policy = struct
             site_admin : bool option; [@default None]
             starred_url : string option; [@default None]
             subscriptions_url : string option; [@default None]
-            type_ : string option; [@key "type"] [@default None]
+            type_ : string option; [@default None] [@key "type"]
             url : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show]
@@ -765,9 +765,9 @@ module Actions_billing_usage = struct
     module Minutes_used_breakdown = struct
       module Primary = struct
         type t = {
-          macos : int option; [@key "MACOS"] [@default None]
-          ubuntu : int option; [@key "UBUNTU"] [@default None]
-          windows : int option; [@key "WINDOWS"] [@default None]
+          macos : int option; [@default None] [@key "MACOS"]
+          ubuntu : int option; [@default None] [@key "UBUNTU"]
+          windows : int option; [@default None] [@key "WINDOWS"]
         }
         [@@deriving yojson { strict = false; meta = true }, show]
       end
@@ -930,7 +930,7 @@ module Scim_enterprise_user = struct
         module Primary = struct
           type t = {
             primary : bool option; [@default None]
-            type_ : string option; [@key "type"] [@default None]
+            type_ : string option; [@default None] [@key "type"]
             value : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show]
@@ -959,9 +959,9 @@ module Scim_enterprise_user = struct
       module Primary = struct
         type t = {
           created : string option; [@default None]
-          lastmodified : string option; [@key "lastModified"] [@default None]
+          lastmodified : string option; [@default None] [@key "lastModified"]
           location : string option; [@default None]
-          resourcetype : string option; [@key "resourceType"] [@default None]
+          resourcetype : string option; [@default None] [@key "resourceType"]
         }
         [@@deriving yojson { strict = false; meta = true }, show]
       end
@@ -972,8 +972,8 @@ module Scim_enterprise_user = struct
     module Name = struct
       module Primary = struct
         type t = {
-          familyname : string option; [@key "familyName"] [@default None]
-          givenname : string option; [@key "givenName"] [@default None]
+          familyname : string option; [@default None] [@key "familyName"]
+          givenname : string option; [@default None] [@key "givenName"]
         }
         [@@deriving yojson { strict = false; meta = true }, show]
       end
@@ -988,13 +988,13 @@ module Scim_enterprise_user = struct
     type t = {
       active : bool option; [@default None]
       emails : Emails.t option; [@default None]
-      externalid : string option; [@key "externalId"] [@default None]
+      externalid : string option; [@default None] [@key "externalId"]
       groups : Groups.t option; [@default None]
       id : string;
       meta : Meta.t option; [@default None]
       name : Name.t option; [@default None]
       schemas : Schemas.t;
-      username : string option; [@key "userName"] [@default None]
+      username : string option; [@default None] [@key "userName"]
     }
     [@@deriving yojson { strict = false; meta = true }, show]
   end
@@ -1413,7 +1413,7 @@ module Scim_user_list_enterprise = struct
               module Primary = struct
                 type t = {
                   primary : bool option; [@default None]
-                  type_ : string option; [@key "type"] [@default None]
+                  type_ : string option; [@default None] [@key "type"]
                   value : string option; [@default None]
                 }
                 [@@deriving yojson { strict = false; meta = true }, show]
@@ -1442,9 +1442,9 @@ module Scim_user_list_enterprise = struct
             module Primary = struct
               type t = {
                 created : string option; [@default None]
-                lastmodified : string option; [@key "lastModified"] [@default None]
+                lastmodified : string option; [@default None] [@key "lastModified"]
                 location : string option; [@default None]
-                resourcetype : string option; [@key "resourceType"] [@default None]
+                resourcetype : string option; [@default None] [@key "resourceType"]
               }
               [@@deriving yojson { strict = false; meta = true }, show]
             end
@@ -1455,8 +1455,8 @@ module Scim_user_list_enterprise = struct
           module Name = struct
             module Primary = struct
               type t = {
-                familyname : string option; [@key "familyName"] [@default None]
-                givenname : string option; [@key "givenName"] [@default None]
+                familyname : string option; [@default None] [@key "familyName"]
+                givenname : string option; [@default None] [@key "givenName"]
               }
               [@@deriving yojson { strict = false; meta = true }, show]
             end
@@ -1471,13 +1471,13 @@ module Scim_user_list_enterprise = struct
           type t = {
             active : bool option; [@default None]
             emails : Emails.t option; [@default None]
-            externalid : string option; [@key "externalId"] [@default None]
+            externalid : string option; [@default None] [@key "externalId"]
             groups : Groups.t option; [@default None]
             id : string;
             meta : Meta.t option; [@default None]
             name : Name.t option; [@default None]
             schemas : Schemas.t;
-            username : string option; [@key "userName"] [@default None]
+            username : string option; [@default None] [@key "userName"]
           }
           [@@deriving yojson { strict = false; meta = true }, show]
         end
@@ -2033,9 +2033,9 @@ module Scim_user = struct
       module Primary = struct
         type t = {
           created : string option; [@default None]
-          lastmodified : string option; [@key "lastModified"] [@default None]
+          lastmodified : string option; [@default None] [@key "lastModified"]
           location : string option; [@default None]
-          resourcetype : string option; [@key "resourceType"] [@default None]
+          resourcetype : string option; [@default None] [@key "resourceType"]
         }
         [@@deriving yojson { strict = false; meta = true }, show]
       end
@@ -2129,7 +2129,7 @@ module Scim_user = struct
 
     type t = {
       active : bool;
-      displayname : string option; [@key "displayName"] [@default None]
+      displayname : string option; [@default None] [@key "displayName"]
       emails : Emails.t;
       externalid : string option; [@key "externalId"]
       groups : Groups.t option; [@default None]
@@ -2641,7 +2641,7 @@ module Scim_group_list_enterprise = struct
             module Items = struct
               module Primary = struct
                 type t = {
-                  ref_ : string option; [@key "$ref"] [@default None]
+                  ref_ : string option; [@default None] [@key "$ref"]
                   display : string option; [@default None]
                   value : string option; [@default None]
                 }
@@ -2658,9 +2658,9 @@ module Scim_group_list_enterprise = struct
             module Primary = struct
               type t = {
                 created : string option; [@default None]
-                lastmodified : string option; [@key "lastModified"] [@default None]
+                lastmodified : string option; [@default None] [@key "lastModified"]
                 location : string option; [@default None]
-                resourcetype : string option; [@key "resourceType"] [@default None]
+                resourcetype : string option; [@default None] [@key "resourceType"]
               }
               [@@deriving yojson { strict = false; meta = true }, show]
             end
@@ -2673,8 +2673,8 @@ module Scim_group_list_enterprise = struct
           end
 
           type t = {
-            displayname : string option; [@key "displayName"] [@default None]
-            externalid : string option; [@key "externalId"] [@default None]
+            displayname : string option; [@default None] [@key "displayName"]
+            externalid : string option; [@default None] [@key "externalId"]
             id : string;
             members : Members.t option; [@default None]
             meta : Meta.t option; [@default None]
@@ -2845,7 +2845,7 @@ module Git_tree = struct
             path : string option; [@default None]
             sha : string option; [@default None]
             size : int option; [@default None]
-            type_ : string option; [@key "type"] [@default None]
+            type_ : string option; [@default None] [@key "type"]
             url : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show]
@@ -2887,7 +2887,7 @@ module Runner = struct
           type t = {
             id : int option; [@default None]
             name : string option; [@default None]
-            type_ : Type.t option; [@key "type"] [@default None]
+            type_ : Type.t option; [@default None] [@key "type"]
           }
           [@@deriving yojson { strict = false; meta = true }, show]
         end
@@ -2964,10 +2964,10 @@ module Api_overview = struct
     module Ssh_key_fingerprints = struct
       module Primary = struct
         type t = {
-          sha256_dsa : string option; [@key "SHA256_DSA"] [@default None]
-          sha256_ecdsa : string option; [@key "SHA256_ECDSA"] [@default None]
-          sha256_ed25519 : string option; [@key "SHA256_ED25519"] [@default None]
-          sha256_rsa : string option; [@key "SHA256_RSA"] [@default None]
+          sha256_dsa : string option; [@default None] [@key "SHA256_DSA"]
+          sha256_ecdsa : string option; [@default None] [@key "SHA256_ECDSA"]
+          sha256_ed25519 : string option; [@default None] [@key "SHA256_ED25519"]
+          sha256_rsa : string option; [@default None] [@key "SHA256_RSA"]
         }
         [@@deriving yojson { strict = false; meta = true }, show]
       end
@@ -3060,7 +3060,7 @@ module Scim_enterprise_group = struct
       module Items = struct
         module Primary = struct
           type t = {
-            ref_ : string option; [@key "$ref"] [@default None]
+            ref_ : string option; [@default None] [@key "$ref"]
             display : string option; [@default None]
             value : string option; [@default None]
           }
@@ -3077,9 +3077,9 @@ module Scim_enterprise_group = struct
       module Primary = struct
         type t = {
           created : string option; [@default None]
-          lastmodified : string option; [@key "lastModified"] [@default None]
+          lastmodified : string option; [@default None] [@key "lastModified"]
           location : string option; [@default None]
-          resourcetype : string option; [@key "resourceType"] [@default None]
+          resourcetype : string option; [@default None] [@key "resourceType"]
         }
         [@@deriving yojson { strict = false; meta = true }, show]
       end
@@ -3092,8 +3092,8 @@ module Scim_enterprise_group = struct
     end
 
     type t = {
-      displayname : string option; [@key "displayName"] [@default None]
-      externalid : string option; [@key "externalId"] [@default None]
+      displayname : string option; [@default None] [@key "displayName"]
+      externalid : string option; [@default None] [@key "externalId"]
       id : string;
       members : Members.t option; [@default None]
       meta : Meta.t option; [@default None]
@@ -4200,9 +4200,9 @@ module Workflow_run_usage = struct
         end
 
         type t = {
-          macos : MACOS.t option; [@key "MACOS"] [@default None]
-          ubuntu : UBUNTU.t option; [@key "UBUNTU"] [@default None]
-          windows : WINDOWS.t option; [@key "WINDOWS"] [@default None]
+          macos : MACOS.t option; [@default None] [@key "MACOS"]
+          ubuntu : UBUNTU.t option; [@default None] [@key "UBUNTU"]
+          windows : WINDOWS.t option; [@default None] [@key "WINDOWS"]
         }
         [@@deriving yojson { strict = false; meta = true }, show]
       end
@@ -4346,9 +4346,9 @@ module Workflow_usage = struct
         end
 
         type t = {
-          macos : MACOS.t option; [@key "MACOS"] [@default None]
-          ubuntu : UBUNTU.t option; [@key "UBUNTU"] [@default None]
-          windows : WINDOWS.t option; [@key "WINDOWS"] [@default None]
+          macos : MACOS.t option; [@default None] [@key "MACOS"]
+          ubuntu : UBUNTU.t option; [@default None] [@key "UBUNTU"]
+          windows : WINDOWS.t option; [@default None] [@key "WINDOWS"]
         }
         [@@deriving yojson { strict = false; meta = true }, show]
       end
@@ -4497,8 +4497,8 @@ module Audit_log_event = struct
     end
 
     type t = {
-      timestamp_ : int option; [@key "@timestamp"] [@default None]
-      document_id_ : string option; [@key "_document_id"] [@default None]
+      timestamp_ : int option; [@default None] [@key "@timestamp"]
+      document_id_ : string option; [@default None] [@key "_document_id"]
       action : string option; [@default None]
       active : bool option; [@default None]
       active_was : bool option; [@default None]
@@ -4581,7 +4581,7 @@ module Scim_error = struct
       documentation_url : string option; [@default None]
       message : string option; [@default None]
       schemas : Schemas.t option; [@default None]
-      scimtype : string option; [@key "scimType"] [@default None]
+      scimtype : string option; [@default None] [@key "scimType"]
       status : int option; [@default None]
     }
     [@@deriving yojson { strict = false; meta = true }, show]
@@ -5464,7 +5464,7 @@ module Project = struct
       number : int;
       organization_permission : Organization_permission.t option; [@default None]
       owner_url : string;
-      private_ : bool option; [@key "private"] [@default None]
+      private_ : bool option; [@default None] [@key "private"]
       state : string;
       updated_at : string;
       url : string;
@@ -5978,7 +5978,7 @@ module Repository = struct
               site_admin : bool option; [@default None]
               starred_url : string option; [@default None]
               subscriptions_url : string option; [@default None]
-              type_ : string option; [@key "type"] [@default None]
+              type_ : string option; [@default None] [@key "type"]
               url : string option; [@default None]
             }
             [@@deriving yojson { strict = false; meta = true }, show]
@@ -6066,7 +6066,7 @@ module Repository = struct
           open_issues_count : int option; [@default None]
           owner : Owner.t option; [@default None]
           permissions : Permissions.t option; [@default None]
-          private_ : bool option; [@key "private"] [@default None]
+          private_ : bool option; [@default None] [@key "private"]
           pulls_url : string option; [@default None]
           pushed_at : string option; [@default None]
           releases_url : string option; [@default None]
@@ -6165,7 +6165,7 @@ module Repository = struct
       organization : Nullable_simple_user.t option; [@default None]
       owner : Simple_user.t;
       permissions : Permissions.t option; [@default None]
-      private_ : bool; [@key "private"] [@default false]
+      private_ : bool; [@default false] [@key "private"]
       pulls_url : string;
       pushed_at : string option;
       releases_url : string;
@@ -6302,7 +6302,7 @@ module Team_project = struct
       organization_permission : string option; [@default None]
       owner_url : string;
       permissions : Permissions.t;
-      private_ : bool option; [@key "private"] [@default None]
+      private_ : bool option; [@default None] [@key "private"]
       state : string;
       updated_at : string;
       url : string;
@@ -6351,7 +6351,7 @@ module Nullable_repository = struct
               site_admin : bool option; [@default None]
               starred_url : string option; [@default None]
               subscriptions_url : string option; [@default None]
-              type_ : string option; [@key "type"] [@default None]
+              type_ : string option; [@default None] [@key "type"]
               url : string option; [@default None]
             }
             [@@deriving yojson { strict = false; meta = true }, show]
@@ -6439,7 +6439,7 @@ module Nullable_repository = struct
           open_issues_count : int option; [@default None]
           owner : Owner.t option; [@default None]
           permissions : Permissions.t option; [@default None]
-          private_ : bool option; [@key "private"] [@default None]
+          private_ : bool option; [@default None] [@key "private"]
           pulls_url : string option; [@default None]
           pushed_at : string option; [@default None]
           releases_url : string option; [@default None]
@@ -6538,7 +6538,7 @@ module Nullable_repository = struct
       organization : Nullable_simple_user.t option; [@default None]
       owner : Simple_user.t;
       permissions : Permissions.t option; [@default None]
-      private_ : bool; [@key "private"] [@default false]
+      private_ : bool; [@default false] [@key "private"]
       pulls_url : string;
       pushed_at : string option;
       releases_url : string;
@@ -6580,7 +6580,7 @@ module Base_gist = struct
             language : string option; [@default None]
             raw_url : string option; [@default None]
             size : int option; [@default None]
-            type_ : string option; [@key "type"] [@default None]
+            type_ : string option; [@default None] [@key "type"]
           }
           [@@deriving yojson { strict = false; meta = true }, show]
         end
@@ -7186,7 +7186,7 @@ module Code_scanning_alert_instance = struct
       html_url : string option; [@default None]
       location : Code_scanning_alert_location.t option; [@default None]
       message : Message.t option; [@default None]
-      ref_ : string option; [@key "ref"] [@default None]
+      ref_ : string option; [@default None] [@key "ref"]
       state : Code_scanning_alert_state.t option; [@default None]
     }
     [@@deriving yojson { strict = false; meta = true }, show]
@@ -8207,7 +8207,7 @@ module Gist_simple = struct
             raw_url : string option; [@default None]
             size : int option; [@default None]
             truncated : bool option; [@default None]
-            type_ : string option; [@key "type"] [@default None]
+            type_ : string option; [@default None] [@key "type"]
           }
           [@@deriving yojson { strict = false; meta = true }, show]
         end
@@ -8228,7 +8228,7 @@ module Gist_simple = struct
                 language : string option; [@default None]
                 raw_url : string option; [@default None]
                 size : int option; [@default None]
-                type_ : string option; [@key "type"] [@default None]
+                type_ : string option; [@default None] [@key "type"]
               }
               [@@deriving yojson { strict = false; meta = true }, show]
             end
@@ -8443,7 +8443,7 @@ module Environment = struct
 
                   type t = {
                     reviewer : Reviewer.t option; [@default None]
-                    type_ : Deployment_reviewer_type.t option; [@key "type"] [@default None]
+                    type_ : Deployment_reviewer_type.t option; [@default None] [@key "type"]
                   }
                   [@@deriving yojson { strict = false; meta = true }, show]
                 end
@@ -8656,7 +8656,7 @@ module Pending_deployment = struct
 
           type t = {
             reviewer : Reviewer.t option; [@default None]
-            type_ : Deployment_reviewer_type.t option; [@key "type"] [@default None]
+            type_ : Deployment_reviewer_type.t option; [@default None] [@key "type"]
           }
           [@@deriving yojson { strict = false; meta = true }, show]
         end
@@ -10152,7 +10152,7 @@ module Team_repository = struct
       open_issues_count : int;
       owner : Nullable_simple_user.t option;
       permissions : Permissions.t option; [@default None]
-      private_ : bool; [@key "private"] [@default false]
+      private_ : bool; [@default false] [@key "private"]
       pulls_url : string;
       pushed_at : string option;
       releases_url : string;
@@ -10722,7 +10722,7 @@ module Timeline_cross_referenced_event = struct
       module Primary = struct
         type t = {
           issue : Issue.t option; [@default None]
-          type_ : string option; [@key "type"] [@default None]
+          type_ : string option; [@default None] [@key "type"]
         }
         [@@deriving yojson { strict = false; meta = true }, show]
       end

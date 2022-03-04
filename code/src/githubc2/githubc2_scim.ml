@@ -10,7 +10,7 @@ module Provision_and_invite_user = struct
           module Primary = struct
             type t = {
               primary : bool option; [@default None]
-              type_ : string option; [@default None]
+              type_ : string option; [@default None] [@key "type"]
               value : string;
             }
             [@@deriving yojson { strict = false; meta = true }, show]
@@ -29,9 +29,9 @@ module Provision_and_invite_user = struct
       module Name = struct
         module Primary = struct
           type t = {
-            familyname : string;
+            familyname : string; [@key "familyName"]
             formatted : string option; [@default None]
-            givenname : string;
+            givenname : string; [@key "givenName"]
           }
           [@@deriving yojson { strict = false; meta = true }, show]
         end
@@ -45,13 +45,13 @@ module Provision_and_invite_user = struct
 
       type t = {
         active : bool option; [@default None]
-        displayname : string option; [@default None]
+        displayname : string option; [@default None] [@key "displayName"]
         emails : Emails.t;
-        externalid : string option; [@default None]
+        externalid : string option; [@default None] [@key "externalId"]
         groups : Groups.t option; [@default None]
         name : Name.t;
         schemas : Schemas.t option; [@default None]
-        username : string;
+        username : string; [@key "userName"]
       }
       [@@deriving yojson { strict = false; meta = true }, show]
     end
@@ -124,7 +124,7 @@ module List_provisioned_identities = struct
       count : int option; [@default None]
       filter : string option; [@default None]
       org : string;
-      startindex : int option; [@default None]
+      startindex : int option; [@default None] [@key "startIndex"]
     }
     [@@deriving make, show]
   end
@@ -210,10 +210,10 @@ module Update_attribute_for_user = struct
                 module Primary = struct
                   type t = {
                     active : bool option; [@default None]
-                    externalid : string option; [@default None]
-                    familyname : string option; [@default None]
-                    givenname : string option; [@default None]
-                    username : string option; [@default None]
+                    externalid : string option; [@default None] [@key "externalId"]
+                    familyname : string option; [@default None] [@key "familyName"]
+                    givenname : string option; [@default None] [@key "givenName"]
+                    username : string option; [@default None] [@key "userName"]
                   }
                   [@@deriving yojson { strict = false; meta = true }, show]
                 end
@@ -281,7 +281,7 @@ module Update_attribute_for_user = struct
       end
 
       type t = {
-        operations : Operations.t;
+        operations : Operations.t; [@key "Operations"]
         schemas : Schemas.t option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show]
@@ -404,7 +404,7 @@ module Set_information_for_provisioned_user = struct
           module Primary = struct
             type t = {
               primary : bool option; [@default None]
-              type_ : string option; [@default None]
+              type_ : string option; [@default None] [@key "type"]
               value : string;
             }
             [@@deriving yojson { strict = false; meta = true }, show]
@@ -423,9 +423,9 @@ module Set_information_for_provisioned_user = struct
       module Name = struct
         module Primary = struct
           type t = {
-            familyname : string;
+            familyname : string; [@key "familyName"]
             formatted : string option; [@default None]
-            givenname : string;
+            givenname : string; [@key "givenName"]
           }
           [@@deriving yojson { strict = false; meta = true }, show]
         end
@@ -439,13 +439,13 @@ module Set_information_for_provisioned_user = struct
 
       type t = {
         active : bool option; [@default None]
-        displayname : string option; [@default None]
+        displayname : string option; [@default None] [@key "displayName"]
         emails : Emails.t;
-        externalid : string option; [@default None]
+        externalid : string option; [@default None] [@key "externalId"]
         groups : Groups.t option; [@default None]
         name : Name.t;
         schemas : Schemas.t option; [@default None]
-        username : string;
+        username : string; [@key "userName"]
       }
       [@@deriving yojson { strict = false; meta = true }, show]
     end

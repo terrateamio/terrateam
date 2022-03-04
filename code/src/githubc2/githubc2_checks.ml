@@ -1034,7 +1034,7 @@ module List_for_ref = struct
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
-      ref_ : string;
+      ref_ : string; [@key "ref"]
       repo : string;
       status : Status.t option; [@default None]
     }
@@ -1099,7 +1099,7 @@ module List_suites_for_ref = struct
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
-      ref_ : string;
+      ref_ : string; [@key "ref"]
       repo : string;
     }
     [@@deriving make, show]

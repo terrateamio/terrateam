@@ -3239,7 +3239,7 @@ module Create_workflow_dispatch = struct
 
       type t = {
         inputs : Inputs.t option; [@default None]
-        ref_ : string;
+        ref_ : string; [@key "ref"]
       }
       [@@deriving yojson { strict = false; meta = true }, show]
     end
