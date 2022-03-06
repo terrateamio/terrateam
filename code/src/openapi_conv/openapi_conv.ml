@@ -123,7 +123,7 @@ let resolve_parameter_ref { Components.parameters; _ } =
 (* TODO: Fix this because we are actually only converting Schemas into
    Components and not into Components.Schemas.  This might change if we start
    converting responses into Components too. *)
-let module_name_of_ref context ref_ =
+let module_name_of_ref base_module_name context ref_ =
   match context with
   | "schemas" | "parameters" | "responses" -> (
       match CCString.split_on_char '/' ref_ with
@@ -132,7 +132,7 @@ let module_name_of_ref context ref_ =
       | _ -> failwith (Printf.sprintf "Unknown ref type: %s" ref_))
   | _ -> (
       match CCString.split_on_char '/' ref_ with
-      | [ "#"; "components"; m; n ] -> [ "Githubc2_components"; module_name_of_string n ]
+      | [ "#"; "components"; m; n ] -> [ base_module_name ^ "_components"; module_name_of_string n ]
       | _ -> failwith (Printf.sprintf "Unknown ref type: %s" ref_))
 
 let http_status_to_name = function
@@ -381,14 +381,14 @@ let rec collect_schema_refs
    [Openapi.Request] value.
 
    We will convert [parameters] to a module called [Parameters] as a record. *)
-let convert_str_operation components uritmpl op_typ op =
+let convert_str_operation base_module_name components uritmpl op_typ op =
   assert (CCOpt.is_some op.Operation.operation_id);
   let operation_id = CCOpt.get_exn_or "operation_id" op.Operation.operation_id in
   let params_config =
     Json_schema_conv.Config.make
       ~create_yojson_funcs:false
       ~field_name_of_schema
-      ~module_name_of_ref:(module_name_of_ref "paths")
+      ~module_name_of_ref:(module_name_of_ref base_module_name "paths")
       ~module_name_of_field_name:module_name_of_string
       ~prim_type_attrs:Gen.(deriving [ show_deriver ])
       ~record_type_attrs:(fun _ -> Gen.(deriving [ make_deriver; show_deriver ]))
@@ -450,7 +450,7 @@ let convert_str_operation components uritmpl op_typ op =
     let config =
       Json_schema_conv.Config.make
         ~field_name_of_schema
-        ~module_name_of_ref:(module_name_of_ref "paths")
+        ~module_name_of_ref:(module_name_of_ref base_module_name "paths")
         ~module_name_of_field_name:module_name_of_string
         ~prim_type_attrs:Gen.(deriving [ yojson_deriver ~meta:true (); show_deriver ])
         ~record_type_attrs:(fun strict ->
@@ -493,7 +493,7 @@ let convert_str_operation components uritmpl op_typ op =
     let config =
       Json_schema_conv.Config.make
         ~field_name_of_schema
-        ~module_name_of_ref:(module_name_of_ref "paths")
+        ~module_name_of_ref:(module_name_of_ref base_module_name "paths")
         ~module_name_of_field_name:module_name_of_string
         ~prim_type_attrs:Gen.(deriving [ yojson_deriver ~meta:false (); show_deriver ])
         ~record_type_attrs:(fun strict ->
@@ -699,13 +699,13 @@ let convert_str_components state { Components.schemas; responses; _ } =
       modules
   | Tsort.ErrorCycle _ -> assert false
 
-let convert_str_paths output_base components paths =
+let convert_str_paths output_base base_module_name components paths =
   let modules =
     CCList.map
       (fun (uritmpl, path) ->
         assert (path.Path.parameters = None);
         CCList.map
-          (CCFun.uncurry (convert_str_operation components uritmpl))
+          (CCFun.uncurry (convert_str_operation base_module_name components uritmpl))
           (CCList.filter_map
              (fun (t, op) -> CCOpt.map (fun op -> (t, op)) op)
              [
@@ -738,12 +738,12 @@ let convert_str_paths output_base components paths =
         (fun oc -> CCIO.write_line oc (Pprintast.string_of_structure modules)))
     (String_map.to_list modules)
 
-let convert_str_document output_base { Document.paths; components } =
+let convert_str_document output_base base_module_name { Document.paths; components } =
   let components_modules =
     convert_str_components
       (Json_schema_conv.Config.make
          ~field_name_of_schema
-         ~module_name_of_ref:(module_name_of_ref "schemas")
+         ~module_name_of_ref:(module_name_of_ref base_module_name "schemas")
          ~module_name_of_field_name:(module_name_of_field_name components)
          ~prim_type_attrs:Gen.(deriving [ yojson_deriver (); show_deriver ])
          ~record_type_attrs:(fun strict ->
@@ -755,10 +755,11 @@ let convert_str_document output_base { Document.paths; components } =
   in
   CCIO.with_out (output_base ^ "_components.ml") (fun cout ->
       CCIO.write_line cout (Pprintast.string_of_structure components_modules));
-  convert_str_paths output_base components paths
+  convert_str_paths output_base base_module_name components paths
 
 let convert ~input_file ~output_name ~output_dir =
   let output_base = Filename.concat output_dir output_name in
+  let base_module_name = CCString.capitalize_ascii output_name in
   match Document.of_yojson (Yojson.Safe.from_file input_file) with
-  | Ok document -> convert_str_document output_base document
+  | Ok document -> convert_str_document output_base base_module_name document
   | Error err -> print_endline ("ERROR: " ^ err)
