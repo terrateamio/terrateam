@@ -45,6 +45,14 @@ module Create_blob = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `Created of Created.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Conflict of Conflict.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
@@ -101,6 +109,13 @@ module Get_blob = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
 
     let t =
       [
@@ -202,6 +217,12 @@ module Create_commit = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `Created of Created.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
@@ -248,6 +269,11 @@ module Get_commit = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -291,6 +317,8 @@ module List_matching_refs = struct
       type t = Githubc2_components.Git_ref.t list
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -337,6 +365,11 @@ module Get_ref = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -397,6 +430,11 @@ module Create_ref = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `Created of Created.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
@@ -454,6 +492,11 @@ module Update_ref = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -499,6 +542,11 @@ module Delete_ref = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `No_content
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
 
     let t =
       [
@@ -586,6 +634,11 @@ module Create_tag = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `Created of Created.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
@@ -630,6 +683,11 @@ module Get_tag = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -742,6 +800,13 @@ module Create_tree = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `Created of Created.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
@@ -794,6 +859,12 @@ module Get_tree = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
 
     let t =
       [

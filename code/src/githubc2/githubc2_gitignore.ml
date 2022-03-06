@@ -8,6 +8,11 @@ module Get_all_templates = struct
 
     module Not_modified = struct end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -39,6 +44,11 @@ module Get_template = struct
     end
 
     module Not_modified = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      ]
 
     let t =
       [

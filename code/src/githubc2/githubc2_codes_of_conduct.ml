@@ -9,6 +9,11 @@ module Get_all_codes_of_conduct = struct
 
     module Not_modified = struct end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -45,6 +50,12 @@ module Get_conduct_code = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -83,6 +94,8 @@ module Get_for_repo = struct
       type t = Githubc2_components.Code_of_conduct.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end

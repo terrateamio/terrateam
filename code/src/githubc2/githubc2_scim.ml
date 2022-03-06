@@ -88,6 +88,16 @@ module Provision_and_invite_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `Created
+      | `Not_modified
+      | `Bad_request of Bad_request.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Conflict of Conflict.t
+      | `Internal_server_error of Internal_server_error.t
+      ]
+
     let t =
       [
         ("201", fun _ -> Ok `Created);
@@ -147,6 +157,14 @@ module List_provisioned_identities = struct
       type t = Githubc2_components.Scim_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK
+      | `Not_modified
+      | `Bad_request of Bad_request.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -314,6 +332,15 @@ module Update_attribute_for_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK
+      | `Not_modified
+      | `Bad_request of Bad_request.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Too_many_requests of Too_many_requests.t
+      ]
+
     let t =
       [
         ("200", fun _ -> Ok `OK);
@@ -363,6 +390,13 @@ module Delete_user_from_org = struct
       type t = Githubc2_components.Scim_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `No_content
+      | `Not_modified
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -467,6 +501,13 @@ module Set_information_for_provisioned_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK
+      | `Not_modified
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
+
     let t =
       [
         ("200", fun _ -> Ok `OK);
@@ -514,6 +555,13 @@ module Get_provisioning_information_for_user = struct
       type t = Githubc2_components.Scim_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK
+      | `Not_modified
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [

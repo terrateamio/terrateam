@@ -77,6 +77,13 @@ module List = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -184,6 +191,11 @@ module List_for_org = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -240,6 +252,11 @@ module List_assignees = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -282,6 +299,11 @@ module Check_user_can_be_assigned = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `No_content
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -472,6 +494,15 @@ module Create = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t =
+      [ `Created of Created.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Gone of Gone.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      | `Service_unavailable of Service_unavailable.t
+      ]
+
     let t =
       [
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
@@ -570,6 +601,13 @@ module List_for_repo = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Moved_permanently of Moved_permanently.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -658,6 +696,12 @@ module List_comments_for_repo = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -720,6 +764,11 @@ module Update_comment = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -760,6 +809,8 @@ module Delete_comment = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -803,6 +854,11 @@ module Get_comment = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -851,6 +907,11 @@ module List_events_for_repo = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
 
     let t =
       [
@@ -908,6 +969,13 @@ module Get_event = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Gone of Gone.t
+      ]
 
     let t =
       [
@@ -1117,6 +1185,16 @@ module Update = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Moved_permanently of Moved_permanently.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Gone of Gone.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      | `Service_unavailable of Service_unavailable.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -1182,6 +1260,14 @@ module Get = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Moved_permanently of Moved_permanently.t
+      | `Not_modified
+      | `Not_found of Not_found.t
+      | `Gone of Gone.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -1240,6 +1326,8 @@ module Remove_assignees = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -1290,6 +1378,8 @@ module Add_assignees = struct
       type t = Githubc2_components.Issue.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `Created of Created.t ]
 
     let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
   end
@@ -1357,6 +1447,14 @@ module Create_comment = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `Created of Created.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Gone of Gone.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
@@ -1417,6 +1515,12 @@ module List_comments = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      | `Gone of Gone.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -1474,6 +1578,11 @@ module List_events = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Gone of Gone.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -1520,6 +1629,11 @@ module Remove_all_labels = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `No_content
+      | `Gone of Gone.t
+      ]
 
     let t =
       [
@@ -1625,6 +1739,12 @@ module Add_labels = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Gone of Gone.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
 
     let t =
       [
@@ -1733,6 +1853,12 @@ module Set_labels = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Gone of Gone.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -1783,6 +1909,11 @@ module List_labels_on_issue = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Gone of Gone.t
+      ]
 
     let t =
       [
@@ -1840,6 +1971,12 @@ module Remove_label = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      | `Gone of Gone.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -1890,6 +2027,12 @@ module Unlock = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `No_content
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -1972,6 +2115,14 @@ module Lock = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `No_content
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Gone of Gone.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("204", fun _ -> Ok `No_content);
@@ -2029,6 +2180,12 @@ module List_events_for_timeline = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      | `Gone of Gone.t
+      ]
 
     let t =
       [
@@ -2098,6 +2255,12 @@ module Create_label = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `Created of Created.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
@@ -2144,6 +2307,11 @@ module List_labels_for_repo = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -2199,6 +2367,8 @@ module Update_label = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -2233,6 +2403,8 @@ module Delete_label = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -2276,6 +2448,11 @@ module Get_label = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -2351,6 +2528,12 @@ module Create_milestone = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `Created of Created.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
 
     let t =
       [
@@ -2430,6 +2613,11 @@ module List_milestones = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -2501,6 +2689,8 @@ module Update_milestone = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -2540,6 +2730,11 @@ module Delete_milestone = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `No_content
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -2588,6 +2783,11 @@ module Get_milestone = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -2631,6 +2831,8 @@ module List_labels_for_milestone = struct
       type t = Githubc2_components.Label.t list
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -2726,6 +2928,12 @@ module List_for_authenticated_user = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [

@@ -534,6 +534,31 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
                           | None -> []))))
                 resolved_responses
            @ [
+               Str.type_
+                 Asttypes.Recursive
+                 [
+                   Type.mk
+                     ~manifest:
+                       (Typ.variant
+                          (CCList.map
+                             (fun (code, r) ->
+                               Rf.tag
+                                 (Location.mknoloc (http_status_to_name code))
+                                 false
+                                 (match get_json_media_type r.Response.content with
+                                 | Some _ ->
+                                     [
+                                       Typ.constr
+                                         (Location.mknoloc
+                                            (Gen.ident [ http_status_to_name code; "t" ]))
+                                         [];
+                                     ]
+                                 | None -> []))
+                             resolved_responses)
+                          Asttypes.Closed
+                          None)
+                     (Location.mknoloc "t");
+                 ];
                Str.value
                  Asttypes.Nonrecursive
                  [

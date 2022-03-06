@@ -28,6 +28,11 @@ module Render = struct
     module OK = struct end
     module Not_modified = struct end
 
+    type t =
+      [ `OK
+      | `Not_modified
+      ]
+
     let t = [ ("200", fun _ -> Ok `OK); ("304", fun _ -> Ok `Not_modified) ]
   end
 
@@ -50,6 +55,11 @@ module Render_raw = struct
   module Responses = struct
     module OK = struct end
     module Not_modified = struct end
+
+    type t =
+      [ `OK
+      | `Not_modified
+      ]
 
     let t = [ ("200", fun _ -> Ok `OK); ("304", fun _ -> Ok `Not_modified) ]
   end

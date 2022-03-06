@@ -47,6 +47,15 @@ module Update_authenticated = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -105,6 +114,13 @@ module Get_authenticated = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      ]
 
     let t =
       [
@@ -165,6 +181,15 @@ module List_blocked_by_authenticated_user = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unsupported_media_type of Unsupported_media_type.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -213,6 +238,14 @@ module Unblock = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `No_content
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -268,6 +301,15 @@ module Block = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `No_content
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("204", fun _ -> Ok `No_content);
@@ -318,6 +360,14 @@ module Check_blocked = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `No_content
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -394,6 +444,15 @@ module Set_primary_email_visibility_for_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -469,6 +528,15 @@ module Delete_email_for_authenticated_user = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `No_content
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
 
     let t =
       [
@@ -549,6 +617,15 @@ module Add_email_for_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `Created of Created.t
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
@@ -605,6 +682,14 @@ module List_emails_for_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -657,6 +742,13 @@ module List_followers_for_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -708,6 +800,13 @@ module List_followed_by_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -755,6 +854,14 @@ module Unfollow = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `No_content
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -805,6 +912,14 @@ module Follow = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `No_content
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
+
     let t =
       [
         ("204", fun _ -> Ok `No_content);
@@ -853,6 +968,14 @@ module Check_person_is_followed_by_authenticated = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `No_content
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -919,6 +1042,15 @@ module Create_gpg_key_for_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `Created of Created.t
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
@@ -976,6 +1108,14 @@ module List_gpg_keys_for_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -1029,6 +1169,15 @@ module Delete_gpg_key_for_authenticated_user = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `No_content
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
 
     let t =
       [
@@ -1084,6 +1233,14 @@ module Get_gpg_key_for_authenticated_user = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -1152,6 +1309,15 @@ module Create_public_ssh_key_for_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `Created of Created.t
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
@@ -1209,6 +1375,14 @@ module List_public_ssh_keys_for_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -1257,6 +1431,14 @@ module Delete_public_ssh_key_for_authenticated_user = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `No_content
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -1309,6 +1491,14 @@ module Get_public_ssh_key_for_authenticated_user = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -1367,6 +1557,14 @@ module List_public_emails_for_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -1408,6 +1606,11 @@ module List = struct
     end
 
     module Not_modified = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      ]
 
     let t =
       [
@@ -1465,6 +1668,12 @@ module Get_by_username = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Accepted of Accepted.t
+      | `Not_found of Not_found.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -1504,6 +1713,8 @@ module List_followers_for_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -1541,6 +1752,8 @@ module List_following_for_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -1574,6 +1787,11 @@ module Check_following_for_user = struct
   module Responses = struct
     module No_content = struct end
     module Not_found = struct end
+
+    type t =
+      [ `No_content
+      | `Not_found
+      ]
 
     let t = [ ("204", fun _ -> Ok `No_content); ("404", fun _ -> Ok `Not_found) ]
   end
@@ -1611,6 +1829,8 @@ module List_gpg_keys_for_user = struct
       type t = Githubc2_components.Gpg_key.t list
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1670,6 +1890,12 @@ module Get_context_for_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -1715,6 +1941,8 @@ module List_public_keys_for_user = struct
       type t = Githubc2_components.Key_simple.t list
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end

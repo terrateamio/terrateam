@@ -6,6 +6,8 @@ module Remove_restrictions_for_org = struct
   module Responses = struct
     module No_content = struct end
 
+    type t = [ `No_content ]
+
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
 
@@ -44,6 +46,11 @@ module Set_restrictions_for_org = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
 
     let t =
       [
@@ -99,6 +106,8 @@ module Get_restrictions_for_org = struct
         | V1 v -> V1.to_yojson v
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -129,6 +138,11 @@ module Remove_restrictions_for_repo = struct
   module Responses = struct
     module No_content = struct end
     module Conflict = struct end
+
+    type t =
+      [ `No_content
+      | `Conflict
+      ]
 
     let t = [ ("204", fun _ -> Ok `No_content); ("409", fun _ -> Ok `Conflict) ]
   end
@@ -169,6 +183,11 @@ module Set_restrictions_for_repo = struct
     end
 
     module Conflict = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Conflict
+      ]
 
     let t =
       [
@@ -226,6 +245,8 @@ module Get_restrictions_for_repo = struct
         | V1 v -> V1.to_yojson v
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -249,6 +270,8 @@ module Remove_restrictions_for_authenticated_user = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -283,6 +306,11 @@ module Set_restrictions_for_authenticated_user = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
 
     let t =
       [
@@ -334,6 +362,11 @@ module Get_restrictions_for_authenticated_user = struct
     end
 
     module No_content = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `No_content
+      ]
 
     let t =
       [

@@ -71,6 +71,14 @@ module Code = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Forbidden of Forbidden.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      | `Service_unavailable of Service_unavailable.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -153,6 +161,11 @@ module Commits = struct
     end
 
     module Not_modified = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      ]
 
     let t =
       [
@@ -265,6 +278,14 @@ module Issues_and_pull_requests = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Forbidden of Forbidden.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      | `Service_unavailable of Service_unavailable.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -363,6 +384,14 @@ module Labels = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
 
     let t =
       [
@@ -468,6 +497,13 @@ module Repos = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Unprocessable_entity of Unprocessable_entity.t
+      | `Service_unavailable of Service_unavailable.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -541,6 +577,12 @@ module Topics = struct
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Unsupported_media_type of Unsupported_media_type.t
+      ]
 
     let t =
       [
@@ -640,6 +682,13 @@ module Users = struct
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Unprocessable_entity of Unprocessable_entity.t
+      | `Service_unavailable of Service_unavailable.t
+      ]
 
     let t =
       [

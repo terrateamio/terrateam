@@ -42,6 +42,13 @@ module List_alerts_for_repo = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Service_unavailable of Service_unavailable.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -128,6 +135,13 @@ module Update_alert = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Service_unavailable of Service_unavailable.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -195,6 +209,13 @@ module Get_alert = struct
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Service_unavailable of Service_unavailable.t
+      ]
 
     let t =
       [
@@ -265,6 +286,13 @@ module List_alert_instances = struct
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Service_unavailable of Service_unavailable.t
+      ]
 
     let t =
       [
@@ -345,6 +373,13 @@ module List_recent_analyses = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Service_unavailable of Service_unavailable.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -424,6 +459,14 @@ module Delete_analysis = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Bad_request of Bad_request.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Service_unavailable of Service_unavailable.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -494,6 +537,13 @@ module Get_analysis = struct
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Service_unavailable of Service_unavailable.t
+      ]
 
     let t =
       [
@@ -581,6 +631,15 @@ module Upload_sarif = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t =
+      [ `Accepted of Accepted.t
+      | `Bad_request
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Request_entity_too_large
+      | `Service_unavailable of Service_unavailable.t
+      ]
+
     let t =
       [
         ("202", Openapi.of_json_body (fun v -> `Accepted v) Accepted.of_yojson);
@@ -643,6 +702,13 @@ module Get_sarif = struct
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Forbidden of Forbidden.t
+      | `Not_found
+      | `Service_unavailable of Service_unavailable.t
+      ]
 
     let t =
       [

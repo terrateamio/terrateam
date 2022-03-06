@@ -18,6 +18,8 @@ module Set_github_actions_permissions_organization = struct
   module Responses = struct
     module No_content = struct end
 
+    type t = [ `No_content ]
+
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
 
@@ -47,6 +49,8 @@ module Get_github_actions_permissions_organization = struct
       type t = Githubc2_components.Actions_organization_permissions.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -86,6 +90,8 @@ module Set_selected_repositories_enabled_github_actions_organization = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -134,6 +140,8 @@ module List_selected_repositories_enabled_github_actions_organization = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -167,6 +175,8 @@ module Disable_selected_repository_github_actions_organization = struct
   module Responses = struct
     module No_content = struct end
 
+    type t = [ `No_content ]
+
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
 
@@ -196,6 +206,8 @@ module Enable_selected_repository_github_actions_organization = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -228,6 +240,8 @@ module Set_allowed_actions_organization = struct
   module Responses = struct
     module No_content = struct end
 
+    type t = [ `No_content ]
+
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
 
@@ -256,6 +270,8 @@ module Get_allowed_actions_organization = struct
       type t = Githubc2_components.Selected_actions.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -319,6 +335,8 @@ module Create_self_hosted_runner_group_for_org = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `Created of Created.t ]
+
     let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
   end
 
@@ -365,6 +383,8 @@ module List_self_hosted_runner_groups_for_org = struct
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -425,6 +445,8 @@ module Update_self_hosted_runner_group_for_org = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -457,6 +479,8 @@ module Delete_self_hosted_runner_group_from_org = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -492,6 +516,8 @@ module Get_self_hosted_runner_group_for_org = struct
       type t = Githubc2_components.Runner_groups_org.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -537,6 +563,8 @@ module Set_repo_access_to_self_hosted_runner_group_in_org = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -588,6 +616,8 @@ module List_repo_access_to_self_hosted_runner_group_in_org = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -624,6 +654,8 @@ module Remove_repo_access_to_self_hosted_runner_group_in_org = struct
   module Responses = struct
     module No_content = struct end
 
+    type t = [ `No_content ]
+
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
 
@@ -658,6 +690,8 @@ module Add_repo_access_to_self_hosted_runner_group_in_org = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -704,6 +738,8 @@ module Set_self_hosted_runners_in_group_for_org = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -755,6 +791,8 @@ module List_self_hosted_runners_in_group_for_org = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -791,6 +829,8 @@ module Remove_self_hosted_runner_from_group_for_org = struct
   module Responses = struct
     module No_content = struct end
 
+    type t = [ `No_content ]
+
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
 
@@ -825,6 +865,8 @@ module Add_self_hosted_runner_to_group_for_org = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -876,6 +918,8 @@ module List_self_hosted_runners_for_org = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -908,6 +952,8 @@ module List_runner_applications_for_org = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -936,6 +982,8 @@ module Create_registration_token_for_org = struct
       type t = Githubc2_components.Authentication_token.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `Created of Created.t ]
 
     let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
   end
@@ -966,6 +1014,8 @@ module Create_remove_token_for_org = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `Created of Created.t ]
+
     let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
   end
 
@@ -995,6 +1045,8 @@ module Delete_self_hosted_runner_from_org = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -1028,6 +1080,8 @@ module Get_self_hosted_runner_for_org = struct
       type t = Githubc2_components.Runner.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1075,6 +1129,8 @@ module List_org_secrets = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -1107,6 +1163,8 @@ module Get_org_public_key = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -1136,6 +1194,8 @@ module Delete_org_secret = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -1201,6 +1261,11 @@ module Create_or_update_org_secret = struct
 
     module No_content = struct end
 
+    type t =
+      [ `Created of Created.t
+      | `No_content
+      ]
+
     let t =
       [
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
@@ -1238,6 +1303,8 @@ module Get_org_secret = struct
       type t = Githubc2_components.Organization_actions_secret.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1281,6 +1348,8 @@ module Set_selected_repos_for_org_secret = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -1330,6 +1399,8 @@ module List_selected_repos_for_org_secret = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -1364,6 +1435,11 @@ module Remove_selected_repo_from_org_secret = struct
   module Responses = struct
     module No_content = struct end
     module Conflict = struct end
+
+    type t =
+      [ `No_content
+      | `Conflict
+      ]
 
     let t = [ ("204", fun _ -> Ok `No_content); ("409", fun _ -> Ok `Conflict) ]
   end
@@ -1400,6 +1476,11 @@ module Add_selected_repo_to_org_secret = struct
   module Responses = struct
     module No_content = struct end
     module Conflict = struct end
+
+    type t =
+      [ `No_content
+      | `Conflict
+      ]
 
     let t = [ ("204", fun _ -> Ok `No_content); ("409", fun _ -> Ok `Conflict) ]
   end
@@ -1452,6 +1533,8 @@ module List_artifacts_for_repo = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -1485,6 +1568,8 @@ module Delete_artifact = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -1524,6 +1609,8 @@ module Get_artifact = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -1559,6 +1646,8 @@ module Download_artifact = struct
 
   module Responses = struct
     module Found = struct end
+
+    type t = [ `Found ]
 
     let t = [ ("302", fun _ -> Ok `Found) ]
   end
@@ -1598,6 +1687,8 @@ module Get_job_for_workflow_run = struct
       type t = Githubc2_components.Job.t [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -1632,6 +1723,8 @@ module Download_job_logs_for_workflow_run = struct
 
   module Responses = struct
     module Found = struct end
+
+    type t = [ `Found ]
 
     let t = [ ("302", fun _ -> Ok `Found) ]
   end
@@ -1679,6 +1772,8 @@ module Set_github_actions_permissions_repository = struct
   module Responses = struct
     module No_content = struct end
 
+    type t = [ `No_content ]
+
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
 
@@ -1712,6 +1807,8 @@ module Get_github_actions_permissions_repository = struct
       type t = Githubc2_components.Actions_repository_permissions.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1748,6 +1845,8 @@ module Set_allowed_actions_repository = struct
   module Responses = struct
     module No_content = struct end
 
+    type t = [ `No_content ]
+
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
 
@@ -1780,6 +1879,8 @@ module Get_allowed_actions_repository = struct
       type t = Githubc2_components.Selected_actions.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1828,6 +1929,8 @@ module List_self_hosted_runners_for_repo = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -1864,6 +1967,8 @@ module List_runner_applications_for_repo = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -1896,6 +2001,8 @@ module Create_registration_token_for_repo = struct
       type t = Githubc2_components.Authentication_token.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `Created of Created.t ]
 
     let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
   end
@@ -1930,6 +2037,8 @@ module Create_remove_token_for_repo = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `Created of Created.t ]
+
     let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
   end
 
@@ -1960,6 +2069,8 @@ module Delete_self_hosted_runner_from_repo = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -1998,6 +2109,8 @@ module Get_self_hosted_runner_for_repo = struct
       type t = Githubc2_components.Runner.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -2076,6 +2189,8 @@ module List_workflow_runs_for_repo = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -2119,6 +2234,8 @@ module Delete_workflow_run = struct
   module Responses = struct
     module No_content = struct end
 
+    type t = [ `No_content ]
+
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
 
@@ -2157,6 +2274,8 @@ module Get_workflow_run = struct
       type t = Githubc2_components.Workflow_run.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -2198,6 +2317,8 @@ module Get_reviews_for_run = struct
       type t = Githubc2_components.Environment_approvals.t list
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -2246,6 +2367,12 @@ module Approve_workflow_run = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t =
+      [ `Created of Created.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
 
     let t =
       [
@@ -2304,6 +2431,8 @@ module List_workflow_run_artifacts = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -2346,6 +2475,8 @@ module Get_workflow_run_attempt = struct
       type t = Githubc2_components.Workflow_run.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -2409,6 +2540,11 @@ module List_jobs_for_workflow_run_attempt = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -2453,6 +2589,8 @@ module Download_workflow_run_attempt_logs = struct
   module Responses = struct
     module Found = struct end
 
+    type t = [ `Found ]
+
     let t = [ ("302", fun _ -> Ok `Found) ]
   end
 
@@ -2490,6 +2628,8 @@ module Cancel_workflow_run = struct
     module Accepted = struct
       type t = Json_schema.Empty_obj.t [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `Accepted of Accepted.t ]
 
     let t = [ ("202", Openapi.of_json_body (fun v -> `Accepted v) Accepted.of_yojson) ]
   end
@@ -2553,6 +2693,8 @@ module List_jobs_for_workflow_run = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -2595,6 +2737,8 @@ module Delete_workflow_run_logs = struct
   module Responses = struct
     module No_content = struct end
 
+    type t = [ `No_content ]
+
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
 
@@ -2629,6 +2773,8 @@ module Download_workflow_run_logs = struct
 
   module Responses = struct
     module Found = struct end
+
+    type t = [ `Found ]
 
     let t = [ ("302", fun _ -> Ok `Found) ]
   end
@@ -2695,6 +2841,8 @@ module Review_pending_deployments_for_run = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -2734,6 +2882,8 @@ module Get_pending_deployments_for_run = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -2770,6 +2920,8 @@ module Re_run_workflow = struct
     module Created = struct
       type t = Json_schema.Empty_obj.t [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `Created of Created.t ]
 
     let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
   end
@@ -2808,6 +2960,8 @@ module Get_workflow_run_usage = struct
       type t = Githubc2_components.Workflow_run_usage.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -2860,6 +3014,8 @@ module List_repo_secrets = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -2896,6 +3052,8 @@ module Get_repo_public_key = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -2926,6 +3084,8 @@ module Delete_repo_secret = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -2978,6 +3138,11 @@ module Create_or_update_repo_secret = struct
 
     module No_content = struct end
 
+    type t =
+      [ `Created of Created.t
+      | `No_content
+      ]
+
     let t =
       [
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
@@ -3020,6 +3185,8 @@ module Get_repo_secret = struct
       type t = Githubc2_components.Actions_secret.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -3071,6 +3238,8 @@ module List_repo_workflows = struct
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -3124,6 +3293,8 @@ module Get_workflow = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -3176,6 +3347,8 @@ module Disable_workflow = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -3250,6 +3423,8 @@ module Create_workflow_dispatch = struct
   module Responses = struct
     module No_content = struct end
 
+    type t = [ `No_content ]
+
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
 
@@ -3303,6 +3478,8 @@ module Enable_workflow = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -3400,6 +3577,8 @@ module List_workflow_runs = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -3468,6 +3647,8 @@ module Get_workflow_usage = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -3522,6 +3703,8 @@ module List_environment_secrets = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -3561,6 +3744,8 @@ module Get_environment_public_key = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    type t = [ `OK of OK.t ]
+
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
@@ -3594,6 +3779,8 @@ module Delete_environment_secret = struct
 
   module Responses = struct
     module No_content = struct end
+
+    type t = [ `No_content ]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -3647,6 +3834,11 @@ module Create_or_update_environment_secret = struct
 
     module No_content = struct end
 
+    type t =
+      [ `Created of Created.t
+      | `No_content
+      ]
+
     let t =
       [
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
@@ -3689,6 +3881,8 @@ module Get_environment_secret = struct
       type t = Githubc2_components.Actions_secret.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
+
+    type t = [ `OK of OK.t ]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end

@@ -44,6 +44,12 @@ module List_alerts_for_org = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      | `Service_unavailable of Service_unavailable.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -119,6 +125,12 @@ module List_alerts_for_repo = struct
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found
+      | `Service_unavailable of Service_unavailable.t
+      ]
 
     let t =
       [
@@ -196,6 +208,13 @@ module Update_alert = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    type t =
+      [ `OK of OK.t
+      | `Not_found
+      | `Unprocessable_entity
+      | `Service_unavailable of Service_unavailable.t
+      ]
+
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
@@ -256,6 +275,13 @@ module Get_alert = struct
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Not_found
+      | `Service_unavailable of Service_unavailable.t
+      ]
 
     let t =
       [
