@@ -36,18 +36,27 @@ if(LIBKQUEUE_VERSION_COMMIT STREQUAL "")
 	unset(LIBKQUEUE_VERSION_COMMIT)
 endif()
 
-execute_process(COMMAND sh -c "git describe --tags --match 'v*' | grep '-' | cut -d- -f2"
-		OUTPUT_VARIABLE PROJECT_VERSION_RELEASE
-		OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-if(PROJECT_VERSION_RELEASE STREQUAL "")
-	MESSAGE("Version ${PROJECT_VERSION} (${LIBKQUEUE_VERSION_COMMIT})")
-	unset(PROJECT_VERSION_RELEASE)
+# The version may be overridden when building packages by defining
+# VERSION_OVERRIDE. Otherwise try to pull the number of commits
+# since last tag from git to get a unique version number.
+if(VERSION_OVERRIDE)
+  MESSAGE("Version ${VERSION_OVERRIDE} (${LIBKQUEUE_VERSION_COMMIT}) [override]")
+  set(PROJECT_VERSION "${VERSION_OVERRIDE}")
+  set(CPACK_PACKAGE_VERSION "${VERSION_OVERRIDE}")
 else()
-	# Release 1 is the default, so we need to start at release 2
-	MATH(EXPR PROJECT_VERSION_RELEASE "${PROJECT_VERSION_RELEASE}+1")
-	MESSAGE("Version ${PROJECT_VERSION}-${PROJECT_VERSION_RELEASE} (${LIBKQUEUE_VERSION_COMMIT})")
-        set(LIBKQUEUE_VERSION_RELEASE ${PROJECT_VERSION_RELEASE})
+  execute_process(COMMAND sh -c "git describe --tags --match 'v*' | grep '-' | cut -d- -f2"
+                  OUTPUT_VARIABLE PROJECT_VERSION_RELEASE
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  if(PROJECT_VERSION_RELEASE STREQUAL "")
+    MESSAGE("Version ${PROJECT_VERSION} (${LIBKQUEUE_VERSION_COMMIT})")
+    unset(PROJECT_VERSION_RELEASE)
+  else()
+    # Release 1 is the default, so we need to start at release 2
+    MATH(EXPR PROJECT_VERSION_RELEASE "${PROJECT_VERSION_RELEASE}+1")
+    MESSAGE("Version ${PROJECT_VERSION}-${PROJECT_VERSION_RELEASE} (${LIBKQUEUE_VERSION_COMMIT})")
+    set(LIBKQUEUE_VERSION_RELEASE ${PROJECT_VERSION_RELEASE})
+  endif()
 endif()
 
 project(libkqueue VERSION ${PROJECT_VERSION}
