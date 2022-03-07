@@ -19,6 +19,7 @@ module Get = struct
       | `Not_modified
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [

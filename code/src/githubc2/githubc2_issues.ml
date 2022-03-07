@@ -83,6 +83,7 @@ module List = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -195,6 +196,7 @@ module List_for_org = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -256,6 +258,7 @@ module List_assignees = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -304,6 +307,7 @@ module Check_user_can_be_assigned = struct
       [ `No_content
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -502,6 +506,7 @@ module Create = struct
       | `Unprocessable_entity of Unprocessable_entity.t
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -607,6 +612,7 @@ module List_for_repo = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -701,6 +707,7 @@ module List_comments_for_repo = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -768,6 +775,7 @@ module Update_comment = struct
       [ `OK of OK.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -810,7 +818,7 @@ module Delete_comment = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ]
+    type t = [ `No_content ] [@@deriving show]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -859,6 +867,7 @@ module Get_comment = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -912,6 +921,7 @@ module List_events_for_repo = struct
       [ `OK of OK.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -976,6 +986,7 @@ module Get_event = struct
       | `Not_found of Not_found.t
       | `Gone of Gone.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1194,6 +1205,7 @@ module Update = struct
       | `Unprocessable_entity of Unprocessable_entity.t
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1267,6 +1279,7 @@ module Get = struct
       | `Not_found of Not_found.t
       | `Gone of Gone.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1326,7 +1339,7 @@ module Remove_assignees = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1379,7 +1392,7 @@ module Add_assignees = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `Created of Created.t ]
+    type t = [ `Created of Created.t ] [@@deriving show]
 
     let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
   end
@@ -1454,6 +1467,7 @@ module Create_comment = struct
       | `Gone of Gone.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1520,6 +1534,7 @@ module List_comments = struct
       | `Not_found of Not_found.t
       | `Gone of Gone.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1582,6 +1597,7 @@ module List_events = struct
       [ `OK of OK.t
       | `Gone of Gone.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1634,6 +1650,7 @@ module Remove_all_labels = struct
       [ `No_content
       | `Gone of Gone.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1745,6 +1762,7 @@ module Add_labels = struct
       | `Gone of Gone.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1858,6 +1876,7 @@ module Set_labels = struct
       | `Gone of Gone.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1914,6 +1933,7 @@ module List_labels_on_issue = struct
       [ `OK of OK.t
       | `Gone of Gone.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1976,6 +1996,7 @@ module Remove_label = struct
       | `Not_found of Not_found.t
       | `Gone of Gone.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2033,6 +2054,7 @@ module Unlock = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2122,6 +2144,7 @@ module Lock = struct
       | `Gone of Gone.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2186,6 +2209,7 @@ module List_events_for_timeline = struct
       | `Not_found of Not_found.t
       | `Gone of Gone.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2260,6 +2284,7 @@ module Create_label = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2312,6 +2337,7 @@ module List_labels_for_repo = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2367,7 +2393,7 @@ module Update_label = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -2404,7 +2430,7 @@ module Delete_label = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ]
+    type t = [ `No_content ] [@@deriving show]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -2453,6 +2479,7 @@ module Get_label = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2534,6 +2561,7 @@ module Create_milestone = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2617,6 +2645,7 @@ module List_milestones = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2689,7 +2718,7 @@ module Update_milestone = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -2735,6 +2764,7 @@ module Delete_milestone = struct
       [ `No_content
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2787,6 +2817,7 @@ module Get_milestone = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2832,7 +2863,7 @@ module List_labels_for_milestone = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -2934,6 +2965,7 @@ module List_for_authenticated_user = struct
       | `Not_modified
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [

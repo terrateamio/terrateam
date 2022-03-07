@@ -52,6 +52,7 @@ module List_packages_for_organization = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -129,6 +130,7 @@ module Delete_package_for_org = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -187,7 +189,7 @@ module Get_package_for_organization = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -259,6 +261,7 @@ module Restore_package_for_org = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -353,6 +356,7 @@ module Get_all_package_versions_for_package_owned_by_org = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -437,6 +441,7 @@ module Delete_package_version_for_org = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -497,7 +502,7 @@ module Get_package_version_for_organization = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -570,6 +575,7 @@ module Restore_package_version_for_org = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -639,7 +645,7 @@ module List_packages_for_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -708,6 +714,7 @@ module Delete_package_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -764,7 +771,7 @@ module Get_package_for_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -834,6 +841,7 @@ module Restore_package_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -926,6 +934,7 @@ module Get_all_package_versions_for_package_owned_by_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1008,6 +1017,7 @@ module Delete_package_version_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1066,7 +1076,7 @@ module Get_package_version_for_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1137,6 +1147,7 @@ module Restore_package_version_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1220,6 +1231,7 @@ module List_packages_for_user = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1297,6 +1309,7 @@ module Delete_package_for_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1355,7 +1368,7 @@ module Get_package_for_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1427,6 +1440,7 @@ module Restore_package_for_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1509,6 +1523,7 @@ module Get_all_package_versions_for_package_owned_by_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1586,6 +1601,7 @@ module Delete_package_version_for_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1646,7 +1662,7 @@ module Get_package_version_for_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1719,6 +1735,7 @@ module Restore_package_version_for_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [

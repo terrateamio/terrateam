@@ -12,6 +12,7 @@ module Get_all_templates = struct
       [ `OK of OK.t
       | `Not_modified
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -49,6 +50,7 @@ module Get_template = struct
       [ `OK of OK.t
       | `Not_modified
       ]
+    [@@deriving show]
 
     let t =
       [

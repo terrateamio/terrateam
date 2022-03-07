@@ -19,6 +19,7 @@ module List = struct
       [ `OK of OK.t
       | `Not_modified
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -140,6 +141,7 @@ module Update = struct
       | `Conflict of Conflict.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -185,6 +187,7 @@ module Get = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -248,7 +251,7 @@ module Get_audit_log = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -306,6 +309,7 @@ module List_blocked_users = struct
       [ `OK of OK.t
       | `Unsupported_media_type of Unsupported_media_type.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -343,7 +347,7 @@ module Unblock_user = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ]
+    type t = [ `No_content ] [@@deriving show]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -384,6 +388,7 @@ module Block_user = struct
       [ `No_content
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -429,6 +434,7 @@ module Check_blocked_user = struct
       [ `No_content
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -463,7 +469,7 @@ module List_saml_sso_authorizations = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -504,6 +510,7 @@ module Remove_saml_sso_authorization = struct
       [ `No_content
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -552,6 +559,7 @@ module List_failed_invitations = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -638,6 +646,7 @@ module Create_webhook = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -689,6 +698,7 @@ module List_webhooks = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -777,6 +787,7 @@ module Update_webhook = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -823,6 +834,7 @@ module Delete_webhook = struct
       [ `No_content
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -870,6 +882,7 @@ module Get_webhook = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -918,7 +931,7 @@ module Update_webhook_config_for_org = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -953,7 +966,7 @@ module Get_webhook_config_for_org = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1005,6 +1018,7 @@ module List_webhook_deliveries = struct
       | `Bad_request of Bad_request.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1064,6 +1078,7 @@ module Get_webhook_delivery = struct
       | `Bad_request of Bad_request.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1123,6 +1138,7 @@ module Redeliver_webhook_delivery = struct
       | `Bad_request of Bad_request.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1173,6 +1189,7 @@ module Ping_webhook = struct
       [ `No_content
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1224,7 +1241,7 @@ module List_app_installations = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1302,6 +1319,7 @@ module Create_invitation = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1352,6 +1370,7 @@ module List_pending_invitations = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1405,6 +1424,7 @@ module Cancel_invitation = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1456,6 +1476,7 @@ module List_invitation_teams = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1531,6 +1552,7 @@ module List_members = struct
       | `Found
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1585,6 +1607,7 @@ module Remove_member = struct
       [ `No_content
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1627,6 +1650,7 @@ module Check_membership_for_user = struct
       | `Found
       | `Not_found
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1678,6 +1702,7 @@ module Remove_membership_for_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1751,6 +1776,7 @@ module Set_membership_for_user = struct
       | `Forbidden of Forbidden.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1806,6 +1832,7 @@ module Get_membership_for_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1856,7 +1883,7 @@ module List_outside_collaborators = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1911,6 +1938,7 @@ module Remove_outside_collaborator = struct
       [ `No_content
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1963,6 +1991,7 @@ module Convert_member_to_outside_collaborator = struct
       | `Forbidden
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2004,7 +2033,7 @@ module List_public_members = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -2039,7 +2068,7 @@ module Remove_public_membership_for_authenticated_user = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ]
+    type t = [ `No_content ] [@@deriving show]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -2080,6 +2109,7 @@ module Set_public_membership_for_authenticated_user = struct
       [ `No_content
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2120,6 +2150,7 @@ module Check_public_membership_for_user = struct
       [ `No_content
       | `Not_found
       ]
+    [@@deriving show]
 
     let t = [ ("204", fun _ -> Ok `No_content); ("404", fun _ -> Ok `Not_found) ]
   end
@@ -2188,6 +2219,7 @@ module List_memberships_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2268,6 +2300,7 @@ module Update_membership_for_authenticated_user = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2321,6 +2354,7 @@ module Get_membership_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2378,6 +2412,7 @@ module List_for_authenticated_user = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2419,7 +2454,7 @@ module List_for_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end

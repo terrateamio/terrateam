@@ -78,6 +78,7 @@ module Code = struct
       | `Unprocessable_entity of Unprocessable_entity.t
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -166,6 +167,7 @@ module Commits = struct
       [ `OK of OK.t
       | `Not_modified
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -285,6 +287,7 @@ module Issues_and_pull_requests = struct
       | `Unprocessable_entity of Unprocessable_entity.t
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -392,6 +395,7 @@ module Labels = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -503,6 +507,7 @@ module Repos = struct
       | `Unprocessable_entity of Unprocessable_entity.t
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -583,6 +588,7 @@ module Topics = struct
       | `Not_modified
       | `Unsupported_media_type of Unsupported_media_type.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -689,6 +695,7 @@ module Users = struct
       | `Unprocessable_entity of Unprocessable_entity.t
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [

@@ -45,6 +45,7 @@ module Create = struct
       | `Forbidden of Forbidden.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -135,6 +136,7 @@ module List = struct
       | `Not_modified
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -210,7 +212,7 @@ module List_review_comments_for_repo = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -263,7 +265,7 @@ module Update_review_comment = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -310,6 +312,7 @@ module Delete_review_comment = struct
       [ `No_content
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -362,6 +365,7 @@ module Get_review_comment = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -445,6 +449,7 @@ module Update = struct
       | `Forbidden of Forbidden.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -508,6 +513,7 @@ module Get = struct
       | `Not_found of Not_found.t
       | `Internal_server_error of Internal_server_error.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -610,6 +616,7 @@ module Create_review_comment = struct
       | `Forbidden of Forbidden.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -679,7 +686,7 @@ module List_review_comments = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -746,6 +753,7 @@ module Create_reply_for_review_comment = struct
       [ `Created of Created.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -793,7 +801,7 @@ module List_commits = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -853,6 +861,7 @@ module List_files = struct
       | `Unprocessable_entity of Unprocessable_entity.t
       | `Internal_server_error of Internal_server_error.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -975,6 +984,7 @@ module Merge = struct
       | `Conflict of Conflict.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1025,6 +1035,7 @@ module Check_if_merged = struct
       [ `No_content
       | `Not_found
       ]
+    [@@deriving show]
 
     let t = [ ("204", fun _ -> Ok `No_content); ("404", fun _ -> Ok `Not_found) ]
   end
@@ -1093,6 +1104,7 @@ module Remove_requested_reviewers = struct
       [ `OK of OK.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1209,6 +1221,7 @@ module Request_reviewers = struct
       | `Forbidden of Forbidden.t
       | `Unprocessable_entity
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1255,7 +1268,7 @@ module List_requested_reviewers = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1359,6 +1372,7 @@ module Create_review = struct
       | `Forbidden of Forbidden.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1406,7 +1420,7 @@ module List_reviews = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1465,6 +1479,7 @@ module Delete_pending_review = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1529,6 +1544,7 @@ module Update_review = struct
       [ `OK of OK.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1585,6 +1601,7 @@ module Get_review = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1641,6 +1658,7 @@ module List_comments_for_review = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1716,6 +1734,7 @@ module Dismiss_review = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1808,6 +1827,7 @@ module Submit_review = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1887,6 +1907,7 @@ module Update_branch = struct
       | `Forbidden of Forbidden.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [

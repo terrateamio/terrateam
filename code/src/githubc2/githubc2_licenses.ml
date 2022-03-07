@@ -20,6 +20,7 @@ module Get_all_commonly_used = struct
       [ `OK of OK.t
       | `Not_modified
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -76,6 +77,7 @@ module Get = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -116,7 +118,7 @@ module Get_for_repo = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end

@@ -55,6 +55,7 @@ module Update_authenticated = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -121,6 +122,7 @@ module Get_authenticated = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -189,6 +191,7 @@ module List_blocked_by_authenticated_user = struct
       | `Not_found of Not_found.t
       | `Unsupported_media_type of Unsupported_media_type.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -246,6 +249,7 @@ module Unblock = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -309,6 +313,7 @@ module Block = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -368,6 +373,7 @@ module Check_blocked = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -452,6 +458,7 @@ module Set_primary_email_visibility_for_authenticated_user = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -537,6 +544,7 @@ module Delete_email_for_authenticated_user = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -625,6 +633,7 @@ module Add_email_for_authenticated_user = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -689,6 +698,7 @@ module List_emails_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -748,6 +758,7 @@ module List_followers_for_authenticated_user = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -806,6 +817,7 @@ module List_followed_by_authenticated_user = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -862,6 +874,7 @@ module Unfollow = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -919,6 +932,7 @@ module Follow = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -976,6 +990,7 @@ module Check_person_is_followed_by_authenticated = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1050,6 +1065,7 @@ module Create_gpg_key_for_authenticated_user = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1115,6 +1131,7 @@ module List_gpg_keys_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1178,6 +1195,7 @@ module Delete_gpg_key_for_authenticated_user = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1241,6 +1259,7 @@ module Get_gpg_key_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1317,6 +1336,7 @@ module Create_public_ssh_key_for_authenticated_user = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1382,6 +1402,7 @@ module List_public_ssh_keys_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1439,6 +1460,7 @@ module Delete_public_ssh_key_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1499,6 +1521,7 @@ module Get_public_ssh_key_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1564,6 +1587,7 @@ module List_public_emails_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1611,6 +1635,7 @@ module List = struct
       [ `OK of OK.t
       | `Not_modified
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1673,6 +1698,7 @@ module Get_by_username = struct
       | `Accepted of Accepted.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1713,7 +1739,7 @@ module List_followers_for_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1752,7 +1778,7 @@ module List_following_for_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1792,6 +1818,7 @@ module Check_following_for_user = struct
       [ `No_content
       | `Not_found
       ]
+    [@@deriving show]
 
     let t = [ ("204", fun _ -> Ok `No_content); ("404", fun _ -> Ok `Not_found) ]
   end
@@ -1830,7 +1857,7 @@ module List_gpg_keys_for_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1895,6 +1922,7 @@ module Get_context_for_user = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1942,7 +1970,7 @@ module List_public_keys_for_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end

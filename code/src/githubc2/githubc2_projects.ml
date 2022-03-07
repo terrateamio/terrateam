@@ -54,6 +54,7 @@ module Create_for_org = struct
       | `Gone of Gone.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -119,6 +120,7 @@ module List_for_org = struct
       [ `OK of OK.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -203,6 +205,7 @@ module Update_card = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -274,6 +277,7 @@ module Delete_card = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -335,6 +339,7 @@ module Get_card = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -464,6 +469,7 @@ module Move_card = struct
       | `Unprocessable_entity of Unprocessable_entity.t
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -530,6 +536,7 @@ module Update_column = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -581,6 +588,7 @@ module Delete_column = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -641,6 +649,7 @@ module Get_column = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -790,6 +799,7 @@ module Create_card = struct
       | `Unprocessable_entity of Unprocessable_entity.t
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -864,6 +874,7 @@ module List_cards = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -938,6 +949,7 @@ module Move_column = struct
       | `Forbidden of Forbidden.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1049,6 +1061,7 @@ module Update = struct
       | `Gone of Gone.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1127,6 +1140,7 @@ module Delete = struct
       | `Not_found of Not_found.t
       | `Gone of Gone.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1183,6 +1197,7 @@ module Get = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1265,6 +1280,7 @@ module List_collaborators = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1341,6 +1357,7 @@ module Remove_collaborator = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1432,6 +1449,7 @@ module Add_collaborator = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1507,6 +1525,7 @@ module Get_permission_for_user = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1580,6 +1599,7 @@ module Create_column = struct
       | `Forbidden of Forbidden.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1642,6 +1662,7 @@ module List_columns = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1730,6 +1751,7 @@ module Create_for_repo = struct
       | `Gone of Gone.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1820,6 +1842,7 @@ module List_for_repo = struct
       | `Gone of Gone.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1913,6 +1936,7 @@ module Create_for_authenticated_user = struct
       | `Unsupported_media_type of Unsupported_media_type.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1977,6 +2001,7 @@ module List_for_user = struct
       [ `OK of OK.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [

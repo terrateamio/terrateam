@@ -45,7 +45,7 @@ module Root = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -77,6 +77,7 @@ module Get = struct
       [ `OK of OK.t
       | `Not_modified
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -105,7 +106,7 @@ module Get_octocat = struct
   module Responses = struct
     module OK = struct end
 
-    type t = [ `OK ]
+    type t = [ `OK ] [@@deriving show]
 
     let t = [ ("200", fun _ -> Ok `OK) ]
   end
@@ -131,7 +132,7 @@ module Get_zen = struct
   module Responses = struct
     module OK = struct end
 
-    type t = [ `OK ]
+    type t = [ `OK ] [@@deriving show]
 
     let t = [ ("200", fun _ -> Ok `OK) ]
   end

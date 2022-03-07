@@ -6,7 +6,7 @@ module Remove_restrictions_for_org = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ]
+    type t = [ `No_content ] [@@deriving show]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -51,6 +51,7 @@ module Set_restrictions_for_org = struct
       [ `OK of OK.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -106,7 +107,7 @@ module Get_restrictions_for_org = struct
         | V1 v -> V1.to_yojson v
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -143,6 +144,7 @@ module Remove_restrictions_for_repo = struct
       [ `No_content
       | `Conflict
       ]
+    [@@deriving show]
 
     let t = [ ("204", fun _ -> Ok `No_content); ("409", fun _ -> Ok `Conflict) ]
   end
@@ -188,6 +190,7 @@ module Set_restrictions_for_repo = struct
       [ `OK of OK.t
       | `Conflict
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -245,7 +248,7 @@ module Get_restrictions_for_repo = struct
         | V1 v -> V1.to_yojson v
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -271,7 +274,7 @@ module Remove_restrictions_for_authenticated_user = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ]
+    type t = [ `No_content ] [@@deriving show]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -311,6 +314,7 @@ module Set_restrictions_for_authenticated_user = struct
       [ `OK of OK.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -367,6 +371,7 @@ module Get_restrictions_for_authenticated_user = struct
       [ `OK of OK.t
       | `No_content
       ]
+    [@@deriving show]
 
     let t =
       [

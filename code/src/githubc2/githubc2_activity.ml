@@ -39,6 +39,7 @@ module List_public_events = struct
       | `Forbidden of Forbidden.t
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -72,7 +73,7 @@ module Get_feeds = struct
       type t = Githubc2_components.Feed.t [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -130,6 +131,7 @@ module List_public_events_for_repo_network = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -204,6 +206,7 @@ module Mark_notifications_as_read = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -270,6 +273,7 @@ module List_notifications_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -323,6 +327,7 @@ module Mark_thread_as_read = struct
       | `Not_modified
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -376,6 +381,7 @@ module Get_thread = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -426,6 +432,7 @@ module Delete_thread_subscription = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -489,6 +496,7 @@ module Set_thread_subscription = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -543,6 +551,7 @@ module Get_thread_subscription_for_authenticated_user = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -584,7 +593,7 @@ module List_public_org_events = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -624,7 +633,7 @@ module List_repo_events = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -684,6 +693,7 @@ module Mark_repo_notifications_as_read = struct
       [ `Accepted of Accepted.t
       | `Reset_content
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -728,7 +738,7 @@ module List_repo_notifications_for_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -808,6 +818,7 @@ module List_stargazers_for_repo = struct
       [ `OK of OK.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -852,7 +863,7 @@ module List_watchers_for_repo = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -887,7 +898,7 @@ module Delete_repo_subscription = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ]
+    type t = [ `No_content ] [@@deriving show]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -934,7 +945,7 @@ module Set_repo_subscription = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -981,6 +992,7 @@ module Get_repo_subscription = struct
       | `Forbidden of Forbidden.t
       | `Not_found
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1058,6 +1070,7 @@ module List_repos_starred_by_authenticated_user = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1123,6 +1136,7 @@ module Unstar_repo_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1184,6 +1198,7 @@ module Star_repo_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1245,6 +1260,7 @@ module Check_repo_is_starred_by_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1304,6 +1320,7 @@ module List_watched_repos_for_authenticated_user = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1345,7 +1362,7 @@ module List_events_for_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1385,7 +1402,7 @@ module List_org_events_for_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1424,7 +1441,7 @@ module List_public_events_for_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1463,7 +1480,7 @@ module List_received_events_for_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1502,7 +1519,7 @@ module List_received_public_events_for_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1585,7 +1602,7 @@ module List_repos_starred_by_user = struct
         | V1 v -> V1.to_yojson v
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1629,7 +1646,7 @@ module List_repos_watched_by_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end

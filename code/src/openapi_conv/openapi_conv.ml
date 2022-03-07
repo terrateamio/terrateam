@@ -538,6 +538,7 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
                  Asttypes.Recursive
                  [
                    Type.mk
+                     ~attrs:Gen.(deriving [ show_deriver ])
                      ~manifest:
                        (Typ.variant
                           (CCList.map

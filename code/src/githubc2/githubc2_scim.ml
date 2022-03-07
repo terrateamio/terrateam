@@ -97,6 +97,7 @@ module Provision_and_invite_user = struct
       | `Conflict of Conflict.t
       | `Internal_server_error of Internal_server_error.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -165,6 +166,7 @@ module List_provisioned_identities = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -340,6 +342,7 @@ module Update_attribute_for_user = struct
       | `Not_found of Not_found.t
       | `Too_many_requests of Too_many_requests.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -397,6 +400,7 @@ module Delete_user_from_org = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -507,6 +511,7 @@ module Set_information_for_provisioned_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -562,6 +567,7 @@ module Get_provisioning_information_for_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [

@@ -7,7 +7,7 @@ module Get_authenticated = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -157,6 +157,7 @@ module Create_from_manifest = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -205,7 +206,7 @@ module Update_webhook_config_for_app = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -231,7 +232,7 @@ module Get_webhook_config_for_app = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -278,6 +279,7 @@ module List_webhook_deliveries = struct
       | `Bad_request of Bad_request.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -329,6 +331,7 @@ module Get_webhook_delivery = struct
       | `Bad_request of Bad_request.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -379,6 +382,7 @@ module Redeliver_webhook_delivery = struct
       | `Bad_request of Bad_request.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -421,7 +425,7 @@ module List_installations = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -463,6 +467,7 @@ module Delete_installation = struct
       [ `No_content
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -519,6 +524,7 @@ module Get_installation = struct
       | `Not_found of Not_found.t
       | `Unsupported_media_type of Unsupported_media_type.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -617,6 +623,7 @@ module Create_installation_access_token = struct
       | `Unsupported_media_type of Unsupported_media_type.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -664,6 +671,7 @@ module Unsuspend_installation = struct
       [ `No_content
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -704,6 +712,7 @@ module Suspend_installation = struct
       [ `No_content
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -752,6 +761,7 @@ module Delete_authorization = struct
       [ `No_content
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -805,6 +815,7 @@ module Reset_token = struct
       [ `OK of OK.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -855,6 +866,7 @@ module Delete_token = struct
       [ `No_content
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -914,6 +926,7 @@ module Check_token = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1002,6 +1015,7 @@ module Scope_token = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1069,6 +1083,7 @@ module Get_by_slug = struct
       | `Not_found of Not_found.t
       | `Unsupported_media_type of Unsupported_media_type.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1162,6 +1177,7 @@ module Create_content_attachment = struct
       | `Unsupported_media_type of Unsupported_media_type.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1239,6 +1255,7 @@ module List_repos_accessible_to_installation = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1270,7 +1287,7 @@ module Revoke_installation_access_token = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ]
+    type t = [ `No_content ] [@@deriving show]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -1313,6 +1330,7 @@ module Get_subscription_plan_for_account = struct
       | `Unauthorized of Unauthorized.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1367,6 +1385,7 @@ module List_plans = struct
       | `Unauthorized of Unauthorized.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1448,6 +1467,7 @@ module List_accounts_for_plan = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1505,6 +1525,7 @@ module Get_subscription_plan_for_account_stubbed = struct
       | `Unauthorized of Unauthorized.t
       | `Not_found
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1553,6 +1574,7 @@ module List_plans_stubbed = struct
       [ `OK of OK.t
       | `Unauthorized of Unauthorized.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1621,6 +1643,7 @@ module List_accounts_for_plan_stubbed = struct
       [ `OK of OK.t
       | `Unauthorized of Unauthorized.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1663,7 +1686,7 @@ module Get_org_installation = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1754,6 +1777,7 @@ module Create_content_attachment_for_repo = struct
       | `Unsupported_media_type of Unsupported_media_type.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1820,6 +1844,7 @@ module Get_repo_installation = struct
       | `Moved_permanently of Moved_permanently.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1902,6 +1927,7 @@ module List_installations_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Unsupported_media_type of Unsupported_media_type.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1977,6 +2003,7 @@ module List_installation_repos_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2034,6 +2061,7 @@ module Remove_repo_from_installation_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2091,6 +2119,7 @@ module Add_repo_to_installation_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2152,6 +2181,7 @@ module List_subscriptions_for_authenticated_user = struct
       | `Unauthorized of Unauthorized.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2204,6 +2234,7 @@ module List_subscriptions_for_authenticated_user_stubbed = struct
       | `Not_modified
       | `Unauthorized of Unauthorized.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -2239,7 +2270,7 @@ module Get_user_installation = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end

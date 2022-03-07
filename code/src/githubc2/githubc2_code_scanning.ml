@@ -48,6 +48,7 @@ module List_alerts_for_repo = struct
       | `Not_found of Not_found.t
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -141,6 +142,7 @@ module Update_alert = struct
       | `Not_found of Not_found.t
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -216,6 +218,7 @@ module Get_alert = struct
       | `Not_found of Not_found.t
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -293,6 +296,7 @@ module List_alert_instances = struct
       | `Not_found of Not_found.t
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -379,6 +383,7 @@ module List_recent_analyses = struct
       | `Not_found of Not_found.t
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -466,6 +471,7 @@ module Delete_analysis = struct
       | `Not_found of Not_found.t
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -544,6 +550,7 @@ module Get_analysis = struct
       | `Not_found of Not_found.t
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -639,6 +646,7 @@ module Upload_sarif = struct
       | `Request_entity_too_large
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -709,6 +717,7 @@ module Get_sarif = struct
       | `Not_found
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [

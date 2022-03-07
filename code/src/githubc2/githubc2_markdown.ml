@@ -32,6 +32,7 @@ module Render = struct
       [ `OK
       | `Not_modified
       ]
+    [@@deriving show]
 
     let t = [ ("200", fun _ -> Ok `OK); ("304", fun _ -> Ok `Not_modified) ]
   end
@@ -60,6 +61,7 @@ module Render_raw = struct
       [ `OK
       | `Not_modified
       ]
+    [@@deriving show]
 
     let t = [ ("200", fun _ -> Ok `OK); ("304", fun _ -> Ok `Not_modified) ]
   end

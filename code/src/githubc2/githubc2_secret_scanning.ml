@@ -49,6 +49,7 @@ module List_alerts_for_org = struct
       | `Not_found of Not_found.t
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -131,6 +132,7 @@ module List_alerts_for_repo = struct
       | `Not_found
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -214,6 +216,7 @@ module Update_alert = struct
       | `Unprocessable_entity
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -282,6 +285,7 @@ module Get_alert = struct
       | `Not_found
       | `Service_unavailable of Service_unavailable.t
       ]
+    [@@deriving show]
 
     let t =
       [

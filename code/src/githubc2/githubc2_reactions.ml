@@ -48,6 +48,7 @@ module Create_for_team_discussion_comment_in_org = struct
       [ `OK of OK.t
       | `Created of Created.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -113,7 +114,7 @@ module List_for_team_discussion_comment_in_org = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -161,7 +162,7 @@ module Delete_for_team_discussion_comment = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ]
+    type t = [ `No_content ] [@@deriving show]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -237,6 +238,7 @@ module Create_for_team_discussion_in_org = struct
       [ `OK of OK.t
       | `Created of Created.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -299,7 +301,7 @@ module List_for_team_discussion_in_org = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -344,7 +346,7 @@ module Delete_for_team_discussion = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ]
+    type t = [ `No_content ] [@@deriving show]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -400,6 +402,7 @@ module Delete_legacy = struct
       | `Forbidden of Forbidden.t
       | `Gone of Gone.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -494,6 +497,7 @@ module Create_for_commit_comment = struct
       | `Unsupported_media_type of Unsupported_media_type.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -570,6 +574,7 @@ module List_for_commit_comment = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -618,7 +623,7 @@ module Delete_for_commit_comment = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ]
+    type t = [ `No_content ] [@@deriving show]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -698,6 +703,7 @@ module Create_for_issue_comment = struct
       | `Created of Created.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -771,6 +777,7 @@ module List_for_issue_comment = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -819,7 +826,7 @@ module Delete_for_issue_comment = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ]
+    type t = [ `No_content ] [@@deriving show]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -899,6 +906,7 @@ module Create_for_issue = struct
       | `Created of Created.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -978,6 +986,7 @@ module List_for_issue = struct
       | `Not_found of Not_found.t
       | `Gone of Gone.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1027,7 +1036,7 @@ module Delete_for_issue = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ]
+    type t = [ `No_content ] [@@deriving show]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -1107,6 +1116,7 @@ module Create_for_pull_request_review_comment = struct
       | `Created of Created.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1180,6 +1190,7 @@ module List_for_pull_request_review_comment = struct
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1228,7 +1239,7 @@ module Delete_for_pull_request_comment = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ]
+    type t = [ `No_content ] [@@deriving show]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -1306,6 +1317,7 @@ module Create_for_release = struct
       | `Created of Created.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
+    [@@deriving show]
 
     let t =
       [
@@ -1376,7 +1388,7 @@ module Create_for_team_discussion_comment_legacy = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `Created of Created.t ]
+    type t = [ `Created of Created.t ] [@@deriving show]
 
     let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
   end
@@ -1435,7 +1447,7 @@ module List_for_team_discussion_comment_legacy = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1505,7 +1517,7 @@ module Create_for_team_discussion_legacy = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `Created of Created.t ]
+    type t = [ `Created of Created.t ] [@@deriving show]
 
     let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
   end
@@ -1562,7 +1574,7 @@ module List_for_team_discussion_legacy = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `OK of OK.t ]
+    type t = [ `OK of OK.t ] [@@deriving show]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
