@@ -119,7 +119,7 @@ The libkqueue filter `EVFILT_LIBKQUEUE` exposes runtime configuration options an
 using `EVFILT_LIBKQUEUE` the `flags` field should be set to `EV_ADD`, and the `fflags` field should be one of the
 following:
 
-- `NOTE_VERSION` return the current version as a 32 unsigned integer in the format `MMmmpprr` (`Major`, `minor`, `patch`, `release`) in the `data` field of an entry in the eventlist.
+- `NOTE_VERSION` return the current version as a 32bit unsigned integer in the format `MMmmpprr` (`Major`, `minor`, `patch`, `release`) in the `data` field of an entry in the eventlist.
 - `NOTE_VERSION_STR` return the current version as a string in the `udata` field of an entry in the eventlist.
 
 Example - retrieving version string:
