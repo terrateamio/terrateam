@@ -36,8 +36,9 @@ extern pthread_mutex_t kq_mtx;
  */
 static pthread_t monitoring_thread;
 static pid_t monitoring_tid; /* Monitoring thread */
-pthread_once_t monitoring_thread_initialized = PTHREAD_ONCE_INIT;
-pthread_cond_t monitoring_thread_cond = PTHREAD_COND_INITIALIZER;
+
+static pthread_mutex_t monitoring_thread_mtx = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t monitoring_thread_cond = PTHREAD_COND_INITIALIZER;
 
 /*
  * Number of active kqueues.
@@ -66,9 +67,15 @@ static int nb_max_fd;
 static void
 linux_kqueue_cleanup(struct kqueue *kq);
 
-static bool end_monitoring_thread = false;
-
-static void
+/** Clean up a kqueue from the perspective of the monitoring thread
+ *
+ * Called with the kq_mtx held.
+ *
+ * @return
+ *   - 0 if the monitoring thread should exit.
+ *   - 1 if the monitoring thread should continue.
+ */
+static int
 monitoring_thread_kq_cleanup(int signal_fd, bool ignore_use_count)
 {
     int fd;
@@ -128,16 +135,14 @@ check_count:
     /*
      * Stop thread if all kqueues have been closed
      */
-    if (kqueue_cnt == 0) end_monitoring_thread = true;
+    if (kqueue_cnt == 0) return (0);
+    return (1);
 }
 
 static void
 monitoring_thread_cleanup(void *arg)
 {
     int i;
-
-    /* Reset so that thread can be restarted */
-    monitoring_thread_initialized = PTHREAD_ONCE_INIT;
 
     for (i = 0; i < nb_max_fd; i++) {
         if (fd_use_cnt[i] > 0) {
@@ -149,7 +154,7 @@ monitoring_thread_cleanup(void *arg)
                 dbg_printf("fd=%i - forcefully cleaning up, use_count=%u: %s",
                            fd, fd_use_cnt[fd], strerror(errno));
                 fd_use_cnt[fd] = 0;
-                monitoring_thread_kq_cleanup(i, true);
+                (void)monitoring_thread_kq_cleanup(i, true);
                 fd_use_cnt[fd] = 0;
              }
         }
@@ -162,14 +167,15 @@ monitoring_thread_cleanup(void *arg)
     free(fd_use_cnt);
     fd_use_cnt = NULL;
 
-    (void) pthread_mutex_unlock(&kq_mtx);
+    /* Reset so that thread can be restarted */
+    monitoring_tid = 0;
 }
 
 /*
  * Monitoring thread that loops on waiting for signals to be received
  */
 static void *
-monitoring_thread_loop(void *arg)
+monitoring_thread_loop(UNUSED void *arg)
 {
     int res = 0;
     siginfo_t info;
@@ -193,8 +199,6 @@ monitoring_thread_loop(void *arg)
     sigemptyset(&monitoring_sig_set);
     sigaddset(&monitoring_sig_set, MONITORING_THREAD_SIGNAL);
 
-    end_monitoring_thread = false;    /* reset */
-
     monitoring_tid = syscall(SYS_gettid);
 
     dbg_printf("tid=%u - monitoring thread started", monitoring_tid);
@@ -216,10 +220,9 @@ monitoring_thread_loop(void *arg)
     /*
      * Now that thread is initialized, let kqueue init resume
      */
-    pthread_mutex_lock(arg);    /* Must try to lock to ensure parent is waiting on signal */
+    pthread_mutex_lock(&monitoring_thread_mtx);    /* Must try to lock to ensure parent is waiting on signal */
     pthread_cond_signal(&monitoring_thread_cond);
-    pthread_mutex_unlock(arg);
-    pthread_detach(pthread_self());
+    pthread_mutex_unlock(&monitoring_thread_mtx);
 
     pthread_cleanup_push(monitoring_thread_cleanup, NULL)
     while (true) {
@@ -232,35 +235,43 @@ monitoring_thread_loop(void *arg)
         (void) pthread_mutex_lock(&kq_mtx);
         if (res != -1) {
             dbg_printf("fd=%i - freeing kqueue due to fd closure", fd_map[info.si_fd]);
-            monitoring_thread_kq_cleanup(info.si_fd, false);
+
+            /*
+             * If no more kqueues... exit.
+             */
+            if (monitoring_thread_kq_cleanup(info.si_fd, false) == 0)
+                break;
         } else {
             dbg_perror("sigwaitinfo returned early");
         }
-
-        if (end_monitoring_thread)
-            break;
-
         (void) pthread_mutex_unlock(&kq_mtx);
     }
-    pthread_cleanup_pop(true);
+    pthread_cleanup_pop(true); /* Executes the cleanup function (monitoring_thread_cleanup) */
+    (void) pthread_mutex_unlock(&kq_mtx);
 
     return NULL;
 }
 
-static void
+static int
 linux_kqueue_start_thread(void)
 {
-    static pthread_mutex_t  mt_mtx = PTHREAD_MUTEX_INITIALIZER;
-
-    pthread_mutex_lock(&mt_mtx);
-
-    if (pthread_create(&monitoring_thread, NULL, &monitoring_thread_loop, &mt_mtx)) {
+    pthread_mutex_lock(&monitoring_thread_mtx);
+    if (pthread_create(&monitoring_thread, NULL, &monitoring_thread_loop, &monitoring_thread_mtx)) {
          dbg_perror("linux_kqueue_start_thread failure");
+         pthread_mutex_unlock(&monitoring_thread_mtx);
+
+         return (-1);
     }
+    /*
+     * Ensures resources are released without an explicit join
+     */
+    pthread_detach(monitoring_thread);
 
     /* Wait for thread creating to be done as we need monitoring_tid to be available */
-    pthread_cond_wait(&monitoring_thread_cond, &mt_mtx); /* unlocks mt_mtx allowing child to lock it */
-    pthread_mutex_unlock(&mt_mtx);
+    pthread_cond_wait(&monitoring_thread_cond, &monitoring_thread_mtx); /* unlocks mt_mtx allowing child to lock it */
+    pthread_mutex_unlock(&monitoring_thread_mtx);
+
+    return (0);
 }
 
 static int
@@ -347,7 +358,12 @@ linux_kqueue_init(struct kqueue *kq)
     kqueue_cnt++;
 
     /* Start monitoring thread during first initialization */
-    (void) pthread_once(&monitoring_thread_initialized, linux_kqueue_start_thread);
+    if (monitoring_tid == 0) {
+        if (linux_kqueue_start_thread() < 0) {
+            pthread_mutex_unlock(&kq_mtx);
+            return (-1);
+        }
+    }
 
     /* Update pipe FD map */
     fd_map[kq->pipefd[0]] = kq->pipefd[1];
@@ -760,10 +776,10 @@ linux_eventfd_register(struct kqueue *kq, struct eventfd *efd)
 
     if (epoll_ctl(kq->epollfd, EPOLL_CTL_ADD, kqops.eventfd_descriptor(efd), EPOLL_EV_EVENTFD(EPOLLIN, efd)) < 0) {
         dbg_perror("epoll_ctl(2)");
-        return -1;
+        return (-1);
     }
 
-    return 0;
+    return (0);
 }
 
 void
