@@ -74,6 +74,15 @@ get_fd_used(void)
 static struct map *kqmap;
 
 void
+libkqueue_free(void)
+{
+    dbg_puts("Releasing library resources");
+
+    if (kqops.libkqueue_free)
+        kqops.libkqueue_free();
+}
+
+void
 libkqueue_init(void)
 {
 #ifdef NDEBUG
@@ -107,10 +116,17 @@ libkqueue_init(void)
        abort();
    if (knote_init() < 0)
        abort();
-   dbg_puts("library initialization complete");
+
 #ifdef _WIN32
    kq_init_complete = 1;
 #endif
+
+   if (kqops.libkqueue_init)
+       kqops.libkqueue_init();
+
+   dbg_puts("library initialization complete");
+
+   atexit(libkqueue_free);
 }
 
 void

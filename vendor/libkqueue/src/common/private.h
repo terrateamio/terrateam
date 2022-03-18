@@ -478,6 +478,16 @@ struct kqueue {
  *
  */
 struct kqueue_vtable {
+    /** Called once on startup
+     *
+     */
+    void   (*libkqueue_init)(void);
+
+    /** Called at exit
+     *
+     */
+    void   (*libkqueue_free)(void);
+
     /** Called once for every kqueue created
      *
      */
