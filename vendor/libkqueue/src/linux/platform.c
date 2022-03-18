@@ -717,8 +717,14 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
         case EPOLL_UDATA_FD_STATE:
         {
             struct fd_state   *fds = epoll_udata->ud_fds;
-            struct knote      *kn;
+            struct knote      *kn, *write;
             assert(fds);
+
+            /*
+             * fds can be freed after the first linux_kevent_copyout_ev
+             * so cache the pointer value here.
+             */
+            write = fds->fds_write;
 
             /*
              *    FD, or errored, or other side shutdown
@@ -734,7 +740,7 @@ linux_kevent_copyout(struct kqueue *kq, int nready, struct kevent *el, int neven
             /*
              *    FD is writable, or errored, or other side shutdown
              */
-            if ((kn = fds->fds_write) && (ev->events & (EPOLLOUT | POLLHUP | EPOLLERR))) {
+            if ((kn = write) && (ev->events & (EPOLLOUT | POLLHUP | EPOLLERR))) {
                 if (el_p >= el_end) goto oos;
 
                 rv = linux_kevent_copyout_ev(el_p, (el_end - el_p), ev, knote_get_filter(kn), kn);
