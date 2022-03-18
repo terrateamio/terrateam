@@ -115,9 +115,9 @@ typedef struct {
 } while (0)
 
 # define tracing_mutex_lock(x)  do { \
-    dbg_printf("waiting for %s", #x); \
+    dbg_printf("[%i]: waiting for %s", __LINE__, #x); \
     pthread_mutex_lock(&((x)->mtx_lock)); \
-    dbg_printf("locked %s", #x); \
+    dbg_printf("[%i]: locked %s", __LINE__, #x); \
     (x)->mtx_owner = THREAD_ID; \
     (x)->mtx_status = MTX_LOCKED; \
 } while (0)
@@ -126,7 +126,7 @@ typedef struct {
     (x)->mtx_status = MTX_UNLOCKED; \
     (x)->mtx_owner = -1; \
     pthread_mutex_unlock(&((x)->mtx_lock)); \
-    dbg_printf("unlocked %s", # x); \
+    dbg_printf("[%i]: unlocked %s", __LINE__, # x); \
 } while (0)
 
 #else /* NDEBUG */
