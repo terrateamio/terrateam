@@ -5,12 +5,6 @@
 
  ## Common
 
- * We need to uninitialize library after `fork()` `using pthread_atfork()`.
-   BSD kqueue file descriptors are not inherited by the fork copy and
-   will be closed automatically in the fork.  With libkqueue, because
-   we don't unitialize the library, kqueue file descriptors will persist
-   in the fork.
-
  * Some functions should crash instead of silently printing a debug
    message.. for example, `note_release()`.
 
@@ -38,24 +32,24 @@
    the call stack to `kevent()`.
 
  ## POSIX
- 
+
  * `EVFILT_PROC` - The POSIX implmentation requires that `SIGCHLD`
     be delivered to its global waiter thread so that the waiter can discover a
-    when child process exits  `sigprocmask(2)` is used to mask `SIGCHLD` at a process 
-    level.  If the application unmasks `SIGCHLD` or installs a handler for it, 
+    when child process exits  `sigprocmask(2)` is used to mask `SIGCHLD` at a process
+    level.  If the application unmasks `SIGCHLD` or installs a handler for it,
     the POSIX `EVFILT_PROC` code will not function.
-  
- * `EVFILT_PROC` - If using the POSIX `EVFILT_PROC` the number of monitored 
-    processes should be kept low (< 100).  Because the Linux kernel coalesces 
-    `SIGCHLD` (and other signals), the only way to reliably determine if a 
-    monitored process has exited, is to loop through all PIDs registered by any 
-    kqueue when we receive a `SIGCHLD`.  This involves many calls to `waitid(2)` 
+
+ * `EVFILT_PROC` - If using the POSIX `EVFILT_PROC` the number of monitored
+    processes should be kept low (< 100).  Because the Linux kernel coalesces
+    `SIGCHLD` (and other signals), the only way to reliably determine if a
+    monitored process has exited, is to loop through all PIDs registered by any
+    kqueue when we receive a `SIGCHLD`.  This involves many calls to `waitid(2)`
     and may have a negative performance impact.
-    
+
  * `EVFILT_PROC` - The notification list of the global waiter thread, and the
-    ready lists of individual kqueues share the same mutex.  This may cause 
+    ready lists of individual kqueues share the same mutex.  This may cause
     performance issues where large numbers of processes are monitored.
-    
+
  ## Linux
 
  * If a file descriptor outside of kqueue is closed, the internal kqueue
@@ -71,9 +65,9 @@
    If building against Kernels < 5.3 (where `pidfd_open()` is not available)
    the POSIX `EVFILT_PROC` code is used.  See the POSIX section above for
    limitations of the POSIX `EVFILT_PROC` code.
-   
-  * `EVFILT_PROC` - Native kqueue provides notifications for any process that 
-   is visible to the application process.  On Linux/POSIX platforms only direct 
+
+  * `EVFILT_PROC` - Native kqueue provides notifications for any process that
+   is visible to the application process.  On Linux/POSIX platforms only direct
    children of the application process can be monitored for exit.
 
  ## Solaris
@@ -95,6 +89,12 @@
    Applications should ensure that file descriptors are removed from
    the kqueue before they are closed.
 
+ * We need to uninitialize library after `fork()` `using pthread_atfork()`.
+   BSD kqueue file descriptors are not inherited by the fork copy and
+   will be closed automatically in the fork.  With libkqueue, because
+   we don't unitialize the library, kqueue file descriptors will persist
+   in the fork.
+
  ## Windows
 
  * On Windows, you need to supply `-DMAKE_STATIC` in `CFLAGS` when building the
@@ -104,6 +104,12 @@
    state is not cleaned up.
    Applications should ensure that file descriptors are removed from
    the kqueue before they are closed.
+
+ * We need to uninitialize library after `fork()` `using pthread_atfork()`.
+   BSD kqueue file descriptors are not inherited by the fork copy and
+   will be closed automatically in the fork.  With libkqueue, because
+   we don't unitialize the library, kqueue file descriptors will persist
+   in the fork.
 
 # libkqueue (kernel)
 

@@ -147,9 +147,15 @@ monitoring_thread_scan_for_closed(void)
 {
     int i;
 
+    /*
+     * Avoid debug output below
+     */
+    if (kqueue_cnt == 0)
+        return;
+
     dbg_printf("scanning FDs 0-%i", nb_max_fd);
 
-    for (i = 0; i < nb_max_fd; i++) {
+    for (i = 0; (kqueue_cnt > 0) && (i < nb_max_fd); i++) {
         int fd;
 
         if (fd_use_cnt[i] == 0) continue;
@@ -164,18 +170,11 @@ monitoring_thread_scan_for_closed(void)
             fd_use_cnt[i] = 1;
             (void)monitoring_thread_kq_cleanup(i);
         }
-
-        /*
-         * stop scanning if all the kqueues have been
-         * cleaned up.
-         */
-        if (kqueue_cnt == 0)
-            break;
     }
 }
 
 static void
-monitoring_thread_cleanup(void *arg)
+monitoring_thread_cleanup(UNUSED void *arg)
 {
     /*
      * If the entire process is exiting, then scan through
@@ -296,6 +295,23 @@ monitoring_thread_loop(UNUSED void *arg)
     return NULL;
 }
 
+static int
+linux_kqueue_start_thread(void)
+{
+    pthread_mutex_lock(&monitoring_thread_mtx);
+    if (pthread_create(&monitoring_thread, NULL, &monitoring_thread_loop, &monitoring_thread_mtx)) {
+         dbg_perror("linux_kqueue_start_thread failure");
+         pthread_mutex_unlock(&monitoring_thread_mtx);
+
+         return (-1);
+    }
+    /* Wait for thread creating to be done as we need monitoring_tid to be available */
+    pthread_cond_wait(&monitoring_thread_cond, &monitoring_thread_mtx); /* unlocks mt_mtx allowing child to lock it */
+    pthread_mutex_unlock(&monitoring_thread_mtx);
+
+    return (0);
+}
+
 /*
  * We have to use this instead of pthread_detach as there
  * seems to be some sort of race with LSAN and thread cleanup
@@ -311,31 +327,45 @@ linux_monitor_thread_join(void)
     }
 }
 
-static int
-linux_kqueue_start_thread(void)
+static void
+linux_at_fork(void)
 {
-    static bool done_at_exit_handler;
+    int i;
 
-    pthread_mutex_lock(&monitoring_thread_mtx);
-    if (pthread_create(&monitoring_thread, NULL, &monitoring_thread_loop, &monitoring_thread_mtx)) {
-         dbg_perror("linux_kqueue_start_thread failure");
-         pthread_mutex_unlock(&monitoring_thread_mtx);
-
-         return (-1);
-    }
     /*
-     * Ensures resources are released without an explicit join
+     * forcefully close all outstanding kqueues
      */
-    if (!done_at_exit_handler) {
-        atexit(linux_monitor_thread_join);
-        done_at_exit_handler = true;
+    tracing_mutex_lock(&kq_mtx);
+    for (i = 0; (kqueue_cnt > 0) && (i < nb_max_fd); i++) {
+        if (fd_use_cnt[i] == 0) continue;
+
+        dbg_printf("Closing kq fd=%i due to fork", i);
+        close(i);
+        fd_use_cnt[i] = 1;
+        (void)monitoring_thread_kq_cleanup(i);
     }
+    tracing_mutex_unlock(&kq_mtx);
 
-    /* Wait for thread creating to be done as we need monitoring_tid to be available */
-    pthread_cond_wait(&monitoring_thread_cond, &monitoring_thread_mtx); /* unlocks mt_mtx allowing child to lock it */
-    pthread_mutex_unlock(&monitoring_thread_mtx);
+    /*
+     * re-initialises everything so that the child could
+     * in theory allocate a new set of kqueues.
+     *
+     * Children don't appear to inherit pending signals
+     * so this should all still work as intended.
+     */
+    linux_monitor_thread_join();
+}
 
-    return (0);
+static void
+linux_libkqueue_free(void)
+{
+    linux_monitor_thread_join();
+}
+
+static void
+linux_libkqueue_init(void)
+{
+    pthread_atfork(NULL, NULL, linux_at_fork);
 }
 
 static int
@@ -1483,6 +1513,8 @@ linux_fd_to_path(char *buf, size_t bufsz, int fd)
 }
 
 const struct kqueue_vtable kqops = {
+    .libkqueue_init     = linux_libkqueue_init,
+    .libkqueue_free     = linux_libkqueue_free,
     .kqueue_init        = linux_kqueue_init,
     .kqueue_free        = linux_kqueue_free,
     .kevent_wait        = linux_kevent_wait,
