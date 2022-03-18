@@ -63,14 +63,14 @@ static int *fd_map;
 /*
  * Map kqueue id to counter for kq cleanups.
  * When use counter is at 0, cleanup can be performed by signal handler.
- * Otherwise, it means cleanup was already performed for this FD in linux_kqueue_free.
+ * Otherwise, it means cleanup was already performed for this FD in linux_kqueue_reused.
  */
 static unsigned int *fd_use_cnt;
 
 static int nb_max_fd;
 
 static void
-linux_kqueue_cleanup(struct kqueue *kq);
+linux_kqueue_free(struct kqueue *kq);
 
 /** Clean up a kqueue from the perspective of the monitoring thread
  *
@@ -81,7 +81,7 @@ linux_kqueue_cleanup(struct kqueue *kq);
  *   - 1 if the monitoring thread should continue.
  */
 static int
-monitoring_thread_kq_cleanup(int signal_fd, bool ignore_use_count)
+monitoring_thread_kq_cleanup(int signal_fd)
 {
     int fd;
     struct kqueue *kq;
@@ -105,38 +105,31 @@ monitoring_thread_kq_cleanup(int signal_fd, bool ignore_use_count)
     }
 
     /*
-     * If kqueue instance for this FD hasn't been cleaned yet
-     *
-     * The issue the fd_use_cnt array prevents, is where kqueue
-     * allocates a KQ, and takes the opportunity to cleanup an
-     * old KQ instance, and this happens before the monitoring
-     * thread is woken up to reap the KQ itself.
-     *
-     * If the KQ has already been freed, we don't want to do
-     * anything here, as that will destroy the newly allocated
-     * KQ that shares an identifier with the old KQ.
-     *
-     * It's a counter because multiple signals may be queued.
+     * Decrement use counter as signal handler has been run for
+     * this FD.  We rely on using an RT signal so that multiple
+     * signals are queued.
      */
-    if (ignore_use_count || (fd_use_cnt[fd] == 0)) {
-        dbg_printf("kq=%p - fd=%i use_count=%u cleaning up...", kq, fd, fd_use_cnt[fd]);
+    fd_use_cnt[signal_fd]--;
+    assert(fd_use_cnt[signal_fd] >= 0);
+
+    /*
+     * If kqueue instance for this FD hasn't been cleaned up yet
+     *
+     * When the main kqueue code frees a kq, the file descriptor
+     * of the kq often gets reused.
+     *
+     * We maintain a count of how many allocations have been
+     * performed against a given file descriptor ID, and only
+     * free the kqueue here if that count is zero.
+     */
+    if (fd_use_cnt[signal_fd] == 0) {
+        dbg_printf("kq=%p - fd=%i use_count=%u cleaning up...", kq, fd, fd_use_cnt[signal_fd]);
         kqueue_free(kq);
     } else {
-        dbg_printf("kq=%p - fd=%i use_count=%u skipping...", kq, fd, fd_use_cnt[fd]);
+        dbg_printf("kq=%p - fd=%i use_count=%u skipping...", kq, fd, fd_use_cnt[signal_fd]);
     }
 
 check_count:
-    /*
-     * Forcefully cleaning up like this breaks use counting
-     * so we reset the use count to 0, and don't allow it to
-     * go below 0 if we later receive delayed signals.
-     */
-    if (ignore_use_count) {
-        fd_use_cnt[fd] = 0;
-    } else if (fd_use_cnt[fd] > 0) {
-        fd_use_cnt[fd]--; /* Decrement use counter as signal handler has been run for this FD */
-    }
-
     /*
      * Stop thread if all kqueues have been closed
      */
@@ -149,6 +142,8 @@ monitoring_thread_cleanup(void *arg)
 {
     int i;
 
+    dbg_printf("scanning FDs 0-%i", nb_max_fd);
+
     for (i = 0; i < nb_max_fd; i++) {
         if (fd_use_cnt[i] > 0) {
             int fd;
@@ -157,10 +152,9 @@ monitoring_thread_cleanup(void *arg)
             dbg_printf("Checking rfd=%i wfd=%i", i, fd);
             if (fcntl(fd, F_GETFD) < 0) {
                 dbg_printf("fd=%i - forcefully cleaning up, use_count=%u: %s",
-                           fd, fd_use_cnt[fd], strerror(errno));
-                fd_use_cnt[fd] = 0;
-                (void)monitoring_thread_kq_cleanup(i, true);
-                fd_use_cnt[fd] = 0;
+                           fd, fd_use_cnt[i], errno == EBADF ? "File descriptor already closed" : strerror(errno));
+                fd_use_cnt[i] = 1;
+                (void)monitoring_thread_kq_cleanup(i);
              }
         }
     }
@@ -175,6 +169,7 @@ monitoring_thread_cleanup(void *arg)
 
     /* Reset so that thread can be restarted */
     monitoring_tid = 0;
+    monitoring_thread = 0;
 }
 
 /*
@@ -238,6 +233,11 @@ monitoring_thread_loop(UNUSED void *arg)
          * should be performed on the kqueue.
          */
         res = sigwaitinfo(&monitoring_sig_set, &info);
+
+        /*
+         * Don't allow cancellation in the middle of cleaning up resources
+         */
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
         tracing_mutex_lock(&kq_mtx);
         if (res != -1) {
             dbg_printf("fd=%i - freeing kqueue due to fd closure", fd_map[info.si_fd]);
@@ -245,13 +245,15 @@ monitoring_thread_loop(UNUSED void *arg)
             /*
              * If no more kqueues... exit.
              */
-            if (monitoring_thread_kq_cleanup(info.si_fd, false) == 0)
+            if (monitoring_thread_kq_cleanup(info.si_fd) == 0)
                 break;
         } else {
             dbg_perror("sigwaitinfo returned early");
         }
         tracing_mutex_unlock(&kq_mtx);
+        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     }
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     monitoring_thread_on_exit = false;
     pthread_cleanup_pop(true); /* Executes the cleanup function (monitoring_thread_cleanup) */
     monitoring_thread_on_exit = true;
@@ -260,9 +262,26 @@ monitoring_thread_loop(UNUSED void *arg)
     return NULL;
 }
 
+/*
+ * We have to use this instead of pthread_detach as there
+ * seems to be some sort of race with LSAN and thread cleanup
+ * on exit, and if we don't explicitly join the monitoring
+ * thread, LSAN reports kqueues as leaked.
+ */
+static void
+linux_monitor_thread_join(void)
+{
+    if (monitoring_thread) {
+        pthread_cancel(monitoring_thread);
+        pthread_join(monitoring_thread, NULL);
+    }
+}
+
 static int
 linux_kqueue_start_thread(void)
 {
+    static bool done_at_exit_handler;
+
     pthread_mutex_lock(&monitoring_thread_mtx);
     if (pthread_create(&monitoring_thread, NULL, &monitoring_thread_loop, &monitoring_thread_mtx)) {
          dbg_perror("linux_kqueue_start_thread failure");
@@ -273,7 +292,10 @@ linux_kqueue_start_thread(void)
     /*
      * Ensures resources are released without an explicit join
      */
-    pthread_detach(monitoring_thread);
+    if (!done_at_exit_handler) {
+        atexit(linux_monitor_thread_join);
+        done_at_exit_handler = true;
+    }
 
     /* Wait for thread creating to be done as we need monitoring_tid to be available */
     pthread_cond_wait(&monitoring_thread_cond, &monitoring_thread_mtx); /* unlocks mt_mtx allowing child to lock it */
@@ -348,14 +370,15 @@ linux_kqueue_init(struct kqueue *kq)
      *
      * We may want to make this configurable at runtime later
      * so we won't conflict with the application.
+     *
+     * Note: MONITORING_THREAD_SIGNAL must be >= SIGRTMIN so that
+     * multiple signals are queued.
      */
     if (fcntl(kq->pipefd[0], F_SETSIG, MONITORING_THREAD_SIGNAL) < 0) {
         dbg_printf("fd=%i - failed settting F_SETSIG sig=%u: %s",
                    kq->pipefd[0], MONITORING_THREAD_SIGNAL, strerror(errno));
         goto error;
     }
-
-    tracing_mutex_lock(&kq_mtx);
 
     /*
      * Increment kqueue counter - must be incremented before
@@ -369,13 +392,15 @@ linux_kqueue_init(struct kqueue *kq)
     if (monitoring_tid == 0) {
         if (linux_kqueue_start_thread() < 0) {
             kqueue_cnt--;
-            tracing_mutex_unlock(&kq_mtx);
             goto error;
         }
     }
 
     /* Update pipe FD map */
-    fd_map[kq->pipefd[0]] = kq->pipefd[1];
+    fd_map[kq->pipefd[0]] = kq->kq_id;
+
+    /* Mark this id as in use */
+    fd_use_cnt[kq->pipefd[0]]++;
 
     dbg_printf("active_kqueues=%u", kqueue_cnt);
 
@@ -396,8 +421,6 @@ linux_kqueue_init(struct kqueue *kq)
     }
     dbg_printf("kq=%p - monitoring fd=%i for closure", kq, kq->pipefd[0]);
 
-    tracing_mutex_unlock(&kq_mtx);
-
     return (0);
 }
 
@@ -409,7 +432,7 @@ linux_kqueue_init(struct kqueue *kq)
  * - false if epoll fd was already closed
  */
 static void
-linux_kqueue_cleanup(struct kqueue *kq)
+linux_kqueue_free(struct kqueue *kq)
 {
     char buffer;
     ssize_t ret;
@@ -456,21 +479,6 @@ linux_kqueue_cleanup(struct kqueue *kq)
     /* Decrement kqueue counter */
     kqueue_cnt--;
     dbg_printf("kq=%p - cleaned up kqueue, active_kqueues=%u", kq, kqueue_cnt);
-}
-
-/** Explicitly free the kqueue
- *
- * This is only called from the public kqueue function when a map
- * slot is going to be re-used, so it's an indicator that the
- * KQ fd is in use, and we shouldn't attempt to free it if we
- * receive a signal in the monitoring thread.
- */
-static void
-linux_kqueue_free(struct kqueue *kq)
-{
-    linux_kqueue_cleanup(kq);
-    fd_use_cnt[kq->kq_id]++;
-    dbg_printf("kq=%p - increased fd=%i use_count=%u", kq, kq->kq_id, fd_use_cnt[kq->kq_id]);
 }
 
 static int

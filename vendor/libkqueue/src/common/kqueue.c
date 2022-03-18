@@ -181,6 +181,15 @@ kqueue(void)
 
     tracing_mutex_init(&kq->kq_mtx, NULL);
 
+    /*
+     * Init, delete and insert should be atomic
+     * this is mainly for the monitoring thread
+     * on Linux, to ensure if an FD gets reused
+     * for a new KQ, the signal handler doesn't
+     * accidentally free up memory allocated to
+     * the new KQ.
+     */
+    tracing_mutex_lock(&kq_mtx);
     if (kqops.kqueue_init(kq) < 0) {
     error:
         dbg_printf("kq=%p - init failed", kq);
@@ -191,9 +200,6 @@ kqueue(void)
 
     dbg_printf("kq=%p - alloced with fd=%d", kq, kq->kq_id);
 
-    /* Delete and insert should be atomic */
-    tracing_mutex_lock(&kq_mtx);
-
     kqueue_free_by_id(kq->kq_id);   /* Free any old map entries */
 
     if (map_insert(kqmap, kq->kq_id, kq) < 0) {
@@ -202,7 +208,6 @@ kqueue(void)
         tracing_mutex_unlock(&kq_mtx);
         goto error;
     }
-
     tracing_mutex_unlock(&kq_mtx);
 
     return (kq->kq_id);
