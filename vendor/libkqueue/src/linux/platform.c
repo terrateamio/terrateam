@@ -360,8 +360,9 @@ linux_kqueue_init(struct kqueue *kq)
     /* Start monitoring thread during first initialization */
     if (monitoring_tid == 0) {
         if (linux_kqueue_start_thread() < 0) {
-            pthread_mutex_unlock(&kq_mtx);
-            return (-1);
+            kqueue_cnt--;
+            (void) pthread_mutex_unlock(&kq_mtx);
+            goto error;
         }
     }
 
