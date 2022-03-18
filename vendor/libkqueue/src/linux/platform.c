@@ -30,7 +30,7 @@
  */
 static __thread struct epoll_event epoll_events[MAX_KEVENT];
 
-extern pthread_mutex_t kq_mtx;
+extern tracing_mutex_t kq_mtx;
 /*
  * Monitoring thread that takes care of cleaning up kqueues (on linux only)
  */
@@ -238,7 +238,7 @@ monitoring_thread_loop(UNUSED void *arg)
          * should be performed on the kqueue.
          */
         res = sigwaitinfo(&monitoring_sig_set, &info);
-        (void) pthread_mutex_lock(&kq_mtx);
+        tracing_mutex_lock(&kq_mtx);
         if (res != -1) {
             dbg_printf("fd=%i - freeing kqueue due to fd closure", fd_map[info.si_fd]);
 
@@ -250,12 +250,12 @@ monitoring_thread_loop(UNUSED void *arg)
         } else {
             dbg_perror("sigwaitinfo returned early");
         }
-        (void) pthread_mutex_unlock(&kq_mtx);
+        tracing_mutex_unlock(&kq_mtx);
     }
     monitoring_thread_on_exit = false;
     pthread_cleanup_pop(true); /* Executes the cleanup function (monitoring_thread_cleanup) */
     monitoring_thread_on_exit = true;
-    (void) pthread_mutex_unlock(&kq_mtx);
+    tracing_mutex_unlock(&kq_mtx);
 
     return NULL;
 }
@@ -355,7 +355,7 @@ linux_kqueue_init(struct kqueue *kq)
         goto error;
     }
 
-    (void) pthread_mutex_lock(&kq_mtx);
+    tracing_mutex_lock(&kq_mtx);
 
     /*
      * Increment kqueue counter - must be incremented before
@@ -369,7 +369,7 @@ linux_kqueue_init(struct kqueue *kq)
     if (monitoring_tid == 0) {
         if (linux_kqueue_start_thread() < 0) {
             kqueue_cnt--;
-            (void) pthread_mutex_unlock(&kq_mtx);
+            tracing_mutex_unlock(&kq_mtx);
             goto error;
         }
     }
@@ -391,12 +391,12 @@ linux_kqueue_init(struct kqueue *kq)
     if (fcntl(kq->pipefd[0], F_SETOWN_EX, &sig_owner) < 0) {
         dbg_printf("fd=%i - failed settting F_SETOWN to tid=%u: %s", monitoring_tid, kq->pipefd[0], strerror(errno));
         kqueue_cnt--;
-        (void) pthread_mutex_unlock(&kq_mtx);
+        tracing_mutex_unlock(&kq_mtx);
         goto error;
     }
     dbg_printf("kq=%p - monitoring fd=%i for closure", kq, kq->pipefd[0]);
 
-    (void) pthread_mutex_unlock(&kq_mtx);
+    tracing_mutex_unlock(&kq_mtx);
 
     return (0);
 }

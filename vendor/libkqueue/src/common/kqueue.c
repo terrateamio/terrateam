@@ -20,12 +20,12 @@
 int DEBUG_KQUEUE = 0;
 char *KQUEUE_DEBUG_IDENT = "KQ";
 
+tracing_mutex_t kq_mtx = TRACING_MUTEX_INITIALIZER;
+
 #ifdef _WIN32
 static LONG kq_init_begin = 0;
 static int kq_init_complete = 0;
-pthread_mutex_t kq_mtx;
 #else
-pthread_mutex_t kq_mtx = PTHREAD_MUTEX_INITIALIZER;
 pthread_once_t kq_is_initialized = PTHREAD_ONCE_INIT;
 #endif
 
@@ -84,7 +84,7 @@ libkqueue_init(void)
         DEBUG_KQUEUE = 1;
 
 #ifdef _WIN32
-    pthread_mutex_init(&kq_mtx, NULL);
+    tracing_mutex_init(&kq_mtx, NULL);
     /* Initialize the Winsock library */
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0)
@@ -168,11 +168,11 @@ kqueue(void)
         }
     }
 
-    pthread_mutex_init(&kq_mtx, NULL);
+    tracing_mutex_init(&kq_mtx, NULL);
 #else
-    (void) pthread_mutex_lock(&kq_mtx);
+    tracing_mutex_lock(&kq_mtx);
     (void) pthread_once(&kq_is_initialized, libkqueue_init);
-    (void) pthread_mutex_unlock(&kq_mtx);
+    tracing_mutex_unlock(&kq_mtx);
 #endif
 
     kq = calloc(1, sizeof(*kq));
@@ -183,6 +183,7 @@ kqueue(void)
 
     if (kqops.kqueue_init(kq) < 0) {
     error:
+        dbg_printf("kq=%p - init failed", kq);
         tracing_mutex_destroy(&kq->kq_mtx);
         free(kq);
         return (-1);
@@ -191,18 +192,18 @@ kqueue(void)
     dbg_printf("kq=%p - alloced with fd=%d", kq, kq->kq_id);
 
     /* Delete and insert should be atomic */
-    (void) pthread_mutex_lock(&kq_mtx);
+    tracing_mutex_lock(&kq_mtx);
 
     kqueue_free_by_id(kq->kq_id);   /* Free any old map entries */
 
     if (map_insert(kqmap, kq->kq_id, kq) < 0) {
         dbg_printf("kq=%p - map insertion failed, freeing", kq);
         filter_unregister_all(kq);
-        pthread_mutex_unlock(&kq_mtx);
+        tracing_mutex_unlock(&kq_mtx);
         goto error;
     }
 
-    pthread_mutex_unlock(&kq_mtx);
+    tracing_mutex_unlock(&kq_mtx);
 
     return (kq->kq_id);
 }
