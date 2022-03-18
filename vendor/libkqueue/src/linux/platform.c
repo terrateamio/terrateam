@@ -41,6 +41,11 @@ static pthread_mutex_t monitoring_thread_mtx = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t monitoring_thread_cond = PTHREAD_COND_INITIALIZER;
 
 /*
+ * Monitoring thread is exiting because the process is terminating
+ */
+static bool monitoring_thread_on_exit = true;
+
+/*
  * Number of active kqueues.
  * When the last kqueue is closed, the monitoring thread can be stopped.
  */
@@ -160,7 +165,8 @@ monitoring_thread_cleanup(void *arg)
         }
     }
 
-    dbg_printf("tid=%u - monitoring thread exiting", monitoring_tid);
+    dbg_printf("tid=%u - monitoring thread exiting (%s)",
+               monitoring_tid, monitoring_thread_on_exit ? "process term" : "no kqueues");
     /* Free thread resources */
     free(fd_map);
     fd_map = NULL;
@@ -246,7 +252,9 @@ monitoring_thread_loop(UNUSED void *arg)
         }
         (void) pthread_mutex_unlock(&kq_mtx);
     }
+    monitoring_thread_on_exit = false;
     pthread_cleanup_pop(true); /* Executes the cleanup function (monitoring_thread_cleanup) */
+    monitoring_thread_on_exit = true;
     (void) pthread_mutex_unlock(&kq_mtx);
 
     return NULL;
