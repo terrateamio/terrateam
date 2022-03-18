@@ -20,12 +20,12 @@
 int DEBUG_KQUEUE = 0;
 char *KQUEUE_DEBUG_IDENT = "KQ";
 
-tracing_mutex_t kq_mtx = TRACING_MUTEX_INITIALIZER;
-
 #ifdef _WIN32
+tracing_mutex_t kq_mtx;
 static LONG kq_init_begin = 0;
 static int kq_init_complete = 0;
 #else
+tracing_mutex_t kq_mtx = TRACING_MUTEX_INITIALIZER;
 pthread_once_t kq_is_initialized = PTHREAD_ONCE_INIT;
 #endif
 
