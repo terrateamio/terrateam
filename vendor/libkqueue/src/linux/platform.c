@@ -105,12 +105,17 @@ monitoring_thread_kq_cleanup(int signal_fd)
     }
 
     /*
+     * We should never have more pending signals than we have
+     * allocated kqueues against a given ID.
+     */
+    assert(fd_use_cnt[signal_fd] > 0);
+
+    /*
      * Decrement use counter as signal handler has been run for
      * this FD.  We rely on using an RT signal so that multiple
      * signals are queued.
      */
     fd_use_cnt[signal_fd]--;
-    assert(fd_use_cnt[signal_fd] >= 0);
 
     /*
      * If kqueue instance for this FD hasn't been cleaned up yet
@@ -138,26 +143,56 @@ check_count:
 }
 
 static void
-monitoring_thread_cleanup(void *arg)
+monitoring_thread_scan_for_closed(void)
 {
     int i;
 
     dbg_printf("scanning FDs 0-%i", nb_max_fd);
 
     for (i = 0; i < nb_max_fd; i++) {
-        if (fd_use_cnt[i] > 0) {
-            int fd;
+        int fd;
 
-            fd = fd_map[i];
-            dbg_printf("Checking rfd=%i wfd=%i", i, fd);
-            if (fcntl(fd, F_GETFD) < 0) {
-                dbg_printf("fd=%i - forcefully cleaning up, use_count=%u: %s",
-                           fd, fd_use_cnt[i], errno == EBADF ? "File descriptor already closed" : strerror(errno));
-                fd_use_cnt[i] = 1;
-                (void)monitoring_thread_kq_cleanup(i);
-             }
+        if (fd_use_cnt[i] == 0) continue;
+
+        fd = fd_map[i];
+        dbg_printf("Checking rfd=%i wfd=%i", i, fd);
+        if (fcntl(fd, F_GETFD) < 0) {
+            dbg_printf("fd=%i - forcefully cleaning up, use_count=%u: %s",
+                       fd, fd_use_cnt[i], errno == EBADF ? "File descriptor already closed" : strerror(errno));
+
+            /* next call decrements */
+            fd_use_cnt[i] = 1;
+            (void)monitoring_thread_kq_cleanup(i);
         }
+
+        /*
+         * stop scanning if all the kqueues have been
+         * cleaned up.
+         */
+        if (kqueue_cnt == 0)
+            break;
     }
+}
+
+static void
+monitoring_thread_cleanup(void *arg)
+{
+    /*
+     * If the entire process is exiting, then scan through
+     * all the in use file descriptors, checking to see if
+     * they've been closed or not.
+     *
+     * We do this because we don't reliably receive all the
+     * close MONITORING_THREAD_SIGNALs before the process
+     * exits, and this avoids ASAN or valgrind raising
+     * spurious memory leaks.
+     *
+     * If the user _hasn't_ closed a KQ fd, then we don't
+     * free the underlying memory, and it'll be correctly
+     * reported as a memory leak.
+     */
+    if (monitoring_thread_on_exit)
+        monitoring_thread_scan_for_closed();
 
     dbg_printf("tid=%u - monitoring thread exiting (%s)",
                monitoring_tid, monitoring_thread_on_exit ? "process term" : "no kqueues");
@@ -169,7 +204,6 @@ monitoring_thread_cleanup(void *arg)
 
     /* Reset so that thread can be restarted */
     monitoring_tid = 0;
-    monitoring_thread = 0;
 }
 
 /*
