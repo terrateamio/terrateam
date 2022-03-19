@@ -122,6 +122,18 @@ typedef struct {
     (x)->mtx_status = MTX_LOCKED; \
 } while (0)
 
+# define tracing_mutex_trylock(ret, x)  do { \
+    dbg_printf("[%i]: waiting for %s", __LINE__, #x); \
+    ret = pthread_mutex_trylock(&((x)->mtx_lock)); \
+    if (ret == 0) { \
+        dbg_printf("[%i]: locked %s", __LINE__, #x); \
+        (x)->mtx_owner = THREAD_ID; \
+        (x)->mtx_status = MTX_LOCKED; \
+    } else { \
+        dbg_printf("[%i]: locking %s failed - %s", __LINE__, #x, strerror(ret)); \
+    } \
+} while (0)
+
 # define tracing_mutex_unlock(x)  do { \
     (x)->mtx_status = MTX_UNLOCKED; \
     (x)->mtx_owner = -1; \
@@ -144,6 +156,7 @@ typedef struct {
 # define tracing_mutex_destroy      pthread_mutex_destroy
 # define tracing_mutex_assert(x,y)
 # define tracing_mutex_lock         pthread_mutex_lock
+# define tracing_mutex_trylock(ret,x) do { ret = pthread_mutex_trylock(x); } while (0)
 # define tracing_mutex_unlock       pthread_mutex_unlock
 #endif
 
