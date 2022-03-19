@@ -62,6 +62,12 @@ struct evfilt_data;
  */
 #define LIST_INSERTED(elm, field) (((elm)->field.le_next) || ((elm)->field.le_prev))
 
+/** Have the trashit macro set the "trashed" value to NULL, so the LIST_INSERTED macro works
+ *
+ */
+#undef TRASHIT
+#define TRASHIT(x) x = NULL
+
 /** On Linux LIST_FOREACH_SAFE isn't provided
  *
  */
