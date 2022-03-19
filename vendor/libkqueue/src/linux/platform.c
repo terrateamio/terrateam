@@ -328,7 +328,9 @@ linux_monitor_thread_join(void)
     if (monitoring_tid) {
         void *retval;
         int ret;
+#ifndef NDEBUG
         pid_t our_monitoring_tid = monitoring_tid; /* Gets trashed when the thread exits */
+#endif
 
         dbg_printf("tid=%u - cancelling", monitoring_tid);
         ret = pthread_cancel(monitoring_thread);
