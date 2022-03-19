@@ -448,7 +448,8 @@ evfilt_proc_destroy(struct filter *filt)
     assert(proc_count > 0);
     /*
      * Only cancel the wait thread if we're not
-     * in a forked copy.
+     * in a forked copy as fork does not produce
+     * a new copy of the thread.
      */
     if ((--proc_count == 0) && (proc_wait_thread > 0)) {
         pthread_cancel(proc_wait_thread);
