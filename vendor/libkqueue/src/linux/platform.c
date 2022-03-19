@@ -285,7 +285,6 @@ monitoring_thread_loop(UNUSED void *arg)
         res = sigwaitinfo(&monitoring_sig_set, &info);
         if ((res == -1) && (errno = EINTR)) {
             dbg_printf("sigwaitinfo(2): %s", strerror(errno));
-            pthread_testcancel();
             continue;
         }
 
@@ -343,15 +342,18 @@ static void
 linux_monitor_thread_join(void)
 {
     static tracing_mutex_t signal_mtx = TRACING_MUTEX_INITIALIZER;
+    int ret;
 
-    tracing_mutex_lock(&signal_mtx);
-    if (monitoring_tid) {
-        dbg_printf("tid=%u - signalling to exit", monitoring_tid);
-        if (pthread_cancel(monitoring_thread) < 0)
-           dbg_perror("tid=%u - signalling failed", monitoring_tid);
-        pthread_join(monitoring_thread, NULL);
+    tracing_mutex_trylock(ret, &signal_mtx);
+    if (ret == 0) {
+        if (monitoring_tid) {
+            dbg_printf("tid=%u - signalling to exit", monitoring_tid);
+            if (pthread_cancel(monitoring_thread) < 0)
+               dbg_perror("tid=%u - signalling failed", monitoring_tid);
+            pthread_join(monitoring_thread, NULL);
+        }
+        tracing_mutex_unlock(&signal_mtx);
     }
-    tracing_mutex_unlock(&signal_mtx);
 }
 
 static void
