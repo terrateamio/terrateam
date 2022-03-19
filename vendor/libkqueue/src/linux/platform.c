@@ -328,16 +328,17 @@ linux_monitor_thread_join(void)
     if (monitoring_tid) {
         void *retval;
         int ret;
+        pid_t our_monitoring_tid = monitoring_tid; /* Gets trashed when the thread exits */
 
         dbg_printf("tid=%u - cancelling", monitoring_tid);
         ret = pthread_cancel(monitoring_thread);
         if (ret != 0)
-           dbg_printf("tid=%u - cancel failed: %s", monitoring_tid, strerror(ret));
+           dbg_printf("tid=%u - cancel failed: %s", our_monitoring_tid, strerror(ret));
         ret = pthread_join(monitoring_thread, &retval);
         if (ret == 0) {
-           dbg_printf("tid=%u - joined with exit_status=%" PRIuPTR, monitoring_tid, (uintptr_t)retval);
+           dbg_printf("tid=%u - joined with exit_status=%" PRIdPTR, our_monitoring_tid, (intptr_t)retval);
         } else {
-           dbg_printf("tid=%u - join failed: %s", monitoring_tid, strerror(ret));
+           dbg_printf("tid=%u - join failed: %s", our_monitoring_tid, strerror(ret));
         }
     }
 }
