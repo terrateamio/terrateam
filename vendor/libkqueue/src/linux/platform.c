@@ -285,6 +285,7 @@ monitoring_thread_loop(UNUSED void *arg)
         res = sigwaitinfo(&monitoring_sig_set, &info);
         if ((res == -1) && (errno = EINTR)) {
             dbg_printf("sigwaitinfo(2): %s", strerror(errno));
+            pthread_testcancel();
             continue;
         }
 
@@ -307,7 +308,6 @@ monitoring_thread_loop(UNUSED void *arg)
         tracing_mutex_unlock(&kq_mtx);
         pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     }
-    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     monitoring_thread_on_exit = false;
     pthread_cleanup_pop(true); /* Executes the cleanup function (monitoring_thread_cleanup) */
     monitoring_thread_on_exit = true;
