@@ -862,7 +862,7 @@ linux_eventfd_register(struct kqueue *kq, struct eventfd *efd)
     EVENTFD_UDATA(efd); /* setup udata for the efd */
 
     if (epoll_ctl(kq->epollfd, EPOLL_CTL_ADD, kqops.eventfd_descriptor(efd), EPOLL_EV_EVENTFD(EPOLLIN, efd)) < 0) {
-        dbg_perror("epoll_ctl(2)");
+        dbg_perror("epoll_ctl(2) - register epoll_fd=%i eventfd=%i", kq->epollfd, kqops.eventfd_descriptor(efd));
         return (-1);
     }
 
@@ -873,7 +873,7 @@ void
 linux_eventfd_unregister(struct kqueue *kq, struct eventfd *efd)
 {
     if (epoll_ctl(kq->epollfd, EPOLL_CTL_DEL, kqops.eventfd_descriptor(efd), NULL) < 0)
-        dbg_perror("epoll_ctl(2)");
+        dbg_perror("epoll_ctl(2) - unregister epoll_fd=%i eventfd=%i", kq->epollfd, kqops.eventfd_descriptor(efd));
 }
 
 static int
