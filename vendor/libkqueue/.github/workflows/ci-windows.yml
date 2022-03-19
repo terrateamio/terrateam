@@ -11,6 +11,7 @@ env:
 
 jobs:
   windows-build:
+    timeout-minutes: 5
     runs-on: windows-2019
     name: CI-windows (build)
 

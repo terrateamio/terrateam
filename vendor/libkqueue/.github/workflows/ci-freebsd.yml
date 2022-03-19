@@ -9,6 +9,7 @@ on:
 
 jobs:
   freebsd-tests:
+    timeout-minutes: 5
     runs-on: macos-latest
     name: "FreeBSD tests"
     steps:

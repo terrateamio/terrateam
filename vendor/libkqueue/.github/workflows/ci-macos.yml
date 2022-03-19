@@ -9,6 +9,7 @@ on:
 
 jobs:
   macos-tests:
+    timeout-minutes: 5
     runs-on: macos-latest
     name: "macOS tests"
     steps:
