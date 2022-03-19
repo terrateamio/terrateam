@@ -31,8 +31,7 @@ extern const struct filter evfilt_libkqueue;
 void
 filter_init_all(void)
 {
-#define FILTER_INIT(filt) \
-do { \
+#define FILTER_INIT(filt) do { \
     if (filt.libkqueue_init) \
         filt.libkqueue_init(); \
 } while (0)
@@ -47,6 +46,7 @@ do { \
     FILTER_INIT(evfilt_libkqueue);
 }
 
+#ifndef _WIN32
 void
 filter_fork_all(void)
 {
@@ -64,6 +64,7 @@ filter_fork_all(void)
     FILTER_FORK(evfilt_user);
     FILTER_FORK(evfilt_libkqueue);
 }
+#endif
 
 void
 filter_free_all(void)

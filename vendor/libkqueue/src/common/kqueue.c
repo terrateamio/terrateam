@@ -84,6 +84,7 @@ libkqueue_free(void)
         kqops.libkqueue_free();
 }
 
+#ifndef _WIN32
 void
 libkqueue_fork(void)
 {
@@ -94,6 +95,7 @@ libkqueue_fork(void)
     if (kqops.libkqueue_fork)
         kqops.libkqueue_fork();
 }
+#endif
 
 void
 libkqueue_init(void)
@@ -141,7 +143,9 @@ libkqueue_init(void)
 
    dbg_puts("library initialization complete");
 
+#ifndef _WIN32
    pthread_atfork(NULL, NULL, libkqueue_fork);
+#endif
    atexit(libkqueue_free);
 }
 

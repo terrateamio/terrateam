@@ -263,10 +263,12 @@ struct filter {
      */
     void                   (*libkqueue_init)(void);
 
+#ifndef _WIN32
     /** Called on fork (for the child)
      *
      */
     void                   (*libkqueue_fork)(void);
+#endif
 
     /** Called at exit
      *
@@ -507,10 +509,12 @@ struct kqueue_vtable {
      */
     void   (*libkqueue_init)(void);
 
+#ifndef _WIN32
     /** Called on fork (for the child)
      *
      */
     void   (*libkqueue_fork)(void);
+#endif
 
     /** Called at exit
      *
@@ -681,7 +685,9 @@ static inline int knote_copyout_flag_actions(struct filter *filt, struct knote *
 #define knote_get_filter(knt) &((knt)->kn_kq->kq_filt[~(knt)->kev.filter])
 
 void            filter_init_all(void);
+#ifndef _WIN32
 void            filter_fork_all(void);
+#endif
 void            filter_free_all(void);
 
 int             filter_lookup(struct filter **, struct kqueue *, short);
