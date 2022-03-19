@@ -36,9 +36,23 @@ struct proc_pid {
     LIST_HEAD(pid_waiters, knote) ppd_proc_waiters; //!< knotes that are waiting on this PID.
 };
 
+/** Synchronisation for wait thread information
+ *
+ * This ensures that the number of process being monitored is correct
+ * and stops multiple threads attempting to start a monitor thread
+ * at the same time.
+ */
 static tracing_mutex_t     proc_init_mtx = TRACING_MUTEX_INITIALIZER;
 static int                 proc_count = 0;
-static pthread_t           proc_wait_thread_id;
+static pthread_t           proc_wait_thread;
+
+/** Synchronisation for thread start
+ *
+ * This prevents any threads from continuing whilst the wait thread
+ * is started.
+ */
+static pthread_mutex_t     proc_wait_thread_mtx = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t      proc_wait_thread_cond = PTHREAD_COND_INITIALIZER;
 
 /** The global PID tree
  *
@@ -256,7 +270,20 @@ wait_thread(UNUSED void *arg)
      */
     sigemptyset(&sigmask);
     sigaddset(&sigmask, SIGCHLD);
+
+    /*
+     * Inform the parent that we started correctly
+     */
+    pthread_mutex_lock(&proc_wait_thread_mtx);    /* Must try to lock to ensure parent is waiting on signal */
+    pthread_cond_signal(&proc_wait_thread_cond);
+    pthread_mutex_unlock(&proc_wait_thread_mtx);
     do {
+        /*
+         * Don't allow the thread to be cancelled until we've
+         * finished one loop in the monitoring thread.  This
+         * ensures there are no nasty issue on exit.
+         */
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
         if (ret < 0) {
             dbg_printf("sigwaitinfo(2): %s", strerror(errno));
             continue;
@@ -321,6 +348,7 @@ wait_thread(UNUSED void *arg)
         tracing_mutex_unlock(&proc_pid_index_mtx);
 
         dbg_printf("waiting for SIGCHLD");
+        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL); /* sigwaitinfo is the next cancellation point */
     } while ((ret = sigwaitinfo(&sigmask, &info)));
 
     dbg_printf("exited");
@@ -353,7 +381,7 @@ evfilt_proc_libkqueue_fork(void)
      * of the process, and we need to prevent a cancellation
      * request being sent to it when all the knotes are freed.
      */
-    proc_wait_thread_id = 0;
+    proc_wait_thread = 0;
 }
 
 static int
@@ -374,7 +402,6 @@ evfilt_proc_init(struct filter *filt)
      * Initialise global resources (wait thread and PID tree).
      */
     tracing_mutex_lock(&proc_init_mtx);
-
     if (proc_count == 0) {
         sigset_t sigmask;
 
@@ -393,10 +420,16 @@ evfilt_proc_init(struct filter *filt)
 
         dbg_printf("creating wait thread");
 
-        if (pthread_create(&proc_wait_thread_id, NULL, wait_thread, NULL) != 0) {
+        pthread_mutex_lock(&proc_wait_thread_mtx);
+        if (pthread_create(&proc_wait_thread, NULL, wait_thread, NULL) != 0) {
             tracing_mutex_unlock(&proc_init_mtx);
+            pthread_mutex_unlock(&proc_wait_thread_mtx);
+
             goto error_1;
         }
+        /* Wait until the wait thread has started and is monitoring signals */
+        pthread_cond_wait(&proc_wait_thread_cond, &proc_wait_thread_mtx);
+        pthread_mutex_unlock(&proc_wait_thread_mtx);
     }
     proc_count++;
     tracing_mutex_unlock(&proc_init_mtx);
@@ -417,9 +450,9 @@ evfilt_proc_destroy(struct filter *filt)
      * Only cancel the wait thread if we're not
      * in a forked copy.
      */
-    if ((--proc_count == 0) && (proc_wait_thread_id > 0)) {
-        pthread_cancel(proc_wait_thread_id);
-        if (pthread_join(proc_wait_thread_id, NULL) < 0) {
+    if ((--proc_count == 0) && (proc_wait_thread > 0)) {
+        pthread_cancel(proc_wait_thread);
+        if (pthread_join(proc_wait_thread, NULL) < 0) {
             dbg_printf("pthread_join(2) %s", strerror(errno));
         } else {
             dbg_puts("waiter thread joined");
