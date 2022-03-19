@@ -129,8 +129,6 @@ libkqueue_init(void)
    kqmap = map_new(get_fd_limit()); // INT_MAX
    if (kqmap == NULL)
        abort();
-   if (knote_init() < 0)
-       abort();
 
 #ifdef _WIN32
    kq_init_complete = 1;

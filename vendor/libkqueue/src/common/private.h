@@ -648,7 +648,6 @@ struct knote    *knote_new(void);
 void            knote_release(struct knote *);
 void            knote_insert(struct filter *, struct knote *);
 int             knote_delete(struct filter *, struct knote *);
-int             knote_init(void);
 int             knote_disable(struct filter *, struct knote *);
 int             knote_enable(struct filter *, struct knote *);
 int             knote_modify(struct filter *, struct knote *);

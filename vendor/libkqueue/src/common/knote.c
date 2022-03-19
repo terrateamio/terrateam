@@ -20,13 +20,6 @@
 
 #include "alloc.h"
 
-int
-knote_init(void)
-{
-    return 0;
-//    return (mem_init(sizeof(struct knote), 1024));
-}
-
 /** Comparator for the knote_index
  *
  * FIXME - Should respect EV_UDATA_SPECIFIC but that's a whole
