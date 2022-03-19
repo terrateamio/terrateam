@@ -404,13 +404,10 @@ evfilt_proc_destroy(struct filter *filt)
     tracing_mutex_lock(&proc_init_mtx);
     assert(proc_count > 0);
     if (--proc_count == 0) {
-        void *retval;
-
         pthread_cancel(proc_wait_thread_id);
-        if (pthread_join(proc_wait_thread_id, &retval) < 0) {
+        if (pthread_join(proc_wait_thread_id, NULL) < 0) {
             dbg_printf("pthread_join(2) %s", strerror(errno));
         } else {
-            assert(retval == PTHREAD_CANCELED);
             dbg_puts("waiter thread joined");
         }
     }
