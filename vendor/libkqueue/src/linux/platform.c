@@ -342,12 +342,16 @@ linux_kqueue_start_thread(void)
 static void
 linux_monitor_thread_join(void)
 {
-    if (monitoring_thread) {
+    static tracing_mutex_t signal_mtx = TRACING_MUTEX_INITIALIZER;
+
+    tracing_mutex_lock(&signal_mtx);
+    if (monitoring_tid) {
         dbg_printf("tid=%u - signalling to exit", monitoring_tid);
         if (pthread_cancel(monitoring_thread) < 0)
            dbg_perror("tid=%u - signalling failed", monitoring_tid);
         pthread_join(monitoring_thread, NULL);
     }
+    tracing_mutex_unlock(&signal_mtx);
 }
 
 static void
