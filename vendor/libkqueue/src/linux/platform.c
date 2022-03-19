@@ -17,6 +17,7 @@
 #define _GNU_SOURCE
 #include <poll.h>
 #include <signal.h>
+#include <inttypes.h>
 #include <sys/prctl.h>
 #include <sys/resource.h>
 
@@ -75,13 +76,9 @@ linux_kqueue_free(struct kqueue *kq);
 /** Clean up a kqueue from the perspective of the monitoring thread
  *
  * Called with the kq_mtx held.
- *
- * @return
- *   - 0 if the monitoring thread should exit.
- *   - 1 if the monitoring thread should continue.
  */
-static int
-monitoring_thread_kq_cleanup(int signal_fd, bool closed_on_fork)
+static void
+linux_kqueue_cleanup(int signal_fd, bool closed_on_fork)
 {
     int fd;
     struct kqueue *kq;
@@ -94,14 +91,14 @@ monitoring_thread_kq_cleanup(int signal_fd, bool closed_on_fork)
     if (fd < 0) {
        /* Should not happen */
         dbg_printf("fd=%i - not a known FD", fd);
-        goto check_count;
+        return;
     }
 
     kq = kqueue_lookup(fd);
     if (!kq) {
         /* Should not happen */
         dbg_printf("fd=%i - no kqueue associated", fd);
-        goto check_count;
+        return;
     }
 
     /*
@@ -150,44 +147,6 @@ monitoring_thread_kq_cleanup(int signal_fd, bool closed_on_fork)
     } else {
         dbg_printf("kq=%p - fd=%i use_count=%u skipping...", kq, fd, fd_use_cnt[signal_fd]);
     }
-
-check_count:
-    /*
-     * Stop thread if all kqueues have been closed
-     */
-    if (kqueue_cnt == 0) return (0);
-    return (1);
-}
-
-static void
-monitoring_thread_scan_for_closed(void)
-{
-    int i;
-
-    /*
-     * Avoid debug output below
-     */
-    if (kqueue_cnt == 0)
-        return;
-
-    dbg_printf("scanning fds 0-%i", nb_max_fd);
-
-    for (i = 0; (kqueue_cnt > 0) && (i < nb_max_fd); i++) {
-        int fd;
-
-        if (fd_use_cnt[i] == 0) continue;
-
-        fd = fd_map[i];
-        dbg_printf("checking rfd=%i wfd=%i", i, fd);
-        if (fcntl(fd, F_GETFD) < 0) {
-            dbg_printf("fd=%i - forcefully cleaning up, use_count=%u: %s",
-                       fd, fd_use_cnt[i], errno == EBADF ? "File descriptor already closed" : strerror(errno));
-
-            /* next call decrements */
-            fd_use_cnt[i] = 1;
-            (void)monitoring_thread_kq_cleanup(i, false);
-        }
-    }
 }
 
 static void
@@ -207,8 +166,28 @@ monitoring_thread_cleanup(UNUSED void *arg)
      * free the underlying memory, and it'll be correctly
      * reported as a memory leak.
      */
-    if (monitoring_thread_on_exit)
-        monitoring_thread_scan_for_closed();
+    if (monitoring_thread_on_exit && (kqueue_cnt > 0)) {
+        int i;
+
+        dbg_printf("scanning fds 0-%i", nb_max_fd);
+
+        for (i = 0; (kqueue_cnt > 0) && (i < nb_max_fd); i++) {
+            int fd;
+
+            if (fd_use_cnt[i] == 0) continue;
+
+            fd = fd_map[i];
+            dbg_printf("checking rfd=%i wfd=%i", i, fd);
+            if (fcntl(fd, F_GETFD) < 0) {
+                dbg_printf("fd=%i - forcefully cleaning up, use_count=%u: %s",
+                           fd, fd_use_cnt[i], errno == EBADF ? "File descriptor already closed" : strerror(errno));
+
+                /* next call decrements */
+                fd_use_cnt[i] = 1;
+                (void)linux_kqueue_cleanup(i, false);
+            }
+        }
+    }
 
     dbg_printf("tid=%u - monitoring thread exiting (%s)",
                monitoring_tid, monitoring_thread_on_exit ? "process term" : "no kqueues");
@@ -297,9 +276,14 @@ monitoring_thread_loop(UNUSED void *arg)
             dbg_printf("fd=%i - freeing kqueue due to fd closure", fd_map[info.si_fd]);
 
             /*
-             * If no more kqueues... exit.
+             * Release resources used by this kqueue
              */
-            if (monitoring_thread_kq_cleanup(info.si_fd, false) == 0)
+            linux_kqueue_cleanup(info.si_fd, false);
+
+            /*
+             * Exit if there are no more kqueues to monitor
+             */
+            if (kqueue_cnt == 0)
                 break;
         } else {
             dbg_perror("sigwaitinfo returned early");
@@ -319,7 +303,7 @@ static int
 linux_kqueue_start_thread(void)
 {
     pthread_mutex_lock(&monitoring_thread_mtx);
-    if (pthread_create(&monitoring_thread, NULL, &monitoring_thread_loop, &monitoring_thread_mtx)) {
+    if (pthread_create(&monitoring_thread, NULL, &monitoring_thread_loop, NULL)) {
          dbg_perror("linux_kqueue_start_thread failure");
          pthread_mutex_unlock(&monitoring_thread_mtx);
 
@@ -341,18 +325,20 @@ linux_kqueue_start_thread(void)
 static void
 linux_monitor_thread_join(void)
 {
-    static tracing_mutex_t signal_mtx = TRACING_MUTEX_INITIALIZER;
-    int ret;
+    if (monitoring_tid) {
+        void *retval;
+        int ret;
 
-    tracing_mutex_trylock(ret, &signal_mtx);
-    if (ret == 0) {
-        if (monitoring_tid) {
-            dbg_printf("tid=%u - signalling to exit", monitoring_tid);
-            if (pthread_cancel(monitoring_thread) < 0)
-               dbg_perror("tid=%u - signalling failed", monitoring_tid);
-            pthread_join(monitoring_thread, NULL);
+        dbg_printf("tid=%u - cancelling", monitoring_tid);
+        ret = pthread_cancel(monitoring_thread);
+        if (ret != 0)
+           dbg_printf("tid=%u - cancel failed: %s", monitoring_tid, strerror(ret));
+        ret = pthread_join(monitoring_thread, &retval);
+        if (ret == 0) {
+           dbg_printf("tid=%u - joined with exit_status=%" PRIuPTR, monitoring_tid, (uintptr_t)retval);
+        } else {
+           dbg_printf("tid=%u - join failed: %s", monitoring_tid, strerror(ret));
         }
-        tracing_mutex_unlock(&signal_mtx);
     }
 }
 
@@ -360,6 +346,12 @@ static void
 linux_at_fork(void)
 {
     int i;
+
+    /*
+     * We don't have to cancel the monitor thread
+     * here as fork() typically only duplicates
+     * the thread which called it.
+     */
 
     /*
      * forcefully close all outstanding kqueues
@@ -372,18 +364,9 @@ linux_at_fork(void)
         close(i);
         fd_use_cnt[i] = 1;
 
-        (void)monitoring_thread_kq_cleanup(i, true);
+        (void)linux_kqueue_cleanup(i, true);
     }
     tracing_mutex_unlock(&kq_mtx);
-
-    /*
-     * re-initialises everything so that the child could
-     * in theory allocate a new set of kqueues.
-     *
-     * Children don't appear to inherit pending signals
-     * so this should all still work as intended.
-     */
-    linux_monitor_thread_join();
 }
 
 static void
