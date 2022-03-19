@@ -266,6 +266,10 @@ monitoring_thread_loop(UNUSED void *arg)
          * should be performed on the kqueue.
          */
         res = sigwaitinfo(&monitoring_sig_set, &info);
+        if ((res == -1) && (errno = EINTR)) {
+            dbg_printf("sigwaitinfo(2): %s", strerror(errno));
+            continue;
+        }
 
         /*
          * Don't allow cancellation in the middle of cleaning up resources
