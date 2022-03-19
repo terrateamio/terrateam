@@ -344,6 +344,18 @@ evfilt_proc_libkqueue_init(void)
 #endif
      tracing_mutex_init(&proc_pid_index_mtx, &proc_pid_index_mtx_attr);
 }
+
+static void
+evfilt_proc_libkqueue_fork(void)
+{
+    /*
+     * The wait thread isn't duplicated in the forked copy
+     * of the process, and we need to prevent a cancellation
+     * request being sent to it when all the knotes are freed.
+     */
+    proc_wait_thread_id = 0;
+}
+
 static int
 evfilt_proc_init(struct filter *filt)
 {
@@ -401,7 +413,11 @@ evfilt_proc_destroy(struct filter *filt)
      */
     tracing_mutex_lock(&proc_init_mtx);
     assert(proc_count > 0);
-    if (--proc_count == 0) {
+    /*
+     * Only cancel the wait thread if we're not
+     * in a forked copy.
+     */
+    if ((--proc_count == 0) && (proc_wait_thread_id > 0)) {
         pthread_cancel(proc_wait_thread_id);
         if (pthread_join(proc_wait_thread_id, NULL) < 0) {
             dbg_printf("pthread_join(2) %s", strerror(errno));
@@ -575,6 +591,7 @@ evfilt_proc_knote_copyout(struct kevent *dst, int nevents, struct filter *filt,
 
 const struct filter evfilt_proc = {
     .libkqueue_init   = evfilt_proc_libkqueue_init,
+    .libkqueue_fork   = evfilt_proc_libkqueue_fork,
     .kf_id            = EVFILT_PROC,
     .kf_init          = evfilt_proc_init,
     .kf_destroy       = evfilt_proc_destroy,
