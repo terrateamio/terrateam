@@ -153,7 +153,7 @@ monitoring_thread_scan_for_closed(void)
     if (kqueue_cnt == 0)
         return;
 
-    dbg_printf("scanning FDs 0-%i", nb_max_fd);
+    dbg_printf("scanning fds 0-%i", nb_max_fd);
 
     for (i = 0; (kqueue_cnt > 0) && (i < nb_max_fd); i++) {
         int fd;
@@ -161,7 +161,7 @@ monitoring_thread_scan_for_closed(void)
         if (fd_use_cnt[i] == 0) continue;
 
         fd = fd_map[i];
-        dbg_printf("Checking rfd=%i wfd=%i", i, fd);
+        dbg_printf("checking rfd=%i wfd=%i", i, fd);
         if (fcntl(fd, F_GETFD) < 0) {
             dbg_printf("fd=%i - forcefully cleaning up, use_count=%u: %s",
                        fd, fd_use_cnt[i], errno == EBADF ? "File descriptor already closed" : strerror(errno));
