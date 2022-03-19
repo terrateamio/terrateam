@@ -81,7 +81,7 @@ linux_kqueue_free(struct kqueue *kq);
  *   - 1 if the monitoring thread should continue.
  */
 static int
-monitoring_thread_kq_cleanup(int signal_fd)
+monitoring_thread_kq_cleanup(int signal_fd, bool closed_on_fork)
 {
     int fd;
     struct kqueue *kq;
@@ -102,6 +102,23 @@ monitoring_thread_kq_cleanup(int signal_fd)
         /* Should not happen */
         dbg_printf("fd=%i - no kqueue associated", fd);
         goto check_count;
+    }
+
+    /*
+     * On fork the epoll fd is inherited by the child process
+     * Any modifications made by the child affect the parent's
+     * epoll instance.
+     *
+     * So... if we remove file descriptors in the child, then
+     * we can break functionality for the parent.
+     *
+     * Our only option is to close the epollfd, and check for
+     * an invalid epollfd when deregistering file descriptors
+     * and ignore the operation.
+     */
+    if (closed_on_fork) {
+        close(kq->epollfd);
+        kq->epollfd = -1;
     }
 
     /*
@@ -168,7 +185,7 @@ monitoring_thread_scan_for_closed(void)
 
             /* next call decrements */
             fd_use_cnt[i] = 1;
-            (void)monitoring_thread_kq_cleanup(i);
+            (void)monitoring_thread_kq_cleanup(i, false);
         }
     }
 }
@@ -282,7 +299,7 @@ monitoring_thread_loop(UNUSED void *arg)
             /*
              * If no more kqueues... exit.
              */
-            if (monitoring_thread_kq_cleanup(info.si_fd) == 0)
+            if (monitoring_thread_kq_cleanup(info.si_fd, false) == 0)
                 break;
         } else {
             dbg_perror("sigwaitinfo returned early");
@@ -346,7 +363,8 @@ linux_at_fork(void)
         dbg_printf("Closing kq fd=%i due to fork", i);
         close(i);
         fd_use_cnt[i] = 1;
-        (void)monitoring_thread_kq_cleanup(i);
+
+        (void)monitoring_thread_kq_cleanup(i, true);
     }
     tracing_mutex_unlock(&kq_mtx);
 
