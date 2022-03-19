@@ -76,7 +76,7 @@ static struct map *kqmap;
 void
 libkqueue_free(void)
 {
-    dbg_puts("Releasing library resources");
+    dbg_puts("releasing library resources");
 
     if (kqops.libkqueue_free)
         kqops.libkqueue_free();

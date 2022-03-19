@@ -343,7 +343,9 @@ static void
 linux_monitor_thread_join(void)
 {
     if (monitoring_thread) {
-        pthread_cancel(monitoring_thread);
+        dbg_printf("tid=%u - signalling to exit", monitoring_tid);
+        if (pthread_cancel(monitoring_thread) < 0)
+           dbg_perror("tid=%u - signalling failed", monitoring_tid);
         pthread_join(monitoring_thread, NULL);
     }
 }
