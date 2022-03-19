@@ -89,7 +89,7 @@ waiter_notify(struct proc_pid *ppd, int status)
         kqops.eventfd_raise(&filt->kf_proc_eventfd);
         LIST_INSERT_HEAD(&filt->kf_ready, kn, kn_ready); /* protected by proc_pid_index_mtx */
 
-        LIST_REMOVE(kn, kn_proc_waiter);
+        LIST_REMOVE_ZERO(kn, kn_proc_waiter);
     }
 
     dbg_printf("pid=%u removing waiter list", (unsigned int)ppd->ppd_pid);
@@ -113,7 +113,7 @@ waiter_notify_error(struct proc_pid *ppd, int wait_errno)
         kqops.eventfd_raise(&filt->kf_proc_eventfd);
         LIST_INSERT_HEAD(&filt->kf_ready, kn, kn_ready); /* protected by proc_pid_index_mtx */
 
-        LIST_REMOVE(kn, kn_proc_waiter);
+        LIST_REMOVE_ZERO(kn, kn_proc_waiter);
     }
 
     dbg_printf("pid=%u removing waiter list", (unsigned int)ppd->ppd_pid);
@@ -470,7 +470,7 @@ evfilt_proc_knote_delete(UNUSED struct filter *filt, struct knote *kn)
     struct proc_pid *ppd;
 
     tracing_mutex_lock(&proc_pid_index_mtx);
-    if (LIST_INSERTED(kn, kn_proc_waiter)) LIST_REMOVE(kn, kn_proc_waiter);
+    if (LIST_INSERTED(kn, kn_proc_waiter)) LIST_REMOVE_ZERO(kn, kn_proc_waiter);
 
     /*
      * ppd may have been removed already if there
@@ -507,7 +507,7 @@ evfilt_proc_knote_disable(UNUSED struct filter *filt, struct knote *kn)
      * as knote_create when re-enabling.
      */
     tracing_mutex_lock(&proc_pid_index_mtx);
-    if (LIST_INSERTED(kn, kn_proc_waiter)) LIST_REMOVE(kn, kn_proc_waiter);
+    if (LIST_INSERTED(kn, kn_proc_waiter)) LIST_REMOVE_ZERO(kn, kn_proc_waiter);
     tracing_mutex_unlock(&proc_pid_index_mtx);
 
     return (0);
@@ -560,7 +560,7 @@ evfilt_proc_knote_copyout(struct kevent *dst, int nevents, struct filter *filt,
         dst_p->flags |= EV_EOF;
         dst_p->data = kn->kn_proc_status;
 
-        LIST_REMOVE(kn, kn_ready); /* knote_copyout_flag_actions may free the knote */
+        LIST_REMOVE_ZERO(kn, kn_ready); /* knote_copyout_flag_actions may free the knote */
 
         if (knote_copyout_flag_actions(filt, kn) < 0) {
             LIST_INSERT_HEAD(&filt->kf_ready, kn, kn_ready);

@@ -141,7 +141,7 @@ knote_delete(struct filter *filt, struct knote *kn)
     RB_REMOVE(knote_index, &filt->kf_index, kn);
 
     if (LIST_INSERTED(kn, kn_ready))
-        LIST_REMOVE(kn, kn_ready);
+        LIST_REMOVE_ZERO(kn, kn_ready);
     tracing_mutex_unlock(&filt->kf_knote_mtx);
 
     rv = filt->kn_delete(filt, kn);
@@ -166,7 +166,7 @@ knote_disable(struct filter *filt, struct knote *kn)
     if (rv == 0) {
         tracing_mutex_lock(&filt->kf_knote_mtx);
         if (LIST_INSERTED(kn, kn_ready)) /* No longer marked as ready if disabled */
-            LIST_REMOVE(kn, kn_ready);
+            LIST_REMOVE_ZERO(kn, kn_ready);
         tracing_mutex_unlock(&filt->kf_knote_mtx);
         KNOTE_DISABLE(kn); /* set the disable flag */
     }
