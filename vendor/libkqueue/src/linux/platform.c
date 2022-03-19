@@ -506,7 +506,7 @@ linux_kqueue_free(struct kqueue *kq)
         dbg_printf("epoll_fd=%i - closed", kq->epollfd);
 
         if (close(kq->epollfd) < 0)
-            dbg_perror("close(2)");
+            dbg_perror("close(2) - epoll_fd=%i", kq->epollfd);
         kq->epollfd = -1;
     }
 
@@ -522,7 +522,7 @@ linux_kqueue_free(struct kqueue *kq)
         dbg_puts("kqueue wasn't closed");
 
         if (close(kq->pipefd[1]) < 0)
-            dbg_perror("close(2)");
+            dbg_perror("close(2) - pipefd[1]=%i", kq->pipefd[1]);
         kq->pipefd[1] = -1;
     } else if (ret > 0) {
         // Shouldn't happen unless data is written to kqueue FD
@@ -536,7 +536,7 @@ linux_kqueue_free(struct kqueue *kq)
         dbg_printf("kq_fd=%i - closed", pipefd);
 
         if (close(pipefd) < 0)
-            dbg_perror("close(2)");
+            dbg_perror("close(2) - pipefd[0]=%i", kq->pipefd[0]);
         kq->pipefd[0] = -1;
     }
 
