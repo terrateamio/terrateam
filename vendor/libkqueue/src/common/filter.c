@@ -28,6 +28,61 @@ extern const struct filter evfilt_timer;
 extern const struct filter evfilt_user;
 extern const struct filter evfilt_libkqueue;
 
+void
+filter_init_all(void)
+{
+#define FILTER_INIT(filt) \
+do { \
+    if (filt.libkqueue_init) \
+        filt.libkqueue_init(); \
+} while (0)
+
+    FILTER_INIT(evfilt_read);
+    FILTER_INIT(evfilt_write);
+    FILTER_INIT(evfilt_signal);
+    FILTER_INIT(evfilt_vnode);
+    FILTER_INIT(evfilt_proc);
+    FILTER_INIT(evfilt_timer);
+    FILTER_INIT(evfilt_user);
+    FILTER_INIT(evfilt_libkqueue);
+}
+
+void
+filter_fork_all(void)
+{
+#define FILTER_FORK(filt) do { \
+    if (filt.libkqueue_fork) \
+        filt.libkqueue_fork(); \
+} while (0)
+
+    FILTER_FORK(evfilt_read);
+    FILTER_FORK(evfilt_write);
+    FILTER_FORK(evfilt_signal);
+    FILTER_FORK(evfilt_vnode);
+    FILTER_FORK(evfilt_proc);
+    FILTER_FORK(evfilt_timer);
+    FILTER_FORK(evfilt_user);
+    FILTER_FORK(evfilt_libkqueue);
+}
+
+void
+filter_free_all(void)
+{
+#define FILTER_FREE(filt) do { \
+    if (filt.libkqueue_free) \
+        filt.libkqueue_free(); \
+} while (0)
+
+    FILTER_FREE(evfilt_read);
+    FILTER_FREE(evfilt_write);
+    FILTER_FREE(evfilt_signal);
+    FILTER_FREE(evfilt_vnode);
+    FILTER_FREE(evfilt_proc);
+    FILTER_FREE(evfilt_timer);
+    FILTER_FREE(evfilt_user);
+    FILTER_FREE(evfilt_libkqueue);
+}
+
 static int
 filter_register(struct kqueue *kq, const struct filter *src)
 {

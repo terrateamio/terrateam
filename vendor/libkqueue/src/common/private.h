@@ -258,6 +258,21 @@ struct knote {
 struct filter {
     short                  kf_id;              //!< EVFILT_* facility this filter provides.
 
+    /** Called once on startup
+     *
+     */
+    void                   (*libkqueue_init)(void);
+
+    /** Called on fork (for the child)
+     *
+     */
+    void                   (*libkqueue_fork)(void);
+
+    /** Called at exit
+     *
+     */
+    void                   (*libkqueue_free)(void);
+
     /** Perform initialisation for this filter
      *
      * This is called once per filer per kqueue as the kqueue is initialised.
@@ -492,6 +507,11 @@ struct kqueue_vtable {
      */
     void   (*libkqueue_init)(void);
 
+    /** Called on fork (for the child)
+     *
+     */
+    void   (*libkqueue_fork)(void);
+
     /** Called at exit
      *
      */
@@ -659,6 +679,10 @@ static inline int knote_copyout_flag_actions(struct filter *filt, struct knote *
 }
 
 #define knote_get_filter(knt) &((knt)->kn_kq->kq_filt[~(knt)->kev.filter])
+
+void            filter_init_all(void);
+void            filter_fork_all(void);
+void            filter_free_all(void);
 
 int             filter_lookup(struct filter **, struct kqueue *, short);
 int             filter_register_all(struct kqueue *);

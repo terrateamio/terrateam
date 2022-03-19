@@ -328,11 +328,25 @@ wait_thread(UNUSED void *arg)
     return (NULL);
 }
 
+static void
+evfilt_proc_libkqueue_init(void)
+{
+    /*
+     * Initialise the global PID index tree.  This needs to be
+     * recursive as the delete/enable/disable functions all
+     * need to lock the mutex, and they may be called indirectly
+     * in the copyout function (which already locks this mutex),
+     * as well as by other kqueue code.
+     */
+#ifndef _WIN32
+     pthread_mutexattr_init(&proc_pid_index_mtx_attr);
+     pthread_mutexattr_settype(&proc_pid_index_mtx_attr, PTHREAD_MUTEX_RECURSIVE);
+#endif
+     tracing_mutex_init(&proc_pid_index_mtx, &proc_pid_index_mtx_attr);
+}
 static int
 evfilt_proc_init(struct filter *filt)
 {
-    static bool global_init = false;
-
     if (kqops.eventfd_init(&filt->kf_proc_eventfd, filt) < 0) {
     error_0:
         return (-1);
@@ -348,22 +362,6 @@ evfilt_proc_init(struct filter *filt)
      * Initialise global resources (wait thread and PID tree).
      */
     tracing_mutex_lock(&proc_init_mtx);
-
-    /*
-     * Initialise the global PID index tree.  This needs to be
-     * recursive as the delete/enable/disable functions all
-     * need to lock the mutex, and they may be called indirectly
-     * in the copyout function (which already locks this mutex),
-     * as well as by other kqueue code.
-     */
-    if (!global_init) {
-#ifndef _WIN32
-        pthread_mutexattr_init(&proc_pid_index_mtx_attr);
-        pthread_mutexattr_settype(&proc_pid_index_mtx_attr, PTHREAD_MUTEX_RECURSIVE);
-#endif
-        tracing_mutex_init(&proc_pid_index_mtx, &proc_pid_index_mtx_attr);
-        global_init = true;
-    }
 
     if (proc_count == 0) {
         sigset_t sigmask;
@@ -576,13 +574,14 @@ evfilt_proc_knote_copyout(struct kevent *dst, int nevents, struct filter *filt,
 }
 
 const struct filter evfilt_proc = {
-    .kf_id      = EVFILT_PROC,
-    .kf_init    = evfilt_proc_init,
-    .kf_destroy = evfilt_proc_destroy,
-    .kf_copyout = evfilt_proc_knote_copyout,
-    .kn_create  = evfilt_proc_knote_create,
-    .kn_modify  = evfilt_proc_knote_modify,
-    .kn_enable  = evfilt_proc_knote_create,
-    .kn_disable = evfilt_proc_knote_disable,
-    .kn_delete  = evfilt_proc_knote_delete
+    .libkqueue_init   = evfilt_proc_libkqueue_init,
+    .kf_id            = EVFILT_PROC,
+    .kf_init          = evfilt_proc_init,
+    .kf_destroy       = evfilt_proc_destroy,
+    .kf_copyout       = evfilt_proc_knote_copyout,
+    .kn_create        = evfilt_proc_knote_create,
+    .kn_modify        = evfilt_proc_knote_modify,
+    .kn_enable        = evfilt_proc_knote_create,
+    .kn_disable       = evfilt_proc_knote_disable,
+    .kn_delete        = evfilt_proc_knote_delete
 };

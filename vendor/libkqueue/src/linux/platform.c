@@ -344,7 +344,7 @@ linux_monitor_thread_join(void)
 }
 
 static void
-linux_at_fork(void)
+linux_libkqueue_fork(void)
 {
     int i;
 
@@ -374,12 +374,6 @@ static void
 linux_libkqueue_free(void)
 {
     linux_monitor_thread_join();
-}
-
-static void
-linux_libkqueue_init(void)
-{
-    pthread_atfork(NULL, NULL, linux_at_fork);
 }
 
 static int
@@ -1531,7 +1525,7 @@ linux_fd_to_path(char *buf, size_t bufsz, int fd)
 }
 
 const struct kqueue_vtable kqops = {
-    .libkqueue_init     = linux_libkqueue_init,
+    .libkqueue_fork     = linux_libkqueue_fork,
     .libkqueue_free     = linux_libkqueue_free,
     .kqueue_init        = linux_kqueue_init,
     .kqueue_free        = linux_kqueue_free,

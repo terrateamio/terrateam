@@ -78,8 +78,21 @@ libkqueue_free(void)
 {
     dbg_puts("releasing library resources");
 
+    filter_free_all();
+
     if (kqops.libkqueue_free)
         kqops.libkqueue_free();
+}
+
+void
+libkqueue_fork(void)
+{
+    dbg_puts("cleaning up forked resources");
+
+    filter_fork_all();
+
+    if (kqops.libkqueue_fork)
+        kqops.libkqueue_fork();
 }
 
 void
@@ -124,8 +137,11 @@ libkqueue_init(void)
    if (kqops.libkqueue_init)
        kqops.libkqueue_init();
 
+   filter_init_all();
+
    dbg_puts("library initialization complete");
 
+   pthread_atfork(NULL, NULL, libkqueue_fork);
    atexit(libkqueue_free);
 }
 
