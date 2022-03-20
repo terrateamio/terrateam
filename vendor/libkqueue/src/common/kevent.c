@@ -329,7 +329,9 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
     struct kqueue *kq;
     struct kevent *el_p, *el_end;
     int rv = 0;
+#ifndef _WIN32
     int prev_cancel_state;
+#endif
 #ifndef NDEBUG
     static atomic_uint _kevent_counter = 0;
     unsigned int myid = 0;
@@ -347,19 +349,23 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
     }
     if (!changelist) changelist = &null_kev;
 
+#ifndef _WIN32
+    prev_cancel_state = pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+#endif
     /*
      * Grab the global mutex.  This prevents
      * any operations that might free the
      * kqueue from progressing.
      */
-    prev_cancel_state = pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
     tracing_mutex_lock(&kq_mtx);
     /* Convert the descriptor into an object pointer */
     kq = kqueue_lookup(kqfd);
     if (kq == NULL) {
         errno = ENOENT;
         tracing_mutex_unlock(&kq_mtx);
-        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+#ifndef _WIN32
+        pthread_setcancelstate(prev_cancel_state, NULL);
+#endif
         return (-1);
     }
 
@@ -441,9 +447,11 @@ out:
     kqueue_unlock(kq);
     dbg_printf("--- END kevent %u ret %d ---", myid, rv);
 
+#ifndef _WIN32
     pthread_setcancelstate(prev_cancel_state, NULL);
     if (prev_cancel_state == PTHREAD_CANCEL_ENABLE)
         pthread_testcancel();
+#endif
 
     return (rv);
 }

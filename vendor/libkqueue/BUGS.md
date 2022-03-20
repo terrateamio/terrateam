@@ -24,13 +24,6 @@
    src/windows/timer.c:    return (0); /* STUB */
    ```
 
- * `kqueue()` should defer thread cancellation until the end.
-
- * `kevent()` should defer thread cancellation and call `pthread_testcancel()`
-   before and after the call to `kevent_wait()`. This may require changing the
-   way that `EINTR` is handled, to make sure that the `EINTR` is propagated up
-   the call stack to `kevent()`.
-
  ## POSIX
 
  * `EVFILT_PROC` - The POSIX implmentation requires that `SIGCHLD`
