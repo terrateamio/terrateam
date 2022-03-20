@@ -101,6 +101,8 @@ libkqueue_free(void)
 void
 libkqueue_pre_fork(void)
 {
+    struct kqueue *kq, *kq_tmp;
+
     /*
      * Ensure that all global structures are in a
      * consistent state before attempting the
@@ -112,19 +114,46 @@ libkqueue_pre_fork(void)
      * memory corruption and or crashes in the child.
      */
     tracing_mutex_lock(&kq_mtx);
+
+    /*
+     * Acquire locks for all the active kqueues,
+     * this ensures in the child all kqueues are in
+     * a consistent state, ready to be freed.
+     *
+     * This has the potential to stall out the process
+     * whilst we attempt to acquire all the locks,
+     * so it might be a good idea to make this
+     * configurable in future.
+     */
+    dbg_puts("gathering kqueue locks on fork");
+    LIST_FOREACH_SAFE(kq, &kq_list, kq_entry, kq_tmp) {
+        kqueue_lock(kq);
+    }
 }
 
 void
 libkqueue_parent_fork(void)
 {
+    struct kqueue *kq, *kq_tmp;
+
+    dbg_puts("releasing kqueue locks in parent");
+    LIST_FOREACH_SAFE(kq, &kq_list, kq_entry, kq_tmp) {
+        kqueue_unlock(kq);
+    }
     tracing_mutex_unlock(&kq_mtx);
 }
 
 void
 libkqueue_child_fork(void)
 {
-    dbg_puts("cleaning up forked resources");
+    struct kqueue *kq, *kq_tmp;
 
+    dbg_puts("releasing kqueue locks in child");
+    LIST_FOREACH_SAFE(kq, &kq_list, kq_entry, kq_tmp) {
+        kqueue_unlock(kq);
+    }
+
+    dbg_puts("cleaning up forked resources");
     filter_fork_all();
 
     if (kqops.libkqueue_fork)
