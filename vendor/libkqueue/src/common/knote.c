@@ -108,6 +108,19 @@ int knote_delete_all(struct filter *filt)
     return (0);
 }
 
+int knote_mark_disabled_all(struct filter *filt)
+{
+    struct knote *kn, *tmp;
+
+    tracing_mutex_lock(&filt->kf_knote_mtx);
+    RB_FOREACH_SAFE(kn, knote_index, &filt->kf_index, tmp) {
+        dbg_printf("kn=%p - marking disabled", kn);
+        KNOTE_DISABLE(kn);
+    }
+    tracing_mutex_unlock(&filt->kf_knote_mtx);
+    return (0);
+}
+
 int
 knote_delete(struct filter *filt, struct knote *kn)
 {

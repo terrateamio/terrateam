@@ -647,12 +647,12 @@ extern unsigned int kq_cnt;
 /*
  * knote internal API
  */
-int             knote_delete_all(struct filter *filt);
 struct knote    *knote_lookup(struct filter *, uintptr_t);
+int             knote_delete_all(struct filter *filt);
+int             knote_mark_disabled_all(struct filter *filt);
 struct knote    *knote_new(void);
 
 #define knote_retain(kn) atomic_inc(&kn->kn_ref)
-
 void            knote_release(struct knote *);
 void            knote_insert(struct filter *, struct knote *);
 int             knote_delete(struct filter *, struct knote *);
@@ -710,6 +710,7 @@ int             kevent_copyout(struct kqueue *, int, struct kevent *, int);
 void            kevent_free(struct kqueue *);
 const char      *kevent_dump(const struct kevent *);
 struct kqueue   *kqueue_lookup(int);
+void            kqueue_knote_mark_disabled_all(struct kqueue *kq);
 void            kqueue_free(struct kqueue *);
 void            kqueue_free_by_id(int id);
 int             kqueue_validate(struct kqueue *);

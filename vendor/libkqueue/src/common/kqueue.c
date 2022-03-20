@@ -161,6 +161,17 @@ libkqueue_init(void)
 }
 
 void
+kqueue_knote_mark_disabled_all(struct kqueue *kq)
+{
+    unsigned int i;
+
+    for (i = 0; i < EVFILT_SYSCOUNT; i++) {
+        struct filter *kf = &kq->kq_filt[i];
+        knote_mark_disabled_all(kf);
+    }
+}
+
+void
 kqueue_free(struct kqueue *kq)
 {
     dbg_printf("kq=%p - freeing", kq);

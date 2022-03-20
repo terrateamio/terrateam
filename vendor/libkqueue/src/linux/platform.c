@@ -356,6 +356,11 @@ linux_libkqueue_fork(void)
         kq->epollfd = -1;
 
         /*
+         * Mark all knotes as already disable
+         */
+        kqueue_knote_mark_disabled_all(kq);
+
+        /*
          * Do the actual freeing...
          */
         kqueue_free(kq);
