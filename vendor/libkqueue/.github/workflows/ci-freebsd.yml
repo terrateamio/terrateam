@@ -6,10 +6,12 @@ on:
       - master
     paths:
       - 'test/*'
+      - '.github/workflows/ci-freebsd.yml'
 
 jobs:
   freebsd-tests:
-    timeout-minutes: 5
+# virtualbox takes a long time to start
+    timeout-minutes: 15
     runs-on: macos-10.15
     name: "FreeBSD tests"
     steps:

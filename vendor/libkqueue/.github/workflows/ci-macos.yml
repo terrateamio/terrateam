@@ -6,6 +6,7 @@ on:
       - master
     paths:
       - 'test/*'
+      - '.github/workflows/ci-macos.yml'
 
 jobs:
   macos-tests:
