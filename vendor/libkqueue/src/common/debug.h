@@ -115,6 +115,15 @@ typedef struct {
     abort(); \
 } while (0)
 
+# define tracing_mutex_assert_state(x,y) do { \
+  if ((y) == MTX_UNLOCKED) \
+      assert((x)->mtx_status == MTX_UNLOCKED); \
+  else if ((y) == MTX_LOCKED) \
+      assert((x)->mtx_status == MTX_LOCKED); \
+  else \
+    abort(); \
+} while (0)
+
 # define tracing_mutex_lock(x)  do { \
     dbg_printf("[%i]: waiting for %s", __LINE__, #x); \
     pthread_mutex_lock(&((x)->mtx_lock)); \
@@ -156,6 +165,7 @@ typedef struct {
 # define tracing_mutex_init         pthread_mutex_init
 # define tracing_mutex_destroy      pthread_mutex_destroy
 # define tracing_mutex_assert(x,y)
+# define tracing_mutex_assert_state(x,y)
 # define tracing_mutex_lock         pthread_mutex_lock
 # define tracing_mutex_trylock(ret,x) do { ret = pthread_mutex_trylock(x); } while (0)
 # define tracing_mutex_unlock       pthread_mutex_unlock
