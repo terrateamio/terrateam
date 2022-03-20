@@ -18,6 +18,12 @@
 
 #include "private.h"
 
+int
+linux_evfilt_user_knote_enable(struct filter *filt, struct knote *kn);
+
+int
+linux_evfilt_user_knote_disable(struct filter *filt, struct knote *kn);
+
 /* NOTE: copy+pasted from linux_eventfd_raise() */
 static int
 eventfd_raise(int evfd)
@@ -113,24 +119,17 @@ linux_evfilt_user_knote_create(struct filter *filt, struct knote *kn)
         } else {
             dbg_perror("eventfd(2)");
         }
-error:
         if (evfd >= 0) close(evfd);
         kn->kn_eventfd = -1;
-        kn->kn_registered = 0;
         return (-1);
     }
 
     dbg_printf("event_fd=%i - created", evfd);
-
-    /* Add the eventfd to the epoll set */
-    KN_UDATA(kn);   /* populate this knote's kn_udata field */
-    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_ADD, evfd, EPOLL_EV_KN(EPOLLIN, kn)) < 0) {
-        dbg_perror("epoll_ctl(2)");
-        goto error;
-    }
-
     kn->kn_eventfd = evfd;
-    kn->kn_registered = 1;
+    KN_UDATA(kn);   /* populate this knote's kn_udata field */
+
+    if (KNOTE_ENABLED(kn))
+        return linux_evfilt_user_knote_enable(filt, kn);
 
     return (0);
 }
@@ -179,17 +178,8 @@ linux_evfilt_user_knote_delete(struct filter *filt, struct knote *kn)
 {
     int rv = 0;
 
-    if (kn->kn_registered) {
-        rv = epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, kn->kn_eventfd, NULL);
-        if (rv < 0) {
-            dbg_perror("epoll_ctl(2)");
-        } else {
-            dbg_printf("event_fd=%i - removed from epoll_fd=%i",
-                       kn->kn_eventfd, filter_epoll_fd(filt));
-        }
-    }
-
-    kn->kn_registered = 0;
+    if (KNOTE_ENABLED(kn))
+        linux_evfilt_user_knote_disable(filt, kn);
 
     dbg_printf("event_fd=%i - closed", kn->kn_eventfd);
     if (close(kn->kn_eventfd) < 0) {
@@ -204,15 +194,25 @@ linux_evfilt_user_knote_delete(struct filter *filt, struct knote *kn)
 int
 linux_evfilt_user_knote_enable(struct filter *filt, struct knote *kn)
 {
-    /* FIXME: what happens if NOTE_TRIGGER is in fflags?
-       should the event fire? */
-    return linux_evfilt_user_knote_create(filt, kn);
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_ADD, kn->kn_eventfd, EPOLL_EV_KN(EPOLLIN, kn)) < 0) {
+        dbg_perror("epoll_ctl(2)");
+        return (-1);
+    }
+    dbg_printf("event_fd=%i - added to epoll_fd=%i", kn->kn_eventfd, filter_epoll_fd(filt));
+
+    return (0);
 }
 
 int
 linux_evfilt_user_knote_disable(struct filter *filt, struct knote *kn)
 {
-    return linux_evfilt_user_knote_delete(filt, kn);
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, kn->kn_eventfd, NULL) < 0) {
+            dbg_perror("epoll_ctl(2)");
+            return (-1);
+    }
+    dbg_printf("event_fd=%i - removed from epoll_fd=%i", kn->kn_eventfd, filter_epoll_fd(filt));
+
+    return (0);
 }
 
 const struct filter evfilt_user = {
