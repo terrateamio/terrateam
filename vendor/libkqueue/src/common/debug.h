@@ -85,13 +85,14 @@ extern char *KQUEUE_DEBUG_IDENT;
  * It also allows you to assert that a mutex has (or has not) been locked
  * by calling tracing_mutex_assert().
  */
-
-# define MTX_UNLOCKED    0
-# define MTX_LOCKED      1
+enum tracing_mutex_status {
+    MTX_UNLOCKED = 0,
+    MTX_LOCKED
+};
 
 typedef struct {
     pthread_mutex_t mtx_lock;
-    int mtx_status;
+    enum tracing_mutex_status mtx_status;
     int mtx_owner;
 } tracing_mutex_t;
 
