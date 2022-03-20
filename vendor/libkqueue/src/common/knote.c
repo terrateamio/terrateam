@@ -77,9 +77,8 @@ knote_release(struct knote *kn)
 void
 knote_insert(struct filter *filt, struct knote *kn)
 {
-    tracing_mutex_lock(&filt->kf_knote_mtx);
+    kqueue_mutex_assert(filt->kf_kqueue, MTX_LOCKED);
     RB_INSERT(knote_index, &filt->kf_index, kn);
-    tracing_mutex_unlock(&filt->kf_knote_mtx);
 }
 
 struct knote *
@@ -90,9 +89,8 @@ knote_lookup(struct filter *filt, uintptr_t ident)
 
     query.kev.ident = ident;
 
-    tracing_mutex_lock(&filt->kf_knote_mtx);
+    kqueue_mutex_assert(filt->kf_kqueue, MTX_LOCKED);
     ent = RB_FIND(knote_index, &filt->kf_index, &query);
-    tracing_mutex_unlock(&filt->kf_knote_mtx);
 
     return (ent);
 }
@@ -101,10 +99,10 @@ int knote_delete_all(struct filter *filt)
 {
     struct knote *kn, *tmp;
 
-    tracing_mutex_lock(&filt->kf_knote_mtx);
+    kqueue_mutex_assert(filt->kf_kqueue, MTX_LOCKED);
     RB_FOREACH_SAFE(kn, knote_index, &filt->kf_index, tmp)
         knote_delete(filt, kn);
-    tracing_mutex_unlock(&filt->kf_knote_mtx);
+
     return (0);
 }
 
@@ -112,12 +110,11 @@ int knote_mark_disabled_all(struct filter *filt)
 {
     struct knote *kn, *tmp;
 
-    tracing_mutex_lock(&filt->kf_knote_mtx);
     RB_FOREACH_SAFE(kn, knote_index, &filt->kf_index, tmp) {
         dbg_printf("kn=%p - marking disabled", kn);
         KNOTE_DISABLE(kn);
     }
-    tracing_mutex_unlock(&filt->kf_knote_mtx);
+
     return (0);
 }
 
@@ -139,7 +136,7 @@ knote_delete(struct filter *filt, struct knote *kn)
      * thread before we acquired the knotelist lock.
      */
     query.kev.ident = kn->kev.ident;
-    tracing_mutex_lock(&filt->kf_knote_mtx);
+    kqueue_mutex_assert(filt->kf_kqueue, MTX_LOCKED);
     tmp = RB_FIND(knote_index, &filt->kf_index, &query);
     if (tmp != kn)
         dbg_printf("kn=%p - conflicting entry in filter tree", kn);
@@ -148,7 +145,6 @@ knote_delete(struct filter *filt, struct knote *kn)
 
     if (LIST_INSERTED(kn, kn_ready))
         LIST_REMOVE_ZERO(kn, kn_ready);
-    tracing_mutex_unlock(&filt->kf_knote_mtx);
 
     rv = filt->kn_delete(filt, kn);
     dbg_printf("kn=%p - kn_delete rv=%i", kn, rv);
@@ -172,10 +168,9 @@ knote_disable(struct filter *filt, struct knote *kn)
     rv = filt->kn_disable(filt, kn);
     dbg_printf("kn=%p - kn_disable rv=%i", kn, rv);
     if (rv == 0) {
-        tracing_mutex_lock(&filt->kf_knote_mtx);
+        kqueue_mutex_assert(filt->kf_kqueue, MTX_LOCKED);
         if (LIST_INSERTED(kn, kn_ready)) /* No longer marked as ready if disabled */
             LIST_REMOVE_ZERO(kn, kn_ready);
-        tracing_mutex_unlock(&filt->kf_knote_mtx);
         KNOTE_DISABLE(kn); /* set the disable flag */
     }
 

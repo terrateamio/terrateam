@@ -468,13 +468,6 @@ struct filter {
                                                ///< with eventfds.
                                                ///< This is not used by all filters.
 
-    tracing_mutex_t        kf_knote_mtx;       //!< Used to synchronise knote operations
-                                               ///< (addition, removal, modification etc...)
-                                               ///< on this filter.
-#ifndef _WIN32
-    pthread_mutexattr_t    kf_knote_mtx_attr;
-#endif
-
     struct kqueue          *kf_kqueue;         //!< kqueue this filter is associated with.
 
 #if defined(FILTER_PLATFORM_SPECIFIC)
@@ -645,8 +638,9 @@ extern unsigned int kq_cnt;
 /*
  * kqueue internal API
  */
-#define kqueue_lock(kq)     tracing_mutex_lock(&(kq)->kq_mtx)
-#define kqueue_unlock(kq)   tracing_mutex_unlock(&(kq)->kq_mtx)
+#define kqueue_mutex_assert(kq, state) tracing_mutex_assert(&(kq)->kq_mtx, state)
+#define kqueue_lock(kq)                tracing_mutex_lock(&(kq)->kq_mtx)
+#define kqueue_unlock(kq)              tracing_mutex_unlock(&(kq)->kq_mtx)
 
 /*
  * knote internal API

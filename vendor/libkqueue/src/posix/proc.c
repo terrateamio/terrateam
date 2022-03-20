@@ -600,7 +600,7 @@ evfilt_proc_knote_copyout(struct kevent *dst, int nevents, struct filter *filt,
      * major issues.
      *
      * By using a single lock we ensure either the
-     * waiter thread is notifying kqueue isntances
+     * waiter thread is notifying kqueue instances
      * data is ready, or a kqueue is copying out
      * notifications, so no deadlock can occur.
      */
