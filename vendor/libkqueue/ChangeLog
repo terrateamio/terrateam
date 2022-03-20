@@ -1,8 +1,39 @@
 Unreleased
 ------------------------------------------------------------------------
 
-  * Fix: Allow EVFILT_TIMER filters to be modified on Linux
-    (Closes #116) (Reported by: Grant Erickson).
+  * Fix: posix/proc don't allow users of this filter to progress
+    until the proc waiter thread has completed initialisation.
+
+  * Fix: Address multiple thread synchronisation issues by using a
+    single global mutex to synchronise the kqueue list, and kqueue
+    file descriptor map, and per kqueue mutexes which are locked for
+    the duration of copyin and copyout.  The per filter knote mutex
+    was removed with this change as it's no longer needed.
+
+  * Fix: posix/proc fix knote use after free if a notification
+    comes in for a knote which has already been freed.
+    The underlying issue was a problem with the list macros not
+    zeroing out prev/next pointers when items were removed from
+    lists.
+
+  * Fix: prevent thread cancellation on Linux in kqueue() and
+    kevent().  This prevents deadlocks occuring if a kqueue is
+    shared between threads and one thread is cancelled.
+
+  * Fix: linux Cleanup all kqueues by closing their file descriptors
+    and freeing associated memory on fork.  A similar fix needed for
+    Solaris.
+
+  * Fix: linux/read linux/write Prevent invalid access of
+    fds->fds_write if the file descriptor state is freed after
+    processing read  events.
+
+  * Fix: linux/monitor Use an atexit handler to ensure the fd
+    monitoring thread is shutdown gracefully on Linux.  This fixes
+    spurious leak reports from LSAN et al...
+
+  * Fix: linux/timer Allow EVFILT_TIMER filters to be modified on
+    Linux (Closes #116) (Reported by: Grant Erickson).
 
   * Fix: Set the library search path in libkqueue.pc (Closes #117)
     (Reported by: Grant Erickson)
@@ -44,7 +75,9 @@ Unreleased
     of packages between releases.
 
   * Add EVFILT_LIBKQUEUE to expose libkqueue specific configuration
-    options.
+    options. The initial implementation supports NOTE_VERSION to
+    retrieve the current version number, and NOTE_VERSION_STR to
+    retrieve a textual description of the version.
 
 2021-09-06  v2.5.0
 ------------------------------------------------------------------------
