@@ -154,6 +154,33 @@ test_cleanup(void *unused)
         die("setrlimit failed");
     }
 }
+
+void
+test_fork(void *unused)
+{
+    int kqfd;
+    pid_t pid;
+
+    kqfd = kqueue();
+    if (kqfd < 0)
+        die("kqueue()");
+
+    pid = fork();
+    if (pid == 0) {
+        /*
+         * fork should immediately close all open
+         * kqueues and their file descriptors.
+         */
+        if (close(kqfd) != -1)
+           die("kqueue fd still open in child");
+
+        testing_end_quiet();
+        exit(0);
+    } else if (pid == -1)
+        die("fork()");
+
+    close(kqfd);
+}
 #endif
 
 /* EV_RECEIPT is not available or running on Win32 */
@@ -232,6 +259,7 @@ test_kqueue(struct test_context *ctx)
 
 #if defined(__linux__)
     test(cleanup, ctx);
+    test(fork, ctx);
 #endif
 
 #if !defined(_WIN32)

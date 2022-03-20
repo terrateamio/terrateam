@@ -98,6 +98,28 @@ libkqueue_free(void)
 }
 
 #ifndef _WIN32
+
+/** TSAN incorrectly detects data races in this function
+ *
+ * It's not clear why it's not recording the fact that the appropriate
+ * mutexes are in fact locked... but it is:
+ *
+ * Write of size 4 at 0x7f2ca355e34c by thread T1 (mutexes: write M4):
+ *   #0 monitoring_thread_loop /home/arr2036/Documents/Repositories/dependencies/libkqueue/src/linux/platform.c:298 (libkqueue.so.0+0xf521)
+ *
+ * Previous write of size 4 at 0x7f2ca355e34c by main thread:
+ *   #0 libkqueue_pre_fork /home/arr2036/Documents/Repositories/dependencies/libkqueue/src/common/kqueue.c:116 (libkqueue.so.0+0xbb8c)
+ *   #1 <null> <null> (libc.so.6+0x94aff)
+ *   #2 test_fork /home/arr2036/Documents/Repositories/dependencies/libkqueue/test/kqueue.c:168 (libkqueue-test+0x63cf)
+ *   #3 run_iteration /home/arr2036/Documents/Repositories/dependencies/libkqueue/test/main.c:82 (libkqueue-test+0x7ca3)
+ *   #4 test_harness /home/arr2036/Documents/Repositories/dependencies/libkqueue/test/main.c:109 (libkqueue-test+0x7e40)
+ *   #5 main /home/arr2036/Documents/Repositories/dependencies/libkqueue/test/main.c:286 (libkqueue-test+0x8889)
+ */
+#if defined(__has_feature)
+#  if __has_feature(thread_sanitizer) || defined(__SANITIZE_THREAD__)
+__attribute__((no_sanitize("thread")))
+#  endif
+#endif
 void
 libkqueue_pre_fork(void)
 {
