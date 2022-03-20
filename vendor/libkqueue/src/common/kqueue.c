@@ -99,7 +99,29 @@ libkqueue_free(void)
 
 #ifndef _WIN32
 void
-libkqueue_fork(void)
+libkqueue_pre_fork(void)
+{
+    /*
+     * Ensure that all global structures are in a
+     * consistent state before attempting the
+     * fork.
+     *
+     * If we don't do this then kq_mtx state will
+     * be undefined when the child starts cleaning
+     * up resources, and we could get deadlocks, nasty
+     * memory corruption and or crashes in the child.
+     */
+    tracing_mutex_lock(&kq_mtx);
+}
+
+void
+libkqueue_parent_fork(void)
+{
+    tracing_mutex_unlock(&kq_mtx);
+}
+
+void
+libkqueue_child_fork(void)
 {
     dbg_puts("cleaning up forked resources");
 
@@ -107,6 +129,8 @@ libkqueue_fork(void)
 
     if (kqops.libkqueue_fork)
         kqops.libkqueue_fork();
+
+    tracing_mutex_unlock(&kq_mtx);
 }
 #endif
 
@@ -155,7 +179,7 @@ libkqueue_init(void)
    dbg_puts("library initialization complete");
 
 #ifndef _WIN32
-   pthread_atfork(NULL, NULL, libkqueue_fork);
+   pthread_atfork(libkqueue_pre_fork, libkqueue_parent_fork, libkqueue_child_fork);
 #endif
    atexit(libkqueue_free);
 }

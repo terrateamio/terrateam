@@ -309,6 +309,10 @@ linux_kqueue_start_thread(void)
     return (0);
 }
 
+/** Free kqueues on fork
+ *
+ * Called with kq_mtx held.
+ */
 static void
 linux_libkqueue_fork(void)
 {

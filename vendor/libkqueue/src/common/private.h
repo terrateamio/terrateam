@@ -266,6 +266,8 @@ struct filter {
 #ifndef _WIN32
     /** Called on fork (for the child)
      *
+     * Always called with kq_mtx held to ensure global resources
+     * are in a a consistent state for cleanup.
      */
     void                   (*libkqueue_fork)(void);
 #endif
@@ -515,6 +517,8 @@ struct kqueue_vtable {
 #ifndef _WIN32
     /** Called on fork (for the child)
      *
+     * Always called with kq_mtx held to ensure global resources
+     * are in a a consistent state for cleanup.
      */
     void   (*libkqueue_fork)(void);
 #endif
