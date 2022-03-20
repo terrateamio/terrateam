@@ -321,6 +321,14 @@ kevent_copyin(struct kqueue *kq, const struct kevent *changelist, int nchanges,
     return (el_p - eventlist);
 }
 
+#ifndef _WIN32
+static void
+kevent_release_kq_mutex(void *kq)
+{
+    kqueue_unlock((struct kqueue *)kq);
+}
+#endif
+
 int VISIBLE
 kevent(int kqfd, const struct kevent *changelist, int nchanges,
         struct kevent *eventlist, int nevents,
@@ -370,6 +378,9 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
     }
 
     kqueue_lock(kq);
+#ifndef _WIN32
+    pthread_cleanup_push(kevent_release_kq_mutex, kq);
+#endif
 
     /*
      * We no longer need the global mutex as
@@ -377,7 +388,6 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
      * we release the lock.
      */
     tracing_mutex_unlock(&kq_mtx);
-
 #ifndef NDEBUG
     if (DEBUG_KQUEUE) {
         myid = atomic_inc(&_kevent_counter);
@@ -408,7 +418,20 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
      * the changelist, copy events out.
      */
     if ((el_end - el_p) > 0) {
+        /*
+         * Allow cancellation in kevent_wait as we
+         * may be waiting a long time for the thread
+         * to exit...
+         */
+#ifndef _WIN32
+        (void)pthread_setcancelstate(prev_cancel_state, NULL);
+        if (prev_cancel_state == PTHREAD_CANCEL_ENABLE)
+            pthread_testcancel();
+#endif
         rv = kqops.kevent_wait(kq, nevents, timeout);
+#ifndef _WIN32
+        (void)pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+#endif
         dbg_printf("kqops.kevent_wait rv=%i", rv);
         if (likely(rv > 0)) {
             rv = kqops.kevent_copyout(kq, rv, el_p, el_end - el_p);
@@ -444,6 +467,9 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
 #endif
 
 out:
+#ifndef _WIN32
+    pthread_cleanup_pop(0);
+#endif
     kqueue_unlock(kq);
     dbg_printf("--- END kevent %u ret %d ---", myid, rv);
 
