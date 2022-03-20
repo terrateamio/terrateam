@@ -164,7 +164,9 @@ knote_disable(struct filter *filt, struct knote *kn)
 {
     int rv = 0;
 
-    assert(!(kn->kev.flags & EV_DISABLE));
+    /* If the knote is already disabled, this call is a noop */
+    if (KNOTE_DISABLED(kn))
+        return (0);
 
     dbg_printf("kn=%p - calling kn_disable", kn);
     rv = filt->kn_disable(filt, kn);
@@ -184,6 +186,10 @@ int
 knote_enable(struct filter *filt, struct knote *kn)
 {
     int rv = 0;
+
+    /* If the knote is already enabled, this call is a noop */
+    if (KNOTE_ENABLED(kn))
+        return (0);
 
     dbg_printf("kn=%p - calling kn_enable", kn);
     rv = filt->kn_enable(filt, kn);
