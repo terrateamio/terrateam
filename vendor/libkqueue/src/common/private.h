@@ -490,6 +490,9 @@ struct filter {
  */
 struct kqueue {
     int                    kq_id;              //!< File descriptor used to identify this kqueue.
+
+    LIST_ENTRY(kqueue)     kq_entry;           //!< Entry in the global list of active kqueues.
+
     struct filter          kq_filt[EVFILT_SYSCOUNT];    //!< Filters supported by the kqueue.  Each
                                                ///< kqueue maintains one filter state structure
                                                ///< per filter type.
@@ -628,7 +631,12 @@ struct kqueue_vtable {
      */
     int    (*eventfd_descriptor)(struct eventfd *efd);
 };
+LIST_HEAD(kqueue_head, kqueue);
+
 extern const struct kqueue_vtable kqops;
+extern tracing_mutex_t kq_mtx;
+extern struct kqueue_head kq_list;
+extern unsigned int kq_cnt;
 
 /*
  * kqueue internal API

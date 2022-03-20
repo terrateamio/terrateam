@@ -29,6 +29,19 @@ tracing_mutex_t kq_mtx = TRACING_MUTEX_INITIALIZER;
 pthread_once_t kq_is_initialized = PTHREAD_ONCE_INIT;
 #endif
 
+/** List of all active kqueues
+ *
+ * This is used to iterate over all active kqueues.
+ *
+ * kq_mtx should be held whilst accessing or modifying.
+ */
+struct kqueue_head kq_list;
+
+/** Count of the active kqueues
+ *
+ */
+unsigned int kq_cnt = 0;
+
 unsigned int
 get_fd_limit(void)
 {
@@ -152,6 +165,9 @@ kqueue_free(struct kqueue *kq)
 {
     dbg_printf("kq=%p - freeing", kq);
 
+    kq_cnt--;
+    LIST_REMOVE(kq, kq_entry);
+
     /*
      * map_remove ensures the current map entry
      * points to this kqueue.
@@ -242,6 +258,8 @@ kqueue(void)
         tracing_mutex_unlock(&kq_mtx);
         goto error;
     }
+    LIST_INSERT_HEAD(&kq_list, kq, kq_entry);
+    kq_cnt++;
     tracing_mutex_unlock(&kq_mtx);
 
     return (kq->kq_id);

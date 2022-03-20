@@ -16,6 +16,7 @@
  */
 #include <err.h>
 #include <signal.h>
+#include <inttypes.h>
 #include <sys/prctl.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -45,6 +46,7 @@ struct proc_pid {
 static tracing_mutex_t     proc_init_mtx = TRACING_MUTEX_INITIALIZER;
 static int                 proc_count = 0;
 static pthread_t           proc_wait_thread;
+static pid_t               proc_wait_tid; /* Monitoring thread */
 
 /** Synchronisation for thread start
  *
@@ -174,7 +176,7 @@ waiter_siginfo_to_status(siginfo_t *info)
  *
  */
 static void *
-wait_thread(UNUSED void *arg)
+wait_thread_loop(UNUSED void *arg)
 {
     int status;
     int ret = 0;
@@ -186,7 +188,9 @@ wait_thread(UNUSED void *arg)
      * etc. Max name length is 16 bytes. */
     prctl(PR_SET_NAME, "libkqueue_wait", 0, 0, 0);
 
-    dbg_printf("waiter thread started");
+    proc_wait_tid = syscall(SYS_gettid);
+
+    dbg_printf("tid=%u - waiter thread started", proc_wait_tid);
 
     /*
      * Native kqueue implementations leave processes monitored
@@ -381,7 +385,7 @@ evfilt_proc_libkqueue_fork(void)
      * of the process, and we need to prevent a cancellation
      * request being sent to it when all the knotes are freed.
      */
-    proc_wait_thread = 0;
+    proc_wait_tid = 0;
 }
 
 static int
@@ -421,7 +425,7 @@ evfilt_proc_init(struct filter *filt)
         dbg_printf("creating wait thread");
 
         pthread_mutex_lock(&proc_wait_thread_mtx);
-        if (pthread_create(&proc_wait_thread, NULL, wait_thread, NULL) != 0) {
+        if (pthread_create(&proc_wait_thread, NULL, wait_thread_loop, NULL) != 0) {
             tracing_mutex_unlock(&proc_init_mtx);
             pthread_mutex_unlock(&proc_wait_thread_mtx);
 
@@ -451,12 +455,25 @@ evfilt_proc_destroy(struct filter *filt)
      * in a forked copy as fork does not produce
      * a new copy of the thread.
      */
-    if ((--proc_count == 0) && (proc_wait_thread > 0)) {
-        pthread_cancel(proc_wait_thread);
-        if (pthread_join(proc_wait_thread, NULL) < 0) {
-            dbg_printf("pthread_join(2) %s", strerror(errno));
+    if ((--proc_count == 0) && (proc_wait_tid != 0)) {
+        pid_t tid = proc_wait_tid;
+        void *retval;
+        int ret;
+
+        dbg_printf("tid=%u - cancelling", tid);
+        ret = pthread_cancel(proc_wait_thread);
+        if (ret != 0)
+           dbg_printf("tid=%u - cancel failed: %s", tid, strerror(ret));
+
+        ret = pthread_join(proc_wait_thread, &retval);
+        if (ret == 0) {
+            if (retval == PTHREAD_CANCELED) {
+                dbg_printf("tid=%u - joined with exit_status=PTHREAD_CANCELED", tid);
+            } else {
+                dbg_printf("tid=%u - joined with exit_status=%" PRIdPTR, tid, (intptr_t)retval);
+            }
         } else {
-            dbg_puts("waiter thread joined");
+            dbg_printf("tid=%u - join failed: %s", tid, strerror(ret));
         }
     }
     tracing_mutex_unlock(&proc_init_mtx);
@@ -476,7 +493,6 @@ evfilt_proc_knote_create(struct filter *filt, struct knote *kn)
      * here and error out early instead of waiting for the waiter
      * loop to tell us.
      */
-
     ppd = RB_FIND(pid_index, &proc_pid_index, &(struct proc_pid){ .ppd_pid = kn->kev.ident });
     if (!ppd) {
         dbg_printf("pid=%u adding waiter list", (unsigned int)kn->kev.ident);

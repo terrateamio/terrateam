@@ -31,7 +31,6 @@
  */
 static __thread struct epoll_event epoll_events[MAX_KEVENT];
 
-extern tracing_mutex_t kq_mtx;
 /*
  * Monitoring thread that takes care of cleaning up kqueues (on linux only)
  */
@@ -41,16 +40,16 @@ static pid_t monitoring_tid; /* Monitoring thread */
 static pthread_mutex_t monitoring_thread_mtx = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t monitoring_thread_cond = PTHREAD_COND_INITIALIZER;
 
+enum thread_exit_state {
+    THREAD_EXIT_STATE_SELF_CANCEL = 0,
+    THREAD_EXIT_STATE_CANCEL_LOCKED,
+    THREAD_EXIT_STATE_CANCEL_UNLOCKED,
+};
+
 /*
  * Monitoring thread is exiting because the process is terminating
  */
-static bool monitoring_thread_on_exit = true;
-
-/*
- * Number of active kqueues.
- * When the last kqueue is closed, the monitoring thread can be stopped.
- */
-static unsigned int kqueue_cnt = 0;
+static enum thread_exit_state monitoring_thread_state;
 
 /*
  * Map for kqueue pipes where index is the read side (for which signals are received)
@@ -73,12 +72,69 @@ static int nb_max_fd;
 static void
 linux_kqueue_free(struct kqueue *kq);
 
+static void
+monitoring_thread_cleanup(UNUSED void *arg)
+{
+    struct kqueue *kq, *kq_tmp;
+
+    /*
+     * If the entire process is exiting, then free all
+     * the kqueues
+     *
+     * We do this because we don't reliably receive all the
+     * close MONITORING_THREAD_SIGNALs before the process
+     * exits, and this avoids ASAN or valgrind raising
+     * spurious memory leaks.
+     *
+     * If the user _hasn't_ closed a KQ fd, then we don't
+     * free the underlying memory, and it'll be correctly
+     * reported as a memory leak.
+     */
+    if ((monitoring_thread_state == THREAD_EXIT_STATE_CANCEL_LOCKED) ||
+        (monitoring_thread_state == THREAD_EXIT_STATE_CANCEL_UNLOCKED)) {
+        LIST_FOREACH_SAFE(kq, &kq_list, kq_entry, kq_tmp) {
+            int signal_fd = kq->pipefd[0];
+
+            /*
+             * If there's no use cnt for the kqueue
+             * then something has gone very wrong
+             */
+            assert(fd_use_cnt[signal_fd] > 0);
+            fd_use_cnt[signal_fd]--;
+
+            if (fd_use_cnt[signal_fd] == 0) {
+                dbg_printf("kq=%p - fd=%i use_count=%u cleaning up...", kq, kq->kq_id, fd_use_cnt[signal_fd]);
+                kqueue_free(kq);
+            } else {
+                dbg_printf("kq=%p - fd=%i use_count=%u skipping, this is likely a leak...",
+                           kq, kq->kq_id, fd_use_cnt[signal_fd]);
+            }
+        }
+    }
+
+    dbg_printf("tid=%u - monitoring thread exiting (%s)",
+               monitoring_tid,
+               monitoring_thread_state == THREAD_EXIT_STATE_SELF_CANCEL ? "no kqueues" : "process term");
+    /* Free thread resources */
+    free(fd_map);
+    fd_map = NULL;
+    free(fd_use_cnt);
+    fd_use_cnt = NULL;
+
+    /* Reset so that thread can be restarted */
+    monitoring_tid = 0;
+
+    if (monitoring_thread_state == THREAD_EXIT_STATE_CANCEL_UNLOCKED)
+        tracing_mutex_unlock(&kq_mtx);
+}
+
+
 /** Clean up a kqueue from the perspective of the monitoring thread
  *
  * Called with the kq_mtx held.
  */
 static void
-linux_kqueue_cleanup(int signal_fd, bool closed_on_fork)
+monitoring_thread_kqueue_cleanup(int signal_fd)
 {
     int fd;
     struct kqueue *kq;
@@ -99,23 +155,6 @@ linux_kqueue_cleanup(int signal_fd, bool closed_on_fork)
         /* Should not happen */
         dbg_printf("fd=%i - no kqueue associated", fd);
         return;
-    }
-
-    /*
-     * On fork the epoll fd is inherited by the child process
-     * Any modifications made by the child affect the parent's
-     * epoll instance.
-     *
-     * So... if we remove file descriptors in the child, then
-     * we can break functionality for the parent.
-     *
-     * Our only option is to close the epollfd, and check for
-     * an invalid epollfd when deregistering file descriptors
-     * and ignore the operation.
-     */
-    if (closed_on_fork) {
-        close(kq->epollfd);
-        kq->epollfd = -1;
     }
 
     /*
@@ -147,58 +186,6 @@ linux_kqueue_cleanup(int signal_fd, bool closed_on_fork)
     } else {
         dbg_printf("kq=%p - fd=%i use_count=%u skipping...", kq, fd, fd_use_cnt[signal_fd]);
     }
-}
-
-static void
-monitoring_thread_cleanup(UNUSED void *arg)
-{
-    /*
-     * If the entire process is exiting, then scan through
-     * all the in use file descriptors, checking to see if
-     * they've been closed or not.
-     *
-     * We do this because we don't reliably receive all the
-     * close MONITORING_THREAD_SIGNALs before the process
-     * exits, and this avoids ASAN or valgrind raising
-     * spurious memory leaks.
-     *
-     * If the user _hasn't_ closed a KQ fd, then we don't
-     * free the underlying memory, and it'll be correctly
-     * reported as a memory leak.
-     */
-    if (monitoring_thread_on_exit && (kqueue_cnt > 0)) {
-        int i;
-
-        dbg_printf("scanning fds 0-%i", nb_max_fd);
-
-        for (i = 0; (kqueue_cnt > 0) && (i < nb_max_fd); i++) {
-            int fd;
-
-            if (fd_use_cnt[i] == 0) continue;
-
-            fd = fd_map[i];
-            dbg_printf("checking rfd=%i wfd=%i", i, fd);
-            if (fcntl(fd, F_GETFD) < 0) {
-                dbg_printf("fd=%i - forcefully cleaning up, use_count=%u: %s",
-                           fd, fd_use_cnt[i], errno == EBADF ? "File descriptor already closed" : strerror(errno));
-
-                /* next call decrements */
-                fd_use_cnt[i] = 1;
-                (void)linux_kqueue_cleanup(i, false);
-            }
-        }
-    }
-
-    dbg_printf("tid=%u - monitoring thread exiting (%s)",
-               monitoring_tid, monitoring_thread_on_exit ? "process term" : "no kqueues");
-    /* Free thread resources */
-    free(fd_map);
-    fd_map = NULL;
-    free(fd_use_cnt);
-    fd_use_cnt = NULL;
-
-    /* Reset so that thread can be restarted */
-    monitoring_tid = 0;
 }
 
 /*
@@ -254,6 +241,7 @@ monitoring_thread_loop(UNUSED void *arg)
     pthread_cond_signal(&monitoring_thread_cond);
     pthread_mutex_unlock(&monitoring_thread_mtx);
 
+    monitoring_thread_state = THREAD_EXIT_STATE_CANCEL_UNLOCKED;
     pthread_cleanup_push(monitoring_thread_cleanup, NULL)
     while (true) {
         /*
@@ -262,7 +250,7 @@ monitoring_thread_loop(UNUSED void *arg)
          * should be performed on the kqueue.
          */
         res = sigwaitinfo(&monitoring_sig_set, &info);
-        if ((res == -1) && (errno = EINTR)) {
+        if (res == -1) {
             dbg_printf("sigwaitinfo(2): %s", strerror(errno));
             continue;
         }
@@ -272,28 +260,33 @@ monitoring_thread_loop(UNUSED void *arg)
          */
         pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
         tracing_mutex_lock(&kq_mtx);
-        if (res != -1) {
-            dbg_printf("fd=%i - freeing kqueue due to fd closure", fd_map[info.si_fd]);
+        dbg_printf("fd=%i - freeing kqueue due to fd closure", fd_map[info.si_fd]);
 
-            /*
-             * Release resources used by this kqueue
-             */
-            linux_kqueue_cleanup(info.si_fd, false);
+        /*
+         * Release resources used by this kqueue
+         */
+        monitoring_thread_kqueue_cleanup(info.si_fd);
 
-            /*
-             * Exit if there are no more kqueues to monitor
-             */
-            if (kqueue_cnt == 0)
-                break;
-        } else {
-            dbg_perror("sigwaitinfo returned early");
-        }
+        /*
+         * Exit if there are no more kqueues to monitor
+         */
+        if (kq_cnt == 0)
+            break;
+
         tracing_mutex_unlock(&kq_mtx);
         pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     }
-    monitoring_thread_on_exit = false;
+
+    /*
+     * Ensure that any cancellation requests are acted on
+     */
+    monitoring_thread_state = THREAD_EXIT_STATE_CANCEL_LOCKED;
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+    pthread_testcancel();
+
+    monitoring_thread_state = THREAD_EXIT_STATE_SELF_CANCEL;
     pthread_cleanup_pop(true); /* Executes the cleanup function (monitoring_thread_cleanup) */
-    monitoring_thread_on_exit = true;
+    pthread_detach(pthread_self());
     tracing_mutex_unlock(&kq_mtx);
 
     return NULL;
@@ -303,7 +296,7 @@ static int
 linux_kqueue_start_thread(void)
 {
     pthread_mutex_lock(&monitoring_thread_mtx);
-    if (pthread_create(&monitoring_thread, NULL, &monitoring_thread_loop, NULL)) {
+    if (pthread_create(&monitoring_thread, NULL, monitoring_thread_loop, NULL)) {
          dbg_perror("linux_kqueue_start_thread failure");
          pthread_mutex_unlock(&monitoring_thread_mtx);
 
@@ -316,6 +309,59 @@ linux_kqueue_start_thread(void)
     return (0);
 }
 
+static void
+linux_libkqueue_fork(void)
+{
+    struct kqueue *kq, *kq_tmp;
+
+    /*
+     * We don't have to cancel the monitor thread here
+     * as fork() typically only duplicates the thread
+     * which called it.
+     *
+     * Ensure we don't try and cancel it on exit by
+     * clearing the thread id.
+     *
+     * We don't need to lock the kq_mtx here as we're in
+     * the child, and none of our threads will have been
+     * duplicated.
+     */
+    monitoring_tid = 0;
+
+    /*
+     * If the process has been forked, then we need
+     * to destroy all of the kqueue instances in
+     * the fork.
+     *
+     * This replicates the behaviour of real kqueues
+     * on FreeBSD, and also prevents spurious leak
+     * reports being raised by LSAN.
+     */
+    LIST_FOREACH_SAFE(kq, &kq_list, kq_entry, kq_tmp) {
+        dbg_printf("kq=%p - cleaning up on fork", kq);
+
+        /*
+         * On fork the epoll fd is inherited by the child process
+         * Any modifications made by the child affect the parent's
+         * epoll instance.
+         *
+         * So... if we remove file descriptors from epoll in the
+         * child, then we break the parent.
+         *
+         * We close the epollfd first to prevent the normal cleanup
+         * logic from modifying the epoll instance in the parent
+         * process.
+         */
+        close(kq->epollfd);
+        kq->epollfd = -1;
+
+        /*
+         * Do the actual freeing...
+         */
+        kqueue_free(kq);
+    }
+}
+
 /*
  * We have to use this instead of pthread_detach as there
  * seems to be some sort of race with LSAN and thread cleanup
@@ -323,59 +369,38 @@ linux_kqueue_start_thread(void)
  * thread, LSAN reports kqueues as leaked.
  */
 static void
-linux_monitor_thread_join(void)
-{
-    if (monitoring_tid) {
-        void *retval;
-        int ret;
-#ifndef NDEBUG
-        pid_t our_monitoring_tid = monitoring_tid; /* Gets trashed when the thread exits */
-#endif
-
-        dbg_printf("tid=%u - cancelling", monitoring_tid);
-        ret = pthread_cancel(monitoring_thread);
-        if (ret != 0)
-           dbg_printf("tid=%u - cancel failed: %s", our_monitoring_tid, strerror(ret));
-        ret = pthread_join(monitoring_thread, &retval);
-        if (ret == 0) {
-           dbg_printf("tid=%u - joined with exit_status=%" PRIdPTR, our_monitoring_tid, (intptr_t)retval);
-        } else {
-           dbg_printf("tid=%u - join failed: %s", our_monitoring_tid, strerror(ret));
-        }
-    }
-}
-
-static void
-linux_libkqueue_fork(void)
-{
-    int i;
-
-    /*
-     * We don't have to cancel the monitor thread
-     * here as fork() typically only duplicates
-     * the thread which called it.
-     */
-
-    /*
-     * forcefully close all outstanding kqueues
-     */
-    tracing_mutex_lock(&kq_mtx);
-    for (i = 0; (kqueue_cnt > 0) && (i < nb_max_fd); i++) {
-        if (fd_use_cnt[i] == 0) continue;
-
-        dbg_printf("Closing kq fd=%i due to fork", i);
-        close(i);
-        fd_use_cnt[i] = 1;
-
-        (void)linux_kqueue_cleanup(i, true);
-    }
-    tracing_mutex_unlock(&kq_mtx);
-}
-
-static void
 linux_libkqueue_free(void)
 {
-    linux_monitor_thread_join();
+    pid_t tid;
+
+    tracing_mutex_lock(&kq_mtx);
+    tid = monitoring_tid; /* Gets trashed when the thread exits */
+    if (tid) {
+        void *retval;
+        int ret;
+
+        dbg_printf("tid=%u - cancelling", tid);
+        ret = pthread_cancel(monitoring_thread);
+        if (ret != 0)
+           dbg_printf("tid=%u - cancel failed: %s", tid, strerror(ret));
+        /*
+         * We unlock here to allow the monitoring thread
+         * to continue if it was processing a cleanup.
+         */
+        tracing_mutex_unlock(&kq_mtx);
+
+        ret = pthread_join(monitoring_thread, &retval);
+        if (ret == 0) {
+            if (retval == PTHREAD_CANCELED) {
+                dbg_printf("tid=%u - joined with exit_status=PTHREAD_CANCELED", tid);
+            } else {
+                dbg_printf("tid=%u - joined with exit_status=%" PRIdPTR, tid, (intptr_t)retval);
+            }
+        } else {
+            dbg_printf("tid=%u - join failed: %s", tid, strerror(ret));
+        }
+    }
+    tracing_mutex_unlock(&kq_mtx);
 }
 
 static int
@@ -454,20 +479,10 @@ linux_kqueue_init(struct kqueue *kq)
         goto error;
     }
 
-    /*
-     * Increment kqueue counter - must be incremented before
-     * starting the monitoring thread in case there's a spurious
-     * wakeup and the thread immediately checks that there
-     * are no kqueues, and exits.
-     */
-    kqueue_cnt++;
-
     /* Start monitoring thread during first initialization */
     if (monitoring_tid == 0) {
-        if (linux_kqueue_start_thread() < 0) {
-            kqueue_cnt--;
+        if (linux_kqueue_start_thread() < 0)
             goto error;
-        }
     }
 
     /* Update pipe FD map */
@@ -475,8 +490,6 @@ linux_kqueue_init(struct kqueue *kq)
 
     /* Mark this id as in use */
     fd_use_cnt[kq->pipefd[0]]++;
-
-    dbg_printf("active_kqueues=%u", kqueue_cnt);
 
     assert(monitoring_tid != 0);
 
@@ -489,7 +502,6 @@ linux_kqueue_init(struct kqueue *kq)
     sig_owner.pid = monitoring_tid;
     if (fcntl(kq->pipefd[0], F_SETOWN_EX, &sig_owner) < 0) {
         dbg_printf("fd=%i - failed settting F_SETOWN to tid=%u: %s", monitoring_tid, kq->pipefd[0], strerror(errno));
-        kqueue_cnt--;
         tracing_mutex_unlock(&kq_mtx);
         goto error;
     }
@@ -553,10 +565,6 @@ linux_kqueue_free(struct kqueue *kq)
         }
         kq->pipefd[0] = -1;
     }
-
-    /* Decrement kqueue counter */
-    kqueue_cnt--;
-    dbg_printf("kq=%p - cleaned up kqueue, active_kqueues=%u", kq, kqueue_cnt);
 }
 
 static int
