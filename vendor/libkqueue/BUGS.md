@@ -46,7 +46,7 @@
     kqueue when we receive a `SIGCHLD`.  This involves many calls to `waitid(2)`
     and may have a negative performance impact.
 
- * `EVFILT_PROC` - The notification list of the global waiter thread, and the
+ * `EVFILT_PROC` - The notification list of the global waiter thread and the
     ready lists of individual kqueues share the same mutex.  This may cause
     performance issues where large numbers of processes are monitored.
 
@@ -104,12 +104,6 @@
    state is not cleaned up.
    Applications should ensure that file descriptors are removed from
    the kqueue before they are closed.
-
- * We need to uninitialize library after `fork()` `using pthread_atfork()`.
-   BSD kqueue file descriptors are not inherited by the fork copy and
-   will be closed automatically in the fork.  With libkqueue, because
-   we don't unitialize the library, kqueue file descriptors will persist
-   in the fork.
 
 # libkqueue (kernel)
 
