@@ -92,6 +92,13 @@ monitoring_thread_cleanup(UNUSED void *arg)
      */
     if ((monitoring_thread_state == THREAD_EXIT_STATE_CANCEL_LOCKED) ||
         (monitoring_thread_state == THREAD_EXIT_STATE_CANCEL_UNLOCKED)) {
+
+        /*
+         * Keep the assertion in kqueue_free happy
+         */
+        if (monitoring_thread_state == THREAD_EXIT_STATE_CANCEL_UNLOCKED)
+            tracing_mutex_lock(&kq_mtx);
+
         LIST_FOREACH_SAFE(kq, &kq_list, kq_entry, kq_tmp) {
             int signal_fd = kq->pipefd[0];
 
@@ -110,6 +117,9 @@ monitoring_thread_cleanup(UNUSED void *arg)
                            kq, kq->kq_id, fd_use_cnt[signal_fd]);
             }
         }
+
+        if (monitoring_thread_state == THREAD_EXIT_STATE_CANCEL_UNLOCKED)
+            tracing_mutex_unlock(&kq_mtx);
     }
 
     dbg_printf("tid=%u - monitoring thread exiting (%s)",
@@ -124,7 +134,7 @@ monitoring_thread_cleanup(UNUSED void *arg)
     /* Reset so that thread can be restarted */
     monitoring_tid = 0;
 
-    if (monitoring_thread_state == THREAD_EXIT_STATE_CANCEL_UNLOCKED)
+    if (monitoring_thread_state == THREAD_EXIT_STATE_CANCEL_LOCKED)
         tracing_mutex_unlock(&kq_mtx);
 }
 
@@ -409,7 +419,8 @@ linux_libkqueue_free(void)
             dbg_printf("tid=%u - join failed: %s", tid, strerror(ret));
         }
     }
-    tracing_mutex_unlock(&kq_mtx);
+    else
+        tracing_mutex_unlock(&kq_mtx);
 }
 
 static int
