@@ -103,17 +103,43 @@ monitoring_thread_cleanup(UNUSED void *arg)
             int signal_fd = kq->pipefd[0];
 
             /*
-             * If there's no use cnt for the kqueue
-             * then something has gone very wrong
+             * We only cleanup kqueues where their file descriptor
+             * has been closed.
+             *
+             * This is necessary because we can be told to exit
+             * before the monitoring thread has a chance to process
+             * the signal indicating that a kqueue has been
+             * cleaned up, and this can lead to spurious reports
+             * from LSAN.
+             *
+             * We only cleanup kqueues where the file descriptor has
+             * been closed, because other kqueues may be in the
+             * middle of operations with kq->kq_mtx held, and
+             * attempting to clean them up would cause a deadlock.
+             *
+             * These kqueues are legitimate leaks, and should have
+             * been freed by the user application before it exited.
              */
-            assert(fd_use_cnt[signal_fd] > 0);
-            fd_use_cnt[signal_fd]--;
+            dbg_printf("kq=%p - fd=%i explicitly checking for closeure", kq, kq->kq_id);
+            if (fcntl(kq->kq_id, F_GETFD) < 0) {
+                dbg_printf("kq=%p - fd=%i forcefully cleaning up, current use_count=%u: %s",
+                           kq,
+                           kq->kq_id, fd_use_cnt[signal_fd],
+                           errno == EBADF ? "File descriptor already closed" : strerror(errno));
+                fd_use_cnt[signal_fd] = 0;
+            } else {
+                /*
+                 * If there's no use cnt for the kqueue then something
+                 * has gone very wrong.
+                 */
+                assert(fd_use_cnt[signal_fd] > 0);
+            }
 
             if (fd_use_cnt[signal_fd] == 0) {
                 dbg_printf("kq=%p - fd=%i use_count=%u cleaning up...", kq, kq->kq_id, fd_use_cnt[signal_fd]);
                 kqueue_free(kq);
             } else {
-                dbg_printf("kq=%p - fd=%i use_count=%u skipping, this is likely a leak...",
+                dbg_printf("kq=%p - fd=%i is alive use_count=%u.  Skipping, this is likely a leak...",
                            kq, kq->kq_id, fd_use_cnt[signal_fd]);
             }
         }

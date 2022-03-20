@@ -335,7 +335,6 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
     unsigned int myid = 0;
     (void) myid;
 #endif
-
     /* deal with ubsan "runtime error: applying zero offset to null pointer" */
     if (eventlist) {
         if (nevents > MAX_KEVENT)
@@ -354,13 +353,24 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
      * kqueue from progressing.
      */
     prev_cancel_state = pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+    tracing_mutex_lock(&kq_mtx);
     /* Convert the descriptor into an object pointer */
     kq = kqueue_lookup(kqfd);
     if (kq == NULL) {
         errno = ENOENT;
+        tracing_mutex_unlock(&kq_mtx);
         pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
         return (-1);
     }
+
+    kqueue_lock(kq);
+
+    /*
+     * We no longer need the global mutex as
+     * nothing else can use this kqueue until
+     * we release the lock.
+     */
+    tracing_mutex_unlock(&kq_mtx);
 
 #ifndef NDEBUG
     if (DEBUG_KQUEUE) {
@@ -373,9 +383,12 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
      * Process each kevent on the changelist.
      */
     if (nchanges > 0) {
-        kqueue_lock(kq);
+        /*
+         * Grab the kqueue specific mutex, this
+         * prevents any operations on the specific
+         * kqueue from progressing.
+         */
         rv = kevent_copyin(kq, changelist, nchanges, el_p, el_end - el_p);
-        kqueue_unlock(kq);
         dbg_printf("(%u) kevent_copyin rv=%d", myid, rv);
         if (rv < 0)
             goto out;
@@ -392,9 +405,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
         rv = kqops.kevent_wait(kq, nevents, timeout);
         dbg_printf("kqops.kevent_wait rv=%i", rv);
         if (likely(rv > 0)) {
-            kqueue_lock(kq);
             rv = kqops.kevent_copyout(kq, rv, el_p, el_end - el_p);
-            kqueue_unlock(kq);
             dbg_printf("(%u) kevent_copyout rv=%i", myid, rv);
             if (rv >= 0) {
                 el_p += rv;             /* Add events from copyin */
@@ -427,6 +438,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
 #endif
 
 out:
+    kqueue_unlock(kq);
     dbg_printf("--- END kevent %u ret %d ---", myid, rv);
 
     pthread_setcancelstate(prev_cancel_state, NULL);

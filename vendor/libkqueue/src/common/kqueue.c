@@ -195,9 +195,19 @@ kqueue_knote_mark_disabled_all(struct kqueue *kq)
     }
 }
 
+/** Free a kqueue, must be called with the kq_mtx held
+ *
+ */
 void
 kqueue_free(struct kqueue *kq)
 {
+    /*
+     * Because this can be called during fork
+     * processing the locker and unlocker may
+     * be different.
+     */
+    tracing_mutex_assert_state(&kq_mtx, MTX_LOCKED);
+
     dbg_printf("kq=%p - freeing", kq);
 
     kq_cnt--;
@@ -212,8 +222,16 @@ kqueue_free(struct kqueue *kq)
      */
     map_remove(kqmap, kq->kq_id, kq);
 
+    /*
+     * Ensure no other thread has any ongoing
+     * operations on this kqueue.  Unlikely but
+     * keeps TSAN Happy.
+     */
+    kqueue_lock(kq);
     filter_unregister_all(kq);
     kqops.kqueue_free(kq);
+    kqueue_unlock(kq);
+
     tracing_mutex_destroy(&kq->kq_mtx);
 
 #ifndef NDEBUG
