@@ -117,6 +117,28 @@ struct evfilt_data;
 #endif
 
 /*
+ * Check for LLVM TSAN
+ */
+#if defined(__has_feature)
+#  if __has_feature(thread_sanitizer)
+#    define TSAN_IGNORE  __attribute__((no_sanitize("thread")))
+#    define HAVE_TSAN_IGNORE
+#  endif
+#endif
+
+/*
+ * Check for GCC TSAN
+ */
+#ifdef __SANITIZE_THREAD__
+#  define TSAN_IGNORE  __attribute__((no_sanitize("thread")))
+#  define HAVE_TSAN_IGNORE
+#endif
+
+#ifndef HAVE_TSAN_IGNORE
+#  define TSAN_IGNORE
+#endif
+
+/*
  * Bit twiddling
  */
 #define COPY_FLAGS_BIT(_dst, _src, _flag) (_dst).flags = ((_dst).flags & ~(_flag)) | ((_src).flags & (_flag))

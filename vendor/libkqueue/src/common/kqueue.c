@@ -115,11 +115,7 @@ libkqueue_free(void)
  *   #4 test_harness /home/arr2036/Documents/Repositories/dependencies/libkqueue/test/main.c:109 (libkqueue-test+0x7e40)
  *   #5 main /home/arr2036/Documents/Repositories/dependencies/libkqueue/test/main.c:286 (libkqueue-test+0x8889)
  */
-#if defined(__has_feature)
-#  if __has_feature(thread_sanitizer) || defined(__SANITIZE_THREAD__)
-__attribute__((no_sanitize("thread")))
-#  endif
-#endif
+TSAN_IGNORE
 void
 libkqueue_pre_fork(void)
 {
