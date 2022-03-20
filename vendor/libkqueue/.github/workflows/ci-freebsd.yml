@@ -10,7 +10,7 @@ on:
 jobs:
   freebsd-tests:
     timeout-minutes: 5
-    runs-on: macos-latest
+    runs-on: macos-10.15
     name: "FreeBSD tests"
     steps:
     - uses: actions/checkout@v2
