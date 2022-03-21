@@ -121,6 +121,11 @@ following:
 
 - `NOTE_VERSION` return the current version as a 32bit unsigned integer in the format `MMmmpprr` (`Major`, `minor`, `patch`, `release`) in the `data` field of an entry in the eventlist.
 - `NOTE_VERSION_STR` return the current version as a string in the `udata` field of an entry in the eventlist.
+- `NOTE_FORK_CLEANUP` defaults to on (`1`).
+   - If the `data` field is `0` no resources will be cleaned up on fork.
+   - if the `data` field is `1` all kqueues will be closed/freed on fork.
+   The default behaviour matches native kqueue but may be expensive if many kqueues are active.
+   If `EV_RECEIPT` is set the previous value of cleanup flag will be provided in a receipt event.
 
 Example - retrieving version string:
 
@@ -131,28 +136,20 @@ Example - retrieving version string:
         //error
     }
     printf("libkqueue version - %s", (char *)receipt.udata);
-
-- `NOTE_FORK_CLEANUP` defaults to on (`1`) which matches the behaviour of native kqueue.
-   If the `data` field is `0` no resources will be cleaned up on fork.
-   if the `data` field is `1` all kqueues will be closed/freed on fork.
-   The default behaviour matches native kqueue, but may be expensive if many kqueues are
-   active. If there's no need to close the kqueues on fork, this should be set to disable.
-   If EV_RECEIPT is set the previous value of cleanup flag will be provided in a receipt
-   event.
-
+    
+The following are only available in debugging builds of libkqueue:
 - `NOTE_DEBUG` defaults to off `0`, but may be overridden by the environmental variable
-  `KQUEUE_DEBUG`.  Only available in debugging builds of libkqueue.
-  If the `data` field is `0` no debug messages will be produced.
-  If the `data` field is `1` debug messages will be produced.
+  `KQUEUE_DEBUG`.
+  - If the `data` field is `0` no debug messages will be produced.
+  - If the `data` field is `1` debug messages will be produced.
+  If `EV_RECEIPT` is set the previous value of debug flag will be provided in a receipt event.
+- `NOTE_DEBUG_PREFIX` defaults to `KQ`.
+  Logging prefix will be set to the value of a string pointed to by the `data` field.
+  Logging prefix strings will be memdup'd.
+- `NOTE_DEBUG_FUNC` defaults to a function which writes debug information to stderr.
+  The `data` field should contain a pointer to a function with the signature
+  `void (*debug_func)(char const *fmt, ...)`, or `NULL` to restore to original logging function.
 
-- `NOTE_DEBUG_PREFIX` defaults to `KQ`.  Only available in debugging builds of libkqueue.
-  Will be set to the value of the `data` field.  Value will be memdup'd.
-
-- `NOTE_DEBUG_FUNC` defaults to a function which writes to stdout.
-  Only available in debugging builds of libkqueue.
-  Data should point to a function the signature
-  `void (*debug_func)(char const *fmt, va_list ap)`, or `NULL` to restore to original
-  logging function.
 
 Building Applications
 ---------------------
