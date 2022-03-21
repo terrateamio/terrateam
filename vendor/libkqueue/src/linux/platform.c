@@ -17,6 +17,7 @@
 #define _GNU_SOURCE
 #include <poll.h>
 #include <signal.h>
+
 #include <inttypes.h>
 #include <sys/prctl.h>
 #include <sys/resource.h>
@@ -100,8 +101,6 @@ monitoring_thread_cleanup(UNUSED void *arg)
             tracing_mutex_lock(&kq_mtx);
 
         LIST_FOREACH_SAFE(kq, &kq_list, kq_entry, kq_tmp) {
-            int signal_fd = kq->pipefd[0];
-
             /*
              * We only cleanup kqueues where their file descriptor
              * has been closed.
@@ -124,23 +123,23 @@ monitoring_thread_cleanup(UNUSED void *arg)
             if (fcntl(kq->kq_id, F_GETFD) < 0) {
                 dbg_printf("kq=%p - fd=%i forcefully cleaning up, current use_count=%u: %s",
                            kq,
-                           kq->kq_id, fd_use_cnt[signal_fd],
+                           kq->kq_id, fd_use_cnt[kq->kq_id],
                            errno == EBADF ? "File descriptor already closed" : strerror(errno));
-                fd_use_cnt[signal_fd] = 0;
+                fd_use_cnt[kq->kq_id] = 0;
             } else {
                 /*
                  * If there's no use cnt for the kqueue then something
                  * has gone very wrong.
                  */
-                assert(fd_use_cnt[signal_fd] > 0);
+                assert(fd_use_cnt[kq->kq_id] > 0);
             }
 
-            if (fd_use_cnt[signal_fd] == 0) {
-                dbg_printf("kq=%p - fd=%i use_count=%u cleaning up...", kq, kq->kq_id, fd_use_cnt[signal_fd]);
+            if (fd_use_cnt[kq->kq_id] == 0) {
+                dbg_printf("kq=%p - fd=%i use_count=%u cleaning up...", kq, kq->kq_id, fd_use_cnt[kq->kq_id]);
                 kqueue_free(kq);
             } else {
                 dbg_printf("kq=%p - fd=%i is alive use_count=%u.  Skipping, this is likely a leak...",
-                           kq, kq->kq_id, fd_use_cnt[signal_fd]);
+                           kq, kq->kq_id, fd_use_cnt[kq->kq_id]);
             }
         }
 
@@ -190,6 +189,7 @@ monitoring_thread_kqueue_cleanup(int signal_fd)
     if (!kq) {
         /* Should not happen */
         dbg_printf("fd=%i - no kqueue associated", fd);
+        assert(0);
         return;
     }
 
@@ -197,14 +197,16 @@ monitoring_thread_kqueue_cleanup(int signal_fd)
      * We should never have more pending signals than we have
      * allocated kqueues against a given ID.
      */
-    assert(fd_use_cnt[signal_fd] > 0);
+    assert(fd_use_cnt[kq->kq_id] > 0);
 
     /*
      * Decrement use counter as signal handler has been run for
      * this FD.  We rely on using an RT signal so that multiple
      * signals are queued.
+     *
+     * Use count is tracked with the kq_id.
      */
-    fd_use_cnt[signal_fd]--;
+    fd_use_cnt[kq->kq_id]--;
 
     /*
      * If kqueue instance for this FD hasn't been cleaned up yet
@@ -216,11 +218,11 @@ monitoring_thread_kqueue_cleanup(int signal_fd)
      * performed against a given file descriptor ID, and only
      * free the kqueue here if that count is zero.
      */
-    if (fd_use_cnt[signal_fd] == 0) {
-        dbg_printf("kq=%p - fd=%i use_count=%u cleaning up...", kq, fd, fd_use_cnt[signal_fd]);
+    if (fd_use_cnt[kq->kq_id] == 0) {
+        dbg_printf("kq=%p - fd=%i use_count=%u cleaning up...", kq, fd, fd_use_cnt[kq->kq_id]);
         kqueue_free(kq);
     } else {
-        dbg_printf("kq=%p - fd=%i use_count=%u skipping...", kq, fd, fd_use_cnt[signal_fd]);
+        dbg_printf("kq=%p - fd=%i use_count=%u skipping...", kq, fd, fd_use_cnt[kq->kq_id]);
     }
 }
 
@@ -296,7 +298,7 @@ monitoring_thread_loop(UNUSED void *arg)
          */
         pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
         tracing_mutex_lock(&kq_mtx);
-        dbg_printf("fd=%i - freeing kqueue due to fd closure", fd_map[info.si_fd]);
+        dbg_printf("fd=%i - freeing kqueue due to fd closure (signal) for sfd=%i ", fd_map[info.si_fd], info.si_fd);
 
         /*
          * Release resources used by this kqueue
@@ -535,7 +537,9 @@ linux_kqueue_init(struct kqueue *kq)
     fd_map[kq->pipefd[0]] = kq->kq_id;
 
     /* Mark this id as in use */
-    fd_use_cnt[kq->pipefd[0]]++;
+    fd_use_cnt[kq->kq_id]++;
+
+    dbg_printf("kq=%p - fd=%i use_count=%u", kq, kq->kq_id, fd_use_cnt[kq->kq_id]);
 
     assert(monitoring_tid != 0);
 
@@ -547,7 +551,7 @@ linux_kqueue_init(struct kqueue *kq)
     sig_owner.type = F_OWNER_TID;
     sig_owner.pid = monitoring_tid;
     if (fcntl(kq->pipefd[0], F_SETOWN_EX, &sig_owner) < 0) {
-        dbg_printf("fd=%i - failed settting F_SETOWN to tid=%u: %s", monitoring_tid, kq->pipefd[0], strerror(errno));
+        dbg_printf("fd=%i - failed settting F_SETOWN to tid=%u: %s", monitoring_tid, kq->kq_id, strerror(errno));
         tracing_mutex_unlock(&kq_mtx);
         goto error;
     }
