@@ -85,6 +85,13 @@ kevent_fflags_dump(const struct kevent *kev)
 
     case EVFILT_LIBKQUEUE:
         KEVFFL_DUMP(NOTE_VERSION);
+        KEVFFL_DUMP(NOTE_VERSION_STR);
+        KEVFFL_DUMP(NOTE_FORK_CLEANUP);
+#ifndef NDEBUG
+        KEVFFL_DUMP(NOTE_DEBUG);
+        KEVFFL_DUMP(NOTE_DEBUG_PREFIX);
+        KEVFFL_DUMP(NOTE_DEBUG_FUNC);
+#endif
         break;
 
     default:
@@ -389,7 +396,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
      */
     tracing_mutex_unlock(&kq_mtx);
 #ifndef NDEBUG
-    if (DEBUG_KQUEUE) {
+    if (libkqueue_debug) {
         myid = atomic_inc(&_kevent_counter);
         dbg_printf("--- START kevent %u --- (nchanges = %d nevents = %d)", myid, nchanges, nevents);
     }
@@ -456,7 +463,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
     }
 
 #ifndef NDEBUG
-    if (DEBUG_KQUEUE && (rv > 0)) {
+    if (libkqueue_debug && (rv > 0)) {
         int n;
 
         dbg_printf("(%u) returning %zu events", myid, el_p - eventlist);

@@ -132,6 +132,28 @@ Example - retrieving version string:
     }
     printf("libkqueue version - %s", (char *)receipt.udata);
 
+- `NOTE_FORK_CLEANUP` defaults to on (`1`) which matches the behaviour of native kqueue.
+   If the `data` field is `0` no resources will be cleaned up on fork.
+   if the `data` field is `1` all kqueues will be closed/freed on fork.
+   The default behaviour matches native kqueue, but may be expensive if many kqueues are
+   active. If there's no need to close the kqueues on fork, this should be set to disable.
+   If EV_RECEIPT is set the previous value of cleanup flag will be provided in a receipt
+   event.
+
+- `NOTE_DEBUG` defaults to off `0`, but may be overridden by the environmental variable
+  `KQUEUE_DEBUG`.  Only available in debugging builds of libkqueue.
+  If the `data` field is `0` no debug messages will be produced.
+  If the `data` field is `1` debug messages will be produced.
+
+- `NOTE_DEBUG_PREFIX` defaults to `KQ`.  Only available in debugging builds of libkqueue.
+  Will be set to the value of the `data` field.  Value will be memdup'd.
+
+- `NOTE_DEBUG_FUNC` defaults to a function which writes to stdout.
+  Only available in debugging builds of libkqueue.
+  Data should point to a function the signature
+  `void (*debug_func)(char const *fmt, va_list ap)`, or `NULL` to restore to original
+  logging function.
+
 Building Applications
 ---------------------
 

@@ -18,8 +18,8 @@
 #include <pthread.h>
 #include "src/common/private.h"
 
-int DEBUG_KQUEUE = 1;
-char * KQUEUE_DEBUG_IDENT = "lockstat";
+int libkqueue_debug = 1;
+char * libkqueue_debug_ident = "lockstat";
 
 struct foo {
     tracing_mutex_t foo_lock;

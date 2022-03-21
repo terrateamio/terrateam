@@ -23,6 +23,7 @@
 #include <fcntl.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <sys/types.h>
 /* Required by glibc for MAP_ANON */
 #define __USE_MISC 1
@@ -652,6 +653,7 @@ struct kqueue_vtable {
 };
 LIST_HEAD(kqueue_head, kqueue);
 
+extern bool libkqueue_fork_cleanup;
 extern const struct kqueue_vtable kqops;
 extern tracing_mutex_t kq_mtx;
 extern struct kqueue_head kq_list;

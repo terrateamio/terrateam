@@ -19,14 +19,13 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdbool.h>
+#include <pthread.h>
 #ifdef _WIN32
 # include <windows.h>
 #else
 # include <unistd.h>
 #endif
-
-extern int DEBUG_KQUEUE;
-extern char *KQUEUE_DEBUG_IDENT;
 
 #if defined(__linux__)
 # include <sys/syscall.h>
@@ -40,38 +39,38 @@ extern char *KQUEUE_DEBUG_IDENT;
 #endif
 
 #ifndef NDEBUG
-#define dbg_puts(str)           do {                                \
-    if (DEBUG_KQUEUE)                                                      \
-      fprintf(stderr, "%s [%d]: %s(): %s\n",                        \
-              KQUEUE_DEBUG_IDENT, THREAD_ID, __func__, str);               \
+#define dbg_puts(str) do {                                                                              \
+    if (libkqueue_debug)                                                                                \
+        libkqueue_debug_func("%s [%d]: %s(): %s\n",                                                     \
+                             libkqueue_debug_ident, THREAD_ID, __func__, str);                          \
 } while (0)
 
-#define dbg_printf(fmt,...)     do {                                \
-    if (DEBUG_KQUEUE)                                                      \
-      fprintf(stderr, "%s [%d]: %s(): "fmt"\n",                     \
-              KQUEUE_DEBUG_IDENT, THREAD_ID, __func__, ##__VA_ARGS__);       \
+#define dbg_printf(fmt,...) do {                                                                        \
+    if (libkqueue_debug)                                                                                \
+        libkqueue_debug_func("%s [%d]: %s(): "fmt"\n",                                                  \
+                             libkqueue_debug_ident, THREAD_ID, __func__, ##__VA_ARGS__);                \
 } while (0)
 
-#define dbg_perror(fmt,...)         do {                                \
-    if (DEBUG_KQUEUE)                                                      \
-      fprintf(stderr, "%s [%d]: %s(): "fmt": %s (errno=%d)\n",         \
-              KQUEUE_DEBUG_IDENT, THREAD_ID, __func__, ##__VA_ARGS__,    \
-              strerror(errno), errno);                              \
+#define dbg_perror(fmt,...) do {                                                                        \
+    if (libkqueue_debug)                                                                                \
+        libkqueue_debug_func("%s [%d]: %s(): "fmt": %s (errno=%d)\n",                                    \
+                             libkqueue_debug_ident, THREAD_ID, __func__, ##__VA_ARGS__,                  \
+                             strerror(errno), errno);                                                    \
 } while (0)
 
-# define reset_errno()          do { errno = 0; } while (0)
+# define reset_errno() do { errno = 0; } while (0)
 
 # if defined(_WIN32)
-#  define dbg_lasterror(str)     do {                                \
-    if (DEBUG_KQUEUE)                                                      \
-      fprintf(stderr, "%s: [%d] %s(): %s: (LastError=%d)\n",        \
-              KQUEUE_DEBUG_IDENT, THREAD_ID, __func__, str, (int)GetLastError());            \
+#  define dbg_lasterror(str) do {                                                                       \
+    if (libkqueue_debug)                                                                                \
+        libkqueue_debug_func("%s: [%d] %s(): %s: (LastError=%d)\n",                                     \
+                             libkqueue_debug_ident, THREAD_ID, __func__, str, (int)GetLastError());     \
 } while (0)
 
-#  define dbg_wsalasterror(str)  do {                                \
-    if (DEBUG_KQUEUE)                                                      \
-      fprintf(stderr, "%s: [%d] %s(): %s: (WSALastError=%d)\n",        \
-              KQUEUE_DEBUG_IDENT, THREAD_ID, __func__, str, (int)WSAGetLastError());            \
+#  define dbg_wsalasterror(str) do {                                                                    \
+    if (libkqueue_debug)                                                                                \
+        libkqueue_debug_func("%s: [%d] %s(): %s: (WSALastError=%d)\n",                                  \
+                             libkqueue_debug_ident, THREAD_ID, __func__, str, (int)WSAGetLastError());  \
 } while (0)
 
 # else
@@ -151,6 +150,16 @@ typedef struct {
     dbg_printf("[%i]: unlocked %s", __LINE__, # x); \
 } while (0)
 
+typedef void (*dbg_func_t)(char const *fmt, ...);
+
+extern bool libkqueue_debug;
+extern char const *libkqueue_debug_ident;
+extern dbg_func_t libkqueue_debug_func;
+
+void libkqueue_debug_func_set(dbg_func_t func);
+void libkqueue_debug_ident_set(char const *str);
+void libkqueue_debug_ident_clear(void);
+
 #else /* NDEBUG */
 # define dbg_puts(str)
 # define dbg_printf(fmt, ...)
@@ -170,5 +179,6 @@ typedef struct {
 # define tracing_mutex_trylock(ret,x) do { ret = pthread_mutex_trylock(x); } while (0)
 # define tracing_mutex_unlock       pthread_mutex_unlock
 #endif
+
 
 #endif  /* ! _DEBUG_H */

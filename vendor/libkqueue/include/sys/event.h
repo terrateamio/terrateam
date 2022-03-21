@@ -232,12 +232,20 @@ struct kevent {
 #define NOTE_ABSOLUTE   0x0008         //!< Data is an absolute timeout.
 /** @} */
 
-/** @name Data/hint flags for EVFILT_TIMER as suported and defined in kevent64
+/** @name Data/hint flags for EVFILT_LIBKQUEUE
  *
  * @{
  */
-#define NOTE_VERSION    0x0001         //!< Version number as MMmmpprr.
-#define NOTE_VERSION_STR 0x0002        //!< Version number string.
+#define NOTE_VERSION       0x0001      //!< Version number as MMmmpprr.
+#define NOTE_VERSION_STR   0x0002      //!< Version number string.
+#define NOTE_FORK_CLEANUP  0x0003      //!< Control whether we cleanup kqueues
+                                       ///< and resources associated with them
+                                       ///< on fork.
+#define NOTE_DEBUG         0x0004      //!< Toggle debugging output.
+#define NOTE_DEBUG_PREFIX  0x0005      //!< Prefix to add to all debug messages.
+#define NOTE_DEBUG_FUNC    0x0006      //!< Debugging function to call to product
+                                       ///< output. Function should have the signature.
+                                       ///< int (*debug_func)(char const *fmt, va_list ap).
 /** @} */
 
 #ifndef __KERNEL__

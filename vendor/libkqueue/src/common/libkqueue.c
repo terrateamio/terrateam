@@ -18,8 +18,6 @@
 int
 common_libkqueue_knote_create(struct filter *filt, struct knote *kn)
 {
-    kn->kev.flags |= EV_RECEIPT; /* Causes the knote to be copied to the eventlist */
-
     switch (kn->kev.fflags) {
     case NOTE_VERSION_STR:
         kn->kev.udata = LIBKQUEUE_VERSION_STRING
@@ -33,6 +31,7 @@ common_libkqueue_knote_create(struct filter *filt, struct knote *kn)
 		" built "LIBKQUEUE_VERSION_DATE
 #  endif
                 ;
+        kn->kev.flags |= EV_RECEIPT; /* Causes the knote to be copied to the eventlist */
         break;
 
     case NOTE_VERSION:
@@ -43,8 +42,34 @@ common_libkqueue_knote_create(struct filter *filt, struct knote *kn)
                         | (uint32_t)LIBKQUEUE_VERSION_RELEASE
 #endif
                 ;
+         kn->kev.flags |= EV_RECEIPT; /* Causes the knote to be copied to the eventlist */
          break;
 
+    case NOTE_FORK_CLEANUP:
+    {
+         bool old = libkqueue_fork_cleanup;
+         libkqueue_fork_cleanup = (kn->kev.data > 0);
+         kn->kev.data = old;
+    }
+    	break;
+
+#ifndef NDEBUG
+    case NOTE_DEBUG:
+    {
+        bool old = libkqueue_debug;
+        libkqueue_debug = (kn->kev.data > 0);
+        kn->kev.data = old;
+    }
+        break;
+
+    case NOTE_DEBUG_PREFIX:
+        libkqueue_debug_ident_set((char *)kn->kev.data);
+        break;
+
+    case NOTE_DEBUG_FUNC:
+        libkqueue_debug_func_set((dbg_func_t)kn->kev.data);
+        break;
+#endif
     default:
         return (-1);
     }

@@ -17,8 +17,13 @@
 
 #include "private.h"
 
-int DEBUG_KQUEUE = 0;
-char *KQUEUE_DEBUG_IDENT = "KQ";
+/** Global control for whether we perform cleanups on fork
+ */
+bool libkqueue_fork_cleanup = true;
+
+/** Value is updated on fork to ensure all fork handlers are synchronised
+ */
+bool libkqueue_fork_cleanup_active;
 
 #ifdef _WIN32
 tracing_mutex_t kq_mtx;
@@ -98,7 +103,6 @@ libkqueue_free(void)
 }
 
 #ifndef _WIN32
-
 /** TSAN incorrectly detects data races in this function
  *
  * It's not clear why it's not recording the fact that the appropriate
@@ -134,6 +138,18 @@ libkqueue_pre_fork(void)
     tracing_mutex_lock(&kq_mtx);
 
     /*
+     * Unfortunately there's no way to remove the atfork
+     * handlers, so all we can do if cleanup is
+     * deactivated is bail as quickly as possible.
+     *
+     * We copy the value of libkqueue_fork_cleanup so
+     * that it's consistent during the fork.
+     */
+    libkqueue_fork_cleanup_active = libkqueue_fork_cleanup;
+    if (!libkqueue_fork_cleanup_active)
+        return;
+
+    /*
      * Acquire locks for all the active kqueues,
      * this ensures in the child all kqueues are in
      * a consistent state, ready to be freed.
@@ -154,6 +170,11 @@ libkqueue_parent_fork(void)
 {
     struct kqueue *kq, *kq_tmp;
 
+    if (!libkqueue_fork_cleanup_active) {
+        tracing_mutex_unlock(&kq_mtx);
+        return;
+    }
+
     dbg_puts("releasing kqueue locks in parent");
     LIST_FOREACH_SAFE(kq, &kq_list, kq_entry, kq_tmp) {
         kqueue_unlock(kq);
@@ -165,6 +186,11 @@ void
 libkqueue_child_fork(void)
 {
     struct kqueue *kq, *kq_tmp;
+
+    if (!libkqueue_fork_cleanup_active) {
+        tracing_mutex_unlock(&kq_mtx);
+        return;
+    }
 
     dbg_puts("releasing kqueue locks in child");
     LIST_FOREACH_SAFE(kq, &kq_list, kq_entry, kq_tmp) {
@@ -185,11 +211,11 @@ void
 libkqueue_init(void)
 {
 #ifdef NDEBUG
-    DEBUG_KQUEUE = 0;
+    libkqueue_debug = 0;
 #else
     char *s = getenv("KQUEUE_DEBUG");
     if ((s != NULL) && (strlen(s) > 0) && (*s != '0')) {
-        DEBUG_KQUEUE = 1;
+        libkqueue_debug = 1;
 
 #ifdef _WIN32
     tracing_mutex_init(&kq_mtx, NULL);
@@ -228,6 +254,7 @@ libkqueue_init(void)
 #ifndef _WIN32
    pthread_atfork(libkqueue_pre_fork, libkqueue_parent_fork, libkqueue_child_fork);
 #endif
+   atexit(libkqueue_debug_ident_clear);
    atexit(libkqueue_free);
 }
 

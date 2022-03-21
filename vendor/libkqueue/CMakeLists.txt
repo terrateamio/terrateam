@@ -172,6 +172,7 @@ set(LIBKQUEUE_HEADERS
 set(LIBKQUEUE_SOURCES
     src/common/alloc.h
     src/common/debug.h
+    src/common/debug.c
     src/common/filter.c
     src/common/kevent.c
     src/common/knote.c
