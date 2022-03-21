@@ -1,11 +1,14 @@
 Unreleased
 ------------------------------------------------------------------------
 
+2022-03-21  v2.6.0
+------------------------------------------------------------------------
+
   * Fix: posix/proc don't allow users of this filter to progress
     until the proc waiter thread has completed initialisation.
 
   * Fix: Address multiple thread synchronisation issues by using a
-    single global mutex to synchronise the kqueue list, and kqueue
+    single global mutex to synchronise the kqueue list and kqueue
     file descriptor map, and per kqueue mutexes which are locked for
     the duration of copyin and copyout.  The per filter knote mutex
     was removed with this change as it's no longer needed.

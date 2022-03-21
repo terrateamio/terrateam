@@ -14,7 +14,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-set(PROJECT_VERSION 2.5.2)
+set(PROJECT_VERSION 2.6.0)
 
 if(EXISTS "/etc/debian_version")
   cmake_minimum_required(VERSION 3.7.2)
