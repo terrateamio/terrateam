@@ -172,6 +172,3 @@ Releases History
 2.0 add support for Android _2013-04-29_
 
 1.0 stable relesae for Linux, Solaris, and Windows _2010-09-18_
-
-[BuildStatus]: https://travis-ci.org/mheily/libkqueue.svg?branch=master "Travis CI status"
-[BuildStatusLink]: https://travis-ci.org/mheily/libkqueue
