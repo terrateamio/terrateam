@@ -210,9 +210,7 @@ libkqueue_child_fork(void)
 void
 libkqueue_init(void)
 {
-#ifdef NDEBUG
-    libkqueue_debug = 0;
-#else
+#ifndef NDEBUG
     char *s = getenv("KQUEUE_DEBUG");
     if ((s != NULL) && (strlen(s) > 0) && (*s != '0')) {
         libkqueue_debug = 1;
@@ -254,7 +252,10 @@ libkqueue_init(void)
 #ifndef _WIN32
    pthread_atfork(libkqueue_pre_fork, libkqueue_parent_fork, libkqueue_child_fork);
 #endif
+
+#ifndef NDEBUG
    atexit(libkqueue_debug_ident_clear);
+#endif
    atexit(libkqueue_free);
 }
 

@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "debug.h"
+#include "private.h"
 
 bool libkqueue_debug = false;
 
@@ -36,7 +37,8 @@ static void dbg_stderr(char const *fmt, ...);
  */
 dbg_func_t libkqueue_debug_func = dbg_stderr;
 
-static void dbg_stderr(char const *fmt, ...)
+static void
+dbg_stderr(char const *fmt, ...)
 {
     va_list ap;
 
@@ -47,7 +49,8 @@ static void dbg_stderr(char const *fmt, ...)
 
 /** Set a new logging debug function
  */
-void libkqueue_debug_func_set(dbg_func_t func)
+void
+libkqueue_debug_func_set(dbg_func_t func)
 {
     if (!func) {
         libkqueue_debug_func = dbg_stderr;
@@ -58,7 +61,8 @@ void libkqueue_debug_func_set(dbg_func_t func)
 
 /** Set a new debug identity
  */
-void libkqueue_debug_ident_set(char const *str)
+void
+libkqueue_debug_ident_set(char const *str)
 {
     free(libkqueue_debug_ident_copy);
     libkqueue_debug_ident_copy = strdup(str);
@@ -67,10 +71,12 @@ void libkqueue_debug_ident_set(char const *str)
 
 /** Clear any previously allocated identities
  */
-void libkqueue_debug_ident_clear(void)
+TSAN_IGNORE
+void
+libkqueue_debug_ident_clear(void)
 {
+    libkqueue_debug_ident = "";
     free(libkqueue_debug_ident_copy);
     libkqueue_debug_ident_copy = NULL;
-    libkqueue_debug_ident = "";
 }
 #endif
