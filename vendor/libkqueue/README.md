@@ -124,6 +124,7 @@ following:
 - `NOTE_FORK_CLEANUP` defaults to on (`1`).
    - If the `data` field is `0` no resources will be cleaned up on fork.
    - if the `data` field is `1` all kqueues will be closed/freed on fork.
+
    The default behaviour matches native kqueue but may be expensive if many kqueues are active.
    If `EV_RECEIPT` is set the previous value of cleanup flag will be provided in a receipt event.
 
@@ -142,6 +143,7 @@ The following are only available in debugging builds of libkqueue:
   `KQUEUE_DEBUG`.
   - If the `data` field is `0` no debug messages will be produced.
   - If the `data` field is `1` debug messages will be produced.
+
   If `EV_RECEIPT` is set the previous value of debug flag will be provided in a receipt event.
 - `NOTE_DEBUG_PREFIX` defaults to `KQ`.
   Logging prefix will be set to the value of a string pointed to by the `data` field.
