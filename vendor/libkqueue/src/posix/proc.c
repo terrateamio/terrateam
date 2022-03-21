@@ -456,7 +456,9 @@ evfilt_proc_destroy(struct filter *filt)
      * a new copy of the thread.
      */
     if ((--proc_count == 0) && (proc_wait_tid != 0)) {
+#ifndef NDEBUG
         pid_t tid = proc_wait_tid;
+#endif
         void *retval;
         int ret;
 
