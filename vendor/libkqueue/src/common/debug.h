@@ -20,7 +20,6 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <pthread.h>
 #ifdef _WIN32
 # include <windows.h>
 #else
