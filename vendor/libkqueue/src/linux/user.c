@@ -112,7 +112,7 @@ linux_evfilt_user_knote_create(struct filter *filt, struct knote *kn)
     int evfd;
 
     /* Create an eventfd */
-    evfd = eventfd(0, 0);
+    evfd = eventfd(0, EFD_CLOEXEC);
     if (evfd < 0) {
         if ((errno == EMFILE) || (errno == ENFILE)) {
             dbg_perror("eventfd(2) fd_used=%u fd_max=%u", get_fd_used(), get_fd_limit());

@@ -81,7 +81,7 @@ signalfd_add(int epoll_fd, int sigfd, struct knote *kn)
 static int
 signalfd_create(int epoll_fd, struct knote *kn, int signum)
 {
-    static int flags = SFD_NONBLOCK;
+    static int flags = SFD_NONBLOCK | SFD_CLOEXEC;
     sigset_t sigmask;
     int sigfd;
 

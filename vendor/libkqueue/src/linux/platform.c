@@ -456,7 +456,7 @@ linux_kqueue_init(struct kqueue *kq)
 {
     struct f_owner_ex sig_owner;
 
-    kq->epollfd = epoll_create(1);
+    kq->epollfd = epoll_create1(EPOLL_CLOEXEC);
     if (kq->epollfd < 0) {
         dbg_perror("epoll_create(2)");
         return (-1);
@@ -504,6 +504,17 @@ linux_kqueue_init(struct kqueue *kq)
      */
     if ((fcntl(kq->pipefd[0], F_SETFL, O_NONBLOCK | O_ASYNC ) < 0) ||
         (fcntl(kq->pipefd[1], F_SETFL, O_NONBLOCK) < 0)) {
+        dbg_perror("fcntl(2)");
+        goto error;
+    }
+
+    /*
+     * FD_CLOEXEC - Prevent file descriptors being inherited
+     * on exec.  There's no reason a kqueue would ever be
+     * needed in an exec'd process.
+     */
+    if ((fcntl(kq->pipefd[0], F_SETFD, FD_CLOEXEC) < 0) ||
+        (fcntl(kq->pipefd[1], F_SETFD, FD_CLOEXEC) < 0)) {
         dbg_perror("fcntl(2)");
         goto error;
     }
@@ -953,7 +964,7 @@ linux_eventfd_init(struct eventfd *efd, struct filter *filt)
 {
     int evfd;
 
-    evfd = eventfd(0, EFD_NONBLOCK);
+    evfd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
     if (evfd < 0) {
         dbg_perror("eventfd");
         return (-1);

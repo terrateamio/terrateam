@@ -163,7 +163,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 
     kn->kev.flags |= EV_CLEAR;
 
-    tfd = timerfd_create(CLOCK_MONOTONIC, 0);
+    tfd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC);
     if (tfd < 0) {
         if ((errno == EMFILE) || (errno == ENFILE)) {
             dbg_perror("timerfd_create(2) fd_used=%u fd_max=%u", get_fd_used(), get_fd_limit());

@@ -116,7 +116,11 @@ evfilt_proc_knote_create(struct filter *filt, struct knote *kn)
     /* Returns an FD, which, when readable, indicates the process has exited */
     pfd = syscall(SYS_pidfd_open, (pid_t)kn->kev.ident, 0);
     if (pfd < 0) {
-        dbg_printf("pidfd_open(2): %s", strerror(errno));
+        dbg_perror("pidfd_open(2)");
+        return (-1);
+    }
+    if (fcntl(pfd, F_SETFD, FD_CLOEXEC) < 0) {
+        dbg_perror("fcntl(2)");
         return (-1);
     }
     dbg_printf("created pidfd=%i monitoring pid=%u", pfd, (unsigned int)kn->kev.ident);

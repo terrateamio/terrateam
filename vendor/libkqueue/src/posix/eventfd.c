@@ -24,11 +24,20 @@ posix_eventfd_init(struct eventfd *efd, struct filter *filt)
         return (-1);
     }
     if ((fcntl(sd[0], F_SETFL, O_NONBLOCK) < 0) ||
-            (fcntl(sd[1], F_SETFL, O_NONBLOCK) < 0)) {
+        (fcntl(sd[1], F_SETFL, O_NONBLOCK) < 0)) {
+        dbg_perror("fcntl(2)");
+    error:
         close(sd[0]);
         close(sd[1]);
         return (-1);
     }
+
+    if ((fcntl(sd[0], F_SETFD, FD_CLOEXEC) < 0) ||
+        (fcntl(sd[0], F_SETFD, FD_CLOEXEC) < 0)) {
+        dbg_perror("fcntl(2)");
+        goto error;
+    }
+
     efd->ef_wfd = sd[0];
     efd->ef_id = sd[1];
     efd->ef_filt = filt;
