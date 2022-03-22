@@ -470,7 +470,7 @@ linux_kqueue_init(struct kqueue *kq)
      * Closing the end will cause the pipe to be close which
      * will be caught by the monitoring thread.
      */
-    if (pipe(kq->pipefd)) {
+    if (pipe2(kq->pipefd, O_CLOEXEC)) {
         if (close(kq->epollfd) < 0)
             dbg_perror("close(2)");
         kq->epollfd = -1;
@@ -504,17 +504,6 @@ linux_kqueue_init(struct kqueue *kq)
      */
     if ((fcntl(kq->pipefd[0], F_SETFL, O_NONBLOCK | O_ASYNC ) < 0) ||
         (fcntl(kq->pipefd[1], F_SETFL, O_NONBLOCK) < 0)) {
-        dbg_perror("fcntl(2)");
-        goto error;
-    }
-
-    /*
-     * FD_CLOEXEC - Prevent file descriptors being inherited
-     * on exec.  There's no reason a kqueue would ever be
-     * needed in an exec'd process.
-     */
-    if ((fcntl(kq->pipefd[0], F_SETFD, FD_CLOEXEC) < 0) ||
-        (fcntl(kq->pipefd[1], F_SETFD, FD_CLOEXEC) < 0)) {
         dbg_perror("fcntl(2)");
         goto error;
     }
