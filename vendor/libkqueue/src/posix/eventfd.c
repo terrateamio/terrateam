@@ -20,22 +20,9 @@ posix_eventfd_init(struct eventfd *efd, struct filter *filt)
 {
     int sd[2];
 
-    if (socketpair(AF_UNIX, SOCK_STREAM, 0, sd) < 0) {
+    if (pipe2(sd, O_CLOEXEC | O_NONBLOCK)) < 0) {
+        dbg_perror("pipe2(2)")
         return (-1);
-    }
-    if ((fcntl(sd[0], F_SETFL, O_NONBLOCK) < 0) ||
-        (fcntl(sd[1], F_SETFL, O_NONBLOCK) < 0)) {
-        dbg_perror("fcntl(2)");
-    error:
-        close(sd[0]);
-        close(sd[1]);
-        return (-1);
-    }
-
-    if ((fcntl(sd[0], F_SETFD, FD_CLOEXEC) < 0) ||
-        (fcntl(sd[0], F_SETFD, FD_CLOEXEC) < 0)) {
-        dbg_perror("fcntl(2)");
-        goto error;
     }
 
     efd->ef_wfd = sd[0];
