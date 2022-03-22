@@ -121,6 +121,12 @@ following:
 
 - `NOTE_VERSION` return the current version as a 32bit unsigned integer in the format `MMmmpprr` (`Major`, `minor`, `patch`, `release`) in the `data` field of an entry in the eventlist.
 - `NOTE_VERSION_STR` return the current version as a string in the `udata` field of an entry in the eventlist.
+- `NOTE_THREAD_SAFE` defaults to on (`1`).
+   - If the `data` field is `0` the global mutex will not be locked after resolving a kqueue fd
+     to a kqueue structure.  The application must guarantee any given kqueue will be created and
+     destroyed by the same thread.
+   - If the `data` field is `1` kqueues can be created and destroyed in different threads safely.
+     This may add contention around the global mutex.
 - `NOTE_FORK_CLEANUP` defaults to on (`1`).
    - If the `data` field is `0` no resources will be cleaned up on fork.
    - if the `data` field is `1` all kqueues will be closed/freed on fork.
@@ -137,7 +143,7 @@ Example - retrieving version string:
         //error
     }
     printf("libkqueue version - %s", (char *)receipt.udata);
-    
+
 The following are only available in debugging builds of libkqueue:
 - `NOTE_DEBUG` defaults to off `0`, but may be overridden by the environmental variable
   `KQUEUE_DEBUG`.

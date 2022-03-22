@@ -653,6 +653,7 @@ struct kqueue_vtable {
 };
 LIST_HEAD(kqueue_head, kqueue);
 
+extern bool libkqueue_thread_safe;
 extern bool libkqueue_fork_cleanup;
 extern const struct kqueue_vtable kqops;
 extern tracing_mutex_t kq_mtx;

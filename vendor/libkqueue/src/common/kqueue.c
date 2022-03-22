@@ -17,6 +17,10 @@
 
 #include "private.h"
 
+/** Global control for whether we lock the kq_mtx when looking up kqueues
+ */
+bool libkqueue_thread_safe = true;
+
 /** Global control for whether we perform cleanups on fork
  */
 bool libkqueue_fork_cleanup = true;

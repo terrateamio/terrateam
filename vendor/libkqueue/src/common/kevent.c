@@ -86,6 +86,7 @@ kevent_fflags_dump(const struct kevent *kev)
     case EVFILT_LIBKQUEUE:
         KEVFFL_DUMP(NOTE_VERSION);
         KEVFFL_DUMP(NOTE_VERSION_STR);
+        KEVFFL_DUMP(NOTE_THREAD_SAFE);
         KEVFFL_DUMP(NOTE_FORK_CLEANUP);
 #ifndef NDEBUG
         KEVFFL_DUMP(NOTE_DEBUG);
@@ -372,12 +373,15 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
      * any operations that might free the
      * kqueue from progressing.
      */
-    tracing_mutex_lock(&kq_mtx);
+    if (libkqueue_thread_safe)
+        tracing_mutex_lock(&kq_mtx);
+
     /* Convert the descriptor into an object pointer */
     kq = kqueue_lookup(kqfd);
     if (kq == NULL) {
         errno = ENOENT;
-        tracing_mutex_unlock(&kq_mtx);
+        if (libkqueue_thread_safe)
+            tracing_mutex_unlock(&kq_mtx);
 #ifndef _WIN32
         pthread_setcancelstate(prev_cancel_state, NULL);
 #endif
@@ -385,6 +389,7 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
     }
 
     kqueue_lock(kq);
+
 #ifndef _WIN32
     pthread_cleanup_push(kevent_release_kq_mutex, kq);
 #endif
@@ -394,7 +399,8 @@ kevent(int kqfd, const struct kevent *changelist, int nchanges,
      * nothing else can use this kqueue until
      * we release the lock.
      */
-    tracing_mutex_unlock(&kq_mtx);
+    if (libkqueue_thread_safe)
+        tracing_mutex_unlock(&kq_mtx);
 #ifndef NDEBUG
     if (libkqueue_debug) {
         myid = atomic_inc(&_kevent_counter);

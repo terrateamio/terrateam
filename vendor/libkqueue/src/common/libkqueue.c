@@ -25,10 +25,10 @@ common_libkqueue_knote_create(struct filter *filt, struct knote *kn)
                 "-" STRINGIFY(LIBKQUEUE_VERSION_RELEASE)
 #  endif
 #  ifdef LIBKQUEUE_VERSION_COMMIT
-		" (git #"LIBKQUEUE_VERSION_COMMIT")"
+        " (git #"LIBKQUEUE_VERSION_COMMIT")"
 #  endif
 #  ifdef LIBKQUEUE_VERSION_DATE
-		" built "LIBKQUEUE_VERSION_DATE
+        " built "LIBKQUEUE_VERSION_DATE
 #  endif
                 ;
         kn->kev.flags |= EV_RECEIPT; /* Causes the knote to be copied to the eventlist */
@@ -45,13 +45,21 @@ common_libkqueue_knote_create(struct filter *filt, struct knote *kn)
          kn->kev.flags |= EV_RECEIPT; /* Causes the knote to be copied to the eventlist */
          break;
 
+    case NOTE_THREAD_SAFE:
+    {
+        bool old = libkqueue_thread_safe;
+        libkqueue_thread_safe = (kn->kev.data > 0);
+        kn->kev.data = old;
+    }
+        break;
+
     case NOTE_FORK_CLEANUP:
     {
-         bool old = libkqueue_fork_cleanup;
-         libkqueue_fork_cleanup = (kn->kev.data > 0);
-         kn->kev.data = old;
+        bool old = libkqueue_fork_cleanup;
+        libkqueue_fork_cleanup = (kn->kev.data > 0);
+        kn->kev.data = old;
     }
-    	break;
+        break;
 
 #ifndef NDEBUG
     case NOTE_DEBUG:
