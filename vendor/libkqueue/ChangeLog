@@ -1,6 +1,14 @@
 Unreleased
 ------------------------------------------------------------------------
 
+  * Fix: Sprinkle CLOEXEC around various places in the Linux and
+    POSIX platforms to stop us leaking file descriptors on exec.
+    
+  * Add EVFILT_LIBKQUEUE/NOTE_THREAD_SAFE.  When set to 0, the 
+    global mutex is not locked on kqueue lookup.  The application 
+    must guarantee that kqueues must not be destroyed by a different 
+    thread to the one that created them.
+
 2022-03-21  v2.6.0
 ------------------------------------------------------------------------
 
@@ -29,7 +37,7 @@ Unreleased
 
   * Fix: linux/read linux/write Prevent invalid access of
     fds->fds_write if the file descriptor state is freed after
-    processing read  events.
+    processing read events.
 
   * Fix: linux/monitor Use an atexit handler to ensure the fd
     monitoring thread is shutdown gracefully on Linux.  This fixes
