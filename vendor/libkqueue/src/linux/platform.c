@@ -324,7 +324,9 @@ monitoring_thread_loop(UNUSED void *arg)
 
     monitoring_thread_state = THREAD_EXIT_STATE_SELF_CANCEL;
     pthread_cleanup_pop(true); /* Executes the cleanup function (monitoring_thread_cleanup) */
-    pthread_detach(pthread_self());
+    res = pthread_detach(pthread_self());
+    if (res != 0)
+        dbg_printf("pthread_detach(3): %s", strerror(res));
     tracing_mutex_unlock(&kq_mtx);
 
     return NULL;
