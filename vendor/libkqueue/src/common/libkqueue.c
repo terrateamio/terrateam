@@ -82,7 +82,7 @@ common_libkqueue_knote_create(struct filter *filt, struct knote *kn)
         return (-1);
     }
 
-    return (1); /* Provide receipt */
+    return (kn->kev.flags & EV_RECEIPT ? 1 : 0); /* Provide receipt */
 }
 
 int
