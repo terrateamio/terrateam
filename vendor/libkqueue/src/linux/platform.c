@@ -385,29 +385,28 @@ linux_libkqueue_fork(void)
         dbg_printf("kq=%p - cleaning up on fork", kq);
 
         /*
-         * On fork the epoll fd is inherited by the child process
-         * Any modifications made by the child affect the parent's
-         * epoll instance.
+         * There's very limited cleanups we can do
+         * here, as we're only allowed to call
+         * async-signal-safe functions in this
+         * handler.
          *
-         * So... if we remove file descriptors from epoll in the
-         * child, then we break the parent.
+         * This means any functions which alloc or
+         * free memory are ruled out, meaning we
+         * can't release any of the memory allocated
+         * to the kqueues or filters.
          *
-         * We close the epollfd first to prevent the normal cleanup
-         * logic from modifying the epoll instance in the parent
-         * process.
+         * Fortunately close() is async-signal-safe.
          */
         close(kq->epollfd);
         kq->epollfd = -1;
 
-        /*
-         * Mark all knotes as already disable
-         */
-        kqueue_knote_mark_disabled_all(kq);
+        if ((kq->pipefd[0] > 0) && (close(kq->pipefd[0]) < 0))
+            dbg_perror("close(2)");
+        kq->pipefd[0] = -1;
 
-        /*
-         * Do the actual freeing...
-         */
-        kqueue_free(kq);
+        if ((kq->pipefd[1] > 0) && (close(kq->pipefd[1]) < 0))
+            dbg_perror("close(2)");
+        kq->pipefd[1] = -1;
     }
 }
 
