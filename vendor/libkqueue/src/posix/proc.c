@@ -336,9 +336,6 @@ wait_thread_loop(UNUSED void *arg)
                     dbg_printf("waitid(2): pid=%u reaped too early - %s", ppd->ppd_pid, strerror(errno));
 
                     waiter_notify_error(ppd, errno);
-
-                    tracing_mutex_unlock(&proc_pid_index_mtx);
-
                     continue;
 
                 case EINTR:

@@ -377,6 +377,7 @@ kqueue(void)
      */
     tracing_mutex_lock(&kq_mtx);
     if (kqops.kqueue_init(kq) < 0) {
+        tracing_mutex_unlock(&kq_mtx);
     error:
         dbg_printf("kq=%p - init failed", kq);
         tracing_mutex_destroy(&kq->kq_mtx);

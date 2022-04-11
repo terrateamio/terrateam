@@ -119,7 +119,7 @@ linux_evfilt_user_knote_create(struct filter *filt, struct knote *kn)
         } else {
             dbg_perror("eventfd(2)");
         }
-        if (evfd >= 0) close(evfd);
+        close(evfd);
         kn->kn_eventfd = -1;
         return (-1);
     }
