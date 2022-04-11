@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #ifdef _WIN32
 # include <windows.h>
+# include "../windows/platform.h"
 #else
 # include <unistd.h>
 #endif
