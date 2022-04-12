@@ -7,6 +7,7 @@ on:
 
 jobs:
   linux-build-and-test:
+    if: github.repository == 'mheily/libkqueue'
     timeout-minutes: 5
     strategy:
       fail-fast: false
