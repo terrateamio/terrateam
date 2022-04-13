@@ -38,6 +38,7 @@ module Template : sig
     [ `Exn of exn
     | Snabela_lexer.err
     ]
+  [@@deriving show]
 
   type t
 
@@ -58,6 +59,7 @@ type err =
   | `Premature_eof  (** Reached an unexpected EOF. *)
   | `Missing_closing_section of string  (** Failed to provide a close for the section. *)
   ]
+[@@deriving show]
 
 (** A compiled representation of a parsed template and transformers. *)
 type t
@@ -75,9 +77,3 @@ val of_template :
 
 (** Apply a key-value to a template turning it into a string or an error. *)
 val apply : t -> Kv.t Kv.Map.t -> (string, [> err ]) result
-
-(** Pretty print an error. *)
-val pp_err : Format.formatter -> err -> unit
-
-(** Turn an error into a string. *)
-val show_err : err -> string

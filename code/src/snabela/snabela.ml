@@ -26,9 +26,10 @@ end
 
 module Template = struct
   type err =
-    [ `Exn of exn
+    [ `Exn of (exn[@printer fun fmt exn -> fprintf fmt "%s" (Printexc.to_string exn)])
     | Snabela_lexer.err
     ]
+  [@@deriving show]
 
   type t = Snabela_lexer.Token.t
 
