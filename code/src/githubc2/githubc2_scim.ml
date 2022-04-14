@@ -13,7 +13,7 @@ module Provision_and_invite_user = struct
               type_ : string option; [@default None] [@key "type"]
               value : string;
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -33,7 +33,7 @@ module Provision_and_invite_user = struct
             formatted : string option; [@default None]
             givenname : string; [@key "givenName"]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -53,7 +53,7 @@ module Provision_and_invite_user = struct
         schemas : Schemas.t option; [@default None]
         username : string; [@key "userName"]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -235,7 +235,7 @@ module Update_attribute_for_user = struct
                     givenname : string option; [@default None] [@key "givenName"]
                     username : string option; [@default None] [@key "userName"]
                   }
-                  [@@deriving yojson { strict = false; meta = true }, show]
+                  [@@deriving make, yojson { strict = false; meta = true }, show]
                 end
 
                 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -248,7 +248,7 @@ module Update_attribute_for_user = struct
                       primary : bool option; [@default None]
                       value : string option; [@default None]
                     }
-                    [@@deriving yojson { strict = false; meta = true }, show]
+                    [@@deriving make, yojson { strict = false; meta = true }, show]
                   end
 
                   include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -287,7 +287,7 @@ module Update_attribute_for_user = struct
               path : string option; [@default None]
               value : Value.t option; [@default None]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -304,7 +304,7 @@ module Update_attribute_for_user = struct
         operations : Operations.t; [@key "Operations"]
         schemas : Schemas.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -445,7 +445,7 @@ module Set_information_for_provisioned_user = struct
               type_ : string option; [@default None] [@key "type"]
               value : string;
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -465,7 +465,7 @@ module Set_information_for_provisioned_user = struct
             formatted : string option; [@default None]
             givenname : string; [@key "givenName"]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -485,7 +485,7 @@ module Set_information_for_provisioned_user = struct
         schemas : Schemas.t option; [@default None]
         username : string; [@key "userName"]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

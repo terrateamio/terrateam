@@ -82,7 +82,7 @@ module Create = struct
         privacy : Privacy.t option; [@default None]
         repo_names : Repo_names.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -227,7 +227,7 @@ module Update_in_org = struct
         permission : Permission.t; [@default "pull"]
         privacy : Privacy.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -355,7 +355,7 @@ module Create_discussion_in_org = struct
         private_ : bool; [@default false] [@key "private"]
         title : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -460,7 +460,7 @@ module Update_discussion_in_org = struct
         body : string option; [@default None]
         title : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -585,7 +585,7 @@ module Create_discussion_comment_in_org = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { body : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { body : string } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -694,7 +694,7 @@ module Update_discussion_comment_in_org = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { body : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { body : string } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -976,7 +976,7 @@ module Add_or_update_membership_for_user_in_org = struct
       end
 
       type t = { role : Role.t [@default "member"] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1175,7 +1175,7 @@ module Add_or_update_project_permissions_in_org = struct
       end
 
       type t = { permission : Permission.t option [@default None] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1383,7 +1383,7 @@ module Add_or_update_repo_permissions_in_org = struct
       end
 
       type t = { permission : Permission.t option [@default None] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1490,7 +1490,7 @@ module Create_or_update_idp_group_connections_in_org = struct
             group_id : string;
             group_name : string;
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1500,7 +1500,7 @@ module Create_or_update_idp_group_connections_in_org = struct
     end
 
     type t = { groups : Groups.t option [@default None] }
-    [@@deriving yojson { strict = true; meta = true }, show]
+    [@@deriving make, yojson { strict = true; meta = true }, show]
   end
 
   module Responses = struct
@@ -1640,7 +1640,7 @@ module Update_legacy = struct
         permission : Permission.t; [@default "pull"]
         privacy : Privacy.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1813,7 +1813,7 @@ module Create_discussion_legacy = struct
         private_ : bool; [@default false] [@key "private"]
         title : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1914,7 +1914,7 @@ module Update_discussion_legacy = struct
         body : string option; [@default None]
         title : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2033,7 +2033,7 @@ module Create_discussion_comment_legacy = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { body : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { body : string } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2138,7 +2138,7 @@ module Update_discussion_comment_legacy = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { body : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { body : string } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2543,7 +2543,7 @@ module Add_or_update_membership_for_user_legacy = struct
       end
 
       type t = { role : Role.t [@default "member"] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2788,7 +2788,7 @@ module Add_or_update_project_permissions_legacy = struct
       end
 
       type t = { permission : Permission.t option [@default None] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -3009,7 +3009,7 @@ module Add_or_update_repo_permissions_legacy = struct
       end
 
       type t = { permission : Permission.t option [@default None] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -3134,7 +3134,7 @@ module Create_or_update_idp_group_connections_legacy = struct
               id : string option; [@default None]
               name : string option; [@default None]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -3147,7 +3147,7 @@ module Create_or_update_idp_group_connections_legacy = struct
         groups : Groups.t;
         synced_at : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

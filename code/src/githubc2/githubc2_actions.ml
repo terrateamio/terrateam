@@ -9,7 +9,7 @@ module Set_github_actions_permissions_organization = struct
         allowed_actions : Githubc2_components.Allowed_actions.t option; [@default None]
         enabled_repositories : Githubc2_components.Enabled_repositories.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -82,7 +82,7 @@ module Set_selected_repositories_enabled_github_actions_organization = struct
       end
 
       type t = { selected_repository_ids : Selected_repository_ids.t }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -323,7 +323,7 @@ module Create_self_hosted_runner_group_for_org = struct
         selected_repository_ids : Selected_repository_ids.t option; [@default None]
         visibility : Visibility.t; [@default "all"]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -433,7 +433,7 @@ module Update_self_hosted_runner_group_for_org = struct
         name : string;
         visibility : Visibility.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -555,7 +555,7 @@ module Set_repo_access_to_self_hosted_runner_group_in_org = struct
       end
 
       type t = { selected_repository_ids : Selected_repository_ids.t }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -730,7 +730,8 @@ module Set_self_hosted_runners_in_group_for_org = struct
         type t = int list [@@deriving yojson { strict = false; meta = true }, show]
       end
 
-      type t = { runners : Runners.t } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { runners : Runners.t }
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1247,7 +1248,7 @@ module Create_or_update_org_secret = struct
         selected_repository_ids : Selected_repository_ids.t option; [@default None]
         visibility : Visibility.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1341,7 +1342,7 @@ module Set_selected_repos_for_org_secret = struct
       end
 
       type t = { selected_repository_ids : Selected_repository_ids.t }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1766,7 +1767,7 @@ module Set_github_actions_permissions_repository = struct
         allowed_actions : Githubc2_components.Allowed_actions.t option; [@default None]
         enabled : bool;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2834,7 +2835,7 @@ module Review_pending_deployments_for_run = struct
         environment_ids : Environment_ids.t;
         state : State.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -3130,7 +3131,7 @@ module Create_or_update_repo_secret = struct
         encrypted_value : string option; [@default None]
         key_id : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -3420,7 +3421,7 @@ module Create_workflow_dispatch = struct
         inputs : Inputs.t option; [@default None]
         ref_ : string; [@key "ref"]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -3826,7 +3827,7 @@ module Create_or_update_environment_secret = struct
         encrypted_value : string;
         key_id : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

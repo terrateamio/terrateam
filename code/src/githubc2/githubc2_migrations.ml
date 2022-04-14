@@ -30,7 +30,7 @@ module Start_for_org = struct
         lock_repositories : bool; [@default false]
         repositories : Repositories.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -414,7 +414,7 @@ module Update_import = struct
         vcs_password : string option; [@default None]
         vcs_username : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -508,7 +508,7 @@ module Start_import = struct
         vcs_url : string;
         vcs_username : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -677,7 +677,7 @@ module Map_commit_author = struct
       email : string option; [@default None]
       name : string option; [@default None]
     }
-    [@@deriving yojson { strict = true; meta = true }, show]
+    [@@deriving make, yojson { strict = true; meta = true }, show]
   end
 
   module Responses = struct
@@ -787,7 +787,8 @@ module Set_lfs_preference = struct
         [@@deriving yojson { strict = false; meta = true }, show]
       end
 
-      type t = { use_lfs : Use_lfs.t } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { use_lfs : Use_lfs.t }
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -864,7 +865,7 @@ module Start_for_authenticated_user = struct
         lock_repositories : bool option; [@default None]
         repositories : Repositories.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

@@ -454,7 +454,7 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
         ~module_name_of_field_name:module_name_of_string
         ~prim_type_attrs:Gen.(deriving [ yojson_deriver ~meta:true (); show_deriver ])
         ~record_type_attrs:(fun strict ->
-          Gen.(deriving [ yojson_deriver ~strict ~meta:true (); show_deriver ]))
+          Gen.(deriving [ make_deriver; yojson_deriver ~strict ~meta:true (); show_deriver ]))
         ~record_field_attrs
         ~resolve_ref:(resolve_schema_ref components)
         ()

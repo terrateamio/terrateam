@@ -182,7 +182,7 @@ module Update_alert = struct
         resolution : Githubc2_components.Secret_scanning_alert_resolution.t option; [@default None]
         state : Githubc2_components.Secret_scanning_alert_state.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

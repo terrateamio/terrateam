@@ -179,7 +179,7 @@ module Schema = struct
      [r].  If it is [true] in [l] then take [r] if it is a value.
 
      - [nullable] keep value in [l]. *)
-  let merge (l : t_) (r : t_) =
+  let rec merge (l : t_) (r : t_) =
     {
       typ = take_left_option l.typ r.typ;
       multiple_of = take_left_option l.multiple_of r.multiple_of;
@@ -197,10 +197,19 @@ module Schema = struct
       one_of = take_left_option l.one_of r.one_of;
       any_of = take_left_option l.any_of r.any_of;
       items = take_left_option l.items r.items;
-      properties = String_map.union (fun _ _ r -> Some r) l.properties r.properties;
+      properties =
+        String_map.union
+          (fun _ l r ->
+            match (l, r) with
+            | Value.V l, Value.V r -> Some (Value.V (merge l r))
+            | _, r -> Some r)
+          l.properties
+          r.properties;
       additional_properties =
         (match (l.additional_properties, r.additional_properties) with
         | Additional_properties.(Bool true, V _) -> r.additional_properties
+        | Additional_properties.(V (Value.V l), V (Value.V r)) ->
+            Additional_properties.V (Value.V (merge l r))
         | _, _ -> l.additional_properties);
       format = take_left_option l.format r.format;
       enum = take_left_option l.enum r.enum;
@@ -796,7 +805,9 @@ let rec convert_str_schema (config : Config.t) =
             (qualified_type [ "T"; "t" ]));
         Gen.(make_all_of_of_yojson_func (Config.tidx_to_string config));
       ]
-      (* @ convert_str_schema config schema *)
+  (* @ convert_str_schema config schema *)
+  | { S.typ = None; properties; _ } as schema when not (String_map.is_empty properties) ->
+      convert_str_schema config { schema with Schema.typ = Some "object" }
   | {
       S.typ = Some "object";
       properties;

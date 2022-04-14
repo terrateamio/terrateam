@@ -6,7 +6,8 @@ module Create = struct
       module Files = struct
         module Additional = struct
           module Primary = struct
-            type t = { content : string } [@@deriving yojson { strict = false; meta = true }, show]
+            type t = { content : string }
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -53,7 +54,7 @@ module Create = struct
         files : Files.t;
         public : Public.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -317,7 +318,7 @@ module Update = struct
                   content : string;
                   filename : string option; [@default None]
                 }
-                [@@deriving yojson { strict = false; meta = true }, show]
+                [@@deriving make, yojson { strict = false; meta = true }, show]
               end
 
               include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -329,7 +330,7 @@ module Update = struct
                   content : string option; [@default None]
                   filename : string option;
                 }
-                [@@deriving yojson { strict = false; meta = true }, show]
+                [@@deriving make, yojson { strict = false; meta = true }, show]
               end
 
               include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -341,7 +342,7 @@ module Update = struct
                   content : string option; [@default None]
                   filename : string option; [@default None]
                 }
-                [@@deriving yojson { strict = false; meta = true }, show]
+                [@@deriving make, yojson { strict = false; meta = true }, show]
               end
 
               include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -375,7 +376,7 @@ module Update = struct
           description : string;
           files : Files.t option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -391,7 +392,7 @@ module Update = struct
                   content : string;
                   filename : string option; [@default None]
                 }
-                [@@deriving yojson { strict = false; meta = true }, show]
+                [@@deriving make, yojson { strict = false; meta = true }, show]
               end
 
               include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -403,7 +404,7 @@ module Update = struct
                   content : string option; [@default None]
                   filename : string option;
                 }
-                [@@deriving yojson { strict = false; meta = true }, show]
+                [@@deriving make, yojson { strict = false; meta = true }, show]
               end
 
               include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -415,7 +416,7 @@ module Update = struct
                   content : string option; [@default None]
                   filename : string option; [@default None]
                 }
-                [@@deriving yojson { strict = false; meta = true }, show]
+                [@@deriving make, yojson { strict = false; meta = true }, show]
               end
 
               include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -449,7 +450,7 @@ module Update = struct
           description : string option; [@default None]
           files : Files.t;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -655,7 +656,7 @@ module Create_comment = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { body : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { body : string } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -786,7 +787,7 @@ module Update_comment = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { body : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { body : string } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

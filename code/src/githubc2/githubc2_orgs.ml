@@ -96,7 +96,7 @@ module Update = struct
         name : string option; [@default None]
         twitter_username : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -603,7 +603,7 @@ module Create_webhook = struct
             url : string;
             username : string option; [@default None]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -619,7 +619,7 @@ module Create_webhook = struct
         events : Events.t; [@default [ "push" ]]
         name : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -744,7 +744,7 @@ module Update_webhook = struct
             secret : string option; [@default None]
             url : string;
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -760,7 +760,7 @@ module Update_webhook = struct
         events : Events.t; [@default [ "push" ]]
         name : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -922,7 +922,7 @@ module Update_webhook_config_for_org = struct
       secret : string option; [@default None]
       url : string option; [@default None]
     }
-    [@@deriving yojson { strict = true; meta = true }, show]
+    [@@deriving make, yojson { strict = true; meta = true }, show]
   end
 
   module Responses = struct
@@ -1292,7 +1292,7 @@ module Create_invitation = struct
         role : Role.t; [@default "direct_member"]
         team_ids : Team_ids.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1749,7 +1749,7 @@ module Set_membership_for_user = struct
       end
 
       type t = { role : Role.t [@default "member"] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2267,7 +2267,7 @@ module Update_membership_for_authenticated_user = struct
         [@@deriving yojson { strict = false; meta = true }, show]
       end
 
-      type t = { state : State.t } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { state : State.t } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

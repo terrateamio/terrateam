@@ -37,7 +37,7 @@ module Create_in_org = struct
         team_id : int option; [@default None]
         visibility : Visibility.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -189,7 +189,7 @@ module Update = struct
           module Advanced_security = struct
             module Primary = struct
               type t = { status : string option [@default None] }
-              [@@deriving yojson { strict = false; meta = true }, show]
+              [@@deriving make, yojson { strict = false; meta = true }, show]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -198,7 +198,7 @@ module Update = struct
           module Secret_scanning = struct
             module Primary = struct
               type t = { status : string option [@default None] }
-              [@@deriving yojson { strict = false; meta = true }, show]
+              [@@deriving make, yojson { strict = false; meta = true }, show]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -208,7 +208,7 @@ module Update = struct
             advanced_security : Advanced_security.t option; [@default None]
             secret_scanning : Secret_scanning.t option; [@default None]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -246,7 +246,7 @@ module Update = struct
         security_and_analysis : Security_and_analysis.t option; [@default None]
         visibility : Visibility.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -456,7 +456,7 @@ module Create_autolink = struct
         key_prefix : string;
         url_template : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -921,7 +921,7 @@ module Update_branch_protection = struct
                 teams : Teams.t option; [@default None]
                 users : Users.t option; [@default None]
               }
-              [@@deriving yojson { strict = false; meta = true }, show]
+              [@@deriving make, yojson { strict = false; meta = true }, show]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -933,7 +933,7 @@ module Update_branch_protection = struct
             require_code_owner_reviews : bool option; [@default None]
             required_approving_review_count : int option; [@default None]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -949,7 +949,7 @@ module Update_branch_protection = struct
             contexts : Contexts.t;
             strict : bool;
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -974,7 +974,7 @@ module Update_branch_protection = struct
             teams : Teams.t;
             users : Users.t;
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -990,7 +990,7 @@ module Update_branch_protection = struct
         required_status_checks : Required_status_checks.t option;
         restrictions : Restrictions.t option;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1264,7 +1264,7 @@ module Update_pull_request_review_protection = struct
             teams : Teams.t option; [@default None]
             users : Users.t option; [@default None]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1276,7 +1276,7 @@ module Update_pull_request_review_protection = struct
         require_code_owner_reviews : bool option; [@default None]
         required_approving_review_count : int option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1592,7 +1592,7 @@ module Update_status_check_protection = struct
         contexts : Contexts.t option; [@default None]
         strict : bool option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1756,7 +1756,8 @@ module Remove_status_check_contexts = struct
           type t = string list [@@deriving yojson { strict = false; meta = true }, show]
         end
 
-        type t = { contexts : Contexts.t } [@@deriving yojson { strict = false; meta = true }, show]
+        type t = { contexts : Contexts.t }
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1840,7 +1841,8 @@ module Add_status_check_contexts = struct
           type t = string list [@@deriving yojson { strict = false; meta = true }, show]
         end
 
-        type t = { contexts : Contexts.t } [@@deriving yojson { strict = false; meta = true }, show]
+        type t = { contexts : Contexts.t }
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1931,7 +1933,8 @@ module Set_status_check_contexts = struct
           type t = string list [@@deriving yojson { strict = false; meta = true }, show]
         end
 
-        type t = { contexts : Contexts.t } [@@deriving yojson { strict = false; meta = true }, show]
+        type t = { contexts : Contexts.t }
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2157,7 +2160,7 @@ module Remove_app_access_restrictions = struct
           type t = string list [@@deriving yojson { strict = false; meta = true }, show]
         end
 
-        type t = { apps : Apps.t } [@@deriving yojson { strict = false; meta = true }, show]
+        type t = { apps : Apps.t } [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2235,7 +2238,7 @@ module Add_app_access_restrictions = struct
           type t = string list [@@deriving yojson { strict = false; meta = true }, show]
         end
 
-        type t = { apps : Apps.t } [@@deriving yojson { strict = false; meta = true }, show]
+        type t = { apps : Apps.t } [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2313,7 +2316,7 @@ module Set_app_access_restrictions = struct
           type t = string list [@@deriving yojson { strict = false; meta = true }, show]
         end
 
-        type t = { apps : Apps.t } [@@deriving yojson { strict = false; meta = true }, show]
+        type t = { apps : Apps.t } [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2444,7 +2447,7 @@ module Remove_team_access_restrictions = struct
           type t = string list [@@deriving yojson { strict = false; meta = true }, show]
         end
 
-        type t = { teams : Teams.t } [@@deriving yojson { strict = false; meta = true }, show]
+        type t = { teams : Teams.t } [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2522,7 +2525,7 @@ module Add_team_access_restrictions = struct
           type t = string list [@@deriving yojson { strict = false; meta = true }, show]
         end
 
-        type t = { teams : Teams.t } [@@deriving yojson { strict = false; meta = true }, show]
+        type t = { teams : Teams.t } [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2600,7 +2603,7 @@ module Set_team_access_restrictions = struct
           type t = string list [@@deriving yojson { strict = false; meta = true }, show]
         end
 
-        type t = { teams : Teams.t } [@@deriving yojson { strict = false; meta = true }, show]
+        type t = { teams : Teams.t } [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2731,7 +2734,7 @@ module Remove_user_access_restrictions = struct
           type t = string list [@@deriving yojson { strict = false; meta = true }, show]
         end
 
-        type t = { users : Users.t } [@@deriving yojson { strict = false; meta = true }, show]
+        type t = { users : Users.t } [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2809,7 +2812,7 @@ module Add_user_access_restrictions = struct
           type t = string list [@@deriving yojson { strict = false; meta = true }, show]
         end
 
-        type t = { users : Users.t } [@@deriving yojson { strict = false; meta = true }, show]
+        type t = { users : Users.t } [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2887,7 +2890,7 @@ module Set_user_access_restrictions = struct
           type t = string list [@@deriving yojson { strict = false; meta = true }, show]
         end
 
-        type t = { users : Users.t } [@@deriving yojson { strict = false; meta = true }, show]
+        type t = { users : Users.t } [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -3013,7 +3016,7 @@ module Rename_branch = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { new_name : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { new_name : string } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -3211,7 +3214,7 @@ module Add_collaborator = struct
         permission : Permission.t; [@default "push"]
         permissions : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -3419,7 +3422,7 @@ module Update_commit_comment = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { body : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { body : string } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -3733,7 +3736,7 @@ module Create_commit_comment = struct
         path : string option; [@default None]
         position : int option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -4261,7 +4264,7 @@ module Delete_file = struct
             email : string option; [@default None]
             name : string option; [@default None]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -4273,7 +4276,7 @@ module Delete_file = struct
             email : string option; [@default None]
             name : string option; [@default None]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -4286,7 +4289,7 @@ module Delete_file = struct
         message : string;
         sha : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -4385,7 +4388,7 @@ module Create_or_update_file_contents = struct
             email : string;
             name : string;
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -4398,7 +4401,7 @@ module Create_or_update_file_contents = struct
             email : string;
             name : string;
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -4412,7 +4415,7 @@ module Create_or_update_file_contents = struct
         message : string;
         sha : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -4697,7 +4700,7 @@ module Create_deployment = struct
         task : string; [@default "deploy"]
         transient_environment : bool; [@default false]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -4968,7 +4971,7 @@ module Create_deployment_status = struct
         state : State.t;
         target_url : string; [@default ""]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -5151,7 +5154,7 @@ module Create_dispatch_event = struct
         client_payload : Client_payload.t option; [@default None]
         event_type : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -5298,7 +5301,7 @@ module Create_or_update_environment = struct
             type_ : Githubc2_components.Deployment_reviewer_type.t option;
                 [@default None] [@key "type"]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -5313,7 +5316,7 @@ module Create_or_update_environment = struct
       reviewers : Reviewers.t option; [@default None]
       wait_timer : int option; [@default None]
     }
-    [@@deriving yojson { strict = true; meta = true }, show]
+    [@@deriving make, yojson { strict = true; meta = true }, show]
   end
 
   module Responses = struct
@@ -5412,7 +5415,7 @@ module Create_fork = struct
   module Request_body = struct
     module Primary = struct
       type t = { organization : string option [@default None] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -5568,7 +5571,7 @@ module Create_webhook = struct
           token : string option; [@default None]
           url : string option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -5584,7 +5587,7 @@ module Create_webhook = struct
       events : Events.t; [@default [ "push" ]]
       name : string option; [@default None]
     }
-    [@@deriving yojson { strict = true; meta = true }, show]
+    [@@deriving make, yojson { strict = true; meta = true }, show]
   end
 
   module Responses = struct
@@ -5719,7 +5722,7 @@ module Update_webhook = struct
             secret : string option; [@default None]
             url : string;
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -5740,7 +5743,7 @@ module Update_webhook = struct
         events : Events.t; [@default [ "push" ]]
         remove_events : Remove_events.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -5915,7 +5918,7 @@ module Update_webhook_config_for_repo = struct
       secret : string option; [@default None]
       url : string option; [@default None]
     }
-    [@@deriving yojson { strict = true; meta = true }, show]
+    [@@deriving make, yojson { strict = true; meta = true }, show]
   end
 
   module Responses = struct
@@ -6345,7 +6348,7 @@ module Update_invitation = struct
       end
 
       type t = { permissions : Permissions.t option [@default None] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -6434,7 +6437,7 @@ module Create_deploy_key = struct
         read_only : bool option; [@default None]
         title : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -6733,7 +6736,7 @@ module Merge_upstream = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { branch : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { branch : string } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -6795,7 +6798,7 @@ module Merge = struct
         commit_message : string option; [@default None]
         head : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -6940,13 +6943,13 @@ module Create_pages_site = struct
             branch : string;
             path : Path.t; [@default "/"]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
       end
 
-      type t = { source : Source.t } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { source : Source.t } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -7039,7 +7042,7 @@ module Update_information_about_pages_site = struct
                 branch : string;
                 path : Path.t;
               }
-              [@@deriving yojson { strict = false; meta = true }, show]
+              [@@deriving make, yojson { strict = false; meta = true }, show]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -7069,7 +7072,7 @@ module Update_information_about_pages_site = struct
           public : bool option; [@default None]
           source : Source.t;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -7105,7 +7108,7 @@ module Update_information_about_pages_site = struct
                 branch : string;
                 path : Path.t;
               }
-              [@@deriving yojson { strict = false; meta = true }, show]
+              [@@deriving make, yojson { strict = false; meta = true }, show]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -7135,7 +7138,7 @@ module Update_information_about_pages_site = struct
           public : bool option; [@default None]
           source : Source.t option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -7171,7 +7174,7 @@ module Update_information_about_pages_site = struct
                 branch : string;
                 path : Path.t;
               }
-              [@@deriving yojson { strict = false; meta = true }, show]
+              [@@deriving make, yojson { strict = false; meta = true }, show]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -7201,7 +7204,7 @@ module Update_information_about_pages_site = struct
           public : bool;
           source : Source.t option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -7237,7 +7240,7 @@ module Update_information_about_pages_site = struct
                 branch : string;
                 path : Path.t;
               }
-              [@@deriving yojson { strict = false; meta = true }, show]
+              [@@deriving make, yojson { strict = false; meta = true }, show]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -7267,7 +7270,7 @@ module Update_information_about_pages_site = struct
           public : bool option; [@default None]
           source : Source.t option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -7748,7 +7751,7 @@ module Create_release = struct
         tag_name : string;
         target_commitish : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -7872,7 +7875,7 @@ module Update_release_asset = struct
         name : string option; [@default None]
         state : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -8035,7 +8038,7 @@ module Generate_release_notes = struct
         tag_name : string;
         target_commitish : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -8190,7 +8193,7 @@ module Update_release = struct
         tag_name : string option; [@default None]
         target_commitish : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -8708,7 +8711,7 @@ module Create_commit_status = struct
         state : State.t;
         target_url : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -8877,7 +8880,7 @@ module Replace_all_topics = struct
         type t = string list [@@deriving yojson { strict = false; meta = true }, show]
       end
 
-      type t = { names : Names.t } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { names : Names.t } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -9255,7 +9258,7 @@ module Transfer = struct
         new_owner : string;
         team_ids : Team_ids.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -9444,7 +9447,7 @@ module Create_using_template = struct
         owner : string option; [@default None]
         private_ : bool; [@default false] [@key "private"]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -9554,7 +9557,7 @@ module Create_for_authenticated_user = struct
         private_ : bool; [@default false] [@key "private"]
         team_id : int option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

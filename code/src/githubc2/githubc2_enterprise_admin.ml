@@ -9,7 +9,7 @@ module Set_github_actions_permissions_enterprise = struct
         allowed_actions : Githubc2_components.Allowed_actions.t option; [@default None]
         enabled_organizations : Githubc2_components.Enabled_organizations.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -82,7 +82,7 @@ module Set_selected_organizations_enabled_github_actions_enterprise = struct
       end
 
       type t = { selected_organization_ids : Selected_organization_ids.t }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -323,7 +323,7 @@ module Create_self_hosted_runner_group_for_enterprise = struct
         selected_organization_ids : Selected_organization_ids.t option; [@default None]
         visibility : Visibility.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -432,7 +432,7 @@ module Update_self_hosted_runner_group_for_enterprise = struct
         name : string option; [@default None]
         visibility : Visibility.t; [@default "all"]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -556,7 +556,7 @@ module Set_org_access_to_self_hosted_runner_group_in_enterprise = struct
       end
 
       type t = { selected_organization_ids : Selected_organization_ids.t }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -735,7 +735,8 @@ module Set_self_hosted_runners_in_group_for_enterprise = struct
         type t = int list [@@deriving yojson { strict = false; meta = true }, show]
       end
 
-      type t = { runners : Runners.t } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { runners : Runners.t }
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1193,7 +1194,8 @@ module Provision_and_invite_enterprise_group = struct
       module Members = struct
         module Items = struct
           module Primary = struct
-            type t = { value : string } [@@deriving yojson { strict = false; meta = true }, show]
+            type t = { value : string }
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1211,7 +1213,7 @@ module Provision_and_invite_enterprise_group = struct
         members : Members.t option; [@default None]
         schemas : Schemas.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1362,7 +1364,7 @@ module Update_attribute_for_enterprise_group = struct
               path : string option; [@default None]
               value : Value.t option; [@default None]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1379,7 +1381,7 @@ module Update_attribute_for_enterprise_group = struct
         operations : Operations.t; [@key "Operations"]
         schemas : Schemas.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1464,7 +1466,8 @@ module Set_information_for_provisioned_enterprise_group = struct
       module Members = struct
         module Items = struct
           module Primary = struct
-            type t = { value : string } [@@deriving yojson { strict = false; meta = true }, show]
+            type t = { value : string }
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1482,7 +1485,7 @@ module Set_information_for_provisioned_enterprise_group = struct
         members : Members.t option; [@default None]
         schemas : Schemas.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1575,7 +1578,7 @@ module Provision_and_invite_enterprise_user = struct
               type_ : string; [@key "type"]
               value : string;
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1588,7 +1591,7 @@ module Provision_and_invite_enterprise_user = struct
         module Items = struct
           module Primary = struct
             type t = { value : string option [@default None] }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1603,7 +1606,7 @@ module Provision_and_invite_enterprise_user = struct
             familyname : string; [@key "familyName"]
             givenname : string; [@key "givenName"]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1620,7 +1623,7 @@ module Provision_and_invite_enterprise_user = struct
         schemas : Schemas.t;
         username : string; [@key "userName"]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1724,7 +1727,7 @@ module Update_attribute_for_enterprise_user = struct
         operations : Operations.t; [@key "Operations"]
         schemas : Schemas.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1814,7 +1817,7 @@ module Set_information_for_provisioned_enterprise_user = struct
               type_ : string; [@key "type"]
               value : string;
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1827,7 +1830,7 @@ module Set_information_for_provisioned_enterprise_user = struct
         module Items = struct
           module Primary = struct
             type t = { value : string option [@default None] }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1842,7 +1845,7 @@ module Set_information_for_provisioned_enterprise_user = struct
             familyname : string; [@key "familyName"]
             givenname : string; [@key "givenName"]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1859,7 +1862,7 @@ module Set_information_for_provisioned_enterprise_user = struct
         schemas : Schemas.t;
         username : string; [@key "userName"]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

@@ -364,7 +364,7 @@ module Create = struct
                 id : int option; [@default None]
                 name : string option; [@default None]
               }
-              [@@deriving yojson { strict = false; meta = true }, show]
+              [@@deriving make, yojson { strict = false; meta = true }, show]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -453,7 +453,7 @@ module Create = struct
         milestone : Milestone.t option; [@default None]
         title : Title.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -754,7 +754,7 @@ module Update_comment = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { body : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { body : string } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1046,7 +1046,7 @@ module Update = struct
                 id : int option; [@default None]
                 name : string option; [@default None]
               }
-              [@@deriving yojson { strict = false; meta = true }, show]
+              [@@deriving make, yojson { strict = false; meta = true }, show]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1146,7 +1146,7 @@ module Update = struct
         state : State.t option; [@default None]
         title : Title.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1327,7 +1327,7 @@ module Remove_assignees = struct
       end
 
       type t = { assignees : Assignees.t option [@default None] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1380,7 +1380,7 @@ module Add_assignees = struct
       end
 
       type t = { assignees : Assignees.t option [@default None] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1428,7 +1428,7 @@ module Create_comment = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { body : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { body : string } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1696,7 +1696,7 @@ module Add_labels = struct
         end
 
         type t = { labels : Labels.t option [@default None] }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1707,7 +1707,8 @@ module Add_labels = struct
         module Labels = struct
           module Items = struct
             module Primary = struct
-              type t = { name : string } [@@deriving yojson { strict = false; meta = true }, show]
+              type t = { name : string }
+              [@@deriving make, yojson { strict = false; meta = true }, show]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1717,7 +1718,7 @@ module Add_labels = struct
         end
 
         type t = { labels : Labels.t option [@default None] }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1810,7 +1811,7 @@ module Set_labels = struct
         end
 
         type t = { labels : Labels.t option [@default None] }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1821,7 +1822,8 @@ module Set_labels = struct
         module Labels = struct
           module Items = struct
             module Primary = struct
-              type t = { name : string } [@@deriving yojson { strict = false; meta = true }, show]
+              type t = { name : string }
+              [@@deriving make, yojson { strict = false; meta = true }, show]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1831,7 +1833,7 @@ module Set_labels = struct
         end
 
         type t = { labels : Labels.t option [@default None] }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2108,7 +2110,7 @@ module Lock = struct
       end
 
       type t = { lock_reason : Lock_reason.t option [@default None] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2257,7 +2259,7 @@ module Create_label = struct
         description : string option; [@default None]
         name : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2381,7 +2383,7 @@ module Update_label = struct
         description : string option; [@default None]
         new_name : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2534,7 +2536,7 @@ module Create_milestone = struct
         state : State.t; [@default "open"]
         title : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -2706,7 +2708,7 @@ module Update_milestone = struct
         state : State.t; [@default "open"]
         title : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

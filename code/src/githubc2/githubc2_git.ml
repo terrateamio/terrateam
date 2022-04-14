@@ -13,7 +13,7 @@ module Create_blob = struct
         content : string;
         encoding : string; [@default "utf-8"]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -166,7 +166,7 @@ module Create_commit = struct
             email : string;
             name : string;
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -179,7 +179,7 @@ module Create_commit = struct
             email : string option; [@default None]
             name : string option; [@default None]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -197,7 +197,7 @@ module Create_commit = struct
         signature : string option; [@default None]
         tree : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -418,7 +418,7 @@ module Create_ref = struct
         ref_ : string; [@key "ref"]
         sha : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -481,7 +481,7 @@ module Update_ref = struct
         force : bool; [@default false]
         sha : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -601,7 +601,7 @@ module Create_tag = struct
             email : string;
             name : string;
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving make, yojson { strict = false; meta = true }, show]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -625,7 +625,7 @@ module Create_tag = struct
         tagger : Tagger.t option; [@default None]
         type_ : Type.t; [@key "type"]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -770,7 +770,7 @@ module Create_tree = struct
               sha : string option; [@default None]
               type_ : Type.t option; [@default None] [@key "type"]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -783,7 +783,7 @@ module Create_tree = struct
         base_tree : string option; [@default None]
         tree : Tree.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

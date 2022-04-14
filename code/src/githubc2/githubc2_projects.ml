@@ -9,7 +9,7 @@ module Create_for_org = struct
         body : string option; [@default None]
         name : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -163,7 +163,7 @@ module Update_card = struct
         archived : bool option; [@default None]
         note : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -377,7 +377,7 @@ module Move_card = struct
         column_id : int option; [@default None]
         position : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -506,7 +506,7 @@ module Update_column = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { name : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { name : string } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -684,7 +684,8 @@ module Create_card = struct
   module Request_body = struct
     module V0 = struct
       module Primary = struct
-        type t = { note : string option } [@@deriving yojson { strict = false; meta = true }, show]
+        type t = { note : string option }
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -696,7 +697,7 @@ module Create_card = struct
           content_id : int;
           content_type : string;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -914,7 +915,7 @@ module Move_column = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { position : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { position : string } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1004,7 +1005,7 @@ module Update = struct
         private_ : bool option; [@default None] [@key "private"]
         state : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1411,7 +1412,7 @@ module Add_collaborator = struct
       end
 
       type t = { permission : Permission.t [@default "write"] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1563,7 +1564,7 @@ module Create_column = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { name : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { name : string } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1706,7 +1707,7 @@ module Create_for_repo = struct
         body : string option; [@default None]
         name : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1887,7 +1888,7 @@ module Create_for_authenticated_user = struct
         body : string option; [@default None]
         name : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

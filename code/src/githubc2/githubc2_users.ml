@@ -13,7 +13,7 @@ module Update_authenticated = struct
         name : string option; [@default None]
         twitter_username : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -416,7 +416,7 @@ module Set_primary_email_visibility_for_authenticated_user = struct
       end
 
       type t = { visibility : Visibility.t }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -495,7 +495,8 @@ module Delete_email_for_authenticated_user = struct
           type t = string list [@@deriving yojson { strict = false; meta = true }, show]
         end
 
-        type t = { emails : Emails.t } [@@deriving yojson { strict = false; meta = true }, show]
+        type t = { emails : Emails.t }
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -580,7 +581,8 @@ module Add_email_for_authenticated_user = struct
           type t = string list [@@deriving yojson { strict = false; meta = true }, show]
         end
 
-        type t = { emails : Emails.t } [@@deriving yojson { strict = false; meta = true }, show]
+        type t = { emails : Emails.t }
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1023,7 +1025,7 @@ module Create_gpg_key_for_authenticated_user = struct
   module Request_body = struct
     module Primary = struct
       type t = { armored_public_key : string }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1295,7 +1297,7 @@ module Create_public_ssh_key_for_authenticated_user = struct
         key : string;
         title : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

@@ -27,7 +27,8 @@ module Create_for_team_discussion_comment_in_org = struct
         [@@deriving yojson { strict = false; meta = true }, show]
       end
 
-      type t = { content : Content.t } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { content : Content.t }
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -217,7 +218,8 @@ module Create_for_team_discussion_in_org = struct
         [@@deriving yojson { strict = false; meta = true }, show]
       end
 
-      type t = { content : Content.t } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { content : Content.t }
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -457,7 +459,8 @@ module Create_for_commit_comment = struct
         [@@deriving yojson { strict = false; meta = true }, show]
       end
 
-      type t = { content : Content.t } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { content : Content.t }
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -676,7 +679,8 @@ module Create_for_issue_comment = struct
         [@@deriving yojson { strict = false; meta = true }, show]
       end
 
-      type t = { content : Content.t } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { content : Content.t }
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -879,7 +883,8 @@ module Create_for_issue = struct
         [@@deriving yojson { strict = false; meta = true }, show]
       end
 
-      type t = { content : Content.t } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { content : Content.t }
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1089,7 +1094,8 @@ module Create_for_pull_request_review_comment = struct
         [@@deriving yojson { strict = false; meta = true }, show]
       end
 
-      type t = { content : Content.t } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { content : Content.t }
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1290,7 +1296,8 @@ module Create_for_release = struct
         [@@deriving yojson { strict = false; meta = true }, show]
       end
 
-      type t = { content : Content.t } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { content : Content.t }
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1376,7 +1383,8 @@ module Create_for_team_discussion_comment_legacy = struct
         [@@deriving yojson { strict = false; meta = true }, show]
       end
 
-      type t = { content : Content.t } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { content : Content.t }
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1505,7 +1513,8 @@ module Create_for_team_discussion_legacy = struct
         [@@deriving yojson { strict = false; meta = true }, show]
       end
 
-      type t = { content : Content.t } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { content : Content.t }
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

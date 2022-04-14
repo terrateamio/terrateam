@@ -18,7 +18,7 @@ module Create = struct
                 identifier : string;
                 label : string;
               }
-              [@@deriving yojson { strict = false; meta = true }, show]
+              [@@deriving make, yojson { strict = false; meta = true }, show]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -70,7 +70,7 @@ module Create = struct
                     start_line : int;
                     title : string option; [@default None]
                   }
-                  [@@deriving yojson { strict = false; meta = true }, show]
+                  [@@deriving make, yojson { strict = false; meta = true }, show]
                 end
 
                 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -87,7 +87,7 @@ module Create = struct
                     caption : string option; [@default None]
                     image_url : string;
                   }
-                  [@@deriving yojson { strict = false; meta = true }, show]
+                  [@@deriving make, yojson { strict = false; meta = true }, show]
                 end
 
                 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -103,14 +103,21 @@ module Create = struct
               text : string option; [@default None]
               title : string;
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
         end
 
         module Status = struct
-          type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
+          let t_of_yojson = function
+            | `String "queued" -> Ok "queued"
+            | `String "in_progress" -> Ok "in_progress"
+            | `String "completed" -> Ok "completed"
+            | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+          type t = (string[@of_yojson t_of_yojson])
+          [@@deriving yojson { strict = false; meta = true }, show]
         end
 
         type t = {
@@ -123,9 +130,9 @@ module Create = struct
           name : string;
           output : Output.t option; [@default None]
           started_at : string option; [@default None]
-          status : Status.t;
+          status : Status.t; [@default "queued"]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -141,7 +148,7 @@ module Create = struct
                 identifier : string;
                 label : string;
               }
-              [@@deriving yojson { strict = false; meta = true }, show]
+              [@@deriving make, yojson { strict = false; meta = true }, show]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -193,7 +200,7 @@ module Create = struct
                     start_line : int;
                     title : string option; [@default None]
                   }
-                  [@@deriving yojson { strict = false; meta = true }, show]
+                  [@@deriving make, yojson { strict = false; meta = true }, show]
                 end
 
                 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -210,7 +217,7 @@ module Create = struct
                     caption : string option; [@default None]
                     image_url : string;
                   }
-                  [@@deriving yojson { strict = false; meta = true }, show]
+                  [@@deriving make, yojson { strict = false; meta = true }, show]
                 end
 
                 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -226,14 +233,21 @@ module Create = struct
               text : string option; [@default None]
               title : string;
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
         end
 
         module Status = struct
-          type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
+          let t_of_yojson = function
+            | `String "queued" -> Ok "queued"
+            | `String "in_progress" -> Ok "in_progress"
+            | `String "completed" -> Ok "completed"
+            | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+          type t = (string[@of_yojson t_of_yojson])
+          [@@deriving yojson { strict = false; meta = true }, show]
         end
 
         type t = {
@@ -246,9 +260,9 @@ module Create = struct
           name : string;
           output : Output.t option; [@default None]
           started_at : string option; [@default None]
-          status : Status.t option; [@default None]
+          status : Status.t; [@default "queued"]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -320,7 +334,7 @@ module Update = struct
                 identifier : string;
                 label : string;
               }
-              [@@deriving yojson { strict = false; meta = true }, show]
+              [@@deriving make, yojson { strict = false; meta = true }, show]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -372,7 +386,7 @@ module Update = struct
                     start_line : int;
                     title : string option; [@default None]
                   }
-                  [@@deriving yojson { strict = false; meta = true }, show]
+                  [@@deriving make, yojson { strict = false; meta = true }, show]
                 end
 
                 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -389,7 +403,7 @@ module Update = struct
                     caption : string option; [@default None]
                     image_url : string;
                   }
-                  [@@deriving yojson { strict = false; meta = true }, show]
+                  [@@deriving make, yojson { strict = false; meta = true }, show]
                 end
 
                 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -405,14 +419,21 @@ module Update = struct
               text : string option; [@default None]
               title : string option; [@default None]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
         end
 
         module Status = struct
-          type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
+          let t_of_yojson = function
+            | `String "queued" -> Ok "queued"
+            | `String "in_progress" -> Ok "in_progress"
+            | `String "completed" -> Ok "completed"
+            | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+          type t = (string[@of_yojson t_of_yojson])
+          [@@deriving yojson { strict = false; meta = true }, show]
         end
 
         type t = {
@@ -426,7 +447,7 @@ module Update = struct
           started_at : string option; [@default None]
           status : Status.t option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -442,7 +463,7 @@ module Update = struct
                 identifier : string;
                 label : string;
               }
-              [@@deriving yojson { strict = false; meta = true }, show]
+              [@@deriving make, yojson { strict = false; meta = true }, show]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -494,7 +515,7 @@ module Update = struct
                     start_line : int;
                     title : string option; [@default None]
                   }
-                  [@@deriving yojson { strict = false; meta = true }, show]
+                  [@@deriving make, yojson { strict = false; meta = true }, show]
                 end
 
                 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -511,7 +532,7 @@ module Update = struct
                     caption : string option; [@default None]
                     image_url : string;
                   }
-                  [@@deriving yojson { strict = false; meta = true }, show]
+                  [@@deriving make, yojson { strict = false; meta = true }, show]
                 end
 
                 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -527,14 +548,21 @@ module Update = struct
               text : string option; [@default None]
               title : string option; [@default None]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
         end
 
         module Status = struct
-          type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
+          let t_of_yojson = function
+            | `String "queued" -> Ok "queued"
+            | `String "in_progress" -> Ok "in_progress"
+            | `String "completed" -> Ok "completed"
+            | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+          type t = (string[@of_yojson t_of_yojson])
+          [@@deriving yojson { strict = false; meta = true }, show]
         end
 
         type t = {
@@ -548,7 +576,7 @@ module Update = struct
           started_at : string option; [@default None]
           status : Status.t option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -765,7 +793,7 @@ module Create_suite = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { head_sha : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { head_sha : string } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -829,7 +857,7 @@ module Set_suites_preferences = struct
               app_id : int;
               setting : bool; [@default true]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -839,7 +867,7 @@ module Set_suites_preferences = struct
       end
 
       type t = { auto_trigger_checks : Auto_trigger_checks.t option [@default None] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

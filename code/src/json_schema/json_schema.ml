@@ -121,7 +121,7 @@ let one_of fs yojson =
       (fun f ->
         match f yojson with
         | Ok v -> Some v
-        | Error err -> None)
+        | Error _ -> None)
       fs
   with
   | [] -> Error ("oneOf: No valid match:\n" ^ Yojson.Safe.to_string yojson)

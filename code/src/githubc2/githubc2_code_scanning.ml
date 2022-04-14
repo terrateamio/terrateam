@@ -101,7 +101,7 @@ module Update_alert = struct
             [@default None]
         state : Githubc2_components.Code_scanning_alert_set_state.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -599,7 +599,7 @@ module Upload_sarif = struct
         started_at : string option; [@default None]
         tool_name : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

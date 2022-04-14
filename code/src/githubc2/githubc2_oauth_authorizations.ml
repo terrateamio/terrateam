@@ -192,7 +192,7 @@ module Create_authorization = struct
         note_url : string option; [@default None]
         scopes : Scopes.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -349,7 +349,7 @@ module Get_or_create_authorization_for_app = struct
         note_url : string option; [@default None]
         scopes : Scopes.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -442,7 +442,7 @@ module Get_or_create_authorization_for_app_and_fingerprint = struct
         note_url : string option; [@default None]
         scopes : Scopes.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -526,7 +526,7 @@ module Update_authorization = struct
         remove_scopes : Remove_scopes.t option; [@default None]
         scopes : Scopes.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

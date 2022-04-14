@@ -18,7 +18,7 @@ module Create = struct
         maintainer_can_modify : bool option; [@default None]
         title : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -253,7 +253,7 @@ module Update_review_comment = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { body : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { body : string } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -422,7 +422,7 @@ module Update = struct
         state : State.t option; [@default None]
         title : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -589,7 +589,7 @@ module Create_review_comment = struct
         start_line : int option; [@default None]
         start_side : Start_side.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -732,7 +732,7 @@ module Create_reply_for_review_comment = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { body : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { body : string } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -925,7 +925,7 @@ module Merge = struct
         merge_method : Merge_method.t option; [@default None]
         sha : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1083,7 +1083,7 @@ module Remove_requested_reviewers = struct
         reviewers : Reviewers.t;
         team_reviewers : Team_reviewers.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1159,7 +1159,7 @@ module Request_reviewers = struct
           reviewers : Reviewers.t;
           team_reviewers : Team_reviewers.t option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1179,7 +1179,7 @@ module Request_reviewers = struct
           reviewers : Reviewers.t option; [@default None]
           team_reviewers : Team_reviewers.t;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1319,7 +1319,7 @@ module Create_review = struct
               start_line : int option; [@default None]
               start_side : string option; [@default None]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1345,7 +1345,7 @@ module Create_review = struct
         commit_id : string option; [@default None]
         event : Event.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1523,7 +1523,7 @@ module Update_review = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { body : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { body : string } [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1707,7 +1707,7 @@ module Dismiss_review = struct
         event : string option; [@default None]
         message : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1794,7 +1794,7 @@ module Submit_review = struct
         body : string option; [@default None]
         event : Event.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1873,7 +1873,7 @@ module Update_branch = struct
   module Request_body = struct
     module Primary = struct
       type t = { expected_head_sha : string option [@default None] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

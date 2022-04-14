@@ -194,7 +194,7 @@ module Update_webhook_config_for_app = struct
         secret : string option; [@default None]
         url : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -571,7 +571,7 @@ module Create_installation_access_token = struct
         repositories : Repositories.t option; [@default None]
         repository_ids : Repository_ids.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -743,7 +743,8 @@ module Delete_authorization = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { access_token : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { access_token : string }
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -794,7 +795,8 @@ module Reset_token = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { access_token : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { access_token : string }
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -848,7 +850,8 @@ module Delete_token = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { access_token : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { access_token : string }
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -899,7 +902,8 @@ module Check_token = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { access_token : string } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { access_token : string }
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -976,7 +980,7 @@ module Scope_token = struct
         target : string option; [@default None]
         target_id : int option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1122,7 +1126,7 @@ module Create_content_attachment = struct
         body : string;
         title : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1722,7 +1726,7 @@ module Create_content_attachment_for_repo = struct
         body : string;
         title : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

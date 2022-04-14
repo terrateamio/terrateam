@@ -170,7 +170,7 @@ module Mark_notifications_as_read = struct
         last_read_at : string option; [@default None]
         read : bool option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -466,7 +466,7 @@ module Set_thread_subscription = struct
   module Request_body = struct
     module Primary = struct
       type t = { ignored : bool [@default false] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -668,7 +668,7 @@ module Mark_repo_notifications_as_read = struct
   module Request_body = struct
     module Primary = struct
       type t = { last_read_at : string option [@default None] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -933,7 +933,7 @@ module Set_repo_subscription = struct
         ignored : bool option; [@default None]
         subscribed : bool option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
