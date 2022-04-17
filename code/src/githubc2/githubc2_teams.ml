@@ -248,6 +248,7 @@ module Update_in_org = struct
 
   let make ?body params =
     Openapi.Request.make
+      ?body:(CCOpt.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -481,6 +482,7 @@ module Update_discussion_in_org = struct
 
   let make ?body params =
     Openapi.Request.make
+      ?body:(CCOpt.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1010,6 +1012,7 @@ module Add_or_update_membership_for_user_in_org = struct
 
   let make ?body params =
     Openapi.Request.make
+      ?body:(CCOpt.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1213,6 +1216,7 @@ module Add_or_update_project_permissions_in_org = struct
 
   let make ?body params =
     Openapi.Request.make
+      ?body:(CCOpt.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1401,6 +1405,7 @@ module Add_or_update_repo_permissions_in_org = struct
 
   let make ?body params =
     Openapi.Request.make
+      ?body:(CCOpt.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1935,6 +1940,7 @@ module Update_discussion_legacy = struct
 
   let make ?body params =
     Openapi.Request.make
+      ?body:(CCOpt.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2585,6 +2591,7 @@ module Add_or_update_membership_for_user_legacy = struct
 
   let make ?body params =
     Openapi.Request.make
+      ?body:(CCOpt.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2841,6 +2848,7 @@ module Add_or_update_project_permissions_legacy = struct
 
   let make ?body params =
     Openapi.Request.make
+      ?body:(CCOpt.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -3048,6 +3056,7 @@ module Add_or_update_repo_permissions_legacy = struct
 
   let make ?body params =
     Openapi.Request.make
+      ?body:(CCOpt.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

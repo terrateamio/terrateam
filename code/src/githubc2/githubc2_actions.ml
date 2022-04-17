@@ -249,6 +249,7 @@ module Set_allowed_actions_organization = struct
 
   let make ?body params =
     Openapi.Request.make
+      ?body:(CCOpt.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1858,6 +1859,7 @@ module Set_allowed_actions_repository = struct
 
   let make ?body params =
     Openapi.Request.make
+      ?body:(CCOpt.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

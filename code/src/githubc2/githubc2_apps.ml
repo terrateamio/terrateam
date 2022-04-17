@@ -172,6 +172,7 @@ module Create_from_manifest = struct
 
   let make ?body params =
     Openapi.Request.make
+      ?body:(CCOpt.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -215,6 +216,7 @@ module Update_webhook_config_for_app = struct
 
   let make ?body () =
     Openapi.Request.make
+      ?body:(CCOpt.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -643,6 +645,7 @@ module Create_installation_access_token = struct
 
   let make ?body params =
     Openapi.Request.make
+      ?body:(CCOpt.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1202,6 +1205,7 @@ module Create_content_attachment = struct
 
   let make ?body params =
     Openapi.Request.make
+      ?body:(CCOpt.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

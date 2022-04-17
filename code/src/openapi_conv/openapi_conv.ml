@@ -634,8 +634,8 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
                        [ (Asttypes.Nolabel, Exp.ident (Location.mknoloc (Gen.ident [ "body" ]))) ]
                    );
                  ]
-             | Some (Value.V _) -> []
-             | Some _ ->
+             | Some (Value.V request_body)
+               when CCOpt.is_some (get_json_media_type request_body.Request_body.content) ->
                  [
                    ( Asttypes.Optional "body",
                      Exp.apply
@@ -647,6 +647,8 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
                          (Asttypes.Nolabel, Exp.ident (Location.mknoloc (Gen.ident [ "body" ])));
                        ] );
                  ]
+             | Some (Value.V _) -> []
+             | Some (Value.Ref _) -> failwith "request body ref not supported"
              | None -> []);
              [
                (Asttypes.Labelled "headers", Gen.make_list []);
@@ -685,14 +687,18 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
     Gen.make_func
       "make"
       (match op.Operation.request_body with
-      | Some (Value.V request_body) when request_body.Request_body.required ->
+      | Some (Value.V request_body)
+        when request_body.Request_body.required
+             && CCOpt.is_some (get_json_media_type request_body.Request_body.content) ->
           (* TODO: Handle ref that is required *)
           Ast_helper.(
             Exp.fun_ (Asttypes.Labelled "body") None (Pat.var (Location.mknoloc "body")) make_params)
-      | Some _ ->
+      | Some (Value.V request_body)
+        when CCOpt.is_some (get_json_media_type request_body.Request_body.content) ->
           Ast_helper.(
             Exp.fun_ (Asttypes.Optional "body") None (Pat.var (Location.mknoloc "body")) make_params)
-      | None -> make_params)
+      | Some (Value.Ref _) -> failwith "request body ref not supported"
+      | Some (Value.V _) | None -> make_params)
   in
   (operation_id, parameters_module @ request_body @ [ responses; url; make ])
 

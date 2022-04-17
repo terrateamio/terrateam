@@ -68,7 +68,7 @@ module Render_raw = struct
 
   let url = "/markdown/raw"
 
-  let make ?body () =
+  let make () =
     Openapi.Request.make
       ~headers:[]
       ~url_params:[]

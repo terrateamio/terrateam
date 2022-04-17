@@ -223,6 +223,7 @@ module Update_card = struct
 
   let make ?body params =
     Openapi.Request.make
+      ?body:(CCOpt.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1081,6 +1082,7 @@ module Update = struct
 
   let make ?body params =
     Openapi.Request.make
+      ?body:(CCOpt.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1468,6 +1470,7 @@ module Add_collaborator = struct
 
   let make ?body params =
     Openapi.Request.make
+      ?body:(CCOpt.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
