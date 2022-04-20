@@ -308,6 +308,10 @@ module Typed_sql = struct
 
     let ud f xs = f xs
 
+    let ud' f = function
+      | Some s :: rest -> CCOpt.map (fun v -> (v, rest)) (f s)
+      | _ -> None
+
     let option t = function
       | None :: xs -> Some (None, xs)
       | xs -> (

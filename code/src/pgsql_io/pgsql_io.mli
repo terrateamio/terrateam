@@ -111,6 +111,10 @@ module Typed_sql : sig
     val uuid : Uuidm.t t
     val boolean : bool t
     val ud : (string option list -> ('a * string option list) option) -> 'a t
+
+    (** Simpler interface to user defined conversion. *)
+    val ud' : (string -> 'a option) -> 'a t
+
     val option : 'a t -> 'a option t
   end
 
