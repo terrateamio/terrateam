@@ -23,14 +23,15 @@ else()
   # For RPM packaging to work correctly version >= 3.8 is required
   cmake_minimum_required(VERSION 3.8.0)
 endif()
-cmake_policy(SET CMP0063 OLD)
+#cmake_policy(SET CMP0063 OLD)
 
 # Both variables used in src/version.h.in
 string(TIMESTAMP PROJECT_VERSION_DATE "%b %d %Y at %H:%M:%S")
 
 execute_process(COMMAND git rev-parse --short=8 HEAD
                 OUTPUT_VARIABLE LIBKQUEUE_VERSION_COMMIT
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(LIBKQUEUE_VERSION_COMMIT STREQUAL "")
 	unset(LIBKQUEUE_VERSION_COMMIT)
@@ -46,7 +47,8 @@ if(VERSION_OVERRIDE)
 else()
   execute_process(COMMAND sh -c "git describe --tags --match 'v*' | grep '-' | cut -d- -f2"
                   OUTPUT_VARIABLE PROJECT_VERSION_RELEASE
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+                  OUTPUT_STRIP_TRAILING_WHITESPACE
+                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
   if(PROJECT_VERSION_RELEASE STREQUAL "")
     MESSAGE("Version ${PROJECT_VERSION} (${LIBKQUEUE_VERSION_COMMIT})")
