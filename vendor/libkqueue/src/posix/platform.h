@@ -25,75 +25,21 @@
 #include <signal.h>
 #include <stdint.h>
 #include <string.h>
-#include <sys/queue.h>
+#include <stdatomic.h>
 #include <sys/resource.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "../common/queue.h"
+#include "platform_ext.h"
 
-/** Additional members of 'struct eventfd'
- *
- * These should be included in the platform's EVENTFD_PLATFORM_SPECIFIC
- * macro definition if using the POSIX eventfd functions.
- */
-#define POSIX_EVENTFD_PLATFORM_SPECIFIC \
-    int             ef_wfd
-
-/** Additional members of 'struct knote'
- *
- * These should be included in the platform's KNOTE_PLATFORM_SPECIFIC
- * macro definition if using the POSIX proc filter.
- */
-#define POSIX_KNOTE_PROC_PLATFORM_SPECIFIC \
-    struct { \
-        LIST_ENTRY(knote) kn_proc_waiter; \
-        int kn_proc_status; \
-    }
-
-/** Additional members of 'struct knote'
- *
- * These should be included in the platform's KNOTE_PLATFORM_SPECIFIC
- * macro definition if using the POSIX filters.
- */
-#define POSIX_PROC_PLATFORM_SPECIFIC \
-    POSIX_KNOTE_PROC_PLATFORM_SPECIFIC
-
-/** Additional members of 'struct filter'
- *
- * These should be included in the platform's FILTER_PLATFORM_SPECIFIC
- * macro definition if using the POSIX proc filter.
- */
-#define POSIX_FILTER_PROC_PLATFORM_SPECIFIC \
-    struct { \
-        struct eventfd  kf_proc_eventfd; \
-        pthread_t kf_proc_thread_id; \
-    }
-
-/** Additional members of 'struct filter'
- *
- * These should be included in the platform's FILTER_PLATFORM_SPECIFIC
- * macro definition if using all the POSIX filters.
- */
-#define POSIX_FILTER_PLATFORM_SPECIFIC \
-    int             kf_pfd; /* fd to poll(2) for readiness */ \
-    int             kf_wfd; \
-    POSIX_FILTER_PROC_PLATFORM_SPECIFIC
-
-/** Additional members of 'struct kqueue'
- *
- * These should be included in the platform's KQUEUE_PLATFORM_SPECIFIC
- * macro definition.
- */
-#define POSIX_KQUEUE_PLATFORM_SPECIFIC \
-    fd_set          kq_fds, kq_rfds; \
-    int             kq_nfds
-
-/** Additional members of 'struct knote'
- *
- */
-#define POSIX_KNOTE_PLATFORM_SPECIFIC \
-    struct sleepreq *kn_sleepreq
+#define EVENTFD_PLATFORM_SPECIFIC	POSIX_EVENTFD_PLATFORM_SPECIFIC
+#define KNOTE_PROC_PLATFORM_SPECIFIC	POSIX_KNOTE_PROC_PLATFORM_SPECIFIC
+#define PROC_PLATFORM_SPECIFIC		POSIX_PROC_PLATFORM_SPECIFIC
+#define FILTER_PLATFORM_SPECIFIC	POSIX_FILTER_PLATFORM_SPECIFIC
+#define KQUEUE_PLATFORM_SPECIFIC	POSIX_KQUEUE_PLATFORM_SPECIFIC
+#define KNOTE_PLATFORM_SPECIFIC		POSIX_KNOTE_PLATFORM_SPECIFIC
 
 void    posix_kqueue_free(struct kqueue *);
 int     posix_kqueue_init(struct kqueue *);

@@ -62,7 +62,7 @@ struct filter;
 #define KNOTE_PROC_PLATFORM_SPECIFIC  int kn_procfd;
 #define FILTER_PROC_PLATFORM_SPECIFIC
 #else
-#include "../posix/platform.h"
+#include "../posix/platform_ext.h"
 #define KNOTE_PROC_PLATFORM_SPECIFIC  POSIX_KNOTE_PROC_PLATFORM_SPECIFIC
 #define FILTER_PROC_PLATFORM_SPECIFIC POSIX_FILTER_PROC_PLATFORM_SPECIFIC
 #endif
