@@ -101,7 +101,7 @@ test_cleanup(void *unused)
     }
 
     /* lower FD limit to 32 */
-    if (max_fds < rlim.rlim_cur) {
+    if (max_fds < curr_rlim.rlim_cur) {
         /* Set FD limit to MAX_FDS */
         rlim = curr_rlim;
         rlim.rlim_cur = 32;
