@@ -184,11 +184,10 @@ wait_thread_loop(UNUSED void *arg)
     sigset_t sigmask;
     struct proc_pid *ppd, *ppd_tmp;
 
+#ifdef __linux__
     /* Set the thread's name to something descriptive so it shows up in gdb,
      * etc. Max name length is 16 bytes. */
     prctl(PR_SET_NAME, "libkqueue_wait", 0, 0, 0);
-
-#ifdef __linux__
     proc_wait_tid = syscall(SYS_gettid);
 #else
     /*

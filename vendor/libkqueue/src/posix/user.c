@@ -141,18 +141,14 @@ posix_evfilt_user_knote_disable(struct filter *filt, struct knote *kn)
     return (0);
 }
 
-/* FIXME: this conflicts with the struct in linux/platform.c
-
 const struct filter evfilt_user = {
     .kf_id      = EVFILT_USER,
-    .kf_init    = evfilt_user_init,
-    .kf_destroy = evfilt_user_destroy,
-    .kf_copyout = evfilt_user_copyout,
-    .kn_create  = evfilt_user_knote_create,
-    .kn_modify  = evfilt_user_knote_modify,
-    .kn_delete  = evfilt_user_knote_delete,
-    .kn_enable  = evfilt_user_knote_enable,
-    .kn_disable = evfilt_user_knote_disable,
+    .kf_init    = posix_evfilt_user_init,
+    .kf_destroy = posix_evfilt_user_destroy,
+    .kf_copyout = posix_evfilt_user_copyout,
+    .kn_create  = posix_evfilt_user_knote_create,
+    .kn_modify  = posix_evfilt_user_knote_modify,
+    .kn_delete  = posix_evfilt_user_knote_delete,
+    .kn_enable  = posix_evfilt_user_knote_enable,
+    .kn_disable = posix_evfilt_user_knote_disable,
 };
-
-*/

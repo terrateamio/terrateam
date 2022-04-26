@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Mark Heily <mark@heily.com>
+ * Copyright (c) 2022 Arran Cudbard-Bell <a.cudbardb@freeradius.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,10 +13,16 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include "../common/private.h"
 
-int     posix_eventfd_init(struct eventfd *efd, struct filter *filt);
-void    posix_eventfd_close(struct eventfd *);
-int     posix_eventfd_raise(struct eventfd *);
-int     posix_eventfd_lower(struct eventfd *);
-int     posix_eventfd_descriptor(struct eventfd *);
+
+const struct filter evfilt_vnode = {
+    .kf_id      = EVFILT_VNODE,
+//    .kf_copyout = evfilt_vnode_copyout,
+//    .kn_create  = evfilt_vnode_knote_create,
+//    .kn_modify  = evfilt_vnode_knote_modify,
+//    .kn_delete  = evfilt_vnode_knote_delete,
+//    .kn_enable  = evfilt_vnode_knote_enable,
+//    .kn_disable = evfilt_vnode_knote_disable,
+};

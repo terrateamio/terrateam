@@ -16,6 +16,7 @@
 
 #include "../common/private.h"
 #include "platform.h"
+#include "eventfd.h"
 
 int
 posix_kqueue_init(struct kqueue *kq)
@@ -88,3 +89,19 @@ posix_kevent_copyout(struct kqueue *kq, int nready,
 
     return (nret);
 }
+
+const struct kqueue_vtable kqops = {
+//    .libkqueue_fork     = posix_libkqueue_fork,
+//    .libkqueue_free     = posix_libkqueue_free,
+    .kqueue_init        = posix_kqueue_init,
+    .kqueue_free        = posix_kqueue_free,
+//    .kevent_wait        = posix_kevent_wait,
+    .kevent_copyout     = posix_kevent_copyout,
+//    .eventfd_register   = posix_eventfd_register,
+//    .eventfd_unregister = posix_eventfd_unregister,
+    .eventfd_init       = posix_eventfd_init,
+    .eventfd_close      = posix_eventfd_close,
+    .eventfd_raise      = posix_eventfd_raise,
+    .eventfd_lower      = posix_eventfd_lower,
+    .eventfd_descriptor = posix_eventfd_descriptor,
+};

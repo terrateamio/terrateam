@@ -157,9 +157,12 @@ _timer_create(struct filter *filt, struct knote *kn)
         free(req);
         return (-1);
     }
+
+#ifdef __linux__
     /* Set the thread's name to something descriptive so it shows up in gdb,
      * etc. Max name length is 16 bytes. */
     prctl(PR_SET_NAME, "libkqueue_sleep", 0, 0, 0);
+#endif
 
     pthread_attr_destroy(&attr);
 

@@ -192,7 +192,8 @@ if(CMAKE_SYSTEM_NAME MATCHES Windows)
        src/windows/read.c
        src/windows/stdint.h
        src/windows/timer.c
-       src/windows/user.c)
+       src/windows/user.c
+       )
 elseif(CMAKE_SYSTEM_NAME MATCHES "(Solaris|SunOS)")
   list(APPEND LIBKQUEUE_SOURCES
        src/posix/eventfd.c
@@ -202,7 +203,8 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "(Solaris|SunOS)")
        src/solaris/signal.c
        src/solaris/socket.c
        src/solaris/timer.c
-       src/solaris/user.c)
+       src/solaris/user.c
+       )
 elseif(CMAKE_SYSTEM_NAME STREQUAL Linux)
   #
   #  Set the default prefix to something sane
@@ -218,7 +220,8 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL Linux)
        src/linux/timer.c
        src/linux/user.c
        src/linux/vnode.c
-       src/linux/write.c)
+       src/linux/write.c
+       )
 
     if (HAVE_SYS_PIDFD_OPEN)
         list(APPEND LIBKQUEUE_SOURCES src/linux/proc.c)
@@ -231,11 +234,15 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL Emscripten)
        src/posix/eventfd.h
        src/posix/platform.c
        src/posix/platform.h
-       src/posix/signal.c
        src/posix/proc.c
+       src/posix/read.c
+       src/posix/signal.c
        src/posix/signal.c
        src/posix/timer.c
-       src/posix/user.c)
+       src/posix/user.c
+       src/posix/vnode.c
+       src/posix/write.c
+       )
 else()
   message(FATAL_ERROR "unsupported host os")
 endif()
@@ -287,10 +294,16 @@ endif()
 if(WIN32)
   target_link_libraries(kqueue PRIVATE ws2_32)
 endif()
-target_link_libraries(kqueue PRIVATE Threads::Threads)
+
 
 if(ENABLE_TESTING)
   add_subdirectory(test)
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL Emscripten)
+  target_compile_options(kqueue PRIVATE -pthread)
+else()
+  target_link_libraries(kqueue PRIVATE Threads::Threads)
 endif()
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/libkqueue.pc.in"
