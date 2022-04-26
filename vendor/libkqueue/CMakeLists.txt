@@ -23,7 +23,6 @@ else()
   # For RPM packaging to work correctly version >= 3.8 is required
   cmake_minimum_required(VERSION 3.8.0)
 endif()
-#cmake_policy(SET CMP0063 OLD)
 
 # Both variables used in src/version.h.in
 string(TIMESTAMP PROJECT_VERSION_DATE "%b %d %Y at %H:%M:%S")
@@ -243,6 +242,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL Emscripten)
        src/posix/vnode.c
        src/posix/write.c
        )
+  set(STATIC_KQUEUE ON)
 else()
   message(FATAL_ERROR "unsupported host os")
 endif()
