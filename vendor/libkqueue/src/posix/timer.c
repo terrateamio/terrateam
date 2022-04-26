@@ -215,12 +215,9 @@ int
 evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
     struct knote *src, void *ptr UNUSED)
 {
-    struct filter *filt;
     struct sleepinfo    si;
     ssize_t       cnt;
     struct knote *kn;
-
-    filt = knote_get_filter(src);
 
     /* Read the ident */
     cnt = read(filt->kf_pfd, &si, sizeof(si));
