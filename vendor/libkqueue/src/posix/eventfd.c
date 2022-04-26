@@ -20,7 +20,7 @@ posix_eventfd_init(struct eventfd *efd, struct filter *filt)
 {
     int sd[2];
 
-    if (pipe2(sd, O_CLOEXEC | O_NONBLOCK)) < 0) {
+    if (pipe2(sd, O_CLOEXEC | O_NONBLOCK) < 0) {
         dbg_perror("pipe2(2)")
         return (-1);
     }
