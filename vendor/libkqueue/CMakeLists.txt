@@ -168,12 +168,13 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}
                     ${CMAKE_CURRENT_BINARY_DIR}/include)
 
 set(LIBKQUEUE_HEADERS
-    include/sys/event.h)
+    include/sys/event.h
+    )
 
 set(LIBKQUEUE_SOURCES
     src/common/alloc.h
-    src/common/debug.h
     src/common/debug.c
+    src/common/debug.h
     src/common/filter.c
     src/common/kevent.c
     src/common/knote.c
@@ -182,7 +183,8 @@ set(LIBKQUEUE_SOURCES
     src/common/map.c
     src/common/private.h
     src/common/queue.h
-    src/common/tree.h)
+    src/common/tree.h
+    )
 
 if(CMAKE_SYSTEM_NAME MATCHES Windows)
   list(APPEND LIBKQUEUE_SOURCES
@@ -221,7 +223,6 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL Linux)
        src/linux/vnode.c
        src/linux/write.c
        )
-
     if (HAVE_SYS_PIDFD_OPEN)
         list(APPEND LIBKQUEUE_SOURCES src/linux/proc.c)
     else()
