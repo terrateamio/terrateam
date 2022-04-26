@@ -188,7 +188,14 @@ wait_thread_loop(UNUSED void *arg)
      * etc. Max name length is 16 bytes. */
     prctl(PR_SET_NAME, "libkqueue_wait", 0, 0, 0);
 
+#ifdef __linux__
     proc_wait_tid = syscall(SYS_gettid);
+#else
+    /*
+     *  There's no POSIX interface for getting a numeric thread ID
+     */
+    proc_wait_tid = 1;
+#endif
 
     dbg_printf("tid=%u - waiter thread started", proc_wait_tid);
 
