@@ -225,6 +225,17 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL Linux)
     else()
         list(APPEND LIBKQUEUE_SOURCES src/posix/proc.c)
     endif()
+elseif(CMAKE_SYSTEM_NAME STREQUAL Emscripten)
+  list(APPEND LIBKQUEUE_SOURCES
+       src/posix/eventfd.c
+       src/posix/eventfd.h
+       src/posix/platform.c
+       src/posix/platform.h
+       src/posix/signal.c
+       src/posix/proc.c
+       src/posix/signal.c
+       src/posix/timer.c
+       src/posix/user.c)
 else()
   message(FATAL_ERROR "unsupported host os")
 endif()

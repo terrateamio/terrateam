@@ -30,7 +30,7 @@
 #if defined(__linux__)
 # include <sys/syscall.h>
 # define THREAD_ID ((pid_t)  syscall(__NR_gettid))
-#elif defined(__sun)
+#elif defined(__sun) || defined(__EMSCRIPTEN__)
 # define THREAD_ID ((int) pthread_self())
 #elif defined(_WIN32)
 # define THREAD_ID (int)(GetCurrentThreadId())

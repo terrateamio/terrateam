@@ -54,6 +54,8 @@ struct evfilt_data;
 # include "../linux/platform.h"
 #elif defined(__sun)
 # include "../solaris/platform.h"
+#elif defined(__EMSCRIPTEN__)
+# include "../posix/platform.h"
 #else
 # error Unknown platform
 #endif
