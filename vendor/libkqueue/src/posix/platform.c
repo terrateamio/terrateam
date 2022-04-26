@@ -29,3 +29,62 @@ void
 posix_kqueue_free(struct kqueue *kq UNUSED)
 {
 }
+
+int
+posix_kevent_wait(
+        struct kqueue *kq,
+        const struct timespec *timeout)
+{
+    int n, nfds;
+    fd_set rfds;
+
+    nfds = kq->kq_nfds;
+    rfds = kq->kq_fds;
+
+    dbg_puts("waiting for events");
+    n = pselect(nfds, &rfds, NULL , NULL, timeout, NULL);
+    if (n < 0) {
+        if (errno == EINTR) {
+            dbg_puts("signal caught");
+            return (-1);
+        }
+        dbg_perror("pselect(2)");
+        return (-1);
+    }
+
+    kq->kq_rfds = rfds;
+
+    return (n);
+}
+
+int
+posix_kevent_copyout(struct kqueue *kq, int nready,
+        struct kevent *eventlist, int nevents)
+{
+    struct filter *filt;
+    int i, rv, nret;
+
+    nret = 0;
+    for (i = 0; (i < NUM_ELEMENTS(kq->kq_filt) && nready > 0 && nevents > 0); i++) {
+        dbg_printf("eventlist: n = %d nevents = %d", nready, nevents);
+        filt = &kq->kq_filt[i];
+        dbg_printf("pfd[%d] = %d", i, filt->kf_pfd);
+        if (FD_ISSET(filt->kf_id, &kq->kq_rfds)) {
+            dbg_printf("pending events for filter %d (%s)", filt->kf_id, filter_name(filt->kf_id));
+#if 0
+            rv = filt->kf_copyout(eventlist, nevents, filt, kn, evt);
+            if (rv < 0) {
+                dbg_puts("kevent_copyout failed");
+                nret = -1;
+                break;
+            }
+#endif
+            nret += rv;
+            eventlist += rv;
+            nevents -= rv;
+            nready--;
+        }
+    }
+
+    return (nret);
+}
