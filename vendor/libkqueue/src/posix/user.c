@@ -54,7 +54,7 @@ posix_evfilt_user_copyout(struct kevent *dst, UNUSED int nevents, struct filter 
     if (src->kev.flags & EV_CLEAR)
         src->kev.fflags &= ~NOTE_TRIGGER;
     if (src->kev.flags & (EV_DISPATCH | EV_CLEAR | EV_ONESHOT)) {
-        kqops.eventfd_raise(&src->kn_eventfd);
+        kqops.eventfd_raise(&filt->kf_efd);
     }
 
     if (src->kev.flags & EV_DISPATCH)
@@ -114,7 +114,7 @@ posix_evfilt_user_knote_modify(struct filter *filt, struct knote *kn,
 
     if ((!(kn->kev.flags & EV_DISABLE)) && kev->fflags & NOTE_TRIGGER) {
         kn->kev.fflags |= NOTE_TRIGGER;
-        knote_enqueue(filt, kn);
+        LIST_INSERT_HEAD(&filt->kf_ready, kn, kn_ready);
         kqops.eventfd_raise(&filt->kf_efd);
     }
 
