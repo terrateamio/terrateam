@@ -89,9 +89,10 @@ Build & Running only the test suite
 -----------------------------------
 Helpful to see the behavior of the tests on systems with native `kqueue`, e.g: macOS, FreeBSD
 
-    cmake . test/CMakeLists.txt
-    make -C test/
-    ./test/libkqueue-test
+    cd test
+    cmake .
+    make
+    ./libkqueue-test
 
 To enable tests which expose bugs in native kqueue implementations pass `-DWITH_NATIVE_KQUEUE_BUGS=1` to cmake.
 i.e. `cmake . test/CMakeLists.txt -DWITH_NATIVE_KQUEUE_BUGS=1`.
