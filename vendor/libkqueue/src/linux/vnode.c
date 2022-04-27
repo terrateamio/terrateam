@@ -97,9 +97,6 @@ get_one_event(struct inotify_event *dst, size_t len, int inofd)
 
     dbg_printf("read(2) from inotify wd: %ld bytes", (long)n);
 
-    /* Quiet Coverity's complaints about name being unterminated */
-    dst->name[(len - ((uint8_t *)dst - (uint8_t *)dst->name)) - 1] = '\0';
-
     return (0);
 }
 
@@ -194,6 +191,9 @@ evfilt_vnode_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt
     struct stat sb;
 
     evt = (struct inotify_event *)buf;
+    /* Quiet Coverity's complaints about name being unterminated */
+    evt->name[0] = '\0';
+
     if (get_one_event(evt, sizeof(buf), src->kn_vnode.inotifyfd) < 0)
         return (-1);
 
