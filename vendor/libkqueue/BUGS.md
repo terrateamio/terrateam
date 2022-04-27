@@ -1,4 +1,4 @@
- # libkqueue (userland)
+ # libkqueue
 
  This documents the current behavioural differences or defficiencies of
  libkqueue vs the native BSD kqueue implementations.
@@ -90,18 +90,8 @@
    in the fork.
 
  ## Windows
-
- * On Windows, you need to supply `-DMAKE_STATIC` in `CFLAGS` when building the
-   static library. This does not apply when using cmake.
-
+ 
  * If a file descriptor outside of kqueue is closed, the internal kqueue
    state is not cleaned up.
    Applications should ensure that file descriptors are removed from
    the kqueue before they are closed.
-
-# libkqueue (kernel)
-
- * When passing a knote pointer to the kernel, the reference count of
-   the knote structure should be incremented. Conversely, when the pointer
-   has been returned from the kernel and the event unregistered from the
-   kernel, the reference count should be decremented.
