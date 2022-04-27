@@ -128,7 +128,7 @@ add_watch(struct filter *filt, struct knote *kn)
         mask |= IN_ONESHOT;
 
     /* Create an inotify descriptor */
-    ifd = inotify_init();
+    ifd = inotify_init1(IN_CLOEXEC);
     if (ifd < 0) {
         if ((errno == EMFILE) || (errno == ENFILE)) {
             dbg_perror("inotify_init(2) fd_used=%u fd_max=%u", get_fd_used(), get_fd_limit());
