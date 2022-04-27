@@ -4,7 +4,22 @@ on:
   push:
     branches:
       - master
+    paths:
+      - 'CMakeLists.txt'
+      - 'include/sys/*'
+      - 'src/common/*'
+      - 'src/windows/*'
+      - 'test/*'
+      - '.github/workflows/ci-windows.yml'
   pull_request:
+    branches:
+      - master
+    paths:
+      - 'CMakeLists.txt'
+      - 'src/common/*'
+      - 'src/windows/*'
+      - 'test/*'
+      - '.github/workflows/ci-windows.yml'
 
 env:
   KQUEUE_DEBUG: yes

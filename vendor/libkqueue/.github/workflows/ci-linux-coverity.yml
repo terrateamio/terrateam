@@ -4,7 +4,12 @@ on:
   push:
     branches:
       - master
-
+    paths:
+      - 'include/sys/*'
+      - 'src/common/*'
+      - 'src/linux/*'
+      - 'test/*'
+      - '.github/workflows/ci-linux-coverity.yml'
 jobs:
   linux-build-and-test:
     if: github.repository == 'mheily/libkqueue'

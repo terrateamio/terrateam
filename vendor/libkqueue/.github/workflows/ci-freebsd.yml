@@ -7,6 +7,12 @@ on:
     paths:
       - 'test/*'
       - '.github/workflows/ci-freebsd.yml'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'test/*'
+      - '.github/workflows/ci-freebsd.yml'
 
 jobs:
   freebsd-tests:
