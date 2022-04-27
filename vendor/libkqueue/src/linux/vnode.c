@@ -78,6 +78,15 @@ get_one_event(struct inotify_event *dst, size_t len, int inofd)
             return (-1);
         }
 
+        /*
+         * Last member of struct inotify_event is the name field.
+         * this field will be padded to the next multiple of
+         * struct inotify_event.
+         *
+         * We need this loop here so that we don't accidentally
+         * read more than one inotify event per read call which
+         * could happen if the event's name field were 0.
+         */
         n = read(inofd, dst, want);
         if (n < 0) {
             switch (errno) {
@@ -96,6 +105,11 @@ get_one_event(struct inotify_event *dst, size_t len, int inofd)
     }
 
     dbg_printf("read(2) from inotify wd: %ld bytes", (long)n);
+
+#ifdef __COVERITY__
+    /* Coverity complains this isn't \0 terminated, but it is */
+    if (evt->len > 0) evt->name[ev->len - 1] = '\0';
+#endif
 
     return (0);
 }
@@ -191,9 +205,6 @@ evfilt_vnode_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt
     struct stat sb;
 
     evt = (struct inotify_event *)buf;
-    /* Quiet Coverity's complaints about name being unterminated */
-    evt->name[0] = '\0';
-
     if (get_one_event(evt, sizeof(buf), src->kn_vnode.inotifyfd) < 0)
         return (-1);
 
