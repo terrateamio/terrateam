@@ -258,8 +258,8 @@ kevent_copyin_one(const struct knote **out, struct kqueue *kq, const struct keve
 
 /** @return number of events added to the eventlist */
 static int
-kevent_copyin(struct kqueue *kq, const struct kevent *changelist, int nchanges,
-        struct kevent *eventlist, int nevents)
+kevent_copyin(struct kqueue *kq, const struct kevent changelist[], int nchanges,
+        struct kevent eventlist[], int nevents)
 {
     int status;
     int rv;
@@ -338,9 +338,10 @@ kevent_release_kq_mutex(void *kq)
 #endif
 
 int VISIBLE
-kevent(int kqfd, const struct kevent *changelist, int nchanges,
-        struct kevent *eventlist, int nevents,
-        const struct timespec *timeout)
+kevent(int kqfd,
+       const struct kevent changelist[], int nchanges,
+       struct kevent eventlist[], int nevents,
+       const struct timespec *timeout)
 {
     struct kqueue *kq;
     struct kevent *el_p, *el_end;
