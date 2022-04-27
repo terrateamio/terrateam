@@ -30,7 +30,7 @@ jobs:
             llvm                 \
         run: |
           freebsd-version
-          cd libkqueue
-          cmake . test/CMakeLists.txt
-          make -C ./test
-          test/libkqueue-test
+          cd libkqueue/test
+          cmake .
+          make
+          ./libkqueue-test

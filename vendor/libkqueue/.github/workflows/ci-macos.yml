@@ -18,8 +18,9 @@ jobs:
 
     - name: Build and configure
       run: |
-        cmake . test/CMakeLists.txt
-        make -C test/
+        cd test
+        cmake .
+        make
 
     - name: libkqueue test suite
       run: |
