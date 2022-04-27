@@ -109,7 +109,7 @@ test_cleanup(void *unused)
             die("setrlimit failed");
         }
     } else {
-        max_fds = rlim.rlim_cur;
+        max_fds = curr_rlim.rlim_cur;
     }
 
     /* Create initial kqueue to avoid cleanup thread being destroyed on each close */
