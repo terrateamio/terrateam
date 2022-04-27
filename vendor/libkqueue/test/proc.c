@@ -188,6 +188,8 @@ test_kevent_proc_multiple_kqueue(struct test_context *ctx)
 #endif
 
     kq_b = kqueue();
+    if (kq_b < 0)
+        die("kqueue");
 
     /* Create a child that waits to be killed and then exits */
     pid = fork();
