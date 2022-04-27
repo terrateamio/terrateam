@@ -132,7 +132,7 @@ following:
    - if the `data` field is `1` all kqueues will be closed/freed on fork.
 
    The default behaviour matches native kqueue but may be expensive if many kqueues are active.
-   If `EV_RECEIPT` is set the previous value of cleanup flag will be provided in a receipt event.
+   If `EV_RECEIPT` is set, the previous value of cleanup flag will be provided in a receipt event.
 
 Example - retrieving version string:
 
