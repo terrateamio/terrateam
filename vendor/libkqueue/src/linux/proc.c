@@ -60,7 +60,7 @@ evfilt_proc_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
 
     case CLD_DUMPED:    /* WIFSIGNALED/WCOREDUMP - Core flag set - Low 7 bits contains fatal signal */
         status |= 0x80; /* core flag */
-        status = info.si_status & 0x7f;
+        status |= info.si_status & 0x7f;
         dbg_printf("pid=%u dumped, status %u", (unsigned int)src->kev.ident, status);
         break;
 
