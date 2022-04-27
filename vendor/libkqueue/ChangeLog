@@ -1,5 +1,22 @@
 Unreleased
 ------------------------------------------------------------------------
+ 
+2022-04-27  v2.6.1
+------------------------------------------------------------------------
+
+  * Fix: Set the core dumped flag correctly in linux/proc on 
+    CLD_DUMPED.
+
+  * Fix: Don't attempt to cleanup memory on fork as free() is not
+    fork safe.  We still close open kqueue FDs on fork, and liberal
+    use of CLOEXEC should clean up any lingering filter FDs though
+    we may want to close these explicitly in future too.
+ 
+  * Fix: Double unlock in posix/proc.c
+ 
+  * Fix: Potential deadlock on kqueue initialisation failure.
+
+  * Fix: Building for MSVC (Patch by Jan200101)
 
   * Fix: Sprinkle CLOEXEC around various places in the Linux and
     POSIX platforms to stop us leaking file descriptors on exec.
