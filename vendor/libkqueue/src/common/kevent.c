@@ -22,7 +22,7 @@
 
 #include "private.h"
 
-static struct kevent null_kev; /* null kevent for when we get passed a NULL eventlist */
+static struct kevent null_kev[1]; /* null kevent for when we get passed a NULL eventlist */
 
 static const char *
 kevent_filter_dump(const struct kevent *kev)
@@ -362,9 +362,9 @@ kevent(int kqfd,
         el_p = eventlist;
         el_end = el_p + nevents;
     } else {
-        eventlist = el_p = el_end = &null_kev;
+        eventlist = el_p = el_end = null_kev;
     }
-    if (!changelist) changelist = &null_kev;
+    if (!changelist) changelist = null_kev;
 
 #ifndef _WIN32
     prev_cancel_state = pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
