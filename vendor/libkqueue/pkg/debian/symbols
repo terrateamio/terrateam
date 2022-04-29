@@ -1,3 +1,0 @@
-libkqueue.so.0 libkqueue0 #MINVER#
- kevent@Base 2.0.2
- kqueue@Base 2.0.2
