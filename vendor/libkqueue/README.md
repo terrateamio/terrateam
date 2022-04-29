@@ -78,6 +78,14 @@ Xcode (project)
 
     cmake -G "Xcode" <path to source>
 
+Source archive
+--------------
+
+    mkdir -p cmake-build-source
+    cd cmake-build-source
+    cmake ..
+    make package_source
+
 Running Unit Tests
 ------------------
 

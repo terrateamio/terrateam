@@ -419,11 +419,18 @@ else()
 set(CPACK_DEBIAN_DEVEL_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME} (= ${PROJECT_VERSION})")
 endif()
 
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${PROJECT_VERSION}")
+set(CPACK_SOURCE_IGNORE_FILES
+  "cmake-build-*"
+  ".github/"
+  ".git/"
+  ".*.swp"
+)
+set(CPACK_SOURCE_GENERATOR "TXZ")
+
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Mark Heily <mark@heily.com>")
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/mheily/libkqueue")
 include(CPack)
-
-add_custom_target(tarball git archive -o "libkqueue-${PROJECT_VERSION}.tar.gz" --prefix "libkqueue-${PROJECT_VERSION}/" HEAD)
 
 #
 #  Ensure variables which represent arguments are not

@@ -7,6 +7,7 @@ config.h
 *.ddeb
 *.swp
 .fuse*
+cmake-build-*/
 CMakeCache.txt
 CMakeFiles/
 CPackConfig.cmake
