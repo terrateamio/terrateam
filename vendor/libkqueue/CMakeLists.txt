@@ -134,8 +134,6 @@ if(DEBUG_FSANITIZERFLAGS)
   MESSAGE("CMAKE_LD_FLAGS_DEBUG are \"${CMAKE_LD_FLAGS_DEBUG}\"")
 endif()
 
-option(STATIC_KQUEUE "build libkqueue as static library" OFF)
-
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
@@ -247,7 +245,6 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL Emscripten)
        src/posix/vnode.c
        src/posix/write.c
        )
-  set(STATIC_KQUEUE ON)
 else()
   message(FATAL_ERROR "unsupported host os")
 endif()
@@ -259,40 +256,44 @@ source_group(src
              FILES
                ${LIBKQUEUE_SOURCES})
 
-if(STATIC_KQUEUE)
-  set(LIBRARY_TYPE STATIC)
+add_library(objlib OBJECT ${LIBKQUEUE_SOURCES} ${LIBKQUEUE_HEADERS})
+add_library(kqueue SHARED $<TARGET_OBJECTS:objlib>)
+add_library(kqueue_static STATIC $<TARGET_OBJECTS:objlib>)
+if (CMAKE_SYSTEM_NAME MATCHES Windows)
+  set_target_properties(kqueue_static
+          PROPERTIES
+          OUTPUT_NAME kqueue_static
+          ARCHIVE_OUTPUT_DIRECTORY kqueueStatic)
 else()
-  set(LIBRARY_TYPE SHARED)
+  set_target_properties(kqueue_static PROPERTIES OUTPUT_NAME kqueue)
 endif()
-
-add_library(kqueue ${LIBRARY_TYPE} ${LIBKQUEUE_SOURCES} ${LIBKQUEUE_HEADERS})
 
 # We should have absolute ABI compatibility between versions as none
 # of the public function signatures of variables will change.
 set_target_properties(kqueue PROPERTIES SOVERSION 0)
 
 if(WIN32)
-  target_compile_definitions(kqueue PRIVATE _USRDLL;_WINDLL)
-  target_compile_definitions(kqueue PRIVATE _CRT_SECURE_NO_WARNINGS)
-  target_compile_definitions(kqueue PRIVATE WIN32_LEAN_AND_MEAN)
+  target_compile_definitions(objlib PRIVATE _USRDLL;_WINDLL)
+  target_compile_definitions(objlib PRIVATE _CRT_SECURE_NO_WARNINGS)
+  target_compile_definitions(objlib PRIVATE WIN32_LEAN_AND_MEAN)
 else()
-  target_compile_definitions(kqueue PRIVATE _XOPEN_SOURCE=600)
+  target_compile_definitions(objlib PRIVATE _XOPEN_SOURCE=600)
 endif()
 
-target_include_directories(kqueue PRIVATE include)
+target_include_directories(objlib PRIVATE include)
 if(NOT WIN32)
-  target_include_directories(kqueue PRIVATE src/common)
+  target_include_directories(objlib PRIVATE src/common)
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES GNU)
-  target_compile_options(kqueue PRIVATE -Wall -Werror)
+  target_compile_options(objlib PRIVATE -Wall -Werror)
 endif()
 if(MINGW AND CMAKE_C_COMPILER_ID MATCHES GNU)
   #TODO: is it needed at all?
   if (CMAKE_SIZEOF_VOID_P EQUAL 4)
-    target_compile_options(kqueue PRIVATE -march=i486)
+    target_compile_options(objlib PRIVATE -march=i486)
   elseif(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    target_compile_options(kqueue PRIVATE -march=x86-64)
+    target_compile_options(objlib PRIVATE -march=x86-64)
   endif ()
 endif()
 
@@ -306,7 +307,7 @@ if(ENABLE_TESTING)
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL Emscripten)
-  target_compile_options(kqueue PRIVATE -pthread)
+  target_compile_options(objlib PRIVATE -pthread)
 else()
   target_link_libraries(kqueue PRIVATE Threads::Threads)
 endif()
@@ -331,7 +332,7 @@ install(FILES
           "${CMAKE_INSTALL_FULL_INCLUDEDIR}/kqueue/sys"
         COMPONENT headers)
 install(TARGETS
-          kqueue
+          kqueue kqueue_static
         DESTINATION
           "${CMAKE_INSTALL_FULL_LIBDIR}"
         COMPONENT libraries)
