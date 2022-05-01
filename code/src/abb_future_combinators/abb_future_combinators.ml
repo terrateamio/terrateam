@@ -63,6 +63,8 @@ module Make (Fut : Abb_intf.Future.S) = struct
     List.iter ~f:Fut.cancel futl >>| fun () -> (v, Std_list.rev rest_rev)
 
   let all l =
+    List.iter ~f:(fun fut -> ignore (Fut.fork fut)) l
+    >>= fun () ->
     let fut = List.map ~f:(fun x -> x) l in
     Std_list.iter ~f:(fun d -> link d fut) l;
     fut

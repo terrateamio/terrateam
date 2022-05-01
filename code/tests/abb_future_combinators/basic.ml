@@ -16,10 +16,10 @@ let first1 =
       ignore (Fut.run_with_state res dummy_state);
       ignore (Fut.run_with_state (Fut.Promise.set p1 1) dummy_state);
       match Fut.state res with
-        | `Det (v, fut)              ->
-            assert (v = 1);
-            assert (Fut.state fut = `Undet)
-        | `Undet | `Aborted | `Exn _ -> assert false)
+      | `Det (v, fut) ->
+          assert (v = 1);
+          assert (Fut.state fut = `Undet)
+      | `Undet | `Aborted | `Exn _ -> assert false)
 
 let first2 =
   Oth.test ~desc:"first returns determined future" ~name:"first with both determined" (fun _ ->
@@ -30,12 +30,12 @@ let first2 =
       ignore (Fut.run_with_state (Fut.Promise.set p1 1) dummy_state);
       ignore (Fut.run_with_state (Fut.Promise.set p2 2) dummy_state);
       match Fut.state res with
-        | `Det (v, fut)              -> (
-            assert (v = 1);
-            match Fut.state fut with
-              | `Det v                     -> assert (v = 2)
-              | `Undet | `Aborted | `Exn _ -> assert false)
-        | `Undet | `Aborted | `Exn _ -> assert false)
+      | `Det (v, fut) -> (
+          assert (v = 1);
+          match Fut.state fut with
+          | `Det v -> assert (v = 2)
+          | `Undet | `Aborted | `Exn _ -> assert false)
+      | `Undet | `Aborted | `Exn _ -> assert false)
 
 let first3 =
   Oth.test ~desc:"Abort aborts the whole thing" ~name:"Abort first" (fun _ ->
@@ -56,11 +56,11 @@ let firstl1 =
       ignore (Fut.run_with_state res dummy_state);
       ignore (Fut.run_with_state (Fut.Promise.set p1 1) dummy_state);
       match Fut.state res with
-        | `Det (v, [ fut ])          ->
-            assert (v = 1);
-            assert (Fut.state fut = `Undet)
-        | `Det _                     -> assert false
-        | `Undet | `Aborted | `Exn _ -> assert false)
+      | `Det (v, [ fut ]) ->
+          assert (v = 1);
+          assert (Fut.state fut = `Undet)
+      | `Det _ -> assert false
+      | `Undet | `Aborted | `Exn _ -> assert false)
 
 let firstl2 =
   Oth.test ~desc:"firstl returns determined future" ~name:"firstl with both determined" (fun _ ->
@@ -71,13 +71,13 @@ let firstl2 =
       ignore (Fut.run_with_state (Fut.Promise.set p1 1) dummy_state);
       ignore (Fut.run_with_state (Fut.Promise.set p2 2) dummy_state);
       match Fut.state res with
-        | `Det (v, [ fut ])          -> (
-            assert (v = 1);
-            match Fut.state fut with
-              | `Det v                     -> assert (v = 2)
-              | `Undet | `Aborted | `Exn _ -> assert false)
-        | `Det _                     -> assert false
-        | `Undet | `Aborted | `Exn _ -> assert false)
+      | `Det (v, [ fut ]) -> (
+          assert (v = 1);
+          match Fut.state fut with
+          | `Det v -> assert (v = 2)
+          | `Undet | `Aborted | `Exn _ -> assert false)
+      | `Det _ -> assert false
+      | `Undet | `Aborted | `Exn _ -> assert false)
 
 let firstl3 =
   Oth.test ~desc:"Abort aborts the whole thing" ~name:"Abort firstl" (fun _ ->
@@ -185,8 +185,8 @@ let with_finally_exn =
       assert (!finally_exec > 0);
       assert (!finally_exec = 1);
       match Fut.state fut with
-        | `Exn (Failure _, None) -> ()
-        | _                      -> assert false)
+      | `Exn (Failure _, None) -> ()
+      | _ -> assert false)
 
 let with_finally_raise =
   Oth.test
@@ -205,8 +205,8 @@ let with_finally_raise =
       assert (!finally_exec > 0);
       assert (!finally_exec = 1);
       match Fut.state fut with
-        | `Exn (Failure _, Some _) -> ()
-        | _                        -> assert false)
+      | `Exn (Failure _, Some _) -> ()
+      | _ -> assert false)
 
 let with_finally_exn_in_finally =
   Oth.test
@@ -218,13 +218,13 @@ let with_finally_exn_in_finally =
       in
       ignore (Fut.run_with_state fut dummy_state);
       match Fut.state fut with
-        | `Exn (Failure msg, Some _) ->
-            assert (msg = "finally");
-            ()
-        | `Aborted                   -> assert false
-        | `Undet                     -> assert false
-        | `Exn _                     -> assert false
-        | `Det _                     -> assert false)
+      | `Exn (Failure msg, Some _) ->
+          assert (msg = "finally");
+          ()
+      | `Aborted -> assert false
+      | `Undet -> assert false
+      | `Exn _ -> assert false
+      | `Det _ -> assert false)
 
 let with_finally_exn_in_body_and_finally =
   Oth.test
@@ -236,13 +236,13 @@ let with_finally_exn_in_body_and_finally =
       in
       ignore (Fut.run_with_state fut dummy_state);
       match Fut.state fut with
-        | `Exn (Failure msg, Some _) ->
-            assert (msg = "finally");
-            ()
-        | `Aborted                   -> assert false
-        | `Undet                     -> assert false
-        | `Exn _                     -> assert false
-        | `Det _                     -> assert false)
+      | `Exn (Failure msg, Some _) ->
+          assert (msg = "finally");
+          ()
+      | `Aborted -> assert false
+      | `Undet -> assert false
+      | `Exn _ -> assert false
+      | `Det _ -> assert false)
 
 let with_finally_aborted_from_outside =
   Oth.test
@@ -338,8 +338,8 @@ let on_failure_exn =
       assert (!failure_exec > 0);
       assert (!failure_exec = 1);
       match Fut.state fut with
-        | `Exn (Failure _, None) -> ()
-        | _                      -> assert false)
+      | `Exn (Failure _, None) -> ()
+      | _ -> assert false)
 
 let on_failure_raise =
   Oth.test
@@ -358,8 +358,8 @@ let on_failure_raise =
       assert (!failure_exec > 0);
       assert (!failure_exec = 1);
       match Fut.state fut with
-        | `Exn (Failure _, Some _) -> ()
-        | _                        -> assert false)
+      | `Exn (Failure _, Some _) -> ()
+      | _ -> assert false)
 
 let timeout_timeout =
   Oth.test ~desc:"Test timeout when the timeout function fires" ~name:"timeout timeout" (fun _ ->

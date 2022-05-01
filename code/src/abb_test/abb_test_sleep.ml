@@ -39,8 +39,6 @@ module Make (Abb : Abb_intf.S) = struct
               fut :: timer_loop (n - 1)
         in
         let futures = timer_loop 5000 in
-        Fut_comb.List.iter ~f:(fun fut -> Fut_comb.ignore (Abb.Future.fork fut)) futures
-        >>= fun () ->
         Fut_comb.all futures
         >>| fun _ ->
         Printf.printf
