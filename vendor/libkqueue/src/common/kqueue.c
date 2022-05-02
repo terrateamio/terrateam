@@ -29,6 +29,10 @@ bool libkqueue_fork_cleanup = true;
  */
 bool libkqueue_fork_cleanup_active;
 
+/** Whether this is a child of the original process
+ */
+static bool libkqueue_in_child = false;
+
 #ifdef _WIN32
 tracing_mutex_t kq_mtx;
 static LONG kq_init_begin = 0;
@@ -98,6 +102,14 @@ static struct map *kqmap;
 void
 libkqueue_free(void)
 {
+    /*
+     * The issue here is that we're not sure
+     */
+    if (libkqueue_in_child) {
+        dbg_puts("not releasing library resources as we are a child");
+        return;
+    }
+
     dbg_puts("releasing library resources");
 
     filter_free_all();
@@ -190,6 +202,8 @@ void
 libkqueue_child_fork(void)
 {
     struct kqueue *kq, *kq_tmp;
+
+    libkqueue_in_child = true;
 
     if (!libkqueue_fork_cleanup_active) {
         tracing_mutex_unlock(&kq_mtx);
