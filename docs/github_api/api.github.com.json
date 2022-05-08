@@ -49842,7 +49842,6 @@
         },
         "required": [
           "additions",
-          "blob_url",
           "changes",
           "contents_url",
           "deletions",

@@ -839,14 +839,14 @@ module Diff_entry = struct
 
     type t = {
       additions : int;
-      blob_url : string;
+      blob_url : string option; [@default None]
       changes : int;
       contents_url : string;
       deletions : int;
       filename : string;
       patch : string option; [@default None]
       previous_filename : string option; [@default None]
-      raw_url : string;
+      raw_url : string option; [@default None]
       sha : string;
       status : Status_.t;
     }
