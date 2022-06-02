@@ -212,7 +212,6 @@ let get_json_media_type m =
   | None -> String_map.get "*/*" m
   | r -> r
 
-let extract_module_name_from_ref ref_ = CCList.hd (CCList.rev (CCString.split ~by:"/" ref_))
 let module_name_of_operation_id s = s |> CCString.replace ~sub:"/" ~by:"_" |> module_name_of_string
 
 let field_name_of_schema s =
@@ -344,38 +343,6 @@ let request_param_of_op_params components param_in params =
                   Exp.tuple [ Exp.constant (Const.string p.Parameter.name); type_desc ])
            |> Gen.make_list))
 
-let rec collect_schema_refs
-    { Schema.properties; additional_properties; items; any_of; one_of; all_of; _ } =
-  let additional_schemas =
-    CCOpt.get_or ~default:[] any_of
-    @ CCOpt.get_or ~default:[] one_of
-    @ CCOpt.get_or ~default:[] all_of
-  in
-  CCList.flatten
-    [
-      CCList.flatten
-        (CCList.map
-           (fun (_, schema) ->
-             match schema with
-             | Value.Ref ref_ -> [ ref_ ]
-             | Value.V schema -> collect_schema_refs schema)
-           (String_map.to_list properties));
-      (match additional_properties with
-      | Additional_properties.Bool _ -> []
-      | Additional_properties.V (Value.V schema) -> collect_schema_refs schema
-      | Additional_properties.V _ -> []);
-      (match items with
-      | Some (Value.V schema) -> collect_schema_refs schema
-      | Some (Value.Ref ref_) -> [ ref_ ]
-      | None -> []);
-      CCList.flatten
-      @@ CCList.map
-           (function
-             | Value.Ref ref_ -> [ ref_ ]
-             | Value.V schema -> collect_schema_refs schema)
-           additional_schemas;
-    ]
-
 (* To convert an operation we need to convert the parameters, request body, and
    responses.  The resulting module will have a function to create a
    [Openapi.Request] value.
@@ -394,6 +361,7 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
       ~record_type_attrs:(fun _ -> Gen.(deriving [ make_deriver; show_deriver ]))
       ~record_field_attrs
       ~resolve_ref:(resolve_schema_ref components)
+      ~variant_name_of_ref:(module_name_of_ref base_module_name "paths")
       ()
   in
   let parameters_module =
@@ -457,6 +425,7 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
           Gen.(deriving [ make_deriver; yojson_deriver ~strict ~meta:true (); show_deriver ]))
         ~record_field_attrs
         ~resolve_ref:(resolve_schema_ref components)
+        ~variant_name_of_ref:(module_name_of_ref base_module_name "paths")
         ()
     in
     match op.Operation.request_body with
@@ -500,6 +469,7 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
           Gen.(deriving [ yojson_deriver ~strict (); show_deriver ]))
         ~record_field_attrs
         ~resolve_ref:(resolve_schema_ref components)
+        ~variant_name_of_ref:(module_name_of_ref base_module_name "paths")
         ()
     in
     let resolved_responses =
@@ -702,34 +672,62 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
   in
   (operation_id, parameters_module @ request_body @ [ responses; url; make ])
 
-let convert_str_components state { Components.schemas; responses; _ } =
-  let schemas_refs =
-    Tsort.sort
-      (CCList.map
-         (fun (name, schema) ->
-           match schema with
-           | Value.Ref ref_ -> (name, [ extract_module_name_from_ref ref_ ])
-           | Value.V schema ->
-               (name, CCList.map extract_module_name_from_ref (collect_schema_refs schema)))
-         (String_map.to_list schemas))
+let convert_str_components
+    output_dir
+    base_module_name
+    ({ Components.schemas; responses; _ } as components) =
+  let module_name_of_ref ref_ =
+    match CCString.split_on_char '/' ref_ with
+    | [ "#"; "components"; m; n ] ->
+        [ base_module_name ^ "_components_" ^ CCString.lowercase_ascii (module_name_of_string n) ]
+    | _ -> failwith (Printf.sprintf "Unknown ref type: %s" ref_)
   in
-  match schemas_refs with
-  | Tsort.Sorted sorted ->
-      let modules =
-        CCList.map
-          (fun (name, schema) ->
-            let m_expr =
-              match schema with
-              | Value.V schema ->
-                  Ast_helper.Mod.structure (Json_schema_conv.convert_str_schema state schema)
-              | Value.Ref _ -> Ast_helper.Mod.structure []
-            in
-            Ast_helper.(
-              Str.module_ (Mb.mk (Location.mknoloc (Some (module_name_of_string name))) m_expr)))
-          (CCList.map (fun name -> (name, String_map.find name schemas)) sorted)
-      in
-      modules
-  | Tsort.ErrorCycle _ -> assert false
+  let variant_name_of_ref ref_ =
+    match CCString.split_on_char '/' ref_ with
+    | [ "#"; "components"; m; n ] -> [ module_name_of_string n ]
+    | _ -> failwith (Printf.sprintf "Unknown ref type: %s" ref_)
+  in
+  let config =
+    Json_schema_conv.Config.make
+      ~field_name_of_schema
+      ~module_name_of_ref
+      ~module_name_of_field_name:(module_name_of_field_name components)
+      ~prim_type_attrs:Gen.(deriving [ yojson_deriver (); show_deriver ])
+      ~record_type_attrs:(fun strict -> Gen.(deriving [ yojson_deriver ~strict (); show_deriver ]))
+      ~record_field_attrs
+      ~resolve_ref:(resolve_schema_ref components)
+      ~variant_name_of_ref
+      ()
+  in
+  CCList.iter
+    (fun (name, schema) ->
+      match schema with
+      | Value.Ref _ -> ()
+      | Value.V schema ->
+          let m = Json_schema_conv.convert_str_schema config schema in
+          CCIO.with_out
+            (Filename.concat
+               output_dir
+               (CCString.lowercase_ascii
+                  (base_module_name ^ "_components_" ^ module_name_of_string name ^ ".ml")))
+            (fun oc -> CCIO.write_line oc (Pprintast.string_of_structure m)))
+    (String_map.to_list schemas);
+  let sts =
+    CCList.map
+      (fun name ->
+        let module_name =
+          base_module_name ^ "_components_" ^ CCString.lowercase_ascii (module_name_of_string name)
+        in
+        Ast_helper.(
+          Str.module_
+            (Mb.mk
+               (Location.mknoloc (Some (module_name_of_string name)))
+               (Mod.ident (Location.mknoloc (Json_schema_conv.Gen.ident [ module_name ]))))))
+      (schemas |> String_map.to_list |> CCList.map fst |> CCList.sort CCString.compare)
+  in
+  CCIO.with_out
+    (Filename.concat output_dir (CCString.lowercase_ascii (base_module_name ^ "_components.ml")))
+    (fun oc -> CCIO.write_line oc (Pprintast.string_of_structure sts))
 
 let convert_str_paths output_base base_module_name components paths =
   let modules =
@@ -770,28 +768,13 @@ let convert_str_paths output_base base_module_name components paths =
         (fun oc -> CCIO.write_line oc (Pprintast.string_of_structure modules)))
     (String_map.to_list modules)
 
-let convert_str_document output_base base_module_name { Document.paths; components } =
-  let components_modules =
-    convert_str_components
-      (Json_schema_conv.Config.make
-         ~field_name_of_schema
-         ~module_name_of_ref:(module_name_of_ref base_module_name "schemas")
-         ~module_name_of_field_name:(module_name_of_field_name components)
-         ~prim_type_attrs:Gen.(deriving [ yojson_deriver (); show_deriver ])
-         ~record_type_attrs:(fun strict ->
-           Gen.(deriving [ yojson_deriver ~strict (); show_deriver ]))
-         ~record_field_attrs
-         ~resolve_ref:(resolve_schema_ref components)
-         ())
-      components
-  in
-  CCIO.with_out (output_base ^ "_components.ml") (fun cout ->
-      CCIO.write_line cout (Pprintast.string_of_structure components_modules));
+let convert_str_document output_dir base_module_name { Document.paths; components } =
+  let output_base = Filename.concat output_dir (CCString.lowercase_ascii base_module_name) in
+  convert_str_components output_dir base_module_name components;
   convert_str_paths output_base base_module_name components paths
 
 let convert ~input_file ~output_name ~output_dir =
-  let output_base = Filename.concat output_dir output_name in
   let base_module_name = CCString.capitalize_ascii output_name in
   match Document.of_yojson (Yojson.Safe.from_file input_file) with
-  | Ok document -> convert_str_document output_base base_module_name document
+  | Ok document -> convert_str_document output_dir base_module_name document
   | Error err -> print_endline ("ERROR: " ^ err)
