@@ -13,9 +13,15 @@ module Cmdline = struct
     let doc = "Input file" in
     C.Arg.(required & opt (some string) None & info [ "i"; "input" ] ~doc)
 
+  let non_strict_records =
+    let doc = "Do not require records to be strict" in
+    C.Arg.(value & flag & info [ "non-strict-records" ] ~doc)
+
   let convert_cmd f =
     let doc = "Convert to Ocaml" in
-    C.Cmd.v (C.Cmd.info "convert" ~doc) C.Term.(const f $ input_file $ output_name $ output_dir)
+    C.Cmd.v
+      (C.Cmd.info "convert" ~doc)
+      C.Term.(const f $ non_strict_records $ input_file $ output_name $ output_dir)
 
   let default_cmd = C.Term.(ret (const (`Help (`Pager, None))))
 end
@@ -42,7 +48,13 @@ let module_name_of_field_name defs s =
     module_name_of_string s ^ "_"
   else module_name_of_string s
 
-let module_name_of_ref ref_ =
+let module_name_of_ref module_base ref_ =
+  match CCString.split_on_char '/' ref_ with
+  | [ "#"; "definitions"; n ] ->
+      [ module_base ^ "_" ^ CCString.lowercase_ascii (module_name_of_string n) ]
+  | _ -> failwith (Printf.sprintf "Unknown ref: %s" ref_)
+
+let variant_name_of_ref ref_ =
   match CCString.split_on_char '/' ref_ with
   | [ "#"; "definitions"; n ] -> [ module_name_of_string n ]
   | _ -> failwith (Printf.sprintf "Unknown ref: %s" ref_)
@@ -132,76 +144,80 @@ let rec collect_schema_refs
 
 let extract_module_name_from_ref ref_ = CCList.hd (CCList.rev (CCString.split ~by:"/" ref_))
 
-let convert_definitions definitions =
-  let schemas_refs =
-    Tsort.sort
-      (CCList.map
-         (fun (name, schema) ->
-           match schema with
-           | Json_schema_conv.Value.Ref ref_ -> (name, [ extract_module_name_from_ref ref_ ])
-           | Json_schema_conv.Value.V schema ->
-               (name, CCList.map extract_module_name_from_ref (collect_schema_refs schema)))
-         (Json_schema_conv.String_map.to_list definitions))
+let convert_def strict_records definitions module_base def =
+  Json_schema_conv.convert_str_schema
+    (Json_schema_conv.Config.make
+       ~field_name_of_schema
+       ~module_name_of_ref:(module_name_of_ref module_base)
+       ~module_name_of_field_name:(module_name_of_field_name definitions)
+       ~prim_type_attrs:Json_schema_conv.Gen.(deriving [ yojson_deriver (); show_deriver ])
+       ~record_type_attrs:(fun strict ->
+         Json_schema_conv.Gen.(
+           deriving
+             [ yojson_deriver ~strict:(strict && strict_records) (); make_deriver; show_deriver ]))
+       ~record_field_attrs:(fun schema name required ->
+         let field_name = field_name_of_schema name in
+         CCList.flatten
+           [
+             (if CCString.equal field_name name then []
+             else Json_schema_conv.Gen.yojson_key_name name);
+             (if Json_schema_conv.String_set.mem name required then []
+             else
+               match schema.Json_schema_conv.Schema.default with
+               | Some default -> field_default_of_value default
+               | None -> Json_schema_conv.Gen.field_default_none);
+           ])
+       ~resolve_ref:(resolve_ref definitions)
+       ~variant_name_of_ref
+       ())
+    def
+
+let convert_document strict_records output_dir output_name { Document.definitions; one_of } =
+  let module_base = CCString.capitalize_ascii output_name in
+  let event = Json_schema_conv.{ (Schema.make_t_ ()) with Schema.one_of = Some one_of } in
+  Json_schema_conv.String_map.iter
+    (fun name def ->
+      match def with
+      | Json_schema_conv.Value.Ref _ -> ()
+      | Json_schema_conv.Value.V def ->
+          let module_name =
+            module_base ^ "_" ^ CCString.lowercase_ascii (module_name_of_string name)
+          in
+          let structure = convert_def strict_records definitions module_base def in
+          CCIO.with_out
+            (Filename.concat output_dir (CCString.lowercase_ascii module_name ^ ".ml"))
+            (fun oc -> CCIO.write_line oc (Pprintast.string_of_structure structure)))
+    definitions;
+  let structure =
+    Ast_helper.(
+      CCList.map
+        (fun name ->
+          let module_name =
+            module_base ^ "_" ^ CCString.lowercase_ascii (module_name_of_string name)
+          in
+          Str.module_
+            (Mb.mk
+               (Location.mknoloc (Some (module_name_of_string name)))
+               (Mod.ident (Location.mknoloc (Json_schema_conv.Gen.ident [ module_name ])))))
+        (definitions
+        |> Json_schema_conv.String_map.to_list
+        |> CCList.map fst
+        |> CCList.sort CCString.compare)
+      @ [
+          Str.module_
+            (Mb.mk
+               (Location.mknoloc (Some (module_name_of_string "event")))
+               (Mod.structure (convert_def strict_records definitions module_base event)));
+        ])
   in
-  match schemas_refs with
-  | Tsort.Sorted sorted ->
-      CCList.flatten
-        (CCList.map
-           (fun (name, def) ->
-             match def with
-             | Json_schema_conv.Value.Ref _ -> []
-             | Json_schema_conv.Value.V def ->
-                 [
-                   Ast_helper.(
-                     Str.module_
-                       (Mb.mk
-                          (Location.mknoloc (Some (module_name_of_string name)))
-                          (Mod.structure
-                             (Json_schema_conv.convert_str_schema
-                                (Json_schema_conv.Config.make
-                                   ~field_name_of_schema
-                                   ~module_name_of_ref
-                                   ~module_name_of_field_name:
-                                     (module_name_of_field_name definitions)
-                                   ~prim_type_attrs:
-                                     Json_schema_conv.Gen.(
-                                       deriving [ yojson_deriver (); show_deriver ])
-                                   ~record_type_attrs:(fun strict ->
-                                     Json_schema_conv.Gen.(
-                                       deriving
-                                         [ yojson_deriver ~strict (); make_deriver; show_deriver ]))
-                                   ~record_field_attrs:(fun schema name required ->
-                                     let field_name = field_name_of_schema name in
-                                     CCList.flatten
-                                       [
-                                         (if CCString.equal field_name name then []
-                                         else Json_schema_conv.Gen.yojson_key_name name);
-                                         (if Json_schema_conv.String_set.mem name required then []
-                                         else
-                                           match schema.Json_schema_conv.Schema.default with
-                                           | Some default -> field_default_of_value default
-                                           | None -> Json_schema_conv.Gen.field_default_none);
-                                       ])
-                                   ~resolve_ref:(resolve_ref definitions)
-                                   ())
-                                def))));
-                 ])
-           (CCList.map
-              (fun name -> (name, Json_schema_conv.String_map.find name definitions))
-              sorted))
-  | Tsort.ErrorCycle _ -> assert false
+  CCIO.with_out
+    (Filename.concat output_dir (output_name ^ ".ml"))
+    (fun oc -> CCIO.write_line oc (Pprintast.string_of_structure structure))
 
-let convert_document output_base { Document.definitions; one_of } =
-  let event = Json_schema_conv.(Value.V { (Schema.make_t_ ()) with Schema.one_of = Some one_of }) in
-  let definitions = Json_schema_conv.String_map.add "event" event definitions in
-  let definition_modules = convert_definitions definitions in
-  CCIO.with_out (output_base ^ ".ml") (fun oc ->
-      CCIO.write_line oc (Pprintast.string_of_structure definition_modules))
-
-let convert input_file output_name output_dir =
-  let output_base = Filename.concat output_dir output_name in
+let convert non_strict_records input_file output_name output_dir =
+  let strict_records = not non_strict_records in
   match Document.of_yojson (Yojson.Safe.from_file input_file) with
-  | Ok document -> convert_document output_base document
+  | Ok document -> convert_document strict_records output_dir output_name document
   | Error err -> print_endline err
 
 let cmds = Cmdline.[ convert_cmd convert ]

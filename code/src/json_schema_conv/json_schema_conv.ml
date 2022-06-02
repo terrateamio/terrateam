@@ -418,25 +418,27 @@ module Config = struct
   type t = {
     create_yojson_funcs : bool;
     field_name_of_schema : string -> string;
-    module_name_of_ref : string -> string list;
     module_name_of_field_name : string -> string;
+    module_name_of_ref : string -> string list;
     prim_type_attrs : Parsetree.attributes;
     record_field_attrs : Schema.t_ -> string -> String_set.t -> Parsetree.attributes;
     record_type_attrs : bool -> Parsetree.attributes;
     resolve_ref : Schema.t -> Schema.t_;
     strict_record : bool;
     tidx : Type_idx.t;
+    variant_name_of_ref : string -> string list;
   }
 
   let make
       ?(create_yojson_funcs = true)
       ~field_name_of_schema
-      ~module_name_of_ref
       ~module_name_of_field_name
+      ~module_name_of_ref
       ~prim_type_attrs
       ~record_field_attrs
       ~record_type_attrs
       ~resolve_ref
+      ~variant_name_of_ref
       () =
     {
       create_yojson_funcs;
@@ -449,6 +451,7 @@ module Config = struct
       resolve_ref;
       strict_record = true;
       tidx = Type_idx.default;
+      variant_name_of_ref;
     }
 
   let create_yojson_funcs t = t.create_yojson_funcs
@@ -463,6 +466,7 @@ module Config = struct
   let tidx_incr t = { t with tidx = Type_idx.incr t.tidx }
   let tidx_reset t = { t with tidx = Type_idx.default }
   let tidx_to_string t = Type_idx.to_string t.tidx
+  let variant_name_of_ref t = t.variant_name_of_ref
 end
 
 let extract_prim_type = function
@@ -718,7 +722,7 @@ let rec convert_str_schema (config : Config.t) =
         if all_types_refs then
           CCList.map
             (function
-              | Value.Ref ref_ -> Config.module_name_of_ref config ref_ |> CCList.rev |> CCList.hd
+              | Value.Ref ref_ -> Config.variant_name_of_ref config ref_ |> CCList.rev |> CCList.hd
               | Value.V _ -> assert false)
             types
         else CCList.mapi (fun idx _ -> "V" ^ CCInt.to_string idx) types
