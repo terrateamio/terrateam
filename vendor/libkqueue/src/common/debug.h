@@ -24,6 +24,7 @@
 # include <windows.h>
 # include "../windows/platform.h"
 #else
+# include <pthread.h>
 # include <unistd.h>
 #endif
 
