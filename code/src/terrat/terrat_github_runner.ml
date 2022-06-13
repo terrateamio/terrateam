@@ -229,8 +229,19 @@ let rec run' request_id access_token_cache config db =
                         id
                       >>= fun _ -> Abb.Future.return (Ok (`Cont access_token_cache)))
               | _ ->
+                  let open Abb.Future.Infix_monad in
                   Logs.err (fun m -> m "GITHUB_RUNNER : %s : ERROR : MISSING_WORKFLOW" request_id);
-                  Abb.Future.return (Ok (`Cont access_token_cache))))
+                  abort_work_manifest
+                    ~access_token
+                    ~db
+                    ~owner
+                    ~repo
+                    ~sha
+                    ~pull_number
+                    ~run_type
+                    ~dirspaces
+                    id
+                  >>= fun _ -> Abb.Future.return (Ok (`Cont access_token_cache))))
       | _ :: _ ->
           (* Should only ever be one result *)
           assert false)
