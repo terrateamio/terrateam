@@ -1,23 +1,37 @@
 with
+unlocks as (
+    select
+        repository,
+        pull_number,
+        unlocked_at,
+        row_number() over (partition by repository, pull_number order by unlocked_at desc) as rn
+    from github_pull_request_unlocks
+),
+latest_unlocks as (
+    select * from unlocks where rn = 1
+),
 work_manifests as (
     select
-        id,
-        created_at,
-        repository,
-        state,
-        (case run_type
+        gwm.id as id,
+        gwm.created_at as created_at,
+        gwm.repository as repository,
+        gwm.state as state,
+        (case gwm.run_type
          when 'autoapply' then 'apply'
          when 'apply' then 'apply'
          when 'autoplan' then 'plan'
          when 'plan' then 'plan'
          end) as unified_run_type,
-        (case run_type
+        (case gwm.run_type
          when 'autoapply' then 0
          when 'apply' then 0
          when 'autoplan' then 1
          when 'plan' then 1
          end) as priority
-    from github_work_manifests
+    from github_work_manifests as gwm
+    left join latest_unlocks as unlocks
+        on unlocks.repository = gwm.repository and unlocks.pull_number = gwm.pull_number
+    where unlocks.unlocked_at is null or unlocks.unlocked_at < gwm.created_at
 ),
 -- Find all repositories with a currently running apply.  The count should only
 -- ever be 0 or 1

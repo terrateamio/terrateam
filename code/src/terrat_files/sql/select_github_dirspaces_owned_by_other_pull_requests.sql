@@ -39,8 +39,7 @@ pull_request_applies_previous_commits as (
         on gpru.repository = gpr.repository and gpru.pull_number = gpr.pull_number
     where (gpr.base_sha <> gwm.base_sha or gpr.sha <> gwm.sha)
           and gwm.run_type in ('apply', 'autoapply')
-          and (gpru.unlocked_at is null
-               or gpru.unlocked_at is not null and gpru.unlocked_at < gwm.completed_at)
+          and (gpru.unlocked_at is null or gpru.unlocked_at < gwm.created_at)
 ),
 -- Combine the dirspaces for the current revision with the dirspaces that have
 -- been applied in previous revisions.
@@ -66,8 +65,7 @@ unmerged_pull_requests_with_applies as (
     left join latest_unlocks as gpru
         on gpru.repository = gpr.repository and gpru.pull_number = gpr.pull_number
     where gpr.state in ('open', 'closed') and gwm.run_type in ('apply', 'autoapply')
-          and (gpru.unlocked_at is null
-               or gpru.unlocked_at is not null and gpru.unlocked_at < gwm.completed_at)
+          and (gpru.unlocked_at is null or gpru.unlocked_at < gwm.created_at)
 ),
 -- All those dirspaces that are in a pull request that has at least one apply
 -- and not merged.
