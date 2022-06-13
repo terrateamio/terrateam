@@ -1,7 +1,7 @@
 module Process = Abb_process.Make (Abb)
 module Org_admin = CCMap.Make (CCInt)
 
-let terrateam_workflow_name = "Terrateam Terraform"
+let terrateam_workflow_name = "Terrateam Workflow"
 let terrateam_config_yml = ".terrateam/config.yml"
 let installation_expiration = 60.0
 
