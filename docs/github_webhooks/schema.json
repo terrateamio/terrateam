@@ -9811,6 +9811,7 @@
             "issues": { "type": "string", "enum": ["read", "write"] },
             "keys": { "type": "string", "enum": ["read", "write"] },
             "members": { "type": "string", "enum": ["read", "write"] },
+            "merge_queues": { "type": "string", "enum": ["read", "write"] },
             "metadata": { "type": "string", "enum": ["read", "write"] },
             "organization_administration": {
               "type": "string",
@@ -9900,6 +9901,7 @@
               "label",
               "member",
               "membership",
+              "merge_group",
               "milestone",
               "organization",
               "org_block",
