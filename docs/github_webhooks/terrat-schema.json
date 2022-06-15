@@ -115,6 +115,7 @@
               "label",
               "member",
               "membership",
+              "merge_group",
               "milestone",
               "organization",
               "org_block",
@@ -138,6 +139,7 @@
               "team_add",
               "watch",
               "workflow_dispatch",
+              "workflow_job",
               "workflow_run"
             ],
             "type": "string"
@@ -248,6 +250,13 @@
               "type": "string"
             },
             "members": {
+              "enum": [
+                "read",
+                "write"
+              ],
+              "type": "string"
+            },
+            "merge_queues": {
               "enum": [
                 "read",
                 "write"
@@ -22121,7 +22130,7 @@
           "type": "integer"
         },
         "run_id": {
-          "type": "number"
+          "type": "integer"
         },
         "run_url": {
           "format": "uri",
@@ -22366,6 +22375,12 @@
           },
           "type": "array"
         },
+        "referenced_workflows": {
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
         "repository": {
           "$ref": "#/definitions/repository-lite"
         },
@@ -22453,6 +22468,9 @@
       "$schema": "http://json-schema.org/draft-07/schema",
       "oneOf": [
         {
+          "$ref": "#/definitions/workflow-step-queued"
+        },
+        {
           "$ref": "#/definitions/workflow-step-in_progress"
         },
         {
@@ -22539,6 +22557,43 @@
         "completed_at"
       ],
       "title": "Workflow Step (In Progress)",
+      "type": "object"
+    },
+    "workflow-step-queued": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "completed_at": {
+          "type": "null"
+        },
+        "conclusion": {
+          "type": "null"
+        },
+        "name": {
+          "type": "string"
+        },
+        "number": {
+          "type": "integer"
+        },
+        "started_at": {
+          "type": "null"
+        },
+        "status": {
+          "enum": [
+            "queued"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "status",
+        "conclusion",
+        "number",
+        "started_at",
+        "completed_at"
+      ],
+      "title": "Workflow Step (Queued)",
       "type": "object"
     },
     "workflow_dispatch$event": {
@@ -22761,7 +22816,7 @@
               "type": "integer"
             },
             "run_id": {
-              "type": "number"
+              "type": "integer"
             },
             "run_url": {
               "format": "uri",
