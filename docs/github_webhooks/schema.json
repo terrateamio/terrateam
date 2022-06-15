@@ -12766,6 +12766,28 @@
       "additionalProperties": false,
       "title": "Workflow Step (Completed)"
     },
+    "workflow-step-queued": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "required": [
+        "name",
+        "status",
+        "conclusion",
+        "number",
+        "started_at",
+        "completed_at"
+      ],
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "status": { "type": "string", "enum": ["queued"] },
+        "conclusion": { "type": "null" },
+        "number": { "type": "integer" },
+        "started_at": { "type": "null" },
+        "completed_at": { "type": "null" }
+      },
+      "additionalProperties": false,
+      "title": "Workflow Step (Queued)"
+    },
     "workflow-step-in_progress": {
       "$schema": "http://json-schema.org/draft-07/schema",
       "required": [
@@ -12792,6 +12814,7 @@
       "$schema": "http://json-schema.org/draft-07/schema",
       "type": "object",
       "oneOf": [
+        { "$ref": "#/definitions/workflow-step-queued" },
         { "$ref": "#/definitions/workflow-step-in_progress" },
         { "$ref": "#/definitions/workflow-step-completed" }
       ],
