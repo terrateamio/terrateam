@@ -18,7 +18,9 @@
 #define  _KQUEUE_WINDOWS_PLATFORM_H
 
 /* Require Windows Server 2003 or later */
+#if WINVER < 0x0502
 #define WINVER 0x0502
+#endif
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0502
 #endif
@@ -28,6 +30,7 @@
 #include <io.h>
 #include <malloc.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 #include "../common/queue.h"
 
