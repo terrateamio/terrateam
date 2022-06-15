@@ -12686,6 +12686,7 @@
         "logs_url": { "type": "string", "format": "uri" },
         "node_id": { "type": "string" },
         "name": { "type": "string" },
+        "path": { "type": "string" },
         "pull_requests": {
           "type": "array",
           "items": {
@@ -12717,6 +12718,12 @@
               }
             },
             "additionalProperties": false
+          }
+        },
+        "referenced_workflows": {
+          "type": "array",
+          "items": {
+            "type": "object"
           }
         },
         "repository": { "$ref": "#/definitions/repository-lite" },
