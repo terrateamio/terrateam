@@ -17,6 +17,8 @@
 #ifndef  _KQUEUE_WINDOWS_PLATFORM_H
 #define  _KQUEUE_WINDOWS_PLATFORM_H
 
+#include "config.h"
+
 /* Require Windows Server 2003 or later */
 #if WINVER < 0x0502
 #define WINVER 0x0502
