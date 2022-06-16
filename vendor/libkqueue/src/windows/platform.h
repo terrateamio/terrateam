@@ -123,9 +123,11 @@ int     windows_get_descriptor_type(struct knote *);
 # define unlikely(x) (x)
 #endif
 
+#ifdef _MSC_VER
 /* Function visibility macros */
 #define VISIBLE __declspec(dllexport)
 #define HIDDEN
+#endif
 
 #if !defined(__func__) && !defined(__GNUC__)
 #define __func__ __FUNCDNAME__
