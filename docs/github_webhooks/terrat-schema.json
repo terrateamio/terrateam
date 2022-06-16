@@ -228,15 +228,8 @@
         },
         "email": {
           "description": "The git author's email address.",
-          "oneOf": [
-            {
-              "format": "email",
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "format": "email",
+          "type": "string"
         },
         "name": {
           "description": "The git author's name.",
@@ -247,7 +240,6 @@
         }
       },
       "required": [
-        "email",
         "name"
       ],
       "title": "Committer",
@@ -334,14 +326,7 @@
           ]
         },
         "suspended_by": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/user"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/user"
         },
         "target_id": {
           "description": "The ID of the user or organization this token is being scoped to.",
@@ -381,8 +366,7 @@
         "created_at",
         "updated_at",
         "single_file_name",
-        "suspended_at",
-        "suspended_by"
+        "suspended_at"
       ],
       "title": "Installation",
       "type": "object"
@@ -868,14 +852,7 @@
           "type": "string"
         },
         "requester": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/user"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/user"
         },
         "sender": {
           "$ref": "#/definitions/user"
@@ -887,7 +864,6 @@
         "repository_selection",
         "repositories_added",
         "repositories_removed",
-        "requester",
         "sender"
       ],
       "title": "installation_repositories added event",
@@ -986,14 +962,7 @@
           "type": "string"
         },
         "requester": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/user"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/user"
         },
         "sender": {
           "$ref": "#/definitions/user"
@@ -1005,7 +974,6 @@
         "repository_selection",
         "repositories_added",
         "repositories_removed",
-        "requester",
         "sender"
       ],
       "title": "installation_repositories removed event",
@@ -1033,14 +1001,7 @@
           ]
         },
         "assignee": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/user"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/user"
         },
         "assignees": {
           "items": {
@@ -1053,17 +1014,11 @@
         },
         "body": {
           "description": "Contents of the issue",
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": "string"
         },
         "closed_at": {
           "format": "date-time",
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": "string"
         },
         "comments": {
           "type": "integer"
@@ -1104,14 +1059,7 @@
           "type": "boolean"
         },
         "milestone": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/milestone"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/milestone"
         },
         "node_id": {
           "type": "string"
@@ -1120,14 +1068,7 @@
           "type": "integer"
         },
         "performed_via_github_app": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/app"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/app"
         },
         "pull_request": {
           "additionalProperties": false,
@@ -1212,15 +1153,11 @@
         "number",
         "title",
         "user",
-        "assignees",
-        "milestone",
         "comments",
         "created_at",
         "updated_at",
-        "closed_at",
         "author_association",
         "active_lock_reason",
-        "body",
         "reactions"
       ],
       "title": "Issue",
@@ -1258,14 +1195,7 @@
           "type": "string"
         },
         "performed_via_github_app": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/app"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/app"
         },
         "reactions": {
           "$ref": "#/definitions/reactions"
@@ -1293,7 +1223,6 @@
         "created_at",
         "updated_at",
         "author_association",
-        "performed_via_github_app",
         "body",
         "reactions"
       ],
@@ -1324,14 +1253,7 @@
             {
               "properties": {
                 "assignee": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/definitions/user"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
+                  "$ref": "#/definitions/user"
                 },
                 "labels": {
                   "items": {
@@ -1354,8 +1276,7 @@
               "required": [
                 "labels",
                 "state",
-                "locked",
-                "assignee"
+                "locked"
               ],
               "tsAdditionalProperties": false,
               "type": "object"
@@ -1407,14 +1328,7 @@
             {
               "properties": {
                 "assignee": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/definitions/user"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
+                  "$ref": "#/definitions/user"
                 },
                 "labels": {
                   "items": {
@@ -1437,8 +1351,7 @@
               "required": [
                 "labels",
                 "state",
-                "locked",
-                "assignee"
+                "locked"
               ],
               "tsAdditionalProperties": false,
               "type": "object"
@@ -1510,14 +1423,7 @@
             {
               "properties": {
                 "assignee": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/definitions/user"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
+                  "$ref": "#/definitions/user"
                 },
                 "labels": {
                   "items": {
@@ -1540,8 +1446,7 @@
               "required": [
                 "labels",
                 "state",
-                "locked",
-                "assignee"
+                "locked"
               ],
               "tsAdditionalProperties": false,
               "type": "object"
@@ -1902,14 +1807,7 @@
           "type": "integer"
         },
         "assignee": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/user"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/user"
         },
         "assignees": {
           "items": {
@@ -1921,14 +1819,7 @@
           "$ref": "#/definitions/author_association"
         },
         "auto_merge": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/auto-merge"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/auto-merge"
         },
         "base": {
           "additionalProperties": false,
@@ -2084,24 +1975,10 @@
           ]
         },
         "merged_by": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/user"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/user"
         },
         "milestone": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/milestone"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/milestone"
         },
         "node_id": {
           "type": "string"
@@ -2197,12 +2074,10 @@
         "closed_at",
         "merged_at",
         "merge_commit_sha",
-        "assignee",
         "assignees",
         "requested_reviewers",
         "requested_teams",
         "labels",
-        "milestone",
         "commits_url",
         "review_comments_url",
         "review_comment_url",
@@ -2212,14 +2087,12 @@
         "base",
         "_links",
         "author_association",
-        "auto_merge",
         "active_lock_reason",
         "draft",
         "merged",
         "mergeable",
         "rebaseable",
         "mergeable_state",
-        "merged_by",
         "comments",
         "review_comments",
         "maintainer_can_modify",
@@ -3568,14 +3441,7 @@
         },
         "head_commit": {
           "description": "For pushes where `after` is or points to a commit object, an expanded representation of that commit. For pushes where `after` refers to an annotated tag object, an expanded representation of the commit pointed to by the annotated tag.",
-          "oneOf": [
-            {
-              "$ref": "#/definitions/commit"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/commit"
         },
         "installation": {
           "$ref": "#/definitions/installation-lite"
@@ -3607,7 +3473,6 @@
         "base_ref",
         "compare",
         "commits",
-        "head_commit",
         "repository",
         "pusher",
         "sender"
@@ -3889,14 +3754,7 @@
           "type": "string"
         },
         "license": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/license"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/license"
         },
         "master_branch": {
           "type": "string"
@@ -3964,9 +3822,6 @@
             {
               "format": "date-time",
               "type": "string"
-            },
-            {
-              "type": "null"
             }
           ]
         },
@@ -4094,7 +3949,6 @@
         "deployments_url",
         "created_at",
         "updated_at",
-        "pushed_at",
         "git_url",
         "ssh_url",
         "clone_url",
@@ -4113,7 +3967,6 @@
         "mirror_url",
         "archived",
         "open_issues_count",
-        "license",
         "forks",
         "open_issues",
         "watchers",
@@ -4414,14 +4267,7 @@
           ]
         },
         "assignee": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/user"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/user"
         },
         "assignees": {
           "items": {
@@ -4433,14 +4279,7 @@
           "$ref": "#/definitions/author_association"
         },
         "auto_merge": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/auto-merge"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/auto-merge"
         },
         "base": {
           "additionalProperties": false,
@@ -4558,14 +4397,7 @@
           ]
         },
         "milestone": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/milestone"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/milestone"
         },
         "node_id": {
           "type": "string"
@@ -4648,12 +4480,10 @@
         "closed_at",
         "merged_at",
         "merge_commit_sha",
-        "assignee",
         "assignees",
         "requested_reviewers",
         "requested_teams",
         "labels",
-        "milestone",
         "draft",
         "commits_url",
         "review_comments_url",
@@ -4664,7 +4494,6 @@
         "base",
         "_links",
         "author_association",
-        "auto_merge",
         "active_lock_reason"
       ],
       "title": "Simple Pull Request",
@@ -5178,15 +5007,8 @@
           "type": "string"
         },
         "previous_attempt_url": {
-          "oneOf": [
-            {
-              "format": "uri",
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "format": "uri",
+          "type": "string"
         },
         "pull_requests": {
           "items": {
@@ -5329,7 +5151,6 @@
         "workflow_url",
         "run_attempt",
         "run_started_at",
-        "previous_attempt_url",
         "actor",
         "triggering_actor"
       ],
@@ -5469,16 +5290,9 @@
       "properties": {
         "inputs": {
           "description": "Inputs to the workflow. Each key represents the name of the input while it's value represents the value of that input.",
-          "oneOf": [
-            {
-              "additionalProperties": true,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "additionalProperties": true,
+          "properties": {},
+          "type": "object"
         },
         "installation": {
           "$ref": "#/definitions/installation-lite"
@@ -5502,7 +5316,6 @@
         }
       },
       "required": [
-        "inputs",
         "ref",
         "repository",
         "sender",
