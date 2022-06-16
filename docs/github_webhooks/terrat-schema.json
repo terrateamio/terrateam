@@ -19,55 +19,6 @@
         "events": {
           "description": "The list of events for the GitHub app",
           "items": {
-            "enum": [
-              "branch_protection_rule",
-              "check_run",
-              "check_suite",
-              "code_scanning_alert",
-              "commit_comment",
-              "content_reference",
-              "create",
-              "delete",
-              "deployment",
-              "deployment_review",
-              "deployment_status",
-              "deploy_key",
-              "discussion",
-              "discussion_comment",
-              "fork",
-              "gollum",
-              "issues",
-              "issue_comment",
-              "label",
-              "member",
-              "membership",
-              "merge_group",
-              "milestone",
-              "organization",
-              "org_block",
-              "page_build",
-              "project",
-              "project_card",
-              "project_column",
-              "public",
-              "pull_request",
-              "pull_request_review",
-              "pull_request_review_comment",
-              "push",
-              "registry_package",
-              "release",
-              "repository",
-              "repository_dispatch",
-              "secret_scanning_alert",
-              "star",
-              "status",
-              "team",
-              "team_add",
-              "watch",
-              "workflow_dispatch",
-              "workflow_job",
-              "workflow_run"
-            ],
             "type": "string"
           },
           "type": "array"
@@ -95,262 +46,10 @@
           "$ref": "#/definitions/user"
         },
         "permissions": {
-          "additionalProperties": false,
-          "description": "The set of permissions for the GitHub app",
-          "properties": {
-            "actions": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "administration": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "checks": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "content_references": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "contents": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "deployments": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "discussions": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "emails": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "environments": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "issues": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "keys": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "members": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "merge_queues": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "metadata": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "organization_administration": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "organization_hooks": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "organization_packages": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "organization_plan": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "organization_projects": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "organization_secrets": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "organization_self_hosted_runners": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "organization_user_blocking": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "packages": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "pages": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "pull_requests": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "repository_hooks": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "repository_projects": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "secret_scanning_alerts": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "secrets": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "security_events": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "security_scanning_alert": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "single_file": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "statuses": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "team_discussions": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "vulnerability_alerts": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "workflows": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            }
+          "additionalProperties": {
+            "type": "string"
           },
+          "description": "The set of permissions for the GitHub app",
           "type": "object"
         },
         "slug": {
@@ -379,16 +78,6 @@
     "author_association": {
       "$schema": "http://json-schema.org/draft-07/schema",
       "description": "How the author is associated with the repository.",
-      "enum": [
-        "COLLABORATOR",
-        "CONTRIBUTOR",
-        "FIRST_TIMER",
-        "FIRST_TIME_CONTRIBUTOR",
-        "MANNEQUIN",
-        "MEMBER",
-        "NONE",
-        "OWNER"
-      ],
       "title": "AuthorAssociation",
       "type": "string"
     },
@@ -595,58 +284,6 @@
         },
         "events": {
           "items": {
-            "enum": [
-              "branch_protection_rule",
-              "check_run",
-              "check_suite",
-              "code_scanning_alert",
-              "commit_comment",
-              "content_reference",
-              "create",
-              "delete",
-              "deployment",
-              "deployment_review",
-              "deployment_status",
-              "deploy_key",
-              "discussion",
-              "discussion_comment",
-              "fork",
-              "gollum",
-              "issues",
-              "issue_comment",
-              "label",
-              "member",
-              "membership",
-              "merge_queue_entry",
-              "milestone",
-              "organization",
-              "org_block",
-              "page_build",
-              "project",
-              "projects_v2_item",
-              "project_card",
-              "project_column",
-              "public",
-              "pull_request",
-              "pull_request_review",
-              "pull_request_review_comment",
-              "pull_request_review_thread",
-              "push",
-              "registry_package",
-              "release",
-              "repository",
-              "repository_dispatch",
-              "secret_scanning_alert",
-              "secret_scanning_alert_location",
-              "star",
-              "status",
-              "team",
-              "team_add",
-              "watch",
-              "workflow_dispatch",
-              "workflow_job",
-              "workflow_run"
-            ],
             "type": "string"
           },
           "type": "array"
@@ -663,253 +300,8 @@
           "type": "integer"
         },
         "permissions": {
-          "additionalProperties": false,
-          "properties": {
-            "actions": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "administration": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "checks": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "content_references": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "contents": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "deployments": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "discussions": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "emails": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "environments": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "issues": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "members": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "metadata": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "organization_administration": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "organization_events": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "organization_hooks": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "organization_packages": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "organization_plan": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "organization_projects": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "organization_secrets": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "organization_self_hosted_runners": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "organization_user_blocking": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "packages": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "pages": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "pull_requests": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "repository_hooks": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "repository_projects": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "secret_scanning_alerts": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "secrets": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "security_events": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "security_scanning_alert": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "single_file": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "statuses": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "team_discussions": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "vulnerability_alerts": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "workflows": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            }
+          "additionalProperties": {
+            "type": "string"
           },
           "required": [],
           "type": "object"
@@ -920,10 +312,6 @@
         },
         "repository_selection": {
           "description": "Describe whether all repositories have been selected or there's a selection involved",
-          "enum": [
-            "all",
-            "selected"
-          ],
           "type": "string"
         },
         "single_file_name": {
@@ -1639,13 +1027,6 @@
       "description": "The [issue](https://docs.github.com/en/rest/reference/issues) itself.",
       "properties": {
         "active_lock_reason": {
-          "enum": [
-            "resolved",
-            "off-topic",
-            "too heated",
-            "spam",
-            null
-          ],
           "type": [
             "string",
             "null"
@@ -2512,13 +1893,6 @@
           "type": "object"
         },
         "active_lock_reason": {
-          "enum": [
-            "resolved",
-            "off-topic",
-            "too heated",
-            "spam",
-            null
-          ],
           "type": [
             "string",
             "null"
@@ -2985,11 +2359,6 @@
         "start_side": {
           "default": "RIGHT",
           "description": "The side of the first line of the range for a multi-line comment.",
-          "enum": [
-            "LEFT",
-            "RIGHT",
-            null
-          ],
           "type": [
             "string",
             "null"
@@ -4248,32 +3617,10 @@
     },
     "reactions": {
       "$schema": "http://json-schema.org/draft-07/schema",
-      "additionalProperties": false,
+      "additionalProperties": {
+        "type": "integer"
+      },
       "properties": {
-        "+1": {
-          "type": "integer"
-        },
-        "-1": {
-          "type": "integer"
-        },
-        "confused": {
-          "type": "integer"
-        },
-        "eyes": {
-          "type": "integer"
-        },
-        "heart": {
-          "type": "integer"
-        },
-        "hooray": {
-          "type": "integer"
-        },
-        "laugh": {
-          "type": "integer"
-        },
-        "rocket": {
-          "type": "integer"
-        },
         "total_count": {
           "type": "integer"
         },
@@ -4284,15 +3631,7 @@
       },
       "required": [
         "url",
-        "total_count",
-        "+1",
-        "-1",
-        "laugh",
-        "confused",
-        "heart",
-        "hooray",
-        "eyes",
-        "rocket"
+        "total_count"
       ],
       "title": "Reactions",
       "type": "object"
@@ -4601,29 +3940,9 @@
           "$ref": "#/definitions/user"
         },
         "permissions": {
-          "additionalProperties": false,
-          "properties": {
-            "admin": {
-              "type": "boolean"
-            },
-            "maintain": {
-              "type": "boolean"
-            },
-            "pull": {
-              "type": "boolean"
-            },
-            "push": {
-              "type": "boolean"
-            },
-            "triage": {
-              "type": "boolean"
-            }
+          "additionalProperties": {
+            "type": "boolean"
           },
-          "required": [
-            "pull",
-            "push",
-            "admin"
-          ],
           "type": "object"
         },
         "private": {
@@ -4717,11 +4036,6 @@
           "type": "boolean"
         },
         "visibility": {
-          "enum": [
-            "public",
-            "private",
-            "internal"
-          ],
           "type": "string"
         },
         "watchers": {
@@ -5094,13 +4408,6 @@
           "type": "object"
         },
         "active_lock_reason": {
-          "enum": [
-            "resolved",
-            "off-topic",
-            "too heated",
-            "spam",
-            null
-          ],
           "type": [
             "string",
             "null"
@@ -5686,13 +4993,6 @@
           ]
         },
         "conclusion": {
-          "enum": [
-            "success",
-            "failure",
-            "cancelled",
-            "skipped",
-            null
-          ],
           "type": [
             "string",
             "null"
@@ -5764,11 +5064,6 @@
         },
         "status": {
           "description": "The current status of the job. Can be `queued`, `in_progress`, or `completed`.",
-          "enum": [
-            "queued",
-            "in_progress",
-            "completed"
-          ],
           "type": "string"
         },
         "steps": {
@@ -5834,17 +5129,6 @@
           "type": "string"
         },
         "conclusion": {
-          "enum": [
-            "success",
-            "failure",
-            "neutral",
-            "cancelled",
-            "timed_out",
-            "action_required",
-            "stale",
-            "skipped",
-            null
-          ],
           "type": [
             "string",
             "null"
@@ -5994,13 +5278,6 @@
           "type": "string"
         },
         "status": {
-          "enum": [
-            "requested",
-            "in_progress",
-            "completed",
-            "queued",
-            "waiting"
-          ],
           "type": "string"
         },
         "triggering_actor": {
@@ -6083,11 +5360,6 @@
           "type": "string"
         },
         "conclusion": {
-          "enum": [
-            "failure",
-            "skipped",
-            "success"
-          ],
           "type": "string"
         },
         "name": {
@@ -6269,12 +5541,6 @@
             {
               "properties": {
                 "conclusion": {
-                  "enum": [
-                    "success",
-                    "failure",
-                    "cancelled",
-                    "skipped"
-                  ],
                   "type": "string"
                 }
               },
@@ -6542,16 +5808,6 @@
             {
               "properties": {
                 "conclusion": {
-                  "enum": [
-                    "success",
-                    "failure",
-                    "neutral",
-                    "cancelled",
-                    "timed_out",
-                    "action_required",
-                    "stale",
-                    "skipped"
-                  ],
                   "type": "string"
                 }
               },
