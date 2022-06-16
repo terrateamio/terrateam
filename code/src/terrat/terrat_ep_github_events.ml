@@ -1,4 +1,4 @@
-module Gw = Githubc2_webhooks
+module Gw = Terrat_github_webhooks
 
 module Sql = struct
   let read fname =
@@ -222,7 +222,7 @@ module Event = struct
     config : Terrat_config.t;
     installation_id : int;
     pull_number : int;
-    repository : Githubc2_webhooks.Repository.t;
+    repository : Gw.Repository.t;
     request_id : string;
     run_type : Terrat_work_manifest.Run_type.t;
     tag_query : Terrat_tag_set.t;
@@ -1372,7 +1372,10 @@ let post config storage ctx =
   let headers = Brtl_ctx.Request.headers request in
   let body = Brtl_ctx.body ctx in
   match
-    Githubc2_webhooks_decoder.run ?secret:(Terrat_config.github_webhook_secret config) headers body
+    Terrat_github_webhooks_decoder.run
+      ?secret:(Terrat_config.github_webhook_secret config)
+      headers
+      body
   with
   | Ok (Gw.Event.Installation_event installation_event) ->
       process_event_handler config storage ctx (fun () ->
@@ -1388,60 +1391,12 @@ let post config storage ctx =
           process_workflow_job (Brtl_ctx.token ctx) config storage event)
   | Ok (Gw.Event.Push_event _) ->
       Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-  | Ok (Gw.Event.Check_run_event _) | Ok (Gw.Event.Check_suite_event _) ->
-      Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
   | Ok (Gw.Event.Workflow_run_event _) ->
       Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-  | Ok (Gw.Event.Branch_protection_rule_event _)
-  | Ok (Gw.Event.Code_scanning_alert_event _)
-  | Ok (Gw.Event.Commit_comment_event _)
-  | Ok (Gw.Event.Create_event _)
-  | Ok (Gw.Event.Delete_event _)
-  | Ok (Gw.Event.Deploy_key_event _)
-  | Ok (Gw.Event.Deployment_event _)
-  | Ok (Gw.Event.Deployment_status_event _)
-  | Ok (Gw.Event.Discussion_event _)
-  | Ok (Gw.Event.Discussion_comment_event _)
-  | Ok (Gw.Event.Fork_event _)
-  | Ok (Gw.Event.Github_app_authorization_event _)
-  | Ok (Gw.Event.Gollum_event _)
-  | Ok (Gw.Event.Installation_repositories_event _)
-  | Ok (Gw.Event.Issues_event _)
-  | Ok (Gw.Event.Label_event _)
-  | Ok (Gw.Event.Marketplace_purchase_event _)
-  | Ok (Gw.Event.Member_event _)
-  | Ok (Gw.Event.Membership_event _)
-  | Ok (Gw.Event.Meta_event _)
-  | Ok (Gw.Event.Milestone_event _)
-  | Ok (Gw.Event.Org_block_event _)
-  | Ok (Gw.Event.Organization_event _)
-  | Ok (Gw.Event.Package_event _)
-  | Ok (Gw.Event.Page_build_event _)
-  | Ok (Gw.Event.Ping_event _)
-  | Ok (Gw.Event.Project_card_event _)
-  | Ok (Gw.Event.Project_column_event _)
-  | Ok (Gw.Event.Project_event _)
-  | Ok (Gw.Event.Projects_v2_item_event _)
-  | Ok (Gw.Event.Public_event _)
-  | Ok (Gw.Event.Pull_request_review_comment_event _)
-  | Ok (Gw.Event.Pull_request_review_event _)
-  | Ok (Gw.Event.Pull_request_review_thread_event _)
-  | Ok (Gw.Event.Release_event _)
-  | Ok (Gw.Event.Repository_dispatch_event _)
-  | Ok (Gw.Event.Repository_event _)
-  | Ok (Gw.Event.Repository_import_event _)
-  | Ok (Gw.Event.Repository_vulnerability_alert_event _)
-  | Ok (Gw.Event.Secret_scanning_alert_event _)
-  | Ok (Gw.Event.Security_advisory_event _)
-  | Ok (Gw.Event.Sponsorship_event _)
-  | Ok (Gw.Event.Star_event _)
-  | Ok (Gw.Event.Status_event _)
-  | Ok (Gw.Event.Team_add_event _)
-  | Ok (Gw.Event.Team_event _)
-  | Ok (Gw.Event.Watch_event _)
-  | Ok (Gw.Event.Workflow_dispatch_event _) -> assert false
-  | Error (#Githubc2_webhooks_decoder.err as err) ->
+  | Ok (Gw.Event.Installation_repositories_event _) | Ok (Gw.Event.Workflow_dispatch_event _) ->
+      assert false
+  | Error (#Terrat_github_webhooks_decoder.err as err) ->
       Logs.warn (fun m ->
-          m "GITHUB_EVENT : UNKNOWN_EVENT : %s" (Githubc2_webhooks_decoder.show_err err));
+          m "GITHUB_EVENT : UNKNOWN_EVENT : %s" (Terrat_github_webhooks_decoder.show_err err));
       Abb.Future.return
         (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
