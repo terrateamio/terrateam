@@ -163,13 +163,6 @@
           "type": "string",
           "const": "plan"
         },
-        "terragrunt": {
-          "type": "boolean",
-          "default": false
-        },
-        "terraform_version": {
-          "$ref": "#/definitions/terraform-version"
-        },
         "extra_args": {
           "type": "array",
           "items": { "type": "string" }
@@ -192,13 +185,6 @@
         "type": {
           "type": "string",
           "const": "apply"
-        },
-        "terragrunt": {
-          "type": "boolean",
-          "default": false
-        },
-        "terraform_version": {
-          "$ref": "#/definitions/terraform-version"
         },
         "extra_args": {
           "type": "array",
@@ -234,6 +220,13 @@
       "properties": {
         "tag_query": {
           "type": "string"
+        },
+        "terragrunt": {
+          "type": "boolean",
+          "default": false
+        },
+        "terraform_version": {
+          "$ref": "#/definitions/terraform-version"
         },
         "plan": { "$ref": "#/definitions/workflow-op-list" },
         "apply": { "$ref": "#/definitions/workflow-op-list" }
