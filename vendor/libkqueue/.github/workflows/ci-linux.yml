@@ -35,13 +35,14 @@ jobs:
       fail-fast: false
       matrix:
           env:
-            - { CC: gcc,    OS: ubuntu-20.04, NAME: release-gcc,               BUILD_TYPE: Release    }
-            - { CC: clang,  OS: ubuntu-20.04, NAME: release-clang,             BUILD_TYPE: Release    }
-            - { CC: clang,  OS: ubuntu-20.04, NAME: debug-asan,                BUILD_TYPE: Debug,    ENABLE_ASAN: YES,   ENABLE_LSAN: YES,   ENABLE_UBSAN: YES }
-            - { CC: clang,  OS: ubuntu-20.04, NAME: debug-tsan,                BUILD_TYPE: Debug,    ENABLE_TSAN: YES }
+            - { CC: gcc,      OS: ubuntu-20.04, NAME: release-gcc,               BUILD_TYPE: Release    }
+            - { CC: clang,    OS: ubuntu-20.04, NAME: release-clang,             BUILD_TYPE: Release    }
+            - { CC: musl-gcc, OS: ubuntu-20.04, NAME: release-musl-gcc,          BUILD_TYPE: Release    }
+            - { CC: clang,    OS: ubuntu-20.04, NAME: debug-asan,                BUILD_TYPE: Debug,    ENABLE_ASAN: YES,   ENABLE_LSAN: YES,   ENABLE_UBSAN: YES }
+            - { CC: clang,    OS: ubuntu-20.04, NAME: debug-tsan,                BUILD_TYPE: Debug,    ENABLE_TSAN: YES }
             # Older kernel triggers a switch to posix/proc as it doesn't support pidfd.
-            - { CC: clang,  OS: ubuntu-18.04, NAME: debug-asan-posix-proc,     BUILD_TYPE: Debug,    ENABLE_ASAN: YES,   ENABLE_LSAN: YES,   ENABLE_UBSAN: YES }
-            - { CC: clang,  OS: ubuntu-18.04, NAME: debug-tsan-posix-proc,     BUILD_TYPE: Debug,    ENABLE_TSAN: YES }
+            - { CC: clang,    OS: ubuntu-18.04, NAME: debug-asan-posix-proc,     BUILD_TYPE: Debug,    ENABLE_ASAN: YES,   ENABLE_LSAN: YES,   ENABLE_UBSAN: YES }
+            - { CC: clang,    OS: ubuntu-18.04, NAME: debug-tsan-posix-proc,     BUILD_TYPE: Debug,    ENABLE_TSAN: YES }
 
     runs-on: ${{ matrix.env.OS }}
 
@@ -77,6 +78,11 @@ jobs:
       run: |
         sudo apt-get install -y --no-install-recommends gcc-7 gccgo-7 gdb
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 9999 && sudo update-alternatives --config gcc
+
+    - name: Install MUSL
+      if: ${{ matrix.env.CC == 'musl-gcc' }}
+      run: |
+        sudo apt-get install -y --no-install-recommends musl musl-dev musl-tools
 
     - name: Install other build deps
       run: |
