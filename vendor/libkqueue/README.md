@@ -120,7 +120,7 @@ When building under clang and some later versions of GCC, you can add the follow
 - `-DENABLE_ASAN=YES`, enables address sansitizer (detects use after free issues, and out of bounds accesses).
 - `-DENABLE_LSAN=YES`, enables leak sanitizer (detects memory leaks).
 - `-DENABLE_TSAN=YES`, enables thread sanitizer (detects races).
-- `-DENABLE_UBSAN=YES`, enables undefined behaviour sanitizer (detects misaligned accesses, interger wrap, divide by zero etc...).
+- `-DENABLE_UBSAN=YES`, enables undefined behaviour sanitizer (detects misaligned accesses, integer wrap, divide by zero etc...).
 
 libkqueue filter
 ----------------
