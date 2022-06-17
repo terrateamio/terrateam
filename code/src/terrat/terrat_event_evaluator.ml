@@ -9,6 +9,8 @@ module Msg = struct
     | Repo_config_failure of string
     | Pull_request_not_appliable of 'pull_request
     | Pull_request_not_mergeable of 'pull_request
+    | Apply_no_matching_dirspaces
+    | Plan_no_matching_dirspaces
 end
 
 module type S = sig
@@ -180,6 +182,12 @@ module Make (S : S) = struct
                               "EVENT_EVALUATOR : %s : NOOP : AUTOPLAN_NO_MATCHES"
                               (S.Event.request_id event));
                         Abb.Future.return (Ok None)
+                    | _, [] ->
+                        Logs.info (fun m ->
+                            m
+                              "EVENT_EVALUATOR : %s : NOOP : PLAN_NO_MATCHING_DIRSPACES"
+                              (S.Event.request_id event));
+                        Abb.Future.return (Ok (Some Msg.Plan_no_matching_dirspaces))
                     | _, _ ->
                         let work_manifest =
                           Terrat_work_manifest.
@@ -245,6 +253,12 @@ module Make (S : S) = struct
                               "EVENT_EVALUATOR : %s : NOOP : AUTOAPPLY_NO_MATCHES"
                               (S.Event.request_id event));
                         Abb.Future.return (Ok None)
+                    | _, [] ->
+                        Logs.info (fun m ->
+                            m
+                              "EVENT_EVALUATOR : %s : NOOP : APPLY_NO_MATCHING_DIRSPACES"
+                              (S.Event.request_id event));
+                        Abb.Future.return (Ok (Some Msg.Apply_no_matching_dirspaces))
                     | _, _ -> (
                         Logs.info (fun m ->
                             m

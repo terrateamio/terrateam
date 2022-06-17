@@ -9,6 +9,8 @@ module Msg : sig
     | Repo_config_failure of string
     | Pull_request_not_appliable of 'pull_request
     | Pull_request_not_mergeable of 'pull_request
+    | Apply_no_matching_dirspaces
+    | Plan_no_matching_dirspaces
 end
 
 module type S = sig

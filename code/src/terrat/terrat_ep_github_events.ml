@@ -214,6 +214,8 @@ module Tmpl = struct
   let pull_request_not_mergeable = read "github_pull_request_not_mergeable.tmpl"
   let terrateam_comment_unknown_action = read "terrateam_comment_unknown_action.tmpl"
   let terrateam_comment_help = read "terrateam_comment_help.tmpl"
+  let apply_no_matching_dirspaces = read "apply_no_matching_dirspaces.tmpl"
+  let plan_no_matching_dirspaces = read "plan_no_matching_dirspaces.tmpl"
 end
 
 module Event = struct
@@ -932,6 +934,20 @@ module Evaluator = Terrat_event_evaluator.Make (struct
         apply_template_and_publish
           "PULL_REQUEST_NOT_MERGEABLE"
           Tmpl.pull_request_not_mergeable
+          kv
+          event
+    | Terrat_event_evaluator.Msg.Apply_no_matching_dirspaces ->
+        let kv = Snabela.Kv.(Map.of_list []) in
+        apply_template_and_publish
+          "APPLY_NO_MATCHING_DIRSPACES"
+          Tmpl.apply_no_matching_dirspaces
+          kv
+          event
+    | Terrat_event_evaluator.Msg.Plan_no_matching_dirspaces ->
+        let kv = Snabela.Kv.(Map.of_list []) in
+        apply_template_and_publish
+          "PLAN_NO_MATCHING_DIRSPACES"
+          Tmpl.plan_no_matching_dirspaces
           kv
           event
 end)
