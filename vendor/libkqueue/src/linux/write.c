@@ -13,12 +13,18 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include "private.h"
 
-#include <linux/sockios.h>
+#if HAVE_LINUX_SOCKIOS_H
+# include <linux/sockios.h>
+#endif
+
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
-#include "private.h"
+#ifndef SIOCOUTQ
+# define SIOCOUTQ TIOCOUTQ
+#endif
 
 int
 evfilt_write_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,

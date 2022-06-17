@@ -1,9 +1,14 @@
-
+#cmakedefine01 HAVE_ERR_H
+#cmakedefine01 HAVE_SYS_EVENTFD_H
+#cmakedefine01 HAVE_SYS_QUEUE_H
 #cmakedefine01 HAVE_SYS_SIGNALFD_H
 #cmakedefine01 HAVE_SYS_TIMERFD_H
-#cmakedefine01 HAVE_SYS_EVENTFD_H
-#cmakedefine01 HAVE_ERR_H
 #cmakedefine01 HAVE_SYS_TYPES_H
+
+#cmakedefine01 HAVE_LINUX_LIMITS_H
+#cmakedefine01 HAVE_LINUX_SOCKIOS_H
+#cmakedefine01 HAVE_LINUX_UNISTD_H
+#cmakedefine01 HAVE_SYSCALL_H
 
 #cmakedefine01 HAVE_EPOLLRDHUP
 #cmakedefine01 HAVE_NOTE_TRUNCATE

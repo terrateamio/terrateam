@@ -13,11 +13,18 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <linux/sockios.h>
+#include "private.h"
+
+#if HAVE_LINUX_SOCKIOS_H
+# include <linux/sockios.h>
+#endif
+
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
-#include "private.h"
+#ifndef SIOCINQ
+# define SIOCINQ FIONREAD
+#endif
 
 /*
  * Return the offset from the current position to end of file.

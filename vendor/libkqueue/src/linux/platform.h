@@ -20,7 +20,7 @@ struct filter;
 
 #include <sys/syscall.h>
 #include <sys/epoll.h>
-#include <sys/queue.h>
+
 #include <sys/inotify.h>
 #if HAVE_SYS_EVENTFD_H
 # include <sys/eventfd.h>
@@ -38,12 +38,24 @@ struct filter;
           return (0);
   }
 #endif
+
 #include <errno.h>
-#include <linux/limits.h>
 #include <pthread.h>
 #include <stdatomic.h>
 #include <string.h>
-#include <sys/queue.h>
+
+#if HAVE_LINUX_LIMITS_H
+#  include <linux/limits.h>
+#else
+#  include <limits.h>
+#endif
+
+#if HAVE_SYS_QUEUE_H
+# include <sys/queue.h>
+#else
+# include "../common/queue.h"
+#endif
+
 #include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -80,11 +92,14 @@ struct filter;
 #define atomic_ptr_load(p)            atomic_load(p)
 
 /*
- * Get the current thread ID
+ * Allow us to make arbitrary syscalls
  */
 # define _GNU_SOURCE
+#if HAVE_LINUX_UNISTD_H
 # include <linux/unistd.h>
-# include <unistd.h>
+#elif HAVE_SYSCALL_H
+# include <syscall.h>
+#endif
 #ifndef __ANDROID__
 extern long int syscall (long int __sysno, ...);
 #endif

@@ -13,10 +13,11 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include "private.h"
+
 #include <signal.h>
 #include <sys/socket.h>
 
-#include "private.h"
 
 int
 linux_evfilt_user_knote_enable(struct filter *filt, struct knote *kn);

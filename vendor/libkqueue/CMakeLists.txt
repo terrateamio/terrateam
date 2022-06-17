@@ -144,9 +144,10 @@ include(CheckIncludeFiles)
 include(CheckSymbolExists)
 include(GNUInstallDirs)
 
+check_include_files(sys/eventfd.h HAVE_SYS_EVENTFD_H)
+check_include_files(sys/queue.h HAVE_SYS_QUEUE_H)
 check_include_files(sys/signalfd.h HAVE_SYS_SIGNALFD_H)
 check_include_files(sys/timerfd.h HAVE_SYS_TIMERFD_H)
-check_include_files(sys/eventfd.h HAVE_SYS_EVENTFD_H)
 check_include_files(sys/types.h HAVE_SYS_TYPES_H)
 if(ENABLE_TESTING)
   check_include_files(err.h HAVE_ERR_H)
@@ -162,8 +163,6 @@ set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
 check_symbol_exists(ppoll poll.h HAVE_DECL_PPOLL)
 check_symbol_exists(SYS_pidfd_open sys/syscall.h HAVE_SYS_PIDFD_OPEN)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
-               ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
                     ${CMAKE_CURRENT_BINARY_DIR}/include)
 
@@ -207,6 +206,11 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "(Solaris|SunOS)")
        src/solaris/user.c
        )
 elseif(CMAKE_SYSTEM_NAME STREQUAL Linux)
+  check_include_files(linux/limits.h HAVE_LINUX_LIMITS_H)
+  check_include_files(linux/sockios.h HAVE_LINUX_SOCKIOS_H)
+  check_include_files(linux/unistd.h HAVE_LINUX_UNISTD_H)
+  check_include_files(syscall.h HAVE_SYSCALL_H)
+
   #
   #  Set the default prefix to something sane
   #
@@ -306,6 +310,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL Emscripten)
 else()
   target_link_libraries(kqueue PRIVATE Threads::Threads)
 endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
+               ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/libkqueue.pc.in"
                "${CMAKE_CURRENT_BINARY_DIR}/libkqueue.pc"
