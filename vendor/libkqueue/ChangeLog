@@ -1,6 +1,13 @@
 Unreleased
 ------------------------------------------------------------------------
  
+   * Fix: Various build system and include fixes to allow libkqueue
+     to build correctly with musl libc.
+     
+   * Fix: Various macro and include fixes for Windows/MinGW builds.
+     (Fixed by: neheb)
+     
+ 
 2022-04-27  v2.6.1
 ------------------------------------------------------------------------
 
