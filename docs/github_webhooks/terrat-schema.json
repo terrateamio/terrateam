@@ -1,0 +1,5722 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "app": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "description": "GitHub apps are a new way to extend GitHub. They can be installed directly on organizations and user accounts and granted access to specific repositories. They come with granular permissions and built-in webhooks. GitHub apps are first class actors within GitHub.",
+      "properties": {
+        "created_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "events": {
+          "description": "The list of events for the GitHub app",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "external_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "html_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "id": {
+          "description": "Unique identifier of the GitHub app",
+          "type": "integer"
+        },
+        "name": {
+          "description": "The name of the GitHub app",
+          "type": "string"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "owner": {
+          "$ref": "#/definitions/user"
+        },
+        "permissions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The set of permissions for the GitHub app",
+          "type": "object"
+        },
+        "slug": {
+          "description": "The slug name of the GitHub app",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "node_id",
+        "owner",
+        "name",
+        "description",
+        "external_url",
+        "html_url",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "App",
+      "type": "object"
+    },
+    "author_association": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "description": "How the author is associated with the repository.",
+      "title": "AuthorAssociation",
+      "type": "string"
+    },
+    "auto-merge": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "description": "The status of auto merging a pull request.",
+      "properties": {
+        "commit_message": {
+          "description": "Commit message for the merge commit.",
+          "type": "string"
+        },
+        "commit_title": {
+          "description": "Title for the merge commit message.",
+          "type": "string"
+        },
+        "enabled_by": {
+          "$ref": "#/definitions/user"
+        },
+        "merge_method": {
+          "description": "The merge method to use.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "enabled_by",
+        "merge_method",
+        "commit_title",
+        "commit_message"
+      ],
+      "title": "PullRequestAutoMerge",
+      "type": "object"
+    },
+    "commit": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "added": {
+          "description": "An array of files added in the commit.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "author": {
+          "$ref": "#/definitions/committer"
+        },
+        "committer": {
+          "$ref": "#/definitions/committer"
+        },
+        "distinct": {
+          "description": "Whether this commit is distinct from any that have been pushed before.",
+          "type": "boolean"
+        },
+        "id": {
+          "type": "string"
+        },
+        "message": {
+          "description": "The commit message.",
+          "type": "string"
+        },
+        "modified": {
+          "description": "An array of files modified by the commit.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "removed": {
+          "description": "An array of files removed in the commit.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "timestamp": {
+          "description": "The ISO 8601 timestamp of the commit.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "tree_id": {
+          "type": "string"
+        },
+        "url": {
+          "description": "URL that points to the commit API resource.",
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "tree_id",
+        "distinct",
+        "message",
+        "timestamp",
+        "url",
+        "author",
+        "committer",
+        "added",
+        "removed",
+        "modified"
+      ],
+      "title": "Commit",
+      "type": "object"
+    },
+    "commit-simple": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "author": {
+          "$ref": "#/definitions/committer"
+        },
+        "committer": {
+          "$ref": "#/definitions/committer"
+        },
+        "id": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "tree_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "tree_id",
+        "message",
+        "timestamp",
+        "author",
+        "committer"
+      ],
+      "title": "SimpleCommit",
+      "type": "object"
+    },
+    "committer": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "description": "Metaproperties for Git author/committer information.",
+      "properties": {
+        "date": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "email": {
+          "description": "The git author's email address.",
+          "format": "email",
+          "type": "string"
+        },
+        "name": {
+          "description": "The git author's name.",
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Committer",
+      "type": "object"
+    },
+    "installation": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "description": "The GitHub App installation.",
+      "properties": {
+        "access_tokens_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "account": {
+          "$ref": "#/definitions/user"
+        },
+        "app_id": {
+          "type": "integer"
+        },
+        "app_slug": {
+          "type": "string"
+        },
+        "created_at": {
+          "oneOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            }
+          ]
+        },
+        "events": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "has_multiple_single_files": {
+          "type": "boolean"
+        },
+        "html_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "id": {
+          "description": "The ID of the installation.",
+          "type": "integer"
+        },
+        "permissions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "required": [],
+          "type": "object"
+        },
+        "repositories_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "repository_selection": {
+          "description": "Describe whether all repositories have been selected or there's a selection involved",
+          "type": "string"
+        },
+        "single_file_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "single_file_paths": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "suspended_at": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "suspended_by": {
+          "$ref": "#/definitions/user"
+        },
+        "target_id": {
+          "description": "The ID of the user or organization this token is being scoped to.",
+          "type": "integer"
+        },
+        "target_type": {
+          "enum": [
+            "User",
+            "Organization"
+          ],
+          "type": "string"
+        },
+        "updated_at": {
+          "oneOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "account",
+        "repository_selection",
+        "access_tokens_url",
+        "repositories_url",
+        "html_url",
+        "app_id",
+        "target_id",
+        "target_type",
+        "permissions",
+        "events",
+        "created_at",
+        "updated_at",
+        "single_file_name",
+        "suspended_at"
+      ],
+      "title": "Installation",
+      "type": "object"
+    },
+    "installation$created": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "created"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation"
+        },
+        "repositories": {
+          "description": "An array of repository objects that the installation can access.",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "full_name": {
+                "type": "string"
+              },
+              "id": {
+                "description": "Unique identifier of the repository",
+                "type": "integer"
+              },
+              "name": {
+                "description": "The name of the repository.",
+                "type": "string"
+              },
+              "node_id": {
+                "type": "string"
+              },
+              "private": {
+                "description": "Whether the repository is private or public.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "node_id",
+              "name",
+              "full_name",
+              "private"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "requester": {
+          "$ref": "#/definitions/user"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "installation",
+        "sender"
+      ],
+      "title": "installation created event",
+      "type": "object"
+    },
+    "installation$deleted": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "deleted"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation"
+        },
+        "repositories": {
+          "description": "An array of repository objects that the installation can access.",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "full_name": {
+                "type": "string"
+              },
+              "id": {
+                "description": "Unique identifier of the repository",
+                "type": "integer"
+              },
+              "name": {
+                "description": "The name of the repository.",
+                "type": "string"
+              },
+              "node_id": {
+                "type": "string"
+              },
+              "private": {
+                "description": "Whether the repository is private or public.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "node_id",
+              "name",
+              "full_name",
+              "private"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "requester": {
+          "type": "null"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "installation",
+        "sender"
+      ],
+      "title": "installation deleted event",
+      "type": "object"
+    },
+    "installation$new_permissions_accepted": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "new_permissions_accepted"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation"
+        },
+        "repositories": {
+          "description": "An array of repository objects that the installation can access.",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "full_name": {
+                "type": "string"
+              },
+              "id": {
+                "description": "Unique identifier of the repository",
+                "type": "integer"
+              },
+              "name": {
+                "description": "The name of the repository.",
+                "type": "string"
+              },
+              "node_id": {
+                "type": "string"
+              },
+              "private": {
+                "description": "Whether the repository is private or public.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "node_id",
+              "name",
+              "full_name",
+              "private"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "requester": {
+          "type": "null"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "installation",
+        "sender"
+      ],
+      "title": "installation new_permissions_accepted event",
+      "type": "object"
+    },
+    "installation$suspend": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "suspend"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/installation"
+            },
+            {
+              "properties": {
+                "suspended_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "suspended_by": {
+                  "$ref": "#/definitions/user"
+                }
+              },
+              "required": [
+                "suspended_by",
+                "suspended_at"
+              ],
+              "tsAdditionalProperties": false,
+              "type": "object"
+            }
+          ]
+        },
+        "repositories": {
+          "description": "An array of repository objects that the installation can access.",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "full_name": {
+                "type": "string"
+              },
+              "id": {
+                "description": "Unique identifier of the repository",
+                "type": "integer"
+              },
+              "name": {
+                "description": "The name of the repository.",
+                "type": "string"
+              },
+              "node_id": {
+                "type": "string"
+              },
+              "private": {
+                "description": "Whether the repository is private or public.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "node_id",
+              "name",
+              "full_name",
+              "private"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "requester": {
+          "type": "null"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "installation",
+        "sender"
+      ],
+      "title": "installation suspend event",
+      "type": "object"
+    },
+    "installation$unsuspend": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "unsuspend"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/installation"
+            },
+            {
+              "properties": {
+                "suspended_at": {
+                  "type": "null"
+                },
+                "suspended_by": {
+                  "type": "null"
+                }
+              },
+              "required": [
+                "suspended_by",
+                "suspended_at"
+              ],
+              "tsAdditionalProperties": false,
+              "type": "object"
+            }
+          ]
+        },
+        "repositories": {
+          "description": "An array of repository objects that the installation can access.",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "full_name": {
+                "type": "string"
+              },
+              "id": {
+                "description": "Unique identifier of the repository",
+                "type": "integer"
+              },
+              "name": {
+                "description": "The name of the repository.",
+                "type": "string"
+              },
+              "node_id": {
+                "type": "string"
+              },
+              "private": {
+                "description": "Whether the repository is private or public.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "node_id",
+              "name",
+              "full_name",
+              "private"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "requester": {
+          "type": "null"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "installation",
+        "sender"
+      ],
+      "title": "installation unsuspend event",
+      "type": "object"
+    },
+    "installation-lite": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "description": "Installation",
+      "properties": {
+        "id": {
+          "description": "The ID of the installation.",
+          "type": "integer"
+        },
+        "node_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "node_id"
+      ],
+      "title": "InstallationLite",
+      "type": "object"
+    },
+    "installation_event": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/installation$created"
+        },
+        {
+          "$ref": "#/definitions/installation$deleted"
+        },
+        {
+          "$ref": "#/definitions/installation$new_permissions_accepted"
+        },
+        {
+          "$ref": "#/definitions/installation$suspend"
+        },
+        {
+          "$ref": "#/definitions/installation$unsuspend"
+        }
+      ]
+    },
+    "installation_repositories$added": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "added"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation"
+        },
+        "repositories_added": {
+          "description": "An array of repository objects, which were added to the installation.",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "full_name": {
+                "type": "string"
+              },
+              "id": {
+                "description": "Unique identifier of the repository",
+                "type": "integer"
+              },
+              "name": {
+                "description": "The name of the repository.",
+                "type": "string"
+              },
+              "node_id": {
+                "type": "string"
+              },
+              "private": {
+                "description": "Whether the repository is private or public.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "node_id",
+              "name",
+              "full_name",
+              "private"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "repositories_removed": {
+          "description": "An array of repository objects, which were removed from the installation.",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "full_name": {
+                "type": "string"
+              },
+              "id": {
+                "description": "Unique identifier of the repository",
+                "type": "integer"
+              },
+              "name": {
+                "description": "The name of the repository.",
+                "type": "string"
+              },
+              "node_id": {
+                "type": "string"
+              },
+              "private": {
+                "description": "Whether the repository is private or public.",
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "maxItems": 0,
+          "type": "array"
+        },
+        "repository_selection": {
+          "description": "Describe whether all repositories have been selected or there's a selection involved",
+          "enum": [
+            "all",
+            "selected"
+          ],
+          "type": "string"
+        },
+        "requester": {
+          "$ref": "#/definitions/user"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "installation",
+        "repository_selection",
+        "repositories_added",
+        "repositories_removed",
+        "sender"
+      ],
+      "title": "installation_repositories added event",
+      "type": "object"
+    },
+    "installation_repositories$removed": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "removed"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation"
+        },
+        "repositories_added": {
+          "description": "An array of repository objects, which were added to the installation.",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "full_name": {
+                "type": "string"
+              },
+              "id": {
+                "description": "Unique identifier of the repository",
+                "type": "integer"
+              },
+              "name": {
+                "description": "The name of the repository.",
+                "type": "string"
+              },
+              "node_id": {
+                "type": "string"
+              },
+              "private": {
+                "description": "Whether the repository is private or public.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "node_id",
+              "name",
+              "full_name",
+              "private"
+            ],
+            "type": "object"
+          },
+          "maxItems": 0,
+          "type": "array"
+        },
+        "repositories_removed": {
+          "description": "An array of repository objects, which were removed from the installation.",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "full_name": {
+                "type": "string"
+              },
+              "id": {
+                "description": "Unique identifier of the repository",
+                "type": "integer"
+              },
+              "name": {
+                "description": "The name of the repository.",
+                "type": "string"
+              },
+              "node_id": {
+                "type": "string"
+              },
+              "private": {
+                "description": "Whether the repository is private or public.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "node_id",
+              "name",
+              "full_name",
+              "private"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "repository_selection": {
+          "description": "Describe whether all repositories have been selected or there's a selection involved",
+          "enum": [
+            "all",
+            "selected"
+          ],
+          "type": "string"
+        },
+        "requester": {
+          "$ref": "#/definitions/user"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "installation",
+        "repository_selection",
+        "repositories_added",
+        "repositories_removed",
+        "sender"
+      ],
+      "title": "installation_repositories removed event",
+      "type": "object"
+    },
+    "installation_repositories_event": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/installation_repositories$added"
+        },
+        {
+          "$ref": "#/definitions/installation_repositories$removed"
+        }
+      ]
+    },
+    "issue": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "description": "The [issue](https://docs.github.com/en/rest/reference/issues) itself.",
+      "properties": {
+        "active_lock_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "assignee": {
+          "$ref": "#/definitions/user"
+        },
+        "assignees": {
+          "items": {
+            "$ref": "#/definitions/user"
+          },
+          "type": "array"
+        },
+        "author_association": {
+          "$ref": "#/definitions/author_association"
+        },
+        "body": {
+          "description": "Contents of the issue",
+          "type": "string"
+        },
+        "closed_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "comments": {
+          "type": "integer"
+        },
+        "comments_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "draft": {
+          "type": "boolean"
+        },
+        "events_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "html_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "labels": {
+          "items": {
+            "$ref": "#/definitions/label"
+          },
+          "type": "array"
+        },
+        "labels_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "locked": {
+          "type": "boolean"
+        },
+        "milestone": {
+          "$ref": "#/definitions/milestone"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "number": {
+          "type": "integer"
+        },
+        "performed_via_github_app": {
+          "$ref": "#/definitions/app"
+        },
+        "pull_request": {
+          "additionalProperties": false,
+          "properties": {
+            "diff_url": {
+              "format": "uri",
+              "type": "string"
+            },
+            "html_url": {
+              "format": "uri",
+              "type": "string"
+            },
+            "merged_at": {
+              "format": "date-time",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "patch_url": {
+              "format": "uri",
+              "type": "string"
+            },
+            "url": {
+              "format": "uri",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "reactions": {
+          "$ref": "#/definitions/reactions"
+        },
+        "repository_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "state": {
+          "description": "State of the issue; either 'open' or 'closed'",
+          "enum": [
+            "open",
+            "closed"
+          ],
+          "type": "string"
+        },
+        "state_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "timeline_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "title": {
+          "description": "Title of the issue",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "url": {
+          "description": "URL for the issue",
+          "format": "uri",
+          "type": "string"
+        },
+        "user": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "url",
+        "repository_url",
+        "labels_url",
+        "comments_url",
+        "events_url",
+        "html_url",
+        "id",
+        "node_id",
+        "number",
+        "title",
+        "user",
+        "comments",
+        "created_at",
+        "updated_at",
+        "author_association",
+        "active_lock_reason",
+        "reactions"
+      ],
+      "title": "Issue",
+      "type": "object"
+    },
+    "issue-comment": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "description": "The [comment](https://docs.github.com/en/rest/reference/issues#comments) itself.",
+      "properties": {
+        "author_association": {
+          "$ref": "#/definitions/author_association"
+        },
+        "body": {
+          "description": "Contents of the issue comment",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "html_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "id": {
+          "description": "Unique identifier of the issue comment",
+          "type": "integer"
+        },
+        "issue_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "performed_via_github_app": {
+          "$ref": "#/definitions/app"
+        },
+        "reactions": {
+          "$ref": "#/definitions/reactions"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "url": {
+          "description": "URL for the issue comment",
+          "format": "uri",
+          "type": "string"
+        },
+        "user": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "url",
+        "html_url",
+        "issue_url",
+        "id",
+        "node_id",
+        "user",
+        "created_at",
+        "updated_at",
+        "author_association",
+        "body",
+        "reactions"
+      ],
+      "title": "issue comment",
+      "type": "object"
+    },
+    "issue_comment$created": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "created"
+          ],
+          "type": "string"
+        },
+        "comment": {
+          "$ref": "#/definitions/issue-comment"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "issue": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/issue"
+            },
+            {
+              "properties": {
+                "assignee": {
+                  "$ref": "#/definitions/user"
+                },
+                "labels": {
+                  "items": {
+                    "$ref": "#/definitions/label"
+                  },
+                  "type": "array"
+                },
+                "locked": {
+                  "type": "boolean"
+                },
+                "state": {
+                  "description": "State of the issue; either 'open' or 'closed'",
+                  "enum": [
+                    "open",
+                    "closed"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "labels",
+                "state",
+                "locked"
+              ],
+              "tsAdditionalProperties": false,
+              "type": "object"
+            }
+          ],
+          "description": "The [issue](https://docs.github.com/en/rest/reference/issues) the comment belongs to."
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "issue",
+        "comment",
+        "repository",
+        "sender"
+      ],
+      "title": "issue_comment created event",
+      "type": "object"
+    },
+    "issue_comment$deleted": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "deleted"
+          ],
+          "type": "string"
+        },
+        "comment": {
+          "$ref": "#/definitions/issue-comment"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "issue": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/issue"
+            },
+            {
+              "properties": {
+                "assignee": {
+                  "$ref": "#/definitions/user"
+                },
+                "labels": {
+                  "items": {
+                    "$ref": "#/definitions/label"
+                  },
+                  "type": "array"
+                },
+                "locked": {
+                  "type": "boolean"
+                },
+                "state": {
+                  "description": "State of the issue; either 'open' or 'closed'",
+                  "enum": [
+                    "open",
+                    "closed"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "labels",
+                "state",
+                "locked"
+              ],
+              "tsAdditionalProperties": false,
+              "type": "object"
+            }
+          ],
+          "description": "The [issue](https://docs.github.com/en/rest/reference/issues) the comment belongs to."
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "issue",
+        "comment",
+        "repository",
+        "sender"
+      ],
+      "title": "issue_comment deleted event",
+      "type": "object"
+    },
+    "issue_comment$edited": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "edited"
+          ],
+          "type": "string"
+        },
+        "changes": {
+          "additionalProperties": false,
+          "description": "The changes to the comment.",
+          "properties": {
+            "body": {
+              "additionalProperties": false,
+              "properties": {
+                "from": {
+                  "description": "The previous version of the body.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "from"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "comment": {
+          "$ref": "#/definitions/issue-comment"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "issue": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/issue"
+            },
+            {
+              "properties": {
+                "assignee": {
+                  "$ref": "#/definitions/user"
+                },
+                "labels": {
+                  "items": {
+                    "$ref": "#/definitions/label"
+                  },
+                  "type": "array"
+                },
+                "locked": {
+                  "type": "boolean"
+                },
+                "state": {
+                  "description": "State of the issue; either 'open' or 'closed'",
+                  "enum": [
+                    "open",
+                    "closed"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "labels",
+                "state",
+                "locked"
+              ],
+              "tsAdditionalProperties": false,
+              "type": "object"
+            }
+          ],
+          "description": "The [issue](https://docs.github.com/en/rest/reference/issues) the comment belongs to."
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "changes",
+        "issue",
+        "comment",
+        "repository",
+        "sender"
+      ],
+      "title": "issue_comment edited event",
+      "type": "object"
+    },
+    "issue_comment_event": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/issue_comment$created"
+        },
+        {
+          "$ref": "#/definitions/issue_comment$deleted"
+        },
+        {
+          "$ref": "#/definitions/issue_comment$edited"
+        }
+      ]
+    },
+    "label": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "color": {
+          "description": "6-character hex code, without the leading #, identifying the color",
+          "type": "string"
+        },
+        "default": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "description": "The name of the label.",
+          "type": "string"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "url": {
+          "description": "URL for the label",
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "node_id",
+        "url",
+        "name",
+        "color",
+        "default",
+        "description"
+      ],
+      "title": "Label",
+      "type": "object"
+    },
+    "license": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "spdx_id": {
+          "type": "string"
+        },
+        "url": {
+          "format": "uri",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "key",
+        "name",
+        "spdx_id",
+        "url",
+        "node_id"
+      ],
+      "title": "License",
+      "type": "object"
+    },
+    "link": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "href": {
+          "format": "uri-template",
+          "type": "string"
+        }
+      },
+      "required": [
+        "href"
+      ],
+      "title": "Link",
+      "type": "object"
+    },
+    "milestone": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "description": "A collection of related issues and pull requests.",
+      "properties": {
+        "closed_at": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "closed_issues": {
+          "type": "integer"
+        },
+        "created_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "creator": {
+          "$ref": "#/definitions/user"
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "due_on": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "html_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "labels_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "number": {
+          "description": "The number of the milestone.",
+          "type": "integer"
+        },
+        "open_issues": {
+          "type": "integer"
+        },
+        "state": {
+          "description": "The state of the milestone.",
+          "enum": [
+            "open",
+            "closed"
+          ],
+          "type": "string"
+        },
+        "title": {
+          "description": "The title of the milestone.",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "url": {
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url",
+        "html_url",
+        "labels_url",
+        "id",
+        "node_id",
+        "number",
+        "title",
+        "description",
+        "creator",
+        "open_issues",
+        "closed_issues",
+        "state",
+        "created_at",
+        "updated_at",
+        "due_on",
+        "closed_at"
+      ],
+      "title": "Milestone",
+      "type": "object"
+    },
+    "organization": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "avatar_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "events_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "hooks_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "html_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "issues_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "login": {
+          "type": "string"
+        },
+        "members_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "public_members_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "repos_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "url": {
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "login",
+        "id",
+        "node_id",
+        "url",
+        "repos_url",
+        "events_url",
+        "hooks_url",
+        "issues_url",
+        "members_url",
+        "public_members_url",
+        "avatar_url",
+        "description"
+      ],
+      "title": "Organization",
+      "type": "object"
+    },
+    "pull-request": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "_links": {
+          "additionalProperties": false,
+          "properties": {
+            "comments": {
+              "$ref": "#/definitions/link"
+            },
+            "commits": {
+              "$ref": "#/definitions/link"
+            },
+            "html": {
+              "$ref": "#/definitions/link"
+            },
+            "issue": {
+              "$ref": "#/definitions/link"
+            },
+            "review_comment": {
+              "$ref": "#/definitions/link"
+            },
+            "review_comments": {
+              "$ref": "#/definitions/link"
+            },
+            "self": {
+              "$ref": "#/definitions/link"
+            },
+            "statuses": {
+              "$ref": "#/definitions/link"
+            }
+          },
+          "required": [
+            "self",
+            "html",
+            "issue",
+            "comments",
+            "review_comments",
+            "review_comment",
+            "commits",
+            "statuses"
+          ],
+          "type": "object"
+        },
+        "active_lock_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "additions": {
+          "type": "integer"
+        },
+        "assignee": {
+          "$ref": "#/definitions/user"
+        },
+        "assignees": {
+          "items": {
+            "$ref": "#/definitions/user"
+          },
+          "type": "array"
+        },
+        "author_association": {
+          "$ref": "#/definitions/author_association"
+        },
+        "auto_merge": {
+          "$ref": "#/definitions/auto-merge"
+        },
+        "base": {
+          "additionalProperties": false,
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "ref": {
+              "type": "string"
+            },
+            "repo": {
+              "$ref": "#/definitions/repository"
+            },
+            "sha": {
+              "type": "string"
+            },
+            "user": {
+              "$ref": "#/definitions/user"
+            }
+          },
+          "required": [
+            "label",
+            "ref",
+            "sha",
+            "user",
+            "repo"
+          ],
+          "type": "object"
+        },
+        "body": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "changed_files": {
+          "type": "integer"
+        },
+        "closed_at": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "comments": {
+          "type": "integer"
+        },
+        "comments_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "commits": {
+          "type": "integer"
+        },
+        "commits_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "deletions": {
+          "type": "integer"
+        },
+        "diff_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "draft": {
+          "description": "Indicates whether or not the pull request is a draft.",
+          "type": "boolean"
+        },
+        "head": {
+          "additionalProperties": false,
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "ref": {
+              "type": "string"
+            },
+            "repo": {
+              "$ref": "#/definitions/repository"
+            },
+            "sha": {
+              "type": "string"
+            },
+            "user": {
+              "$ref": "#/definitions/user"
+            }
+          },
+          "required": [
+            "label",
+            "ref",
+            "sha",
+            "user",
+            "repo"
+          ],
+          "type": "object"
+        },
+        "html_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "issue_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "labels": {
+          "items": {
+            "$ref": "#/definitions/label"
+          },
+          "type": "array"
+        },
+        "locked": {
+          "type": "boolean"
+        },
+        "maintainer_can_modify": {
+          "description": "Indicates whether maintainers can modify the pull request.",
+          "type": "boolean"
+        },
+        "merge_commit_sha": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mergeable": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "mergeable_state": {
+          "type": "string"
+        },
+        "merged": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "merged_at": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "merged_by": {
+          "$ref": "#/definitions/user"
+        },
+        "milestone": {
+          "$ref": "#/definitions/milestone"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "number": {
+          "description": "Number uniquely identifying the pull request within its repository.",
+          "type": "integer"
+        },
+        "patch_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "rebaseable": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "requested_reviewers": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/user"
+              },
+              {
+                "$ref": "#/definitions/team"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "requested_teams": {
+          "items": {
+            "$ref": "#/definitions/team"
+          },
+          "type": "array"
+        },
+        "review_comment_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "review_comments": {
+          "type": "integer"
+        },
+        "review_comments_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "state": {
+          "description": "State of this Pull Request. Either `open` or `closed`.",
+          "enum": [
+            "open",
+            "closed"
+          ],
+          "type": "string"
+        },
+        "statuses_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "title": {
+          "description": "The title of the pull request.",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "user": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "url",
+        "id",
+        "node_id",
+        "html_url",
+        "diff_url",
+        "patch_url",
+        "issue_url",
+        "number",
+        "state",
+        "locked",
+        "title",
+        "user",
+        "body",
+        "created_at",
+        "updated_at",
+        "closed_at",
+        "merged_at",
+        "merge_commit_sha",
+        "assignees",
+        "requested_reviewers",
+        "requested_teams",
+        "labels",
+        "commits_url",
+        "review_comments_url",
+        "review_comment_url",
+        "comments_url",
+        "statuses_url",
+        "head",
+        "base",
+        "_links",
+        "author_association",
+        "active_lock_reason",
+        "draft",
+        "merged",
+        "mergeable",
+        "rebaseable",
+        "mergeable_state",
+        "comments",
+        "review_comments",
+        "maintainer_can_modify",
+        "commits",
+        "additions",
+        "deletions",
+        "changed_files"
+      ],
+      "title": "Pull Request",
+      "type": "object"
+    },
+    "pull-request-review-comment": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "description": "The [comment](https://docs.github.com/en/rest/reference/pulls#comments) itself.",
+      "properties": {
+        "_links": {
+          "additionalProperties": false,
+          "properties": {
+            "html": {
+              "$ref": "#/definitions/link"
+            },
+            "pull_request": {
+              "$ref": "#/definitions/link"
+            },
+            "self": {
+              "$ref": "#/definitions/link"
+            }
+          },
+          "required": [
+            "self",
+            "html",
+            "pull_request"
+          ],
+          "type": "object"
+        },
+        "author_association": {
+          "$ref": "#/definitions/author_association"
+        },
+        "body": {
+          "description": "The text of the comment.",
+          "type": "string"
+        },
+        "commit_id": {
+          "description": "The SHA of the commit to which the comment applies.",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "diff_hunk": {
+          "description": "The diff of the line that the comment refers to.",
+          "type": "string"
+        },
+        "html_url": {
+          "description": "HTML URL for the pull request review comment.",
+          "format": "uri",
+          "type": "string"
+        },
+        "id": {
+          "description": "The ID of the pull request review comment.",
+          "type": "integer"
+        },
+        "in_reply_to_id": {
+          "description": "The comment ID to reply to.",
+          "type": "integer"
+        },
+        "line": {
+          "description": "The line of the blob to which the comment applies. The last line of the range for a multi-line comment",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "node_id": {
+          "description": "The node ID of the pull request review comment.",
+          "type": "string"
+        },
+        "original_commit_id": {
+          "description": "The SHA of the original commit to which the comment applies.",
+          "type": "string"
+        },
+        "original_line": {
+          "description": "The line of the blob to which the comment applies. The last line of the range for a multi-line comment",
+          "type": "integer"
+        },
+        "original_position": {
+          "description": "The index of the original line in the diff to which the comment applies.",
+          "type": "integer"
+        },
+        "original_start_line": {
+          "description": "The first line of the range for a multi-line comment.",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "path": {
+          "description": "The relative path of the file to which the comment applies.",
+          "type": "string"
+        },
+        "position": {
+          "description": "The line index in the diff to which the comment applies.",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "pull_request_review_id": {
+          "description": "The ID of the pull request review to which the comment belongs.",
+          "type": "integer"
+        },
+        "pull_request_url": {
+          "description": "URL for the pull request that the review comment belongs to.",
+          "format": "uri",
+          "type": "string"
+        },
+        "reactions": {
+          "$ref": "#/definitions/reactions"
+        },
+        "side": {
+          "description": "The side of the first line of the range for a multi-line comment.",
+          "enum": [
+            "LEFT",
+            "RIGHT"
+          ],
+          "type": "string"
+        },
+        "start_line": {
+          "description": "The first line of the range for a multi-line comment.",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "start_side": {
+          "default": "RIGHT",
+          "description": "The side of the first line of the range for a multi-line comment.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "updated_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "url": {
+          "description": "URL for the pull request review comment",
+          "format": "uri",
+          "type": "string"
+        },
+        "user": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "url",
+        "pull_request_review_id",
+        "id",
+        "node_id",
+        "diff_hunk",
+        "path",
+        "position",
+        "original_position",
+        "commit_id",
+        "original_commit_id",
+        "user",
+        "body",
+        "created_at",
+        "updated_at",
+        "html_url",
+        "pull_request_url",
+        "author_association",
+        "_links",
+        "start_line",
+        "original_start_line",
+        "original_line",
+        "line",
+        "start_side",
+        "side",
+        "reactions"
+      ],
+      "title": "Pull Request Review Comment",
+      "type": "object"
+    },
+    "pull_request$assigned": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "assigned"
+          ],
+          "type": "string"
+        },
+        "assignee": {
+          "$ref": "#/definitions/user"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "number": {
+          "description": "The pull request number.",
+          "type": "integer"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "pull_request": {
+          "$ref": "#/definitions/pull-request"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "number",
+        "pull_request",
+        "assignee",
+        "repository",
+        "sender"
+      ],
+      "title": "pull_request assigned event",
+      "type": "object"
+    },
+    "pull_request$auto_merge_disabled": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "auto_merge_disabled"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "number": {
+          "type": "integer"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "pull_request": {
+          "$ref": "#/definitions/pull-request"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "number",
+        "pull_request",
+        "reason",
+        "repository",
+        "sender"
+      ],
+      "title": "pull_request auto_merge_disabled event",
+      "type": "object"
+    },
+    "pull_request$auto_merge_enabled": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "auto_merge_enabled"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "number": {
+          "type": "integer"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "pull_request": {
+          "$ref": "#/definitions/pull-request"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "number",
+        "pull_request",
+        "reason",
+        "repository",
+        "sender"
+      ],
+      "title": "pull_request auto_merge_enabled event",
+      "type": "object"
+    },
+    "pull_request$closed": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "closed"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "number": {
+          "description": "The pull request number.",
+          "type": "integer"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "pull_request": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/pull-request"
+            },
+            {
+              "properties": {
+                "closed_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "merged": {
+                  "type": "boolean"
+                },
+                "state": {
+                  "description": "State of this Pull Request. Either `open` or `closed`.",
+                  "enum": [
+                    "closed"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "state",
+                "closed_at",
+                "merged"
+              ],
+              "tsAdditionalProperties": false,
+              "type": "object"
+            }
+          ]
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "number",
+        "pull_request",
+        "repository",
+        "sender"
+      ],
+      "title": "pull_request closed event",
+      "type": "object"
+    },
+    "pull_request$converted_to_draft": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "converted_to_draft"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "number": {
+          "description": "The pull request number.",
+          "type": "integer"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "pull_request": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/pull-request"
+            },
+            {
+              "properties": {
+                "closed_at": {
+                  "type": "null"
+                },
+                "draft": {
+                  "description": "Indicates whether or not the pull request is a draft.",
+                  "enum": [
+                    true
+                  ],
+                  "type": "boolean"
+                },
+                "merged": {
+                  "enum": [
+                    false
+                  ],
+                  "type": "boolean"
+                },
+                "merged_at": {
+                  "type": "null"
+                },
+                "merged_by": {
+                  "type": "null"
+                }
+              },
+              "required": [
+                "closed_at",
+                "merged_at",
+                "draft",
+                "merged",
+                "merged_by"
+              ],
+              "tsAdditionalProperties": false,
+              "type": "object"
+            }
+          ]
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "number",
+        "pull_request",
+        "repository",
+        "sender"
+      ],
+      "title": "pull_request converted_to_draft event",
+      "type": "object"
+    },
+    "pull_request$edited": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "edited"
+          ],
+          "type": "string"
+        },
+        "changes": {
+          "additionalProperties": false,
+          "description": "The changes to the comment if the action was `edited`.",
+          "properties": {
+            "base": {
+              "additionalProperties": false,
+              "properties": {
+                "ref": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "from": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "from"
+                  ],
+                  "type": "object"
+                },
+                "sha": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "from": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "from"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "ref",
+                "sha"
+              ],
+              "type": "object"
+            },
+            "body": {
+              "additionalProperties": false,
+              "properties": {
+                "from": {
+                  "description": "The previous version of the body if the action was `edited`.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "from"
+              ],
+              "type": "object"
+            },
+            "title": {
+              "additionalProperties": false,
+              "properties": {
+                "from": {
+                  "description": "The previous version of the title if the action was `edited`.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "from"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "number": {
+          "description": "The pull request number.",
+          "type": "integer"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "pull_request": {
+          "$ref": "#/definitions/pull-request"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "changes",
+        "number",
+        "pull_request",
+        "repository",
+        "sender"
+      ],
+      "title": "pull_request edited event",
+      "type": "object"
+    },
+    "pull_request$labeled": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "labeled"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "label": {
+          "$ref": "#/definitions/label"
+        },
+        "number": {
+          "description": "The pull request number.",
+          "type": "integer"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "pull_request": {
+          "$ref": "#/definitions/pull-request"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "number",
+        "pull_request",
+        "label",
+        "repository",
+        "sender"
+      ],
+      "title": "pull_request labeled event",
+      "type": "object"
+    },
+    "pull_request$locked": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "locked"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "number": {
+          "description": "The pull request number.",
+          "type": "integer"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "pull_request": {
+          "$ref": "#/definitions/pull-request"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "number",
+        "pull_request",
+        "repository",
+        "sender"
+      ],
+      "title": "pull_request locked event",
+      "type": "object"
+    },
+    "pull_request$opened": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "opened"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "number": {
+          "description": "The pull request number.",
+          "type": "integer"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "pull_request": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/pull-request"
+            },
+            {
+              "properties": {
+                "active_lock_reason": {
+                  "type": "null"
+                },
+                "closed_at": {
+                  "type": "null"
+                },
+                "merge_commit_sha": {
+                  "type": "null"
+                },
+                "merged_at": {
+                  "type": "null"
+                },
+                "merged_by": {
+                  "type": "null"
+                },
+                "state": {
+                  "enum": [
+                    "open"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "state",
+                "closed_at",
+                "merged_at",
+                "merge_commit_sha",
+                "active_lock_reason",
+                "merged_by"
+              ],
+              "tsAdditionalProperties": false,
+              "type": "object"
+            }
+          ]
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "number",
+        "pull_request",
+        "repository",
+        "sender"
+      ],
+      "title": "pull_request opened event",
+      "type": "object"
+    },
+    "pull_request$ready_for_review": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "ready_for_review"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "number": {
+          "description": "The pull request number.",
+          "type": "integer"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "pull_request": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/pull-request"
+            },
+            {
+              "properties": {
+                "closed_at": {
+                  "type": "null"
+                },
+                "draft": {
+                  "description": "Indicates whether or not the pull request is a draft.",
+                  "enum": [
+                    false
+                  ],
+                  "type": "boolean"
+                },
+                "merged": {
+                  "type": "boolean"
+                },
+                "merged_at": {
+                  "type": "null"
+                },
+                "merged_by": {
+                  "type": "null"
+                },
+                "state": {
+                  "enum": [
+                    "open"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "state",
+                "closed_at",
+                "merged_at",
+                "draft",
+                "merged",
+                "merged_by"
+              ],
+              "tsAdditionalProperties": false,
+              "type": "object"
+            }
+          ]
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "number",
+        "pull_request",
+        "repository",
+        "sender"
+      ],
+      "title": "pull_request ready_for_review event",
+      "type": "object"
+    },
+    "pull_request$reopened": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "reopened"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "number": {
+          "description": "The pull request number.",
+          "type": "integer"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "pull_request": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/pull-request"
+            },
+            {
+              "properties": {
+                "closed_at": {
+                  "type": "null"
+                },
+                "merged": {
+                  "type": "boolean"
+                },
+                "merged_at": {
+                  "type": "null"
+                },
+                "merged_by": {
+                  "type": "null"
+                },
+                "state": {
+                  "enum": [
+                    "open"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "state",
+                "closed_at",
+                "merged_at",
+                "merged",
+                "merged_by"
+              ],
+              "tsAdditionalProperties": false,
+              "type": "object"
+            }
+          ]
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "number",
+        "pull_request",
+        "repository",
+        "sender"
+      ],
+      "title": "pull_request reopened event",
+      "type": "object"
+    },
+    "pull_request$review_request_removed": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "enum": [
+                "review_request_removed"
+              ],
+              "type": "string"
+            },
+            "installation": {
+              "$ref": "#/definitions/installation-lite"
+            },
+            "number": {
+              "description": "The pull request number.",
+              "type": "integer"
+            },
+            "organization": {
+              "$ref": "#/definitions/organization"
+            },
+            "pull_request": {
+              "$ref": "#/definitions/pull-request"
+            },
+            "repository": {
+              "$ref": "#/definitions/repository"
+            },
+            "requested_reviewer": {
+              "$ref": "#/definitions/user"
+            },
+            "sender": {
+              "$ref": "#/definitions/user"
+            }
+          },
+          "required": [
+            "action",
+            "number",
+            "pull_request",
+            "requested_reviewer",
+            "repository",
+            "sender"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "enum": [
+                "review_request_removed"
+              ],
+              "type": "string"
+            },
+            "installation": {
+              "$ref": "#/definitions/installation-lite"
+            },
+            "number": {
+              "description": "The pull request number.",
+              "type": "integer"
+            },
+            "organization": {
+              "$ref": "#/definitions/organization"
+            },
+            "pull_request": {
+              "$ref": "#/definitions/pull-request"
+            },
+            "repository": {
+              "$ref": "#/definitions/repository"
+            },
+            "requested_team": {
+              "$ref": "#/definitions/team"
+            },
+            "sender": {
+              "$ref": "#/definitions/user"
+            }
+          },
+          "required": [
+            "action",
+            "number",
+            "pull_request",
+            "requested_team",
+            "repository",
+            "sender"
+          ],
+          "type": "object"
+        }
+      ],
+      "title": "pull_request review_request_removed event"
+    },
+    "pull_request$review_requested": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "enum": [
+                "review_requested"
+              ],
+              "type": "string"
+            },
+            "installation": {
+              "$ref": "#/definitions/installation-lite"
+            },
+            "number": {
+              "description": "The pull request number.",
+              "type": "integer"
+            },
+            "organization": {
+              "$ref": "#/definitions/organization"
+            },
+            "pull_request": {
+              "$ref": "#/definitions/pull-request"
+            },
+            "repository": {
+              "$ref": "#/definitions/repository"
+            },
+            "requested_reviewer": {
+              "$ref": "#/definitions/user"
+            },
+            "sender": {
+              "$ref": "#/definitions/user"
+            }
+          },
+          "required": [
+            "action",
+            "number",
+            "pull_request",
+            "requested_reviewer",
+            "repository",
+            "sender"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "enum": [
+                "review_requested"
+              ],
+              "type": "string"
+            },
+            "installation": {
+              "$ref": "#/definitions/installation-lite"
+            },
+            "number": {
+              "description": "The pull request number.",
+              "type": "integer"
+            },
+            "organization": {
+              "$ref": "#/definitions/organization"
+            },
+            "pull_request": {
+              "$ref": "#/definitions/pull-request"
+            },
+            "repository": {
+              "$ref": "#/definitions/repository"
+            },
+            "requested_team": {
+              "$ref": "#/definitions/team"
+            },
+            "sender": {
+              "$ref": "#/definitions/user"
+            }
+          },
+          "required": [
+            "action",
+            "number",
+            "pull_request",
+            "requested_team",
+            "repository",
+            "sender"
+          ],
+          "type": "object"
+        }
+      ],
+      "title": "pull_request review_requested event"
+    },
+    "pull_request$synchronize": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "synchronize"
+          ],
+          "type": "string"
+        },
+        "after": {
+          "type": "string"
+        },
+        "before": {
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "number": {
+          "description": "The pull request number.",
+          "type": "integer"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "pull_request": {
+          "$ref": "#/definitions/pull-request"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "number",
+        "before",
+        "after",
+        "pull_request",
+        "repository",
+        "sender"
+      ],
+      "title": "pull_request synchronize event",
+      "type": "object"
+    },
+    "pull_request$unassigned": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "unassigned"
+          ],
+          "type": "string"
+        },
+        "assignee": {
+          "$ref": "#/definitions/user"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "number": {
+          "description": "The pull request number.",
+          "type": "integer"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "pull_request": {
+          "$ref": "#/definitions/pull-request"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "number",
+        "pull_request",
+        "assignee",
+        "repository",
+        "sender"
+      ],
+      "title": "pull_request unassigned event",
+      "type": "object"
+    },
+    "pull_request$unlabeled": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "unlabeled"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "label": {
+          "$ref": "#/definitions/label"
+        },
+        "number": {
+          "description": "The pull request number.",
+          "type": "integer"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "pull_request": {
+          "$ref": "#/definitions/pull-request"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "number",
+        "pull_request",
+        "label",
+        "repository",
+        "sender"
+      ],
+      "title": "pull_request unlabeled event",
+      "type": "object"
+    },
+    "pull_request$unlocked": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "unlocked"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "number": {
+          "description": "The pull request number.",
+          "type": "integer"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "pull_request": {
+          "$ref": "#/definitions/pull-request"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "number",
+        "pull_request",
+        "repository",
+        "sender"
+      ],
+      "title": "pull_request unlocked event",
+      "type": "object"
+    },
+    "pull_request_event": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/pull_request$assigned"
+        },
+        {
+          "$ref": "#/definitions/pull_request$auto_merge_disabled"
+        },
+        {
+          "$ref": "#/definitions/pull_request$auto_merge_enabled"
+        },
+        {
+          "$ref": "#/definitions/pull_request$closed"
+        },
+        {
+          "$ref": "#/definitions/pull_request$converted_to_draft"
+        },
+        {
+          "$ref": "#/definitions/pull_request$edited"
+        },
+        {
+          "$ref": "#/definitions/pull_request$labeled"
+        },
+        {
+          "$ref": "#/definitions/pull_request$locked"
+        },
+        {
+          "$ref": "#/definitions/pull_request$opened"
+        },
+        {
+          "$ref": "#/definitions/pull_request$ready_for_review"
+        },
+        {
+          "$ref": "#/definitions/pull_request$reopened"
+        },
+        {
+          "$ref": "#/definitions/pull_request$review_request_removed"
+        },
+        {
+          "$ref": "#/definitions/pull_request$review_requested"
+        },
+        {
+          "$ref": "#/definitions/pull_request$synchronize"
+        },
+        {
+          "$ref": "#/definitions/pull_request$unassigned"
+        },
+        {
+          "$ref": "#/definitions/pull_request$unlabeled"
+        },
+        {
+          "$ref": "#/definitions/pull_request$unlocked"
+        }
+      ]
+    },
+    "push$event": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "after": {
+          "description": "The SHA of the most recent commit on `ref` after the push.",
+          "type": "string"
+        },
+        "base_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "before": {
+          "description": "The SHA of the most recent commit on `ref` before the push.",
+          "type": "string"
+        },
+        "commits": {
+          "description": "An array of commit objects describing the pushed commits. (Pushed commits are all commits that are included in the `compare` between the `before` commit and the `after` commit.) The array includes a maximum of 20 commits. If necessary, you can use the [Commits API](https://docs.github.com/en/rest/reference/repos#commits) to fetch additional commits. This limit is applied to timeline events only and isn't applied to webhook deliveries.",
+          "items": {
+            "$ref": "#/definitions/commit"
+          },
+          "type": "array"
+        },
+        "compare": {
+          "description": "URL that shows the changes in this `ref` update, from the `before` commit to the `after` commit. For a newly created `ref` that is directly based on the default branch, this is the comparison between the head of the default branch and the `after` commit. Otherwise, this shows all commits until the `after` commit.",
+          "type": "string"
+        },
+        "created": {
+          "description": "Whether this push created the `ref`.",
+          "type": "boolean"
+        },
+        "deleted": {
+          "description": "Whether this push deleted the `ref`.",
+          "type": "boolean"
+        },
+        "forced": {
+          "description": "Whether this push was a force push of the `ref`.",
+          "type": "boolean"
+        },
+        "head_commit": {
+          "description": "For pushes where `after` is or points to a commit object, an expanded representation of that commit. For pushes where `after` refers to an annotated tag object, an expanded representation of the commit pointed to by the annotated tag.",
+          "$ref": "#/definitions/commit"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "pusher": {
+          "$ref": "#/definitions/committer"
+        },
+        "ref": {
+          "description": "The full git ref that was pushed. Example: `refs/heads/main` or `refs/tags/v3.14.1`.",
+          "type": "string"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "ref",
+        "before",
+        "after",
+        "created",
+        "deleted",
+        "forced",
+        "base_ref",
+        "compare",
+        "commits",
+        "repository",
+        "pusher",
+        "sender"
+      ],
+      "title": "push event",
+      "type": "object"
+    },
+    "reactions": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "properties": {
+        "total_count": {
+          "type": "integer"
+        },
+        "url": {
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url",
+        "total_count"
+      ],
+      "title": "Reactions",
+      "type": "object"
+    },
+    "repo-ref": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "url",
+        "name"
+      ],
+      "title": "Repo Ref",
+      "type": "object"
+    },
+    "repository": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "description": "A git repository",
+      "properties": {
+        "allow_auto_merge": {
+          "default": false,
+          "description": "Whether to allow auto-merge for pull requests.",
+          "type": "boolean"
+        },
+        "allow_forking": {
+          "description": "Whether to allow private forks",
+          "type": "boolean"
+        },
+        "allow_merge_commit": {
+          "default": true,
+          "description": "Whether to allow merge commits for pull requests.",
+          "type": "boolean"
+        },
+        "allow_rebase_merge": {
+          "default": true,
+          "description": "Whether to allow rebase merges for pull requests.",
+          "type": "boolean"
+        },
+        "allow_squash_merge": {
+          "default": true,
+          "description": "Whether to allow squash merges for pull requests.",
+          "type": "boolean"
+        },
+        "allow_update_branch": {
+          "type": "boolean"
+        },
+        "archive_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "archived": {
+          "default": false,
+          "description": "Whether the repository is archived.",
+          "type": "boolean"
+        },
+        "assignees_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "blobs_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "branches_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "clone_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "collaborators_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "comments_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "commits_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "compare_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "contents_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "contributors_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "created_at": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "format": "date-time",
+              "type": "string"
+            }
+          ]
+        },
+        "default_branch": {
+          "description": "The default branch of the repository.",
+          "type": "string"
+        },
+        "delete_branch_on_merge": {
+          "default": false,
+          "description": "Whether to delete head branches when pull requests are merged",
+          "type": "boolean"
+        },
+        "deployments_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "disabled": {
+          "description": "Returns whether or not this repository is disabled.",
+          "type": "boolean"
+        },
+        "downloads_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "events_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "fork": {
+          "type": "boolean"
+        },
+        "forks": {
+          "type": "integer"
+        },
+        "forks_count": {
+          "type": "integer"
+        },
+        "forks_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "git_commits_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "git_refs_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "git_tags_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "git_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "has_downloads": {
+          "default": true,
+          "description": "Whether downloads are enabled.",
+          "type": "boolean"
+        },
+        "has_issues": {
+          "default": true,
+          "description": "Whether issues are enabled.",
+          "type": "boolean"
+        },
+        "has_pages": {
+          "type": "boolean"
+        },
+        "has_projects": {
+          "default": true,
+          "description": "Whether projects are enabled.",
+          "type": "boolean"
+        },
+        "has_wiki": {
+          "default": true,
+          "description": "Whether the wiki is enabled.",
+          "type": "boolean"
+        },
+        "homepage": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "hooks_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "html_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "id": {
+          "description": "Unique identifier of the repository",
+          "type": "integer"
+        },
+        "is_template": {
+          "type": "boolean"
+        },
+        "issue_comment_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "issue_events_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "issues_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "keys_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "labels_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "language": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "languages_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "license": {
+          "$ref": "#/definitions/license"
+        },
+        "master_branch": {
+          "type": "string"
+        },
+        "merges_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "milestones_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "mirror_url": {
+          "format": "uri",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "description": "The name of the repository.",
+          "type": "string"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "notifications_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "open_issues": {
+          "type": "integer"
+        },
+        "open_issues_count": {
+          "type": "integer"
+        },
+        "organization": {
+          "type": "string"
+        },
+        "owner": {
+          "$ref": "#/definitions/user"
+        },
+        "permissions": {
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "type": "object"
+        },
+        "private": {
+          "description": "Whether the repository is private or public.",
+          "type": "boolean"
+        },
+        "public": {
+          "type": "boolean"
+        },
+        "pulls_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "pushed_at": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "format": "date-time",
+              "type": "string"
+            }
+          ]
+        },
+        "releases_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "ssh_url": {
+          "type": "string"
+        },
+        "stargazers": {
+          "type": "integer"
+        },
+        "stargazers_count": {
+          "type": "integer"
+        },
+        "stargazers_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "statuses_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "subscribers_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "subscription_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "svn_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "tags_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "teams_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "topics": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "trees_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "use_squash_pr_title_as_default": {
+          "type": "boolean"
+        },
+        "visibility": {
+          "type": "string"
+        },
+        "watchers": {
+          "type": "integer"
+        },
+        "watchers_count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "node_id",
+        "name",
+        "full_name",
+        "private",
+        "owner",
+        "html_url",
+        "description",
+        "fork",
+        "url",
+        "forks_url",
+        "keys_url",
+        "collaborators_url",
+        "teams_url",
+        "hooks_url",
+        "issue_events_url",
+        "events_url",
+        "assignees_url",
+        "branches_url",
+        "tags_url",
+        "blobs_url",
+        "git_tags_url",
+        "git_refs_url",
+        "trees_url",
+        "statuses_url",
+        "languages_url",
+        "stargazers_url",
+        "contributors_url",
+        "subscribers_url",
+        "subscription_url",
+        "commits_url",
+        "git_commits_url",
+        "comments_url",
+        "issue_comment_url",
+        "contents_url",
+        "compare_url",
+        "merges_url",
+        "archive_url",
+        "downloads_url",
+        "issues_url",
+        "pulls_url",
+        "milestones_url",
+        "notifications_url",
+        "labels_url",
+        "releases_url",
+        "deployments_url",
+        "created_at",
+        "updated_at",
+        "git_url",
+        "ssh_url",
+        "clone_url",
+        "svn_url",
+        "homepage",
+        "size",
+        "stargazers_count",
+        "watchers_count",
+        "language",
+        "has_issues",
+        "has_projects",
+        "has_downloads",
+        "has_wiki",
+        "has_pages",
+        "forks_count",
+        "mirror_url",
+        "archived",
+        "open_issues_count",
+        "forks",
+        "open_issues",
+        "watchers",
+        "default_branch",
+        "is_template",
+        "topics",
+        "visibility"
+      ],
+      "title": "Repository",
+      "type": "object"
+    },
+    "repository-lite": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "archive_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "assignees_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "blobs_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "branches_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "collaborators_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "comments_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "commits_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "compare_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "contents_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "contributors_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "deployments_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "downloads_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "events_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "fork": {
+          "type": "boolean"
+        },
+        "forks_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "git_commits_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "git_refs_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "git_tags_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "hooks_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "html_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "id": {
+          "description": "Unique identifier of the repository",
+          "type": "integer"
+        },
+        "issue_comment_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "issue_events_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "issues_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "keys_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "labels_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "languages_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "merges_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "milestones_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the repository.",
+          "type": "string"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "notifications_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "owner": {
+          "$ref": "#/definitions/user"
+        },
+        "private": {
+          "description": "Whether the repository is private or public.",
+          "type": "boolean"
+        },
+        "pulls_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "releases_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "stargazers_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "statuses_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "subscribers_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "subscription_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "tags_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "teams_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "trees_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "url": {
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "archive_url",
+        "assignees_url",
+        "blobs_url",
+        "branches_url",
+        "collaborators_url",
+        "comments_url",
+        "commits_url",
+        "compare_url",
+        "contents_url",
+        "contributors_url",
+        "deployments_url",
+        "description",
+        "downloads_url",
+        "events_url",
+        "fork",
+        "forks_url",
+        "full_name",
+        "git_commits_url",
+        "git_refs_url",
+        "git_tags_url",
+        "hooks_url",
+        "html_url",
+        "id",
+        "issue_comment_url",
+        "issue_events_url",
+        "issues_url",
+        "keys_url",
+        "labels_url",
+        "languages_url",
+        "merges_url",
+        "milestones_url",
+        "name",
+        "node_id",
+        "notifications_url",
+        "owner",
+        "private",
+        "pulls_url",
+        "releases_url",
+        "stargazers_url",
+        "statuses_url",
+        "subscribers_url",
+        "subscription_url",
+        "tags_url",
+        "teams_url",
+        "trees_url",
+        "url"
+      ],
+      "title": "Repository Lite",
+      "type": "object"
+    },
+    "simple-pull-request": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "_links": {
+          "additionalProperties": false,
+          "properties": {
+            "comments": {
+              "$ref": "#/definitions/link"
+            },
+            "commits": {
+              "$ref": "#/definitions/link"
+            },
+            "html": {
+              "$ref": "#/definitions/link"
+            },
+            "issue": {
+              "$ref": "#/definitions/link"
+            },
+            "review_comment": {
+              "$ref": "#/definitions/link"
+            },
+            "review_comments": {
+              "$ref": "#/definitions/link"
+            },
+            "self": {
+              "$ref": "#/definitions/link"
+            },
+            "statuses": {
+              "$ref": "#/definitions/link"
+            }
+          },
+          "required": [
+            "self",
+            "html",
+            "issue",
+            "comments",
+            "review_comments",
+            "review_comment",
+            "commits",
+            "statuses"
+          ],
+          "type": "object"
+        },
+        "active_lock_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "assignee": {
+          "$ref": "#/definitions/user"
+        },
+        "assignees": {
+          "items": {
+            "$ref": "#/definitions/user"
+          },
+          "type": "array"
+        },
+        "author_association": {
+          "$ref": "#/definitions/author_association"
+        },
+        "auto_merge": {
+          "$ref": "#/definitions/auto-merge"
+        },
+        "base": {
+          "additionalProperties": false,
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "ref": {
+              "type": "string"
+            },
+            "repo": {
+              "$ref": "#/definitions/repository"
+            },
+            "sha": {
+              "type": "string"
+            },
+            "user": {
+              "$ref": "#/definitions/user"
+            }
+          },
+          "required": [
+            "label",
+            "ref",
+            "sha",
+            "user",
+            "repo"
+          ],
+          "type": "object"
+        },
+        "body": {
+          "type": "string"
+        },
+        "closed_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "comments_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "commits_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "diff_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "draft": {
+          "type": "boolean"
+        },
+        "head": {
+          "additionalProperties": false,
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "ref": {
+              "type": "string"
+            },
+            "repo": {
+              "$ref": "#/definitions/repository"
+            },
+            "sha": {
+              "type": "string"
+            },
+            "user": {
+              "$ref": "#/definitions/user"
+            }
+          },
+          "required": [
+            "label",
+            "ref",
+            "sha",
+            "user",
+            "repo"
+          ],
+          "type": "object"
+        },
+        "html_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "issue_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "labels": {
+          "items": {
+            "$ref": "#/definitions/label"
+          },
+          "type": "array"
+        },
+        "locked": {
+          "type": "boolean"
+        },
+        "merge_commit_sha": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "merged_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "milestone": {
+          "$ref": "#/definitions/milestone"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "number": {
+          "type": "integer"
+        },
+        "patch_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "requested_reviewers": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/user"
+              },
+              {
+                "$ref": "#/definitions/team"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "requested_teams": {
+          "items": {
+            "$ref": "#/definitions/team"
+          },
+          "type": "array"
+        },
+        "review_comment_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "review_comments_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "open",
+            "closed"
+          ],
+          "type": "string"
+        },
+        "statuses_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "updated_at": {
+          "type": "string"
+        },
+        "url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "user": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "url",
+        "id",
+        "node_id",
+        "html_url",
+        "diff_url",
+        "patch_url",
+        "issue_url",
+        "number",
+        "state",
+        "locked",
+        "title",
+        "user",
+        "body",
+        "created_at",
+        "updated_at",
+        "closed_at",
+        "merged_at",
+        "merge_commit_sha",
+        "assignees",
+        "requested_reviewers",
+        "requested_teams",
+        "labels",
+        "draft",
+        "commits_url",
+        "review_comments_url",
+        "review_comment_url",
+        "comments_url",
+        "statuses_url",
+        "head",
+        "base",
+        "_links",
+        "author_association",
+        "active_lock_reason"
+      ],
+      "title": "Simple Pull Request",
+      "type": "object"
+    },
+    "team": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "description": "Groups of organization members that gives permissions on specified repositories.",
+      "properties": {
+        "description": {
+          "description": "Description of the team",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "html_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "id": {
+          "description": "Unique identifier of the team",
+          "type": "integer"
+        },
+        "members_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the team",
+          "type": "string"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "parent": {
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "description": "Description of the team",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "html_url": {
+              "format": "uri",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique identifier of the team",
+              "type": "integer"
+            },
+            "members_url": {
+              "format": "uri-template",
+              "type": "string"
+            },
+            "name": {
+              "description": "Name of the team",
+              "type": "string"
+            },
+            "node_id": {
+              "type": "string"
+            },
+            "permission": {
+              "description": "Permission that the team will have for its repositories",
+              "type": "string"
+            },
+            "privacy": {
+              "enum": [
+                "open",
+                "closed",
+                "secret"
+              ],
+              "type": "string"
+            },
+            "repositories_url": {
+              "format": "uri",
+              "type": "string"
+            },
+            "slug": {
+              "type": "string"
+            },
+            "url": {
+              "description": "URL for the team",
+              "format": "uri",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "id",
+            "node_id",
+            "slug",
+            "description",
+            "privacy",
+            "url",
+            "html_url",
+            "members_url",
+            "repositories_url",
+            "permission"
+          ],
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "permission": {
+          "description": "Permission that the team will have for its repositories",
+          "type": "string"
+        },
+        "privacy": {
+          "enum": [
+            "open",
+            "closed",
+            "secret"
+          ],
+          "type": "string"
+        },
+        "repositories_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "url": {
+          "description": "URL for the team",
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "id",
+        "node_id",
+        "slug",
+        "description",
+        "privacy",
+        "url",
+        "html_url",
+        "members_url",
+        "repositories_url",
+        "permission"
+      ],
+      "title": "Team",
+      "type": "object"
+    },
+    "user": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "avatar_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "email": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "events_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "followers_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "following_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "gists_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "gravatar_id": {
+          "type": "string"
+        },
+        "html_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "login": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "organizations_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "received_events_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "repos_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "site_admin": {
+          "type": "boolean"
+        },
+        "starred_url": {
+          "format": "uri-template",
+          "type": "string"
+        },
+        "subscriptions_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "Bot",
+            "User",
+            "Organization"
+          ],
+          "type": "string"
+        },
+        "url": {
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "login",
+        "id",
+        "node_id",
+        "avatar_url",
+        "gravatar_id",
+        "url",
+        "html_url",
+        "followers_url",
+        "following_url",
+        "gists_url",
+        "starred_url",
+        "subscriptions_url",
+        "organizations_url",
+        "repos_url",
+        "events_url",
+        "received_events_url",
+        "type",
+        "site_admin"
+      ],
+      "title": "User",
+      "type": "object"
+    },
+    "workflow": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "badge_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "html_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "url": {
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "badge_url",
+        "created_at",
+        "html_url",
+        "id",
+        "name",
+        "node_id",
+        "path",
+        "state",
+        "updated_at",
+        "url"
+      ],
+      "title": "Workflow",
+      "type": "object"
+    },
+    "workflow-job": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "description": "The workflow job. Many `workflow_job` keys, such as `head_sha`, `conclusion`, and `started_at` are the same as those in a [`check_run`](#check_run) object.",
+      "properties": {
+        "check_run_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "completed_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "conclusion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "head_sha": {
+          "type": "string"
+        },
+        "html_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "labels": {
+          "description": "Custom labels for the job. Specified by the [`\"runs-on\"` attribute](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on) in the workflow YAML.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "run_attempt": {
+          "type": "integer"
+        },
+        "run_id": {
+          "type": "integer"
+        },
+        "run_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "runner_group_id": {
+          "description": "The ID of the runner group that is running this job. This will be `null` as long as `workflow_job[status]` is `queued`.",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "runner_group_name": {
+          "description": "The name of the runner group that is running this job. This will be `null` as long as `workflow_job[status]` is `queued`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "runner_id": {
+          "description": "The ID of the runner that is running this job. This will be `null` as long as `workflow_job[status]` is `queued`.",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "runner_name": {
+          "description": "The name of the runner that is running this job. This will be `null` as long as `workflow_job[status]` is `queued`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "started_at": {
+          "type": "string"
+        },
+        "status": {
+          "description": "The current status of the job. Can be `queued`, `in_progress`, or `completed`.",
+          "type": "string"
+        },
+        "steps": {
+          "items": {
+            "$ref": "#/definitions/workflow-step"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "url": {
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "run_id",
+        "run_url",
+        "run_attempt",
+        "node_id",
+        "head_sha",
+        "url",
+        "html_url",
+        "status",
+        "conclusion",
+        "started_at",
+        "completed_at",
+        "name",
+        "steps",
+        "check_run_url",
+        "labels",
+        "runner_id",
+        "runner_name",
+        "runner_group_id",
+        "runner_group_name"
+      ],
+      "title": "Workflow Job",
+      "type": "object"
+    },
+    "workflow-run": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "actor": {
+          "$ref": "#/definitions/user"
+        },
+        "artifacts_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "cancel_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "check_suite_id": {
+          "type": "integer"
+        },
+        "check_suite_node_id": {
+          "type": "string"
+        },
+        "check_suite_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "conclusion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "created_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "event": {
+          "type": "string"
+        },
+        "head_branch": {
+          "type": "string"
+        },
+        "head_commit": {
+          "$ref": "#/definitions/commit-simple"
+        },
+        "head_repository": {
+          "$ref": "#/definitions/repository-lite"
+        },
+        "head_sha": {
+          "type": "string"
+        },
+        "html_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "jobs_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "logs_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "previous_attempt_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "pull_requests": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "base": {
+                "additionalProperties": false,
+                "properties": {
+                  "ref": {
+                    "type": "string"
+                  },
+                  "repo": {
+                    "$ref": "#/definitions/repo-ref"
+                  },
+                  "sha": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ref",
+                  "sha",
+                  "repo"
+                ],
+                "type": "object"
+              },
+              "head": {
+                "additionalProperties": false,
+                "properties": {
+                  "ref": {
+                    "type": "string"
+                  },
+                  "repo": {
+                    "$ref": "#/definitions/repo-ref"
+                  },
+                  "sha": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ref",
+                  "sha",
+                  "repo"
+                ],
+                "type": "object"
+              },
+              "id": {
+                "type": "number"
+              },
+              "number": {
+                "type": "number"
+              },
+              "url": {
+                "format": "uri",
+                "type": "string"
+              }
+            },
+            "required": [
+              "url",
+              "id",
+              "number",
+              "head",
+              "base"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "referenced_workflows": {
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository-lite"
+        },
+        "rerun_url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "run_attempt": {
+          "type": "integer"
+        },
+        "run_number": {
+          "type": "integer"
+        },
+        "run_started_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "triggering_actor": {
+          "$ref": "#/definitions/user"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "url": {
+          "format": "uri",
+          "type": "string"
+        },
+        "workflow_id": {
+          "type": "integer"
+        },
+        "workflow_url": {
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "artifacts_url",
+        "cancel_url",
+        "check_suite_url",
+        "check_suite_id",
+        "check_suite_node_id",
+        "conclusion",
+        "created_at",
+        "event",
+        "head_branch",
+        "head_commit",
+        "head_repository",
+        "head_sha",
+        "html_url",
+        "id",
+        "jobs_url",
+        "logs_url",
+        "node_id",
+        "name",
+        "pull_requests",
+        "repository",
+        "rerun_url",
+        "run_number",
+        "status",
+        "updated_at",
+        "url",
+        "workflow_id",
+        "workflow_url",
+        "run_attempt",
+        "run_started_at",
+        "actor",
+        "triggering_actor"
+      ],
+      "title": "Workflow Run",
+      "type": "object"
+    },
+    "workflow-step": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "oneOf": [
+        {
+          "$ref": "#/definitions/workflow-step-queued"
+        },
+        {
+          "$ref": "#/definitions/workflow-step-in_progress"
+        },
+        {
+          "$ref": "#/definitions/workflow-step-completed"
+        }
+      ],
+      "title": "Workflow Step",
+      "type": "object"
+    },
+    "workflow-step-completed": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "completed_at": {
+          "type": "string"
+        },
+        "conclusion": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "number": {
+          "type": "integer"
+        },
+        "started_at": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "completed"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "status",
+        "conclusion",
+        "number",
+        "started_at",
+        "completed_at"
+      ],
+      "title": "Workflow Step (Completed)",
+      "type": "object"
+    },
+    "workflow-step-in_progress": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "completed_at": {
+          "type": "null"
+        },
+        "conclusion": {
+          "type": "null"
+        },
+        "name": {
+          "type": "string"
+        },
+        "number": {
+          "type": "integer"
+        },
+        "started_at": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "in_progress"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "status",
+        "conclusion",
+        "number",
+        "started_at",
+        "completed_at"
+      ],
+      "title": "Workflow Step (In Progress)",
+      "type": "object"
+    },
+    "workflow-step-queued": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "completed_at": {
+          "type": "null"
+        },
+        "conclusion": {
+          "type": "null"
+        },
+        "name": {
+          "type": "string"
+        },
+        "number": {
+          "type": "integer"
+        },
+        "started_at": {
+          "type": "null"
+        },
+        "status": {
+          "enum": [
+            "queued"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "status",
+        "conclusion",
+        "number",
+        "started_at",
+        "completed_at"
+      ],
+      "title": "Workflow Step (Queued)",
+      "type": "object"
+    },
+    "workflow_dispatch$event": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "inputs": {
+          "description": "Inputs to the workflow. Each key represents the name of the input while it's value represents the value of that input.",
+          "additionalProperties": true,
+          "properties": {},
+          "type": "object"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "ref": {
+          "description": "The branch ref from which the workflow was run.",
+          "type": "string"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        },
+        "workflow": {
+          "description": "Relative path to the workflow file which contains the workflow.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ref",
+        "repository",
+        "sender",
+        "workflow"
+      ],
+      "title": "workflow_dispatch event",
+      "type": "object"
+    },
+    "workflow_job$completed": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "completed"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        },
+        "workflow_job": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/workflow-job"
+            },
+            {
+              "properties": {
+                "conclusion": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "conclusion"
+              ],
+              "tsAdditionalProperties": false,
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "required": [
+        "action",
+        "repository",
+        "sender",
+        "workflow_job"
+      ],
+      "title": "workflow_job completed event",
+      "type": "object"
+    },
+    "workflow_job$in_progress": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "in_progress"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        },
+        "workflow_job": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/workflow-job"
+            },
+            {
+              "properties": {
+                "status": {
+                  "enum": [
+                    "in_progress"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "status"
+              ],
+              "tsAdditionalProperties": false,
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "required": [
+        "action",
+        "repository",
+        "sender",
+        "workflow_job"
+      ],
+      "title": "workflow_job in_progress event",
+      "type": "object"
+    },
+    "workflow_job$queued": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "queued"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        },
+        "workflow_job": {
+          "additionalProperties": false,
+          "properties": {
+            "check_run_url": {
+              "format": "uri",
+              "type": "string"
+            },
+            "completed_at": {
+              "type": "null"
+            },
+            "conclusion": {
+              "type": "null"
+            },
+            "head_sha": {
+              "type": "string"
+            },
+            "html_url": {
+              "format": "uri",
+              "type": "string"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "labels": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "name": {
+              "type": "string"
+            },
+            "node_id": {
+              "type": "string"
+            },
+            "run_attempt": {
+              "type": "integer"
+            },
+            "run_id": {
+              "type": "integer"
+            },
+            "run_url": {
+              "format": "uri",
+              "type": "string"
+            },
+            "runner_group_id": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "runner_group_name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "runner_id": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "runner_name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "started_at": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "queued"
+              ],
+              "type": "string"
+            },
+            "steps": {
+              "items": {
+                "$ref": "#/definitions/workflow-step"
+              },
+              "type": "array"
+            },
+            "url": {
+              "format": "uri",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "run_id",
+            "run_url",
+            "run_attempt",
+            "node_id",
+            "head_sha",
+            "url",
+            "html_url",
+            "status",
+            "conclusion",
+            "started_at",
+            "completed_at",
+            "name",
+            "steps",
+            "check_run_url",
+            "labels",
+            "runner_id",
+            "runner_name",
+            "runner_group_id",
+            "runner_group_name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "action",
+        "repository",
+        "sender",
+        "workflow_job"
+      ],
+      "title": "workflow_job queued event",
+      "type": "object"
+    },
+    "workflow_job_event": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/workflow_job$completed"
+        },
+        {
+          "$ref": "#/definitions/workflow_job$in_progress"
+        },
+        {
+          "$ref": "#/definitions/workflow_job$queued"
+        }
+      ]
+    },
+    "workflow_run$completed": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "completed"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        },
+        "workflow": {
+          "$ref": "#/definitions/workflow"
+        },
+        "workflow_run": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/workflow-run"
+            },
+            {
+              "properties": {
+                "conclusion": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "conclusion"
+              ],
+              "tsAdditionalProperties": false,
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "required": [
+        "action",
+        "repository",
+        "sender",
+        "workflow",
+        "workflow_run"
+      ],
+      "title": "workflow_run completed event",
+      "type": "object"
+    },
+    "workflow_run$requested": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "requested"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        },
+        "workflow": {
+          "$ref": "#/definitions/workflow"
+        },
+        "workflow_run": {
+          "$ref": "#/definitions/workflow-run"
+        }
+      },
+      "required": [
+        "action",
+        "repository",
+        "sender",
+        "workflow",
+        "workflow_run"
+      ],
+      "title": "workflow_run requested event",
+      "type": "object"
+    },
+    "workflow_run_event": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/workflow_run$completed"
+        },
+        {
+          "$ref": "#/definitions/workflow_run$requested"
+        }
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/definitions/installation_event"
+    },
+    {
+      "$ref": "#/definitions/installation_repositories_event"
+    },
+    {
+      "$ref": "#/definitions/issue_comment_event"
+    },
+    {
+      "$ref": "#/definitions/pull_request_event"
+    },
+    {
+      "$ref": "#/definitions/push$event"
+    },
+    {
+      "$ref": "#/definitions/workflow_dispatch$event"
+    },
+    {
+      "$ref": "#/definitions/workflow_job_event"
+    },
+    {
+      "$ref": "#/definitions/workflow_run_event"
+    }
+  ]
+}
