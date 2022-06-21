@@ -22,8 +22,6 @@ end
 type t = {
   env : Env.t option; [@default None]
   extra_args : Extra_args.t option; [@default None]
-  terraform_version : Terrat_repo_config_terraform_version.t option; [@default None]
-  terragrunt : bool; [@default false]
   type_ : Type.t; [@key "type"]
 }
 [@@deriving yojson { strict = true; meta = true }, make, show]
