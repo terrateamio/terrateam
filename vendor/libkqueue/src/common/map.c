@@ -34,7 +34,7 @@ map_new(size_t len)
     if (dst == NULL)
         return (NULL);
 #ifdef _WIN32
-    dst->data = calloc(len, len * sizeof(dst->data[0]));
+    dst->data = calloc(len, sizeof(dst->data[0]));
     if(dst->data == NULL) {
         dbg_perror("calloc()");
         free(dst);
