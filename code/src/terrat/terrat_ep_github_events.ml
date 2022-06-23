@@ -554,6 +554,12 @@ module Evaluator = Terrat_event_evaluator.Make (struct
             ~base_sha
             head_sha
           >>= fun diff ->
+          Logs.debug (fun m ->
+              m
+                "GITHUB_EVENT : %s : MERGEABLE : merged=%s : mergeable_state=%s"
+                event.Event.request_id
+                (Bool.to_string merged)
+                mergeable_state);
           Abb.Future.return
             (Ok
                Terrat_pull_request.
