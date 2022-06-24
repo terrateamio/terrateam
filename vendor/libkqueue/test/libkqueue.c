@@ -46,8 +46,8 @@ test_libkqueue_version_str(struct test_context *ctx)
         die("kevent");
     }
 
-    if (strlen((char *)receipt.udata) < 8) {
-        printf("No version number returned");
+    if (!strlen((char *)receipt.udata)) {
+        printf("empty version number returned");
         die("kevent");
     }
 }
