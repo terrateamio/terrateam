@@ -975,8 +975,15 @@ let run_event_evaluator storage event =
   Abb.Future.fork (Terrat_github_runner.run (Event.request_id event) event.Event.config storage)
   >>= fun _ -> Abb.Future.return (Ok ())
 
-let perform_unlock_pr config storage installation_id repository pull_number =
+let perform_unlock_pr request_id config storage installation_id repository pull_number =
   let open Abbs_future_combinators.Infix_result_monad in
+  Logs.info (fun m ->
+      m
+        "GITHUB_EVENT : %s : UNLOCK : %s : %s  : %d"
+        request_id
+        repository.Gw.Repository.owner.Gw.User.login
+        repository.Gw.Repository.name
+        pull_number);
   Pgsql_pool.with_conn storage ~f:(fun db ->
       Pgsql_io.Prepared_stmt.execute
         db
@@ -994,10 +1001,15 @@ let perform_unlock_pr config storage installation_id repository pull_number =
     ~pull_number
     "All directories and workspaces have been unlocked"
   >>= function
-  | Ok () -> Abb.Future.return (Ok ())
+  | Ok () ->
+      Abb.Future.fork (Terrat_github_runner.run request_id config storage)
+      >>= fun _ -> Abb.Future.return (Ok ())
   | Error (#Terrat_github.publish_comment_err as err) ->
       Logs.err (fun m ->
-          m "GITHUB_EVENT : PUBLISH_COMMENT_ERROR : %s" (Terrat_github.show_publish_comment_err err));
+          m
+            "GITHUB_EVENT : %s : PUBLISH_COMMENT_ERROR : %s"
+            request_id
+            (Terrat_github.show_publish_comment_err err));
       Abb.Future.return (Ok ())
 
 let process_installation request_id config storage = function
@@ -1145,7 +1157,7 @@ let process_issue_comment request_id config storage = function
       } -> (
       match Terrat_comment.parse comment.Gw.Issue_comment.body with
       | Ok Terrat_comment.Unlock ->
-          perform_unlock_pr config storage installation_id repository pull_number
+          perform_unlock_pr request_id config storage installation_id repository pull_number
       | Ok (Terrat_comment.Plan { tag_query }) ->
           let open Abbs_future_combinators.Infix_result_monad in
           Terrat_github.get_installation_access_token config installation_id
