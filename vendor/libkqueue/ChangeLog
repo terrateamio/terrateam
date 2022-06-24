@@ -1,12 +1,17 @@
 Unreleased
 ------------------------------------------------------------------------
  
+2022-04-27  v2.6.2
+------------------------------------------------------------------------
+
    * Fix: Various build system and include fixes to allow libkqueue
      to build correctly with musl libc.
      
    * Fix: Various macro and include fixes for Windows/MinGW builds.
      (Fixed by: neheb)
      
+   * Always build both a static and a shared library. The STATIC_KQUEUE 
+     build variable has been removed.
  
 2022-04-27  v2.6.1
 ------------------------------------------------------------------------
