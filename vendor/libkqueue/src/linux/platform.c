@@ -523,7 +523,7 @@ linux_kqueue_init(struct kqueue *kq)
      * multiple signals are queued.
      */
     if (fcntl(kq->pipefd[0], F_SETSIG, MONITORING_THREAD_SIGNAL) < 0) {
-        dbg_printf("fd=%i - failed settting F_SETSIG sig=%u: %s",
+        dbg_printf("fd=%i - failed setting F_SETSIG sig=%u: %s",
                    kq->pipefd[0], MONITORING_THREAD_SIGNAL, strerror(errno));
         goto error;
     }
@@ -552,7 +552,7 @@ linux_kqueue_init(struct kqueue *kq)
     sig_owner.type = F_OWNER_TID;
     sig_owner.pid = monitoring_tid;
     if (fcntl(kq->pipefd[0], F_SETOWN_EX, &sig_owner) < 0) {
-        dbg_printf("fd=%i - failed settting F_SETOWN to tid=%u: %s", monitoring_tid, kq->kq_id, strerror(errno));
+        dbg_printf("fd=%i - failed setting F_SETOWN to tid=%u: %s", monitoring_tid, kq->kq_id, strerror(errno));
         tracing_mutex_unlock(&kq_mtx);
         goto error;
     }
