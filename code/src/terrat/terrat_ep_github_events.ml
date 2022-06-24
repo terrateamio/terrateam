@@ -1045,7 +1045,9 @@ let process_installation request_id config storage = function
                     installation.Gw.Installation.account.Gw.User.type_
               | [] -> assert false)
           | _ :: _ -> Abb.Future.return (Ok ()))
-  | Gw.Installation_event.Installation_deleted _ -> failwith "nyi6"
+  | Gw.Installation_event.Installation_deleted _ ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : INSTALLATION_DELETED" request_id);
+      Abb.Future.return (Ok ())
   | Gw.Installation_event.Installation_new_permissions_accepted installation_event ->
       let installation = installation_event.Gw.Installation_new_permissions_accepted.installation in
       Logs.info (fun m ->
@@ -1054,8 +1056,12 @@ let process_installation request_id config storage = function
             installation.Gw.Installation.id
             installation.Gw.Installation.account.Gw.User.login);
       Abb.Future.return (Ok ())
-  | Gw.Installation_event.Installation_suspend _ -> failwith "nyi7"
-  | Gw.Installation_event.Installation_unsuspend _ -> failwith "nyi8"
+  | Gw.Installation_event.Installation_suspend _ ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : INSTALLATION_SUSPENDED" request_id);
+      Abb.Future.return (Ok ())
+  | Gw.Installation_event.Installation_unsuspend _ ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : INSTALLATION_UNSUSPENDED" request_id);
+      Abb.Future.return (Ok ())
 
 let process_pull_request_event request_id config storage = function
   | Gw.Pull_request_event.Pull_request_opened
@@ -1129,19 +1135,49 @@ let process_pull_request_event request_id config storage = function
       in
       run_event_evaluator storage event
   | Gw.Pull_request_event.Pull_request_closed _ -> failwith "Invalid pull_request_closed event"
-  | Gw.Pull_request_event.Pull_request_assigned _
-  | Gw.Pull_request_event.Pull_request_auto_merge_disabled _
-  | Gw.Pull_request_event.Pull_request_auto_merge_enabled _
-  | Gw.Pull_request_event.Pull_request_converted_to_draft _
-  | Gw.Pull_request_event.Pull_request_edited _
-  | Gw.Pull_request_event.Pull_request_labeled _
-  | Gw.Pull_request_event.Pull_request_locked _
-  | Gw.Pull_request_event.Pull_request_ready_for_review _
-  | Gw.Pull_request_event.Pull_request_review_request_removed _
-  | Gw.Pull_request_event.Pull_request_review_requested _
-  | Gw.Pull_request_event.Pull_request_unassigned _
-  | Gw.Pull_request_event.Pull_request_unlabeled _
-  | Gw.Pull_request_event.Pull_request_unlocked _ -> failwith "nyi10"
+  | Gw.Pull_request_event.Pull_request_assigned _ ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_ASSIGNED" request_id);
+      Abb.Future.return (Ok ())
+  | Gw.Pull_request_event.Pull_request_auto_merge_disabled _ ->
+      Logs.debug (fun m ->
+          m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_AUTO_MERGE_DISABLED" request_id);
+      Abb.Future.return (Ok ())
+  | Gw.Pull_request_event.Pull_request_auto_merge_enabled _ ->
+      Logs.debug (fun m ->
+          m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_AUTO_MERGE_ENABLED" request_id);
+      Abb.Future.return (Ok ())
+  | Gw.Pull_request_event.Pull_request_converted_to_draft _ ->
+      Logs.debug (fun m ->
+          m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_CONVERTED_TO_DRAFT" request_id);
+      Abb.Future.return (Ok ())
+  | Gw.Pull_request_event.Pull_request_edited _ ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_EDITED" request_id);
+      Abb.Future.return (Ok ())
+  | Gw.Pull_request_event.Pull_request_labeled _ ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_LABELED" request_id);
+      Abb.Future.return (Ok ())
+  | Gw.Pull_request_event.Pull_request_locked _ ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_LOCKED" request_id);
+      Abb.Future.return (Ok ())
+  | Gw.Pull_request_event.Pull_request_ready_for_review _ ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_READY_FOR_REVIEW" request_id);
+      Abb.Future.return (Ok ())
+  | Gw.Pull_request_event.Pull_request_review_request_removed _ ->
+      Logs.debug (fun m ->
+          m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_REVIEW_REQUEST_REMOVED" request_id);
+      Abb.Future.return (Ok ())
+  | Gw.Pull_request_event.Pull_request_review_requested _ ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_REVIEW_REQUESTED" request_id);
+      Abb.Future.return (Ok ())
+  | Gw.Pull_request_event.Pull_request_unassigned _ ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_UNASSIGNED" request_id);
+      Abb.Future.return (Ok ())
+  | Gw.Pull_request_event.Pull_request_unlabeled _ ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_UNLABELED" request_id);
+      Abb.Future.return (Ok ())
+  | Gw.Pull_request_event.Pull_request_unlocked _ ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_UNLOCKED" request_id);
+      Abb.Future.return (Ok ())
 
 let process_issue_comment request_id config storage = function
   | Gw.Issue_comment_event.Issue_comment_created
@@ -1244,9 +1280,15 @@ let process_issue_comment request_id config storage = function
                     request_id
                     (Snabela.show_err err));
               Abb.Future.return (Ok ())))
-  | Gw.Issue_comment_event.Issue_comment_created _ -> failwith "nyi12"
-  | Gw.Issue_comment_event.Issue_comment_deleted _ -> failwith "nyi13"
-  | Gw.Issue_comment_event.Issue_comment_edited _ -> failwith "nyi14"
+  | Gw.Issue_comment_event.Issue_comment_created _ ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : ISSUE_COMMENT_CREATED" request_id);
+      Abb.Future.return (Ok ())
+  | Gw.Issue_comment_event.Issue_comment_deleted _ ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : ISSUE_COMMENT_DELETED" request_id);
+      Abb.Future.return (Ok ())
+  | Gw.Issue_comment_event.Issue_comment_edited _ ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : ISSUE_COMMENT_EDITED" request_id);
+      Abb.Future.return (Ok ())
 
 let process_workflow_job_failure storage access_token run_id repository =
   let open Abbs_future_combinators.Infix_result_monad in
