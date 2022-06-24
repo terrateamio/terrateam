@@ -363,8 +363,14 @@ module Make (S : S) = struct
     >>= function
     | Ok (Some msg) -> S.publish_msg event msg
     | Ok None -> Abb.Future.return ()
-    | Error (`Repo_config_parse_err err) -> S.publish_msg event (Msg.Repo_config_parse_failure err)
-    | Error (`Repo_config_err err) -> S.publish_msg event (Msg.Repo_config_failure err)
+    | Error (`Repo_config_parse_err err) ->
+        Logs.info (fun m ->
+            m "EVENT_EVALUATOR : %s : REPO_CONFIG_PARSE_ERROR : %s" (S.Event.request_id event) err);
+        S.publish_msg event (Msg.Repo_config_parse_failure err)
+    | Error (`Repo_config_err err) ->
+        Logs.info (fun m ->
+            m "EVENT_EVALUATOR : %s : REPO_CONFIG_ERROR : %s" (S.Event.request_id event) err);
+        S.publish_msg event (Msg.Repo_config_failure err)
     | Error `Error ->
         Logs.err (fun m -> m "EVENT_EVALUATOR : %s : ERROR : ERROR" (S.Event.request_id event));
         Abb.Future.return ()
