@@ -971,6 +971,13 @@ let run_event_evaluator storage event =
 
 let perform_unlock_pr request_id config storage installation_id repository pull_number =
   let open Abbs_future_combinators.Infix_result_monad in
+  Logs.info (fun m ->
+      m
+        "GITHUB_EVENT : %s : UNLOCK : %s : %s  : %d"
+        request_id
+        repository.Gw.Repository.owner.Gw.User.login
+        repository.Gw.Repository.name
+        pull_number);
   Pgsql_pool.with_conn storage ~f:(fun db ->
       Pgsql_io.Prepared_stmt.execute
         db
@@ -993,7 +1000,10 @@ let perform_unlock_pr request_id config storage installation_id repository pull_
       >>= fun _ -> Abb.Future.return (Ok ())
   | Error (#Terrat_github.publish_comment_err as err) ->
       Logs.err (fun m ->
-          m "GITHUB_EVENT : PUBLISH_COMMENT_ERROR : %s" (Terrat_github.show_publish_comment_err err));
+          m
+            "GITHUB_EVENT : %s : PUBLISH_COMMENT_ERROR : %s"
+            request_id
+            (Terrat_github.show_publish_comment_err err));
       Abb.Future.return (Ok ())
 
 let process_installation request_id config storage = function
