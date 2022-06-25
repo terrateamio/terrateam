@@ -99,7 +99,7 @@ module Sql = struct
       /% Var.bigint "repository"
       /% Var.bigint "pull_number")
 
-  let select_running_apply_in_repo =
+  let select_existing_apply_in_repo =
     Pgsql_io.Typed_sql.(
       sql
       // (* base_hash *) Ret.text
@@ -115,8 +115,10 @@ module Sql = struct
       // (* pr state *) Ret.text
       // (* merged_hash *) Ret.(option text)
       // (* merged_at *) Ret.(option text)
-      /^ read "select_github_work_manifest_running_apply_in_repo.sql"
-      /% Var.bigint "repository")
+      // (* state *) Ret.(ud' Terrat_work_manifest.State.of_string)
+      /^ read "select_github_work_manifest_existing_apply_in_repo.sql"
+      /% Var.bigint "repository"
+      /% Var.bigint "pull_number")
 
   let select_dirspaces_owned_by_other_pull_requests =
     Pgsql_io.Typed_sql.(
@@ -202,6 +204,7 @@ module Tmpl = struct
     read "github_dirspaces_owned_by_other_pull_requests.tmpl"
 
   let apply_running = read "github_apply_running.tmpl"
+  let apply_queued = read "github_apply_queued.tmpl"
   let repo_config_parse_failure = read "github_repo_config_parse_failure.tmpl"
   let repo_config_generic_failure = read "github_repo_config_generic_failure.tmpl"
 
@@ -675,11 +678,11 @@ module Evaluator = Terrat_event_evaluator.Make (struct
             m "GITHUB_EVENT : %s : ERROR : %s" (Event.request_id event) (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
 
-  let query_running_apply_in_repo db event =
+  let query_existing_apply_in_repo db event =
     let run =
       Pgsql_io.Prepared_stmt.fetch
         db
-        Sql.select_running_apply_in_repo
+        Sql.select_existing_apply_in_repo
         ~f:
           (fun base_hash
                created_at
@@ -693,7 +696,8 @@ module Evaluator = Terrat_event_evaluator.Make (struct
                pull_number
                pr_state
                merged_hash
-               merged_at ->
+               merged_at
+               state ->
           let pull_request =
             Terrat_pull_request.
               {
@@ -725,10 +729,11 @@ module Evaluator = Terrat_event_evaluator.Make (struct
               pull_request;
               run_id;
               run_type = CCOpt.get_exn_or ("run type " ^ run_type) (Run_type.of_string run_type);
-              state = State.Running;
+              state;
               tag_query = Terrat_tag_set.of_string tag_query;
             })
         (CCInt64.of_int event.Event.repository.Gw.Repository.id)
+        (CCInt64.of_int event.Event.pull_number)
     in
     let open Abb.Future.Infix_monad in
     run
@@ -900,7 +905,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
           Tmpl.dirspaces_owned_by_other_pull_requests
           kv
           event
-    | Terrat_event_evaluator.Msg.Apply_running pull_request ->
+    | Terrat_event_evaluator.Msg.Conflicting_apply_running pull_request ->
         let kv =
           Snabela.Kv.(
             Map.of_list
@@ -914,6 +919,20 @@ module Evaluator = Terrat_event_evaluator.Make (struct
               (Event.request_id event)
               pull_request.Terrat_pull_request.id);
         apply_template_and_publish "APPLY_RUNNING" Tmpl.apply_running kv event
+    | Terrat_event_evaluator.Msg.Conflicting_apply_queued pull_request ->
+        let kv =
+          Snabela.Kv.(
+            Map.of_list
+              [
+                ("pull_request_id", string (CCInt64.to_string pull_request.Terrat_pull_request.id));
+              ])
+        in
+        Logs.info (fun m ->
+            m
+              "GITHUB_EVENT : %s : APPLY_QUEUED : %Ld"
+              (Event.request_id event)
+              pull_request.Terrat_pull_request.id);
+        apply_template_and_publish "APPLY_QUEUED" Tmpl.apply_queued kv event
     | Terrat_event_evaluator.Msg.Repo_config_parse_failure err ->
         let kv = Snabela.Kv.(Map.of_list [ ("msg", string err) ]) in
         apply_template_and_publish
