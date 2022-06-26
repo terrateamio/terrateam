@@ -351,6 +351,33 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     let mergeable t = t.Terrat_pull_request.mergeable
   end
 
+  let list_existing_dirs event pull_request dirs =
+    let open Abb.Future.Infix_monad in
+    let client = Terrat_github.create (`Token event.Event.access_token) in
+    Abbs_future_combinators.List_result.fold_left
+      ~init:Terrat_event_evaluator.Dir_set.empty
+      ~f:(fun acc d ->
+        let open Abbs_future_combinators.Infix_result_monad in
+        Githubc2_abb.call
+          client
+          Githubc2_repos.Get_content.(
+            make
+              (Parameters.make
+                 ~owner:event.Event.repository.Gw.Repository.owner.Gw.User.login
+                 ~repo:event.Event.repository.Gw.Repository.name
+                 ~ref_:(Some pull_request.Terrat_pull_request.hash)
+                 ~path:d
+                 ()))
+        >>= fun resp ->
+        match Openapi.Response.value resp with
+        | `OK _ | `Found | `Forbidden _ ->
+            Abb.Future.return (Ok (Terrat_event_evaluator.Dir_set.add d acc))
+        | `Not_found _ -> Abb.Future.return (Ok acc))
+      (Terrat_event_evaluator.Dir_set.to_list dirs)
+    >>= function
+    | Ok existing_dirs -> Abb.Future.return (Ok existing_dirs)
+    | Error _ -> failwith "nyi"
+
   let store_dirspaceflows db event pull_request dirspaceflows =
     let run =
       Abbs_future_combinators.List_result.iter

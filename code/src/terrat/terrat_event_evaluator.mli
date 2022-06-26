@@ -1,3 +1,4 @@
+module Dir_set : module type of CCSet.Make (CCString)
 module Dirspace_map : module type of CCMap.Make (Terrat_change.Dirspace)
 
 module Msg : sig
@@ -33,6 +34,10 @@ module type S = sig
     val passed_all_checks : t -> bool
     val mergeable : t -> bool option
   end
+
+  (** Given a set of directories, return those directories that exist in the repo *)
+  val list_existing_dirs :
+    Event.t -> Pull_request.t -> Dir_set.t -> (Dir_set.t, [> `Error ]) result Abb.Future.t
 
   val store_dirspaceflows :
     Pgsql_io.t ->

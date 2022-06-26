@@ -1,3 +1,4 @@
+module Dir_set = CCSet.Make (CCString)
 module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
 
 module Msg = struct
@@ -33,6 +34,9 @@ module type S = sig
     val passed_all_checks : t -> bool
     val mergeable : t -> bool option
   end
+
+  val list_existing_dirs :
+    Event.t -> Pull_request.t -> Dir_set.t -> (Dir_set.t, [> `Error ]) result Abb.Future.t
 
   val store_dirspaceflows :
     Pgsql_io.t ->
@@ -281,6 +285,36 @@ module Make (S : S) = struct
                     (S.Event.tag_query event)
                     out_of_change_applies
                     (S.Pull_request.diff pull_request)
+                in
+                Logs.info (fun m ->
+                    m "EVENT_EVALUATOR : %s : LIST_EXISTING_DIRS" (S.Event.request_id event));
+                let dirs =
+                  all_match_dirspaceflows
+                  |> CCList.map (fun dsf -> Terrat_change.(dsf.Dirspaceflow.dirspace.Dirspace.dir))
+                  |> Dir_set.of_list
+                in
+                S.list_existing_dirs event pull_request dirs
+                >>= fun existing_dirs ->
+                let missing_dirs = Dir_set.diff dirs existing_dirs in
+                Logs.info (fun m ->
+                    m
+                      "EVENT_EVALUATOR : %s : MISSING_DIRS : %d"
+                      (S.Event.request_id event)
+                      (Dir_set.cardinal missing_dirs));
+                let all_match_dirspaceflows =
+                  all_match_dirspaceflows
+                  |> CCList.filter (fun dsf ->
+                         Dir_set.mem
+                           Terrat_change.(dsf.Dirspaceflow.dirspace.Dirspace.dir)
+                           existing_dirs)
+                in
+                let tag_query_matches =
+                  tag_query_matches
+                  |> CCList.filter (fun tcm ->
+                         let dsf = tcm.Terrat_change_matcher.dirspaceflow in
+                         Dir_set.mem
+                           Terrat_change.(dsf.Dirspaceflow.dirspace.Dirspace.dir)
+                           existing_dirs)
                 in
                 Logs.info (fun m ->
                     m "EVENT_EVALUATOR : %s : STORE_DIRSPACEFLOWS" (S.Event.request_id event));
