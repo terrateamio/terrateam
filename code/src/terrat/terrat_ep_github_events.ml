@@ -649,16 +649,6 @@ module Evaluator = Terrat_event_evaluator.Make (struct
               event.Event.pull_number
               (Githubc2_repos.Compare_commits.Responses.Internal_server_error.show err));
         Abb.Future.return (Error `Error)
-    | Error (#Terrat_github.fetch_gitmodules_err as err) ->
-        Logs.err (fun m ->
-            m
-              "GITHUB_EVENT : %s : FETCH_GITMODULES : %s : %s : %d : %s"
-              (Event.request_id event)
-              owner
-              repo
-              event.Event.pull_number
-              (Terrat_github.show_fetch_gitmodules_err err));
-        Abb.Future.return (Error `Error)
 
   let query_pull_request_out_of_diff_applies db event pull_request =
     let run =

@@ -49,17 +49,6 @@ type fetch_repo_config_err =
   ]
 [@@deriving show]
 
-type fetch_gitmodules_err =
-  [ Githubc2_abb.call_err
-  | Git_config.err
-  | `Gitmodules_is_dir
-  | `Gitmodules_is_symlink
-  | `Gitmodules_is_submodule
-  | `Gitmodules_forbidden
-  | `Gitmodules_unknown_err
-  ]
-[@@deriving show]
-
 type publish_comment_err =
   [ Githubc2_abb.call_err
   | `Forbidden of Githubc2_components.Basic_error.t
@@ -190,34 +179,6 @@ let fetch_repo_config ~python ~access_token ~owner ~repo ref_ =
   | `OK (C.Content_submodule _) -> Abb.Future.return (Error `Repo_config_in_sub_module)
   | `Forbidden _ -> Abb.Future.return (Error `Repo_config_permission_denied)
   | `Found -> Abb.Future.return (Error `Repo_config_unknown_err)
-
-let fetch_gitmodules ~access_token ~owner ~repo ref_ =
-  let open Abbs_future_combinators.Infix_result_monad in
-  let client = create (`Token access_token) in
-  Githubc2_abb.call
-    client
-    Githubc2_repos.Get_content.(
-      make (Parameters.make ~owner ~repo ~ref_:(Some ref_) ~path:".gitmodules" ()))
-  >>= fun resp ->
-  let module C = Githubc2_repos.Get_content.Responses.OK in
-  match Openapi.Response.value resp with
-  | `OK (C.Content_file file) -> (
-      let content =
-        Githubc2_components.Content_file.(
-          match file.primary.Primary.encoding with
-          | "base64" ->
-              Base64.decode_exn (CCString.replace ~sub:"\n" ~by:"" file.primary.Primary.content)
-          | _ -> file.primary.Primary.content)
-      in
-      match Git_config.of_string content with
-      | Ok gitmodules -> Abb.Future.return (Ok gitmodules)
-      | Error err -> Abb.Future.return (Error err))
-  | `Not_found _ -> Abb.Future.return (Ok Git_config.empty)
-  | `OK (C.Content_directory _) -> Abb.Future.return (Error `Gitmodules_is_dir)
-  | `OK (C.Content_symlink _) -> Abb.Future.return (Error `Gitmodules_is_symlink)
-  | `OK (C.Content_submodule _) -> Abb.Future.return (Error `Gitmodules_is_submodule)
-  | `Forbidden _ -> Abb.Future.return (Error `Gitmodules_forbidden)
-  | `Found -> Abb.Future.return (Error `Gitmodules_unknown_err)
 
 let fetch_pull_request_files ~access_token ~owner ~pull_number repo =
   let client = create (`Token access_token) in

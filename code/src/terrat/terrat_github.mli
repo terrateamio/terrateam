@@ -42,17 +42,6 @@ type fetch_repo_config_err =
   ]
 [@@deriving show]
 
-type fetch_gitmodules_err =
-  [ Githubc2_abb.call_err
-  | Git_config.err
-  | `Gitmodules_is_dir
-  | `Gitmodules_is_symlink
-  | `Gitmodules_is_submodule
-  | `Gitmodules_forbidden
-  | `Gitmodules_unknown_err
-  ]
-[@@deriving show]
-
 type publish_comment_err =
   [ Githubc2_abb.call_err
   | `Forbidden of Githubc2_components.Basic_error.t
@@ -108,13 +97,6 @@ val fetch_repo_config :
   repo:string ->
   string ->
   (Terrat_repo_config.Version_1.t, [> fetch_repo_config_err ]) result Abb.Future.t
-
-val fetch_gitmodules :
-  access_token:string ->
-  owner:string ->
-  repo:string ->
-  string ->
-  (Git_config.t, [> fetch_gitmodules_err ]) result Abb.Future.t
 
 val fetch_pull_request_files :
   access_token:string ->
