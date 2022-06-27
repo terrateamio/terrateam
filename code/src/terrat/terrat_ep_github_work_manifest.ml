@@ -933,6 +933,8 @@ module Results = struct
                 pull_number
           | Terrat_work_manifest.Unified_run_type.Plan -> Abb.Future.return ())
         >>= fun () ->
+        Abb.Future.fork (Terrat_github_runner.run request_id config storage)
+        >>= fun _ ->
         Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
     | Error (#Pgsql_pool.err as err) ->
         Logs.err (fun m -> m "WORK_MANIFEST : PLAN : %s : ERROR : %s" id (Pgsql_pool.show_err err));

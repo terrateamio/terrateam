@@ -23,14 +23,15 @@ select
     gwm.pull_number,
     gpr.state,
     gpr.merged_sha,
-    gpr.merged_at
+    gpr.merged_at,
+    gwm.state
 from github_work_manifests as gwm
 inner join github_pull_requests as gpr
     on gpr.repository = gwm.repository and gpr.pull_number = gwm.pull_number
 left join latest_unlocks
     on latest_unlocks.repository = gpr.repository and latest_unlocks.pull_number = gpr.pull_number
 where gwm.repository = $repository
-      and gwm.state = 'running'
+      and (gwm.state = 'running' or (gwm.pull_number = $pull_number and gwm.state = 'queued'))
       and gwm.run_type in ('apply', 'autoapply')
       and (latest_unlocks.unlocked_at is null
            or latest_unlocks.unlocked_at < gwm.created_at)

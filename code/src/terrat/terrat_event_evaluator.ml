@@ -1,10 +1,12 @@
+module Dir_set = CCSet.Make (CCString)
 module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
 
 module Msg = struct
   type 'pull_request t =
     | Missing_plans of Terrat_change.Dirspace.t list
     | Dirspaces_owned_by_other_pull_request of 'pull_request Dirspace_map.t
-    | Apply_running of 'pull_request
+    | Conflicting_apply_running of 'pull_request
+    | Conflicting_apply_queued of 'pull_request
     | Repo_config_parse_failure of string
     | Repo_config_failure of string
     | Pull_request_not_appliable of 'pull_request
@@ -33,6 +35,9 @@ module type S = sig
     val mergeable : t -> bool option
   end
 
+  val list_existing_dirs :
+    Event.t -> Pull_request.t -> Dir_set.t -> (Dir_set.t, [> `Error ]) result Abb.Future.t
+
   val store_dirspaceflows :
     Pgsql_io.t ->
     Event.t ->
@@ -59,7 +64,7 @@ module type S = sig
 
   val fetch_pull_request : Event.t -> (Pull_request.t, [> `Error ]) result Abb.Future.t
 
-  val query_running_apply_in_repo :
+  val query_existing_apply_in_repo :
     Pgsql_io.t ->
     Event.t ->
     (Pull_request.t Terrat_work_manifest.Existing_lite.t option, [> `Error ]) result Abb.Future.t
@@ -125,6 +130,127 @@ module Make (S : S) = struct
     | Some mergeable, "merge" -> mergeable
     | (Some _ | _), _ -> true
 
+  let create_and_store_work_manifest db event pull_request matches =
+    let open Abbs_future_combinators.Infix_result_monad in
+    let work_manifest =
+      Terrat_work_manifest.
+        {
+          base_hash = S.Pull_request.base_hash pull_request;
+          changes = CCList.map Terrat_change_matcher.dirspaceflow matches;
+          completed_at = None;
+          created_at = ();
+          hash = S.Pull_request.hash pull_request;
+          id = ();
+          pull_request;
+          run_id = ();
+          run_type = S.Event.run_type event;
+          state = ();
+          tag_query = S.Event.tag_query event;
+        }
+    in
+    Logs.info (fun m -> m "EVENT_EVALUATOR : %s : CREATE_WORK_MANIFEST" (S.Event.request_id event));
+    S.store_new_work_manifest db event work_manifest >>= fun _ -> Abb.Future.return (Ok None)
+
+  let process_plan db event tag_query_matches pull_request run_type =
+    let matches =
+      match run_type with
+      | `Auto ->
+          CCList.filter
+            (fun {
+                   Terrat_change_matcher.when_modified =
+                     Terrat_repo_config.When_modified.{ autoplan; _ };
+                   _;
+                 } -> autoplan)
+            tag_query_matches
+      | `Manual -> tag_query_matches
+    in
+    match (S.Event.run_type event, matches) with
+    | Terrat_work_manifest.Run_type.Autoplan, [] ->
+        Logs.info (fun m ->
+            m "EVENT_EVALUATOR : %s : NOOP : AUTOPLAN_NO_MATCHES" (S.Event.request_id event));
+        Abb.Future.return (Ok None)
+    | _, [] ->
+        Logs.info (fun m ->
+            m "EVENT_EVALUATOR : %s : NOOP : PLAN_NO_MATCHING_DIRSPACES" (S.Event.request_id event));
+        Abb.Future.return (Ok (Some Msg.Plan_no_matching_dirspaces))
+    | _, _ -> create_and_store_work_manifest db event pull_request matches
+
+  let process_apply db event tag_query_matches all_match_dirspaceflows pull_request run_type =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Logs.info (fun m ->
+        m "EVENT_EVALUATOR : %s : MISSING_APPLIED_DIRSPACES" (S.Event.request_id event));
+    S.query_unapplied_dirspaces db event pull_request
+    >>= fun missing_dirspaces ->
+    (* Filter only those missing *)
+    let tag_query_matches =
+      CCList.filter
+        (fun Terrat_change_matcher.{ dirspaceflow = Terrat_change.Dirspaceflow.{ dirspace; _ }; _ } ->
+          CCList.mem ~eq:Terrat_change.Dirspace.equal dirspace missing_dirspaces)
+        tag_query_matches
+    in
+    (* To perform an apply we need:
+
+       1. Plans for all of the dirspaces we are going to run.  This
+       also means that the plan also has happened after any of the
+       most recent applies to that dirspace.
+
+       2. Make sure no other pull requests own the any of the
+       dirspaces that this pull request touches. *)
+    let matches =
+      match run_type with
+      | `Auto ->
+          CCList.filter
+            (fun {
+                   Terrat_change_matcher.when_modified =
+                     Terrat_repo_config.When_modified.{ autoapply; _ };
+                   _;
+                 } -> autoapply)
+            tag_query_matches
+      | `Manual -> tag_query_matches
+    in
+    match (S.Event.run_type event, matches) with
+    | Terrat_work_manifest.Run_type.Autoapply, [] ->
+        Logs.info (fun m ->
+            m "EVENT_EVALUATOR : %s : NOOP : AUTOAPPLY_NO_MATCHES" (S.Event.request_id event));
+        Abb.Future.return (Ok None)
+    | _, [] ->
+        Logs.info (fun m ->
+            m "EVENT_EVALUATOR : %s : NOOP : APPLY_NO_MATCHING_DIRSPACES" (S.Event.request_id event));
+        Abb.Future.return (Ok (Some Msg.Apply_no_matching_dirspaces))
+    | _, _ -> (
+        Logs.info (fun m ->
+            m "EVENT_EVALUATOR : %s : QUERY_DIRSPACES_OWNED_BY_OTHER_PRS" (S.Event.request_id event));
+        S.query_dirspaces_owned_by_other_pull_requests
+          db
+          event
+          pull_request
+          (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows)
+        >>= function
+        | dirspaces when Dirspace_map.is_empty dirspaces -> (
+            (* None of the dirspaces are owned by another PR, we can proceed *)
+            Logs.info (fun m ->
+                m
+                  "EVENT_EVALUATOR : %s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS"
+                  (S.Event.request_id event));
+            S.query_dirspaces_without_valid_plans
+              db
+              event
+              pull_request
+              (CCList.map
+                 CCFun.(
+                   Terrat_change_matcher.dirspaceflow %> Terrat_change.Dirspaceflow.to_dirspace)
+                 matches)
+            >>= function
+            | [] ->
+                (* All are ready to be applied *)
+                create_and_store_work_manifest db event pull_request matches
+            | dirspaces ->
+                (* Some are missing plans *)
+                Abb.Future.return (Ok (Some (Msg.Missing_plans dirspaces))))
+        | dirspaces ->
+            (* Some are owned by another PR, abort *)
+            Abb.Future.return (Ok (Some (Msg.Dirspaces_owned_by_other_pull_request dirspaces))))
+
   let exec_event storage event pull_request repo_config =
     let open Abbs_future_combinators.Infix_result_monad in
     Pgsql_pool.with_conn storage ~f:(fun db ->
@@ -135,11 +261,14 @@ module Make (S : S) = struct
             >>= fun () ->
             Logs.info (fun m ->
                 m "EVENT_EVALUATOR : %s : QUERY_RUNNING_APPLY" (S.Event.request_id event));
-            S.query_running_apply_in_repo db event
+            S.query_existing_apply_in_repo db event
             >>= function
+            | Some wm when Terrat_work_manifest.(wm.state = State.Running) ->
+                Abb.Future.return
+                  (Ok (Some (Msg.Conflicting_apply_running wm.Terrat_work_manifest.pull_request)))
             | Some wm ->
                 Abb.Future.return
-                  (Ok (Some (Msg.Apply_running wm.Terrat_work_manifest.pull_request)))
+                  (Ok (Some (Msg.Conflicting_apply_queued wm.Terrat_work_manifest.pull_request)))
             | None -> (
                 (* Collect any changes that have been applied outside of the current
                    state of the PR.  For example, we made a change to dir1 and dir2,
@@ -158,168 +287,49 @@ module Make (S : S) = struct
                     (S.Pull_request.diff pull_request)
                 in
                 Logs.info (fun m ->
+                    m "EVENT_EVALUATOR : %s : LIST_EXISTING_DIRS" (S.Event.request_id event));
+                let dirs =
+                  all_match_dirspaceflows
+                  |> CCList.map (fun dsf -> Terrat_change.(dsf.Dirspaceflow.dirspace.Dirspace.dir))
+                  |> Dir_set.of_list
+                in
+                S.list_existing_dirs event pull_request dirs
+                >>= fun existing_dirs ->
+                let missing_dirs = Dir_set.diff dirs existing_dirs in
+                Logs.info (fun m ->
+                    m
+                      "EVENT_EVALUATOR : %s : MISSING_DIRS : %d"
+                      (S.Event.request_id event)
+                      (Dir_set.cardinal missing_dirs));
+                let all_match_dirspaceflows =
+                  all_match_dirspaceflows
+                  |> CCList.filter (fun dsf ->
+                         Dir_set.mem
+                           Terrat_change.(dsf.Dirspaceflow.dirspace.Dirspace.dir)
+                           existing_dirs)
+                in
+                let tag_query_matches =
+                  tag_query_matches
+                  |> CCList.filter (fun tcm ->
+                         let dsf = tcm.Terrat_change_matcher.dirspaceflow in
+                         Dir_set.mem
+                           Terrat_change.(dsf.Dirspaceflow.dirspace.Dirspace.dir)
+                           existing_dirs)
+                in
+                Logs.info (fun m ->
                     m "EVENT_EVALUATOR : %s : STORE_DIRSPACEFLOWS" (S.Event.request_id event));
                 S.store_dirspaceflows db event pull_request all_match_dirspaceflows
                 >>= fun () ->
                 match unified_run_type (S.Event.run_type event) with
-                | `Plan run_type -> (
-                    let matches =
-                      match run_type with
-                      | `Auto ->
-                          CCList.filter
-                            (fun {
-                                   Terrat_change_matcher.when_modified =
-                                     Terrat_repo_config.When_modified.{ autoplan; _ };
-                                   _;
-                                 } -> autoplan)
-                            tag_query_matches
-                      | `Manual -> tag_query_matches
-                    in
-                    match (S.Event.run_type event, matches) with
-                    | Terrat_work_manifest.Run_type.Autoplan, [] ->
-                        Logs.info (fun m ->
-                            m
-                              "EVENT_EVALUATOR : %s : NOOP : AUTOPLAN_NO_MATCHES"
-                              (S.Event.request_id event));
-                        Abb.Future.return (Ok None)
-                    | _, [] ->
-                        Logs.info (fun m ->
-                            m
-                              "EVENT_EVALUATOR : %s : NOOP : PLAN_NO_MATCHING_DIRSPACES"
-                              (S.Event.request_id event));
-                        Abb.Future.return (Ok (Some Msg.Plan_no_matching_dirspaces))
-                    | _, _ ->
-                        let work_manifest =
-                          Terrat_work_manifest.
-                            {
-                              base_hash = S.Pull_request.base_hash pull_request;
-                              changes = CCList.map Terrat_change_matcher.dirspaceflow matches;
-                              completed_at = None;
-                              created_at = ();
-                              hash = S.Pull_request.hash pull_request;
-                              id = ();
-                              pull_request;
-                              run_id = ();
-                              run_type = S.Event.run_type event;
-                              state = ();
-                              tag_query = S.Event.tag_query event;
-                            }
-                        in
-                        Logs.info (fun m ->
-                            m
-                              "EVENT_EVALUATOR : %s : CREATE_WORK_MANIFEST"
-                              (S.Event.request_id event));
-                        S.store_new_work_manifest db event work_manifest
-                        >>= fun _ -> Abb.Future.return (Ok None))
-                | `Apply run_type when S.Pull_request.passed_all_checks pull_request -> (
-                    Logs.info (fun m ->
-                        m
-                          "EVENT_EVALUATOR : %s : MISSING_APPLIED_DIRSPACES"
-                          (S.Event.request_id event));
-                    S.query_unapplied_dirspaces db event pull_request
-                    >>= fun missing_dirspaces ->
-                    (* Filter only those missing *)
-                    let tag_query_matches =
-                      CCList.filter
-                        (fun Terrat_change_matcher.
-                               { dirspaceflow = Terrat_change.Dirspaceflow.{ dirspace; _ }; _ } ->
-                          CCList.mem ~eq:Terrat_change.Dirspace.equal dirspace missing_dirspaces)
-                        tag_query_matches
-                    in
-                    (* To perform an apply we need:
-
-                       1. Plans for all of the dirspaces we are going to run.  This
-                       also means that the plan also has happened after any of the
-                       most recent applies to that dirspace.
-
-                       2. Make sure no other pull requests own the any of the
-                       dirspaces that this pull request touches. *)
-                    let matches =
-                      match run_type with
-                      | `Auto ->
-                          CCList.filter
-                            (fun {
-                                   Terrat_change_matcher.when_modified =
-                                     Terrat_repo_config.When_modified.{ autoapply; _ };
-                                   _;
-                                 } -> autoapply)
-                            tag_query_matches
-                      | `Manual -> tag_query_matches
-                    in
-                    match (S.Event.run_type event, matches) with
-                    | Terrat_work_manifest.Run_type.Autoapply, [] ->
-                        Logs.info (fun m ->
-                            m
-                              "EVENT_EVALUATOR : %s : NOOP : AUTOAPPLY_NO_MATCHES"
-                              (S.Event.request_id event));
-                        Abb.Future.return (Ok None)
-                    | _, [] ->
-                        Logs.info (fun m ->
-                            m
-                              "EVENT_EVALUATOR : %s : NOOP : APPLY_NO_MATCHING_DIRSPACES"
-                              (S.Event.request_id event));
-                        Abb.Future.return (Ok (Some Msg.Apply_no_matching_dirspaces))
-                    | _, _ -> (
-                        Logs.info (fun m ->
-                            m
-                              "EVENT_EVALUATOR : %s : QUERY_DIRSPACES_OWNED_BY_OTHER_PRS"
-                              (S.Event.request_id event));
-                        S.query_dirspaces_owned_by_other_pull_requests
-                          db
-                          event
-                          pull_request
-                          (CCList.map
-                             Terrat_change.Dirspaceflow.to_dirspace
-                             all_match_dirspaceflows)
-                        >>= function
-                        | dirspaces when Dirspace_map.is_empty dirspaces -> (
-                            (* None of the dirspaces are owned by another PR, we can proceed *)
-                            Logs.info (fun m ->
-                                m
-                                  "EVENT_EVALUATOR : %s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS"
-                                  (S.Event.request_id event));
-                            S.query_dirspaces_without_valid_plans
-                              db
-                              event
-                              pull_request
-                              (CCList.map
-                                 CCFun.(
-                                   Terrat_change_matcher.dirspaceflow
-                                   %> Terrat_change.Dirspaceflow.to_dirspace)
-                                 matches)
-                            >>= function
-                            | [] ->
-                                (* All are ready to be applied *)
-                                let work_manifest =
-                                  Terrat_work_manifest.
-                                    {
-                                      base_hash = S.Pull_request.base_hash pull_request;
-                                      changes =
-                                        CCList.map Terrat_change_matcher.dirspaceflow matches;
-                                      completed_at = None;
-                                      created_at = ();
-                                      hash = S.Pull_request.hash pull_request;
-                                      id = ();
-                                      pull_request;
-                                      run_id = ();
-                                      run_type = S.Event.run_type event;
-                                      state = ();
-                                      tag_query = S.Event.tag_query event;
-                                    }
-                                in
-                                Logs.info (fun m ->
-                                    m
-                                      "EVENT_EVALUATOR : %s : CREATE_WORK_MANIFEST"
-                                      (S.Event.request_id event));
-                                S.store_new_work_manifest db event work_manifest
-                                >>= fun _ -> Abb.Future.return (Ok None)
-                            | dirspaces ->
-                                (* Some are missing plans *)
-                                Abb.Future.return (Ok (Some (Msg.Missing_plans dirspaces))))
-                        | dirspaces ->
-                            (* Some are owned by another PR, abort *)
-                            Abb.Future.return
-                              (Ok (Some (Msg.Dirspaces_owned_by_other_pull_request dirspaces)))))
+                | `Plan run_type -> process_plan db event tag_query_matches pull_request run_type
+                | `Apply run_type when S.Pull_request.passed_all_checks pull_request ->
+                    process_apply
+                      db
+                      event
+                      tag_query_matches
+                      all_match_dirspaceflows
+                      pull_request
+                      run_type
                 | `Apply _ ->
                     Logs.info (fun m ->
                         m "EVENT_EVALUATOR : %s : PR_NOT_APPLIABLE" (S.Event.request_id event));
