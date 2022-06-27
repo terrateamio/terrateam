@@ -47,6 +47,7 @@ end
 module Tmpl = struct
   let read fname = CCOpt.get_exn_or fname (Terrat_files_tmpl.read fname)
   let failed_to_start_workflow = read "github_failed_to_start_workflow.tmpl"
+  let failed_to_find_workflow = read "github_failed_to_find_workflow.tmpl"
 end
 
 type err =
@@ -104,6 +105,7 @@ let abort_work_manifest
     ~pull_number
     ~run_type
     ~dirspaces
+    ~tmpl
     work_manifest_id =
   let open Abbs_future_combinators.Infix_result_monad in
   Pgsql_io.Prepared_stmt.execute db Sql.abort_work_manifest work_manifest_id
@@ -113,7 +115,7 @@ let abort_work_manifest
     ~owner
     ~repo
     ~pull_number:(CCInt64.to_int pull_number)
-    Tmpl.failed_to_start_workflow
+    tmpl
   >>= fun () ->
   let unified_run_type =
     Terrat_work_manifest.(run_type |> Unified_run_type.of_run_type |> Unified_run_type.to_string)
@@ -226,9 +228,10 @@ let rec run' request_id access_token_cache config db =
                         ~pull_number
                         ~run_type
                         ~dirspaces
+                        ~tmpl:Tmpl.failed_to_start_workflow
                         id
                       >>= fun _ -> Abb.Future.return (Ok (`Cont access_token_cache)))
-              | _ ->
+              | None ->
                   let open Abb.Future.Infix_monad in
                   Logs.err (fun m -> m "GITHUB_RUNNER : %s : ERROR : MISSING_WORKFLOW" request_id);
                   abort_work_manifest
@@ -240,6 +243,7 @@ let rec run' request_id access_token_cache config db =
                     ~pull_number
                     ~run_type
                     ~dirspaces
+                    ~tmpl:Tmpl.failed_to_find_workflow
                     id
                   >>= fun _ -> Abb.Future.return (Ok (`Cont access_token_cache))))
       | _ :: _ ->
