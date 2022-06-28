@@ -1502,13 +1502,20 @@ let post config storage ctx =
       process_event_handler config storage ctx (fun () ->
           process_workflow_job (Brtl_ctx.token ctx) config storage event)
   | Ok (Gw.Event.Push_event _) ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PUSH_EVENT" (Brtl_ctx.token ctx));
       Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
   | Ok (Gw.Event.Workflow_run_event _) ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : WORKFLOW_RUN_EVENT" (Brtl_ctx.token ctx));
       Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
   | Ok (Gw.Event.Installation_repositories_event _) | Ok (Gw.Event.Workflow_dispatch_event _) ->
-      assert false
+      Logs.debug (fun m ->
+          m "GITHUB_EVENT : %s : NOOP : INSTALLATION_REPOSITORIES_EVENT" (Brtl_ctx.token ctx));
+      Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
   | Error (#Terrat_github_webhooks_decoder.err as err) ->
       Logs.warn (fun m ->
-          m "GITHUB_EVENT : UNKNOWN_EVENT : %s" (Terrat_github_webhooks_decoder.show_err err));
+          m
+            "GITHUB_EVENT : %s : UNKNOWN_EVENT : %s"
+            (Brtl_ctx.token ctx)
+            (Terrat_github_webhooks_decoder.show_err err));
       Abb.Future.return
         (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
