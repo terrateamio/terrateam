@@ -3296,7 +3296,6 @@
         "action",
         "number",
         "pull_request",
-        "label",
         "repository",
         "sender"
       ],
