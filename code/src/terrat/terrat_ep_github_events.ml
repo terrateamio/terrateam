@@ -1028,7 +1028,13 @@ let perform_unlock_pr request_id config storage installation_id repository pull_
         db
         Sql.insert_pull_request_unlock
         (CCInt64.of_int repository.Gw.Repository.id)
-        (CCInt64.of_int pull_number))
+        (CCInt64.of_int pull_number)
+      >>= fun () ->
+      Terrat_github_plan_cleanup.clean_pull_request
+        ~owner:repository.Gw.Repository.owner.Gw.User.login
+        ~repo:repository.Gw.Repository.name
+        ~pull_number
+        db)
   >>= fun () ->
   Terrat_github.get_installation_access_token config installation_id
   >>= fun token ->

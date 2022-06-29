@@ -501,6 +501,16 @@ module Plans = struct
         Abb.Future.return
           (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
 
+  let delete_plan request_id db work_manifest dir workspace =
+    let open Abb.Future.Infix_monad in
+    Terrat_github_plan_cleanup.clean ~work_manifest ~dir ~workspace db
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m ->
+            m "WORK_MANIFEST : %s : DELETE_PLAN : ERROR : %s" request_id (Pgsql_io.show_err err));
+        Abb.Future.return (Ok ())
+
   let get config storage work_manifest_id path workspace ctx =
     let open Abb.Future.Infix_monad in
     let request_id = Brtl_ctx.token ctx in
@@ -508,13 +518,17 @@ module Plans = struct
     Logs.info (fun m ->
         m "WORK_MANIFEST : %s : PLAN_GET : %s : %s : %s" request_id id path workspace);
     Pgsql_pool.with_conn storage ~f:(fun db ->
+        let open Abbs_future_combinators.Infix_result_monad in
         Pgsql_io.Prepared_stmt.fetch
           db
           Sql.select_recent_plan
           ~f:CCFun.id
           work_manifest_id
           path
-          workspace)
+          workspace
+        >>= fun res ->
+        delete_plan request_id db work_manifest_id path workspace
+        >>= fun () -> Abb.Future.return (Ok res))
     >>= function
     | Ok [] ->
         Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx)

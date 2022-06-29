@@ -93,6 +93,8 @@ let run config storage =
   Logs.info (fun m -> m "Starting server");
   Abb.Future.fork (Terrat_github_runner.run "STARTUP" config storage)
   >>= fun _ ->
+  Abb.Future.fork (Terrat_github_plan_cleanup.start storage)
+  >>= fun _ ->
   Brtl.run cfg mw (rtng config storage)
   >>| function
   | Ok () -> ()
