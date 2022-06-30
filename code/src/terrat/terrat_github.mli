@@ -175,6 +175,7 @@ val publish_comment :
   (unit, [> publish_comment_err ]) result Abb.Future.t
 
 val react_to_comment :
+  ?content:string ->
   access_token:string ->
   owner:string ->
   repo:string ->

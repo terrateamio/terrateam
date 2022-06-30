@@ -3,6 +3,7 @@ type t =
   | Apply of { tag_query : Terrat_tag_set.t }
   | Unlock
   | Help
+  | Feedback of string
 
 type err =
   [ `Not_terrateam

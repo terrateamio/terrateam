@@ -243,14 +243,14 @@ let publish_comment ~access_token ~owner ~repo ~pull_number body =
   | (`Forbidden _ | `Not_found _ | `Gone _ | `Unprocessable_entity _) as err ->
       Abb.Future.return (Error err)
 
-let react_to_comment ~access_token ~owner ~repo ~comment_id () =
+let react_to_comment ?(content = "rocket") ~access_token ~owner ~repo ~comment_id () =
   let open Abbs_future_combinators.Infix_result_monad in
   let client = create (`Token access_token) in
   Githubc2_abb.call
     client
     Githubc2_reactions.Create_for_issue_comment.(
       make
-        ~body:Request_body.(make Primary.(make ~content:"rocket"))
+        ~body:Request_body.(make Primary.(make ~content))
         Parameters.(make ~comment_id ~owner ~repo))
   >>= fun resp ->
   match Openapi.Response.value resp with

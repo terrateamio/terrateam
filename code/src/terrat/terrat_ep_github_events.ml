@@ -219,6 +219,9 @@ module Tmpl = struct
   let terrateam_comment_help = read "terrateam_comment_help.tmpl"
   let apply_no_matching_dirspaces = read "apply_no_matching_dirspaces.tmpl"
   let plan_no_matching_dirspaces = read "plan_no_matching_dirspaces.tmpl"
+
+  let unlock_success =
+    CCOpt.get_exn_or "unlock_success.tmpl" (Terrat_files_tmpl.read "unlock_success.tmpl")
 end
 
 module Event = struct
@@ -1035,7 +1038,7 @@ let perform_unlock_pr request_id config storage installation_id repository pull_
     ~owner:repository.Gw.Repository.owner.Gw.User.login
     ~repo:repository.Gw.Repository.name
     ~pull_number
-    "All directories and workspaces have been unlocked"
+    Tmpl.unlock_success
   >>= function
   | Ok () ->
       Abb.Future.fork (Terrat_github_runner.run request_id config storage)
@@ -1293,6 +1296,27 @@ let process_issue_comment request_id config storage = function
               Logs.err (fun m ->
                   m "GITHUB_EVENT : %s : TMPL_ERROR : HELP : %s" request_id (Snabela.show_err err));
               Abb.Future.return (Ok ()))
+      | Ok (Terrat_comment.Feedback msg) ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          Logs.info (fun m ->
+              m
+                "GITHUB_EVENT : %s : FEEDBACK : owner=%s : repo=%s : pull_number=%d : user=%s : %s"
+                request_id
+                repository.Gw.Repository.owner.Gw.User.login
+                repository.Gw.Repository.name
+                pull_number
+                comment.Gw.Issue_comment.user.Gw.User.login
+                msg);
+          Terrat_github.get_installation_access_token config installation_id
+          >>= fun access_token ->
+          Terrat_github.react_to_comment
+            ~content:"heart"
+            ~access_token
+            ~owner:repository.Gw.Repository.owner.Gw.User.login
+            ~repo:repository.Gw.Repository.name
+            ~comment_id:comment.Gw.Issue_comment.id
+            ()
+          >>= fun () -> Abb.Future.return (Ok ())
       | Error `Not_terrateam -> Abb.Future.return (Ok ())
       | Error (`Unknown_action action) -> (
           let kv = Snabela.Kv.Map.of_list [] in
