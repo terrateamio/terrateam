@@ -308,6 +308,22 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "cost_estimation": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "diff_monthly_cost": {
+                    "type": "number"
+                  },
+                  "currency": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "diff_monthly_cost",
+                  "currency"
+                ]
               }
             }
           }

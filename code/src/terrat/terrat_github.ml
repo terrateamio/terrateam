@@ -2,6 +2,7 @@ module Process = Abb_process.Make (Abb)
 module Org_admin = CCMap.Make (CCInt)
 
 let terrateam_workflow_name = "Terrateam Workflow"
+let terrateam_workflow_path = ".github/workflows/terrateam.yml"
 let terrateam_config_yml = ".terrateam/config.yml"
 let installation_expiration = 60.0
 
@@ -218,14 +219,20 @@ let load_workflow ~access_token ~owner ~repo =
               (fun { Workflow.primary; _ } ->
                 let id = primary.Workflow.Primary.id in
                 let name = primary.Workflow.Primary.name in
-                (id, name))
+                let path = primary.Workflow.Primary.path in
+                (id, name, path))
               workflows
           in
           Abb.Future.return (Ok (workflows @ acc)))
     Githubc2_actions.List_repo_workflows.(make (Parameters.make ~owner ~repo ()))
   >>= fun workflows ->
-  match CCList.filter (fun (_, name) -> CCString.equal name terrateam_workflow_name) workflows with
-  | (id, _) :: _ -> Abb.Future.return (Ok (Some id))
+  match
+    CCList.filter
+      (fun (_, name, path) ->
+        CCString.equal name terrateam_workflow_name || CCString.equal path terrateam_workflow_path)
+      workflows
+  with
+  | (id, _, _) :: _ -> Abb.Future.return (Ok (Some id))
   | [] -> Abb.Future.return (Ok None)
 
 let publish_comment ~access_token ~owner ~repo ~pull_number body =

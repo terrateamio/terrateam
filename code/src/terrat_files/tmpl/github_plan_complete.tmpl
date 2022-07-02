@@ -1,9 +1,13 @@
+## Plans
 @?overall_success-@
-Running plans **succeeded**.
+:heavy_check_mark: Running plans **succeeded**.
 @/overall_success-@
 @!overall_success-@
-Running plans **failed**.
+:heavy_multiplication_x: Running plans **failed**.
 @/overall_success-@
+
+<details>
+  <summary>Click to expand</summary>
 
 @#results-@
 **Dir**: @dir@
@@ -16,11 +20,14 @@ Running plans **failed**.
 @plan_diff@
 ```
 
-To apply this directory and workspace, comment:
+<details>
+  <summary>To apply this directory and workspace...</summary>
 
 ```
 terrateam apply dir:@dir@ workspace:@workspace@
 ```
+
+</details>
 
 @/success-@
 @!success-@
@@ -41,16 +48,40 @@ terrateam apply dir:@dir@ workspace:@workspace@
 @/output-@
 @/results-@
 
+
+
 @?overall_success-@
+---
+
 To apply all these changes, comment:
 
 ```
 terrateam apply
 ```
+
+</details>
+@/overall_success-@
+@?overall_success-@
+
+@^cost_estimation-@
+## Cost Estimation
+@#cost_estimation-@
+**Total Monthly Difference: @diff_monthly_cost | money@ @currency@**
+<details>
+  <summary>Expand for cost estimation details</summary>
+
+| Dir | Workspace | Monthly Diff |
+| :---: | :---: | ---: |
+@#dirspaces-@
+| @dir@ | @workspace@ | @diff_monthly_cost | money@ @currency@|
+@/dirspaces-@
+| | **Total** | **@diff_monthly_cost | money@ @currency@** |
+@/cost_estimation-@
+</details>
+@/cost_estimation-@
 @/overall_success-@
 
-Give feedback by commenting `terrateam feedback <msg>`:
+## Feedback
 
-```
-terrateam feedback Terrateam rocks!
-```
+Give feedback by commenting `terrateam feedback <your msg>`.
+

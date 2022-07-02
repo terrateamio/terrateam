@@ -19,3 +19,5 @@ val github_app_client_secret : t -> string
 val github_app_client_id : t -> string
 val api_base : t -> string
 val python_exec : t -> string
+val infracost_pricing_api_endpoint : t -> Uri.t
+val infracost_api_key : t -> string

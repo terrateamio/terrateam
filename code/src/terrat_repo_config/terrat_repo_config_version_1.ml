@@ -8,6 +8,24 @@ module Checkout_strategy = struct
   [@@deriving yojson { strict = false; meta = true }, show]
 end
 
+module Cost_estimation = struct
+  module Provider = struct
+    let t_of_yojson = function
+      | `String "infracost" -> Ok "infracost"
+      | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+    type t = (string[@of_yojson t_of_yojson])
+    [@@deriving yojson { strict = false; meta = true }, show]
+  end
+
+  type t = {
+    currency : string; [@default "USD"]
+    enabled : bool; [@default true]
+    provider : Provider.t; [@default "infracost"]
+  }
+  [@@deriving yojson { strict = true; meta = true }, make, show]
+end
+
 module Dirs = struct
   include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Terrat_repo_config_dir)
 end
@@ -37,6 +55,7 @@ end
 type t = {
   automerge : Terrat_repo_config_automerge.t option; [@default None]
   checkout_strategy : Checkout_strategy.t; [@default "merge"]
+  cost_estimation : Cost_estimation.t option; [@default None]
   default_tf_version : Terrat_repo_config_terraform_version.t option; [@default None]
   dirs : Dirs.t option; [@default None]
   enabled : bool; [@default true]

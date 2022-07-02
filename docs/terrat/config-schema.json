@@ -346,6 +346,25 @@
           ],
           "default": "merge"
         },
+        "cost_estimation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "provider": {
+              "type": "string",
+              "default": "infracost",
+              "enum": ["infracost"]
+            },
+            "currency": {
+              "type": "string",
+              "default": "USD"
+            }
+          }
+        },
         "default_tf_version": {
           "$ref": "#/definitions/terraform-version"
         },

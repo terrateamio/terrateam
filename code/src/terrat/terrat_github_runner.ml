@@ -211,14 +211,16 @@ let rec run' request_id access_token_cache config db =
                       >>= fun () ->
                       (* TODO: Handle failing because workflow is not present in branch *)
                       Abb.Future.return (Ok (`Cont access_token_cache))
-                  | Error _ ->
+                  | Error (#Githubc2_abb.call_err as err) ->
                       Logs.err (fun m ->
                           m
-                            "GITHUB_RUNNER : %s : ERROR : COULD_NOT_RUN_WORKFLOW : %s : %s : %s"
+                            "GITHUB_RUNNER : %s : ERROR : COULD_NOT_RUN_WORKFLOW : %s : %s : %s : \
+                             %s"
                             request_id
                             owner
                             repo
-                            branch);
+                            branch
+                            (Githubc2_abb.show_call_err err));
                       abort_work_manifest
                         ~access_token
                         ~db

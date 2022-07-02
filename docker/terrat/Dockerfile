@@ -23,12 +23,12 @@ RUN eval $(opam env) && \
 # compile
 WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && eval $(opam env) && \
-    (make -j4 release_terrat_cli || make -j1 release_terrat_cli)
+    (time make -j4 release_terrat_cli || time make -j1 release_terrat_cli)
 
 # test
 WORKDIR /mono/code
 RUN eval $(opam env) && \
-    env OCAMLRUNPARAM=b make -j4 -k test && \
+    time env OCAMLRUNPARAM=b make -j4 -k test && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # app image

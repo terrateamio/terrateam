@@ -159,13 +159,22 @@ module Sql = struct
 end
 
 module Tmpl = struct
+  module Transformers = struct
+    let money =
+      ( "money",
+        Snabela.Kv.(
+          function
+          | F num -> S (Printf.sprintf "%01.02f" num)
+          | any -> any) )
+  end
+
   let read fname =
     fname
     |> Terrat_files_tmpl.read
     |> CCOption.get_exn_or fname
     |> Snabela.Template.of_utf8_string
     |> CCResult.get_exn
-    |> fun tmpl -> Snabela.of_template tmpl []
+    |> fun tmpl -> Snabela.of_template tmpl Transformers.[ money ]
 
   let plan_complete = read "github_plan_complete.tmpl"
   let apply_complete = read "github_apply_complete.tmpl"
@@ -437,8 +446,8 @@ module Initiate = struct
                     })
           | Wm.Run_type.Apply | Wm.Run_type.Autoapply ->
               Terrat_api_components.(
-                Work_manifest.Work_manifest_plan
-                  Work_manifest_plan.
+                Work_manifest.Work_manifest_apply
+                  Work_manifest_apply.
                     {
                       type_ = "apply";
                       base_ref = work_manifest.Wm.pull_request.Pull_request.base_branch;
@@ -603,11 +612,50 @@ module Results = struct
   let create_run_output run_type results =
     let module Wmr = Terrat_api_components.Work_manifest_result in
     let module R = Terrat_api_work_manifest.Results.Request_body in
+    let cost_estimation =
+      results.R.dirspaces
+      |> CCList.map (fun Wmr.{ path; workspace; output; _ } ->
+             CCOption.map
+               (fun infracost -> (path, workspace, infracost))
+               Wmr.Output.(output.primary.Primary.cost_estimation))
+      |> CCOption.sequence_l
+      |> CCOption.map (fun costs ->
+             let module Ce = Wmr.Output.Primary.Cost_estimation in
+             let diff_monthly_cost, currency =
+               CCListLabels.fold_left
+                 ~init:(0.0, "")
+                 ~f:(fun (acc_diff_monthly_cost, _) (_, _, Ce.{ diff_monthly_cost; currency }) ->
+                   (acc_diff_monthly_cost +. diff_monthly_cost, currency))
+                 costs
+             in
+             Snabela.Kv.(
+               Map.of_list
+                 [
+                   ("diff_monthly_cost", float diff_monthly_cost);
+                   ("currency", string currency);
+                   ( "dirspaces",
+                     list
+                       (CCList.map
+                          (fun (path, workspace, Ce.{ diff_monthly_cost; currency }) ->
+                            Map.of_list
+                              [
+                                ("dir", string path);
+                                ("workspace", string workspace);
+                                ("diff_monthly_cost", float diff_monthly_cost);
+                                ("currency", string currency);
+                              ])
+                          costs) );
+                 ]))
+    in
     let kv =
       Snabela.Kv.(
         Map.of_list
           (CCList.flatten
              [
+               CCOption.map_or
+                 ~default:[]
+                 (fun cost_estimation -> [ ("cost_estimation", list [ cost_estimation ]) ])
+                 cost_estimation;
                [
                  ("overall_success", bool results.R.overall.R.Overall.success);
                  ( "results",

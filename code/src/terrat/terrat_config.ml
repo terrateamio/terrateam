@@ -11,6 +11,8 @@ type t = {
   github_app_client_id : string;
   api_base : string;
   python_exec : string;
+  infracost_pricing_api_endpoint : Uri.t;
+  infracost_api_key : string;
 }
 
 type err =
@@ -57,6 +59,10 @@ let create () =
   >>= fun api_base ->
   env_str "TERRAT_PYTHON_EXEC"
   >>= fun python_exec ->
+  env_str "INFRACOST_PRICING_API_ENDPOINT"
+  >>= fun infracost_pricing_api_endpoint ->
+  env_str "SELF_HOSTED_INFRACOST_API_KEY"
+  >>= fun infracost_api_key ->
   Ok
     {
       port;
@@ -71,6 +77,8 @@ let create () =
       github_app_client_id;
       api_base;
       python_exec;
+      infracost_pricing_api_endpoint = Uri.of_string infracost_pricing_api_endpoint;
+      infracost_api_key;
     }
 
 let port t = t.port
@@ -85,3 +93,5 @@ let github_app_client_secret t = t.github_app_client_secret
 let github_app_client_id t = t.github_app_client_id
 let api_base t = t.api_base
 let python_exec t = t.python_exec
+let infracost_pricing_api_endpoint t = t.infracost_pricing_api_endpoint
+let infracost_api_key t = t.infracost_api_key
