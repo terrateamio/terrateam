@@ -1,17 +1,3 @@
-module Apply_requirements = struct
-  module Items = struct
-    let t_of_yojson = function
-      | `String "mergeable" -> Ok "mergeable"
-      | `String "approved" -> Ok "approved"
-      | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-    type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
-  end
-
-  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
-end
-
 module Checkout_strategy = struct
   let t_of_yojson = function
     | `String "merge" -> Ok "merge"
@@ -49,7 +35,6 @@ module Workflows = struct
 end
 
 type t = {
-  apply_requirements : Apply_requirements.t option; [@default None]
   automerge : Terrat_repo_config_automerge.t option; [@default None]
   checkout_strategy : Checkout_strategy.t; [@default "merge"]
   default_tf_version : Terrat_repo_config_terraform_version.t option; [@default None]

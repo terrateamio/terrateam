@@ -349,17 +349,6 @@
         "default_tf_version": {
           "$ref": "#/definitions/terraform-version"
         },
-        "apply_requirements": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "default": ["mergeable"],
-            "enum": [
-              "mergeable",
-              "approved"
-            ]
-          }
-        },
         "hooks": {
           "type": "object",
           "additionalProperties": false,
