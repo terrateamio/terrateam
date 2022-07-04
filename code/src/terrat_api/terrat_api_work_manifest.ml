@@ -5,8 +5,12 @@ module Results = struct
 
   module Request_body = struct
     module Overall = struct
+      module Errors = struct
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
       type t = {
-        msg : string option; [@default None]
+        errors : Errors.t option; [@default None]
         success : bool;
       }
       [@@deriving make, yojson { strict = true; meta = true }, show]

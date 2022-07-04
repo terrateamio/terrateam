@@ -606,28 +606,46 @@ module Results = struct
     let kv =
       Snabela.Kv.(
         Map.of_list
-          [
-            ("overall_success", bool results.R.overall.R.Overall.success);
-            ( "results",
-              list
-                (CCList.map
-                   (fun Wmr.{ path; workspace; success; output } ->
-                     Map.of_list
-                       [
-                         ("dir", string path);
-                         ("workspace", string workspace);
-                         ("success", bool success);
-                         ( "output",
-                           list
-                             [
-                               Map.of_list
-                                 (CCList.map
-                                    (fun (k, v) -> (k, string v))
-                                    (Json_schema.String_map.to_list output.Wmr.Output.additional));
-                             ] );
-                       ])
-                   results.R.dirspaces) );
-          ])
+          (CCList.flatten
+             [
+               [
+                 ("overall_success", bool results.R.overall.R.Overall.success);
+                 ( "results",
+                   list
+                     (CCList.map
+                        (fun Wmr.{ path; workspace; success; output } ->
+                          Map.of_list
+                            [
+                              ("dir", string path);
+                              ("workspace", string workspace);
+                              ("success", bool success);
+                              ( "output",
+                                list
+                                  [
+                                    Map.of_list
+                                      (CCList.flatten
+                                         [
+                                           (match Wmr.Output.(output.primary.Primary.errors) with
+                                           | Some errors ->
+                                               [
+                                                 ( "errors",
+                                                   list
+                                                     (CCList.map
+                                                        (fun line ->
+                                                          Map.of_list [ ("line", string line) ])
+                                                        errors) );
+                                               ]
+                                           | None -> []);
+                                           CCList.map
+                                             (fun (k, v) -> (k, string v))
+                                             (Json_schema.String_map.to_list
+                                                output.Wmr.Output.additional);
+                                         ]);
+                                  ] );
+                            ])
+                        results.R.dirspaces) );
+               ];
+             ]))
     in
     let tmpl =
       match Terrat_work_manifest.Unified_run_type.of_run_type run_type with

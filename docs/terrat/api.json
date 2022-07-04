@@ -150,8 +150,11 @@
                       "success": {
                         "type": "boolean"
                       },
-                      "msg": {
-                        "type": "string"
+                      "errors": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
                       }
                     },
                     "required": ["success"]
@@ -298,6 +301,14 @@
             "type": "object",
             "additionalProperties": {
               "type": "string"
+            },
+            "properties": {
+              "errors": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
             }
           }
         },
