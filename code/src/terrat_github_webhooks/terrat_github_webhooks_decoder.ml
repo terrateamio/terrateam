@@ -19,7 +19,7 @@ let run ?secret headers body =
   match secret with
   | Some secret -> (
       match
-        CCOpt.flat_map
+        CCOption.flat_map
           (CCString.Split.left ~by:"=")
           (Cohttp.Header.get headers "x-hub-signature-256")
       with

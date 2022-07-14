@@ -1,7 +1,7 @@
 (* module Gh = Githubc_v3
  * 
  * module Sql = struct
- *   let read fname = CCOpt.get_exn_or fname (Terrat_files_sql.read fname)
+ *   let read fname = CCOption.get_exn_or fname (Terrat_files_sql.read fname)
  * 
  *   let insert_user =
  *     Pgsql_io.Typed_sql.(
@@ -46,16 +46,16 @@
  *     public_emails
  *     |> CCList.filter Gh.Response.User_public_email.primary
  *     |> CCList.head_opt
- *     |> CCOpt.map Gh.Response.User_public_email.email
+ *     |> CCOption.map Gh.Response.User_public_email.email
  *   in
  *   let avatar_url = Uri.to_string (Gh.Response.Current_user.avatar_url current_user) in
  *   let expiration =
- *     CCOpt.map
+ *     CCOption.map
  *       (fun exp -> ISO8601.Permissive.string_of_datetime (now +. CCFloat.of_int exp))
  *       (Gh.Response.Oauth_access_token.expires_in oauth_access_token)
  *   in
  *   let refresh_expiration =
- *     CCOpt.map
+ *     CCOption.map
  *       (fun exp -> ISO8601.Permissive.string_of_datetime (now +. CCFloat.of_int exp))
  *       (Gh.Response.Oauth_access_token.refresh_token_expires_in oauth_access_token)
  *   in
@@ -88,7 +88,7 @@
  *           (Uri.make
  *              ~path:"/"
  *              ~query:
- *                (CCOpt.map_or
+ *                (CCOption.map_or
  *                   ~default:[]
  *                   (fun installation_id ->
  *                     [ ("installation_id", [ Int64.to_string installation_id ]) ])

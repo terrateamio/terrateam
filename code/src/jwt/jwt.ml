@@ -11,7 +11,7 @@ module Verifier = struct
     type t = Mirage_crypto_pk.Rsa.pub
 
     let create ~e ~n =
-      CCOpt.wrap
+      CCOption.wrap
         (fun () ->
           let e = z_of_string e in
           let n = z_of_string n in
@@ -101,7 +101,7 @@ module Header = struct
     Yojson.Basic.to_string json
 
   let of_json =
-    CCOpt.wrap (fun json ->
+    CCOption.wrap (fun json ->
         let assoc = Yojson.Basic.Util.to_assoc json in
         CCList.map
           (fun (c, v) ->
@@ -111,8 +111,8 @@ module Header = struct
           assoc)
 
   let of_string str =
-    let open CCOpt.Infix in
-    CCOpt.wrap Yojson.Basic.from_string str >>= fun json -> of_json json
+    let open CCOption.Infix in
+    CCOption.wrap Yojson.Basic.from_string str >>= fun json -> of_json json
 end
 
 module Claim = struct
@@ -173,7 +173,7 @@ module Payload = struct
     | _ -> None
 
   let of_json =
-    CCOpt.wrap (fun json ->
+    CCOption.wrap (fun json ->
         CCListLabels.fold_left
           ~f:(fun acc v ->
             match v with
@@ -186,8 +186,8 @@ module Payload = struct
           (Yojson.Basic.Util.to_assoc json))
 
   let of_string str =
-    let open CCOpt.Infix in
-    CCOpt.wrap Yojson.Basic.from_string str >>= fun json -> of_json json
+    let open CCOption.Infix in
+    CCOption.wrap Yojson.Basic.from_string str >>= fun json -> of_json json
 
   let to_json t =
     `Assoc
@@ -211,7 +211,7 @@ type 'a t = {
 let b64_url_encode str = Base64.encode_exn ~pad:false ~alphabet:Base64.uri_safe_alphabet str
 
 let b64_url_decode str =
-  CCOpt.wrap (Base64.decode_exn ~pad:false ~alphabet:Base64.uri_safe_alphabet) str
+  CCOption.wrap (Base64.decode_exn ~pad:false ~alphabet:Base64.uri_safe_alphabet) str
 
 let of_header_and_payload signer header payload =
   let b64_header = b64_url_encode (Header.to_string header) in
@@ -234,7 +234,7 @@ let of_token token =
   let token_splitted = CCString.split_on_char '.' token in
   match token_splitted with
   | [ header_encoded; payload_encoded; signature_encoded ] ->
-      let open CCOpt.Infix in
+      let open CCOption.Infix in
       b64_url_decode header_encoded
       >>= fun header_decoded ->
       Header.of_string header_decoded

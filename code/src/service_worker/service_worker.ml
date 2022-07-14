@@ -29,7 +29,7 @@ module Headers = struct
   type t = J.t Js.t
 
   let create (t : t) = new%js J.constr t
-  let get (t : t) name = CCOpt.map Js.to_string (Js.Opt.to_option (t##get (Js.string name)))
+  let get (t : t) name = CCOption.map Js.to_string (Js.Opt.to_option (t##get (Js.string name)))
   let set (t : t) name value = t##set (Js.string name) (Js.string value)
 end
 
@@ -198,7 +198,7 @@ module Registration = struct
       object%js
         val sizes = Js.string sizes
         val src = Js.string src
-        val type_ = Js.Optdef.option (CCOpt.map Js.string typ)
+        val type_ = Js.Optdef.option (CCOption.map Js.string typ)
       end
   end
 

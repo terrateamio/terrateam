@@ -20,7 +20,7 @@ module Validator = struct
   let create encode decode = { encode; decode }
 
   let ( %> ) a b =
-    create (fun v -> CCOpt.(a.encode v >>= b.encode)) (fun v -> a.decode (b.decode v))
+    create (fun v -> CCOption.(a.encode v >>= b.encode)) (fun v -> a.decode (b.decode v))
 
   let int = create CCInt.of_string CCInt.to_string
 

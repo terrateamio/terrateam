@@ -246,14 +246,14 @@ let record_field_attrs schema name required =
     [
       (match schema.Schema.default with
       | Some default when schema.Schema.nullable ->
-          CCOpt.map_or
+          CCOption.map_or
             ~default:[]
             (fun default ->
               Gen.field_default
                 (Ast_helper.Exp.construct (Location.mknoloc (Gen.ident [ "Some" ])) (Some default)))
             (field_default_of_value default)
       | Some default ->
-          CCOpt.map_or
+          CCOption.map_or
             ~default:[]
             (fun default -> Gen.field_default default)
             (field_default_of_value default)
@@ -317,7 +317,7 @@ let request_param_of_op_params components param_in params =
                                             module_name_of_string p.Parameter.name;
                                             Printf.sprintf "V%d" idx;
                                           ]))
-                                    (Some (Pat.var (Location.mknoloc "v"))))
+                                    (Some ([], Pat.var (Location.mknoloc "v"))))
                                  (Exp.construct
                                     (Location.mknoloc (Gen.ident [ "Var" ]))
                                     (Some
@@ -331,7 +331,7 @@ let request_param_of_op_params components param_in params =
                         let type_desc = type_desc_of_schema schema in
                         let type_desc =
                           if
-                            (p.Parameter.required || CCOpt.is_some schema.Schema.default)
+                            (p.Parameter.required || CCOption.is_some schema.Schema.default)
                             && not schema.Schema.nullable
                           then type_desc
                           else option type_desc
@@ -349,8 +349,8 @@ let request_param_of_op_params components param_in params =
 
    We will convert [parameters] to a module called [Parameters] as a record. *)
 let convert_str_operation base_module_name components uritmpl op_typ op =
-  assert (CCOpt.is_some op.Operation.operation_id);
-  let operation_id = CCOpt.get_exn_or "operation_id" op.Operation.operation_id in
+  assert (CCOption.is_some op.Operation.operation_id);
+  let operation_id = CCOption.get_exn_or "operation_id" op.Operation.operation_id in
   let params_config =
     Json_schema_conv.Config.make
       ~create_yojson_funcs:false
@@ -595,7 +595,7 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
              (match op.Operation.request_body with
              | Some (Value.V request_body)
                when request_body.Request_body.required
-                    && CCOpt.is_some (get_json_media_type request_body.Request_body.content) ->
+                    && CCOption.is_some (get_json_media_type request_body.Request_body.content) ->
                  (* TODO: Handle reference bodies that are required *)
                  [
                    ( Asttypes.Labelled "body",
@@ -605,11 +605,11 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
                    );
                  ]
              | Some (Value.V request_body)
-               when CCOpt.is_some (get_json_media_type request_body.Request_body.content) ->
+               when CCOption.is_some (get_json_media_type request_body.Request_body.content) ->
                  [
                    ( Asttypes.Optional "body",
                      Exp.apply
-                       (Exp.ident (Location.mknoloc (Gen.ident [ "CCOpt"; "map" ])))
+                       (Exp.ident (Location.mknoloc (Gen.ident [ "CCOption"; "map" ])))
                        [
                          ( Asttypes.Nolabel,
                            Exp.ident (Location.mknoloc (Gen.ident [ "Request_body"; "to_yojson" ]))
@@ -659,12 +659,12 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
       (match op.Operation.request_body with
       | Some (Value.V request_body)
         when request_body.Request_body.required
-             && CCOpt.is_some (get_json_media_type request_body.Request_body.content) ->
+             && CCOption.is_some (get_json_media_type request_body.Request_body.content) ->
           (* TODO: Handle ref that is required *)
           Ast_helper.(
             Exp.fun_ (Asttypes.Labelled "body") None (Pat.var (Location.mknoloc "body")) make_params)
       | Some (Value.V request_body)
-        when CCOpt.is_some (get_json_media_type request_body.Request_body.content) ->
+        when CCOption.is_some (get_json_media_type request_body.Request_body.content) ->
           Ast_helper.(
             Exp.fun_ (Asttypes.Optional "body") None (Pat.var (Location.mknoloc "body")) make_params)
       | Some (Value.Ref _) -> failwith "request body ref not supported"
@@ -737,7 +737,7 @@ let convert_str_paths output_base base_module_name components paths =
         CCList.map
           (CCFun.uncurry (convert_str_operation base_module_name components uritmpl))
           (CCList.filter_map
-             (fun (t, op) -> CCOpt.map (fun op -> (t, op)) op)
+             (fun (t, op) -> CCOption.map (fun op -> (t, op)) op)
              [
                (`Get, path.Path.get);
                (`Put, path.Path.put);

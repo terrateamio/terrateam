@@ -1,0 +1,13 @@
+version=0.23.0
+profile = default
+break-cases = fit-or-vertical
+break-fun-decl = fit-or-vertical
+break-fun-sig = fit-or-vertical
+break-infix = fit-or-vertical
+break-infix-before-func = true
+break-separators = after
+doc-comments = before
+m = 100
+parens-tuple = always
+type-decl = sparse
+wrap-fun-args = false

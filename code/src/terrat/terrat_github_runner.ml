@@ -2,9 +2,9 @@ module Int64_map = CCMap.Make (CCInt64)
 
 module Sql = struct
   let read fname =
-    CCOpt.get_exn_or
+    CCOption.get_exn_or
       fname
-      (CCOpt.map
+      (CCOption.map
          (fun s ->
            s
            |> CCString.split_on_char '\n'
@@ -45,7 +45,7 @@ module Sql = struct
 end
 
 module Tmpl = struct
-  let read fname = CCOpt.get_exn_or fname (Terrat_files_tmpl.read fname)
+  let read fname = CCOption.get_exn_or fname (Terrat_files_tmpl.read fname)
   let failed_to_start_workflow = read "github_failed_to_start_workflow.tmpl"
   let failed_to_find_workflow = read "github_failed_to_find_workflow.tmpl"
 end

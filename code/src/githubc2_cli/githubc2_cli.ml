@@ -51,7 +51,7 @@ let main () =
       exit 2
   | `Exn (exn, bt_opt) ->
       Printf.eprintf "Exn = %s\n" (Printexc.to_string exn);
-      CCOpt.iter (fun bt -> Printf.eprintf "%s\n" (Printexc.raw_backtrace_to_string bt)) bt_opt;
+      CCOption.iter (fun bt -> Printf.eprintf "%s\n" (Printexc.raw_backtrace_to_string bt)) bt_opt;
       exit 3
 
 let () = main ()

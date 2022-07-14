@@ -11,11 +11,11 @@ module Path = struct
     else None
 
   let ud f idx s =
-    let open CCOpt.Infix in
-    extract idx s >>= fun (idx, s) -> CCOpt.wrap f s >>= fun v -> v >>= fun v -> Some (idx, v)
+    let open CCOption.Infix in
+    extract idx s >>= fun (idx, s) -> CCOption.wrap f s >>= fun v -> v >>= fun v -> Some (idx, v)
 
-  let string = ud CCOpt.return
-  let int = ud (CCFun.compose int_of_string CCOpt.return)
+  let string = ud CCOption.return
+  let int = ud (CCFun.compose int_of_string CCOption.return)
 
   let any idx s =
     if s.[idx] = '/' then
@@ -30,13 +30,13 @@ module Query = struct
   let ud n f =
     ( n,
       function
-      | Some (v :: _) -> CCOpt.(flatten (wrap f v))
+      | Some (v :: _) -> CCOption.(flatten (wrap f v))
       | Some [] | None -> None )
 
   let ud_array n f =
     ( n,
       function
-      | Some vs -> CCOpt.(flatten (wrap f vs))
+      | Some vs -> CCOption.(flatten (wrap f vs))
       | None -> None )
 
   let option (n, f) =
@@ -54,8 +54,8 @@ module Query = struct
       | Some _ as v -> f v
       | None -> Some def )
 
-  let string n = ud n CCOpt.return
-  let int n = ud n CCFun.(int_of_string %> CCOpt.return)
+  let string n = ud n CCOption.return
+  let int n = ud n CCFun.(int_of_string %> CCOption.return)
 
   let rec apply_arr' acc f = function
     | [] -> Some (List.rev acc)
@@ -117,7 +117,7 @@ let rec test_uri : type f r. Uri.t -> (f, r) t -> (int * (f, r) Witness.t) optio
       Some (CCString.length s, Witness.Start)
   | Rel _ -> None
   | Path_const (t, s) ->
-      let open CCOpt.Infix in
+      let open CCOption.Infix in
       test_uri uri t
       >>= fun (idx, wit) ->
       if idx < String.length path then
@@ -126,14 +126,14 @@ let rec test_uri : type f r. Uri.t -> (f, r) t -> (int * (f, r) Witness.t) optio
         if CCString.is_sub ~sub:s 0 path idx ~sub_len:len then Some (idx + len, wit) else None
       else None
   | Path_var (t, v) ->
-      let open CCOpt.Infix in
+      let open CCOption.Infix in
       test_uri uri t
       >>= fun (idx, wit) ->
       if idx < String.length path then
         v idx path >>= fun (idx, value) -> Some (idx, Witness.Var (wit, value, Witness.Path))
       else None
   | Query_var (t, (n, v)) ->
-      let open CCOpt.Infix in
+      let open CCOption.Infix in
       test_uri uri t
       >>= fun (idx, wit) ->
       let q = Uri.get_query_param' uri n in

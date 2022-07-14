@@ -8,7 +8,7 @@ WORKDIR /
 RUN eval $(opam env) && \
     opam update && \
     opam repository add opam-acsl mono/opam && \
-    opam pin add -y containers 3.4 && \
+    opam pin add -y containers 3.9 && \
     opam install -y hll pds && \
     mkdir -p opam-mono/compilers && \
     mkdir -p opam-mono/packages && \
@@ -17,9 +17,6 @@ RUN eval $(opam env) && \
     cd /mono/code && \
     hll generate -n monorepo --opam-dir ../../opam-mono --tag 1.0 --test-deps-as-regular-deps && \
     opam update opam-mono && \
-    opam pin add -n uri ../vendor/ocaml-uri && \
-    opam pin add -n uri-sexp ../vendor/ocaml-uri && \
-    opam install -y uri uri-sexp && \
     opam info monorepo && \
     opam install -j4 -y --strict --deps-only monorepo
 

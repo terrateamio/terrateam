@@ -24,9 +24,9 @@ let post_handler config ctx =
   let token = Brtl_ctx.token ctx in
   let headers = Brtl_ctx.Request.headers request in
   let remote_addr =
-    CCOpt.get_or
+    CCOption.get_or
       ~default:(Brtl_ctx.remote_addr ctx)
-      (CCOpt.flat_map (Cohttp.Header.get headers) config.Config.remote_ip_header)
+      (CCOption.flat_map (Cohttp.Header.get headers) config.Config.remote_ip_header)
   in
   let extra_key =
     match config.Config.extra_key ctx with

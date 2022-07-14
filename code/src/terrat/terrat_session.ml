@@ -60,7 +60,7 @@ let store storage id_opt user_id ctx =
         |> Brtl_ctx.request
         |> Brtl_ctx.Request.headers
         |> CCFun.flip Cohttp.Header.get "user-agent"
-        |> CCOpt.get_or ~default:"Unknown"
+        |> CCOption.get_or ~default:"Unknown"
       in
       let uuid = Uuidm.v `V4 in
       Pgsql_pool.with_conn storage ~f:(fun db ->
@@ -91,7 +91,7 @@ let create storage =
 
 let get_session ctx = Brtl_mw_session.get_session_value key ctx
 
-(* let get_session_exn ctx = CCOpt.get_exn_or "get_session" (get_session ctx) *)
+(* let get_session_exn ctx = CCOption.get_exn_or "get_session" (get_session ctx) *)
 
 let set_session t ctx = Brtl_mw_session.set_session_value key t ctx
 
@@ -100,7 +100,7 @@ let rem_session storage ctx =
     match Brtl_mw_session.get_cookie_value cookie_name ctx with
     | Some token ->
         let open Abbs_future_combinators.Infix_result_monad in
-        let token = CCOpt.get_exn_or ("token: " ^ token) (Uuidm.of_string token) in
+        let token = CCOption.get_exn_or ("token: " ^ token) (Uuidm.of_string token) in
         Pgsql_pool.with_conn storage ~f:(fun db ->
             Pgsql_io.Prepared_stmt.execute db Sql.delete token)
         >>= fun () -> Abb.Future.return (Ok (Brtl_mw_session.rem_session_value key ctx))

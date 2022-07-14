@@ -281,20 +281,20 @@ module Typed_sql = struct
 
     let take_one f = function
       | [] | None :: _ -> None
-      | Some x :: xs -> CCOpt.map (fun v -> (v, xs)) (f x)
+      | Some x :: xs -> CCOption.map (fun v -> (v, xs)) (f x)
 
-    let smallint = take_one (CCOpt.wrap int_of_string)
+    let smallint = take_one (CCOption.wrap int_of_string)
     let integer = take_one Int32.of_string_opt
     let bigint = take_one Int64.of_string_opt
-    let decimal = take_one (CCOpt.wrap Z.of_string)
+    let decimal = take_one (CCOption.wrap Z.of_string)
     let numeric = decimal
-    let real = take_one (CCOpt.wrap float_of_string)
+    let real = take_one (CCOption.wrap float_of_string)
     let double = real
-    let smallserial = take_one (CCOpt.wrap int_of_string)
+    let smallserial = take_one (CCOption.wrap int_of_string)
     let serial = take_one Int32.of_string_opt
     let bigserial = take_one Int64.of_string_opt
     let money = take_one Int64.of_string_opt
-    let text = take_one CCOpt.return
+    let text = take_one CCOption.return
     let varchar = text
     let char = text
     let json = text
@@ -309,7 +309,7 @@ module Typed_sql = struct
     let ud f xs = f xs
 
     let ud' f = function
-      | Some s :: rest -> CCOpt.map (fun v -> (v, rest)) (f s)
+      | Some s :: rest -> CCOption.map (fun v -> (v, rest)) (f s)
       | _ -> None
 
     let option t = function
@@ -462,7 +462,7 @@ module Row_func = struct
       | Sql when vs = [] -> Some f
       | Sql -> None
       | Ret (t', r) ->
-          let open CCOpt.Infix in
+          let open CCOption.Infix in
           r vs >>= fun (v, vs') -> kbind' f vs' t' >>= fun f' -> Some (f' v)
 
     let kbind f data t = kbind' f (List.rev data) t

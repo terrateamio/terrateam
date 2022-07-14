@@ -1,6 +1,9 @@
 .*~
 pds.mk
 Ocamlrules.mk.in
-build/
-.merlin
+code/build/
+code/.merlin
 .*__pycache__.*
+code/dune
+code/dune-project
+code/dune-workspace

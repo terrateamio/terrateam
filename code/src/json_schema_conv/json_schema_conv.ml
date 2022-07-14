@@ -219,7 +219,7 @@ module Schema = struct
 end
 
 module Gen = struct
-  let ident ns = CCOpt.get_exn_or ("ident " ^ CCString.concat "." ns) (Longident.unflatten ns)
+  let ident ns = CCOption.get_exn_or ("ident " ^ CCString.concat "." ns) (Longident.unflatten ns)
   let prim_type t ts = Ast_helper.Typ.constr (Location.mknoloc (ident t)) ts
   let prim_unit = prim_type [ "unit" ] []
   let prim_string = prim_type [ "string" ] []
@@ -362,7 +362,7 @@ module Gen = struct
           Ast_helper.Exp.case
             (Ast_helper.Pat.construct
                (Location.mknoloc (ident [ v ]))
-               (Some (Ast_helper.Pat.var (Location.mknoloc "v"))))
+               (Some ([], Ast_helper.Pat.var (Location.mknoloc "v"))))
             (Ast_helper.Exp.apply
                (Ast_helper.Exp.ident (Location.mknoloc (ident (conversion @ [ "to_yojson" ]))))
                [ (Asttypes.Nolabel, Ast_helper.Exp.ident (Location.mknoloc (ident [ "v" ]))) ])
@@ -473,7 +473,7 @@ let extract_prim_type = function
   | { Schema.typ = Some (("string" | "integer" | "number" | "boolean") as typ); _ } -> Some typ
   | _ -> None
 
-let is_prim_type schema = CCOpt.is_some (extract_prim_type schema)
+let is_prim_type schema = CCOption.is_some (extract_prim_type schema)
 
 let prim_type_of_string format typ =
   match (format, typ) with
@@ -586,7 +586,7 @@ let rec convert_str_schema (config : Config.t) =
             (Config.tidx_to_string config)
             (maybe_make_nullable
                nullable
-               (prim_type_of_string (CCOpt.get_or ~default:"" format) typ)));
+               (prim_type_of_string (CCOption.get_or ~default:"" format) typ)));
       ]
   | { S.typ = Some "null"; _ } ->
       [
@@ -600,7 +600,7 @@ let rec convert_str_schema (config : Config.t) =
       convert_str_schema config { schema with S.items = Some (Value.V (S.make_t_ ())) }
   | { S.items = Some (Value.V items); nullable; _ } -> (
       match extract_prim_type items with
-      | Some prim when CCOpt.is_none items.Schema.enum ->
+      | Some prim when CCOption.is_none items.Schema.enum ->
           [
             Gen.(
               make_str_type
@@ -609,7 +609,7 @@ let rec convert_str_schema (config : Config.t) =
                 (maybe_make_nullable
                    nullable
                    (list
-                      [ prim_type_of_string (CCOpt.get_or ~default:"" items.Schema.format) prim ])));
+                      [ prim_type_of_string (CCOption.get_or ~default:"" items.Schema.format) prim ])));
           ]
       | _ ->
           [
@@ -989,15 +989,15 @@ and convert_str_schema_obj config properties_config required properties =
             let attrs = Config.record_field_attrs config schema name required in
             let config, field_type =
               match extract_prim_type schema with
-              | Some prim when not (CCOpt.is_some schema.Schema.enum && prim = "string") ->
-                  (config, prim_type_of_string (CCOpt.get_or ~default:"" schema.Schema.format) prim)
+              | Some prim when not (CCOption.is_some schema.Schema.enum && prim = "string") ->
+                  (config, prim_type_of_string (CCOption.get_or ~default:"" schema.Schema.format) prim)
               | _ ->
                   let module_name = Config.module_name_of_field_name config name in
                   (Config.tidx_incr config, Gen.qualified_type [ module_name; "t" ])
             in
             let field_type =
               if
-                (String_set.mem name required || CCOpt.is_some schema.Schema.default)
+                (String_set.mem name required || CCOption.is_some schema.Schema.default)
                 && not schema.Schema.nullable
               then field_type
               else Gen.option [ field_type ]
@@ -1014,7 +1014,7 @@ and convert_str_schema_obj config properties_config required properties =
             let field_type = Gen.qualified_type (module_name @ [ "t" ]) in
             let field_type =
               if
-                (String_set.mem name required || CCOpt.is_some schema.Schema.default)
+                (String_set.mem name required || CCOption.is_some schema.Schema.default)
                 && not schema.Schema.nullable
               then field_type
               else Gen.option [ field_type ]

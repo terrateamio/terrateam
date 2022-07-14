@@ -1,7 +1,7 @@
 (* module Gw = Githubc2_webhooks
  * 
  * module Sql = struct
- *   let read fname = CCOpt.get_exn_or fname (Terrat_files_sql.read fname)
+ *   let read fname = CCOption.get_exn_or fname (Terrat_files_sql.read fname)
  * 
  *   let insert_org =
  *     Pgsql_io.Typed_sql.(sql // (\* id *\) Ret.uuid /^ read "insert_org.sql" /% Var.text "name")

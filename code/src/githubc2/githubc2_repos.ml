@@ -302,7 +302,7 @@ module Update = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1312,7 +1312,7 @@ module Update_pull_request_review_protection = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1636,7 +1636,7 @@ module Update_status_check_protection = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1812,7 +1812,7 @@ module Remove_status_check_contexts = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1905,7 +1905,7 @@ module Add_status_check_contexts = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1991,7 +1991,7 @@ module Set_status_check_contexts = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2212,7 +2212,7 @@ module Remove_app_access_restrictions = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2291,7 +2291,7 @@ module Add_app_access_restrictions = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2370,7 +2370,7 @@ module Set_app_access_restrictions = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2502,7 +2502,7 @@ module Remove_team_access_restrictions = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2581,7 +2581,7 @@ module Add_team_access_restrictions = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2660,7 +2660,7 @@ module Set_team_access_restrictions = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2792,7 +2792,7 @@ module Remove_user_access_restrictions = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2871,7 +2871,7 @@ module Add_user_access_restrictions = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2950,7 +2950,7 @@ module Set_user_access_restrictions = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -3080,7 +3080,7 @@ module Rename_branch = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -3276,7 +3276,7 @@ module Add_collaborator = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -5365,7 +5365,7 @@ module Create_or_update_environment = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -5489,7 +5489,7 @@ module Create_fork = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -5651,7 +5651,7 @@ module Create_webhook = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -5804,7 +5804,7 @@ module Update_webhook = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -5957,7 +5957,7 @@ module Update_webhook_config_for_repo = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -6391,7 +6391,7 @@ module Update_invitation = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -7919,7 +7919,7 @@ module Update_release_asset = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -8251,7 +8251,7 @@ module Update_release = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -8398,7 +8398,7 @@ module Upload_release_asset = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

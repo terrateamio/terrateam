@@ -36,7 +36,7 @@ module Rt = struct
       github ()
       / "callback"
       /? Query.string "code"
-      /? Query.(option (ud "installation_id" (CCOpt.wrap Int64.of_string))))
+      /? Query.(option (ud "installation_id" (CCOption.wrap Int64.of_string))))
 
   let health_check () = Brtl_rtng.Route.(rel / "health")
 end
@@ -91,7 +91,7 @@ let run config storage =
   let mw_session = Terrat_session.create storage in
   let mw = Brtl_mw.create [ mw_log; mw_session ] in
   Logs.info (fun m -> m "Starting server");
-  Abb.Future.fork (Terrat_github_runner.run "STARTUP" config storage)
+  Abb.Future.fork (Terrat_github_runner.run ~request_id:"STARTUP" config storage)
   >>= fun _ ->
   Abb.Future.fork (Terrat_github_plan_cleanup.start storage)
   >>= fun _ ->

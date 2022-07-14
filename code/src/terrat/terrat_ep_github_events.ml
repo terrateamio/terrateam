@@ -2,9 +2,9 @@ module Gw = Terrat_github_webhooks
 
 module Sql = struct
   let read fname =
-    CCOpt.get_exn_or
+    CCOption.get_exn_or
       fname
-      (CCOpt.map
+      (CCOption.map
          (fun s ->
            s
            |> CCString.split_on_char '\n'
@@ -193,7 +193,7 @@ module Tmpl = struct
   let read fname =
     fname
     |> Terrat_files_tmpl.read
-    |> CCOpt.get_exn_or fname
+    |> CCOption.get_exn_or fname
     |> Snabela.Template.of_utf8_string
     |> CCResult.get_exn
     |> fun tmpl -> Snabela.of_template tmpl []
@@ -209,7 +209,7 @@ module Tmpl = struct
   let repo_config_generic_failure = read "github_repo_config_generic_failure.tmpl"
 
   let action_failed =
-    CCOpt.get_exn_or
+    CCOption.get_exn_or
       "github_action_failed.tmpl"
       (Terrat_files_tmpl.read "github_action_failed.tmpl")
 
@@ -221,7 +221,7 @@ module Tmpl = struct
   let plan_no_matching_dirspaces = read "plan_no_matching_dirspaces.tmpl"
 
   let unlock_success =
-    CCOpt.get_exn_or "unlock_success.tmpl" (Terrat_files_tmpl.read "unlock_success.tmpl")
+    CCOption.get_exn_or "unlock_success.tmpl" (Terrat_files_tmpl.read "unlock_success.tmpl")
 end
 
 module Event = struct
@@ -483,7 +483,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
             {
               work_manifest with
               Wm.id;
-              state = CCOpt.get_exn_or "work manifest state" (Wm.State.of_string state);
+              state = CCOption.get_exn_or "work manifest state" (Wm.State.of_string state);
               created_at;
               run_id = None;
               changes = ();
@@ -748,7 +748,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
               id;
               pull_request;
               run_id;
-              run_type = CCOpt.get_exn_or ("run type " ^ run_type) (Run_type.of_string run_type);
+              run_type = CCOption.get_exn_or ("run type " ^ run_type) (Run_type.of_string run_type);
               state;
               tag_query = Terrat_tag_set.of_string tag_query;
             })
@@ -1011,7 +1011,7 @@ let run_event_evaluator storage event =
   let open Abb.Future.Infix_monad in
   Evaluator.run storage event
   >>= fun () ->
-  Abb.Future.fork (Terrat_github_runner.run (Event.request_id event) event.Event.config storage)
+  Abb.Future.fork (Terrat_github_runner.run ~request_id:(Event.request_id event) event.Event.config storage)
   >>= fun _ -> Abb.Future.return (Ok ())
 
 let perform_unlock_pr request_id config storage installation_id repository pull_number =
@@ -1047,7 +1047,7 @@ let perform_unlock_pr request_id config storage installation_id repository pull_
     Tmpl.unlock_success
   >>= function
   | Ok () ->
-      Abb.Future.fork (Terrat_github_runner.run request_id config storage)
+      Abb.Future.fork (Terrat_github_runner.run ~request_id config storage)
       >>= fun _ -> Abb.Future.return (Ok ())
   | Error (#Terrat_github.publish_comment_err as err) ->
       Logs.err (fun m ->

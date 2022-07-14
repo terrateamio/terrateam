@@ -94,5 +94,5 @@ let of_string s =
 let to_list t = t |> Config.to_list |> CCList.map (fun (k, v) -> (k, Value.to_list v))
 
 let value section name t =
-  let open CCOpt.Infix in
+  let open CCOption.Infix in
   Config.find_opt section t >>= fun vs -> Value.find_opt (CCString.lowercase_ascii name) vs

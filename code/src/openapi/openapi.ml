@@ -52,10 +52,10 @@ module Request = struct
   }
 
   let make ?body ~headers ~url_params ~query_params ~url ~responses meth =
-    let body = CCOpt.map Yojson.Safe.to_string body in
+    let body = CCOption.map Yojson.Safe.to_string body in
     let to_uritmpl_var =
       CCList.filter_map (fun (n, Var.Var (v, t)) ->
-          CCOpt.map (fun v -> (n, v)) (Var.to_uritmpl_var t v))
+          CCOption.map (fun v -> (n, v)) (Var.to_uritmpl_var t v))
     in
     let headers =
       headers

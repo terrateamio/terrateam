@@ -42,7 +42,7 @@ module Make (Abb : Abb_intf.S) = struct
     Filename.concat temp_dir (Printf.sprintf "%s%06x%s" prefix rnd suffix)
 
   let with_dirname ?temp_dir ~prefix ~suffix f =
-    let temp_dir = CCOpt.get_or ~default:(Filename.get_temp_dir_name ()) temp_dir in
+    let temp_dir = CCOption.get_or ~default:(Filename.get_temp_dir_name ()) temp_dir in
     let rec try_create = function
       | 0 -> Abb.Future.return (Error `Temp_dir_error)
       | n -> (

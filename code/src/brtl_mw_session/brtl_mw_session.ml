@@ -74,7 +74,7 @@ let set_session_value key v ctx =
   | Some value -> ctx |> Brtl_ctx.md_add key Value.{ value with is_dirty = true; v }
   | None -> ctx |> Brtl_ctx.md_add key Value.{ is_dirty = true; is_create = true; v }
 
-let get_session_value key ctx = Brtl_ctx.md_find key ctx |> CCOpt.map (fun v -> v.Value.v)
+let get_session_value key ctx = Brtl_ctx.md_find key ctx |> CCOption.map (fun v -> v.Value.v)
 let get_cookie_value = load_cookie
 let rem_session_value = Brtl_ctx.md_rem
 let create_key () = Hmap.Key.create ()

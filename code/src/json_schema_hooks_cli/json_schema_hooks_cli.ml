@@ -113,9 +113,9 @@ let rec collect_schema_refs
     =
   let open Json_schema_conv in
   let additional_schemas =
-    CCOpt.get_or ~default:[] any_of
-    @ CCOpt.get_or ~default:[] one_of
-    @ CCOpt.get_or ~default:[] all_of
+    CCOption.get_or ~default:[] any_of
+    @ CCOption.get_or ~default:[] one_of
+    @ CCOption.get_or ~default:[] all_of
   in
   CCList.flatten
     [

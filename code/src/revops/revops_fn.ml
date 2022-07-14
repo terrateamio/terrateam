@@ -41,11 +41,11 @@ functor
 
     let compose_tuple first second =
       compose
-        (fun l r -> return (l, r))
-        (CCFun.compose fst return)
-        (CCFun.compose snd return)
-        first
-        second
+        ~introduce:(fun l r -> return (l, r))
+        ~eliminate_first:(CCFun.compose fst return)
+        ~eliminate_second:(CCFun.compose snd return)
+        ~first
+        ~second
 
     let ( +* ) = compose_tuple
 

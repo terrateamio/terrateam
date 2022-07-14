@@ -373,7 +373,7 @@ module File = struct
 
   let mode_of_flags flags =
     List.map
-      Abb_intf.File.Flag.(
+      ~f:Abb_intf.File.Flag.(
         function
         | Read_only -> Unix.O_RDONLY
         | Write_only -> Unix.O_WRONLY
@@ -387,7 +387,7 @@ module File = struct
   let perm_of_flags flags =
     let creates =
       List.filter
-        Abb_intf.File.Flag.(
+        ~f:Abb_intf.File.Flag.(
           function
           | Create _ -> true
           | _ -> false)
@@ -570,7 +570,7 @@ module File = struct
 
   let pwrite t ~offset bufs =
     try
-      let n = Unix.lseek t offset Unix.SEEK_SET in
+      let n = Unix.lseek t offset ~mode:Unix.SEEK_SET in
       assert (n = offset);
       write_bufs t bufs
     with
@@ -579,13 +579,13 @@ module File = struct
 
   let lseek' t ~offset = function
     | Abb_intf.File.Seek.Cur ->
-        ignore (Unix.lseek t offset Unix.SEEK_CUR);
+        ignore (Unix.lseek t offset ~mode:Unix.SEEK_CUR);
         Ok ()
     | Abb_intf.File.Seek.Set ->
-        ignore (Unix.lseek t offset Unix.SEEK_SET);
+        ignore (Unix.lseek t offset ~mode:Unix.SEEK_SET);
         Ok ()
     | Abb_intf.File.Seek.End ->
-        ignore (Unix.lseek t offset Unix.SEEK_END);
+        ignore (Unix.lseek t offset ~mode:Unix.SEEK_END);
         Ok ()
 
   let lseek t ~offset seek =
@@ -971,7 +971,7 @@ module Socket = struct
 
   let getaddrinfo_options_of_hints hints =
     List.map
-      Abb_intf.Socket.Addrinfo_hints.(
+      ~f:Abb_intf.Socket.Addrinfo_hints.(
         function
         | Family domain -> Unix.AI_FAMILY (unix_of_domain domain)
         | Socket_type socktype -> Unix.AI_SOCKTYPE (unix_of_socket_type socktype)
@@ -998,7 +998,7 @@ module Socket = struct
               | Abb_intf.Socket.Addrinfo_query.Host_service (h, s) ->
                   Unix.getaddrinfo h s (getaddrinfo_options_of_hints hints)
             in
-            List.map addrinfo_of_unix_addrinfo ai))
+            List.map ~f:addrinfo_of_unix_addrinfo ai))
 
   let getsockname t =
     match Unix.getsockname t with
@@ -1521,7 +1521,7 @@ module Process = struct
     assert (init_args.cwd = None);
     List.iter
       ~f:(fun dup ->
-        Unix.dup2 (Dup.src dup) (Dup.dst dup);
+        Unix.dup2 ?cloexec:None ~src:(Dup.src dup) ~dst:(Dup.dst dup);
         Unix.close (Dup.src dup))
       dups;
     try Unix.execvp ~prog:init_args.exec_name ~args:(Array.of_list init_args.args)

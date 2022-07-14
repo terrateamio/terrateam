@@ -7,7 +7,7 @@ type t = {
 module Change_map = CCMap.Make (Terrat_change.Dirspace)
 
 let find_workflow_idx tag_set workflows =
-  CCOpt.map
+  CCOption.map
     fst
     (CCList.find_idx
        (fun workflow_entry ->
@@ -24,9 +24,9 @@ let when_modified_of_when_modified_nullable default when_modified =
   | Some when_modified ->
       {
         Wm.file_patterns =
-          CCOpt.get_or ~default:default.Wm.file_patterns when_modified.Wm_null.file_patterns;
-        autoplan = CCOpt.get_or ~default:default.Wm.autoplan when_modified.Wm_null.autoplan;
-        autoapply = CCOpt.get_or ~default:default.Wm.autoapply when_modified.Wm_null.autoapply;
+          CCOption.get_or ~default:default.Wm.file_patterns when_modified.Wm_null.file_patterns;
+        autoplan = CCOption.get_or ~default:default.Wm.autoplan when_modified.Wm_null.autoplan;
+        autoapply = CCOption.get_or ~default:default.Wm.autoapply when_modified.Wm_null.autoapply;
       }
   | None -> default
 
@@ -36,12 +36,12 @@ let map_dirspace ?(tag_query = Terrat_tag_set.of_list []) repo_config dirspaces 
   let dirs, default_when_modified, workflows =
     match repo_config with
     | { C.Version_1.dirs; when_modified; workflows; _ } ->
-        ( CCOpt.map_or
+        ( CCOption.map_or
             ~default:Json_schema.String_map.empty
             (fun C.Version_1.Dirs.{ additional; _ } -> additional)
             dirs,
-          CCOpt.get_or ~default:(C.When_modified.make ()) when_modified,
-          CCOpt.get_or ~default:[] workflows )
+          CCOption.get_or ~default:(C.When_modified.make ()) when_modified,
+          CCOption.get_or ~default:[] workflows )
   in
   let module Dir = Terrat_repo_config.Dir in
   let module When_modified = Terrat_repo_config.When_modified in
@@ -65,12 +65,12 @@ let map_dirspace ?(tag_query = Terrat_tag_set.of_list []) repo_config dirspaces 
              default_when_modified
              dir_config.Dir.when_modified
          in
-         let tags = ("dir:" ^ dir) :: CCOpt.get_or ~default:[] dir_config.Dir.tags in
+         let tags = ("dir:" ^ dir) :: CCOption.get_or ~default:[] dir_config.Dir.tags in
          (* Combine all tags into the workspace to make life a bit easier downstream *)
          let workspace_config =
-           CCOpt.get_or
+           CCOption.get_or
              ~default:Dir.Workspaces.Additional.{ tags = [ "workspace:" ^ workspace ] @ tags }
-             CCOpt.(
+             CCOption.(
                dir_config.Dir.workspaces
                >>= fun workspaces ->
                Json_schema.String_map.get workspace workspaces.Dir.Workspaces.additional
@@ -110,12 +110,12 @@ let match_diff ?(tag_query = Terrat_tag_set.of_list []) repo_config diff =
   let dirs, default_when_modified, workflows =
     match repo_config with
     | { C.Version_1.dirs; when_modified; workflows; _ } ->
-        ( CCOpt.map_or
+        ( CCOption.map_or
             ~default:Json_schema.String_map.empty
             (fun C.Version_1.Dirs.{ additional; _ } -> additional)
             dirs,
-          CCOpt.get_or ~default:(C.When_modified.make ()) when_modified,
-          CCOpt.get_or ~default:[] workflows )
+          CCOption.get_or ~default:(C.When_modified.make ()) when_modified,
+          CCOption.get_or ~default:[] workflows )
   in
   let module Dir = Terrat_repo_config.Dir in
   let module When_modified = Terrat_repo_config.When_modified in
@@ -151,7 +151,7 @@ let match_diff ?(tag_query = Terrat_tag_set.of_list []) repo_config diff =
     dirs
     |> Json_schema.String_map.to_list
     |> CCList.filter_map (fun (d, dir_config) ->
-           CCOpt.flat_map
+           CCOption.flat_map
              (fun when_modified ->
                match when_modified.When_modified_null.file_patterns with
                | Some file_patterns ->
@@ -197,7 +197,7 @@ let match_diff ?(tag_query = Terrat_tag_set.of_list []) repo_config diff =
              | None -> Dir.(make ())
            in
            let workspaces =
-             CCOpt.map_or
+             CCOption.map_or
                ~default:
                  (Json_schema.String_map.singleton
                     "default"

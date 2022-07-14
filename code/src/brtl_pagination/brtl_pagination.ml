@@ -35,14 +35,14 @@ module Make (M : S) = struct
         t.uri
         |> CCFun.flip Uri.remove_query_param "page"
         |> CCFun.flip Uri.add_query_param ("page", "n" :: M.to_paginate last)
-        |> CCOpt.return
+        |> CCOption.return
     | Prev when Uri.get_query_param t.uri t.page_param = None -> None
     | Prev ->
         let first = M.items t.page |> CCList.rev |> CCList.hd in
         t.uri
         |> CCFun.flip Uri.remove_query_param "page"
         |> CCFun.flip Uri.add_query_param ("page", "n" :: M.to_paginate first)
-        |> CCOpt.return
+        |> CCOption.return
     | Next -> None
 
   let to_prev t =
@@ -54,13 +54,13 @@ module Make (M : S) = struct
         t.uri
         |> CCFun.flip Uri.remove_query_param "page"
         |> CCFun.flip Uri.add_query_param ("page", "p" :: M.to_paginate last)
-        |> CCOpt.return
+        |> CCOption.return
     | Prev when results_len > 0 && M.has_another_page t.page ->
         let first = M.items t.page |> CCList.hd in
         t.uri
         |> CCFun.flip Uri.remove_query_param "page"
         |> CCFun.flip Uri.add_query_param ("page", "p" :: M.to_paginate first)
-        |> CCOpt.return
+        |> CCOption.return
     | Prev -> None
 
   let items t = M.items t.page

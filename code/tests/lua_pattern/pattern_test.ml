@@ -33,7 +33,7 @@ let tests =
     ("([fb-c[)E", false);
   ]
 
-let test_pat pat res _ = assert (res = CCOpt.is_some (Lua_pattern.of_string pat))
+let test_pat pat res _ = assert (res = CCOption.is_some (Lua_pattern.of_string pat))
 
 let create_test (pat, res) = Oth.test ~name:(Printf.sprintf "%s" pat) (test_pat pat res)
 

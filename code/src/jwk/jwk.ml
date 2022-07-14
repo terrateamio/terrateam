@@ -11,7 +11,7 @@ type t = Key.t String_map.t
 let get_kid = String_map.get
 
 let of_string =
-  CCOpt.wrap (fun s ->
+  CCOption.wrap (fun s ->
       let json = Yojson.Basic.from_string s in
       let keys = Yojson.Basic.Util.(to_list (member "keys" json)) in
       CCListLabels.fold_left

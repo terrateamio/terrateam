@@ -67,13 +67,13 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       | Error _ as err -> Abb.Future.return err
 
     let connect_http addrinfo uri =
-      let port = CCOpt.get_or ~default:80 (Uri.port uri) in
+      let port = CCOption.get_or ~default:80 (Uri.port uri) in
       connect_to_port addrinfo port Buffered_of.of_tcp_socket
 
     let connect_https addrinfo conf uri =
       let open Fut_comb.Infix_result_monad in
-      let host = CCOpt.get_exn_or "get host" (Uri.host uri) in
-      let port = CCOpt.get_or ~default:443 (Uri.port uri) in
+      let host = CCOption.get_exn_or "get host" (Uri.host uri) in
+      let port = CCOption.get_or ~default:443 (Uri.port uri) in
       connect_to_port addrinfo port CCFun.id
       >>= fun conn -> Abb.Future.return (Abb_tls.client_tcp conn conf host)
 
@@ -113,11 +113,11 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         | Scheme.Http -> connect_http addrinfo uri
         | Scheme.Https tls_config -> connect_https addrinfo tls_config uri
       in
-      let host = CCOpt.get_exn_or "get host" (Uri.host (Request.uri req)) in
+      let host = CCOption.get_exn_or "get host" (Uri.host (Request.uri req)) in
       Abb.Socket.getaddrinfo (Abb_intf.Socket.Addrinfo_query.Host host)
       >>= fun addrinfos ->
       let addrinfos = sort_by_family addrinfos in
-      let addrinfo = CCOpt.get_exn_or "get addrinfo" (CCList.head_opt addrinfos) in
+      let addrinfo = CCOption.get_exn_or "get addrinfo" (CCList.head_opt addrinfos) in
       connect addrinfo scheme (Request.uri req)
       >>= fun (ic, oc) ->
       Fut_comb.on_failure

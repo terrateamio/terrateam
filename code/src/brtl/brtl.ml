@@ -41,7 +41,7 @@ let run_handler hndlr ctx =
       Abb.Future.return (Ctx.set_response (Rspnc.create ~status:`Internal_server_error "") ctx)
   | `Exn (exn, bt_opt) ->
       Logs.err (fun m -> m "Exception: %s" (Printexc.to_string exn));
-      CCOpt.iter
+      CCOption.iter
         (fun bt -> Logs.err (fun m -> m "Backtrace: %s" (Printexc.raw_backtrace_to_string bt)))
         bt_opt;
       Abb.Future.return (Ctx.set_response (Rspnc.create ~status:`Internal_server_error "") ctx)
@@ -75,7 +75,7 @@ let on_handler_err req err =
   (match err with
   | `Exn (exn, bt_opt) ->
       Logs.err (fun m -> m "Exception: %s" (Printexc.to_string exn));
-      CCOpt.iter
+      CCOption.iter
         (fun bt -> Logs.err (fun m -> m "Backtrace: %s" (Printexc.raw_backtrace_to_string bt)))
         bt_opt
   | `Timeout -> Logs.err (fun m -> m "Timeout"));

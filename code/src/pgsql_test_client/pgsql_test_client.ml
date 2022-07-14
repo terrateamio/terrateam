@@ -394,7 +394,7 @@ let test_array =
         in
         let rf =
           Pgsql_io.Row_func.map sql ~f:(fun name age other ->
-              (name, Int32.to_int age, CCOpt.map Int32.to_int other))
+              (name, Int32.to_int age, CCOption.map Int32.to_int other))
         in
         Pgsql_io.Prepared_stmt.create conn sql
         >>= fun stmt ->

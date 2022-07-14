@@ -27,7 +27,7 @@ let uri t =
       Uri.with_scheme
         uri
         (Some
-           (CCOpt.get_or
+           (CCOption.get_or
               ~default:"http"
               (Cohttp.Header.get (Request.headers t.request) "x-forwarded-proto")))
 

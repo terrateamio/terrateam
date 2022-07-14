@@ -73,7 +73,7 @@ module Update_authenticated = struct
 
   let make ?body () =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -564,7 +564,7 @@ module Delete_email_for_authenticated_user = struct
 
   let make ?body () =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -655,7 +655,7 @@ module Add_email_for_authenticated_user = struct
 
   let make ?body () =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]

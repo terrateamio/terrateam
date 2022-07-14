@@ -29,7 +29,7 @@ let create () =
   let open CCResult.Infix in
   of_opt
     (`Key_error "TERRAT_PORT")
-    (CCInt.of_string (CCOpt.get_or ~default:"8080" (Sys.getenv_opt "TERRAT_PORT")))
+    (CCInt.of_string (CCOption.get_or ~default:"8080" (Sys.getenv_opt "TERRAT_PORT")))
   >>= fun port ->
   env_str "DB_HOST"
   >>= fun db_host ->

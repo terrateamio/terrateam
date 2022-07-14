@@ -5,9 +5,9 @@ let response_headers = Cohttp.Header.of_list [ ("content-type", "application/jso
 
 module Sql = struct
   let read fname =
-    CCOpt.get_exn_or
+    CCOption.get_exn_or
       fname
-      (CCOpt.map
+      (CCOption.map
          (fun s ->
            s
            |> CCString.split_on_char '\n'
@@ -24,7 +24,7 @@ module Sql = struct
 
   let run_type = function
     | Some s :: rest ->
-        let open CCOpt in
+        let open CCOption in
         Terrat_work_manifest.Run_type.of_string s >>= fun run_type -> Some (run_type, rest)
     | _ -> None
 
@@ -162,7 +162,7 @@ module Tmpl = struct
   let read fname =
     fname
     |> Terrat_files_tmpl.read
-    |> CCOpt.get_exn_or fname
+    |> CCOption.get_exn_or fname
     |> Snabela.Template.of_utf8_string
     |> CCResult.get_exn
     |> fun tmpl -> Snabela.of_template tmpl []
@@ -284,7 +284,7 @@ module Evaluator = Terrat_work_manifest_evaluator.Make (struct
               Terrat_change.
                 {
                   Dirspaceflow.dirspace = { Dirspace.dir; workspace };
-                  workflow_idx = CCOpt.map CCInt32.to_int workflow_idx;
+                  workflow_idx = CCOption.map CCInt32.to_int workflow_idx;
                 })
             t.T.work_manifest
           >>= fun dirspaces ->
@@ -931,7 +931,7 @@ module Results = struct
                 (CCInt64.to_int pull_number)
                 run_type
                 results
-                (CCOpt.get_exn_or "run_id is None" run_id)
+                (CCOption.get_exn_or "run_id is None" run_id)
                 sha
           <*>
           match Terrat_work_manifest.Unified_run_type.of_run_type run_type with
@@ -947,7 +947,7 @@ module Results = struct
                 pull_number
           | Terrat_work_manifest.Unified_run_type.Plan -> Abb.Future.return ())
         >>= fun () ->
-        Abb.Future.fork (Terrat_github_runner.run request_id config storage)
+        Abb.Future.fork (Terrat_github_runner.run ~request_id config storage)
         >>= fun _ ->
         Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
     | Error (#Pgsql_pool.err as err) ->

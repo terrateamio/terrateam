@@ -45,7 +45,7 @@ module Typed = struct
     let open Abb_fut_js.Infix_monad in
     Abb_fut_js.unsafe_of_promise (t.store##getItem (Js.string key))
     >>| fun s ->
-    CCOpt.flat_map CCFun.(Js.Unsafe.coerce %> Js.to_string %> t.decode) (Js.Opt.to_option s)
+    CCOption.flat_map CCFun.(Js.Unsafe.coerce %> Js.to_string %> t.decode) (Js.Opt.to_option s)
 
   let remove_item t key = Abb_fut_js.unsafe_of_promise (t.store##removeItem (Js.string key))
   let clear t = Abb_fut_js.unsafe_of_promise t.store##clear
@@ -61,4 +61,4 @@ include Typed
 
 type t = string Typed.t
 
-let create name = Typed.create ~encode:CCFun.id ~decode:CCOpt.return name
+let create name = Typed.create ~encode:CCFun.id ~decode:CCOption.return name

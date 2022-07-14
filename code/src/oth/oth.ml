@@ -47,11 +47,11 @@ module Outputter = struct
               "Test: %s\t\tFAILED (%0.02f sec)\n"
               tr.Test_result.name
               (Duration.to_f tr.Test_result.duration);
-            CCOpt.iter (Printf.printf "Description: %s\n") tr.Test_result.desc;
+            CCOption.iter (Printf.printf "Description: %s\n") tr.Test_result.desc;
             Printf.printf "Exn: %s\n" (Printexc.to_string exn);
-            CCOpt.iter
+            CCOption.iter
               (Printf.printf "Backtrace: %s\n")
-              (CCOpt.map Printexc.raw_backtrace_to_string bt_opt))
+              (CCOption.map Printexc.raw_backtrace_to_string bt_opt))
 
   let basic_tap out rr =
     let oc, close =
@@ -97,7 +97,7 @@ module Outputter = struct
                    ~which:`All
                    ~sub:"\n"
                    ~by:"\n# "
-                   (CCOpt.get_or ~default:"" tr.Test_result.desc));
+                   (CCOption.get_or ~default:"" tr.Test_result.desc));
               Printf.fprintf
                 oc
                 "# Exn: %s\n"
@@ -109,7 +109,7 @@ module Outputter = struct
                    ~which:`All
                    ~sub:"\n"
                    ~by:"\n# "
-                   (CCOpt.get_or ~default:"" (CCOpt.map Printexc.raw_backtrace_to_string bt_opt))));
+                   (CCOption.get_or ~default:"" (CCOption.map Printexc.raw_backtrace_to_string bt_opt))));
           output_test (n + 1) trs
     in
     output_test start_test rr;
@@ -162,7 +162,7 @@ let main outputter test =
   let rr = eval test in
   outputter rr;
   List.iter
-    (fun tr ->
+    ~f:(fun tr ->
       match tr.Test_result.res with
       | `Ok -> ()
       | _ -> exit 1)

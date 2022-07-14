@@ -1,8 +1,8 @@
 module Sql = struct
   let read fname =
-    CCOpt.get_exn_or
+    CCOption.get_exn_or
       fname
-      (CCOpt.map
+      (CCOption.map
          (fun s ->
            s
            |> CCString.split_on_char '\n'

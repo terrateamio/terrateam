@@ -23,7 +23,7 @@ module Io = struct
       | `Post -> `POST
     in
     let headers = Cohttp.Header.of_list headers in
-    let body = CCOpt.map Cohttp.Body.of_string body in
+    let body = CCOption.map Cohttp.Body.of_string body in
     Http.Client.call ?body ~tls_config ~headers meth uri
     >>= function
     | Ok (resp, body) ->
@@ -74,7 +74,7 @@ let create ?(user_agent = "Githubc2_abb") ?(base_url = base_url) auth =
 let call t req = Api.call Openapi.Request.(req |> with_base_url t.base_url |> add_headers t.headers)
 
 let parse_link s =
-  let open CCOpt.Infix in
+  let open CCOption.Infix in
   CCString.Split.left ~by:"; " s
   >>= fun (link, rel) ->
   let uri = Uri.of_string (String.sub link 1 (String.length link - 2)) in
@@ -87,7 +87,7 @@ let parse_link s =
 
 let rec parse_links s =
   if String.length s > 0 then
-    let open CCOpt.Infix in
+    let open CCOption.Infix in
     match CCString.Split.left ~by:", " s with
     | Some (left, right) ->
         parse_link left >>= fun link -> parse_links right >>= fun rest -> Some (link :: rest)
@@ -95,10 +95,10 @@ let rec parse_links s =
   else Some []
 
 let links resp =
-  CCOpt.get_or
+  CCOption.get_or
     ~default:[]
     (parse_links
-       (CCOpt.get_or
+       (CCOption.get_or
           ~default:""
           (Cohttp.Header.get (Cohttp.Header.of_list (Openapi.Response.headers resp)) "link")))
 

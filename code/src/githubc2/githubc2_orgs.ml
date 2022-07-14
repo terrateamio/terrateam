@@ -156,7 +156,7 @@ module Update = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -803,7 +803,7 @@ module Update_webhook = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -942,7 +942,7 @@ module Update_webhook_config_for_org = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1337,7 +1337,7 @@ module Create_invitation = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1795,7 +1795,7 @@ module Set_membership_for_user = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

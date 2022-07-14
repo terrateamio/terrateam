@@ -222,7 +222,7 @@ module Mark_notifications_as_read = struct
 
   let make ?body () =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -512,7 +512,7 @@ module Set_thread_subscription = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -708,7 +708,7 @@ module Mark_repo_notifications_as_read = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -957,7 +957,7 @@ module Set_repo_subscription = struct
 
   let make ?body params =
     Openapi.Request.make
-      ?body:(CCOpt.map Request_body.to_yojson body)
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

@@ -6,7 +6,7 @@ let sleep duration =
   let p =
     Future.Promise.create
       ~abort:(fun () ->
-        CCOpt.iter Dom_html.clearTimeout !timeout_id;
+        CCOption.iter Dom_html.clearTimeout !timeout_id;
         Future.return ())
       ()
   in
