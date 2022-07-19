@@ -3,6 +3,11 @@ module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
 
 let response_headers = Cohttp.Header.of_list [ ("content-type", "application/json") ]
 
+let maybe_credential_error_strings =
+  [
+    "no valid credential"; "Required token could not be found"; "could not find default credentials";
+  ]
+
 module Sql = struct
   let read fname =
     CCOption.get_exn_or
@@ -612,8 +617,41 @@ module Results = struct
   let create_run_output run_type results =
     let module Wmr = Terrat_api_components.Work_manifest_result in
     let module R = Terrat_api_work_manifest.Results.Request_body in
-    let cost_estimation =
+    let module Dirspace_result_compare = struct
+      type t = bool * string * string [@@deriving ord]
+    end in
+    let dirspaces =
       results.R.dirspaces
+      |> CCList.sort
+           (fun
+             Wmr.{ path = p1; workspace = w1; success = s1; _ }
+             Wmr.{ path = p2; workspace = w2; success = s2; _ }
+           -> Dirspace_result_compare.compare (s1, p1, w1) (s2, p2, w2))
+    in
+    let maybe_credentials_error =
+      dirspaces
+      |> CCList.exists (fun Wmr.{ output; _ } ->
+             let other_outputs =
+               output.Wmr.Output.additional
+               |> Json_schema.String_map.to_seq
+               |> CCSeq.map (fun (_, v) -> v)
+             in
+             let strings =
+               CCSeq.(
+                 append
+                   (of_list
+                      (CCOption.get_or ~default:[] Wmr.Output.(output.primary.Primary.errors)))
+                   other_outputs)
+             in
+             CCSeq.exists
+               (fun s ->
+                 CCList.exists
+                   (fun sub -> CCString.find ~sub s <> -1)
+                   maybe_credential_error_strings)
+               strings)
+    in
+    let cost_estimation =
+      dirspaces
       |> CCList.map (fun Wmr.{ path; workspace; output; _ } ->
              CCOption.map
                (fun infracost -> (path, workspace, infracost))
@@ -677,6 +715,7 @@ module Results = struct
                  (fun cost_estimation -> [ ("cost_estimation", list [ cost_estimation ]) ])
                  cost_estimation;
                [
+                 ("maybe_credentials_error", bool maybe_credentials_error);
                  ("overall_success", bool results.R.overall.R.Overall.success);
                  ( "results",
                    list
@@ -711,7 +750,7 @@ module Results = struct
                                          ]);
                                   ] );
                             ])
-                        results.R.dirspaces) );
+                        dirspaces) );
                ];
              ]))
     in

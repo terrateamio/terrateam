@@ -1,13 +1,22 @@
-## Plans
 @?overall_success-@
-:heavy_check_mark: Running plans **succeeded**.
+## Plans :heavy_check_mark:
+
+Running plans succeeded. See **Terrateam Plan Output**.
 @/overall_success-@
 @!overall_success-@
-:heavy_multiplication_x: Running plans **failed**.
+## Plans :heavy_multiplication_x:
+
+Running plans **FAILED**.  See **Terrateam Plan Output**.
+
+@?maybe_credentials_error-@
+Verify that the **credentials** are setup.  For more information, see the [authentication](https://docs.terrateam.io/authentication/overview) documentation.
+
+@/maybe_credentials_error-@
+After resolving the issue, run `terrateam plan` to execute the plan operation again.
 @/overall_success-@
 
 <details>
-  <summary>Click to expand</summary>
+  <summary><b><h2>Terrateam Plan Output @?overall_success@:heavy_check_mark:@/overall_success@@!overall_success@:heavy_multiplication_x:@/overall_success@</h2></b></summary>
 
 @#results-@
 **Dir**: @dir@
@@ -59,8 +68,8 @@ To apply all these changes, comment:
 terrateam apply
 ```
 
-</details>
 @/overall_success-@
+</details>
 @?overall_success-@
 
 @^cost_estimation-@
