@@ -594,7 +594,7 @@ module Results = struct
       in
       let dirspaces =
         CCList.map
-          (fun Wmr.{ path; workspace; success } ->
+          (fun Wmr.{ path; workspace; success; _ } ->
             let state = if success then "success" else "failure" in
             let description = if success then "Completed" else "Failed" in
             T.make
