@@ -313,6 +313,12 @@
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
+                  "prev_monthly_cost":{
+                    "type": "number"
+                  },
+                  "total_monthly_cost":{
+                    "type": "number"
+                  },
                   "diff_monthly_cost": {
                     "type": "number"
                   },
@@ -321,6 +327,8 @@
                   }
                 },
                 "required": [
+                  "prev_monthly_cost",
+                  "total_monthly_cost",
                   "diff_monthly_cost",
                   "currency"
                 ]

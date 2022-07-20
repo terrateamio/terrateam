@@ -621,26 +621,46 @@ module Results = struct
       |> CCOption.sequence_l
       |> CCOption.map (fun costs ->
              let module Ce = Wmr.Output.Primary.Cost_estimation in
-             let diff_monthly_cost, currency =
+             let prev_monthly_cost, total_monthly_cost, diff_monthly_cost, currency =
                CCListLabels.fold_left
-                 ~init:(0.0, "")
-                 ~f:(fun (acc_diff_monthly_cost, _) (_, _, Ce.{ diff_monthly_cost; currency }) ->
-                   (acc_diff_monthly_cost +. diff_monthly_cost, currency))
+                 ~init:(0.0, 0.0, 0.0, "")
+                 ~f:
+                   (fun (acc_prev_monthly_cost, acc_total_monthly_cost, acc_diff_monthly_cost, _)
+                        ( _,
+                          _,
+                          Ce.{ prev_monthly_cost; total_monthly_cost; diff_monthly_cost; currency }
+                        ) ->
+                   ( acc_prev_monthly_cost +. prev_monthly_cost,
+                     acc_total_monthly_cost +. total_monthly_cost,
+                     acc_diff_monthly_cost +. diff_monthly_cost,
+                     currency ))
                  costs
              in
              Snabela.Kv.(
                Map.of_list
                  [
+                   ("prev_monthly_cost", float prev_monthly_cost);
+                   ("total_monthly_cost", float total_monthly_cost);
                    ("diff_monthly_cost", float diff_monthly_cost);
                    ("currency", string currency);
                    ( "dirspaces",
                      list
                        (CCList.map
-                          (fun (path, workspace, Ce.{ diff_monthly_cost; currency }) ->
+                          (fun ( path,
+                                 workspace,
+                                 Ce.
+                                   {
+                                     prev_monthly_cost;
+                                     total_monthly_cost;
+                                     diff_monthly_cost;
+                                     currency;
+                                   } ) ->
                             Map.of_list
                               [
                                 ("dir", string path);
                                 ("workspace", string workspace);
+                                ("prev_monthly_cost", float prev_monthly_cost);
+                                ("total_monthly_cost", float total_monthly_cost);
                                 ("diff_monthly_cost", float diff_monthly_cost);
                                 ("currency", string currency);
                               ])
