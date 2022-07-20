@@ -1,3 +1,5 @@
+## Changes owned by other pull requests :heavy_multiplication_x:
+
 Cannot perform action because some directories and workspaces are owned by other pull requests.
 
 | Dir | Workspace | Owner |
@@ -6,8 +8,4 @@ Cannot perform action because some directories and workspaces are owned by other
 | `@dir@` | `@workspace@` | #@pull_request_id@ |
 @/dirspaces-@
 
-To allow this change to be applied, you can apply the comment below in **each of the listed pull requests** to remove any locks on directories that they have.
-
-```
-terrateam unlock
-```
+To allow this change to be applied, comment `terrateam unlock` in **each of the listed pull requests** to remove the locks.

@@ -954,7 +954,14 @@ module Evaluator = Terrat_event_evaluator.Make (struct
               pull_request.Terrat_pull_request.id);
         apply_template_and_publish "APPLY_QUEUED" Tmpl.apply_queued kv event
     | Terrat_event_evaluator.Msg.Repo_config_parse_failure err ->
-        let kv = Snabela.Kv.(Map.of_list [ ("msg", string err) ]) in
+        let kv =
+          Snabela.Kv.(
+            Map.of_list
+              [
+                ("terrateam_repo_config_filename", string ".terrateam/config.yml");
+                ("msg", string err);
+              ])
+        in
         apply_template_and_publish
           "REPO_CONFIG_PARSE_FAILURE"
           Tmpl.repo_config_parse_failure
@@ -1011,7 +1018,8 @@ let run_event_evaluator storage event =
   let open Abb.Future.Infix_monad in
   Evaluator.run storage event
   >>= fun () ->
-  Abb.Future.fork (Terrat_github_runner.run ~request_id:(Event.request_id event) event.Event.config storage)
+  Abb.Future.fork
+    (Terrat_github_runner.run ~request_id:(Event.request_id event) event.Event.config storage)
   >>= fun _ -> Abb.Future.return (Ok ())
 
 let perform_unlock_pr request_id config storage installation_id repository pull_number =
