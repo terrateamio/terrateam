@@ -5681,6 +5681,45 @@
       "title": "workflow_run requested event",
       "type": "object"
     },
+    "workflow_run$in_progress": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "in_progress"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        },
+        "workflow": {
+          "$ref": "#/definitions/workflow"
+        },
+        "workflow_run": {
+              "$ref": "#/definitions/workflow-run"
+        }
+      },
+      "required": [
+        "action",
+        "repository",
+        "sender",
+        "workflow",
+        "workflow_run"
+      ],
+      "title": "workflow_run completed event",
+      "type": "object"
+    },
     "workflow_run_event": {
       "oneOf": [
         {
@@ -5688,6 +5727,9 @@
         },
         {
           "$ref": "#/definitions/workflow_run$requested"
+        },
+        {
+          "$ref": "#/definitions/workflow_run$in_progress"
         }
       ]
     }
