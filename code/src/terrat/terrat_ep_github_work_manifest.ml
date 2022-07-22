@@ -58,6 +58,27 @@ module Sql = struct
       /% Var.text "run_id"
       /% Var.text "sha")
 
+  let select_work_manifest =
+    Pgsql_io.Typed_sql.(
+      sql
+      // (* bash_hash *) Ret.text
+      // (* completed_at *) Ret.(option text)
+      // (* created_at *) Ret.text
+      // (* hash *) Ret.text
+      // (* run_type *) Ret.ud' Terrat_work_manifest.Run_type.of_string
+      // (* state *) Ret.ud' Terrat_work_manifest.State.of_string
+      // (* tag_query *) Ret.ud tag_query
+      // (* repository *) Ret.bigint
+      // (* pull_number *) Ret.bigint
+      // (* base_branch *) Ret.text
+      // (* installation_id *) Ret.bigint
+      // (* owner *) Ret.text
+      // (* repo *) Ret.text
+      /^ read "select_github_work_manifest.sql"
+      /% Var.uuid "id"
+      /% Var.text "run_id"
+      /% Var.text "sha")
+
   let abort_work_manifest =
     Pgsql_io.Typed_sql.(
       sql
@@ -138,7 +159,7 @@ module Sql = struct
       /% Var.text "dir"
       /% Var.text "workspace")
 
-  let select_github_parameters_from_work_manifest =
+  let select_github_parameters_from_work_manifest () =
     Pgsql_io.Typed_sql.(
       sql
       // (* installation_id *) Ret.bigint
@@ -183,7 +204,21 @@ module Tmpl = struct
 
   let plan_complete = read "github_plan_complete.tmpl"
   let apply_complete = read "github_apply_complete.tmpl"
+
+  let work_manifest_already_run =
+    "github_work_manifest_already_run.tmpl"
+    |> Terrat_files_tmpl.read
+    |> CCOption.get_exn_or "github_work_manifest_already_run.tmpl"
 end
+
+let publish_comment token owner repo pull_number body =
+  let client = Terrat_github.create (`Token token) in
+  Githubc2_abb.call
+    client
+    Githubc2_issues.Create_comment.(
+      make
+        ~body:Request_body.(make Primary.{ body })
+        Parameters.(make ~issue_number:pull_number ~owner ~repo))
 
 module T = struct
   type t = {
@@ -205,6 +240,7 @@ module Pull_request = struct
     pull_number : int64;
     base_branch : string;
   }
+  [@@deriving show]
 end
 
 module Evaluator = Terrat_work_manifest_evaluator.Make (struct
@@ -213,6 +249,135 @@ module Evaluator = Terrat_work_manifest_evaluator.Make (struct
   module Pull_request = Pull_request
 
   let request_id t = t.T.request_id
+
+  let maybe_update_commit_status t installation_id owner repo_name run_type dirspaces hash =
+    function
+    | Terrat_work_manifest.State.Running ->
+        let unified_run_type =
+          Terrat_work_manifest.(
+            run_type |> Unified_run_type.of_run_type |> Unified_run_type.to_string)
+        in
+        Abbs_future_combinators.ignore
+          (Abb.Future.fork
+             (let open Abbs_future_combinators.Infix_result_monad in
+             Terrat_github.get_installation_access_token t.T.config (CCInt64.to_int installation_id)
+             >>= fun access_token ->
+             let target_url =
+               Printf.sprintf "https://github.com/%s/%s/actions/runs/%s" owner repo_name t.T.run_id
+             in
+             let commit_statuses =
+               let module T = Terrat_github.Commit_status.Create.T in
+               let aggregate =
+                 T.make
+                   ~target_url
+                   ~description:"Running"
+                   ~context:(Printf.sprintf "terrateam %s" unified_run_type)
+                   ~state:"pending"
+                   ()
+               in
+               let dirspaces =
+                 CCList.map
+                   (fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.dir; workspace }; _ } ->
+                     T.make
+                       ~target_url
+                       ~description:"Running"
+                       ~context:(Printf.sprintf "terrateam %s %s %s" unified_run_type dir workspace)
+                       ~state:"pending"
+                       ())
+                   dirspaces
+               in
+               aggregate :: dirspaces
+             in
+             Terrat_github.Commit_status.create
+               ~access_token
+               ~owner
+               ~repo:repo_name
+               ~sha:hash
+               commit_statuses))
+    | Terrat_work_manifest.State.Queued
+    | Terrat_work_manifest.State.Completed
+    | Terrat_work_manifest.State.Aborted -> Abb.Future.return ()
+
+  let initiate_work_manifest' db t =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Pgsql_io.Prepared_stmt.fetch
+      db
+      Sql.initiate_work_manifest
+      ~f:
+        (fun base_hash
+             completed_at
+             created_at
+             hash
+             run_type
+             state
+             tag_query
+             repo_id
+             pull_number
+             base_branch
+             installation_id
+             owner
+             repo_name ->
+        (* This is done in this annoying way because the type system
+           complains that "Pull_request" will escape its scope otherwise
+           and I haven't figured out how to resolve that. *)
+        ( base_hash,
+          completed_at,
+          created_at,
+          hash,
+          run_type,
+          state,
+          tag_query,
+          repo_id,
+          pull_number,
+          base_branch,
+          installation_id,
+          owner,
+          repo_name ))
+      t.T.work_manifest
+      t.T.run_id
+      t.T.hash
+    >>= function
+    | wm :: _ -> Abb.Future.return (Ok (Some wm))
+    | [] -> (
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          Sql.select_work_manifest
+          ~f:
+            (fun base_hash
+                 completed_at
+                 created_at
+                 hash
+                 run_type
+                 state
+                 tag_query
+                 repo_id
+                 pull_number
+                 base_branch
+                 installation_id
+                 owner
+                 repo_name ->
+            (* This is done in this annoying way because the type system
+               complains that "Pull_request" will escape its scope otherwise
+               and I haven't figured out how to resolve that. *)
+            ( base_hash,
+              completed_at,
+              created_at,
+              hash,
+              run_type,
+              state,
+              tag_query,
+              repo_id,
+              pull_number,
+              base_branch,
+              installation_id,
+              owner,
+              repo_name ))
+          t.T.work_manifest
+          t.T.run_id
+          t.T.hash
+        >>= function
+        | wm :: _ -> Abb.Future.return (Ok (Some wm))
+        | [] -> Abb.Future.return (Ok None))
 
   let initiate_work_manifest db t =
     let run =
@@ -224,26 +389,9 @@ module Evaluator = Terrat_work_manifest_evaluator.Make (struct
             (Uuidm.to_string t.T.work_manifest)
             t.T.run_id
             t.T.hash);
-      Pgsql_io.Prepared_stmt.fetch
-        db
-        Sql.initiate_work_manifest
-        ~f:
-          (fun base_hash
-               completed_at
-               created_at
-               hash
-               run_type
-               state
-               tag_query
-               repo_id
-               pull_number
-               base_branch
-               installation_id
-               owner
-               repo_name ->
-          (* This is done in this annoying way because the type system
-             complains that "Pull_request" will escape its scope otherwise
-             and I haven't figured out how to resolve that. *)
+      initiate_work_manifest' db t
+      >>= function
+      | Some
           ( base_hash,
             completed_at,
             created_at,
@@ -256,25 +404,7 @@ module Evaluator = Terrat_work_manifest_evaluator.Make (struct
             base_branch,
             installation_id,
             owner,
-            repo_name ))
-        t.T.work_manifest
-        t.T.run_id
-        t.T.hash
-      >>= function
-      | ( base_hash,
-          completed_at,
-          created_at,
-          hash,
-          run_type,
-          state,
-          tag_query,
-          repo_id,
-          pull_number,
-          base_branch,
-          installation_id,
-          owner,
-          repo_name )
-        :: _ ->
+            repo_name ) ->
           let partial_work_manifest =
             Terrat_work_manifest.
               {
@@ -303,50 +433,11 @@ module Evaluator = Terrat_work_manifest_evaluator.Make (struct
             t.T.work_manifest
           >>= fun dirspaces ->
           let open Abb.Future.Infix_monad in
-          let unified_run_type =
-            Terrat_work_manifest.(
-              run_type |> Unified_run_type.of_run_type |> Unified_run_type.to_string)
-          in
-          Abb.Future.fork
-            (let open Abbs_future_combinators.Infix_result_monad in
-            Terrat_github.get_installation_access_token t.T.config (CCInt64.to_int installation_id)
-            >>= fun access_token ->
-            let target_url =
-              Printf.sprintf "https://github.com/%s/%s/actions/runs/%s" owner repo_name t.T.run_id
-            in
-            let commit_statuses =
-              let module T = Terrat_github.Commit_status.Create.T in
-              let aggregate =
-                T.make
-                  ~target_url
-                  ~description:"Running"
-                  ~context:(Printf.sprintf "terrateam %s" unified_run_type)
-                  ~state:"pending"
-                  ()
-              in
-              let dirspaces =
-                CCList.map
-                  (fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.dir; workspace }; _ } ->
-                    T.make
-                      ~target_url
-                      ~description:"Running"
-                      ~context:(Printf.sprintf "terrateam %s %s %s" unified_run_type dir workspace)
-                      ~state:"pending"
-                      ())
-                  dirspaces
-              in
-              aggregate :: dirspaces
-            in
-            Terrat_github.Commit_status.create
-              ~access_token
-              ~owner
-              ~repo:repo_name
-              ~sha:hash
-              commit_statuses)
-          >>= fun _ ->
+          maybe_update_commit_status t installation_id owner repo_name run_type dirspaces hash state
+          >>= fun () ->
           Abb.Future.return
             (Ok (Some Terrat_work_manifest.{ partial_work_manifest with changes = dirspaces }))
-      | [] ->
+      | None ->
           Logs.info (fun m ->
               m
                 "GITHUB_WORK_MANIFEST : %s : ABORT_WORK_MANIFEST : %s"
@@ -422,6 +513,37 @@ end)
 module Initiate = struct
   module Work_manifest_initiate = Terrat_api_components.Work_manifest_initiate
 
+  let comment_work_manifest_already_run config storage request_id work_manifest_id =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Pgsql_pool.with_conn storage ~f:(fun db ->
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          (Sql.select_github_parameters_from_work_manifest ())
+          ~f:(fun installation_id owner name branch _sha pull_number _run_type _run_id ->
+            (installation_id, owner, name, branch, pull_number))
+          work_manifest_id)
+    >>= function
+    | (installation_id, owner, name, branch, pull_number) :: _ ->
+        Logs.err (fun m ->
+            m
+              "GITHUB_WORK_MANIFEST : %s : WORK_MANIFEST_ALREADY_RUNNING : work_manifest=%s : \
+               owner=%s : name=%s : pull_number=%Ld"
+              request_id
+              (Uuidm.to_string work_manifest_id)
+              owner
+              name
+              pull_number);
+        Terrat_github.get_installation_access_token config (CCInt64.to_int installation_id)
+        >>= fun access_token ->
+        publish_comment
+          access_token
+          owner
+          name
+          (CCInt64.to_int pull_number)
+          Tmpl.work_manifest_already_run
+        >>= fun _ -> Abb.Future.return (Ok ())
+    | [] -> assert false
+
   let handle_post request_id config storage work_manifest_id { Work_manifest_initiate.run_id; sha }
       =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -475,6 +597,30 @@ module Initiate = struct
         in
         Abb.Future.return
           (Brtl_ctx.set_response (Brtl_rspnc.create ~headers:response_headers ~status:`OK body) ctx)
+    | Error (`Work_manifest_already_run Terrat_work_manifest.{ id; pull_request; _ }) -> (
+        comment_work_manifest_already_run config storage request_id id
+        >>= function
+        | Ok () ->
+            Abb.Future.return
+              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)
+        | Error (#Pgsql_pool.err as err) ->
+            Logs.err (fun m ->
+                m "GITHUB_WORK_MANIFEST : %s : ERROR : %s" request_id (Pgsql_pool.show_err err));
+            Abb.Future.return
+              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+        | Error (#Pgsql_io.err as err) ->
+            Logs.err (fun m ->
+                m "GITHUB_WORK_MANIFEST : %s : ERROR : %s" request_id (Pgsql_io.show_err err));
+            Abb.Future.return
+              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+        | Error (#Terrat_github.get_installation_access_token_err as err) ->
+            Logs.err (fun m ->
+                m
+                  "GITHUB_WORK_MANIFEST : %s : ERROR : %s"
+                  request_id
+                  (Terrat_github.show_get_installation_access_token_err err));
+            Abb.Future.return
+              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
     | Error (#Terrat_work_manifest_evaluator.err as err) ->
         Logs.err (fun m ->
             m "GITHUB_WORK_MANIFEST : %s : ERROR : %s" request_id (Evaluator.show_err err));
@@ -765,15 +911,6 @@ module Results = struct
         Logs.err (fun m -> m "WORK_MANIFEST : ERROR : %s" (Snabela.show_err err));
         assert false
 
-  let publish_comment token owner repo pull_number body =
-    let client = Terrat_github.create (`Token token) in
-    Githubc2_abb.call
-      client
-      Githubc2_issues.Create_comment.(
-        make
-          ~body:Request_body.(make Primary.{ body })
-          Parameters.(make ~issue_number:pull_number ~owner ~repo))
-
   let publish_results
       request_id
       config
@@ -1035,7 +1172,7 @@ module Results = struct
             >>= fun () ->
             Pgsql_io.Prepared_stmt.fetch
               db
-              Sql.select_github_parameters_from_work_manifest
+              (Sql.select_github_parameters_from_work_manifest ())
               ~f:(fun installation_id owner name branch sha pull_number run_type run_id ->
                 (installation_id, owner, name, branch, sha, pull_number, run_type, run_id))
               work_manifest_id
