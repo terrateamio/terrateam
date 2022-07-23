@@ -171,6 +171,13 @@ module Tmpl = struct
           function
           | F num -> S (Printf.sprintf "%01.02f" num)
           | any -> any) )
+
+    let plan_diff =
+      ( "plan_diff",
+        Snabela.Kv.(
+          function
+          | S plan -> S (Terrat_plan_diff.transform plan)
+          | any -> any) )
   end
 
   let read fname =
@@ -179,7 +186,7 @@ module Tmpl = struct
     |> CCOption.get_exn_or fname
     |> Snabela.Template.of_utf8_string
     |> CCResult.get_exn
-    |> fun tmpl -> Snabela.of_template tmpl Transformers.[ money ]
+    |> fun tmpl -> Snabela.of_template tmpl Transformers.[ money; plan_diff ]
 
   let plan_complete = read "github_plan_complete.tmpl"
   let apply_complete = read "github_apply_complete.tmpl"
