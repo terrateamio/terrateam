@@ -65,6 +65,13 @@ type publish_reaction_err =
   ]
 [@@deriving show]
 
+type get_tree_err =
+  [ Githubc2_abb.call_err
+  | `Not_found of Githubc2_components.Basic_error.t
+  | `Unprocessable_entity of Githubc2_components.Validation_error.t
+  ]
+[@@deriving show]
+
 let create auth = Githubc2_abb.create ~user_agent:"Terrateam" auth
 
 let get_installation_access_token config installation_id =
@@ -262,6 +269,63 @@ let react_to_comment ?(content = "rocket") ~access_token ~owner ~repo ~comment_i
   >>= fun resp ->
   match Openapi.Response.value resp with
   | `OK _ | `Created _ -> Abb.Future.return (Ok ())
+  | `Unprocessable_entity _ as err -> Abb.Future.return (Error err)
+
+let rec get_tree ~access_token ~owner ~repo ~sha () =
+  let open Abbs_future_combinators.Infix_result_monad in
+  let client = create (`Token access_token) in
+  Githubc2_abb.call
+    client
+    Githubc2_git.Get_tree.(
+      make Parameters.(make ~recursive:(Some "true") ~owner ~repo ~tree_sha:sha ()))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK tree when Githubc2_components_git_tree.(tree.primary.Primary.truncated) -> (
+      Githubc2_abb.call
+        client
+        Githubc2_git.Get_tree.(make Parameters.(make ~owner ~repo ~tree_sha:sha ()))
+      >>= fun resp ->
+      match Openapi.Response.value resp with
+      | `OK tree ->
+          (Abbs_future_combinators.List_result.fold_left ~init:[] ~f:(fun files item ->
+               let module Items = Githubc2_components_git_tree.Primary.Tree.Items in
+               match item.Items.primary.Items.Primary.type_ with
+               | Some "tree" ->
+                   get_tree
+                     ~access_token
+                     ~owner
+                     ~repo
+                     ~sha:(CCOption.get_exn_or "get_tree_sha" item.Items.primary.Items.Primary.sha)
+                     ()
+                   >>= fun fs ->
+                   let path =
+                     CCOption.get_exn_or "get_tree_path" item.Items.primary.Items.Primary.path
+                   in
+                   Abb.Future.return (Ok ([ path ] @ files @ fs))
+               | Some "blob" ->
+                   Abb.Future.return
+                     (Ok
+                        (CCOption.get_exn_or "get_tree_path" item.Items.primary.Items.Primary.path
+                        :: files))
+               | Some typ ->
+                   Logs.err (fun m -> m "GET_TREE : UNKNOWN_TYPE : %s" typ);
+                   Abb.Future.return (Ok files)
+               | None ->
+                   Logs.err (fun m -> m "GET_TREE : TYPE : NONE");
+                   Abb.Future.return (Ok files)))
+            Githubc2_components_git_tree.(tree.primary.Primary.tree)
+      | `Not_found _ as err -> Abb.Future.return (Error err)
+      | `Unprocessable_entity _ as err -> Abb.Future.return (Error err))
+  | `OK tree ->
+      let tree = Githubc2_components_git_tree.(tree.primary.Primary.tree) in
+      let files =
+        tree
+        |> CCList.map (fun item ->
+               let module Items = Githubc2_components_git_tree.Primary.Tree.Items in
+               CCOption.get_exn_or "git_tree_item_path" item.Items.primary.Items.Primary.path)
+      in
+      Abb.Future.return (Ok files)
+  | `Not_found _ as err -> Abb.Future.return (Error err)
   | `Unprocessable_entity _ as err -> Abb.Future.return (Error err)
 
 module Commit_status = struct

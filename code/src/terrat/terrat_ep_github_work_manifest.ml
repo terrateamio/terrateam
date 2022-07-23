@@ -230,6 +230,10 @@ let publish_comment token owner repo pull_number body =
 module T = struct
   type t = {
     config : Terrat_config.t;
+    access_token : string;
+    owner : string;
+    name : string;
+    pull_number : int;
     hash : string;
     request_id : string;
     run_id : string;
@@ -520,8 +524,99 @@ end)
 module Initiate = struct
   module Work_manifest_initiate = Terrat_api_components.Work_manifest_initiate
 
-  let comment_work_manifest_already_run config storage request_id work_manifest_id =
+  let comment_work_manifest_already_run t =
     let open Abbs_future_combinators.Infix_result_monad in
+    Logs.err (fun m ->
+        m
+          "GITHUB_WORK_MANIFEST : %s : WORK_MANIFEST_ALREADY_RUNNING : work_manifest=%s : owner=%s \
+           : name=%s : pull_number=%d"
+          t.T.request_id
+          (Uuidm.to_string t.T.work_manifest)
+          t.T.owner
+          t.T.name
+          t.T.pull_number);
+    publish_comment
+      t.T.access_token
+      t.T.owner
+      t.T.name
+      t.T.pull_number
+      Tmpl.work_manifest_already_run
+    >>= fun _ -> Abb.Future.return (Ok ())
+
+  let handle_post request_id config storage t =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Evaluator.run storage t
+    >>= function
+    | Some work_manifest -> (
+        let module Wm = Terrat_work_manifest in
+        let changed_dirspaces =
+          CCList.map
+            (fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.dir; workspace }; workflow_idx } ->
+              (* TODO: Provide correct rank *)
+              Terrat_api_components.Work_manifest_dir.
+                { path = dir; workspace; workflow = workflow_idx; rank = 0 })
+            work_manifest.Wm.changes
+        in
+        match work_manifest.Wm.run_type with
+        | Wm.Run_type.Plan | Wm.Run_type.Autoplan ->
+            let open Abbs_future_combinators.Infix_result_monad in
+            Terrat_github.fetch_repo_config
+              ~python:(Terrat_config.python_exec config)
+              ~access_token:t.T.access_token
+              ~owner:t.T.owner
+              ~repo:t.T.name
+              t.T.hash
+            >>= fun repo_config ->
+            Terrat_github.get_tree
+              ~access_token:t.T.access_token
+              ~owner:t.T.owner
+              ~repo:t.T.name
+              ~sha:t.T.hash
+              ()
+            >>= fun files ->
+            let dirspaces =
+              CCList.map
+                (fun Terrat_change_matcher.
+                       {
+                         dirspaceflow =
+                           Terrat_change.
+                             { Dirspaceflow.dirspace = { Dirspace.dir; workspace }; workflow_idx };
+                         _;
+                       } ->
+                  Terrat_api_components.Work_manifest_dir.
+                    { path = dir; workspace; workflow = workflow_idx; rank = 0 })
+                (Terrat_change_matcher.match_diff
+                   repo_config
+                   (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) files))
+            in
+            let ret =
+              Terrat_api_components.(
+                Work_manifest.Work_manifest_plan
+                  Work_manifest_plan.
+                    {
+                      type_ = "plan";
+                      base_ref = work_manifest.Wm.pull_request.Pull_request.base_branch;
+                      changed_dirspaces;
+                      dirspaces;
+                    })
+            in
+            Abb.Future.return (Ok ret)
+        | Wm.Run_type.Apply | Wm.Run_type.Autoapply ->
+            let ret =
+              Terrat_api_components.(
+                Work_manifest.Work_manifest_apply
+                  Work_manifest_apply.
+                    {
+                      type_ = "apply";
+                      base_ref = work_manifest.Wm.pull_request.Pull_request.base_branch;
+                      changed_dirspaces;
+                    })
+            in
+            Abb.Future.return (Ok ret))
+    | None -> Abb.Future.return (Error `Work_manifest_not_found)
+
+  let pre_handle_post request_id config storage work_manifest_id run_id sha =
+    let open Abb.Future.Infix_monad in
     Pgsql_pool.with_conn storage ~f:(fun db ->
         Pgsql_io.Prepared_stmt.fetch
           db
@@ -530,109 +625,106 @@ module Initiate = struct
             (installation_id, owner, name, branch, pull_number))
           work_manifest_id)
     >>= function
-    | (installation_id, owner, name, branch, pull_number) :: _ ->
-        Logs.err (fun m ->
-            m
-              "GITHUB_WORK_MANIFEST : %s : WORK_MANIFEST_ALREADY_RUNNING : work_manifest=%s : \
-               owner=%s : name=%s : pull_number=%Ld"
-              request_id
-              (Uuidm.to_string work_manifest_id)
-              owner
-              name
-              pull_number);
+    | Ok ((installation_id, owner, name, branch, pull_number) :: _) ->
+        let open Abbs_future_combinators.Infix_result_monad in
         Terrat_github.get_installation_access_token config (CCInt64.to_int installation_id)
         >>= fun access_token ->
-        publish_comment
-          access_token
-          owner
-          name
-          (CCInt64.to_int pull_number)
-          Tmpl.work_manifest_already_run
-        >>= fun _ -> Abb.Future.return (Ok ())
-    | [] -> assert false
+        Abb.Future.return
+          (Ok
+             T.
+               {
+                 config;
+                 access_token;
+                 owner;
+                 name;
+                 pull_number = CCInt64.to_int pull_number;
+                 hash = sha;
+                 request_id;
+                 run_id;
+                 work_manifest = work_manifest_id;
+               })
+    | Ok [] -> Abb.Future.return (Error `Work_manifest_not_found)
+    | Error (#Pgsql_pool.err as err) -> Abb.Future.return (Error err)
+    | Error (#Pgsql_io.err as err) -> Abb.Future.return (Error err)
 
-  let handle_post request_id config storage work_manifest_id { Work_manifest_initiate.run_id; sha }
-      =
-    let open Abbs_future_combinators.Infix_result_monad in
-    let t = T.{ config; hash = sha; request_id; run_id; work_manifest = work_manifest_id } in
-    Evaluator.run storage t
-    >>= function
-    | Some work_manifest ->
-        let module Wm = Terrat_work_manifest in
-        let dirs =
-          CCList.map
-            (fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.dir; workspace }; workflow_idx } ->
-              (* TODO: Provide correct rank *)
-              Terrat_api_components.Work_manifest_dir.
-                { path = dir; workspace; workflow = workflow_idx; rank = 0 })
-            work_manifest.Wm.changes
-        in
-        let ret =
-          match work_manifest.Wm.run_type with
-          | Wm.Run_type.Plan | Wm.Run_type.Autoplan ->
-              Terrat_api_components.(
-                Work_manifest.Work_manifest_plan
-                  Work_manifest_plan.
-                    {
-                      type_ = "plan";
-                      base_ref = work_manifest.Wm.pull_request.Pull_request.base_branch;
-                      dirs;
-                    })
-          | Wm.Run_type.Apply | Wm.Run_type.Autoapply ->
-              Terrat_api_components.(
-                Work_manifest.Work_manifest_apply
-                  Work_manifest_apply.
-                    {
-                      type_ = "apply";
-                      base_ref = work_manifest.Wm.pull_request.Pull_request.base_branch;
-                      dirs;
-                    })
-        in
-        Abb.Future.return (Ok ret)
-    | None -> Abb.Future.return (Error `Not_found)
-
-  let post config storage work_manifest_id work_manifest_initiate ctx =
+  let post config storage work_manifest_id { Work_manifest_initiate.run_id; sha } ctx =
     let open Abb.Future.Infix_monad in
     let request_id = Brtl_ctx.token ctx in
-    handle_post request_id config storage work_manifest_id work_manifest_initiate
+    pre_handle_post request_id config storage work_manifest_id run_id sha
     >>= function
-    | Ok response ->
-        let body =
-          response
-          |> Terrat_api_work_manifest.Initiate.Responses.OK.to_yojson
-          |> Yojson.Safe.to_string
-        in
-        Abb.Future.return
-          (Brtl_ctx.set_response (Brtl_rspnc.create ~headers:response_headers ~status:`OK body) ctx)
-    | Error (`Work_manifest_already_run Terrat_work_manifest.{ id; pull_request; _ }) -> (
-        comment_work_manifest_already_run config storage request_id id
+    | Ok t -> (
+        handle_post request_id config storage t
         >>= function
-        | Ok () ->
+        | Ok response ->
+            let body =
+              response
+              |> Terrat_api_work_manifest.Initiate.Responses.OK.to_yojson
+              |> Yojson.Safe.to_string
+            in
             Abb.Future.return
-              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)
-        | Error (#Pgsql_pool.err as err) ->
-            Logs.err (fun m ->
-                m "GITHUB_WORK_MANIFEST : %s : ERROR : %s" request_id (Pgsql_pool.show_err err));
-            Abb.Future.return
-              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-        | Error (#Pgsql_io.err as err) ->
-            Logs.err (fun m ->
-                m "GITHUB_WORK_MANIFEST : %s : ERROR : %s" request_id (Pgsql_io.show_err err));
-            Abb.Future.return
-              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-        | Error (#Terrat_github.get_installation_access_token_err as err) ->
+              (Brtl_ctx.set_response
+                 (Brtl_rspnc.create ~headers:response_headers ~status:`OK body)
+                 ctx)
+        | Error (`Work_manifest_already_run Terrat_work_manifest.{ id; pull_request; _ }) -> (
+            comment_work_manifest_already_run t
+            >>= function
+            | Ok () ->
+                Abb.Future.return
+                  (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)
+            | Error (#Githubc2_abb.call_err as err) ->
+                Logs.err (fun m ->
+                    m
+                      "GITHUB_WORK_MANIFEST : %s : ERROR : %s"
+                      request_id
+                      (Githubc2_abb.show_call_err err));
+                Abb.Future.return
+                  (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+        | Error (#Terrat_github.fetch_repo_config_err as err) ->
             Logs.err (fun m ->
                 m
                   "GITHUB_WORK_MANIFEST : %s : ERROR : %s"
                   request_id
-                  (Terrat_github.show_get_installation_access_token_err err));
+                  (Terrat_github.show_fetch_repo_config_err err));
+            Abb.Future.return
+              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+        | Error (#Terrat_github.get_tree_err as err) ->
+            Logs.err (fun m ->
+                m
+                  "GITHUB_WORK_MANIFEST : %s : ERROR : %s"
+                  request_id
+                  (Terrat_github.show_get_tree_err err));
+            Abb.Future.return
+              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+        | Error (#Terrat_work_manifest_evaluator.err as err) ->
+            Logs.err (fun m ->
+                m "GITHUB_WORK_MANIFEST : %s : ERROR : %s" request_id (Evaluator.show_err err));
             Abb.Future.return
               (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-    | Error (#Terrat_work_manifest_evaluator.err as err) ->
+    | Error (#Pgsql_pool.err as err) ->
         Logs.err (fun m ->
-            m "GITHUB_WORK_MANIFEST : %s : ERROR : %s" request_id (Evaluator.show_err err));
+            m "GITHUB_WORK_MANIFEST : %s : ERROR : %s" request_id (Pgsql_pool.show_err err));
         Abb.Future.return
           (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m ->
+            m "GITHUB_WORK_MANIFEST : %s : ERROR : %s" request_id (Pgsql_io.show_err err));
+        Abb.Future.return
+          (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+    | Error (#Terrat_github.get_installation_access_token_err as err) ->
+        Logs.err (fun m ->
+            m
+              "GITHUB_WORK_MANIFEST : %s : ERROR : %s"
+              request_id
+              (Terrat_github.show_get_installation_access_token_err err));
+        Abb.Future.return
+          (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+    | Error `Work_manifest_not_found ->
+        Logs.err (fun m ->
+            m
+              "GITHUB_WORK_MANIFEST : %s : WORK_MANIFEST_NOT_FOUND : %s"
+              request_id
+              (Uuidm.to_string work_manifest_id));
+        Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx)
 end
 
 module Plans = struct

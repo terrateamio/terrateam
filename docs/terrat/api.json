@@ -205,7 +205,13 @@
           "base_ref": {
             "type": "string"
           },
-          "dirs": {
+          "changed_dirspaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/work-manifest-dir"
+            }
+          },
+          "dirspaces": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/work-manifest-dir"
@@ -215,7 +221,8 @@
         "required": [
           "type",
           "base_ref",
-          "dirs"
+          "changed_dirspaces",
+          "dirspaces"
         ]
       },
       "work-manifest-apply": {
@@ -229,7 +236,7 @@
           "base_ref": {
             "type": "string"
           },
-          "dirs": {
+          "changed_dirspaces": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/work-manifest-dir"
@@ -239,7 +246,7 @@
         "required": [
           "type",
           "base_ref",
-          "dirs"
+          "changed_dirspaces"
         ]
       },
       "work-manifest": {

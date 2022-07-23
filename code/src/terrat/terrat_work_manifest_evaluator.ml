@@ -7,7 +7,7 @@ end
 type ('pull_request, 'pull_request_lite) err =
   [ Pgsql_pool.err
   | Pgsql_io.err
-  | `Not_found
+  | `Work_manifest_not_found
   | `Work_manifest_already_run of ('pull_request Work_manifest.t[@opaque])
   | `Work_manifest_in_queue_state
   | `Dirspaces_without_valid_plans of Terrat_change.Dirspace.t list

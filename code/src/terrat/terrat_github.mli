@@ -57,6 +57,13 @@ type publish_reaction_err =
   ]
 [@@deriving show]
 
+type get_tree_err =
+  [ Githubc2_abb.call_err
+  | `Not_found of Githubc2_components.Basic_error.t
+  | `Unprocessable_entity of Githubc2_components.Validation_error.t
+  ]
+[@@deriving show]
+
 module Commit_status : sig
   type create_err = Githubc2_abb.call_err [@@deriving show]
 
@@ -182,3 +189,11 @@ val react_to_comment :
   comment_id:int ->
   unit ->
   (unit, [> publish_reaction_err ]) result Abb.Future.t
+
+val get_tree :
+  access_token:string ->
+  owner:string ->
+  repo:string ->
+  sha:string ->
+  unit ->
+  (string list, [> get_tree_err ]) result Abb.Future.t
