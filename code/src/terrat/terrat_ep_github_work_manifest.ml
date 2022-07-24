@@ -1060,13 +1060,41 @@ module Results = struct
       client
       Githubc2_pulls.Merge.(
         make
-          ~body:Request_body.(make Primary.(make ~commit_title:(Some "Terrateam Automerge") ()))
+          ~body:
+            Request_body.(
+              make
+                Primary.(
+                  make
+                    ~commit_title:(Some (Printf.sprintf "Terrateam Automerge #%Ld" pull_number))
+                    ()))
           Parameters.(make ~owner ~repo ~pull_number:(CCInt64.to_int pull_number)))
     >>= fun resp ->
     match Openapi.Response.value resp with
     | `OK _ -> Abb.Future.return (Ok ())
-    | (`Conflict _ | `Forbidden _ | `Method_not_allowed _ | `Not_found _ | `Unprocessable_entity _)
-      as err -> Abb.Future.return (Error err)
+    | `Method_not_allowed _ -> (
+        Logs.info (fun m ->
+            m
+              "WORK_MANIFEST : %s : MERGE_METHOD_NOT_ALLOWED : %s : %s : %Ld"
+              request_id
+              owner
+              repo
+              pull_number);
+        Githubc2_abb.call
+          client
+          Githubc2_pulls.Merge.(
+            make
+              ~body:Request_body.(make Primary.(make ~merge_method:(Some "squash") ()))
+              Parameters.(make ~owner ~repo ~pull_number:(CCInt64.to_int pull_number)))
+        >>= fun resp ->
+        match Openapi.Response.value resp with
+        | `OK _ -> Abb.Future.return (Ok ())
+        | ( `Method_not_allowed _
+          | `Conflict _
+          | `Forbidden _
+          | `Not_found _
+          | `Unprocessable_entity _ ) as err -> Abb.Future.return (Error err))
+    | (`Conflict _ | `Forbidden _ | `Not_found _ | `Unprocessable_entity _) as err ->
+        Abb.Future.return (Error err)
 
   let delete_pull_request_branch request_id access_token owner repo pull_number =
     let open Abbs_future_combinators.Infix_result_monad in
