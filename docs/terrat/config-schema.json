@@ -365,6 +365,10 @@
             }
           }
         },
+        "create_and_select_workspace": {
+          "type": "boolean",
+          "default": true
+        },
         "default_tf_version": {
           "$ref": "#/definitions/terraform-version"
         },
