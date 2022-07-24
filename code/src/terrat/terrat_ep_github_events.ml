@@ -515,7 +515,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
       ~access_token:event.Event.access_token
       ~owner:event.Event.repository.Gw.Repository.owner.Gw.User.login
       ~repo:event.Event.repository.Gw.Repository.name
-      pull_request.Terrat_pull_request.branch_name
+      pull_request.Terrat_pull_request.hash
     >>= function
     | Ok repo_config -> Abb.Future.return (Ok repo_config)
     | Error (`Repo_config_parse_err err) -> Abb.Future.return (Error (`Repo_config_parse_err err))
@@ -579,13 +579,14 @@ module Evaluator = Terrat_event_evaluator.Make (struct
           let head_sha = Head.(head.primary.Primary.sha) in
           let merged_sha = merge_commit_sha in
           let branch_name = Head.(head.primary.Primary.ref_) in
+          let hash = CCOption.get_or ~default:head_sha merged_sha in
           fetch_diff
             ~request_id:event.Event.request_id
             ~access_token:event.Event.access_token
             ~owner
             ~repo
             ~base_sha
-            head_sha
+            hash
           >>= fun diff ->
           Logs.debug (fun m ->
               m
