@@ -489,7 +489,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
               changes = ();
             }
           in
-          create_check_run event wm work_manifest.Wm.changes pull_request.Pr.hash
+          create_check_run event wm work_manifest.Wm.changes hash
           >>= fun () -> Abb.Future.return (Ok wm)
     in
     let open Abb.Future.Infix_monad in
