@@ -57,7 +57,7 @@ type t = {
   checkout_strategy : Checkout_strategy.t; [@default "merge"]
   cost_estimation : Cost_estimation.t option; [@default None]
   create_and_select_workspace : bool; [@default true]
-  default_tf_version : Terrat_repo_config_terraform_version.t option; [@default None]
+  default_tf_version : string option; [@default None]
   dirs : Dirs.t option; [@default None]
   enabled : bool; [@default true]
   hooks : Hooks.t option; [@default None]
