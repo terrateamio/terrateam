@@ -955,14 +955,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
               pull_request.Terrat_pull_request.id);
         apply_template_and_publish "APPLY_QUEUED" Tmpl.apply_queued kv event
     | Terrat_event_evaluator.Msg.Repo_config_parse_failure err ->
-        let kv =
-          Snabela.Kv.(
-            Map.of_list
-              [
-                ("terrateam_repo_config_filename", string ".terrateam/config.yml");
-                ("msg", string err);
-              ])
-        in
+        let kv = Snabela.Kv.(Map.of_list [ ("msg", string err) ]) in
         apply_template_and_publish
           "REPO_CONFIG_PARSE_FAILURE"
           Tmpl.repo_config_parse_failure
