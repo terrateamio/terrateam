@@ -14,6 +14,7 @@ module Msg : sig
     | Apply_no_matching_dirspaces
     | Plan_no_matching_dirspaces
     | Base_branch_not_default_branch of 'pull_request
+    | Autoapply_running
 end
 
 module type S = sig

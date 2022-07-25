@@ -220,6 +220,7 @@ module Tmpl = struct
   let apply_no_matching_dirspaces = read "apply_no_matching_dirspaces.tmpl"
   let plan_no_matching_dirspaces = read "plan_no_matching_dirspaces.tmpl"
   let base_branch_not_default_branch = read "base_branch_not_default_branch.tmpl"
+  let auto_apply_running = read "auto_apply_running.tmpl"
 
   let unlock_success =
     CCOption.get_exn_or "unlock_success.tmpl" (Terrat_files_tmpl.read "unlock_success.tmpl")
@@ -1006,6 +1007,9 @@ module Evaluator = Terrat_event_evaluator.Make (struct
           Tmpl.base_branch_not_default_branch
           kv
           event
+    | Terrat_event_evaluator.Msg.Autoapply_running ->
+        let kv = Snabela.Kv.(Map.of_list []) in
+        apply_template_and_publish "AUTO_APPLY_RUNNING" Tmpl.auto_apply_running kv event
 end)
 
 let run_event_evaluator storage event =

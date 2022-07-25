@@ -14,6 +14,7 @@ module Msg = struct
     | Apply_no_matching_dirspaces
     | Plan_no_matching_dirspaces
     | Base_branch_not_default_branch of 'pull_request
+    | Autoapply_running
 end
 
 module type S = sig
@@ -152,7 +153,7 @@ module Make (S : S) = struct
         }
     in
     Logs.info (fun m -> m "EVENT_EVALUATOR : %s : CREATE_WORK_MANIFEST" (S.Event.request_id event));
-    S.store_new_work_manifest db event work_manifest >>= fun _ -> Abb.Future.return (Ok None)
+    S.store_new_work_manifest db event work_manifest >>= fun _ -> Abb.Future.return (Ok ())
 
   let process_plan db event tag_query_matches pull_request run_type =
     let matches =
@@ -176,7 +177,10 @@ module Make (S : S) = struct
         Logs.info (fun m ->
             m "EVENT_EVALUATOR : %s : NOOP : PLAN_NO_MATCHING_DIRSPACES" (S.Event.request_id event));
         Abb.Future.return (Ok (Some Msg.Plan_no_matching_dirspaces))
-    | _, _ -> create_and_store_work_manifest db event pull_request matches
+    | _, _ ->
+        let open Abbs_future_combinators.Infix_result_monad in
+        create_and_store_work_manifest db event pull_request matches
+        >>= fun () -> Abb.Future.return (Ok None)
 
   let process_apply db event tag_query_matches all_match_dirspaceflows pull_request run_type =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -244,9 +248,13 @@ module Make (S : S) = struct
                    Terrat_change_matcher.dirspaceflow %> Terrat_change.Dirspaceflow.to_dirspace)
                  matches)
             >>= function
-            | [] ->
+            | [] -> (
                 (* All are ready to be applied *)
                 create_and_store_work_manifest db event pull_request matches
+                >>= function
+                | () when S.Event.run_type event = Terrat_work_manifest.Run_type.Autoapply ->
+                    Abb.Future.return (Ok (Some Msg.Autoapply_running))
+                | () -> Abb.Future.return (Ok None))
             | dirspaces ->
                 (* Some are missing plans *)
                 Abb.Future.return (Ok (Some (Msg.Missing_plans dirspaces))))
