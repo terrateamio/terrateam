@@ -1,3 +1,5 @@
+.PHONY: terrat-api terrat-repo-config terrat-webhooks
+
 all: .merlin
 
 .merlin: pds.conf
@@ -6,5 +8,17 @@ all: .merlin
 
 pds.mk: pds.conf
 	pds
+
+terrat-api:
+	env OCAMLRUNPARAM=b ./build/debug/openapi_cli/openapi_cli.native convert --input ../docs/terrat/api.json --name "terrat_api" --output-dir ./src/terrat_api
+	find src/terrat_api  -type f -exec ocamlformat -i '{}' \;
+
+terrat-repo-config:
+	env OCAMLRUNPARAM=b ./build/release/json_schema_hooks_cli/json_schema_hooks_cli.native convert --input ../docs/terrat/config-schema.json --name terrat_repo_config --output-dir=./src/terrat_repo_config/
+	find src/terrat_repo_config/ -type f -exec ocamlformat -i '{}' \;
+
+terrat-webhooks:
+	env OCAMLRUNPARAM=b ./build/release/json_schema_hooks_cli/json_schema_hooks_cli.native convert -i ../docs/github_webhooks/terrat-schema.json -n terrat_github_webhooks --output-dir ./src/terrat_github_webhooks/ --non-strict-records
+	find src/terrat_github_webhooks/ -type f -exec ocamlformat -i '{}' \;
 
 -include pds.mk

@@ -1,4 +1,6 @@
+module Cost_estimation = Terrat_api_components_cost_estimation
 module Plan_create = Terrat_api_components_plan_create
+module Total_cost_estimation = Terrat_api_components_total_cost_estimation
 module Work_manifest = Terrat_api_components_work_manifest
 module Work_manifest_apply = Terrat_api_components_work_manifest_apply
 module Work_manifest_dir = Terrat_api_components_work_manifest_dir

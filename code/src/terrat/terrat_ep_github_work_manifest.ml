@@ -903,52 +903,68 @@ module Results = struct
                Wmr.Output.(output.primary.Primary.cost_estimation))
       |> CCOption.sequence_l
       |> CCOption.map (fun costs ->
-             let module Ce = Wmr.Output.Primary.Cost_estimation in
-             let prev_monthly_cost, total_monthly_cost, diff_monthly_cost, currency =
+             let module Ce = Terrat_api_components_cost_estimation in
+             let diff_monthly_cost =
                CCListLabels.fold_left
-                 ~init:(0.0, 0.0, 0.0, "")
-                 ~f:
-                   (fun (acc_prev_monthly_cost, acc_total_monthly_cost, acc_diff_monthly_cost, _)
-                        ( _,
-                          _,
-                          Ce.{ prev_monthly_cost; total_monthly_cost; diff_monthly_cost; currency }
-                        ) ->
-                   ( acc_prev_monthly_cost +. prev_monthly_cost,
-                     acc_total_monthly_cost +. total_monthly_cost,
-                     acc_diff_monthly_cost +. diff_monthly_cost,
-                     currency ))
+                 ~init:0.0
+                 ~f:(fun acc_diff_monthly_cost (_, _, Ce.{ diff_monthly_cost; _ }) ->
+                   acc_diff_monthly_cost +. diff_monthly_cost)
                  costs
+             in
+             let total_cost_estimation =
+               let open CCOption.Infix in
+               results.R.overall.R.Overall.output
+               >>= fun output ->
+               R.Overall.Output.(output.primary.Primary.cost_estimation)
+               >>= fun cost_estimation ->
+               Terrat_api_components.Total_cost_estimation.(
+                 Some (cost_estimation.total_monthly_cost, cost_estimation.currency))
              in
              Snabela.Kv.(
                Map.of_list
-                 [
-                   ("prev_monthly_cost", float prev_monthly_cost);
-                   ("total_monthly_cost", float total_monthly_cost);
-                   ("diff_monthly_cost", float diff_monthly_cost);
-                   ("currency", string currency);
-                   ( "dirspaces",
-                     list
-                       (CCList.map
-                          (fun ( path,
-                                 workspace,
-                                 Ce.
-                                   {
-                                     prev_monthly_cost;
-                                     total_monthly_cost;
-                                     diff_monthly_cost;
-                                     currency;
-                                   } ) ->
-                            Map.of_list
-                              [
-                                ("dir", string path);
-                                ("workspace", string workspace);
-                                ("prev_monthly_cost", float prev_monthly_cost);
-                                ("total_monthly_cost", float total_monthly_cost);
-                                ("diff_monthly_cost", float diff_monthly_cost);
-                                ("currency", string currency);
-                              ])
-                          costs) );
-                 ]))
+                 (CCList.flatten
+                    [
+                      CCOption.map_or
+                        ~default:
+                          [
+                            ("prev_monthly_cost", string "???");
+                            ("total_monthly_cost", string "???");
+                            ("diff_monthly_cost", string "???");
+                            ("currency", string "???");
+                          ]
+                        (fun (total_monthly_cost, currency) ->
+                          [
+                            ("prev_monthly_cost", float (total_monthly_cost -. diff_monthly_cost));
+                            ("total_monthly_cost", float total_monthly_cost);
+                            ("diff_monthly_cost", float diff_monthly_cost);
+                            ("currency", string currency);
+                          ])
+                        total_cost_estimation;
+                      [
+                        ( "dirspaces",
+                          list
+                            (CCList.map
+                               (fun ( path,
+                                      workspace,
+                                      Ce.
+                                        {
+                                          prev_monthly_cost;
+                                          total_monthly_cost;
+                                          diff_monthly_cost;
+                                          currency;
+                                        } ) ->
+                                 Map.of_list
+                                   [
+                                     ("dir", string path);
+                                     ("workspace", string workspace);
+                                     ("prev_monthly_cost", float prev_monthly_cost);
+                                     ("total_monthly_cost", float total_monthly_cost);
+                                     ("diff_monthly_cost", float diff_monthly_cost);
+                                     ("currency", string currency);
+                                   ])
+                               costs) );
+                      ];
+                    ])))
     in
     let kv =
       Snabela.Kv.(
@@ -962,6 +978,27 @@ module Results = struct
                [
                  ("maybe_credentials_error", bool maybe_credentials_error);
                  ("overall_success", bool results.R.overall.R.Overall.success);
+                 ( "output",
+                   list
+                     [
+                       Map.of_list
+                         (CCList.flatten
+                            [
+                              CCOption.map_or
+                                ~default:[]
+                                (fun errors ->
+                                  [
+                                    ( "errors",
+                                      list
+                                        (CCList.map
+                                           (fun line -> Map.of_list [ ("line", string line) ])
+                                           errors) );
+                                  ])
+                                (let open CCOption.Infix in
+                                results.R.overall.R.Overall.output
+                                >>= fun output -> R.Overall.Output.(output.primary.Primary.errors));
+                            ]);
+                     ] );
                  ( "results",
                    list
                      (CCList.map
