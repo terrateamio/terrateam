@@ -13,6 +13,7 @@ module Msg : sig
     | Pull_request_not_mergeable of 'pull_request
     | Apply_no_matching_dirspaces
     | Plan_no_matching_dirspaces
+    | Base_branch_not_default_branch of 'pull_request
 end
 
 module type S = sig
@@ -22,11 +23,13 @@ module type S = sig
     val request_id : t -> string
     val run_type : t -> Terrat_work_manifest.Run_type.t
     val tag_query : t -> Terrat_tag_set.t
+    val default_branch : t -> string
   end
 
   module Pull_request : sig
     type t
 
+    val base_branch_name : t -> string
     val base_hash : t -> string
     val hash : t -> string
     val diff : t -> Terrat_change.Diff.t list

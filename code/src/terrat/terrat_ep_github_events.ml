@@ -219,6 +219,7 @@ module Tmpl = struct
   let terrateam_comment_help = read "terrateam_comment_help.tmpl"
   let apply_no_matching_dirspaces = read "apply_no_matching_dirspaces.tmpl"
   let plan_no_matching_dirspaces = read "plan_no_matching_dirspaces.tmpl"
+  let base_branch_not_default_branch = read "base_branch_not_default_branch.tmpl"
 
   let unlock_success =
     CCOption.get_exn_or "unlock_success.tmpl" (Terrat_files_tmpl.read "unlock_success.tmpl")
@@ -268,6 +269,7 @@ module Event = struct
   let request_id t = t.request_id
   let tag_query t = t.tag_query
   let run_type t = t.run_type
+  let default_branch t = t.repository.Gw.Repository.default_branch
 end
 
 let create_check_run event work_manifest changes hash =
@@ -346,6 +348,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
   module Pull_request = struct
     type t = (int64, Terrat_change.Diff.t list, bool) Terrat_pull_request.t
 
+    let base_branch_name t = t.Terrat_pull_request.base_branch_name
     let base_hash t = t.Terrat_pull_request.base_hash
     let hash t = t.Terrat_pull_request.hash
     let diff t = t.Terrat_pull_request.diff
@@ -994,6 +997,13 @@ module Evaluator = Terrat_event_evaluator.Make (struct
         apply_template_and_publish
           "PLAN_NO_MATCHING_DIRSPACES"
           Tmpl.plan_no_matching_dirspaces
+          kv
+          event
+    | Terrat_event_evaluator.Msg.Base_branch_not_default_branch _ ->
+        let kv = Snabela.Kv.(Map.of_list []) in
+        apply_template_and_publish
+          "BASE_BRANCH_NOT_DEFAULT_BRANCH"
+          Tmpl.base_branch_not_default_branch
           kv
           event
 end)

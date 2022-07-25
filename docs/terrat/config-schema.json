@@ -310,6 +310,12 @@
           "type": "boolean",
           "default": true
         },
+        "destination_branches": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "version": {
           "type": "string",
           "default": "1",

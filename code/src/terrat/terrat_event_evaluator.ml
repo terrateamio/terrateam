@@ -13,6 +13,7 @@ module Msg = struct
     | Pull_request_not_mergeable of 'pull_request
     | Apply_no_matching_dirspaces
     | Plan_no_matching_dirspaces
+    | Base_branch_not_default_branch of 'pull_request
 end
 
 module type S = sig
@@ -22,11 +23,13 @@ module type S = sig
     val request_id : t -> string
     val run_type : t -> Terrat_work_manifest.Run_type.t
     val tag_query : t -> Terrat_tag_set.t
+    val default_branch : t -> string
   end
 
   module Pull_request : sig
     type t
 
+    val base_branch_name : t -> string
     val base_hash : t -> string
     val hash : t -> string
     val diff : t -> Terrat_change.Diff.t list
@@ -335,6 +338,13 @@ module Make (S : S) = struct
                         m "EVENT_EVALUATOR : %s : PR_NOT_APPLIABLE" (S.Event.request_id event));
                     Abb.Future.return (Ok (Some (Msg.Pull_request_not_appliable pull_request))))))
 
+  let is_valid_destination_branch event pull_request repo_config =
+    let module Rc = Terrat_repo_config_version_1 in
+    let valid_branches =
+      CCOption.get_or ~default:[ S.Event.default_branch event ] repo_config.Rc.destination_branches
+    in
+    CCList.mem ~eq:CCString.equal (S.Pull_request.base_branch_name pull_request) valid_branches
+
   let run' storage event =
     let module Run_type = Terrat_work_manifest.Run_type in
     let open Abbs_future_combinators.Infix_result_monad in
@@ -344,28 +354,41 @@ module Make (S : S) = struct
     Logs.info (fun m -> m "EVENT_EVALUATOR : %s : FETCHING_REPO_CONFIG" (S.Event.request_id event));
     S.fetch_repo_config event pull_request
     >>= fun repo_config ->
-    if repo_config.Terrat_repo_config.Version_1.enabled then (
-      match S.Pull_request.state pull_request with
-      | Terrat_pull_request.State.(Open | Merged _)
-        when can_apply_checkout_strategy repo_config pull_request ->
-          exec_event storage event pull_request repo_config
-      | Terrat_pull_request.State.(Open | Merged _) ->
-          (* Cannot apply checkout strategy *)
+    if is_valid_destination_branch event pull_request repo_config then
+      if repo_config.Terrat_repo_config.Version_1.enabled then (
+        match S.Pull_request.state pull_request with
+        | Terrat_pull_request.State.(Open | Merged _)
+          when can_apply_checkout_strategy repo_config pull_request ->
+            exec_event storage event pull_request repo_config
+        | Terrat_pull_request.State.(Open | Merged _) ->
+            (* Cannot apply checkout strategy *)
+            Logs.info (fun m ->
+                m "EVENT_EVALUATOR : %s : CANNOT_APPLY_CHECKOUT_STRATEGY" (S.Event.request_id event));
+            Abb.Future.return (Ok (Some (Msg.Pull_request_not_mergeable pull_request)))
+        | Terrat_pull_request.State.Closed ->
+            Logs.info (fun m ->
+                m "EVENT_EVALUATOR : %s : NOOP : PR_CLOSED" (S.Event.request_id event));
+            Pgsql_pool.with_conn storage ~f:(fun db ->
+                Logs.info (fun m ->
+                    m "EVENT_EVALUATOR : %s : STORE_PULL_REQUEST" (S.Event.request_id event));
+                S.store_pull_request db event pull_request)
+            >>= fun () -> Abb.Future.return (Ok None))
+      else (
+        Logs.info (fun m ->
+            m "EVENT_EVALUATOR : %s : NOOP : REPO_CONFIG_DISABLED" (S.Event.request_id event));
+        Abb.Future.return (Ok None))
+    else
+      match S.Event.run_type event with
+      | Terrat_work_manifest.Run_type.Autoplan | Terrat_work_manifest.Run_type.Autoapply ->
           Logs.info (fun m ->
-              m "EVENT_EVALUATOR : %s : CANNOT_APPLY_CHECKOUT_STRATEGY" (S.Event.request_id event));
-          Abb.Future.return (Ok (Some (Msg.Pull_request_not_mergeable pull_request)))
-      | Terrat_pull_request.State.Closed ->
+              m "EVENT_EVALUATOR : %s : DEST_BRANCH_NOT_DEFAULT_BRANCH" (S.Event.request_id event));
+          Abb.Future.return (Ok None)
+      | Terrat_work_manifest.Run_type.Plan | Terrat_work_manifest.Run_type.Apply ->
           Logs.info (fun m ->
-              m "EVENT_EVALUATOR : %s : NOOP : PR_CLOSED" (S.Event.request_id event));
-          Pgsql_pool.with_conn storage ~f:(fun db ->
-              Logs.info (fun m ->
-                  m "EVENT_EVALUATOR : %s : STORE_PULL_REQUEST" (S.Event.request_id event));
-              S.store_pull_request db event pull_request)
-          >>= fun () -> Abb.Future.return (Ok None))
-    else (
-      Logs.info (fun m ->
-          m "EVENT_EVALUATOR : %s : NOOP : REPO_CONFIG_DISABLED" (S.Event.request_id event));
-      Abb.Future.return (Ok None))
+              m
+                "EVENT_EVALUATOR : %s : DEST_BRANCH_NOT_DEFAULT_BRANCH_EXPLICIT"
+                (S.Event.request_id event));
+          Abb.Future.return (Ok (Some (Msg.Base_branch_not_default_branch pull_request)))
 
   let run storage event =
     let open Abb.Future.Infix_monad in
