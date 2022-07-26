@@ -1,21 +1,11 @@
 module Output = struct
   module Primary = struct
-    module Cost_estimation = struct
-      type t = {
-        currency : string;
-        diff_monthly_cost : float;
-        prev_monthly_cost : float;
-        total_monthly_cost : float;
-      }
-      [@@deriving yojson { strict = true; meta = true }, show]
-    end
-
     module Errors = struct
       type t = string list [@@deriving yojson { strict = false; meta = true }, show]
     end
 
     type t = {
-      cost_estimation : Cost_estimation.t option; [@default None]
+      cost_estimation : Terrat_api_components_cost_estimation.t option; [@default None]
       errors : Errors.t option; [@default None]
     }
     [@@deriving yojson { strict = false; meta = true }, show]

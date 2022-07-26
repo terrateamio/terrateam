@@ -150,10 +150,21 @@
                       "success": {
                         "type": "boolean"
                       },
-                      "errors": {
-                        "type": "array",
-                        "items": {
+                      "output": {
+                        "type": "object",
+                        "additionalProperties": {
                           "type": "string"
+                        },
+                        "properties": {
+                          "cost_estimation": {
+                            "$ref": "#/components/schemas/total-cost-estimation"
+                          },
+                          "errors": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
                         }
                       }
                     },
@@ -317,28 +328,7 @@
                 }
               },
               "cost_estimation": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "prev_monthly_cost":{
-                    "type": "number"
-                  },
-                  "total_monthly_cost":{
-                    "type": "number"
-                  },
-                  "diff_monthly_cost": {
-                    "type": "number"
-                  },
-                  "currency": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "prev_monthly_cost",
-                  "total_monthly_cost",
-                  "diff_monthly_cost",
-                  "currency"
-                ]
+                "$ref": "#/components/schemas/cost-estimation"
               }
             }
           }
@@ -355,6 +345,46 @@
         "items": {
           "$ref": "#/components/schemas/work-manifest-result"
         }
+      },
+      "cost-estimation": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "prev_monthly_cost":{
+            "type": "number"
+          },
+          "total_monthly_cost":{
+            "type": "number"
+          },
+          "diff_monthly_cost": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "prev_monthly_cost",
+          "total_monthly_cost",
+          "diff_monthly_cost",
+          "currency"
+        ]
+      },
+      "total-cost-estimation": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "total_monthly_cost": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "total_monthly_cost",
+          "currency"
+        ]
       }
     },
     "responses": {

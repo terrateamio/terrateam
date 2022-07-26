@@ -5,12 +5,28 @@ module Results = struct
 
   module Request_body = struct
     module Overall = struct
-      module Errors = struct
-        type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+      module Output = struct
+        module Primary = struct
+          module Errors = struct
+            type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+          end
+
+          type t = {
+            cost_estimation : Terrat_api_components.Total_cost_estimation.t option; [@default None]
+            errors : Errors.t option; [@default None]
+          }
+          [@@deriving make, yojson { strict = false; meta = true }, show]
+        end
+
+        module Additional = struct
+          type t = string [@@deriving yojson { strict = false; meta = true }, show]
+        end
+
+        include Json_schema.Additional_properties.Make (Primary) (Additional)
       end
 
       type t = {
-        errors : Errors.t option; [@default None]
+        output : Output.t option; [@default None]
         success : bool;
       }
       [@@deriving make, yojson { strict = true; meta = true }, show]
