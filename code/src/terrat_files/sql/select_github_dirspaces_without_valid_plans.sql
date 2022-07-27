@@ -1,4 +1,15 @@
 with
+unlocks as (
+    select
+        repository,
+        pull_number,
+        unlocked_at,
+        row_number() over (partition by repository, pull_number order by unlocked_at desc) as rn
+    from github_pull_request_unlocks
+),
+latest_unlocks as (
+    select * from unlocks where rn = 1
+),
 dirspaces as (
     select dir, workspace from unnest($dirs, $workspaces) as v(dir, workspace)
 ),
@@ -18,6 +29,8 @@ all_completed_runs as (
          end) as unified_run_type,
         gwm.completed_at as completed_at
     from github_pull_requests as gpr
+    left join latest_unlocks
+        on latest_unlocks.repository = gpr.repository and latest_unlocks.pull_number = gpr.pull_number
     inner join github_work_manifests as gwm
         on gpr.base_sha = gwm.base_sha and (gpr.sha = gwm.sha or (gpr.state = 'merged' and gpr.merged_sha = gwm.sha))
     inner join github_work_manifest_dirspaceflows as gwmds
@@ -25,6 +38,7 @@ all_completed_runs as (
     left join github_work_manifest_results as gwmr
         on gwmr.work_manifest = gwmds.work_manifest and gwmr.path = gwmds.path and gwmr.workspace = gwmds.workspace
     where gwm.completed_at is not null
+          and (latest_unlocks.unlocked_at is null or latest_unlocks.unlocked_at < gwm.created_at)
 ),
 completed_runs as (
     select
