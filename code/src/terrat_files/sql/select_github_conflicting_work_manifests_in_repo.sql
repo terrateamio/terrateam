@@ -31,7 +31,9 @@ inner join github_pull_requests as gpr
 left join latest_unlocks
     on latest_unlocks.repository = gpr.repository and latest_unlocks.pull_number = gpr.pull_number
 where gwm.repository = $repository
-      and (gwm.state = 'running' or (gwm.pull_number = $pull_number and gwm.state = 'queued'))
-      and gwm.run_type in ('apply', 'autoapply')
+      and gwm.state in ('queued', 'running')
+      and ((gwm.pull_number = $pull_number)
+           or ($run_type in ('autoapply', 'apply')))
       and (latest_unlocks.unlocked_at is null
            or latest_unlocks.unlocked_at < gwm.created_at)
+order by gwm.created_at

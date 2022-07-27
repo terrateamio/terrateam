@@ -5,8 +5,7 @@ module Msg : sig
   type 'pull_request t =
     | Missing_plans of Terrat_change.Dirspace.t list
     | Dirspaces_owned_by_other_pull_request of 'pull_request Dirspace_map.t
-    | Conflicting_apply_running of 'pull_request
-    | Conflicting_apply_queued of 'pull_request
+    | Conflicting_work_manifests of 'pull_request Terrat_work_manifest.Existing_lite.t list
     | Repo_config_parse_failure of string
     | Repo_config_failure of string
     | Pull_request_not_appliable of 'pull_request
@@ -69,10 +68,10 @@ module type S = sig
 
   val fetch_pull_request : Event.t -> (Pull_request.t, [> `Error ]) result Abb.Future.t
 
-  val query_existing_apply_in_repo :
+  val query_conflicting_work_manifests_in_repo :
     Pgsql_io.t ->
     Event.t ->
-    (Pull_request.t Terrat_work_manifest.Existing_lite.t option, [> `Error ]) result Abb.Future.t
+    (Pull_request.t Terrat_work_manifest.Existing_lite.t list, [> `Error ]) result Abb.Future.t
 
   val query_unapplied_dirspaces :
     Pgsql_io.t ->

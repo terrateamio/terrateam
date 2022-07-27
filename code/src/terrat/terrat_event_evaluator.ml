@@ -5,8 +5,7 @@ module Msg = struct
   type 'pull_request t =
     | Missing_plans of Terrat_change.Dirspace.t list
     | Dirspaces_owned_by_other_pull_request of 'pull_request Dirspace_map.t
-    | Conflicting_apply_running of 'pull_request
-    | Conflicting_apply_queued of 'pull_request
+    | Conflicting_work_manifests of 'pull_request Terrat_work_manifest.Existing_lite.t list
     | Repo_config_parse_failure of string
     | Repo_config_failure of string
     | Pull_request_not_appliable of 'pull_request
@@ -68,10 +67,10 @@ module type S = sig
 
   val fetch_pull_request : Event.t -> (Pull_request.t, [> `Error ]) result Abb.Future.t
 
-  val query_existing_apply_in_repo :
+  val query_conflicting_work_manifests_in_repo :
     Pgsql_io.t ->
     Event.t ->
-    (Pull_request.t Terrat_work_manifest.Existing_lite.t option, [> `Error ]) result Abb.Future.t
+    (Pull_request.t Terrat_work_manifest.Existing_lite.t list, [> `Error ]) result Abb.Future.t
 
   val query_unapplied_dirspaces :
     Pgsql_io.t ->
@@ -271,16 +270,12 @@ module Make (S : S) = struct
             S.store_pull_request db event pull_request
             >>= fun () ->
             Logs.info (fun m ->
-                m "EVENT_EVALUATOR : %s : QUERY_RUNNING_APPLY" (S.Event.request_id event));
-            S.query_existing_apply_in_repo db event
+                m
+                  "EVENT_EVALUATOR : %s : QUERY_CONFLICTING_WORK_MANIFESTS"
+                  (S.Event.request_id event));
+            S.query_conflicting_work_manifests_in_repo db event
             >>= function
-            | Some wm when Terrat_work_manifest.(wm.state = State.Running) ->
-                Abb.Future.return
-                  (Ok (Some (Msg.Conflicting_apply_running wm.Terrat_work_manifest.pull_request)))
-            | Some wm ->
-                Abb.Future.return
-                  (Ok (Some (Msg.Conflicting_apply_queued wm.Terrat_work_manifest.pull_request)))
-            | None -> (
+            | [] -> (
                 (* Collect any changes that have been applied outside of the current
                    state of the PR.  For example, we made a change to dir1 and dir2,
                    applied dir1, then we updated our PR to revert dir1, we would
@@ -344,7 +339,8 @@ module Make (S : S) = struct
                 | `Apply _ ->
                     Logs.info (fun m ->
                         m "EVENT_EVALUATOR : %s : PR_NOT_APPLIABLE" (S.Event.request_id event));
-                    Abb.Future.return (Ok (Some (Msg.Pull_request_not_appliable pull_request))))))
+                    Abb.Future.return (Ok (Some (Msg.Pull_request_not_appliable pull_request))))
+            | wms -> Abb.Future.return (Ok (Some (Msg.Conflicting_work_manifests wms)))))
 
   let is_valid_destination_branch event pull_request repo_config =
     let module Rc = Terrat_repo_config_version_1 in

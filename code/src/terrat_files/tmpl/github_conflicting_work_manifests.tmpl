@@ -1,0 +1,28 @@
+## Conflicting operations :heavy_multiplication_x:
+There are conflicting operations that are preventing this operation from being performed.  If there are other operations running, wait for them to complete and try again.  If you believe any operations are stuck for some reason, see the **Conflicting operations** section below for how to resolve them.
+
+<details>
+   <summary><h3>Conflicting operations</h3></summary>
+
+| Pull Request | Operation | State | Created At |
+| --- | --- | --- | --- |
+@#work_manifests-@
+| #@pull_number@ | @run_type@ | @state@ | @created_at@ UTC |
+@/work_manifests-@
+
+If any of these appear to be stuck, unlock it by commenting **in the pull request**:
+
+```
+terrateam unlock
+```
+
+**Be careful when unlocking.**  Make sure that these runs are actually stuck by verifying if there are any running GitHub Actions workflows.
+
+If this persists, verify the GitHub Action workflow matches the [documentation](https://docs.terrateam.io/setup/github-actions-workflow).
+
+For further support:
+
+- Join our [Slack community](https://slack.terrateam.io/) (Fastest)
+- Email us directly at support@@terrateam.io
+
+</details>
