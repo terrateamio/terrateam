@@ -150,6 +150,9 @@
                       "success": {
                         "type": "boolean"
                       },
+                      "outputs": {
+                        "$ref": "#/components/schemas/hook-outputs"
+                      },
                       "output": {
                         "type": "object",
                         "additionalProperties": {
@@ -322,6 +325,9 @@
           "success": {
             "type": "boolean"
           },
+          "outputs": {
+            "$ref": "#/components/schemas/workflow-outputs"
+          },
           "output": {
             "type": "object",
             "additionalProperties": {
@@ -398,6 +404,395 @@
           "total_monthly_cost",
           "currency"
         ]
+      },
+      "output-text": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "output_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "output-plan": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "plan": {
+            "type": "string"
+          },
+          "plan_text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "plan",
+          "plan_text"
+        ]
+      },
+      "output-cost-estimation": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "cost_estimation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "prev_monthly_cost": {
+                "type": "number"
+              },
+              "total_monthly_cost": {
+                "type": "number"
+              },
+              "diff_monthly_cost": {
+                "type": "number"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "dirspaces": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "workspace": {
+                      "type": "string"
+                    },
+                    "prev_monthly_cost": {
+                      "type": "number"
+                    },
+                    "total_monthly_cost": {
+                      "type": "number"
+                    },
+                    "diff_monthly_cost": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "workspace",
+                    "prev_monthly_cost",
+                    "total_monthly_cost",
+                    "diff_monthly_cost"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "prev_monthly_cost",
+              "total_monthly_cost",
+              "diff_monthly_cost",
+              "currency",
+              "dirspaces"
+            ]
+          }
+        },
+        "required": [
+          "cost_estimation"
+        ]
+      },
+      "workflow-output-run": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workflow_step": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "run"
+              },
+              "cmd": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            },
+            "required": [
+              "type",
+              "cmd"
+            ]
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "outputs": {
+            "$ref": "#/components/schemas/output-text"
+          }
+        },
+        "required": [
+          "workflow_step",
+          "success"
+        ]
+      },
+      "workflow-output-env": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workflow_step": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "env"
+              },
+              "name": {
+                "type": "string"
+              },
+              "cmd": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            },
+            "required": [
+              "type",
+              "name",
+              "cmd"
+            ]
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "outputs": {
+            "$ref": "#/components/schemas/output-text"
+          }
+        },
+        "required": [
+          "workflow_step",
+          "success",
+          "outputs"
+        ]
+      },
+      "workflow-output-init": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workflow_step": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "init"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "outputs": {
+            "$ref": "#/components/schemas/output-text"
+          }
+        },
+        "required": [
+          "workflow_step",
+          "success",
+          "outputs"
+        ]
+      },
+      "workflow-output-plan": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workflow_step": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "plan"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "outputs": {
+            "oneOf": [
+              {"$ref": "#/components/schemas/output-text"},
+              {"$ref": "#/components/schemas/output-plan"}
+            ]
+          }
+        },
+        "required": [
+          "workflow_step",
+          "success"
+        ]
+      },
+      "workflow-output-apply": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workflow_step": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "apply"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "outputs": {
+            "$ref": "#/components/schemas/output-text"
+          }
+        },
+        "required": [
+          "workflow_step",
+          "success",
+          "outputs"
+        ]
+      },
+      "workflow-output-checkout": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workflow_step": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "checkout"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "outputs": {
+            "$ref": "#/components/schemas/output-text"
+          }
+        },
+        "required": [
+          "workflow_step",
+          "success",
+          "outputs"
+        ]
+      },
+      "workflow-output-cost-estimation": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workflow_step": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "cost-estimation"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "outputs": {
+            "oneOf": [
+              {"$ref": "#/components/schemas/output-text"},
+              {"$ref": "#/components/schemas/output-cost-estimation"}
+            ]
+          }
+        },
+        "required": [
+          "workflow_step",
+          "success",
+          "outputs"
+        ]
+      },
+      "workflow-output-cost-estimation-setup": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workflow_step": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "cost-estimation-setup"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "outputs": {
+            "$ref": "#/components/schemas/output-text"
+          }
+        },
+        "required": [
+          "workflow_step",
+          "success"
+        ]
+      },
+      "workflow-outputs": {
+        "type": "array",
+        "items": {
+          "oneOf": [
+            {"$ref": "#/components/schemas/workflow-output-run"},
+            {"$ref": "#/components/schemas/workflow-output-init"},
+            {"$ref": "#/components/schemas/workflow-output-plan"},
+            {"$ref": "#/components/schemas/workflow-output-apply"}
+          ]
+        }
+      },
+      "hook-outputs": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "pre": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {"$ref": "#/components/schemas/workflow-output-run"},
+                {"$ref": "#/components/schemas/workflow-output-checkout"},
+                {"$ref": "#/components/schemas/workflow-output-cost-estimation-setup"},
+                {"$ref": "#/components/schemas/workflow-output-cost-estimation"}
+              ]
+            }
+          },
+          "post": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {"$ref": "#/components/schemas/workflow-output-run"}
+              ]
+            }
+          }
+        }
       }
     },
     "responses": {

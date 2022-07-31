@@ -550,7 +550,6 @@ module Initiate = struct
 
   let fetch_all_dirspaces ~python ~access_token ~owner ~repo hash =
     let open Abbs_future_combinators.Infix_result_monad in
-    Logs.info (fun m -> m "SHA = %s" hash);
     Terrat_github.fetch_repo_config ~python ~access_token ~owner ~repo hash
     >>= fun repo_config ->
     Terrat_github.get_tree ~access_token ~owner ~repo ~sha:hash ()
@@ -1050,7 +1049,7 @@ module Results = struct
                  ( "results",
                    list
                      (CCList.map
-                        (fun Wmr.{ path; workspace; success; output } ->
+                        (fun Wmr.{ path; workspace; success; output; _ } ->
                           Map.of_list
                             [
                               ("dir", string path);
