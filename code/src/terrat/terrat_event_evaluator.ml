@@ -151,8 +151,12 @@ module Make (S : S) = struct
           tag_query = S.Event.tag_query event;
         }
     in
-    Logs.info (fun m -> m "EVENT_EVALUATOR : %s : CREATE_WORK_MANIFEST" (S.Event.request_id event));
-    S.store_new_work_manifest db event work_manifest >>= fun _ -> Abb.Future.return (Ok ())
+    Abbs_time_it.run
+      (fun t ->
+        Logs.info (fun m ->
+            m "EVENT_EVALUATOR : %s : CREATE_WORK_MANIFEST : %f" (S.Event.request_id event) t))
+      (fun () -> S.store_new_work_manifest db event work_manifest)
+    >>= fun _ -> Abb.Future.return (Ok ())
 
   let process_plan db event tag_query_matches pull_request run_type =
     let matches =
@@ -183,9 +187,11 @@ module Make (S : S) = struct
 
   let process_apply db event tag_query_matches all_match_dirspaceflows pull_request run_type =
     let open Abbs_future_combinators.Infix_result_monad in
-    Logs.info (fun m ->
-        m "EVENT_EVALUATOR : %s : MISSING_APPLIED_DIRSPACES" (S.Event.request_id event));
-    S.query_unapplied_dirspaces db event pull_request
+    Abbs_time_it.run
+      (fun t ->
+        Logs.info (fun m ->
+            m "EVENT_EVALUATOR : %s : MISSING_APPLIED_DIRSPACES : %f" (S.Event.request_id event) t))
+      (fun () -> S.query_unapplied_dirspaces db event pull_request)
     >>= fun missing_dirspaces ->
     (* Filter only those missing *)
     let tag_query_matches =
@@ -224,28 +230,38 @@ module Make (S : S) = struct
             m "EVENT_EVALUATOR : %s : NOOP : APPLY_NO_MATCHING_DIRSPACES" (S.Event.request_id event));
         Abb.Future.return (Ok (Some Msg.Apply_no_matching_dirspaces))
     | _, _ -> (
-        Logs.info (fun m ->
-            m "EVENT_EVALUATOR : %s : QUERY_DIRSPACES_OWNED_BY_OTHER_PRS" (S.Event.request_id event));
-        S.query_dirspaces_owned_by_other_pull_requests
-          db
-          event
-          pull_request
-          (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows)
-        >>= function
-        | dirspaces when Dirspace_map.is_empty dirspaces -> (
-            (* None of the dirspaces are owned by another PR, we can proceed *)
+        Abbs_time_it.run
+          (fun t ->
             Logs.info (fun m ->
                 m
-                  "EVENT_EVALUATOR : %s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS"
-                  (S.Event.request_id event));
-            S.query_dirspaces_without_valid_plans
+                  "EVENT_EVALUATOR : %s : QUERY_DIRSPACES_OWNED_BY_OTHER_PRS : %f"
+                  (S.Event.request_id event)
+                  t))
+          (fun () ->
+            S.query_dirspaces_owned_by_other_pull_requests
               db
               event
               pull_request
-              (CCList.map
-                 CCFun.(
-                   Terrat_change_matcher.dirspaceflow %> Terrat_change.Dirspaceflow.to_dirspace)
-                 matches)
+              (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows))
+        >>= function
+        | dirspaces when Dirspace_map.is_empty dirspaces -> (
+            (* None of the dirspaces are owned by another PR, we can proceed *)
+            Abbs_time_it.run
+              (fun t ->
+                Logs.info (fun m ->
+                    m
+                      "EVENT_EVALUATOR : %s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS : %f"
+                      (S.Event.request_id event)
+                      t))
+              (fun () ->
+                S.query_dirspaces_without_valid_plans
+                  db
+                  event
+                  pull_request
+                  (CCList.map
+                     CCFun.(
+                       Terrat_change_matcher.dirspaceflow %> Terrat_change.Dirspaceflow.to_dirspace)
+                     matches))
             >>= function
             | [] -> (
                 (* All are ready to be applied *)
@@ -265,15 +281,20 @@ module Make (S : S) = struct
     let open Abbs_future_combinators.Infix_result_monad in
     Pgsql_pool.with_conn storage ~f:(fun db ->
         Pgsql_io.tx db ~f:(fun () ->
-            Logs.info (fun m ->
-                m "EVENT_EVALUATOR : %s : STORE_PULL_REQUEST" (S.Event.request_id event));
-            S.store_pull_request db event pull_request
+            Abbs_time_it.run
+              (fun t ->
+                Logs.info (fun m ->
+                    m "EVENT_EVALUATOR : %s : STORE_PULL_REQUEST : %f" (S.Event.request_id event) t))
+              (fun () -> S.store_pull_request db event pull_request)
             >>= fun () ->
-            Logs.info (fun m ->
-                m
-                  "EVENT_EVALUATOR : %s : QUERY_CONFLICTING_WORK_MANIFESTS"
-                  (S.Event.request_id event));
-            S.query_conflicting_work_manifests_in_repo db event
+            Abbs_time_it.run
+              (fun t ->
+                Logs.info (fun m ->
+                    m
+                      "EVENT_EVALUATOR : %s : QUERY_CONFLICTING_WORK_MANIFESTS : %f"
+                      (S.Event.request_id event)
+                      t))
+              (fun () -> S.query_conflicting_work_manifests_in_repo db event)
             >>= function
             | [] -> (
                 (* Collect any changes that have been applied outside of the current
@@ -281,9 +302,14 @@ module Make (S : S) = struct
                    applied dir1, then we updated our PR to revert dir1, we would
                    want to be able to plan and apply dir1 again even though it
                    doesn't look like dir1 changes. *)
-                Logs.info (fun m ->
-                    m "EVENT_EVALUATOR : %s : QUERY_OUT_OF_DIFF_APPLIES" (S.Event.request_id event));
-                S.query_pull_request_out_of_diff_applies db event pull_request
+                Abbs_time_it.run
+                  (fun t ->
+                    Logs.info (fun m ->
+                        m
+                          "EVENT_EVALUATOR : %s : QUERY_OUT_OF_DIFF_APPLIES : %f"
+                          (S.Event.request_id event)
+                          t))
+                  (fun () -> S.query_pull_request_out_of_diff_applies db event pull_request)
                 >>= fun out_of_change_applies ->
                 let tag_query_matches, all_match_dirspaceflows =
                   compute_matches
@@ -292,14 +318,19 @@ module Make (S : S) = struct
                     out_of_change_applies
                     (S.Pull_request.diff pull_request)
                 in
-                Logs.info (fun m ->
-                    m "EVENT_EVALUATOR : %s : LIST_EXISTING_DIRS" (S.Event.request_id event));
                 let dirs =
                   all_match_dirspaceflows
                   |> CCList.map (fun dsf -> Terrat_change.(dsf.Dirspaceflow.dirspace.Dirspace.dir))
                   |> Dir_set.of_list
                 in
-                S.list_existing_dirs event pull_request dirs
+                Abbs_time_it.run
+                  (fun t ->
+                    Logs.info (fun m ->
+                        m
+                          "EVENT_EVALUATOR : %s : LIST_EXISTING_DIRS : %f"
+                          (S.Event.request_id event)
+                          t))
+                  (fun () -> S.list_existing_dirs event pull_request dirs)
                 >>= fun existing_dirs ->
                 let missing_dirs = Dir_set.diff dirs existing_dirs in
                 Logs.info (fun m ->
@@ -322,9 +353,14 @@ module Make (S : S) = struct
                            Terrat_change.(dsf.Dirspaceflow.dirspace.Dirspace.dir)
                            existing_dirs)
                 in
-                Logs.info (fun m ->
-                    m "EVENT_EVALUATOR : %s : STORE_DIRSPACEFLOWS" (S.Event.request_id event));
-                S.store_dirspaceflows db event pull_request all_match_dirspaceflows
+                Abbs_time_it.run
+                  (fun t ->
+                    Logs.info (fun m ->
+                        m
+                          "EVENT_EVALUATOR : %s : STORE_DIRSPACEFLOWS : %f"
+                          (S.Event.request_id event)
+                          t))
+                  (fun () -> S.store_dirspaceflows db event pull_request all_match_dirspaceflows)
                 >>= fun () ->
                 match unified_run_type (S.Event.run_type event) with
                 | `Plan run_type -> process_plan db event tag_query_matches pull_request run_type
@@ -352,11 +388,17 @@ module Make (S : S) = struct
   let run' storage event =
     let module Run_type = Terrat_work_manifest.Run_type in
     let open Abbs_future_combinators.Infix_result_monad in
-    Logs.info (fun m -> m "EVENT_EVALUATOR : %s : FETCHING_PULL_REQUEST" (S.Event.request_id event));
-    S.fetch_pull_request event
+    Abbs_time_it.run
+      (fun t ->
+        Logs.info (fun m ->
+            m "EVENT_EVALUATOR: %s : FETCHING_PULL_REQUEST : %f" (S.Event.request_id event) t))
+      (fun () -> S.fetch_pull_request event)
     >>= fun pull_request ->
-    Logs.info (fun m -> m "EVENT_EVALUATOR : %s : FETCHING_REPO_CONFIG" (S.Event.request_id event));
-    S.fetch_repo_config event pull_request
+    Abbs_time_it.run
+      (fun t ->
+        Logs.info (fun m ->
+            m "EVENT_EVALUATOR: %s : FETCHING_REPO_CONFIG : %f" (S.Event.request_id event) t))
+      (fun () -> S.fetch_repo_config event pull_request)
     >>= fun repo_config ->
     if is_valid_destination_branch event pull_request repo_config then
       if repo_config.Terrat_repo_config.Version_1.enabled then (
@@ -373,9 +415,14 @@ module Make (S : S) = struct
             Logs.info (fun m ->
                 m "EVENT_EVALUATOR : %s : NOOP : PR_CLOSED" (S.Event.request_id event));
             Pgsql_pool.with_conn storage ~f:(fun db ->
-                Logs.info (fun m ->
-                    m "EVENT_EVALUATOR : %s : STORE_PULL_REQUEST" (S.Event.request_id event));
-                S.store_pull_request db event pull_request)
+                Abbs_time_it.run
+                  (fun t ->
+                    Logs.info (fun m ->
+                        m
+                          "EVENT_EVALUATOR : %s : STORE_PULL_REQUEST : %f"
+                          (S.Event.request_id event)
+                          t))
+                  (fun () -> S.store_pull_request db event pull_request))
             >>= fun () -> Abb.Future.return (Ok None))
       else (
         Logs.info (fun m ->
@@ -398,7 +445,12 @@ module Make (S : S) = struct
     let open Abb.Future.Infix_monad in
     run' storage event
     >>= function
-    | Ok (Some msg) -> S.publish_msg event msg
+    | Ok (Some msg) ->
+        Abbs_time_it.run
+          (fun t ->
+            Logs.info (fun m ->
+                m "EVENT_EVALUATOR : %s : PUBLISH_MSG : %f" (S.Event.request_id event) t))
+          (fun () -> S.publish_msg event msg)
     | Ok None -> Abb.Future.return ()
     | Error (`Repo_config_parse_err err) ->
         Logs.info (fun m ->

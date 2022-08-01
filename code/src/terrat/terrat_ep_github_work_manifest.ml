@@ -1092,7 +1092,9 @@ module Results = struct
       >>= fun _ -> complete_check token owner repo branch run_id run_type sha results
     in
     let open Abb.Future.Infix_monad in
-    run
+    Abbs_time_it.run
+      (fun t -> Logs.info (fun m -> m "WORK_MANIFEST : %s : PUBLISH_RESULTS : %f" request_id t))
+      (fun () -> run)
     >>= function
     | Ok () -> Abb.Future.return ()
     | Error (#Terrat_github.get_installation_access_token_err as err) ->
@@ -1336,34 +1338,49 @@ module Results = struct
     Pgsql_pool.with_conn storage ~f:(fun db ->
         let open Abbs_future_combinators.Infix_result_monad in
         Pgsql_io.tx db ~f:(fun () ->
-            Abbs_future_combinators.List_result.iter
-              ~f:(fun result ->
-                let module Wmr = Terrat_api_components.Work_manifest_result in
+            Abbs_time_it.run
+              (fun t ->
                 Logs.info (fun m ->
-                    m
-                      "WORK_MANIFEST : %s : RESULT_STORE : %s : %s : %s : %s"
-                      request_id
-                      id
+                    m "WORK_MANIFEST : %s : DIRSPACE_RESULT_STORE : %f" request_id t))
+              (fun () ->
+                Abbs_future_combinators.List_result.iter
+                  ~f:(fun result ->
+                    let module Wmr = Terrat_api_components.Work_manifest_result in
+                    Logs.info (fun m ->
+                        m
+                          "WORK_MANIFEST : %s : RESULT_STORE : %s : %s : %s : %s"
+                          request_id
+                          id
+                          result.Wmr.path
+                          result.Wmr.workspace
+                          (if result.Wmr.success then "SUCCESS" else "FAILURE"));
+                    Pgsql_io.Prepared_stmt.execute
+                      db
+                      Sql.insert_github_work_manifest_result
+                      work_manifest_id
                       result.Wmr.path
                       result.Wmr.workspace
-                      (if result.Wmr.success then "SUCCESS" else "FAILURE"));
-                Pgsql_io.Prepared_stmt.execute
+                      result.Wmr.success)
+                  results.Terrat_api_work_manifest.Results.Request_body.dirspaces)
+            >>= fun () ->
+            Abbs_time_it.run
+              (fun t ->
+                Logs.info (fun m ->
+                    m "WORK_MANIFEST : %s : COMPLETE_WORK_MANIFEST : %f" request_id t))
+              (fun () ->
+                Pgsql_io.Prepared_stmt.execute db Sql.complete_work_manifest work_manifest_id)
+            >>= fun () ->
+            Abbs_time_it.run
+              (fun t ->
+                Logs.info (fun m ->
+                    m "WORK_MANIFEST : %s : SELECT_GITHUB_PARAMETERS : %f" request_id t))
+              (fun () ->
+                Pgsql_io.Prepared_stmt.fetch
                   db
-                  Sql.insert_github_work_manifest_result
-                  work_manifest_id
-                  result.Wmr.path
-                  result.Wmr.workspace
-                  result.Wmr.success)
-              results.Terrat_api_work_manifest.Results.Request_body.dirspaces
-            >>= fun () ->
-            Pgsql_io.Prepared_stmt.execute db Sql.complete_work_manifest work_manifest_id
-            >>= fun () ->
-            Pgsql_io.Prepared_stmt.fetch
-              db
-              (Sql.select_github_parameters_from_work_manifest ())
-              ~f:(fun installation_id owner name branch sha _base_sha pull_number run_type run_id ->
-                (installation_id, owner, name, branch, sha, pull_number, run_type, run_id))
-              work_manifest_id
+                  (Sql.select_github_parameters_from_work_manifest ())
+                  ~f:(fun installation_id owner name branch sha _base_sha pull_number run_type run_id ->
+                    (installation_id, owner, name, branch, sha, pull_number, run_type, run_id))
+                  work_manifest_id)
             >>= function
             | values :: _ -> Abb.Future.return (Ok values)
             | [] -> assert false))
