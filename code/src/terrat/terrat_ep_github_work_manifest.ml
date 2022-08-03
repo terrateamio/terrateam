@@ -916,6 +916,7 @@ module Results = struct
       |> CCOption.sequence_l
       |> CCOption.map (fun costs ->
              let module Ce = Terrat_api_components_cost_estimation in
+             let module Tce = Terrat_api_components.Total_cost_estimation in
              let diff_monthly_cost =
                CCListLabels.fold_left
                  ~init:0.0
@@ -928,9 +929,20 @@ module Results = struct
                results.R.overall.R.Overall.output
                >>= fun output ->
                R.Overall.Output.(output.primary.Primary.cost_estimation)
-               >>= fun cost_estimation ->
-               Terrat_api_components.Total_cost_estimation.(
-                 Some (cost_estimation.total_monthly_cost, cost_estimation.currency))
+               >>= function
+               | Tce.
+                   {
+                     prev_monthly_cost = Some prev_monthly_cost;
+                     diff_monthly_cost = Some diff_monthly_cost;
+                     total_monthly_cost;
+                     currency;
+                   } -> Some (prev_monthly_cost, diff_monthly_cost, total_monthly_cost, currency)
+               | Tce.{ total_monthly_cost; currency; _ } ->
+                   Some
+                     ( total_monthly_cost -. diff_monthly_cost,
+                       diff_monthly_cost,
+                       total_monthly_cost,
+                       currency )
              in
              Snabela.Kv.(
                Map.of_list
@@ -944,9 +956,9 @@ module Results = struct
                             ("diff_monthly_cost", string "???");
                             ("currency", string "???");
                           ]
-                        (fun (total_monthly_cost, currency) ->
+                        (fun (prev_monthly_cost, diff_monthly_cost, total_monthly_cost, currency) ->
                           [
-                            ("prev_monthly_cost", float (total_monthly_cost -. diff_monthly_cost));
+                            ("prev_monthly_cost", float prev_monthly_cost);
                             ("total_monthly_cost", float total_monthly_cost);
                             ("diff_monthly_cost", float diff_monthly_cost);
                             ("currency", string currency);
