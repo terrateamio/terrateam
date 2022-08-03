@@ -7,6 +7,7 @@ select
      else gpr.branch
      end),
     gwm.sha,
+    gwm.base_sha,
     gpr.pull_number,
     gwm.run_type,
     gwm.run_id

@@ -227,13 +227,20 @@
             "items": {
               "$ref": "#/components/schemas/work-manifest-dir"
             }
+          },
+          "base_dirspaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/work-manifest-dir"
+            }
           }
         },
         "required": [
           "type",
           "base_ref",
           "changed_dirspaces",
-          "dirspaces"
+          "dirspaces",
+          "base_dirspaces"
         ]
       },
       "work-manifest-apply": {
@@ -374,7 +381,13 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "prev_monthly_cost": {
+            "type": "number"
+          },
           "total_monthly_cost": {
+            "type": "number"
+          },
+          "diff_monthly_cost": {
             "type": "number"
           },
           "currency": {

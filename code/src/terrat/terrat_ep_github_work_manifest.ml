@@ -167,6 +167,7 @@ module Sql = struct
       // (* name *) Ret.text
       // (* branch *) Ret.text
       // (* sha *) Ret.text
+      // (* base_sha *) Ret.text
       // (* pull_number *) Ret.bigint
       // (* run_type *) Ret.ud run_type
       // (* run_id *) Ret.(option text)
@@ -235,6 +236,7 @@ module T = struct
     name : string;
     pull_number : int;
     hash : string;
+    base_hash : string;
     request_id : string;
     run_id : string;
     work_manifest : Uuidm.t;
@@ -543,6 +545,29 @@ module Initiate = struct
       Tmpl.work_manifest_already_run
     >>= fun _ -> Abb.Future.return (Ok ())
 
+  let fetch_all_dirspaces ~python ~access_token ~owner ~repo hash =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Logs.info (fun m -> m "SHA = %s" hash);
+    Terrat_github.fetch_repo_config ~python ~access_token ~owner ~repo hash
+    >>= fun repo_config ->
+    Terrat_github.get_tree ~access_token ~owner ~repo ~sha:hash ()
+    >>= fun files ->
+    Abb.Future.return
+      (Ok
+         (CCList.map
+            (fun Terrat_change_matcher.
+                   {
+                     dirspaceflow =
+                       Terrat_change.
+                         { Dirspaceflow.dirspace = { Dirspace.dir; workspace }; workflow_idx };
+                     _;
+                   } ->
+              Terrat_api_components.Work_manifest_dir.
+                { path = dir; workspace; workflow = workflow_idx; rank = 0 })
+            (Terrat_change_matcher.match_diff
+               repo_config
+               (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) files))))
+
   let handle_post request_id config storage t =
     let open Abbs_future_combinators.Infix_result_monad in
     Evaluator.run storage t
@@ -560,35 +585,20 @@ module Initiate = struct
         match work_manifest.Wm.run_type with
         | Wm.Run_type.Plan | Wm.Run_type.Autoplan ->
             let open Abbs_future_combinators.Infix_result_monad in
-            Terrat_github.fetch_repo_config
+            fetch_all_dirspaces
+              ~python:(Terrat_config.python_exec config)
+              ~access_token:t.T.access_token
+              ~owner:t.T.owner
+              ~repo:t.T.name
+              t.T.base_hash
+            >>= fun base_dirspaces ->
+            fetch_all_dirspaces
               ~python:(Terrat_config.python_exec config)
               ~access_token:t.T.access_token
               ~owner:t.T.owner
               ~repo:t.T.name
               t.T.hash
-            >>= fun repo_config ->
-            Terrat_github.get_tree
-              ~access_token:t.T.access_token
-              ~owner:t.T.owner
-              ~repo:t.T.name
-              ~sha:t.T.hash
-              ()
-            >>= fun files ->
-            let dirspaces =
-              CCList.map
-                (fun Terrat_change_matcher.
-                       {
-                         dirspaceflow =
-                           Terrat_change.
-                             { Dirspaceflow.dirspace = { Dirspace.dir; workspace }; workflow_idx };
-                         _;
-                       } ->
-                  Terrat_api_components.Work_manifest_dir.
-                    { path = dir; workspace; workflow = workflow_idx; rank = 0 })
-                (Terrat_change_matcher.match_diff
-                   repo_config
-                   (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) files))
-            in
+            >>= fun dirspaces ->
             let ret =
               Terrat_api_components.(
                 Work_manifest.Work_manifest_plan
@@ -598,6 +608,7 @@ module Initiate = struct
                       base_ref = work_manifest.Wm.pull_request.Pull_request.base_branch;
                       changed_dirspaces;
                       dirspaces;
+                      base_dirspaces;
                     })
             in
             Abb.Future.return (Ok ret)
@@ -621,11 +632,11 @@ module Initiate = struct
         Pgsql_io.Prepared_stmt.fetch
           db
           (Sql.select_github_parameters_from_work_manifest ())
-          ~f:(fun installation_id owner name branch _sha pull_number _run_type _run_id ->
-            (installation_id, owner, name, branch, pull_number))
+          ~f:(fun installation_id owner name branch _sha base_sha pull_number _run_type _run_id ->
+            (installation_id, owner, name, branch, base_sha, pull_number))
           work_manifest_id)
     >>= function
-    | Ok ((installation_id, owner, name, branch, pull_number) :: _) ->
+    | Ok ((installation_id, owner, name, branch, base_sha, pull_number) :: _) ->
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_github.get_installation_access_token config (CCInt64.to_int installation_id)
         >>= fun access_token ->
@@ -639,6 +650,7 @@ module Initiate = struct
                  name;
                  pull_number = CCInt64.to_int pull_number;
                  hash = sha;
+                 base_hash = base_sha;
                  request_id;
                  run_id;
                  work_manifest = work_manifest_id;
@@ -1337,7 +1349,7 @@ module Results = struct
             Pgsql_io.Prepared_stmt.fetch
               db
               (Sql.select_github_parameters_from_work_manifest ())
-              ~f:(fun installation_id owner name branch sha pull_number run_type run_id ->
+              ~f:(fun installation_id owner name branch sha _base_sha pull_number run_type run_id ->
                 (installation_id, owner, name, branch, sha, pull_number, run_type, run_id))
               work_manifest_id
             >>= function

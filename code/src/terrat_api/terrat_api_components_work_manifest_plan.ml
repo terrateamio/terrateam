@@ -1,3 +1,8 @@
+module Base_dirspaces = struct
+  type t = Terrat_api_components_work_manifest_dir.t list
+  [@@deriving yojson { strict = false; meta = true }, show]
+end
+
 module Changed_dirspaces = struct
   type t = Terrat_api_components_work_manifest_dir.t list
   [@@deriving yojson { strict = false; meta = true }, show]
@@ -18,6 +23,7 @@ module Type = struct
 end
 
 type t = {
+  base_dirspaces : Base_dirspaces.t;
   base_ref : string;
   changed_dirspaces : Changed_dirspaces.t;
   dirspaces : Dirspaces.t;
