@@ -154,16 +154,16 @@ let match_diff ?(tag_query = Terrat_tag_set.of_list []) repo_config diff =
            CCOption.flat_map
              (fun when_modified ->
                match when_modified.When_modified_null.file_patterns with
-               | Some file_patterns ->
-                   let fname_matcher = matcher_of_file_pattern file_patterns in
-                   if CCList.exists (Path_glob.Glob.eval fname_matcher) diff_filenames then Some d
-                   else None
-               | None ->
+               | Some [] | None ->
                    let diff_filenames_in_dir =
                      CCList.filter CCFun.(Filename.dirname %> CCString.equal d) diff_filenames
                    in
                    if CCList.exists (Path_glob.Glob.eval free_fname_matcher) diff_filenames_in_dir
                    then Some d
+                   else None
+               | Some file_patterns ->
+                   let fname_matcher = matcher_of_file_pattern file_patterns in
+                   if CCList.exists (Path_glob.Glob.eval fname_matcher) diff_filenames then Some d
                    else None)
              dir_config.Dir.when_modified)
   in
