@@ -120,9 +120,17 @@ let match_diff ?(tag_query = Terrat_tag_set.of_list []) repo_config diff =
   let module Dir = Terrat_repo_config.Dir in
   let module When_modified = Terrat_repo_config.When_modified in
   let module When_modified_null = Terrat_repo_config.When_modified_nullable in
-  let matcher_of_file_pattern file_pattern =
-    Path_glob.Glob.parse
-      (CCString.concat " or " (CCList.map (fun pat -> "<" ^ pat ^ ">") file_pattern))
+  (* Create a matcher from a list of file patterns.  We want to always return
+     false if it's an empty list but if not we make a globber then return a
+     function that takes a file name and globs it *)
+  let matcher_of_file_pattern = function
+    | [] -> CCFun.const false
+    | file_patterns ->
+        let globber =
+          Path_glob.Glob.parse
+            (CCString.concat " or " (CCList.map (fun pat -> "<" ^ pat ^ ">") file_patterns))
+        in
+        fun fname -> Path_glob.Glob.eval globber fname
   in
   (* A filename matcher using the global [when_modified.file_patterns] value.
      Called "free" because this will be used to match files not associated with
@@ -154,17 +162,14 @@ let match_diff ?(tag_query = Terrat_tag_set.of_list []) repo_config diff =
            CCOption.flat_map
              (fun when_modified ->
                match when_modified.When_modified_null.file_patterns with
-               | Some [] | None ->
+               | None ->
                    let diff_filenames_in_dir =
                      CCList.filter CCFun.(Filename.dirname %> CCString.equal d) diff_filenames
                    in
-                   if CCList.exists (Path_glob.Glob.eval free_fname_matcher) diff_filenames_in_dir
-                   then Some d
-                   else None
+                   if CCList.exists free_fname_matcher diff_filenames_in_dir then Some d else None
                | Some file_patterns ->
                    let fname_matcher = matcher_of_file_pattern file_patterns in
-                   if CCList.exists (Path_glob.Glob.eval fname_matcher) diff_filenames then Some d
-                   else None)
+                   if CCList.exists fname_matcher diff_filenames then Some d else None)
              dir_config.Dir.when_modified)
   in
   let matches_when_changed fname =
@@ -175,8 +180,8 @@ let match_diff ?(tag_query = Terrat_tag_set.of_list []) repo_config diff =
           when_modified_of_when_modified_nullable default_when_modified dir_config.Dir.when_modified
         in
         let fname_matcher = matcher_of_file_pattern when_modified.When_modified.file_patterns in
-        Path_glob.Glob.eval fname_matcher fname
-    | None -> Path_glob.Glob.eval free_fname_matcher fname
+        fname_matcher fname
+    | None -> free_fname_matcher fname
   in
   (* Iterate the diff and collect those files that match a file pattern. *)
   let dirspaces =

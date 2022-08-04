@@ -49,6 +49,9 @@ let dirs_config =
                      ] );
                  ("s3", `Assoc [ ("tags", `List [ `String "s3" ]) ]);
                  ("lambda", `Assoc [ ("when_modified", `Assoc [ ("autoplan", `Bool true) ]) ]);
+                 ("module", `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ]);
+                 ( "null_file_patterns",
+                   `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `Null) ]) ] );
                ] );
          ]))
 
@@ -422,6 +425,30 @@ let test_dir_config_lambda_json =
           | _ -> assert false)
         changes)
 
+let test_dir_config_module =
+  Oth.test ~name:"Test Dir Config module" (fun _ ->
+      let diff = Terrat_change.Diff.[ Add { filename = "module/foo.tf" } ] in
+      let changes = Terrat_change_matcher.match_diff dirs_config diff in
+      assert (CCList.length changes = 0))
+
+let test_dir_config_null_file_patterns =
+  Oth.test ~name:"Test Dir Config null_file_patterns" (fun _ ->
+      let diff = Terrat_change.Diff.[ Add { filename = "null_file_patterns/foo.tf" } ] in
+      let changes = Terrat_change_matcher.match_diff dirs_config diff in
+      assert (CCList.length changes = 1);
+      CCList.iter
+        (fun c ->
+          let module Tcm = Terrat_change_matcher in
+          let module Trcwm = Terrat_repo_config.When_modified in
+          let module Tcds = Terrat_change.Dirspaceflow in
+          let module Ds = Terrat_change.Dirspace in
+          match c.Tcm.dirspaceflow.Tcds.dirspace.Ds.dir with
+          | "null_file_patterns" ->
+              assert (not c.Tcm.when_modified.Trcwm.autoplan);
+              assert c.Tcm.when_modified.Trcwm.autoapply
+          | _ -> assert false)
+        changes)
+
 let test_bad_dir_config_iam =
   Oth.test ~name:"Test Bad Dir Config iam" (fun _ ->
       let diff = Terrat_change.Diff.[ Add { filename = "iam/foo.tf" } ] in
@@ -466,6 +493,8 @@ let test =
       test_dir_config_ebl_and_modules;
       test_dir_config_s3;
       test_dir_config_lambda_json;
+      test_dir_config_module;
+      test_dir_config_null_file_patterns;
       test_bad_dir_config_iam;
       test_bad_dir_config_ec2;
       test_bad_dir_config_ec2_root_dir_change;
