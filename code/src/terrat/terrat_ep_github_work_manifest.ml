@@ -395,14 +395,17 @@ module Evaluator = Terrat_work_manifest_evaluator.Make (struct
   let initiate_work_manifest db t =
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
-      Logs.info (fun m ->
-          m
-            "GITHUB_WORK_MANIFEST : %s : INITIATE : %s : %s : %s"
-            t.T.request_id
-            (Uuidm.to_string t.T.work_manifest)
-            t.T.run_id
-            t.T.hash);
-      initiate_work_manifest' db t
+      Abbs_time_it.run
+        (fun time ->
+          Logs.info (fun m ->
+              m
+                "GITHUB_WORK_MANIFEST : %s : INITIATE : %s : %s : %s : %f"
+                t.T.request_id
+                (Uuidm.to_string t.T.work_manifest)
+                t.T.run_id
+                t.T.hash
+                time))
+        (fun () -> initiate_work_manifest' db t)
       >>= function
       | Some
           ( base_hash,
@@ -585,19 +588,28 @@ module Initiate = struct
         match work_manifest.Wm.run_type with
         | Wm.Run_type.Plan | Wm.Run_type.Autoplan ->
             let open Abbs_future_combinators.Infix_result_monad in
-            fetch_all_dirspaces
-              ~python:(Terrat_config.python_exec config)
-              ~access_token:t.T.access_token
-              ~owner:t.T.owner
-              ~repo:t.T.name
-              t.T.base_hash
+            Abbs_time_it.run
+              (fun time ->
+                Logs.info (fun m ->
+                    m "WORK_MANIFEST : %s : FETCH_BASE_DIRSPACES : %f" request_id time))
+              (fun () ->
+                fetch_all_dirspaces
+                  ~python:(Terrat_config.python_exec config)
+                  ~access_token:t.T.access_token
+                  ~owner:t.T.owner
+                  ~repo:t.T.name
+                  t.T.base_hash)
             >>= fun base_dirspaces ->
-            fetch_all_dirspaces
-              ~python:(Terrat_config.python_exec config)
-              ~access_token:t.T.access_token
-              ~owner:t.T.owner
-              ~repo:t.T.name
-              t.T.hash
+            Abbs_time_it.run
+              (fun time ->
+                Logs.info (fun m -> m "WORK_MANIFEST : %s : FETCH_DIRSPACES : %f" request_id time))
+              (fun () ->
+                fetch_all_dirspaces
+                  ~python:(Terrat_config.python_exec config)
+                  ~access_token:t.T.access_token
+                  ~owner:t.T.owner
+                  ~repo:t.T.name
+                  t.T.hash)
             >>= fun dirspaces ->
             let ret =
               Terrat_api_components.(
@@ -1378,7 +1390,8 @@ module Results = struct
                 Pgsql_io.Prepared_stmt.fetch
                   db
                   (Sql.select_github_parameters_from_work_manifest ())
-                  ~f:(fun installation_id owner name branch sha _base_sha pull_number run_type run_id ->
+                  ~f:
+                    (fun installation_id owner name branch sha _base_sha pull_number run_type run_id ->
                     (installation_id, owner, name, branch, sha, pull_number, run_type, run_id))
                   work_manifest_id)
             >>= function
