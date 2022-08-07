@@ -221,6 +221,7 @@ module Tmpl = struct
   let plan_no_matching_dirspaces = read "plan_no_matching_dirspaces.tmpl"
   let base_branch_not_default_branch = read "base_branch_not_default_branch.tmpl"
   let auto_apply_running = read "auto_apply_running.tmpl"
+  let bad_glob = read "bad_glob.tmpl"
 
   let unlock_success =
     CCOption.get_exn_or "unlock_success.tmpl" (Terrat_files_tmpl.read "unlock_success.tmpl")
@@ -703,6 +704,26 @@ module Evaluator = Terrat_event_evaluator.Make (struct
             m "GITHUB_EVENT : %s : ERROR : %s" (Event.request_id event) (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
 
+  let fetch_tree event pull_request =
+    let open Abb.Future.Infix_monad in
+    let owner = event.Event.repository.Gw.Repository.owner.Gw.User.login in
+    let repo = event.Event.repository.Gw.Repository.name in
+    Terrat_github.get_tree
+      ~access_token:event.Event.access_token
+      ~owner
+      ~repo
+      ~sha:pull_request.Terrat_pull_request.hash
+      ()
+    >>= function
+    | Ok files -> Abb.Future.return (Ok files)
+    | Error (#Terrat_github.get_tree_err as err) ->
+        Logs.err (fun m ->
+            m
+              "GITHUB_EVENT : %s : ERROR : %s"
+              (Event.request_id event)
+              (Terrat_github.show_get_tree_err err));
+        Abb.Future.return (Error `Error)
+
   let query_conflicting_work_manifests_in_repo db event =
     let run =
       Pgsql_io.Prepared_stmt.fetch
@@ -1031,6 +1052,9 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     | Terrat_event_evaluator.Msg.Autoapply_running ->
         let kv = Snabela.Kv.(Map.of_list []) in
         apply_template_and_publish "AUTO_APPLY_RUNNING" Tmpl.auto_apply_running kv event
+    | Terrat_event_evaluator.Msg.Bad_glob s ->
+        let kv = Snabela.Kv.(Map.of_list [ ("glob", string s) ]) in
+        apply_template_and_publish "BAD_GLOB" Tmpl.bad_glob kv event
 end)
 
 let run_event_evaluator storage event =

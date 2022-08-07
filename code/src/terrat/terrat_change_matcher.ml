@@ -1,3 +1,5 @@
+exception Bad_glob of string
+
 type t = {
   dirspaceflow : Terrat_change.Dirspaceflow.t;
   when_modified : Terrat_repo_config.When_modified.t;
@@ -5,6 +7,71 @@ type t = {
 [@@deriving show]
 
 module Change_map = CCMap.Make (Terrat_change.Dirspace)
+
+let parse_glob globs =
+  try Path_glob.Glob.parse (CCString.concat " or " (CCList.map (fun pat -> "<" ^ pat ^ ">") globs))
+  with Path_glob.Ast.Parse_error _ ->
+    (* Failed to parse, so now let's find the specific glob that failed *)
+    CCList.iter
+      (fun s ->
+        try ignore (Path_glob.Glob.parse ("<" ^ s ^ ">"))
+        with Path_glob.Ast.Parse_error _ -> raise (Bad_glob s))
+      globs;
+    (* Made it this far?  Something is wrong *)
+    raise (Bad_glob "Unknown")
+
+let synthesize_dirs filelist dirs =
+  let module Dir = Terrat_repo_config.Dir in
+  let module When_modified_null = Terrat_repo_config.When_modified_nullable in
+  let glob_dirs =
+    dirs
+    |> Json_schema.String_map.to_list
+    (* We sort the dirs section by longest-first (in terms of number of
+       characters).  The heuristic is that a longer directory specification is a
+       more specific and thus, to be preferred in the search. *)
+    |> CCList.sort (fun (d1, _) (d2, _) -> CCInt.compare (CCString.length d2) (CCString.length d1))
+    (* Any dir with '*' is considered a glob, for example foo/bar/* *)
+    |> CCList.filter (fun (d, _) -> CCString.contains d '*')
+    |> CCList.map (fun (d, config) -> (parse_glob [ d ], config))
+  in
+  let dirs = Json_schema.String_map.filter (fun d _ -> not (CCString.contains d '*')) dirs in
+  let synthetic_dirs =
+    filelist
+    |> CCList.filter_map (fun fname ->
+           let open CCOption.Infix in
+           CCList.find_opt (fun (d, _) -> Path_glob.Glob.eval d fname) glob_dirs
+           >>= fun (_, config) ->
+           let dir = Filename.dirname fname in
+           if Json_schema.String_map.mem dir dirs then None
+           else
+             let config =
+               match config.Dir.when_modified with
+               | None -> config
+               | Some When_modified_null.{ file_patterns = None; _ } -> config
+               | Some
+                   (When_modified_null.{ file_patterns = Some file_patterns; _ } as when_modified)
+                 ->
+                   (* Replace the '${DIR}' string with the name of the directory
+                      name we've synthesized. *)
+                   {
+                     config with
+                     Dir.when_modified =
+                       Some
+                         {
+                           when_modified with
+                           When_modified_null.file_patterns =
+                             Some
+                               (CCList.map
+                                  (fun pat -> CCString.replace ~sub:"${DIR}" ~by:dir pat)
+                                  file_patterns);
+                         };
+                   }
+             in
+             Some (Filename.dirname fname, config))
+    |> Json_schema.String_map.of_list
+  in
+  (* Combine the specific dirs and the synthetic ones *)
+  Json_schema.String_map.union (fun _ v _ -> Some v) dirs synthetic_dirs
 
 let find_workflow_idx tag_set workflows =
   CCOption.map
@@ -30,7 +97,7 @@ let when_modified_of_when_modified_nullable default when_modified =
       }
   | None -> default
 
-let map_dirspace ?(tag_query = Terrat_tag_set.of_list []) repo_config dirspaces =
+let map_dirspace ?(tag_query = Terrat_tag_set.of_list []) ~filelist repo_config dirspaces =
   let module Dirspace = Terrat_change.Dirspace in
   let module C = Terrat_repo_config in
   let dirs, default_when_modified, workflows =
@@ -43,6 +110,7 @@ let map_dirspace ?(tag_query = Terrat_tag_set.of_list []) repo_config dirspaces 
           CCOption.get_or ~default:(C.When_modified.make ()) when_modified,
           CCOption.get_or ~default:[] workflows )
   in
+  let dirs = synthesize_dirs filelist dirs in
   let module Dir = Terrat_repo_config.Dir in
   let module When_modified = Terrat_repo_config.When_modified in
   dirspaces
@@ -104,9 +172,12 @@ let map_dirspace ?(tag_query = Terrat_tag_set.of_list []) repo_config dirspaces 
 
    2. We determine if the change causes another directory to be included
    (file_pattern can reference any path). *)
-let match_diff ?(tag_query = Terrat_tag_set.of_list []) repo_config diff =
+let match_diff' ?(tag_query = Terrat_tag_set.of_list []) ~filelist repo_config diff =
   let module Diff = Terrat_change.Diff in
   let module C = Terrat_repo_config in
+  let module Dir = Terrat_repo_config.Dir in
+  let module When_modified = Terrat_repo_config.When_modified in
+  let module When_modified_null = Terrat_repo_config.When_modified_nullable in
   let dirs, default_when_modified, workflows =
     match repo_config with
     | { C.Version_1.dirs; when_modified; workflows; _ } ->
@@ -117,19 +188,14 @@ let match_diff ?(tag_query = Terrat_tag_set.of_list []) repo_config diff =
           CCOption.get_or ~default:(C.When_modified.make ()) when_modified,
           CCOption.get_or ~default:[] workflows )
   in
-  let module Dir = Terrat_repo_config.Dir in
-  let module When_modified = Terrat_repo_config.When_modified in
-  let module When_modified_null = Terrat_repo_config.When_modified_nullable in
+  let dirs = synthesize_dirs filelist dirs in
   (* Create a matcher from a list of file patterns.  We want to always return
      false if it's an empty list but if not we make a globber then return a
      function that takes a file name and globs it *)
   let matcher_of_file_pattern = function
     | [] -> CCFun.const false
     | file_patterns ->
-        let globber =
-          Path_glob.Glob.parse
-            (CCString.concat " or " (CCList.map (fun pat -> "<" ^ pat ^ ">") file_patterns))
-        in
+        let globber = parse_glob file_patterns in
         fun fname -> Path_glob.Glob.eval globber fname
   in
   (* A filename matcher using the global [when_modified.file_patterns] value.
@@ -214,7 +280,11 @@ let match_diff ?(tag_query = Terrat_tag_set.of_list []) repo_config diff =
              (fun workspace -> Terrat_change.Dirspace.{ dir; workspace })
              (Iter.to_list (Json_schema.String_map.keys workspaces)))
   in
-  map_dirspace ~tag_query repo_config dirspaces
+  map_dirspace ~tag_query ~filelist repo_config dirspaces
+
+let match_diff ?tag_query ~filelist repo_config diff =
+  try Ok (match_diff' ?tag_query ~filelist repo_config diff)
+  with Bad_glob s -> Error (`Bad_glob s)
 
 let merge_dedup l r =
   let of_list v =

@@ -14,6 +14,7 @@ module Msg : sig
     | Plan_no_matching_dirspaces
     | Base_branch_not_default_branch of 'pull_request
     | Autoapply_running
+    | Bad_glob of string
 end
 
 module type S = sig
@@ -67,6 +68,7 @@ module type S = sig
     Abb.Future.t
 
   val fetch_pull_request : Event.t -> (Pull_request.t, [> `Error ]) result Abb.Future.t
+  val fetch_tree : Event.t -> Pull_request.t -> (string list, [> `Error ]) result Abb.Future.t
 
   val query_conflicting_work_manifests_in_repo :
     Pgsql_io.t ->

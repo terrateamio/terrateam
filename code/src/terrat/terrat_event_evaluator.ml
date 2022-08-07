@@ -14,6 +14,7 @@ module Msg = struct
     | Plan_no_matching_dirspaces
     | Base_branch_not_default_branch of 'pull_request
     | Autoapply_running
+    | Bad_glob of string
 end
 
 module type S = sig
@@ -66,6 +67,7 @@ module type S = sig
     Abb.Future.t
 
   val fetch_pull_request : Event.t -> (Pull_request.t, [> `Error ]) result Abb.Future.t
+  val fetch_tree : Event.t -> Pull_request.t -> (string list, [> `Error ]) result Abb.Future.t
 
   val query_conflicting_work_manifests_in_repo :
     Pgsql_io.t ->
@@ -110,20 +112,23 @@ let unified_run_type =
   | Apply -> `Apply `Manual
 
 module Make (S : S) = struct
-  let compute_matches repo_config tag_query out_of_change_applies diff =
+  let compute_matches ~repo_config ~tag_query ~out_of_change_applies ~diff ~repo_tree () =
+    let open CCResult.Infix in
     let all_matching_dirspaces =
-      Terrat_change_matcher.map_dirspace repo_config out_of_change_applies
+      Terrat_change_matcher.map_dirspace ~filelist:repo_tree repo_config out_of_change_applies
     in
-    let all_matching_diff = Terrat_change_matcher.match_diff repo_config diff in
+    Terrat_change_matcher.match_diff ~filelist:repo_tree repo_config diff
+    >>= fun all_matching_diff ->
     let all_matches = Terrat_change_matcher.merge_dedup all_matching_dirspaces all_matching_diff in
     let all_match_dirspaceflows = CCList.map Terrat_change_matcher.dirspaceflow all_matches in
     let tag_query_matches =
       Terrat_change_matcher.map_dirspace
         ~tag_query
+        ~filelist:repo_tree
         repo_config
         (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows)
     in
-    (tag_query_matches, all_match_dirspaceflows)
+    Ok (tag_query_matches, all_match_dirspaceflows)
 
   let can_apply_checkout_strategy repo_config pull_request =
     match
@@ -277,7 +282,7 @@ module Make (S : S) = struct
             (* Some are owned by another PR, abort *)
             Abb.Future.return (Ok (Some (Msg.Dirspaces_owned_by_other_pull_request dirspaces))))
 
-  let exec_event storage event pull_request repo_config =
+  let exec_event storage event pull_request repo_config repo_tree =
     let open Abbs_future_combinators.Infix_result_monad in
     Pgsql_pool.with_conn storage ~f:(fun db ->
         Pgsql_io.tx db ~f:(fun () ->
@@ -311,13 +316,15 @@ module Make (S : S) = struct
                           t))
                   (fun () -> S.query_pull_request_out_of_diff_applies db event pull_request)
                 >>= fun out_of_change_applies ->
-                let tag_query_matches, all_match_dirspaceflows =
-                  compute_matches
-                    repo_config
-                    (S.Event.tag_query event)
-                    out_of_change_applies
-                    (S.Pull_request.diff pull_request)
-                in
+                Abb.Future.return
+                  (compute_matches
+                     ~repo_config
+                     ~tag_query:(S.Event.tag_query event)
+                     ~out_of_change_applies
+                     ~diff:(S.Pull_request.diff pull_request)
+                     ~repo_tree
+                     ())
+                >>= fun (tag_query_matches, all_match_dirspaceflows) ->
                 let dirs =
                   all_match_dirspaceflows
                   |> CCList.map (fun dsf -> Terrat_change.(dsf.Dirspaceflow.dirspace.Dirspace.dir))
@@ -400,12 +407,14 @@ module Make (S : S) = struct
             m "EVENT_EVALUATOR: %s : FETCHING_REPO_CONFIG : %f" (S.Event.request_id event) t))
       (fun () -> S.fetch_repo_config event pull_request)
     >>= fun repo_config ->
+    S.fetch_tree event pull_request
+    >>= fun repo_tree ->
     if is_valid_destination_branch event pull_request repo_config then
       if repo_config.Terrat_repo_config.Version_1.enabled then (
         match S.Pull_request.state pull_request with
         | Terrat_pull_request.State.(Open | Merged _)
           when can_apply_checkout_strategy repo_config pull_request ->
-            exec_event storage event pull_request repo_config
+            exec_event storage event pull_request repo_config repo_tree
         | Terrat_pull_request.State.(Open | Merged _) ->
             (* Cannot apply checkout strategy *)
             Logs.info (fun m ->
@@ -452,6 +461,9 @@ module Make (S : S) = struct
                 m "EVENT_EVALUATOR : %s : PUBLISH_MSG : %f" (S.Event.request_id event) t))
           (fun () -> S.publish_msg event msg)
     | Ok None -> Abb.Future.return ()
+    | Error (`Bad_glob s) ->
+        Logs.err (fun m -> m "EVENT_EVALUATOR : %s : BAD_GLOB : %s" (S.Event.request_id event) s);
+        S.publish_msg event (Msg.Bad_glob s)
     | Error (`Repo_config_parse_err err) ->
         Logs.info (fun m ->
             m "EVENT_EVALUATOR : %s : REPO_CONFIG_PARSE_ERR : %s" (S.Event.request_id event) err);

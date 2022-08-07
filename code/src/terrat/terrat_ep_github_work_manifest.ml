@@ -555,21 +555,27 @@ module Initiate = struct
     >>= fun repo_config ->
     Terrat_github.get_tree ~access_token ~owner ~repo ~sha:hash ()
     >>= fun files ->
-    Abb.Future.return
-      (Ok
-         (CCList.map
-            (fun Terrat_change_matcher.
-                   {
-                     dirspaceflow =
-                       Terrat_change.
-                         { Dirspaceflow.dirspace = { Dirspace.dir; workspace }; workflow_idx };
-                     _;
-                   } ->
-              Terrat_api_components.Work_manifest_dir.
-                { path = dir; workspace; workflow = workflow_idx; rank = 0 })
-            (Terrat_change_matcher.match_diff
-               repo_config
-               (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) files))))
+    match
+      Terrat_change_matcher.match_diff
+        ~filelist:files
+        repo_config
+        (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) files)
+    with
+    | Ok matches ->
+        Abb.Future.return
+          (Ok
+             (CCList.map
+                (fun Terrat_change_matcher.
+                       {
+                         dirspaceflow =
+                           Terrat_change.
+                             { Dirspaceflow.dirspace = { Dirspace.dir; workspace }; workflow_idx };
+                         _;
+                       } ->
+                  Terrat_api_components.Work_manifest_dir.
+                    { path = dir; workspace; workflow = workflow_idx; rank = 0 })
+                matches))
+    | Error (`Bad_glob _ as err) -> Abb.Future.return (Error err)
 
   let handle_post request_id config storage t =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -722,6 +728,10 @@ module Initiate = struct
         | Error (#Terrat_work_manifest_evaluator.err as err) ->
             Logs.err (fun m ->
                 m "GITHUB_WORK_MANIFEST : %s : ERROR : %s" request_id (Evaluator.show_err err));
+            Abb.Future.return
+              (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+        | Error (`Bad_glob s) ->
+            Logs.err (fun m -> m "GITHUB_WORK_MANIFEST : %s : BAD_GLOB : %s" request_id s);
             Abb.Future.return
               (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
     | Error (#Pgsql_pool.err as err) ->

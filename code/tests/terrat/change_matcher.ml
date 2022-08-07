@@ -101,7 +101,9 @@ let test_simple =
   Oth.test ~name:"Test simple" (fun _ ->
       let repo_config = CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson (`Assoc [])) in
       let diff = Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" } ] in
-      let changes = Terrat_change_matcher.match_diff repo_config diff in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist:[] repo_config diff)
+      in
       assert (CCList.length changes = 1))
 
 let test_workflow_idx =
@@ -131,7 +133,9 @@ let test_workflow_idx =
                ]))
       in
       let diff = Terrat_change.Diff.[ Add { filename = "ec/ec2.tf" } ] in
-      let changes = Terrat_change_matcher.match_diff repo_config diff in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist:[] repo_config diff)
+      in
       assert (CCList.length changes = 1);
       let change = CCList.hd changes in
       let module Tcm = Terrat_change_matcher in
@@ -169,7 +173,9 @@ let test_workflow_idx_tag_in_dir =
                ]))
       in
       let diff = Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" } ] in
-      let changes = Terrat_change_matcher.match_diff repo_config diff in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist:[] repo_config diff)
+      in
       assert (CCList.length changes = 1);
       let change = CCList.hd changes in
       let module Tcm = Terrat_change_matcher in
@@ -214,7 +220,9 @@ let test_workflow_idx_multiple_dirs =
       let diff =
         Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" }; Add { filename = "s3/s3.tf" } ]
       in
-      let changes = Terrat_change_matcher.match_diff repo_config diff in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist:[] repo_config diff)
+      in
       assert (CCList.length changes = 2);
       let change = CCList.hd changes in
       let module Tcm = Terrat_change_matcher in
@@ -250,7 +258,9 @@ let test_workflow_override =
       let diff =
         Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" }; Add { filename = "s3/s3.tf" } ]
       in
-      let changes = Terrat_change_matcher.match_diff repo_config diff in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist:[] repo_config diff)
+      in
       assert (CCList.length changes = 2);
       let module Tcm = Terrat_change_matcher in
       let module Tc = Terrat_change in
@@ -265,10 +275,12 @@ let test_dir_match =
         Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" }; Add { filename = "s3/s3.tf" } ]
       in
       let changes =
-        Terrat_change_matcher.match_diff
-          ~tag_query:(Terrat_tag_set.of_list [ "dir:ec2" ])
-          repo_config
-          diff
+        CCResult.get_exn
+          (Terrat_change_matcher.match_diff
+             ~tag_query:(Terrat_tag_set.of_list [ "dir:ec2" ])
+             ~filelist:[]
+             repo_config
+             diff)
       in
       assert (CCList.length changes = 1))
 
@@ -282,6 +294,7 @@ let test_dirspace_map =
       let changes =
         Terrat_change_matcher.map_dirspace
           ~tag_query:(Terrat_tag_set.of_list [ "dir:ec2" ])
+          ~filelist:[]
           repo_config
           dirspaces
       in
@@ -308,13 +321,17 @@ let test_dir_file_pattern =
                ]))
       in
       let diff = Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" } ] in
-      let changes = Terrat_change_matcher.match_diff repo_config diff in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist:[] repo_config diff)
+      in
       assert (CCList.length changes = 2))
 
 let test_dir_config_iam =
   Oth.test ~name:"Test Dir Config IAM" (fun _ ->
       let diff = Terrat_change.Diff.[ Add { filename = "iam/foo.tf" } ] in
-      let changes = Terrat_change_matcher.match_diff dirs_config diff in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist:[] dirs_config diff)
+      in
       (* We match the iam and ec2 dir *)
       assert (CCList.length changes = 2);
       CCList.iter
@@ -336,7 +353,9 @@ let test_dir_config_iam =
 let test_dir_config_ebl =
   Oth.test ~name:"Test Dir Config ebl" (fun _ ->
       let diff = Terrat_change.Diff.[ Add { filename = "ebl/foo.tf" } ] in
-      let changes = Terrat_change_matcher.match_diff dirs_config diff in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist:[] dirs_config diff)
+      in
       assert (CCList.length changes = 1);
       CCList.iter
         (fun c ->
@@ -354,7 +373,9 @@ let test_dir_config_ebl =
 let test_dir_config_ebl_modules =
   Oth.test ~name:"Test Dir Config ebl modules" (fun _ ->
       let diff = Terrat_change.Diff.[ Add { filename = "ebl_modules" } ] in
-      let changes = Terrat_change_matcher.match_diff dirs_config diff in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist:[] dirs_config diff)
+      in
       assert (CCList.length changes = 1);
       CCList.iter
         (fun c ->
@@ -374,7 +395,9 @@ let test_dir_config_ebl_and_modules =
       let diff =
         Terrat_change.Diff.[ Add { filename = "ebl_modules" }; Add { filename = "ebl/foo.tf" } ]
       in
-      let changes = Terrat_change_matcher.match_diff dirs_config diff in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist:[] dirs_config diff)
+      in
       assert (CCList.length changes = 1);
       CCList.iter
         (fun c ->
@@ -392,7 +415,9 @@ let test_dir_config_ebl_and_modules =
 let test_dir_config_s3 =
   Oth.test ~name:"Test Dir Config s3" (fun _ ->
       let diff = Terrat_change.Diff.[ Add { filename = "s3/foo.tf" } ] in
-      let changes = Terrat_change_matcher.match_diff dirs_config diff in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist:[] dirs_config diff)
+      in
       assert (CCList.length changes = 1);
       CCList.iter
         (fun c ->
@@ -410,7 +435,9 @@ let test_dir_config_s3 =
 let test_dir_config_lambda_json =
   Oth.test ~name:"Test Dir Config lambda JSON" (fun _ ->
       let diff = Terrat_change.Diff.[ Add { filename = "lambda/foo.json" } ] in
-      let changes = Terrat_change_matcher.match_diff dirs_config diff in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist:[] dirs_config diff)
+      in
       assert (CCList.length changes = 1);
       CCList.iter
         (fun c ->
@@ -428,13 +455,17 @@ let test_dir_config_lambda_json =
 let test_dir_config_module =
   Oth.test ~name:"Test Dir Config module" (fun _ ->
       let diff = Terrat_change.Diff.[ Add { filename = "module/foo.tf" } ] in
-      let changes = Terrat_change_matcher.match_diff dirs_config diff in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist:[] dirs_config diff)
+      in
       assert (CCList.length changes = 0))
 
 let test_dir_config_null_file_patterns =
   Oth.test ~name:"Test Dir Config null_file_patterns" (fun _ ->
       let diff = Terrat_change.Diff.[ Add { filename = "null_file_patterns/foo.tf" } ] in
-      let changes = Terrat_change_matcher.match_diff dirs_config diff in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist:[] dirs_config diff)
+      in
       assert (CCList.length changes = 1);
       CCList.iter
         (fun c ->
@@ -449,31 +480,284 @@ let test_dir_config_null_file_patterns =
           | _ -> assert false)
         changes)
 
+let test_recursive_dirs_template_dir =
+  Oth.test ~name:"Test Recursive Dirs Template Dir" (fun _ ->
+      let dirs_config =
+        CCResult.get_exn
+          (Terrat_repo_config.Version_1.of_yojson
+             (`Assoc
+               [
+                 ( "dirs",
+                   `Assoc
+                     [
+                       ( "_template/*",
+                         `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ] );
+                       ( "aws/**/terragrunt.hcl",
+                         `Assoc
+                           [
+                             ( "when_modified",
+                               `Assoc
+                                 [
+                                   ( "file_patterns",
+                                     `List [ `String "_templates/**/*.tf"; `String "${DIR}/*.hcl" ]
+                                   );
+                                 ] );
+                           ] );
+                     ] );
+               ]))
+      in
+      let filelist =
+        [
+          "_template/aws/terragrunt.hcl";
+          "_template/aws/staging/terragrunt.hcl";
+          "aws/staging/us-east-1/terragrunt.hcl";
+          "aws/prod/us-east-1/terragrunt.hcl";
+        ]
+      in
+      let diff = Terrat_change.Diff.[ Add { filename = "_template/aws/terragrunt.hcl" } ] in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist dirs_config diff)
+      in
+      assert (CCList.length changes = 0))
+
+let test_recursive_dirs_aws_prod =
+  Oth.test ~name:"Test Recursive Dirs AWS Prod" (fun _ ->
+      let dirs_config =
+        CCResult.get_exn
+          (Terrat_repo_config.Version_1.of_yojson
+             (`Assoc
+               [
+                 ( "dirs",
+                   `Assoc
+                     [
+                       ( "_template/*",
+                         `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ] );
+                       ( "aws/**/terragrunt.hcl",
+                         `Assoc
+                           [
+                             ( "when_modified",
+                               `Assoc
+                                 [
+                                   ( "file_patterns",
+                                     `List [ `String "_templates/**/*.tf"; `String "${DIR}/*.hcl" ]
+                                   );
+                                 ] );
+                           ] );
+                     ] );
+               ]))
+      in
+      let filelist =
+        [
+          "_template/aws/terragrunt.hcl";
+          "_template/aws/staging/terragrunt.hcl";
+          "aws/staging/us-east-1/terragrunt.hcl";
+          "aws/prod/us-east-1/terragrunt.hcl";
+        ]
+      in
+      let diff = Terrat_change.Diff.[ Add { filename = "aws/prod/us-east-1/terragrunt.hcl" } ] in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist dirs_config diff)
+      in
+      assert (CCList.length changes = 1))
+
+let test_recursive_dirs_tags =
+  Oth.test ~name:"Test Recursive Dirs With Tags" (fun _ ->
+      let dirs_config =
+        CCResult.get_exn
+          (Terrat_repo_config.Version_1.of_yojson
+             (`Assoc
+               [
+                 ( "dirs",
+                   `Assoc
+                     [
+                       ( "_template/*",
+                         `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ] );
+                       ( "aws/**/secrets-manager/**/terragrunt.hcl",
+                         `Assoc
+                           [
+                             ("tags", `List [ `String "secrets" ]);
+                             ( "when_modified",
+                               `Assoc [ ("file_patterns", `List [ `String "${DIR}/*.hcl" ]) ] );
+                           ] );
+                       ( "aws/**/terragrunt.hcl",
+                         `Assoc
+                           [
+                             ( "when_modified",
+                               `Assoc [ ("file_patterns", `List [ `String "${DIR}/*.hcl" ]) ] );
+                           ] );
+                     ] );
+               ]))
+      in
+      let filelist =
+        [
+          "_template/aws/terragrunt.hcl";
+          "_template/aws/staging/terragrunt.hcl";
+          "aws/staging/us-east-1/terragrunt.hcl";
+          "aws/prod/us-east-1/terragrunt.hcl";
+          "aws/prod/secrets-manager/us-east-1/terragrunt.hcl";
+        ]
+      in
+      let diff =
+        Terrat_change.Diff.
+          [
+            Add { filename = "aws/prod/us-east-1/terragrunt.hcl" };
+            Add { filename = "aws/prod/secrets-manager/us-east-1/terragrunt.hcl" };
+          ]
+      in
+      let changes =
+        CCResult.get_exn
+          (Terrat_change_matcher.match_diff
+             ~tag_query:(Terrat_tag_set.of_list [ "secrets" ])
+             ~filelist
+             dirs_config
+             diff)
+      in
+      assert (CCList.length changes = 1);
+      CCList.iter
+        (fun c ->
+          let module Tcm = Terrat_change_matcher in
+          let module Trcwm = Terrat_repo_config.When_modified in
+          let module Tcds = Terrat_change.Dirspaceflow in
+          let module Ds = Terrat_change.Dirspace in
+          match c.Tcm.dirspaceflow.Tcds.dirspace.Ds.dir with
+          | "aws/prod/secrets-manager/us-east-1" ->
+              assert c.Tcm.when_modified.Trcwm.autoplan;
+              assert (not c.Tcm.when_modified.Trcwm.autoapply)
+          | _ -> assert false)
+        changes)
+
+let test_recursive_dirs_without_tags =
+  Oth.test ~name:"Test Recursive Dirs Without Tags" (fun _ ->
+      let dirs_config =
+        CCResult.get_exn
+          (Terrat_repo_config.Version_1.of_yojson
+             (`Assoc
+               [
+                 ( "dirs",
+                   `Assoc
+                     [
+                       ( "_template/*",
+                         `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ] );
+                       ( "aws/**/secrets-manager/**/terragrunt.hcl",
+                         `Assoc
+                           [
+                             ("tags", `List [ `String "secrets" ]);
+                             ( "when_modified",
+                               `Assoc [ ("file_patterns", `List [ `String "${DIR}/*.hcl" ]) ] );
+                           ] );
+                       ( "aws/**/terragrunt.hcl",
+                         `Assoc
+                           [
+                             ( "when_modified",
+                               `Assoc [ ("file_patterns", `List [ `String "${DIR}/*.hcl" ]) ] );
+                           ] );
+                     ] );
+               ]))
+      in
+      let filelist =
+        [
+          "_template/aws/terragrunt.hcl";
+          "_template/aws/staging/terragrunt.hcl";
+          "aws/staging/us-east-1/terragrunt.hcl";
+          "aws/prod/us-east-1/terragrunt.hcl";
+          "aws/prod/secrets-manager/us-east-1/terragrunt.hcl";
+        ]
+      in
+      let diff =
+        Terrat_change.Diff.
+          [
+            Add { filename = "aws/prod/us-east-1/terragrunt.hcl" };
+            Add { filename = "aws/prod/secrets-manager/us-east-1/terragrunt.hcl" };
+          ]
+      in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist dirs_config diff)
+      in
+      assert (CCList.length changes = 1);
+      CCList.iter
+        (fun c ->
+          let module Tcm = Terrat_change_matcher in
+          let module Trcwm = Terrat_repo_config.When_modified in
+          let module Tcds = Terrat_change.Dirspaceflow in
+          let module Ds = Terrat_change.Dirspace in
+          match c.Tcm.dirspaceflow.Tcds.dirspace.Ds.dir with
+          | "aws/prod/secrets-manager/us-east-1" | "aws/prod/us-east-1" ->
+              assert c.Tcm.when_modified.Trcwm.autoplan;
+              assert (not c.Tcm.when_modified.Trcwm.autoapply)
+          | _ -> assert false)
+        changes)
+
+let test_bad_glob =
+  Oth.test ~name:"Test Bad glob" (fun _ ->
+      let dirs_config =
+        CCResult.get_exn
+          (Terrat_repo_config.Version_1.of_yojson
+             (`Assoc
+               [
+                 ( "dirs",
+                   `Assoc
+                     [
+                       ( "_template/*",
+                         `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ] );
+                       ( "aws",
+                         `Assoc
+                           [
+                             ( "when_modified",
+                               `Assoc
+                                 [
+                                   ( "file_patterns",
+                                     `List [ `String "_templates/**/*.tf"; `String "${DIR}/*.hcl" ]
+                                   );
+                                 ] );
+                           ] );
+                     ] );
+               ]))
+      in
+      let filelist =
+        [
+          "_template/aws/terragrunt.hcl";
+          "_template/aws/staging/terragrunt.hcl";
+          "aws/staging/us-east-1/terragrunt.hcl";
+          "aws/prod/us-east-1/terragrunt.hcl";
+        ]
+      in
+      let diff = Terrat_change.Diff.[ Add { filename = "aws/prod/us-east-1/terragrunt.hcl" } ] in
+      let result = Terrat_change_matcher.match_diff ~filelist dirs_config diff in
+      assert (result = Error (`Bad_glob "${DIR}/*.hcl")))
+
 let test_bad_dir_config_iam =
   Oth.test ~name:"Test Bad Dir Config iam" (fun _ ->
       let diff = Terrat_change.Diff.[ Add { filename = "iam/foo.tf" } ] in
-      let changes = Terrat_change_matcher.match_diff bad_dirs_config diff in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist:[] bad_dirs_config diff)
+      in
       (* matches s3 and iam *)
       assert (CCList.length changes = 2))
 
 let test_bad_dir_config_ec2 =
   Oth.test ~name:"Test Bad Dir Config ec2" (fun _ ->
       let diff = Terrat_change.Diff.[ Add { filename = "ec2/foo.tf" } ] in
-      let changes = Terrat_change_matcher.match_diff bad_dirs_config diff in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist:[] bad_dirs_config diff)
+      in
       (* matches s3 *)
       assert (CCList.length changes = 1))
 
 let test_bad_dir_config_ec2_root_dir_change =
   Oth.test ~name:"Test Bad Dir Config ec2 root dir change" (fun _ ->
       let diff = Terrat_change.Diff.[ Add { filename = "foo.tf" } ] in
-      let changes = Terrat_change_matcher.match_diff bad_dirs_config diff in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist:[] bad_dirs_config diff)
+      in
       (* matches ., s3, and ec2 *)
       assert (CCList.length changes = 3))
 
 let test_bad_dir_config_s3 =
   Oth.test ~name:"Test Bad Dir Config s3" (fun _ ->
       let diff = Terrat_change.Diff.[ Add { filename = "s3/foo.tf" } ] in
-      let changes = Terrat_change_matcher.match_diff bad_dirs_config diff in
+      let changes =
+        CCResult.get_exn (Terrat_change_matcher.match_diff ~filelist:[] bad_dirs_config diff)
+      in
       assert (CCList.length changes = 1))
 
 let test =
@@ -495,6 +779,10 @@ let test =
       test_dir_config_lambda_json;
       test_dir_config_module;
       test_dir_config_null_file_patterns;
+      test_recursive_dirs_template_dir;
+      test_recursive_dirs_aws_prod;
+      test_recursive_dirs_tags;
+      test_bad_glob;
       test_bad_dir_config_iam;
       test_bad_dir_config_ec2;
       test_bad_dir_config_ec2_root_dir_change;
