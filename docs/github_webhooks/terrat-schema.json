@@ -5397,26 +5397,7 @@
           "$ref": "#/definitions/user"
         },
         "workflow_job": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/workflow-job"
-            },
-            {
-              "properties": {
-                "status": {
-                  "enum": [
-                    "in_progress"
-                  ],
-                  "type": "string"
-                }
-              },
-              "required": [
-                "status"
-              ],
-              "tsAdditionalProperties": false,
-              "type": "object"
-            }
-          ]
+          "$ref": "#/definitions/workflow-job"
         }
       },
       "required": [
