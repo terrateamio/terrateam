@@ -284,6 +284,17 @@ module Make (S : S) = struct
 
   let exec_event storage event pull_request repo_config repo_tree =
     let open Abbs_future_combinators.Infix_result_monad in
+    Logs.info (fun m ->
+        m
+          "EVENT_EVALUATOR : %s : PULL_REQUEST : base_sha=%s : sha=%s"
+          (S.Event.request_id event)
+          (S.Pull_request.base_hash pull_request)
+          (S.Pull_request.hash pull_request));
+    Logs.info (fun m ->
+        m
+          "EVENT_EVALUATOR : %s : PULL_REQUEST : NUM_DIFF : %d"
+          (S.Event.request_id event)
+          (CCList.length (S.Pull_request.diff pull_request)));
     Pgsql_pool.with_conn storage ~f:(fun db ->
         Pgsql_io.tx db ~f:(fun () ->
             Abbs_time_it.run
