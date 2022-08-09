@@ -131,6 +131,10 @@
           "type": "string",
           "const": "init"
         },
+        "extra_args": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
         "env": {
           "type": "object",
           "additionalProperties": {
