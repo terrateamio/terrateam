@@ -5160,6 +5160,9 @@
       "$schema": "http://json-schema.org/draft-07/schema",
       "oneOf": [
         {
+          "$ref": "#/definitions/workflow-step-pending"
+        },
+        {
           "$ref": "#/definitions/workflow-step-queued"
         },
         {
@@ -5244,6 +5247,43 @@
         "completed_at"
       ],
       "title": "Workflow Step (In Progress)",
+      "type": "object"
+    },
+    "workflow-step-pending": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "completed_at": {
+          "type": "null"
+        },
+        "conclusion": {
+          "type": "null"
+        },
+        "name": {
+          "type": "string"
+        },
+        "number": {
+          "type": "integer"
+        },
+        "started_at": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "pending"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "status",
+        "conclusion",
+        "number",
+        "started_at",
+        "completed_at"
+      ],
+      "title": "Workflow Step (Pending)",
       "type": "object"
     },
     "workflow-step-queued": {
