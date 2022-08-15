@@ -931,86 +931,88 @@ module Results = struct
     in
     let cost_estimation =
       dirspaces
-      |> CCList.map (fun Wmr.{ path; workspace; output; _ } ->
+      |> CCList.filter_map (fun Wmr.{ path; workspace; output; _ } ->
              CCOption.map
                (fun infracost -> (path, workspace, infracost))
                Wmr.Output.(output.primary.Primary.cost_estimation))
-      |> CCOption.sequence_l
-      |> CCOption.map (fun costs ->
-             let module Ce = Terrat_api_components_cost_estimation in
-             let module Tce = Terrat_api_components.Total_cost_estimation in
-             let diff_monthly_cost =
-               CCListLabels.fold_left
-                 ~init:0.0
-                 ~f:(fun acc_diff_monthly_cost (_, _, Ce.{ diff_monthly_cost; _ }) ->
-                   acc_diff_monthly_cost +. diff_monthly_cost)
-                 costs
-             in
-             let total_cost_estimation =
-               let open CCOption.Infix in
-               results.R.overall.R.Overall.output
-               >>= fun output ->
-               R.Overall.Output.(output.primary.Primary.cost_estimation)
-               >>= function
-               | Tce.
-                   {
-                     prev_monthly_cost = Some prev_monthly_cost;
-                     diff_monthly_cost = Some diff_monthly_cost;
-                     total_monthly_cost;
-                     currency;
-                   } -> Some (prev_monthly_cost, diff_monthly_cost, total_monthly_cost, currency)
-               | Tce.{ total_monthly_cost; currency; _ } ->
-                   Some
-                     ( total_monthly_cost -. diff_monthly_cost,
-                       diff_monthly_cost,
-                       total_monthly_cost,
-                       currency )
-             in
-             Snabela.Kv.(
-               Map.of_list
-                 (CCList.flatten
-                    [
-                      CCOption.map_or
-                        ~default:
-                          [
-                            ("prev_monthly_cost", string "???");
-                            ("total_monthly_cost", string "???");
-                            ("diff_monthly_cost", string "???");
-                            ("currency", string "???");
-                          ]
-                        (fun (prev_monthly_cost, diff_monthly_cost, total_monthly_cost, currency) ->
-                          [
-                            ("prev_monthly_cost", float prev_monthly_cost);
-                            ("total_monthly_cost", float total_monthly_cost);
-                            ("diff_monthly_cost", float diff_monthly_cost);
-                            ("currency", string currency);
-                          ])
-                        total_cost_estimation;
-                      [
-                        ( "dirspaces",
-                          list
-                            (CCList.map
-                               (fun ( path,
-                                      workspace,
-                                      Ce.
-                                        {
-                                          prev_monthly_cost;
-                                          total_monthly_cost;
-                                          diff_monthly_cost;
-                                          currency;
-                                        } ) ->
-                                 Map.of_list
-                                   [
-                                     ("dir", string path);
-                                     ("workspace", string workspace);
-                                     ("prev_monthly_cost", float prev_monthly_cost);
-                                     ("total_monthly_cost", float total_monthly_cost);
-                                     ("diff_monthly_cost", float diff_monthly_cost);
-                                     ("currency", string currency);
-                                   ])
-                               costs) );
-                      ];
-                    ])))
+      |> function
+      | [] -> None
+      | costs ->
+          let module Ce = Terrat_api_components_cost_estimation in
+          let module Tce = Terrat_api_components.Total_cost_estimation in
+          let diff_monthly_cost =
+            CCListLabels.fold_left
+              ~init:0.0
+              ~f:(fun acc_diff_monthly_cost (_, _, Ce.{ diff_monthly_cost; _ }) ->
+                acc_diff_monthly_cost +. diff_monthly_cost)
+              costs
+          in
+          let total_cost_estimation =
+            let open CCOption.Infix in
+            results.R.overall.R.Overall.output
+            >>= fun output ->
+            R.Overall.Output.(output.primary.Primary.cost_estimation)
+            >>= function
+            | Tce.
+                {
+                  prev_monthly_cost = Some prev_monthly_cost;
+                  diff_monthly_cost = Some diff_monthly_cost;
+                  total_monthly_cost;
+                  currency;
+                } -> Some (prev_monthly_cost, diff_monthly_cost, total_monthly_cost, currency)
+            | Tce.{ total_monthly_cost; currency; _ } ->
+                Some
+                  ( total_monthly_cost -. diff_monthly_cost,
+                    diff_monthly_cost,
+                    total_monthly_cost,
+                    currency )
+          in
+          Some
+            Snabela.Kv.(
+              Map.of_list
+                (CCList.flatten
+                   [
+                     CCOption.map_or
+                       ~default:
+                         [
+                           ("prev_monthly_cost", string "???");
+                           ("total_monthly_cost", string "???");
+                           ("diff_monthly_cost", string "???");
+                           ("currency", string "???");
+                         ]
+                       (fun (prev_monthly_cost, diff_monthly_cost, total_monthly_cost, currency) ->
+                         [
+                           ("prev_monthly_cost", float prev_monthly_cost);
+                           ("total_monthly_cost", float total_monthly_cost);
+                           ("diff_monthly_cost", float diff_monthly_cost);
+                           ("currency", string currency);
+                         ])
+                       total_cost_estimation;
+                     [
+                       ( "dirspaces",
+                         list
+                           (CCList.map
+                              (fun ( path,
+                                     workspace,
+                                     Ce.
+                                       {
+                                         prev_monthly_cost;
+                                         total_monthly_cost;
+                                         diff_monthly_cost;
+                                         currency;
+                                       } ) ->
+                                Map.of_list
+                                  [
+                                    ("dir", string path);
+                                    ("workspace", string workspace);
+                                    ("prev_monthly_cost", float prev_monthly_cost);
+                                    ("total_monthly_cost", float total_monthly_cost);
+                                    ("diff_monthly_cost", float diff_monthly_cost);
+                                    ("currency", string currency);
+                                  ])
+                              costs) );
+                     ];
+                   ]))
     in
     let kv =
       Snabela.Kv.(
