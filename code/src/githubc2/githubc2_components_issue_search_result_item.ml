@@ -69,6 +69,7 @@ module Primary = struct
     repository_url : string;
     score : float;
     state : string;
+    state_reason : string option; [@default None]
     text_matches : Githubc2_components_search_result_text_matches.t option; [@default None]
     timeline_url : string option; [@default None]
     title : string;

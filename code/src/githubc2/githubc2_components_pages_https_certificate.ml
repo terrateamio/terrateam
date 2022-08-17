@@ -1,10 +1,6 @@
 module Primary = struct
   module Domains = struct
-    module Items = struct
-      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
-    end
-
-    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = string list [@@deriving yojson { strict = false; meta = true }, show]
   end
 
   module State = struct

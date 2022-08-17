@@ -613,9 +613,9 @@ module Update = struct
 
   let url = "/repos/{owner}/{repo}/check-runs/{check_run_id}"
 
-  let make ?body params =
+  let make ~body params =
     Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
+      ~body:(Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

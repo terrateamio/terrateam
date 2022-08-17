@@ -13,6 +13,18 @@ module Items = struct
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
+    module Type = struct
+      let t_of_yojson = function
+        | `String "dir" -> Ok "dir"
+        | `String "file" -> Ok "file"
+        | `String "submodule" -> Ok "submodule"
+        | `String "symlink" -> Ok "symlink"
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      type t = (string[@of_yojson t_of_yojson])
+      [@@deriving yojson { strict = false; meta = true }, show]
+    end
+
     type t = {
       links_ : Links_.t; [@key "_links"]
       content : string option; [@default None]
@@ -23,7 +35,7 @@ module Items = struct
       path : string;
       sha : string;
       size : int;
-      type_ : string; [@key "type"]
+      type_ : Type.t; [@key "type"]
       url : string;
     }
     [@@deriving yojson { strict = false; meta = true }, show]

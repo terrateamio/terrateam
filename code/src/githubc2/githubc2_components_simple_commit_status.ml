@@ -8,7 +8,7 @@ module Primary = struct
     node_id : string;
     required : bool option; [@default None]
     state : string;
-    target_url : string;
+    target_url : string option;
     updated_at : string;
     url : string;
   }

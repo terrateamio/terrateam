@@ -238,7 +238,7 @@ module List_notifications_for_authenticated_user = struct
       before : string option; [@default None]
       page : int; [@default 1]
       participating : bool; [@default false]
-      per_page : int; [@default 30]
+      per_page : int; [@default 50]
       since : string option; [@default None]
     }
     [@@deriving make, show]
@@ -301,8 +301,8 @@ module List_notifications_for_authenticated_user = struct
           ("participating", Var (params.participating, Bool));
           ("since", Var (params.since, Option String));
           ("before", Var (params.before, Option String));
-          ("per_page", Var (params.per_page, Int));
           ("page", Var (params.page, Int));
+          ("per_page", Var (params.per_page, Int));
         ])
       ~url
       ~responses:Responses.t

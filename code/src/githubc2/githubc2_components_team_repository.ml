@@ -87,6 +87,7 @@ module Primary = struct
     pulls_url : string;
     pushed_at : string option;
     releases_url : string;
+    role_name : string option; [@default None]
     size : int;
     ssh_url : string;
     stargazers_count : int;

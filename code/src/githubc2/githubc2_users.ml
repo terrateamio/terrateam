@@ -172,25 +172,12 @@ module List_blocked_by_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    module Unsupported_media_type = struct
-      module Primary = struct
-        type t = {
-          documentation_url : string;
-          message : string;
-        }
-        [@@deriving yojson { strict = false; meta = true }, show]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
     type t =
       [ `OK of OK.t
       | `Not_modified
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
-      | `Unsupported_media_type of Unsupported_media_type.t
       ]
     [@@deriving show]
 
@@ -201,9 +188,6 @@ module List_blocked_by_authenticated_user = struct
         ("401", Openapi.of_json_body (fun v -> `Unauthorized v) Unauthorized.of_yojson);
         ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
-        ( "415",
-          Openapi.of_json_body (fun v -> `Unsupported_media_type v) Unsupported_media_type.of_yojson
-        );
       ]
   end
 
@@ -1027,7 +1011,10 @@ module Create_gpg_key_for_authenticated_user = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { armored_public_key : string }
+      type t = {
+        armored_public_key : string;
+        name : string option; [@default None]
+      }
       [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
@@ -1689,10 +1676,6 @@ module Get_by_username = struct
         | Public_user v -> Githubc2_components.Public_user.to_yojson v
     end
 
-    module Accepted = struct
-      include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Json_schema.Obj)
-    end
-
     module Not_found = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
@@ -1700,7 +1683,6 @@ module Get_by_username = struct
 
     type t =
       [ `OK of OK.t
-      | `Accepted of Accepted.t
       | `Not_found of Not_found.t
       ]
     [@@deriving show]
@@ -1708,7 +1690,6 @@ module Get_by_username = struct
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
-        ("202", Openapi.of_json_body (fun v -> `Accepted v) Accepted.of_yojson);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
       ]
   end

@@ -1327,7 +1327,7 @@ module Remove_assignees = struct
         type t = string list [@@deriving yojson { strict = false; meta = true }, show]
       end
 
-      type t = { assignees : Assignees.t option [@default None] }
+      type t = { assignees : Assignees.t }
       [@@deriving make, yojson { strict = false; meta = true }, show]
     end
 
@@ -1347,9 +1347,9 @@ module Remove_assignees = struct
 
   let url = "/repos/{owner}/{repo}/issues/{issue_number}/assignees"
 
-  let make ?body params =
+  let make ~body params =
     Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
+      ~body:(Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

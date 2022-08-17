@@ -14,56 +14,6 @@ module Primary = struct
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
   end
 
-  module Security_and_analysis = struct
-    module Primary = struct
-      module Advanced_security = struct
-        module Primary = struct
-          module Status_ = struct
-            let t_of_yojson = function
-              | `String "enabled" -> Ok "enabled"
-              | `String "disabled" -> Ok "disabled"
-              | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-            type t = (string[@of_yojson t_of_yojson])
-            [@@deriving yojson { strict = false; meta = true }, show]
-          end
-
-          type t = { status : Status_.t option [@default None] }
-          [@@deriving yojson { strict = false; meta = true }, show]
-        end
-
-        include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-      end
-
-      module Secret_scanning = struct
-        module Primary = struct
-          module Status_ = struct
-            let t_of_yojson = function
-              | `String "enabled" -> Ok "enabled"
-              | `String "disabled" -> Ok "disabled"
-              | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-            type t = (string[@of_yojson t_of_yojson])
-            [@@deriving yojson { strict = false; meta = true }, show]
-          end
-
-          type t = { status : Status_.t option [@default None] }
-          [@@deriving yojson { strict = false; meta = true }, show]
-        end
-
-        include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-      end
-
-      type t = {
-        advanced_security : Advanced_security.t option; [@default None]
-        secret_scanning : Secret_scanning.t option; [@default None]
-      }
-      [@@deriving yojson { strict = false; meta = true }, show]
-    end
-
-    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-  end
-
   module Topics = struct
     type t = string list [@@deriving yojson { strict = false; meta = true }, show]
   end
@@ -74,6 +24,7 @@ module Primary = struct
     allow_merge_commit : bool option; [@default None]
     allow_rebase_merge : bool option; [@default None]
     allow_squash_merge : bool option; [@default None]
+    allow_update_branch : bool option; [@default None]
     anonymous_access_enabled : bool; [@default true]
     archive_url : string;
     archived : bool;
@@ -141,7 +92,7 @@ module Primary = struct
     pulls_url : string;
     pushed_at : string;
     releases_url : string;
-    security_and_analysis : Security_and_analysis.t option; [@default None]
+    security_and_analysis : Githubc2_components_security_and_analysis.t option; [@default None]
     size : int;
     source : Githubc2_components_repository.t option; [@default None]
     ssh_url : string;
@@ -160,6 +111,7 @@ module Primary = struct
     trees_url : string;
     updated_at : string;
     url : string;
+    use_squash_pr_title_as_default : bool option; [@default None]
     visibility : string option; [@default None]
     watchers : int;
     watchers_count : int;

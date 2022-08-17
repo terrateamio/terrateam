@@ -12,6 +12,15 @@ module Primary = struct
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
   end
 
+  module Type = struct
+    let t_of_yojson = function
+      | `String "symlink" -> Ok "symlink"
+      | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+    type t = (string[@of_yojson t_of_yojson])
+    [@@deriving yojson { strict = false; meta = true }, show]
+  end
+
   type t = {
     links_ : Links_.t; [@key "_links"]
     download_url : string option;
@@ -22,7 +31,7 @@ module Primary = struct
     sha : string;
     size : int;
     target : string;
-    type_ : string; [@key "type"]
+    type_ : Type.t; [@key "type"]
     url : string;
   }
   [@@deriving yojson { strict = false; meta = true }, show]

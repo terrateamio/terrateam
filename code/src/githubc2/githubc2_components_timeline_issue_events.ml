@@ -20,6 +20,7 @@ type t =
   | V18 of Githubc2_components_timeline_commit_commented_event.t
   | V19 of Githubc2_components_timeline_assigned_issue_event.t
   | V20 of Githubc2_components_timeline_unassigned_issue_event.t
+  | V21 of Githubc2_components_state_change_issue_event.t
 [@@deriving show]
 
 let of_yojson =
@@ -56,6 +57,7 @@ let of_yojson =
         map (fun v -> V19 v) (Githubc2_components_timeline_assigned_issue_event.of_yojson v));
       (fun v ->
         map (fun v -> V20 v) (Githubc2_components_timeline_unassigned_issue_event.of_yojson v));
+      (fun v -> map (fun v -> V21 v) (Githubc2_components_state_change_issue_event.of_yojson v));
     ])
 
 let to_yojson = function
@@ -80,3 +82,4 @@ let to_yojson = function
   | V18 v -> Githubc2_components_timeline_commit_commented_event.to_yojson v
   | V19 v -> Githubc2_components_timeline_assigned_issue_event.to_yojson v
   | V20 v -> Githubc2_components_timeline_unassigned_issue_event.to_yojson v
+  | V21 v -> Githubc2_components_state_change_issue_event.to_yojson v

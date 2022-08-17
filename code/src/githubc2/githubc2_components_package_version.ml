@@ -1,14 +1,10 @@
 module Primary = struct
-  module Metadata = struct
+  module Metadata_ = struct
     module Primary = struct
       module Container = struct
         module Primary = struct
           module Tags = struct
-            module Items = struct
-              type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
-            end
-
-            type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+            type t = string list [@@deriving yojson { strict = false; meta = true }, show]
           end
 
           type t = { tags : Tags.t } [@@deriving yojson { strict = false; meta = true }, show]
@@ -20,11 +16,7 @@ module Primary = struct
       module Docker = struct
         module Primary = struct
           module Tag_ = struct
-            module Items = struct
-              type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
-            end
-
-            type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+            type t = string list [@@deriving yojson { strict = false; meta = true }, show]
           end
 
           type t = { tag : Tag_.t option [@default None] }
@@ -66,7 +58,7 @@ module Primary = struct
     html_url : string option; [@default None]
     id : int;
     license : string option; [@default None]
-    metadata : Metadata.t option; [@default None]
+    metadata : Metadata_.t option; [@default None]
     name : string;
     package_html_url : string;
     updated_at : string;

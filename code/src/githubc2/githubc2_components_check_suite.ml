@@ -45,6 +45,8 @@ module Primary = struct
     node_id : string;
     pull_requests : Pull_requests.t option;
     repository : Githubc2_components_minimal_repository.t;
+    rerequestable : bool option; [@default None]
+    runs_rerequestable : bool option; [@default None]
     status : Status_.t option;
     updated_at : string option;
     url : string option;

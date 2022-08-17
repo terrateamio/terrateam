@@ -581,10 +581,10 @@ module Create_review_comment = struct
 
       type t = {
         body : string;
-        commit_id : string option; [@default None]
+        commit_id : string;
         in_reply_to : int option; [@default None]
-        line : int option; [@default None]
-        path : string option; [@default None]
+        line : int;
+        path : string;
         position : int option; [@default None]
         side : Side.t option; [@default None]
         start_line : int option; [@default None]
@@ -1257,8 +1257,6 @@ module List_requested_reviewers = struct
   module Parameters = struct
     type t = {
       owner : string;
-      page : int; [@default 1]
-      per_page : int; [@default 30]
       pull_number : int;
       repo : string;
     }
@@ -1289,10 +1287,7 @@ module List_requested_reviewers = struct
           ("repo", Var (params.repo, String));
           ("pull_number", Var (params.pull_number, Int));
         ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+      ~query_params:[]
       ~url
       ~responses:Responses.t
       `Get
@@ -1707,8 +1702,17 @@ module Dismiss_review = struct
 
   module Request_body = struct
     module Primary = struct
+      module Event = struct
+        let t_of_yojson = function
+          | `String "DISMISS" -> Ok "DISMISS"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
       type t = {
-        event : string option; [@default None]
+        event : Event.t option; [@default None]
         message : string;
       }
       [@@deriving make, yojson { strict = false; meta = true }, show]

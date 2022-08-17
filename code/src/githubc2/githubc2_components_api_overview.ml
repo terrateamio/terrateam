@@ -45,6 +45,10 @@ module Primary = struct
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
   end
 
+  module Ssh_keys = struct
+    type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+  end
+
   module Web = struct
     type t = string list [@@deriving yojson { strict = false; meta = true }, show]
   end
@@ -59,6 +63,7 @@ module Primary = struct
     packages : Packages.t option; [@default None]
     pages : Pages.t option; [@default None]
     ssh_key_fingerprints : Ssh_key_fingerprints.t option; [@default None]
+    ssh_keys : Ssh_keys.t option; [@default None]
     verifiable_password_authentication : bool;
     web : Web.t option; [@default None]
   }

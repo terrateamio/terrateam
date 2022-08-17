@@ -11,11 +11,16 @@ module Primary = struct
     [@@deriving yojson { strict = false; meta = true }, show]
   end
 
+  module Tags = struct
+    type t = string list option [@@deriving yojson { strict = false; meta = true }, show]
+  end
+
   type t = {
     description : string option; [@default None]
     id : string option; [@default None]
     name : string option; [@default None]
     severity : Severity.t option; [@default None]
+    tags : Tags.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show]
 end

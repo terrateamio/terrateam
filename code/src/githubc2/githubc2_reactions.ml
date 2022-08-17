@@ -373,64 +373,6 @@ module Delete_for_team_discussion = struct
       `Delete
 end
 
-module Delete_legacy = struct
-  module Parameters = struct
-    type t = { reaction_id : int } [@@deriving make, show]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-    module Not_modified = struct end
-
-    module Unauthorized = struct
-      type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Forbidden = struct
-      type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Gone = struct
-      type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    type t =
-      [ `No_content
-      | `Not_modified
-      | `Unauthorized of Unauthorized.t
-      | `Forbidden of Forbidden.t
-      | `Gone of Gone.t
-      ]
-    [@@deriving show]
-
-    let t =
-      [
-        ("204", fun _ -> Ok `No_content);
-        ("304", fun _ -> Ok `Not_modified);
-        ("401", Openapi.of_json_body (fun v -> `Unauthorized v) Unauthorized.of_yojson);
-        ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
-        ("410", Openapi.of_json_body (fun v -> `Gone v) Gone.of_yojson);
-      ]
-  end
-
-  let url = "/reactions/{reaction_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("reaction_id", Var (params.reaction_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Delete
-end
-
 module Create_for_commit_comment = struct
   module Parameters = struct
     type t = {
@@ -477,18 +419,6 @@ module Create_for_commit_comment = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    module Unsupported_media_type = struct
-      module Primary = struct
-        type t = {
-          documentation_url : string;
-          message : string;
-        }
-        [@@deriving yojson { strict = false; meta = true }, show]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
@@ -497,7 +427,6 @@ module Create_for_commit_comment = struct
     type t =
       [ `OK of OK.t
       | `Created of Created.t
-      | `Unsupported_media_type of Unsupported_media_type.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
     [@@deriving show]
@@ -506,9 +435,6 @@ module Create_for_commit_comment = struct
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
-        ( "415",
-          Openapi.of_json_body (fun v -> `Unsupported_media_type v) Unsupported_media_type.of_yojson
-        );
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
       ]
@@ -1353,6 +1279,121 @@ module Create_for_release = struct
       ~url
       ~responses:Responses.t
       `Post
+end
+
+module List_for_release = struct
+  module Parameters = struct
+    module Content = struct
+      let t_of_yojson = function
+        | `String "+1" -> Ok "+1"
+        | `String "laugh" -> Ok "laugh"
+        | `String "heart" -> Ok "heart"
+        | `String "hooray" -> Ok "hooray"
+        | `String "rocket" -> Ok "rocket"
+        | `String "eyes" -> Ok "eyes"
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+    end
+
+    type t = {
+      content : Content.t option; [@default None]
+      owner : string;
+      page : int; [@default 1]
+      per_page : int; [@default 30]
+      release_id : int;
+      repo : string;
+    }
+    [@@deriving make, show]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Reaction.t list
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      ]
+    [@@deriving show]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+      ]
+  end
+
+  let url = "/repos/{owner}/{repo}/releases/{release_id}/reactions"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [
+          ("owner", Var (params.owner, String));
+          ("repo", Var (params.repo, String));
+          ("release_id", Var (params.release_id, Int));
+        ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [
+          ("content", Var (params.content, Option String));
+          ("per_page", Var (params.per_page, Int));
+          ("page", Var (params.page, Int));
+        ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Delete_for_release = struct
+  module Parameters = struct
+    type t = {
+      owner : string;
+      reaction_id : int;
+      release_id : int;
+      repo : string;
+    }
+    [@@deriving make, show]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+
+    type t = [ `No_content ] [@@deriving show]
+
+    let t = [ ("204", fun _ -> Ok `No_content) ]
+  end
+
+  let url = "/repos/{owner}/{repo}/releases/{release_id}/reactions/{reaction_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [
+          ("owner", Var (params.owner, String));
+          ("repo", Var (params.repo, String));
+          ("release_id", Var (params.release_id, Int));
+          ("reaction_id", Var (params.reaction_id, Int));
+        ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
 end
 
 module Create_for_team_discussion_comment_legacy = struct

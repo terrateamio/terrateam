@@ -1,4 +1,14 @@
 module Primary = struct
+  module Build_type = struct
+    let t_of_yojson = function
+      | `String "legacy" -> Ok "legacy"
+      | `String "workflow" -> Ok "workflow"
+      | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+    type t = (string[@of_yojson t_of_yojson])
+    [@@deriving yojson { strict = false; meta = true }, show]
+  end
+
   module Protected_domain_state = struct
     let t_of_yojson = function
       | `String "pending" -> Ok "pending"
@@ -22,6 +32,7 @@ module Primary = struct
   end
 
   type t = {
+    build_type : Build_type.t option; [@default None]
     cname : string option;
     custom_404 : bool; [@default false]
     html_url : string option; [@default None]

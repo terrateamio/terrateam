@@ -10,7 +10,7 @@ module Primary = struct
     dismissed_review : Githubc2_components_issue_event_dismissed_review.t option; [@default None]
     event : string;
     id : int;
-    issue : Githubc2_components_issue.t option; [@default None]
+    issue : Githubc2_components_nullable_issue.t option; [@default None]
     label : Githubc2_components_issue_event_label.t option; [@default None]
     lock_reason : string option; [@default None]
     milestone : Githubc2_components_issue_event_milestone.t option; [@default None]

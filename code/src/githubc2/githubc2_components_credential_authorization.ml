@@ -4,10 +4,11 @@ module Primary = struct
   end
 
   type t = {
-    authorized_credential_id : int option; [@default None]
+    authorized_credential_expires_at : string option; [@default None]
+    authorized_credential_id : int option;
     authorized_credential_note : string option; [@default None]
     authorized_credential_title : string option; [@default None]
-    credential_accessed_at : string option; [@default None]
+    credential_accessed_at : string option;
     credential_authorized_at : string;
     credential_id : int;
     credential_type : string;

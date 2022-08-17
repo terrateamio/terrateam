@@ -104,7 +104,7 @@ module Primary = struct
 
   type t = {
     created_at : string;
-    deployment_branch_policy : Githubc2_components_deployment_branch_policy.t option;
+    deployment_branch_policy : Githubc2_components_deployment_branch_policy_settings.t option;
         [@default None]
     html_url : string;
     id : int;

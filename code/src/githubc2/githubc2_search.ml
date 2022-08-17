@@ -571,22 +571,9 @@ module Topics = struct
 
     module Not_modified = struct end
 
-    module Unsupported_media_type = struct
-      module Primary = struct
-        type t = {
-          documentation_url : string;
-          message : string;
-        }
-        [@@deriving yojson { strict = false; meta = true }, show]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
     type t =
       [ `OK of OK.t
       | `Not_modified
-      | `Unsupported_media_type of Unsupported_media_type.t
       ]
     [@@deriving show]
 
@@ -594,9 +581,6 @@ module Topics = struct
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
         ("304", fun _ -> Ok `Not_modified);
-        ( "415",
-          Openapi.of_json_body (fun v -> `Unsupported_media_type v) Unsupported_media_type.of_yojson
-        );
       ]
   end
 

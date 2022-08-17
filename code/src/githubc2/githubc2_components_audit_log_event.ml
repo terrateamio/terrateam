@@ -10,7 +10,7 @@ module Primary = struct
 
   module Config = struct
     module Items = struct
-      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
+      include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Json_schema.Obj)
     end
 
     type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
@@ -18,7 +18,7 @@ module Primary = struct
 
   module Config_was = struct
     module Items = struct
-      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
+      include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Json_schema.Obj)
     end
 
     type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
@@ -30,7 +30,7 @@ module Primary = struct
 
   module Events = struct
     module Items = struct
-      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
+      include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Json_schema.Obj)
     end
 
     type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
@@ -38,7 +38,7 @@ module Primary = struct
 
   module Events_were = struct
     module Items = struct
-      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
+      include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Json_schema.Obj)
     end
 
     type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]

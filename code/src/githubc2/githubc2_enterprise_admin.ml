@@ -1,3 +1,45 @@
+module Get_server_statistics = struct
+  module Parameters = struct
+    type t = {
+      date_end : string option; [@default None]
+      date_start : string option; [@default None]
+      enterprise_or_org : string;
+    }
+    [@@deriving make, show]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Server_statistics.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    type t = [ `OK of OK.t ] [@@deriving show]
+
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+  end
+
+  let url = "/enterprise-installation/{enterprise_or_org}/server-statistics"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [ ("enterprise_or_org", Var (params.enterprise_or_org, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [
+          ("date_start", Var (params.date_start, Option String));
+          ("date_end", Var (params.date_end, Option String));
+        ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
 module Set_github_actions_permissions_enterprise = struct
   module Parameters = struct
     type t = { enterprise : string } [@@deriving make, show]
@@ -307,6 +349,10 @@ module Create_self_hosted_runner_group_for_enterprise = struct
         type t = int list [@@deriving yojson { strict = false; meta = true }, show]
       end
 
+      module Selected_workflows = struct
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
       module Visibility = struct
         let t_of_yojson = function
           | `String "selected" -> Ok "selected"
@@ -318,9 +364,12 @@ module Create_self_hosted_runner_group_for_enterprise = struct
       end
 
       type t = {
+        allows_public_repositories : bool; [@default false]
         name : string;
+        restricted_to_workflows : bool; [@default false]
         runners : Runners.t option; [@default None]
         selected_organization_ids : Selected_organization_ids.t option; [@default None]
+        selected_workflows : Selected_workflows.t option; [@default None]
         visibility : Visibility.t option; [@default None]
       }
       [@@deriving make, yojson { strict = false; meta = true }, show]
@@ -362,6 +411,7 @@ module List_self_hosted_runner_groups_for_enterprise = struct
       enterprise : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
+      visible_to_organization : string option; [@default None]
     }
     [@@deriving make, show]
   end
@@ -401,7 +451,11 @@ module List_self_hosted_runner_groups_for_enterprise = struct
       ~query_params:
         (let open Openapi.Request.Var in
         let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+        [
+          ("per_page", Var (params.per_page, Int));
+          ("page", Var (params.page, Int));
+          ("visible_to_organization", Var (params.visible_to_organization, Option String));
+        ])
       ~url
       ~responses:Responses.t
       `Get
@@ -418,6 +472,10 @@ module Update_self_hosted_runner_group_for_enterprise = struct
 
   module Request_body = struct
     module Primary = struct
+      module Selected_workflows = struct
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
       module Visibility = struct
         let t_of_yojson = function
           | `String "selected" -> Ok "selected"
@@ -429,7 +487,10 @@ module Update_self_hosted_runner_group_for_enterprise = struct
       end
 
       type t = {
+        allows_public_repositories : bool; [@default false]
         name : string option; [@default None]
+        restricted_to_workflows : bool; [@default false]
+        selected_workflows : Selected_workflows.t option; [@default None]
         visibility : Visibility.t; [@default "all"]
       }
       [@@deriving make, yojson { strict = false; meta = true }, show]
@@ -1114,6 +1175,377 @@ module Get_self_hosted_runner_for_enterprise = struct
       `Get
 end
 
+module Remove_all_custom_labels_from_self_hosted_runner_for_enterprise = struct
+  module Parameters = struct
+    type t = {
+      enterprise : string;
+      runner_id : int;
+    }
+    [@@deriving make, show]
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Primary = struct
+        module Labels = struct
+          type t = Githubc2_components.Runner_label.t list
+          [@@deriving yojson { strict = false; meta = false }, show]
+        end
+
+        type t = {
+          labels : Labels.t;
+          total_count : int;
+        }
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Unprocessable_entity = struct
+      type t = Githubc2_components.Validation_error_simple.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+    [@@deriving show]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+      ]
+  end
+
+  let url = "/enterprises/{enterprise}/actions/runners/{runner_id}/labels"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [
+          ("enterprise", Var (params.enterprise, String)); ("runner_id", Var (params.runner_id, Int));
+        ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module Add_custom_labels_to_self_hosted_runner_for_enterprise = struct
+  module Parameters = struct
+    type t = {
+      enterprise : string;
+      runner_id : int;
+    }
+    [@@deriving make, show]
+  end
+
+  module Request_body = struct
+    module Primary = struct
+      module Labels = struct
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      type t = { labels : Labels.t } [@@deriving make, yojson { strict = false; meta = true }, show]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Primary = struct
+        module Labels = struct
+          type t = Githubc2_components.Runner_label.t list
+          [@@deriving yojson { strict = false; meta = false }, show]
+        end
+
+        type t = {
+          labels : Labels.t;
+          total_count : int;
+        }
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Unprocessable_entity = struct
+      type t = Githubc2_components.Validation_error_simple.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+    [@@deriving show]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+      ]
+  end
+
+  let url = "/enterprises/{enterprise}/actions/runners/{runner_id}/labels"
+
+  let make ~body params =
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [
+          ("enterprise", Var (params.enterprise, String)); ("runner_id", Var (params.runner_id, Int));
+        ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module Set_custom_labels_for_self_hosted_runner_for_enterprise = struct
+  module Parameters = struct
+    type t = {
+      enterprise : string;
+      runner_id : int;
+    }
+    [@@deriving make, show]
+  end
+
+  module Request_body = struct
+    module Primary = struct
+      module Labels = struct
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      type t = { labels : Labels.t } [@@deriving make, yojson { strict = false; meta = true }, show]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Primary = struct
+        module Labels = struct
+          type t = Githubc2_components.Runner_label.t list
+          [@@deriving yojson { strict = false; meta = false }, show]
+        end
+
+        type t = {
+          labels : Labels.t;
+          total_count : int;
+        }
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Unprocessable_entity = struct
+      type t = Githubc2_components.Validation_error_simple.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+    [@@deriving show]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+      ]
+  end
+
+  let url = "/enterprises/{enterprise}/actions/runners/{runner_id}/labels"
+
+  let make ~body params =
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [
+          ("enterprise", Var (params.enterprise, String)); ("runner_id", Var (params.runner_id, Int));
+        ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module List_labels_for_self_hosted_runner_for_enterprise = struct
+  module Parameters = struct
+    type t = {
+      enterprise : string;
+      runner_id : int;
+    }
+    [@@deriving make, show]
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Primary = struct
+        module Labels = struct
+          type t = Githubc2_components.Runner_label.t list
+          [@@deriving yojson { strict = false; meta = false }, show]
+        end
+
+        type t = {
+          labels : Labels.t;
+          total_count : int;
+        }
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      ]
+    [@@deriving show]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+      ]
+  end
+
+  let url = "/enterprises/{enterprise}/actions/runners/{runner_id}/labels"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [
+          ("enterprise", Var (params.enterprise, String)); ("runner_id", Var (params.runner_id, Int));
+        ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Remove_custom_label_from_self_hosted_runner_for_enterprise = struct
+  module Parameters = struct
+    type t = {
+      enterprise : string;
+      name : string;
+      runner_id : int;
+    }
+    [@@deriving make, show]
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Primary = struct
+        module Labels = struct
+          type t = Githubc2_components.Runner_label.t list
+          [@@deriving yojson { strict = false; meta = false }, show]
+        end
+
+        type t = {
+          labels : Labels.t;
+          total_count : int;
+        }
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Unprocessable_entity = struct
+      type t = Githubc2_components.Validation_error_simple.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+    [@@deriving show]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+      ]
+  end
+
+  let url = "/enterprises/{enterprise}/actions/runners/{runner_id}/labels/{name}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [
+          ("enterprise", Var (params.enterprise, String));
+          ("runner_id", Var (params.runner_id, Int));
+          ("name", Var (params.name, String));
+        ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
 module Get_audit_log = struct
   module Parameters = struct
     module Include = struct
@@ -1180,6 +1612,76 @@ module Get_audit_log = struct
           ("page", Var (params.page, Int));
           ("per_page", Var (params.per_page, Int));
         ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Get_consumed_licenses = struct
+  module Parameters = struct
+    type t = {
+      enterprise : string;
+      page : int; [@default 1]
+      per_page : int; [@default 30]
+    }
+    [@@deriving make, show]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Get_consumed_licenses.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    type t = [ `OK of OK.t ] [@@deriving show]
+
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+  end
+
+  let url = "/enterprises/{enterprise}/consumed-licenses"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [ ("enterprise", Var (params.enterprise, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Get_license_sync_status = struct
+  module Parameters = struct
+    type t = { enterprise : string } [@@deriving make, show]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Get_license_sync_status.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    type t = [ `OK of OK.t ] [@@deriving show]
+
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+  end
+
+  let url = "/enterprises/{enterprise}/license-sync-status"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [ ("enterprise", Var (params.enterprise, String)) ])
+      ~query_params:[]
       ~url
       ~responses:Responses.t
       `Get
@@ -1322,42 +1824,7 @@ module Update_attribute_for_enterprise_group = struct
             end
 
             module Value = struct
-              module V0 = struct
-                type t = string [@@deriving yojson { strict = false; meta = true }, show]
-              end
-
-              module V1 = struct
-                include
-                  Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Json_schema.Obj)
-              end
-
-              module V2 = struct
-                module Items = struct
-                  type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
-                end
-
-                type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
-              end
-
-              type t =
-                | V0 of V0.t
-                | V1 of V1.t
-                | V2 of V2.t
-              [@@deriving show]
-
-              let of_yojson =
-                Json_schema.one_of
-                  (let open CCResult in
-                  [
-                    (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
-                    (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
-                    (fun v -> map (fun v -> V2 v) (V2.of_yojson v));
-                  ])
-
-              let to_yojson = function
-                | V0 v -> V0.to_yojson v
-                | V1 v -> V1.to_yojson v
-                | V2 v -> V2.to_yojson v
+              type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
             end
 
             type t = {

@@ -68,6 +68,7 @@ module Primary = struct
         allow_merge_commit : bool option; [@default None]
         allow_rebase_merge : bool option; [@default None]
         allow_squash_merge : bool option; [@default None]
+        allow_update_branch : bool option; [@default None]
         archive_url : string option; [@default None]
         archived : bool option; [@default None]
         assignees_url : string option; [@default None]
@@ -143,6 +144,7 @@ module Primary = struct
         trees_url : string option; [@default None]
         updated_at : string option; [@default None]
         url : string option; [@default None]
+        use_squash_pr_title_as_default : bool option; [@default None]
         visibility : string option; [@default None]
         watchers_count : int option; [@default None]
       }
@@ -162,6 +164,7 @@ module Primary = struct
     allow_merge_commit : bool; [@default true]
     allow_rebase_merge : bool; [@default true]
     allow_squash_merge : bool; [@default true]
+    allow_update_branch : bool; [@default false]
     archive_url : string;
     archived : bool; [@default false]
     assignees_url : string;
@@ -244,6 +247,7 @@ module Primary = struct
     trees_url : string;
     updated_at : string option;
     url : string;
+    use_squash_pr_title_as_default : bool; [@default false]
     visibility : string; [@default "public"]
     watchers : int;
     watchers_count : int;

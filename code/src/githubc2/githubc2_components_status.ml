@@ -4,11 +4,11 @@ module Primary = struct
     context : string;
     created_at : string;
     creator : Githubc2_components_nullable_simple_user.t option;
-    description : string;
+    description : string option;
     id : int;
     node_id : string;
     state : string;
-    target_url : string;
+    target_url : string option;
     updated_at : string;
     url : string;
   }

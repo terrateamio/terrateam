@@ -45,6 +45,7 @@ module Primary = struct
     members_can_create_public_pages : bool option; [@default None]
     members_can_create_public_repositories : bool option; [@default None]
     members_can_create_repositories : bool option; [@default None]
+    members_can_fork_private_repositories : bool option; [@default None]
     members_url : string;
     name : string option; [@default None]
     node_id : string;

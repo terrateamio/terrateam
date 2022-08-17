@@ -407,13 +407,13 @@ module Primary = struct
     module Items = struct
       module Primary = struct
         type t = {
-          color : string option; [@default None]
-          default : bool option; [@default None]
-          description : string option; [@default None]
-          id : int64 option; [@default None]
-          name : string option; [@default None]
-          node_id : string option; [@default None]
-          url : string option; [@default None]
+          color : string;
+          default : bool;
+          description : string option;
+          id : int64;
+          name : string;
+          node_id : string;
+          url : string;
         }
         [@@deriving yojson { strict = false; meta = true }, show]
       end

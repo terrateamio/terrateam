@@ -43,6 +43,49 @@ module List = struct
       `Get
 end
 
+module List_custom_roles = struct
+  module Parameters = struct
+    type t = { organization_id : string } [@@deriving make, show]
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Primary = struct
+        module Custom_roles = struct
+          type t = Githubc2_components.Organization_custom_repository_role.t list
+          [@@deriving yojson { strict = false; meta = false }, show]
+        end
+
+        type t = {
+          custom_roles : Custom_roles.t option; [@default None]
+          total_count : int option; [@default None]
+        }
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    type t = [ `OK of OK.t ] [@@deriving show]
+
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+  end
+
+  let url = "/organizations/{organization_id}/custom_roles"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [ ("organization_id", Var (params.organization_id, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
 module Update = struct
   module Parameters = struct
     type t = { org : string } [@@deriving make, show]
@@ -93,6 +136,7 @@ module Update = struct
         members_can_create_public_pages : bool; [@default true]
         members_can_create_public_repositories : bool option; [@default None]
         members_can_create_repositories : bool; [@default true]
+        members_can_fork_private_repositories : bool; [@default false]
         name : string option; [@default None]
         twitter_username : string option; [@default None]
       }
@@ -239,7 +283,6 @@ module Get_audit_log = struct
       include_ : Include.t option; [@default None] [@key "include"]
       order : Order.t option; [@default None]
       org : string;
-      page : int; [@default 1]
       per_page : int; [@default 30]
       phrase : string option; [@default None]
     }
@@ -276,7 +319,6 @@ module Get_audit_log = struct
           ("before", Var (params.before, Option String));
           ("order", Var (params.order, Option String));
           ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
         ])
       ~url
       ~responses:Responses.t
@@ -294,31 +336,9 @@ module List_blocked_users = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    module Unsupported_media_type = struct
-      module Primary = struct
-        type t = {
-          documentation_url : string;
-          message : string;
-        }
-        [@@deriving yojson { strict = false; meta = true }, show]
-      end
+    type t = [ `OK of OK.t ] [@@deriving show]
 
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
-    type t =
-      [ `OK of OK.t
-      | `Unsupported_media_type of Unsupported_media_type.t
-      ]
-    [@@deriving show]
-
-    let t =
-      [
-        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
-        ( "415",
-          Openapi.of_json_body (fun v -> `Unsupported_media_type v) Unsupported_media_type.of_yojson
-        );
-      ]
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
   let url = "/orgs/{org}/blocks"
@@ -461,7 +481,13 @@ end
 
 module List_saml_sso_authorizations = struct
   module Parameters = struct
-    type t = { org : string } [@@deriving make, show]
+    type t = {
+      login : string option; [@default None]
+      org : string;
+      page : int option; [@default None]
+      per_page : int; [@default 30]
+    }
+    [@@deriving make, show]
   end
 
   module Responses = struct
@@ -484,7 +510,14 @@ module List_saml_sso_authorizations = struct
         (let open Openapi.Request.Var in
         let open Parameters in
         [ ("org", Var (params.org, String)) ])
-      ~query_params:[]
+      ~query_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [
+          ("per_page", Var (params.per_page, Int));
+          ("page", Var (params.page, Option Int));
+          ("login", Var (params.login, Option String));
+        ])
       ~url
       ~responses:Responses.t
       `Get
@@ -918,13 +951,17 @@ module Update_webhook_config_for_org = struct
   end
 
   module Request_body = struct
-    type t = {
-      content_type : string option; [@default None]
-      insecure_ssl : Githubc2_components.Webhook_config_insecure_ssl.t option; [@default None]
-      secret : string option; [@default None]
-      url : string option; [@default None]
-    }
-    [@@deriving make, yojson { strict = true; meta = true }, show]
+    module Primary = struct
+      type t = {
+        content_type : string option; [@default None]
+        insecure_ssl : Githubc2_components.Webhook_config_insecure_ssl.t option; [@default None]
+        secret : string option; [@default None]
+        url : string option; [@default None]
+      }
+      [@@deriving make, yojson { strict = false; meta = true }, show]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
   end
 
   module Responses = struct
@@ -1977,6 +2014,15 @@ module Convert_member_to_outside_collaborator = struct
     [@@deriving make, show]
   end
 
+  module Request_body = struct
+    module Primary = struct
+      type t = { async : bool [@default false] }
+      [@@deriving make, yojson { strict = false; meta = true }, show]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
   module Responses = struct
     module Accepted = struct
       type t = Json_schema.Empty_obj.t [@@deriving yojson { strict = false; meta = false }, show]
@@ -2009,8 +2055,9 @@ module Convert_member_to_outside_collaborator = struct
 
   let url = "/orgs/{org}/outside_collaborators/{username}"
 
-  let make params =
+  let make ?body params =
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2173,6 +2220,106 @@ module Check_public_membership_for_user = struct
       ~url
       ~responses:Responses.t
       `Get
+end
+
+module List_security_manager_teams = struct
+  module Parameters = struct
+    type t = { org : string } [@@deriving make, show]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Team_simple.t list
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    type t = [ `OK of OK.t ] [@@deriving show]
+
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+  end
+
+  let url = "/orgs/{org}/security-managers"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [ ("org", Var (params.org, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Remove_security_manager_team = struct
+  module Parameters = struct
+    type t = {
+      org : string;
+      team_slug : string;
+    }
+    [@@deriving make, show]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+
+    type t = [ `No_content ] [@@deriving show]
+
+    let t = [ ("204", fun _ -> Ok `No_content) ]
+  end
+
+  let url = "/orgs/{org}/security-managers/teams/{team_slug}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [ ("org", Var (params.org, String)); ("team_slug", Var (params.team_slug, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module Add_security_manager_team = struct
+  module Parameters = struct
+    type t = {
+      org : string;
+      team_slug : string;
+    }
+    [@@deriving make, show]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+    module Conflict = struct end
+
+    type t =
+      [ `No_content
+      | `Conflict
+      ]
+    [@@deriving show]
+
+    let t = [ ("204", fun _ -> Ok `No_content); ("409", fun _ -> Ok `Conflict) ]
+  end
+
+  let url = "/orgs/{org}/security-managers/teams/{team_slug}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [ ("org", Var (params.org, String)); ("team_slug", Var (params.team_slug, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
 end
 
 module List_memberships_for_authenticated_user = struct

@@ -159,12 +159,18 @@ module List_provisioned_identities = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    module Too_many_requests = struct
+      type t = Githubc2_components.Scim_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
     type t =
       [ `OK
       | `Not_modified
       | `Bad_request of Bad_request.t
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
+      | `Too_many_requests of Too_many_requests.t
       ]
     [@@deriving show]
 
@@ -175,6 +181,7 @@ module List_provisioned_identities = struct
         ("400", Openapi.of_json_body (fun v -> `Bad_request v) Bad_request.of_yojson);
         ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ("429", Openapi.of_json_body (fun v -> `Too_many_requests v) Too_many_requests.of_yojson);
       ]
   end
 

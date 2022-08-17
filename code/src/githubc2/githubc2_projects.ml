@@ -1495,7 +1495,7 @@ module Get_permission_for_user = struct
 
   module Responses = struct
     module OK = struct
-      type t = Githubc2_components.Repository_collaborator_permission.t
+      type t = Githubc2_components.Project_collaborator_permission.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
@@ -1915,18 +1915,6 @@ module Create_for_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    module Unsupported_media_type = struct
-      module Primary = struct
-        type t = {
-          documentation_url : string;
-          message : string;
-        }
-        [@@deriving yojson { strict = false; meta = true }, show]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error_simple.t
       [@@deriving yojson { strict = false; meta = false }, show]
@@ -1937,7 +1925,6 @@ module Create_for_authenticated_user = struct
       | `Not_modified
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
-      | `Unsupported_media_type of Unsupported_media_type.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
     [@@deriving show]
@@ -1948,9 +1935,6 @@ module Create_for_authenticated_user = struct
         ("304", fun _ -> Ok `Not_modified);
         ("401", Openapi.of_json_body (fun v -> `Unauthorized v) Unauthorized.of_yojson);
         ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
-        ( "415",
-          Openapi.of_json_body (fun v -> `Unsupported_media_type v) Unsupported_media_type.of_yojson
-        );
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
       ]

@@ -1,7 +1,8 @@
 module Primary = struct
   type t = {
     permission : string;
-    user : Githubc2_components_nullable_simple_user.t option;
+    role_name : string;
+    user : Githubc2_components_nullable_collaborator.t option;
   }
   [@@deriving yojson { strict = false; meta = true }, show]
 end

@@ -1,6 +1,7 @@
 module Primary = struct
   type t = {
     id : int;
+    is_alphanumeric : bool option; [@default None]
     key_prefix : string;
     url_template : string;
   }

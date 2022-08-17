@@ -81,38 +81,3 @@ module Get_conduct_code = struct
       ~responses:Responses.t
       `Get
 end
-
-module Get_for_repo = struct
-  module Parameters = struct
-    type t = {
-      owner : string;
-      repo : string;
-    }
-    [@@deriving make, show]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Githubc2_components.Code_of_conduct.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    type t = [ `OK of OK.t ] [@@deriving show]
-
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
-  end
-
-  let url = "/repos/{owner}/{repo}/community/code_of_conduct"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end

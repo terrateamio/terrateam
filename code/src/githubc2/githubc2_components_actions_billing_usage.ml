@@ -5,6 +5,17 @@ module Primary = struct
         macos : int option; [@default None] [@key "MACOS"]
         ubuntu : int option; [@default None] [@key "UBUNTU"]
         windows : int option; [@default None] [@key "WINDOWS"]
+        total : int option; [@default None]
+        ubuntu_16_core : int option; [@default None]
+        ubuntu_32_core : int option; [@default None]
+        ubuntu_4_core : int option; [@default None]
+        ubuntu_64_core : int option; [@default None]
+        ubuntu_8_core : int option; [@default None]
+        windows_16_core : int option; [@default None]
+        windows_32_core : int option; [@default None]
+        windows_4_core : int option; [@default None]
+        windows_64_core : int option; [@default None]
+        windows_8_core : int option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show]
     end

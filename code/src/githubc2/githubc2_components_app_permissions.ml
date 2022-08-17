@@ -29,16 +29,6 @@ module Primary = struct
     [@@deriving yojson { strict = false; meta = true }, show]
   end
 
-  module Content_references = struct
-    let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
-      | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-    type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
-  end
-
   module Contents = struct
     let t_of_yojson = function
       | `String "read" -> Ok "read"
@@ -89,7 +79,7 @@ module Primary = struct
     [@@deriving yojson { strict = false; meta = true }, show]
   end
 
-  module Metadata = struct
+  module Metadata_ = struct
     let t_of_yojson = function
       | `String "read" -> Ok "read"
       | `String "write" -> Ok "write"
@@ -293,6 +283,7 @@ module Primary = struct
   module Vulnerability_alerts = struct
     let t_of_yojson = function
       | `String "read" -> Ok "read"
+      | `String "write" -> Ok "write"
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
@@ -312,13 +303,12 @@ module Primary = struct
     actions : Actions.t option; [@default None]
     administration : Administration.t option; [@default None]
     checks : Checks.t option; [@default None]
-    content_references : Content_references.t option; [@default None]
     contents : Contents.t option; [@default None]
     deployments : Deployments.t option; [@default None]
     environments : Environments.t option; [@default None]
     issues : Issues.t option; [@default None]
     members : Members.t option; [@default None]
-    metadata : Metadata.t option; [@default None]
+    metadata : Metadata_.t option; [@default None]
     organization_administration : Organization_administration.t option; [@default None]
     organization_hooks : Organization_hooks.t option; [@default None]
     organization_packages : Organization_packages.t option; [@default None]

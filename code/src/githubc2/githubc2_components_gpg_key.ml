@@ -47,6 +47,7 @@ module Primary = struct
           primary_key_id : int option; [@default None]
           public_key : string option; [@default None]
           raw_key : string option; [@default None]
+          revoked : bool option; [@default None]
           subkeys : Subkeys.t option; [@default None]
         }
         [@@deriving yojson { strict = false; meta = true }, show]
@@ -68,9 +69,11 @@ module Primary = struct
     expires_at : string option;
     id : int;
     key_id : string;
+    name : string option; [@default None]
     primary_key_id : int option;
     public_key : string;
     raw_key : string option;
+    revoked : bool;
     subkeys : Subkeys.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show]

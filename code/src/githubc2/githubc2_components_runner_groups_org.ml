@@ -1,4 +1,8 @@
 module Primary = struct
+  module Selected_workflows = struct
+    type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+  end
+
   type t = {
     allows_public_repositories : bool;
     default : bool;
@@ -6,9 +10,12 @@ module Primary = struct
     inherited : bool;
     inherited_allows_public_repositories : bool option; [@default None]
     name : string;
+    restricted_to_workflows : bool; [@default false]
     runners_url : string;
     selected_repositories_url : string option; [@default None]
+    selected_workflows : Selected_workflows.t option; [@default None]
     visibility : string;
+    workflow_restrictions_read_only : bool; [@default false]
   }
   [@@deriving yojson { strict = false; meta = true }, show]
 end

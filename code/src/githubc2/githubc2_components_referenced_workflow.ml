@@ -1,9 +1,8 @@
 module Primary = struct
   type t = {
-    body : string;
-    id : int;
-    node_id : string option; [@default None]
-    title : string;
+    path : string;
+    ref_ : string option; [@default None] [@key "ref"]
+    sha : string;
   }
   [@@deriving yojson { strict = false; meta = true }, show]
 end

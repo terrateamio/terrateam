@@ -11,8 +11,6 @@ type get_installation_access_token_err =
   | `Unauthorized of Githubc2_components.Basic_error.t
   | `Forbidden of Githubc2_components.Basic_error.t
   | `Not_found of Githubc2_components.Basic_error.t
-  | `Unsupported_media_type of
-    Githubc2_apps.Create_installation_access_token.Responses.Unsupported_media_type.t
   | `Unprocessable_entity of Githubc2_components.Validation_error.t
   ]
 [@@deriving show]

@@ -29,28 +29,8 @@ module Primary = struct
   end
 
   module Files = struct
-    module Items = struct
-      module Primary = struct
-        type t = {
-          additions : int option; [@default None]
-          blob_url : string option; [@default None]
-          changes : int option; [@default None]
-          contents_url : string option; [@default None]
-          deletions : int option; [@default None]
-          filename : string option; [@default None]
-          patch : string option; [@default None]
-          previous_filename : string option; [@default None]
-          raw_url : string option; [@default None]
-          sha : string option; [@default None]
-          status : string option; [@default None]
-        }
-        [@@deriving yojson { strict = false; meta = true }, show]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
-    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = Githubc2_components_diff_entry.t list
+    [@@deriving yojson { strict = false; meta = true }, show]
   end
 
   module Parents = struct

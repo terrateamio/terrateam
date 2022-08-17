@@ -308,8 +308,6 @@ module List_matching_refs = struct
   module Parameters = struct
     type t = {
       owner : string;
-      page : int; [@default 1]
-      per_page : int; [@default 30]
       ref_ : string; [@key "ref"]
       repo : string;
     }
@@ -340,10 +338,7 @@ module List_matching_refs = struct
           ("repo", Var (params.repo, String));
           ("ref", Var (params.ref_, String));
         ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+      ~query_params:[]
       ~url
       ~responses:Responses.t
       `Get

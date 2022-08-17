@@ -5,8 +5,10 @@ module Primary = struct
         actions_runner_registration : Githubc2_components_rate_limit.t option; [@default None]
         code_scanning_upload : Githubc2_components_rate_limit.t option; [@default None]
         core : Githubc2_components_rate_limit.t;
+        dependency_snapshots : Githubc2_components_rate_limit.t option; [@default None]
         graphql : Githubc2_components_rate_limit.t option; [@default None]
         integration_manifest : Githubc2_components_rate_limit.t option; [@default None]
+        scim : Githubc2_components_rate_limit.t option; [@default None]
         search : Githubc2_components_rate_limit.t;
         source_import : Githubc2_components_rate_limit.t option; [@default None]
       }

@@ -25,9 +25,12 @@ module Start_for_org = struct
       type t = {
         exclude : Exclude.t option; [@default None]
         exclude_attachments : bool; [@default false]
+        exclude_git_data : bool; [@default false]
+        exclude_metadata : bool; [@default false]
         exclude_owner_projects : bool; [@default false]
         exclude_releases : bool; [@default false]
         lock_repositories : bool; [@default false]
+        org_metadata_only : bool; [@default false]
         repositories : Repositories.t;
       }
       [@@deriving make, yojson { strict = false; meta = true }, show]
@@ -408,9 +411,21 @@ module Update_import = struct
 
   module Request_body = struct
     module Primary = struct
+      module Vcs = struct
+        let t_of_yojson = function
+          | `String "subversion" -> Ok "subversion"
+          | `String "tfvc" -> Ok "tfvc"
+          | `String "git" -> Ok "git"
+          | `String "mercurial" -> Ok "mercurial"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
       type t = {
         tfvc_project : string option; [@default None]
-        vcs : string option; [@default None]
+        vcs : Vcs.t option; [@default None]
         vcs_password : string option; [@default None]
         vcs_username : string option; [@default None]
       }
@@ -862,9 +877,12 @@ module Start_for_authenticated_user = struct
       type t = {
         exclude : Exclude.t option; [@default None]
         exclude_attachments : bool option; [@default None]
+        exclude_git_data : bool option; [@default None]
+        exclude_metadata : bool option; [@default None]
         exclude_owner_projects : bool option; [@default None]
         exclude_releases : bool option; [@default None]
         lock_repositories : bool option; [@default None]
+        org_metadata_only : bool; [@default false]
         repositories : Repositories.t;
       }
       [@@deriving make, yojson { strict = false; meta = true }, show]

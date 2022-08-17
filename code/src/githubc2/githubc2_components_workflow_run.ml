@@ -4,7 +4,13 @@ module Primary = struct
     [@@deriving yojson { strict = false; meta = true }, show]
   end
 
+  module Referenced_workflows = struct
+    type t = Githubc2_components_referenced_workflow.t list
+    [@@deriving yojson { strict = false; meta = true }, show]
+  end
+
   type t = {
+    actor : Githubc2_components_simple_user.t option; [@default None]
     artifacts_url : string;
     cancel_url : string;
     check_suite_id : int option; [@default None]
@@ -24,14 +30,17 @@ module Primary = struct
     logs_url : string;
     name : string option; [@default None]
     node_id : string;
+    path : string;
     previous_attempt_url : string option; [@default None]
     pull_requests : Pull_requests.t option;
+    referenced_workflows : Referenced_workflows.t option; [@default None]
     repository : Githubc2_components_minimal_repository.t;
     rerun_url : string;
     run_attempt : int option; [@default None]
     run_number : int;
     run_started_at : string option; [@default None]
     status : string option;
+    triggering_actor : Githubc2_components_simple_user.t option; [@default None]
     updated_at : string;
     url : string;
     workflow_id : int;

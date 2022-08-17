@@ -7,6 +7,10 @@ module Primary = struct
     type t = { enabled : bool } [@@deriving yojson { strict = true; meta = true }, show]
   end
 
+  module Block_creations = struct
+    type t = { enabled : bool } [@@deriving yojson { strict = true; meta = true }, show]
+  end
+
   module Enforce_admins = struct
     type t = {
       enabled : bool;
@@ -26,8 +30,13 @@ module Primary = struct
 
   module Required_pull_request_reviews = struct
     module Primary = struct
-      module Dismissal_restrictions = struct
+      module Bypass_pull_request_allowances = struct
         module Primary = struct
+          module Apps = struct
+            type t = Githubc2_components_integration.t list
+            [@@deriving yojson { strict = false; meta = true }, show]
+          end
+
           module Teams = struct
             type t = Githubc2_components_team.t list
             [@@deriving yojson { strict = false; meta = true }, show]
@@ -39,6 +48,35 @@ module Primary = struct
           end
 
           type t = {
+            apps : Apps.t option; [@default None]
+            teams : Teams.t;
+            users : Users.t;
+          }
+          [@@deriving yojson { strict = false; meta = true }, show]
+        end
+
+        include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+      end
+
+      module Dismissal_restrictions = struct
+        module Primary = struct
+          module Apps = struct
+            type t = Githubc2_components_integration.t list
+            [@@deriving yojson { strict = false; meta = true }, show]
+          end
+
+          module Teams = struct
+            type t = Githubc2_components_team.t list
+            [@@deriving yojson { strict = false; meta = true }, show]
+          end
+
+          module Users = struct
+            type t = Githubc2_components_simple_user.t list
+            [@@deriving yojson { strict = false; meta = true }, show]
+          end
+
+          type t = {
+            apps : Apps.t option; [@default None]
             teams : Teams.t;
             teams_url : string;
             url : string;
@@ -52,6 +90,7 @@ module Primary = struct
       end
 
       type t = {
+        bypass_pull_request_allowances : Bypass_pull_request_allowances.t option; [@default None]
         dismiss_stale_reviews : bool option; [@default None]
         dismissal_restrictions : Dismissal_restrictions.t option; [@default None]
         require_code_owner_reviews : bool option; [@default None]
@@ -79,6 +118,7 @@ module Primary = struct
   type t = {
     allow_deletions : Allow_deletions.t option; [@default None]
     allow_force_pushes : Allow_force_pushes.t option; [@default None]
+    block_creations : Block_creations.t option; [@default None]
     enforce_admins : Enforce_admins.t option; [@default None]
     required_conversation_resolution : Required_conversation_resolution.t option; [@default None]
     required_linear_history : Required_linear_history.t option; [@default None]

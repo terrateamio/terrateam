@@ -29,10 +29,6 @@ module Create_from_manifest = struct
     type t = { code : string } [@@deriving make, show]
   end
 
-  module Request_body = struct
-    type t = Json_schema.Empty_obj.t [@@deriving yojson { strict = false; meta = true }, show]
-  end
-
   module Responses = struct
     module Created = struct
       module All_of = struct
@@ -170,9 +166,8 @@ module Create_from_manifest = struct
 
   let url = "/app-manifests/{code}/conversions"
 
-  let make ?body params =
+  let make params =
     Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -214,9 +209,9 @@ module Update_webhook_config_for_app = struct
 
   let url = "/app/hook/config"
 
-  let make ?body () =
+  let make ~body () =
     Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
+      ~body:(Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -509,22 +504,9 @@ module Get_installation = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    module Unsupported_media_type = struct
-      module Primary = struct
-        type t = {
-          documentation_url : string;
-          message : string;
-        }
-        [@@deriving yojson { strict = false; meta = true }, show]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
     type t =
       [ `OK of OK.t
       | `Not_found of Not_found.t
-      | `Unsupported_media_type of Unsupported_media_type.t
       ]
     [@@deriving show]
 
@@ -532,9 +514,6 @@ module Get_installation = struct
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
-        ( "415",
-          Openapi.of_json_body (fun v -> `Unsupported_media_type v) Unsupported_media_type.of_yojson
-        );
       ]
   end
 
@@ -600,18 +579,6 @@ module Create_installation_access_token = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    module Unsupported_media_type = struct
-      module Primary = struct
-        type t = {
-          documentation_url : string;
-          message : string;
-        }
-        [@@deriving yojson { strict = false; meta = true }, show]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
@@ -622,7 +589,6 @@ module Create_installation_access_token = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
-      | `Unsupported_media_type of Unsupported_media_type.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
     [@@deriving show]
@@ -633,9 +599,6 @@ module Create_installation_access_token = struct
         ("401", Openapi.of_json_body (fun v -> `Unauthorized v) Unauthorized.of_yojson);
         ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
-        ( "415",
-          Openapi.of_json_body (fun v -> `Unsupported_media_type v) Unsupported_media_type.of_yojson
-        );
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
       ]
@@ -1072,23 +1035,10 @@ module Get_by_slug = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    module Unsupported_media_type = struct
-      module Primary = struct
-        type t = {
-          documentation_url : string;
-          message : string;
-        }
-        [@@deriving yojson { strict = false; meta = true }, show]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
     type t =
       [ `OK of OK.t
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
-      | `Unsupported_media_type of Unsupported_media_type.t
       ]
     [@@deriving show]
 
@@ -1097,9 +1047,6 @@ module Get_by_slug = struct
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
         ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
-        ( "415",
-          Openapi.of_json_body (fun v -> `Unsupported_media_type v) Unsupported_media_type.of_yojson
-        );
       ]
   end
 
@@ -1116,105 +1063,6 @@ module Get_by_slug = struct
       ~url
       ~responses:Responses.t
       `Get
-end
-
-module Create_content_attachment = struct
-  module Parameters = struct
-    type t = { content_reference_id : int } [@@deriving make, show]
-  end
-
-  module Request_body = struct
-    module Primary = struct
-      type t = {
-        body : string;
-        title : string;
-      }
-      [@@deriving make, yojson { strict = false; meta = true }, show]
-    end
-
-    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Githubc2_components.Content_reference_attachment.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Not_modified = struct end
-
-    module Forbidden = struct
-      type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Not_found = struct
-      type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Gone = struct
-      type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Unsupported_media_type = struct
-      module Primary = struct
-        type t = {
-          documentation_url : string;
-          message : string;
-        }
-        [@@deriving yojson { strict = false; meta = true }, show]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
-    module Unprocessable_entity = struct
-      type t = Githubc2_components.Validation_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    type t =
-      [ `OK of OK.t
-      | `Not_modified
-      | `Forbidden of Forbidden.t
-      | `Not_found of Not_found.t
-      | `Gone of Gone.t
-      | `Unsupported_media_type of Unsupported_media_type.t
-      | `Unprocessable_entity of Unprocessable_entity.t
-      ]
-    [@@deriving show]
-
-    let t =
-      [
-        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
-        ("304", fun _ -> Ok `Not_modified);
-        ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
-        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
-        ("410", Openapi.of_json_body (fun v -> `Gone v) Gone.of_yojson);
-        ( "415",
-          Openapi.of_json_body (fun v -> `Unsupported_media_type v) Unsupported_media_type.of_yojson
-        );
-        ( "422",
-          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
-      ]
-  end
-
-  let url = "/content_references/{content_reference_id}/attachments"
-
-  let make ?body params =
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("content_reference_id", Var (params.content_reference_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
 end
 
 module List_repos_accessible_to_installation = struct
@@ -1714,114 +1562,6 @@ module Get_org_installation = struct
       `Get
 end
 
-module Create_content_attachment_for_repo = struct
-  module Parameters = struct
-    type t = {
-      content_reference_id : int;
-      owner : string;
-      repo : string;
-    }
-    [@@deriving make, show]
-  end
-
-  module Request_body = struct
-    module Primary = struct
-      type t = {
-        body : string;
-        title : string;
-      }
-      [@@deriving make, yojson { strict = false; meta = true }, show]
-    end
-
-    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Githubc2_components.Content_reference_attachment.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Not_modified = struct end
-
-    module Forbidden = struct
-      type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Not_found = struct
-      type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Gone = struct
-      type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Unsupported_media_type = struct
-      module Primary = struct
-        type t = {
-          documentation_url : string;
-          message : string;
-        }
-        [@@deriving yojson { strict = false; meta = true }, show]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
-    module Unprocessable_entity = struct
-      type t = Githubc2_components.Validation_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    type t =
-      [ `OK of OK.t
-      | `Not_modified
-      | `Forbidden of Forbidden.t
-      | `Not_found of Not_found.t
-      | `Gone of Gone.t
-      | `Unsupported_media_type of Unsupported_media_type.t
-      | `Unprocessable_entity of Unprocessable_entity.t
-      ]
-    [@@deriving show]
-
-    let t =
-      [
-        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
-        ("304", fun _ -> Ok `Not_modified);
-        ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
-        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
-        ("410", Openapi.of_json_body (fun v -> `Gone v) Gone.of_yojson);
-        ( "415",
-          Openapi.of_json_body (fun v -> `Unsupported_media_type v) Unsupported_media_type.of_yojson
-        );
-        ( "422",
-          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
-      ]
-  end
-
-  let url = "/repos/{owner}/{repo}/content_references/{content_reference_id}/attachments"
-
-  let make ~body params =
-    Openapi.Request.make
-      ~body:(Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("content_reference_id", Var (params.content_reference_id, Int));
-        ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
 module Get_repo_installation = struct
   module Parameters = struct
     type t = {
@@ -1916,24 +1656,11 @@ module List_installations_for_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    module Unsupported_media_type = struct
-      module Primary = struct
-        type t = {
-          documentation_url : string;
-          message : string;
-        }
-        [@@deriving yojson { strict = false; meta = true }, show]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
     type t =
       [ `OK of OK.t
       | `Not_modified
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
-      | `Unsupported_media_type of Unsupported_media_type.t
       ]
     [@@deriving show]
 
@@ -1943,9 +1670,6 @@ module List_installations_for_authenticated_user = struct
         ("304", fun _ -> Ok `Not_modified);
         ("401", Openapi.of_json_body (fun v -> `Unauthorized v) Unauthorized.of_yojson);
         ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
-        ( "415",
-          Openapi.of_json_body (fun v -> `Unsupported_media_type v) Unsupported_media_type.of_yojson
-        );
       ]
   end
 

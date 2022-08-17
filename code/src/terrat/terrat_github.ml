@@ -19,8 +19,6 @@ type get_installation_access_token_err =
   | `Unauthorized of Githubc2_components.Basic_error.t
   | `Forbidden of Githubc2_components.Basic_error.t
   | `Not_found of Githubc2_components.Basic_error.t
-  | `Unsupported_media_type of
-    Githubc2_apps.Create_installation_access_token.Responses.Unsupported_media_type.t
   | `Unprocessable_entity of Githubc2_components.Validation_error.t
   ]
 [@@deriving show]
@@ -100,11 +98,8 @@ let get_installation_access_token config installation_id =
   | `Created token ->
       let installation_token = Githubc2_components.Installation_token.value token in
       Abb.Future.return (Ok installation_token.Githubc2_components.Installation_token.Primary.token)
-  | ( `Unauthorized _
-    | `Forbidden _
-    | `Not_found _
-    | `Unsupported_media_type _
-    | `Unprocessable_entity _ ) as err -> Abb.Future.return (Error err)
+  | (`Unauthorized _ | `Forbidden _ | `Not_found _ | `Unprocessable_entity _) as err ->
+      Abb.Future.return (Error err)
 
 let parse_repo_config python content =
   let open Abb.Future.Infix_monad in
