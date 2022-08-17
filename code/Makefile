@@ -21,4 +21,10 @@ terrat-webhooks:
 	env OCAMLRUNPARAM=b ./build/release/json_schema_hooks_cli/json_schema_hooks_cli.native convert -i ../docs/github_webhooks/terrat-schema.json -n terrat_github_webhooks --output-dir ./src/terrat_github_webhooks/ --non-strict-records
 	find src/terrat_github_webhooks/ -type f -exec ocamlformat -i '{}' \;
 
+github-api:
+	rm -rf src/githubc2
+	mkdir -p src/githubc2
+	env OCAMLRUNPARAM=b ./build/debug/openapi_cli/openapi_cli.native convert --input ../docs/github_api/api.github.com.json --name "githubc2" --output-dir ./src/githubc2/
+	find src/githubc2/ -type f -exec ocamlformat -i '{}' \;
+
 -include pds.mk
