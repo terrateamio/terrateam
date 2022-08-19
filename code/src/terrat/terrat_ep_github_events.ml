@@ -1265,6 +1265,9 @@ let process_pull_request_event request_id config storage = function
   | Gw.Pull_request_event.Pull_request_locked _ ->
       Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_LOCKED" request_id);
       Abb.Future.return (Ok ())
+  | Gw.Pull_request_event.Pull_request_milestoned _ ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_MILESTONED" request_id);
+      Abb.Future.return (Ok ())
   | Gw.Pull_request_event.Pull_request_ready_for_review _ ->
       Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_READY_FOR_REVIEW" request_id);
       Abb.Future.return (Ok ())
@@ -1415,6 +1418,9 @@ let process_issue_comment request_id config storage = function
       Abb.Future.return (Ok ())
   | Gw.Issue_comment_event.Issue_comment_edited _ ->
       Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : ISSUE_COMMENT_EDITED" request_id);
+      Abb.Future.return (Ok ())
+  | Gw.Issue_comment_event.Issue_any _ ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : ISSUE" request_id);
       Abb.Future.return (Ok ())
 
 let process_workflow_job_failure storage access_token run_id repository =

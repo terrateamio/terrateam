@@ -7,6 +7,7 @@ type t =
   | Pull_request_edited of Terrat_github_webhooks_pull_request_edited.t
   | Pull_request_labeled of Terrat_github_webhooks_pull_request_labeled.t
   | Pull_request_locked of Terrat_github_webhooks_pull_request_locked.t
+  | Pull_request_milestoned of Terrat_github_webhooks_pull_request_milestoned.t
   | Pull_request_opened of Terrat_github_webhooks_pull_request_opened.t
   | Pull_request_ready_for_review of Terrat_github_webhooks_pull_request_ready_for_review.t
   | Pull_request_reopened of Terrat_github_webhooks_pull_request_reopened.t
@@ -57,6 +58,10 @@ let of_yojson =
           (Terrat_github_webhooks_pull_request_locked.of_yojson v));
       (fun v ->
         map
+          (fun v -> Pull_request_milestoned v)
+          (Terrat_github_webhooks_pull_request_milestoned.of_yojson v));
+      (fun v ->
+        map
           (fun v -> Pull_request_opened v)
           (Terrat_github_webhooks_pull_request_opened.of_yojson v));
       (fun v ->
@@ -105,6 +110,7 @@ let to_yojson = function
   | Pull_request_edited v -> Terrat_github_webhooks_pull_request_edited.to_yojson v
   | Pull_request_labeled v -> Terrat_github_webhooks_pull_request_labeled.to_yojson v
   | Pull_request_locked v -> Terrat_github_webhooks_pull_request_locked.to_yojson v
+  | Pull_request_milestoned v -> Terrat_github_webhooks_pull_request_milestoned.to_yojson v
   | Pull_request_opened v -> Terrat_github_webhooks_pull_request_opened.to_yojson v
   | Pull_request_ready_for_review v ->
       Terrat_github_webhooks_pull_request_ready_for_review.to_yojson v

@@ -1163,6 +1163,38 @@
       "title": "Issue",
       "type": "object"
     },
+    "issue$any": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        },
+        "issue": {
+          "$ref": "#/definitions/issue"
+        }
+      },
+      "required": [
+        "action",
+        "installation",
+        "organization",
+        "repository",
+        "sender",
+        "issue"
+      ]
+    },
     "issue-comment": {
       "$schema": "http://json-schema.org/draft-07/schema",
       "additionalProperties": false,
@@ -1476,7 +1508,7 @@
       "type": "object"
     },
     "issue_comment_event": {
-      "oneOf": [
+      "anyOf": [
         {
           "$ref": "#/definitions/issue_comment$created"
         },
@@ -1485,6 +1517,9 @@
         },
         {
           "$ref": "#/definitions/issue_comment$edited"
+        },
+        {
+          "$ref": "#/definitions/issue$any"
         }
       ]
     },
@@ -2750,6 +2785,46 @@
       "title": "pull_request locked event",
       "type": "object"
     },
+    "pull_request$milestoned": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "milestoned"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "number": {
+          "description": "The pull request number.",
+          "type": "integer"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "pull_request": {
+          "$ref": "#/definitions/pull-request"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "number",
+        "pull_request",
+        "repository",
+        "sender"
+      ],
+      "title": "pull_request locked event",
+      "type": "object"
+    },
     "pull_request$opened": {
       "$schema": "http://json-schema.org/draft-07/schema",
       "additionalProperties": false,
@@ -3367,6 +3442,9 @@
         },
         {
           "$ref": "#/definitions/pull_request$locked"
+        },
+        {
+          "$ref": "#/definitions/pull_request$milestoned"
         },
         {
           "$ref": "#/definitions/pull_request$opened"
