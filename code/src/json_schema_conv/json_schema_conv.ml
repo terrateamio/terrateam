@@ -643,7 +643,24 @@ let rec convert_str_schema (config : Config.t) =
              { schema with Schema.nullable = false }
              Schema.{ (make_t_ ()) with typ = Some "object" }
       in
-      let names = CCList.mapi (fun idx _ -> "V" ^ CCInt.to_string idx) types in
+      let all_types_refs =
+        CCList.for_all
+          (function
+            | Value.Ref _ -> true
+            | Value.V _ -> false)
+          types
+      in
+      (* If everything in here is a ref then we're going to use the name of the
+         ref as the variant name *)
+      let names =
+        if all_types_refs then
+          CCList.map
+            (function
+              | Value.Ref ref_ -> Config.variant_name_of_ref config ref_ |> CCList.rev |> CCList.hd
+              | Value.V _ -> assert false)
+            types
+        else CCList.mapi (fun idx _ -> "V" ^ CCInt.to_string idx) types
+      in
       let resolve_schema name typ =
         [
           Ast_helper.(
@@ -990,7 +1007,8 @@ and convert_str_schema_obj config properties_config required properties =
             let config, field_type =
               match extract_prim_type schema with
               | Some prim when not (CCOption.is_some schema.Schema.enum && prim = "string") ->
-                  (config, prim_type_of_string (CCOption.get_or ~default:"" schema.Schema.format) prim)
+                  ( config,
+                    prim_type_of_string (CCOption.get_or ~default:"" schema.Schema.format) prim )
               | _ ->
                   let module_name = Config.module_name_of_field_name config name in
                   (Config.tidx_incr config, Gen.qualified_type [ module_name; "t" ])
