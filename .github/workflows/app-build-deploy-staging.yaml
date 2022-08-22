@@ -1,4 +1,4 @@
-name: app-build-deploy-staging
+name: staging-app-build-deploy
 
 on:
   workflow_dispatch:

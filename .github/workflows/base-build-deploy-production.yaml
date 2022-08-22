@@ -1,4 +1,4 @@
-name: base-build-deploy-production
+name: prod-base-build-deploy
 
 on:
   workflow_dispatch:
