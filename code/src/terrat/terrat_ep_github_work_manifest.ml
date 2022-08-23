@@ -219,7 +219,8 @@ module Tmpl = struct
     |> CCOption.get_exn_or "github_work_manifest_already_run.tmpl"
 end
 
-let publish_comment token owner repo pull_number body =
+let publish_comment request_id token owner repo pull_number body =
+  let open Abb.Future.Infix_monad in
   let client = Terrat_github.create (`Token token) in
   Githubc2_abb.call
     client
@@ -227,6 +228,24 @@ let publish_comment token owner repo pull_number body =
       make
         ~body:Request_body.(make Primary.{ body })
         Parameters.(make ~issue_number:pull_number ~owner ~repo))
+  >>= function
+  | Ok resp -> (
+      match Openapi.Response.value resp with
+      | `Created _ -> Abb.Future.return (Ok ())
+      | (`Forbidden _ | `Gone _ | `Not_found _ | `Unprocessable_entity _) as err ->
+          Logs.err (fun m ->
+              m
+                "GITHUB_WORK_MANIFEST : %s : PUBLISH_RESULTS : %s"
+                request_id
+                (Githubc2_issues.Create_comment.Responses.show err));
+          Abb.Future.return (Ok ()))
+  | Error (#Githubc2_abb.call_err as err) ->
+      Logs.err (fun m ->
+          m
+            "GITHUB_WORK_MANIFEST : %s : PUBLISH_RESULTS : %s"
+            request_id
+            (Githubc2_abb.show_call_err err));
+      Abb.Future.return (Ok ())
 
 module T = struct
   type t = {
@@ -541,6 +560,7 @@ module Initiate = struct
           t.T.name
           t.T.pull_number);
     publish_comment
+      t.T.request_id
       t.T.access_token
       t.T.owner
       t.T.name
@@ -1112,8 +1132,8 @@ module Results = struct
       let output = create_run_output run_type results in
       Terrat_github.get_installation_access_token config installation_id
       >>= fun token ->
-      publish_comment token owner repo pull_number output
-      >>= fun _ -> complete_check token owner repo branch run_id run_type sha results
+      publish_comment request_id token owner repo pull_number output
+      >>= fun () -> complete_check token owner repo branch run_id run_type sha results
     in
     let open Abb.Future.Infix_monad in
     Abbs_time_it.run
