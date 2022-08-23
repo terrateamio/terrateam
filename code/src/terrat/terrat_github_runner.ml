@@ -148,94 +148,77 @@ let abort_work_manifest
 
 let rec run' request_id access_token_cache config db =
   let open Abbs_future_combinators.Infix_result_monad in
-  Pgsql_io.tx db ~f:(fun () ->
-      Pgsql_io.Prepared_stmt.fetch db ~f:CCFun.id Sql.select_next_work_manifest
+  Pgsql_io.Prepared_stmt.fetch db ~f:CCFun.id Sql.select_next_work_manifest
+  >>= function
+  | [] -> Abb.Future.return (Ok ())
+  | [ id ] -> (
+      Logs.info (fun m -> m "GITHUB_RUNNER : %s : RUNNING : %s" request_id (Uuidm.to_string id));
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        Sql.select_work_manifest_dirspaces
+        ~f:(fun dir workspace -> Terrat_change.Dirspace.{ dir; workspace })
+        id
+      >>= fun dirspaces ->
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        Sql.select_action_parameters
+        ~f:(fun installation_id owner repo branch sha pull_number run_type ->
+          (installation_id, owner, repo, branch, sha, pull_number, run_type))
+        id
       >>= function
-      | [] -> Abb.Future.return (Ok `Done)
-      | [ id ] -> (
-          Logs.info (fun m -> m "GITHUB_RUNNER : %s : RUNNING : %s" request_id (Uuidm.to_string id));
-          Pgsql_io.Prepared_stmt.fetch
-            db
-            Sql.select_work_manifest_dirspaces
-            ~f:(fun dir workspace -> Terrat_change.Dirspace.{ dir; workspace })
-            id
-          >>= fun dirspaces ->
-          Pgsql_io.Prepared_stmt.fetch
-            db
-            Sql.select_action_parameters
-            ~f:(fun installation_id owner repo branch sha pull_number run_type ->
-              (installation_id, owner, repo, branch, sha, pull_number, run_type))
-            id
+      | [] -> assert false
+      | (installation_id, owner, repo, branch, sha, pull_number, run_type) :: _ -> (
+          load_access_token access_token_cache config installation_id
+          >>= fun (access_token, access_token_cache) ->
+          Terrat_github.load_workflow ~access_token ~owner ~repo
           >>= function
-          | [] -> assert false
-          | (installation_id, owner, repo, branch, sha, pull_number, run_type) :: _ -> (
-              load_access_token access_token_cache config installation_id
-              >>= fun (access_token, access_token_cache) ->
-              Terrat_github.load_workflow ~access_token ~owner ~repo
+          | Some workflow_id -> (
+              let open Abb.Future.Infix_monad in
+              let client = Terrat_github.create (`Token access_token) in
+              Githubc2_abb.call
+                client
+                Githubc2_actions.Create_workflow_dispatch.(
+                  make
+                    ~body:
+                      Request_body.
+                        {
+                          primary =
+                            Primary.
+                              {
+                                ref_ = branch;
+                                inputs =
+                                  Some
+                                    Inputs.
+                                      {
+                                        primary = Json_schema.Empty_obj.t;
+                                        additional =
+                                          Json_schema.String_map.of_list
+                                            [
+                                              ("work-token", Uuidm.to_string id);
+                                              ( "api-base-url",
+                                                Terrat_config.api_base config ^ "/github" );
+                                            ];
+                                      };
+                              };
+                          additional = Json_schema.String_map.empty;
+                        }
+                    Parameters.(make ~owner ~repo ~workflow_id:(Workflow_id.V0 workflow_id)))
               >>= function
-              | Some workflow_id -> (
-                  let open Abb.Future.Infix_monad in
-                  let client = Terrat_github.create (`Token access_token) in
-                  Githubc2_abb.call
-                    client
-                    Githubc2_actions.Create_workflow_dispatch.(
-                      make
-                        ~body:
-                          Request_body.
-                            {
-                              primary =
-                                Primary.
-                                  {
-                                    ref_ = branch;
-                                    inputs =
-                                      Some
-                                        Inputs.
-                                          {
-                                            primary = Json_schema.Empty_obj.t;
-                                            additional =
-                                              Json_schema.String_map.of_list
-                                                [
-                                                  ("work-token", Uuidm.to_string id);
-                                                  ( "api-base-url",
-                                                    Terrat_config.api_base config ^ "/github" );
-                                                ];
-                                          };
-                                  };
-                              additional = Json_schema.String_map.empty;
-                            }
-                        Parameters.(make ~owner ~repo ~workflow_id:(Workflow_id.V0 workflow_id)))
-                  >>= function
-                  | Ok _ ->
-                      let open Abbs_future_combinators.Infix_result_monad in
-                      start_check access_token owner repo sha run_type dirspaces
-                      >>= fun () ->
-                      (* TODO: Handle failing because workflow is not present in branch *)
-                      Abb.Future.return (Ok (`Cont access_token_cache))
-                  | Error (#Githubc2_abb.call_err as err) ->
-                      Logs.err (fun m ->
-                          m
-                            "GITHUB_RUNNER : %s : ERROR : COULD_NOT_RUN_WORKFLOW : %s : %s : %s : \
-                             %s"
-                            request_id
-                            owner
-                            repo
-                            branch
-                            (Githubc2_abb.show_call_err err));
-                      abort_work_manifest
-                        ~access_token
-                        ~db
-                        ~owner
-                        ~repo
-                        ~sha
-                        ~pull_number
-                        ~run_type
-                        ~dirspaces
-                        ~tmpl:Tmpl.failed_to_start_workflow
-                        id
-                      >>= fun _ -> Abb.Future.return (Ok (`Cont access_token_cache)))
-              | None ->
-                  let open Abb.Future.Infix_monad in
-                  Logs.err (fun m -> m "GITHUB_RUNNER : %s : ERROR : MISSING_WORKFLOW" request_id);
+              | Ok _ ->
+                  let open Abbs_future_combinators.Infix_result_monad in
+                  start_check access_token owner repo sha run_type dirspaces
+                  >>= fun () ->
+                  (* TODO: Handle failing because workflow is not present in branch *)
+                  run' request_id access_token_cache config db
+              | Error (#Githubc2_abb.call_err as err) ->
+                  Logs.err (fun m ->
+                      m
+                        "GITHUB_RUNNER : %s : ERROR : COULD_NOT_RUN_WORKFLOW : %s : %s : %s : %s"
+                        request_id
+                        owner
+                        repo
+                        branch
+                        (Githubc2_abb.show_call_err err));
                   abort_work_manifest
                     ~access_token
                     ~db
@@ -245,15 +228,27 @@ let rec run' request_id access_token_cache config db =
                     ~pull_number
                     ~run_type
                     ~dirspaces
-                    ~tmpl:Tmpl.failed_to_find_workflow
+                    ~tmpl:Tmpl.failed_to_start_workflow
                     id
-                  >>= fun _ -> Abb.Future.return (Ok (`Cont access_token_cache))))
-      | _ :: _ ->
-          (* Should only ever be one result *)
-          assert false)
-  >>= function
-  | `Done -> Abb.Future.return (Ok ())
-  | `Cont access_token_cache -> run' request_id access_token_cache config db
+                  >>= fun _ -> run' request_id access_token_cache config db)
+          | None ->
+              let open Abb.Future.Infix_monad in
+              Logs.err (fun m -> m "GITHUB_RUNNER : %s : ERROR : MISSING_WORKFLOW" request_id);
+              abort_work_manifest
+                ~access_token
+                ~db
+                ~owner
+                ~repo
+                ~sha
+                ~pull_number
+                ~run_type
+                ~dirspaces
+                ~tmpl:Tmpl.failed_to_find_workflow
+                id
+              >>= fun _ -> run' request_id access_token_cache config db))
+  | _ :: _ ->
+      (* Should only ever be one result *)
+      assert false
 
 let run ~request_id config storage =
   let open Abb.Future.Infix_monad in
