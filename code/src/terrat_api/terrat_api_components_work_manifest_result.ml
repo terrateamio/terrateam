@@ -20,6 +20,7 @@ end
 
 type t = {
   output : Output.t;
+  outputs : Terrat_api_components_workflow_outputs.t option; [@default None]
   path : string;
   success : bool;
   workspace : string;

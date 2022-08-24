@@ -27,6 +27,7 @@ module Results = struct
 
       type t = {
         output : Output.t option; [@default None]
+        outputs : Terrat_api_components.Hook_outputs.t option; [@default None]
         success : bool;
       }
       [@@deriving make, yojson { strict = true; meta = true }, show]

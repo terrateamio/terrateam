@@ -46,6 +46,10 @@
           "type": "array",
           "items": { "type": "string" }
         },
+        "capture_output": {
+          "type": "boolean",
+          "default": false
+        },
         "run_on": { "$ref": "#/definitions/run-on" },
         "env": {
           "type": "object",
