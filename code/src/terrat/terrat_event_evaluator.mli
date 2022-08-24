@@ -37,6 +37,7 @@ module type S = sig
     val state : t -> Terrat_pull_request.State.t
     val passed_all_checks : t -> bool
     val mergeable : t -> bool option
+    val is_draft_pr : t -> bool
   end
 
   (** Given a set of directories, return those directories that exist in the repo *)

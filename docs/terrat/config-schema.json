@@ -275,6 +275,10 @@
         "autoapply": {
           "type": "boolean",
           "default": false
+        },
+        "autoplan_draft_pr": {
+          "type": "boolean",
+          "default": true
         }
       }
     },
@@ -292,6 +296,9 @@
           "type": "boolean"
         },
         "autoapply": {
+          "type": "boolean"
+        },
+        "autoplan_draft_pr": {
           "type": "boolean"
         }
       }

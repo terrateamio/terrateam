@@ -532,6 +532,7 @@ module Evaluator = Terrat_work_manifest_evaluator.Make (struct
                 | _ -> assert false);
               checks = ();
               mergeable = None;
+              draft = false;
             } ))
       pull_request.Pull_request.repo_id
       pull_request.Pull_request.pull_number

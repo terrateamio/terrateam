@@ -357,6 +357,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     let state t = t.Terrat_pull_request.state
     let passed_all_checks t = t.Terrat_pull_request.checks
     let mergeable t = t.Terrat_pull_request.mergeable
+    let is_draft_pr t = t.Terrat_pull_request.draft
   end
 
   let list_existing_dirs event pull_request dirs =
@@ -575,6 +576,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
                 merge_commit_sha;
                 mergeable_state;
                 mergeable;
+                draft;
                 _;
               };
             _;
@@ -585,6 +587,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
           let merged_sha = merge_commit_sha in
           let branch_name = Head.(head.primary.Primary.ref_) in
           let hash = CCOption.get_or ~default:head_sha merged_sha in
+          let draft = CCOption.get_or ~default:false draft in
           fetch_diff
             ~request_id:event.Event.request_id
             ~access_token:event.Event.access_token
@@ -623,6 +626,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
                           mergeable_state
                           [ "clean"; "unstable"; "has_hooks" ];
                    mergeable;
+                   draft;
                  })
       | `Not_found _ | `Internal_server_error _ | `Not_modified -> failwith "nyi2"
     in
@@ -762,6 +766,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
                   | _ -> assert false);
                 checks = true;
                 mergeable = None;
+                draft = false;
               }
           in
           Terrat_work_manifest.
@@ -850,6 +855,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
                 | _ -> assert false);
               checks = true;
               mergeable = None;
+              draft = false;
             } ))
       (CCInt64.of_int event.Event.repository.Gw.Repository.id)
       pull_request.Terrat_pull_request.id

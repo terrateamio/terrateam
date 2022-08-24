@@ -37,6 +37,7 @@ module type S = sig
     val state : t -> Terrat_pull_request.State.t
     val passed_all_checks : t -> bool
     val mergeable : t -> bool option
+    val is_draft_pr : t -> bool
   end
 
   val list_existing_dirs :
@@ -170,16 +171,20 @@ module Make (S : S) = struct
           CCList.filter
             (fun {
                    Terrat_change_matcher.when_modified =
-                     Terrat_repo_config.When_modified.{ autoplan; _ };
+                     Terrat_repo_config.When_modified.{ autoplan; autoplan_draft_pr; _ };
                    _;
-                 } -> autoplan)
+                 } ->
+              autoplan && ((not (S.Pull_request.is_draft_pr pull_request)) || autoplan_draft_pr))
             tag_query_matches
       | `Manual -> tag_query_matches
     in
     match (S.Event.run_type event, matches) with
     | Terrat_work_manifest.Run_type.Autoplan, [] ->
         Logs.info (fun m ->
-            m "EVENT_EVALUATOR : %s : NOOP : AUTOPLAN_NO_MATCHES" (S.Event.request_id event));
+            m
+              "EVENT_EVALUATOR : %s : NOOP : AUTOPLAN_NO_MATCHES : draft=%s"
+              (S.Event.request_id event)
+              (Bool.to_string (S.Pull_request.is_draft_pr pull_request)));
         Abb.Future.return (Ok None)
     | _, [] ->
         Logs.info (fun m ->

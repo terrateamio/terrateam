@@ -23,6 +23,7 @@ type ('id, 'diff, 'checks) t = {
   diff : 'diff;
       (** The list of changes in the difference between [hash] and
                     [base_hash] *)
+  draft : bool;
   hash : string;
   id : 'id;
   mergeable : bool option;

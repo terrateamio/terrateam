@@ -94,6 +94,10 @@ let when_modified_of_when_modified_nullable default when_modified =
           CCOption.get_or ~default:default.Wm.file_patterns when_modified.Wm_null.file_patterns;
         autoplan = CCOption.get_or ~default:default.Wm.autoplan when_modified.Wm_null.autoplan;
         autoapply = CCOption.get_or ~default:default.Wm.autoapply when_modified.Wm_null.autoapply;
+        autoplan_draft_pr =
+          CCOption.get_or
+            ~default:default.Wm.autoplan_draft_pr
+            when_modified.Wm_null.autoplan_draft_pr;
       }
   | None -> default
 

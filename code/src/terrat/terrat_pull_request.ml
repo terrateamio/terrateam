@@ -20,6 +20,7 @@ type ('id, 'diff, 'checks) t = {
   branch_name : string;
   checks : 'checks;
   diff : 'diff;
+  draft : bool;
   hash : string;
   id : 'id;
   mergeable : bool option;
