@@ -8,4 +8,4 @@ insert into github_installation_repositories (
        $installation_id,
        $name,
        $owner
-) on conflict (owner, name) do update set installation_id = excluded.installation_id
+) on conflict (id) do update set (installation_id, name, owner) = (excluded.installation_id, excluded.name, excluded.owner)
