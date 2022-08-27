@@ -1189,7 +1189,6 @@
       "required": [
         "action",
         "installation",
-        "organization",
         "repository",
         "sender",
         "issue"
