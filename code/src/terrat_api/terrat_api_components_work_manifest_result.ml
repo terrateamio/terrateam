@@ -19,8 +19,8 @@ module Output = struct
 end
 
 type t = {
-  output : Output.t;
-  outputs : Terrat_api_components_workflow_outputs.t option; [@default None]
+  output : Output.t option; [@default None]
+  outputs : Terrat_api_components_workflow_outputs.t;
   path : string;
   success : bool;
   workspace : string;

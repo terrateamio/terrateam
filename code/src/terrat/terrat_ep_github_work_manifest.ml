@@ -207,8 +207,9 @@ module Tmpl = struct
     |> Terrat_files_tmpl.read
     |> CCOption.get_exn_or fname
     |> Snabela.Template.of_utf8_string
-    |> CCResult.get_exn
-    |> fun tmpl -> Snabela.of_template tmpl Transformers.[ money; plan_diff ]
+    |> function
+    | Ok tmpl -> Snabela.of_template tmpl Transformers.[ money; plan_diff ]
+    | Error (#Snabela.Template.err as err) -> failwith (Snabela.Template.show_err err)
 
   let plan_complete = read "github_plan_complete.tmpl"
   let apply_complete = read "github_apply_complete.tmpl"
@@ -217,6 +218,15 @@ module Tmpl = struct
     "github_work_manifest_already_run.tmpl"
     |> Terrat_files_tmpl.read
     |> CCOption.get_exn_or "github_work_manifest_already_run.tmpl"
+end
+
+module Workflow_step_output = struct
+  type t = {
+    success : bool;
+    key : string option;
+    text : string;
+    step_type : string;
+  }
 end
 
 let publish_comment request_id token owner repo pull_number body =
@@ -246,6 +256,116 @@ let publish_comment request_id token owner repo pull_number body =
             request_id
             (Githubc2_abb.show_call_err err));
       Abb.Future.return (Ok ())
+
+let pre_hook_output_texts (outputs : Terrat_api_components_hook_outputs.Pre.t) =
+  let module Output = Terrat_api_components_hook_outputs.Pre.Items in
+  let module Text = Terrat_api_components_output_text in
+  let module Run = Terrat_api_components_workflow_output_run in
+  let module Checkout = Terrat_api_components_workflow_output_checkout in
+  let module Ce = Terrat_api_components_workflow_output_cost_estimation in
+  outputs
+  |> CCList.filter_map (function
+         | Output.Workflow_output_run
+             Run.
+               {
+                 workflow_step = Workflow_step.{ type_; _ };
+                 outputs = Some Text.{ text; output_key };
+                 success;
+                 _;
+               }
+         | Output.Workflow_output_checkout
+             Checkout.
+               {
+                 workflow_step = Workflow_step.{ type_; _ };
+                 outputs = Text.{ text; output_key };
+                 success;
+               }
+         | Output.Workflow_output_cost_estimation
+             Ce.
+               {
+                 workflow_step = Workflow_step.{ type_; _ };
+                 outputs = Outputs.Output_text Text.{ text; output_key };
+                 success;
+                 _;
+               } -> Some Workflow_step_output.{ key = output_key; text; success; step_type = type_ }
+         | Output.Workflow_output_run Run.{ outputs = None; _ }
+         | Output.Workflow_output_cost_estimation
+             Ce.{ outputs = Outputs.Output_cost_estimation _; _ } -> None)
+
+let post_hook_output_texts (outputs : Terrat_api_components_hook_outputs.Post.t) =
+  let module Output = Terrat_api_components_hook_outputs.Post.Items in
+  let module Text = Terrat_api_components_output_text in
+  let module Run = Terrat_api_components_workflow_output_run in
+  outputs
+  |> CCList.filter_map (function
+         | Output.Workflow_output_run
+             Run.
+               {
+                 workflow_step = Workflow_step.{ type_; _ };
+                 outputs = Some Text.{ text; output_key };
+                 success;
+                 _;
+               } -> Some Workflow_step_output.{ key = output_key; text; success; step_type = type_ }
+         | Output.Workflow_output_run Run.{ outputs = None; _ } -> None)
+
+let workflow_output_texts outputs =
+  let module Output = Terrat_api_components_workflow_outputs.Items in
+  let module Run = Terrat_api_components_workflow_output_run in
+  let module Init = Terrat_api_components_workflow_output_init in
+  let module Plan = Terrat_api_components_workflow_output_plan in
+  let module Apply = Terrat_api_components_workflow_output_apply in
+  let module Text = Terrat_api_components_output_text in
+  let module Output_plan = Terrat_api_components_output_plan in
+  outputs
+  |> CCList.flat_map (function
+         | Output.Workflow_output_run
+             Run.
+               {
+                 workflow_step = Workflow_step.{ type_; _ };
+                 outputs = Some Text.{ text; output_key };
+                 success;
+                 _;
+               }
+         | Output.Workflow_output_init
+             Init.
+               {
+                 workflow_step = Workflow_step.{ type_; _ };
+                 outputs = Some Text.{ text; output_key };
+                 success;
+                 _;
+               }
+         | Output.Workflow_output_plan
+             Plan.
+               {
+                 workflow_step = Workflow_step.{ type_; _ };
+                 outputs = Some (Plan.Outputs.Output_text Text.{ text; output_key });
+                 success;
+                 _;
+               }
+         | Output.Workflow_output_apply
+             Apply.
+               {
+                 workflow_step = Workflow_step.{ type_; _ };
+                 outputs = Some Text.{ text; output_key };
+                 success;
+                 _;
+               } -> [ Workflow_step_output.{ step_type = type_; text; key = output_key; success } ]
+         | Output.Workflow_output_plan
+             Plan.
+               {
+                 workflow_step = Workflow_step.{ type_; _ };
+                 outputs = Some (Plan.Outputs.Output_plan Output_plan.{ plan; plan_text });
+                 success;
+                 _;
+               } ->
+             [
+               Workflow_step_output.
+                 { step_type = type_; text = plan_text; key = Some "plan_text"; success };
+               Workflow_step_output.{ step_type = type_; text = plan; key = Some "plan"; success };
+             ]
+         | Output.Workflow_output_run _ | Output.Workflow_output_plan _
+         | Output.Workflow_output_init Init.{ outputs = None; _ }
+         | Output.Workflow_output_apply Apply.{ outputs = None; _ } -> [])
 
 module T = struct
   type t = {
@@ -929,110 +1049,89 @@ module Results = struct
     in
     let maybe_credentials_error =
       dirspaces
-      |> CCList.exists (fun Wmr.{ output; _ } ->
-             let other_outputs =
-               output.Wmr.Output.additional
-               |> Json_schema.String_map.to_seq
-               |> CCSeq.map (fun (_, v) -> v)
-             in
-             let strings =
-               CCSeq.(
-                 append
-                   (of_list
-                      (CCOption.get_or ~default:[] Wmr.Output.(output.primary.Primary.errors)))
-                   other_outputs)
-             in
-             CCSeq.exists
-               (fun s ->
+      |> CCList.exists (fun Wmr.{ outputs; _ } ->
+             let module Text = Terrat_api_components_output_text in
+             let texts = workflow_output_texts outputs in
+             CCList.exists
+               (fun Workflow_step_output.{ text; _ } ->
                  CCList.exists
-                   (fun sub -> CCString.find ~sub s <> -1)
+                   (fun sub -> CCString.find ~sub text <> -1)
                    maybe_credential_error_strings)
-               strings)
+               texts)
     in
+    let module Hook_outputs = Terrat_api_components.Hook_outputs in
+    let pre = results.R.overall.R.Overall.outputs.Hook_outputs.pre in
+    let post = results.R.overall.R.Overall.outputs.Hook_outputs.post in
     let cost_estimation =
-      dirspaces
-      |> CCList.filter_map (fun Wmr.{ path; workspace; output; _ } ->
-             CCOption.map
-               (fun infracost -> (path, workspace, infracost))
-               Wmr.Output.(output.primary.Primary.cost_estimation))
-      |> function
-      | [] -> None
-      | costs ->
-          let module Ce = Terrat_api_components_cost_estimation in
-          let module Tce = Terrat_api_components.Total_cost_estimation in
-          let diff_monthly_cost =
-            CCListLabels.fold_left
-              ~init:0.0
-              ~f:(fun acc_diff_monthly_cost (_, _, Ce.{ diff_monthly_cost; _ }) ->
-                acc_diff_monthly_cost +. diff_monthly_cost)
-              costs
-          in
-          let total_cost_estimation =
-            let open CCOption.Infix in
-            results.R.overall.R.Overall.output
-            >>= fun output ->
-            R.Overall.Output.(output.primary.Primary.cost_estimation)
-            >>= function
-            | Tce.
-                {
-                  prev_monthly_cost = Some prev_monthly_cost;
-                  diff_monthly_cost = Some diff_monthly_cost;
-                  total_monthly_cost;
-                  currency;
-                } -> Some (prev_monthly_cost, diff_monthly_cost, total_monthly_cost, currency)
-            | Tce.{ total_monthly_cost; currency; _ } ->
-                Some
-                  ( total_monthly_cost -. diff_monthly_cost,
-                    diff_monthly_cost,
-                    total_monthly_cost,
-                    currency )
-          in
-          Some
-            Snabela.Kv.(
-              Map.of_list
-                (CCList.flatten
-                   [
-                     CCOption.map_or
-                       ~default:
-                         [
-                           ("prev_monthly_cost", string "???");
-                           ("total_monthly_cost", string "???");
-                           ("diff_monthly_cost", string "???");
-                           ("currency", string "???");
-                         ]
-                       (fun (prev_monthly_cost, diff_monthly_cost, total_monthly_cost, currency) ->
-                         [
-                           ("prev_monthly_cost", float prev_monthly_cost);
-                           ("total_monthly_cost", float total_monthly_cost);
-                           ("diff_monthly_cost", float diff_monthly_cost);
-                           ("currency", string currency);
-                         ])
-                       total_cost_estimation;
+      let module Wce = Terrat_api_components_workflow_output_cost_estimation in
+      let module Ce = Terrat_api_components_output_cost_estimation in
+      pre
+      |> CCList.filter_map (function
+             | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_cost_estimation
+                 {
+                   Wce.outputs = Wce.Outputs.Output_cost_estimation Ce.{ cost_estimation; _ };
+                   success = true;
+                   _;
+                 } -> Some cost_estimation
+             | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_run _
+             | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_checkout _
+             | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_cost_estimation _ ->
+                 None)
+      |> CCOption.of_list
+      |> CCOption.map (function
+             | Ce.Cost_estimation_.
+                 { currency; total_monthly_cost; prev_monthly_cost; diff_monthly_cost; dirspaces }
+             ->
+             Snabela.Kv.(
+               Map.of_list
+                 [
+                   ("prev_monthly_cost", float prev_monthly_cost);
+                   ("total_monthly_cost", float total_monthly_cost);
+                   ("diff_monthly_cost", float diff_monthly_cost);
+                   ("currency", string currency);
+                   ( "dirspaces",
+                     list
+                       (CCList.map
+                          (fun Ce.Cost_estimation_.Dirspaces.Items.
+                                 {
+                                   path;
+                                   workspace;
+                                   total_monthly_cost;
+                                   prev_monthly_cost;
+                                   diff_monthly_cost;
+                                 } ->
+                            Map.of_list
+                              [
+                                ("dir", string path);
+                                ("workspace", string workspace);
+                                ("prev_monthly_cost", float prev_monthly_cost);
+                                ("total_monthly_cost", float total_monthly_cost);
+                                ("diff_monthly_cost", float diff_monthly_cost);
+                              ])
+                          dirspaces) );
+                 ]))
+    in
+    let kv_of_workflow_step steps =
+      Snabela.Kv.(
+        list
+          (CCList.map
+             (function
+               | Workflow_step_output.{ key = Some key; text; success; step_type } ->
+                   Map.of_list
                      [
-                       ( "dirspaces",
-                         list
-                           (CCList.map
-                              (fun ( path,
-                                     workspace,
-                                     Ce.
-                                       {
-                                         prev_monthly_cost;
-                                         total_monthly_cost;
-                                         diff_monthly_cost;
-                                         currency;
-                                       } ) ->
-                                Map.of_list
-                                  [
-                                    ("dir", string path);
-                                    ("workspace", string workspace);
-                                    ("prev_monthly_cost", float prev_monthly_cost);
-                                    ("total_monthly_cost", float total_monthly_cost);
-                                    ("diff_monthly_cost", float diff_monthly_cost);
-                                    ("currency", string currency);
-                                  ])
-                              costs) );
-                     ];
-                   ]))
+                       (key, bool true);
+                       ("text", string text);
+                       ("success", bool success);
+                       ("step_type", string step_type);
+                     ]
+               | Workflow_step_output.{ success; text; step_type; _ } ->
+                   Map.of_list
+                     [
+                       ("success", bool success);
+                       ("text", string text);
+                       ("step_type", string step_type);
+                     ])
+             steps))
     in
     let kv =
       Snabela.Kv.(
@@ -1046,59 +1145,19 @@ module Results = struct
                [
                  ("maybe_credentials_error", bool maybe_credentials_error);
                  ("overall_success", bool results.R.overall.R.Overall.success);
-                 ( "output",
-                   list
-                     [
-                       Map.of_list
-                         (CCList.flatten
-                            [
-                              CCOption.map_or
-                                ~default:[]
-                                (fun errors ->
-                                  [
-                                    ( "errors",
-                                      list
-                                        (CCList.map
-                                           (fun line -> Map.of_list [ ("line", string line) ])
-                                           errors) );
-                                  ])
-                                (let open CCOption.Infix in
-                                results.R.overall.R.Overall.output
-                                >>= fun output -> R.Overall.Output.(output.primary.Primary.errors));
-                            ]);
-                     ] );
+                 ("pre_hooks", kv_of_workflow_step (pre_hook_output_texts pre));
+                 ("post_hooks", kv_of_workflow_step (post_hook_output_texts post));
                  ( "results",
                    list
                      (CCList.map
-                        (fun Wmr.{ path; workspace; success; output; _ } ->
+                        (fun Wmr.{ path; workspace; success; outputs; _ } ->
+                          let module Text = Terrat_api_components_output_text in
                           Map.of_list
                             [
                               ("dir", string path);
                               ("workspace", string workspace);
                               ("success", bool success);
-                              ( "output",
-                                list
-                                  [
-                                    Map.of_list
-                                      (CCList.flatten
-                                         [
-                                           (match Wmr.Output.(output.primary.Primary.errors) with
-                                           | Some errors ->
-                                               [
-                                                 ( "errors",
-                                                   list
-                                                     (CCList.map
-                                                        (fun line ->
-                                                          Map.of_list [ ("line", string line) ])
-                                                        errors) );
-                                               ]
-                                           | None -> []);
-                                           CCList.map
-                                             (fun (k, v) -> (k, string v))
-                                             (Json_schema.String_map.to_list
-                                                output.Wmr.Output.additional);
-                                         ]);
-                                  ] );
+                              ("outputs", kv_of_workflow_step (workflow_output_texts outputs));
                             ])
                         dirspaces) );
                ];

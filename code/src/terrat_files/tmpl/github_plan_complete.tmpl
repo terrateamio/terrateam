@@ -1,5 +1,9 @@
-@?overall_success-@
+@-?overall_success-@
 ## Plans :heavy_check_mark:
+
+<details>
+  <summary><h2>Terrateam Plan Output :heavy_check_mark:</h2></summary>
+
 @/overall_success-@
 @!overall_success-@
 ## Plans :heavy_multiplication_x:
@@ -11,30 +15,57 @@ Verify that the **credentials** are setup.  For more information, see the [authe
 
 @/maybe_credentials_error-@
 After resolving the issue, run `terrateam plan` to execute the plan operation again.
-@/overall_success-@
 
 <details>
-  <summary><h2>Terrateam Plan Output @?overall_success@:heavy_check_mark:@/overall_success@@!overall_success@:heavy_multiplication_x:@/overall_success@</h2></summary>
+  <summary><h2>Terrateam Plan Output :heavy_multiplication_x:</h2></summary>
 
-@#output-@
-@^errors-@
-```
-@#errors-@
-@line@
-@/errors-@
-```
+<details>
+  <summary><h3>Pre Hooks</h3></summary>
 
-@/errors-@
-@/output-@
+@#pre_hooks-@
+**Step**: @step_type@
+@?success-@
+**Success**: :heavy_check_mark:
+@/success-@
+@!success-@
+**Success**: :heavy_multiplication_x:
+@/success-@
+```
+@text@
+```
+@/pre_hooks-@
+</details>
+
+<details>
+  <summary><h3>Post Hooks</h3></summary>
+
+@#post_hooks-@
+**Step**: @step_type@
+@?success-@
+**Success**: :heavy_check_mark:
+@/success-@
+@!success-@
+**Success**: :heavy_multiplication_x:
+@/success-@
+```
+@text@
+```
+@/post_hooks-@
+</details>
+@/overall_success-@
+
 @#results-@
 **Dir**: @dir@
 **Workspace**: @workspace@
 **Success**: @?success@:heavy_check_mark:@/success@@!success@:heavy_multiplication_x:@/success@
 
-@#output-@
 @?success-@
 ```diff
-@plan_text | plan_diff@
+@#outputs-@
+@^plan_text-@
+@text | plan_diff@
+@/plan_text-@
+@/outputs-@
 ```
 
 <details>
@@ -48,21 +79,22 @@ terrateam apply dir:@dir@ workspace:@workspace@
 
 @/success-@
 @!success-@
-```
-@^errors-@
-@#errors-@
-@line@
-@/errors-@
-@/errors-@
-@^init-@
-@init@
-@/init-@
-@^plan-@
-@plan@
-@/plan-@
-```
+@#outputs-@
+@% Don't do anything if this is a plan_text output -@
+@^!plan_text-@
+**Step**: @step_type@
+@?success-@
+**Success**: :heavy_check_mark:
 @/success-@
-@/output-@
+@!success-@
+**Success**: :heavy_multiplication_x:
+@/success-@
+```
+@text@
+```
+@/plan_text-@
+@/outputs-@
+@/success-@
 @/results-@
 
 </details>
@@ -102,4 +134,3 @@ terrateam apply
 Questions? Comments? Give feedback by commenting `terrateam feedback <your msg>`.  Your message lands directly in our inbox.
 
 </details>
-

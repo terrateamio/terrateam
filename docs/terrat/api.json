@@ -171,7 +171,7 @@
                         }
                       }
                     },
-                    "required": ["success"]
+                    "required": ["success", "outputs"]
                   }
                 },
                 "required": ["dirspaces", "overall"]
@@ -350,7 +350,7 @@
           "path",
           "workspace",
           "success",
-          "output"
+          "outputs"
         ]
       },
       "work-manifest-results": {
@@ -600,8 +600,7 @@
         },
         "required": [
           "workflow_step",
-          "success",
-          "outputs"
+          "success"
         ]
       },
       "workflow-output-plan": {
@@ -662,8 +661,7 @@
         },
         "required": [
           "workflow_step",
-          "success",
-          "outputs"
+          "success"
         ]
       },
       "workflow-output-checkout": {
@@ -729,35 +727,6 @@
           "outputs"
         ]
       },
-      "workflow-output-cost-estimation-setup": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "workflow_step": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "type": {
-                "type": "string",
-                "const": "cost-estimation-setup"
-              }
-            },
-            "required": [
-              "type"
-            ]
-          },
-          "success": {
-            "type": "boolean"
-          },
-          "outputs": {
-            "$ref": "#/components/schemas/output-text"
-          }
-        },
-        "required": [
-          "workflow_step",
-          "success"
-        ]
-      },
       "workflow-outputs": {
         "type": "array",
         "items": {
@@ -779,7 +748,6 @@
               "oneOf": [
                 {"$ref": "#/components/schemas/workflow-output-run"},
                 {"$ref": "#/components/schemas/workflow-output-checkout"},
-                {"$ref": "#/components/schemas/workflow-output-cost-estimation-setup"},
                 {"$ref": "#/components/schemas/workflow-output-cost-estimation"}
               ]
             }
@@ -792,7 +760,11 @@
               ]
             }
           }
-        }
+        },
+        "required": [
+          "pre",
+          "post"
+        ]
       }
     },
     "responses": {

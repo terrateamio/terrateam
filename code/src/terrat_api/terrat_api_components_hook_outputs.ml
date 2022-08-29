@@ -24,8 +24,6 @@ module Pre = struct
     type t =
       | Workflow_output_run of Terrat_api_components_workflow_output_run.t
       | Workflow_output_checkout of Terrat_api_components_workflow_output_checkout.t
-      | Workflow_output_cost_estimation_setup of
-          Terrat_api_components_workflow_output_cost_estimation_setup.t
       | Workflow_output_cost_estimation of Terrat_api_components_workflow_output_cost_estimation.t
     [@@deriving show]
 
@@ -43,10 +41,6 @@ module Pre = struct
               (Terrat_api_components_workflow_output_checkout.of_yojson v));
           (fun v ->
             map
-              (fun v -> Workflow_output_cost_estimation_setup v)
-              (Terrat_api_components_workflow_output_cost_estimation_setup.of_yojson v));
-          (fun v ->
-            map
               (fun v -> Workflow_output_cost_estimation v)
               (Terrat_api_components_workflow_output_cost_estimation.of_yojson v));
         ])
@@ -54,8 +48,6 @@ module Pre = struct
     let to_yojson = function
       | Workflow_output_run v -> Terrat_api_components_workflow_output_run.to_yojson v
       | Workflow_output_checkout v -> Terrat_api_components_workflow_output_checkout.to_yojson v
-      | Workflow_output_cost_estimation_setup v ->
-          Terrat_api_components_workflow_output_cost_estimation_setup.to_yojson v
       | Workflow_output_cost_estimation v ->
           Terrat_api_components_workflow_output_cost_estimation.to_yojson v
   end
@@ -64,7 +56,7 @@ module Pre = struct
 end
 
 type t = {
-  post : Post.t option; [@default None]
-  pre : Pre.t option; [@default None]
+  post : Post.t;
+  pre : Pre.t;
 }
 [@@deriving yojson { strict = true; meta = true }, show]

@@ -1,42 +1,85 @@
-@?overall_success-@
+@-?overall_success-@
 ## Applies :heavy_check_mark:
 
-Running applies **succeeded**. See **Terrateam Apply Output**.
-@/overall_success-@
-@!overall_success-@
+<details>
+  <summary><h2>Terrateam Apply Output :heavy_check_mark:</h2></summary>
+
+@-/overall_success-@
+@-!overall_success-@
 ## Applies :heavy_multiplication_x:
 
-Running applies **failed**.  See **Terrateam Apply Output**.
-@/overall_success-@
+Running plans **FAILED**.  See **Terrateam Apply Output**.
 
 <details>
-  <summary><h2>Terrateam Apply Output @?overall_success@:heavy_check_mark:@/overall_success@@!overall_success@:heavy_multiplication_x:@/overall_success@</h2></summary>
+  <summary><h2>Terrateam Apply Output :heavy_multiplication_x:</h2></summary>
 
-@#results-@
+<details>
+  <summary><h3>Pre Hooks</h3></summary>
+
+@-#pre_hooks-@
+**Step**: @step_type@
+@-?success-@
+**Success**: :heavy_check_mark:
+@-/success-@
+@-!success-@
+**Success**: :heavy_multiplication_x:
+@-/success-@
+```
+@text@
+```
+@-/pre_hooks-@
+</details>
+
+<details>
+  <summary><h3>Post Hooks</h3></summary>
+
+@-#post_hooks-@
+**Step**: @step_type@
+@-?success-@
+**Success**: :heavy_check_mark:
+@-/success-@
+@-!success-@
+**Success**: :heavy_multiplication_x:
+@-/success-@
+```
+@text@
+```
+@-/post_hooks-@
+</details>
+@/overall_success-@
+
+@-#results-@
 **Dir**: @dir@
 **Workspace**: @workspace@
 **Success**: @?success@:heavy_check_mark:@/success@@!success@:heavy_multiplication_x:@/success@
 
-@#output-@
-@?success-@
+@-?success-@
 ```
-@apply@
+@-#outputs-@
+@-^apply-@
+@text@
+@-/apply-@
+@-/outputs-@
 ```
-@/success-@
-@!success-@
+
+@-/success-@
+@-!success-@
+@-#outputs-@
+@-% Don't do anything if this is a plan_text output -@
+@-^!plan_text-@
+**Step**: @step_type@
+@-?success-@
+**Success**: :heavy_check_mark:
+@-/success-@
+@-!success-@
+**Success**: :heavy_multiplication_x:
+@-/success-@
 ```
-@^errors-@
-@errors@
-@/errors-@
-@^init-@
-@init@
-@/init-@
-@^apply-@
-@apply@
-@/apply-@
+@text@
 ```
-@/success-@
-@/output-@
-@/results-@
+@-/plan_text-@
+@-/outputs-@
+@-/success-@
+@-/results-@
 
 </details>
