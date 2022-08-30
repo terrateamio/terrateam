@@ -152,23 +152,6 @@
                       },
                       "outputs": {
                         "$ref": "#/components/schemas/hook-outputs"
-                      },
-                      "output": {
-                        "type": "object",
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "properties": {
-                          "cost_estimation": {
-                            "$ref": "#/components/schemas/total-cost-estimation"
-                          },
-                          "errors": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          }
-                        }
                       }
                     },
                     "required": ["success", "outputs"]
@@ -327,23 +310,6 @@
           },
           "outputs": {
             "$ref": "#/components/schemas/workflow-outputs"
-          },
-          "output": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            },
-            "properties": {
-              "errors": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "cost_estimation": {
-                "$ref": "#/components/schemas/cost-estimation"
-              }
-            }
           }
         },
         "required": [
@@ -358,52 +324,6 @@
         "items": {
           "$ref": "#/components/schemas/work-manifest-result"
         }
-      },
-      "cost-estimation": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "prev_monthly_cost":{
-            "type": "number"
-          },
-          "total_monthly_cost":{
-            "type": "number"
-          },
-          "diff_monthly_cost": {
-            "type": "number"
-          },
-          "currency": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "prev_monthly_cost",
-          "total_monthly_cost",
-          "diff_monthly_cost",
-          "currency"
-        ]
-      },
-      "total-cost-estimation": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "prev_monthly_cost": {
-            "type": "number"
-          },
-          "total_monthly_cost": {
-            "type": "number"
-          },
-          "diff_monthly_cost": {
-            "type": "number"
-          },
-          "currency": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "total_monthly_cost",
-          "currency"
-        ]
       },
       "output-text": {
         "type": "object",

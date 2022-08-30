@@ -1079,7 +1079,7 @@ module Results = struct
                  None)
       |> CCOption.of_list
       |> CCOption.map (function
-             | Ce.Cost_estimation_.
+             | Ce.Cost_estimation.
                  { currency; total_monthly_cost; prev_monthly_cost; diff_monthly_cost; dirspaces }
              ->
              Snabela.Kv.(
@@ -1092,7 +1092,7 @@ module Results = struct
                    ( "dirspaces",
                      list
                        (CCList.map
-                          (fun Ce.Cost_estimation_.Dirspaces.Items.
+                          (fun Ce.Cost_estimation.Dirspaces.Items.
                                  {
                                    path;
                                    workspace;

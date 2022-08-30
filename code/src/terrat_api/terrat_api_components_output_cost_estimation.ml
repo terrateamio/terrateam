@@ -1,4 +1,4 @@
-module Cost_estimation_ = struct
+module Cost_estimation = struct
   module Dirspaces = struct
     module Items = struct
       type t = {
@@ -24,5 +24,5 @@ module Cost_estimation_ = struct
   [@@deriving yojson { strict = true; meta = true }, show]
 end
 
-type t = { cost_estimation : Cost_estimation_.t }
+type t = { cost_estimation : Cost_estimation.t }
 [@@deriving yojson { strict = true; meta = true }, show]
