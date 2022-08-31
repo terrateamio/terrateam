@@ -495,7 +495,13 @@ module Evaluator = Terrat_event_evaluator.Make (struct
               changes = ();
             }
           in
-          create_check_run event wm work_manifest.Wm.changes hash
+          Logs.info (fun m ->
+              m "GITHUB_EVENT : %s : START_CREATE_COMMIT_STATUSES" (Event.request_id event));
+          Abbs_time_it.run
+            (fun t ->
+              Logs.info (fun m ->
+                  m "GITHUB_EVENT : %s : CREATE_COMMIT_STATUSES : %f" (Event.request_id event) t))
+            (fun () -> create_check_run event wm work_manifest.Wm.changes hash)
           >>= fun () -> Abb.Future.return (Ok wm)
     in
     let open Abb.Future.Infix_monad in
@@ -1508,12 +1514,20 @@ let process_workflow_job_failure storage access_token run_id repository =
         in
         aggregate :: dirspaces
       in
-      Terrat_github.Commit_status.create
-        ~access_token
-        ~owner:repository.Gw.Repository.owner.Gw.User.login
-        ~repo:repository.Gw.Repository.name
-        ~sha
-        commit_statuses
+      let open Abb.Future.Infix_monad in
+      Abb.Future.fork
+        (Abbs_time_it.run
+           (fun t ->
+             Logs.info (fun m ->
+                 m "GITHUB_EVENT : WORKFLOW_JOB_FAIL_COMMIT_STATUS : %s : %f" run_id t))
+           (fun () ->
+             Terrat_github.Commit_status.create
+               ~access_token
+               ~owner:repository.Gw.Repository.owner.Gw.User.login
+               ~repo:repository.Gw.Repository.name
+               ~sha
+               commit_statuses))
+      >>= fun _ -> Abb.Future.return (Ok ())
   | None ->
       (* Nothing to fail *)
       Logs.warn (fun m ->
