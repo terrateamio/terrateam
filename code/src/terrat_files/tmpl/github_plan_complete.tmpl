@@ -1,6 +1,9 @@
 @-?overall_success-@
 ## Plans :thumbsup:
+@?compact_view-@
+This is a compact view of the plan.  See Action output for details.
 
+@/compact_view-@
 <details>
   <summary><h2>Terrateam Plan Output :thumbsup:</h2></summary>
 
@@ -63,7 +66,12 @@ After resolving the issue, run `terrateam plan` to execute the plan operation ag
 ```diff
 @#outputs-@
 @^plan_text-@
+@?compact_view-@
+@text | compact_plan | plan_diff@
+@/compact_view-@
+@!compact_view-@
 @text | plan_diff@
+@/compact_view-@
 @/plan_text-@
 @/outputs-@
 ```

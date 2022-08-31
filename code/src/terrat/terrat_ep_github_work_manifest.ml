@@ -200,6 +200,18 @@ module Tmpl = struct
           function
           | S plan -> S (Terrat_plan_diff.transform plan)
           | any -> any) )
+
+    let compact_plan =
+      ( "compact_plan",
+        Snabela.Kv.(
+          function
+          | S plan ->
+              S
+                (plan
+                |> CCString.split_on_char '\n'
+                |> CCList.filter (fun s -> CCString.find ~sub:"= (known after apply)" s = -1)
+                |> CCString.concat "\n")
+          | any -> any) )
   end
 
   let read fname =
@@ -208,7 +220,7 @@ module Tmpl = struct
     |> CCOption.get_exn_or fname
     |> Snabela.Template.of_utf8_string
     |> function
-    | Ok tmpl -> Snabela.of_template tmpl Transformers.[ money; plan_diff ]
+    | Ok tmpl -> Snabela.of_template tmpl Transformers.[ money; compact_plan; plan_diff ]
     | Error (#Snabela.Template.err as err) -> failwith (Snabela.Template.show_err err)
 
   let plan_complete = read "github_plan_complete.tmpl"
@@ -218,6 +230,11 @@ module Tmpl = struct
     "github_work_manifest_already_run.tmpl"
     |> Terrat_files_tmpl.read
     |> CCOption.get_exn_or "github_work_manifest_already_run.tmpl"
+
+  let comment_too_large =
+    "github_comment_too_large.tmpl"
+    |> Terrat_files_tmpl.read
+    |> CCOption.get_exn_or "github_comment_too_large.tmpl"
 end
 
 module Workflow_step_output = struct
@@ -229,35 +246,7 @@ module Workflow_step_output = struct
   }
 end
 
-let publish_comment request_id token owner repo pull_number body =
-  let open Abb.Future.Infix_monad in
-  let client = Terrat_github.create (`Token token) in
-  Githubc2_abb.call
-    client
-    Githubc2_issues.Create_comment.(
-      make
-        ~body:Request_body.(make Primary.{ body })
-        Parameters.(make ~issue_number:pull_number ~owner ~repo))
-  >>= function
-  | Ok resp -> (
-      match Openapi.Response.value resp with
-      | `Created _ -> Abb.Future.return (Ok ())
-      | (`Forbidden _ | `Gone _ | `Not_found _ | `Unprocessable_entity _) as err ->
-          Logs.err (fun m ->
-              m
-                "GITHUB_WORK_MANIFEST : %s : PUBLISH_RESULTS : %s"
-                request_id
-                (Githubc2_issues.Create_comment.Responses.show err));
-          Abb.Future.return (Ok ()))
-  | Error (#Githubc2_abb.call_err as err) ->
-      Logs.err (fun m ->
-          m
-            "GITHUB_WORK_MANIFEST : %s : PUBLISH_RESULTS : %s"
-            request_id
-            (Githubc2_abb.show_call_err err));
-      Abb.Future.return (Ok ())
-
-let pre_hook_output_texts (outputs : Terrat_api_components_hook_outputs.Pre.t) =
+let pre_hook_output_texts outputs =
   let module Output = Terrat_api_components_hook_outputs.Pre.Items in
   let module Text = Terrat_api_components_output_text in
   let module Run = Terrat_api_components_workflow_output_run in
@@ -680,12 +669,11 @@ module Initiate = struct
           t.T.owner
           t.T.name
           t.T.pull_number);
-    publish_comment
-      t.T.request_id
-      t.T.access_token
-      t.T.owner
-      t.T.name
-      t.T.pull_number
+    Terrat_github.publish_comment
+      ~access_token:t.T.access_token
+      ~owner:t.T.owner
+      ~repo:t.T.name
+      ~pull_number:t.T.pull_number
       Tmpl.work_manifest_already_run
     >>= fun _ -> Abb.Future.return (Ok ())
 
@@ -848,6 +836,14 @@ module Initiate = struct
                       request_id
                       (Githubc2_abb.show_call_err err));
                 Abb.Future.return
+                  (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+            | Error (#Terrat_github.publish_comment_err as err) ->
+                Logs.err (fun m ->
+                    m
+                      "GITHUB_WORK_MANIFEST : %s : ERROR : %s"
+                      request_id
+                      (Terrat_github.show_publish_comment_err err));
+                Abb.Future.return
                   (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
         | Error (#Terrat_github.fetch_repo_config_err as err) ->
             Logs.err (fun m ->
@@ -996,7 +992,7 @@ module Plans = struct
 end
 
 module Results = struct
-  let complete_check access_token owner repo branch run_id run_type sha results =
+  let complete_check ~access_token ~owner ~repo ~branch ~run_id ~run_type ~sha ~results () =
     let module Wmr = Terrat_api_components.Work_manifest_result in
     let module R = Terrat_api_work_manifest.Results.Request_body in
     let unified_run_type =
@@ -1033,7 +1029,7 @@ module Results = struct
     in
     Terrat_github.Commit_status.create ~access_token ~owner ~repo ~sha commit_statuses
 
-  let create_run_output run_type results =
+  let create_run_output ~compact_view run_type results =
     let module Wmr = Terrat_api_components.Work_manifest_result in
     let module R = Terrat_api_work_manifest.Results.Request_body in
     let module Dirspace_result_compare = struct
@@ -1147,6 +1143,7 @@ module Results = struct
                  ("overall_success", bool results.R.overall.R.Overall.success);
                  ("pre_hooks", kv_of_workflow_step (pre_hook_output_texts pre));
                  ("post_hooks", kv_of_workflow_step (post_hook_output_texts post));
+                 ("compact_view", bool compact_view);
                  ( "results",
                    list
                      (CCList.map
@@ -1174,25 +1171,77 @@ module Results = struct
         Logs.err (fun m -> m "WORK_MANIFEST : ERROR : %s" (Snabela.show_err err));
         assert false
 
+  let rec iterate_comment_posts
+      ?(compact_view = false)
+      ~request_id
+      ~access_token
+      ~owner
+      ~repo
+      ~pull_number
+      ~run_id
+      ~sha
+      ~run_type
+      ~results
+      () =
+    let open Abb.Future.Infix_monad in
+    let output = create_run_output ~compact_view run_type results in
+    Terrat_github.publish_comment ~access_token ~owner ~repo ~pull_number output
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error (#Terrat_github.publish_comment_err as err) when not compact_view ->
+        Logs.err (fun m ->
+            m
+              "WORK_MANIFEST : %s : ITERATE_COMMENT_POST : %s"
+              request_id
+              (Terrat_github.show_publish_comment_err err));
+        iterate_comment_posts
+          ~compact_view:true
+          ~request_id
+          ~access_token
+          ~owner
+          ~repo
+          ~pull_number
+          ~run_id
+          ~sha
+          ~run_type
+          ~results
+          ()
+    | Error (#Terrat_github.publish_comment_err as err) ->
+        Logs.err (fun m ->
+            m
+              "WORK_MANIFEST : %s : ITERATE_COMMENT_POST : %s"
+              request_id
+              (Terrat_github.show_publish_comment_err err));
+        Terrat_github.publish_comment ~access_token ~owner ~repo ~pull_number Tmpl.comment_too_large
+
   let publish_results
-      request_id
-      config
-      installation_id
-      owner
-      repo
-      branch
-      pull_number
-      run_type
-      results
-      run_id
-      sha =
+      ~request_id
+      ~config
+      ~access_token
+      ~owner
+      ~repo
+      ~branch
+      ~pull_number
+      ~run_type
+      ~results
+      ~run_id
+      ~sha
+      () =
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
-      let output = create_run_output run_type results in
-      Terrat_github.get_installation_access_token config installation_id
-      >>= fun token ->
-      publish_comment request_id token owner repo pull_number output
-      >>= fun () -> complete_check token owner repo branch run_id run_type sha results
+      iterate_comment_posts
+        ~request_id
+        ~access_token
+        ~owner
+        ~repo
+        ~pull_number
+        ~run_id
+        ~sha
+        ~run_type
+        ~results
+        ()
+      >>= fun () ->
+      complete_check ~access_token ~owner ~repo ~branch ~run_id ~run_type ~sha ~results ()
     in
     let open Abb.Future.Infix_monad in
     Abbs_time_it.run
@@ -1200,12 +1249,23 @@ module Results = struct
       (fun () -> run)
     >>= function
     | Ok () -> Abb.Future.return ()
+    | Error (#Githubc2_abb.call_err as err) ->
+        Logs.err (fun m ->
+            m "WORK_MANIFEST : %s : ERROR : %s" request_id (Githubc2_abb.show_call_err err));
+        Abb.Future.return ()
     | Error (#Terrat_github.get_installation_access_token_err as err) ->
         Logs.err (fun m ->
             m
               "WORK_MANIFEST : %s : ERROR : %s"
               request_id
               (Terrat_github.show_get_installation_access_token_err err));
+        Abb.Future.return ()
+    | Error (#Terrat_github.publish_comment_err as err) ->
+        Logs.err (fun m ->
+            m
+              "WORK_MANIFEST : %s : ERROR : %s"
+              request_id
+              (Terrat_github.show_publish_comment_err err));
         Abb.Future.return ()
 
   let automerge_config = function
@@ -1305,7 +1365,8 @@ module Results = struct
             Abb.Future.return (Ok ()))
     | `Not_found _ | `Internal_server_error _ | `Not_modified -> failwith "nyi"
 
-  let perform_automerge request_id config storage installation_id owner repo sha pull_number =
+  let perform_automerge ~request_id ~config ~storage ~access_token ~owner ~repo ~sha ~pull_number ()
+      =
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
       Logs.info (fun m ->
@@ -1334,8 +1395,6 @@ module Results = struct
                 repo
                 pull_number
                 sha);
-          Terrat_github.get_installation_access_token config installation_id
-          >>= fun access_token ->
           Terrat_github.fetch_repo_config
             ~python:(Terrat_config.python_exec config)
             ~access_token
@@ -1426,6 +1485,69 @@ module Results = struct
               (Githubc2_pulls.Merge.Responses.Method_not_allowed.show err));
         Abb.Future.return ()
 
+  let complete_work_manifest
+      ~config
+      ~storage
+      ~request_id
+      ~installation_id
+      ~owner
+      ~repo
+      ~branch
+      ~sha
+      ~pull_number
+      ~run_type
+      ~run_id
+      ~results
+      () =
+    let run =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Terrat_github.get_installation_access_token config (CCInt64.to_int installation_id)
+      >>= fun access_token ->
+      Abb.Future.Infix_app.(
+        (fun () () -> Ok ())
+        <$> publish_results
+              ~request_id
+              ~config
+              ~access_token
+              ~owner
+              ~repo
+              ~branch
+              ~pull_number:(CCInt64.to_int pull_number)
+              ~run_type
+              ~results
+              ~run_id:(CCOption.get_exn_or "run_id is None" run_id)
+              ~sha
+              ()
+        <*>
+        match Terrat_work_manifest.Unified_run_type.of_run_type run_type with
+        | Terrat_work_manifest.Unified_run_type.Apply ->
+            perform_automerge
+              ~request_id
+              ~config
+              ~storage
+              ~access_token
+              ~owner
+              ~repo
+              ~sha
+              ~pull_number
+              ()
+        | Terrat_work_manifest.Unified_run_type.Plan -> Abb.Future.return ())
+    in
+    let open Abb.Future.Infix_monad in
+    run
+    >>= fun ret ->
+    Abb.Future.fork (Terrat_github_runner.run ~request_id config storage)
+    >>= fun _ ->
+    match ret with
+    | Ok () -> Abb.Future.return ()
+    | Error (#Terrat_github.get_installation_access_token_err as err) ->
+        Logs.err (fun m ->
+            m
+              "WORK_MANIFEST : %s : ERROR : %s"
+              request_id
+              (Terrat_github.show_get_installation_access_token_err err));
+        Abb.Future.return ()
+
   let put config storage work_manifest_id results ctx =
     let open Abb.Future.Infix_monad in
     let request_id = Brtl_ctx.token ctx in
@@ -1490,36 +1612,21 @@ module Results = struct
             | [] -> assert false))
     >>= function
     | Ok (installation_id, owner, repo, branch, sha, pull_number, run_type, run_id) ->
-        Abb.Future.Infix_app.(
-          (fun () () -> ())
-          <$> publish_results
-                request_id
-                config
-                (CCInt64.to_int installation_id)
-                owner
-                repo
-                branch
-                (CCInt64.to_int pull_number)
-                run_type
-                results
-                (CCOption.get_exn_or "run_id is None" run_id)
-                sha
-          <*>
-          match Terrat_work_manifest.Unified_run_type.of_run_type run_type with
-          | Terrat_work_manifest.Unified_run_type.Apply ->
-              perform_automerge
-                request_id
-                config
-                storage
-                (CCInt64.to_int installation_id)
-                owner
-                repo
-                sha
-                pull_number
-          | Terrat_work_manifest.Unified_run_type.Plan -> Abb.Future.return ())
+        complete_work_manifest
+          ~config
+          ~storage
+          ~request_id
+          ~installation_id
+          ~owner
+          ~repo
+          ~branch
+          ~sha
+          ~pull_number
+          ~run_type
+          ~run_id
+          ~results
+          ()
         >>= fun () ->
-        Abb.Future.fork (Terrat_github_runner.run ~request_id config storage)
-        >>= fun _ ->
         Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
     | Error (#Pgsql_pool.err as err) ->
         Logs.err (fun m -> m "WORK_MANIFEST : PLAN : %s : ERROR : %s" id (Pgsql_pool.show_err err));
@@ -1527,10 +1634,6 @@ module Results = struct
           (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
     | Error (#Pgsql_io.err as err) ->
         Logs.err (fun m -> m "WORK_MANIFEST : PLAN : %s : ERROR : %s" id (Pgsql_io.show_err err));
-        Abb.Future.return
-          (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-    | Error (#Githubc2_abb.call_err as err) ->
-        Logs.err (fun m -> m "WORK_MANIFEST : ERROR : %s" (Githubc2_abb.show_call_err err));
         Abb.Future.return
           (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
 end
