@@ -1075,10 +1075,17 @@ let run_event_evaluator storage event =
         event.Event.repository.Gw.Repository.name)
   >>= fun () ->
   let open Abb.Future.Infix_monad in
-  Evaluator.run storage event
-  >>= fun () ->
   Abb.Future.fork
-    (Terrat_github_runner.run ~request_id:(Event.request_id event) event.Event.config storage)
+    (Abbs_time_it.run
+       (fun t ->
+         Logs.info (fun m -> m "GITHUB_EVENT : %s : EVALUATE_EVENT : %f" event.Event.request_id t))
+       (fun () -> Evaluator.run storage event)
+    >>= fun () ->
+    Abbs_time_it.run
+      (fun t ->
+        Logs.info (fun m -> m "GITHUB_EVENT : %s : GITHUB_RUNNER : %f" event.Event.request_id t))
+      (fun () ->
+        Terrat_github_runner.run ~request_id:(Event.request_id event) event.Event.config storage))
   >>= fun _ -> Abb.Future.return (Ok ())
 
 let perform_unlock_pr request_id config storage installation_id repository pull_number =
