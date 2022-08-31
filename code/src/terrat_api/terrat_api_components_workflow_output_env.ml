@@ -21,7 +21,7 @@ module Workflow_step = struct
 end
 
 type t = {
-  outputs : Terrat_api_components_output_text.t;
+  outputs : Terrat_api_components_output_text.t option; [@default None]
   success : bool;
   workflow_step : Workflow_step.t;
 }

@@ -278,6 +278,7 @@ let pre_hook_output_texts outputs =
                  _;
                } -> Some Workflow_step_output.{ key = output_key; text; success; step_type = type_ }
          | Output.Workflow_output_run Run.{ outputs = None; _ }
+         | Output.Workflow_output_env _
          | Output.Workflow_output_cost_estimation
              Ce.{ outputs = Outputs.Output_cost_estimation _; _ } -> None)
 
@@ -295,7 +296,8 @@ let post_hook_output_texts (outputs : Terrat_api_components_hook_outputs.Post.t)
                  success;
                  _;
                } -> Some Workflow_step_output.{ key = output_key; text; success; step_type = type_ }
-         | Output.Workflow_output_run Run.{ outputs = None; _ } -> None)
+         | Output.Workflow_output_run Run.{ outputs = None; _ } | Output.Workflow_output_env _ ->
+             None)
 
 let workflow_output_texts outputs =
   let module Output = Terrat_api_components_workflow_outputs.Items in
@@ -352,7 +354,9 @@ let workflow_output_texts outputs =
                  { step_type = type_; text = plan_text; key = Some "plan_text"; success };
                Workflow_step_output.{ step_type = type_; text = plan; key = Some "plan"; success };
              ]
-         | Output.Workflow_output_run _ | Output.Workflow_output_plan _
+         | Output.Workflow_output_run _
+         | Output.Workflow_output_plan _
+         | Output.Workflow_output_env _
          | Output.Workflow_output_init Init.{ outputs = None; _ }
          | Output.Workflow_output_apply Apply.{ outputs = None; _ } -> [])
 
@@ -1070,6 +1074,7 @@ module Results = struct
                    _;
                  } -> Some cost_estimation
              | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_run _
+             | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_env _
              | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_checkout _
              | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_cost_estimation _ ->
                  None)

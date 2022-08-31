@@ -490,8 +490,7 @@
         },
         "required": [
           "workflow_step",
-          "success",
-          "outputs"
+          "success"
         ]
       },
       "workflow-output-init": {
@@ -652,6 +651,7 @@
         "items": {
           "oneOf": [
             {"$ref": "#/components/schemas/workflow-output-run"},
+            {"$ref": "#/components/schemas/workflow-output-env"},
             {"$ref": "#/components/schemas/workflow-output-init"},
             {"$ref": "#/components/schemas/workflow-output-plan"},
             {"$ref": "#/components/schemas/workflow-output-apply"}
@@ -667,6 +667,7 @@
             "items": {
               "oneOf": [
                 {"$ref": "#/components/schemas/workflow-output-run"},
+                {"$ref": "#/components/schemas/workflow-output-env"},
                 {"$ref": "#/components/schemas/workflow-output-checkout"},
                 {"$ref": "#/components/schemas/workflow-output-cost-estimation"}
               ]
@@ -676,7 +677,8 @@
             "type": "array",
             "items": {
               "oneOf": [
-                {"$ref": "#/components/schemas/workflow-output-run"}
+                {"$ref": "#/components/schemas/workflow-output-run"},
+                {"$ref": "#/components/schemas/workflow-output-env"}
               ]
             }
           }
