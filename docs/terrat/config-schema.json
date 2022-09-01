@@ -219,6 +219,62 @@
     "version-1": {
       "additionalProperties": false,
       "properties": {
+        "apply_requirements": {
+          "additionalProperties": false,
+          "properties": {
+            "checks": {
+              "additionalProperties": false,
+              "properties": {
+                "approved": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "count": {
+                      "default": 1,
+                      "type": "integer"
+                    },
+                    "enabled": {
+                      "default": false,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "merge_conflicts": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "enabled": {
+                      "default": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "status_checks": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "enabled": {
+                      "default": true,
+                      "type": "boolean"
+                    },
+                    "ignore_matching": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "create_pending_apply_check": {
+              "default": true,
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
         "automerge": {
           "$ref": "#/definitions/automerge"
         },

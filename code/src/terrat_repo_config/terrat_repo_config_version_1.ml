@@ -1,3 +1,45 @@
+module Apply_requirements = struct
+  module Checks = struct
+    module Approved = struct
+      type t = {
+        count : int; [@default 1]
+        enabled : bool; [@default false]
+      }
+      [@@deriving yojson { strict = true; meta = true }, make, show]
+    end
+
+    module Merge_conflicts = struct
+      type t = { enabled : bool [@default true] }
+      [@@deriving yojson { strict = true; meta = true }, make, show]
+    end
+
+    module Status_checks = struct
+      module Ignore_matching = struct
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      type t = {
+        enabled : bool; [@default true]
+        ignore_matching : Ignore_matching.t option; [@default None]
+      }
+      [@@deriving yojson { strict = true; meta = true }, make, show]
+    end
+
+    type t = {
+      approved : Approved.t option; [@default None]
+      merge_conflicts : Merge_conflicts.t option; [@default None]
+      status_checks : Status_checks.t option; [@default None]
+    }
+    [@@deriving yojson { strict = true; meta = true }, make, show]
+  end
+
+  type t = {
+    checks : Checks.t option; [@default None]
+    create_pending_apply_check : bool; [@default true]
+  }
+  [@@deriving yojson { strict = true; meta = true }, make, show]
+end
+
 module Checkout_strategy = struct
   let t_of_yojson = function
     | `String "merge" -> Ok "merge"
@@ -57,6 +99,7 @@ module Workflows = struct
 end
 
 type t = {
+  apply_requirements : Apply_requirements.t option; [@default None]
   automerge : Terrat_repo_config_automerge.t option; [@default None]
   checkout_strategy : Checkout_strategy.t; [@default "merge"]
   cost_estimation : Cost_estimation.t option; [@default None]
