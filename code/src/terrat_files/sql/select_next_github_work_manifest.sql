@@ -19,6 +19,7 @@ work_manifests as (
         (case gwm.run_type
          when 'autoapply' then 'apply'
          when 'apply' then 'apply'
+         when 'unsafe-apply' then 'apply'
          when 'autoplan' then 'plan'
          when 'plan' then 'plan'
          end) as unified_run_type,

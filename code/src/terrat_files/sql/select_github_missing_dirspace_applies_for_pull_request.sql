@@ -11,7 +11,7 @@ pull_request_applies_previous_commits as (
     inner join github_work_manifest_dirspaceflows as gwmds
         on gwmds.work_manifest = gwm.id
     where (gpr.base_sha <> gwm.base_sha or gpr.sha <> gwm.sha)
-          and gwm.run_type in ('apply', 'autoapply')
+          and gwm.run_type in ('apply', 'autoapply', 'unsafe-apply')
 ),
 all_necessary_dirspaces as (
     select distinct
@@ -56,7 +56,7 @@ applied_dirspaces as (
         on results.repository = gpr.repository and results.pull_number = gpr.pull_number
            and results.base_sha = gpr.base_sha
            and (results.sha = gpr.sha or results.sha = gpr.merged_sha)
-    where results.rn = 1 and results.run_type in ('apply', 'autoapply') and results.success
+    where results.rn = 1 and results.run_type in ('apply', 'autoapply', 'unsafe-apply') and results.success
 )
 select distinct
     ands.path,

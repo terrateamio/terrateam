@@ -773,6 +773,18 @@ module Initiate = struct
                       changed_dirspaces;
                     })
             in
+            Abb.Future.return (Ok ret)
+        | Wm.Run_type.Unsafe_apply ->
+            let ret =
+              Terrat_api_components.(
+                Work_manifest.Work_manifest_unsafe_apply
+                  Work_manifest_unsafe_apply.
+                    {
+                      type_ = "unsafe-apply";
+                      base_ref = work_manifest.Wm.pull_request.Pull_request.base_branch;
+                      changed_dirspaces;
+                    })
+            in
             Abb.Future.return (Ok ret))
     | None -> Abb.Future.return (Error `Work_manifest_not_found)
 

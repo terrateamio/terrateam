@@ -253,10 +253,35 @@
           "changed_dirspaces"
         ]
       },
+      "work-manifest-unsafe-apply": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "unsafe-apply"
+          },
+          "base_ref": {
+            "type": "string"
+          },
+          "changed_dirspaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/work-manifest-dir"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "base_ref",
+          "changed_dirspaces"
+        ]
+      },
       "work-manifest": {
         "oneOf": [
           { "$ref": "#/components/schemas/work-manifest-plan" },
-          { "$ref": "#/components/schemas/work-manifest-apply" }
+          { "$ref": "#/components/schemas/work-manifest-apply" },
+          { "$ref": "#/components/schemas/work-manifest-unsafe-apply" }
         ]
       },
       "work-manifest-initiate": {

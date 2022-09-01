@@ -35,6 +35,28 @@
         "success"
       ]
     },
+    "retry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "tries": {
+          "type": "integer",
+          "default": 3
+        },
+        "backoff": {
+          "type": "number",
+          "default": 3.0
+        },
+        "initial_sleep": {
+          "type": "integer",
+          "default": 5
+        }
+      }
+    },
     "hook-op-run": {
       "type": "object",
       "properties": {
@@ -191,28 +213,7 @@
             "type": "string"
           }
         },
-        "retry": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "default": false
-            },
-            "tries": {
-              "type": "integer",
-              "default": 3
-            },
-            "backoff": {
-              "type": "number",
-              "default": 3.0
-            },
-            "initial_sleep": {
-              "type": "integer",
-              "default": 5
-            }
-          }
-        }
+        "retry": { "$ref": "#/definitions/retry" }
       },
       "required": [
         "type"

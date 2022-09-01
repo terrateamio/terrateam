@@ -71,6 +71,7 @@ let migrations =
     ("add-github-merged-sha", run_file_sql "2022-04-26-add-merged-sha.sql");
     ("add-github-merged_at", run_file_sql "2022-04-26-add-merged_at.sql");
     ("drop-plan-text", run_file_sql "2022-05-01-remove-plan-text.sql");
+    ("add-unsafe-apply", run_file_sql "2022-09-01-add-unsafe-apply.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations

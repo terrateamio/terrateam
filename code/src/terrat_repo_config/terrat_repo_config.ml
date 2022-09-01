@@ -7,6 +7,7 @@ module Hook_op_env = Terrat_repo_config_hook_op_env
 module Hook_op_run = Terrat_repo_config_hook_op_run
 module Hook_op_slack = Terrat_repo_config_hook_op_slack
 module Permission = Terrat_repo_config_permission
+module Retry = Terrat_repo_config_retry
 module Run_on = Terrat_repo_config_run_on
 module Tags = Terrat_repo_config_tags
 module Terraform_version = Terrat_repo_config_terraform_version

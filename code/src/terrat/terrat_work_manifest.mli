@@ -4,6 +4,7 @@ module Run_type : sig
     | Autoapply
     | Plan
     | Apply
+    | Unsafe_apply
 
   val to_string : t -> string
   val of_string : string -> t option

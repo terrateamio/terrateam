@@ -111,6 +111,7 @@ let unified_run_type =
   | Plan -> `Plan `Manual
   | Autoapply -> `Apply `Auto
   | Apply -> `Apply `Manual
+  | Unsafe_apply -> `Unsafe_apply
 
 module Make (S : S) = struct
   let compute_matches ~repo_config ~tag_query ~out_of_change_applies ~diff ~repo_tree () =
@@ -164,9 +165,9 @@ module Make (S : S) = struct
       (fun () -> S.store_new_work_manifest db event work_manifest)
     >>= fun _ -> Abb.Future.return (Ok ())
 
-  let process_plan db event tag_query_matches pull_request run_type =
+  let process_plan db event tag_query_matches pull_request run_source_type =
     let matches =
-      match run_type with
+      match run_source_type with
       | `Auto ->
           CCList.filter
             (fun {
@@ -195,7 +196,14 @@ module Make (S : S) = struct
         create_and_store_work_manifest db event pull_request matches
         >>= fun () -> Abb.Future.return (Ok None)
 
-  let process_apply db event tag_query_matches all_match_dirspaceflows pull_request run_type =
+  let process_apply
+      db
+      event
+      tag_query_matches
+      all_match_dirspaceflows
+      pull_request
+      run_type
+      run_source_type =
     let open Abbs_future_combinators.Infix_result_monad in
     Abbs_time_it.run
       (fun t ->
@@ -219,7 +227,7 @@ module Make (S : S) = struct
        2. Make sure no other pull requests own the any of the
        dirspaces that this pull request touches. *)
     let matches =
-      match run_type with
+      match run_source_type with
       | `Auto ->
           CCList.filter
             (fun {
@@ -254,6 +262,12 @@ module Make (S : S) = struct
               pull_request
               (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows))
         >>= function
+        | dirspaces when Dirspace_map.is_empty dirspaces && run_type = `Unsafe_apply -> (
+            create_and_store_work_manifest db event pull_request matches
+            >>= function
+            | () when S.Event.run_type event = Terrat_work_manifest.Run_type.Autoapply ->
+                Abb.Future.return (Ok (Some Msg.Autoapply_running))
+            | () -> Abb.Future.return (Ok None))
         | dirspaces when Dirspace_map.is_empty dirspaces -> (
             (* None of the dirspaces are owned by another PR, we can proceed *)
             Abbs_time_it.run
@@ -386,16 +400,27 @@ module Make (S : S) = struct
                   (fun () -> S.store_dirspaceflows db event pull_request all_match_dirspaceflows)
                 >>= fun () ->
                 match unified_run_type (S.Event.run_type event) with
-                | `Plan run_type -> process_plan db event tag_query_matches pull_request run_type
-                | `Apply run_type when S.Pull_request.passed_all_checks pull_request ->
+                | `Plan run_source_type ->
+                    process_plan db event tag_query_matches pull_request run_source_type
+                | `Apply run_source_type when S.Pull_request.passed_all_checks pull_request ->
                     process_apply
                       db
                       event
                       tag_query_matches
                       all_match_dirspaceflows
                       pull_request
-                      run_type
-                | `Apply _ ->
+                      `Apply
+                      run_source_type
+                | `Unsafe_apply when S.Pull_request.passed_all_checks pull_request ->
+                    process_apply
+                      db
+                      event
+                      tag_query_matches
+                      all_match_dirspaceflows
+                      pull_request
+                      `Unsafe_apply
+                      `Manual
+                | `Unsafe_apply | `Apply _ ->
                     Logs.info (fun m ->
                         m "EVENT_EVALUATOR : %s : PR_NOT_APPLIABLE" (S.Event.request_id event));
                     Abb.Future.return (Ok (Some (Msg.Pull_request_not_appliable pull_request))))
@@ -459,7 +484,9 @@ module Make (S : S) = struct
           Logs.info (fun m ->
               m "EVENT_EVALUATOR : %s : DEST_BRANCH_NOT_DEFAULT_BRANCH" (S.Event.request_id event));
           Abb.Future.return (Ok None)
-      | Terrat_work_manifest.Run_type.Plan | Terrat_work_manifest.Run_type.Apply ->
+      | Terrat_work_manifest.Run_type.Plan
+      | Terrat_work_manifest.Run_type.Apply
+      | Terrat_work_manifest.Run_type.Unsafe_apply ->
           Logs.info (fun m ->
               m
                 "EVENT_EVALUATOR : %s : DEST_BRANCH_NOT_DEFAULT_BRANCH_EXPLICIT"

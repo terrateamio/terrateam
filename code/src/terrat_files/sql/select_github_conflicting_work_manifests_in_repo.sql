@@ -33,7 +33,7 @@ left join latest_unlocks
 where gwm.repository = $repository
       and gwm.state in ('queued', 'running')
       and ((gwm.pull_number = $pull_number)
-           or ($run_type in ('autoapply', 'apply')))
+           or ($run_type in ('autoapply', 'apply', 'unsafe-apply')))
       and (latest_unlocks.unlocked_at is null
            or latest_unlocks.unlocked_at < gwm.created_at)
 order by gwm.created_at

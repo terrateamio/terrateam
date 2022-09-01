@@ -68,7 +68,7 @@ module Make (S : S) = struct
                 Abb.Future.return (Error `Work_manifest_in_queue_state)
             | Some work_manifest -> (
                 match work_manifest.Terrat_work_manifest.run_type with
-                | Terrat_work_manifest.Run_type.(Autoplan | Plan) ->
+                | Terrat_work_manifest.Run_type.(Autoplan | Plan | Unsafe_apply) ->
                     Abb.Future.return (Ok (Some work_manifest))
                 | Terrat_work_manifest.Run_type.(Autoapply | Apply) -> (
                     Logs.debug (fun m ->

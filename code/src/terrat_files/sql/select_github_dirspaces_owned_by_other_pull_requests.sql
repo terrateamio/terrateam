@@ -38,7 +38,7 @@ pull_request_applies_previous_commits as (
     left join latest_unlocks as gpru
         on gpru.repository = gpr.repository and gpru.pull_number = gpr.pull_number
     where (gpr.base_sha <> gwm.base_sha or gpr.sha <> gwm.sha)
-          and gwm.run_type in ('apply', 'autoapply')
+          and gwm.run_type in ('apply', 'autoapply', 'unsafe-apply')
           and (gpru.unlocked_at is null or gpru.unlocked_at < gwm.created_at)
 ),
 -- Combine the dirspaces for the current revision with the dirspaces that have
@@ -64,7 +64,7 @@ unmerged_pull_requests_with_applies as (
         on gwm.repository = gpr.repository and gwm.pull_number = gpr.pull_number
     left join latest_unlocks as gpru
         on gpru.repository = gpr.repository and gpru.pull_number = gpr.pull_number
-    where gpr.state in ('open', 'closed') and gwm.run_type in ('apply', 'autoapply')
+    where gpr.state in ('open', 'closed') and gwm.run_type in ('apply', 'autoapply', 'unsafe-apply')
           and (gpru.unlocked_at is null or gpru.unlocked_at < gwm.created_at)
 ),
 -- All those dirspaces that are in a pull request that has at least one apply
@@ -110,7 +110,7 @@ applies_for_merged_pull_requests as (
     inner join github_work_manifest_results as results
         on results.work_manifest = gwm.id
            and results.path = gwmds.path and results.workspace = gwmds.workspace
-    where gwm.run_type in ('apply', 'autoapply') and results.success
+    where gwm.run_type in ('apply', 'autoapply', 'unsafe-apply') and results.success
 ),
 unapplied_dirspaces as (
     select

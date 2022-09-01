@@ -1368,6 +1368,29 @@ let process_issue_comment request_id config storage = function
               ~tag_query
           in
           run_event_evaluator storage event
+      | Ok (Terrat_comment.Unsafe_apply { tag_query }) ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          Terrat_github.get_installation_access_token config installation_id
+          >>= fun access_token ->
+          Terrat_github.react_to_comment
+            ~access_token
+            ~owner:repository.Gw.Repository.owner.Gw.User.login
+            ~repo:repository.Gw.Repository.name
+            ~comment_id:comment.Gw.Issue_comment.id
+            ()
+          >>= fun () ->
+          let event =
+            Event.make
+              ~access_token
+              ~config
+              ~installation_id
+              ~pull_number
+              ~repository
+              ~request_id
+              ~run_type:Terrat_work_manifest.Run_type.Unsafe_apply
+              ~tag_query
+          in
+          run_event_evaluator storage event
       | Ok Terrat_comment.Help -> (
           let kv = Snabela.Kv.Map.of_list [] in
           match Snabela.apply Tmpl.terrateam_comment_help kv with

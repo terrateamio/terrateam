@@ -4,18 +4,21 @@ module Run_type = struct
     | Autoapply
     | Plan
     | Apply
+    | Unsafe_apply
 
   let to_string = function
     | Autoplan -> "autoplan"
     | Plan -> "plan"
     | Autoapply -> "autoapply"
     | Apply -> "apply"
+    | Unsafe_apply -> "unsafe-apply"
 
   let of_string = function
     | "autoplan" -> Some Autoplan
     | "plan" -> Some Plan
     | "autoapply" -> Some Autoapply
     | "apply" -> Some Apply
+    | "unsafe-apply" -> Some Unsafe_apply
     | _ -> None
 end
 
@@ -26,7 +29,7 @@ module Unified_run_type = struct
 
   let of_run_type = function
     | Run_type.(Autoplan | Plan) -> Plan
-    | Run_type.(Autoapply | Apply) -> Apply
+    | Run_type.(Autoapply | Apply | Unsafe_apply) -> Apply
 
   let to_string = function
     | Plan -> "plan"
