@@ -92,7 +92,7 @@ module Make (Abb : Abb_intf.S) = struct
       | `Ok (Error errors) -> Abb.Future.return (Error (`Msg (CCString.concat "," errors)))
       | `Timeout -> Abb.Future.return (Error (`Msg "Timeout"))
 
-    let send ctx data =
+    let send_recv ctx data =
       let open Abb.Future.Infix_monad in
       Abb.Socket.sendto
         ctx.sock
@@ -100,21 +100,18 @@ module Make (Abb : Abb_intf.S) = struct
           Abb_intf.Write_buf.[ { buf = Cstruct.to_bytes data; pos = 0; len = Cstruct.length data } ]
         ctx.sockaddr
       >>= function
-      | Ok n when n = Cstruct.length data -> Abb.Future.return (Ok ())
+      | Ok n when n = Cstruct.length data -> (
+          let buf = Bytes.create (64 * 1024) in
+          Abb.Socket.recvfrom ctx.sock ~buf ~pos:0 ~len:(Bytes.length buf)
+          >>= function
+          | Ok (n, _) ->
+              let data = Cstruct.of_bytes ~len:n buf in
+              Abb.Future.return (Ok data)
+          | Error (#Abb_intf.Errors.recvfrom as err) ->
+              Abb.Future.return (Error (`Msg (Abb_intf.Errors.show_recvfrom err))))
       | Ok _ -> Abb.Future.return (Error (`Msg "Failed to write whole query"))
       | Error (#Abb_intf.Errors.sendto as err) ->
           Abb.Future.return (Error (`Msg (Abb_intf.Errors.show_sendto err)))
-
-    let recv ctx =
-      let open Abb.Future.Infix_monad in
-      let buf = Bytes.create (64 * 1024) in
-      Abb.Socket.recvfrom ctx.sock ~buf ~pos:0 ~len:(Bytes.length buf)
-      >>= function
-      | Ok (n, _) ->
-          let data = Cstruct.of_bytes ~len:n buf in
-          Abb.Future.return (Ok data)
-      | Error (#Abb_intf.Errors.recvfrom as err) ->
-          Abb.Future.return (Error (`Msg (Abb_intf.Errors.show_recvfrom err)))
 
     let close ctx = Abb_fut_comb.ignore (Abb.Socket.close ctx.sock)
   end
