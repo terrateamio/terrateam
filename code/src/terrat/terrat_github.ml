@@ -381,3 +381,34 @@ module Commit_status = struct
     | Ok _ as ret -> Abb.Future.return ret
     | Error #list_err as err -> Abb.Future.return err
 end
+
+module Status_check = struct
+  type list_err = Githubc2_abb.call_err [@@deriving show]
+
+  let create_client = create
+
+  let list ~access_token ~owner ~repo ~ref_ () =
+    let open Abb.Future.Infix_monad in
+    let client = create_client (`Token access_token) in
+    Githubc2_abb.call
+      client
+      Githubc2_checks.List_for_ref.(make Parameters.(make ~owner ~repo ~ref_ ()))
+    >>= function
+    | Ok resp ->
+        let module OK = Githubc2_checks.List_for_ref.Responses.OK in
+        let (`OK OK.{ primary = Primary.{ check_runs; _ }; _ }) = Openapi.Response.value resp in
+        Abb.Future.return (Ok check_runs)
+    | Error _ as err -> Abb.Future.return err
+end
+
+module Pull_request_reviews = struct
+  type list_err = Githubc2_abb.call_err [@@deriving show]
+
+  let create_client = create
+
+  let list ~access_token ~owner ~repo ~pull_number () =
+    let client = create_client (`Token access_token) in
+    Githubc2_abb.collect_all
+      client
+      Githubc2_pulls.List_reviews.(make Parameters.(make ~owner ~repo ~pull_number ()))
+end

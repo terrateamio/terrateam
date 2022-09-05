@@ -711,6 +711,41 @@ module Evaluator = Terrat_event_evaluator.Make (struct
               (Terrat_github_commit_check.show_list_err err));
         Abb.Future.return (Error `Error)
 
+  let fetch_pull_request_reviews event pull_request =
+    let open Abb.Future.Infix_monad in
+    let owner = event.Event.repository.Gw.Repository.owner.Gw.User.login in
+    let repo = event.Event.repository.Gw.Repository.name in
+    let pull_number = CCInt64.to_int pull_request.Terrat_pull_request.id in
+    Terrat_github.Pull_request_reviews.list
+      ~access_token:event.Event.access_token
+      ~owner
+      ~repo
+      ~pull_number
+      ()
+    >>= function
+    | Ok reviews ->
+        let module Prr = Githubc2_components.Pull_request_review in
+        Abb.Future.return
+          (Ok
+             (CCList.map
+                (fun Prr.{ primary = Primary.{ node_id; state; _ }; _ } ->
+                  Terrat_pull_request_review.
+                    {
+                      id = node_id;
+                      status =
+                        (match state with
+                        | "APPROVED" -> Status.Approved
+                        | _ -> Status.Unknown);
+                    })
+                reviews))
+    | Error (#Terrat_github.Pull_request_reviews.list_err as err) ->
+        Logs.err (fun m ->
+            m
+              "GITHUB_EVENT : %s : ERROR : %s"
+              (Event.request_id event)
+              (Terrat_github.Pull_request_reviews.show_list_err err));
+        Abb.Future.return (Error `Error)
+
   let query_conflicting_work_manifests_in_repo db event =
     let run =
       Pgsql_io.Prepared_stmt.fetch
@@ -1027,8 +1062,31 @@ module Evaluator = Terrat_event_evaluator.Make (struct
           Tmpl.repo_config_generic_failure
           kv
           event
-    | Terrat_event_evaluator.Msg.Pull_request_not_appliable _ ->
-        let kv = Snabela.Kv.(Map.of_list []) in
+    | Terrat_event_evaluator.Msg.Pull_request_not_appliable (_, apply_requirements) ->
+        let module Ar = Terrat_event_evaluator.Msg.Apply_requirements in
+        let kv =
+          Snabela.Kv.(
+            Map.of_list
+              [
+                ("approved_enabled", bool (CCOption.is_some apply_requirements.Ar.approved));
+                ( "approved_check",
+                  bool (CCOption.get_or ~default:false apply_requirements.Ar.approved) );
+                ( "merge_conflicts_enabled",
+                  bool (CCOption.is_some apply_requirements.Ar.merge_conflicts) );
+                ( "merge_conflicts_check",
+                  bool (CCOption.get_or ~default:false apply_requirements.Ar.merge_conflicts) );
+                ( "status_checks_enabled",
+                  bool (CCOption.is_some apply_requirements.Ar.status_checks) );
+                ( "status_checks_check",
+                  bool (CCOption.get_or ~default:false apply_requirements.Ar.status_checks) );
+                ( "status_checks_failed",
+                  list
+                    (CCList.map
+                       (fun Terrat_commit_check.{ title; _ } ->
+                         Map.of_list [ ("title", string title) ])
+                       apply_requirements.Ar.status_checks_failed) );
+              ])
+        in
         apply_template_and_publish
           "PULL_REQUEST_NOT_APPLIABLE"
           Tmpl.pull_request_not_appliable

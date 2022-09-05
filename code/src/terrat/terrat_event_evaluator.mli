@@ -2,13 +2,22 @@ module Dir_set : module type of CCSet.Make (CCString)
 module Dirspace_map : module type of CCMap.Make (Terrat_change.Dirspace)
 
 module Msg : sig
+  module Apply_requirements : sig
+    type t = {
+      approved : bool option;
+      merge_conflicts : bool option;
+      status_checks : bool option;
+      status_checks_failed : Terrat_commit_check.t list;
+    }
+  end
+
   type 'pull_request t =
     | Missing_plans of Terrat_change.Dirspace.t list
     | Dirspaces_owned_by_other_pull_request of 'pull_request Dirspace_map.t
     | Conflicting_work_manifests of 'pull_request Terrat_work_manifest.Existing_lite.t list
     | Repo_config_parse_failure of string
     | Repo_config_failure of string
-    | Pull_request_not_appliable of 'pull_request
+    | Pull_request_not_appliable of ('pull_request * Apply_requirements.t)
     | Pull_request_not_mergeable of 'pull_request
     | Apply_no_matching_dirspaces
     | Plan_no_matching_dirspaces

@@ -99,6 +99,30 @@ module Commit_status : sig
     (Githubc2_components.Status.t list, [> list_err ]) result Abb.Future.t
 end
 
+module Status_check : sig
+  type list_err = Githubc2_abb.call_err [@@deriving show]
+
+  val list :
+    access_token:string ->
+    owner:string ->
+    repo:string ->
+    ref_:string ->
+    unit ->
+    (Githubc2_components.Check_run.t list, [> list_err ]) result Abb.Future.t
+end
+
+module Pull_request_reviews : sig
+  type list_err = Githubc2_abb.call_err [@@deriving show]
+
+  val list :
+    access_token:string ->
+    owner:string ->
+    repo:string ->
+    pull_number:int ->
+    unit ->
+    (Githubc2_components.Pull_request_review.t list, [> list_err ]) result Abb.Future.t
+end
+
 val create : Githubc2_abb.Authorization.t -> Githubc2_abb.t
 
 val get_installation_access_token :

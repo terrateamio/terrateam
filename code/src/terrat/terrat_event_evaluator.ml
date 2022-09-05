@@ -2,13 +2,22 @@ module Dir_set = CCSet.Make (CCString)
 module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
 
 module Msg = struct
+  module Apply_requirements = struct
+    type t = {
+      approved : bool option;
+      merge_conflicts : bool option;
+      status_checks : bool option;
+      status_checks_failed : Terrat_commit_check.t list;
+    }
+  end
+
   type 'pull_request t =
     | Missing_plans of Terrat_change.Dirspace.t list
     | Dirspaces_owned_by_other_pull_request of 'pull_request Dirspace_map.t
     | Conflicting_work_manifests of 'pull_request Terrat_work_manifest.Existing_lite.t list
     | Repo_config_parse_failure of string
     | Repo_config_failure of string
-    | Pull_request_not_appliable of 'pull_request
+    | Pull_request_not_appliable of ('pull_request * Apply_requirements.t)
     | Pull_request_not_mergeable of 'pull_request
     | Apply_no_matching_dirspaces
     | Plan_no_matching_dirspaces
@@ -183,6 +192,127 @@ module Make (S : S) = struct
     | Some mergeable, "merge" -> mergeable
     | (Some _ | _), _ -> true
 
+  let check_apply_requirements event pull_request repo_config =
+    let module Rc = Terrat_repo_config.Version_1 in
+    let module Ar = Rc.Apply_requirements in
+    let open Abbs_future_combinators.Infix_result_monad in
+    let apply_requirements =
+      CCOption.get_or ~default:(Rc.Apply_requirements.make ()) repo_config.Rc.apply_requirements
+    in
+    let Ar.Checks.{ approved; merge_conflicts; status_checks } =
+      CCOption.get_or ~default:(Ar.Checks.make ()) apply_requirements.Ar.checks
+    in
+    let approved = CCOption.get_or ~default:(Ar.Checks.Approved.make ()) approved in
+    let merge_conflicts =
+      CCOption.get_or ~default:(Ar.Checks.Merge_conflicts.make ()) merge_conflicts
+    in
+    let status_checks = CCOption.get_or ~default:(Ar.Checks.Status_checks.make ()) status_checks in
+    Abbs_future_combinators.Infix_result_app.(
+      (fun reviews commit_checks -> (reviews, commit_checks))
+      <$> Abbs_time_it.run
+            (fun t ->
+              Logs.info (fun m ->
+                  m "EVENT_EVALUATOR : %s : FETCH_APPROVED_TIME : %f" (S.Event.request_id event) t))
+            (fun () -> S.fetch_pull_request_reviews event pull_request)
+      <*> Abbs_time_it.run
+            (fun t ->
+              Logs.info (fun m ->
+                  m
+                    "EVENT_EVALUATOR : %s : FETCH_COMMIT_CHECKS_TIME : %f"
+                    (S.Event.request_id event)
+                    t))
+            (fun () -> S.fetch_commit_checks event pull_request))
+    >>= fun (reviews, commit_checks) ->
+    let approved_reviews =
+      CCList.filter
+        (function
+          | Terrat_pull_request_review.{ status = Status.Approved; _ } -> true
+          | _ -> false)
+        reviews
+    in
+    let approved_result = CCList.length approved_reviews >= approved.Ar.Checks.Approved.count in
+    let merge_result = CCOption.get_or ~default:false (S.Pull_request.mergeable pull_request) in
+    let ignore_matching =
+      CCOption.get_or ~default:[] status_checks.Ar.Checks.Status_checks.ignore_matching
+    in
+    (* Convert all patterns and ignore those that don't compile.  This eats
+       errors.
+
+       TODO: Improve handling errors here *)
+    let ignore_matching_pats = CCList.filter_map Lua_pattern.of_string ignore_matching in
+    (* Relevant checks exclude our terrateam checks, and also exclude any
+       ignored patterns.  We check both if a pattern matches OR if there is an
+       exact match with the string.  This is because someone might put in an
+       invalid pattern (because secretly we are using Lua patterns underneath
+       which have a slightly different syntax) *)
+    let relevant_commit_checks =
+      CCList.filter
+        (fun Terrat_commit_check.{ title; _ } ->
+          not
+            (CCString.prefix ~pre:"terrateam apply:" title
+            || CCString.prefix ~pre:"terrateam plan:" title
+            || CCList.mem
+                 ~eq:CCString.equal
+                 title
+                 [ "terrateam apply pre-hooks"; "terrateam apply post-hooks" ]
+            || CCList.exists CCFun.(Lua_pattern.find title %> CCOption.is_some) ignore_matching_pats
+            || CCList.exists (CCString.equal title) ignore_matching))
+        commit_checks
+    in
+    let failed_commit_checks =
+      CCList.filter
+        (function
+          | Terrat_commit_check.{ status = Status.Completed; _ } -> false
+          | _ -> true)
+        relevant_commit_checks
+    in
+    let all_commit_check_success = CCList.is_empty failed_commit_checks in
+    let merged =
+      let module St = Terrat_pull_request.State in
+      match S.Pull_request.state pull_request with
+      | St.Merged _ -> true
+      | St.Open | St.Closed -> false
+    in
+    let apply_requirements =
+      Msg.Apply_requirements.
+        {
+          approved = (if approved.Ar.Checks.Approved.enabled then Some approved_result else None);
+          merge_conflicts =
+            (if merge_conflicts.Ar.Checks.Merge_conflicts.enabled then Some merge_result else None);
+          status_checks =
+            (if status_checks.Ar.Checks.Status_checks.enabled then Some all_commit_check_success
+            else None);
+          status_checks_failed = failed_commit_checks;
+        }
+    in
+    (* If it's merged, nothing should stop an apply because it's already
+       merged. *)
+    let result =
+      merged
+      || ((not approved.Ar.Checks.Approved.enabled) || approved_result)
+         && ((not merge_conflicts.Ar.Checks.Merge_conflicts.enabled) || merge_result)
+         && ((not status_checks.Ar.Checks.Status_checks.enabled) || all_commit_check_success)
+    in
+    Logs.info (fun m ->
+        m
+          "EVENT_EVALUATOR : %s : APPLY_REQUIREMENTS_CHECKS : approved=%s merge_conflicts=%s \
+           status_checks=%s"
+          (S.Event.request_id event)
+          (Bool.to_string approved.Ar.Checks.Approved.enabled)
+          (Bool.to_string merge_conflicts.Ar.Checks.Merge_conflicts.enabled)
+          (Bool.to_string status_checks.Ar.Checks.Status_checks.enabled));
+    Logs.info (fun m ->
+        m
+          "EVENT_EVALUATOR : %s : APPLY_REQUIREMENTS_RESULT : approved=%s merge_check=%s \
+           commit_check=%s merged=%s result=%s"
+          (S.Event.request_id event)
+          (Bool.to_string approved_result)
+          (Bool.to_string merge_result)
+          (Bool.to_string all_commit_check_success)
+          (Bool.to_string merged)
+          (Bool.to_string result));
+    Abb.Future.return (Ok (result, apply_requirements))
+
   let create_and_store_work_manifest db event pull_request matches =
     let open Abbs_future_combinators.Infix_result_monad in
     let dirspaceflows = CCList.map Terrat_change_matcher.dirspaceflow matches in
@@ -259,104 +389,124 @@ module Make (S : S) = struct
       tag_query_matches
       all_match_dirspaceflows
       pull_request
+      repo_config
       run_type
       run_source_type =
     let open Abbs_future_combinators.Infix_result_monad in
     Abbs_time_it.run
       (fun t ->
         Logs.info (fun m ->
-            m "EVENT_EVALUATOR : %s : MISSING_APPLIED_DIRSPACES : %f" (S.Event.request_id event) t))
-      (fun () -> S.query_unapplied_dirspaces db event pull_request)
-    >>= fun missing_dirspaces ->
-    (* Filter only those missing *)
-    let tag_query_matches =
-      CCList.filter
-        (fun Terrat_change_matcher.{ dirspaceflow = Terrat_change.Dirspaceflow.{ dirspace; _ }; _ } ->
-          CCList.mem ~eq:Terrat_change.Dirspace.equal dirspace missing_dirspaces)
-        tag_query_matches
-    in
-    (* To perform an apply we need:
-
-       1. Plans for all of the dirspaces we are going to run.  This
-       also means that the plan also has happened after any of the
-       most recent applies to that dirspace.
-
-       2. Make sure no other pull requests own the any of the
-       dirspaces that this pull request touches. *)
-    let matches =
-      match run_source_type with
-      | `Auto ->
-          CCList.filter
-            (fun {
-                   Terrat_change_matcher.when_modified =
-                     Terrat_repo_config.When_modified.{ autoapply; _ };
-                   _;
-                 } -> autoapply)
-            tag_query_matches
-      | `Manual -> tag_query_matches
-    in
-    match (S.Event.run_type event, matches) with
-    | Terrat_work_manifest.Run_type.Autoapply, [] ->
-        Logs.info (fun m ->
-            m "EVENT_EVALUATOR : %s : NOOP : AUTOAPPLY_NO_MATCHES" (S.Event.request_id event));
-        Abb.Future.return (Ok None)
-    | _, [] ->
-        Logs.info (fun m ->
-            m "EVENT_EVALUATOR : %s : NOOP : APPLY_NO_MATCHING_DIRSPACES" (S.Event.request_id event));
-        Abb.Future.return (Ok (Some Msg.Apply_no_matching_dirspaces))
-    | _, _ -> (
+            m "EVENT_EVALUATOR : %s : CHECK_APPLY_REQUIREMENTS : %f" (S.Event.request_id event) t))
+      (fun () -> check_apply_requirements event pull_request repo_config)
+    >>= function
+    | true, _ -> (
         Abbs_time_it.run
           (fun t ->
             Logs.info (fun m ->
                 m
-                  "EVENT_EVALUATOR : %s : QUERY_DIRSPACES_OWNED_BY_OTHER_PRS : %f"
+                  "EVENT_EVALUATOR : %s : MISSING_APPLIED_DIRSPACES : %f"
                   (S.Event.request_id event)
                   t))
-          (fun () ->
-            S.query_dirspaces_owned_by_other_pull_requests
-              db
-              event
-              pull_request
-              (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows))
-        >>= function
-        | dirspaces when Dirspace_map.is_empty dirspaces && run_type = `Unsafe_apply -> (
-            create_and_store_work_manifest db event pull_request matches
-            >>= function
-            | () when S.Event.run_type event = Terrat_work_manifest.Run_type.Autoapply ->
-                Abb.Future.return (Ok (Some Msg.Autoapply_running))
-            | () -> Abb.Future.return (Ok None))
-        | dirspaces when Dirspace_map.is_empty dirspaces -> (
-            (* None of the dirspaces are owned by another PR, we can proceed *)
+          (fun () -> S.query_unapplied_dirspaces db event pull_request)
+        >>= fun missing_dirspaces ->
+        (* Filter only those missing *)
+        let tag_query_matches =
+          CCList.filter
+            (fun Terrat_change_matcher.
+                   { dirspaceflow = Terrat_change.Dirspaceflow.{ dirspace; _ }; _ } ->
+              CCList.mem ~eq:Terrat_change.Dirspace.equal dirspace missing_dirspaces)
+            tag_query_matches
+        in
+        (* To perform an apply we need:
+
+           1. Plans for all of the dirspaces we are going to run.  This
+           also means that the plan also has happened after any of the
+           most recent applies to that dirspace.
+
+           2. Make sure no other pull requests own the any of the
+           dirspaces that this pull request touches. *)
+        let matches =
+          match run_source_type with
+          | `Auto ->
+              CCList.filter
+                (fun {
+                       Terrat_change_matcher.when_modified =
+                         Terrat_repo_config.When_modified.{ autoapply; _ };
+                       _;
+                     } -> autoapply)
+                tag_query_matches
+          | `Manual -> tag_query_matches
+        in
+        match (S.Event.run_type event, matches) with
+        | Terrat_work_manifest.Run_type.Autoapply, [] ->
+            Logs.info (fun m ->
+                m "EVENT_EVALUATOR : %s : NOOP : AUTOAPPLY_NO_MATCHES" (S.Event.request_id event));
+            Abb.Future.return (Ok None)
+        | _, [] ->
+            Logs.info (fun m ->
+                m
+                  "EVENT_EVALUATOR : %s : NOOP : APPLY_NO_MATCHING_DIRSPACES"
+                  (S.Event.request_id event));
+            Abb.Future.return (Ok (Some Msg.Apply_no_matching_dirspaces))
+        | _, _ -> (
             Abbs_time_it.run
               (fun t ->
                 Logs.info (fun m ->
                     m
-                      "EVENT_EVALUATOR : %s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS : %f"
+                      "EVENT_EVALUATOR : %s : QUERY_DIRSPACES_OWNED_BY_OTHER_PRS : %f"
                       (S.Event.request_id event)
                       t))
               (fun () ->
-                S.query_dirspaces_without_valid_plans
+                S.query_dirspaces_owned_by_other_pull_requests
                   db
                   event
                   pull_request
-                  (CCList.map
-                     CCFun.(
-                       Terrat_change_matcher.dirspaceflow %> Terrat_change.Dirspaceflow.to_dirspace)
-                     matches))
+                  (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows))
             >>= function
-            | [] -> (
-                (* All are ready to be applied *)
+            | dirspaces when Dirspace_map.is_empty dirspaces && run_type = `Unsafe_apply -> (
                 create_and_store_work_manifest db event pull_request matches
                 >>= function
                 | () when S.Event.run_type event = Terrat_work_manifest.Run_type.Autoapply ->
                     Abb.Future.return (Ok (Some Msg.Autoapply_running))
                 | () -> Abb.Future.return (Ok None))
+            | dirspaces when Dirspace_map.is_empty dirspaces -> (
+                (* None of the dirspaces are owned by another PR, we can proceed *)
+                Abbs_time_it.run
+                  (fun t ->
+                    Logs.info (fun m ->
+                        m
+                          "EVENT_EVALUATOR : %s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS : %f"
+                          (S.Event.request_id event)
+                          t))
+                  (fun () ->
+                    S.query_dirspaces_without_valid_plans
+                      db
+                      event
+                      pull_request
+                      (CCList.map
+                         CCFun.(
+                           Terrat_change_matcher.dirspaceflow
+                           %> Terrat_change.Dirspaceflow.to_dirspace)
+                         matches))
+                >>= function
+                | [] -> (
+                    (* All are ready to be applied *)
+                    create_and_store_work_manifest db event pull_request matches
+                    >>= function
+                    | () when S.Event.run_type event = Terrat_work_manifest.Run_type.Autoapply ->
+                        Abb.Future.return (Ok (Some Msg.Autoapply_running))
+                    | () -> Abb.Future.return (Ok None))
+                | dirspaces ->
+                    (* Some are missing plans *)
+                    Abb.Future.return (Ok (Some (Msg.Missing_plans dirspaces))))
             | dirspaces ->
-                (* Some are missing plans *)
-                Abb.Future.return (Ok (Some (Msg.Missing_plans dirspaces))))
-        | dirspaces ->
-            (* Some are owned by another PR, abort *)
-            Abb.Future.return (Ok (Some (Msg.Dirspaces_owned_by_other_pull_request dirspaces))))
+                (* Some are owned by another PR, abort *)
+                Abb.Future.return (Ok (Some (Msg.Dirspaces_owned_by_other_pull_request dirspaces))))
+        )
+    | false, apply_requirements ->
+        Logs.info (fun m -> m "EVENT_EVALUATOR : %s : PR_NOT_APPLIABLE" (S.Event.request_id event));
+        Abb.Future.return
+          (Ok (Some (Msg.Pull_request_not_appliable (pull_request, apply_requirements))))
 
   let exec_event storage event pull_request repo_config repo_tree =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -459,28 +609,26 @@ module Make (S : S) = struct
                 match unified_run_type (S.Event.run_type event) with
                 | `Plan run_source_type ->
                     process_plan db event tag_query_matches pull_request run_source_type
-                | `Apply run_source_type when S.Pull_request.passed_all_checks pull_request ->
+                | `Apply run_source_type ->
                     process_apply
                       db
                       event
                       tag_query_matches
                       all_match_dirspaceflows
                       pull_request
+                      repo_config
                       `Apply
                       run_source_type
-                | `Unsafe_apply when S.Pull_request.passed_all_checks pull_request ->
+                | `Unsafe_apply ->
                     process_apply
                       db
                       event
                       tag_query_matches
                       all_match_dirspaceflows
                       pull_request
+                      repo_config
                       `Unsafe_apply
-                      `Manual
-                | `Unsafe_apply | `Apply _ ->
-                    Logs.info (fun m ->
-                        m "EVENT_EVALUATOR : %s : PR_NOT_APPLIABLE" (S.Event.request_id event));
-                    Abb.Future.return (Ok (Some (Msg.Pull_request_not_appliable pull_request))))
+                      `Manual)
             | wms -> Abb.Future.return (Ok (Some (Msg.Conflicting_work_manifests wms)))))
 
   let is_valid_destination_branch event pull_request repo_config =
