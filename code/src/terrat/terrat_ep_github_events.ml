@@ -274,47 +274,6 @@ module Event = struct
   let default_branch t = t.repository.Gw.Repository.default_branch
 end
 
-let create_check_run event work_manifest changes hash =
-  let unified_run_type =
-    Terrat_work_manifest.(
-      work_manifest.run_type |> Unified_run_type.of_run_type |> Unified_run_type.to_string)
-  in
-  let target_url =
-    Printf.sprintf
-      "https://github.com/%s/%s/actions"
-      event.Event.repository.Gw.Repository.owner.Gw.User.login
-      event.Event.repository.Gw.Repository.name
-  in
-  let commit_statuses =
-    let module T = Terrat_github.Commit_status.Create.T in
-    let aggregate =
-      T.make
-        ~target_url
-        ~description:"Queued"
-        ~context:(Printf.sprintf "terrateam %s" unified_run_type)
-        ~state:"pending"
-        ()
-    in
-    let dirspaces =
-      CCList.map
-        (fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.dir; workspace }; _ } ->
-          T.make
-            ~target_url
-            ~description:"Queued"
-            ~context:(Printf.sprintf "terrateam %s %s %s" unified_run_type dir workspace)
-            ~state:"pending"
-            ())
-        changes
-    in
-    aggregate :: dirspaces
-  in
-  Terrat_github.Commit_status.create
-    ~access_token:event.Event.access_token
-    ~owner:event.Event.repository.Gw.Repository.owner.Gw.User.login
-    ~repo:event.Event.repository.Gw.Repository.name
-    ~sha:hash
-    commit_statuses
-
 let diff_of_github_diff =
   CCList.map
     Githubc2_components.Diff_entry.(
@@ -495,14 +454,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
               changes = ();
             }
           in
-          Logs.info (fun m ->
-              m "GITHUB_EVENT : %s : START_CREATE_COMMIT_STATUSES" (Event.request_id event));
-          Abbs_time_it.run
-            (fun t ->
-              Logs.info (fun m ->
-                  m "GITHUB_EVENT : %s : CREATE_COMMIT_STATUSES : %f" (Event.request_id event) t))
-            (fun () -> create_check_run event wm work_manifest.Wm.changes hash)
-          >>= fun () -> Abb.Future.return (Ok wm)
+          Abb.Future.return (Ok wm)
     in
     let open Abb.Future.Infix_monad in
     run
@@ -734,6 +686,31 @@ module Evaluator = Terrat_event_evaluator.Make (struct
               (Terrat_github.show_get_tree_err err));
         Abb.Future.return (Error `Error)
 
+  let fetch_commit_checks event pull_request =
+    let open Abb.Future.Infix_monad in
+    let owner = event.Event.repository.Gw.Repository.owner.Gw.User.login in
+    let repo = event.Event.repository.Gw.Repository.name in
+    Abbs_time_it.run
+      (fun t ->
+        Logs.info (fun m ->
+            m "GITHUB_EVENT : %s : LIST_COMMIT_CHECKS : %f" (Event.request_id event) t))
+      (fun () ->
+        Terrat_github_commit_check.list
+          ~access_token:event.Event.access_token
+          ~owner
+          ~repo
+          ~ref_:pull_request.Terrat_pull_request.hash
+          ())
+    >>= function
+    | Ok _ as res -> Abb.Future.return res
+    | Error (#Terrat_github_commit_check.list_err as err) ->
+        Logs.err (fun m ->
+            m
+              "GITHUB_EVENT : %s : FETCH_COMMIT_CHECKS : %s"
+              (Event.request_id event)
+              (Terrat_github_commit_check.show_list_err err));
+        Abb.Future.return (Error `Error)
+
   let query_conflicting_work_manifests_in_repo db event =
     let run =
       Pgsql_io.Prepared_stmt.fetch
@@ -801,6 +778,30 @@ module Evaluator = Terrat_event_evaluator.Make (struct
         Logs.err (fun m ->
             m "GITHUB_EVENT : %s : ERROR : %s" (Event.request_id event) (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
+
+  let create_commit_checks event pull_request checks =
+    let open Abb.Future.Infix_monad in
+    Terrat_github_commit_check.create
+      ~access_token:event.Event.access_token
+      ~owner:event.Event.repository.Gw.Repository.owner.Gw.User.login
+      ~repo:event.Event.repository.Gw.Repository.name
+      ~ref_:pull_request.Terrat_pull_request.hash
+      checks
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error (#Githubc2_abb.call_err as err) ->
+        Logs.err (fun m ->
+            m
+              "GITHUB_EVENT : %s : ERROR : %s"
+              (Event.request_id event)
+              (Githubc2_abb.show_call_err err));
+        Abb.Future.return (Error `Error)
+
+  let get_commit_check_details_url event pull_request =
+    Printf.sprintf
+      "https://github.com/%s/%s/actions"
+      event.Event.repository.Gw.Repository.owner.Gw.User.login
+      event.Event.repository.Gw.Repository.name
 
   let query_unapplied_dirspaces db event pull_request =
     let module Pr = Terrat_pull_request in

@@ -65,9 +65,15 @@ type get_tree_err =
 module Commit_status : sig
   type create_err = Githubc2_abb.call_err [@@deriving show]
 
+  type list_err =
+    [ Githubc2_abb.call_err
+    | `Moved_permanently of Githubc2_components.Basic_error.t
+    ]
+  [@@deriving show]
+
   module Create : sig
     module T : sig
-      type t
+      type t [@@deriving show]
 
       val make :
         ?target_url:string -> ?description:string -> ?context:string -> state:string -> unit -> t
@@ -83,6 +89,14 @@ module Commit_status : sig
     sha:string ->
     Create.t ->
     (unit, [> create_err ]) result Abb.Future.t
+
+  val list :
+    access_token:string ->
+    owner:string ->
+    repo:string ->
+    sha:string ->
+    unit ->
+    (Githubc2_components.Status.t list, [> list_err ]) result Abb.Future.t
 end
 
 val create : Githubc2_abb.Authorization.t -> Githubc2_abb.t

@@ -70,6 +70,22 @@ module type S = sig
   val fetch_pull_request : Event.t -> (Pull_request.t, [> `Error ]) result Abb.Future.t
   val fetch_tree : Event.t -> Pull_request.t -> (string list, [> `Error ]) result Abb.Future.t
 
+  val fetch_commit_checks :
+    Event.t -> Pull_request.t -> (Terrat_commit_check.t list, [> `Error ]) result Abb.Future.t
+
+  val fetch_pull_request_reviews :
+    Event.t ->
+    Pull_request.t ->
+    (Terrat_pull_request_review.t list, [> `Error ]) result Abb.Future.t
+
+  val create_commit_checks :
+    Event.t ->
+    Pull_request.t ->
+    Terrat_commit_check.t list ->
+    (unit, [> `Error ]) result Abb.Future.t
+
+  val get_commit_check_details_url : Event.t -> Pull_request.t -> string
+
   val query_conflicting_work_manifests_in_repo :
     Pgsql_io.t ->
     Event.t ->
@@ -113,24 +129,51 @@ let unified_run_type =
   | Apply -> `Apply `Manual
   | Unsafe_apply -> `Unsafe_apply
 
+let compute_matches ~repo_config ~tag_query ~out_of_change_applies ~diff ~repo_tree () =
+  let open CCResult.Infix in
+  let all_matching_dirspaces =
+    Terrat_change_matcher.map_dirspace ~filelist:repo_tree repo_config out_of_change_applies
+  in
+  Terrat_change_matcher.match_diff ~filelist:repo_tree repo_config diff
+  >>= fun all_matching_diff ->
+  let all_matches = Terrat_change_matcher.merge_dedup all_matching_dirspaces all_matching_diff in
+  let all_match_dirspaceflows = CCList.map Terrat_change_matcher.dirspaceflow all_matches in
+  let tag_query_matches =
+    Terrat_change_matcher.map_dirspace
+      ~tag_query
+      ~filelist:repo_tree
+      repo_config
+      (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows)
+  in
+  Ok (tag_query_matches, all_match_dirspaceflows)
+
 module Make (S : S) = struct
-  let compute_matches ~repo_config ~tag_query ~out_of_change_applies ~diff ~repo_tree () =
-    let open CCResult.Infix in
-    let all_matching_dirspaces =
-      Terrat_change_matcher.map_dirspace ~filelist:repo_tree repo_config out_of_change_applies
+  let create_queued_commit_checks event pull_request dirspaces =
+    let details_url = S.get_commit_check_details_url event pull_request in
+    let unified_run_type =
+      let module Urt = Terrat_work_manifest.Unified_run_type in
+      event |> S.Event.run_type |> Urt.of_run_type |> Urt.to_string
     in
-    Terrat_change_matcher.match_diff ~filelist:repo_tree repo_config diff
-    >>= fun all_matching_diff ->
-    let all_matches = Terrat_change_matcher.merge_dedup all_matching_dirspaces all_matching_diff in
-    let all_match_dirspaceflows = CCList.map Terrat_change_matcher.dirspaceflow all_matches in
-    let tag_query_matches =
-      Terrat_change_matcher.map_dirspace
-        ~tag_query
-        ~filelist:repo_tree
-        repo_config
-        (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows)
+    let aggregate =
+      Terrat_commit_check.(
+        make
+          ~details_url
+          ~description:"Queued"
+          ~title:(Printf.sprintf "terrateam %s" unified_run_type)
+          ~status:Status.Queued)
     in
-    Ok (tag_query_matches, all_match_dirspaceflows)
+    let dirspace_checks =
+      CCList.map
+        (fun Terrat_change.Dirspace.{ dir; workspace; _ } ->
+          Terrat_commit_check.(
+            make
+              ~details_url
+              ~description:"Queued"
+              ~title:(Printf.sprintf "terrateam %s %s %s" unified_run_type dir workspace)
+              ~status:Status.Queued))
+        dirspaces
+    in
+    aggregate :: dirspace_checks
 
   let can_apply_checkout_strategy repo_config pull_request =
     match
@@ -142,11 +185,12 @@ module Make (S : S) = struct
 
   let create_and_store_work_manifest db event pull_request matches =
     let open Abbs_future_combinators.Infix_result_monad in
+    let dirspaceflows = CCList.map Terrat_change_matcher.dirspaceflow matches in
     let work_manifest =
       Terrat_work_manifest.
         {
           base_hash = S.Pull_request.base_hash pull_request;
-          changes = CCList.map Terrat_change_matcher.dirspaceflow matches;
+          changes = dirspaceflows;
           completed_at = None;
           created_at = ();
           hash = S.Pull_request.hash pull_request;
@@ -163,7 +207,20 @@ module Make (S : S) = struct
         Logs.info (fun m ->
             m "EVENT_EVALUATOR : %s : CREATE_WORK_MANIFEST : %f" (S.Event.request_id event) t))
       (fun () -> S.store_new_work_manifest db event work_manifest)
-    >>= fun _ -> Abb.Future.return (Ok ())
+    >>= fun _ ->
+    Abbs_time_it.run
+      (fun t ->
+        Logs.info (fun m ->
+            m "EVENT_EVALUATOR : %s : CREATE_COMMIT_CHECKS : %f" (S.Event.request_id event) t))
+      (fun () ->
+        S.create_commit_checks
+          event
+          pull_request
+          (create_queued_commit_checks
+             event
+             pull_request
+             (CCList.map (fun dsf -> dsf.Terrat_change.Dirspaceflow.dirspace) dirspaceflows)))
+    >>= fun () -> Abb.Future.return (Ok ())
 
   let process_plan db event tag_query_matches pull_request run_source_type =
     let matches =

@@ -332,6 +332,12 @@ let rec get_tree ~access_token ~owner ~repo ~sha () =
 module Commit_status = struct
   type create_err = Githubc2_abb.call_err [@@deriving show]
 
+  type list_err =
+    [ Githubc2_abb.call_err
+    | `Moved_permanently of Githubc2_components.Basic_error.t
+    ]
+  [@@deriving show]
+
   module Create = struct
     module T = struct
       type t = {
@@ -340,6 +346,7 @@ module Commit_status = struct
         context : string option;
         state : string;
       }
+      [@@deriving show]
 
       let make ?target_url ?description ?context ~state () =
         { target_url; description; context; state }
@@ -363,4 +370,14 @@ module Commit_status = struct
               Parameters.(make ~owner ~repo ~sha))
         >>= fun _ -> Abb.Future.return (Ok ()))
       creates
+
+  let list ~access_token ~owner ~repo ~sha () =
+    let open Abb.Future.Infix_monad in
+    let client = create_client (`Token access_token) in
+    Githubc2_abb.collect_all
+      client
+      Githubc2_repos.List_commit_statuses_for_ref.(make Parameters.(make ~owner ~repo ~ref_:sha ()))
+    >>= function
+    | Ok _ as ret -> Abb.Future.return ret
+    | Error #list_err as err -> Abb.Future.return err
 end

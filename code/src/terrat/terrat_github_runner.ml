@@ -72,29 +72,35 @@ let start_commit_statuses ~access_token ~owner ~repo ~sha ~run_type ~dirspaces (
   in
   let target_url = Printf.sprintf "https://github.com/%s/%s/actions" owner repo in
   let commit_statuses =
-    let module T = Terrat_github.Commit_status.Create.T in
     let aggregate =
-      T.make
-        ~target_url
-        ~description:"Running"
-        ~context:(Printf.sprintf "terrateam %s" unified_run_type)
-        ~state:"pending"
-        ()
+      Terrat_commit_check.
+        [
+          make
+            ~details_url:target_url
+            ~description:"Running"
+            ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
+            ~status:Status.Queued;
+          make
+            ~details_url:target_url
+            ~description:"Running"
+            ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
+            ~status:Status.Queued;
+        ]
     in
     let dirspaces =
       CCList.map
         (fun Terrat_change.Dirspace.{ dir; workspace } ->
-          T.make
-            ~target_url
-            ~description:"Running"
-            ~context:(Printf.sprintf "terrateam %s %s %s" unified_run_type dir workspace)
-            ~state:"pending"
-            ())
+          Terrat_commit_check.(
+            make
+              ~details_url:target_url
+              ~description:"Running"
+              ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
+              ~status:Status.Queued))
         dirspaces
     in
-    aggregate :: dirspaces
+    aggregate @ dirspaces
   in
-  Terrat_github.Commit_status.create ~access_token ~owner ~repo ~sha commit_statuses
+  Terrat_github_commit_check.create ~access_token ~owner ~repo ~ref_:sha commit_statuses
 
 let abort_work_manifest
     ~access_token
@@ -122,29 +128,28 @@ let abort_work_manifest
   in
   let target_url = Printf.sprintf "https://github.com/%s/%s/actions" owner repo in
   let commit_statuses =
-    let module T = Terrat_github.Commit_status.Create.T in
     let aggregate =
-      T.make
-        ~target_url
-        ~description:"Failed"
-        ~context:(Printf.sprintf "terrateam %s" unified_run_type)
-        ~state:"failure"
-        ()
+      Terrat_commit_check.(
+        make
+          ~details_url:target_url
+          ~description:"Failed"
+          ~title:(Printf.sprintf "terrateam %s" unified_run_type)
+          ~status:Status.Failed)
     in
     let dirspaces =
       CCList.map
         (fun Terrat_change.Dirspace.{ dir; workspace } ->
-          T.make
-            ~target_url
-            ~description:"Failed"
-            ~context:(Printf.sprintf "terrateam %s %s %s" unified_run_type dir workspace)
-            ~state:"failure"
-            ())
+          Terrat_commit_check.(
+            make
+              ~details_url:target_url
+              ~description:"Failed"
+              ~title:(Printf.sprintf "terrateam %s %s %s" unified_run_type dir workspace)
+              ~status:Status.Failed))
         dirspaces
     in
     aggregate :: dirspaces
   in
-  Terrat_github.Commit_status.create ~access_token ~owner ~repo ~sha commit_statuses
+  Terrat_github_commit_check.create ~access_token ~owner ~repo ~ref_:sha commit_statuses
 
 let run_workflow ~config ~access_token ~work_token ~owner ~repo ~branch ~workflow_id () =
   let client = Terrat_github.create (`Token access_token) in

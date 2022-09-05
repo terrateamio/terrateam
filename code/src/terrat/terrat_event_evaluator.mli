@@ -71,6 +71,22 @@ module type S = sig
   val fetch_pull_request : Event.t -> (Pull_request.t, [> `Error ]) result Abb.Future.t
   val fetch_tree : Event.t -> Pull_request.t -> (string list, [> `Error ]) result Abb.Future.t
 
+  val fetch_commit_checks :
+    Event.t -> Pull_request.t -> (Terrat_commit_check.t list, [> `Error ]) result Abb.Future.t
+
+  val fetch_pull_request_reviews :
+    Event.t ->
+    Pull_request.t ->
+    (Terrat_pull_request_review.t list, [> `Error ]) result Abb.Future.t
+
+  val create_commit_checks :
+    Event.t ->
+    Pull_request.t ->
+    Terrat_commit_check.t list ->
+    (unit, [> `Error ]) result Abb.Future.t
+
+  val get_commit_check_details_url : Event.t -> Pull_request.t -> string
+
   val query_conflicting_work_manifests_in_repo :
     Pgsql_io.t ->
     Event.t ->
