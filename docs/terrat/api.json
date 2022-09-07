@@ -1,372 +1,116 @@
 {
-  "openapi": "3.0.3",
-  "paths": {
-    "/api/v1/work-manifests/{work_manifest_id}/initiate": {
-      "post": {
-        "operationId": "work-manifest/initiate",
-        "parameters": [
-          {
-            "name": "work_manifest_id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/work-manifest"
+  "components": {
+    "parameters": {},
+    "responses": {},
+    "schemas": {
+      "hook-outputs": {
+        "additionalProperties": false,
+        "properties": {
+          "post": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/workflow-output-run"
+                },
+                {
+                  "$ref": "#/components/schemas/workflow-output-env"
                 }
-              }
-            }
+              ]
+            },
+            "type": "array"
           },
-          "403": {
+          "pre": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/workflow-output-run"
+                },
+                {
+                  "$ref": "#/components/schemas/workflow-output-env"
+                },
+                {
+                  "$ref": "#/components/schemas/workflow-output-checkout"
+                },
+                {
+                  "$ref": "#/components/schemas/workflow-output-cost-estimation"
+                }
+              ]
+            },
+            "type": "array"
           }
         },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/work-manifest-initiate"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/work-manifests/{work_manifest_id}/plans": {
-      "post": {
-        "operationId": "work-manifest/plan-create",
-        "parameters": [
-          {
-            "name": "work_manifest_id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
+        "required": [
+          "pre",
+          "post"
         ],
-        "responses": {
-          "200": {},
-          "403": {}
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/plan-create"
-              }
-            }
-          }
-        }
+        "type": "object"
       },
-      "get": {
-        "operationId": "work-manifest/plan-get",
-        "parameters": [
-          {
-            "name": "work_manifest_id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "dir",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "workspace",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
+      "output-cost-estimation": {
+        "additionalProperties": false,
+        "properties": {
+          "cost_estimation": {
+            "additionalProperties": false,
+            "properties": {
+              "currency": {
+                "type": "string"
+              },
+              "diff_monthly_cost": {
+                "type": "number"
+              },
+              "dirspaces": {
+                "items": {
                   "additionalProperties": false,
                   "properties": {
-                    "data": {
+                    "diff_monthly_cost": {
+                      "type": "number"
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "prev_monthly_cost": {
+                      "type": "number"
+                    },
+                    "total_monthly_cost": {
+                      "type": "number"
+                    },
+                    "workspace": {
                       "type": "string"
                     }
                   },
-                  "required": ["data"]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/work-manifests/{work_manifest_id}": {
-      "put": {
-        "operationId": "work-manifest/results",
-        "parameters": [
-          {
-            "name": "work_manifest_id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {},
-          "403": {}
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "dirspaces": {
-                    "$ref": "#/components/schemas/work-manifest-results"
-                  },
-                  "overall": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "success": {
-                        "type": "boolean"
-                      },
-                      "outputs": {
-                        "$ref": "#/components/schemas/hook-outputs"
-                      }
-                    },
-                    "required": ["success", "outputs"]
-                  }
+                  "required": [
+                    "path",
+                    "workspace",
+                    "prev_monthly_cost",
+                    "total_monthly_cost",
+                    "diff_monthly_cost"
+                  ],
+                  "type": "object"
                 },
-                "required": ["dirspaces", "overall"]
+                "type": "array"
+              },
+              "prev_monthly_cost": {
+                "type": "number"
+              },
+              "total_monthly_cost": {
+                "type": "number"
               }
-            }
-          }
-        }
-      }
-    }
-  },
-  "components": {
-    "schemas": {
-      "work-manifest-dir": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "path": {
-            "type": "string"
-          },
-          "workspace": {
-            "type": "string"
-          },
-          "workflow": {
-            "type": "integer"
-          },
-          "rank": {
-            "type": "integer",
-            "description": "Starts at 0, relative dependency order to perform operation on dir."
+            },
+            "required": [
+              "prev_monthly_cost",
+              "total_monthly_cost",
+              "diff_monthly_cost",
+              "currency",
+              "dirspaces"
+            ],
+            "type": "object"
           }
         },
         "required": [
-          "path",
-          "workspace",
-          "rank"
-        ]
-      },
-      "work-manifest-plan": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "type": {
-            "type": "string",
-            "const": "plan"
-          },
-          "base_ref": {
-            "type": "string"
-          },
-          "changed_dirspaces": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/work-manifest-dir"
-            }
-          },
-          "dirspaces": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/work-manifest-dir"
-            }
-          },
-          "base_dirspaces": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/work-manifest-dir"
-            }
-          }
-        },
-        "required": [
-          "type",
-          "base_ref",
-          "changed_dirspaces",
-          "dirspaces",
-          "base_dirspaces"
-        ]
-      },
-      "work-manifest-apply": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "type": {
-            "type": "string",
-            "const": "apply"
-          },
-          "base_ref": {
-            "type": "string"
-          },
-          "changed_dirspaces": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/work-manifest-dir"
-            }
-          }
-        },
-        "required": [
-          "type",
-          "base_ref",
-          "changed_dirspaces"
-        ]
-      },
-      "work-manifest-unsafe-apply": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "type": {
-            "type": "string",
-            "const": "unsafe-apply"
-          },
-          "base_ref": {
-            "type": "string"
-          },
-          "changed_dirspaces": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/work-manifest-dir"
-            }
-          }
-        },
-        "required": [
-          "type",
-          "base_ref",
-          "changed_dirspaces"
-        ]
-      },
-      "work-manifest": {
-        "oneOf": [
-          { "$ref": "#/components/schemas/work-manifest-plan" },
-          { "$ref": "#/components/schemas/work-manifest-apply" },
-          { "$ref": "#/components/schemas/work-manifest-unsafe-apply" }
-        ]
-      },
-      "work-manifest-initiate": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "run_id": {
-            "type": "string"
-          },
-          "sha": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "run_id",
-          "sha"
-        ]
-      },
-      "plan-create": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "path": {
-            "type": "string"
-          },
-          "workspace": {
-            "type": "string"
-          },
-          "plan_data": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "path",
-          "workspace",
-          "plan_data"
-        ]
-      },
-      "work-manifest-result": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "path": {
-            "type": "string"
-          },
-          "workspace": {
-            "type": "string"
-          },
-          "success": {
-            "type": "boolean"
-          },
-          "outputs": {
-            "$ref": "#/components/schemas/workflow-outputs"
-          }
-        },
-        "required": [
-          "path",
-          "workspace",
-          "success",
-          "outputs"
-        ]
-      },
-      "work-manifest-results": {
-        "type": "array",
-        "items": {
-          "$ref": "#/components/schemas/work-manifest-result"
-        }
-      },
-      "output-text": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "text": {
-            "type": "string"
-          },
-          "output_key": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "text"
-        ]
+          "cost_estimation"
+        ],
+        "type": "object"
       },
       "output-plan": {
-        "type": "object",
         "additionalProperties": false,
         "properties": {
           "plan": {
@@ -379,344 +123,645 @@
         "required": [
           "plan",
           "plan_text"
-        ]
+        ],
+        "type": "object"
       },
-      "output-cost-estimation": {
-        "type": "object",
+      "output-text": {
         "additionalProperties": false,
         "properties": {
-          "cost_estimation": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "prev_monthly_cost": {
-                "type": "number"
-              },
-              "total_monthly_cost": {
-                "type": "number"
-              },
-              "diff_monthly_cost": {
-                "type": "number"
-              },
-              "currency": {
-                "type": "string"
-              },
-              "dirspaces": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "path": {
-                      "type": "string"
-                    },
-                    "workspace": {
-                      "type": "string"
-                    },
-                    "prev_monthly_cost": {
-                      "type": "number"
-                    },
-                    "total_monthly_cost": {
-                      "type": "number"
-                    },
-                    "diff_monthly_cost": {
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "path",
-                    "workspace",
-                    "prev_monthly_cost",
-                    "total_monthly_cost",
-                    "diff_monthly_cost"
-                  ]
-                }
-              }
-            },
-            "required": [
-              "prev_monthly_cost",
-              "total_monthly_cost",
-              "diff_monthly_cost",
-              "currency",
-              "dirspaces"
-            ]
+          "output_key": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
           }
         },
         "required": [
-          "cost_estimation"
-        ]
+          "text"
+        ],
+        "type": "object"
       },
-      "workflow-output-run": {
-        "type": "object",
+      "plan-create": {
         "additionalProperties": false,
         "properties": {
-          "workflow_step": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "type": {
-                "type": "string",
-                "const": "run"
-              },
-              "cmd": {
-                "type": "array",
-                "items": { "type": "string" }
-              }
+          "path": {
+            "type": "string"
+          },
+          "plan_data": {
+            "type": "string"
+          },
+          "workspace": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "workspace",
+          "plan_data"
+        ],
+        "type": "object"
+      },
+      "work-manifest": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/work-manifest-plan"
+          },
+          {
+            "$ref": "#/components/schemas/work-manifest-apply"
+          },
+          {
+            "$ref": "#/components/schemas/work-manifest-unsafe-apply"
+          }
+        ]
+      },
+      "work-manifest-apply": {
+        "additionalProperties": false,
+        "properties": {
+          "base_ref": {
+            "type": "string"
+          },
+          "changed_dirspaces": {
+            "items": {
+              "$ref": "#/components/schemas/work-manifest-dir"
             },
-            "required": [
-              "type",
-              "cmd"
-            ]
+            "type": "array"
+          },
+          "type": {
+            "const": "apply",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "base_ref",
+          "changed_dirspaces"
+        ],
+        "type": "object"
+      },
+      "work-manifest-dir": {
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "rank": {
+            "description": "Starts at 0, relative dependency order to perform operation on dir.",
+            "type": "integer"
+          },
+          "workflow": {
+            "type": "integer"
+          },
+          "workspace": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "workspace",
+          "rank"
+        ],
+        "type": "object"
+      },
+      "work-manifest-initiate": {
+        "additionalProperties": false,
+        "properties": {
+          "run_id": {
+            "type": "string"
+          },
+          "sha": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "sha"
+        ],
+        "type": "object"
+      },
+      "work-manifest-plan": {
+        "additionalProperties": false,
+        "properties": {
+          "base_dirspaces": {
+            "items": {
+              "$ref": "#/components/schemas/work-manifest-dir"
+            },
+            "type": "array"
+          },
+          "base_ref": {
+            "type": "string"
+          },
+          "changed_dirspaces": {
+            "items": {
+              "$ref": "#/components/schemas/work-manifest-dir"
+            },
+            "type": "array"
+          },
+          "dirspaces": {
+            "items": {
+              "$ref": "#/components/schemas/work-manifest-dir"
+            },
+            "type": "array"
+          },
+          "type": {
+            "const": "plan",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "base_ref",
+          "changed_dirspaces",
+          "dirspaces",
+          "base_dirspaces"
+        ],
+        "type": "object"
+      },
+      "work-manifest-result": {
+        "additionalProperties": false,
+        "properties": {
+          "outputs": {
+            "$ref": "#/components/schemas/workflow-outputs"
+          },
+          "path": {
+            "type": "string"
           },
           "success": {
             "type": "boolean"
           },
+          "workspace": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "workspace",
+          "success",
+          "outputs"
+        ],
+        "type": "object"
+      },
+      "work-manifest-results": {
+        "items": {
+          "$ref": "#/components/schemas/work-manifest-result"
+        },
+        "type": "array"
+      },
+      "work-manifest-unsafe-apply": {
+        "additionalProperties": false,
+        "properties": {
+          "base_ref": {
+            "type": "string"
+          },
+          "changed_dirspaces": {
+            "items": {
+              "$ref": "#/components/schemas/work-manifest-dir"
+            },
+            "type": "array"
+          },
+          "type": {
+            "const": "unsafe-apply",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "base_ref",
+          "changed_dirspaces"
+        ],
+        "type": "object"
+      },
+      "workflow-output-apply": {
+        "additionalProperties": false,
+        "properties": {
           "outputs": {
             "$ref": "#/components/schemas/output-text"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "workflow_step": {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "apply",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
           }
         },
         "required": [
           "workflow_step",
           "success"
-        ]
+        ],
+        "type": "object"
       },
-      "workflow-output-env": {
-        "type": "object",
+      "workflow-output-checkout": {
         "additionalProperties": false,
         "properties": {
+          "outputs": {
+            "$ref": "#/components/schemas/output-text"
+          },
+          "success": {
+            "type": "boolean"
+          },
           "workflow_step": {
-            "type": "object",
             "additionalProperties": false,
             "properties": {
               "type": {
-                "type": "string",
-                "const": "env"
+                "const": "checkout",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "workflow_step",
+          "success",
+          "outputs"
+        ],
+        "type": "object"
+      },
+      "workflow-output-cost-estimation": {
+        "additionalProperties": false,
+        "properties": {
+          "outputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/output-text"
+              },
+              {
+                "$ref": "#/components/schemas/output-cost-estimation"
+              }
+            ]
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "workflow_step": {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "cost-estimation",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "workflow_step",
+          "success",
+          "outputs"
+        ],
+        "type": "object"
+      },
+      "workflow-output-env": {
+        "additionalProperties": false,
+        "properties": {
+          "outputs": {
+            "$ref": "#/components/schemas/output-text"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "workflow_step": {
+            "additionalProperties": false,
+            "properties": {
+              "cmd": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
               },
               "name": {
                 "type": "string"
               },
-              "cmd": {
-                "type": "array",
-                "items": { "type": "string" }
+              "type": {
+                "const": "env",
+                "type": "string"
               }
             },
             "required": [
               "type",
               "name",
               "cmd"
-            ]
-          },
-          "success": {
-            "type": "boolean"
-          },
-          "outputs": {
-            "$ref": "#/components/schemas/output-text"
+            ],
+            "type": "object"
           }
         },
         "required": [
           "workflow_step",
           "success"
-        ]
+        ],
+        "type": "object"
       },
       "workflow-output-init": {
-        "type": "object",
         "additionalProperties": false,
         "properties": {
-          "workflow_step": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "type": {
-                "type": "string",
-                "const": "init"
-              }
-            },
-            "required": [
-              "type"
-            ]
+          "outputs": {
+            "$ref": "#/components/schemas/output-text"
           },
           "success": {
             "type": "boolean"
           },
-          "outputs": {
-            "$ref": "#/components/schemas/output-text"
+          "workflow_step": {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "init",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
           }
         },
         "required": [
           "workflow_step",
           "success"
-        ]
+        ],
+        "type": "object"
       },
       "workflow-output-plan": {
-        "type": "object",
         "additionalProperties": false,
         "properties": {
-          "workflow_step": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "type": {
-                "type": "string",
-                "const": "plan"
+          "outputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/output-text"
+              },
+              {
+                "$ref": "#/components/schemas/output-plan"
               }
-            },
-            "required": [
-              "type"
             ]
           },
           "success": {
             "type": "boolean"
           },
-          "outputs": {
-            "oneOf": [
-              {"$ref": "#/components/schemas/output-text"},
-              {"$ref": "#/components/schemas/output-plan"}
-            ]
+          "workflow_step": {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "plan",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
           }
         },
         "required": [
           "workflow_step",
           "success"
-        ]
+        ],
+        "type": "object"
       },
-      "workflow-output-apply": {
-        "type": "object",
+      "workflow-output-run": {
         "additionalProperties": false,
         "properties": {
-          "workflow_step": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "type": {
-                "type": "string",
-                "const": "apply"
-              }
-            },
-            "required": [
-              "type"
-            ]
+          "outputs": {
+            "$ref": "#/components/schemas/output-text"
           },
           "success": {
             "type": "boolean"
           },
-          "outputs": {
-            "$ref": "#/components/schemas/output-text"
+          "workflow_step": {
+            "additionalProperties": false,
+            "properties": {
+              "cmd": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "type": {
+                "const": "run",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "cmd"
+            ],
+            "type": "object"
           }
         },
         "required": [
           "workflow_step",
           "success"
-        ]
-      },
-      "workflow-output-checkout": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "workflow_step": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "type": {
-                "type": "string",
-                "const": "checkout"
-              }
-            },
-            "required": [
-              "type"
-            ]
-          },
-          "success": {
-            "type": "boolean"
-          },
-          "outputs": {
-            "$ref": "#/components/schemas/output-text"
-          }
-        },
-        "required": [
-          "workflow_step",
-          "success",
-          "outputs"
-        ]
-      },
-      "workflow-output-cost-estimation": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "workflow_step": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "type": {
-                "type": "string",
-                "const": "cost-estimation"
-              }
-            },
-            "required": [
-              "type"
-            ]
-          },
-          "success": {
-            "type": "boolean"
-          },
-          "outputs": {
-            "oneOf": [
-              {"$ref": "#/components/schemas/output-text"},
-              {"$ref": "#/components/schemas/output-cost-estimation"}
-            ]
-          }
-        },
-        "required": [
-          "workflow_step",
-          "success",
-          "outputs"
-        ]
+        ],
+        "type": "object"
       },
       "workflow-outputs": {
-        "type": "array",
         "items": {
           "oneOf": [
-            {"$ref": "#/components/schemas/workflow-output-run"},
-            {"$ref": "#/components/schemas/workflow-output-env"},
-            {"$ref": "#/components/schemas/workflow-output-init"},
-            {"$ref": "#/components/schemas/workflow-output-plan"},
-            {"$ref": "#/components/schemas/workflow-output-apply"}
-          ]
-        }
-      },
-      "hook-outputs": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "pre": {
-            "type": "array",
-            "items": {
-              "oneOf": [
-                {"$ref": "#/components/schemas/workflow-output-run"},
-                {"$ref": "#/components/schemas/workflow-output-env"},
-                {"$ref": "#/components/schemas/workflow-output-checkout"},
-                {"$ref": "#/components/schemas/workflow-output-cost-estimation"}
-              ]
+            {
+              "$ref": "#/components/schemas/workflow-output-run"
+            },
+            {
+              "$ref": "#/components/schemas/workflow-output-env"
+            },
+            {
+              "$ref": "#/components/schemas/workflow-output-init"
+            },
+            {
+              "$ref": "#/components/schemas/workflow-output-plan"
+            },
+            {
+              "$ref": "#/components/schemas/workflow-output-apply"
             }
-          },
-          "post": {
-            "type": "array",
-            "items": {
-              "oneOf": [
-                {"$ref": "#/components/schemas/workflow-output-run"},
-                {"$ref": "#/components/schemas/workflow-output-env"}
-              ]
+          ]
+        },
+        "type": "array"
+      }
+    }
+  },
+  "openapi": "3.0.3",
+  "paths": {
+    "/api/v1/work-manifests/{work_manifest_id}": {
+      "put": {
+        "operationId": "work-manifest/results",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "work_manifest_id",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "dirspaces": {
+                    "$ref": "#/components/schemas/work-manifest-results"
+                  },
+                  "overall": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "outputs": {
+                        "$ref": "#/components/schemas/hook-outputs"
+                      },
+                      "success": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "success",
+                      "outputs"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "dirspaces",
+                  "overall"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
         },
-        "required": [
-          "pre",
-          "post"
-        ]
+        "responses": {
+          "200": {},
+          "403": {}
+        }
       }
     },
-    "responses": {
+    "/api/v1/work-manifests/{work_manifest_id}/initiate": {
+      "post": {
+        "operationId": "work-manifest/initiate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "work_manifest_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/work-manifest-initiate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/work-manifest"
+                }
+              }
+            }
+          },
+          "403": {}
+        }
+      }
     },
-    "parameters": {
+    "/api/v1/work-manifests/{work_manifest_id}/plans": {
+      "get": {
+        "operationId": "work-manifest/plan-get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "work_manifest_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dir",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "work-manifest/plan-create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "work_manifest_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/plan-create"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {},
+          "403": {}
+        }
+      }
     }
   }
 }

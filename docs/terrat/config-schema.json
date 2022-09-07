@@ -1,17 +1,165 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "definitions": {
-    "tags": {
-      "type": "array",
-      "items": { "type": "string" }
+    "automerge": {
+      "additionalProperties": false,
+      "properties": {
+        "delete_branch": {
+          "default": false,
+          "type": "boolean"
+        },
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "type": "object"
     },
-    "terraform-version": {
-      "type": "string"
+    "dir": {
+      "additionalProperties": false,
+      "properties": {
+        "create_and_select_workspace": {
+          "default": true,
+          "type": "boolean"
+        },
+        "tags": {
+          "$ref": "#/definitions/tags"
+        },
+        "when_modified": {
+          "$ref": "#/definitions/when-modified-nullable"
+        },
+        "workspaces": {
+          "additionalProperties": {
+            "additionalProperties": false,
+            "properties": {
+              "tags": {
+                "$ref": "#/definitions/tags"
+              }
+            },
+            "required": [
+              "tags"
+            ],
+            "type": "object"
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "hook": {
+      "additionalProperties": false,
+      "properties": {
+        "post": {
+          "$ref": "#/definitions/hook-list"
+        },
+        "pre": {
+          "$ref": "#/definitions/hook-list"
+        }
+      },
+      "type": "object"
+    },
+    "hook-list": {
+      "items": {
+        "$ref": "#/definitions/hook-op"
+      },
+      "type": "array"
+    },
+    "hook-op": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/hook-op-run"
+        },
+        {
+          "$ref": "#/definitions/hook-op-slack"
+        },
+        {
+          "$ref": "#/definitions/hook-op-env"
+        }
+      ]
+    },
+    "hook-op-env": {
+      "additionalProperties": false,
+      "properties": {
+        "cmd": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "trim_trailing_newlines": {
+          "default": true,
+          "type": "boolean"
+        },
+        "type": {
+          "const": "env",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "name",
+        "cmd"
+      ],
+      "type": "object"
+    },
+    "hook-op-run": {
+      "additionalProperties": false,
+      "properties": {
+        "capture_output": {
+          "default": false,
+          "type": "boolean"
+        },
+        "cmd": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "env": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "run_on": {
+          "$ref": "#/definitions/run-on"
+        },
+        "type": {
+          "const": "run",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "cmd"
+      ],
+      "type": "object"
+    },
+    "hook-op-slack": {
+      "additionalProperties": false,
+      "properties": {
+        "msg": {
+          "type": "string"
+        },
+        "run_on": {
+          "$ref": "#/definitions/run-on"
+        },
+        "type": {
+          "const": "slack",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "msg"
+      ],
+      "type": "object"
     },
     "permission": {
-      "type": "array",
       "items": {
-        "type": "object",
         "additionalProperties": false,
         "properties": {
           "id": {
@@ -24,405 +172,322 @@
         "required": [
           "id",
           "permissions"
-        ]
-      }
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "retry": {
+      "additionalProperties": false,
+      "properties": {
+        "backoff": {
+          "default": 3.0,
+          "type": "number"
+        },
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        },
+        "initial_sleep": {
+          "default": 5,
+          "type": "integer"
+        },
+        "tries": {
+          "default": 3,
+          "type": "integer"
+        }
+      },
+      "type": "object"
     },
     "run-on": {
-      "type": "string",
       "enum": [
         "failure",
         "always",
         "success"
-      ]
+      ],
+      "type": "string"
     },
-    "retry": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "default": false
-        },
-        "tries": {
-          "type": "integer",
-          "default": 3
-        },
-        "backoff": {
-          "type": "number",
-          "default": 3.0
-        },
-        "initial_sleep": {
-          "type": "integer",
-          "default": 5
-        }
-      }
-    },
-    "hook-op-run": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "type": "string",
-          "const": "run"
-        },
-        "cmd": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "capture_output": {
-          "type": "boolean",
-          "default": false
-        },
-        "run_on": { "$ref": "#/definitions/run-on" },
-        "env": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        }
-      },
-      "additionalProperties": false,
-      "required": [
-        "type",
-        "cmd"
-      ]
-    },
-    "hook-op-slack": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "type": "string",
-          "const": "slack"
-        },
-        "msg": {
-          "type": "string"
-        },
-        "run_on": { "$ref": "#/definitions/run-on" }
-      },
-      "additionalProperties": false,
-      "required": [
-        "type",
-        "msg"
-      ]
-    },
-    "hook-op-env": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "type": "string",
-          "const": "env"
-        },
-        "name": {
-          "type": "string"
-        },
-        "cmd": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "trim_trailing_newlines": {
-          "type": "boolean",
-          "default": true
-        }
-      },
-      "additionalProperties": false,
-      "required": [
-        "type",
-        "name",
-        "cmd"
-      ]
-    },
-    "hook-op": {
-      "oneOf": [
-        { "$ref": "#/definitions/hook-op-run" },
-        { "$ref": "#/definitions/hook-op-slack" },
-        { "$ref": "#/definitions/hook-op-env" }
-      ]
-    },
-    "hook-list": {
-      "type": "array",
-      "items": { "$ref": "#/definitions/hook-op" }
-    },
-    "hook": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "pre": { "$ref": "#/definitions/hook-list" },
-        "post": { "$ref": "#/definitions/hook-list" }
-      }
-    },
-    "workflow-op-init": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "type": {
-          "type": "string",
-          "const": "init"
-        },
-        "extra_args": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "env": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        }
-      },
-      "required": [
-        "type"
-      ]
-    },
-    "workflow-op-plan": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "type": {
-          "type": "string",
-          "const": "plan"
-        },
-        "extra_args": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "env": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        }
-      },
-      "required": [
-        "type"
-      ]
-    },
-    "workflow-op-apply": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "type": {
-          "type": "string",
-          "const": "apply"
-        },
-        "extra_args": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "env": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "retry": { "$ref": "#/definitions/retry" }
-      },
-      "required": [
-        "type"
-      ]
-    },
-    "workflow-op-list": {
-      "type": "array",
+    "tags": {
       "items": {
-        "oneOf": [
-          { "$ref": "#/definitions/workflow-op-init" },
-          { "$ref": "#/definitions/workflow-op-plan" },
-          { "$ref": "#/definitions/workflow-op-apply" },
-          { "$ref": "#/definitions/hook-op-run" },
-          { "$ref": "#/definitions/hook-op-slack" },
-          { "$ref": "#/definitions/hook-op-env" }
-        ]
-      }
-    },
-    "workflow-entry": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "tag_query": {
-          "type": "string"
-        },
-        "terragrunt": {
-          "type": "boolean",
-          "default": false
-        },
-        "terraform_version": {
-          "$ref": "#/definitions/terraform-version"
-        },
-        "plan": { "$ref": "#/definitions/workflow-op-list" },
-        "apply": { "$ref": "#/definitions/workflow-op-list" }
+        "type": "string"
       },
-      "required": [
-        "tag_query"
-      ]
+      "type": "array"
     },
-    "dir": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "tags": { "$ref": "#/definitions/tags" },
-        "create_and_select_workspace": {
-          "type": "boolean",
-          "default": true
-        },
-        "workspaces": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "tags": { "$ref": "#/definitions/tags" }
-            },
-            "required": [
-              "tags"
-            ]
-          }
-        },
-        "when_modified": {
-          "$ref": "#/definitions/when-modified-nullable"
-        }
-      }
-    },
-    "when-modified": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "file_patterns": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": ["**/*.tf", "**/*.tfvars"]
-        },
-        "autoplan": {
-          "type": "boolean",
-          "default": true
-        },
-        "autoapply": {
-          "type": "boolean",
-          "default": false
-        },
-        "autoplan_draft_pr": {
-          "type": "boolean",
-          "default": true
-        }
-      }
-    },
-    "when-modified-nullable": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "file_patterns": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "autoplan": {
-          "type": "boolean"
-        },
-        "autoapply": {
-          "type": "boolean"
-        },
-        "autoplan_draft_pr": {
-          "type": "boolean"
-        }
-      }
-    },
-    "automerge": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "default": false
-        },
-        "delete_branch": {
-          "type": "boolean",
-          "default": false
-        }
-      }
+    "terraform-version": {
+      "type": "string"
     },
     "version-1": {
       "additionalProperties": false,
-      "type": "object",
       "properties": {
-        "enabled": {
-          "type": "boolean",
-          "default": true
-        },
-        "destination_branches": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "version": {
-          "type": "string",
-          "default": "1",
-          "const": "1"
-        },
-        "parallel_runs": {
-          "type": "integer",
-          "default" : 3
-        },
-        "when_modified": {
-          "$ref": "#/definitions/when-modified"
-        },
         "automerge": {
           "$ref": "#/definitions/automerge"
         },
         "checkout_strategy": {
-          "type": "string",
+          "default": "merge",
           "enum": [
             "merge",
             "checkout"
           ],
-          "default": "merge"
+          "type": "string"
         },
         "cost_estimation": {
-          "type": "object",
           "additionalProperties": false,
           "properties": {
+            "currency": {
+              "default": "USD",
+              "type": "string"
+            },
             "enabled": {
-              "type": "boolean",
-              "default": true
+              "default": true,
+              "type": "boolean"
             },
             "provider": {
-              "type": "string",
               "default": "infracost",
-              "enum": ["infracost"]
-            },
-            "currency": {
-              "type": "string",
-              "default": "USD"
+              "enum": [
+                "infracost"
+              ],
+              "type": "string"
             }
-          }
+          },
+          "type": "object"
         },
         "create_and_select_workspace": {
-          "type": "boolean",
-          "default": true
+          "default": true,
+          "type": "boolean"
         },
         "default_tf_version": {
           "$ref": "#/definitions/terraform-version"
         },
-        "hooks": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "plan": { "$ref": "#/definitions/hook" },
-            "apply": { "$ref": "#/definitions/hook" }
-          }
-        },
-        "workflows": {
-          "type": "array",
-          "items": { "$ref": "#/definitions/workflow-entry" }
+        "destination_branches": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "dirs": {
-          "type": "object",
-          "additionalProperties": { "$ref": "#/definitions/dir" }
+          "additionalProperties": {
+            "$ref": "#/definitions/dir"
+          },
+          "type": "object"
+        },
+        "enabled": {
+          "default": true,
+          "type": "boolean"
+        },
+        "hooks": {
+          "additionalProperties": false,
+          "properties": {
+            "apply": {
+              "$ref": "#/definitions/hook"
+            },
+            "plan": {
+              "$ref": "#/definitions/hook"
+            }
+          },
+          "type": "object"
+        },
+        "parallel_runs": {
+          "default": 3,
+          "type": "integer"
+        },
+        "version": {
+          "const": "1",
+          "default": "1",
+          "type": "string"
+        },
+        "when_modified": {
+          "$ref": "#/definitions/when-modified"
+        },
+        "workflows": {
+          "items": {
+            "$ref": "#/definitions/workflow-entry"
+          },
+          "type": "array"
         }
-      }
+      },
+      "type": "object"
+    },
+    "when-modified": {
+      "additionalProperties": false,
+      "properties": {
+        "autoapply": {
+          "default": false,
+          "type": "boolean"
+        },
+        "autoplan": {
+          "default": true,
+          "type": "boolean"
+        },
+        "autoplan_draft_pr": {
+          "default": true,
+          "type": "boolean"
+        },
+        "file_patterns": {
+          "default": [
+            "**/*.tf",
+            "**/*.tfvars"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "when-modified-nullable": {
+      "additionalProperties": false,
+      "properties": {
+        "autoapply": {
+          "type": "boolean"
+        },
+        "autoplan": {
+          "type": "boolean"
+        },
+        "autoplan_draft_pr": {
+          "type": "boolean"
+        },
+        "file_patterns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "workflow-entry": {
+      "additionalProperties": false,
+      "properties": {
+        "apply": {
+          "$ref": "#/definitions/workflow-op-list"
+        },
+        "plan": {
+          "$ref": "#/definitions/workflow-op-list"
+        },
+        "tag_query": {
+          "type": "string"
+        },
+        "terraform_version": {
+          "$ref": "#/definitions/terraform-version"
+        },
+        "terragrunt": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "tag_query"
+      ],
+      "type": "object"
+    },
+    "workflow-op-apply": {
+      "additionalProperties": false,
+      "properties": {
+        "env": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "extra_args": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "retry": {
+          "$ref": "#/definitions/retry"
+        },
+        "type": {
+          "const": "apply",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "workflow-op-init": {
+      "additionalProperties": false,
+      "properties": {
+        "env": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "extra_args": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "init",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "workflow-op-list": {
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/definitions/workflow-op-init"
+          },
+          {
+            "$ref": "#/definitions/workflow-op-plan"
+          },
+          {
+            "$ref": "#/definitions/workflow-op-apply"
+          },
+          {
+            "$ref": "#/definitions/hook-op-run"
+          },
+          {
+            "$ref": "#/definitions/hook-op-slack"
+          },
+          {
+            "$ref": "#/definitions/hook-op-env"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "workflow-op-plan": {
+      "additionalProperties": false,
+      "properties": {
+        "env": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "extra_args": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "plan",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
     }
   },
   "oneOf": [
-    { "$ref": "#/definitions/version-1" }
+    {
+      "$ref": "#/definitions/version-1"
+    }
   ]
 }

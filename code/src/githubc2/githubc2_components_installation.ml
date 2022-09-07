@@ -1,21 +1,21 @@
 module Primary = struct
   module Account = struct
     type t =
-      | V0 of Githubc2_components_simple_user.t
-      | V1 of Githubc2_components_enterprise.t
+      | Simple_user of Githubc2_components_simple_user.t
+      | Enterprise of Githubc2_components_enterprise.t
     [@@deriving show]
 
     let of_yojson =
       Json_schema.any_of
         (let open CCResult in
         [
-          (fun v -> map (fun v -> V0 v) (Githubc2_components_simple_user.of_yojson v));
-          (fun v -> map (fun v -> V1 v) (Githubc2_components_enterprise.of_yojson v));
+          (fun v -> map (fun v -> Simple_user v) (Githubc2_components_simple_user.of_yojson v));
+          (fun v -> map (fun v -> Enterprise v) (Githubc2_components_enterprise.of_yojson v));
         ])
 
     let to_yojson = function
-      | V0 v -> Githubc2_components_simple_user.to_yojson v
-      | V1 v -> Githubc2_components_enterprise.to_yojson v
+      | Simple_user v -> Githubc2_components_simple_user.to_yojson v
+      | Enterprise v -> Githubc2_components_enterprise.to_yojson v
   end
 
   module Events = struct
