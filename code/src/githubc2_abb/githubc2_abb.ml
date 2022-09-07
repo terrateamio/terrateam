@@ -115,6 +115,7 @@ let rec fold t ~init ~f req =
   | None -> Abb.Future.return (Ok init)
 
 let collect_all t req =
+  let open Abbs_future_combinators.Infix_result_monad in
   fold
     ~init:[]
     ~f:(fun acc resp ->
@@ -123,3 +124,4 @@ let collect_all t req =
       | _ -> Abb.Future.return (Error `Error))
     t
     req
+  >>= fun res -> Abb.Future.return (Ok (CCList.rev res))
