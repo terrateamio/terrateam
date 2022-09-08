@@ -412,12 +412,19 @@ module Evaluator = Terrat_work_manifest_evaluator.Make (struct
              in
              let commit_statuses =
                let aggregate =
-                 Terrat_commit_check.(
-                   make
-                     ~details_url:target_url
-                     ~description:"Running"
-                     ~title:(Printf.sprintf "terrateam %s" unified_run_type)
-                     ~status:Status.Queued)
+                 Terrat_commit_check.
+                   [
+                     make
+                       ~details_url:target_url
+                       ~description:"Running"
+                       ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
+                       ~status:Status.Queued;
+                     make
+                       ~details_url:target_url
+                       ~description:"Running"
+                       ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
+                       ~status:Status.Queued;
+                   ]
                in
                let dirspaces =
                  CCList.map
@@ -426,11 +433,12 @@ module Evaluator = Terrat_work_manifest_evaluator.Make (struct
                        make
                          ~details_url:target_url
                          ~description:"Running"
-                         ~title:(Printf.sprintf "terrateam %s %s %s" unified_run_type dir workspace)
+                         ~title:
+                           (Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
                          ~status:Status.Queued))
                    dirspaces
                in
-               aggregate :: dirspaces
+               aggregate @ dirspaces
              in
              let open Abb.Future.Infix_monad in
              Terrat_github_commit_check.create
@@ -1020,20 +1028,58 @@ module Results = struct
   let complete_check ~access_token ~owner ~repo ~branch ~run_id ~run_type ~sha ~results () =
     let module Wmr = Terrat_api_components.Work_manifest_result in
     let module R = Terrat_api_work_manifest.Results.Request_body in
+    let module Hooks_output = Terrat_api_components.Hook_outputs in
     let unified_run_type =
       Terrat_work_manifest.(run_type |> Unified_run_type.of_run_type |> Unified_run_type.to_string)
     in
     let success = results.R.overall.R.Overall.success in
     let description = if success then "Completed" else "Failed" in
-    let status = Terrat_commit_check.Status.(if success then Completed else Failed) in
     let target_url = Printf.sprintf "https://github.com/%s/%s/actions/runs/%s" owner repo run_id in
+    let pre_hooks_status =
+      let module Run = Terrat_api_components.Workflow_output_run in
+      let module Env = Terrat_api_components.Workflow_output_env in
+      let module Checkout = Terrat_api_components.Workflow_output_checkout in
+      let module Ce = Terrat_api_components.Workflow_output_cost_estimation in
+      results.R.overall.R.Overall.outputs.Hooks_output.pre
+      |> CCList.exists
+           Hooks_output.Pre.Items.(
+             function
+             | Workflow_output_run Run.{ success; _ }
+             | Workflow_output_env Env.{ success; _ }
+             | Workflow_output_checkout Checkout.{ success; _ }
+             | Workflow_output_cost_estimation Ce.{ success; _ } -> not success)
+      |> function
+      | true -> Terrat_commit_check.Status.Failed
+      | false -> Terrat_commit_check.Status.Completed
+    in
+    let post_hooks_status =
+      let module Run = Terrat_api_components.Workflow_output_run in
+      let module Env = Terrat_api_components.Workflow_output_env in
+      results.R.overall.R.Overall.outputs.Hooks_output.post
+      |> CCList.exists
+           Hooks_output.Post.Items.(
+             function
+             | Workflow_output_run Run.{ success; _ } | Workflow_output_env Env.{ success; _ } ->
+                 not success)
+      |> function
+      | true -> Terrat_commit_check.Status.Failed
+      | false -> Terrat_commit_check.Status.Completed
+    in
     let commit_statuses =
       let aggregate =
-        Terrat_commit_check.make
-          ~details_url:target_url
-          ~description
-          ~title:(Printf.sprintf "terrateam %s" unified_run_type)
-          ~status
+        Terrat_commit_check.
+          [
+            make
+              ~details_url:target_url
+              ~description
+              ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
+              ~status:pre_hooks_status;
+            make
+              ~details_url:target_url
+              ~description
+              ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
+              ~status:post_hooks_status;
+          ]
       in
       let dirspaces =
         CCList.map
@@ -1043,11 +1089,11 @@ module Results = struct
             Terrat_commit_check.make
               ~details_url:target_url
               ~description
-              ~title:(Printf.sprintf "terrateam %s %s %s" unified_run_type path workspace)
+              ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type path workspace)
               ~status)
           results.R.dirspaces
       in
-      aggregate :: dirspaces
+      aggregate @ dirspaces
     in
     Terrat_github_commit_check.create ~access_token ~owner ~repo ~ref_:sha commit_statuses
 

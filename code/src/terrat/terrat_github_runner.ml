@@ -129,12 +129,19 @@ let abort_work_manifest
   let target_url = Printf.sprintf "https://github.com/%s/%s/actions" owner repo in
   let commit_statuses =
     let aggregate =
-      Terrat_commit_check.(
-        make
-          ~details_url:target_url
-          ~description:"Failed"
-          ~title:(Printf.sprintf "terrateam %s" unified_run_type)
-          ~status:Status.Failed)
+      Terrat_commit_check.
+        [
+          make
+            ~details_url:target_url
+            ~description:"Failed"
+            ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
+            ~status:Status.Failed;
+          make
+            ~details_url:target_url
+            ~description:"Failed"
+            ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
+            ~status:Status.Failed;
+        ]
     in
     let dirspaces =
       CCList.map
@@ -143,11 +150,11 @@ let abort_work_manifest
             make
               ~details_url:target_url
               ~description:"Failed"
-              ~title:(Printf.sprintf "terrateam %s %s %s" unified_run_type dir workspace)
+              ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
               ~status:Status.Failed))
         dirspaces
     in
-    aggregate :: dirspaces
+    aggregate @ dirspaces
   in
   Terrat_github_commit_check.create ~access_token ~owner ~repo ~ref_:sha commit_statuses
 

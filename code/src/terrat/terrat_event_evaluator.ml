@@ -164,12 +164,19 @@ module Make (S : S) = struct
       event |> S.Event.run_type |> Urt.of_run_type |> Urt.to_string
     in
     let aggregate =
-      Terrat_commit_check.(
-        make
-          ~details_url
-          ~description:"Queued"
-          ~title:(Printf.sprintf "terrateam %s" unified_run_type)
-          ~status:Status.Queued)
+      Terrat_commit_check.
+        [
+          make
+            ~details_url
+            ~description:"Queued"
+            ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
+            ~status:Status.Queued;
+          make
+            ~details_url
+            ~description:"Queued"
+            ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
+            ~status:Status.Queued;
+        ]
     in
     let dirspace_checks =
       CCList.map
@@ -178,11 +185,11 @@ module Make (S : S) = struct
             make
               ~details_url
               ~description:"Queued"
-              ~title:(Printf.sprintf "terrateam %s %s %s" unified_run_type dir workspace)
+              ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
               ~status:Status.Queued))
         dirspaces
     in
-    aggregate :: dirspace_checks
+    aggregate @ dirspace_checks
 
   let can_apply_checkout_strategy repo_config pull_request =
     match
