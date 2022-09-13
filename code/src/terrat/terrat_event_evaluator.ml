@@ -1,4 +1,5 @@
 module Dir_set = CCSet.Make (CCString)
+module String_set = CCSet.Make (CCString)
 module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
 
 module Msg = struct
@@ -154,7 +155,7 @@ let compute_matches ~repo_config ~tag_query ~out_of_change_applies ~diff ~repo_t
       repo_config
       (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows)
   in
-  Ok (tag_query_matches, all_match_dirspaceflows)
+  Ok (tag_query_matches, all_matches)
 
 module Make (S : S) = struct
   let create_queued_commit_checks event pull_request dirspaces =
@@ -198,6 +199,69 @@ module Make (S : S) = struct
     with
     | Some mergeable, "merge" -> mergeable
     | (Some _ | _), _ -> true
+
+  let maybe_create_pending_apply event pull_request repo_config = function
+    | [] ->
+        (* No matches so don't make anything *)
+        Abb.Future.return (Ok ())
+    | all_matches ->
+        let open Abb.Future.Infix_monad in
+        let module Rc = Terrat_repo_config.Version_1 in
+        let module Ar = Rc.Apply_requirements in
+        let apply_requirements =
+          CCOption.get_or ~default:(Rc.Apply_requirements.make ()) repo_config.Rc.apply_requirements
+        in
+        if apply_requirements.Ar.create_pending_apply_check then (
+          Abbs_time_it.run
+            (fun t ->
+              Logs.info (fun m ->
+                  m "EVENT_EVALUATOR : %s : FETCH_COMMIT_CHECKS : %f" (S.Event.request_id event) t))
+            (fun () -> S.fetch_commit_checks event pull_request)
+          >>= function
+          | Ok commit_checks -> (
+              let details_url = S.get_commit_check_details_url event pull_request in
+              let commit_check_titles =
+                commit_checks
+                |> CCList.map (fun Terrat_commit_check.{ title; _ } -> title)
+                |> String_set.of_list
+              in
+              let missing_commit_checks =
+                all_matches
+                |> CCList.filter_map
+                     (fun
+                       Terrat_change_matcher.
+                         {
+                           dirspaceflow =
+                             Terrat_change.
+                               { Dirspaceflow.dirspace = Dirspace.{ dir; workspace }; _ };
+                           when_modified = Terrat_repo_config.When_modified.{ autoapply; _ };
+                         }
+                     ->
+                       let name = Printf.sprintf "terrateam apply: %s %s" dir workspace in
+                       if (not autoapply) && not (String_set.mem name commit_check_titles) then
+                         Some
+                           Terrat_commit_check.(
+                             make
+                               ~details_url
+                               ~description:"Waiting"
+                               ~title:(Printf.sprintf "terrateam apply: %s %s" dir workspace)
+                               ~status:Status.Queued)
+                       else None)
+              in
+              S.create_commit_checks event pull_request missing_commit_checks
+              >>= function
+              | Ok _ -> Abb.Future.return (Ok ())
+              | Error `Error ->
+                  Logs.err (fun m ->
+                      m
+                        "EVENT_EVALUATOR : %s : FAILED_CREATE_APPLY_CHECK"
+                        (S.Event.request_id event));
+                  Abb.Future.return (Ok ()))
+          | Error _ as err ->
+              Logs.err (fun m ->
+                  m "EVENT_EVALUATOR : %s : FAILED_FETCH_COMMIT_CHECKS" (S.Event.request_id event));
+              Abb.Future.return err)
+        else Abb.Future.return (Ok ())
 
   let check_apply_requirements event pull_request repo_config =
     let module Rc = Terrat_repo_config.Version_1 in
@@ -359,7 +423,7 @@ module Make (S : S) = struct
              (CCList.map (fun dsf -> dsf.Terrat_change.Dirspaceflow.dirspace) dirspaceflows)))
     >>= fun () -> Abb.Future.return (Ok ())
 
-  let process_plan db event tag_query_matches pull_request run_source_type =
+  let process_plan' db event pull_request tag_query_matches run_source_type =
     let matches =
       match run_source_type with
       | `Auto ->
@@ -389,6 +453,12 @@ module Make (S : S) = struct
         let open Abbs_future_combinators.Infix_result_monad in
         create_and_store_work_manifest db event pull_request matches
         >>= fun () -> Abb.Future.return (Ok None)
+
+  let process_plan db event tag_query_matches all_matches pull_request repo_config run_source_type =
+    Abbs_future_combinators.Infix_result_app.(
+      (fun _ plan_result -> plan_result)
+      <$> maybe_create_pending_apply event pull_request repo_config all_matches
+      <*> process_plan' db event pull_request tag_query_matches run_source_type)
 
   let process_apply
       db
@@ -568,7 +638,10 @@ module Make (S : S) = struct
                      ~diff:(S.Pull_request.diff pull_request)
                      ~repo_tree
                      ())
-                >>= fun (tag_query_matches, all_match_dirspaceflows) ->
+                >>= fun (tag_query_matches, all_matches) ->
+                let all_match_dirspaceflows =
+                  CCList.map Terrat_change_matcher.dirspaceflow all_matches
+                in
                 let dirs =
                   all_match_dirspaceflows
                   |> CCList.map (fun dsf -> Terrat_change.(dsf.Dirspaceflow.dirspace.Dirspace.dir))
@@ -615,7 +688,22 @@ module Make (S : S) = struct
                 >>= fun () ->
                 match unified_run_type (S.Event.run_type event) with
                 | `Plan run_source_type ->
-                    process_plan db event tag_query_matches pull_request run_source_type
+                    Abbs_time_it.run
+                      (fun t ->
+                        Logs.info (fun m ->
+                            m
+                              "EVENT_EVALUATOR : %s : PROCESS_PLAN : %f"
+                              (S.Event.request_id event)
+                              t))
+                      (fun () ->
+                        process_plan
+                          db
+                          event
+                          tag_query_matches
+                          all_matches
+                          pull_request
+                          repo_config
+                          run_source_type)
                 | `Apply run_source_type ->
                     process_apply
                       db

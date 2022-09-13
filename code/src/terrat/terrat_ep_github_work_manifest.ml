@@ -1434,8 +1434,16 @@ module Results = struct
             Abb.Future.return (Ok ()))
     | `Not_found _ | `Internal_server_error _ | `Not_modified -> failwith "nyi"
 
-  let perform_automerge ~request_id ~config ~storage ~access_token ~owner ~repo ~sha ~pull_number ()
-      =
+  let perform_post_apply
+      ~request_id
+      ~config
+      ~storage
+      ~access_token
+      ~owner
+      ~repo
+      ~sha
+      ~pull_number
+      () =
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
       Logs.info (fun m ->
@@ -1590,7 +1598,7 @@ module Results = struct
         <*>
         match Terrat_work_manifest.Unified_run_type.of_run_type run_type with
         | Terrat_work_manifest.Unified_run_type.Apply ->
-            perform_automerge
+            perform_post_apply
               ~request_id
               ~config
               ~storage
