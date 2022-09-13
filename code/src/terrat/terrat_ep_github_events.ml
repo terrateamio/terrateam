@@ -1385,12 +1385,16 @@ let process_issue_comment request_id config storage = function
           let open Abbs_future_combinators.Infix_result_monad in
           Terrat_github.get_installation_access_token config installation_id
           >>= fun access_token ->
-          Terrat_github.react_to_comment
-            ~access_token
-            ~owner:repository.Gw.Repository.owner.Gw.User.login
-            ~repo:repository.Gw.Repository.name
-            ~comment_id:comment.Gw.Issue_comment.id
-            ()
+          Abbs_time_it.run
+            (fun t ->
+              Logs.info (fun m -> m "GITHUB_EVENT : %s : REACT_TO_COMMENT : %f" request_id t))
+            (fun () ->
+              Terrat_github.react_to_comment
+                ~access_token
+                ~owner:repository.Gw.Repository.owner.Gw.User.login
+                ~repo:repository.Gw.Repository.name
+                ~comment_id:comment.Gw.Issue_comment.id
+                ())
           >>= fun () ->
           let event =
             Event.make
@@ -1408,12 +1412,16 @@ let process_issue_comment request_id config storage = function
           let open Abbs_future_combinators.Infix_result_monad in
           Terrat_github.get_installation_access_token config installation_id
           >>= fun access_token ->
-          Terrat_github.react_to_comment
-            ~access_token
-            ~owner:repository.Gw.Repository.owner.Gw.User.login
-            ~repo:repository.Gw.Repository.name
-            ~comment_id:comment.Gw.Issue_comment.id
-            ()
+          Abbs_time_it.run
+            (fun t ->
+              Logs.info (fun m -> m "GITHUB_EVENT : %s : REACT_TO_COMMENT : %f" request_id t))
+            (fun () ->
+              Terrat_github.react_to_comment
+                ~access_token
+                ~owner:repository.Gw.Repository.owner.Gw.User.login
+                ~repo:repository.Gw.Repository.name
+                ~comment_id:comment.Gw.Issue_comment.id
+                ())
           >>= fun () ->
           let event =
             Event.make
@@ -1431,12 +1439,16 @@ let process_issue_comment request_id config storage = function
           let open Abbs_future_combinators.Infix_result_monad in
           Terrat_github.get_installation_access_token config installation_id
           >>= fun access_token ->
-          Terrat_github.react_to_comment
-            ~access_token
-            ~owner:repository.Gw.Repository.owner.Gw.User.login
-            ~repo:repository.Gw.Repository.name
-            ~comment_id:comment.Gw.Issue_comment.id
-            ()
+          Abbs_time_it.run
+            (fun t ->
+              Logs.info (fun m -> m "GITHUB_EVENT : %s : REACT_TO_COMMENT : %f" request_id t))
+            (fun () ->
+              Terrat_github.react_to_comment
+                ~access_token
+                ~owner:repository.Gw.Repository.owner.Gw.User.login
+                ~repo:repository.Gw.Repository.name
+                ~comment_id:comment.Gw.Issue_comment.id
+                ())
           >>= fun () ->
           let event =
             Event.make

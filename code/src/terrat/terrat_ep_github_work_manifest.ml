@@ -1298,19 +1298,26 @@ module Results = struct
       () =
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
-      iterate_comment_posts
-        ~request_id
-        ~access_token
-        ~owner
-        ~repo
-        ~pull_number
-        ~run_id
-        ~sha
-        ~run_type
-        ~results
-        ()
+      Abbs_time_it.run
+        (fun t -> Logs.info (fun m -> m "WORK_MANIFEST : %s : COMMENT : %f" request_id t))
+        (fun () ->
+          iterate_comment_posts
+            ~request_id
+            ~access_token
+            ~owner
+            ~repo
+            ~pull_number
+            ~run_id
+            ~sha
+            ~run_type
+            ~results
+            ())
       >>= fun () ->
-      complete_check ~access_token ~owner ~repo ~branch ~run_id ~run_type ~sha ~results ()
+      Abbs_time_it.run
+        (fun t ->
+          Logs.info (fun m -> m "WORK_MANIFEST : %s : COMPLETE_COMMIT_STATUSES : %f" request_id t))
+        (fun () ->
+          complete_check ~access_token ~owner ~repo ~branch ~run_id ~run_type ~sha ~results ())
     in
     let open Abb.Future.Infix_monad in
     Abbs_time_it.run

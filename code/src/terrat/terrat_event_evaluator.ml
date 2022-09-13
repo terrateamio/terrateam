@@ -705,25 +705,41 @@ module Make (S : S) = struct
                           repo_config
                           run_source_type)
                 | `Apply run_source_type ->
-                    process_apply
-                      db
-                      event
-                      tag_query_matches
-                      all_match_dirspaceflows
-                      pull_request
-                      repo_config
-                      `Apply
-                      run_source_type
+                    Abbs_time_it.run
+                      (fun t ->
+                        Logs.info (fun m ->
+                            m
+                              "EVENT_EVALUATOR : %s : PROCESS_APPLY : %f"
+                              (S.Event.request_id event)
+                              t))
+                      (fun () ->
+                        process_apply
+                          db
+                          event
+                          tag_query_matches
+                          all_match_dirspaceflows
+                          pull_request
+                          repo_config
+                          `Apply
+                          run_source_type)
                 | `Unsafe_apply ->
-                    process_apply
-                      db
-                      event
-                      tag_query_matches
-                      all_match_dirspaceflows
-                      pull_request
-                      repo_config
-                      `Unsafe_apply
-                      `Manual)
+                    Abbs_time_it.run
+                      (fun t ->
+                        Logs.info (fun m ->
+                            m
+                              "EVENT_EVALUATOR : %s : PROCESS_UNSAFE_APPLY : %f"
+                              (S.Event.request_id event)
+                              t))
+                      (fun () ->
+                        process_apply
+                          db
+                          event
+                          tag_query_matches
+                          all_match_dirspaceflows
+                          pull_request
+                          repo_config
+                          `Unsafe_apply
+                          `Manual))
             | wms -> Abb.Future.return (Ok (Some (Msg.Conflicting_work_manifests wms)))))
 
   let is_valid_destination_branch event pull_request repo_config =
