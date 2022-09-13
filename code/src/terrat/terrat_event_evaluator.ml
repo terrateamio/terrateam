@@ -742,14 +742,19 @@ module Make (S : S) = struct
             m "EVENT_EVALUATOR: %s : FETCHING_PULL_REQUEST : %f" (S.Event.request_id event) t))
       (fun () -> S.fetch_pull_request event)
     >>= fun pull_request ->
-    Abbs_time_it.run
-      (fun t ->
-        Logs.info (fun m ->
-            m "EVENT_EVALUATOR: %s : FETCHING_REPO_CONFIG : %f" (S.Event.request_id event) t))
-      (fun () -> S.fetch_repo_config event pull_request)
-    >>= fun repo_config ->
-    S.fetch_tree event pull_request
-    >>= fun repo_tree ->
+    Abbs_future_combinators.Infix_result_app.(
+      (fun repo_config repo_tree -> (repo_config, repo_tree))
+      <$> Abbs_time_it.run
+            (fun t ->
+              Logs.info (fun m ->
+                  m "EVENT_EVALUATOR: %s : FETCHING_REPO_CONFIG : %f" (S.Event.request_id event) t))
+            (fun () -> S.fetch_repo_config event pull_request)
+      <*> Abbs_time_it.run
+            (fun t ->
+              Logs.info (fun m ->
+                  m "EVENT_EVALUATOR : %s : FETCHING_REPO_TREE : %f" (S.Event.request_id event) t))
+            (fun () -> S.fetch_tree event pull_request))
+    >>= fun (repo_config, repo_tree) ->
     if is_valid_destination_branch event pull_request repo_config then
       if repo_config.Terrat_repo_config.Version_1.enabled then (
         match S.Pull_request.state pull_request with
