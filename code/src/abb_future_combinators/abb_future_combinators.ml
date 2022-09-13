@@ -168,6 +168,24 @@ module Make (Fut : Abb_intf.Future.S) = struct
       | Error _ as err -> err
   end
 
+  module Infix_result_app = struct
+    type ('a, 'b) t = ('a, 'b) result Fut.t
+
+    let ( <*> ) ft v =
+      Fut.Infix_app.(
+        (let open Fut.Infix_monad in
+        ft
+        >>| function
+        | Ok f -> (
+            function
+            | Ok ok -> Ok (f ok)
+            | Error _ as err -> err)
+        | Error _ as err -> fun _ -> err)
+        <*> v)
+
+    let ( <$> ) f v = Fut.return (Ok f) <*> v
+  end
+
   module List_result = struct
     open Infix_result_monad
 

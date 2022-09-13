@@ -124,4 +124,15 @@ module Make (Fut : Abb_intf.Future.S) : sig
     val ( >>= ) : ('a, 'c) t -> ('a -> ('b, 'c) t) -> ('b, 'c) t
     val ( >>| ) : ('a, 'c) t -> ('a -> 'b) -> ('b, 'c) t
   end
+
+  (** Applicative for result types.  Execute all futures and execute the given
+     function or return the error value of the first future to evaluate to
+     [Error _].  The results of any successes are discarded.  In the case of a
+     future evaluating to [Error _], the other futures are NOT aborted. *)
+  module Infix_result_app : sig
+    type ('a, 'b) t = ('a, 'b) result Fut.t
+
+    val ( <$> ) : ('a -> 'b) -> ('a, 'c) t -> ('b, 'c) t
+    val ( <*> ) : ('a -> 'b, 'c) t -> ('a, 'c) t -> ('b, 'c) t
+  end
 end
