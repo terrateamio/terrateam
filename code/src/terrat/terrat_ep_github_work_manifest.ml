@@ -277,7 +277,9 @@ let pre_hook_output_texts outputs =
                  success;
                  _;
                } -> Some Workflow_step_output.{ key = output_key; text; success; step_type = type_ }
-         | Output.Workflow_output_run Run.{ outputs = None; _ }
+         | Output.Workflow_output_run
+             Run.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ } ->
+             Some Workflow_step_output.{ key = None; text = ""; success; step_type = type_ }
          | Output.Workflow_output_env _
          | Output.Workflow_output_cost_estimation
              Ce.{ outputs = Outputs.Output_cost_estimation _; _ } -> None)
@@ -296,8 +298,10 @@ let post_hook_output_texts (outputs : Terrat_api_components_hook_outputs.Post.t)
                  success;
                  _;
                } -> Some Workflow_step_output.{ key = output_key; text; success; step_type = type_ }
-         | Output.Workflow_output_run Run.{ outputs = None; _ } | Output.Workflow_output_env _ ->
-             None)
+         | Output.Workflow_output_run
+             Run.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ } ->
+             Some Workflow_step_output.{ key = None; text = ""; success; step_type = type_ }
+         | Output.Workflow_output_env _ -> None)
 
 let workflow_output_texts outputs =
   let module Output = Terrat_api_components_workflow_outputs.Items in
