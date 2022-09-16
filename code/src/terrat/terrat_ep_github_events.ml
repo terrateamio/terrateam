@@ -344,7 +344,13 @@ module Evaluator = Terrat_event_evaluator.Make (struct
       (Terrat_event_evaluator.Dir_set.to_list dirs)
     >>= function
     | Ok existing_dirs -> Abb.Future.return (Ok existing_dirs)
-    | Error _ -> failwith "nyi"
+    | Error (#Githubc2_abb.call_err as err) ->
+        Logs.err (fun m ->
+            m
+              "GITHUB_EVENT : %s : FAIL_LIST_EXISTING_DIRS : %s"
+              (Event.request_id event)
+              (Githubc2_abb.show_call_err err));
+        Abb.Future.return (Error `Error)
 
   let store_dirspaceflows db event pull_request dirspaceflows =
     let run =
