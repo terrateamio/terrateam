@@ -200,6 +200,25 @@ module Make (S : S) = struct
     | Some mergeable, "merge" -> mergeable
     | (Some _ | _), _ -> true
 
+  let maybe_replace_old_commit_statuses event pull_request commit_checks =
+    let open Abb.Future.Infix_monad in
+    let replacement_commit_statuses =
+      commit_checks
+      |> CCList.filter (fun Terrat_commit_check.{ title; status; _ } ->
+             (not Terrat_commit_check.Status.(equal status Completed))
+             && (CCList.mem ~eq:CCString.equal title [ "terrateam plan"; "terrateam apply" ]
+                || CCString.prefix ~pre:"terrateam plan " title
+                || CCString.prefix ~pre:"terrateam apply " title))
+      |> CCList.map (fun check -> Terrat_commit_check.{ check with status = Status.Completed })
+    in
+    S.create_commit_checks event pull_request replacement_commit_statuses
+    >>= function
+    | Ok () -> Abb.Future.return ()
+    | Error _ ->
+        Logs.err (fun m ->
+            m "EVENT_EVALUATOR : %s : FAILED_REPLACE_OLD_COMMIT_STATUSES" (S.Event.request_id event));
+        Abb.Future.return ()
+
   let maybe_create_pending_apply event pull_request repo_config = function
     | [] ->
         (* No matches so don't make anything *)
@@ -219,6 +238,8 @@ module Make (S : S) = struct
             (fun () -> S.fetch_commit_checks event pull_request)
           >>= function
           | Ok commit_checks -> (
+              Abb.Future.fork (maybe_replace_old_commit_statuses event pull_request commit_checks)
+              >>= fun _ ->
               let details_url = S.get_commit_check_details_url event pull_request in
               let commit_check_titles =
                 commit_checks
@@ -294,6 +315,9 @@ module Make (S : S) = struct
                     t))
             (fun () -> S.fetch_commit_checks event pull_request))
     >>= fun (reviews, commit_checks) ->
+    Abbs_future_combinators.to_result
+      (Abb.Future.fork (maybe_replace_old_commit_statuses event pull_request commit_checks))
+    >>= fun _ ->
     let approved_reviews =
       CCList.filter
         (function
