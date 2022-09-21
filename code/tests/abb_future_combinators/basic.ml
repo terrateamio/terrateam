@@ -164,6 +164,36 @@ let with_finally_aborted =
       assert (!finally_exec = 1);
       assert (Fut.state fut = `Aborted))
 
+let with_finally_aborted_complete =
+  Oth.test
+    ~desc:"Test the finally block finishes before next step"
+    ~name:"with_finally aborted complete"
+    (fun _ ->
+      let finally_exec = ref 0 in
+      let next_step_finally_count = ref 0 in
+      let trigger_finally_step = Fut.Promise.create () in
+      let p = Fut.Promise.create () in
+      let fut =
+        let open Fut.Infix_monad in
+        Fut.await
+          (Fut_comb.with_finally
+             (fun () -> Fut.Promise.future p)
+             ~finally:(fun () ->
+               Fut.Promise.future trigger_finally_step
+               >>= fun () ->
+               incr finally_exec;
+               Fut.return ()))
+        >>| fun _ -> next_step_finally_count := !finally_exec
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.abort (Fut.Promise.future p)) dummy_state);
+      assert (!finally_exec = 0);
+      assert (!next_step_finally_count = 0);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger_finally_step ()) dummy_state);
+      assert (!finally_exec = 1);
+      assert (!next_step_finally_count = 1);
+      assert (Fut.state fut = `Det ()))
+
 let with_finally_exn =
   Oth.test
     ~desc:"Test the finally block is run on a fut determining to an exn"
@@ -262,6 +292,169 @@ let with_finally_aborted_from_outside =
       assert (!finally_exec = 1);
       assert (Fut.state fut = `Aborted);
       assert (Fut.state (Fut.Promise.future p) = `Aborted))
+
+let with_finally_nested_raise =
+  Oth.test ~name:"with_finally nested raise" (fun _ ->
+      let inner_first = ref false in
+      let inner_finally = ref false in
+      let outer_finally = ref false in
+      let start = Fut.Promise.create () in
+      let fut =
+        let open Fut.Infix_monad in
+        Fut_comb.with_finally
+          (fun () ->
+            Fut_comb.with_finally
+              (fun () -> Fut.Promise.future start >>= fun () -> raise (Failure "fail"))
+              ~finally:(fun () ->
+                if not !outer_finally then (
+                  inner_first := true;
+                  inner_finally := true);
+                Fut.return ()))
+          ~finally:(fun () ->
+            outer_finally := true;
+            Fut.return ())
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.Promise.set start ()) dummy_state);
+      assert !inner_first;
+      assert !outer_finally)
+
+let with_finally_nested_abort =
+  Oth.test ~name:"with_finally nested abort" (fun _ ->
+      let inner_first = ref false in
+      let inner_finally = ref false in
+      let outer_finally = ref false in
+      let start = Fut.Promise.create () in
+      let fut =
+        let open Fut.Infix_monad in
+        Fut_comb.with_finally
+          (fun () ->
+            Fut_comb.with_finally
+              (fun () -> Fut.Promise.future start)
+              ~finally:(fun () ->
+                if not !outer_finally then (
+                  inner_first := true;
+                  inner_finally := true);
+                Fut.return ()))
+          ~finally:(fun () ->
+            outer_finally := true;
+            Fut.return ())
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state Fut.(abort (Promise.future start)) dummy_state);
+      assert !inner_first;
+      assert !outer_finally;
+      assert (Fut.state fut = `Aborted))
+
+let with_finally_nested_abort_outside =
+  Oth.test ~name:"with_finally nested abort outside" (fun _ ->
+      let inner_first = ref false in
+      let inner_finally = ref false in
+      let outer_finally = ref false in
+      let start = Fut.Promise.create () in
+      let fut =
+        let open Fut.Infix_monad in
+        Fut_comb.with_finally
+          (fun () ->
+            Fut_comb.with_finally
+              (fun () -> Fut.Promise.future start)
+              ~finally:(fun () ->
+                if not !outer_finally then (
+                  inner_first := true;
+                  inner_finally := true);
+                Fut.return ()))
+          ~finally:(fun () ->
+            outer_finally := true;
+            Fut.return ())
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.abort fut) dummy_state);
+      assert !inner_first;
+      assert !outer_finally;
+      assert (Fut.state fut = `Aborted))
+
+let with_finally_nested_abort_sequenced =
+  Oth.test ~name:"with_finally nested abort sequenced" (fun _ ->
+      let inner_first = ref false in
+      let inner_finally = ref false in
+      let outer_finally = ref false in
+      let start = Fut.Promise.create () in
+      let trigger_inner = Fut.Promise.create () in
+      let fut =
+        let open Fut.Infix_monad in
+        Fut_comb.with_finally
+          (fun () ->
+            Fut_comb.with_finally
+              (fun () -> Fut.Promise.future start)
+              ~finally:(fun () ->
+                Fut.Promise.future trigger_inner
+                >>= fun () ->
+                if not !outer_finally then (
+                  inner_first := true;
+                  inner_finally := true);
+                Fut.return ()))
+          ~finally:(fun () ->
+            outer_finally := true;
+            Fut.return ())
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.abort fut) dummy_state);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger_inner ()) dummy_state);
+      assert !inner_first;
+      assert !outer_finally;
+      assert (Fut.state (Fut.Promise.future start) = `Aborted);
+      assert (Fut.state (Fut.Promise.future trigger_inner) = `Det ());
+      assert (Fut.state fut = `Aborted))
+
+let with_finally_nested_exn_sequenced =
+  Oth.test ~name:"with_finally nested exn sequenced" (fun _ ->
+      let inner_first = ref false in
+      let inner_finally = ref false in
+      let outer_finally = ref false in
+      let start = Fut.Promise.create () in
+      let wait = Fut.Promise.create () in
+      let trigger_inner = Fut.Promise.create () in
+      let business_end =
+        let open Fut.Infix_monad in
+        Fut_comb.with_finally
+          (fun () ->
+            Fut_comb.with_finally
+              (fun () -> Fut.Promise.future wait)
+              ~finally:(fun () ->
+                Fut.Promise.future trigger_inner
+                >>= fun () ->
+                if not !outer_finally then (
+                  inner_first := true;
+                  inner_finally := true);
+                Fut.return ()))
+          ~finally:(fun () ->
+            outer_finally := true;
+            Fut.return ())
+      in
+      let fut =
+        Fut.Infix_app.(
+          (fun _ _ -> ())
+          <$> (let open Fut.Infix_monad in
+              Fut.Promise.future start >>= fun () -> failwith "exn")
+          <*> business_end)
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.Promise.set start ()) dummy_state);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger_inner ()) dummy_state);
+      assert !inner_first;
+      assert !outer_finally;
+      (match Fut.state fut with
+      | `Aborted -> assert false
+      | `Det _ -> assert false
+      | `Undet -> assert false
+      | `Exn (Failure _, _) -> ()
+      | `Exn _ -> assert false);
+      match Fut.state business_end with
+      | `Aborted -> assert false
+      | `Det _ -> assert false
+      | `Undet -> assert false
+      | `Exn (Failure _, _) -> ()
+      | `Exn _ -> assert false)
 
 let on_failure_success =
   Oth.test ~desc:"Test the failure block is not run on success" ~name:"on_failure success" (fun _ ->
@@ -398,11 +591,17 @@ let () =
            first4;
            with_finally_success;
            with_finally_aborted;
+           with_finally_aborted_complete;
            with_finally_exn;
            with_finally_raise;
            with_finally_exn_in_finally;
            with_finally_exn_in_body_and_finally;
            with_finally_aborted_from_outside;
+           with_finally_nested_raise;
+           with_finally_nested_abort;
+           with_finally_nested_abort_outside;
+           with_finally_nested_abort_sequenced;
+           with_finally_nested_exn_sequenced;
            on_failure_success;
            on_failure_aborted;
            on_failure_aborted_from_outside;

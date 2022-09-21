@@ -24,8 +24,8 @@ let test1 =
       assert !raising;
       assert (Fut.state fut1 = `Det v);
       match Fut.state fut2 with
-        | `Exn (Foo, Some _) -> ()
-        | _                  -> assert false)
+      | `Exn (Foo, Some _) -> ()
+      | _ -> assert false)
 
 let test2 =
   Oth.test ~desc:"Throwing aborts all connected applicatives" ~name:"Exception #2" (fun _ ->
@@ -48,11 +48,11 @@ let test2 =
       assert (not !executed_anyways);
       assert (Fut.state fut1 = `Det ());
       (match Fut.state fut2 with
-        | `Exn (Foo, Some _) -> ()
-        | _                  -> assert false);
+      | `Exn (Foo, Some _) -> ()
+      | _ -> assert false);
       match Fut.state fut3 with
-        | `Exn (Foo, Some _) -> ()
-        | _                  -> assert false)
+      | `Exn (Foo, Some _) -> ()
+      | _ -> assert false)
 
 let test3 =
   Oth.test ~desc:"Await evaluates to `Aborted on exception" ~name:"Exception #3" (fun _ ->
@@ -76,14 +76,14 @@ let test3 =
       assert (not !executed_anyways);
       assert (Fut.state fut1 = `Det ());
       (match Fut.state fut2 with
-        | `Exn (Foo, Some _) -> ()
-        | _                  -> assert false);
+      | `Exn (Foo, Some _) -> ()
+      | _ -> assert false);
       (match Fut.state fut3 with
-        | `Exn (Foo, Some _) -> ()
-        | _                  -> assert false);
+      | `Exn (Foo, Some _) -> ()
+      | _ -> assert false);
       match Fut.state fut4 with
-        | `Det (`Exn (Foo, Some _)) -> ()
-        | _                         -> assert false)
+      | `Det (`Exn (Foo, Some _)) -> ()
+      | _ -> assert false)
 
 let test4 =
   Oth.test
@@ -109,17 +109,17 @@ let test4 =
       assert (not !raising);
       assert (not !executed_anyways);
       (match Fut.state fut1 with
-        | `Exn (Foo, None) -> ()
-        | _                -> assert false);
+      | `Exn (Foo, None) -> ()
+      | _ -> assert false);
       (match Fut.state fut2 with
-        | `Exn (Foo, None) -> ()
-        | _                -> assert false);
+      | `Exn (Foo, None) -> ()
+      | _ -> assert false);
       (match Fut.state fut3 with
-        | `Exn (Foo, None) -> ()
-        | _                -> assert false);
+      | `Exn (Foo, None) -> ()
+      | _ -> assert false);
       match Fut.state fut4 with
-        | `Det (`Exn (Foo, None)) -> ()
-        | _                       -> assert false)
+      | `Det (`Exn (Foo, None)) -> ()
+      | _ -> assert false)
 
 let test5 =
   Oth.test ~desc:"Await evaluates to `Aborted on exception" ~name:"Exception #5" (fun _ ->
@@ -144,16 +144,70 @@ let test5 =
       assert !raising;
       assert (not !executed_anyways);
       (match Fut.state fut1 with
-        | `Exn (Foo, Some _) -> ()
-        | _                  -> assert false);
+      | `Exn (Foo, Some _) -> ()
+      | _ -> assert false);
       assert (Fut.state fut2 = `Det ());
       (match Fut.state fut3 with
-        | `Exn (Foo, Some _) -> ()
-        | _                  -> assert false);
+      | `Exn (Foo, Some _) -> ()
+      | _ -> assert false);
       match Fut.state fut4 with
-        | `Det (`Exn (Foo, Some _)) -> ()
-        | _                         -> assert false)
+      | `Det (`Exn (Foo, Some _)) -> ()
+      | _ -> assert false)
+
+let test_exn_determined_after_completed =
+  Oth.test ~name:"Exn determined after completed" (fun _ ->
+      let state = Abb_fut.State.create () in
+      let trigger_next_step = Fut.Promise.create () in
+      let abort () = Fut.Promise.future trigger_next_step in
+      let p = Fut.Promise.create ~abort () in
+      let fut = Fut.Promise.future p in
+      let exn_fut = Fut.Promise.set_exn p (Failure "foo", None) in
+      assert (Fut.state exn_fut = `Undet);
+      ignore (Fut.run_with_state exn_fut state);
+      assert (Fut.state exn_fut = `Undet);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger_next_step ()) state);
+      assert (Fut.state exn_fut = `Det ());
+      match Fut.state fut with
+      | `Undet -> assert false
+      | `Det _ -> assert false
+      | `Aborted -> assert false
+      | `Exn _ -> ())
+
+let test_exn_applicative_determined_after_abort_fun =
+  Oth.test ~name:"Exn applicative determined after abort fun" (fun _ ->
+      let state = Abb_fut.State.create () in
+      let start = Fut.Promise.create () in
+      let trigger_next_step = Fut.Promise.create () in
+      let abort () = Fut.Promise.future trigger_next_step in
+      let fut =
+        Fut.Infix_app.(
+          (fun _ _ -> ())
+          <$> (let open Fut.Infix_monad in
+              Fut.Promise.future start >>= fun () -> failwith "exn")
+          <*> Fut.Promise.(future (create ~abort ())))
+      in
+      ignore (Fut.run_with_state fut state);
+      assert (Fut.state fut = `Undet);
+      ignore (Fut.run_with_state (Fut.Promise.set start ()) state);
+      assert (Fut.state fut = `Undet);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger_next_step ()) state);
+      match Fut.state fut with
+      | `Undet -> assert false
+      | `Det _ -> assert false
+      | `Aborted -> assert false
+      | `Exn _ -> ())
 
 let () =
   Random.self_init ();
-  Oth.(run (parallel [ test1; test2; test3; test4; test5 ]))
+  Oth.(
+    run
+      (parallel
+         [
+           test1;
+           test2;
+           test3;
+           test4;
+           test5;
+           test_exn_determined_after_completed;
+           test_exn_applicative_determined_after_abort_fun;
+         ]))

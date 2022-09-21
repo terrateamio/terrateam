@@ -13,16 +13,16 @@ let simple_send =
         let open Fut.Infix_monad in
         Channel_queue.T.create ()
         >>= fun queue ->
-        let (r_chan, w_chan) = Channel_queue.to_abb_channel queue in
+        let r_chan, w_chan = Channel_queue.to_abb_channel queue in
         Fut.fork (Channel.send w_chan ())
         >>= fun send_fut ->
         Channel.recv r_chan
-        >>| fun r ->
+        >>= fun r ->
         assert (r = `Ok ());
-        assert (Fut.state send_fut = `Det (`Ok ()))
+        send_fut
       in
       ignore (Fut.run_with_state fut dummy_state);
-      assert (Fut.state fut = `Det ()))
+      assert (Fut.state fut = `Det (`Ok ())))
 
 let simple_recv =
   Oth.test ~desc:"Receiving then sending works" ~name:"Simple Receive" (fun _ ->
@@ -30,7 +30,7 @@ let simple_recv =
         let open Fut.Infix_monad in
         Channel_queue.T.create ()
         >>= fun queue ->
-        let (r_chan, w_chan) = Channel_queue.to_abb_channel queue in
+        let r_chan, w_chan = Channel_queue.to_abb_channel queue in
         Fut.fork (Channel.recv r_chan)
         >>= fun recv_fut ->
         Channel.send w_chan ()
@@ -47,7 +47,7 @@ let closed_recv =
         let open Fut.Infix_monad in
         Channel_queue.T.create ()
         >>= fun queue ->
-        let (r_chan, w_chan) = Channel_queue.to_abb_channel queue in
+        let r_chan, w_chan = Channel_queue.to_abb_channel queue in
         Channel.close_reader r_chan
         >>= fun () -> Channel.recv r_chan >>| fun r -> assert (r = `Closed)
       in
@@ -60,7 +60,7 @@ let closed_send =
         let open Fut.Infix_monad in
         Channel_queue.T.create ()
         >>= fun queue ->
-        let (r_chan, w_chan) = Channel_queue.to_abb_channel queue in
+        let r_chan, w_chan = Channel_queue.to_abb_channel queue in
         Channel.close_reader r_chan
         >>= fun () -> Channel.send w_chan () >>| fun r -> assert (r = `Closed)
       in
@@ -73,7 +73,7 @@ let recv_then_close =
         let open Fut.Infix_monad in
         Channel_queue.T.create ()
         >>= fun queue ->
-        let (r_chan, w_chan) = Channel_queue.to_abb_channel queue in
+        let r_chan, w_chan = Channel_queue.to_abb_channel queue in
         Fut.fork (Channel.recv r_chan)
         >>= fun recv_fut ->
         Channel.close_reader r_chan >>= fun () -> recv_fut >>| fun r -> assert (r = `Closed)
@@ -87,7 +87,7 @@ let fast_count =
         let open Fut.Infix_monad in
         Channel_queue.T.create ~fast_count:1 ()
         >>= fun queue ->
-        let (r_chan, w_chan) = Channel_queue.to_abb_channel queue in
+        let r_chan, w_chan = Channel_queue.to_abb_channel queue in
         Fut.fork (Channel.send w_chan ())
         >>= fun send1 ->
         Fut.fork (Channel.send w_chan ())
@@ -111,19 +111,19 @@ let close_send_allows_recv =
         let open Fut.Infix_monad in
         Channel_queue.T.create ~fast_count:0 ()
         >>= fun queue ->
-        let (r_chan, w_chan) = Channel_queue.to_abb_channel queue in
+        let r_chan, w_chan = Channel_queue.to_abb_channel queue in
         Fut.fork (Channel.send w_chan ())
         >>= fun send_ret ->
         Channel.close w_chan
         >>= fun () ->
         assert (Fut.state send_ret = `Undet);
         Channel.recv r_chan
-        >>| fun r ->
+        >>= fun r ->
         assert (r = `Ok ());
-        assert (Fut.state send_ret = `Det (`Ok ()))
+        send_ret
       in
       ignore (Fut.run_with_state fut dummy_state);
-      assert (Fut.state fut = `Det ()))
+      assert (Fut.state fut = `Det (`Ok ())))
 
 let close_recv_aborts_all_sends =
   Oth.test
@@ -134,7 +134,7 @@ let close_recv_aborts_all_sends =
         let open Fut.Infix_monad in
         Channel_queue.T.create ~fast_count:0 ()
         >>= fun queue ->
-        let (r_chan, w_chan) = Channel_queue.to_abb_channel queue in
+        let r_chan, w_chan = Channel_queue.to_abb_channel queue in
         Fut.fork (Channel.send w_chan ())
         >>= fun send_ret ->
         Channel.close_reader r_chan >>| fun () -> assert (Fut.state send_ret = `Aborted)
@@ -151,7 +151,7 @@ let closed_cannot_be_aborted =
         let open Fut.Infix_monad in
         Channel_queue.T.create ~fast_count:0 ()
         >>= fun queue ->
-        let (r_chan, w_chan) = Channel_queue.to_abb_channel queue in
+        let r_chan, w_chan = Channel_queue.to_abb_channel queue in
         Fut.fork (Channel.closed w_chan)
         >>= fun closed ->
         Fut.abort closed
@@ -168,7 +168,7 @@ let recv_can_be_aborted =
         let open Fut.Infix_monad in
         Channel_queue.T.create ()
         >>= fun queue ->
-        let (r_chan, w_chan) = Channel_queue.to_abb_channel queue in
+        let r_chan, w_chan = Channel_queue.to_abb_channel queue in
         Fut.fork (Channel.recv r_chan)
         >>= fun recv_fut ->
         Fut.abort recv_fut

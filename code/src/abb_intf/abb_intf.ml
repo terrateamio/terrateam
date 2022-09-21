@@ -397,11 +397,11 @@ module Future = struct
 
       (** Create a promise with an optional function to call on abort.  When
          aborting or canceling a future, the processing of the dependency tree
-         does not wait until the future [abort] returns to be determined,
-         instead all of the [abort] functions for the all of the aborted futures
-         in the graph are executed.  If calling the [abort] function raises and
-         exception, then that exception is what is propagated through the tree,
-         replacing whatever the existing error was. *)
+         is executed depth-first and the each abort is executed to completion
+         before working back up the stack of aborts.  If calling the [abort]
+         function raises and exception, then that exception is what is
+         propagated through the tree, replacing whatever the existing error
+         was. *)
       val create : ?abort:abort -> unit -> 'a t
 
       (** Return a future for the promise. *)
@@ -412,8 +412,10 @@ module Future = struct
       val set : 'a t -> 'a -> unit fut
 
       (** Set the promise to an exception, this will fail all of the connected
-          futures with the exception.  This is a no-op if the promise has
-          already been determined. *)
+         futures with the exception, causing their abort function to be
+         executed.  The returned future is not determined until all aborts have
+         been executed.  This is a no-op if the promise has already been
+         determined. *)
       val set_exn : 'a t -> exn * Printexc.raw_backtrace option -> unit fut
     end
 
@@ -449,13 +451,16 @@ module Future = struct
     val await_map : ('a Set.t -> 'b) -> 'a t -> 'b t
     val await_bind : ('a Set.t -> 'b t) -> 'a t -> 'b t
 
-    (** Abort a future and of its undetermined dependencies.  If a future has
-        been determined already then {!abort} is a no-op. *)
+    (** Abort a future and all of its undetermined dependencies.  The returned
+       future will not be determined until all aborts of dependencies have been
+       completed.  If a future has been determined already then {!abort} is a
+       no-op. *)
     val abort : 'a t -> unit t
 
     (** Cancel a future, this is like an abort except it only spreads to
-       watchers.  If the future has been determined already then {!cancel} is a
-       no-op. *)
+       watchers.  The returned future will not be determined until all aborts of
+       dependencies have been completed.  If the future has been determined
+       already then {!cancel} is a no-op. *)
     val cancel : 'a t -> unit t
 
     (** Add [dep] future as a dependency to the given future. *)

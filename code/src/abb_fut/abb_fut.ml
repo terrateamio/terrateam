@@ -185,54 +185,173 @@ module Make (Sched_state : S) = struct
     { state = `Undet { f; watchers; deps; abort; num_ops = 0 } }
 
   let safe_call_abort undet s =
-    try (run_with_state (undet.abort ()) s, `Aborted)
-    with exn -> (s, `Exn (exn, Some (Printexc.get_raw_backtrace ())))
+    try
+      let t = undet.abort () in
+      (run_with_state t s, t, `Aborted)
+    with exn -> (s, return (), `Exn (exn, Some (Printexc.get_raw_backtrace ())))
+
+  let safe_call_abort_exn undet exn s =
+    match safe_call_abort undet s with
+    | s, t, `Aborted -> (s, t, `Exn exn)
+    | s, t, exn -> (s, t, exn)
 
   let set' undet v s =
     let st = `Det v in
     ListLabels.fold_left ~f:(fun s w -> Watcher.call w s st) ~init:s undet.watchers
 
-  let cancel' undet s =
-    let s, det = safe_call_abort undet s in
-    ListLabels.fold_left ~f:(fun s w -> Watcher.call w s det) ~init:s undet.watchers
+  let watch_u_undet_state ~f s undet =
+    let rec w =
+      ref
+        (Some
+           (fun s _ ->
+             w := None;
+             f s))
+    in
+    add_watcher undet w;
+    s
 
-  let rec abort' : 'a. 'a undet -> State.t -> State.t =
-   fun undet s ->
+  let watch_u_state ~f s state =
+    match state with
+    | `Alias _ -> assert false
+    | `Aborted | `Exn _ | `Det _ -> f s
+    | `Undet undet -> watch_u_undet_state ~f s undet
+
+  let watch_u ~f s u = watch_u_state ~f s (collapse_alias u).state
+
+  (* Abort all deps.  We create a future that will represent when all deps are
+     completed.  For each dep, we mark it as aborted, and then we recursively go
+     into each dep and do the same.  Finally, as we go back up the stack we'll
+     run the abort function for each one of those.  When the future returned by
+     abort is determined, we mark that dep as done and once [num_deps] becomes
+     0, we determine the [all_deps_completed] future so the next level up the
+     stack can finish running.  In this way, we get depth-first abort. *)
+  let rec abort_deps : State.t -> dep list -> State.t * unit u =
+   fun s deps ->
+    let all_deps_complete = undetermined () in
+    let num_deps = ref (List.length deps) in
+    let f det watchers s =
+      let s = ListLabels.fold_left ~f:(fun s w -> Watcher.call w s det) ~init:s watchers in
+      decr num_deps;
+      if !num_deps > 0 then s
+      else
+        match all_deps_complete.state with
+        | `Alias _ -> assert false
+        | `Undet undet -> set' undet () s
+        | `Det () | `Aborted | `Exn _ -> assert false
+    in
     let s =
       ListLabels.fold_left
-        ~f:(fun s (Dep u) ->
-          let u = collapse_alias u in
-          match u.state with
+        ~f:(fun s (Dep dep_u) ->
+          let dep_u = collapse_alias dep_u in
+          match dep_u.state with
           | `Alias _ -> assert false
-          | `Undet undet ->
-              u.state <- `Aborted;
-              abort' undet s
-          | `Aborted | `Exn _ | `Det _ -> s)
+          | `Undet undet -> (
+              dep_u.state <- `Aborted;
+              let s, abort_u = abort_deps s undet.deps in
+              match abort_u.state with
+              | `Alias _ -> assert false
+              | `Aborted | `Exn _ -> assert false
+              | `Det () ->
+                  let s, t, det = safe_call_abort undet s in
+                  watch_u ~f:(f det undet.watchers) s (u_of_t t)
+              | `Undet undet_abort_u ->
+                  watch_u_undet_state
+                    ~f:(fun s ->
+                      let s, t, det = safe_call_abort undet s in
+                      watch_u ~f:(f det undet.watchers) s (u_of_t t))
+                    s
+                    undet_abort_u)
+          | `Aborted | `Exn _ | `Det _ ->
+              decr num_deps;
+              s)
         ~init:s
-        undet.deps
+        deps
     in
-    let s, det = safe_call_abort undet s in
-    ListLabels.fold_left ~f:(fun s w -> Watcher.call w s det) ~init:s undet.watchers
+    if !num_deps > 0 then (s, all_deps_complete) else (s, u_of_t (return ()))
 
-  let rec abort_exn' : 'a. 'a undet -> exn * Printexc.raw_backtrace option -> State.t -> State.t =
-   fun undet exn s ->
-    let s, st =
-      match safe_call_abort undet s with
-      | s, `Aborted -> (s, `Exn exn)
-      | s, st -> (s, st)
-    in
-    let s = ListLabels.fold_left ~f:(fun s w -> Watcher.call w s st) ~init:s undet.watchers in
-    ListLabels.fold_left
-      ~f:(fun s (Dep u) ->
-        let u = collapse_alias u in
-        match u.state with
+  (* In order to abort an undetermined future, we first want to abort all of the
+     undetermined deps.  Aborting is done depth-first.  So at each future, we
+     abort all of their deps concurrently, wait for all of them to finish, then
+     we determine that future, and work back up the stack.  And we wait for
+     every abort future to become determined.  We don't treat the abort as "fire
+     and forget" but instead execute them like any other future.  Finally, we
+     determine this future that started it all. *)
+  let abort' : 'a. 'a undet -> State.t -> State.t =
+   fun undet s ->
+    (* Abort deps, get back a new sate and also a [u], a future that will be
+       determined once all depds have been aborted. *)
+    let s, u = abort_deps s undet.deps in
+    watch_u
+      ~f:(fun s ->
+        let s, t, det = safe_call_abort undet s in
+        watch_u
+          ~f:(fun s ->
+            ListLabels.fold_left ~f:(fun s w -> Watcher.call w s det) ~init:s undet.watchers)
+          s
+          (u_of_t t))
+      s
+      u
+
+  (* See {!abort_deps} for what this is doing.  *)
+  let rec abort_exn_deps :
+      State.t -> exn * Printexc.raw_backtrace option -> dep list -> State.t * unit u =
+   fun s exn deps ->
+    let all_deps_complete = undetermined () in
+    let num_deps = ref (List.length deps) in
+    let f det watchers s =
+      let s = ListLabels.fold_left ~f:(fun s w -> Watcher.call w s det) ~init:s watchers in
+      decr num_deps;
+      if !num_deps > 0 then s
+      else
+        match all_deps_complete.state with
         | `Alias _ -> assert false
-        | `Undet undet ->
-            u.state <- st;
-            abort_exn' undet exn s
-        | `Aborted | `Exn _ | `Det _ -> s)
-      ~init:s
-      undet.deps
+        | `Undet undet -> set' undet () s
+        | `Det () | `Aborted | `Exn _ -> assert false
+    in
+    let s =
+      ListLabels.fold_left
+        ~f:(fun s (Dep dep_u) ->
+          let dep_u = collapse_alias dep_u in
+          match dep_u.state with
+          | `Alias _ -> assert false
+          | `Undet undet -> (
+              dep_u.state <- `Exn exn;
+              let s, abort_u = abort_exn_deps s exn undet.deps in
+              match abort_u.state with
+              | `Alias _ -> assert false
+              | `Aborted | `Exn _ -> assert false
+              | `Det () ->
+                  let s, t, det = safe_call_abort_exn undet exn s in
+                  watch_u ~f:(f det undet.watchers) s (u_of_t t)
+              | `Undet undet_abort_u ->
+                  watch_u_undet_state
+                    ~f:(fun s ->
+                      let s, t, det = safe_call_abort_exn undet exn s in
+                      watch_u ~f:(f det undet.watchers) s (u_of_t t))
+                    s
+                    undet_abort_u)
+          | `Aborted | `Exn _ | `Det _ ->
+              decr num_deps;
+              s)
+        ~init:s
+        deps
+    in
+    if !num_deps > 0 then (s, all_deps_complete) else (s, u_of_t (return ()))
+
+  (* See {!abort'} for details on how this works. *)
+  let abort_exn' : 'a. 'a undet -> exn * Printexc.raw_backtrace option -> State.t -> State.t =
+   fun undet exn s ->
+    let s, u = abort_exn_deps s exn undet.deps in
+    watch_u
+      ~f:(fun s ->
+        let s, t, det = safe_call_abort_exn undet exn s in
+        watch_u
+          ~f:(fun s ->
+            ListLabels.fold_left ~f:(fun s w -> Watcher.call w s det) ~init:s undet.watchers)
+          s
+          (u_of_t t))
+      s
+      u
 
   let safe_apply u undet f v s =
     try
@@ -448,30 +567,42 @@ module Make (Sched_state : S) = struct
   let maybe_abort u u_undet u' v s =
     match v with
     | `Det _ -> s
-    | `Exn exn -> (
+    | `Exn exn ->
         u.state <- `Exn exn;
-        s
-        |> abort_exn' u_undet exn
-        |> fun s ->
-        let u' = collapse_alias u' in
-        match u'.state with
-        | `Alias _ -> assert false
-        | `Det _ | `Aborted | `Exn _ -> s
-        | `Undet undet ->
-            u'.state <- `Exn exn;
-            abort_exn' undet exn s)
-    | `Aborted -> (
+        let s =
+          (* When the [u_undet] becomes determined, we want to determine [u'].
+             [u'] is the future that represents the "outer" future, the one that
+             is "closest to the user". *)
+          watch_u_undet_state
+            ~f:(fun s ->
+              let u' = collapse_alias u' in
+              match u'.state with
+              | `Alias _ -> assert false
+              | `Det _ | `Aborted | `Exn _ -> s
+              | `Undet undet ->
+                  u'.state <- `Exn exn;
+                  abort_exn' undet exn s)
+            s
+            u_undet
+        in
+        abort_exn' u_undet exn s
+    | `Aborted ->
         u.state <- `Aborted;
-        s
-        |> abort' u_undet
-        |> fun s ->
-        let u' = collapse_alias u' in
-        match u'.state with
-        | `Alias _ -> assert false
-        | `Det _ | `Aborted | `Exn _ -> s
-        | `Undet undet ->
-            u'.state <- `Aborted;
-            abort' undet s)
+        let s =
+          (* Same as the exn scenario above. *)
+          watch_u_undet_state
+            ~f:(fun s ->
+              let u' = collapse_alias u' in
+              match u'.state with
+              | `Alias _ -> assert false
+              | `Det _ | `Aborted | `Exn _ -> s
+              | `Undet undet ->
+                  u'.state <- `Aborted;
+                  abort' undet s)
+            s
+            u_undet
+        in
+        abort' u_undet s
 
   (* Applicative implementation that ensures both futures are executing
      concurrently.  The implementation is rather annoying and requires a bunch
@@ -629,7 +760,7 @@ module Make (Sched_state : S) = struct
     | `Alias _ -> assert false
     | `Det _ | `Aborted | `Exn _ -> return ()
     | `Undet _ ->
-        let rec u =
+        let rec u' =
           {
             state =
               `Undet
@@ -637,22 +768,32 @@ module Make (Sched_state : S) = struct
                   f =
                     Some
                       (fun s ->
-                        let u' = collapse_alias (u_of_t t) in
+                        (* It's possible that [t] has been determined between
+                           [abort] being called and being executed, so fetch
+                           the value again. *)
+                        let u = collapse_alias (u_of_t t) in
                         let s =
-                          match u'.state with
-                          | `Alias _ -> assert false
-                          | `Undet undet ->
-                              u'.state <- `Aborted;
-                              abort' undet s
-                          | `Det _ | `Exn _ | `Aborted -> s
+                          (* Watch the future that we're about to abort such
+                             that when it is determined, we will then determine
+                             the future we're returning. *)
+                          watch_u
+                            ~f:(fun s ->
+                              let u' = collapse_alias u' in
+                              match u'.state with
+                              | `Alias _ -> assert false
+                              | `Det _ | `Exn _ | `Aborted -> s
+                              | `Undet undet ->
+                                  u'.state <- `Det ();
+                                  set' undet () s)
+                            s
+                            u
                         in
-                        let u = collapse_alias u in
                         match u.state with
                         | `Alias _ -> assert false
-                        | `Det _ | `Exn _ | `Aborted -> s
+                        | `Det _ | `Aborted | `Exn _ -> s
                         | `Undet undet ->
-                            u.state <- `Det ();
-                            set' undet () s);
+                            u.state <- `Aborted;
+                            abort' undet s);
                   watchers = [];
                   deps = [];
                   abort = noop_abort;
@@ -660,7 +801,14 @@ module Make (Sched_state : S) = struct
                 };
           }
         in
-        t_of_u u
+        t_of_u u'
+
+  let cancel' undet s =
+    let s, t, det = safe_call_abort undet s in
+    watch_u
+      ~f:(fun s -> ListLabels.fold_left ~f:(fun s w -> Watcher.call w s det) ~init:s undet.watchers)
+      s
+      (u_of_t t)
 
   let cancel t =
     let u = collapse_alias (u_of_t t) in
@@ -668,7 +816,7 @@ module Make (Sched_state : S) = struct
     | `Alias _ -> assert false
     | `Det _ | `Aborted | `Exn _ -> return ()
     | `Undet _ ->
-        let rec u =
+        let rec u' =
           {
             state =
               `Undet
@@ -676,22 +824,29 @@ module Make (Sched_state : S) = struct
                   f =
                     Some
                       (fun s ->
-                        let u' = collapse_alias (u_of_t t) in
+                        (* It's possible that [t] has been determined between
+                           [cancel] being called and being executed, so fetch
+                           the value again. *)
+                        let u = collapse_alias (u_of_t t) in
                         let s =
-                          match u'.state with
-                          | `Alias _ -> assert false
-                          | `Det _ | `Exn _ | `Aborted -> s
-                          | `Undet undet ->
-                              u'.state <- `Aborted;
-                              cancel' undet s
+                          watch_u
+                            ~f:(fun s ->
+                              let u' = collapse_alias u' in
+                              match u'.state with
+                              | `Alias _ -> assert false
+                              | `Det _ | `Exn _ | `Aborted -> s
+                              | `Undet undet ->
+                                  u'.state <- `Det ();
+                                  set' undet () s)
+                            s
+                            u
                         in
-                        let u = collapse_alias u in
                         match u.state with
                         | `Alias _ -> assert false
-                        | `Det _ | `Exn _ | `Aborted -> s
+                        | `Det _ | `Aborted | `Exn _ -> s
                         | `Undet undet ->
-                            u.state <- `Det ();
-                            set' undet () s);
+                            u.state <- `Aborted;
+                            cancel' undet s);
                   watchers = [];
                   deps = [];
                   abort = noop_abort;
@@ -699,7 +854,7 @@ module Make (Sched_state : S) = struct
                 };
           }
         in
-        t_of_u u
+        t_of_u u'
 
   module Promise = struct
     type 'a fut = 'a t
@@ -710,74 +865,95 @@ module Make (Sched_state : S) = struct
     external future : 'a t -> 'a fut = "%identity"
 
     let set t v =
-      let rec u =
-        {
-          state =
-            `Undet
-              {
-                f =
-                  Some
-                    (fun s ->
-                      let u' = collapse_alias (u_of_t t) in
-                      let s =
-                        match u'.state with
-                        | `Alias _ -> assert false
-                        | `Det _ | `Exn _ | `Aborted -> s
-                        | `Undet undet ->
-                            u'.state <- `Det v;
-                            set' undet v s
-                      in
-
-                      let u = collapse_alias u in
-                      match u.state with
-                      | `Alias _ -> assert false
-                      | `Det _ | `Exn _ | `Aborted -> s
-                      | `Undet undet ->
-                          u.state <- `Det ();
-                          set' undet () s);
-                watchers = [];
-                deps = [];
-                abort = noop_abort;
-                num_ops = 0;
-              };
-        }
-      in
-      t_of_u u
+      let u = collapse_alias (u_of_t t) in
+      match u.state with
+      | `Alias _ -> assert false
+      | `Det _ | `Aborted | `Exn _ -> return ()
+      | `Undet _ ->
+          let rec u' =
+            {
+              state =
+                `Undet
+                  {
+                    f =
+                      Some
+                        (fun s ->
+                          (* It's possible that [t] has been set between
+                             calling [set] and executing, so fetch it again. *)
+                          let u = collapse_alias (u_of_t t) in
+                          let s =
+                            watch_u
+                              ~f:(fun s ->
+                                let u' = collapse_alias u' in
+                                match u'.state with
+                                | `Alias _ -> assert false
+                                | `Det _ | `Exn _ | `Aborted -> s
+                                | `Undet undet ->
+                                    u'.state <- `Det ();
+                                    set' undet () s)
+                              s
+                              u
+                          in
+                          match u.state with
+                          | `Alias _ -> assert false
+                          | `Det _ | `Aborted | `Exn _ -> s
+                          | `Undet undet ->
+                              u.state <- `Det v;
+                              set' undet v s);
+                    watchers = [];
+                    deps = [];
+                    abort = noop_abort;
+                    num_ops = 0;
+                  };
+            }
+          in
+          t_of_u u'
 
     let set_exn t exn =
-      let rec u =
-        {
-          state =
-            `Undet
-              {
-                f =
-                  Some
-                    (fun s ->
-                      let u' = collapse_alias (u_of_t t) in
-                      let s =
-                        match u'.state with
-                        | `Alias _ -> assert false
-                        | `Det _ | `Exn _ | `Aborted -> s
-                        | `Undet undet ->
-                            u'.state <- `Exn exn;
-                            abort_exn' undet exn s
-                      in
-
-                      let u = collapse_alias u in
-                      match u.state with
-                      | `Alias _ -> assert false
-                      | `Det _ | `Exn _ | `Aborted -> s
-                      | `Undet undet ->
-                          u.state <- `Det ();
-                          set' undet () s);
-                watchers = [];
-                deps = [];
-                abort = noop_abort;
-                num_ops = 0;
-              };
-        }
-      in
-      t_of_u u
+      let u = collapse_alias (u_of_t t) in
+      match u.state with
+      | `Alias _ -> assert false
+      | `Det _ | `Aborted | `Exn _ -> return ()
+      | `Undet _ ->
+          let rec u' =
+            {
+              state =
+                `Undet
+                  {
+                    f =
+                      Some
+                        (fun s ->
+                          (* It's possible that [t] has been determined between
+                             calling [set_exn] and executing, so fetch the
+                             value again. *)
+                          let u = collapse_alias (u_of_t t) in
+                          let s =
+                            watch_u
+                              ~f:(fun s ->
+                                let u' = collapse_alias u' in
+                                match u'.state with
+                                | `Alias _ -> assert false
+                                | `Det _ | `Exn _ | `Aborted -> s
+                                | `Undet undet ->
+                                    u'.state <- `Det ();
+                                    set' undet () s)
+                              s
+                              u
+                          in
+                          match u.state with
+                          | `Alias _ -> assert false
+                          | `Det _ | `Aborted | `Exn _ -> s
+                          | `Undet undet ->
+                              u.state <- `Exn exn;
+                              abort_exn' undet exn s);
+                    watchers = [];
+                    deps = [];
+                    abort = noop_abort;
+                    num_ops = 0;
+                  };
+            }
+          in
+          t_of_u u'
   end
 
   module Infix_monad = struct

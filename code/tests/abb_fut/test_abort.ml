@@ -259,8 +259,8 @@ let test15 =
       ignore (Fut.run_with_state (Fut.abort fut1) state);
       assert (Fut.state fut1 = `Aborted);
       match Fut.state fut2 with
-        | `Det _ | `Aborted | `Undet -> assert false
-        | `Exn _                     -> ())
+      | `Det _ | `Aborted | `Undet -> assert false
+      | `Exn _ -> ())
 
 let test_cancel =
   Oth.test ~desc:"Canceling a future aborts it" ~name:"Cancel #1" (fun _ ->
@@ -282,6 +282,22 @@ let test_cancel_deep =
       assert (Fut.state fut1 = `Undet);
       assert (Fut.state fut2 = `Aborted);
       assert (Fut.state fut3 = `Aborted))
+
+let test_abort_determined_after_completed =
+  Oth.test ~name:"Abort determined after completed" (fun _ ->
+      let state = Abb_fut.State.create () in
+      let trigger_next_step = Fut.Promise.create () in
+      let abort () =
+        let open Fut.Infix_monad in
+        Fut.Promise.future trigger_next_step
+      in
+      let fut = Fut.Promise.(future (create ~abort ())) in
+      let abort_fut = Fut.abort fut in
+      assert (Fut.state abort_fut = `Undet);
+      ignore (Fut.run_with_state abort_fut state);
+      assert (Fut.state abort_fut = `Undet);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger_next_step ()) state);
+      assert (Fut.state abort_fut = `Det ()))
 
 let () =
   Oth.(
@@ -305,4 +321,5 @@ let () =
            test15;
            test_cancel;
            test_cancel_deep;
+           test_abort_determined_after_completed;
          ]))
