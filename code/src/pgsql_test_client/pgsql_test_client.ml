@@ -612,6 +612,58 @@ let test_bad_state =
           assert false
       | Error _ -> assert false)
 
+let test_concurrent_exn_raise =
+  Oth_abb.test ~name:"Concurrent Exn Raise" (fun () ->
+      let create_sql =
+        Pgsql_io.Typed_sql.(sql /^ "CREATE TABLE IF NOT EXISTS foo (name TEXT, age INTEGER)")
+      in
+      let insert_good_sql =
+        Pgsql_io.Typed_sql.(
+          sql
+          /^ "INSERT INTO foo (name, age) VALUES($name, $age)"
+          /% Var.text "name"
+          /% Var.integer "age")
+      in
+      let f conn =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_io.Prepared_stmt.execute conn create_sql
+        >>= fun () ->
+        let open Abb.Future.Infix_monad in
+        let in_tx = Abb.Future.Promise.create () in
+        Abb.Future.await
+          Abb.Future.Infix_app.(
+            (fun _ res ->
+              match res with
+              | Ok () -> ()
+              | Error (#Pgsql_io.err as err) ->
+                  print_endline (Pgsql_io.show_err err);
+                  assert false
+              | Error _ -> assert false)
+            <$> (let open Abb.Future.Infix_monad in
+                Abb.Future.Promise.future in_tx
+                >>= fun () -> Abb.Sys.sleep 0.0 >>= fun () -> raise (Failure "crash"))
+            <*> Pgsql_io.tx conn ~f:(fun () ->
+                    let open Abbs_future_combinators.Infix_result_monad in
+                    Abbs_future_combinators.to_result (Abb.Future.Promise.set in_tx ())
+                    >>= fun () ->
+                    Pgsql_io.Prepared_stmt.execute conn insert_good_sql "foo bar" 12l
+                    >>= fun () -> Pgsql_io.Prepared_stmt.execute conn insert_good_sql "foo" 12l))
+        >>= function
+        | `Det () -> assert false
+        | `Exn (_, _) ->
+            Pgsql_io.(
+              tx conn ~f:(fun () -> Prepared_stmt.execute conn insert_good_sql "foo baz" 13l))
+        | `Aborted -> assert false
+      in
+      let open Abb.Future.Infix_monad in
+      with_conn f
+      >>= function
+      | Ok () -> Abb.Future.return ()
+      | Error (#Pgsql_io.err as err) ->
+          print_endline (Pgsql_io.show_err err);
+          assert false
+      | Error _ -> assert false)
+
 let test =
   Oth_abb.(
     to_sync_test
@@ -633,6 +685,7 @@ let test =
            test_integrity_recover;
            test_rollback;
            test_bad_state;
+           test_concurrent_exn_raise;
          ]))
 
 let reporter ppf =

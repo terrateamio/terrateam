@@ -1,3 +1,5 @@
+exception Nested_tx_not_supported
+
 module Backend_key_data = struct
   type t = {
     pid : int32;
@@ -97,23 +99,8 @@ module Io = struct
     | [] -> consume_until conn f
     | fr :: fs ->
         (* Printf.printf "fr = %s\n%!" (Pgsql_codec.Frame.Backend.show fr);
-         * List.iter
-         *   (fun frame -> Printf.printf "Fs %s\n%!" (Pgsql_codec.Frame.Backend.show frame))
-         *   fs; *)
+         * List.iter (fun frame -> Printf.printf "Fs %s\n%!" (Pgsql_codec.Frame.Backend.show frame)) fs; *)
         Abb.Future.return (Ok fs)
-
-  let reset conn =
-    let open Abbs_future_combinators.Infix_result_monad in
-    send_frame conn Pgsql_codec.Frame.Frontend.Sync
-    >>= fun () ->
-    conn.expected_frames <- [];
-    consume_until conn (function
-        | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'T' | 'E' } when conn.in_tx -> true
-        | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'I' } when not conn.in_tx -> true
-        | _ -> false)
-    >>= fun res ->
-    assert (res = []);
-    Abb.Future.return (Ok ())
 
   let error_response conn =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -150,24 +137,45 @@ module Io = struct
     | "40001" (* serialization_failure *) -> `Integrity_err { message = m; detail = d }
     | _ -> `Unmatching_frame fs
 
-  let rec consume_matching conn fs =
+  let rec consume_matching ?(skip_leading_unmatched = false) conn fs =
     let open Abbs_future_combinators.Infix_result_monad in
-    wait_for_frames conn >>= fun received_fs -> match_frames conn fs received_fs
+    wait_for_frames conn
+    >>= fun received_fs -> match_frames ~skip_leading_unmatched conn fs received_fs
 
-  and match_frames conn fs received_fs =
+  and match_frames ~skip_leading_unmatched conn fs received_fs =
     match (fs, received_fs) with
     | [], _ -> Abb.Future.return (Ok received_fs)
-    | _, [] -> consume_matching conn fs
-    | f :: fs, r_f :: r_fs when f r_f -> match_frames conn fs r_fs
+    | _, [] -> consume_matching ~skip_leading_unmatched conn fs
+    | f :: fs, r_f :: r_fs when f r_f -> match_frames ~skip_leading_unmatched:false conn fs r_fs
     | _, Pgsql_codec.Frame.Backend.NoticeResponse { msgs } :: rfs ->
         conn.notice_response msgs;
-        match_frames conn fs rfs
+        match_frames ~skip_leading_unmatched conn fs rfs
     | _, (Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as r_fs) ->
         let open Abb.Future.Infix_monad in
         error_response conn >>= fun _ -> Abb.Future.return (Error (handle_err_frame msgs r_fs))
+    | _, _ :: r_fs when skip_leading_unmatched -> match_frames ~skip_leading_unmatched conn fs r_fs
     | _, _ ->
         let open Abb.Future.Infix_monad in
         reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame received_fs))
+
+  and reset conn =
+    let open Abbs_future_combinators.Infix_result_monad in
+    send_frame conn Pgsql_codec.Frame.Frontend.Sync
+    >>= fun () ->
+    conn.expected_frames <- [];
+    consume_matching
+      ~skip_leading_unmatched:true
+      conn
+      Pgsql_codec.Frame.Backend.
+        [
+          (function
+          | ReadyForQuery { status = 'T' | 'E' } when conn.in_tx -> true
+          | ReadyForQuery { status = 'I' } when not conn.in_tx -> true
+          | _ -> false);
+        ]
+    >>= fun res ->
+    assert (res = []);
+    Abb.Future.return (Ok ())
 end
 
 type frame_err =
@@ -503,9 +511,7 @@ module Cursor = struct
   and consume_exec_frames conn row_func st = function
     | [] -> consume_exec conn row_func st
     | Pgsql_codec.Frame.Backend.CommandComplete _ :: fs -> consume_exec_end conn row_func st fs
-    | (Pgsql_codec.Frame.Backend.DataRow _ as frame) :: _ ->
-        Printf.printf "Frame = %s\n%!" (Pgsql_codec.Frame.Backend.show frame);
-        assert false
+    | Pgsql_codec.Frame.Backend.DataRow _ :: _ -> assert false
     | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->
         let open Abb.Future.Infix_monad in
         Io.error_response conn >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs fs))
@@ -964,34 +970,36 @@ let tx_rollback t =
   let open Abbs_future_combinators.Infix_result_monad in
   Io.reset t
   >>= fun () ->
+  t.in_tx <- false;
   Io.send_frame t Pgsql_codec.Frame.Frontend.(Query { query = "ROLLBACK" })
   >>= fun () ->
-  t.in_tx <- false;
-  add_expected_frames
+  Io.consume_matching
+    ~skip_leading_unmatched:true
     t
     Pgsql_codec.Frame.Backend.
-      [
-        equal (ReadyForQuery { status = 'E' });
-        equal (CommandComplete { tag = "ROLLBACK" });
-        equal (ReadyForQuery { status = 'I' });
-      ];
-  Io.consume_matching t (consume_expected_frames t)
+      [ equal (CommandComplete { tag = "ROLLBACK" }); equal (ReadyForQuery { status = 'I' }) ]
 
 let tx t ~f =
+  if t.in_tx then raise Nested_tx_not_supported;
   Abbs_future_combinators.on_failure
     (fun () ->
       let open Abb.Future.Infix_monad in
       t.in_tx <- true;
       Io.send_frame t Pgsql_codec.Frame.Frontend.(Query { query = "BEGIN" })
       >>= fun _ ->
-      add_expected_frames
+      Io.consume_matching
+        ~skip_leading_unmatched:true
         t
         Pgsql_codec.Frame.Backend.
-          [ equal (CommandComplete { tag = "BEGIN" }); equal (ReadyForQuery { status = 'T' }) ];
-      f ()
+          [ equal (CommandComplete { tag = "BEGIN" }); equal (ReadyForQuery { status = 'T' }) ]
       >>= function
-      | Ok _ as r ->
-          let open Abbs_future_combinators.Infix_result_monad in
-          tx_commit t >>= fun _ -> Abb.Future.return r
-      | Error _ as r -> tx_rollback t >>= fun _ -> Abb.Future.return r)
+      | Ok [] -> (
+          f ()
+          >>= function
+          | Ok _ as r ->
+              let open Abbs_future_combinators.Infix_result_monad in
+              tx_commit t >>= fun _ -> Abb.Future.return r
+          | Error _ as r -> tx_rollback t >>= fun _ -> Abb.Future.return r)
+      | Ok fs -> tx_rollback t >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
+      | Error _ as err -> tx_rollback t >>= fun _ -> Abb.Future.return err)
     ~failure:(fun () -> Abbs_future_combinators.ignore (tx_rollback t))

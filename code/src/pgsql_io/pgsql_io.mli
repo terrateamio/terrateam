@@ -1,6 +1,8 @@
 (** A connection to the database *)
 type t
 
+exception Nested_tx_not_supported
+
 module Io : sig
   type err = [ `Parse_error of Pgsql_codec.Decode.err ]
 end
@@ -199,6 +201,7 @@ type create_err =
   | `Connection_failed
   | Io.err
   ]
+[@@deriving show, eq]
 
 val create :
   ?tls_config:[ `Require of Otls.Tls_config.t | `Prefer of Otls.Tls_config.t ] ->
@@ -222,12 +225,9 @@ val connected : t -> bool
    [false] if the connection is not alive. *)
 val ping : t -> bool Abb.Future.t
 
+(** Execute the function inside a transaction. If the function fails, either by
+   returning [Error _] or throwing an exception or being aborted, the exception
+   will be rolled back.  Otherwise it will be commited.
+
+   Nested transactions are not supported. *)
 val tx : t -> f:(unit -> ('a, ([> err ] as 'e)) result Abb.Future.t) -> ('a, 'e) result Abb.Future.t
-
-(** Printers *)
-val pp_create_err : Format.formatter -> create_err -> unit
-
-val show_create_err : create_err -> string
-
-(** Equaity *)
-val equal_create_err : create_err -> create_err -> bool
