@@ -470,7 +470,7 @@ let test_stmt_fetch =
 let test_integrity_fail =
   Oth_abb.test ~desc:"Integrity fail" ~name:"integrity_fail" (fun () ->
       let open Abb.Future.Infix_monad in
-      let f conn =
+      let f in_tx trigger conn =
         let create_sql =
           Pgsql_io.Typed_sql.(
             sql /^ "CREATE TABLE IF NOT EXISTS foo (name TEXT PRIMARY KEY, age INTEGER)")
@@ -481,9 +481,11 @@ let test_integrity_fail =
         in
         Pgsql_io.tx conn ~f:(fun () ->
             let open Abbs_future_combinators.Infix_result_monad in
-            Pgsql_io.Prepared_stmt.execute conn create_sql
+            Abbs_future_combinators.to_result (Abb.Future.Promise.set in_tx ())
             >>= fun () ->
-            Abbs_future_combinators.to_result (Abb.Sys.sleep 1.0)
+            Abbs_future_combinators.to_result trigger
+            >>= fun () ->
+            Pgsql_io.Prepared_stmt.execute conn create_sql
             >>= fun () ->
             Pgsql_io.Prepared_stmt.execute conn insert_sql "Testy McTestface" (Int32.of_int 36))
       in
@@ -492,7 +494,24 @@ let test_integrity_fail =
         | _, Error (`Integrity_err _) | Error (`Integrity_err _), _ -> Ok ()
         | _ -> Error ()
       in
-      Abb.Future.Infix_app.(check_err <$> with_conn f <*> with_conn f)
+      let in_tx_left = Abb.Future.Promise.create () in
+      let in_tx_right = Abb.Future.Promise.create () in
+      let trigger_tx = Abb.Future.Promise.create () in
+      let trigger_tx_fut = Abb.Future.Promise.future trigger_tx in
+      Abb.Future.fork
+        Abb.Future.Infix_app.(
+          check_err
+          <$> with_conn (f in_tx_left trigger_tx_fut)
+          <*> with_conn (f in_tx_right trigger_tx_fut))
+      >>= fun test ->
+      Abb.Future.Infix_app.(
+        (fun () () -> ())
+        <$> Abb.Future.Promise.future in_tx_left
+        <*> Abb.Future.Promise.future in_tx_right)
+      >>= fun () ->
+      Abb.Future.Promise.set trigger_tx ()
+      >>= fun () ->
+      test
       >>= fun r ->
       assert (r = Ok ());
       Abb.Future.return ())
@@ -500,7 +519,7 @@ let test_integrity_fail =
 let test_integrity_recover =
   Oth_abb.test ~desc:"Integrity error recover" ~name:"integrity_recover" (fun () ->
       let open Abb.Future.Infix_monad in
-      let f conn =
+      let f in_tx trigger conn =
         let create_sql =
           Pgsql_io.Typed_sql.(
             sql /^ "CREATE TABLE IF NOT EXISTS foo (name TEXT PRIMARY KEY, age INTEGER)")
@@ -511,9 +530,11 @@ let test_integrity_recover =
         in
         Pgsql_io.tx conn ~f:(fun () ->
             let open Abbs_future_combinators.Infix_result_monad in
-            Pgsql_io.Prepared_stmt.execute conn create_sql
+            Abbs_future_combinators.to_result (Abb.Future.Promise.set in_tx ())
             >>= fun () ->
-            Abbs_future_combinators.to_result (Abb.Sys.sleep 1.0)
+            Abbs_future_combinators.to_result trigger
+            >>= fun () ->
+            Pgsql_io.Prepared_stmt.execute conn create_sql
             >>= fun () ->
             Pgsql_io.Prepared_stmt.execute conn insert_sql "Testy McTestface" (Int32.of_int 36))
         >>= function
@@ -531,7 +552,24 @@ let test_integrity_recover =
             failwith (Pgsql_io.show_err err)
         | _, _ -> failwith "missing integrity failure"
       in
-      Abb.Future.Infix_app.(check_err <$> with_conn f <*> with_conn f)
+      let in_tx_left = Abb.Future.Promise.create () in
+      let in_tx_right = Abb.Future.Promise.create () in
+      let trigger_tx = Abb.Future.Promise.create () in
+      let trigger_tx_fut = Abb.Future.Promise.future trigger_tx in
+      Abb.Future.fork
+        Abb.Future.Infix_app.(
+          check_err
+          <$> with_conn (f in_tx_left trigger_tx_fut)
+          <*> with_conn (f in_tx_right trigger_tx_fut))
+      >>= fun test ->
+      Abb.Future.Infix_app.(
+        (fun () () -> ())
+        <$> Abb.Future.Promise.future in_tx_left
+        <*> Abb.Future.Promise.future in_tx_right)
+      >>= fun () ->
+      Abb.Future.Promise.set trigger_tx ()
+      >>= fun () ->
+      test
       >>= fun r ->
       assert (r = Ok ());
       Abb.Future.return ())
