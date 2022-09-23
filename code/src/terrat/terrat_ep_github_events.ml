@@ -479,14 +479,14 @@ module Evaluator = Terrat_event_evaluator.Make (struct
               (Githubc2_abb.show_call_err err));
         Abb.Future.return (Error `Error)
 
-  let fetch_repo_config event pull_request =
+  let fetch_repo_config event pull_request ref_ =
     let open Abb.Future.Infix_monad in
     Terrat_github.fetch_repo_config
       ~python:(Terrat_config.python_exec event.Event.config)
       ~access_token:event.Event.access_token
       ~owner:event.Event.repository.Gw.Repository.owner.Gw.User.login
       ~repo:event.Event.repository.Gw.Repository.name
-      pull_request.Terrat_pull_request.hash
+      ref_
     >>= function
     | Ok repo_config -> Abb.Future.return (Ok repo_config)
     | Error (`Repo_config_parse_err err) -> Abb.Future.return (Error (`Repo_config_parse_err err))

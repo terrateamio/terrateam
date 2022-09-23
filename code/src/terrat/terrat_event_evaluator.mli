@@ -73,6 +73,7 @@ module type S = sig
   val fetch_repo_config :
     Event.t ->
     Pull_request.t ->
+    string ->
     ( Terrat_repo_config.Version_1.t,
       [> `Repo_config_parse_err of string | `Repo_config_err of string ] )
     result

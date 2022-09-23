@@ -73,6 +73,7 @@ module type S = sig
   val fetch_repo_config :
     Event.t ->
     Pull_request.t ->
+    string ->
     ( Terrat_repo_config.Version_1.t,
       [> `Repo_config_parse_err of string | `Repo_config_err of string ] )
     result
@@ -897,7 +898,7 @@ module Make (S : S) = struct
             (fun t ->
               Logs.info (fun m ->
                   m "EVENT_EVALUATOR: %s : FETCHING_REPO_CONFIG : %f" (S.Event.request_id event) t))
-            (fun () -> S.fetch_repo_config event pull_request)
+            (fun () -> S.fetch_repo_config event pull_request (S.Pull_request.hash pull_request))
       <*> Abbs_time_it.run
             (fun t ->
               Logs.info (fun m ->
