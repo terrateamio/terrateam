@@ -1,6 +1,72 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "definitions": {
+    "access-control": {
+      "additionalProperties": false,
+      "properties": {
+        "apply_require_all_dirspace_access": {
+          "default": true,
+          "type": "boolean"
+        },
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        },
+        "plan_require_all_dirspace_access": {
+          "default": false,
+          "type": "boolean"
+        },
+        "policies": {
+          "items": {
+            "$ref": "#/definitions/access-control-policy"
+          },
+          "type": "array"
+        },
+        "terrateam_config_update": {
+          "$ref": "#/definitions/access-control-match-list"
+        },
+        "unlock": {
+          "$ref": "#/definitions/access-control-match-list"
+        }
+      },
+      "type": "object"
+    },
+    "access-control-match-list": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "access-control-policy": {
+      "additionalProperties": false,
+      "properties": {
+        "apply": {
+          "$ref": "#/definitions/access-control-match-list"
+        },
+        "apply_autoapprove": {
+          "$ref": "#/definitions/access-control-match-list"
+        },
+        "apply_force": {
+          "$ref": "#/definitions/access-control-match-list"
+        },
+        "apply_with_superapproval": {
+          "$ref": "#/definitions/access-control-match-list"
+        },
+        "plan": {
+          "$ref": "#/definitions/access-control-match-list"
+        },
+        "superapproval": {
+          "$ref": "#/definitions/access-control-match-list"
+        },
+        "tag_query": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "tag_query"
+      ],
+      "type": "object"
+    },
     "automerge": {
       "additionalProperties": false,
       "properties": {
@@ -202,7 +268,7 @@
       "additionalProperties": false,
       "properties": {
         "backoff": {
-          "default": 3.0,
+          "default": 1.5,
           "type": "number"
         },
         "enabled": {
@@ -240,6 +306,9 @@
     "version-1": {
       "additionalProperties": false,
       "properties": {
+        "access_control": {
+          "$ref": "#/definitions/access-control"
+        },
         "apply_requirements": {
           "additionalProperties": false,
           "properties": {

@@ -124,6 +124,7 @@ module Workflows = struct
 end
 
 type t = {
+  access_control : Terrat_repo_config_access_control.t option; [@default None]
   apply_requirements : Apply_requirements.t option; [@default None]
   automerge : Terrat_repo_config_automerge.t option; [@default None]
   checkout_strategy : Checkout_strategy.t; [@default "merge"]

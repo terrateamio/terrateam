@@ -1,3 +1,6 @@
+module Access_control = Terrat_repo_config_access_control
+module Access_control_match_list = Terrat_repo_config_access_control_match_list
+module Access_control_policy = Terrat_repo_config_access_control_policy
 module Automerge = Terrat_repo_config_automerge
 module Destination_branch_name = Terrat_repo_config_destination_branch_name
 module Destination_branch_object = Terrat_repo_config_destination_branch_object
