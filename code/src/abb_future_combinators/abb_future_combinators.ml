@@ -72,6 +72,9 @@ module Make (Fut : Abb_intf.Future.S) = struct
   let with_finally f ~finally =
     try
       let fut = f () in
+      (* Tracking if finally was called is necessary because we could fail while
+         executing the finally, so we do not want to call it again. (see [Double
+         Fail Here] below.) *)
       let finally_called = ref false in
       let finally () =
         if not !finally_called then (
@@ -92,7 +95,13 @@ module Make (Fut : Abb_intf.Future.S) = struct
                        | `Exn exn -> Fut.Promise.set_exn p exn
                        | `Aborted -> Fut.abort (Fut.Promise.future p))
                      (finally ())
-                 with exn -> Fut.Promise.set_exn p (exn, Some (Printexc.get_raw_backtrace ())))
+                 with exn ->
+                   (* Double Fail Here.  In order to get here, we have executed
+                      [finally] however it threw an exception, in which case the
+                      promise [p] will be set to the exception, which will cause
+                      its [abort] function to be executed, but we've already
+                      executed that, which is why we're failing it. *)
+                   Fut.Promise.set_exn p (exn, Some (Printexc.get_raw_backtrace ())))
              | `Exn exn -> Fut.Promise.set_exn p exn
              | `Aborted -> Fut.abort (Fut.Promise.future p))
            fut)
