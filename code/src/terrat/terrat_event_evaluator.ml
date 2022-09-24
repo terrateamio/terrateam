@@ -883,6 +883,14 @@ module Make (S : S) = struct
               msg_fragment);
         Abb.Future.return (Ok (Some (Msg.Dest_branch_no_match pull_request)))
 
+  let fetch_dest_repo_config event pull_request =
+    let open Abbs_future_combinators.Infix_result_monad in
+    S.fetch_repo_config event pull_request (S.Event.default_branch event)
+    >>| fun repo_default_config ->
+    match is_valid_destination_branch event pull_request repo_default_config with
+    | Ok () -> Ok repo_default_config
+    | Error _ as err -> err
+
   let run' storage event =
     let module Run_type = Terrat_work_manifest.Run_type in
     let open Abbs_future_combinators.Infix_result_monad in
@@ -893,7 +901,7 @@ module Make (S : S) = struct
       (fun () -> S.fetch_pull_request event)
     >>= fun pull_request ->
     Abbs_future_combinators.Infix_result_app.(
-      (fun repo_config repo_tree -> (repo_config, repo_tree))
+      (fun repo_config repo_dest_config repo_tree -> (repo_config, repo_dest_config, repo_tree))
       <$> Abbs_time_it.run
             (fun t ->
               Logs.info (fun m ->
@@ -902,11 +910,19 @@ module Make (S : S) = struct
       <*> Abbs_time_it.run
             (fun t ->
               Logs.info (fun m ->
+                  m
+                    "EVENT_EVALUATOR: %s : FETCHING_DEST_REPO_CONFIG : %f"
+                    (S.Event.request_id event)
+                    t))
+            (fun () -> fetch_dest_repo_config event pull_request)
+      <*> Abbs_time_it.run
+            (fun t ->
+              Logs.info (fun m ->
                   m "EVENT_EVALUATOR : %s : FETCHING_REPO_TREE : %f" (S.Event.request_id event) t))
             (fun () -> S.fetch_tree event pull_request))
-    >>= fun (repo_config, repo_tree) ->
-    match is_valid_destination_branch event pull_request repo_config with
-    | Ok () ->
+    >>= fun (repo_config, repo_dest_config, repo_tree) ->
+    match repo_dest_config with
+    | Ok repo_dest_config ->
         if repo_config.Terrat_repo_config.Version_1.enabled then (
           match S.Pull_request.state pull_request with
           | Terrat_pull_request.State.(Open | Merged _)
