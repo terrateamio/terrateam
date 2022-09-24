@@ -160,6 +160,9 @@ let compute_matches ~repo_config ~tag_query ~out_of_change_applies ~diff ~repo_t
   Ok (tag_query_matches, all_matches)
 
 module Make (S : S) = struct
+  let log_time event name t =
+    Logs.info (fun m -> m "EVENT_EVALUATOR : %s : %s : %f" (S.Event.request_id event) name t)
+
   let create_queued_commit_checks event pull_request dirspaces =
     let details_url = S.get_commit_check_details_url event pull_request in
     let unified_run_type =
@@ -233,11 +236,8 @@ module Make (S : S) = struct
           CCOption.get_or ~default:(Rc.Apply_requirements.make ()) repo_config.Rc.apply_requirements
         in
         if apply_requirements.Ar.create_pending_apply_check then (
-          Abbs_time_it.run
-            (fun t ->
-              Logs.info (fun m ->
-                  m "EVENT_EVALUATOR : %s : FETCH_COMMIT_CHECKS : %f" (S.Event.request_id event) t))
-            (fun () -> S.fetch_commit_checks event pull_request)
+          Abbs_time_it.run (log_time event "FETCH_COMMIT_CHECKS") (fun () ->
+              S.fetch_commit_checks event pull_request)
           >>= function
           | Ok commit_checks -> (
               Abb.Future.fork (maybe_replace_old_commit_statuses event pull_request commit_checks)
@@ -303,19 +303,10 @@ module Make (S : S) = struct
     let status_checks = CCOption.get_or ~default:(Ar.Checks.Status_checks.make ()) status_checks in
     Abbs_future_combinators.Infix_result_app.(
       (fun reviews commit_checks -> (reviews, commit_checks))
-      <$> Abbs_time_it.run
-            (fun t ->
-              Logs.info (fun m ->
-                  m "EVENT_EVALUATOR : %s : FETCH_APPROVED_TIME : %f" (S.Event.request_id event) t))
-            (fun () -> S.fetch_pull_request_reviews event pull_request)
-      <*> Abbs_time_it.run
-            (fun t ->
-              Logs.info (fun m ->
-                  m
-                    "EVENT_EVALUATOR : %s : FETCH_COMMIT_CHECKS_TIME : %f"
-                    (S.Event.request_id event)
-                    t))
-            (fun () -> S.fetch_commit_checks event pull_request))
+      <$> Abbs_time_it.run (log_time event "FETCH_APPROVED_TIME") (fun () ->
+              S.fetch_pull_request_reviews event pull_request)
+      <*> Abbs_time_it.run (log_time event "FETCH_COMMIT_CHECKS_TIME") (fun () ->
+              S.fetch_commit_checks event pull_request))
     >>= fun (reviews, commit_checks) ->
     Abbs_future_combinators.to_result
       (Abb.Future.fork (maybe_replace_old_commit_statuses event pull_request commit_checks))
@@ -429,17 +420,10 @@ module Make (S : S) = struct
           tag_query = S.Event.tag_query event;
         }
     in
-    Abbs_time_it.run
-      (fun t ->
-        Logs.info (fun m ->
-            m "EVENT_EVALUATOR : %s : CREATE_WORK_MANIFEST : %f" (S.Event.request_id event) t))
-      (fun () -> S.store_new_work_manifest db event work_manifest)
+    Abbs_time_it.run (log_time event "CREATE_WORK_MANIFEST") (fun () ->
+        S.store_new_work_manifest db event work_manifest)
     >>= fun _ ->
-    Abbs_time_it.run
-      (fun t ->
-        Logs.info (fun m ->
-            m "EVENT_EVALUATOR : %s : CREATE_COMMIT_CHECKS : %f" (S.Event.request_id event) t))
-      (fun () ->
+    Abbs_time_it.run (log_time event "CREATE_COMMIT_CHECKS") (fun () ->
         S.create_commit_checks
           event
           pull_request
@@ -496,21 +480,12 @@ module Make (S : S) = struct
       run_type
       run_source_type =
     let open Abbs_future_combinators.Infix_result_monad in
-    Abbs_time_it.run
-      (fun t ->
-        Logs.info (fun m ->
-            m "EVENT_EVALUATOR : %s : CHECK_APPLY_REQUIREMENTS : %f" (S.Event.request_id event) t))
-      (fun () -> check_apply_requirements event pull_request repo_config)
+    Abbs_time_it.run (log_time event "CHECK_APPLY_REQUIREMENTS") (fun () ->
+        check_apply_requirements event pull_request repo_config)
     >>= function
     | true, _ -> (
-        Abbs_time_it.run
-          (fun t ->
-            Logs.info (fun m ->
-                m
-                  "EVENT_EVALUATOR : %s : MISSING_APPLIED_DIRSPACES : %f"
-                  (S.Event.request_id event)
-                  t))
-          (fun () -> S.query_unapplied_dirspaces db event pull_request)
+        Abbs_time_it.run (log_time event "MISSING_APPLIED_DIRSPACES") (fun () ->
+            S.query_unapplied_dirspaces db event pull_request)
         >>= fun missing_dirspaces ->
         (* Filter only those missing *)
         let tag_query_matches =
@@ -552,14 +527,7 @@ module Make (S : S) = struct
                   (S.Event.request_id event));
             Abb.Future.return (Ok (Some Msg.Apply_no_matching_dirspaces))
         | _, _ -> (
-            Abbs_time_it.run
-              (fun t ->
-                Logs.info (fun m ->
-                    m
-                      "EVENT_EVALUATOR : %s : QUERY_DIRSPACES_OWNED_BY_OTHER_PRS : %f"
-                      (S.Event.request_id event)
-                      t))
-              (fun () ->
+            Abbs_time_it.run (log_time event "QUERY_DIRSPACES_OWNED_BY_OTHER_PRS") (fun () ->
                 S.query_dirspaces_owned_by_other_pull_requests
                   db
                   event
@@ -574,14 +542,7 @@ module Make (S : S) = struct
                 | () -> Abb.Future.return (Ok None))
             | dirspaces when Dirspace_map.is_empty dirspaces -> (
                 (* None of the dirspaces are owned by another PR, we can proceed *)
-                Abbs_time_it.run
-                  (fun t ->
-                    Logs.info (fun m ->
-                        m
-                          "EVENT_EVALUATOR : %s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS : %f"
-                          (S.Event.request_id event)
-                          t))
-                  (fun () ->
+                Abbs_time_it.run (log_time event "QUERY_DIRSPACES_WITHOUT_VALID_PLANS") (fun () ->
                     S.query_dirspaces_without_valid_plans
                       db
                       event
@@ -626,20 +587,11 @@ module Make (S : S) = struct
           (CCList.length (S.Pull_request.diff pull_request)));
     Pgsql_pool.with_conn storage ~f:(fun db ->
         Pgsql_io.tx db ~f:(fun () ->
-            Abbs_time_it.run
-              (fun t ->
-                Logs.info (fun m ->
-                    m "EVENT_EVALUATOR : %s : STORE_PULL_REQUEST : %f" (S.Event.request_id event) t))
-              (fun () -> S.store_pull_request db event pull_request)
+            Abbs_time_it.run (log_time event "STORE_PULL_REQUEST") (fun () ->
+                S.store_pull_request db event pull_request)
             >>= fun () ->
-            Abbs_time_it.run
-              (fun t ->
-                Logs.info (fun m ->
-                    m
-                      "EVENT_EVALUATOR : %s : QUERY_CONFLICTING_WORK_MANIFESTS : %f"
-                      (S.Event.request_id event)
-                      t))
-              (fun () -> S.query_conflicting_work_manifests_in_repo db event)
+            Abbs_time_it.run (log_time event "QUERY_CONFLICTING_WORK_MANIFESTS") (fun () ->
+                S.query_conflicting_work_manifests_in_repo db event)
             >>= function
             | [] -> (
                 (* Collect any changes that have been applied outside of the current
@@ -647,14 +599,8 @@ module Make (S : S) = struct
                    applied dir1, then we updated our PR to revert dir1, we would
                    want to be able to plan and apply dir1 again even though it
                    doesn't look like dir1 changes. *)
-                Abbs_time_it.run
-                  (fun t ->
-                    Logs.info (fun m ->
-                        m
-                          "EVENT_EVALUATOR : %s : QUERY_OUT_OF_DIFF_APPLIES : %f"
-                          (S.Event.request_id event)
-                          t))
-                  (fun () -> S.query_pull_request_out_of_diff_applies db event pull_request)
+                Abbs_time_it.run (log_time event "QUERY_OUT_OF_DIFF_APPLIES") (fun () ->
+                    S.query_pull_request_out_of_diff_applies db event pull_request)
                 >>= fun out_of_change_applies ->
                 Abb.Future.return
                   (compute_matches
@@ -673,14 +619,8 @@ module Make (S : S) = struct
                   |> CCList.map (fun dsf -> Terrat_change.(dsf.Dirspaceflow.dirspace.Dirspace.dir))
                   |> Dir_set.of_list
                 in
-                Abbs_time_it.run
-                  (fun t ->
-                    Logs.info (fun m ->
-                        m
-                          "EVENT_EVALUATOR : %s : LIST_EXISTING_DIRS : %f"
-                          (S.Event.request_id event)
-                          t))
-                  (fun () -> S.list_existing_dirs event pull_request dirs)
+                Abbs_time_it.run (log_time event "LIST_EXISTING_DIRS") (fun () ->
+                    S.list_existing_dirs event pull_request dirs)
                 >>= fun existing_dirs ->
                 let missing_dirs = Dir_set.diff dirs existing_dirs in
                 Logs.info (fun m ->
@@ -703,25 +643,12 @@ module Make (S : S) = struct
                            Terrat_change.(dsf.Dirspaceflow.dirspace.Dirspace.dir)
                            existing_dirs)
                 in
-                Abbs_time_it.run
-                  (fun t ->
-                    Logs.info (fun m ->
-                        m
-                          "EVENT_EVALUATOR : %s : STORE_DIRSPACEFLOWS : %f"
-                          (S.Event.request_id event)
-                          t))
-                  (fun () -> S.store_dirspaceflows db event pull_request all_match_dirspaceflows)
+                Abbs_time_it.run (log_time event "STORE_DIRSPACEFLOWS") (fun () ->
+                    S.store_dirspaceflows db event pull_request all_match_dirspaceflows)
                 >>= fun () ->
                 match unified_run_type (S.Event.run_type event) with
                 | `Plan run_source_type ->
-                    Abbs_time_it.run
-                      (fun t ->
-                        Logs.info (fun m ->
-                            m
-                              "EVENT_EVALUATOR : %s : PROCESS_PLAN : %f"
-                              (S.Event.request_id event)
-                              t))
-                      (fun () ->
+                    Abbs_time_it.run (log_time event "PROCESS_PLAN") (fun () ->
                         process_plan
                           db
                           event
@@ -731,14 +658,7 @@ module Make (S : S) = struct
                           repo_config
                           run_source_type)
                 | `Apply run_source_type ->
-                    Abbs_time_it.run
-                      (fun t ->
-                        Logs.info (fun m ->
-                            m
-                              "EVENT_EVALUATOR : %s : PROCESS_APPLY : %f"
-                              (S.Event.request_id event)
-                              t))
-                      (fun () ->
+                    Abbs_time_it.run (log_time event "PROCESS_APPLY") (fun () ->
                         process_apply
                           db
                           event
@@ -749,14 +669,7 @@ module Make (S : S) = struct
                           `Apply
                           run_source_type)
                 | `Unsafe_apply ->
-                    Abbs_time_it.run
-                      (fun t ->
-                        Logs.info (fun m ->
-                            m
-                              "EVENT_EVALUATOR : %s : PROCESS_UNSAFE_APPLY : %f"
-                              (S.Event.request_id event)
-                              t))
-                      (fun () ->
+                    Abbs_time_it.run (log_time event "PROCESS_UNSAFE_APPLY") (fun () ->
                         process_apply
                           db
                           event
@@ -894,32 +807,16 @@ module Make (S : S) = struct
   let run' storage event =
     let module Run_type = Terrat_work_manifest.Run_type in
     let open Abbs_future_combinators.Infix_result_monad in
-    Abbs_time_it.run
-      (fun t ->
-        Logs.info (fun m ->
-            m "EVENT_EVALUATOR: %s : FETCHING_PULL_REQUEST : %f" (S.Event.request_id event) t))
-      (fun () -> S.fetch_pull_request event)
+    Abbs_time_it.run (log_time event "FETCHING_PULL_REQUEST") (fun () -> S.fetch_pull_request event)
     >>= fun pull_request ->
     Abbs_future_combinators.Infix_result_app.(
       (fun repo_config repo_dest_config repo_tree -> (repo_config, repo_dest_config, repo_tree))
-      <$> Abbs_time_it.run
-            (fun t ->
-              Logs.info (fun m ->
-                  m "EVENT_EVALUATOR: %s : FETCHING_REPO_CONFIG : %f" (S.Event.request_id event) t))
-            (fun () -> S.fetch_repo_config event pull_request (S.Pull_request.hash pull_request))
-      <*> Abbs_time_it.run
-            (fun t ->
-              Logs.info (fun m ->
-                  m
-                    "EVENT_EVALUATOR: %s : FETCHING_DEST_REPO_CONFIG : %f"
-                    (S.Event.request_id event)
-                    t))
-            (fun () -> fetch_dest_repo_config event pull_request)
-      <*> Abbs_time_it.run
-            (fun t ->
-              Logs.info (fun m ->
-                  m "EVENT_EVALUATOR : %s : FETCHING_REPO_TREE : %f" (S.Event.request_id event) t))
-            (fun () -> S.fetch_tree event pull_request))
+      <$> Abbs_time_it.run (log_time event "FETCHING_REPO_CONFIG") (fun () ->
+              S.fetch_repo_config event pull_request (S.Pull_request.hash pull_request))
+      <*> Abbs_time_it.run (log_time event "FETCHING_DEST_REPO_CONFIG") (fun () ->
+              fetch_dest_repo_config event pull_request)
+      <*> Abbs_time_it.run (log_time event "FETCHING_REPO_TREE") (fun () ->
+              S.fetch_tree event pull_request))
     >>= fun (repo_config, repo_dest_config, repo_tree) ->
     match repo_dest_config with
     | Ok repo_dest_config ->
@@ -939,14 +836,8 @@ module Make (S : S) = struct
               Logs.info (fun m ->
                   m "EVENT_EVALUATOR : %s : NOOP : PR_CLOSED" (S.Event.request_id event));
               Pgsql_pool.with_conn storage ~f:(fun db ->
-                  Abbs_time_it.run
-                    (fun t ->
-                      Logs.info (fun m ->
-                          m
-                            "EVENT_EVALUATOR : %s : STORE_PULL_REQUEST : %f"
-                            (S.Event.request_id event)
-                            t))
-                    (fun () -> S.store_pull_request db event pull_request))
+                  Abbs_time_it.run (log_time event "STORE_PULL_REQUEST") (fun () ->
+                      S.store_pull_request db event pull_request))
               >>= fun () -> Abb.Future.return (Ok None))
         else (
           Logs.info (fun m ->
@@ -961,11 +852,7 @@ module Make (S : S) = struct
         | `Det v -> (
             match v with
             | Ok (Some msg) ->
-                Abbs_time_it.run
-                  (fun t ->
-                    Logs.info (fun m ->
-                        m "EVENT_EVALUATOR : %s : PUBLISH_MSG : %f" (S.Event.request_id event) t))
-                  (fun () -> S.publish_msg event msg)
+                Abbs_time_it.run (log_time event "PUBLISH_MSG") (fun () -> S.publish_msg event msg)
             | Ok None -> Abb.Future.return ()
             | Error (`Bad_glob s) ->
                 Logs.err (fun m ->
