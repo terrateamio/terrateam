@@ -1,6 +1,6 @@
-## Unknown Action :heavy_multiplication_x:
+## Unknown Command :heavy_multiplication_x:
 
-**Whoops, I don't understand that command.**
+Unknown command, see the list of valid commands below.
 
 List of Terrateam commands:
 
@@ -8,11 +8,13 @@ List of Terrateam commands:
 - `terrateam plan <tag_query>` - Perform a plan command across only those changes which match the tag query.
 - `terrateam apply` - Perform an apply command across all changes.
 - `terrateam apply <tag_query>` - Perform an apply command across only those changes which match the tag query.
-- `terrateam unsafe-apply` - Perform an unsafe apply, which performs a plan and apply in the same operation.
-- `terrateam unsafe-apply <tag_query>` - Perform an unsafe apply command across only those changes which match the tag query.
+- `terrateam apply-force` - Run an apply even if the change has not passed [apply requirements](https://docs.terrateam.io/configuration/apply-requirements).
+- `terrateam apply-force <tag_query>` - Run an apply even if the change has not passed [apply requirements](https://docs.terrateam.io/configuration/apply-requirements) across only those changes which match the tag query.
+- `terrateam apply-autoapprove` - Performs a plan and apply it in the same execution.
+- `terrateam apply-autoapprove <tag_query>` - Perform a plan and apply it in the same execution across only those changes which match the tag query.
 - `terrateam unlock` - Release any locks this pull request owns.  Useful for getting out of a sticky situation.
 - `terrateam feedback <msg>` - Give use feedback.
 
-For more help see:
+For help help see:
 
 https://docs.terrateam.io/

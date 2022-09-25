@@ -1,5 +1,18 @@
 @-?overall_success-@
 ## Applies :thumbsup:
+@^denied_dirspaces-@
+<details open>
+  <summary><h2>Access Control :no_entry:</h2></summary>
+
+Not all [dirspaces](https://docs.terrateam.io/usage/overview#dirspace) were run because the user did not have access.  The following dirspaces were not run:
+
+| Dir | Workspace | Policy |
+| --- | --------- | ------ |
+@#denied_dirspaces-@
+| `@dir@` | `@workspace@` | @^policy@@#policy@`@item@` @/policy-@@/policy@@^!policy@**No matching policy**@/policy@ |
+@/denied_dirspaces-@
+</details>
+@/denied_dirspaces-@
 
 <details>
   <summary><h2>Terrateam Apply Output :thumbsup:</h2></summary>

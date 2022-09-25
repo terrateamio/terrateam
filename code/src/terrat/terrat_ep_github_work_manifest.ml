@@ -37,6 +37,15 @@ module Sql = struct
     | Some s :: rest -> Some (Terrat_tag_set.of_string s, rest)
     | _ -> None
 
+  let policy =
+    let module P = struct
+      type t = string list [@@deriving yojson]
+    end in
+    CCFun.(
+      CCOption.wrap Yojson.Safe.from_string
+      %> CCOption.map P.of_yojson
+      %> CCOption.flat_map CCResult.to_opt)
+
   let initiate_work_manifest =
     Pgsql_io.Typed_sql.(
       sql
@@ -183,6 +192,15 @@ module Sql = struct
       /% Var.text "owner"
       /% Var.text "name"
       /% Var.bigint "pull_number")
+
+  let select_work_manifest_access_control_denied_dirspaces =
+    Pgsql_io.Typed_sql.(
+      sql
+      // (* path *) Ret.text
+      // (* workspace *) Ret.text
+      // (* policy *) Ret.(option (ud' policy))
+      /^ read "select_github_work_manifest_access_control_denied_dirspaces.sql"
+      /% Var.uuid "work_manifest")
 end
 
 module Tmpl = struct
@@ -764,28 +782,34 @@ module Initiate = struct
         | Wm.Run_type.Plan | Wm.Run_type.Autoplan ->
             let open Abbs_future_combinators.Infix_result_monad in
             Abbs_time_it.run
-              (fun time ->
-                Logs.info (fun m ->
-                    m "WORK_MANIFEST : %s : FETCH_BASE_DIRSPACES : %f" request_id time))
+              (fun t ->
+                Logs.info (fun m -> m "WORK_MANIFEST : %s : FETCH_ALL_DIRSPACES : %f" request_id t))
               (fun () ->
-                fetch_all_dirspaces
-                  ~python:(Terrat_config.python_exec config)
-                  ~access_token:t.T.access_token
-                  ~owner:t.T.owner
-                  ~repo:t.T.name
-                  t.T.base_hash)
-            >>= fun base_dirspaces ->
-            Abbs_time_it.run
-              (fun time ->
-                Logs.info (fun m -> m "WORK_MANIFEST : %s : FETCH_DIRSPACES : %f" request_id time))
-              (fun () ->
-                fetch_all_dirspaces
-                  ~python:(Terrat_config.python_exec config)
-                  ~access_token:t.T.access_token
-                  ~owner:t.T.owner
-                  ~repo:t.T.name
-                  t.T.hash)
-            >>= fun dirspaces ->
+                Abbs_future_combinators.Infix_result_app.(
+                  (fun base_dirspaces dirspaces -> (base_dirspaces, dirspaces))
+                  <$> Abbs_time_it.run
+                        (fun time ->
+                          Logs.info (fun m ->
+                              m "WORK_MANIFEST : %s : FETCH_BASE_DIRSPACES : %f" request_id time))
+                        (fun () ->
+                          fetch_all_dirspaces
+                            ~python:(Terrat_config.python_exec config)
+                            ~access_token:t.T.access_token
+                            ~owner:t.T.owner
+                            ~repo:t.T.name
+                            t.T.base_hash)
+                  <*> Abbs_time_it.run
+                        (fun time ->
+                          Logs.info (fun m ->
+                              m "WORK_MANIFEST : %s : FETCH_DIRSPACES : %f" request_id time))
+                        (fun () ->
+                          fetch_all_dirspaces
+                            ~python:(Terrat_config.python_exec config)
+                            ~access_token:t.T.access_token
+                            ~owner:t.T.owner
+                            ~repo:t.T.name
+                            t.T.hash)))
+            >>= fun (base_dirspaces, dirspaces) ->
             let ret =
               Terrat_api_components.(
                 Work_manifest.Work_manifest_plan
@@ -1117,7 +1141,7 @@ module Results = struct
     in
     Terrat_github_commit_check.create ~access_token ~owner ~repo ~ref_:sha commit_statuses
 
-  let create_run_output ~compact_view run_type results =
+  let create_run_output ~compact_view run_type results denied_dirspaces =
     let module Wmr = Terrat_api_components.Work_manifest_result in
     let module R = Terrat_api_work_manifest.Results.Request_body in
     let module Dirspace_result_compare = struct
@@ -1247,6 +1271,31 @@ module Results = struct
                             ])
                         dirspaces) );
                ];
+               (match denied_dirspaces with
+               | [] -> []
+               | dirspaces ->
+                   [
+                     ( "denied_dirspaces",
+                       list
+                         (CCList.map
+                            (fun (Terrat_change.Dirspace.{ dir; workspace }, policy) ->
+                              Map.of_list
+                                (CCList.flatten
+                                   [
+                                     [ ("dir", string dir); ("workspace", string workspace) ];
+                                     (match policy with
+                                     | Some policy ->
+                                         [
+                                           ( "policy",
+                                             list
+                                               (CCList.map
+                                                  (fun p -> Map.of_list [ ("item", string p) ])
+                                                  policy) );
+                                         ]
+                                     | None -> []);
+                                   ]))
+                            denied_dirspaces) );
+                   ]);
              ]))
     in
     let tmpl =
@@ -1271,9 +1320,10 @@ module Results = struct
       ~sha
       ~run_type
       ~results
+      ~denied_dirspaces
       () =
     let open Abb.Future.Infix_monad in
-    let output = create_run_output ~compact_view run_type results in
+    let output = create_run_output ~compact_view run_type results denied_dirspaces in
     Terrat_github.publish_comment ~access_token ~owner ~repo ~pull_number output
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
@@ -1294,6 +1344,7 @@ module Results = struct
           ~sha
           ~run_type
           ~results
+          ~denied_dirspaces
           ()
     | Error (#Terrat_github.publish_comment_err as err) ->
         Logs.err (fun m ->
@@ -1313,31 +1364,34 @@ module Results = struct
       ~pull_number
       ~run_type
       ~results
+      ~denied_dirspaces
       ~run_id
       ~sha
       () =
     let run =
-      let open Abbs_future_combinators.Infix_result_monad in
-      Abbs_time_it.run
-        (fun t -> Logs.info (fun m -> m "WORK_MANIFEST : %s : COMMENT : %f" request_id t))
-        (fun () ->
-          iterate_comment_posts
-            ~request_id
-            ~access_token
-            ~owner
-            ~repo
-            ~pull_number
-            ~run_id
-            ~sha
-            ~run_type
-            ~results
-            ())
-      >>= fun () ->
-      Abbs_time_it.run
-        (fun t ->
-          Logs.info (fun m -> m "WORK_MANIFEST : %s : COMPLETE_COMMIT_STATUSES : %f" request_id t))
-        (fun () ->
-          complete_check ~access_token ~owner ~repo ~branch ~run_id ~run_type ~sha ~results ())
+      Abbs_future_combinators.Infix_result_app.(
+        (fun _ _ -> ())
+        <$> Abbs_time_it.run
+              (fun t -> Logs.info (fun m -> m "WORK_MANIFEST : %s : COMMENT : %f" request_id t))
+              (fun () ->
+                iterate_comment_posts
+                  ~request_id
+                  ~access_token
+                  ~owner
+                  ~repo
+                  ~pull_number
+                  ~run_id
+                  ~sha
+                  ~run_type
+                  ~results
+                  ~denied_dirspaces
+                  ())
+        <*> Abbs_time_it.run
+              (fun t ->
+                Logs.info (fun m ->
+                    m "WORK_MANIFEST : %s : COMPLETE_COMMIT_STATUSES : %f" request_id t))
+              (fun () ->
+                complete_check ~access_token ~owner ~repo ~branch ~run_id ~run_type ~sha ~results ()))
     in
     let open Abb.Future.Infix_monad in
     Abbs_time_it.run
@@ -1603,6 +1657,7 @@ module Results = struct
       ~run_type
       ~run_id
       ~results
+      ~denied_dirspaces
       () =
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -1620,6 +1675,7 @@ module Results = struct
               ~pull_number:(CCInt64.to_int pull_number)
               ~run_type
               ~results
+              ~denied_dirspaces
               ~run_id:(CCOption.get_exn_or "run_id is None" run_id)
               ~sha
               ()
@@ -1703,6 +1759,18 @@ module Results = struct
             Abbs_time_it.run
               (fun t ->
                 Logs.info (fun m ->
+                    m "WORK_MANIFEST : %s : FETCH_ACCESS_CONTROL_DENIED_DIRSPACES : %f" request_id t))
+              (fun () ->
+                Pgsql_io.Prepared_stmt.fetch
+                  db
+                  Sql.select_work_manifest_access_control_denied_dirspaces
+                  ~f:(fun dir workspace policy ->
+                    (Terrat_change.Dirspace.{ dir; workspace }, policy))
+                  work_manifest_id)
+            >>= fun denied_dirspaces ->
+            Abbs_time_it.run
+              (fun t ->
+                Logs.info (fun m ->
                     m "WORK_MANIFEST : %s : SELECT_GITHUB_PARAMETERS : %f" request_id t))
               (fun () ->
                 Pgsql_io.Prepared_stmt.fetch
@@ -1710,13 +1778,22 @@ module Results = struct
                   (Sql.select_github_parameters_from_work_manifest ())
                   ~f:
                     (fun installation_id owner name branch sha _base_sha pull_number run_type run_id ->
-                    (installation_id, owner, name, branch, sha, pull_number, run_type, run_id))
+                    ( installation_id,
+                      owner,
+                      name,
+                      branch,
+                      sha,
+                      pull_number,
+                      run_type,
+                      run_id,
+                      denied_dirspaces ))
                   work_manifest_id)
             >>= function
             | values :: _ -> Abb.Future.return (Ok values)
             | [] -> assert false))
     >>= function
-    | Ok (installation_id, owner, repo, branch, sha, pull_number, run_type, run_id) ->
+    | Ok (installation_id, owner, repo, branch, sha, pull_number, run_type, run_id, denied_dirspaces)
+      ->
         complete_work_manifest
           ~config
           ~storage
@@ -1730,6 +1807,7 @@ module Results = struct
           ~run_type
           ~run_id
           ~results
+          ~denied_dirspaces
           ()
         >>= fun () ->
         Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)

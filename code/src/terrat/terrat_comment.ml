@@ -1,7 +1,8 @@
 type t =
   | Plan of { tag_query : Terrat_tag_set.t }
   | Apply of { tag_query : Terrat_tag_set.t }
-  | Unsafe_apply of { tag_query : Terrat_tag_set.t }
+  | Apply_autoapprove of { tag_query : Terrat_tag_set.t }
+  | Apply_force of { tag_query : Terrat_tag_set.t }
   | Unlock
   | Help
   | Feedback of string
@@ -27,7 +28,9 @@ let parse s =
   | Some ("unlock", _) -> Ok Unlock
   | Some ("plan", rest) -> Ok (Plan { tag_query = tag_set_of_string rest })
   | Some ("apply", rest) -> Ok (Apply { tag_query = tag_set_of_string rest })
-  | Some ("unsafe-apply", rest) -> Ok (Unsafe_apply { tag_query = tag_set_of_string rest })
+  | Some ("apply-autoapprove", rest) ->
+      Ok (Apply_autoapprove { tag_query = tag_set_of_string rest })
+  | Some ("apply-force", rest) -> Ok (Apply_force { tag_query = tag_set_of_string rest })
   | Some ("help", _) -> Ok Help
   | Some ("feedback", rest) -> Ok (Feedback rest)
   | Some (action, rest) -> Error (`Unknown_action action)

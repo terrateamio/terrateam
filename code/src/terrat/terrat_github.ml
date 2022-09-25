@@ -70,6 +70,9 @@ type get_tree_err =
   ]
 [@@deriving show]
 
+type get_team_membership_in_org_err = Githubc2_abb.call_err [@@deriving show]
+type get_repo_collaborator_permission_err = Githubc2_abb.call_err [@@deriving show]
+
 let create auth = Githubc2_abb.create ~user_agent:"Terrateam" auth
 
 let get_installation_access_token config installation_id =
@@ -328,6 +331,33 @@ let rec get_tree ~access_token ~owner ~repo ~sha () =
       Abb.Future.return (Ok files)
   | `Not_found _ as err -> Abb.Future.return (Error err)
   | `Unprocessable_entity _ as err -> Abb.Future.return (Error err)
+
+let get_team_membership_in_org ~access_token ~org ~team ~user () =
+  let open Abbs_future_combinators.Infix_result_monad in
+  let module Team = Githubc2_components.Team_membership in
+  let client = create (`Token access_token) in
+  Githubc2_abb.call
+    client
+    Githubc2_teams.Get_membership_for_user_in_org.(
+      make Parameters.(make ~org ~team_slug:team ~username:user))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `Not_found -> Abb.Future.return (Ok false)
+  | `OK Team.{ primary = Primary.{ state; _ }; _ } -> Abb.Future.return (Ok (state = "active"))
+
+let get_repo_collaborator_permission ~access_token ~org ~repo ~user () =
+  let open Abbs_future_combinators.Infix_result_monad in
+  let module Permission = Githubc2_components.Repository_collaborator_permission in
+  let client = create (`Token access_token) in
+  Githubc2_abb.call
+    client
+    Githubc2_repos.Get_collaborator_permission_level.(
+      make Parameters.(make ~owner:org ~repo ~username:user))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `Not_found _ -> Abb.Future.return (Ok None)
+  | `OK Permission.{ primary = Primary.{ role_name; _ }; _ } ->
+      Abb.Future.return (Ok (Some role_name))
 
 module Commit_status = struct
   type create_err = Githubc2_abb.call_err [@@deriving show]

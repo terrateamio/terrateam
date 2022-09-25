@@ -1,7 +1,8 @@
 type t =
   | Plan of { tag_query : Terrat_tag_set.t }
   | Apply of { tag_query : Terrat_tag_set.t }
-  | Unsafe_apply of { tag_query : Terrat_tag_set.t }
+  | Apply_autoapprove of { tag_query : Terrat_tag_set.t }
+  | Apply_force of { tag_query : Terrat_tag_set.t }
   | Unlock
   | Help
   | Feedback of string

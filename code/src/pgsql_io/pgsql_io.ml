@@ -242,13 +242,14 @@ module Typed_sql = struct
     let ud t f = make t.oid (fun v vs -> t.f (f v) vs) t.name
 
     let option t =
-      make
-        t.oid
-        (fun o vs ->
-          match o with
-          | None -> None :: vs
-          | Some v -> t.f v vs)
-        t.name
+      {
+        t with
+        f =
+          (fun o vs ->
+            match o with
+            | None -> None :: vs
+            | Some v -> t.f v vs);
+      }
 
     let array t =
       make_array

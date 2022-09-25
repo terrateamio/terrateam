@@ -188,6 +188,15 @@ module Sql = struct
       // (* workspace *) Ret.text
       /^ "select path, workspace from github_work_manifest_dirspaceflows where work_manifest = $id"
       /% Var.uuid "id")
+
+  let insert_work_manifest_access_control_denied_dirspace =
+    Pgsql_io.Typed_sql.(
+      sql
+      /^ read "insert_github_work_manifest_access_control_denied_dirspace.sql"
+      /% Var.text "path"
+      /% Var.text "workspace"
+      /% Var.(option (str_array (text "policy")))
+      /% Var.(uuid "work_manifest"))
 end
 
 module Tmpl = struct
@@ -222,9 +231,19 @@ module Tmpl = struct
   let base_branch_not_default_branch = read "dest_branch_no_match.tmpl"
   let auto_apply_running = read "auto_apply_running.tmpl"
   let bad_glob = read "bad_glob.tmpl"
+  let unlock_success = read "unlock_success.tmpl"
+  let access_control_all_dirspaces_denied = read "access_control_all_dirspaces_denied.tmpl"
+  let access_control_invalid_query = read "access_control_invalid_query.tmpl"
+  let access_control_dirspaces_denied = read "access_control_dirspaces_denied.tmpl"
+  let access_control_unlock_denied = read "access_control_unlock_denied.tmpl"
 
-  let unlock_success =
-    CCOption.get_exn_or "unlock_success.tmpl" (Terrat_files_tmpl.read "unlock_success.tmpl")
+  let access_control_terrateam_config_update_denied =
+    read "access_control_terrateam_config_update_denied.tmpl"
+
+  let access_control_terrateam_config_update_bad_query =
+    read "access_control_terrateam_config_update_bad_query.tmpl"
+
+  let access_control_lookup_err = read "access_control_lookup_err.tmpl"
 end
 
 module Event = struct
@@ -235,8 +254,9 @@ module Event = struct
     pull_number : int;
     repository : Gw.Repository.t;
     request_id : string;
-    run_type : Terrat_work_manifest.Run_type.t;
+    event_type : Terrat_event_evaluator.Event_type.t;
     tag_query : Terrat_tag_set.t;
+    user : string;
   }
 
   let make
@@ -246,8 +266,9 @@ module Event = struct
       ~pull_number
       ~repository
       ~request_id
-      ~run_type
-      ~tag_query =
+      ~event_type
+      ~tag_query
+      ~user =
     Logs.info (fun m ->
         m
           "GITHUB_EVENT : %s : MAKE : %s : %s : %d : %s : %s"
@@ -255,7 +276,7 @@ module Event = struct
           repository.Gw.Repository.owner.Gw.User.login
           repository.Gw.Repository.name
           pull_number
-          (Terrat_work_manifest.Run_type.to_string run_type)
+          (Terrat_event_evaluator.Event_type.to_string event_type)
           (Terrat_tag_set.to_string tag_query));
     {
       access_token;
@@ -264,14 +285,16 @@ module Event = struct
       pull_number;
       repository;
       request_id;
-      run_type;
+      event_type;
       tag_query;
+      user;
     }
 
   let request_id t = t.request_id
   let tag_query t = t.tag_query
-  let run_type t = t.run_type
+  let event_type t = t.event_type
   let default_branch t = t.repository.Gw.Repository.default_branch
+  let user t = t.user
 end
 
 let diff_of_github_diff =
@@ -319,6 +342,66 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     let is_draft_pr t = t.Terrat_pull_request.draft
     let branch_name t = t.Terrat_pull_request.branch_name
   end
+
+  module Access_control = struct
+    type ctx = {
+      user : string;
+      event : Event.t;
+    }
+
+    (* Order matters here.  Roles closer to the beginning of the search are more
+       powerful than those closer to the end *)
+    let repo_permission_levels =
+      [
+        ("admin", "admin");
+        ("maintain", "maintain");
+        ("write", "write");
+        ("triage", "triage");
+        ("read", "read");
+      ]
+
+    let query ctx query =
+      match CCString.Split.left ~by:":" query with
+      | Some ("user", value) -> Abb.Future.return (Ok (CCString.equal value ctx.user))
+      | Some ("team", value) -> (
+          let open Abb.Future.Infix_monad in
+          Terrat_github.get_team_membership_in_org
+            ~access_token:ctx.event.Event.access_token
+            ~org:ctx.event.Event.repository.Gw.Repository.owner.Gw.User.login
+            ~team:value
+            ~user:ctx.user
+            ()
+          >>= function
+          | Ok res -> Abb.Future.return (Ok res)
+          | Error _ -> Abb.Future.return (Error `Error))
+      | Some ("repo", value) -> (
+          let open Abb.Future.Infix_monad in
+          match CCList.find_idx CCFun.(fst %> CCString.equal value) repo_permission_levels with
+          | Some (idx, _) -> (
+              Terrat_github.get_repo_collaborator_permission
+                ~access_token:ctx.event.Event.access_token
+                ~org:ctx.event.Event.repository.Gw.Repository.owner.Gw.User.login
+                ~repo:ctx.event.Event.repository.Gw.Repository.name
+                ~user:ctx.user
+                ()
+              >>= function
+              | Ok (Some role) -> (
+                  match
+                    CCList.find_idx CCFun.(snd %> CCString.equal role) repo_permission_levels
+                  with
+                  | Some (idx_role, _) ->
+                      (* Test if their actual role has an index less than or
+                         equal to the index of the role in the query. *)
+                      Abb.Future.return (Ok (idx_role <= idx))
+                  | None -> Abb.Future.return (Ok false))
+              | Ok None -> Abb.Future.return (Ok false)
+              | Error _ -> Abb.Future.return (Error `Error))
+          | None -> Abb.Future.return (Error (`Invalid_query query)))
+      | Some (_, _) -> Abb.Future.return (Error (`Invalid_query query))
+      | None -> Abb.Future.return (Error (`Invalid_query query))
+  end
+
+  let create_access_control_ctx ~user event = Access_control.{ user; event }
 
   let list_existing_dirs event pull_request dirs =
     let open Abb.Future.Infix_monad in
@@ -405,11 +488,14 @@ module Evaluator = Terrat_event_evaluator.Make (struct
             m "GITHUB_EVENT : %s : ERROR : %s" (Event.request_id event) (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
 
-  let store_new_work_manifest db event work_manifest =
+  let store_new_work_manifest db event work_manifest denied_dirspaces =
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
       let module Wm = Terrat_work_manifest in
       let module Pr = Terrat_pull_request in
+      let module Ch = Terrat_change in
+      let module Cm = Terrat_change_match in
+      let module Ac = Terrat_access_control in
       let pull_request = work_manifest.Terrat_work_manifest.pull_request in
       let hash =
         match pull_request.Pr.state with
@@ -432,7 +518,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
         work_manifest.Wm.base_hash
         pull_request.Pr.id
         (CCInt64.of_int event.Event.repository.Gw.Repository.id)
-        (Terrat_work_manifest.Run_type.to_string event.Event.run_type)
+        (Terrat_work_manifest.Run_type.to_string work_manifest.Wm.run_type)
         hash
         (Terrat_tag_set.to_string work_manifest.Wm.tag_query)
       >>= function
@@ -450,6 +536,19 @@ module Evaluator = Terrat_event_evaluator.Make (struct
                 workspace
                 workflow_idx)
             work_manifest.Wm.changes
+          >>= fun () ->
+          Abbs_future_combinators.List_result.iter
+            ~f:
+              (fun Ac.R.Deny.
+                     { change_match = Cm.{ dirspace = Ch.Dirspace.{ dir; workspace }; _ }; policy } ->
+              Pgsql_io.Prepared_stmt.execute
+                db
+                Sql.insert_work_manifest_access_control_denied_dirspace
+                dir
+                workspace
+                policy
+                id)
+            denied_dirspaces
           >>= fun () ->
           let wm =
             {
@@ -736,7 +835,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
         Abb.Future.return
           (Ok
              (CCList.map
-                (fun Prr.{ primary = Primary.{ node_id; state; _ }; _ } ->
+                (fun Prr.{ primary = Primary.{ node_id; state; user; _ }; _ } ->
                   Terrat_pull_request_review.
                     {
                       id = node_id;
@@ -744,6 +843,11 @@ module Evaluator = Terrat_event_evaluator.Make (struct
                         (match state with
                         | "APPROVED" -> Status.Approved
                         | _ -> Status.Unknown);
+                      user =
+                        CCOption.map
+                          (fun Githubc2_components.Nullable_simple_user.
+                                 { primary = Primary.{ login; _ }; _ } -> login)
+                          user;
                     })
                 reviews))
     | Error (#Terrat_github.Pull_request_reviews.list_err as err) ->
@@ -754,7 +858,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
               (Terrat_github.Pull_request_reviews.show_list_err err));
         Abb.Future.return (Error `Error)
 
-  let query_conflicting_work_manifests_in_repo db event =
+  let query_conflicting_work_manifests_in_repo db event operation =
     let run =
       Pgsql_io.Prepared_stmt.fetch
         db
@@ -811,7 +915,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
             })
         (CCInt64.of_int event.Event.repository.Gw.Repository.id)
         (CCInt64.of_int event.Event.pull_number)
-        event.Event.run_type
+        (Terrat_event_evaluator.Op_class.run_type_of_tf operation)
     in
     let open Abb.Future.Infix_monad in
     run
@@ -927,7 +1031,10 @@ module Evaluator = Terrat_event_evaluator.Make (struct
       ~pull_number:event.Event.pull_number
       body
     >>= function
-    | Ok () -> Abb.Future.return ()
+    | Ok () ->
+        Logs.info (fun m ->
+            m "GITHUB_EVENT : %s : PUBLISHED_COMMENT : %s" (Event.request_id event) msg_type);
+        Abb.Future.return ()
     | Error (#Terrat_github.publish_comment_err as err) ->
         Logs.err (fun m ->
             m
@@ -947,6 +1054,40 @@ module Evaluator = Terrat_event_evaluator.Make (struct
               (Event.request_id event)
               (Snabela.show_err err));
         Abb.Future.return ()
+
+  let unlock_pull_request storage event =
+    let run =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Pgsql_pool.with_conn storage ~f:(fun db ->
+          Pgsql_io.Prepared_stmt.execute
+            db
+            Sql.insert_pull_request_unlock
+            (CCInt64.of_int event.Event.repository.Gw.Repository.id)
+            (CCInt64.of_int event.Event.pull_number)
+          >>= fun () ->
+          Terrat_github_plan_cleanup.clean_pull_request
+            ~owner:event.Event.repository.Gw.Repository.owner.Gw.User.login
+            ~repo:event.Event.repository.Gw.Repository.name
+            ~pull_number:event.Event.pull_number
+            db)
+      >>= fun () ->
+      let open Abb.Future.Infix_monad in
+      Abb.Future.fork
+        (Terrat_github_runner.run ~request_id:event.Event.request_id event.Event.config storage)
+      >>= fun _ -> Abb.Future.return (Ok ())
+    in
+    let open Abb.Future.Infix_monad in
+    run
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error (#Pgsql_pool.err as err) ->
+        Logs.err (fun m ->
+            m "GITHUB_EVENT : %s : ERROR : %s" (Event.request_id event) (Pgsql_pool.show_err err));
+        Abb.Future.return (Error `Error)
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m ->
+            m "GITHUB_EVENT : %s : ERROR : %s" (Event.request_id event) (Pgsql_io.show_err err));
+        Abb.Future.return (Error `Error)
 
   let publish_msg event = function
     | Terrat_event_evaluator.Msg.Missing_plans dirspaces ->
@@ -1143,6 +1284,167 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     | Terrat_event_evaluator.Msg.Bad_glob s ->
         let kv = Snabela.Kv.(Map.of_list [ ("glob", string s) ]) in
         apply_template_and_publish "BAD_GLOB" Tmpl.bad_glob kv event
+    | Terrat_event_evaluator.Msg.Access_control_denied (`All_dirspaces denies) ->
+        let kv =
+          Snabela.Kv.(
+            Map.of_list
+              [
+                ("user", string event.Event.user);
+                ("default_branch", string (Event.default_branch event));
+                ( "denies",
+                  list
+                    (CCList.map
+                       (fun Terrat_access_control.R.Deny.
+                              {
+                                change_match =
+                                  Terrat_change_match.
+                                    { dirspace = Terrat_change.Dirspace.{ dir; workspace }; _ };
+                                policy;
+                              } ->
+                         Map.of_list
+                           (CCList.flatten
+                              [
+                                [ ("dir", string dir); ("workspace", string workspace) ];
+                                CCOption.map_or
+                                  ~default:[]
+                                  (fun policy ->
+                                    [
+                                      ( "match_list",
+                                        list
+                                          (CCList.map
+                                             (fun s -> Map.of_list [ ("item", string s) ])
+                                             policy) );
+                                    ])
+                                  policy;
+                              ]))
+                       denies) );
+              ])
+        in
+        apply_template_and_publish
+          "ACCESS_CONTROL_ALL_DIRSPACES_DENIED"
+          Tmpl.access_control_all_dirspaces_denied
+          kv
+          event
+    | Terrat_event_evaluator.Msg.Access_control_denied (`Invalid_query query) ->
+        let kv =
+          Snabela.Kv.(
+            Map.of_list
+              [
+                ("user", string event.Event.user);
+                ("default_branch", string (Event.default_branch event));
+                ("query", string query);
+              ])
+        in
+        apply_template_and_publish
+          "ACCESS_CONTROL_INVALID_QUERY"
+          Tmpl.access_control_invalid_query
+          kv
+          event
+    | Terrat_event_evaluator.Msg.Access_control_denied (`Dirspaces denies) ->
+        let kv =
+          Snabela.Kv.(
+            Map.of_list
+              [
+                ("user", string event.Event.user);
+                ("default_branch", string (Event.default_branch event));
+                ( "denies",
+                  list
+                    (CCList.map
+                       (fun Terrat_access_control.R.Deny.
+                              {
+                                change_match =
+                                  Terrat_change_match.
+                                    { dirspace = Terrat_change.Dirspace.{ dir; workspace }; _ };
+                                policy;
+                              } ->
+                         Map.of_list
+                           (CCList.flatten
+                              [
+                                [ ("dir", string dir); ("workspace", string workspace) ];
+                                CCOption.map_or
+                                  ~default:[]
+                                  (fun policy ->
+                                    [
+                                      ( "match_list",
+                                        list
+                                          (CCList.map
+                                             (fun s -> Map.of_list [ ("item", string s) ])
+                                             policy) );
+                                    ])
+                                  policy;
+                              ]))
+                       denies) );
+              ])
+        in
+        apply_template_and_publish
+          "ACCESS_CONTROL_DIRSPACES_DENIED"
+          Tmpl.access_control_dirspaces_denied
+          kv
+          event
+    | Terrat_event_evaluator.Msg.Access_control_denied (`Terrateam_config_update match_list) ->
+        let kv =
+          Snabela.Kv.(
+            Map.of_list
+              [
+                ("user", string event.Event.user);
+                ("default_branch", string (Event.default_branch event));
+                ( "match_list",
+                  list (CCList.map (fun s -> Map.of_list [ ("item", string s) ]) match_list) );
+              ])
+        in
+        apply_template_and_publish
+          "ACCESS_CONTROL_TERRATEAM_CONFIG_UPDATE_DENIED"
+          Tmpl.access_control_terrateam_config_update_denied
+          kv
+          event
+    | Terrat_event_evaluator.Msg.Access_control_denied (`Terrateam_config_update_bad_query query) ->
+        let kv =
+          Snabela.Kv.(
+            Map.of_list
+              [
+                ("user", string event.Event.user);
+                ("default_branch", string (Event.default_branch event));
+                ("query", string query);
+              ])
+        in
+        apply_template_and_publish
+          "ACCESS_CONTROL_TERRATEAM_CONFIG_UPDATE_BAD_QUERY"
+          Tmpl.access_control_terrateam_config_update_bad_query
+          kv
+          event
+    | Terrat_event_evaluator.Msg.Access_control_denied `Lookup_err ->
+        let kv =
+          Snabela.Kv.(
+            Map.of_list
+              [
+                ("user", string event.Event.user);
+                ("default_branch", string (Event.default_branch event));
+              ])
+        in
+        apply_template_and_publish
+          "ACCESS_CONTROL_LOOKUP_ERR"
+          Tmpl.access_control_lookup_err
+          kv
+          event
+    | Terrat_event_evaluator.Msg.Access_control_denied (`Unlock match_list) ->
+        let kv =
+          Snabela.Kv.(
+            Map.of_list
+              [
+                ("user", string event.Event.user);
+                ("default_branch", string (Event.default_branch event));
+                ( "match_list",
+                  list (CCList.map (fun s -> Map.of_list [ ("item", string s) ]) match_list) );
+              ])
+        in
+        apply_template_and_publish
+          "ACCESS_CONTROL_UNLOCK_DENIED"
+          Tmpl.access_control_unlock_denied
+          kv
+          event
+    | Terrat_event_evaluator.Msg.Unlock_success ->
+        let kv = Snabela.Kv.(Map.of_list []) in
+        apply_template_and_publish "UNLOCK_SUCCESS" Tmpl.unlock_success kv event
 end)
 
 let run_event_evaluator storage event =
@@ -1170,7 +1472,7 @@ let run_event_evaluator storage event =
         Terrat_github_runner.run ~request_id:(Event.request_id event) event.Event.config storage))
   >>= fun _ -> Abb.Future.return (Ok ())
 
-let perform_unlock_pr request_id config storage installation_id repository pull_number =
+let perform_unlock_pr request_id config storage installation_id repository pull_number user =
   let open Abbs_future_combinators.Infix_result_monad in
   Logs.info (fun m ->
       m
@@ -1179,39 +1481,21 @@ let perform_unlock_pr request_id config storage installation_id repository pull_
         repository.Gw.Repository.owner.Gw.User.login
         repository.Gw.Repository.name
         pull_number);
-  Pgsql_pool.with_conn storage ~f:(fun db ->
-      Pgsql_io.Prepared_stmt.execute
-        db
-        Sql.insert_pull_request_unlock
-        (CCInt64.of_int repository.Gw.Repository.id)
-        (CCInt64.of_int pull_number)
-      >>= fun () ->
-      Terrat_github_plan_cleanup.clean_pull_request
-        ~owner:repository.Gw.Repository.owner.Gw.User.login
-        ~repo:repository.Gw.Repository.name
-        ~pull_number
-        db)
-  >>= fun () ->
   Terrat_github.get_installation_access_token config installation_id
-  >>= fun token ->
-  let open Abb.Future.Infix_monad in
-  Terrat_github.publish_comment
-    ~access_token:token
-    ~owner:repository.Gw.Repository.owner.Gw.User.login
-    ~repo:repository.Gw.Repository.name
-    ~pull_number
-    Tmpl.unlock_success
-  >>= function
-  | Ok () ->
-      Abb.Future.fork (Terrat_github_runner.run ~request_id config storage)
-      >>= fun _ -> Abb.Future.return (Ok ())
-  | Error (#Terrat_github.publish_comment_err as err) ->
-      Logs.err (fun m ->
-          m
-            "GITHUB_EVENT : %s : PUBLISH_COMMENT_ERROR : %s"
-            request_id
-            (Terrat_github.show_publish_comment_err err));
-      Abb.Future.return (Ok ())
+  >>= fun access_token ->
+  let event =
+    Event.make
+      ~access_token
+      ~config
+      ~installation_id
+      ~pull_number
+      ~repository
+      ~request_id
+      ~event_type:Terrat_event_evaluator.Event_type.Unlock
+      ~tag_query:(Terrat_tag_set.of_list [])
+      ~user
+  in
+  run_event_evaluator storage event
 
 let process_installation request_id config storage = function
   | Gw.Installation_event.Installation_created created ->
@@ -1313,8 +1597,9 @@ let process_pull_request_event request_id config storage = function
           ~pull_number
           ~repository
           ~request_id
-          ~run_type:Terrat_work_manifest.Run_type.Autoplan
+          ~event_type:Terrat_event_evaluator.Event_type.Autoplan
           ~tag_query:(Terrat_tag_set.of_list [])
+          ~user:sender.Gw.User.login
       in
       run_event_evaluator storage event
   | Gw.Pull_request_event.Pull_request_opened _ -> failwith "Invalid pull_request_open event"
@@ -1328,9 +1613,17 @@ let process_pull_request_event request_id config storage = function
           Gw.Pull_request_closed.Pull_request_.T.
             { primary = Primary.{ number = pull_number; _ }; _ };
         repository;
+        sender;
         _;
       } ->
       let open Abbs_future_combinators.Infix_result_monad in
+      Logs.info (fun m ->
+          m
+            "GITHUB_EVENT : %s : PULL_REQUEST_CLOSED_EVENT : owner=%s : repo=%s : sender=%s"
+            request_id
+            repository.Gw.Repository.owner.Gw.User.login
+            repository.Gw.Repository.name
+            sender.Gw.User.login);
       Terrat_github.get_installation_access_token config installation_id
       >>= fun access_token ->
       let event =
@@ -1341,8 +1634,9 @@ let process_pull_request_event request_id config storage = function
           ~pull_number
           ~repository
           ~request_id
-          ~run_type:Terrat_work_manifest.Run_type.Autoapply
+          ~event_type:Terrat_event_evaluator.Event_type.Autoapply
           ~tag_query:(Terrat_tag_set.of_list [])
+          ~user:sender.Gw.User.login
       in
       run_event_evaluator storage event
   | Gw.Pull_request_event.Pull_request_closed _ -> failwith "Invalid pull_request_closed event"
@@ -1415,7 +1709,14 @@ let process_issue_comment request_id config storage = function
             sender.Gw.User.login);
       match Terrat_comment.parse comment.Gw.Issue_comment.body with
       | Ok Terrat_comment.Unlock ->
-          perform_unlock_pr request_id config storage installation_id repository pull_number
+          perform_unlock_pr
+            request_id
+            config
+            storage
+            installation_id
+            repository
+            pull_number
+            sender.Gw.User.login
       | Ok (Terrat_comment.Plan { tag_query }) ->
           let open Abbs_future_combinators.Infix_result_monad in
           Terrat_github.get_installation_access_token config installation_id
@@ -1439,8 +1740,9 @@ let process_issue_comment request_id config storage = function
               ~pull_number
               ~repository
               ~request_id
-              ~run_type:Terrat_work_manifest.Run_type.Plan
+              ~event_type:Terrat_event_evaluator.Event_type.Plan
               ~tag_query
+              ~user:sender.Gw.User.login
           in
           run_event_evaluator storage event
       | Ok (Terrat_comment.Apply { tag_query }) ->
@@ -1466,11 +1768,12 @@ let process_issue_comment request_id config storage = function
               ~pull_number
               ~repository
               ~request_id
-              ~run_type:Terrat_work_manifest.Run_type.Apply
+              ~event_type:Terrat_event_evaluator.Event_type.Apply
               ~tag_query
+              ~user:sender.Gw.User.login
           in
           run_event_evaluator storage event
-      | Ok (Terrat_comment.Unsafe_apply { tag_query }) ->
+      | Ok (Terrat_comment.Apply_autoapprove { tag_query }) ->
           let open Abbs_future_combinators.Infix_result_monad in
           Terrat_github.get_installation_access_token config installation_id
           >>= fun access_token ->
@@ -1493,8 +1796,37 @@ let process_issue_comment request_id config storage = function
               ~pull_number
               ~repository
               ~request_id
-              ~run_type:Terrat_work_manifest.Run_type.Unsafe_apply
+              ~event_type:Terrat_event_evaluator.Event_type.Apply_autoapprove
               ~tag_query
+              ~user:sender.Gw.User.login
+          in
+          run_event_evaluator storage event
+      | Ok (Terrat_comment.Apply_force { tag_query }) ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          Terrat_github.get_installation_access_token config installation_id
+          >>= fun access_token ->
+          Abbs_time_it.run
+            (fun t ->
+              Logs.info (fun m -> m "GITHUB_EVENT : %s : REACT_TO_COMMENT : %f" request_id t))
+            (fun () ->
+              Terrat_github.react_to_comment
+                ~access_token
+                ~owner:repository.Gw.Repository.owner.Gw.User.login
+                ~repo:repository.Gw.Repository.name
+                ~comment_id:comment.Gw.Issue_comment.id
+                ())
+          >>= fun () ->
+          let event =
+            Event.make
+              ~access_token
+              ~config
+              ~installation_id
+              ~pull_number
+              ~repository
+              ~request_id
+              ~event_type:Terrat_event_evaluator.Event_type.Apply_force
+              ~tag_query
+              ~user:sender.Gw.User.login
           in
           run_event_evaluator storage event
       | Ok Terrat_comment.Help -> (

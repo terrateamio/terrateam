@@ -8,5 +8,6 @@ end
 type t = {
   id : string;
   status : Status.t;
+  user : string option;
 }
 [@@deriving show, eq, make]

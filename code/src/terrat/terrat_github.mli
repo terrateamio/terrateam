@@ -62,6 +62,9 @@ type get_tree_err =
   ]
 [@@deriving show]
 
+type get_team_membership_in_org_err = Githubc2_abb.call_err [@@deriving show]
+type get_repo_collaborator_permission_err = Githubc2_abb.call_err [@@deriving show]
+
 module Commit_status : sig
   type create_err = Githubc2_abb.call_err [@@deriving show]
 
@@ -233,3 +236,19 @@ val get_tree :
   sha:string ->
   unit ->
   (string list, [> get_tree_err ]) result Abb.Future.t
+
+val get_team_membership_in_org :
+  access_token:string ->
+  org:string ->
+  team:string ->
+  user:string ->
+  unit ->
+  (bool, [> get_team_membership_in_org_err ]) result Abb.Future.t
+
+val get_repo_collaborator_permission :
+  access_token:string ->
+  org:string ->
+  repo:string ->
+  user:string ->
+  unit ->
+  (string option, [> get_repo_collaborator_permission_err ]) result Abb.Future.t

@@ -8,6 +8,7 @@ module Msg : sig
       merge_conflicts : bool option;
       status_checks : bool option;
       status_checks_failed : Terrat_commit_check.t list;
+      approved_reviews : Terrat_pull_request_review.t list;
     }
   end
 
@@ -24,6 +25,53 @@ module Msg : sig
     | Dest_branch_no_match of 'pull_request
     | Autoapply_running
     | Bad_glob of string
+    | Access_control_denied of
+        [ `All_dirspaces of Terrat_access_control.R.Deny.t list
+        | `Dirspaces of Terrat_access_control.R.Deny.t list
+        | `Invalid_query of string
+        | `Lookup_err
+        | `Terrateam_config_update of string list
+        | `Terrateam_config_update_bad_query of string
+        | `Unlock of string list
+        ]
+    | Unlock_success
+end
+
+module Op_class : sig
+  type tf_mode =
+    [ `Manual
+    | `Auto
+    ]
+  [@@deriving show]
+
+  type tf =
+    [ `Apply of tf_mode
+    | `Apply_autoapprove
+    | `Apply_force
+    | `Plan of tf_mode
+    ]
+  [@@deriving show]
+
+  type t =
+    | Terraform of tf
+    | Pull_request of [ `Unlock ]
+  [@@deriving show]
+
+  val run_type_of_tf : tf -> Terrat_work_manifest.Run_type.t
+end
+
+module Event_type : sig
+  type t =
+    | Apply
+    | Apply_autoapprove
+    | Apply_force
+    | Autoapply
+    | Autoplan
+    | Plan
+    | Unlock
+  [@@deriving show]
+
+  val to_string : t -> string
 end
 
 module type S = sig
@@ -31,9 +79,10 @@ module type S = sig
     type t
 
     val request_id : t -> string
-    val run_type : t -> Terrat_work_manifest.Run_type.t
+    val event_type : t -> Event_type.t
     val tag_query : t -> Terrat_tag_set.t
     val default_branch : t -> string
+    val user : t -> string
   end
 
   module Pull_request : sig
@@ -50,6 +99,10 @@ module type S = sig
     val branch_name : t -> string
   end
 
+  module Access_control : Terrat_access_control.S
+
+  val create_access_control_ctx : user:string -> Event.t -> Access_control.ctx
+
   (** Given a set of directories, return those directories that exist in the repo *)
   val list_existing_dirs :
     Event.t -> Pull_request.t -> Dir_set.t -> (Dir_set.t, [> `Error ]) result Abb.Future.t
@@ -65,6 +118,7 @@ module type S = sig
     Pgsql_io.t ->
     Event.t ->
     Pull_request.t Terrat_work_manifest.New.t ->
+    Terrat_access_control.R.Deny.t list ->
     (Pull_request.t Terrat_work_manifest.Existing_lite.t, [> `Error ]) result Abb.Future.t
 
   val store_pull_request :
@@ -101,6 +155,7 @@ module type S = sig
   val query_conflicting_work_manifests_in_repo :
     Pgsql_io.t ->
     Event.t ->
+    Op_class.tf ->
     (Pull_request.t Terrat_work_manifest.Existing_lite.t list, [> `Error ]) result Abb.Future.t
 
   val query_unapplied_dirspaces :
@@ -131,6 +186,7 @@ module type S = sig
     Pull_request.t ->
     (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
 
+  val unlock_pull_request : Terrat_storage.t -> Event.t -> (unit, [> `Error ]) result Abb.Future.t
   val publish_msg : Event.t -> Pull_request.t Msg.t -> unit Abb.Future.t
 end
 

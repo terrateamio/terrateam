@@ -9,6 +9,7 @@ module Msg = struct
       merge_conflicts : bool option;
       status_checks : bool option;
       status_checks_failed : Terrat_commit_check.t list;
+      approved_reviews : Terrat_pull_request_review.t list;
     }
   end
 
@@ -25,6 +26,75 @@ module Msg = struct
     | Dest_branch_no_match of 'pull_request
     | Autoapply_running
     | Bad_glob of string
+    | Access_control_denied of
+        [ `All_dirspaces of Terrat_access_control.R.Deny.t list
+        | `Dirspaces of Terrat_access_control.R.Deny.t list
+        | `Invalid_query of string
+        | `Lookup_err
+        | `Terrateam_config_update of string list
+        | `Terrateam_config_update_bad_query of string
+        | `Unlock of string list
+        ]
+    | Unlock_success
+end
+
+module Op_class = struct
+  type tf_mode =
+    [ `Manual
+    | `Auto
+    ]
+  [@@deriving show]
+
+  type tf =
+    [ `Apply of tf_mode
+    | `Apply_autoapprove
+    | `Apply_force
+    | `Plan of tf_mode
+    ]
+  [@@deriving show]
+
+  type t =
+    | Terraform of tf
+    | Pull_request of [ `Unlock ]
+  [@@deriving show]
+
+  let run_type_of_tf = function
+    | `Apply `Auto -> Terrat_work_manifest.Run_type.Autoapply
+    | `Apply `Manual | `Apply_force -> Terrat_work_manifest.Run_type.Apply
+    | `Apply_autoapprove -> Terrat_work_manifest.Run_type.Unsafe_apply
+    | `Plan `Auto -> Terrat_work_manifest.Run_type.Autoplan
+    | `Plan `Manual -> Terrat_work_manifest.Run_type.Plan
+end
+
+module Event_type = struct
+  type t =
+    | Apply
+    | Apply_autoapprove
+    | Apply_force
+    | Autoapply
+    | Autoplan
+    | Plan
+    | Unlock
+  [@@deriving show]
+
+  (* Translate the event type to its operation class *)
+  let to_op_class = function
+    | Apply -> Op_class.Terraform (`Apply `Manual)
+    | Apply_autoapprove -> Op_class.Terraform `Apply_autoapprove
+    | Apply_force -> Op_class.Terraform `Apply_force
+    | Autoapply -> Op_class.Terraform (`Apply `Auto)
+    | Autoplan -> Op_class.Terraform (`Plan `Auto)
+    | Plan -> Op_class.Terraform (`Plan `Manual)
+    | Unlock -> Op_class.Pull_request `Unlock
+
+  let to_string = function
+    | Apply -> "apply"
+    | Apply_autoapprove -> "apply_autoapprove"
+    | Apply_force -> "apply_force"
+    | Autoapply -> "autoapply"
+    | Autoplan -> "autoplan"
+    | Plan -> "plan"
+    | Unlock -> "unlock"
 end
 
 module type S = sig
@@ -32,9 +102,10 @@ module type S = sig
     type t
 
     val request_id : t -> string
-    val run_type : t -> Terrat_work_manifest.Run_type.t
+    val event_type : t -> Event_type.t
     val tag_query : t -> Terrat_tag_set.t
     val default_branch : t -> string
+    val user : t -> string
   end
 
   module Pull_request : sig
@@ -51,6 +122,10 @@ module type S = sig
     val branch_name : t -> string
   end
 
+  module Access_control : Terrat_access_control.S
+
+  val create_access_control_ctx : user:string -> Event.t -> Access_control.ctx
+
   val list_existing_dirs :
     Event.t -> Pull_request.t -> Dir_set.t -> (Dir_set.t, [> `Error ]) result Abb.Future.t
 
@@ -65,6 +140,7 @@ module type S = sig
     Pgsql_io.t ->
     Event.t ->
     Pull_request.t Terrat_work_manifest.New.t ->
+    Terrat_access_control.R.Deny.t list ->
     (Pull_request.t Terrat_work_manifest.Existing_lite.t, [> `Error ]) result Abb.Future.t
 
   val store_pull_request :
@@ -101,6 +177,7 @@ module type S = sig
   val query_conflicting_work_manifests_in_repo :
     Pgsql_io.t ->
     Event.t ->
+    Op_class.tf ->
     (Pull_request.t Terrat_work_manifest.Existing_lite.t list, [> `Error ]) result Abb.Future.t
 
   val query_unapplied_dirspaces :
@@ -129,17 +206,9 @@ module type S = sig
     Pull_request.t ->
     (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
 
+  val unlock_pull_request : Terrat_storage.t -> Event.t -> (unit, [> `Error ]) result Abb.Future.t
   val publish_msg : Event.t -> Pull_request.t Msg.t -> unit Abb.Future.t
 end
-
-let unified_run_type =
-  let open Terrat_work_manifest.Run_type in
-  function
-  | Autoplan -> `Plan `Auto
-  | Plan -> `Plan `Manual
-  | Autoapply -> `Apply `Auto
-  | Apply -> `Apply `Manual
-  | Unsafe_apply -> `Unsafe_apply
 
 let compute_matches ~repo_config ~tag_query ~out_of_change_applies ~diff ~repo_tree () =
   let open CCResult.Infix in
@@ -181,11 +250,193 @@ module Make (S : S) = struct
   let log_time event name t =
     Logs.info (fun m -> m "EVENT_EVALUATOR : %s : %s : %f" (S.Event.request_id event) name t)
 
-  let create_queued_commit_checks event pull_request dirspaces =
+  module Access_control = Terrat_access_control.Make (S.Access_control)
+
+  module Access_control_engine = struct
+    module Ac = Terrat_repo_config.Access_control
+    module P = Terrat_repo_config.Access_control_policy
+
+    let default_terrateam_config_update = [ "repo:admin" ]
+    let default_plan = [ "*" ]
+    let default_apply = [ "repo:maintain" ]
+    let default_apply_force = [ "repo:admin" ]
+    let default_apply_autoapprove = [ "repo:admin" ]
+    let default_unlock = [ "*" ]
+    let default_apply_with_superapproval = []
+    let default_superapproval = []
+
+    type t = {
+      ctx : S.Access_control.ctx;
+      event : S.Event.t;
+      config : Terrat_repo_config.Access_control.t;
+    }
+
+    let make event repo_config =
+      let ctx = S.create_access_control_ctx ~user:(S.Event.user event) event in
+      let default = Terrat_repo_config.Access_control.make () in
+      let config =
+        CCOption.get_or ~default repo_config.Terrat_repo_config.Version_1.access_control
+      in
+      { ctx; event; config }
+
+    let eval_repo_config t diff =
+      let terrateam_config_update =
+        CCOption.get_or ~default:default_terrateam_config_update t.config.Ac.terrateam_config_update
+      in
+      if t.config.Ac.enabled then
+        Abbs_time_it.run (log_time t.event "ACCESS_CONTROL_EVAL_REPO_CONFIG") (fun () ->
+            let open Abbs_future_combinators.Infix_result_monad in
+            Access_control.eval_repo_config t.ctx terrateam_config_update diff
+            >>| function
+            | true -> None
+            | false -> Some terrateam_config_update)
+      else (
+        Logs.debug (fun m ->
+            m "EVENT_EVALUATOR : %s : ACCESS_CONTROL_DISABLED" (S.Event.request_id t.event));
+        Abb.Future.return (Ok None))
+
+    let eval' t change_matches default selector =
+      if t.config.Ac.enabled then
+        let policies =
+          match t.config.Ac.policies with
+          | None ->
+              (* If no policy is specified, then use the default *)
+              [
+                Terrat_access_control.Policy.
+                  { tag_query = Terrat_tag_set.of_list []; policy = default };
+              ]
+          | Some policies ->
+              (* Policies have been specified, but that doesn't mean the specific
+                 operation that is being executed has a configuration.  So iterate
+                 through and pluck out the specific configuration and take the
+                 default if that configuration was not specified. *)
+              policies
+              |> CCList.map (fun (Terrat_repo_config.Access_control_policy.{ tag_query; _ } as p) ->
+                     Terrat_access_control.Policy.
+                       {
+                         tag_query = Terrat_tag_set.of_string tag_query;
+                         policy = CCOption.get_or ~default (selector p);
+                       })
+        in
+        Abbs_time_it.run (log_time t.event "ACCESS_CONTROL_EVAL") (fun () ->
+            Access_control.eval t.ctx policies change_matches)
+      else (
+        Logs.debug (fun m ->
+            m "EVENT_EVALUATOR : %s : ACCESS_CONTROL_DISABLED" (S.Event.request_id t.event));
+        Abb.Future.return (Ok Terrat_access_control.R.{ pass = change_matches; deny = [] }))
+
+    let eval_superapproved t reviewers change_matches =
+      let open Abbs_future_combinators.Infix_result_monad in
+      (* First, let's see if this user can even apply any of the denied changes
+         if there is a superapproval. If there isn't, we return the original
+         response, otherwise we have to see if any of the changes have super
+         approvals. *)
+      eval'
+        t
+        change_matches
+        default_apply_with_superapproval
+        (fun P.{ apply_with_superapproval; _ } -> apply_with_superapproval)
+      >>= function
+      | Terrat_access_control.R.{ pass = _ :: _ as pass; deny } ->
+          (* Now, of those that passed, let's see if any have been approved by a
+             super approver.  To do this we'll iterate over the approvers. *)
+          let pass_with_superapproval =
+            pass
+            |> CCList.map (fun (Terrat_change_match.{ dirspace; _ } as ch) -> (dirspace, ch))
+            |> Dirspace_map.of_list
+          in
+          Abbs_future_combinators.List_result.fold_left
+            ~f:(fun acc user ->
+              let changes = acc |> Dirspace_map.to_list |> CCList.map snd in
+              let ctx = S.create_access_control_ctx ~user t.event in
+              let t' = { t with ctx } in
+              eval' t' changes default_superapproval (fun P.{ superapproval; _ } -> superapproval)
+              >>= fun Terrat_access_control.R.{ pass; _ } ->
+              let acc =
+                CCListLabels.fold_left
+                  ~f:(fun acc Terrat_change_match.{ dirspace; _ } ->
+                    Dirspace_map.remove dirspace acc)
+                  ~init:acc
+                  pass
+              in
+              Abb.Future.return (Ok acc))
+            ~init:pass_with_superapproval
+            reviewers
+          >>= fun unapproved ->
+          Abb.Future.return
+            (Ok
+               (Dirspace_map.fold
+                  (fun k _ acc -> Dirspace_map.remove k acc)
+                  unapproved
+                  pass_with_superapproval))
+      | _ ->
+          Logs.debug (fun m ->
+              m
+                "EVENT_EVALUATOR : %s : ACCESS_CONTROL : NO_MATCHING_CHANGES_FOR_SUPERAPPROVAL"
+                (S.Event.request_id t.event));
+          Abb.Future.return (Ok Dirspace_map.empty)
+
+    let eval_tf_operation t change_matches = function
+      | `Plan -> eval' t change_matches default_plan (fun P.{ plan; _ } -> plan)
+      | `Apply reviewers -> (
+          let open Abbs_future_combinators.Infix_result_monad in
+          eval' t change_matches default_apply (fun P.{ apply; _ } -> apply)
+          >>= function
+          | Terrat_access_control.R.{ pass; deny = _ :: _ as deny } ->
+              (* If we have some denies, then let's see if any of them can be
+                 applied with because of a super approver.  If not, we'll return
+                 the original response. *)
+              Logs.debug (fun m ->
+                  m
+                    "EVENT_EVALUATOR : %s : ACCESS_CONTROL : EVAL_SUPERAPPROVAL"
+                    (S.Event.request_id t.event));
+              let denied_change_matches =
+                CCList.map
+                  (fun Terrat_access_control.R.Deny.{ change_match; _ } -> change_match)
+                  deny
+              in
+              eval_superapproved t reviewers denied_change_matches
+              >>= fun superapproved ->
+              let pass = pass @ (superapproved |> Dirspace_map.to_list |> CCList.map snd) in
+              let deny =
+                CCList.filter
+                  (fun Terrat_access_control.R.Deny.
+                         { change_match = Terrat_change_match.{ dirspace; _ }; _ } ->
+                    not (Dirspace_map.mem dirspace superapproved))
+                  deny
+              in
+              Abb.Future.return (Ok Terrat_access_control.R.{ pass; deny })
+          | r -> Abb.Future.return (Ok r))
+      | `Apply_force ->
+          eval' t change_matches default_apply_force (fun P.{ apply_force; _ } -> apply_force)
+      | `Apply_autoapprove ->
+          eval' t change_matches default_apply_autoapprove (fun P.{ apply_autoapprove; _ } ->
+              apply_autoapprove)
+
+    let eval_pr_operation t = function
+      | `Unlock ->
+          if t.config.Ac.enabled then
+            let match_list = CCOption.get_or ~default:default_unlock t.config.Ac.unlock in
+            Abbs_time_it.run (log_time t.event "ACCESS_CONTROL_EVAL") (fun () ->
+                let open Abbs_future_combinators.Infix_result_monad in
+                Access_control.eval_match_list t.ctx match_list
+                >>| function
+                | true -> None
+                | false -> Some match_list)
+          else (
+            Logs.debug (fun m ->
+                m "EVENT_EVALUATOR : %s : ACCESS_CONTROL_DISABLED" (S.Event.request_id t.event));
+            Abb.Future.return (Ok None))
+
+    let plan_require_all_dirspace_access t = t.config.Ac.plan_require_all_dirspace_access
+    let apply_require_all_dirspace_access t = t.config.Ac.apply_require_all_dirspace_access
+  end
+
+  let create_queued_commit_checks event run_type pull_request dirspaces =
     let details_url = S.get_commit_check_details_url event pull_request in
     let unified_run_type =
       let module Urt = Terrat_work_manifest.Unified_run_type in
-      event |> S.Event.run_type |> Urt.of_run_type |> Urt.to_string
+      run_type |> Urt.of_run_type |> Urt.to_string
     in
     let aggregate =
       Terrat_commit_check.
@@ -388,6 +639,7 @@ module Make (S : S) = struct
             (if status_checks.Ar.Checks.Status_checks.enabled then Some all_commit_check_success
             else None);
           status_checks_failed = failed_commit_checks;
+          approved_reviews;
         }
     in
     (* If it's merged, nothing should stop an apply because it's already
@@ -418,7 +670,14 @@ module Make (S : S) = struct
           (Bool.to_string result));
     Abb.Future.return (Ok (result, apply_requirements))
 
-  let create_and_store_work_manifest db repo_config event pull_request matches =
+  let create_and_store_work_manifest
+      db
+      repo_config
+      event
+      pull_request
+      matches
+      denied_dirspaces
+      run_type =
     let open Abbs_future_combinators.Infix_result_monad in
     let dirspaceflows = dirspaceflows_of_changes repo_config matches in
     let dirspaces = CCList.map (fun Terrat_change_match.{ dirspace; _ } -> dirspace) matches in
@@ -433,24 +692,27 @@ module Make (S : S) = struct
           id = ();
           pull_request;
           run_id = ();
-          run_type = S.Event.run_type event;
+          run_type;
           state = ();
           tag_query = S.Event.tag_query event;
         }
     in
     Abbs_time_it.run (log_time event "CREATE_WORK_MANIFEST") (fun () ->
-        S.store_new_work_manifest db event work_manifest)
+        S.store_new_work_manifest db event work_manifest denied_dirspaces)
     >>= fun _ ->
     Abbs_time_it.run (log_time event "CREATE_COMMIT_CHECKS") (fun () ->
         S.create_commit_checks
           event
           pull_request
-          (create_queued_commit_checks event pull_request dirspaces))
+          (create_queued_commit_checks event run_type pull_request dirspaces))
     >>= fun () -> Abb.Future.return (Ok ())
 
-  let process_plan' db repo_config event pull_request tag_query_matches run_source_type =
+  let process_plan' access_control db repo_config event pull_request tag_query_matches tf_mode =
+    let module D = Terrat_access_control.R.Deny in
+    let module Cm = Terrat_change_match in
+    let open Abb.Future.Infix_monad in
     let matches =
-      match run_source_type with
+      match tf_mode with
       | `Auto ->
           CCList.filter
             (fun Terrat_change_match.
@@ -463,125 +725,225 @@ module Make (S : S) = struct
             tag_query_matches
       | `Manual -> tag_query_matches
     in
-    match (S.Event.run_type event, matches) with
-    | Terrat_work_manifest.Run_type.Autoplan, [] ->
-        Logs.info (fun m ->
-            m
-              "EVENT_EVALUATOR : %s : NOOP : AUTOPLAN_NO_MATCHES : draft=%s"
-              (S.Event.request_id event)
-              (Bool.to_string (S.Pull_request.is_draft_pr pull_request)));
-        Abb.Future.return (Ok None)
-    | _, [] ->
-        Logs.info (fun m ->
-            m "EVENT_EVALUATOR : %s : NOOP : PLAN_NO_MATCHING_DIRSPACES" (S.Event.request_id event));
-        Abb.Future.return (Ok (Some Msg.Plan_no_matching_dirspaces))
-    | _, _ ->
-        let open Abbs_future_combinators.Infix_result_monad in
-        create_and_store_work_manifest db repo_config event pull_request matches
-        >>= fun () -> Abb.Future.return (Ok None)
+    Access_control_engine.eval_tf_operation access_control matches `Plan
+    >>= function
+    | Ok Terrat_access_control.R.{ pass = []; deny = _ :: _ as deny }
+      when not (Access_control_engine.plan_require_all_dirspace_access access_control) ->
+        (* In this case all have been denied, but not all dirspaces must have
+           access, however this is treated as special because no work will be done
+           so a special message should be given to the usr. *)
+        Abb.Future.return (Ok (Some (Msg.Access_control_denied (`All_dirspaces deny))))
+    | Ok Terrat_access_control.R.{ pass; deny }
+      when CCList.is_empty deny
+           || not (Access_control_engine.plan_require_all_dirspace_access access_control) -> (
+        (* All have passed or any that we do not require all to pass *)
+        let matches = pass in
+        match (tf_mode, matches) with
+        | `Auto, [] ->
+            Logs.info (fun m ->
+                m
+                  "EVENT_EVALUATOR : %s : NOOP : AUTOPLAN_NO_MATCHES : draft=%s"
+                  (S.Event.request_id event)
+                  (Bool.to_string (S.Pull_request.is_draft_pr pull_request)));
+            Abb.Future.return (Ok None)
+        | _, [] ->
+            Logs.info (fun m ->
+                m
+                  "EVENT_EVALUATOR : %s : NOOP : PLAN_NO_MATCHING_DIRSPACES"
+                  (S.Event.request_id event));
+            Abb.Future.return (Ok (Some Msg.Plan_no_matching_dirspaces))
+        | _, _ ->
+            let open Abbs_future_combinators.Infix_result_monad in
+            create_and_store_work_manifest
+              db
+              repo_config
+              event
+              pull_request
+              matches
+              deny
+              (Op_class.run_type_of_tf (`Plan tf_mode))
+            >>= fun () -> Abb.Future.return (Ok None))
+    | Ok Terrat_access_control.R.{ deny; _ } ->
+        Abb.Future.return (Ok (Some (Msg.Access_control_denied (`Dirspaces deny))))
+    | Error `Error -> Abb.Future.return (Ok (Some (Msg.Access_control_denied `Lookup_err)))
+    | Error (`Invalid_query query) ->
+        Abb.Future.return (Ok (Some (Msg.Access_control_denied (`Invalid_query query))))
 
-  let process_plan db event tag_query_matches all_matches pull_request repo_config run_source_type =
+  let process_plan
+      access_control
+      db
+      event
+      tag_query_matches
+      all_matches
+      pull_request
+      repo_config
+      tf_mode =
     Abbs_future_combinators.Infix_result_app.(
       (fun _ plan_result -> plan_result)
       <$> maybe_create_pending_apply event pull_request repo_config all_matches
-      <*> process_plan' db repo_config event pull_request tag_query_matches run_source_type)
+      <*> process_plan' access_control db repo_config event pull_request tag_query_matches tf_mode)
+
+  let process_apply'
+      db
+      event
+      matches
+      all_match_dirspaceflows
+      pull_request
+      repo_config
+      operation
+      denies =
+    let module D = Terrat_access_control.R.Deny in
+    let module Cm = Terrat_change_match in
+    let open Abbs_future_combinators.Infix_result_monad in
+    match (operation, matches) with
+    | `Apply `Auto, [] ->
+        Logs.info (fun m ->
+            m "EVENT_EVALUATOR : %s : NOOP : AUTOAPPLY_NO_MATCHES" (S.Event.request_id event));
+        Abb.Future.return (Ok None)
+    | _, [] ->
+        Logs.info (fun m ->
+            m "EVENT_EVALUATOR : %s : NOOP : APPLY_NO_MATCHING_DIRSPACES" (S.Event.request_id event));
+        Abb.Future.return (Ok (Some Msg.Apply_no_matching_dirspaces))
+    | _, _ -> (
+        Abbs_time_it.run (log_time event "QUERY_DIRSPACES_OWNED_BY_OTHER_PRS") (fun () ->
+            S.query_dirspaces_owned_by_other_pull_requests
+              db
+              event
+              pull_request
+              (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows))
+        >>= function
+        | dirspaces when Dirspace_map.is_empty dirspaces && operation = `Apply_autoapprove -> (
+            create_and_store_work_manifest
+              db
+              repo_config
+              event
+              pull_request
+              matches
+              denies
+              (Op_class.run_type_of_tf operation)
+            >>= function
+            | () when operation = `Apply `Auto ->
+                Abb.Future.return (Ok (Some Msg.Autoapply_running))
+            | () -> Abb.Future.return (Ok None))
+        | dirspaces when Dirspace_map.is_empty dirspaces -> (
+            (* None of the dirspaces are owned by another PR, we can proceed *)
+            Abbs_time_it.run (log_time event "QUERY_DIRSPACES_WITHOUT_VALID_PLANS") (fun () ->
+                S.query_dirspaces_without_valid_plans
+                  db
+                  event
+                  pull_request
+                  (CCList.map (fun Terrat_change_match.{ dirspace; _ } -> dirspace) matches))
+            >>= function
+            | [] -> (
+                (* All are ready to be applied *)
+                create_and_store_work_manifest
+                  db
+                  repo_config
+                  event
+                  pull_request
+                  matches
+                  denies
+                  (Op_class.run_type_of_tf operation)
+                >>= function
+                | () when operation = `Apply `Auto ->
+                    Abb.Future.return (Ok (Some Msg.Autoapply_running))
+                | () -> Abb.Future.return (Ok None))
+            | dirspaces ->
+                (* Some are missing plans *)
+                Abb.Future.return (Ok (Some (Msg.Missing_plans dirspaces))))
+        | dirspaces ->
+            (* Some are owned by another PR, abort *)
+            Abb.Future.return (Ok (Some (Msg.Dirspaces_owned_by_other_pull_request dirspaces))))
 
   let process_apply
+      access_control
       db
       event
       tag_query_matches
       all_match_dirspaceflows
       pull_request
       repo_config
-      run_type
-      run_source_type =
+      operation =
     let open Abbs_future_combinators.Infix_result_monad in
+    Abbs_time_it.run (log_time event "MISSING_APPLIED_DIRSPACES") (fun () ->
+        S.query_unapplied_dirspaces db event pull_request)
+    >>= fun missing_dirspaces ->
+    (* Filter only those missing *)
+    let tag_query_matches =
+      CCList.filter
+        (fun Terrat_change_match.{ dirspace; _ } ->
+          CCList.mem ~eq:Terrat_change.Dirspace.equal dirspace missing_dirspaces)
+        tag_query_matches
+    in
+    (* To perform an apply we need:
+
+       1. Plans for all of the dirspaces we are going to run.  This
+       also means that the plan also has happened after any of the
+       most recent applies to that dirspace.
+
+       2. Make sure no other pull requests own the any of the
+       dirspaces that this pull request touches. *)
+    let matches =
+      match operation with
+      | `Apply `Auto ->
+          CCList.filter
+            (fun Terrat_change_match.
+                   { when_modified = Terrat_repo_config.When_modified.{ autoapply; _ }; _ } ->
+              autoapply)
+            tag_query_matches
+      | `Apply `Manual | `Apply_autoapprove | `Apply_force -> tag_query_matches
+    in
     Abbs_time_it.run (log_time event "CHECK_APPLY_REQUIREMENTS") (fun () ->
         check_apply_requirements event pull_request repo_config)
+    >>= fun (passed_apply_requirements, apply_requirements_results) ->
+    let access_control_run_type =
+      match operation with
+      | `Apply _ ->
+          `Apply
+            (CCList.flat_map
+               (function
+                 | Terrat_pull_request_review.{ user = Some user; _ } -> [ user ]
+                 | _ -> [])
+               apply_requirements_results.Msg.Apply_requirements.approved_reviews)
+      | (`Apply_autoapprove | `Apply_force) as op -> op
+    in
+    let open Abb.Future.Infix_monad in
+    Access_control_engine.eval_tf_operation access_control matches access_control_run_type
     >>= function
-    | true, _ -> (
-        Abbs_time_it.run (log_time event "MISSING_APPLIED_DIRSPACES") (fun () ->
-            S.query_unapplied_dirspaces db event pull_request)
-        >>= fun missing_dirspaces ->
-        (* Filter only those missing *)
-        let tag_query_matches =
-          CCList.filter
-            (fun Terrat_change_match.{ dirspace; _ } ->
-              CCList.mem ~eq:Terrat_change.Dirspace.equal dirspace missing_dirspaces)
-            tag_query_matches
-        in
-        (* To perform an apply we need:
-
-           1. Plans for all of the dirspaces we are going to run.  This
-           also means that the plan also has happened after any of the
-           most recent applies to that dirspace.
-
-           2. Make sure no other pull requests own the any of the
-           dirspaces that this pull request touches. *)
-        let matches =
-          match run_source_type with
-          | `Auto ->
-              CCList.filter
-                (fun Terrat_change_match.
-                       { when_modified = Terrat_repo_config.When_modified.{ autoapply; _ }; _ } ->
-                  autoapply)
-                tag_query_matches
-          | `Manual -> tag_query_matches
-        in
-        match (S.Event.run_type event, matches) with
-        | Terrat_work_manifest.Run_type.Autoapply, [] ->
+    | Ok access_control_result -> (
+        match (operation, access_control_result) with
+        | (`Apply _ | `Apply_autoapprove), _ when not passed_apply_requirements ->
             Logs.info (fun m ->
-                m "EVENT_EVALUATOR : %s : NOOP : AUTOAPPLY_NO_MATCHES" (S.Event.request_id event));
-            Abb.Future.return (Ok None)
-        | _, [] ->
-            Logs.info (fun m ->
-                m
-                  "EVENT_EVALUATOR : %s : NOOP : APPLY_NO_MATCHING_DIRSPACES"
-                  (S.Event.request_id event));
-            Abb.Future.return (Ok (Some Msg.Apply_no_matching_dirspaces))
-        | _, _ -> (
-            Abbs_time_it.run (log_time event "QUERY_DIRSPACES_OWNED_BY_OTHER_PRS") (fun () ->
-                S.query_dirspaces_owned_by_other_pull_requests
-                  db
-                  event
-                  pull_request
-                  (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows))
-            >>= function
-            | dirspaces when Dirspace_map.is_empty dirspaces && run_type = `Unsafe_apply -> (
-                create_and_store_work_manifest db repo_config event pull_request matches
-                >>= function
-                | () when S.Event.run_type event = Terrat_work_manifest.Run_type.Autoapply ->
-                    Abb.Future.return (Ok (Some Msg.Autoapply_running))
-                | () -> Abb.Future.return (Ok None))
-            | dirspaces when Dirspace_map.is_empty dirspaces -> (
-                (* None of the dirspaces are owned by another PR, we can proceed *)
-                Abbs_time_it.run (log_time event "QUERY_DIRSPACES_WITHOUT_VALID_PLANS") (fun () ->
-                    S.query_dirspaces_without_valid_plans
-                      db
-                      event
-                      pull_request
-                      (CCList.map (fun Terrat_change_match.{ dirspace; _ } -> dirspace) matches))
-                >>= function
-                | [] -> (
-                    (* All are ready to be applied *)
-                    create_and_store_work_manifest db repo_config event pull_request matches
-                    >>= function
-                    | () when S.Event.run_type event = Terrat_work_manifest.Run_type.Autoapply ->
-                        Abb.Future.return (Ok (Some Msg.Autoapply_running))
-                    | () -> Abb.Future.return (Ok None))
-                | dirspaces ->
-                    (* Some are missing plans *)
-                    Abb.Future.return (Ok (Some (Msg.Missing_plans dirspaces))))
-            | dirspaces ->
-                (* Some are owned by another PR, abort *)
-                Abb.Future.return (Ok (Some (Msg.Dirspaces_owned_by_other_pull_request dirspaces))))
-        )
-    | false, apply_requirements ->
-        Logs.info (fun m -> m "EVENT_EVALUATOR : %s : PR_NOT_APPLIABLE" (S.Event.request_id event));
-        Abb.Future.return
-          (Ok (Some (Msg.Pull_request_not_appliable (pull_request, apply_requirements))))
+                m "EVENT_EVALUATOR : %s : PR_NOT_APPLIABLE" (S.Event.request_id event));
+            Abb.Future.return
+              (Ok (Some (Msg.Pull_request_not_appliable (pull_request, apply_requirements_results))))
+        | _, Terrat_access_control.R.{ pass = []; deny = _ :: _ as deny }
+          when not (Access_control_engine.apply_require_all_dirspace_access access_control) ->
+            (* In this case all have been denied, but not all dirspaces must have
+               access, however this is treated as special because no work will be done
+               so a special message should be given to the usr. *)
+            Abb.Future.return (Ok (Some (Msg.Access_control_denied (`All_dirspaces deny))))
+        | _, Terrat_access_control.R.{ pass; deny }
+          when CCList.is_empty deny
+               || not (Access_control_engine.apply_require_all_dirspace_access access_control) ->
+            (* All have passed or any that we do not require all to pass *)
+            let matches = pass in
+            process_apply'
+              db
+              event
+              matches
+              all_match_dirspaceflows
+              pull_request
+              repo_config
+              operation
+              deny
+        | _, Terrat_access_control.R.{ deny; _ } ->
+            Abb.Future.return (Ok (Some (Msg.Access_control_denied (`Dirspaces deny)))))
+    | Error `Error -> Abb.Future.return (Ok (Some (Msg.Access_control_denied `Lookup_err)))
+    | Error (`Invalid_query query) ->
+        Abb.Future.return (Ok (Some (Msg.Access_control_denied (`Invalid_query query))))
 
-  let exec_event storage event pull_request repo_config repo_tree =
+  let exec_event access_control storage event pull_request repo_config repo_tree operation =
     let open Abbs_future_combinators.Infix_result_monad in
     Logs.info (fun m ->
         m
@@ -596,11 +958,8 @@ module Make (S : S) = struct
           (CCList.length (S.Pull_request.diff pull_request)));
     Pgsql_pool.with_conn storage ~f:(fun db ->
         Pgsql_io.tx db ~f:(fun () ->
-            Abbs_time_it.run (log_time event "STORE_PULL_REQUEST") (fun () ->
-                S.store_pull_request db event pull_request)
-            >>= fun () ->
             Abbs_time_it.run (log_time event "QUERY_CONFLICTING_WORK_MANIFESTS") (fun () ->
-                S.query_conflicting_work_manifests_in_repo db event)
+                S.query_conflicting_work_manifests_in_repo db event operation)
             >>= function
             | [] -> (
                 (* Collect any changes that have been applied outside of the current
@@ -654,39 +1013,51 @@ module Make (S : S) = struct
                 Abbs_time_it.run (log_time event "STORE_DIRSPACEFLOWS") (fun () ->
                     S.store_dirspaceflows db event pull_request all_match_dirspaceflows)
                 >>= fun () ->
-                match unified_run_type (S.Event.run_type event) with
-                | `Plan run_source_type ->
+                match operation with
+                | `Plan tf_mode ->
                     Abbs_time_it.run (log_time event "PROCESS_PLAN") (fun () ->
                         process_plan
+                          access_control
                           db
                           event
                           tag_query_matches
                           all_matches
                           pull_request
                           repo_config
-                          run_source_type)
-                | `Apply run_source_type ->
+                          tf_mode)
+                | `Apply tf_mode ->
                     Abbs_time_it.run (log_time event "PROCESS_APPLY") (fun () ->
                         process_apply
+                          access_control
                           db
                           event
                           tag_query_matches
                           all_match_dirspaceflows
                           pull_request
                           repo_config
-                          `Apply
-                          run_source_type)
-                | `Unsafe_apply ->
-                    Abbs_time_it.run (log_time event "PROCESS_UNSAFE_APPLY") (fun () ->
+                          (`Apply tf_mode))
+                | `Apply_autoapprove ->
+                    Abbs_time_it.run (log_time event "PROCESS_APPLY_AUTOAPPROVE") (fun () ->
                         process_apply
+                          access_control
                           db
                           event
                           tag_query_matches
                           all_match_dirspaceflows
                           pull_request
                           repo_config
-                          `Unsafe_apply
-                          `Manual))
+                          `Apply_autoapprove)
+                | `Apply_force ->
+                    Abbs_time_it.run (log_time event "PROCESS_APPLY_FORCE") (fun () ->
+                        process_apply
+                          access_control
+                          db
+                          event
+                          tag_query_matches
+                          all_match_dirspaceflows
+                          pull_request
+                          repo_config
+                          `Apply_force))
             | wms -> Abb.Future.return (Ok (Some (Msg.Conflicting_work_manifests wms)))))
 
   (* Turn a glob into lua pattern for checking.  We escape all lua pattern
@@ -786,17 +1157,19 @@ module Make (S : S) = struct
     eval_destination_branch_match dest_branch source_branch valid_branches
 
   let handle_branches_error event pull_request msg_fragment =
-    match S.Event.run_type event with
-    | Terrat_work_manifest.Run_type.Autoplan | Terrat_work_manifest.Run_type.Autoapply ->
+    match S.Event.event_type event with
+    | Event_type.Autoplan | Event_type.Autoapply ->
         Logs.info (fun m ->
             m
               "EVENT_EVALUATOR : %s : %s_BRANCH_NOT_VALID_BRANCH"
               (S.Event.request_id event)
               msg_fragment);
         Abb.Future.return (Ok None)
-    | Terrat_work_manifest.Run_type.Plan
-    | Terrat_work_manifest.Run_type.Apply
-    | Terrat_work_manifest.Run_type.Unsafe_apply ->
+    | Event_type.Plan
+    | Event_type.Apply
+    | Event_type.Apply_autoapprove
+    | Event_type.Apply_force
+    | Event_type.Unlock ->
         Logs.info (fun m ->
             m
               "EVENT_EVALUATOR : %s : %s_BRANCH_NOT_VALID_BRANCH_EXPLICIT"
@@ -804,7 +1177,7 @@ module Make (S : S) = struct
               msg_fragment);
         Abb.Future.return (Ok (Some (Msg.Dest_branch_no_match pull_request)))
 
-  let fetch_dest_repo_config event pull_request =
+  let fetch_default_repo_config event pull_request =
     let open Abbs_future_combinators.Infix_result_monad in
     S.fetch_repo_config event pull_request (S.Event.default_branch event)
     >>| fun repo_default_config ->
@@ -817,36 +1190,85 @@ module Make (S : S) = struct
     let open Abbs_future_combinators.Infix_result_monad in
     Abbs_time_it.run (log_time event "FETCHING_PULL_REQUEST") (fun () -> S.fetch_pull_request event)
     >>= fun pull_request ->
+    Pgsql_pool.with_conn storage ~f:(fun db ->
+        Abbs_time_it.run (log_time event "STORE_PULL_REQUEST") (fun () ->
+            S.store_pull_request db event pull_request))
+    >>= fun () ->
     Abbs_future_combinators.Infix_result_app.(
-      (fun repo_config repo_dest_config repo_tree -> (repo_config, repo_dest_config, repo_tree))
+      (fun repo_config repo_default_config repo_tree ->
+        (repo_config, repo_default_config, repo_tree))
       <$> Abbs_time_it.run (log_time event "FETCHING_REPO_CONFIG") (fun () ->
               S.fetch_repo_config event pull_request (S.Pull_request.hash pull_request))
       <*> Abbs_time_it.run (log_time event "FETCHING_DEST_REPO_CONFIG") (fun () ->
-              fetch_dest_repo_config event pull_request)
+              fetch_default_repo_config event pull_request)
       <*> Abbs_time_it.run (log_time event "FETCHING_REPO_TREE") (fun () ->
               S.fetch_tree event pull_request))
-    >>= fun (repo_config, repo_dest_config, repo_tree) ->
-    match repo_dest_config with
-    | Ok repo_dest_config ->
-        if repo_config.Terrat_repo_config.Version_1.enabled then (
-          match S.Pull_request.state pull_request with
-          | Terrat_pull_request.State.(Open | Merged _)
-            when can_apply_checkout_strategy repo_config pull_request ->
-              exec_event storage event pull_request repo_config repo_tree
-          | Terrat_pull_request.State.(Open | Merged _) ->
-              (* Cannot apply checkout strategy *)
-              Logs.info (fun m ->
-                  m
-                    "EVENT_EVALUATOR : %s : CANNOT_APPLY_CHECKOUT_STRATEGY"
-                    (S.Event.request_id event));
-              Abb.Future.return (Ok (Some (Msg.Pull_request_not_mergeable pull_request)))
-          | Terrat_pull_request.State.Closed ->
-              Logs.info (fun m ->
-                  m "EVENT_EVALUATOR : %s : NOOP : PR_CLOSED" (S.Event.request_id event));
-              Pgsql_pool.with_conn storage ~f:(fun db ->
-                  Abbs_time_it.run (log_time event "STORE_PULL_REQUEST") (fun () ->
-                      S.store_pull_request db event pull_request))
-              >>= fun () -> Abb.Future.return (Ok None))
+    >>= fun (repo_config, repo_default_config, repo_tree) ->
+    match repo_default_config with
+    | Ok repo_default_config ->
+        if repo_default_config.Terrat_repo_config.Version_1.enabled then
+          let access_control = Access_control_engine.make event repo_default_config in
+          match Event_type.to_op_class (S.Event.event_type event) with
+          | Op_class.Pull_request `Unlock -> (
+              let open Abb.Future.Infix_monad in
+              Access_control_engine.eval_pr_operation access_control `Unlock
+              >>= function
+              | Ok None ->
+                  let open Abbs_future_combinators.Infix_result_monad in
+                  S.unlock_pull_request storage event
+                  >>= fun () -> Abb.Future.return (Ok (Some Msg.Unlock_success))
+              | Ok (Some match_list) ->
+                  Abb.Future.return (Ok (Some (Msg.Access_control_denied (`Unlock match_list))))
+              | Error `Error ->
+                  Abb.Future.return (Ok (Some (Msg.Access_control_denied `Lookup_err)))
+              | Error (`Invalid_query query) ->
+                  Abb.Future.return
+                    (Ok
+                       (Some (Msg.Access_control_denied (`Terrateam_config_update_bad_query query))))
+              )
+          | Op_class.Terraform operation -> (
+              match S.Pull_request.state pull_request with
+              | Terrat_pull_request.State.(Open | Merged _)
+                when can_apply_checkout_strategy repo_config pull_request -> (
+                  let open Abb.Future.Infix_monad in
+                  Access_control_engine.eval_repo_config
+                    access_control
+                    (S.Pull_request.diff pull_request)
+                  >>= function
+                  | Ok None ->
+                      exec_event
+                        access_control
+                        storage
+                        event
+                        pull_request
+                        repo_config
+                        repo_tree
+                        operation
+                  | Ok (Some match_list) ->
+                      Abb.Future.return
+                        (Ok (Some (Msg.Access_control_denied (`Terrateam_config_update match_list))))
+                  | Error `Error ->
+                      Abb.Future.return (Ok (Some (Msg.Access_control_denied `Lookup_err)))
+                  | Error (`Invalid_query query) ->
+                      Abb.Future.return
+                        (Ok
+                           (Some
+                              (Msg.Access_control_denied (`Terrateam_config_update_bad_query query))))
+                  )
+              | Terrat_pull_request.State.(Open | Merged _) ->
+                  (* Cannot apply checkout strategy *)
+                  Logs.info (fun m ->
+                      m
+                        "EVENT_EVALUATOR : %s : CANNOT_APPLY_CHECKOUT_STRATEGY"
+                        (S.Event.request_id event));
+                  Abb.Future.return (Ok (Some (Msg.Pull_request_not_mergeable pull_request)))
+              | Terrat_pull_request.State.Closed ->
+                  Logs.info (fun m ->
+                      m "EVENT_EVALUATOR : %s : NOOP : PR_CLOSED" (S.Event.request_id event));
+                  Pgsql_pool.with_conn storage ~f:(fun db ->
+                      Abbs_time_it.run (log_time event "STORE_PULL_REQUEST") (fun () ->
+                          S.store_pull_request db event pull_request))
+                  >>= fun () -> Abb.Future.return (Ok None))
         else (
           Logs.info (fun m ->
               m "EVENT_EVALUATOR : %s : NOOP : REPO_CONFIG_DISABLED" (S.Event.request_id event));
