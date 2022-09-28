@@ -1261,6 +1261,7 @@ let process_pull_request_event request_id config storage = function
           Gw.Pull_request_opened.Pull_request_.T.
             { primary = Primary.{ number = pull_number; _ }; _ };
         repository;
+        sender;
         _;
       }
   | Gw.Pull_request_event.Pull_request_synchronize
@@ -1269,6 +1270,7 @@ let process_pull_request_event request_id config storage = function
           Some { Gw.Installation_lite.id = installation_id; _ };
         repository;
         pull_request = Gw.Pull_request.{ number = pull_number; _ };
+        sender;
         _;
       }
   | Gw.Pull_request_event.Pull_request_reopened
@@ -1279,15 +1281,17 @@ let process_pull_request_event request_id config storage = function
         pull_request =
           Gw.Pull_request_reopened.Pull_request_.T.
             { primary = Primary.{ number = pull_number; _ }; _ };
+        sender;
         _;
       } ->
       let open Abbs_future_combinators.Infix_result_monad in
       Logs.info (fun m ->
           m
-            "GITHUB_EVENT : %s : PULL_REQUEST_EVENT : owner=%s : repo=%s"
+            "GITHUB_EVENT : %s : PULL_REQUEST_EVENT : owner=%s : repo=%s : sender=%s"
             request_id
             repository.Gw.Repository.owner.Gw.User.login
-            repository.Gw.Repository.name);
+            repository.Gw.Repository.name
+            sender.Gw.User.login);
       Terrat_github.get_installation_access_token config installation_id
       >>= fun access_token ->
       let event =
@@ -1388,14 +1392,16 @@ let process_issue_comment request_id config storage = function
         issue =
           Gw.Issue_comment_created.Issue_.T.
             { primary = Primary.{ number = pull_number; pull_request = Some _; _ }; _ };
+        sender;
         _;
       } -> (
       Logs.info (fun m ->
           m
-            "GITHUB_EVENT : %s : COMMENT_CREATED_EVENT : owner=%s : repo=%s"
+            "GITHUB_EVENT : %s : COMMENT_CREATED_EVENT : owner=%s : repo=%s : sender=%s"
             request_id
             repository.Gw.Repository.owner.Gw.User.login
-            repository.Gw.Repository.name);
+            repository.Gw.Repository.name
+            sender.Gw.User.login);
       match Terrat_comment.parse comment.Gw.Issue_comment.body with
       | Ok Terrat_comment.Unlock ->
           perform_unlock_pr request_id config storage installation_id repository pull_number
