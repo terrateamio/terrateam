@@ -939,56 +939,60 @@ module Make (S : S) = struct
     | Error `No_matching_source_branch -> handle_branches_error event pull_request "SOURCE"
 
   let run storage event =
-    let open Abb.Future.Infix_monad in
-    Abb.Future.await (run' storage event)
-    >>= function
-    | `Det v -> (
-        match v with
-        | Ok (Some msg) ->
-            Abbs_time_it.run
-              (fun t ->
+    Abb.Future.await_bind
+      (function
+        | `Det v -> (
+            match v with
+            | Ok (Some msg) ->
+                Abbs_time_it.run
+                  (fun t ->
+                    Logs.info (fun m ->
+                        m "EVENT_EVALUATOR : %s : PUBLISH_MSG : %f" (S.Event.request_id event) t))
+                  (fun () -> S.publish_msg event msg)
+            | Ok None -> Abb.Future.return ()
+            | Error (`Bad_glob s) ->
+                Logs.err (fun m ->
+                    m "EVENT_EVALUATOR : %s : BAD_GLOB : %s" (S.Event.request_id event) s);
+                S.publish_msg event (Msg.Bad_glob s)
+            | Error (`Repo_config_parse_err err) ->
                 Logs.info (fun m ->
-                    m "EVENT_EVALUATOR : %s : PUBLISH_MSG : %f" (S.Event.request_id event) t))
-              (fun () -> S.publish_msg event msg)
-        | Ok None -> Abb.Future.return ()
-        | Error (`Bad_glob s) ->
-            Logs.err (fun m ->
-                m "EVENT_EVALUATOR : %s : BAD_GLOB : %s" (S.Event.request_id event) s);
-            S.publish_msg event (Msg.Bad_glob s)
-        | Error (`Repo_config_parse_err err) ->
-            Logs.info (fun m ->
-                m "EVENT_EVALUATOR : %s : REPO_CONFIG_PARSE_ERR : %s" (S.Event.request_id event) err);
-            S.publish_msg event (Msg.Repo_config_parse_failure err)
-        | Error (`Repo_config_err err) ->
-            Logs.info (fun m ->
-                m "EVENT_EVALUATOR : %s : REPO_CONFIG_ERR : %s" (S.Event.request_id event) err);
-            S.publish_msg event (Msg.Repo_config_failure err)
-        | Error `Error ->
-            Logs.err (fun m -> m "EVENT_EVALUATOR : %s : ERROR : ERROR" (S.Event.request_id event));
+                    m
+                      "EVENT_EVALUATOR : %s : REPO_CONFIG_PARSE_ERR : %s"
+                      (S.Event.request_id event)
+                      err);
+                S.publish_msg event (Msg.Repo_config_parse_failure err)
+            | Error (`Repo_config_err err) ->
+                Logs.info (fun m ->
+                    m "EVENT_EVALUATOR : %s : REPO_CONFIG_ERR : %s" (S.Event.request_id event) err);
+                S.publish_msg event (Msg.Repo_config_failure err)
+            | Error `Error ->
+                Logs.err (fun m ->
+                    m "EVENT_EVALUATOR : %s : ERROR : ERROR" (S.Event.request_id event));
+                Abb.Future.return ()
+            | Error (#Pgsql_pool.err as err) ->
+                Logs.err (fun m ->
+                    m
+                      "EVENT_EVALUATOR : %s : ERROR : %s"
+                      (S.Event.request_id event)
+                      (Pgsql_pool.show_err err));
+                Abb.Future.return ()
+            | Error (#Pgsql_io.err as err) ->
+                Logs.err (fun m ->
+                    m
+                      "EVENT_EVALUATOR : %s : ERROR : %s"
+                      (S.Event.request_id event)
+                      (Pgsql_io.show_err err));
+                Abb.Future.return ())
+        | `Aborted ->
+            Logs.err (fun m -> m "EVENT_EVALUATOR : %s : ABORTED" (S.Event.request_id event));
             Abb.Future.return ()
-        | Error (#Pgsql_pool.err as err) ->
+        | `Exn (exn, bt_opt) ->
             Logs.err (fun m ->
                 m
-                  "EVENT_EVALUATOR : %s : ERROR : %s"
+                  "EVENT_EVALUATOR : %s : EXN : %s : %s"
                   (S.Event.request_id event)
-                  (Pgsql_pool.show_err err));
-            Abb.Future.return ()
-        | Error (#Pgsql_io.err as err) ->
-            Logs.err (fun m ->
-                m
-                  "EVENT_EVALUATOR : %s : ERROR : %s"
-                  (S.Event.request_id event)
-                  (Pgsql_io.show_err err));
+                  (Printexc.to_string exn)
+                  (CCOption.map_or ~default:"" Printexc.raw_backtrace_to_string bt_opt));
             Abb.Future.return ())
-    | `Aborted ->
-        Logs.err (fun m -> m "EVENT_EVALUATOR : %s : ABORTED" (S.Event.request_id event));
-        Abb.Future.return ()
-    | `Exn (exn, bt_opt) ->
-        Logs.err (fun m ->
-            m
-              "EVENT_EVALUATOR : %s : EXN : %s : %s"
-              (S.Event.request_id event)
-              (Printexc.to_string exn)
-              (CCOption.map_or ~default:"" Printexc.raw_backtrace_to_string bt_opt));
-        Abb.Future.return ()
+      (run' storage event)
 end
