@@ -143,21 +143,39 @@ let unified_run_type =
 
 let compute_matches ~repo_config ~tag_query ~out_of_change_applies ~diff ~repo_tree () =
   let open CCResult.Infix in
+  Terrat_change_match.synthesize_dir_config ~file_list:repo_tree repo_config
+  >>= fun dirs ->
   let all_matching_dirspaces =
-    Terrat_change_matcher.map_dirspace ~filelist:repo_tree repo_config out_of_change_applies
+    CCList.flat_map
+      CCFun.(Terrat_change_match.of_dirspace dirs %> CCOption.to_list)
+      out_of_change_applies
   in
-  Terrat_change_matcher.match_diff ~filelist:repo_tree repo_config diff
-  >>= fun all_matching_diff ->
-  let all_matches = Terrat_change_matcher.merge_dedup all_matching_dirspaces all_matching_diff in
-  let all_match_dirspaceflows = CCList.map Terrat_change_matcher.dirspaceflow all_matches in
+  let all_matching_diff = Terrat_change_match.match_diff_list dirs diff in
+  let all_matches = Terrat_change_match.merge_with_dedup all_matching_diff all_matching_dirspaces in
   let tag_query_matches =
-    Terrat_change_matcher.map_dirspace
-      ~tag_query
-      ~filelist:repo_tree
-      repo_config
-      (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows)
+    CCList.filter (Terrat_change_match.match_tag_query ~tag_query) all_matches
   in
   Ok (tag_query_matches, all_matches)
+
+let match_tag_queries ~accessor ~changes queries =
+  CCList.map
+    (fun change ->
+      ( change,
+        CCList.find_idx
+          (fun q -> Terrat_change_match.match_tag_query ~tag_query:(accessor q) change)
+          queries ))
+    changes
+
+let dirspaceflows_of_changes repo_config changes =
+  let workflows = CCOption.get_or ~default:[] repo_config.Terrat_repo_config.Version_1.workflows in
+  CCList.map
+    (fun (Terrat_change_match.{ dirspace; _ }, workflow) ->
+      Terrat_change.Dirspaceflow.{ dirspace; workflow_idx = CCOption.map fst workflow })
+    (match_tag_queries
+       ~accessor:(fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
+         Terrat_tag_set.of_string tag_query)
+       ~changes
+       workflows)
 
 module Make (S : S) = struct
   let log_time event name t =
@@ -252,12 +270,11 @@ module Make (S : S) = struct
                 all_matches
                 |> CCList.filter_map
                      (fun
-                       Terrat_change_matcher.
+                       Terrat_change_match.
                          {
-                           dirspaceflow =
-                             Terrat_change.
-                               { Dirspaceflow.dirspace = Dirspace.{ dir; workspace }; _ };
+                           dirspace = Terrat_change.Dirspace.{ dir; workspace };
                            when_modified = Terrat_repo_config.When_modified.{ autoapply; _ };
+                           _;
                          }
                      ->
                        let name = Printf.sprintf "terrateam apply: %s %s" dir workspace in
@@ -401,9 +418,10 @@ module Make (S : S) = struct
           (Bool.to_string result));
     Abb.Future.return (Ok (result, apply_requirements))
 
-  let create_and_store_work_manifest db event pull_request matches =
+  let create_and_store_work_manifest db repo_config event pull_request matches =
     let open Abbs_future_combinators.Infix_result_monad in
-    let dirspaceflows = CCList.map Terrat_change_matcher.dirspaceflow matches in
+    let dirspaceflows = dirspaceflows_of_changes repo_config matches in
+    let dirspaces = CCList.map (fun Terrat_change_match.{ dirspace; _ } -> dirspace) matches in
     let work_manifest =
       Terrat_work_manifest.
         {
@@ -427,22 +445,20 @@ module Make (S : S) = struct
         S.create_commit_checks
           event
           pull_request
-          (create_queued_commit_checks
-             event
-             pull_request
-             (CCList.map (fun dsf -> dsf.Terrat_change.Dirspaceflow.dirspace) dirspaceflows)))
+          (create_queued_commit_checks event pull_request dirspaces))
     >>= fun () -> Abb.Future.return (Ok ())
 
-  let process_plan' db event pull_request tag_query_matches run_source_type =
+  let process_plan' db repo_config event pull_request tag_query_matches run_source_type =
     let matches =
       match run_source_type with
       | `Auto ->
           CCList.filter
-            (fun {
-                   Terrat_change_matcher.when_modified =
-                     Terrat_repo_config.When_modified.{ autoplan; autoplan_draft_pr; _ };
-                   _;
-                 } ->
+            (fun Terrat_change_match.
+                   {
+                     when_modified =
+                       Terrat_repo_config.When_modified.{ autoplan; autoplan_draft_pr; _ };
+                     _;
+                   } ->
               autoplan && ((not (S.Pull_request.is_draft_pr pull_request)) || autoplan_draft_pr))
             tag_query_matches
       | `Manual -> tag_query_matches
@@ -461,14 +477,14 @@ module Make (S : S) = struct
         Abb.Future.return (Ok (Some Msg.Plan_no_matching_dirspaces))
     | _, _ ->
         let open Abbs_future_combinators.Infix_result_monad in
-        create_and_store_work_manifest db event pull_request matches
+        create_and_store_work_manifest db repo_config event pull_request matches
         >>= fun () -> Abb.Future.return (Ok None)
 
   let process_plan db event tag_query_matches all_matches pull_request repo_config run_source_type =
     Abbs_future_combinators.Infix_result_app.(
       (fun _ plan_result -> plan_result)
       <$> maybe_create_pending_apply event pull_request repo_config all_matches
-      <*> process_plan' db event pull_request tag_query_matches run_source_type)
+      <*> process_plan' db repo_config event pull_request tag_query_matches run_source_type)
 
   let process_apply
       db
@@ -490,8 +506,7 @@ module Make (S : S) = struct
         (* Filter only those missing *)
         let tag_query_matches =
           CCList.filter
-            (fun Terrat_change_matcher.
-                   { dirspaceflow = Terrat_change.Dirspaceflow.{ dirspace; _ }; _ } ->
+            (fun Terrat_change_match.{ dirspace; _ } ->
               CCList.mem ~eq:Terrat_change.Dirspace.equal dirspace missing_dirspaces)
             tag_query_matches
         in
@@ -507,11 +522,9 @@ module Make (S : S) = struct
           match run_source_type with
           | `Auto ->
               CCList.filter
-                (fun {
-                       Terrat_change_matcher.when_modified =
-                         Terrat_repo_config.When_modified.{ autoapply; _ };
-                       _;
-                     } -> autoapply)
+                (fun Terrat_change_match.
+                       { when_modified = Terrat_repo_config.When_modified.{ autoapply; _ }; _ } ->
+                  autoapply)
                 tag_query_matches
           | `Manual -> tag_query_matches
         in
@@ -535,7 +548,7 @@ module Make (S : S) = struct
                   (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows))
             >>= function
             | dirspaces when Dirspace_map.is_empty dirspaces && run_type = `Unsafe_apply -> (
-                create_and_store_work_manifest db event pull_request matches
+                create_and_store_work_manifest db repo_config event pull_request matches
                 >>= function
                 | () when S.Event.run_type event = Terrat_work_manifest.Run_type.Autoapply ->
                     Abb.Future.return (Ok (Some Msg.Autoapply_running))
@@ -547,15 +560,11 @@ module Make (S : S) = struct
                       db
                       event
                       pull_request
-                      (CCList.map
-                         CCFun.(
-                           Terrat_change_matcher.dirspaceflow
-                           %> Terrat_change.Dirspaceflow.to_dirspace)
-                         matches))
+                      (CCList.map (fun Terrat_change_match.{ dirspace; _ } -> dirspace) matches))
                 >>= function
                 | [] -> (
                     (* All are ready to be applied *)
-                    create_and_store_work_manifest db event pull_request matches
+                    create_and_store_work_manifest db repo_config event pull_request matches
                     >>= function
                     | () when S.Event.run_type event = Terrat_work_manifest.Run_type.Autoapply ->
                         Abb.Future.return (Ok (Some Msg.Autoapply_running))
@@ -611,12 +620,11 @@ module Make (S : S) = struct
                      ~repo_tree
                      ())
                 >>= fun (tag_query_matches, all_matches) ->
-                let all_match_dirspaceflows =
-                  CCList.map Terrat_change_matcher.dirspaceflow all_matches
-                in
                 let dirs =
-                  all_match_dirspaceflows
-                  |> CCList.map (fun dsf -> Terrat_change.(dsf.Dirspaceflow.dirspace.Dirspace.dir))
+                  all_matches
+                  |> CCList.map
+                       (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; _ }
+                       -> dir)
                   |> Dir_set.of_list
                 in
                 Abbs_time_it.run (log_time event "LIST_EXISTING_DIRS") (fun () ->
@@ -628,20 +636,20 @@ module Make (S : S) = struct
                       "EVENT_EVALUATOR : %s : MISSING_DIRS : %d"
                       (S.Event.request_id event)
                       (Dir_set.cardinal missing_dirs));
-                let all_match_dirspaceflows =
-                  all_match_dirspaceflows
-                  |> CCList.filter (fun dsf ->
-                         Dir_set.mem
-                           Terrat_change.(dsf.Dirspaceflow.dirspace.Dirspace.dir)
-                           existing_dirs)
+                let all_match_dirspaces =
+                  all_matches
+                  |> CCList.filter
+                       (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; _ }
+                       -> Dir_set.mem dir existing_dirs)
                 in
                 let tag_query_matches =
                   tag_query_matches
-                  |> CCList.filter (fun tcm ->
-                         let dsf = tcm.Terrat_change_matcher.dirspaceflow in
-                         Dir_set.mem
-                           Terrat_change.(dsf.Dirspaceflow.dirspace.Dirspace.dir)
-                           existing_dirs)
+                  |> CCList.filter
+                       (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; _ }
+                       -> Dir_set.mem dir existing_dirs)
+                in
+                let all_match_dirspaceflows =
+                  dirspaceflows_of_changes repo_config all_match_dirspaces
                 in
                 Abbs_time_it.run (log_time event "STORE_DIRSPACEFLOWS") (fun () ->
                     S.store_dirspaceflows db event pull_request all_match_dirspaceflows)

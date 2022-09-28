@@ -1,4 +1,4 @@
-type t
+type t [@@deriving show]
 
 val of_list : string list -> t
 val to_list : t -> string list

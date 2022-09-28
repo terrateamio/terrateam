@@ -708,26 +708,42 @@ module Initiate = struct
     >>= fun repo_config ->
     Terrat_github.get_tree ~access_token ~owner ~repo ~sha:hash ()
     >>= fun files ->
-    match
-      Terrat_change_matcher.match_diff
-        ~filelist:files
-        repo_config
-        (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) files)
-    with
-    | Ok matches ->
+    match Terrat_change_match.synthesize_dir_config ~file_list:files repo_config with
+    | Ok dirs ->
+        let matches =
+          Terrat_change_match.match_diff_list
+            dirs
+            (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) files)
+        in
+        let workflows =
+          CCOption.get_or ~default:[] repo_config.Terrat_repo_config.Version_1.workflows
+        in
+        let dirspaceflows =
+          CCList.map
+            (fun (Terrat_change_match.{ dirspace; _ } as change) ->
+              Terrat_change.Dirspaceflow.
+                {
+                  dirspace;
+                  workflow_idx =
+                    CCOption.map
+                      fst
+                      (CCList.find_idx
+                         (fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
+                           Terrat_change_match.match_tag_query
+                             ~tag_query:(Terrat_tag_set.of_string tag_query)
+                             change)
+                         workflows);
+                })
+            matches
+        in
         Abb.Future.return
           (Ok
              (CCList.map
-                (fun Terrat_change_matcher.
-                       {
-                         dirspaceflow =
-                           Terrat_change.
-                             { Dirspaceflow.dirspace = { Dirspace.dir; workspace }; workflow_idx };
-                         _;
-                       } ->
+                (fun Terrat_change.
+                       { Dirspaceflow.dirspace = Dirspace.{ dir; workspace }; workflow_idx } ->
                   Terrat_api_components.Work_manifest_dir.
                     { path = dir; workspace; workflow = workflow_idx; rank = 0 })
-                matches))
+                dirspaceflows))
     | Error (`Bad_glob _ as err) -> Abb.Future.return (Error err)
 
   let handle_post request_id config storage t =
