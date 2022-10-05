@@ -1657,24 +1657,20 @@ let process_workflow_job_failure storage access_token run_id repository =
       Abb.Future.return (Ok ())
 
 let process_workflow_job request_id config storage = function
-  | Gw.Workflow_job_event.Workflow_job_completed
-      Gw.Workflow_job_completed.
-        {
-          installation = Some Gw.Installation_lite.{ id = installation_id; _ };
-          repository;
-          workflow_job =
-            Workflow_job_.T.{ primary = Primary.{ run_id; conclusion = Some "failure"; _ }; _ };
-          _;
-        } ->
+  | Gw.Workflow_job_event.
+      {
+        installation = Some Gw.Installation_lite.{ id = installation_id; _ };
+        repository;
+        workflow_job = Gw.Workflow_job.{ run_id; conclusion = Some "failure"; _ };
+        _;
+      } ->
       (* We only handle failures specially because only on failure is it possible
          that the action did not communicate back the result to the service. *)
       let open Abbs_future_combinators.Infix_result_monad in
       Terrat_github.get_installation_access_token config installation_id
       >>= fun access_token ->
       process_workflow_job_failure storage access_token (CCInt.to_string run_id) repository
-  | Gw.Workflow_job_event.Workflow_job_completed _
-  | Gw.Workflow_job_event.Workflow_job_in_progress _
-  | Gw.Workflow_job_event.Workflow_job_queued _ -> Abb.Future.return (Ok ())
+  | _ -> Abb.Future.return (Ok ())
 
 let handle_error ctx = function
   | #Pgsql_pool.err as err ->
