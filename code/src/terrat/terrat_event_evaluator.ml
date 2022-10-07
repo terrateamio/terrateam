@@ -22,7 +22,7 @@ module Msg = struct
     | Pull_request_not_mergeable of 'pull_request
     | Apply_no_matching_dirspaces
     | Plan_no_matching_dirspaces
-    | Base_branch_not_default_branch of 'pull_request
+    | Dest_branch_no_match of 'pull_request
     | Autoapply_running
     | Bad_glob of string
 end
@@ -48,6 +48,7 @@ module type S = sig
     val passed_all_checks : t -> bool
     val mergeable : t -> bool option
     val is_draft_pr : t -> bool
+    val branch_name : t -> string
   end
 
   val list_existing_dirs :
@@ -766,12 +767,111 @@ module Make (S : S) = struct
                           `Manual))
             | wms -> Abb.Future.return (Ok (Some (Msg.Conflicting_work_manifests wms)))))
 
+  (* Turn a glob into lua pattern for checking.  We escape all lua pattern
+     special characters "().%+-?[^$", turn * into ".*", and wrap the whole thing
+     in ^ and $ to make it a complete string match. *)
+  let pattern_of_glob s =
+    let len = CCString.length s in
+    let b = Buffer.create len in
+    Buffer.add_char b '^';
+    for i = 0 to len - 1 do
+      match CCString.get s i with
+      | '*' -> Buffer.add_string b ".*"
+      | ('(' | ')' | '.' | '%' | '+' | '-' | '?' | '[' | '^' | '$') as c ->
+          Buffer.add_char b '%';
+          Buffer.add_char b c
+      | c -> Buffer.add_char b c
+    done;
+    Buffer.add_char b '$';
+    let pattern = Buffer.contents b in
+    CCOption.get_exn_or ("pattern_glob " ^ s ^ " " ^ pattern) (Lua_pattern.of_string pattern)
+
+  (* Get a destination branch from the destination branch configuration and
+     normalize it all on the Destination_branch_object type so it's easier to
+     work with. *)
+  let get_destination_branch =
+    let module D = Terrat_repo_config.Version_1.Destination_branches.Items in
+    let module O = Terrat_repo_config.Destination_branch_object in
+    function
+    | D.Destination_branch_name branch -> O.make ~branch ()
+    | D.Destination_branch_object obj -> obj
+
+  let rec eval_destination_branch_match dest_branch source_branch =
+    let module Obj = Terrat_repo_config.Destination_branch_object in
+    function
+    | [] -> Error `No_matching_dest_branch
+    | Obj.{ branch; source_branches } :: valid_branches -> (
+        let branch_glob = pattern_of_glob (CCString.lowercase_ascii branch) in
+        match Lua_pattern.find dest_branch branch_glob with
+        | Some _ ->
+            (* Partition the source branches into the not patterns and the
+               positive patterns. *)
+            let not_branches, branches =
+              CCList.partition
+                (CCString.prefix ~pre:"!")
+                (CCOption.get_or ~default:[ "*" ] source_branches)
+            in
+            (* Remove the exclamation point from the beginning as it's not
+               actually part of the pattern. *)
+            let not_branch_globs =
+              CCList.map
+                CCFun.(CCString.drop 1 %> CCString.lowercase_ascii %> pattern_of_glob)
+                not_branches
+            in
+            let branch_globs =
+              CCList.map CCFun.(CCString.lowercase_ascii %> pattern_of_glob) branches
+            in
+            (* The not patterns are an "and", as in success for the not patterns
+               is that all of them do not match.
+
+               The positive matches, however, are if any of them match. *)
+            if
+              CCList.for_all
+                CCFun.(Lua_pattern.find source_branch %> CCOption.is_none)
+                not_branch_globs
+              && CCList.exists
+                   CCFun.(Lua_pattern.find source_branch %> CCOption.is_some)
+                   branch_globs
+            then Ok ()
+            else Error `No_matching_source_branch
+        | None ->
+            (* If the dest branch doesn't match this branch, then try the next *)
+            eval_destination_branch_match dest_branch source_branch valid_branches)
+
+  (* Given a pull request and a repo configuration, validate that the
+     destination branch and the source branch are valid.  Everything is
+     converted to lowercase. *)
   let is_valid_destination_branch event pull_request repo_config =
     let module Rc = Terrat_repo_config_version_1 in
+    let module Obj = Terrat_repo_config.Destination_branch_object in
     let valid_branches =
-      CCOption.get_or ~default:[ S.Event.default_branch event ] repo_config.Rc.destination_branches
+      CCOption.map_or
+        ~default:[ Obj.make ~branch:(S.Event.default_branch event) () ]
+        (CCList.map get_destination_branch)
+        repo_config.Rc.destination_branches
     in
-    CCList.mem ~eq:CCString.equal (S.Pull_request.base_branch_name pull_request) valid_branches
+    let dest_branch = CCString.lowercase_ascii (S.Pull_request.base_branch_name pull_request) in
+    let source_branch = CCString.lowercase_ascii (S.Pull_request.branch_name pull_request) in
+    eval_destination_branch_match dest_branch source_branch valid_branches
+
+  let handle_branches_error event pull_request msg_fragment =
+    match S.Event.run_type event with
+    | Terrat_work_manifest.Run_type.Autoplan | Terrat_work_manifest.Run_type.Autoapply ->
+        Logs.info (fun m ->
+            m
+              "EVENT_EVALUATOR : %s : %s_BRANCH_NOT_VALID_BRANCH"
+              (S.Event.request_id event)
+              msg_fragment);
+        Abb.Future.return (Ok None)
+    | Terrat_work_manifest.Run_type.Plan
+    | Terrat_work_manifest.Run_type.Apply
+    | Terrat_work_manifest.Run_type.Unsafe_apply ->
+        Logs.info (fun m ->
+            m
+              "EVENT_EVALUATOR : %s : %s_BRANCH_NOT_VALID_BRANCH_EXPLICIT"
+              (S.Event.request_id event)
+              msg_fragment);
+        Abb.Future.return (Ok (Some (Msg.Dest_branch_no_match pull_request)))
 
   let run' storage event =
     let module Run_type = Terrat_work_manifest.Run_type in
@@ -795,48 +895,39 @@ module Make (S : S) = struct
                   m "EVENT_EVALUATOR : %s : FETCHING_REPO_TREE : %f" (S.Event.request_id event) t))
             (fun () -> S.fetch_tree event pull_request))
     >>= fun (repo_config, repo_tree) ->
-    if is_valid_destination_branch event pull_request repo_config then
-      if repo_config.Terrat_repo_config.Version_1.enabled then (
-        match S.Pull_request.state pull_request with
-        | Terrat_pull_request.State.(Open | Merged _)
-          when can_apply_checkout_strategy repo_config pull_request ->
-            exec_event storage event pull_request repo_config repo_tree
-        | Terrat_pull_request.State.(Open | Merged _) ->
-            (* Cannot apply checkout strategy *)
-            Logs.info (fun m ->
-                m "EVENT_EVALUATOR : %s : CANNOT_APPLY_CHECKOUT_STRATEGY" (S.Event.request_id event));
-            Abb.Future.return (Ok (Some (Msg.Pull_request_not_mergeable pull_request)))
-        | Terrat_pull_request.State.Closed ->
-            Logs.info (fun m ->
-                m "EVENT_EVALUATOR : %s : NOOP : PR_CLOSED" (S.Event.request_id event));
-            Pgsql_pool.with_conn storage ~f:(fun db ->
-                Abbs_time_it.run
-                  (fun t ->
-                    Logs.info (fun m ->
-                        m
-                          "EVENT_EVALUATOR : %s : STORE_PULL_REQUEST : %f"
-                          (S.Event.request_id event)
-                          t))
-                  (fun () -> S.store_pull_request db event pull_request))
-            >>= fun () -> Abb.Future.return (Ok None))
-      else (
-        Logs.info (fun m ->
-            m "EVENT_EVALUATOR : %s : NOOP : REPO_CONFIG_DISABLED" (S.Event.request_id event));
-        Abb.Future.return (Ok None))
-    else
-      match S.Event.run_type event with
-      | Terrat_work_manifest.Run_type.Autoplan | Terrat_work_manifest.Run_type.Autoapply ->
+    match is_valid_destination_branch event pull_request repo_config with
+    | Ok () ->
+        if repo_config.Terrat_repo_config.Version_1.enabled then (
+          match S.Pull_request.state pull_request with
+          | Terrat_pull_request.State.(Open | Merged _)
+            when can_apply_checkout_strategy repo_config pull_request ->
+              exec_event storage event pull_request repo_config repo_tree
+          | Terrat_pull_request.State.(Open | Merged _) ->
+              (* Cannot apply checkout strategy *)
+              Logs.info (fun m ->
+                  m
+                    "EVENT_EVALUATOR : %s : CANNOT_APPLY_CHECKOUT_STRATEGY"
+                    (S.Event.request_id event));
+              Abb.Future.return (Ok (Some (Msg.Pull_request_not_mergeable pull_request)))
+          | Terrat_pull_request.State.Closed ->
+              Logs.info (fun m ->
+                  m "EVENT_EVALUATOR : %s : NOOP : PR_CLOSED" (S.Event.request_id event));
+              Pgsql_pool.with_conn storage ~f:(fun db ->
+                  Abbs_time_it.run
+                    (fun t ->
+                      Logs.info (fun m ->
+                          m
+                            "EVENT_EVALUATOR : %s : STORE_PULL_REQUEST : %f"
+                            (S.Event.request_id event)
+                            t))
+                    (fun () -> S.store_pull_request db event pull_request))
+              >>= fun () -> Abb.Future.return (Ok None))
+        else (
           Logs.info (fun m ->
-              m "EVENT_EVALUATOR : %s : DEST_BRANCH_NOT_DEFAULT_BRANCH" (S.Event.request_id event));
-          Abb.Future.return (Ok None)
-      | Terrat_work_manifest.Run_type.Plan
-      | Terrat_work_manifest.Run_type.Apply
-      | Terrat_work_manifest.Run_type.Unsafe_apply ->
-          Logs.info (fun m ->
-              m
-                "EVENT_EVALUATOR : %s : DEST_BRANCH_NOT_DEFAULT_BRANCH_EXPLICIT"
-                (S.Event.request_id event));
-          Abb.Future.return (Ok (Some (Msg.Base_branch_not_default_branch pull_request)))
+              m "EVENT_EVALUATOR : %s : NOOP : REPO_CONFIG_DISABLED" (S.Event.request_id event));
+          Abb.Future.return (Ok None))
+    | Error `No_matching_dest_branch -> handle_branches_error event pull_request "DEST"
+    | Error `No_matching_source_branch -> handle_branches_error event pull_request "SOURCE"
 
   let run storage event =
     let open Abb.Future.Infix_monad in

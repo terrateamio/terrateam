@@ -21,7 +21,7 @@ module Msg : sig
     | Pull_request_not_mergeable of 'pull_request
     | Apply_no_matching_dirspaces
     | Plan_no_matching_dirspaces
-    | Base_branch_not_default_branch of 'pull_request
+    | Dest_branch_no_match of 'pull_request
     | Autoapply_running
     | Bad_glob of string
 end
@@ -47,6 +47,7 @@ module type S = sig
     val passed_all_checks : t -> bool
     val mergeable : t -> bool option
     val is_draft_pr : t -> bool
+    val branch_name : t -> string
   end
 
   (** Given a set of directories, return those directories that exist in the repo *)

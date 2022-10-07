@@ -219,7 +219,7 @@ module Tmpl = struct
   let terrateam_comment_help = read "terrateam_comment_help.tmpl"
   let apply_no_matching_dirspaces = read "apply_no_matching_dirspaces.tmpl"
   let plan_no_matching_dirspaces = read "plan_no_matching_dirspaces.tmpl"
-  let base_branch_not_default_branch = read "base_branch_not_default_branch.tmpl"
+  let base_branch_not_default_branch = read "dest_branch_no_match.tmpl"
   let auto_apply_running = read "auto_apply_running.tmpl"
   let bad_glob = read "bad_glob.tmpl"
 
@@ -317,6 +317,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     let passed_all_checks t = t.Terrat_pull_request.checks
     let mergeable t = t.Terrat_pull_request.mergeable
     let is_draft_pr t = t.Terrat_pull_request.draft
+    let branch_name t = t.Terrat_pull_request.branch_name
   end
 
   let list_existing_dirs event pull_request dirs =
@@ -1119,10 +1120,19 @@ module Evaluator = Terrat_event_evaluator.Make (struct
           Tmpl.plan_no_matching_dirspaces
           kv
           event
-    | Terrat_event_evaluator.Msg.Base_branch_not_default_branch _ ->
-        let kv = Snabela.Kv.(Map.of_list []) in
+    | Terrat_event_evaluator.Msg.Dest_branch_no_match pull_request ->
+        let kv =
+          Snabela.Kv.(
+            Map.of_list
+              [
+                ( "source_branch",
+                  string (CCString.lowercase_ascii (Pull_request.branch_name pull_request)) );
+                ( "dest_branch",
+                  string (CCString.lowercase_ascii (Pull_request.base_branch_name pull_request)) );
+              ])
+        in
         apply_template_and_publish
-          "BASE_BRANCH_NOT_DEFAULT_BRANCH"
+          "DEST_BRANCH_NO_MATCH"
           Tmpl.base_branch_not_default_branch
           kv
           event

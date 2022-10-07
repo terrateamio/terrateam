@@ -69,7 +69,32 @@ module Cost_estimation = struct
 end
 
 module Destination_branches = struct
-  type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+  module Items = struct
+    type t =
+      | Destination_branch_name of Terrat_repo_config_destination_branch_name.t
+      | Destination_branch_object of Terrat_repo_config_destination_branch_object.t
+    [@@deriving show]
+
+    let of_yojson =
+      Json_schema.one_of
+        (let open CCResult in
+        [
+          (fun v ->
+            map
+              (fun v -> Destination_branch_name v)
+              (Terrat_repo_config_destination_branch_name.of_yojson v));
+          (fun v ->
+            map
+              (fun v -> Destination_branch_object v)
+              (Terrat_repo_config_destination_branch_object.of_yojson v));
+        ])
+
+    let to_yojson = function
+      | Destination_branch_name v -> Terrat_repo_config_destination_branch_name.to_yojson v
+      | Destination_branch_object v -> Terrat_repo_config_destination_branch_object.to_yojson v
+  end
+
+  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
 end
 
 module Dirs = struct

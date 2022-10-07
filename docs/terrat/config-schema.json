@@ -15,6 +15,27 @@
       },
       "type": "object"
     },
+    "destination-branch-name": {
+      "type": "string"
+    },
+    "destination-branch-object": {
+      "additionalProperties": false,
+      "properties": {
+        "branch": {
+          "type": "string"
+        },
+        "source_branches": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "branch"
+      ],
+      "type": "object"
+    },
     "dir": {
       "additionalProperties": false,
       "properties": {
@@ -257,10 +278,10 @@
                       "type": "boolean"
                     },
                     "ignore_matching": {
-                      "type": "array",
                       "items": {
                         "type": "string"
-                      }
+                      },
+                      "type": "array"
                     }
                   },
                   "type": "object"
@@ -316,7 +337,14 @@
         },
         "destination_branches": {
           "items": {
-            "type": "string"
+            "oneOf": [
+              {
+                "$ref": "#/definitions/destination-branch-name"
+              },
+              {
+                "$ref": "#/definitions/destination-branch-object"
+              }
+            ]
           },
           "type": "array"
         },
