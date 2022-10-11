@@ -10,6 +10,17 @@ module Items = struct
       [@@deriving yojson { strict = false; meta = true }, show]
     end
 
+    module Scope = struct
+      let t_of_yojson = function
+        | `String "unknown" -> Ok "unknown"
+        | `String "runtime" -> Ok "runtime"
+        | `String "development" -> Ok "development"
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      type t = (string[@of_yojson t_of_yojson])
+      [@@deriving yojson { strict = false; meta = true }, show]
+    end
+
     module Vulnerabilities = struct
       module Items = struct
         module Primary = struct
@@ -35,6 +46,7 @@ module Items = struct
       manifest : string;
       name : string;
       package_url : string option;
+      scope : Scope.t;
       source_repository_url : string option;
       version : string;
       vulnerabilities : Vulnerabilities.t;

@@ -1,4 +1,19 @@
 module Primary = struct
+  module Conclusion = struct
+    let t_of_yojson = function
+      | `String "success" -> Ok "success"
+      | `String "failure" -> Ok "failure"
+      | `String "neutral" -> Ok "neutral"
+      | `String "cancelled" -> Ok "cancelled"
+      | `String "skipped" -> Ok "skipped"
+      | `String "timed_out" -> Ok "timed_out"
+      | `String "action_required" -> Ok "action_required"
+      | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+    type t = (string[@of_yojson t_of_yojson])
+    [@@deriving yojson { strict = false; meta = true }, show]
+  end
+
   module Labels = struct
     type t = string list [@@deriving yojson { strict = false; meta = true }, show]
   end
@@ -48,7 +63,7 @@ module Primary = struct
   type t = {
     check_run_url : string;
     completed_at : string option;
-    conclusion : string option;
+    conclusion : Conclusion.t option;
     head_sha : string;
     html_url : string option;
     id : int;

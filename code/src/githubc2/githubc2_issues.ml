@@ -1110,6 +1110,17 @@ module Update = struct
         [@@deriving yojson { strict = false; meta = true }, show]
       end
 
+      module State_reason = struct
+        let t_of_yojson = function
+          | `String "completed" -> Ok "completed"
+          | `String "not_planned" -> Ok "not_planned"
+          | `String "reopened" -> Ok "reopened"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
       module Title = struct
         module V0 = struct
           type t = string option [@@deriving yojson { strict = false; meta = true }, show]
@@ -1144,6 +1155,7 @@ module Update = struct
         labels : Labels.t option; [@default None]
         milestone : Milestone.t option; [@default None]
         state : State.t option; [@default None]
+        state_reason : State_reason.t option; [@default None]
         title : Title.t option; [@default None]
       }
       [@@deriving make, yojson { strict = false; meta = true }, show]
@@ -1644,6 +1656,16 @@ module Remove_all_labels = struct
   module Responses = struct
     module No_content = struct end
 
+    module Moved_permanently = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
     module Gone = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
@@ -1651,6 +1673,8 @@ module Remove_all_labels = struct
 
     type t =
       [ `No_content
+      | `Moved_permanently of Moved_permanently.t
+      | `Not_found of Not_found.t
       | `Gone of Gone.t
       ]
     [@@deriving show]
@@ -1658,6 +1682,8 @@ module Remove_all_labels = struct
     let t =
       [
         ("204", fun _ -> Ok `No_content);
+        ("301", Openapi.of_json_body (fun v -> `Moved_permanently v) Moved_permanently.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
         ("410", Openapi.of_json_body (fun v -> `Gone v) Gone.of_yojson);
       ]
   end
@@ -1751,6 +1777,16 @@ module Add_labels = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    module Moved_permanently = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
     module Gone = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
@@ -1763,6 +1799,8 @@ module Add_labels = struct
 
     type t =
       [ `OK of OK.t
+      | `Moved_permanently of Moved_permanently.t
+      | `Not_found of Not_found.t
       | `Gone of Gone.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
@@ -1771,6 +1809,8 @@ module Add_labels = struct
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("301", Openapi.of_json_body (fun v -> `Moved_permanently v) Moved_permanently.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
         ("410", Openapi.of_json_body (fun v -> `Gone v) Gone.of_yojson);
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
@@ -1867,6 +1907,16 @@ module Set_labels = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    module Moved_permanently = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
     module Gone = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
@@ -1879,6 +1929,8 @@ module Set_labels = struct
 
     type t =
       [ `OK of OK.t
+      | `Moved_permanently of Moved_permanently.t
+      | `Not_found of Not_found.t
       | `Gone of Gone.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
@@ -1887,6 +1939,8 @@ module Set_labels = struct
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("301", Openapi.of_json_body (fun v -> `Moved_permanently v) Moved_permanently.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
         ("410", Openapi.of_json_body (fun v -> `Gone v) Gone.of_yojson);
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
@@ -1931,6 +1985,16 @@ module List_labels_on_issue = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    module Moved_permanently = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
     module Gone = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
@@ -1938,6 +2002,8 @@ module List_labels_on_issue = struct
 
     type t =
       [ `OK of OK.t
+      | `Moved_permanently of Moved_permanently.t
+      | `Not_found of Not_found.t
       | `Gone of Gone.t
       ]
     [@@deriving show]
@@ -1945,6 +2011,8 @@ module List_labels_on_issue = struct
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("301", Openapi.of_json_body (fun v -> `Moved_permanently v) Moved_permanently.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
         ("410", Openapi.of_json_body (fun v -> `Gone v) Gone.of_yojson);
       ]
   end
@@ -1988,6 +2056,11 @@ module Remove_label = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    module Moved_permanently = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
     module Not_found = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
@@ -2000,6 +2073,7 @@ module Remove_label = struct
 
     type t =
       [ `OK of OK.t
+      | `Moved_permanently of Moved_permanently.t
       | `Not_found of Not_found.t
       | `Gone of Gone.t
       ]
@@ -2008,6 +2082,7 @@ module Remove_label = struct
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("301", Openapi.of_json_body (fun v -> `Moved_permanently v) Moved_permanently.of_yojson);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
         ("410", Openapi.of_json_body (fun v -> `Gone v) Gone.of_yojson);
       ]

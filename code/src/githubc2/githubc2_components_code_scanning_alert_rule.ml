@@ -31,6 +31,7 @@ module Primary = struct
     description : string option; [@default None]
     full_description : string option; [@default None]
     help : string option; [@default None]
+    help_uri : string option; [@default None]
     id : string option; [@default None]
     name : string option; [@default None]
     security_severity_level : Security_severity_level.t option; [@default None]

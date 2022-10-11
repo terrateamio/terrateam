@@ -4,7 +4,7 @@ module Primary = struct
     dismissed_at : string option;
     dismissed_by : Githubc2_components_nullable_simple_user.t option;
     dismissed_comment : string option; [@default None]
-    dismissed_reason : Githubc2_components_code_scanning_alert_dismissed_reason.t option;
+    dismissed_reason : Githubc2_components_code_scanning_alert_dismissed_reason.t;
     fixed_at : string option; [@default None]
     html_url : string;
     instances_url : string;

@@ -9,6 +9,7 @@ module Primary = struct
     push_protection_bypassed_by : Githubc2_components_nullable_simple_user.t option; [@default None]
     repository : Githubc2_components_simple_repository.t option; [@default None]
     resolution : Githubc2_components_secret_scanning_alert_resolution.t option; [@default None]
+    resolution_comment : string option; [@default None]
     resolved_at : string option; [@default None]
     resolved_by : Githubc2_components_nullable_simple_user.t option; [@default None]
     secret : string option; [@default None]

@@ -341,6 +341,7 @@ module Update_alert = struct
     module Primary = struct
       type t = {
         resolution : Githubc2_components.Secret_scanning_alert_resolution.t option; [@default None]
+        resolution_comment : string option; [@default None]
         state : Githubc2_components.Secret_scanning_alert_state.t;
       }
       [@@deriving make, yojson { strict = false; meta = true }, show]
@@ -355,6 +356,7 @@ module Update_alert = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    module Bad_request = struct end
     module Not_found = struct end
     module Unprocessable_entity = struct end
 
@@ -373,6 +375,7 @@ module Update_alert = struct
 
     type t =
       [ `OK of OK.t
+      | `Bad_request
       | `Not_found
       | `Unprocessable_entity
       | `Service_unavailable of Service_unavailable.t
@@ -382,6 +385,7 @@ module Update_alert = struct
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("400", fun _ -> Ok `Bad_request);
         ("404", fun _ -> Ok `Not_found);
         ("422", fun _ -> Ok `Unprocessable_entity);
         ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);

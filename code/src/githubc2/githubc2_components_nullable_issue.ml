@@ -63,6 +63,17 @@ module Primary = struct
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
   end
 
+  module State_reason = struct
+    let t_of_yojson = function
+      | `String "completed" -> Ok "completed"
+      | `String "reopened" -> Ok "reopened"
+      | `String "not_planned" -> Ok "not_planned"
+      | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+    type t = (string[@of_yojson t_of_yojson])
+    [@@deriving yojson { strict = false; meta = true }, show]
+  end
+
   type t = {
     active_lock_reason : string option; [@default None]
     assignee : Githubc2_components_nullable_simple_user.t option;
@@ -92,7 +103,7 @@ module Primary = struct
     repository : Githubc2_components_repository.t option; [@default None]
     repository_url : string;
     state : string;
-    state_reason : string option; [@default None]
+    state_reason : State_reason.t option; [@default None]
     timeline_url : string option; [@default None]
     title : string;
     updated_at : string;

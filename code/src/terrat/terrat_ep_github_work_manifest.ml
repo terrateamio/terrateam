@@ -1459,7 +1459,8 @@ module Results = struct
                   pull_number
                   (Githubc2_git.Delete_ref.Responses.Unprocessable_entity.show err));
             Abb.Future.return (Ok ()))
-    | `Not_found _ | `Internal_server_error _ | `Not_modified -> failwith "nyi"
+    | `Not_found _ | `Internal_server_error _ | `Not_modified | `Service_unavailable _ ->
+        failwith "nyi"
 
   let perform_post_apply
       ~request_id

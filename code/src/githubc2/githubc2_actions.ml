@@ -29,40 +29,6 @@ module Get_actions_cache_usage_for_enterprise = struct
       `Get
 end
 
-module Set_actions_oidc_custom_issuer_policy_for_enterprise = struct
-  module Parameters = struct
-    type t = { enterprise : string } [@@deriving make, show]
-  end
-
-  module Request_body = struct
-    type t = Githubc2_components.Actions_oidc_custom_issuer_policy_for_enterprise.t
-    [@@deriving yojson { strict = false; meta = true }, show]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-
-    type t = [ `No_content ] [@@deriving show]
-
-    let t = [ ("204", fun _ -> Ok `No_content) ]
-  end
-
-  let url = "/enterprises/{enterprise}/actions/oidc/customization/issuer"
-
-  let make ~body params =
-    Openapi.Request.make
-      ~body:(Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Put
-end
-
 module Set_github_actions_default_workflow_permissions_enterprise = struct
   module Parameters = struct
     type t = { enterprise : string } [@@deriving make, show]
@@ -978,43 +944,6 @@ module Remove_repo_access_to_self_hosted_runner_group_in_org = struct
       ~url
       ~responses:Responses.t
       `Delete
-end
-
-module Add_repo_access_to_self_hosted_runner_group_in_org = struct
-  module Parameters = struct
-    type t = {
-      org : string;
-      repository_id : int;
-      runner_group_id : int;
-    }
-    [@@deriving make, show]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-
-    type t = [ `No_content ] [@@deriving show]
-
-    let t = [ ("204", fun _ -> Ok `No_content) ]
-  end
-
-  let url = "/orgs/{org}/actions/runner-groups/{runner_group_id}/repositories/{repository_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("org", Var (params.org, String));
-          ("runner_group_id", Var (params.runner_group_id, Int));
-          ("repository_id", Var (params.repository_id, Int));
-        ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Put
 end
 
 module Set_self_hosted_runners_in_group_for_org = struct
@@ -2693,130 +2622,6 @@ module Re_run_job_for_workflow_run = struct
       `Post
 end
 
-module Set_custom_oidc_sub_claim_for_repo = struct
-  module Parameters = struct
-    type t = {
-      owner : string;
-      repo : string;
-    }
-    [@@deriving make, show]
-  end
-
-  module Request_body = struct
-    type t = Githubc2_components.Opt_out_oidc_custom_sub.t
-    [@@deriving yojson { strict = false; meta = true }, show]
-  end
-
-  module Responses = struct
-    module Created = struct
-      type t = Githubc2_components.Empty_object.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Bad_request = struct
-      type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Not_found = struct
-      type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Unprocessable_entity = struct
-      type t = Githubc2_components.Validation_error_simple.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    type t =
-      [ `Created of Created.t
-      | `Bad_request of Bad_request.t
-      | `Not_found of Not_found.t
-      | `Unprocessable_entity of Unprocessable_entity.t
-      ]
-    [@@deriving show]
-
-    let t =
-      [
-        ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
-        ("400", Openapi.of_json_body (fun v -> `Bad_request v) Bad_request.of_yojson);
-        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
-        ( "422",
-          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
-      ]
-  end
-
-  let url = "/repos/{owner}/{repo}/actions/oidc/customization/sub"
-
-  let make ~body params =
-    Openapi.Request.make
-      ~body:(Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Put
-end
-
-module Get_custom_oidc_sub_claim_for_repo = struct
-  module Parameters = struct
-    type t = {
-      owner : string;
-      repo : string;
-    }
-    [@@deriving make, show]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Githubc2_components.Opt_out_oidc_custom_sub.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Bad_request = struct
-      type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Not_found = struct
-      type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    type t =
-      [ `OK of OK.t
-      | `Bad_request of Bad_request.t
-      | `Not_found of Not_found.t
-      ]
-    [@@deriving show]
-
-    let t =
-      [
-        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
-        ("400", Openapi.of_json_body (fun v -> `Bad_request v) Bad_request.of_yojson);
-        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
-      ]
-  end
-
-  let url = "/repos/{owner}/{repo}/actions/oidc/customization/sub"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
 module Set_github_actions_permissions_repository = struct
   module Parameters = struct
     type t = {
@@ -3761,6 +3566,7 @@ module List_workflow_runs_for_repo = struct
       created : string option; [@default None]
       event : string option; [@default None]
       exclude_pull_requests : bool; [@default false]
+      head_sha : string option; [@default None]
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
@@ -3815,6 +3621,7 @@ module List_workflow_runs_for_repo = struct
           ("created", Var (params.created, Option String));
           ("exclude_pull_requests", Var (params.exclude_pull_requests, Bool));
           ("check_suite_id", Var (params.check_suite_id, Option Int));
+          ("head_sha", Var (params.head_sha, Option String));
         ])
       ~url
       ~responses:Responses.t
@@ -4228,7 +4035,8 @@ module Cancel_workflow_run = struct
 
   module Responses = struct
     module Accepted = struct
-      type t = Json_schema.Empty_obj.t [@@deriving yojson { strict = false; meta = false }, show]
+      type t = Githubc2_components.Empty_object.t
+      [@@deriving yojson { strict = false; meta = false }, show]
     end
 
     module Conflict = struct
@@ -4564,7 +4372,8 @@ module Re_run_workflow = struct
 
   module Responses = struct
     module Created = struct
-      type t = Json_schema.Empty_obj.t [@@deriving yojson { strict = false; meta = false }, show]
+      type t = Githubc2_components.Empty_object.t
+      [@@deriving yojson { strict = false; meta = false }, show]
     end
 
     type t = [ `Created of Created.t ] [@@deriving show]
@@ -4830,7 +4639,8 @@ module Create_or_update_repo_secret = struct
 
   module Responses = struct
     module Created = struct
-      type t = Json_schema.Empty_obj.t [@@deriving yojson { strict = false; meta = false }, show]
+      type t = Githubc2_components.Empty_object.t
+      [@@deriving yojson { strict = false; meta = false }, show]
     end
 
     module No_content = struct end
@@ -5248,6 +5058,7 @@ module List_workflow_runs = struct
       created : string option; [@default None]
       event : string option; [@default None]
       exclude_pull_requests : bool; [@default false]
+      head_sha : string option; [@default None]
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
@@ -5310,6 +5121,7 @@ module List_workflow_runs = struct
           ("created", Var (params.created, Option String));
           ("exclude_pull_requests", Var (params.exclude_pull_requests, Bool));
           ("check_suite_id", Var (params.check_suite_id, Option Int));
+          ("head_sha", Var (params.head_sha, Option String));
         ])
       ~url
       ~responses:Responses.t

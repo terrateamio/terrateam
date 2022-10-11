@@ -15,6 +15,7 @@ module Primary = struct
   end
 
   type t = {
+    advanced_security_enabled_for_new_repositories : bool option; [@default None]
     avatar_url : string;
     billing_email : string option; [@default None]
     blog : string option; [@default None]
@@ -22,6 +23,9 @@ module Primary = struct
     company : string option; [@default None]
     created_at : string;
     default_repository_permission : string option; [@default None]
+    dependabot_alerts_enabled_for_new_repositories : bool option; [@default None]
+    dependabot_security_updates_enabled_for_new_repositories : bool option; [@default None]
+    dependency_graph_enabled_for_new_repositories : bool option; [@default None]
     description : string option;
     disk_usage : int option; [@default None]
     email : string option; [@default None]
@@ -56,12 +60,15 @@ module Primary = struct
     public_members_url : string;
     public_repos : int;
     repos_url : string;
+    secret_scanning_enabled_for_new_repositories : bool option; [@default None]
+    secret_scanning_push_protection_enabled_for_new_repositories : bool option; [@default None]
     total_private_repos : int option; [@default None]
     twitter_username : string option; [@default None]
     two_factor_requirement_enabled : bool option; [@default None]
     type_ : string; [@key "type"]
     updated_at : string;
     url : string;
+    web_commit_signoff_required : bool option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show]
 end

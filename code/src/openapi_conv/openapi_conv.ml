@@ -224,22 +224,26 @@ let field_name_of_schema s =
   | "-1" -> "minus_one"
   | s -> s
 
-let field_default_of_value = function
-  | `String s -> Some Ast_helper.(Exp.constant (Const.string s))
-  | `Bool b ->
+let field_default_of_value typ default =
+  match (default, typ) with
+  | `String s, Some "boolean" ->
+      Some Ast_helper.(Exp.construct (Location.mknoloc (Gen.ident [ s ])) None)
+  | `String s, _ -> Some Ast_helper.(Exp.constant (Const.string s))
+  | `Bool b, _ ->
       Some Ast_helper.(Exp.construct (Location.mknoloc (Gen.ident [ Bool.to_string b ])) None)
-  | `Float fl -> Some Ast_helper.(Exp.constant (Const.float (CCFloat.to_string fl)))
-  | `Int int -> Some Ast_helper.(Exp.constant (Const.integer (CCInt.to_string int)))
-  | `List [] -> Some Json_schema_conv.Gen.(make_list [])
-  | `List (`String _ :: _ as v) ->
+  | `Float fl, _ -> Some Ast_helper.(Exp.constant (Const.float (CCFloat.to_string fl)))
+  | `Int int, _ -> Some Ast_helper.(Exp.constant (Const.integer (CCInt.to_string int)))
+  | `List [], _ -> Some Json_schema_conv.Gen.(make_list [])
+  | `List (`String _ :: _ as v), _ ->
       Some
         Json_schema_conv.Gen.(
           make_list
             (CCList.map
                (fun s -> Ast_helper.(Exp.constant (Const.string s)))
                (Yojson.Safe.Util.filter_string v)))
-  | `List _ -> (* TODO: Add more *) None
-  | json -> failwith (Printf.sprintf "Unknown field default value: %s" (Yojson.Safe.to_string json))
+  | `List _, _ -> (* TODO: Add more *) None
+  | json, _ ->
+      failwith (Printf.sprintf "Unknown field default value: %s" (Yojson.Safe.to_string json))
 
 let record_field_attrs schema name required =
   CCList.flatten
@@ -251,12 +255,12 @@ let record_field_attrs schema name required =
             (fun default ->
               Gen.field_default
                 (Ast_helper.Exp.construct (Location.mknoloc (Gen.ident [ "Some" ])) (Some default)))
-            (field_default_of_value default)
+            (field_default_of_value schema.Schema.typ default)
       | Some default ->
           CCOption.map_or
             ~default:[]
             (fun default -> Gen.field_default default)
-            (field_default_of_value default)
+            (field_default_of_value schema.Schema.typ default)
       | None when not (String_set.mem name required) -> Gen.field_default_none
       | None -> []);
       (if CCString.equal (field_name_of_schema name) name then [] else Gen.yojson_key_name name);

@@ -5,6 +5,48 @@ module Create_in_org = struct
 
   module Request_body = struct
     module Primary = struct
+      module Merge_commit_message = struct
+        let t_of_yojson = function
+          | `String "PR_BODY" -> Ok "PR_BODY"
+          | `String "PR_TITLE" -> Ok "PR_TITLE"
+          | `String "BLANK" -> Ok "BLANK"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      module Merge_commit_title = struct
+        let t_of_yojson = function
+          | `String "PR_TITLE" -> Ok "PR_TITLE"
+          | `String "MERGE_MESSAGE" -> Ok "MERGE_MESSAGE"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      module Squash_merge_commit_message = struct
+        let t_of_yojson = function
+          | `String "PR_BODY" -> Ok "PR_BODY"
+          | `String "COMMIT_MESSAGES" -> Ok "COMMIT_MESSAGES"
+          | `String "BLANK" -> Ok "BLANK"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      module Squash_merge_commit_title = struct
+        let t_of_yojson = function
+          | `String "PR_TITLE" -> Ok "PR_TITLE"
+          | `String "COMMIT_OR_PR_TITLE" -> Ok "COMMIT_OR_PR_TITLE"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
       module Visibility = struct
         let t_of_yojson = function
           | `String "public" -> Ok "public"
@@ -31,8 +73,12 @@ module Create_in_org = struct
         homepage : string option; [@default None]
         is_template : bool; [@default false]
         license_template : string option; [@default None]
+        merge_commit_message : Merge_commit_message.t option; [@default None]
+        merge_commit_title : Merge_commit_title.t option; [@default None]
         name : string;
         private_ : bool; [@default false] [@key "private"]
+        squash_merge_commit_message : Squash_merge_commit_message.t option; [@default None]
+        squash_merge_commit_title : Squash_merge_commit_title.t option; [@default None]
         team_id : int option; [@default None]
         use_squash_pr_title_as_default : bool; [@default false]
         visibility : Visibility.t option; [@default None]
@@ -184,6 +230,27 @@ module Update = struct
 
   module Request_body = struct
     module Primary = struct
+      module Merge_commit_message = struct
+        let t_of_yojson = function
+          | `String "PR_BODY" -> Ok "PR_BODY"
+          | `String "PR_TITLE" -> Ok "PR_TITLE"
+          | `String "BLANK" -> Ok "BLANK"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      module Merge_commit_title = struct
+        let t_of_yojson = function
+          | `String "PR_TITLE" -> Ok "PR_TITLE"
+          | `String "MERGE_MESSAGE" -> Ok "MERGE_MESSAGE"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
       module Security_and_analysis = struct
         module Primary = struct
           module Advanced_security = struct
@@ -225,6 +292,27 @@ module Update = struct
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
       end
 
+      module Squash_merge_commit_message = struct
+        let t_of_yojson = function
+          | `String "PR_BODY" -> Ok "PR_BODY"
+          | `String "COMMIT_MESSAGES" -> Ok "COMMIT_MESSAGES"
+          | `String "BLANK" -> Ok "BLANK"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      module Squash_merge_commit_title = struct
+        let t_of_yojson = function
+          | `String "PR_TITLE" -> Ok "PR_TITLE"
+          | `String "COMMIT_OR_PR_TITLE" -> Ok "COMMIT_OR_PR_TITLE"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
       module Visibility = struct
         let t_of_yojson = function
           | `String "public" -> Ok "public"
@@ -252,11 +340,16 @@ module Update = struct
         has_wiki : bool; [@default true]
         homepage : string option; [@default None]
         is_template : bool; [@default false]
+        merge_commit_message : Merge_commit_message.t option; [@default None]
+        merge_commit_title : Merge_commit_title.t option; [@default None]
         name : string option; [@default None]
         private_ : bool; [@default false] [@key "private"]
         security_and_analysis : Security_and_analysis.t option; [@default None]
+        squash_merge_commit_message : Squash_merge_commit_message.t option; [@default None]
+        squash_merge_commit_title : Squash_merge_commit_title.t option; [@default None]
         use_squash_pr_title_as_default : bool; [@default false]
         visibility : Visibility.t option; [@default None]
+        web_commit_signoff_required : bool; [@default false]
       }
       [@@deriving make, yojson { strict = false; meta = true }, show]
     end
@@ -466,6 +559,7 @@ module Create_autolink = struct
   module Request_body = struct
     module Primary = struct
       type t = {
+        is_alphanumeric : bool; [@default true]
         key_prefix : string;
         url_template : string;
       }
@@ -3250,11 +3344,24 @@ module List_collaborators = struct
       type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
     end
 
+    module Permission = struct
+      let t_of_yojson = function
+        | `String "pull" -> Ok "pull"
+        | `String "triage" -> Ok "triage"
+        | `String "push" -> Ok "push"
+        | `String "maintain" -> Ok "maintain"
+        | `String "admin" -> Ok "admin"
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+    end
+
     type t = {
       affiliation : Affiliation.t; [@default "all"]
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
+      permission : Permission.t option; [@default None]
       repo : string;
     }
     [@@deriving make, show]
@@ -3298,6 +3405,7 @@ module List_collaborators = struct
         let open Parameters in
         [
           ("affiliation", Var (params.affiliation, String));
+          ("permission", Var (params.permission, Option String));
           ("per_page", Var (params.per_page, Int));
           ("page", Var (params.page, Int));
         ])
@@ -4060,11 +4168,25 @@ module Get_commit = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    module Service_unavailable = struct
+      module Primary = struct
+        type t = {
+          code : string option; [@default None]
+          documentation_url : string option; [@default None]
+          message : string option; [@default None]
+        }
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
     type t =
       [ `OK of OK.t
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       | `Internal_server_error of Internal_server_error.t
+      | `Service_unavailable of Service_unavailable.t
       ]
     [@@deriving show]
 
@@ -4077,6 +4199,7 @@ module Get_commit = struct
         ( "500",
           Openapi.of_json_body (fun v -> `Internal_server_error v) Internal_server_error.of_yojson
         );
+        ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
       ]
   end
 
@@ -4281,10 +4404,24 @@ module Compare_commits_with_basehead = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    module Service_unavailable = struct
+      module Primary = struct
+        type t = {
+          code : string option; [@default None]
+          documentation_url : string option; [@default None]
+          message : string option; [@default None]
+        }
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
     type t =
       [ `OK of OK.t
       | `Not_found of Not_found.t
       | `Internal_server_error of Internal_server_error.t
+      | `Service_unavailable of Service_unavailable.t
       ]
     [@@deriving show]
 
@@ -4295,6 +4432,7 @@ module Compare_commits_with_basehead = struct
         ( "500",
           Openapi.of_json_body (fun v -> `Internal_server_error v) Internal_server_error.of_yojson
         );
+        ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
       ]
   end
 
@@ -5812,6 +5950,7 @@ module Create_fork = struct
   module Request_body = struct
     module Primary = struct
       type t = {
+        default_branch_only : bool option; [@default None]
         name : string option; [@default None]
         organization : string option; [@default None]
       }
@@ -7285,6 +7424,11 @@ module Delete_pages_site = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    module Conflict = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
@@ -7293,6 +7437,7 @@ module Delete_pages_site = struct
     type t =
       [ `No_content
       | `Not_found of Not_found.t
+      | `Conflict of Conflict.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
     [@@deriving show]
@@ -7301,6 +7446,7 @@ module Delete_pages_site = struct
       [
         ("204", fun _ -> Ok `No_content);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ("409", Openapi.of_json_body (fun v -> `Conflict v) Conflict.of_yojson);
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
       ]
@@ -7914,6 +8060,11 @@ module Update_information_about_pages_site = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    module Conflict = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show]
@@ -7922,6 +8073,7 @@ module Update_information_about_pages_site = struct
     type t =
       [ `No_content
       | `Bad_request of Bad_request.t
+      | `Conflict of Conflict.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
     [@@deriving show]
@@ -7930,6 +8082,7 @@ module Update_information_about_pages_site = struct
       [
         ("204", fun _ -> Ok `No_content);
         ("400", Openapi.of_json_body (fun v -> `Bad_request v) Bad_request.of_yojson);
+        ("409", Openapi.of_json_body (fun v -> `Conflict v) Conflict.of_yojson);
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
       ]
@@ -10352,6 +10505,48 @@ module Create_for_authenticated_user = struct
 
   module Request_body = struct
     module Primary = struct
+      module Merge_commit_message = struct
+        let t_of_yojson = function
+          | `String "PR_BODY" -> Ok "PR_BODY"
+          | `String "PR_TITLE" -> Ok "PR_TITLE"
+          | `String "BLANK" -> Ok "BLANK"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      module Merge_commit_title = struct
+        let t_of_yojson = function
+          | `String "PR_TITLE" -> Ok "PR_TITLE"
+          | `String "MERGE_MESSAGE" -> Ok "MERGE_MESSAGE"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      module Squash_merge_commit_message = struct
+        let t_of_yojson = function
+          | `String "PR_BODY" -> Ok "PR_BODY"
+          | `String "COMMIT_MESSAGES" -> Ok "COMMIT_MESSAGES"
+          | `String "BLANK" -> Ok "BLANK"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      module Squash_merge_commit_title = struct
+        let t_of_yojson = function
+          | `String "PR_TITLE" -> Ok "PR_TITLE"
+          | `String "COMMIT_OR_PR_TITLE" -> Ok "COMMIT_OR_PR_TITLE"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
       type t = {
         allow_auto_merge : bool; [@default false]
         allow_merge_commit : bool; [@default true]
@@ -10368,8 +10563,12 @@ module Create_for_authenticated_user = struct
         homepage : string option; [@default None]
         is_template : bool; [@default false]
         license_template : string option; [@default None]
+        merge_commit_message : Merge_commit_message.t option; [@default None]
+        merge_commit_title : Merge_commit_title.t option; [@default None]
         name : string;
         private_ : bool; [@default false] [@key "private"]
+        squash_merge_commit_message : Squash_merge_commit_message.t option; [@default None]
+        squash_merge_commit_title : Squash_merge_commit_title.t option; [@default None]
         team_id : int option; [@default None]
       }
       [@@deriving make, yojson { strict = false; meta = true }, show]

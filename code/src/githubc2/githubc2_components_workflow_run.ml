@@ -18,6 +18,7 @@ module Primary = struct
     check_suite_url : string;
     conclusion : string option;
     created_at : string;
+    display_title : string;
     event : string;
     head_branch : string option;
     head_commit : Githubc2_components_nullable_simple_commit.t option;

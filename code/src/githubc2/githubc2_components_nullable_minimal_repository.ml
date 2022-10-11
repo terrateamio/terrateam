@@ -119,6 +119,7 @@ module Primary = struct
     visibility : string option; [@default None]
     watchers : int option; [@default None]
     watchers_count : int option; [@default None]
+    web_commit_signoff_required : bool option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show]
 end

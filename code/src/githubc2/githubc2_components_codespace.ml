@@ -80,6 +80,7 @@ module Primary = struct
     id : int;
     idle_timeout_minutes : int option;
     idle_timeout_notice : string option; [@default None]
+    last_known_stop_notice : string option; [@default None]
     last_used_at : string;
     location : Location.t;
     machine : Githubc2_components_nullable_codespace_machine.t option;

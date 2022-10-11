@@ -1,4 +1,25 @@
 module Primary = struct
+  module Merge_commit_message = struct
+    let t_of_yojson = function
+      | `String "PR_BODY" -> Ok "PR_BODY"
+      | `String "PR_TITLE" -> Ok "PR_TITLE"
+      | `String "BLANK" -> Ok "BLANK"
+      | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+    type t = (string[@of_yojson t_of_yojson])
+    [@@deriving yojson { strict = false; meta = true }, show]
+  end
+
+  module Merge_commit_title = struct
+    let t_of_yojson = function
+      | `String "PR_TITLE" -> Ok "PR_TITLE"
+      | `String "MERGE_MESSAGE" -> Ok "MERGE_MESSAGE"
+      | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+    type t = (string[@of_yojson t_of_yojson])
+    [@@deriving yojson { strict = false; meta = true }, show]
+  end
+
   module Permissions = struct
     module Primary = struct
       type t = {
@@ -12,6 +33,27 @@ module Primary = struct
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Squash_merge_commit_message = struct
+    let t_of_yojson = function
+      | `String "PR_BODY" -> Ok "PR_BODY"
+      | `String "COMMIT_MESSAGES" -> Ok "COMMIT_MESSAGES"
+      | `String "BLANK" -> Ok "BLANK"
+      | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+    type t = (string[@of_yojson t_of_yojson])
+    [@@deriving yojson { strict = false; meta = true }, show]
+  end
+
+  module Squash_merge_commit_title = struct
+    let t_of_yojson = function
+      | `String "PR_TITLE" -> Ok "PR_TITLE"
+      | `String "COMMIT_OR_PR_TITLE" -> Ok "COMMIT_OR_PR_TITLE"
+      | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+    type t = (string[@of_yojson t_of_yojson])
+    [@@deriving yojson { strict = false; meta = true }, show]
   end
 
   module Topics = struct
@@ -75,6 +117,8 @@ module Primary = struct
     languages_url : string;
     license : Githubc2_components_nullable_license_simple.t option;
     master_branch : string option; [@default None]
+    merge_commit_message : Merge_commit_message.t option; [@default None]
+    merge_commit_title : Merge_commit_title.t option; [@default None]
     merges_url : string;
     milestones_url : string;
     mirror_url : string option;
@@ -95,6 +139,8 @@ module Primary = struct
     security_and_analysis : Githubc2_components_security_and_analysis.t option; [@default None]
     size : int;
     source : Githubc2_components_repository.t option; [@default None]
+    squash_merge_commit_message : Squash_merge_commit_message.t option; [@default None]
+    squash_merge_commit_title : Squash_merge_commit_title.t option; [@default None]
     ssh_url : string;
     stargazers_count : int;
     stargazers_url : string;
@@ -115,6 +161,7 @@ module Primary = struct
     visibility : string option; [@default None]
     watchers : int;
     watchers_count : int;
+    web_commit_signoff_required : bool option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show]
 end

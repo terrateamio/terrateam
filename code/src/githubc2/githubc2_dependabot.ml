@@ -431,6 +431,276 @@ module Add_selected_repo_to_org_secret = struct
       `Put
 end
 
+module List_alerts_for_repo = struct
+  module Parameters = struct
+    module Direction = struct
+      let t_of_yojson = function
+        | `String "asc" -> Ok "asc"
+        | `String "desc" -> Ok "desc"
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+    end
+
+    module Sort = struct
+      let t_of_yojson = function
+        | `String "created" -> Ok "created"
+        | `String "updated" -> Ok "updated"
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+    end
+
+    type t = {
+      direction : Direction.t; [@default "desc"]
+      ecosystem : string option; [@default None]
+      manifest : string option; [@default None]
+      owner : string;
+      package : string option; [@default None]
+      page : int; [@default 1]
+      per_page : int; [@default 30]
+      repo : string;
+      scope : Githubc2_components.Dependabot_alert_scope.t;
+      severity : string option; [@default None]
+      sort : Sort.t; [@default "created"]
+      state : string option; [@default None]
+    }
+    [@@deriving make, show]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Dependabot_alert.t list
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Not_modified = struct end
+
+    module Forbidden = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Unprocessable_entity = struct
+      type t = Githubc2_components.Validation_error_simple.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+    [@@deriving show]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("304", fun _ -> Ok `Not_modified);
+        ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+      ]
+  end
+
+  let url = "/repos/{owner}/{repo}/dependabot/alerts"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [
+          ("state", Var (params.state, Option String));
+          ("severity", Var (params.severity, Option String));
+          ("ecosystem", Var (params.ecosystem, Option String));
+          ("package", Var (params.package, Option String));
+          ("manifest", Var (params.manifest, Option String));
+          ("scope", Var (params.scope, Option String));
+          ("sort", Var (params.sort, String));
+          ("direction", Var (params.direction, String));
+          ("page", Var (params.page, Int));
+          ("per_page", Var (params.per_page, Int));
+        ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Update_alert = struct
+  module Parameters = struct
+    type t = {
+      alert_number : int;
+      owner : string;
+      repo : string;
+    }
+    [@@deriving make, show]
+  end
+
+  module Request_body = struct
+    type t = {
+      dismissed_comment : string option; [@default None]
+      dismissed_reason : Githubc2_components.Dependabot_alert_dismissed_reason.t option;
+          [@default None]
+      state : Githubc2_components.Dependabot_alert_set_state.t;
+    }
+    [@@deriving make, yojson { strict = true; meta = true }, show]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Dependabot_alert.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Not_modified = struct end
+
+    module Bad_request = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Forbidden = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Conflict = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Unprocessable_entity = struct
+      type t = Githubc2_components.Validation_error_simple.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Bad_request of Bad_request.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Conflict of Conflict.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+    [@@deriving show]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("304", fun _ -> Ok `Not_modified);
+        ("400", Openapi.of_json_body (fun v -> `Bad_request v) Bad_request.of_yojson);
+        ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ("409", Openapi.of_json_body (fun v -> `Conflict v) Conflict.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+      ]
+  end
+
+  let url = "/repos/{owner}/{repo}/dependabot/alerts/{alert_number}"
+
+  let make ~body params =
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [
+          ("owner", Var (params.owner, String));
+          ("repo", Var (params.repo, String));
+          ("alert_number", Var (params.alert_number, Int));
+        ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Patch
+end
+
+module Get_alert = struct
+  module Parameters = struct
+    type t = {
+      alert_number : int;
+      owner : string;
+      repo : string;
+    }
+    [@@deriving make, show]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Dependabot_alert.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Not_modified = struct end
+
+    module Forbidden = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      ]
+    [@@deriving show]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("304", fun _ -> Ok `Not_modified);
+        ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+      ]
+  end
+
+  let url = "/repos/{owner}/{repo}/dependabot/alerts/{alert_number}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+        let open Parameters in
+        [
+          ("owner", Var (params.owner, String));
+          ("repo", Var (params.repo, String));
+          ("alert_number", Var (params.alert_number, Int));
+        ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
 module List_repo_secrets = struct
   module Parameters = struct
     type t = {

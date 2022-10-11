@@ -593,7 +593,8 @@ module Evaluator = Terrat_event_evaluator.Make (struct
                    mergeable;
                    draft;
                  })
-      | `Not_found _ | `Internal_server_error _ | `Not_modified -> failwith "nyi2"
+      | `Not_found _ | `Internal_server_error _ | `Not_modified | `Service_unavailable _ ->
+          failwith "nyi2"
     in
     let open Abb.Future.Infix_monad in
     run

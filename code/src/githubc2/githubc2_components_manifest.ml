@@ -4,7 +4,8 @@ module File = struct
 end
 
 module Resolved = struct
-  type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
+  include
+    Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Githubc2_components_dependency)
 end
 
 type t = {

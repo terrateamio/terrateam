@@ -19,7 +19,7 @@ module Primary = struct
     members_url : string;
     name : string;
     node_id : string;
-    organization : Githubc2_components_organization_full.t;
+    organization : Githubc2_components_team_organization.t;
     parent : Githubc2_components_nullable_team_simple.t option; [@default None]
     permission : string;
     privacy : Privacy.t option; [@default None]

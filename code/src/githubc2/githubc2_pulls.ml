@@ -508,11 +508,25 @@ module Get = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    module Service_unavailable = struct
+      module Primary = struct
+        type t = {
+          code : string option; [@default None]
+          documentation_url : string option; [@default None]
+          message : string option; [@default None]
+        }
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
     type t =
       [ `OK of OK.t
       | `Not_modified
       | `Not_found of Not_found.t
       | `Internal_server_error of Internal_server_error.t
+      | `Service_unavailable of Service_unavailable.t
       ]
     [@@deriving show]
 
@@ -524,6 +538,7 @@ module Get = struct
         ( "500",
           Openapi.of_json_body (fun v -> `Internal_server_error v) Internal_server_error.of_yojson
         );
+        ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
       ]
   end
 
@@ -857,10 +872,24 @@ module List_files = struct
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
+    module Service_unavailable = struct
+      module Primary = struct
+        type t = {
+          code : string option; [@default None]
+          documentation_url : string option; [@default None]
+          message : string option; [@default None]
+        }
+        [@@deriving yojson { strict = false; meta = true }, show]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
     type t =
       [ `OK of OK.t
       | `Unprocessable_entity of Unprocessable_entity.t
       | `Internal_server_error of Internal_server_error.t
+      | `Service_unavailable of Service_unavailable.t
       ]
     [@@deriving show]
 
@@ -872,6 +901,7 @@ module List_files = struct
         ( "500",
           Openapi.of_json_body (fun v -> `Internal_server_error v) Internal_server_error.of_yojson
         );
+        ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
       ]
   end
 

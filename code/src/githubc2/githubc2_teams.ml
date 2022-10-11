@@ -1,121 +1,3 @@
-module External_idp_group_info_for_org = struct
-  module Parameters = struct
-    type t = {
-      group_id : int;
-      org : string;
-    }
-    [@@deriving make, show]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Githubc2_components.External_group.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    type t = [ `OK of OK.t ] [@@deriving show]
-
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
-  end
-
-  let url = "/orgs/{org}/external-group/{group_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("group_id", Var (params.group_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module List_external_idp_groups_for_org = struct
-  module Parameters = struct
-    type t = {
-      display_name : string option; [@default None]
-      org : string;
-      page : int option; [@default None]
-      per_page : int; [@default 30]
-    }
-    [@@deriving make, show]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Githubc2_components.External_groups.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    type t = [ `OK of OK.t ] [@@deriving show]
-
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
-  end
-
-  let url = "/orgs/{org}/external-groups"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Option Int));
-          ("display_name", Var (params.display_name, Option String));
-        ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module List_idp_groups_for_org = struct
-  module Parameters = struct
-    type t = {
-      org : string;
-      page : string option; [@default None]
-      per_page : int; [@default 30]
-    }
-    [@@deriving make, show]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Githubc2_components.Group_mapping.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    type t = [ `OK of OK.t ] [@@deriving show]
-
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
-  end
-
-  let url = "/orgs/{org}/team-sync/groups"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Option String)) ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
 module Create = struct
   module Parameters = struct
     type t = { org : string } [@@deriving make, show]
@@ -312,14 +194,49 @@ module Update_in_org = struct
   end
 
   module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Team_full.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
     module Created = struct
       type t = Githubc2_components.Team_full.t
       [@@deriving yojson { strict = false; meta = false }, show]
     end
 
-    type t = [ `Created of Created.t ] [@@deriving show]
+    module Forbidden = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
 
-    let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    module Unprocessable_entity = struct
+      type t = Githubc2_components.Validation_error.t
+      [@@deriving yojson { strict = false; meta = false }, show]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Created of Created.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+    [@@deriving show]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
+        ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+      ]
   end
 
   let url = "/orgs/{org}/teams/{team_slug}"
@@ -890,117 +807,6 @@ module Get_discussion_comment_in_org = struct
           ("discussion_number", Var (params.discussion_number, Int));
           ("comment_number", Var (params.comment_number, Int));
         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module Link_external_idp_group_to_team_for_org = struct
-  module Parameters = struct
-    type t = {
-      org : string;
-      team_slug : string;
-    }
-    [@@deriving make, show]
-  end
-
-  module Request_body = struct
-    module Primary = struct
-      type t = { group_id : int } [@@deriving make, yojson { strict = false; meta = true }, show]
-    end
-
-    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Githubc2_components.External_group.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    type t = [ `OK of OK.t ] [@@deriving show]
-
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
-  end
-
-  let url = "/orgs/{org}/teams/{team_slug}/external-groups"
-
-  let make ~body params =
-    Openapi.Request.make
-      ~body:(Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("team_slug", Var (params.team_slug, String)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Patch
-end
-
-module Unlink_external_idp_group_from_team_for_org = struct
-  module Parameters = struct
-    type t = {
-      org : string;
-      team_slug : string;
-    }
-    [@@deriving make, show]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-
-    type t = [ `No_content ] [@@deriving show]
-
-    let t = [ ("204", fun _ -> Ok `No_content) ]
-  end
-
-  let url = "/orgs/{org}/teams/{team_slug}/external-groups"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("team_slug", Var (params.team_slug, String)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Delete
-end
-
-module List_linked_external_idp_groups_to_team_for_org = struct
-  module Parameters = struct
-    type t = {
-      org : string;
-      team_slug : string;
-    }
-    [@@deriving make, show]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Githubc2_components.External_groups.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    type t = [ `OK of OK.t ] [@@deriving show]
-
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
-  end
-
-  let url = "/orgs/{org}/teams/{team_slug}/external-groups"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("team_slug", Var (params.team_slug, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1647,99 +1453,6 @@ module Check_permissions_for_repo_in_org = struct
           ("owner", Var (params.owner, String));
           ("repo", Var (params.repo, String));
         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module Create_or_update_idp_group_connections_in_org = struct
-  module Parameters = struct
-    type t = {
-      org : string;
-      team_slug : string;
-    }
-    [@@deriving make, show]
-  end
-
-  module Request_body = struct
-    module Groups = struct
-      module Items = struct
-        module Primary = struct
-          type t = {
-            group_description : string;
-            group_id : string;
-            group_name : string;
-          }
-          [@@deriving make, yojson { strict = false; meta = true }, show]
-        end
-
-        include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-      end
-
-      type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
-    end
-
-    type t = { groups : Groups.t option [@default None] }
-    [@@deriving make, yojson { strict = true; meta = true }, show]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Githubc2_components.Group_mapping.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    type t = [ `OK of OK.t ] [@@deriving show]
-
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
-  end
-
-  let url = "/orgs/{org}/teams/{team_slug}/team-sync/group-mappings"
-
-  let make ~body params =
-    Openapi.Request.make
-      ~body:(Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("team_slug", Var (params.team_slug, String)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Patch
-end
-
-module List_idp_groups_in_org = struct
-  module Parameters = struct
-    type t = {
-      org : string;
-      team_slug : string;
-    }
-    [@@deriving make, show]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Githubc2_components.Group_mapping.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    type t = [ `OK of OK.t ] [@@deriving show]
-
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
-  end
-
-  let url = "/orgs/{org}/teams/{team_slug}/team-sync/group-mappings"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("team_slug", Var (params.team_slug, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -3279,142 +2992,6 @@ module Check_permissions_for_repo_legacy = struct
           ("owner", Var (params.owner, String));
           ("repo", Var (params.repo, String));
         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module Create_or_update_idp_group_connections_legacy = struct
-  module Parameters = struct
-    type t = { team_id : int } [@@deriving make, show]
-  end
-
-  module Request_body = struct
-    module Primary = struct
-      module Groups = struct
-        module Items = struct
-          module Primary = struct
-            type t = {
-              description : string option; [@default None]
-              group_description : string;
-              group_id : string;
-              group_name : string;
-              id : string option; [@default None]
-              name : string option; [@default None]
-            }
-            [@@deriving make, yojson { strict = false; meta = true }, show]
-          end
-
-          include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-        end
-
-        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
-      end
-
-      type t = {
-        groups : Groups.t;
-        synced_at : string option; [@default None]
-      }
-      [@@deriving make, yojson { strict = false; meta = true }, show]
-    end
-
-    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Githubc2_components.Group_mapping.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Forbidden = struct
-      type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Unprocessable_entity = struct
-      type t = Githubc2_components.Validation_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    type t =
-      [ `OK of OK.t
-      | `Forbidden of Forbidden.t
-      | `Unprocessable_entity of Unprocessable_entity.t
-      ]
-    [@@deriving show]
-
-    let t =
-      [
-        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
-        ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
-        ( "422",
-          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
-      ]
-  end
-
-  let url = "/teams/{team_id}/team-sync/group-mappings"
-
-  let make ~body params =
-    Openapi.Request.make
-      ~body:(Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("team_id", Var (params.team_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Patch
-end
-
-module List_idp_groups_for_legacy = struct
-  module Parameters = struct
-    type t = { team_id : int } [@@deriving make, show]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Githubc2_components.Group_mapping.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Forbidden = struct
-      type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    module Not_found = struct
-      type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
-    end
-
-    type t =
-      [ `OK of OK.t
-      | `Forbidden of Forbidden.t
-      | `Not_found of Not_found.t
-      ]
-    [@@deriving show]
-
-    let t =
-      [
-        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
-        ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
-        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
-      ]
-  end
-
-  let url = "/teams/{team_id}/team-sync/group-mappings"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("team_id", Var (params.team_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t

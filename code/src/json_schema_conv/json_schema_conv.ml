@@ -1027,13 +1027,20 @@ and convert_str_schema_obj config properties_config required properties =
         | Value.Ref ref_ as schema ->
             let schema = Config.resolve_ref config schema in
             let attrs = Config.record_field_attrs config schema name required in
-            (* let attrs = Config.record_field_attrs config (Schema.make_t_ ()) name required in *)
             let module_name = Config.module_name_of_ref config ref_ in
             let field_type = Gen.qualified_type (module_name @ [ "t" ]) in
             let field_type =
+              (* We don't wrap the value in an option if its required or has a
+                 default and also if the referenced schema is a primitive type
+                 or not nullable.  This last part is because imagine a reference
+                 Foo that has a nullable string type.  We don't want to wrap
+                 that up twice in options so, "string option option".  This is
+                 kind of trash behaviour because really the underlying reference
+                 type should handle if it's option entirely, but for reasons we
+                 only do that for primitive types. *)
               if
                 (String_set.mem name required || CCOption.is_some schema.Schema.default)
-                && not schema.Schema.nullable
+                && (is_prim_type schema || not schema.Schema.nullable)
               then field_type
               else Gen.option [ field_type ]
             in
