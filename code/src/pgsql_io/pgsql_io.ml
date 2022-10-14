@@ -837,9 +837,10 @@ and create_sm_ssl_conn ?passwd ~required ~notice_response ~host ~port ~user tls_
       match Abbs_tls.client_tcp tcp tls_config host with
       | Ok (r, w) -> create_sm_perform_login r w ?passwd ~notice_response ~user database
       | Error _ -> failwith "nyi")
-  | n when n = 1 && Bytes.get bytes 0 = 'N' && not required -> failwith "nyi"
+  | n when n = 1 && Bytes.get bytes 0 = 'N' && not required ->
+      create_sm_perform_login r w ?passwd ~notice_response ~user database
   | n when n = 1 && Bytes.get bytes 0 = 'N' && required -> failwith "nyi"
-  | _ -> failwith "nyi"
+  | n -> failwith "nyi"
 
 and create_sm_perform_login r w ?passwd ~notice_response ~user database =
   let open Abbs_future_combinators.Infix_result_monad in
