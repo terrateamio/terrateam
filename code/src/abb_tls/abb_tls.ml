@@ -1,6 +1,6 @@
 module List = ListLabels
 
-type err = [ `Error ]
+type err = [ `Error ] [@@deriving show, eq]
 
 external int_of_fd : Unix.file_descr -> int = "%identity"
 

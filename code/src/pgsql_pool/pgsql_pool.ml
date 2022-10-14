@@ -1,3 +1,7 @@
+let src = Logs.Src.create "pgsql.pool"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 exception Pgsql_pool_closed
 
 type err = [ `Pgsql_pool_error ] [@@deriving show]

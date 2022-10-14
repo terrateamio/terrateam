@@ -1,6 +1,6 @@
 (** Wrapper for Otls. *)
 
-type err = [ `Error ]
+type err = [ `Error ] [@@deriving show, eq]
 
 module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
   module Buffered : module type of Abb_io_buffered.Make (Abb.Future)
