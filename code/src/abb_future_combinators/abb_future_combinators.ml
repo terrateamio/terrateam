@@ -14,6 +14,14 @@ module Make (Fut : Abb_intf.Future.S) = struct
 
     let iter ~f l = fold_left ~f:(fun () l -> f l) ~init:() l
 
+    let iter_par ~f l =
+      (* Execute all of the futures and background them. *)
+      map ~f:(fun v -> Fut.fork (f v)) l
+      >>= fun l ->
+      (* Now iterate through that list of background work, waiting for each one
+         to finish. *)
+      iter ~f:Fun.id l
+
     let filter ~f l =
       fold_left
         ~f:(fun acc v ->
