@@ -22,26 +22,9 @@ let google =
             301 = Cohttp.Code.code_of_status status
             || 302 = Cohttp.Code.code_of_status status
             || 200 = Cohttp.Code.code_of_status status)
-      | Error `E_access -> assert false
-      | Error `E_address_family_not_supported -> assert false
-      | Error `E_address_in_use -> assert false
-      | Error `E_address_not_available -> assert false
-      | Error `E_bad_file -> assert false
-      | Error `E_connection_refused -> assert false
-      | Error `E_connection_reset -> assert false
-      | Error `E_file_table_full -> assert false
-      | Error `E_host_unreachable -> assert false
-      | Error `E_invalid -> assert false
-      | Error `E_is_connected -> assert false
-      | Error `E_network_unreachable -> assert false
-      | Error `E_no_buffers -> assert false
-      | Error `E_permission -> assert false
-      | Error `E_protocol_not_supported -> assert false
-      | Error `E_protocol_type -> assert false
-      | Error `Error -> assert false
-      | Error (`Invalid_scheme _) -> assert false
-      | Error (`Unexpected _) -> assert false
-      | Error (`Invalid _) -> assert false)
+      | Error (#Cohttp_abb.request_err as err) ->
+          Printf.printf "ERR: %s\n%!" (Cohttp_abb.show_request_err err);
+          assert false)
 
 let test = Oth_abb.(to_sync_test (parallel [ google ]))
 
