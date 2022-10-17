@@ -819,6 +819,15 @@ module Make (S : S) = struct
                 not_branches
             in
             let branch_globs =
+              let branches =
+                (* If there are not-branch globs, but branch globs is empty,
+                   that implicitly means match anything on the positive branch.
+                   If not-branches are empty then take what is in branches,
+                   which could be nothing. *)
+                match (not_branch_globs, branches) with
+                | _ :: _, [] -> [ "*" ]
+                | _, branches -> branches
+              in
               CCList.map CCFun.(CCString.lowercase_ascii %> pattern_of_glob) branches
             in
             (* The not patterns are an "and", as in success for the not patterns
