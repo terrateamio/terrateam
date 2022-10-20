@@ -1,5 +1,6 @@
 # build image
-FROM terrateam-base as build
+ARG BASE_IMAGE=terrateam-base
+FROM $BASE_IMAGE as build
 
 COPY ./ /mono
 
