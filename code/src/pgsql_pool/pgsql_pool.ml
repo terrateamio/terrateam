@@ -1,3 +1,7 @@
+let src = Logs.Src.create "pgsql.pool"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 exception Pgsql_pool_closed
 
 type err = [ `Pgsql_pool_error ] [@@deriving show]
@@ -79,8 +83,10 @@ module Server = struct
             | `Ok (Ok conn) ->
                 Abb.Future.Promise.set p (Ok conn)
                 >>= fun () -> loop { t with num_conns = t.num_conns + 1 } w r
-            | `Ok (Error _) | `Timeout ->
-                Abb.Future.Promise.set p (Error ()) >>= fun () -> loop t w r))
+            | `Ok (Error (#Pgsql_io.create_err as err)) ->
+                Logs.err (fun m -> m "PGSQL_POOL : ERROR : %s" (Pgsql_io.show_create_err err));
+                Abb.Future.Promise.set p (Error ()) >>= fun () -> loop t w r
+            | `Timeout -> Abb.Future.Promise.set p (Error ()) >>= fun () -> loop t w r))
     | `Ok (Msg.Return conn) when Pgsql_io.connected conn -> (
         match take_until_undet t.waiting with
         | Some p -> Abb.Future.Promise.set p (Ok conn) >>= fun () -> loop t w r

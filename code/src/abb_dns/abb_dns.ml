@@ -1,3 +1,7 @@
+let src = Logs.Src.create "abb.dns" ~doc:"Abb DNS"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 module Make (Abb : Abb_intf.S) = struct
   module Abb_fut_comb = Abb_future_combinators.Make (Abb.Future)
 
@@ -42,6 +46,7 @@ module Make (Abb : Abb_intf.S) = struct
       | Some (`Udp, nameservers) -> { nameservers; preferred_ns = None; timeout_ns = timeout }
       | Some (`Tcp, _) -> invalid_arg "tcp not supported"
       | None -> (
+          Logs.debug (fun m -> m "DNS : READ_RESOLV_CONF");
           let nameservers =
             let open CCResult.Infix in
             read_file "/etc/resolv.conf"
@@ -51,8 +56,17 @@ module Make (Abb : Abb_intf.S) = struct
             Ok (CCList.map (fun (`Nameserver ip) -> `Plaintext (ip, 53)) nameservers)
           in
           match nameservers with
-          | Ok nameservers -> { nameservers; preferred_ns = None; timeout_ns = timeout }
-          | Error _ ->
+          | Ok nameservers ->
+              List.iter
+                (fun (`Plaintext (ip, port)) ->
+                  Logs.debug (fun m -> m "DNS : NAMESERVER : %s : %d" (Ipaddr.to_string ip) port))
+                nameservers;
+              { nameservers; preferred_ns = None; timeout_ns = timeout }
+          | Error err ->
+              (match err with
+              | `Msg msg -> Logs.err (fun m -> m "DNS : RESOLV_CONF : %s" msg)
+              | `Open_file msg -> Logs.err (fun m -> m "DNS : RESOLV_CONF_OPEN_FILE : %s" msg)
+              | `Read_File msg -> Logs.err (fun m -> m "DNS : RESOLV_CONF_READ_FILE : %s" msg));
               let nameservers =
                 CCList.map (fun ip -> `Plaintext (ip, 53)) Dns_client.default_resolvers
               in

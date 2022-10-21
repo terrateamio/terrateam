@@ -1,20 +1,21 @@
 (** Cohttp-based client and server. *)
 
-type connect_http_err =
-  [ Abb_intf.Errors.sock_create
-  | Abb_intf.Errors.tcp_sock_connect
-  ]
+type connect_http_err = Abb_happy_eyeballs.connect_err [@@deriving show]
 
 type connect_https_err =
   [ connect_http_err
   | `Error
+  | Abb_happy_eyeballs.connect_err
   ]
+[@@deriving show]
 
 type request_err =
   [ connect_https_err
+  | `E_connection_refused
   | `Invalid_scheme of string
   | `Invalid of string
   ]
+[@@deriving show]
 
 type run_err =
   [ `Exn of exn
@@ -22,13 +23,7 @@ type run_err =
   | `E_address_in_use
   | `E_address_not_available
   ]
-
-val show_request_err : request_err -> string
-val pp_request_err : Format.formatter -> request_err -> unit
-val show_connect_https_err : connect_https_err -> string
-val pp_connect_https_err : Format.formatter -> connect_https_err -> unit
-val show_connect_http_err : connect_http_err -> string
-val pp_connect_http_err : Format.formatter -> connect_http_err -> unit
+[@@deriving show]
 
 module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
   (** Data structure representing a request. *)
@@ -62,17 +57,11 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
     end
 
     (** Open an HTTP connection. *)
-    val connect_http :
-      Abb_intf.Socket.Addrinfo.t ->
-      Uri.t ->
-      (Io.ic * Io.oc, [> connect_http_err ]) result Abb.Future.t
+    val connect_http : Uri.t -> (Io.ic * Io.oc, [> connect_http_err ]) result Abb.Future.t
 
     (** Open an HTTPs connection using the provided TLS configuration. *)
     val connect_https :
-      Abb_intf.Socket.Addrinfo.t ->
-      Otls.Tls_config.t ->
-      Uri.t ->
-      (Io.ic * Io.oc, [> connect_https_err ]) result Abb.Future.t
+      Otls.Tls_config.t -> Uri.t -> (Io.ic * Io.oc, [> connect_https_err ]) result Abb.Future.t
 
     (** With an open connection, either HTTP or HTTPs, perform a request on the
         connection. *)

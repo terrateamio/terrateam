@@ -104,7 +104,13 @@ module Make (Fut : Abb_intf.Future.S) : sig
   module List : sig
     val map : f:('a -> 'b Fut.t) -> 'a list -> 'b list Fut.t
     val fold_left : f:('a -> 'b -> 'a Fut.t) -> init:'a -> 'b list -> 'a Fut.t
+
+    (** Iterate a list of values executing a function in serial. *)
     val iter : f:('a -> unit Fut.t) -> 'a list -> unit Fut.t
+
+    (** Iterate a list of values executing a function in parallel. *)
+    val iter_par : f:('a -> unit Fut.t) -> 'a list -> unit Fut.t
+
     val filter : f:('a -> bool Fut.t) -> 'a list -> 'a list Fut.t
   end
 

@@ -41,7 +41,7 @@ type integrity_err = {
 [@@deriving show]
 
 module Io = struct
-  type err = [ `Parse_error of Pgsql_codec.Decode.err ] [@@deriving show, eq]
+  type err = [ `Parse_error of Pgsql_codec.Decode.err ] [@@deriving show]
 
   let encode_frame buf frame =
     Buffer.clear buf;
@@ -783,51 +783,50 @@ module Prepared_stmt = struct
 end
 
 type create_err =
-  [ `Unexpected of (exn[@opaque] [@equal ( = )])
+  [ `Unexpected of (exn[@printer fun fmt v -> fprintf fmt "%s" (Printexc.to_string v)])
   | `Connection_failed
-  | Io.err
+  | `Connect_missing_password_err
+  | `Tls_negotiate_err of Abb_tls.err
+  | `Tls_required_but_denied_err
+  | `Tls_unexpected_response of int * string
+  | `Unsupported_auth_gss_err
+  | `Unsupported_auth_sasl_err
+  | `Unsupported_auth_scm_credential_err
+  | `Unsupported_auth_sspi_err
+  | frame_err
   ]
-[@@deriving show, eq]
+[@@deriving show]
 
-let rec create_sm ?tls_config ?passwd ~notice_response ~host ~port ~user database tcp =
+let rec create_sm ?tls_config ?passwd ~notice_response ~host ~port ~user database =
   let open Abbs_future_combinators.Infix_result_monad in
-  Abb.Socket.getaddrinfo
-    ~hints:
-      Abb_intf.Socket.
-        [ Addrinfo_hints.Socket_type Socket_type.Stream; Addrinfo_hints.Family Domain.Inet4 ]
-    Abb_intf.Socket.Addrinfo_query.(Host_service (host, string_of_int port))
-  >>= function
-  | [] -> Abb.Future.return (Error `Connection_failed)
-  | r :: _ -> (
-      let addr = r.Abb_intf.Socket.Addrinfo.addr in
-      Abb.Socket.Tcp.connect tcp addr
-      >>= fun () ->
-      match tls_config with
-      | None ->
-          let r, w = Abbs_io_buffered.Of.of_tcp_socket ~size:4096 tcp in
-          create_sm_perform_login r w ?passwd ~notice_response ~user database
-      | Some (`Require tls_config) ->
-          create_sm_ssl_conn
-            ?passwd
-            ~required:true
-            ~notice_response
-            ~host
-            ~port
-            ~user
-            tls_config
-            tcp
-            database
-      | Some (`Prefer tls_config) ->
-          create_sm_ssl_conn
-            ?passwd
-            ~required:false
-            ~notice_response
-            ~host
-            ~port
-            ~user
-            tls_config
-            tcp
-            database)
+  Abbs_happy_eyeballs.connect host [ port ]
+  >>= fun (_, tcp) ->
+  match tls_config with
+  | None ->
+      let r, w = Abbs_io_buffered.Of.of_tcp_socket ~size:4096 tcp in
+      create_sm_perform_login r w ?passwd ~notice_response ~user database
+  | Some (`Require tls_config) ->
+      create_sm_ssl_conn
+        ?passwd
+        ~required:true
+        ~notice_response
+        ~host
+        ~port
+        ~user
+        tls_config
+        tcp
+        database
+  | Some (`Prefer tls_config) ->
+      create_sm_ssl_conn
+        ?passwd
+        ~required:false
+        ~notice_response
+        ~host
+        ~port
+        ~user
+        tls_config
+        tcp
+        database
 
 and create_sm_ssl_conn ?passwd ~required ~notice_response ~host ~port ~user tls_config tcp database
     =
@@ -845,10 +844,12 @@ and create_sm_ssl_conn ?passwd ~required ~notice_response ~host ~port ~user tls_
   | n when n = 1 && Bytes.get bytes 0 = 'S' -> (
       match Abbs_tls.client_tcp tcp tls_config host with
       | Ok (r, w) -> create_sm_perform_login r w ?passwd ~notice_response ~user database
-      | Error _ -> failwith "nyi")
-  | n when n = 1 && Bytes.get bytes 0 = 'N' && not required -> failwith "nyi"
-  | n when n = 1 && Bytes.get bytes 0 = 'N' && required -> failwith "nyi"
-  | _ -> failwith "nyi"
+      | Error (#Abb_tls.err as err) -> Abb.Future.return (Error (`Tls_negotiate_err err)))
+  | n when n = 1 && Bytes.get bytes 0 = 'N' && not required ->
+      create_sm_perform_login r w ?passwd ~notice_response ~user database
+  | n when n = 1 && Bytes.get bytes 0 = 'N' && required ->
+      Abb.Future.return (Error `Tls_required_but_denied_err)
+  | n -> Abb.Future.return (Error (`Tls_unexpected_response (n, Bytes.sub_string bytes 0 n)))
 
 and create_sm_perform_login r w ?passwd ~notice_response ~user database =
   let open Abbs_future_combinators.Infix_result_monad in
@@ -889,7 +890,7 @@ and create_sm_process_login_frames ?passwd ~user t =
       | Some password ->
           Io.send_frame t Pgsql_codec.Frame.Frontend.(PasswordMessage { password })
           >>= fun () -> create_sm_process_login_frames ?passwd ~user t fs
-      | None -> failwith "nyi")
+      | None -> Abb.Future.return (Error `Connect_missing_password_err))
   | AuthenticationMD5Password { salt } :: fs -> (
       let open Abbs_future_combinators.Infix_result_monad in
       match passwd with
@@ -899,43 +900,38 @@ and create_sm_process_login_frames ?passwd ~user t =
           let password = "md5" ^ passusersalt in
           Io.send_frame t Pgsql_codec.Frame.Frontend.(PasswordMessage { password })
           >>= fun () -> create_sm_process_login_frames ?passwd ~user t fs
-      | None -> failwith "nyi")
+      | None -> Abb.Future.return (Error `Connect_missing_password_err))
   | ParameterStatus _ :: fs -> create_sm_process_login_frames ?passwd ~user t fs
   | BackendKeyData { pid; secret_key } :: fs ->
       let t = { t with backend_key_data = Backend_key_data.{ pid; secret_key } } in
       create_sm_process_login_frames ?passwd ~user t fs
   | [ ReadyForQuery _ ] -> Abb.Future.return (Ok t)
-  | _ -> failwith "nyi"
+  | AuthenticationSCMCredential :: _ ->
+      Abb.Future.return (Error `Unsupported_auth_scm_credential_err)
+  | AuthenticationGSS :: _ -> Abb.Future.return (Error `Unsupported_auth_gss_err)
+  | AuthenticationSASL _ :: _ -> Abb.Future.return (Error `Unsupported_auth_sasl_err)
+  | AuthenticationSSPI :: _ -> Abb.Future.return (Error `Unsupported_auth_sspi_err)
+  | fs -> Abb.Future.return (Error (`Unmatching_frame fs))
 
 let create ?tls_config ?passwd ?(port = 5432) ?(notice_response = fun _ -> ()) ~host ~user database
     =
   let open Abb.Future.Infix_monad in
-  let tcp = CCResult.get_exn (Abb.Socket.Tcp.create ~domain:Abb_intf.Socket.Domain.Inet4) in
-  Abbs_future_combinators.on_failure
-    (fun () ->
-      create_sm ?tls_config ?passwd ~notice_response ~host ~port ~user database tcp
-      >>= function
-      | Ok _ as r -> Abb.Future.return r
-      | Error `Disconnected
-      | Error `E_io
-      | Error `E_no_space
-      | Error `Connection_failed
-      | Error `E_access
-      | Error `E_address_family_not_supported
-      | Error `E_address_in_use
-      | Error `E_address_not_available
-      | Error `E_bad_file
-      | Error `E_connection_refused
-      | Error `E_connection_reset
-      | Error `E_host_unreachable
-      | Error `E_invalid
-      | Error `E_is_connected
-      | Error `E_network_unreachable ->
-          Abbs_future_combinators.ignore (Abb.Socket.close tcp)
-          >>= fun () -> Abb.Future.return (Error `Connection_failed)
-      | (Error (`Unexpected _) | Error (`Parse_error _)) as err ->
-          Abbs_future_combinators.ignore (Abb.Socket.close tcp) >>= fun () -> Abb.Future.return err)
-    ~failure:(fun () -> Abbs_future_combinators.ignore (Abb.Socket.close tcp))
+  create_sm ?tls_config ?passwd ~notice_response ~host ~port ~user database
+  >>= function
+  | Ok _ as r -> Abb.Future.return r
+  | Error `Disconnected | Error #Abb_happy_eyeballs.connect_err | Error `E_io | Error `E_no_space ->
+      Abb.Future.return (Error `Connection_failed)
+  | ( Error `Connect_missing_password_err
+    | Error (`Tls_negotiate_err _)
+    | Error `Tls_required_but_denied_err
+    | Error (`Tls_unexpected_response _)
+    | Error (`Unmatching_frame _)
+    | Error `Unsupported_auth_gss_err
+    | Error `Unsupported_auth_sasl_err
+    | Error `Unsupported_auth_scm_credential_err
+    | Error `Unsupported_auth_sspi_err
+    | Error (`Unexpected _)
+    | Error (`Parse_error _) ) as err -> Abb.Future.return err
 
 let destroy t =
   t.connected <- false;

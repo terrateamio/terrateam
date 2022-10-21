@@ -4,7 +4,7 @@ type t
 exception Nested_tx_not_supported
 
 module Io : sig
-  type err = [ `Parse_error of Pgsql_codec.Decode.err ]
+  type err = [ `Parse_error of Pgsql_codec.Decode.err ] [@@deriving show]
 end
 
 type frame_err =
@@ -12,23 +12,20 @@ type frame_err =
   | Io.err
   | `Disconnected
   ]
-
-val show_frame_err : frame_err -> string
+[@@deriving show]
 
 type integrity_err = {
   message : string;
   detail : string option;
 }
-
-val show_integrity_err : integrity_err -> string
+[@@deriving show]
 
 type sql_parse_err =
   [ `Empty_variable_name
   | `Unclosed_quote of string
   | `Unknown_variable of string
   ]
-
-val show_sql_parse_err : sql_parse_err -> string
+[@@deriving show]
 
 type err =
   [ `Msgs of (char * string) list
@@ -38,9 +35,7 @@ type err =
   | `Integrity_err of integrity_err
   | sql_parse_err
   ]
-
-val pp_err : Format.formatter -> err -> unit
-val show_err : err -> string
+[@@deriving show]
 
 module Typed_sql : sig
   module Var : sig
@@ -199,9 +194,17 @@ end
 type create_err =
   [ `Unexpected of exn
   | `Connection_failed
-  | Io.err
+  | `Connect_missing_password_err
+  | `Tls_negotiate_err of Abb_tls.err
+  | `Tls_required_but_denied_err
+  | `Tls_unexpected_response of int * string
+  | `Unsupported_auth_gss_err
+  | `Unsupported_auth_sasl_err
+  | `Unsupported_auth_scm_credential_err
+  | `Unsupported_auth_sspi_err
+  | frame_err
   ]
-[@@deriving show, eq]
+[@@deriving show]
 
 val create :
   ?tls_config:[ `Require of Otls.Tls_config.t | `Prefer of Otls.Tls_config.t ] ->

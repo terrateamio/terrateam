@@ -1,32 +1,32 @@
 module List = ListLabels
 
-type connect_http_err =
-  [ Abb_intf.Errors.sock_create
-  | Abb_intf.Errors.tcp_sock_connect
-  ]
-[@@deriving show]
+type connect_http_err = Abb_happy_eyeballs.connect_err [@@deriving show]
 
 type connect_https_err =
   [ connect_http_err
   | `Error
+  | Abb_happy_eyeballs.connect_err
   ]
 [@@deriving show]
 
 type request_err =
   [ connect_https_err
+  | `E_connection_refused
   | `Invalid_scheme of string
   | `Invalid of string
   ]
 [@@deriving show]
 
 type run_err =
-  [ `Exn of exn
+  [ `Exn of (exn[@printer fun fmt v -> fprintf fmt "%s" (Printexc.to_string v)])
   | `E_address_family_not_supported
   | `E_address_in_use
   | `E_address_not_available
   ]
+[@@deriving show]
 
 module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
+  module Happy_eyeballs = Abb_happy_eyeballs.Make (Abb)
   module Channel = Abb_channel.Make (Abb.Future)
   module Channel_queue = Abb_channel_queue.Make (Abb.Future)
   module Fut_comb = Abb_future_combinators.Make (Abb.Future)
@@ -47,34 +47,20 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         | Https of Otls.Tls_config.t
     end
 
-    let connect_to_port addrinfo port conv =
-      let open Abb.Future.Infix_monad in
-      let sockaddr =
-        match addrinfo.Abb_intf.Socket.Addrinfo.addr with
-        | Abb_intf.Socket.Sockaddr.Inet inet -> Abb_intf.Socket.Sockaddr.(Inet { inet with port })
-        | _ -> assert false
-      in
-      let domain = addrinfo.Abb_intf.Socket.Addrinfo.family in
-      match Abb.Socket.Tcp.create ~domain with
-      | Ok sock ->
-          Fut_comb.on_failure
-            (fun () ->
-              Abb.Socket.Tcp.connect sock sockaddr
-              >>= function
-              | Ok () -> Abb.Future.return (Ok (conv sock))
-              | Error _ as err -> Abb.Future.return err)
-            ~failure:(fun () -> Fut_comb.ignore (Abb.Socket.close sock))
-      | Error _ as err -> Abb.Future.return err
+    let connect_to_port host port conv =
+      let open Fut_comb.Infix_result_monad in
+      Happy_eyeballs.connect host [ port ] >>= fun (_, sock) -> Abb.Future.return (Ok (conv sock))
 
-    let connect_http addrinfo uri =
+    let connect_http uri =
+      let host = CCOption.get_exn_or "get host" (Uri.host uri) in
       let port = CCOption.get_or ~default:80 (Uri.port uri) in
-      connect_to_port addrinfo port Buffered_of.of_tcp_socket
+      connect_to_port host port Buffered_of.of_tcp_socket
 
-    let connect_https addrinfo conf uri =
+    let connect_https conf uri =
       let open Fut_comb.Infix_result_monad in
       let host = CCOption.get_exn_or "get host" (Uri.host uri) in
       let port = CCOption.get_or ~default:443 (Uri.port uri) in
-      connect_to_port addrinfo port CCFun.id
+      connect_to_port host port CCFun.id
       >>= fun conn -> Abb.Future.return (Abb_tls.client_tcp conn conf host)
 
     let write_body writer = function
@@ -94,31 +80,14 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       | `Eof -> Error `E_connection_refused
       | `Invalid reason as err -> Error err
 
-    let sort_by_family addrinfos =
-      let module Addrinfo = Abb_intf.Socket.Addrinfo in
-      let module Domain = Abb_intf.Socket.Domain in
-      List.sort
-        ~cmp:(fun { Addrinfo.family = x; _ } { Addrinfo.family = y; _ } ->
-          match (x, y) with
-          | Domain.Inet4, Domain.Inet4 | Domain.Inet6, Domain.Inet6 | Domain.Unix, Domain.Unix -> 0
-          | _, Domain.Inet4 -> 1
-          | Domain.Inet4, _ | Domain.Inet6, _ -> -1
-          | Domain.Unix, _ -> 1)
-        addrinfos
-
     let request ?flush ?(body = `Empty) scheme req =
       let open Fut_comb.Infix_result_monad in
-      let connect addrinfo scheme uri =
+      let connect scheme uri =
         match scheme with
-        | Scheme.Http -> connect_http addrinfo uri
-        | Scheme.Https tls_config -> connect_https addrinfo tls_config uri
+        | Scheme.Http -> connect_http uri
+        | Scheme.Https tls_config -> connect_https tls_config uri
       in
-      let host = CCOption.get_exn_or "get host" (Uri.host (Request.uri req)) in
-      Abb.Socket.getaddrinfo (Abb_intf.Socket.Addrinfo_query.Host host)
-      >>= fun addrinfos ->
-      let addrinfos = sort_by_family addrinfos in
-      let addrinfo = CCOption.get_exn_or "get addrinfo" (CCList.head_opt addrinfos) in
-      connect addrinfo scheme (Request.uri req)
+      connect scheme (Request.uri req)
       >>= fun (ic, oc) ->
       Fut_comb.on_failure
         (fun () -> do_request ?flush ~body req ic oc)
