@@ -17,7 +17,7 @@ jobs:
         TERRATEAM_ENVIRONMENT: "staging"
       run: |
         curl -L https://fly.io/install.sh | sh
-        flyctl auth docker
+        /home/runner/.fly/bin/flyctl auth docker
         docker build -t registry.fly.io/terrateam-app-$TERRATEAM_ENVIRONMENT:base -f docker/terrat/Dockerfile.base .
         docker push registry.fly.io/terrateam-app-staging:base
         MATRIX_ACCESS_TOKEN=$(curl -s -XPOST -d '{"type":"m.login.password", "user":"terrateam", "password":'\"$MATRIX_PASSWORD\"'}' "https://matrix.org/_matrix/client/r0/login" | grep -Po '"access_token":.*?[^\\]",' | cut -d'"' -f4)

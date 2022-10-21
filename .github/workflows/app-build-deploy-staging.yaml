@@ -17,7 +17,7 @@ jobs:
         TERRATEAM_ENVIRONMENT: "staging"
       run: |
         curl -L https://fly.io/install.sh | sh
-        flyctl deploy -a terrateam-app-$TERRATEAM_ENVIRONMENT --dockerfile docker/terrat/Dockerfile --build-arg BASE_IMAGE="registry.fly.io/terrateam-app-$TERRATEAM_ENVIRONMENT:base"
+        /home/runner/.fly/bin/flyctl deploy -a terrateam-app-$TERRATEAM_ENVIRONMENT --dockerfile docker/terrat/Dockerfile --build-arg BASE_IMAGE="registry.fly.io/terrateam-app-$TERRATEAM_ENVIRONMENT:base"
         MATRIX_ACCESS_TOKEN=$(curl -s -XPOST -d '{"type":"m.login.password", "user":"terrateam", "password":'\"$MATRIX_PASSWORD\"'}' "https://matrix.org/_matrix/client/r0/login" | grep -Po '"access_token":.*?[^\\]",' | cut -d'"' -f4)
         MATRIX_MESSAGE="GitHub Actions [$GITHUB_WORKFLOW]: Deployed $GITHUB_SHA"
         curl 'https://matrix.org/_matrix/client/r0/rooms/!AJlEMsztoOToHdwijN%3Amatrix.org/send/m.room.message/?access_token='$MATRIX_ACCESS_TOKEN -X PUT --data '{"msgtype":"m.text","body":"'"$MATRIX_MESSAGE"'"}'
