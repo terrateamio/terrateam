@@ -159,15 +159,12 @@ module Make (Fut : Abb_intf.Future.S) = struct
     | (`Ok _ as r), fut -> Fut.abort fut >>| fun () -> r
     | `Timeout, fut -> Fut.abort fut >>| fun () -> `Timeout
 
-  let rec retry_times ~times ~on_failure f =
+  let rec retry ~f ~test ~betwixt =
     let open Fut.Infix_monad in
-    if times > 0 then
-      f ()
-      >>= function
-      | Ok r -> Fut.return (Ok r)
-      | Error err when times = 1 -> Fut.return (Error err)
-      | Error err -> on_failure err >>= fun () -> retry_times ~times:(times - 1) ~on_failure f
-    else invalid_arg "times must be greater than 0"
+    f ()
+    >>= function
+    | r when test r -> Fut.return r
+    | r -> betwixt r >>= fun () -> retry ~f ~test ~betwixt
 
   module Infix_result_monad = struct
     type ('a, 'b) t = ('a, 'b) result Fut.t
