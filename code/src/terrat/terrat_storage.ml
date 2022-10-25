@@ -8,6 +8,7 @@ let create config =
     cfg
   in
   Pgsql_pool.create
+    ~idle_check:(Duration.of_sec 0)
     ~tls_config:(`Prefer tls_config)
     ~host:(Terrat_config.db_host config)
     ~user:(Terrat_config.db_user config)
