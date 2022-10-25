@@ -1,6 +1,9 @@
 name: production-app-build-deploy
 
 on:
+  push:
+    branches:
+      - "terrateam-main"
   workflow_dispatch:
 
 jobs:
