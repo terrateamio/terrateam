@@ -940,15 +940,16 @@ let destroy t =
 let connected t = t.connected
 
 let ping t =
-  if t.connected then
+  if t.connected then (
     let open Abb.Future.Infix_monad in
     Io.reset t
     >>= function
     | Ok () -> Abb.Future.return true
-    | Error `Disconnected ->
+    | Error _ ->
+        (* Reset didn't work?  End this connection.  There are just too many
+           possible reasons it could have failed. *)
         t.connected <- false;
-        Abb.Future.return false
-    | Error _ -> Abb.Future.return true
+        Abb.Future.return false)
   else Abb.Future.return false
 
 let tx_commit t =

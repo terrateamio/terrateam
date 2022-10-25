@@ -6,6 +6,13 @@ exception Pgsql_pool_closed
 
 type err = [ `Pgsql_pool_error ] [@@deriving show]
 
+module Conn = struct
+  type t = {
+    conn : Pgsql_io.t;
+    last_used : float;
+  }
+end
+
 module Msg = struct
   type t =
     | Get of (Pgsql_io.t, unit) result Abb.Future.Promise.t
@@ -14,6 +21,7 @@ end
 
 module Server = struct
   type t = {
+    idle_check : Duration.t;
     tls_config : [ `Require of Otls.Tls_config.t | `Prefer of Otls.Tls_config.t ] option;
     passwd : string option;
     port : int option;
@@ -23,7 +31,7 @@ module Server = struct
     connect_timeout : float;
     database : string;
     num_conns : int;
-    conns : Pgsql_io.t list;
+    conns : Conn.t list;
     waiting : (Pgsql_io.t, unit) result Abb.Future.Promise.t Queue.t;
   }
 
@@ -35,16 +43,22 @@ module Server = struct
     | Some _ -> take_until_undet waiting
     | None -> None
 
+  let verify_conn Conn.{ conn; _ } =
+    let open Abb.Future.Infix_monad in
+    Pgsql_io.ping conn
+    >>= function
+    | true ->
+        Abb.Sys.monotonic () >>= fun last_used -> Abb.Future.return (Some Conn.{ conn; last_used })
+    | false -> Pgsql_io.destroy conn >>= fun () -> Abb.Future.return None
+
   let verify_conns t =
     Abbs_future_combinators.List.fold_left
       ~f:(fun t conn ->
         let open Abb.Future.Infix_monad in
-        Pgsql_io.ping conn
+        verify_conn conn
         >>= function
-        | true -> Abb.Future.return { t with conns = conn :: t.conns }
-        | false ->
-            Pgsql_io.destroy conn
-            >>= fun () -> Abb.Future.return { t with num_conns = t.num_conns - 1 })
+        | Some conn -> Abb.Future.return { t with conns = conn :: t.conns }
+        | None -> Abb.Future.return { t with num_conns = t.num_conns - 1 })
       ~init:{ t with conns = [] }
       t.conns
 
@@ -59,9 +73,21 @@ module Server = struct
         Queue.add p t.waiting;
         loop t w r
     | `Ok (Msg.Get p) -> (
+        Abb.Sys.monotonic ()
+        >>= fun now ->
         match t.conns with
-        | c :: cs when Pgsql_io.connected c ->
-            Abb.Future.Promise.set p (Ok c) >>= fun () -> loop { t with conns = cs } w r
+        | (Conn.{ conn; last_used } as c) :: cs
+          when Pgsql_io.connected conn && now -. last_used >= Duration.to_f t.idle_check -> (
+            (* Verify the connection is still alive, and if so give it back.
+               Otherwise, remove it and  handle the message again. *)
+            verify_conn c
+            >>= function
+            | Some Conn.{ conn; _ } ->
+                Abb.Future.Promise.set p (Ok conn) >>= fun () -> loop { t with conns = cs } w r
+            | None ->
+                handle_msg { t with num_conns = t.num_conns - 1; conns = cs } w r (`Ok (Msg.Get p)))
+        | Conn.{ conn; _ } :: cs when Pgsql_io.connected conn ->
+            Abb.Future.Promise.set p (Ok conn) >>= fun () -> loop { t with conns = cs } w r
         | _ :: _ ->
             (* If one connection is disconnected, maybe all of them are, so
                verify all the connections before handing out the next one.
@@ -90,7 +116,9 @@ module Server = struct
     | `Ok (Msg.Return conn) when Pgsql_io.connected conn -> (
         match take_until_undet t.waiting with
         | Some p -> Abb.Future.Promise.set p (Ok conn) >>= fun () -> loop t w r
-        | None -> loop { t with conns = conn :: t.conns } w r)
+        | None ->
+            Abb.Sys.monotonic ()
+            >>= fun last_used -> loop { t with conns = Conn.{ conn; last_used } :: t.conns } w r)
     | `Ok (Msg.Return conn) -> (
         Pgsql_io.destroy conn
         >>= fun () ->
@@ -101,16 +129,26 @@ module Server = struct
         | None -> loop t w r)
     | `Closed ->
         Abbs_future_combinators.List.iter
-          ~f:(fun conn -> Abbs_future_combinators.ignore (Pgsql_io.destroy conn))
+          ~f:(fun Conn.{ conn; _ } -> Abbs_future_combinators.ignore (Pgsql_io.destroy conn))
           t.conns
 end
 
 type t = Msg.t Abbs_service_local.w
 
-let create ?tls_config ?passwd ?port ~connect_timeout ~host ~user ~max_conns database =
+let create
+    ?(idle_check = Duration.of_year 1)
+    ?tls_config
+    ?passwd
+    ?port
+    ~connect_timeout
+    ~host
+    ~user
+    ~max_conns
+    database =
   let t =
     Server.
       {
+        idle_check;
         tls_config;
         passwd;
         port;

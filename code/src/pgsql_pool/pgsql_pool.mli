@@ -4,8 +4,15 @@ type err = [ `Pgsql_pool_error ]
 type t
 
 (** Create a pool which will create [Pgsql] connections with the given
-   configuration.  No connections are made on creation. *)
+    configuration.  No connections are made on creation.  [idle_check] specifies
+    how long between uses of a connection to check if it is still connected.
+    This is tested on the next use of the connection.  The check translates to a
+    ping being sent to the database to verify the connection is still alive.  By
+    default this check is 1 year.  A value of [0] checks it on every use.  If
+    the connection has been disconnected, the next connection is verified, and
+    so on, until a connection is found. *)
 val create :
+  ?idle_check:Duration.t ->
   ?tls_config:[ `Require of Otls.Tls_config.t | `Prefer of Otls.Tls_config.t ] ->
   ?passwd:string ->
   ?port:int ->
