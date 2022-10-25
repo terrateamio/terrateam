@@ -20,7 +20,6 @@ jobs:
         /home/runner/.fly/bin/flyctl auth docker
         docker build -t registry.fly.io/terrateam-app-$TERRATEAM_ENVIRONMENT:base -f docker/terrat/Dockerfile.base .
         docker push registry.fly.io/terrateam-app-$TERRATEAM_ENVIRONMENT:base
-        MATRIX_ACCESS_TOKEN=$(curl -s -XPOST -d '{"type":"m.login.password", "user":"terrateam", "password":'\"$MATRIX_PASSWORD\"'}' "https://matrix.org/_matrix/client/r0/login" | grep -Po '"access_token":.*?[^\\]
-",' | cut -d'"' -f4)
+        MATRIX_ACCESS_TOKEN=$(curl -s -XPOST -d '{"type":"m.login.password", "user":"terrateam", "password":'\"$MATRIX_PASSWORD\"'}' "https://matrix.org/_matrix/client/r0/login" | grep -Po '"access_token":.*?[^\\]",' | cut -d'"' -f4)
         MATRIX_MESSAGE="GitHub Actions [$GITHUB_WORKFLOW]: Updated base image $GITHUB_SHA"
         curl 'https://matrix.org/_matrix/client/r0/rooms/!AJlEMsztoOToHdwijN%3Amatrix.org/send/m.room.message/?access_token='$MATRIX_ACCESS_TOKEN -X PUT --data '{"msgtype":"m.text","body":"'"$MATRIX_MESSAGE"'"}'
