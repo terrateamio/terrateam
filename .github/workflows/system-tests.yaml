@@ -1,0 +1,26 @@
+name: system-tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+    - name: System tests
+      env:
+        DOCKER_BUILDKIT: 1
+        MATRIX_PASSWORD: ${{ secrets.MATRIX_PASSWORD }}
+        DEBIAN_FRONTEND: "noninteractive"
+      run: |
+        apt update
+        apt -y install git age curl
+        curl -s -o ngrok.tgz https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
+        tar xzf ngrok.tgz -C /usr/local/bin
+        rm -f ngrok.tgz
+        curl -s -L -o /usr/local/bin/docker-compose https://github.com/docker/compose/releases/download/v2.12.2/docker-compose-linux-x86_64
+        cd tests/terrat/system-tests
+        ./bin/start.sh
+        ./bin/stop.sh
