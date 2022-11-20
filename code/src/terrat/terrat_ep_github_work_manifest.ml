@@ -705,8 +705,8 @@ module Initiate = struct
     let open Abbs_future_combinators.Infix_result_monad in
     Logs.err (fun m ->
         m
-          "GITHUB_WORK_MANIFEST : %s : WORK_MANIFEST_ALREADY_RUNNING : work_manifest=%s : owner=%s \
-           : name=%s : pull_number=%d"
+          "GITHUB_WORK_MANIFEST : %s : WORK_MANIFEST_ALREADY_RUN : work_manifest=%s : owner=%s : \
+           name=%s : pull_number=%d"
           t.T.request_id
           (Uuidm.to_string t.T.work_manifest)
           t.T.owner
