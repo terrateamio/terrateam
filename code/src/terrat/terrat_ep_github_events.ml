@@ -2012,7 +2012,11 @@ let process_workflow_job request_id config storage = function
       let open Abbs_future_combinators.Infix_result_monad in
       Terrat_github.get_installation_access_token config installation_id
       >>= fun access_token ->
+      let open Abb.Future.Infix_monad in
       process_workflow_job_failure storage access_token (CCInt.to_string run_id) repository
+      >>= fun ret ->
+      Abb.Future.fork (Terrat_github_runner.run ~request_id config storage)
+      >>= fun _ -> Abb.Future.return ret
   | _ -> Abb.Future.return (Ok ())
 
 let handle_error ctx = function
