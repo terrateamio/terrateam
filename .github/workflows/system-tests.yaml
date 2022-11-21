@@ -21,8 +21,14 @@ on:
         description: 'specify tests or leave empty for all'
       terrateam-base-build:
         required: true
+        type: boolean
         default: 'false'
         description: 'docker build terrateam-base instead of docker pull'
+      terrateam-build:
+        required: true
+        type: boolean
+        default: 'true'
+        description: 'docker build terrateam instead of docker pull'
 
 jobs:
   tests:
@@ -42,7 +48,22 @@ jobs:
         NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
         FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         TERRATEAM_BASE_BUILD: ${{ github.event.inputs.terrateam-base-build }}
+        TERRATEAM_BUILD: ${{ github.event.inputs.terrateam-build }}
       run: |
         cd tests/terrat/system-tests
+        mkdir -p ${{ runner.temp }}/test-output
         make start
-        make TERRATEAM_BASE_BUILD=${{ github.event.inputs.terrateam-base-build }} REPO_URL=${{ github.event.inputs.repo-url }} DEFAULT_BRANCH=${{ github.event.inputs.default-branch }} AGE_IDENTITY_PATH=${AGE_IDENTITY_PATH} FORCE_BUILD_BASE=${{ github.event.inputs.terrateam-base-build }} ${{ github.event.inputs.tests }}
+        make -k TEST_OUTPUT_DIR=${{ runner.temp }}/test-output TERRATEAM_BASE_BUILD=${{ github.event.inputs.terrateam-base-build }} REPO_URL=${{ github.event.inputs.repo-url }} DEFAULT_BRANCH=${{ github.event.inputs.default-branch }} AGE_IDENTITY_PATH=${AGE_IDENTITY_PATH} FORCE_BUILD_BASE=${{ github.event.inputs.terrateam-base-build }} ${{ github.event.inputs.tests }}
+    - name: Test Summary
+      uses: test-summary/action@v2
+      with:
+        output: '${{ runner.temp }}/test-summary.md'
+        paths: |
+          ${{ runner.temp }}/test-output/**/*.tap
+      if: always()
+    - name: Upload test summary
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-summary
+        path: ${{ runner.temp }}/
+      if: always()
