@@ -5,7 +5,6 @@ module Ctx = Brtl_ctx
 module Mw = Brtl_mw
 module Rspnc = Brtl_rspnc
 module Rtng = Brtl_rtng
-module Tmpl = Brtl_tmpl
 
 let rec read_body_chunks r b =
   let open Abb.Future.Infix_monad in
@@ -71,15 +70,23 @@ let handler mw rtng conn req ic oc =
       Mw.exec_early_exit_handler ctx mw
       >>= fun ctx -> write_response oc (Ctx.response ctx) >>= fun () -> Abb.Future.return `Ok
 
-let on_handler_err req err =
-  (match err with
+let on_handler_err (req : Cohttp.Request.t) = function
   | `Exn (exn, bt_opt) ->
+      let b = Buffer.create 100 in
+      let formatter = Format.formatter_of_buffer b in
+      Cohttp.Request.pp_hum formatter req;
+      Logs.err (fun m -> m "Request exn: %s" (Buffer.contents b));
       Logs.err (fun m -> m "Exception: %s" (Printexc.to_string exn));
       CCOption.iter
         (fun bt -> Logs.err (fun m -> m "Backtrace: %s" (Printexc.raw_backtrace_to_string bt)))
-        bt_opt
-  | `Timeout -> Logs.err (fun m -> m "Timeout"));
-  Abb.Future.return `Ok
+        bt_opt;
+      Abb.Future.return `Ok
+  | `Timeout ->
+      let b = Buffer.create 100 in
+      let formatter = Format.formatter_of_buffer b in
+      Cohttp.Request.pp_hum formatter req;
+      Logs.err (fun m -> m "Request timeout %s" (Buffer.contents b));
+      Abb.Future.return `Ok
 
 let on_protocol_err = function
   | `Error str ->
