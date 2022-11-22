@@ -699,7 +699,12 @@ module Make (S : S) = struct
     in
     Abbs_time_it.run (log_time event "CREATE_WORK_MANIFEST") (fun () ->
         S.store_new_work_manifest db event work_manifest denied_dirspaces)
-    >>= fun _ ->
+    >>= fun work_manifest ->
+    Logs.info (fun m ->
+        m
+          "EVENT_EVALUATOR : %s : STORED_WORK_MANIFEST : %s"
+          (S.Event.request_id event)
+          (Uuidm.to_string work_manifest.Terrat_work_manifest.id));
     Abbs_time_it.run (log_time event "CREATE_COMMIT_CHECKS") (fun () ->
         S.create_commit_checks
           event

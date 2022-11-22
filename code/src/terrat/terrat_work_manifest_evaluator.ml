@@ -55,27 +55,41 @@ module Make (S : S) = struct
   let run' storage t =
     let open Abbs_future_combinators.Infix_result_monad in
     Pgsql_pool.with_conn storage ~f:(fun db ->
-        Pgsql_io.tx db ~f:(fun () ->
-            Logs.info (fun m ->
-                m "WORK_MANIFEST_EVALUATOR : %s : INITIATE_WORK_MANIFEST" (S.request_id t));
-            S.initiate_work_manifest db t
-            >>= function
-            | None -> Abb.Future.return (Ok None)
-            | Some
-                (Terrat_work_manifest.{ state = State.(Completed | Aborted); pull_request; _ } as
-                wm) -> Abb.Future.return (Error (`Work_manifest_already_run wm))
-            | Some Terrat_work_manifest.{ state = State.Queued; _ } ->
-                Abb.Future.return (Error `Work_manifest_in_queue_state)
-            | Some work_manifest -> (
-                match work_manifest.Terrat_work_manifest.run_type with
-                | Terrat_work_manifest.Run_type.(Autoplan | Plan | Unsafe_apply) ->
-                    Abb.Future.return (Ok (Some work_manifest))
-                | Terrat_work_manifest.Run_type.(Autoapply | Apply) -> (
+        (* Explicitly not doing this in a transaction because we want the initiate
+           to mark the work manifest as running even if we fail further down. *)
+        Logs.info (fun m ->
+            m "WORK_MANIFEST_EVALUATOR : %s : INITIATE_WORK_MANIFEST" (S.request_id t));
+        S.initiate_work_manifest db t
+        >>= function
+        | None -> Abb.Future.return (Ok None)
+        | Some (Terrat_work_manifest.{ state = State.(Completed | Aborted); pull_request; _ } as wm)
+          -> Abb.Future.return (Error (`Work_manifest_already_run wm))
+        | Some Terrat_work_manifest.{ state = State.Queued; _ } ->
+            Abb.Future.return (Error `Work_manifest_in_queue_state)
+        | Some work_manifest -> (
+            match work_manifest.Terrat_work_manifest.run_type with
+            | Terrat_work_manifest.Run_type.(Autoplan | Plan | Unsafe_apply) ->
+                Abb.Future.return (Ok (Some work_manifest))
+            | Terrat_work_manifest.Run_type.(Autoapply | Apply) -> (
+                Logs.debug (fun m ->
+                    m
+                      "WORK_MANIFEST_EVALUATOR : %s : QUERY_DIRSPACES_OWNED_BY_OTHER_PR"
+                      (S.request_id t));
+                S.query_dirspaces_owned_by_other_pull_requests
+                  db
+                  t
+                  work_manifest.Terrat_work_manifest.pull_request
+                  (CCList.map
+                     Terrat_change.Dirspaceflow.to_dirspace
+                     work_manifest.Terrat_work_manifest.changes)
+                >>= function
+                | owned_dirspaces when Dirspace_map.is_empty owned_dirspaces -> (
+                    (* No dirspaces owned by another pull request, great *)
                     Logs.debug (fun m ->
                         m
-                          "WORK_MANIFEST_EVALUATOR : %s : QUERY_DIRSPACES_OWNED_BY_OTHER_PR"
+                          "WORK_MANIFEST_EVALUATOR : %s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS"
                           (S.request_id t));
-                    S.query_dirspaces_owned_by_other_pull_requests
+                    S.query_dirspaces_without_valid_plans
                       db
                       t
                       work_manifest.Terrat_work_manifest.pull_request
@@ -83,32 +97,18 @@ module Make (S : S) = struct
                          Terrat_change.Dirspaceflow.to_dirspace
                          work_manifest.Terrat_work_manifest.changes)
                     >>= function
-                    | owned_dirspaces when Dirspace_map.is_empty owned_dirspaces -> (
-                        (* No dirspaces owned by another pull request, great *)
-                        Logs.debug (fun m ->
-                            m
-                              "WORK_MANIFEST_EVALUATOR : %s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS"
-                              (S.request_id t));
-                        S.query_dirspaces_without_valid_plans
-                          db
-                          t
-                          work_manifest.Terrat_work_manifest.pull_request
-                          (CCList.map
-                             Terrat_change.Dirspaceflow.to_dirspace
-                             work_manifest.Terrat_work_manifest.changes)
-                        >>= function
-                        | [] ->
-                            (* All dirspaces have plans, great *)
-                            Abb.Future.return (Ok (Some work_manifest))
-                        | dirspaces ->
-                            (* Some dirspaces do not have valid plans, not great *)
-                            Abb.Future.return (Error (`Dirspaces_without_valid_plans dirspaces)))
-                    | owned_dirspaces ->
-                        (* Some dirspaces owned by other pull requests *)
-                        Abb.Future.return
-                          (Error
-                             (`Dirspaces_owned_by_other_pull_requests
-                               (Dirspace_map.to_list owned_dirspaces)))))))
+                    | [] ->
+                        (* All dirspaces have plans, great *)
+                        Abb.Future.return (Ok (Some work_manifest))
+                    | dirspaces ->
+                        (* Some dirspaces do not have valid plans, not great *)
+                        Abb.Future.return (Error (`Dirspaces_without_valid_plans dirspaces)))
+                | owned_dirspaces ->
+                    (* Some dirspaces owned by other pull requests *)
+                    Abb.Future.return
+                      (Error
+                         (`Dirspaces_owned_by_other_pull_requests
+                           (Dirspace_map.to_list owned_dirspaces))))))
 
   let run storage t =
     (run' storage t
