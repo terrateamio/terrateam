@@ -9,7 +9,7 @@
           "type": "boolean"
         },
         "enabled": {
-          "default": false,
+          "default": true,
           "type": "boolean"
         },
         "plan_require_all_dirspace_access": {

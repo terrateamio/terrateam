@@ -256,11 +256,11 @@ module Make (S : S) = struct
     module Ac = Terrat_repo_config.Access_control
     module P = Terrat_repo_config.Access_control_policy
 
-    let default_terrateam_config_update = [ "repo:admin" ]
+    let default_terrateam_config_update = [ "*" ]
     let default_plan = [ "*" ]
-    let default_apply = [ "repo:maintain" ]
-    let default_apply_force = [ "repo:admin" ]
-    let default_apply_autoapprove = [ "repo:admin" ]
+    let default_apply = [ "*" ]
+    let default_apply_force = []
+    let default_apply_autoapprove = []
     let default_unlock = [ "*" ]
     let default_apply_with_superapproval = []
     let default_superapproval = []
