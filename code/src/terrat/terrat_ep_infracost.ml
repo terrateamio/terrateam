@@ -17,9 +17,10 @@ let tls_config =
 
 let header_replace k v h = Cohttp.Header.replace h k v
 
-let post config storage path ctx =
+let post' config storage path ctx =
   let open Abb.Future.Infix_monad in
   let request = Brtl_ctx.request ctx in
+  let request_id = Brtl_ctx.token ctx in
   match Cohttp.Header.get (Brtl_ctx.Request.headers request) "x-api-key" with
   | Some work_manifest_id -> (
       (match Uuidm.of_string work_manifest_id with
@@ -38,35 +39,47 @@ let post config storage path ctx =
             |> CCFun.flip Cohttp.Header.remove "host"
             |> header_replace "x-api-key" (Terrat_config.infracost_api_key config)
           in
-          Logs.info (fun m -> m "INFRACOST: URI : %s" (Uri.to_string uri));
+          Logs.debug (fun m -> m "INFRACOST: %s : URI : %s" request_id (Uri.to_string uri));
           Http.Client.call ~tls_config ~headers ~body:(Http.Body.of_string body) `POST uri
           >>= function
           | Ok (resp, body) when Cohttp.Response.status resp = `OK ->
+              Logs.debug (fun m -> m "INFRACOST: %s : SUCCESS" request_id);
               Abb.Future.return
                 (Brtl_ctx.set_response
                    (Brtl_rspnc.create ~headers:(Cohttp.Response.headers resp) ~status:`OK body)
                    ctx)
           | Ok (resp, _) ->
-              Logs.err (fun m -> m "INFRACOST : ERROR : %a" Cohttp.Response.pp_hum resp);
+              Logs.err (fun m ->
+                  m "INFRACOST : %s : ERROR : %a" request_id Cohttp.Response.pp_hum resp);
               Abb.Future.return
                 (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error body) ctx)
           | Error (#Cohttp_abb.request_err as err) ->
-              Logs.err (fun m -> m "INFRACOST : ERROR : %s" (Cohttp_abb.show_request_err err));
+              Logs.err (fun m ->
+                  m "INFRACOST : %s : ERROR : %s" request_id (Cohttp_abb.show_request_err err));
               Abb.Future.return
                 (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
       | Error (#Pgsql_pool.err as err) ->
-          Logs.err (fun m -> m "INFRACOST : ERROR : %s" (Pgsql_pool.show_err err));
+          Logs.err (fun m -> m "INFRACOST : %s : ERROR : %s" request_id (Pgsql_pool.show_err err));
           Abb.Future.return
             (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
       | Error (#Pgsql_io.err as err) ->
-          Logs.err (fun m -> m "INFRACOST : ERROR : %s" (Pgsql_io.show_err err));
+          Logs.err (fun m -> m "INFRACOST : %s : ERROR : %s" request_id (Pgsql_io.show_err err));
           Abb.Future.return
             (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
       | Ok [] ->
-          Logs.err (fun m -> m "INFRACOST : ERROR : MISSING_WORK_MANIFEST");
+          Logs.err (fun m -> m "INFRACOST : %s : ERROR : MISSING_WORK_MANIFEST" request_id);
           Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)
       | Error `Bad_work_manifest ->
-          Logs.err (fun m -> m "INFRACOST : ERROR : BAD_WORK_MANIFEST");
+          Logs.err (fun m -> m "INFRACOST : %s : ERROR : BAD_WORK_MANIFEST" request_id);
           Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx))
   | None ->
       Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)
+
+let post config storage path ctx =
+  let request_id = Brtl_ctx.token ctx in
+  Logs.debug (fun m -> m "INFRACOST : %s : START" request_id);
+  Abbs_future_combinators.with_finally
+    (fun () -> post' config storage path ctx)
+    ~finally:(fun () ->
+      Logs.debug (fun m -> m "INFRACOST : %s : FINISH" request_id);
+      Abbs_future_combinators.unit)
