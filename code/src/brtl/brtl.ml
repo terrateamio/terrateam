@@ -70,22 +70,16 @@ let handler mw rtng conn req ic oc =
       Mw.exec_early_exit_handler ctx mw
       >>= fun ctx -> write_response oc (Ctx.response ctx) >>= fun () -> Abb.Future.return `Ok
 
-let on_handler_err (req : Cohttp.Request.t) = function
+let on_handler_err req = function
   | `Exn (exn, bt_opt) ->
-      let b = Buffer.create 100 in
-      let formatter = Format.formatter_of_buffer b in
-      Cohttp.Request.pp_hum formatter req;
-      Logs.err (fun m -> m "Request exn: %s" (Buffer.contents b));
+      Logs.err (fun m -> m "Request exn: %a" Cohttp.Request.pp_hum req);
       Logs.err (fun m -> m "Exception: %s" (Printexc.to_string exn));
       CCOption.iter
         (fun bt -> Logs.err (fun m -> m "Backtrace: %s" (Printexc.raw_backtrace_to_string bt)))
         bt_opt;
       Abb.Future.return `Ok
   | `Timeout ->
-      let b = Buffer.create 100 in
-      let formatter = Format.formatter_of_buffer b in
-      Cohttp.Request.pp_hum formatter req;
-      Logs.err (fun m -> m "Request timeout %s" (Buffer.contents b));
+      Logs.err (fun m -> m "Request timeout %a" Cohttp.Request.pp_hum req);
       Abb.Future.return `Ok
 
 let on_protocol_err = function
