@@ -2,6 +2,19 @@ module Dir_set = CCSet.Make (CCString)
 module String_set = CCSet.Make (CCString)
 module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
 
+module Metrics = struct
+  module DefaultHistogram = Prmths.Histogram (struct
+    let spec = Prmths.Histogram_spec.of_list [ 0.005; 0.5; 1.0; 5.0; 10.0; 15.0; 20.0 ]
+  end)
+
+  let namespace = "terrat"
+  let subsystem = "event_evaluator"
+
+  let eval_duration_seconds =
+    let help = "Number of seconds to evaluate an event" in
+    DefaultHistogram.v ~help ~namespace ~subsystem "eval_duration_seconds"
+end
+
 module Msg = struct
   module Apply_requirements = struct
     type t = {
@@ -1333,5 +1346,5 @@ module Make (S : S) = struct
                   (Printexc.to_string exn)
                   (CCOption.map_or ~default:"" Printexc.raw_backtrace_to_string bt_opt));
             Abb.Future.return ())
-      (run' storage event)
+      (Metrics.DefaultHistogram.time Metrics.eval_duration_seconds (fun () -> run' storage event))
 end

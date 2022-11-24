@@ -1,5 +1,53 @@
 module Gw = Terrat_github_webhooks
 
+module Metrics = struct
+  module DefaultHistogram = Prmths.Histogram (struct
+    let spec = Prmths.Histogram_spec.of_list [ 0.005; 0.5; 1.0; 5.0; 10.0; 15.0; 20.0 ]
+  end)
+
+  let namespace = "terrat"
+  let subsystem = "ep_github_events"
+
+  let events_duration_seconds =
+    let help = "Number of seconds that handling an incoming event takes" in
+    DefaultHistogram.v ~help ~namespace ~subsystem "events_duration_seconds"
+
+  let events_total_family =
+    let help = "Number of events that the system has received" in
+    Prmths.Counter.v_labels
+      ~label_names:[ "type"; "action" ]
+      ~help
+      ~namespace
+      ~subsystem
+      "events_total"
+
+  let comment_events_total action = Prmths.Counter.labels events_total_family [ "comment"; action ]
+  let pr_events_total action = Prmths.Counter.labels events_total_family [ "pr"; action ]
+
+  let installation_events_total typ =
+    Prmths.Counter.labels events_total_family [ "installation"; typ ]
+
+  let events_concurrent =
+    let help = "Number of events being handled right now" in
+    Prmths.Gauge.v ~help ~namespace ~subsystem "events_concurrent"
+
+  let pgsql_pool_errors_total =
+    let help = "Number of pgsql pool errors" in
+    Prmths.Counter.v ~help ~namespace ~subsystem "pgsql_pool_errors_total"
+
+  let pgsql_errors_total =
+    let help = "Number of pgsql errors" in
+    Prmths.Counter.v ~help ~namespace ~subsystem "pgsql_errors_total"
+
+  let github_errors_total =
+    let help = "Number of github errors" in
+    Prmths.Counter.v ~help ~namespace ~subsystem "github_errors_total"
+
+  let github_webhook_decode_errors_total =
+    let help = "Number of github errors" in
+    Prmths.Counter.v ~help ~namespace ~subsystem "github_webhook_decode_errors_total"
+end
+
 module Sql = struct
   let read fname =
     CCOption.get_exn_or
@@ -429,6 +477,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     >>= function
     | Ok existing_dirs -> Abb.Future.return (Ok existing_dirs)
     | Error (#Githubc2_abb.call_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "GITHUB_EVENT : %s : FAIL_LIST_EXISTING_DIRS : %s"
@@ -455,6 +504,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
     | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
             m "GITHUB_EVENT : %s : ERROR : %s" (Event.request_id event) (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
@@ -484,6 +534,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
     | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
             m "GITHUB_EVENT : %s : ERROR : %s" (Event.request_id event) (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
@@ -567,10 +618,12 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     >>= function
     | Ok wm -> Abb.Future.return (Ok wm)
     | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
             m "GITHUB_EVENT : %s : ERROR : %s" (Event.request_id event) (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
     | Error (#Githubc2_abb.call_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "GITHUB_EVENT : %s : ERROR : %s"
@@ -604,6 +657,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
         Abb.Future.return
           (Error (`Repo_config_err "An unknown error occurred while reading the repo config."))
     | Error (#Terrat_github.fetch_repo_config_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "GITHUB_EVENT : %s : ERROR : %s"
@@ -701,6 +755,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     | Ok _ as ret -> Abb.Future.return ret
     | Error `Error -> Abb.Future.return (Error `Error)
     | Error (#Githubc2_abb.call_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "GITHUB_EVENT : %s : ERROR : %s : %s : %s"
@@ -769,6 +824,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     >>= function
     | Ok dirspaces -> Abb.Future.return (Ok dirspaces)
     | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
             m "GITHUB_EVENT : %s : ERROR : %s" (Event.request_id event) (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
@@ -811,6 +867,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     >>= function
     | Ok _ as res -> Abb.Future.return res
     | Error (#Terrat_github_commit_check.list_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "GITHUB_EVENT : %s : FETCH_COMMIT_CHECKS : %s"
@@ -851,6 +908,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
                     })
                 reviews))
     | Error (#Terrat_github.Pull_request_reviews.list_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "GITHUB_EVENT : %s : ERROR : %s"
@@ -922,6 +980,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     >>= function
     | Ok wms -> Abb.Future.return (Ok wms)
     | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
             m "GITHUB_EVENT : %s : ERROR : %s" (Event.request_id event) (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
@@ -937,6 +996,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
     | Error (#Githubc2_abb.call_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "GITHUB_EVENT : %s : ERROR : %s"
@@ -963,6 +1023,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     >>= function
     | Ok dirspaces -> Abb.Future.return (Ok dirspaces)
     | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
             m "GITHUB_EVENT : %s : ERROR : %s" (Event.request_id event) (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
@@ -980,6 +1041,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     >>= function
     | Ok _ as ret -> Abb.Future.return ret
     | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
             m "GITHUB_EVENT : %s : ERROR : %s" (Event.request_id event) (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
@@ -1018,6 +1080,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     >>= function
     | Ok res -> Abb.Future.return (Ok (Terrat_event_evaluator.Dirspace_map.of_list res))
     | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
             m "GITHUB_EVENT : %s : ERROR : %s" (Event.request_id event) (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
@@ -1081,10 +1144,12 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
     | Error (#Pgsql_pool.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
         Logs.err (fun m ->
             m "GITHUB_EVENT : %s : ERROR : %s" (Event.request_id event) (Pgsql_pool.show_err err));
         Abb.Future.return (Error `Error)
     | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
             m "GITHUB_EVENT : %s : ERROR : %s" (Event.request_id event) (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
@@ -1500,6 +1565,7 @@ let perform_unlock_pr request_id config storage installation_id repository pull_
 let process_installation request_id config storage = function
   | Gw.Installation_event.Installation_created created ->
       let open Abbs_future_combinators.Infix_result_monad in
+      Prmths.Counter.inc_one (Metrics.installation_events_total "created");
       let installation = created.Gw.Installation_created.installation in
       Logs.info (fun m ->
           m
@@ -1532,8 +1598,10 @@ let process_installation request_id config storage = function
           | _ :: _ -> Abb.Future.return (Ok ()))
   | Gw.Installation_event.Installation_deleted _ ->
       Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : INSTALLATION_DELETED" request_id);
+      Prmths.Counter.inc_one (Metrics.installation_events_total "deleted");
       Abb.Future.return (Ok ())
   | Gw.Installation_event.Installation_new_permissions_accepted installation_event ->
+      Prmths.Counter.inc_one (Metrics.installation_events_total "new_permissions_accepted");
       let installation = installation_event.Gw.Installation_new_permissions_accepted.installation in
       Logs.info (fun m ->
           m
@@ -1543,9 +1611,11 @@ let process_installation request_id config storage = function
       Abb.Future.return (Ok ())
   | Gw.Installation_event.Installation_suspend _ ->
       Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : INSTALLATION_SUSPENDED" request_id);
+      Prmths.Counter.inc_one (Metrics.installation_events_total "suspended");
       Abb.Future.return (Ok ())
   | Gw.Installation_event.Installation_unsuspend _ ->
       Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : INSTALLATION_UNSUSPENDED" request_id);
+      Prmths.Counter.inc_one (Metrics.installation_events_total "unsuspended");
       Abb.Future.return (Ok ())
 
 let process_pull_request_event request_id config storage = function
@@ -1580,6 +1650,7 @@ let process_pull_request_event request_id config storage = function
         _;
       } ->
       let open Abbs_future_combinators.Infix_result_monad in
+      Prmths.Counter.inc_one (Metrics.pr_events_total "update");
       Logs.info (fun m ->
           m
             "GITHUB_EVENT : %s : PULL_REQUEST_EVENT : owner=%s : repo=%s : sender=%s"
@@ -1617,6 +1688,7 @@ let process_pull_request_event request_id config storage = function
         _;
       } ->
       let open Abbs_future_combinators.Infix_result_monad in
+      Prmths.Counter.inc_one (Metrics.pr_events_total "close");
       Logs.info (fun m ->
           m
             "GITHUB_EVENT : %s : PULL_REQUEST_CLOSED_EVENT : owner=%s : repo=%s : sender=%s"
@@ -1709,6 +1781,7 @@ let process_issue_comment request_id config storage = function
             sender.Gw.User.login);
       match Terrat_comment.parse comment.Gw.Issue_comment.body with
       | Ok Terrat_comment.Unlock ->
+          Prmths.Counter.inc_one (Metrics.comment_events_total "unlock");
           perform_unlock_pr
             request_id
             config
@@ -1719,6 +1792,7 @@ let process_issue_comment request_id config storage = function
             sender.Gw.User.login
       | Ok (Terrat_comment.Plan { tag_query }) ->
           let open Abbs_future_combinators.Infix_result_monad in
+          Prmths.Counter.inc_one (Metrics.comment_events_total "plan");
           Terrat_github.get_installation_access_token config installation_id
           >>= fun access_token ->
           Abbs_time_it.run
@@ -1747,6 +1821,7 @@ let process_issue_comment request_id config storage = function
           run_event_evaluator storage event
       | Ok (Terrat_comment.Apply { tag_query }) ->
           let open Abbs_future_combinators.Infix_result_monad in
+          Prmths.Counter.inc_one (Metrics.comment_events_total "apply");
           Terrat_github.get_installation_access_token config installation_id
           >>= fun access_token ->
           Abbs_time_it.run
@@ -1775,6 +1850,7 @@ let process_issue_comment request_id config storage = function
           run_event_evaluator storage event
       | Ok (Terrat_comment.Apply_autoapprove { tag_query }) ->
           let open Abbs_future_combinators.Infix_result_monad in
+          Prmths.Counter.inc_one (Metrics.comment_events_total "apply_autoapprove");
           Terrat_github.get_installation_access_token config installation_id
           >>= fun access_token ->
           Abbs_time_it.run
@@ -1803,6 +1879,7 @@ let process_issue_comment request_id config storage = function
           run_event_evaluator storage event
       | Ok (Terrat_comment.Apply_force { tag_query }) ->
           let open Abbs_future_combinators.Infix_result_monad in
+          Prmths.Counter.inc_one (Metrics.comment_events_total "apply_force");
           Terrat_github.get_installation_access_token config installation_id
           >>= fun access_token ->
           Abbs_time_it.run
@@ -1830,6 +1907,7 @@ let process_issue_comment request_id config storage = function
           in
           run_event_evaluator storage event
       | Ok Terrat_comment.Help -> (
+          Prmths.Counter.inc_one (Metrics.comment_events_total "help");
           let kv = Snabela.Kv.Map.of_list [] in
           match Snabela.apply Tmpl.terrateam_comment_help kv with
           | Ok body ->
@@ -1848,6 +1926,7 @@ let process_issue_comment request_id config storage = function
               Abb.Future.return (Ok ()))
       | Ok (Terrat_comment.Feedback msg) ->
           let open Abbs_future_combinators.Infix_result_monad in
+          Prmths.Counter.inc_one (Metrics.comment_events_total "feedback");
           Logs.info (fun m ->
               m
                 "GITHUB_EVENT : %s : FEEDBACK : owner=%s : repo=%s : pull_number=%d : user=%s : %s"
@@ -1867,8 +1946,11 @@ let process_issue_comment request_id config storage = function
             ~comment_id:comment.Gw.Issue_comment.id
             ()
           >>= fun () -> Abb.Future.return (Ok ())
-      | Error `Not_terrateam -> Abb.Future.return (Ok ())
+      | Error `Not_terrateam ->
+          Prmths.Counter.inc_one (Metrics.comment_events_total "not_terrateam");
+          Abb.Future.return (Ok ())
       | Error (`Unknown_action action) -> (
+          Prmths.Counter.inc_one (Metrics.comment_events_total "unknown_action");
           let kv = Snabela.Kv.Map.of_list [] in
           match Snabela.apply Tmpl.terrateam_comment_unknown_action kv with
           | Ok body ->
@@ -1892,15 +1974,19 @@ let process_issue_comment request_id config storage = function
               Abb.Future.return (Ok ())))
   | Gw.Issue_comment_event.Issue_comment_created _ ->
       Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : ISSUE_COMMENT_CREATED" request_id);
+      Prmths.Counter.inc_one (Metrics.comment_events_total "noop");
       Abb.Future.return (Ok ())
   | Gw.Issue_comment_event.Issue_comment_deleted _ ->
       Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : ISSUE_COMMENT_DELETED" request_id);
+      Prmths.Counter.inc_one (Metrics.comment_events_total "noop");
       Abb.Future.return (Ok ())
   | Gw.Issue_comment_event.Issue_comment_edited _ ->
       Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : ISSUE_COMMENT_EDITED" request_id);
+      Prmths.Counter.inc_one (Metrics.comment_events_total "noop");
       Abb.Future.return (Ok ())
   | Gw.Issue_comment_event.Issue_any _ ->
       Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : ISSUE" request_id);
+      Prmths.Counter.inc_one (Metrics.comment_events_total "noop");
       Abb.Future.return (Ok ())
 
 let process_workflow_job_failure storage access_token run_id repository =
@@ -2021,16 +2107,19 @@ let process_workflow_job request_id config storage = function
 
 let handle_error ctx = function
   | #Pgsql_pool.err as err ->
+      Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
       Logs.err (fun m ->
           m "GITHUB_EVENT : %s : ERROR : %s" (Brtl_ctx.token ctx) (Pgsql_pool.show_err err));
       Abb.Future.return
         (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
   | #Pgsql_io.err as err ->
+      Prmths.Counter.inc_one Metrics.pgsql_errors_total;
       Logs.err (fun m ->
           m "GITHUB_EVENT : %s : ERROR : %s" (Brtl_ctx.token ctx) (Pgsql_io.show_err err));
       Abb.Future.return
         (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
   | #Terrat_github.get_installation_access_token_err as err ->
+      Prmths.Counter.inc_one Metrics.github_errors_total;
       Logs.err (fun m ->
           m
             "GITHUB_EVENT : %s : ERROR : %s"
@@ -2038,6 +2127,7 @@ let handle_error ctx = function
             (Terrat_github.show_get_installation_access_token_err err));
       Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)
   | #Terrat_github.publish_comment_err as err ->
+      Prmths.Counter.inc_one Metrics.github_errors_total;
       Logs.err (fun m ->
           m
             "GITHUB_EVENT : %s : ERROR : %s"
@@ -2068,39 +2158,46 @@ let post config storage ctx =
   let request = Brtl_ctx.request ctx in
   let headers = Brtl_ctx.Request.headers request in
   let body = Brtl_ctx.body ctx in
-  match
-    Terrat_github_webhooks_decoder.run
-      ?secret:(Terrat_config.github_webhook_secret config)
-      headers
-      body
-  with
-  | Ok (Gw.Event.Installation_event installation_event) ->
-      process_event_handler config storage ctx (fun () ->
-          process_installation (Brtl_ctx.token ctx) config storage installation_event)
-  | Ok (Gw.Event.Pull_request_event pull_request_event) ->
-      process_event_handler config storage ctx (fun () ->
-          process_pull_request_event (Brtl_ctx.token ctx) config storage pull_request_event)
-  | Ok (Gw.Event.Issue_comment_event event) ->
-      process_event_handler config storage ctx (fun () ->
-          process_issue_comment (Brtl_ctx.token ctx) config storage event)
-  | Ok (Gw.Event.Workflow_job_event event) ->
-      process_event_handler config storage ctx (fun () ->
-          process_workflow_job (Brtl_ctx.token ctx) config storage event)
-  | Ok (Gw.Event.Push_event _) ->
-      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PUSH_EVENT" (Brtl_ctx.token ctx));
-      Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-  | Ok (Gw.Event.Workflow_run_event _) ->
-      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : WORKFLOW_RUN_EVENT" (Brtl_ctx.token ctx));
-      Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-  | Ok (Gw.Event.Installation_repositories_event _) | Ok (Gw.Event.Workflow_dispatch_event _) ->
-      Logs.debug (fun m ->
-          m "GITHUB_EVENT : %s : NOOP : INSTALLATION_REPOSITORIES_EVENT" (Brtl_ctx.token ctx));
-      Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-  | Error (#Terrat_github_webhooks_decoder.err as err) ->
-      Logs.warn (fun m ->
-          m
-            "GITHUB_EVENT : %s : UNKNOWN_EVENT : %s"
-            (Brtl_ctx.token ctx)
-            (Terrat_github_webhooks_decoder.show_err err));
-      Abb.Future.return
-        (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+  Metrics.DefaultHistogram.time Metrics.events_duration_seconds (fun () ->
+      Prmths.Gauge.track_inprogress Metrics.events_concurrent (fun () ->
+          match
+            Terrat_github_webhooks_decoder.run
+              ?secret:(Terrat_config.github_webhook_secret config)
+              headers
+              body
+          with
+          | Ok (Gw.Event.Installation_event installation_event) ->
+              process_event_handler config storage ctx (fun () ->
+                  process_installation (Brtl_ctx.token ctx) config storage installation_event)
+          | Ok (Gw.Event.Pull_request_event pull_request_event) ->
+              process_event_handler config storage ctx (fun () ->
+                  process_pull_request_event (Brtl_ctx.token ctx) config storage pull_request_event)
+          | Ok (Gw.Event.Issue_comment_event event) ->
+              process_event_handler config storage ctx (fun () ->
+                  process_issue_comment (Brtl_ctx.token ctx) config storage event)
+          | Ok (Gw.Event.Workflow_job_event event) ->
+              process_event_handler config storage ctx (fun () ->
+                  process_workflow_job (Brtl_ctx.token ctx) config storage event)
+          | Ok (Gw.Event.Push_event _) ->
+              Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PUSH_EVENT" (Brtl_ctx.token ctx));
+              Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
+          | Ok (Gw.Event.Workflow_run_event _) ->
+              Logs.debug (fun m ->
+                  m "GITHUB_EVENT : %s : NOOP : WORKFLOW_RUN_EVENT" (Brtl_ctx.token ctx));
+              Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
+          | Ok (Gw.Event.Installation_repositories_event _)
+          | Ok (Gw.Event.Workflow_dispatch_event _) ->
+              Logs.debug (fun m ->
+                  m
+                    "GITHUB_EVENT : %s : NOOP : INSTALLATION_REPOSITORIES_EVENT"
+                    (Brtl_ctx.token ctx));
+              Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
+          | Error (#Terrat_github_webhooks_decoder.err as err) ->
+              Prmths.Counter.inc_one Metrics.github_webhook_decode_errors_total;
+              Logs.warn (fun m ->
+                  m
+                    "GITHUB_EVENT : %s : UNKNOWN_EVENT : %s"
+                    (Brtl_ctx.token ctx)
+                    (Terrat_github_webhooks_decoder.show_err err));
+              Abb.Future.return
+                (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))

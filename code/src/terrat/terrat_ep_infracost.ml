@@ -1,5 +1,26 @@
 module Http = Cohttp_abb.Make (Abb)
 
+module Metrics = struct
+  module DefaultHistogram = Prmths.Histogram (struct
+    let spec = Prmths.Histogram_spec.of_list [ 0.005; 0.5; 1.0; 5.0; 10.0; 15.0; 20.0 ]
+  end)
+
+  let namespace = "terrat"
+  let subsystem = "ep_infracost"
+
+  let duration_seconds =
+    let help = "Number of seconds to eval an infracost request" in
+    DefaultHistogram.v ~help ~namespace ~subsystem "duration_seconds"
+
+  let requests_total =
+    let help = "Total number of requests" in
+    Prmths.Counter.v ~help ~namespace ~subsystem "requests_total"
+
+  let requests_concurrent =
+    let help = "Number of concurrent requests" in
+    Prmths.Gauge.v ~help ~namespace ~subsystem "requests_concurrent"
+end
+
 module Sql = struct
   let verify_work_manifest =
     Pgsql_io.Typed_sql.(
@@ -78,8 +99,11 @@ let post' config storage path ctx =
 let post config storage path ctx =
   let request_id = Brtl_ctx.token ctx in
   Logs.debug (fun m -> m "INFRACOST : %s : START" request_id);
-  Abbs_future_combinators.with_finally
-    (fun () -> post' config storage path ctx)
-    ~finally:(fun () ->
-      Logs.debug (fun m -> m "INFRACOST : %s : FINISH" request_id);
-      Abbs_future_combinators.unit)
+  Prmths.Counter.inc_one Metrics.requests_total;
+  Metrics.DefaultHistogram.time Metrics.duration_seconds (fun () ->
+      Prmths.Gauge.track_inprogress Metrics.requests_concurrent (fun () ->
+          Abbs_future_combinators.with_finally
+            (fun () -> post' config storage path ctx)
+            ~finally:(fun () ->
+              Logs.debug (fun m -> m "INFRACOST : %s : FINISH" request_id);
+              Abbs_future_combinators.unit)))
