@@ -40,6 +40,7 @@ module Rt = struct
 
   let health_check () = Brtl_rtng.Route.(rel / "health")
   let infracost () = Brtl_rtng.Route.(api () / "github" / "infracost" /% Path.any)
+  let metrics () = Brtl_rtng.Route.(rel / "metrics")
 end
 
 let response_404 ctx =
@@ -50,6 +51,9 @@ let rtng config storage =
     ~default:(Brtl_static.run Terrat_files_assets.read "index.html")
     Brtl_rtng.Route.
       [
+        (* Ops *)
+        (`GET, Rt.health_check () --> Terrat_ep_health_check.get);
+        (`GET, Rt.metrics () --> Terrat_ep_metrics.get);
         (* Work manifests *)
         ( `POST,
           Rt.github_work_manifest_plan ()
@@ -66,7 +70,6 @@ let rtng config storage =
         (* Github *)
         (`POST, Rt.github_events () --> Terrat_ep_github_events.post config storage);
         (`GET, Rt.github_callback () --> Terrat_ep_github_callback.get config storage);
-        (`GET, Rt.health_check () --> Terrat_ep_health_check.get);
         (* Infracost *)
         (`POST, Rt.infracost () --> Terrat_ep_infracost.post config storage);
         (* API 404s.  This is needed because for any and only UI endpoint we
