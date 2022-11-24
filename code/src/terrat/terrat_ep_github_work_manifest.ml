@@ -1,6 +1,31 @@
 module String_map = CCMap.Make (CCString)
 module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
 
+module Metrics = struct
+  let namespace = "terrat"
+  let subsystem = "ep_github_work_manifest"
+
+  module Run_output_histogram = Prmths.Histogram (struct
+    let spec =
+      Prmths.Histogram_spec.of_list [ 500.0; 1000.0; 2500.0; 10000.0; 20000.0; 35000.0; 65000.0 ]
+  end)
+
+  let run_output_chars =
+    let help = "Number of chars in run output" in
+    let family =
+      Run_output_histogram.v_labels
+        ~label_names:[ "run_type"; "compact_view" ]
+        ~help
+        ~namespace
+        ~subsystem
+        "run_output_chars"
+    in
+    fun ~r ~c ->
+      Run_output_histogram.labels
+        family
+        [ Terrat_work_manifest.Run_type.to_string r; Bool.to_string c ]
+end
+
 let response_headers = Cohttp.Header.of_list [ ("content-type", "application/json") ]
 
 let maybe_credential_error_strings =
@@ -1324,6 +1349,9 @@ module Results = struct
       () =
     let open Abb.Future.Infix_monad in
     let output = create_run_output ~compact_view run_type results denied_dirspaces in
+    Metrics.Run_output_histogram.observe
+      (Metrics.run_output_chars ~r:run_type ~c:compact_view)
+      (CCFloat.of_int (CCString.length output));
     Terrat_github.publish_comment ~access_token ~owner ~repo ~pull_number output
     >>= function
     | Ok () -> Abb.Future.return (Ok ())

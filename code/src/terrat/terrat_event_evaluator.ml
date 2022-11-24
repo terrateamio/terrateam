@@ -3,16 +3,43 @@ module String_set = CCSet.Make (CCString)
 module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
 
 module Metrics = struct
-  module DefaultHistogram = Prmths.Histogram (struct
-    let spec = Prmths.Histogram_spec.of_list [ 0.005; 0.5; 1.0; 5.0; 10.0; 15.0; 20.0 ]
-  end)
+  module DefaultHistogram = Prmths.DefaultHistogram
 
   let namespace = "terrat"
   let subsystem = "event_evaluator"
 
   let eval_duration_seconds =
-    let help = "Number of seconds to evaluate an event" in
+    let help = "Time to evaluate an event" in
     DefaultHistogram.v ~help ~namespace ~subsystem "eval_duration_seconds"
+
+  let stored_work_manifests_total =
+    let help = "Number of work manifests stored" in
+    Prmths.Counter.v_label
+      ~label_name:"run_type"
+      ~help
+      ~namespace
+      ~subsystem
+      "stored_work_manifests_total"
+
+  let operations_total =
+    let help = "Count of operations per type" in
+    Prmths.Counter.v_label ~label_name:"run_type" ~help ~namespace ~subsystem "operations_total"
+
+  let access_control_total =
+    let help = "Count of access control calls" in
+    let family =
+      Prmths.Counter.v_labels
+        ~label_names:[ "type"; "result" ]
+        ~help
+        ~namespace
+        ~subsystem
+        "access_control_total"
+    in
+    fun ~t ~r -> Prmths.Counter.labels family [ t; r ]
+
+  let errors_total =
+    let help = "Number of errors" in
+    Prmths.Counter.v_label ~label_name:"type" ~help ~namespace ~subsystem "errors_total"
 end
 
 module Msg = struct
@@ -77,6 +104,14 @@ module Op_class = struct
     | `Apply_autoapprove -> Terrat_work_manifest.Run_type.Unsafe_apply
     | `Plan `Auto -> Terrat_work_manifest.Run_type.Autoplan
     | `Plan `Manual -> Terrat_work_manifest.Run_type.Plan
+
+  let to_string = function
+    | `Apply `Auto -> "autoapply"
+    | `Apply `Manual -> "apply"
+    | `Apply_force -> "apply_force"
+    | `Apply_autoapprove -> "apply_autoapprove"
+    | `Plan `Auto -> "autoplan"
+    | `Plan `Manual -> "plan"
 end
 
 module Event_type = struct
@@ -260,8 +295,11 @@ let dirspaceflows_of_changes repo_config changes =
        workflows)
 
 module Make (S : S) = struct
-  let log_time event name t =
-    Logs.info (fun m -> m "EVENT_EVALUATOR : %s : %s : %f" (S.Event.request_id event) name t)
+  let log_time ?m event name t =
+    Logs.info (fun m -> m "EVENT_EVALUATOR : %s : %s : %f" (S.Event.request_id event) name t);
+    match m with
+    | Some m -> Metrics.DefaultHistogram.observe m t
+    | None -> ()
 
   module Access_control = Terrat_access_control.Make (S.Access_control)
 
@@ -331,7 +369,7 @@ module Make (S : S) = struct
                          policy = CCOption.get_or ~default (selector p);
                        })
         in
-        Abbs_time_it.run (log_time t.event "ACCESS_CONTROL_EVAL") (fun () ->
+        Abbs_time_it.run (log_time t.event "ACCESS_CONTROL_SUPERAPPROVAL_EVAL") (fun () ->
             Access_control.eval t.ctx policies change_matches)
       else (
         Logs.debug (fun m ->
@@ -692,6 +730,7 @@ module Make (S : S) = struct
       denied_dirspaces
       run_type =
     let open Abbs_future_combinators.Infix_result_monad in
+    let module Run_type = Terrat_work_manifest.Run_type in
     let dirspaceflows = dirspaceflows_of_changes repo_config matches in
     let dirspaces = CCList.map (fun Terrat_change_match.{ dirspace; _ } -> dirspace) matches in
     let work_manifest =
@@ -713,6 +752,7 @@ module Make (S : S) = struct
     Abbs_time_it.run (log_time event "CREATE_WORK_MANIFEST") (fun () ->
         S.store_new_work_manifest db event work_manifest denied_dirspaces)
     >>= fun work_manifest ->
+    Prmths.Counter.inc_one (Metrics.stored_work_manifests_total (Run_type.to_string run_type));
     Logs.info (fun m ->
         m
           "EVENT_EVALUATOR : %s : STORED_WORK_MANIFEST : %s"
@@ -1031,6 +1071,9 @@ module Make (S : S) = struct
                 Abbs_time_it.run (log_time event "STORE_DIRSPACEFLOWS") (fun () ->
                     S.store_dirspaceflows db event pull_request all_match_dirspaceflows)
                 >>= fun () ->
+                Prmths.Counter.inc_one
+                  (Metrics.operations_total
+                     (Terrat_work_manifest.Run_type.to_string (Op_class.run_type_of_tf operation)));
                 match operation with
                 | `Plan tf_mode ->
                     Abbs_time_it.run (log_time event "PROCESS_PLAN") (fun () ->
@@ -1232,14 +1275,18 @@ module Make (S : S) = struct
               Access_control_engine.eval_pr_operation access_control `Unlock
               >>= function
               | Ok None ->
+                  Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"allowed");
                   let open Abbs_future_combinators.Infix_result_monad in
                   S.unlock_pull_request storage event
                   >>= fun () -> Abb.Future.return (Ok (Some Msg.Unlock_success))
               | Ok (Some match_list) ->
+                  Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"denied");
                   Abb.Future.return (Ok (Some (Msg.Access_control_denied (`Unlock match_list))))
               | Error `Error ->
+                  Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"denied");
                   Abb.Future.return (Ok (Some (Msg.Access_control_denied `Lookup_err)))
               | Error (`Invalid_query query) ->
+                  Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"denied");
                   Abb.Future.return
                     (Ok
                        (Some (Msg.Access_control_denied (`Terrateam_config_update_bad_query query))))
@@ -1254,6 +1301,10 @@ module Make (S : S) = struct
                     (S.Pull_request.diff pull_request)
                   >>= function
                   | Ok None ->
+                      Prmths.Counter.inc_one
+                        (Metrics.access_control_total
+                           ~t:(Op_class.to_string operation)
+                           ~r:"allowed");
                       exec_event
                         access_control
                         storage
@@ -1263,11 +1314,17 @@ module Make (S : S) = struct
                         repo_tree
                         operation
                   | Ok (Some match_list) ->
+                      Prmths.Counter.inc_one
+                        (Metrics.access_control_total ~t:(Op_class.to_string operation) ~r:"denied");
                       Abb.Future.return
                         (Ok (Some (Msg.Access_control_denied (`Terrateam_config_update match_list))))
                   | Error `Error ->
+                      Prmths.Counter.inc_one
+                        (Metrics.access_control_total ~t:(Op_class.to_string operation) ~r:"denied");
                       Abb.Future.return (Ok (Some (Msg.Access_control_denied `Lookup_err)))
                   | Error (`Invalid_query query) ->
+                      Prmths.Counter.inc_one
+                        (Metrics.access_control_total ~t:(Op_class.to_string operation) ~r:"denied");
                       Abb.Future.return
                         (Ok
                            (Some
@@ -1283,10 +1340,7 @@ module Make (S : S) = struct
               | Terrat_pull_request.State.Closed ->
                   Logs.info (fun m ->
                       m "EVENT_EVALUATOR : %s : NOOP : PR_CLOSED" (S.Event.request_id event));
-                  Pgsql_pool.with_conn storage ~f:(fun db ->
-                      Abbs_time_it.run (log_time event "STORE_PULL_REQUEST") (fun () ->
-                          S.store_pull_request db event pull_request))
-                  >>= fun () -> Abb.Future.return (Ok None))
+                  Abb.Future.return (Ok None))
         else (
           Logs.info (fun m ->
               m "EVENT_EVALUATOR : %s : NOOP : REPO_CONFIG_DISABLED" (S.Event.request_id event));
@@ -1303,10 +1357,12 @@ module Make (S : S) = struct
                 Abbs_time_it.run (log_time event "PUBLISH_MSG") (fun () -> S.publish_msg event msg)
             | Ok None -> Abb.Future.return ()
             | Error (`Bad_glob s) ->
+                Prmths.Counter.inc_one (Metrics.errors_total "bad_glob");
                 Logs.err (fun m ->
                     m "EVENT_EVALUATOR : %s : BAD_GLOB : %s" (S.Event.request_id event) s);
                 S.publish_msg event (Msg.Bad_glob s)
             | Error (`Repo_config_parse_err err) ->
+                Prmths.Counter.inc_one (Metrics.errors_total "repo_config_parse_err");
                 Logs.info (fun m ->
                     m
                       "EVENT_EVALUATOR : %s : REPO_CONFIG_PARSE_ERR : %s"
@@ -1314,14 +1370,17 @@ module Make (S : S) = struct
                       err);
                 S.publish_msg event (Msg.Repo_config_parse_failure err)
             | Error (`Repo_config_err err) ->
+                Prmths.Counter.inc_one (Metrics.errors_total "repo_config_err");
                 Logs.info (fun m ->
                     m "EVENT_EVALUATOR : %s : REPO_CONFIG_ERR : %s" (S.Event.request_id event) err);
                 S.publish_msg event (Msg.Repo_config_failure err)
             | Error `Error ->
+                Prmths.Counter.inc_one (Metrics.errors_total "error");
                 Logs.err (fun m ->
                     m "EVENT_EVALUATOR : %s : ERROR : ERROR" (S.Event.request_id event));
                 Abb.Future.return ()
             | Error (#Pgsql_pool.err as err) ->
+                Prmths.Counter.inc_one (Metrics.errors_total "pgsql_pool");
                 Logs.err (fun m ->
                     m
                       "EVENT_EVALUATOR : %s : ERROR : %s"
@@ -1329,6 +1388,7 @@ module Make (S : S) = struct
                       (Pgsql_pool.show_err err));
                 Abb.Future.return ()
             | Error (#Pgsql_io.err as err) ->
+                Prmths.Counter.inc_one (Metrics.errors_total "pgsql_io");
                 Logs.err (fun m ->
                     m
                       "EVENT_EVALUATOR : %s : ERROR : %s"
@@ -1336,9 +1396,11 @@ module Make (S : S) = struct
                       (Pgsql_io.show_err err));
                 Abb.Future.return ())
         | `Aborted ->
+            Prmths.Counter.inc_one (Metrics.errors_total "aborted");
             Logs.err (fun m -> m "EVENT_EVALUATOR : %s : ABORTED" (S.Event.request_id event));
             Abb.Future.return ()
         | `Exn (exn, bt_opt) ->
+            Prmths.Counter.inc_one (Metrics.errors_total "exn");
             Logs.err (fun m ->
                 m
                   "EVENT_EVALUATOR : %s : EXN : %s : %s"
