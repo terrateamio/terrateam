@@ -21,3 +21,4 @@ val api_base : t -> string
 val python_exec : t -> string
 val infracost_pricing_api_endpoint : t -> Uri.t
 val infracost_api_key : t -> string
+val db_connect_timeout : t -> float

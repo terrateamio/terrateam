@@ -4,6 +4,7 @@ type t = {
   db_user : string;
   db_password : string;
   db : string;
+  db_connect_timeout : float;
   github_app_id : string;
   github_app_pem : Mirage_crypto_pk.Rsa.priv;
   github_webhook_secret : string option;
@@ -41,6 +42,10 @@ let create () =
   >>= fun db_password ->
   env_str "DB_NAME"
   >>= fun db ->
+  of_opt
+    (`Key_error "DB_CONNECT_TIMEOUT")
+    (CCFloat.of_string_opt (CCOption.get_or ~default:"120" (Sys.getenv_opt "DB_CONNECT_TIMEOUT")))
+  >>= fun db_connect_timeout ->
   env_str "GITHUB_APP_ID"
   >>= fun github_app_id ->
   let github_webhook_secret = Sys.getenv_opt "GITHUB_WEBHOOK_SECRET" in
@@ -70,6 +75,7 @@ let create () =
       db_user;
       db_password;
       db;
+      db_connect_timeout;
       github_app_id;
       github_app_pem;
       github_webhook_secret;
@@ -86,6 +92,7 @@ let db_host t = t.db_host
 let db_user t = t.db_user
 let db_password t = t.db_password
 let db t = t.db
+let db_connect_timeout t = t.db_connect_timeout
 let github_app_id t = t.github_app_id
 let github_app_pem t = t.github_app_pem
 let github_webhook_secret t = t.github_webhook_secret
