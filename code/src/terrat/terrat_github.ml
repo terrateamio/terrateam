@@ -9,10 +9,6 @@ module Metrics = struct
     let help = "Number of retries in a call" in
     Prmths.Counter.v ~help ~namespace ~subsystem "call_retries_total"
 
-  let get_installation_access_token_total =
-    let help = "Number of calls to get_installation_access_token" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "get_installation_access_token_total"
-
   let fn_call_total =
     let help = "Number of calls of a function" in
     Prmths.Counter.v_label ~label_name:"fn" ~help ~namespace ~subsystem "fn_call_total"
@@ -105,7 +101,7 @@ let call ?(tries = 3) t req =
       Abb.Sys.sleep 1.5)
 
 let get_installation_access_token config installation_id =
-  Prmths.Counter.inc_one Metrics.get_installation_access_token_total;
+  Prmths.Counter.inc_one (Metrics.fn_call_total "get_installation_access_token");
   let open Abb.Future.Infix_monad in
   Abb.Sys.time ()
   >>= fun time ->
