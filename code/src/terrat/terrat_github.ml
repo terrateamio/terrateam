@@ -13,65 +13,9 @@ module Metrics = struct
     let help = "Number of calls to get_installation_access_token" in
     Prmths.Counter.v ~help ~namespace ~subsystem "get_installation_access_token_total"
 
-  let fetch_repo_config_total =
-    let help = "Number of calls to fetch_repo_config" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "fetch_repo_config_total"
-
-  let fetch_pull_request_files_total =
-    let help = "Number of calls to fetch_pull_request_files" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "fetch_pull_request_files_total"
-
-  let fetch_changed_files_total =
-    let help = "Number of calls to fetch_changed_files" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "fetch_changed_files_total"
-
-  let fetch_pull_request_total =
-    let help = "Number of calls to fetch_pull_request" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "fetch_pull_request_total"
-
-  let compare_commits_total =
-    let help = "Number of calls to compare_commits" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "compare_commits_total"
-
-  let load_workflow_total =
-    let help = "Number of calls to load_workflow" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "load_workflow_total"
-
-  let publish_comment_total =
-    let help = "Number of calls to publish_comment" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "publish_comment_total"
-
-  let react_to_comment_total =
-    let help = "Number of calls to react_to_comment" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "react_to_comment_total"
-
-  let get_tree_total =
-    let help = "Number of calls to get_tree" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "get_tree_total"
-
-  let get_team_membership_in_org_total =
-    let help = "Number of calls to get_team_membership_in_org" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "get_team_membership_in_org_total"
-
-  let get_repo_collaborator_permission_total =
-    let help = "Number of calls to get_repo_collaborator_permission" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "get_repo_collaborator_permission_total"
-
-  let commit_status_create_total =
-    let help = "Number of calls to commit_status:create" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "commit_status:create_total"
-
-  let commit_status_list_total =
-    let help = "Number of calls to commit_status:list" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "commit_status:list_total"
-
-  let status_check_list_total =
-    let help = "Number of calls to status_check:list" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "status_check:list_total"
-
-  let pull_request_reviews_list_total =
-    let help = "Number of calls to status_check:list" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "pull_request_reviews:list_total"
+  let fn_call_total =
+    let help = "Number of calls of a function" in
+    Prmths.Counter.v_label ~label_name:"fn" ~help ~namespace ~subsystem "fn_call_total"
 end
 
 let terrateam_workflow_name = "Terrateam Workflow"
@@ -276,33 +220,33 @@ let rec fetch_repo_config' ~python ~access_token ~owner ~repo ref_ = function
       | `Found -> Abb.Future.return (Error `Repo_config_unknown_err))
 
 let fetch_repo_config ~python ~access_token ~owner ~repo ref_ =
-  Prmths.Counter.inc_one Metrics.fetch_repo_config_total;
+  Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_repo_config");
   fetch_repo_config' ~python ~access_token ~owner ~repo ref_ terrateam_config_yml
 
 let fetch_pull_request_files ~access_token ~owner ~pull_number repo =
-  Prmths.Counter.inc_one Metrics.fetch_pull_request_files_total;
+  Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_pull_request_files");
   let client = create (`Token access_token) in
   Githubc2_abb.collect_all
     client
     Githubc2_pulls.List_files.(make (Parameters.make ~owner ~pull_number ~repo ()))
 
 let fetch_changed_files ~access_token ~owner ~repo ~base head =
-  Prmths.Counter.inc_one Metrics.fetch_changed_files_total;
+  Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_changed_files");
   let client = create (`Token access_token) in
   call client Githubc2_repos.Compare_commits.(make Parameters.(make ~base ~head ~owner ~repo ()))
 
 let fetch_pull_request ~access_token ~owner ~repo pull_number =
-  Prmths.Counter.inc_one Metrics.fetch_pull_request_total;
+  Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_pull_request");
   let client = create (`Token access_token) in
   call client Githubc2_pulls.Get.(make Parameters.(make ~owner ~repo ~pull_number))
 
 let compare_commits ~access_token ~owner ~repo (base, head) =
-  Prmths.Counter.inc_one Metrics.compare_commits_total;
+  Prmths.Counter.inc_one (Metrics.fn_call_total "compare_commits");
   let client = create (`Token access_token) in
   call client Githubc2_repos.Compare_commits.(make Parameters.(make ~base ~head ~owner ~repo ()))
 
 let load_workflow ~access_token ~owner ~repo =
-  Prmths.Counter.inc_one Metrics.load_workflow_total;
+  Prmths.Counter.inc_one (Metrics.fn_call_total "load_workflow");
   let open Abbs_future_combinators.Infix_result_monad in
   let client = create (`Token access_token) in
   Githubc2_abb.fold
@@ -335,7 +279,7 @@ let load_workflow ~access_token ~owner ~repo =
   | [] -> Abb.Future.return (Ok None)
 
 let publish_comment ~access_token ~owner ~repo ~pull_number body =
-  Prmths.Counter.inc_one Metrics.publish_comment_total;
+  Prmths.Counter.inc_one (Metrics.fn_call_total "publish_comment");
   let open Abbs_future_combinators.Infix_result_monad in
   let client = create (`Token access_token) in
   call
@@ -351,7 +295,7 @@ let publish_comment ~access_token ~owner ~repo ~pull_number body =
       Abb.Future.return (Error err)
 
 let react_to_comment ?(content = "rocket") ~access_token ~owner ~repo ~comment_id () =
-  Prmths.Counter.inc_one Metrics.react_to_comment_total;
+  Prmths.Counter.inc_one (Metrics.fn_call_total "react_to_comment");
   let open Abbs_future_combinators.Infix_result_monad in
   let client = create (`Token access_token) in
   call
@@ -366,7 +310,7 @@ let react_to_comment ?(content = "rocket") ~access_token ~owner ~repo ~comment_i
   | `Unprocessable_entity _ as err -> Abb.Future.return (Error err)
 
 let rec get_tree ~access_token ~owner ~repo ~sha () =
-  Prmths.Counter.inc_one Metrics.get_tree_total;
+  Prmths.Counter.inc_one (Metrics.fn_call_total "get_tree");
   let open Abbs_future_combinators.Infix_result_monad in
   let client = create (`Token access_token) in
   call
@@ -422,7 +366,7 @@ let rec get_tree ~access_token ~owner ~repo ~sha () =
   | `Unprocessable_entity _ as err -> Abb.Future.return (Error err)
 
 let get_team_membership_in_org ~access_token ~org ~team ~user () =
-  Prmths.Counter.inc_one Metrics.get_team_membership_in_org_total;
+  Prmths.Counter.inc_one (Metrics.fn_call_total "get_team_membership_in_org");
   let open Abbs_future_combinators.Infix_result_monad in
   let module Team = Githubc2_components.Team_membership in
   let client = create (`Token access_token) in
@@ -436,7 +380,7 @@ let get_team_membership_in_org ~access_token ~org ~team ~user () =
   | `OK Team.{ primary = Primary.{ state; _ }; _ } -> Abb.Future.return (Ok (state = "active"))
 
 let get_repo_collaborator_permission ~access_token ~org ~repo ~user () =
-  Prmths.Counter.inc_one Metrics.get_repo_collaborator_permission_total;
+  Prmths.Counter.inc_one (Metrics.fn_call_total "get_repo_collaborator_permission");
   let open Abbs_future_combinators.Infix_result_monad in
   let module Permission = Githubc2_components.Repository_collaborator_permission in
   let client = create (`Token access_token) in
@@ -482,7 +426,7 @@ module Commit_status = struct
     let client = create_client (`Token access_token) in
     Abbs_future_combinators.List_result.iter
       ~f:(fun Create.T.{ target_url; description; context; state } ->
-        Prmths.Counter.inc_one Metrics.commit_status_create_total;
+        Prmths.Counter.inc_one (Metrics.fn_call_total "commit_status_create");
         let open Abbs_future_combinators.Infix_result_monad in
         call
           client
@@ -494,7 +438,7 @@ module Commit_status = struct
       creates
 
   let list ~access_token ~owner ~repo ~sha () =
-    Prmths.Counter.inc_one Metrics.commit_status_list_total;
+    Prmths.Counter.inc_one (Metrics.fn_call_total "commit_status_list");
     let open Abb.Future.Infix_monad in
     let client = create_client (`Token access_token) in
     Githubc2_abb.collect_all
@@ -511,7 +455,7 @@ module Status_check = struct
   let create_client = create
 
   let list ~access_token ~owner ~repo ~ref_ () =
-    Prmths.Counter.inc_one Metrics.status_check_list_total;
+    Prmths.Counter.inc_one (Metrics.fn_call_total "status_check_list");
     let open Abb.Future.Infix_monad in
     let client = create_client (`Token access_token) in
     call client Githubc2_checks.List_for_ref.(make Parameters.(make ~owner ~repo ~ref_ ()))
@@ -529,7 +473,7 @@ module Pull_request_reviews = struct
   let create_client = create
 
   let list ~access_token ~owner ~repo ~pull_number () =
-    Prmths.Counter.inc_one Metrics.pull_request_reviews_list_total;
+    Prmths.Counter.inc_one (Metrics.fn_call_total "pull_request_reviews_list");
     let client = create_client (`Token access_token) in
     Githubc2_abb.collect_all
       client
