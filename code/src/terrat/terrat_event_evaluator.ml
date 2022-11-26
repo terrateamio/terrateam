@@ -5,6 +5,10 @@ module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
 module Metrics = struct
   module DefaultHistogram = Prmths.DefaultHistogram
 
+  module Dirspaces_per_work_manifest_histogram = Prmths.Histogram (struct
+    let spec = Prmths.Histogram_spec.of_list [ 1.0; 5.0; 10.0; 20.0; 50.0; 100.0 ]
+  end)
+
   let namespace = "terrat"
   let subsystem = "event_evaluator"
 
@@ -43,6 +47,15 @@ module Metrics = struct
   let error_errors_total = Terrat_metrics.errors_total ~m:"event_evaluator" ~t:"error"
   let aborted_errors_total = Terrat_metrics.errors_total ~m:"event_evaluator" ~t:"aborted"
   let exn_errors_total = Terrat_metrics.errors_total ~m:"event_evaluator" ~t:"exn"
+
+  let dirspaces_per_work_manifest =
+    let help = "Number of dirspaces per work manifest" in
+    Dirspaces_per_work_manifest_histogram.v_label
+      ~label_name:"run_type"
+      ~help
+      ~namespace
+      ~subsystem
+      "dirspaces_per_work_manifest"
 end
 
 module Msg = struct
@@ -752,6 +765,9 @@ module Make (S : S) = struct
           tag_query = S.Event.tag_query event;
         }
     in
+    Metrics.Dirspaces_per_work_manifest_histogram.observe
+      (Metrics.dirspaces_per_work_manifest (Run_type.to_string run_type))
+      (CCFloat.of_int (CCList.length dirspaces));
     Abbs_time_it.run (log_time event "CREATE_WORK_MANIFEST") (fun () ->
         S.store_new_work_manifest db event work_manifest denied_dirspaces)
     >>= fun work_manifest ->

@@ -10,6 +10,10 @@ module Metrics = struct
       Prmths.Histogram_spec.of_list [ 500.0; 1000.0; 2500.0; 10000.0; 20000.0; 35000.0; 65000.0 ]
   end)
 
+  module Plan_histogram = Prmths.Histogram (struct
+    let spec = Prmths.Histogram_spec.of_list [ 1000.0; 10000.0; 100000.0; 1000000.0; 1000000.0 ]
+  end)
+
   let run_output_chars =
     let help = "Number of chars in run output" in
     let family =
@@ -30,6 +34,19 @@ module Metrics = struct
 
   let pgsql_errors_total = Terrat_metrics.errors_total ~m:"ep_github_work_manifest" ~t:"pgsql"
   let github_errors_total = Terrat_metrics.errors_total ~m:"ep_github_work_manifest" ~t:"github"
+
+  let plan_chars =
+    let help = "Size of plans" in
+    Plan_histogram.v ~help ~namespace ~subsystem "plan_chars"
+
+  let run_overall_result_count =
+    let help = "Count of the results of overall runs" in
+    Prmths.Counter.v_label
+      ~label_name:"success"
+      ~help
+      ~namespace
+      ~subsystem
+      "run_overall_result_count"
 end
 
 let response_headers = Cohttp.Header.of_list [ ("content-type", "application/json") ]
@@ -1028,6 +1045,12 @@ module Plans = struct
     let request_id = Brtl_ctx.token ctx in
     let id = Uuidm.to_string work_manifest_id in
     Logs.info (fun m -> m "WORK_MANIFEST : %s : PLAN : %s : %s : %s" request_id id path workspace);
+    (* Decode it and it will get re-encoded before putting it into (before
+       applying the prepared statement, we don't want to worry about
+       properly escaping the string).  This is decoded here just to ensure
+       that we only accept valid base64 encoded data. *)
+    let plan = Base64.decode_exn plan_data in
+    Metrics.Plan_histogram.observe Metrics.plan_chars (CCFloat.of_int (CCString.length plan));
     Pgsql_pool.with_conn storage ~f:(fun db ->
         Pgsql_io.Prepared_stmt.execute
           db
@@ -1035,11 +1058,7 @@ module Plans = struct
           work_manifest_id
           path
           workspace
-          (* Decode it and it will get re-encoded before putting it into (before
-             applying the prepared statement, we don't want to worry about
-             properly escaping the string).  This is decoded here just to ensure
-             that we only accept valid base64 encoded data. *)
-          (Base64.decode_exn plan_data))
+          plan)
     >>= function
     | Ok () -> Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
     | Error (#Pgsql_pool.err as err) ->
@@ -1785,6 +1804,10 @@ module Results = struct
           (if Terrat_api_work_manifest.Results.Request_body.(results.overall.Overall.success) then
            "SUCCESS"
           else "FAILURE"));
+    Prmths.Counter.inc_one
+      (Metrics.run_overall_result_count
+         (Bool.to_string
+            Terrat_api_work_manifest.Results.Request_body.(results.overall.Overall.success)));
     Pgsql_pool.with_conn storage ~f:(fun db ->
         let open Abbs_future_combinators.Infix_result_monad in
         Pgsql_io.tx db ~f:(fun () ->
