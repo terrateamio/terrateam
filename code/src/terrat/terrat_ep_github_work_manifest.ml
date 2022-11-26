@@ -24,6 +24,12 @@ module Metrics = struct
       Run_output_histogram.labels
         family
         [ Terrat_work_manifest.Run_type.to_string r; Bool.to_string c ]
+
+  let pgsql_pool_errors_total =
+    Terrat_metrics.errors_total ~m:"ep_github_work_manifest" ~t:"pgsql_pool"
+
+  let pgsql_errors_total = Terrat_metrics.errors_total ~m:"ep_github_work_manifest" ~t:"pgsql"
+  let github_errors_total = Terrat_metrics.errors_total ~m:"ep_github_work_manifest" ~t:"github"
 end
 
 let response_headers = Cohttp.Header.of_list [ ("content-type", "application/json") ]
@@ -497,6 +503,7 @@ module Evaluator = Terrat_work_manifest_evaluator.Make (struct
              >>= function
              | Ok () -> Abb.Future.return (Ok ())
              | Error (#Terrat_github.get_installation_access_token_err as err) ->
+                 Prmths.Counter.inc_one Metrics.github_errors_total;
                  Logs.err (fun m ->
                      m
                        "WORK_MANIFEST : %s : COMMIT_CHECK : %s"
@@ -663,6 +670,7 @@ module Evaluator = Terrat_work_manifest_evaluator.Make (struct
     >>= function
     | Ok _ as ret -> Abb.Future.return ret
     | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
             m "GITHUB_WORK_MANIFEST : %s : ERROR : %s" t.T.request_id (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
@@ -680,6 +688,7 @@ module Evaluator = Terrat_work_manifest_evaluator.Make (struct
     >>= function
     | Ok _ as ret -> Abb.Future.return ret
     | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
             m "GITHUB_WORK_MANIFEST : %s : ERROR : %s" t.T.request_id (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
@@ -718,6 +727,7 @@ module Evaluator = Terrat_work_manifest_evaluator.Make (struct
     >>= function
     | Ok res -> Abb.Future.return (Ok (Terrat_event_evaluator.Dirspace_map.of_list res))
     | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
             m "GITHUB_WORK_MANIFEST : %s : ERROR : %s" t.T.request_id (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
@@ -904,8 +914,12 @@ module Initiate = struct
                  work_manifest = work_manifest_id;
                })
     | Ok [] -> Abb.Future.return (Error `Work_manifest_not_found)
-    | Error (#Pgsql_pool.err as err) -> Abb.Future.return (Error err)
-    | Error (#Pgsql_io.err as err) -> Abb.Future.return (Error err)
+    | Error (#Pgsql_pool.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
+        Abb.Future.return (Error err)
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Abb.Future.return (Error err)
 
   let post config storage work_manifest_id { Work_manifest_initiate.run_id; sha } ctx =
     let open Abb.Future.Infix_monad in
@@ -932,6 +946,7 @@ module Initiate = struct
                 Abb.Future.return
                   (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)
             | Error (#Githubc2_abb.call_err as err) ->
+                Prmths.Counter.inc_one Metrics.github_errors_total;
                 Logs.err (fun m ->
                     m
                       "GITHUB_WORK_MANIFEST : %s : ERROR : %s"
@@ -940,6 +955,7 @@ module Initiate = struct
                 Abb.Future.return
                   (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
             | Error (#Terrat_github.publish_comment_err as err) ->
+                Prmths.Counter.inc_one Metrics.github_errors_total;
                 Logs.err (fun m ->
                     m
                       "GITHUB_WORK_MANIFEST : %s : ERROR : %s"
@@ -948,6 +964,7 @@ module Initiate = struct
                 Abb.Future.return
                   (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
         | Error (#Terrat_github.fetch_repo_config_err as err) ->
+            Prmths.Counter.inc_one Metrics.github_errors_total;
             Logs.err (fun m ->
                 m
                   "GITHUB_WORK_MANIFEST : %s : ERROR : %s"
@@ -956,6 +973,7 @@ module Initiate = struct
             Abb.Future.return
               (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
         | Error (#Terrat_github.get_tree_err as err) ->
+            Prmths.Counter.inc_one Metrics.github_errors_total;
             Logs.err (fun m ->
                 m
                   "GITHUB_WORK_MANIFEST : %s : ERROR : %s"
@@ -973,16 +991,19 @@ module Initiate = struct
             Abb.Future.return
               (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
     | Error (#Pgsql_pool.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
         Logs.err (fun m ->
             m "GITHUB_WORK_MANIFEST : %s : ERROR : %s" request_id (Pgsql_pool.show_err err));
         Abb.Future.return
           (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
     | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
             m "GITHUB_WORK_MANIFEST : %s : ERROR : %s" request_id (Pgsql_io.show_err err));
         Abb.Future.return
           (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
     | Error (#Terrat_github.get_installation_access_token_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "GITHUB_WORK_MANIFEST : %s : ERROR : %s"
@@ -1022,11 +1043,13 @@ module Plans = struct
     >>= function
     | Ok () -> Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
     | Error (#Pgsql_pool.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
         Logs.err (fun m ->
             m "WORK_MANIFEST : %s : PLAN : %s : ERROR : %s" request_id id (Pgsql_pool.show_err err));
         Abb.Future.return
           (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
     | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
             m "WORK_MANIFEST : %s : PLAN : %s : ERROR : %s" request_id id (Pgsql_io.show_err err));
         Abb.Future.return
@@ -1038,6 +1061,7 @@ module Plans = struct
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
     | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
             m "WORK_MANIFEST : %s : DELETE_PLAN : ERROR : %s" request_id (Pgsql_io.show_err err));
         Abb.Future.return (Ok ())
@@ -1074,6 +1098,7 @@ module Plans = struct
              (Brtl_rspnc.create ~headers:response_headers ~status:`OK response)
              ctx)
     | Error (#Pgsql_pool.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
         Logs.err (fun m ->
             m
               "WORK_MANIFEST : %s : PLAN_GET : %s : ERROR : %s"
@@ -1083,6 +1108,7 @@ module Plans = struct
         Abb.Future.return
           (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
     | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
             m
               "WORK_MANIFEST : %s : PLAN_GET : %s : ERROR : %s"
@@ -1356,6 +1382,7 @@ module Results = struct
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
     | Error (#Terrat_github.publish_comment_err as err) when not compact_view ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "WORK_MANIFEST : %s : ITERATE_COMMENT_POST : %s"
@@ -1375,6 +1402,7 @@ module Results = struct
           ~denied_dirspaces
           ()
     | Error (#Terrat_github.publish_comment_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "WORK_MANIFEST : %s : ITERATE_COMMENT_POST : %s"
@@ -1428,10 +1456,12 @@ module Results = struct
     >>= function
     | Ok () -> Abb.Future.return ()
     | Error (#Githubc2_abb.call_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m "WORK_MANIFEST : %s : ERROR : %s" request_id (Githubc2_abb.show_call_err err));
         Abb.Future.return ()
     | Error (#Terrat_github.get_installation_access_token_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "WORK_MANIFEST : %s : ERROR : %s"
@@ -1439,6 +1469,7 @@ module Results = struct
               (Terrat_github.show_get_installation_access_token_err err));
         Abb.Future.return ()
     | Error (#Terrat_github.publish_comment_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "WORK_MANIFEST : %s : ERROR : %s"
@@ -1606,6 +1637,7 @@ module Results = struct
     >>= function
     | Ok () -> Abb.Future.return ()
     | Error (#Pgsql_pool.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
         Logs.err (fun m ->
             m
               "WORK_MANIFEST : %s : AUTOMERGE : ERROR : %s : %s : %Ld : %s : %s"
@@ -1617,6 +1649,7 @@ module Results = struct
               (Pgsql_pool.show_err err));
         Abb.Future.return ()
     | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
             m
               "WORK_MANIFEST : %s : AUTOMERGE : ERROR : %s : %s : %Ld : %s : %s"
@@ -1628,6 +1661,7 @@ module Results = struct
               (Pgsql_io.show_err err));
         Abb.Future.return ()
     | Error (#Terrat_github.get_installation_access_token_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "WORK_MANIFEST : %s : AUTOMERGE : ERROR : %s : %s : %Ld : %s : %s"
@@ -1639,6 +1673,7 @@ module Results = struct
               (Terrat_github.show_get_installation_access_token_err err));
         Abb.Future.return ()
     | Error (#Terrat_github.fetch_repo_config_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "WORK_MANIFEST : %s : AUTOMERGE : ERROR : %s : %s : %Ld : %s : %s"
@@ -1730,6 +1765,7 @@ module Results = struct
     match ret with
     | Ok () -> Abb.Future.return ()
     | Error (#Terrat_github.get_installation_access_token_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "WORK_MANIFEST : %s : ERROR : %s"
@@ -1840,10 +1876,12 @@ module Results = struct
         >>= fun () ->
         Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
     | Error (#Pgsql_pool.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
         Logs.err (fun m -> m "WORK_MANIFEST : PLAN : %s : ERROR : %s" id (Pgsql_pool.show_err err));
         Abb.Future.return
           (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
     | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m -> m "WORK_MANIFEST : PLAN : %s : ERROR : %s" id (Pgsql_io.show_err err));
         Abb.Future.return
           (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)

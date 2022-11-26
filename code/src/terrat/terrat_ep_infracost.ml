@@ -23,6 +23,12 @@ module Metrics = struct
   let requests_concurrent =
     let help = "Number of concurrent requests" in
     Prmths.Gauge.v ~help ~namespace ~subsystem "requests_concurrent"
+
+  let pgsql_pool_errors_total = Terrat_metrics.errors_total ~m:"ep_infracost" ~t:"pgsql_pool"
+  let pgsql_errors_total = Terrat_metrics.errors_total ~m:"ep_infracost" ~t:"pgsql"
+  let http_errors_total = Terrat_metrics.errors_total ~m:"ep_infracost" ~t:"http"
+  let timeout_errors_total = Terrat_metrics.errors_total ~m:"ep_infracost" ~t:"timeout"
+  let infracost_errors_total = Terrat_metrics.errors_total ~m:"ep_infracost" ~t:"infracost"
 end
 
 module Sql = struct
@@ -79,25 +85,30 @@ let post' config storage path ctx =
           | `Ok (Ok (resp, _)) ->
               Logs.err (fun m ->
                   m "INFRACOST : %s : ERROR : %a" request_id Cohttp.Response.pp_hum resp);
+              Prmths.Counter.inc_one Metrics.infracost_errors_total;
               Prmths.Counter.inc_one (Metrics.responses_total "error");
               Abb.Future.return
                 (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error body) ctx)
           | `Ok (Error (#Cohttp_abb.request_err as err)) ->
               Logs.err (fun m ->
                   m "INFRACOST : %s : ERROR : %s" request_id (Cohttp_abb.show_request_err err));
+              Prmths.Counter.inc_one Metrics.http_errors_total;
               Prmths.Counter.inc_one (Metrics.responses_total "error");
               Abb.Future.return
                 (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
           | `Timeout ->
               Logs.err (fun m -> m "INFRACOST : %s : ERROR : TIMEOUT" request_id);
+              Prmths.Counter.inc_one Metrics.timeout_errors_total;
               Prmths.Counter.inc_one (Metrics.responses_total "timeout");
               Abb.Future.return
                 (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
       | Error (#Pgsql_pool.err as err) ->
+          Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
           Logs.err (fun m -> m "INFRACOST : %s : ERROR : %s" request_id (Pgsql_pool.show_err err));
           Abb.Future.return
             (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
       | Error (#Pgsql_io.err as err) ->
+          Prmths.Counter.inc_one Metrics.pgsql_errors_total;
           Logs.err (fun m -> m "INFRACOST : %s : ERROR : %s" request_id (Pgsql_io.show_err err));
           Abb.Future.return
             (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)

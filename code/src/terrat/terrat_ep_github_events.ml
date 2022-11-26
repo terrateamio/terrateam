@@ -31,21 +31,12 @@ module Metrics = struct
     let help = "Number of events being handled right now" in
     Prmths.Gauge.v ~help ~namespace ~subsystem "events_concurrent"
 
-  let pgsql_pool_errors_total =
-    let help = "Number of pgsql pool errors" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "pgsql_pool_errors_total"
-
-  let pgsql_errors_total =
-    let help = "Number of pgsql errors" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "pgsql_errors_total"
-
-  let github_errors_total =
-    let help = "Number of github errors" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "github_errors_total"
+  let pgsql_pool_errors_total = Terrat_metrics.errors_total ~m:"ep_github_events" ~t:"pgsql_pool"
+  let pgsql_errors_total = Terrat_metrics.errors_total ~m:"ep_github_events" ~t:"pgsql"
+  let github_errors_total = Terrat_metrics.errors_total ~m:"ep_github_events" ~t:"github"
 
   let github_webhook_decode_errors_total =
-    let help = "Number of github errors" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "github_webhook_decode_errors_total"
+    Terrat_metrics.errors_total ~m:"ep_github_events" ~t:"github_webhook_decode"
 end
 
 module Sql = struct
@@ -765,6 +756,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
               (Githubc2_abb.show_call_err err));
         Abb.Future.return (Error `Error)
     | Error (#Terrat_github.get_installation_access_token_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "GITHUB_EVENT : %s : ERROR : %s : %s : %s"
@@ -842,6 +834,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
     >>= function
     | Ok files -> Abb.Future.return (Ok files)
     | Error (#Terrat_github.get_tree_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "GITHUB_EVENT : %s : ERROR : %s"
@@ -1099,6 +1092,7 @@ module Evaluator = Terrat_event_evaluator.Make (struct
             m "GITHUB_EVENT : %s : PUBLISHED_COMMENT : %s" (Event.request_id event) msg_type);
         Abb.Future.return ()
     | Error (#Terrat_github.publish_comment_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "GITHUB_EVENT : %s : %s : ERROR : %s"

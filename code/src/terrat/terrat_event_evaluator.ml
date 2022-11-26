@@ -37,9 +37,12 @@ module Metrics = struct
     in
     fun ~t ~r -> Prmths.Counter.labels family [ t; r ]
 
-  let errors_total =
-    let help = "Number of errors" in
-    Prmths.Counter.v_label ~label_name:"type" ~help ~namespace ~subsystem "errors_total"
+  let pgsql_pool_errors_total = Terrat_metrics.errors_total ~m:"event_evaluator" ~t:"pgsql_pool"
+  let pgsql_errors_total = Terrat_metrics.errors_total ~m:"event_evaluator" ~t:"pgsql"
+  let github_errors_total = Terrat_metrics.errors_total ~m:"event_evaluator" ~t:"github"
+  let error_errors_total = Terrat_metrics.errors_total ~m:"event_evaluator" ~t:"error"
+  let aborted_errors_total = Terrat_metrics.errors_total ~m:"event_evaluator" ~t:"aborted"
+  let exn_errors_total = Terrat_metrics.errors_total ~m:"event_evaluator" ~t:"exn"
 end
 
 module Msg = struct
@@ -1357,12 +1360,10 @@ module Make (S : S) = struct
                 Abbs_time_it.run (log_time event "PUBLISH_MSG") (fun () -> S.publish_msg event msg)
             | Ok None -> Abb.Future.return ()
             | Error (`Bad_glob s) ->
-                Prmths.Counter.inc_one (Metrics.errors_total "bad_glob");
                 Logs.err (fun m ->
                     m "EVENT_EVALUATOR : %s : BAD_GLOB : %s" (S.Event.request_id event) s);
                 S.publish_msg event (Msg.Bad_glob s)
             | Error (`Repo_config_parse_err err) ->
-                Prmths.Counter.inc_one (Metrics.errors_total "repo_config_parse_err");
                 Logs.info (fun m ->
                     m
                       "EVENT_EVALUATOR : %s : REPO_CONFIG_PARSE_ERR : %s"
@@ -1370,17 +1371,16 @@ module Make (S : S) = struct
                       err);
                 S.publish_msg event (Msg.Repo_config_parse_failure err)
             | Error (`Repo_config_err err) ->
-                Prmths.Counter.inc_one (Metrics.errors_total "repo_config_err");
                 Logs.info (fun m ->
                     m "EVENT_EVALUATOR : %s : REPO_CONFIG_ERR : %s" (S.Event.request_id event) err);
                 S.publish_msg event (Msg.Repo_config_failure err)
             | Error `Error ->
-                Prmths.Counter.inc_one (Metrics.errors_total "error");
+                Prmths.Counter.inc_one Metrics.error_errors_total;
                 Logs.err (fun m ->
                     m "EVENT_EVALUATOR : %s : ERROR : ERROR" (S.Event.request_id event));
                 Abb.Future.return ()
             | Error (#Pgsql_pool.err as err) ->
-                Prmths.Counter.inc_one (Metrics.errors_total "pgsql_pool");
+                Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
                 Logs.err (fun m ->
                     m
                       "EVENT_EVALUATOR : %s : ERROR : %s"
@@ -1388,7 +1388,7 @@ module Make (S : S) = struct
                       (Pgsql_pool.show_err err));
                 Abb.Future.return ()
             | Error (#Pgsql_io.err as err) ->
-                Prmths.Counter.inc_one (Metrics.errors_total "pgsql_io");
+                Prmths.Counter.inc_one Metrics.pgsql_errors_total;
                 Logs.err (fun m ->
                     m
                       "EVENT_EVALUATOR : %s : ERROR : %s"
@@ -1396,11 +1396,11 @@ module Make (S : S) = struct
                       (Pgsql_io.show_err err));
                 Abb.Future.return ())
         | `Aborted ->
-            Prmths.Counter.inc_one (Metrics.errors_total "aborted");
+            Prmths.Counter.inc_one Metrics.aborted_errors_total;
             Logs.err (fun m -> m "EVENT_EVALUATOR : %s : ABORTED" (S.Event.request_id event));
             Abb.Future.return ()
         | `Exn (exn, bt_opt) ->
-            Prmths.Counter.inc_one (Metrics.errors_total "exn");
+            Prmths.Counter.inc_one Metrics.exn_errors_total;
             Logs.err (fun m ->
                 m
                   "EVENT_EVALUATOR : %s : EXN : %s : %s"
