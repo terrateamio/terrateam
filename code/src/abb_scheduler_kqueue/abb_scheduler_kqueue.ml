@@ -317,6 +317,7 @@ module Thread = struct
           Unix.close trigger
         in
         let wait, d = Abb_thread_pool.enqueue t.El.thread_pool ~f ~trigger in
+        let closed_wait = ref false in
         let abort () =
           (* It would be nice to kill the thread here but several issues arise,
              including: the thread may have allocated resources it needs to clean
@@ -330,6 +331,7 @@ module Thread = struct
                   change_read = Fd_map.remove wait t.El.change_read;
                 }
               in
+              closed_wait := true;
               Unix.close wait;
               let s = Abb_fut.State.set_state t s in
               (s, Future.return ()))
@@ -349,7 +351,16 @@ module Thread = struct
                 >>| fun () ->
                 Unix.close wait;
                 ()
-            | None -> assert false
+            | None ->
+                (* This should never happen but it does sometimes.  Until I figure
+                   out why, this is the best we can do. *)
+                Future.Promise.set_exn p (Failure "thread_pool_invalid_state", None)
+                >>| fun () ->
+                (* This is because we're not sure if we did call close.  Because
+                   I don't know how we get to this point, I don't know if it an
+                   [abort] has happened. *)
+                if not !closed_wait then Unix.close wait;
+                ()
           in
           Future.run_with_state fut s
         in
