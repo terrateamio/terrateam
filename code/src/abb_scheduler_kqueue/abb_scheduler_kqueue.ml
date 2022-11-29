@@ -373,24 +373,26 @@ module File = struct
 
   let mode_of_flags flags =
     List.map
-      ~f:Abb_intf.File.Flag.(
-        function
-        | Read_only -> Unix.O_RDONLY
-        | Write_only -> Unix.O_WRONLY
-        | Create _ -> Unix.O_CREAT
-        | Read_write -> Unix.O_RDWR
-        | Append -> Unix.O_APPEND
-        | Truncate -> Unix.O_TRUNC
-        | Exclusive -> Unix.O_EXCL)
+      ~f:
+        Abb_intf.File.Flag.(
+          function
+          | Read_only -> Unix.O_RDONLY
+          | Write_only -> Unix.O_WRONLY
+          | Create _ -> Unix.O_CREAT
+          | Read_write -> Unix.O_RDWR
+          | Append -> Unix.O_APPEND
+          | Truncate -> Unix.O_TRUNC
+          | Exclusive -> Unix.O_EXCL)
       flags
 
   let perm_of_flags flags =
     let creates =
       List.filter
-        ~f:Abb_intf.File.Flag.(
-          function
-          | Create _ -> true
-          | _ -> false)
+        ~f:
+          Abb_intf.File.Flag.(
+            function
+            | Create _ -> true
+            | _ -> false)
         flags
     in
     match creates with
@@ -971,14 +973,15 @@ module Socket = struct
 
   let getaddrinfo_options_of_hints hints =
     List.map
-      ~f:Abb_intf.Socket.Addrinfo_hints.(
-        function
-        | Family domain -> Unix.AI_FAMILY (unix_of_domain domain)
-        | Socket_type socktype -> Unix.AI_SOCKTYPE (unix_of_socket_type socktype)
-        | Protocol p -> Unix.AI_PROTOCOL p
-        | Numeric_host -> Unix.AI_NUMERICHOST
-        | Canon_name -> Unix.AI_CANONNAME
-        | Passive -> Unix.AI_PASSIVE)
+      ~f:
+        Abb_intf.Socket.Addrinfo_hints.(
+          function
+          | Family domain -> Unix.AI_FAMILY (unix_of_domain domain)
+          | Socket_type socktype -> Unix.AI_SOCKTYPE (unix_of_socket_type socktype)
+          | Protocol p -> Unix.AI_PROTOCOL p
+          | Numeric_host -> Unix.AI_NUMERICHOST
+          | Canon_name -> Unix.AI_CANONNAME
+          | Passive -> Unix.AI_PASSIVE)
       hints
 
   let getaddrinfo ?hints query =
