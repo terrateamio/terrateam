@@ -14,6 +14,10 @@ module Metrics = struct
     let spec = Prmths.Histogram_spec.of_list [ 1000.0; 10000.0; 100000.0; 1000000.0; 1000000.0 ]
   end)
 
+  module Work_manifest_run_time_histogram = Prmths.Histogram (struct
+    let spec = Prmths.Histogram_spec.of_exponential 20.0 1.5 10
+  end)
+
   let run_output_chars =
     let help = "Number of chars in run output" in
     let family =
@@ -47,6 +51,24 @@ module Metrics = struct
       ~namespace
       ~subsystem
       "run_overall_result_count"
+
+  let work_manifest_run_time_duration_seconds =
+    let help = "Number of seconds since a work manifest was created vs when it was completed" in
+    Work_manifest_run_time_histogram.v_label
+      ~label_name:"run_type"
+      ~help
+      ~namespace
+      ~subsystem
+      "work_manifest_run_time_duration_seconds"
+
+  let work_manifest_wait_duration_seconds =
+    let help = "Number of seconds a work manifest waited between creation and the initiate call" in
+    Work_manifest_run_time_histogram.v_label
+      ~label_name:"run_type"
+      ~help
+      ~namespace
+      ~subsystem
+      "work_manifest_wait_duration_seconds"
 end
 
 let response_headers = Cohttp.Header.of_list [ ("content-type", "application/json") ]
@@ -228,6 +250,7 @@ module Sql = struct
       // (* pull_number *) Ret.bigint
       // (* run_type *) Ret.ud run_type
       // (* run_id *) Ret.(option text)
+      // (* run time *) Ret.double
       /^ read "select_github_parameters_from_work_manifest.sql"
       /% Var.uuid "id")
 
@@ -907,11 +930,25 @@ module Initiate = struct
         Pgsql_io.Prepared_stmt.fetch
           db
           (Sql.select_github_parameters_from_work_manifest ())
-          ~f:(fun installation_id owner name branch _sha base_sha pull_number _run_type _run_id ->
-            (installation_id, owner, name, branch, base_sha, pull_number))
+          ~f:
+            (fun installation_id
+                 owner
+                 name
+                 branch
+                 _sha
+                 base_sha
+                 pull_number
+                 run_type
+                 _run_id
+                 run_time ->
+            (installation_id, owner, name, branch, base_sha, pull_number, run_type, run_time))
           work_manifest_id)
     >>= function
-    | Ok ((installation_id, owner, name, branch, base_sha, pull_number) :: _) ->
+    | Ok ((installation_id, owner, name, branch, base_sha, pull_number, run_type, run_time) :: _) ->
+        Metrics.Work_manifest_run_time_histogram.observe
+          (Metrics.work_manifest_wait_duration_seconds
+             (Terrat_work_manifest.Run_type.to_string run_type))
+          run_time;
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_github.get_installation_access_token config (CCInt64.to_int installation_id)
         >>= fun access_token ->
@@ -1864,7 +1901,16 @@ module Results = struct
                   db
                   (Sql.select_github_parameters_from_work_manifest ())
                   ~f:
-                    (fun installation_id owner name branch sha _base_sha pull_number run_type run_id ->
+                    (fun installation_id
+                         owner
+                         name
+                         branch
+                         sha
+                         _base_sha
+                         pull_number
+                         run_type
+                         run_id
+                         run_time ->
                     ( installation_id,
                       owner,
                       name,
@@ -1873,14 +1919,28 @@ module Results = struct
                       pull_number,
                       run_type,
                       run_id,
-                      denied_dirspaces ))
+                      denied_dirspaces,
+                      run_time ))
                   work_manifest_id)
             >>= function
             | values :: _ -> Abb.Future.return (Ok values)
             | [] -> assert false))
     >>= function
-    | Ok (installation_id, owner, repo, branch, sha, pull_number, run_type, run_id, denied_dirspaces)
-      ->
+    | Ok
+        ( installation_id,
+          owner,
+          repo,
+          branch,
+          sha,
+          pull_number,
+          run_type,
+          run_id,
+          denied_dirspaces,
+          run_time ) ->
+        Metrics.Work_manifest_run_time_histogram.observe
+          (Metrics.work_manifest_run_time_duration_seconds
+             (Terrat_work_manifest.Run_type.to_string run_type))
+          run_time;
         complete_work_manifest
           ~config
           ~storage
