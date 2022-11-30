@@ -43,7 +43,6 @@ module Metrics = struct
 
   let pgsql_pool_errors_total = Terrat_metrics.errors_total ~m:"event_evaluator" ~t:"pgsql_pool"
   let pgsql_errors_total = Terrat_metrics.errors_total ~m:"event_evaluator" ~t:"pgsql"
-  let github_errors_total = Terrat_metrics.errors_total ~m:"event_evaluator" ~t:"github"
   let error_errors_total = Terrat_metrics.errors_total ~m:"event_evaluator" ~t:"error"
   let aborted_errors_total = Terrat_metrics.errors_total ~m:"event_evaluator" ~t:"aborted"
   let exn_errors_total = Terrat_metrics.errors_total ~m:"event_evaluator" ~t:"exn"
