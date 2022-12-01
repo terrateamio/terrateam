@@ -3,6 +3,7 @@
 set -e
 
 export TERRAT_PYTHON_EXEC=python3
+export OCAMLRUNPARAM=b
 
 exec 2>&1
 

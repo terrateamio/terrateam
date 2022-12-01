@@ -15,9 +15,7 @@ module Make (Abb : Abb_intf.S) = struct
     Buffered.read_line ic
     >>| function
     | Ok s -> Some s
-    | Error (`Unexpected End_of_file)
-    | Error (`Unexpected (Unix.Unix_error (Unix.ECONNREFUSED, _, _))) -> None
-    | Error _ -> assert false
+    | Error _ -> None
 
   let read ic n =
     let open Abb.Future.Infix_monad in
@@ -38,5 +36,5 @@ module Make (Abb : Abb_intf.S) = struct
     Buffered.write oc ~bufs:Abb_intf.Write_buf.[ { buf; pos = 0; len = Bytes.length buf } ]
     >>= function
     | Ok _ -> Fut_comb.unit
-    | Error _ -> assert false
+    | Error err -> raise (Failure (Abb_io_buffered.show_write_err err))
 end
