@@ -38,6 +38,8 @@ module El = struct
     mono_time : float;
     exec_duration : float array;
     thread_pool : (Unix.file_descr * Unix.file_descr) Abb_thread_pool.t;
+    ignore_reads : Unix.file_descr list;
+    ignore_writes : Unix.file_descr list;
   }
 
   type t_ = t
@@ -57,6 +59,8 @@ module El = struct
         mono_time = Mtime.Span.to_s (Mtime_clock.elapsed ());
         exec_duration = Array.create_float 1024;
         thread_pool = Abb_thread_pool.create ~capacity:100 ~wait:Unix.pipe;
+        ignore_reads = [];
+        ignore_writes = [];
       }
     in
     Array.fill t.exec_duration 0 (Array.length t.exec_duration) 0.0;
@@ -71,14 +75,17 @@ module El = struct
   let read_fds t = Iter.to_list (Fd_map.keys t.reads)
   let write_fds t = Iter.to_list (Fd_map.keys t.writes)
 
-  let dispatch fds get set s =
+  let dispatch fds get set ignores s =
     ListLabels.fold_left
       ~init:s
       ~f:(fun s fd ->
-        let m = get s in
-        let f = Fd_map.find fd m in
-        let s = set (Fd_map.remove fd m) s in
-        f s)
+        let ignore_list = ignores s in
+        if not (CCList.mem ~eq:( = ) fd ignore_list) then
+          let m = get s in
+          let f = Fd_map.find fd m in
+          let s = set (Fd_map.remove fd m) s in
+          f s
+        else s)
       fds
 
   let dispatch_reads reads s =
@@ -88,6 +95,7 @@ module El = struct
       (fun reads s ->
         let t = Abb_fut.State.state s in
         Abb_fut.State.set_state { t with reads } s)
+      (fun s -> (Abb_fut.State.state s).ignore_reads)
       s
 
   let dispatch_writes writes s =
@@ -97,6 +105,7 @@ module El = struct
       (fun writes s ->
         let t = Abb_fut.State.state s in
         Abb_fut.State.set_state { t with writes } s)
+      (fun s -> (Abb_fut.State.state s).ignore_writes)
       s
 
   let rec dispatch_timers s =
@@ -133,6 +142,8 @@ module El = struct
         t with
         curr_time = Unix.gettimeofday ();
         mono_time = Mtime.Span.to_s (Mtime_clock.elapsed ());
+        ignore_reads = [];
+        ignore_writes = [];
       }
     in
     let s = Abb_fut.State.set_state t s in
@@ -242,7 +253,14 @@ module Thread = struct
              up, and Thread.kill is not actually implemented. *)
           Future.with_state (fun s ->
               let t = Abb_fut.State.state s in
-              let t = { t with El.reads = Fd_map.remove wait t.El.reads } in
+              let t =
+                {
+                  t with
+                  El.reads = Fd_map.remove wait t.El.reads;
+                  ignore_reads = wait :: t.El.ignore_reads;
+                  ignore_writes = wait :: t.El.ignore_writes;
+                }
+              in
               Unix.close wait;
               let s = Abb_fut.State.set_state t s in
               (s, Future.return ()))
@@ -278,24 +296,26 @@ module File = struct
 
   let mode_of_flags flags =
     List.map
-      ~f:Abb_intf.File.Flag.(
-        function
-        | Read_only -> Unix.O_RDONLY
-        | Write_only -> Unix.O_WRONLY
-        | Create _ -> Unix.O_CREAT
-        | Read_write -> Unix.O_RDWR
-        | Append -> Unix.O_APPEND
-        | Truncate -> Unix.O_TRUNC
-        | Exclusive -> Unix.O_EXCL)
+      ~f:
+        Abb_intf.File.Flag.(
+          function
+          | Read_only -> Unix.O_RDONLY
+          | Write_only -> Unix.O_WRONLY
+          | Create _ -> Unix.O_CREAT
+          | Read_write -> Unix.O_RDWR
+          | Append -> Unix.O_APPEND
+          | Truncate -> Unix.O_TRUNC
+          | Exclusive -> Unix.O_EXCL)
       flags
 
   let perm_of_flags flags =
     let creates =
       List.filter
-        ~f:Abb_intf.File.Flag.(
-          function
-          | Create _ -> true
-          | _ -> false)
+        ~f:
+          Abb_intf.File.Flag.(
+            function
+            | Create _ -> true
+            | _ -> false)
         flags
     in
     match creates with
@@ -794,14 +814,15 @@ module Socket = struct
 
   let getaddrinfo_options_of_hints hints =
     List.map
-      ~f:Abb_intf.Socket.Addrinfo_hints.(
-        function
-        | Family domain -> Unix.AI_FAMILY (unix_of_domain domain)
-        | Socket_type socktype -> Unix.AI_SOCKTYPE (unix_of_socket_type socktype)
-        | Protocol p -> Unix.AI_PROTOCOL p
-        | Numeric_host -> Unix.AI_NUMERICHOST
-        | Canon_name -> Unix.AI_CANONNAME
-        | Passive -> Unix.AI_PASSIVE)
+      ~f:
+        Abb_intf.Socket.Addrinfo_hints.(
+          function
+          | Family domain -> Unix.AI_FAMILY (unix_of_domain domain)
+          | Socket_type socktype -> Unix.AI_SOCKTYPE (unix_of_socket_type socktype)
+          | Protocol p -> Unix.AI_PROTOCOL p
+          | Numeric_host -> Unix.AI_NUMERICHOST
+          | Canon_name -> Unix.AI_CANONNAME
+          | Passive -> Unix.AI_PASSIVE)
       hints
 
   let getaddrinfo ?hints query =
@@ -844,7 +865,13 @@ module Socket = struct
             ~abort:(fun () ->
               Future.with_state (fun s ->
                   let el = Abb_fut.State.state s in
-                  let el = { el with El.reads = Fd_map.remove t el.El.reads } in
+                  let el =
+                    {
+                      el with
+                      El.reads = Fd_map.remove t el.El.reads;
+                      ignore_reads = t :: el.El.ignore_reads;
+                    }
+                  in
                   let s = Abb_fut.State.set_state el s in
                   (s, Future.return ())))
             ()
@@ -888,7 +915,13 @@ module Socket = struct
         ~abort:(fun () ->
           Future.with_state (fun s ->
               let el = Abb_fut.State.state s in
-              let el = { el with El.writes = Fd_map.remove t el.El.writes } in
+              let el =
+                {
+                  el with
+                  El.writes = Fd_map.remove t el.El.writes;
+                  ignore_writes = t :: el.El.ignore_writes;
+                }
+              in
               let s = Abb_fut.State.set_state el s in
               (s, Future.return ())))
         ()
@@ -978,7 +1011,13 @@ module Socket = struct
           ~abort:(fun () ->
             Future.with_state (fun s ->
                 let el = Abb_fut.State.state s in
-                let el = { el with El.reads = Fd_map.remove t el.El.reads } in
+                let el =
+                  {
+                    el with
+                    El.reads = Fd_map.remove t el.El.reads;
+                    ignore_reads = t :: el.El.ignore_reads;
+                  }
+                in
                 let s = Abb_fut.State.set_state el s in
                 (s, Future.return ())))
           ()
@@ -1016,7 +1055,13 @@ module Socket = struct
         ~abort:(fun () ->
           Future.with_state (fun s ->
               let el = Abb_fut.State.state s in
-              let el = { el with El.reads = Fd_map.remove t el.El.reads } in
+              let el =
+                {
+                  el with
+                  El.reads = Fd_map.remove t el.El.reads;
+                  ignore_reads = t :: el.El.ignore_reads;
+                }
+              in
               let s = Abb_fut.State.set_state el s in
               (s, Future.return ())))
         ()
@@ -1034,7 +1079,13 @@ module Socket = struct
         ~abort:(fun () ->
           Future.with_state (fun s ->
               let el = Abb_fut.State.state s in
-              let el = { el with El.writes = Fd_map.remove t el.El.writes } in
+              let el =
+                {
+                  el with
+                  El.writes = Fd_map.remove t el.El.writes;
+                  ignore_writes = t :: el.El.ignore_writes;
+                }
+              in
               let s = Abb_fut.State.set_state el s in
               (s, Future.return ())))
         ()
@@ -1107,7 +1158,13 @@ module Socket = struct
           ~abort:(fun () ->
             Future.with_state (fun s ->
                 let el = Abb_fut.State.state s in
-                let el = { el with El.writes = Fd_map.remove t el.El.writes } in
+                let el =
+                  {
+                    el with
+                    El.writes = Fd_map.remove t el.El.writes;
+                    ignore_writes = t :: el.El.ignore_writes;
+                  }
+                in
                 let s = Abb_fut.State.set_state el s in
                 (s, Future.return ())))
           ()
@@ -1151,7 +1208,13 @@ module Socket = struct
               ~abort:(fun () ->
                 Future.with_state (fun s ->
                     let el = Abb_fut.State.state s in
-                    let el = { el with El.reads = Fd_map.remove t el.El.reads } in
+                    let el =
+                      {
+                        el with
+                        El.reads = Fd_map.remove t el.El.reads;
+                        ignore_reads = t :: el.El.ignore_reads;
+                      }
+                    in
                     let s = Abb_fut.State.set_state el s in
                     (s, Future.return ())))
               ()
@@ -1194,7 +1257,13 @@ module Socket = struct
           ~abort:(fun () ->
             Future.with_state (fun s ->
                 let el = Abb_fut.State.state s in
-                let el = { el with El.writes = Fd_map.remove t el.El.writes } in
+                let el =
+                  {
+                    el with
+                    El.writes = Fd_map.remove t el.El.writes;
+                    ignore_writes = t :: el.El.ignore_writes;
+                  }
+                in
                 let s = Abb_fut.State.set_state el s in
                 (s, Future.return ())))
           ()

@@ -1,4 +1,4 @@
-let timer_test1 =
+let timer_test =
   Oth.test ~desc:"Simple timer test" ~name:"Timer Test #1" (fun _ ->
       let kq = Kqueue.create () in
       let timer = Kqueue.Change.Filter.Timer.{ id = 1; unit = Unit.to_t Unit.Seconds; time = 1 } in
@@ -23,4 +23,4 @@ let timer_test1 =
 
 let () =
   Random.self_init ();
-  Oth.(run (parallel [ timer_test1 ]))
+  Oth.(run (parallel [ timer_test ]))

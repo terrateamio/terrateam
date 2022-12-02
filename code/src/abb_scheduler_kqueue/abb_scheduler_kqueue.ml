@@ -214,7 +214,37 @@ module El = struct
     let s =
       Kqueue.Eventlist.fold
         ~f:(fun s event ->
+          let t = Abb_fut.State.state s in
           match Kqueue.Event.of_kevent event with
+          | Kqueue.Event.Read r
+            when Fd_map.mem
+                   (Kqueue.unsafe_file_descr_of_int r.Kqueue.Event.Read.descr)
+                   t.change_read ->
+              (* If the FD being processed now is in the change_read or
+                 change_write map, then means we have done something in this
+                 iteration of the loop where a previously handled FD has
+                 modified something related to this FD.  This is most likely an
+                 abort and in that sense it is most likely a [`Del] operation.
+                 Because we've made it here, it means that another piece of code
+                 has decided to abort the operation on this FD, but because
+                 we're processing it, it means that it has fired on this same
+                 iteration.  And all of our kqueue events are ONESHOT, so it's
+                 already out of the kqueue.  So we just remove the change
+                 operation and continue on.  That away we don't try to delete
+                 what is already not there. *)
+              let fd = Kqueue.unsafe_file_descr_of_int r.Kqueue.Event.Read.descr in
+              assert (Fd_map.find fd t.change_read = `Del);
+              let t = { t with change_read = Fd_map.remove fd t.change_read } in
+              Abb_fut.State.set_state t s
+          | Kqueue.Event.Write w
+            when Fd_map.mem
+                   (Kqueue.unsafe_file_descr_of_int w.Kqueue.Event.Write.descr)
+                   t.change_write ->
+              (* See the comment above in Read. *)
+              let fd = Kqueue.unsafe_file_descr_of_int w.Kqueue.Event.Write.descr in
+              assert (Fd_map.find fd t.change_write = `Del);
+              let t = { t with change_write = Fd_map.remove fd t.change_write } in
+              Abb_fut.State.set_state t s
           | Kqueue.Event.Read r ->
               dispatch_read (Kqueue.unsafe_file_descr_of_int r.Kqueue.Event.Read.descr) s
           | Kqueue.Event.Write w ->
@@ -317,23 +347,26 @@ module Thread = struct
           Unix.close trigger
         in
         let wait, d = Abb_thread_pool.enqueue t.El.thread_pool ~f ~trigger in
-        let closed_wait = ref false in
         let abort () =
           (* It would be nice to kill the thread here but several issues arise,
              including: the thread may have allocated resources it needs to clean
              up, and Thread.kill is not actually implemented. *)
           Future.with_state (fun s ->
-              let t = Abb_fut.State.state s in
-              let t =
-                {
-                  t with
-                  El.reads = Fd_map.remove wait t.El.reads;
-                  change_read = Fd_map.remove wait t.El.change_read;
-                }
+              (* See the comment around {!close} for why this is implemented
+                 like this.  It has to do with compatibility with libkqueue *)
+              let el = Abb_fut.State.state s in
+              let timer_id = el.El.next_timer_id in
+              let el = { el with El.next_timer_id = el.El.next_timer_id + 1 } in
+              let ts = Float.succ el.El.mono_time in
+              let f s =
+                try
+                  Unix.close wait;
+                  s
+                with _ -> s
               in
-              closed_wait := true;
-              Unix.close wait;
-              let s = Abb_fut.State.set_state t s in
+              let el = { el with El.timers = Timers.add timer_id ts f el.El.timers } in
+              let el = El.remove_read wait (El.remove_write wait el) in
+              let s = Abb_fut.State.set_state el s in
               (s, Future.return ()))
         in
         let p = Future.Promise.create ~abort () in
@@ -351,16 +384,7 @@ module Thread = struct
                 >>| fun () ->
                 Unix.close wait;
                 ()
-            | None ->
-                (* This should never happen but it does sometimes.  Until I figure
-                   out why, this is the best we can do. *)
-                Future.Promise.set_exn p (Failure "thread_pool_invalid_state", None)
-                >>| fun () ->
-                (* This is because we're not sure if we did call close.  Because
-                   I don't know how we get to this point, I don't know if it an
-                   [abort] has happened. *)
-                if not !closed_wait then Unix.close wait;
-                ()
+            | None -> assert false
           in
           Future.run_with_state fut s
         in
