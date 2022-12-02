@@ -78,12 +78,12 @@ module Server = struct
     let open Abb.Future.Infix_monad in
     function
     | `Ok (Msg.Get p) when t.conns = [] && t.num_conns = t.max_conns ->
-        t.metrics { num_conns = t.num_conns; idle_conns = CCList.length t.conns }
+        t.metrics Metrics.{ num_conns = t.num_conns; idle_conns = CCList.length t.conns }
         >>= fun () ->
         Queue.add p t.waiting;
         loop t w r
     | `Ok (Msg.Get p) -> (
-        t.metrics { num_conns = t.num_conns; idle_conns = CCList.length t.conns }
+        t.metrics Metrics.{ num_conns = t.num_conns; idle_conns = CCList.length t.conns }
         >>= fun () ->
         Abb.Sys.monotonic ()
         >>= fun now ->
@@ -126,7 +126,7 @@ module Server = struct
                 Abb.Future.Promise.set p (Error ()) >>= fun () -> loop t w r
             | `Timeout -> Abb.Future.Promise.set p (Error ()) >>= fun () -> loop t w r))
     | `Ok (Msg.Return conn) when Pgsql_io.connected conn -> (
-        t.metrics { num_conns = t.num_conns; idle_conns = CCList.length t.conns }
+        t.metrics Metrics.{ num_conns = t.num_conns; idle_conns = CCList.length t.conns }
         >>= fun () ->
         match take_until_undet t.waiting with
         | Some p -> Abb.Future.Promise.set p (Ok conn) >>= fun () -> loop t w r
@@ -134,7 +134,7 @@ module Server = struct
             Abb.Sys.monotonic ()
             >>= fun last_used -> loop { t with conns = Conn.{ conn; last_used } :: t.conns } w r)
     | `Ok (Msg.Return conn) -> (
-        t.metrics { num_conns = t.num_conns; idle_conns = CCList.length t.conns }
+        t.metrics Metrics.{ num_conns = t.num_conns; idle_conns = CCList.length t.conns }
         >>= fun () ->
         Pgsql_io.destroy conn
         >>= fun () ->
