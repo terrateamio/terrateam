@@ -14,6 +14,7 @@ type t = {
   python_exec : string;
   infracost_pricing_api_endpoint : Uri.t;
   infracost_api_key : string;
+  nginx_status_uri : Uri.t option;
 }
 
 type err =
@@ -68,6 +69,7 @@ let create () =
   >>= fun infracost_pricing_api_endpoint ->
   env_str "SELF_HOSTED_INFRACOST_API_KEY"
   >>= fun infracost_api_key ->
+  let nginx_status_uri = CCOption.map Uri.of_string (Sys.getenv_opt "NGINX_STATUS_URI") in
   Ok
     {
       port;
@@ -85,6 +87,7 @@ let create () =
       python_exec;
       infracost_pricing_api_endpoint = Uri.of_string infracost_pricing_api_endpoint;
       infracost_api_key;
+      nginx_status_uri;
     }
 
 let port t = t.port
@@ -102,3 +105,4 @@ let api_base t = t.api_base
 let python_exec t = t.python_exec
 let infracost_pricing_api_endpoint t = t.infracost_pricing_api_endpoint
 let infracost_api_key t = t.infracost_api_key
+let nginx_status_uri t = t.nginx_status_uri

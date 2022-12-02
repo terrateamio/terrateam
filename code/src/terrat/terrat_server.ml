@@ -102,6 +102,13 @@ let run config storage =
   >>= fun _ ->
   Abb.Future.fork (Terrat_github_plan_cleanup.start storage)
   >>= fun _ ->
+  Abb.Future.fork
+    (match Terrat_config.nginx_status_uri config with
+    | Some uri ->
+        Logs.debug (fun m -> m "Starting nginx metrics: %s" (Uri.to_string uri));
+        Terrat_nginx_metrics.start uri
+    | None -> Abb.Future.return ())
+  >>= fun _ ->
   Brtl.run cfg mw (rtng config storage)
   >>| function
   | Ok () -> ()

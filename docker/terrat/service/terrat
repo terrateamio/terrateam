@@ -5,6 +5,8 @@ set -e
 export TERRAT_PYTHON_EXEC=python3
 export OCAMLRUNPARAM=b
 
+export NGINX_STATUS_URI=http://localhost:8080/nginx_status
+
 exec 2>&1
 
 sleep 5
