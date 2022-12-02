@@ -6,6 +6,13 @@ exception Pgsql_pool_closed
 
 type err = [ `Pgsql_pool_error ] [@@deriving show]
 
+module Metrics = struct
+  type t = {
+    num_conns : int;
+    idle_conns : int;
+  }
+end
+
 module Conn = struct
   type t = {
     conn : Pgsql_io.t;
@@ -21,6 +28,7 @@ end
 
 module Server = struct
   type t = {
+    metrics : Metrics.t -> unit Abb.Future.t;
     idle_check : Duration.t;
     tls_config : [ `Require of Otls.Tls_config.t | `Prefer of Otls.Tls_config.t ] option;
     passwd : string option;
@@ -70,9 +78,13 @@ module Server = struct
     let open Abb.Future.Infix_monad in
     function
     | `Ok (Msg.Get p) when t.conns = [] && t.num_conns = t.max_conns ->
+        t.metrics { num_conns = t.num_conns; idle_conns = CCList.length t.conns }
+        >>= fun () ->
         Queue.add p t.waiting;
         loop t w r
     | `Ok (Msg.Get p) -> (
+        t.metrics { num_conns = t.num_conns; idle_conns = CCList.length t.conns }
+        >>= fun () ->
         Abb.Sys.monotonic ()
         >>= fun now ->
         match t.conns with
@@ -114,12 +126,16 @@ module Server = struct
                 Abb.Future.Promise.set p (Error ()) >>= fun () -> loop t w r
             | `Timeout -> Abb.Future.Promise.set p (Error ()) >>= fun () -> loop t w r))
     | `Ok (Msg.Return conn) when Pgsql_io.connected conn -> (
+        t.metrics { num_conns = t.num_conns; idle_conns = CCList.length t.conns }
+        >>= fun () ->
         match take_until_undet t.waiting with
         | Some p -> Abb.Future.Promise.set p (Ok conn) >>= fun () -> loop t w r
         | None ->
             Abb.Sys.monotonic ()
             >>= fun last_used -> loop { t with conns = Conn.{ conn; last_used } :: t.conns } w r)
     | `Ok (Msg.Return conn) -> (
+        t.metrics { num_conns = t.num_conns; idle_conns = CCList.length t.conns }
+        >>= fun () ->
         Pgsql_io.destroy conn
         >>= fun () ->
         verify_conns t
@@ -136,6 +152,7 @@ end
 type t = Msg.t Abbs_service_local.w
 
 let create
+    ?(metrics = fun _ -> Abbs_future_combinators.unit)
     ?(idle_check = Duration.of_year 1)
     ?tls_config
     ?passwd
@@ -148,6 +165,7 @@ let create
   let t =
     Server.
       {
+        metrics;
         idle_check;
         tls_config;
         passwd;

@@ -1,5 +1,12 @@
 exception Pgsql_pool_closed
 
+module Metrics : sig
+  type t = {
+    num_conns : int;
+    idle_conns : int;
+  }
+end
+
 type err = [ `Pgsql_pool_error ]
 type t
 
@@ -12,6 +19,7 @@ type t
     the connection has been disconnected, the next connection is verified, and
     so on, until a connection is found. *)
 val create :
+  ?metrics:(Metrics.t -> unit Abb.Future.t) ->
   ?idle_check:Duration.t ->
   ?tls_config:[ `Require of Otls.Tls_config.t | `Prefer of Otls.Tls_config.t ] ->
   ?passwd:string ->
