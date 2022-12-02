@@ -574,6 +574,21 @@ let timeout_success =
       assert (Fut.state wait = `Det (`Ok ()));
       assert (Fut.state (Fut.Promise.future timeout) = `Aborted))
 
+let protect_test =
+  Oth.test ~name:"protect" (fun _ ->
+      let protected = Fut.Promise.create () in
+      let trigger = Fut.Promise.create () in
+      let fut =
+        Fut_comb.protect (fun () ->
+            let open Fut.Infix_monad in
+            Fut.Promise.future trigger >>= fun () -> Fut.Promise.set protected ())
+      in
+      ignore (Fut.run_with_state (Fut.abort fut) dummy_state);
+      assert (Fut.state fut = `Aborted);
+      assert (Fut.state (Fut.Promise.future protected) = `Undet);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger ()) dummy_state);
+      assert (Fut.state (Fut.Promise.future protected) = `Det ()))
+
 let () =
   Oth.(
     run
@@ -609,4 +624,5 @@ let () =
            on_failure_raise;
            timeout_timeout;
            timeout_success;
+           protect_test;
          ]))

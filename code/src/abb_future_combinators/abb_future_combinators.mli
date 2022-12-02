@@ -72,6 +72,11 @@ module Make (Fut : Abb_intf.Future.S) : sig
       fails. *)
   val on_failure : (unit -> 'a Fut.t) -> failure:(unit -> unit Fut.t) -> 'a Fut.t
 
+  (** Executes a future such that it is protected from any abort operation.  The
+      future returned from this may still be aborted, however the work it is
+      protecting will be executed to completion. *)
+  val protect : (unit -> 'a Fut.t) -> 'a Fut.t
+
   (** Link two futures together.  If one is aborted or fails the other one will
       be aborted or failed. *)
   val link : 'a Fut.t -> 'b Fut.t -> unit

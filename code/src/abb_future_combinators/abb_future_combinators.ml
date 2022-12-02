@@ -137,6 +137,11 @@ module Make (Fut : Abb_intf.Future.S) = struct
         ret)
       ~finally:(fun () -> if not !succeeded then failure () else unit)
 
+  let protect f =
+    let open Fut.Infix_monad in
+    let ret = Fut.Promise.create () in
+    Fut.fork (f () >>= Fut.Promise.set ret) >>= fun _ -> Fut.Promise.future ret
+
   let to_result fut = fut >>= fun v -> Fut.return (Ok v)
 
   let of_option = function
