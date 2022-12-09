@@ -765,7 +765,7 @@ module Evaluator = Terrat_work_manifest_evaluator.Make (struct
       (CCList.map (fun { Terrat_change.Dirspace.dir; _ } -> dir) dirspaces)
       (CCList.map (fun { Terrat_change.Dirspace.workspace; _ } -> workspace) dirspaces)
     >>= function
-    | Ok res -> Abb.Future.return (Ok (Terrat_event_evaluator.Dirspace_map.of_list res))
+    | Ok res -> Abb.Future.return (Ok (Terrat_evaluator.Event.Dirspace_map.of_list res))
     | Error (#Pgsql_io.err as err) ->
         Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
