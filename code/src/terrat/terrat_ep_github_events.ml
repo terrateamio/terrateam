@@ -132,16 +132,17 @@ let run_event_evaluator storage event =
   >>= fun () ->
   let open Abb.Future.Infix_monad in
   Abb.Future.fork
-    (Abbs_time_it.run
-       (fun t ->
-         Logs.info (fun m -> m "GITHUB_EVENT : %s : EVALUATE_EVENT : %f" event.Event.request_id t))
-       (fun () -> Terrat_github_evaluator.Event.eval storage event)
+    (let open Abb.Future.Infix_monad in
+    Abbs_time_it.run
+      (fun t ->
+        Logs.info (fun m -> m "GITHUB_EVENT : %s : EVALUATE_EVENT : %f" event.Event.request_id t))
+      (fun () -> Terrat_github_evaluator.Event.eval storage event)
     >>= fun () ->
     Abbs_time_it.run
       (fun t ->
         Logs.info (fun m -> m "GITHUB_EVENT : %s : GITHUB_RUNNER : %f" event.Event.request_id t))
       (fun () ->
-        Terrat_github_runner.run
+        Terrat_github_evaluator.Runner.run
           ~request_id:(Terrat_github_evaluator.S.Event.T.request_id event)
           event.Event.config
           storage))
@@ -711,7 +712,7 @@ let process_workflow_job request_id config storage = function
       let open Abb.Future.Infix_monad in
       process_workflow_job_failure storage access_token (CCInt.to_string run_id) repository
       >>= fun ret ->
-      Abb.Future.fork (Terrat_github_runner.run ~request_id config storage)
+      Abb.Future.fork (Terrat_github_evaluator.Runner.run ~request_id config storage)
       >>= fun _ -> Abb.Future.return ret
   | _ -> Abb.Future.return (Ok ())
 

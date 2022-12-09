@@ -33,3 +33,7 @@ end
 module Event : sig
   val eval : Terrat_storage.t -> S.Event.T.t -> unit Abb.Future.t
 end
+
+module Runner : sig
+  val run : request_id:string -> Terrat_config.t -> Terrat_storage.t -> unit Abb.Future.t
+end

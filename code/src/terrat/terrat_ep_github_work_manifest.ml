@@ -1816,7 +1816,7 @@ module Results = struct
     let open Abb.Future.Infix_monad in
     run
     >>= fun ret ->
-    Abb.Future.fork (Terrat_github_runner.run ~request_id config storage)
+    Abb.Future.fork (Terrat_github_evaluator.Runner.run ~request_id config storage)
     >>= fun _ ->
     match ret with
     | Ok () -> Abb.Future.return ()

@@ -313,6 +313,10 @@ module type S = sig
     val unlock_pull_request : Terrat_storage.t -> T.t -> (unit, [> `Error ]) result Abb.Future.t
     val publish_msg : T.t -> Pull_request.t Event.Msg.t -> unit Abb.Future.t
   end
+
+  module Runner : sig
+    val run : request_id:string -> Terrat_config.t -> Terrat_storage.t -> unit Abb.Future.t
+  end
 end
 
 module Make (S : S) = struct
@@ -1484,5 +1488,9 @@ module Make (S : S) = struct
                     (CCOption.map_or ~default:"" Printexc.raw_backtrace_to_string bt_opt));
               Abb.Future.return ())
         (Metrics.DefaultHistogram.time Metrics.eval_duration_seconds (fun () -> run' storage event))
+  end
+
+  module Runner = struct
+    let run = S.Runner.run
   end
 end
