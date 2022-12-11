@@ -202,6 +202,12 @@ module Event = struct
          workflows)
 end
 
+module Work_manifest = struct
+  module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
+
+  type 'a t = 'a Terrat_work_manifest.Existing.t
+end
+
 module type S = sig
   module Event : sig
     module T : sig
@@ -317,12 +323,60 @@ module type S = sig
   module Runner : sig
     val run : request_id:string -> Terrat_config.t -> Terrat_storage.t -> unit Abb.Future.t
   end
+
+  module Work_manifest : sig
+    module Initiate : sig
+      type t
+
+      module Pull_request : sig
+        type t [@@deriving show]
+
+        module Lite : sig
+          type t [@@deriving show]
+        end
+      end
+
+      val request_id : t -> string
+
+      val create :
+        request_id:string ->
+        work_manifest_id:Uuidm.t ->
+        Terrat_config.t ->
+        Terrat_storage.t ->
+        Terrat_api_components.Work_manifest_initiate.t ->
+        (t, [> `Work_manifest_not_found | `Error ]) result Abb.Future.t
+
+      val to_response :
+        t ->
+        Pull_request.t Work_manifest.t ->
+        (Terrat_api_components.Work_manifest.t, [> `Error ]) result Abb.Future.t
+
+      val initiate_work_manifest :
+        Pgsql_io.t -> t -> (Pull_request.t Work_manifest.t option, [> `Error ]) result Abb.Future.t
+
+      val query_dirspaces_without_valid_plans :
+        Pgsql_io.t ->
+        t ->
+        Pull_request.t ->
+        Terrat_change.Dirspace.t list ->
+        (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
+
+      val query_dirspaces_owned_by_other_pull_requests :
+        Pgsql_io.t ->
+        t ->
+        Pull_request.t ->
+        Terrat_change.Dirspace.t list ->
+        (Pull_request.Lite.t Work_manifest.Dirspace_map.t, [> `Error ]) result Abb.Future.t
+
+      val work_manifest_already_run : t -> (unit, [> `Error ]) result Abb.Future.t
+    end
+  end
 end
 
 module Make (S : S) = struct
   module Event = struct
     let log_time ?m event name t =
-      Logs.info (fun m -> m "EVENT_EVALUATOR : %s : %s : %f" (S.Event.T.request_id event) name t);
+      Logs.info (fun m -> m "EVALUATOR : %s : %s : %f" (S.Event.T.request_id event) name t);
       match m with
       | Some m -> Metrics.DefaultHistogram.observe m t
       | None -> ()
@@ -371,7 +425,7 @@ module Make (S : S) = struct
               | false -> Some terrateam_config_update)
         else (
           Logs.debug (fun m ->
-              m "EVENT_EVALUATOR : %s : ACCESS_CONTROL_DISABLED" (S.Event.T.request_id t.event));
+              m "EVALUATOR : %s : ACCESS_CONTROL_DISABLED" (S.Event.T.request_id t.event));
           Abb.Future.return (Ok None))
 
       let eval' t change_matches default selector =
@@ -402,7 +456,7 @@ module Make (S : S) = struct
               Access_control.eval t.ctx policies change_matches)
         else (
           Logs.debug (fun m ->
-              m "EVENT_EVALUATOR : %s : ACCESS_CONTROL_DISABLED" (S.Event.T.request_id t.event));
+              m "EVALUATOR : %s : ACCESS_CONTROL_DISABLED" (S.Event.T.request_id t.event));
           Abb.Future.return (Ok Terrat_access_control.R.{ pass = change_matches; deny = [] }))
 
       let eval_superapproved t reviewers change_matches =
@@ -452,7 +506,7 @@ module Make (S : S) = struct
         | _ ->
             Logs.debug (fun m ->
                 m
-                  "EVENT_EVALUATOR : %s : ACCESS_CONTROL : NO_MATCHING_CHANGES_FOR_SUPERAPPROVAL"
+                  "EVALUATOR : %s : ACCESS_CONTROL : NO_MATCHING_CHANGES_FOR_SUPERAPPROVAL"
                   (S.Event.T.request_id t.event));
             Abb.Future.return (Ok Event.Dirspace_map.empty)
 
@@ -468,7 +522,7 @@ module Make (S : S) = struct
                    the original response. *)
                 Logs.debug (fun m ->
                     m
-                      "EVENT_EVALUATOR : %s : ACCESS_CONTROL : EVAL_SUPERAPPROVAL"
+                      "EVALUATOR : %s : ACCESS_CONTROL : EVAL_SUPERAPPROVAL"
                       (S.Event.T.request_id t.event));
                 let denied_change_matches =
                   CCList.map
@@ -505,7 +559,7 @@ module Make (S : S) = struct
                   | false -> Some match_list)
             else (
               Logs.debug (fun m ->
-                  m "EVENT_EVALUATOR : %s : ACCESS_CONTROL_DISABLED" (S.Event.T.request_id t.event));
+                  m "EVALUATOR : %s : ACCESS_CONTROL_DISABLED" (S.Event.T.request_id t.event));
               Abb.Future.return (Ok None))
 
       let plan_require_all_dirspace_access t = t.config.Ac.plan_require_all_dirspace_access
@@ -570,9 +624,7 @@ module Make (S : S) = struct
       | Ok () -> Abb.Future.return ()
       | Error _ ->
           Logs.err (fun m ->
-              m
-                "EVENT_EVALUATOR : %s : FAILED_REPLACE_OLD_COMMIT_STATUSES"
-                (S.Event.T.request_id event));
+              m "EVALUATOR : %s : FAILED_REPLACE_OLD_COMMIT_STATUSES" (S.Event.T.request_id event));
           Abb.Future.return ()
 
     let maybe_create_pending_apply event pull_request repo_config = function
@@ -629,15 +681,11 @@ module Make (S : S) = struct
                 | Ok _ -> Abb.Future.return (Ok ())
                 | Error `Error ->
                     Logs.err (fun m ->
-                        m
-                          "EVENT_EVALUATOR : %s : FAILED_CREATE_APPLY_CHECK"
-                          (S.Event.T.request_id event));
+                        m "EVALUATOR : %s : FAILED_CREATE_APPLY_CHECK" (S.Event.T.request_id event));
                     Abb.Future.return (Ok ()))
             | Error _ as err ->
                 Logs.err (fun m ->
-                    m
-                      "EVENT_EVALUATOR : %s : FAILED_FETCH_COMMIT_CHECKS"
-                      (S.Event.T.request_id event));
+                    m "EVALUATOR : %s : FAILED_FETCH_COMMIT_CHECKS" (S.Event.T.request_id event));
                 Abb.Future.return err)
           else Abb.Future.return (Ok ())
 
@@ -746,7 +794,7 @@ module Make (S : S) = struct
       in
       Logs.info (fun m ->
           m
-            "EVENT_EVALUATOR : %s : APPLY_REQUIREMENTS_CHECKS : approved=%s merge_conflicts=%s \
+            "EVALUATOR : %s : APPLY_REQUIREMENTS_CHECKS : approved=%s merge_conflicts=%s \
              status_checks=%s"
             (S.Event.T.request_id event)
             (Bool.to_string approved.Ar.Checks.Approved.enabled)
@@ -754,7 +802,7 @@ module Make (S : S) = struct
             (Bool.to_string status_checks.Ar.Checks.Status_checks.enabled));
       Logs.info (fun m ->
           m
-            "EVENT_EVALUATOR : %s : APPLY_REQUIREMENTS_RESULT : approved=%s merge_check=%s \
+            "EVALUATOR : %s : APPLY_REQUIREMENTS_RESULT : approved=%s merge_check=%s \
              commit_check=%s merged=%s result=%s"
             (S.Event.T.request_id event)
             (Bool.to_string approved_result)
@@ -801,7 +849,7 @@ module Make (S : S) = struct
       Prmths.Counter.inc_one (Metrics.stored_work_manifests_total (Run_type.to_string run_type));
       Logs.info (fun m ->
           m
-            "EVENT_EVALUATOR : %s : STORED_WORK_MANIFEST : %s"
+            "EVALUATOR : %s : STORED_WORK_MANIFEST : %s"
             (S.Event.T.request_id event)
             (Uuidm.to_string work_manifest.Terrat_work_manifest.id));
       Abbs_time_it.run (log_time event "CREATE_COMMIT_CHECKS") (fun () ->
@@ -847,14 +895,14 @@ module Make (S : S) = struct
           | `Auto, [] ->
               Logs.info (fun m ->
                   m
-                    "EVENT_EVALUATOR : %s : NOOP : AUTOPLAN_NO_MATCHES : draft=%s"
+                    "EVALUATOR : %s : NOOP : AUTOPLAN_NO_MATCHES : draft=%s"
                     (S.Event.T.request_id event)
                     (Bool.to_string (S.Event.Pull_request.is_draft_pr pull_request)));
               Abb.Future.return (Ok None)
           | _, [] ->
               Logs.info (fun m ->
                   m
-                    "EVENT_EVALUATOR : %s : NOOP : PLAN_NO_MATCHING_DIRSPACES"
+                    "EVALUATOR : %s : NOOP : PLAN_NO_MATCHING_DIRSPACES"
                     (S.Event.T.request_id event));
               Abb.Future.return (Ok (Some Event.Msg.Plan_no_matching_dirspaces))
           | _, _ ->
@@ -903,13 +951,11 @@ module Make (S : S) = struct
       match (operation, matches) with
       | `Apply `Auto, [] ->
           Logs.info (fun m ->
-              m "EVENT_EVALUATOR : %s : NOOP : AUTOAPPLY_NO_MATCHES" (S.Event.T.request_id event));
+              m "EVALUATOR : %s : NOOP : AUTOAPPLY_NO_MATCHES" (S.Event.T.request_id event));
           Abb.Future.return (Ok None)
       | _, [] ->
           Logs.info (fun m ->
-              m
-                "EVENT_EVALUATOR : %s : NOOP : APPLY_NO_MATCHING_DIRSPACES"
-                (S.Event.T.request_id event));
+              m "EVALUATOR : %s : NOOP : APPLY_NO_MATCHING_DIRSPACES" (S.Event.T.request_id event));
           Abb.Future.return (Ok (Some Event.Msg.Apply_no_matching_dirspaces))
       | _, _ -> (
           Abbs_time_it.run (log_time event "QUERY_DIRSPACES_OWNED_BY_OTHER_PRS") (fun () ->
@@ -1023,7 +1069,7 @@ module Make (S : S) = struct
           match (operation, access_control_result) with
           | (`Apply _ | `Apply_autoapprove), _ when not passed_apply_requirements ->
               Logs.info (fun m ->
-                  m "EVENT_EVALUATOR : %s : PR_NOT_APPLIABLE" (S.Event.T.request_id event));
+                  m "EVALUATOR : %s : PR_NOT_APPLIABLE" (S.Event.T.request_id event));
               Abb.Future.return
                 (Ok
                    (Some
@@ -1059,13 +1105,13 @@ module Make (S : S) = struct
       let open Abbs_future_combinators.Infix_result_monad in
       Logs.info (fun m ->
           m
-            "EVENT_EVALUATOR : %s : PULL_REQUEST : base_sha=%s : sha=%s"
+            "EVALUATOR : %s : PULL_REQUEST : base_sha=%s : sha=%s"
             (S.Event.T.request_id event)
             (S.Event.Pull_request.base_hash pull_request)
             (S.Event.Pull_request.hash pull_request));
       Logs.info (fun m ->
           m
-            "EVENT_EVALUATOR : %s : PULL_REQUEST : NUM_DIFF : %d"
+            "EVALUATOR : %s : PULL_REQUEST : NUM_DIFF : %d"
             (S.Event.T.request_id event)
             (CCList.length (S.Event.Pull_request.diff pull_request)));
       Pgsql_pool.with_conn storage ~f:(fun db ->
@@ -1105,7 +1151,7 @@ module Make (S : S) = struct
                   let missing_dirs = Event.Dir_set.diff dirs existing_dirs in
                   Logs.info (fun m ->
                       m
-                        "EVENT_EVALUATOR : %s : MISSING_DIRS : %d"
+                        "EVALUATOR : %s : MISSING_DIRS : %d"
                         (S.Event.T.request_id event)
                         (Event.Dir_set.cardinal missing_dirs));
                   let all_match_dirspaces =
@@ -1284,7 +1330,7 @@ module Make (S : S) = struct
       | Event.Event_type.Autoplan | Event.Event_type.Autoapply ->
           Logs.info (fun m ->
               m
-                "EVENT_EVALUATOR : %s : %s_BRANCH_NOT_VALID_BRANCH"
+                "EVALUATOR : %s : %s_BRANCH_NOT_VALID_BRANCH"
                 (S.Event.T.request_id event)
                 msg_fragment);
           Abb.Future.return (Ok None)
@@ -1295,7 +1341,7 @@ module Make (S : S) = struct
       | Event.Event_type.Unlock ->
           Logs.info (fun m ->
               m
-                "EVENT_EVALUATOR : %s : %s_BRANCH_NOT_VALID_BRANCH_EXPLICIT"
+                "EVALUATOR : %s : %s_BRANCH_NOT_VALID_BRANCH_EXPLICIT"
                 (S.Event.T.request_id event)
                 msg_fragment);
           Abb.Future.return (Ok (Some (Event.Msg.Dest_branch_no_match pull_request)))
@@ -1411,17 +1457,17 @@ module Make (S : S) = struct
                     (* Cannot apply checkout strategy *)
                     Logs.info (fun m ->
                         m
-                          "EVENT_EVALUATOR : %s : CANNOT_APPLY_CHECKOUT_STRATEGY"
+                          "EVALUATOR : %s : CANNOT_APPLY_CHECKOUT_STRATEGY"
                           (S.Event.T.request_id event));
                     Abb.Future.return
                       (Ok (Some (Event.Msg.Pull_request_not_mergeable pull_request)))
                 | Terrat_pull_request.State.Closed ->
                     Logs.info (fun m ->
-                        m "EVENT_EVALUATOR : %s : NOOP : PR_CLOSED" (S.Event.T.request_id event));
+                        m "EVALUATOR : %s : NOOP : PR_CLOSED" (S.Event.T.request_id event));
                     Abb.Future.return (Ok None))
           else (
             Logs.info (fun m ->
-                m "EVENT_EVALUATOR : %s : NOOP : REPO_CONFIG_DISABLED" (S.Event.T.request_id event));
+                m "EVALUATOR : %s : NOOP : REPO_CONFIG_DISABLED" (S.Event.T.request_id event));
             Abb.Future.return (Ok None))
       | Error `No_matching_dest_branch -> handle_branches_error event pull_request "DEST"
       | Error `No_matching_source_branch -> handle_branches_error event pull_request "SOURCE"
@@ -1437,32 +1483,29 @@ module Make (S : S) = struct
               | Ok None -> Abb.Future.return ()
               | Error (`Bad_glob s) ->
                   Logs.err (fun m ->
-                      m "EVENT_EVALUATOR : %s : BAD_GLOB : %s" (S.Event.T.request_id event) s);
+                      m "EVALUATOR : %s : BAD_GLOB : %s" (S.Event.T.request_id event) s);
                   S.Event.publish_msg event (Event.Msg.Bad_glob s)
               | Error (`Repo_config_parse_err err) ->
                   Logs.info (fun m ->
                       m
-                        "EVENT_EVALUATOR : %s : REPO_CONFIG_PARSE_ERR : %s"
+                        "EVALUATOR : %s : REPO_CONFIG_PARSE_ERR : %s"
                         (S.Event.T.request_id event)
                         err);
                   S.Event.publish_msg event (Event.Msg.Repo_config_parse_failure err)
               | Error (`Repo_config_err err) ->
                   Logs.info (fun m ->
-                      m
-                        "EVENT_EVALUATOR : %s : REPO_CONFIG_ERR : %s"
-                        (S.Event.T.request_id event)
-                        err);
+                      m "EVALUATOR : %s : REPO_CONFIG_ERR : %s" (S.Event.T.request_id event) err);
                   S.Event.publish_msg event (Event.Msg.Repo_config_failure err)
               | Error `Error ->
                   Prmths.Counter.inc_one Metrics.error_errors_total;
                   Logs.err (fun m ->
-                      m "EVENT_EVALUATOR : %s : ERROR : ERROR" (S.Event.T.request_id event));
+                      m "EVALUATOR : %s : ERROR : ERROR" (S.Event.T.request_id event));
                   Abb.Future.return ()
               | Error (#Pgsql_pool.err as err) ->
                   Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
                   Logs.err (fun m ->
                       m
-                        "EVENT_EVALUATOR : %s : ERROR : %s"
+                        "EVALUATOR : %s : ERROR : %s"
                         (S.Event.T.request_id event)
                         (Pgsql_pool.show_err err));
                   Abb.Future.return ()
@@ -1470,19 +1513,19 @@ module Make (S : S) = struct
                   Prmths.Counter.inc_one Metrics.pgsql_errors_total;
                   Logs.err (fun m ->
                       m
-                        "EVENT_EVALUATOR : %s : ERROR : %s"
+                        "EVALUATOR : %s : ERROR : %s"
                         (S.Event.T.request_id event)
                         (Pgsql_io.show_err err));
                   Abb.Future.return ())
           | `Aborted ->
               Prmths.Counter.inc_one Metrics.aborted_errors_total;
-              Logs.err (fun m -> m "EVENT_EVALUATOR : %s : ABORTED" (S.Event.T.request_id event));
+              Logs.err (fun m -> m "EVALUATOR : %s : ABORTED" (S.Event.T.request_id event));
               Abb.Future.return ()
           | `Exn (exn, bt_opt) ->
               Prmths.Counter.inc_one Metrics.exn_errors_total;
               Logs.err (fun m ->
                   m
-                    "EVENT_EVALUATOR : %s : EXN : %s : %s"
+                    "EVALUATOR : %s : EXN : %s : %s"
                     (S.Event.T.request_id event)
                     (Printexc.to_string exn)
                     (CCOption.map_or ~default:"" Printexc.raw_backtrace_to_string bt_opt));
@@ -1492,5 +1535,112 @@ module Make (S : S) = struct
 
   module Runner = struct
     let run = S.Runner.run
+  end
+
+  module Work_manifest = struct
+    module Initiate = struct
+      type err =
+        [ Pgsql_pool.err
+        | Pgsql_io.err
+        | `Work_manifest_not_found
+        | `Work_manifest_already_run of
+          (S.Work_manifest.Initiate.Pull_request.t Work_manifest.t[@opaque])
+        | `Work_manifest_in_queue_state
+        | `Dirspaces_without_valid_plans of Terrat_change.Dirspace.t list
+        | `Dirspaces_owned_by_other_pull_requests of
+          (Terrat_change.Dirspace.t * S.Work_manifest.Initiate.Pull_request.Lite.t) list
+        | `Error
+        ]
+      [@@deriving show]
+
+      let run storage t =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_pool.with_conn storage ~f:(fun db ->
+            (* Explicitly not doing this in a transaction because we want the initiate
+               to mark the work manifest as running even if we fail further down. *)
+            Logs.info (fun m ->
+                m "EVALUATOR : %s : INITIATE_WORK_MANIFEST" (S.Work_manifest.Initiate.request_id t));
+            S.Work_manifest.Initiate.initiate_work_manifest db t
+            >>= function
+            | None -> Abb.Future.return (Ok None)
+            | Some
+                (Terrat_work_manifest.{ state = State.(Completed | Aborted); pull_request; _ } as
+                wm) -> Abb.Future.return (Error (`Work_manifest_already_run wm))
+            | Some Terrat_work_manifest.{ state = State.Queued; _ } ->
+                Abb.Future.return (Error `Work_manifest_in_queue_state)
+            | Some work_manifest -> (
+                match work_manifest.Terrat_work_manifest.run_type with
+                | Terrat_work_manifest.Run_type.(Autoplan | Plan | Unsafe_apply) ->
+                    Abb.Future.return (Ok (Some work_manifest))
+                | Terrat_work_manifest.Run_type.(Autoapply | Apply) -> (
+                    Logs.debug (fun m ->
+                        m
+                          "EVALUATOR : %s : QUERY_DIRSPACES_OWNED_BY_OTHER_PR"
+                          (S.Work_manifest.Initiate.request_id t));
+                    S.Work_manifest.Initiate.query_dirspaces_owned_by_other_pull_requests
+                      db
+                      t
+                      work_manifest.Terrat_work_manifest.pull_request
+                      (CCList.map
+                         Terrat_change.Dirspaceflow.to_dirspace
+                         work_manifest.Terrat_work_manifest.changes)
+                    >>= function
+                    | owned_dirspaces when Work_manifest.Dirspace_map.is_empty owned_dirspaces -> (
+                        (* No dirspaces owned by another pull request, great *)
+                        Logs.debug (fun m ->
+                            m
+                              "EVALUATOR : %s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS"
+                              (S.Work_manifest.Initiate.request_id t));
+                        S.Work_manifest.Initiate.query_dirspaces_without_valid_plans
+                          db
+                          t
+                          work_manifest.Terrat_work_manifest.pull_request
+                          (CCList.map
+                             Terrat_change.Dirspaceflow.to_dirspace
+                             work_manifest.Terrat_work_manifest.changes)
+                        >>= function
+                        | [] ->
+                            (* All dirspaces have plans, great *)
+                            Abb.Future.return (Ok (Some work_manifest))
+                        | dirspaces ->
+                            (* Some dirspaces do not have valid plans, not great *)
+                            Abb.Future.return (Error (`Dirspaces_without_valid_plans dirspaces)))
+                    | owned_dirspaces ->
+                        (* Some dirspaces owned by other pull requests *)
+                        Abb.Future.return
+                          (Error
+                             (`Dirspaces_owned_by_other_pull_requests
+                               (Work_manifest.Dirspace_map.to_list owned_dirspaces))))))
+
+      let initiate config storage request_id work_manifest_id work_manifest_initiate =
+        let open Abbs_future_combinators.Infix_result_monad in
+        S.Work_manifest.Initiate.create
+          ~request_id
+          ~work_manifest_id
+          config
+          storage
+          work_manifest_initiate
+        >>= fun t ->
+        let open Abb.Future.Infix_monad in
+        run storage t
+        >>= function
+        | Ok (Some work_manifest) -> S.Work_manifest.Initiate.to_response t work_manifest
+        | Ok None -> Abb.Future.return (Error `Work_manifest_not_found)
+        | Error (`Work_manifest_already_run _) -> (
+            S.Work_manifest.Initiate.work_manifest_already_run t
+            >>= function
+            | Ok () -> Abb.Future.return (Error `Error)
+            | Error `Error -> Abb.Future.return (Error `Error))
+        | Error _ as err -> Abb.Future.return err
+    end
+
+    let initiate ~request_id config storage work_manifest_id wm_initiate =
+      let open Abb.Future.Infix_monad in
+      Initiate.initiate config storage request_id work_manifest_id wm_initiate
+      >>= function
+      | Ok response -> Abb.Future.return (Some response)
+      | Error (#Initiate.err as err) ->
+          Logs.err (fun m -> m "EVALUATOR : %s : ERROR : %s" request_id (Initiate.show_err err));
+          Abb.Future.return None
   end
 end

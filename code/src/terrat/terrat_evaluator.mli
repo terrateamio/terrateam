@@ -81,6 +81,12 @@ module Event : sig
   end
 end
 
+module Work_manifest : sig
+  module Dirspace_map : module type of CCMap.Make (Terrat_change.Dirspace)
+
+  type 'a t = 'a Terrat_work_manifest.Existing.t
+end
+
 module type S = sig
   module Event : sig
     module T : sig
@@ -196,6 +202,54 @@ module type S = sig
   module Runner : sig
     val run : request_id:string -> Terrat_config.t -> Terrat_storage.t -> unit Abb.Future.t
   end
+
+  module Work_manifest : sig
+    module Initiate : sig
+      type t
+
+      module Pull_request : sig
+        type t [@@deriving show]
+
+        module Lite : sig
+          type t [@@deriving show]
+        end
+      end
+
+      val request_id : t -> string
+
+      val create :
+        request_id:string ->
+        work_manifest_id:Uuidm.t ->
+        Terrat_config.t ->
+        Terrat_storage.t ->
+        Terrat_api_components.Work_manifest_initiate.t ->
+        (t, [> `Work_manifest_not_found | `Error ]) result Abb.Future.t
+
+      val to_response :
+        t ->
+        Pull_request.t Work_manifest.t ->
+        (Terrat_api_components.Work_manifest.t, [> `Error ]) result Abb.Future.t
+
+      val initiate_work_manifest :
+        Pgsql_io.t -> t -> (Pull_request.t Work_manifest.t option, [> `Error ]) result Abb.Future.t
+
+      val query_dirspaces_without_valid_plans :
+        Pgsql_io.t ->
+        t ->
+        Pull_request.t ->
+        Terrat_change.Dirspace.t list ->
+        (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
+
+      val query_dirspaces_owned_by_other_pull_requests :
+        Pgsql_io.t ->
+        t ->
+        Pull_request.t ->
+        Terrat_change.Dirspace.t list ->
+        (Pull_request.Lite.t Work_manifest.Dirspace_map.t, [> `Error ]) result Abb.Future.t
+
+      val work_manifest_already_run : t -> (unit, [> `Error ]) result Abb.Future.t
+    end
+  end
 end
 
 module Make (S : S) : sig
@@ -205,5 +259,15 @@ module Make (S : S) : sig
 
   module Runner : sig
     val run : request_id:string -> Terrat_config.t -> Terrat_storage.t -> unit Abb.Future.t
+  end
+
+  module Work_manifest : sig
+    val initiate :
+      request_id:string ->
+      Terrat_config.t ->
+      Terrat_storage.t ->
+      Uuidm.t ->
+      Terrat_api_components.Work_manifest_initiate.t ->
+      Terrat_api_components.Work_manifest.t option Abb.Future.t
   end
 end

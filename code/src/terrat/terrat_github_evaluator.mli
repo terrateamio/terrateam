@@ -37,3 +37,13 @@ end
 module Runner : sig
   val run : request_id:string -> Terrat_config.t -> Terrat_storage.t -> unit Abb.Future.t
 end
+
+module Work_manifest : sig
+  val initiate :
+    request_id:string ->
+    Terrat_config.t ->
+    Terrat_storage.t ->
+    Uuidm.t ->
+    Terrat_api_components.Work_manifest_initiate.t ->
+    Terrat_api_components.Work_manifest.t option Abb.Future.t
+end
