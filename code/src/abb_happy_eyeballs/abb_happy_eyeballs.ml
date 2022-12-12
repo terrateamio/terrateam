@@ -3,8 +3,6 @@ type connect_err = [ `He_connect_err ] [@@deriving show]
 module Make (Abb : Abb_intf.S) = struct
   module Abb_fut_comb = Abb_future_combinators.Make (Abb.Future)
 
-  let dummy_id = 0
-
   let try_connect ip port =
     let tcp =
       let domain =
@@ -39,7 +37,7 @@ module Make (Abb : Abb_intf.S) = struct
           ~hints:[ Abb_intf.Socket.(Addrinfo_hints.Family Domain.Inet4) ]
           (Abb_intf.Socket.Addrinfo_query.Host (Domain_name.to_string host))
         >>| function
-        | Ok [] | Error _ -> `Event (Happy_eyeballs.Resolved_a_failed host)
+        | Ok [] | Error _ -> `Event (Happy_eyeballs.Resolved_a_failed (host, ""))
         | Ok addrs ->
             let res =
               addrs
@@ -55,7 +53,7 @@ module Make (Abb : Abb_intf.S) = struct
           ~hints:[ Abb_intf.Socket.(Addrinfo_hints.Family Domain.Inet6) ]
           (Abb_intf.Socket.Addrinfo_query.Host (Domain_name.to_string host))
         >>| function
-        | Ok [] | Error _ -> `Event (Happy_eyeballs.Resolved_aaaa_failed host)
+        | Ok [] | Error _ -> `Event (Happy_eyeballs.Resolved_aaaa_failed (host, ""))
         | Ok addrs ->
             let res =
               addrs
@@ -66,14 +64,15 @@ module Make (Abb : Abb_intf.S) = struct
               |> Ipaddr.V6.Set.of_list
             in
             `Event (Happy_eyeballs.Resolved_aaaa (host, res)))
-    | Happy_eyeballs.Connect (host, _id, (ip, port)) -> (
+    | Happy_eyeballs.Connect (host, id, (ip, port)) -> (
         try_connect ip port
         >>= function
         | Ok tcp -> Abb.Future.return (`Ok ((ip, port), tcp))
         | Error _ ->
-            Abb.Future.return
-              (`Event (Happy_eyeballs.Connection_failed (host, dummy_id, (ip, port)))))
-    | Happy_eyeballs.Connect_failed (_, _) -> Abb.Future.return `He_connect_err
+            Abb.Future.return (`Event (Happy_eyeballs.Connection_failed (host, id, (ip, port), "")))
+        )
+    | Happy_eyeballs.Connect_failed (_, _, _) -> Abb.Future.return `He_connect_err
+    | Happy_eyeballs.Connect_cancelled (_, _) -> Abb.Future.return `He_connect_err
 
   (* Each action is a future whose result is the application of {!act}.  We wait
      for the first response, and depending on what that is, we continue on
@@ -118,7 +117,8 @@ module Make (Abb : Abb_intf.S) = struct
     >>= fun ts ->
     let ts = Duration.(to_us_64 (of_f ts)) in
     let he = Happy_eyeballs.create ts in
-    let he, actions = he_connect he ts in
+    let _, id = Happy_eyeballs.Waiter_map.register "" Happy_eyeballs.Waiter_map.empty in
+    let he, actions = he_connect he ts id in
     run he (Duration.of_ms 10) actions
 
   let connect host ports =
@@ -129,12 +129,12 @@ module Make (Abb : Abb_intf.S) = struct
        distinguish them with id's. *)
     match Ipaddr.of_string host with
     | Ok ip ->
-        connect' (fun he ts ->
-            Happy_eyeballs.connect_ip he ts ~id:dummy_id (List.map (fun p -> (ip, p)) ports))
+        connect' (fun he ts id ->
+            Happy_eyeballs.connect_ip he ts ~id (List.map (fun p -> (ip, p)) ports))
     | Error _ -> (
         match Domain_name.of_string host with
         | Ok dn ->
-            connect' (fun he ts ->
-                Happy_eyeballs.connect he ts ~id:dummy_id (Domain_name.host_exn dn) ports)
+            connect' (fun he ts id ->
+                Happy_eyeballs.connect he ts ~id (Domain_name.host_exn dn) ports)
         | Error _ -> failwith "nyi")
 end

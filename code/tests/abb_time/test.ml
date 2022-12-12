@@ -4,8 +4,7 @@ end
 
 module T = struct
   let time = Unix.gettimeofday
-
-  let monotonic () = Mtime.Span.to_s (Mtime_clock.elapsed ())
+  let monotonic () = Mtime.Span.(to_float_ns (Mtime_clock.elapsed ()) /. to_float_ns s)
 end
 
 module Time = Abb_time.Make (Monad) (T)

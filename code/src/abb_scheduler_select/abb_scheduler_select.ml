@@ -14,9 +14,7 @@ end)
 
 module Timers = struct
   module Timer_map = Map.Make (struct
-    type t = float * int
-
-    let compare = compare
+    type t = (Mtime.span[@compare Mtime.Span.compare]) * int [@@deriving ord]
   end)
 
   type 'a t = 'a Timer_map.t
@@ -27,6 +25,8 @@ module Timers = struct
   let next t = Timer_map.min_binding t
 end
 
+let sec_ns = Mtime.Span.(to_float_ns s)
+
 (* El is short for Event Loop *)
 module El = struct
   type t = {
@@ -35,7 +35,7 @@ module El = struct
     timers : (t Abb_fut.State.t -> t Abb_fut.State.t) Timers.t;
     next_timer_id : int;
     curr_time : float;
-    mono_time : float;
+    mono_time : Mtime.span;
     exec_duration : float array;
     thread_pool : (Unix.file_descr * Unix.file_descr) Abb_thread_pool.t;
     ignore_reads : Unix.file_descr list;
@@ -56,7 +56,7 @@ module El = struct
         timers = Timers.empty;
         next_timer_id = 0;
         curr_time = Unix.gettimeofday ();
-        mono_time = Mtime.Span.to_s (Mtime_clock.elapsed ());
+        mono_time = Mtime_clock.elapsed ();
         exec_duration = Array.create_float 1024;
         thread_pool = Abb_thread_pool.create ~capacity:100 ~wait:Unix.pipe;
         ignore_reads = [];
@@ -112,7 +112,7 @@ module El = struct
     let t = Abb_fut.State.state s in
     try
       match Timers.next t.timers with
-      | (ts, id), f when ts <= t.mono_time ->
+      | (ts, id), f when Mtime.Span.compare ts t.mono_time <= 0 ->
           let t = { t with timers = Timers.remove id ts t.timers } in
           let s = Abb_fut.State.set_state t s in
           dispatch_timers (f s)
@@ -125,7 +125,8 @@ module El = struct
     let timeout =
       try
         match Timers.next t.timers with
-        | (ts, _), _ when ts > t.mono_time -> ts -. t.mono_time
+        | (ts, _), _ when Mtime.Span.compare ts t.mono_time > 0 ->
+            Mtime.Span.(to_float_ns (abs_diff ts t.mono_time) /. sec_ns)
         | _ -> 0.0
       with Not_found -> -1.0
     in
@@ -141,15 +142,16 @@ module El = struct
       {
         t with
         curr_time = Unix.gettimeofday ();
-        mono_time = Mtime.Span.to_s (Mtime_clock.elapsed ());
+        mono_time = Mtime_clock.elapsed ();
         ignore_reads = [];
         ignore_writes = [];
       }
     in
     let s = Abb_fut.State.set_state t s in
     let s = s |> dispatch_reads reads |> dispatch_writes writes |> dispatch_timers in
-    let end_time = Mtime.Span.to_s (Mtime_clock.elapsed ()) in
-    update_exec_duration (Abb_fut.State.state s).exec_duration (end_time -. t.mono_time);
+    let end_time = Mtime_clock.elapsed () in
+    let duration = Mtime.Span.(to_float_ns (abs_diff end_time t.mono_time) /. sec_ns) in
+    update_exec_duration (Abb_fut.State.state s).exec_duration duration;
     s
 
   let rec loop s done_fut =
@@ -193,11 +195,14 @@ module Sys = struct
     Future.with_state (fun s ->
         let t = Abb_fut.State.state s in
         let timer_id = t.El.next_timer_id in
-        (* [Float.succ] to guarantee that this happens within the next event
-           loop iteration.  This ensure that [sleep 0.0] will cause an event
-           loop to happen between sleeping and running.  Otherwise a tight loop
-           with [sleep 0.0] would never let the scheduler do other work. *)
-        let ts = duration +. Float.succ t.El.mono_time in
+        (* Add one [ns] to the duration just to ensure we do not get caught in a
+           tight loop by sleeping 0 seconds. *)
+        let duration_span =
+          CCOption.get_exn_or
+            "negative sleep duration"
+            (Mtime.Span.of_float_ns (duration *. sec_ns))
+        in
+        let ts = Mtime.Span.(add t.El.mono_time (add duration_span ns)) in
         let p =
           Future.Promise.create
             ~abort:(fun () ->
@@ -228,7 +233,7 @@ module Sys = struct
   let monotonic () =
     Future.with_state (fun s ->
         let t = Abb_fut.State.state s in
-        (s, Future.return t.El.mono_time))
+        (s, Future.return Mtime.Span.(to_float_ns t.El.mono_time /. sec_ns)))
 end
 
 module Thread = struct

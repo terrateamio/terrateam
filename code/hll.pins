@@ -1,2 +1,2 @@
-dns-client = "6.3.0"
-js_of_ocaml = "4.0.0"
+dns-client = "6.4.1"
+js_of_ocaml = "4.1.0"

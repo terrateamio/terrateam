@@ -102,7 +102,7 @@ module Make (Abb : Abb_intf.S) = struct
         ~timeout:(Abb.Sys.sleep (Duration.to_f t.timeout_ns))
         (connect_to_ns t [] nameservers)
       >>= function
-      | `Ok (Ok (sock, sockaddr)) -> Abb.Future.return (Ok { sock; sockaddr })
+      | `Ok (Ok (sock, sockaddr)) -> Abb.Future.return (Ok (`Udp, { sock; sockaddr }))
       | `Ok (Error errors) -> Abb.Future.return (Error (`Msg (CCString.concat "," errors)))
       | `Timeout -> Abb.Future.return (Error (`Msg "Timeout"))
 
