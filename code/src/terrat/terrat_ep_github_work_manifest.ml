@@ -510,70 +510,32 @@ module Plans = struct
   let post config storage work_manifest_id { Pc.path; workspace; plan_data } ctx =
     let open Abb.Future.Infix_monad in
     let request_id = Brtl_ctx.token ctx in
-    let id = Uuidm.to_string work_manifest_id in
-    Logs.info (fun m -> m "WORK_MANIFEST : %s : PLAN : %s : %s : %s" request_id id path workspace);
-    (* Decode it and it will get re-encoded before putting it into (before
-       applying the prepared statement, we don't want to worry about
-       properly escaping the string).  This is decoded here just to ensure
-       that we only accept valid base64 encoded data. *)
     let plan = Base64.decode_exn plan_data in
     Metrics.Plan_histogram.observe Metrics.plan_chars (CCFloat.of_int (CCString.length plan));
-    Pgsql_pool.with_conn storage ~f:(fun db ->
-        Pgsql_io.Prepared_stmt.execute
-          db
-          Sql.upsert_terraform_plan
-          work_manifest_id
-          path
-          workspace
-          plan)
+    Terrat_github_evaluator.Work_manifest.plan_store
+      ~request_id
+      ~path
+      ~workspace
+      storage
+      work_manifest_id
+      plan
     >>= function
     | Ok () -> Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-    | Error (#Pgsql_pool.err as err) ->
-        Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
-        Logs.err (fun m ->
-            m "WORK_MANIFEST : %s : PLAN : %s : ERROR : %s" request_id id (Pgsql_pool.show_err err));
+    | Error `Error ->
         Abb.Future.return
           (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-    | Error (#Pgsql_io.err as err) ->
-        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
-        Logs.err (fun m ->
-            m "WORK_MANIFEST : %s : PLAN : %s : ERROR : %s" request_id id (Pgsql_io.show_err err));
-        Abb.Future.return
-          (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-
-  let delete_plan request_id db work_manifest dir workspace =
-    let open Abb.Future.Infix_monad in
-    Terrat_github_plan_cleanup.clean ~work_manifest ~dir ~workspace db
-    >>= function
-    | Ok () -> Abb.Future.return (Ok ())
-    | Error (#Pgsql_io.err as err) ->
-        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
-        Logs.err (fun m ->
-            m "WORK_MANIFEST : %s : DELETE_PLAN : ERROR : %s" request_id (Pgsql_io.show_err err));
-        Abb.Future.return (Ok ())
 
   let get config storage work_manifest_id path workspace ctx =
     let open Abb.Future.Infix_monad in
     let request_id = Brtl_ctx.token ctx in
-    let id = Uuidm.to_string work_manifest_id in
-    Logs.info (fun m ->
-        m "WORK_MANIFEST : %s : PLAN_GET : %s : %s : %s" request_id id path workspace);
-    Pgsql_pool.with_conn storage ~f:(fun db ->
-        let open Abbs_future_combinators.Infix_result_monad in
-        Pgsql_io.Prepared_stmt.fetch
-          db
-          Sql.select_recent_plan
-          ~f:CCFun.id
-          work_manifest_id
-          path
-          workspace
-        >>= fun res ->
-        delete_plan request_id db work_manifest_id path workspace
-        >>= fun () -> Abb.Future.return (Ok res))
+    Terrat_github_evaluator.Work_manifest.plan_fetch
+      ~request_id
+      ~path
+      ~workspace
+      storage
+      work_manifest_id
     >>= function
-    | Ok [] ->
-        Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx)
-    | Ok (data :: _) ->
+    | Ok (Some data) ->
         let response =
           Terrat_api_work_manifest.Plan_get.Responses.OK.(
             { data = Base64.encode_exn data } |> to_yojson)
@@ -583,24 +545,9 @@ module Plans = struct
           (Brtl_ctx.set_response
              (Brtl_rspnc.create ~headers:response_headers ~status:`OK response)
              ctx)
-    | Error (#Pgsql_pool.err as err) ->
-        Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
-        Logs.err (fun m ->
-            m
-              "WORK_MANIFEST : %s : PLAN_GET : %s : ERROR : %s"
-              request_id
-              id
-              (Pgsql_pool.show_err err));
-        Abb.Future.return
-          (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-    | Error (#Pgsql_io.err as err) ->
-        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
-        Logs.err (fun m ->
-            m
-              "WORK_MANIFEST : %s : PLAN_GET : %s : ERROR : %s"
-              request_id
-              id
-              (Pgsql_io.show_err err));
+    | Ok None ->
+        Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx)
+    | Error `Error ->
         Abb.Future.return
           (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
 end

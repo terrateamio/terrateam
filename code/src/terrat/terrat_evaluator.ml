@@ -370,6 +370,25 @@ module type S = sig
 
       val work_manifest_already_run : t -> (unit, [> `Error ]) result Abb.Future.t
     end
+
+    module Plans : sig
+      val fetch :
+        request_id:string ->
+        path:string ->
+        workspace:string ->
+        Terrat_storage.t ->
+        Uuidm.t ->
+        (string option, [> `Error ]) result Abb.Future.t
+
+      val store :
+        request_id:string ->
+        path:string ->
+        workspace:string ->
+        Terrat_storage.t ->
+        Uuidm.t ->
+        string ->
+        (unit, [> `Error ]) result Abb.Future.t
+    end
   end
 end
 
@@ -1642,5 +1661,8 @@ module Make (S : S) = struct
       | Error (#Initiate.err as err) ->
           Logs.err (fun m -> m "EVALUATOR : %s : ERROR : %s" request_id (Initiate.show_err err));
           Abb.Future.return None
+
+    let plan_fetch = S.Work_manifest.Plans.fetch
+    let plan_store = S.Work_manifest.Plans.store
   end
 end

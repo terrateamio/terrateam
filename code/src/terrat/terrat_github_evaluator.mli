@@ -46,4 +46,21 @@ module Work_manifest : sig
     Uuidm.t ->
     Terrat_api_components.Work_manifest_initiate.t ->
     Terrat_api_components.Work_manifest.t option Abb.Future.t
+
+  val plan_fetch :
+    request_id:string ->
+    path:string ->
+    workspace:string ->
+    Terrat_storage.t ->
+    Uuidm.t ->
+    (string option, [> `Error ]) result Abb.Future.t
+
+  val plan_store :
+    request_id:string ->
+    path:string ->
+    workspace:string ->
+    Terrat_storage.t ->
+    Uuidm.t ->
+    string ->
+    (unit, [> `Error ]) result Abb.Future.t
 end

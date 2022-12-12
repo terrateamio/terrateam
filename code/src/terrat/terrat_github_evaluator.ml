@@ -2461,6 +2461,139 @@ module Wm = struct
         Tmpl.work_manifest_already_run
       >>= fun _ -> Abb.Future.return (Ok ())
   end
+
+  module Plans = struct
+    module Sql = struct
+      let read fname =
+        CCOption.get_exn_or
+          fname
+          (CCOption.map
+             (fun s ->
+               s
+               |> CCString.split_on_char '\n'
+               |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
+               |> CCString.concat "\n")
+             (Terrat_files_sql.read fname))
+
+      let base64 = function
+        | Some s :: rest -> (
+            match Base64.decode (CCString.replace ~sub:"\n" ~by:"" s) with
+            | Ok s -> Some (s, rest)
+            | _ -> None)
+        | _ -> None
+
+      let upsert_terraform_plan =
+        Pgsql_io.Typed_sql.(
+          sql
+          /^ read "upsert_terraform_plan.sql"
+          /% Var.uuid "work_manifest"
+          /% Var.text "path"
+          /% Var.text "workspace"
+          /% Var.(ud (text "data") Base64.encode_string))
+
+      let select_recent_plan =
+        Pgsql_io.Typed_sql.(
+          sql
+          // (* data *) Ret.ud base64
+          /^ read "select_github_recent_plan.sql"
+          /% Var.uuid "id"
+          /% Var.text "dir"
+          /% Var.text "workspace")
+    end
+
+    let delete_plan request_id db work_manifest dir workspace =
+      let open Abb.Future.Infix_monad in
+      Terrat_github_plan_cleanup.clean ~work_manifest ~dir ~workspace db
+      >>= function
+      | Ok () -> Abb.Future.return (Ok ())
+      | Error (#Pgsql_io.err as err) ->
+          Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : DELETE_PLAN : ERROR : %s"
+                request_id
+                (Pgsql_io.show_err err));
+          Abb.Future.return (Ok ())
+
+    let fetch ~request_id ~path ~workspace storage work_manifest_id =
+      let open Abb.Future.Infix_monad in
+      Logs.info (fun m ->
+          m
+            "GITHUB_EVALUATOR : %s : PLAN_GET : %a : %s : %s"
+            request_id
+            Uuidm.pp
+            work_manifest_id
+            path
+            workspace);
+      Pgsql_pool.with_conn storage ~f:(fun db ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          Pgsql_io.Prepared_stmt.fetch
+            db
+            Sql.select_recent_plan
+            ~f:CCFun.id
+            work_manifest_id
+            path
+            workspace
+          >>= fun res ->
+          delete_plan request_id db work_manifest_id path workspace
+          >>= fun () -> Abb.Future.return (Ok res))
+      >>= function
+      | Ok [] -> Abb.Future.return (Ok None)
+      | Ok (data :: _) -> Abb.Future.return (Ok (Some data))
+      | Error (#Pgsql_pool.err as err) ->
+          Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : PLAN_GET : %a : ERROR : %s"
+                request_id
+                Uuidm.pp
+                work_manifest_id
+                (Pgsql_pool.show_err err));
+          Abb.Future.return (Error `Error)
+      | Error (#Pgsql_io.err as err) ->
+          Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : PLAN_GET : %a : ERROR : %s"
+                request_id
+                Uuidm.pp
+                work_manifest_id
+                (Pgsql_io.show_err err));
+          Abb.Future.return (Error `Error)
+
+    let store ~request_id ~path ~workspace storage work_manifest_id plan_data =
+      let open Abb.Future.Infix_monad in
+      Pgsql_pool.with_conn storage ~f:(fun db ->
+          Pgsql_io.Prepared_stmt.execute
+            db
+            Sql.upsert_terraform_plan
+            work_manifest_id
+            path
+            workspace
+            plan_data)
+      >>= function
+      | Ok () -> Abb.Future.return (Ok ())
+      | Error (#Pgsql_pool.err as err) ->
+          Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : PLAN : %a : ERROR : %s"
+                request_id
+                Uuidm.pp
+                work_manifest_id
+                (Pgsql_pool.show_err err));
+          Abb.Future.return (Error `Error)
+      | Error (#Pgsql_io.err as err) ->
+          Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : PLAN : %a : ERROR : %s"
+                request_id
+                Uuidm.pp
+                work_manifest_id
+                (Pgsql_io.show_err err));
+          Abb.Future.return (Error `Error)
+  end
 end
 
 module S = struct
