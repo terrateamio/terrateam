@@ -389,6 +389,16 @@ module type S = sig
         string ->
         (unit, [> `Error ]) result Abb.Future.t
     end
+
+    module Results : sig
+      val store :
+        request_id:string ->
+        Terrat_config.t ->
+        Terrat_storage.t ->
+        Uuidm.t ->
+        Terrat_api_work_manifest.Results.Request_body.t ->
+        (unit, [> `Error ]) result Abb.Future.t
+    end
   end
 end
 
@@ -1664,5 +1674,6 @@ module Make (S : S) = struct
 
     let plan_fetch = S.Work_manifest.Plans.fetch
     let plan_store = S.Work_manifest.Plans.store
+    let results_store = S.Work_manifest.Results.store
   end
 end

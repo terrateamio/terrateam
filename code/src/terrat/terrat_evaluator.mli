@@ -268,6 +268,16 @@ module type S = sig
         string ->
         (unit, [> `Error ]) result Abb.Future.t
     end
+
+    module Results : sig
+      val store :
+        request_id:string ->
+        Terrat_config.t ->
+        Terrat_storage.t ->
+        Uuidm.t ->
+        Terrat_api_work_manifest.Results.Request_body.t ->
+        (unit, [> `Error ]) result Abb.Future.t
+    end
   end
 end
 
@@ -304,6 +314,14 @@ module Make (S : S) : sig
       Terrat_storage.t ->
       Uuidm.t ->
       string ->
+      (unit, [> `Error ]) result Abb.Future.t
+
+    val results_store :
+      request_id:string ->
+      Terrat_config.t ->
+      Terrat_storage.t ->
+      Uuidm.t ->
+      Terrat_api_work_manifest.Results.Request_body.t ->
       (unit, [> `Error ]) result Abb.Future.t
   end
 end
