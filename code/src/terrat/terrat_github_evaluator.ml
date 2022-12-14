@@ -1752,6 +1752,8 @@ module Ev = struct
 end
 
 module Wm = struct
+  module Wm = Terrat_evaluator.Work_manifest
+
   module Initiate = struct
     module Sql = struct
       let read fname =
@@ -2026,7 +2028,7 @@ module Wm = struct
                   dirspaceflows))
       | Error (`Bad_glob _ as err) -> Abb.Future.return (Error err)
 
-    let to_response' t work_manifest =
+    let to_response' t (Wm.Pull_request work_manifest) =
       let module Wm = Terrat_work_manifest in
       let request_id = t.request_id in
       let changed_dirspaces =
@@ -2347,7 +2349,10 @@ module Wm = struct
               state
             >>= fun () ->
             Abb.Future.return
-              (Ok (Some Terrat_work_manifest.{ partial_work_manifest with changes = dirspaces }))
+              (Ok
+                 (Some
+                    (Wm.Pull_request
+                       Terrat_work_manifest.{ partial_work_manifest with changes = dirspaces })))
         | None ->
             Logs.info (fun m ->
                 m

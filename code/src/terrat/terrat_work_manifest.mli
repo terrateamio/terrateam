@@ -1,3 +1,5 @@
+(** A work manifest defines the work to be executed.   *)
+
 module Run_type : sig
   type t =
     | Autoplan
