@@ -238,10 +238,6 @@ module type S = sig
 
     val create_access_control_ctx : user:string -> T.t -> Access_control.ctx
 
-    (** Given a set of directories, return those directories that exist in the repo *)
-    val list_existing_dirs :
-      T.t -> Pull_request.t -> Event.Dir_set.t -> (Event.Dir_set.t, [> `Error ]) result Abb.Future.t
-
     val store_dirspaceflows :
       Pgsql_io.t ->
       T.t ->
@@ -1174,9 +1170,13 @@ module Make (S : S) = struct
                          -> dir)
                     |> Event.Dir_set.of_list
                   in
-                  Abbs_time_it.run (log_time event "LIST_EXISTING_DIRS") (fun () ->
-                      S.Event.list_existing_dirs event pull_request dirs)
-                  >>= fun existing_dirs ->
+                  let existing_dirs =
+                    Event.Dir_set.filter
+                      (fun d ->
+                        let d = d ^ "/" in
+                        CCList.exists (CCString.prefix ~pre:d) repo_tree)
+                      dirs
+                  in
                   let missing_dirs = Event.Dir_set.diff dirs existing_dirs in
                   Logs.info (fun m ->
                       m

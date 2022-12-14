@@ -709,40 +709,6 @@ module Ev = struct
 
   let create_access_control_ctx ~user event = Access_control.{ user; event }
 
-  let list_existing_dirs event pull_request dirs =
-    let open Abb.Future.Infix_monad in
-    let client = Terrat_github.create (`Token event.T.access_token) in
-    Abbs_future_combinators.List_result.fold_left
-      ~init:Terrat_evaluator.Event.Dir_set.empty
-      ~f:(fun acc d ->
-        let open Abbs_future_combinators.Infix_result_monad in
-        Githubc2_abb.call
-          client
-          Githubc2_repos.Get_content.(
-            make
-              (Parameters.make
-                 ~owner:event.T.repository.Gw.Repository.owner.Gw.User.login
-                 ~repo:event.T.repository.Gw.Repository.name
-                 ~ref_:(Some pull_request.Terrat_pull_request.hash)
-                 ~path:d
-                 ()))
-        >>= fun resp ->
-        match Openapi.Response.value resp with
-        | `OK _ | `Found | `Forbidden _ ->
-            Abb.Future.return (Ok (Terrat_evaluator.Event.Dir_set.add d acc))
-        | `Not_found _ -> Abb.Future.return (Ok acc))
-      (Terrat_evaluator.Event.Dir_set.to_list dirs)
-    >>= function
-    | Ok existing_dirs -> Abb.Future.return (Ok existing_dirs)
-    | Error (#Githubc2_abb.call_err as err) ->
-        Prmths.Counter.inc_one Metrics.github_errors_total;
-        Logs.err (fun m ->
-            m
-              "GITHUB_EVALUATOR : %s : FAIL_LIST_EXISTING_DIRS : %s"
-              (T.request_id event)
-              (Githubc2_abb.show_call_err err));
-        Abb.Future.return (Error `Error)
-
   let store_dirspaceflows db event pull_request dirspaceflows =
     let run =
       Abbs_future_combinators.List_result.iter

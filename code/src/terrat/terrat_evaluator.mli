@@ -117,10 +117,6 @@ module type S = sig
 
     val create_access_control_ctx : user:string -> T.t -> Access_control.ctx
 
-    (** Given a set of directories, return those directories that exist in the repo *)
-    val list_existing_dirs :
-      T.t -> Pull_request.t -> Event.Dir_set.t -> (Event.Dir_set.t, [> `Error ]) result Abb.Future.t
-
     val store_dirspaceflows :
       Pgsql_io.t ->
       T.t ->
