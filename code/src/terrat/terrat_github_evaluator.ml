@@ -1004,8 +1004,14 @@ module Ev = struct
                    mergeable;
                    draft;
                  })
-      | `Not_found _ | `Internal_server_error _ | `Not_modified | `Service_unavailable _ ->
-          failwith "nyi2"
+      | (`Not_found _ | `Internal_server_error _ | `Not_modified | `Service_unavailable _) as err ->
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : ERROR : %a"
+                event.T.request_id
+                Githubc2_pulls.Get.Responses.pp
+                err);
+          Abb.Future.return (Error `Error)
     in
     let open Abb.Future.Infix_monad in
     run
@@ -3345,8 +3351,10 @@ module Wm = struct
                     pull_number
                     (Githubc2_git.Delete_ref.Responses.Unprocessable_entity.show err));
               Abb.Future.return (Ok ()))
-      | `Not_found _ | `Internal_server_error _ | `Not_modified | `Service_unavailable _ ->
-          failwith "nyi"
+      | (`Not_found _ | `Internal_server_error _ | `Not_modified | `Service_unavailable _) as err ->
+          Logs.err (fun m ->
+              m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Githubc2_pulls.Get.Responses.pp err);
+          Abb.Future.return (Error `Error)
 
     let perform_post_apply
         ~request_id
