@@ -89,12 +89,12 @@ type get_repo_collaborator_permission_err = Githubc2_abb.call_err [@@deriving sh
 let create auth = Githubc2_abb.create ~user_agent:"Terrateam" auth
 
 let call ?(tries = 3) t req =
-  let num_tries = ref tries in
+  let num_tries = ref 1 in
   Abbs_future_combinators.retry
     ~f:(fun () -> Githubc2_abb.call t req)
     ~test:(function
-      | Error _ -> !num_tries < tries
-      | Ok resp -> Openapi.Response.status resp < 500 || !num_tries < tries)
+      | Error _ -> tries < !num_tries
+      | Ok resp -> Openapi.Response.status resp < 500 || tries < !num_tries)
     ~betwixt:(fun _ ->
       Prmths.Counter.inc_one Metrics.call_retries_total;
       incr num_tries;
