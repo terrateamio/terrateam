@@ -21,7 +21,8 @@ module Event : sig
     type 'pull_request t =
       | Missing_plans of Terrat_change.Dirspace.t list
       | Dirspaces_owned_by_other_pull_request of 'pull_request Dirspace_map.t
-      | Conflicting_work_manifests of 'pull_request Terrat_work_manifest.Existing_lite.t list
+      | Conflicting_work_manifests of
+          'pull_request Terrat_work_manifest.Pull_request.Existing_lite.t list
       | Repo_config_parse_failure of string
       | Repo_config_failure of string
       | Pull_request_not_appliable of ('pull_request * Apply_requirements.t)
@@ -63,7 +64,7 @@ module Event : sig
       | Pull_request of [ `Unlock ]
     [@@deriving show]
 
-    val run_type_of_tf : tf -> Terrat_work_manifest.Run_type.t
+    val run_type_of_tf : tf -> Terrat_work_manifest.Pull_request.Run_type.t
   end
 
   module Event_type : sig
@@ -84,7 +85,7 @@ end
 module Work_manifest : sig
   module Dirspace_map : module type of CCMap.Make (Terrat_change.Dirspace)
 
-  type _ t = Pull_request : 'a Terrat_work_manifest.Existing.t -> 'a t
+  type _ t = Pull_request : 'a Terrat_work_manifest.Pull_request.Existing.t -> 'a t
 end
 
 module type S = sig
@@ -127,9 +128,10 @@ module type S = sig
     val store_new_work_manifest :
       Pgsql_io.t ->
       T.t ->
-      Pull_request.t Terrat_work_manifest.New.t ->
+      Pull_request.t Terrat_work_manifest.Pull_request.New.t ->
       Terrat_access_control.R.Deny.t list ->
-      (Pull_request.t Terrat_work_manifest.Existing_lite.t, [> `Error ]) result Abb.Future.t
+      (Pull_request.t Terrat_work_manifest.Pull_request.Existing_lite.t, [> `Error ]) result
+      Abb.Future.t
 
     val store_pull_request :
       Pgsql_io.t -> T.t -> Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
@@ -161,7 +163,8 @@ module type S = sig
       Pgsql_io.t ->
       T.t ->
       Event.Op_class.tf ->
-      (Pull_request.t Terrat_work_manifest.Existing_lite.t list, [> `Error ]) result Abb.Future.t
+      (Pull_request.t Terrat_work_manifest.Pull_request.Existing_lite.t list, [> `Error ]) result
+      Abb.Future.t
 
     val query_unapplied_dirspaces :
       Pgsql_io.t ->

@@ -1,7 +1,7 @@
 module Dirspace_map : module type of CCMap.Make (Terrat_change.Dirspace)
 
 module Work_manifest : sig
-  type 'a t = 'a Terrat_work_manifest.Existing.t
+  type 'a t = 'a Terrat_work_manifest.Pull_request.Existing.t
 end
 
 type ('pull_request, 'pull_request_lite) err =

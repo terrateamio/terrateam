@@ -1,7 +1,7 @@
 module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
 
 module Work_manifest = struct
-  type 'a t = 'a Terrat_work_manifest.Existing.t
+  type 'a t = 'a Terrat_work_manifest.Pull_request.Existing.t
 end
 
 type ('pull_request, 'pull_request_lite) err =
@@ -62,15 +62,16 @@ module Make (S : S) = struct
         S.initiate_work_manifest db t
         >>= function
         | None -> Abb.Future.return (Ok None)
-        | Some (Terrat_work_manifest.{ state = State.(Completed | Aborted); pull_request; _ } as wm)
-          -> Abb.Future.return (Error (`Work_manifest_already_run wm))
+        | Some
+            (Terrat_work_manifest.{ state = State.(Completed | Aborted); src = pull_request; _ } as
+            wm) -> Abb.Future.return (Error (`Work_manifest_already_run wm))
         | Some Terrat_work_manifest.{ state = State.Queued; _ } ->
             Abb.Future.return (Error `Work_manifest_in_queue_state)
         | Some work_manifest -> (
             match work_manifest.Terrat_work_manifest.run_type with
-            | Terrat_work_manifest.Run_type.(Autoplan | Plan | Unsafe_apply) ->
+            | Terrat_work_manifest.Pull_request.Run_type.(Autoplan | Plan | Unsafe_apply) ->
                 Abb.Future.return (Ok (Some work_manifest))
-            | Terrat_work_manifest.Run_type.(Autoapply | Apply) -> (
+            | Terrat_work_manifest.Pull_request.Run_type.(Autoapply | Apply) -> (
                 Logs.debug (fun m ->
                     m
                       "WORK_MANIFEST_EVALUATOR : %s : QUERY_DIRSPACES_OWNED_BY_OTHER_PR"
@@ -78,7 +79,7 @@ module Make (S : S) = struct
                 S.query_dirspaces_owned_by_other_pull_requests
                   db
                   t
-                  work_manifest.Terrat_work_manifest.pull_request
+                  work_manifest.Terrat_work_manifest.src
                   (CCList.map
                      Terrat_change.Dirspaceflow.to_dirspace
                      work_manifest.Terrat_work_manifest.changes)
@@ -92,7 +93,7 @@ module Make (S : S) = struct
                     S.query_dirspaces_without_valid_plans
                       db
                       t
-                      work_manifest.Terrat_work_manifest.pull_request
+                      work_manifest.Terrat_work_manifest.src
                       (CCList.map
                          Terrat_change.Dirspaceflow.to_dirspace
                          work_manifest.Terrat_work_manifest.changes)
