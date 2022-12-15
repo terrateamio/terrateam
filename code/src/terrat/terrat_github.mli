@@ -173,7 +173,7 @@ val compare_commits :
   owner:string ->
   repo:string ->
   string * string ->
-  (Githubc2_repos.Compare_commits.Responses.t Openapi.Response.t, [> Githubc2_abb.call_err ]) result
+  (Githubc2_components.Commit_comparison.Primary.Files.t, [> Githubc2_abb.call_err ]) result
   Abb.Future.t
 
 (* val get_access_token :

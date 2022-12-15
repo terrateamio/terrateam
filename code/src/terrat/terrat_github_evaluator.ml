@@ -389,14 +389,14 @@ module Ev = struct
     let insert_dirspace =
       Pgsql_io.Typed_sql.(
         sql
-        /^ "insert into github_dirspaces (base_sha, path, repository, sha, workspace) values \
-            ($base_sha, $path, $repository, $sha, $workspace) on conflict (repository, sha, path, \
-            workspace) do nothing"
-        /% Var.text "base_sha"
-        /% Var.text "path"
-        /% Var.bigint "repository"
-        /% Var.text "sha"
-        /% Var.text "workspace")
+        /^ "insert into github_dirspaces (base_sha, path, repository, sha, workspace) select * \
+            from unnest($base_sha, $path, $repository, $sha, $workspace) on conflict (repository, \
+            sha, path, workspace) do nothing"
+        /% Var.(str_array (text "base_sha"))
+        /% Var.(str_array (text "path"))
+        /% Var.(array (bigint "repository"))
+        /% Var.(str_array (text "sha"))
+        /% Var.(str_array (text "workspace")))
 
     let insert_work_manifest =
       Pgsql_io.Typed_sql.(
@@ -416,11 +416,11 @@ module Ev = struct
       Pgsql_io.Typed_sql.(
         sql
         /^ "insert into github_work_manifest_dirspaceflows (work_manifest, path, workspace, \
-            workflow_idx) values ($work_manifest, $path, $workspace, $workflow_idx)"
-        /% Var.uuid "work_manifest"
-        /% Var.text "path"
-        /% Var.text "workspace"
-        /% Var.(option (smallint "workflow_idx")))
+            workflow_idx) select * from unnest($work_manifest, $path, $workspace, $workflow_idx)"
+        /% Var.(str_array (uuid "work_manifest"))
+        /% Var.(str_array (text "path"))
+        /% Var.(str_array (text "workspace"))
+        /% Var.(array (option (smallint "workflow_idx"))))
 
     let select_out_of_diff_applies =
       Pgsql_io.Typed_sql.(
@@ -505,10 +505,10 @@ module Ev = struct
       Pgsql_io.Typed_sql.(
         sql
         /^ read "insert_github_work_manifest_access_control_denied_dirspace.sql"
-        /% Var.text "path"
-        /% Var.text "workspace"
-        /% Var.(option (str_array (text "policy")))
-        /% Var.(uuid "work_manifest"))
+        /% Var.(str_array (text "path"))
+        /% Var.(str_array (text "workspace"))
+        /% Var.(str_array (option (json "policy")))
+        /% Var.(str_array (uuid "work_manifest")))
   end
 
   module Tmpl = struct
@@ -626,14 +626,9 @@ module Ev = struct
   let fetch_diff ~request_id ~access_token ~owner ~repo ~base_sha head_sha =
     let open Abbs_future_combinators.Infix_result_monad in
     Terrat_github.compare_commits ~access_token ~owner ~repo (base_sha, head_sha)
-    >>= fun resp ->
-    let module Ghc_comp = Githubc2_components in
-    let module Cc = Ghc_comp.Commit_comparison in
-    match Openapi.Response.value resp with
-    | `OK { Cc.primary = { Cc.Primary.files = Some files; _ }; _ } ->
-        let diff = diff_of_github_diff files in
-        Abb.Future.return (Ok diff)
-    | otherwise -> Abb.Future.return (Error (`Bad_compare_response otherwise))
+    >>= fun files ->
+    let diff = diff_of_github_diff files in
+    Abb.Future.return (Ok diff)
 
   module Pull_request = struct
     type t = (int64, Terrat_change.Diff.t list, bool) Terrat_pull_request.t
@@ -710,18 +705,24 @@ module Ev = struct
   let create_access_control_ctx ~user event = Access_control.{ user; event }
 
   let store_dirspaceflows db event pull_request dirspaceflows =
+    let id = CCInt64.of_int event.T.repository.Gw.Repository.id in
     let run =
       Abbs_future_combinators.List_result.iter
-        ~f:(fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.dir; workspace }; _ } ->
+        ~f:(fun dirspaceflows ->
           Pgsql_io.Prepared_stmt.execute
             db
             Sql.insert_dirspace
-            (Pull_request.base_hash pull_request)
-            dir
-            (CCInt64.of_int event.T.repository.Gw.Repository.id)
-            (Pull_request.hash pull_request)
-            workspace)
-        dirspaceflows
+            (CCList.replicate (CCList.length dirspaceflows) (Pull_request.base_hash pull_request))
+            (CCList.map
+               (fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.dir; _ }; _ } -> dir)
+               dirspaceflows)
+            (CCList.replicate (CCList.length dirspaceflows) id)
+            (CCList.replicate (CCList.length dirspaceflows) (Pull_request.hash pull_request))
+            (CCList.map
+               (fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.workspace; _ }; _ } ->
+                 workspace)
+               dirspaceflows))
+        (CCList.chunks 500 dirspaceflows)
     in
     let open Abb.Future.Infix_monad in
     run
@@ -800,30 +801,57 @@ module Ev = struct
       | [] -> assert false
       | (id, state, created_at) :: _ ->
           Abbs_future_combinators.List_result.iter
-            ~f:
-              (fun Terrat_change.
-                     { Dirspaceflow.dirspace = { Dirspace.dir; workspace }; workflow_idx } ->
+            ~f:(fun changes ->
               Pgsql_io.Prepared_stmt.execute
                 db
                 Sql.insert_work_manifest_dirspaceflow
-                id
-                dir
-                workspace
-                workflow_idx)
-            work_manifest.Wm.changes
+                (CCList.replicate (CCList.length changes) id)
+                (CCList.map
+                   (fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.dir; _ }; _ } -> dir)
+                   changes)
+                (CCList.map
+                   (fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.workspace; _ }; _ } ->
+                     workspace)
+                   changes)
+                (CCList.map
+                   (fun Terrat_change.{ Dirspaceflow.workflow_idx; _ } -> workflow_idx)
+                   changes))
+            (CCList.chunks 500 work_manifest.Wm.changes)
           >>= fun () ->
+          let module Policy = struct
+            type t = string list [@@deriving yojson]
+          end in
           Abbs_future_combinators.List_result.iter
-            ~f:
-              (fun Ac.R.Deny.
-                     { change_match = Cm.{ dirspace = Ch.Dirspace.{ dir; workspace }; _ }; policy } ->
+            ~f:(fun denied_dirspaces ->
               Pgsql_io.Prepared_stmt.execute
                 db
                 Sql.insert_work_manifest_access_control_denied_dirspace
-                dir
-                workspace
-                policy
-                id)
-            denied_dirspaces
+                (CCList.map
+                   (fun Ac.R.Deny.{ change_match = Cm.{ dirspace = Ch.Dirspace.{ dir; _ }; _ }; _ } ->
+                     dir)
+                   denied_dirspaces)
+                (CCList.map
+                   (fun Ac.R.Deny.
+                          { change_match = Cm.{ dirspace = Ch.Dirspace.{ workspace; _ }; _ }; _ } ->
+                     workspace)
+                   denied_dirspaces)
+                (CCList.map
+                   (fun Ac.R.Deny.{ policy; _ } ->
+                     (* This has a very awkward JSON conversion because we are
+                        performing this insert by passing in a bunch of arrays
+                        of values.  However policy is already an array and SQL
+                        does not support multidimensional arrays where the
+                        inner arrays can have different dimensions.  So we need
+                        to convert the policy to a string so that we can pass
+                        in an array of strings, and it needs to be in a format
+                        postgresql can turn back into an array.  So we use JSON
+                        as the intermediate representation. *)
+                     CCOption.map
+                       (fun policy -> Yojson.Safe.to_string (Policy.to_yojson policy))
+                       policy)
+                   denied_dirspaces)
+                (CCList.replicate (CCList.length denied_dirspaces) id))
+            (CCList.chunks 500 denied_dirspaces)
           >>= fun () ->
           let wm =
             {

@@ -100,6 +100,16 @@ let call ?(tries = 3) t req =
       incr num_tries;
       Abb.Sys.sleep 1.5)
 
+let fold ?(tries = 3) t ~init ~f req =
+  let num_tries = ref 1 in
+  Abbs_future_combinators.retry
+    ~f:(fun () -> Githubc2_abb.fold t ~init ~f req)
+    ~test:(fun r -> CCResult.is_ok r || tries < !num_tries)
+    ~betwixt:(fun _ ->
+      Prmths.Counter.inc_one Metrics.call_retries_total;
+      incr num_tries;
+      Abb.Sys.sleep 1.5)
+
 let get_installation_access_token config installation_id =
   Prmths.Counter.inc_one (Metrics.fn_call_total "get_installation_access_token");
   let open Abb.Future.Infix_monad in
@@ -237,9 +247,18 @@ let fetch_pull_request ~access_token ~owner ~repo pull_number =
   call client Githubc2_pulls.Get.(make Parameters.(make ~owner ~repo ~pull_number))
 
 let compare_commits ~access_token ~owner ~repo (base, head) =
+  let module Cc = Githubc2_components.Commit_comparison in
   Prmths.Counter.inc_one (Metrics.fn_call_total "compare_commits");
   let client = create (`Token access_token) in
-  call client Githubc2_repos.Compare_commits.(make Parameters.(make ~base ~head ~owner ~repo ()))
+  fold
+    client
+    ~init:[]
+    ~f:(fun acc resp ->
+      match Openapi.Response.value resp with
+      | `OK { Cc.primary = { Cc.Primary.files = Some files; _ }; _ } ->
+          Abb.Future.return (Ok (files @ acc))
+      | _ -> Abb.Future.return (Error `Error))
+    Githubc2_repos.Compare_commits.(make Parameters.(make ~base ~head ~owner ~repo ()))
 
 let load_workflow ~access_token ~owner ~repo =
   Prmths.Counter.inc_one (Metrics.fn_call_total "load_workflow");

@@ -1200,6 +1200,11 @@ module Make (S : S) = struct
                   let all_match_dirspaceflows =
                     Event.dirspaceflows_of_changes repo_config all_match_dirspaces
                   in
+                  Logs.info (fun m ->
+                      m
+                        "EVALUATOR : %s : NUM_DIRSPACEFLOWS : %d"
+                        (S.Event.T.request_id event)
+                        (CCList.length all_match_dirspaceflows));
                   Abbs_time_it.run (log_time event "STORE_DIRSPACEFLOWS") (fun () ->
                       S.Event.store_dirspaceflows db event pull_request all_match_dirspaceflows)
                   >>= fun () ->
