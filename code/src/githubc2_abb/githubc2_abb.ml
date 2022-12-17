@@ -9,6 +9,7 @@ let tls_config =
 
 module Io = struct
   type 'a t = 'a Abb.Future.t
+  type err = Cohttp_abb.request_err
 
   let ( >>= ) = Abb.Future.Infix_monad.( >>= )
   let return = Abb.Future.return
@@ -30,7 +31,7 @@ module Io = struct
         let headers = resp |> Http.Response.headers |> Cohttp.Header.to_list in
         let status = resp |> Http.Response.status |> Cohttp.Code.code_of_status in
         return (Ok (Openapi.Response.make ~headers ~status body))
-    | Error _ -> return (Error `Error)
+    | Error err -> return (Error (`Io_err err))
 end
 
 module Api = Openapi.Make (Io)
@@ -45,7 +46,7 @@ end
 type call_err =
   [ `Conversion_err of string * string Openapi.Response.t
   | `Missing_response of string Openapi.Response.t
-  | `Error
+  | `Io_err of Cohttp_abb.request_err
   ]
 [@@deriving show]
 

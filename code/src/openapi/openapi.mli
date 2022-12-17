@@ -40,6 +40,7 @@ end
 
 module type IO = sig
   type 'a t
+  type err
 
   val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
   val return : 'a -> 'a t
@@ -50,7 +51,7 @@ module type IO = sig
     headers:(string * string) list ->
     meth:[ `Get | `Post | `Delete | `Patch | `Put ] ->
     Uri.t ->
-    (string Response.t, [> `Error ]) result t
+    (string Response.t, [> `Io_err of err ]) result t
 end
 
 module Make (Io : IO) : sig
@@ -59,7 +60,7 @@ module Make (Io : IO) : sig
     ( 'a Response.t,
       [> `Conversion_err of string * string Response.t
       | `Missing_response of string Response.t
-      | `Error
+      | `Io_err of Io.err
       ] )
     result
     Io.t

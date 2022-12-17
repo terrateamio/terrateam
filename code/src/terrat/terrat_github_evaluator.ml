@@ -3436,6 +3436,17 @@ module Wm = struct
                 sha
                 (Pgsql_io.show_err err));
           Abb.Future.return ()
+      | Error `Error ->
+          Prmths.Counter.inc_one Metrics.github_errors_total;
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : AUTOMERGE : ERROR : %s : %s : %Ld : %s : ERROR"
+                request_id
+                owner
+                repo
+                pull_number
+                sha);
+          Abb.Future.return ()
       | Error (#Terrat_github.get_installation_access_token_err as err) ->
           Prmths.Counter.inc_one Metrics.github_errors_total;
           Logs.err (fun m ->

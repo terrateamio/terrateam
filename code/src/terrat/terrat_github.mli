@@ -70,6 +70,7 @@ module Commit_status : sig
 
   type list_err =
     [ Githubc2_abb.call_err
+    | `Error
     | `Moved_permanently of Githubc2_components.Basic_error.t
     ]
   [@@deriving show]
@@ -115,7 +116,11 @@ module Status_check : sig
 end
 
 module Pull_request_reviews : sig
-  type list_err = Githubc2_abb.call_err [@@deriving show]
+  type list_err =
+    [ `Error
+    | Githubc2_abb.call_err
+    ]
+  [@@deriving show]
 
   val list :
     access_token:string ->
@@ -149,7 +154,7 @@ val fetch_pull_request_files :
   owner:string ->
   pull_number:int ->
   string ->
-  (Githubc2_components.Diff_entry.t list, [> Githubc2_abb.call_err ]) result Abb.Future.t
+  (Githubc2_components.Diff_entry.t list, [> Githubc2_abb.call_err | `Error ]) result Abb.Future.t
 
 val fetch_changed_files :
   access_token:string ->
@@ -173,7 +178,9 @@ val compare_commits :
   owner:string ->
   repo:string ->
   string * string ->
-  (Githubc2_components.Commit_comparison.Primary.Files.t, [> Githubc2_abb.call_err ]) result
+  ( Githubc2_components.Commit_comparison.Primary.Files.t,
+    [> Githubc2_abb.call_err | `Error ] )
+  result
   Abb.Future.t
 
 (* val get_access_token :

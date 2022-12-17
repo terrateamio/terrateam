@@ -414,6 +414,7 @@ module Commit_status = struct
 
   type list_err =
     [ Githubc2_abb.call_err
+    | `Error
     | `Moved_permanently of Githubc2_components.Basic_error.t
     ]
   [@@deriving show]
@@ -483,7 +484,11 @@ module Status_check = struct
 end
 
 module Pull_request_reviews = struct
-  type list_err = Githubc2_abb.call_err [@@deriving show]
+  type list_err =
+    [ `Error
+    | Githubc2_abb.call_err
+    ]
+  [@@deriving show]
 
   let create_client = create
 

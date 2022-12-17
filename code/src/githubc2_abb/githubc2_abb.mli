@@ -8,7 +8,7 @@ end
 type call_err =
   [ `Conversion_err of string * string Openapi.Response.t
   | `Missing_response of string Openapi.Response.t
-  | `Error
+  | `Io_err of Cohttp_abb.request_err
   ]
 [@@deriving show]
 
@@ -20,7 +20,9 @@ val call : t -> 'a Openapi.Request.t -> ('a Openapi.Response.t, [> call_err ]) r
 (** Iterate all of the pages in a paginated response and combine them.  They are
    returned in the order they were received. *)
 val collect_all :
-  t -> [> `OK of 'a list ] Openapi.Request.t -> ('a list, [> call_err ]) result Abb.Future.t
+  t ->
+  [> `OK of 'a list ] Openapi.Request.t ->
+  ('a list, [> call_err | `Error ]) result Abb.Future.t
 
 val fold :
   t ->
