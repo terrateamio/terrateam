@@ -65,6 +65,13 @@ type get_tree_err =
 type get_team_membership_in_org_err = Githubc2_abb.call_err [@@deriving show]
 type get_repo_collaborator_permission_err = Githubc2_abb.call_err [@@deriving show]
 
+type compare_commits_err =
+  [ Githubc2_abb.call_err
+  | `Not_found of Githubc2_components.Basic_error.t
+  | `Internal_server_error of Githubc2_components.Basic_error.t
+  ]
+[@@deriving show]
+
 module Commit_status : sig
   type create_err = Githubc2_abb.call_err [@@deriving show]
 
@@ -178,9 +185,7 @@ val compare_commits :
   owner:string ->
   repo:string ->
   string * string ->
-  ( Githubc2_components.Commit_comparison.Primary.Files.t,
-    [> Githubc2_abb.call_err | `Error ] )
-  result
+  (Githubc2_components.Commit_comparison.Primary.Files.t, [> compare_commits_err ]) result
   Abb.Future.t
 
 (* val get_access_token :

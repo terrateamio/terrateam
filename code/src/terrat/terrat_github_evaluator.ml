@@ -626,9 +626,11 @@ module Ev = struct
   let fetch_diff ~request_id ~access_token ~owner ~repo ~base_sha head_sha =
     let open Abbs_future_combinators.Infix_result_monad in
     Terrat_github.compare_commits ~access_token ~owner ~repo (base_sha, head_sha)
-    >>= fun files ->
-    let diff = diff_of_github_diff files in
-    Abb.Future.return (Ok diff)
+    >>= function
+    | [] -> Abb.Future.return (Error `Bad_compare_response)
+    | files ->
+        let diff = diff_of_github_diff files in
+        Abb.Future.return (Ok diff)
 
   module Pull_request = struct
     type t = (int64, Terrat_change.Diff.t list, bool) Terrat_pull_request.t
@@ -1011,16 +1013,21 @@ module Ev = struct
     run
     >>= function
     | Ok _ as ret -> Abb.Future.return ret
-    | Error `Error -> Abb.Future.return (Error `Error)
-    | Error (#Githubc2_abb.call_err as err) ->
+    | Error `Error ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
+        Logs.err (fun m ->
+            m "GITHUB_EVALUATOR : %s : ERROR : %s : %s : ERROR" (T.request_id event) owner repo);
+        Abb.Future.return (Error `Error)
+    | Error (#Terrat_github.compare_commits_err as err) ->
         Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
-              "GITHUB_EVALUATOR : %s : ERROR : %s : %s : %s"
+              "GITHUB_EVALUATOR : %s : ERROR : %s : %s : %a"
               (T.request_id event)
               owner
               repo
-              (Githubc2_abb.show_call_err err));
+              Terrat_github.pp_compare_commits_err
+              err);
         Abb.Future.return (Error `Error)
     | Error (#Terrat_github.get_installation_access_token_err as err) ->
         Prmths.Counter.inc_one Metrics.github_errors_total;
@@ -1032,7 +1039,7 @@ module Ev = struct
               repo
               (Terrat_github.show_get_installation_access_token_err err));
         Abb.Future.return (Error `Error)
-    | Error (`Bad_compare_response (`OK cc)) ->
+    | Error `Bad_compare_response ->
         Logs.info (fun m ->
             m
               "GITHUB_EVALUATOR : %s : NO_FILES_CHANGED : %s : %s : %d"
@@ -1040,33 +1047,6 @@ module Ev = struct
               owner
               repo
               event.T.pull_number);
-        Logs.info (fun m ->
-            m
-              "GITHUB_EVALUATOR : %s : NO_FILES_CHANGED : %s : %s : %s"
-              (T.request_id event)
-              owner
-              repo
-              (Githubc2_repos.Compare_commits.Responses.OK.show cc));
-        Abb.Future.return (Error `Error)
-    | Error (`Bad_compare_response (`Not_found not_found)) ->
-        Logs.err (fun m ->
-            m
-              "GITHUB_EVALUATOR : %s : COMMITS_NOT_FOUND : %s : %s : %d : %s"
-              (T.request_id event)
-              owner
-              repo
-              event.T.pull_number
-              (Githubc2_repos.Compare_commits.Responses.Not_found.show not_found));
-        Abb.Future.return (Error `Error)
-    | Error (`Bad_compare_response (`Internal_server_error err)) ->
-        Logs.err (fun m ->
-            m
-              "GITHUB_EVALUATOR : %s : INTERNAL_SERVER_ERROR : %s : %s : %d : %s"
-              (T.request_id event)
-              owner
-              repo
-              event.T.pull_number
-              (Githubc2_repos.Compare_commits.Responses.Internal_server_error.show err));
         Abb.Future.return (Error `Error)
 
   let query_pull_request_out_of_diff_applies db event pull_request =
