@@ -768,7 +768,7 @@ module Ev = struct
             m "GITHUB_EVALUATOR : %s : ERROR : %s" (T.request_id event) (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
 
-  let store_new_work_manifest db event work_manifest denied_dirspaces =
+  let store_pull_request_work_manifest db event work_manifest denied_dirspaces =
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
       let module Wm = Terrat_work_manifest in
@@ -1070,16 +1070,11 @@ module Ev = struct
             m "GITHUB_EVALUATOR : %s : ERROR : %s" (T.request_id event) (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
 
-  let fetch_tree event pull_request =
+  let fetch_tree event ~sha =
     let open Abb.Future.Infix_monad in
     let owner = event.T.repository.Gw.Repository.owner.Gw.User.login in
     let repo = event.T.repository.Gw.Repository.name in
-    Terrat_github.get_tree
-      ~access_token:event.T.access_token
-      ~owner
-      ~repo
-      ~sha:pull_request.Terrat_pull_request.hash
-      ()
+    Terrat_github.get_tree ~access_token:event.T.access_token ~owner ~repo ~sha ()
     >>= function
     | Ok files -> Abb.Future.return (Ok files)
     | Error (#Terrat_github.get_tree_err as err) ->

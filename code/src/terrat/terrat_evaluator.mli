@@ -125,7 +125,7 @@ module type S = sig
       Terrat_change.Dirspaceflow.t list ->
       (unit, [> `Error ]) result Abb.Future.t
 
-    val store_new_work_manifest :
+    val store_pull_request_work_manifest :
       Pgsql_io.t ->
       T.t ->
       Pull_request.t Terrat_work_manifest.Pull_request.New.t ->
@@ -146,7 +146,7 @@ module type S = sig
       Abb.Future.t
 
     val fetch_pull_request : T.t -> (Pull_request.t, [> `Error ]) result Abb.Future.t
-    val fetch_tree : T.t -> Pull_request.t -> (string list, [> `Error ]) result Abb.Future.t
+    val fetch_tree : T.t -> sha:string -> (string list, [> `Error ]) result Abb.Future.t
 
     val fetch_commit_checks :
       T.t -> Pull_request.t -> (Terrat_commit_check.t list, [> `Error ]) result Abb.Future.t

@@ -246,7 +246,7 @@ module type S = sig
       Terrat_change.Dirspaceflow.t list ->
       (unit, [> `Error ]) result Abb.Future.t
 
-    val store_new_work_manifest :
+    val store_pull_request_work_manifest :
       Pgsql_io.t ->
       T.t ->
       Pull_request.t Terrat_work_manifest.Pull_request.New.t ->
@@ -267,7 +267,7 @@ module type S = sig
       Abb.Future.t
 
     val fetch_pull_request : T.t -> (Pull_request.t, [> `Error ]) result Abb.Future.t
-    val fetch_tree : T.t -> Pull_request.t -> (string list, [> `Error ]) result Abb.Future.t
+    val fetch_tree : T.t -> sha:string -> (string list, [> `Error ]) result Abb.Future.t
 
     val fetch_commit_checks :
       T.t -> Pull_request.t -> (Terrat_commit_check.t list, [> `Error ]) result Abb.Future.t
@@ -872,7 +872,7 @@ module Make (S : S) = struct
         (Metrics.dirspaces_per_work_manifest (Run_type.to_string run_type))
         (CCFloat.of_int (CCList.length dirspaces));
       Abbs_time_it.run (log_time event "CREATE_WORK_MANIFEST") (fun () ->
-          S.Event.store_new_work_manifest db event work_manifest denied_dirspaces)
+          S.Event.store_pull_request_work_manifest db event work_manifest denied_dirspaces)
       >>= fun work_manifest ->
       Prmths.Counter.inc_one (Metrics.stored_work_manifests_total (Run_type.to_string run_type));
       Logs.info (fun m ->
@@ -1412,7 +1412,7 @@ module Make (S : S) = struct
         <*> Abbs_time_it.run (log_time event "FETCHING_DEST_REPO_CONFIG") (fun () ->
                 fetch_default_repo_config event pull_request)
         <*> Abbs_time_it.run (log_time event "FETCHING_REPO_TREE") (fun () ->
-                S.Event.fetch_tree event pull_request))
+                S.Event.fetch_tree event ~sha:(S.Event.Pull_request.hash pull_request)))
       >>= fun (repo_config, repo_default_config, repo_tree) ->
       match repo_default_config with
       | Ok repo_default_config ->
