@@ -8,24 +8,14 @@ module Event : sig
   module Dirspace_map : module type of CCMap.Make (Terrat_change.Dirspace)
 
   module Msg : sig
-    module Apply_requirements : sig
-      type t = {
-        approved : bool option;
-        merge_conflicts : bool option;
-        status_checks : bool option;
-        status_checks_failed : Terrat_commit_check.t list;
-        approved_reviews : Terrat_pull_request_review.t list;
-      }
-    end
-
-    type 'pull_request t =
+    type ('pull_request, 'apply_requirements) t =
       | Missing_plans of Terrat_change.Dirspace.t list
       | Dirspaces_owned_by_other_pull_request of 'pull_request Dirspace_map.t
       | Conflicting_work_manifests of
           'pull_request Terrat_work_manifest.Pull_request.Existing_lite.t list
       | Repo_config_parse_failure of string
       | Repo_config_failure of string
-      | Pull_request_not_appliable of ('pull_request * Apply_requirements.t)
+      | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
       | Pull_request_not_mergeable of 'pull_request
       | Apply_no_matching_dirspaces
       | Plan_no_matching_dirspaces
@@ -114,6 +104,13 @@ module type S = sig
       val branch_name : t -> string
     end
 
+    module Apply_requirements : sig
+      type t
+
+      val passed : t -> bool
+      val approved_reviews : t -> Terrat_pull_request_review.t list
+    end
+
     module Access_control : Terrat_access_control.S
 
     val create_access_control_ctx : user:string -> T.t -> Access_control.ctx
@@ -128,6 +125,8 @@ module type S = sig
     val store_pull_request_work_manifest :
       Pgsql_io.t ->
       T.t ->
+      Terrat_repo_config.Version_1.t ->
+      Terrat_change_match.t list ->
       Pull_request.t Terrat_work_manifest.Pull_request.New.t ->
       Terrat_access_control.R.Deny.t list ->
       (Pull_request.t Terrat_work_manifest.Pull_request.Existing_lite.t, [> `Error ]) result
@@ -148,16 +147,11 @@ module type S = sig
     val fetch_pull_request : T.t -> (Pull_request.t, [> `Error ]) result Abb.Future.t
     val fetch_tree : T.t -> sha:string -> (string list, [> `Error ]) result Abb.Future.t
 
-    val fetch_commit_checks :
-      T.t -> Pull_request.t -> (Terrat_commit_check.t list, [> `Error ]) result Abb.Future.t
-
-    val fetch_pull_request_reviews :
-      T.t -> Pull_request.t -> (Terrat_pull_request_review.t list, [> `Error ]) result Abb.Future.t
-
-    val create_commit_checks :
-      T.t -> Pull_request.t -> Terrat_commit_check.t list -> (unit, [> `Error ]) result Abb.Future.t
-
-    val get_commit_check_details_url : T.t -> Pull_request.t -> string
+    val check_apply_requirements :
+      T.t ->
+      Pull_request.t ->
+      Terrat_repo_config.Version_1.t ->
+      (Apply_requirements.t, [> `Error ]) result Abb.Future.t
 
     val query_conflicting_work_manifests_in_repo :
       Pgsql_io.t ->
@@ -195,7 +189,7 @@ module type S = sig
       (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
 
     val unlock_pull_request : Terrat_storage.t -> T.t -> (unit, [> `Error ]) result Abb.Future.t
-    val publish_msg : T.t -> Pull_request.t Event.Msg.t -> unit Abb.Future.t
+    val publish_msg : T.t -> (Pull_request.t, Apply_requirements.t) Event.Msg.t -> unit Abb.Future.t
   end
 
   module Runner : sig

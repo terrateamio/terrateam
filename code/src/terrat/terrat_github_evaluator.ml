@@ -362,6 +362,8 @@ module R = struct
 end
 
 module Ev = struct
+  module String_set = CCSet.Make (CCString)
+
   module Sql = struct
     let read fname =
       CCOption.get_exn_or
@@ -552,6 +554,20 @@ module Ev = struct
     let access_control_lookup_err = read "access_control_lookup_err.tmpl"
   end
 
+  module Apply_requirements = struct
+    type t = {
+      approved : bool option;
+      merge_conflicts : bool option;
+      status_checks : bool option;
+      status_checks_failed : Terrat_commit_check.t list;
+      approved_reviews : Terrat_pull_request_review.t list;
+      passed : bool;
+    }
+
+    let passed { passed; _ } = passed
+    let approved_reviews { approved_reviews; _ } = approved_reviews
+  end
+
   module T = struct
     type t = {
       access_token : string;
@@ -602,6 +618,12 @@ module Ev = struct
     let default_branch t = t.repository.Gw.Repository.default_branch
     let user t = t.user
   end
+
+  let log_time ?m event name t =
+    Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : %s : %f" (T.request_id event) name t);
+    match m with
+    | Some m -> Metrics.DefaultHistogram.observe m t
+    | None -> ()
 
   let diff_of_github_diff =
     CCList.map
@@ -767,160 +789,6 @@ module Ev = struct
         Logs.err (fun m ->
             m "GITHUB_EVALUATOR : %s : ERROR : %s" (T.request_id event) (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
-
-  let store_pull_request_work_manifest db event work_manifest denied_dirspaces =
-    let run =
-      let open Abbs_future_combinators.Infix_result_monad in
-      let module Wm = Terrat_work_manifest in
-      let module Pr = Terrat_pull_request in
-      let module Ch = Terrat_change in
-      let module Cm = Terrat_change_match in
-      let module Ac = Terrat_access_control in
-      let pull_request = work_manifest.Terrat_work_manifest.src in
-      let hash =
-        match pull_request.Pr.state with
-        | Pr.State.(Merged Merged.{ merged_hash; _ }) -> merged_hash
-        | _ -> work_manifest.Wm.hash
-      in
-      Logs.info (fun m ->
-          m
-            "GITHUB_EVALUATOR : %s : STORE_WORK_MANIFEST : %s : %s : %Ld : %s : %s"
-            (T.request_id event)
-            event.T.repository.Gw.Repository.owner.Gw.User.login
-            event.T.repository.Gw.Repository.name
-            pull_request.Pr.id
-            work_manifest.Wm.base_hash
-            hash);
-      Pgsql_io.Prepared_stmt.fetch
-        db
-        Sql.insert_work_manifest
-        ~f:(fun id state created_at -> (id, state, created_at))
-        work_manifest.Wm.base_hash
-        pull_request.Pr.id
-        (CCInt64.of_int event.T.repository.Gw.Repository.id)
-        (Terrat_work_manifest.Pull_request.Run_type.to_string work_manifest.Wm.run_type)
-        hash
-        (Terrat_tag_set.to_string work_manifest.Wm.tag_query)
-      >>= function
-      | [] -> assert false
-      | (id, state, created_at) :: _ ->
-          Abbs_future_combinators.List_result.iter
-            ~f:(fun changes ->
-              Pgsql_io.Prepared_stmt.execute
-                db
-                Sql.insert_work_manifest_dirspaceflow
-                (CCList.replicate (CCList.length changes) id)
-                (CCList.map
-                   (fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.dir; _ }; _ } -> dir)
-                   changes)
-                (CCList.map
-                   (fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.workspace; _ }; _ } ->
-                     workspace)
-                   changes)
-                (CCList.map
-                   (fun Terrat_change.{ Dirspaceflow.workflow_idx; _ } -> workflow_idx)
-                   changes))
-            (CCList.chunks 500 work_manifest.Wm.changes)
-          >>= fun () ->
-          let module Policy = struct
-            type t = string list [@@deriving yojson]
-          end in
-          Abbs_future_combinators.List_result.iter
-            ~f:(fun denied_dirspaces ->
-              Pgsql_io.Prepared_stmt.execute
-                db
-                Sql.insert_work_manifest_access_control_denied_dirspace
-                (CCList.map
-                   (fun Ac.R.Deny.{ change_match = Cm.{ dirspace = Ch.Dirspace.{ dir; _ }; _ }; _ } ->
-                     dir)
-                   denied_dirspaces)
-                (CCList.map
-                   (fun Ac.R.Deny.
-                          { change_match = Cm.{ dirspace = Ch.Dirspace.{ workspace; _ }; _ }; _ } ->
-                     workspace)
-                   denied_dirspaces)
-                (CCList.map
-                   (fun Ac.R.Deny.{ policy; _ } ->
-                     (* This has a very awkward JSON conversion because we are
-                        performing this insert by passing in a bunch of arrays
-                        of values.  However policy is already an array and SQL
-                        does not support multidimensional arrays where the
-                        inner arrays can have different dimensions.  So we need
-                        to convert the policy to a string so that we can pass
-                        in an array of strings, and it needs to be in a format
-                        postgresql can turn back into an array.  So we use JSON
-                        as the intermediate representation. *)
-                     CCOption.map
-                       (fun policy -> Yojson.Safe.to_string (Policy.to_yojson policy))
-                       policy)
-                   denied_dirspaces)
-                (CCList.replicate (CCList.length denied_dirspaces) id))
-            (CCList.chunks 500 denied_dirspaces)
-          >>= fun () ->
-          let wm =
-            {
-              work_manifest with
-              Wm.id;
-              state = CCOption.get_exn_or "work manifest state" (Wm.State.of_string state);
-              created_at;
-              run_id = None;
-              changes = ();
-            }
-          in
-          Abb.Future.return (Ok wm)
-    in
-    let open Abb.Future.Infix_monad in
-    run
-    >>= function
-    | Ok wm -> Abb.Future.return (Ok wm)
-    | Error (#Pgsql_io.err as err) ->
-        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
-        Logs.err (fun m ->
-            m "GITHUB_EVALUATOR : %s : ERROR : %s" (T.request_id event) (Pgsql_io.show_err err));
-        Abb.Future.return (Error `Error)
-    | Error (#Githubc2_abb.call_err as err) ->
-        Prmths.Counter.inc_one Metrics.github_errors_total;
-        Logs.err (fun m ->
-            m
-              "GITHUB_EVALUATOR : %s : ERROR : %s"
-              (T.request_id event)
-              (Githubc2_abb.show_call_err err));
-        Abb.Future.return (Error `Error)
-
-  let fetch_repo_config event pull_request ref_ =
-    let open Abb.Future.Infix_monad in
-    Terrat_github.fetch_repo_config
-      ~python:(Terrat_config.python_exec event.T.config)
-      ~access_token:event.T.access_token
-      ~owner:event.T.repository.Gw.Repository.owner.Gw.User.login
-      ~repo:event.T.repository.Gw.Repository.name
-      ref_
-    >>= function
-    | Ok repo_config -> Abb.Future.return (Ok repo_config)
-    | Error (`Repo_config_parse_err err) -> Abb.Future.return (Error (`Repo_config_parse_err err))
-    (* TODO: Pull these error messages below into something more abstract *)
-    | Error `Repo_config_in_sub_module ->
-        Abb.Future.return (Error (`Repo_config_err "Repo config in sub module, not supported."))
-    | Error `Repo_config_is_symlink ->
-        Abb.Future.return (Error (`Repo_config_err "Repo config is a symlink, not supported."))
-    | Error `Repo_config_is_dir ->
-        Abb.Future.return
-          (Error (`Repo_config_err "Repo config is a directory but should be a file."))
-    | Error `Repo_config_permission_denied ->
-        Abb.Future.return
-          (Error (`Repo_config_err "Repo config is inaccessible due to permissions."))
-    | Error `Repo_config_unknown_err ->
-        Abb.Future.return
-          (Error (`Repo_config_err "An unknown error occurred while reading the repo config."))
-    | Error (#Terrat_github.fetch_repo_config_err as err) ->
-        Prmths.Counter.inc_one Metrics.github_errors_total;
-        Logs.err (fun m ->
-            m
-              "GITHUB_EVALUATOR : %s : ERROR : %s"
-              (T.request_id event)
-              (Terrat_github.show_fetch_repo_config_err err));
-        Abb.Future.return
-          (Error (`Repo_config_err "An unknown error occurred while reading the repo config."))
 
   let fetch_pull_request event =
     let owner = event.T.repository.Gw.Repository.owner.Gw.User.login in
@@ -1250,6 +1118,404 @@ module Ev = struct
       event.T.repository.Gw.Repository.owner.Gw.User.login
       event.T.repository.Gw.Repository.name
 
+  let maybe_replace_old_commit_statuses event pull_request commit_checks =
+    let open Abb.Future.Infix_monad in
+    let replacement_commit_statuses =
+      commit_checks
+      |> CCList.filter (fun Terrat_commit_check.{ title; status; _ } ->
+             (not Terrat_commit_check.Status.(equal status Completed))
+             && (CCList.mem ~eq:CCString.equal title [ "terrateam plan"; "terrateam apply" ]
+                || CCString.prefix ~pre:"terrateam plan " title
+                || CCString.prefix ~pre:"terrateam apply " title))
+      |> CCList.map (fun check -> Terrat_commit_check.{ check with status = Status.Completed })
+    in
+    create_commit_checks event pull_request replacement_commit_statuses
+    >>= function
+    | Ok () -> Abb.Future.return ()
+    | Error _ ->
+        Logs.err (fun m ->
+            m "EVALUATOR : %s : FAILED_REPLACE_OLD_COMMIT_STATUSES" (T.request_id event));
+        Abb.Future.return ()
+
+  let create_queued_commit_checks event run_type pull_request dirspaces =
+    let details_url = get_commit_check_details_url event pull_request in
+    let unified_run_type =
+      let module Urt = Terrat_work_manifest.Pull_request.Unified_run_type in
+      run_type |> Urt.of_run_type |> Urt.to_string
+    in
+    let aggregate =
+      Terrat_commit_check.
+        [
+          make
+            ~details_url
+            ~description:"Queued"
+            ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
+            ~status:Status.Queued;
+          make
+            ~details_url
+            ~description:"Queued"
+            ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
+            ~status:Status.Queued;
+        ]
+    in
+    let dirspace_checks =
+      CCList.map
+        (fun Terrat_change.Dirspace.{ dir; workspace; _ } ->
+          Terrat_commit_check.(
+            make
+              ~details_url
+              ~description:"Queued"
+              ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
+              ~status:Status.Queued))
+        dirspaces
+    in
+    aggregate @ dirspace_checks
+
+  let maybe_create_pending_apply event pull_request repo_config = function
+    | [] ->
+        (* No matches so don't make anything *)
+        Abb.Future.return (Ok ())
+    | all_matches ->
+        let open Abb.Future.Infix_monad in
+        let module Rc = Terrat_repo_config.Version_1 in
+        let module Ar = Rc.Apply_requirements in
+        let apply_requirements =
+          CCOption.get_or ~default:(Rc.Apply_requirements.make ()) repo_config.Rc.apply_requirements
+        in
+        if apply_requirements.Ar.create_pending_apply_check then (
+          Abbs_time_it.run (log_time event "FETCH_COMMIT_CHECKS") (fun () ->
+              fetch_commit_checks event pull_request)
+          >>= function
+          | Ok commit_checks -> (
+              Abb.Future.fork (maybe_replace_old_commit_statuses event pull_request commit_checks)
+              >>= fun _ ->
+              let details_url = get_commit_check_details_url event pull_request in
+              let commit_check_titles =
+                commit_checks
+                |> CCList.map (fun Terrat_commit_check.{ title; _ } -> title)
+                |> String_set.of_list
+              in
+              let missing_commit_checks =
+                all_matches
+                |> CCList.filter_map
+                     (fun
+                       Terrat_change_match.
+                         {
+                           dirspace = Terrat_change.Dirspace.{ dir; workspace };
+                           when_modified = Terrat_repo_config.When_modified.{ autoapply; _ };
+                           _;
+                         }
+                     ->
+                       let name = Printf.sprintf "terrateam apply: %s %s" dir workspace in
+                       if (not autoapply) && not (String_set.mem name commit_check_titles) then
+                         Some
+                           Terrat_commit_check.(
+                             make
+                               ~details_url
+                               ~description:"Waiting"
+                               ~title:(Printf.sprintf "terrateam apply: %s %s" dir workspace)
+                               ~status:Status.Queued)
+                       else None)
+              in
+              create_commit_checks event pull_request missing_commit_checks
+              >>= function
+              | Ok _ -> Abb.Future.return (Ok ())
+              | Error `Error ->
+                  Logs.err (fun m ->
+                      m "EVALUATOR : %s : FAILED_CREATE_APPLY_CHECK" (T.request_id event));
+                  Abb.Future.return (Ok ()))
+          | Error _ as err ->
+              Logs.err (fun m ->
+                  m "EVALUATOR : %s : FAILED_FETCH_COMMIT_CHECKS" (T.request_id event));
+              Abb.Future.return err)
+        else Abb.Future.return (Ok ())
+
+  let store_pull_request_work_manifest db event repo_config changes work_manifest denied_dirspaces =
+    let run =
+      let open Abbs_future_combinators.Infix_result_monad in
+      let module Wm = Terrat_work_manifest in
+      let module Pr = Terrat_pull_request in
+      let module Ch = Terrat_change in
+      let module Cm = Terrat_change_match in
+      let module Ac = Terrat_access_control in
+      let pull_request = work_manifest.Terrat_work_manifest.src in
+      let hash =
+        match pull_request.Pr.state with
+        | Pr.State.(Merged Merged.{ merged_hash; _ }) -> merged_hash
+        | _ -> work_manifest.Wm.hash
+      in
+      Logs.info (fun m ->
+          m
+            "GITHUB_EVALUATOR : %s : STORE_WORK_MANIFEST : %s : %s : %Ld : %s : %s"
+            (T.request_id event)
+            event.T.repository.Gw.Repository.owner.Gw.User.login
+            event.T.repository.Gw.Repository.name
+            pull_request.Pr.id
+            work_manifest.Wm.base_hash
+            hash);
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        Sql.insert_work_manifest
+        ~f:(fun id state created_at -> (id, state, created_at))
+        work_manifest.Wm.base_hash
+        pull_request.Pr.id
+        (CCInt64.of_int event.T.repository.Gw.Repository.id)
+        (Terrat_work_manifest.Pull_request.Run_type.to_string work_manifest.Wm.run_type)
+        hash
+        (Terrat_tag_set.to_string work_manifest.Wm.tag_query)
+      >>= function
+      | [] -> assert false
+      | (id, state, created_at) :: _ ->
+          Abbs_future_combinators.List_result.iter
+            ~f:(fun changes ->
+              Pgsql_io.Prepared_stmt.execute
+                db
+                Sql.insert_work_manifest_dirspaceflow
+                (CCList.replicate (CCList.length changes) id)
+                (CCList.map
+                   (fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.dir; _ }; _ } -> dir)
+                   changes)
+                (CCList.map
+                   (fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.workspace; _ }; _ } ->
+                     workspace)
+                   changes)
+                (CCList.map
+                   (fun Terrat_change.{ Dirspaceflow.workflow_idx; _ } -> workflow_idx)
+                   changes))
+            (CCList.chunks 500 work_manifest.Wm.changes)
+          >>= fun () ->
+          let module Policy = struct
+            type t = string list [@@deriving yojson]
+          end in
+          Abbs_future_combinators.List_result.iter
+            ~f:(fun denied_dirspaces ->
+              Pgsql_io.Prepared_stmt.execute
+                db
+                Sql.insert_work_manifest_access_control_denied_dirspace
+                (CCList.map
+                   (fun Ac.R.Deny.{ change_match = Cm.{ dirspace = Ch.Dirspace.{ dir; _ }; _ }; _ } ->
+                     dir)
+                   denied_dirspaces)
+                (CCList.map
+                   (fun Ac.R.Deny.
+                          { change_match = Cm.{ dirspace = Ch.Dirspace.{ workspace; _ }; _ }; _ } ->
+                     workspace)
+                   denied_dirspaces)
+                (CCList.map
+                   (fun Ac.R.Deny.{ policy; _ } ->
+                     (* This has a very awkward JSON conversion because we are
+                        performing this insert by passing in a bunch of arrays
+                        of values.  However policy is already an array and SQL
+                        does not support multidimensional arrays where the
+                        inner arrays can have different dimensions.  So we need
+                        to convert the policy to a string so that we can pass
+                        in an array of strings, and it needs to be in a format
+                        postgresql can turn back into an array.  So we use JSON
+                        as the intermediate representation. *)
+                     CCOption.map
+                       (fun policy -> Yojson.Safe.to_string (Policy.to_yojson policy))
+                       policy)
+                   denied_dirspaces)
+                (CCList.replicate (CCList.length denied_dirspaces) id))
+            (CCList.chunks 500 denied_dirspaces)
+          >>= fun () ->
+          let wm =
+            {
+              work_manifest with
+              Wm.id;
+              state = CCOption.get_exn_or "work manifest state" (Wm.State.of_string state);
+              created_at;
+              run_id = None;
+              changes = ();
+            }
+          in
+          let dirspaces =
+            CCList.map
+              (fun Terrat_change.Dirspaceflow.{ dirspace; _ } -> dirspace)
+              work_manifest.Wm.changes
+          in
+          Abbs_time_it.run (log_time event "CREATE_COMMIT_CHECKS") (fun () ->
+              create_commit_checks
+                event
+                pull_request
+                (create_queued_commit_checks event wm.Wm.run_type pull_request dirspaces))
+          >>= fun () ->
+          let module Urt = Terrat_work_manifest.Pull_request.Unified_run_type in
+          (match Urt.of_run_type work_manifest.Wm.run_type with
+          | Urt.Plan -> maybe_create_pending_apply event pull_request repo_config changes
+          | Urt.Apply -> Abb.Future.return (Ok ()))
+          >>= fun () -> Abb.Future.return (Ok wm)
+    in
+    let open Abb.Future.Infix_monad in
+    run
+    >>= function
+    | Ok wm -> Abb.Future.return (Ok wm)
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m ->
+            m "GITHUB_EVALUATOR : %s : ERROR : %s" (T.request_id event) (Pgsql_io.show_err err));
+        Abb.Future.return (Error `Error)
+    | Error (#Githubc2_abb.call_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
+        Logs.err (fun m ->
+            m
+              "GITHUB_EVALUATOR : %s : ERROR : %s"
+              (T.request_id event)
+              (Githubc2_abb.show_call_err err));
+        Abb.Future.return (Error `Error)
+    | Error `Error -> Abb.Future.return (Error `Error)
+
+  let fetch_repo_config event pull_request ref_ =
+    let open Abb.Future.Infix_monad in
+    Terrat_github.fetch_repo_config
+      ~python:(Terrat_config.python_exec event.T.config)
+      ~access_token:event.T.access_token
+      ~owner:event.T.repository.Gw.Repository.owner.Gw.User.login
+      ~repo:event.T.repository.Gw.Repository.name
+      ref_
+    >>= function
+    | Ok repo_config -> Abb.Future.return (Ok repo_config)
+    | Error (`Repo_config_parse_err err) -> Abb.Future.return (Error (`Repo_config_parse_err err))
+    (* TODO: Pull these error messages below into something more abstract *)
+    | Error `Repo_config_in_sub_module ->
+        Abb.Future.return (Error (`Repo_config_err "Repo config in sub module, not supported."))
+    | Error `Repo_config_is_symlink ->
+        Abb.Future.return (Error (`Repo_config_err "Repo config is a symlink, not supported."))
+    | Error `Repo_config_is_dir ->
+        Abb.Future.return
+          (Error (`Repo_config_err "Repo config is a directory but should be a file."))
+    | Error `Repo_config_permission_denied ->
+        Abb.Future.return
+          (Error (`Repo_config_err "Repo config is inaccessible due to permissions."))
+    | Error `Repo_config_unknown_err ->
+        Abb.Future.return
+          (Error (`Repo_config_err "An unknown error occurred while reading the repo config."))
+    | Error (#Terrat_github.fetch_repo_config_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
+        Logs.err (fun m ->
+            m
+              "GITHUB_EVALUATOR : %s : ERROR : %s"
+              (T.request_id event)
+              (Terrat_github.show_fetch_repo_config_err err));
+        Abb.Future.return
+          (Error (`Repo_config_err "An unknown error occurred while reading the repo config."))
+
+  let check_apply_requirements event pull_request repo_config =
+    let module Rc = Terrat_repo_config.Version_1 in
+    let module Ar = Rc.Apply_requirements in
+    let open Abbs_future_combinators.Infix_result_monad in
+    let apply_requirements =
+      CCOption.get_or ~default:(Rc.Apply_requirements.make ()) repo_config.Rc.apply_requirements
+    in
+    let Ar.Checks.{ approved; merge_conflicts; status_checks } =
+      CCOption.get_or ~default:(Ar.Checks.make ()) apply_requirements.Ar.checks
+    in
+    let approved = CCOption.get_or ~default:(Ar.Checks.Approved.make ()) approved in
+    let merge_conflicts =
+      CCOption.get_or ~default:(Ar.Checks.Merge_conflicts.make ()) merge_conflicts
+    in
+    let status_checks = CCOption.get_or ~default:(Ar.Checks.Status_checks.make ()) status_checks in
+    Abbs_future_combinators.Infix_result_app.(
+      (fun reviews commit_checks -> (reviews, commit_checks))
+      <$> Abbs_time_it.run (log_time event "FETCH_APPROVED_TIME") (fun () ->
+              fetch_pull_request_reviews event pull_request)
+      <*> Abbs_time_it.run (log_time event "FETCH_COMMIT_CHECKS_TIME") (fun () ->
+              fetch_commit_checks event pull_request))
+    >>= fun (reviews, commit_checks) ->
+    Abbs_future_combinators.to_result
+      (Abb.Future.fork (maybe_replace_old_commit_statuses event pull_request commit_checks))
+    >>= fun _ ->
+    let approved_reviews =
+      CCList.filter
+        (function
+          | Terrat_pull_request_review.{ status = Status.Approved; _ } -> true
+          | _ -> false)
+        reviews
+    in
+    let approved_result = CCList.length approved_reviews >= approved.Ar.Checks.Approved.count in
+    let merge_result = CCOption.get_or ~default:false (Pull_request.mergeable pull_request) in
+    let ignore_matching =
+      CCOption.get_or ~default:[] status_checks.Ar.Checks.Status_checks.ignore_matching
+    in
+    (* Convert all patterns and ignore those that don't compile.  This eats
+       errors.
+
+       TODO: Improve handling errors here *)
+    let ignore_matching_pats = CCList.filter_map Lua_pattern.of_string ignore_matching in
+    (* Relevant checks exclude our terrateam checks, and also exclude any
+       ignored patterns.  We check both if a pattern matches OR if there is an
+       exact match with the string.  This is because someone might put in an
+       invalid pattern (because secretly we are using Lua patterns underneath
+       which have a slightly different syntax) *)
+    let relevant_commit_checks =
+      CCList.filter
+        (fun Terrat_commit_check.{ title; _ } ->
+          not
+            (CCString.prefix ~pre:"terrateam apply:" title
+            || CCString.prefix ~pre:"terrateam plan:" title
+            || CCList.mem
+                 ~eq:CCString.equal
+                 title
+                 [ "terrateam apply pre-hooks"; "terrateam apply post-hooks" ]
+            || CCList.exists CCFun.(Lua_pattern.find title %> CCOption.is_some) ignore_matching_pats
+            || CCList.exists (CCString.equal title) ignore_matching))
+        commit_checks
+    in
+    let failed_commit_checks =
+      CCList.filter
+        (function
+          | Terrat_commit_check.{ status = Status.Completed; _ } -> false
+          | _ -> true)
+        relevant_commit_checks
+    in
+    let all_commit_check_success = CCList.is_empty failed_commit_checks in
+    let merged =
+      let module St = Terrat_pull_request.State in
+      match Pull_request.state pull_request with
+      | St.Merged _ -> true
+      | St.Open | St.Closed -> false
+    in
+    (* If it's merged, nothing should stop an apply because it's already
+       merged. *)
+    let passed =
+      merged
+      || ((not approved.Ar.Checks.Approved.enabled) || approved_result)
+         && ((not merge_conflicts.Ar.Checks.Merge_conflicts.enabled) || merge_result)
+         && ((not status_checks.Ar.Checks.Status_checks.enabled) || all_commit_check_success)
+    in
+    let apply_requirements =
+      {
+        Apply_requirements.passed;
+        approved = (if approved.Ar.Checks.Approved.enabled then Some approved_result else None);
+        merge_conflicts =
+          (if merge_conflicts.Ar.Checks.Merge_conflicts.enabled then Some merge_result else None);
+        status_checks =
+          (if status_checks.Ar.Checks.Status_checks.enabled then Some all_commit_check_success
+          else None);
+        status_checks_failed = failed_commit_checks;
+        approved_reviews;
+      }
+    in
+    Logs.info (fun m ->
+        m
+          "GITHUB_EVALUATOR : %s : APPLY_REQUIREMENTS_CHECKS : approved=%s merge_conflicts=%s \
+           status_checks=%s"
+          (T.request_id event)
+          (Bool.to_string approved.Ar.Checks.Approved.enabled)
+          (Bool.to_string merge_conflicts.Ar.Checks.Merge_conflicts.enabled)
+          (Bool.to_string status_checks.Ar.Checks.Status_checks.enabled));
+    Logs.info (fun m ->
+        m
+          "GITHUB_EVALUATOR : %s : APPLY_REQUIREMENTS_RESULT : approved=%s merge_check=%s \
+           commit_check=%s merged=%s passed=%s"
+          (T.request_id event)
+          (Bool.to_string approved_result)
+          (Bool.to_string merge_result)
+          (Bool.to_string all_commit_check_success)
+          (Bool.to_string merged)
+          (Bool.to_string passed));
+    Abb.Future.return (Ok apply_requirements)
+
   let query_unapplied_dirspaces db event pull_request =
     let module Pr = Terrat_pull_request in
     let open Abb.Future.Infix_monad in
@@ -1519,7 +1785,7 @@ module Ev = struct
           kv
           event
     | Msg.Pull_request_not_appliable (_, apply_requirements) ->
-        let module Ar = Terrat_evaluator.Event.Msg.Apply_requirements in
+        let module Ar = Apply_requirements in
         let kv =
           Snabela.Kv.(
             Map.of_list
