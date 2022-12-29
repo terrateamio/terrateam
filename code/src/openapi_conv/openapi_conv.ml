@@ -216,7 +216,8 @@ let module_name_of_operation_id s = s |> CCString.replace ~sub:"/" ~by:"_" |> mo
 
 let field_name_of_schema s =
   match CCString.lowercase_ascii s with
-  | ("type" | "in" | "object" | "class" | "to" | "private" | "include" | "ref") as s -> s ^ "_"
+  | ("type" | "in" | "object" | "class" | "to" | "private" | "include" | "ref" | "method") as s ->
+      s ^ "_"
   | s when CCString.prefix ~pre:"_" s -> CCString.drop_while (( = ) '_') s ^ "_"
   | s when CCString.prefix ~pre:"$" s -> CCString.drop_while (( = ) '$') s ^ "_"
   | s when CCString.prefix ~pre:"@" s -> CCString.drop_while (( = ) '@') s ^ "_"

@@ -160,11 +160,14 @@
           "$ref": "#/definitions/hook-op-slack"
         },
         {
-          "$ref": "#/definitions/hook-op-env"
+          "$ref": "#/definitions/hook-op-env-exec"
+        },
+        {
+          "$ref": "#/definitions/hook-op-env-source"
         }
       ]
     },
-    "hook-op-env": {
+    "hook-op-env-exec": {
       "additionalProperties": false,
       "properties": {
         "cmd": {
@@ -180,6 +183,10 @@
           "default": true,
           "type": "boolean"
         },
+        "method": {
+          "const": "exec",
+          "type": "string"
+        },
         "type": {
           "const": "env",
           "type": "string"
@@ -189,6 +196,31 @@
         "type",
         "name",
         "cmd"
+      ],
+      "type": "object"
+    },
+    "hook-op-env-source": {
+      "additionalProperties": false,
+      "properties": {
+        "cmd": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "method": {
+          "const": "source",
+          "type": "string"
+        },
+        "type": {
+          "const": "env",
+          "type": "string"
+        }
+      },
+      "required": [
+        "cmd",
+        "method",
+        "type"
       ],
       "type": "object"
     },
@@ -606,7 +638,10 @@
             "$ref": "#/definitions/hook-op-slack"
           },
           {
-            "$ref": "#/definitions/hook-op-env"
+            "$ref": "#/definitions/hook-op-env-exec"
+          },
+          {
+            "$ref": "#/definitions/hook-op-env-source"
           }
         ]
       },

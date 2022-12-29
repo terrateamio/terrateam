@@ -14,7 +14,8 @@ module Workflow_step = struct
 
   type t = {
     cmd : Cmd.t;
-    name : string;
+    method_ : string option; [@default None] [@key "method"]
+    name : string option; [@default None]
     type_ : Type.t; [@key "type"]
   }
   [@@deriving yojson { strict = true; meta = true }, show]
