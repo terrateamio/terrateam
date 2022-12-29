@@ -8,7 +8,7 @@ module Primary = struct
         has_unpushed_changes : bool option; [@default None]
         ref_ : string option; [@default None] [@key "ref"]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -23,23 +23,23 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Recent_folders = struct
-    type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Runtime_constraints = struct
     module Primary = struct
       module Allowed_port_privacy_settings = struct
-        type t = string list option [@@deriving yojson { strict = false; meta = true }, show]
+        type t = string list option [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = {
         allowed_port_privacy_settings : Allowed_port_privacy_settings.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -67,7 +67,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -103,7 +103,7 @@ module Primary = struct
     url : string;
     web_url : string;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

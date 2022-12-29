@@ -6,7 +6,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Administration = struct
@@ -16,7 +16,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Checks = struct
@@ -26,7 +26,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Contents = struct
@@ -36,7 +36,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Deployments = struct
@@ -46,7 +46,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Environments = struct
@@ -56,7 +56,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Issues = struct
@@ -66,7 +66,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Members = struct
@@ -76,7 +76,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Metadata_ = struct
@@ -86,7 +86,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_administration = struct
@@ -96,7 +96,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_custom_roles = struct
@@ -106,7 +106,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_hooks = struct
@@ -116,7 +116,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_packages = struct
@@ -126,7 +126,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_plan = struct
@@ -135,7 +135,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_projects = struct
@@ -146,7 +146,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_secrets = struct
@@ -156,7 +156,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_self_hosted_runners = struct
@@ -166,7 +166,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_user_blocking = struct
@@ -176,7 +176,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Packages = struct
@@ -186,7 +186,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Pages = struct
@@ -196,7 +196,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Pull_requests = struct
@@ -206,7 +206,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Repository_hooks = struct
@@ -216,7 +216,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Repository_projects = struct
@@ -227,7 +227,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Secret_scanning_alerts = struct
@@ -237,7 +237,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Secrets = struct
@@ -247,7 +247,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Security_events = struct
@@ -257,7 +257,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Single_file = struct
@@ -267,7 +267,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Statuses = struct
@@ -277,7 +277,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Team_discussions = struct
@@ -287,7 +287,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Vulnerability_alerts = struct
@@ -297,7 +297,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Workflows = struct
@@ -306,7 +306,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -342,7 +342,7 @@ module Primary = struct
     vulnerability_alerts : Vulnerability_alerts.t option; [@default None]
     workflows : Workflows.t option; [@default None]
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

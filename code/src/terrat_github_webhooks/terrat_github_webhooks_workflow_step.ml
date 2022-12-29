@@ -3,7 +3,7 @@ type t =
   | Workflow_step_queued of Terrat_github_webhooks_workflow_step_queued.t
   | Workflow_step_in_progress of Terrat_github_webhooks_workflow_step_in_progress.t
   | Workflow_step_completed of Terrat_github_webhooks_workflow_step_completed.t
-[@@deriving show]
+[@@deriving show, eq]
 
 let of_yojson =
   Json_schema.one_of

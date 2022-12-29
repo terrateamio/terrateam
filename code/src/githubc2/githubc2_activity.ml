@@ -4,20 +4,20 @@ module List_public_events = struct
       page : int; [@default 1]
       per_page : int; [@default 30]
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Event.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_modified = struct end
 
     module Forbidden = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Service_unavailable = struct
@@ -27,7 +27,7 @@ module List_public_events = struct
           documentation_url : string option; [@default None]
           message : string option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -39,7 +39,7 @@ module List_public_events = struct
       | `Forbidden of Forbidden.t
       | `Service_unavailable of Service_unavailable.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -70,10 +70,11 @@ module Get_feeds = struct
 
   module Responses = struct
     module OK = struct
-      type t = Githubc2_components.Feed.t [@@deriving yojson { strict = false; meta = false }, show]
+      type t = Githubc2_components.Feed.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -98,30 +99,30 @@ module List_public_events_for_repo_network = struct
       per_page : int; [@default 30]
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Event.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Moved_permanently = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_modified = struct end
 
     module Forbidden = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_found = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -131,7 +132,7 @@ module List_public_events_for_repo_network = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -170,7 +171,7 @@ module Mark_notifications_as_read = struct
         last_read_at : string option; [@default None]
         read : bool option; [@default None]
       }
-      [@@deriving make, yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -180,7 +181,7 @@ module Mark_notifications_as_read = struct
     module Accepted = struct
       module Primary = struct
         type t = { message : string option [@default None] }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -191,12 +192,12 @@ module Mark_notifications_as_read = struct
 
     module Unauthorized = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Forbidden = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -206,7 +207,7 @@ module Mark_notifications_as_read = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -241,30 +242,30 @@ module List_notifications_for_authenticated_user = struct
       per_page : int; [@default 50]
       since : string option; [@default None]
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Thread.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_modified = struct end
 
     module Unauthorized = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Forbidden = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -274,7 +275,7 @@ module List_notifications_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -311,7 +312,7 @@ end
 
 module Mark_thread_as_read = struct
   module Parameters = struct
-    type t = { thread_id : int } [@@deriving make, show]
+    type t = { thread_id : int } [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -320,7 +321,7 @@ module Mark_thread_as_read = struct
 
     module Forbidden = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -328,7 +329,7 @@ module Mark_thread_as_read = struct
       | `Not_modified
       | `Forbidden of Forbidden.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -355,25 +356,25 @@ end
 
 module Get_thread = struct
   module Parameters = struct
-    type t = { thread_id : int } [@@deriving make, show]
+    type t = { thread_id : int } [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Thread.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_modified = struct end
 
     module Unauthorized = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Forbidden = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -382,7 +383,7 @@ module Get_thread = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -410,7 +411,7 @@ end
 
 module Delete_thread_subscription = struct
   module Parameters = struct
-    type t = { thread_id : int } [@@deriving make, show]
+    type t = { thread_id : int } [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -419,12 +420,12 @@ module Delete_thread_subscription = struct
 
     module Unauthorized = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Forbidden = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -433,7 +434,7 @@ module Delete_thread_subscription = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -461,13 +462,13 @@ end
 
 module Set_thread_subscription = struct
   module Parameters = struct
-    type t = { thread_id : int } [@@deriving make, show]
+    type t = { thread_id : int } [@@deriving make, show, eq]
   end
 
   module Request_body = struct
     module Primary = struct
       type t = { ignored : bool [@default false] }
-      [@@deriving make, yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -476,19 +477,19 @@ module Set_thread_subscription = struct
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Thread_subscription.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_modified = struct end
 
     module Unauthorized = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Forbidden = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -497,7 +498,7 @@ module Set_thread_subscription = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -526,25 +527,25 @@ end
 
 module Get_thread_subscription_for_authenticated_user = struct
   module Parameters = struct
-    type t = { thread_id : int } [@@deriving make, show]
+    type t = { thread_id : int } [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Thread_subscription.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_modified = struct end
 
     module Unauthorized = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Forbidden = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -553,7 +554,7 @@ module Get_thread_subscription_for_authenticated_user = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -586,16 +587,16 @@ module List_public_org_events = struct
       page : int; [@default 1]
       per_page : int; [@default 30]
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Event.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -626,16 +627,16 @@ module List_repo_events = struct
       per_page : int; [@default 30]
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Event.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -664,13 +665,13 @@ module Mark_repo_notifications_as_read = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Request_body = struct
     module Primary = struct
       type t = { last_read_at : string option [@default None] }
-      [@@deriving make, yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -683,7 +684,7 @@ module Mark_repo_notifications_as_read = struct
           message : string option; [@default None]
           url : string option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -695,7 +696,7 @@ module Mark_repo_notifications_as_read = struct
       [ `Accepted of Accepted.t
       | `Reset_content
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -732,16 +733,16 @@ module List_repo_notifications_for_authenticated_user = struct
       repo : string;
       since : string option; [@default None]
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Thread.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -779,25 +780,25 @@ module List_stargazers_for_repo = struct
       per_page : int; [@default 30]
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       module V0 = struct
         type t = Githubc2_components.Simple_user.t list
-        [@@deriving yojson { strict = false; meta = false }, show]
+        [@@deriving yojson { strict = false; meta = false }, show, eq]
       end
 
       module V1 = struct
         type t = Githubc2_components.Stargazer.t list
-        [@@deriving yojson { strict = false; meta = false }, show]
+        [@@deriving yojson { strict = false; meta = false }, show, eq]
       end
 
       type t =
         | V0 of V0.t
         | V1 of V1.t
-      [@@deriving show]
+      [@@deriving show, eq]
 
       let of_yojson =
         Json_schema.any_of
@@ -814,14 +815,14 @@ module List_stargazers_for_repo = struct
 
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
       [ `OK of OK.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -857,16 +858,16 @@ module List_watchers_for_repo = struct
       per_page : int; [@default 30]
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Simple_user.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -895,13 +896,13 @@ module Delete_repo_subscription = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ] [@@deriving show]
+    type t = [ `No_content ] [@@deriving show, eq]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -927,7 +928,7 @@ module Set_repo_subscription = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Request_body = struct
@@ -936,7 +937,7 @@ module Set_repo_subscription = struct
         ignored : bool option; [@default None]
         subscribed : bool option; [@default None]
       }
-      [@@deriving make, yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -945,10 +946,10 @@ module Set_repo_subscription = struct
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Repository_subscription.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -975,18 +976,18 @@ module Get_repo_subscription = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Repository_subscription.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Forbidden = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_found = struct end
@@ -996,7 +997,7 @@ module Get_repo_subscription = struct
       | `Forbidden of Forbidden.t
       | `Not_found
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -1029,7 +1030,7 @@ module List_repos_starred_by_authenticated_user = struct
         | `String "desc" -> Ok "desc"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
     end
 
     module Sort = struct
@@ -1038,7 +1039,7 @@ module List_repos_starred_by_authenticated_user = struct
         | `String "updated" -> Ok "updated"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
     end
 
     type t = {
@@ -1047,25 +1048,25 @@ module List_repos_starred_by_authenticated_user = struct
       per_page : int; [@default 30]
       sort : Sort.t; [@default "created"]
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Repository.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_modified = struct end
 
     module Unauthorized = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Forbidden = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -1074,7 +1075,7 @@ module List_repos_starred_by_authenticated_user = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -1111,7 +1112,7 @@ module Unstar_repo_for_authenticated_user = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -1120,17 +1121,17 @@ module Unstar_repo_for_authenticated_user = struct
 
     module Unauthorized = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Forbidden = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_found = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -1140,7 +1141,7 @@ module Unstar_repo_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -1173,7 +1174,7 @@ module Star_repo_for_authenticated_user = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -1182,17 +1183,17 @@ module Star_repo_for_authenticated_user = struct
 
     module Unauthorized = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Forbidden = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_found = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -1202,7 +1203,7 @@ module Star_repo_for_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -1235,7 +1236,7 @@ module Check_repo_is_starred_by_authenticated_user = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -1244,17 +1245,17 @@ module Check_repo_is_starred_by_authenticated_user = struct
 
     module Unauthorized = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Forbidden = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_found = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -1264,7 +1265,7 @@ module Check_repo_is_starred_by_authenticated_user = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -1297,25 +1298,25 @@ module List_watched_repos_for_authenticated_user = struct
       page : int; [@default 1]
       per_page : int; [@default 30]
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Minimal_repository.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_modified = struct end
 
     module Unauthorized = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Forbidden = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -1324,7 +1325,7 @@ module List_watched_repos_for_authenticated_user = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -1357,16 +1358,16 @@ module List_events_for_authenticated_user = struct
       per_page : int; [@default 30]
       username : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Event.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1397,16 +1398,16 @@ module List_org_events_for_authenticated_user = struct
       per_page : int; [@default 30]
       username : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Event.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1436,16 +1437,16 @@ module List_public_events_for_user = struct
       per_page : int; [@default 30]
       username : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Event.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1475,16 +1476,16 @@ module List_received_events_for_user = struct
       per_page : int; [@default 30]
       username : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Event.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1514,16 +1515,16 @@ module List_received_public_events_for_user = struct
       per_page : int; [@default 30]
       username : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Event.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1554,7 +1555,7 @@ module List_repos_starred_by_user = struct
         | `String "desc" -> Ok "desc"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
     end
 
     module Sort = struct
@@ -1563,7 +1564,7 @@ module List_repos_starred_by_user = struct
         | `String "updated" -> Ok "updated"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
     end
 
     type t = {
@@ -1573,25 +1574,25 @@ module List_repos_starred_by_user = struct
       sort : Sort.t; [@default "created"]
       username : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       module V0 = struct
         type t = Githubc2_components.Starred_repository.t list
-        [@@deriving yojson { strict = false; meta = false }, show]
+        [@@deriving yojson { strict = false; meta = false }, show, eq]
       end
 
       module V1 = struct
         type t = Githubc2_components.Repository.t list
-        [@@deriving yojson { strict = false; meta = false }, show]
+        [@@deriving yojson { strict = false; meta = false }, show, eq]
       end
 
       type t =
         | V0 of V0.t
         | V1 of V1.t
-      [@@deriving show]
+      [@@deriving show, eq]
 
       let of_yojson =
         Json_schema.any_of
@@ -1606,7 +1607,7 @@ module List_repos_starred_by_user = struct
         | V1 v -> V1.to_yojson v
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1641,16 +1642,16 @@ module List_repos_watched_by_user = struct
       per_page : int; [@default 30]
       username : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Minimal_repository.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end

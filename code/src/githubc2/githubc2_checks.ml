@@ -4,7 +4,7 @@ module Create = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Request_body = struct
@@ -18,13 +18,13 @@ module Create = struct
                 identifier : string;
                 label : string;
               }
-              [@@deriving make, yojson { strict = false; meta = true }, show]
+              [@@deriving make, yojson { strict = false; meta = true }, show, eq]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
           end
 
-          type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+          type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         module Conclusion = struct
@@ -40,7 +40,7 @@ module Create = struct
             | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
           type t = (string[@of_yojson t_of_yojson])
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         module Output = struct
@@ -56,7 +56,7 @@ module Create = struct
                       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
                     type t = (string[@of_yojson t_of_yojson])
-                    [@@deriving yojson { strict = false; meta = true }, show]
+                    [@@deriving yojson { strict = false; meta = true }, show, eq]
                   end
 
                   type t = {
@@ -70,13 +70,13 @@ module Create = struct
                     start_line : int;
                     title : string option; [@default None]
                   }
-                  [@@deriving make, yojson { strict = false; meta = true }, show]
+                  [@@deriving make, yojson { strict = false; meta = true }, show, eq]
                 end
 
                 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
               end
 
-              type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+              type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
 
             module Images = struct
@@ -87,13 +87,13 @@ module Create = struct
                     caption : string option; [@default None]
                     image_url : string;
                   }
-                  [@@deriving make, yojson { strict = false; meta = true }, show]
+                  [@@deriving make, yojson { strict = false; meta = true }, show, eq]
                 end
 
                 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
               end
 
-              type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+              type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
 
             type t = {
@@ -103,7 +103,7 @@ module Create = struct
               text : string option; [@default None]
               title : string;
             }
-            [@@deriving make, yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show, eq]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -117,7 +117,7 @@ module Create = struct
             | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
           type t = (string[@of_yojson t_of_yojson])
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         type t = {
@@ -132,7 +132,7 @@ module Create = struct
           started_at : string option; [@default None]
           status : Status.t; [@default "queued"]
         }
-        [@@deriving make, yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -148,13 +148,13 @@ module Create = struct
                 identifier : string;
                 label : string;
               }
-              [@@deriving make, yojson { strict = false; meta = true }, show]
+              [@@deriving make, yojson { strict = false; meta = true }, show, eq]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
           end
 
-          type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+          type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         module Conclusion = struct
@@ -170,7 +170,7 @@ module Create = struct
             | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
           type t = (string[@of_yojson t_of_yojson])
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         module Output = struct
@@ -186,7 +186,7 @@ module Create = struct
                       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
                     type t = (string[@of_yojson t_of_yojson])
-                    [@@deriving yojson { strict = false; meta = true }, show]
+                    [@@deriving yojson { strict = false; meta = true }, show, eq]
                   end
 
                   type t = {
@@ -200,13 +200,13 @@ module Create = struct
                     start_line : int;
                     title : string option; [@default None]
                   }
-                  [@@deriving make, yojson { strict = false; meta = true }, show]
+                  [@@deriving make, yojson { strict = false; meta = true }, show, eq]
                 end
 
                 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
               end
 
-              type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+              type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
 
             module Images = struct
@@ -217,13 +217,13 @@ module Create = struct
                     caption : string option; [@default None]
                     image_url : string;
                   }
-                  [@@deriving make, yojson { strict = false; meta = true }, show]
+                  [@@deriving make, yojson { strict = false; meta = true }, show, eq]
                 end
 
                 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
               end
 
-              type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+              type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
 
             type t = {
@@ -233,7 +233,7 @@ module Create = struct
               text : string option; [@default None]
               title : string;
             }
-            [@@deriving make, yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show, eq]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -247,7 +247,7 @@ module Create = struct
             | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
           type t = (string[@of_yojson t_of_yojson])
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         type t = {
@@ -262,7 +262,7 @@ module Create = struct
           started_at : string option; [@default None]
           status : Status.t; [@default "queued"]
         }
-        [@@deriving make, yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -271,7 +271,7 @@ module Create = struct
     type t =
       | V0 of V0.t
       | V1 of V1.t
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let of_yojson =
       Json_schema.one_of
@@ -289,10 +289,10 @@ module Create = struct
   module Responses = struct
     module Created = struct
       type t = Githubc2_components.Check_run.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `Created of Created.t ] [@@deriving show]
+    type t = [ `Created of Created.t ] [@@deriving show, eq]
 
     let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
   end
@@ -320,7 +320,7 @@ module Update = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Request_body = struct
@@ -334,13 +334,13 @@ module Update = struct
                 identifier : string;
                 label : string;
               }
-              [@@deriving make, yojson { strict = false; meta = true }, show]
+              [@@deriving make, yojson { strict = false; meta = true }, show, eq]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
           end
 
-          type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+          type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         module Conclusion = struct
@@ -356,7 +356,7 @@ module Update = struct
             | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
           type t = (string[@of_yojson t_of_yojson])
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         module Output = struct
@@ -372,7 +372,7 @@ module Update = struct
                       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
                     type t = (string[@of_yojson t_of_yojson])
-                    [@@deriving yojson { strict = false; meta = true }, show]
+                    [@@deriving yojson { strict = false; meta = true }, show, eq]
                   end
 
                   type t = {
@@ -386,13 +386,13 @@ module Update = struct
                     start_line : int;
                     title : string option; [@default None]
                   }
-                  [@@deriving make, yojson { strict = false; meta = true }, show]
+                  [@@deriving make, yojson { strict = false; meta = true }, show, eq]
                 end
 
                 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
               end
 
-              type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+              type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
 
             module Images = struct
@@ -403,13 +403,13 @@ module Update = struct
                     caption : string option; [@default None]
                     image_url : string;
                   }
-                  [@@deriving make, yojson { strict = false; meta = true }, show]
+                  [@@deriving make, yojson { strict = false; meta = true }, show, eq]
                 end
 
                 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
               end
 
-              type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+              type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
 
             type t = {
@@ -419,7 +419,7 @@ module Update = struct
               text : string option; [@default None]
               title : string option; [@default None]
             }
-            [@@deriving make, yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show, eq]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -433,7 +433,7 @@ module Update = struct
             | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
           type t = (string[@of_yojson t_of_yojson])
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         type t = {
@@ -447,7 +447,7 @@ module Update = struct
           started_at : string option; [@default None]
           status : Status.t option; [@default None]
         }
-        [@@deriving make, yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -463,13 +463,13 @@ module Update = struct
                 identifier : string;
                 label : string;
               }
-              [@@deriving make, yojson { strict = false; meta = true }, show]
+              [@@deriving make, yojson { strict = false; meta = true }, show, eq]
             end
 
             include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
           end
 
-          type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+          type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         module Conclusion = struct
@@ -485,7 +485,7 @@ module Update = struct
             | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
           type t = (string[@of_yojson t_of_yojson])
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         module Output = struct
@@ -501,7 +501,7 @@ module Update = struct
                       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
                     type t = (string[@of_yojson t_of_yojson])
-                    [@@deriving yojson { strict = false; meta = true }, show]
+                    [@@deriving yojson { strict = false; meta = true }, show, eq]
                   end
 
                   type t = {
@@ -515,13 +515,13 @@ module Update = struct
                     start_line : int;
                     title : string option; [@default None]
                   }
-                  [@@deriving make, yojson { strict = false; meta = true }, show]
+                  [@@deriving make, yojson { strict = false; meta = true }, show, eq]
                 end
 
                 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
               end
 
-              type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+              type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
 
             module Images = struct
@@ -532,13 +532,13 @@ module Update = struct
                     caption : string option; [@default None]
                     image_url : string;
                   }
-                  [@@deriving make, yojson { strict = false; meta = true }, show]
+                  [@@deriving make, yojson { strict = false; meta = true }, show, eq]
                 end
 
                 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
               end
 
-              type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+              type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
 
             type t = {
@@ -548,7 +548,7 @@ module Update = struct
               text : string option; [@default None]
               title : string option; [@default None]
             }
-            [@@deriving make, yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show, eq]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -562,7 +562,7 @@ module Update = struct
             | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
           type t = (string[@of_yojson t_of_yojson])
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         type t = {
@@ -576,7 +576,7 @@ module Update = struct
           started_at : string option; [@default None]
           status : Status.t option; [@default None]
         }
-        [@@deriving make, yojson { strict = false; meta = true }, show]
+        [@@deriving make, yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -585,7 +585,7 @@ module Update = struct
     type t =
       | V0 of V0.t
       | V1 of V1.t
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let of_yojson =
       Json_schema.any_of
@@ -603,10 +603,10 @@ module Update = struct
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Check_run.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -638,16 +638,16 @@ module Get = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Check_run.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -680,16 +680,16 @@ module List_annotations = struct
       per_page : int; [@default 30]
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Check_annotation.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -723,27 +723,28 @@ module Rerequest_run = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module Created = struct
-      type t = Json_schema.Empty_obj.t [@@deriving yojson { strict = false; meta = false }, show]
+      type t = Json_schema.Empty_obj.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Forbidden = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_found = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Unprocessable_entity = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -752,7 +753,7 @@ module Rerequest_run = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -789,12 +790,13 @@ module Create_suite = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Request_body = struct
     module Primary = struct
-      type t = { head_sha : string } [@@deriving make, yojson { strict = false; meta = true }, show]
+      type t = { head_sha : string }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -803,19 +805,19 @@ module Create_suite = struct
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Check_suite.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Created = struct
       type t = Githubc2_components.Check_suite.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
       [ `OK of OK.t
       | `Created of Created.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -846,7 +848,7 @@ module Set_suites_preferences = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Request_body = struct
@@ -858,17 +860,17 @@ module Set_suites_preferences = struct
               app_id : int;
               setting : bool; [@default true]
             }
-            [@@deriving make, yojson { strict = false; meta = true }, show]
+            [@@deriving make, yojson { strict = false; meta = true }, show, eq]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
         end
 
-        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = { auto_trigger_checks : Auto_trigger_checks.t option [@default None] }
-      [@@deriving make, yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -877,10 +879,10 @@ module Set_suites_preferences = struct
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Check_suite_preference.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -908,16 +910,16 @@ module Get_suite = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Check_suite.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -949,7 +951,7 @@ module List_for_suite = struct
         | `String "all" -> Ok "all"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
     end
 
     module Status = struct
@@ -959,7 +961,7 @@ module List_for_suite = struct
         | `String "completed" -> Ok "completed"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
     end
 
     type t = {
@@ -972,7 +974,7 @@ module List_for_suite = struct
       repo : string;
       status : Status.t option; [@default None]
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -980,20 +982,20 @@ module List_for_suite = struct
       module Primary = struct
         module Check_runs = struct
           type t = Githubc2_components.Check_run.t list
-          [@@deriving yojson { strict = false; meta = false }, show]
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
         end
 
         type t = {
           check_runs : Check_runs.t;
           total_count : int;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1033,15 +1035,16 @@ module Rerequest_suite = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module Created = struct
-      type t = Json_schema.Empty_obj.t [@@deriving yojson { strict = false; meta = false }, show]
+      type t = Json_schema.Empty_obj.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `Created of Created.t ] [@@deriving show]
+    type t = [ `Created of Created.t ] [@@deriving show, eq]
 
     let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
   end
@@ -1073,7 +1076,7 @@ module List_for_ref = struct
         | `String "all" -> Ok "all"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
     end
 
     module Status = struct
@@ -1083,7 +1086,7 @@ module List_for_ref = struct
         | `String "completed" -> Ok "completed"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
     end
 
     type t = {
@@ -1097,7 +1100,7 @@ module List_for_ref = struct
       repo : string;
       status : Status.t option; [@default None]
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -1105,20 +1108,20 @@ module List_for_ref = struct
       module Primary = struct
         module Check_runs = struct
           type t = Githubc2_components.Check_run.t list
-          [@@deriving yojson { strict = false; meta = false }, show]
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
         end
 
         type t = {
           check_runs : Check_runs.t;
           total_count : int;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1163,7 +1166,7 @@ module List_suites_for_ref = struct
       ref_ : string; [@key "ref"]
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -1171,20 +1174,20 @@ module List_suites_for_ref = struct
       module Primary = struct
         module Check_suites = struct
           type t = Githubc2_components.Check_suite.t list
-          [@@deriving yojson { strict = false; meta = false }, show]
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
         end
 
         type t = {
           check_suites : Check_suites.t;
           total_count : int;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end

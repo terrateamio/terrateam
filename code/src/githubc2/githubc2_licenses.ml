@@ -5,13 +5,13 @@ module Get_all_commonly_used = struct
       page : int; [@default 1]
       per_page : int; [@default 30]
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.License_simple.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_modified = struct end
@@ -20,7 +20,7 @@ module Get_all_commonly_used = struct
       [ `OK of OK.t
       | `Not_modified
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -50,25 +50,25 @@ end
 
 module Get = struct
   module Parameters = struct
-    type t = { license : string } [@@deriving make, show]
+    type t = { license : string } [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.License.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_modified = struct end
 
     module Forbidden = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_found = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -77,7 +77,7 @@ module Get = struct
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -109,16 +109,16 @@ module Get_for_repo = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.License_content.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end

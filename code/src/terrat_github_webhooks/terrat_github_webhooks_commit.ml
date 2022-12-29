@@ -1,13 +1,13 @@
 module Added = struct
-  type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+  type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Modified = struct
-  type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+  type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Removed = struct
-  type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+  type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
@@ -23,4 +23,4 @@ type t = {
   tree_id : string;
   url : string;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

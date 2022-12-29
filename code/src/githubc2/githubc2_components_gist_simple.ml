@@ -11,7 +11,7 @@ module Primary = struct
           truncated : bool option; [@default None]
           type_ : string option; [@default None] [@key "type"]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -32,7 +32,7 @@ module Primary = struct
               size : int option; [@default None]
               type_ : string option; [@default None] [@key "type"]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -43,18 +43,18 @@ module Primary = struct
 
       module Forks = struct
         module Items = struct
-          type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
+          type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
-        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module History = struct
         module Items = struct
-          type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
+          type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
-        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = {
@@ -79,7 +79,7 @@ module Primary = struct
         url : string;
         user : Githubc2_components_nullable_simple_user.t option;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -95,18 +95,18 @@ module Primary = struct
           url : string option; [@default None]
           user : Githubc2_components_public_user.t option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
-    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module History = struct
     type t = Githubc2_components_gist_history.t list
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -132,7 +132,7 @@ module Primary = struct
     url : string option; [@default None]
     user : string option; [@default None]
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

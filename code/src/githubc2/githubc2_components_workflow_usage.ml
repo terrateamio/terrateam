@@ -4,7 +4,7 @@ module Primary = struct
       module MACOS = struct
         module Primary = struct
           type t = { total_ms : int option [@default None] }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -13,7 +13,7 @@ module Primary = struct
       module UBUNTU = struct
         module Primary = struct
           type t = { total_ms : int option [@default None] }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -22,7 +22,7 @@ module Primary = struct
       module WINDOWS = struct
         module Primary = struct
           type t = { total_ms : int option [@default None] }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -33,13 +33,13 @@ module Primary = struct
         ubuntu : UBUNTU.t option; [@default None] [@key "UBUNTU"]
         windows : WINDOWS.t option; [@default None] [@key "WINDOWS"]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
   end
 
-  type t = { billable : Billable.t } [@@deriving yojson { strict = false; meta = true }, show]
+  type t = { billable : Billable.t } [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

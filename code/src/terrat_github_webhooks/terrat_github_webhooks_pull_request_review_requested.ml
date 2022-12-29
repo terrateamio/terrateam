@@ -6,7 +6,7 @@ module V0 = struct
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
       type t = (string[@of_yojson t_of_yojson])
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     type t = {
@@ -19,7 +19,7 @@ module V0 = struct
       requested_reviewer : Terrat_github_webhooks_user.t;
       sender : Terrat_github_webhooks_user.t;
     }
-    [@@deriving yojson { strict = false; meta = true }, make, show]
+    [@@deriving yojson { strict = false; meta = true }, make, show, eq]
   end
 
   include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -33,7 +33,7 @@ module V1 = struct
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
       type t = (string[@of_yojson t_of_yojson])
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     type t = {
@@ -46,7 +46,7 @@ module V1 = struct
       requested_team : Terrat_github_webhooks_team.t;
       sender : Terrat_github_webhooks_user.t;
     }
-    [@@deriving yojson { strict = false; meta = true }, make, show]
+    [@@deriving yojson { strict = false; meta = true }, make, show, eq]
   end
 
   include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -55,7 +55,7 @@ end
 type t =
   | V0 of V0.t
   | V1 of V1.t
-[@@deriving show]
+[@@deriving show, eq]
 
 let of_yojson =
   Json_schema.one_of

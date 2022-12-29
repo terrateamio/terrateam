@@ -4,14 +4,14 @@ module Get = struct
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Rate_limit_overview.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_modified = struct end
 
     module Not_found = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -19,7 +19,7 @@ module Get = struct
       | `Not_modified
       | `Not_found of Not_found.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [

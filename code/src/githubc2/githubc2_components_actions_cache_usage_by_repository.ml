@@ -4,7 +4,7 @@ module Primary = struct
     active_caches_size_in_bytes : int;
     full_name : string;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

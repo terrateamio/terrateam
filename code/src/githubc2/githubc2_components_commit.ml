@@ -7,7 +7,7 @@ module Primary = struct
             sha : string;
             url : string;
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -22,7 +22,7 @@ module Primary = struct
         url : string;
         verification : Githubc2_components_verification.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -30,7 +30,7 @@ module Primary = struct
 
   module Files = struct
     type t = Githubc2_components_diff_entry.t list
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Parents = struct
@@ -41,13 +41,13 @@ module Primary = struct
           sha : string;
           url : string;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
-    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Stats = struct
@@ -57,7 +57,7 @@ module Primary = struct
         deletions : int option; [@default None]
         total : int option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -76,7 +76,7 @@ module Primary = struct
     stats : Stats.t option; [@default None]
     url : string;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

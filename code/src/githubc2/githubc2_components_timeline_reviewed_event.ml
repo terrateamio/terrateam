@@ -3,7 +3,7 @@ module Primary = struct
     module Primary = struct
       module Html = struct
         module Primary = struct
-          type t = { href : string } [@@deriving yojson { strict = false; meta = true }, show]
+          type t = { href : string } [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -11,7 +11,7 @@ module Primary = struct
 
       module Pull_request_ = struct
         module Primary = struct
-          type t = { href : string } [@@deriving yojson { strict = false; meta = true }, show]
+          type t = { href : string } [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -21,7 +21,7 @@ module Primary = struct
         html : Html.t;
         pull_request : Pull_request_.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -43,7 +43,7 @@ module Primary = struct
     submitted_at : string option; [@default None]
     user : Githubc2_components_simple_user.t;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

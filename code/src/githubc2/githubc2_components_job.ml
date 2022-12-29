@@ -11,11 +11,11 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Labels = struct
-    type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Status_ = struct
@@ -26,7 +26,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Steps = struct
@@ -40,7 +40,7 @@ module Primary = struct
             | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
           type t = (string[@of_yojson t_of_yojson])
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         type t = {
@@ -51,13 +51,13 @@ module Primary = struct
           started_at : string option; [@default None]
           status : Status_.t;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
-    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -82,7 +82,7 @@ module Primary = struct
     steps : Steps.t option; [@default None]
     url : string;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

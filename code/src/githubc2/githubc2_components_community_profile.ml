@@ -10,7 +10,7 @@ module Primary = struct
         pull_request_template : Githubc2_components_nullable_community_health_file.t option;
         readme : Githubc2_components_nullable_community_health_file.t option;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -24,7 +24,7 @@ module Primary = struct
     health_percentage : int;
     updated_at : string option;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

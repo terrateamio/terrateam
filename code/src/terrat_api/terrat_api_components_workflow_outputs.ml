@@ -5,7 +5,7 @@ module Items = struct
     | Workflow_output_init of Terrat_api_components_workflow_output_init.t
     | Workflow_output_plan of Terrat_api_components_workflow_output_plan.t
     | Workflow_output_apply of Terrat_api_components_workflow_output_apply.t
-  [@@deriving show]
+  [@@deriving show, eq]
 
   let of_yojson =
     Json_schema.one_of
@@ -41,4 +41,4 @@ module Items = struct
     | Workflow_output_apply v -> Terrat_api_components_workflow_output_apply.to_yojson v
 end
 
-type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]

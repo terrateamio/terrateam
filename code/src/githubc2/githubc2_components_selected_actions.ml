@@ -1,6 +1,6 @@
 module Primary = struct
   module Patterns_allowed = struct
-    type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -8,7 +8,7 @@ module Primary = struct
     patterns_allowed : Patterns_allowed.t option; [@default None]
     verified_allowed : bool option; [@default None]
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

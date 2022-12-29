@@ -21,6 +21,7 @@ type varspec = {
   prefix : int option;
   explode : bool;
 }
+[@@deriving show, eq]
 
 type expr =
   | Literal of string
@@ -28,8 +29,9 @@ type expr =
       op : char option;
       vars : varspec list;
     }
+[@@deriving show, eq]
 
-type t = expr list
+type t = expr list [@@deriving show, eq]
 type parse_err = [ `Error ]
 
 let rec exprs_of_tokens =

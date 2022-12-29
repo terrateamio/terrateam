@@ -4,16 +4,16 @@ module Action = struct
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Changes = struct
   module Body = struct
-    type t = { from : string } [@@deriving yojson { strict = false; meta = true }, make, show]
+    type t = { from : string } [@@deriving yojson { strict = false; meta = true }, make, show, eq]
   end
 
   type t = { body : Body.t option [@default None] }
-  [@@deriving yojson { strict = false; meta = true }, make, show]
+  [@@deriving yojson { strict = false; meta = true }, make, show, eq]
 end
 
 module Issue_ = struct
@@ -21,12 +21,12 @@ module Issue_ = struct
     module Primary = struct
       module Assignees = struct
         type t = Terrat_github_webhooks_user.t list
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Labels = struct
         type t = Terrat_github_webhooks_label.t list
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Pull_request_ = struct
@@ -37,7 +37,7 @@ module Issue_ = struct
           patch_url : string option; [@default None]
           url : string option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, make, show]
+        [@@deriving yojson { strict = false; meta = true }, make, show, eq]
       end
 
       module State = struct
@@ -47,7 +47,7 @@ module Issue_ = struct
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
         type t = (string[@of_yojson t_of_yojson])
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = {
@@ -82,7 +82,7 @@ module Issue_ = struct
         url : string;
         user : Terrat_github_webhooks_user.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, make, show]
+      [@@deriving yojson { strict = false; meta = true }, make, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -92,12 +92,12 @@ module Issue_ = struct
     module Primary = struct
       module Assignees = struct
         type t = Terrat_github_webhooks_user.t list
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Labels = struct
         type t = Terrat_github_webhooks_label.t list
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Pull_request_ = struct
@@ -108,7 +108,7 @@ module Issue_ = struct
           patch_url : string option; [@default None]
           url : string option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, make, show]
+        [@@deriving yojson { strict = false; meta = true }, make, show, eq]
       end
 
       module State = struct
@@ -118,7 +118,7 @@ module Issue_ = struct
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
         type t = (string[@of_yojson t_of_yojson])
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = {
@@ -153,13 +153,13 @@ module Issue_ = struct
         url : string;
         user : Terrat_github_webhooks_user.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, make, show]
+      [@@deriving yojson { strict = false; meta = true }, make, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
   end
 
-  type t = T.t [@@deriving yojson { strict = false; meta = true }, show]
+  type t = T.t [@@deriving yojson { strict = false; meta = true }, show, eq]
 
   let of_yojson json =
     let open CCResult in
@@ -176,4 +176,4 @@ type t = {
   repository : Terrat_github_webhooks_repository.t;
   sender : Terrat_github_webhooks_user.t;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

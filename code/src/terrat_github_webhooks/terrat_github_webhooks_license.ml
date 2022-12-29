@@ -5,4 +5,4 @@ type t = {
   spdx_id : string;
   url : string option;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

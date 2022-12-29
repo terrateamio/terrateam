@@ -3,7 +3,7 @@ module Primary = struct
     module Primary = struct
       module Current_user_organizations = struct
         type t = Githubc2_components_link_with_type.t list
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = {
@@ -16,14 +16,14 @@ module Primary = struct
         timeline : Githubc2_components_link_with_type.t;
         user : Githubc2_components_link_with_type.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
   end
 
   module Current_user_organization_urls = struct
-    type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -37,7 +37,7 @@ module Primary = struct
     timeline_url : string;
     user_url : string;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

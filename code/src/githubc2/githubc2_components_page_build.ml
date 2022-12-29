@@ -1,7 +1,8 @@
 module Primary = struct
   module Error = struct
     module Primary = struct
-      type t = { message : string option } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { message : string option }
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -17,7 +18,7 @@ module Primary = struct
     updated_at : string;
     url : string;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

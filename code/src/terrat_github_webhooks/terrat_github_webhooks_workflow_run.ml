@@ -6,7 +6,7 @@ module Pull_requests = struct
         repo : Terrat_github_webhooks_repo_ref.t;
         sha : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, make, show]
+      [@@deriving yojson { strict = false; meta = true }, make, show, eq]
     end
 
     module Head = struct
@@ -15,7 +15,7 @@ module Pull_requests = struct
         repo : Terrat_github_webhooks_repo_ref.t;
         sha : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, make, show]
+      [@@deriving yojson { strict = false; meta = true }, make, show, eq]
     end
 
     type t = {
@@ -25,10 +25,10 @@ module Pull_requests = struct
       number : float;
       url : string;
     }
-    [@@deriving yojson { strict = false; meta = true }, make, show]
+    [@@deriving yojson { strict = false; meta = true }, make, show, eq]
   end
 
-  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Referenced_workflows = struct
@@ -36,7 +36,7 @@ module Referenced_workflows = struct
     include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Json_schema.Obj)
   end
 
-  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
@@ -75,4 +75,4 @@ type t = {
   workflow_id : int;
   workflow_url : string;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

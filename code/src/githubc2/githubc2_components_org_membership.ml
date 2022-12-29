@@ -2,7 +2,7 @@ module Primary = struct
   module Permissions = struct
     module Primary = struct
       type t = { can_create_repository : bool }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -16,7 +16,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module State = struct
@@ -26,7 +26,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -38,7 +38,7 @@ module Primary = struct
     url : string;
     user : Githubc2_components_nullable_simple_user.t option;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

@@ -1,16 +1,16 @@
 module Created_at = struct
   module V0 = struct
-    type t = string [@@deriving yojson { strict = false; meta = true }, show]
+    type t = string [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module V1 = struct
-    type t = int [@@deriving yojson { strict = false; meta = true }, show]
+    type t = int [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t =
     | V0 of V0.t
     | V1 of V1.t
-  [@@deriving show]
+  [@@deriving show, eq]
 
   let of_yojson =
     Json_schema.one_of
@@ -26,19 +26,19 @@ module Created_at = struct
 end
 
 module Events = struct
-  type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+  type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Permissions = struct
   module Additional = struct
-    type t = string [@@deriving yojson { strict = false; meta = true }, show]
+    type t = string [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Additional)
 end
 
 module Single_file_paths = struct
-  type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+  type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Target_type = struct
@@ -48,22 +48,22 @@ module Target_type = struct
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Updated_at = struct
   module V0 = struct
-    type t = string [@@deriving yojson { strict = false; meta = true }, show]
+    type t = string [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module V1 = struct
-    type t = int [@@deriving yojson { strict = false; meta = true }, show]
+    type t = int [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t =
     | V0 of V0.t
     | V1 of V1.t
-  [@@deriving show]
+  [@@deriving show, eq]
 
   let of_yojson =
     Json_schema.one_of
@@ -99,4 +99,4 @@ type t = {
   target_type : Target_type.t;
   updated_at : Updated_at.t;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

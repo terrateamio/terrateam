@@ -1,6 +1,6 @@
 module Primary = struct
   module Events = struct
-    type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Permissions = struct
@@ -12,11 +12,11 @@ module Primary = struct
         issues : string option; [@default None]
         metadata : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Additional = struct
-      type t = string [@@deriving yojson { strict = false; meta = true }, show]
+      type t = string [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Additional)
@@ -41,7 +41,7 @@ module Primary = struct
     updated_at : string;
     webhook_secret : string option; [@default None]
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

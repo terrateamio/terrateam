@@ -4,4 +4,4 @@ type t = {
   workflow : int option; [@default None]
   workspace : string;
 }
-[@@deriving yojson { strict = true; meta = true }, show]
+[@@deriving yojson { strict = true; meta = true }, show, eq]

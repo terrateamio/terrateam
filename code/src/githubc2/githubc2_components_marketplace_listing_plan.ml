@@ -1,6 +1,6 @@
 module Primary = struct
   module Bullets = struct
-    type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -18,7 +18,7 @@ module Primary = struct
     url : string;
     yearly_price_in_cents : int;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

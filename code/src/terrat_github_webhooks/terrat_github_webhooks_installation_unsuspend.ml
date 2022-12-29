@@ -4,7 +4,7 @@ module Action = struct
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Installation_ = struct
@@ -12,17 +12,17 @@ module Installation_ = struct
     module Primary = struct
       module Created_at = struct
         module V0 = struct
-          type t = string [@@deriving yojson { strict = false; meta = true }, show]
+          type t = string [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         module V1 = struct
-          type t = int [@@deriving yojson { strict = false; meta = true }, show]
+          type t = int [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         type t =
           | V0 of V0.t
           | V1 of V1.t
-        [@@deriving show]
+        [@@deriving show, eq]
 
         let of_yojson =
           Json_schema.one_of
@@ -38,23 +38,23 @@ module Installation_ = struct
       end
 
       module Events = struct
-        type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Permissions = struct
         module Additional = struct
-          type t = string [@@deriving yojson { strict = false; meta = true }, show]
+          type t = string [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Additional)
       end
 
       module Single_file_paths = struct
-        type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Suspended_by = struct
-        type t = unit [@@deriving yojson { strict = false; meta = true }, show]
+        type t = unit [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Target_type = struct
@@ -64,22 +64,22 @@ module Installation_ = struct
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
         type t = (string[@of_yojson t_of_yojson])
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Updated_at = struct
         module V0 = struct
-          type t = string [@@deriving yojson { strict = false; meta = true }, show]
+          type t = string [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         module V1 = struct
-          type t = int [@@deriving yojson { strict = false; meta = true }, show]
+          type t = int [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         type t =
           | V0 of V0.t
           | V1 of V1.t
-        [@@deriving show]
+        [@@deriving show, eq]
 
         let of_yojson =
           Json_schema.one_of
@@ -115,7 +115,7 @@ module Installation_ = struct
         target_type : Target_type.t;
         updated_at : Updated_at.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, make, show]
+      [@@deriving yojson { strict = false; meta = true }, make, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -125,17 +125,17 @@ module Installation_ = struct
     module Primary = struct
       module Created_at = struct
         module V0 = struct
-          type t = string [@@deriving yojson { strict = false; meta = true }, show]
+          type t = string [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         module V1 = struct
-          type t = int [@@deriving yojson { strict = false; meta = true }, show]
+          type t = int [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         type t =
           | V0 of V0.t
           | V1 of V1.t
-        [@@deriving show]
+        [@@deriving show, eq]
 
         let of_yojson =
           Json_schema.one_of
@@ -151,23 +151,23 @@ module Installation_ = struct
       end
 
       module Events = struct
-        type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Permissions = struct
         module Additional = struct
-          type t = string [@@deriving yojson { strict = false; meta = true }, show]
+          type t = string [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Additional)
       end
 
       module Single_file_paths = struct
-        type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Suspended_by = struct
-        type t = unit [@@deriving yojson { strict = false; meta = true }, show]
+        type t = unit [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Target_type = struct
@@ -177,22 +177,22 @@ module Installation_ = struct
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
         type t = (string[@of_yojson t_of_yojson])
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Updated_at = struct
         module V0 = struct
-          type t = string [@@deriving yojson { strict = false; meta = true }, show]
+          type t = string [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         module V1 = struct
-          type t = int [@@deriving yojson { strict = false; meta = true }, show]
+          type t = int [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         type t =
           | V0 of V0.t
           | V1 of V1.t
-        [@@deriving show]
+        [@@deriving show, eq]
 
         let of_yojson =
           Json_schema.one_of
@@ -228,13 +228,13 @@ module Installation_ = struct
         target_type : Target_type.t;
         updated_at : Updated_at.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, make, show]
+      [@@deriving yojson { strict = false; meta = true }, make, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
   end
 
-  type t = T.t [@@deriving yojson { strict = false; meta = true }, show]
+  type t = T.t [@@deriving yojson { strict = false; meta = true }, show, eq]
 
   let of_yojson json =
     let open CCResult in
@@ -250,14 +250,14 @@ module Repositories = struct
       node_id : string;
       private_ : bool; [@key "private"]
     }
-    [@@deriving yojson { strict = false; meta = true }, make, show]
+    [@@deriving yojson { strict = false; meta = true }, make, show, eq]
   end
 
-  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Requester = struct
-  type t = unit [@@deriving yojson { strict = false; meta = true }, show]
+  type t = unit [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
@@ -267,4 +267,4 @@ type t = {
   requester : Requester.t option; [@default None]
   sender : Terrat_github_webhooks_user.t;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

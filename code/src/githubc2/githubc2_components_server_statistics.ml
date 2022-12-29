@@ -6,7 +6,7 @@ module Items = struct
           dormancy_threshold : string option; [@default None]
           total_dormant_users : int option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -22,7 +22,7 @@ module Items = struct
               total_issue_comments : int option; [@default None]
               total_pull_request_comments : int option; [@default None]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -35,7 +35,7 @@ module Items = struct
               public_gists : int option; [@default None]
               total_gists : int option; [@default None]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -48,7 +48,7 @@ module Items = struct
               inactive_hooks : int option; [@default None]
               total_hooks : int option; [@default None]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -61,7 +61,7 @@ module Items = struct
               open_issues : int option; [@default None]
               total_issues : int option; [@default None]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -74,7 +74,7 @@ module Items = struct
               open_milestones : int option; [@default None]
               total_milestones : int option; [@default None]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -88,7 +88,7 @@ module Items = struct
               total_team_members : int option; [@default None]
               total_teams : int option; [@default None]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -97,7 +97,7 @@ module Items = struct
         module Pages = struct
           module Primary = struct
             type t = { total_pages : int option [@default None] }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -111,7 +111,7 @@ module Items = struct
               total_pulls : int option; [@default None]
               unmergeable_pulls : int option; [@default None]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -127,7 +127,7 @@ module Items = struct
               total_repos : int option; [@default None]
               total_wikis : int option; [@default None]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -140,7 +140,7 @@ module Items = struct
               suspended_users : int option; [@default None]
               total_users : int option; [@default None]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -158,7 +158,7 @@ module Items = struct
           repos : Repos.t option; [@default None]
           users : Users.t option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -167,11 +167,11 @@ module Items = struct
     module Github_connect = struct
       module Primary = struct
         module Features_enabled = struct
-          type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+          type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         type t = { features_enabled : Features_enabled.t option [@default None] }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -187,10 +187,10 @@ module Items = struct
       schema_version : string option; [@default None]
       server_id : string option; [@default None]
     }
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
 end
 
-type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]

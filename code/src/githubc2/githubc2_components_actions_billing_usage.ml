@@ -17,7 +17,7 @@ module Primary = struct
         windows_64_core : int option; [@default None]
         windows_8_core : int option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -29,7 +29,7 @@ module Primary = struct
     total_minutes_used : int;
     total_paid_minutes_used : int;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

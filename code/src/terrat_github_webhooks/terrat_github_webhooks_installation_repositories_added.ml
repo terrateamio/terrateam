@@ -4,7 +4,7 @@ module Action = struct
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Repositories_added = struct
@@ -16,10 +16,10 @@ module Repositories_added = struct
       node_id : string;
       private_ : bool; [@key "private"]
     }
-    [@@deriving yojson { strict = false; meta = true }, make, show]
+    [@@deriving yojson { strict = false; meta = true }, make, show, eq]
   end
 
-  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Repositories_removed = struct
@@ -31,10 +31,10 @@ module Repositories_removed = struct
       node_id : string option; [@default None]
       private_ : bool option; [@key "private"] [@default None]
     }
-    [@@deriving yojson { strict = false; meta = true }, make, show]
+    [@@deriving yojson { strict = false; meta = true }, make, show, eq]
   end
 
-  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Repository_selection = struct
@@ -44,7 +44,7 @@ module Repository_selection = struct
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
@@ -56,4 +56,4 @@ type t = {
   requester : Terrat_github_webhooks_user.t option; [@default None]
   sender : Terrat_github_webhooks_user.t;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

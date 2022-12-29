@@ -8,7 +8,7 @@ module Primary = struct
             name : string;
             url : string;
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -19,7 +19,7 @@ module Primary = struct
         repo : Repo.t;
         sha : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -34,7 +34,7 @@ module Primary = struct
             name : string;
             url : string;
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -45,7 +45,7 @@ module Primary = struct
         repo : Repo.t;
         sha : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -58,7 +58,7 @@ module Primary = struct
     number : int;
     url : string;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

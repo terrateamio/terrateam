@@ -4,7 +4,7 @@ module Type = struct
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
@@ -12,4 +12,4 @@ type t = {
   run_on : Terrat_repo_config_run_on.t option; [@default None]
   type_ : Type.t; [@key "type"]
 }
-[@@deriving yojson { strict = true; meta = true }, make, show]
+[@@deriving yojson { strict = true; meta = true }, make, show, eq]

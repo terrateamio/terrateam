@@ -8,7 +8,7 @@ module Primary = struct
         seats : int option; [@default None]
         space : int;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -64,7 +64,7 @@ module Primary = struct
     url : string;
     web_commit_signoff_required : bool option; [@default None]
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

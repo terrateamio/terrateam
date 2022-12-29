@@ -6,7 +6,7 @@ module List_alerts_for_enterprise = struct
         | `String "desc" -> Ok "desc"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
     end
 
     module Sort = struct
@@ -15,7 +15,7 @@ module List_alerts_for_enterprise = struct
         | `String "updated" -> Ok "updated"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
     end
 
     module State = struct
@@ -24,7 +24,7 @@ module List_alerts_for_enterprise = struct
         | `String "resolved" -> Ok "resolved"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
     end
 
     type t = {
@@ -38,18 +38,18 @@ module List_alerts_for_enterprise = struct
       sort : Sort.t; [@default "created"]
       state : State.t option; [@default None]
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Organization_secret_scanning_alert.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_found = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Service_unavailable = struct
@@ -59,7 +59,7 @@ module List_alerts_for_enterprise = struct
           documentation_url : string option; [@default None]
           message : string option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -70,7 +70,7 @@ module List_alerts_for_enterprise = struct
       | `Not_found of Not_found.t
       | `Service_unavailable of Service_unavailable.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -115,7 +115,7 @@ module List_alerts_for_org = struct
         | `String "desc" -> Ok "desc"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
     end
 
     module Sort = struct
@@ -124,7 +124,7 @@ module List_alerts_for_org = struct
         | `String "updated" -> Ok "updated"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
     end
 
     module State = struct
@@ -133,7 +133,7 @@ module List_alerts_for_org = struct
         | `String "resolved" -> Ok "resolved"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
     end
 
     type t = {
@@ -148,18 +148,18 @@ module List_alerts_for_org = struct
       sort : Sort.t; [@default "created"]
       state : State.t option; [@default None]
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Organization_secret_scanning_alert.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_found = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Service_unavailable = struct
@@ -169,7 +169,7 @@ module List_alerts_for_org = struct
           documentation_url : string option; [@default None]
           message : string option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -180,7 +180,7 @@ module List_alerts_for_org = struct
       | `Not_found of Not_found.t
       | `Service_unavailable of Service_unavailable.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -226,7 +226,7 @@ module List_alerts_for_repo = struct
         | `String "desc" -> Ok "desc"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
     end
 
     module Sort = struct
@@ -235,7 +235,7 @@ module List_alerts_for_repo = struct
         | `String "updated" -> Ok "updated"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
     end
 
     module State = struct
@@ -244,7 +244,7 @@ module List_alerts_for_repo = struct
         | `String "resolved" -> Ok "resolved"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show]
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
     end
 
     type t = {
@@ -260,13 +260,13 @@ module List_alerts_for_repo = struct
       sort : Sort.t; [@default "created"]
       state : State.t option; [@default None]
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Secret_scanning_alert.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_found = struct end
@@ -278,7 +278,7 @@ module List_alerts_for_repo = struct
           documentation_url : string option; [@default None]
           message : string option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -289,7 +289,7 @@ module List_alerts_for_repo = struct
       | `Not_found
       | `Service_unavailable of Service_unavailable.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -334,7 +334,7 @@ module Update_alert = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Request_body = struct
@@ -344,7 +344,7 @@ module Update_alert = struct
         resolution_comment : string option; [@default None]
         state : Githubc2_components.Secret_scanning_alert_state.t;
       }
-      [@@deriving make, yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -353,7 +353,7 @@ module Update_alert = struct
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Secret_scanning_alert.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Bad_request = struct end
@@ -367,7 +367,7 @@ module Update_alert = struct
           documentation_url : string option; [@default None]
           message : string option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -380,7 +380,7 @@ module Update_alert = struct
       | `Unprocessable_entity
       | `Service_unavailable of Service_unavailable.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -419,13 +419,13 @@ module Get_alert = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Secret_scanning_alert.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_modified = struct end
@@ -438,7 +438,7 @@ module Get_alert = struct
           documentation_url : string option; [@default None]
           message : string option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -450,7 +450,7 @@ module Get_alert = struct
       | `Not_found
       | `Service_unavailable of Service_unavailable.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -489,13 +489,13 @@ module List_locations_for_alert = struct
       per_page : int; [@default 30]
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Secret_scanning_location.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_found = struct end
@@ -507,7 +507,7 @@ module List_locations_for_alert = struct
           documentation_url : string option; [@default None]
           message : string option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -518,7 +518,7 @@ module List_locations_for_alert = struct
       | `Not_found
       | `Service_unavailable of Service_unavailable.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [

@@ -1,6 +1,6 @@
 module Primary = struct
   module Line_numbers = struct
-    type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -18,7 +18,7 @@ module Primary = struct
     text_matches : Githubc2_components_search_result_text_matches.t option; [@default None]
     url : string;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

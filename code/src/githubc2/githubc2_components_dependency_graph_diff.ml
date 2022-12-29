@@ -7,7 +7,7 @@ module Items = struct
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
       type t = (string[@of_yojson t_of_yojson])
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Scope = struct
@@ -18,7 +18,7 @@ module Items = struct
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
       type t = (string[@of_yojson t_of_yojson])
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Vulnerabilities = struct
@@ -30,13 +30,13 @@ module Items = struct
             advisory_url : string;
             severity : string;
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
       end
 
-      type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+      type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     type t = {
@@ -51,10 +51,10 @@ module Items = struct
       version : string;
       vulnerabilities : Vulnerabilities.t;
     }
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
 end
 
-type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]

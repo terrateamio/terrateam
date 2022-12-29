@@ -8,7 +8,7 @@ module Primary = struct
             email : string option; [@default None]
             name : string option; [@default None]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -21,7 +21,7 @@ module Primary = struct
             email : string option; [@default None]
             name : string option; [@default None]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -35,13 +35,13 @@ module Primary = struct
               sha : string option; [@default None]
               url : string option; [@default None]
             }
-            [@@deriving yojson { strict = false; meta = true }, show]
+            [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
         end
 
-        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Tree = struct
@@ -50,7 +50,7 @@ module Primary = struct
             sha : string option; [@default None]
             url : string option; [@default None]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -64,7 +64,7 @@ module Primary = struct
             signature : string option; [@default None]
             verified : bool option; [@default None]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -82,7 +82,7 @@ module Primary = struct
         url : string option; [@default None]
         verification : Verification_.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -97,7 +97,7 @@ module Primary = struct
             html : string option; [@default None]
             self : string option; [@default None]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -115,7 +115,7 @@ module Primary = struct
         type_ : string option; [@default None] [@key "type"]
         url : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -125,7 +125,7 @@ module Primary = struct
     commit : Commit_.t;
     content : Content.t option;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

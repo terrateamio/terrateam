@@ -4,32 +4,32 @@ module Action = struct
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Changes = struct
   module Base = struct
     module Ref = struct
-      type t = { from : string } [@@deriving yojson { strict = false; meta = true }, make, show]
+      type t = { from : string } [@@deriving yojson { strict = false; meta = true }, make, show, eq]
     end
 
     module Sha = struct
-      type t = { from : string } [@@deriving yojson { strict = false; meta = true }, make, show]
+      type t = { from : string } [@@deriving yojson { strict = false; meta = true }, make, show, eq]
     end
 
     type t = {
       ref_ : Ref.t; [@key "ref"]
       sha : Sha.t;
     }
-    [@@deriving yojson { strict = false; meta = true }, make, show]
+    [@@deriving yojson { strict = false; meta = true }, make, show, eq]
   end
 
   module Body = struct
-    type t = { from : string } [@@deriving yojson { strict = false; meta = true }, make, show]
+    type t = { from : string } [@@deriving yojson { strict = false; meta = true }, make, show, eq]
   end
 
   module Title = struct
-    type t = { from : string } [@@deriving yojson { strict = false; meta = true }, make, show]
+    type t = { from : string } [@@deriving yojson { strict = false; meta = true }, make, show, eq]
   end
 
   type t = {
@@ -37,7 +37,7 @@ module Changes = struct
     body : Body.t option; [@default None]
     title : Title.t option; [@default None]
   }
-  [@@deriving yojson { strict = false; meta = true }, make, show]
+  [@@deriving yojson { strict = false; meta = true }, make, show, eq]
 end
 
 type t = {
@@ -50,4 +50,4 @@ type t = {
   repository : Terrat_github_webhooks_repository.t;
   sender : Terrat_github_webhooks_user.t;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

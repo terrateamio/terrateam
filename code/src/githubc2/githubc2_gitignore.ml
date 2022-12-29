@@ -3,7 +3,7 @@ module Get_all_templates = struct
 
   module Responses = struct
     module OK = struct
-      type t = string list [@@deriving yojson { strict = false; meta = false }, show]
+      type t = string list [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_modified = struct end
@@ -12,7 +12,7 @@ module Get_all_templates = struct
       [ `OK of OK.t
       | `Not_modified
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -35,13 +35,13 @@ end
 
 module Get_template = struct
   module Parameters = struct
-    type t = { name : string } [@@deriving make, show]
+    type t = { name : string } [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Gitignore_template.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_modified = struct end
@@ -50,7 +50,7 @@ module Get_template = struct
       [ `OK of OK.t
       | `Not_modified
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [

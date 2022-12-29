@@ -18,7 +18,7 @@ type t =
   | Pull_request_unassigned of Terrat_github_webhooks_pull_request_unassigned.t
   | Pull_request_unlabeled of Terrat_github_webhooks_pull_request_unlabeled.t
   | Pull_request_unlocked of Terrat_github_webhooks_pull_request_unlocked.t
-[@@deriving show]
+[@@deriving show, eq]
 
 let of_yojson =
   Json_schema.one_of

@@ -1,16 +1,16 @@
 module Base_dirspaces = struct
   type t = Terrat_api_components_work_manifest_dir.t list
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Changed_dirspaces = struct
   type t = Terrat_api_components_work_manifest_dir.t list
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Dirspaces = struct
   type t = Terrat_api_components_work_manifest_dir.t list
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Type = struct
@@ -19,7 +19,7 @@ module Type = struct
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
@@ -29,4 +29,4 @@ type t = {
   dirspaces : Dirspaces.t;
   type_ : Type.t; [@key "type"]
 }
-[@@deriving yojson { strict = true; meta = true }, show]
+[@@deriving yojson { strict = true; meta = true }, show, eq]

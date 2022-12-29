@@ -4,7 +4,7 @@ module Detector = struct
     url : string;
     version : string;
   }
-  [@@deriving yojson { strict = true; meta = true }, show]
+  [@@deriving yojson { strict = true; meta = true }, show, eq]
 end
 
 module Job_ = struct
@@ -13,7 +13,7 @@ module Job_ = struct
     html_url : string option; [@default None]
     id : string;
   }
-  [@@deriving yojson { strict = true; meta = true }, show]
+  [@@deriving yojson { strict = true; meta = true }, show, eq]
 end
 
 module Manifests = struct
@@ -31,4 +31,4 @@ type t = {
   sha : string;
   version : int;
 }
-[@@deriving yojson { strict = true; meta = true }, show]
+[@@deriving yojson { strict = true; meta = true }, show, eq]

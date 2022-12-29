@@ -4,7 +4,7 @@ module Action = struct
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Workflow_run_ = struct
@@ -18,7 +18,7 @@ module Workflow_run_ = struct
               repo : Terrat_github_webhooks_repo_ref.t;
               sha : string;
             }
-            [@@deriving yojson { strict = false; meta = true }, make, show]
+            [@@deriving yojson { strict = false; meta = true }, make, show, eq]
           end
 
           module Head = struct
@@ -27,7 +27,7 @@ module Workflow_run_ = struct
               repo : Terrat_github_webhooks_repo_ref.t;
               sha : string;
             }
-            [@@deriving yojson { strict = false; meta = true }, make, show]
+            [@@deriving yojson { strict = false; meta = true }, make, show, eq]
           end
 
           type t = {
@@ -37,10 +37,10 @@ module Workflow_run_ = struct
             number : float;
             url : string;
           }
-          [@@deriving yojson { strict = false; meta = true }, make, show]
+          [@@deriving yojson { strict = false; meta = true }, make, show, eq]
         end
 
-        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Referenced_workflows = struct
@@ -48,7 +48,7 @@ module Workflow_run_ = struct
           include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Json_schema.Obj)
         end
 
-        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = {
@@ -87,7 +87,7 @@ module Workflow_run_ = struct
         workflow_id : int;
         workflow_url : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, make, show]
+      [@@deriving yojson { strict = false; meta = true }, make, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -103,7 +103,7 @@ module Workflow_run_ = struct
               repo : Terrat_github_webhooks_repo_ref.t;
               sha : string;
             }
-            [@@deriving yojson { strict = false; meta = true }, make, show]
+            [@@deriving yojson { strict = false; meta = true }, make, show, eq]
           end
 
           module Head = struct
@@ -112,7 +112,7 @@ module Workflow_run_ = struct
               repo : Terrat_github_webhooks_repo_ref.t;
               sha : string;
             }
-            [@@deriving yojson { strict = false; meta = true }, make, show]
+            [@@deriving yojson { strict = false; meta = true }, make, show, eq]
           end
 
           type t = {
@@ -122,10 +122,10 @@ module Workflow_run_ = struct
             number : float;
             url : string;
           }
-          [@@deriving yojson { strict = false; meta = true }, make, show]
+          [@@deriving yojson { strict = false; meta = true }, make, show, eq]
         end
 
-        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Referenced_workflows = struct
@@ -133,7 +133,7 @@ module Workflow_run_ = struct
           include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Json_schema.Obj)
         end
 
-        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = {
@@ -172,13 +172,13 @@ module Workflow_run_ = struct
         workflow_id : int;
         workflow_url : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, make, show]
+      [@@deriving yojson { strict = false; meta = true }, make, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
   end
 
-  type t = T.t [@@deriving yojson { strict = false; meta = true }, show]
+  type t = T.t [@@deriving yojson { strict = false; meta = true }, show, eq]
 
   let of_yojson json =
     let open CCResult in
@@ -194,4 +194,4 @@ type t = {
   workflow : Terrat_github_webhooks_workflow.t;
   workflow_run : Workflow_run_.t;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

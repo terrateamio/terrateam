@@ -6,4 +6,4 @@ type t = {
   timestamp : string;
   tree_id : string;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

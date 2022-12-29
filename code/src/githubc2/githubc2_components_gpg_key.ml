@@ -6,13 +6,13 @@ module Primary = struct
           email : string option; [@default None]
           verified : bool option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
-    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Subkeys = struct
@@ -20,18 +20,18 @@ module Primary = struct
       module Primary = struct
         module Emails = struct
           module Items = struct
-            type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
+            type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
-          type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+          type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         module Subkeys = struct
           module Items = struct
-            type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
+            type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
-          type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+          type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         type t = {
@@ -50,13 +50,13 @@ module Primary = struct
           revoked : bool option; [@default None]
           subkeys : Subkeys.t option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
-    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -76,7 +76,7 @@ module Primary = struct
     revoked : bool;
     subkeys : Subkeys.t;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

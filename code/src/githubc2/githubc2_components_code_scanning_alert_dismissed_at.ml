@@ -1,1 +1,1 @@
-type t = string option [@@deriving yojson { strict = false; meta = true }, show]
+type t = string option [@@deriving yojson { strict = false; meta = true }, show, eq]

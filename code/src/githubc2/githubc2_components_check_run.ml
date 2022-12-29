@@ -1,7 +1,7 @@
 module Primary = struct
   module Check_suite_ = struct
     module Primary = struct
-      type t = { id : int } [@@deriving yojson { strict = false; meta = true }, show]
+      type t = { id : int } [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -19,7 +19,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Output = struct
@@ -31,7 +31,7 @@ module Primary = struct
         text : string option;
         title : string option;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -39,7 +39,7 @@ module Primary = struct
 
   module Pull_requests = struct
     type t = Githubc2_components_pull_request_minimal.t list
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Status_ = struct
@@ -50,7 +50,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -72,7 +72,7 @@ module Primary = struct
     status : Status_.t;
     url : string;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

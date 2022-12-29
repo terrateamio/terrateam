@@ -1,10 +1,10 @@
 module Events = struct
-  type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+  type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Permissions = struct
   module Additional = struct
-    type t = string [@@deriving yojson { strict = false; meta = true }, show]
+    type t = string [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Additional)
@@ -24,4 +24,4 @@ type t = {
   slug : string option; [@default None]
   updated_at : string;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

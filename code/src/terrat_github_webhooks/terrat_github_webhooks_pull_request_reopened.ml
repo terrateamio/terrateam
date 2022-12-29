@@ -4,7 +4,7 @@ module Action = struct
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Pull_request_ = struct
@@ -21,12 +21,12 @@ module Pull_request_ = struct
           self : Terrat_github_webhooks_link.t;
           statuses : Terrat_github_webhooks_link.t;
         }
-        [@@deriving yojson { strict = false; meta = true }, make, show]
+        [@@deriving yojson { strict = false; meta = true }, make, show, eq]
       end
 
       module Assignees = struct
         type t = Terrat_github_webhooks_user.t list
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Base = struct
@@ -37,7 +37,7 @@ module Pull_request_ = struct
           sha : string;
           user : Terrat_github_webhooks_user.t;
         }
-        [@@deriving yojson { strict = false; meta = true }, make, show]
+        [@@deriving yojson { strict = false; meta = true }, make, show, eq]
       end
 
       module Head = struct
@@ -48,16 +48,16 @@ module Pull_request_ = struct
           sha : string;
           user : Terrat_github_webhooks_user.t;
         }
-        [@@deriving yojson { strict = false; meta = true }, make, show]
+        [@@deriving yojson { strict = false; meta = true }, make, show, eq]
       end
 
       module Labels = struct
         type t = Terrat_github_webhooks_label.t list
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Merged_by = struct
-        type t = unit [@@deriving yojson { strict = false; meta = true }, show]
+        type t = unit [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Requested_reviewers = struct
@@ -65,7 +65,7 @@ module Pull_request_ = struct
           type t =
             | User of Terrat_github_webhooks_user.t
             | Team of Terrat_github_webhooks_team.t
-          [@@deriving show]
+          [@@deriving show, eq]
 
           let of_yojson =
             Json_schema.one_of
@@ -80,12 +80,12 @@ module Pull_request_ = struct
             | Team v -> Terrat_github_webhooks_team.to_yojson v
         end
 
-        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Requested_teams = struct
         type t = Terrat_github_webhooks_team.t list
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module State = struct
@@ -95,7 +95,7 @@ module Pull_request_ = struct
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
         type t = (string[@of_yojson t_of_yojson])
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = {
@@ -148,7 +148,7 @@ module Pull_request_ = struct
         url : string;
         user : Terrat_github_webhooks_user.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, make, show]
+      [@@deriving yojson { strict = false; meta = true }, make, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -167,12 +167,12 @@ module Pull_request_ = struct
           self : Terrat_github_webhooks_link.t;
           statuses : Terrat_github_webhooks_link.t;
         }
-        [@@deriving yojson { strict = false; meta = true }, make, show]
+        [@@deriving yojson { strict = false; meta = true }, make, show, eq]
       end
 
       module Assignees = struct
         type t = Terrat_github_webhooks_user.t list
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Base = struct
@@ -183,7 +183,7 @@ module Pull_request_ = struct
           sha : string;
           user : Terrat_github_webhooks_user.t;
         }
-        [@@deriving yojson { strict = false; meta = true }, make, show]
+        [@@deriving yojson { strict = false; meta = true }, make, show, eq]
       end
 
       module Head = struct
@@ -194,16 +194,16 @@ module Pull_request_ = struct
           sha : string;
           user : Terrat_github_webhooks_user.t;
         }
-        [@@deriving yojson { strict = false; meta = true }, make, show]
+        [@@deriving yojson { strict = false; meta = true }, make, show, eq]
       end
 
       module Labels = struct
         type t = Terrat_github_webhooks_label.t list
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Merged_by = struct
-        type t = unit [@@deriving yojson { strict = false; meta = true }, show]
+        type t = unit [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Requested_reviewers = struct
@@ -211,7 +211,7 @@ module Pull_request_ = struct
           type t =
             | User of Terrat_github_webhooks_user.t
             | Team of Terrat_github_webhooks_team.t
-          [@@deriving show]
+          [@@deriving show, eq]
 
           let of_yojson =
             Json_schema.one_of
@@ -226,12 +226,12 @@ module Pull_request_ = struct
             | Team v -> Terrat_github_webhooks_team.to_yojson v
         end
 
-        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Requested_teams = struct
         type t = Terrat_github_webhooks_team.t list
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module State = struct
@@ -241,7 +241,7 @@ module Pull_request_ = struct
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
         type t = (string[@of_yojson t_of_yojson])
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = {
@@ -294,13 +294,13 @@ module Pull_request_ = struct
         url : string;
         user : Terrat_github_webhooks_user.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, make, show]
+      [@@deriving yojson { strict = false; meta = true }, make, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
   end
 
-  type t = T.t [@@deriving yojson { strict = false; meta = true }, show]
+  type t = T.t [@@deriving yojson { strict = false; meta = true }, show, eq]
 
   let of_yojson json =
     let open CCResult in
@@ -316,4 +316,4 @@ type t = {
   repository : Terrat_github_webhooks_repository.t;
   sender : Terrat_github_webhooks_user.t;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

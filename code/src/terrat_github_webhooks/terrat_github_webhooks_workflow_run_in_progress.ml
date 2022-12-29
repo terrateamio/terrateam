@@ -4,7 +4,7 @@ module Action = struct
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
@@ -16,4 +16,4 @@ type t = {
   workflow : Terrat_github_webhooks_workflow.t;
   workflow_run : Terrat_github_webhooks_workflow_run.t;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

@@ -3,10 +3,11 @@ module Root = struct
 
   module Responses = struct
     module OK = struct
-      type t = Githubc2_components.Root.t [@@deriving yojson { strict = false; meta = false }, show]
+      type t = Githubc2_components.Root.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -29,7 +30,7 @@ module Get = struct
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Api_overview.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_modified = struct end
@@ -38,7 +39,7 @@ module Get = struct
       [ `OK of OK.t
       | `Not_modified
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -61,13 +62,13 @@ end
 
 module Get_octocat = struct
   module Parameters = struct
-    type t = { s : string option [@default None] } [@@deriving make, show]
+    type t = { s : string option [@default None] } [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct end
 
-    type t = [ `OK ] [@@deriving show]
+    type t = [ `OK ] [@@deriving show, eq]
 
     let t = [ ("200", fun _ -> Ok `OK) ]
   end
@@ -93,7 +94,7 @@ module Get_zen = struct
   module Responses = struct
     module OK = struct end
 
-    type t = [ `OK ] [@@deriving show]
+    type t = [ `OK ] [@@deriving show, eq]
 
     let t = [ ("200", fun _ -> Ok `OK) ]
   end

@@ -7,7 +7,7 @@ module Items = struct
           html : string option;
           self : string;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -22,7 +22,7 @@ module Items = struct
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
       type t = (string[@of_yojson t_of_yojson])
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     type t = {
@@ -38,10 +38,10 @@ module Items = struct
       type_ : Type.t; [@key "type"]
       url : string;
     }
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
 end
 
-type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]

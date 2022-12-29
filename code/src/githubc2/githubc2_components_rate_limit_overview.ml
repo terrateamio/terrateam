@@ -12,7 +12,7 @@ module Primary = struct
         search : Githubc2_components_rate_limit.t;
         source_import : Githubc2_components_rate_limit.t option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -22,7 +22,7 @@ module Primary = struct
     rate : Githubc2_components_rate_limit.t;
     resources : Resources.t;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

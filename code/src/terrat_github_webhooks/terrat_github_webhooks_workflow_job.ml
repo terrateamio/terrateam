@@ -1,10 +1,10 @@
 module Labels = struct
-  type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+  type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Steps = struct
   type t = Terrat_github_webhooks_workflow_step.t list
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
@@ -29,4 +29,4 @@ type t = {
   steps : Steps.t;
   url : string;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

@@ -31,7 +31,7 @@ module Primary = struct
         should_be_a_record : bool option; [@default None]
         uri : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -69,7 +69,7 @@ module Primary = struct
         should_be_a_record : bool option; [@default None]
         uri : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -79,7 +79,7 @@ module Primary = struct
     alt_domain : Alt_domain.t option; [@default None]
     domain : Domain.t option; [@default None]
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

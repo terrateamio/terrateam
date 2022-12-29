@@ -27,7 +27,7 @@ module Workflow_op_list = Terrat_repo_config_workflow_op_list
 module Workflow_op_plan = Terrat_repo_config_workflow_op_plan
 
 module Event = struct
-  type t = Version_1 of Terrat_repo_config_version_1.t [@@deriving show]
+  type t = Version_1 of Terrat_repo_config_version_1.t [@@deriving show, eq]
 
   let of_yojson =
     Json_schema.one_of

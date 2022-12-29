@@ -2,7 +2,7 @@ module String_map = CCMap.Make (CCString)
 
 module Additional_properties = struct
   module type Primary = sig
-    type t [@@deriving yojson, show]
+    type t [@@deriving yojson, show, eq]
 
     module Yojson_meta : sig
       val keys : string list
@@ -10,19 +10,20 @@ module Additional_properties = struct
   end
 
   module type Additional = sig
-    type t [@@deriving yojson, show]
+    type t [@@deriving yojson, show, eq]
   end
 
   module Make (P : Primary) (A : Additional) = struct
     (* Helper type for printing the string *)
-    type additional_show = (string * A.t) list [@@deriving show]
+    type additional_show = (string * A.t) list [@@deriving show, eq]
 
     type t = {
       primary : P.t;
       additional : A.t String_map.t;
           [@printer fun fmt v -> pp_additional_show fmt (String_map.to_list v)]
+          [@equal fun a b -> equal_additional_show (String_map.to_list a) (String_map.to_list b)]
     }
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let rec additional_of_yojson acc keys = function
       | [] -> Ok acc
@@ -52,11 +53,11 @@ module Additional_properties = struct
 end
 
 module Obj = struct
-  type t = Yojson.Safe.t [@@deriving yojson, show]
+  type t = Yojson.Safe.t [@@deriving yojson, show, eq]
 end
 
 module Empty_obj = struct
-  type t = unit
+  type t = unit [@@deriving eq]
 
   let t = ()
 
@@ -75,7 +76,7 @@ end
 
 module Format = struct
   module Uri = struct
-    type t = Uri.t [@@deriving show]
+    type t = Uri.t [@@deriving show, eq]
 
     let pp fmt uri = Format.pp_print_string fmt (Uri.to_string uri)
     let to_yojson uri = Uri.to_string uri |> [%to_yojson: string]
@@ -87,7 +88,7 @@ module Format = struct
   end
 
   module Uritmpl = struct
-    type t = Uritmpl.t
+    type t = Uritmpl.t [@@deriving eq]
 
     let pp fmt uritmpl = Format.pp_print_string fmt (Uritmpl.to_string uritmpl)
 
@@ -111,7 +112,7 @@ module Format = struct
   end
 
   module Date_time = struct
-    type t = float [@@deriving yojson, show]
+    type t = float [@@deriving yojson, show, eq]
   end
 end
 

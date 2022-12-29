@@ -4,7 +4,7 @@ module Get_all_codes_of_conduct = struct
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Code_of_conduct.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_modified = struct end
@@ -13,7 +13,7 @@ module Get_all_codes_of_conduct = struct
       [ `OK of OK.t
       | `Not_modified
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -36,20 +36,20 @@ end
 
 module Get_conduct_code = struct
   module Parameters = struct
-    type t = { key : string } [@@deriving make, show]
+    type t = { key : string } [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Code_of_conduct.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Not_modified = struct end
 
     module Not_found = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -57,7 +57,7 @@ module Get_conduct_code = struct
       | `Not_modified
       | `Not_found of Not_found.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [

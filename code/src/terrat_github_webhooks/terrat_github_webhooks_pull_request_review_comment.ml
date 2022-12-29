@@ -4,7 +4,7 @@ module Links_ = struct
     pull_request : Terrat_github_webhooks_link.t;
     self : Terrat_github_webhooks_link.t;
   }
-  [@@deriving yojson { strict = false; meta = true }, make, show]
+  [@@deriving yojson { strict = false; meta = true }, make, show, eq]
 end
 
 module Side = struct
@@ -14,7 +14,7 @@ module Side = struct
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
@@ -45,4 +45,4 @@ type t = {
   url : string;
   user : Terrat_github_webhooks_user.t;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

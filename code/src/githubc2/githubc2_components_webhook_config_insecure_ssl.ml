@@ -1,15 +1,15 @@
 module V0 = struct
-  type t = string [@@deriving yojson { strict = false; meta = true }, show]
+  type t = string [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module V1 = struct
-  type t = float [@@deriving yojson { strict = false; meta = true }, show]
+  type t = float [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t =
   | V0 of V0.t
   | V1 of V1.t
-[@@deriving show]
+[@@deriving show, eq]
 
 let of_yojson =
   Json_schema.one_of

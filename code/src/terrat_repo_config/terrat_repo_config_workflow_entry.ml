@@ -5,4 +5,4 @@ type t = {
   terraform_version : string option; [@default None]
   terragrunt : bool; [@default false]
 }
-[@@deriving yojson { strict = true; meta = true }, make, show]
+[@@deriving yojson { strict = true; meta = true }, make, show, eq]

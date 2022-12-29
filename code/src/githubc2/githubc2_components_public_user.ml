@@ -6,7 +6,7 @@ module Plan = struct
       private_repos : int;
       space : int;
     }
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -53,4 +53,4 @@ type t = {
   updated_at : string;
   url : string;
 }
-[@@deriving yojson { strict = true; meta = true }, show]
+[@@deriving yojson { strict = true; meta = true }, show, eq]

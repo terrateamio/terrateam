@@ -1,7 +1,7 @@
 module Primary = struct
   module Assets = struct
     type t = Githubc2_components_release_asset.t list
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -29,7 +29,7 @@ module Primary = struct
     url : string;
     zipball_url : string option;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

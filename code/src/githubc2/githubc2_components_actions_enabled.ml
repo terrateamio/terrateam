@@ -1,1 +1,1 @@
-type t = bool [@@deriving yojson { strict = false; meta = true }, show]
+type t = bool [@@deriving yojson { strict = false; meta = true }, show, eq]

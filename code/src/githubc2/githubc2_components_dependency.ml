@@ -1,5 +1,5 @@
 module Dependencies = struct
-  type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+  type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Relationship = struct
@@ -9,7 +9,7 @@ module Relationship = struct
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Scope = struct
@@ -19,7 +19,7 @@ module Scope = struct
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
@@ -29,4 +29,4 @@ type t = {
   relationship : Relationship.t option; [@default None]
   scope : Scope.t option; [@default None]
 }
-[@@deriving yojson { strict = true; meta = true }, show]
+[@@deriving yojson { strict = true; meta = true }, show, eq]

@@ -1,7 +1,7 @@
 module Primary = struct
   module Statuses = struct
     type t = Githubc2_components_simple_commit_status.t list
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -13,7 +13,7 @@ module Primary = struct
     total_count : int;
     url : string;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

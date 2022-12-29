@@ -4,22 +4,23 @@ module Primary = struct
       module Primary = struct
         module Value = struct
           module V0 = struct
-            type t = string option [@@deriving yojson { strict = false; meta = true }, show]
+            type t = string option [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           module V1 = struct
-            type t = int option [@@deriving yojson { strict = false; meta = true }, show]
+            type t = int option [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           module V2 = struct
-            type t = string list option [@@deriving yojson { strict = false; meta = true }, show]
+            type t = string list option
+            [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           type t =
             | V0 of V0.t
             | V1 of V1.t
             | V2 of V2.t
-          [@@deriving show]
+          [@@deriving show, eq]
 
           let of_yojson =
             Json_schema.one_of
@@ -44,13 +45,13 @@ module Primary = struct
           resource : string option; [@default None]
           value : Value.t option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
-    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -58,7 +59,7 @@ module Primary = struct
     errors : Errors.t option; [@default None]
     message : string;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

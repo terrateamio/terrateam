@@ -7,4 +7,4 @@ type t = {
   superapproval : Terrat_repo_config_access_control_match_list.t option; [@default None]
   tag_query : string;
 }
-[@@deriving yojson { strict = true; meta = true }, make, show]
+[@@deriving yojson { strict = true; meta = true }, make, show, eq]

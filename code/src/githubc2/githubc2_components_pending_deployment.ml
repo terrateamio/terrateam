@@ -8,7 +8,7 @@ module Primary = struct
         node_id : string option; [@default None]
         url : string option; [@default None]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -21,7 +21,7 @@ module Primary = struct
           type t =
             | Simple_user of Githubc2_components_simple_user.t
             | Team of Githubc2_components_team.t
-          [@@deriving show]
+          [@@deriving show, eq]
 
           let of_yojson =
             Json_schema.any_of
@@ -42,13 +42,13 @@ module Primary = struct
           type_ : Githubc2_components_deployment_reviewer_type.t option;
               [@default None] [@key "type"]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
-    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -58,7 +58,7 @@ module Primary = struct
     wait_timer : int;
     wait_timer_started_at : string option;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

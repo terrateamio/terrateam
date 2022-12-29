@@ -87,7 +87,7 @@ module Event = struct
     | Workflow_dispatch_event of Terrat_github_webhooks_workflow_dispatch_event.t
     | Workflow_job_event of Terrat_github_webhooks_workflow_job_event.t
     | Workflow_run_event of Terrat_github_webhooks_workflow_run_event.t
-  [@@deriving show]
+  [@@deriving show, eq]
 
   let of_yojson =
     Json_schema.one_of

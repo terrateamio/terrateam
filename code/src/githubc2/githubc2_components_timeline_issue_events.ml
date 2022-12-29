@@ -21,7 +21,7 @@ type t =
   | Timeline_assigned_issue_event of Githubc2_components_timeline_assigned_issue_event.t
   | Timeline_unassigned_issue_event of Githubc2_components_timeline_unassigned_issue_event.t
   | State_change_issue_event of Githubc2_components_state_change_issue_event.t
-[@@deriving show]
+[@@deriving show, eq]
 
 let of_yojson =
   Json_schema.any_of

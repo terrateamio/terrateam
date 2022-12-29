@@ -5,16 +5,16 @@ module Get_server_statistics = struct
       date_start : string option; [@default None]
       enterprise_or_org : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Server_statistics.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -42,7 +42,7 @@ end
 
 module Set_github_actions_permissions_enterprise = struct
   module Parameters = struct
-    type t = { enterprise : string } [@@deriving make, show]
+    type t = { enterprise : string } [@@deriving make, show, eq]
   end
 
   module Request_body = struct
@@ -51,7 +51,7 @@ module Set_github_actions_permissions_enterprise = struct
         allowed_actions : Githubc2_components.Allowed_actions.t option; [@default None]
         enabled_organizations : Githubc2_components.Enabled_organizations.t;
       }
-      [@@deriving make, yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -60,7 +60,7 @@ module Set_github_actions_permissions_enterprise = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ] [@@deriving show]
+    type t = [ `No_content ] [@@deriving show, eq]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -83,16 +83,16 @@ end
 
 module Get_github_actions_permissions_enterprise = struct
   module Parameters = struct
-    type t = { enterprise : string } [@@deriving make, show]
+    type t = { enterprise : string } [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Actions_enterprise_permissions.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -114,17 +114,17 @@ end
 
 module Set_selected_organizations_enabled_github_actions_enterprise = struct
   module Parameters = struct
-    type t = { enterprise : string } [@@deriving make, show]
+    type t = { enterprise : string } [@@deriving make, show, eq]
   end
 
   module Request_body = struct
     module Primary = struct
       module Selected_organization_ids = struct
-        type t = int list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = int list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = { selected_organization_ids : Selected_organization_ids.t }
-      [@@deriving make, yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -133,7 +133,7 @@ module Set_selected_organizations_enabled_github_actions_enterprise = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ] [@@deriving show]
+    type t = [ `No_content ] [@@deriving show, eq]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -161,7 +161,7 @@ module List_selected_organizations_enabled_github_actions_enterprise = struct
       page : int; [@default 1]
       per_page : int; [@default 30]
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -169,20 +169,20 @@ module List_selected_organizations_enabled_github_actions_enterprise = struct
       module Primary = struct
         module Organizations = struct
           type t = Githubc2_components.Organization_simple.t list
-          [@@deriving yojson { strict = false; meta = false }, show]
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
         end
 
         type t = {
           organizations : Organizations.t;
           total_count : float;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -211,13 +211,13 @@ module Disable_selected_organization_github_actions_enterprise = struct
       enterprise : string;
       org_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ] [@@deriving show]
+    type t = [ `No_content ] [@@deriving show, eq]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -243,13 +243,13 @@ module Enable_selected_organization_github_actions_enterprise = struct
       enterprise : string;
       org_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ] [@@deriving show]
+    type t = [ `No_content ] [@@deriving show, eq]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -271,18 +271,18 @@ end
 
 module Set_allowed_actions_enterprise = struct
   module Parameters = struct
-    type t = { enterprise : string } [@@deriving make, show]
+    type t = { enterprise : string } [@@deriving make, show, eq]
   end
 
   module Request_body = struct
     type t = Githubc2_components.Selected_actions.t
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ] [@@deriving show]
+    type t = [ `No_content ] [@@deriving show, eq]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -305,16 +305,16 @@ end
 
 module Get_allowed_actions_enterprise = struct
   module Parameters = struct
-    type t = { enterprise : string } [@@deriving make, show]
+    type t = { enterprise : string } [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Selected_actions.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -336,21 +336,21 @@ end
 
 module Create_self_hosted_runner_group_for_enterprise = struct
   module Parameters = struct
-    type t = { enterprise : string } [@@deriving make, show]
+    type t = { enterprise : string } [@@deriving make, show, eq]
   end
 
   module Request_body = struct
     module Primary = struct
       module Runners = struct
-        type t = int list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = int list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Selected_organization_ids = struct
-        type t = int list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = int list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Selected_workflows = struct
-        type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Visibility = struct
@@ -360,7 +360,7 @@ module Create_self_hosted_runner_group_for_enterprise = struct
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
         type t = (string[@of_yojson t_of_yojson])
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = {
@@ -372,7 +372,7 @@ module Create_self_hosted_runner_group_for_enterprise = struct
         selected_workflows : Selected_workflows.t option; [@default None]
         visibility : Visibility.t option; [@default None]
       }
-      [@@deriving make, yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -381,10 +381,10 @@ module Create_self_hosted_runner_group_for_enterprise = struct
   module Responses = struct
     module Created = struct
       type t = Githubc2_components.Runner_groups_enterprise.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `Created of Created.t ] [@@deriving show]
+    type t = [ `Created of Created.t ] [@@deriving show, eq]
 
     let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
   end
@@ -413,7 +413,7 @@ module List_self_hosted_runner_groups_for_enterprise = struct
       per_page : int; [@default 30]
       visible_to_organization : string option; [@default None]
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -421,20 +421,20 @@ module List_self_hosted_runner_groups_for_enterprise = struct
       module Primary = struct
         module Runner_groups = struct
           type t = Githubc2_components.Runner_groups_enterprise.t list
-          [@@deriving yojson { strict = false; meta = false }, show]
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
         end
 
         type t = {
           runner_groups : Runner_groups.t;
           total_count : float;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -467,13 +467,13 @@ module Update_self_hosted_runner_group_for_enterprise = struct
       enterprise : string;
       runner_group_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Request_body = struct
     module Primary = struct
       module Selected_workflows = struct
-        type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Visibility = struct
@@ -483,7 +483,7 @@ module Update_self_hosted_runner_group_for_enterprise = struct
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
         type t = (string[@of_yojson t_of_yojson])
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = {
@@ -493,7 +493,7 @@ module Update_self_hosted_runner_group_for_enterprise = struct
         selected_workflows : Selected_workflows.t option; [@default None]
         visibility : Visibility.t; [@default "all"]
       }
-      [@@deriving make, yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -502,10 +502,10 @@ module Update_self_hosted_runner_group_for_enterprise = struct
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Runner_groups_enterprise.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -535,13 +535,13 @@ module Delete_self_hosted_runner_group_from_enterprise = struct
       enterprise : string;
       runner_group_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ] [@@deriving show]
+    type t = [ `No_content ] [@@deriving show, eq]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -570,16 +570,16 @@ module Get_self_hosted_runner_group_for_enterprise = struct
       enterprise : string;
       runner_group_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Runner_groups_enterprise.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -608,17 +608,17 @@ module Set_org_access_to_self_hosted_runner_group_in_enterprise = struct
       enterprise : string;
       runner_group_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Request_body = struct
     module Primary = struct
       module Selected_organization_ids = struct
-        type t = int list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = int list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = { selected_organization_ids : Selected_organization_ids.t }
-      [@@deriving make, yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -627,7 +627,7 @@ module Set_org_access_to_self_hosted_runner_group_in_enterprise = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ] [@@deriving show]
+    type t = [ `No_content ] [@@deriving show, eq]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -659,7 +659,7 @@ module List_org_access_to_self_hosted_runner_group_in_enterprise = struct
       per_page : int; [@default 30]
       runner_group_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -667,20 +667,20 @@ module List_org_access_to_self_hosted_runner_group_in_enterprise = struct
       module Primary = struct
         module Organizations = struct
           type t = Githubc2_components.Organization_simple.t list
-          [@@deriving yojson { strict = false; meta = false }, show]
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
         end
 
         type t = {
           organizations : Organizations.t;
           total_count : float;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -713,13 +713,13 @@ module Remove_org_access_to_self_hosted_runner_group_in_enterprise = struct
       org_id : int;
       runner_group_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ] [@@deriving show]
+    type t = [ `No_content ] [@@deriving show, eq]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -751,13 +751,13 @@ module Add_org_access_to_self_hosted_runner_group_in_enterprise = struct
       org_id : int;
       runner_group_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ] [@@deriving show]
+    type t = [ `No_content ] [@@deriving show, eq]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -788,17 +788,17 @@ module Set_self_hosted_runners_in_group_for_enterprise = struct
       enterprise : string;
       runner_group_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Request_body = struct
     module Primary = struct
       module Runners = struct
-        type t = int list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = int list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = { runners : Runners.t }
-      [@@deriving make, yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -807,7 +807,7 @@ module Set_self_hosted_runners_in_group_for_enterprise = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ] [@@deriving show]
+    type t = [ `No_content ] [@@deriving show, eq]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -839,7 +839,7 @@ module List_self_hosted_runners_in_group_for_enterprise = struct
       per_page : int; [@default 30]
       runner_group_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -847,20 +847,20 @@ module List_self_hosted_runners_in_group_for_enterprise = struct
       module Primary = struct
         module Runners = struct
           type t = Githubc2_components.Runner.t list
-          [@@deriving yojson { strict = false; meta = false }, show]
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
         end
 
         type t = {
           runners : Runners.t;
           total_count : float;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -893,13 +893,13 @@ module Remove_self_hosted_runner_from_group_for_enterprise = struct
       runner_group_id : int;
       runner_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ] [@@deriving show]
+    type t = [ `No_content ] [@@deriving show, eq]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -930,13 +930,13 @@ module Add_self_hosted_runner_to_group_for_enterprise = struct
       runner_group_id : int;
       runner_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ] [@@deriving show]
+    type t = [ `No_content ] [@@deriving show, eq]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -967,7 +967,7 @@ module List_self_hosted_runners_for_enterprise = struct
       page : int; [@default 1]
       per_page : int; [@default 30]
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -975,20 +975,20 @@ module List_self_hosted_runners_for_enterprise = struct
       module Primary = struct
         module Runners = struct
           type t = Githubc2_components.Runner.t list
-          [@@deriving yojson { strict = false; meta = false }, show]
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
         end
 
         type t = {
           runners : Runners.t option; [@default None]
           total_count : float option; [@default None]
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1013,16 +1013,16 @@ end
 
 module List_runner_applications_for_enterprise = struct
   module Parameters = struct
-    type t = { enterprise : string } [@@deriving make, show]
+    type t = { enterprise : string } [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Runner_application.t list
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1044,16 +1044,16 @@ end
 
 module Create_registration_token_for_enterprise = struct
   module Parameters = struct
-    type t = { enterprise : string } [@@deriving make, show]
+    type t = { enterprise : string } [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module Created = struct
       type t = Githubc2_components.Authentication_token.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `Created of Created.t ] [@@deriving show]
+    type t = [ `Created of Created.t ] [@@deriving show, eq]
 
     let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
   end
@@ -1075,16 +1075,16 @@ end
 
 module Create_remove_token_for_enterprise = struct
   module Parameters = struct
-    type t = { enterprise : string } [@@deriving make, show]
+    type t = { enterprise : string } [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module Created = struct
       type t = Githubc2_components.Authentication_token.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `Created of Created.t ] [@@deriving show]
+    type t = [ `Created of Created.t ] [@@deriving show, eq]
 
     let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
   end
@@ -1110,13 +1110,13 @@ module Delete_self_hosted_runner_from_enterprise = struct
       enterprise : string;
       runner_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ] [@@deriving show]
+    type t = [ `No_content ] [@@deriving show, eq]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -1144,16 +1144,16 @@ module Get_self_hosted_runner_for_enterprise = struct
       enterprise : string;
       runner_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Runner.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -1181,7 +1181,7 @@ module Remove_all_custom_labels_from_self_hosted_runner_for_enterprise = struct
       enterprise : string;
       runner_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -1189,14 +1189,14 @@ module Remove_all_custom_labels_from_self_hosted_runner_for_enterprise = struct
       module Primary = struct
         module Labels = struct
           type t = Githubc2_components.Runner_label.t list
-          [@@deriving yojson { strict = false; meta = false }, show]
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
         end
 
         type t = {
           labels : Labels.t;
           total_count : int;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1204,12 +1204,12 @@ module Remove_all_custom_labels_from_self_hosted_runner_for_enterprise = struct
 
     module Not_found = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error_simple.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -1217,7 +1217,7 @@ module Remove_all_custom_labels_from_self_hosted_runner_for_enterprise = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -1251,16 +1251,17 @@ module Add_custom_labels_to_self_hosted_runner_for_enterprise = struct
       enterprise : string;
       runner_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Request_body = struct
     module Primary = struct
       module Labels = struct
-        type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
-      type t = { labels : Labels.t } [@@deriving make, yojson { strict = false; meta = true }, show]
+      type t = { labels : Labels.t }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1271,14 +1272,14 @@ module Add_custom_labels_to_self_hosted_runner_for_enterprise = struct
       module Primary = struct
         module Labels = struct
           type t = Githubc2_components.Runner_label.t list
-          [@@deriving yojson { strict = false; meta = false }, show]
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
         end
 
         type t = {
           labels : Labels.t;
           total_count : int;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1286,12 +1287,12 @@ module Add_custom_labels_to_self_hosted_runner_for_enterprise = struct
 
     module Not_found = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error_simple.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -1299,7 +1300,7 @@ module Add_custom_labels_to_self_hosted_runner_for_enterprise = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -1334,16 +1335,17 @@ module Set_custom_labels_for_self_hosted_runner_for_enterprise = struct
       enterprise : string;
       runner_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Request_body = struct
     module Primary = struct
       module Labels = struct
-        type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
-      type t = { labels : Labels.t } [@@deriving make, yojson { strict = false; meta = true }, show]
+      type t = { labels : Labels.t }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1354,14 +1356,14 @@ module Set_custom_labels_for_self_hosted_runner_for_enterprise = struct
       module Primary = struct
         module Labels = struct
           type t = Githubc2_components.Runner_label.t list
-          [@@deriving yojson { strict = false; meta = false }, show]
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
         end
 
         type t = {
           labels : Labels.t;
           total_count : int;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1369,12 +1371,12 @@ module Set_custom_labels_for_self_hosted_runner_for_enterprise = struct
 
     module Not_found = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error_simple.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -1382,7 +1384,7 @@ module Set_custom_labels_for_self_hosted_runner_for_enterprise = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -1417,7 +1419,7 @@ module List_labels_for_self_hosted_runner_for_enterprise = struct
       enterprise : string;
       runner_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -1425,14 +1427,14 @@ module List_labels_for_self_hosted_runner_for_enterprise = struct
       module Primary = struct
         module Labels = struct
           type t = Githubc2_components.Runner_label.t list
-          [@@deriving yojson { strict = false; meta = false }, show]
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
         end
 
         type t = {
           labels : Labels.t;
           total_count : int;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1440,14 +1442,14 @@ module List_labels_for_self_hosted_runner_for_enterprise = struct
 
     module Not_found = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
       [ `OK of OK.t
       | `Not_found of Not_found.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -1480,7 +1482,7 @@ module Remove_custom_label_from_self_hosted_runner_for_enterprise = struct
       name : string;
       runner_id : int;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -1488,14 +1490,14 @@ module Remove_custom_label_from_self_hosted_runner_for_enterprise = struct
       module Primary = struct
         module Labels = struct
           type t = Githubc2_components.Runner_label.t list
-          [@@deriving yojson { strict = false; meta = false }, show]
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
         end
 
         type t = {
           labels : Labels.t;
           total_count : int;
         }
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -1503,12 +1505,12 @@ module Remove_custom_label_from_self_hosted_runner_for_enterprise = struct
 
     module Not_found = struct
       type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error_simple.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
@@ -1516,7 +1518,7 @@ module Remove_custom_label_from_self_hosted_runner_for_enterprise = struct
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [

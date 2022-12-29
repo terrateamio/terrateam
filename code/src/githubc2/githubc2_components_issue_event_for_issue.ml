@@ -14,7 +14,7 @@ type t =
   | Moved_column_in_project_issue_event of Githubc2_components_moved_column_in_project_issue_event.t
   | Removed_from_project_issue_event of Githubc2_components_removed_from_project_issue_event.t
   | Converted_note_to_issue_issue_event of Githubc2_components_converted_note_to_issue_issue_event.t
-[@@deriving show]
+[@@deriving show, eq]
 
 let of_yojson =
   Json_schema.any_of

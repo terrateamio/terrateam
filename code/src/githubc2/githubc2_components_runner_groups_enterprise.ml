@@ -1,6 +1,6 @@
 module Primary = struct
   module Selected_workflows = struct
-    type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -15,7 +15,7 @@ module Primary = struct
     visibility : string;
     workflow_restrictions_read_only : bool; [@default false]
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

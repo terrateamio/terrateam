@@ -2,7 +2,7 @@ module Primary = struct
   module Allow_deletions = struct
     module Primary = struct
       type t = { enabled : bool option [@default None] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -11,7 +11,7 @@ module Primary = struct
   module Allow_force_pushes = struct
     module Primary = struct
       type t = { enabled : bool option [@default None] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -20,7 +20,7 @@ module Primary = struct
   module Block_creations = struct
     module Primary = struct
       type t = { enabled : bool option [@default None] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -29,7 +29,7 @@ module Primary = struct
   module Required_conversation_resolution = struct
     module Primary = struct
       type t = { enabled : bool option [@default None] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -38,7 +38,7 @@ module Primary = struct
   module Required_linear_history = struct
     module Primary = struct
       type t = { enabled : bool option [@default None] }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -50,7 +50,7 @@ module Primary = struct
         enabled : bool;
         url : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -75,7 +75,7 @@ module Primary = struct
     restrictions : Githubc2_components_branch_restriction_policy.t option; [@default None]
     url : string option; [@default None]
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

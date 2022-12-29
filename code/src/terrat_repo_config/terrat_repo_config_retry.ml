@@ -4,4 +4,4 @@ type t = {
   initial_sleep : int; [@default 5]
   tries : int; [@default 3]
 }
-[@@deriving yojson { strict = true; meta = true }, make, show]
+[@@deriving yojson { strict = true; meta = true }, make, show, eq]

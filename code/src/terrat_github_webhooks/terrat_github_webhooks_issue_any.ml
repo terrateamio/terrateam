@@ -6,4 +6,4 @@ type t = {
   repository : Terrat_github_webhooks_repository.t;
   sender : Terrat_github_webhooks_user.t;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

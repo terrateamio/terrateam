@@ -1,15 +1,15 @@
 module Primary = struct
   module Exclude = struct
     module Items = struct
-      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
+      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
-    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Repositories = struct
     type t = Githubc2_components_repository.t list
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -32,7 +32,7 @@ module Primary = struct
     updated_at : string;
     url : string;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

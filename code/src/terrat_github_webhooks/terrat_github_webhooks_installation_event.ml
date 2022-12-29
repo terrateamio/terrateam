@@ -5,7 +5,7 @@ type t =
       Terrat_github_webhooks_installation_new_permissions_accepted.t
   | Installation_suspend of Terrat_github_webhooks_installation_suspend.t
   | Installation_unsuspend of Terrat_github_webhooks_installation_unsuspend.t
-[@@deriving show]
+[@@deriving show, eq]
 
 let of_yojson =
   Json_schema.one_of

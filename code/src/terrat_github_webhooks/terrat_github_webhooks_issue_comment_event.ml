@@ -3,7 +3,7 @@ type t =
   | Issue_comment_deleted of Terrat_github_webhooks_issue_comment_deleted.t
   | Issue_comment_edited of Terrat_github_webhooks_issue_comment_edited.t
   | Issue_any of Terrat_github_webhooks_issue_any.t
-[@@deriving show]
+[@@deriving show, eq]
 
 let of_yojson =
   Json_schema.any_of

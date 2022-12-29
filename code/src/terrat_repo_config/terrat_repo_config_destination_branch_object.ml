@@ -1,9 +1,9 @@
 module Source_branches = struct
-  type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+  type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
   branch : string;
   source_branches : Source_branches.t option; [@default None]
 }
-[@@deriving yojson { strict = true; meta = true }, make, show]
+[@@deriving yojson { strict = true; meta = true }, make, show, eq]

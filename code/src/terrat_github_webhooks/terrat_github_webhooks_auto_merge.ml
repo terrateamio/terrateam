@@ -4,4 +4,4 @@ type t = {
   enabled_by : Terrat_github_webhooks_user.t;
   merge_method : string;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

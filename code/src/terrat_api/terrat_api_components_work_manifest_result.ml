@@ -4,4 +4,4 @@ type t = {
   success : bool;
   workspace : string;
 }
-[@@deriving yojson { strict = true; meta = true }, show]
+[@@deriving yojson { strict = true; meta = true }, show, eq]

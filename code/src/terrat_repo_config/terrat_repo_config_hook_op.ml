@@ -3,7 +3,7 @@ type t =
   | Hook_op_slack of Terrat_repo_config_hook_op_slack.t
   | Hook_op_env_exec of Terrat_repo_config_hook_op_env_exec.t
   | Hook_op_env_source of Terrat_repo_config_hook_op_env_source.t
-[@@deriving show]
+[@@deriving show, eq]
 
 let of_yojson =
   Json_schema.one_of

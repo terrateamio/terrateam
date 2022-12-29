@@ -3,7 +3,7 @@ module Primary = struct
     module Primary = struct
       module Html = struct
         module Primary = struct
-          type t = { href : string } [@@deriving yojson { strict = false; meta = true }, show]
+          type t = { href : string } [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -11,7 +11,7 @@ module Primary = struct
 
       module Pull_request_ = struct
         module Primary = struct
-          type t = { href : string } [@@deriving yojson { strict = false; meta = true }, show]
+          type t = { href : string } [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -19,7 +19,7 @@ module Primary = struct
 
       module Self = struct
         module Primary = struct
-          type t = { href : string } [@@deriving yojson { strict = false; meta = true }, show]
+          type t = { href : string } [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -30,7 +30,7 @@ module Primary = struct
         pull_request : Pull_request_.t;
         self : Self.t;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -43,7 +43,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Start_side = struct
@@ -53,7 +53,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -86,7 +86,7 @@ module Primary = struct
     url : string;
     user : Githubc2_components_simple_user.t;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

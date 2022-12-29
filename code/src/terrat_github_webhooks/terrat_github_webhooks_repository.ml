@@ -1,16 +1,16 @@
 module Created_at = struct
   module V0 = struct
-    type t = int [@@deriving yojson { strict = false; meta = true }, show]
+    type t = int [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module V1 = struct
-    type t = string [@@deriving yojson { strict = false; meta = true }, show]
+    type t = string [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t =
     | V0 of V0.t
     | V1 of V1.t
-  [@@deriving show]
+  [@@deriving show, eq]
 
   let of_yojson =
     Json_schema.one_of
@@ -27,7 +27,7 @@ end
 
 module Permissions = struct
   module Additional = struct
-    type t = bool [@@deriving yojson { strict = false; meta = true }, show]
+    type t = bool [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Additional)
@@ -35,17 +35,17 @@ end
 
 module Pushed_at = struct
   module V0 = struct
-    type t = int [@@deriving yojson { strict = false; meta = true }, show]
+    type t = int [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module V1 = struct
-    type t = string [@@deriving yojson { strict = false; meta = true }, show]
+    type t = string [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t =
     | V0 of V0.t
     | V1 of V1.t
-  [@@deriving show]
+  [@@deriving show, eq]
 
   let of_yojson =
     Json_schema.one_of
@@ -61,7 +61,7 @@ module Pushed_at = struct
 end
 
 module Topics = struct
-  type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+  type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
@@ -155,4 +155,4 @@ type t = {
   watchers : int;
   watchers_count : int;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

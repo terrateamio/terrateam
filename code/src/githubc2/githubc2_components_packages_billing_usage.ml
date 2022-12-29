@@ -4,7 +4,7 @@ module Primary = struct
     total_gigabytes_bandwidth_used : int;
     total_paid_gigabytes_bandwidth_used : int;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

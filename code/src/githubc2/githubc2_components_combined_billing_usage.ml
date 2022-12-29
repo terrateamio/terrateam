@@ -4,7 +4,7 @@ module Primary = struct
     estimated_paid_storage_for_month : int;
     estimated_storage_for_month : int;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

@@ -1,10 +1,10 @@
 module Commits = struct
   type t = Terrat_github_webhooks_commit.t list
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Head_commit = struct
-  type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show]
+  type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
@@ -24,4 +24,4 @@ type t = {
   repository : Terrat_github_webhooks_repository.t;
   sender : Terrat_github_webhooks_user.t;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

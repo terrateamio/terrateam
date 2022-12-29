@@ -362,8 +362,8 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
       ~field_name_of_schema
       ~module_name_of_ref:(module_name_of_ref base_module_name "paths")
       ~module_name_of_field_name:module_name_of_string
-      ~prim_type_attrs:Gen.(deriving [ show_deriver ])
-      ~record_type_attrs:(fun _ -> Gen.(deriving [ make_deriver; show_deriver ]))
+      ~prim_type_attrs:Gen.(deriving [ show_deriver; eq_deriver ])
+      ~record_type_attrs:(fun _ -> Gen.(deriving [ make_deriver; show_deriver; eq_deriver ]))
       ~record_field_attrs
       ~resolve_ref:(resolve_schema_ref components)
       ~variant_name_of_ref:(module_name_of_ref base_module_name "paths")
@@ -425,9 +425,11 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
         ~field_name_of_schema
         ~module_name_of_ref:(module_name_of_ref base_module_name "paths")
         ~module_name_of_field_name:module_name_of_string
-        ~prim_type_attrs:Gen.(deriving [ yojson_deriver ~meta:true (); show_deriver ])
+        ~prim_type_attrs:Gen.(deriving [ yojson_deriver ~meta:true (); show_deriver; eq_deriver ])
         ~record_type_attrs:(fun strict ->
-          Gen.(deriving [ make_deriver; yojson_deriver ~strict ~meta:true (); show_deriver ]))
+          Gen.(
+            deriving
+              [ make_deriver; yojson_deriver ~strict ~meta:true (); show_deriver; eq_deriver ]))
         ~record_field_attrs
         ~resolve_ref:(resolve_schema_ref components)
         ~variant_name_of_ref:(module_name_of_ref base_module_name "paths")
@@ -469,9 +471,9 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
         ~field_name_of_schema
         ~module_name_of_ref:(module_name_of_ref base_module_name "paths")
         ~module_name_of_field_name:module_name_of_string
-        ~prim_type_attrs:Gen.(deriving [ yojson_deriver ~meta:false (); show_deriver ])
+        ~prim_type_attrs:Gen.(deriving [ yojson_deriver ~meta:false (); show_deriver; eq_deriver ])
         ~record_type_attrs:(fun strict ->
-          Gen.(deriving [ yojson_deriver ~strict (); show_deriver ]))
+          Gen.(deriving [ yojson_deriver ~strict (); show_deriver; eq_deriver ]))
         ~record_field_attrs
         ~resolve_ref:(resolve_schema_ref components)
         ~variant_name_of_ref:(module_name_of_ref base_module_name "paths")
@@ -513,7 +515,7 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
                  Asttypes.Recursive
                  [
                    Type.mk
-                     ~attrs:Gen.(deriving [ show_deriver ])
+                     ~attrs:Gen.(deriving [ show_deriver; eq_deriver ])
                      ~manifest:
                        (Typ.variant
                           (CCList.map
@@ -697,8 +699,9 @@ let convert_str_components
       ~field_name_of_schema
       ~module_name_of_ref
       ~module_name_of_field_name:(module_name_of_field_name components)
-      ~prim_type_attrs:Gen.(deriving [ yojson_deriver (); show_deriver ])
-      ~record_type_attrs:(fun strict -> Gen.(deriving [ yojson_deriver ~strict (); show_deriver ]))
+      ~prim_type_attrs:Gen.(deriving [ yojson_deriver (); show_deriver; eq_deriver ])
+      ~record_type_attrs:(fun strict ->
+        Gen.(deriving [ yojson_deriver ~strict (); show_deriver; eq_deriver ]))
       ~record_field_attrs
       ~resolve_ref:(resolve_schema_ref components)
       ~variant_name_of_ref

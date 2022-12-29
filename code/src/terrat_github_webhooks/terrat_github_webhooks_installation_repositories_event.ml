@@ -1,7 +1,7 @@
 type t =
   | Installation_repositories_added of Terrat_github_webhooks_installation_repositories_added.t
   | Installation_repositories_removed of Terrat_github_webhooks_installation_repositories_removed.t
-[@@deriving show]
+[@@deriving show, eq]
 
 let of_yojson =
   Json_schema.one_of

@@ -10,13 +10,13 @@ module Primary = struct
                   duration_ms : int;
                   job_id : int;
                 }
-                [@@deriving yojson { strict = false; meta = true }, show]
+                [@@deriving yojson { strict = false; meta = true }, show, eq]
               end
 
               include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
             end
 
-            type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+            type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           type t = {
@@ -24,7 +24,7 @@ module Primary = struct
             jobs : int;
             total_ms : int;
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -39,13 +39,13 @@ module Primary = struct
                   duration_ms : int;
                   job_id : int;
                 }
-                [@@deriving yojson { strict = false; meta = true }, show]
+                [@@deriving yojson { strict = false; meta = true }, show, eq]
               end
 
               include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
             end
 
-            type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+            type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           type t = {
@@ -53,7 +53,7 @@ module Primary = struct
             jobs : int;
             total_ms : int;
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -68,13 +68,13 @@ module Primary = struct
                   duration_ms : int;
                   job_id : int;
                 }
-                [@@deriving yojson { strict = false; meta = true }, show]
+                [@@deriving yojson { strict = false; meta = true }, show, eq]
               end
 
               include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
             end
 
-            type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+            type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           type t = {
@@ -82,7 +82,7 @@ module Primary = struct
             jobs : int;
             total_ms : int;
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -93,7 +93,7 @@ module Primary = struct
         ubuntu : UBUNTU.t option; [@default None] [@key "UBUNTU"]
         windows : WINDOWS.t option; [@default None] [@key "WINDOWS"]
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -103,7 +103,7 @@ module Primary = struct
     billable : Billable.t;
     run_duration_ms : int option; [@default None]
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

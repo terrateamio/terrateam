@@ -255,6 +255,7 @@ module Gen = struct
 
   let show_deriver = Ast_helper.Exp.ident (Location.mknoloc (ident [ "show" ]))
   let make_deriver = Ast_helper.Exp.ident (Location.mknoloc (ident [ "make" ]))
+  let eq_deriver = Ast_helper.Exp.ident (Location.mknoloc (ident [ "eq" ]))
 
   let of_yojson_attr name =
     [
@@ -700,7 +701,7 @@ let rec convert_str_schema (config : Config.t) =
       @ Gen.
           [
             make_variant_type
-              ~attrs:(deriving [ show_deriver ])
+              ~attrs:(deriving [ show_deriver; eq_deriver ])
               (Config.tidx_to_string config)
               variants;
           ]
@@ -783,7 +784,7 @@ let rec convert_str_schema (config : Config.t) =
       @ Gen.
           [
             make_variant_type
-              ~attrs:(deriving [ show_deriver ])
+              ~attrs:(deriving [ show_deriver; eq_deriver ])
               (Config.tidx_to_string config)
               variants;
           ]

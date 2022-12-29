@@ -9,7 +9,7 @@ module Primary = struct
             type_ : string; [@key "type"]
             wait_timer : int option; [@default None]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -24,7 +24,7 @@ module Primary = struct
                   type t =
                     | Simple_user of Githubc2_components_simple_user.t
                     | Team of Githubc2_components_team.t
-                  [@@deriving show]
+                  [@@deriving show, eq]
 
                   let of_yojson =
                     Json_schema.any_of
@@ -45,13 +45,13 @@ module Primary = struct
                   type_ : Githubc2_components_deployment_reviewer_type.t option;
                       [@default None] [@key "type"]
                 }
-                [@@deriving yojson { strict = false; meta = true }, show]
+                [@@deriving yojson { strict = false; meta = true }, show, eq]
               end
 
               include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
             end
 
-            type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+            type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
           type t = {
@@ -60,7 +60,7 @@ module Primary = struct
             reviewers : Reviewers.t option; [@default None]
             type_ : string; [@key "type"]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -73,7 +73,7 @@ module Primary = struct
             node_id : string;
             type_ : string; [@key "type"]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -83,7 +83,7 @@ module Primary = struct
         | V0 of V0.t
         | V1 of V1.t
         | V2 of V2.t
-      [@@deriving show]
+      [@@deriving show, eq]
 
       let of_yojson =
         Json_schema.any_of
@@ -100,7 +100,7 @@ module Primary = struct
         | V2 v -> V2.to_yojson v
     end
 
-    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -115,7 +115,7 @@ module Primary = struct
     updated_at : string;
     url : string;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

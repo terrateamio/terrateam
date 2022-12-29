@@ -2,29 +2,29 @@ module String_map : module type of CCMap.Make (CCString)
 
 module Format : sig
   module Uri : sig
-    type t = Uri.t [@@deriving yojson, show]
+    type t = Uri.t [@@deriving yojson, show, eq]
   end
 
   module Uritmpl : sig
-    type t = Uritmpl.t [@@deriving yojson, show]
+    type t = Uritmpl.t [@@deriving yojson, show, eq]
   end
 
   module Date_time : sig
-    type t = float [@@deriving yojson, show]
+    type t = float [@@deriving yojson, show, eq]
   end
 end
 
 (** This serializes into a Yojson.Safe.t but guarantees that the it's an object,
    not a scalar such as [string] or [int] *)
 module Obj : sig
-  type t = Yojson.Safe.t [@@deriving yojson, show]
+  type t = Yojson.Safe.t [@@deriving yojson, show, eq]
 end
 
 (** Represents an object with no elements to be serialized/deserialized.  This
    does not ensure that the object is empty, just that the any object is
    accepted and none of its attributes are serialized/deserialized. *)
 module Empty_obj : sig
-  type t [@@deriving yojson, show]
+  type t [@@deriving yojson, show, eq]
 
   val t : t
 
@@ -40,7 +40,7 @@ end
    decoding the additional parts. *)
 module Additional_properties : sig
   module type Primary = sig
-    type t [@@deriving yojson, show]
+    type t [@@deriving yojson, show, eq]
 
     module Yojson_meta : sig
       val keys : string list
@@ -48,7 +48,7 @@ module Additional_properties : sig
   end
 
   module type Additional = sig
-    type t [@@deriving yojson, show]
+    type t [@@deriving yojson, show, eq]
   end
 
   module Make (P : Primary) (A : Additional) : sig
@@ -56,7 +56,7 @@ module Additional_properties : sig
       primary : P.t;
       additional : A.t String_map.t;
     }
-    [@@deriving yojson, show]
+    [@@deriving yojson, show, eq]
 
     val make : ?additional:A.t String_map.t -> P.t -> t
     val value : t -> P.t

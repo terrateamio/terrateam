@@ -1,12 +1,12 @@
 module Remove_restrictions_for_org = struct
   module Parameters = struct
-    type t = { org : string } [@@deriving make, show]
+    type t = { org : string } [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ] [@@deriving show]
+    type t = [ `No_content ] [@@deriving show, eq]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -28,30 +28,30 @@ end
 
 module Set_restrictions_for_org = struct
   module Parameters = struct
-    type t = { org : string } [@@deriving make, show]
+    type t = { org : string } [@@deriving make, show, eq]
   end
 
   module Request_body = struct
     type t = Githubc2_components.Interaction_limit.t
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Interaction_limit_response.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
       [ `OK of OK.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -79,7 +79,7 @@ end
 
 module Get_restrictions_for_org = struct
   module Parameters = struct
-    type t = { org : string } [@@deriving make, show]
+    type t = { org : string } [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -91,7 +91,7 @@ module Get_restrictions_for_org = struct
       type t =
         | V0 of Githubc2_components.Interaction_limit_response.t
         | V1 of V1.t
-      [@@deriving show]
+      [@@deriving show, eq]
 
       let of_yojson =
         Json_schema.any_of
@@ -107,7 +107,7 @@ module Get_restrictions_for_org = struct
         | V1 v -> V1.to_yojson v
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -133,7 +133,7 @@ module Remove_restrictions_for_repo = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -144,7 +144,7 @@ module Remove_restrictions_for_repo = struct
       [ `No_content
       | `Conflict
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t = [ ("204", fun _ -> Ok `No_content); ("409", fun _ -> Ok `Conflict) ]
   end
@@ -170,18 +170,18 @@ module Set_restrictions_for_repo = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Request_body = struct
     type t = Githubc2_components.Interaction_limit.t
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Interaction_limit_response.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Conflict = struct end
@@ -190,7 +190,7 @@ module Set_restrictions_for_repo = struct
       [ `OK of OK.t
       | `Conflict
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -220,7 +220,7 @@ module Get_restrictions_for_repo = struct
       owner : string;
       repo : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -232,7 +232,7 @@ module Get_restrictions_for_repo = struct
       type t =
         | V0 of Githubc2_components.Interaction_limit_response.t
         | V1 of V1.t
-      [@@deriving show]
+      [@@deriving show, eq]
 
       let of_yojson =
         Json_schema.any_of
@@ -248,7 +248,7 @@ module Get_restrictions_for_repo = struct
         | V1 v -> V1.to_yojson v
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
@@ -274,7 +274,7 @@ module Remove_restrictions_for_authenticated_user = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ] [@@deriving show]
+    type t = [ `No_content ] [@@deriving show, eq]
 
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
@@ -296,25 +296,25 @@ module Set_restrictions_for_authenticated_user = struct
 
   module Request_body = struct
     type t = Githubc2_components.Interaction_limit.t
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Githubc2_components.Interaction_limit_response.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     type t =
       [ `OK of OK.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -349,7 +349,7 @@ module Get_restrictions_for_authenticated_user = struct
       type t =
         | V0 of Githubc2_components.Interaction_limit_response.t
         | V1 of V1.t
-      [@@deriving show]
+      [@@deriving show, eq]
 
       let of_yojson =
         Json_schema.any_of
@@ -371,7 +371,7 @@ module Get_restrictions_for_authenticated_user = struct
       [ `OK of OK.t
       | `No_content
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [

@@ -151,11 +151,17 @@ let convert_def strict_records definitions module_base def =
        ~field_name_of_schema
        ~module_name_of_ref:(module_name_of_ref module_base)
        ~module_name_of_field_name:(module_name_of_field_name definitions)
-       ~prim_type_attrs:Json_schema_conv.Gen.(deriving [ yojson_deriver (); show_deriver ])
+       ~prim_type_attrs:
+         Json_schema_conv.Gen.(deriving [ yojson_deriver (); show_deriver; eq_deriver ])
        ~record_type_attrs:(fun strict ->
          Json_schema_conv.Gen.(
            deriving
-             [ yojson_deriver ~strict:(strict && strict_records) (); make_deriver; show_deriver ]))
+             [
+               yojson_deriver ~strict:(strict && strict_records) ();
+               make_deriver;
+               show_deriver;
+               eq_deriver;
+             ]))
        ~record_field_attrs:(fun schema name required ->
          let field_name = field_name_of_schema name in
          CCList.flatten

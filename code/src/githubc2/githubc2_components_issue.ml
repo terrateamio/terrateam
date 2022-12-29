@@ -1,13 +1,13 @@
 module Primary = struct
   module Assignees = struct
     type t = Githubc2_components_simple_user.t list
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Labels = struct
     module Items = struct
       module V0 = struct
-        type t = string [@@deriving yojson { strict = false; meta = true }, show]
+        type t = string [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module V1 = struct
@@ -21,7 +21,7 @@ module Primary = struct
             node_id : string option; [@default None]
             url : string option; [@default None]
           }
-          [@@deriving yojson { strict = false; meta = true }, show]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -30,7 +30,7 @@ module Primary = struct
       type t =
         | V0 of V0.t
         | V1 of V1.t
-      [@@deriving show]
+      [@@deriving show, eq]
 
       let of_yojson =
         Json_schema.one_of
@@ -45,7 +45,7 @@ module Primary = struct
         | V1 v -> V1.to_yojson v
     end
 
-    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Pull_request_ = struct
@@ -57,7 +57,7 @@ module Primary = struct
         patch_url : string option;
         url : string option;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -71,7 +71,7 @@ module Primary = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -110,7 +110,7 @@ module Primary = struct
     url : string;
     user : Githubc2_components_nullable_simple_user.t option;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

@@ -1,6 +1,6 @@
 module Results = struct
   module Parameters = struct
-    type t = { work_manifest_id : string } [@@deriving make, show]
+    type t = { work_manifest_id : string } [@@deriving make, show, eq]
   end
 
   module Request_body = struct
@@ -9,14 +9,14 @@ module Results = struct
         outputs : Terrat_api_components.Hook_outputs.t;
         success : bool;
       }
-      [@@deriving make, yojson { strict = true; meta = true }, show]
+      [@@deriving make, yojson { strict = true; meta = true }, show, eq]
     end
 
     type t = {
       dirspaces : Terrat_api_components.Work_manifest_results.t;
       overall : Overall.t;
     }
-    [@@deriving make, yojson { strict = true; meta = true }, show]
+    [@@deriving make, yojson { strict = true; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -27,7 +27,7 @@ module Results = struct
       [ `OK
       | `Forbidden
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t = [ ("200", fun _ -> Ok `OK); ("403", fun _ -> Ok `Forbidden) ]
   end
@@ -50,18 +50,18 @@ end
 
 module Initiate = struct
   module Parameters = struct
-    type t = { work_manifest_id : string } [@@deriving make, show]
+    type t = { work_manifest_id : string } [@@deriving make, show, eq]
   end
 
   module Request_body = struct
     type t = Terrat_api_components.Work_manifest_initiate.t
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
     module OK = struct
       type t = Terrat_api_components.Work_manifest.t
-      [@@deriving yojson { strict = false; meta = false }, show]
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Forbidden = struct end
@@ -70,7 +70,7 @@ module Initiate = struct
       [ `OK of OK.t
       | `Forbidden
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [
@@ -96,12 +96,12 @@ end
 
 module Plan_create = struct
   module Parameters = struct
-    type t = { work_manifest_id : string } [@@deriving make, show]
+    type t = { work_manifest_id : string } [@@deriving make, show, eq]
   end
 
   module Request_body = struct
     type t = Terrat_api_components.Plan_create.t
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -112,7 +112,7 @@ module Plan_create = struct
       [ `OK
       | `Forbidden
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t = [ ("200", fun _ -> Ok `OK); ("403", fun _ -> Ok `Forbidden) ]
   end
@@ -140,15 +140,15 @@ module Plan_get = struct
       work_manifest_id : string;
       workspace : string;
     }
-    [@@deriving make, show]
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
     module OK = struct
-      type t = { data : string } [@@deriving yojson { strict = true; meta = true }, show]
+      type t = { data : string } [@@deriving yojson { strict = true; meta = true }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end

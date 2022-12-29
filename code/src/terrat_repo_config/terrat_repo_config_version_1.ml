@@ -5,24 +5,24 @@ module Apply_requirements = struct
         count : int; [@default 1]
         enabled : bool; [@default false]
       }
-      [@@deriving yojson { strict = true; meta = true }, make, show]
+      [@@deriving yojson { strict = true; meta = true }, make, show, eq]
     end
 
     module Merge_conflicts = struct
       type t = { enabled : bool [@default true] }
-      [@@deriving yojson { strict = true; meta = true }, make, show]
+      [@@deriving yojson { strict = true; meta = true }, make, show, eq]
     end
 
     module Status_checks = struct
       module Ignore_matching = struct
-        type t = string list [@@deriving yojson { strict = false; meta = true }, show]
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = {
         enabled : bool; [@default true]
         ignore_matching : Ignore_matching.t option; [@default None]
       }
-      [@@deriving yojson { strict = true; meta = true }, make, show]
+      [@@deriving yojson { strict = true; meta = true }, make, show, eq]
     end
 
     type t = {
@@ -30,14 +30,14 @@ module Apply_requirements = struct
       merge_conflicts : Merge_conflicts.t option; [@default None]
       status_checks : Status_checks.t option; [@default None]
     }
-    [@@deriving yojson { strict = true; meta = true }, make, show]
+    [@@deriving yojson { strict = true; meta = true }, make, show, eq]
   end
 
   type t = {
     checks : Checks.t option; [@default None]
     create_pending_apply_check : bool; [@default true]
   }
-  [@@deriving yojson { strict = true; meta = true }, make, show]
+  [@@deriving yojson { strict = true; meta = true }, make, show, eq]
 end
 
 module Checkout_strategy = struct
@@ -47,7 +47,7 @@ module Checkout_strategy = struct
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Cost_estimation = struct
@@ -57,7 +57,7 @@ module Cost_estimation = struct
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -65,7 +65,7 @@ module Cost_estimation = struct
     enabled : bool; [@default true]
     provider : Provider.t; [@default "infracost"]
   }
-  [@@deriving yojson { strict = true; meta = true }, make, show]
+  [@@deriving yojson { strict = true; meta = true }, make, show, eq]
 end
 
 module Destination_branches = struct
@@ -73,7 +73,7 @@ module Destination_branches = struct
     type t =
       | Destination_branch_name of Terrat_repo_config_destination_branch_name.t
       | Destination_branch_object of Terrat_repo_config_destination_branch_object.t
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let of_yojson =
       Json_schema.one_of
@@ -94,7 +94,7 @@ module Destination_branches = struct
       | Destination_branch_object v -> Terrat_repo_config_destination_branch_object.to_yojson v
   end
 
-  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Dirs = struct
@@ -106,7 +106,7 @@ module Hooks = struct
     apply : Terrat_repo_config_hook.t option; [@default None]
     plan : Terrat_repo_config_hook.t option; [@default None]
   }
-  [@@deriving yojson { strict = true; meta = true }, make, show]
+  [@@deriving yojson { strict = true; meta = true }, make, show, eq]
 end
 
 module Version = struct
@@ -115,12 +115,12 @@ module Version = struct
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Workflows = struct
   type t = Terrat_repo_config_workflow_entry.t list
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
@@ -140,4 +140,4 @@ type t = {
   when_modified : Terrat_repo_config_when_modified.t option; [@default None]
   workflows : Workflows.t option; [@default None]
 }
-[@@deriving yojson { strict = true; meta = true }, make, show]
+[@@deriving yojson { strict = true; meta = true }, make, show, eq]

@@ -8,10 +8,10 @@ module Cost_estimation = struct
         total_monthly_cost : float;
         workspace : string;
       }
-      [@@deriving yojson { strict = true; meta = true }, show]
+      [@@deriving yojson { strict = true; meta = true }, show, eq]
     end
 
-    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -21,8 +21,8 @@ module Cost_estimation = struct
     prev_monthly_cost : float;
     total_monthly_cost : float;
   }
-  [@@deriving yojson { strict = true; meta = true }, show]
+  [@@deriving yojson { strict = true; meta = true }, show, eq]
 end
 
 type t = { cost_estimation : Cost_estimation.t }
-[@@deriving yojson { strict = true; meta = true }, show]
+[@@deriving yojson { strict = true; meta = true }, show, eq]

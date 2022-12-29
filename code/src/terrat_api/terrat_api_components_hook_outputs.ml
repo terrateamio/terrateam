@@ -3,7 +3,7 @@ module Post = struct
     type t =
       | Workflow_output_run of Terrat_api_components_workflow_output_run.t
       | Workflow_output_env of Terrat_api_components_workflow_output_env.t
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let of_yojson =
       Json_schema.one_of
@@ -24,7 +24,7 @@ module Post = struct
       | Workflow_output_env v -> Terrat_api_components_workflow_output_env.to_yojson v
   end
 
-  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Pre = struct
@@ -34,7 +34,7 @@ module Pre = struct
       | Workflow_output_env of Terrat_api_components_workflow_output_env.t
       | Workflow_output_checkout of Terrat_api_components_workflow_output_checkout.t
       | Workflow_output_cost_estimation of Terrat_api_components_workflow_output_cost_estimation.t
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let of_yojson =
       Json_schema.one_of
@@ -66,11 +66,11 @@ module Pre = struct
           Terrat_api_components_workflow_output_cost_estimation.to_yojson v
   end
 
-  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show]
+  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
   post : Post.t;
   pre : Pre.t;
 }
-[@@deriving yojson { strict = true; meta = true }, show]
+[@@deriving yojson { strict = true; meta = true }, show, eq]

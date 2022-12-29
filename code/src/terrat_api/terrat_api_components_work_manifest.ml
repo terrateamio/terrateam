@@ -2,7 +2,7 @@ type t =
   | Work_manifest_plan of Terrat_api_components_work_manifest_plan.t
   | Work_manifest_apply of Terrat_api_components_work_manifest_apply.t
   | Work_manifest_unsafe_apply of Terrat_api_components_work_manifest_unsafe_apply.t
-[@@deriving show]
+[@@deriving show, eq]
 
 let of_yojson =
   Json_schema.one_of

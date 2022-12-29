@@ -1,6 +1,6 @@
 module Policies = struct
   type t = Terrat_repo_config_access_control_policy.t list
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
@@ -11,4 +11,4 @@ type t = {
   terrateam_config_update : Terrat_repo_config_access_control_match_list.t option; [@default None]
   unlock : Terrat_repo_config_access_control_match_list.t option; [@default None]
 }
-[@@deriving yojson { strict = true; meta = true }, make, show]
+[@@deriving yojson { strict = true; meta = true }, make, show, eq]

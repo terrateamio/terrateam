@@ -1,7 +1,7 @@
 module Primary = struct
   module Labels = struct
     type t = Githubc2_components_runner_label.t list
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -12,7 +12,7 @@ module Primary = struct
     os : string;
     status : string;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

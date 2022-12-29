@@ -1,13 +1,13 @@
 module Completed_at = struct
-  type t = unit [@@deriving yojson { strict = false; meta = true }, show]
+  type t = unit [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Conclusion = struct
-  type t = unit [@@deriving yojson { strict = false; meta = true }, show]
+  type t = unit [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Started_at = struct
-  type t = unit [@@deriving yojson { strict = false; meta = true }, show]
+  type t = unit [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Status = struct
@@ -16,7 +16,7 @@ module Status = struct
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
@@ -27,4 +27,4 @@ type t = {
   started_at : Started_at.t;
   status : Status.t;
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]

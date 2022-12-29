@@ -1,7 +1,7 @@
 module Primary = struct
   module Clones = struct
     type t = Githubc2_components_traffic.t list
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -9,7 +9,7 @@ module Primary = struct
     count : int;
     uniques : int;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

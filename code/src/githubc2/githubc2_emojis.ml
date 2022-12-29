@@ -4,7 +4,7 @@ module Get = struct
   module Responses = struct
     module OK = struct
       module Additional = struct
-        type t = string [@@deriving yojson { strict = false; meta = false }, show]
+        type t = string [@@deriving yojson { strict = false; meta = false }, show, eq]
       end
 
       include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Additional)
@@ -16,7 +16,7 @@ module Get = struct
       [ `OK of OK.t
       | `Not_modified
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t =
       [

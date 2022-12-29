@@ -10,7 +10,7 @@ module Render = struct
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
         type t = (string[@of_yojson t_of_yojson])
-        [@@deriving yojson { strict = false; meta = true }, show]
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = {
@@ -18,7 +18,7 @@ module Render = struct
         mode : Mode.t; [@default "markdown"]
         text : string;
       }
-      [@@deriving make, yojson { strict = false; meta = true }, show]
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
@@ -32,7 +32,7 @@ module Render = struct
       [ `OK
       | `Not_modified
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t = [ ("200", fun _ -> Ok `OK); ("304", fun _ -> Ok `Not_modified) ]
   end
@@ -61,7 +61,7 @@ module Render_raw = struct
       [ `OK
       | `Not_modified
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
 
     let t = [ ("200", fun _ -> Ok `OK); ("304", fun _ -> Ok `Not_modified) ]
   end

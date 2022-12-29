@@ -6,14 +6,14 @@ module Primary = struct
         name : string;
         url : string;
       }
-      [@@deriving yojson { strict = false; meta = true }, show]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
   end
 
   module Scopes = struct
-    type t = string list option [@@deriving yojson { strict = false; meta = true }, show]
+    type t = string list option [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -33,7 +33,7 @@ module Primary = struct
     url : string;
     user : Githubc2_components_nullable_simple_user.t option; [@default None]
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

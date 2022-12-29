@@ -1,21 +1,21 @@
 module Additional = struct
   module V0 = struct
-    type t = string option [@@deriving yojson { strict = false; meta = true }, show]
+    type t = string option [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module V1 = struct
-    type t = float option [@@deriving yojson { strict = false; meta = true }, show]
+    type t = float option [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module V2 = struct
-    type t = bool option [@@deriving yojson { strict = false; meta = true }, show]
+    type t = bool option [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t =
     | V0 of V0.t
     | V1 of V1.t
     | V2 of V2.t
-  [@@deriving show]
+  [@@deriving show, eq]
 
   let of_yojson =
     Json_schema.any_of

@@ -1,12 +1,12 @@
 module Primary = struct
   module Pull_requests = struct
     type t = Githubc2_components_pull_request_minimal.t list
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Referenced_workflows = struct
     type t = Githubc2_components_referenced_workflow.t list
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -47,7 +47,7 @@ module Primary = struct
     workflow_id : int;
     workflow_url : string;
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

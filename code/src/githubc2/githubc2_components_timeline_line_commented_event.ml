@@ -1,7 +1,7 @@
 module Primary = struct
   module Comments = struct
     type t = Githubc2_components_pull_request_review_comment.t list
-    [@@deriving yojson { strict = false; meta = true }, show]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
@@ -9,7 +9,7 @@ module Primary = struct
     event : string option; [@default None]
     node_id : string option; [@default None]
   }
-  [@@deriving yojson { strict = false; meta = true }, show]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

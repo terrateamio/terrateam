@@ -4,4 +4,4 @@ type t = {
   name : string;
   username : string option; [@default None]
 }
-[@@deriving yojson { strict = false; meta = true }, make, show]
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]
