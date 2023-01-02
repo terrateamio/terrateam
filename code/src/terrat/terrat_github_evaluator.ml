@@ -1437,6 +1437,8 @@ module Ev = struct
     let ignore_matching =
       CCOption.get_or ~default:[] status_checks.Ar.Checks.Status_checks.ignore_matching
     in
+    if CCOption.is_none (Pull_request.mergeable pull_request) then
+      Logs.debug (fun m -> m "GITHUB_EVALUATOR : %s : MERGEABLE_NONE" (T.request_id event));
     (* Convert all patterns and ignore those that don't compile.  This eats
        errors.
 
