@@ -650,11 +650,9 @@ module Ev = struct
   let fetch_diff ~request_id ~access_token ~owner ~repo ~base_sha head_sha =
     let open Abbs_future_combinators.Infix_result_monad in
     Terrat_github.compare_commits ~access_token ~owner ~repo (base_sha, head_sha)
-    >>= function
-    | [] -> Abb.Future.return (Error `Bad_compare_response)
-    | files ->
-        let diff = diff_of_github_diff files in
-        Abb.Future.return (Ok diff)
+    >>= fun files ->
+    let diff = diff_of_github_diff files in
+    Abb.Future.return (Ok diff)
 
   module Pull_request = struct
     type t = (int64, Terrat_change.Diff.t list, bool) Terrat_pull_request.t
@@ -908,15 +906,6 @@ module Ev = struct
               owner
               repo
               (Terrat_github.show_get_installation_access_token_err err));
-        Abb.Future.return (Error `Error)
-    | Error `Bad_compare_response ->
-        Logs.info (fun m ->
-            m
-              "GITHUB_EVALUATOR : %s : NO_FILES_CHANGED : %s : %s : %d"
-              (T.request_id event)
-              owner
-              repo
-              event.T.pull_number);
         Abb.Future.return (Error `Error)
 
   let query_pull_request_out_of_diff_applies db event pull_request =
