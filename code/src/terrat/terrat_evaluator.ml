@@ -929,7 +929,10 @@ module Make (S : S) = struct
                   let existing_dirs =
                     Event.Dir_set.filter
                       (function
-                        | "." | "./" -> true
+                        | "." ->
+                            (* The root directory is always there, because...it
+                               has to be. *)
+                            true
                         | d ->
                             let d = d ^ "/" in
                             CCList.exists (CCString.prefix ~pre:d) repo_tree)
