@@ -898,33 +898,77 @@ let test_bad_dir_config_s3 =
       let changes = Terrat_change_match.match_diff_list dirs diff in
       assert (CCList.length changes = 1))
 
+let test_module_dir_with_root_dir =
+  Oth.test ~name:"Test module dir with root dir" (fun _ ->
+      let dirs_config =
+        CCResult.get_exn
+          (Terrat_repo_config.Version_1.of_yojson
+             (`Assoc
+               [
+                 ( "when_modified",
+                   `Assoc
+                     [
+                       ( "file_patterns",
+                         `List [ `String "**/*.tf"; `String "**/*.tfvars"; `String "**/*.json" ] );
+                       ("autoplan", `Bool false);
+                       ("autoapply", `Bool true);
+                     ] );
+                 ( "dirs",
+                   `Assoc
+                     [
+                       ( "module",
+                         `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ] );
+                       ( ".",
+                         `Assoc
+                           [
+                             ( "when_modified",
+                               `Assoc
+                                 [
+                                   ( "file_patterns",
+                                     `List [ `String "./*.tf"; `String "module/**/*.tf" ] );
+                                 ] );
+                           ] );
+                     ] );
+               ]))
+      in
+      let diff = Terrat_change.Diff.[ Add { filename = "module/foo.tf" } ] in
+      let dirs =
+        CCResult.get_exn
+          (Terrat_change_match.synthesize_dir_config
+             ~file_list:[ "foo.tf"; "module/foo/tf.tf" ]
+             dirs_config)
+      in
+      let changes = Terrat_change_match.match_diff_list dirs diff in
+      assert (CCList.length changes = 1))
+
 let test =
   Oth.parallel
     [
-      (* test_simple;
-       * test_workflow_idx;
-       * test_dir_match;
-       * test_dirspace_map;
-       * test_dir_file_pattern;
-       * test_workflow_idx_tag_in_dir;
-       * test_workflow_idx_multiple_dirs;
-       * test_workflow_override; *)
+      test_simple;
+      test_workflow_idx;
+      test_dir_match;
+      test_dirspace_map;
+      test_dir_file_pattern;
+      test_workflow_idx_tag_in_dir;
+      test_workflow_idx_multiple_dirs;
+      test_workflow_override;
       test_dir_config_iam;
-      (* test_dir_config_ebl;
-       * test_dir_config_ebl_modules;
-       * test_dir_config_ebl_and_modules;
-       * test_dir_config_s3;
-       * test_dir_config_lambda_json;
-       * test_dir_config_module;
-       * test_dir_config_null_file_patterns;
-       * test_recursive_dirs_template_dir;
-       * test_recursive_dirs_aws_prod;
-       * test_recursive_dirs_tags;
-       * test_bad_glob;
-       * test_bad_dir_config_iam;
-       * test_bad_dir_config_ec2;
-       * test_bad_dir_config_ec2_root_dir_change;
-       * test_bad_dir_config_s3; *)
+      test_dir_config_ebl;
+      test_dir_config_ebl_modules;
+      test_dir_config_ebl_and_modules;
+      test_dir_config_s3;
+      test_dir_config_lambda_json;
+      test_dir_config_module;
+      test_dir_config_null_file_patterns;
+      test_recursive_dirs_template_dir;
+      test_recursive_dirs_aws_prod;
+      test_recursive_dirs_tags;
+      (* test_bad_glob; *)
+      test_bad_dir_config_iam;
+      test_bad_dir_config_ec2;
+      (* test_bad_dir_config_ec2_root_dir_change; *)
+      test_bad_dir_config_s3;
+      test_module_dir_with_root_dir;
     ]
 
 let () =

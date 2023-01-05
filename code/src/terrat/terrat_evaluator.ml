@@ -928,9 +928,11 @@ module Make (S : S) = struct
                   in
                   let existing_dirs =
                     Event.Dir_set.filter
-                      (fun d ->
-                        let d = d ^ "/" in
-                        CCList.exists (CCString.prefix ~pre:d) repo_tree)
+                      (function
+                        | "." | "./" -> true
+                        | d ->
+                            let d = d ^ "/" in
+                            CCList.exists (CCString.prefix ~pre:d) repo_tree)
                       dirs
                   in
                   let missing_dirs = Event.Dir_set.diff dirs existing_dirs in
