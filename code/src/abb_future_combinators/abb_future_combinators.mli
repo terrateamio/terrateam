@@ -98,11 +98,16 @@ module Make (Fut : Abb_intf.Future.S) : sig
      abort it *)
   val timeout : timeout:unit Fut.t -> 'a Fut.t -> [ `Ok of 'a | `Timeout ] Fut.t
 
-  (** Perform an operation [f], and [test] if it is a success or not.  Returning
-      [true] means success.  If it is, return the value.  Otherwise run a
-      function [betwixt] between runs and then call [f] again.  Exceptions are
-      not handled as part of the retry process. *)
-  val retry : f:(unit -> 'a Fut.t) -> test:('a -> bool) -> betwixt:('a -> unit Fut.t) -> 'a Fut.t
+  (** Perform an operation [f], and call [while_] on the result.  If [while_]
+      returns [true] it means to try again. If [false] then return the value.
+      Otherwise run a function [betwixt] between runs and then call [f] again.
+      Exceptions are not handled as part of the retry process. *)
+  val retry : f:(unit -> 'a Fut.t) -> while_:('a -> bool) -> betwixt:('a -> unit Fut.t) -> 'a Fut.t
+
+  (** Try, at most, the number of [tries] given.  If there are remaining tries,
+      call the test function which corresponds to the [while_] in the {!retry}
+      function. *)
+  val finite_tries : int -> ('a -> bool) -> 'a -> bool
 
   module List : sig
     val map : f:('a -> 'b Fut.t) -> 'a list -> 'b list Fut.t

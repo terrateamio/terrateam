@@ -164,12 +164,21 @@ module Make (Fut : Abb_intf.Future.S) = struct
     | (`Ok _ as r), fut -> Fut.abort fut >>| fun () -> r
     | `Timeout, fut -> Fut.abort fut >>| fun () -> `Timeout
 
-  let rec retry ~f ~test ~betwixt =
+  let rec retry ~f ~while_ ~betwixt =
     let open Fut.Infix_monad in
     f ()
     >>= function
-    | r when test r -> Fut.return r
-    | r -> betwixt r >>= fun () -> retry ~f ~test ~betwixt
+    | r when while_ r -> betwixt r >>= fun () -> retry ~f ~while_ ~betwixt
+    | r -> Fut.return r
+
+  let finite_tries num_tries while_ =
+    assert (num_tries > 0);
+    let num_tries = ref num_tries in
+    function
+    | r when !num_tries > 0 ->
+        decr num_tries;
+        while_ r
+    | _ -> false
 
   module Infix_result_monad = struct
     type ('a, 'b) t = ('a, 'b) result Fut.t
