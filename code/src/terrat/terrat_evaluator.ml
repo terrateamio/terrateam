@@ -43,6 +43,10 @@ module Metrics = struct
   let aborted_errors_total = Terrat_metrics.errors_total ~m:subsystem ~t:"aborted"
   let exn_errors_total = Terrat_metrics.errors_total ~m:subsystem ~t:"exn"
 
+  let op_on_pull_request_not_mergeable =
+    let help = "Count of operations on a pull requests that are not mergeable" in
+    Prmths.Counter.v ~help ~namespace ~subsystem "op_on_pull_request_no_mergeable"
+
   let dirspaces_per_work_manifest =
     let help = "Number of dirspaces per work manifest" in
     Dirspaces_per_work_manifest_histogram.v_label
@@ -67,7 +71,7 @@ module Event = struct
       | Repo_config_parse_failure of string
       | Repo_config_failure of string
       | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
-      | Pull_request_not_mergeable of 'pull_request
+      | Pull_request_not_mergeable
       | Apply_no_matching_dirspaces
       | Plan_no_matching_dirspaces
       | Dest_branch_no_match of 'pull_request
@@ -220,7 +224,6 @@ module type S = sig
       val diff : t -> Terrat_change.Diff.t list
       val state : t -> Terrat_pull_request.State.t
       val passed_all_checks : t -> bool
-      val mergeable : t -> bool option
       val is_draft_pr : t -> bool
       val branch_name : t -> string
     end
@@ -256,17 +259,25 @@ module type S = sig
     val store_pull_request :
       Pgsql_io.t -> T.t -> Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
 
-    val fetch_repo_config :
+    val fetch_base_repo_config :
       T.t ->
-      Pull_request.t ->
-      string ->
       ( Terrat_repo_config.Version_1.t,
         [> `Repo_config_parse_err of string | `Repo_config_err of string ] )
       result
       Abb.Future.t
 
-    val fetch_pull_request : T.t -> (Pull_request.t, [> `Error ]) result Abb.Future.t
-    val fetch_tree : T.t -> sha:string -> (string list, [> `Error ]) result Abb.Future.t
+    val fetch_repo_config :
+      T.t ->
+      Pull_request.t ->
+      ( Terrat_repo_config.Version_1.t,
+        [> `Repo_config_parse_err of string | `Repo_config_err of string ] )
+      result
+      Abb.Future.t
+
+    val fetch_pull_request :
+      T.t -> (Pull_request.t, [> `Merge_conflict | `Error ]) result Abb.Future.t
+
+    val fetch_tree : T.t -> Pull_request.t -> (string list, [> `Error ]) result Abb.Future.t
 
     val check_apply_requirements :
       T.t ->
@@ -587,14 +598,6 @@ module Make (S : S) = struct
       let plan_require_all_dirspace_access t = t.config.Ac.plan_require_all_dirspace_access
       let apply_require_all_dirspace_access t = t.config.Ac.apply_require_all_dirspace_access
     end
-
-    let can_apply_checkout_strategy repo_config pull_request =
-      match
-        ( S.Event.Pull_request.mergeable pull_request,
-          repo_config.Terrat_repo_config.Version_1.checkout_strategy )
-      with
-      | Some mergeable, "merge" -> mergeable
-      | (Some _ | _), _ -> true
 
     let create_and_store_work_manifest
         db
@@ -1120,6 +1123,31 @@ module Make (S : S) = struct
       in
       eval_destination_branch_match dest_branch source_branch valid_branches
 
+    let perform_unlock storage event =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Abbs_time_it.run (log_time event "FETCHING_DEST_REPO_CONFIG") (fun () ->
+          S.Event.fetch_base_repo_config event)
+      >>= fun repo_default_config ->
+      let access_control = Access_control_engine.make event repo_default_config in
+      let open Abb.Future.Infix_monad in
+      Access_control_engine.eval_pr_operation access_control `Unlock
+      >>= function
+      | Ok None ->
+          Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"allowed");
+          let open Abbs_future_combinators.Infix_result_monad in
+          S.Event.unlock_pull_request storage event
+          >>= fun () -> Abb.Future.return (Ok (Some Event.Msg.Unlock_success))
+      | Ok (Some match_list) ->
+          Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"denied");
+          Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`Unlock match_list))))
+      | Error `Error ->
+          Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"denied");
+          Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied `Lookup_err)))
+      | Error (`Invalid_query query) ->
+          Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"denied");
+          Abb.Future.return
+            (Ok (Some (Event.Msg.Access_control_denied (`Terrateam_config_update_bad_query query))))
+
     let handle_branches_error event pull_request msg_fragment =
       match S.Event.T.event_type event with
       | Event.Event_type.Autoplan | Event.Event_type.Autoapply ->
@@ -1143,14 +1171,13 @@ module Make (S : S) = struct
 
     let fetch_default_repo_config event pull_request =
       let open Abbs_future_combinators.Infix_result_monad in
-      S.Event.fetch_repo_config event pull_request (S.Event.T.default_branch event)
+      S.Event.fetch_base_repo_config event
       >>| fun repo_default_config ->
       match is_valid_destination_branch event pull_request repo_default_config with
       | Ok () -> Ok repo_default_config
       | Error _ as err -> err
 
-    let run' storage event =
-      let module Run_type = Terrat_work_manifest.Pull_request.Run_type in
+    let perform_terraform_operation storage event operation =
       let open Abbs_future_combinators.Infix_result_monad in
       Abbs_time_it.run (log_time event "FETCHING_PULL_REQUEST") (fun () ->
           S.Event.fetch_pull_request event)
@@ -1163,109 +1190,76 @@ module Make (S : S) = struct
         (fun repo_config repo_default_config repo_tree ->
           (repo_config, repo_default_config, repo_tree))
         <$> Abbs_time_it.run (log_time event "FETCHING_REPO_CONFIG") (fun () ->
-                S.Event.fetch_repo_config
-                  event
-                  pull_request
-                  (S.Event.Pull_request.hash pull_request))
+                S.Event.fetch_repo_config event pull_request)
         <*> Abbs_time_it.run (log_time event "FETCHING_DEST_REPO_CONFIG") (fun () ->
                 fetch_default_repo_config event pull_request)
         <*> Abbs_time_it.run (log_time event "FETCHING_REPO_TREE") (fun () ->
-                S.Event.fetch_tree event ~sha:(S.Event.Pull_request.hash pull_request)))
+                S.Event.fetch_tree event pull_request))
       >>= fun (repo_config, repo_default_config, repo_tree) ->
       match repo_default_config with
       | Ok repo_default_config ->
-          if repo_default_config.Terrat_repo_config.Version_1.enabled then
+          if repo_default_config.Terrat_repo_config.Version_1.enabled then (
             let access_control = Access_control_engine.make event repo_default_config in
-            match Event.Event_type.to_op_class (S.Event.T.event_type event) with
-            | Event.Op_class.Pull_request `Unlock -> (
+            match S.Event.Pull_request.state pull_request with
+            | Terrat_pull_request.State.(Open | Merged _) -> (
                 let open Abb.Future.Infix_monad in
-                Access_control_engine.eval_pr_operation access_control `Unlock
+                Access_control_engine.eval_repo_config
+                  access_control
+                  (S.Event.Pull_request.diff pull_request)
                 >>= function
                 | Ok None ->
-                    Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"allowed");
-                    let open Abbs_future_combinators.Infix_result_monad in
-                    S.Event.unlock_pull_request storage event
-                    >>= fun () -> Abb.Future.return (Ok (Some Event.Msg.Unlock_success))
+                    Prmths.Counter.inc_one
+                      (Metrics.access_control_total
+                         ~t:(Event.Op_class.to_string operation)
+                         ~r:"allowed");
+                    exec_event
+                      access_control
+                      storage
+                      event
+                      pull_request
+                      repo_config
+                      repo_tree
+                      operation
                 | Ok (Some match_list) ->
-                    Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"denied");
+                    Prmths.Counter.inc_one
+                      (Metrics.access_control_total
+                         ~t:(Event.Op_class.to_string operation)
+                         ~r:"denied");
                     Abb.Future.return
-                      (Ok (Some (Event.Msg.Access_control_denied (`Unlock match_list))))
+                      (Ok
+                         (Some
+                            (Event.Msg.Access_control_denied (`Terrateam_config_update match_list))))
                 | Error `Error ->
-                    Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"denied");
+                    Prmths.Counter.inc_one
+                      (Metrics.access_control_total
+                         ~t:(Event.Op_class.to_string operation)
+                         ~r:"denied");
                     Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied `Lookup_err)))
                 | Error (`Invalid_query query) ->
-                    Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"denied");
+                    Prmths.Counter.inc_one
+                      (Metrics.access_control_total
+                         ~t:(Event.Op_class.to_string operation)
+                         ~r:"denied");
                     Abb.Future.return
                       (Ok
                          (Some
                             (Event.Msg.Access_control_denied
                                (`Terrateam_config_update_bad_query query)))))
-            | Event.Op_class.Terraform operation -> (
-                match S.Event.Pull_request.state pull_request with
-                | Terrat_pull_request.State.(Open | Merged _)
-                  when can_apply_checkout_strategy repo_config pull_request -> (
-                    let open Abb.Future.Infix_monad in
-                    Access_control_engine.eval_repo_config
-                      access_control
-                      (S.Event.Pull_request.diff pull_request)
-                    >>= function
-                    | Ok None ->
-                        Prmths.Counter.inc_one
-                          (Metrics.access_control_total
-                             ~t:(Event.Op_class.to_string operation)
-                             ~r:"allowed");
-                        exec_event
-                          access_control
-                          storage
-                          event
-                          pull_request
-                          repo_config
-                          repo_tree
-                          operation
-                    | Ok (Some match_list) ->
-                        Prmths.Counter.inc_one
-                          (Metrics.access_control_total
-                             ~t:(Event.Op_class.to_string operation)
-                             ~r:"denied");
-                        Abb.Future.return
-                          (Ok
-                             (Some
-                                (Event.Msg.Access_control_denied
-                                   (`Terrateam_config_update match_list))))
-                    | Error `Error ->
-                        Prmths.Counter.inc_one
-                          (Metrics.access_control_total
-                             ~t:(Event.Op_class.to_string operation)
-                             ~r:"denied");
-                        Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied `Lookup_err)))
-                    | Error (`Invalid_query query) ->
-                        Prmths.Counter.inc_one
-                          (Metrics.access_control_total
-                             ~t:(Event.Op_class.to_string operation)
-                             ~r:"denied");
-                        Abb.Future.return
-                          (Ok
-                             (Some
-                                (Event.Msg.Access_control_denied
-                                   (`Terrateam_config_update_bad_query query)))))
-                | Terrat_pull_request.State.(Open | Merged _) ->
-                    (* Cannot apply checkout strategy *)
-                    Logs.info (fun m ->
-                        m
-                          "EVALUATOR : %s : CANNOT_APPLY_CHECKOUT_STRATEGY"
-                          (S.Event.T.request_id event));
-                    Abb.Future.return
-                      (Ok (Some (Event.Msg.Pull_request_not_mergeable pull_request)))
-                | Terrat_pull_request.State.Closed ->
-                    Logs.info (fun m ->
-                        m "EVALUATOR : %s : NOOP : PR_CLOSED" (S.Event.T.request_id event));
-                    Abb.Future.return (Ok None))
+            | Terrat_pull_request.State.Closed ->
+                Logs.info (fun m ->
+                    m "EVALUATOR : %s : NOOP : PR_CLOSED" (S.Event.T.request_id event));
+                Abb.Future.return (Ok None))
           else (
             Logs.info (fun m ->
                 m "EVALUATOR : %s : NOOP : REPO_CONFIG_DISABLED" (S.Event.T.request_id event));
             Abb.Future.return (Ok None))
       | Error `No_matching_dest_branch -> handle_branches_error event pull_request "DEST"
       | Error `No_matching_source_branch -> handle_branches_error event pull_request "SOURCE"
+
+    let run' storage event =
+      match Event.Event_type.to_op_class (S.Event.T.event_type event) with
+      | Event.Op_class.Pull_request `Unlock -> perform_unlock storage event
+      | Event.Op_class.Terraform operation -> perform_terraform_operation storage event operation
 
     let eval storage event =
       Abb.Future.await_bind
@@ -1276,6 +1270,11 @@ module Make (S : S) = struct
                   Abbs_time_it.run (log_time event "PUBLISH_MSG") (fun () ->
                       S.Event.publish_msg event msg)
               | Ok None -> Abb.Future.return ()
+              | Error `Merge_conflict ->
+                  Prmths.Counter.inc_one Metrics.op_on_pull_request_not_mergeable;
+                  Logs.debug (fun m ->
+                      m "EVALUATOR : %s : MERGE_CONFLICT" (S.Event.T.request_id event));
+                  S.Event.publish_msg event Event.Msg.Pull_request_not_mergeable
               | Error (`Bad_glob s) ->
                   Logs.err (fun m ->
                       m "EVALUATOR : %s : BAD_GLOB : %s" (S.Event.T.request_id event) s);

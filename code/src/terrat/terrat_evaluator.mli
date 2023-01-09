@@ -16,7 +16,7 @@ module Event : sig
       | Repo_config_parse_failure of string
       | Repo_config_failure of string
       | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
-      | Pull_request_not_mergeable of 'pull_request
+      | Pull_request_not_mergeable
       | Apply_no_matching_dirspaces
       | Plan_no_matching_dirspaces
       | Dest_branch_no_match of 'pull_request
@@ -99,7 +99,6 @@ module type S = sig
       val diff : t -> Terrat_change.Diff.t list
       val state : t -> Terrat_pull_request.State.t
       val passed_all_checks : t -> bool
-      val mergeable : t -> bool option
       val is_draft_pr : t -> bool
       val branch_name : t -> string
     end
@@ -135,17 +134,25 @@ module type S = sig
     val store_pull_request :
       Pgsql_io.t -> T.t -> Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
 
-    val fetch_repo_config :
+    val fetch_base_repo_config :
       T.t ->
-      Pull_request.t ->
-      string ->
       ( Terrat_repo_config.Version_1.t,
         [> `Repo_config_parse_err of string | `Repo_config_err of string ] )
       result
       Abb.Future.t
 
-    val fetch_pull_request : T.t -> (Pull_request.t, [> `Error ]) result Abb.Future.t
-    val fetch_tree : T.t -> sha:string -> (string list, [> `Error ]) result Abb.Future.t
+    val fetch_repo_config :
+      T.t ->
+      Pull_request.t ->
+      ( Terrat_repo_config.Version_1.t,
+        [> `Repo_config_parse_err of string | `Repo_config_err of string ] )
+      result
+      Abb.Future.t
+
+    val fetch_pull_request :
+      T.t -> (Pull_request.t, [> `Merge_conflict | `Error ]) result Abb.Future.t
+
+    val fetch_tree : T.t -> Pull_request.t -> (string list, [> `Error ]) result Abb.Future.t
 
     val check_apply_requirements :
       T.t ->

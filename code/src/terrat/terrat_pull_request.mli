@@ -27,6 +27,7 @@ type ('id, 'diff, 'checks) t = {
   hash : string;
   id : 'id;
   mergeable : bool option;
+  provisional_merge_sha : string;
   state : State.t;
 }
 [@@deriving show]

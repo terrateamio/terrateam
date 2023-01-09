@@ -20,6 +20,10 @@ module Metrics = struct
   let pgsql_errors_total = Terrat_metrics.errors_total ~m:subsystem ~t:"pgsql"
   let github_errors_total = Terrat_metrics.errors_total ~m:subsystem ~t:"github"
 
+  let fetch_pull_request_merge_conflict_total =
+    let help = "Number of merge conflicts observed when fetching pull requests" in
+    Prmths.Counter.v ~help ~namespace ~subsystem "fetch_pull_request_merge_conflict_total"
+
   let work_manifest_wait_duration_seconds =
     let help = "Number of seconds a work manifest waited between creation and the initiate call" in
     Work_manifest_run_time_histogram.v_label
@@ -490,8 +494,7 @@ module Ev = struct
     let insert_pull_request_unlock =
       Pgsql_io.Typed_sql.(
         sql
-        /^ "insert into github_pull_request_unlocks (repository, pull_number) values ($repository, \
-            $pull_number)"
+        /^ read "insert_github_pull_request_unlock.sql"
         /% Var.bigint "repository"
         /% Var.bigint "pull_number")
 
@@ -666,6 +669,7 @@ module Ev = struct
     let mergeable t = t.Terrat_pull_request.mergeable
     let is_draft_pr t = t.Terrat_pull_request.draft
     let branch_name t = t.Terrat_pull_request.branch_name
+    let change_hash t = t.Terrat_pull_request.provisional_merge_sha
   end
 
   module Access_control = struct
@@ -788,7 +792,7 @@ module Ev = struct
             m "GITHUB_EVALUATOR : %s : ERROR : %s" (T.request_id event) (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
 
-  let fetch_pull_request event =
+  let fetch_pull_request' event =
     let owner = event.T.repository.Gw.Repository.owner.Gw.User.login in
     let repo = event.T.repository.Gw.Repository.name in
     let run =
@@ -813,7 +817,7 @@ module Ev = struct
                 state;
                 merged;
                 merged_at;
-                merge_commit_sha;
+                merge_commit_sha = Some merge_commit_sha;
                 mergeable_state;
                 mergeable;
                 draft;
@@ -824,9 +828,7 @@ module Ev = struct
           let base_branch_name = Base.(base.primary.Primary.ref_) in
           let base_sha = Base.(base.primary.Primary.sha) in
           let head_sha = Head.(head.primary.Primary.sha) in
-          let merged_sha = merge_commit_sha in
           let branch_name = Head.(head.primary.Primary.ref_) in
-          let hash = CCOption.get_or ~default:head_sha merged_sha in
           let draft = CCOption.get_or ~default:false draft in
           fetch_diff
             ~request_id:event.T.request_id
@@ -834,7 +836,7 @@ module Ev = struct
             ~owner
             ~repo
             ~base_sha
-            hash
+            merge_commit_sha
           >>= fun diff ->
           Logs.debug (fun m ->
               m
@@ -853,12 +855,12 @@ module Ev = struct
                    hash = head_sha;
                    id = CCInt64.of_int event.T.pull_number;
                    state =
-                     (match (state, merged, merged_sha, merged_at) with
-                     | "open", _, _, _ -> State.Open
-                     | "closed", true, Some merged_hash, Some merged_at ->
-                         State.(Merged Merged.{ merged_hash; merged_at })
-                     | "closed", false, _, _ -> State.Closed
-                     | _, _, _, _ -> assert false);
+                     (match (state, merged, merged_at) with
+                     | "open", _, _ -> State.Open
+                     | "closed", true, Some merged_at ->
+                         State.(Merged Merged.{ merged_hash = merge_commit_sha; merged_at })
+                     | "closed", false, _ -> State.Closed
+                     | _, _, _ -> assert false);
                    checks =
                      merged
                      || CCList.mem
@@ -866,8 +868,10 @@ module Ev = struct
                           mergeable_state
                           [ "clean"; "unstable"; "has_hooks" ];
                    mergeable;
+                   provisional_merge_sha = merge_commit_sha;
                    draft;
                  })
+      | `OK _ -> Abb.Future.return (Error `Merge_conflict)
       | (`Not_found _ | `Internal_server_error _ | `Not_modified | `Service_unavailable _) as err ->
           Logs.err (fun m ->
               m
@@ -881,6 +885,7 @@ module Ev = struct
     run
     >>= function
     | Ok _ as ret -> Abb.Future.return ret
+    | Error `Merge_conflict as err -> Abb.Future.return err
     | Error `Error ->
         Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
@@ -908,6 +913,20 @@ module Ev = struct
               (Terrat_github.show_get_installation_access_token_err err));
         Abb.Future.return (Error `Error)
 
+  let fetch_pull_request event =
+    (* We require a merge commit to continue, but GitHub may not be able to
+       create it in time between us getting the event and querying.  So retry a
+       few times. *)
+    Abbs_future_combinators.retry
+      ~f:(fun () -> fetch_pull_request' event)
+      ~while_:
+        (Abbs_future_combinators.finite_tries 3 (function
+            | Error `Merge_conflict -> true
+            | _ -> false))
+      ~betwixt:(fun _ ->
+        Prmths.Counter.inc_one Metrics.fetch_pull_request_merge_conflict_total;
+        Abb.Sys.sleep 2.0)
+
   let query_pull_request_out_of_diff_applies db event pull_request =
     let run =
       Pgsql_io.Prepared_stmt.fetch
@@ -927,11 +946,16 @@ module Ev = struct
             m "GITHUB_EVALUATOR : %s : ERROR : %s" (T.request_id event) (Pgsql_io.show_err err));
         Abb.Future.return (Error `Error)
 
-  let fetch_tree event ~sha =
+  let fetch_tree event pull_request =
     let open Abb.Future.Infix_monad in
     let owner = event.T.repository.Gw.Repository.owner.Gw.User.login in
     let repo = event.T.repository.Gw.Repository.name in
-    Terrat_github.get_tree ~access_token:event.T.access_token ~owner ~repo ~sha ()
+    Terrat_github.get_tree
+      ~access_token:event.T.access_token
+      ~owner
+      ~repo
+      ~sha:(Pull_request.change_hash pull_request)
+      ()
     >>= function
     | Ok files -> Abb.Future.return (Ok files)
     | Error (#Terrat_github.get_tree_err as err) ->
@@ -1048,6 +1072,7 @@ module Ev = struct
                   | _ -> assert false);
                 checks = true;
                 mergeable = None;
+                provisional_merge_sha = "";
                 draft = false;
               }
           in
@@ -1354,7 +1379,7 @@ module Ev = struct
         Abb.Future.return (Error `Error)
     | Error `Error -> Abb.Future.return (Error `Error)
 
-  let fetch_repo_config event pull_request ref_ =
+  let fetch_repo_config_by_ref event ref_ =
     let open Abb.Future.Infix_monad in
     Terrat_github.fetch_repo_config
       ~python:(Terrat_config.python_exec event.T.config)
@@ -1388,6 +1413,11 @@ module Ev = struct
               (Terrat_github.show_fetch_repo_config_err err));
         Abb.Future.return
           (Error (`Repo_config_err "An unknown error occurred while reading the repo config."))
+
+  let fetch_base_repo_config event = fetch_repo_config_by_ref event (T.default_branch event)
+
+  let fetch_repo_config event pull_request =
+    fetch_repo_config_by_ref event (Pull_request.change_hash pull_request)
 
   let check_apply_requirements event pull_request repo_config =
     let module Rc = Terrat_repo_config.Version_1 in
@@ -1568,6 +1598,7 @@ module Ev = struct
                 | _ -> assert false);
               checks = true;
               mergeable = None;
+              provisional_merge_sha = "";
               draft = false;
             } ))
       (CCInt64.of_int event.T.repository.Gw.Repository.id)
@@ -1805,7 +1836,7 @@ module Ev = struct
           Tmpl.pull_request_not_appliable
           kv
           event
-    | Msg.Pull_request_not_mergeable _ ->
+    | Msg.Pull_request_not_mergeable ->
         let kv = Snabela.Kv.(Map.of_list []) in
         apply_template_and_publish
           "PULL_REQUEST_NOT_MERGEABLE"
@@ -2679,6 +2710,7 @@ module Wm = struct
                   | _ -> assert false);
                 checks = ();
                 mergeable = None;
+                provisional_merge_sha = "";
                 draft = false;
               } ))
         pull_request.Pull_request.repo_id
