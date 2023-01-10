@@ -103,6 +103,7 @@ end
 
 module Hooks = struct
   type t = {
+    all : Terrat_repo_config_hook.t option; [@default None]
     apply : Terrat_repo_config_hook.t option; [@default None]
     plan : Terrat_repo_config_hook.t option; [@default None]
   }

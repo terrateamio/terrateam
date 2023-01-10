@@ -462,6 +462,9 @@
         "hooks": {
           "additionalProperties": false,
           "properties": {
+            "all": {
+              "$ref": "#/definitions/hook"
+            },
             "apply": {
               "$ref": "#/definitions/hook"
             },

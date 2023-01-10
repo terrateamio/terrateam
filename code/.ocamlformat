@@ -1,4 +1,4 @@
-version=0.23.0
+version=0.24.1
 profile = default
 break-cases = fit-or-vertical
 break-fun-decl = fit-or-vertical
