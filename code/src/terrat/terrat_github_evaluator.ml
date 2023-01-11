@@ -925,10 +925,11 @@ module Ev = struct
     let open Abb.Future.Infix_monad in
     Abbs_future_combinators.retry
       ~f:(fun () -> fetch_pull_request' event)
-      ~while_:(Abbs_future_combinators.finite_tries 3 CCResult.is_error)
-      ~betwixt:(fun _ ->
-        Prmths.Counter.inc_one Metrics.fetch_pull_request_errors_total;
-        Abb.Sys.sleep 2.0)
+      ~while_:(Abbs_future_combinators.finite_tries 6 CCResult.is_error)
+      ~betwixt:
+        (Abbs_future_combinators.series ~start:2.0 ~step:(( *. ) 1.5) (fun n _ ->
+             Prmths.Counter.inc_one Metrics.fetch_pull_request_errors_total;
+             Abb.Sys.sleep (CCFloat.min n 8.0)))
     >>= function
     | Ok _ as ret -> Abb.Future.return ret
     | Error `Merge_conflict as err -> Abb.Future.return err

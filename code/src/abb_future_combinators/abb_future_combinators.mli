@@ -109,6 +109,12 @@ module Make (Fut : Abb_intf.Future.S) : sig
       function. *)
   val finite_tries : int -> ('a -> bool) -> 'a -> bool
 
+  (** Given a [start] value and a [step] function, and a function which takes
+      the current value in the series and another value, call it when given a
+      new value and return the result of the function.  Every call with a value
+      will increment the series value by [step] *)
+  val series : start:'a -> step:('a -> 'a) -> ('a -> 'b -> 'c Fut.t) -> 'b -> 'c Fut.t
+
   module List : sig
     val map : f:('a -> 'b Fut.t) -> 'a list -> 'b list Fut.t
     val fold_left : f:('a -> 'b -> 'a Fut.t) -> init:'a -> 'b list -> 'a Fut.t

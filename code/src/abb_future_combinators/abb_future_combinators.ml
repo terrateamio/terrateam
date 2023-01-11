@@ -180,6 +180,13 @@ module Make (Fut : Abb_intf.Future.S) = struct
         while_ r
     | _ -> false
 
+  let series ~start ~step f =
+    let start = ref start in
+    fun v ->
+      let start' = !start in
+      start := step !start;
+      f start' v
+
   module Infix_result_monad = struct
     type ('a, 'b) t = ('a, 'b) result Fut.t
 
