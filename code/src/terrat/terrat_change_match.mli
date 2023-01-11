@@ -17,7 +17,10 @@ end
 exception No_matching_dir of string
 
 (** Given a list of files in the repository and a version of the config,
-   construct the [dirs] configuration that matches all of the files. *)
+    construct the [dirs] configuration that matches all of the files.
+    [file_list] is a list of all files to use to synthesize the directories.
+    The file list is relative to the root of the repository and must NOT begin
+    with [.]. *)
 val synthesize_dir_config :
   file_list:string list ->
   Terrat_repo_config.Version_1.t ->

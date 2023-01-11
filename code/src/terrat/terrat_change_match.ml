@@ -67,13 +67,21 @@ module Dirs = struct
         let wm =
           when_modified_of_when_modified_nullable default_when_modified config.Dir.when_modified
         in
+        let sub, by =
+          match dirname with
+          | "." ->
+              (* The [.] directory is special in that our directory listings do
+                 not start with [./].  So if the directory is "." we assume we can
+                 just chop off the [${DIR}/].  So [${DIR}/*.tf] becomes [*.tf]
+                 instead of [./*.tf] *)
+              ("${DIR}/", "")
+          | dirname -> ("${DIR}", dirname)
+        in
         Wm.
           {
             wm with
             file_patterns =
-              CCList.map
-                (fun pat -> CCString.replace ~sub:"${DIR}" ~by:dirname pat)
-                wm.Wm.file_patterns;
+              CCList.map (fun pat -> CCString.replace ~sub ~by pat) wm.Wm.file_patterns;
           }
       in
       let file_pattern_matcher =
