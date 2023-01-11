@@ -20,9 +20,9 @@ module Metrics = struct
   let pgsql_errors_total = Terrat_metrics.errors_total ~m:subsystem ~t:"pgsql"
   let github_errors_total = Terrat_metrics.errors_total ~m:subsystem ~t:"github"
 
-  let fetch_pull_request_merge_conflict_total =
-    let help = "Number of merge conflicts observed when fetching pull requests" in
-    Prmths.Counter.v ~help ~namespace ~subsystem "fetch_pull_request_merge_conflict_total"
+  let fetch_pull_request_errors_total =
+    let help = "Number of errors in fetching a pull request" in
+    Prmths.Counter.v ~help ~namespace ~subsystem "fetch_pull_request_errors_total"
 
   let work_manifest_wait_duration_seconds =
     let help = "Number of seconds a work manifest waited between creation and the initiate call" in
@@ -879,13 +879,18 @@ module Ev = struct
                 event.T.request_id
                 Githubc2_pulls.Get.Responses.pp
                 err);
-          Abb.Future.return (Error `Error)
+          Abb.Future.return (Error err)
     in
     let open Abb.Future.Infix_monad in
     run
     >>= function
     | Ok _ as ret -> Abb.Future.return ret
-    | Error `Merge_conflict as err -> Abb.Future.return err
+    | Error
+        ( `Merge_conflict
+        | `Not_found _
+        | `Internal_server_error _
+        | `Not_modified
+        | `Service_unavailable _ ) as err -> Abb.Future.return err
     | Error `Error ->
         Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
@@ -917,15 +922,21 @@ module Ev = struct
     (* We require a merge commit to continue, but GitHub may not be able to
        create it in time between us getting the event and querying.  So retry a
        few times. *)
+    let open Abb.Future.Infix_monad in
     Abbs_future_combinators.retry
       ~f:(fun () -> fetch_pull_request' event)
-      ~while_:
-        (Abbs_future_combinators.finite_tries 3 (function
-            | Error `Merge_conflict -> true
-            | _ -> false))
+      ~while_:(Abbs_future_combinators.finite_tries 3 CCResult.is_error)
       ~betwixt:(fun _ ->
-        Prmths.Counter.inc_one Metrics.fetch_pull_request_merge_conflict_total;
+        Prmths.Counter.inc_one Metrics.fetch_pull_request_errors_total;
         Abb.Sys.sleep 2.0)
+    >>= function
+    | Ok _ as ret -> Abb.Future.return ret
+    | Error `Merge_conflict as err -> Abb.Future.return err
+    | Error (`Not_found _)
+    | Error (`Internal_server_error _)
+    | Error `Not_modified
+    | Error (`Service_unavailable _)
+    | Error `Error -> Abb.Future.return (Error `Error)
 
   let query_pull_request_out_of_diff_applies db event pull_request =
     let run =
