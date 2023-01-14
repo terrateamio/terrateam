@@ -2856,7 +2856,7 @@ module Wm = struct
                 (Pgsql_io.show_err err));
           Abb.Future.return (Error `Error)
 
-    let store ~request_id ~path ~workspace storage work_manifest_id plan_data =
+    let store ~request_id ~path ~workspace ~has_changes storage work_manifest_id plan_data =
       let open Abb.Future.Infix_monad in
       Pgsql_pool.with_conn storage ~f:(fun db ->
           Pgsql_io.Prepared_stmt.execute

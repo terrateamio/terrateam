@@ -390,6 +390,7 @@ module type S = sig
         request_id:string ->
         path:string ->
         workspace:string ->
+        has_changes:bool ->
         Terrat_storage.t ->
         Uuidm.t ->
         string ->

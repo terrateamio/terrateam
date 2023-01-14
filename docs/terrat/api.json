@@ -150,6 +150,10 @@
       "plan-create": {
         "additionalProperties": false,
         "properties": {
+          "has_changes": {
+            "default": true,
+            "type": "boolean"
+          },
           "path": {
             "type": "string"
           },
@@ -450,10 +454,10 @@
                 },
                 "type": "array"
               },
-              "name": {
+              "method": {
                 "type": "string"
               },
-              "method": {
+              "name": {
                 "type": "string"
               },
               "type": {
@@ -522,6 +526,9 @@
           "workflow_step": {
             "additionalProperties": false,
             "properties": {
+              "has_changes": {
+                "type": "boolean"
+              },
               "type": {
                 "const": "plan",
                 "type": "string"
@@ -556,6 +563,9 @@
                   "type": "string"
                 },
                 "type": "array"
+              },
+              "exit_code": {
+                "type": "integer"
               },
               "type": {
                 "const": "run",

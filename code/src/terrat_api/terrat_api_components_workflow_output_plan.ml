@@ -27,7 +27,10 @@ module Workflow_step = struct
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
-  type t = { type_ : Type.t [@key "type"] }
+  type t = {
+    has_changes : bool option; [@default None]
+    type_ : Type.t; [@key "type"]
+  }
   [@@deriving yojson { strict = true; meta = true }, show, eq]
 end
 

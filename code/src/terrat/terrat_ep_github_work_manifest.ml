@@ -51,7 +51,7 @@ end
 module Plans = struct
   module Pc = Terrat_api_components.Plan_create
 
-  let post config storage work_manifest_id { Pc.path; workspace; plan_data } ctx =
+  let post config storage work_manifest_id { Pc.path; workspace; plan_data; has_changes } ctx =
     let open Abb.Future.Infix_monad in
     let request_id = Brtl_ctx.token ctx in
     let plan = Base64.decode_exn plan_data in
@@ -60,6 +60,7 @@ module Plans = struct
       ~request_id
       ~path
       ~workspace
+      ~has_changes
       storage
       work_manifest_id
       plan
