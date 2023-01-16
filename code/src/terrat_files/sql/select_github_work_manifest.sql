@@ -11,7 +11,8 @@ select
     gpr.base_branch,
     gir.installation_id,
     gir.owner,
-    gir.name
+    gir.name,
+    gpr.base_branch
 from github_work_manifests as gwm
 inner join github_pull_requests as gpr
     on gwm.repository = gpr.repository and gwm.pull_number = gpr.pull_number

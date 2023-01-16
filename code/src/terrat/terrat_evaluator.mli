@@ -207,44 +207,36 @@ module type S = sig
 
   module Work_manifest : sig
     module Initiate : sig
-      type t
-
       module Pull_request : sig
-        type t [@@deriving show]
-
         module Lite : sig
           type t [@@deriving show]
         end
       end
 
-      val create :
+      type t
+
+      val work_manifest_state : t -> Terrat_work_manifest.State.t
+      val work_manifest_run_type : t -> Terrat_work_manifest.Pull_request.Run_type.t
+
+      val to_response :
+        t -> (Terrat_api_components.Work_manifest.t, [> `Error ]) result Abb.Future.t
+
+      (** Fetch a work manifest if it exists.  If it is in a queued state then
+          initiate it. *)
+      val initiate_work_manifest :
         request_id:string ->
         work_manifest_id:Uuidm.t ->
         Terrat_config.t ->
-        Terrat_storage.t ->
+        Pgsql_io.t ->
         Terrat_api_components.Work_manifest_initiate.t ->
-        (t, [> `Work_manifest_not_found | `Error ]) result Abb.Future.t
-
-      val to_response :
-        t ->
-        Pull_request.t Work_manifest.t ->
-        (Terrat_api_components.Work_manifest.t, [> `Error ]) result Abb.Future.t
-
-      val initiate_work_manifest :
-        Pgsql_io.t -> t -> (Pull_request.t Work_manifest.t option, [> `Error ]) result Abb.Future.t
+        (t option, [> `Error ]) result Abb.Future.t
 
       val query_dirspaces_without_valid_plans :
-        Pgsql_io.t ->
-        t ->
-        Pull_request.t ->
-        Terrat_change.Dirspace.t list ->
-        (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
+        Pgsql_io.t -> t -> (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
 
       val query_dirspaces_owned_by_other_pull_requests :
         Pgsql_io.t ->
         t ->
-        Pull_request.t ->
-        Terrat_change.Dirspace.t list ->
         (Pull_request.Lite.t Work_manifest.Dirspace_map.t, [> `Error ]) result Abb.Future.t
 
       val work_manifest_already_run : t -> (unit, [> `Error ]) result Abb.Future.t

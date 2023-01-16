@@ -21,4 +21,5 @@ returning
     gpr.base_branch,
     gir.installation_id,
     gir.owner,
-    gir.name
+    gir.name,
+    extract(epoch from (now() - gwm.created_at))
