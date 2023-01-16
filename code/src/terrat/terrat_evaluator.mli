@@ -75,7 +75,7 @@ end
 module Work_manifest : sig
   module Dirspace_map : module type of CCMap.Make (Terrat_change.Dirspace)
 
-  type _ t = Pull_request : 'a Terrat_work_manifest.Pull_request.Existing.t -> 'a t
+  type 'a t = 'a Terrat_work_manifest.Pull_request.Existing.t
 end
 
 module type S = sig

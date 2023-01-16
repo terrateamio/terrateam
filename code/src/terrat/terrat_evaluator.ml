@@ -200,7 +200,7 @@ end
 module Work_manifest = struct
   module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
 
-  type _ t = Pull_request : 'a Terrat_work_manifest.Pull_request.Existing.t -> 'a t
+  type 'a t = 'a Terrat_work_manifest.Pull_request.Existing.t
 end
 
 module type S = sig
@@ -1365,13 +1365,11 @@ module Make (S : S) = struct
             >>= function
             | None -> Abb.Future.return (Ok None)
             | Some
-                (Wm.Pull_request
-                   Terrat_work_manifest.
-                     { state = State.(Completed | Aborted); src = pull_request; _ } as wm) ->
-                Abb.Future.return (Error (`Work_manifest_already_run wm))
-            | Some (Wm.Pull_request Terrat_work_manifest.{ state = State.Queued; _ }) ->
+                (Terrat_work_manifest.{ state = State.(Completed | Aborted); src = pull_request; _ }
+                as wm) -> Abb.Future.return (Error (`Work_manifest_already_run wm))
+            | Some Terrat_work_manifest.{ state = State.Queued; _ } ->
                 Abb.Future.return (Error `Work_manifest_in_queue_state)
-            | Some (Wm.Pull_request work_manifest) -> (
+            | Some work_manifest -> (
                 match work_manifest.Terrat_work_manifest.run_type with
                 | Terrat_work_manifest.Pull_request.Run_type.(Autoplan | Plan | Unsafe_apply) ->
                     Abb.Future.return (Ok (Some work_manifest))
@@ -1427,8 +1425,7 @@ module Make (S : S) = struct
         let open Abb.Future.Infix_monad in
         run storage t
         >>= function
-        | Ok (Some work_manifest) ->
-            S.Work_manifest.Initiate.to_response t (Wm.Pull_request work_manifest)
+        | Ok (Some work_manifest) -> S.Work_manifest.Initiate.to_response t work_manifest
         | Ok None -> Abb.Future.return (Error `Work_manifest_not_found)
         | Error (`Work_manifest_already_run _) -> (
             S.Work_manifest.Initiate.work_manifest_already_run t
