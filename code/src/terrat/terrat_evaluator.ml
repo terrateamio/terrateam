@@ -342,8 +342,6 @@ module type S = sig
         end
       end
 
-      val request_id : t -> string
-
       val create :
         request_id:string ->
         work_manifest_id:Uuidm.t ->
@@ -1354,13 +1352,12 @@ module Make (S : S) = struct
         ]
       [@@deriving show]
 
-      let run storage t =
+      let run request_id storage t =
         let open Abbs_future_combinators.Infix_result_monad in
         Pgsql_pool.with_conn storage ~f:(fun db ->
             (* Explicitly not doing this in a transaction because we want the initiate
                to mark the work manifest as running even if we fail further down. *)
-            Logs.info (fun m ->
-                m "EVALUATOR : %s : INITIATE_WORK_MANIFEST" (S.Work_manifest.Initiate.request_id t));
+            Logs.info (fun m -> m "EVALUATOR : %s : INITIATE_WORK_MANIFEST" request_id);
             S.Work_manifest.Initiate.initiate_work_manifest db t
             >>= function
             | None -> Abb.Future.return (Ok None)
@@ -1375,9 +1372,7 @@ module Make (S : S) = struct
                     Abb.Future.return (Ok (Some work_manifest))
                 | Terrat_work_manifest.Pull_request.Run_type.(Autoapply | Apply) -> (
                     Logs.debug (fun m ->
-                        m
-                          "EVALUATOR : %s : QUERY_DIRSPACES_OWNED_BY_OTHER_PR"
-                          (S.Work_manifest.Initiate.request_id t));
+                        m "EVALUATOR : %s : QUERY_DIRSPACES_OWNED_BY_OTHER_PR" request_id);
                     S.Work_manifest.Initiate.query_dirspaces_owned_by_other_pull_requests
                       db
                       t
@@ -1389,9 +1384,7 @@ module Make (S : S) = struct
                     | owned_dirspaces when Work_manifest.Dirspace_map.is_empty owned_dirspaces -> (
                         (* No dirspaces owned by another pull request, great *)
                         Logs.debug (fun m ->
-                            m
-                              "EVALUATOR : %s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS"
-                              (S.Work_manifest.Initiate.request_id t));
+                            m "EVALUATOR : %s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS" request_id);
                         S.Work_manifest.Initiate.query_dirspaces_without_valid_plans
                           db
                           t
@@ -1423,7 +1416,7 @@ module Make (S : S) = struct
           work_manifest_initiate
         >>= fun t ->
         let open Abb.Future.Infix_monad in
-        run storage t
+        run request_id storage t
         >>= function
         | Ok (Some work_manifest) -> S.Work_manifest.Initiate.to_response t work_manifest
         | Ok None -> Abb.Future.return (Error `Work_manifest_not_found)

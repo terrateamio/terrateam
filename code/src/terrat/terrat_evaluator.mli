@@ -217,8 +217,6 @@ module type S = sig
         end
       end
 
-      val request_id : t -> string
-
       val create :
         request_id:string ->
         work_manifest_id:Uuidm.t ->

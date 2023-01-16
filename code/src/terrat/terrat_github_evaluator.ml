@@ -2431,8 +2431,6 @@ module Wm = struct
                 (Terrat_github.show_get_tree_err err));
           Abb.Future.return (Error `Error)
 
-    let request_id t = t.request_id
-
     let maybe_update_commit_status t installation_id owner repo_name run_type dirspaces hash =
       function
       | Terrat_work_manifest.State.Running ->
