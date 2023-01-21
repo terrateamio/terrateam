@@ -106,7 +106,7 @@ module Event = struct
 
     type t =
       | Terraform of tf
-      | Pull_request of [ `Unlock ]
+      | Pull_request of [ `Unlock of int list ]
     [@@deriving show]
 
     let run_type_of_tf = function
@@ -133,7 +133,7 @@ module Event = struct
       | Autoapply
       | Autoplan
       | Plan
-      | Unlock
+      | Unlock of int list
     [@@deriving show]
 
     (* Translate the event type to its operation class *)
@@ -144,7 +144,7 @@ module Event = struct
       | Autoapply -> Op_class.Terraform (`Apply `Auto)
       | Autoplan -> Op_class.Terraform (`Plan `Auto)
       | Plan -> Op_class.Terraform (`Plan `Manual)
-      | Unlock -> Op_class.Pull_request `Unlock
+      | Unlock ids -> Op_class.Pull_request (`Unlock ids)
 
     let to_string = function
       | Apply -> "apply"
@@ -153,7 +153,7 @@ module Event = struct
       | Autoapply -> "autoapply"
       | Autoplan -> "autoplan"
       | Plan -> "plan"
-      | Unlock -> "unlock"
+      | Unlock _ -> "unlock"
   end
 
   let compute_matches ~repo_config ~tag_query ~out_of_change_applies ~diff ~repo_tree () =
@@ -320,7 +320,9 @@ module type S = sig
       Pull_request.t ->
       (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
 
-    val unlock_pull_request : Terrat_storage.t -> T.t -> (unit, [> `Error ]) result Abb.Future.t
+    val unlock_pull_request :
+      Terrat_storage.t -> T.t -> int -> (unit, [> `Error ]) result Abb.Future.t
+
     val publish_msg : T.t -> (Pull_request.t, Apply_requirements.t) Event.Msg.t -> unit Abb.Future.t
   end
 
@@ -1123,7 +1125,7 @@ module Make (S : S) = struct
       in
       eval_destination_branch_match dest_branch source_branch valid_branches
 
-    let perform_unlock storage event =
+    let perform_unlock storage event unlock_ids =
       let open Abbs_future_combinators.Infix_result_monad in
       Abbs_time_it.run (log_time event "FETCHING_DEST_REPO_CONFIG") (fun () ->
           S.Event.fetch_base_repo_config event)
@@ -1135,7 +1137,9 @@ module Make (S : S) = struct
       | Ok None ->
           Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"allowed");
           let open Abbs_future_combinators.Infix_result_monad in
-          S.Event.unlock_pull_request storage event
+          Abbs_future_combinators.List_result.iter
+            ~f:(S.Event.unlock_pull_request storage event)
+            unlock_ids
           >>= fun () -> Abb.Future.return (Ok (Some Event.Msg.Unlock_success))
       | Ok (Some match_list) ->
           Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"denied");
@@ -1161,7 +1165,7 @@ module Make (S : S) = struct
       | Event.Event_type.Apply
       | Event.Event_type.Apply_autoapprove
       | Event.Event_type.Apply_force
-      | Event.Event_type.Unlock ->
+      | Event.Event_type.Unlock _ ->
           Logs.info (fun m ->
               m
                 "EVALUATOR : %s : %s_BRANCH_NOT_VALID_BRANCH_EXPLICIT"
@@ -1258,7 +1262,7 @@ module Make (S : S) = struct
 
     let run' storage event =
       match Event.Event_type.to_op_class (S.Event.T.event_type event) with
-      | Event.Op_class.Pull_request `Unlock -> perform_unlock storage event
+      | Event.Op_class.Pull_request (`Unlock unlock_ids) -> perform_unlock storage event unlock_ids
       | Event.Op_class.Terraform operation -> perform_terraform_operation storage event operation
 
     let eval storage event =

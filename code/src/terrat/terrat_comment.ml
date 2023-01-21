@@ -3,7 +3,7 @@ type t =
   | Apply of { tag_query : Terrat_tag_set.t }
   | Apply_autoapprove of { tag_query : Terrat_tag_set.t }
   | Apply_force of { tag_query : Terrat_tag_set.t }
-  | Unlock
+  | Unlock of string list
   | Help
   | Feedback of string
 
@@ -25,7 +25,13 @@ let parse s =
     | _ -> None
   in
   match split_s with
-  | Some ("unlock", _) -> Ok Unlock
+  | Some ("unlock", rest) ->
+      Ok
+        (Unlock
+           (rest
+           |> CCString.split_on_char ' '
+           |> CCList.map CCString.trim
+           |> CCList.filter CCFun.(CCString.is_empty %> not)))
   | Some ("plan", rest) -> Ok (Plan { tag_query = tag_set_of_string rest })
   | Some ("apply", rest) -> Ok (Apply { tag_query = tag_set_of_string rest })
   | Some ("apply-autoapprove", rest) ->

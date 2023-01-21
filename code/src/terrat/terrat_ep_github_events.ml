@@ -116,6 +116,11 @@ module Tmpl = struct
     CCOption.get_exn_or
       "github_action_failed.tmpl"
       (Terrat_files_tmpl.read "github_action_failed.tmpl")
+
+  let unlock_failed_bad_id =
+    CCOption.get_exn_or
+      "github_unlock_failed_bad_id.tmpl"
+      (Terrat_files_tmpl.read "github_unlock_failed_bad_id.tmpl")
 end
 
 let run_event_evaluator storage event =
@@ -148,30 +153,64 @@ let run_event_evaluator storage event =
           storage))
   >>= fun _ -> Abb.Future.return (Ok ())
 
-let perform_unlock_pr request_id config storage installation_id repository pull_number user =
+let perform_unlock_pr
+    request_id
+    config
+    storage
+    installation_id
+    repository
+    pull_number
+    user
+    unlock_ids =
   let open Abbs_future_combinators.Infix_result_monad in
   Logs.info (fun m ->
       m
-        "GITHUB_EVENT : %s : UNLOCK : %s : %s  : %d"
+        "GITHUB_EVENT : %s : UNLOCK : %s : %s  : %d : %s"
         request_id
         repository.Gw.Repository.owner.Gw.User.login
         repository.Gw.Repository.name
-        pull_number);
-  Terrat_github.get_installation_access_token config installation_id
-  >>= fun access_token ->
-  let event =
-    Terrat_github_evaluator.S.Event.T.make
-      ~access_token
-      ~config
-      ~installation_id
-      ~pull_number
-      ~repository
-      ~request_id
-      ~event_type:Terrat_evaluator.Event.Event_type.Unlock
-      ~tag_query:(Terrat_tag_set.of_list [])
-      ~user
-  in
-  run_event_evaluator storage event
+        pull_number
+        (CCString.concat " " unlock_ids));
+  match
+    unlock_ids
+    |> CCList.map (fun s ->
+           match CCInt.of_string s with
+           | Some n -> Ok n
+           | None -> Error s)
+    |> CCResult.flatten_l
+  with
+  | Ok unlock_ids ->
+      let unlock_ids =
+        (* If the list is empty, then want to unlock the PR that this was issued
+           in. *)
+        match unlock_ids with
+        | [] -> [ pull_number ]
+        | unlock_ids -> unlock_ids
+      in
+      Terrat_github.get_installation_access_token config installation_id
+      >>= fun access_token ->
+      let event =
+        Terrat_github_evaluator.S.Event.T.make
+          ~access_token
+          ~config
+          ~installation_id
+          ~pull_number
+          ~repository
+          ~request_id
+          ~event_type:(Terrat_evaluator.Event.Event_type.Unlock unlock_ids)
+          ~tag_query:(Terrat_tag_set.of_list [])
+          ~user
+      in
+      run_event_evaluator storage event
+  | Error _ ->
+      Terrat_github.get_installation_access_token config installation_id
+      >>= fun access_token ->
+      Terrat_github.publish_comment
+        ~access_token
+        ~owner:repository.Gw.Repository.owner.Gw.User.login
+        ~repo:repository.Gw.Repository.name
+        ~pull_number
+        Tmpl.unlock_failed_bad_id
 
 let process_installation request_id config storage = function
   | Gw.Installation_event.Installation_created created ->
@@ -391,7 +430,7 @@ let process_issue_comment request_id config storage = function
             repository.Gw.Repository.name
             sender.Gw.User.login);
       match Terrat_comment.parse comment.Gw.Issue_comment.body with
-      | Ok Terrat_comment.Unlock ->
+      | Ok (Terrat_comment.Unlock ids) ->
           Prmths.Counter.inc_one (Metrics.comment_events_total "unlock");
           perform_unlock_pr
             request_id
@@ -401,6 +440,7 @@ let process_issue_comment request_id config storage = function
             repository
             pull_number
             sender.Gw.User.login
+            ids
       | Ok (Terrat_comment.Plan { tag_query }) ->
           let open Abbs_future_combinators.Infix_result_monad in
           Prmths.Counter.inc_one (Metrics.comment_events_total "plan");

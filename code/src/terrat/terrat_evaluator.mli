@@ -51,7 +51,7 @@ module Event : sig
 
     type t =
       | Terraform of tf
-      | Pull_request of [ `Unlock ]
+      | Pull_request of [ `Unlock of int list ]
     [@@deriving show]
 
     val run_type_of_tf : tf -> Terrat_work_manifest.Pull_request.Run_type.t
@@ -65,7 +65,7 @@ module Event : sig
       | Autoapply
       | Autoplan
       | Plan
-      | Unlock
+      | Unlock of int list
     [@@deriving show]
 
     val to_string : t -> string
@@ -195,7 +195,9 @@ module type S = sig
       Pull_request.t ->
       (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
 
-    val unlock_pull_request : Terrat_storage.t -> T.t -> (unit, [> `Error ]) result Abb.Future.t
+    val unlock_pull_request :
+      Terrat_storage.t -> T.t -> int -> (unit, [> `Error ]) result Abb.Future.t
+
     val publish_msg : T.t -> (Pull_request.t, Apply_requirements.t) Event.Msg.t -> unit Abb.Future.t
   end
 

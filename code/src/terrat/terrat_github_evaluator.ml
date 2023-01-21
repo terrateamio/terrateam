@@ -1659,7 +1659,7 @@ module Ev = struct
               (Snabela.show_err err));
         Abb.Future.return ()
 
-  let unlock_pull_request storage event =
+  let unlock_pull_request storage event pull_number =
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
       Pgsql_pool.with_conn storage ~f:(fun db ->
@@ -1667,7 +1667,7 @@ module Ev = struct
             db
             Sql.insert_pull_request_unlock
             (CCInt64.of_int event.T.repository.Gw.Repository.id)
-            (CCInt64.of_int event.T.pull_number)
+            (CCInt64.of_int pull_number)
           >>= fun () ->
           Terrat_github_plan_cleanup.clean_pull_request
             ~owner:event.T.repository.Gw.Repository.owner.Gw.User.login

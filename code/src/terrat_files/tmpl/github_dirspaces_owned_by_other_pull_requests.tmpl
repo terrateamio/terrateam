@@ -8,7 +8,11 @@ Cannot perform action because some directories and workspaces are owned by other
 | `@dir@` | `@workspace@` | #@pull_request_id@ |
 @/dirspaces-@
 
-To allow this change to be applied, comment `terrateam unlock` in **each of the listed pull requests** to remove the locks.
+To unlock these pull requests, comment in any pull request:
+
+```
+terrateam unlock@-#dirspaces@ @pull_request_id@@/dirspaces@
+```
 
 After resolving the issue, perform the apply operation again by commenting:
 
