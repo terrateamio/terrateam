@@ -102,9 +102,10 @@ let call ?(tries = 3) t req =
       (Abbs_future_combinators.finite_tries tries (function
           | Error _ -> true
           | Ok resp -> Openapi.Response.status resp >= 500))
-    ~betwixt:(fun _ ->
-      Prmths.Counter.inc_one Metrics.call_retries_total;
-      Abb.Sys.sleep 1.5)
+    ~betwixt:
+      (Abbs_future_combinators.series ~start:1.5 ~step:(( *. ) 1.5) (fun n _ ->
+           Prmths.Counter.inc_one Metrics.call_retries_total;
+           Abb.Sys.sleep n))
 
 let get_installation_access_token config installation_id =
   Prmths.Counter.inc_one (Metrics.fn_call_total "get_installation_access_token");
@@ -254,7 +255,7 @@ let compare_commits ~access_token ~owner ~repo (base, head) =
   | `OK { Cc.primary = { Cc.Primary.files = None; _ }; _ } -> Abb.Future.return (Ok [])
   | (`Internal_server_error _ | `Not_found _) as err -> Abb.Future.return (Error err)
 
-let load_workflow ~access_token ~owner ~repo =
+let load_workflow' ~access_token ~owner ~repo =
   Prmths.Counter.inc_one (Metrics.fn_call_total "load_workflow");
   let open Abbs_future_combinators.Infix_result_monad in
   let client = create (`Token access_token) in
@@ -286,6 +287,15 @@ let load_workflow ~access_token ~owner ~repo =
   with
   | (id, _, _) :: _ -> Abb.Future.return (Ok (Some id))
   | [] -> Abb.Future.return (Ok None)
+
+let load_workflow ~access_token ~owner ~repo =
+  Abbs_future_combinators.retry
+    ~f:(fun () -> load_workflow' ~access_token ~owner ~repo)
+    ~while_:(Abbs_future_combinators.finite_tries 3 CCResult.is_error)
+    ~betwixt:
+      (Abbs_future_combinators.series ~start:1.5 ~step:(( *. ) 1.5) (fun n _ ->
+           Prmths.Counter.inc_one Metrics.call_retries_total;
+           Abb.Sys.sleep n))
 
 let publish_comment ~access_token ~owner ~repo ~pull_number body =
   Prmths.Counter.inc_one (Metrics.fn_call_total "publish_comment");

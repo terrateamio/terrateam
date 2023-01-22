@@ -140,6 +140,13 @@ end
 
 val create : Githubc2_abb.Authorization.t -> Githubc2_abb.t
 
+(** Perform a call but with a retry *)
+val call :
+  ?tries:int ->
+  Githubc2_abb.t ->
+  'a Openapi.Request.t ->
+  ('a Openapi.Response.t, [> Githubc2_abb.call_err ]) result Abb_scheduler_kqueue.Future.t
+
 val get_installation_access_token :
   Terrat_config.t -> int -> (string, [> get_installation_access_token_err ]) result Abb.Future.t
 

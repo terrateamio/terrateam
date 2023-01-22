@@ -233,7 +233,7 @@ module R = struct
 
   let run_workflow ~config ~access_token ~work_token ~owner ~repo ~branch ~workflow_id () =
     let client = Terrat_github.create (`Token access_token) in
-    Githubc2_abb.call
+    Terrat_github.call
       client
       Githubc2_actions.Create_workflow_dispatch.(
         make
