@@ -57,6 +57,18 @@ module Dirs = struct
           ~additional:(Json_schema.String_map.of_list [ ("default", Additional.make ~tags:[]) ])
           Json_schema.Empty_obj.t)
 
+    let escape_glob s =
+      let b = Buffer.create (CCString.length s) in
+      CCString.iter
+        (function
+          | ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | '-' | '.' | ' ') as c ->
+              Buffer.add_char b c
+          | c ->
+              Buffer.add_char b '\\';
+              Buffer.add_char b c)
+        s;
+      Buffer.contents b
+
     let of_config_dir default_when_modified dirname config =
       let module Dir = Terrat_repo_config.Dir in
       let module Ws = Terrat_repo_config.Dir.Workspaces in
@@ -75,7 +87,7 @@ module Dirs = struct
                  just chop off the [${DIR}/].  So [${DIR}/*.tf] becomes [*.tf]
                  instead of [./*.tf] *)
               ("${DIR}/", "")
-          | dirname -> ("${DIR}", dirname)
+          | dirname -> ("${DIR}", escape_glob dirname)
         in
         Wm.
           {
