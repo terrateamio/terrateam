@@ -1672,7 +1672,7 @@ module Ev = struct
           Terrat_github_plan_cleanup.clean_pull_request
             ~owner:event.T.repository.Gw.Repository.owner.Gw.User.login
             ~repo:event.T.repository.Gw.Repository.name
-            ~pull_number:event.T.pull_number
+            ~pull_number
             db)
       >>= fun () ->
       let open Abb.Future.Infix_monad in
