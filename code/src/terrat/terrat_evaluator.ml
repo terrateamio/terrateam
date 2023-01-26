@@ -386,13 +386,23 @@ module type S = sig
     end
 
     module Results : sig
+      type t
+
+      val merge_pull_request : t -> (unit, [> `Error ]) result Abb.Future.t
+      val delete_pull_request_branch : t -> (unit, [> `Error ]) result Abb.Future.t
+
+      val query_missing_applied_dirspaces :
+        t -> (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
+
+      val fetch_repo_config : t -> (Terrat_repo_config.Version_1.t, [> `Error ]) result Abb.Future.t
+
       val store :
         request_id:string ->
         Terrat_config.t ->
         Terrat_storage.t ->
         Uuidm.t ->
         Terrat_api_work_manifest.Results.Request_body.t ->
-        (unit, [> `Error ]) result Abb.Future.t
+        (t, [> `Error ]) result Abb.Future.t
     end
   end
 end
@@ -1424,6 +1434,37 @@ module Make (S : S) = struct
 
     let plan_fetch = S.Work_manifest.Plans.fetch
     let plan_store = S.Work_manifest.Plans.store
-    let results_store = S.Work_manifest.Results.store
+
+    let automerge_config = function
+      | Terrat_repo_config.(Version_1.{ automerge = Some _ as automerge; _ }) -> automerge
+      | _ -> None
+
+    let results_store ~request_id config storage work_manifest_id results =
+      Abbs_future_combinators.with_finally
+        (fun () ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          S.Work_manifest.Results.store ~request_id config storage work_manifest_id results
+          >>= fun t ->
+          S.Work_manifest.Results.query_missing_applied_dirspaces t
+          >>= function
+          | [] -> (
+              Logs.info (fun m ->
+                  m
+                    "GITHUB_EVALUATOR : %s : ALL_DIRSPACES_APPLIED : %a"
+                    request_id
+                    Uuidm.pp
+                    work_manifest_id);
+              S.Work_manifest.Results.fetch_repo_config t
+              >>= fun repo_config ->
+              match automerge_config repo_config with
+              | Some Terrat_repo_config.Automerge.{ enabled = true; delete_branch } -> (
+                  S.Work_manifest.Results.merge_pull_request t
+                  >>= function
+                  | () when delete_branch -> S.Work_manifest.Results.delete_pull_request_branch t
+                  | () -> Abb.Future.return (Ok ()))
+              | _ -> Abb.Future.return (Ok ()))
+          | _ :: _ -> Abb.Future.return (Ok ()))
+        ~finally:(fun () ->
+          Abbs_future_combinators.ignore (Abb.Future.fork (Runner.run ~request_id config storage)))
   end
 end

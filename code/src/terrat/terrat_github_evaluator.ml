@@ -2111,7 +2111,6 @@ module Wm = struct
           // (* repo *) Ret.text
           /^ read "select_github_work_manifest.sql"
           /% Var.uuid "id"
-          /% Var.text "run_id"
           /% Var.text "sha")
 
       let select_work_manifest_dirspaces =
@@ -2417,7 +2416,6 @@ module Wm = struct
                 owner,
                 repo_name ))
             work_manifest_id
-            work_manifest_initiate.I.run_id
             work_manifest_initiate.I.sha
           >>= function
           | partial_wm :: _ -> Abb.Future.return (Ok partial_wm)
@@ -2871,13 +2869,6 @@ module Wm = struct
                |> CCString.concat "\n")
              (Terrat_files_sql.read fname))
 
-      let run_type = function
-        | Some s :: rest ->
-            let open CCOption in
-            Terrat_work_manifest.Pull_request.Run_type.of_string s
-            >>= fun run_type -> Some (run_type, rest)
-        | _ -> None
-
       let policy =
         let module P = struct
           type t = string list [@@deriving yojson]
@@ -2887,15 +2878,33 @@ module Wm = struct
           %> CCOption.map P.of_yojson
           %> CCOption.flat_map CCResult.to_opt)
 
-      let select_missing_dirspace_applies_for_pull_request =
+      let select_work_manifest_for_update =
         Pgsql_io.Typed_sql.(
           sql
-          // (* path *) Ret.text
-          // (* workspace *) Ret.text
-          /^ read "select_github_missing_dirspace_applies_for_pull_request.sql"
-          /% Var.text "owner"
-          /% Var.text "name"
-          /% Var.bigint "pull_number")
+          // (* bash_hash *) Ret.text
+          // (* completed_at *) Ret.(option text)
+          // (* created_at *) Ret.text
+          // (* hash *) Ret.text
+          // (* run_type *) Ret.ud' Terrat_work_manifest.Pull_request.Run_type.of_string
+          // (* state *) Ret.ud' Terrat_work_manifest.State.of_string
+          // (* tag_query *) Ret.ud' CCFun.(Terrat_tag_query.of_string %> CCOption.return)
+          // (* repository *) Ret.bigint
+          // (* pull_number *) Ret.bigint
+          // (* base_branch *) Ret.text
+          // (* installation_id *) Ret.bigint
+          // (* owner *) Ret.text
+          // (* repo *) Ret.text
+          // (* run_id *) Ret.(option text)
+          /^ read "select_github_work_manifest_for_update.sql"
+          /% Var.uuid "id")
+
+      let complete_work_manifest =
+        Pgsql_io.Typed_sql.(
+          sql
+          // (* run_time *) Ret.double
+          /^ "update github_work_manifests set state = 'completed', completed_at = now() where id \
+              = $id returning extract(epoch from (completed_at - created_at))"
+          /% Var.uuid "id")
 
       let insert_github_work_manifest_result =
         Pgsql_io.Typed_sql.(
@@ -2906,29 +2915,6 @@ module Wm = struct
           /% Var.text "workspace"
           /% Var.boolean "success")
 
-      let complete_work_manifest =
-        Pgsql_io.Typed_sql.(
-          sql
-          /^ "update github_work_manifests set state = 'completed', completed_at = now() where id \
-              = $id"
-          /% Var.uuid "id")
-
-      let select_github_parameters_from_work_manifest () =
-        Pgsql_io.Typed_sql.(
-          sql
-          // (* installation_id *) Ret.bigint
-          // (* owner *) Ret.text
-          // (* name *) Ret.text
-          // (* branch *) Ret.text
-          // (* sha *) Ret.text
-          // (* base_sha *) Ret.text
-          // (* pull_number *) Ret.bigint
-          // (* run_type *) Ret.ud run_type
-          // (* run_id *) Ret.(option text)
-          // (* run time *) Ret.double
-          /^ read "select_github_parameters_from_work_manifest.sql"
-          /% Var.uuid "id")
-
       let select_work_manifest_access_control_denied_dirspaces =
         Pgsql_io.Typed_sql.(
           sql
@@ -2937,6 +2923,16 @@ module Wm = struct
           // (* policy *) Ret.(option (ud' policy))
           /^ read "select_github_work_manifest_access_control_denied_dirspaces.sql"
           /% Var.uuid "work_manifest")
+
+      let select_missing_dirspace_applies_for_pull_request =
+        Pgsql_io.Typed_sql.(
+          sql
+          // (* path *) Ret.text
+          // (* workspace *) Ret.text
+          /^ read "select_github_missing_dirspace_applies_for_pull_request.sql"
+          /% Var.text "owner"
+          /% Var.text "name"
+          /% Var.bigint "pull_number")
     end
 
     module Tmpl = struct
@@ -2994,6 +2990,317 @@ module Wm = struct
         step_type : string;
       }
     end
+
+    type t = {
+      access_token : string;
+      config : Terrat_config.t;
+      installation_id : int64;
+      name : string;
+      owner : string;
+      pull_number : int;
+      request_id : string;
+      run_id : string;
+      storage : Terrat_storage.t;
+      work_manifest : unit Terrat_work_manifest.Pull_request.Existing_lite.t;
+    }
+
+    let merge_pull_request t =
+      let run =
+        let open Abbs_future_combinators.Infix_result_monad in
+        let client = Terrat_github.create (`Token t.access_token) in
+        Logs.info (fun m ->
+            m
+              "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %s : %s : %d"
+              t.request_id
+              t.owner
+              t.name
+              t.pull_number);
+        Githubc2_abb.call
+          client
+          Githubc2_pulls.Merge.(
+            make
+              ~body:
+                Request_body.(
+                  make
+                    Primary.(
+                      make
+                        ~commit_title:
+                          (Some (Printf.sprintf "Terrateam Automerge #%d" t.pull_number))
+                        ()))
+              Parameters.(make ~owner:t.owner ~repo:t.name ~pull_number:t.pull_number))
+        >>= fun resp ->
+        match Openapi.Response.value resp with
+        | `OK _ -> Abb.Future.return (Ok ())
+        | `Method_not_allowed _ -> (
+            Logs.info (fun m ->
+                m
+                  "GITHUB_EVALUATOR : %s : MERGE_METHOD_NOT_ALLOWED : %s : %s : %d"
+                  t.request_id
+                  t.owner
+                  t.name
+                  t.pull_number);
+            Githubc2_abb.call
+              client
+              Githubc2_pulls.Merge.(
+                make
+                  ~body:Request_body.(make Primary.(make ~merge_method:(Some "squash") ()))
+                  Parameters.(make ~owner:t.owner ~repo:t.name ~pull_number:t.pull_number))
+            >>= fun resp ->
+            match Openapi.Response.value resp with
+            | `OK _ -> Abb.Future.return (Ok ())
+            | ( `Method_not_allowed _
+              | `Conflict _
+              | `Forbidden _
+              | `Not_found _
+              | `Unprocessable_entity _ ) as err -> Abb.Future.return (Error err))
+        | (`Conflict _ | `Forbidden _ | `Not_found _ | `Unprocessable_entity _) as err ->
+            Abb.Future.return (Error err)
+      in
+      let open Abb.Future.Infix_monad in
+      run
+      >>= function
+      | Ok _ as ret -> Abb.Future.return ret
+      | Error (#Githubc2_abb.call_err as err) ->
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %a"
+                t.request_id
+                Githubc2_abb.pp_call_err
+                err);
+          Abb.Future.return (Error `Error)
+      | Error (#Githubc2_pulls.Merge.Responses.t as err) ->
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %a"
+                t.request_id
+                Githubc2_pulls.Merge.Responses.pp
+                err);
+          Abb.Future.return (Error `Error)
+
+    let delete_pull_request_branch t =
+      let run =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Logs.info (fun m ->
+            m
+              "GITHUB_EVALUATOR : %s : DELETE_PULL_REQUEST_BRANCH : %s : %s : %d"
+              t.request_id
+              t.owner
+              t.name
+              t.pull_number);
+        Terrat_github.fetch_pull_request
+          ~access_token:t.access_token
+          ~owner:t.owner
+          ~repo:t.name
+          t.pull_number
+        >>= fun resp ->
+        match Openapi.Response.value resp with
+        | `OK
+            Githubc2_components.Pull_request.
+              {
+                primary = Primary.{ head = Head.{ primary = Primary.{ ref_ = branch; _ }; _ }; _ };
+                _;
+              } -> (
+            Logs.info (fun m ->
+                m
+                  "GITHUB_EVALUATOR : %s : DELETE_PULL_REQUEST_BRANCH : %s : %s : %d : %s"
+                  t.request_id
+                  t.owner
+                  t.name
+                  t.pull_number
+                  branch);
+            let client = Terrat_github.create (`Token t.access_token) in
+            Githubc2_abb.call
+              client
+              Githubc2_git.Delete_ref.(
+                make Parameters.(make ~owner:t.owner ~repo:t.name ~ref_:("heads/" ^ branch)))
+            >>= fun resp ->
+            match Openapi.Response.value resp with
+            | `No_content -> Abb.Future.return (Ok ())
+            | `Unprocessable_entity err ->
+                Logs.err (fun m ->
+                    m
+                      "GITHUB_EVALUATOR : %s : DELETE_PULL_REQUEST_BRANCH : %s : %s : %d : %a"
+                      t.request_id
+                      t.owner
+                      t.name
+                      t.pull_number
+                      Githubc2_git.Delete_ref.Responses.Unprocessable_entity.pp
+                      err);
+                Abb.Future.return (Ok ()))
+        | (`Not_found _ | `Internal_server_error _ | `Not_modified | `Service_unavailable _) as err
+          ->
+            Prmths.Counter.inc_one Metrics.github_errors_total;
+            Logs.err (fun m ->
+                m
+                  "GITHUB_EVALUATOR : %s : ERROR : %a"
+                  t.request_id
+                  Githubc2_pulls.Get.Responses.pp
+                  err);
+            Abb.Future.return (Error `Error)
+      in
+      let open Abb.Future.Infix_monad in
+      run
+      >>= function
+      | (Ok _ | Error `Error) as ret -> Abb.Future.return ret
+      | Error (#Githubc2_abb.call_err as err) ->
+          Prmths.Counter.inc_one Metrics.github_errors_total;
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : DELETE_PULL_REQUEST_BRANCH : %a"
+                t.request_id
+                Githubc2_abb.pp_call_err
+                err);
+          Abb.Future.return (Error `Error)
+
+    let query_missing_applied_dirspaces t =
+      let open Abb.Future.Infix_monad in
+      Pgsql_pool.with_conn t.storage ~f:(fun db ->
+          Pgsql_io.Prepared_stmt.fetch
+            db
+            Sql.select_missing_dirspace_applies_for_pull_request
+            ~f:(fun dir workspace -> Terrat_change.Dirspace.{ dir; workspace })
+            t.owner
+            t.name
+            (CCInt64.of_int t.pull_number))
+      >>= function
+      | Ok _ as ret -> Abb.Future.return ret
+      | Error (#Pgsql_pool.err as err) ->
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : QUERY_MISSING_APPLIED_DIRSPACES : %a"
+                t.request_id
+                Pgsql_pool.pp_err
+                err);
+          Abb.Future.return (Error `Error)
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : QUERY_MISSING_APPLIED_DIRSPACES : %a"
+                t.request_id
+                Pgsql_io.pp_err
+                err);
+          Abb.Future.return (Error `Error)
+
+    let fetch_repo_config t =
+      let open Abb.Future.Infix_monad in
+      Terrat_github.fetch_repo_config
+        ~python:(Terrat_config.python_exec t.config)
+        ~access_token:t.access_token
+        ~owner:t.owner
+        ~repo:t.name
+        t.work_manifest.Terrat_work_manifest.hash
+      >>= function
+      | Ok _ as ret -> Abb.Future.return ret
+      | Error (#Terrat_github.fetch_repo_config_err as err) ->
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : FETCH_PULL_REQUEST : ERROR : %a"
+                t.request_id
+                Terrat_github.pp_fetch_repo_config_err
+                err);
+          Abb.Future.return (Error `Error)
+
+    let fetch_work_manifest db work_manifest_id =
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        Sql.select_work_manifest_for_update
+        work_manifest_id
+        ~f:(fun
+             base_hash
+             completed_at
+             created_at
+             hash
+             run_type
+             state
+             tag_query
+             repo_id
+             pull_number
+             base_branch
+             installation_id
+             owner
+             name
+             run_id
+           ->
+          ( (installation_id, owner, name, pull_number),
+            {
+              Terrat_work_manifest.base_hash;
+              changes = ();
+              completed_at;
+              created_at;
+              hash;
+              id = work_manifest_id;
+              src = ();
+              run_id;
+              run_type;
+              state;
+              tag_query;
+            } ))
+
+    let log_work_manifest_result request_id work_manifest_id success =
+      Logs.info (fun m ->
+          m
+            "GITHUB_EVALUATOR : %s : RESULT : %a : %s"
+            request_id
+            Uuidm.pp
+            work_manifest_id
+            (if success then "SUCCESS" else "FAILURE"));
+      Prmths.Counter.inc_one (Metrics.run_overall_result_count (Bool.to_string success))
+
+    let complete_work_manifest request_id db work_manifest_id =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Abbs_time_it.run
+        (fun t ->
+          Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : COMPLETE_WORK_MANIFEST : %f" request_id t))
+        (fun () ->
+          Pgsql_io.Prepared_stmt.fetch db Sql.complete_work_manifest work_manifest_id ~f:CCFun.id)
+      >>= function
+      | run_time :: _ -> Abb.Future.return (Ok run_time)
+      | [] -> assert false
+
+    let store_dirspace_results request_id db work_manifest_id dirspaces =
+      Abbs_time_it.run
+        (fun t ->
+          Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : DIRSPACE_RESULT_STORE : %f" request_id t))
+        (fun () ->
+          Abbs_future_combinators.List_result.iter
+            ~f:(fun result ->
+              let module Wmr = Terrat_api_components.Work_manifest_result in
+              Logs.info (fun m ->
+                  m
+                    "GITHUB_EVALUATOR : %s : RESULT_STORE : %a : %s : %s : %s"
+                    request_id
+                    Uuidm.pp
+                    work_manifest_id
+                    result.Wmr.path
+                    result.Wmr.workspace
+                    (if result.Wmr.success then "SUCCESS" else "FAILURE"));
+              Pgsql_io.Prepared_stmt.execute
+                db
+                Sql.insert_github_work_manifest_result
+                work_manifest_id
+                result.Wmr.path
+                result.Wmr.workspace
+                result.Wmr.success)
+            dirspaces)
+
+    let fetch_denied_dirspaces request_id db work_manifest_id =
+      Abbs_time_it.run
+        (fun t ->
+          Logs.info (fun m ->
+              m "GITHUB_EVALUATOR : %s : FETCH_ACCESS_CONTROL_DENIED_DIRSPACES : %f" request_id t))
+        (fun () ->
+          Pgsql_io.Prepared_stmt.fetch
+            db
+            Sql.select_work_manifest_access_control_denied_dirspaces
+            ~f:(fun dir workspace policy -> (Terrat_change.Dirspace.{ dir; workspace }, policy))
+            work_manifest_id)
+
+    let fetch_access_token request_id config installation_id =
+      Abbs_time_it.run
+        (fun t ->
+          Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : FETCH_ACCESS_TOKEN : %f" request_id t))
+        (fun () ->
+          Terrat_github.get_installation_access_token config (CCInt64.to_int installation_id))
 
     let pre_hook_output_texts outputs =
       let module Output = Terrat_api_components_hook_outputs.Pre.Items in
@@ -3148,85 +3455,6 @@ module Wm = struct
              | Output.Workflow_output_env _
              | Output.Workflow_output_init Init.{ outputs = None; _ }
              | Output.Workflow_output_apply Apply.{ outputs = None; _ } -> [])
-
-    let complete_check ~access_token ~owner ~repo ~branch ~run_id ~run_type ~sha ~results () =
-      let module Wmr = Terrat_api_components.Work_manifest_result in
-      let module R = Terrat_api_work_manifest.Results.Request_body in
-      let module Hooks_output = Terrat_api_components.Hook_outputs in
-      let unified_run_type =
-        Terrat_work_manifest.Pull_request.(
-          run_type |> Unified_run_type.of_run_type |> Unified_run_type.to_string)
-      in
-      let success = results.R.overall.R.Overall.success in
-      let description = if success then "Completed" else "Failed" in
-      let target_url =
-        Printf.sprintf "https://github.com/%s/%s/actions/runs/%s" owner repo run_id
-      in
-      let pre_hooks_status =
-        let module Run = Terrat_api_components.Workflow_output_run in
-        let module Env = Terrat_api_components.Workflow_output_env in
-        let module Checkout = Terrat_api_components.Workflow_output_checkout in
-        let module Ce = Terrat_api_components.Workflow_output_cost_estimation in
-        let module Oidc = Terrat_api_components.Workflow_output_oidc in
-        results.R.overall.R.Overall.outputs.Hooks_output.pre
-        |> CCList.exists
-             Hooks_output.Pre.Items.(
-               function
-               | Workflow_output_run Run.{ success; _ }
-               | Workflow_output_env Env.{ success; _ }
-               | Workflow_output_checkout Checkout.{ success; _ }
-               | Workflow_output_cost_estimation Ce.{ success; _ }
-               | Workflow_output_oidc Oidc.{ success; _ } -> not success)
-        |> function
-        | true -> Terrat_commit_check.Status.Failed
-        | false -> Terrat_commit_check.Status.Completed
-      in
-      let post_hooks_status =
-        let module Run = Terrat_api_components.Workflow_output_run in
-        let module Env = Terrat_api_components.Workflow_output_env in
-        let module Oidc = Terrat_api_components.Workflow_output_oidc in
-        results.R.overall.R.Overall.outputs.Hooks_output.post
-        |> CCList.exists
-             Hooks_output.Post.Items.(
-               function
-               | Workflow_output_run Run.{ success; _ }
-               | Workflow_output_env Env.{ success; _ }
-               | Workflow_output_oidc Oidc.{ success; _ } -> not success)
-        |> function
-        | true -> Terrat_commit_check.Status.Failed
-        | false -> Terrat_commit_check.Status.Completed
-      in
-      let commit_statuses =
-        let aggregate =
-          Terrat_commit_check.
-            [
-              make
-                ~details_url:target_url
-                ~description
-                ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
-                ~status:pre_hooks_status;
-              make
-                ~details_url:target_url
-                ~description
-                ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
-                ~status:post_hooks_status;
-            ]
-        in
-        let dirspaces =
-          CCList.map
-            (fun Wmr.{ path; workspace; success; _ } ->
-              let status = Terrat_commit_check.Status.(if success then Completed else Failed) in
-              let description = if success then "Completed" else "Failed" in
-              Terrat_commit_check.make
-                ~details_url:target_url
-                ~description
-                ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type path workspace)
-                ~status)
-            results.R.dirspaces
-        in
-        aggregate @ dirspaces
-      in
-      Terrat_github_commit_check.create ~access_token ~owner ~repo ~ref_:sha commit_statuses
 
     let create_run_output ~compact_view run_type results denied_dirspaces =
       let module Wmr = Terrat_api_components.Work_manifest_result in
@@ -3397,25 +3625,21 @@ module Wm = struct
           Logs.err (fun m -> m "GITHUB_EVALUATOR : ERROR : %s" (Snabela.show_err err));
           assert false
 
-    let rec iterate_comment_posts
-        ?(compact_view = false)
-        ~request_id
-        ~access_token
-        ~owner
-        ~repo
-        ~pull_number
-        ~run_id
-        ~sha
-        ~run_type
-        ~results
-        ~denied_dirspaces
-        () =
+    let rec iterate_comment_posts ?(compact_view = false) t results denied_dirspaces =
+      let module Wm = Terrat_work_manifest in
       let open Abb.Future.Infix_monad in
-      let output = create_run_output ~compact_view run_type results denied_dirspaces in
+      let output =
+        create_run_output ~compact_view t.work_manifest.Wm.run_type results denied_dirspaces
+      in
       Metrics.Run_output_histogram.observe
-        (Metrics.run_output_chars ~r:run_type ~c:compact_view)
+        (Metrics.run_output_chars ~r:t.work_manifest.Wm.run_type ~c:compact_view)
         (CCFloat.of_int (CCString.length output));
-      Terrat_github.publish_comment ~access_token ~owner ~repo ~pull_number output
+      Terrat_github.publish_comment
+        ~access_token:t.access_token
+        ~owner:t.owner
+        ~repo:t.name
+        ~pull_number:t.pull_number
+        output
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Terrat_github.publish_comment_err as err) when not compact_view ->
@@ -3423,576 +3647,232 @@ module Wm = struct
           Logs.err (fun m ->
               m
                 "GITHUB_EVALUATOR : %s : ITERATE_COMMENT_POST : %s"
-                request_id
+                t.request_id
                 (Terrat_github.show_publish_comment_err err));
-          iterate_comment_posts
-            ~compact_view:true
-            ~request_id
-            ~access_token
-            ~owner
-            ~repo
-            ~pull_number
-            ~run_id
-            ~sha
-            ~run_type
-            ~results
-            ~denied_dirspaces
-            ()
+          iterate_comment_posts ~compact_view:true t results denied_dirspaces
       | Error (#Terrat_github.publish_comment_err as err) ->
           Prmths.Counter.inc_one Metrics.github_errors_total;
           Logs.err (fun m ->
               m
                 "GITHUB_EVALUATOR : %s : ITERATE_COMMENT_POST : %s"
-                request_id
+                t.request_id
                 (Terrat_github.show_publish_comment_err err));
           Terrat_github.publish_comment
-            ~access_token
-            ~owner
-            ~repo
-            ~pull_number
+            ~access_token:t.access_token
+            ~owner:t.owner
+            ~repo:t.name
+            ~pull_number:t.pull_number
             Tmpl.comment_too_large
 
-    let publish_results
-        ~request_id
-        ~config
-        ~access_token
-        ~owner
-        ~repo
-        ~branch
-        ~pull_number
-        ~run_type
-        ~results
-        ~denied_dirspaces
-        ~run_id
-        ~sha
-        () =
-      let run =
-        Abbs_future_combinators.Infix_result_app.(
-          (fun _ _ -> ())
-          <$> Abbs_time_it.run
-                (fun t ->
-                  Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : COMMENT : %f" request_id t))
-                (fun () ->
-                  iterate_comment_posts
-                    ~request_id
-                    ~access_token
-                    ~owner
-                    ~repo
-                    ~pull_number
-                    ~run_id
-                    ~sha
-                    ~run_type
-                    ~results
-                    ~denied_dirspaces
-                    ())
-          <*> Abbs_time_it.run
-                (fun t ->
-                  Logs.info (fun m ->
-                      m "GITHUB_EVALUATOR : %s : COMPLETE_COMMIT_STATUSES : %f" request_id t))
-                (fun () ->
-                  complete_check
-                    ~access_token
-                    ~owner
-                    ~repo
-                    ~branch
-                    ~run_id
-                    ~run_type
-                    ~sha
-                    ~results
-                    ()))
+    let complete_status_checks t results =
+      let module Wm = Terrat_work_manifest in
+      let module Wmr = Terrat_api_components.Work_manifest_result in
+      let module R = Terrat_api_work_manifest.Results.Request_body in
+      let module Hooks_output = Terrat_api_components.Hook_outputs in
+      let unified_run_type =
+        Terrat_work_manifest.Pull_request.(
+          t.work_manifest.Wm.run_type |> Unified_run_type.of_run_type |> Unified_run_type.to_string)
       in
-      let open Abb.Future.Infix_monad in
-      Abbs_time_it.run
-        (fun t ->
-          Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : PUBLISH_RESULTS : %f" request_id t))
-        (fun () -> run)
-      >>= function
-      | Ok () -> Abb.Future.return ()
-      | Error (#Githubc2_abb.call_err as err) ->
-          Prmths.Counter.inc_one Metrics.github_errors_total;
-          Logs.err (fun m ->
-              m "GITHUB_EVALUATOR : %s : ERROR : %s" request_id (Githubc2_abb.show_call_err err));
-          Abb.Future.return ()
-      | Error (#Terrat_github.get_installation_access_token_err as err) ->
-          Prmths.Counter.inc_one Metrics.github_errors_total;
-          Logs.err (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : ERROR : %s"
-                request_id
-                (Terrat_github.show_get_installation_access_token_err err));
-          Abb.Future.return ()
-      | Error (#Terrat_github.publish_comment_err as err) ->
-          Prmths.Counter.inc_one Metrics.github_errors_total;
-          Logs.err (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : ERROR : %s"
-                request_id
-                (Terrat_github.show_publish_comment_err err));
-          Abb.Future.return ()
-
-    let automerge_config = function
-      | Terrat_repo_config.(Version_1.{ automerge = Some _ as automerge; _ }) -> automerge
-      | _ -> None
-
-    let merge_pull_request request_id access_token owner repo pull_number =
-      let open Abbs_future_combinators.Infix_result_monad in
-      let client = Terrat_github.create (`Token access_token) in
-      Logs.info (fun m ->
-          m
-            "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %s : %s : %Ld"
-            request_id
-            owner
-            repo
-            pull_number);
-      Githubc2_abb.call
-        client
-        Githubc2_pulls.Merge.(
-          make
-            ~body:
-              Request_body.(
-                make
-                  Primary.(
-                    make
-                      ~commit_title:(Some (Printf.sprintf "Terrateam Automerge #%Ld" pull_number))
-                      ()))
-            Parameters.(make ~owner ~repo ~pull_number:(CCInt64.to_int pull_number)))
-      >>= fun resp ->
-      match Openapi.Response.value resp with
-      | `OK _ -> Abb.Future.return (Ok ())
-      | `Method_not_allowed _ -> (
-          Logs.info (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : MERGE_METHOD_NOT_ALLOWED : %s : %s : %Ld"
-                request_id
-                owner
-                repo
-                pull_number);
-          Githubc2_abb.call
-            client
-            Githubc2_pulls.Merge.(
+      let success = results.R.overall.R.Overall.success in
+      let description = if success then "Completed" else "Failed" in
+      let target_url =
+        Printf.sprintf "https://github.com/%s/%s/actions/runs/%s" t.owner t.name t.run_id
+      in
+      let pre_hooks_status =
+        let module Run = Terrat_api_components.Workflow_output_run in
+        let module Env = Terrat_api_components.Workflow_output_env in
+        let module Checkout = Terrat_api_components.Workflow_output_checkout in
+        let module Ce = Terrat_api_components.Workflow_output_cost_estimation in
+        let module Oidc = Terrat_api_components.Workflow_output_oidc in
+        results.R.overall.R.Overall.outputs.Hooks_output.pre
+        |> CCList.exists
+             Hooks_output.Pre.Items.(
+               function
+               | Workflow_output_run Run.{ success; _ }
+               | Workflow_output_env Env.{ success; _ }
+               | Workflow_output_checkout Checkout.{ success; _ }
+               | Workflow_output_cost_estimation Ce.{ success; _ }
+               | Workflow_output_oidc Oidc.{ success; _ } -> not success)
+        |> function
+        | true -> Terrat_commit_check.Status.Failed
+        | false -> Terrat_commit_check.Status.Completed
+      in
+      let post_hooks_status =
+        let module Run = Terrat_api_components.Workflow_output_run in
+        let module Env = Terrat_api_components.Workflow_output_env in
+        let module Oidc = Terrat_api_components.Workflow_output_oidc in
+        results.R.overall.R.Overall.outputs.Hooks_output.post
+        |> CCList.exists
+             Hooks_output.Post.Items.(
+               function
+               | Workflow_output_run Run.{ success; _ }
+               | Workflow_output_env Env.{ success; _ }
+               | Workflow_output_oidc Oidc.{ success; _ } -> not success)
+        |> function
+        | true -> Terrat_commit_check.Status.Failed
+        | false -> Terrat_commit_check.Status.Completed
+      in
+      let commit_statuses =
+        let aggregate =
+          Terrat_commit_check.
+            [
               make
-                ~body:Request_body.(make Primary.(make ~merge_method:(Some "squash") ()))
-                Parameters.(make ~owner ~repo ~pull_number:(CCInt64.to_int pull_number)))
-          >>= fun resp ->
-          match Openapi.Response.value resp with
-          | `OK _ -> Abb.Future.return (Ok ())
-          | ( `Method_not_allowed _
-            | `Conflict _
-            | `Forbidden _
-            | `Not_found _
-            | `Unprocessable_entity _ ) as err -> Abb.Future.return (Error err))
-      | (`Conflict _ | `Forbidden _ | `Not_found _ | `Unprocessable_entity _) as err ->
-          Abb.Future.return (Error err)
-
-    let delete_pull_request_branch request_id access_token owner repo pull_number =
-      let open Abbs_future_combinators.Infix_result_monad in
-      Logs.info (fun m ->
-          m
-            "GITHUB_EVALUATOR : %s : DELETE_PULL_REQUEST_BRANCH : %s : %s : %Ld"
-            request_id
-            owner
-            repo
-            pull_number);
-      Terrat_github.fetch_pull_request ~access_token ~owner ~repo (CCInt64.to_int pull_number)
-      >>= fun resp ->
-      match Openapi.Response.value resp with
-      | `OK
-          Githubc2_components.Pull_request.
-            {
-              primary = Primary.{ head = Head.{ primary = Primary.{ ref_ = branch; _ }; _ }; _ };
-              _;
-            } -> (
-          Logs.info (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : DELETE_PULL_REQUEST_BRANCH : %s : %s : %Ld : %s"
-                request_id
-                owner
-                repo
-                pull_number
-                branch);
-          let client = Terrat_github.create (`Token access_token) in
-          Githubc2_abb.call
-            client
-            Githubc2_git.Delete_ref.(make Parameters.(make ~owner ~repo ~ref_:("heads/" ^ branch)))
-          >>= fun resp ->
-          match Openapi.Response.value resp with
-          | `No_content -> Abb.Future.return (Ok ())
-          | `Unprocessable_entity err ->
-              Logs.err (fun m ->
-                  m
-                    "GITHUB_EVALUATOR : %s : DELETE_PULL_REQUEST_BRANCH : ERROR : %s : %s : %Ld : \
-                     %s"
-                    request_id
-                    owner
-                    repo
-                    pull_number
-                    (Githubc2_git.Delete_ref.Responses.Unprocessable_entity.show err));
-              Abb.Future.return (Ok ()))
-      | (`Not_found _ | `Internal_server_error _ | `Not_modified | `Service_unavailable _) as err ->
-          Logs.err (fun m ->
-              m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Githubc2_pulls.Get.Responses.pp err);
-          Abb.Future.return (Error `Error)
-
-    let perform_post_apply
-        ~request_id
-        ~config
-        ~storage
-        ~access_token
-        ~owner
-        ~repo
-        ~sha
-        ~pull_number
-        () =
-      let run =
-        let open Abbs_future_combinators.Infix_result_monad in
-        Logs.info (fun m ->
-            m
-              "GITHUB_EVALUATOR : %s : AUTOMERGE : SELECT_MISSING_DIRSPACE_APPLIES : %s : %s : %Ld \
-               : %s"
-              request_id
-              owner
-              repo
-              pull_number
-              sha);
-        Pgsql_pool.with_conn storage ~f:(fun db ->
-            Pgsql_io.Prepared_stmt.fetch
-              db
-              Sql.select_missing_dirspace_applies_for_pull_request
-              ~f:(fun path workspace -> (path, workspace))
-              owner
-              repo
-              pull_number)
-        >>= function
-        | [] -> (
-            Logs.info (fun m ->
-                m
-                  "GITHUB_EVALUATOR : %s : ALL_DIRSPACES_APPLIED : %s : %s : %Ld : %s"
-                  request_id
-                  owner
-                  repo
-                  pull_number
-                  sha);
-            Terrat_github.fetch_repo_config
-              ~python:(Terrat_config.python_exec config)
-              ~access_token
-              ~owner
-              ~repo
-              sha
-            >>= fun repo_config ->
-            match automerge_config repo_config with
-            | Some Terrat_repo_config.Automerge.{ enabled = true; delete_branch } -> (
-                merge_pull_request request_id access_token owner repo pull_number
-                >>= function
-                | () when delete_branch ->
-                    delete_pull_request_branch request_id access_token owner repo pull_number
-                | () -> Abb.Future.return (Ok ()))
-            | _ -> Abb.Future.return (Ok ()))
-        | _ :: _ ->
-            (* Not everything is applied, so skip *)
-            Abb.Future.return (Ok ())
+                ~details_url:target_url
+                ~description
+                ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
+                ~status:pre_hooks_status;
+              make
+                ~details_url:target_url
+                ~description
+                ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
+                ~status:post_hooks_status;
+            ]
+        in
+        let dirspaces =
+          CCList.map
+            (fun Wmr.{ path; workspace; success; _ } ->
+              let status = Terrat_commit_check.Status.(if success then Completed else Failed) in
+              let description = if success then "Completed" else "Failed" in
+              Terrat_commit_check.make
+                ~details_url:target_url
+                ~description
+                ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type path workspace)
+                ~status)
+            results.R.dirspaces
+        in
+        aggregate @ dirspaces
       in
-      let open Abb.Future.Infix_monad in
-      run
-      >>= function
-      | Ok () -> Abb.Future.return ()
-      | Error (#Pgsql_pool.err as err) ->
-          Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
-          Logs.err (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : AUTOMERGE : ERROR : %s : %s : %Ld : %s : %s"
-                request_id
-                owner
-                repo
-                pull_number
-                sha
-                (Pgsql_pool.show_err err));
-          Abb.Future.return ()
-      | Error (#Pgsql_io.err as err) ->
-          Prmths.Counter.inc_one Metrics.pgsql_errors_total;
-          Logs.err (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : AUTOMERGE : ERROR : %s : %s : %Ld : %s : %s"
-                request_id
-                owner
-                repo
-                pull_number
-                sha
-                (Pgsql_io.show_err err));
-          Abb.Future.return ()
-      | Error `Error ->
-          Prmths.Counter.inc_one Metrics.github_errors_total;
-          Logs.err (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : AUTOMERGE : ERROR : %s : %s : %Ld : %s : ERROR"
-                request_id
-                owner
-                repo
-                pull_number
-                sha);
-          Abb.Future.return ()
-      | Error (#Terrat_github.get_installation_access_token_err as err) ->
-          Prmths.Counter.inc_one Metrics.github_errors_total;
-          Logs.err (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : AUTOMERGE : ERROR : %s : %s : %Ld : %s : %s"
-                request_id
-                owner
-                repo
-                pull_number
-                sha
-                (Terrat_github.show_get_installation_access_token_err err));
-          Abb.Future.return ()
-      | Error (#Terrat_github.fetch_repo_config_err as err) ->
-          Prmths.Counter.inc_one Metrics.github_errors_total;
-          Logs.err (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : AUTOMERGE : ERROR : %s : %s : %Ld : %s : %s"
-                request_id
-                owner
-                repo
-                pull_number
-                sha
-                (Terrat_github.show_fetch_repo_config_err err));
-          Abb.Future.return ()
-      | Error (`Conflict err) ->
-          Logs.err (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : AUTOMERGE : ERROR : %s : %s : %Ld : %s : %s"
-                request_id
-                owner
-                repo
-                pull_number
-                sha
-                (Githubc2_pulls.Merge.Responses.Conflict.show err));
-          Abb.Future.return ()
-      | Error (`Method_not_allowed err) ->
-          Logs.err (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : AUTOMERGE : ERROR : %s : %s : %Ld : %s : %s"
-                request_id
-                owner
-                repo
-                pull_number
-                sha
-                (Githubc2_pulls.Merge.Responses.Method_not_allowed.show err));
-          Abb.Future.return ()
+      Terrat_github_commit_check.create
+        ~access_token:t.access_token
+        ~owner:t.owner
+        ~repo:t.name
+        ~ref_:t.work_manifest.Wm.hash
+        commit_statuses
 
-    let complete_work_manifest
-        ~config
-        ~storage
-        ~request_id
-        ~installation_id
-        ~owner
-        ~repo
-        ~branch
-        ~sha
-        ~pull_number
-        ~run_type
-        ~run_id
-        ~results
-        ~denied_dirspaces
-        () =
-      let run =
-        let open Abbs_future_combinators.Infix_result_monad in
-        Terrat_github.get_installation_access_token config (CCInt64.to_int installation_id)
-        >>= fun access_token ->
-        Abb.Future.Infix_app.(
-          (fun () () -> Ok ())
-          <$> publish_results
-                ~request_id
-                ~config
-                ~access_token
-                ~owner
-                ~repo
-                ~branch
-                ~pull_number:(CCInt64.to_int pull_number)
-                ~run_type
-                ~results
-                ~denied_dirspaces
-                ~run_id:(CCOption.get_exn_or "run_id is None" run_id)
-                ~sha
-                ()
-          <*>
-          match Terrat_work_manifest.Pull_request.Unified_run_type.of_run_type run_type with
-          | Terrat_work_manifest.Pull_request.Unified_run_type.Apply ->
-              perform_post_apply
-                ~request_id
-                ~config
-                ~storage
-                ~access_token
-                ~owner
-                ~repo
-                ~sha
-                ~pull_number
-                ()
-          | Terrat_work_manifest.Pull_request.Unified_run_type.Plan -> Abb.Future.return ())
-      in
-      let open Abb.Future.Infix_monad in
-      run
-      >>= fun ret ->
-      Abb.Future.fork (R.run ~request_id config storage)
-      >>= fun _ ->
-      match ret with
-      | Ok () -> Abb.Future.return ()
-      | Error (#Terrat_github.get_installation_access_token_err as err) ->
-          Prmths.Counter.inc_one Metrics.github_errors_total;
-          Logs.err (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : ERROR : %s"
-                request_id
-                (Terrat_github.show_get_installation_access_token_err err));
-          Abb.Future.return ()
+    let publish_results t results denied_dirspaces =
+      Abbs_time_it.run
+        (fun d ->
+          Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : PUBLISH_RESULTS : %f" t.request_id d))
+        (fun () ->
+          Abbs_future_combinators.Infix_result_app.(
+            (fun _ _ -> ())
+            <$> Abbs_time_it.run
+                  (fun d ->
+                    Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : COMMENT : %f" t.request_id d))
+                  (fun () -> iterate_comment_posts t results denied_dirspaces)
+            <*> Abbs_time_it.run
+                  (fun d ->
+                    Logs.info (fun m ->
+                        m "GITHUB_EVALUATOR : %s : COMPLETE_COMMIT_STATUSES : %f" t.request_id d))
+                  (fun () -> complete_status_checks t results)))
 
     let store ~request_id config storage work_manifest_id results =
+      let run =
+        let module Rb = Terrat_api_work_manifest.Results.Request_body in
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_pool.with_conn storage ~f:(fun db ->
+            Pgsql_io.tx db ~f:(fun () ->
+                fetch_work_manifest db work_manifest_id
+                >>= function
+                | ((installation_id, owner, name, pull_number), work_manifest) :: _ -> (
+                    log_work_manifest_result
+                      request_id
+                      work_manifest_id
+                      results.Rb.overall.Rb.Overall.success;
+                    complete_work_manifest request_id db work_manifest_id
+                    >>= fun run_time ->
+                    store_dirspace_results request_id db work_manifest_id results.Rb.dirspaces
+                    >>= fun () ->
+                    fetch_denied_dirspaces request_id db work_manifest_id
+                    >>= fun denied_dirspaces ->
+                    fetch_access_token request_id config installation_id
+                    >>= fun access_token ->
+                    match work_manifest.Terrat_work_manifest.run_id with
+                    | Some run_id ->
+                        let t =
+                          {
+                            access_token;
+                            config;
+                            installation_id;
+                            name;
+                            owner;
+                            pull_number = CCInt64.to_int pull_number;
+                            request_id;
+                            storage;
+                            work_manifest;
+                            run_id;
+                          }
+                        in
+                        publish_results t results denied_dirspaces
+                        >>= fun () -> Abb.Future.return (Ok (run_time, t))
+                    | None -> Abb.Future.return (Error `Work_manifest_missing_run_id))
+                | [] -> Abb.Future.return (Error `Workflow_not_found)))
+      in
       let open Abb.Future.Infix_monad in
-      Logs.info (fun m ->
-          m
-            "GITHUB_EVALUATOR : %s : RESULT : %a : %s"
-            request_id
-            Uuidm.pp
-            work_manifest_id
-            (if Terrat_api_work_manifest.Results.Request_body.(results.overall.Overall.success) then
-             "SUCCESS"
-            else "FAILURE"));
-      Prmths.Counter.inc_one
-        (Metrics.run_overall_result_count
-           (Bool.to_string
-              Terrat_api_work_manifest.Results.Request_body.(results.overall.Overall.success)));
-      Pgsql_pool.with_conn storage ~f:(fun db ->
-          let open Abbs_future_combinators.Infix_result_monad in
-          Pgsql_io.tx db ~f:(fun () ->
-              Abbs_time_it.run
-                (fun t ->
-                  Logs.info (fun m ->
-                      m "GITHUB_EVALUATOR : %s : DIRSPACE_RESULT_STORE : %f" request_id t))
-                (fun () ->
-                  Abbs_future_combinators.List_result.iter
-                    ~f:(fun result ->
-                      let module Wmr = Terrat_api_components.Work_manifest_result in
-                      Logs.info (fun m ->
-                          m
-                            "GITHUB_EVALUATOR : %s : RESULT_STORE : %a : %s : %s : %s"
-                            request_id
-                            Uuidm.pp
-                            work_manifest_id
-                            result.Wmr.path
-                            result.Wmr.workspace
-                            (if result.Wmr.success then "SUCCESS" else "FAILURE"));
-                      Pgsql_io.Prepared_stmt.execute
-                        db
-                        Sql.insert_github_work_manifest_result
-                        work_manifest_id
-                        result.Wmr.path
-                        result.Wmr.workspace
-                        result.Wmr.success)
-                    results.Terrat_api_work_manifest.Results.Request_body.dirspaces)
-              >>= fun () ->
-              Abbs_time_it.run
-                (fun t ->
-                  Logs.info (fun m ->
-                      m "GITHUB_EVALUATOR : %s : COMPLETE_WORK_MANIFEST : %f" request_id t))
-                (fun () ->
-                  Pgsql_io.Prepared_stmt.execute db Sql.complete_work_manifest work_manifest_id)
-              >>= fun () ->
-              Abbs_time_it.run
-                (fun t ->
-                  Logs.info (fun m ->
-                      m
-                        "GITHUB_EVALUATOR : %s : FETCH_ACCESS_CONTROL_DENIED_DIRSPACES : %f"
-                        request_id
-                        t))
-                (fun () ->
-                  Pgsql_io.Prepared_stmt.fetch
-                    db
-                    Sql.select_work_manifest_access_control_denied_dirspaces
-                    ~f:(fun dir workspace policy ->
-                      (Terrat_change.Dirspace.{ dir; workspace }, policy))
-                    work_manifest_id)
-              >>= fun denied_dirspaces ->
-              Abbs_time_it.run
-                (fun t ->
-                  Logs.info (fun m ->
-                      m "GITHUB_EVALUATOR : %s : SELECT_GITHUB_PARAMETERS : %f" request_id t))
-                (fun () ->
-                  Pgsql_io.Prepared_stmt.fetch
-                    db
-                    (Sql.select_github_parameters_from_work_manifest ())
-                    ~f:
-                      (fun installation_id
-                           owner
-                           name
-                           branch
-                           sha
-                           _base_sha
-                           pull_number
-                           run_type
-                           run_id
-                           run_time ->
-                      ( installation_id,
-                        owner,
-                        name,
-                        branch,
-                        sha,
-                        pull_number,
-                        run_type,
-                        run_id,
-                        denied_dirspaces,
-                        run_time ))
-                    work_manifest_id)
-              >>= function
-              | values :: _ -> Abb.Future.return (Ok values)
-              | [] -> assert false))
+      run
       >>= function
-      | Ok
-          ( installation_id,
-            owner,
-            repo,
-            branch,
-            sha,
-            pull_number,
-            run_type,
-            run_id,
-            denied_dirspaces,
-            run_time ) ->
+      | Ok (run_time, t) ->
+          let module Wm = Terrat_work_manifest in
           Metrics.Work_manifest_run_time_histogram.observe
             (Metrics.work_manifest_run_time_duration_seconds
-               (Terrat_work_manifest.Pull_request.Run_type.to_string run_type))
+               (Wm.Pull_request.Run_type.to_string t.work_manifest.Wm.run_type))
             run_time;
-          complete_work_manifest
-            ~config
-            ~storage
-            ~request_id
-            ~installation_id
-            ~owner
-            ~repo
-            ~branch
-            ~sha
-            ~pull_number
-            ~run_type
-            ~run_id
-            ~results
-            ~denied_dirspaces
-            ()
-          >>= fun () -> Abb.Future.return (Ok ())
+          Abb.Future.return (Ok t)
       | Error (#Pgsql_pool.err as err) ->
-          Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
           Logs.err (fun m ->
               m
-                "GITHUB_EVALUATOR : %s : PLAN : %a : ERROR : %s"
+                "GITHUB_EVALUATOR : %s : STORE : %a : %a"
                 request_id
                 Uuidm.pp
                 work_manifest_id
-                (Pgsql_pool.show_err err));
+                Pgsql_pool.pp_err
+                err);
           Abb.Future.return (Error `Error)
       | Error (#Pgsql_io.err as err) ->
-          Prmths.Counter.inc_one Metrics.pgsql_errors_total;
           Logs.err (fun m ->
               m
-                "GITHUB_EVALUATOR : %s : PLAN : %a : ERROR : %s"
+                "GITHUB_EVALUATOR : %s : STORE : %a : %a"
                 request_id
                 Uuidm.pp
                 work_manifest_id
-                (Pgsql_io.show_err err));
+                Pgsql_io.pp_err
+                err);
+          Abb.Future.return (Error `Error)
+      | Error (#Terrat_github.publish_comment_err as err) ->
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : STORE : %a : %a"
+                request_id
+                Uuidm.pp
+                work_manifest_id
+                Terrat_github.pp_publish_comment_err
+                err);
+          Abb.Future.return (Error `Error)
+      | Error (#Terrat_github.get_installation_access_token_err as err) ->
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : STORE : %a : %a"
+                request_id
+                Uuidm.pp
+                work_manifest_id
+                Terrat_github.pp_get_installation_access_token_err
+                err);
+          Abb.Future.return (Error `Error)
+      | Error `Work_manifest_missing_run_id ->
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : STORE : %a : WORK_MANIFEST_MISSING_RUN_ID"
+                request_id
+                Uuidm.pp
+                work_manifest_id);
+          Abb.Future.return (Error `Error)
+      | Error `Workflow_not_found ->
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : STORE : %a : WORKFLOW_NOT_FOUND"
+                request_id
+                Uuidm.pp
+                work_manifest_id);
           Abb.Future.return (Error `Error)
   end
 end
