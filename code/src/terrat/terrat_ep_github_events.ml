@@ -60,6 +60,20 @@ module Sql = struct
       /% Var.uuid "org"
       /% Var.text "target_type")
 
+  let update_github_installation_unsuspend =
+    Pgsql_io.Typed_sql.(
+      sql /^ "update github_installations set state = 'installed' where id = $id" /% Var.bigint "id")
+
+  let update_github_installation_uninstall =
+    Pgsql_io.Typed_sql.(
+      sql
+      /^ "update github_installations set state = 'uninstalled' where id = $id"
+      /% Var.bigint "id")
+
+  let update_github_installation_suspended =
+    Pgsql_io.Typed_sql.(
+      sql /^ "update github_installations set state = 'suspended' where id = $id" /% Var.bigint "id")
+
   let insert_github_installation_repository =
     Pgsql_io.Typed_sql.(
       sql
@@ -221,7 +235,7 @@ let process_installation request_id config storage = function
           m
             "INSTALLATION : CREATE :  %d : %s"
             installation.Gw.Installation.id
-            created.Gw.Installation_created.installation.Gw.Installation.account.Gw.User.login);
+            installation.Gw.Installation.account.Gw.User.login);
       Pgsql_pool.with_conn storage ~f:(fun db ->
           Pgsql_io.Prepared_stmt.fetch
             db
@@ -246,10 +260,19 @@ let process_installation request_id config storage = function
                     installation.Gw.Installation.account.Gw.User.type_
               | [] -> assert false)
           | _ :: _ -> Abb.Future.return (Ok ()))
-  | Gw.Installation_event.Installation_deleted _ ->
-      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : INSTALLATION_DELETED" request_id);
+  | Gw.Installation_event.Installation_deleted deleted ->
+      let installation = deleted.Gw.Installation_deleted.installation in
+      Logs.info (fun m ->
+          m
+            "INSTALLATION : UNINSTALL : %d : %s"
+            installation.Gw.Installation.id
+            installation.Gw.Installation.account.Gw.User.login);
       Prmths.Counter.inc_one (Metrics.installation_events_total "deleted");
-      Abb.Future.return (Ok ())
+      Pgsql_pool.with_conn storage ~f:(fun db ->
+          Pgsql_io.Prepared_stmt.execute
+            db
+            Sql.update_github_installation_uninstall
+            (Int64.of_int installation.Gw.Installation.id))
   | Gw.Installation_event.Installation_new_permissions_accepted installation_event ->
       Prmths.Counter.inc_one (Metrics.installation_events_total "new_permissions_accepted");
       let installation = installation_event.Gw.Installation_new_permissions_accepted.installation in
@@ -259,14 +282,34 @@ let process_installation request_id config storage = function
             installation.Gw.Installation.id
             installation.Gw.Installation.account.Gw.User.login);
       Abb.Future.return (Ok ())
-  | Gw.Installation_event.Installation_suspend _ ->
-      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : INSTALLATION_SUSPENDED" request_id);
+  | Gw.Installation_event.Installation_suspend suspended ->
+      let installation = suspended.Gw.Installation_suspend.installation in
+      let module I = Gw.Installation_suspend.Installation_ in
+      Logs.info (fun m ->
+          m
+            "INSTALLATION : SUSPENDED : %d : %s"
+            installation.I.T.primary.I.T.Primary.id
+            installation.I.T.primary.I.T.Primary.account.Gw.User.login);
       Prmths.Counter.inc_one (Metrics.installation_events_total "suspended");
-      Abb.Future.return (Ok ())
-  | Gw.Installation_event.Installation_unsuspend _ ->
-      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : INSTALLATION_UNSUSPENDED" request_id);
+      Pgsql_pool.with_conn storage ~f:(fun db ->
+          Pgsql_io.Prepared_stmt.execute
+            db
+            Sql.update_github_installation_suspended
+            (Int64.of_int installation.I.T.primary.I.T.Primary.id))
+  | Gw.Installation_event.Installation_unsuspend unsuspend ->
+      let installation = unsuspend.Gw.Installation_unsuspend.installation in
+      let module I = Gw.Installation_unsuspend.Installation_ in
+      Logs.info (fun m ->
+          m
+            "INSTALLATION : UNSUSPENDED : %d : %s"
+            installation.I.T.primary.I.T.Primary.id
+            installation.I.T.primary.I.T.Primary.account.Gw.User.login);
       Prmths.Counter.inc_one (Metrics.installation_events_total "unsuspended");
-      Abb.Future.return (Ok ())
+      Pgsql_pool.with_conn storage ~f:(fun db ->
+          Pgsql_io.Prepared_stmt.execute
+            db
+            Sql.update_github_installation_unsuspend
+            (Int64.of_int installation.I.T.primary.I.T.Primary.id))
 
 let process_pull_request_event request_id config storage = function
   | Gw.Pull_request_event.Pull_request_opened
