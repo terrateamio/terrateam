@@ -124,6 +124,32 @@
       },
       "type": "object"
     },
+    "drift": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        },
+        "reconcile": {
+          "default": false,
+          "type": "boolean"
+        },
+        "schedule": {
+          "enum": [
+            "hourly",
+            "daily",
+            "weekly",
+            "monthly"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "schedule"
+      ],
+      "type": "object"
+    },
     "hook": {
       "additionalProperties": false,
       "properties": {
@@ -493,6 +519,9 @@
             "$ref": "#/definitions/dir"
           },
           "type": "object"
+        },
+        "drift": {
+          "$ref": "#/definitions/drift"
         },
         "enabled": {
           "default": true,

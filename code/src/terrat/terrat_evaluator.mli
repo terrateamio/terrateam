@@ -201,6 +201,36 @@ module type S = sig
     val publish_msg : T.t -> (Pull_request.t, Apply_requirements.t) Event.Msg.t -> unit Abb.Future.t
   end
 
+  module Drift : sig
+    module Schedule : sig
+      type t [@@deriving show]
+
+      val id : t -> string
+      val owner : t -> string
+      val name : t -> string
+    end
+
+    module Repo : sig
+      type t
+
+      val tree : t -> string list
+      val repo_config : t -> Terrat_repo_config.Version_1.t
+    end
+
+    val query_missing_scheduled_runs :
+      Terrat_config.t -> Pgsql_io.t -> (Schedule.t list, [> `Error ]) result Abb.Future.t
+
+    val fetch_repo : Terrat_config.t -> Schedule.t -> (Repo.t, [> `Error ]) result Abb.Future.t
+
+    val store_work_manifest :
+      Terrat_config.t ->
+      Pgsql_io.t ->
+      Schedule.t ->
+      Repo.t ->
+      Terrat_change.Dirspaceflow.t list ->
+      (unit, [> `Error ]) result Abb.Future.t
+  end
+
   module Runner : sig
     val run : request_id:string -> Terrat_config.t -> Terrat_storage.t -> unit Abb.Future.t
   end
@@ -287,6 +317,15 @@ end
 module Make (S : S) : sig
   module Event : sig
     val eval : Terrat_storage.t -> S.Event.T.t -> unit Abb.Future.t
+  end
+
+  module Drift : sig
+    module Service : sig
+      val run : Terrat_config.t -> Terrat_storage.t -> unit Abb.Future.t
+    end
+
+    val run_schedule :
+      Terrat_config.t -> Terrat_storage.t -> S.Drift.Schedule.t -> unit Abb.Future.t
   end
 
   module Runner : sig

@@ -15,6 +15,7 @@ end
 type t = {
   base_ref : string;
   changed_dirspaces : Changed_dirspaces.t;
+  run_kind : string;
   type_ : Type.t; [@key "type"]
 }
 [@@deriving yojson { strict = true; meta = true }, show, eq]

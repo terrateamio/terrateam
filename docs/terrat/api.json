@@ -196,15 +196,19 @@
             },
             "type": "array"
           },
+          "run_kind": {
+            "type": "string"
+          },
           "type": {
             "const": "apply",
             "type": "string"
           }
         },
         "required": [
-          "type",
           "base_ref",
-          "changed_dirspaces"
+          "changed_dirspaces",
+          "run_kind",
+          "type"
         ],
         "type": "object"
       },
@@ -272,17 +276,21 @@
             },
             "type": "array"
           },
+          "run_kind": {
+            "type": "string"
+          },
           "type": {
             "const": "plan",
             "type": "string"
           }
         },
         "required": [
-          "type",
+          "base_dirspaces",
           "base_ref",
           "changed_dirspaces",
           "dirspaces",
-          "base_dirspaces"
+          "run_kind",
+          "type"
         ],
         "type": "object"
       },
@@ -328,15 +336,19 @@
             },
             "type": "array"
           },
+          "run_kind": {
+            "type": "string"
+          },
           "type": {
             "const": "unsafe-apply",
             "type": "string"
           }
         },
         "required": [
-          "type",
           "base_ref",
-          "changed_dirspaces"
+          "changed_dirspaces",
+          "run_kind",
+          "type"
         ],
         "type": "object"
       },

@@ -1,10 +1,14 @@
-update github_work_manifests as gwm set
+update github_work_manifests set
        run_id = $run_id
-from github_pull_requests as gpr
+from github_work_manifests as gwm
 inner join github_installation_repositories as gir
-    on gir.id = gpr.repository
-where gwm.repository = gpr.repository
-      and gwm.pull_number = gpr.pull_number
+    on gwm.repository = gir.id
+left join github_pull_requests as gpr
+    on gir.id = gpr.repository and gwm.pull_number = gpr.pull_number
+left join github_drift_work_manifests as gdwm
+    on gdwm.work_manifest = gwm.id
+where github_work_manifests.id = gwm.id
+      and (gwm.pull_number is not null or gdwm.work_manifest is not null)
       and gwm.id = $id
       and gwm.sha = $sha
       and gwm.state = 'running'
@@ -18,7 +22,7 @@ returning
     gwm.tag_query,
     gwm.repository,
     gwm.pull_number,
-    gpr.base_branch,
+    coalesce(gpr.base_branch, gdwm.branch),
     gir.installation_id,
     gir.owner,
     gir.name,

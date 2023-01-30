@@ -325,6 +325,36 @@ module type S = sig
     val publish_msg : T.t -> (Pull_request.t, Apply_requirements.t) Event.Msg.t -> unit Abb.Future.t
   end
 
+  module Drift : sig
+    module Schedule : sig
+      type t [@@deriving show]
+
+      val id : t -> string
+      val owner : t -> string
+      val name : t -> string
+    end
+
+    module Repo : sig
+      type t
+
+      val tree : t -> string list
+      val repo_config : t -> Terrat_repo_config.Version_1.t
+    end
+
+    val query_missing_scheduled_runs :
+      Terrat_config.t -> Pgsql_io.t -> (Schedule.t list, [> `Error ]) result Abb.Future.t
+
+    val fetch_repo : Terrat_config.t -> Schedule.t -> (Repo.t, [> `Error ]) result Abb.Future.t
+
+    val store_work_manifest :
+      Terrat_config.t ->
+      Pgsql_io.t ->
+      Schedule.t ->
+      Repo.t ->
+      Terrat_change.Dirspaceflow.t list ->
+      (unit, [> `Error ]) result Abb.Future.t
+  end
+
   module Runner : sig
     val run : request_id:string -> Terrat_config.t -> Terrat_storage.t -> unit Abb.Future.t
   end
@@ -1375,6 +1405,125 @@ module Make (S : S) = struct
                     (CCOption.map_or ~default:"" Printexc.raw_backtrace_to_string bt_opt));
               Abb.Future.return ())
         (Metrics.DefaultHistogram.time Metrics.eval_duration_seconds (fun () -> run' storage event))
+  end
+
+  module Drift = struct
+    let fetch_repo config schedule =
+      Abbs_time_it.run
+        (fun d ->
+          Logs.info (fun m ->
+              m
+                "EVALUATOR : DRIFT : FETCH_REPO : owner=%s : name=%s : %f"
+                (S.Drift.Schedule.owner schedule)
+                (S.Drift.Schedule.name schedule)
+                d))
+        (fun () -> S.Drift.fetch_repo config schedule)
+
+    let store_work_manifest config db schedule repo dirspaceflows =
+      Abbs_time_it.run
+        (fun d ->
+          Logs.info (fun m ->
+              m
+                "EVALUATOR : DRIFT : STORE_WORK_MANIFEST : owner=%s : name=%s : %f"
+                (S.Drift.Schedule.owner schedule)
+                (S.Drift.Schedule.name schedule)
+                d))
+        (fun () -> S.Drift.store_work_manifest config db schedule repo dirspaceflows)
+
+    let run_schedule' config db schedule =
+      let open Abbs_future_combinators.Infix_result_monad in
+      fetch_repo config schedule
+      >>= fun repo ->
+      let diff =
+        CCList.map (fun filename -> Terrat_change.Diff.Change { filename }) (S.Drift.Repo.tree repo)
+      in
+      match
+        compute_matches
+          ~repo_config:(S.Drift.Repo.repo_config repo)
+          ~tag_query:(Terrat_tag_query.of_string "")
+          ~out_of_change_applies:[]
+          ~diff
+          ~repo_tree:(S.Drift.Repo.tree repo)
+          ()
+      with
+      | Ok (tag_query_matches, _) ->
+          let dirspaceflows =
+            dirspaceflows_of_changes (S.Drift.Repo.repo_config repo) tag_query_matches
+          in
+          store_work_manifest config db schedule repo dirspaceflows
+      | Error (`Bad_glob err) ->
+          Logs.info (fun m -> m "EVALUATOR : DRIFT : BAD_GLOB : %s" err);
+          Abb.Future.return (Error `Error)
+
+    let run_schedule config storage schedule =
+      Abbs_future_combinators.ignore
+        (Pgsql_pool.with_conn storage ~f:(fun db ->
+             Pgsql_io.tx db ~f:(fun () -> run_schedule' config db schedule)))
+
+    module Service = struct
+      let one_hour = Duration.(to_f (of_day 1))
+
+      let query_missing_scheduled_runs config db =
+        Abbs_time_it.run
+          (fun d ->
+            Logs.info (fun m -> m "EVALUATOR : DRIFT : QUERY_MISSING_SCHEDULED_RUNS : %f" d))
+          (fun () -> S.Drift.query_missing_scheduled_runs config db)
+
+      let create_and_store_work_manifest config db schedule =
+        Abbs_time_it.run
+          (fun d ->
+            Logs.info (fun m -> m "EVALUATOR : DRIFT : CREATE_AND_STORE_WORK_MANIFEST : %f" d))
+          (fun () -> run_schedule' config db schedule)
+
+      let run' config storage =
+        let open Abb.Future.Infix_monad in
+        Pgsql_pool.with_conn storage ~f:(fun db ->
+            Pgsql_io.tx db ~f:(fun () ->
+                query_missing_scheduled_runs config db
+                >>= function
+                | Ok schedules ->
+                    Abbs_future_combinators.to_result
+                      (Abbs_future_combinators.List.iter
+                         ~f:(fun schedule ->
+                           create_and_store_work_manifest config db schedule
+                           >>= function
+                           | Ok () -> Abb.Future.return ()
+                           | Error (`Repo_config_parse_err err | `Repo_config_err err) ->
+                               Logs.err (fun m ->
+                                   m
+                                     "EVALUATOR : DRIFT : owner=%s : name=%s : %s"
+                                     (S.Drift.Schedule.owner schedule)
+                                     (S.Drift.Schedule.name schedule)
+                                     err);
+                               Abb.Future.return ()
+                           | Error `Error ->
+                               Logs.err (fun m ->
+                                   m
+                                     "EVALUATOR : DRIFT : STORE_WORK_MANIFEST : %a"
+                                     S.Drift.Schedule.pp
+                                     schedule);
+                               Abb.Future.return ())
+                         schedules)
+                | Error `Error ->
+                    Logs.err (fun m -> m "EVALUATOR : DRIFT : QUERY_MISSING_SCHEDULED_RUNS");
+                    Abb.Future.return (Ok ())))
+
+      let rec run config storage =
+        let open Abb.Future.Infix_monad in
+        Abbs_time_it.run
+          (fun d -> Logs.info (fun m -> m "EVALUATOR : DRIFT : RUN : %f" d))
+          (fun () -> run' config storage)
+        >>= function
+        | Ok () ->
+            S.Runner.run ~request_id:"DRIFT" config storage
+            >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> run config storage
+        | Error (#Pgsql_pool.err as err) ->
+            Logs.err (fun m -> m "EVALUATOR : DRIFT : %a" Pgsql_pool.pp_err err);
+            Abb.Sys.sleep one_hour >>= fun () -> run config storage
+        | Error (#Pgsql_io.err as err) ->
+            Logs.err (fun m -> m "EVALUATOR : DRIFT : %a" Pgsql_io.pp_err err);
+            Abb.Sys.sleep one_hour >>= fun () -> run config storage
+    end
   end
 
   module Runner = struct

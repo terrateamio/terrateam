@@ -5,6 +5,7 @@ module Automerge = Terrat_repo_config_automerge
 module Destination_branch_name = Terrat_repo_config_destination_branch_name
 module Destination_branch_object = Terrat_repo_config_destination_branch_object
 module Dir = Terrat_repo_config_dir
+module Drift = Terrat_repo_config_drift
 module Hook = Terrat_repo_config_hook
 module Hook_list = Terrat_repo_config_hook_list
 module Hook_op = Terrat_repo_config_hook_op

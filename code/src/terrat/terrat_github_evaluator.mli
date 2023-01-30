@@ -34,6 +34,12 @@ module Event : sig
   val eval : Terrat_storage.t -> S.Event.T.t -> unit Abb.Future.t
 end
 
+module Drift : sig
+  module Service : sig
+    val run : Terrat_config.t -> Terrat_storage.t -> unit Abb.Future.t
+  end
+end
+
 module Runner : sig
   val run : request_id:string -> Terrat_config.t -> Terrat_storage.t -> unit Abb.Future.t
 end
@@ -72,4 +78,16 @@ module Work_manifest : sig
     Uuidm.t ->
     Terrat_api_work_manifest.Results.Request_body.t ->
     (unit, [> `Error ]) result Abb.Future.t
+end
+
+module Push : sig
+  val eval :
+    request_id:string ->
+    installation_id:int ->
+    owner:string ->
+    name:string ->
+    default_branch:string ->
+    Terrat_config.t ->
+    Terrat_storage.t ->
+    unit Abb.Future.t
 end

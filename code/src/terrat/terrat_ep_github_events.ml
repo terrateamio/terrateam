@@ -799,6 +799,29 @@ let process_workflow_job request_id config storage = function
       >>= fun _ -> Abb.Future.return ret
   | _ -> Abb.Future.return (Ok ())
 
+let process_push_event request_id config storage event =
+  let repository = event.Gw.Push_event.repository in
+  let default_branch = repository.Gw.Repository.default_branch in
+  let ref_ = event.Gw.Push_event.ref_ in
+  let default_ref = "refs/heads/" ^ default_branch in
+  match event.Gw.Push_event.installation with
+  | Some installation_lite when CCString.equal ref_ default_ref ->
+      let installation_id = installation_lite.Gw.Installation_lite.id in
+      let owner = repository.Gw.Repository.owner.Gw.User.login in
+      let name = repository.Gw.Repository.name in
+      Abbs_future_combinators.to_result
+        (Terrat_github_evaluator.Push.eval
+           ~request_id
+           ~installation_id
+           ~owner
+           ~name
+           ~default_branch
+           config
+           storage)
+  | Some _ | None ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : PUSH_EVENT : NOOP" request_id);
+      Abb.Future.return (Ok ())
+
 let handle_error ctx = function
   | #Pgsql_pool.err as err ->
       Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
@@ -872,9 +895,9 @@ let post config storage ctx =
           | Ok (Gw.Event.Workflow_job_event event) ->
               process_event_handler config storage ctx (fun () ->
                   process_workflow_job (Brtl_ctx.token ctx) config storage event)
-          | Ok (Gw.Event.Push_event _) ->
-              Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PUSH_EVENT" (Brtl_ctx.token ctx));
-              Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
+          | Ok (Gw.Event.Push_event event) ->
+              process_event_handler config storage ctx (fun () ->
+                  process_push_event (Brtl_ctx.token ctx) config storage event)
           | Ok (Gw.Event.Workflow_run_event _) ->
               Logs.debug (fun m ->
                   m "GITHUB_EVENT : %s : NOOP : WORKFLOW_RUN_EVENT" (Brtl_ctx.token ctx));
