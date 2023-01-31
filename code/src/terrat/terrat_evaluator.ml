@@ -600,6 +600,22 @@ module Make (S : S) = struct
       let apply_require_all_dirspace_access t = t.config.Ac.apply_require_all_dirspace_access
     end
 
+    let store_pull_request_work_manifest
+        db
+        event
+        repo_config
+        all_matches
+        work_manifest
+        denied_dirspaces =
+      Abbs_time_it.run (log_time event "CREATE_WORK_MANIFEST") (fun () ->
+          S.Event.store_pull_request_work_manifest
+            db
+            event
+            repo_config
+            all_matches
+            work_manifest
+            denied_dirspaces)
+
     let create_and_store_work_manifest
         db
         repo_config
@@ -632,14 +648,13 @@ module Make (S : S) = struct
       Metrics.Dirspaces_per_work_manifest_histogram.observe
         (Metrics.dirspaces_per_work_manifest (Run_type.to_string run_type))
         (CCFloat.of_int (CCList.length dirspaces));
-      Abbs_time_it.run (log_time event "CREATE_WORK_MANIFEST") (fun () ->
-          S.Event.store_pull_request_work_manifest
-            db
-            event
-            repo_config
-            all_matches
-            work_manifest
-            denied_dirspaces)
+      store_pull_request_work_manifest
+        db
+        event
+        repo_config
+        all_matches
+        work_manifest
+        denied_dirspaces
       >>= fun work_manifest ->
       Prmths.Counter.inc_one (Metrics.stored_work_manifests_total (Run_type.to_string run_type));
       Logs.info (fun m ->
@@ -721,6 +736,14 @@ module Make (S : S) = struct
       | Error (`Invalid_query query) ->
           Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`Invalid_query query))))
 
+    let query_dirspaces_owned_by_other_pull_requests db event pull_request dirspaces =
+      Abbs_time_it.run (log_time event "QUERY_DIRSPACES_OWNED_BY_OTHER_PRS") (fun () ->
+          S.Event.query_dirspaces_owned_by_other_pull_requests db event pull_request dirspaces)
+
+    let query_dirspaces_without_valid_plans db event pull_request dirspaces =
+      Abbs_time_it.run (log_time event "QUERY_DIRSPACES_WITHOUT_VALID_PLANS") (fun () ->
+          S.Event.query_dirspaces_without_valid_plans db event pull_request dirspaces)
+
     let process_apply'
         db
         event
@@ -743,12 +766,11 @@ module Make (S : S) = struct
               m "EVALUATOR : %s : NOOP : APPLY_NO_MATCHING_DIRSPACES" (S.Event.T.request_id event));
           Abb.Future.return (Ok (Some Event.Msg.Apply_no_matching_dirspaces))
       | _, _ -> (
-          Abbs_time_it.run (log_time event "QUERY_DIRSPACES_OWNED_BY_OTHER_PRS") (fun () ->
-              S.Event.query_dirspaces_owned_by_other_pull_requests
-                db
-                event
-                pull_request
-                (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows))
+          query_dirspaces_owned_by_other_pull_requests
+            db
+            event
+            pull_request
+            (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows)
           >>= function
           | dirspaces when Event.Dirspace_map.is_empty dirspaces && operation = `Apply_autoapprove
             -> (
@@ -767,12 +789,11 @@ module Make (S : S) = struct
               | () -> Abb.Future.return (Ok None))
           | dirspaces when Event.Dirspace_map.is_empty dirspaces -> (
               (* None of the dirspaces are owned by another PR, we can proceed *)
-              Abbs_time_it.run (log_time event "QUERY_DIRSPACES_WITHOUT_VALID_PLANS") (fun () ->
-                  S.Event.query_dirspaces_without_valid_plans
-                    db
-                    event
-                    pull_request
-                    (CCList.map (fun Terrat_change_match.{ dirspace; _ } -> dirspace) matches))
+              query_dirspaces_without_valid_plans
+                db
+                event
+                pull_request
+                (CCList.map (fun Terrat_change_match.{ dirspace; _ } -> dirspace) matches)
               >>= function
               | [] -> (
                   (* All are ready to be applied *)
@@ -797,6 +818,14 @@ module Make (S : S) = struct
               Abb.Future.return
                 (Ok (Some (Event.Msg.Dirspaces_owned_by_other_pull_request dirspaces))))
 
+    let query_unapplied_dirspaces db event pull_request =
+      Abbs_time_it.run (log_time event "MISSING_APPLIED_DIRSPACES") (fun () ->
+          S.Event.query_unapplied_dirspaces db event pull_request)
+
+    let check_apply_requirements event pull_request repo_config =
+      Abbs_time_it.run (log_time event "CHECK_APPLY_REQUIREMENTS") (fun () ->
+          S.Event.check_apply_requirements event pull_request repo_config)
+
     let process_apply
         access_control
         db
@@ -807,8 +836,7 @@ module Make (S : S) = struct
         repo_config
         operation =
       let open Abbs_future_combinators.Infix_result_monad in
-      Abbs_time_it.run (log_time event "MISSING_APPLIED_DIRSPACES") (fun () ->
-          S.Event.query_unapplied_dirspaces db event pull_request)
+      query_unapplied_dirspaces db event pull_request
       >>= fun missing_dirspaces ->
       (* Filter only those missing *)
       let tag_query_matches =
@@ -835,8 +863,7 @@ module Make (S : S) = struct
               tag_query_matches
         | `Apply `Manual | `Apply_autoapprove | `Apply_force -> tag_query_matches
       in
-      Abbs_time_it.run (log_time event "CHECK_APPLY_REQUIREMENTS") (fun () ->
-          S.Event.check_apply_requirements event pull_request repo_config)
+      check_apply_requirements event pull_request repo_config
       >>= fun apply_requirements ->
       let passed_apply_requirements = S.Event.Apply_requirements.passed apply_requirements in
       let access_control_run_type =
@@ -886,6 +913,18 @@ module Make (S : S) = struct
       | Error (`Invalid_query query) ->
           Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`Invalid_query query))))
 
+    let query_conflicting_work_manifests_in_repo db event operation =
+      Abbs_time_it.run (log_time event "QUERY_CONFLICTING_WORK_MANIFESTS") (fun () ->
+          S.Event.query_conflicting_work_manifests_in_repo db event operation)
+
+    let query_pull_request_out_of_diff_applies db event pull_request =
+      Abbs_time_it.run (log_time event "QUERY_OUT_OF_DIFF_APPLIES") (fun () ->
+          S.Event.query_pull_request_out_of_diff_applies db event pull_request)
+
+    let store_dirspaceflows db event pull_request all_match_dirspaceflows =
+      Abbs_time_it.run (log_time event "STORE_DIRSPACEFLOWS") (fun () ->
+          S.Event.store_dirspaceflows db event pull_request all_match_dirspaceflows)
+
     let exec_event access_control storage event pull_request repo_config repo_tree operation =
       let open Abbs_future_combinators.Infix_result_monad in
       Logs.info (fun m ->
@@ -901,8 +940,7 @@ module Make (S : S) = struct
             (CCList.length (S.Event.Pull_request.diff pull_request)));
       Pgsql_pool.with_conn storage ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
-              Abbs_time_it.run (log_time event "QUERY_CONFLICTING_WORK_MANIFESTS") (fun () ->
-                  S.Event.query_conflicting_work_manifests_in_repo db event operation)
+              query_conflicting_work_manifests_in_repo db event operation
               >>= function
               | [] -> (
                   (* Collect any changes that have been applied outside of the current
@@ -910,8 +948,7 @@ module Make (S : S) = struct
                      applied dir1, then we updated our PR to revert dir1, we would
                      want to be able to plan and apply dir1 again even though it
                      doesn't look like dir1 changes. *)
-                  Abbs_time_it.run (log_time event "QUERY_OUT_OF_DIFF_APPLIES") (fun () ->
-                      S.Event.query_pull_request_out_of_diff_applies db event pull_request)
+                  query_pull_request_out_of_diff_applies db event pull_request
                   >>= fun out_of_change_applies ->
                   Abb.Future.return
                     (Event.compute_matches
@@ -970,8 +1007,7 @@ module Make (S : S) = struct
                         "EVALUATOR : %s : NUM_DIRSPACEFLOWS : %d"
                         (S.Event.T.request_id event)
                         (CCList.length all_match_dirspaceflows));
-                  Abbs_time_it.run (log_time event "STORE_DIRSPACEFLOWS") (fun () ->
-                      S.Event.store_dirspaceflows db event pull_request all_match_dirspaceflows)
+                  store_dirspaceflows db event pull_request all_match_dirspaceflows
                   >>= fun () ->
                   Prmths.Counter.inc_one
                     (Metrics.operations_total
@@ -1172,32 +1208,43 @@ module Make (S : S) = struct
                 msg_fragment);
           Abb.Future.return (Ok (Some (Event.Msg.Dest_branch_no_match pull_request)))
 
+    let fetch_pull_request event =
+      Abbs_time_it.run (log_time event "FETCHING_PULL_REQUEST") (fun () ->
+          S.Event.fetch_pull_request event)
+
+    let store_pull_request db event pull_request =
+      Abbs_time_it.run (log_time event "STORE_PULL_REQUEST") (fun () ->
+          S.Event.store_pull_request db event pull_request)
+
+    let fetch_repo_config event pull_request =
+      Abbs_time_it.run (log_time event "FETCHING_REPO_CONFIG") (fun () ->
+          S.Event.fetch_repo_config event pull_request)
+
     let fetch_default_repo_config event pull_request =
-      let open Abbs_future_combinators.Infix_result_monad in
-      S.Event.fetch_base_repo_config event
-      >>| fun repo_default_config ->
-      match is_valid_destination_branch event pull_request repo_default_config with
-      | Ok () -> Ok repo_default_config
-      | Error _ as err -> err
+      Abbs_time_it.run (log_time event "FETCHING_DEST_REPO_CONFIG") (fun () ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          S.Event.fetch_base_repo_config event
+          >>| fun repo_default_config ->
+          match is_valid_destination_branch event pull_request repo_default_config with
+          | Ok () -> Ok repo_default_config
+          | Error _ as err -> err)
+
+    let fetch_tree event pull_request =
+      Abbs_time_it.run (log_time event "FETCHING_REPO_TREE") (fun () ->
+          S.Event.fetch_tree event pull_request)
 
     let perform_terraform_operation storage event operation =
       let open Abbs_future_combinators.Infix_result_monad in
-      Abbs_time_it.run (log_time event "FETCHING_PULL_REQUEST") (fun () ->
-          S.Event.fetch_pull_request event)
+      fetch_pull_request event
       >>= fun pull_request ->
-      Pgsql_pool.with_conn storage ~f:(fun db ->
-          Abbs_time_it.run (log_time event "STORE_PULL_REQUEST") (fun () ->
-              S.Event.store_pull_request db event pull_request))
+      Pgsql_pool.with_conn storage ~f:(fun db -> store_pull_request db event pull_request)
       >>= fun () ->
       Abbs_future_combinators.Infix_result_app.(
         (fun repo_config repo_default_config repo_tree ->
           (repo_config, repo_default_config, repo_tree))
-        <$> Abbs_time_it.run (log_time event "FETCHING_REPO_CONFIG") (fun () ->
-                S.Event.fetch_repo_config event pull_request)
-        <*> Abbs_time_it.run (log_time event "FETCHING_DEST_REPO_CONFIG") (fun () ->
-                fetch_default_repo_config event pull_request)
-        <*> Abbs_time_it.run (log_time event "FETCHING_REPO_TREE") (fun () ->
-                S.Event.fetch_tree event pull_request))
+        <$> fetch_repo_config event pull_request
+        <*> fetch_default_repo_config event pull_request
+        <*> fetch_tree event pull_request)
       >>= fun (repo_config, repo_default_config, repo_tree) ->
       match repo_default_config with
       | Ok repo_default_config ->
@@ -1264,14 +1311,15 @@ module Make (S : S) = struct
       | Event.Op_class.Pull_request (`Unlock unlock_ids) -> perform_unlock storage event unlock_ids
       | Event.Op_class.Terraform operation -> perform_terraform_operation storage event operation
 
+    let publish_msg event msg =
+      Abbs_time_it.run (log_time event "PUBLISH_MSG") (fun () -> S.Event.publish_msg event msg)
+
     let eval storage event =
       Abb.Future.await_bind
         (function
           | `Det v -> (
               match v with
-              | Ok (Some msg) ->
-                  Abbs_time_it.run (log_time event "PUBLISH_MSG") (fun () ->
-                      S.Event.publish_msg event msg)
+              | Ok (Some msg) -> publish_msg event msg
               | Ok None -> Abb.Future.return ()
               | Error `Merge_conflict ->
                   Prmths.Counter.inc_one Metrics.op_on_pull_request_not_mergeable;
