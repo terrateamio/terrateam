@@ -61,6 +61,21 @@ type fetch_repo_config_err =
   ]
 [@@deriving show]
 
+type fetch_repo_err =
+  [ Githubc2_abb.call_err
+  | `Moved_permanently of Githubc2_repos.Get.Responses.Moved_permanently.t
+  | `Forbidden of Githubc2_repos.Get.Responses.Forbidden.t
+  | `Not_found of Githubc2_repos.Get.Responses.Not_found.t
+  ]
+[@@deriving show]
+
+type fetch_branch_err =
+  [ Githubc2_abb.call_err
+  | `Moved_permanently of Githubc2_repos.Get_branch.Responses.Moved_permanently.t
+  | `Not_found of Githubc2_repos.Get_branch.Responses.Not_found.t
+  ]
+[@@deriving show]
+
 type publish_comment_err =
   [ Githubc2_abb.call_err
   | `Forbidden of Githubc2_components.Basic_error.t
@@ -167,6 +182,24 @@ let parse_repo_config python content =
   | Error (`Run_error (_, _, stderr, _)) ->
       Abb.Future.return (Error (`Repo_config_parse_err stderr))
   | Error (#Abb_process.check_output_err as err) -> Abb.Future.return (Error err)
+
+let fetch_repo ~access_token ~owner ~repo =
+  let open Abbs_future_combinators.Infix_result_monad in
+  let client = create (`Token access_token) in
+  call client Githubc2_repos.Get.(make (Parameters.make ~owner ~repo))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK repo -> Abb.Future.return (Ok repo)
+  | (`Forbidden _ | `Moved_permanently _ | `Not_found _) as err -> Abb.Future.return (Error err)
+
+let fetch_branch ~access_token ~owner ~repo branch =
+  let open Abbs_future_combinators.Infix_result_monad in
+  let client = create (`Token access_token) in
+  call client Githubc2_repos.Get_branch.(make (Parameters.make ~branch ~owner ~repo))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK branch -> Abb.Future.return (Ok branch)
+  | (`Moved_permanently _ | `Not_found _) as err -> Abb.Future.return (Error err)
 
 let rec fetch_repo_config' ~python ~access_token ~owner ~repo ref_ = function
   | [] ->

@@ -40,6 +40,21 @@ type fetch_repo_config_err =
   ]
 [@@deriving show]
 
+type fetch_repo_err =
+  [ Githubc2_abb.call_err
+  | `Moved_permanently of Githubc2_repos.Get.Responses.Moved_permanently.t
+  | `Forbidden of Githubc2_repos.Get.Responses.Forbidden.t
+  | `Not_found of Githubc2_repos.Get.Responses.Not_found.t
+  ]
+[@@deriving show]
+
+type fetch_branch_err =
+  [ Githubc2_abb.call_err
+  | `Moved_permanently of Githubc2_repos.Get_branch.Responses.Moved_permanently.t
+  | `Not_found of Githubc2_repos.Get_branch.Responses.Not_found.t
+  ]
+[@@deriving show]
+
 type publish_comment_err =
   [ Githubc2_abb.call_err
   | `Forbidden of Githubc2_components.Basic_error.t
@@ -149,6 +164,19 @@ val call :
 
 val get_installation_access_token :
   Terrat_config.t -> int -> (string, [> get_installation_access_token_err ]) result Abb.Future.t
+
+val fetch_repo :
+  access_token:string ->
+  owner:string ->
+  repo:string ->
+  (Githubc2_components.Full_repository.t, [> fetch_repo_err ]) result Abb.Future.t
+
+val fetch_branch :
+  access_token:string ->
+  owner:string ->
+  repo:string ->
+  string ->
+  (Githubc2_components.Branch_with_protection.t, [> fetch_branch_err ]) result Abb.Future.t
 
 (** Load the configuration from the repo, which should be a YAML file if it
    exists.  If it exists, convert it to JSON and load it.  If it does not exist
