@@ -3595,7 +3595,7 @@ module Wm = struct
                  Plan.
                    {
                      workflow_step = Workflow_step.{ type_; _ };
-                     outputs = Some (Plan.Outputs.Output_plan Output_plan.{ plan; plan_text });
+                     outputs = Some (Plan.Outputs.Output_plan Output_plan.{ plan; plan_text; _ });
                      success;
                      _;
                    } ->
