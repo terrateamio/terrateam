@@ -57,6 +57,42 @@ module Metrics = struct
       "dirspaces_per_work_manifest"
 end
 
+let compute_matches ~repo_config ~tag_query ~out_of_change_applies ~diff ~repo_tree () =
+  let open CCResult.Infix in
+  Terrat_change_match.synthesize_dir_config ~file_list:repo_tree repo_config
+  >>= fun dirs ->
+  let all_matching_dirspaces =
+    CCList.flat_map
+      CCFun.(Terrat_change_match.of_dirspace dirs %> CCOption.to_list)
+      out_of_change_applies
+  in
+  let all_matching_diff = Terrat_change_match.match_diff_list dirs diff in
+  let all_matches = Terrat_change_match.merge_with_dedup all_matching_diff all_matching_dirspaces in
+  let tag_query_matches =
+    CCList.filter (Terrat_change_match.match_tag_query ~tag_query) all_matches
+  in
+  Ok (tag_query_matches, all_matches)
+
+let match_tag_queries ~accessor ~changes queries =
+  CCList.map
+    (fun change ->
+      ( change,
+        CCList.find_idx
+          (fun q -> Terrat_change_match.match_tag_query ~tag_query:(accessor q) change)
+          queries ))
+    changes
+
+let dirspaceflows_of_changes repo_config changes =
+  let workflows = CCOption.get_or ~default:[] repo_config.Terrat_repo_config.Version_1.workflows in
+  CCList.map
+    (fun (Terrat_change_match.{ dirspace; _ }, workflow) ->
+      Terrat_change.Dirspaceflow.{ dirspace; workflow_idx = CCOption.map fst workflow })
+    (match_tag_queries
+       ~accessor:(fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
+         Terrat_tag_query.of_string tag_query)
+       ~changes
+       workflows)
+
 module Event = struct
   module Dir_set = CCSet.Make (CCString)
   module String_set = CCSet.Make (CCString)
@@ -156,45 +192,8 @@ module Event = struct
       | Unlock _ -> "unlock"
   end
 
-  let compute_matches ~repo_config ~tag_query ~out_of_change_applies ~diff ~repo_tree () =
-    let open CCResult.Infix in
-    Terrat_change_match.synthesize_dir_config ~file_list:repo_tree repo_config
-    >>= fun dirs ->
-    let all_matching_dirspaces =
-      CCList.flat_map
-        CCFun.(Terrat_change_match.of_dirspace dirs %> CCOption.to_list)
-        out_of_change_applies
-    in
-    let all_matching_diff = Terrat_change_match.match_diff_list dirs diff in
-    let all_matches =
-      Terrat_change_match.merge_with_dedup all_matching_diff all_matching_dirspaces
-    in
-    let tag_query_matches =
-      CCList.filter (Terrat_change_match.match_tag_query ~tag_query) all_matches
-    in
-    Ok (tag_query_matches, all_matches)
-
-  let match_tag_queries ~accessor ~changes queries =
-    CCList.map
-      (fun change ->
-        ( change,
-          CCList.find_idx
-            (fun q -> Terrat_change_match.match_tag_query ~tag_query:(accessor q) change)
-            queries ))
-      changes
-
-  let dirspaceflows_of_changes repo_config changes =
-    let workflows =
-      CCOption.get_or ~default:[] repo_config.Terrat_repo_config.Version_1.workflows
-    in
-    CCList.map
-      (fun (Terrat_change_match.{ dirspace; _ }, workflow) ->
-        Terrat_change.Dirspaceflow.{ dirspace; workflow_idx = CCOption.map fst workflow })
-      (match_tag_queries
-         ~accessor:(fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
-           Terrat_tag_query.of_string tag_query)
-         ~changes
-         workflows)
+  let compute_matches = compute_matches
+  let dirspaceflows_of_changes = dirspaceflows_of_changes
 end
 
 module Work_manifest = struct
