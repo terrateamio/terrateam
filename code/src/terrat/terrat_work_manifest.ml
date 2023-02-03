@@ -19,6 +19,12 @@ module State = struct
     | _ -> None
 end
 
+module Kind = struct
+  type ('pr, 'd) t =
+    | Pull_request of 'pr
+    | Drift of 'd
+end
+
 type ('id, 'created_at, 'run_id, 'state, 'changes, 'src, 'run_type) t = {
   base_hash : string;
   changes : 'changes;

@@ -7,7 +7,8 @@ drift_schedules as (
          when 'daily' then interval '1 day'
          when 'weekly' then interval '1 week'
          when 'monthly' then interval '1 month'
-         end) as schedule
+         end) as schedule,
+         reconcile
     from github_drift_schedules
     where schedule in ('hourly', 'daily', 'weekly', 'monthly')
     for update skip locked
@@ -39,7 +40,8 @@ select
     gir.installation_id as installation_id,
     gir.id as repository,
     gir.owner as owner,
-    gir.name as name
+    gir.name as name,
+    ds.reconcile
 from drift_schedules as ds
 inner join github_installation_repositories as gir
     on gir.id = ds.repository

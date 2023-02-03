@@ -332,6 +332,7 @@ module type S = sig
       val id : t -> string
       val owner : t -> string
       val name : t -> string
+      val reconcile : t -> bool
     end
 
     module Repo : sig
@@ -346,7 +347,15 @@ module type S = sig
 
     val fetch_repo : Terrat_config.t -> Schedule.t -> (Repo.t, [> `Error ]) result Abb.Future.t
 
-    val store_work_manifest :
+    val store_plan_work_manifest :
+      Terrat_config.t ->
+      Pgsql_io.t ->
+      Schedule.t ->
+      Repo.t ->
+      Terrat_change.Dirspaceflow.t list ->
+      (unit, [> `Error ]) result Abb.Future.t
+
+    val store_reconcile_work_manifest :
       Terrat_config.t ->
       Pgsql_io.t ->
       Schedule.t ->
@@ -415,13 +424,29 @@ module type S = sig
     end
 
     module Results : sig
+      module Kind : sig
+        module Pull_request : sig
+          type t
+        end
+
+        module Drift : sig
+          type t
+        end
+      end
+
       type t
 
-      val merge_pull_request : t -> (unit, [> `Error ]) result Abb.Future.t
-      val delete_pull_request_branch : t -> (unit, [> `Error ]) result Abb.Future.t
+      val kind : t -> (Kind.Pull_request.t, Kind.Drift.t) Terrat_work_manifest.Kind.t
+      val merge_pull_request : t -> Kind.Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
+
+      val delete_pull_request_branch :
+        t -> Kind.Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
 
       val query_missing_applied_dirspaces :
-        t -> (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
+        t -> Kind.Pull_request.t -> (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
+
+      val query_drift_schedule :
+        t -> Terrat_storage.t -> Kind.Drift.t -> (Drift.Schedule.t, [> `Error ]) result Abb.Future.t
 
       val fetch_repo_config : t -> (Terrat_repo_config.Version_1.t, [> `Error ]) result Abb.Future.t
 
@@ -1419,18 +1444,29 @@ module Make (S : S) = struct
                 d))
         (fun () -> S.Drift.fetch_repo config schedule)
 
-    let store_work_manifest config db schedule repo dirspaceflows =
+    let store_plan_work_manifest config db schedule repo dirspaceflows =
       Abbs_time_it.run
         (fun d ->
           Logs.info (fun m ->
               m
-                "EVALUATOR : DRIFT : STORE_WORK_MANIFEST : owner=%s : name=%s : %f"
+                "EVALUATOR : DRIFT : STORE_PLAN_WORK_MANIFEST : owner=%s : name=%s : %f"
                 (S.Drift.Schedule.owner schedule)
                 (S.Drift.Schedule.name schedule)
                 d))
-        (fun () -> S.Drift.store_work_manifest config db schedule repo dirspaceflows)
+        (fun () -> S.Drift.store_plan_work_manifest config db schedule repo dirspaceflows)
 
-    let run_schedule' config db schedule =
+    let store_reconcile_work_manifest config db schedule repo dirspaceflows =
+      Abbs_time_it.run
+        (fun d ->
+          Logs.info (fun m ->
+              m
+                "EVALUATOR : DRIFT : STORE_RECONCILE_WORK_MANIFEST : owner=%s : name=%s : %f"
+                (S.Drift.Schedule.owner schedule)
+                (S.Drift.Schedule.name schedule)
+                d))
+        (fun () -> S.Drift.store_reconcile_work_manifest config db schedule repo dirspaceflows)
+
+    let run_schedule' config db f schedule =
       let open Abbs_future_combinators.Infix_result_monad in
       fetch_repo config schedule
       >>= fun repo ->
@@ -1450,7 +1486,7 @@ module Make (S : S) = struct
           let dirspaceflows =
             dirspaceflows_of_changes (S.Drift.Repo.repo_config repo) tag_query_matches
           in
-          store_work_manifest config db schedule repo dirspaceflows
+          f config db schedule repo dirspaceflows
       | Error (`Bad_glob err) ->
           Logs.info (fun m -> m "EVALUATOR : DRIFT : BAD_GLOB : %s" err);
           Abb.Future.return (Error `Error)
@@ -1458,7 +1494,7 @@ module Make (S : S) = struct
     let run_schedule config storage schedule =
       Abbs_future_combinators.ignore
         (Pgsql_pool.with_conn storage ~f:(fun db ->
-             Pgsql_io.tx db ~f:(fun () -> run_schedule' config db schedule)))
+             Pgsql_io.tx db ~f:(fun () -> run_schedule' config db store_plan_work_manifest schedule)))
 
     module Service = struct
       let one_hour = Duration.(to_f (of_day 1))
@@ -1473,7 +1509,7 @@ module Make (S : S) = struct
         Abbs_time_it.run
           (fun d ->
             Logs.info (fun m -> m "EVALUATOR : DRIFT : CREATE_AND_STORE_WORK_MANIFEST : %f" d))
-          (fun () -> run_schedule' config db schedule)
+          (fun () -> run_schedule' config db store_plan_work_manifest schedule)
 
       let run' config storage =
         let open Abb.Future.Infix_monad in
@@ -1635,31 +1671,106 @@ module Make (S : S) = struct
       | Terrat_repo_config.(Version_1.{ automerge = Some _ as automerge; _ }) -> automerge
       | _ -> None
 
+    let maybe_reconcile ~request_id config storage schedule results =
+      let run =
+        let module R = Terrat_api_work_manifest.Results.Request_body in
+        let module Dirspace = Terrat_api_components_work_manifest_result in
+        let overall = results.R.overall.R.Overall.success in
+        let dirspaces = results.R.dirspaces in
+        let plans_with_changes =
+          CCList.flat_map
+            (fun Dirspace.{ outputs; path; workspace; _ } ->
+              let module Outputs = Terrat_api_components_workflow_outputs in
+              let module Plan = Terrat_api_components_workflow_output_plan in
+              let module Output_plan = Terrat_api_components_output_plan in
+              CCList.flat_map
+                (function
+                  | Outputs.Items.Workflow_output_plan
+                      Plan.
+                        {
+                          outputs = Some (Outputs.Output_plan Output_plan.{ has_changes = true; _ });
+                          _;
+                        } -> [ Terrat_change.Dirspace.{ dir = path; workspace } ]
+                  | _ -> [])
+                outputs)
+            dirspaces
+        in
+        Logs.info (fun m ->
+            m "EVALUATOR : %s : DRIFT : RECONCILE : overall=%s" request_id (Bool.to_string overall));
+        Logs.info (fun m ->
+            m
+              "EVALUATOR : %s : DRIFT : RECONCILE : plans_with_changes=%d"
+              request_id
+              (CCList.length plans_with_changes));
+        CCList.iter
+          (fun Terrat_change.Dirspace.{ dir; workspace } ->
+            Logs.info (fun m ->
+                m
+                  "EVALUATOR : %s : DRIFT : RECONCILE : dir=%s : workspace=%s"
+                  request_id
+                  dir
+                  workspace))
+          plans_with_changes;
+        if overall && not (CCList.is_empty plans_with_changes) then
+          (* Create a reconcile job *)
+          Pgsql_pool.with_conn storage ~f:(fun db ->
+              Pgsql_io.tx db ~f:(fun () ->
+                  Drift.run_schedule' config db Drift.store_reconcile_work_manifest schedule))
+        else (* Nothing to reconcile *)
+          Abb.Future.return (Ok ())
+      in
+      let open Abb.Future.Infix_monad in
+      run
+      >>= function
+      | Ok () -> Abb.Future.return (Ok ())
+      | Error (#Pgsql_pool.err as err) ->
+          Logs.err (fun m ->
+              m "EVALUATOR : %s : DRIFT : RECONCILE : %a" request_id Pgsql_pool.pp_err err);
+          Abb.Future.return (Error `Error)
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m ->
+              m "EVALUATOR : %s : DRIFT : RECONCILE : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+      | Error `Error ->
+          Logs.err (fun m -> m "EVALUATOR : %s : DRIFT : ERROR" request_id);
+          Abb.Future.return (Error `Error)
+
     let results_store ~request_id config storage work_manifest_id results =
       Abbs_future_combinators.with_finally
         (fun () ->
           let open Abbs_future_combinators.Infix_result_monad in
           S.Work_manifest.Results.store ~request_id config storage work_manifest_id results
           >>= fun t ->
-          S.Work_manifest.Results.query_missing_applied_dirspaces t
-          >>= function
-          | [] -> (
-              Logs.info (fun m ->
-                  m
-                    "GITHUB_EVALUATOR : %s : ALL_DIRSPACES_APPLIED : %a"
-                    request_id
-                    Uuidm.pp
-                    work_manifest_id);
-              S.Work_manifest.Results.fetch_repo_config t
-              >>= fun repo_config ->
-              match automerge_config repo_config with
-              | Some Terrat_repo_config.Automerge.{ enabled = true; delete_branch } -> (
-                  S.Work_manifest.Results.merge_pull_request t
-                  >>= function
-                  | () when delete_branch -> S.Work_manifest.Results.delete_pull_request_branch t
-                  | () -> Abb.Future.return (Ok ()))
-              | _ -> Abb.Future.return (Ok ()))
-          | _ :: _ -> Abb.Future.return (Ok ()))
+          match S.Work_manifest.Results.kind t with
+          | Terrat_work_manifest.Kind.Pull_request pull_request -> (
+              S.Work_manifest.Results.query_missing_applied_dirspaces t pull_request
+              >>= function
+              | [] -> (
+                  Logs.info (fun m ->
+                      m
+                        "EVALUATOR : %s : ALL_DIRSPACES_APPLIED : %a"
+                        request_id
+                        Uuidm.pp
+                        work_manifest_id);
+                  S.Work_manifest.Results.fetch_repo_config t
+                  >>= fun repo_config ->
+                  match automerge_config repo_config with
+                  | Some Terrat_repo_config.Automerge.{ enabled = true; delete_branch } -> (
+                      S.Work_manifest.Results.merge_pull_request t pull_request
+                      >>= function
+                      | () when delete_branch ->
+                          S.Work_manifest.Results.delete_pull_request_branch t pull_request
+                      | () -> Abb.Future.return (Ok ()))
+                  | _ -> Abb.Future.return (Ok ()))
+              | _ :: _ -> Abb.Future.return (Ok ()))
+          | Terrat_work_manifest.Kind.Drift drift -> (
+              S.Work_manifest.Results.query_drift_schedule t storage drift
+              >>= function
+              | schedule when S.Drift.Schedule.reconcile schedule ->
+                  maybe_reconcile ~request_id config storage schedule results
+              | schedule ->
+                  Logs.info (fun m -> m "EVALUATOR : %s : DRIFT : NO_RECONCILE" request_id);
+                  Abb.Future.return (Ok ())))
         ~finally:(fun () ->
           Abbs_future_combinators.ignore (Abb.Future.fork (Runner.run ~request_id config storage)))
   end

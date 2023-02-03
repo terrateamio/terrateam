@@ -208,6 +208,7 @@ module type S = sig
       val id : t -> string
       val owner : t -> string
       val name : t -> string
+      val reconcile : t -> bool
     end
 
     module Repo : sig
@@ -222,7 +223,15 @@ module type S = sig
 
     val fetch_repo : Terrat_config.t -> Schedule.t -> (Repo.t, [> `Error ]) result Abb.Future.t
 
-    val store_work_manifest :
+    val store_plan_work_manifest :
+      Terrat_config.t ->
+      Pgsql_io.t ->
+      Schedule.t ->
+      Repo.t ->
+      Terrat_change.Dirspaceflow.t list ->
+      (unit, [> `Error ]) result Abb.Future.t
+
+    val store_reconcile_work_manifest :
       Terrat_config.t ->
       Pgsql_io.t ->
       Schedule.t ->
@@ -293,13 +302,29 @@ module type S = sig
     end
 
     module Results : sig
+      module Kind : sig
+        module Pull_request : sig
+          type t
+        end
+
+        module Drift : sig
+          type t
+        end
+      end
+
       type t
 
-      val merge_pull_request : t -> (unit, [> `Error ]) result Abb.Future.t
-      val delete_pull_request_branch : t -> (unit, [> `Error ]) result Abb.Future.t
+      val kind : t -> (Kind.Pull_request.t, Kind.Drift.t) Terrat_work_manifest.Kind.t
+      val merge_pull_request : t -> Kind.Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
+
+      val delete_pull_request_branch :
+        t -> Kind.Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
 
       val query_missing_applied_dirspaces :
-        t -> (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
+        t -> Kind.Pull_request.t -> (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
+
+      val query_drift_schedule :
+        t -> Terrat_storage.t -> Kind.Drift.t -> (Drift.Schedule.t, [> `Error ]) result Abb.Future.t
 
       val fetch_repo_config : t -> (Terrat_repo_config.Version_1.t, [> `Error ]) result Abb.Future.t
 
