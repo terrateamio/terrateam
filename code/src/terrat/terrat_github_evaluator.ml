@@ -3040,10 +3040,19 @@ module Wm = struct
       let module Run = Terrat_api_components_workflow_output_run in
       let module Checkout = Terrat_api_components_workflow_output_checkout in
       let module Ce = Terrat_api_components_workflow_output_cost_estimation in
+      let module Oidc = Terrat_api_components_workflow_output_oidc in
       outputs
       |> CCList.filter_map (function
              | Output.Workflow_output_run
                  Run.
+                   {
+                     workflow_step = Workflow_step.{ type_; _ };
+                     outputs = Some Text.{ text; output_key };
+                     success;
+                     _;
+                   }
+             | Output.Workflow_output_oidc
+                 Oidc.
                    {
                      workflow_step = Workflow_step.{ type_; _ };
                      outputs = Some Text.{ text; output_key };
@@ -3067,7 +3076,9 @@ module Wm = struct
                    } ->
                  Some Workflow_step_output.{ key = output_key; text; success; step_type = type_ }
              | Output.Workflow_output_run
-                 Run.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ } ->
+                 Run.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ }
+             | Output.Workflow_output_oidc
+                 Oidc.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ } ->
                  Some Workflow_step_output.{ key = None; text = ""; success; step_type = type_ }
              | Output.Workflow_output_env _
              | Output.Workflow_output_cost_estimation
@@ -3077,6 +3088,7 @@ module Wm = struct
       let module Output = Terrat_api_components_hook_outputs.Post.Items in
       let module Text = Terrat_api_components_output_text in
       let module Run = Terrat_api_components_workflow_output_run in
+      let module Oidc = Terrat_api_components_workflow_output_oidc in
       outputs
       |> CCList.filter_map (function
              | Output.Workflow_output_run
@@ -3086,10 +3098,20 @@ module Wm = struct
                      outputs = Some Text.{ text; output_key };
                      success;
                      _;
+                   }
+             | Output.Workflow_output_oidc
+                 Oidc.
+                   {
+                     workflow_step = Workflow_step.{ type_; _ };
+                     outputs = Some Text.{ text; output_key };
+                     success;
+                     _;
                    } ->
                  Some Workflow_step_output.{ key = output_key; text; success; step_type = type_ }
              | Output.Workflow_output_run
-                 Run.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ } ->
+                 Run.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ }
+             | Output.Workflow_output_oidc
+                 Oidc.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ } ->
                  Some Workflow_step_output.{ key = None; text = ""; success; step_type = type_ }
              | Output.Workflow_output_env _ -> None)
 
@@ -3101,10 +3123,19 @@ module Wm = struct
       let module Apply = Terrat_api_components_workflow_output_apply in
       let module Text = Terrat_api_components_output_text in
       let module Output_plan = Terrat_api_components_output_plan in
+      let module Oidc = Terrat_api_components_workflow_output_oidc in
       outputs
       |> CCList.flat_map (function
              | Output.Workflow_output_run
                  Run.
+                   {
+                     workflow_step = Workflow_step.{ type_; _ };
+                     outputs = Some Text.{ text; output_key };
+                     success;
+                     _;
+                   }
+             | Output.Workflow_output_oidc
+                 Oidc.
                    {
                      workflow_step = Workflow_step.{ type_; _ };
                      outputs = Some Text.{ text; output_key };
@@ -3151,6 +3182,7 @@ module Wm = struct
                      { step_type = type_; text = plan; key = Some "plan"; success };
                  ]
              | Output.Workflow_output_run _
+             | Output.Workflow_output_oidc _
              | Output.Workflow_output_plan _
              | Output.Workflow_output_env _
              | Output.Workflow_output_init Init.{ outputs = None; _ }
@@ -3174,6 +3206,7 @@ module Wm = struct
         let module Env = Terrat_api_components.Workflow_output_env in
         let module Checkout = Terrat_api_components.Workflow_output_checkout in
         let module Ce = Terrat_api_components.Workflow_output_cost_estimation in
+        let module Oidc = Terrat_api_components.Workflow_output_oidc in
         results.R.overall.R.Overall.outputs.Hooks_output.pre
         |> CCList.exists
              Hooks_output.Pre.Items.(
@@ -3181,7 +3214,8 @@ module Wm = struct
                | Workflow_output_run Run.{ success; _ }
                | Workflow_output_env Env.{ success; _ }
                | Workflow_output_checkout Checkout.{ success; _ }
-               | Workflow_output_cost_estimation Ce.{ success; _ } -> not success)
+               | Workflow_output_cost_estimation Ce.{ success; _ }
+               | Workflow_output_oidc Oidc.{ success; _ } -> not success)
         |> function
         | true -> Terrat_commit_check.Status.Failed
         | false -> Terrat_commit_check.Status.Completed
@@ -3189,12 +3223,14 @@ module Wm = struct
       let post_hooks_status =
         let module Run = Terrat_api_components.Workflow_output_run in
         let module Env = Terrat_api_components.Workflow_output_env in
+        let module Oidc = Terrat_api_components.Workflow_output_oidc in
         results.R.overall.R.Overall.outputs.Hooks_output.post
         |> CCList.exists
              Hooks_output.Post.Items.(
                function
-               | Workflow_output_run Run.{ success; _ } | Workflow_output_env Env.{ success; _ } ->
-                   not success)
+               | Workflow_output_run Run.{ success; _ }
+               | Workflow_output_env Env.{ success; _ }
+               | Workflow_output_oidc Oidc.{ success; _ } -> not success)
         |> function
         | true -> Terrat_commit_check.Status.Failed
         | false -> Terrat_commit_check.Status.Completed
@@ -3272,6 +3308,7 @@ module Wm = struct
                      _;
                    } -> Some cost_estimation
                | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_run _
+               | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_oidc _
                | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_env _
                | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_checkout _
                | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_cost_estimation _ ->

@@ -7,6 +7,7 @@ module Items = struct
     | Hook_op_slack of Terrat_repo_config_hook_op_slack.t
     | Hook_op_env_exec of Terrat_repo_config_hook_op_env_exec.t
     | Hook_op_env_source of Terrat_repo_config_hook_op_env_source.t
+    | Hook_op_oidc of Terrat_repo_config_hook_op_oidc.t
   [@@deriving show, eq]
 
   let of_yojson =
@@ -25,6 +26,7 @@ module Items = struct
           map (fun v -> Hook_op_env_exec v) (Terrat_repo_config_hook_op_env_exec.of_yojson v));
         (fun v ->
           map (fun v -> Hook_op_env_source v) (Terrat_repo_config_hook_op_env_source.of_yojson v));
+        (fun v -> map (fun v -> Hook_op_oidc v) (Terrat_repo_config_hook_op_oidc.of_yojson v));
       ])
 
   let to_yojson = function
@@ -35,6 +37,7 @@ module Items = struct
     | Hook_op_slack v -> Terrat_repo_config_hook_op_slack.to_yojson v
     | Hook_op_env_exec v -> Terrat_repo_config_hook_op_env_exec.to_yojson v
     | Hook_op_env_source v -> Terrat_repo_config_hook_op_env_source.to_yojson v
+    | Hook_op_oidc v -> Terrat_repo_config_hook_op_oidc.to_yojson v
 end
 
 type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]

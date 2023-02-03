@@ -14,6 +14,9 @@
                 },
                 {
                   "$ref": "#/components/schemas/workflow-output-env"
+                },
+                {
+                  "$ref": "#/components/schemas/workflow-output-oidc"
                 }
               ]
             },
@@ -33,6 +36,9 @@
                 },
                 {
                   "$ref": "#/components/schemas/workflow-output-cost-estimation"
+                },
+                {
+                  "$ref": "#/components/schemas/workflow-output-oidc"
                 }
               ]
             },
@@ -569,6 +575,35 @@
         ],
         "type": "object"
       },
+      "workflow-output-oidc": {
+        "additionalProperties": false,
+        "properties": {
+          "outputs": {
+            "$ref": "#/components/schemas/output-text"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "workflow_step": {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "oidc",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "workflow_step",
+          "success"
+        ],
+        "type": "object"
+      },
       "workflow-outputs": {
         "items": {
           "oneOf": [
@@ -586,6 +621,9 @@
             },
             {
               "$ref": "#/components/schemas/workflow-output-apply"
+            },
+            {
+              "$ref": "#/components/schemas/workflow-output-oidc"
             }
           ]
         },

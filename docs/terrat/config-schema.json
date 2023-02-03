@@ -164,6 +164,9 @@
         },
         {
           "$ref": "#/definitions/hook-op-env-source"
+        },
+        {
+          "$ref": "#/definitions/hook-op-oidc"
         }
       ]
     },
@@ -176,16 +179,16 @@
           },
           "type": "array"
         },
+        "method": {
+          "const": "exec",
+          "type": "string"
+        },
         "name": {
           "type": "string"
         },
         "trim_trailing_newlines": {
           "default": true,
           "type": "boolean"
-        },
-        "method": {
-          "const": "exec",
-          "type": "string"
         },
         "type": {
           "const": "env",
@@ -220,6 +223,32 @@
       "required": [
         "cmd",
         "method",
+        "type"
+      ],
+      "type": "object"
+    },
+    "hook-op-oidc": {
+      "additionalProperties": false,
+      "properties": {
+        "audience": {
+          "type": "string"
+        },
+        "provider": {
+          "enum": [
+            "aws"
+          ],
+          "type": "string"
+        },
+        "role_arn": {
+          "type": "string"
+        },
+        "type": {
+          "const": "oidc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "role_arn",
         "type"
       ],
       "type": "object"
@@ -645,6 +674,9 @@
           },
           {
             "$ref": "#/definitions/hook-op-env-source"
+          },
+          {
+            "$ref": "#/definitions/hook-op-oidc"
           }
         ]
       },

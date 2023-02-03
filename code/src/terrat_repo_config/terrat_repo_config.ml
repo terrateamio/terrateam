@@ -10,6 +10,7 @@ module Hook_list = Terrat_repo_config_hook_list
 module Hook_op = Terrat_repo_config_hook_op
 module Hook_op_env_exec = Terrat_repo_config_hook_op_env_exec
 module Hook_op_env_source = Terrat_repo_config_hook_op_env_source
+module Hook_op_oidc = Terrat_repo_config_hook_op_oidc
 module Hook_op_run = Terrat_repo_config_hook_op_run
 module Hook_op_slack = Terrat_repo_config_hook_op_slack
 module Permission = Terrat_repo_config_permission
