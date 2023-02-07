@@ -1,5 +1,6 @@
 type t = {
   apply : Terrat_repo_config_workflow_op_list.t option; [@default None]
+  cdktf : bool; [@default false]
   plan : Terrat_repo_config_workflow_op_list.t option; [@default None]
   tag_query : string;
   terraform_version : string option; [@default None]
