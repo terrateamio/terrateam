@@ -109,6 +109,9 @@
           "default": true,
           "type": "boolean"
         },
+        "stacks": {
+          "$ref": "#/definitions/workspaces"
+        },
         "tags": {
           "$ref": "#/definitions/tags"
         },
@@ -116,19 +119,7 @@
           "$ref": "#/definitions/when-modified-nullable"
         },
         "workspaces": {
-          "additionalProperties": {
-            "additionalProperties": false,
-            "properties": {
-              "tags": {
-                "$ref": "#/definitions/tags"
-              }
-            },
-            "required": [
-              "tags"
-            ],
-            "type": "object"
-          },
-          "type": "object"
+          "$ref": "#/definitions/workspaces"
         }
       },
       "type": "object"
@@ -709,6 +700,21 @@
       "required": [
         "type"
       ],
+      "type": "object"
+    },
+    "workspaces": {
+      "additionalProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "tags": {
+            "$ref": "#/definitions/tags"
+          }
+        },
+        "required": [
+          "tags"
+        ],
+        "type": "object"
+      },
       "type": "object"
     }
   },

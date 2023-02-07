@@ -12,6 +12,32 @@ type t = {
 exception No_matching_dir of string
 exception Bad_glob of string
 
+let workspaces_or_stacks ~default ~dirname ~config_tags workspaces stacks =
+  let module Ws = Terrat_repo_config.Workspaces in
+  match (workspaces, stacks, default) with
+  | None, Some st, _ ->
+      Ws.
+        {
+          st with
+          additional =
+            Json_schema.String_map.mapi
+              (fun k Ws.Additional.{ tags } ->
+                Ws.Additional.
+                  { tags = (("dir:" ^ dirname) :: ("stack:" ^ k) :: tags) @ config_tags })
+              st.Ws.additional;
+        }
+  | Some ws, _, _ | None, None, ws ->
+      Ws.
+        {
+          ws with
+          additional =
+            Json_schema.String_map.mapi
+              (fun k Ws.Additional.{ tags } ->
+                Ws.Additional.
+                  { tags = (("dir:" ^ dirname) :: ("workspace:" ^ k) :: tags) @ config_tags })
+              ws.Ws.additional;
+        }
+
 let parse_glob globs =
   try Path_glob.Glob.parse (CCString.concat " or " (CCList.map (fun pat -> "<" ^ pat ^ ">") globs))
   with Path_glob.Ast.Parse_error _ ->
@@ -47,12 +73,12 @@ module Dirs = struct
       create_and_select_workspace : bool;
       file_pattern_matcher : string -> bool; [@opaque]
       when_modified : Terrat_repo_config_when_modified.t;
-      workspaces : Terrat_repo_config_dir.Workspaces.t;
+      workspaces : Terrat_repo_config.Workspaces.t;
     }
     [@@deriving show]
 
     let default_workspaces =
-      Terrat_repo_config.Dir.Workspaces.(
+      Terrat_repo_config.Workspaces.(
         make
           ~additional:(Json_schema.String_map.of_list [ ("default", Additional.make ~tags:[]) ])
           Json_schema.Empty_obj.t)
@@ -71,10 +97,22 @@ module Dirs = struct
 
     let of_config_dir default_when_modified dirname config =
       let module Dir = Terrat_repo_config.Dir in
-      let module Ws = Terrat_repo_config.Dir.Workspaces in
+      let module Ws = Terrat_repo_config.Workspaces in
       let module Wm = Terrat_repo_config.When_modified in
-      let workspaces = CCOption.get_or ~default:default_workspaces config.Dir.workspaces in
       let config_tags = CCOption.get_or ~default:[] config.Dir.tags in
+      (* With CDKTK enabled, users can specify workspaces or stacks (but not
+         both).  So we synthesize a workspaces object from either of these,
+         preferring workspaces if it is present.  We are going to consider
+         workspaces and stacks the same and translate everything that we track
+         into workspaces. *)
+      let workspaces =
+        workspaces_or_stacks
+          ~default:default_workspaces
+          ~dirname
+          ~config_tags
+          config.Dir.workspaces
+          config.Dir.stacks
+      in
       let when_modified =
         let wm =
           when_modified_of_when_modified_nullable default_when_modified config.Dir.when_modified
@@ -105,17 +143,7 @@ module Dirs = struct
         create_and_select_workspace = config.Dir.create_and_select_workspace;
         file_pattern_matcher;
         when_modified;
-        workspaces =
-          Ws.
-            {
-              workspaces with
-              additional =
-                Json_schema.String_map.mapi
-                  (fun k Ws.Additional.{ tags } ->
-                    Ws.Additional.
-                      { tags = (("dir:" ^ dirname) :: ("workspace:" ^ k) :: tags) @ config_tags })
-                  workspaces.Ws.additional;
-            };
+        workspaces;
       }
   end
 
@@ -219,7 +247,7 @@ let synthesize_dir_config ~file_list repo_config =
   try Ok (synthesize_dir_config' ~file_list repo_config) with Bad_glob s -> Error (`Bad_glob s)
 
 let match_filename_in_dirs dirs fname =
-  let module Ws = Terrat_repo_config.Dir.Workspaces in
+  let module Ws = Terrat_repo_config.Workspaces in
   Json_schema.String_map.fold
     (fun dirname
          Dirs.Dir.{ create_and_select_workspace; file_pattern_matcher; when_modified; workspaces }
@@ -259,7 +287,7 @@ let match_diff_list dirs diff_list =
   |> Iter.to_list
 
 let of_dirspace dirs (Terrat_change.Dirspace.{ dir; workspace } as dirspace) =
-  let module Ws = Terrat_repo_config.Dir.Workspaces in
+  let module Ws = Terrat_repo_config.Workspaces in
   let open CCOption.Infix in
   Json_schema.String_map.find_opt dir dirs
   >>= fun Dirs.Dir.{ create_and_select_workspace; when_modified; workspaces; _ } ->
