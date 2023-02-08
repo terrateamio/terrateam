@@ -13,3 +13,4 @@ let of_string =
 
 let to_string t = t |> String_set.to_list |> CCString.concat " "
 let match_ ~query t = String_set.subset query t
+let mem = String_set.mem

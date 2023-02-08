@@ -8,3 +8,4 @@ val of_string : string -> t
 
 val to_string : t -> string
 val match_ : query:t -> t -> bool
+val mem : string -> t -> bool

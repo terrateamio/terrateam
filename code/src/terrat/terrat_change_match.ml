@@ -87,7 +87,7 @@ module Dirs = struct
       let b = Buffer.create (CCString.length s) in
       CCString.iter
         (function
-          | ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | '-' | '.' | ' ') as c ->
+          | ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | '-' | '.' | ' ' | '/') as c ->
               Buffer.add_char b c
           | c ->
               Buffer.add_char b '\\';
@@ -311,4 +311,5 @@ let merge_with_dedup l r =
   |> Dirspace_map.values
   |> Iter.to_list
 
-let match_tag_query ~tag_query { tags; _ } = Terrat_tag_query.match_ tag_query tags
+let match_tag_query ~tag_query { tags; dirspace; _ } =
+  Terrat_tag_query.match_ ~tag_set:tags ~dirspace tag_query
