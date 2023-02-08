@@ -85,7 +85,7 @@ module type S = sig
 
       val request_id : t -> string
       val event_type : t -> Event.Event_type.t
-      val tag_query : t -> Terrat_tag_set.t
+      val tag_query : t -> Terrat_tag_query.t
       val default_branch : t -> string
       val user : t -> string
     end

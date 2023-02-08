@@ -8,7 +8,7 @@ type err = query_err [@@deriving show]
 
 module Policy : sig
   type t = {
-    tag_query : Terrat_tag_set.t;
+    tag_query : Terrat_tag_query.t;
     policy : string list;
   }
   [@@deriving show]

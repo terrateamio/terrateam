@@ -580,7 +580,7 @@ module Ev = struct
       repository : Gw.Repository.t;
       request_id : string;
       event_type : Terrat_evaluator.Event.Event_type.t;
-      tag_query : Terrat_tag_set.t;
+      tag_query : Terrat_tag_query.t;
       user : string;
     }
 
@@ -602,7 +602,7 @@ module Ev = struct
             repository.Gw.Repository.name
             pull_number
             (Terrat_evaluator.Event.Event_type.to_string event_type)
-            (Terrat_tag_set.to_string tag_query));
+            (Terrat_tag_query.to_string tag_query));
       {
         access_token;
         config;
@@ -1103,7 +1103,7 @@ module Ev = struct
                   ("run type " ^ run_type)
                   (Pull_request.Run_type.of_string run_type);
               state;
-              tag_query = Terrat_tag_set.of_string tag_query;
+              tag_query = Terrat_tag_query.of_string tag_query;
             })
         (CCInt64.of_int event.T.repository.Gw.Repository.id)
         (CCInt64.of_int event.T.pull_number)
@@ -1288,7 +1288,7 @@ module Ev = struct
         (CCInt64.of_int event.T.repository.Gw.Repository.id)
         (Terrat_work_manifest.Pull_request.Run_type.to_string work_manifest.Wm.run_type)
         hash
-        (Terrat_tag_set.to_string work_manifest.Wm.tag_query)
+        (Terrat_tag_query.to_string work_manifest.Wm.tag_query)
       >>= function
       | [] -> assert false
       | (id, state, created_at) :: _ ->
@@ -2073,7 +2073,7 @@ module Wm = struct
         | _ -> None
 
       let tag_query = function
-        | Some s :: rest -> Some (Terrat_tag_set.of_string s, rest)
+        | Some s :: rest -> Some (Terrat_tag_query.of_string s, rest)
         | _ -> None
 
       let select_github_parameters_from_work_manifest () =
@@ -2311,7 +2311,7 @@ module Wm = struct
                         (CCList.find_idx
                            (fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
                              Terrat_change_match.match_tag_query
-                               ~tag_query:(Terrat_tag_set.of_string tag_query)
+                               ~tag_query:(Terrat_tag_query.of_string tag_query)
                                change)
                            workflows);
                   })

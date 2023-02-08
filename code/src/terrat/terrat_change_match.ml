@@ -311,4 +311,4 @@ let merge_with_dedup l r =
   |> Dirspace_map.values
   |> Iter.to_list
 
-let match_tag_query ~tag_query { tags; _ } = Terrat_tag_set.match_ ~query:tag_query tags
+let match_tag_query ~tag_query { tags; _ } = Terrat_tag_query.match_ tag_query tags

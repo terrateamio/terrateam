@@ -198,7 +198,7 @@ let perform_unlock_pr
           ~repository
           ~request_id
           ~event_type:(Terrat_evaluator.Event.Event_type.Unlock unlock_ids)
-          ~tag_query:(Terrat_tag_set.of_list [])
+          ~tag_query:(Terrat_tag_query.of_string "")
           ~user
       in
       run_event_evaluator storage event
@@ -319,7 +319,7 @@ let process_pull_request_event request_id config storage = function
           ~repository
           ~request_id
           ~event_type:Terrat_evaluator.Event.Event_type.Autoplan
-          ~tag_query:(Terrat_tag_set.of_list [])
+          ~tag_query:(Terrat_tag_query.of_string "")
           ~user:sender.Gw.User.login
       in
       run_event_evaluator storage event
@@ -357,7 +357,7 @@ let process_pull_request_event request_id config storage = function
           ~repository
           ~request_id
           ~event_type:Terrat_evaluator.Event.Event_type.Autoapply
-          ~tag_query:(Terrat_tag_set.of_list [])
+          ~tag_query:(Terrat_tag_query.of_string "")
           ~user:sender.Gw.User.login
       in
       run_event_evaluator storage event

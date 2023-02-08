@@ -42,4 +42,4 @@ val of_dirspace : Dirs.t -> Terrat_change.Dirspace.t -> t option
    the first entry is taking. *)
 val merge_with_dedup : t list -> t list -> t list
 
-val match_tag_query : tag_query:Terrat_tag_set.t -> t -> bool
+val match_tag_query : tag_query:Terrat_tag_query.t -> t -> bool

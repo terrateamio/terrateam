@@ -10,7 +10,7 @@ let terrateam_repo_config = [ ".terrateam/config.yml"; ".terrateam/config.yaml" 
 
 module Policy = struct
   type t = {
-    tag_query : Terrat_tag_set.t;
+    tag_query : Terrat_tag_query.t;
     policy : string list;
   }
   [@@deriving show]

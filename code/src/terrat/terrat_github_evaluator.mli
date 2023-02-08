@@ -9,7 +9,7 @@ module S : sig
         repository : Terrat_github_webhooks.Repository.t;
         request_id : string;
         event_type : Terrat_evaluator.Event.Event_type.t;
-        tag_query : Terrat_tag_set.t;
+        tag_query : Terrat_tag_query.t;
         user : string;
       }
 
@@ -21,7 +21,7 @@ module S : sig
         repository:Terrat_github_webhooks.Repository.t ->
         request_id:string ->
         event_type:Terrat_evaluator.Event.Event_type.t ->
-        tag_query:Terrat_tag_set.t ->
+        tag_query:Terrat_tag_query.t ->
         user:string ->
         t
 

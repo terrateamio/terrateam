@@ -192,7 +192,7 @@ module Event = struct
         Terrat_change.Dirspaceflow.{ dirspace; workflow_idx = CCOption.map fst workflow })
       (match_tag_queries
          ~accessor:(fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
-           Terrat_tag_set.of_string tag_query)
+           Terrat_tag_query.of_string tag_query)
          ~changes
          workflows)
 end
@@ -210,7 +210,7 @@ module type S = sig
 
       val request_id : t -> string
       val event_type : t -> Event.Event_type.t
-      val tag_query : t -> Terrat_tag_set.t
+      val tag_query : t -> Terrat_tag_query.t
       val default_branch : t -> string
       val user : t -> string
     end
@@ -471,7 +471,7 @@ module Make (S : S) = struct
                 (* If no policy is specified, then use the default *)
                 [
                   Terrat_access_control.Policy.
-                    { tag_query = Terrat_tag_set.of_list []; policy = default };
+                    { tag_query = Terrat_tag_query.of_string ""; policy = default };
                 ]
             | Some policies ->
                 (* Policies have been specified, but that doesn't mean the specific
@@ -483,7 +483,7 @@ module Make (S : S) = struct
                      (fun (Terrat_repo_config.Access_control_policy.{ tag_query; _ } as p) ->
                        Terrat_access_control.Policy.
                          {
-                           tag_query = Terrat_tag_set.of_string tag_query;
+                           tag_query = Terrat_tag_query.of_string tag_query;
                            policy = CCOption.get_or ~default (selector p);
                          })
           in

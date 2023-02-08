@@ -30,7 +30,7 @@ type ('id, 'created_at, 'run_id, 'state, 'changes, 'src, 'run_type) t = {
   run_id : 'run_id;
   run_type : 'run_type;
   state : 'state;
-  tag_query : Terrat_tag_set.t;
+  tag_query : Terrat_tag_query.t;
 }
 
 module Pull_request = struct
