@@ -17,9 +17,14 @@ module Type = struct
 end
 
 type t = {
+  assume_role_arn : string option; [@default None]
+  assume_role_enabled : bool; [@default true]
   audience : string option; [@default None]
+  duration : int; [@default 3600]
   provider : Provider.t option; [@default None]
+  region : string; [@default "us-east-1"]
   role_arn : string;
+  session_name : string; [@default "terrateam"]
   type_ : Type.t; [@key "type"]
 }
 [@@deriving yojson { strict = true; meta = true }, make, show, eq]

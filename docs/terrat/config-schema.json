@@ -221,8 +221,19 @@
     "hook-op-oidc": {
       "additionalProperties": false,
       "properties": {
+        "assume_role_arn": {
+          "type": "string"
+        },
+        "assume_role_enabled": {
+          "default": true,
+          "type": "boolean"
+        },
         "audience": {
           "type": "string"
+        },
+        "duration": {
+          "default": 3600,
+          "type": "integer"
         },
         "provider": {
           "enum": [
@@ -230,7 +241,15 @@
           ],
           "type": "string"
         },
+        "region": {
+          "default": "us-east-1",
+          "type": "string"
+        },
         "role_arn": {
+          "type": "string"
+        },
+        "session_name": {
+          "default": "terrateam",
           "type": "string"
         },
         "type": {
