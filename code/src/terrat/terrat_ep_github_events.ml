@@ -97,7 +97,7 @@ module Sql = struct
     Pgsql_io.Typed_sql.(
       sql
       // (* id *) Ret.uuid
-      // (* pull_number *) Ret.bigint
+      // (* pull_number *) Ret.(option bigint)
       // (* sha *) Ret.text
       // (* run_type *) Ret.ud' Terrat_work_manifest.Pull_request.Run_type.of_string
       /^ read "github_fail_running_work_manifest.sql"
@@ -698,7 +698,7 @@ let process_workflow_job_failure storage access_token run_id repository =
         run_id
       >>= function
       | [] -> Abb.Future.return (Ok None)
-      | ((work_manifest_id, pull_number, sha, run_type) as r) :: _ ->
+      | ((work_manifest_id, _pull_number, _sha, _run_type) as r) :: _ ->
           Pgsql_io.Prepared_stmt.fetch
             db
             Sql.select_work_manifest_dirspaces
@@ -706,7 +706,7 @@ let process_workflow_job_failure storage access_token run_id repository =
             work_manifest_id
           >>= fun dirspaces -> Abb.Future.return (Ok (Some (r, dirspaces))))
   >>= function
-  | Some ((work_manifest_id, pull_number, sha, run_type), dirspaces) ->
+  | Some ((work_manifest_id, Some pull_number, sha, run_type), dirspaces) ->
       Logs.info (fun m ->
           m
             "GITHUB_EVENT : WORKFLOW_JOB_FAIL : %s : %s : %Ld"
@@ -769,6 +769,13 @@ let process_workflow_job_failure storage access_token run_id repository =
                ~sha
                commit_statuses))
       >>= fun _ -> Abb.Future.return (Ok ())
+  | Some ((work_manifest_id, None, _, _), _) ->
+      Logs.info (fun m ->
+          m
+            "GITHUB_EVENT : WORKFLOW_JOB_FAIL : %s : %s : DRIFT"
+            repository.Gw.Repository.owner.Gw.User.login
+            repository.Gw.Repository.name);
+      Abb.Future.return (Ok ())
   | None ->
       (* Nothing to fail *)
       Logs.warn (fun m ->
