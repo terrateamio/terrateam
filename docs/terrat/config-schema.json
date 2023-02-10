@@ -259,6 +259,16 @@
       "type": "object"
     },
     "hook-op-oidc": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/hook-op-oidc-aws"
+        },
+        {
+          "$ref": "#/definitions/hook-op-oidc-gcp"
+        }
+      ]
+    },
+    "hook-op-oidc-aws": {
       "additionalProperties": false,
       "properties": {
         "assume_role_arn": {
@@ -276,9 +286,7 @@
           "type": "integer"
         },
         "provider": {
-          "enum": [
-            "aws"
-          ],
+          "const": "aws",
           "type": "string"
         },
         "region": {
@@ -302,6 +310,44 @@
         "type"
       ],
       "type": "object"
+    },
+    "hook-op-oidc-gcp": {
+      "additionalProperties": false,
+      "properties": {
+        "access_token_lifetime": {
+          "default": 3600,
+          "type": "integer"
+        },
+        "access_token_subject": {
+          "type": "string"
+        },
+        "audience": {
+          "type": "string"
+        },
+        "project_id": {
+          "type": "string"
+        },
+        "provider": {
+          "const": "gcp",
+          "type": "string"
+        },
+        "service_account": {
+          "type": "string"
+        },
+        "type": {
+          "const": "oidc",
+          "type": "string"
+        },
+        "workload_identity_provider": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "provider",
+        "service_account",
+        "type",
+        "workload_identity_provider"
+      ]
     },
     "hook-op-run": {
       "additionalProperties": false,
