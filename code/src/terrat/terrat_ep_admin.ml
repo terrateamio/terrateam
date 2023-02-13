@@ -24,7 +24,7 @@ module Drift = struct
           // (* owner *) Ret.text
           // (* name *) Ret.text
           // (* state *) Ret.text
-          // (* run_type *) Ret.ud' Terrat_work_manifest.Pull_request.Run_type.of_string
+          // (* run_type *) Ret.ud' Terrat_work_manifest.Run_type.of_string
           // (* created_at *) Ret.text
           // (* completed_at *) Ret.(option text)
           /^ read "select_github_admin_drift_list.sql")
@@ -37,8 +37,7 @@ module Drift = struct
         owner;
         name;
         state;
-        run_type =
-          Terrat_work_manifest.Pull_request.Unified_run_type.(to_string (of_run_type run_type));
+        run_type = Terrat_work_manifest.Unified_run_type.(to_string (of_run_type run_type));
         created_at;
         completed_at;
       }

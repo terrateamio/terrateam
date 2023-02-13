@@ -102,8 +102,7 @@ module Event = struct
     type ('pull_request, 'apply_requirements) t =
       | Missing_plans of Terrat_change.Dirspace.t list
       | Dirspaces_owned_by_other_pull_request of 'pull_request Dirspace_map.t
-      | Conflicting_work_manifests of
-          'pull_request Terrat_work_manifest.Pull_request.Existing_lite.t list
+      | Conflicting_work_manifests of 'pull_request Terrat_work_manifest.Existing_lite.t list
       | Repo_config_parse_failure of string
       | Repo_config_failure of string
       | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
@@ -146,11 +145,11 @@ module Event = struct
     [@@deriving show]
 
     let run_type_of_tf = function
-      | `Apply `Auto -> Terrat_work_manifest.Pull_request.Run_type.Autoapply
-      | `Apply `Manual | `Apply_force -> Terrat_work_manifest.Pull_request.Run_type.Apply
-      | `Apply_autoapprove -> Terrat_work_manifest.Pull_request.Run_type.Unsafe_apply
-      | `Plan `Auto -> Terrat_work_manifest.Pull_request.Run_type.Autoplan
-      | `Plan `Manual -> Terrat_work_manifest.Pull_request.Run_type.Plan
+      | `Apply `Auto -> Terrat_work_manifest.Run_type.Autoapply
+      | `Apply `Manual | `Apply_force -> Terrat_work_manifest.Run_type.Apply
+      | `Apply_autoapprove -> Terrat_work_manifest.Run_type.Unsafe_apply
+      | `Plan `Auto -> Terrat_work_manifest.Run_type.Autoplan
+      | `Plan `Manual -> Terrat_work_manifest.Run_type.Plan
 
     let to_string = function
       | `Apply `Auto -> "autoapply"
@@ -199,7 +198,7 @@ end
 module Work_manifest = struct
   module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
 
-  type 'a t = 'a Terrat_work_manifest.Pull_request.Existing.t
+  type 'a t = 'a Terrat_work_manifest.Existing.t
 end
 
 module type S = sig
@@ -250,10 +249,9 @@ module type S = sig
       T.t ->
       Terrat_repo_config.Version_1.t ->
       Terrat_change_match.t list ->
-      Pull_request.t Terrat_work_manifest.Pull_request.New.t ->
+      Pull_request.t Terrat_work_manifest.New.t ->
       Terrat_access_control.R.Deny.t list ->
-      (Pull_request.t Terrat_work_manifest.Pull_request.Existing_lite.t, [> `Error ]) result
-      Abb.Future.t
+      (Pull_request.t Terrat_work_manifest.Existing_lite.t, [> `Error ]) result Abb.Future.t
 
     val store_pull_request :
       Pgsql_io.t -> T.t -> Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
@@ -288,8 +286,7 @@ module type S = sig
       Pgsql_io.t ->
       T.t ->
       Event.Op_class.tf ->
-      (Pull_request.t Terrat_work_manifest.Pull_request.Existing_lite.t list, [> `Error ]) result
-      Abb.Future.t
+      (Pull_request.t Terrat_work_manifest.Existing_lite.t list, [> `Error ]) result Abb.Future.t
 
     val query_unapplied_dirspaces :
       Pgsql_io.t ->
@@ -379,7 +376,7 @@ module type S = sig
       type t
 
       val work_manifest_state : t -> Terrat_work_manifest.State.t
-      val work_manifest_run_type : t -> Terrat_work_manifest.Pull_request.Run_type.t
+      val work_manifest_run_type : t -> Terrat_work_manifest.Run_type.t
 
       val to_response :
         t -> (Terrat_api_components.Work_manifest.t, [> `Error ]) result Abb.Future.t
@@ -680,7 +677,7 @@ module Make (S : S) = struct
         denied_dirspaces
         run_type =
       let open Abbs_future_combinators.Infix_result_monad in
-      let module Run_type = Terrat_work_manifest.Pull_request.Run_type in
+      let module Run_type = Terrat_work_manifest.Run_type in
       let dirspaceflows = Event.dirspaceflows_of_changes repo_config matches in
       let dirspaces = CCList.map (fun Terrat_change_match.{ dirspace; _ } -> dirspace) matches in
       let work_manifest =
@@ -1065,7 +1062,7 @@ module Make (S : S) = struct
                   >>= fun () ->
                   Prmths.Counter.inc_one
                     (Metrics.operations_total
-                       (Terrat_work_manifest.Pull_request.Run_type.to_string
+                       (Terrat_work_manifest.Run_type.to_string
                           (Event.Op_class.run_type_of_tf operation)));
                   match operation with
                   | `Plan tf_mode ->
@@ -1612,7 +1609,7 @@ module Make (S : S) = struct
                     Abb.Future.return (Error (`Work_manifest_already_run t))
                 | State.Queued -> Abb.Future.return (Error `Work_manifest_in_queue_state)
                 | _ -> (
-                    let module Run_type = Terrat_work_manifest.Pull_request.Run_type in
+                    let module Run_type = Terrat_work_manifest.Run_type in
                     match S.Work_manifest.Initiate.work_manifest_run_type t with
                     | Run_type.(Autoplan | Plan | Unsafe_apply) -> Abb.Future.return (Ok (Some t))
                     | Run_type.(Autoapply | Apply) -> (

@@ -55,7 +55,7 @@ module Metrics = struct
     fun ~r ~c ->
       Run_output_histogram.labels
         family
-        [ Terrat_work_manifest.Pull_request.Run_type.to_string r; Bool.to_string c ]
+        [ Terrat_work_manifest.Run_type.to_string r; Bool.to_string c ]
 
   let run_overall_result_count =
     let help = "Count of the results of overall runs" in
@@ -117,7 +117,7 @@ let insert_work_manifest db repository_id work_manifest pull_number_opt =
     work_manifest.Wm.base_hash
     pull_number_opt
     (CCInt64.of_int repository_id)
-    (Terrat_work_manifest.Pull_request.Run_type.to_string work_manifest.Wm.run_type)
+    (Terrat_work_manifest.Run_type.to_string work_manifest.Wm.run_type)
     work_manifest.Wm.hash
     (Terrat_tag_query.to_string work_manifest.Wm.tag_query)
   >>= function
@@ -294,22 +294,10 @@ module Dr = struct
         Abb.Future.return (Error `Error)
 
   let store_plan_work_manifest config db schedule repo dirspaceflows =
-    store_work_manifest
-      config
-      db
-      schedule
-      repo
-      dirspaceflows
-      Terrat_work_manifest.Pull_request.Run_type.Plan
+    store_work_manifest config db schedule repo dirspaceflows Terrat_work_manifest.Run_type.Plan
 
   let store_reconcile_work_manifest config db schedule repo dirspaceflows =
-    store_work_manifest
-      config
-      db
-      schedule
-      repo
-      dirspaceflows
-      Terrat_work_manifest.Pull_request.Run_type.Apply
+    store_work_manifest config db schedule repo dirspaceflows Terrat_work_manifest.Run_type.Apply
 end
 
 module R = struct
@@ -339,7 +327,7 @@ module R = struct
         // (* branch *) Ret.text
         // (* sha *) Ret.text
         // (* pull_number *) Ret.(option bigint)
-        // (* run_type *) Ret.ud' Terrat_work_manifest.Pull_request.Run_type.of_string
+        // (* run_type *) Ret.ud' Terrat_work_manifest.Run_type.of_string
         /^ read "select_github_action_parameters.sql"
         /% Var.uuid "work_manifest")
 
@@ -384,8 +372,7 @@ module R = struct
 
   let start_commit_statuses ~access_token ~owner ~repo ~sha ~run_type ~dirspaces () =
     let unified_run_type =
-      Terrat_work_manifest.Pull_request.(
-        run_type |> Unified_run_type.of_run_type |> Unified_run_type.to_string)
+      Terrat_work_manifest.(run_type |> Unified_run_type.of_run_type |> Unified_run_type.to_string)
     in
     let target_url = Printf.sprintf "https://github.com/%s/%s/actions" owner repo in
     let commit_statuses =
@@ -443,7 +430,7 @@ module R = struct
           tmpl
         >>= fun () ->
         let unified_run_type =
-          Terrat_work_manifest.Pull_request.(
+          Terrat_work_manifest.(
             run_type |> Unified_run_type.of_run_type |> Unified_run_type.to_string)
         in
         let target_url = Printf.sprintf "https://github.com/%s/%s/actions" owner repo in
@@ -685,7 +672,7 @@ module Ev = struct
         /^ read "select_github_conflicting_work_manifests_in_repo.sql"
         /% Var.bigint "repository"
         /% Var.bigint "pull_number"
-        /% Var.(ud (text "run_type") Terrat_work_manifest.Pull_request.Run_type.to_string))
+        /% Var.(ud (text "run_type") Terrat_work_manifest.Run_type.to_string))
 
     let select_dirspaces_owned_by_other_pull_requests =
       Pgsql_io.Typed_sql.(
@@ -1326,10 +1313,7 @@ module Ev = struct
               id;
               src = pull_request;
               run_id;
-              run_type =
-                CCOption.get_exn_or
-                  ("run type " ^ run_type)
-                  (Pull_request.Run_type.of_string run_type);
+              run_type = CCOption.get_exn_or ("run type " ^ run_type) (Run_type.of_string run_type);
               state;
               tag_query = Terrat_tag_query.of_string tag_query;
             })
@@ -1394,7 +1378,7 @@ module Ev = struct
   let create_queued_commit_checks event run_type pull_request dirspaces =
     let details_url = get_commit_check_details_url event pull_request in
     let unified_run_type =
-      let module Urt = Terrat_work_manifest.Pull_request.Unified_run_type in
+      let module Urt = Terrat_work_manifest.Unified_run_type in
       run_type |> Urt.of_run_type |> Urt.to_string
     in
     let aggregate =
@@ -1571,7 +1555,7 @@ module Ev = struct
             pull_request
             (create_queued_commit_checks event wm.Wm.run_type pull_request dirspaces))
       >>= fun () ->
-      let module Urt = Terrat_work_manifest.Pull_request.Unified_run_type in
+      let module Urt = Terrat_work_manifest.Unified_run_type in
       (match Urt.of_run_type work_manifest.Wm.run_type with
       | Urt.Plan -> maybe_create_pending_apply event pull_request repo_config changes
       | Urt.Apply -> Abb.Future.return (Ok ()))
@@ -1982,7 +1966,7 @@ module Ev = struct
                              ( "run_type",
                                string
                                  (CCString.capitalize_ascii
-                                    Terrat_work_manifest.Pull_request.Unified_run_type.(
+                                    Terrat_work_manifest.Unified_run_type.(
                                       to_string (of_run_type run_type))) );
                              ( "state",
                                string
@@ -2281,7 +2265,7 @@ module Wm = struct
           // (* completed_at *) Ret.(option text)
           // (* created_at *) Ret.text
           // (* hash *) Ret.text
-          // (* run_type *) Ret.ud' Terrat_work_manifest.Pull_request.Run_type.of_string
+          // (* run_type *) Ret.ud' Terrat_work_manifest.Run_type.of_string
           // (* state *) Ret.ud' Terrat_work_manifest.State.of_string
           // (* tag_query *) Ret.ud tag_query
           // (* repository *) Ret.bigint
@@ -2304,7 +2288,7 @@ module Wm = struct
           // (* completed_at *) Ret.(option text)
           // (* created_at *) Ret.text
           // (* hash *) Ret.text
-          // (* run_type *) Ret.ud' Terrat_work_manifest.Pull_request.Run_type.of_string
+          // (* run_type *) Ret.ud' Terrat_work_manifest.Run_type.of_string
           // (* state *) Ret.ud' Terrat_work_manifest.State.of_string
           // (* tag_query *) Ret.ud tag_query
           // (* repository *) Ret.bigint
@@ -2393,7 +2377,7 @@ module Wm = struct
       repository_id : int64;
       request_id : string;
       run_id : string;
-      work_manifest : Src.t Terrat_work_manifest.Pull_request.Existing.t;
+      work_manifest : Src.t Terrat_work_manifest.Existing.t;
     }
 
     let work_manifest_state { work_manifest = Terrat_work_manifest.{ state; _ }; _ } = state
@@ -2413,7 +2397,7 @@ module Wm = struct
         hash = function
       | Terrat_work_manifest.State.Running ->
           let unified_run_type =
-            Terrat_work_manifest.Pull_request.(
+            Terrat_work_manifest.(
               run_type |> Unified_run_type.of_run_type |> Unified_run_type.to_string)
           in
           Abbs_future_combinators.ignore
@@ -2570,7 +2554,7 @@ module Wm = struct
           let module Wm = Terrat_work_manifest in
           Metrics.Work_manifest_run_time_histogram.observe
             (Metrics.work_manifest_wait_duration_seconds
-               (Terrat_work_manifest.Pull_request.Run_type.to_string work_manifest.Wm.run_type))
+               (Terrat_work_manifest.Run_type.to_string work_manifest.Wm.run_type))
             run_time;
           Abb.Future.return (Ok work_manifest)
       | [] -> (
@@ -2816,7 +2800,7 @@ module Wm = struct
           work_manifest.Wm.changes
       in
       match work_manifest.Wm.run_type with
-      | Wm.Pull_request.Run_type.Plan | Wm.Pull_request.Run_type.Autoplan ->
+      | Wm.Run_type.Plan | Wm.Run_type.Autoplan ->
           let open Abbs_future_combinators.Infix_result_monad in
           Abbs_time_it.run
             (fun t ->
@@ -2861,7 +2845,7 @@ module Wm = struct
                   })
           in
           Abb.Future.return (Ok ret)
-      | Wm.Pull_request.Run_type.Apply | Wm.Pull_request.Run_type.Autoapply ->
+      | Wm.Run_type.Apply | Wm.Run_type.Autoapply ->
           let ret =
             Terrat_api_components.(
               Work_manifest.Work_manifest_apply
@@ -2874,7 +2858,7 @@ module Wm = struct
                   })
           in
           Abb.Future.return (Ok ret)
-      | Wm.Pull_request.Run_type.Unsafe_apply ->
+      | Wm.Run_type.Unsafe_apply ->
           let ret =
             Terrat_api_components.(
               Work_manifest.Work_manifest_unsafe_apply
@@ -3079,7 +3063,7 @@ module Wm = struct
           // (* completed_at *) Ret.(option text)
           // (* created_at *) Ret.text
           // (* hash *) Ret.text
-          // (* run_type *) Ret.ud' Terrat_work_manifest.Pull_request.Run_type.of_string
+          // (* run_type *) Ret.ud' Terrat_work_manifest.Run_type.of_string
           // (* state *) Ret.ud' Terrat_work_manifest.State.of_string
           // (* tag_query *) Ret.ud' CCFun.(Terrat_tag_query.of_string %> CCOption.return)
           // (* repository *) Ret.bigint
@@ -3217,7 +3201,7 @@ module Wm = struct
       request_id : string;
       run_id : string;
       storage : Terrat_storage.t;
-      work_manifest : Kind.t Terrat_work_manifest.Pull_request.Existing_lite.t;
+      work_manifest : Kind.t Terrat_work_manifest.Existing_lite.t;
     }
 
     let kind t = t.work_manifest.Terrat_work_manifest.src
@@ -3856,9 +3840,9 @@ module Wm = struct
                ]))
       in
       let tmpl =
-        match Terrat_work_manifest.Pull_request.Unified_run_type.of_run_type run_type with
-        | Terrat_work_manifest.Pull_request.Unified_run_type.Plan -> Tmpl.plan_complete
-        | Terrat_work_manifest.Pull_request.Unified_run_type.Apply -> Tmpl.apply_complete
+        match Terrat_work_manifest.Unified_run_type.of_run_type run_type with
+        | Terrat_work_manifest.Unified_run_type.Plan -> Tmpl.plan_complete
+        | Terrat_work_manifest.Unified_run_type.Apply -> Tmpl.apply_complete
       in
       match Snabela.apply tmpl kv with
       | Ok body -> body
@@ -3911,7 +3895,7 @@ module Wm = struct
       let module R = Terrat_api_work_manifest.Results.Request_body in
       let module Hooks_output = Terrat_api_components.Hook_outputs in
       let unified_run_type =
-        Terrat_work_manifest.Pull_request.(
+        Terrat_work_manifest.(
           t.work_manifest.Wm.run_type |> Unified_run_type.of_run_type |> Unified_run_type.to_string)
       in
       let success = results.R.overall.R.Overall.success in
@@ -4061,7 +4045,7 @@ module Wm = struct
           let module Wm = Terrat_work_manifest in
           Metrics.Work_manifest_run_time_histogram.observe
             (Metrics.work_manifest_run_time_duration_seconds
-               (Wm.Pull_request.Run_type.to_string t.work_manifest.Wm.run_type))
+               (Wm.Run_type.to_string t.work_manifest.Wm.run_type))
             run_time;
           Abb.Future.return (Ok t)
       | Error (#Pgsql_pool.err as err) ->

@@ -11,8 +11,7 @@ module Event : sig
     type ('pull_request, 'apply_requirements) t =
       | Missing_plans of Terrat_change.Dirspace.t list
       | Dirspaces_owned_by_other_pull_request of 'pull_request Dirspace_map.t
-      | Conflicting_work_manifests of
-          'pull_request Terrat_work_manifest.Pull_request.Existing_lite.t list
+      | Conflicting_work_manifests of 'pull_request Terrat_work_manifest.Existing_lite.t list
       | Repo_config_parse_failure of string
       | Repo_config_failure of string
       | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
@@ -54,7 +53,7 @@ module Event : sig
       | Pull_request of [ `Unlock of int list ]
     [@@deriving show]
 
-    val run_type_of_tf : tf -> Terrat_work_manifest.Pull_request.Run_type.t
+    val run_type_of_tf : tf -> Terrat_work_manifest.Run_type.t
   end
 
   module Event_type : sig
@@ -75,7 +74,7 @@ end
 module Work_manifest : sig
   module Dirspace_map : module type of CCMap.Make (Terrat_change.Dirspace)
 
-  type 'a t = 'a Terrat_work_manifest.Pull_request.Existing.t
+  type 'a t = 'a Terrat_work_manifest.Existing.t
 end
 
 module type S = sig
@@ -126,10 +125,9 @@ module type S = sig
       T.t ->
       Terrat_repo_config.Version_1.t ->
       Terrat_change_match.t list ->
-      Pull_request.t Terrat_work_manifest.Pull_request.New.t ->
+      Pull_request.t Terrat_work_manifest.New.t ->
       Terrat_access_control.R.Deny.t list ->
-      (Pull_request.t Terrat_work_manifest.Pull_request.Existing_lite.t, [> `Error ]) result
-      Abb.Future.t
+      (Pull_request.t Terrat_work_manifest.Existing_lite.t, [> `Error ]) result Abb.Future.t
 
     val store_pull_request :
       Pgsql_io.t -> T.t -> Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
@@ -164,8 +162,7 @@ module type S = sig
       Pgsql_io.t ->
       T.t ->
       Event.Op_class.tf ->
-      (Pull_request.t Terrat_work_manifest.Pull_request.Existing_lite.t list, [> `Error ]) result
-      Abb.Future.t
+      (Pull_request.t Terrat_work_manifest.Existing_lite.t list, [> `Error ]) result Abb.Future.t
 
     val query_unapplied_dirspaces :
       Pgsql_io.t ->
@@ -255,7 +252,7 @@ module type S = sig
       type t
 
       val work_manifest_state : t -> Terrat_work_manifest.State.t
-      val work_manifest_run_type : t -> Terrat_work_manifest.Pull_request.Run_type.t
+      val work_manifest_run_type : t -> Terrat_work_manifest.Run_type.t
 
       val to_response :
         t -> (Terrat_api_components.Work_manifest.t, [> `Error ]) result Abb.Future.t

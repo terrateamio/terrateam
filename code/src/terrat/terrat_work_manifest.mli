@@ -16,6 +16,27 @@ module Kind : sig
     | Drift of 'd
 end
 
+module Run_type : sig
+  type t =
+    | Autoplan
+    | Autoapply
+    | Plan
+    | Apply
+    | Unsafe_apply
+
+  val to_string : t -> string
+  val of_string : string -> t option
+end
+
+module Unified_run_type : sig
+  type t =
+    | Plan
+    | Apply
+
+  val of_run_type : Run_type.t -> t
+  val to_string : t -> string
+end
+
 type ('id, 'created_at, 'run_id, 'state, 'changes, 'src, 'run_type) t = {
   base_hash : string;
   changes : 'changes;
@@ -30,50 +51,19 @@ type ('id, 'created_at, 'run_id, 'state, 'changes, 'src, 'run_type) t = {
   tag_query : Terrat_tag_query.t;
 }
 
-module Pull_request : sig
-  module Run_type : sig
-    type t =
-      | Autoplan
-      | Autoapply
-      | Plan
-      | Apply
-      | Unsafe_apply
+module New : sig
+  (** A new work manifest has no id, create time, run id, or state *)
+  type nonrec 'src t =
+    (unit, unit, unit, unit, Terrat_change.Dirspaceflow.t list, 'src, Run_type.t) t
+end
 
-    val to_string : t -> string
-    val of_string : string -> t option
-  end
+module Existing : sig
+  (** An existing work manifest has all of the fillings *)
+  type nonrec 'src t =
+    (Uuidm.t, string, string option, State.t, Terrat_change.Dirspaceflow.t list, 'src, Run_type.t) t
+end
 
-  module Unified_run_type : sig
-    type t =
-      | Plan
-      | Apply
-
-    val of_run_type : Run_type.t -> t
-    val to_string : t -> string
-  end
-
-  module New : sig
-    (** A new work manifest has no id, create time, run id, or state *)
-    type nonrec 'pull_request t =
-      (unit, unit, unit, unit, Terrat_change.Dirspaceflow.t list, 'pull_request, Run_type.t) t
-  end
-
-  module Existing : sig
-    (** An existing work manifest has all of the fillings *)
-    type nonrec 'pull_request t =
-      ( Uuidm.t,
-        string,
-        string option,
-        State.t,
-        Terrat_change.Dirspaceflow.t list,
-        'pull_request,
-        Run_type.t )
-      t
-  end
-
-  module Existing_lite : sig
-    (** An existing work manifest but do not include the changes *)
-    type nonrec 'pull_request t =
-      (Uuidm.t, string, string option, State.t, unit, 'pull_request, Run_type.t) t
-  end
+module Existing_lite : sig
+  (** An existing work manifest but do not include the changes *)
+  type nonrec 'src t = (Uuidm.t, string, string option, State.t, unit, 'src, Run_type.t) t
 end
