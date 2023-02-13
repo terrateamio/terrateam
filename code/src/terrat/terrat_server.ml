@@ -41,44 +41,60 @@ module Rt = struct
   let health_check () = Brtl_rtng.Route.(rel / "health")
   let infracost () = Brtl_rtng.Route.(api () / "github" / "infracost" /% Path.any)
   let metrics () = Brtl_rtng.Route.(rel / "metrics")
+
+  (* Admin interface *)
+  let admin_rt () = Brtl_rtng.Route.(api () / "v1" / "admin")
+  let admin_drift_list_rt () = Brtl_rtng.Route.(admin_rt () / "drifts")
 end
 
 let response_404 ctx =
   Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx)
 
+let maybe_add_admin_routes config storage =
+  (* Very important, we only want to add these endpoints if the admin token is
+     set.  The admin token is really only meant for debugging purposes. *)
+  match Terrat_config.admin_token config with
+  | Some token ->
+      Brtl_rtng.Route.
+        [
+          (`GET, Rt.admin_drift_list_rt () --> Terrat_ep_admin.Drift.List.get token config storage);
+        ]
+  | None -> []
+
 let rtng config storage =
   Brtl_rtng.create
     ~default:(Brtl_static.run Terrat_files_assets.read "index.html")
-    Brtl_rtng.Route.
-      [
-        (* Ops *)
-        (`GET, Rt.health_check () --> Terrat_ep_health_check.get storage);
-        (`GET, Rt.metrics () --> Terrat_ep_metrics.get);
-        (* Work manifests *)
-        ( `POST,
-          Rt.github_work_manifest_plan ()
-          --> Terrat_ep_github_work_manifest.Plans.post config storage );
-        ( `GET,
-          Rt.github_get_work_manifest_plan ()
-          --> Terrat_ep_github_work_manifest.Plans.get config storage );
-        ( `PUT,
-          Rt.github_work_manifest_results ()
-          --> Terrat_ep_github_work_manifest.Results.put config storage );
-        ( `POST,
-          Rt.github_work_manifest_initiate ()
-          --> Terrat_ep_github_work_manifest.Initiate.post config storage );
-        (* Github *)
-        (`POST, Rt.github_events () --> Terrat_ep_github_events.post config storage);
-        (`GET, Rt.github_callback () --> Terrat_ep_github_callback.get config storage);
-        (* Infracost *)
-        (`POST, Rt.infracost () --> Terrat_ep_infracost.post config storage);
-        (* API 404s.  This is needed because for any and only UI endpoint we
-           want to return the HTML *)
-        (`GET, Rt.api_404 () --> fun _ ctx -> response_404 ctx);
-        (`PUT, Rt.api_404 () --> fun _ ctx -> response_404 ctx);
-        (`POST, Rt.api_404 () --> fun _ ctx -> response_404 ctx);
-        (`DELETE, Rt.api_404 () --> fun _ ctx -> response_404 ctx);
-      ]
+    (maybe_add_admin_routes config storage
+    @ Brtl_rtng.Route.
+        [
+          (* Ops *)
+          (`GET, Rt.health_check () --> Terrat_ep_health_check.get storage);
+          (`GET, Rt.metrics () --> Terrat_ep_metrics.get);
+          (* Work manifests *)
+          ( `POST,
+            Rt.github_work_manifest_plan ()
+            --> Terrat_ep_github_work_manifest.Plans.post config storage );
+          ( `GET,
+            Rt.github_get_work_manifest_plan ()
+            --> Terrat_ep_github_work_manifest.Plans.get config storage );
+          ( `PUT,
+            Rt.github_work_manifest_results ()
+            --> Terrat_ep_github_work_manifest.Results.put config storage );
+          ( `POST,
+            Rt.github_work_manifest_initiate ()
+            --> Terrat_ep_github_work_manifest.Initiate.post config storage );
+          (* Github *)
+          (`POST, Rt.github_events () --> Terrat_ep_github_events.post config storage);
+          (`GET, Rt.github_callback () --> Terrat_ep_github_callback.get config storage);
+          (* Infracost *)
+          (`POST, Rt.infracost () --> Terrat_ep_infracost.post config storage);
+          (* API 404s.  This is needed because for any and only UI endpoint we
+             want to return the HTML *)
+          (`GET, Rt.api_404 () --> fun _ ctx -> response_404 ctx);
+          (`PUT, Rt.api_404 () --> fun _ ctx -> response_404 ctx);
+          (`POST, Rt.api_404 () --> fun _ ctx -> response_404 ctx);
+          (`DELETE, Rt.api_404 () --> fun _ ctx -> response_404 ctx);
+        ])
 
 let run config storage =
   let open Abb.Future.Infix_monad in

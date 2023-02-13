@@ -32,7 +32,7 @@ module Results = struct
     let t = [ ("200", fun _ -> Ok `OK); ("403", fun _ -> Ok `Forbidden) ]
   end
 
-  let url = "/api/v1/work-manifests/{work_manifest_id}"
+  let url = "/api/github/v1/work-manifests/{work_manifest_id}"
 
   let make ~body params =
     Openapi.Request.make
@@ -78,7 +78,7 @@ module Initiate = struct
       ]
   end
 
-  let url = "/api/v1/work-manifests/{work_manifest_id}/initiate"
+  let url = "/api/github/v1/work-manifests/{work_manifest_id}/initiate"
 
   let make ~body params =
     Openapi.Request.make
@@ -117,7 +117,7 @@ module Plan_create = struct
     let t = [ ("200", fun _ -> Ok `OK); ("403", fun _ -> Ok `Forbidden) ]
   end
 
-  let url = "/api/v1/work-manifests/{work_manifest_id}/plans"
+  let url = "/api/github/v1/work-manifests/{work_manifest_id}/plans"
 
   let make ~body params =
     Openapi.Request.make
@@ -153,7 +153,7 @@ module Plan_get = struct
     let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
-  let url = "/api/v1/work-manifests/{work_manifest_id}/plans"
+  let url = "/api/github/v1/work-manifests/{work_manifest_id}/plans"
 
   let make params =
     Openapi.Request.make

@@ -523,6 +523,35 @@
         ],
         "type": "object"
       },
+      "workflow-output-oidc": {
+        "additionalProperties": false,
+        "properties": {
+          "outputs": {
+            "$ref": "#/components/schemas/output-text"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "workflow_step": {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "oidc",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "workflow_step",
+          "success"
+        ],
+        "type": "object"
+      },
       "workflow-output-plan": {
         "additionalProperties": false,
         "properties": {
@@ -598,35 +627,6 @@
         ],
         "type": "object"
       },
-      "workflow-output-oidc": {
-        "additionalProperties": false,
-        "properties": {
-          "outputs": {
-            "$ref": "#/components/schemas/output-text"
-          },
-          "success": {
-            "type": "boolean"
-          },
-          "workflow_step": {
-            "additionalProperties": false,
-            "properties": {
-              "type": {
-                "const": "oidc",
-                "type": "string"
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "workflow_step",
-          "success"
-        ],
-        "type": "object"
-      },
       "workflow-outputs": {
         "items": {
           "oneOf": [
@@ -656,7 +656,7 @@
   },
   "openapi": "3.0.3",
   "paths": {
-    "/api/v1/work-manifests/{work_manifest_id}": {
+    "/api/github/v1/work-manifests/{work_manifest_id}": {
       "put": {
         "operationId": "work-manifest/results",
         "parameters": [
@@ -711,7 +711,7 @@
         }
       }
     },
-    "/api/v1/work-manifests/{work_manifest_id}/initiate": {
+    "/api/github/v1/work-manifests/{work_manifest_id}/initiate": {
       "post": {
         "operationId": "work-manifest/initiate",
         "parameters": [
@@ -748,7 +748,7 @@
         }
       }
     },
-    "/api/v1/work-manifests/{work_manifest_id}/plans": {
+    "/api/github/v1/work-manifests/{work_manifest_id}/plans": {
       "get": {
         "operationId": "work-manifest/plan-get",
         "parameters": [
@@ -823,6 +823,71 @@
         "responses": {
           "200": {},
           "403": {}
+        }
+      }
+    },
+    "/api/v1/admin/drifts": {
+      "get": {
+        "operationId": "admin/drifts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "results": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "completed_at": {
+                            "type": "string"
+                          },
+                          "created_at": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "owner": {
+                            "type": "string"
+                          },
+                          "run_type": {
+                            "enum": [
+                              "plan",
+                              "apply"
+                            ],
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "created_at",
+                          "id",
+                          "name",
+                          "owner",
+                          "run_type",
+                          "state"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "results"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
         }
       }
     }
