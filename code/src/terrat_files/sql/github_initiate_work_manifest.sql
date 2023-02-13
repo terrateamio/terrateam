@@ -26,4 +26,8 @@ returning
     gir.installation_id,
     gir.owner,
     gir.name,
-    extract(epoch from (now() - gwm.created_at))
+    extract(epoch from (now() - gwm.created_at)),
+    (case
+     when gdwm.work_manifest is not null then 'drift'
+     else ''
+     end)

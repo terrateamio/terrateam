@@ -2291,6 +2291,7 @@ module Wm = struct
           // (* owner *) Ret.text
           // (* repo *) Ret.text
           // (* run_time *) Ret.double
+          // (* run_kind *) Ret.text
           /^ read "github_initiate_work_manifest.sql"
           /% Var.uuid "id"
           /% Var.text "run_id"
@@ -2312,6 +2313,7 @@ module Wm = struct
           // (* installation_id *) Ret.bigint
           // (* owner *) Ret.text
           // (* repo *) Ret.text
+          // (* run_kind *) Ret.text
           /^ read "select_github_work_manifest.sql"
           /% Var.uuid "id"
           /% Var.text "sha")
@@ -2378,6 +2380,7 @@ module Wm = struct
         pull_number : int64 option;
         repo_name : string;
         repository : int64;
+        run_kind : string;
       }
     end
 
@@ -2533,7 +2536,8 @@ module Wm = struct
                installation_id
                owner
                repo_name
-               run_time ->
+               run_time
+               run_kind ->
           ( run_time,
             {
               Terrat_work_manifest.base_hash;
@@ -2542,7 +2546,17 @@ module Wm = struct
               created_at;
               hash;
               id = work_manifest_id;
-              src = Src.{ base_branch; installation_id; owner; pull_number; repo_name; repository };
+              src =
+                Src.
+                  {
+                    base_branch;
+                    installation_id;
+                    owner;
+                    pull_number;
+                    repo_name;
+                    repository;
+                    run_kind;
+                  };
               run_id = Some work_manifest_initiate.I.run_id;
               run_type;
               state;
@@ -2581,7 +2595,8 @@ module Wm = struct
                    base_branch
                    installation_id
                    owner
-                   repo_name ->
+                   repo_name
+                   run_kind ->
               {
                 Terrat_work_manifest.base_hash;
                 changes = ();
@@ -2590,7 +2605,16 @@ module Wm = struct
                 hash;
                 id = work_manifest_id;
                 src =
-                  Src.{ base_branch; installation_id; owner; pull_number; repo_name; repository };
+                  Src.
+                    {
+                      base_branch;
+                      installation_id;
+                      owner;
+                      pull_number;
+                      repo_name;
+                      repository;
+                      run_kind;
+                    };
                 run_id = Some work_manifest_initiate.I.run_id;
                 run_type;
                 state;
@@ -2833,7 +2857,7 @@ module Wm = struct
                     changed_dirspaces;
                     dirspaces;
                     base_dirspaces;
-                    run_kind = "";
+                    run_kind = work_manifest.Wm.src.Src.run_kind;
                   })
           in
           Abb.Future.return (Ok ret)

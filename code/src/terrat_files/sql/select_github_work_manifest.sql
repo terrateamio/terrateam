@@ -12,7 +12,11 @@ select
     gir.installation_id,
     gir.owner,
     gir.name,
-    gpr.base_branch
+    gpr.base_branch,
+    (case
+     when gwdm.work_manifest is not null then 'drift'
+     else ''
+     end)
 from github_work_manifests as gwm
 inner join github_installation_repositories as gir
     on gir.id = gpr.repository
