@@ -23,3 +23,4 @@ val infracost_pricing_api_endpoint : t -> Uri.t
 val infracost_api_key : t -> string
 val db_connect_timeout : t -> float
 val nginx_status_uri : t -> Uri.t option
+val admin_token : t -> string option

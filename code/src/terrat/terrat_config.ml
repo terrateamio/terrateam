@@ -15,6 +15,7 @@ type t = {
   infracost_pricing_api_endpoint : Uri.t;
   infracost_api_key : string;
   nginx_status_uri : Uri.t option;
+  admin_token : string option;
 }
 
 type err =
@@ -70,6 +71,7 @@ let create () =
   env_str "SELF_HOSTED_INFRACOST_API_KEY"
   >>= fun infracost_api_key ->
   let nginx_status_uri = CCOption.map Uri.of_string (Sys.getenv_opt "NGINX_STATUS_URI") in
+  let admin_token = Sys.getenv_opt "TERRAT_ADMIN_TOKEN" in
   Ok
     {
       port;
@@ -88,6 +90,7 @@ let create () =
       infracost_pricing_api_endpoint = Uri.of_string infracost_pricing_api_endpoint;
       infracost_api_key;
       nginx_status_uri;
+      admin_token;
     }
 
 let port t = t.port
@@ -106,3 +109,4 @@ let python_exec t = t.python_exec
 let infracost_pricing_api_endpoint t = t.infracost_pricing_api_endpoint
 let infracost_api_key t = t.infracost_api_key
 let nginx_status_uri t = t.nginx_status_uri
+let admin_token t = t.admin_token
