@@ -99,10 +99,10 @@ module Event = struct
   module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
 
   module Msg = struct
-    type ('pull_request, 'apply_requirements) t =
+    type ('pull_request, 'src, 'apply_requirements) t =
       | Missing_plans of Terrat_change.Dirspace.t list
       | Dirspaces_owned_by_other_pull_request of 'pull_request Dirspace_map.t
-      | Conflicting_work_manifests of 'pull_request Terrat_work_manifest.Existing_lite.t list
+      | Conflicting_work_manifests of 'src Terrat_work_manifest.Existing_lite.t list
       | Repo_config_parse_failure of string
       | Repo_config_failure of string
       | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
@@ -124,6 +124,13 @@ module Event = struct
       | Unlock_success
   end
 
+  module Unlock_id = struct
+    type t =
+      | Pull_request of int
+      | Drift
+    [@@deriving show]
+  end
+
   module Op_class = struct
     type tf_mode =
       [ `Manual
@@ -141,7 +148,7 @@ module Event = struct
 
     type t =
       | Terraform of tf
-      | Pull_request of [ `Unlock of int list ]
+      | Pull_request of [ `Unlock of Unlock_id.t list ]
     [@@deriving show]
 
     let run_type_of_tf = function
@@ -168,7 +175,7 @@ module Event = struct
       | Autoapply
       | Autoplan
       | Plan
-      | Unlock of int list
+      | Unlock of Unlock_id.t list
     [@@deriving show]
 
     (* Translate the event type to its operation class *)
@@ -224,6 +231,10 @@ module type S = sig
       val passed_all_checks : t -> bool
       val is_draft_pr : t -> bool
       val branch_name : t -> string
+    end
+
+    module Src : sig
+      type t
     end
 
     module Apply_requirements : sig
@@ -286,7 +297,7 @@ module type S = sig
       Pgsql_io.t ->
       T.t ->
       Event.Op_class.tf ->
-      (Pull_request.t Terrat_work_manifest.Existing_lite.t list, [> `Error ]) result Abb.Future.t
+      (Src.t Terrat_work_manifest.Existing_lite.t list, [> `Error ]) result Abb.Future.t
 
     val query_unapplied_dirspaces :
       Pgsql_io.t ->
@@ -316,10 +327,11 @@ module type S = sig
       Pull_request.t ->
       (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
 
-    val unlock_pull_request :
-      Terrat_storage.t -> T.t -> int -> (unit, [> `Error ]) result Abb.Future.t
+    val perform_unlock :
+      Terrat_storage.t -> T.t -> Event.Unlock_id.t -> (unit, [> `Error ]) result Abb.Future.t
 
-    val publish_msg : T.t -> (Pull_request.t, Apply_requirements.t) Event.Msg.t -> unit Abb.Future.t
+    val publish_msg :
+      T.t -> (Pull_request.t, Src.t, Apply_requirements.t) Event.Msg.t -> unit Abb.Future.t
   end
 
   module Drift : sig
@@ -1224,7 +1236,7 @@ module Make (S : S) = struct
           Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"allowed");
           let open Abbs_future_combinators.Infix_result_monad in
           Abbs_future_combinators.List_result.iter
-            ~f:(S.Event.unlock_pull_request storage event)
+            ~f:(S.Event.perform_unlock storage event)
             unlock_ids
           >>= fun () -> Abb.Future.return (Ok (Some Event.Msg.Unlock_success))
       | Ok (Some match_list) ->

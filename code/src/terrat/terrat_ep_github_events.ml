@@ -187,10 +187,12 @@ let perform_unlock_pr
         (CCString.concat " " unlock_ids));
   match
     unlock_ids
-    |> CCList.map (fun s ->
-           match CCInt.of_string s with
-           | Some n -> Ok n
-           | None -> Error s)
+    |> CCList.map (function
+           | "drift" -> Ok Terrat_evaluator.Event.Unlock_id.Drift
+           | s -> (
+               match CCInt.of_string s with
+               | Some n -> Ok (Terrat_evaluator.Event.Unlock_id.Pull_request n)
+               | None -> Error s))
     |> CCResult.flatten_l
   with
   | Ok unlock_ids ->
@@ -198,7 +200,7 @@ let perform_unlock_pr
         (* If the list is empty, then want to unlock the PR that this was issued
            in. *)
         match unlock_ids with
-        | [] -> [ pull_number ]
+        | [] -> [ Terrat_evaluator.Event.Unlock_id.Pull_request pull_number ]
         | unlock_ids -> unlock_ids
       in
       Terrat_github.get_installation_access_token config installation_id

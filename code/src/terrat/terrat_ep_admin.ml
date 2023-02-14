@@ -27,10 +27,11 @@ module Drift = struct
           // (* run_type *) Ret.ud' Terrat_work_manifest.Run_type.of_string
           // (* created_at *) Ret.text
           // (* completed_at *) Ret.(option text)
+          // (* unlocked *) Ret.boolean
           /^ read "select_github_admin_drift_list.sql")
     end
 
-    let make_drift id owner name state run_type created_at completed_at =
+    let make_drift id owner name state run_type created_at completed_at unlocked =
       let open Terrat_api_admin.Drifts.Responses.OK.Results.Items in
       {
         id = Uuidm.to_string id;
@@ -40,6 +41,7 @@ module Drift = struct
         run_type = Terrat_work_manifest.Unified_run_type.(to_string (of_run_type run_type));
         created_at;
         completed_at;
+        unlocked;
       }
 
     let get admin_token config storage ctx =

@@ -865,6 +865,9 @@
                           },
                           "state": {
                             "type": "string"
+                          },
+                          "unlocked": {
+                            "type": "boolean"
                           }
                         },
                         "required": [
@@ -873,7 +876,8 @@
                           "name",
                           "owner",
                           "run_type",
-                          "state"
+                          "state",
+                          "unlocked"
                         ],
                         "type": "object"
                       },

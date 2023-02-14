@@ -2,16 +2,13 @@ with
 dirspaces as (
     select dir, workspace from unnest($dirs, $workspaces) as v(dir, workspace)
 ),
-unlocks as (
+latest_unlocks as (
     select
         repository,
         pull_number,
-        unlocked_at,
-        row_number() over (partition by repository, pull_number order by unlocked_at desc) as rn
+        max(unlocked_at) as unlocked_at
     from github_pull_request_unlocks
-),
-latest_unlocks as (
-    select * from unlocks where rn = 1
+    group by repository, pull_number
 ),
 -- First things we'll do is for each pull request determine all of the dirspaces
 -- that need to be applied.

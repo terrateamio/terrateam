@@ -1,14 +1,18 @@
 with
-unlocks as (
+latest_unlocks as (
     select
         repository,
         pull_number,
-        unlocked_at,
-        row_number() over (partition by repository, pull_number order by unlocked_at desc) as rn
+        max(unlocked_at) as unlocked_at
     from github_pull_request_unlocks
+    group by repository, pull_number
 ),
-latest_unlocks as (
-    select * from unlocks where rn = 1
+latest_drift_unlocks as (
+    select
+        repository,
+        max(unlocked_at) as unlocked_at
+    from github_drift_unlocks
+    group by repository
 ),
 dirspaces as (
     select dir, workspace from unnest($dirs, $workspaces) as v(dir, workspace)
@@ -38,8 +42,11 @@ all_completed_runs as (
         on gwmds.work_manifest = gwm.id
     left join github_work_manifest_results as gwmr
         on gwmr.work_manifest = gwmds.work_manifest and gwmr.path = gwmds.path and gwmr.workspace = gwmds.workspace
+    left join latest_drift_unlocks
+        on latest_drift_unlocks.repository = gpr.repository
     where gwm.completed_at is not null
           and (latest_unlocks.unlocked_at is null or latest_unlocks.unlocked_at < gwm.created_at)
+          and (latest_drift_unlocks.unlocked_at is null or latest_drift_unlocks.unlocked_at < gwm.created_at)
 ),
 completed_runs as (
     select

@@ -7,13 +7,13 @@ There are conflicting operations that are preventing this operation from being p
 | Pull Request | Operation | State | Created At |
 | --- | --- | --- | --- |
 @#work_manifests-@
-| #@pull_number@ | @run_type@ | @state@ | @created_at@ UTC |
+| @!is_drift-@ #@pull_number@ @-/is_drift@@?is_drift-@ Drift @-/is_drift@ | @run_type@ | @state@ | @created_at@ UTC |
 @/work_manifests-@
 
 If these appear to be stuck, unlock them by commenting in any pull request:
 
 ```
-terrateam unlock@-#work_manifests@ @pull_number@@/work_manifests@
+terrateam unlock@-#work_manifests@ @!is_drift-@ @pull_number@ @-/is_drift@@?is_drift-@ drift @-/is_drift@@/work_manifests@
 ```
 
 **Be careful when unlocking.**  Make sure that these runs are actually stuck by verifying if there are any running GitHub Actions workflows.

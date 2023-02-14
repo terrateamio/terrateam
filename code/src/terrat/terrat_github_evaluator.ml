@@ -652,7 +652,7 @@ module Ev = struct
         /% Var.bigint "repository"
         /% Var.bigint "pull_number")
 
-    let select_conflicting_work_manifests_in_repo =
+    let select_conflicting_work_manifests_in_repo () =
       Pgsql_io.Typed_sql.(
         sql
         // (* base_hash *) Ret.text
@@ -660,15 +660,16 @@ module Ev = struct
         // (* hash *) Ret.text
         // (* id *) Ret.uuid
         // (* run_id *) Ret.(option text)
-        // (* run_type *) Ret.text
+        // (* run_type *) Ret.ud' Terrat_work_manifest.Run_type.of_string
         // (* tag_query *) Ret.text
-        // (* base_branch *) Ret.text
-        // (* branch *) Ret.text
-        // (* pull_number *) Ret.bigint
-        // (* pr state *) Ret.text
+        // (* base_branch *) Ret.(option text)
+        // (* branch *) Ret.(option text)
+        // (* pull_number *) Ret.(option bigint)
+        // (* pr state *) Ret.(option text)
         // (* merged_hash *) Ret.(option text)
         // (* merged_at *) Ret.(option text)
         // (* state *) Ret.(ud' Terrat_work_manifest.State.of_string)
+        // (* run_kind *) Ret.text
         /^ read "select_github_conflicting_work_manifests_in_repo.sql"
         /% Var.bigint "repository"
         /% Var.bigint "pull_number"
@@ -704,12 +705,15 @@ module Ev = struct
         /% Var.(str_array (text "dirs"))
         /% Var.(str_array (text "workspaces")))
 
-    let insert_pull_request_unlock =
+    let insert_pull_request_unlock () =
       Pgsql_io.Typed_sql.(
         sql
         /^ read "insert_github_pull_request_unlock.sql"
         /% Var.bigint "repository"
         /% Var.bigint "pull_number")
+
+    let insert_drift_unlock () =
+      Pgsql_io.Typed_sql.(sql /^ read "insert_github_drift_unlock.sql" /% Var.bigint "repository")
 
     let select_missing_dirspace_applies_for_pull_request =
       Pgsql_io.Typed_sql.(
@@ -883,6 +887,12 @@ module Ev = struct
     let is_draft_pr t = t.Terrat_pull_request.draft
     let branch_name t = t.Terrat_pull_request.branch_name
     let change_hash t = t.Terrat_pull_request.provisional_merge_sha
+  end
+
+  module Src = struct
+    type t =
+      | Pull_request of Pull_request.t
+      | Drift
   end
 
   module Access_control = struct
@@ -1265,7 +1275,7 @@ module Ev = struct
     let run =
       Pgsql_io.Prepared_stmt.fetch
         db
-        Sql.select_conflicting_work_manifests_in_repo
+        (Sql.select_conflicting_work_manifests_in_repo ())
         ~f:
           (fun base_hash
                created_at
@@ -1280,28 +1290,35 @@ module Ev = struct
                pr_state
                merged_hash
                merged_at
-               state ->
-          let pull_request =
-            Terrat_pull_request.
-              {
-                base_branch_name = base_branch;
-                base_hash;
-                branch_name = branch;
-                diff = [];
-                hash;
-                id = pull_number;
-                state =
-                  (match (pr_state, merged_hash, merged_at) with
-                  | "open", _, _ -> Terrat_pull_request.State.Open
-                  | "closed", _, _ -> Terrat_pull_request.State.Closed
-                  | "merged", Some merged_hash, Some merged_at ->
-                      Terrat_pull_request.State.(Merged Merged.{ merged_hash; merged_at })
-                  | _ -> assert false);
-                checks = true;
-                mergeable = None;
-                provisional_merge_sha = "";
-                draft = false;
-              }
+               state
+               run_kind ->
+          let src =
+            match (pull_number, base_branch, branch, pr_state) with
+            | Some pull_number, Some base_branch, Some branch, Some pr_state ->
+                let pull_request =
+                  Terrat_pull_request.
+                    {
+                      base_branch_name = base_branch;
+                      base_hash;
+                      branch_name = branch;
+                      diff = [];
+                      hash;
+                      id = pull_number;
+                      state =
+                        (match (pr_state, merged_hash, merged_at) with
+                        | "open", _, _ -> Terrat_pull_request.State.Open
+                        | "closed", _, _ -> Terrat_pull_request.State.Closed
+                        | "merged", Some merged_hash, Some merged_at ->
+                            Terrat_pull_request.State.(Merged Merged.{ merged_hash; merged_at })
+                        | _ -> assert false);
+                      checks = true;
+                      mergeable = None;
+                      provisional_merge_sha = "";
+                      draft = false;
+                    }
+                in
+                Src.Pull_request pull_request
+            | _ -> Src.Drift
           in
           Terrat_work_manifest.
             {
@@ -1311,9 +1328,9 @@ module Ev = struct
               created_at;
               hash;
               id;
-              src = pull_request;
+              src;
               run_id;
-              run_type = CCOption.get_exn_or ("run type " ^ run_type) (Run_type.of_string run_type);
+              run_type;
               state;
               tag_query = Terrat_tag_query.of_string tag_query;
             })
@@ -1848,21 +1865,34 @@ module Ev = struct
               (Snabela.show_err err));
         Abb.Future.return ()
 
-  let unlock_pull_request storage event pull_number =
+  let perform_unlock_pull_request event db pull_number =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Pgsql_io.Prepared_stmt.execute
+      db
+      (Sql.insert_pull_request_unlock ())
+      (CCInt64.of_int event.T.repository.Gw.Repository.id)
+      (CCInt64.of_int pull_number)
+    >>= fun () ->
+    Terrat_github_plan_cleanup.clean_pull_request
+      ~owner:event.T.repository.Gw.Repository.owner.Gw.User.login
+      ~repo:event.T.repository.Gw.Repository.name
+      ~pull_number
+      db
+
+  let perform_unlock_drift event db =
+    Pgsql_io.Prepared_stmt.execute
+      db
+      (Sql.insert_drift_unlock ())
+      (CCInt64.of_int event.T.repository.Gw.Repository.id)
+
+  let perform_unlock storage event unlock_id =
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
       Pgsql_pool.with_conn storage ~f:(fun db ->
-          Pgsql_io.Prepared_stmt.execute
-            db
-            Sql.insert_pull_request_unlock
-            (CCInt64.of_int event.T.repository.Gw.Repository.id)
-            (CCInt64.of_int pull_number)
-          >>= fun () ->
-          Terrat_github_plan_cleanup.clean_pull_request
-            ~owner:event.T.repository.Gw.Repository.owner.Gw.User.login
-            ~repo:event.T.repository.Gw.Repository.name
-            ~pull_number
-            db)
+          match unlock_id with
+          | Terrat_evaluator.Event.Unlock_id.Pull_request pull_number ->
+              perform_unlock_pull_request event db pull_number
+          | Terrat_evaluator.Event.Unlock_id.Drift -> perform_unlock_drift event db)
       >>= fun () ->
       let open Abb.Future.Infix_monad in
       Abb.Future.fork (R.run ~request_id:event.T.request_id event.T.config storage)
@@ -1952,17 +1982,17 @@ module Ev = struct
                 ( "work_manifests",
                   list
                     (CCList.map
-                       (fun Terrat_work_manifest.
-                              {
-                                created_at;
-                                run_type;
-                                state;
-                                src = Terrat_pull_request.{ id; _ };
-                                _;
-                              } ->
+                       (fun Terrat_work_manifest.{ created_at; run_type; state; src; _ } ->
+                         let pull_number, is_drift =
+                           match src with
+                           | Src.Pull_request Terrat_pull_request.{ id; _ } ->
+                               (CCInt64.to_string id, false)
+                           | Src.Drift -> ("drift", true)
+                         in
                          Map.of_list
                            [
-                             ("pull_number", string (CCInt64.to_string id));
+                             ("pull_number", string pull_number);
+                             ("is_drift", bool is_drift);
                              ( "run_type",
                                string
                                  (CCString.capitalize_ascii

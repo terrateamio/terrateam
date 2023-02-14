@@ -1,14 +1,18 @@
 with
-unlocks as (
+latest_unlocks as (
     select
         repository,
         pull_number,
-        unlocked_at,
-        row_number() over (partition by repository, pull_number order by unlocked_at desc) as rn
+        max(unlocked_at) as unlocked_at
     from github_pull_request_unlocks
+    group by repository, pull_number
 ),
-latest_unlocks as (
-    select * from unlocks where rn = 1
+latest_drift_unlocks as (
+    select
+        repository,
+        max(unlocked_at) as unlocked_at
+    from github_drift_unlocks
+    group by repository
 ),
 work_manifests as (
     select
@@ -32,7 +36,10 @@ work_manifests as (
     from github_work_manifests as gwm
     left join latest_unlocks as unlocks
         on unlocks.repository = gwm.repository and unlocks.pull_number = gwm.pull_number
-    where unlocks.unlocked_at is null or unlocks.unlocked_at < gwm.created_at
+    left join latest_drift_unlocks as drift_unlocks
+        on drift_unlocks.repository = gwm.repository
+    where (unlocks.unlocked_at is null or unlocks.unlocked_at < gwm.created_at) and
+          (drift_unlocks.unlocked_at is null or drift_unlocks.unlocked_at < gwm.created_at)
 ),
 -- Find all repositories with a currently running apply.  The count should only
 -- ever be 0 or 1

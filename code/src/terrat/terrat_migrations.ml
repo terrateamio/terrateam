@@ -74,6 +74,7 @@ let migrations =
     ("add-unsafe-apply", run_file_sql "2022-09-01-add-unsafe-apply.sql");
     ("add-access-denied", run_file_sql "2022-10-29-add-access-denied.sql");
     ("add-drift", run_file_sql "2023-01-30-add-drift-tables.sql");
+    ("add-drift-unlock", run_file_sql "2023-02-14-add-drift-unlock.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations

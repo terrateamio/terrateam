@@ -23,6 +23,7 @@ module Drifts = struct
             owner : string;
             run_type : Run_type.t;
             state : string;
+            unlocked : bool;
           }
           [@@deriving yojson { strict = true; meta = true }, show, eq]
         end
