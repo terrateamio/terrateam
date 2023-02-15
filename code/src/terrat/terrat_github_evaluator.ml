@@ -65,6 +65,15 @@ module Metrics = struct
       ~namespace
       ~subsystem
       "run_overall_result_count"
+
+  let pull_request_mergeable_state_count =
+    let help = "Counts for the different mergeable states in pull requests fetches" in
+    Prmths.Counter.v_label
+      ~label_name:"mergeable_state"
+      ~help
+      ~namespace
+      ~subsystem
+      "pull_request_mergeable_state_count"
 end
 
 module Sql = struct
@@ -1053,6 +1062,7 @@ module Ev = struct
           let head_sha = Head.(head.primary.Primary.sha) in
           let branch_name = Head.(head.primary.Primary.ref_) in
           let draft = CCOption.get_or ~default:false draft in
+          Prmths.Counter.inc_one (Metrics.pull_request_mergeable_state_count mergeable_state);
           fetch_diff
             ~request_id:event.T.request_id
             ~access_token:event.T.access_token
@@ -1071,31 +1081,32 @@ module Ev = struct
                 merge_commit_sha);
           Abb.Future.return
             (Ok
-               Terrat_pull_request.
-                 {
-                   base_branch_name;
-                   base_hash = base_sha;
-                   branch_name;
-                   diff;
-                   hash = head_sha;
-                   id = CCInt64.of_int event.T.pull_number;
-                   state =
-                     (match (state, merged, merged_at) with
-                     | "open", _, _ -> State.Open
-                     | "closed", true, Some merged_at ->
-                         State.(Merged Merged.{ merged_hash = merge_commit_sha; merged_at })
-                     | "closed", false, _ -> State.Closed
-                     | _, _, _ -> assert false);
-                   checks =
-                     merged
-                     || CCList.mem
-                          ~eq:CCString.equal
-                          mergeable_state
-                          [ "clean"; "unstable"; "has_hooks" ];
-                   mergeable;
-                   provisional_merge_sha = merge_commit_sha;
-                   draft;
-                 })
+               ( mergeable_state,
+                 Terrat_pull_request.
+                   {
+                     base_branch_name;
+                     base_hash = base_sha;
+                     branch_name;
+                     diff;
+                     hash = head_sha;
+                     id = CCInt64.of_int event.T.pull_number;
+                     state =
+                       (match (state, merged, merged_at) with
+                       | "open", _, _ -> State.Open
+                       | "closed", true, Some merged_at ->
+                           State.(Merged Merged.{ merged_hash = merge_commit_sha; merged_at })
+                       | "closed", false, _ -> State.Closed
+                       | _, _, _ -> assert false);
+                     checks =
+                       merged
+                       || CCList.mem
+                            ~eq:CCString.equal
+                            mergeable_state
+                            [ "clean"; "unstable"; "has_hooks" ];
+                     mergeable;
+                     provisional_merge_sha = merge_commit_sha;
+                     draft;
+                   } ))
       | `OK _ -> Abb.Future.return (Error `Merge_conflict)
       | (`Not_found _ | `Internal_server_error _ | `Not_modified | `Service_unavailable _) as err ->
           Logs.err (fun m ->
@@ -1150,13 +1161,16 @@ module Ev = struct
     let open Abb.Future.Infix_monad in
     Abbs_future_combinators.retry
       ~f:(fun () -> fetch_pull_request' event)
-      ~while_:(Abbs_future_combinators.finite_tries 6 CCResult.is_error)
+      ~while_:
+        (Abbs_future_combinators.finite_tries 6 (function
+            | Error _ | Ok ("unknown", _) -> true
+            | Ok _ -> false))
       ~betwixt:
         (Abbs_future_combinators.series ~start:2.0 ~step:(( *. ) 1.5) (fun n _ ->
              Prmths.Counter.inc_one Metrics.fetch_pull_request_errors_total;
              Abb.Sys.sleep (CCFloat.min n 8.0)))
     >>= function
-    | Ok _ as ret -> Abb.Future.return ret
+    | Ok (_, ret) -> Abb.Future.return (Ok ret)
     | Error `Merge_conflict as err -> Abb.Future.return err
     | Error (`Not_found _)
     | Error (`Internal_server_error _)
