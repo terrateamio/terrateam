@@ -2502,10 +2502,11 @@ module Wm = struct
 
     let fetch_all_dirspaces ~python ~access_token ~owner ~repo hash =
       let open Abbs_future_combinators.Infix_result_monad in
-      Terrat_github.fetch_repo_config ~python ~access_token ~owner ~repo hash
-      >>= fun repo_config ->
-      Terrat_github.get_tree ~access_token ~owner ~repo ~sha:hash ()
-      >>= fun files ->
+      Abbs_future_combinators.Infix_result_app.(
+        (fun repo_config files -> (repo_config, files))
+        <$> Terrat_github.fetch_repo_config ~python ~access_token ~owner ~repo hash
+        <*> Terrat_github.get_tree ~access_token ~owner ~repo ~sha:hash ())
+      >>= fun (repo_config, files) ->
       match Terrat_change_match.synthesize_dir_config ~file_list:files repo_config with
       | Ok dirs ->
           let matches =
