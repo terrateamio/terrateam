@@ -31,6 +31,7 @@ module Event : sig
           | `Unlock of string list
           ]
       | Unlock_success
+      | Tag_query_err of Terrat_tag_query.err
   end
 
   module Unlock_id : sig

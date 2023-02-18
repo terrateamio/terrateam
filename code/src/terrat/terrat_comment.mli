@@ -10,6 +10,8 @@ type t =
 type err =
   [ `Not_terrateam
   | `Unknown_action of string
+  | Terrat_tag_query.err
   ]
+[@@deriving show]
 
 val parse : string -> (t, [> err ]) result

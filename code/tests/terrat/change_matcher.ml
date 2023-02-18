@@ -151,7 +151,7 @@ let test_workflow_idx =
           (CCList.find_idx
              (fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
                Terrat_change_match.match_tag_query
-                 ~tag_query:(Terrat_tag_query.of_string tag_query)
+                 ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string tag_query))
                  change)
              workflows)
       in
@@ -204,7 +204,7 @@ let test_workflow_idx_tag_in_dir =
           (CCList.find_idx
              (fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
                Terrat_change_match.match_tag_query
-                 ~tag_query:(Terrat_tag_query.of_string tag_query)
+                 ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string tag_query))
                  change)
              workflows)
       in
@@ -266,7 +266,7 @@ let test_workflow_idx_multiple_dirs =
           (CCList.find_idx
              (fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
                Terrat_change_match.match_tag_query
-                 ~tag_query:(Terrat_tag_query.of_string tag_query)
+                 ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string tag_query))
                  change)
              workflows)
       in
@@ -320,7 +320,7 @@ let test_workflow_override =
               (CCList.find_idx
                  (fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
                    Terrat_change_match.match_tag_query
-                     ~tag_query:(Terrat_tag_query.of_string tag_query)
+                     ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string tag_query))
                      change)
                  workflows)
           in
@@ -341,7 +341,8 @@ let test_dir_match =
       in
       let changes =
         CCList.filter
-          (Terrat_change_match.match_tag_query ~tag_query:(Terrat_tag_query.of_string "dir:ec2"))
+          (Terrat_change_match.match_tag_query
+             ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string "dir:ec2")))
           (Terrat_change_match.match_diff_list dirs diff)
       in
       assert (CCList.length changes = 1))
@@ -361,7 +362,8 @@ let test_dirspace_map =
       in
       let changes =
         CCList.filter
-          (Terrat_change_match.match_tag_query ~tag_query:(Terrat_tag_query.of_string "dir:ec2"))
+          (Terrat_change_match.match_tag_query
+             ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string "dir:ec2")))
           (CCList.flat_map
              CCFun.(Terrat_change_match.of_dirspace dirs %> CCOption.to_list)
              dirspaces)
@@ -734,7 +736,8 @@ let test_recursive_dirs_tags =
       in
       let changes =
         CCList.filter
-          (Terrat_change_match.match_tag_query ~tag_query:(Terrat_tag_query.of_string "secrets"))
+          (Terrat_change_match.match_tag_query
+             ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string "secrets")))
           (Terrat_change_match.match_diff_list dirs diff)
       in
       assert (CCList.length changes = 1);

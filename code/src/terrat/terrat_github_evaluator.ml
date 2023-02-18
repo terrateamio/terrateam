@@ -286,7 +286,7 @@ module Dr = struct
           run_id = ();
           run_type;
           state = ();
-          tag_query = Terrat_tag_query.of_string "";
+          tag_query = Terrat_tag_query.any;
         }
       in
       insert_work_manifest db (CCInt64.to_int schedule.S.repository) work_manifest None
@@ -670,7 +670,7 @@ module Ev = struct
         // (* id *) Ret.uuid
         // (* run_id *) Ret.(option text)
         // (* run_type *) Ret.ud' Terrat_work_manifest.Run_type.of_string
-        // (* tag_query *) Ret.text
+        // (* tag_query *) Ret.ud' CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
         // (* base_branch *) Ret.(option text)
         // (* branch *) Ret.(option text)
         // (* pull_number *) Ret.(option bigint)
@@ -781,6 +781,7 @@ module Ev = struct
       read "access_control_terrateam_config_update_bad_query.tmpl"
 
     let access_control_lookup_err = read "access_control_lookup_err.tmpl"
+    let tag_query_error = read "tag_query_error.tmpl"
   end
 
   module Apply_requirements = struct
@@ -1346,7 +1347,7 @@ module Ev = struct
               run_id;
               run_type;
               state;
-              tag_query = Terrat_tag_query.of_string tag_query;
+              tag_query;
             })
         (CCInt64.of_int event.T.repository.Gw.Repository.id)
         (CCInt64.of_int event.T.pull_number)
@@ -2282,6 +2283,9 @@ module Ev = struct
     | Msg.Unlock_success ->
         let kv = Snabela.Kv.(Map.of_list []) in
         apply_template_and_publish "UNLOCK_SUCCESS" Tmpl.unlock_success kv event
+    | Msg.Tag_query_err (`Tag_query_error (s, err)) ->
+        let kv = Snabela.Kv.(Map.of_list [ ("query", string s); ("err", string err) ]) in
+        apply_template_and_publish "TAG_QUERY_ERR" Tmpl.tag_query_error kv event
 end
 
 module Wm = struct
@@ -2298,10 +2302,6 @@ module Wm = struct
                |> CCString.concat "\n")
              (Terrat_files_sql.read fname))
 
-      let tag_query = function
-        | Some s :: rest -> Some (Terrat_tag_query.of_string s, rest)
-        | _ -> None
-
       let initiate_work_manifest () =
         Pgsql_io.Typed_sql.(
           sql
@@ -2311,7 +2311,7 @@ module Wm = struct
           // (* hash *) Ret.text
           // (* run_type *) Ret.ud' Terrat_work_manifest.Run_type.of_string
           // (* state *) Ret.ud' Terrat_work_manifest.State.of_string
-          // (* tag_query *) Ret.ud tag_query
+          // (* tag_query *) Ret.ud' CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
           // (* repository *) Ret.bigint
           // (* pull_number *) Ret.(option bigint)
           // (* base_branch *) Ret.text
@@ -2334,7 +2334,7 @@ module Wm = struct
           // (* hash *) Ret.text
           // (* run_type *) Ret.ud' Terrat_work_manifest.Run_type.of_string
           // (* state *) Ret.ud' Terrat_work_manifest.State.of_string
-          // (* tag_query *) Ret.ud tag_query
+          // (* tag_query *) Ret.ud' CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
           // (* repository *) Ret.bigint
           // (* pull_number *) Ret.(option bigint)
           // (* base_branch *) Ret.text
@@ -2529,7 +2529,7 @@ module Wm = struct
                         (CCList.find_idx
                            (fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
                              Terrat_change_match.match_tag_query
-                               ~tag_query:(Terrat_tag_query.of_string tag_query)
+                               ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string tag_query))
                                change)
                            workflows);
                   })
@@ -3110,7 +3110,7 @@ module Wm = struct
           // (* hash *) Ret.text
           // (* run_type *) Ret.ud' Terrat_work_manifest.Run_type.of_string
           // (* state *) Ret.ud' Terrat_work_manifest.State.of_string
-          // (* tag_query *) Ret.ud' CCFun.(Terrat_tag_query.of_string %> CCOption.return)
+          // (* tag_query *) Ret.ud' CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
           // (* repository *) Ret.bigint
           // (* pull_number *) Ret.(option bigint)
           // (* base_branch *) Ret.text

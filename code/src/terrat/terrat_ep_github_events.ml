@@ -123,13 +123,17 @@ module Tmpl = struct
     |> CCResult.get_exn
     |> fun tmpl -> Snabela.of_template tmpl []
 
-  let terrateam_comment_unknown_action = read "terrateam_comment_unknown_action.tmpl"
+  let terrateam_comment_tag_query_error = read "terrateam_comment_tag_query_error.tmpl"
+
+  let terrateam_comment_unknown_action =
+    let fname = "terrateam_comment_unknown_action.tmpl" in
+    CCOption.get_exn_or fname (Terrat_files_tmpl.read fname)
+
   let terrateam_comment_help = read "terrateam_comment_help.tmpl"
 
   let action_failed =
-    CCOption.get_exn_or
-      "github_action_failed.tmpl"
-      (Terrat_files_tmpl.read "github_action_failed.tmpl")
+    let fname = "github_action_failed.tmpl" in
+    CCOption.get_exn_or fname (Terrat_files_tmpl.read fname)
 
   let unlock_failed_bad_id =
     CCOption.get_exn_or
@@ -214,7 +218,7 @@ let perform_unlock_pr
           ~repository
           ~request_id
           ~event_type:(Terrat_evaluator.Event.Event_type.Unlock unlock_ids)
-          ~tag_query:(Terrat_tag_query.of_string "")
+          ~tag_query:Terrat_tag_query.any
           ~user
       in
       run_event_evaluator storage event
@@ -364,7 +368,7 @@ let process_pull_request_event request_id config storage = function
           ~repository
           ~request_id
           ~event_type:Terrat_evaluator.Event.Event_type.Autoplan
-          ~tag_query:(Terrat_tag_query.of_string "")
+          ~tag_query:Terrat_tag_query.any
           ~user:sender.Gw.User.login
       in
       run_event_evaluator storage event
@@ -402,7 +406,7 @@ let process_pull_request_event request_id config storage = function
           ~repository
           ~request_id
           ~event_type:Terrat_evaluator.Event.Event_type.Autoapply
-          ~tag_query:(Terrat_tag_query.of_string "")
+          ~tag_query:Terrat_tag_query.any
           ~user:sender.Gw.User.login
       in
       run_event_evaluator storage event
@@ -645,14 +649,14 @@ let process_issue_comment request_id config storage = function
       | Error `Not_terrateam ->
           Prmths.Counter.inc_one (Metrics.comment_events_total "not_terrateam");
           Abb.Future.return (Ok ())
-      | Error (`Unknown_action action) -> (
-          Prmths.Counter.inc_one (Metrics.comment_events_total "unknown_action");
-          let kv = Snabela.Kv.Map.of_list [] in
-          match Snabela.apply Tmpl.terrateam_comment_unknown_action kv with
+      | Error (`Tag_query_error (_, err)) -> (
+          Prmths.Counter.inc_one (Metrics.comment_events_total "tag_query");
+          let kv = Snabela.Kv.(Map.of_list [ ("err", string err) ]) in
+          match Snabela.apply Tmpl.terrateam_comment_tag_query_error kv with
           | Ok body ->
               let open Abbs_future_combinators.Infix_result_monad in
               Logs.info (fun m ->
-                  m "GITHUB_EVENT : %s : COMMENT_ERROR : UNKNOWN_ACTION : %s" request_id action);
+                  m "GITHUB_EVENT : %s : COMMENT_ERROR : TAG_QUERY_ERROR : %s" request_id err);
               Terrat_github.get_installation_access_token config installation_id
               >>= fun access_token ->
               Terrat_github.publish_comment
@@ -664,10 +668,23 @@ let process_issue_comment request_id config storage = function
           | Error (#Snabela.err as err) ->
               Logs.err (fun m ->
                   m
-                    "GITHUB_EVENT : %s : TMPL_ERROR : UNKNOWN_ACTION : %s"
+                    "GITHUB_EVENT : %s : TMPL_ERROR : TAG_QUERY_ERROR : %s"
                     request_id
                     (Snabela.show_err err));
-              Abb.Future.return (Ok ())))
+              Abb.Future.return (Ok ()))
+      | Error (`Unknown_action action) ->
+          Prmths.Counter.inc_one (Metrics.comment_events_total "unknown_action");
+          let open Abbs_future_combinators.Infix_result_monad in
+          Logs.info (fun m ->
+              m "GITHUB_EVENT : %s : COMMENT_ERROR : UNKNOWN_ACTION : %s" request_id action);
+          Terrat_github.get_installation_access_token config installation_id
+          >>= fun access_token ->
+          Terrat_github.publish_comment
+            ~access_token
+            ~owner:repository.Gw.Repository.owner.Gw.User.login
+            ~repo:repository.Gw.Repository.name
+            ~pull_number
+            Tmpl.terrateam_comment_unknown_action)
   | Gw.Issue_comment_event.Issue_comment_created _ ->
       Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : ISSUE_COMMENT_CREATED" request_id);
       Prmths.Counter.inc_one (Metrics.comment_events_total "noop");

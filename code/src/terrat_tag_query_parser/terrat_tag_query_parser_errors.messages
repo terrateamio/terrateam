@@ -1,0 +1,146 @@
+start: RPAREN
+##
+## Ends in an error in state: 0.
+##
+## start' -> . start [ # ]
+##
+## The known suffix of the stack is as follows:
+##
+##
+
+This query could not be parsed.  This could be for a few reasons:
+- There are too many closing right parantheses.
+- There is an `and` or `or` that is missing both sides to its expression.  If you have a tag named `or`, `and`, or `not`, then wrap it in quotes to treat it like a tag name rather than an operator, for example `"and"`.
+
+start: NOT RPAREN
+##
+## Ends in an error in state: 4.
+##
+## expr -> NOT . STRING [ STRING RPAREN OR NOT LPAREN EOF AND ]
+## expr -> NOT . LPAREN expr RPAREN [ STRING RPAREN OR NOT LPAREN EOF AND ]
+##
+## The known suffix of the stack is as follows:
+## NOT
+##
+
+Have read a `not` but expected a tag or an opening parantheses.  To treat `not` as a tag, wrap it in quotes: `"not"`.
+
+start: NOT LPAREN RPAREN
+##
+## Ends in an error in state: 6.
+##
+## expr -> NOT LPAREN . expr RPAREN [ STRING RPAREN OR NOT LPAREN EOF AND ]
+##
+## The known suffix of the stack is as follows:
+## NOT LPAREN
+##
+start: LPAREN RPAREN
+##
+## Ends in an error in state: 7.
+##
+## expr -> LPAREN . expr RPAREN [ STRING RPAREN OR NOT LPAREN EOF AND ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN
+##
+
+Parentheses must contain an expression, `()` is not allowed.
+
+start: STRING IN RPAREN
+##
+## Ends in an error in state: 2.
+##
+## expr -> STRING IN . STRING [ STRING RPAREN OR NOT LPAREN EOF AND ]
+##
+## The known suffix of the stack is as follows:
+## STRING IN
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+start: LPAREN STRING EOF
+##
+## Ends in an error in state: 8.
+##
+## expr -> LPAREN expr . RPAREN [ STRING RPAREN OR NOT LPAREN EOF AND ]
+## expr -> expr . OR expr [ STRING RPAREN OR NOT LPAREN AND ]
+## expr -> expr . AND expr [ STRING RPAREN OR NOT LPAREN AND ]
+## expr -> expr . expr [ STRING RPAREN OR NOT LPAREN AND ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 1, spurious reduction of production expr -> STRING
+##
+
+Missing closing parentheses.
+
+start: STRING OR RPAREN
+##
+## Ends in an error in state: 10.
+##
+## expr -> expr OR . expr [ STRING RPAREN OR NOT LPAREN EOF AND ]
+##
+## The known suffix of the stack is as follows:
+## expr OR
+##
+
+An `or` expression with a closing parenthesis where a tag was expected.  In order to treat the `or` as a tag, wrap it in quotes, for example `"or"`.
+
+start: STRING AND RPAREN
+##
+## Ends in an error in state: 12.
+##
+## expr -> expr AND . expr [ STRING RPAREN OR NOT LPAREN EOF AND ]
+##
+## The known suffix of the stack is as follows:
+## expr AND
+##
+
+An `and` expression with a closing parenthesis where a tag was expected.  In order to treat the `and` as a tag, wrap it in quotes, for example `"and"`.
+
+start: NOT LPAREN STRING EOF
+##
+## Ends in an error in state: 15.
+##
+## expr -> expr . OR expr [ STRING RPAREN OR NOT LPAREN AND ]
+## expr -> expr . AND expr [ STRING RPAREN OR NOT LPAREN AND ]
+## expr -> expr . expr [ STRING RPAREN OR NOT LPAREN AND ]
+## expr -> NOT LPAREN expr . RPAREN [ STRING RPAREN OR NOT LPAREN EOF AND ]
+##
+## The known suffix of the stack is as follows:
+## NOT LPAREN expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 1, spurious reduction of production expr -> STRING
+##
+
+Missing closing parentheses.
+
+start: STRING RPAREN
+##
+## Ends in an error in state: 19.
+##
+## expr -> expr . OR expr [ STRING OR NOT LPAREN EOF AND ]
+## expr -> expr . AND expr [ STRING OR NOT LPAREN EOF AND ]
+## expr -> expr . expr [ STRING OR NOT LPAREN EOF AND ]
+## start -> expr . EOF [ # ]
+##
+## The known suffix of the stack is as follows:
+## expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 1, spurious reduction of production expr -> STRING
+##
+
+Missing opening parentheses.
