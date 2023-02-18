@@ -19,6 +19,10 @@ on:
         required: false
         default: ''
         description: 'specify tests or leave empty for all'
+      admin_token:
+        required: false
+        default: 'test'
+        description: 'authentication token for admin view'
       terrateam-base-build:
         required: true
         type: boolean
@@ -50,11 +54,12 @@ jobs:
         TERRAT_ACTION_BRANCH: ${{ github.event.inputs.action-branch }}
         TERRATEAM_BASE_BUILD: ${{ github.event.inputs.terrateam-base-build }}
         TERRATEAM_BUILD: ${{ github.event.inputs.terrateam-build }}
+        TERRAT_ADMIN_TOKEN: ${{ github.event.inputs.admin_token }}
       run: |
         cd tests/terrat/system-tests
         mkdir -p ${{ runner.temp }}/test-output
         make start
-        make -k TEST_OUTPUT_DIR=${{ runner.temp }}/test-output TERRATEAM_BASE_BUILD=${{ github.event.inputs.terrateam-base-build }} REPO_URL=${{ github.event.inputs.repo-url }} DEFAULT_BRANCH=${{ github.event.inputs.default-branch }} AGE_IDENTITY_PATH=${AGE_IDENTITY_PATH} FORCE_BUILD_BASE=${{ github.event.inputs.terrateam-base-build }} ${{ github.event.inputs.tests }}
+        make -k TEST_OUTPUT_DIR=${{ runner.temp }}/test-output TERRATEAM_BASE_BUILD=${{ github.event.inputs.terrateam-base-build }} REPO_URL=${{ github.event.inputs.repo-url }} DEFAULT_BRANCH=${{ github.event.inputs.default-branch }} AGE_IDENTITY_PATH=${AGE_IDENTITY_PATH} FORCE_BUILD_BASE=${{ github.event.inputs.terrateam-base-build }} NGROK_ENDPOINT=$(cat /tmp/ngrok_endpoint) ${{ github.event.inputs.tests }}
     - name: Test Summary
       uses: test-summary/action@v2
       with:
