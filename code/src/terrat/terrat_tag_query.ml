@@ -17,6 +17,9 @@ type t = {
 }
 [@@deriving show]
 
+let dir_in_prefix = "dir~"
+let dir_in_prefix_len = CCString.length dir_in_prefix
+
 let escape_glob s =
   let b = Buffer.create (CCString.length s) in
   CCString.iter
@@ -43,6 +46,10 @@ let rec of_ast =
   let module T = Terrat_tag_query_parser_value in
   function
   | T.In_dir glob_str ->
+      let glob = Path_glob.Glob.parse (Printf.sprintf "<**/%s/**>" (escape_glob glob_str)) in
+      Q.Dir_glob (glob_str, Path_glob.Glob.eval glob)
+  | T.Tag q when CCString.starts_with ~prefix:dir_in_prefix q ->
+      let glob_str = CCString.drop dir_in_prefix_len q in
       let glob = Path_glob.Glob.parse (Printf.sprintf "<**/%s/**>" (escape_glob glob_str)) in
       Q.Dir_glob (glob_str, Path_glob.Glob.eval glob)
   | T.Tag tag -> Q.Tag tag

@@ -422,6 +422,13 @@ let test_quote_escape_2 =
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       assert (Terrat_tag_query.match_ ~tag_set ~dirspace query))
 
+let test_deprecated_dir_glob =
+  Oth.test ~name:"Deprecated dir glob" (fun _ ->
+      let query = of_string_exn "dir~foo" in
+      let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
+      let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
+      assert (Terrat_tag_query.match_ ~tag_set ~dirspace query))
+
 let test =
   Oth.parallel
     [
@@ -479,6 +486,7 @@ let test =
       test_quote_3;
       test_quote_escape_1;
       test_quote_escape_2;
+      test_deprecated_dir_glob;
     ]
 
 let () =
