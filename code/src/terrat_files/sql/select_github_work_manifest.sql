@@ -14,7 +14,7 @@ select
     gir.name,
     gpr.base_branch,
     (case
-     when gwdm.work_manifest is not null then 'drift'
+     when gdwm.work_manifest is not null then 'drift'
      else ''
      end)
 from github_work_manifests as gwm
