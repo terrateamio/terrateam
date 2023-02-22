@@ -48,6 +48,32 @@ module Results = struct
       `Put
 end
 
+module Get_access_token = struct
+  module Parameters = struct end
+
+  module Responses = struct
+    module OK = struct
+      type t = { access_token : string }
+      [@@deriving yojson { strict = true; meta = true }, show, eq]
+    end
+
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
+
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+  end
+
+  let url = "/api/github/v1/work-manifests/{work_manifest_id}/access-token"
+
+  let make () =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
 module Initiate = struct
   module Parameters = struct
     type t = { work_manifest_id : string } [@@deriving make, show, eq]

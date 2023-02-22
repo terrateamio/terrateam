@@ -76,6 +76,13 @@ module Metrics = struct
       "pull_request_mergeable_state_count"
 end
 
+let base64 = function
+  | Some s :: rest -> (
+      match Base64.decode (CCString.replace ~sub:"\n" ~by:"" s) with
+      | Ok s -> Some (s, rest)
+      | _ -> None)
+  | _ -> None
+
 module Sql = struct
   let read fname =
     CCOption.get_exn_or
@@ -2385,6 +2392,14 @@ module Wm = struct
           /% Var.bigint "pull_number"
           /% Var.(str_array (text "dirs"))
           /% Var.(str_array (text "workspaces")))
+
+      let select_encryption_key () =
+        (* The base64 conversion is so that there are no issues with escaping
+           the string *)
+        Pgsql_io.Typed_sql.(
+          sql
+          // (* data *) Ret.ud' CCFun.(Cstruct.of_hex %> CCOption.return)
+          /^ "select encode(data, 'hex') from encryption_keys order by rank limit 1")
     end
 
     module Tmpl = struct
@@ -2422,6 +2437,7 @@ module Wm = struct
       request_id : string;
       run_id : string;
       work_manifest : Src.t Terrat_work_manifest.Existing.t;
+      encryption_key : Cstruct.t;
     }
 
     let work_manifest_state { work_manifest = Terrat_work_manifest.{ state; _ }; _ } = state
@@ -2672,6 +2688,13 @@ module Wm = struct
               })
           work_manifest_id
         >>= fun dirspaceflows ->
+        Pgsql_io.Prepared_stmt.fetch db (Sql.select_encryption_key ()) ~f:CCFun.id
+        >>= fun keys ->
+        let key =
+          match keys with
+          | key :: _ -> key
+          | [] -> assert false
+        in
         let run_id = work_manifest_initiate.Terrat_api_components.Work_manifest_initiate.run_id in
         let wm = { work_manifest with Wm.changes = dirspaceflows } in
         Terrat_github.get_installation_access_token
@@ -2702,6 +2725,7 @@ module Wm = struct
             request_id;
             run_id;
             work_manifest = wm;
+            encryption_key = key;
           }
         in
         Abb.Future.return (Ok t)
@@ -2844,6 +2868,13 @@ module Wm = struct
               { path = dir; workspace; workflow = workflow_idx; rank = 0 })
           work_manifest.Wm.changes
       in
+      let token =
+        Base64.encode_exn
+          (Cstruct.to_string
+             (Mirage_crypto.Hash.SHA256.hmac
+                ~key:t.encryption_key
+                (Cstruct.of_string (Uuidm.to_string work_manifest.Wm.id))))
+      in
       match work_manifest.Wm.run_type with
       | Wm.Run_type.Plan | Wm.Run_type.Autoplan ->
           let open Abbs_future_combinators.Infix_result_monad in
@@ -2881,12 +2912,13 @@ module Wm = struct
               Work_manifest.Work_manifest_plan
                 Work_manifest_plan.
                   {
-                    type_ = "plan";
+                    token;
+                    base_dirspaces;
                     base_ref = work_manifest.Wm.src.Src.base_branch;
                     changed_dirspaces;
                     dirspaces;
-                    base_dirspaces;
                     run_kind = work_manifest.Wm.src.Src.run_kind;
+                    type_ = "plan";
                   })
           in
           Abb.Future.return (Ok ret)
@@ -2896,10 +2928,11 @@ module Wm = struct
               Work_manifest.Work_manifest_apply
                 Work_manifest_apply.
                   {
-                    type_ = "apply";
+                    token;
                     base_ref = work_manifest.Wm.src.Src.base_branch;
                     changed_dirspaces;
                     run_kind = "";
+                    type_ = "apply";
                   })
           in
           Abb.Future.return (Ok ret)
@@ -2909,10 +2942,11 @@ module Wm = struct
               Work_manifest.Work_manifest_unsafe_apply
                 Work_manifest_unsafe_apply.
                   {
-                    type_ = "unsafe-apply";
+                    token;
                     base_ref = work_manifest.Wm.src.Src.base_branch;
                     changed_dirspaces;
                     run_kind = "";
+                    type_ = "unsafe-apply";
                   })
           in
           Abb.Future.return (Ok ret)
@@ -2951,13 +2985,6 @@ module Wm = struct
                |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
                |> CCString.concat "\n")
              (Terrat_files_sql.read fname))
-
-      let base64 = function
-        | Some s :: rest -> (
-            match Base64.decode (CCString.replace ~sub:"\n" ~by:"" s) with
-            | Ok s -> Some (s, rest)
-            | _ -> None)
-        | _ -> None
 
       let upsert_terraform_plan =
         Pgsql_io.Typed_sql.(

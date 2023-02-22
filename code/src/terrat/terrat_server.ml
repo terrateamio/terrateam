@@ -21,11 +21,13 @@ module Rt = struct
       work_manifest base
       /* Body.decode ~json:Terrat_api_work_manifest.Results.Request_body.of_yojson ())
 
+  let work_manifest_access_token base = Brtl_rtng.Route.(work_manifest base / "access-token")
   let github () = Brtl_rtng.Route.(api () / "github" / "v1")
   let github_events () = Brtl_rtng.Route.(github () / "events")
   let github_work_manifest_plan () = work_manifest_plan github
   let github_work_manifest_initiate () = work_manifest_initiate github
   let github_work_manifest_results () = work_manifest_results github
+  let github_work_manifest_access_token () = work_manifest_access_token github
 
   let github_get_work_manifest_plan () =
     Brtl_rtng.Route.(
@@ -83,6 +85,9 @@ let rtng config storage =
           ( `POST,
             Rt.github_work_manifest_initiate ()
             --> Terrat_ep_github_work_manifest.Initiate.post config storage );
+          ( `POST,
+            Rt.github_work_manifest_access_token ()
+            --> Terrat_ep_github_work_manifest.Access_token.post config storage );
           (* Github *)
           (`POST, Rt.github_events () --> Terrat_ep_github_events.post config storage);
           (`GET, Rt.github_callback () --> Terrat_ep_github_callback.get config storage);

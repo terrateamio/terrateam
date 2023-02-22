@@ -17,7 +17,7 @@ end
 let terrateam_workflow_name = "Terrateam Workflow"
 let terrateam_workflow_path = ".github/workflows/terrateam.yml"
 let terrateam_config_yml = [ ".terrateam/config.yml"; ".terrateam/config.yaml" ]
-let installation_expiration = 60.0
+let installation_expiration_sec = 60.0
 
 type get_access_token_err =
   [ Pgsql_pool.err
@@ -122,7 +122,11 @@ let call ?(tries = 3) t req =
            Prmths.Counter.inc_one Metrics.call_retries_total;
            Abb.Sys.sleep n))
 
-let get_installation_access_token config installation_id =
+let get_installation_access_token
+    ?(expiration_sec = installation_expiration_sec)
+    ?permissions
+    config
+    installation_id =
   Prmths.Counter.inc_one (Metrics.fn_call_total "get_installation_access_token");
   let open Abb.Future.Infix_monad in
   Abb.Sys.time ()
@@ -132,8 +136,8 @@ let get_installation_access_token config installation_id =
     let module C = Jwt.Claim in
     P.empty
     |> P.add_claim C.iss (`String (Terrat_config.github_app_id config))
-    |> P.add_claim C.iat (`Int (Float.to_int (time -. installation_expiration)))
-    |> P.add_claim C.exp (`Int (Float.to_int (time +. installation_expiration)))
+    |> P.add_claim C.iat (`Int (Float.to_int (time -. expiration_sec)))
+    |> P.add_claim C.exp (`Int (Float.to_int (time +. expiration_sec)))
   in
   let signer = Jwt.Signer.(RS256 (Priv_key.of_priv_key (Terrat_config.github_app_pem config))) in
   let header = Jwt.Header.create (Jwt.Signer.to_string signer) in
@@ -143,7 +147,10 @@ let get_installation_access_token config installation_id =
   let client = create (`Bearer token) in
   call
     client
-    Githubc2_apps.Create_installation_access_token.(make (Parameters.make ~installation_id))
+    Githubc2_apps.Create_installation_access_token.(
+      make
+        ~body:Request_body.(make Primary.(make ~permissions ()))
+        (Parameters.make ~installation_id))
   >>= fun resp ->
   match Openapi.Response.value resp with
   | `Created token ->

@@ -63,6 +63,17 @@ let run_file_sql fname (config, storage) =
                 stmts))
   | None -> failwith ("Could not load file: " ^ fname)
 
+let add_encryption_key (config, storage) =
+  let key = Mirage_crypto_rng.generate 64 in
+  let insert_encryption_key =
+    Pgsql_io.Typed_sql.(
+      sql
+      /^ "insert into encryption_keys (rank, data) values(0, decode($data, 'base64'))"
+      /% Var.(ud (text "data") CCFun.(Cstruct.to_string %> Base64.encode_exn)))
+  in
+  Pgsql_pool.with_conn storage ~f:(fun db ->
+      Pgsql_io.Prepared_stmt.execute db insert_encryption_key key)
+
 let migrations =
   [
     ("initial-tables", run_file_sql "2021-12-03-initial-tables.sql");
@@ -75,6 +86,8 @@ let migrations =
     ("add-access-denied", run_file_sql "2022-10-29-add-access-denied.sql");
     ("add-drift", run_file_sql "2023-01-30-add-drift-tables.sql");
     ("add-drift-unlock", run_file_sql "2023-02-14-add-drift-unlock.sql");
+    ("add-encryption-keys-table", run_file_sql "2023-02-22-add-encryption-keys.sql");
+    ("add-encryption-key", add_encryption_key);
   ]
 
 let run config storage = Mig.run (config, storage) migrations

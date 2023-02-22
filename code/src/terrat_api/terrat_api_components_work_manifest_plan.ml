@@ -28,6 +28,7 @@ type t = {
   changed_dirspaces : Changed_dirspaces.t;
   dirspaces : Dirspaces.t;
   run_kind : string;
+  token : string;
   type_ : Type.t; [@key "type"]
 }
 [@@deriving yojson { strict = true; meta = true }, show, eq]

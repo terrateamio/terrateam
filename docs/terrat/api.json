@@ -203,6 +203,9 @@
           "run_kind": {
             "type": "string"
           },
+          "token": {
+            "type": "string"
+          },
           "type": {
             "const": "apply",
             "type": "string"
@@ -212,6 +215,7 @@
           "base_ref",
           "changed_dirspaces",
           "run_kind",
+          "token",
           "type"
         ],
         "type": "object"
@@ -283,6 +287,9 @@
           "run_kind": {
             "type": "string"
           },
+          "token": {
+            "type": "string"
+          },
           "type": {
             "const": "plan",
             "type": "string"
@@ -294,6 +301,7 @@
           "changed_dirspaces",
           "dirspaces",
           "run_kind",
+          "token",
           "type"
         ],
         "type": "object"
@@ -343,6 +351,9 @@
           "run_kind": {
             "type": "string"
           },
+          "token": {
+            "type": "string"
+          },
           "type": {
             "const": "unsafe-apply",
             "type": "string"
@@ -352,6 +363,7 @@
           "base_ref",
           "changed_dirspaces",
           "run_kind",
+          "token",
           "type"
         ],
         "type": "object"
@@ -708,6 +720,31 @@
         "responses": {
           "200": {},
           "403": {}
+        }
+      }
+    },
+    "/api/github/v1/work-manifests/{work_manifest_id}/access-token": {
+      "post": {
+        "operationId": "work-manifest/get-access-token",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "access_token": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "access_token"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
         }
       }
     },

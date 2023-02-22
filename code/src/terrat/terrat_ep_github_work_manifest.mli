@@ -27,3 +27,7 @@ module Results : sig
     Terrat_api_work_manifest.Results.Request_body.t ->
     Brtl_rtng.Handler.t
 end
+
+module Access_token : sig
+  val post : Terrat_config.t -> Terrat_storage.t -> Uuidm.t -> Brtl_rtng.Handler.t
+end

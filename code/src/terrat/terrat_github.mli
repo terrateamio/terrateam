@@ -163,7 +163,11 @@ val call :
   ('a Openapi.Response.t, [> Githubc2_abb.call_err ]) result Abb_scheduler_kqueue.Future.t
 
 val get_installation_access_token :
-  Terrat_config.t -> int -> (string, [> get_installation_access_token_err ]) result Abb.Future.t
+  ?expiration_sec:float ->
+  ?permissions:Githubc2_components.App_permissions.t ->
+  Terrat_config.t ->
+  int ->
+  (string, [> get_installation_access_token_err ]) result Abb.Future.t
 
 val fetch_repo :
   access_token:string ->
