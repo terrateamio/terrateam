@@ -171,10 +171,7 @@
     "hook-op": {
       "oneOf": [
         {
-          "$ref": "#/definitions/hook-op-run"
-        },
-        {
-          "$ref": "#/definitions/hook-op-slack"
+          "$ref": "#/definitions/hook-op-drift-create-issue"
         },
         {
           "$ref": "#/definitions/hook-op-env-exec"
@@ -184,8 +181,25 @@
         },
         {
           "$ref": "#/definitions/hook-op-oidc"
+        },
+        {
+          "$ref": "#/definitions/hook-op-run"
+        },
+        {
+          "$ref": "#/definitions/hook-op-slack"
         }
       ]
+    },
+    "hook-op-drift-create-issue": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "drift_create_issue",
+          "type": "string"
+        }
+      },
+      "required": [],
+      "type": "object"
     },
     "hook-op-env-exec": {
       "additionalProperties": false,

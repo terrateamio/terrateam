@@ -10,6 +10,9 @@
             "items": {
               "oneOf": [
                 {
+                  "$ref": "#/components/schemas/workflow-output-drift-create-issue"
+                },
+                {
                   "$ref": "#/components/schemas/workflow-output-run"
                 },
                 {
@@ -464,6 +467,35 @@
         ],
         "type": "object"
       },
+      "workflow-output-drift-create-issue": {
+        "additionalProperties": false,
+        "properties": {
+          "outputs": {
+            "$ref": "#/components/schemas/output-text"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "workflow_step": {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "drift-create-issue",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "workflow_step",
+          "success"
+        ],
+        "type": "object"
+      },
       "workflow-output-env": {
         "additionalProperties": false,
         "properties": {
@@ -643,7 +675,7 @@
         "items": {
           "oneOf": [
             {
-              "$ref": "#/components/schemas/workflow-output-run"
+              "$ref": "#/components/schemas/workflow-output-apply"
             },
             {
               "$ref": "#/components/schemas/workflow-output-env"
@@ -652,13 +684,13 @@
               "$ref": "#/components/schemas/workflow-output-init"
             },
             {
+              "$ref": "#/components/schemas/workflow-output-oidc"
+            },
+            {
               "$ref": "#/components/schemas/workflow-output-plan"
             },
             {
-              "$ref": "#/components/schemas/workflow-output-apply"
-            },
-            {
-              "$ref": "#/components/schemas/workflow-output-oidc"
+              "$ref": "#/components/schemas/workflow-output-run"
             }
           ]
         },

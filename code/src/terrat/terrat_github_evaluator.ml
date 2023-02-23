@@ -3654,6 +3654,7 @@ module Wm = struct
       let module Text = Terrat_api_components_output_text in
       let module Run = Terrat_api_components_workflow_output_run in
       let module Oidc = Terrat_api_components_workflow_output_oidc in
+      let module Drift_create_issue = Terrat_api_components_workflow_output_drift_create_issue in
       outputs
       |> CCList.filter_map (function
              | Output.Workflow_output_run
@@ -3671,12 +3672,23 @@ module Wm = struct
                      outputs = Some Text.{ text; output_key };
                      success;
                      _;
+                   }
+             | Output.Workflow_output_drift_create_issue
+                 Drift_create_issue.
+                   {
+                     workflow_step = Workflow_step.{ type_; _ };
+                     outputs = Some Text.{ text; output_key };
+                     success;
+                     _;
                    } ->
                  Some Workflow_step_output.{ key = output_key; text; success; step_type = type_ }
              | Output.Workflow_output_run
                  Run.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ }
              | Output.Workflow_output_oidc
-                 Oidc.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ } ->
+                 Oidc.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ }
+             | Output.Workflow_output_drift_create_issue
+                 Drift_create_issue.
+                   { workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ } ->
                  Some Workflow_step_output.{ key = None; text = ""; success; step_type = type_ }
              | Output.Workflow_output_env _ -> None)
 
@@ -3998,13 +4010,15 @@ module Wm = struct
         let module Run = Terrat_api_components.Workflow_output_run in
         let module Env = Terrat_api_components.Workflow_output_env in
         let module Oidc = Terrat_api_components.Workflow_output_oidc in
+        let module Drift_create_issue = Terrat_api_components.Workflow_output_drift_create_issue in
         results.R.overall.R.Overall.outputs.Hooks_output.post
         |> CCList.exists
              Hooks_output.Post.Items.(
                function
                | Workflow_output_run Run.{ success; _ }
                | Workflow_output_env Env.{ success; _ }
-               | Workflow_output_oidc Oidc.{ success; _ } -> not success)
+               | Workflow_output_oidc Oidc.{ success; _ }
+               | Workflow_output_drift_create_issue Drift_create_issue.{ success; _ } -> not success)
         |> function
         | true -> Terrat_commit_check.Status.Failed
         | false -> Terrat_commit_check.Status.Completed

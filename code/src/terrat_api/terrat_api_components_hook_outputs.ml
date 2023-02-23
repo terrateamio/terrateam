@@ -1,6 +1,8 @@
 module Post = struct
   module Items = struct
     type t =
+      | Workflow_output_drift_create_issue of
+          Terrat_api_components_workflow_output_drift_create_issue.t
       | Workflow_output_run of Terrat_api_components_workflow_output_run.t
       | Workflow_output_env of Terrat_api_components_workflow_output_env.t
       | Workflow_output_oidc of Terrat_api_components_workflow_output_oidc.t
@@ -10,6 +12,10 @@ module Post = struct
       Json_schema.one_of
         (let open CCResult in
         [
+          (fun v ->
+            map
+              (fun v -> Workflow_output_drift_create_issue v)
+              (Terrat_api_components_workflow_output_drift_create_issue.of_yojson v));
           (fun v ->
             map
               (fun v -> Workflow_output_run v)
@@ -25,6 +31,8 @@ module Post = struct
         ])
 
     let to_yojson = function
+      | Workflow_output_drift_create_issue v ->
+          Terrat_api_components_workflow_output_drift_create_issue.to_yojson v
       | Workflow_output_run v -> Terrat_api_components_workflow_output_run.to_yojson v
       | Workflow_output_env v -> Terrat_api_components_workflow_output_env.to_yojson v
       | Workflow_output_oidc v -> Terrat_api_components_workflow_output_oidc.to_yojson v
