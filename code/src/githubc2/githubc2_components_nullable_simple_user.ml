@@ -20,7 +20,7 @@ module Primary = struct
     starred_url : string;
     subscriptions_url : string;
     type_ : string; [@key "type"]
-    url : string;
+    url : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
