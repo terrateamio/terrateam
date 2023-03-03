@@ -70,13 +70,19 @@ let post' config storage path ctx =
             |> CCFun.flip Cohttp.Header.remove "host"
             |> header_replace "x-api-key" (Terrat_config.infracost_api_key config)
           in
-          Logs.debug (fun m -> m "INFRACOST: %s : URI : %s" request_id (Uri.to_string uri));
+          Logs.debug (fun m ->
+              m
+                "INFRACOST: %s : work_manifest=%s : URI : %s"
+                request_id
+                work_manifest_id
+                (Uri.to_string uri));
           Abbs_future_combinators.timeout
             ~timeout:(Abb.Sys.sleep 5.0)
             (Http.Client.call ~tls_config ~headers ~body:(Http.Body.of_string body) `POST uri)
           >>= function
           | `Ok (Ok (resp, body)) when Cohttp.Response.status resp = `OK ->
-              Logs.debug (fun m -> m "INFRACOST: %s : SUCCESS" request_id);
+              Logs.debug (fun m ->
+                  m "INFRACOST: %s : work_manifest=%s : SUCCESS" request_id work_manifest_id);
               Prmths.Counter.inc_one (Metrics.responses_total "success");
               Abb.Future.return
                 (Brtl_ctx.set_response
@@ -84,32 +90,57 @@ let post' config storage path ctx =
                    ctx)
           | `Ok (Ok (resp, _)) ->
               Logs.err (fun m ->
-                  m "INFRACOST : %s : ERROR : %a" request_id Cohttp.Response.pp_hum resp);
+                  m
+                    "INFRACOST : %s : work_manifest=%s : ERROR : %a"
+                    request_id
+                    work_manifest_id
+                    Cohttp.Response.pp_hum
+                    resp);
               Prmths.Counter.inc_one Metrics.infracost_errors_total;
               Prmths.Counter.inc_one (Metrics.responses_total "error");
               Abb.Future.return
                 (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error body) ctx)
           | `Ok (Error (#Cohttp_abb.request_err as err)) ->
               Logs.err (fun m ->
-                  m "INFRACOST : %s : ERROR : %s" request_id (Cohttp_abb.show_request_err err));
+                  m
+                    "INFRACOST : %s : work_manifest=%s : ERROR : %s"
+                    request_id
+                    work_manifest_id
+                    (Cohttp_abb.show_request_err err));
               Prmths.Counter.inc_one Metrics.http_errors_total;
               Prmths.Counter.inc_one (Metrics.responses_total "error");
               Abb.Future.return
                 (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
           | `Timeout ->
-              Logs.err (fun m -> m "INFRACOST : %s : ERROR : TIMEOUT" request_id);
+              Logs.err (fun m ->
+                  m
+                    "INFRACOST : %s : work_manifest=%s : ERROR : TIMEOUT"
+                    request_id
+                    work_manifest_id);
               Prmths.Counter.inc_one Metrics.timeout_errors_total;
               Prmths.Counter.inc_one (Metrics.responses_total "timeout");
               Abb.Future.return
                 (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
       | Error (#Pgsql_pool.err as err) ->
           Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
-          Logs.err (fun m -> m "INFRACOST : %s : ERROR : %s" request_id (Pgsql_pool.show_err err));
+          Logs.err (fun m ->
+              m
+                "INFRACOST : %s : work_manifest=%s : ERROR : %a"
+                request_id
+                work_manifest_id
+                Pgsql_pool.pp_err
+                err);
           Abb.Future.return
             (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
       | Error (#Pgsql_io.err as err) ->
           Prmths.Counter.inc_one Metrics.pgsql_errors_total;
-          Logs.err (fun m -> m "INFRACOST : %s : ERROR : %s" request_id (Pgsql_io.show_err err));
+          Logs.err (fun m ->
+              m
+                "INFRACOST : %s : work_manifest=%s : ERROR : %a"
+                request_id
+                work_manifest_id
+                Pgsql_io.pp_err
+                err);
           Abb.Future.return
             (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
       | Ok [] ->
