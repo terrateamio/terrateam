@@ -76,6 +76,8 @@ module Metrics = struct
       "pull_request_mergeable_state_count"
 end
 
+let fetch_pull_request_tries = 6
+
 let base64 = function
   | Some s :: rest -> (
       match Base64.decode (CCString.replace ~sub:"\n" ~by:"" s) with
@@ -1170,8 +1172,8 @@ module Ev = struct
     Abbs_future_combinators.retry
       ~f:(fun () -> fetch_pull_request' event)
       ~while_:
-        (Abbs_future_combinators.finite_tries 6 (function
-            | Error _ | Ok ("unknown", _) -> true
+        (Abbs_future_combinators.finite_tries fetch_pull_request_tries (function
+            | Error _ | Ok ("unknown", Terrat_pull_request.{ state = State.Open; _ }) -> true
             | Ok _ -> false))
       ~betwixt:
         (Abbs_future_combinators.series ~start:2.0 ~step:(( *. ) 1.5) (fun n _ ->
