@@ -37,6 +37,7 @@ FROM alpine:3.13
 
 # packages
 RUN apk add --no-cache \
+    gettext \
     gmp \
     libffi \
     libressl3.1-libtls \
