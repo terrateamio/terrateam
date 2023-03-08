@@ -50,7 +50,7 @@ RUN apk add --no-cache \
 RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx
 COPY docker/terrat/service/terrat /etc/service/terrat/run
 COPY docker/terrat/service/nginx /etc/service/nginx/run
-COPY docker/terrat/nginx.conf /etc/nginx/nginx.conf
+COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
 
 # artifacts
 COPY --from=build /usr/lib/libkqueue.so /usr/lib/libkqueue.so

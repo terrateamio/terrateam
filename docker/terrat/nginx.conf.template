@@ -29,6 +29,9 @@ http {
     limit_conn_zone $server_name zone=terrat_app:10m;
     limit_req_zone $binary_remote_addr zone=client_limit:10m rate=1000r/s;
 
+    limit_conn_zone $server_name zone=infracost_app:10m;
+    limit_req_zone $binary_remote_addr zone=infracost_limit:10m rate=1000r/s;
+
     client_body_buffer_size 64k;
 
     # Public facing portion of the app
@@ -54,7 +57,19 @@ http {
             client_max_body_size 10m;
         }
 
-        # Turn off rate limite for health checks
+        location /infracost {
+            # Limit the proxy to a lower number of concurrent requests to keep
+            # the underlying application happy.
+            limit_conn infracost_app 3000;
+            limit_req zone=infracost_limit burst=5000;
+
+            proxy_pass http://terrateam-infracost-$TERRATEAM_ENVIRONMENT.internal:4000
+            proxy_set_header X-Forwarded-For $remote_addr;
+
+            client_max_body_size 10m;
+        }
+
+        # Turn off rate limit for health checks
         location /health {
             proxy_pass http://127.0.0.1:8180;
             proxy_set_header X-Forwarded-For $remote_addr;
