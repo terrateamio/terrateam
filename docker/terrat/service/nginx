@@ -4,5 +4,5 @@ sleep 5
 
 mkdir -p /run/nginx
 
-envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+envsubst '$TERRATEAM_ENVIRONMENT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 exec /usr/sbin/nginx -c /etc/nginx/nginx.conf
