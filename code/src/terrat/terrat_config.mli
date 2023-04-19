@@ -5,6 +5,12 @@ type err =
   | `Bad_pem of string
   ]
 
+module Telemetry : sig
+  type t =
+    | Disabled
+    | Anonymous of Uri.t
+end
+
 val show_err : err -> string
 val create : unit -> (t, [> err ]) result
 val port : t -> int
@@ -24,3 +30,4 @@ val infracost_api_key : t -> string
 val db_connect_timeout : t -> float
 val nginx_status_uri : t -> Uri.t option
 val admin_token : t -> string option
+val telemetry : t -> Telemetry.t

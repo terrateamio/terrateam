@@ -568,7 +568,16 @@ module R = struct
                 >>= function
                 | Ok _ ->
                     (* TODO: Handle failing because workflow is not present in branch *)
-                    run' request_id access_token_cache config db
+                    Terrat_telemetry.send
+                      (Terrat_config.telemetry config)
+                      (Terrat_telemetry.Event.Run
+                         {
+                           github_app_id = Terrat_config.github_app_id config;
+                           run_type;
+                           owner;
+                           repo;
+                         })
+                    >>= fun () -> run' request_id access_token_cache config db
                 | Error (#Githubc2_abb.call_err as err) ->
                     Logs.err (fun m ->
                         m

@@ -1,3 +1,11 @@
+let default_telemetry_uri = Uri.of_string "https://telemetry.terrateam.io"
+
+module Telemetry = struct
+  type t =
+    | Disabled
+    | Anonymous of Uri.t
+end
+
 type t = {
   port : int;
   db_host : string;
@@ -16,6 +24,7 @@ type t = {
   infracost_api_key : string;
   nginx_status_uri : Uri.t option;
   admin_token : string option;
+  telemetry : Telemetry.t;
 }
 
 type err =
@@ -72,6 +81,19 @@ let create () =
   >>= fun infracost_api_key ->
   let nginx_status_uri = CCOption.map Uri.of_string (Sys.getenv_opt "NGINX_STATUS_URI") in
   let admin_token = Sys.getenv_opt "TERRAT_ADMIN_TOKEN" in
+  let telemetry_uri =
+    CCOption.map_or
+      ~default:default_telemetry_uri
+      Uri.of_string
+      (Sys.getenv_opt "TERRAT_TELEMETRY_URI")
+  in
+  of_opt
+    (`Key_error "TERRAT_TELEMETRY_LEVEL")
+    (match CCOption.get_or ~default:"anonymous" (Sys.getenv_opt "TERRAT_TELEMETRY_LEVEL") with
+    | "anonymous" -> Some (Telemetry.Anonymous telemetry_uri)
+    | "disabled" -> Some Telemetry.Disabled
+    | _ -> None)
+  >>= fun telemetry ->
   Ok
     {
       port;
@@ -91,6 +113,7 @@ let create () =
       infracost_api_key;
       nginx_status_uri;
       admin_token;
+      telemetry;
     }
 
 let port t = t.port
@@ -110,3 +133,4 @@ let infracost_pricing_api_endpoint t = t.infracost_pricing_api_endpoint
 let infracost_api_key t = t.infracost_api_key
 let nginx_status_uri t = t.nginx_status_uri
 let admin_token t = t.admin_token
+let telemetry t = t.telemetry

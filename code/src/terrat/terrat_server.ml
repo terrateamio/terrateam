@@ -101,6 +101,20 @@ let rtng config storage =
           (`DELETE, Rt.api_404 () --> fun _ ctx -> response_404 ctx);
         ])
 
+let start_telemetry config =
+  match Terrat_config.telemetry config with
+  | Terrat_config.Telemetry.Disabled ->
+      Logs.info (fun m -> m "Telemetry disabled");
+      Abbs_future_combinators.unit
+  | Terrat_config.Telemetry.Anonymous uri as tc ->
+      let open Abb.Future.Infix_monad in
+      Logs.info (fun m -> m "Telemetry enabled with endpoint %a" Uri.pp uri);
+      Terrat_telemetry.send
+        tc
+        (Terrat_telemetry.Event.Start { github_app_id = Terrat_config.github_app_id config })
+      >>= fun () ->
+      Abbs_future_combinators.ignore (Abb.Future.fork (Terrat_telemetry.start_ping_loop config))
+
 let run config storage =
   let open Abb.Future.Infix_monad in
   let one_min = Duration.of_min 1 in
@@ -119,6 +133,8 @@ let run config storage =
   let mw_session = Terrat_session.create storage in
   let mw = Brtl_mw.create [ mw_log; mw_session ] in
   Logs.info (fun m -> m "Starting server");
+  start_telemetry config
+  >>= fun () ->
   Abb.Future.fork (Terrat_github_evaluator.Runner.run ~request_id:"STARTUP" config storage)
   >>= fun _ ->
   Abb.Future.fork (Terrat_github_evaluator.Drift.Service.run config storage)
