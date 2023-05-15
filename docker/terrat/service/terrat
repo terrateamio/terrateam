@@ -1,16 +1,85 @@
-#! /bin/sh
+#!/usr/bin/env python3
+import os
+import sys
+import jwt
+import time
+import subprocess
+import requests
+import json
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
+from cryptography.hazmat.backends import default_backend
 
-set -e
+# Set environment variables
+os.environ['GITHUB_APP_PEM'] = os.environ['GITHUB_APP_PEM'].replace('\\n', '\n').strip('\"').strip()
+os.environ['GITHUB_APP_ID'] = os.environ['GITHUB_APP_ID'].strip('\"').strip()
+os.environ['GITHUB_WEBHOOK_SECRET'] = os.environ['GITHUB_WEBHOOK_SECRET'].strip('\"').strip()
+os.environ['GITHUB_APP_CLIENT_ID'] = os.environ['GITHUB_APP_CLIENT_ID'].strip('\"').strip()
+os.environ['GITHUB_APP_CLIENT_SECRET'] = os.environ['GITHUB_APP_CLIENT_SECRET'].strip('\"').strip()
+os.environ['TERRAT_PYTHON_EXEC'] = '/usr/bin/python3'
+os.environ['OCAMLRUNPARAM'] = 'b'
+os.environ['NGINX_STATUS_URI'] = 'http://localhost:8080/nginx_status'
+os.environ['TERRAT_PORT'] = '8180'
+os.environ.setdefault('TERRAT_API_BASE', '')
+os.environ.setdefault('GITHUB_WEBHOOK_URL_UPDATE', 'TRUE')
+os.environ.setdefault('INFRACOST_PRICING_API_ENDPOINT', '')
+os.environ.setdefault('SELF_HOSTED_INFRACOST_API_KEY', '')
 
-export TERRAT_PYTHON_EXEC=python3
-export OCAMLRUNPARAM=b
+# Sleep in case we're in a bad runit loop
+time.sleep(3)
 
-export NGINX_STATUS_URI=http://localhost:8080/nginx_status
+# Docker Compose
+try:
+  if os.environ['TERRAT_API_BASE'] == '' and os.environ['NGROK_ENDPOINT']:
+    print('TERRAT_API_BASE is unset, polling ngrok for a public url...')
+    max = range(20)
+    for n in max:
+      headers = {'Accept': 'application/json'}
+      r = requests.get(os.environ['NGROK_ENDPOINT'] + "/api/tunnels", headers=headers)
+      ngrok_public_url = r.json()['tunnels'][0]['public_url']
+      if ngrok_public_url != "null":
+        os.environ['TERRAT_API_BASE'] = "%s/api" % (ngrok_public_url)
+        break
+      print('No ngrok public url found, trying again in 3 seconds...')
+      time.sleep(3)
+except:
+  pass
 
-exec 2>&1
+# Fly.io
+try:
+  if os.environ['TERRAT_API_BASE'] == '' and os.environ['FLY_APP_NAME']:
+    print('TERRAT_API_BASE is unset, using FLY_APP_NAME')
+    os.environ['TERRAT_API_BASE'] = "https://%s.fly.dev/api" % (os.environ['FLY_APP_NAME'])
+except:
+  pass
 
-sleep 5
+#
+# GitHub application webhook url update
+#
+# If GITHUB_WEBHOOK_URL_UPDATE is set to TRUE and TERRAT_API_BASE
+# is not empty then update the GitHub application webhook url
+try:
+  if os.environ['GITHUB_WEBHOOK_URL_UPDATE'] == 'TRUE' and os.environ['TERRAT_API_BASE'] != '':
+    print('Updating the GitHub application webhook url')
+    webhook_url = os.environ['TERRAT_API_BASE'] + "/github/v1/events"
+    current_time = int(time.time())
+    payload = {
+      'iat': current_time,
+      'exp': current_time + (10 * 60),
+      'iss': os.getenv('GITHUB_APP_ID'),
+    }
+    private_key = os.getenv('GITHUB_APP_PEM').encode()
+    cert_obj = load_pem_private_key(private_key, password=None, backend=default_backend())
+    encoded = jwt.encode(payload, private_key, algorithm='RS256').decode()
+    bearer_token = "Bearer %s" % (encoded)
+    headers = { 'Content-Type': 'application/json', 'Authorization': bearer_token }
+    payload = { "content_type": "json", "url": webhook_url }
+    r = requests.patch('https://api.github.com/app/hook/config', data=json.dumps(payload), headers=headers)
+    print(r.content)
+except:
+  pass
 
-/usr/local/bin/terrat migrate --verbosity=debug
+# Run db migration
+subprocess.run('/usr/local/bin/terrat migrate --verbosity=debug', shell=True, check=True)
 
-exec /usr/local/bin/terrat server --verbosity=debug
+# Run server
+os.execv('/usr/local/bin/terrat', ['/usr/local/bin/terrat', 'server', '--verbosity=debug'])

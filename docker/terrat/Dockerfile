@@ -37,12 +37,18 @@ FROM alpine:3.13
 
 # packages
 RUN apk add --no-cache \
+    bash \
+    curl \
     gettext \
     gmp \
+    jq \
     libffi \
     libressl3.1-libtls \
     libtls-standalone \
     nginx \
+    py3-cryptography \
+    py3-jwt \
+    py3-requests \
     py3-yaml \
     python3 \
     runit
