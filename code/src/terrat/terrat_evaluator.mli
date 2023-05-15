@@ -32,6 +32,8 @@ module Event : sig
           ]
       | Unlock_success
       | Tag_query_err of Terrat_tag_query.err
+      | Account_expired
+      | Unexpected_temporary_err
   end
 
   module Unlock_id : sig
@@ -124,6 +126,9 @@ module type S = sig
     module Access_control : Terrat_access_control.S
 
     val create_access_control_ctx : user:string -> T.t -> Access_control.ctx
+
+    val query_account_status :
+      Terrat_storage.t -> T.t -> ([ `Active | `Expired ], [> `Error ]) result Abb.Future.t
 
     val store_dirspaceflows :
       Pgsql_io.t ->

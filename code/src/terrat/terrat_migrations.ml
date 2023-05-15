@@ -88,6 +88,7 @@ let migrations =
     ("add-drift-unlock", run_file_sql "2023-02-14-add-drift-unlock.sql");
     ("add-encryption-keys-table", run_file_sql "2023-02-22-add-encryption-keys.sql");
     ("add-encryption-key", add_encryption_key);
+    ("add-github-account-status", run_file_sql "2023-05-15-add-github-account-status.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations

@@ -131,6 +131,8 @@ module Event = struct
           ]
       | Unlock_success
       | Tag_query_err of Terrat_tag_query.err
+      | Account_expired
+      | Unexpected_temporary_err
   end
 
   module Unlock_id = struct
@@ -253,6 +255,9 @@ module type S = sig
     module Access_control : Terrat_access_control.S
 
     val create_access_control_ctx : user:string -> T.t -> Access_control.ctx
+
+    val query_account_status :
+      Terrat_storage.t -> T.t -> ([ `Active | `Expired ], [> `Error ]) result Abb.Future.t
 
     val store_dirspaceflows :
       Pgsql_io.t ->
@@ -1394,9 +1399,17 @@ module Make (S : S) = struct
       | Error `No_matching_source_branch -> handle_branches_error event pull_request "SOURCE"
 
     let run' storage event =
-      match Event.Event_type.to_op_class (S.Event.T.event_type event) with
-      | Event.Op_class.Pull_request (`Unlock unlock_ids) -> perform_unlock storage event unlock_ids
-      | Event.Op_class.Terraform operation -> perform_terraform_operation storage event operation
+      let open Abb.Future.Infix_monad in
+      S.Event.query_account_status storage event
+      >>= function
+      | Ok `Active -> (
+          match Event.Event_type.to_op_class (S.Event.T.event_type event) with
+          | Event.Op_class.Pull_request (`Unlock unlock_ids) ->
+              perform_unlock storage event unlock_ids
+          | Event.Op_class.Terraform operation ->
+              perform_terraform_operation storage event operation)
+      | Ok `Expired -> Abb.Future.return (Ok (Some Event.Msg.Account_expired))
+      | Error `Error -> Abb.Future.return (Ok (Some Event.Msg.Unexpected_temporary_err))
 
     let publish_msg event msg =
       Abbs_time_it.run (log_time event "PUBLISH_MSG") (fun () -> S.Event.publish_msg event msg)

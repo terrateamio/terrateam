@@ -543,13 +543,13 @@ module R = struct
             >>= function
             | Some workflow_id -> (
                 (if CCOption.is_some pull_number then
-                 Abbs_time_it.run
-                   (fun t ->
-                     Logs.info (fun m ->
-                         m "GITHUB_EVALUATOR : %s : START_COMMIT_STATUSES : %f" request_id t))
-                   (fun () ->
-                     start_commit_statuses ~access_token ~owner ~repo ~sha ~run_type ~dirspaces ())
-                else Abb.Future.return (Ok ()))
+                   Abbs_time_it.run
+                     (fun t ->
+                       Logs.info (fun m ->
+                           m "GITHUB_EVALUATOR : %s : START_COMMIT_STATUSES : %f" request_id t))
+                     (fun () ->
+                       start_commit_statuses ~access_token ~owner ~repo ~sha ~run_type ~dirspaces ())
+                 else Abb.Future.return (Ok ()))
                 >>= fun () ->
                 let open Abb.Future.Infix_monad in
                 Abbs_time_it.run
@@ -760,6 +760,13 @@ module Ev = struct
         /% Var.(str_array (text "workspace"))
         /% Var.(str_array (option (json "policy")))
         /% Var.(str_array (uuid "work_manifest")))
+
+    let select_installation_account_status =
+      Pgsql_io.Typed_sql.(
+        sql
+        // (* account_status *) Ret.text
+        /^ "select account_status from github_installations where id = $installation_id"
+        /% Var.bigint "installation_id")
   end
 
   module Tmpl = struct
@@ -800,6 +807,8 @@ module Ev = struct
 
     let access_control_lookup_err = read "access_control_lookup_err.tmpl"
     let tag_query_error = read "tag_query_error.tmpl"
+    let account_expired_err = read "account_expired_err.tmpl"
+    let unexpected_temporary_err = read "unexpected_temporary_err.tmpl"
   end
 
   module Apply_requirements = struct
@@ -841,12 +850,14 @@ module Ev = struct
         ~user =
       Logs.info (fun m ->
           m
-            "GITHUB_EVALUATOR : %s : MAKE : %s : %s : %d : %s : %s"
+            "GITHUB_EVALUATOR : %s : MAKE : %s : %s : pull_number=%d : event_type=%s : \
+             installation_id=%d : tag_query=%s"
             request_id
             repository.Gw.Repository.owner.Gw.User.login
             repository.Gw.Repository.name
             pull_number
             (Terrat_evaluator.Event.Event_type.to_string event_type)
+            installation_id
             (Terrat_tag_query.to_string tag_query));
       {
         access_token;
@@ -982,6 +993,28 @@ module Ev = struct
   end
 
   let create_access_control_ctx ~user event = Access_control.{ user; event }
+
+  let query_account_status storage event =
+    let open Abb.Future.Infix_monad in
+    Pgsql_pool.with_conn storage ~f:(fun db ->
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          Sql.select_installation_account_status
+          ~f:CCFun.id
+          (CCInt64.of_int event.T.installation_id))
+    >>= function
+    | Ok ("expired" :: _) -> Abb.Future.return (Ok `Expired)
+    | Ok _ -> Abb.Future.return (Ok `Active)
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m ->
+            m "GITHUB_EVALUATOR : %s : ERROR : %s" (T.request_id event) (Pgsql_io.show_err err));
+        Abb.Future.return (Error `Error)
+    | Error (#Pgsql_pool.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
+        Logs.err (fun m ->
+            m "GITHUB_EVALUATOR : %s : ERROR : %s" (T.request_id event) (Pgsql_pool.show_err err));
+        Abb.Future.return (Error `Error)
 
   let store_dirspaceflows db event pull_request dirspaceflows =
     let id = CCInt64.of_int event.T.repository.Gw.Repository.id in
@@ -1309,22 +1342,21 @@ module Ev = struct
       Pgsql_io.Prepared_stmt.fetch
         db
         (Sql.select_conflicting_work_manifests_in_repo ())
-        ~f:
-          (fun base_hash
-               created_at
-               hash
-               id
-               run_id
-               run_type
-               tag_query
-               base_branch
-               branch
-               pull_number
-               pr_state
-               merged_hash
-               merged_at
-               state
-               run_kind ->
+        ~f:(fun base_hash
+                created_at
+                hash
+                id
+                run_id
+                run_type
+                tag_query
+                base_branch
+                branch
+                pull_number
+                pr_state
+                merged_hash
+                merged_at
+                state
+                run_kind ->
           let src =
             match (pull_number, base_branch, branch, pr_state) with
             | Some pull_number, Some base_branch, Some branch, Some pr_state ->
@@ -1763,7 +1795,7 @@ module Ev = struct
           (if merge_conflicts.Ar.Checks.Merge_conflicts.enabled then Some merge_result else None);
         status_checks =
           (if status_checks.Ar.Checks.Status_checks.enabled then Some all_commit_check_success
-          else None);
+           else None);
         status_checks_failed = failed_commit_checks;
         approved_reviews;
       }
@@ -1829,8 +1861,16 @@ module Ev = struct
     Pgsql_io.Prepared_stmt.fetch
       db
       Sql.select_dirspaces_owned_by_other_pull_requests
-      ~f:
-        (fun dir workspace base_branch branch base_hash hash merged_hash merged_at pull_number state ->
+      ~f:(fun dir
+              workspace
+              base_branch
+              branch
+              base_hash
+              hash
+              merged_hash
+              merged_at
+              pull_number
+              state ->
         ( Terrat_change.Dirspace.{ dir; workspace },
           Terrat_pull_request.
             {
@@ -2304,6 +2344,12 @@ module Ev = struct
     | Msg.Tag_query_err (`Tag_query_error (s, err)) ->
         let kv = Snabela.Kv.(Map.of_list [ ("query", string s); ("err", string err) ]) in
         apply_template_and_publish "TAG_QUERY_ERR" Tmpl.tag_query_error kv event
+    | Msg.Account_expired ->
+        let kv = Snabela.Kv.(Map.of_list []) in
+        apply_template_and_publish "ACCOUNT_EXPIRED" Tmpl.account_expired_err kv event
+    | Msg.Unexpected_temporary_err ->
+        let kv = Snabela.Kv.(Map.of_list []) in
+        apply_template_and_publish "UNEXPECTED_TEMPORARY_ERR" Tmpl.unexpected_temporary_err kv event
 end
 
 module Wm = struct
@@ -2578,22 +2624,21 @@ module Wm = struct
       Pgsql_io.Prepared_stmt.fetch
         db
         (Sql.initiate_work_manifest ())
-        ~f:
-          (fun base_hash
-               completed_at
-               created_at
-               hash
-               run_type
-               state
-               tag_query
-               repository
-               pull_number
-               base_branch
-               installation_id
-               owner
-               repo_name
-               run_time
-               run_kind ->
+        ~f:(fun base_hash
+                completed_at
+                created_at
+                hash
+                run_type
+                state
+                tag_query
+                repository
+                pull_number
+                base_branch
+                installation_id
+                owner
+                repo_name
+                run_time
+                run_kind ->
           ( run_time,
             {
               Terrat_work_manifest.base_hash;
@@ -2638,21 +2683,20 @@ module Wm = struct
           Pgsql_io.Prepared_stmt.fetch
             db
             (Sql.select_work_manifest ())
-            ~f:
-              (fun base_hash
-                   completed_at
-                   created_at
-                   hash
-                   run_type
-                   state
-                   tag_query
-                   repository
-                   pull_number
-                   base_branch
-                   installation_id
-                   owner
-                   repo_name
-                   run_kind ->
+            ~f:(fun base_hash
+                    completed_at
+                    created_at
+                    hash
+                    run_type
+                    state
+                    tag_query
+                    repository
+                    pull_number
+                    base_branch
+                    installation_id
+                    owner
+                    repo_name
+                    run_kind ->
               {
                 Terrat_work_manifest.base_hash;
                 changes = ();
@@ -2798,17 +2842,16 @@ module Wm = struct
           Pgsql_io.Prepared_stmt.fetch
             db
             Sql.select_dirspaces_owned_by_other_pull_requests
-            ~f:
-              (fun dir
-                   workspace
-                   base_branch
-                   branch
-                   base_hash
-                   hash
-                   merged_hash
-                   merged_at
-                   pull_number
-                   state ->
+            ~f:(fun dir
+                    workspace
+                    base_branch
+                    branch
+                    base_hash
+                    hash
+                    merged_hash
+                    merged_at
+                    pull_number
+                    state ->
               ( Tc.Dirspace.{ dir; workspace },
                 Terrat_pull_request.
                   {
