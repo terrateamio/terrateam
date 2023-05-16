@@ -1,16 +1,137 @@
-#! /bin/sh
+#! /usr/bin/env python3
 
-set -e
+import jwt
+import os
+import requests
+import subprocess
+import sys
+import time
 
-export TERRAT_PYTHON_EXEC=python3
-export OCAMLRUNPARAM=b
 
-export NGINX_STATUS_URI=http://localhost:8080/nginx_status
+TERRAT_API_BASE = 'TERRAT_API_BASE'
+NGROK_ENDPOINT = 'NGROK_ENDPOINT'
+FLY_APP_NAME = 'FLY_APP_NAME'
+REQUIRED_ENV_KEYS = ['GITHUB_APP_PEM']
 
-exec 2>&1
 
-sleep 5
+def setup_environment():
+    os.environ['GITHUB_APP_PEM'] = os.environ['GITHUB_APP_PEM'].replace('\\n', '\n')
+    os.environ['TERRAT_PYTHON_EXEC'] = '/usr/bin/python3'
+    os.environ['OCAMLRUNPARAM'] = 'b'
+    os.environ['NGINX_STATUS_URI'] = 'http://localhost:8080/nginx_status'
+    os.environ['TERRAT_PORT'] = '8180'
+    os.environ.setdefault('GITHUB_WEBHOOK_URL_UPDATE', 'TRUE')
+    os.environ.setdefault('INFRACOST_PRICING_API_ENDPOINT', '')
+    os.environ.setdefault('SELF_HOSTED_INFRACOST_API_KEY', '')
 
-/usr/local/bin/terrat migrate --verbosity=debug
 
-exec /usr/local/bin/terrat server --verbosity=debug
+def assert_required_env_keys():
+    missing_keys = [
+      k for k in REQUIRED_ENV_KEYS
+      if k not in os.environ
+    ]
+
+    if missing_keys:
+        print('Missing environment variables: {}'.format(' '.join(missing_keys)))
+        print('Please see https://terrateam.io/docs/self-hosted for what variables are required')
+        sys.exit(1)
+
+
+def assert_run_mode():
+    if os.environ.get(FLY_APP_NAME) and os.environ.get(NGROK_ENDPOINT):
+        print('Must specify either FLY_APP_NAME or NGROK_ENDPOINT, but not both')
+        print('Please see https://terrateam.io/docs/self-hosted on setting the run mode')
+        sys.exit(1)
+    elif (not os.environ.get(TERRAT_API_BASE)
+          and not os.environ.get(FLY_APP_NAME)
+          and not os.environ.get(NGROK_ENDPOINT)):
+        print('Either TERRAT_API_BASE, or FLY_APPNAME, or NGROK_ENDPOINT must be set')
+        print('Please see https://terrateam.io/docs/self-hosted for more information')
+        sys.exit(1)
+
+
+def run_mode_docker_compose():
+    print('TERRAT_API_BASE is unset, polling ngrok for a public url...')
+    headers = {'Accept': 'application/json'}
+    try:
+        for n in range(20):
+            r = requests.get(os.environ[NGROK_ENDPOINT] + "/api/tunnels", headers=headers)
+            tunnels = r.json()['tunnels']
+            if tunnels:
+                ngrok_public_url = tunnels[0]['public_url']
+                if ngrok_public_url and ngrok_public_url != "null":
+                    os.environ[TERRAT_API_BASE] = ngrok_public_url + '/api'
+                    break
+                print('No ngrok public url found, trying again in 3 seconds...')
+                time.sleep(3)
+    except Exception:
+        print('Ngrok configuration chosen however Terrateam failed to find the ngrok public tunnel')
+        sys.exit(1)
+
+
+def run_mode_fly_app():
+    print('TERRAT_API_BASE is unset, using FLY_APP_NAME')
+    os.environ[TERRAT_API_BASE] = 'https://{}.fly.dev/api'.format(os.environ[FLY_APP_NAME])
+
+
+def update_github_webhook_url():
+    try:
+        print('Updating the GitHub application webhook url')
+        webhook_url = os.environ[TERRAT_API_BASE] + "/github/v1/events"
+        current_time = int(time.time())
+        payload = {
+            'iat': current_time,
+            'exp': current_time + (10 * 60),
+            'iss': os.getenv('GITHUB_APP_ID'),
+        }
+        private_key = os.getenv('GITHUB_APP_PEM').encode()
+        encoded = jwt.encode(payload, private_key, algorithm='RS256').decode()
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(encoded)
+        }
+        payload = {
+            'content_type': 'json',
+            'url': webhook_url
+        }
+        r = requests.patch('https://api.github.com/app/hook/config',
+                           json=payload,
+                           headers=headers)
+        print(r.content)
+    except Exception as e:
+        print('Failed to update github webhook')
+        print(e)
+        sys.exit(1)
+
+
+def main():
+    print('Starting...')
+
+    # Sleep in case we're in a bad runit loop
+    time.sleep(3)
+
+    assert_required_env_keys()
+    assert_run_mode()
+
+    setup_environment()
+
+    if not os.environ.get(TERRAT_API_BASE):
+        if os.environ.get(NGROK_ENDPOINT):
+            run_mode_docker_compose()
+        elif os.environ.get(FLY_APP_NAME):
+            run_mode_fly_app()
+        else:
+            raise Exception('TERRAT_API_BASE, NGROK_ENDPOINT, or FLY_APP_NAME must be specified')
+
+    if os.environ.get('GITHUB_WEBHOOK_URL_UPDATE', '').upper() == 'TRUE':
+        update_github_webhook_url()
+
+    # Run db migration
+    subprocess.check_call(['/usr/local/bin/terrat', 'migrate', '--verbosity=debug'])
+
+    # Run server
+    os.execv('/usr/local/bin/terrat', ['/usr/local/bin/terrat', 'server', '--verbosity=debug'])
+
+
+if __name__ == '__main__':
+    main()
