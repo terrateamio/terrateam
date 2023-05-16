@@ -10,11 +10,7 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.hazmat.backends import default_backend
 
 # Set environment variables
-os.environ['GITHUB_APP_PEM'] = os.environ['GITHUB_APP_PEM'].replace('\\n', '\n').strip('\"').strip()
-os.environ['GITHUB_APP_ID'] = os.environ['GITHUB_APP_ID'].strip('\"').strip()
-os.environ['GITHUB_WEBHOOK_SECRET'] = os.environ['GITHUB_WEBHOOK_SECRET'].strip('\"').strip()
-os.environ['GITHUB_APP_CLIENT_ID'] = os.environ['GITHUB_APP_CLIENT_ID'].strip('\"').strip()
-os.environ['GITHUB_APP_CLIENT_SECRET'] = os.environ['GITHUB_APP_CLIENT_SECRET'].strip('\"').strip()
+os.environ['GITHUB_APP_PEM'] = os.environ['GITHUB_APP_PEM'].replace('\\n', '\n')
 os.environ['TERRAT_PYTHON_EXEC'] = '/usr/bin/python3'
 os.environ['OCAMLRUNPARAM'] = 'b'
 os.environ['NGINX_STATUS_URI'] = 'http://localhost:8080/nginx_status'
