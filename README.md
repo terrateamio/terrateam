@@ -21,6 +21,8 @@ Terrateam delivers self-service Terraform across your organization, visibility i
 - [Docs](#docs)
 - [Support](#support)
 
+**⭐ Like us? Give us a star!**
+
 ## Features
 
 - [Access Control](https://terrateam.io/docs/features/access-control) - Define a set of capabilities, such as `plan` and `apply`, and which users can perform those operations. GitHub Users, Teams, and Repository Collaborator policies are supported.
