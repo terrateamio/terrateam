@@ -37,16 +37,16 @@ try:
         break
       print('No ngrok public url found, trying again in 3 seconds...')
       time.sleep(3)
-except:
-  pass
+except Exception as e:
+  print(e)
 
 # Fly.io
 try:
   if os.environ['TERRAT_API_BASE'] == '' and os.environ['FLY_APP_NAME']:
     print('TERRAT_API_BASE is unset, using FLY_APP_NAME')
     os.environ['TERRAT_API_BASE'] = "https://%s.fly.dev/api" % (os.environ['FLY_APP_NAME'])
-except:
-  pass
+except Exception as e:
+  print(e)
 
 #
 # GitHub application webhook url update
@@ -71,8 +71,8 @@ try:
     payload = { "content_type": "json", "url": webhook_url }
     r = requests.patch('https://api.github.com/app/hook/config', data=json.dumps(payload), headers=headers)
     print(r.content)
-except:
-  pass
+except Exception as e:
+  print(e)
 
 # Run db migration
 subprocess.run('/usr/local/bin/terrat migrate --verbosity=debug', shell=True, check=True)
