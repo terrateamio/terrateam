@@ -45,7 +45,8 @@ all_necessary_dirspaces as (
         gpr.repository as repository,
         gpr.pull_number as pull_number,
         coalesce(gds.path, prapc.path) as path,
-        coalesce(gds.workspace, prapc.workspace) as workspace
+        coalesce(gds.workspace, prapc.workspace) as workspace,
+        gds.lock_policy as lock_policy
     from github_pull_requests as gpr
     inner join github_dirspaces as gds
         on gds.base_sha = gpr.base_sha and (gds.sha = gpr.sha or gds.sha = gpr.merged_sha)
@@ -75,6 +76,7 @@ dangling_dirspaces as (
     from unmerged_pull_requests_with_applies as uprwa
     inner join all_necessary_dirspaces as ands
         on ands.repository = uprwa.repository and ands.pull_number = uprwa.pull_number
+    where ands.lock_policy in ('strict', 'apply')
 ),
 -- For all required dirspaces we will find only those pull requests which have
 --  been merged and then of those merge applies we want those necessary
@@ -121,7 +123,7 @@ unapplied_dirspaces as (
     left join applies_for_merged_pull_requests as applies
         on applies.repository = ands.repository and applies.pull_number = ands.pull_number
            and applies.path = ands.path and applies.workspace = ands.workspace
-    where applies.path is null
+    where applies.path is null and ands.lock_policy in ('strict', 'merge')
 ),
 -- And now combine our two lists of dirspaces:
 --

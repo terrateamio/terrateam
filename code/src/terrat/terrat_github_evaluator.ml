@@ -664,14 +664,15 @@ module Ev = struct
     let insert_dirspace =
       Pgsql_io.Typed_sql.(
         sql
-        /^ "insert into github_dirspaces (base_sha, path, repository, sha, workspace) select * \
-            from unnest($base_sha, $path, $repository, $sha, $workspace) on conflict (repository, \
-            sha, path, workspace) do nothing"
+        /^ "insert into github_dirspaces (base_sha, path, repository, sha, workspace, lock_policy) \
+            select * from unnest($base_sha, $path, $repository, $sha, $workspace, $lock_policy) on \
+            conflict (repository, sha, path, workspace) do nothing"
         /% Var.(str_array (text "base_sha"))
         /% Var.(str_array (text "path"))
         /% Var.(array (bigint "repository"))
         /% Var.(str_array (text "sha"))
-        /% Var.(str_array (text "workspace")))
+        /% Var.(str_array (text "workspace"))
+        /% Var.(str_array (text "lock_policy")))
 
     let select_out_of_diff_applies =
       Pgsql_io.Typed_sql.(
@@ -1036,6 +1037,15 @@ module Ev = struct
             (CCList.map
                (fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.workspace; _ }; _ } ->
                  workspace)
+               dirspaceflows)
+            (CCList.map
+               (fun Terrat_change.{ Dirspaceflow.workflow; _ } ->
+                 let module Dfwf = Terrat_change.Dirspaceflow.Workflow in
+                 let module Wf = Terrat_repo_config_workflow_entry in
+                 CCOption.map_or
+                   ~default:"strict"
+                   (fun { Dfwf.workflow = { Wf.lock_policy; _ }; _ } -> lock_policy)
+                   workflow)
                dirspaceflows))
         (CCList.chunks 500 dirspaceflows)
     in
