@@ -78,16 +78,16 @@ module Destination_branches = struct
     let of_yojson =
       Json_schema.one_of
         (let open CCResult in
-        [
-          (fun v ->
-            map
-              (fun v -> Destination_branch_name v)
-              (Terrat_repo_config_destination_branch_name.of_yojson v));
-          (fun v ->
-            map
-              (fun v -> Destination_branch_object v)
-              (Terrat_repo_config_destination_branch_object.of_yojson v));
-        ])
+         [
+           (fun v ->
+             map
+               (fun v -> Destination_branch_name v)
+               (Terrat_repo_config_destination_branch_name.of_yojson v));
+           (fun v ->
+             map
+               (fun v -> Destination_branch_object v)
+               (Terrat_repo_config_destination_branch_object.of_yojson v));
+         ])
 
     let to_yojson = function
       | Destination_branch_name v -> Terrat_repo_config_destination_branch_name.to_yojson v

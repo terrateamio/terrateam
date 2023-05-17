@@ -13,21 +13,21 @@ module Items = struct
   let of_yojson =
     Json_schema.one_of
       (let open CCResult in
-      [
-        (fun v ->
-          map (fun v -> Workflow_op_init v) (Terrat_repo_config_workflow_op_init.of_yojson v));
-        (fun v ->
-          map (fun v -> Workflow_op_plan v) (Terrat_repo_config_workflow_op_plan.of_yojson v));
-        (fun v ->
-          map (fun v -> Workflow_op_apply v) (Terrat_repo_config_workflow_op_apply.of_yojson v));
-        (fun v -> map (fun v -> Hook_op_run v) (Terrat_repo_config_hook_op_run.of_yojson v));
-        (fun v -> map (fun v -> Hook_op_slack v) (Terrat_repo_config_hook_op_slack.of_yojson v));
-        (fun v ->
-          map (fun v -> Hook_op_env_exec v) (Terrat_repo_config_hook_op_env_exec.of_yojson v));
-        (fun v ->
-          map (fun v -> Hook_op_env_source v) (Terrat_repo_config_hook_op_env_source.of_yojson v));
-        (fun v -> map (fun v -> Hook_op_oidc v) (Terrat_repo_config_hook_op_oidc.of_yojson v));
-      ])
+       [
+         (fun v ->
+           map (fun v -> Workflow_op_init v) (Terrat_repo_config_workflow_op_init.of_yojson v));
+         (fun v ->
+           map (fun v -> Workflow_op_plan v) (Terrat_repo_config_workflow_op_plan.of_yojson v));
+         (fun v ->
+           map (fun v -> Workflow_op_apply v) (Terrat_repo_config_workflow_op_apply.of_yojson v));
+         (fun v -> map (fun v -> Hook_op_run v) (Terrat_repo_config_hook_op_run.of_yojson v));
+         (fun v -> map (fun v -> Hook_op_slack v) (Terrat_repo_config_hook_op_slack.of_yojson v));
+         (fun v ->
+           map (fun v -> Hook_op_env_exec v) (Terrat_repo_config_hook_op_env_exec.of_yojson v));
+         (fun v ->
+           map (fun v -> Hook_op_env_source v) (Terrat_repo_config_hook_op_env_source.of_yojson v));
+         (fun v -> map (fun v -> Hook_op_oidc v) (Terrat_repo_config_hook_op_oidc.of_yojson v));
+       ])
 
   let to_yojson = function
     | Workflow_op_init v -> Terrat_repo_config_workflow_op_init.to_yojson v

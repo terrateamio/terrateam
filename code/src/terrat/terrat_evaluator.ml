@@ -91,7 +91,11 @@ let dirspaceflows_of_changes repo_config changes =
     Ok
       (CCList.map
          (fun (Terrat_change_match.{ dirspace; _ }, workflow) ->
-           Terrat_change.Dirspaceflow.{ dirspace; workflow_idx = CCOption.map fst workflow })
+           Terrat_change.Dirspaceflow.
+             {
+               dirspace;
+               workflow = CCOption.map (fun (idx, workflow) -> Workflow.{ idx; workflow }) workflow;
+             })
          (match_tag_queries
             ~accessor:(fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
               match Terrat_tag_query.of_string tag_query with
@@ -263,7 +267,7 @@ module type S = sig
       Pgsql_io.t ->
       T.t ->
       Pull_request.t ->
-      Terrat_change.Dirspaceflow.t list ->
+      Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list ->
       (unit, [> `Error ]) result Abb.Future.t
 
     val store_pull_request_work_manifest :
@@ -372,7 +376,7 @@ module type S = sig
       Pgsql_io.t ->
       Schedule.t ->
       Repo.t ->
-      Terrat_change.Dirspaceflow.t list ->
+      Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list ->
       (unit, [> `Error ]) result Abb.Future.t
 
     val store_reconcile_work_manifest :
@@ -380,7 +384,7 @@ module type S = sig
       Pgsql_io.t ->
       Schedule.t ->
       Repo.t ->
-      Terrat_change.Dirspaceflow.t list ->
+      Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list ->
       (unit, [> `Error ]) result Abb.Future.t
   end
 

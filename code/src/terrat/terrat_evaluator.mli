@@ -134,7 +134,7 @@ module type S = sig
       Pgsql_io.t ->
       T.t ->
       Pull_request.t ->
-      Terrat_change.Dirspaceflow.t list ->
+      Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list ->
       (unit, [> `Error ]) result Abb.Future.t
 
     val store_pull_request_work_manifest :
@@ -243,7 +243,7 @@ module type S = sig
       Pgsql_io.t ->
       Schedule.t ->
       Repo.t ->
-      Terrat_change.Dirspaceflow.t list ->
+      Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list ->
       (unit, [> `Error ]) result Abb.Future.t
 
     val store_reconcile_work_manifest :
@@ -251,7 +251,7 @@ module type S = sig
       Pgsql_io.t ->
       Schedule.t ->
       Repo.t ->
-      Terrat_change.Dirspaceflow.t list ->
+      Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list ->
       (unit, [> `Error ]) result Abb.Future.t
   end
 

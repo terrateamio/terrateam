@@ -54,13 +54,27 @@ type ('id, 'created_at, 'run_id, 'state, 'changes, 'src, 'run_type) t = {
 module New : sig
   (** A new work manifest has no id, create time, run id, or state *)
   type nonrec 'src t =
-    (unit, unit, unit, unit, Terrat_change.Dirspaceflow.t list, 'src, Run_type.t) t
+    ( unit,
+      unit,
+      unit,
+      unit,
+      Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list,
+      'src,
+      Run_type.t )
+    t
 end
 
 module Existing : sig
   (** An existing work manifest has all of the fillings *)
   type nonrec 'src t =
-    (Uuidm.t, string, string option, State.t, Terrat_change.Dirspaceflow.t list, 'src, Run_type.t) t
+    ( Uuidm.t,
+      string,
+      string option,
+      State.t,
+      int Terrat_change.Dirspaceflow.t list,
+      'src,
+      Run_type.t )
+    t
 end
 
 module Existing_lite : sig

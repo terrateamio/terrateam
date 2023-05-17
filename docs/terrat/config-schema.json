@@ -682,6 +682,15 @@
           "default": false,
           "type": "boolean"
         },
+        "lock_policy": {
+          "default": "strict",
+          "enum": [
+            "strict",
+            "apply",
+            "merge"
+          ],
+          "type": "string"
+        },
         "plan": {
           "$ref": "#/definitions/workflow-op-list"
         },

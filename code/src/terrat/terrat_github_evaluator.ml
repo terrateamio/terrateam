@@ -149,7 +149,10 @@ let insert_work_manifest db repository_id work_manifest pull_number_opt =
             (CCList.replicate (CCList.length changes) id)
             (CCList.map (fun { Dsf.dirspace = { Ds.dir; _ }; _ } -> dir) changes)
             (CCList.map (fun { Dsf.dirspace = { Ds.workspace; _ }; _ } -> workspace) changes)
-            (CCList.map (fun { Dsf.workflow_idx; _ } -> workflow_idx) changes))
+            (CCList.map
+               (fun { Dsf.workflow; _ } ->
+                 CCOption.map (fun Dsf.Workflow.{ idx; _ } -> idx) workflow)
+               changes))
         (CCList.chunks 500 work_manifest.Wm.changes)
       >>= fun () -> Abb.Future.return (Ok (id, state, created_at))
 
@@ -2596,9 +2599,9 @@ module Wm = struct
                 Terrat_change.Dirspaceflow.
                   {
                     dirspace;
-                    workflow_idx =
+                    workflow =
                       CCOption.map
-                        fst
+                        (fun (idx, workflow) -> Workflow.{ idx; workflow })
                         (CCList.find_idx
                            (fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
                              Terrat_change_match.match_tag_query
@@ -2612,9 +2615,17 @@ module Wm = struct
             (Ok
                (CCList.map
                   (fun Terrat_change.
-                         { Dirspaceflow.dirspace = Dirspace.{ dir; workspace }; workflow_idx } ->
+                         { Dirspaceflow.dirspace = Dirspace.{ dir; workspace }; workflow } ->
                     Terrat_api_components.Work_manifest_dir.
-                      { path = dir; workspace; workflow = workflow_idx; rank = 0 })
+                      {
+                        path = dir;
+                        workspace;
+                        workflow =
+                          CCOption.map
+                            (fun Terrat_change.Dirspaceflow.Workflow.{ idx; _ } -> idx)
+                            workflow;
+                        rank = 0;
+                      })
                   dirspaceflows))
       | Error (`Bad_glob _ as err) -> Abb.Future.return (Error err)
 
@@ -2739,7 +2750,7 @@ module Wm = struct
             Terrat_change.
               {
                 Dirspaceflow.dirspace = { Dirspace.dir; workspace };
-                workflow_idx = CCOption.map CCInt32.to_int workflow_idx;
+                workflow = CCOption.map CCInt32.to_int workflow_idx;
               })
           work_manifest_id
         >>= fun dirspaceflows ->
@@ -2916,10 +2927,9 @@ module Wm = struct
         let module Tc = Terrat_change in
         let module Dsf = Tc.Dirspaceflow in
         CCList.map
-          (fun Tc.{ Dsf.dirspace = { Dirspace.dir; workspace }; workflow_idx } ->
+          (fun Tc.{ Dsf.dirspace = { Dirspace.dir; workspace }; workflow } ->
             (* TODO: Provide correct rank *)
-            Terrat_api_components.Work_manifest_dir.
-              { path = dir; workspace; workflow = workflow_idx; rank = 0 })
+            Terrat_api_components.Work_manifest_dir.{ path = dir; workspace; workflow; rank = 0 })
           work_manifest.Wm.changes
       in
       let token =

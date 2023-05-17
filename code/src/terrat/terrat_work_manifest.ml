@@ -79,12 +79,26 @@ type ('id, 'created_at, 'run_id, 'state, 'changes, 'src, 'run_type) t = {
 
 module New = struct
   type nonrec 'src t =
-    (unit, unit, unit, unit, Terrat_change.Dirspaceflow.t list, 'src, Run_type.t) t
+    ( unit,
+      unit,
+      unit,
+      unit,
+      Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list,
+      'src,
+      Run_type.t )
+    t
 end
 
 module Existing = struct
   type nonrec 'src t =
-    (Uuidm.t, string, string option, State.t, Terrat_change.Dirspaceflow.t list, 'src, Run_type.t) t
+    ( Uuidm.t,
+      string,
+      string option,
+      State.t,
+      int Terrat_change.Dirspaceflow.t list,
+      'src,
+      Run_type.t )
+    t
 end
 
 module Existing_lite = struct

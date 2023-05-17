@@ -10,18 +10,19 @@ type t =
 let of_yojson =
   Json_schema.one_of
     (let open CCResult in
-    [
-      (fun v ->
-        map
-          (fun v -> Hook_op_drift_create_issue v)
-          (Terrat_repo_config_hook_op_drift_create_issue.of_yojson v));
-      (fun v -> map (fun v -> Hook_op_env_exec v) (Terrat_repo_config_hook_op_env_exec.of_yojson v));
-      (fun v ->
-        map (fun v -> Hook_op_env_source v) (Terrat_repo_config_hook_op_env_source.of_yojson v));
-      (fun v -> map (fun v -> Hook_op_oidc v) (Terrat_repo_config_hook_op_oidc.of_yojson v));
-      (fun v -> map (fun v -> Hook_op_run v) (Terrat_repo_config_hook_op_run.of_yojson v));
-      (fun v -> map (fun v -> Hook_op_slack v) (Terrat_repo_config_hook_op_slack.of_yojson v));
-    ])
+     [
+       (fun v ->
+         map
+           (fun v -> Hook_op_drift_create_issue v)
+           (Terrat_repo_config_hook_op_drift_create_issue.of_yojson v));
+       (fun v ->
+         map (fun v -> Hook_op_env_exec v) (Terrat_repo_config_hook_op_env_exec.of_yojson v));
+       (fun v ->
+         map (fun v -> Hook_op_env_source v) (Terrat_repo_config_hook_op_env_source.of_yojson v));
+       (fun v -> map (fun v -> Hook_op_oidc v) (Terrat_repo_config_hook_op_oidc.of_yojson v));
+       (fun v -> map (fun v -> Hook_op_run v) (Terrat_repo_config_hook_op_run.of_yojson v));
+       (fun v -> map (fun v -> Hook_op_slack v) (Terrat_repo_config_hook_op_slack.of_yojson v));
+     ])
 
 let to_yojson = function
   | Hook_op_drift_create_issue v -> Terrat_repo_config_hook_op_drift_create_issue.to_yojson v

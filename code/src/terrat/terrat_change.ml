@@ -19,9 +19,17 @@ module Dirspace = struct
 end
 
 module Dirspaceflow = struct
-  type t = {
+  module Workflow = struct
+    type t = {
+      idx : int;
+      workflow : Terrat_repo_config_workflow_entry.t;
+    }
+    [@@deriving eq, show]
+  end
+
+  type 'a t = {
     dirspace : Dirspace.t;
-    workflow_idx : int option;
+    workflow : 'a option;
   }
   [@@deriving eq, show]
 

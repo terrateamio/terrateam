@@ -22,11 +22,19 @@ module Dirspace : sig
 end
 
 module Dirspaceflow : sig
-  type t = {
+  module Workflow : sig
+    type t = {
+      idx : int;
+      workflow : Terrat_repo_config_workflow_entry.t;
+    }
+    [@@deriving eq, show]
+  end
+
+  type 'a t = {
     dirspace : Dirspace.t;
-    workflow_idx : int option;
+    workflow : 'a option;
   }
   [@@deriving eq, show]
 
-  val to_dirspace : t -> Dirspace.t
+  val to_dirspace : 'a t -> Dirspace.t
 end
