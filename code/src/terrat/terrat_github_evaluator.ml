@@ -4362,6 +4362,8 @@ module Push = struct
         Abbs_future_combinators.to_result
           (Abbs_future_combinators.List.iter
              ~f:(fun repository ->
+               Logs.info (fun m ->
+                   m "GITHUB_EVALUATOR : %s : DRIFT : RUNNING : repo_id=%Ld" request_id repository);
                Drift.run_schedule
                  config
                  storage
