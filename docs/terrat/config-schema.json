@@ -685,9 +685,10 @@
         "lock_policy": {
           "default": "strict",
           "enum": [
-            "strict",
             "apply",
-            "merge"
+            "merge",
+            "none",
+            "strict"
           ],
           "type": "string"
         },

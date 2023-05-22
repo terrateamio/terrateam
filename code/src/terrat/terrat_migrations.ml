@@ -90,6 +90,7 @@ let migrations =
     ("add-encryption-key", add_encryption_key);
     ("add-github-account-status", run_file_sql "2023-05-15-add-github-account-status.sql");
     ("add-lock-policy", run_file_sql "2023-05-17-add-lock-policy.sql");
+    ("add-lock-policy-none", run_file_sql "2023-05-20-add-lock-policy-none.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations

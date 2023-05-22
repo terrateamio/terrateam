@@ -1,8 +1,9 @@
 module Lock_policy = struct
   let t_of_yojson = function
-    | `String "strict" -> Ok "strict"
     | `String "apply" -> Ok "apply"
     | `String "merge" -> Ok "merge"
+    | `String "none" -> Ok "none"
+    | `String "strict" -> Ok "strict"
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
