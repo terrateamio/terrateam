@@ -38,32 +38,36 @@ module Make (Abb : Abb_intf.S) = struct
           (Abb_intf.Socket.Addrinfo_query.Host (Domain_name.to_string host))
         >>| function
         | Ok [] | Error _ -> `Event (Happy_eyeballs.Resolved_a_failed (host, ""))
-        | Ok addrs ->
-            let res =
-              addrs
-              |> CCList.map (function
-                     | Abb_intf.Socket.(Addrinfo.{ addr = Sockaddr.(Inet { addr; _ }); _ }) ->
-                         Ipaddr.V4.of_string_exn (Unix.string_of_inet_addr addr)
-                     | _ -> assert false)
-              |> Ipaddr.V4.Set.of_list
-            in
-            `Event (Happy_eyeballs.Resolved_a (host, res)))
+        | Ok addrs -> (
+            addrs
+            |> CCList.flat_map (function
+                   | Abb_intf.Socket.(Addrinfo.{ addr = Sockaddr.(Inet { addr; _ }); _ }) ->
+                       CCOption.to_list
+                         (CCOption.of_result (Ipaddr.V4.of_string (Unix.string_of_inet_addr addr)))
+                   | _ -> assert false)
+            |> Ipaddr.V4.Set.of_list
+            |> function
+            | set when Ipaddr.V4.Set.is_empty set ->
+                `Event (Happy_eyeballs.Resolved_a_failed (host, "No IPv6 addresses found"))
+            | set -> `Event (Happy_eyeballs.Resolved_a (host, set))))
     | Happy_eyeballs.Resolve_aaaa host -> (
         Abb.Socket.getaddrinfo
           ~hints:[ Abb_intf.Socket.(Addrinfo_hints.Family Domain.Inet6) ]
           (Abb_intf.Socket.Addrinfo_query.Host (Domain_name.to_string host))
         >>| function
         | Ok [] | Error _ -> `Event (Happy_eyeballs.Resolved_aaaa_failed (host, ""))
-        | Ok addrs ->
-            let res =
-              addrs
-              |> CCList.map (function
-                     | Abb_intf.Socket.(Addrinfo.{ addr = Sockaddr.(Inet { addr; _ }); _ }) ->
-                         Ipaddr.V6.of_string_exn (Unix.string_of_inet_addr addr)
-                     | _ -> assert false)
-              |> Ipaddr.V6.Set.of_list
-            in
-            `Event (Happy_eyeballs.Resolved_aaaa (host, res)))
+        | Ok addrs -> (
+            addrs
+            |> CCList.flat_map (function
+                   | Abb_intf.Socket.(Addrinfo.{ addr = Sockaddr.(Inet { addr; _ }); _ }) ->
+                       CCOption.to_list
+                         (CCOption.of_result (Ipaddr.V6.of_string (Unix.string_of_inet_addr addr)))
+                   | _ -> assert false)
+            |> Ipaddr.V6.Set.of_list
+            |> function
+            | set when Ipaddr.V6.Set.is_empty set ->
+                `Event (Happy_eyeballs.Resolved_aaaa_failed (host, "No IPv6 addresses found"))
+            | set -> `Event (Happy_eyeballs.Resolved_aaaa (host, set))))
     | Happy_eyeballs.Connect (host, id, (ip, port)) -> (
         try_connect ip port
         >>= function
