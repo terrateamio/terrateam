@@ -605,7 +605,7 @@ module R = struct
                     >>= fun _ -> run' request_id access_token_cache config db)
             | None ->
                 let open Abb.Future.Infix_monad in
-                Logs.err (fun m -> m "GITHUB_EVALUATOR : %s : ERROR : MISSING_WORKFLOW" request_id);
+                Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : MISSING_WORKFLOW" request_id);
                 abort_work_manifest
                   ~access_token
                   ~db
