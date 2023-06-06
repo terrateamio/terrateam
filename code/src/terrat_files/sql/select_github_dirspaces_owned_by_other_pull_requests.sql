@@ -143,7 +143,7 @@ all_dangling_dirspaces as (
         on dds.repository = gpr.repository and dds.pull_number = gpr.pull_number
     where uds.repository is not null or dds.repository is not null
 )
-select
+select distinct
     adds.path as path,
     adds.workspace as workspace,
     gpr.base_branch as base_branch,

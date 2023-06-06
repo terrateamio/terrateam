@@ -113,7 +113,7 @@ module Event = struct
   module Msg = struct
     type ('pull_request, 'src, 'apply_requirements) t =
       | Missing_plans of Terrat_change.Dirspace.t list
-      | Dirspaces_owned_by_other_pull_request of 'pull_request Dirspace_map.t
+      | Dirspaces_owned_by_other_pull_request of (Terrat_change.Dirspace.t * 'pull_request) list
       | Conflicting_work_manifests of 'src Terrat_work_manifest.Existing_lite.t list
       | Repo_config_parse_failure of string
       | Repo_config_failure of string
@@ -332,7 +332,7 @@ module type S = sig
       T.t ->
       Pull_request.t ->
       Terrat_change.Dirspace.t list ->
-      (Pull_request.t Event.Dirspace_map.t, [> `Error ]) result Abb.Future.t
+      ((Terrat_change.Dirspace.t * Pull_request.t) list, [> `Error ]) result Abb.Future.t
 
     (** Return the list of changes that have happened for this PR that were done
      on a different hash than the passed in pull request. *)
@@ -867,8 +867,7 @@ module Make (S : S) = struct
             pull_request
             (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows)
           >>= function
-          | dirspaces when Event.Dirspace_map.is_empty dirspaces && operation = `Apply_autoapprove
-            -> (
+          | [] when operation = `Apply_autoapprove -> (
               create_and_store_work_manifest
                 db
                 repo_config
@@ -882,7 +881,7 @@ module Make (S : S) = struct
               | () when operation = `Apply `Auto ->
                   Abb.Future.return (Ok (Some Event.Msg.Autoapply_running))
               | () -> Abb.Future.return (Ok None))
-          | dirspaces when Event.Dirspace_map.is_empty dirspaces -> (
+          | [] -> (
               (* None of the dirspaces are owned by another PR, we can proceed *)
               query_dirspaces_without_valid_plans
                 db

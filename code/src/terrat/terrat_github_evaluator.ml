@@ -1910,7 +1910,7 @@ module Ev = struct
       (CCList.map (fun { Terrat_change.Dirspace.dir; _ } -> dir) dirspaces)
       (CCList.map (fun { Terrat_change.Dirspace.workspace; _ } -> workspace) dirspaces)
     >>= function
-    | Ok res -> Abb.Future.return (Ok (Terrat_evaluator.Event.Dirspace_map.of_list res))
+    | Ok _ as res -> Abb.Future.return res
     | Error (#Pgsql_io.err as err) ->
         Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m ->
@@ -2026,7 +2026,6 @@ module Ev = struct
           dirspaces;
         apply_template_and_publish "MISSING_PLANS" Tmpl.missing_plans kv event
     | Msg.Dirspaces_owned_by_other_pull_request prs ->
-        let prs = Terrat_evaluator.Event.Dirspace_map.to_list prs in
         let kv =
           Snabela.Kv.(
             Map.of_list

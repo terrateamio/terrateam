@@ -10,7 +10,7 @@ module Event : sig
   module Msg : sig
     type ('pull_request, 'src, 'apply_requirements) t =
       | Missing_plans of Terrat_change.Dirspace.t list
-      | Dirspaces_owned_by_other_pull_request of 'pull_request Dirspace_map.t
+      | Dirspaces_owned_by_other_pull_request of (Terrat_change.Dirspace.t * 'pull_request) list
       | Conflicting_work_manifests of 'src Terrat_work_manifest.Existing_lite.t list
       | Repo_config_parse_failure of string
       | Repo_config_failure of string
@@ -199,7 +199,7 @@ module type S = sig
       T.t ->
       Pull_request.t ->
       Terrat_change.Dirspace.t list ->
-      (Pull_request.t Event.Dirspace_map.t, [> `Error ]) result Abb.Future.t
+      ((Terrat_change.Dirspace.t * Pull_request.t) list, [> `Error ]) result Abb.Future.t
 
     (** Return the list of changes that have happened for this PR that were done
      on a different hash than the passed in pull request. *)
