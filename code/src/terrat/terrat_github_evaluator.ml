@@ -2026,6 +2026,11 @@ module Ev = struct
           dirspaces;
         apply_template_and_publish "MISSING_PLANS" Tmpl.missing_plans kv event
     | Msg.Dirspaces_owned_by_other_pull_request prs ->
+        let unique_pull_request_ids =
+          prs
+          |> CCList.map (fun (_, Terrat_pull_request.{ id; _ }) -> id)
+          |> CCList.sort_uniq ~cmp:CCInt64.compare
+        in
         let kv =
           Snabela.Kv.(
             Map.of_list
@@ -2042,6 +2047,11 @@ module Ev = struct
                              ("pull_request_id", string (CCInt64.to_string id));
                            ])
                        prs) );
+                ( "unique_pull_request_ids",
+                  list
+                    (CCList.map
+                       (fun id -> Map.of_list [ ("id", string (CCInt64.to_string id)) ])
+                       unique_pull_request_ids) );
               ])
         in
         CCList.iter
