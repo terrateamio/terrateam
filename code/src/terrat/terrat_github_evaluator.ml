@@ -3332,6 +3332,7 @@ module Wm = struct
         key : string option;
         text : string;
         step_type : string;
+        details : string option;
       }
     end
 
@@ -3694,11 +3695,20 @@ module Wm = struct
              | Output.Workflow_output_run
                  Run.
                    {
-                     workflow_step = Workflow_step.{ type_; _ };
+                     workflow_step = Workflow_step.{ type_; cmd; _ };
                      outputs = Some Text.{ text; output_key };
                      success;
                      _;
-                   }
+                   } ->
+                 Some
+                   Workflow_step_output.
+                     {
+                       key = output_key;
+                       text;
+                       success;
+                       step_type = type_;
+                       details = Some (CCString.concat " " cmd);
+                     }
              | Output.Workflow_output_oidc
                  Oidc.
                    {
@@ -3722,12 +3732,16 @@ module Wm = struct
                      success;
                      _;
                    } ->
-                 Some Workflow_step_output.{ key = output_key; text; success; step_type = type_ }
+                 Some
+                   Workflow_step_output.
+                     { key = output_key; text; success; step_type = type_; details = None }
              | Output.Workflow_output_run
                  Run.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ }
              | Output.Workflow_output_oidc
                  Oidc.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ } ->
-                 Some Workflow_step_output.{ key = None; text = ""; success; step_type = type_ }
+                 Some
+                   Workflow_step_output.
+                     { key = None; text = ""; success; step_type = type_; details = None }
              | Output.Workflow_output_env _
              | Output.Workflow_output_cost_estimation
                  Ce.{ outputs = Outputs.Output_cost_estimation _; _ } -> None)
@@ -3743,11 +3757,20 @@ module Wm = struct
              | Output.Workflow_output_run
                  Run.
                    {
-                     workflow_step = Workflow_step.{ type_; _ };
+                     workflow_step = Workflow_step.{ type_; cmd; _ };
                      outputs = Some Text.{ text; output_key };
                      success;
                      _;
-                   }
+                   } ->
+                 Some
+                   Workflow_step_output.
+                     {
+                       key = output_key;
+                       text;
+                       success;
+                       step_type = type_;
+                       details = Some (CCString.concat " " cmd);
+                     }
              | Output.Workflow_output_oidc
                  Oidc.
                    {
@@ -3764,7 +3787,9 @@ module Wm = struct
                      success;
                      _;
                    } ->
-                 Some Workflow_step_output.{ key = output_key; text; success; step_type = type_ }
+                 Some
+                   Workflow_step_output.
+                     { key = output_key; text; success; step_type = type_; details = None }
              | Output.Workflow_output_run
                  Run.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ }
              | Output.Workflow_output_oidc
@@ -3772,7 +3797,9 @@ module Wm = struct
              | Output.Workflow_output_drift_create_issue
                  Drift_create_issue.
                    { workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ } ->
-                 Some Workflow_step_output.{ key = None; text = ""; success; step_type = type_ }
+                 Some
+                   Workflow_step_output.
+                     { key = None; text = ""; success; step_type = type_; details = None }
              | Output.Workflow_output_env _ -> None)
 
     let workflow_output_texts outputs =
@@ -3789,11 +3816,21 @@ module Wm = struct
              | Output.Workflow_output_run
                  Run.
                    {
-                     workflow_step = Workflow_step.{ type_; _ };
+                     workflow_step = Workflow_step.{ type_; cmd; _ };
                      outputs = Some Text.{ text; output_key };
                      success;
                      _;
-                   }
+                   } ->
+                 [
+                   Workflow_step_output.
+                     {
+                       key = output_key;
+                       text;
+                       success;
+                       step_type = type_;
+                       details = Some (CCString.concat " " cmd);
+                     };
+                 ]
              | Output.Workflow_output_oidc
                  Oidc.
                    {
@@ -3826,7 +3863,10 @@ module Wm = struct
                      success;
                      _;
                    } ->
-                 [ Workflow_step_output.{ step_type = type_; text; key = output_key; success } ]
+                 [
+                   Workflow_step_output.
+                     { step_type = type_; text; key = output_key; success; details = None };
+                 ]
              | Output.Workflow_output_plan
                  Plan.
                    {
@@ -3837,9 +3877,15 @@ module Wm = struct
                    } ->
                  [
                    Workflow_step_output.
-                     { step_type = type_; text = plan_text; key = Some "plan_text"; success };
+                     {
+                       step_type = type_;
+                       text = plan_text;
+                       key = Some "plan_text";
+                       success;
+                       details = None;
+                     };
                    Workflow_step_output.
-                     { step_type = type_; text = plan; key = Some "plan"; success };
+                     { step_type = type_; text = plan; key = Some "plan"; success; details = None };
                  ]
              | Output.Workflow_output_run _
              | Output.Workflow_output_oidc _
@@ -3932,22 +3978,28 @@ module Wm = struct
         Snabela.Kv.(
           list
             (CCList.map
-               (function
-                 | Workflow_step_output.{ key = Some key; text; success; step_type } ->
-                     Map.of_list
-                       [
-                         (key, bool true);
-                         ("text", string text);
-                         ("success", bool success);
-                         ("step_type", string step_type);
-                       ]
-                 | Workflow_step_output.{ success; text; step_type; _ } ->
-                     Map.of_list
-                       [
-                         ("success", bool success);
-                         ("text", string text);
-                         ("step_type", string step_type);
-                       ])
+               (fun Workflow_step_output.{ key; text; success; step_type; details } ->
+                 Map.of_list
+                   (CCList.concat
+                      [
+                        [
+                          ("text", string text);
+                          ("success", bool success);
+                          ("step_type", string step_type);
+                        ]
+                        @ CCOption.map_or ~default:[] (fun key -> [ (key, bool true) ]) key
+                        @ CCOption.map_or
+                            ~default:[]
+                            (fun details ->
+                              [
+                                ( "details",
+                                  string
+                                    (match step_type with
+                                    | "run" -> "`" ^ details ^ "`"
+                                    | _ -> details) );
+                              ])
+                            details;
+                      ]))
                steps))
       in
       let kv =
