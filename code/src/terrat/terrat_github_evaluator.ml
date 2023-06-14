@@ -3965,6 +3965,7 @@ module Wm = struct
                    ("pre_hooks", kv_of_workflow_step (pre_hook_output_texts pre));
                    ("post_hooks", kv_of_workflow_step (post_hook_output_texts post));
                    ("compact_view", bool compact_view);
+                   ("compact_dirspaces", bool (CCList.length dirspaces > 5));
                    ( "results",
                      list
                        (CCList.map

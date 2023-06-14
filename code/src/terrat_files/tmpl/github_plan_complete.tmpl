@@ -17,8 +17,9 @@ Not all [dirspaces](https://terrateam.io/docs/glossary#dirspace) were run becaus
 @/denied_dirspaces-@
 </details>
 @/denied_dirspaces-@
+## Terrateam Plan Output :thumbsup:
 <details>
-  <summary><h2>Terrateam Plan Output :thumbsup:</h2></summary>
+  <summary>Expand for plan output details</summary>
 
 @/overall_success-@
 @!overall_success-@
@@ -32,8 +33,9 @@ Verify that the **credentials** are setup.  For more information, see the [Cloud
 @/maybe_credentials_error-@
 After resolving the issue, run `terrateam plan` to execute the plan operation again.
 
+## Terrateam Plan Output :heavy_multiplication_x:
 <details>
-  <summary><h2>Terrateam Plan Output :heavy_multiplication_x:</h2></summary>
+  <summary>Expand for plan output details</summary>
 
 <details>
   <summary><h3>Pre Hooks</h3></summary>
@@ -71,6 +73,15 @@ After resolving the issue, run `terrateam plan` to execute the plan operation ag
 @/overall_success-@
 
 @#results-@
+
+## @dir@ @?success@:thumbsup:@/success@@!success@:heavy_multiplication_x:@/success@
+@?compact_dirspaces-@
+<details>
+  <summary>Expand for details</summary>
+
+---
+
+@/compact_dirspaces-@
 **Dir**: @dir@
 **Workspace**: @workspace@
 **Success**: @?success@:thumbsup:@/success@@!success@:heavy_multiplication_x:@/success@
@@ -88,15 +99,6 @@ After resolving the issue, run `terrateam plan` to execute the plan operation ag
 @/plan_text-@
 @/outputs-@
 ```
-
-<details>
-  <summary>To apply this directory and workspace...</summary>
-
-```
-terrateam apply dir:@dir@ workspace:@workspace@
-```
-
-</details>
 
 @/success-@
 @!success-@
@@ -116,17 +118,12 @@ terrateam apply dir:@dir@ workspace:@workspace@
 @/plan_text-@
 @/outputs-@
 @/success-@
+@?compact_dirspaces-@
+</details>
+@/compact_dirspaces-@
 @/results-@
 
 </details>
-@?overall_success-@
-
-To apply all these changes, comment:
-
-```
-terrateam apply
-```
-@/overall_success-@
 @?overall_success-@
 
 @^cost_estimation-@
@@ -145,6 +142,16 @@ terrateam apply
 @/cost_estimation-@
 </details>
 @/cost_estimation-@
+@/overall_success-@
+@?overall_success-@
+
+---
+
+To apply all these changes, comment:
+
+```
+terrateam apply
+```
 @/overall_success-@
 
 ---
