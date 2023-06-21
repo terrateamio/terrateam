@@ -7,23 +7,24 @@ module Telemetry = struct
 end
 
 type t = {
-  port : int;
-  db_host : string;
-  db_user : string;
-  db_password : string;
+  admin_token : string option;
+  api_base : string;
   db : string;
   db_connect_timeout : float;
+  db_host : string;
+  db_password : string;
+  db_user : string;
+  github_app_client_id : string;
+  github_app_client_secret : string;
   github_app_id : string;
   github_app_pem : Mirage_crypto_pk.Rsa.priv;
+  github_base_url : Uri.t option;
   github_webhook_secret : string option;
-  github_app_client_secret : string;
-  github_app_client_id : string;
-  api_base : string;
-  python_exec : string;
-  infracost_pricing_api_endpoint : Uri.t;
   infracost_api_key : string;
+  infracost_pricing_api_endpoint : Uri.t;
   nginx_status_uri : Uri.t option;
-  admin_token : string option;
+  port : int;
+  python_exec : string;
   telemetry : Telemetry.t;
 }
 
@@ -94,43 +95,46 @@ let create () =
     | "disabled" -> Some Telemetry.Disabled
     | _ -> None)
   >>= fun telemetry ->
+  let github_base_url = CCOption.map Uri.of_string (Sys.getenv_opt "GITHUB_BASE_URL") in
   Ok
     {
-      port;
-      db_host;
-      db_user;
-      db_password;
+      admin_token;
+      api_base;
       db;
       db_connect_timeout;
+      db_host;
+      db_password;
+      db_user;
+      github_app_client_id;
+      github_app_client_secret;
       github_app_id;
       github_app_pem;
+      github_base_url;
       github_webhook_secret;
-      github_app_client_secret;
-      github_app_client_id;
-      api_base;
-      python_exec;
-      infracost_pricing_api_endpoint = Uri.of_string infracost_pricing_api_endpoint;
       infracost_api_key;
+      infracost_pricing_api_endpoint = Uri.of_string infracost_pricing_api_endpoint;
       nginx_status_uri;
-      admin_token;
+      port;
+      python_exec;
       telemetry;
     }
 
-let port t = t.port
-let db_host t = t.db_host
-let db_user t = t.db_user
-let db_password t = t.db_password
+let admin_token t = t.admin_token
+let api_base t = t.api_base
 let db t = t.db
 let db_connect_timeout t = t.db_connect_timeout
+let db_host t = t.db_host
+let db_password t = t.db_password
+let db_user t = t.db_user
+let github_app_client_id t = t.github_app_client_id
+let github_app_client_secret t = t.github_app_client_secret
 let github_app_id t = t.github_app_id
 let github_app_pem t = t.github_app_pem
+let github_base_url t = t.github_base_url
 let github_webhook_secret t = t.github_webhook_secret
-let github_app_client_secret t = t.github_app_client_secret
-let github_app_client_id t = t.github_app_client_id
-let api_base t = t.api_base
-let python_exec t = t.python_exec
-let infracost_pricing_api_endpoint t = t.infracost_pricing_api_endpoint
 let infracost_api_key t = t.infracost_api_key
+let infracost_pricing_api_endpoint t = t.infracost_pricing_api_endpoint
 let nginx_status_uri t = t.nginx_status_uri
-let admin_token t = t.admin_token
+let port t = t.port
+let python_exec t = t.python_exec
 let telemetry t = t.telemetry

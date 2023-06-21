@@ -229,17 +229,18 @@ module Dr = struct
 
   let fetch_repo_config config access_token owner repo branch =
     Terrat_github.fetch_repo_config
+      ~config
       ~python:(Terrat_config.python_exec config)
       ~access_token
       ~owner
       ~repo
       branch
 
-  let fetch_tree access_token owner repo branch =
-    Terrat_github.get_tree ~access_token ~owner ~repo ~sha:branch ()
+  let fetch_tree config access_token owner repo branch =
+    Terrat_github.get_tree ~config ~access_token ~owner ~repo ~sha:branch ()
 
-  let fetch_branch access_token owner repo branch =
-    Terrat_github.fetch_branch ~access_token ~owner ~repo branch
+  let fetch_branch config access_token owner repo branch =
+    Terrat_github.fetch_branch ~config ~access_token ~owner ~repo branch
 
   let fetch_repo config schedule =
     let run =
@@ -247,15 +248,15 @@ module Dr = struct
       let open Abbs_future_combinators.Infix_result_monad in
       Terrat_github.get_installation_access_token config (CCInt64.to_int schedule.S.installation_id)
       >>= fun access_token ->
-      Terrat_github.fetch_repo ~access_token ~owner:schedule.S.owner ~repo:schedule.S.name
+      Terrat_github.fetch_repo ~config ~access_token ~owner:schedule.S.owner ~repo:schedule.S.name
       >>= fun repo ->
       let module R = Githubc2_components.Full_repository in
       let default_branch = repo.R.primary.R.Primary.default_branch in
       Abbs_future_combinators.Infix_result_app.(
         (fun repo_config tree branch -> (repo_config, tree, branch))
         <$> fetch_repo_config config access_token schedule.S.owner schedule.S.name default_branch
-        <*> fetch_tree access_token schedule.S.owner schedule.S.name default_branch
-        <*> fetch_branch access_token schedule.S.owner schedule.S.name default_branch)
+        <*> fetch_tree config access_token schedule.S.owner schedule.S.name default_branch
+        <*> fetch_branch config access_token schedule.S.owner schedule.S.name default_branch)
       >>= fun (repo_config, tree, branch) ->
       Abb.Future.return (Ok { Repo.repo_config; tree; branch })
     in
@@ -428,6 +429,7 @@ module R = struct
     Terrat_github_commit_check.create ~access_token ~owner ~repo ~ref_:sha commit_statuses
 
   let abort_work_manifest
+      ~config
       ~access_token
       ~db
       ~owner
@@ -444,6 +446,7 @@ module R = struct
     match pull_number with
     | Some pull_number ->
         Terrat_github.publish_comment
+          ~config
           ~access_token
           ~owner
           ~repo
@@ -484,11 +487,17 @@ module R = struct
           in
           aggregate @ dirspaces
         in
-        Terrat_github_commit_check.create ~access_token ~owner ~repo ~ref_:sha commit_statuses
+        Terrat_github_commit_check.create
+          ~config
+          ~access_token
+          ~owner
+          ~repo
+          ~ref_:sha
+          commit_statuses
     | None -> Abb.Future.return (Ok ())
 
   let run_workflow ~config ~access_token ~work_token ~owner ~repo ~branch ~workflow_id () =
-    let client = Terrat_github.create (`Token access_token) in
+    let client = Terrat_github.create config (`Token access_token) in
     Terrat_github.call
       client
       Githubc2_actions.Create_workflow_dispatch.(
@@ -542,7 +551,7 @@ module R = struct
         | (installation_id, owner, repo, branch, sha, pull_number, run_type) :: _ -> (
             load_access_token access_token_cache config installation_id
             >>= fun (access_token, access_token_cache) ->
-            Terrat_github.load_workflow ~access_token ~owner ~repo
+            Terrat_github.load_workflow ~config ~access_token ~owner ~repo
             >>= function
             | Some workflow_id -> (
                 (if CCOption.is_some pull_number then
@@ -551,7 +560,15 @@ module R = struct
                        Logs.info (fun m ->
                            m "GITHUB_EVALUATOR : %s : START_COMMIT_STATUSES : %f" request_id t))
                      (fun () ->
-                       start_commit_statuses ~access_token ~owner ~repo ~sha ~run_type ~dirspaces ())
+                       start_commit_statuses
+                         ~config
+                         ~access_token
+                         ~owner
+                         ~repo
+                         ~sha
+                         ~run_type
+                         ~dirspaces
+                         ())
                  else Abb.Future.return (Ok ()))
                 >>= fun () ->
                 let open Abb.Future.Infix_monad in
@@ -592,6 +609,7 @@ module R = struct
                           branch
                           (Githubc2_abb.show_call_err err));
                     abort_work_manifest
+                      ~config
                       ~access_token
                       ~db
                       ~owner
@@ -607,6 +625,7 @@ module R = struct
                 let open Abb.Future.Infix_monad in
                 Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : MISSING_WORKFLOW" request_id);
                 abort_work_manifest
+                  ~config
                   ~access_token
                   ~db
                   ~owner
@@ -910,9 +929,9 @@ module Ev = struct
           } -> Terrat_change.Diff.Move { filename; previous_filename }
         | _ -> failwith "nyi1")
 
-  let fetch_diff ~request_id ~access_token ~owner ~repo ~base_sha head_sha =
+  let fetch_diff ~config ~request_id ~access_token ~owner ~repo ~base_sha head_sha =
     let open Abbs_future_combinators.Infix_result_monad in
-    Terrat_github.compare_commits ~access_token ~owner ~repo (base_sha, head_sha)
+    Terrat_github.compare_commits ~config ~access_token ~owner ~repo (base_sha, head_sha)
     >>= fun files ->
     let diff = diff_of_github_diff files in
     Abb.Future.return (Ok diff)
@@ -961,6 +980,7 @@ module Ev = struct
       | Some ("team", value) -> (
           let open Abb.Future.Infix_monad in
           Terrat_github.get_team_membership_in_org
+            ~config:ctx.event.T.config
             ~access_token:ctx.event.T.access_token
             ~org:ctx.event.T.repository.Gw.Repository.owner.Gw.User.login
             ~team:value
@@ -974,6 +994,7 @@ module Ev = struct
           match CCList.find_idx CCFun.(fst %> CCString.equal value) repo_permission_levels with
           | Some (idx, _) -> (
               Terrat_github.get_repo_collaborator_permission
+                ~config:ctx.event.T.config
                 ~access_token:ctx.event.T.access_token
                 ~org:ctx.event.T.repository.Gw.Repository.owner.Gw.User.login
                 ~repo:ctx.event.T.repository.Gw.Repository.name
@@ -1095,6 +1116,7 @@ module Ev = struct
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
       Terrat_github.fetch_pull_request
+        ~config:event.T.config
         ~access_token:event.T.access_token
         ~owner
         ~repo
@@ -1129,6 +1151,7 @@ module Ev = struct
           let draft = CCOption.get_or ~default:false draft in
           Prmths.Counter.inc_one (Metrics.pull_request_mergeable_state_count mergeable_state);
           fetch_diff
+            ~config:event.T.config
             ~request_id:event.T.request_id
             ~access_token:event.T.access_token
             ~owner
@@ -1267,6 +1290,7 @@ module Ev = struct
     let owner = event.T.repository.Gw.Repository.owner.Gw.User.login in
     let repo = event.T.repository.Gw.Repository.name in
     Terrat_github.get_tree
+      ~config:event.T.config
       ~access_token:event.T.access_token
       ~owner
       ~repo
@@ -1293,6 +1317,7 @@ module Ev = struct
             m "GITHUB_EVALUATOR : %s : LIST_COMMIT_CHECKS : %f" (T.request_id event) t))
       (fun () ->
         Terrat_github_commit_check.list
+          ~config:event.T.config
           ~access_token:event.T.access_token
           ~owner
           ~repo
@@ -1315,6 +1340,7 @@ module Ev = struct
     let repo = event.T.repository.Gw.Repository.name in
     let pull_number = CCInt64.to_int pull_request.Terrat_pull_request.id in
     Terrat_github.Pull_request_reviews.list
+      ~config:event.T.config
       ~access_token:event.T.access_token
       ~owner
       ~repo
@@ -1429,6 +1455,7 @@ module Ev = struct
   let create_commit_checks event pull_request checks =
     let open Abb.Future.Infix_monad in
     Terrat_github_commit_check.create
+      ~config:event.T.config
       ~access_token:event.T.access_token
       ~owner:event.T.repository.Gw.Repository.owner.Gw.User.login
       ~repo:event.T.repository.Gw.Repository.name
@@ -1678,6 +1705,7 @@ module Ev = struct
   let fetch_repo_config_by_ref event ref_ =
     let open Abb.Future.Infix_monad in
     Terrat_github.fetch_repo_config
+      ~config:event.T.config
       ~python:(Terrat_config.python_exec event.T.config)
       ~access_token:event.T.access_token
       ~owner:event.T.repository.Gw.Repository.owner.Gw.User.login
@@ -1920,6 +1948,7 @@ module Ev = struct
   let publish_comment msg_type event body =
     let open Abb.Future.Infix_monad in
     Terrat_github.publish_comment
+      ~config:event.T.config
       ~access_token:event.T.access_token
       ~owner:event.T.repository.Gw.Repository.owner.Gw.User.login
       ~repo:event.T.repository.Gw.Repository.name
@@ -2525,6 +2554,7 @@ module Wm = struct
       run_type
 
     let maybe_update_commit_status
+        config
         access_token
         request_id
         run_id
@@ -2576,6 +2606,7 @@ module Wm = struct
                 in
                 let open Abb.Future.Infix_monad in
                 Terrat_github_commit_check.create
+                  ~config
                   ~access_token
                   ~owner
                   ~repo:repo_name
@@ -2595,12 +2626,12 @@ module Wm = struct
       | Terrat_work_manifest.State.Completed
       | Terrat_work_manifest.State.Aborted -> Abb.Future.return ()
 
-    let fetch_all_dirspaces ~python ~access_token ~owner ~repo hash =
+    let fetch_all_dirspaces ~config ~python ~access_token ~owner ~repo hash =
       let open Abbs_future_combinators.Infix_result_monad in
       Abbs_future_combinators.Infix_result_app.(
         (fun repo_config files -> (repo_config, files))
-        <$> Terrat_github.fetch_repo_config ~python ~access_token ~owner ~repo hash
-        <*> Terrat_github.get_tree ~access_token ~owner ~repo ~sha:hash ())
+        <$> Terrat_github.fetch_repo_config ~config ~python ~access_token ~owner ~repo hash
+        <*> Terrat_github.get_tree ~config ~access_token ~owner ~repo ~sha:hash ())
       >>= fun (repo_config, files) ->
       match Terrat_change_match.synthesize_dir_config ~file_list:files repo_config with
       | Ok dirs ->
@@ -2788,6 +2819,7 @@ module Wm = struct
         >>= fun access_token ->
         let open Abb.Future.Infix_monad in
         maybe_update_commit_status
+          config
           access_token
           request_id
           run_id
@@ -2930,6 +2962,7 @@ module Wm = struct
                 t.name
                 pull_number);
           Terrat_github.publish_comment
+            ~config:t.config
             ~access_token:t.access_token
             ~owner:t.owner
             ~repo:t.name
@@ -2973,6 +3006,7 @@ module Wm = struct
                             m "GITHUB_EVALUATOR : %s : FETCH_BASE_DIRSPACES : %f" request_id time))
                       (fun () ->
                         fetch_all_dirspaces
+                          ~config:t.config
                           ~python:(Terrat_config.python_exec t.config)
                           ~access_token:t.access_token
                           ~owner:t.owner
@@ -2984,6 +3018,7 @@ module Wm = struct
                             m "GITHUB_EVALUATOR : %s : FETCH_DIRSPACES : %f" request_id time))
                       (fun () ->
                         fetch_all_dirspaces
+                          ~config:t.config
                           ~python:(Terrat_config.python_exec t.config)
                           ~access_token:t.access_token
                           ~owner:t.owner
@@ -3365,7 +3400,7 @@ module Wm = struct
     let merge_pull_request t pull_number =
       let run =
         let open Abbs_future_combinators.Infix_result_monad in
-        let client = Terrat_github.create (`Token t.access_token) in
+        let client = Terrat_github.create t.config (`Token t.access_token) in
         Logs.info (fun m ->
             m
               "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %s : %s : %d"
@@ -3445,6 +3480,7 @@ module Wm = struct
               t.name
               pull_number);
         Terrat_github.fetch_pull_request
+          ~config:t.config
           ~access_token:t.access_token
           ~owner:t.owner
           ~repo:t.name
@@ -3465,7 +3501,7 @@ module Wm = struct
                   t.name
                   pull_number
                   branch);
-            let client = Terrat_github.create (`Token t.access_token) in
+            let client = Terrat_github.create t.config (`Token t.access_token) in
             Githubc2_abb.call
               client
               Githubc2_git.Delete_ref.(
@@ -3561,6 +3597,7 @@ module Wm = struct
     let fetch_repo_config t =
       let open Abb.Future.Infix_monad in
       Terrat_github.fetch_repo_config
+        ~config:t.config
         ~python:(Terrat_config.python_exec t.config)
         ~access_token:t.access_token
         ~owner:t.owner
@@ -4080,6 +4117,7 @@ module Wm = struct
         (Metrics.run_output_chars ~r:t.work_manifest.Wm.run_type ~c:compact_view)
         (CCFloat.of_int (CCString.length output));
       Terrat_github.publish_comment
+        ~config:t.config
         ~access_token:t.access_token
         ~owner:t.owner
         ~repo:t.name
@@ -4103,6 +4141,7 @@ module Wm = struct
                 t.request_id
                 (Terrat_github.show_publish_comment_err err));
           Terrat_github.publish_comment
+            ~config:t.config
             ~access_token:t.access_token
             ~owner:t.owner
             ~repo:t.name
@@ -4190,6 +4229,7 @@ module Wm = struct
         aggregate @ dirspaces
       in
       Terrat_github_commit_check.create
+        ~config:t.config
         ~access_token:t.access_token
         ~owner:t.owner
         ~repo:t.name
@@ -4449,6 +4489,7 @@ module Push = struct
       Terrat_github.get_installation_access_token config installation_id
       >>= fun access_token ->
       Terrat_github.fetch_repo_config
+        ~config
         ~python:(Terrat_config.python_exec config)
         ~access_token
         ~owner

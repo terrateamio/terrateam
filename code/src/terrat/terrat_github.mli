@@ -109,6 +109,7 @@ module Commit_status : sig
   end
 
   val create :
+    config:Terrat_config.t ->
     access_token:string ->
     owner:string ->
     repo:string ->
@@ -117,6 +118,7 @@ module Commit_status : sig
     (unit, [> create_err ]) result Abb.Future.t
 
   val list :
+    config:Terrat_config.t ->
     access_token:string ->
     owner:string ->
     repo:string ->
@@ -129,6 +131,7 @@ module Status_check : sig
   type list_err = Githubc2_abb.call_err [@@deriving show]
 
   val list :
+    config:Terrat_config.t ->
     access_token:string ->
     owner:string ->
     repo:string ->
@@ -145,6 +148,7 @@ module Pull_request_reviews : sig
   [@@deriving show]
 
   val list :
+    config:Terrat_config.t ->
     access_token:string ->
     owner:string ->
     repo:string ->
@@ -153,7 +157,7 @@ module Pull_request_reviews : sig
     (Githubc2_components.Pull_request_review.t list, [> list_err ]) result Abb.Future.t
 end
 
-val create : Githubc2_abb.Authorization.t -> Githubc2_abb.t
+val create : Terrat_config.t -> Githubc2_abb.Authorization.t -> Githubc2_abb.t
 
 (** Perform a call but with a retry *)
 val call :
@@ -170,12 +174,14 @@ val get_installation_access_token :
   (string, [> get_installation_access_token_err ]) result Abb.Future.t
 
 val fetch_repo :
+  config:Terrat_config.t ->
   access_token:string ->
   owner:string ->
   repo:string ->
   (Githubc2_components.Full_repository.t, [> fetch_repo_err ]) result Abb.Future.t
 
 val fetch_branch :
+  config:Terrat_config.t ->
   access_token:string ->
   owner:string ->
   repo:string ->
@@ -188,6 +194,7 @@ val fetch_branch :
    that is because Ocaml does not have great Yaml support so we piggyback on
    Python for converting to JSON. *)
 val fetch_repo_config :
+  config:Terrat_config.t ->
   python:string ->
   access_token:string ->
   owner:string ->
@@ -196,6 +203,7 @@ val fetch_repo_config :
   (Terrat_repo_config.Version_1.t, [> fetch_repo_config_err ]) result Abb.Future.t
 
 val fetch_pull_request_files :
+  config:Terrat_config.t ->
   access_token:string ->
   owner:string ->
   pull_number:int ->
@@ -203,6 +211,7 @@ val fetch_pull_request_files :
   (Githubc2_components.Diff_entry.t list, [> Githubc2_abb.call_err | `Error ]) result Abb.Future.t
 
 val fetch_changed_files :
+  config:Terrat_config.t ->
   access_token:string ->
   owner:string ->
   repo:string ->
@@ -212,6 +221,7 @@ val fetch_changed_files :
   Abb.Future.t
 
 val fetch_pull_request :
+  config:Terrat_config.t ->
   access_token:string ->
   owner:string ->
   repo:string ->
@@ -220,6 +230,7 @@ val fetch_pull_request :
   Abb.Future.t
 
 val compare_commits :
+  config:Terrat_config.t ->
   access_token:string ->
   owner:string ->
   repo:string ->
@@ -258,12 +269,14 @@ val compare_commits :
  *   (unit, [> verify_user_installation_access_err ]) result Abb.Future.t *)
 
 val load_workflow :
+  config:Terrat_config.t ->
   access_token:string ->
   owner:string ->
   repo:string ->
   (int option, [> get_installation_access_token_err ]) result Abb.Future.t
 
 val publish_comment :
+  config:Terrat_config.t ->
   access_token:string ->
   owner:string ->
   repo:string ->
@@ -273,6 +286,7 @@ val publish_comment :
 
 val react_to_comment :
   ?content:string ->
+  config:Terrat_config.t ->
   access_token:string ->
   owner:string ->
   repo:string ->
@@ -281,6 +295,7 @@ val react_to_comment :
   (unit, [> publish_reaction_err ]) result Abb.Future.t
 
 val get_tree :
+  config:Terrat_config.t ->
   access_token:string ->
   owner:string ->
   repo:string ->
@@ -289,6 +304,7 @@ val get_tree :
   (string list, [> get_tree_err ]) result Abb.Future.t
 
 val get_team_membership_in_org :
+  config:Terrat_config.t ->
   access_token:string ->
   org:string ->
   team:string ->
@@ -297,6 +313,7 @@ val get_team_membership_in_org :
   (bool, [> get_team_membership_in_org_err ]) result Abb.Future.t
 
 val get_repo_collaborator_permission :
+  config:Terrat_config.t ->
   access_token:string ->
   org:string ->
   repo:string ->

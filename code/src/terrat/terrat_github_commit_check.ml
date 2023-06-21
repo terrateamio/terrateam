@@ -8,8 +8,9 @@ type list_err =
   ]
 [@@deriving show]
 
-let create ~access_token ~owner ~repo ~ref_ checks =
+let create ~config ~access_token ~owner ~repo ~ref_ checks =
   Terrat_github.Commit_status.create
+    ~config
     ~access_token
     ~owner
     ~repo
@@ -29,13 +30,13 @@ let create ~access_token ~owner ~repo ~ref_ checks =
            ())
        checks)
 
-let list ~access_token ~owner ~repo ~ref_ () =
+let list ~config ~access_token ~owner ~repo ~ref_ () =
   let open Abb.Future.Infix_monad in
   let module S = Githubc2_components.Status in
   Abbs_future_combinators.Infix_result_app.(
     (fun statuses checks -> (statuses, checks))
-    <$> Terrat_github.Commit_status.list ~access_token ~owner ~repo ~sha:ref_ ()
-    <*> Terrat_github.Status_check.list ~access_token ~owner ~repo ~ref_ ())
+    <$> Terrat_github.Commit_status.list ~config ~access_token ~owner ~repo ~sha:ref_ ()
+    <*> Terrat_github.Status_check.list ~config ~access_token ~owner ~repo ~ref_ ())
   >>= function
   | Ok (statuses, checks) ->
       let statuses =

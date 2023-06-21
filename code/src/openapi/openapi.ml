@@ -85,16 +85,7 @@ module Request = struct
     in
     { meth; url; headers; body; responses }
 
-  let with_base_url url t =
-    {
-      t with
-      url =
-        t.url
-        |> CCFun.flip Uri.with_host (Uri.host url)
-        |> CCFun.flip Uri.with_scheme (Uri.scheme url)
-        |> CCFun.flip Uri.with_port (Uri.port url);
-    }
-
+  let with_base_url url t = { t with url = Uri.(of_string (to_string url ^ to_string t.url)) }
   let with_url url t = { t with url }
   let add_headers headers t = { t with headers = headers @ t.headers }
 end

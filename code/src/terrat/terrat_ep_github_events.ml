@@ -156,19 +156,19 @@ let run_event_evaluator storage event =
   let open Abb.Future.Infix_monad in
   Abb.Future.fork
     (let open Abb.Future.Infix_monad in
-    Abbs_time_it.run
-      (fun t ->
-        Logs.info (fun m -> m "GITHUB_EVENT : %s : EVALUATE_EVENT : %f" event.Event.request_id t))
-      (fun () -> Terrat_github_evaluator.Event.eval storage event)
-    >>= fun () ->
-    Abbs_time_it.run
-      (fun t ->
-        Logs.info (fun m -> m "GITHUB_EVENT : %s : GITHUB_RUNNER : %f" event.Event.request_id t))
-      (fun () ->
-        Terrat_github_evaluator.Runner.run
-          ~request_id:(Terrat_github_evaluator.S.Event.T.request_id event)
-          event.Event.config
-          storage))
+     Abbs_time_it.run
+       (fun t ->
+         Logs.info (fun m -> m "GITHUB_EVENT : %s : EVALUATE_EVENT : %f" event.Event.request_id t))
+       (fun () -> Terrat_github_evaluator.Event.eval storage event)
+     >>= fun () ->
+     Abbs_time_it.run
+       (fun t ->
+         Logs.info (fun m -> m "GITHUB_EVENT : %s : GITHUB_RUNNER : %f" event.Event.request_id t))
+       (fun () ->
+         Terrat_github_evaluator.Runner.run
+           ~request_id:(Terrat_github_evaluator.S.Event.T.request_id event)
+           event.Event.config
+           storage))
   >>= fun _ -> Abb.Future.return (Ok ())
 
 let perform_unlock_pr
@@ -226,6 +226,7 @@ let perform_unlock_pr
       Terrat_github.get_installation_access_token config installation_id
       >>= fun access_token ->
       Terrat_github.publish_comment
+        ~config
         ~access_token
         ~owner:repository.Gw.Repository.owner.Gw.User.login
         ~repo:repository.Gw.Repository.name
@@ -500,6 +501,7 @@ let process_issue_comment request_id config storage = function
               Logs.info (fun m -> m "GITHUB_EVENT : %s : REACT_TO_COMMENT : %f" request_id t))
             (fun () ->
               Terrat_github.react_to_comment
+                ~config
                 ~access_token
                 ~owner:repository.Gw.Repository.owner.Gw.User.login
                 ~repo:repository.Gw.Repository.name
@@ -529,6 +531,7 @@ let process_issue_comment request_id config storage = function
               Logs.info (fun m -> m "GITHUB_EVENT : %s : REACT_TO_COMMENT : %f" request_id t))
             (fun () ->
               Terrat_github.react_to_comment
+                ~config
                 ~access_token
                 ~owner:repository.Gw.Repository.owner.Gw.User.login
                 ~repo:repository.Gw.Repository.name
@@ -558,6 +561,7 @@ let process_issue_comment request_id config storage = function
               Logs.info (fun m -> m "GITHUB_EVENT : %s : REACT_TO_COMMENT : %f" request_id t))
             (fun () ->
               Terrat_github.react_to_comment
+                ~config
                 ~access_token
                 ~owner:repository.Gw.Repository.owner.Gw.User.login
                 ~repo:repository.Gw.Repository.name
@@ -587,6 +591,7 @@ let process_issue_comment request_id config storage = function
               Logs.info (fun m -> m "GITHUB_EVENT : %s : REACT_TO_COMMENT : %f" request_id t))
             (fun () ->
               Terrat_github.react_to_comment
+                ~config
                 ~access_token
                 ~owner:repository.Gw.Repository.owner.Gw.User.login
                 ~repo:repository.Gw.Repository.name
@@ -615,6 +620,7 @@ let process_issue_comment request_id config storage = function
               Terrat_github.get_installation_access_token config installation_id
               >>= fun access_token ->
               Terrat_github.publish_comment
+                ~config
                 ~access_token
                 ~owner:repository.Gw.Repository.owner.Gw.User.login
                 ~repo:repository.Gw.Repository.name
@@ -639,6 +645,7 @@ let process_issue_comment request_id config storage = function
           Terrat_github.get_installation_access_token config installation_id
           >>= fun access_token ->
           Terrat_github.react_to_comment
+            ~config
             ~content:"heart"
             ~access_token
             ~owner:repository.Gw.Repository.owner.Gw.User.login
@@ -660,6 +667,7 @@ let process_issue_comment request_id config storage = function
               Terrat_github.get_installation_access_token config installation_id
               >>= fun access_token ->
               Terrat_github.publish_comment
+                ~config
                 ~access_token
                 ~owner:repository.Gw.Repository.owner.Gw.User.login
                 ~repo:repository.Gw.Repository.name
@@ -680,6 +688,7 @@ let process_issue_comment request_id config storage = function
           Terrat_github.get_installation_access_token config installation_id
           >>= fun access_token ->
           Terrat_github.publish_comment
+            ~config
             ~access_token
             ~owner:repository.Gw.Repository.owner.Gw.User.login
             ~repo:repository.Gw.Repository.name
@@ -702,7 +711,7 @@ let process_issue_comment request_id config storage = function
       Prmths.Counter.inc_one (Metrics.comment_events_total "noop");
       Abb.Future.return (Ok ())
 
-let process_workflow_job_failure storage access_token run_id repository =
+let process_workflow_job_failure config storage access_token run_id repository =
   let open Abbs_future_combinators.Infix_result_monad in
   Pgsql_pool.with_conn storage ~f:(fun db ->
       (* Including the repository here just in case run id's are recycled,
@@ -734,6 +743,7 @@ let process_workflow_job_failure storage access_token run_id repository =
             pull_number);
       (* We successfully failed something *)
       Terrat_github.publish_comment
+        ~config
         ~access_token
         ~owner:repository.Gw.Repository.owner.Gw.User.login
         ~repo:repository.Gw.Repository.name
@@ -782,6 +792,7 @@ let process_workflow_job_failure storage access_token run_id repository =
                  m "GITHUB_EVENT : WORKFLOW_JOB_FAIL_COMMIT_STATUS : %s : %f" run_id t))
            (fun () ->
              Terrat_github.Commit_status.create
+               ~config
                ~access_token
                ~owner:repository.Gw.Repository.owner.Gw.User.login
                ~repo:repository.Gw.Repository.name
@@ -819,7 +830,7 @@ let process_workflow_job request_id config storage = function
       Terrat_github.get_installation_access_token config installation_id
       >>= fun access_token ->
       let open Abb.Future.Infix_monad in
-      process_workflow_job_failure storage access_token (CCInt.to_string run_id) repository
+      process_workflow_job_failure config storage access_token (CCInt.to_string run_id) repository
       >>= fun ret ->
       Abb.Future.fork (Terrat_github_evaluator.Runner.run ~request_id config storage)
       >>= fun _ -> Abb.Future.return ret

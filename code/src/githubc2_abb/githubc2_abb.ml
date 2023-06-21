@@ -57,6 +57,14 @@ type t = {
 }
 
 let create ?(user_agent = "Githubc2_abb") ?(base_url = base_url) auth =
+  let base_url =
+    base_url
+    |> Uri.to_string
+    |> CCString.rev
+    |> CCString.drop_while (( = ) '/')
+    |> CCString.rev
+    |> Uri.of_string
+  in
   {
     auth;
     base_url;

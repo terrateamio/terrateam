@@ -7,6 +7,7 @@ type list_err =
 [@@deriving show]
 
 val create :
+  config:Terrat_config.t ->
   access_token:string ->
   owner:string ->
   repo:string ->
@@ -15,6 +16,7 @@ val create :
   (unit, [> err ]) result Abb.Future.t
 
 val list :
+  config:Terrat_config.t ->
   access_token:string ->
   owner:string ->
   repo:string ->
