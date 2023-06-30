@@ -111,8 +111,23 @@ let links resp =
           ~default:""
           (Cohttp.Header.get (Cohttp.Header.of_list (Openapi.Response.headers resp)) "link")))
 
-let rec fold t ~init ~f req =
+let rec fold' t ~init ~f req =
   let open Abbs_future_combinators.Infix_result_monad in
+  Api.call Openapi.Request.(req |> add_headers t.headers)
+  >>= fun resp ->
+  f init resp
+  >>= fun init ->
+  match List.assoc_opt "next" (links resp) with
+  | Some next ->
+      let req = Openapi.Request.with_url next req in
+      fold' t ~init ~f req
+  | None -> Abb.Future.return (Ok init)
+
+let fold t ~init ~f req =
+  let open Abbs_future_combinators.Infix_result_monad in
+  (* With the initial call we want a standard call, with all URL replacement
+     operations.  However on the next call we want to use the exact URL that we
+     were given in pagination. *)
   call t req
   >>= fun resp ->
   f init resp
@@ -120,7 +135,7 @@ let rec fold t ~init ~f req =
   match List.assoc_opt "next" (links resp) with
   | Some next ->
       let req = Openapi.Request.with_url next req in
-      fold t ~init ~f req
+      fold' t ~init ~f req
   | None -> Abb.Future.return (Ok init)
 
 let collect_all t req =
