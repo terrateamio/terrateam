@@ -1,5 +1,5 @@
 type connect_err =
-  [ `He_connect_err
+  [ `He_connect_err of string * string
   | `He_cancelled_err
   ]
 [@@deriving show]
@@ -43,7 +43,9 @@ module Make (Abb : Abb_intf.S) = struct
           ~hints:[ Abb_intf.Socket.(Addrinfo_hints.Family Domain.Inet4) ]
           (Abb_intf.Socket.Addrinfo_query.Host (Domain_name.to_string host))
         >>| function
-        | Ok [] | Error _ -> `Event (Happy_eyeballs.Resolved_a_failed (host, ""))
+        | Ok [] -> `Event (Happy_eyeballs.Resolved_a_failed (host, "no hosts found"))
+        | Error (#Abb_intf.Errors.unexpected as err) ->
+            `Event (Happy_eyeballs.Resolved_a_failed (host, Abb_intf.Errors.show_unexpected err))
         | Ok addrs -> (
             addrs
             |> CCList.flat_map (function
@@ -54,14 +56,16 @@ module Make (Abb : Abb_intf.S) = struct
             |> Ipaddr.V4.Set.of_list
             |> function
             | set when Ipaddr.V4.Set.is_empty set ->
-                `Event (Happy_eyeballs.Resolved_a_failed (host, "No IPv6 addresses found"))
+                `Event (Happy_eyeballs.Resolved_a_failed (host, "no IPv6 addresses found"))
             | set -> `Event (Happy_eyeballs.Resolved_a (host, set))))
     | Happy_eyeballs.Resolve_aaaa host -> (
         Abb.Socket.getaddrinfo
           ~hints:[ Abb_intf.Socket.(Addrinfo_hints.Family Domain.Inet6) ]
           (Abb_intf.Socket.Addrinfo_query.Host (Domain_name.to_string host))
         >>| function
-        | Ok [] | Error _ -> `Event (Happy_eyeballs.Resolved_aaaa_failed (host, ""))
+        | Ok [] -> `Event (Happy_eyeballs.Resolved_aaaa_failed (host, "no hosts found"))
+        | Error (#Abb_intf.Errors.unexpected as err) ->
+            `Event (Happy_eyeballs.Resolved_aaaa_failed (host, Abb_intf.Errors.show_unexpected err))
         | Ok addrs -> (
             addrs
             |> CCList.flat_map (function
@@ -72,16 +76,24 @@ module Make (Abb : Abb_intf.S) = struct
             |> Ipaddr.V6.Set.of_list
             |> function
             | set when Ipaddr.V6.Set.is_empty set ->
-                `Event (Happy_eyeballs.Resolved_aaaa_failed (host, "No IPv6 addresses found"))
+                `Event (Happy_eyeballs.Resolved_aaaa_failed (host, "no IPv6 addresses found"))
             | set -> `Event (Happy_eyeballs.Resolved_aaaa (host, set))))
     | Happy_eyeballs.Connect (host, id, (ip, port)) -> (
         try_connect ip port
         >>= function
         | Ok tcp -> Abb.Future.return (`Ok ((ip, port), tcp))
-        | Error _ ->
-            Abb.Future.return (`Event (Happy_eyeballs.Connection_failed (host, id, (ip, port), "")))
-        )
-    | Happy_eyeballs.Connect_failed (_, _, _) -> Abb.Future.return `He_connect_err
+        | Error (#Abb_intf.Errors.tcp_sock_connect as err) ->
+            Abb.Future.return
+              (`Event
+                (Happy_eyeballs.Connection_failed
+                   (host, id, (ip, port), Abb_intf.Errors.show_tcp_sock_connect err)))
+        | Error (#Abb_intf.Errors.sock_create as err) ->
+            Abb.Future.return
+              (`Event
+                (Happy_eyeballs.Connection_failed
+                   (host, id, (ip, port), Abb_intf.Errors.show_sock_create err))))
+    | Happy_eyeballs.Connect_failed (domain, _, msg) ->
+        Abb.Future.return (`He_connect_err (Domain_name.to_string domain, msg))
     | Happy_eyeballs.Connect_cancelled (_, _) -> Abb.Future.return `He_cancelled_err
 
   (* Each action is a future whose result is the application of {!act}.  We wait
@@ -91,8 +103,8 @@ module Make (Abb : Abb_intf.S) = struct
     let open Abb.Future.Infix_monad in
     Abb_fut_comb.firstl actions
     >>= function
-    | `He_connect_err, futs ->
-        Abb_fut_comb.List.iter_par ~f:Abb.Future.abort futs >>| fun () -> Error `He_connect_err
+    | (`He_connect_err _ as err), futs ->
+        Abb_fut_comb.List.iter_par ~f:Abb.Future.abort futs >>| fun () -> Error err
     | `He_cancelled_err, futs ->
         Abb_fut_comb.List.iter_par ~f:Abb.Future.abort futs >>| fun () -> Error `He_cancelled_err
     | `Event ev, futs ->
@@ -110,7 +122,7 @@ module Make (Abb : Abb_intf.S) = struct
         let ts = Duration.(to_us_64 (of_f ts)) in
         let he, cont, actions = Happy_eyeballs.timer he ts in
         match cont with
-        | `Suspend -> Abb.Future.return (Error `He_connect_err)
+        | `Suspend -> Abb.Future.return (Error (`He_connect_err ("", "timeout")))
         | `Act ->
             let timer = Abb.Sys.sleep (Duration.to_f timer_duration) >>| fun () -> `Timeout in
             do_step he timer_duration (timer :: futs))

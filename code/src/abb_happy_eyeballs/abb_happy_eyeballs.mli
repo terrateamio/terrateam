@@ -1,5 +1,5 @@
 type connect_err =
-  [ `He_connect_err
+  [ `He_connect_err of string * string
   | `He_cancelled_err
   ]
 [@@deriving show]
