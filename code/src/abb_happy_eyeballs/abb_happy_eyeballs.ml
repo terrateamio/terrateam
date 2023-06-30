@@ -1,4 +1,10 @@
-type connect_err = [ `He_connect_err ] [@@deriving show]
+type connect_err =
+  [ `He_connect_err
+  | `He_cancelled_err
+  ]
+[@@deriving show]
+
+let default_connect_timeout = Duration.of_ms 100
 
 module Make (Abb : Abb_intf.S) = struct
   module Abb_fut_comb = Abb_future_combinators.Make (Abb.Future)
@@ -76,7 +82,7 @@ module Make (Abb : Abb_intf.S) = struct
             Abb.Future.return (`Event (Happy_eyeballs.Connection_failed (host, id, (ip, port), "")))
         )
     | Happy_eyeballs.Connect_failed (_, _, _) -> Abb.Future.return `He_connect_err
-    | Happy_eyeballs.Connect_cancelled (_, _) -> Abb.Future.return `He_connect_err
+    | Happy_eyeballs.Connect_cancelled (_, _) -> Abb.Future.return `He_cancelled_err
 
   (* Each action is a future whose result is the application of {!act}.  We wait
      for the first response, and depending on what that is, we continue on
@@ -87,6 +93,8 @@ module Make (Abb : Abb_intf.S) = struct
     >>= function
     | `He_connect_err, futs ->
         Abb_fut_comb.List.iter_par ~f:Abb.Future.abort futs >>| fun () -> Error `He_connect_err
+    | `He_cancelled_err, futs ->
+        Abb_fut_comb.List.iter_par ~f:Abb.Future.abort futs >>| fun () -> Error `He_cancelled_err
     | `Event ev, futs ->
         Abb.Sys.monotonic ()
         >>= fun ts ->
@@ -123,7 +131,7 @@ module Make (Abb : Abb_intf.S) = struct
     let he = Happy_eyeballs.create ts in
     let _, id = Happy_eyeballs.Waiter_map.register "" Happy_eyeballs.Waiter_map.empty in
     let he, actions = he_connect he ts id in
-    run he (Duration.of_ms 10) actions
+    run he default_connect_timeout actions
 
   let connect host ports =
     (* Happy_eyeballs has a different approach depending on if we're connecting
