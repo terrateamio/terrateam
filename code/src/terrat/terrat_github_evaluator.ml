@@ -1318,6 +1318,7 @@ module Ev = struct
       (fun () ->
         Terrat_github_commit_check.list
           ~config:event.T.config
+          ~log_id:(T.request_id event)
           ~access_token:event.T.access_token
           ~owner
           ~repo
