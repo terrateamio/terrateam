@@ -504,9 +504,17 @@ module Commit_status = struct
     Prmths.Counter.inc_one (Metrics.fn_call_total "commit_status_list");
     let open Abb.Future.Infix_monad in
     let client = create_client config (`Token access_token) in
-    Githubc2_abb.collect_all
-      client
-      Githubc2_repos.List_commit_statuses_for_ref.(make Parameters.(make ~owner ~repo ~ref_:sha ()))
+    Abbs_future_combinators.retry
+      ~f:(fun () ->
+        Githubc2_abb.collect_all
+          client
+          Githubc2_repos.List_commit_statuses_for_ref.(
+            make Parameters.(make ~owner ~repo ~ref_:sha ())))
+      ~while_:(Abbs_future_combinators.finite_tries 3 CCResult.is_error)
+      ~betwixt:
+        (Abbs_future_combinators.series ~start:1.5 ~step:(( *. ) 1.5) (fun n _ ->
+             Prmths.Counter.inc_one Metrics.call_retries_total;
+             Abb.Sys.sleep n))
     >>= function
     | Ok _ as ret -> Abb.Future.return ret
     | Error #list_err as err -> Abb.Future.return err
