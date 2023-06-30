@@ -30,13 +30,24 @@ let create ~config ~access_token ~owner ~repo ~ref_ checks =
            ())
        checks)
 
-let list ~config ~access_token ~owner ~repo ~ref_ () =
+let list_commit_statuses ~config ~log_id ~access_token ~owner ~repo ~sha () =
+  Abbs_time_it.run
+    (fun t ->
+      Logs.info (fun m -> m "GITHUB_COMMIT_CHECK : %s : LIST_COMMIT_STATUSES : %f" log_id t))
+    (fun () -> Terrat_github.Commit_status.list ~config ~access_token ~owner ~repo ~sha ())
+
+let list_status_checks ~config ~log_id ~access_token ~owner ~repo ~ref_ () =
+  Abbs_time_it.run
+    (fun t -> Logs.info (fun m -> m "GITHUB_COMMIT_CHECK : %s : LIST_STATUS_CHECKS : %f" log_id t))
+    (fun () -> Terrat_github.Status_check.list ~config ~access_token ~owner ~repo ~ref_ ())
+
+let list ~config ~log_id ~access_token ~owner ~repo ~ref_ () =
   let open Abb.Future.Infix_monad in
   let module S = Githubc2_components.Status in
   Abbs_future_combinators.Infix_result_app.(
     (fun statuses checks -> (statuses, checks))
-    <$> Terrat_github.Commit_status.list ~config ~access_token ~owner ~repo ~sha:ref_ ()
-    <*> Terrat_github.Status_check.list ~config ~access_token ~owner ~repo ~ref_ ())
+    <$> list_commit_statuses ~config ~log_id ~access_token ~owner ~repo ~sha:ref_ ()
+    <*> list_status_checks ~config ~log_id ~access_token ~owner ~repo ~ref_ ())
   >>= function
   | Ok (statuses, checks) ->
       let statuses =

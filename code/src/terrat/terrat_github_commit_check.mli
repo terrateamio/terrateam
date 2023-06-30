@@ -17,6 +17,7 @@ val create :
 
 val list :
   config:Terrat_config.t ->
+  log_id:string ->
   access_token:string ->
   owner:string ->
   repo:string ->
