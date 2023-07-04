@@ -400,7 +400,8 @@ let rec get_tree ~config ~access_token ~owner ~repo ~sha () =
                    let path =
                      CCOption.get_exn_or "get_tree_path" item.Items.primary.Items.Primary.path
                    in
-                   Abb.Future.return (Ok ([ path ] @ files @ fs))
+                   let fs = CCList.map (Filename.concat path) fs in
+                   Abb.Future.return (Ok (files @ fs))
                | Some "blob" ->
                    Abb.Future.return
                      (Ok

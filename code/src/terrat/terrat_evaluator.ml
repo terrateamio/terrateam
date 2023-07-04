@@ -1055,6 +1055,11 @@ module Make (S : S) = struct
                        ~repo_tree
                        ())
                   >>= fun (tag_query_matches, all_matches) ->
+                  Logs.info (fun m ->
+                      m
+                        "EVALUATOR : %s : NUM_MATCHES : %d"
+                        (S.Event.T.request_id event)
+                        (CCList.length all_matches));
                   let dirs =
                     all_matches
                     |> CCList.map
