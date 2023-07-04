@@ -461,7 +461,11 @@ module type S = sig
       type t
 
       val kind : t -> (Kind.Pull_request.t, Kind.Drift.t) Terrat_work_manifest.Kind.t
-      val merge_pull_request : t -> Kind.Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
+
+      val merge_pull_request :
+        t ->
+        Kind.Pull_request.t ->
+        (unit, [> `Error | `Error_with_msg of string ]) result Abb.Future.t
 
       val delete_pull_request_branch :
         t -> Kind.Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
@@ -481,6 +485,9 @@ module type S = sig
         Uuidm.t ->
         Terrat_api_work_manifest.Results.Request_body.t ->
         (t, [> `Error ]) result Abb.Future.t
+
+      val publish_msg_automerge :
+        t -> Kind.Pull_request.t -> string -> (unit, [> `Error ]) result Abb.Future.t
     end
   end
 end
@@ -1820,11 +1827,26 @@ module Make (S : S) = struct
                   >>= fun repo_config ->
                   match automerge_config repo_config with
                   | Some Terrat_repo_config.Automerge.{ enabled = true; delete_branch } -> (
+                      let open Abb.Future.Infix_monad in
                       S.Work_manifest.Results.merge_pull_request t pull_request
                       >>= function
-                      | () when delete_branch ->
+                      | Ok () when delete_branch ->
                           S.Work_manifest.Results.delete_pull_request_branch t pull_request
-                      | () -> Abb.Future.return (Ok ()))
+                      | Ok () -> Abb.Future.return (Ok ())
+                      | Error (`Error_with_msg msg) -> (
+                          S.Work_manifest.Results.publish_msg_automerge t pull_request msg
+                          >>= function
+                          | Ok () ->
+                              (* If we've managed to tell the user that this
+                                 happened, consider this a success so we do not
+                                 fail the API call.  Otherwise the action could
+                                 retry. *)
+                              Abb.Future.return (Ok ())
+                          | Error `Error as err ->
+                              Logs.err (fun m ->
+                                  m "EVALUATOR : %s : PUBLISH_MSG_AUTOMERGE" request_id);
+                              Abb.Future.return err)
+                      | Error `Error as err -> Abb.Future.return err)
                   | _ -> Abb.Future.return (Ok ()))
               | _ :: _ -> Abb.Future.return (Ok ()))
           | Terrat_work_manifest.Kind.Drift drift -> (

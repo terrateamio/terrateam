@@ -3360,6 +3360,8 @@ module Wm = struct
         "github_comment_too_large.tmpl"
         |> Terrat_files_tmpl.read
         |> CCOption.get_exn_or "github_comment_too_large.tmpl"
+
+      let automerge_error = read "github_automerge_error.tmpl"
     end
 
     module Workflow_step_output = struct
@@ -3461,6 +3463,17 @@ module Wm = struct
                 Githubc2_abb.pp_call_err
                 err);
           Abb.Future.return (Error `Error)
+      | Error
+          (`Method_not_allowed
+             Githubc2_pulls.Merge.Responses.Method_not_allowed.
+               { primary = Primary.{ message = Some message; _ }; _ } as err) ->
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %a"
+                t.request_id
+                Githubc2_pulls.Merge.Responses.pp
+                err);
+          Abb.Future.return (Error (`Error_with_msg message))
       | Error (#Githubc2_pulls.Merge.Responses.t as err) ->
           Logs.err (fun m ->
               m
@@ -4366,6 +4379,34 @@ module Wm = struct
                 request_id
                 Uuidm.pp
                 work_manifest_id);
+          Abb.Future.return (Error `Error)
+
+    let publish_msg_automerge t pull_number msg =
+      let kv = Snabela.Kv.(Map.of_list [ ("msg", string msg) ]) in
+      match Snabela.apply Tmpl.automerge_error kv with
+      | Ok body -> (
+          let open Abb.Future.Infix_monad in
+          Terrat_github.publish_comment
+            ~config:t.config
+            ~access_token:t.access_token
+            ~owner:t.owner
+            ~repo:t.name
+            ~pull_number
+            body
+          >>= function
+          | Ok () -> Abb.Future.return (Ok ())
+          | Error (#Terrat_github.publish_comment_err as err) ->
+              Prmths.Counter.inc_one Metrics.github_errors_total;
+              Logs.err (fun m ->
+                  m
+                    "GITHUB_EVALUATOR : %s : PUBLISH_MSG_AUTOMERGE : %a"
+                    t.request_id
+                    Terrat_github.pp_publish_comment_err
+                    err);
+              Abb.Future.return (Error `Error))
+      | Error (#Snabela.err as err) ->
+          Logs.err (fun m ->
+              m "GITHUB_EVALUATOR : %s : PUBLISH_MSG_AUTOMERGE : %a" t.request_id Snabela.pp_err err);
           Abb.Future.return (Error `Error)
   end
 end

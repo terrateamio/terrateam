@@ -330,7 +330,11 @@ module type S = sig
       type t
 
       val kind : t -> (Kind.Pull_request.t, Kind.Drift.t) Terrat_work_manifest.Kind.t
-      val merge_pull_request : t -> Kind.Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
+
+      val merge_pull_request :
+        t ->
+        Kind.Pull_request.t ->
+        (unit, [> `Error | `Error_with_msg of string ]) result Abb.Future.t
 
       val delete_pull_request_branch :
         t -> Kind.Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
@@ -350,6 +354,9 @@ module type S = sig
         Uuidm.t ->
         Terrat_api_work_manifest.Results.Request_body.t ->
         (t, [> `Error ]) result Abb.Future.t
+
+      val publish_msg_automerge :
+        t -> Kind.Pull_request.t -> string -> (unit, [> `Error ]) result Abb.Future.t
     end
   end
 end
