@@ -1669,12 +1669,16 @@ module Make (S : S) = struct
                   work_manifest_id
                   work_manifest_initiate.I.run_id
                   work_manifest_initiate.I.sha);
-            S.Work_manifest.Initiate.initiate_work_manifest
-              ~request_id
-              ~work_manifest_id
-              config
-              db
-              work_manifest_initiate
+            Abbs_time_it.run
+              (fun t ->
+                Logs.info (fun m -> m "EVALUATOR : %s : INITIATE_WORK_MANIFEST : %f" request_id t))
+              (fun () ->
+                S.Work_manifest.Initiate.initiate_work_manifest
+                  ~request_id
+                  ~work_manifest_id
+                  config
+                  db
+                  work_manifest_initiate)
             >>= function
             | None -> Abb.Future.return (Ok None)
             | Some t -> (

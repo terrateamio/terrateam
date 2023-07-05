@@ -2790,7 +2790,11 @@ module Wm = struct
     let initiate_work_manifest ~request_id ~work_manifest_id config db work_manifest_initiate =
       let run =
         let open Abbs_future_combinators.Infix_result_monad in
-        fetch_and_initiate_work_manifest db work_manifest_id work_manifest_initiate
+        Abbs_time_it.run
+          (fun t ->
+            Logs.info (fun m ->
+                m "GITHUB_EVALUATOR : %s : FETCH_AND_INITIATE_WORK_MANIFEST : %f" request_id t))
+          (fun () -> fetch_and_initiate_work_manifest db work_manifest_id work_manifest_initiate)
         >>= fun work_manifest ->
         let module Wm = Terrat_work_manifest in
         Pgsql_io.Prepared_stmt.fetch
@@ -2994,6 +2998,7 @@ module Wm = struct
       match work_manifest.Wm.run_type with
       | Wm.Run_type.Plan | Wm.Run_type.Autoplan ->
           let open Abbs_future_combinators.Infix_result_monad in
+          Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : FETCH_ALL_DIRSPACES" request_id);
           Abbs_time_it.run
             (fun t ->
               Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : FETCH_ALL_DIRSPACES : %f" request_id t))
