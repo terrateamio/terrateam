@@ -7,8 +7,15 @@ module State : sig
     [@@deriving show]
   end
 
+  module Open_status : sig
+    type t =
+      | Mergeable
+      | Merge_conflict
+    [@@deriving show]
+  end
+
   type t =
-    | Open
+    | Open of Open_status.t
     | Closed  (** The PR has been closed without merging *)
     | Merged of Merged.t  (** The PR has been closed by merging, we want the commit id *)
   [@@deriving show]
@@ -27,7 +34,7 @@ type ('id, 'diff, 'checks) t = {
   hash : string;
   id : 'id;
   mergeable : bool option;
-  provisional_merge_sha : string;
+  provisional_merge_sha : string option;
   state : State.t;
 }
 [@@deriving show]

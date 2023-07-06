@@ -297,9 +297,7 @@ module type S = sig
       result
       Abb.Future.t
 
-    val fetch_pull_request :
-      T.t -> (Pull_request.t, [> `Merge_conflict | `Error ]) result Abb.Future.t
-
+    val fetch_pull_request : T.t -> (Pull_request.t, [> `Error ]) result Abb.Future.t
     val fetch_tree : T.t -> Pull_request.t -> (string list, [> `Error ]) result Abb.Future.t
 
     val check_apply_requirements :
@@ -798,21 +796,23 @@ module Make (S : S) = struct
              || not (Access_control_engine.plan_require_all_dirspace_access access_control) -> (
           (* All have passed or any that we do not require all to pass *)
           let matches = pass in
-          match (tf_mode, matches) with
-          | `Auto, [] ->
+          match (S.Event.Pull_request.state pull_request, tf_mode, matches) with
+          | _, `Auto, [] ->
               Logs.info (fun m ->
                   m
                     "EVALUATOR : %s : NOOP : AUTOPLAN_NO_MATCHES : draft=%s"
                     (S.Event.T.request_id event)
                     (Bool.to_string (S.Event.Pull_request.is_draft_pr pull_request)));
               Abb.Future.return (Ok None)
-          | _, [] ->
+          | _, _, [] ->
               Logs.info (fun m ->
                   m
                     "EVALUATOR : %s : NOOP : PLAN_NO_MATCHING_DIRSPACES"
                     (S.Event.T.request_id event));
               Abb.Future.return (Ok (Some Event.Msg.Plan_no_matching_dirspaces))
-          | _, _ ->
+          | Terrat_pull_request.State.(Open Open_status.Merge_conflict), _, _ ->
+              Abb.Future.return (Error `Merge_conflict)
+          | _, _, _ ->
               let open Abbs_future_combinators.Infix_result_monad in
               create_and_store_work_manifest
                 db
@@ -1358,7 +1358,7 @@ module Make (S : S) = struct
           if repo_default_config.Terrat_repo_config.Version_1.enabled then (
             let access_control = Access_control_engine.make event repo_default_config in
             match S.Event.Pull_request.state pull_request with
-            | Terrat_pull_request.State.(Open | Merged _) -> (
+            | Terrat_pull_request.State.(Open _ | Merged _) -> (
                 let open Abb.Future.Infix_monad in
                 Access_control_engine.eval_repo_config
                   access_control

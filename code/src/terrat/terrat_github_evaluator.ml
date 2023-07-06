@@ -948,7 +948,11 @@ module Ev = struct
     let mergeable t = t.Terrat_pull_request.mergeable
     let is_draft_pr t = t.Terrat_pull_request.draft
     let branch_name t = t.Terrat_pull_request.branch_name
-    let change_hash t = t.Terrat_pull_request.provisional_merge_sha
+
+    let change_hash t =
+      CCOption.get_or
+        ~default:t.Terrat_pull_request.hash
+        t.Terrat_pull_request.provisional_merge_sha
   end
 
   module Src = struct
@@ -1085,7 +1089,7 @@ module Ev = struct
     let module Pr = Terrat_pull_request in
     let merged_sha, merged_at, state =
       match pull_request.Pr.state with
-      | Pr.State.Open -> (None, None, "open")
+      | Pr.State.Open _ -> (None, None, "open")
       | Pr.State.Closed -> (None, None, "closed")
       | Pr.State.(Merged { Merged.merged_hash; merged_at }) ->
           (Some merged_hash, Some merged_at, "merged")
@@ -1136,7 +1140,7 @@ module Ev = struct
                 state;
                 merged;
                 merged_at;
-                merge_commit_sha = Some merge_commit_sha;
+                merge_commit_sha;
                 mergeable_state;
                 mergeable;
                 draft;
@@ -1157,7 +1161,7 @@ module Ev = struct
             ~owner
             ~repo
             ~base_sha
-            merge_commit_sha
+            (CCOption.get_or ~default:head_sha merge_commit_sha)
           >>= fun diff ->
           Logs.debug (fun m ->
               m
@@ -1166,7 +1170,7 @@ module Ev = struct
                 event.T.request_id
                 (Bool.to_string merged)
                 mergeable_state
-                merge_commit_sha);
+                (CCOption.get_or ~default:"" merge_commit_sha));
           Abb.Future.return
             (Ok
                ( mergeable_state,
@@ -1179,12 +1183,13 @@ module Ev = struct
                      hash = head_sha;
                      id = CCInt64.of_int event.T.pull_number;
                      state =
-                       (match (state, merged, merged_at) with
-                       | "open", _, _ -> State.Open
-                       | "closed", true, Some merged_at ->
+                       (match (merge_commit_sha, state, merged, merged_at) with
+                       | Some _, "open", _, _ -> State.(Open Open_status.Mergeable)
+                       | None, "open", _, _ -> State.(Open Open_status.Merge_conflict)
+                       | Some merge_commit_sha, "closed", true, Some merged_at ->
                            State.(Merged Merged.{ merged_hash = merge_commit_sha; merged_at })
-                       | "closed", false, _ -> State.Closed
-                       | _, _, _ -> assert false);
+                       | _, "closed", false, _ -> State.Closed
+                       | _, _, _, _ -> assert false);
                      checks =
                        merged
                        || CCList.mem
@@ -1195,7 +1200,6 @@ module Ev = struct
                      provisional_merge_sha = merge_commit_sha;
                      draft;
                    } ))
-      | `OK _ -> Abb.Future.return (Error `Merge_conflict)
       | (`Not_found _ | `Internal_server_error _ | `Not_modified | `Service_unavailable _) as err ->
           Logs.err (fun m ->
               m
@@ -1209,12 +1213,8 @@ module Ev = struct
     run
     >>= function
     | Ok _ as ret -> Abb.Future.return ret
-    | Error
-        ( `Merge_conflict
-        | `Not_found _
-        | `Internal_server_error _
-        | `Not_modified
-        | `Service_unavailable _ ) as err -> Abb.Future.return err
+    | Error (`Not_found _ | `Internal_server_error _ | `Not_modified | `Service_unavailable _) as
+      err -> Abb.Future.return err
     | Error `Error ->
         Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
@@ -1251,7 +1251,7 @@ module Ev = struct
       ~f:(fun () -> fetch_pull_request' event)
       ~while_:
         (Abbs_future_combinators.finite_tries fetch_pull_request_tries (function
-            | Error _ | Ok ("unknown", Terrat_pull_request.{ state = State.Open; _ }) -> true
+            | Error _ | Ok ("unknown", Terrat_pull_request.{ state = State.Open _; _ }) -> true
             | Ok _ -> false))
       ~betwixt:
         (Abbs_future_combinators.series ~start:2.0 ~step:(( *. ) 1.5) (fun n _ ->
@@ -1259,7 +1259,6 @@ module Ev = struct
              Abb.Sys.sleep (CCFloat.min n 8.0)))
     >>= function
     | Ok (_, ret) -> Abb.Future.return (Ok ret)
-    | Error `Merge_conflict as err -> Abb.Future.return err
     | Error (`Not_found _)
     | Error (`Internal_server_error _)
     | Error `Not_modified
@@ -1411,14 +1410,14 @@ module Ev = struct
                       id = pull_number;
                       state =
                         (match (pr_state, merged_hash, merged_at) with
-                        | "open", _, _ -> Terrat_pull_request.State.Open
+                        | "open", _, _ -> Terrat_pull_request.State.(Open Open_status.Mergeable)
                         | "closed", _, _ -> Terrat_pull_request.State.Closed
                         | "merged", Some merged_hash, Some merged_at ->
                             Terrat_pull_request.State.(Merged Merged.{ merged_hash; merged_at })
                         | _ -> assert false);
                       checks = true;
                       mergeable = None;
-                      provisional_merge_sha = "";
+                      provisional_merge_sha = None;
                       draft = false;
                     }
                 in
@@ -1819,7 +1818,7 @@ module Ev = struct
       let module St = Terrat_pull_request.State in
       match Pull_request.state pull_request with
       | St.Merged _ -> true
-      | St.Open | St.Closed -> false
+      | St.Open _ | St.Closed -> false
     in
     (* If it's merged, nothing should stop an apply because it's already
        merged. *)
@@ -1924,14 +1923,14 @@ module Ev = struct
               id = pull_number;
               state =
                 (match (state, merged_hash, merged_at) with
-                | "open", _, _ -> Terrat_pull_request.State.Open
+                | "open", _, _ -> Terrat_pull_request.State.(Open Open_status.Mergeable)
                 | "closed", _, _ -> Terrat_pull_request.State.Closed
                 | "merged", Some merged_hash, Some merged_at ->
                     Terrat_pull_request.State.(Merged Merged.{ merged_hash; merged_at })
                 | _ -> assert false);
               checks = true;
               mergeable = None;
-              provisional_merge_sha = "";
+              provisional_merge_sha = None;
               draft = false;
             } ))
       (CCInt64.of_int event.T.repository.Gw.Repository.id)
@@ -2926,14 +2925,14 @@ module Wm = struct
                     id = pull_number;
                     state =
                       (match (state, merged_hash, merged_at) with
-                      | "open", _, _ -> Terrat_pull_request.State.Open
+                      | "open", _, _ -> Terrat_pull_request.State.(Open Open_status.Mergeable)
                       | "closed", _, _ -> Terrat_pull_request.State.Closed
                       | "merged", Some merged_hash, Some merged_at ->
                           Terrat_pull_request.State.(Merged Merged.{ merged_hash; merged_at })
                       | _ -> assert false);
                     checks = ();
                     mergeable = None;
-                    provisional_merge_sha = "";
+                    provisional_merge_sha = None;
                     draft = false;
                   } ))
             t.repository_id

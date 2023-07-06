@@ -7,8 +7,15 @@ module State = struct
     [@@deriving show]
   end
 
+  module Open_status = struct
+    type t =
+      | Mergeable
+      | Merge_conflict
+    [@@deriving show]
+  end
+
   type t =
-    | Open
+    | Open of Open_status.t
     | Closed
     | Merged of Merged.t
   [@@deriving show]
@@ -24,7 +31,7 @@ type ('id, 'diff, 'checks) t = {
   hash : string;
   id : 'id;
   mergeable : bool option;
-  provisional_merge_sha : string;
+  provisional_merge_sha : string option;
   state : State.t;
 }
 [@@deriving show]

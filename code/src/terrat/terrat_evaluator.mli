@@ -164,9 +164,7 @@ module type S = sig
       result
       Abb.Future.t
 
-    val fetch_pull_request :
-      T.t -> (Pull_request.t, [> `Merge_conflict | `Error ]) result Abb.Future.t
-
+    val fetch_pull_request : T.t -> (Pull_request.t, [> `Error ]) result Abb.Future.t
     val fetch_tree : T.t -> Pull_request.t -> (string list, [> `Error ]) result Abb.Future.t
 
     val check_apply_requirements :
