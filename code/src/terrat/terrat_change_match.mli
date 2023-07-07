@@ -12,10 +12,6 @@ module Dirs : sig
   type t [@@deriving show]
 end
 
-(** Thrown when an input [diff] or [dirspace] has no matching entry in the
-   [Dirs] config.  *)
-exception No_matching_dir of string
-
 (** Given a list of files in the repository and a version of the config,
     construct the [dirs] configuration that matches all of the files.
     [file_list] is a list of all files to use to synthesize the directories.

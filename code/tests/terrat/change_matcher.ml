@@ -944,36 +944,15 @@ let test_module_dir_with_root_dir =
       let changes = Terrat_change_match.match_diff_list dirs diff in
       assert (CCList.length changes = 1))
 
-let test_large_directory_count =
-  Oth.test ~name:"Test large directory count" (fun _ ->
-      let repo_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc
-               [
-                 ("when_modified", `Assoc [ ("file_patterns", `List []) ]);
-                 ( "dirs",
-                   `Assoc
-                     [
-                       ( "ec2/**/*.tf",
-                         `Assoc
-                           [
-                             ( "when_modified",
-                               `Assoc
-                                 [
-                                   ( "file_patterns",
-                                     `List [ `String "${DIR}/*.tf"; `String "${DIR}/*.tfvars" ] );
-                                 ] );
-                           ] );
-                     ] );
-               ]))
-      in
-      (* let diff = Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" } ] in *)
+let test_large_directory_count_unmatching_files =
+  Oth.test ~name:"Test large directory count unmatching files" (fun _ ->
+      let num_dirs = 4000 in
+      let repo_config = CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson (`Assoc [])) in
       let file_list =
         "ec2/ec2.tf"
         :: CCList.flat_map
-             (fun i -> CCList.map (Printf.sprintf "tf/%04d/tf_%d.tf" i) (CCList.range 0 10))
-             (CCList.range 0 4000)
+             (fun i -> CCList.map (Printf.sprintf "other/%04d/bar_%d.txt" i) (CCList.range 0 10))
+             (CCList.range 0 num_dirs)
       in
       let diff = CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) file_list in
       let dirs =
@@ -981,6 +960,58 @@ let test_large_directory_count =
       in
       let changes = Terrat_change_match.match_diff_list dirs diff in
       assert (CCList.length changes = 1))
+
+let test_large_directory_count_matching_files =
+  Oth.test ~name:"Test large directory count matching files" (fun _ ->
+      (* Number of operations = num_dirs * num_files.  Its not exactly that
+         because each directory is not equal amounts of work. *)
+      let num_dirs = 1000 in
+      let num_files_per_dir = 10 in
+      let repo_config = CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson (`Assoc [])) in
+      let file_list =
+        "ec2/ec2.tf"
+        :: CCList.flat_map
+             (fun i ->
+               CCList.map (Printf.sprintf "tf/%04d/bar_%d.tf" i) (CCList.range 1 num_files_per_dir))
+             (CCList.range 1 num_dirs)
+      in
+      let diff = CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) file_list in
+      let dirs =
+        CCResult.get_exn (Terrat_change_match.synthesize_dir_config ~file_list repo_config)
+      in
+      let changes = Terrat_change_match.match_diff_list dirs diff in
+      assert (CCList.length changes = 1 + num_dirs))
+
+let test_large_directory_count_non_default_when_modified =
+  Oth.test ~name:"Test large directory count non default when_modified" (fun _ ->
+      (* Number of operations = num_dirs * num_files.  Its not exactly that
+         because each directory is not equal amounts of work. *)
+      let num_dirs = 1000 in
+      let num_files_per_dir = 10 in
+      let repo_config =
+        CCResult.get_exn
+          (Terrat_repo_config.Version_1.of_yojson
+             (`Assoc
+               [
+                 ( "when_modified",
+                   `Assoc [ ("file_patterns", `List [ `String "**/*.bar"; `String "foo/*.txt" ]) ]
+                 );
+               ]))
+      in
+      let file_list =
+        "ec2/ec2.tf"
+        :: CCList.flat_map
+             (fun i ->
+               CCList.map (Printf.sprintf "tf/%04d/bar_%d.tf" i) (CCList.range 1 num_files_per_dir))
+             (CCList.range 1 num_dirs)
+        @ [ "foo/bar.txt" ]
+      in
+      let diff = CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) file_list in
+      let dirs =
+        CCResult.get_exn (Terrat_change_match.synthesize_dir_config ~file_list repo_config)
+      in
+      let changes = Terrat_change_match.match_diff_list dirs diff in
+      assert (CCList.length changes = 2 + num_dirs))
 
 let test =
   Oth.parallel
@@ -1010,7 +1041,9 @@ let test =
       (* test_bad_dir_config_ec2_root_dir_change; *)
       test_bad_dir_config_s3;
       test_module_dir_with_root_dir;
-      test_large_directory_count;
+      test_large_directory_count_unmatching_files;
+      test_large_directory_count_matching_files;
+      test_large_directory_count_non_default_when_modified;
     ]
 
 let () =

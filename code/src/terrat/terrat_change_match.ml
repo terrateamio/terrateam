@@ -1,4 +1,5 @@
 module String_set = CCSet.Make (CCString)
+module String_map = CCMap.Make (CCString)
 module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
 
 type t = {
@@ -9,7 +10,6 @@ type t = {
 }
 [@@deriving show]
 
-exception No_matching_dir of string
 exception Bad_glob of string
 
 let workspaces_or_stacks ~default ~dirname ~config_tags workspaces stacks =
@@ -178,6 +178,21 @@ let update_default_when_modified_file_patterns
         file_patterns;
   }
 
+let make_dir_map file_list =
+  CCList.fold_left
+    (fun acc fname ->
+      let dirname = Filename.dirname fname in
+      match String_map.find_opt dirname acc with
+      | Some l -> String_map.add dirname (fname :: l) acc
+      | None -> String_map.add dirname [ fname ] acc)
+    String_map.empty
+    file_list
+
+let all_dir_match_patterns =
+  (* All patterns start with "${DIR}" because we can do an optimization for file
+     checking. *)
+  CCList.for_all (CCString.prefix ~pre:"${DIR}/")
+
 (* Given a list of files and a repository configuration, create a directory
    configuration that matches every file with their specific configuration. *)
 let synthesize_dir_config' ~file_list repo_config =
@@ -228,17 +243,29 @@ let synthesize_dir_config' ~file_list repo_config =
     Json_schema.String_map.union (fun _ v _ -> Some v) non_glob_dirs synthetic_dirs
   in
   let default_dir_config = Dir.make () in
+  let remaining_dir_creator =
+    if all_dir_match_patterns default_when_modified.Wm.file_patterns then fun dirname fnames acc ->
+      (* For the remaining files, we want to construct a default configuration.  But
+         it's possible that these directories would never match anything anyways, so
+         we want to be careful.  If no files in the directory match the default
+         [file_patterns], then we won't include it in the output.  This is because
+         we could have a repository with a lot of directories in it that will never
+         match anything, so rather than carry them around, just don't include them.
+         It's a waste to try to match anything against them. *)
+      let dir = Dirs.Dir.of_config_dir default_when_modified dirname default_dir_config in
+      let file_pattern_matcher = dir.Dirs.Dir.file_pattern_matcher in
+      if CCList.exists file_pattern_matcher fnames then (dirname, dir) :: acc else acc
+    else fun dirname fnames acc ->
+      let dir = Dirs.Dir.of_config_dir default_when_modified dirname default_dir_config in
+      (dirname, dir) :: acc
+  in
   let remaining_dirs =
     file_list
     |> CCList.filter_map (fun fname ->
            let dirname = Filename.dirname fname in
-           if not (Json_schema.String_map.mem dirname specified_dirs) then Some dirname else None)
-    |> String_set.of_list
-    |> CCFun.flip
-         (String_set.fold (fun dirname acc ->
-              (dirname, Dirs.Dir.of_config_dir default_when_modified dirname default_dir_config)
-              :: acc))
-         []
+           if not (Json_schema.String_map.mem dirname specified_dirs) then Some fname else None)
+    |> make_dir_map
+    |> CCFun.flip (String_map.fold remaining_dir_creator) []
     |> Json_schema.String_map.of_list
   in
   Json_schema.String_map.union (fun _ v _ -> Some v) specified_dirs remaining_dirs
@@ -246,41 +273,83 @@ let synthesize_dir_config' ~file_list repo_config =
 let synthesize_dir_config ~file_list repo_config =
   try Ok (synthesize_dir_config' ~file_list repo_config) with Bad_glob s -> Error (`Bad_glob s)
 
-let match_filename_in_dirs dirs fname =
+let match_filename_in_dirs dirs fnames =
+  (* Match a filename to any directories and remove those directories on match.
+     We only need to match a directory once for any file, so there is no need to
+     check it against future files. *)
   let module Ws = Terrat_repo_config.Workspaces in
+  (* A fold always goes to the end of the list, however if we match a file to a
+     directory, we don't have to check any more files.  So we use a local
+     exception as a means of local control flow to exit the fold early. *)
+  let module Break = struct
+    exception R of (Dirs.Dir.t Json_schema.String_map.t * t list)
+  end in
   Json_schema.String_map.fold
     (fun dirname
          Dirs.Dir.{ create_and_select_workspace; file_pattern_matcher; when_modified; workspaces }
-         acc ->
-      if file_pattern_matcher fname then
-        Json_schema.String_map.fold
-          (fun workspace Ws.Additional.{ tags } acc ->
-            let mtch =
-              {
-                create_and_select_workspace;
-                dirspace = Terrat_change.Dirspace.{ dir = dirname; workspace };
-                tags = Terrat_tag_set.of_list tags;
-                when_modified;
-              }
-            in
-            mtch :: acc)
-          (Ws.additional workspaces)
-          acc
-      else acc)
+         (dirs, mtchs) ->
+      try
+        let mtchs =
+          CCList.fold_left
+            (fun acc fname ->
+              if file_pattern_matcher fname then
+                raise
+                  (Break.R
+                     ( Json_schema.String_map.remove dirname dirs,
+                       Json_schema.String_map.fold
+                         (fun workspace Ws.Additional.{ tags } acc ->
+                           let mtch =
+                             {
+                               create_and_select_workspace;
+                               dirspace = Terrat_change.Dirspace.{ dir = dirname; workspace };
+                               tags = Terrat_tag_set.of_list tags;
+                               when_modified;
+                             }
+                           in
+                           mtch :: acc)
+                         (Ws.additional workspaces)
+                         acc ))
+              else acc)
+            mtchs
+            fnames
+        in
+        (dirs, mtchs)
+      with Break.R acc -> acc)
     dirs
-    []
+    (dirs, [])
 
-let match_diff dirs diff =
-  match diff with
+let files_of_diff = function
   | Terrat_change.Diff.Add { filename }
   | Terrat_change.Diff.Change { filename }
-  | Terrat_change.Diff.Remove { filename } -> match_filename_in_dirs dirs filename
-  | Terrat_change.Diff.Move { filename; previous_filename } ->
-      match_filename_in_dirs dirs filename @ match_filename_in_dirs dirs previous_filename
+  | Terrat_change.Diff.Remove { filename } -> [ filename ]
+  | Terrat_change.Diff.Move { filename; previous_filename } -> [ filename; previous_filename ]
+
+let match_dir_map dirs dir_map =
+  (* A fold has no way to exit early so we use an exception as control flow. *)
+  let module Break = struct
+    exception R of t list
+  end in
+  try
+    let _, mtchs =
+      String_map.fold
+        (fun _ files (dirs, acc) ->
+          if String_map.is_empty dirs then
+            (* If there are no more directories to match against, return early *)
+            raise (Break.R acc)
+          else
+            let dirs, mtchs = match_filename_in_dirs dirs files in
+            (dirs, mtchs @ acc))
+        dir_map
+        (dirs, [])
+    in
+    mtchs
+  with Break.R mtchs -> mtchs
 
 let match_diff_list dirs diff_list =
   diff_list
-  |> CCList.flat_map (match_diff dirs)
+  |> CCList.flat_map files_of_diff
+  |> make_dir_map
+  |> match_dir_map dirs
   |> CCList.map (fun ({ dirspace; _ } as mtch) -> (dirspace, mtch))
   |> Dirspace_map.of_list
   |> Dirspace_map.values
