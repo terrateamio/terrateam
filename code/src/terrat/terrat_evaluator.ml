@@ -309,7 +309,7 @@ module type S = sig
     val query_conflicting_work_manifests_in_repo :
       Pgsql_io.t ->
       T.t ->
-      Event.Op_class.tf ->
+      [< Event.Op_class.tf ] ->
       (Src.t Terrat_work_manifest.Existing_lite.t list, [> `Error ]) result Abb.Future.t
 
     val query_unapplied_dirspaces :
@@ -756,6 +756,10 @@ module Make (S : S) = struct
           Abb.Future.return (Ok ())
       | Error (#Terrat_tag_query.err as err) -> Abb.Future.return (Error err)
 
+    let query_conflicting_work_manifests_in_repo db event operation =
+      Abbs_time_it.run (log_time event "QUERY_CONFLICTING_WORK_MANIFESTS") (fun () ->
+          S.Event.query_conflicting_work_manifests_in_repo db event operation)
+
     let process_plan
         access_control
         db
@@ -812,18 +816,22 @@ module Make (S : S) = struct
               Abb.Future.return (Ok (Some Event.Msg.Plan_no_matching_dirspaces))
           | Terrat_pull_request.State.(Open Open_status.Merge_conflict), _, _ ->
               Abb.Future.return (Error `Merge_conflict)
-          | _, _, _ ->
+          | _, _, _ -> (
               let open Abbs_future_combinators.Infix_result_monad in
-              create_and_store_work_manifest
-                db
-                repo_config
-                event
-                pull_request
-                all_matches
-                matches
-                deny
-                (Event.Op_class.run_type_of_tf (`Plan tf_mode))
-              >>= fun () -> Abb.Future.return (Ok None))
+              query_conflicting_work_manifests_in_repo db event (`Plan tf_mode)
+              >>= function
+              | [] ->
+                  create_and_store_work_manifest
+                    db
+                    repo_config
+                    event
+                    pull_request
+                    all_matches
+                    matches
+                    deny
+                    (Event.Op_class.run_type_of_tf (`Plan tf_mode))
+                  >>= fun () -> Abb.Future.return (Ok None)
+              | wms -> Abb.Future.return (Ok (Some (Event.Msg.Conflicting_work_manifests wms)))))
       | Ok Terrat_access_control.R.{ deny; _ } ->
           Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`Dirspaces deny))))
       | Error `Error -> Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied `Lookup_err)))
@@ -897,20 +905,24 @@ module Make (S : S) = struct
                 (CCList.map (fun Terrat_change_match.{ dirspace; _ } -> dirspace) matches)
               >>= function
               | [] -> (
-                  (* All are ready to be applied *)
-                  create_and_store_work_manifest
-                    db
-                    repo_config
-                    event
-                    pull_request
-                    matches
-                    matches
-                    denies
-                    (Event.Op_class.run_type_of_tf operation)
+                  query_conflicting_work_manifests_in_repo db event operation
                   >>= function
-                  | () when operation = `Apply `Auto ->
-                      Abb.Future.return (Ok (Some Event.Msg.Autoapply_running))
-                  | () -> Abb.Future.return (Ok None))
+                  | [] -> (
+                      (* All are ready to be applied *)
+                      create_and_store_work_manifest
+                        db
+                        repo_config
+                        event
+                        pull_request
+                        matches
+                        matches
+                        denies
+                        (Event.Op_class.run_type_of_tf operation)
+                      >>= function
+                      | () when operation = `Apply `Auto ->
+                          Abb.Future.return (Ok (Some Event.Msg.Autoapply_running))
+                      | () -> Abb.Future.return (Ok None))
+                  | wms -> Abb.Future.return (Ok (Some (Event.Msg.Conflicting_work_manifests wms))))
               | dirspaces ->
                   (* Some are missing plans *)
                   Abb.Future.return (Ok (Some (Event.Msg.Missing_plans dirspaces))))
@@ -935,7 +947,7 @@ module Make (S : S) = struct
         all_match_dirspaceflows
         pull_request
         repo_config
-        operation =
+        (operation : [< Event.Op_class.tf ]) =
       let open Abbs_future_combinators.Infix_result_monad in
       query_unapplied_dirspaces db event pull_request
       >>= fun missing_dirspaces ->
@@ -1016,10 +1028,6 @@ module Make (S : S) = struct
       | Error (`Invalid_query query) ->
           Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`Invalid_query query))))
 
-    let query_conflicting_work_manifests_in_repo db event operation =
-      Abbs_time_it.run (log_time event "QUERY_CONFLICTING_WORK_MANIFESTS") (fun () ->
-          S.Event.query_conflicting_work_manifests_in_repo db event operation)
-
     let query_pull_request_out_of_diff_applies db event pull_request =
       Abbs_time_it.run (log_time event "QUERY_OUT_OF_DIFF_APPLIES") (fun () ->
           S.Event.query_pull_request_out_of_diff_applies db event pull_request)
@@ -1043,129 +1051,122 @@ module Make (S : S) = struct
             (CCList.length (S.Event.Pull_request.diff pull_request)));
       Pgsql_pool.with_conn storage ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
-              query_conflicting_work_manifests_in_repo db event operation
-              >>= function
-              | [] -> (
-                  (* Collect any changes that have been applied outside of the current
-                     state of the PR.  For example, we made a change to dir1 and dir2,
-                     applied dir1, then we updated our PR to revert dir1, we would
-                     want to be able to plan and apply dir1 again even though it
-                     doesn't look like dir1 changes. *)
-                  query_pull_request_out_of_diff_applies db event pull_request
-                  >>= fun out_of_change_applies ->
-                  Abb.Future.return
-                    (compute_matches
-                       ~repo_config
-                       ~tag_query:(S.Event.T.tag_query event)
-                       ~out_of_change_applies
-                       ~diff:(S.Event.Pull_request.diff pull_request)
-                       ~repo_tree
-                       ())
-                  >>= fun (tag_query_matches, all_matches) ->
-                  Logs.info (fun m ->
-                      m
-                        "EVALUATOR : %s : NUM_MATCHES : %d"
-                        (S.Event.T.request_id event)
-                        (CCList.length all_matches));
-                  let dirs =
-                    all_matches
-                    |> CCList.map
-                         (fun
-                           Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; _ }
-                         -> dir)
-                    |> Event.Dir_set.of_list
-                  in
-                  let existing_dirs =
-                    Event.Dir_set.filter
-                      (function
-                        | "." ->
-                            (* The root directory is always there, because...it
-                               has to be. *)
-                            true
-                        | d ->
-                            let d = d ^ "/" in
-                            CCList.exists (CCString.prefix ~pre:d) repo_tree)
-                      dirs
-                  in
-                  let missing_dirs = Event.Dir_set.diff dirs existing_dirs in
-                  Logs.info (fun m ->
-                      m
-                        "EVALUATOR : %s : MISSING_DIRS : %d"
-                        (S.Event.T.request_id event)
-                        (Event.Dir_set.cardinal missing_dirs));
-                  let all_match_dirspaces =
-                    all_matches
-                    |> CCList.filter
-                         (fun
-                           Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; _ }
-                         -> Event.Dir_set.mem dir existing_dirs)
-                  in
-                  let tag_query_matches =
-                    tag_query_matches
-                    |> CCList.filter
-                         (fun
-                           Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; _ }
-                         -> Event.Dir_set.mem dir existing_dirs)
-                  in
-                  Abb.Future.return (dirspaceflows_of_changes repo_config all_match_dirspaces)
-                  >>= fun all_match_dirspaceflows ->
-                  Logs.info (fun m ->
-                      m
-                        "EVALUATOR : %s : NUM_DIRSPACEFLOWS : %d"
-                        (S.Event.T.request_id event)
-                        (CCList.length all_match_dirspaceflows));
-                  store_dirspaceflows db event pull_request all_match_dirspaceflows
-                  >>= fun () ->
-                  Prmths.Counter.inc_one
-                    (Metrics.operations_total
-                       (Terrat_work_manifest.Run_type.to_string
-                          (Event.Op_class.run_type_of_tf operation)));
-                  match operation with
-                  | `Plan tf_mode ->
-                      Abbs_time_it.run (log_time event "PROCESS_PLAN") (fun () ->
-                          process_plan
-                            access_control
-                            db
-                            event
-                            tag_query_matches
-                            all_matches
-                            pull_request
-                            repo_config
-                            tf_mode)
-                  | `Apply tf_mode ->
-                      Abbs_time_it.run (log_time event "PROCESS_APPLY") (fun () ->
-                          process_apply
-                            access_control
-                            db
-                            event
-                            tag_query_matches
-                            all_match_dirspaceflows
-                            pull_request
-                            repo_config
-                            (`Apply tf_mode))
-                  | `Apply_autoapprove ->
-                      Abbs_time_it.run (log_time event "PROCESS_APPLY_AUTOAPPROVE") (fun () ->
-                          process_apply
-                            access_control
-                            db
-                            event
-                            tag_query_matches
-                            all_match_dirspaceflows
-                            pull_request
-                            repo_config
-                            `Apply_autoapprove)
-                  | `Apply_force ->
-                      Abbs_time_it.run (log_time event "PROCESS_APPLY_FORCE") (fun () ->
-                          process_apply
-                            access_control
-                            db
-                            event
-                            tag_query_matches
-                            all_match_dirspaceflows
-                            pull_request
-                            repo_config
-                            `Apply_force))
-              | wms -> Abb.Future.return (Ok (Some (Event.Msg.Conflicting_work_manifests wms)))))
+              (* Collect any changes that have been applied outside of the current
+                 state of the PR.  For example, we made a change to dir1 and dir2,
+                 applied dir1, then we updated our PR to revert dir1, we would
+                 want to be able to plan and apply dir1 again even though it
+                 doesn't look like dir1 changes. *)
+              query_pull_request_out_of_diff_applies db event pull_request
+              >>= fun out_of_change_applies ->
+              Abb.Future.return
+                (compute_matches
+                   ~repo_config
+                   ~tag_query:(S.Event.T.tag_query event)
+                   ~out_of_change_applies
+                   ~diff:(S.Event.Pull_request.diff pull_request)
+                   ~repo_tree
+                   ())
+              >>= fun (tag_query_matches, all_matches) ->
+              Logs.info (fun m ->
+                  m
+                    "EVALUATOR : %s : NUM_MATCHES : %d"
+                    (S.Event.T.request_id event)
+                    (CCList.length all_matches));
+              let dirs =
+                all_matches
+                |> CCList.map
+                     (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; _ } ->
+                       dir)
+                |> Event.Dir_set.of_list
+              in
+              let existing_dirs =
+                Event.Dir_set.filter
+                  (function
+                    | "." ->
+                        (* The root directory is always there, because...it
+                           has to be. *)
+                        true
+                    | d ->
+                        let d = d ^ "/" in
+                        CCList.exists (CCString.prefix ~pre:d) repo_tree)
+                  dirs
+              in
+              let missing_dirs = Event.Dir_set.diff dirs existing_dirs in
+              Logs.info (fun m ->
+                  m
+                    "EVALUATOR : %s : MISSING_DIRS : %d"
+                    (S.Event.T.request_id event)
+                    (Event.Dir_set.cardinal missing_dirs));
+              let all_match_dirspaces =
+                all_matches
+                |> CCList.filter
+                     (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; _ } ->
+                       Event.Dir_set.mem dir existing_dirs)
+              in
+              let tag_query_matches =
+                tag_query_matches
+                |> CCList.filter
+                     (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; _ } ->
+                       Event.Dir_set.mem dir existing_dirs)
+              in
+              Abb.Future.return (dirspaceflows_of_changes repo_config all_match_dirspaces)
+              >>= fun all_match_dirspaceflows ->
+              Logs.info (fun m ->
+                  m
+                    "EVALUATOR : %s : NUM_DIRSPACEFLOWS : %d"
+                    (S.Event.T.request_id event)
+                    (CCList.length all_match_dirspaceflows));
+              store_dirspaceflows db event pull_request all_match_dirspaceflows
+              >>= fun () ->
+              Prmths.Counter.inc_one
+                (Metrics.operations_total
+                   (Terrat_work_manifest.Run_type.to_string
+                      (Event.Op_class.run_type_of_tf operation)));
+              match operation with
+              | `Plan tf_mode ->
+                  Abbs_time_it.run (log_time event "PROCESS_PLAN") (fun () ->
+                      process_plan
+                        access_control
+                        db
+                        event
+                        tag_query_matches
+                        all_matches
+                        pull_request
+                        repo_config
+                        tf_mode)
+              | `Apply tf_mode ->
+                  Abbs_time_it.run (log_time event "PROCESS_APPLY") (fun () ->
+                      process_apply
+                        access_control
+                        db
+                        event
+                        tag_query_matches
+                        all_match_dirspaceflows
+                        pull_request
+                        repo_config
+                        (`Apply tf_mode))
+              | `Apply_autoapprove ->
+                  Abbs_time_it.run (log_time event "PROCESS_APPLY_AUTOAPPROVE") (fun () ->
+                      process_apply
+                        access_control
+                        db
+                        event
+                        tag_query_matches
+                        all_match_dirspaceflows
+                        pull_request
+                        repo_config
+                        `Apply_autoapprove)
+              | `Apply_force ->
+                  Abbs_time_it.run (log_time event "PROCESS_APPLY_FORCE") (fun () ->
+                      process_apply
+                        access_control
+                        db
+                        event
+                        tag_query_matches
+                        all_match_dirspaceflows
+                        pull_request
+                        repo_config
+                        `Apply_force)))
 
     (* Turn a glob into lua pattern for checking.  We escape all lua pattern
        special characters "().%+-?[^$", turn * into ".*", and wrap the whole thing

@@ -63,7 +63,7 @@ module Event : sig
       | Pull_request of [ `Unlock of Unlock_id.t list ]
     [@@deriving show]
 
-    val run_type_of_tf : tf -> Terrat_work_manifest.Run_type.t
+    val run_type_of_tf : [< tf ] -> Terrat_work_manifest.Run_type.t
   end
 
   module Event_type : sig
@@ -176,7 +176,7 @@ module type S = sig
     val query_conflicting_work_manifests_in_repo :
       Pgsql_io.t ->
       T.t ->
-      Event.Op_class.tf ->
+      [< Event.Op_class.tf ] ->
       (Src.t Terrat_work_manifest.Existing_lite.t list, [> `Error ]) result Abb.Future.t
 
     val query_unapplied_dirspaces :
