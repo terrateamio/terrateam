@@ -126,13 +126,13 @@ let test_sign_rs256 =
   Oth.test ~name:"Sign RS256" (fun _ ->
       let private_key =
         match CCResult.get_exn (X509.Private_key.decode_pem (Cstruct.of_string private_key)) with
-          | `RSA priv_key -> priv_key
-          | _             -> assert false
+        | `RSA priv_key -> priv_key
+        | _ -> assert false
       in
       let public_key =
         match CCResult.get_exn (X509.Public_key.decode_pem (Cstruct.of_string public_key)) with
-          | `RSA pub_key -> pub_key
-          | _            -> assert false
+        | `RSA pub_key -> pub_key
+        | _ -> assert false
       in
       let header = Jwt.Header.create ~typ:"JWT" "RS256" in
       let payload =
@@ -164,6 +164,6 @@ let test =
     ]
 
 let () =
-  Mirage_crypto_rng_unix.initialize ();
+  Mirage_crypto_rng_unix.initialize (module Mirage_crypto_rng.Fortuna);
   Random.self_init ();
   Oth.run test
