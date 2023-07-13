@@ -1,2 +1,3 @@
-dns-client = "6.4.1"
+dns-client = "7.0.3"
 js_of_ocaml = "4.1.0"
+happy-eyeballs = "0.4.0"
