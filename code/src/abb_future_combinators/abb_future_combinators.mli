@@ -116,7 +116,13 @@ module Make (Fut : Abb_intf.Future.S) : sig
   val series : start:'a -> step:('a -> 'a) -> ('a -> 'b -> 'c Fut.t) -> 'b -> 'c Fut.t
 
   module List : sig
+    (** Map a list in serial *)
     val map : f:('a -> 'b Fut.t) -> 'a list -> 'b list Fut.t
+
+    (** Map a list performing each operation in parallel.  Every item in the
+        list is executed concurrently. *)
+    val map_par : f:('a -> 'b Fut.t) -> 'a list -> 'b list Fut.t
+
     val fold_left : f:('a -> 'b -> 'a Fut.t) -> init:'a -> 'b list -> 'a Fut.t
 
     (** Iterate a list of values executing a function in serial. *)

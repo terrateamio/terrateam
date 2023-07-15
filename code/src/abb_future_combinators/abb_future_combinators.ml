@@ -12,6 +12,7 @@ module Make (Fut : Abb_intf.Future.S) = struct
       fold_left ~f:(fun acc l -> f l >>= fun v -> Fut.return (v :: acc)) ~init:[] l
       >>= fun l -> Fut.return (Std_list.rev l)
 
+    let map_par ~f l = map ~f:(fun v -> Fut.fork (f v)) l >>= fun l -> map ~f:Fun.id l
     let iter ~f l = fold_left ~f:(fun () l -> f l) ~init:() l
 
     let iter_par ~f l =
@@ -209,13 +210,13 @@ module Make (Fut : Abb_intf.Future.S) = struct
     let ( <*> ) ft v =
       Fut.Infix_app.(
         (let open Fut.Infix_monad in
-        ft
-        >>| function
-        | Ok f -> (
-            function
-            | Ok ok -> Ok (f ok)
-            | Error _ as err -> err)
-        | Error _ as err -> fun _ -> err)
+         ft
+         >>| function
+         | Ok f -> (
+             function
+             | Ok ok -> Ok (f ok)
+             | Error _ as err -> err)
+         | Error _ as err -> fun _ -> err)
         <*> v)
 
     let ( <$> ) f v = Fut.return (Ok f) <*> v

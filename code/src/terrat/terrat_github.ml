@@ -108,6 +108,8 @@ type compare_commits_err =
   ]
 [@@deriving show]
 
+let max_get_tree_chunks = 20
+
 let create config auth =
   Githubc2_abb.create ?base_url:(Terrat_config.github_base_url config) ~user_agent:"Terrateam" auth
 
@@ -384,36 +386,65 @@ let rec get_tree ~config ~access_token ~owner ~repo ~sha () =
       call client Githubc2_git.Get_tree.(make Parameters.(make ~owner ~repo ~tree_sha:sha ()))
       >>= fun resp ->
       match Openapi.Response.value resp with
-      | `OK tree ->
-          (Abbs_future_combinators.List_result.fold_left ~init:[] ~f:(fun files item ->
-               let module Items = Githubc2_components_git_tree.Primary.Tree.Items in
-               match item.Items.primary.Items.Primary.type_ with
-               | Some "tree" ->
-                   get_tree
-                     ~config
-                     ~access_token
-                     ~owner
-                     ~repo
-                     ~sha:(CCOption.get_exn_or "get_tree_sha" item.Items.primary.Items.Primary.sha)
-                     ()
-                   >>= fun fs ->
-                   let path =
-                     CCOption.get_exn_or "get_tree_path" item.Items.primary.Items.Primary.path
-                   in
-                   let fs = CCList.map (Filename.concat path) fs in
-                   Abb.Future.return (Ok (files @ fs))
-               | Some "blob" ->
-                   Abb.Future.return
-                     (Ok
-                        (CCOption.get_exn_or "get_tree_path" item.Items.primary.Items.Primary.path
-                        :: files))
-               | Some typ ->
-                   Logs.err (fun m -> m "GET_TREE : UNKNOWN_TYPE : %s" typ);
-                   Abb.Future.return (Ok files)
-               | None ->
-                   Logs.err (fun m -> m "GET_TREE : TYPE : NONE");
-                   Abb.Future.return (Ok files)))
-            Githubc2_components_git_tree.(tree.primary.Primary.tree)
+      | `OK tree -> (
+          let
+          (* In the case that the response is truncated, we need to preform
+             the recursive calls ourselves.  We will do that in parallel, with
+             maximum number of concurrent lookups per level being
+             [max_get_tree_chunks]. *)
+          open
+            Abb.Future.Infix_monad in
+          let num_items = CCList.length Githubc2_components_git_tree.(tree.primary.Primary.tree) in
+          let num_per_chunk =
+            match num_items / max_get_tree_chunks with
+            | 0 -> num_items
+            | n -> n
+          in
+          let items =
+            CCList.chunks num_per_chunk Githubc2_components_git_tree.(tree.primary.Primary.tree)
+          in
+          Abbs_future_combinators.List.map_par
+            ~f:(fun items ->
+              let open Abbs_future_combinators.Infix_result_monad in
+              Abbs_future_combinators.List_result.fold_left
+                ~init:[]
+                ~f:(fun files item ->
+                  let module Items = Githubc2_components_git_tree.Primary.Tree.Items in
+                  match item.Items.primary.Items.Primary.type_ with
+                  | Some "tree" ->
+                      get_tree
+                        ~config
+                        ~access_token
+                        ~owner
+                        ~repo
+                        ~sha:
+                          (CCOption.get_exn_or "get_tree_sha" item.Items.primary.Items.Primary.sha)
+                        ()
+                      >>= fun fs ->
+                      let path =
+                        CCOption.get_exn_or "get_tree_path" item.Items.primary.Items.Primary.path
+                      in
+                      let fs = CCList.map (Filename.concat path) fs in
+                      Abb.Future.return (Ok (files @ fs))
+                  | Some "blob" ->
+                      Abb.Future.return
+                        (Ok
+                           (CCOption.get_exn_or
+                              "get_tree_path"
+                              item.Items.primary.Items.Primary.path
+                           :: files))
+                  | Some typ ->
+                      Logs.err (fun m -> m "GET_TREE : UNKNOWN_TYPE : %s" typ);
+                      Abb.Future.return (Ok files)
+                  | None ->
+                      Logs.err (fun m -> m "GET_TREE : TYPE : NONE");
+                      Abb.Future.return (Ok files))
+                items)
+            items
+          >>= fun res ->
+          match CCResult.flatten_l res with
+          | Ok files -> Abb.Future.return (Ok (CCList.flatten files))
+          | Error _ as err -> Abb.Future.return err)
       | `Not_found _ as err -> Abb.Future.return (Error err)
       | `Unprocessable_entity _ as err -> Abb.Future.return (Error err))
   | `OK tree ->

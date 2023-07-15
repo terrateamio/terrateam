@@ -95,6 +95,26 @@ module Dirs = struct
         s;
       Buffer.contents b
 
+    let compile_file_pattern_matcher file_patterns =
+      (* Checking file globs can be expensive, but most file globs start with
+         directory prefix.  So we can do a fairly inexpensive prefix check on
+         the filename first and if anything in there matches we then test the
+         more expensive dir globs.
+
+         TODO: Map the prefix to the specific file pattern so we only check
+         those file patterns that have a prefix match. *)
+      let short_circuit =
+        CCList.map
+          (fun pat ->
+            match CCString.index_opt pat '*' with
+            | Some idx -> CCString.sub pat 0 idx
+            | None -> pat)
+          file_patterns
+      in
+      fun fname ->
+        CCList.exists (fun pre -> CCString.prefix ~pre fname) short_circuit
+        && Path_glob.Glob.eval (parse_glob file_patterns) fname
+
     let of_config_dir default_when_modified dirname config =
       let module Dir = Terrat_repo_config.Dir in
       let module Ws = Terrat_repo_config.Workspaces in
@@ -137,7 +157,7 @@ module Dirs = struct
       let file_pattern_matcher =
         match when_modified.Wm.file_patterns with
         | [] -> CCFun.const false
-        | file_patterns -> Path_glob.Glob.eval (parse_glob file_patterns)
+        | file_patterns -> compile_file_pattern_matcher file_patterns
       in
       {
         create_and_select_workspace = config.Dir.create_and_select_workspace;

@@ -9,7 +9,7 @@ WORKDIR /
 RUN eval $(opam env) && \
     opam update && \
     opam repository add opam-acsl mono/opam && \
-    opam pin add -y containers 3.10 && \
+    opam pin add -y containers 3.12 && \
     opam install -y hll pds && \
     mkdir -p opam-mono/compilers && \
     mkdir -p opam-mono/packages && \
