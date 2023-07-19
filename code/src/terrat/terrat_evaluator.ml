@@ -55,6 +55,10 @@ module Metrics = struct
       ~namespace
       ~subsystem
       "dirspaces_per_work_manifest"
+
+  let op_on_account_disabled_total =
+    let help = "Count of operations on a disabled account" in
+    Prmths.Counter.v ~help ~namespace ~subsystem "op_on_account_disabled_total"
 end
 
 let compute_matches ~repo_config ~tag_query ~out_of_change_applies ~diff ~repo_tree () =
@@ -261,7 +265,7 @@ module type S = sig
     val create_access_control_ctx : user:string -> T.t -> Access_control.ctx
 
     val query_account_status :
-      Terrat_storage.t -> T.t -> ([ `Active | `Expired ], [> `Error ]) result Abb.Future.t
+      Pgsql_io.t -> T.t -> ([ `Active | `Expired | `Disabled ], [> `Error ]) result Abb.Future.t
 
     val store_dirspaceflows :
       Pgsql_io.t ->
@@ -756,9 +760,18 @@ module Make (S : S) = struct
           Abb.Future.return (Ok ())
       | Error (#Terrat_tag_query.err as err) -> Abb.Future.return (Error err)
 
-    let query_conflicting_work_manifests_in_repo db event operation =
-      Abbs_time_it.run (log_time event "QUERY_CONFLICTING_WORK_MANIFESTS") (fun () ->
-          S.Event.query_conflicting_work_manifests_in_repo db event operation)
+    let test_can_perform_operation db event operation =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Abbs_time_it.run (log_time event "QUERY_ACCOUNT_STATUS") (fun () ->
+          S.Event.query_account_status db event)
+      >>= function
+      | `Active ->
+          Abbs_time_it.run (log_time event "QUERY_CONFLICTING_WORK_MANIFESTS") (fun () ->
+              S.Event.query_conflicting_work_manifests_in_repo db event operation
+              >>= function
+              | [] -> Abb.Future.return (Ok `Valid)
+              | wms -> Abb.Future.return (Ok (`Conflicting_work_manifests wms)))
+      | `Expired | `Disabled -> Abb.Future.return (Ok `Account_expired)
 
     let process_plan
         access_control
@@ -818,9 +831,9 @@ module Make (S : S) = struct
               Abb.Future.return (Error `Merge_conflict)
           | _, _, _ -> (
               let open Abbs_future_combinators.Infix_result_monad in
-              query_conflicting_work_manifests_in_repo db event (`Plan tf_mode)
+              test_can_perform_operation db event (`Plan tf_mode)
               >>= function
-              | [] ->
+              | `Valid ->
                   create_and_store_work_manifest
                     db
                     repo_config
@@ -831,7 +844,9 @@ module Make (S : S) = struct
                     deny
                     (Event.Op_class.run_type_of_tf (`Plan tf_mode))
                   >>= fun () -> Abb.Future.return (Ok None)
-              | wms -> Abb.Future.return (Ok (Some (Event.Msg.Conflicting_work_manifests wms)))))
+              | `Conflicting_work_manifests wms ->
+                  Abb.Future.return (Ok (Some (Event.Msg.Conflicting_work_manifests wms)))
+              | `Account_expired -> Abb.Future.return (Ok (Some Event.Msg.Account_expired))))
       | Ok Terrat_access_control.R.{ deny; _ } ->
           Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`Dirspaces deny))))
       | Error `Error -> Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied `Lookup_err)))
@@ -905,9 +920,9 @@ module Make (S : S) = struct
                 (CCList.map (fun Terrat_change_match.{ dirspace; _ } -> dirspace) matches)
               >>= function
               | [] -> (
-                  query_conflicting_work_manifests_in_repo db event operation
+                  test_can_perform_operation db event operation
                   >>= function
-                  | [] -> (
+                  | `Valid -> (
                       (* All are ready to be applied *)
                       create_and_store_work_manifest
                         db
@@ -922,7 +937,9 @@ module Make (S : S) = struct
                       | () when operation = `Apply `Auto ->
                           Abb.Future.return (Ok (Some Event.Msg.Autoapply_running))
                       | () -> Abb.Future.return (Ok None))
-                  | wms -> Abb.Future.return (Ok (Some (Event.Msg.Conflicting_work_manifests wms))))
+                  | `Conflicting_work_manifests wms ->
+                      Abb.Future.return (Ok (Some (Event.Msg.Conflicting_work_manifests wms)))
+                  | `Account_expired -> Abb.Future.return (Ok (Some Event.Msg.Account_expired)))
               | dirspaces ->
                   (* Some are missing plans *)
                   Abb.Future.return (Ok (Some (Event.Msg.Missing_plans dirspaces))))
@@ -1416,16 +1433,17 @@ module Make (S : S) = struct
 
     let run' storage event =
       let open Abb.Future.Infix_monad in
-      S.Event.query_account_status storage event
+      Pgsql_pool.with_conn storage ~f:(fun db -> S.Event.query_account_status db event)
       >>= function
-      | Ok `Active -> (
+      | Ok (`Active | `Expired) -> (
           match Event.Event_type.to_op_class (S.Event.T.event_type event) with
           | Event.Op_class.Pull_request (`Unlock unlock_ids) ->
               perform_unlock storage event unlock_ids
           | Event.Op_class.Terraform operation ->
               perform_terraform_operation storage event operation)
-      | Ok `Expired -> Abb.Future.return (Ok (Some Event.Msg.Account_expired))
+      | Ok `Disabled -> Abb.Future.return (Error `Account_disabled)
       | Error `Error -> Abb.Future.return (Ok (Some Event.Msg.Unexpected_temporary_err))
+      | Error #Pgsql_pool.err as err -> Abb.Future.return err
 
     let publish_msg event msg =
       Abbs_time_it.run (log_time event "PUBLISH_MSG") (fun () -> S.Event.publish_msg event msg)
@@ -1437,6 +1455,11 @@ module Make (S : S) = struct
               match v with
               | Ok (Some msg) -> publish_msg event msg
               | Ok None -> Abb.Future.return ()
+              | Error `Account_disabled ->
+                  Prmths.Counter.inc_one Metrics.op_on_account_disabled_total;
+                  Logs.debug (fun m ->
+                      m "EVALUATOR : %s : ACCOUNT_DISABLED" (S.Event.T.request_id event));
+                  S.Event.publish_msg event Event.Msg.Pull_request_not_mergeable
               | Error `Merge_conflict ->
                   Prmths.Counter.inc_one Metrics.op_on_pull_request_not_mergeable;
                   Logs.debug (fun m ->

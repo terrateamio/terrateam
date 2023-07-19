@@ -128,7 +128,7 @@ module type S = sig
     val create_access_control_ctx : user:string -> T.t -> Access_control.ctx
 
     val query_account_status :
-      Terrat_storage.t -> T.t -> ([ `Active | `Expired ], [> `Error ]) result Abb.Future.t
+      Pgsql_io.t -> T.t -> ([ `Active | `Expired | `Disabled ], [> `Error ]) result Abb.Future.t
 
     val store_dirspaceflows :
       Pgsql_io.t ->

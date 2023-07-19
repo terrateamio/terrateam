@@ -1023,16 +1023,16 @@ module Ev = struct
 
   let create_access_control_ctx ~user event = Access_control.{ user; event }
 
-  let query_account_status storage event =
+  let query_account_status db event =
     let open Abb.Future.Infix_monad in
-    Pgsql_pool.with_conn storage ~f:(fun db ->
-        Pgsql_io.Prepared_stmt.fetch
-          db
-          Sql.select_installation_account_status
-          ~f:CCFun.id
-          (CCInt64.of_int event.T.installation_id))
+    Pgsql_io.Prepared_stmt.fetch
+      db
+      Sql.select_installation_account_status
+      ~f:CCFun.id
+      (CCInt64.of_int event.T.installation_id)
     >>= function
     | Ok ("expired" :: _) -> Abb.Future.return (Ok `Expired)
+    | Ok ("disabled" :: _) -> Abb.Future.return (Ok `Disabled)
     | Ok _ -> Abb.Future.return (Ok `Active)
     | Error (#Pgsql_io.err as err) ->
         Prmths.Counter.inc_one Metrics.pgsql_errors_total;
