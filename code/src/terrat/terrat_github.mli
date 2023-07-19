@@ -206,8 +206,8 @@ val fetch_pull_request_files :
   config:Terrat_config.t ->
   access_token:string ->
   owner:string ->
-  pull_number:int ->
-  string ->
+  repo:string ->
+  int ->
   (Githubc2_components.Diff_entry.t list, [> Githubc2_abb.call_err | `Error ]) result Abb.Future.t
 
 val fetch_changed_files :
