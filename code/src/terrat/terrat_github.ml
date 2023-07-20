@@ -270,12 +270,12 @@ let fetch_repo_config ~config ~python ~access_token ~owner ~repo ref_ =
   Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_repo_config");
   fetch_repo_config' ~config ~python ~access_token ~owner ~repo ref_ terrateam_config_yml
 
-let fetch_pull_request_files ~config ~access_token ~owner ~pull_number repo =
+let fetch_pull_request_files ~config ~access_token ~owner ~repo pull_number =
   Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_pull_request_files");
   let client = create config (`Token access_token) in
   Githubc2_abb.collect_all
     client
-    Githubc2_pulls.List_files.(make (Parameters.make ~owner ~pull_number ~repo ()))
+    Githubc2_pulls.List_files.(make (Parameters.make ~per_page:100 ~owner ~pull_number ~repo ()))
 
 let fetch_changed_files ~config ~access_token ~owner ~repo ~base head =
   Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_changed_files");

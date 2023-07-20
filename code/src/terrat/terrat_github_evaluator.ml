@@ -929,11 +929,11 @@ module Ev = struct
           } -> Terrat_change.Diff.Move { filename; previous_filename }
         | _ -> failwith "nyi1")
 
-  let fetch_diff ~config ~request_id ~access_token ~owner ~repo ~base_sha head_sha =
+  let fetch_diff ~config ~access_token ~owner ~repo pull_number =
     let open Abbs_future_combinators.Infix_result_monad in
-    Terrat_github.compare_commits ~config ~access_token ~owner ~repo (base_sha, head_sha)
-    >>= fun files ->
-    let diff = diff_of_github_diff files in
+    Terrat_github.fetch_pull_request_files ~config ~access_token ~owner ~repo pull_number
+    >>= fun github_diff ->
+    let diff = diff_of_github_diff github_diff in
     Abb.Future.return (Ok diff)
 
   module Pull_request = struct
@@ -1156,12 +1156,10 @@ module Ev = struct
           Prmths.Counter.inc_one (Metrics.pull_request_mergeable_state_count mergeable_state);
           fetch_diff
             ~config:event.T.config
-            ~request_id:event.T.request_id
             ~access_token:event.T.access_token
             ~owner
             ~repo
-            ~base_sha
-            (CCOption.get_or ~default:head_sha merge_commit_sha)
+            event.T.pull_number
           >>= fun diff ->
           Logs.debug (fun m ->
               m
