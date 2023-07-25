@@ -12,7 +12,6 @@ select
     gir.installation_id,
     gir.owner,
     gir.name,
-    gpr.base_branch,
     (case
      when gdwm.work_manifest is not null then 'drift'
      else ''
