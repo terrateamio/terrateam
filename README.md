@@ -42,7 +42,7 @@ The fastest way to get started with Terrateam is signing up for [Terrateam Cloud
 
 ### Terrateam Self-Hosted
 
-Deploy a self-hosted version of Terrateam with Docker. Access to all features.
+This plan covers our Kubernetes and Docker compose deployment with limited usage and without guarantee. This deployment is designed for evaluating Terrateam without vendor approval. It is not designed for production use.
 
 #### Architecture
 
