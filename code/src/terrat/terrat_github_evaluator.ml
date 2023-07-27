@@ -1492,7 +1492,7 @@ module Ev = struct
     | Ok () -> Abb.Future.return ()
     | Error _ ->
         Logs.err (fun m ->
-            m "EVALUATOR : %s : FAILED_REPLACE_OLD_COMMIT_STATUSES" (T.request_id event));
+            m "GITHUB_EVALUATOR : %s : FAILED_REPLACE_OLD_COMMIT_STATUSES" (T.request_id event));
         Abb.Future.return ()
 
   let create_queued_commit_checks event run_type pull_request dirspaces =
@@ -1580,11 +1580,11 @@ module Ev = struct
               | Ok _ -> Abb.Future.return (Ok ())
               | Error `Error ->
                   Logs.err (fun m ->
-                      m "EVALUATOR : %s : FAILED_CREATE_APPLY_CHECK" (T.request_id event));
+                      m "GITHUB_EVALUATOR : %s : FAILED_CREATE_APPLY_CHECK" (T.request_id event));
                   Abb.Future.return (Ok ()))
           | Error _ as err ->
               Logs.err (fun m ->
-                  m "EVALUATOR : %s : FAILED_FETCH_COMMIT_CHECKS" (T.request_id event));
+                  m "GITHUB_EVALUATOR : %s : FAILED_FETCH_COMMIT_CHECKS" (T.request_id event));
               Abb.Future.return err)
         else Abb.Future.return (Ok ())
 

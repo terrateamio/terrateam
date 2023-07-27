@@ -2,12 +2,20 @@ module Process = Abb_process.Make (Abb)
 module Org_admin = CCMap.Make (CCInt)
 
 module Metrics = struct
+  module Call_retry_wait_histograph = Prmths.Histogram (struct
+    let spec = Prmths.Histogram_spec.of_exponential 30.0 1.2 20
+  end)
+
   let namespace = "terrat"
   let subsystem = "github"
 
   let call_retries_total =
     let help = "Number of retries in a call" in
     Prmths.Counter.v ~help ~namespace ~subsystem "call_retries_total"
+
+  let rate_limit_retry_wait_seconds =
+    let help = "Number of seconds a call has spent waiting due to rate limit" in
+    Call_retry_wait_histograph.v ~help ~namespace ~subsystem "rate_limit_retry_wait_seconds"
 
   let fn_call_total =
     let help = "Number of calls of a function" in
@@ -110,8 +118,45 @@ type compare_commits_err =
 
 let max_get_tree_chunks = 20
 
+let is_secondary_rate_limit_error resp =
+  let headers = Openapi.Response.headers resp in
+  let get k = CCList.Assoc.get ~eq:CCString.equal_caseless k headers in
+  Openapi.Response.status resp = 403
+  &&
+  match (get "retry-after", get "x-ratelimit-remaining", get "x-ratelimit-reset") with
+  | Some _, _, _ | None, Some "0", Some _ -> true
+  | _, _, _ -> false
+
+let rate_limit_wait resp =
+  let headers = Openapi.Response.headers resp in
+  let get k = CCList.Assoc.get ~eq:CCString.equal_caseless k headers in
+  if Openapi.Response.status resp = 403 then
+    match (get "retry-after", get "x-ratelimit-remaining", get "x-ratelimit-reset") with
+    | (Some _ as retry_after), _, _ ->
+        Abb.Future.return
+          (CCOption.map
+             CCFloat.of_int
+             (CCOption.map_or ~default:(Some 60) CCInt.of_string retry_after))
+    | None, Some "0", Some retry_time -> (
+        match CCFloat.of_string_opt retry_time with
+        | Some retry_time ->
+            let open Abb.Future.Infix_monad in
+            Abb.Sys.time () >>= fun now -> Abb.Future.return (Some (retry_time -. now))
+        | None -> Abb.Future.return (Some 60.0))
+    | _, _, _ -> Abb.Future.return None
+  else Abb.Future.return None
+
 let create config auth =
   Githubc2_abb.create ?base_url:(Terrat_config.github_base_url config) ~user_agent:"Terrateam" auth
+
+let retry_wait default_wait resp =
+  let open Abb.Future.Infix_monad in
+  rate_limit_wait resp
+  >>= function
+  | Some retry_after ->
+      Metrics.Call_retry_wait_histograph.observe Metrics.rate_limit_retry_wait_seconds retry_after;
+      Abb.Future.return retry_after
+  | None -> Abb.Future.return default_wait
 
 let call ?(tries = 3) t req =
   Abbs_future_combinators.retry
@@ -119,11 +164,20 @@ let call ?(tries = 3) t req =
     ~while_:
       (Abbs_future_combinators.finite_tries tries (function
           | Error _ -> true
-          | Ok resp -> Openapi.Response.status resp >= 500))
+          | Ok resp -> Openapi.Response.status resp >= 500 || is_secondary_rate_limit_error resp))
     ~betwixt:
-      (Abbs_future_combinators.series ~start:1.5 ~step:(( *. ) 1.5) (fun n _ ->
+      (Abbs_future_combinators.series ~start:1.5 ~step:(( *. ) 1.5) (fun n resp ->
            Prmths.Counter.inc_one Metrics.call_retries_total;
-           Abb.Sys.sleep n))
+           (* If it's a rate limit error, sleep until GitHub says we can try
+              again *)
+           match resp with
+           | Error (`Missing_response resp) ->
+               let open Abb.Future.Infix_monad in
+               retry_wait n resp >>= Abb.Sys.sleep
+           | Ok resp ->
+               let open Abb.Future.Infix_monad in
+               retry_wait n resp >>= Abb.Sys.sleep
+           | Error _ -> Abb.Sys.sleep n))
 
 let get_installation_access_token
     ?(expiration_sec = installation_expiration_sec)
@@ -518,19 +572,28 @@ module Commit_status = struct
   let create_client = create
 
   let create ~config ~access_token ~owner ~repo ~sha creates =
+    let open Abb.Future.Infix_monad in
     let client = create_client config (`Token access_token) in
-    Abbs_future_combinators.List_result.iter
-      ~f:(fun Create.T.{ target_url; description; context; state } ->
-        Prmths.Counter.inc_one (Metrics.fn_call_total "commit_status_create");
-        let open Abbs_future_combinators.Infix_result_monad in
-        call
-          client
-          Githubc2_repos.Create_commit_status.(
-            make
-              ~body:Request_body.(make Primary.(make ?context ~description ~state ~target_url ()))
-              Parameters.(make ~owner ~repo ~sha))
-        >>= fun _ -> Abb.Future.return (Ok ()))
-      creates
+    Abbs_future_combinators.List.map_par
+      ~f:(fun creates ->
+        Abbs_future_combinators.List_result.iter
+          ~f:(fun Create.T.{ target_url; description; context; state } ->
+            Prmths.Counter.inc_one (Metrics.fn_call_total "commit_status_create");
+            let open Abbs_future_combinators.Infix_result_monad in
+            call
+              client
+              Githubc2_repos.Create_commit_status.(
+                make
+                  ~body:
+                    Request_body.(make Primary.(make ?context ~description ~state ~target_url ()))
+                  Parameters.(make ~owner ~repo ~sha))
+            >>= fun _ -> Abb.Future.return (Ok ()))
+          creates)
+      (CCList.chunks 50 creates)
+    >>= fun res ->
+    match CCResult.flatten_l res with
+    | Ok _ -> Abb.Future.return (Ok ())
+    | Error _ as err -> Abb.Future.return err
 
   let list ~config ~access_token ~owner ~repo ~sha () =
     Prmths.Counter.inc_one (Metrics.fn_call_total "commit_status_list");
