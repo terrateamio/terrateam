@@ -24,8 +24,7 @@ module Sql = struct
     Pgsql_io.Typed_sql.(
       sql
       /^ read "delete_github_pull_request_plans.sql"
-      /% Var.text "owner"
-      /% Var.text "repo"
+      /% Var.bigint "repo_id"
       /% Var.bigint "pull_number")
 end
 
@@ -52,13 +51,12 @@ let clean ~work_manifest ~dir ~workspace db =
   | Ok () -> Abb.Future.return (Ok ())
   | Error (#Pgsql_io.err as err) -> Abb.Future.return (Error err)
 
-let clean_pull_request ~owner ~repo ~pull_number db =
+let clean_pull_request ~repo_id ~pull_number db =
   let open Abb.Future.Infix_monad in
   Pgsql_io.Prepared_stmt.execute
     db
     Sql.delete_pull_request_plans
-    owner
-    repo
+    (CCInt64.of_int repo_id)
     (CCInt64.of_int pull_number)
   >>= function
   | Ok () -> Abb.Future.return (Ok ())

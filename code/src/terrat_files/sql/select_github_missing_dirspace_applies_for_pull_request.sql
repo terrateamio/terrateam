@@ -69,5 +69,4 @@ inner join all_necessary_dirspaces as ands
 left join applied_dirspaces as applied
     on ands.repository = applied.repository and ands.pull_number = applied.pull_number
        and ands.path = applied.path and ands.workspace = applied.workspace
-where gir.owner = $owner and gir.name = $name and gpr.pull_number = $pull_number
-      and applied.repository is null
+where gpr.repository = $repo_id and gpr.pull_number = $pull_number and applied.repository is null

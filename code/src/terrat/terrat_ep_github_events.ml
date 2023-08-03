@@ -101,8 +101,6 @@ module Sql = struct
       // (* sha *) Ret.text
       // (* run_type *) Ret.ud' Terrat_work_manifest.Run_type.of_string
       /^ read "github_fail_running_work_manifest.sql"
-      /% Var.text "owner"
-      /% Var.text "name"
       /% Var.text "run_id")
 
   let select_work_manifest_dirspaces =
@@ -721,8 +719,6 @@ let process_workflow_job_failure config storage access_token run_id repository =
         db
         Sql.fail_running_work_manifest
         ~f:(fun id pull_number sha run_type -> (id, pull_number, sha, run_type))
-        repository.Gw.Repository.owner.Gw.User.login
-        repository.Gw.Repository.name
         run_id
       >>= function
       | [] -> Abb.Future.return (Ok None)
@@ -844,12 +840,14 @@ let process_push_event request_id config storage event =
   match event.Gw.Push_event.installation with
   | Some installation_lite when CCString.equal ref_ default_ref ->
       let installation_id = installation_lite.Gw.Installation_lite.id in
+      let repo_id = CCInt64.of_int repository.Gw.Repository.id in
       let owner = repository.Gw.Repository.owner.Gw.User.login in
       let name = repository.Gw.Repository.name in
       Abbs_future_combinators.to_result
         (Terrat_github_evaluator.Push.eval
            ~request_id
            ~installation_id
+           ~repo_id
            ~owner
            ~name
            ~default_branch

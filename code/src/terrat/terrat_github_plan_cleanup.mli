@@ -11,8 +11,4 @@ val clean :
 
 (** Clean up all plans for the matching pull request. *)
 val clean_pull_request :
-  owner:string ->
-  repo:string ->
-  pull_number:int ->
-  Pgsql_io.t ->
-  (unit, [> Pgsql_io.err ]) result Abb.Future.t
+  repo_id:int -> pull_number:int -> Pgsql_io.t -> (unit, [> Pgsql_io.err ]) result Abb.Future.t

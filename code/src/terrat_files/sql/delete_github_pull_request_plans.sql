@@ -6,7 +6,7 @@ deletable_terraform_plans as (
         on gwm.id = gtp.work_manifest
     inner join github_installation_repositories as gir
         on gir.id = gwm.repository
-    where gir.owner = $owner and gir.name = $repo and gwm.pull_number = $pull_number
+    where gwm.repository = $repo_id and gwm.pull_number = $pull_number
 )
 delete from github_terraform_plans as gtp
 using deletable_terraform_plans as dtp

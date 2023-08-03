@@ -771,8 +771,7 @@ module Ev = struct
         // (* path *) Ret.text
         // (* workspace *) Ret.text
         /^ read "select_github_missing_dirspace_applies_for_pull_request.sql"
-        /% Var.text "owner"
-        /% Var.text "name"
+        /% Var.bigint "repo_id"
         /% Var.bigint "pull_number")
 
     let insert_work_manifest_access_control_denied_dirspace =
@@ -1866,8 +1865,7 @@ module Ev = struct
       db
       Sql.select_missing_dirspace_applies_for_pull_request
       ~f:(fun dir workspace -> Terrat_change.Dirspace.{ dir; workspace })
-      event.T.repository.Gw.Repository.owner.Gw.User.login
-      event.T.repository.Gw.Repository.name
+      (CCInt64.of_int event.T.repository.Gw.Repository.id)
       pull_request.Pr.id
     >>= function
     | Ok dirspaces -> Abb.Future.return (Ok dirspaces)
@@ -1987,8 +1985,7 @@ module Ev = struct
       (CCInt64.of_int pull_number)
     >>= fun () ->
     Terrat_github_plan_cleanup.clean_pull_request
-      ~owner:event.T.repository.Gw.Repository.owner.Gw.User.login
-      ~repo:event.T.repository.Gw.Repository.name
+      ~repo_id:event.T.repository.Gw.Repository.id
       ~pull_number
       db
 
@@ -3301,8 +3298,7 @@ module Wm = struct
           // (* path *) Ret.text
           // (* workspace *) Ret.text
           /^ read "select_github_missing_dirspace_applies_for_pull_request.sql"
-          /% Var.text "owner"
-          /% Var.text "name"
+          /% Var.bigint "repo_id"
           /% Var.bigint "pull_number")
 
       let select_drift_schedule_from_work_manifest_id () =
@@ -3398,6 +3394,7 @@ module Wm = struct
       run_id : string;
       storage : Terrat_storage.t;
       work_manifest : Kind.t Terrat_work_manifest.Existing_lite.t;
+      repo_id : int64;
     }
 
     let kind t = t.work_manifest.Terrat_work_manifest.src
@@ -3568,8 +3565,7 @@ module Wm = struct
             db
             Sql.select_missing_dirspace_applies_for_pull_request
             ~f:(fun dir workspace -> Terrat_change.Dirspace.{ dir; workspace })
-            t.owner
-            t.name
+            t.repo_id
             (CCInt64.of_int pull_number))
       >>= function
       | Ok _ as ret -> Abb.Future.return ret
@@ -3651,7 +3647,7 @@ module Wm = struct
              name
              run_id
            ->
-          ( (installation_id, owner, name, pull_number),
+          ( (installation_id, owner, name, repo_id, pull_number),
             {
               Terrat_work_manifest.base_hash;
               changes = ();
@@ -4283,7 +4279,7 @@ module Wm = struct
             Pgsql_io.tx db ~f:(fun () ->
                 fetch_work_manifest db work_manifest_id
                 >>= function
-                | ((installation_id, owner, name, pull_number), work_manifest) :: _ -> (
+                | ((installation_id, owner, name, repo_id, pull_number), work_manifest) :: _ -> (
                     log_work_manifest_result
                       request_id
                       work_manifest_id
@@ -4307,6 +4303,7 @@ module Wm = struct
                             storage;
                             work_manifest;
                             run_id;
+                            repo_id;
                           }
                         in
                         fetch_denied_dirspaces request_id db work_manifest_id
@@ -4424,16 +4421,6 @@ include Terrat_evaluator.Make (S)
 
 module Push = struct
   module Sql = struct
-    let select_repository =
-      Pgsql_io.Typed_sql.(
-        sql
-        // (* repository *) Ret.bigint
-        /^ "select id from github_installation_repositories where installation_id = \
-            $installation_id and owner = $owner and name = $name"
-        /% Var.bigint "installation_id"
-        /% Var.text "owner"
-        /% Var.text "name")
-
     let upsert_drift_schedule =
       Pgsql_io.Typed_sql.(
         sql
@@ -4450,46 +4437,31 @@ module Push = struct
     let delete_drift_schedule =
       Pgsql_io.Typed_sql.(
         sql
-        /^ "delete from github_drift_schedules where repository in (select id from \
-            github_installation_repositories where installation_id = $installation_id and owner = \
-            $owner and name = $name)"
+        /^ "delete from github_drift_schedules where repository = $repo_id"
         /% Var.bigint "installation_id"
-        /% Var.text "owner"
-        /% Var.text "name")
+        /% Var.bigint "repo_id")
   end
 
-  let enable_drift_schedule storage installation_id owner name schedule reconcile =
-    let open Abbs_future_combinators.Infix_result_monad in
+  let enable_drift_schedule storage installation_id repo_id schedule reconcile =
     Pgsql_pool.with_conn storage ~f:(fun db ->
         Pgsql_io.tx db ~f:(fun () ->
             Pgsql_io.Prepared_stmt.fetch
               db
-              Sql.select_repository
+              Sql.upsert_drift_schedule
               ~f:CCFun.id
-              (CCInt64.of_int installation_id)
-              owner
-              name
-            >>= function
-            | repository_id :: _ ->
-                Pgsql_io.Prepared_stmt.fetch
-                  db
-                  Sql.upsert_drift_schedule
-                  ~f:CCFun.id
-                  repository_id
-                  schedule
-                  reconcile
-            | [] -> assert false))
+              repo_id
+              schedule
+              reconcile))
 
-  let disable_drift_schedule storage installation_id owner name =
+  let disable_drift_schedule storage installation_id repo_id =
     Pgsql_pool.with_conn storage ~f:(fun db ->
         Pgsql_io.Prepared_stmt.execute
           db
           Sql.delete_drift_schedule
           (CCInt64.of_int installation_id)
-          owner
-          name)
+          repo_id)
 
-  let update_drift_schedule request_id config storage installation_id owner name =
+  let update_drift_schedule request_id config storage installation_id repo_id owner name =
     let module D = Terrat_repo_config.Drift in
     function
     | Some { D.enabled = true; schedule; reconcile } ->
@@ -4503,7 +4475,7 @@ module Push = struct
               name
               schedule
               (Bool.to_string reconcile));
-        enable_drift_schedule storage installation_id owner name schedule reconcile
+        enable_drift_schedule storage installation_id repo_id schedule reconcile
         >>= fun repositories ->
         Abbs_future_combinators.to_result
           (Abbs_future_combinators.List.iter
@@ -4525,9 +4497,9 @@ module Push = struct
     | Some { D.enabled = false; _ } | None ->
         Logs.info (fun m ->
             m "GITHUB_EVALUATOR : %s : DRIFT : DISABLE : owner=%s : name=%s" request_id owner name);
-        disable_drift_schedule storage installation_id owner name
+        disable_drift_schedule storage installation_id repo_id
 
-  let eval ~request_id ~installation_id ~owner ~name ~default_branch config storage =
+  let eval ~request_id ~installation_id ~repo_id ~owner ~name ~default_branch config storage =
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
       Terrat_github.get_installation_access_token config installation_id
@@ -4542,7 +4514,15 @@ module Push = struct
       >>= fun repo_config ->
       let module C = Terrat_repo_config.Version_1 in
       let drift_config = repo_config.C.drift in
-      update_drift_schedule request_id config storage installation_id owner name drift_config
+      update_drift_schedule
+        request_id
+        config
+        storage
+        installation_id
+        repo_id
+        owner
+        name
+        drift_config
     in
     let open Abb.Future.Infix_monad in
     run

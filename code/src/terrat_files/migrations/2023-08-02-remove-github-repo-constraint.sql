@@ -1,0 +1,1 @@
+alter table github_installation_repositories drop constraint repo_name;
