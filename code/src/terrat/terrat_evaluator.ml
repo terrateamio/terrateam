@@ -1592,7 +1592,7 @@ module Make (S : S) = struct
              Pgsql_io.tx db ~f:(fun () -> run_schedule' config db store_plan_work_manifest schedule)))
 
     module Service = struct
-      let one_hour = Duration.(to_f (of_day 1))
+      let one_hour = Duration.(to_f (of_hour 1))
 
       let query_missing_scheduled_runs config db =
         Abbs_time_it.run
