@@ -98,12 +98,6 @@ graph TD
 
 See our [documentation](https://terrateam.io/docs/how-it-works) to learn more about execution steps, types of operations, event evaluations, locking, and more.
 
-## Cloud vs. Self-Hosted
-
-There is no difference between Terrateam Cloud and the Self-Hosted version. Both versions grant you full access to all Terrateam features. No cloud-only features.
-
-Terrateam Self-Hosted is free for all.
-
 ## Docs
 
 Check out our [documentation](https://terrateam.io/docs) for getting started instructions, example use cases, and tutorials.
