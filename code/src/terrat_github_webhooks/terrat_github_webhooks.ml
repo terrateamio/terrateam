@@ -92,37 +92,37 @@ module Event = struct
   let of_yojson =
     Json_schema.one_of
       (let open CCResult in
-      [
-        (fun v ->
-          map
-            (fun v -> Installation_event v)
-            (Terrat_github_webhooks_installation_event.of_yojson v));
-        (fun v ->
-          map
-            (fun v -> Installation_repositories_event v)
-            (Terrat_github_webhooks_installation_repositories_event.of_yojson v));
-        (fun v ->
-          map
-            (fun v -> Issue_comment_event v)
-            (Terrat_github_webhooks_issue_comment_event.of_yojson v));
-        (fun v ->
-          map
-            (fun v -> Pull_request_event v)
-            (Terrat_github_webhooks_pull_request_event.of_yojson v));
-        (fun v -> map (fun v -> Push_event v) (Terrat_github_webhooks_push_event.of_yojson v));
-        (fun v ->
-          map
-            (fun v -> Workflow_dispatch_event v)
-            (Terrat_github_webhooks_workflow_dispatch_event.of_yojson v));
-        (fun v ->
-          map
-            (fun v -> Workflow_job_event v)
-            (Terrat_github_webhooks_workflow_job_event.of_yojson v));
-        (fun v ->
-          map
-            (fun v -> Workflow_run_event v)
-            (Terrat_github_webhooks_workflow_run_event.of_yojson v));
-      ])
+       [
+         (fun v ->
+           map
+             (fun v -> Installation_event v)
+             (Terrat_github_webhooks_installation_event.of_yojson v));
+         (fun v ->
+           map
+             (fun v -> Installation_repositories_event v)
+             (Terrat_github_webhooks_installation_repositories_event.of_yojson v));
+         (fun v ->
+           map
+             (fun v -> Issue_comment_event v)
+             (Terrat_github_webhooks_issue_comment_event.of_yojson v));
+         (fun v ->
+           map
+             (fun v -> Pull_request_event v)
+             (Terrat_github_webhooks_pull_request_event.of_yojson v));
+         (fun v -> map (fun v -> Push_event v) (Terrat_github_webhooks_push_event.of_yojson v));
+         (fun v ->
+           map
+             (fun v -> Workflow_dispatch_event v)
+             (Terrat_github_webhooks_workflow_dispatch_event.of_yojson v));
+         (fun v ->
+           map
+             (fun v -> Workflow_job_event v)
+             (Terrat_github_webhooks_workflow_job_event.of_yojson v));
+         (fun v ->
+           map
+             (fun v -> Workflow_run_event v)
+             (Terrat_github_webhooks_workflow_run_event.of_yojson v));
+       ])
 
   let to_yojson = function
     | Installation_event v -> Terrat_github_webhooks_installation_event.to_yojson v

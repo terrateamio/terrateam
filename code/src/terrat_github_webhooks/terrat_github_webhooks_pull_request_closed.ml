@@ -66,10 +66,10 @@ module Pull_request_ = struct
           let of_yojson =
             Json_schema.one_of
               (let open CCResult in
-              [
-                (fun v -> map (fun v -> User v) (Terrat_github_webhooks_user.of_yojson v));
-                (fun v -> map (fun v -> Team v) (Terrat_github_webhooks_team.of_yojson v));
-              ])
+               [
+                 (fun v -> map (fun v -> User v) (Terrat_github_webhooks_user.of_yojson v));
+                 (fun v -> map (fun v -> Team v) (Terrat_github_webhooks_team.of_yojson v));
+               ])
 
           let to_yojson = function
             | User v -> Terrat_github_webhooks_user.to_yojson v
@@ -208,10 +208,10 @@ module Pull_request_ = struct
           let of_yojson =
             Json_schema.one_of
               (let open CCResult in
-              [
-                (fun v -> map (fun v -> User v) (Terrat_github_webhooks_user.of_yojson v));
-                (fun v -> map (fun v -> Team v) (Terrat_github_webhooks_team.of_yojson v));
-              ])
+               [
+                 (fun v -> map (fun v -> User v) (Terrat_github_webhooks_user.of_yojson v));
+                 (fun v -> map (fun v -> Team v) (Terrat_github_webhooks_team.of_yojson v));
+               ])
 
           let to_yojson = function
             | User v -> Terrat_github_webhooks_user.to_yojson v

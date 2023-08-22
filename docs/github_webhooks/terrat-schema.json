@@ -2437,7 +2437,6 @@
         "action",
         "number",
         "pull_request",
-        "reason",
         "repository",
         "sender"
       ],

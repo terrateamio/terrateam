@@ -7,20 +7,20 @@ type t =
 let of_yojson =
   Json_schema.one_of
     (let open CCResult in
-    [
-      (fun v ->
-        map
-          (fun v -> Workflow_run_completed v)
-          (Terrat_github_webhooks_workflow_run_completed.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Workflow_run_requested v)
-          (Terrat_github_webhooks_workflow_run_requested.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Workflow_run_in_progress v)
-          (Terrat_github_webhooks_workflow_run_in_progress.of_yojson v));
-    ])
+     [
+       (fun v ->
+         map
+           (fun v -> Workflow_run_completed v)
+           (Terrat_github_webhooks_workflow_run_completed.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Workflow_run_requested v)
+           (Terrat_github_webhooks_workflow_run_requested.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Workflow_run_in_progress v)
+           (Terrat_github_webhooks_workflow_run_in_progress.of_yojson v));
+     ])
 
 let to_yojson = function
   | Workflow_run_completed v -> Terrat_github_webhooks_workflow_run_completed.to_yojson v

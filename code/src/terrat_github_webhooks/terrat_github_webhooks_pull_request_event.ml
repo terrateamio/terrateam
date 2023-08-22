@@ -23,80 +23,80 @@ type t =
 let of_yojson =
   Json_schema.one_of
     (let open CCResult in
-    [
-      (fun v ->
-        map
-          (fun v -> Pull_request_assigned v)
-          (Terrat_github_webhooks_pull_request_assigned.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Pull_request_auto_merge_disabled v)
-          (Terrat_github_webhooks_pull_request_auto_merge_disabled.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Pull_request_auto_merge_enabled v)
-          (Terrat_github_webhooks_pull_request_auto_merge_enabled.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Pull_request_closed v)
-          (Terrat_github_webhooks_pull_request_closed.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Pull_request_converted_to_draft v)
-          (Terrat_github_webhooks_pull_request_converted_to_draft.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Pull_request_edited v)
-          (Terrat_github_webhooks_pull_request_edited.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Pull_request_labeled v)
-          (Terrat_github_webhooks_pull_request_labeled.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Pull_request_locked v)
-          (Terrat_github_webhooks_pull_request_locked.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Pull_request_milestoned v)
-          (Terrat_github_webhooks_pull_request_milestoned.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Pull_request_opened v)
-          (Terrat_github_webhooks_pull_request_opened.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Pull_request_ready_for_review v)
-          (Terrat_github_webhooks_pull_request_ready_for_review.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Pull_request_reopened v)
-          (Terrat_github_webhooks_pull_request_reopened.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Pull_request_review_request_removed v)
-          (Terrat_github_webhooks_pull_request_review_request_removed.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Pull_request_review_requested v)
-          (Terrat_github_webhooks_pull_request_review_requested.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Pull_request_synchronize v)
-          (Terrat_github_webhooks_pull_request_synchronize.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Pull_request_unassigned v)
-          (Terrat_github_webhooks_pull_request_unassigned.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Pull_request_unlabeled v)
-          (Terrat_github_webhooks_pull_request_unlabeled.of_yojson v));
-      (fun v ->
-        map
-          (fun v -> Pull_request_unlocked v)
-          (Terrat_github_webhooks_pull_request_unlocked.of_yojson v));
-    ])
+     [
+       (fun v ->
+         map
+           (fun v -> Pull_request_assigned v)
+           (Terrat_github_webhooks_pull_request_assigned.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Pull_request_auto_merge_disabled v)
+           (Terrat_github_webhooks_pull_request_auto_merge_disabled.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Pull_request_auto_merge_enabled v)
+           (Terrat_github_webhooks_pull_request_auto_merge_enabled.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Pull_request_closed v)
+           (Terrat_github_webhooks_pull_request_closed.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Pull_request_converted_to_draft v)
+           (Terrat_github_webhooks_pull_request_converted_to_draft.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Pull_request_edited v)
+           (Terrat_github_webhooks_pull_request_edited.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Pull_request_labeled v)
+           (Terrat_github_webhooks_pull_request_labeled.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Pull_request_locked v)
+           (Terrat_github_webhooks_pull_request_locked.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Pull_request_milestoned v)
+           (Terrat_github_webhooks_pull_request_milestoned.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Pull_request_opened v)
+           (Terrat_github_webhooks_pull_request_opened.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Pull_request_ready_for_review v)
+           (Terrat_github_webhooks_pull_request_ready_for_review.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Pull_request_reopened v)
+           (Terrat_github_webhooks_pull_request_reopened.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Pull_request_review_request_removed v)
+           (Terrat_github_webhooks_pull_request_review_request_removed.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Pull_request_review_requested v)
+           (Terrat_github_webhooks_pull_request_review_requested.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Pull_request_synchronize v)
+           (Terrat_github_webhooks_pull_request_synchronize.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Pull_request_unassigned v)
+           (Terrat_github_webhooks_pull_request_unassigned.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Pull_request_unlabeled v)
+           (Terrat_github_webhooks_pull_request_unlabeled.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Pull_request_unlocked v)
+           (Terrat_github_webhooks_pull_request_unlocked.of_yojson v));
+     ])
 
 let to_yojson = function
   | Pull_request_assigned v -> Terrat_github_webhooks_pull_request_assigned.to_yojson v

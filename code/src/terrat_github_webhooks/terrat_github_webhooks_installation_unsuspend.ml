@@ -27,10 +27,10 @@ module Installation_ = struct
         let of_yojson =
           Json_schema.one_of
             (let open CCResult in
-            [
-              (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
-              (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
-            ])
+             [
+               (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
+               (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
+             ])
 
         let to_yojson = function
           | V0 v -> V0.to_yojson v
@@ -84,10 +84,10 @@ module Installation_ = struct
         let of_yojson =
           Json_schema.one_of
             (let open CCResult in
-            [
-              (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
-              (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
-            ])
+             [
+               (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
+               (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
+             ])
 
         let to_yojson = function
           | V0 v -> V0.to_yojson v
@@ -140,10 +140,10 @@ module Installation_ = struct
         let of_yojson =
           Json_schema.one_of
             (let open CCResult in
-            [
-              (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
-              (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
-            ])
+             [
+               (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
+               (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
+             ])
 
         let to_yojson = function
           | V0 v -> V0.to_yojson v
@@ -197,10 +197,10 @@ module Installation_ = struct
         let of_yojson =
           Json_schema.one_of
             (let open CCResult in
-            [
-              (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
-              (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
-            ])
+             [
+               (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
+               (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
+             ])
 
         let to_yojson = function
           | V0 v -> V0.to_yojson v

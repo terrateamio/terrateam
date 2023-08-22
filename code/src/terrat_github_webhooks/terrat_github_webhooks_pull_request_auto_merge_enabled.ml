@@ -13,7 +13,7 @@ type t = {
   number : int;
   organization : Terrat_github_webhooks_organization.t option; [@default None]
   pull_request : Terrat_github_webhooks_pull_request.t;
-  reason : string;
+  reason : string option; [@default None]
   repository : Terrat_github_webhooks_repository.t;
   sender : Terrat_github_webhooks_user.t;
 }
