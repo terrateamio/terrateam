@@ -103,17 +103,30 @@ module Dirs = struct
 
          TODO: Map the prefix to the specific file pattern so we only check
          those file patterns that have a prefix match. *)
+      let not_patterns, patterns = CCList.partition (CCString.prefix ~pre:"!") file_patterns in
+      let not_patterns = CCList.map (CCString.drop 1) not_patterns in
       let short_circuit =
         CCList.map
           (fun pat ->
             match CCString.index_opt pat '*' with
             | Some idx -> CCString.sub pat 0 idx
             | None -> pat)
-          file_patterns
+          (not_patterns @ file_patterns)
+      in
+      let not_patterns_glob =
+        match not_patterns with
+        | [] -> CCFun.const false
+        | not_patterns -> Path_glob.Glob.eval (parse_glob not_patterns)
+      in
+      let patterns_glob =
+        match patterns with
+        | [] -> CCFun.const false
+        | patterns -> Path_glob.Glob.eval (parse_glob patterns)
       in
       fun fname ->
         CCList.exists (fun pre -> CCString.prefix ~pre fname) short_circuit
-        && Path_glob.Glob.eval (parse_glob file_patterns) fname
+        && patterns_glob fname
+        && not (not_patterns_glob fname)
 
     let of_config_dir default_when_modified dirname config =
       let module Dir = Terrat_repo_config.Dir in

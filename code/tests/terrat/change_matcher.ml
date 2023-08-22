@@ -1013,6 +1013,49 @@ let test_large_directory_count_non_default_when_modified =
       let changes = Terrat_change_match.match_diff_list dirs diff in
       assert (CCList.length changes = 2 + num_dirs))
 
+let test_not_match =
+  Oth.test ~name:"Test not match" (fun _ ->
+      let repo_config =
+        CCResult.get_exn
+          (Terrat_repo_config.Version_1.of_yojson
+             (`Assoc
+               [
+                 ( "when_modified",
+                   `Assoc [ ("file_patterns", `List [ `String "**/*.tf"; `String "!ec2/**/*.tf" ]) ]
+                 );
+               ]))
+      in
+      let diff = Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" } ] in
+      let dirs =
+        CCResult.get_exn
+          (Terrat_change_match.synthesize_dir_config ~file_list:[ "ec2/ec2.tf" ] repo_config)
+      in
+      let changes = Terrat_change_match.match_diff_list dirs diff in
+      assert (CCList.length changes = 0))
+
+let test_not_match_multiple =
+  Oth.test ~name:"Test not match multiple" (fun _ ->
+      let repo_config =
+        CCResult.get_exn
+          (Terrat_repo_config.Version_1.of_yojson
+             (`Assoc
+               [
+                 ( "when_modified",
+                   `Assoc
+                     [
+                       ( "file_patterns",
+                         `List [ `String "**/*.tf"; `String "!ec2/**/*.tf"; `String "!foo/*.tf" ] );
+                     ] );
+               ]))
+      in
+      let diff = Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" } ] in
+      let dirs =
+        CCResult.get_exn
+          (Terrat_change_match.synthesize_dir_config ~file_list:[ "ec2/ec2.tf" ] repo_config)
+      in
+      let changes = Terrat_change_match.match_diff_list dirs diff in
+      assert (CCList.length changes = 0))
+
 let test =
   Oth.parallel
     [
@@ -1044,6 +1087,8 @@ let test =
       test_large_directory_count_unmatching_files;
       test_large_directory_count_matching_files;
       test_large_directory_count_non_default_when_modified;
+      test_not_match;
+      test_not_match_multiple;
     ]
 
 let () =
