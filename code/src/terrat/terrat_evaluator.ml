@@ -408,7 +408,9 @@ module type S = sig
       val work_manifest_run_type : t -> Terrat_work_manifest.Run_type.t
 
       val to_response :
-        t -> (Terrat_api_components.Work_manifest.t, [> `Error ]) result Abb.Future.t
+        t ->
+        (Terrat_api_components.Work_manifest.t, [> `Error | `Bad_glob of string ]) result
+        Abb.Future.t
 
       val initiate_work_manifest :
         request_id:string ->
@@ -426,7 +428,8 @@ module type S = sig
         t ->
         (Pull_request.Lite.t Work_manifest.Dirspace_map.t, [> `Error ]) result Abb.Future.t
 
-      val work_manifest_already_run : t -> (unit, [> `Error ]) result Abb.Future.t
+      val work_manifest_already_run : t -> unit Abb.Future.t
+      val publish_msg_bad_glob : t -> string -> unit Abb.Future.t
     end
 
     module Plans : sig
@@ -1744,13 +1747,20 @@ module Make (S : S) = struct
         let open Abb.Future.Infix_monad in
         run config storage request_id work_manifest_id work_manifest_initiate
         >>= function
-        | Ok (Some t) -> S.Work_manifest.Initiate.to_response t
-        | Ok None -> Abb.Future.return (Error `Work_manifest_not_found)
-        | Error (`Work_manifest_already_run t) -> (
-            S.Work_manifest.Initiate.work_manifest_already_run t
+        | Ok (Some t) -> (
+            S.Work_manifest.Initiate.to_response t
             >>= function
-            | Ok () -> Abb.Future.return (Error `Error)
-            | Error `Error -> Abb.Future.return (Error `Error))
+            | Ok _ as res -> Abb.Future.return res
+            | Error (`Bad_glob glob) ->
+                let open Abb.Future.Infix_monad in
+                S.Work_manifest.Initiate.publish_msg_bad_glob t glob
+                >>= fun () -> Abb.Future.return (Error `Error)
+            | Error #err as err -> Abb.Future.return err)
+        | Ok None -> Abb.Future.return (Error `Work_manifest_not_found)
+        | Error (`Work_manifest_already_run t) ->
+            let open Abb.Future.Infix_monad in
+            S.Work_manifest.Initiate.work_manifest_already_run t
+            >>= fun () -> Abb.Future.return (Error `Error)
         | Error _ as err -> Abb.Future.return err
     end
 

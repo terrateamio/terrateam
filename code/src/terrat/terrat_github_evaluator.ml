@@ -2506,10 +2506,20 @@ module Wm = struct
     end
 
     module Tmpl = struct
+      let read fname =
+        fname
+        |> Terrat_files_tmpl.read
+        |> CCOption.get_exn_or fname
+        |> Snabela.Template.of_utf8_string
+        |> CCResult.get_exn
+        |> fun tmpl -> Snabela.of_template tmpl []
+
       let work_manifest_already_run =
         "github_work_manifest_already_run.tmpl"
         |> Terrat_files_tmpl.read
         |> CCOption.get_exn_or "github_work_manifest_already_run.tmpl"
+
+      let bad_glob = read "bad_glob.tmpl"
     end
 
     module Pull_request = struct
@@ -2967,8 +2977,41 @@ module Wm = struct
             ~repo:t.name
             ~pull_number:(CCInt64.to_int pull_number)
             Tmpl.work_manifest_already_run
-          >>= fun _ -> Abb.Future.return (Ok ())
-      | None -> Abb.Future.return (Ok ())
+          >>= fun _ -> Abb.Future.return ()
+      | None -> Abb.Future.return ()
+
+    let publish_msg_bad_glob t glob =
+      match t.pull_number with
+      | Some pull_number -> (
+          let open Abb.Future.Infix_monad in
+          let kv = Snabela.Kv.(Map.of_list [ ("glob", string glob) ]) in
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : BAD_GLOB : work_manifest=%s : owner=%s : name=%s : \
+                 pull_number=%Ld"
+                t.request_id
+                (Uuidm.to_string t.work_manifest.Terrat_work_manifest.id)
+                t.owner
+                t.name
+                pull_number);
+          match Snabela.apply Tmpl.bad_glob kv with
+          | Ok body ->
+              Terrat_github.publish_comment
+                ~config:t.config
+                ~access_token:t.access_token
+                ~owner:t.owner
+                ~repo:t.name
+                ~pull_number:(CCInt64.to_int pull_number)
+                body
+              >>= fun _ -> Abb.Future.return ()
+          | Error (#Snabela.err as err) ->
+              Logs.err (fun m ->
+                  m
+                    "GITHUB_EVALUATOR : %s : TEMPLATE_ERROR : %s"
+                    t.request_id
+                    (Snabela.show_err err));
+              Abb.Future.return ())
+      | None -> Abb.Future.return ()
 
     let to_response' t =
       let module Wm = Terrat_work_manifest in
@@ -3082,9 +3125,9 @@ module Wm = struct
                 Terrat_github.pp_fetch_repo_config_err
                 err);
           Abb.Future.return (Error `Error)
-      | Error (`Bad_glob glob) ->
+      | Error (`Bad_glob glob) as err ->
           Logs.err (fun m -> m "GITHUB_EVALUATOR : %s : ERROR : BAD_GLOB : %s" t.request_id glob);
-          Abb.Future.return (Error `Error)
+          Abb.Future.return err
       | Error (#Terrat_github.get_tree_err as err) ->
           Logs.err (fun m ->
               m "GITHUB_EVALUATOR : %s : ERROR : %a" t.request_id Terrat_github.pp_get_tree_err err);

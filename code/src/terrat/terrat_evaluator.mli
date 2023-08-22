@@ -271,7 +271,9 @@ module type S = sig
       val work_manifest_run_type : t -> Terrat_work_manifest.Run_type.t
 
       val to_response :
-        t -> (Terrat_api_components.Work_manifest.t, [> `Error ]) result Abb.Future.t
+        t ->
+        (Terrat_api_components.Work_manifest.t, [> `Error | `Bad_glob of string ]) result
+        Abb.Future.t
 
       (** Fetch a work manifest if it exists.  If it is in a queued state then
           initiate it. *)
@@ -291,7 +293,8 @@ module type S = sig
         t ->
         (Pull_request.Lite.t Work_manifest.Dirspace_map.t, [> `Error ]) result Abb.Future.t
 
-      val work_manifest_already_run : t -> (unit, [> `Error ]) result Abb.Future.t
+      val work_manifest_already_run : t -> unit Abb.Future.t
+      val publish_msg_bad_glob : t -> string -> unit Abb.Future.t
     end
 
     module Plans : sig
