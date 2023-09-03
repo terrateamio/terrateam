@@ -3984,19 +3984,47 @@ module Wm = struct
              | Output.Workflow_output_init Init.{ outputs = None; _ }
              | Output.Workflow_output_apply Apply.{ outputs = None; _ } -> [])
 
+    let has_changes_of_workflow_outputs outputs =
+      let module Output = Terrat_api_components_workflow_outputs.Items in
+      let module Plan = Terrat_api_components_workflow_output_plan in
+      let module Output_plan = Terrat_api_components_output_plan in
+      (* Find the plan output, and then extract the has changes if it's there *)
+      outputs
+      |> CCList.find_opt (function
+             | Output.Workflow_output_plan _ -> true
+             | _ -> false)
+      |> CCOption.flat_map (function
+             | Output.Workflow_output_plan
+                 Plan.
+                   { outputs = Some (Plan.Outputs.Output_plan Output_plan.{ has_changes; _ }); _ }
+               -> Some has_changes
+             | _ -> None)
+
     let create_run_output ~view run_type results denied_dirspaces =
       let module Wmr = Terrat_api_components.Work_manifest_result in
       let module R = Terrat_api_work_manifest.Results.Request_body in
-      let module Dirspace_result_compare = struct
-        type t = bool * string * string [@@deriving ord]
-      end in
       let dirspaces =
+        let module Cmp = struct
+          type t = bool * bool * string * string [@@deriving ord]
+        end in
         results.R.dirspaces
         |> CCList.sort
              (fun
-               Wmr.{ path = p1; workspace = w1; success = s1; _ }
-               Wmr.{ path = p2; workspace = w2; success = s2; _ }
-             -> Dirspace_result_compare.compare (s1, p1, w1) (s2, p2, w2))
+               Wmr.{ path = p1; workspace = w1; success = s1; outputs = outputs1; _ }
+               Wmr.{ path = p2; workspace = w2; success = s2; outputs = outputs2; _ }
+             ->
+               (* Sort the results by dirspace and whether or not it has
+                  changes.  We want those dirspaces that have no changes
+                  last. *)
+               let has_changes1 =
+                 CCOption.get_or ~default:true (has_changes_of_workflow_outputs outputs1)
+               in
+               let has_changes2 =
+                 CCOption.get_or ~default:true (has_changes_of_workflow_outputs outputs2)
+               in
+               (* Negate has_changes because the order of [bool] is [false]
+                  before [true]. *)
+               Cmp.compare (not has_changes1, s1, p1, w1) (not has_changes2, s2, p2, w2))
       in
       let maybe_credentials_error =
         dirspaces
@@ -4114,12 +4142,19 @@ module Wm = struct
                           (fun Wmr.{ path; workspace; success; outputs; _ } ->
                             let module Text = Terrat_api_components_output_text in
                             Map.of_list
-                              [
-                                ("dir", string path);
-                                ("workspace", string workspace);
-                                ("success", bool success);
-                                ("outputs", kv_of_workflow_step (workflow_output_texts outputs));
-                              ])
+                              (CCList.flatten
+                                 [
+                                   [
+                                     ("dir", string path);
+                                     ("workspace", string workspace);
+                                     ("success", bool success);
+                                     ("outputs", kv_of_workflow_step (workflow_output_texts outputs));
+                                   ]
+                                   @ CCOption.map_or
+                                       ~default:[]
+                                       (fun has_changes -> [ ("has_changes", bool has_changes) ])
+                                       (has_changes_of_workflow_outputs outputs);
+                                 ]))
                           dirspaces) );
                  ];
                  (match denied_dirspaces with
