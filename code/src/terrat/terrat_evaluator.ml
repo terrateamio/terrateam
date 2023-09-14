@@ -313,6 +313,7 @@ module type S = sig
     val query_conflicting_work_manifests_in_repo :
       Pgsql_io.t ->
       T.t ->
+      Terrat_change.Dirspace.t list ->
       [< Event.Op_class.tf ] ->
       (Src.t Terrat_work_manifest.Existing_lite.t list, [> `Error ]) result Abb.Future.t
 
@@ -763,14 +764,14 @@ module Make (S : S) = struct
           Abb.Future.return (Ok ())
       | Error (#Terrat_tag_query.err as err) -> Abb.Future.return (Error err)
 
-    let test_can_perform_operation db event operation =
+    let test_can_perform_operation db event dirspaces operation =
       let open Abbs_future_combinators.Infix_result_monad in
       Abbs_time_it.run (log_time event "QUERY_ACCOUNT_STATUS") (fun () ->
           S.Event.query_account_status db event)
       >>= function
       | `Active ->
           Abbs_time_it.run (log_time event "QUERY_CONFLICTING_WORK_MANIFESTS") (fun () ->
-              S.Event.query_conflicting_work_manifests_in_repo db event operation
+              S.Event.query_conflicting_work_manifests_in_repo db event dirspaces operation
               >>= function
               | [] -> Abb.Future.return (Ok `Valid)
               | wms -> Abb.Future.return (Ok (`Conflicting_work_manifests wms)))
@@ -834,7 +835,10 @@ module Make (S : S) = struct
               Abb.Future.return (Error `Merge_conflict)
           | _, _, _ -> (
               let open Abbs_future_combinators.Infix_result_monad in
-              test_can_perform_operation db event (`Plan tf_mode)
+              let dirspaces =
+                CCList.map (fun Terrat_change_match.{ dirspace; _ } -> dirspace) matches
+              in
+              test_can_perform_operation db event dirspaces (`Plan tf_mode)
               >>= function
               | `Valid ->
                   create_and_store_work_manifest
@@ -923,7 +927,10 @@ module Make (S : S) = struct
                 (CCList.map (fun Terrat_change_match.{ dirspace; _ } -> dirspace) matches)
               >>= function
               | [] -> (
-                  test_can_perform_operation db event operation
+                  let dirspaces =
+                    CCList.map (fun Terrat_change_match.{ dirspace; _ } -> dirspace) matches
+                  in
+                  test_can_perform_operation db event dirspaces operation
                   >>= function
                   | `Valid -> (
                       (* All are ready to be applied *)

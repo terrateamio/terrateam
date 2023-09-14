@@ -1,4 +1,7 @@
 with
+dirspaces as (
+    select dir, workspace from unnest($dirs, $workspaces) as v(dir, workspace)
+),
 latest_unlocks as (
     select
         repository,
@@ -13,6 +16,15 @@ latest_drift_unlocks as (
         max(unlocked_at) as unlocked_at
     from github_drift_unlocks
     group by repository
+),
+work_manifests_for_dirspace as (
+    select distinct
+        gwm.id
+    from github_work_manifests as gwm
+    inner join github_work_manifest_dirspaceflows as gwmdsfs
+        on gwmdsfs.work_manifest = gwm.id
+    inner join dirspaces
+        on dirspaces.dir = gwmdsfs.path and dirspaces.workspace = gwmdsfs.workspace
 )
 select
     gwm.base_sha,
@@ -34,6 +46,8 @@ select
      else ''
      end)
 from github_work_manifests as gwm
+inner join work_manifests_for_dirspace
+    on work_manifests_for_dirspace.id = gwm.id
 left join github_pull_requests as gpr
     on gpr.repository = gwm.repository and gpr.pull_number = gwm.pull_number
 left join latest_unlocks

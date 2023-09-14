@@ -723,7 +723,9 @@ module Ev = struct
         /^ read "select_github_conflicting_work_manifests_in_repo.sql"
         /% Var.bigint "repository"
         /% Var.bigint "pull_number"
-        /% Var.(ud (text "run_type") Terrat_work_manifest.Run_type.to_string))
+        /% Var.(ud (text "run_type") Terrat_work_manifest.Run_type.to_string)
+        /% Var.(str_array (text "dirs"))
+        /% Var.(str_array (text "workspaces")))
 
     let select_dirspaces_owned_by_other_pull_requests =
       Pgsql_io.Typed_sql.(
@@ -1373,7 +1375,7 @@ module Ev = struct
               (Terrat_github.Pull_request_reviews.show_list_err err));
         Abb.Future.return (Error `Error)
 
-  let query_conflicting_work_manifests_in_repo db event operation =
+  let query_conflicting_work_manifests_in_repo db event dirspaces operation =
     let run =
       Pgsql_io.Prepared_stmt.fetch
         db
@@ -1438,6 +1440,8 @@ module Ev = struct
         (CCInt64.of_int event.T.repository.Gw.Repository.id)
         (CCInt64.of_int event.T.pull_number)
         (Terrat_evaluator.Event.Op_class.run_type_of_tf operation)
+        (CCList.map (fun Terrat_change.Dirspace.{ dir; _ } -> dir) dirspaces)
+        (CCList.map (fun Terrat_change.Dirspace.{ workspace; _ } -> workspace) dirspaces)
     in
     let open Abb.Future.Infix_monad in
     run

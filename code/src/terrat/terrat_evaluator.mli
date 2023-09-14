@@ -176,6 +176,7 @@ module type S = sig
     val query_conflicting_work_manifests_in_repo :
       Pgsql_io.t ->
       T.t ->
+      Terrat_change.Dirspace.t list ->
       [< Event.Op_class.tf ] ->
       (Src.t Terrat_work_manifest.Existing_lite.t list, [> `Error ]) result Abb.Future.t
 
