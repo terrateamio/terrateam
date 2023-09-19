@@ -1378,21 +1378,23 @@ module Ev = struct
       Pgsql_io.Prepared_stmt.fetch
         db
         (Sql.select_conflicting_work_manifests_in_repo ())
-        ~f:(fun base_hash
-                created_at
-                hash
-                id
-                run_id
-                run_type
-                tag_query
-                base_branch
-                branch
-                pull_number
-                pr_state
-                merged_hash
-                merged_at
-                state
-                run_kind ->
+        ~f:(fun
+            base_hash
+            created_at
+            hash
+            id
+            run_id
+            run_type
+            tag_query
+            base_branch
+            branch
+            pull_number
+            pr_state
+            merged_hash
+            merged_at
+            state
+            run_kind
+          ->
           let src =
             match (pull_number, base_branch, branch, pr_state) with
             | Some pull_number, Some base_branch, Some branch, Some pr_state ->
@@ -1898,16 +1900,8 @@ module Ev = struct
     Pgsql_io.Prepared_stmt.fetch
       db
       Sql.select_dirspaces_owned_by_other_pull_requests
-      ~f:(fun dir
-              workspace
-              base_branch
-              branch
-              base_hash
-              hash
-              merged_hash
-              merged_at
-              pull_number
-              state ->
+      ~f:(fun
+          dir workspace base_branch branch base_hash hash merged_hash merged_at pull_number state ->
         ( Terrat_change.Dirspace.{ dir; workspace },
           Terrat_pull_request.
             {
@@ -2690,21 +2684,23 @@ module Wm = struct
       Pgsql_io.Prepared_stmt.fetch
         db
         (Sql.initiate_work_manifest ())
-        ~f:(fun base_hash
-                completed_at
-                created_at
-                hash
-                run_type
-                state
-                tag_query
-                repository
-                pull_number
-                base_branch
-                installation_id
-                owner
-                repo_name
-                run_time
-                run_kind ->
+        ~f:(fun
+            base_hash
+            completed_at
+            created_at
+            hash
+            run_type
+            state
+            tag_query
+            repository
+            pull_number
+            base_branch
+            installation_id
+            owner
+            repo_name
+            run_time
+            run_kind
+          ->
           ( run_time,
             {
               Terrat_work_manifest.base_hash;
@@ -2749,20 +2745,22 @@ module Wm = struct
           Pgsql_io.Prepared_stmt.fetch
             db
             (Sql.select_work_manifest ())
-            ~f:(fun base_hash
-                    completed_at
-                    created_at
-                    hash
-                    run_type
-                    state
-                    tag_query
-                    repository
-                    pull_number
-                    base_branch
-                    installation_id
-                    owner
-                    repo_name
-                    run_kind ->
+            ~f:(fun
+                base_hash
+                completed_at
+                created_at
+                hash
+                run_type
+                state
+                tag_query
+                repository
+                pull_number
+                base_branch
+                installation_id
+                owner
+                repo_name
+                run_kind
+              ->
               {
                 Terrat_work_manifest.base_hash;
                 changes = ();
@@ -2913,16 +2911,18 @@ module Wm = struct
           Pgsql_io.Prepared_stmt.fetch
             db
             Sql.select_dirspaces_owned_by_other_pull_requests
-            ~f:(fun dir
-                    workspace
-                    base_branch
-                    branch
-                    base_hash
-                    hash
-                    merged_hash
-                    merged_at
-                    pull_number
-                    state ->
+            ~f:(fun
+                dir
+                workspace
+                base_branch
+                branch
+                base_hash
+                hash
+                merged_hash
+                merged_at
+                pull_number
+                state
+              ->
               ( Tc.Dirspace.{ dir; workspace },
                 Terrat_pull_request.
                   {
@@ -3675,21 +3675,21 @@ module Wm = struct
         (Sql.select_work_manifest_for_update ())
         work_manifest_id
         ~f:(fun
-             base_hash
-             completed_at
-             created_at
-             hash
-             run_type
-             state
-             tag_query
-             repo_id
-             pull_number
-             base_branch
-             installation_id
-             owner
-             name
-             run_id
-           ->
+            base_hash
+            completed_at
+            created_at
+            hash
+            run_type
+            state
+            tag_query
+            repo_id
+            pull_number
+            base_branch
+            installation_id
+            owner
+            name
+            run_id
+          ->
           ( (installation_id, owner, name, repo_id, pull_number),
             {
               Terrat_work_manifest.base_hash;
@@ -3986,7 +3986,7 @@ module Wm = struct
              | Output.Workflow_output_init Init.{ outputs = None; _ }
              | Output.Workflow_output_apply Apply.{ outputs = None; _ } -> [])
 
-    let create_run_output ~compact_view run_type results denied_dirspaces =
+    let create_run_output ~view run_type results denied_dirspaces =
       let module Wmr = Terrat_api_components.Work_manifest_result in
       let module R = Terrat_api_work_manifest.Results.Request_body in
       let module Dirspace_result_compare = struct
@@ -4108,7 +4108,7 @@ module Wm = struct
                    ("overall_success", bool results.R.overall.R.Overall.success);
                    ("pre_hooks", kv_of_workflow_step (pre_hook_output_texts pre));
                    ("post_hooks", kv_of_workflow_step (post_hook_output_texts post));
-                   ("compact_view", bool compact_view);
+                   ("compact_view", bool (view = `Compact));
                    ("compact_dirspaces", bool (CCList.length dirspaces > 5));
                    ( "results",
                      list
@@ -4162,14 +4162,12 @@ module Wm = struct
           Logs.err (fun m -> m "GITHUB_EVALUATOR : ERROR : %s" (Snabela.show_err err));
           assert false
 
-    let rec iterate_comment_posts ?(compact_view = false) t pull_number results denied_dirspaces =
+    let rec iterate_comment_posts ?(view = `Full) t pull_number results denied_dirspaces =
       let module Wm = Terrat_work_manifest in
       let open Abb.Future.Infix_monad in
-      let output =
-        create_run_output ~compact_view t.work_manifest.Wm.run_type results denied_dirspaces
-      in
+      let output = create_run_output ~view t.work_manifest.Wm.run_type results denied_dirspaces in
       Metrics.Run_output_histogram.observe
-        (Metrics.run_output_chars ~r:t.work_manifest.Wm.run_type ~c:compact_view)
+        (Metrics.run_output_chars ~r:t.work_manifest.Wm.run_type ~c:(view = `Compact))
         (CCFloat.of_int (CCString.length output));
       Terrat_github.publish_comment
         ~config:t.config
@@ -4180,28 +4178,50 @@ module Wm = struct
         output
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
-      | Error (#Terrat_github.publish_comment_err as err) when not compact_view ->
-          Prmths.Counter.inc_one Metrics.github_errors_total;
-          Logs.err (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : ITERATE_COMMENT_POST : %s"
-                t.request_id
-                (Terrat_github.show_publish_comment_err err));
-          iterate_comment_posts ~compact_view:true t pull_number results denied_dirspaces
-      | Error (#Terrat_github.publish_comment_err as err) ->
-          Prmths.Counter.inc_one Metrics.github_errors_total;
-          Logs.err (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : ITERATE_COMMENT_POST : %s"
-                t.request_id
-                (Terrat_github.show_publish_comment_err err));
-          Terrat_github.publish_comment
-            ~config:t.config
-            ~access_token:t.access_token
-            ~owner:t.owner
-            ~repo:t.name
-            ~pull_number
-            Tmpl.comment_too_large
+      | Error (#Terrat_github.publish_comment_err as err) -> (
+          match (view, results.Terrat_api_work_manifest.Results.Request_body.dirspaces) with
+          | _, [] -> assert false
+          | `Full, _ ->
+              Prmths.Counter.inc_one Metrics.github_errors_total;
+              Logs.err (fun m ->
+                  m
+                    "GITHUB_EVALUATOR : %s : ITERATE_COMMENT_POST : %s"
+                    t.request_id
+                    (Terrat_github.show_publish_comment_err err));
+              iterate_comment_posts ~view:`Compact t pull_number results denied_dirspaces
+          | `Compact, [ _ ] ->
+              (* If we're in compact view but there is only one dirspace, then
+                 that means there is no way to make the comment smaller. *)
+              Prmths.Counter.inc_one Metrics.github_errors_total;
+              Logs.err (fun m ->
+                  m
+                    "GITHUB_EVALUATOR : %s : ITERATE_COMMENT_POST : %s"
+                    t.request_id
+                    (Terrat_github.show_publish_comment_err err));
+              Terrat_github.publish_comment
+                ~config:t.config
+                ~access_token:t.access_token
+                ~owner:t.owner
+                ~repo:t.name
+                ~pull_number
+                Tmpl.comment_too_large
+          | `Compact, dirspaces ->
+              Abbs_future_combinators.List_result.iter
+                ~f:(fun dirspace ->
+                  Prmths.Counter.inc_one Metrics.github_errors_total;
+                  Logs.err (fun m ->
+                      m
+                        "GITHUB_EVALUATOR : %s : ITERATE_COMMENT_POST : %s"
+                        t.request_id
+                        (Terrat_github.show_publish_comment_err err));
+                  let results =
+                    {
+                      results with
+                      Terrat_api_work_manifest.Results.Request_body.dirspaces = [ dirspace ];
+                    }
+                  in
+                  iterate_comment_posts ~view:`Full t pull_number results denied_dirspaces)
+                dirspaces)
 
     let complete_status_checks t results =
       let module Wm = Terrat_work_manifest in
