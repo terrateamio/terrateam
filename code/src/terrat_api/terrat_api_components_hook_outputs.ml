@@ -11,24 +11,24 @@ module Post = struct
     let of_yojson =
       Json_schema.one_of
         (let open CCResult in
-        [
-          (fun v ->
-            map
-              (fun v -> Workflow_output_drift_create_issue v)
-              (Terrat_api_components_workflow_output_drift_create_issue.of_yojson v));
-          (fun v ->
-            map
-              (fun v -> Workflow_output_run v)
-              (Terrat_api_components_workflow_output_run.of_yojson v));
-          (fun v ->
-            map
-              (fun v -> Workflow_output_env v)
-              (Terrat_api_components_workflow_output_env.of_yojson v));
-          (fun v ->
-            map
-              (fun v -> Workflow_output_oidc v)
-              (Terrat_api_components_workflow_output_oidc.of_yojson v));
-        ])
+         [
+           (fun v ->
+             map
+               (fun v -> Workflow_output_drift_create_issue v)
+               (Terrat_api_components_workflow_output_drift_create_issue.of_yojson v));
+           (fun v ->
+             map
+               (fun v -> Workflow_output_run v)
+               (Terrat_api_components_workflow_output_run.of_yojson v));
+           (fun v ->
+             map
+               (fun v -> Workflow_output_env v)
+               (Terrat_api_components_workflow_output_env.of_yojson v));
+           (fun v ->
+             map
+               (fun v -> Workflow_output_oidc v)
+               (Terrat_api_components_workflow_output_oidc.of_yojson v));
+         ])
 
     let to_yojson = function
       | Workflow_output_drift_create_issue v ->
@@ -54,28 +54,28 @@ module Pre = struct
     let of_yojson =
       Json_schema.one_of
         (let open CCResult in
-        [
-          (fun v ->
-            map
-              (fun v -> Workflow_output_run v)
-              (Terrat_api_components_workflow_output_run.of_yojson v));
-          (fun v ->
-            map
-              (fun v -> Workflow_output_env v)
-              (Terrat_api_components_workflow_output_env.of_yojson v));
-          (fun v ->
-            map
-              (fun v -> Workflow_output_checkout v)
-              (Terrat_api_components_workflow_output_checkout.of_yojson v));
-          (fun v ->
-            map
-              (fun v -> Workflow_output_cost_estimation v)
-              (Terrat_api_components_workflow_output_cost_estimation.of_yojson v));
-          (fun v ->
-            map
-              (fun v -> Workflow_output_oidc v)
-              (Terrat_api_components_workflow_output_oidc.of_yojson v));
-        ])
+         [
+           (fun v ->
+             map
+               (fun v -> Workflow_output_run v)
+               (Terrat_api_components_workflow_output_run.of_yojson v));
+           (fun v ->
+             map
+               (fun v -> Workflow_output_env v)
+               (Terrat_api_components_workflow_output_env.of_yojson v));
+           (fun v ->
+             map
+               (fun v -> Workflow_output_checkout v)
+               (Terrat_api_components_workflow_output_checkout.of_yojson v));
+           (fun v ->
+             map
+               (fun v -> Workflow_output_cost_estimation v)
+               (Terrat_api_components_workflow_output_cost_estimation.of_yojson v));
+           (fun v ->
+             map
+               (fun v -> Workflow_output_oidc v)
+               (Terrat_api_components_workflow_output_oidc.of_yojson v));
+         ])
 
     let to_yojson = function
       | Workflow_output_run v -> Terrat_api_components_workflow_output_run.to_yojson v

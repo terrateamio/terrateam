@@ -33,5 +33,7 @@ type ('id, 'diff, 'checks) t = {
   mergeable : bool option;
   provisional_merge_sha : string option;
   state : State.t;
+  title : string option;
+  user : string option;
 }
 [@@deriving show]

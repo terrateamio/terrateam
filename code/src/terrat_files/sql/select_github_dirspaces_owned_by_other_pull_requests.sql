@@ -153,7 +153,9 @@ select distinct
     gpr.merged_sha as merged_hash,
     gpr.merged_at as merged_at,
     gpr.pull_number as id,
-    gpr.state as state
+    gpr.state as state,
+    gpr.title as title,
+    gpr.username as username
 from github_pull_requests as gpr
 inner join all_dangling_dirspaces as adds
     on gpr.repository = adds.repository and gpr.pull_number = adds.pull_number

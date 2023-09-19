@@ -3,5 +3,5 @@
 sleep 5
 
 mkdir -p /run/nginx
-
+envsubst '$TERRAT_UI_BASE' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 exec /usr/sbin/nginx -c /etc/nginx/nginx.conf

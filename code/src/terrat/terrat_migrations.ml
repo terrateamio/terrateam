@@ -94,6 +94,18 @@ let migrations =
     ("remove-github-repo-constraint", run_file_sql "2023-08-02-remove-github-repo-constraint.sql");
     ( "add-base-sha-to-github-dirspaces-pkey",
       run_file_sql "2023-11-09-add-base-sha-to-github-dirspaces-pkey.sql" );
+    ("refactor-users", run_file_sql "2023-09-25-refactor-users.sql");
+    ("refactor-user-sessions", run_file_sql "2023-09-25-refactor-user-sessions.sql");
+    ( "refactor-user-sessions-user-agent",
+      run_file_sql "2023-09-25-refactor-user-sessions-user-agent.sql" );
+    ("remove-github-users-id", run_file_sql "2023-09-25-remove-github-users-id.sql");
+    ( "make-user-session-token-autogen",
+      run_file_sql "2023-09-26-make-user-session-token-autogen.sql" );
+    ("add-pull-request-title", run_file_sql "2023-10-10-add-pull-request-title.sql");
+    ( "add-user-track-on-work-manifest",
+      run_file_sql "2023-11-15-add-user-track-on-work-manifest.sql" );
+    ("add-user-track-on-pull-request", run_file_sql "2023-11-15-add-user-track-on-pull-request.sql");
+    ("add-user-installations-table", run_file_sql "2023-11-18-add-user-installations-table.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations

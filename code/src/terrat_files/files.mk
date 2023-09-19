@@ -3,15 +3,6 @@
 # Make it serial because we are adding a NON_LIB_MODULE
 .NOTPARALLEL:
 
-asset_files := \
-	../terrat_css/style.css \
-	../terrat_js/terrat_js.js \
-	$(wildcard ../../../../vendor/material-icons/mdi-v20210302.*) \
-	$(wildcard ../terrat_site/*.html) \
-	$(wildcard ../terrat_site/*.png) \
-	$(wildcard ../terrat_site/*.json) \
-	$(wildcard ../terrat_site/*.svg)
-
 migrations_files := $(wildcard $(SRC_DIR)/migrations/*.sql)
 
 sql_files := $(wildcard $(SRC_DIR)/sql/*.sql)
@@ -25,7 +16,6 @@ SRC_DIR = src
 
 NON_LIB_MODULES = \
 	terrat_files.ml \
-	terrat_files_assets.ml \
 	terrat_files_migrations.ml \
 	terrat_files_sql.ml \
         terrat_files_tmpl.ml
@@ -33,13 +23,6 @@ NON_LIB_MODULES = \
 $(SRC_DIR)/terrat_files.ml:
 	mkdir -p "$(SRC_DIR)"
 	test -e $@ || touch $@
-
-$(SRC_DIR)/terrat_files_assets.ml: $(asset_files)
-	mkdir -p "$(SRC_DIR)"
-	-rm -rf assets
-	mkdir assets
-	cp $^ assets/
-	ocaml-crunch -m plain assets/ > $@
 
 $(SRC_DIR)/terrat_files_migrations.ml: $(migrations_files)
 	mkdir -p "$(SRC_DIR)"
@@ -66,7 +49,6 @@ clean: clean_files
 
 clean_files:
 	rm "$(SRC_DIR)/terrat_files.ml" \
-	   "$(SRC_DIR)/terrat_files_assets.ml" \
 	   "$(SRC_DIR)/terrat_files_migrations.ml" \
 	   "$(SRC_DIR)/terrat_files_sql.ml" \
            "$(SRC_DIR)/terrat_files_tmpl.ml"

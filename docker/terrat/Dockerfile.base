@@ -1,10 +1,11 @@
 # base image
-FROM alpine:3.13
+FROM alpine:3.18
 
 # packages
 RUN apk add --no-cache \
     bsd-compat-headers \
     ca-certificates \
+    clang \
     cmake \
     coreutils \
     git \
@@ -18,7 +19,6 @@ RUN apk add --no-cache \
     npm \
     opam \
     openssh \
-    openssl-dev \
     perl \
     py3-yaml \
     python3 \

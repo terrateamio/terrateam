@@ -109,7 +109,8 @@ module Sql = struct
       /% Var.bigint "repository"
       /% Var.text "run_type"
       /% Var.text "sha"
-      /% Var.text "tag_query")
+      /% Var.text "tag_query"
+      /% Var.(option (text "username")))
 
   let insert_work_manifest_dirspaceflow () =
     Pgsql_io.Typed_sql.(
@@ -138,6 +139,7 @@ let insert_work_manifest db repository_id work_manifest pull_number_opt =
     (Terrat_work_manifest.Run_type.to_string work_manifest.Wm.run_type)
     work_manifest.Wm.hash
     (Terrat_tag_query.to_string work_manifest.Wm.tag_query)
+    work_manifest.Wm.user
   >>= function
   | [] -> assert false
   | (id, state, created_at) :: _ ->
@@ -297,6 +299,7 @@ module Dr = struct
           run_type;
           state = ();
           tag_query = Terrat_tag_query.any;
+          user = None;
         }
       in
       insert_work_manifest db (CCInt64.to_int schedule.S.repository) work_manifest None
@@ -672,7 +675,9 @@ module Ev = struct
         /% Var.text "sha"
         /% Var.(option (text "merged_sha"))
         /% Var.(option (timestamptz "merged_at"))
-        /% Var.text "state")
+        /% Var.text "state"
+        /% Var.(option (text "title"))
+        /% Var.(option (text "username")))
 
     let insert_dirspace =
       Pgsql_io.Typed_sql.(
@@ -712,6 +717,9 @@ module Ev = struct
         // (* merged_at *) Ret.(option text)
         // (* state *) Ret.(ud' Terrat_work_manifest.State.of_string)
         // (* run_kind *) Ret.text
+        // (* pull_request_title *) Ret.(option text)
+        // (* work manifest username *) Ret.(option text)
+        // (* pull request username *) Ret.(option text)
         /^ read "select_github_conflicting_work_manifests_in_repo.sql"
         /% Var.bigint "repository"
         /% Var.bigint "pull_number"
@@ -743,6 +751,8 @@ module Ev = struct
         // (* merged_at *) Ret.(option text)
         // (* pull_number *) Ret.bigint
         // (* state *) Ret.text
+        // (* title *) Ret.(option text)
+        // (* username *) Ret.(option text)
         /^ read "select_github_dirspaces_owned_by_other_pull_requests.sql"
         /% Var.bigint "repository"
         /% Var.bigint "pull_number"
@@ -1114,6 +1124,8 @@ module Ev = struct
       merged_sha
       merged_at
       state
+      pull_request.Pr.title
+      pull_request.Pr.user
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
     | Error (#Pgsql_io.err as err) ->
@@ -1136,6 +1148,7 @@ module Ev = struct
       let module Pr = Ghc_comp.Pull_request in
       let module Head = Pr.Primary.Head in
       let module Base = Pr.Primary.Base in
+      let module User = Ghc_comp.Simple_user in
       match Openapi.Response.value resp with
       | `OK
           {
@@ -1150,6 +1163,8 @@ module Ev = struct
                 mergeable_state;
                 mergeable;
                 draft;
+                title;
+                user = User.{ primary = Primary.{ login; _ }; _ };
                 _;
               };
             _;
@@ -1203,6 +1218,8 @@ module Ev = struct
                      mergeable;
                      provisional_merge_sha = merge_commit_sha;
                      draft;
+                     title = Some title;
+                     user = Some login;
                    } ))
       | (`Not_found _ | `Internal_server_error _ | `Not_modified | `Service_unavailable _) as err ->
           Logs.err (fun m ->
@@ -1420,6 +1437,9 @@ module Ev = struct
             merged_at
             state
             run_kind
+            pull_request_title
+            wm_user
+            pr_user
           ->
           let src =
             match (pull_number, base_branch, branch, pr_state) with
@@ -1444,6 +1464,8 @@ module Ev = struct
                       mergeable = None;
                       provisional_merge_sha = None;
                       draft = false;
+                      title = pull_request_title;
+                      user = pr_user;
                     }
                 in
                 Src.Pull_request pull_request
@@ -1462,6 +1484,7 @@ module Ev = struct
               run_type;
               state;
               tag_query;
+              user = wm_user;
             })
         (CCInt64.of_int event.T.repository.Gw.Repository.id)
         (CCInt64.of_int event.T.pull_number)
@@ -1931,7 +1954,19 @@ module Ev = struct
       db
       Sql.select_dirspaces_owned_by_other_pull_requests
       ~f:(fun
-          dir workspace base_branch branch base_hash hash merged_hash merged_at pull_number state ->
+          dir
+          workspace
+          base_branch
+          branch
+          base_hash
+          hash
+          merged_hash
+          merged_at
+          pull_number
+          state
+          title
+          user
+        ->
         ( Terrat_change.Dirspace.{ dir; workspace },
           Terrat_pull_request.
             {
@@ -1952,6 +1987,8 @@ module Ev = struct
               mergeable = None;
               provisional_merge_sha = None;
               draft = false;
+              title;
+              user;
             } ))
       (CCInt64.of_int event.T.repository.Gw.Repository.id)
       pull_request.Terrat_pull_request.id
@@ -2465,6 +2502,7 @@ module Wm = struct
           // (* repo *) Ret.text
           // (* run_time *) Ret.double
           // (* run_kind *) Ret.text
+          // (* username *) Ret.(option text)
           /^ read "github_initiate_work_manifest.sql"
           /% Var.uuid "id"
           /% Var.text "run_id"
@@ -2487,6 +2525,7 @@ module Wm = struct
           // (* owner *) Ret.text
           // (* repo *) Ret.text
           // (* run_kind *) Ret.text
+          // (* username *) Ret.(option text)
           /^ read "select_github_work_manifest.sql"
           /% Var.uuid "id"
           /% Var.text "sha")
@@ -2525,6 +2564,8 @@ module Wm = struct
           // (* merged_at *) Ret.(option text)
           // (* pull_number *) Ret.bigint
           // (* state *) Ret.text
+          // (* pull_request_title *) Ret.(option text)
+          // (* username *) Ret.(option text)
           /^ read "select_github_dirspaces_owned_by_other_pull_requests.sql"
           /% Var.bigint "repository"
           /% Var.bigint "pull_number"
@@ -2743,6 +2784,7 @@ module Wm = struct
             repo_name
             run_time
             run_kind
+            user
           ->
           ( run_time,
             {
@@ -2767,6 +2809,7 @@ module Wm = struct
               run_type;
               state;
               tag_query;
+              user;
             } ))
         work_manifest_id
         work_manifest_initiate.I.run_id
@@ -2807,6 +2850,7 @@ module Wm = struct
                 owner
                 repo_name
                 run_kind
+                user
               ->
               {
                 Terrat_work_manifest.base_hash;
@@ -2830,6 +2874,7 @@ module Wm = struct
                 run_type;
                 state;
                 tag_query;
+                user;
               })
             work_manifest_id
             work_manifest_initiate.I.sha
@@ -2970,6 +3015,8 @@ module Wm = struct
                 merged_at
                 pull_number
                 state
+                title
+                user
               ->
               ( Tc.Dirspace.{ dir; workspace },
                 Terrat_pull_request.
@@ -2991,6 +3038,8 @@ module Wm = struct
                     mergeable = None;
                     provisional_merge_sha = None;
                     draft = false;
+                    title;
+                    user;
                   } ))
             t.repository_id
             pull_number
@@ -3356,6 +3405,7 @@ module Wm = struct
           // (* owner *) Ret.text
           // (* repo *) Ret.text
           // (* run_id *) Ret.(option text)
+          // (* username *) Ret.(option text)
           /^ read "select_github_work_manifest_for_update.sql"
           /% Var.uuid "id")
 
@@ -3738,6 +3788,7 @@ module Wm = struct
             owner
             name
             run_id
+            user
           ->
           ( (installation_id, owner, name, repo_id, pull_number),
             {
@@ -3756,6 +3807,7 @@ module Wm = struct
               run_type;
               state;
               tag_query;
+              user;
             } ))
 
     let log_work_manifest_result request_id work_manifest_id success =

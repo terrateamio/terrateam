@@ -1,6 +1,9 @@
 module Rt = struct
   let api () = Brtl_rtng.Route.(rel / "api")
   let api_404 () = Brtl_rtng.Route.(api () /% Path.any)
+  let api_v1 () = Brtl_rtng.Route.(api () / "v1")
+  let whoami () = Brtl_rtng.Route.(api_v1 () / "whoami")
+  let github_client_id () = Brtl_rtng.Route.(api_v1 () / "github" / "client_id")
   let work_manifest_root base = Brtl_rtng.Route.(base () / "work-manifests")
   let work_manifest base = Brtl_rtng.Route.(work_manifest_root base /% Path.ud Uuidm.of_string)
 
@@ -45,8 +48,45 @@ module Rt = struct
   let metrics () = Brtl_rtng.Route.(rel / "metrics")
 
   (* Admin interface *)
-  let admin_rt () = Brtl_rtng.Route.(api () / "v1" / "admin")
+  let admin_rt () = Brtl_rtng.Route.(api_v1 () / "admin")
   let admin_drift_list_rt () = Brtl_rtng.Route.(admin_rt () / "drifts")
+
+  (* User API *)
+  let user_api_rt () = Brtl_rtng.Route.(api_v1 () / "user")
+  let user_installations_rt () = Brtl_rtng.Route.(user_api_rt () / "installations")
+
+  (* Installations API *)
+  let installation_api_rt () = Brtl_rtng.Route.(api_v1 () / "installations")
+
+  let installation_work_manifests_rt () =
+    Brtl_rtng.Route.(
+      installation_api_rt ()
+      /% Path.int
+      / "work-manifests"
+      /? Query.(option (int "pr"))
+      /? Query.(
+           option
+             (ud "d" (function
+                 | "asc" -> Some `Asc
+                 | "desc" -> Some `Desc
+                 | _ -> None)))
+      /? Query.(
+           option
+             (ud_array
+                "page"
+                Brtl_ep_paginate.Param.(of_param Typ.(tuple (string, ud' Uuidm.of_string)))))
+      /? Query.(option_default 20 (Query.int "limit")))
+
+  let installation_pull_requests_manifests_rt () =
+    Brtl_rtng.Route.(
+      installation_api_rt ()
+      /% Path.int
+      / "pull-requests"
+      /? Query.(option (int "pr"))
+      /? Query.(
+           option
+             (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.(ud' CCInt64.of_string_opt))))
+      /? Query.(option_default 20 (Query.int "limit")))
 end
 
 let response_404 ctx =
@@ -65,7 +105,8 @@ let maybe_add_admin_routes config storage =
 
 let rtng config storage =
   Brtl_rtng.create
-    ~default:(Brtl_static.run Terrat_files_assets.read "index.html")
+    ~default:(fun ctx ->
+      Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx))
     (maybe_add_admin_routes config storage
     @ Brtl_rtng.Route.
         [
@@ -91,6 +132,17 @@ let rtng config storage =
           (* Github *)
           (`POST, Rt.github_events () --> Terrat_ep_github_events.post config storage);
           (`GET, Rt.github_callback () --> Terrat_ep_github_callback.get config storage);
+          (`GET, Rt.github_client_id () --> Terrat_ep_github_client_id.get config storage);
+          (* User *)
+          (`GET, Rt.whoami () --> Terrat_ep_whoami.get config storage);
+          (`GET, Rt.user_installations_rt () --> Terrat_ep_user.Installations.get config storage);
+          (* Installations *)
+          ( `GET,
+            Rt.installation_work_manifests_rt ()
+            --> Terrat_ep_installations.Work_manifests.get config storage );
+          ( `GET,
+            Rt.installation_pull_requests_manifests_rt ()
+            --> Terrat_ep_installations.Pull_requests.get config storage );
           (* Infracost *)
           (`POST, Rt.infracost () --> Terrat_ep_infracost.post config storage);
           (* API 404s.  This is needed because for any and only UI endpoint we

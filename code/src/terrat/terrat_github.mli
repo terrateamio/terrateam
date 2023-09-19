@@ -1,3 +1,12 @@
+type user_err =
+  [ Githubc2_abb.call_err
+  | `Unauthorized of Githubc2_components.Basic_error.t
+  | `Forbidden of Githubc2_components.Basic_error.t
+  | `Not_modified
+  | `Unauthorized of Githubc2_components.Basic_error.t
+  ]
+[@@deriving show]
+
 type get_access_token_err =
   [ Pgsql_pool.err
   | Pgsql_io.err
@@ -23,8 +32,10 @@ type verify_user_installation_access_err =
 [@@deriving show]
 
 type get_user_installations_err =
-  [ get_access_token_err
-  | Githubc2_abb.call_err
+  [ Githubc2_abb.call_err
+  | `Unauthorized of Githubc2_components.Basic_error.t
+  | `Forbidden of Githubc2_components.Basic_error.t
+  | `Not_modified
   ]
 [@@deriving show]
 
@@ -165,6 +176,12 @@ val call :
   'a Openapi.Request.t ->
   ('a Openapi.Response.t, [> Githubc2_abb.call_err ]) result Abb_scheduler_kqueue.Future.t
 
+val user :
+  config:Terrat_config.t ->
+  access_token:string ->
+  unit ->
+  (Githubc2_users.Get_authenticated.Responses.OK.t, [> user_err ]) result Abb.Future.t
+
 val get_installation_access_token :
   ?expiration_sec:float ->
   ?permissions:Githubc2_components.App_permissions.t ->
@@ -230,6 +247,10 @@ val compare_commits :
   (Githubc2_components.Commit_comparison.Primary.Files.t, [> compare_commits_err ]) result
   Abb.Future.t
 
+val get_user_installations :
+  Githubc2_abb.t ->
+  (Githubc2_components.Installation.t list, [> get_user_installations_err ]) result Abb.Future.t
+
 (* val get_access_token :
  *   Terrat_storage.t ->
  *   string ->
@@ -237,28 +258,21 @@ val compare_commits :
  *   string ->
  *   (string, [> get_access_token_err ]) result Abb.Future.t *)
 
-(* val get_user_installations :
- *   Terrat_config.t ->
- *   Terrat_storage.t ->
- *   Githubc_v3.Schema.t ->
- *   string ->
- *   (Terrat_data.Response.Installation.t list, [> get_user_installations_err ]) result Abb.Future.t
- * 
- * val verify_user_installation_access :
- *   Terrat_config.t ->
- *   Terrat_storage.t ->
- *   Githubc_v3.Schema.t ->
- *   int64 ->
- *   string ->
- *   (unit, [> verify_user_installation_access_err ]) result Abb.Future.t
- * 
- * val verify_admin_installation_access :
- *   Terrat_config.t ->
- *   Terrat_storage.t ->
- *   Githubc_v3.Schema.t ->
- *   int64 ->
- *   string ->
- *   (unit, [> verify_user_installation_access_err ]) result Abb.Future.t *)
+(* val verify_user_installation_access : *)
+(*   Terrat_config.t -> *)
+(*   Terrat_storage.t -> *)
+(*   Githubc_v3.Schema.t -> *)
+(*   int64 -> *)
+(*   string -> *)
+(*   (unit, [> verify_user_installation_access_err ]) result Abb.Future.t *)
+
+(* val verify_admin_installation_access : *)
+(*   Terrat_config.t -> *)
+(*   Terrat_storage.t -> *)
+(*   Githubc_v3.Schema.t -> *)
+(*   int64 -> *)
+(*   string -> *)
+(*   (unit, [> verify_user_installation_access_err ]) result Abb.Future.t *)
 
 val load_workflow :
   owner:string ->
@@ -302,3 +316,22 @@ val get_repo_collaborator_permission :
   user:string ->
   Githubc2_abb.t ->
   (string option, [> get_repo_collaborator_permission_err ]) result Abb.Future.t
+
+(** GitHub does not include Oauth operations in their JSON schema, so
+    implementing here. *)
+module Oauth : sig
+  module Response : sig
+    type t = {
+      access_token : string;
+      scope : string;
+      token_type : string;
+      refresh_token : string option; [@default None]
+      refresh_token_expires_in : int option; [@default None]
+      expires_in : int option; [@default None]
+    }
+    [@@deriving yojson { strict = false }, show]
+  end
+
+  val authorize : config:Terrat_config.t -> string -> (Response.t, [> `Error ]) result Abb.Future.t
+  val refresh : config:Terrat_config.t -> string -> (Response.t, [> `Error ]) result Abb.Future.t
+end

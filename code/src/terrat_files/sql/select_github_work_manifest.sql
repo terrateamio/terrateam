@@ -15,7 +15,8 @@ select
     (case
      when gdwm.work_manifest is not null then 'drift'
      else ''
-     end)
+     end),
+     gwm.username
 from github_work_manifests as gwm
 inner join github_installation_repositories as gir
     on gir.id = gwm.repository

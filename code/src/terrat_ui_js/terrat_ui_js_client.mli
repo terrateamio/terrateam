@@ -1,0 +1,50 @@
+type err =
+  [ `Conversion_err of string * string Openapi.Response.t
+  | `Missing_response of string Openapi.Response.t
+  | `Io_err of Jv.Error.t
+  | `Forbidden
+  ]
+[@@deriving show]
+
+module Page : sig
+  type 'a t [@@deriving eq, show]
+
+  val empty : unit -> 'a t
+  val page : 'a t -> 'a list
+  val next : 'a t -> string list option
+  val prev : 'a t -> string list option
+end
+
+type t
+
+val create : unit -> t
+
+val whoami :
+  t ->
+  ( Terrat_api_components.User.t option,
+    [> `Conversion_err of string * string Openapi.Response.t
+    | `Missing_response of string Openapi.Response.t
+    | `Io_err of Jv.Error.t
+    ] )
+  result
+  Abb_js.Future.t
+
+val client_id : t -> (string, [> err ]) result Abb_js.Future.t
+
+val installations :
+  t -> (Terrat_api_user.List_installations.Responses.OK.t, [> err ]) result Abb_js.Future.t
+
+val work_manifests :
+  ?page:string list ->
+  ?pull_number:int ->
+  ?dir:[ `Asc | `Desc ] ->
+  installation_id:string ->
+  t ->
+  (Terrat_api_components.Installation_work_manifest.t Page.t, [> err ]) result Abb_js.Future.t
+
+val pull_requests :
+  ?page:string list ->
+  ?pull_number:int ->
+  installation_id:string ->
+  t ->
+  (Terrat_api_components.Installation_pull_request.t Page.t, [> err ]) result Abb_js.Future.t

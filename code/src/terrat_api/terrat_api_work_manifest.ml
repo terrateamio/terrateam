@@ -40,8 +40,8 @@ module Results = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("work_manifest_id", Var (params.work_manifest_id, String)) ])
+         let open Parameters in
+         [ ("work_manifest_id", Var (params.work_manifest_id, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -112,8 +112,8 @@ module Initiate = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("work_manifest_id", Var (params.work_manifest_id, String)) ])
+         let open Parameters in
+         [ ("work_manifest_id", Var (params.work_manifest_id, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -151,8 +151,8 @@ module Plan_create = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("work_manifest_id", Var (params.work_manifest_id, String)) ])
+         let open Parameters in
+         [ ("work_manifest_id", Var (params.work_manifest_id, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -186,12 +186,12 @@ module Plan_get = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("work_manifest_id", Var (params.work_manifest_id, String)) ])
+         let open Parameters in
+         [ ("work_manifest_id", Var (params.work_manifest_id, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("dir", Var (params.dir, String)); ("workspace", Var (params.workspace, String)) ])
+         let open Parameters in
+         [ ("dir", Var (params.dir, String)); ("workspace", Var (params.workspace, String)) ])
       ~url
       ~responses:Responses.t
       `Get

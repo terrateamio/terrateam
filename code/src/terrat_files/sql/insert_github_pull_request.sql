@@ -7,7 +7,9 @@ insert into github_pull_requests (
     sha,
     merged_sha,
     merged_at,
-    state
+    state,
+    title,
+    username
 )  values (
     $base_branch,
     $base_sha,
@@ -17,7 +19,9 @@ insert into github_pull_requests (
     $sha,
     $merged_sha,
     $merged_at,
-    $state
+    $state,
+    $title,
+    $username
 ) on conflict (repository, pull_number) do update set (
     base_branch,
     branch,
@@ -25,7 +29,9 @@ insert into github_pull_requests (
     sha,
     merged_sha,
     merged_at,
-    state
+    state,
+    title,
+    username
 ) = (
     excluded.base_branch,
     excluded.branch,
@@ -33,5 +39,7 @@ insert into github_pull_requests (
     excluded.sha,
     excluded.merged_sha,
     excluded.merged_at,
-    excluded.state
+    excluded.state,
+    excluded.title,
+    excluded.username
 )

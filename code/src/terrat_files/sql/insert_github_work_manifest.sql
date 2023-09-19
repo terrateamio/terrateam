@@ -4,13 +4,15 @@ insert into github_work_manifests (
        repository,
        run_type,
        sha,
-       tag_query
+       tag_query,
+       username
 ) values (
        $base_sha,
        $pull_number,
        $repository,
        $run_type,
        $sha,
-       $tag_query
+       $tag_query,
+       $username
 )
 returning id, state, to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"')

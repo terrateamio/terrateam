@@ -70,11 +70,12 @@ type ('id, 'created_at, 'run_id, 'state, 'changes, 'src, 'run_type) t = {
   created_at : 'created_at;
   hash : string;
   id : 'id;
-  src : 'src;
   run_id : 'run_id;
   run_type : 'run_type;
+  src : 'src;
   state : 'state;
   tag_query : Terrat_tag_query.t;
+  user : string option;
 }
 
 module New = struct

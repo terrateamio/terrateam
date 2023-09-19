@@ -11,32 +11,32 @@ module Items = struct
   let of_yojson =
     Json_schema.one_of
       (let open CCResult in
-      [
-        (fun v ->
-          map
-            (fun v -> Workflow_output_apply v)
-            (Terrat_api_components_workflow_output_apply.of_yojson v));
-        (fun v ->
-          map
-            (fun v -> Workflow_output_env v)
-            (Terrat_api_components_workflow_output_env.of_yojson v));
-        (fun v ->
-          map
-            (fun v -> Workflow_output_init v)
-            (Terrat_api_components_workflow_output_init.of_yojson v));
-        (fun v ->
-          map
-            (fun v -> Workflow_output_oidc v)
-            (Terrat_api_components_workflow_output_oidc.of_yojson v));
-        (fun v ->
-          map
-            (fun v -> Workflow_output_plan v)
-            (Terrat_api_components_workflow_output_plan.of_yojson v));
-        (fun v ->
-          map
-            (fun v -> Workflow_output_run v)
-            (Terrat_api_components_workflow_output_run.of_yojson v));
-      ])
+       [
+         (fun v ->
+           map
+             (fun v -> Workflow_output_apply v)
+             (Terrat_api_components_workflow_output_apply.of_yojson v));
+         (fun v ->
+           map
+             (fun v -> Workflow_output_env v)
+             (Terrat_api_components_workflow_output_env.of_yojson v));
+         (fun v ->
+           map
+             (fun v -> Workflow_output_init v)
+             (Terrat_api_components_workflow_output_init.of_yojson v));
+         (fun v ->
+           map
+             (fun v -> Workflow_output_oidc v)
+             (Terrat_api_components_workflow_output_oidc.of_yojson v));
+         (fun v ->
+           map
+             (fun v -> Workflow_output_plan v)
+             (Terrat_api_components_workflow_output_plan.of_yojson v));
+         (fun v ->
+           map
+             (fun v -> Workflow_output_run v)
+             (Terrat_api_components_workflow_output_run.of_yojson v));
+       ])
 
   let to_yojson = function
     | Workflow_output_apply v -> Terrat_api_components_workflow_output_apply.to_yojson v

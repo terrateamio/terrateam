@@ -1,27 +1,33 @@
 exception Session_store_failed
 
 module Sql = struct
-  let load =
+  let load () =
     Pgsql_io.Typed_sql.(
       sql
-      // (* user *) Ret.varchar
-      /^ "select user_id from user_sessions where token = $token"
+      // (* avatar_url *) Ret.(option text)
+      // (* email *) Ret.(option text)
+      // (* id *) Ret.uuid
+      // (* name *) Ret.(option text)
+      /^ "select users.avatar_url, users.email, users.id, users.name  from user_sessions as us \
+          inner join users on users.id = us.user_id where us.token = $token"
       /% Var.uuid "token")
 
-  let store =
+  let store () =
     Pgsql_io.Typed_sql.(
       sql
-      /^ "insert into user_sessions (user_id, token, user_agent) values ($user_id, $token, \
-          $user_agent)"
-      /% Var.varchar "user_id"
-      /% Var.uuid "token"
-      /% Var.varchar "user_agent")
+      // (* token *) Ret.uuid
+      /^ "insert into user_sessions (user_id, user_agent) values ($user_id, $user_agent) returning \
+          token"
+      /% Var.uuid "user_id"
+      /% Var.text "user_agent")
 
   let delete =
     Pgsql_io.Typed_sql.(sql /^ "delete from user_sessions where token = $token" /% Var.uuid "token")
 end
 
-let key : string Brtl_mw_session.Value.t Hmap.key = Brtl_mw_session.create_key ()
+let key : Terrat_api_components.User.t Brtl_mw_session.Value.t Hmap.key =
+  Brtl_mw_session.create_key ()
+
 let cookie_name = "session"
 
 let load storage id =
@@ -30,10 +36,15 @@ let load storage id =
       let load =
         let open Abbs_future_combinators.Infix_result_monad in
         Pgsql_pool.with_conn storage ~f:(fun db ->
-            Pgsql_io.Prepared_stmt.fetch db Sql.load ~f:CCFun.id uuid
+            Pgsql_io.Prepared_stmt.fetch
+              db
+              (Sql.load ())
+              ~f:(fun avatar_url email id name ->
+                Terrat_api_components.User.{ avatar_url; email; id = Uuidm.to_string id; name })
+              uuid
             >>= function
             | [] -> Abb.Future.return (Ok None)
-            | email :: _ -> Abb.Future.return (Ok (Some email)))
+            | user :: _ -> Abb.Future.return (Ok (Some user)))
       in
       let open Abb.Future.Infix_monad in
       load
@@ -48,7 +59,7 @@ let load storage id =
           Abb.Future.return None)
   | None -> Abb.Future.return None
 
-let store storage id_opt user_id ctx =
+let store storage id_opt user ctx =
   match id_opt with
   | Some id ->
       (* If there already is an id, do nothing *)
@@ -62,11 +73,17 @@ let store storage id_opt user_id ctx =
         |> CCFun.flip Cohttp.Header.get "user-agent"
         |> CCOption.get_or ~default:"Unknown"
       in
-      let uuid = Uuidm.v `V4 in
+      let user_id = Terrat_api_components.User.(user.id) in
       Pgsql_pool.with_conn storage ~f:(fun db ->
-          Pgsql_io.Prepared_stmt.execute db Sql.store user_id uuid user_agent)
+          Pgsql_io.Prepared_stmt.fetch
+            db
+            (Sql.store ())
+            ~f:CCFun.id
+            (CCOption.get_exn_or "terrat_session_store" (Uuidm.of_string user_id))
+            user_agent)
       >>= function
-      | Ok () -> Abb.Future.return (Uuidm.to_string uuid)
+      | Ok [] -> assert false
+      | Ok (token :: _) -> Abb.Future.return (Uuidm.to_string token)
       | Error (#Pgsql_io.err as err) ->
           Logs.err (fun m -> m "Failure storing session %s" (Pgsql_io.show_err err));
           raise Session_store_failed

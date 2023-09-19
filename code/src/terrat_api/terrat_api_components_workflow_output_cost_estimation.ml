@@ -7,13 +7,13 @@ module Outputs = struct
   let of_yojson =
     Json_schema.one_of
       (let open CCResult in
-      [
-        (fun v -> map (fun v -> Output_text v) (Terrat_api_components_output_text.of_yojson v));
-        (fun v ->
-          map
-            (fun v -> Output_cost_estimation v)
-            (Terrat_api_components_output_cost_estimation.of_yojson v));
-      ])
+       [
+         (fun v -> map (fun v -> Output_text v) (Terrat_api_components_output_text.of_yojson v));
+         (fun v ->
+           map
+             (fun v -> Output_cost_estimation v)
+             (Terrat_api_components_output_cost_estimation.of_yojson v));
+       ])
 
   let to_yojson = function
     | Output_text v -> Terrat_api_components_output_text.to_yojson v

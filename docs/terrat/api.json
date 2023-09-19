@@ -3,6 +3,18 @@
     "parameters": {},
     "responses": {},
     "schemas": {
+      "error": {
+        "additionalProperties": false,
+        "properties": {
+          "msg": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msg"
+        ],
+        "type": "object"
+      },
       "hook-outputs": {
         "additionalProperties": false,
         "properties": {
@@ -51,6 +63,262 @@
         "required": [
           "pre",
           "post"
+        ],
+        "type": "object"
+      },
+      "installation": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/installation-type-github"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type"
+        ],
+        "type": "object"
+      },
+      "installation-pull-request": {
+        "additionalProperties": false,
+        "properties": {
+          "base_branch": {
+            "type": "string"
+          },
+          "base_sha": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "latest_work_manifest_run_at": {
+            "type": "string"
+          },
+          "merged_at": {
+            "type": "string"
+          },
+          "merged_sha": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "pull_number": {
+            "type": "integer"
+          },
+          "repository": {
+            "type": "integer"
+          },
+          "sha": {
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "open",
+              "closed",
+              "merged"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "base_branch",
+          "base_sha",
+          "branch",
+          "name",
+          "owner",
+          "pull_number",
+          "repository",
+          "sha",
+          "state"
+        ],
+        "type": "object"
+      },
+      "installation-type-github": {
+        "const": "github",
+        "type": "string"
+      },
+      "installation-work-manifest": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/installation-work-manifest-drift"
+          },
+          {
+            "$ref": "#/components/schemas/installation-work-manifest-pull-request"
+          }
+        ]
+      },
+      "installation-work-manifest-drift": {
+        "additionalProperties": false,
+        "properties": {
+          "base_branch": {
+            "type": "string"
+          },
+          "base_ref": {
+            "type": "string"
+          },
+          "completed_at": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "dirspaces": {
+            "items": {
+              "$ref": "#/components/schemas/work-manifest-dirspace"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "repo": {
+            "type": "string"
+          },
+          "repository": {
+            "type": "integer"
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "run_type": {
+            "enum": [
+              "apply",
+              "autoapply",
+              "autoplan",
+              "plan",
+              "unsafe-apply"
+            ],
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/work-manifest-state"
+          }
+        },
+        "required": [
+          "base_branch",
+          "base_ref",
+          "created_at",
+          "dirspaces",
+          "id",
+          "owner",
+          "ref",
+          "repo",
+          "repository",
+          "run_type",
+          "state"
+        ],
+        "type": "object"
+      },
+      "installation-work-manifest-pull-request": {
+        "additionalProperties": false,
+        "properties": {
+          "base_branch": {
+            "type": "string"
+          },
+          "base_ref": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "completed_at": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "dirspaces": {
+            "items": {
+              "$ref": "#/components/schemas/work-manifest-dirspace"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "pull_number": {
+            "type": "integer"
+          },
+          "pull_request_title": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "repo": {
+            "type": "string"
+          },
+          "repository": {
+            "type": "integer"
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "run_type": {
+            "enum": [
+              "apply",
+              "autoapply",
+              "autoplan",
+              "plan",
+              "unsafe-apply"
+            ],
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/work-manifest-state"
+          },
+          "tag_query": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "base_branch",
+          "base_ref",
+          "branch",
+          "created_at",
+          "dirspaces",
+          "id",
+          "owner",
+          "pull_number",
+          "ref",
+          "repo",
+          "repository",
+          "run_type",
+          "state",
+          "tag_query"
         ],
         "type": "object"
       },
@@ -178,6 +446,27 @@
         ],
         "type": "object"
       },
+      "user": {
+        "additionalProperties": false,
+        "properties": {
+          "avatar_url": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
       "work-manifest": {
         "oneOf": [
           {
@@ -244,6 +533,25 @@
           "path",
           "workspace",
           "rank"
+        ],
+        "type": "object"
+      },
+      "work-manifest-dirspace": {
+        "additionalProperties": false,
+        "properties": {
+          "dir": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "workspace": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dir",
+          "workspace"
         ],
         "type": "object"
       },
@@ -338,6 +646,15 @@
           "$ref": "#/components/schemas/work-manifest-result"
         },
         "type": "array"
+      },
+      "work-manifest-state": {
+        "enum": [
+          "aborted",
+          "completed",
+          "queued",
+          "running"
+        ],
+        "type": "string"
       },
       "work-manifest-unsafe-apply": {
         "additionalProperties": false,
@@ -960,6 +1277,219 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/github/client_id": {
+      "get": {
+        "operationId": "api_v1/client_id",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "client_id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "client_id"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/installations/{installation_id}/pull-requests": {
+      "get": {
+        "operationId": "installations/list-pull-requests",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pr",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "pull_requests": {
+                      "items": {
+                        "$ref": "#/components/schemas/installation-pull-request"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "pull_requests"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/installations/{installation_id}/work-manifests": {
+      "get": {
+        "operationId": "installations/list-work-manifests",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pr",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "d",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "work_manifests": {
+                      "items": {
+                        "$ref": "#/components/schemas/installation-work-manifest"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "work_manifests"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/user/installations": {
+      "get": {
+        "operationId": "user/list-installations",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "installations": {
+                      "items": {
+                        "$ref": "#/components/schemas/installation"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "installations"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/whoami": {
+      "get": {
+        "operationId": "user/whoami",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/user"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
           }
         }
       }

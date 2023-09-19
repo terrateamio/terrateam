@@ -747,6 +747,7 @@ module Make (S : S) = struct
                 run_type;
                 state = ();
                 tag_query = S.Event.T.tag_query event;
+                user = Some (S.Event.T.user event);
               }
           in
           Metrics.Dirspaces_per_work_manifest_histogram.observe

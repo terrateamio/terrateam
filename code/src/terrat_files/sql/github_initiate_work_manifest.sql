@@ -30,4 +30,6 @@ returning
     (case
      when gdwm.work_manifest is not null then 'drift'
      else ''
-     end)
+     end),
+    gwm.username
+

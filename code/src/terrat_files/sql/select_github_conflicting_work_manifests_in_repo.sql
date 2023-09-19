@@ -44,7 +44,10 @@ select
     (case
      when gdwm.work_manifest is not null then 'drift'
      else ''
-     end)
+     end),
+    gpr.title,
+    gwm.username,
+    gpr.username
 from github_work_manifests as gwm
 inner join work_manifests_for_dirspace
     on work_manifests_for_dirspace.id = gwm.id

@@ -27,6 +27,15 @@ let terrateam_workflow_path = ".github/workflows/terrateam.yml"
 let terrateam_config_yml = [ ".terrateam/config.yml"; ".terrateam/config.yaml" ]
 let installation_expiration_sec = 60.0
 
+type user_err =
+  [ Githubc2_abb.call_err
+  | `Unauthorized of Githubc2_components.Basic_error.t
+  | `Forbidden of Githubc2_components.Basic_error.t
+  | `Not_modified
+  | `Unauthorized of Githubc2_components.Basic_error.t
+  ]
+[@@deriving show]
+
 type get_access_token_err =
   [ Pgsql_pool.err
   | Pgsql_io.err
@@ -52,8 +61,10 @@ type verify_user_installation_access_err =
 [@@deriving show]
 
 type get_user_installations_err =
-  [ get_access_token_err
-  | Githubc2_abb.call_err
+  [ Githubc2_abb.call_err
+  | `Unauthorized of Githubc2_components.Basic_error.t
+  | `Forbidden of Githubc2_components.Basic_error.t
+  | `Not_modified
   ]
 [@@deriving show]
 
@@ -182,6 +193,16 @@ let call ?(tries = 3) t req =
                let open Abb.Future.Infix_monad in
                retry_wait n resp >>= Abb.Sys.sleep
            | Error _ -> Abb.Sys.sleep n))
+
+let user ~config ~access_token () =
+  let open Abbs_future_combinators.Infix_result_monad in
+  Prmths.Counter.inc_one (Metrics.fn_call_total "user");
+  let client = create config (`Token access_token) in
+  call client (Githubc2_users.Get_authenticated.make ())
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK user -> Abb.Future.return (Ok user)
+  | (`Forbidden _ | `Not_modified | `Unauthorized _) as err -> Abb.Future.return (Error err)
 
 let get_installation_access_token
     ?(expiration_sec = installation_expiration_sec)
@@ -348,6 +369,19 @@ let compare_commits ~owner ~repo (base, head) client =
   | `OK { Cc.primary = { Cc.Primary.files = Some files; _ }; _ } -> Abb.Future.return (Ok files)
   | `OK { Cc.primary = { Cc.Primary.files = None; _ }; _ } -> Abb.Future.return (Ok [])
   | (`Internal_server_error _ | `Not_found _) as err -> Abb.Future.return (Error err)
+
+let get_user_installations client =
+  let open Abbs_future_combinators.Infix_result_monad in
+  let module R = Githubc2_apps.List_installations_for_authenticated_user.Responses in
+  Prmths.Counter.inc_one (Metrics.fn_call_total "get_user_installations");
+  call
+    client
+    Githubc2_apps.List_installations_for_authenticated_user.(
+      make Parameters.(make ~per_page:100 ()))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK R.OK.{ primary = Primary.{ installations; _ }; _ } -> Abb.Future.return (Ok installations)
+  | (`Forbidden _ | `Not_modified | `Unauthorized _) as err -> Abb.Future.return (Error err)
 
 let load_workflow' ~owner ~repo client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "load_workflow");
@@ -626,4 +660,88 @@ module Pull_request_reviews = struct
     Githubc2_abb.collect_all
       client
       Githubc2_pulls.List_reviews.(make Parameters.(make ~owner ~repo ~pull_number ()))
+end
+
+module Oauth = struct
+  module Http = Cohttp_abb.Make (Abb)
+
+  let tls_config =
+    let cfg = Otls.Tls_config.create () in
+    Otls.Tls_config.insecure_noverifycert cfg;
+    cfg
+
+  module Response = struct
+    type t = {
+      access_token : string;
+      scope : string;
+      token_type : string;
+      refresh_token : string option; [@default None]
+      refresh_token_expires_in : int option; [@default None]
+      expires_in : int option; [@default None]
+    }
+    [@@deriving yojson { strict = false }, show]
+  end
+
+  let authorize ~config code =
+    let open Abb.Future.Infix_monad in
+    let headers =
+      Cohttp.Header.of_list
+        [
+          ("user-agent", "Terrateam");
+          ("content-type", "application/json");
+          ("accept", "application/vnd.github.v3+json");
+        ]
+    in
+    let uri = Uri.make ~scheme:"https" ~host:"github.com" ~path:"/login/oauth/access_token" () in
+    let body =
+      Cohttp.Body.of_string
+        (Yojson.Safe.to_string
+           (`Assoc
+             [
+               ("client_id", `String (Terrat_config.github_app_client_id config));
+               ("client_secret", `String (Terrat_config.github_app_client_secret config));
+               ("code", `String code);
+             ]))
+    in
+    Http.Client.call ~headers ~tls_config ~body `POST uri
+    >>| function
+    | Ok (resp, body)
+      when Cohttp.Code.is_success (Cohttp.Code.code_of_status (Http.Response.status resp)) -> (
+        match Response.of_yojson (Yojson.Safe.from_string body) with
+        | Ok value -> Ok value
+        | Error _ -> Error `Error)
+    | Ok (resp, _) -> Error `Error
+    | Error _ -> Error `Error
+
+  let refresh ~config refresh_token =
+    let open Abb.Future.Infix_monad in
+    let headers =
+      Cohttp.Header.of_list
+        [
+          ("user-agent", "Terrateam");
+          ("accept", "application/json");
+          ("content-type", "application/json");
+        ]
+    in
+    let uri = Uri.make ~scheme:"https" ~host:"github.com" ~path:"/login/oauth/access_token" () in
+    let body =
+      Cohttp.Body.of_string
+        (Yojson.Safe.to_string
+           (`Assoc
+             [
+               ("client_id", `String (Terrat_config.github_app_client_id config));
+               ("client_secret", `String (Terrat_config.github_app_client_secret config));
+               ("grant_type", `String "refresh_token");
+               ("refresh_token", `String refresh_token);
+             ]))
+    in
+    Http.Client.call ~headers ~tls_config ~body `POST uri
+    >>| function
+    | Ok (resp, body)
+      when Cohttp.Code.is_success (Cohttp.Code.code_of_status (Http.Response.status resp)) -> (
+        match Response.of_yojson (Yojson.Safe.from_string body) with
+        | Ok value -> Ok value
+        | Error _ -> Error `Error)
+    | Ok (resp, _) -> Error `Error
+    | Error _ -> Error `Error
 end

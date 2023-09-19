@@ -24,7 +24,7 @@ RUN eval $(opam env) && \
 # compile
 WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && eval $(opam env) && \
-    (time make -j4 release_terrat_cli || time make -j1 release_terrat_cli)
+    (time make -j4 release_terrat_cli release_terrat_ui || time make -j1 release_terrat_cli release_terrat_ui)
 
 # test
 WORKDIR /mono/code
@@ -54,15 +54,15 @@ RUN apk add --no-cache \
     runit
 
 # configs
-RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx
+RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets
 COPY docker/terrat/service/terrat /etc/service/terrat/run
 COPY docker/terrat/service/nginx /etc/service/nginx/run
-COPY docker/terrat/nginx.conf /etc/nginx/nginx.conf
+COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
 
 # artifacts
 COPY --from=build /usr/lib/libkqueue.so /usr/lib/libkqueue.so
 COPY --from=build /mono/code/build/release/terrat_cli/terrat_cli.native /usr/local/bin/terrat
-
+COPY --from=build /mono/code/build/release/terrat_ui_files/assets /usr/local/share/terrat/ui/assets/
 # expose
 EXPOSE 8080
 
