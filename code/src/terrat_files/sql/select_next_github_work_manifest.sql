@@ -34,12 +34,16 @@ work_manifests as (
          when 'plan' then 1
          end) as priority
     from github_work_manifests as gwm
+    left join github_drift_work_manifests as gdwm
+        on gdwm.work_manifest = gwm.id
     left join latest_unlocks as unlocks
         on unlocks.repository = gwm.repository and unlocks.pull_number = gwm.pull_number
     left join latest_drift_unlocks as drift_unlocks
         on drift_unlocks.repository = gwm.repository
-    where (unlocks.unlocked_at is null or unlocks.unlocked_at < gwm.created_at) and
-          (drift_unlocks.unlocked_at is null or drift_unlocks.unlocked_at < gwm.created_at)
+    where (gwm.pull_number is not null
+           and (unlocks.unlocked_at is null or unlocks.unlocked_at < gwm.created_at))
+          or (gdwm.work_manifest is not null
+               and (drift_unlocks.unlocked_at is null or drift_unlocks.unlocked_at < gwm.created_at))
 ),
 -- Find all repositories with a currently running apply.  The count should only
 -- ever be 0 or 1

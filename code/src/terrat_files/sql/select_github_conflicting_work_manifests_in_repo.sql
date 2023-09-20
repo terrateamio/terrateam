@@ -58,11 +58,10 @@ left join latest_drift_unlocks
     on latest_drift_unlocks.repository = gwm.repository
 where gwm.repository = $repository
       and gwm.state in ('queued', 'running')
-      and (gpr.pull_number is not null or gdwm.work_manifest is not null)
+      and ((gwm.pull_number is not null
+            and (latest_unlocks.unlocked_at is null or latest_unlocks.unlocked_at < gwm.created_at))
+           or (gdwm.work_manifest is not null
+               and (latest_drift_unlocks.unlocked_at is null or latest_drift_unlocks.unlocked_at < gwm.created_at)))
       and ((gwm.pull_number is not null and gwm.pull_number = $pull_number)
            or ($run_type in ('autoapply', 'apply', 'unsafe-apply')))
-      and (latest_unlocks.unlocked_at is null
-           or latest_unlocks.unlocked_at < gwm.created_at)
-      and (latest_drift_unlocks.unlocked_at is null
-           or latest_drift_unlocks.unlocked_at < gwm.created_at)
 order by gwm.created_at
