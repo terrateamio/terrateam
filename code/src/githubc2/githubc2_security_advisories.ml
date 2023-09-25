@@ -159,13 +159,15 @@ module List_global_advisories = struct
            ("severity", Var (params.severity, Option String));
            ( "cwes",
              match params.cwes with
-             | Cwes.V0 v -> Var (v, String)
-             | Cwes.V1 v -> Var (v, Array String) );
+             | Some (Cwes.V0 v) -> Var (v, String)
+             | Some (Cwes.V1 v) -> Var (v, Array String)
+             | None -> Var ((), Null) );
            ("is_withdrawn", Var (params.is_withdrawn, Option Bool));
            ( "affects",
              match params.affects with
-             | Affects.V0 v -> Var (v, String)
-             | Affects.V1 v -> Var (v, Array String) );
+             | Some (Affects.V0 v) -> Var (v, String)
+             | Some (Affects.V1 v) -> Var (v, Array String)
+             | None -> Var ((), Null) );
            ("published", Var (params.published, Option String));
            ("updated", Var (params.updated, Option String));
            ("modified", Var (params.modified, Option String));

@@ -9392,7 +9392,7 @@ module Create_release = struct
         discussion_category_name : string option; [@default None]
         draft : bool; [@default false]
         generate_release_notes : bool; [@default false]
-        make_latest : Make_latest.t; [@default true]
+        make_latest : Make_latest.t; [@default "true"]
         name : string option; [@default None]
         prerelease : bool; [@default false]
         tag_name : string;
@@ -9831,7 +9831,7 @@ module Update_release = struct
         body : string option; [@default None]
         discussion_category_name : string option; [@default None]
         draft : bool option; [@default None]
-        make_latest : Make_latest.t; [@default true]
+        make_latest : Make_latest.t; [@default "true"]
         name : string option; [@default None]
         prerelease : bool option; [@default None]
         tag_name : string option; [@default None]

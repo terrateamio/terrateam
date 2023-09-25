@@ -512,8 +512,9 @@ module R = struct
                               additional =
                                 Json_schema.String_map.of_list
                                   [
-                                    ("work-token", Uuidm.to_string work_token);
-                                    ("api-base-url", Terrat_config.api_base config ^ "/github");
+                                    ("work-token", `String (Uuidm.to_string work_token));
+                                    ( "api-base-url",
+                                      `String (Terrat_config.api_base config ^ "/github") );
                                   ];
                             };
                     };
