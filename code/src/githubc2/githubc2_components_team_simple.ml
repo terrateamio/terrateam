@@ -7,6 +7,7 @@ module Primary = struct
     members_url : string;
     name : string;
     node_id : string;
+    notification_setting : string option; [@default None]
     permission : string;
     privacy : string option; [@default None]
     repositories_url : string;

@@ -8,6 +8,8 @@ module Primary = struct
       | `String "skipped" -> Ok "skipped"
       | `String "timed_out" -> Ok "timed_out"
       | `String "action_required" -> Ok "action_required"
+      | `String "startup_failure" -> Ok "startup_failure"
+      | `String "stale" -> Ok "stale"
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])

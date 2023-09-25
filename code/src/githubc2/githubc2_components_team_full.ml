@@ -1,4 +1,14 @@
 module Primary = struct
+  module Notification_setting = struct
+    let t_of_yojson = function
+      | `String "notifications_enabled" -> Ok "notifications_enabled"
+      | `String "notifications_disabled" -> Ok "notifications_disabled"
+      | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+    type t = (string[@of_yojson t_of_yojson])
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
   module Privacy = struct
     let t_of_yojson = function
       | `String "closed" -> Ok "closed"
@@ -19,6 +29,7 @@ module Primary = struct
     members_url : string;
     name : string;
     node_id : string;
+    notification_setting : Notification_setting.t option; [@default None]
     organization : Githubc2_components_team_organization.t;
     parent : Githubc2_components_nullable_team_simple.t option; [@default None]
     permission : string;

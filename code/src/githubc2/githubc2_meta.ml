@@ -88,15 +88,55 @@ module Get_octocat = struct
       `Get
 end
 
+module Get_all_versions = struct
+  module Parameters = struct end
+
+  module Responses = struct
+    module OK = struct
+      type t = string list [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+      ]
+  end
+
+  let url = "/versions"
+
+  let make () =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
 module Get_zen = struct
   module Parameters = struct end
 
   module Responses = struct
-    module OK = struct end
+    module OK = struct
+      type t = string [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
 
-    type t = [ `OK ] [@@deriving show, eq]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
-    let t = [ ("200", fun _ -> Ok `OK) ]
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
   let url = "/zen"

@@ -33,7 +33,7 @@ module Primary = struct
     body : string;
     body_html : string option; [@default None]
     body_text : string option; [@default None]
-    commit_id : string;
+    commit_id : string option;
     html_url : string;
     id : int;
     node_id : string;

@@ -4,6 +4,7 @@ module Primary = struct
       type t = {
         actions_runner_registration : Githubc2_components_rate_limit.t option; [@default None]
         code_scanning_upload : Githubc2_components_rate_limit.t option; [@default None]
+        code_search : Githubc2_components_rate_limit.t option; [@default None]
         core : Githubc2_components_rate_limit.t;
         dependency_snapshots : Githubc2_components_rate_limit.t option; [@default None]
         graphql : Githubc2_components_rate_limit.t option; [@default None]

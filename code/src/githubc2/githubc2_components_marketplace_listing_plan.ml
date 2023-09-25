@@ -3,6 +3,17 @@ module Primary = struct
     type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
+  module Price_model = struct
+    let t_of_yojson = function
+      | `String "FREE" -> Ok "FREE"
+      | `String "FLAT_RATE" -> Ok "FLAT_RATE"
+      | `String "PER_UNIT" -> Ok "PER_UNIT"
+      | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+    type t = (string[@of_yojson t_of_yojson])
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
   type t = {
     accounts_url : string;
     bullets : Bullets.t;
@@ -12,7 +23,7 @@ module Primary = struct
     monthly_price_in_cents : int;
     name : string;
     number : int;
-    price_model : string;
+    price_model : Price_model.t;
     state : string;
     unit_name : string option;
     url : string;

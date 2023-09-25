@@ -64,6 +64,8 @@ module Primary = struct
     check_run_url : string;
     completed_at : string option;
     conclusion : Conclusion.t option;
+    created_at : string;
+    head_branch : string option;
     head_sha : string;
     html_url : string option;
     id : int;
@@ -81,6 +83,7 @@ module Primary = struct
     status : Status_.t;
     steps : Steps.t option; [@default None]
     url : string;
+    workflow_name : string option;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

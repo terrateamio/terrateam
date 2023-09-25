@@ -6,7 +6,7 @@ module Primary = struct
     body_text : string option; [@default None]
     created_at : string;
     html_url : string;
-    id : int;
+    id : int64;
     issue_url : string;
     node_id : string;
     performed_via_github_app : Githubc2_components_nullable_integration.t option; [@default None]

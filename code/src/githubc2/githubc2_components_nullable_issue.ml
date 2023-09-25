@@ -90,7 +90,7 @@ module Primary = struct
     draft : bool option; [@default None]
     events_url : string;
     html_url : string;
-    id : int;
+    id : int64;
     labels : Labels.t;
     labels_url : string;
     locked : bool;

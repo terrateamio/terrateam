@@ -90,6 +90,7 @@ module Primary = struct
     pending_operation : bool option; [@default None]
     pending_operation_disabled_reason : string option; [@default None]
     prebuild : bool option;
+    publish_url : string option; [@default None]
     pulls_url : string option;
     recent_folders : Recent_folders.t;
     repository : Githubc2_components_minimal_repository.t;

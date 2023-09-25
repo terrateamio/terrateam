@@ -308,170 +308,31 @@ module Update = struct
   end
 
   module Request_body = struct
-    module V0 = struct
-      module Primary = struct
-        module Files = struct
-          module Additional = struct
-            module V0 = struct
-              module Primary = struct
-                type t = {
-                  content : string;
-                  filename : string option; [@default None]
-                }
-                [@@deriving make, yojson { strict = false; meta = true }, show, eq]
-              end
-
-              include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-            end
-
-            module V1 = struct
-              module Primary = struct
-                type t = {
-                  content : string option; [@default None]
-                  filename : string option;
-                }
-                [@@deriving make, yojson { strict = false; meta = true }, show, eq]
-              end
-
-              include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-            end
-
-            module V2 = struct
-              module Primary = struct
-                type t = {
-                  content : string option; [@default None]
-                  filename : string option; [@default None]
-                }
-                [@@deriving make, yojson { strict = false; meta = true }, show, eq]
-              end
-
-              include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-            end
-
-            type t =
-              | V0 of V0.t
-              | V1 of V1.t
-              | V2 of V2.t
-            [@@deriving show, eq]
-
-            let of_yojson =
-              Json_schema.any_of
-                (let open CCResult in
-                 [
-                   (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
-                   (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
-                   (fun v -> map (fun v -> V2 v) (V2.of_yojson v));
-                 ])
-
-            let to_yojson = function
-              | V0 v -> V0.to_yojson v
-              | V1 v -> V1.to_yojson v
-              | V2 v -> V2.to_yojson v
+    module Primary = struct
+      module Files = struct
+        module Additional = struct
+          module Primary = struct
+            type t = {
+              content : string option; [@default None]
+              filename : string option; [@default None]
+            }
+            [@@deriving make, yojson { strict = false; meta = true }, show, eq]
           end
 
-          include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Additional)
+          include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
         end
 
-        type t = {
-          description : string;
-          files : Files.t option; [@default None]
-        }
-        [@@deriving make, yojson { strict = false; meta = true }, show, eq]
+        include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Additional)
       end
 
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+      type t = {
+        description : string option; [@default None]
+        files : Files.t option; [@default None]
+      }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 
-    module V1 = struct
-      module Primary = struct
-        module Files = struct
-          module Additional = struct
-            module V0 = struct
-              module Primary = struct
-                type t = {
-                  content : string;
-                  filename : string option; [@default None]
-                }
-                [@@deriving make, yojson { strict = false; meta = true }, show, eq]
-              end
-
-              include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-            end
-
-            module V1 = struct
-              module Primary = struct
-                type t = {
-                  content : string option; [@default None]
-                  filename : string option;
-                }
-                [@@deriving make, yojson { strict = false; meta = true }, show, eq]
-              end
-
-              include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-            end
-
-            module V2 = struct
-              module Primary = struct
-                type t = {
-                  content : string option; [@default None]
-                  filename : string option; [@default None]
-                }
-                [@@deriving make, yojson { strict = false; meta = true }, show, eq]
-              end
-
-              include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-            end
-
-            type t =
-              | V0 of V0.t
-              | V1 of V1.t
-              | V2 of V2.t
-            [@@deriving show, eq]
-
-            let of_yojson =
-              Json_schema.any_of
-                (let open CCResult in
-                 [
-                   (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
-                   (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
-                   (fun v -> map (fun v -> V2 v) (V2.of_yojson v));
-                 ])
-
-            let to_yojson = function
-              | V0 v -> V0.to_yojson v
-              | V1 v -> V1.to_yojson v
-              | V2 v -> V2.to_yojson v
-          end
-
-          include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Additional)
-        end
-
-        type t = {
-          description : string option; [@default None]
-          files : Files.t;
-        }
-        [@@deriving make, yojson { strict = false; meta = true }, show, eq]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
-    type t =
-      | V0 of V0.t
-      | V1 of V1.t
-    [@@deriving show, eq]
-
-    let of_yojson =
-      Json_schema.any_of
-        (let open CCResult in
-         [
-           (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
-           (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
-         ])
-
-    let to_yojson = function
-      | V0 v -> V0.to_yojson v
-      | V1 v -> V1.to_yojson v
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
   end
 
   module Responses = struct

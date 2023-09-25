@@ -86,6 +86,7 @@ module Primary = struct
           members_url : string option; [@default None]
           name : string option; [@default None]
           node_id : string option; [@default None]
+          notification_setting : string option; [@default None]
           parent : string option; [@default None]
           permission : string option; [@default None]
           privacy : string option; [@default None]

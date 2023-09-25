@@ -21,6 +21,7 @@ module Primary = struct
     members_url : string;
     name : string;
     node_id : string;
+    notification_setting : string option; [@default None]
     parent : Githubc2_components_nullable_team_simple.t option;
     permission : string;
     permissions : Permissions.t option; [@default None]

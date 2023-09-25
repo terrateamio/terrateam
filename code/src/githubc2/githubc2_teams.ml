@@ -9,6 +9,16 @@ module Create = struct
         type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
+      module Notification_setting = struct
+        let t_of_yojson = function
+          | `String "notifications_enabled" -> Ok "notifications_enabled"
+          | `String "notifications_disabled" -> Ok "notifications_disabled"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
       module Permission = struct
         let t_of_yojson = function
           | `String "pull" -> Ok "pull"
@@ -37,6 +47,7 @@ module Create = struct
         description : string option; [@default None]
         maintainers : Maintainers.t option; [@default None]
         name : string;
+        notification_setting : Notification_setting.t option; [@default None]
         parent_team_id : int option; [@default None]
         permission : Permission.t; [@default "pull"]
         privacy : Privacy.t option; [@default None]
@@ -159,6 +170,16 @@ module Update_in_org = struct
 
   module Request_body = struct
     module Primary = struct
+      module Notification_setting = struct
+        let t_of_yojson = function
+          | `String "notifications_enabled" -> Ok "notifications_enabled"
+          | `String "notifications_disabled" -> Ok "notifications_disabled"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
       module Permission = struct
         let t_of_yojson = function
           | `String "pull" -> Ok "pull"
@@ -183,6 +204,7 @@ module Update_in_org = struct
       type t = {
         description : string option; [@default None]
         name : string option; [@default None]
+        notification_setting : Notification_setting.t option; [@default None]
         parent_team_id : int option; [@default None]
         permission : Permission.t; [@default "pull"]
         privacy : Privacy.t option; [@default None]
@@ -1506,6 +1528,16 @@ module Update_legacy = struct
 
   module Request_body = struct
     module Primary = struct
+      module Notification_setting = struct
+        let t_of_yojson = function
+          | `String "notifications_enabled" -> Ok "notifications_enabled"
+          | `String "notifications_disabled" -> Ok "notifications_disabled"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
       module Permission = struct
         let t_of_yojson = function
           | `String "pull" -> Ok "pull"
@@ -1530,6 +1562,7 @@ module Update_legacy = struct
       type t = {
         description : string option; [@default None]
         name : string;
+        notification_setting : Notification_setting.t option; [@default None]
         parent_team_id : int option; [@default None]
         permission : Permission.t; [@default "pull"]
         privacy : Privacy.t option; [@default None]

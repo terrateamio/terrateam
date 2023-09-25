@@ -14,7 +14,8 @@ module Create = struct
         body : string option; [@default None]
         draft : bool option; [@default None]
         head : string;
-        issue : int option; [@default None]
+        head_repo : string option; [@default None]
+        issue : int64 option; [@default None]
         maintainer_can_modify : bool option; [@default None]
         title : string option; [@default None]
       }
@@ -594,16 +595,27 @@ module Create_review_comment = struct
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
+      module Subject_type = struct
+        let t_of_yojson = function
+          | `String "line" -> Ok "line"
+          | `String "file" -> Ok "file"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
       type t = {
         body : string;
         commit_id : string;
         in_reply_to : int option; [@default None]
-        line : int;
+        line : int option; [@default None]
         path : string;
         position : int option; [@default None]
         side : Side.t option; [@default None]
         start_line : int option; [@default None]
         start_side : Start_side.t option; [@default None]
+        subject_type : Subject_type.t option; [@default None]
       }
       [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
@@ -1177,62 +1189,23 @@ module Request_reviewers = struct
   end
 
   module Request_body = struct
-    module V0 = struct
-      module Primary = struct
-        module Reviewers = struct
-          type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
-        end
-
-        module Team_reviewers = struct
-          type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
-        end
-
-        type t = {
-          reviewers : Reviewers.t;
-          team_reviewers : Team_reviewers.t option; [@default None]
-        }
-        [@@deriving make, yojson { strict = false; meta = true }, show, eq]
+    module Primary = struct
+      module Reviewers = struct
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
-    module V1 = struct
-      module Primary = struct
-        module Reviewers = struct
-          type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
-        end
-
-        module Team_reviewers = struct
-          type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
-        end
-
-        type t = {
-          reviewers : Reviewers.t option; [@default None]
-          team_reviewers : Team_reviewers.t;
-        }
-        [@@deriving make, yojson { strict = false; meta = true }, show, eq]
+      module Team_reviewers = struct
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+      type t = {
+        reviewers : Reviewers.t option; [@default None]
+        team_reviewers : Team_reviewers.t option; [@default None]
+      }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 
-    type t =
-      | V0 of V0.t
-      | V1 of V1.t
-    [@@deriving show, eq]
-
-    let of_yojson =
-      Json_schema.any_of
-        (let open CCResult in
-         [
-           (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
-           (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
-         ])
-
-    let to_yojson = function
-      | V0 v -> V0.to_yojson v
-      | V1 v -> V1.to_yojson v
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
   end
 
   module Responses = struct

@@ -106,6 +106,7 @@ module Primary = struct
             git_refs_url : string;
             git_tags_url : string;
             git_url : string;
+            has_discussions : bool;
             has_downloads : bool;
             has_issues : bool;
             has_pages : bool;
@@ -305,6 +306,7 @@ module Primary = struct
             git_refs_url : string;
             git_tags_url : string;
             git_url : string;
+            has_discussions : bool;
             has_downloads : bool;
             has_issues : bool;
             has_pages : bool;
@@ -494,7 +496,7 @@ module Primary = struct
     title : string;
     updated_at : string;
     url : string;
-    user : Githubc2_components_nullable_simple_user.t option;
+    user : Githubc2_components_simple_user.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

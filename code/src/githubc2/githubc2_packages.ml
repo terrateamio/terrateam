@@ -1,34 +1,6 @@
-module List_packages_for_organization = struct
+module List_docker_migration_conflicting_packages_for_organization = struct
   module Parameters = struct
-    module Package_type = struct
-      let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
-    end
-
-    module Visibility = struct
-      let t_of_yojson = function
-        | `String "public" -> Ok "public"
-        | `String "private" -> Ok "private"
-        | `String "internal" -> Ok "internal"
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
-    end
-
-    type t = {
-      org : string;
-      package_type : Package_type.t;
-      visibility : Visibility.t option; [@default None]
-    }
-    [@@deriving make, show, eq]
+    type t = { org : string } [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -62,6 +34,91 @@ module List_packages_for_organization = struct
       ]
   end
 
+  let url = "/orgs/{org}/docker/conflicts"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module List_packages_for_organization = struct
+  module Parameters = struct
+    module Package_type = struct
+      let t_of_yojson = function
+        | `String "npm" -> Ok "npm"
+        | `String "maven" -> Ok "maven"
+        | `String "rubygems" -> Ok "rubygems"
+        | `String "docker" -> Ok "docker"
+        | `String "nuget" -> Ok "nuget"
+        | `String "container" -> Ok "container"
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+    end
+
+    module Visibility = struct
+      let t_of_yojson = function
+        | `String "public" -> Ok "public"
+        | `String "private" -> Ok "private"
+        | `String "internal" -> Ok "internal"
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+    end
+
+    type t = {
+      org : string;
+      package_type : Package_type.t;
+      page : int; [@default 1]
+      per_page : int; [@default 30]
+      visibility : Visibility.t option; [@default None]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Package.t list
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Bad_request = struct end
+
+    module Unauthorized = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Forbidden = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Bad_request
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("400", fun _ -> Ok `Bad_request);
+        ("401", Openapi.of_json_body (fun v -> `Unauthorized v) Unauthorized.of_yojson);
+        ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
+      ]
+  end
+
   let url = "/orgs/{org}/packages"
 
   let make params =
@@ -77,6 +134,8 @@ module List_packages_for_organization = struct
          [
            ("package_type", Var (params.package_type, String));
            ("visibility", Var (params.visibility, Option String));
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
          ])
       ~url
       ~responses:Responses.t
@@ -607,6 +666,32 @@ module Restore_package_version_for_org = struct
       `Post
 end
 
+module List_docker_migration_conflicting_packages_for_authenticated_user = struct
+  module Parameters = struct end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Package.t list
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
+
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+  end
+
+  let url = "/user/docker/conflicts"
+
+  let make () =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
 module List_packages_for_authenticated_user = struct
   module Parameters = struct
     module Package_type = struct
@@ -634,6 +719,8 @@ module List_packages_for_authenticated_user = struct
 
     type t = {
       package_type : Package_type.t;
+      page : int; [@default 1]
+      per_page : int; [@default 30]
       visibility : Visibility.t option; [@default None]
     }
     [@@deriving make, show, eq]
@@ -645,9 +732,19 @@ module List_packages_for_authenticated_user = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show, eq]
+    module Bad_request = struct end
 
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+    type t =
+      [ `OK of OK.t
+      | `Bad_request
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("400", fun _ -> Ok `Bad_request);
+      ]
   end
 
   let url = "/user/packages"
@@ -662,6 +759,8 @@ module List_packages_for_authenticated_user = struct
          [
            ("package_type", Var (params.package_type, String));
            ("visibility", Var (params.visibility, Option String));
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
          ])
       ~url
       ~responses:Responses.t
@@ -1177,37 +1276,9 @@ module Restore_package_version_for_authenticated_user = struct
       `Post
 end
 
-module List_packages_for_user = struct
+module List_docker_migration_conflicting_packages_for_user = struct
   module Parameters = struct
-    module Package_type = struct
-      let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
-    end
-
-    module Visibility = struct
-      let t_of_yojson = function
-        | `String "public" -> Ok "public"
-        | `String "private" -> Ok "private"
-        | `String "internal" -> Ok "internal"
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
-    end
-
-    type t = {
-      package_type : Package_type.t;
-      username : string;
-      visibility : Visibility.t option; [@default None]
-    }
-    [@@deriving make, show, eq]
+    type t = { username : string } [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -1241,6 +1312,91 @@ module List_packages_for_user = struct
       ]
   end
 
+  let url = "/users/{username}/docker/conflicts"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("username", Var (params.username, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module List_packages_for_user = struct
+  module Parameters = struct
+    module Package_type = struct
+      let t_of_yojson = function
+        | `String "npm" -> Ok "npm"
+        | `String "maven" -> Ok "maven"
+        | `String "rubygems" -> Ok "rubygems"
+        | `String "docker" -> Ok "docker"
+        | `String "nuget" -> Ok "nuget"
+        | `String "container" -> Ok "container"
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+    end
+
+    module Visibility = struct
+      let t_of_yojson = function
+        | `String "public" -> Ok "public"
+        | `String "private" -> Ok "private"
+        | `String "internal" -> Ok "internal"
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+    end
+
+    type t = {
+      package_type : Package_type.t;
+      page : int; [@default 1]
+      per_page : int; [@default 30]
+      username : string;
+      visibility : Visibility.t option; [@default None]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Package.t list
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Bad_request = struct end
+
+    module Unauthorized = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Forbidden = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Bad_request
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden of Forbidden.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("400", fun _ -> Ok `Bad_request);
+        ("401", Openapi.of_json_body (fun v -> `Unauthorized v) Unauthorized.of_yojson);
+        ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
+      ]
+  end
+
   let url = "/users/{username}/packages"
 
   let make params =
@@ -1256,6 +1412,8 @@ module List_packages_for_user = struct
          [
            ("package_type", Var (params.package_type, String));
            ("visibility", Var (params.visibility, Option String));
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
          ])
       ~url
       ~responses:Responses.t

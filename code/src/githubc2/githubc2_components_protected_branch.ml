@@ -7,6 +7,11 @@ module Primary = struct
     type t = { enabled : bool } [@@deriving yojson { strict = true; meta = true }, show, eq]
   end
 
+  module Allow_fork_syncing = struct
+    type t = { enabled : bool [@default false] }
+    [@@deriving yojson { strict = true; meta = true }, show, eq]
+  end
+
   module Block_creations = struct
     type t = { enabled : bool } [@@deriving yojson { strict = true; meta = true }, show, eq]
   end
@@ -16,6 +21,11 @@ module Primary = struct
       enabled : bool;
       url : string;
     }
+    [@@deriving yojson { strict = true; meta = true }, show, eq]
+  end
+
+  module Lock_branch = struct
+    type t = { enabled : bool [@default false] }
     [@@deriving yojson { strict = true; meta = true }, show, eq]
   end
 
@@ -94,6 +104,7 @@ module Primary = struct
         dismiss_stale_reviews : bool option; [@default None]
         dismissal_restrictions : Dismissal_restrictions.t option; [@default None]
         require_code_owner_reviews : bool option; [@default None]
+        require_last_push_approval : bool; [@default false]
         required_approving_review_count : int option; [@default None]
         url : string;
       }
@@ -118,8 +129,10 @@ module Primary = struct
   type t = {
     allow_deletions : Allow_deletions.t option; [@default None]
     allow_force_pushes : Allow_force_pushes.t option; [@default None]
+    allow_fork_syncing : Allow_fork_syncing.t option; [@default None]
     block_creations : Block_creations.t option; [@default None]
     enforce_admins : Enforce_admins.t option; [@default None]
+    lock_branch : Lock_branch.t option; [@default None]
     required_conversation_resolution : Required_conversation_resolution.t option; [@default None]
     required_linear_history : Required_linear_history.t option; [@default None]
     required_pull_request_reviews : Required_pull_request_reviews.t option; [@default None]

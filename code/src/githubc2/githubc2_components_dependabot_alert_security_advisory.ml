@@ -22,8 +22,8 @@ module Identifiers = struct
   module Items = struct
     module Type = struct
       let t_of_yojson = function
-        | `String "GHSA" -> Ok "GHSA"
         | `String "CVE" -> Ok "CVE"
+        | `String "GHSA" -> Ok "GHSA"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
       type t = (string[@of_yojson t_of_yojson])
@@ -61,33 +61,12 @@ module Severity = struct
 end
 
 module Vulnerabilities = struct
-  module Items = struct
-    module First_patched_version = struct
-      type t = { identifier : string } [@@deriving yojson { strict = true; meta = true }, show, eq]
-    end
-
-    module Package_ = struct
-      type t = {
-        ecosystem : string;
-        name : string;
-      }
-      [@@deriving yojson { strict = true; meta = true }, show, eq]
-    end
-
-    type t = {
-      first_patched_version : First_patched_version.t option;
-      package : Package_.t;
-      severity : string;
-      vulnerable_version_range : string;
-    }
-    [@@deriving yojson { strict = true; meta = true }, show, eq]
-  end
-
-  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
+  type t = Githubc2_components_dependabot_alert_security_vulnerability.t list
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
-  cve_id : string option; [@default None]
+  cve_id : string option;
   cvss : Cvss.t;
   cwes : Cwes.t;
   description : string;

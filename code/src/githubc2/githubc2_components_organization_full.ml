@@ -16,6 +16,7 @@ module Primary = struct
 
   type t = {
     advanced_security_enabled_for_new_repositories : bool option; [@default None]
+    archived_at : string option;
     avatar_url : string;
     billing_email : string option; [@default None]
     blog : string option; [@default None]
@@ -61,6 +62,8 @@ module Primary = struct
     public_repos : int;
     repos_url : string;
     secret_scanning_enabled_for_new_repositories : bool option; [@default None]
+    secret_scanning_push_protection_custom_link : string option; [@default None]
+    secret_scanning_push_protection_custom_link_enabled : bool option; [@default None]
     secret_scanning_push_protection_enabled_for_new_repositories : bool option; [@default None]
     total_private_repos : int option; [@default None]
     twitter_username : string option; [@default None]

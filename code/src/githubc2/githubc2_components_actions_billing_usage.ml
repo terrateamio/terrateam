@@ -5,6 +5,7 @@ module Primary = struct
         macos : int option; [@default None] [@key "MACOS"]
         ubuntu : int option; [@default None] [@key "UBUNTU"]
         windows : int option; [@default None] [@key "WINDOWS"]
+        macos_12_core : int option; [@default None]
         total : int option; [@default None]
         ubuntu_16_core : int option; [@default None]
         ubuntu_32_core : int option; [@default None]

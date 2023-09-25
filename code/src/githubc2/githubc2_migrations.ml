@@ -441,9 +441,22 @@ module Update_import = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show, eq]
+    module Service_unavailable = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
 
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+    type t =
+      [ `OK of OK.t
+      | `Service_unavailable of Service_unavailable.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
+      ]
   end
 
   let url = "/repos/{owner}/{repo}/import"
@@ -474,9 +487,22 @@ module Cancel_import = struct
   module Responses = struct
     module No_content = struct end
 
-    type t = [ `No_content ] [@@deriving show, eq]
+    module Service_unavailable = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
 
-    let t = [ ("204", fun _ -> Ok `No_content) ]
+    type t =
+      [ `No_content
+      | `Service_unavailable of Service_unavailable.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("204", fun _ -> Ok `No_content);
+        ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
+      ]
   end
 
   let url = "/repos/{owner}/{repo}/import"
@@ -546,10 +572,16 @@ module Start_import = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
+    module Service_unavailable = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     type t =
       [ `Created of Created.t
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
+      | `Service_unavailable of Service_unavailable.t
       ]
     [@@deriving show, eq]
 
@@ -559,6 +591,7 @@ module Start_import = struct
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+        ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
       ]
   end
 
@@ -598,9 +631,15 @@ module Get_import_status = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
+    module Service_unavailable = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     type t =
       [ `OK of OK.t
       | `Not_found of Not_found.t
+      | `Service_unavailable of Service_unavailable.t
       ]
     [@@deriving show, eq]
 
@@ -608,6 +647,7 @@ module Get_import_status = struct
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
       ]
   end
 
@@ -647,9 +687,15 @@ module Get_commit_authors = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
+    module Service_unavailable = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     type t =
       [ `OK of OK.t
       | `Not_found of Not_found.t
+      | `Service_unavailable of Service_unavailable.t
       ]
     [@@deriving show, eq]
 
@@ -657,6 +703,7 @@ module Get_commit_authors = struct
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
       ]
   end
 
@@ -712,10 +759,16 @@ module Map_commit_author = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
+    module Service_unavailable = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     type t =
       [ `OK of OK.t
       | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
+      | `Service_unavailable of Service_unavailable.t
       ]
     [@@deriving show, eq]
 
@@ -725,6 +778,7 @@ module Map_commit_author = struct
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+        ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
       ]
   end
 
@@ -763,9 +817,22 @@ module Get_large_files = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show, eq]
+    module Service_unavailable = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
 
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+    type t =
+      [ `OK of OK.t
+      | `Service_unavailable of Service_unavailable.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
+      ]
   end
 
   let url = "/repos/{owner}/{repo}/import/large_files"
@@ -822,9 +889,15 @@ module Set_lfs_preference = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
+    module Service_unavailable = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     type t =
       [ `OK of OK.t
       | `Unprocessable_entity of Unprocessable_entity.t
+      | `Service_unavailable of Service_unavailable.t
       ]
     [@@deriving show, eq]
 
@@ -833,6 +906,7 @@ module Set_lfs_preference = struct
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+        ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
       ]
   end
 

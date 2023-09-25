@@ -11,7 +11,41 @@ module Primary = struct
     type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
+  module Domains = struct
+    module Primary = struct
+      module Codespaces = struct
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      module Copilot = struct
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      module Packages = struct
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      module Website = struct
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      type t = {
+        codespaces : Codespaces.t option; [@default None]
+        copilot : Copilot.t option; [@default None]
+        packages : Packages.t option; [@default None]
+        website : Website.t option; [@default None]
+      }
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
   module Git = struct
+    type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Github_enterprise_importer = struct
     type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
@@ -57,7 +91,9 @@ module Primary = struct
     actions : Actions.t option; [@default None]
     api : Api.t option; [@default None]
     dependabot : Dependabot.t option; [@default None]
+    domains : Domains.t option; [@default None]
     git : Git.t option; [@default None]
+    github_enterprise_importer : Github_enterprise_importer.t option; [@default None]
     hooks : Hooks.t option; [@default None]
     importer : Importer.t option; [@default None]
     packages : Packages.t option; [@default None]

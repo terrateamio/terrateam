@@ -2,8 +2,8 @@ module Primary = struct
   module Access_level = struct
     let t_of_yojson = function
       | `String "none" -> Ok "none"
+      | `String "user" -> Ok "user"
       | `String "organization" -> Ok "organization"
-      | `String "enterprise" -> Ok "enterprise"
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])

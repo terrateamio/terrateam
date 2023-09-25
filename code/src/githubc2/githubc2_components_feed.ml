@@ -12,6 +12,9 @@ module Primary = struct
         current_user_organization : Githubc2_components_link_with_type.t option; [@default None]
         current_user_organizations : Current_user_organizations.t option; [@default None]
         current_user_public : Githubc2_components_link_with_type.t option; [@default None]
+        repository_discussions : Githubc2_components_link_with_type.t option; [@default None]
+        repository_discussions_category : Githubc2_components_link_with_type.t option;
+            [@default None]
         security_advisories : Githubc2_components_link_with_type.t option; [@default None]
         timeline : Githubc2_components_link_with_type.t;
         user : Githubc2_components_link_with_type.t;
@@ -33,6 +36,8 @@ module Primary = struct
     current_user_organization_urls : Current_user_organization_urls.t option; [@default None]
     current_user_public_url : string option; [@default None]
     current_user_url : string option; [@default None]
+    repository_discussions_category_url : string option; [@default None]
+    repository_discussions_url : string option; [@default None]
     security_advisories_url : string option; [@default None]
     timeline_url : string;
     user_url : string;

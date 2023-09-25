@@ -1,99 +1,3 @@
-module Get_actions_cache_usage_for_enterprise = struct
-  module Parameters = struct
-    type t = { enterprise : string } [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Githubc2_components.Actions_cache_usage_org_enterprise.t
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    type t = [ `OK of OK.t ] [@@deriving show, eq]
-
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
-  end
-
-  let url = "/enterprises/{enterprise}/actions/cache/usage"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("enterprise", Var (params.enterprise, String)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module Set_github_actions_default_workflow_permissions_enterprise = struct
-  module Parameters = struct
-    type t = { enterprise : string } [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Githubc2_components.Actions_set_default_workflow_permissions.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-
-    type t = [ `No_content ] [@@deriving show, eq]
-
-    let t = [ ("204", fun _ -> Ok `No_content) ]
-  end
-
-  let url = "/enterprises/{enterprise}/actions/permissions/workflow"
-
-  let make ~body params =
-    Openapi.Request.make
-      ~body:(Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("enterprise", Var (params.enterprise, String)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Put
-end
-
-module Get_github_actions_default_workflow_permissions_enterprise = struct
-  module Parameters = struct
-    type t = { enterprise : string } [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Githubc2_components.Actions_get_default_workflow_permissions.t
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    type t = [ `OK of OK.t ] [@@deriving show, eq]
-
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
-  end
-
-  let url = "/enterprises/{enterprise}/actions/permissions/workflow"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("enterprise", Var (params.enterprise, String)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
 module Get_actions_cache_usage_for_org = struct
   module Parameters = struct
     type t = { org : string } [@@deriving make, show, eq]
@@ -482,15 +386,10 @@ module Set_github_actions_default_workflow_permissions_organization = struct
 
   module Responses = struct
     module No_content = struct end
-    module Conflict = struct end
 
-    type t =
-      [ `No_content
-      | `Conflict
-      ]
-    [@@deriving show, eq]
+    type t = [ `No_content ] [@@deriving show, eq]
 
-    let t = [ ("204", fun _ -> Ok `No_content); ("409", fun _ -> Ok `Conflict) ]
+    let t = [ ("204", fun _ -> Ok `No_content) ]
   end
 
   let url = "/orgs/{org}/actions/permissions/workflow"
@@ -540,591 +439,10 @@ module Get_github_actions_default_workflow_permissions_organization = struct
       `Get
 end
 
-module Create_self_hosted_runner_group_for_org = struct
-  module Parameters = struct
-    type t = { org : string } [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    module Primary = struct
-      module Runners = struct
-        type t = int list [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      module Selected_repository_ids = struct
-        type t = int list [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      module Selected_workflows = struct
-        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      module Visibility = struct
-        let t_of_yojson = function
-          | `String "selected" -> Ok "selected"
-          | `String "all" -> Ok "all"
-          | `String "private" -> Ok "private"
-          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-        type t = (string[@of_yojson t_of_yojson])
-        [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      type t = {
-        allows_public_repositories : bool; [@default false]
-        name : string;
-        restricted_to_workflows : bool; [@default false]
-        runners : Runners.t option; [@default None]
-        selected_repository_ids : Selected_repository_ids.t option; [@default None]
-        selected_workflows : Selected_workflows.t option; [@default None]
-        visibility : Visibility.t; [@default "all"]
-      }
-      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
-    end
-
-    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-  end
-
-  module Responses = struct
-    module Created = struct
-      type t = Githubc2_components.Runner_groups_org.t
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    type t = [ `Created of Created.t ] [@@deriving show, eq]
-
-    let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
-  end
-
-  let url = "/orgs/{org}/actions/runner-groups"
-
-  let make ~body params =
-    Openapi.Request.make
-      ~body:(Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("org", Var (params.org, String)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module List_self_hosted_runner_groups_for_org = struct
-  module Parameters = struct
-    type t = {
-      org : string;
-      page : int; [@default 1]
-      per_page : int; [@default 30]
-      visible_to_repository : string option; [@default None]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct
-      module Primary = struct
-        module Runner_groups = struct
-          type t = Githubc2_components.Runner_groups_org.t list
-          [@@deriving yojson { strict = false; meta = false }, show, eq]
-        end
-
-        type t = {
-          runner_groups : Runner_groups.t;
-          total_count : float;
-        }
-        [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
-    type t = [ `OK of OK.t ] [@@deriving show, eq]
-
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
-  end
-
-  let url = "/orgs/{org}/actions/runner-groups"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("org", Var (params.org, String)) ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("per_page", Var (params.per_page, Int));
-           ("page", Var (params.page, Int));
-           ("visible_to_repository", Var (params.visible_to_repository, Option String));
-         ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module Update_self_hosted_runner_group_for_org = struct
-  module Parameters = struct
-    type t = {
-      org : string;
-      runner_group_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    module Primary = struct
-      module Selected_workflows = struct
-        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      module Visibility = struct
-        let t_of_yojson = function
-          | `String "selected" -> Ok "selected"
-          | `String "all" -> Ok "all"
-          | `String "private" -> Ok "private"
-          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-        type t = (string[@of_yojson t_of_yojson])
-        [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      type t = {
-        allows_public_repositories : bool; [@default false]
-        name : string;
-        restricted_to_workflows : bool; [@default false]
-        selected_workflows : Selected_workflows.t option; [@default None]
-        visibility : Visibility.t option; [@default None]
-      }
-      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
-    end
-
-    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Githubc2_components.Runner_groups_org.t
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    type t = [ `OK of OK.t ] [@@deriving show, eq]
-
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
-  end
-
-  let url = "/orgs/{org}/actions/runner-groups/{runner_group_id}"
-
-  let make ~body params =
-    Openapi.Request.make
-      ~body:(Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Patch
-end
-
-module Delete_self_hosted_runner_group_from_org = struct
-  module Parameters = struct
-    type t = {
-      org : string;
-      runner_group_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-
-    type t = [ `No_content ] [@@deriving show, eq]
-
-    let t = [ ("204", fun _ -> Ok `No_content) ]
-  end
-
-  let url = "/orgs/{org}/actions/runner-groups/{runner_group_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Delete
-end
-
-module Get_self_hosted_runner_group_for_org = struct
-  module Parameters = struct
-    type t = {
-      org : string;
-      runner_group_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Githubc2_components.Runner_groups_org.t
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    type t = [ `OK of OK.t ] [@@deriving show, eq]
-
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
-  end
-
-  let url = "/orgs/{org}/actions/runner-groups/{runner_group_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module Set_repo_access_to_self_hosted_runner_group_in_org = struct
-  module Parameters = struct
-    type t = {
-      org : string;
-      runner_group_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    module Primary = struct
-      module Selected_repository_ids = struct
-        type t = int list [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      type t = { selected_repository_ids : Selected_repository_ids.t }
-      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
-    end
-
-    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-  end
-
-  module Responses = struct
-    module No_content = struct end
-
-    type t = [ `No_content ] [@@deriving show, eq]
-
-    let t = [ ("204", fun _ -> Ok `No_content) ]
-  end
-
-  let url = "/orgs/{org}/actions/runner-groups/{runner_group_id}/repositories"
-
-  let make ~body params =
-    Openapi.Request.make
-      ~body:(Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Put
-end
-
-module List_repo_access_to_self_hosted_runner_group_in_org = struct
-  module Parameters = struct
-    type t = {
-      org : string;
-      page : int; [@default 1]
-      per_page : int; [@default 30]
-      runner_group_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct
-      module Primary = struct
-        module Repositories = struct
-          type t = Githubc2_components.Minimal_repository.t list
-          [@@deriving yojson { strict = false; meta = false }, show, eq]
-        end
-
-        type t = {
-          repositories : Repositories.t;
-          total_count : float;
-        }
-        [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
-    type t = [ `OK of OK.t ] [@@deriving show, eq]
-
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
-  end
-
-  let url = "/orgs/{org}/actions/runner-groups/{runner_group_id}/repositories"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
-         ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module Remove_repo_access_to_self_hosted_runner_group_in_org = struct
-  module Parameters = struct
-    type t = {
-      org : string;
-      repository_id : int;
-      runner_group_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-
-    type t = [ `No_content ] [@@deriving show, eq]
-
-    let t = [ ("204", fun _ -> Ok `No_content) ]
-  end
-
-  let url = "/orgs/{org}/actions/runner-groups/{runner_group_id}/repositories/{repository_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("org", Var (params.org, String));
-           ("runner_group_id", Var (params.runner_group_id, Int));
-           ("repository_id", Var (params.repository_id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Delete
-end
-
-module Set_self_hosted_runners_in_group_for_org = struct
-  module Parameters = struct
-    type t = {
-      org : string;
-      runner_group_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    module Primary = struct
-      module Runners = struct
-        type t = int list [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      type t = { runners : Runners.t }
-      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
-    end
-
-    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-  end
-
-  module Responses = struct
-    module No_content = struct end
-
-    type t = [ `No_content ] [@@deriving show, eq]
-
-    let t = [ ("204", fun _ -> Ok `No_content) ]
-  end
-
-  let url = "/orgs/{org}/actions/runner-groups/{runner_group_id}/runners"
-
-  let make ~body params =
-    Openapi.Request.make
-      ~body:(Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Put
-end
-
-module List_self_hosted_runners_in_group_for_org = struct
-  module Parameters = struct
-    type t = {
-      org : string;
-      page : int; [@default 1]
-      per_page : int; [@default 30]
-      runner_group_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct
-      module Primary = struct
-        module Runners = struct
-          type t = Githubc2_components.Runner.t list
-          [@@deriving yojson { strict = false; meta = false }, show, eq]
-        end
-
-        type t = {
-          runners : Runners.t;
-          total_count : float;
-        }
-        [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
-    type t = [ `OK of OK.t ] [@@deriving show, eq]
-
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
-  end
-
-  let url = "/orgs/{org}/actions/runner-groups/{runner_group_id}/runners"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
-         ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module Remove_self_hosted_runner_from_group_for_org = struct
-  module Parameters = struct
-    type t = {
-      org : string;
-      runner_group_id : int;
-      runner_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-
-    type t = [ `No_content ] [@@deriving show, eq]
-
-    let t = [ ("204", fun _ -> Ok `No_content) ]
-  end
-
-  let url = "/orgs/{org}/actions/runner-groups/{runner_group_id}/runners/{runner_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("org", Var (params.org, String));
-           ("runner_group_id", Var (params.runner_group_id, Int));
-           ("runner_id", Var (params.runner_id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Delete
-end
-
-module Add_self_hosted_runner_to_group_for_org = struct
-  module Parameters = struct
-    type t = {
-      org : string;
-      runner_group_id : int;
-      runner_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-
-    type t = [ `No_content ] [@@deriving show, eq]
-
-    let t = [ ("204", fun _ -> Ok `No_content) ]
-  end
-
-  let url = "/orgs/{org}/actions/runner-groups/{runner_group_id}/runners/{runner_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("org", Var (params.org, String));
-           ("runner_group_id", Var (params.runner_group_id, Int));
-           ("runner_id", Var (params.runner_id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Put
-end
-
 module List_self_hosted_runners_for_org = struct
   module Parameters = struct
     type t = {
+      name : string option; [@default None]
       org : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
@@ -1167,7 +485,11 @@ module List_self_hosted_runners_for_org = struct
       ~query_params:
         (let open Openapi.Request.Var in
          let open Parameters in
-         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         [
+           ("name", Var (params.name, Option String));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -1202,6 +524,84 @@ module List_runner_applications_for_org = struct
       ~url
       ~responses:Responses.t
       `Get
+end
+
+module Generate_runner_jitconfig_for_org = struct
+  module Parameters = struct
+    type t = { org : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    module Primary = struct
+      module Labels = struct
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      type t = {
+        labels : Labels.t;
+        name : string;
+        runner_group_id : int;
+        work_folder : string; [@default "_work"]
+      }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Responses = struct
+    module Created = struct
+      module Primary = struct
+        type t = {
+          encoded_jit_config : string;
+          runner : Githubc2_components.Runner.t;
+        }
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Unprocessable_entity = struct
+      type t = Githubc2_components.Validation_error_simple.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t =
+      [ `Created of Created.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+      ]
+  end
+
+  let url = "/orgs/{org}/actions/runners/generate-jitconfig"
+
+  let make ~body params =
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
 end
 
 module Create_registration_token_for_org = struct
@@ -2123,9 +1523,447 @@ module Add_selected_repo_to_org_secret = struct
       `Put
 end
 
+module Create_org_variable = struct
+  module Parameters = struct
+    type t = { org : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    module Primary = struct
+      module Selected_repository_ids = struct
+        type t = int list [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      module Visibility = struct
+        let t_of_yojson = function
+          | `String "all" -> Ok "all"
+          | `String "private" -> Ok "private"
+          | `String "selected" -> Ok "selected"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      type t = {
+        name : string;
+        selected_repository_ids : Selected_repository_ids.t option; [@default None]
+        value : string;
+        visibility : Visibility.t;
+      }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Responses = struct
+    module Created = struct
+      type t = Githubc2_components.Empty_object.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t = [ `Created of Created.t ] [@@deriving show, eq]
+
+    let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
+  end
+
+  let url = "/orgs/{org}/actions/variables"
+
+  let make ~body params =
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module List_org_variables = struct
+  module Parameters = struct
+    type t = {
+      org : string;
+      page : int; [@default 1]
+      per_page : int; [@default 10]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Primary = struct
+        module Variables = struct
+          type t = Githubc2_components.Organization_actions_variable.t list
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
+        end
+
+        type t = {
+          total_count : int;
+          variables : Variables.t;
+        }
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
+
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+  end
+
+  let url = "/orgs/{org}/actions/variables"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Update_org_variable = struct
+  module Parameters = struct
+    type t = {
+      name : string;
+      org : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    module Primary = struct
+      module Selected_repository_ids = struct
+        type t = int list [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      module Visibility = struct
+        let t_of_yojson = function
+          | `String "all" -> Ok "all"
+          | `String "private" -> Ok "private"
+          | `String "selected" -> Ok "selected"
+          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+        type t = (string[@of_yojson t_of_yojson])
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      type t = {
+        name : string option; [@default None]
+        selected_repository_ids : Selected_repository_ids.t option; [@default None]
+        value : string option; [@default None]
+        visibility : Visibility.t option; [@default None]
+      }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Responses = struct
+    module No_content = struct end
+
+    type t = [ `No_content ] [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content) ]
+  end
+
+  let url = "/orgs/{org}/actions/variables/{name}"
+
+  let make ~body params =
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("name", Var (params.name, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Patch
+end
+
+module Delete_org_variable = struct
+  module Parameters = struct
+    type t = {
+      name : string;
+      org : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+
+    type t = [ `No_content ] [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content) ]
+  end
+
+  let url = "/orgs/{org}/actions/variables/{name}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("name", Var (params.name, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module Get_org_variable = struct
+  module Parameters = struct
+    type t = {
+      name : string;
+      org : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Organization_actions_variable.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
+
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+  end
+
+  let url = "/orgs/{org}/actions/variables/{name}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("name", Var (params.name, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Set_selected_repos_for_org_variable = struct
+  module Parameters = struct
+    type t = {
+      name : string;
+      org : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    module Primary = struct
+      module Selected_repository_ids = struct
+        type t = int list [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      type t = { selected_repository_ids : Selected_repository_ids.t }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Responses = struct
+    module No_content = struct end
+    module Conflict = struct end
+
+    type t =
+      [ `No_content
+      | `Conflict
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content); ("409", fun _ -> Ok `Conflict) ]
+  end
+
+  let url = "/orgs/{org}/actions/variables/{name}/repositories"
+
+  let make ~body params =
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("name", Var (params.name, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module List_selected_repos_for_org_variable = struct
+  module Parameters = struct
+    type t = {
+      name : string;
+      org : string;
+      page : int; [@default 1]
+      per_page : int; [@default 30]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Primary = struct
+        module Repositories = struct
+          type t = Githubc2_components.Minimal_repository.t list
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
+        end
+
+        type t = {
+          repositories : Repositories.t;
+          total_count : int;
+        }
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    module Conflict = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Conflict
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("409", fun _ -> Ok `Conflict);
+      ]
+  end
+
+  let url = "/orgs/{org}/actions/variables/{name}/repositories"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("name", Var (params.name, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Remove_selected_repo_from_org_variable = struct
+  module Parameters = struct
+    type t = {
+      name : string;
+      org : string;
+      repository_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+    module Conflict = struct end
+
+    type t =
+      [ `No_content
+      | `Conflict
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content); ("409", fun _ -> Ok `Conflict) ]
+  end
+
+  let url = "/orgs/{org}/actions/variables/{name}/repositories/{repository_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("org", Var (params.org, String));
+           ("name", Var (params.name, String));
+           ("repository_id", Var (params.repository_id, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module Add_selected_repo_to_org_variable = struct
+  module Parameters = struct
+    type t = {
+      name : string;
+      org : string;
+      repository_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+    module Conflict = struct end
+
+    type t =
+      [ `No_content
+      | `Conflict
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content); ("409", fun _ -> Ok `Conflict) ]
+  end
+
+  let url = "/orgs/{org}/actions/variables/{name}/repositories/{repository_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("org", Var (params.org, String));
+           ("name", Var (params.name, String));
+           ("repository_id", Var (params.repository_id, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
 module List_artifacts_for_repo = struct
   module Parameters = struct
     type t = {
+      name : string option; [@default None]
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
@@ -2169,7 +2007,11 @@ module List_artifacts_for_repo = struct
       ~query_params:
         (let open Openapi.Request.Var in
          let open Parameters in
-         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         [
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+           ("name", Var (params.name, Option String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -2625,6 +2467,245 @@ module Re_run_job_for_workflow_run = struct
       `Post
 end
 
+module Set_custom_oidc_sub_claim_for_repo = struct
+  module Parameters = struct
+    type t = {
+      owner : string;
+      repo : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    module Primary = struct
+      module Include_claim_keys = struct
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      type t = {
+        include_claim_keys : Include_claim_keys.t option; [@default None]
+        use_default : bool;
+      }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Responses = struct
+    module Created = struct
+      type t = Githubc2_components.Empty_object.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Bad_request = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Unprocessable_entity = struct
+      type t = Githubc2_components.Validation_error_simple.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t =
+      [ `Created of Created.t
+      | `Bad_request of Bad_request.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
+        ("400", Openapi.of_json_body (fun v -> `Bad_request v) Bad_request.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+      ]
+  end
+
+  let url = "/repos/{owner}/{repo}/actions/oidc/customization/sub"
+
+  let make ~body params =
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module Get_custom_oidc_sub_claim_for_repo = struct
+  module Parameters = struct
+    type t = {
+      owner : string;
+      repo : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Oidc_custom_sub_repo.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Bad_request = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Bad_request of Bad_request.t
+      | `Not_found of Not_found.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("400", Openapi.of_json_body (fun v -> `Bad_request v) Bad_request.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+      ]
+  end
+
+  let url = "/repos/{owner}/{repo}/actions/oidc/customization/sub"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module List_repo_organization_secrets = struct
+  module Parameters = struct
+    type t = {
+      owner : string;
+      page : int; [@default 1]
+      per_page : int; [@default 30]
+      repo : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Primary = struct
+        module Secrets = struct
+          type t = Githubc2_components.Actions_secret.t list
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
+        end
+
+        type t = {
+          secrets : Secrets.t;
+          total_count : int;
+        }
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
+
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+  end
+
+  let url = "/repos/{owner}/{repo}/actions/organization-secrets"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module List_repo_organization_variables = struct
+  module Parameters = struct
+    type t = {
+      owner : string;
+      page : int; [@default 1]
+      per_page : int; [@default 10]
+      repo : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Primary = struct
+        module Variables = struct
+          type t = Githubc2_components.Actions_variable.t list
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
+        end
+
+        type t = {
+          total_count : int;
+          variables : Variables.t;
+        }
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
+
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+  end
+
+  let url = "/repos/{owner}/{repo}/actions/organization-variables"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
 module Set_github_actions_permissions_repository = struct
   module Parameters = struct
     type t = {
@@ -2932,6 +3013,7 @@ end
 module List_self_hosted_runners_for_repo = struct
   module Parameters = struct
     type t = {
+      name : string option; [@default None]
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
@@ -2975,7 +3057,11 @@ module List_self_hosted_runners_for_repo = struct
       ~query_params:
         (let open Openapi.Request.Var in
          let open Parameters in
-         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         [
+           ("name", Var (params.name, Option String));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -3014,6 +3100,88 @@ module List_runner_applications_for_repo = struct
       ~url
       ~responses:Responses.t
       `Get
+end
+
+module Generate_runner_jitconfig_for_repo = struct
+  module Parameters = struct
+    type t = {
+      owner : string;
+      repo : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    module Primary = struct
+      module Labels = struct
+        type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      type t = {
+        labels : Labels.t;
+        name : string;
+        runner_group_id : int;
+        work_folder : string; [@default "_work"]
+      }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Responses = struct
+    module Created = struct
+      module Primary = struct
+        type t = {
+          encoded_jit_config : string;
+          runner : Githubc2_components.Runner.t;
+        }
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Unprocessable_entity = struct
+      type t = Githubc2_components.Validation_error_simple.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t =
+      [ `Created of Created.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+      ]
+  end
+
+  let url = "/repos/{owner}/{repo}/actions/runners/generate-jitconfig"
+
+  let make ~body params =
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
 end
 
 module Create_registration_token_for_repo = struct
@@ -3559,6 +3727,7 @@ module List_workflow_runs_for_repo = struct
         | `String "queued" -> Ok "queued"
         | `String "requested" -> Ok "requested"
         | `String "waiting" -> Ok "waiting"
+        | `String "pending" -> Ok "pending"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
       type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
@@ -3817,6 +3986,7 @@ end
 module List_workflow_run_artifacts = struct
   module Parameters = struct
     type t = {
+      name : string option; [@default None]
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
@@ -3865,7 +4035,11 @@ module List_workflow_run_artifacts = struct
       ~query_params:
         (let open Openapi.Request.Var in
          let open Parameters in
-         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         [
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+           ("name", Var (params.name, Option String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -4066,6 +4240,73 @@ module Cancel_workflow_run = struct
 
   let make params =
     Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("run_id", Var (params.run_id, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module Review_custom_gates_for_run = struct
+  module Parameters = struct
+    type t = {
+      owner : string;
+      repo : string;
+      run_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t =
+      | Review_custom_gates_comment_required of
+          Githubc2_components.Review_custom_gates_comment_required.t
+      | Review_custom_gates_state_required of
+          Githubc2_components.Review_custom_gates_state_required.t
+    [@@deriving show, eq]
+
+    let of_yojson =
+      Json_schema.any_of
+        (let open CCResult in
+         [
+           (fun v ->
+             map
+               (fun v -> Review_custom_gates_comment_required v)
+               (Githubc2_components.Review_custom_gates_comment_required.of_yojson v));
+           (fun v ->
+             map
+               (fun v -> Review_custom_gates_state_required v)
+               (Githubc2_components.Review_custom_gates_state_required.of_yojson v));
+         ])
+
+    let to_yojson = function
+      | Review_custom_gates_comment_required v ->
+          Githubc2_components.Review_custom_gates_comment_required.to_yojson v
+      | Review_custom_gates_state_required v ->
+          Githubc2_components.Review_custom_gates_state_required.to_yojson v
+  end
+
+  module Responses = struct
+    module No_content = struct end
+
+    type t = [ `No_content ] [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content) ]
+  end
+
+  let url = "/repos/{owner}/{repo}/actions/runs/{run_id}/deployment_protection_rule"
+
+  let make ~body params =
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -4723,6 +4964,233 @@ module Get_repo_secret = struct
       `Get
 end
 
+module Create_repo_variable = struct
+  module Parameters = struct
+    type t = {
+      owner : string;
+      repo : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    module Primary = struct
+      type t = {
+        name : string;
+        value : string;
+      }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Responses = struct
+    module Created = struct
+      type t = Githubc2_components.Empty_object.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t = [ `Created of Created.t ] [@@deriving show, eq]
+
+    let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
+  end
+
+  let url = "/repos/{owner}/{repo}/actions/variables"
+
+  let make ~body params =
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module List_repo_variables = struct
+  module Parameters = struct
+    type t = {
+      owner : string;
+      page : int; [@default 1]
+      per_page : int; [@default 10]
+      repo : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Primary = struct
+        module Variables = struct
+          type t = Githubc2_components.Actions_variable.t list
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
+        end
+
+        type t = {
+          total_count : int;
+          variables : Variables.t;
+        }
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
+
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+  end
+
+  let url = "/repos/{owner}/{repo}/actions/variables"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Update_repo_variable = struct
+  module Parameters = struct
+    type t = {
+      name : string;
+      owner : string;
+      repo : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    module Primary = struct
+      type t = {
+        name : string option; [@default None]
+        value : string option; [@default None]
+      }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Responses = struct
+    module No_content = struct end
+
+    type t = [ `No_content ] [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content) ]
+  end
+
+  let url = "/repos/{owner}/{repo}/actions/variables/{name}"
+
+  let make ~body params =
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("name", Var (params.name, String));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Patch
+end
+
+module Delete_repo_variable = struct
+  module Parameters = struct
+    type t = {
+      name : string;
+      owner : string;
+      repo : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+
+    type t = [ `No_content ] [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content) ]
+  end
+
+  let url = "/repos/{owner}/{repo}/actions/variables/{name}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("name", Var (params.name, String));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module Get_repo_variable = struct
+  module Parameters = struct
+    type t = {
+      name : string;
+      owner : string;
+      repo : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Actions_variable.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
+
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+  end
+
+  let url = "/repos/{owner}/{repo}/actions/variables/{name}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("name", Var (params.name, String));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
 module List_repo_workflows = struct
   module Parameters = struct
     type t = {
@@ -4916,11 +5384,7 @@ module Create_workflow_dispatch = struct
   module Request_body = struct
     module Primary = struct
       module Inputs = struct
-        module Additional = struct
-          type t = string [@@deriving yojson { strict = false; meta = true }, show, eq]
-        end
-
-        include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Additional)
+        include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Json_schema.Obj)
       end
 
       type t = {
@@ -5036,6 +5500,7 @@ module List_workflow_runs = struct
         | `String "queued" -> Ok "queued"
         | `String "requested" -> Ok "requested"
         | `String "waiting" -> Ok "waiting"
+        | `String "pending" -> Ok "pending"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
       type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
@@ -5417,6 +5882,239 @@ module Get_environment_secret = struct
            ("repository_id", Var (params.repository_id, Int));
            ("environment_name", Var (params.environment_name, String));
            ("secret_name", Var (params.secret_name, String));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Create_environment_variable = struct
+  module Parameters = struct
+    type t = {
+      environment_name : string;
+      repository_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    module Primary = struct
+      type t = {
+        name : string;
+        value : string;
+      }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Responses = struct
+    module Created = struct
+      type t = Githubc2_components.Empty_object.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t = [ `Created of Created.t ] [@@deriving show, eq]
+
+    let t = [ ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson) ]
+  end
+
+  let url = "/repositories/{repository_id}/environments/{environment_name}/variables"
+
+  let make ~body params =
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("repository_id", Var (params.repository_id, Int));
+           ("environment_name", Var (params.environment_name, String));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module List_environment_variables = struct
+  module Parameters = struct
+    type t = {
+      environment_name : string;
+      page : int; [@default 1]
+      per_page : int; [@default 10]
+      repository_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Primary = struct
+        module Variables = struct
+          type t = Githubc2_components.Actions_variable.t list
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
+        end
+
+        type t = {
+          total_count : int;
+          variables : Variables.t;
+        }
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
+
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+  end
+
+  let url = "/repositories/{repository_id}/environments/{environment_name}/variables"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("repository_id", Var (params.repository_id, Int));
+           ("environment_name", Var (params.environment_name, String));
+         ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Update_environment_variable = struct
+  module Parameters = struct
+    type t = {
+      environment_name : string;
+      name : string;
+      repository_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    module Primary = struct
+      type t = {
+        name : string option; [@default None]
+        value : string option; [@default None]
+      }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Responses = struct
+    module No_content = struct end
+
+    type t = [ `No_content ] [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content) ]
+  end
+
+  let url = "/repositories/{repository_id}/environments/{environment_name}/variables/{name}"
+
+  let make ~body params =
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("repository_id", Var (params.repository_id, Int));
+           ("name", Var (params.name, String));
+           ("environment_name", Var (params.environment_name, String));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Patch
+end
+
+module Delete_environment_variable = struct
+  module Parameters = struct
+    type t = {
+      environment_name : string;
+      name : string;
+      repository_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+
+    type t = [ `No_content ] [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content) ]
+  end
+
+  let url = "/repositories/{repository_id}/environments/{environment_name}/variables/{name}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("repository_id", Var (params.repository_id, Int));
+           ("name", Var (params.name, String));
+           ("environment_name", Var (params.environment_name, String));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module Get_environment_variable = struct
+  module Parameters = struct
+    type t = {
+      environment_name : string;
+      name : string;
+      repository_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Actions_variable.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
+
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+  end
+
+  let url = "/repositories/{repository_id}/environments/{environment_name}/variables/{name}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("repository_id", Var (params.repository_id, Int));
+           ("environment_name", Var (params.environment_name, String));
+           ("name", Var (params.name, String));
          ])
       ~query_params:[]
       ~url

@@ -1,6 +1,5 @@
 let t_of_yojson = function
   | `String "open" -> Ok "open"
-  | `String "closed" -> Ok "closed"
   | `String "dismissed" -> Ok "dismissed"
   | `String "fixed" -> Ok "fixed"
   | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)

@@ -56,6 +56,16 @@ module Primary = struct
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
+  module Subject_type = struct
+    let t_of_yojson = function
+      | `String "line" -> Ok "line"
+      | `String "file" -> Ok "file"
+      | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+    type t = (string[@of_yojson t_of_yojson])
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
   type t = {
     links_ : Links_.t; [@key "_links"]
     author_association : Githubc2_components_author_association.t;
@@ -72,16 +82,17 @@ module Primary = struct
     node_id : string;
     original_commit_id : string;
     original_line : int option; [@default None]
-    original_position : int;
+    original_position : int option; [@default None]
     original_start_line : int option; [@default None]
     path : string;
-    position : int;
+    position : int option; [@default None]
     pull_request_review_id : int option;
     pull_request_url : string;
     reactions : Githubc2_components_reaction_rollup.t option; [@default None]
     side : Side.t; [@default "RIGHT"]
     start_line : int option; [@default None]
     start_side : Start_side.t option; [@default Some "RIGHT"]
+    subject_type : Subject_type.t option; [@default None]
     updated_at : string;
     url : string;
     user : Githubc2_components_simple_user.t;

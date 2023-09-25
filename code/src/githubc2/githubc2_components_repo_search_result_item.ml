@@ -53,6 +53,7 @@ module Primary = struct
     git_refs_url : string;
     git_tags_url : string;
     git_url : string;
+    has_discussions : bool option; [@default None]
     has_downloads : bool;
     has_issues : bool;
     has_pages : bool;

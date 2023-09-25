@@ -5,6 +5,7 @@ module Primary = struct
     failed_at : string option; [@default None]
     failed_reason : string option; [@default None]
     id : int;
+    invitation_source : string option; [@default None]
     invitation_teams_url : string;
     inviter : Githubc2_components_simple_user.t;
     login : string option;

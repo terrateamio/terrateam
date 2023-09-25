@@ -65,6 +65,7 @@ module Primary = struct
     git_refs_url : string;
     git_tags_url : string;
     git_url : string option; [@default None]
+    has_discussions : bool option; [@default None]
     has_downloads : bool option; [@default None]
     has_issues : bool option; [@default None]
     has_pages : bool option; [@default None]
@@ -99,6 +100,7 @@ module Primary = struct
     pushed_at : string option; [@default None]
     releases_url : string;
     role_name : string option; [@default None]
+    security_and_analysis : Githubc2_components_security_and_analysis.t option; [@default None]
     size : int option; [@default None]
     ssh_url : string option; [@default None]
     stargazers_count : int option; [@default None]
@@ -111,7 +113,6 @@ module Primary = struct
     tags_url : string;
     teams_url : string;
     temp_clone_token : string option; [@default None]
-    template_repository : Githubc2_components_nullable_repository.t option; [@default None]
     topics : Topics.t option; [@default None]
     trees_url : string;
     updated_at : string option; [@default None]

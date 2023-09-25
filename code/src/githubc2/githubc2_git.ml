@@ -410,7 +410,6 @@ module Create_ref = struct
   module Request_body = struct
     module Primary = struct
       type t = {
-        key : string option; [@default None]
         ref_ : string; [@key "ref"]
         sha : string;
       }

@@ -63,6 +63,7 @@ module Primary = struct
     dismiss_stale_reviews : bool;
     dismissal_restrictions : Dismissal_restrictions.t option; [@default None]
     require_code_owner_reviews : bool;
+    require_last_push_approval : bool; [@default false]
     required_approving_review_count : int option; [@default None]
     url : string option; [@default None]
   }

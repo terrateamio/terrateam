@@ -15,6 +15,7 @@ module Primary = struct
   end
 
   type t = {
+    archived_at : string option;
     avatar_url : string;
     billing_email : string option; [@default None]
     blog : string option; [@default None]

@@ -1,24 +1,20 @@
 module Primary = struct
-  module Merge_group = struct
-    module Primary = struct
-      type t = {
-        base_ref : string;
-        head_ref : string;
-        head_sha : string;
-      }
-      [@@deriving yojson { strict = false; meta = true }, show, eq]
-    end
+  module Action = struct
+    let t_of_yojson = function
+      | `String "checks_requested" -> Ok "checks_requested"
+      | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    type t = (string[@of_yojson t_of_yojson])
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = {
-    action : string;
+    action : Action.t;
     installation : Githubc2_components_simple_installation.t option; [@default None]
-    merge_group : Merge_group.t;
-    organization : Githubc2_components_organization_simple.t option; [@default None]
-    repository : Githubc2_components_repository.t option; [@default None]
-    sender : Githubc2_components_simple_user.t option; [@default None]
+    merge_group : Githubc2_components_merge_group.t;
+    organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
+    repository : Githubc2_components_repository_webhooks.t option; [@default None]
+    sender : Githubc2_components_simple_user_webhooks.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
