@@ -17,6 +17,7 @@ module Request : sig
       | Int : int v
       | String : string v
       | Bool : bool v
+      | Null : unit v
 
     type t = Var : ('a * 'a v) -> t
   end

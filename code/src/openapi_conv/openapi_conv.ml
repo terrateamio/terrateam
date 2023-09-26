@@ -310,28 +310,54 @@ let request_param_of_op_params components param_in params =
                   in
                   let type_desc =
                     match resolve_schema_ref components p.Parameter.schema with
-                    | { Schema.one_of = Some schemas; _ } ->
+                    | { Schema.one_of = Some schemas; _ } as schema ->
+                        let is_optional =
+                          not
+                            ((p.Parameter.required || CCOption.is_some schema.Schema.default)
+                            && not schema.Schema.nullable)
+                        in
+                        let wrap_option =
+                          if is_optional then fun v ->
+                            Pat.construct (Location.mknoloc (Gen.ident [ "Some" ])) (Some ([], v))
+                          else CCFun.id
+                        in
                         Exp.match_
                           param_name
-                          (CCList.mapi (fun idx schema ->
-                               Exp.case
-                                 (Pat.construct
-                                    (Location.mknoloc
-                                       (Gen.ident
-                                          [
-                                            module_name_of_string p.Parameter.name;
-                                            Printf.sprintf "V%d" idx;
-                                          ]))
-                                    (Some ([], Pat.var (Location.mknoloc "v"))))
-                                 (Exp.construct
-                                    (Location.mknoloc (Gen.ident [ "Var" ]))
-                                    (Some
-                                       (Exp.tuple
-                                          [
-                                            Exp.ident (Location.mknoloc (Gen.ident [ "v" ]));
-                                            type_desc_of_schema schema;
-                                          ]))))
-                          @@ CCList.map (resolve_schema_ref components) schemas)
+                          ((CCList.mapi (fun idx schema ->
+                                Exp.case
+                                  (wrap_option
+                                     (Pat.construct
+                                        (Location.mknoloc
+                                           (Gen.ident
+                                              [
+                                                module_name_of_string p.Parameter.name;
+                                                Printf.sprintf "V%d" idx;
+                                              ]))
+                                        (Some ([], Pat.var (Location.mknoloc "v")))))
+                                  (Exp.construct
+                                     (Location.mknoloc (Gen.ident [ "Var" ]))
+                                     (Some
+                                        (Exp.tuple
+                                           [
+                                             Exp.ident (Location.mknoloc (Gen.ident [ "v" ]));
+                                             type_desc_of_schema schema;
+                                           ]))))
+                           @@ CCList.map (resolve_schema_ref components) schemas)
+                          @
+                          if is_optional then
+                            [
+                              Exp.case
+                                (Pat.construct (Location.mknoloc (Gen.ident [ "None" ])) None)
+                                (Exp.construct
+                                   (Location.mknoloc (Gen.ident [ "Var" ]))
+                                   (Some
+                                      (Exp.tuple
+                                         [
+                                           Exp.tuple [];
+                                           Exp.ident (Location.mknoloc (Gen.ident [ "Null" ]));
+                                         ])));
+                            ]
+                          else [])
                     | schema ->
                         let type_desc = type_desc_of_schema schema in
                         let type_desc =

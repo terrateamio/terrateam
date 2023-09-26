@@ -22,6 +22,7 @@ module Request = struct
       | Int : int v
       | String : string v
       | Bool : bool v
+      | Null : unit v
 
     type t = Var : ('a * 'a v) -> t
 
@@ -33,6 +34,7 @@ module Request = struct
       | Bool, v -> Some (Uritmpl.Var.S (Bool.to_string v))
       | Option t, Some v -> to_uritmpl_var t v
       | Option _, None -> None
+      | Null, () -> None
       | Array t, arr ->
           Some
             (Uritmpl.Var.A
