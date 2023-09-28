@@ -223,13 +223,14 @@ let perform_unlock_pr
   | Error _ ->
       Terrat_github.get_installation_access_token config installation_id
       >>= fun access_token ->
-      Terrat_github.publish_comment
-        ~config
-        ~access_token
-        ~owner:repository.Gw.Repository.owner.Gw.User.login
-        ~repo:repository.Gw.Repository.name
-        ~pull_number
-        Tmpl.unlock_failed_bad_id
+      Terrat_github.with_client
+        config
+        (`Token access_token)
+        (Terrat_github.publish_comment
+           ~owner:repository.Gw.Repository.owner.Gw.User.login
+           ~repo:repository.Gw.Repository.name
+           ~pull_number
+           ~body:Tmpl.unlock_failed_bad_id)
 
 let process_installation request_id config storage = function
   | Gw.Installation_event.Installation_created created ->
@@ -514,13 +515,13 @@ let process_issue_comment request_id config storage = function
             (fun t ->
               Logs.info (fun m -> m "GITHUB_EVENT : %s : REACT_TO_COMMENT : %f" request_id t))
             (fun () ->
-              Terrat_github.react_to_comment
-                ~config
-                ~access_token
-                ~owner:repository.Gw.Repository.owner.Gw.User.login
-                ~repo:repository.Gw.Repository.name
-                ~comment_id:comment.Gw.Issue_comment.id
-                ())
+              Terrat_github.with_client
+                config
+                (`Token access_token)
+                (Terrat_github.react_to_comment
+                   ~owner:repository.Gw.Repository.owner.Gw.User.login
+                   ~repo:repository.Gw.Repository.name
+                   ~comment_id:comment.Gw.Issue_comment.id))
           >>= fun () ->
           let event =
             Terrat_github_evaluator.S.Event.T.make
@@ -544,13 +545,13 @@ let process_issue_comment request_id config storage = function
             (fun t ->
               Logs.info (fun m -> m "GITHUB_EVENT : %s : REACT_TO_COMMENT : %f" request_id t))
             (fun () ->
-              Terrat_github.react_to_comment
-                ~config
-                ~access_token
-                ~owner:repository.Gw.Repository.owner.Gw.User.login
-                ~repo:repository.Gw.Repository.name
-                ~comment_id:comment.Gw.Issue_comment.id
-                ())
+              Terrat_github.with_client
+                config
+                (`Token access_token)
+                (Terrat_github.react_to_comment
+                   ~owner:repository.Gw.Repository.owner.Gw.User.login
+                   ~repo:repository.Gw.Repository.name
+                   ~comment_id:comment.Gw.Issue_comment.id))
           >>= fun () ->
           let event =
             Terrat_github_evaluator.S.Event.T.make
@@ -574,13 +575,13 @@ let process_issue_comment request_id config storage = function
             (fun t ->
               Logs.info (fun m -> m "GITHUB_EVENT : %s : REACT_TO_COMMENT : %f" request_id t))
             (fun () ->
-              Terrat_github.react_to_comment
-                ~config
-                ~access_token
-                ~owner:repository.Gw.Repository.owner.Gw.User.login
-                ~repo:repository.Gw.Repository.name
-                ~comment_id:comment.Gw.Issue_comment.id
-                ())
+              Terrat_github.with_client
+                config
+                (`Token access_token)
+                (Terrat_github.react_to_comment
+                   ~owner:repository.Gw.Repository.owner.Gw.User.login
+                   ~repo:repository.Gw.Repository.name
+                   ~comment_id:comment.Gw.Issue_comment.id))
           >>= fun () ->
           let event =
             Terrat_github_evaluator.S.Event.T.make
@@ -604,13 +605,13 @@ let process_issue_comment request_id config storage = function
             (fun t ->
               Logs.info (fun m -> m "GITHUB_EVENT : %s : REACT_TO_COMMENT : %f" request_id t))
             (fun () ->
-              Terrat_github.react_to_comment
-                ~config
-                ~access_token
-                ~owner:repository.Gw.Repository.owner.Gw.User.login
-                ~repo:repository.Gw.Repository.name
-                ~comment_id:comment.Gw.Issue_comment.id
-                ())
+              Terrat_github.with_client
+                config
+                (`Token access_token)
+                (Terrat_github.react_to_comment
+                   ~owner:repository.Gw.Repository.owner.Gw.User.login
+                   ~repo:repository.Gw.Repository.name
+                   ~comment_id:comment.Gw.Issue_comment.id))
           >>= fun () ->
           let event =
             Terrat_github_evaluator.S.Event.T.make
@@ -633,13 +634,14 @@ let process_issue_comment request_id config storage = function
               let open Abbs_future_combinators.Infix_result_monad in
               Terrat_github.get_installation_access_token config installation_id
               >>= fun access_token ->
-              Terrat_github.publish_comment
-                ~config
-                ~access_token
-                ~owner:repository.Gw.Repository.owner.Gw.User.login
-                ~repo:repository.Gw.Repository.name
-                ~pull_number
-                body
+              Terrat_github.with_client
+                config
+                (`Token access_token)
+                (Terrat_github.publish_comment
+                   ~owner:repository.Gw.Repository.owner.Gw.User.login
+                   ~repo:repository.Gw.Repository.name
+                   ~pull_number
+                   ~body)
           | Error (#Snabela.err as err) ->
               Logs.err (fun m ->
                   m "GITHUB_EVENT : %s : TMPL_ERROR : HELP : %s" request_id (Snabela.show_err err));
@@ -658,14 +660,14 @@ let process_issue_comment request_id config storage = function
                 msg);
           Terrat_github.get_installation_access_token config installation_id
           >>= fun access_token ->
-          Terrat_github.react_to_comment
-            ~config
-            ~content:"heart"
-            ~access_token
-            ~owner:repository.Gw.Repository.owner.Gw.User.login
-            ~repo:repository.Gw.Repository.name
-            ~comment_id:comment.Gw.Issue_comment.id
-            ()
+          Terrat_github.with_client
+            config
+            (`Token access_token)
+            (Terrat_github.react_to_comment
+               ~content:"heart"
+               ~owner:repository.Gw.Repository.owner.Gw.User.login
+               ~repo:repository.Gw.Repository.name
+               ~comment_id:comment.Gw.Issue_comment.id)
           >>= fun () -> Abb.Future.return (Ok ())
       | Error `Not_terrateam ->
           Prmths.Counter.inc_one (Metrics.comment_events_total "not_terrateam");
@@ -680,13 +682,14 @@ let process_issue_comment request_id config storage = function
                   m "GITHUB_EVENT : %s : COMMENT_ERROR : TAG_QUERY_ERROR : %s" request_id err);
               Terrat_github.get_installation_access_token config installation_id
               >>= fun access_token ->
-              Terrat_github.publish_comment
-                ~config
-                ~access_token
-                ~owner:repository.Gw.Repository.owner.Gw.User.login
-                ~repo:repository.Gw.Repository.name
-                ~pull_number
-                body
+              Terrat_github.with_client
+                config
+                (`Token access_token)
+                (Terrat_github.publish_comment
+                   ~owner:repository.Gw.Repository.owner.Gw.User.login
+                   ~repo:repository.Gw.Repository.name
+                   ~pull_number
+                   ~body)
           | Error (#Snabela.err as err) ->
               Logs.err (fun m ->
                   m
@@ -701,13 +704,14 @@ let process_issue_comment request_id config storage = function
               m "GITHUB_EVENT : %s : COMMENT_ERROR : UNKNOWN_ACTION : %s" request_id action);
           Terrat_github.get_installation_access_token config installation_id
           >>= fun access_token ->
-          Terrat_github.publish_comment
-            ~config
-            ~access_token
-            ~owner:repository.Gw.Repository.owner.Gw.User.login
-            ~repo:repository.Gw.Repository.name
-            ~pull_number
-            Tmpl.terrateam_comment_unknown_action)
+          Terrat_github.with_client
+            config
+            (`Token access_token)
+            (Terrat_github.publish_comment
+               ~owner:repository.Gw.Repository.owner.Gw.User.login
+               ~repo:repository.Gw.Repository.name
+               ~pull_number
+               ~body:Tmpl.terrateam_comment_unknown_action))
   | Gw.Issue_comment_event.Issue_comment_created _ ->
       Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : ISSUE_COMMENT_CREATED" request_id);
       Prmths.Counter.inc_one (Metrics.comment_events_total "noop");
@@ -754,13 +758,14 @@ let process_workflow_job_failure config storage access_token run_id repository =
             repository.Gw.Repository.name
             pull_number);
       (* We successfully failed something *)
-      Terrat_github.publish_comment
-        ~config
-        ~access_token
-        ~owner:repository.Gw.Repository.owner.Gw.User.login
-        ~repo:repository.Gw.Repository.name
-        ~pull_number:(CCInt64.to_int pull_number)
-        Tmpl.action_failed
+      Terrat_github.with_client
+        config
+        (`Token access_token)
+        (Terrat_github.publish_comment
+           ~owner:repository.Gw.Repository.owner.Gw.User.login
+           ~repo:repository.Gw.Repository.name
+           ~pull_number:(CCInt64.to_int pull_number)
+           ~body:Tmpl.action_failed)
       >>= fun () ->
       let unified_run_type =
         Terrat_work_manifest.(
@@ -803,13 +808,14 @@ let process_workflow_job_failure config storage access_token run_id repository =
              Logs.info (fun m ->
                  m "GITHUB_EVENT : WORKFLOW_JOB_FAIL_COMMIT_STATUS : %s : %f" run_id t))
            (fun () ->
-             Terrat_github.Commit_status.create
-               ~config
-               ~access_token
-               ~owner:repository.Gw.Repository.owner.Gw.User.login
-               ~repo:repository.Gw.Repository.name
-               ~sha
-               commit_statuses))
+             Terrat_github.with_client
+               config
+               (`Token access_token)
+               (Terrat_github.Commit_status.create
+                  ~owner:repository.Gw.Repository.owner.Gw.User.login
+                  ~repo:repository.Gw.Repository.name
+                  ~sha
+                  ~creates:commit_statuses)))
       >>= fun _ -> Abb.Future.return (Ok ())
   | Some ((work_manifest_id, None, _, _), _) ->
       Logs.info (fun m ->

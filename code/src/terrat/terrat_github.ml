@@ -149,6 +149,10 @@ let rate_limit_wait resp =
 let create config auth =
   Githubc2_abb.create ?base_url:(Terrat_config.github_base_url config) ~user_agent:"Terrateam" auth
 
+let with_client config auth f =
+  let client = create config auth in
+  f client
+
 let retry_wait default_wait resp =
   let open Abb.Future.Infix_monad in
   rate_limit_wait resp
@@ -247,31 +251,28 @@ let parse_repo_config python content =
       Abb.Future.return (Error (`Repo_config_parse_err stderr))
   | Error (#Abb_process.check_output_err as err) -> Abb.Future.return (Error err)
 
-let fetch_repo ~config ~access_token ~owner ~repo =
+let fetch_repo ~owner ~repo client =
   let open Abbs_future_combinators.Infix_result_monad in
-  let client = create config (`Token access_token) in
   call client Githubc2_repos.Get.(make (Parameters.make ~owner ~repo))
   >>= fun resp ->
   match Openapi.Response.value resp with
   | `OK repo -> Abb.Future.return (Ok repo)
   | (`Forbidden _ | `Moved_permanently _ | `Not_found _) as err -> Abb.Future.return (Error err)
 
-let fetch_branch ~config ~access_token ~owner ~repo branch =
+let fetch_branch ~owner ~repo ~branch client =
   let open Abbs_future_combinators.Infix_result_monad in
-  let client = create config (`Token access_token) in
   call client Githubc2_repos.Get_branch.(make (Parameters.make ~branch ~owner ~repo))
   >>= fun resp ->
   match Openapi.Response.value resp with
   | `OK branch -> Abb.Future.return (Ok branch)
   | (`Moved_permanently _ | `Not_found _) as err -> Abb.Future.return (Error err)
 
-let rec fetch_repo_config' ~config ~python ~access_token ~owner ~repo ref_ = function
+let rec fetch_repo_config' ~python ~owner ~repo ref_ client = function
   | [] ->
       let json = `Assoc [] in
       Abb.Future.return (Ok (CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson json)))
   | terrateam_config_yml :: next_config_yml -> (
       let open Abbs_future_combinators.Infix_result_monad in
-      let client = create config (`Token access_token) in
       call
         client
         Githubc2_repos.Get_content.(
@@ -312,40 +313,35 @@ let rec fetch_repo_config' ~config ~python ~access_token ~owner ~repo ref_ = fun
           with Yojson.Json_error str ->
             Abb.Future.return
               (Error (`Repo_config_parse_err ("Failed to parse repo config: " ^ str))))
-      | `Not_found _ ->
-          fetch_repo_config' ~config ~python ~access_token ~owner ~repo ref_ next_config_yml
+      | `Not_found _ -> fetch_repo_config' ~python ~owner ~repo ref_ client next_config_yml
       | `OK (C.Content_directory _) -> Abb.Future.return (Error `Repo_config_is_dir)
       | `OK (C.Content_symlink _) -> Abb.Future.return (Error `Repo_config_is_symlink)
       | `OK (C.Content_submodule _) -> Abb.Future.return (Error `Repo_config_in_sub_module)
       | `Forbidden _ -> Abb.Future.return (Error `Repo_config_permission_denied)
       | `Found -> Abb.Future.return (Error `Repo_config_unknown_err))
 
-let fetch_repo_config ~config ~python ~access_token ~owner ~repo ref_ =
+let fetch_repo_config ~python ~owner ~repo ~ref_ client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_repo_config");
-  fetch_repo_config' ~config ~python ~access_token ~owner ~repo ref_ terrateam_config_yml
+  fetch_repo_config' ~python ~owner ~repo ref_ client terrateam_config_yml
 
-let fetch_pull_request_files ~config ~access_token ~owner ~repo pull_number =
+let fetch_pull_request_files ~owner ~repo ~pull_number client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_pull_request_files");
-  let client = create config (`Token access_token) in
   Githubc2_abb.collect_all
     client
     Githubc2_pulls.List_files.(make (Parameters.make ~per_page:100 ~owner ~pull_number ~repo ()))
 
-let fetch_changed_files ~config ~access_token ~owner ~repo ~base head =
+let fetch_changed_files ~owner ~repo ~base ~head client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_changed_files");
-  let client = create config (`Token access_token) in
   call client Githubc2_repos.Compare_commits.(make Parameters.(make ~base ~head ~owner ~repo ()))
 
-let fetch_pull_request ~config ~access_token ~owner ~repo pull_number =
+let fetch_pull_request ~owner ~repo ~pull_number client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_pull_request");
-  let client = create config (`Token access_token) in
   call client Githubc2_pulls.Get.(make Parameters.(make ~owner ~repo ~pull_number))
 
-let compare_commits ~config ~access_token ~owner ~repo (base, head) =
+let compare_commits ~owner ~repo (base, head) client =
   let open Abbs_future_combinators.Infix_result_monad in
   let module Cc = Githubc2_components.Commit_comparison in
   Prmths.Counter.inc_one (Metrics.fn_call_total "compare_commits");
-  let client = create config (`Token access_token) in
   call client Githubc2_repos.Compare_commits.(make Parameters.(make ~base ~head ~owner ~repo ()))
   >>= fun resp ->
   match Openapi.Response.value resp with
@@ -353,10 +349,9 @@ let compare_commits ~config ~access_token ~owner ~repo (base, head) =
   | `OK { Cc.primary = { Cc.Primary.files = None; _ }; _ } -> Abb.Future.return (Ok [])
   | (`Internal_server_error _ | `Not_found _) as err -> Abb.Future.return (Error err)
 
-let load_workflow' ~config ~access_token ~owner ~repo =
+let load_workflow' ~owner ~repo client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "load_workflow");
   let open Abbs_future_combinators.Infix_result_monad in
-  let client = create config (`Token access_token) in
   Githubc2_abb.fold
     client
     ~init:[]
@@ -386,19 +381,18 @@ let load_workflow' ~config ~access_token ~owner ~repo =
   | (id, _, _) :: _ -> Abb.Future.return (Ok (Some id))
   | [] -> Abb.Future.return (Ok None)
 
-let load_workflow ~config ~access_token ~owner ~repo =
+let load_workflow ~owner ~repo client =
   Abbs_future_combinators.retry
-    ~f:(fun () -> load_workflow' ~config ~access_token ~owner ~repo)
+    ~f:(fun () -> load_workflow' ~owner ~repo client)
     ~while_:(Abbs_future_combinators.finite_tries 3 CCResult.is_error)
     ~betwixt:
       (Abbs_future_combinators.series ~start:1.5 ~step:(( *. ) 1.5) (fun n _ ->
            Prmths.Counter.inc_one Metrics.call_retries_total;
            Abb.Sys.sleep n))
 
-let publish_comment ~config ~access_token ~owner ~repo ~pull_number body =
+let publish_comment ~owner ~repo ~pull_number ~body client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "publish_comment");
   let open Abbs_future_combinators.Infix_result_monad in
-  let client = create config (`Token access_token) in
   call
     client
     Githubc2_issues.Create_comment.(
@@ -411,10 +405,9 @@ let publish_comment ~config ~access_token ~owner ~repo ~pull_number body =
   | (`Forbidden _ | `Not_found _ | `Gone _ | `Unprocessable_entity _) as err ->
       Abb.Future.return (Error err)
 
-let react_to_comment ?(content = "rocket") ~config ~access_token ~owner ~repo ~comment_id () =
+let react_to_comment ?(content = "rocket") ~owner ~repo ~comment_id client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "react_to_comment");
   let open Abbs_future_combinators.Infix_result_monad in
-  let client = create config (`Token access_token) in
   call
     client
     Githubc2_reactions.Create_for_issue_comment.(
@@ -426,10 +419,9 @@ let react_to_comment ?(content = "rocket") ~config ~access_token ~owner ~repo ~c
   | `OK _ | `Created _ -> Abb.Future.return (Ok ())
   | `Unprocessable_entity _ as err -> Abb.Future.return (Error err)
 
-let rec get_tree ~config ~access_token ~owner ~repo ~sha () =
+let rec get_tree ~owner ~repo ~sha client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "get_tree");
   let open Abbs_future_combinators.Infix_result_monad in
-  let client = create config (`Token access_token) in
   call
     client
     Githubc2_git.Get_tree.(
@@ -467,13 +459,11 @@ let rec get_tree ~config ~access_token ~owner ~repo ~sha () =
                   match item.Items.primary.Items.Primary.type_ with
                   | Some "tree" ->
                       get_tree
-                        ~config
-                        ~access_token
                         ~owner
                         ~repo
                         ~sha:
                           (CCOption.get_exn_or "get_tree_sha" item.Items.primary.Items.Primary.sha)
-                        ()
+                        client
                       >>= fun fs ->
                       let path =
                         CCOption.get_exn_or "get_tree_path" item.Items.primary.Items.Primary.path
@@ -513,11 +503,10 @@ let rec get_tree ~config ~access_token ~owner ~repo ~sha () =
   | `Not_found _ as err -> Abb.Future.return (Error err)
   | `Unprocessable_entity _ as err -> Abb.Future.return (Error err)
 
-let get_team_membership_in_org ~config ~access_token ~org ~team ~user () =
+let get_team_membership_in_org ~org ~team ~user client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "get_team_membership_in_org");
   let open Abbs_future_combinators.Infix_result_monad in
   let module Team = Githubc2_components.Team_membership in
-  let client = create config (`Token access_token) in
   call
     client
     Githubc2_teams.Get_membership_for_user_in_org.(
@@ -527,11 +516,10 @@ let get_team_membership_in_org ~config ~access_token ~org ~team ~user () =
   | `Not_found -> Abb.Future.return (Ok false)
   | `OK Team.{ primary = Primary.{ state; _ }; _ } -> Abb.Future.return (Ok (state = "active"))
 
-let get_repo_collaborator_permission ~config ~access_token ~org ~repo ~user () =
+let get_repo_collaborator_permission ~org ~repo ~user client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "get_repo_collaborator_permission");
   let open Abbs_future_combinators.Infix_result_monad in
   let module Permission = Githubc2_components.Repository_collaborator_permission in
-  let client = create config (`Token access_token) in
   call
     client
     Githubc2_repos.Get_collaborator_permission_level.(
@@ -569,11 +557,8 @@ module Commit_status = struct
     type t = T.t list
   end
 
-  let create_client = create
-
-  let create ~config ~access_token ~owner ~repo ~sha creates =
+  let create ~owner ~repo ~sha ~creates client =
     let open Abb.Future.Infix_monad in
-    let client = create_client config (`Token access_token) in
     Abbs_future_combinators.List.map_par
       ~f:(fun creates ->
         Abbs_future_combinators.List_result.iter
@@ -595,10 +580,9 @@ module Commit_status = struct
     | Ok _ -> Abb.Future.return (Ok ())
     | Error _ as err -> Abb.Future.return err
 
-  let list ~config ~access_token ~owner ~repo ~sha () =
+  let list ~owner ~repo ~sha client =
     Prmths.Counter.inc_one (Metrics.fn_call_total "commit_status_list");
     let open Abb.Future.Infix_monad in
-    let client = create_client config (`Token access_token) in
     Abbs_future_combinators.retry
       ~f:(fun () ->
         Githubc2_abb.collect_all
@@ -618,12 +602,9 @@ end
 module Status_check = struct
   type list_err = Githubc2_abb.call_err [@@deriving show]
 
-  let create_client = create
-
-  let list ~config ~access_token ~owner ~repo ~ref_ () =
+  let list ~owner ~repo ~ref_ client =
     Prmths.Counter.inc_one (Metrics.fn_call_total "status_check_list");
     let open Abb.Future.Infix_monad in
-    let client = create_client config (`Token access_token) in
     call client Githubc2_checks.List_for_ref.(make Parameters.(make ~owner ~repo ~ref_ ()))
     >>= function
     | Ok resp ->
@@ -640,11 +621,8 @@ module Pull_request_reviews = struct
     ]
   [@@deriving show]
 
-  let create_client = create
-
-  let list ~config ~access_token ~owner ~repo ~pull_number () =
+  let list ~owner ~repo ~pull_number client =
     Prmths.Counter.inc_one (Metrics.fn_call_total "pull_request_reviews_list");
-    let client = create_client config (`Token access_token) in
     Githubc2_abb.collect_all
       client
       Githubc2_pulls.List_reviews.(make Parameters.(make ~owner ~repo ~pull_number ()))

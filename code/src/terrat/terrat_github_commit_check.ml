@@ -8,46 +8,46 @@ type list_err =
   ]
 [@@deriving show]
 
-let create ~config ~access_token ~owner ~repo ~ref_ checks =
+let create ~owner ~repo ~ref_ ~checks client =
   Terrat_github.Commit_status.create
-    ~config
-    ~access_token
     ~owner
     ~repo
     ~sha:ref_
-    (CCList.map
-       (fun Terrat_commit_check.{ details_url; description; title; status } ->
-         Terrat_github.Commit_status.Create.T.make
-           ~target_url:details_url
-           ~description
-           ~context:title
-           ~state:
-             Terrat_commit_check.Status.(
-               match status with
-               | Queued | Running -> "pending"
-               | Completed -> "success"
-               | Failed -> "failure")
-           ())
-       checks)
+    ~creates:
+      (CCList.map
+         (fun Terrat_commit_check.{ details_url; description; title; status } ->
+           Terrat_github.Commit_status.Create.T.make
+             ~target_url:details_url
+             ~description
+             ~context:title
+             ~state:
+               Terrat_commit_check.Status.(
+                 match status with
+                 | Queued | Running -> "pending"
+                 | Completed -> "success"
+                 | Failed -> "failure")
+             ())
+         checks)
+    client
 
-let list_commit_statuses ~config ~log_id ~access_token ~owner ~repo ~sha () =
+let list_commit_statuses ~log_id ~owner ~repo ~sha client =
   Abbs_time_it.run
     (fun t ->
       Logs.info (fun m -> m "GITHUB_COMMIT_CHECK : %s : LIST_COMMIT_STATUSES : %f" log_id t))
-    (fun () -> Terrat_github.Commit_status.list ~config ~access_token ~owner ~repo ~sha ())
+    (fun () -> Terrat_github.Commit_status.list ~owner ~repo ~sha client)
 
-let list_status_checks ~config ~log_id ~access_token ~owner ~repo ~ref_ () =
+let list_status_checks ~log_id ~owner ~repo ~ref_ client =
   Abbs_time_it.run
     (fun t -> Logs.info (fun m -> m "GITHUB_COMMIT_CHECK : %s : LIST_STATUS_CHECKS : %f" log_id t))
-    (fun () -> Terrat_github.Status_check.list ~config ~access_token ~owner ~repo ~ref_ ())
+    (fun () -> Terrat_github.Status_check.list ~owner ~repo ~ref_ client)
 
-let list ~config ~log_id ~access_token ~owner ~repo ~ref_ () =
+let list ~log_id ~owner ~repo ~ref_ client =
   let open Abb.Future.Infix_monad in
   let module S = Githubc2_components.Status in
   Abbs_future_combinators.Infix_result_app.(
     (fun statuses checks -> (statuses, checks))
-    <$> list_commit_statuses ~config ~log_id ~access_token ~owner ~repo ~sha:ref_ ()
-    <*> list_status_checks ~config ~log_id ~access_token ~owner ~repo ~ref_ ())
+    <$> list_commit_statuses ~log_id ~owner ~repo ~sha:ref_ client
+    <*> list_status_checks ~log_id ~owner ~repo ~ref_ client)
   >>= function
   | Ok (statuses, checks) ->
       let statuses =

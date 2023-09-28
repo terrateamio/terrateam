@@ -7,20 +7,17 @@ type list_err =
 [@@deriving show]
 
 val create :
-  config:Terrat_config.t ->
-  access_token:string ->
   owner:string ->
   repo:string ->
   ref_:string ->
-  Terrat_commit_check.t list ->
+  checks:Terrat_commit_check.t list ->
+  Githubc2_abb.t ->
   (unit, [> err ]) result Abb.Future.t
 
 val list :
-  config:Terrat_config.t ->
   log_id:string ->
-  access_token:string ->
   owner:string ->
   repo:string ->
   ref_:string ->
-  unit ->
+  Githubc2_abb.t ->
   (Terrat_commit_check.t list, [> list_err ]) result Abb.Future.t
