@@ -134,7 +134,8 @@ module Path : sig
      or at the end of the string. *)
   val ud : (string -> 'a option) -> 'a t
 
-  (** Extract a string from the path. *)
+  (** Extract a string from the path.  The string must be at least one character
+      long. *)
   val string : string t
 
   (** Extract an int from the path. *)

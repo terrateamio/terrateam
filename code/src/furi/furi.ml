@@ -14,7 +14,11 @@ module Path = struct
     let open CCOption.Infix in
     extract idx s >>= fun (idx, s) -> CCOption.wrap f s >>= fun v -> v >>= fun v -> Some (idx, v)
 
-  let string = ud CCOption.return
+  let string =
+    ud (function
+        | s when CCString.length s > 0 -> Some s
+        | _ -> None)
+
   let int = ud (CCFun.compose int_of_string CCOption.return)
 
   let any idx s =
