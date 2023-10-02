@@ -31,6 +31,15 @@ let uri t =
               ~default:"http"
               (Cohttp.Header.get (Request.headers t.request) "x-forwarded-proto")))
 
+let uri_base t =
+  let forwarded_base =
+    t.request
+    |> Request.headers
+    |> CCFun.flip Cohttp.Header.get "x-forwarded-base"
+    |> CCOption.map Uri.of_string
+  in
+  CCOption.get_lazy (fun () -> Uri.with_path (uri t) "/") forwarded_base
+
 let request t = t.request
 let md_find key t = Hmap.find key t.metadata
 let md_add key v t = { t with metadata = Hmap.add key v t.metadata }

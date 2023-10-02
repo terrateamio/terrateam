@@ -44,6 +44,10 @@ val md_rem : 'k Hmap.key -> ('a, 'b) t -> ('a, 'b) t
    is an [x-forwarded-proto] header and use that otherwise set to [http] *)
 val uri : ('a, 'b) t -> Uri.t
 
+(** Get the base URI.  If the [x-forwarded-base] header exists, then this is
+    used as the base, otherwise the [uri] is used and the path is set to [/]. *)
+val uri_base : ('a, 'b) t -> Uri.t
+
 (** Get the body. *)
 val body : ('a, 'b) t -> 'a
 
