@@ -45,37 +45,70 @@ work_manifests as (
           or (gdwm.work_manifest is not null
                and (drift_unlocks.unlocked_at is null or drift_unlocks.unlocked_at < gwm.created_at))
 ),
--- Find all repositories with a currently running apply.  The count should only
--- ever be 0 or 1
-running_applies as (
-    select repository from work_manifests
-    where unified_run_type = 'apply' and state = 'running'
-    group by repository
-    having count(*) > 0
+dirspaces_for_work_manifests as (
+    select
+        work_manifest,
+        path,
+        workspace
+    from github_work_manifest_dirspaceflows as gwmds
+    inner join work_manifests as wm
+        on gwmds.work_manifest = wm.id
 ),
-running_plans as (
-    select repository from work_manifests
-    where unified_run_type = 'plan' and state = 'running'
-    group by repository
-    having count(*) > 0
+queued_dirspaces_per_repo as (
+    select distinct
+        wm.repository as repository,
+        wm.unified_run_type as unified_run_type,
+        path,
+        workspace
+    from github_work_manifest_dirspaceflows as gwmds
+    inner join work_manifests as wm
+        on gwmds.work_manifest = wm.id
+    where wm.state = 'queued'
+),
+running_dirspaces_per_repo as (
+    select distinct
+        wm.repository as repository,
+        wm.unified_run_type as unified_run_type,
+        path,
+        workspace
+    from github_work_manifest_dirspaceflows as gwmds
+    inner join work_manifests as wm
+        on gwmds.work_manifest = wm.id
+    where wm.state = 'running'
+),
+-- Find all those queued dirspaces that have running instance where the running
+-- instance is an apply.  These work manifests cannot be run because the apply
+-- is blocking them
+apply_dirspaces_with_overlap as (
+    select distinct
+        qds.repository as repository,
+        qds.path as path,
+        qds.workspace as workspace
+    from queued_dirspaces_per_repo as qds
+    inner join running_dirspaces_per_repo as rds
+        on qds.repository = rds.repository
+           and qds.path = rds.path
+           and qds.workspace = rds.workspace
+    where rds.unified_run_type = 'apply'
+),
+-- Reject all those work manifests that have a dirspace in the overlapping apply
+-- table
+rejected_work_manifests as (
+    select distinct wm.id as id from work_manifests as wm
+    inner join dirspaces_for_work_manifests as dswm
+        on dswm.work_manifest = wm.id
+    inner join apply_dirspaces_with_overlap as adso
+        on adso.repository = wm.repository
+           and adso.path = dswm.path
+           and adso.workspace = dswm.workspace
 ),
 next_work_manifests as (
     select
-        id,
+        wm.id,
         row_number() over (partition by wm.repository order by wm.priority, wm.created_at) as rn
     from work_manifests as wm
-    left join running_applies as ra on ra.repository = wm.repository
-    left join running_plans as rp on rp.repository = wm.repository
-    where
--- (1) is an apply and nothing is running
-        (wm.state = 'queued'
-         and wm.unified_run_type = 'apply'
-         and ra.repository is null
-         and rp.repository is null)
--- (2) a plan and no applies running
-        or (wm.state = 'queued'
-            and wm.unified_run_type = 'plan'
-            and ra.repository is null)
+    left join rejected_work_manifests as rwm on rwm.id = wm.id
+    where wm.state = 'queued' and rwm.id is null
 )
 update github_work_manifests set state = 'running' where id = (
     select gwm.id from github_work_manifests as gwm
