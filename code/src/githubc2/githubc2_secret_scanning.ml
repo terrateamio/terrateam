@@ -87,21 +87,21 @@ module List_alerts_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("state", Var (params.state, Option String));
-          ("secret_type", Var (params.secret_type, Option String));
-          ("resolution", Var (params.resolution, Option String));
-          ("sort", Var (params.sort, String));
-          ("direction", Var (params.direction, String));
-          ("per_page", Var (params.per_page, Int));
-          ("before", Var (params.before, Option String));
-          ("after", Var (params.after, Option String));
-        ])
+         let open Parameters in
+         [
+           ("state", Var (params.state, Option String));
+           ("secret_type", Var (params.secret_type, Option String));
+           ("resolution", Var (params.resolution, Option String));
+           ("sort", Var (params.sort, String));
+           ("direction", Var (params.direction, String));
+           ("per_page", Var (params.per_page, Int));
+           ("before", Var (params.before, Option String));
+           ("after", Var (params.after, Option String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -197,22 +197,22 @@ module List_alerts_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("state", Var (params.state, Option String));
-          ("secret_type", Var (params.secret_type, Option String));
-          ("resolution", Var (params.resolution, Option String));
-          ("sort", Var (params.sort, String));
-          ("direction", Var (params.direction, String));
-          ("page", Var (params.page, Int));
-          ("per_page", Var (params.per_page, Int));
-          ("before", Var (params.before, Option String));
-          ("after", Var (params.after, Option String));
-        ])
+         let open Parameters in
+         [
+           ("state", Var (params.state, Option String));
+           ("secret_type", Var (params.secret_type, Option String));
+           ("resolution", Var (params.resolution, Option String));
+           ("sort", Var (params.sort, String));
+           ("direction", Var (params.direction, String));
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
+           ("before", Var (params.before, Option String));
+           ("after", Var (params.after, Option String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -306,22 +306,22 @@ module List_alerts_for_repo = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("state", Var (params.state, Option String));
-          ("secret_type", Var (params.secret_type, Option String));
-          ("resolution", Var (params.resolution, Option String));
-          ("sort", Var (params.sort, String));
-          ("direction", Var (params.direction, String));
-          ("page", Var (params.page, Int));
-          ("per_page", Var (params.per_page, Int));
-          ("before", Var (params.before, Option String));
-          ("after", Var (params.after, Option String));
-        ])
+         let open Parameters in
+         [
+           ("state", Var (params.state, Option String));
+           ("secret_type", Var (params.secret_type, Option String));
+           ("resolution", Var (params.resolution, Option String));
+           ("sort", Var (params.sort, String));
+           ("direction", Var (params.direction, String));
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
+           ("before", Var (params.before, Option String));
+           ("after", Var (params.after, Option String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -400,12 +400,12 @@ module Update_alert = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("alert_number", Var (params.alert_number, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("alert_number", Var (params.alert_number, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -468,12 +468,12 @@ module Get_alert = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("alert_number", Var (params.alert_number, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("alert_number", Var (params.alert_number, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -535,16 +535,16 @@ module List_locations_for_alert = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("alert_number", Var (params.alert_number, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("alert_number", Var (params.alert_number, Int));
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get

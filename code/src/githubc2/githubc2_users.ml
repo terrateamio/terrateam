@@ -95,10 +95,10 @@ module Get_authenticated = struct
       let of_yojson =
         Json_schema.one_of
           (let open CCResult in
-          [
-            (fun v -> map (fun v -> Private_user v) (Githubc2_components.Private_user.of_yojson v));
-            (fun v -> map (fun v -> Public_user v) (Githubc2_components.Public_user.of_yojson v));
-          ])
+           [
+             (fun v -> map (fun v -> Private_user v) (Githubc2_components.Private_user.of_yojson v));
+             (fun v -> map (fun v -> Public_user v) (Githubc2_components.Public_user.of_yojson v));
+           ])
 
       let to_yojson = function
         | Private_user v -> Githubc2_components.Private_user.to_yojson v
@@ -253,8 +253,8 @@ module Unblock = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("username", Var (params.username, String)) ])
+         let open Parameters in
+         [ ("username", Var (params.username, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -319,8 +319,8 @@ module Block = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("username", Var (params.username, String)) ])
+         let open Parameters in
+         [ ("username", Var (params.username, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -377,8 +377,8 @@ module Check_blocked = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("username", Var (params.username, String)) ])
+         let open Parameters in
+         [ ("username", Var (params.username, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -492,7 +492,7 @@ module Delete_email_for_authenticated_user = struct
     let of_yojson =
       Json_schema.one_of
         (let open CCResult in
-        [ (fun v -> map (fun v -> V0 v) (V0.of_yojson v)) ])
+         [ (fun v -> map (fun v -> V0 v) (V0.of_yojson v)) ])
 
     let to_yojson = function
       | V0 v -> V0.to_yojson v
@@ -579,7 +579,7 @@ module Add_email_for_authenticated_user = struct
     let of_yojson =
       Json_schema.one_of
         (let open CCResult in
-        [ (fun v -> map (fun v -> V0 v) (V0.of_yojson v)) ])
+         [ (fun v -> map (fun v -> V0 v) (V0.of_yojson v)) ])
 
     let to_yojson = function
       | V0 v -> V0.to_yojson v
@@ -707,8 +707,8 @@ module List_emails_for_authenticated_user = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -766,8 +766,8 @@ module List_followers_for_authenticated_user = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -825,8 +825,8 @@ module List_followed_by_authenticated_user = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -882,8 +882,8 @@ module Unfollow = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("username", Var (params.username, String)) ])
+         let open Parameters in
+         [ ("username", Var (params.username, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -940,8 +940,8 @@ module Follow = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("username", Var (params.username, String)) ])
+         let open Parameters in
+         [ ("username", Var (params.username, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -998,8 +998,8 @@ module Check_person_is_followed_by_authenticated = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("username", Var (params.username, String)) ])
+         let open Parameters in
+         [ ("username", Var (params.username, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1143,8 +1143,8 @@ module List_gpg_keys_for_authenticated_user = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -1208,8 +1208,8 @@ module Delete_gpg_key_for_authenticated_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("gpg_key_id", Var (params.gpg_key_id, Int)) ])
+         let open Parameters in
+         [ ("gpg_key_id", Var (params.gpg_key_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1270,8 +1270,8 @@ module Get_gpg_key_for_authenticated_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("gpg_key_id", Var (params.gpg_key_id, Int)) ])
+         let open Parameters in
+         [ ("gpg_key_id", Var (params.gpg_key_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1415,8 +1415,8 @@ module List_public_ssh_keys_for_authenticated_user = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -1472,8 +1472,8 @@ module Delete_public_ssh_key_for_authenticated_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("key_id", Var (params.key_id, Int)) ])
+         let open Parameters in
+         [ ("key_id", Var (params.key_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1534,8 +1534,8 @@ module Get_public_ssh_key_for_authenticated_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("key_id", Var (params.key_id, Int)) ])
+         let open Parameters in
+         [ ("key_id", Var (params.key_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1601,8 +1601,8 @@ module List_public_emails_for_authenticated_user = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -1745,8 +1745,8 @@ module List_ssh_signing_keys_for_authenticated_user = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -1802,8 +1802,8 @@ module Delete_ssh_signing_key_for_authenticated_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("ssh_signing_key_id", Var (params.ssh_signing_key_id, Int)) ])
+         let open Parameters in
+         [ ("ssh_signing_key_id", Var (params.ssh_signing_key_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1864,8 +1864,8 @@ module Get_ssh_signing_key_for_authenticated_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("ssh_signing_key_id", Var (params.ssh_signing_key_id, Int)) ])
+         let open Parameters in
+         [ ("ssh_signing_key_id", Var (params.ssh_signing_key_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1910,8 +1910,8 @@ module List = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("since", Var (params.since, Option Int)); ("per_page", Var (params.per_page, Int)) ])
+         let open Parameters in
+         [ ("since", Var (params.since, Option Int)); ("per_page", Var (params.per_page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -1932,10 +1932,10 @@ module Get_by_username = struct
       let of_yojson =
         Json_schema.one_of
           (let open CCResult in
-          [
-            (fun v -> map (fun v -> Private_user v) (Githubc2_components.Private_user.of_yojson v));
-            (fun v -> map (fun v -> Public_user v) (Githubc2_components.Public_user.of_yojson v));
-          ])
+           [
+             (fun v -> map (fun v -> Private_user v) (Githubc2_components.Private_user.of_yojson v));
+             (fun v -> map (fun v -> Public_user v) (Githubc2_components.Public_user.of_yojson v));
+           ])
 
       let to_yojson = function
         | Private_user v -> Githubc2_components.Private_user.to_yojson v
@@ -1967,8 +1967,8 @@ module Get_by_username = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("username", Var (params.username, String)) ])
+         let open Parameters in
+         [ ("username", Var (params.username, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2003,12 +2003,12 @@ module List_followers_for_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("username", Var (params.username, String)) ])
+         let open Parameters in
+         [ ("username", Var (params.username, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -2042,12 +2042,12 @@ module List_following_for_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("username", Var (params.username, String)) ])
+         let open Parameters in
+         [ ("username", Var (params.username, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -2082,11 +2082,11 @@ module Check_following_for_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("username", Var (params.username, String));
-          ("target_user", Var (params.target_user, String));
-        ])
+         let open Parameters in
+         [
+           ("username", Var (params.username, String));
+           ("target_user", Var (params.target_user, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2121,12 +2121,12 @@ module List_gpg_keys_for_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("username", Var (params.username, String)) ])
+         let open Parameters in
+         [ ("username", Var (params.username, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -2192,15 +2192,15 @@ module Get_context_for_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("username", Var (params.username, String)) ])
+         let open Parameters in
+         [ ("username", Var (params.username, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("subject_type", Var (params.subject_type, Option String));
-          ("subject_id", Var (params.subject_id, Option String));
-        ])
+         let open Parameters in
+         [
+           ("subject_type", Var (params.subject_type, Option String));
+           ("subject_id", Var (params.subject_id, Option String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -2234,12 +2234,12 @@ module List_public_keys_for_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("username", Var (params.username, String)) ])
+         let open Parameters in
+         [ ("username", Var (params.username, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -2273,12 +2273,12 @@ module List_ssh_signing_keys_for_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("username", Var (params.username, String)) ])
+         let open Parameters in
+         [ ("username", Var (params.username, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get

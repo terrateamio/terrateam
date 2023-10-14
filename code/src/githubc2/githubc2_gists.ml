@@ -39,10 +39,10 @@ module Create = struct
         let of_yojson =
           Json_schema.one_of
             (let open CCResult in
-            [
-              (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
-              (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
-            ])
+             [
+               (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
+               (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
+             ])
 
         let to_yojson = function
           | V0 v -> V0.to_yojson v
@@ -162,12 +162,12 @@ module List = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("since", Var (params.since, Option String));
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
-        ])
+         let open Parameters in
+         [
+           ("since", Var (params.since, Option String));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -227,12 +227,12 @@ module List_public = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("since", Var (params.since, Option String));
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
-        ])
+         let open Parameters in
+         [
+           ("since", Var (params.since, Option String));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -291,12 +291,12 @@ module List_starred = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("since", Var (params.since, Option String));
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
-        ])
+         let open Parameters in
+         [
+           ("since", Var (params.since, Option String));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -357,11 +357,11 @@ module Update = struct
             let of_yojson =
               Json_schema.any_of
                 (let open CCResult in
-                [
-                  (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
-                  (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
-                  (fun v -> map (fun v -> V2 v) (V2.of_yojson v));
-                ])
+                 [
+                   (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
+                   (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
+                   (fun v -> map (fun v -> V2 v) (V2.of_yojson v));
+                 ])
 
             let to_yojson = function
               | V0 v -> V0.to_yojson v
@@ -431,11 +431,11 @@ module Update = struct
             let of_yojson =
               Json_schema.any_of
                 (let open CCResult in
-                [
-                  (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
-                  (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
-                  (fun v -> map (fun v -> V2 v) (V2.of_yojson v));
-                ])
+                 [
+                   (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
+                   (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
+                   (fun v -> map (fun v -> V2 v) (V2.of_yojson v));
+                 ])
 
             let to_yojson = function
               | V0 v -> V0.to_yojson v
@@ -464,10 +464,10 @@ module Update = struct
     let of_yojson =
       Json_schema.any_of
         (let open CCResult in
-        [
-          (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
-          (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
-        ])
+         [
+           (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
+           (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
+         ])
 
     let to_yojson = function
       | V0 v -> V0.to_yojson v
@@ -514,8 +514,8 @@ module Update = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("gist_id", Var (params.gist_id, String)) ])
+         let open Parameters in
+         [ ("gist_id", Var (params.gist_id, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -565,8 +565,8 @@ module Delete = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("gist_id", Var (params.gist_id, String)) ])
+         let open Parameters in
+         [ ("gist_id", Var (params.gist_id, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -641,8 +641,8 @@ module Get = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("gist_id", Var (params.gist_id, String)) ])
+         let open Parameters in
+         [ ("gist_id", Var (params.gist_id, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -705,8 +705,8 @@ module Create_comment = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("gist_id", Var (params.gist_id, String)) ])
+         let open Parameters in
+         [ ("gist_id", Var (params.gist_id, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -765,12 +765,12 @@ module List_comments = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("gist_id", Var (params.gist_id, String)) ])
+         let open Parameters in
+         [ ("gist_id", Var (params.gist_id, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -825,8 +825,8 @@ module Update_comment = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("gist_id", Var (params.gist_id, String)); ("comment_id", Var (params.comment_id, Int)) ])
+         let open Parameters in
+         [ ("gist_id", Var (params.gist_id, String)); ("comment_id", Var (params.comment_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -880,8 +880,8 @@ module Delete_comment = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("gist_id", Var (params.gist_id, String)); ("comment_id", Var (params.comment_id, Int)) ])
+         let open Parameters in
+         [ ("gist_id", Var (params.gist_id, String)); ("comment_id", Var (params.comment_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -960,8 +960,8 @@ module Get_comment = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("gist_id", Var (params.gist_id, String)); ("comment_id", Var (params.comment_id, Int)) ])
+         let open Parameters in
+         [ ("gist_id", Var (params.gist_id, String)); ("comment_id", Var (params.comment_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1020,12 +1020,12 @@ module List_commits = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("gist_id", Var (params.gist_id, String)) ])
+         let open Parameters in
+         [ ("gist_id", Var (params.gist_id, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -1086,8 +1086,8 @@ module Fork = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("gist_id", Var (params.gist_id, String)) ])
+         let open Parameters in
+         [ ("gist_id", Var (params.gist_id, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1146,12 +1146,12 @@ module List_forks = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("gist_id", Var (params.gist_id, String)) ])
+         let open Parameters in
+         [ ("gist_id", Var (params.gist_id, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -1200,8 +1200,8 @@ module Unstar = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("gist_id", Var (params.gist_id, String)) ])
+         let open Parameters in
+         [ ("gist_id", Var (params.gist_id, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1251,8 +1251,8 @@ module Star = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("gist_id", Var (params.gist_id, String)) ])
+         let open Parameters in
+         [ ("gist_id", Var (params.gist_id, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1302,8 +1302,8 @@ module Check_is_starred = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("gist_id", Var (params.gist_id, String)) ])
+         let open Parameters in
+         [ ("gist_id", Var (params.gist_id, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1365,8 +1365,8 @@ module Get_revision = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("gist_id", Var (params.gist_id, String)); ("sha", Var (params.sha, String)) ])
+         let open Parameters in
+         [ ("gist_id", Var (params.gist_id, String)); ("sha", Var (params.sha, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1416,16 +1416,16 @@ module List_for_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("username", Var (params.username, String)) ])
+         let open Parameters in
+         [ ("username", Var (params.username, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("since", Var (params.since, Option String));
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
-        ])
+         let open Parameters in
+         [
+           ("since", Var (params.since, Option String));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+         ])
       ~url
       ~responses:Responses.t
       `Get

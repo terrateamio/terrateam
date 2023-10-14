@@ -29,11 +29,13 @@ module Primary = struct
                   let of_yojson =
                     Json_schema.any_of
                       (let open CCResult in
-                      [
-                        (fun v ->
-                          map (fun v -> Simple_user v) (Githubc2_components_simple_user.of_yojson v));
-                        (fun v -> map (fun v -> Team v) (Githubc2_components_team.of_yojson v));
-                      ])
+                       [
+                         (fun v ->
+                           map
+                             (fun v -> Simple_user v)
+                             (Githubc2_components_simple_user.of_yojson v));
+                         (fun v -> map (fun v -> Team v) (Githubc2_components_team.of_yojson v));
+                       ])
 
                   let to_yojson = function
                     | Simple_user v -> Githubc2_components_simple_user.to_yojson v
@@ -88,11 +90,11 @@ module Primary = struct
       let of_yojson =
         Json_schema.any_of
           (let open CCResult in
-          [
-            (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
-            (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
-            (fun v -> map (fun v -> V2 v) (V2.of_yojson v));
-          ])
+           [
+             (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
+             (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
+             (fun v -> map (fun v -> V2 v) (V2.of_yojson v));
+           ])
 
       let to_yojson = function
         | V0 v -> V0.to_yojson v

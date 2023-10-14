@@ -79,8 +79,8 @@ module Start_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -128,16 +128,16 @@ module List_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
-          ("exclude", Var (params.exclude, Option (Array String)));
-        ])
+         let open Parameters in
+         [
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+           ("exclude", Var (params.exclude, Option (Array String)));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -196,12 +196,12 @@ module Get_status_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("migration_id", Var (params.migration_id, Int)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("migration_id", Var (params.migration_id, Int)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("exclude", Var (params.exclude, Option (Array String))) ])
+         let open Parameters in
+         [ ("exclude", Var (params.exclude, Option (Array String))) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -244,8 +244,8 @@ module Delete_archive_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("migration_id", Var (params.migration_id, Int)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("migration_id", Var (params.migration_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -289,8 +289,8 @@ module Download_archive_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("migration_id", Var (params.migration_id, Int)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("migration_id", Var (params.migration_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -335,12 +335,12 @@ module Unlock_repo_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("org", Var (params.org, String));
-          ("migration_id", Var (params.migration_id, Int));
-          ("repo_name", Var (params.repo_name, String));
-        ])
+         let open Parameters in
+         [
+           ("org", Var (params.org, String));
+           ("migration_id", Var (params.migration_id, Int));
+           ("repo_name", Var (params.repo_name, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -389,12 +389,12 @@ module List_repos_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("migration_id", Var (params.migration_id, Int)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("migration_id", Var (params.migration_id, Int)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -454,8 +454,8 @@ module Update_import = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -486,8 +486,8 @@ module Cancel_import = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -570,8 +570,8 @@ module Start_import = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -618,8 +618,8 @@ module Get_import_status = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -667,12 +667,12 @@ module Get_commit_authors = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("since", Var (params.since, Option Int)) ])
+         let open Parameters in
+         [ ("since", Var (params.since, Option Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -736,12 +736,12 @@ module Map_commit_author = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("author_id", Var (params.author_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("author_id", Var (params.author_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -775,8 +775,8 @@ module Get_large_files = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -844,8 +844,8 @@ module Set_lfs_preference = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -999,8 +999,8 @@ module List_for_authenticated_user = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -1068,12 +1068,12 @@ module Get_status_for_authenticated_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("migration_id", Var (params.migration_id, Int)) ])
+         let open Parameters in
+         [ ("migration_id", Var (params.migration_id, Int)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("exclude", Var (params.exclude, Option (Array String))) ])
+         let open Parameters in
+         [ ("exclude", Var (params.exclude, Option (Array String))) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -1129,8 +1129,8 @@ module Delete_archive_for_authenticated_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("migration_id", Var (params.migration_id, Int)) ])
+         let open Parameters in
+         [ ("migration_id", Var (params.migration_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1180,8 +1180,8 @@ module Get_archive_for_authenticated_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("migration_id", Var (params.migration_id, Int)) ])
+         let open Parameters in
+         [ ("migration_id", Var (params.migration_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1242,11 +1242,11 @@ module Unlock_repo_for_authenticated_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("migration_id", Var (params.migration_id, Int));
-          ("repo_name", Var (params.repo_name, String));
-        ])
+         let open Parameters in
+         [
+           ("migration_id", Var (params.migration_id, Int));
+           ("repo_name", Var (params.repo_name, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1294,12 +1294,12 @@ module List_repos_for_authenticated_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("migration_id", Var (params.migration_id, Int)) ])
+         let open Parameters in
+         [ ("migration_id", Var (params.migration_id, Int)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get

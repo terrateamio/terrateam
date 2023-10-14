@@ -26,15 +26,15 @@ module Get_server_statistics = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise_or_org", Var (params.enterprise_or_org, String)) ])
+         let open Parameters in
+         [ ("enterprise_or_org", Var (params.enterprise_or_org, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("date_start", Var (params.date_start, Option String));
-          ("date_end", Var (params.date_end, Option String));
-        ])
+         let open Parameters in
+         [
+           ("date_start", Var (params.date_start, Option String));
+           ("date_end", Var (params.date_end, Option String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -73,8 +73,8 @@ module Set_github_actions_permissions_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -104,8 +104,8 @@ module Get_github_actions_permissions_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -146,8 +146,8 @@ module Set_selected_organizations_enabled_github_actions_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -194,12 +194,12 @@ module List_selected_organizations_enabled_github_actions_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -229,8 +229,8 @@ module Disable_selected_organization_github_actions_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)); ("org_id", Var (params.org_id, Int)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)); ("org_id", Var (params.org_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -261,8 +261,8 @@ module Enable_selected_organization_github_actions_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)); ("org_id", Var (params.org_id, Int)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)); ("org_id", Var (params.org_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -295,8 +295,8 @@ module Set_allowed_actions_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -326,8 +326,8 @@ module Get_allowed_actions_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -397,8 +397,8 @@ module Create_self_hosted_runner_group_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -446,16 +446,16 @@ module List_self_hosted_runner_groups_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
-          ("visible_to_organization", Var (params.visible_to_organization, Option String));
-        ])
+         let open Parameters in
+         [
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+           ("visible_to_organization", Var (params.visible_to_organization, Option String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -518,11 +518,11 @@ module Update_self_hosted_runner_group_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("enterprise", Var (params.enterprise, String));
-          ("runner_group_id", Var (params.runner_group_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("enterprise", Var (params.enterprise, String));
+           ("runner_group_id", Var (params.runner_group_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -553,11 +553,11 @@ module Delete_self_hosted_runner_group_from_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("enterprise", Var (params.enterprise, String));
-          ("runner_group_id", Var (params.runner_group_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("enterprise", Var (params.enterprise, String));
+           ("runner_group_id", Var (params.runner_group_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -591,11 +591,11 @@ module Get_self_hosted_runner_group_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("enterprise", Var (params.enterprise, String));
-          ("runner_group_id", Var (params.runner_group_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("enterprise", Var (params.enterprise, String));
+           ("runner_group_id", Var (params.runner_group_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -640,11 +640,11 @@ module Set_org_access_to_self_hosted_runner_group_in_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("enterprise", Var (params.enterprise, String));
-          ("runner_group_id", Var (params.runner_group_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("enterprise", Var (params.enterprise, String));
+           ("runner_group_id", Var (params.runner_group_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -692,15 +692,15 @@ module List_org_access_to_self_hosted_runner_group_in_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("enterprise", Var (params.enterprise, String));
-          ("runner_group_id", Var (params.runner_group_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("enterprise", Var (params.enterprise, String));
+           ("runner_group_id", Var (params.runner_group_id, Int));
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -732,12 +732,12 @@ module Remove_org_access_to_self_hosted_runner_group_in_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("enterprise", Var (params.enterprise, String));
-          ("runner_group_id", Var (params.runner_group_id, Int));
-          ("org_id", Var (params.org_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("enterprise", Var (params.enterprise, String));
+           ("runner_group_id", Var (params.runner_group_id, Int));
+           ("org_id", Var (params.org_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -770,12 +770,12 @@ module Add_org_access_to_self_hosted_runner_group_in_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("enterprise", Var (params.enterprise, String));
-          ("runner_group_id", Var (params.runner_group_id, Int));
-          ("org_id", Var (params.org_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("enterprise", Var (params.enterprise, String));
+           ("runner_group_id", Var (params.runner_group_id, Int));
+           ("org_id", Var (params.org_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -820,11 +820,11 @@ module Set_self_hosted_runners_in_group_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("enterprise", Var (params.enterprise, String));
-          ("runner_group_id", Var (params.runner_group_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("enterprise", Var (params.enterprise, String));
+           ("runner_group_id", Var (params.runner_group_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -872,15 +872,15 @@ module List_self_hosted_runners_in_group_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("enterprise", Var (params.enterprise, String));
-          ("runner_group_id", Var (params.runner_group_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("enterprise", Var (params.enterprise, String));
+           ("runner_group_id", Var (params.runner_group_id, Int));
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -911,12 +911,12 @@ module Remove_self_hosted_runner_from_group_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("enterprise", Var (params.enterprise, String));
-          ("runner_group_id", Var (params.runner_group_id, Int));
-          ("runner_id", Var (params.runner_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("enterprise", Var (params.enterprise, String));
+           ("runner_group_id", Var (params.runner_group_id, Int));
+           ("runner_id", Var (params.runner_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -948,12 +948,12 @@ module Add_self_hosted_runner_to_group_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("enterprise", Var (params.enterprise, String));
-          ("runner_group_id", Var (params.runner_group_id, Int));
-          ("runner_id", Var (params.runner_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("enterprise", Var (params.enterprise, String));
+           ("runner_group_id", Var (params.runner_group_id, Int));
+           ("runner_id", Var (params.runner_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1000,12 +1000,12 @@ module List_self_hosted_runners_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -1034,8 +1034,8 @@ module List_runner_applications_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1065,8 +1065,8 @@ module Create_registration_token_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1096,8 +1096,8 @@ module Create_remove_token_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1128,10 +1128,11 @@ module Delete_self_hosted_runner_from_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("enterprise", Var (params.enterprise, String)); ("runner_id", Var (params.runner_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("enterprise", Var (params.enterprise, String));
+           ("runner_id", Var (params.runner_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1165,10 +1166,11 @@ module Get_self_hosted_runner_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("enterprise", Var (params.enterprise, String)); ("runner_id", Var (params.runner_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("enterprise", Var (params.enterprise, String));
+           ("runner_id", Var (params.runner_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1235,10 +1237,11 @@ module Remove_all_custom_labels_from_self_hosted_runner_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("enterprise", Var (params.enterprise, String)); ("runner_id", Var (params.runner_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("enterprise", Var (params.enterprise, String));
+           ("runner_id", Var (params.runner_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1319,10 +1322,11 @@ module Add_custom_labels_to_self_hosted_runner_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("enterprise", Var (params.enterprise, String)); ("runner_id", Var (params.runner_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("enterprise", Var (params.enterprise, String));
+           ("runner_id", Var (params.runner_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1403,10 +1407,11 @@ module Set_custom_labels_for_self_hosted_runner_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("enterprise", Var (params.enterprise, String)); ("runner_id", Var (params.runner_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("enterprise", Var (params.enterprise, String));
+           ("runner_id", Var (params.runner_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1465,10 +1470,11 @@ module List_labels_for_self_hosted_runner_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("enterprise", Var (params.enterprise, String)); ("runner_id", Var (params.runner_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("enterprise", Var (params.enterprise, String));
+           ("runner_id", Var (params.runner_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1536,12 +1542,12 @@ module Remove_custom_label_from_self_hosted_runner_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("enterprise", Var (params.enterprise, String));
-          ("runner_id", Var (params.runner_id, Int));
-          ("name", Var (params.name, String));
-        ])
+         let open Parameters in
+         [
+           ("enterprise", Var (params.enterprise, String));
+           ("runner_id", Var (params.runner_id, Int));
+           ("name", Var (params.name, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t

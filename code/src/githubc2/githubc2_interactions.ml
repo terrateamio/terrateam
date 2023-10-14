@@ -18,8 +18,8 @@ module Remove_restrictions_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -69,8 +69,8 @@ module Set_restrictions_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -96,11 +96,11 @@ module Get_restrictions_for_org = struct
       let of_yojson =
         Json_schema.any_of
           (let open CCResult in
-          [
-            (fun v ->
-              map (fun v -> V0 v) (Githubc2_components.Interaction_limit_response.of_yojson v));
-            (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
-          ])
+           [
+             (fun v ->
+               map (fun v -> V0 v) (Githubc2_components.Interaction_limit_response.of_yojson v));
+             (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
+           ])
 
       let to_yojson = function
         | V0 v -> Githubc2_components.Interaction_limit_response.to_yojson v
@@ -119,8 +119,8 @@ module Get_restrictions_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -156,8 +156,8 @@ module Remove_restrictions_for_repo = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -206,8 +206,8 @@ module Set_restrictions_for_repo = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -237,11 +237,11 @@ module Get_restrictions_for_repo = struct
       let of_yojson =
         Json_schema.any_of
           (let open CCResult in
-          [
-            (fun v ->
-              map (fun v -> V0 v) (Githubc2_components.Interaction_limit_response.of_yojson v));
-            (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
-          ])
+           [
+             (fun v ->
+               map (fun v -> V0 v) (Githubc2_components.Interaction_limit_response.of_yojson v));
+             (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
+           ])
 
       let to_yojson = function
         | V0 v -> Githubc2_components.Interaction_limit_response.to_yojson v
@@ -260,8 +260,8 @@ module Get_restrictions_for_repo = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -354,11 +354,11 @@ module Get_restrictions_for_authenticated_user = struct
       let of_yojson =
         Json_schema.any_of
           (let open CCResult in
-          [
-            (fun v ->
-              map (fun v -> V0 v) (Githubc2_components.Interaction_limit_response.of_yojson v));
-            (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
-          ])
+           [
+             (fun v ->
+               map (fun v -> V0 v) (Githubc2_components.Interaction_limit_response.of_yojson v));
+             (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
+           ])
 
       let to_yojson = function
         | V0 v -> Githubc2_components.Interaction_limit_response.to_yojson v

@@ -81,8 +81,8 @@ module Get_octocat = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("s", Var (params.s, Option String)) ])
+         let open Parameters in
+         [ ("s", Var (params.s, Option String)) ])
       ~url
       ~responses:Responses.t
       `Get

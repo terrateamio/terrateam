@@ -86,22 +86,22 @@ module List_alerts_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("tool_name", Var (params.tool_name, Option String));
-          ("tool_guid", Var (params.tool_guid, Option String));
-          ("before", Var (params.before, Option String));
-          ("after", Var (params.after, Option String));
-          ("page", Var (params.page, Int));
-          ("per_page", Var (params.per_page, Int));
-          ("direction", Var (params.direction, String));
-          ("state", Var (params.state, Option String));
-          ("sort", Var (params.sort, String));
-        ])
+         let open Parameters in
+         [
+           ("tool_name", Var (params.tool_name, Option String));
+           ("tool_guid", Var (params.tool_guid, Option String));
+           ("before", Var (params.before, Option String));
+           ("after", Var (params.after, Option String));
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
+           ("direction", Var (params.direction, String));
+           ("state", Var (params.state, Option String));
+           ("sort", Var (params.sort, String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -195,22 +195,22 @@ module List_alerts_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("tool_name", Var (params.tool_name, Option String));
-          ("tool_guid", Var (params.tool_guid, Option String));
-          ("before", Var (params.before, Option String));
-          ("after", Var (params.after, Option String));
-          ("page", Var (params.page, Int));
-          ("per_page", Var (params.per_page, Int));
-          ("direction", Var (params.direction, String));
-          ("state", Var (params.state, Option String));
-          ("sort", Var (params.sort, String));
-        ])
+         let open Parameters in
+         [
+           ("tool_name", Var (params.tool_name, Option String));
+           ("tool_guid", Var (params.tool_guid, Option String));
+           ("before", Var (params.before, Option String));
+           ("after", Var (params.after, Option String));
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
+           ("direction", Var (params.direction, String));
+           ("state", Var (params.state, Option String));
+           ("sort", Var (params.sort, String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -309,21 +309,21 @@ module List_alerts_for_repo = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("tool_name", Var (params.tool_name, Option String));
-          ("tool_guid", Var (params.tool_guid, Option String));
-          ("page", Var (params.page, Int));
-          ("per_page", Var (params.per_page, Int));
-          ("ref", Var (params.ref_, Option String));
-          ("direction", Var (params.direction, String));
-          ("sort", Var (params.sort, String));
-          ("state", Var (params.state, Option String));
-        ])
+         let open Parameters in
+         [
+           ("tool_name", Var (params.tool_name, Option String));
+           ("tool_guid", Var (params.tool_guid, Option String));
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
+           ("ref", Var (params.ref_, Option String));
+           ("direction", Var (params.direction, String));
+           ("sort", Var (params.sort, String));
+           ("state", Var (params.state, Option String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -407,12 +407,12 @@ module Update_alert = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("alert_number", Var (params.alert_number, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("alert_number", Var (params.alert_number, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -486,12 +486,12 @@ module Get_alert = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("alert_number", Var (params.alert_number, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("alert_number", Var (params.alert_number, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -564,20 +564,20 @@ module List_alert_instances = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("alert_number", Var (params.alert_number, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("alert_number", Var (params.alert_number, Int));
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("page", Var (params.page, Int));
-          ("per_page", Var (params.per_page, Int));
-          ("ref", Var (params.ref_, Option String));
-        ])
+         let open Parameters in
+         [
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
+           ("ref", Var (params.ref_, Option String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -670,21 +670,21 @@ module List_recent_analyses = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("tool_name", Var (params.tool_name, Option String));
-          ("tool_guid", Var (params.tool_guid, Option String));
-          ("page", Var (params.page, Int));
-          ("per_page", Var (params.per_page, Int));
-          ("ref", Var (params.ref_, Option String));
-          ("sarif_id", Var (params.sarif_id, Option String));
-          ("direction", Var (params.direction, String));
-          ("sort", Var (params.sort, String));
-        ])
+         let open Parameters in
+         [
+           ("tool_name", Var (params.tool_name, Option String));
+           ("tool_guid", Var (params.tool_guid, Option String));
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
+           ("ref", Var (params.ref_, Option String));
+           ("sarif_id", Var (params.sarif_id, Option String));
+           ("direction", Var (params.direction, String));
+           ("sort", Var (params.sort, String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -761,16 +761,16 @@ module Delete_analysis = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("analysis_id", Var (params.analysis_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("analysis_id", Var (params.analysis_id, Int));
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("confirm_delete", Var (params.confirm_delete, Option String)) ])
+         let open Parameters in
+         [ ("confirm_delete", Var (params.confirm_delete, Option String)) ])
       ~url
       ~responses:Responses.t
       `Delete
@@ -839,12 +839,12 @@ module Get_analysis = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("analysis_id", Var (params.analysis_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("analysis_id", Var (params.analysis_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -913,8 +913,8 @@ module List_codeql_databases = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -988,12 +988,12 @@ module Get_codeql_database = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("language", Var (params.language, String));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("language", Var (params.language, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1087,8 +1087,8 @@ module Upload_sarif = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1155,12 +1155,12 @@ module Get_sarif = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("sarif_id", Var (params.sarif_id, String));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("sarif_id", Var (params.sarif_id, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t

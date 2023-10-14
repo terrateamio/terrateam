@@ -21,8 +21,8 @@ module Get_actions_cache_usage_for_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -55,8 +55,8 @@ module Set_github_actions_default_workflow_permissions_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -86,8 +86,8 @@ module Get_github_actions_default_workflow_permissions_enterprise = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("enterprise", Var (params.enterprise, String)) ])
+         let open Parameters in
+         [ ("enterprise", Var (params.enterprise, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -117,8 +117,8 @@ module Get_actions_cache_usage_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -165,12 +165,12 @@ module Get_actions_cache_usage_by_repo_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -209,8 +209,8 @@ module Set_github_actions_permissions_organization = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -240,8 +240,8 @@ module Get_github_actions_permissions_organization = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -282,8 +282,8 @@ module Set_selected_repositories_enabled_github_actions_organization = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -330,12 +330,12 @@ module List_selected_repositories_enabled_github_actions_organization = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -365,8 +365,8 @@ module Disable_selected_repository_github_actions_organization = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("repository_id", Var (params.repository_id, Int)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("repository_id", Var (params.repository_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -397,8 +397,8 @@ module Enable_selected_repository_github_actions_organization = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("repository_id", Var (params.repository_id, Int)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("repository_id", Var (params.repository_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -431,8 +431,8 @@ module Set_allowed_actions_organization = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -462,8 +462,8 @@ module Get_allowed_actions_organization = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -501,8 +501,8 @@ module Set_github_actions_default_workflow_permissions_organization = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -532,8 +532,8 @@ module Get_github_actions_default_workflow_permissions_organization = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -604,8 +604,8 @@ module Create_self_hosted_runner_group_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -653,16 +653,16 @@ module List_self_hosted_runner_groups_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
-          ("visible_to_repository", Var (params.visible_to_repository, Option String));
-        ])
+         let open Parameters in
+         [
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+           ("visible_to_repository", Var (params.visible_to_repository, Option String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -726,10 +726,10 @@ module Update_self_hosted_runner_group_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -760,10 +760,10 @@ module Delete_self_hosted_runner_group_from_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -797,10 +797,10 @@ module Get_self_hosted_runner_group_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -845,10 +845,10 @@ module Set_repo_access_to_self_hosted_runner_group_in_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -896,14 +896,14 @@ module List_repo_access_to_self_hosted_runner_group_in_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -934,12 +934,12 @@ module Remove_repo_access_to_self_hosted_runner_group_in_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("org", Var (params.org, String));
-          ("runner_group_id", Var (params.runner_group_id, Int));
-          ("repository_id", Var (params.repository_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("org", Var (params.org, String));
+           ("runner_group_id", Var (params.runner_group_id, Int));
+           ("repository_id", Var (params.repository_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -984,10 +984,10 @@ module Set_self_hosted_runners_in_group_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1035,14 +1035,14 @@ module List_self_hosted_runners_in_group_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("org", Var (params.org, String)); ("runner_group_id", Var (params.runner_group_id, Int));
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -1073,12 +1073,12 @@ module Remove_self_hosted_runner_from_group_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("org", Var (params.org, String));
-          ("runner_group_id", Var (params.runner_group_id, Int));
-          ("runner_id", Var (params.runner_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("org", Var (params.org, String));
+           ("runner_group_id", Var (params.runner_group_id, Int));
+           ("runner_id", Var (params.runner_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1110,12 +1110,12 @@ module Add_self_hosted_runner_to_group_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("org", Var (params.org, String));
-          ("runner_group_id", Var (params.runner_group_id, Int));
-          ("runner_id", Var (params.runner_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("org", Var (params.org, String));
+           ("runner_group_id", Var (params.runner_group_id, Int));
+           ("runner_id", Var (params.runner_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1162,12 +1162,12 @@ module List_self_hosted_runners_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -1196,8 +1196,8 @@ module List_runner_applications_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1227,8 +1227,8 @@ module Create_registration_token_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1258,8 +1258,8 @@ module Create_remove_token_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1290,8 +1290,8 @@ module Delete_self_hosted_runner_from_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("runner_id", Var (params.runner_id, Int)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("runner_id", Var (params.runner_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1325,8 +1325,8 @@ module Get_self_hosted_runner_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("runner_id", Var (params.runner_id, Int)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("runner_id", Var (params.runner_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1385,8 +1385,8 @@ module Remove_all_custom_labels_from_self_hosted_runner_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("runner_id", Var (params.runner_id, Int)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("runner_id", Var (params.runner_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1467,8 +1467,8 @@ module Add_custom_labels_to_self_hosted_runner_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("runner_id", Var (params.runner_id, Int)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("runner_id", Var (params.runner_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1549,8 +1549,8 @@ module Set_custom_labels_for_self_hosted_runner_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("runner_id", Var (params.runner_id, Int)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("runner_id", Var (params.runner_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1609,8 +1609,8 @@ module List_labels_for_self_hosted_runner_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("runner_id", Var (params.runner_id, Int)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("runner_id", Var (params.runner_id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1678,12 +1678,12 @@ module Remove_custom_label_from_self_hosted_runner_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("org", Var (params.org, String));
-          ("runner_id", Var (params.runner_id, Int));
-          ("name", Var (params.name, String));
-        ])
+         let open Parameters in
+         [
+           ("org", Var (params.org, String));
+           ("runner_id", Var (params.runner_id, Int));
+           ("name", Var (params.name, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1730,12 +1730,12 @@ module List_org_secrets = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -1764,8 +1764,8 @@ module Get_org_public_key = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1796,8 +1796,8 @@ module Delete_org_secret = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("secret_name", Var (params.secret_name, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("secret_name", Var (params.secret_name, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1833,10 +1833,10 @@ module Create_or_update_org_secret = struct
           let of_yojson =
             Json_schema.any_of
               (let open CCResult in
-              [
-                (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
-                (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
-              ])
+               [
+                 (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
+                 (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
+               ])
 
           let to_yojson = function
             | V0 v -> V0.to_yojson v
@@ -1898,8 +1898,8 @@ module Create_or_update_org_secret = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("secret_name", Var (params.secret_name, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("secret_name", Var (params.secret_name, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1933,8 +1933,8 @@ module Get_org_secret = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("secret_name", Var (params.secret_name, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("secret_name", Var (params.secret_name, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1979,8 +1979,8 @@ module Set_selected_repos_for_org_secret = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("secret_name", Var (params.secret_name, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("secret_name", Var (params.secret_name, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2028,12 +2028,12 @@ module List_selected_repos_for_org_secret = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)); ("secret_name", Var (params.secret_name, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("secret_name", Var (params.secret_name, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -2069,12 +2069,12 @@ module Remove_selected_repo_from_org_secret = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("org", Var (params.org, String));
-          ("secret_name", Var (params.secret_name, String));
-          ("repository_id", Var (params.repository_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("org", Var (params.org, String));
+           ("secret_name", Var (params.secret_name, String));
+           ("repository_id", Var (params.repository_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2111,12 +2111,12 @@ module Add_selected_repo_to_org_secret = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("org", Var (params.org, String));
-          ("secret_name", Var (params.secret_name, String));
-          ("repository_id", Var (params.repository_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("org", Var (params.org, String));
+           ("secret_name", Var (params.secret_name, String));
+           ("repository_id", Var (params.repository_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2164,12 +2164,12 @@ module List_artifacts_for_repo = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -2200,12 +2200,12 @@ module Delete_artifact = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("artifact_id", Var (params.artifact_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("artifact_id", Var (params.artifact_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2240,12 +2240,12 @@ module Get_artifact = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("artifact_id", Var (params.artifact_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("artifact_id", Var (params.artifact_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2290,13 +2290,13 @@ module Download_artifact = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("artifact_id", Var (params.artifact_id, Int));
-          ("archive_format", Var (params.archive_format, String));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("artifact_id", Var (params.artifact_id, Int));
+           ("archive_format", Var (params.archive_format, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2330,8 +2330,8 @@ module Get_actions_cache_usage = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2367,12 +2367,12 @@ module Delete_actions_cache_by_key = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("key", Var (params.key, String)); ("ref", Var (params.ref_, Option String)) ])
+         let open Parameters in
+         [ ("key", Var (params.key, String)); ("ref", Var (params.ref_, Option String)) ])
       ~url
       ~responses:Responses.t
       `Delete
@@ -2430,19 +2430,19 @@ module Get_actions_cache_list = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
-          ("ref", Var (params.ref_, Option String));
-          ("key", Var (params.key, Option String));
-          ("sort", Var (params.sort, String));
-          ("direction", Var (params.direction, String));
-        ])
+         let open Parameters in
+         [
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+           ("ref", Var (params.ref_, Option String));
+           ("key", Var (params.key, Option String));
+           ("sort", Var (params.sort, String));
+           ("direction", Var (params.direction, String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -2473,12 +2473,12 @@ module Delete_actions_cache_by_id = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("cache_id", Var (params.cache_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("cache_id", Var (params.cache_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2513,12 +2513,12 @@ module Get_job_for_workflow_run = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("job_id", Var (params.job_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("job_id", Var (params.job_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2550,12 +2550,12 @@ module Download_job_logs_for_workflow_run = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("job_id", Var (params.job_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("job_id", Var (params.job_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2613,12 +2613,12 @@ module Re_run_job_for_workflow_run = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("job_id", Var (params.job_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("job_id", Var (params.job_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2662,8 +2662,8 @@ module Set_github_actions_permissions_repository = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2697,8 +2697,8 @@ module Get_github_actions_permissions_repository = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2735,8 +2735,8 @@ module Set_workflow_access_to_repository = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2770,8 +2770,8 @@ module Get_workflow_access_to_repository = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2808,8 +2808,8 @@ module Set_allowed_actions_repository = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2843,8 +2843,8 @@ module Get_allowed_actions_repository = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2886,8 +2886,8 @@ module Set_github_actions_default_workflow_permissions_repository = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2921,8 +2921,8 @@ module Get_github_actions_default_workflow_permissions_repository = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2970,12 +2970,12 @@ module List_self_hosted_runners_for_repo = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -3008,8 +3008,8 @@ module List_runner_applications_for_repo = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -3043,8 +3043,8 @@ module Create_registration_token_for_repo = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -3078,8 +3078,8 @@ module Create_remove_token_for_repo = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -3111,12 +3111,12 @@ module Delete_self_hosted_runner_from_repo = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("runner_id", Var (params.runner_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("runner_id", Var (params.runner_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -3151,12 +3151,12 @@ module Get_self_hosted_runner_for_repo = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("runner_id", Var (params.runner_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("runner_id", Var (params.runner_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -3216,12 +3216,12 @@ module Remove_all_custom_labels_from_self_hosted_runner_for_repo = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("runner_id", Var (params.runner_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("runner_id", Var (params.runner_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -3303,12 +3303,12 @@ module Add_custom_labels_to_self_hosted_runner_for_repo = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("runner_id", Var (params.runner_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("runner_id", Var (params.runner_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -3390,12 +3390,12 @@ module Set_custom_labels_for_self_hosted_runner_for_repo = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("runner_id", Var (params.runner_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("runner_id", Var (params.runner_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -3455,12 +3455,12 @@ module List_labels_for_self_hosted_runner_for_repo = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("runner_id", Var (params.runner_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("runner_id", Var (params.runner_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -3529,13 +3529,13 @@ module Remove_custom_label_from_self_hosted_runner_for_repo = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("runner_id", Var (params.runner_id, Int));
-          ("name", Var (params.name, String));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("runner_id", Var (params.runner_id, Int));
+           ("name", Var (params.name, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -3611,23 +3611,23 @@ module List_workflow_runs_for_repo = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("actor", Var (params.actor, Option String));
-          ("branch", Var (params.branch, Option String));
-          ("event", Var (params.event, Option String));
-          ("status", Var (params.status, Option String));
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
-          ("created", Var (params.created, Option String));
-          ("exclude_pull_requests", Var (params.exclude_pull_requests, Bool));
-          ("check_suite_id", Var (params.check_suite_id, Option Int));
-          ("head_sha", Var (params.head_sha, Option String));
-        ])
+         let open Parameters in
+         [
+           ("actor", Var (params.actor, Option String));
+           ("branch", Var (params.branch, Option String));
+           ("event", Var (params.event, Option String));
+           ("status", Var (params.status, Option String));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+           ("created", Var (params.created, Option String));
+           ("exclude_pull_requests", Var (params.exclude_pull_requests, Bool));
+           ("check_suite_id", Var (params.check_suite_id, Option Int));
+           ("head_sha", Var (params.head_sha, Option String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -3658,12 +3658,12 @@ module Delete_workflow_run = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("run_id", Var (params.run_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("run_id", Var (params.run_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -3699,16 +3699,16 @@ module Get_workflow_run = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("run_id", Var (params.run_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("run_id", Var (params.run_id, Int));
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("exclude_pull_requests", Var (params.exclude_pull_requests, Bool)) ])
+         let open Parameters in
+         [ ("exclude_pull_requests", Var (params.exclude_pull_requests, Bool)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -3742,12 +3742,12 @@ module Get_reviews_for_run = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("run_id", Var (params.run_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("run_id", Var (params.run_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -3802,12 +3802,12 @@ module Approve_workflow_run = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("run_id", Var (params.run_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("run_id", Var (params.run_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -3856,16 +3856,16 @@ module List_workflow_run_artifacts = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("run_id", Var (params.run_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("run_id", Var (params.run_id, Int));
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -3901,17 +3901,17 @@ module Get_workflow_run_attempt = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("run_id", Var (params.run_id, Int));
-          ("attempt_number", Var (params.attempt_number, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("run_id", Var (params.run_id, Int));
+           ("attempt_number", Var (params.attempt_number, Int));
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("exclude_pull_requests", Var (params.exclude_pull_requests, Bool)) ])
+         let open Parameters in
+         [ ("exclude_pull_requests", Var (params.exclude_pull_requests, Bool)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -3973,17 +3973,17 @@ module List_jobs_for_workflow_run_attempt = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("run_id", Var (params.run_id, Int));
-          ("attempt_number", Var (params.attempt_number, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("run_id", Var (params.run_id, Int));
+           ("attempt_number", Var (params.attempt_number, Int));
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -4015,13 +4015,13 @@ module Download_workflow_run_attempt_logs = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("run_id", Var (params.run_id, Int));
-          ("attempt_number", Var (params.attempt_number, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("run_id", Var (params.run_id, Int));
+           ("attempt_number", Var (params.attempt_number, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -4069,12 +4069,12 @@ module Cancel_workflow_run = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("run_id", Var (params.run_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("run_id", Var (params.run_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -4133,20 +4133,20 @@ module List_jobs_for_workflow_run = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("run_id", Var (params.run_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("run_id", Var (params.run_id, Int));
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("filter", Var (params.filter, String));
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
-        ])
+         let open Parameters in
+         [
+           ("filter", Var (params.filter, String));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -4199,12 +4199,12 @@ module Delete_workflow_run_logs = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("run_id", Var (params.run_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("run_id", Var (params.run_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -4236,12 +4236,12 @@ module Download_workflow_run_logs = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("run_id", Var (params.run_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("run_id", Var (params.run_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -4304,12 +4304,12 @@ module Review_pending_deployments_for_run = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("run_id", Var (params.run_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("run_id", Var (params.run_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -4344,12 +4344,12 @@ module Get_pending_deployments_for_run = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("run_id", Var (params.run_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("run_id", Var (params.run_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -4394,12 +4394,12 @@ module Re_run_workflow = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("run_id", Var (params.run_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("run_id", Var (params.run_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -4444,12 +4444,12 @@ module Re_run_workflow_failed_jobs = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("run_id", Var (params.run_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("run_id", Var (params.run_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -4484,12 +4484,12 @@ module Get_workflow_run_usage = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("run_id", Var (params.run_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("run_id", Var (params.run_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -4537,12 +4537,12 @@ module List_repo_secrets = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -4575,8 +4575,8 @@ module Get_repo_public_key = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -4608,12 +4608,12 @@ module Delete_repo_secret = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("secret_name", Var (params.secret_name, String));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("secret_name", Var (params.secret_name, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -4671,12 +4671,12 @@ module Create_or_update_repo_secret = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("secret_name", Var (params.secret_name, String));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("secret_name", Var (params.secret_name, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -4711,12 +4711,12 @@ module Get_repo_secret = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ("secret_name", Var (params.secret_name, String));
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("secret_name", Var (params.secret_name, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -4764,12 +4764,12 @@ module List_repo_workflows = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -4818,15 +4818,15 @@ module Get_workflow = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ( "workflow_id",
-            match params.workflow_id with
-            | Workflow_id.V0 v -> Var (v, Int)
-            | Workflow_id.V1 v -> Var (v, String) );
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ( "workflow_id",
+             match params.workflow_id with
+             | Workflow_id.V0 v -> Var (v, Int)
+             | Workflow_id.V1 v -> Var (v, String) );
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -4873,15 +4873,15 @@ module Disable_workflow = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ( "workflow_id",
-            match params.workflow_id with
-            | Workflow_id.V0 v -> Var (v, Int)
-            | Workflow_id.V1 v -> Var (v, String) );
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ( "workflow_id",
+             match params.workflow_id with
+             | Workflow_id.V0 v -> Var (v, Int)
+             | Workflow_id.V1 v -> Var (v, String) );
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -4949,15 +4949,15 @@ module Create_workflow_dispatch = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ( "workflow_id",
-            match params.workflow_id with
-            | Workflow_id.V0 v -> Var (v, Int)
-            | Workflow_id.V1 v -> Var (v, String) );
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ( "workflow_id",
+             match params.workflow_id with
+             | Workflow_id.V0 v -> Var (v, Int)
+             | Workflow_id.V1 v -> Var (v, String) );
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -5004,15 +5004,15 @@ module Enable_workflow = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ( "workflow_id",
-            match params.workflow_id with
-            | Workflow_id.V0 v -> Var (v, Int)
-            | Workflow_id.V1 v -> Var (v, String) );
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ( "workflow_id",
+             match params.workflow_id with
+             | Workflow_id.V0 v -> Var (v, Int)
+             | Workflow_id.V1 v -> Var (v, String) );
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -5104,30 +5104,30 @@ module List_workflow_runs = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ( "workflow_id",
-            match params.workflow_id with
-            | Workflow_id.V0 v -> Var (v, Int)
-            | Workflow_id.V1 v -> Var (v, String) );
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ( "workflow_id",
+             match params.workflow_id with
+             | Workflow_id.V0 v -> Var (v, Int)
+             | Workflow_id.V1 v -> Var (v, String) );
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("actor", Var (params.actor, Option String));
-          ("branch", Var (params.branch, Option String));
-          ("event", Var (params.event, Option String));
-          ("status", Var (params.status, Option String));
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
-          ("created", Var (params.created, Option String));
-          ("exclude_pull_requests", Var (params.exclude_pull_requests, Bool));
-          ("check_suite_id", Var (params.check_suite_id, Option Int));
-          ("head_sha", Var (params.head_sha, Option String));
-        ])
+         let open Parameters in
+         [
+           ("actor", Var (params.actor, Option String));
+           ("branch", Var (params.branch, Option String));
+           ("event", Var (params.event, Option String));
+           ("status", Var (params.status, Option String));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+           ("created", Var (params.created, Option String));
+           ("exclude_pull_requests", Var (params.exclude_pull_requests, Bool));
+           ("check_suite_id", Var (params.check_suite_id, Option Int));
+           ("head_sha", Var (params.head_sha, Option String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -5176,15 +5176,15 @@ module Get_workflow_usage = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("owner", Var (params.owner, String));
-          ("repo", Var (params.repo, String));
-          ( "workflow_id",
-            match params.workflow_id with
-            | Workflow_id.V0 v -> Var (v, Int)
-            | Workflow_id.V1 v -> Var (v, String) );
-        ])
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ( "workflow_id",
+             match params.workflow_id with
+             | Workflow_id.V0 v -> Var (v, Int)
+             | Workflow_id.V1 v -> Var (v, String) );
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -5232,15 +5232,15 @@ module List_environment_secrets = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("repository_id", Var (params.repository_id, Int));
-          ("environment_name", Var (params.environment_name, String));
-        ])
+         let open Parameters in
+         [
+           ("repository_id", Var (params.repository_id, Int));
+           ("environment_name", Var (params.environment_name, String));
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -5273,11 +5273,11 @@ module Get_environment_public_key = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("repository_id", Var (params.repository_id, Int));
-          ("environment_name", Var (params.environment_name, String));
-        ])
+         let open Parameters in
+         [
+           ("repository_id", Var (params.repository_id, Int));
+           ("environment_name", Var (params.environment_name, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -5309,12 +5309,12 @@ module Delete_environment_secret = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("repository_id", Var (params.repository_id, Int));
-          ("environment_name", Var (params.environment_name, String));
-          ("secret_name", Var (params.secret_name, String));
-        ])
+         let open Parameters in
+         [
+           ("repository_id", Var (params.repository_id, Int));
+           ("environment_name", Var (params.environment_name, String));
+           ("secret_name", Var (params.secret_name, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -5372,12 +5372,12 @@ module Create_or_update_environment_secret = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("repository_id", Var (params.repository_id, Int));
-          ("environment_name", Var (params.environment_name, String));
-          ("secret_name", Var (params.secret_name, String));
-        ])
+         let open Parameters in
+         [
+           ("repository_id", Var (params.repository_id, Int));
+           ("environment_name", Var (params.environment_name, String));
+           ("secret_name", Var (params.secret_name, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -5412,12 +5412,12 @@ module Get_environment_secret = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("repository_id", Var (params.repository_id, Int));
-          ("environment_name", Var (params.environment_name, String));
-          ("secret_name", Var (params.secret_name, String));
-        ])
+         let open Parameters in
+         [
+           ("repository_id", Var (params.repository_id, Int));
+           ("environment_name", Var (params.environment_name, String));
+           ("secret_name", Var (params.secret_name, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t

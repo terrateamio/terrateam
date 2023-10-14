@@ -69,15 +69,15 @@ module List_packages_for_organization = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("org", Var (params.org, String)) ])
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("visibility", Var (params.visibility, Option String));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("visibility", Var (params.visibility, Option String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -148,12 +148,12 @@ module Delete_package_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-          ("org", Var (params.org, String));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+           ("org", Var (params.org, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -201,12 +201,12 @@ module Get_package_for_organization = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-          ("org", Var (params.org, String));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+           ("org", Var (params.org, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -279,16 +279,16 @@ module Restore_package_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-          ("org", Var (params.org, String));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+           ("org", Var (params.org, String));
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("token", Var (params.token, Option String)) ])
+         let open Parameters in
+         [ ("token", Var (params.token, Option String)) ])
       ~url
       ~responses:Responses.t
       `Post
@@ -374,20 +374,20 @@ module Get_all_package_versions_for_package_owned_by_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-          ("org", Var (params.org, String));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+           ("org", Var (params.org, String));
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("page", Var (params.page, Int));
-          ("per_page", Var (params.per_page, Int));
-          ("state", Var (params.state, String));
-        ])
+         let open Parameters in
+         [
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
+           ("state", Var (params.state, String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -459,13 +459,13 @@ module Delete_package_version_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-          ("org", Var (params.org, String));
-          ("package_version_id", Var (params.package_version_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+           ("org", Var (params.org, String));
+           ("package_version_id", Var (params.package_version_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -514,13 +514,13 @@ module Get_package_version_for_organization = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-          ("org", Var (params.org, String));
-          ("package_version_id", Var (params.package_version_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+           ("org", Var (params.org, String));
+           ("package_version_id", Var (params.package_version_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -594,13 +594,13 @@ module Restore_package_version_for_org = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-          ("org", Var (params.org, String));
-          ("package_version_id", Var (params.package_version_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+           ("org", Var (params.org, String));
+           ("package_version_id", Var (params.package_version_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -658,11 +658,11 @@ module List_packages_for_authenticated_user = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("visibility", Var (params.visibility, Option String));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("visibility", Var (params.visibility, Option String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -732,11 +732,11 @@ module Delete_package_for_authenticated_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -783,11 +783,11 @@ module Get_package_for_authenticated_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -859,15 +859,15 @@ module Restore_package_for_authenticated_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("token", Var (params.token, Option String)) ])
+         let open Parameters in
+         [ ("token", Var (params.token, Option String)) ])
       ~url
       ~responses:Responses.t
       `Post
@@ -952,19 +952,19 @@ module Get_all_package_versions_for_package_owned_by_authenticated_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("page", Var (params.page, Int));
-          ("per_page", Var (params.per_page, Int));
-          ("state", Var (params.state, String));
-        ])
+         let open Parameters in
+         [
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
+           ("state", Var (params.state, String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -1035,12 +1035,12 @@ module Delete_package_version_for_authenticated_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-          ("package_version_id", Var (params.package_version_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+           ("package_version_id", Var (params.package_version_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1088,12 +1088,12 @@ module Get_package_version_for_authenticated_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-          ("package_version_id", Var (params.package_version_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+           ("package_version_id", Var (params.package_version_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1165,12 +1165,12 @@ module Restore_package_version_for_authenticated_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-          ("package_version_id", Var (params.package_version_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+           ("package_version_id", Var (params.package_version_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1248,15 +1248,15 @@ module List_packages_for_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("username", Var (params.username, String)) ])
+         let open Parameters in
+         [ ("username", Var (params.username, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("visibility", Var (params.visibility, Option String));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("visibility", Var (params.visibility, Option String));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -1327,12 +1327,12 @@ module Delete_package_for_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-          ("username", Var (params.username, String));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+           ("username", Var (params.username, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1380,12 +1380,12 @@ module Get_package_for_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-          ("username", Var (params.username, String));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+           ("username", Var (params.username, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1458,16 +1458,16 @@ module Restore_package_for_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-          ("username", Var (params.username, String));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+           ("username", Var (params.username, String));
+         ])
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("token", Var (params.token, Option String)) ])
+         let open Parameters in
+         [ ("token", Var (params.token, Option String)) ])
       ~url
       ~responses:Responses.t
       `Post
@@ -1541,12 +1541,12 @@ module Get_all_package_versions_for_package_owned_by_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-          ("username", Var (params.username, String));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+           ("username", Var (params.username, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1619,13 +1619,13 @@ module Delete_package_version_for_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-          ("username", Var (params.username, String));
-          ("package_version_id", Var (params.package_version_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+           ("username", Var (params.username, String));
+           ("package_version_id", Var (params.package_version_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1674,13 +1674,13 @@ module Get_package_version_for_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-          ("package_version_id", Var (params.package_version_id, Int));
-          ("username", Var (params.username, String));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+           ("package_version_id", Var (params.package_version_id, Int));
+           ("username", Var (params.username, String));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -1754,13 +1754,13 @@ module Restore_package_version_for_user = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("package_type", Var (params.package_type, String));
-          ("package_name", Var (params.package_name, String));
-          ("username", Var (params.username, String));
-          ("package_version_id", Var (params.package_version_id, Int));
-        ])
+         let open Parameters in
+         [
+           ("package_type", Var (params.package_type, String));
+           ("package_name", Var (params.package_name, String));
+           ("username", Var (params.username, String));
+           ("package_version_id", Var (params.package_version_id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t

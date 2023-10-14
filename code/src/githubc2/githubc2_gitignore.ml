@@ -66,8 +66,8 @@ module Get_template = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("name", Var (params.name, String)) ])
+         let open Parameters in
+         [ ("name", Var (params.name, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t

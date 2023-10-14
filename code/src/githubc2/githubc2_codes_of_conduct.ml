@@ -74,8 +74,8 @@ module Get_conduct_code = struct
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [ ("key", Var (params.key, String)) ])
+         let open Parameters in
+         [ ("key", Var (params.key, String)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t

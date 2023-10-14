@@ -7,12 +7,12 @@ module Primary = struct
     let of_yojson =
       Json_schema.one_of
         (let open CCResult in
-        [
-          (fun v ->
-            map
-              (fun v -> Secret_scanning_location_commit v)
-              (Githubc2_components_secret_scanning_location_commit.of_yojson v));
-        ])
+         [
+           (fun v ->
+             map
+               (fun v -> Secret_scanning_location_commit v)
+               (Githubc2_components_secret_scanning_location_commit.of_yojson v));
+         ])
 
     let to_yojson = function
       | Secret_scanning_location_commit v ->

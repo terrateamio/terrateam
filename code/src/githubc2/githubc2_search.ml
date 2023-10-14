@@ -99,14 +99,14 @@ module Code = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("q", Var (params.q, String));
-          ("sort", Var (params.sort, Option String));
-          ("order", Var (params.order, String));
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
-        ])
+         let open Parameters in
+         [
+           ("q", Var (params.q, String));
+           ("sort", Var (params.sort, Option String));
+           ("order", Var (params.order, String));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -184,14 +184,14 @@ module Commits = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("q", Var (params.q, String));
-          ("sort", Var (params.sort, Option String));
-          ("order", Var (params.order, String));
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
-        ])
+         let open Parameters in
+         [
+           ("q", Var (params.q, String));
+           ("sort", Var (params.sort, Option String));
+           ("order", Var (params.order, String));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -308,14 +308,14 @@ module Issues_and_pull_requests = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("q", Var (params.q, String));
-          ("sort", Var (params.sort, Option String));
-          ("order", Var (params.order, String));
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
-        ])
+         let open Parameters in
+         [
+           ("q", Var (params.q, String));
+           ("sort", Var (params.sort, Option String));
+           ("order", Var (params.order, String));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -416,15 +416,15 @@ module Labels = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("repository_id", Var (params.repository_id, Int));
-          ("q", Var (params.q, String));
-          ("sort", Var (params.sort, Option String));
-          ("order", Var (params.order, String));
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
-        ])
+         let open Parameters in
+         [
+           ("repository_id", Var (params.repository_id, Int));
+           ("q", Var (params.q, String));
+           ("sort", Var (params.sort, Option String));
+           ("order", Var (params.order, String));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -527,14 +527,14 @@ module Repos = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("q", Var (params.q, String));
-          ("sort", Var (params.sort, Option String));
-          ("order", Var (params.order, String));
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
-        ])
+         let open Parameters in
+         [
+           ("q", Var (params.q, String));
+           ("sort", Var (params.sort, Option String));
+           ("order", Var (params.order, String));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -592,12 +592,12 @@ module Topics = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("q", Var (params.q, String));
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
-        ])
+         let open Parameters in
+         [
+           ("q", Var (params.q, String));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+         ])
       ~url
       ~responses:Responses.t
       `Get
@@ -699,14 +699,14 @@ module Users = struct
       ~url_params:[]
       ~query_params:
         (let open Openapi.Request.Var in
-        let open Parameters in
-        [
-          ("q", Var (params.q, String));
-          ("sort", Var (params.sort, Option String));
-          ("order", Var (params.order, String));
-          ("per_page", Var (params.per_page, Int));
-          ("page", Var (params.page, Int));
-        ])
+         let open Parameters in
+         [
+           ("q", Var (params.q, String));
+           ("sort", Var (params.sort, Option String));
+           ("order", Var (params.order, String));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+         ])
       ~url
       ~responses:Responses.t
       `Get
