@@ -451,6 +451,86 @@
       ],
       "type": "string"
     },
+    "storage-plan-cmd": {
+      "additionalProperties": false,
+      "properties": {
+        "delete": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "fetch": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "method": {
+          "const": "cmd",
+          "type": "string"
+        },
+        "store": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "method",
+        "store",
+        "fetch"
+      ],
+      "type": "object"
+    },
+    "storage-plan-s3": {
+      "additionalProperties": false,
+      "properties": {
+        "access_key_id": {
+          "type": "string"
+        },
+        "bucket": {
+          "type": "string"
+        },
+        "delete_used_plans": {
+          "default": true,
+          "type": "boolean"
+        },
+        "method": {
+          "const": "s3",
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        },
+        "secret_access_key": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "bucket",
+        "method",
+        "region"
+      ],
+      "type": "object"
+    },
+    "storage-plan-terrateam": {
+      "additionalProperties": false,
+      "properties": {
+        "method": {
+          "const": "terrateam",
+          "type": "string"
+        }
+      },
+      "required": [
+        "method"
+      ],
+      "type": "object"
+    },
     "tags": {
       "items": {
         "type": "string"
@@ -605,6 +685,25 @@
         "parallel_runs": {
           "default": 3,
           "type": "integer"
+        },
+        "storage": {
+          "additionalProperties": false,
+          "properties": {
+            "plans": {
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/storage-plan-terrateam"
+                },
+                {
+                  "$ref": "#/definitions/storage-plan-cmd"
+                },
+                {
+                  "$ref": "#/definitions/storage-plan-s3"
+                }
+              ]
+            }
+          },
+          "type": "object"
         },
         "version": {
           "const": "1",

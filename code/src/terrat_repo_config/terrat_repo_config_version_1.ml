@@ -110,6 +110,38 @@ module Hooks = struct
   [@@deriving yojson { strict = true; meta = true }, make, show, eq]
 end
 
+module Storage = struct
+  module Plans = struct
+    type t =
+      | Storage_plan_terrateam of Terrat_repo_config_storage_plan_terrateam.t
+      | Storage_plan_cmd of Terrat_repo_config_storage_plan_cmd.t
+      | Storage_plan_s3 of Terrat_repo_config_storage_plan_s3.t
+    [@@deriving show, eq]
+
+    let of_yojson =
+      Json_schema.one_of
+        (let open CCResult in
+         [
+           (fun v ->
+             map
+               (fun v -> Storage_plan_terrateam v)
+               (Terrat_repo_config_storage_plan_terrateam.of_yojson v));
+           (fun v ->
+             map (fun v -> Storage_plan_cmd v) (Terrat_repo_config_storage_plan_cmd.of_yojson v));
+           (fun v ->
+             map (fun v -> Storage_plan_s3 v) (Terrat_repo_config_storage_plan_s3.of_yojson v));
+         ])
+
+    let to_yojson = function
+      | Storage_plan_terrateam v -> Terrat_repo_config_storage_plan_terrateam.to_yojson v
+      | Storage_plan_cmd v -> Terrat_repo_config_storage_plan_cmd.to_yojson v
+      | Storage_plan_s3 v -> Terrat_repo_config_storage_plan_s3.to_yojson v
+  end
+
+  type t = { plans : Plans.t option [@default None] }
+  [@@deriving yojson { strict = true; meta = true }, make, show, eq]
+end
+
 module Version = struct
   let t_of_yojson = function
     | `String "1" -> Ok "1"
@@ -138,6 +170,7 @@ type t = {
   enabled : bool; [@default true]
   hooks : Hooks.t option; [@default None]
   parallel_runs : int; [@default 3]
+  storage : Storage.t option; [@default None]
   version : Version.t; [@default "1"]
   when_modified : Terrat_repo_config_when_modified.t option; [@default None]
   workflows : Workflows.t option; [@default None]
