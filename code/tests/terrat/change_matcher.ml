@@ -810,43 +810,6 @@ let test_recursive_dirs_without_tags =
           | _ -> assert false)
         changes)
 
-let test_bad_glob =
-  Oth.test ~name:"Test Bad glob" (fun _ ->
-      let dirs_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc
-               [
-                 ( "dirs",
-                   `Assoc
-                     [
-                       ( "_template/*",
-                         `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ] );
-                       ( "aws",
-                         `Assoc
-                           [
-                             ( "when_modified",
-                               `Assoc
-                                 [
-                                   ( "file_patterns",
-                                     `List [ `String "_templates/**/*.tf"; `String "${DIR}/*.hcl" ]
-                                   );
-                                 ] );
-                           ] );
-                     ] );
-               ]))
-      in
-      let file_list =
-        [
-          "_template/aws/terragrunt.hcl";
-          "_template/aws/staging/terragrunt.hcl";
-          "aws/staging/us-east-1/terragrunt.hcl";
-          "aws/prod/us-east-1/terragrunt.hcl";
-        ]
-      in
-      let result = Terrat_change_match.synthesize_dir_config ~file_list dirs_config in
-      assert (result = Error (`Bad_glob "${DIR}/*.hcl")))
-
 let test_bad_dir_config_iam =
   Oth.test ~name:"Test Bad Dir Config iam" (fun _ ->
       let diff = Terrat_change.Diff.[ Add { filename = "iam/foo.tf" } ] in
@@ -1114,7 +1077,6 @@ let test =
       test_recursive_dirs_template_dir;
       test_recursive_dirs_aws_prod;
       test_recursive_dirs_tags;
-      (* test_bad_glob; *)
       test_bad_dir_config_iam;
       test_bad_dir_config_ec2;
       test_bad_dir_config_ec2_root_dir_change;
