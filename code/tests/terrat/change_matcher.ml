@@ -1056,6 +1056,42 @@ let test_not_match_multiple =
       let changes = Terrat_change_match.match_diff_list dirs diff in
       assert (CCList.length changes = 0))
 
+let test_relative_path_file_pattern =
+  Oth.test ~name:"Test relative path file pattern" (fun _ ->
+      let repo_config =
+        CCResult.get_exn
+          (Terrat_repo_config.Version_1.of_yojson
+             (`Assoc
+               [
+                 ( "dirs",
+                   `Assoc
+                     [
+                       ( "d/bar/foo",
+                         `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ] );
+                       ( "d/**/*.tf",
+                         `Assoc
+                           [
+                             ( "when_modified",
+                               `Assoc
+                                 [
+                                   ( "file_patterns",
+                                     `List [ `String "${DIR}/../foo/*.tf"; `String "${DIR}/*.tf" ]
+                                   );
+                                 ] );
+                           ] );
+                     ] );
+               ]))
+      in
+      let diff = Terrat_change.Diff.[ Add { filename = "d/bar/foo/t.tf" } ] in
+      let dirs =
+        CCResult.get_exn
+          (Terrat_change_match.synthesize_dir_config
+             ~file_list:[ "d/bar/foo/t.tf"; "d/bar/baz/t.tf" ]
+             repo_config)
+      in
+      let changes = Terrat_change_match.match_diff_list dirs diff in
+      assert (CCList.length changes = 1))
+
 let test =
   Oth.parallel
     [
@@ -1081,7 +1117,7 @@ let test =
       (* test_bad_glob; *)
       test_bad_dir_config_iam;
       test_bad_dir_config_ec2;
-      (* test_bad_dir_config_ec2_root_dir_change; *)
+      test_bad_dir_config_ec2_root_dir_change;
       test_bad_dir_config_s3;
       test_module_dir_with_root_dir;
       test_large_directory_count_unmatching_files;
@@ -1089,6 +1125,7 @@ let test =
       test_large_directory_count_non_default_when_modified;
       test_not_match;
       test_not_match_multiple;
+      test_relative_path_file_pattern;
     ]
 
 let () =
