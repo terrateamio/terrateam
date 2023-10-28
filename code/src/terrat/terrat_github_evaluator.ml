@@ -825,6 +825,7 @@ module Ev = struct
     let access_control_lookup_err = read "access_control_lookup_err.tmpl"
     let tag_query_error = read "tag_query_error.tmpl"
     let account_expired_err = read "account_expired_err.tmpl"
+    let repo_config = read "repo_config.tmpl"
     let unexpected_temporary_err = read "unexpected_temporary_err.tmpl"
   end
 
@@ -2382,6 +2383,16 @@ module Ev = struct
     | Msg.Account_expired ->
         let kv = Snabela.Kv.(Map.of_list []) in
         apply_template_and_publish "ACCOUNT_EXPIRED" Tmpl.account_expired_err kv event
+    | Msg.Repo_config (repo_config, dirs) ->
+        let repo_config_json =
+          Yojson.Safe.pretty_to_string (Terrat_repo_config_version_1.to_yojson repo_config)
+        in
+        let dirs_json = Yojson.Safe.pretty_to_string (Terrat_change_match.Dirs.to_yojson dirs) in
+        let kv =
+          Snabela.Kv.(
+            Map.of_list [ ("repo_config", string repo_config_json); ("dirs", string dirs_json) ])
+        in
+        apply_template_and_publish "REPO_CONFIG" Tmpl.repo_config kv event
     | Msg.Unexpected_temporary_err ->
         let kv = Snabela.Kv.(Map.of_list []) in
         apply_template_and_publish "UNEXPECTED_TEMPORARY_ERR" Tmpl.unexpected_temporary_err kv event

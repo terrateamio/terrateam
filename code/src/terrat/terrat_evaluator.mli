@@ -33,6 +33,7 @@ module Event : sig
       | Unlock_success
       | Tag_query_err of Terrat_tag_query.err
       | Account_expired
+      | Repo_config of (Terrat_repo_config_version_1.t * Terrat_change_match.Dirs.t)
       | Unexpected_temporary_err
   end
 
@@ -61,6 +62,7 @@ module Event : sig
     type t =
       | Terraform of tf
       | Pull_request of [ `Unlock of Unlock_id.t list ]
+      | Repo_config
     [@@deriving show]
 
     val run_type_of_tf : [< tf ] -> Terrat_work_manifest.Run_type.t
@@ -75,6 +77,7 @@ module Event : sig
       | Autoplan
       | Plan
       | Unlock of Unlock_id.t list
+      | Repo_config
     [@@deriving show]
 
     val to_string : t -> string

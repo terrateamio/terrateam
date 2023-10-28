@@ -669,6 +669,36 @@ let process_issue_comment request_id config storage = function
                ~repo:repository.Gw.Repository.name
                ~comment_id:comment.Gw.Issue_comment.id)
           >>= fun () -> Abb.Future.return (Ok ())
+      | Ok Terrat_comment.Repo_config ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          Prmths.Counter.inc_one (Metrics.comment_events_total "repo_config");
+          Terrat_github.get_installation_access_token config installation_id
+          >>= fun access_token ->
+          Abbs_time_it.run
+            (fun t ->
+              Logs.info (fun m -> m "GITHUB_EVENT : %s : REACT_TO_COMMENT : %f" request_id t))
+            (fun () ->
+              Terrat_github.with_client
+                config
+                (`Token access_token)
+                (Terrat_github.react_to_comment
+                   ~owner:repository.Gw.Repository.owner.Gw.User.login
+                   ~repo:repository.Gw.Repository.name
+                   ~comment_id:comment.Gw.Issue_comment.id))
+          >>= fun () ->
+          let event =
+            Terrat_github_evaluator.S.Event.T.make
+              ~access_token
+              ~config
+              ~installation_id
+              ~pull_number
+              ~repository
+              ~request_id
+              ~event_type:Terrat_evaluator.Event.Event_type.Repo_config
+              ~tag_query:Terrat_tag_query.any
+              ~user:sender.Gw.User.login
+          in
+          run_event_evaluator storage event
       | Error `Not_terrateam ->
           Prmths.Counter.inc_one (Metrics.comment_events_total "not_terrateam");
           Abb.Future.return (Ok ())

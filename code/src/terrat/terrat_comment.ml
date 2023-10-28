@@ -6,6 +6,7 @@ type t =
   | Unlock of string list
   | Help
   | Feedback of string
+  | Repo_config
 
 type err =
   [ `Not_terrateam
@@ -42,5 +43,6 @@ let parse s =
       Terrat_tag_query.of_string rest >>= fun tag_query -> Ok (Apply_force { tag_query })
   | Some ("help", _) -> Ok Help
   | Some ("feedback", rest) -> Ok (Feedback rest)
+  | Some ("repo-config", _) -> Ok Repo_config
   | Some (action, rest) -> Error (`Unknown_action action)
   | None -> Error `Not_terrateam

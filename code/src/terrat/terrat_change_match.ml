@@ -71,11 +71,11 @@ module Dirs = struct
   module Dir = struct
     type t = {
       create_and_select_workspace : bool;
-      file_pattern_matcher : string -> bool; [@opaque]
+      file_pattern_matcher : string -> bool; [@opaque] [@to_yojson fun _ -> `String "<opaque>"]
       when_modified : Terrat_repo_config_when_modified.t;
       workspaces : Terrat_repo_config.Workspaces.t;
     }
-    [@@deriving show]
+    [@@deriving show, to_yojson]
 
     let default_workspaces =
       Terrat_repo_config.Workspaces.(
@@ -212,10 +212,14 @@ module Dirs = struct
 
   type t_printer = (string * Dir.t) list [@@deriving show]
 
+  let yojson_of_stringmap m =
+    `Assoc (CCList.map (fun (k, v) -> (k, Dir.to_yojson v)) (Json_schema.String_map.to_list m))
+
   type t =
     (Dir.t Json_schema.String_map.t
-    [@printer fun fmt v -> pp_t_printer fmt (Json_schema.String_map.to_list v)])
-  [@@deriving show]
+    [@printer fun fmt v -> pp_t_printer fmt (Json_schema.String_map.to_list v)]
+    [@to_yojson yojson_of_stringmap])
+  [@@deriving show, to_yojson]
 end
 
 (* But a ${DIR} in front of the default when modified.  The when modified

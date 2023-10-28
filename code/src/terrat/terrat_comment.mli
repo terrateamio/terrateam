@@ -6,6 +6,7 @@ type t =
   | Unlock of string list
   | Help
   | Feedback of string
+  | Repo_config
 
 type err =
   [ `Not_terrateam

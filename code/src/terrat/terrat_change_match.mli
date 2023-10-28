@@ -9,7 +9,7 @@ type t = {
 [@@deriving show]
 
 module Dirs : sig
-  type t [@@deriving show]
+  type t [@@deriving show, to_yojson]
 end
 
 (** Given a list of files in the repository and a version of the config,

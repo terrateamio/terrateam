@@ -140,6 +140,7 @@ module Event = struct
       | Unlock_success
       | Tag_query_err of Terrat_tag_query.err
       | Account_expired
+      | Repo_config of (Terrat_repo_config_version_1.t * Terrat_change_match.Dirs.t)
       | Unexpected_temporary_err
   end
 
@@ -168,6 +169,7 @@ module Event = struct
     type t =
       | Terraform of tf
       | Pull_request of [ `Unlock of Unlock_id.t list ]
+      | Repo_config
     [@@deriving show]
 
     let run_type_of_tf = function
@@ -195,6 +197,7 @@ module Event = struct
       | Autoplan
       | Plan
       | Unlock of Unlock_id.t list
+      | Repo_config
     [@@deriving show]
 
     (* Translate the event type to its operation class *)
@@ -206,6 +209,7 @@ module Event = struct
       | Autoplan -> Op_class.Terraform (`Plan `Auto)
       | Plan -> Op_class.Terraform (`Plan `Manual)
       | Unlock ids -> Op_class.Pull_request (`Unlock ids)
+      | Repo_config -> Op_class.Repo_config
 
     let to_string = function
       | Apply -> "apply"
@@ -215,6 +219,7 @@ module Event = struct
       | Autoplan -> "autoplan"
       | Plan -> "plan"
       | Unlock _ -> "unlock"
+      | Repo_config -> "repo_config"
   end
 end
 
@@ -1335,7 +1340,8 @@ module Make (S : S) = struct
       | Event.Event_type.Apply
       | Event.Event_type.Apply_autoapprove
       | Event.Event_type.Apply_force
-      | Event.Event_type.Unlock _ ->
+      | Event.Event_type.Unlock _
+      | Event.Event_type.Repo_config ->
           Logs.info (fun m ->
               m
                 "EVALUATOR : %s : %s_BRANCH_NOT_VALID_BRANCH_EXPLICIT"
@@ -1441,6 +1447,18 @@ module Make (S : S) = struct
       | Error `No_matching_dest_branch -> handle_branches_error event pull_request "DEST"
       | Error `No_matching_source_branch -> handle_branches_error event pull_request "SOURCE"
 
+    let perform_repo_config event =
+      let open Abbs_future_combinators.Infix_result_monad in
+      fetch_pull_request event
+      >>= fun pull_request ->
+      Abbs_future_combinators.Infix_result_app.(
+        (fun repo_config repo_tree -> (repo_config, repo_tree))
+        <$> fetch_repo_config event pull_request
+        <*> fetch_tree event pull_request)
+      >>= fun (repo_config, repo_tree) ->
+      Abb.Future.return (Terrat_change_match.synthesize_dir_config ~file_list:repo_tree repo_config)
+      >>= fun dirs -> Abb.Future.return (Ok (Some (Event.Msg.Repo_config (repo_config, dirs))))
+
     let run' storage event =
       let open Abb.Future.Infix_monad in
       Pgsql_pool.with_conn storage ~f:(fun db -> S.Event.query_account_status db event)
@@ -1450,7 +1468,8 @@ module Make (S : S) = struct
           | Event.Op_class.Pull_request (`Unlock unlock_ids) ->
               perform_unlock storage event unlock_ids
           | Event.Op_class.Terraform operation ->
-              perform_terraform_operation storage event operation)
+              perform_terraform_operation storage event operation
+          | Event.Op_class.Repo_config -> perform_repo_config event)
       | Ok `Disabled -> Abb.Future.return (Error `Account_disabled)
       | Error `Error -> Abb.Future.return (Ok (Some Event.Msg.Unexpected_temporary_err))
       | Error #Pgsql_pool.err as err -> Abb.Future.return err
