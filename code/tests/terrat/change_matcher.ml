@@ -1055,6 +1055,42 @@ let test_relative_path_file_pattern =
       let changes = Terrat_change_match.match_diff_list dirs diff in
       assert (CCList.length changes = 1))
 
+let test_relative_path_file_pattern_multiple_dots =
+  Oth.test ~name:"Test relative path file pattern multiple dots" (fun _ ->
+      let repo_config =
+        CCResult.get_exn
+          (Terrat_repo_config.Version_1.of_yojson
+             (`Assoc
+               [
+                 ( "dirs",
+                   `Assoc
+                     [
+                       ( "d/bar/foo",
+                         `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ] );
+                       ( "d/**/*.tf",
+                         `Assoc
+                           [
+                             ( "when_modified",
+                               `Assoc
+                                 [
+                                   ( "file_patterns",
+                                     `List
+                                       [ `String "${DIR}/../../foo/*.tf"; `String "${DIR}/*.tf" ] );
+                                 ] );
+                           ] );
+                     ] );
+               ]))
+      in
+      let diff = Terrat_change.Diff.[ Add { filename = "d/bar/foo/t.tf" } ] in
+      let dirs =
+        CCResult.get_exn
+          (Terrat_change_match.synthesize_dir_config
+             ~file_list:[ "d/bar/foo/t.tf"; "d/bar/envs/baz/t.tf" ]
+             repo_config)
+      in
+      let changes = Terrat_change_match.match_diff_list dirs diff in
+      assert (CCList.length changes = 1))
+
 let test =
   Oth.parallel
     [
@@ -1088,6 +1124,7 @@ let test =
       test_not_match;
       test_not_match_multiple;
       test_relative_path_file_pattern;
+      test_relative_path_file_pattern_multiple_dots;
     ]
 
 let () =

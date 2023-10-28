@@ -128,7 +128,7 @@ module Dirs = struct
         && patterns_glob fname
         && not (not_patterns_glob fname)
 
-    let process_dot_dot dirname =
+    let rec process_dot_dot dirname =
       (* We want to support relative paths in file_patterns, to some extent.  We
          only support [/../], and it must be proceeded by a static directory,
          not a pattern.  The [${DIR}] variable must be expanded as well.  For
@@ -136,25 +136,16 @@ module Dirs = struct
          [foo/**/../baz] will result in [foo/baz] as well, removing the
          pattern.
 
-         To do this, we will split the string on the string [/../], then reverse
-         it, this is because we do not want to apply the transformation to the
-         tail element and the easiest way to pull it out is to flip the list.
-         Then we cut off whatever is after the last [/], and then put the tail
-         back on and reveres it and put the string back together. *)
-      if CCString.mem ~sub:"/../" dirname then
-        match CCList.rev (CCString.split ~by:"/../" dirname) with
-        | [] -> dirname
-        | tail :: rest ->
-            let processed =
-              CCList.map
-                (fun fragement ->
-                  match CCString.Split.right ~by:"/" fragement with
-                  | Some (d, _drop) -> d
-                  | None -> fragement)
-                rest
-            in
-            CCString.concat "/" (CCList.rev (tail :: processed))
-      else dirname
+         To do this, we recursively split it in [/../], then cut the end off the
+         left portion and sew it back.  It's a little expensive in that it
+         splits and join the string continuously, but it's an easy
+         implementation. *)
+      match CCString.Split.left ~by:"/../" dirname with
+      | Some (l, r) -> (
+          match CCString.Split.right ~by:"/" l with
+          | Some (l', _) -> process_dot_dot (l' ^ "/" ^ r)
+          | None -> process_dot_dot r)
+      | None -> dirname
 
     let of_config_dir default_when_modified dirname config =
       let module Dir = Terrat_repo_config.Dir in
