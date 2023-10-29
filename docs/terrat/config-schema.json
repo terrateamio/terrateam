@@ -493,9 +493,21 @@
         "bucket": {
           "type": "string"
         },
+        "delete_extra_args": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "delete_used_plans": {
           "default": true,
           "type": "boolean"
+        },
+        "fetch_extra_args": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "method": {
           "const": "s3",
@@ -509,6 +521,12 @@
         },
         "secret_access_key": {
           "type": "string"
+        },
+        "store_extra_args": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "required": [
