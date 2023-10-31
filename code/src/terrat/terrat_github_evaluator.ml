@@ -720,6 +720,17 @@ module Ev = struct
         /% Var.(str_array (text "dirs"))
         /% Var.(str_array (text "workspaces")))
 
+    let update_abort_duplicate_work_manifests () =
+      Pgsql_io.Typed_sql.(
+        sql
+        // (* work manifest id *) Ret.uuid
+        /^ read "github_abort_duplicate_work_manifests.sql"
+        /% Var.bigint "repository"
+        /% Var.bigint "pull_number"
+        /% Var.(ud (text "run_type") Terrat_work_manifest.Run_type.to_string)
+        /% Var.(str_array (text "dirs"))
+        /% Var.(str_array (text "workspaces")))
+
     let select_dirspaces_owned_by_other_pull_requests =
       Pgsql_io.Typed_sql.(
         sql
@@ -1365,7 +1376,32 @@ module Ev = struct
         Abb.Future.return (Error `Error)
 
   let query_conflicting_work_manifests_in_repo db event dirspaces operation =
+    let run_type = Terrat_evaluator.Event.Op_class.run_type_of_tf operation in
+    let dirs = CCList.map (fun Terrat_change.Dirspace.{ dir; _ } -> dir) dirspaces in
+    let workspaces =
+      CCList.map (fun Terrat_change.Dirspace.{ workspace; _ } -> workspace) dirspaces
+    in
     let run =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        (Sql.update_abort_duplicate_work_manifests ())
+        ~f:CCFun.id
+        (CCInt64.of_int event.T.repository.Gw.Repository.id)
+        (CCInt64.of_int event.T.pull_number)
+        run_type
+        dirs
+        workspaces
+      >>= fun ids ->
+      CCList.iter
+        (fun id ->
+          Logs.info (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : ABORTED_WORK_MANIFEST : %a"
+                (T.request_id event)
+                Uuidm.pp
+                id))
+        ids;
       Pgsql_io.Prepared_stmt.fetch
         db
         (Sql.select_conflicting_work_manifests_in_repo ())
@@ -1430,9 +1466,9 @@ module Ev = struct
             })
         (CCInt64.of_int event.T.repository.Gw.Repository.id)
         (CCInt64.of_int event.T.pull_number)
-        (Terrat_evaluator.Event.Op_class.run_type_of_tf operation)
-        (CCList.map (fun Terrat_change.Dirspace.{ dir; _ } -> dir) dirspaces)
-        (CCList.map (fun Terrat_change.Dirspace.{ workspace; _ } -> workspace) dirspaces)
+        run_type
+        dirs
+        workspaces
     in
     let open Abb.Future.Infix_monad in
     run
@@ -2686,7 +2722,7 @@ module Wm = struct
                   dirspaceflows))
       | Error (`Bad_glob _ as err) -> Abb.Future.return (Error err)
 
-    let fetch_and_initiate_work_manifest db work_manifest_id work_manifest_initiate =
+    let fetch_and_initiate_work_manifest request_id db work_manifest_id work_manifest_initiate =
       let module I = Terrat_api_components.Work_manifest_initiate in
       let open Abbs_future_combinators.Infix_result_monad in
       Pgsql_io.Prepared_stmt.fetch
@@ -2750,6 +2786,10 @@ module Wm = struct
              manifest still exists, just that it was not in a state that it was
              possible to be initiated.  So fetch the underlying work manifest,
              if it exists. *)
+          Logs.info (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : COULD_NOT_INITIATE_WORK_MANIFEST_FETCHING_INSTEAD"
+                request_id);
           Pgsql_io.Prepared_stmt.fetch
             db
             (Sql.select_work_manifest ())
@@ -2805,7 +2845,8 @@ module Wm = struct
           (fun t ->
             Logs.info (fun m ->
                 m "GITHUB_EVALUATOR : %s : FETCH_AND_INITIATE_WORK_MANIFEST : %f" request_id t))
-          (fun () -> fetch_and_initiate_work_manifest db work_manifest_id work_manifest_initiate)
+          (fun () ->
+            fetch_and_initiate_work_manifest request_id db work_manifest_id work_manifest_initiate)
         >>= fun work_manifest ->
         let module Wm = Terrat_work_manifest in
         Pgsql_io.Prepared_stmt.fetch
