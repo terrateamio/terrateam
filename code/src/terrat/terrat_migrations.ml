@@ -92,6 +92,8 @@ let migrations =
     ("add-lock-policy", run_file_sql "2023-05-17-add-lock-policy.sql");
     ("add-lock-policy-none", run_file_sql "2023-05-20-add-lock-policy-none.sql");
     ("remove-github-repo-constraint", run_file_sql "2023-08-02-remove-github-repo-constraint.sql");
+    ( "add-base-sha-to-github-dirspaces-pkey",
+      run_file_sql "2023-11-09-add-base-sha-to-github-dirspaces-pkey.sql" );
   ]
 
 let run config storage = Mig.run (config, storage) migrations

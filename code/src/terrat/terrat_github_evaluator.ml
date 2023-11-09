@@ -676,9 +676,7 @@ module Ev = struct
     let insert_dirspace =
       Pgsql_io.Typed_sql.(
         sql
-        /^ "insert into github_dirspaces (base_sha, path, repository, sha, workspace, lock_policy) \
-            select * from unnest($base_sha, $path, $repository, $sha, $workspace, $lock_policy) on \
-            conflict (repository, sha, path, workspace) do nothing"
+        /^ read "insert_github_dirspaces.sql"
         /% Var.(str_array (text "base_sha"))
         /% Var.(str_array (text "path"))
         /% Var.(array (bigint "repository"))
