@@ -2,6 +2,10 @@
 
 sleep 5
 
+if [ -z "$TERRAT_UI_BASE" ]; then
+    export TERRAT_UI_BASE="https://app.terrateam.io/"
+fi
+
 mkdir -p /run/nginx
 envsubst '$TERRAT_UI_BASE' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 exec /usr/sbin/nginx -c /etc/nginx/nginx.conf

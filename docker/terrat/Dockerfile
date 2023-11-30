@@ -19,7 +19,7 @@ RUN eval $(opam env) && \
     hll generate -n monorepo --opam-dir ../../opam-mono --tag 1.0 --test-deps-as-regular-deps && \
     opam update opam-mono && \
     opam info monorepo && \
-    opam install -j4 -y --strict --deps-only monorepo
+    opam install -j4 -y --deps-only --no-depexts monorepo
 
 # compile
 WORKDIR /mono/code
@@ -33,7 +33,7 @@ RUN eval $(opam env) && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # app image
-FROM alpine:3.13
+FROM alpine:3.18
 
 # packages
 RUN apk add --no-cache \
@@ -43,8 +43,7 @@ RUN apk add --no-cache \
     gmp \
     jq \
     libffi \
-    libressl3.1-libtls \
-    libtls-standalone \
+    libressl \
     nginx \
     py3-cryptography \
     py3-jwt \
