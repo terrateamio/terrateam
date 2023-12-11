@@ -1751,7 +1751,7 @@ module Make (S : S) = struct
                        the same, though, the previous work manifest is aborted
                        and the work will not run. *)
                     Logs.info (fun m -> m "EVALUATOR : %s : WORK_MANIFEST_ABORTED" request_id);
-                    Abb.Future.return (Ok None)
+                    Abb.Future.return (Error `Work_manifest_aborted)
                 | State.Queued -> Abb.Future.return (Error `Work_manifest_in_queue_state)
                 | _ -> (
                     let module Run_type = Terrat_work_manifest.Run_type in
@@ -1797,6 +1797,7 @@ module Make (S : S) = struct
                 >>= fun () -> Abb.Future.return (Error `Error)
             | Error #err as err -> Abb.Future.return err)
         | Ok None -> Abb.Future.return (Error `Work_manifest_not_found)
+        | Error `Work_manifest_aborted -> Abb.Future.return (Error `Work_manifest_aborted)
         | Error (`Work_manifest_already_run t) ->
             let open Abb.Future.Infix_monad in
             S.Work_manifest.Initiate.work_manifest_already_run t
@@ -1809,6 +1810,7 @@ module Make (S : S) = struct
       Initiate.initiate config storage request_id work_manifest_id wm_initiate
       >>= function
       | Ok response -> Abb.Future.return (Some response)
+      | Error `Work_manifest_aborted -> Abb.Future.return None
       | Error (#Initiate.err as err) ->
           Logs.err (fun m -> m "EVALUATOR : %s : ERROR : %s" request_id (Initiate.show_err err));
           Abb.Future.return None
