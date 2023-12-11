@@ -3664,7 +3664,7 @@ module Wm = struct
             match Openapi.Response.value resp with
             | `No_content -> Abb.Future.return (Ok ())
             | `Unprocessable_entity err ->
-                Logs.err (fun m ->
+                Logs.info (fun m ->
                     m
                       "GITHUB_EVALUATOR : %s : DELETE_PULL_REQUEST_BRANCH : %s : %s : %d : %a"
                       t.request_id
@@ -3691,7 +3691,7 @@ module Wm = struct
       | (Ok _ | Error `Error) as ret -> Abb.Future.return ret
       | Error (#Githubc2_abb.call_err as err) ->
           Prmths.Counter.inc_one Metrics.github_errors_total;
-          Logs.err (fun m ->
+          Logs.info (fun m ->
               m
                 "GITHUB_EVALUATOR : %s : DELETE_PULL_REQUEST_BRANCH : %a"
                 t.request_id
@@ -4316,7 +4316,7 @@ module Wm = struct
           | _, [] -> assert false
           | `Full, _ ->
               Prmths.Counter.inc_one Metrics.github_errors_total;
-              Logs.err (fun m ->
+              Logs.info (fun m ->
                   m
                     "GITHUB_EVALUATOR : %s : ITERATE_COMMENT_POST : %s"
                     t.request_id
@@ -4326,7 +4326,7 @@ module Wm = struct
               (* If we're in compact view but there is only one dirspace, then
                  that means there is no way to make the comment smaller. *)
               Prmths.Counter.inc_one Metrics.github_errors_total;
-              Logs.err (fun m ->
+              Logs.info (fun m ->
                   m
                     "GITHUB_EVALUATOR : %s : ITERATE_COMMENT_POST : %s"
                     t.request_id
@@ -4343,7 +4343,7 @@ module Wm = struct
               Abbs_future_combinators.List_result.iter
                 ~f:(fun dirspace ->
                   Prmths.Counter.inc_one Metrics.github_errors_total;
-                  Logs.err (fun m ->
+                  Logs.info (fun m ->
                       m
                         "GITHUB_EVALUATOR : %s : ITERATE_COMMENT_POST : %s"
                         t.request_id
