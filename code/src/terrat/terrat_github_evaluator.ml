@@ -4467,12 +4467,7 @@ module Wm = struct
       let module Wm = Terrat_work_manifest in
       match t.work_manifest.Wm.src with
       | Wm.Kind.Pull_request pull_number -> publish_results t pull_number result denied_dirspaces
-      | Wm.Kind.Drift _ ->
-          Abbs_time_it.run
-            (fun d ->
-              Logs.info (fun m ->
-                  m "GITHUB_EVALUATOR : %s : COMPLETE_COMMIT_STATUSES : %f" t.request_id d))
-            (fun () -> complete_status_checks t result)
+      | Wm.Kind.Drift _ -> Abb.Future.return (Ok ())
 
     let store ~request_id config storage work_manifest_id results =
       let run =
