@@ -1676,7 +1676,9 @@ module Make (S : S) = struct
           (fun () -> run' config storage)
         >>= function
         | Ok () ->
-            S.Runner.run ~request_id:"DRIFT" config storage
+            let request_id = Uuidm.(to_string (v `V4)) in
+            Logs.info (fun m -> m "EVALUATOR : DRIFT : %s" request_id);
+            S.Runner.run ~request_id config storage
             >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> run config storage
         | Error (#Pgsql_pool.err as err) ->
             Logs.err (fun m -> m "EVALUATOR : DRIFT : %a" Pgsql_pool.pp_err err);
