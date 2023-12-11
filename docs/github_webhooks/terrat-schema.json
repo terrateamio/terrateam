@@ -5226,8 +5226,7 @@
         "workflow_url",
         "run_attempt",
         "run_started_at",
-        "actor",
-        "triggering_actor"
+        "actor"
       ],
       "title": "Workflow Run",
       "type": "object"

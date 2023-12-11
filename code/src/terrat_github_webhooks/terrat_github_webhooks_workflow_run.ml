@@ -69,7 +69,7 @@ type t = {
   run_number : int;
   run_started_at : string;
   status : string;
-  triggering_actor : Terrat_github_webhooks_user.t;
+  triggering_actor : Terrat_github_webhooks_user.t option; [@default None]
   updated_at : string;
   url : string;
   workflow_id : int;
