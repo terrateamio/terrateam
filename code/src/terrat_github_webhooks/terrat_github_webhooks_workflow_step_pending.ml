@@ -20,7 +20,7 @@ type t = {
   conclusion : Conclusion.t;
   name : string;
   number : int;
-  started_at : string;
+  started_at : string option; [@default None]
   status : Status.t;
 }
 [@@deriving yojson { strict = false; meta = true }, make, show, eq]

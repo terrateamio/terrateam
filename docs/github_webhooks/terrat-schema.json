@@ -5355,7 +5355,6 @@
         "status",
         "conclusion",
         "number",
-        "started_at",
         "completed_at"
       ],
       "title": "Workflow Step (Pending)",
