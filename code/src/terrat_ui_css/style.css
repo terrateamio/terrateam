@@ -75,6 +75,7 @@
     .nav-bar > div {
         @apply cursor-pointer;
         @apply text-slate-700;
+        @apply px-4;
         @apply hover:border-b-8 hover:border-slate-300;
     }
 
