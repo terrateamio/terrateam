@@ -29,6 +29,7 @@
 
     body {
         @apply bg-color h-screen w-full text-primary flex flex-col overflow-y-scroll;
+        @apply font-sans;
     }
 
     a {
@@ -74,7 +75,8 @@
     .sidebar {
         @apply sticky top-0;
         @apply h-screen pt-2;
-        @apply flex flex-col justify-between justify-items-center gap-y-4 px-2 max-w-min;
+        @apply flex flex-col justify-between justify-items-center gap-y-4 max-w-min;
+        @apply border-r border-slate-600;
     }
 
     .sidebar .avatar {
@@ -82,11 +84,11 @@
     }
 
     .sidebar .avatar > img {
-        @apply rounded-full border-2 border-gray-400 h-16 w-16;
+        @apply rounded-full border-2 border-gray-400 h-14 w-14;
     }
 
     .nav-bar {
-        @apply flex flex-col gap-y-2 py-4 justify-items-center;
+        @apply flex flex-col gap-y-6 py-4 justify-items-center;
     }
 
     .nav-bar > div {
@@ -101,15 +103,16 @@
     }
 
     .main {
-        @apply flex flex-col flex-grow mx-2;
+        @apply flex flex-col flex-grow;
     }
 
     .header {
         @apply sticky top-0;
-        @apply flex flex-col flex-col-reverse;
-        @apply lg:grid lg:grid-cols-3 gap-x-2;
-        @apply py-2 px-4;
+        @apply flex flex-row;
+        @apply gap-x-2;
+        @apply py-4 px-4;
         @apply bg-color;
+        @apply border-b border-slate-600;
     }
 
     .header .installation {
@@ -130,8 +133,8 @@
     }
 
     .main .header .title {
-        @apply flex flex-row place-content-center;
-        @apply font-semibold text-4xl;
+        @apply text-white;
+        @apply font-bold text-4xl;
     }
 
 
@@ -267,8 +270,8 @@
     .page-nav button {
         @apply flex flex-row justify-center items-center justify-items-center;
         @apply rounded bg-blue-700;
-        @apply font-semibold text-2xl;
-        @apply w-24 py-2;
+        @apply font-semibold text-xl;
+        @apply w-24 py-1;
     }
 
     .page-nav button.ui-active.refresh > * {

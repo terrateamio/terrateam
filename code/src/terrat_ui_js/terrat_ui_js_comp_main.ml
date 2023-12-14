@@ -123,7 +123,6 @@ let run' state =
                    div
                      ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "header") ]
                      [
-                       div [];
                        Brtl_js2.Router_output.create
                          state
                          (div ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "title") ] [])
