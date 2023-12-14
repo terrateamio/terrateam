@@ -20,8 +20,19 @@
         @apply font-sans;
     }
 
+    .btn-primary {
+        @apply flex flex-row place-content-center items-center justify-items-center;
+        @apply text-white bg-blue-800;
+        @apply rounded;
+        @apply font-semibold;
+    }
+
     button {
-        @apply text-white;
+        @apply btn-primary;
+    }
+
+    button.ui-disabled {
+        @apply bg-slate-400;
     }
 
     a {
@@ -138,6 +149,7 @@
 
     .main-content {
         @apply flex flex-col w-full lg:w-2/3 mx-auto;
+        @apply mb-20;
     }
 
     .page .v-pair {
@@ -217,7 +229,6 @@
     .pull-requests {
         @apply mx-auto;
         @apply flex flex-col;
-        @apply py-2;
     }
 
     .pull-requests .page {
@@ -261,9 +272,35 @@
     .pull-requests .page .item .details-link button {
         @apply flex flex-row lg:flex-col place-content-center items-center justify-items-center;
         @apply w-full p-2;
-        @apply rounded bg-blue-800;
-        @apply flex flex-row;
+        @apply btn-primary;
+    }
+
+    .repos-toolbar {
+        @apply flex flex-row flex-wrap items-center gap-x-4;
+    }
+
+    button.repos-refresh {
+        @apply btn-primary;
+        @apply pl-2;
+    }
+
+    .repos-page {
+        @apply grid grid-cols-2;
+    }
+
+    .repos-page .page-header {
+        @apply border-b border-slate-300;
+        @apply font-bold text-xl;
+    }
+
+    .repos-page div {
         @apply font-semibold;
+        @apply border-b border-slate-200;
+        @apply py-2;
+    }
+
+    .repos-page div:nth-child(even) {
+        @apply text-right;
     }
 
     .page-nav {
@@ -272,9 +309,8 @@
 
     .page-nav button {
         @apply flex flex-row justify-center items-center justify-items-center;
-        @apply rounded bg-blue-800;
         @apply w-24 py-1;
-        @apply font-semibold;
+        @apply btn-primary;
     }
 
     .page-nav button.ui-disabled {
@@ -311,6 +347,123 @@
     .getting-started > div > a {
         @apply px-2;
     }
+
+    a.setup-repo {
+        @apply flex flex-row items-center justify-end;
+    }
+
+    .setup-repo-title {
+        @apply text-center text-4xl;
+        @apply font-bold;
+    }
+
+    .setup-repo-help {
+        @apply flex flex-col;
+        @apply gap-y-8;
+        @apply w-2/3;
+        @apply mx-auto;
+        @apply rounded-lg border border-slate-300;
+        @apply bg-slate-100;
+        @apply text-center text-xl;
+        @apply py-8;
+    }
+
+    .setup-repo-help h1 {
+        @apply text-4xl font-semibold;
+    }
+
+    .setup-repo-step {
+        @apply flex flex-col gap-y-8;
+        @apply py-8;
+    }
+
+    .setup-repo-step h1 {
+        @apply text-2xl font-semibold;
+    }
+
+    .setup-repo-step img {
+        @apply w-1/2;
+        @apply mx-auto;
+        @apply rounded-lg;
+    }
+
+    .setup-repo-step-number {
+        @apply font-semibold text-xl;
+    }
+
+    button.setup-repo-copy {
+        @apply btn-primary;
+        @apply p-2;
+    }
+
+    code {
+        @apply font-mono font-semibold;
+        @apply bg-slate-200;
+        @apply px-1;
+    }
+
+    .workflow-file {
+        @apply relative;
+        @apply bg-slate-100;
+        @apply border border-slate-300;
+        @apply rounded-md;
+    }
+
+    .workflow-file-content {
+        @apply max-h-96 overflow-auto;
+    }
+
+    .workflow-file-copy {
+        @apply absolute top-0 right-0;
+        @apply px-4 py-2;
+    }
+
+    .setup-repo-step .cloud-provider-list {
+        @apply list-disc list-inside;
+        @apply pl-8 py-3;
+    }
+
+    .setup-repo-step .cloud-provider-list li {
+        @apply py-1;
+    }
+
+    pre.hl {
+        @apply font-mono text-sm;
+        @apply p-8;
+    }
+
+    .hl.slc {
+        @apply text-red-700;
+    }
+
+    .hl.kwa {
+        @apply font-semibold text-green-700;
+    }
+
+    .notifications {
+        @apply fixed top-0 w-full;
+        @apply flex flex-col gap-y-4;
+        @apply p-4;
+        @apply z-50;
+    }
+
+    .notifications > .notification {
+        /* @apply rounded-lg border border-black; */
+        @apply animate-fade-in;
+    }
+
+    .notifications > .notification > .success {
+        @apply rounded-lg;
+        @apply w-full h-full;
+        @apply bg-green-500;
+        @apply flex flex-row items-center justify-center;
+        @apply p-4;
+        box-shadow: 0 0 15px 0px rgba(34, 197, 94, 1);
+    }
+
+    /* .hl.sng { */
+    /*     @apply  */
+    /* } */
 
     /* * { */
     /*     @apply border border-red-500; */

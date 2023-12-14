@@ -194,11 +194,15 @@ let run dir pull_number state =
         ~installation_id:installation.I.id
         client
 
+    let wrap_page = CCFun.id
+
     let render_elt state elt =
-      Brtl_js2.Router_output.const
-        state
-        Brtl_js2.Brr.El.(div ~at:At.[ class' (Jstr.v "item") ] [])
-        (render_work_manifest elt)
+      [
+        Brtl_js2.Router_output.const
+          state
+          Brtl_js2.Brr.El.(div ~at:At.[ class' (Jstr.v "item") ] [])
+          (render_work_manifest elt);
+      ]
 
     let equal = Wm.equal
   end) in

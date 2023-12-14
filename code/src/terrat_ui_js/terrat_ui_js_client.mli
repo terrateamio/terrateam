@@ -3,6 +3,7 @@ type err =
   | `Missing_response of string Openapi.Response.t
   | `Io_err of Jv.Error.t
   | `Forbidden
+  | `Not_found
   ]
 [@@deriving show]
 
@@ -48,3 +49,12 @@ val pull_requests :
   installation_id:string ->
   t ->
   (Terrat_api_components.Installation_pull_request.t Page.t, [> err ]) result Abb_js.Future.t
+
+val repos :
+  ?page:string list ->
+  installation_id:string ->
+  t ->
+  (Terrat_api_components.Installation_repo.t Page.t, [> err ]) result Abb_js.Future.t
+
+val repos_refresh : installation_id:string -> t -> (string, [> err ]) result Abb_js.Future.t
+val task : id:string -> t -> (Terrat_api_components.Task.t, [> err ]) result Abb_js.Future.t

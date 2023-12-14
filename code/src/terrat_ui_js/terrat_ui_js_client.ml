@@ -21,6 +21,7 @@ type err =
   | `Missing_response of string Openapi.Response.t
   | `Io_err of (Jv.Error.t[@printer fun fmt v -> Io_err.(pp fmt (of_js_error v))])
   | `Forbidden
+  | `Not_found
   ]
 [@@deriving show]
 
@@ -174,4 +175,30 @@ let pull_requests ?page ?pull_number ~installation_id t =
   >>= fun resp ->
   match Openapi.Response.value resp with
   | `OK R.{ pull_requests } -> Abb_js.Future.return (Ok (Page.of_response resp pull_requests))
+  | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
+
+let repos ?page ~installation_id t =
+  let open Abb_js_future_combinators.Infix_result_monad in
+  let module R = Terrat_api_installations.List_repos.Responses.OK in
+  call Terrat_api_installations.List_repos.(make Parameters.(make ~page ~installation_id ()))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK R.{ repositories } -> Abb_js.Future.return (Ok (Page.of_response resp repositories))
+  | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
+
+let repos_refresh ~installation_id t =
+  let open Abb_js_future_combinators.Infix_result_monad in
+  let module R = Terrat_api_installations.Repo_refresh.Responses.OK in
+  call Terrat_api_installations.Repo_refresh.(make Parameters.(make ~installation_id))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK R.{ id } -> Abb_js.Future.return (Ok id)
+  | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
+
+let task ~id t =
+  let open Abb_js_future_combinators.Infix_result_monad in
+  call Terrat_api_tasks.Get.(make Parameters.(make ~id))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK r -> Abb_js.Future.return (Ok r)
   | `Forbidden -> Abb_js.Future.return (Error `Forbidden)

@@ -2,6 +2,8 @@ module At = Brtl_js2.Brr.At
 
 module Rt = struct
   let main consumed_path = Brtl_js2_rtng.(root consumed_path)
+  let repo_new consumed_path = Brtl_js2_rtng.(root consumed_path / "repos" / "new" /% Path.string)
+  let repos_refresh consumed_path = Brtl_js2_rtng.(root consumed_path / "repos" / "refresh")
   let pull_requests consumed_path = Brtl_js2_rtng.(root consumed_path / "pull-requests")
 end
 
@@ -31,14 +33,14 @@ let nav_bar state =
        ~choices:
          Brtl_js2_nav_bar.Choice.
            [
-             create ~value:`Main Brtl_js2.Brr.El.[ txt' "Get Started" ] consumed_path;
+             create ~value:`Repos Brtl_js2.Brr.El.[ txt' "Repos" ] consumed_path;
              create
                ~value:`Pull_requests
                Brtl_js2.Brr.El.[ txt' "Pull Requests" ]
                (consumed_path ^ "/pull-requests");
            ]
        Brtl_js2_rtng.
-         [ Rt.pull_requests consumed_path --> `Pull_requests; Rt.main consumed_path --> `Main ]
+         [ Rt.pull_requests consumed_path --> `Pull_requests; Rt.main consumed_path --> `Repos ]
        state);
   nav_bar_div
 
@@ -73,8 +75,6 @@ let pull_requests state =
                ];
          ])
 
-let main = Terrat_ui_js_comp_getting_started.run
-
 let run' state =
   let consumed_path = Brtl_js2.State.consumed_path state in
   let app_state = Brtl_js2.State.app_state state in
@@ -86,6 +86,10 @@ let run' state =
     (Brtl_js2.Output.const
        Brtl_js2.Brr.El.
          [
+           Brtl_js2.Router_output.const
+             state
+             (div ~at:At.[ class' (Jstr.v "notifications") ] [])
+             Terrat_ui_js_comp_notifications.run;
            div
              ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "content") ]
              [
@@ -160,7 +164,9 @@ let run' state =
                  Brtl_js2_rtng.
                    [
                      Rt.pull_requests consumed_path --> pull_requests;
-                     Rt.main consumed_path --> main;
+                     Rt.repo_new consumed_path --> Terrat_ui_js_comp_repo_new.run;
+                     Rt.repos_refresh consumed_path --> Terrat_ui_js_comp_repos_refresh.run;
+                     Rt.main consumed_path --> Terrat_ui_js_comp_repos.run;
                    ];
              ];
          ])

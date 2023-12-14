@@ -16,11 +16,15 @@ let run (pr_send : Terrat_api_components.Installation_pull_request.t Brtl_js2.No
     let fetch ?page () =
       Terrat_ui_js_client.pull_requests ?page ~installation_id:installation.I.id client
 
+    let wrap_page = CCFun.id
+
     let render_elt state pr =
-      Brtl_js2.Router_output.const
-        state
-        Brtl_js2.Brr.El.(div ~at:At.[ class' (Jstr.v "item") ] [])
-        (Terrat_ui_js_comp_pull_request.run (Some pr_send) pr)
+      [
+        Brtl_js2.Router_output.const
+          state
+          Brtl_js2.Brr.El.(div ~at:At.[ class' (Jstr.v "item") ] [])
+          (Terrat_ui_js_comp_pull_request.run (Some pr_send) pr);
+      ]
 
     let equal = Pr.equal
   end) in

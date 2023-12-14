@@ -202,6 +202,8 @@ module Work_manifests = struct
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx
         >>= fun user ->
+        Terrat_user.enforce_installation_access storage user installation_id ctx
+        >>= fun () ->
         let open Abb.Future.Infix_monad in
         let query =
           Page.
@@ -360,10 +362,241 @@ module Pull_requests = struct
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx
         >>= fun user ->
+        Terrat_user.enforce_installation_access storage user installation_id ctx
+        >>= fun () ->
         let open Abb.Future.Infix_monad in
         let query =
           Page.
             { user = Terrat_user.id user; pull_request = pr_opt; storage; installation_id; limit }
         in
         Paginate.run ?page ~page_param:"page" query ctx >>= fun ctx -> Abb.Future.return (Ok ctx))
+end
+
+module Repos = struct
+  module Sql = struct
+    let read fname =
+      CCOption.get_exn_or
+        fname
+        (CCOption.map
+           (fun s ->
+             s
+             |> CCString.split_on_char '\n'
+             |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
+             |> CCString.concat "\n")
+           (Terrat_files_sql.read fname))
+
+    let select_installation_repos_page () =
+      Pgsql_io.Typed_sql.(
+        sql
+        // (* id *) Ret.bigint
+        // (* installation_id *) Ret.bigint
+        // (* name *) Ret.text
+        // (* updated_at *) Ret.text
+        /^ read "select_github_installation_repos_page.sql"
+        /% Var.uuid "user_id"
+        /% Var.bigint "installation_id"
+        /% Var.(option (text "prev_name")))
+  end
+
+  let columns = Pgsql_pagination.Search.Col.[ create ~vname:"prev_name" ~cname:"name" ]
+
+  module Page = struct
+    type cursor = string
+
+    type query = {
+      user : Uuidm.t;
+      storage : Terrat_storage.t;
+      installation_id : int;
+      dir : [ `Asc | `Desc ];
+      limit : int;
+    }
+
+    type t = Terrat_api_components.Installation_repo.t Pgsql_pagination.t
+
+    type err =
+      [ Pgsql_pool.err
+      | Pgsql_io.err
+      ]
+
+    let run_query ?cursor query f =
+      let search = Pgsql_pagination.Search.(create ~page_size:query.limit ~dir:query.dir columns) in
+      Pgsql_pool.with_conn query.storage ~f:(fun db ->
+          f
+            search
+            db
+            (Sql.select_installation_repos_page ())
+            ~f:(fun id installation_id name updated_at ->
+              {
+                Terrat_api_components.Installation_repo.id = CCInt64.to_string id;
+                installation_id = CCInt64.to_string installation_id;
+                name;
+                updated_at;
+              })
+            query.user
+            (CCInt64.of_int query.installation_id)
+            cursor)
+
+    let next ?cursor query = run_query ?cursor query Pgsql_pagination.next
+    let prev ?cursor query = run_query ?cursor query Pgsql_pagination.prev
+
+    let to_yojson t =
+      Terrat_api_installations.List_repos.Responses.OK.(
+        { repositories = Pgsql_pagination.results t } |> to_yojson)
+
+    let cursor_of_first t =
+      let module R = Terrat_api_components.Installation_repo in
+      match Pgsql_pagination.results t with
+      | [] -> None
+      | R.{ name; _ } :: _ -> Some [ name ]
+
+    let cursor_of_last t =
+      let module R = Terrat_api_components.Installation_repo in
+      match CCList.rev (Pgsql_pagination.results t) with
+      | [] -> None
+      | R.{ name; _ } :: _ -> Some [ name ]
+
+    let has_another_page t = Pgsql_pagination.has_next_page t
+
+    let log_err ~token = function
+      | #Pgsql_pool.err as err ->
+          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_pool.pp_err err)
+      | #Pgsql_io.err as err ->
+          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_io.pp_err err)
+  end
+
+  module Paginate = Brtl_ep_paginate.Make (Page)
+
+  let get config storage installation_id page limit =
+    Brtl_ep.run_result ~f:(fun ctx ->
+        let open Abbs_future_combinators.Infix_result_monad in
+        Terrat_session.with_session ctx
+        >>= fun user ->
+        Terrat_user.enforce_installation_access storage user installation_id ctx
+        >>= fun () ->
+        let open Abb.Future.Infix_monad in
+        let query =
+          Page.{ user = Terrat_user.id user; storage; installation_id; limit; dir = `Asc }
+        in
+        Paginate.run ?page ~page_param:"page" query ctx >>= fun ctx -> Abb.Future.return (Ok ctx))
+
+  module Refresh = struct
+    let chunk_size = 500
+
+    module Sql = struct
+      let insert_installation_repos () =
+        Pgsql_io.Typed_sql.(
+          sql
+          /^ "insert into github_installation_repositories (id, installation_id, owner, name) \
+              select * from unnest($id, $installation_id, $owner, $name) on conflict (id) do \
+              nothing"
+          /% Var.(array (bigint "id"))
+          /% Var.(array (bigint "installation_id"))
+          /% Var.(str_array (text "owner"))
+          /% Var.(str_array (text "name")))
+    end
+
+    let refresh_repos request_id config storage installation_id task =
+      let open Abb.Future.Infix_monad in
+      Terrat_task.run storage task (fun () ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          Terrat_github.get_installation_access_token config installation_id
+          >>= fun access_token ->
+          Terrat_github.with_client
+            config
+            (`Token access_token)
+            Terrat_github.get_installation_repos
+          >>= fun repositories ->
+          let module R = Githubc2_components.Repository in
+          let module Rp = R.Primary in
+          let module U = Githubc2_components.Simple_user in
+          let module Up = U.Primary in
+          let installation_id = CCInt64.of_int installation_id in
+          Abbs_future_combinators.List_result.iter
+            ~f:(fun repositories ->
+              Pgsql_pool.with_conn storage ~f:(fun db ->
+                  Pgsql_io.Prepared_stmt.execute
+                    db
+                    (Sql.insert_installation_repos ())
+                    (CCList.map
+                       (fun R.{ primary = Rp.{ id; _ }; _ } -> CCInt64.of_int id)
+                       repositories)
+                    (CCList.replicate (CCList.length repositories) installation_id)
+                    (CCList.map
+                       (fun R.{ primary = Rp.{ owner = U.{ primary = Up.{ login; _ }; _ }; _ }; _ } ->
+                         login)
+                       repositories)
+                    (CCList.map (fun R.{ primary = Rp.{ name; _ }; _ } -> name) repositories)))
+            (CCList.chunks chunk_size repositories))
+      >>= function
+      | Ok () -> Abb.Future.return ()
+      | Error (#Terrat_github.get_installation_access_token_err as err) ->
+          Logs.err (fun m ->
+              m
+                "INSTALLATION : %s : REFRESH_REPOS : %a"
+                request_id
+                Terrat_github.pp_get_installation_access_token_err
+                err);
+          Abb.Future.return ()
+      | Error (#Terrat_github.get_installation_repos_err as err) ->
+          Logs.err (fun m ->
+              m
+                "INSTALLATION : %s : REFRESH_REPOS : %a"
+                request_id
+                Terrat_github.pp_get_installation_repos_err
+                err);
+          Abb.Future.return ()
+      | Error (#Pgsql_pool.err as err) ->
+          Logs.err (fun m ->
+              m "INSTALLATION : %s : REFRESH_REPOS : %a" request_id Pgsql_pool.pp_err err);
+          Abb.Future.return ()
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m ->
+              m "INSTALLATION : %s : REFRESH_REPOS : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return ()
+
+    let post config storage installation_id =
+      Brtl_ep.run_result ~f:(fun ctx ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          Terrat_session.with_session ctx
+          >>= fun user ->
+          Terrat_user.enforce_installation_access storage user installation_id ctx
+          >>= fun () ->
+          let task =
+            Terrat_task.make ~name:(Printf.sprintf "INSTALLATION : REFRESH : %d" installation_id) ()
+          in
+          let open Abb.Future.Infix_monad in
+          Pgsql_pool.with_conn storage ~f:(fun db -> Terrat_task.store db task)
+          >>= function
+          | Ok task ->
+              Abb.Future.fork
+                (refresh_repos (Brtl_ctx.token ctx) config storage installation_id task)
+              >>= fun _ ->
+              let id = Uuidm.to_string (Terrat_task.id task) in
+              let body =
+                Terrat_api_installations.Repo_refresh.Responses.OK.(
+                  { id } |> to_yojson |> Yojson.Safe.to_string)
+              in
+              Abb.Future.return
+                (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx))
+          | Error (#Pgsql_pool.err as err) ->
+              Logs.err (fun m ->
+                  m
+                    "INSTALLATION : %s : REFRESH_REPOS : %a"
+                    (Brtl_ctx.token ctx)
+                    Pgsql_pool.pp_err
+                    err);
+              Abb.Future.return
+                (Ok
+                   (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+          | Error (#Pgsql_io.err as err) ->
+              Logs.err (fun m ->
+                  m
+                    "INSTALLATION : %s : REFRESH_REPOS : %a"
+                    (Brtl_ctx.token ctx)
+                    Pgsql_io.pp_err
+                    err);
+              Abb.Future.return
+                (Ok
+                   (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))
+  end
 end

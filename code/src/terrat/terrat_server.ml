@@ -87,6 +87,21 @@ module Rt = struct
            option
              (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.(ud' CCInt64.of_string_opt))))
       /? Query.(option_default 20 (Query.int "limit")))
+
+  let installation_repos_rt () =
+    Brtl_rtng.Route.(
+      installation_api_rt ()
+      /% Path.int
+      / "repos"
+      /? Query.(option (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.string)))
+      /? Query.(option_default 20 (int "limit")))
+
+  let installation_repos_refresh_rt () =
+    Brtl_rtng.Route.(installation_api_rt () /% Path.int / "repos" / "refresh")
+
+  (* Tasks API *)
+  let tasks_api_rt () = Brtl_rtng.Route.(api_v1 () / "tasks")
+  let task_rt () = Brtl_rtng.Route.(tasks_api_rt () /% Path.ud Uuidm.of_string)
 end
 
 let response_404 ctx =
@@ -113,6 +128,8 @@ let rtng config storage =
           (* Ops *)
           (`GET, Rt.health_check () --> Terrat_ep_health_check.get storage);
           (`GET, Rt.metrics () --> Terrat_ep_metrics.get);
+          (* Tasks *)
+          (`GET, Rt.task_rt () --> Terrat_ep_tasks.get storage);
           (* Work manifests *)
           ( `POST,
             Rt.github_work_manifest_plan ()
@@ -143,6 +160,10 @@ let rtng config storage =
           ( `GET,
             Rt.installation_pull_requests_manifests_rt ()
             --> Terrat_ep_installations.Pull_requests.get config storage );
+          (`GET, Rt.installation_repos_rt () --> Terrat_ep_installations.Repos.get config storage);
+          ( `POST,
+            Rt.installation_repos_refresh_rt ()
+            --> Terrat_ep_installations.Repos.Refresh.post config storage );
           (* Infracost *)
           (`POST, Rt.infracost () --> Terrat_ep_infracost.post config storage);
           (* API 404s.  This is needed because for any and only UI endpoint we

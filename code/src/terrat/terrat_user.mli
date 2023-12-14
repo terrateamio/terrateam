@@ -8,7 +8,7 @@ val name : t -> string option
 
 val enforce_installation_access :
   Terrat_storage.t ->
-  Terrat_api_components.User.t ->
+  t ->
   int ->
   ('a, 'b) Brtl_ctx.t ->
-  (unit, ('a, [> `Forbidden ]) Brtl_ctx.t) result Abb.Future.t
+  (unit, ('a, [> `Forbidden | `Internal_server_error ]) Brtl_ctx.t) result Abb.Future.t

@@ -16,7 +16,8 @@ module type S = sig
     unit ->
     (elt Terrat_ui_js_client.Page.t, [> Terrat_ui_js_client.err ]) result Abb_js.Future.t
 
-  val render_elt : state Brtl_js2.State.t -> elt -> Brtl_js2.Brr.El.t
+  val wrap_page : Brtl_js2.Brr.El.t list -> Brtl_js2.Brr.El.t list
+  val render_elt : state Brtl_js2.State.t -> elt -> Brtl_js2.Brr.El.t list
   val equal : elt -> elt -> bool
 end
 
@@ -53,7 +54,10 @@ module Make (S : S) = struct
     Abb_js.Future.return
       (Brtl_js2.Output.render
          ~cleanup:(fun () -> Abb_js.Future.abort refresh_fut)
-         (Brtl_js2.Note.S.map ~eq:( == ) (fun elts -> CCList.map (S.render_elt state) elts) page))
+         (Brtl_js2.Note.S.map
+            ~eq:( == )
+            (fun elts -> S.wrap_page (CCList.flat_map (S.render_elt state) elts))
+            page))
 
   (* A standard pagination view.  The implementation might seem a little
      backwards: the inner page component is the one that gets the page from the

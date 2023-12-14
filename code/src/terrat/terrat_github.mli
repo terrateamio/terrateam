@@ -39,6 +39,15 @@ type get_user_installations_err =
   ]
 [@@deriving show]
 
+type get_installation_repos_err =
+  [ Githubc2_abb.call_err
+  | `Not_modified
+  | `Forbidden of Githubc2_components.Basic_error.t
+  | `Not_found of Githubc2_components.Basic_error.t
+  | `Unauthorized of Githubc2_components.Basic_error.t
+  ]
+[@@deriving show]
+
 type fetch_repo_config_err =
   [ Githubc2_abb.call_err
   | Abb_process.check_output_err
@@ -250,6 +259,10 @@ val compare_commits :
 val get_user_installations :
   Githubc2_abb.t ->
   (Githubc2_components.Installation.t list, [> get_user_installations_err ]) result Abb.Future.t
+
+val get_installation_repos :
+  Githubc2_abb.t ->
+  (Githubc2_components.Repository.t list, [> get_installation_repos_err ]) result Abb.Future.t
 
 (* val get_access_token :
  *   Terrat_storage.t ->

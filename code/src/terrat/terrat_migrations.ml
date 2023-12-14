@@ -106,6 +106,7 @@ let migrations =
       run_file_sql "2023-11-15-add-user-track-on-work-manifest.sql" );
     ("add-user-track-on-pull-request", run_file_sql "2023-11-15-add-user-track-on-pull-request.sql");
     ("add-user-installations-table", run_file_sql "2023-11-18-add-user-installations-table.sql");
+    ("add-tasks-table", run_file_sql "2023-12-18-add-tasks-table.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations

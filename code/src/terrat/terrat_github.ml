@@ -68,6 +68,15 @@ type get_user_installations_err =
   ]
 [@@deriving show]
 
+type get_installation_repos_err =
+  [ Githubc2_abb.call_err
+  | `Not_modified
+  | `Forbidden of Githubc2_components.Basic_error.t
+  | `Not_found of Githubc2_components.Basic_error.t
+  | `Unauthorized of Githubc2_components.Basic_error.t
+  ]
+[@@deriving show]
+
 type fetch_repo_config_err =
   [ Githubc2_abb.call_err
   | Abb_process.check_output_err
@@ -382,6 +391,20 @@ let get_user_installations client =
   match Openapi.Response.value resp with
   | `OK R.OK.{ primary = Primary.{ installations; _ }; _ } -> Abb.Future.return (Ok installations)
   | (`Forbidden _ | `Not_modified | `Unauthorized _) as err -> Abb.Future.return (Error err)
+
+let get_installation_repos client =
+  let module R = Githubc2_apps.List_repos_accessible_to_installation.Responses in
+  Prmths.Counter.inc_one (Metrics.fn_call_total "get_installation_repos");
+  Githubc2_abb.fold
+    client
+    ~init:[]
+    ~f:(fun acc resp ->
+      match Openapi.Response.value resp with
+      | `OK { R.OK.primary = { R.OK.Primary.repositories; _ }; _ } ->
+          Abb.Future.return (Ok (acc @ repositories))
+      | (`Forbidden _ | `Not_found _ | `Not_modified | `Unauthorized _) as err ->
+          Abb.Future.return (Error err))
+    Githubc2_apps.List_repos_accessible_to_installation.(make Parameters.(make ()))
 
 let load_workflow' ~owner ~repo client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "load_workflow");

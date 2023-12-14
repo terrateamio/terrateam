@@ -12,7 +12,10 @@ module type S = sig
     unit ->
     (elt Terrat_ui_js_client.Page.t, [> Terrat_ui_js_client.err ]) result Abb_js.Future.t
 
-  val render_elt : state Brtl_js2.State.t -> elt -> Brtl_js2.Brr.El.t
+  (* After rendering each element, optionally wrap the page.  For example, a
+     header or footer. *)
+  val wrap_page : Brtl_js2.Brr.El.t list -> Brtl_js2.Brr.El.t list
+  val render_elt : state Brtl_js2.State.t -> elt -> Brtl_js2.Brr.El.t list
   val equal : elt -> elt -> bool
 end
 

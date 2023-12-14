@@ -62,7 +62,7 @@ module.exports = {
         }
       },
       animation: {
-        'fade-in': 'fade-in 2s linear 1',
+        'fade-in': 'fade-in 500ms linear 1',
         'progress-bar': 'gradient 8s linear infinite',
         'ping-5-times': 'ping 1s cubic-bezier(0, 0, 0.2, 1) 5',
         'ping-1-time': 'ping 1s cubic-bezier(0, 0, 0.2, 1) 1',

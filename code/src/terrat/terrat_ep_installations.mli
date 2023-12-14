@@ -20,3 +20,17 @@ module Pull_requests : sig
     int ->
     Brtl_rtng.Handler.t
 end
+
+module Repos : sig
+  val get :
+    Terrat_config.t ->
+    Terrat_storage.t ->
+    int ->
+    string Brtl_ep_paginate.Param.t option ->
+    int ->
+    Brtl_rtng.Handler.t
+
+  module Refresh : sig
+    val post : Terrat_config.t -> Terrat_storage.t -> int -> Brtl_rtng.Handler.t
+  end
+end
