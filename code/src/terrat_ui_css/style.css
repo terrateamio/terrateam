@@ -65,10 +65,11 @@
     }
 
     .nav-bar {
-        @apply flex flex-row justify-center gap-x-6 py-4;
+        @apply flex flex-row gap-x-6;
         @apply border-b border-slate-300;
-        @apply mx-8;
+        @apply mx-8 my-8;
         @apply text-xl;
+        @apply w-2/3 mx-auto;
     }
 
     .nav-bar > div {
@@ -82,22 +83,34 @@
         @apply border-b-8 border-black;
     }
 
-    .header {
+    .header-outer {
         @apply sticky top-0;
+        @apply py-4;
+        @apply bg-black;
+    }
+
+    .header {
         @apply flex flex-row;
-        @apply justify-between;
+        @apply justify-between items-center;
         @apply gap-x-2;
-        @apply py-4 px-4;
-        @apply bg-white;
+        @apply w-2/3 mx-auto;
+    }
+
+    .header .left {
+        @apply flex flex-row gap-x-6;
+    }
+
+    .header .left .links {
+        @apply flex flex-row gap-x-6 justify-between items-center;
+        @apply text-xl;
+    }
+
+    .header .left .links a:link, .header .left .links a:visited {
+        @apply text-white;
     }
 
     .header .right {
-        @apply flex flex-row justify-end gap-x-6;
-    }
-
-    .header .right .links {
-        @apply flex flex-row gap-x-6 justify-between items-center;
-        @apply text-xl;
+        @apply flex flex-row justify-end items-center gap-x-6;
     }
 
     .header .right .installation {
@@ -110,7 +123,7 @@
     }
 
     .header .right .avatar > img {
-        @apply rounded-full border-2 border-gray-400 h-14 w-14;
+        @apply rounded-full border-2 border-gray-400 h-9 w-9;
     }
 
     .logo-text {

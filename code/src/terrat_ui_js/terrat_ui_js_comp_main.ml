@@ -90,62 +90,67 @@ let run' state =
              ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "content") ]
              [
                div
-                 ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "header") ]
+                 ~at:At.[ class' (Jstr.v "header-outer") ]
                  [
                    div
-                     [
-                       img
-                         ~at:
-                           Brtl_js2.Brr.At.
-                             [ src (Jstr.v "/assets/logo.png"); class' (Jstr.v "h-16") ]
-                         ();
-                     ];
-                   div
-                     ~at:At.[ class' (Jstr.v "right") ]
+                     ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "header") ]
                      [
                        div
-                         ~at:At.[ class' (Jstr.v "links") ]
+                         ~at:At.[ class' (Jstr.v "left") ]
                          [
+                           img
+                             ~at:
+                               Brtl_js2.Brr.At.
+                                 [ src (Jstr.v "/assets/logo.png"); class' (Jstr.v "h-9") ]
+                             ();
                            div
+                             ~at:At.[ class' (Jstr.v "links") ]
                              [
-                               a
-                                 ~at:
-                                   At.
-                                     [
-                                       v (Jstr.v "target") (Jstr.v "_blank");
-                                       href (Jstr.v "https://terrateam.io/docs");
-                                     ]
-                                 [ txt' "Docs" ];
-                             ];
-                           div
-                             [
-                               a
-                                 ~at:
-                                   At.
-                                     [
-                                       v (Jstr.v "target") (Jstr.v "_blank");
-                                       href (Jstr.v "https://terrateam.io/support");
-                                     ]
-                                 [ txt' "Support" ];
-                             ];
-                           div
-                             [
-                               a
-                                 ~at:
-                                   At.
-                                     [
-                                       v (Jstr.v "target") (Jstr.v "_blank");
-                                       href (Jstr.v "https://terrateam.io/slack");
-                                     ]
-                                 [ txt' "Slack" ];
+                               div
+                                 [
+                                   a
+                                     ~at:
+                                       At.
+                                         [
+                                           v (Jstr.v "target") (Jstr.v "_blank");
+                                           href (Jstr.v "https://terrateam.io/docs");
+                                         ]
+                                     [ txt' "Docs" ];
+                                 ];
+                               div
+                                 [
+                                   a
+                                     ~at:
+                                       At.
+                                         [
+                                           v (Jstr.v "target") (Jstr.v "_blank");
+                                           href (Jstr.v "https://terrateam.io/support");
+                                         ]
+                                     [ txt' "Support" ];
+                                 ];
+                               div
+                                 [
+                                   a
+                                     ~at:
+                                       At.
+                                         [
+                                           v (Jstr.v "target") (Jstr.v "_blank");
+                                           href (Jstr.v "https://terrateam.io/slack");
+                                         ]
+                                     [ txt' "Slack" ];
+                                 ];
                              ];
                          ];
                        div
-                         ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "installation") ]
-                         [ span [ txt' "Org:" ]; installation_sel_el ];
-                       div
-                         ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "avatar") ]
-                         [ img ~at:Brtl_js2.Brr.At.[ src (Jstr.v avatar_url) ] () ];
+                         ~at:At.[ class' (Jstr.v "right") ]
+                         [
+                           div
+                             ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "installation") ]
+                             [ installation_sel_el ];
+                           div
+                             ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "avatar") ]
+                             [ img ~at:Brtl_js2.Brr.At.[ src (Jstr.v avatar_url) ] () ];
+                         ];
                      ];
                  ];
                nav_bar_div;
