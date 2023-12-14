@@ -21,7 +21,7 @@
     }
 
     button {
-        @apply text-slate-300;
+        @apply text-white;
     }
 
     a {
@@ -255,9 +255,9 @@
     .pull-requests .page .item .details-link button {
         @apply flex flex-row lg:flex-col place-content-center items-center justify-items-center;
         @apply w-full p-2;
-        @apply rounded bg-blue-700;
-        @apply text-2xl;
+        @apply rounded bg-blue-800;
         @apply flex flex-row;
+        @apply font-semibold;
     }
 
     .page-nav {
@@ -266,9 +266,9 @@
 
     .page-nav button {
         @apply flex flex-row justify-center items-center justify-items-center;
-        @apply rounded bg-blue-700;
-        @apply text-xl;
+        @apply rounded bg-blue-800;
         @apply w-24 py-1;
+        @apply font-semibold;
     }
 
     .page-nav button.ui-disabled {
