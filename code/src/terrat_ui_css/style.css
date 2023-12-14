@@ -260,7 +260,7 @@
         @apply flex flex-row lg:flex-col place-content-center items-center justify-items-center;
         @apply w-full h-full p-2;
         @apply rounded-b-md lg:rounded-b-none lg:rounded-r-md bg-blue-700;
-        @apply font-semibold text-2xl;
+        @apply text-2xl;
     }
 
     .page-nav {
@@ -270,12 +270,8 @@
     .page-nav button {
         @apply flex flex-row justify-center items-center justify-items-center;
         @apply rounded bg-blue-700;
-        @apply font-semibold text-xl;
+        @apply text-xl;
         @apply w-24 py-1;
-    }
-
-    .page-nav button.ui-active.refresh > * {
-        animation: spin 3s linear infinite;
     }
 
     .page-nav button.ui-disabled {

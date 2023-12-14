@@ -54,7 +54,7 @@ module Make (S : S) = struct
     let refresh_btn =
       Brtl_js2.Kit.Ui.Button.v'
         ~class':(Jstr.v "refresh")
-        ~active:(Brtl_js2.Note.S.map ~eq:( = ) (fun v -> v > 0) refresh_active)
+        ~enabled:(Brtl_js2.Note.S.map ~eq:( = ) (fun v -> v = 0) refresh_active)
         ~action:(fun () ->
           Abb_js_future_combinators.with_finally
             (fun () ->
@@ -75,14 +75,7 @@ module Make (S : S) = struct
             ~finally:(fun () ->
               set_refresh_active (Brtl_js2.Note.S.value refresh_active - 1);
               Abb_js.Future.return ()))
-        (Brtl_js2.Note.S.const
-           ~eq:( == )
-           Brtl_js2.Brr.El.
-             [
-               span
-                 ~at:At.[ class' (Jstr.v "material-icons") ]
-                 [ span ~at:At.[ class' (Jstr.v "text-2xl") ] [ txt' "refresh" ] ];
-             ])
+        (Brtl_js2.Note.S.const ~eq:( == ) Brtl_js2.Brr.El.[ txt' "Refresh" ])
         ()
     in
     Abb_js.Future.fork (refresh_page refresh_active set_refresh_active page set_res_page)
