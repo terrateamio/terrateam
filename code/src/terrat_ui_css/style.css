@@ -1,35 +1,27 @@
-:root {
-     --color-primary: 203, 213, 225;
-     --color-secondary: 100, 116, 139;
-     --color-success: 34, 197, 94;
-     --color-fail: 239, 68, 68;
-     --color-heading: 255, 98, 31;
-     --color-subheading: 214, 82, 26;
-     --color-action: 37, 99, 235;
-     --color-danger: 181, 31, 31;
-     --color-disabled: 31, 41, 55;
-}
+/* :root { */
+/*      --color-primary: 203, 213, 225; */
+/*      --color-secondary: 100, 116, 139; */
+/*      --color-success: 34, 197, 94; */
+/*      --color-fail: 239, 68, 68; */
+/*      --color-heading: 255, 98, 31; */
+/*      --color-subheading: 214, 82, 26; */
+/*      --color-action: 37, 99, 235; */
+/*      --color-danger: 181, 31, 31; */
+/*      --color-disabled: 31, 41, 55; */
+/* } */
 
 @tailwind base;
 
 @tailwind components;
 
 @layer components {
-    .bg-color {
-        background-color: #0d171a;
-    }
-
-    .bg-color-light {
-        background-color: #142429;
-    }
-
-    .bg-color-attention {
-        background-color: #25434d;
-    }
-
     body {
-        @apply bg-color h-screen w-full text-primary flex flex-col overflow-y-scroll;
+        @apply bg-white h-screen w-full text-black flex flex-col overflow-y-scroll;
         @apply font-sans;
+    }
+
+    button {
+        @apply text-slate-300;
     }
 
     a {
@@ -41,7 +33,7 @@
     }
 
     select {
-        @apply h-10 w-full lg:w-64 px-2 pb-2 pt-1 rounded border border-gray-500 bg-color-light text-lg;
+        @apply h-10 w-full lg:w-64 px-2 pb-2 pt-1 rounded border border-gray-500 bg-slate-100 text-lg;
         @apply overflow-hidden text-ellipsis;
     }
 
@@ -69,59 +61,56 @@
     }
 
     .content {
-        @apply flex flex-row;
-    }
-
-    .sidebar {
-        @apply sticky top-0;
-        @apply h-screen pt-2;
-        @apply flex flex-col justify-between justify-items-center gap-y-4 max-w-min;
-        @apply border-r border-slate-600;
-    }
-
-    .sidebar .avatar {
-        @apply mx-auto pb-4;
-    }
-
-    .sidebar .avatar > img {
-        @apply rounded-full border-2 border-gray-400 h-14 w-14;
+        @apply flex flex-col;
     }
 
     .nav-bar {
-        @apply flex flex-col gap-y-6 py-4 justify-items-center;
+        @apply flex flex-row justify-center gap-x-6 py-4;
+        @apply border-b border-slate-300;
+        @apply mx-8;
+        @apply text-xl;
     }
 
     .nav-bar > div {
-        @apply cursor-pointer mx-auto;
-        @apply border-r-8;
-        @apply hover:border-gray-700;
-        border-color: #0d171a;
+        @apply cursor-pointer;
+        @apply text-slate-700;
+        @apply hover:border-b-8 hover:border-slate-300;
     }
 
     .nav-bar > div.selected {
-        @apply border-r-8 border-blue-700;
-    }
-
-    .main {
-        @apply flex flex-col flex-grow;
+        @apply text-black font-semibold;
+        @apply border-b-8 border-black;
     }
 
     .header {
         @apply sticky top-0;
         @apply flex flex-row;
+        @apply justify-between;
         @apply gap-x-2;
         @apply py-4 px-4;
-        @apply bg-color;
-        @apply border-b border-slate-600;
+        @apply bg-white;
     }
 
-    .header .installation {
+    .header .right {
+        @apply flex flex-row justify-end gap-x-6;
+    }
+
+    .header .right .links {
+        @apply flex flex-row gap-x-6 justify-between items-center;
+        @apply text-xl;
+    }
+
+    .header .right .installation {
         @apply w-full lg:w-auto lg:ml-auto;
         @apply flex flex-row gap-x-4 items-center;
     }
 
-    .header .installation > span {
+    .header .right .installation > span {
         @apply text-xl font-semibold;
+    }
+
+    .header .right .avatar > img {
+        @apply rounded-full border-2 border-gray-400 h-14 w-14;
     }
 
     .logo-text {
@@ -131,12 +120,6 @@
     .main-content {
         @apply flex flex-col;
     }
-
-    .main .header .title {
-        @apply text-white;
-        @apply font-bold text-4xl;
-    }
-
 
     .page .v-pair {
         @apply grid grid-cols-1 grid-rows-2;
@@ -165,7 +148,7 @@
 
     .work-manifests .page .item {
         @apply p-4;
-        @apply bg-gray-800;
+        @apply bg-slate-100;
         @apply rounded-lg border border-gray-400;
         @apply flex flex-col lg:flex-row gap-2;
     }
@@ -224,7 +207,7 @@
     }
 
     .pull-requests .page .item {
-        @apply bg-gray-800;
+        @apply bg-slate-100;
         @apply rounded-lg border border-gray-400;
         @apply flex flex-col lg:flex-row gap-x-2 items-stretch;
     }
@@ -253,14 +236,15 @@
     }
 
     .pull-requests .page .item .details-link {
-        @apply w-full lg:w-24;
+        @apply my-auto p-2;
     }
 
     .pull-requests .page .item .details-link button {
         @apply flex flex-row lg:flex-col place-content-center items-center justify-items-center;
-        @apply w-full h-full p-2;
-        @apply rounded-b-md lg:rounded-b-none lg:rounded-r-md bg-blue-700;
+        @apply w-full p-2;
+        @apply rounded bg-blue-700;
         @apply text-2xl;
+        @apply flex flex-row;
     }
 
     .page-nav {

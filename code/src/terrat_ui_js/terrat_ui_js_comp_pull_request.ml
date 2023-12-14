@@ -52,7 +52,13 @@ let render_details_btn pr_send pr =
            ~action:(fun () ->
              pr_send pr;
              Abb_js.Future.return ())
-           (Brtl_js2.Note.S.const ~eq:( == ) Brtl_js2.Brr.El.[ txt' "Details" ])
+           (Brtl_js2.Note.S.const
+              ~eq:( == )
+              Brtl_js2.Brr.El.
+                [
+                  div [ txt' "Details" ];
+                  div ~at:At.[ class' (Jstr.v "material-icons") ] [ txt' "chevron_right" ];
+                ])
            ());
     ]
 

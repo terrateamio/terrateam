@@ -22,12 +22,6 @@ let installation_sel state =
        sel)
 
 let nav_bar state =
-  let material_icon name =
-    Brtl_js2.Brr.El.(
-      div
-        ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "material-icons") ]
-        [ span ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "text-6xl") ] [ txt' name ] ])
-  in
   let consumed_path = Brtl_js2.State.consumed_path state in
   let nav_bar_div = Brtl_js2.Brr.(El.div ~at:At.[ class' (Jstr.v "nav-bar") ] []) in
   Brtl_js2.R.Elr.def_children
@@ -37,10 +31,10 @@ let nav_bar state =
        ~choices:
          Brtl_js2_nav_bar.Choice.
            [
-             create ~value:`Main [ material_icon "home" ] consumed_path;
+             create ~value:`Main Brtl_js2.Brr.El.[ txt' "Get Started" ] consumed_path;
              create
                ~value:`Pull_requests
-               Brtl_js2.Brr.El.[ img ~at:At.[ src (Jstr.v "/assets/pull-request-nav.svg") ] () ]
+               Brtl_js2.Brr.El.[ txt' "Pull Requests" ]
                (consumed_path ^ "/pull-requests");
            ]
        Brtl_js2_rtng.
@@ -98,58 +92,73 @@ let run' state =
              ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "content") ]
              [
                div
-                 ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "sidebar") ]
+                 ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "header") ]
                  [
                    div
-                     ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "sidebar-top") ]
                      [
-                       div
-                         [
-                           img
-                             ~at:
-                               Brtl_js2.Brr.At.
-                                 [ src (Jstr.v "/assets/logo.png"); class' (Jstr.v "h-16") ]
-                             ();
-                         ];
-                       nav_bar_div;
+                       img
+                         ~at:
+                           Brtl_js2.Brr.At.
+                             [ src (Jstr.v "/assets/logo.png"); class' (Jstr.v "h-16") ]
+                         ();
                      ];
                    div
-                     ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "avatar") ]
-                     [ img ~at:Brtl_js2.Brr.At.[ src (Jstr.v avatar_url) ] () ];
-                 ];
-               div
-                 ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "main") ]
-                 [
-                   div
-                     ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "header") ]
+                     ~at:At.[ class' (Jstr.v "right") ]
                      [
-                       Brtl_js2.Router_output.create
-                         state
-                         (div ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "title") ] [])
-                         Brtl_js2_rtng.
-                           [
-                             (Rt.pull_requests consumed_path
-                             --> fun _ ->
-                             Abb_js.Future.return
-                               (Brtl_js2.Output.const [ Brtl_js2.Brr.El.txt' "Pull Requests" ]));
-                             (Rt.main consumed_path
-                             --> fun _ ->
-                             Abb_js.Future.return
-                               (Brtl_js2.Output.const [ Brtl_js2.Brr.El.txt' "Get Started" ]));
-                           ];
+                       div
+                         ~at:At.[ class' (Jstr.v "links") ]
+                         [
+                           div
+                             [
+                               a
+                                 ~at:
+                                   At.
+                                     [
+                                       v (Jstr.v "target") (Jstr.v "_blank");
+                                       href (Jstr.v "https://terrateam.io/docs");
+                                     ]
+                                 [ txt' "Docs" ];
+                             ];
+                           div
+                             [
+                               a
+                                 ~at:
+                                   At.
+                                     [
+                                       v (Jstr.v "target") (Jstr.v "_blank");
+                                       href (Jstr.v "https://terrateam.io/support");
+                                     ]
+                                 [ txt' "Support" ];
+                             ];
+                           div
+                             [
+                               a
+                                 ~at:
+                                   At.
+                                     [
+                                       v (Jstr.v "target") (Jstr.v "_blank");
+                                       href (Jstr.v "https://terrateam.io/slack");
+                                     ]
+                                 [ txt' "Slack" ];
+                             ];
+                         ];
                        div
                          ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "installation") ]
                          [ span [ txt' "Org:" ]; installation_sel_el ];
+                       div
+                         ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "avatar") ]
+                         [ img ~at:Brtl_js2.Brr.At.[ src (Jstr.v avatar_url) ] () ];
                      ];
-                   Brtl_js2.Router_output.create
-                     state
-                     (div ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "main-content") ] [])
-                     Brtl_js2_rtng.
-                       [
-                         Rt.pull_requests consumed_path --> pull_requests;
-                         Rt.main consumed_path --> main;
-                       ];
                  ];
+               nav_bar_div;
+               Brtl_js2.Router_output.create
+                 state
+                 (div ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "main-content") ] [])
+                 Brtl_js2_rtng.
+                   [
+                     Rt.pull_requests consumed_path --> pull_requests;
+                     Rt.main consumed_path --> main;
+                   ];
              ];
          ])
 

@@ -21,15 +21,15 @@ module.exports = {
         '3xl': '1800px'
       },
       colors: {
-        primary: makeColor('color-primary'),
-        secondary: makeColor('color-secondary'),
-        success: makeColor('color-success'),
-        fail: makeColor('color-fail'),
-        heading: makeColor('color-heading'),
-        subheading: makeColor('color-subheading'),
-        action: makeColor('color-action'),
-        danger: makeColor('color-danger'),
-        disabled: makeColor('color-disabled')
+        // primary: makeColor('color-primary'),
+        // secondary: makeColor('color-secondary'),
+        // success: makeColor('color-success'),
+        // fail: makeColor('color-fail'),
+        // heading: makeColor('color-heading'),
+        // subheading: makeColor('color-subheading'),
+        // action: makeColor('color-action'),
+        // danger: makeColor('color-danger'),
+        // disabled: makeColor('color-disabled')
       },
       keyframes: {
         'fade-in': {
