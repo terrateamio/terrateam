@@ -2,9 +2,7 @@ type ('s, 'f) t = ((string, 's) Brtl_ctx.t, (string, 'f) Brtl_ctx.t) result
 
 let on_failure ctx =
   match Brtl_ctx.response ctx with
-  | `Forbidden ->
-      Logs.err (fun m -> m "%s : Failed permissions" (Brtl_ctx.token ctx));
-      Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx
+  | `Forbidden -> Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx
   | `Location uri ->
       let headers = Cohttp.Header.of_list [ ("location", Uri.to_string uri) ] in
       Brtl_ctx.set_response (Brtl_rspnc.create ~headers ~status:`See_other "") ctx
