@@ -17,5 +17,5 @@ module type S = sig
 end
 
 module Make (S : S) : sig
-  val run : page option -> S.state Brtl_js2.Comp.t
+  val run : S.state Brtl_js2.Comp.t
 end

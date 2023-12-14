@@ -42,7 +42,20 @@ module Make (S : S) = struct
           log [ Jstr.v "Failed to load pull requests"; Jstr.v (Terrat_ui_js_client.show_err err) ]);
         refresh_page refresh_active set_refresh_active page set_res_page
 
-  let run page state =
+  let page_comp refresh_active set_refresh_active res_page set_res_page page_ref page state =
+    let open Abb_js.Future.Infix_monad in
+    page_ref := page;
+    Abb_js.Future.fork (refresh_page refresh_active set_refresh_active page set_res_page)
+    >>= fun refresh_fut ->
+    let page =
+      Brtl_js2.Note.S.map ~eq:(CCList.equal S.equal) Terrat_ui_js_client.Page.page res_page
+    in
+    Abb_js.Future.return
+      (Brtl_js2.Output.render
+         ~cleanup:(fun () -> Abb_js.Future.abort refresh_fut)
+         (Brtl_js2.Note.S.map ~eq:( == ) (fun elts -> CCList.map (S.render_elt state) elts) page))
+
+  let run state =
     let open Abb_js.Future.Infix_monad in
     let consumed_path = Brtl_js2.State.consumed_path state in
     let res_page, set_res_page =
@@ -50,6 +63,7 @@ module Make (S : S) = struct
         ~eq:(Terrat_ui_js_client.Page.equal S.equal)
         (Terrat_ui_js_client.Page.empty ())
     in
+    let page_ref = ref None in
     let refresh_active, set_refresh_active = Brtl_js2.Note.S.create ~eq:( = ) 0 in
     let refresh_btn =
       Brtl_js2.Kit.Ui.Button.v'
@@ -59,7 +73,7 @@ module Make (S : S) = struct
           Abb_js_future_combinators.with_finally
             (fun () ->
               set_refresh_active (Brtl_js2.Note.S.value refresh_active + 1);
-              S.fetch ?page ()
+              S.fetch ?page:!page_ref ()
               >>= function
               | Ok res_page ->
                   set_res_page res_page;
@@ -77,11 +91,6 @@ module Make (S : S) = struct
               Abb_js.Future.return ()))
         (Brtl_js2.Note.S.const ~eq:( == ) Brtl_js2.Brr.El.[ txt' "Refresh" ])
         ()
-    in
-    Abb_js.Future.fork (refresh_page refresh_active set_refresh_active page set_res_page)
-    >>= fun refresh_fut ->
-    let page =
-      Brtl_js2.Note.S.map ~eq:(CCList.equal S.equal) Terrat_ui_js_client.Page.page res_page
     in
     let prev = Brtl_js2.Note.S.map ~eq:page_equal Terrat_ui_js_client.Page.prev res_page in
     let next = Brtl_js2.Note.S.map ~eq:page_equal Terrat_ui_js_client.Page.next res_page in
@@ -116,25 +125,30 @@ module Make (S : S) = struct
         ()
     in
     let el = Brtl_js2.Brr.El.div ~at:At.[ class' (Jstr.v "page") ] [] in
-    Brtl_js2.R.Elr.def_children
-      el
-      (Brtl_js2.Note.S.map ~eq:( == ) (fun elts -> CCList.map (S.render_elt state) elts) page);
+    let page_rt () =
+      Brtl_js2_rtng.(root consumed_path /? Query.(option (array (string S.page_param))))
+    in
     let page_el =
-      Brtl_js2.R.Elr.with_rem
-        (fun () -> Abb_js.Future.abort refresh_fut)
-        Brtl_js2.Brr.El.(
-          div
-            ~at:At.[ class' (Jstr.v S.class') ]
-            [
-              div
-                ~at:At.[ class' (Jstr.v "page-nav") ]
+      Brtl_js2.Brr.El.(
+        div
+          ~at:At.[ class' (Jstr.v S.class') ]
+          [
+            div
+              ~at:At.[ class' (Jstr.v "page-nav") ]
+              [
+                div [ Brtl_js2.Kit.Ui.Button.el refresh_btn ];
+                div [ Brtl_js2.Kit.Ui.Button.el prev_btn ];
+                div [ Brtl_js2.Kit.Ui.Button.el next_btn ];
+              ];
+            Brtl_js2.Router_output.create
+              state
+              el
+              Brtl_js2_rtng.
                 [
-                  div [ Brtl_js2.Kit.Ui.Button.el refresh_btn ];
-                  div [ Brtl_js2.Kit.Ui.Button.el prev_btn ];
-                  div [ Brtl_js2.Kit.Ui.Button.el next_btn ];
+                  page_rt ()
+                  --> page_comp refresh_active set_refresh_active res_page set_res_page page_ref;
                 ];
-              el;
-            ])
+          ])
     in
     Abb_js.Future.return (Brtl_js2.Output.const [ page_el ])
 end

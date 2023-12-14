@@ -32,7 +32,7 @@ let run pull_number state =
                    Brtl_js2.Router_output.const
                      state
                      (div [])
-                     (Terrat_ui_js_comp_work_manifests.run (Some `Asc) (Some pull_number) None);
+                     (Terrat_ui_js_comp_work_manifests.run (Some `Asc) (Some pull_number));
                  ])
       | [] ->
           Brtl_js2.Brr.Console.(log [ Jstr.v "No matching pull request found" ]);

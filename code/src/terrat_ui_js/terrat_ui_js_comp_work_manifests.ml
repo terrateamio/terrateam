@@ -173,7 +173,7 @@ let render_work_manifest wm state =
   | Wm.Installation_work_manifest_drift wm -> render_work_manifest_drift wm
   | Wm.Installation_work_manifest_pull_request wm -> render_work_manifest_pull_request wm
 
-let run dir pull_number page state =
+let run dir pull_number state =
   let app_state = Brtl_js2.State.app_state state in
   let client = Terrat_ui_js_state.client app_state in
   let installation = Terrat_ui_js_state.selected_installation app_state in
@@ -202,4 +202,4 @@ let run dir pull_number page state =
 
     let equal = Wm.equal
   end) in
-  Page.run page state
+  Page.run state

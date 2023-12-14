@@ -45,9 +45,7 @@ let nav_bar state =
 let pull_requests state =
   let consumed_path = Brtl_js2.State.consumed_path state in
   let pull_request_details () = Brtl_js2_rtng.(root consumed_path /% Path.int) in
-  let pull_requests () =
-    Brtl_js2_rtng.(root consumed_path /? Query.(option (array (string "page"))))
-  in
+  let pull_requests () = Brtl_js2_rtng.(root consumed_path) in
   let pr_event, pr_send = Brtl_js2.Note.E.create () in
   let logr =
     Brtl_js2.Note.E.log pr_event (fun pr ->

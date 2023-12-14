@@ -1,9 +1,6 @@
 module At = Brtl_js2.Brr.At
 
-let run
-    (pr_send : Terrat_api_components.Installation_pull_request.t Brtl_js2.Note.E.send)
-    page
-    state =
+let run (pr_send : Terrat_api_components.Installation_pull_request.t Brtl_js2.Note.E.send) state =
   let app_state = Brtl_js2.State.app_state state in
   let client = Terrat_ui_js_state.client app_state in
   let installation = Terrat_ui_js_state.selected_installation app_state in
@@ -27,4 +24,4 @@ let run
 
     let equal = Pr.equal
   end) in
-  Page.run page state
+  Page.run state
