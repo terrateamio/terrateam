@@ -55,6 +55,13 @@ module Make (S : S) = struct
          ~cleanup:(fun () -> Abb_js.Future.abort refresh_fut)
          (Brtl_js2.Note.S.map ~eq:( == ) (fun elts -> CCList.map (S.render_elt state) elts) page))
 
+  (* A standard pagination view.  The implementation might seem a little
+     backwards: the inner page component is the one that gets the page from the
+     URL and then elements outside of the page evaluate the results of the page.
+     This is so that on page change, only the page view is redrawn.  Everything
+     else is modified through signals from that component.  If the outer most
+     component used the URL to get the page, the entire page component would
+     be redrawn on every page change, which is not a pleasant UX. *)
   let run state =
     let open Abb_js.Future.Infix_monad in
     let consumed_path = Brtl_js2.State.consumed_path state in
@@ -63,6 +70,9 @@ module Make (S : S) = struct
         ~eq:(Terrat_ui_js_client.Page.equal S.equal)
         (Terrat_ui_js_client.Page.empty ())
     in
+    (* Don't know the page until the inner component is loaded, so make a ref
+       that will be set when it is evaluated.  We need the page for the refresh
+       button. *)
     let page_ref = ref None in
     let refresh_active, set_refresh_active = Brtl_js2.Note.S.create ~eq:( = ) 0 in
     let refresh_btn =
