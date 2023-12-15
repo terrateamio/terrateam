@@ -37,6 +37,11 @@
         @apply overflow-hidden text-ellipsis;
     }
 
+    .loading {
+        @apply mx-auto my-auto;
+        @apply animate-spin-slow;
+    }
+
     .animate-spin-slow {
         @apply animate-spin;
         animation: spin 5s linear infinite;
@@ -69,7 +74,7 @@
         @apply border-b border-slate-300;
         @apply mx-8 my-8;
         @apply text-xl;
-        @apply w-2/3 mx-auto;
+        @apply w-full lg:w-2/3 mx-auto;
     }
 
     .nav-bar > div {
@@ -94,7 +99,7 @@
         @apply flex flex-row;
         @apply justify-between items-center;
         @apply gap-x-2;
-        @apply w-2/3 mx-auto;
+        @apply w-full lg:w-2/3 mx-auto;
     }
 
     .header .left {
@@ -132,7 +137,7 @@
     }
 
     .main-content {
-        @apply flex flex-col;
+        @apply flex flex-col w-full lg:w-2/3 mx-auto;
     }
 
     .page .v-pair {
@@ -210,7 +215,7 @@
     }
 
     .pull-requests {
-        @apply w-full lg:w-2/3 mx-auto;
+        @apply mx-auto;
         @apply flex flex-col;
         @apply py-2;
     }

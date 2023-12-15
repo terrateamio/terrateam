@@ -165,32 +165,44 @@ let run' state =
              ];
          ])
 
+let ph_loading =
+  Brtl_js2.Brr.El.
+    [
+      div
+        ~at:At.[ class' (Jstr.v "loading") ]
+        [ span ~at:At.[ class' (Jstr.v "material-icons") ] [ txt' "autorenew" ] ];
+    ]
+
 let run installation_id state =
   let open Abb_js.Future.Infix_monad in
   let client = Brtl_js2.State.app_state state in
   Terrat_ui_js_client.whoami client
   >>= function
-  | Ok (Some user) -> (
+  | Ok (Some user) ->
       let module I = Terrat_api_components.Installation in
       let module R = Terrat_api_user.List_installations.Responses.OK in
-      Terrat_ui_js_client.installations client
-      >>= function
-      | Ok R.{ installations = []; _ } -> assert false
-      | Ok R.{ installations; _ } -> (
-          match
-            CCList.find_opt (fun I.{ id; _ } -> CCString.equal id installation_id) installations
-          with
-          | Some selected_installation ->
-              let installations =
-                Brtl_js2.Note.S.const
-                  ~eq:(CCList.equal Terrat_api_components.Installation.equal)
-                  installations
-              in
-              let app_state =
-                Terrat_ui_js_state.create ~client ~user ~installations ~selected_installation ()
-              in
-              run' (Brtl_js2.State.with_app_state app_state state)
-          | None -> Abb_js.Future.return (Brtl_js2.Output.redirect "/"))
-      | Error _ -> failwith "nyi4")
+      Brtl_js2.Ph.create
+        ph_loading
+        (fun state ->
+          Terrat_ui_js_client.installations client
+          >>= function
+          | Ok R.{ installations = []; _ } -> assert false
+          | Ok R.{ installations; _ } -> (
+              match
+                CCList.find_opt (fun I.{ id; _ } -> CCString.equal id installation_id) installations
+              with
+              | Some selected_installation ->
+                  let installations =
+                    Brtl_js2.Note.S.const
+                      ~eq:(CCList.equal Terrat_api_components.Installation.equal)
+                      installations
+                  in
+                  let app_state =
+                    Terrat_ui_js_state.create ~client ~user ~installations ~selected_installation ()
+                  in
+                  run' (Brtl_js2.State.with_app_state app_state state)
+              | None -> Abb_js.Future.return (Brtl_js2.Output.redirect "/"))
+          | Error _ -> failwith "nyi4")
+        state
   | Ok None -> Abb_js.Future.return (Brtl_js2.Output.redirect "/login")
   | Error _ -> assert false
