@@ -144,4 +144,10 @@ module Router_output : sig
   val const : 'a State.t -> Brr.El.t -> 'a Comp.t -> Brr.El.t
 end
 
+(** A placeholder.  When rendering a component, this allows specifying a
+    placeholder that is replaced once the component is rendered. *)
+module Ph : sig
+  val create : Brr.El.t list -> 'a Comp.t -> 'a Comp.t
+end
+
 val main : 'a -> ('a State.t -> unit Abb_js.Future.t) -> unit

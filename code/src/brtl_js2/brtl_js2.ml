@@ -380,6 +380,32 @@ module Router_output = struct
     create state el Brtl_js2_rtng.[ r () --> comp ]
 end
 
+module Ph = struct
+  let handle_output cleanup_ref set_els state = function
+    | Output.(Render { cleanup; els }) ->
+        let logr = Note.S.log els set_els in
+        (cleanup_ref :=
+           fun () ->
+             Note.Logr.destroy logr;
+             cleanup ());
+        Abb_js.Future.return ()
+    | Output.Redirect path ->
+        Router.navigate (State.router state) path;
+        Abb_js.Future.return ()
+    | Output.Navigate uri ->
+        Brr.Window.set_location Brr.G.window uri;
+        Abb_js.Future.return ()
+
+  let create ph comp state =
+    let open Abb_js.Future.Infix_monad in
+    let els, set_els = Note.S.create ~eq:( == ) ph in
+    let cleanup_ref = ref (fun () -> Abb_js.Future.return ()) in
+    Abb_js.Future.fork (comp state >>= handle_output cleanup_ref set_els state)
+    >>= fun fut ->
+    (cleanup_ref := fun () -> Abb_js.Future.abort fut);
+    Abb_js.Future.return (Output.render ~cleanup:(fun () -> !cleanup_ref ()) els)
+end
+
 let main app_state f =
   Abb_js.Future.run
     (let open Abb_fut_js.Infix_monad in
