@@ -1,5 +1,5 @@
 val create : Terrat_storage.t -> Brtl_mw.Mw.t
-val create_user_session : Terrat_api_components.User.t -> ('a, 'b) Brtl_ctx.t -> ('a, 'b) Brtl_ctx.t
+val create_user_session : Terrat_user.t -> ('a, 'b) Brtl_ctx.t -> ('a, 'b) Brtl_ctx.t
 
 val rem_session :
   Terrat_storage.t ->
@@ -8,5 +8,4 @@ val rem_session :
 
 val with_session :
   (string, 'a) Brtl_ctx.t ->
-  (Terrat_api_components.User.t, (string, [> `Location of Uri.t | `Forbidden ]) Brtl_ctx.t) result
-  Abb.Future.t
+  (Terrat_user.t, (string, [> `Location of Uri.t | `Forbidden ]) Brtl_ctx.t) result Abb.Future.t

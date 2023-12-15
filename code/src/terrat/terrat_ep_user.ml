@@ -19,9 +19,6 @@ module Installations = struct
 
   let get' config storage user =
     let open Abbs_future_combinators.Infix_result_monad in
-    let user_id =
-      CCOption.get_exn_or "terrat_ep_user.get'" (Uuidm.of_string user.Terrat_api_components.User.id)
-    in
     Terrat_github_user.get_token config storage user
     >>= fun token ->
     Terrat_github.with_client config (`Bearer token) Terrat_github.get_user_installations
@@ -33,7 +30,7 @@ module Installations = struct
         Pgsql_io.Prepared_stmt.execute
           db
           (Sql.insert_user_installations ())
-          (CCList.replicate (CCList.length installations) user_id)
+          (CCList.replicate (CCList.length installations) (Terrat_user.id user))
           (CCList.map (fun I.{ primary = Primary.{ id; _ }; _ } -> Int64.of_int id) installations)
         >>= fun () ->
         Pgsql_io.Prepared_stmt.fetch

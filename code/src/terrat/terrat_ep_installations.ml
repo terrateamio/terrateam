@@ -206,10 +206,7 @@ module Work_manifests = struct
         let query =
           Page.
             {
-              user =
-                CCOption.get_exn_or
-                  "uuid of user"
-                  (Uuidm.of_string user.Terrat_api_components.User.id);
+              user = Terrat_user.id user;
               pull_request = pr_opt;
               storage;
               installation_id;
@@ -366,16 +363,7 @@ module Pull_requests = struct
         let open Abb.Future.Infix_monad in
         let query =
           Page.
-            {
-              user =
-                CCOption.get_exn_or
-                  "uuid of user"
-                  (Uuidm.of_string user.Terrat_api_components.User.id);
-              pull_request = pr_opt;
-              storage;
-              installation_id;
-              limit;
-            }
+            { user = Terrat_user.id user; pull_request = pr_opt; storage; installation_id; limit }
         in
         Paginate.run ?page ~page_param:"page" query ctx >>= fun ctx -> Abb.Future.return (Ok ctx))
 end

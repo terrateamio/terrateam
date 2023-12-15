@@ -25,9 +25,7 @@ module Sql = struct
     Pgsql_io.Typed_sql.(sql /^ "delete from user_sessions where token = $token" /% Var.uuid "token")
 end
 
-let key : Terrat_api_components.User.t Brtl_mw_session.Value.t Hmap.key =
-  Brtl_mw_session.create_key ()
-
+let key : Terrat_user.t Brtl_mw_session.Value.t Hmap.key = Brtl_mw_session.create_key ()
 let cookie_name = "session"
 
 let load storage id =
@@ -39,8 +37,7 @@ let load storage id =
             Pgsql_io.Prepared_stmt.fetch
               db
               (Sql.load ())
-              ~f:(fun avatar_url email id name ->
-                Terrat_api_components.User.{ avatar_url; email; id = Uuidm.to_string id; name })
+              ~f:(fun avatar_url email id name -> Terrat_user.make ?avatar_url ?email ?name ~id ())
               uuid
             >>= function
             | [] -> Abb.Future.return (Ok None)
@@ -73,13 +70,12 @@ let store storage id_opt user ctx =
         |> CCFun.flip Cohttp.Header.get "user-agent"
         |> CCOption.get_or ~default:"Unknown"
       in
-      let user_id = Terrat_api_components.User.(user.id) in
       Pgsql_pool.with_conn storage ~f:(fun db ->
           Pgsql_io.Prepared_stmt.fetch
             db
             (Sql.store ())
             ~f:CCFun.id
-            (CCOption.get_exn_or "terrat_session_store" (Uuidm.of_string user_id))
+            (Terrat_user.id user)
             user_agent)
       >>= function
       | Ok [] -> assert false

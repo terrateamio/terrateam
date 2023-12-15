@@ -73,10 +73,7 @@ let perform_auth config storage code =
                 expiration
                 refresh_expiration
               >>= fun () ->
-              Abb.Future.return
-                (Ok
-                   Terrat_api_components.User.
-                     { id = Uuidm.to_string user_id; email; name; avatar_url = Some avatar_url })))
+              Abb.Future.return (Ok (Terrat_user.make ~id:user_id ?email ?name ~avatar_url ()))))
 
 let get config storage code installation_id_opt ctx =
   let open Abb.Future.Infix_monad in

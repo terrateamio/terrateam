@@ -37,9 +37,7 @@ let get_token config storage user =
         db
         (Sql.select_user_token ())
         ~f:(fun token expired refresh_token -> (token, expired, refresh_token))
-        (CCOption.get_exn_or
-           "Installation.get'"
-           (Uuidm.of_string user.Terrat_api_components.User.id)))
+        (Terrat_user.id user))
   >>= function
   | [] -> assert false
   | (_, true, refresh_token) :: _ ->
@@ -62,9 +60,7 @@ let get_token config storage user =
           Pgsql_io.Prepared_stmt.execute
             db
             (Sql.insert_github_user ())
-            (CCOption.get_exn_or
-               "Terrat_github_user.get_token"
-               (Uuidm.of_string user.Terrat_api_components.User.id))
+            (Terrat_user.id user)
             oauth.Oauth.access_token
             oauth.Oauth.refresh_token
             expiration
