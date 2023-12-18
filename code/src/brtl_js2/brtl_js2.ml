@@ -1,3 +1,15 @@
+module Brr_fut = struct
+  let fut_of_brr_fut fut =
+    let p = Abb_fut_js.Promise.create () in
+    Fut.await fut (fun v -> Abb_fut_js.run (Abb_fut_js.Promise.set p v));
+    Abb_fut_js.Promise.future p
+
+  let brr_fut_of_fut fut =
+    let open Abb_fut_js.Infix_monad in
+    let brr_fut, set = Fut.create () in
+    Abb_fut_js.fork (fut >>| set) >>= fun _ -> Abb_fut_js.return brr_fut
+end
+
 module Note = struct
   type 'a signal = 'a Note.signal
   type 'a event = 'a Note.event
@@ -31,6 +43,19 @@ module Note = struct
 end
 
 module Brr = Brr
+
+module Io = struct
+  include Brr_io
+
+  module Clipboard = struct
+    include Brr_io.Clipboard
+
+    let read t = Brr_fut.fut_of_brr_fut (Brr_io.Clipboard.read t)
+    let read_text t = Brr_fut.fut_of_brr_fut (Brr_io.Clipboard.read_text t)
+    let write t items = Brr_fut.fut_of_brr_fut (Brr_io.Clipboard.write t items)
+    let write_text t string = Brr_fut.fut_of_brr_fut (Brr_io.Clipboard.write_text t string)
+  end
+end
 
 module R = struct
   include Note_brr
@@ -93,18 +118,6 @@ module Kit = struct
         | None -> failwith "button logr"
     end
   end
-end
-
-module Brr_fut = struct
-  let fut_of_brr_fut fut =
-    let p = Abb_fut_js.Promise.create () in
-    Fut.await fut (fun v -> Abb_fut_js.run (Abb_fut_js.Promise.set p v));
-    Abb_fut_js.Promise.future p
-
-  let brr_fut_of_fut fut =
-    let open Abb_fut_js.Infix_monad in
-    let brr_fut, set = Fut.create () in
-    Abb_fut_js.fork (fut >>| set) >>= fun _ -> Abb_fut_js.return brr_fut
 end
 
 module Router = struct

@@ -40,6 +40,20 @@ module Brr :
     with type El.t = Brr.El.t
      and type 'a Ev.t = 'a Brr.Ev.t
      and type At.t = Brr.At.t
+     and type Navigator.t = Brr.Navigator.t
+
+module Io : sig
+  include module type of Brr_io
+
+  module Clipboard : sig
+    include module type of Brr_io.Clipboard
+
+    val read : t -> (Item.t list, Jv.Error.t) result Abb_js.Future.t
+    val read_text : t -> (Jstr.t, Jv.Error.t) result Abb_js.Future.t
+    val write : t -> Item.t list -> (unit, Jv.Error.t) result Abb_js.Future.t
+    val write_text : t -> Jstr.t -> (unit, Jv.Error.t) result Abb_js.Future.t
+  end
+end
 
 module Kit : sig
   include module type of Note_brr_kit
