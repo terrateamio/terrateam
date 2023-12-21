@@ -8,7 +8,10 @@ module Sql = struct
 
   let update_task () =
     Pgsql_io.Typed_sql.(
-      sql /^ "update tasks set state = $state where id = $id" /% Var.uuid "id" /% Var.text "state")
+      sql
+      /^ "update tasks set state = $state, updated_at = now() where id = $id"
+      /% Var.uuid "id"
+      /% Var.text "state")
 end
 
 type 'a t = {
