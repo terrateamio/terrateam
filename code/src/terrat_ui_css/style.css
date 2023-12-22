@@ -49,7 +49,8 @@
     }
 
     .loading {
-        @apply mx-auto my-auto;
+        @apply flex flex-row justify-center items-center;
+        @apply mx-auto;
         @apply animate-spin-slow;
     }
 
