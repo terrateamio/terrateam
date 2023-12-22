@@ -8,12 +8,23 @@ let comp state =
   let module I = Terrat_api_components.Installation in
   let module Repo = Terrat_api_components.Installation_repo in
   let module Page = Terrat_ui_js_comp_page.Make (struct
-    type elt = Repo.t
+    type elt = Repo.t [@@deriving eq]
     type state = Terrat_ui_js_state.t
+    type query = { page : string list option } [@@deriving eq]
 
     let class' = "repos"
-    let page_param = "page"
-    let fetch ?page () = Terrat_ui_js_client.repos ?page ~installation_id:installation.I.id client
+
+    let query =
+      let rt = Brtl_js2_rtng.(root consumed_path /? Query.(option (array (string "page")))) in
+      Brtl_js2_rtng.(rt --> fun page -> { page })
+
+    let make_uri { page } uri =
+      match page with
+      | Some page -> Uri.add_query_param (Uri.remove_query_param uri "page") ("page", page)
+      | None -> Uri.remove_query_param uri "page"
+
+    let set_page page _ = { page }
+    let fetch { page } = Terrat_ui_js_client.repos ?page ~installation_id:installation.I.id client
 
     let wrap_page els =
       let refresh_btn =
@@ -68,7 +79,7 @@ let comp state =
             ];
         ]
 
-    let equal = Repo.equal
+    let query_comp = None
   end) in
   Page.run state
 

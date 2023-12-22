@@ -175,18 +175,30 @@ let render_work_manifest wm state =
 
 let run dir pull_number state =
   let app_state = Brtl_js2.State.app_state state in
+  let consumed_path = Brtl_js2.State.consumed_path state in
   let client = Terrat_ui_js_state.client app_state in
   let installation = Terrat_ui_js_state.selected_installation app_state in
   let module I = Terrat_api_components.Installation in
   let module Wm = Terrat_api_components.Installation_work_manifest in
   let module Page = Terrat_ui_js_comp_page.Make (struct
-    type elt = Wm.t
+    type elt = Wm.t [@@deriving eq]
     type state = Terrat_ui_js_state.t
+    type query = { page : string list option } [@@deriving eq]
 
     let class' = "work-manifests"
-    let page_param = "page"
 
-    let fetch ?page () =
+    let query =
+      let rt = Brtl_js2_rtng.(root consumed_path /? Query.(option (array (string "page")))) in
+      Brtl_js2_rtng.(rt --> fun page -> { page })
+
+    let make_uri { page } uri =
+      match page with
+      | Some page -> Uri.add_query_param (Uri.remove_query_param uri "page") ("page", page)
+      | None -> Uri.remove_query_param uri "page"
+
+    let set_page page _ = { page }
+
+    let fetch { page } =
       Terrat_ui_js_client.work_manifests
         ?page
         ?pull_number
@@ -204,6 +216,6 @@ let run dir pull_number state =
           (render_work_manifest elt);
       ]
 
-    let equal = Wm.equal
+    let query_comp = None
   end) in
   Page.run state
