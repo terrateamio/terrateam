@@ -63,13 +63,8 @@ module Rt = struct
       installation_api_rt ()
       /% Path.int
       / "work-manifests"
-      /? Query.(option (int "pr"))
-      /? Query.(
-           option
-             (ud "d" (function
-                 | "asc" -> Some `Asc
-                 | "desc" -> Some `Desc
-                 | _ -> None)))
+      /? Query.(option (string "q"))
+      /? Query.(option (string "tz"))
       /? Query.(
            option
              (ud_array

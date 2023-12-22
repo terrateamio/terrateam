@@ -181,7 +181,7 @@ let run dir pull_number state =
   let module I = Terrat_api_components.Installation in
   let module Wm = Terrat_api_components.Installation_work_manifest in
   let module Page = Terrat_ui_js_comp_page.Make (struct
-    type fetch_err = Terrat_ui_js_client.err [@@deriving show]
+    type fetch_err = Terrat_ui_js_client.work_manifests_err [@@deriving show]
     type elt = Wm.t [@@deriving eq]
     type state = Terrat_ui_js_state.t
     type query = { page : string list option } [@@deriving eq]
@@ -202,7 +202,7 @@ let run dir pull_number state =
     let fetch { page } =
       Terrat_ui_js_client.work_manifests
         ?page
-        ?pull_number
+        ?q:(CCOption.map (fun pr -> "pr:" ^ Jstr.(to_string (of_int pr))) pull_number)
         ?dir
         ~installation_id:installation.I.id
         client

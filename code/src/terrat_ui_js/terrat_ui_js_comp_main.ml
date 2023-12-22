@@ -4,7 +4,7 @@ module Rt = struct
   let main consumed_path = Brtl_js2_rtng.(root consumed_path)
   let repo_new consumed_path = Brtl_js2_rtng.(root consumed_path / "repos" / "new" /% Path.string)
   let repos_refresh consumed_path = Brtl_js2_rtng.(root consumed_path / "repos" / "refresh")
-  let pull_requests consumed_path = Brtl_js2_rtng.(root consumed_path / "pull-requests")
+  let audit_trail consumed_path = Brtl_js2_rtng.(root consumed_path / "audit-trail")
 end
 
 let installation_sel state =
@@ -35,45 +35,14 @@ let nav_bar state =
            [
              create ~value:`Repos Brtl_js2.Brr.El.[ txt' "Repos" ] consumed_path;
              create
-               ~value:`Pull_requests
-               Brtl_js2.Brr.El.[ txt' "Pull Requests" ]
-               (consumed_path ^ "/pull-requests");
+               ~value:`Audit_trail
+               Brtl_js2.Brr.El.[ txt' "Audit trail" ]
+               (consumed_path ^ "/audit-trail");
            ]
        Brtl_js2_rtng.
-         [ Rt.pull_requests consumed_path --> `Pull_requests; Rt.main consumed_path --> `Repos ]
+         [ Rt.audit_trail consumed_path --> `Audit_trail; Rt.main consumed_path --> `Repos ]
        state);
   nav_bar_div
-
-let pull_requests state =
-  let consumed_path = Brtl_js2.State.consumed_path state in
-  let pull_request_details () = Brtl_js2_rtng.(root consumed_path /% Path.int) in
-  let pull_requests () = Brtl_js2_rtng.(root consumed_path) in
-  let pr_event, pr_send = Brtl_js2.Note.E.create () in
-  let logr =
-    Brtl_js2.Note.E.log pr_event (fun pr ->
-        Brtl_js2.Router.navigate
-          (Brtl_js2.State.router state)
-          (consumed_path
-          ^ "/"
-          ^ CCInt.to_string pr.Terrat_api_components.Installation_pull_request.pull_number))
-  in
-  Abb_js.Future.return
-    (Brtl_js2.Output.const
-       Brtl_js2.Brr.El.
-         [
-           Brtl_js2.Router_output.create
-             state
-             (Brtl_js2.R.Elr.with_rem
-                (fun () ->
-                  Brtl_js2.Note.Logr.destroy' logr;
-                  Abb_js.Future.return ())
-                (div []))
-             Brtl_js2_rtng.
-               [
-                 pull_request_details () --> Terrat_ui_js_comp_pull_request_details.run;
-                 pull_requests () --> Terrat_ui_js_comp_pull_requests_page.run pr_send;
-               ];
-         ])
 
 let run' state =
   let consumed_path = Brtl_js2.State.consumed_path state in
@@ -163,7 +132,7 @@ let run' state =
                  (div ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "main-content") ] [])
                  Brtl_js2_rtng.
                    [
-                     Rt.pull_requests consumed_path --> pull_requests;
+                     Rt.audit_trail consumed_path --> Terrat_ui_js_comp_audit_trail.run;
                      Rt.repo_new consumed_path --> Terrat_ui_js_comp_repo_new.run;
                      Rt.repos_refresh consumed_path --> Terrat_ui_js_comp_repos_refresh.run;
                      Rt.main consumed_path --> Terrat_ui_js_comp_repos.run;

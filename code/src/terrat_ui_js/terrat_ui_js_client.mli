@@ -7,6 +7,12 @@ type err =
   ]
 [@@deriving show]
 
+type work_manifests_err =
+  [ err
+  | `Bad_request of Terrat_api_installations.List_work_manifests.Responses.Bad_request.t
+  ]
+[@@deriving show]
+
 module Page : sig
   type 'a t [@@deriving eq, show]
 
@@ -36,12 +42,14 @@ val installations :
   t -> (Terrat_api_user.List_installations.Responses.OK.t, [> err ]) result Abb_js.Future.t
 
 val work_manifests :
+  ?tz:string ->
   ?page:string list ->
-  ?pull_number:int ->
+  ?q:string ->
   ?dir:[ `Asc | `Desc ] ->
   installation_id:string ->
   t ->
-  (Terrat_api_components.Installation_work_manifest.t Page.t, [> err ]) result Abb_js.Future.t
+  (Terrat_api_components.Installation_work_manifest.t Page.t, [> work_manifests_err ]) result
+  Abb_js.Future.t
 
 val pull_requests :
   ?page:string list ->

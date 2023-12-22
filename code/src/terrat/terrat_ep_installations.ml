@@ -11,6 +11,8 @@ module Work_manifests = struct
              |> CCString.concat "\n")
            (Terrat_files_sql.read fname))
 
+    let replace_where q where = CCString.replace ~sub:"{{where}}" ~by:where q
+
     let dirspaces =
       let module T = struct
         type t = Terrat_api_components.Work_manifest_dirspace.t list [@@deriving yojson]
@@ -20,7 +22,10 @@ module Work_manifests = struct
         %> CCOption.map T.of_yojson
         %> CCOption.flat_map CCResult.to_opt)
 
-    let select_work_manifests () =
+    let set_timeout timeout =
+      Pgsql_io.Typed_sql.(sql /^ Printf.sprintf "set local statement_timeout = '%s'" timeout)
+
+    let select_work_manifests where =
       Pgsql_io.Typed_sql.(
         sql
         // (* id *) Ret.uuid
@@ -42,12 +47,185 @@ module Work_manifests = struct
         // (* branch *) Ret.(option text)
         // (* username *) Ret.(option text)
         // (* run_id *) Ret.(option text)
-        /^ read "select_github_work_manifests_page.sql"
+        /^ replace_where (read "select_github_work_manifests_page.sql") where
         /% Var.uuid "user"
         /% Var.bigint "installation_id"
-        /% Var.(option (bigint "pull_number"))
+        /% Var.text "tz"
+        /% Var.(str_array (text "strings"))
+        /% Var.(array (bigint "bigints"))
         /% Var.option (Var.text "prev_created_at")
         /% Var.option (Var.uuid "prev_id"))
+  end
+
+  module Tag_query_sql = struct
+    type t = {
+      q : Buffer.t;
+      strings : string CCVector.vector;
+      bigints : int64 CCVector.vector;
+      timezone : string;
+      mutable sort_dir : [ `Asc | `Desc ];
+      mutable sort_by : string;
+    }
+
+    let empty ?(timezone = "UTC") () =
+      {
+        q = Buffer.create 50;
+        strings = CCVector.create ();
+        bigints = CCVector.create ();
+        timezone;
+        sort_dir = `Desc;
+        sort_by = "created_at";
+      }
+
+    let append_str_equal t n v =
+      CCVector.push t.strings v;
+      Buffer.add_string t.q (Printf.sprintf "%s = ($strings)[%d]" n (CCVector.size t.strings))
+
+    let append_bigint_equal t n v =
+      CCVector.push t.bigints v;
+      Buffer.add_string t.q (Printf.sprintf "%s = ($bigints)[%d]" n (CCVector.size t.bigints))
+
+    let date_only s = not (CCString.contains s ' ')
+
+    let rec of_ast t =
+      let module T = Terrat_tag_query_parser_value in
+      function
+      | T.Tag tag -> (
+          match CCString.Split.left ~by:":" tag with
+          | Some ("sort", "asc") ->
+              t.sort_dir <- `Asc;
+              (* Cheap hack but we replace these meta attributes with [true]. *)
+              Buffer.add_string t.q "true";
+              Ok ()
+          | Some ("sort", "desc") ->
+              t.sort_dir <- `Desc;
+              (* Cheap hack but we replace these meta attributes with [true]. *)
+              Buffer.add_string t.q "true";
+              Ok ()
+          | Some ("pr", value) -> (
+              match CCInt64.of_string value with
+              | Some value ->
+                  append_bigint_equal t "pull_number" value;
+                  Ok ()
+              | None -> Error (`Error tag))
+          | Some ("user", value) ->
+              append_str_equal t "username" value;
+              Ok ()
+          | Some ("dir", value) ->
+              CCVector.push t.strings value;
+              Buffer.add_string
+                t.q
+                (Printf.sprintf
+                   "($strings)[%d] in (select jsonb_array_elements(dirspaces) ->> 'dir')"
+                   (CCVector.size t.strings));
+              Ok ()
+          | Some ("repo", value) ->
+              append_str_equal t "name" value;
+              Ok ()
+          | Some ("type", value) ->
+              append_str_equal t "run_type" value;
+              Ok ()
+          | Some ("kind", value) ->
+              append_str_equal t "kind" value;
+              Ok ()
+          | Some ("state", value) ->
+              append_str_equal t "state" value;
+              Ok ()
+          | Some ("branch", value) ->
+              append_str_equal t "branch" value;
+              Ok ()
+          | Some ("workspace", value) ->
+              CCVector.push t.strings value;
+              Buffer.add_string
+                t.q
+                (Printf.sprintf
+                   "($strings)[%d] in (select jsonb_array_elements(dirspaces) ->> 'workspace')"
+                   (CCVector.size t.strings));
+              Ok ()
+          | Some ("created_at", value) -> (
+              match CCString.Split.left ~by:".." value with
+              | Some ("", "") -> Error (`Bad_date_format value)
+              | Some (v, "") ->
+                  CCVector.push t.strings v;
+                  Buffer.add_string
+                    t.q
+                    (Printf.sprintf
+                       "((to_timestamp(($strings)[%d], 'YYYY-MM-DD HH24:MI')::timestamp at time \
+                        zone $tz) <= created_at and created_at < now())"
+                       (CCVector.size t.strings));
+                  Ok ()
+              | Some ("", v) ->
+                  CCVector.push t.strings v;
+                  Buffer.add_string
+                    t.q
+                    (Printf.sprintf
+                       "created_at < (to_timestamp(($strings)[%d], 'YYYY-MM-DD \
+                        HH24:MI')::timestamp at time zone $tz)"
+                       (CCVector.size t.strings));
+                  Ok ()
+              | Some (l, r) ->
+                  CCVector.push t.strings l;
+                  CCVector.push t.strings r;
+                  Buffer.add_string
+                    t.q
+                    (Printf.sprintf
+                       "((to_timestamp(($strings)[%d], 'YYYY-MM-DD HH24:MI')::timestamp at time \
+                        zone $tz) <= created_at and created_at < (to_timestamp(($strings)[%d], \
+                        'YYYY-MM-DD HH24:MI')::timestamp at time zone $tz))"
+                       (CCVector.size t.strings - 1)
+                       (CCVector.size t.strings));
+                  Ok ()
+              | None when date_only value ->
+                  CCVector.push t.strings value;
+                  Buffer.add_string
+                    t.q
+                    (Printf.sprintf
+                       "((to_timestamp(($strings)[%d], 'YYYY-MM-DD H24:MI')::timestamp at time \
+                        zone $tz) <= created_at and created_at < ((to_timestamp(($strings)[%d], \
+                        'YYYY-MM-DD HH24:MI')::timestamp at time zone $tz) + interval '1 day'))"
+                       (CCVector.size t.strings)
+                       (CCVector.size t.strings));
+                  Ok ()
+              | None ->
+                  CCVector.push t.strings value;
+                  Buffer.add_string
+                    t.q
+                    (Printf.sprintf
+                       "((to_timestamp(($strings)[%d], 'YYYY-MM-DD HH24:MI')::timestamp at time \
+                        zone $tz) <= created_at and created_at < (to_timestamp(($strings)[%d], \
+                        'YYYY-MM-DD HH24:MI')::timestamp at time zone $tz) + interval '1 min')"
+                       (CCVector.size t.strings)
+                       (CCVector.size t.strings));
+                  Ok ())
+          | Some _ | None -> Error (`Unknown_tag tag))
+      | T.Or (l, r) ->
+          let open CCResult.Infix in
+          Buffer.add_char t.q '(';
+          of_ast t l
+          >>= fun () ->
+          Buffer.add_string t.q ") or (";
+          of_ast t r
+          >>= fun () ->
+          Buffer.add_char t.q ')';
+          Ok ()
+      | T.And (l, r) ->
+          let open CCResult.Infix in
+          Buffer.add_char t.q '(';
+          of_ast t l
+          >>= fun () ->
+          Buffer.add_string t.q ") and (";
+          of_ast t r
+          >>= fun () ->
+          Buffer.add_char t.q ')';
+          Ok ()
+      | T.Not e ->
+          let open CCResult.Infix in
+          Buffer.add_string t.q "not (";
+          of_ast t e
+          >>= fun () ->
+          Buffer.add_char t.q ')';
+          Ok ()
+      | T.In_dir _ -> Error `In_dir_not_supported
   end
 
   let columns =
@@ -59,10 +237,10 @@ module Work_manifests = struct
 
     type query = {
       user : Uuidm.t;
-      pull_request : int option;
+      query : Tag_query_sql.t option;
+      config : Terrat_config.t;
       storage : Terrat_storage.t;
       installation_id : int;
-      dir : [ `Asc | `Desc ];
       limit : int;
     }
 
@@ -74,7 +252,15 @@ module Work_manifests = struct
       ]
 
     let run_query ?cursor query f =
-      let search = Pgsql_pagination.Search.(create ~page_size:query.limit ~dir:query.dir columns) in
+      let where, q =
+        match query.query with
+        | Some q -> ("where " ^ Buffer.contents q.Tag_query_sql.q, q)
+        | None -> ("", Tag_query_sql.empty ())
+      in
+      let search =
+        Pgsql_pagination.Search.(
+          create ~page_size:query.limit ~dir:q.Tag_query_sql.sort_dir columns)
+      in
       let created_at, id =
         match cursor with
         | Some (created_at, id) -> (Some created_at, Some id)
@@ -82,86 +268,91 @@ module Work_manifests = struct
       in
       Pgsql_pool.with_conn query.storage ~f:(fun db ->
           let open Abbs_future_combinators.Infix_result_monad in
-          Pgsql_io.Prepared_stmt.execute db (Sql.set_timeout ())
-          >>= fun () ->
-          f
-            search
-            db
-            (Sql.select_work_manifests ())
-            ~f:(fun
-                id
-                base_ref
-                completed_at
+          Pgsql_io.tx db ~f:(fun () ->
+              Pgsql_io.Prepared_stmt.execute
+                db
+                (Sql.set_timeout (Terrat_config.statement_timeout query.config))
+              >>= fun () ->
+              f
+                search
+                db
+                (Sql.select_work_manifests where)
+                ~f:(fun
+                    id
+                    base_ref
+                    completed_at
+                    created_at
+                    ref_
+                    run_type
+                    state
+                    tag_query
+                    repository
+                    pull_number
+                    base_branch
+                    owner
+                    repo
+                    run_kind
+                    dirspaces
+                    pull_request_title
+                    branch
+                    user
+                    run_id
+                  ->
+                  let module D = Terrat_api_components.Installation_work_manifest_drift in
+                  let module Pr = Terrat_api_components.Installation_work_manifest_pull_request in
+                  let module Wm = Terrat_api_components.Installation_work_manifest in
+                  match (run_kind, pull_number, branch) with
+                  | "drift", _, _ ->
+                      Wm.Installation_work_manifest_drift
+                        D.
+                          {
+                            base_branch;
+                            base_ref;
+                            completed_at;
+                            created_at;
+                            dirspaces = CCOption.get_or ~default:[] dirspaces;
+                            id = Uuidm.to_string id;
+                            owner;
+                            ref_;
+                            repo;
+                            repository = CCInt64.to_int repository;
+                            run_type = Terrat_work_manifest.Run_type.to_string run_type;
+                            state = Terrat_work_manifest.State.to_string state;
+                            run_id;
+                          }
+                  | "pr", Some pull_number, Some branch ->
+                      Wm.Installation_work_manifest_pull_request
+                        Pr.
+                          {
+                            base_branch;
+                            base_ref;
+                            branch;
+                            completed_at;
+                            created_at;
+                            dirspaces = CCOption.get_or ~default:[] dirspaces;
+                            id = Uuidm.to_string id;
+                            owner;
+                            pull_number = CCInt64.to_int pull_number;
+                            pull_request_title;
+                            ref_;
+                            repo;
+                            repository = CCInt64.to_int repository;
+                            run_type = Terrat_work_manifest.Run_type.to_string run_type;
+                            state = Terrat_work_manifest.State.to_string state;
+                            tag_query = Terrat_tag_query.to_string tag_query;
+                            user;
+                            run_id;
+                          }
+                  | _, _, _ ->
+                      Logs.info (fun m -> m "Unknown run_kind %a" Uuidm.pp id);
+                      raise (Failure ("Failed " ^ Uuidm.to_string id)))
+                query.user
+                (CCInt64.of_int query.installation_id)
+                q.Tag_query_sql.timezone
+                (CCVector.to_list q.Tag_query_sql.strings)
+                (CCVector.to_list q.Tag_query_sql.bigints)
                 created_at
-                ref_
-                run_type
-                state
-                tag_query
-                repository
-                pull_number
-                base_branch
-                owner
-                repo
-                run_kind
-                dirspaces
-                pull_request_title
-                branch
-                user
-                run_id
-              ->
-              let module D = Terrat_api_components.Installation_work_manifest_drift in
-              let module Pr = Terrat_api_components.Installation_work_manifest_pull_request in
-              let module Wm = Terrat_api_components.Installation_work_manifest in
-              match (run_kind, pull_number, branch) with
-              | "drift", _, _ ->
-                  Wm.Installation_work_manifest_drift
-                    D.
-                      {
-                        base_branch;
-                        base_ref;
-                        completed_at;
-                        created_at;
-                        dirspaces = CCOption.get_or ~default:[] dirspaces;
-                        id = Uuidm.to_string id;
-                        owner;
-                        ref_;
-                        repo;
-                        repository = CCInt64.to_int repository;
-                        run_type = Terrat_work_manifest.Run_type.to_string run_type;
-                        state = Terrat_work_manifest.State.to_string state;
-                        run_id;
-                      }
-              | "", Some pull_number, Some branch ->
-                  Wm.Installation_work_manifest_pull_request
-                    Pr.
-                      {
-                        base_branch;
-                        base_ref;
-                        branch;
-                        completed_at;
-                        created_at;
-                        dirspaces = CCOption.get_or ~default:[] dirspaces;
-                        id = Uuidm.to_string id;
-                        owner;
-                        pull_number = CCInt64.to_int pull_number;
-                        pull_request_title;
-                        ref_;
-                        repo;
-                        repository = CCInt64.to_int repository;
-                        run_type = Terrat_work_manifest.Run_type.to_string run_type;
-                        state = Terrat_work_manifest.State.to_string state;
-                        tag_query = Terrat_tag_query.to_string tag_query;
-                        user;
-                        run_id;
-                      }
-              | _, _, _ ->
-                  Logs.info (fun m -> m "Unknown run_kind %a" Uuidm.pp id);
-                  raise (Failure ("Failed " ^ Uuidm.to_string id)))
-            query.user
-            (CCInt64.of_int query.installation_id)
-            (CCOption.map CCInt64.of_int query.pull_request)
-            created_at
-            id)
+                id))
 
     let next ?cursor query = run_query ?cursor query Pgsql_pagination.next
     let prev ?cursor query = run_query ?cursor query Pgsql_pagination.prev
@@ -212,7 +403,8 @@ module Work_manifests = struct
 
   module Paginate = Brtl_ep_paginate.Make (Page)
 
-  let get config storage installation_id pr_opt dir page limit =
+  let get config storage installation_id query timezone page limit =
+    let module Bad_request = Terrat_api_installations.List_work_manifests.Responses.Bad_request in
     Brtl_ep.run_result ~f:(fun ctx ->
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx
@@ -220,18 +412,76 @@ module Work_manifests = struct
         Terrat_user.enforce_installation_access storage user installation_id ctx
         >>= fun () ->
         let open Abb.Future.Infix_monad in
-        let query =
-          Page.
-            {
-              user = Terrat_user.id user;
-              pull_request = pr_opt;
-              storage;
-              installation_id;
-              dir = CCOption.get_or ~default:`Desc dir;
-              limit;
-            }
-        in
-        Paginate.run ?page ~page_param:"page" query ctx >>= fun ctx -> Abb.Future.return (Ok ctx))
+        match CCOption.map Terrat_tag_query_ast.of_string query with
+        | Some (Ok (Some ast)) -> (
+            let query = Tag_query_sql.empty ?timezone () in
+            match Tag_query_sql.of_ast query ast with
+            | Ok () ->
+                let query =
+                  Page.
+                    {
+                      user = Terrat_user.id user;
+                      query = Some query;
+                      config;
+                      storage;
+                      installation_id;
+                      limit;
+                    }
+                in
+                Paginate.run ?page ~page_param:"page" query ctx
+                >>= fun ctx -> Abb.Future.return (Ok ctx)
+            | Error (`Error msg) ->
+                let body =
+                  Bad_request.({ id = msg; data = None } |> to_yojson |> Yojson.Safe.to_string)
+                in
+                Abb.Future.return
+                  (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request body) ctx))
+            | Error `In_dir_not_supported ->
+                let body =
+                  Bad_request.(
+                    { id = "IN_DIR_NOT_SUPPORTED"; data = None }
+                    |> to_yojson
+                    |> Yojson.Safe.to_string)
+                in
+                Abb.Future.return
+                  (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request body) ctx))
+            | Error (`Bad_date_format date) ->
+                let body =
+                  Bad_request.(
+                    { id = "BAD_DATE_FORMAT"; data = Some date }
+                    |> to_yojson
+                    |> Yojson.Safe.to_string)
+                in
+                Abb.Future.return
+                  (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request body) ctx))
+            | Error (`Unknown_tag tag) ->
+                let body =
+                  Bad_request.(
+                    { id = "UNKNOWN_TAG"; data = Some tag } |> to_yojson |> Yojson.Safe.to_string)
+                in
+                Abb.Future.return
+                  (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request body) ctx)))
+        | Some (Ok None) | None ->
+            let query =
+              Page.
+                {
+                  user = Terrat_user.id user;
+                  query = None;
+                  config;
+                  storage;
+                  installation_id;
+                  limit;
+                }
+            in
+            Paginate.run ?page ~page_param:"page" query ctx
+            >>= fun ctx -> Abb.Future.return (Ok ctx)
+        | Some (Error (`Tag_query_error (_, err))) ->
+            let body =
+              Bad_request.(
+                { id = "PARSE_ERROR"; data = Some err } |> to_yojson |> Yojson.Safe.to_string)
+            in
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request body) ctx)))
 end
 
 module Pull_requests = struct

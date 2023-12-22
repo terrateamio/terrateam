@@ -27,6 +27,14 @@
         @apply font-semibold;
     }
 
+    .input-primary {
+        @apply bg-slate-100;
+        @apply rounded;
+        @apply border border-slate-300;
+        @apply p-2;
+        @apply w-full;
+    }
+
     button {
         @apply btn-primary;
     }
@@ -159,16 +167,22 @@
 
     .page .h-pair {
         @apply flex flex-col;
-        @apply lg:grid lg:grid-cols-4 lg:grid-rows-1 items-center content-center;
+        @apply lg:grid lg:grid-cols-10 lg:grid-rows-1 lg:gap-x-2;
+        @apply justify-center items-center content-center;
+    }
+
+    .page .h-pair div:first-child {
+        @apply col-span-3;
+        @apply flex flex-row items-center;
     }
 
     .page .h-pair div:last-child {
-        @apply col-span-2;
+        @apply col-span-7;
         @apply flex flex-row items-center;
     }
 
     .work-manifests {
-        @apply w-full lg:w-2/3 mx-auto;
+        @apply w-full mx-auto;
         @apply flex flex-col;
         @apply py-2;
     }
@@ -182,11 +196,26 @@
         @apply p-4;
         @apply bg-slate-100;
         @apply rounded-lg border border-gray-400;
-        @apply flex flex-col lg:flex-row gap-2;
+        @apply flex flex-col lg:flex-row;
     }
 
     .work-manifests .page .item .details {
-        @apply flex flex-col w-full px-2;
+        @apply flex flex-col gap-y-4;
+        @apply w-full px-2;
+    }
+
+    .work-manifests .page .item .details h1 {
+        @apply text-xl text-center;
+        @apply font-semibold;
+        @apply py-1;
+        @apply my-2;
+        @apply border-b border-slate-300;
+    }
+
+    .work-manifests .page .item .details .attrs {
+        @apply grid grid-cols-1 lg:grid-cols-2;
+        @apply w-full xl:w-4/5;
+        @apply mx-auto;
     }
 
     .work-manifests .page .item .details .title {
@@ -211,20 +240,64 @@
         @apply text-ellipsis overflow-hidden;
     }
 
-    .work-manifest-status-aborted {
-        @apply text-4xl font-semibold text-red-400;
+    .work-manifests .query > div > form {
+        @apply flex flex-row;
     }
 
-    .work-manifest-status-completed {
-        @apply text-4xl font-semibold text-green-400;
+    .work-manifests .query > div > form > input {
+        @apply input-primary;
+        @apply rounded-none rounded-l;
     }
 
-    .work-manifest-status-queued {
-        @apply text-4xl font-semibold;
+    .work-manifests .query > div > form > button.btn-search {
+        @apply btn-primary;
+        @apply px-2;
+        @apply rounded-none;
+        @apply border-t border-t-blue-800;
+        @apply border-b border-b-blue-800;
     }
 
-    .work-manifest-status-running {
-        @apply text-4xl font-semibold animate-spin-slow;
+    .work-manifests .query > div > form > button.btn-search.ui-disabled {
+        @apply bg-slate-400;
+        @apply border-t border-t-slate-400;
+        @apply border-b border-b-slate-400;
+    }
+
+    .work-manifests .query > div > form > button.btn-clear {
+        @apply btn-primary;
+        @apply px-2;
+        @apply rounded-none rounded-r;
+        @apply border-l border-l-white;
+        @apply border-t border-t-blue-800;
+        @apply border-b border-b-blue-800;
+    }
+
+    .work-manifests .query > div > form > button.btn-clear.ui-disabled {
+        @apply bg-slate-400;
+        @apply border-t border-t-slate-400;
+        @apply border-b border-b-slate-400;
+    }
+
+    .work-manifests .query details {
+        @apply py-2;
+    }
+
+    .work-manifests .query .error {
+        @apply font-semibold text-red-600;
+    }
+
+    .work-manifests .query summary {
+        @apply py-2;
+        @apply font-semibold;
+        @apply cursor-pointer;
+    }
+
+    .work-manifests .query details .tql-help {
+        @apply flex flex-col gap-y-4;
+    }
+
+    .work-manifests .query details .tql-help ul {
+        @apply list-disc list-inside;
     }
 
     .pull-requests {
@@ -323,17 +396,18 @@
     }
 
     .dirspace-table {
-        @apply pt-8 grid grid-cols-3 w-full;
+        @apply grid grid-cols-3 w-full;
         @apply gap-1;
+        @apply text-center;
     }
 
     .dirspace-table .table-header {
-        @apply font-semibold text-xl lg:text-2xl;
+        @apply font-semibold text-lg;
         @apply border-b py-1;
     }
 
     .dirspace-table > div:not(.table-header) {
-        @apply text-ellipsis overflow-hidden text-left;
+        @apply text-ellipsis overflow-hidden;
         direction: rtl;
     }
 

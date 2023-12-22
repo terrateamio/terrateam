@@ -26,6 +26,7 @@ type t = {
   port : int;
   python_exec : string;
   telemetry : Telemetry.t;
+  statement_timeout : string;
 }
 
 type err =
@@ -96,6 +97,9 @@ let create () =
     | _ -> None)
   >>= fun telemetry ->
   let github_base_url = CCOption.map Uri.of_string (Sys.getenv_opt "GITHUB_BASE_URL") in
+  let statement_timeout =
+    CCOption.get_or ~default:"500ms" (Sys.getenv_opt "TERRAT_STATEMENT_TIMEOUT")
+  in
   Ok
     {
       admin_token;
@@ -117,6 +121,7 @@ let create () =
       port;
       python_exec;
       telemetry;
+      statement_timeout;
     }
 
 let admin_token t = t.admin_token
@@ -138,3 +143,4 @@ let nginx_status_uri t = t.nginx_status_uri
 let port t = t.port
 let python_exec t = t.python_exec
 let telemetry t = t.telemetry
+let statement_timeout t = t.statement_timeout

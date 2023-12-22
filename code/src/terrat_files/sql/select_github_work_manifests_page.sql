@@ -1,44 +1,83 @@
+with
+unified_run_types as (
+    select
+       id,
+       (case gwm.run_type
+           when 'autoapply' then 'apply'
+           when 'apply' then 'apply'
+           when 'unsafe-apply' then 'apply'
+           when 'autoplan' then 'plan'
+           when 'plan' then 'plan'
+           end) as run_type
+    from github_work_manifests as gwm
+),
+q as (
+    select
+        gwm.id as id,
+        gwm.base_sha as base_sha,
+        completed_at,
+        created_at,
+        gwm.sha as sha,
+        gwm.run_type as run_type,
+        gwm.state as state,
+        gwm.tag_query as tag_query,
+        gwm.repository as repository,
+        gwm.pull_number as pull_number,
+        coalesce(gpr.base_branch, gdwm.branch) as base_branch,
+        gir.owner as owner,
+        gir.name as name,
+        (case
+         when gdwm.work_manifest is not null then 'drift'
+         else 'pr'
+         end) as kind,
+       gpr.title as title,
+       gpr.branch as branch,
+       gwm.username as username,
+       gwm.run_id as run_id,
+       urt.run_type as unified_run_type,
+       to_jsonb((select jsonb_agg(jsonb_build_object(
+                     'dir', gwmds.path,
+                     'workspace', gwmds.workspace,
+                     'success', not ((gwmr.success is null and gwm.state = 'aborted') or not gwmr.success)))
+        from github_work_manifest_dirspaceflows as gwmds
+        left join github_work_manifest_results as gwmr
+            on gwmds.work_manifest = gwmr.work_manifest
+               and gwmds.path = gwmr.path
+               and gwmds.workspace = gwmr.workspace
+        where gwmds.work_manifest = gwm.id)) as dirspaces
+    from github_work_manifests as gwm
+    inner join github_installation_repositories as gir
+        on gir.id = gwm.repository
+    inner join github_user_installations as gui
+        on gir.installation_id = gui.installation_id
+    inner join unified_run_types as urt
+        on urt.id = gwm.id
+    left join github_pull_requests as gpr
+        on gwm.repository = gpr.repository and gwm.pull_number = gpr.pull_number
+    left join github_drift_work_manifests as gdwm
+        on gwm.id = gdwm.work_manifest
+    where gir.installation_id = $installation_id
+          and gui.user_id = $user
+)
 select
-    gwm.id as id,
-    gwm.base_sha,
-    to_char(gwm.completed_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+    id,
+    base_sha,
+    to_char(gwm.completed_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as completed_at,
     to_char(gwm.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
-    gwm.sha,
-    gwm.run_type,
-    gwm.state,
-    gwm.tag_query,
-    gwm.repository,
-    gwm.pull_number,
-    coalesce(gpr.base_branch, gdwm.branch),
-    gir.owner,
-    gir.name,
-    (case
-     when gdwm.work_manifest is not null then 'drift'
-     else ''
-     end),
-    to_json((select json_agg(json_build_object(
-                 'dir', gwmds.path,
-                 'workspace', gwmds.workspace,
-                 'success', not ((gwmr.success is null and gwm.state = 'aborted') or not gwmr.success)))
-     from github_work_manifest_dirspaceflows as gwmds
-     left join github_work_manifest_results as gwmr
-         on gwmds.work_manifest = gwmr.work_manifest
-            and gwmds.path = gwmr.path
-            and gwmds.workspace = gwmr.workspace
-     where gwmds.work_manifest = gwm.id)) as dirspaces,
-   gpr.title,
-   gpr.branch,
-   gwm.username,
-   gwm.run_id
-from github_work_manifests as gwm
-inner join github_installation_repositories as gir
-    on gir.id = gwm.repository
-inner join github_user_installations as gui
-    on gir.installation_id = gui.installation_id
-left join github_pull_requests as gpr
-    on gwm.repository = gpr.repository and gwm.pull_number = gpr.pull_number
-left join github_drift_work_manifests as gdwm
-    on gwm.id = gdwm.work_manifest
-where gir.installation_id = $installation_id
-      and ($pull_number is null or gwm.pull_number = $pull_number)
-      and gui.user_id = $user
+    sha,
+    unified_run_type,
+    state,
+    tag_query,
+    repository,
+    pull_number,
+    base_branch,
+    owner,
+    name,
+    kind,
+    to_jsonb(dirspaces) as dirspaces,
+    title,
+    branch,
+    username,
+    run_id
+from q as gwm
+{{where}}

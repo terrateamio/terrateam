@@ -169,7 +169,8 @@ module List_work_manifests = struct
       d : D.t option; [@default None]
       installation_id : string;
       page : Page.t option; [@default None]
-      pr : int option; [@default None]
+      q : string option; [@default None]
+      tz : string option; [@default None]
     }
     [@@deriving make, show, eq]
   end
@@ -185,17 +186,28 @@ module List_work_manifests = struct
       [@@deriving yojson { strict = true; meta = true }, show, eq]
     end
 
+    module Bad_request = struct
+      type t = {
+        data : string option; [@default None]
+        id : string;
+      }
+      [@@deriving yojson { strict = true; meta = true }, show, eq]
+    end
+
     module Forbidden = struct end
 
     type t =
       [ `OK of OK.t
+      | `Bad_request of Bad_request.t
       | `Forbidden
       ]
     [@@deriving show, eq]
 
     let t =
       [
-        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("403", fun _ -> Ok `Forbidden);
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("400", Openapi.of_json_body (fun v -> `Bad_request v) Bad_request.of_yojson);
+        ("403", fun _ -> Ok `Forbidden);
       ]
   end
 
@@ -213,8 +225,9 @@ module List_work_manifests = struct
          let open Parameters in
          [
            ("page", Var (params.page, Option (Array String)));
-           ("pr", Var (params.pr, Option Int));
+           ("q", Var (params.q, Option String));
            ("d", Var (params.d, Option String));
+           ("tz", Var (params.tz, Option String));
          ])
       ~url
       ~responses:Responses.t

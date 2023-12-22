@@ -1540,10 +1540,10 @@
           },
           {
             "in": "query",
-            "name": "pr",
+            "name": "q",
             "required": false,
             "schema": {
-              "type": "integer"
+              "type": "string"
             }
           },
           {
@@ -1555,6 +1555,14 @@
                 "asc",
                 "desc"
               ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tz",
+            "required": false,
+            "schema": {
               "type": "string"
             }
           }
@@ -1575,6 +1583,27 @@
                   },
                   "required": [
                     "work_manifests"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
                   ],
                   "type": "object"
                 }

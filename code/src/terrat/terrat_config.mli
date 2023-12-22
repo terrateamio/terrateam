@@ -32,3 +32,4 @@ val nginx_status_uri : t -> Uri.t option
 val admin_token : t -> string option
 val telemetry : t -> Telemetry.t
 val github_base_url : t -> Uri.t option
+val statement_timeout : t -> string
