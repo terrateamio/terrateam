@@ -11,7 +11,7 @@ type t =
 type err =
   [ `Not_terrateam
   | `Unknown_action of string
-  | Terrat_tag_query.err
+  | Terrat_tag_query_ast.err
   ]
 [@@deriving show]
 

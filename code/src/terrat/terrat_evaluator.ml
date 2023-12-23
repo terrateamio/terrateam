@@ -88,7 +88,7 @@ let match_tag_queries ~accessor ~changes queries =
 
 let dirspaceflows_of_changes repo_config changes =
   let module E = struct
-    exception Err of Terrat_tag_query.err
+    exception Err of Terrat_tag_query_ast.err
   end in
   let workflows = CCOption.get_or ~default:[] repo_config.Terrat_repo_config.Version_1.workflows in
   try
@@ -107,7 +107,7 @@ let dirspaceflows_of_changes repo_config changes =
               | Error err -> raise (E.Err err))
             ~changes
             workflows))
-  with E.Err (#Terrat_tag_query.err as err) -> Error err
+  with E.Err (#Terrat_tag_query_ast.err as err) -> Error err
 
 module Event = struct
   module Dir_set = CCSet.Make (CCString)
@@ -138,7 +138,7 @@ module Event = struct
           | `Unlock of string list
           ]
       | Unlock_success
-      | Tag_query_err of Terrat_tag_query.err
+      | Tag_query_err of Terrat_tag_query_ast.err
       | Account_expired
       | Repo_config of (Terrat_repo_config_version_1.t * Terrat_change_match.Dirs.t)
       | Unexpected_temporary_err
@@ -560,7 +560,7 @@ module Make (S : S) = struct
 
       let eval' t change_matches default selector =
         let module Err = struct
-          exception Err of Terrat_tag_query.err
+          exception Err of Terrat_tag_query_ast.err
         end in
         try
           if t.config.Ac.enabled then
@@ -592,7 +592,7 @@ module Make (S : S) = struct
             Logs.debug (fun m ->
                 m "EVALUATOR : %s : ACCESS_CONTROL_DISABLED" (S.Event.T.request_id t.event));
             Abb.Future.return (Ok Terrat_access_control.R.{ pass = change_matches; deny = [] }))
-        with Err.Err (#Terrat_tag_query.err as err) -> Abb.Future.return (Error err)
+        with Err.Err (#Terrat_tag_query_ast.err as err) -> Abb.Future.return (Error err)
 
       let eval_superapproved t reviewers change_matches =
         let open Abbs_future_combinators.Infix_result_monad in
@@ -768,7 +768,7 @@ module Make (S : S) = struct
                 (S.Event.T.request_id event)
                 (Uuidm.to_string work_manifest.Terrat_work_manifest.id));
           Abb.Future.return (Ok ())
-      | Error (#Terrat_tag_query.err as err) -> Abb.Future.return (Error err)
+      | Error (#Terrat_tag_query_ast.err as err) -> Abb.Future.return (Error err)
 
     let test_can_perform_operation db event dirspaces operation =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -863,12 +863,12 @@ module Make (S : S) = struct
       | Ok Terrat_access_control.R.{ deny; _ } ->
           Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`Dirspaces deny))))
       | Error `Error -> Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied `Lookup_err)))
-      | Error (#Terrat_tag_query.err as err) ->
+      | Error (#Terrat_tag_query_ast.err as err) ->
           Logs.err (fun m ->
               m
                 "EVALUATOR : %s : TAG_QUERY : %a"
                 (S.Event.T.request_id event)
-                Terrat_tag_query.pp_err
+                Terrat_tag_query_ast.pp_err
                 err);
           Abb.Future.return (Ok (Some (Event.Msg.Tag_query_err err)))
       | Error (`Invalid_query query) ->
@@ -1056,7 +1056,7 @@ module Make (S : S) = struct
           | _, Terrat_access_control.R.{ deny; _ } ->
               Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`Dirspaces deny)))))
       | Error `Error -> Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied `Lookup_err)))
-      | Error (#Terrat_tag_query.err as err) ->
+      | Error (#Terrat_tag_query_ast.err as err) ->
           Abb.Future.return (Ok (Some (Event.Msg.Tag_query_err err)))
       | Error (`Invalid_query query) ->
           Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`Invalid_query query))))
@@ -1510,12 +1510,12 @@ module Make (S : S) = struct
                   Logs.info (fun m ->
                       m "EVALUATOR : %s : REPO_CONFIG_ERR : %s" (S.Event.T.request_id event) err);
                   S.Event.publish_msg event (Event.Msg.Repo_config_failure err)
-              | Error (#Terrat_tag_query.err as err) ->
+              | Error (#Terrat_tag_query_ast.err as err) ->
                   Logs.err (fun m ->
                       m
                         "EVALUATOR : %s : TAG_QUERY_ERR : %a"
                         (S.Event.T.request_id event)
-                        Terrat_tag_query.pp_err
+                        Terrat_tag_query_ast.pp_err
                         err);
                   S.Event.publish_msg event (Event.Msg.Tag_query_err err)
               | Error `Error ->
@@ -1608,9 +1608,9 @@ module Make (S : S) = struct
       | Ok (tag_query_matches, _) -> (
           match dirspaceflows_of_changes (S.Drift.Repo.repo_config repo) tag_query_matches with
           | Ok dirspaceflows -> f config db schedule repo dirspaceflows
-          | Error (#Terrat_tag_query.err as err) ->
+          | Error (#Terrat_tag_query_ast.err as err) ->
               Logs.err (fun m ->
-                  m "EVALUATOR : DRIFT : TAG_QUERY_ERR : %a" Terrat_tag_query.pp_err err);
+                  m "EVALUATOR : DRIFT : TAG_QUERY_ERR : %a" Terrat_tag_query_ast.pp_err err);
               Abb.Future.return (Error `Error))
       | Error (`Bad_glob err) ->
           Logs.info (fun m -> m "EVALUATOR : DRIFT : BAD_GLOB : %s" err);

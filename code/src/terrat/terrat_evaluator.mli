@@ -31,7 +31,7 @@ module Event : sig
           | `Unlock of string list
           ]
       | Unlock_success
-      | Tag_query_err of Terrat_tag_query.err
+      | Tag_query_err of Terrat_tag_query_ast.err
       | Account_expired
       | Repo_config of (Terrat_repo_config_version_1.t * Terrat_change_match.Dirs.t)
       | Unexpected_temporary_err

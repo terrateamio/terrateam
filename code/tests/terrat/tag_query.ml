@@ -35,12 +35,12 @@ end
 
 let print_of_string = function
   | Ok t -> Printf.printf "Ok (%s)\n%!" (Terrat_tag_query.show t)
-  | Error err -> Printf.printf "Error (%s)\n%!" (Terrat_tag_query.show_err err)
+  | Error err -> Printf.printf "Error (%s)\n%!" (Terrat_tag_query_ast.show_err err)
 
 let of_string_exn s =
   match Terrat_tag_query.of_string s with
   | Ok q -> q
-  | Error err -> failwith (Terrat_tag_query.show_err err)
+  | Error err -> failwith (Terrat_tag_query_ast.show_err err)
 
 let test_simple_match =
   Oth.test ~name:"Simple match" (fun _ ->
