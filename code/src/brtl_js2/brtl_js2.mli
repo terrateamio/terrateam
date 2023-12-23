@@ -91,6 +91,33 @@ module Kit : sig
         'a ->
         'a t
     end
+
+    module Input : sig
+      type t
+
+      val v :
+        ?class':Jstr.t ->
+        ?enabled:bool Note.signal ->
+        ?on:'a Note.event ->
+        ?placeholder:Jstr.t ->
+        Jstr.t Note.signal ->
+        t
+
+      val v' :
+        ?class':Jstr.t ->
+        ?enabled:bool Note.signal ->
+        ?on:'a Note.event ->
+        ?placeholder:Jstr.t ->
+        action:(Jstr.t -> unit Abb_js.Future.t) ->
+        Jstr.t Note.signal ->
+        t
+
+      val action : t -> Jstr.t Note.event
+      val enabled : t -> bool Note.signal
+      val editing : t -> bool Note.signal
+      val value : t -> Jstr.t
+      val el : t -> Brr.El.t
+    end
   end
 end
 

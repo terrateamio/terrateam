@@ -117,6 +117,76 @@ module Kit = struct
             btn
         | None -> failwith "button logr"
     end
+
+    module Input = struct
+      type t = {
+        action : Jstr.t Note.event;
+        enabled : bool Note.signal;
+        editing : bool Note.signal;
+        el : Brr.El.t;
+      }
+
+      let v ?class':cl ?(enabled = Note.S.Bool.true') ?on:(edit = Note.E.never) ?placeholder:ph s =
+        let el =
+          Brr.El.input
+            ~at:
+              Brr.At.
+                [
+                  type' (Jstr.v "text");
+                  if_some (CCOption.map class' cl);
+                  if_some (CCOption.map placeholder ph);
+                ]
+            ()
+        in
+        let edit = Note.E.select [ Note.E.stamp edit (); R.Evr.on_el Brr.Ev.click R.Evr.unit el ] in
+        let edit =
+          Note.S.sample_filter enabled ~on:edit
+          @@ fun enabled _ -> if enabled then Some () else None
+        in
+        let keys = R.Evr.on_el Brr.Ev.keydown Key.of_ev el in
+        let escape_key = Note.E.stamp (Note.E.filter (Key.equal `Escape) keys) false in
+        let return_key = Note.E.stamp (Note.E.filter (Key.equal `Return) keys) true in
+        let start_focus = R.Evr.on_el Brr.Ev.focus (R.Evr.stamp true) el in
+        let stop_focus = R.Evr.on_el Brr.Ev.blur (R.Evr.stamp false) el in
+        let valid = Note.S.hold ~eq:( = ) true @@ Note.E.select [ start_focus; escape_key ] in
+        let start = Note.E.stamp edit true in
+        let key_stop = Note.E.stamp (Note.E.select [ escape_key; return_key ]) false in
+        let stop = Note.E.stamp (Note.E.select [ key_stop; stop_focus ]) false in
+        let editing = Note.S.hold ~eq:( = ) (Brr.El.has_focus el) (Note.E.select [ start; stop ]) in
+        let action =
+          Note.S.sample_filter valid ~on:stop
+          @@ fun valid _ -> if valid then Some (Brr.El.prop Brr.El.Prop.value el) else None
+        in
+        Brr.El.set_prop Brr.El.Prop.value (Note.S.value s) el;
+        R.Elr.def_at
+          Brr.At.Name.disabled
+          (Note.S.map
+             ~eq:( = )
+             (function
+               | false -> Some Jstr.empty
+               | true -> None)
+             enabled)
+          el;
+        { action; enabled; editing; el }
+
+      let action t = t.action
+      let enabled t = t.enabled
+      let editing t = t.editing
+      let value t = Brr.El.prop Brr.El.Prop.value t.el
+      let el t = t.el
+
+      let v' ?class' ?enabled ?on ?placeholder ~action:action' s =
+        let input = v ?class' ?enabled ?on ?placeholder s in
+        match Note.E.log (action input) (fun v -> Abb_js.Future.run (action' v)) with
+        | Some logr ->
+            R.Elr.on_rem
+              (fun () ->
+                Note.Logr.destroy logr;
+                Abb_js.Future.return ())
+              (el input);
+            input
+        | None -> failwith "input logr"
+    end
   end
 end
 
