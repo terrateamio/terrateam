@@ -311,7 +311,7 @@ end
 module Router_output = struct
   let match_uri routes uri = Brtl_js2_rtng.first_match ~must_consume_path:false routes uri
 
-  let apply_match mtch iteration curr_iteration state with_cleanup el =
+  let apply_match wrap mtch iteration curr_iteration state with_cleanup el =
     Abb_js.Future.run
       (let state = { state with State.consumed_path = Brtl_js2_rtng.Match.consumed_path mtch } in
        Abb_js.Future.await_bind
@@ -326,6 +326,10 @@ module Router_output = struct
                     Note.Logr.destroy logr;
                     cleanup ());
                Abb_js.Future.return ()
+           | `Det Output.(Render { cleanup; _ }) ->
+               (* If the iterations do not match, still cleanup any outstanding work *)
+               Brr.Console.(log [ Jstr.v "Iteration did not match" ]);
+               cleanup ()
            | `Det (Output.Redirect path) when iteration = !curr_iteration ->
                let open Abb_js.Future.Infix_monad in
                !with_cleanup ()
@@ -364,13 +368,13 @@ module Router_output = struct
                      !curr_iteration;
                    ]);
                Abb_js.Future.return ())
-         (try Brtl_js2_rtng.Match.apply mtch state
+         (try wrap (Brtl_js2_rtng.Match.apply mtch) state
           with exn ->
             Brr.Console.(log [ Jstr.of_string "EXN"; exn ]);
             Brr.El.set_children el [];
             assert false))
 
-  let route_uri iteration state routes prev_match with_cleanup consumed_path el uri =
+  let route_uri wrap iteration state routes prev_match with_cleanup consumed_path el uri =
     let match_opt = match_uri routes uri in
     (* Check the URL match.  If the match does not match the previous one but
        there still is a match then increment the iteration and apply that match.
@@ -383,13 +387,15 @@ module Router_output = struct
         prev_match := mtch;
         consumed_path := Brtl_js2_rtng.Match.consumed_path mtch;
         incr iteration;
-        apply_match mtch !iteration iteration state with_cleanup el
+        apply_match wrap mtch !iteration iteration state with_cleanup el
     | Some _ ->
         (* Match didn't change, so do nothing *)
         ()
-    | None -> incr iteration
+    | None ->
+        incr iteration;
+        Abb_js.Future.run (!with_cleanup ())
 
-  let create state el routes =
+  let create' ~wrap state el routes =
     (* Rendering a page can take an unbounded amount of time and in that time a
        user may choose to navigate to a different page.  To ensure the latest
        page is the one that gets rendered, we track iterations and only assign
@@ -440,14 +446,14 @@ module Router_output = struct
         let prev_match = ref mtch in
         let uri_logr =
           Note.S.log uri (fun uri ->
-              route_uri iteration state routes prev_match with_cleanup consumed_path el uri)
+              route_uri wrap iteration state routes prev_match with_cleanup consumed_path el uri)
         in
         R.Elr.on_rem
           (fun () ->
             Note.Logr.destroy uri_logr;
             !with_cleanup ())
           el;
-        apply_match mtch !iteration iteration state with_cleanup el;
+        apply_match wrap mtch !iteration iteration state with_cleanup el;
         el
     | None ->
         (* TODO: Do something useful here.  Here we give an empty div.  Perhaps
@@ -456,6 +462,8 @@ module Router_output = struct
            should always match every URL that is valid on that page. *)
         Brr.Console.(log [ Jstr.of_string "URL does not match any route" ]);
         el
+
+  let create state el routes = create' ~wrap:CCFun.id state el routes
 
   let const state el comp =
     let consumed_path = State.consumed_path state in
@@ -485,8 +493,12 @@ module Ph = struct
     let cleanup_ref = ref (fun () -> Abb_js.Future.return ()) in
     Abb_js.Future.fork (comp state >>= handle_output cleanup_ref set_els state)
     >>= fun fut ->
-    (cleanup_ref := fun () -> Abb_js.Future.abort fut);
-    Abb_js.Future.return (Output.render ~cleanup:(fun () -> !cleanup_ref ()) els)
+    Abb_js.Future.return
+      (Output.render
+         ~cleanup:(fun () ->
+           let open Abb_js.Future.Infix_monad in
+           Abb_js.Future.abort fut >>= fun () -> !cleanup_ref ())
+         els)
 end
 
 let main app_state f =

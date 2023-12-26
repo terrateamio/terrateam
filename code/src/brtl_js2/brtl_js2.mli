@@ -182,6 +182,10 @@ end
 
 module Router_output : sig
   val create : 'a State.t -> Brr.El.t -> 'a Comp.t Brtl_js2_rtng.Route.t list -> Brr.El.t
+
+  val create' :
+    wrap:('a -> 'b Comp.t) -> 'b State.t -> Brr.El.t -> 'a Brtl_js2_rtng.Route.t list -> Brr.El.t
+
   val const : 'a State.t -> Brr.El.t -> 'a Comp.t -> Brr.El.t
 end
 
