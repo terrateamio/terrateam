@@ -13,3 +13,4 @@ val now : unit -> t
 val get_time : t -> float
 val set_hours : t -> int -> unit
 val set_minutes : t -> int -> unit
+val timezone : unit -> string

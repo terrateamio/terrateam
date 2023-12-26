@@ -31,3 +31,12 @@ let now () = new%js Js.date_now
 let get_time d = d##getTime
 let set_hours t hours = ignore (t##setHours hours)
 let set_minutes t minutes = ignore (t##setMinutes minutes)
+
+let timezone () =
+  let intl = Jv.get Jv.global "Intl" in
+  let date_time_format = Jv.get intl "DateTimeFormat" in
+  match Jv.new' date_time_format Jv.[||] with
+  | exception Jv.Error e -> failwith (Jstr.to_string (Jv.Error.message e))
+  | v ->
+      let used_options = Jv.call v "resolvedOptions" [||] in
+      Jstr.to_string (Jv.to_jstr (Jv.get used_options "timeZone"))
