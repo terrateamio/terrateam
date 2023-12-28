@@ -81,6 +81,9 @@ module Work_manifests = struct
         | None -> (None, None)
       in
       Pgsql_pool.with_conn query.storage ~f:(fun db ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          Pgsql_io.Prepared_stmt.execute db (Sql.set_timeout ())
+          >>= fun () ->
           f
             search
             db
@@ -188,11 +191,23 @@ module Work_manifests = struct
 
     let has_another_page t = Pgsql_pagination.has_next_page t
 
-    let log_err ~token = function
+    let rspnc_of_err ~token = function
+      | `Statement_timeout ->
+          let module Bad_request =
+            Terrat_api_installations.List_work_manifests.Responses.Bad_request
+          in
+          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : STATEMENT_TIMEOUT" token);
+          let body =
+            Bad_request.(
+              { id = "STATEMENT_TIMEOUT"; data = None } |> to_yojson |> Yojson.Safe.to_string)
+          in
+          Brtl_rspnc.create ~status:`Bad_request body
       | #Pgsql_pool.err as err ->
-          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_pool.pp_err err)
+          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_pool.pp_err err);
+          Brtl_rspnc.create ~status:`Internal_server_error ""
       | #Pgsql_io.err as err ->
-          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_io.pp_err err)
+          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_io.pp_err err);
+          Brtl_rspnc.create ~status:`Internal_server_error ""
   end
 
   module Paginate = Brtl_ep_paginate.Make (Page)
@@ -348,11 +363,13 @@ module Pull_requests = struct
 
     let has_another_page t = Pgsql_pagination.has_next_page t
 
-    let log_err ~token = function
+    let rspnc_of_err ~token = function
       | #Pgsql_pool.err as err ->
-          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_pool.pp_err err)
+          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_pool.pp_err err);
+          Brtl_rspnc.create ~status:`Internal_server_error ""
       | #Pgsql_io.err as err ->
-          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_io.pp_err err)
+          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_io.pp_err err);
+          Brtl_rspnc.create ~status:`Internal_server_error ""
   end
 
   module Paginate = Brtl_ep_paginate.Make (Page)
@@ -457,11 +474,13 @@ module Repos = struct
 
     let has_another_page t = Pgsql_pagination.has_next_page t
 
-    let log_err ~token = function
+    let rspnc_of_err ~token = function
       | #Pgsql_pool.err as err ->
-          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_pool.pp_err err)
+          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_pool.pp_err err);
+          Brtl_rspnc.create ~status:`Internal_server_error ""
       | #Pgsql_io.err as err ->
-          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_io.pp_err err)
+          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_io.pp_err err);
+          Brtl_rspnc.create ~status:`Internal_server_error ""
   end
 
   module Paginate = Brtl_ep_paginate.Make (Page)

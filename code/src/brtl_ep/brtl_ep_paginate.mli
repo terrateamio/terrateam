@@ -15,7 +15,7 @@ module type S = sig
       [prev] it means there is another page prior to that page. *)
   val has_another_page : t -> bool
 
-  val log_err : token:string -> err -> unit
+  val rspnc_of_err : token:string -> err -> Brtl_rspnc.t
 end
 
 module Param : sig

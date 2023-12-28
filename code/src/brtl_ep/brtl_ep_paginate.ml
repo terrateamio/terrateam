@@ -10,7 +10,7 @@ module type S = sig
   val cursor_of_first : t -> string list option
   val cursor_of_last : t -> string list option
   val has_another_page : t -> bool
-  val log_err : token:string -> err -> unit
+  val rspnc_of_err : token:string -> err -> Brtl_rspnc.t
 end
 
 module Dir = struct
@@ -120,7 +120,6 @@ module Make (M : S) = struct
         in
         Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~headers ~status:`OK body) ctx)
     | Error err ->
-        M.log_err ~token:(Brtl_ctx.token ctx) err;
         Abb.Future.return
-          (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+          (Brtl_ctx.set_response (M.rspnc_of_err ~token:(Brtl_ctx.token ctx) err) ctx)
 end
