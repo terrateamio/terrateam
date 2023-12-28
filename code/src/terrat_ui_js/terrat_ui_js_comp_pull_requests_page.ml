@@ -8,6 +8,7 @@ let run (pr_send : Terrat_api_components.Installation_pull_request.t Brtl_js2.No
   let module I = Terrat_api_components.Installation in
   let module Pr = Terrat_api_components.Installation_pull_request in
   let module Page = Terrat_ui_js_comp_page.Make (struct
+    type fetch_err = Terrat_ui_js_client.err [@@deriving show]
     type elt = Pr.t [@@deriving eq]
     type state = Terrat_ui_js_state.t
     type query = { page : string list option } [@@deriving eq]

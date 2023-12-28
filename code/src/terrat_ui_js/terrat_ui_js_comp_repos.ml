@@ -8,6 +8,7 @@ let comp state =
   let module I = Terrat_api_components.Installation in
   let module Repo = Terrat_api_components.Installation_repo in
   let module Page = Terrat_ui_js_comp_page.Make (struct
+    type fetch_err = Terrat_ui_js_client.err [@@deriving show]
     type elt = Repo.t [@@deriving eq]
     type state = Terrat_ui_js_state.t
     type query = { page : string list option } [@@deriving eq]
