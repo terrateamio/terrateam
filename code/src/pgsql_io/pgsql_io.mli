@@ -33,6 +33,7 @@ type err =
   | `Disconnected
   | `Bad_result of string option list
   | `Integrity_err of integrity_err
+  | `Statement_timeout
   | sql_parse_err
   ]
 [@@deriving show]

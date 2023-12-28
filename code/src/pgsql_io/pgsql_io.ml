@@ -135,6 +135,7 @@ module Io = struct
     | "40002"
     (* transaction_integrity_constraint_violation *)
     | "40001" (* serialization_failure *) -> `Integrity_err { message = m; detail = d }
+    | "57014" -> `Statement_timeout
     | _ -> `Unmatching_frame fs
 
   let rec consume_matching ?(skip_leading_unmatched = false) conn fs =
@@ -198,6 +199,7 @@ type err =
   | `Disconnected
   | `Bad_result of string option list
   | `Integrity_err of integrity_err
+  | `Statement_timeout
   | sql_parse_err
   ]
 [@@deriving show]
