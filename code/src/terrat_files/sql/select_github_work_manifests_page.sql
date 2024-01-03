@@ -11,6 +11,21 @@ unified_run_types as (
            end) as run_type
     from github_work_manifests as gwm
 ),
+latest_unlocks as (
+    select
+        repository,
+        pull_number,
+        max(unlocked_at) as unlocked_at
+    from github_pull_request_unlocks
+    group by repository, pull_number
+),
+latest_drift_unlocks as (
+    select
+        repository,
+        max(unlocked_at) as unlocked_at
+    from github_drift_unlocks
+    group by repository
+),
 q as (
     select
         gwm.id as id,
@@ -19,7 +34,13 @@ q as (
         created_at,
         gwm.sha as sha,
         gwm.run_type as run_type,
-        gwm.state as state,
+        (case
+         when lu.unlocked_at is not null and gwm.created_at <= lu.unlocked_at then 'aborted'
+         when (gdwm.work_manifest is not null
+               and ldu.unlocked_at is not null
+               and gwm.created_at <= ldu.unlocked_at) then 'aborted'
+         else gwm.state
+         end) as state,
         gwm.tag_query as tag_query,
         gwm.repository as repository,
         gwm.pull_number as pull_number,
@@ -30,21 +51,12 @@ q as (
          when gdwm.work_manifest is not null then 'drift'
          else 'pr'
          end) as kind,
-       gpr.title as title,
-       gpr.branch as branch,
-       gwm.username as username,
-       gwm.run_id as run_id,
-       urt.run_type as unified_run_type,
-       to_jsonb((select jsonb_agg(jsonb_build_object(
-                     'dir', gwmds.path,
-                     'workspace', gwmds.workspace,
-                     'success', not ((gwmr.success is null and gwm.state = 'aborted') or not gwmr.success)))
-        from github_work_manifest_dirspaceflows as gwmds
-        left join github_work_manifest_results as gwmr
-            on gwmds.work_manifest = gwmr.work_manifest
-               and gwmds.path = gwmr.path
-               and gwmds.workspace = gwmr.workspace
-        where gwmds.work_manifest = gwm.id)) as dirspaces
+        gpr.title as title,
+        gpr.branch as branch,
+        gwm.username as username,
+        gwm.run_id as run_id,
+        urt.run_type as unified_run_type,
+        gwm.dirspaces as dirspaces
     from github_work_manifests as gwm
     inner join github_installation_repositories as gir
         on gir.id = gwm.repository
@@ -56,6 +68,10 @@ q as (
         on gwm.repository = gpr.repository and gwm.pull_number = gpr.pull_number
     left join github_drift_work_manifests as gdwm
         on gwm.id = gdwm.work_manifest
+    left join latest_unlocks as lu
+        on lu.repository = gwm.repository and lu.pull_number = gwm.pull_number
+    left join latest_drift_unlocks as ldu
+        on ldu.repository = gwm.repository
     where gir.installation_id = $installation_id
           and gui.user_id = $user
 )
@@ -74,7 +90,16 @@ select
     owner,
     name,
     kind,
-    to_jsonb(dirspaces) as dirspaces,
+    to_jsonb((select jsonb_agg(jsonb_build_object(
+                  'dir', gwmds.path,
+                  'workspace', gwmds.workspace,
+                  'success', not ((gwmr.success is null and gwm.state = 'aborted') or not gwmr.success)))
+              from github_work_manifest_dirspaceflows as gwmds
+              left join github_work_manifest_results as gwmr
+                  on gwmds.work_manifest = gwmr.work_manifest
+                  and gwmds.path = gwmr.path
+                  and gwmds.workspace = gwmr.workspace
+              where gwmds.work_manifest = gwm.id)),
     title,
     branch,
     username,

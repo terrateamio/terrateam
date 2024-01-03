@@ -4,6 +4,7 @@ module Work_manifests : sig
       q : Buffer.t;
       strings : string CCVector.vector;
       bigints : int64 CCVector.vector;
+      json : string CCVector.vector;
       timezone : string;
       mutable sort_dir : [ `Asc | `Desc ];
       mutable sort_by : string;

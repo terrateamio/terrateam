@@ -110,7 +110,8 @@ module Sql = struct
       /% Var.text "run_type"
       /% Var.text "sha"
       /% Var.text "tag_query"
-      /% Var.(option (text "username")))
+      /% Var.(option (text "username"))
+      /% Var.json "dirspaces")
 
   let insert_work_manifest_dirspaceflow () =
     Pgsql_io.Typed_sql.(
@@ -129,6 +130,16 @@ let insert_work_manifest db repository_id work_manifest pull_number_opt =
   let module Dsf = Tc.Dirspaceflow in
   let module Ds = Tc.Dirspace in
   let open Abbs_future_combinators.Infix_result_monad in
+  let dirspaces_json =
+    `List
+      (CCList.map
+         (fun dsf ->
+           let ds = Dsf.to_dirspace dsf in
+           `Assoc [ ("dir", `String ds.Ds.dir); ("workspace", `String ds.Ds.workspace) ])
+         work_manifest.Wm.changes)
+  in
+
+  let dirspaces = Yojson.Safe.to_string dirspaces_json in
   Pgsql_io.Prepared_stmt.fetch
     db
     (Sql.insert_work_manifest ())
@@ -140,6 +151,7 @@ let insert_work_manifest db repository_id work_manifest pull_number_opt =
     work_manifest.Wm.hash
     (Terrat_tag_query.to_string work_manifest.Wm.tag_query)
     work_manifest.Wm.user
+    dirspaces
   >>= function
   | [] -> assert false
   | (id, state, created_at) :: _ ->

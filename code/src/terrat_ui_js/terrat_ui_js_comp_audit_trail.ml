@@ -231,7 +231,10 @@ let render_work_manifest_pull_request wm =
                              | None -> "Running");
                          ];
                      ])
-                   wm.Wm.dirspaces);
+                   (CCList.sort
+                      (fun Dirspace.{ dir = dir1; _ } Dirspace.{ dir = dir2; _ } ->
+                        CCString.compare dir1 dir2)
+                      wm.Wm.dirspaces));
            ];
        ])
 

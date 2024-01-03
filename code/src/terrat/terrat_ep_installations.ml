@@ -53,6 +53,7 @@ module Work_manifests = struct
         /% Var.text "tz"
         /% Var.(str_array (text "strings"))
         /% Var.(array (bigint "bigints"))
+        /% Var.(str_array (json "json"))
         /% Var.option (Var.text "prev_created_at")
         /% Var.option (Var.uuid "prev_id"))
   end
@@ -62,6 +63,7 @@ module Work_manifests = struct
       q : Buffer.t;
       strings : string CCVector.vector;
       bigints : int64 CCVector.vector;
+      json : string CCVector.vector;
       timezone : string;
       mutable sort_dir : [ `Asc | `Desc ];
       mutable sort_by : string;
@@ -72,6 +74,7 @@ module Work_manifests = struct
         q = Buffer.create 50;
         strings = CCVector.create ();
         bigints = CCVector.create ();
+        json = CCVector.create ();
         timezone;
         sort_dir = `Desc;
         sort_by = "created_at";
@@ -112,12 +115,12 @@ module Work_manifests = struct
               append_str_equal t "username" value;
               Ok ()
           | Some ("dir", value) ->
-              CCVector.push t.strings value;
+              CCVector.push
+                t.json
+                (Yojson.Safe.to_string (`List [ `Assoc [ ("dir", `String value) ] ]));
               Buffer.add_string
                 t.q
-                (Printf.sprintf
-                   "($strings)[%d] in (select jsonb_array_elements(dirspaces) ->> 'dir')"
-                   (CCVector.size t.strings));
+                (Printf.sprintf "(dirspaces @> (($json)[%d]::jsonb))" (CCVector.size t.json));
               Ok ()
           | Some ("repo", value) ->
               append_str_equal t "name" value;
@@ -135,12 +138,12 @@ module Work_manifests = struct
               append_str_equal t "branch" value;
               Ok ()
           | Some ("workspace", value) ->
-              CCVector.push t.strings value;
+              CCVector.push
+                t.json
+                (Yojson.Safe.to_string (`List [ `Assoc [ ("workspace", `String value) ] ]));
               Buffer.add_string
                 t.q
-                (Printf.sprintf
-                   "($strings)[%d] in (select jsonb_array_elements(dirspaces) ->> 'workspace')"
-                   (CCVector.size t.strings));
+                (Printf.sprintf "(dirspaces @> (($json)[%d]::jsonb))" (CCVector.size t.json));
               Ok ()
           | Some ("created_at", value) -> (
               match CCString.Split.left ~by:".." value with
@@ -351,6 +354,7 @@ module Work_manifests = struct
                 q.Tag_query_sql.timezone
                 (CCVector.to_list q.Tag_query_sql.strings)
                 (CCVector.to_list q.Tag_query_sql.bigints)
+                (CCVector.to_list q.Tag_query_sql.json)
                 created_at
                 id))
 

@@ -32,9 +32,7 @@ let test_simple_dir =
           let t = Tag_query_sql.empty () in
           match Tag_query_sql.(of_ast t ast) with
           | Ok () ->
-              assert (
-                Buffer.contents t.Tag_query_sql.q
-                = "($strings)[1] in (select jsonb_array_elements(dirspaces) ->> 'dir')")
+              assert (Buffer.contents t.Tag_query_sql.q = "(dirspaces @> (($json)[1]::jsonb))")
           | Error _ -> assert false)
       | Ok None -> assert false
       | Error _ -> assert false)
@@ -95,9 +93,7 @@ let test_simple_workspace =
           let t = Tag_query_sql.empty () in
           match Tag_query_sql.(of_ast t ast) with
           | Ok () ->
-              assert (
-                Buffer.contents t.Tag_query_sql.q
-                = "($strings)[1] in (select jsonb_array_elements(dirspaces) ->> 'workspace')")
+              assert (Buffer.contents t.Tag_query_sql.q = "(dirspaces @> (($json)[1]::jsonb))")
           | Error _ -> assert false)
       | Ok None -> assert false
       | Error _ -> assert false)
