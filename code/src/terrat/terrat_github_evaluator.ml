@@ -607,6 +607,19 @@ module R = struct
                            repo;
                          })
                     >>= fun () -> run' request_id access_token_cache config db
+                | Error (`Missing_response resp as err)
+                  when CCString.mem ~sub:"No ref found for:" (Openapi.Response.value resp) ->
+                    (* If the ref has been deleted while we are looking up the
+                       workflow, just ignore and move on. *)
+                    Logs.err (fun m ->
+                        m
+                          "GITHUB_EVALUATOR : %s : ERROR : REF_NOT_FOUND : %s : %s : %s : %s"
+                          request_id
+                          owner
+                          repo
+                          branch
+                          (Githubc2_abb.show_call_err err));
+                    run' request_id access_token_cache config db
                 | Error (#Githubc2_abb.call_err as err) ->
                     Logs.err (fun m ->
                         m
