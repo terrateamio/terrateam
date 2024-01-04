@@ -113,6 +113,7 @@ module Event = struct
   module Dir_set = CCSet.Make (CCString)
   module String_set = CCSet.Make (CCString)
   module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
+  module Dirspace_set = CCSet.Make (Terrat_change.Dirspace)
 
   module Msg = struct
     type ('pull_request, 'src, 'apply_requirements) t =
@@ -783,6 +784,36 @@ module Make (S : S) = struct
               | wms -> Abb.Future.return (Ok (`Conflicting_work_manifests wms)))
       | `Expired | `Disabled -> Abb.Future.return (Ok `Account_expired)
 
+    let query_dirspaces_without_valid_plans db event pull_request dirspaces =
+      Abbs_time_it.run (log_time event "QUERY_DIRSPACES_WITHOUT_VALID_PLANS") (fun () ->
+          S.Event.query_dirspaces_without_valid_plans db event pull_request dirspaces)
+
+    (* Given a plan event and the list of matches, if the event is an auto,
+       filter out any dirspaces that have already been run.  If manual, return
+       the list as-is.  This is because some operations on pull request might
+       cause an autoplan event but we only want to run those dirspaces that have
+       not been run for that commit.  In github, the primary example of this is
+       making a draft PR ready for review.  If a user has been planning along
+       the way, we don't want to initiate a new plan when they switch to ready,
+       instead we just want to plan any missing directories. *)
+    let missing_autoplan_matches db event pull_request matches = function
+      | `Auto ->
+          let module Cm = Terrat_change_match in
+          let open Abbs_future_combinators.Infix_result_monad in
+          query_dirspaces_without_valid_plans
+            db
+            event
+            pull_request
+            (CCList.map (fun Cm.{ dirspace; _ } -> dirspace) matches)
+          >>= fun dirspaces ->
+          let dirspaces = Event.Dirspace_set.of_list dirspaces in
+          Abb.Future.return
+            (Ok
+               (CCList.filter
+                  (fun Cm.{ dirspace; _ } -> Event.Dirspace_set.mem dirspace dirspaces)
+                  matches))
+      | `Manual -> Abb.Future.return (Ok matches)
+
     let process_plan
         access_control
         db
@@ -794,7 +825,6 @@ module Make (S : S) = struct
         tf_mode =
       let module D = Terrat_access_control.R.Deny in
       let module Cm = Terrat_change_match in
-      let open Abb.Future.Infix_monad in
       let matches =
         match tf_mode with
         | `Auto ->
@@ -810,77 +840,87 @@ module Make (S : S) = struct
               tag_query_matches
         | `Manual -> tag_query_matches
       in
-      Access_control_engine.eval_tf_operation access_control matches `Plan
+      let open Abbs_future_combinators.Infix_result_monad in
+      missing_autoplan_matches db event pull_request matches tf_mode
       >>= function
-      | Ok Terrat_access_control.R.{ pass = []; deny = _ :: _ as deny }
-        when not (Access_control_engine.plan_require_all_dirspace_access access_control) ->
-          (* In this case all have been denied, but not all dirspaces must have
-             access, however this is treated as special because no work will be done
-             so a special message should be given to the usr. *)
-          Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`All_dirspaces deny))))
-      | Ok Terrat_access_control.R.{ pass; deny }
-        when CCList.is_empty deny
-             || not (Access_control_engine.plan_require_all_dirspace_access access_control) -> (
-          (* All have passed or any that we do not require all to pass *)
-          let matches = pass in
-          match (S.Event.Pull_request.state pull_request, tf_mode, matches) with
-          | _, `Auto, [] ->
-              Logs.info (fun m ->
-                  m
-                    "EVALUATOR : %s : NOOP : AUTOPLAN_NO_MATCHES : draft=%s"
-                    (S.Event.T.request_id event)
-                    (Bool.to_string (S.Event.Pull_request.is_draft_pr pull_request)));
-              Abb.Future.return (Ok None)
-          | _, _, [] ->
-              Logs.info (fun m ->
-                  m
-                    "EVALUATOR : %s : NOOP : PLAN_NO_MATCHING_DIRSPACES"
-                    (S.Event.T.request_id event));
-              Abb.Future.return (Ok (Some Event.Msg.Plan_no_matching_dirspaces))
-          | Terrat_pull_request.State.(Open Open_status.Merge_conflict), _, _ ->
-              Abb.Future.return (Error `Merge_conflict)
-          | _, _, _ -> (
-              let open Abbs_future_combinators.Infix_result_monad in
-              let dirspaces =
-                CCList.map (fun Terrat_change_match.{ dirspace; _ } -> dirspace) matches
-              in
-              test_can_perform_operation db event dirspaces (`Plan tf_mode)
-              >>= function
-              | `Valid ->
-                  create_and_store_work_manifest
-                    db
-                    repo_config
-                    event
-                    pull_request
-                    all_matches
-                    matches
-                    deny
-                    (Event.Op_class.run_type_of_tf (`Plan tf_mode))
-                  >>= fun () -> Abb.Future.return (Ok None)
-              | `Conflicting_work_manifests wms ->
-                  Abb.Future.return (Ok (Some (Event.Msg.Conflicting_work_manifests wms)))
-              | `Account_expired -> Abb.Future.return (Ok (Some Event.Msg.Account_expired))))
-      | Ok Terrat_access_control.R.{ deny; _ } ->
-          Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`Dirspaces deny))))
-      | Error `Error -> Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied `Lookup_err)))
-      | Error (#Terrat_tag_query_ast.err as err) ->
-          Logs.err (fun m ->
+      | [] when tf_mode = `Auto ->
+          Logs.info (fun m ->
               m
-                "EVALUATOR : %s : TAG_QUERY : %a"
+                "EVALUATOR : %s : NOOP : AUTOPLAN_NO_MISSING_MATCHES : draft=%s"
                 (S.Event.T.request_id event)
-                Terrat_tag_query_ast.pp_err
-                err);
-          Abb.Future.return (Ok (Some (Event.Msg.Tag_query_err err)))
-      | Error (`Invalid_query query) ->
-          Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`Invalid_query query))))
+                (Bool.to_string (S.Event.Pull_request.is_draft_pr pull_request)));
+          Abb.Future.return (Ok None)
+      | matches -> (
+          let open Abb.Future.Infix_monad in
+          Access_control_engine.eval_tf_operation access_control matches `Plan
+          >>= function
+          | Ok Terrat_access_control.R.{ pass = []; deny = _ :: _ as deny }
+            when not (Access_control_engine.plan_require_all_dirspace_access access_control) ->
+              (* In this case all have been denied, but not all dirspaces must have
+                 access, however this is treated as special because no work will be done
+                 so a special message should be given to the usr. *)
+              Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`All_dirspaces deny))))
+          | Ok Terrat_access_control.R.{ pass; deny }
+            when CCList.is_empty deny
+                 || not (Access_control_engine.plan_require_all_dirspace_access access_control) -> (
+              (* All have passed or any that we do not require all to pass *)
+              let matches = pass in
+              match (S.Event.Pull_request.state pull_request, tf_mode, matches) with
+              | _, `Auto, [] ->
+                  Logs.info (fun m ->
+                      m
+                        "EVALUATOR : %s : NOOP : AUTOPLAN_NO_MATCHES : draft=%s"
+                        (S.Event.T.request_id event)
+                        (Bool.to_string (S.Event.Pull_request.is_draft_pr pull_request)));
+                  Abb.Future.return (Ok None)
+              | _, _, [] ->
+                  Logs.info (fun m ->
+                      m
+                        "EVALUATOR : %s : NOOP : PLAN_NO_MATCHING_DIRSPACES"
+                        (S.Event.T.request_id event));
+                  Abb.Future.return (Ok (Some Event.Msg.Plan_no_matching_dirspaces))
+              | Terrat_pull_request.State.(Open Open_status.Merge_conflict), _, _ ->
+                  Abb.Future.return (Error `Merge_conflict)
+              | _, _, _ -> (
+                  let open Abbs_future_combinators.Infix_result_monad in
+                  let dirspaces =
+                    CCList.map (fun Terrat_change_match.{ dirspace; _ } -> dirspace) matches
+                  in
+                  test_can_perform_operation db event dirspaces (`Plan tf_mode)
+                  >>= function
+                  | `Valid ->
+                      create_and_store_work_manifest
+                        db
+                        repo_config
+                        event
+                        pull_request
+                        all_matches
+                        matches
+                        deny
+                        (Event.Op_class.run_type_of_tf (`Plan tf_mode))
+                      >>= fun () -> Abb.Future.return (Ok None)
+                  | `Conflicting_work_manifests wms ->
+                      Abb.Future.return (Ok (Some (Event.Msg.Conflicting_work_manifests wms)))
+                  | `Account_expired -> Abb.Future.return (Ok (Some Event.Msg.Account_expired))))
+          | Ok Terrat_access_control.R.{ deny; _ } ->
+              Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`Dirspaces deny))))
+          | Error `Error ->
+              Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied `Lookup_err)))
+          | Error (#Terrat_tag_query_ast.err as err) ->
+              Logs.err (fun m ->
+                  m
+                    "EVALUATOR : %s : TAG_QUERY : %a"
+                    (S.Event.T.request_id event)
+                    Terrat_tag_query_ast.pp_err
+                    err);
+              Abb.Future.return (Ok (Some (Event.Msg.Tag_query_err err)))
+          | Error (`Invalid_query query) ->
+              Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`Invalid_query query))))
+          )
 
     let query_dirspaces_owned_by_other_pull_requests db event pull_request dirspaces =
       Abbs_time_it.run (log_time event "QUERY_DIRSPACES_OWNED_BY_OTHER_PRS") (fun () ->
           S.Event.query_dirspaces_owned_by_other_pull_requests db event pull_request dirspaces)
-
-    let query_dirspaces_without_valid_plans db event pull_request dirspaces =
-      Abbs_time_it.run (log_time event "QUERY_DIRSPACES_WITHOUT_VALID_PLANS") (fun () ->
-          S.Event.query_dirspaces_without_valid_plans db event pull_request dirspaces)
 
     let process_apply'
         db

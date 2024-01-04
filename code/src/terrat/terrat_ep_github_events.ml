@@ -350,11 +350,6 @@ let process_pull_request_event request_id config storage = function
       }
   | Gw.Pull_request_event.Pull_request_ready_for_review
       {
-        (* We run the autoplan flow if a pull request is converted from draft to
-           real PR.  We do not check if ignoring draft PRs was enabled or not so
-           we will do duplicate plans if they autoplan with draft PRs and then
-           switch to ready to review.  We'll cross that bridge when we get
-           there. *)
         Gw.Pull_request_ready_for_review.installation =
           Some { Gw.Installation_lite.id = installation_id; _ };
         repository;
