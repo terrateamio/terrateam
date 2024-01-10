@@ -16,7 +16,12 @@ RUN eval $(opam env) && \
     echo 'opam-version: "2.0"' > opam-mono/repo && \
     opam repository add opam-mono opam-mono && \
     cd /mono/code && \
-    hll generate -n monorepo --opam-dir ../../opam-mono --tag 1.0 --test-deps-as-regular-deps && \
+    hll generate \
+      -n monorepo \
+      --opam-dir ../../opam-mono \
+      --tag 1.0 \
+      --test-deps-as-regular-deps \
+      --url-override file://$PWD && \
     opam update opam-mono && \
     opam info monorepo && \
     opam install -j4 -y --deps-only --no-depexts monorepo
