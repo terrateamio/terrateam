@@ -1,0 +1,41 @@
+opam-version: "2.0"
+maintainer: "orbitz@gmail.com"
+build: [
+	[make "-j%{jobs}%"]
+	[make "-j%{jobs}%" "test"] {with-test}
+]
+
+install: [
+	[make "PREFIX=%{prefix}%" "install"]
+]
+
+remove: [
+	[make "PREFIX=%{prefix}%" "remove"]
+]
+
+depends: [
+	"cmdliner"
+	"containers"
+	"ocamlfind"
+	"pds" { build & (>= "5" & < "6") }
+	"process"
+	"toml" { >= "6" }
+]
+
+authors: [
+	"orbitz@gmail.com"
+]
+
+description: """
+Create opam package files from a repository.
+"""
+
+homepage: "https://hg.sr.ht/~mmatalka/hll"
+
+url {
+	src: "http://acsl-pkgs.s3.amazonaws.com/hll-4.2.tar.gz"
+	checksum: "543a3742fc4641b15aad53773d16e7e8"
+}
+bug-reports: "https://todo.sr.ht/~mmatalka/hll"
+dev-repo: "hg+ssh://hg@hg.sr.ht/~mmatalka/hll"
+
