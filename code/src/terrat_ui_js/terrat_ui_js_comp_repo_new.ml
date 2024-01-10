@@ -217,18 +217,6 @@ let run repo_name state =
                  ];
                div
                  [
-                   img
-                     ~at:
-                       At.
-                         [
-                           src
-                             (Jstr.v
-                                "https://terrateam.io/images/using-terrateam-pull-request-with-terraform-change.png");
-                         ]
-                     ();
-                 ];
-               div
-                 [
                    txt' "Learn how to fully customize Terrateam with our runtime ";
                    a
                      ~at:
