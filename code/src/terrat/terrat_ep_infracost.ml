@@ -144,10 +144,18 @@ let post' config storage path ctx =
           Abb.Future.return
             (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
       | Ok [] ->
-          Logs.err (fun m -> m "INFRACOST : %s : ERROR : MISSING_WORK_MANIFEST" request_id);
+          Logs.warn (fun m ->
+              m
+                "INFRACOST : %s : work_manifest=%s : ERROR : MISSING_WORK_MANIFEST"
+                request_id
+                work_manifest_id);
           Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)
       | Error `Bad_work_manifest ->
-          Logs.err (fun m -> m "INFRACOST : %s : ERROR : BAD_WORK_MANIFEST" request_id);
+          Logs.err (fun m ->
+              m
+                "INFRACOST : %s : work_manifest=%s : ERROR : BAD_WORK_MANIFEST"
+                request_id
+                work_manifest_id);
           Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx))
   | None ->
       Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)
