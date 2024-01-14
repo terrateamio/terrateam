@@ -1,0 +1,6 @@
+[
+  [ "Attribute", "a", [ "String", "a value" ] ],
+  [ "Attribute", "b", [ "String", "b value" ] ],
+  [ "Attribute", "c", [ "String", "c value" ] ],
+  [ "Attribute", "d", [ "String", "d value" ] ]
+]

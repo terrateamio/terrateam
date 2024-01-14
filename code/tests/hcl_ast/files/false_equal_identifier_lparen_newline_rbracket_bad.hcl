@@ -1,0 +1,5 @@
+false = foo(
+]
+---
+bar = foo (
+}

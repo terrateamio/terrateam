@@ -1,0 +1,3 @@
+false = foo(]
+---
+foo = foo(}

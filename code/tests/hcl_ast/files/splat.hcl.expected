@@ -1,0 +1,59 @@
+[
+  [
+    "Attribute",
+    "foo",
+    [
+      "Attr",
+      [
+        [
+          "Idx",
+          [
+            [ "Attr", [ [ "Id", "var" ], [ "A_string", "list" ] ] ],
+            [ "Splat" ]
+          ]
+        ],
+        [ "A_string", "id" ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "bar",
+    [
+      "Attr",
+      [
+        [
+          "Idx",
+          [
+            [
+              "Attr",
+              [
+                [
+                  "Idx",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "list" ] ] ],
+                    [ "Splat" ]
+                  ]
+                ],
+                [ "A_string", "interfaces" ]
+              ]
+            ],
+            [ "Int", 0 ]
+          ]
+        ],
+        [ "A_string", "name" ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "baz",
+    [
+      "Attr",
+      [
+        [ "Attr", [ [ "Id", "var" ], [ "A_splat" ] ] ],
+        [ "A_string", "zoom" ]
+      ]
+    ]
+  ]
+]

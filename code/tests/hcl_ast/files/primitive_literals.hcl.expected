@@ -1,0 +1,29 @@
+[
+  [ "Attribute", "whole_number", [ "Int", 5 ] ],
+  [ "Attribute", "neg_number", [ "Minus", [ "Int", 5 ] ] ],
+  [ "Attribute", "fractional_number", [ "Float", 3.2 ] ],
+  [
+    "Attribute",
+    "fractional_number_precision",
+    [ "Float", 3.141592653589793 ]
+  ],
+  [ "Attribute", "fractional_number_exp", [ "Float", 310.0 ] ],
+  [ "Attribute", "fractional_number_exp", [ "Float", 0.031 ] ],
+  [ "Attribute", "fractional_number_exp", [ "Float", 310.0 ] ],
+  [ "Attribute", "fractional_number_exp", [ "Float", 0.031 ] ],
+  [ "Attribute", "fractional_number_exp", [ "Float", 0.03 ] ],
+  [ "Attribute", "fractional_number_exp", [ "Float", 300.0 ] ],
+  [ "Attribute", "fractional_number_exp", [ "Float", 300.0 ] ],
+  [ "Attribute", "fractional_number_exp", [ "Float", 0.03 ] ],
+  [ "Attribute", "string_ascii", [ "String", "hello" ] ],
+  [ "Attribute", "string_unicode_bmp", [ "String", "ЖЖ" ] ],
+  [
+    "Attribute",
+    "string_unicode_astral",
+    [ "String", "👩‍👩‍👧‍👦" ]
+  ],
+  [ "Attribute", "string_unicode_nonnorm", [ "String", "años" ] ],
+  [ "Attribute", "true", [ "Bool", true ] ],
+  [ "Attribute", "false", [ "Bool", false ] ],
+  [ "Attribute", "null", [ "Null" ] ]
+]

@@ -1,0 +1,83 @@
+[
+  [
+    "Attribute",
+    "normal",
+    [
+      "Object",
+      [
+        [ [ "Id", "basic" ], [ "String", "\nFoo\n\nBar\n\nBaz\n\n" ] ],
+        [
+          [ "Id", "indented" ],
+          [ "String", "\n    Foo\n\n    Bar\n\n    Baz\n\n" ]
+        ],
+        [
+          [ "Id", "indented_more" ],
+          [ "String", "\n    Foo\n\n      Bar\n\n    Baz\n\n" ]
+        ],
+        [
+          [ "Id", "interp" ],
+          [ "String", "\n    Foo\n\n    ${bar}\n\n    Baz\n\n" ]
+        ],
+        [
+          [ "Id", "newlines_between" ],
+          [ "String", "\nFoo\n\n\nBar\n\n\nBaz\n\n" ]
+        ],
+        [
+          [ "Id", "indented_newlines_between" ],
+          [ "String", "\n    Foo\n\n\n    Bar\n\n\n    Baz\n\n" ]
+        ],
+        [ [ "Id", "marker_at_suffix" ], [ "String", "\n    NOT EOT\n\n" ] ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "flush",
+    [
+      "Object",
+      [
+        [ [ "Id", "basic" ], [ "String", "\nFoo\n\nBar\n\nBaz\n\n" ] ],
+        [
+          [ "Id", "indented" ],
+          [ "String", "\n    Foo\n\n    Bar\n\n    Baz\n\n" ]
+        ],
+        [
+          [ "Id", "indented_more" ],
+          [ "String", "\n    Foo\n\n      Bar\n\n    Baz\n\n" ]
+        ],
+        [
+          [ "Id", "indented_less" ],
+          [ "String", "\n    Foo\n\n  Bar\n\n    Baz\n\n" ]
+        ],
+        [
+          [ "Id", "interp" ],
+          [ "String", "\n    Foo\n\n    ${bar}\n\n    Baz\n\n" ]
+        ],
+        [
+          [ "Id", "interp_indented_more" ],
+          [ "String", "\n    Foo\n\n      ${bar}\n\n    Baz\n\n" ]
+        ],
+        [
+          [ "Id", "interp_indented_less" ],
+          [ "String", "\n    Foo\n\n  ${space_bar}\n\n    Baz\n\n" ]
+        ],
+        [ [ "Id", "tabs" ], [ "String", "\n\tFoo\n\n  Bar\n\n  Baz\n\n" ] ],
+        [
+          [ "Id", "unicode_spaces" ],
+          [
+            "String",
+            "\n     Foo (there's two \"em spaces\" before Foo there)\n\n    Bar\n\n    Baz\n\n"
+          ]
+        ],
+        [
+          [ "Id", "newlines_between" ],
+          [ "String", "\nFoo\n\n\nBar\n\n\nBaz\n\n" ]
+        ],
+        [
+          [ "Id", "indented_newlines_between" ],
+          [ "String", "\n    Foo\n\n\n    Bar\n\n\n    Baz\n\n" ]
+        ]
+      ]
+    ]
+  ]
+]

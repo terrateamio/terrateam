@@ -1,0 +1,50 @@
+[
+  [
+    "Attribute",
+    "foo",
+    [
+      "Attr",
+      [
+        [ "Attr", [ [ "Id", "a" ], [ "A_string", "b" ] ] ],
+        [ "A_string", "c" ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "foo",
+    [
+      "Idx",
+      [
+        [
+          "Attr",
+          [
+            [
+              "Idx",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Idx", [ [ "Id", "a" ], [ "Int", 0 ] ] ],
+                    [ "A_string", "b" ]
+                  ]
+                ],
+                [ "Int", 1 ]
+              ]
+            ],
+            [ "A_string", "c" ]
+          ]
+        ],
+        [ "Int", 2 ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "foo",
+    [
+      "Attr",
+      [ [ "Attr", [ [ "Id", "a" ], [ "A_int", 0 ] ] ], [ "A_string", "b" ] ]
+    ]
+  ]
+]

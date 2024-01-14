@@ -1,0 +1,10 @@
+[
+  [
+    "Block",
+    {
+      "type_": "a",
+      "labels": [],
+      "body": [ [ "Attribute", "b", [ "String", "foo" ] ] ]
+    }
+  ]
+]

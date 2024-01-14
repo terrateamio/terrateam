@@ -1,0 +1,80 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "workload_identity_config",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Not", [ "Id", "var" ] ],
+                  [ "A_string", "enable_workload_identity" ]
+                ]
+              ],
+              "then_": [ "Tuple", [] ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "identity_namespace" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Tuple",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Id", "identity_namespace" ],
+                            [ "String", "${var.project}.svc.id.goog" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Tuple",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Id", "identity_namespace" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "identity_namespace" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,118 @@
+[
+  [ "Attribute", "foo", [ "Tuple", [ [ "Int", 1 ] ] ] ],
+  [
+    "Attribute",
+    "foo",
+    [ "Tuple", [ [ "Int", 1 ], [ "Int", 2 ], [ "Int", 3 ] ] ]
+  ],
+  [
+    "Attribute",
+    "foo",
+    [ "Tuple", [ [ "Int", 1 ], [ "Int", 2 ], [ "Int", 3 ], [ "Int", 4 ] ] ]
+  ],
+  [
+    "Attribute",
+    "foo",
+    [
+      "For_tuple",
+      {
+        "identifiers": [ "s", [] ],
+        "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "list" ] ] ],
+        "output": [ "Fun_call", [ "upper", [ [ "Id", "s" ] ] ] ],
+        "cond": null
+      }
+    ]
+  ],
+  [
+    "Attribute",
+    "foo",
+    [
+      "For_tuple",
+      {
+        "identifiers": [ "k", [ "v" ] ],
+        "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "map" ] ] ],
+        "output": [
+          "Add",
+          [
+            [ "Fun_call", [ "length", [ [ "Id", "k" ] ] ] ],
+            [ "Fun_call", [ "length", [ [ "Id", "v" ] ] ] ]
+          ]
+        ],
+        "cond": null
+      }
+    ]
+  ],
+  [
+    "Attribute",
+    "foo",
+    [
+      "For_object",
+      {
+        "identifiers": [ "s", [] ],
+        "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "list" ] ] ],
+        "key_output": [ "Id", "s" ],
+        "value_output": [ "Fun_call", [ "upper", [ [ "Id", "s" ] ] ] ],
+        "cond": null
+      }
+    ]
+  ],
+  [
+    "Attribute",
+    "foo",
+    [
+      "For_tuple",
+      {
+        "identifiers": [ "s", [] ],
+        "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "list" ] ] ],
+        "output": [ "Fun_call", [ "upper", [ [ "Id", "s" ] ] ] ],
+        "cond": [ "Not", [ "Equal", [ [ "Id", "s" ], [ "String", "" ] ] ] ]
+      }
+    ]
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "admin_users",
+          [
+            "For_object",
+            {
+              "identifiers": [ "name", [ "user" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "users" ] ]
+              ],
+              "key_output": [ "Id", "name" ],
+              "value_output": [ "Id", "user" ],
+              "cond": [
+                "Attr", [ [ "Id", "user" ], [ "A_string", "is_admin" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "regular_users",
+          [
+            "For_object",
+            {
+              "identifiers": [ "name", [ "user" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "users" ] ]
+              ],
+              "key_output": [ "Id", "name" ],
+              "value_output": [ "Id", "user" ],
+              "cond": [
+                "Attr",
+                [ [ "Not", [ "Id", "user" ] ], [ "A_string", "is_admin" ] ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

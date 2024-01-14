@@ -1,0 +1,250 @@
+[
+  [
+    "Block",
+    {
+      "type_": "equality",
+      "labels": [ [ "Lit", "==" ] ],
+      "body": [
+        [
+          "Attribute",
+          "exactly",
+          [ "Equal", [ [ "String", "a" ], [ "String", "a" ] ] ]
+        ],
+        [
+          "Attribute",
+          "not",
+          [ "Equal", [ [ "String", "a" ], [ "String", "b" ] ] ]
+        ],
+        [
+          "Attribute",
+          "type_mismatch_number",
+          [ "Equal", [ [ "String", "1" ], [ "Int", 1 ] ] ]
+        ],
+        [
+          "Attribute",
+          "type_mismatch_bool",
+          [ "Equal", [ [ "String", "true" ], [ "Bool", true ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "equality",
+      "labels": [ [ "Lit", "!=" ] ],
+      "body": [
+        [
+          "Attribute",
+          "exactly",
+          [ "Not", [ "Equal", [ [ "String", "a" ], [ "String", "a" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "not",
+          [ "Not", [ "Equal", [ [ "String", "a" ], [ "String", "b" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "type_mismatch_number",
+          [ "Not", [ "Equal", [ [ "String", "1" ], [ "Int", 1 ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "type_mismatch_bool",
+          [ "Not", [ "Equal", [ [ "String", "true" ], [ "Bool", true ] ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "inequality",
+      "labels": [ [ "Lit", "<" ] ],
+      "body": [
+        [ "Attribute", "lt", [ "Lt", [ [ "Int", 1 ], [ "Int", 2 ] ] ] ],
+        [ "Attribute", "gt", [ "Lt", [ [ "Int", 2 ], [ "Int", 1 ] ] ] ],
+        [ "Attribute", "eq", [ "Lt", [ [ "Int", 1 ], [ "Int", 1 ] ] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "inequality",
+      "labels": [ [ "Lit", "<=" ] ],
+      "body": [
+        [ "Attribute", "lt", [ "Lte", [ [ "Int", 1 ], [ "Int", 2 ] ] ] ],
+        [ "Attribute", "gt", [ "Lte", [ [ "Int", 2 ], [ "Int", 1 ] ] ] ],
+        [ "Attribute", "eq", [ "Lte", [ [ "Int", 1 ], [ "Int", 1 ] ] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "inequality",
+      "labels": [ [ "Lit", ">" ] ],
+      "body": [
+        [ "Attribute", "lt", [ "Gt", [ [ "Int", 1 ], [ "Int", 2 ] ] ] ],
+        [ "Attribute", "gt", [ "Gt", [ [ "Int", 2 ], [ "Int", 1 ] ] ] ],
+        [ "Attribute", "eq", [ "Gt", [ [ "Int", 1 ], [ "Int", 1 ] ] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "inequality",
+      "labels": [ [ "Lit", ">=" ] ],
+      "body": [
+        [ "Attribute", "lt", [ "Gte", [ [ "Int", 1 ], [ "Int", 2 ] ] ] ],
+        [ "Attribute", "gt", [ "Gte", [ [ "Int", 2 ], [ "Int", 1 ] ] ] ],
+        [ "Attribute", "eq", [ "Gte", [ [ "Int", 1 ], [ "Int", 1 ] ] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "arithmetic",
+      "labels": [],
+      "body": [
+        [ "Attribute", "add", [ "Add", [ [ "Int", 2 ], [ "Float", 3.5 ] ] ] ],
+        [
+          "Attribute",
+          "add_big",
+          [ "Add", [ [ "Float", 3.141592653589793 ], [ "Int", 1 ] ] ]
+        ],
+        [
+          "Attribute",
+          "sub",
+          [ "Subtract", [ [ "Float", 3.5 ], [ "Int", 2 ] ] ]
+        ],
+        [
+          "Attribute",
+          "sub_neg",
+          [ "Subtract", [ [ "Int", 2 ], [ "Float", 3.5 ] ] ]
+        ],
+        [
+          "Attribute", "mul", [ "Mult", [ [ "Int", 2 ], [ "Float", 4.5 ] ] ]
+        ],
+        [ "Attribute", "div", [ "Div", [ [ "Int", 1 ], [ "Int", 10 ] ] ] ],
+        [ "Attribute", "mod", [ "Mod", [ [ "Int", 11 ], [ "Int", 5 ] ] ] ],
+        [
+          "Attribute",
+          "mod_frac",
+          [ "Mod", [ [ "Int", 11 ], [ "Float", 5.1 ] ] ]
+        ],
+        [
+          "Attribute",
+          "sub_neg",
+          [ "Subtract", [ [ "Int", 2 ], [ "Minus", [ "Int", 2 ] ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "logical_binary",
+      "labels": [ [ "Lit", "&&" ] ],
+      "body": [
+        [
+          "Attribute",
+          "tt",
+          [ "Log_and", [ [ "Bool", true ], [ "Bool", true ] ] ]
+        ],
+        [
+          "Attribute",
+          "ft",
+          [ "Log_and", [ [ "Bool", false ], [ "Bool", true ] ] ]
+        ],
+        [
+          "Attribute",
+          "tf",
+          [ "Log_and", [ [ "Bool", true ], [ "Bool", false ] ] ]
+        ],
+        [
+          "Attribute",
+          "ff",
+          [ "Log_and", [ [ "Bool", false ], [ "Bool", false ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "logical_binary",
+      "labels": [ [ "Lit", "||" ] ],
+      "body": [
+        [
+          "Attribute",
+          "tt",
+          [ "Log_or", [ [ "Bool", true ], [ "Bool", true ] ] ]
+        ],
+        [
+          "Attribute",
+          "ft",
+          [ "Log_or", [ [ "Bool", false ], [ "Bool", true ] ] ]
+        ],
+        [
+          "Attribute",
+          "tf",
+          [ "Log_or", [ [ "Bool", true ], [ "Bool", false ] ] ]
+        ],
+        [
+          "Attribute",
+          "ff",
+          [ "Log_or", [ [ "Bool", false ], [ "Bool", false ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "logical_unary",
+      "labels": [ [ "Lit", "!" ] ],
+      "body": [
+        [ "Attribute", "t", [ "Not", [ "Bool", true ] ] ],
+        [ "Attribute", "f", [ "Not", [ "Bool", false ] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "conditional",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "t",
+          [
+            "Cond",
+            {
+              "if_": [ "Bool", true ],
+              "then_": [ "String", "a" ],
+              "else_": [ "String", "b" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "f",
+          [
+            "Cond",
+            {
+              "if_": [ "Bool", false ],
+              "then_": [ "String", "a" ],
+              "else_": [ "String", "b" ]
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]
