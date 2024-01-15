@@ -150,6 +150,94 @@
       ],
       "type": "object"
     },
+    "engine": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/engine-cdktf"
+        },
+        {
+          "$ref": "#/definitions/engine-opentofu"
+        },
+        {
+          "$ref": "#/definitions/engine-terraform"
+        },
+        {
+          "$ref": "#/definitions/engine-terragrunt"
+        }
+      ]
+    },
+    "engine-cdktf": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "const": "cdktf",
+          "type": "string"
+        },
+        "tf_cmd": {
+          "default": "terraform",
+          "type": "string"
+        },
+        "tf_version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "engine-opentofu": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "const": "tofu",
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "engine-terraform": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "const": "terraform",
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "engine-terragrunt": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "const": "terragrunt",
+          "type": "string"
+        },
+        "tf_version": {
+          "default": "terraform",
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
     "hook": {
       "additionalProperties": false,
       "properties": {
@@ -685,6 +773,9 @@
           "default": true,
           "type": "boolean"
         },
+        "engine": {
+          "$ref": "#/definitions/engine"
+        },
         "hooks": {
           "additionalProperties": false,
           "properties": {
@@ -812,6 +903,9 @@
         "cdktf": {
           "default": false,
           "type": "boolean"
+        },
+        "engine": {
+          "$ref": "#/definitions/engine"
         },
         "lock_policy": {
           "default": "strict",
