@@ -78,7 +78,18 @@ module El = struct
 
   let remove_read fd t =
     if Fd_map.mem fd t.reads then
-      { t with reads = Fd_map.remove fd t.reads; change_read = Fd_map.add fd `Del t.change_read }
+      {
+        t with
+        reads = Fd_map.remove fd t.reads;
+        change_read =
+          (if
+             (* If a change has been added and is now being removed before the add has been
+                executed, we need to both remove it as well as not add the [delete].  Kqueue
+                will fail if we try to delete an fd that was never added to it. *)
+             Fd_map.mem fd t.change_read
+           then Fd_map.remove fd t.change_read
+           else Fd_map.add fd `Del t.change_read);
+      }
     else t
 
   let add_write fd handler t =
@@ -93,7 +104,14 @@ module El = struct
       {
         t with
         writes = Fd_map.remove fd t.writes;
-        change_write = Fd_map.add fd `Del t.change_write;
+        change_write =
+          (if
+             (* If a change has been added and is now being removed before the add has been
+                executed, we need to both remove it as well as not add the [delete].  Kqueue
+                will fail if we try to delete an fd that was never added to it. *)
+             Fd_map.mem fd t.change_write
+           then Fd_map.remove fd t.change_write
+           else Fd_map.add fd `Del t.change_write);
       }
     else t
 
