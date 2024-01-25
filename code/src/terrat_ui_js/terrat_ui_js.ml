@@ -10,7 +10,7 @@ let no_installation state =
       >>= function
       | Ok R.{ installations = [] } ->
           Abb_js.Future.return
-            (Brtl_js2.Output.redirect "https://terrateam.io/docs/getting-started/")
+            (Brtl_js2.Output.navigate (Uri.of_string "https://github.com/apps/terrateam-action"))
       | Ok R.{ installations = i :: _ } ->
           let module I = Terrat_api_components.Installation in
           Abb_js.Future.return (Brtl_js2.Output.redirect (consumed_path ^ "/i/" ^ i.I.id))
