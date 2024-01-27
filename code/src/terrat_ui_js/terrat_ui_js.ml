@@ -1,3 +1,6 @@
+let new_installation_install installation_id state =
+  Abb_js.Future.return (Brtl_js2.Output.redirect ("/i/" ^ installation_id ^ "/repos/refresh"))
+
 let no_installation state =
   let open Abb_js.Future.Infix_monad in
   let consumed_path = Brtl_js2.State.consumed_path state in
@@ -21,6 +24,7 @@ let no_installation state =
 let init state =
   let login_rt () = Brtl_js2_rtng.(root "" / "login") in
   let main_rt () = Brtl_js2_rtng.(root "" / "i" /% Path.string) in
+  let installation_install_rt () = Brtl_js2_rtng.(root "" /? Query.string "installation_id") in
   let no_installation_rt () = Brtl_js2_rtng.(root "") in
   let unknown_rt () = Brtl_js2_rtng.(root "") in
   ignore
@@ -31,6 +35,7 @@ let init state =
          [
            login_rt () --> Terrat_ui_js_comp_login.run;
            main_rt () --> Terrat_ui_js_comp_main.run;
+           installation_install_rt () --> new_installation_install;
            no_installation_rt () --> no_installation;
            (unknown_rt ()
            --> fun _ ->

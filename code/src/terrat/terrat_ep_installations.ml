@@ -753,80 +753,6 @@ module Repos = struct
         Paginate.run ?page ~page_param:"page" query ctx >>= fun ctx -> Abb.Future.return (Ok ctx))
 
   module Refresh = struct
-    let chunk_size = 500
-
-    module Sql = struct
-      let insert_installation_repos () =
-        Pgsql_io.Typed_sql.(
-          sql
-          /^ "insert into github_installation_repositories (id, installation_id, owner, name) \
-              select * from unnest($id, $installation_id, $owner, $name) on conflict (id) do \
-              nothing"
-          /% Var.(array (bigint "id"))
-          /% Var.(array (bigint "installation_id"))
-          /% Var.(str_array (text "owner"))
-          /% Var.(str_array (text "name")))
-    end
-
-    let refresh_repos request_id config storage installation_id task =
-      let open Abb.Future.Infix_monad in
-      Terrat_task.run storage task (fun () ->
-          let open Abbs_future_combinators.Infix_result_monad in
-          Terrat_github.get_installation_access_token config installation_id
-          >>= fun access_token ->
-          Terrat_github.with_client
-            config
-            (`Token access_token)
-            Terrat_github.get_installation_repos
-          >>= fun repositories ->
-          let module R = Githubc2_components.Repository in
-          let module Rp = R.Primary in
-          let module U = Githubc2_components.Simple_user in
-          let module Up = U.Primary in
-          let installation_id = CCInt64.of_int installation_id in
-          Abbs_future_combinators.List_result.iter
-            ~f:(fun repositories ->
-              Pgsql_pool.with_conn storage ~f:(fun db ->
-                  Pgsql_io.Prepared_stmt.execute
-                    db
-                    (Sql.insert_installation_repos ())
-                    (CCList.map
-                       (fun R.{ primary = Rp.{ id; _ }; _ } -> CCInt64.of_int id)
-                       repositories)
-                    (CCList.replicate (CCList.length repositories) installation_id)
-                    (CCList.map
-                       (fun R.{ primary = Rp.{ owner = U.{ primary = Up.{ login; _ }; _ }; _ }; _ } ->
-                         login)
-                       repositories)
-                    (CCList.map (fun R.{ primary = Rp.{ name; _ }; _ } -> name) repositories)))
-            (CCList.chunks chunk_size repositories))
-      >>= function
-      | Ok () -> Abb.Future.return ()
-      | Error (#Terrat_github.get_installation_access_token_err as err) ->
-          Logs.err (fun m ->
-              m
-                "INSTALLATION : %s : REFRESH_REPOS : %a"
-                request_id
-                Terrat_github.pp_get_installation_access_token_err
-                err);
-          Abb.Future.return ()
-      | Error (#Terrat_github.get_installation_repos_err as err) ->
-          Logs.err (fun m ->
-              m
-                "INSTALLATION : %s : REFRESH_REPOS : %a"
-                request_id
-                Terrat_github.pp_get_installation_repos_err
-                err);
-          Abb.Future.return ()
-      | Error (#Pgsql_pool.err as err) ->
-          Logs.err (fun m ->
-              m "INSTALLATION : %s : REFRESH_REPOS : %a" request_id Pgsql_pool.pp_err err);
-          Abb.Future.return ()
-      | Error (#Pgsql_io.err as err) ->
-          Logs.err (fun m ->
-              m "INSTALLATION : %s : REFRESH_REPOS : %a" request_id Pgsql_io.pp_err err);
-          Abb.Future.return ()
-
     let post config storage installation_id =
       Brtl_ep.run_result ~f:(fun ctx ->
           let open Abbs_future_combinators.Infix_result_monad in
@@ -834,16 +760,14 @@ module Repos = struct
           >>= fun user ->
           Terrat_user.enforce_installation_access storage user installation_id ctx
           >>= fun () ->
-          let task =
-            Terrat_task.make ~name:(Printf.sprintf "INSTALLATION : REFRESH : %d" installation_id) ()
-          in
           let open Abb.Future.Infix_monad in
-          Pgsql_pool.with_conn storage ~f:(fun db -> Terrat_task.store db task)
+          Terrat_github_installation.refresh_repos'
+            ~request_id:(Brtl_ctx.token ctx)
+            ~config
+            ~storage
+            (Terrat_github_installation.Id.make installation_id)
           >>= function
           | Ok task ->
-              Abb.Future.fork
-                (refresh_repos (Brtl_ctx.token ctx) config storage installation_id task)
-              >>= fun _ ->
               let id = Uuidm.to_string (Terrat_task.id task) in
               let body =
                 Terrat_api_installations.Repo_refresh.Responses.OK.(

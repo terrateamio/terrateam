@@ -1,3 +1,11 @@
+type store_err = Pgsql_io.err
+type abort_err = Pgsql_io.err
+
+type run_err =
+  [ Pgsql_pool.err
+  | Pgsql_io.err
+  ]
+
 module Sql = struct
   let insert_task () =
     Pgsql_io.Typed_sql.(
