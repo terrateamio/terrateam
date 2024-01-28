@@ -293,15 +293,17 @@ module Output = struct
 
   let render ?(cleanup = fun () -> Abb_js.Future.return ()) els = Render { cleanup; els }
   let const ?cleanup els = render ?cleanup (Note.S.const ~eq:( == ) els)
-  let redirect path = Redirect path
 
   let navigate uri =
-    match Brr.Uri.of_jstr (Jstr.v (Uri.to_string uri)) with
-    | Ok uri -> Navigate uri
-    | Error err ->
-        Brr.Console.(
-          log [ Jstr.v "Exn"; Jstr.v "Output.navigate"; Jstr.v (Uri.to_string uri); err ]);
-        assert false
+    match Uri.host uri with
+    | Some _ -> (
+        match Brr.Uri.of_jstr (Jstr.v (Uri.to_string uri)) with
+        | Ok uri -> Navigate uri
+        | Error err ->
+            Brr.Console.(
+              log [ Jstr.v "Exn"; Jstr.v "Output.navigate"; Jstr.v (Uri.to_string uri); err ]);
+            assert false)
+    | None -> Redirect (Uri.to_string uri)
 end
 
 module Comp = struct

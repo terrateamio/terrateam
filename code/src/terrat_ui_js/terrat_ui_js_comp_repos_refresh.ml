@@ -40,7 +40,7 @@ let run' state =
       wait_for_task client task_id
       >>= function
       | Ok T.{ state = "completed"; _ } ->
-          Abb_js.Future.return (Brtl_js2.Output.redirect ("/i/" ^ installation_id))
+          Abb_js.Future.return (Brtl_js2.Output.navigate (Uri.of_string ("/i/" ^ installation_id)))
       | Ok task -> failwith "nyi"
       | Error _ -> failwith "nyi")
   | Error _ -> failwith "nyi"

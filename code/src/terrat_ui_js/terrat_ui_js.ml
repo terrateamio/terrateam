@@ -1,5 +1,6 @@
 let new_installation_install installation_id state =
-  Abb_js.Future.return (Brtl_js2.Output.redirect ("/i/" ^ installation_id ^ "/repos/refresh"))
+  Abb_js.Future.return
+    (Brtl_js2.Output.navigate (Uri.of_string ("/i/" ^ installation_id ^ "/repos/refresh")))
 
 let no_installation state =
   let open Abb_js.Future.Infix_monad in
@@ -16,9 +17,10 @@ let no_installation state =
             (Brtl_js2.Output.navigate (Uri.of_string "https://github.com/apps/terrateam-action"))
       | Ok R.{ installations = i :: _ } ->
           let module I = Terrat_api_components.Installation in
-          Abb_js.Future.return (Brtl_js2.Output.redirect (consumed_path ^ "/i/" ^ i.I.id))
+          Abb_js.Future.return
+            (Brtl_js2.Output.navigate (Uri.of_string (consumed_path ^ "/i/" ^ i.I.id)))
       | Error _ -> failwith "nyi2")
-  | Ok None -> Abb_js.Future.return (Brtl_js2.Output.redirect "/login")
+  | Ok None -> Abb_js.Future.return (Brtl_js2.Output.navigate (Uri.of_string "/login"))
   | Error _ -> assert false
 
 let init state =

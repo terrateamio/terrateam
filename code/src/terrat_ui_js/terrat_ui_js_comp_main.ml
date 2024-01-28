@@ -176,8 +176,8 @@ let run installation_id state =
                     Terrat_ui_js_state.create ~client ~user ~installations ~selected_installation ()
                   in
                   run' (Brtl_js2.State.with_app_state app_state state)
-              | None -> Abb_js.Future.return (Brtl_js2.Output.redirect "/"))
+              | None -> Abb_js.Future.return (Brtl_js2.Output.navigate (Uri.of_string "/")))
           | Error _ -> failwith "nyi4")
         state
-  | Ok None -> Abb_js.Future.return (Brtl_js2.Output.redirect "/login")
+  | Ok None -> Abb_js.Future.return (Brtl_js2.Output.navigate (Uri.of_string "/login"))
   | Error _ -> assert false

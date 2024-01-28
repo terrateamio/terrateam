@@ -166,11 +166,8 @@ module Output : sig
   (** Same as [render ?cleanup (Note.S.const ~eq:(==) els)]. *)
   val const : ?cleanup:(unit -> unit Abb_js.Future.t) -> Brr.El.t list -> t
 
-  (** Navigate to a path inside the same application *)
-  val redirect : string -> t
-
-  (** Navigate to a complete URI.  If the URI is incomplete, the app will crash
-      and a message will be displayed in the console.*)
+  (** Navigate to a URL.  If there is no host in the URL, then it is considered
+      an internal redirect. *)
   val navigate : Uri.t -> t
 end
 
