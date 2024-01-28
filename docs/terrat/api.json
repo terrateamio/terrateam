@@ -470,6 +470,26 @@
         ],
         "type": "object"
       },
+      "server-config": {
+        "additionalProperties": false,
+        "properties": {
+          "github_app_client_id": {
+            "type": "string"
+          },
+          "github_app_url": {
+            "type": "string"
+          },
+          "github_web_base_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "github_app_client_id",
+          "github_app_url",
+          "github_web_base_url"
+        ],
+        "type": "object"
+      },
       "task": {
         "additionalProperties": false,
         "properties": {
@@ -1612,6 +1632,23 @@
           },
           "403": {
             "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/server/config": {
+      "get": {
+        "operationId": "server/config",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/server-config"
+                }
+              }
+            }
           }
         }
       }

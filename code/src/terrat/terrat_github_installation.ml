@@ -5,7 +5,9 @@ module Sql = struct
     Pgsql_io.Typed_sql.(
       sql
       /^ "insert into github_installation_repositories (id, installation_id, owner, name) select * \
-          from unnest($id, $installation_id, $owner, $name) on conflict (id) do nothing"
+          from unnest($id, $installation_id, $owner, $name) on conflict (id) do update set \
+          (installation_id, owner, name) = (excluded.installation_id, excluded.owner, \
+          excluded.name)"
       /% Var.(array (bigint "id"))
       /% Var.(array (bigint "installation_id"))
       /% Var.(str_array (text "owner"))

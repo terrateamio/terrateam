@@ -1,4 +1,6 @@
 let default_telemetry_uri = Uri.of_string "https://telemetry.terrateam.io"
+let default_github_web_base_url = Uri.of_string "https://github.com"
+let default_github_app_url = Uri.of_string "https://github.com/apps/terrateam-action"
 
 module Telemetry = struct
   type t =
@@ -14,11 +16,13 @@ type t = {
   db_host : string;
   db_password : string;
   db_user : string;
+  github_api_base_url : Uri.t option;
   github_app_client_id : string;
   github_app_client_secret : string;
   github_app_id : string;
   github_app_pem : Mirage_crypto_pk.Rsa.priv;
-  github_api_base_url : Uri.t option;
+  github_app_url : Uri.t;
+  github_web_base_url : Uri.t;
   github_webhook_secret : string option;
   infracost_api_key : string;
   infracost_pricing_api_endpoint : Uri.t;
@@ -97,6 +101,15 @@ let create () =
     | _ -> None)
   >>= fun telemetry ->
   let github_api_base_url = CCOption.map Uri.of_string (Sys.getenv_opt "GITHUB_API_BASE_URL") in
+  let github_web_base_url =
+    CCOption.map_or
+      ~default:default_github_web_base_url
+      Uri.of_string
+      (Sys.getenv_opt "GITHUB_WEB_BASE_URL")
+  in
+  let github_app_url =
+    CCOption.map_or ~default:default_github_app_url Uri.of_string (Sys.getenv_opt "GITHUB_APP_URL")
+  in
   let statement_timeout =
     CCOption.get_or ~default:"500ms" (Sys.getenv_opt "TERRAT_STATEMENT_TIMEOUT")
   in
@@ -109,19 +122,21 @@ let create () =
       db_host;
       db_password;
       db_user;
+      github_api_base_url;
       github_app_client_id;
       github_app_client_secret;
       github_app_id;
       github_app_pem;
-      github_api_base_url;
+      github_app_url;
+      github_web_base_url;
       github_webhook_secret;
       infracost_api_key;
       infracost_pricing_api_endpoint = Uri.of_string infracost_pricing_api_endpoint;
       nginx_status_uri;
       port;
       python_exec;
-      telemetry;
       statement_timeout;
+      telemetry;
     }
 
 let admin_token t = t.admin_token
@@ -131,16 +146,18 @@ let db_connect_timeout t = t.db_connect_timeout
 let db_host t = t.db_host
 let db_password t = t.db_password
 let db_user t = t.db_user
+let github_api_base_url t = t.github_api_base_url
 let github_app_client_id t = t.github_app_client_id
 let github_app_client_secret t = t.github_app_client_secret
 let github_app_id t = t.github_app_id
 let github_app_pem t = t.github_app_pem
-let github_api_base_url t = t.github_api_base_url
+let github_app_url t = t.github_app_url
+let github_web_base_url t = t.github_web_base_url
 let github_webhook_secret t = t.github_webhook_secret
 let infracost_api_key t = t.infracost_api_key
 let infracost_pricing_api_endpoint t = t.infracost_pricing_api_endpoint
 let nginx_status_uri t = t.nginx_status_uri
 let port t = t.port
 let python_exec t = t.python_exec
-let telemetry t = t.telemetry
 let statement_timeout t = t.statement_timeout
+let telemetry t = t.telemetry

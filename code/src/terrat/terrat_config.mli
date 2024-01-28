@@ -24,6 +24,8 @@ val github_app_client_id : t -> string
 val github_app_client_secret : t -> string
 val github_app_id : t -> string
 val github_app_pem : t -> Mirage_crypto_pk.Rsa.priv
+val github_app_url : t -> Uri.t
+val github_web_base_url : t -> Uri.t
 val github_webhook_secret : t -> string option
 val infracost_api_key : t -> string
 val infracost_pricing_api_endpoint : t -> Uri.t

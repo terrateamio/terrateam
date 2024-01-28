@@ -210,3 +210,10 @@ let task ~id t =
   match Openapi.Response.value resp with
   | `OK r -> Abb_js.Future.return (Ok r)
   | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
+
+let server_config t =
+  let open Abb_js_future_combinators.Infix_result_monad in
+  call Terrat_api_server.Config.(make ())
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK r -> Abb_js.Future.return (Ok r)

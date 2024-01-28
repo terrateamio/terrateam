@@ -12,9 +12,14 @@ let no_installation state =
       let module R = Terrat_api_user.List_installations.Responses.OK in
       Terrat_ui_js_client.installations client
       >>= function
-      | Ok R.{ installations = [] } ->
-          Abb_js.Future.return
-            (Brtl_js2.Output.navigate (Uri.of_string "https://github.com/apps/terrateam-action"))
+      | Ok R.{ installations = [] } -> (
+          Terrat_ui_js_client.server_config client
+          >>= function
+          | Ok config ->
+              let module C = Terrat_api_components.Server_config in
+              Abb_js.Future.return
+                (Brtl_js2.Output.navigate (Uri.of_string config.C.github_app_url))
+          | Error _ -> failwith "nyi4")
       | Ok R.{ installations = i :: _ } ->
           let module I = Terrat_api_components.Installation in
           Abb_js.Future.return

@@ -66,3 +66,4 @@ val repos :
 
 val repos_refresh : installation_id:string -> t -> (string, [> err ]) result Abb_js.Future.t
 val task : id:string -> t -> (Terrat_api_components.Task.t, [> err ]) result Abb_js.Future.t
+val server_config : t -> (Terrat_api_components.Server_config.t, [> err ]) result Abb_js.Future.t

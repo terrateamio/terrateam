@@ -4,6 +4,7 @@ module Rt = struct
   let api_v1 () = Brtl_rtng.Route.(api () / "v1")
   let whoami () = Brtl_rtng.Route.(api_v1 () / "whoami")
   let github_client_id () = Brtl_rtng.Route.(api_v1 () / "github" / "client_id")
+  let server_config () = Brtl_rtng.Route.(api_v1 () / "server" / "config")
   let work_manifest_root base = Brtl_rtng.Route.(base () / "work-manifests")
   let work_manifest base = Brtl_rtng.Route.(work_manifest_root base /% Path.ud Uuidm.of_string)
 
@@ -161,6 +162,8 @@ let rtng config storage =
             --> Terrat_ep_installations.Repos.Refresh.post config storage );
           (* Infracost *)
           (`POST, Rt.infracost () --> Terrat_ep_infracost.post config storage);
+          (* Server *)
+          (`GET, Rt.server_config () --> Terrat_ep_server.Config.get config);
           (* API 404s.  This is needed because for any and only UI endpoint we
              want to return the HTML *)
           (`GET, Rt.api_404 () --> fun _ ctx -> response_404 ctx);
