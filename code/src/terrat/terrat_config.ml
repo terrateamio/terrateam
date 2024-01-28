@@ -18,7 +18,7 @@ type t = {
   github_app_client_secret : string;
   github_app_id : string;
   github_app_pem : Mirage_crypto_pk.Rsa.priv;
-  github_base_url : Uri.t option;
+  github_api_base_url : Uri.t option;
   github_webhook_secret : string option;
   infracost_api_key : string;
   infracost_pricing_api_endpoint : Uri.t;
@@ -96,7 +96,7 @@ let create () =
     | "disabled" -> Some Telemetry.Disabled
     | _ -> None)
   >>= fun telemetry ->
-  let github_base_url = CCOption.map Uri.of_string (Sys.getenv_opt "GITHUB_BASE_URL") in
+  let github_api_base_url = CCOption.map Uri.of_string (Sys.getenv_opt "GITHUB_API_BASE_URL") in
   let statement_timeout =
     CCOption.get_or ~default:"500ms" (Sys.getenv_opt "TERRAT_STATEMENT_TIMEOUT")
   in
@@ -113,7 +113,7 @@ let create () =
       github_app_client_secret;
       github_app_id;
       github_app_pem;
-      github_base_url;
+      github_api_base_url;
       github_webhook_secret;
       infracost_api_key;
       infracost_pricing_api_endpoint = Uri.of_string infracost_pricing_api_endpoint;
@@ -135,7 +135,7 @@ let github_app_client_id t = t.github_app_client_id
 let github_app_client_secret t = t.github_app_client_secret
 let github_app_id t = t.github_app_id
 let github_app_pem t = t.github_app_pem
-let github_base_url t = t.github_base_url
+let github_api_base_url t = t.github_api_base_url
 let github_webhook_secret t = t.github_webhook_secret
 let infracost_api_key t = t.infracost_api_key
 let infracost_pricing_api_endpoint t = t.infracost_pricing_api_endpoint

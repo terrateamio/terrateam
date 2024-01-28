@@ -167,7 +167,10 @@ let rate_limit_wait resp =
   else Abb.Future.return None
 
 let create config auth =
-  Githubc2_abb.create ?base_url:(Terrat_config.github_base_url config) ~user_agent:"Terrateam" auth
+  Githubc2_abb.create
+    ?base_url:(Terrat_config.github_api_base_url config)
+    ~user_agent:"Terrateam"
+    auth
 
 let with_client config auth f =
   let client = create config auth in
