@@ -1866,8 +1866,8 @@ module Make (S : S) = struct
 
     let maybe_reconcile ~request_id config storage schedule results =
       let run =
-        let module R = Terrat_api_work_manifest.Results.Request_body in
-        let module Dirspace = Terrat_api_components_work_manifest_result in
+        let module R = Terrat_api_components_work_manifest_result in
+        let module Dirspace = Terrat_api_components_work_manifest_dirspace_result in
         let overall = results.R.overall.R.Overall.success in
         let dirspaces = results.R.dirspaces in
         let plans_with_changes =

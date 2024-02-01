@@ -551,6 +551,9 @@
             "$ref": "#/components/schemas/work-manifest-apply"
           },
           {
+            "$ref": "#/components/schemas/work-manifest-index"
+          },
+          {
             "$ref": "#/components/schemas/work-manifest-unsafe-apply"
           }
         ]
@@ -630,6 +633,56 @@
         ],
         "type": "object"
       },
+      "work-manifest-dirspace-result": {
+        "additionalProperties": false,
+        "properties": {
+          "outputs": {
+            "$ref": "#/components/schemas/workflow-outputs"
+          },
+          "path": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "workspace": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "workspace",
+          "success",
+          "outputs"
+        ],
+        "type": "object"
+      },
+      "work-manifest-dirspace-results": {
+        "items": {
+          "$ref": "#/components/schemas/work-manifest-dirspace-result"
+        },
+        "type": "array"
+      },
+      "work-manifest-index": {
+        "additionalProperties": false,
+        "properties": {
+          "dirs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "type": {
+            "const": "index",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dirs",
+          "type"
+        ],
+        "type": "object"
+      },
       "work-manifest-initiate": {
         "additionalProperties": false,
         "properties": {
@@ -695,32 +748,31 @@
       "work-manifest-result": {
         "additionalProperties": false,
         "properties": {
-          "outputs": {
-            "$ref": "#/components/schemas/workflow-outputs"
+          "dirspaces": {
+            "$ref": "#/components/schemas/work-manifest-dirspace-results"
           },
-          "path": {
-            "type": "string"
-          },
-          "success": {
-            "type": "boolean"
-          },
-          "workspace": {
-            "type": "string"
+          "overall": {
+            "additionalProperties": false,
+            "properties": {
+              "outputs": {
+                "$ref": "#/components/schemas/hook-outputs"
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "success",
+              "outputs"
+            ],
+            "type": "object"
           }
         },
         "required": [
-          "path",
-          "workspace",
-          "success",
-          "outputs"
+          "dirspaces",
+          "overall"
         ],
         "type": "object"
-      },
-      "work-manifest-results": {
-        "items": {
-          "$ref": "#/components/schemas/work-manifest-result"
-        },
-        "type": "array"
       },
       "work-manifest-state": {
         "enum": [
@@ -1109,33 +1161,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "additionalProperties": false,
-                "properties": {
-                  "dirspaces": {
-                    "$ref": "#/components/schemas/work-manifest-results"
-                  },
-                  "overall": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "outputs": {
-                        "$ref": "#/components/schemas/hook-outputs"
-                      },
-                      "success": {
-                        "type": "boolean"
-                      }
-                    },
-                    "required": [
-                      "success",
-                      "outputs"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "dirspaces",
-                  "overall"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/work-manifest-result"
               }
             }
           },

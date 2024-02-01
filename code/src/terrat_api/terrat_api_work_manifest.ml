@@ -4,19 +4,8 @@ module Results = struct
   end
 
   module Request_body = struct
-    module Overall = struct
-      type t = {
-        outputs : Terrat_api_components.Hook_outputs.t;
-        success : bool;
-      }
-      [@@deriving make, yojson { strict = true; meta = true }, show, eq]
-    end
-
-    type t = {
-      dirspaces : Terrat_api_components.Work_manifest_results.t;
-      overall : Overall.t;
-    }
-    [@@deriving make, yojson { strict = true; meta = true }, show, eq]
+    type t = Terrat_api_components.Work_manifest_result.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
