@@ -110,6 +110,14 @@ module Hooks = struct
   [@@deriving yojson { strict = true; meta = true }, make, show, eq]
 end
 
+module Indexer = struct
+  type t = {
+    build_sha : string option; [@default None]
+    enabled : bool; [@default false]
+  }
+  [@@deriving yojson { strict = true; meta = true }, make, show, eq]
+end
+
 module Storage = struct
   module Plans = struct
     type t =
@@ -169,6 +177,7 @@ type t = {
   drift : Terrat_repo_config_drift.t option; [@default None]
   enabled : bool; [@default true]
   hooks : Hooks.t option; [@default None]
+  indexer : Indexer.t option; [@default None]
   parallel_runs : int; [@default 3]
   storage : Storage.t option; [@default None]
   version : Version.t; [@default "1"]

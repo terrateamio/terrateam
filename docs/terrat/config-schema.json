@@ -700,6 +700,20 @@
           },
           "type": "object"
         },
+        "indexer": {
+          "additionalProperties": false,
+          "properties": {
+            "build_sha": {
+              "type": "string"
+            },
+            "enabled": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          "required": [],
+          "type": "object"
+        },
         "parallel_runs": {
           "default": 3,
           "type": "integer"
