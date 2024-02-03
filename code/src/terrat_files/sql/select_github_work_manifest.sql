@@ -12,11 +12,8 @@ select
     gir.installation_id,
     gir.owner,
     gir.name,
-    (case
-     when gdwm.work_manifest is not null then 'drift'
-     else ''
-     end),
-     gwm.username
+    gwm.run_kind,
+    gwm.username
 from github_work_manifests as gwm
 inner join github_installation_repositories as gir
     on gir.id = gwm.repository

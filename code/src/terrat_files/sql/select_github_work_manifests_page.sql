@@ -47,10 +47,7 @@ q as (
         coalesce(gpr.base_branch, gdwm.branch) as base_branch,
         gir.owner as owner,
         gir.name as name,
-        (case
-         when gdwm.work_manifest is not null then 'drift'
-         else 'pr'
-         end) as kind,
+        gwm.run_kind as kind,
         gpr.title as title,
         gpr.branch as branch,
         gwm.username as username,

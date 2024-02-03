@@ -41,10 +41,7 @@ select
     gpr.merged_sha,
     gpr.merged_at,
     gwm.state,
-    (case
-     when gdwm.work_manifest is not null then 'drift'
-     else ''
-     end),
+    gwm.run_kind,
     gpr.title,
     gwm.username,
     gpr.username

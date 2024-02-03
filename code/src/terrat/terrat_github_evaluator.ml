@@ -111,7 +111,8 @@ module Sql = struct
       /% Var.text "sha"
       /% Var.text "tag_query"
       /% Var.(option (text "username"))
-      /% Var.json "dirspaces")
+      /% Var.json "dirspaces"
+      /% Var.text "run_kind")
 
   let insert_work_manifest_dirspaceflow () =
     Pgsql_io.Typed_sql.(
@@ -124,7 +125,7 @@ module Sql = struct
       /% Var.(array (option (smallint "workflow_idx"))))
 end
 
-let insert_work_manifest db repository_id work_manifest pull_number_opt =
+let insert_work_manifest db repository_id work_manifest pull_number_opt run_kind =
   let module Wm = Terrat_work_manifest in
   let module Tc = Terrat_change in
   let module Dsf = Tc.Dirspaceflow in
@@ -138,7 +139,6 @@ let insert_work_manifest db repository_id work_manifest pull_number_opt =
            `Assoc [ ("dir", `String ds.Ds.dir); ("workspace", `String ds.Ds.workspace) ])
          work_manifest.Wm.changes)
   in
-
   let dirspaces = Yojson.Safe.to_string dirspaces_json in
   Pgsql_io.Prepared_stmt.fetch
     db
@@ -152,6 +152,7 @@ let insert_work_manifest db repository_id work_manifest pull_number_opt =
     (Terrat_tag_query.to_string work_manifest.Wm.tag_query)
     work_manifest.Wm.user
     dirspaces
+    run_kind
   >>= function
   | [] -> assert false
   | (id, state, created_at) :: _ ->
@@ -314,7 +315,7 @@ module Dr = struct
           user = None;
         }
       in
-      insert_work_manifest db (CCInt64.to_int schedule.S.repository) work_manifest None
+      insert_work_manifest db (CCInt64.to_int schedule.S.repository) work_manifest None "drift"
       >>= fun (id, _, _) ->
       Logs.info (fun m -> m "GITHUB_EVALUATOR : DRIFT : STORE_WORK_MANIFEST : %a" Uuidm.pp id);
       Pgsql_io.Prepared_stmt.execute db (Sql.insert_drift_work_manifest ()) id branch_name
@@ -1698,6 +1699,7 @@ module Ev = struct
         event.T.repository.Gw.Repository.id
         work_manifest
         (Some pull_request.Pr.id)
+        "pr"
       >>= fun (id, state, created_at) ->
       let module Policy = struct
         type t = string list [@@deriving yojson]
