@@ -1,13 +1,23 @@
-module Overall = struct
-  type t = {
-    outputs : Terrat_api_components_hook_outputs.t;
-    success : bool;
-  }
-  [@@deriving yojson { strict = true; meta = true }, show, eq]
-end
+type t =
+  | Work_manifest_index_result of Terrat_api_components_work_manifest_index_result.t
+  | Work_manifest_tf_operation_result of Terrat_api_components_work_manifest_tf_operation_result.t
+[@@deriving show, eq]
 
-type t = {
-  dirspaces : Terrat_api_components_work_manifest_dirspace_results.t;
-  overall : Overall.t;
-}
-[@@deriving yojson { strict = true; meta = true }, show, eq]
+let of_yojson =
+  Json_schema.one_of
+    (let open CCResult in
+     [
+       (fun v ->
+         map
+           (fun v -> Work_manifest_index_result v)
+           (Terrat_api_components_work_manifest_index_result.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Work_manifest_tf_operation_result v)
+           (Terrat_api_components_work_manifest_tf_operation_result.of_yojson v));
+     ])
+
+let to_yojson = function
+  | Work_manifest_index_result v -> Terrat_api_components_work_manifest_index_result.to_yojson v
+  | Work_manifest_tf_operation_result v ->
+      Terrat_api_components_work_manifest_tf_operation_result.to_yojson v

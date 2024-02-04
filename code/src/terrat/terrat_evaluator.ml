@@ -495,7 +495,7 @@ module type S = sig
         Terrat_config.t ->
         Terrat_storage.t ->
         Uuidm.t ->
-        Terrat_api_work_manifest.Results.Request_body.t ->
+        Terrat_api_components_work_manifest_tf_operation_result.t ->
         (t, [> `Error ]) result Abb.Future.t
 
       val publish_msg_automerge :
@@ -1415,6 +1415,10 @@ module Make (S : S) = struct
       Abbs_time_it.run (log_time event "FETCHING_REPO_TREE") (fun () ->
           S.Event.fetch_tree event pull_request)
 
+    let fetch_base_tree event pull_request =
+      Abbs_time_it.run (log_time event "FETCHING_REPO_BASE_TREE") (fun () ->
+          S.Event.fetch_base_tree event pull_request)
+
     let perform_terraform_operation storage event operation =
       let open Abbs_future_combinators.Infix_result_monad in
       fetch_pull_request event
@@ -1866,7 +1870,7 @@ module Make (S : S) = struct
 
     let maybe_reconcile ~request_id config storage schedule results =
       let run =
-        let module R = Terrat_api_components_work_manifest_result in
+        let module R = Terrat_api_components_work_manifest_tf_operation_result in
         let module Dirspace = Terrat_api_components_work_manifest_dirspace_result in
         let overall = results.R.overall.R.Overall.success in
         let dirspaces = results.R.dirspaces in
@@ -1928,7 +1932,7 @@ module Make (S : S) = struct
           Logs.err (fun m -> m "EVALUATOR : %s : DRIFT : ERROR" request_id);
           Abb.Future.return (Error `Error)
 
-    let results_store ~request_id config storage work_manifest_id results =
+    let tf_operation_results_store ~request_id config storage work_manifest_id results =
       Abbs_future_combinators.with_finally
         (fun () ->
           let open Abbs_future_combinators.Infix_result_monad in
@@ -1981,5 +1985,12 @@ module Make (S : S) = struct
                   Abb.Future.return (Ok ())))
         ~finally:(fun () ->
           Abbs_future_combinators.ignore (Abb.Future.fork (Runner.run ~request_id config storage)))
+
+    let results_store ~request_id config storage work_manifest_id results =
+      let module R = Terrat_api_components_work_manifest_result in
+      match results with
+      | R.Work_manifest_index_result _ -> failwith "nyi"
+      | R.Work_manifest_tf_operation_result results ->
+          tf_operation_results_store ~request_id config storage work_manifest_id results
   end
 end

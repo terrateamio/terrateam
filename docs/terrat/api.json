@@ -683,6 +683,64 @@
         ],
         "type": "object"
       },
+      "work-manifest-index-paths": {
+        "additionalProperties": {
+          "additionalProperties": false,
+          "properties": {
+            "failures": {
+              "additionalProperties": {
+                "additionalProperties": false,
+                "properties": {
+                  "lnum": {
+                    "type": "integer"
+                  },
+                  "msg": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "msg"
+                ],
+                "type": "object"
+              },
+              "type": "object"
+            },
+            "modules": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "failures",
+            "modules"
+          ],
+          "type": "object"
+        },
+        "type": "object"
+      },
+      "work-manifest-index-result": {
+        "additionalProperties": false,
+        "properties": {
+          "paths": {
+            "$ref": "#/components/schemas/work-manifest-index-paths"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "version": {
+            "const": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "paths",
+          "success",
+          "version"
+        ],
+        "type": "object"
+      },
       "work-manifest-initiate": {
         "additionalProperties": false,
         "properties": {
@@ -746,6 +804,25 @@
         "type": "object"
       },
       "work-manifest-result": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/work-manifest-index-result"
+          },
+          {
+            "$ref": "#/components/schemas/work-manifest-tf-operation-result"
+          }
+        ]
+      },
+      "work-manifest-state": {
+        "enum": [
+          "aborted",
+          "completed",
+          "queued",
+          "running"
+        ],
+        "type": "string"
+      },
+      "work-manifest-tf-operation-result": {
         "additionalProperties": false,
         "properties": {
           "dirspaces": {
@@ -773,15 +850,6 @@
           "overall"
         ],
         "type": "object"
-      },
-      "work-manifest-state": {
-        "enum": [
-          "aborted",
-          "completed",
-          "queued",
-          "running"
-        ],
-        "type": "string"
       },
       "work-manifest-unsafe-apply": {
         "additionalProperties": false,

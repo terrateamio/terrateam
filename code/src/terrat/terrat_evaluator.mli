@@ -357,7 +357,7 @@ module type S = sig
         Terrat_config.t ->
         Terrat_storage.t ->
         Uuidm.t ->
-        Terrat_api_work_manifest.Results.Request_body.t ->
+        Terrat_api_components_work_manifest_tf_operation_result.t ->
         (t, [> `Error ]) result Abb.Future.t
 
       val publish_msg_automerge :

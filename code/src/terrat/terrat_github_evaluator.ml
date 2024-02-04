@@ -4132,7 +4132,7 @@ module Wm = struct
 
     let create_run_output ~view run_type results denied_dirspaces =
       let module Wmr = Terrat_api_components.Work_manifest_dirspace_result in
-      let module R = Terrat_api_components_work_manifest_result in
+      let module R = Terrat_api_components_work_manifest_tf_operation_result in
       let dirspaces =
         let module Cmp = struct
           type t = bool * bool * string * string [@@deriving ord]
@@ -4339,7 +4339,9 @@ module Wm = struct
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Terrat_github.publish_comment_err as err) -> (
-          match (view, results.Terrat_api_components_work_manifest_result.dirspaces) with
+          match
+            (view, results.Terrat_api_components_work_manifest_tf_operation_result.dirspaces)
+          with
           | _, [] -> assert false
           | `Full, _ ->
               Prmths.Counter.inc_one Metrics.github_errors_total;
@@ -4378,7 +4380,8 @@ module Wm = struct
                   let results =
                     {
                       results with
-                      Terrat_api_components_work_manifest_result.dirspaces = [ dirspace ];
+                      Terrat_api_components_work_manifest_tf_operation_result.dirspaces =
+                        [ dirspace ];
                     }
                   in
                   iterate_comment_posts ~view:`Full t pull_number results denied_dirspaces)
@@ -4387,7 +4390,7 @@ module Wm = struct
     let complete_status_checks t results =
       let module Wm = Terrat_work_manifest in
       let module Wmr = Terrat_api_components.Work_manifest_dirspace_result in
-      let module R = Terrat_api_components_work_manifest_result in
+      let module R = Terrat_api_components_work_manifest_tf_operation_result in
       let module Hooks_output = Terrat_api_components.Hook_outputs in
       let unified_run_type =
         Terrat_work_manifest.(
@@ -4498,7 +4501,7 @@ module Wm = struct
 
     let store ~request_id config storage work_manifest_id results =
       let run =
-        let module Rb = Terrat_api_components_work_manifest_result in
+        let module Rb = Terrat_api_components_work_manifest_tf_operation_result in
         let open Abbs_future_combinators.Infix_result_monad in
         Pgsql_pool.with_conn storage ~f:(fun db ->
             Pgsql_io.tx db ~f:(fun () ->
