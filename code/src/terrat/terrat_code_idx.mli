@@ -1,0 +1,1 @@
+include module type of Terrat_api_components.Work_manifest_index_result

@@ -666,11 +666,17 @@
       "work-manifest-index": {
         "additionalProperties": false,
         "properties": {
+          "base_ref": {
+            "type": "string"
+          },
           "dirs": {
             "items": {
               "type": "string"
             },
             "type": "array"
+          },
+          "token": {
+            "type": "string"
           },
           "type": {
             "const": "index",
@@ -678,7 +684,9 @@
           }
         },
         "required": [
+          "base_ref",
           "dirs",
+          "token",
           "type"
         ],
         "type": "object"

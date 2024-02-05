@@ -61,9 +61,9 @@ module Metrics = struct
     Prmths.Counter.v ~help ~namespace ~subsystem "op_on_account_disabled_total"
 end
 
-let compute_matches ~repo_config ~tag_query ~out_of_change_applies ~diff ~repo_tree () =
+let compute_matches ~repo_config ~tag_query ~out_of_change_applies ~diff ~repo_tree ~index () =
   let open CCResult.Infix in
-  Terrat_change_match.synthesize_dir_config ~file_list:repo_tree repo_config
+  Terrat_change_match.synthesize_dir_config ~index ~file_list:repo_tree repo_config
   >>= fun dirs ->
   let all_matching_dirspaces =
     CCList.flat_map
@@ -171,6 +171,7 @@ module Event = struct
       | Terraform of tf
       | Pull_request of [ `Unlock of Unlock_id.t list ]
       | Repo_config
+      | Index
     [@@deriving show]
 
     let run_type_of_tf = function
@@ -199,6 +200,7 @@ module Event = struct
       | Plan
       | Unlock of Unlock_id.t list
       | Repo_config
+      | Index
     [@@deriving show]
 
     (* Translate the event type to its operation class *)
@@ -211,6 +213,7 @@ module Event = struct
       | Plan -> Op_class.Terraform (`Plan `Manual)
       | Unlock ids -> Op_class.Pull_request (`Unlock ids)
       | Repo_config -> Op_class.Repo_config
+      | Index -> Op_class.Index
 
     let to_string = function
       | Apply -> "apply"
@@ -221,6 +224,7 @@ module Event = struct
       | Plan -> "plan"
       | Unlock _ -> "unlock"
       | Repo_config -> "repo_config"
+      | Index -> "index"
   end
 end
 
@@ -253,6 +257,12 @@ module type S = sig
       val passed_all_checks : t -> bool
       val is_draft_pr : t -> bool
       val branch_name : t -> string
+    end
+
+    module Index : sig
+      type t
+
+      val of_pull_request : Pull_request.t -> t
     end
 
     module Src : sig
@@ -289,8 +299,21 @@ module type S = sig
       Terrat_access_control.R.Deny.t list ->
       (Pull_request.t Terrat_work_manifest.Existing_lite.t, [> `Error ]) result Abb.Future.t
 
+    val store_index_work_manifest :
+      Pgsql_io.t ->
+      T.t ->
+      Terrat_change_match.t list ->
+      Index.t Terrat_work_manifest.New.t ->
+      (Index.t Terrat_work_manifest.Existing_lite.t, [> `Error ]) result Abb.Future.t
+
     val store_pull_request :
       Pgsql_io.t -> T.t -> Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
+
+    val query_index :
+      Pgsql_io.t ->
+      T.t ->
+      Pull_request.t ->
+      (Terrat_change_match.Index.t option, [> `Error ]) result Abb.Future.t
 
     val fetch_base_repo_config :
       T.t ->
@@ -309,6 +332,10 @@ module type S = sig
 
     val fetch_pull_request : T.t -> (Pull_request.t, [> `Error ]) result Abb.Future.t
     val fetch_tree : T.t -> Pull_request.t -> (string list, [> `Error ]) result Abb.Future.t
+    val fetch_base_tree : T.t -> Pull_request.t -> (string list, [> `Error ]) result Abb.Future.t
+
+    val query_code_index :
+      sha:string -> T.t -> (Terrat_code_idx.t option, [> `Error ]) result Abb.Future.t
 
     val check_apply_requirements :
       T.t ->
@@ -373,12 +400,14 @@ module type S = sig
 
       val tree : t -> string list
       val repo_config : t -> Terrat_repo_config.Version_1.t
+      val index : t -> Terrat_change_match.Index.t
     end
 
     val query_missing_scheduled_runs :
       Terrat_config.t -> Pgsql_io.t -> (Schedule.t list, [> `Error ]) result Abb.Future.t
 
-    val fetch_repo : Terrat_config.t -> Schedule.t -> (Repo.t, [> `Error ]) result Abb.Future.t
+    val fetch_repo :
+      Terrat_config.t -> Pgsql_io.t -> Schedule.t -> (Repo.t, [> `Error ]) result Abb.Future.t
 
     val store_plan_work_manifest :
       Terrat_config.t ->
@@ -490,13 +519,21 @@ module type S = sig
 
       val fetch_repo_config : t -> (Terrat_repo_config.Version_1.t, [> `Error ]) result Abb.Future.t
 
-      val store :
+      val store_tf_operation :
         request_id:string ->
         Terrat_config.t ->
         Terrat_storage.t ->
         Uuidm.t ->
         Terrat_api_components_work_manifest_tf_operation_result.t ->
         (t, [> `Error ]) result Abb.Future.t
+
+      val store_index :
+        request_id:string ->
+        Terrat_config.t ->
+        Terrat_storage.t ->
+        Uuidm.t ->
+        Terrat_api_components_work_manifest_index_result.t ->
+        (unit, [> `Error ]) result Abb.Future.t
 
       val publish_msg_automerge :
         t -> Kind.Pull_request.t -> string -> (unit, [> `Error ]) result Abb.Future.t
@@ -702,6 +739,10 @@ module Make (S : S) = struct
       let apply_require_all_dirspace_access t = t.config.Ac.apply_require_all_dirspace_access
     end
 
+    let store_index_work_manifest db event all_matches work_manifest =
+      Abbs_time_it.run (log_time event "STORE_INDEX_WORK_MANIFEST") (fun () ->
+          S.Event.store_index_work_manifest db event all_matches work_manifest)
+
     let store_pull_request_work_manifest
         db
         event
@@ -709,7 +750,7 @@ module Make (S : S) = struct
         all_matches
         work_manifest
         denied_dirspaces =
-      Abbs_time_it.run (log_time event "CREATE_WORK_MANIFEST") (fun () ->
+      Abbs_time_it.run (log_time event "STORE_PULL_REQUEST_WORK_MANIFEST") (fun () ->
           S.Event.store_pull_request_work_manifest
             db
             event
@@ -765,7 +806,7 @@ module Make (S : S) = struct
           Prmths.Counter.inc_one (Metrics.stored_work_manifests_total (Run_type.to_string run_type));
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : STORED_WORK_MANIFEST : %s"
+                "EVALUATOR : %s : STORED_PULL_REQUEST_WORK_MANIFEST : %s"
                 (S.Event.T.request_id event)
                 (Uuidm.to_string work_manifest.Terrat_work_manifest.id));
           Abb.Future.return (Ok ())
@@ -1109,7 +1150,7 @@ module Make (S : S) = struct
       Abbs_time_it.run (log_time event "STORE_DIRSPACEFLOWS") (fun () ->
           S.Event.store_dirspaceflows db event pull_request all_match_dirspaceflows)
 
-    let exec_event access_control storage event pull_request repo_config repo_tree operation =
+    let exec_event access_control storage event pull_request repo_config repo_tree index operation =
       let open Abbs_future_combinators.Infix_result_monad in
       Logs.info (fun m ->
           m
@@ -1138,6 +1179,7 @@ module Make (S : S) = struct
                    ~out_of_change_applies
                    ~diff:(S.Event.Pull_request.diff pull_request)
                    ~repo_tree
+                   ~index
                    ())
               >>= fun (tag_query_matches, all_matches) ->
               Logs.info (fun m ->
@@ -1382,7 +1424,8 @@ module Make (S : S) = struct
       | Event.Event_type.Apply_autoapprove
       | Event.Event_type.Apply_force
       | Event.Event_type.Unlock _
-      | Event.Event_type.Repo_config ->
+      | Event.Event_type.Repo_config
+      | Event.Event_type.Index ->
           Logs.info (fun m ->
               m
                 "EVALUATOR : %s : %s_BRANCH_NOT_VALID_BRANCH_EXPLICIT"
@@ -1411,6 +1454,10 @@ module Make (S : S) = struct
           | Ok () -> Ok repo_default_config
           | Error _ as err -> err)
 
+    let query_index storage event pull_request =
+      Abbs_time_it.run (log_time event "QUERY_INDEX") (fun () ->
+          Pgsql_pool.with_conn storage ~f:(fun db -> S.Event.query_index db event pull_request))
+
     let fetch_tree event pull_request =
       Abbs_time_it.run (log_time event "FETCHING_REPO_TREE") (fun () ->
           S.Event.fetch_tree event pull_request)
@@ -1419,6 +1466,53 @@ module Make (S : S) = struct
       Abbs_time_it.run (log_time event "FETCHING_REPO_BASE_TREE") (fun () ->
           S.Event.fetch_base_tree event pull_request)
 
+    let create_and_store_index_work_manifest db event repo_config repo_tree pull_request =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Abb.Future.return
+        (Terrat_change_match.synthesize_dir_config
+           ~index:Terrat_change_match.Index.empty
+           ~file_list:repo_tree
+           repo_config)
+      >>= fun dirs ->
+      let matches =
+        Terrat_change_match.match_diff_list
+          dirs
+          (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) repo_tree)
+      in
+      match dirspaceflows_of_changes repo_config matches with
+      | Ok dirspaceflows ->
+          let index = S.Event.Index.of_pull_request pull_request in
+          let work_manifest =
+            Terrat_work_manifest.
+              {
+                base_hash = S.Event.Pull_request.base_hash pull_request;
+                changes = dirspaceflows;
+                completed_at = None;
+                created_at = ();
+                hash = S.Event.Pull_request.base_hash pull_request;
+                id = ();
+                src = index;
+                run_id = ();
+                run_type = Terrat_work_manifest.Run_type.Plan;
+                state = ();
+                tag_query = Terrat_tag_query.any;
+                user = Some (S.Event.T.user event);
+              }
+          in
+          store_index_work_manifest db event matches work_manifest
+          >>= fun work_manifest ->
+          Prmths.Counter.inc_one
+            (Metrics.stored_work_manifests_total
+               (Terrat_work_manifest.Run_type.to_string work_manifest.Terrat_work_manifest.run_type));
+          Logs.info (fun m ->
+              m
+                "EVALUATOR : %s : STORED_INDEX_WORK_MANIFEST : %s"
+                (S.Event.T.request_id event)
+                (Uuidm.to_string work_manifest.Terrat_work_manifest.id));
+
+          Abb.Future.return (Ok work_manifest)
+      | Error (#Terrat_tag_query_ast.err as err) -> Abb.Future.return (Error (`Tag_query_err err))
+
     let perform_terraform_operation storage event operation =
       let open Abbs_future_combinators.Infix_result_monad in
       fetch_pull_request event
@@ -1426,13 +1520,19 @@ module Make (S : S) = struct
       Pgsql_pool.with_conn storage ~f:(fun db -> store_pull_request db event pull_request)
       >>= fun () ->
       Abbs_future_combinators.Infix_result_app.(
-        (fun repo_config repo_default_config repo_tree ->
-          (repo_config, repo_default_config, repo_tree))
+        (fun repo_config repo_default_config repo_tree index ->
+          (repo_config, repo_default_config, repo_tree, index))
         <$> fetch_repo_config event pull_request
         <*> fetch_default_repo_config event pull_request
-        <*> fetch_tree event pull_request)
-      >>= fun (repo_config, repo_default_config, repo_tree) ->
+        <*> fetch_tree event pull_request
+        <*> query_index storage event pull_request)
+      >>= fun (repo_config, repo_default_config, repo_tree, index) ->
       match repo_default_config with
+      (* | Ok *)
+      (*     Terrat_repo_config.Version_1. *)
+      (*       { enabled = true; indexer = Some Indexer.{ enabled = true; _ }; _ } *)
+      (*   when CCOption.is_none index -> *)
+      (*     perform_index_update storage event repo_config repo_tree pull_request *)
       | Ok repo_default_config ->
           if repo_default_config.Terrat_repo_config.Version_1.enabled then (
             let access_control = Access_control_engine.make event repo_default_config in
@@ -1448,6 +1548,13 @@ module Make (S : S) = struct
                       (Metrics.access_control_total
                          ~t:(Event.Op_class.to_string operation)
                          ~r:"allowed");
+                    let index =
+                      let module V1 = Terrat_repo_config.Version_1 in
+                      match repo_default_config with
+                      | { V1.indexer = Some { V1.Indexer.enabled = true; _ }; _ } ->
+                          CCOption.get_or ~default:Terrat_change_match.Index.empty index
+                      | _ -> Terrat_change_match.Index.empty
+                    in
                     exec_event
                       access_control
                       storage
@@ -1455,6 +1562,7 @@ module Make (S : S) = struct
                       pull_request
                       repo_config
                       repo_tree
+                      index
                       operation
                 | Ok (Some match_list) ->
                     Prmths.Counter.inc_one
@@ -1501,8 +1609,34 @@ module Make (S : S) = struct
         <$> fetch_repo_config event pull_request
         <*> fetch_tree event pull_request)
       >>= fun (repo_config, repo_tree) ->
-      Abb.Future.return (Terrat_change_match.synthesize_dir_config ~file_list:repo_tree repo_config)
+      Abb.Future.return
+        (Terrat_change_match.synthesize_dir_config
+           ~index:Terrat_change_match.Index.empty
+           ~file_list:repo_tree
+           repo_config)
       >>= fun dirs -> Abb.Future.return (Ok (Some (Event.Msg.Repo_config (repo_config, dirs))))
+
+    let perform_index storage event =
+      let module Rc = Terrat_repo_config.Version_1 in
+      let open Abbs_future_combinators.Infix_result_monad in
+      fetch_pull_request event
+      >>= fun pull_request ->
+      Abbs_future_combinators.Infix_result_app.(
+        (fun repo_config repo_tree -> (repo_config, repo_tree))
+        <$> fetch_repo_config event pull_request
+        <*> fetch_base_tree event pull_request)
+      >>= function
+      | ({ Rc.indexer = Some { Rc.Indexer.enabled = true; _ }; _ } as repo_config), repo_tree -> (
+          let open Abb.Future.Infix_monad in
+          Pgsql_pool.with_conn storage ~f:(fun db ->
+              create_and_store_index_work_manifest db event repo_config repo_tree pull_request)
+          >>= function
+          | Ok _ -> Abb.Future.return (Ok None)
+          | Error (`Tag_query_err err) ->
+              Abb.Future.return (Ok (Some (Event.Msg.Tag_query_err err)))
+          | Error ((#Pgsql_pool.err | #Pgsql_io.err | `Bad_glob _ | `Error) as err) ->
+              Abb.Future.return (Error err))
+      | _, _ -> Abb.Future.return (Ok None)
 
     let run' storage event =
       let open Abb.Future.Infix_monad in
@@ -1514,7 +1648,8 @@ module Make (S : S) = struct
               perform_unlock storage event unlock_ids
           | Event.Op_class.Terraform operation ->
               perform_terraform_operation storage event operation
-          | Event.Op_class.Repo_config -> perform_repo_config event)
+          | Event.Op_class.Repo_config -> perform_repo_config event
+          | Event.Op_class.Index -> perform_index storage event)
       | Ok `Disabled -> Abb.Future.return (Error `Account_disabled)
       | Error `Error -> Abb.Future.return (Ok (Some Event.Msg.Unexpected_temporary_err))
       | Error #Pgsql_pool.err as err -> Abb.Future.return err
@@ -1600,7 +1735,7 @@ module Make (S : S) = struct
   end
 
   module Drift = struct
-    let fetch_repo config schedule =
+    let fetch_repo config db schedule =
       Abbs_time_it.run
         (fun d ->
           Logs.info (fun m ->
@@ -1609,7 +1744,7 @@ module Make (S : S) = struct
                 (S.Drift.Schedule.owner schedule)
                 (S.Drift.Schedule.name schedule)
                 d))
-        (fun () -> S.Drift.fetch_repo config schedule)
+        (fun () -> S.Drift.fetch_repo config db schedule)
 
     let store_plan_work_manifest config db schedule repo dirspaceflows =
       Abbs_time_it.run
@@ -1635,7 +1770,7 @@ module Make (S : S) = struct
 
     let run_schedule' config db f schedule =
       let open Abbs_future_combinators.Infix_result_monad in
-      fetch_repo config schedule
+      fetch_repo config db schedule
       >>= fun repo ->
       let diff =
         CCList.map (fun filename -> Terrat_change.Diff.Change { filename }) (S.Drift.Repo.tree repo)
@@ -1647,6 +1782,7 @@ module Make (S : S) = struct
           ~out_of_change_applies:[]
           ~diff
           ~repo_tree:(S.Drift.Repo.tree repo)
+          ~index:(S.Drift.Repo.index repo)
           ()
       with
       | Ok (tag_query_matches, _) -> (
@@ -1932,65 +2068,73 @@ module Make (S : S) = struct
           Logs.err (fun m -> m "EVALUATOR : %s : DRIFT : ERROR" request_id);
           Abb.Future.return (Error `Error)
 
+    let run_pending_work ~request_id config storage = Runner.run ~request_id config storage
+
     let tf_operation_results_store ~request_id config storage work_manifest_id results =
-      Abbs_future_combinators.with_finally
-        (fun () ->
-          let open Abbs_future_combinators.Infix_result_monad in
-          S.Work_manifest.Results.store ~request_id config storage work_manifest_id results
-          >>= fun t ->
-          match S.Work_manifest.Results.kind t with
-          | Terrat_work_manifest.Kind.Pull_request pull_request -> (
-              S.Work_manifest.Results.query_missing_applied_dirspaces t pull_request
-              >>= function
-              | [] -> (
-                  Logs.info (fun m ->
-                      m
-                        "EVALUATOR : %s : ALL_DIRSPACES_APPLIED : %a"
-                        request_id
-                        Uuidm.pp
-                        work_manifest_id);
-                  S.Work_manifest.Results.fetch_repo_config t
-                  >>= fun repo_config ->
-                  match automerge_config repo_config with
-                  | Some Terrat_repo_config.Automerge.{ enabled = true; delete_branch } -> (
-                      let open Abb.Future.Infix_monad in
-                      S.Work_manifest.Results.merge_pull_request t pull_request
+      let open Abbs_future_combinators.Infix_result_monad in
+      S.Work_manifest.Results.store_tf_operation ~request_id config storage work_manifest_id results
+      >>= fun t ->
+      match S.Work_manifest.Results.kind t with
+      | Terrat_work_manifest.Kind.Pull_request pull_request -> (
+          S.Work_manifest.Results.query_missing_applied_dirspaces t pull_request
+          >>= function
+          | [] -> (
+              Logs.info (fun m ->
+                  m
+                    "EVALUATOR : %s : ALL_DIRSPACES_APPLIED : %a"
+                    request_id
+                    Uuidm.pp
+                    work_manifest_id);
+              S.Work_manifest.Results.fetch_repo_config t
+              >>= fun repo_config ->
+              match automerge_config repo_config with
+              | Some Terrat_repo_config.Automerge.{ enabled = true; delete_branch } -> (
+                  let open Abb.Future.Infix_monad in
+                  S.Work_manifest.Results.merge_pull_request t pull_request
+                  >>= function
+                  | Ok () when delete_branch ->
+                      S.Work_manifest.Results.delete_pull_request_branch t pull_request
+                  | Ok () -> Abb.Future.return (Ok ())
+                  | Error (`Error_with_msg msg) -> (
+                      S.Work_manifest.Results.publish_msg_automerge t pull_request msg
                       >>= function
-                      | Ok () when delete_branch ->
-                          S.Work_manifest.Results.delete_pull_request_branch t pull_request
-                      | Ok () -> Abb.Future.return (Ok ())
-                      | Error (`Error_with_msg msg) -> (
-                          S.Work_manifest.Results.publish_msg_automerge t pull_request msg
-                          >>= function
-                          | Ok () ->
-                              (* If we've managed to tell the user that this
-                                 happened, consider this a success so we do not
-                                 fail the API call.  Otherwise the action could
-                                 retry. *)
-                              Abb.Future.return (Ok ())
-                          | Error `Error as err ->
-                              Logs.err (fun m ->
-                                  m "EVALUATOR : %s : PUBLISH_MSG_AUTOMERGE" request_id);
-                              Abb.Future.return err)
-                      | Error `Error as err -> Abb.Future.return err)
-                  | _ -> Abb.Future.return (Ok ()))
-              | _ :: _ -> Abb.Future.return (Ok ()))
-          | Terrat_work_manifest.Kind.Drift drift -> (
-              S.Work_manifest.Results.query_drift_schedule t storage drift
-              >>= function
-              | schedule when S.Drift.Schedule.reconcile schedule ->
-                  maybe_reconcile ~request_id config storage schedule results
-              | schedule ->
-                  Logs.info (fun m -> m "EVALUATOR : %s : DRIFT : NO_RECONCILE" request_id);
-                  Abb.Future.return (Ok ())))
-        ~finally:(fun () ->
-          Abbs_future_combinators.ignore (Abb.Future.fork (Runner.run ~request_id config storage)))
+                      | Ok () ->
+                          (* If we've managed to tell the user that this
+                             happened, consider this a success so we do not
+                             fail the API call.  Otherwise the action could
+                             retry. *)
+                          Abb.Future.return (Ok ())
+                      | Error `Error as err ->
+                          Logs.err (fun m -> m "EVALUATOR : %s : PUBLISH_MSG_AUTOMERGE" request_id);
+                          Abb.Future.return err)
+                  | Error `Error as err -> Abb.Future.return err)
+              | _ -> Abb.Future.return (Ok ()))
+          | _ :: _ -> Abb.Future.return (Ok ()))
+      | Terrat_work_manifest.Kind.Drift drift -> (
+          S.Work_manifest.Results.query_drift_schedule t storage drift
+          >>= function
+          | schedule when S.Drift.Schedule.reconcile schedule ->
+              maybe_reconcile ~request_id config storage schedule results
+          | schedule ->
+              Logs.info (fun m -> m "EVALUATOR : %s : DRIFT : NO_RECONCILE" request_id);
+              Abb.Future.return (Ok ()))
+
+    let index_results_store ~request_id config storage work_manifest_id results =
+      let open Abbs_future_combinators.Infix_result_monad in
+      S.Work_manifest.Results.store_index ~request_id config storage work_manifest_id results
+      >>= fun _ -> Abb.Future.return (Ok ())
 
     let results_store ~request_id config storage work_manifest_id results =
-      let module R = Terrat_api_components_work_manifest_result in
-      match results with
-      | R.Work_manifest_index_result _ -> failwith "nyi"
-      | R.Work_manifest_tf_operation_result results ->
-          tf_operation_results_store ~request_id config storage work_manifest_id results
+      Abbs_future_combinators.with_finally
+        (fun () ->
+          let module R = Terrat_api_components_work_manifest_result in
+          match results with
+          | R.Work_manifest_tf_operation_result results ->
+              tf_operation_results_store ~request_id config storage work_manifest_id results
+          | R.Work_manifest_index_result results ->
+              index_results_store ~request_id config storage work_manifest_id results)
+        ~finally:(fun () ->
+          Abbs_future_combinators.ignore
+            (Abb.Future.fork (run_pending_work ~request_id config storage)))
   end
 end

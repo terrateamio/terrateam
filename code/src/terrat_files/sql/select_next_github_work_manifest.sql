@@ -40,10 +40,11 @@ work_manifests as (
         on unlocks.repository = gwm.repository and unlocks.pull_number = gwm.pull_number
     left join latest_drift_unlocks as drift_unlocks
         on drift_unlocks.repository = gwm.repository
-    where (gwm.pull_number is not null
+    where (gwm.run_kind = 'pr'
            and (unlocks.unlocked_at is null or unlocks.unlocked_at < gwm.created_at))
-          or (gdwm.work_manifest is not null
-               and (drift_unlocks.unlocked_at is null or drift_unlocks.unlocked_at < gwm.created_at))
+          or (gwm.run_kind = 'drift'
+              and (drift_unlocks.unlocked_at is null or drift_unlocks.unlocked_at < gwm.created_at))
+          or gwm.run_kind = 'index'
 ),
 dirspaces_for_work_manifests as (
     select

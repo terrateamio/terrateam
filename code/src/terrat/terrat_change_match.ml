@@ -10,6 +10,17 @@ type t = {
 }
 [@@deriving show]
 
+module Index = struct
+  module Dep = struct
+    type t = Module of string
+  end
+
+  type t = Dep.t list String_map.t
+
+  let empty = String_map.empty
+  let make = String_map.of_list
+end
+
 exception Bad_glob of string
 
 let workspaces_or_stacks ~default ~dirname ~config_tags workspaces stacks =
@@ -147,7 +158,7 @@ module Dirs = struct
           | None -> process_dot_dot r)
       | None -> dirname
 
-    let of_config_dir default_when_modified dirname config =
+    let of_config_dir module_paths index default_when_modified dirname config =
       let module Dir = Terrat_repo_config.Dir in
       let module Ws = Terrat_repo_config.Workspaces in
       let module Wm = Terrat_repo_config.When_modified in
@@ -183,9 +194,22 @@ module Dirs = struct
           {
             wm with
             file_patterns =
-              CCList.map
-                (fun pat -> process_dot_dot (CCString.replace ~sub ~by pat))
-                wm.Wm.file_patterns;
+              (if String_set.mem dirname module_paths then []
+               else
+                 let file_patterns =
+                   match String_map.find_opt dirname index with
+                   | Some mods ->
+                       CCList.filter_map
+                         (function
+                           | Index.Dep.Module path ->
+                               Some (Filename.concat "${DIR}" (Filename.concat path "*.tf")))
+                         mods
+                       @ wm.Wm.file_patterns
+                   | None -> wm.Wm.file_patterns
+                 in
+                 CCList.map
+                   (fun pat -> process_dot_dot (CCString.replace ~sub ~by pat))
+                   file_patterns);
           }
       in
       let file_pattern_matcher =
@@ -253,7 +277,7 @@ let all_dir_match_patterns =
 
 (* Given a list of files and a repository configuration, create a directory
    configuration that matches every file with their specific configuration. *)
-let synthesize_dir_config' ~file_list repo_config =
+let synthesize_dir_config' ~index ~file_list repo_config =
   let module C = Terrat_repo_config in
   let module Dir = Terrat_repo_config.Dir in
   let module Wm = Terrat_repo_config.When_modified in
@@ -278,10 +302,23 @@ let synthesize_dir_config' ~file_list repo_config =
     |> CCList.filter (fun (d, _) -> CCString.contains d '*')
     |> CCList.map (fun (d, config) -> (parse_glob [ d ], config))
   in
+  let module_paths =
+    String_set.of_list
+      (String_map.fold
+         (fun path values acc ->
+           CCList.filter_map
+             (function
+               | Index.Dep.Module mod_path ->
+                   Some (Dirs.Dir.process_dot_dot (Filename.concat path mod_path)))
+             values
+           @ acc)
+         index
+         [])
+  in
   let non_glob_dirs =
     dirs
     |> Json_schema.String_map.filter (fun d _ -> not (CCString.contains d '*'))
-    |> Json_schema.String_map.mapi (Dirs.Dir.of_config_dir default_when_modified)
+    |> Json_schema.String_map.mapi (Dirs.Dir.of_config_dir module_paths index default_when_modified)
   in
   let synthetic_dirs =
     file_list
@@ -290,7 +327,7 @@ let synthesize_dir_config' ~file_list repo_config =
            CCList.find_opt (fun (d, _) -> Path_glob.Glob.eval d fname) glob_dirs
            >>= fun (_, config) ->
            let dir = Filename.dirname fname in
-           Some (dir, Dirs.Dir.of_config_dir default_when_modified dir config))
+           Some (dir, Dirs.Dir.of_config_dir module_paths index default_when_modified dir config))
     |> Json_schema.String_map.of_list
   in
   (* Combine the globed ones and the non-globed ones for all dirs that were
@@ -310,11 +347,15 @@ let synthesize_dir_config' ~file_list repo_config =
          we could have a repository with a lot of directories in it that will never
          match anything, so rather than carry them around, just don't include them.
          It's a waste to try to match anything against them. *)
-      let dir = Dirs.Dir.of_config_dir default_when_modified dirname default_dir_config in
+      let dir =
+        Dirs.Dir.of_config_dir module_paths index default_when_modified dirname default_dir_config
+      in
       let file_pattern_matcher = dir.Dirs.Dir.file_pattern_matcher in
       if CCList.exists file_pattern_matcher fnames then (dirname, dir) :: acc else acc
     else fun dirname fnames acc ->
-      let dir = Dirs.Dir.of_config_dir default_when_modified dirname default_dir_config in
+      let dir =
+        Dirs.Dir.of_config_dir module_paths index default_when_modified dirname default_dir_config
+      in
       (dirname, dir) :: acc
   in
   let remaining_dirs =
@@ -328,8 +369,9 @@ let synthesize_dir_config' ~file_list repo_config =
   in
   Json_schema.String_map.union (fun _ v _ -> Some v) specified_dirs remaining_dirs
 
-let synthesize_dir_config ~file_list repo_config =
-  try Ok (synthesize_dir_config' ~file_list repo_config) with Bad_glob s -> Error (`Bad_glob s)
+let synthesize_dir_config ~index ~file_list repo_config =
+  try Ok (synthesize_dir_config' ~index ~file_list repo_config)
+  with Bad_glob s -> Error (`Bad_glob s)
 
 let match_filename_in_dirs dirs fnames =
   (* Match a filename to any directories and remove those directories on match.

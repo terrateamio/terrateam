@@ -9,6 +9,18 @@ all: .merlin
 pds.mk: pds.conf
 	pds
 
+terrat-schemas: terrat-api terrat-repo-config terrat-webhooks
+
+terrat: pds.conf
+
+terrat: release_terrat_cli debug_terrat_cli
+
+terrat: release_terrat_ui
+
+terrat: test-debug_abb_fut test-debug_abb_future_combinators
+
+terrat: test-release_terrat test-debug_terrat_github_webhooks test-release_terrat_github_webhooks
+
 terrat-api: release_openapi_cli
 	rm -f ./src/terrat_api/*.ml
 	env OCAMLRUNPARAM=b ./build/release/openapi_cli/openapi_cli.native convert --input ../docs/terrat/api.json --name "terrat_api" --output-dir ./src/terrat_api

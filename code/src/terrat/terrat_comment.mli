@@ -7,6 +7,7 @@ type t =
   | Help
   | Feedback of string
   | Repo_config
+  | Index
 
 type err =
   [ `Not_terrateam

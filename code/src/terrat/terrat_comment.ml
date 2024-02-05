@@ -7,6 +7,7 @@ type t =
   | Help
   | Feedback of string
   | Repo_config
+  | Index
 
 type err =
   [ `Not_terrateam
@@ -44,5 +45,6 @@ let parse s =
   | Some ("help", _) -> Ok Help
   | Some ("feedback", rest) -> Ok (Feedback rest)
   | Some ("repo-config", _) -> Ok Repo_config
+  | Some ("index", _) -> Ok Index
   | Some (action, rest) -> Error (`Unknown_action action)
   | None -> Error `Not_terrateam

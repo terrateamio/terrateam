@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "plan": {
+      "additionalProperties": false,
+      "properties": {
+        "default_branch": {
+          "type": "string"
+        },
+        "installation_id": {
+          "type": "integer"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "pull_number": {
+          "type": "integer"
+        },
+        "repo": {
+          "type": "string"
+        },
+        "repo_id": {
+          "type": "integer"
+        },
+        "tag_query": {
+          "type": "string"
+        },
+        "user": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "default_branch",
+        "installation_id",
+        "owner",
+        "pull_number",
+        "repo",
+        "repo_id",
+        "tag_query",
+        "user"
+      ],
+      "type": "object"
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/definitions/plan"
+    }
+  ]
+}

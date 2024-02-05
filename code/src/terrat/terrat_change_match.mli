@@ -8,6 +8,17 @@ type t = {
 }
 [@@deriving show]
 
+module Index : sig
+  module Dep : sig
+    type t = Module of string
+  end
+
+  type t
+
+  val empty : t
+  val make : (string * Dep.t list) list -> t
+end
+
 module Dirs : sig
   type t [@@deriving show, to_yojson]
 end
@@ -18,6 +29,7 @@ end
     The file list is relative to the root of the repository and must NOT begin
     with [.]. *)
 val synthesize_dir_config :
+  index:Index.t ->
   file_list:string list ->
   Terrat_repo_config.Version_1.t ->
   (Dirs.t, [> `Bad_glob of string ]) result

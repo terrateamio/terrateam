@@ -96,6 +96,7 @@ module Sql = struct
   let fail_running_work_manifest =
     Pgsql_io.Typed_sql.(
       sql
+      // (* run_kind *) Ret.text
       // (* id *) Ret.uuid
       // (* pull_number *) Ret.(option bigint)
       // (* sha *) Ret.text
@@ -146,10 +147,10 @@ let run_event_evaluator storage event =
       Pgsql_io.Prepared_stmt.execute
         db
         Sql.insert_github_installation_repository
-        (CCInt64.of_int event.Event.repository.Gw.Repository.id)
+        (CCInt64.of_int event.Event.repo_id)
         (CCInt64.of_int event.Event.installation_id)
-        event.Event.repository.Gw.Repository.owner.Gw.User.login
-        event.Event.repository.Gw.Repository.name)
+        event.Event.owner
+        event.Event.repo)
   >>= fun () ->
   let open Abb.Future.Infix_monad in
   Abb.Future.fork
@@ -213,11 +214,15 @@ let perform_unlock_pr
           ~config
           ~installation_id
           ~pull_number
-          ~repository
+          ~repo_id:repository.Gw.Repository.id
+          ~default_branch:repository.Gw.Repository.default_branch
+          ~owner:repository.Gw.Repository.owner.Gw.User.login
+          ~repo:repository.Gw.Repository.name
           ~request_id
           ~event_type:(Terrat_evaluator.Event.Event_type.Unlock unlock_ids)
           ~tag_query:Terrat_tag_query.any
           ~user
+          ()
       in
       run_event_evaluator storage event
   | Error _ ->
@@ -376,11 +381,15 @@ let process_pull_request_event request_id config storage = function
           ~config
           ~installation_id
           ~pull_number
-          ~repository
+          ~repo_id:repository.Gw.Repository.id
+          ~default_branch:repository.Gw.Repository.default_branch
+          ~owner:repository.Gw.Repository.owner.Gw.User.login
+          ~repo:repository.Gw.Repository.name
           ~request_id
           ~event_type:Terrat_evaluator.Event.Event_type.Autoplan
           ~tag_query:Terrat_tag_query.any
           ~user:sender.Gw.User.login
+          ()
       in
       run_event_evaluator storage event
   | Gw.Pull_request_event.Pull_request_opened _ -> failwith "Invalid pull_request_open event"
@@ -414,11 +423,15 @@ let process_pull_request_event request_id config storage = function
           ~config
           ~installation_id
           ~pull_number
-          ~repository
+          ~repo_id:repository.Gw.Repository.id
+          ~default_branch:repository.Gw.Repository.default_branch
+          ~owner:repository.Gw.Repository.owner.Gw.User.login
+          ~repo:repository.Gw.Repository.name
           ~request_id
           ~event_type:Terrat_evaluator.Event.Event_type.Autoapply
           ~tag_query:Terrat_tag_query.any
           ~user:sender.Gw.User.login
+          ()
       in
       run_event_evaluator storage event
   | Gw.Pull_request_event.Pull_request_closed _ -> failwith "Invalid pull_request_closed event"
@@ -524,11 +537,15 @@ let process_issue_comment request_id config storage = function
               ~config
               ~installation_id
               ~pull_number
-              ~repository
+              ~repo_id:repository.Gw.Repository.id
+              ~default_branch:repository.Gw.Repository.default_branch
+              ~owner:repository.Gw.Repository.owner.Gw.User.login
+              ~repo:repository.Gw.Repository.name
               ~request_id
               ~event_type:Terrat_evaluator.Event.Event_type.Plan
               ~tag_query
               ~user:sender.Gw.User.login
+              ()
           in
           run_event_evaluator storage event
       | Ok (Terrat_comment.Apply { tag_query }) ->
@@ -554,11 +571,15 @@ let process_issue_comment request_id config storage = function
               ~config
               ~installation_id
               ~pull_number
-              ~repository
+              ~repo_id:repository.Gw.Repository.id
+              ~default_branch:repository.Gw.Repository.default_branch
+              ~owner:repository.Gw.Repository.owner.Gw.User.login
+              ~repo:repository.Gw.Repository.name
               ~request_id
               ~event_type:Terrat_evaluator.Event.Event_type.Apply
               ~tag_query
               ~user:sender.Gw.User.login
+              ()
           in
           run_event_evaluator storage event
       | Ok (Terrat_comment.Apply_autoapprove { tag_query }) ->
@@ -584,11 +605,15 @@ let process_issue_comment request_id config storage = function
               ~config
               ~installation_id
               ~pull_number
-              ~repository
+              ~repo_id:repository.Gw.Repository.id
+              ~default_branch:repository.Gw.Repository.default_branch
+              ~owner:repository.Gw.Repository.owner.Gw.User.login
+              ~repo:repository.Gw.Repository.name
               ~request_id
               ~event_type:Terrat_evaluator.Event.Event_type.Apply_autoapprove
               ~tag_query
               ~user:sender.Gw.User.login
+              ()
           in
           run_event_evaluator storage event
       | Ok (Terrat_comment.Apply_force { tag_query }) ->
@@ -614,11 +639,15 @@ let process_issue_comment request_id config storage = function
               ~config
               ~installation_id
               ~pull_number
-              ~repository
+              ~repo_id:repository.Gw.Repository.id
+              ~default_branch:repository.Gw.Repository.default_branch
+              ~owner:repository.Gw.Repository.owner.Gw.User.login
+              ~repo:repository.Gw.Repository.name
               ~request_id
               ~event_type:Terrat_evaluator.Event.Event_type.Apply_force
               ~tag_query
               ~user:sender.Gw.User.login
+              ()
           in
           run_event_evaluator storage event
       | Ok Terrat_comment.Help -> (
@@ -687,11 +716,49 @@ let process_issue_comment request_id config storage = function
               ~config
               ~installation_id
               ~pull_number
-              ~repository
+              ~repo_id:repository.Gw.Repository.id
+              ~default_branch:repository.Gw.Repository.default_branch
+              ~owner:repository.Gw.Repository.owner.Gw.User.login
+              ~repo:repository.Gw.Repository.name
               ~request_id
               ~event_type:Terrat_evaluator.Event.Event_type.Repo_config
               ~tag_query:Terrat_tag_query.any
               ~user:sender.Gw.User.login
+              ()
+          in
+          run_event_evaluator storage event
+      | Ok Terrat_comment.Index ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          Prmths.Counter.inc_one (Metrics.comment_events_total "index");
+          Terrat_github.get_installation_access_token config installation_id
+          >>= fun access_token ->
+          Abbs_time_it.run
+            (fun t ->
+              Logs.info (fun m -> m "GITHUB_EVENT : %s : REACT_TO_COMMENT : %f" request_id t))
+            (fun () ->
+              Terrat_github.with_client
+                config
+                (`Token access_token)
+                (Terrat_github.react_to_comment
+                   ~owner:repository.Gw.Repository.owner.Gw.User.login
+                   ~repo:repository.Gw.Repository.name
+                   ~comment_id:comment.Gw.Issue_comment.id))
+          >>= fun () ->
+          let event =
+            Terrat_github_evaluator.S.Event.T.make
+              ~access_token
+              ~config
+              ~installation_id
+              ~pull_number
+              ~repo_id:repository.Gw.Repository.id
+              ~default_branch:repository.Gw.Repository.default_branch
+              ~owner:repository.Gw.Repository.owner.Gw.User.login
+              ~repo:repository.Gw.Repository.name
+              ~request_id
+              ~event_type:Terrat_evaluator.Event.Event_type.Index
+              ~tag_query:Terrat_tag_query.any
+              ~user:sender.Gw.User.login
+              ()
           in
           run_event_evaluator storage event
       | Error `Not_terrateam ->
@@ -763,11 +830,11 @@ let process_workflow_job_failure config storage access_token run_id repository =
       Pgsql_io.Prepared_stmt.fetch
         db
         Sql.fail_running_work_manifest
-        ~f:(fun id pull_number sha run_type -> (id, pull_number, sha, run_type))
+        ~f:(fun run_kind id pull_number sha run_type -> (run_kind, id, pull_number, sha, run_type))
         run_id
       >>= function
       | [] -> Abb.Future.return (Ok None)
-      | ((work_manifest_id, _pull_number, _sha, _run_type) as r) :: _ ->
+      | ((run_kind, work_manifest_id, _pull_number, _sha, _run_type) as r) :: _ ->
           Pgsql_io.Prepared_stmt.fetch
             db
             Sql.select_work_manifest_dirspaces
@@ -775,7 +842,7 @@ let process_workflow_job_failure config storage access_token run_id repository =
             work_manifest_id
           >>= fun dirspaces -> Abb.Future.return (Ok (Some (r, dirspaces))))
   >>= function
-  | Some ((work_manifest_id, Some pull_number, sha, run_type), dirspaces) ->
+  | Some (("pr", work_manifest_id, Some pull_number, sha, run_type), dirspaces) ->
       Logs.info (fun m ->
           m
             "GITHUB_EVENT : WORKFLOW_JOB_FAIL : %s : %s : %Ld"
@@ -842,14 +909,25 @@ let process_workflow_job_failure config storage access_token run_id repository =
                   ~sha
                   ~creates:commit_statuses)))
       >>= fun _ -> Abb.Future.return (Ok ())
-  | Some ((work_manifest_id, None, _, _), _) ->
+  | Some (("drift", work_manifest_id, _, _, _), _) ->
       Logs.info (fun m ->
           m
-            "GITHUB_EVENT : WORKFLOW_JOB_FAIL : %s : %s : DRIFT"
+            "GITHUB_EVENT : WORKFLOW_JOB_FAIL : %s : %s : %a : DRIFT"
             repository.Gw.Repository.owner.Gw.User.login
-            repository.Gw.Repository.name);
+            repository.Gw.Repository.name
+            Uuidm.pp
+            work_manifest_id);
       Abb.Future.return (Ok ())
-  | None ->
+  | Some (("index", work_manifest_id, _, _, _), _) ->
+      Logs.info (fun m ->
+          m
+            "GITHUB_EVENT : WORKFLOW_JOB_FAIL : %s : %s : %a : INDEX"
+            repository.Gw.Repository.owner.Gw.User.login
+            repository.Gw.Repository.name
+            Uuidm.pp
+            work_manifest_id);
+      Abb.Future.return (Ok ())
+  | Some _ | None ->
       (* Nothing to fail *)
       Logs.warn (fun m ->
           m

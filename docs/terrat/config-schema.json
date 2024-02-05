@@ -703,7 +703,7 @@
         "indexer": {
           "additionalProperties": false,
           "properties": {
-            "build_sha": {
+            "build_tag": {
               "type": "string"
             },
             "enabled": {

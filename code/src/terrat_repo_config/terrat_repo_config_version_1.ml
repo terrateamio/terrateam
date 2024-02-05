@@ -112,7 +112,7 @@ end
 
 module Indexer = struct
   type t = {
-    build_sha : string option; [@default None]
+    build_tag : string option; [@default None]
     enabled : bool; [@default false]
   }
   [@@deriving yojson { strict = true; meta = true }, make, show, eq]

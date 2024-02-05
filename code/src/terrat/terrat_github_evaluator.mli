@@ -6,7 +6,10 @@ module S : sig
         config : Terrat_config.t;
         installation_id : int;
         pull_number : int;
-        repository : Terrat_github_webhooks.Repository.t;
+        repo_id : int;
+        default_branch : string;
+        owner : string;
+        repo : string;
         request_id : string;
         event_type : Terrat_evaluator.Event.Event_type.t;
         tag_query : Terrat_tag_query.t;
@@ -18,11 +21,15 @@ module S : sig
         config:Terrat_config.t ->
         installation_id:int ->
         pull_number:int ->
-        repository:Terrat_github_webhooks.Repository.t ->
+        repo_id:int ->
+        default_branch:string ->
+        owner:string ->
+        repo:string ->
         request_id:string ->
         event_type:Terrat_evaluator.Event.Event_type.t ->
         tag_query:Terrat_tag_query.t ->
         user:string ->
+        unit ->
         t
 
       val request_id : t -> string

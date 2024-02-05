@@ -12,7 +12,9 @@ module Type = struct
 end
 
 type t = {
+  base_ref : string;
   dirs : Dirs.t;
+  token : string;
   type_ : Type.t; [@key "type"]
 }
 [@@deriving yojson { strict = true; meta = true }, show, eq]

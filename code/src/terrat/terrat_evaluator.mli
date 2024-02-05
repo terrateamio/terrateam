@@ -63,6 +63,7 @@ module Event : sig
       | Terraform of tf
       | Pull_request of [ `Unlock of Unlock_id.t list ]
       | Repo_config
+      | Index
     [@@deriving show]
 
     val run_type_of_tf : [< tf ] -> Terrat_work_manifest.Run_type.t
@@ -78,6 +79,7 @@ module Event : sig
       | Plan
       | Unlock of Unlock_id.t list
       | Repo_config
+      | Index
     [@@deriving show]
 
     val to_string : t -> string
@@ -115,6 +117,12 @@ module type S = sig
       val branch_name : t -> string
     end
 
+    module Index : sig
+      type t
+
+      val of_pull_request : Pull_request.t -> t
+    end
+
     module Src : sig
       type t
     end
@@ -149,8 +157,21 @@ module type S = sig
       Terrat_access_control.R.Deny.t list ->
       (Pull_request.t Terrat_work_manifest.Existing_lite.t, [> `Error ]) result Abb.Future.t
 
+    val store_index_work_manifest :
+      Pgsql_io.t ->
+      T.t ->
+      Terrat_change_match.t list ->
+      Index.t Terrat_work_manifest.New.t ->
+      (Index.t Terrat_work_manifest.Existing_lite.t, [> `Error ]) result Abb.Future.t
+
     val store_pull_request :
       Pgsql_io.t -> T.t -> Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
+
+    val query_index :
+      Pgsql_io.t ->
+      T.t ->
+      Pull_request.t ->
+      (Terrat_change_match.Index.t option, [> `Error ]) result Abb.Future.t
 
     val fetch_base_repo_config :
       T.t ->
@@ -169,6 +190,10 @@ module type S = sig
 
     val fetch_pull_request : T.t -> (Pull_request.t, [> `Error ]) result Abb.Future.t
     val fetch_tree : T.t -> Pull_request.t -> (string list, [> `Error ]) result Abb.Future.t
+    val fetch_base_tree : T.t -> Pull_request.t -> (string list, [> `Error ]) result Abb.Future.t
+
+    val query_code_index :
+      sha:string -> T.t -> (Terrat_code_idx.t option, [> `Error ]) result Abb.Future.t
 
     val check_apply_requirements :
       T.t ->
@@ -233,12 +258,14 @@ module type S = sig
 
       val tree : t -> string list
       val repo_config : t -> Terrat_repo_config.Version_1.t
+      val index : t -> Terrat_change_match.Index.t
     end
 
     val query_missing_scheduled_runs :
       Terrat_config.t -> Pgsql_io.t -> (Schedule.t list, [> `Error ]) result Abb.Future.t
 
-    val fetch_repo : Terrat_config.t -> Schedule.t -> (Repo.t, [> `Error ]) result Abb.Future.t
+    val fetch_repo :
+      Terrat_config.t -> Pgsql_io.t -> Schedule.t -> (Repo.t, [> `Error ]) result Abb.Future.t
 
     val store_plan_work_manifest :
       Terrat_config.t ->
@@ -352,13 +379,21 @@ module type S = sig
 
       val fetch_repo_config : t -> (Terrat_repo_config.Version_1.t, [> `Error ]) result Abb.Future.t
 
-      val store :
+      val store_tf_operation :
         request_id:string ->
         Terrat_config.t ->
         Terrat_storage.t ->
         Uuidm.t ->
         Terrat_api_components_work_manifest_tf_operation_result.t ->
         (t, [> `Error ]) result Abb.Future.t
+
+      val store_index :
+        request_id:string ->
+        Terrat_config.t ->
+        Terrat_storage.t ->
+        Uuidm.t ->
+        Terrat_api_components_work_manifest_index_result.t ->
+        (unit, [> `Error ]) result Abb.Future.t
 
       val publish_msg_automerge :
         t -> Kind.Pull_request.t -> string -> (unit, [> `Error ]) result Abb.Future.t
