@@ -141,7 +141,16 @@ module Make (Fut : Abb_intf.Future.S) = struct
   let protect f =
     let open Fut.Infix_monad in
     let ret = Fut.Promise.create () in
-    Fut.fork (f () >>= Fut.Promise.set ret) >>= fun _ -> Fut.Promise.future ret
+    Fut.fork
+      (try
+         Fut.await_bind
+           (function
+             | `Det v -> Fut.Promise.set ret v
+             | `Exn exn -> Fut.Promise.set_exn ret exn
+             | `Aborted -> Fut.abort (Fut.Promise.future ret))
+           (f ())
+       with exn -> Fut.Promise.set_exn ret (exn, Some (Printexc.get_raw_backtrace ())))
+    >>= fun _ -> Fut.Promise.future ret
 
   let to_result fut = fut >>= fun v -> Fut.return (Ok v)
 
