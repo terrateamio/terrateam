@@ -70,7 +70,7 @@ q as (
     left join latest_drift_unlocks as ldu
         on ldu.repository = gwm.repository
     where gir.installation_id = $installation_id
-          and gui.user_id = $user
+          and gui.user_id = $user and kind <> 'index'
 )
 select
     id,
