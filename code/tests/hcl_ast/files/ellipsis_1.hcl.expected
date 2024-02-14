@@ -1,0 +1,7 @@
+[
+  [
+    "Attribute",
+    "foo",
+    [ "Fun_call", [ "foo", [ [ "Ellipsis", [ "Id", "i" ] ] ] ] ]
+  ]
+]

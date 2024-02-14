@@ -105,8 +105,9 @@ collection_expr:
 expr:
   | simple_expr { $1 }
   | collection_expr { $1 }
-  | id = IDENTIFIER; LPAREN; NEWLINE*; args = fun_args; RPAREN; { Expr.Fun_call (id, args)  }
+  | id = IDENTIFIER; LPAREN; NEWLINE*; args = fun_args; NEWLINE*; RPAREN; { Expr.Fun_call (id, args)  }
   | LPAREN; e = expr; RPAREN { e }
+  | e = expr; ELLIPSIS { Expr.Ellipsis e }
   | e = expr; LBRACKET; i = idx_expr { Expr.Idx (e, i) }
   | e = expr; DOT; a = attr_expr { Expr.Attr (e, a) }
   | e = expr; QUESTION_MARK; thn = expr; COLON; els = expr { Expr.Cond {if_ = e; then_ = thn; else_ = els } }
@@ -154,19 +155,19 @@ identifiers_rest:
   | /* empty */ { [] }
 
 for_tuple:
-  | id = IDENTIFIER; ids = identifiers_rest; IN; in_ = expr; COLON; e = expr; NEWLINE*; IF; if_ =  expr
+  | id = IDENTIFIER; ids = identifiers_rest; IN; in_ = expr; COLON; e = expr; NEWLINE*; IF; if_ =  expr; NEWLINE*
     { Expr.For_tuple { identifiers = (id, ids); input = in_; output = e; cond = Some if_ } }
-  | id = IDENTIFIER; ids = identifiers_rest; IN; in_ = expr; COLON; e = expr
+  | id = IDENTIFIER; ids = identifiers_rest; IN; in_ = expr; COLON; e = expr; NEWLINE*
     { Expr.For_tuple { identifiers = (id, ids); input = in_; output = e; cond = None } }
 
 for_object:
-  | id = IDENTIFIER; ids = identifiers_rest; IN; in_ = expr; COLON; k = expr; FAT_ARROW; v =  expr; NEWLINE*; IF; if_ = expr
+  | id = IDENTIFIER; ids = identifiers_rest; IN; in_ = expr; COLON; k = expr; FAT_ARROW; v =  expr; NEWLINE*; IF; if_ = expr; NEWLINE*
     { Expr.For_object { identifiers = (id, ids);
                         input = in_;
                         key_output = k;
                         value_output = v;
                         cond = Some if_ } }
-  | id = IDENTIFIER; ids = identifiers_rest; IN; in_ = expr; COLON; k = expr; FAT_ARROW; v = expr
+  | id = IDENTIFIER; ids = identifiers_rest; IN; in_ = expr; COLON; k = expr; FAT_ARROW; v = expr; NEWLINE*
     { Expr.For_object { identifiers = (id, ids);
                         input = in_;
                         key_output = k;
@@ -174,7 +175,7 @@ for_object:
                         cond = None } }
 
 ops:
-  | expr PLUS expr { Expr.Add ($1, $3) }
+  | expr; PLUS; expr { Expr.Add ($1, $3) }
   | expr MINUS expr { Expr.Subtract ($1, $3) }
   | expr MULT expr { Expr.Mult ($1, $3) }
   | expr DIV expr { Expr.Div ($1, $3) }

@@ -1,0 +1,19 @@
+[
+  [
+    "Attribute",
+    "foo",
+    [
+      "For_object",
+      {
+        "identifiers": [ "i", [ "v" ] ],
+        "input": [
+          "Tuple",
+          [ [ "String", "a" ], [ "String", "a" ], [ "String", "b" ] ]
+        ],
+        "key_output": [ "Id", "v" ],
+        "value_output": [ "Ellipsis", [ "Id", "i" ] ],
+        "cond": null
+      }
+    ]
+  ]
+]

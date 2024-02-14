@@ -1,0 +1,45 @@
+[
+  [
+    "Attribute",
+    "us_clusters_filters",
+    [
+      "Fun_call",
+      [
+        "flatten",
+        [
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "cluster", [] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "us_clusters" ] ]
+              ],
+              "output": [
+                "For_tuple",
+                {
+                  "identifiers": [ "pool_filter", [] ],
+                  "input": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "us_lqs_pod_pool_filters" ]
+                    ]
+                  ],
+                  "output": [
+                    "Object",
+                    [
+                      [ [ "Id", "cluster" ], [ "Id", "cluster" ] ],
+                      [ [ "Id", "pool_filter" ], [ "Id", "pool_filter" ] ]
+                    ]
+                  ],
+                  "cond": null
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    ]
+  ]
+]

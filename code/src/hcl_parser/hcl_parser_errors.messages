@@ -1652,7 +1652,7 @@ main: FALSE EQUAL LBRACKET FOR IDENTIFIER IN FALSE COLON FALSE NEWLINE TRUE
 ## In state 2, spurious reduction of production list(NEWLINE) -> NEWLINE list(NEWLINE)
 ##
 
-Unexpected new line in object for definition.
+Unexpected new line in tuple for definition.
 
 main: FALSE EQUAL LBRACKET FOR IDENTIFIER IN FALSE COLON FALSE IF RPAREN
 ##

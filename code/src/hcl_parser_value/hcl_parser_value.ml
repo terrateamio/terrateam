@@ -61,6 +61,7 @@ module Expr = struct
     | Mod of (t * t)
     | Heredoc of string
     | Heredoc' of string
+    | Ellipsis of t
   [@@deriving show { with_path = false }, eq, yojson]
 end
 
