@@ -139,6 +139,8 @@ module Dirs = struct
         && patterns_glob fname
         && not (not_patterns_glob fname)
 
+    let process_dot = CCString.replace ~which:`All ~sub:"/./" ~by:"/"
+
     let rec process_dot_dot dirname =
       (* We want to support relative paths in file_patterns, to some extent.  We
          only support [/../], and it must be proceeded by a static directory,
@@ -157,6 +159,8 @@ module Dirs = struct
           | Some (l', _) -> process_dot_dot (l' ^ "/" ^ r)
           | None -> process_dot_dot r)
       | None -> dirname
+
+    let process_relative_path dirname = process_dot_dot (process_dot dirname)
 
     let of_config_dir module_paths index default_when_modified dirname config =
       let module Dir = Terrat_repo_config.Dir in
@@ -208,7 +212,7 @@ module Dirs = struct
                    | None -> wm.Wm.file_patterns
                  in
                  CCList.map
-                   (fun pat -> process_dot_dot (CCString.replace ~sub ~by pat))
+                   (fun pat -> process_relative_path (CCString.replace ~sub ~by pat))
                    file_patterns);
           }
       in
@@ -309,7 +313,12 @@ let synthesize_dir_config' ~index ~file_list repo_config =
            CCList.filter_map
              (function
                | Index.Dep.Module mod_path ->
-                   Some (Dirs.Dir.process_dot_dot (Filename.concat path mod_path)))
+                   Printf.printf
+                     "FOO = %s %s %s\n%!"
+                     path
+                     mod_path
+                     (Dirs.Dir.process_relative_path (Filename.concat path mod_path));
+                   Some (Dirs.Dir.process_relative_path (Filename.concat path mod_path)))
              values
            @ acc)
          index

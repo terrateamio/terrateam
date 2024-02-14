@@ -112,6 +112,7 @@ let migrations =
     ("add-work-manifest-run-kind", run_file_sql "2024-02-02-add-work-manifest-run-kind.sql");
     ("add-github-code-index-table", run_file_sql "2024-02-05-add-code-index-table.sql");
     ("add-index-work-manifests", run_file_sql "2024-02-07-add-index-work-manifest-table.sql");
+    ("add-code-index-created_at", run_file_sql "2024-02-14-add-code-index-created_at.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations
