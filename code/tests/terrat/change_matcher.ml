@@ -1172,6 +1172,28 @@ let test_index_basic =
           dirspace
           Terrat_change.Dirspace.{ dir = "tf"; workspace = "default" }))
 
+let test_index_with_dirs_section =
+  Oth.test ~name:"Test index with dirs section" (fun _ ->
+      let module Idx = Terrat_change_match.Index in
+      let index = Idx.make [ ("tf", Idx.Dep.[ Module "../modules/foo" ]) ] in
+      let repo_config =
+        CCResult.get_exn
+          (Terrat_repo_config.Version_1.of_yojson
+             (`Assoc [ ("dirs", `Assoc [ ("tf", `Assoc [ ("tags", `List [ `String "tf" ]) ]) ]) ]))
+      in
+      let file_list = [ "modules/foo/main.tf"; "tf/main.tf" ] in
+      let dirs =
+        CCResult.get_exn (Terrat_change_match.synthesize_dir_config ~index ~file_list repo_config)
+      in
+      let diff = Terrat_change.Diff.[ Add { filename = "modules/foo/main.tf" } ] in
+      let changes = Terrat_change_match.match_diff_list dirs diff in
+      assert (CCList.length changes = 1);
+      let dirspace = (CCList.hd changes).Terrat_change_match.dirspace in
+      assert (
+        Terrat_change.Dirspace.equal
+          dirspace
+          Terrat_change.Dirspace.{ dir = "tf"; workspace = "default" }))
+
 let test =
   Oth.parallel
     [
@@ -1207,6 +1229,7 @@ let test =
       test_relative_path_file_pattern;
       test_relative_path_file_pattern_multiple_dots;
       test_index_basic;
+      test_index_with_dirs_section;
     ]
 
 let () =

@@ -10,6 +10,7 @@ select
      end),
      gwm.sha,
      gwm.pull_number,
+     gwm.run_kind,
      gwm.run_type
 from github_work_manifests as gwm
 inner join github_installation_repositories as gir

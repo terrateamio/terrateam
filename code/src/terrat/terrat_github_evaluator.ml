@@ -422,6 +422,7 @@ module R = struct
         // (* branch *) Ret.text
         // (* sha *) Ret.text
         // (* pull_number *) Ret.(option bigint)
+        // (* run_kind *) Ret.text
         // (* run_type *) Ret.ud' Terrat_work_manifest.Run_type.of_string
         /^ read "select_github_action_parameters.sql"
         /% Var.uuid "work_manifest")
@@ -615,12 +616,12 @@ module R = struct
         Pgsql_io.Prepared_stmt.fetch
           db
           Sql.select_action_parameters
-          ~f:(fun installation_id owner repo branch sha pull_number run_type ->
-            (installation_id, owner, repo, branch, sha, pull_number, run_type))
+          ~f:(fun installation_id owner repo branch sha pull_number run_kind run_type ->
+            (installation_id, owner, repo, branch, sha, pull_number, run_kind, run_type))
           id
         >>= function
         | [] -> assert false
-        | (installation_id, owner, repo, branch, sha, pull_number, run_type) :: _ -> (
+        | (installation_id, owner, repo, branch, sha, pull_number, run_kind, run_type) :: _ -> (
             load_access_token access_token_cache config installation_id
             >>= fun (access_token, access_token_cache) ->
             Terrat_github.with_client
@@ -629,7 +630,7 @@ module R = struct
               (Terrat_github.load_workflow ~owner ~repo)
             >>= function
             | Some workflow_id -> (
-                (if CCOption.is_some pull_number then
+                (if CCString.equal run_kind "pr" then
                    Abbs_time_it.run
                      (fun t ->
                        Logs.info (fun m ->
