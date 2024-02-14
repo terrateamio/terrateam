@@ -1550,7 +1550,7 @@ module Make (S : S) = struct
                          ~r:"allowed");
                     let index =
                       let module V1 = Terrat_repo_config.Version_1 in
-                      match repo_default_config with
+                      match repo_config with
                       | { V1.indexer = Some { V1.Indexer.enabled = true; _ }; _ } ->
                           CCOption.get_or ~default:Terrat_change_match.Index.empty index
                       | _ -> Terrat_change_match.Index.empty
@@ -1600,20 +1600,25 @@ module Make (S : S) = struct
       | Error `No_matching_dest_branch -> handle_branches_error event pull_request "DEST"
       | Error `No_matching_source_branch -> handle_branches_error event pull_request "SOURCE"
 
-    let perform_repo_config event =
+    let perform_repo_config storage event =
       let open Abbs_future_combinators.Infix_result_monad in
       fetch_pull_request event
       >>= fun pull_request ->
       Abbs_future_combinators.Infix_result_app.(
-        (fun repo_config repo_tree -> (repo_config, repo_tree))
+        (fun repo_config repo_tree index -> (repo_config, repo_tree, index))
         <$> fetch_repo_config event pull_request
-        <*> fetch_tree event pull_request)
-      >>= fun (repo_config, repo_tree) ->
+        <*> fetch_tree event pull_request
+        <*> query_index storage event pull_request)
+      >>= fun (repo_config, repo_tree, index) ->
+      let index =
+        let module V1 = Terrat_repo_config.Version_1 in
+        match repo_config with
+        | { V1.indexer = Some { V1.Indexer.enabled = true; _ }; _ } ->
+            CCOption.get_or ~default:Terrat_change_match.Index.empty index
+        | _ -> Terrat_change_match.Index.empty
+      in
       Abb.Future.return
-        (Terrat_change_match.synthesize_dir_config
-           ~index:Terrat_change_match.Index.empty
-           ~file_list:repo_tree
-           repo_config)
+        (Terrat_change_match.synthesize_dir_config ~index ~file_list:repo_tree repo_config)
       >>= fun dirs -> Abb.Future.return (Ok (Some (Event.Msg.Repo_config (repo_config, dirs))))
 
     let perform_index storage event =
@@ -1625,18 +1630,15 @@ module Make (S : S) = struct
         (fun repo_config repo_tree -> (repo_config, repo_tree))
         <$> fetch_repo_config event pull_request
         <*> fetch_base_tree event pull_request)
+      >>= fun (repo_config, repo_tree) ->
+      let open Abb.Future.Infix_monad in
+      Pgsql_pool.with_conn storage ~f:(fun db ->
+          create_and_store_index_work_manifest db event repo_config repo_tree pull_request)
       >>= function
-      | ({ Rc.indexer = Some { Rc.Indexer.enabled = true; _ }; _ } as repo_config), repo_tree -> (
-          let open Abb.Future.Infix_monad in
-          Pgsql_pool.with_conn storage ~f:(fun db ->
-              create_and_store_index_work_manifest db event repo_config repo_tree pull_request)
-          >>= function
-          | Ok _ -> Abb.Future.return (Ok None)
-          | Error (`Tag_query_err err) ->
-              Abb.Future.return (Ok (Some (Event.Msg.Tag_query_err err)))
-          | Error ((#Pgsql_pool.err | #Pgsql_io.err | `Bad_glob _ | `Error) as err) ->
-              Abb.Future.return (Error err))
-      | _, _ -> Abb.Future.return (Ok None)
+      | Ok _ -> Abb.Future.return (Ok None)
+      | Error (`Tag_query_err err) -> Abb.Future.return (Ok (Some (Event.Msg.Tag_query_err err)))
+      | Error ((#Pgsql_pool.err | #Pgsql_io.err | `Bad_glob _ | `Error) as err) ->
+          Abb.Future.return (Error err)
 
     let run' storage event =
       let open Abb.Future.Infix_monad in
@@ -1648,7 +1650,7 @@ module Make (S : S) = struct
               perform_unlock storage event unlock_ids
           | Event.Op_class.Terraform operation ->
               perform_terraform_operation storage event operation
-          | Event.Op_class.Repo_config -> perform_repo_config event
+          | Event.Op_class.Repo_config -> perform_repo_config storage event
           | Event.Op_class.Index -> perform_index storage event)
       | Ok `Disabled -> Abb.Future.return (Error `Account_disabled)
       | Error `Error -> Abb.Future.return (Ok (Some Event.Msg.Unexpected_temporary_err))
