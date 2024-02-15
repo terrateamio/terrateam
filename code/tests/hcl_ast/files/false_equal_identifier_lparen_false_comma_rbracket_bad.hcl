@@ -1,3 +1,5 @@
-false = bar ( bar , ]
+foo = foo(foo,+
 ---
-false = bar ( bar , }
+foo = foo(foo,}
+---
+foo = foo(foo,]

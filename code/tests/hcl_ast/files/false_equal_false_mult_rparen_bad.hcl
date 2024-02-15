@@ -1,13 +1,3 @@
-false = false * )
+foo = foo * +
 ---
-bar = bar * )
----
-bar = bar * ]
----
-bar = bar * }
----
-bar = 1 * ]
----
-bar = "foo" * ]
----
-bar = "foo" * *
+foo = foo * )

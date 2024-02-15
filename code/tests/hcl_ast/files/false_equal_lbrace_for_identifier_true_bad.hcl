@@ -1,5 +1,3 @@
-false = { for bar true
+foo = {for foo 1
 ---
-baz = { for bar 1
----
-baz = { for bar "bar"
+foo = {for foo foo

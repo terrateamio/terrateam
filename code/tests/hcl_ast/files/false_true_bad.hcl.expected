@@ -1,1 +1,1 @@
-Top-level must start with an attribute or block, found identifier followed by literal.
+Expected (=) for attribute definition or block labels for block definition.

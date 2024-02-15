@@ -1,11 +1,3 @@
-false = { for foo in false : )
+foo = {for foo in foo : )
 ---
-bar = { for foo in bar : )
----
-bar = { for foo in bar : ]
----
-bar = { for foo in bar : }
----
-bar = { for foo in bar : *
----
-bar = { for foo in bar : :
+foo = {for foo in foo : +

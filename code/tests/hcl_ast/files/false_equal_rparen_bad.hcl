@@ -1,13 +1,3 @@
-false = )
+foo = )
 ---
-false = ]
----
-false = }
----
-bar = )
----
-bar = *
----
-bar = +
----
-bar = ?
+foo = +

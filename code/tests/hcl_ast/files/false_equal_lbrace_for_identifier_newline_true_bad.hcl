@@ -1,0 +1,2 @@
+foo = {for foo
+  foo

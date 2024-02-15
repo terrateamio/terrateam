@@ -1,3 +1,1 @@
-false = false [ * true
----
-bar = bar [ * baz
+foo = foo[*true

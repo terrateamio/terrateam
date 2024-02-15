@@ -1,9 +1,10 @@
 foo = [1]
 foo = [1, 2, 3]
-foo = [ 1
+foo = [ 1,
   2
-  3
-  4
+  ,
+  3,
+  4,
 ]
 foo = [for s in var.list: upper(s)]
 foo = [for k, v in var.map : length(k) + length(v)]

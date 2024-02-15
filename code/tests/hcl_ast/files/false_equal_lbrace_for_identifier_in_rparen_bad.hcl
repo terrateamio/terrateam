@@ -1,7 +1,5 @@
-false = { for foo in )
+foo = {for foo in +
 ---
-false = { for foo in ]
+foo = {for foo in ]
 ---
-false = { for foo in *
----
-false = { for foo in +
+foo = {for foo in )

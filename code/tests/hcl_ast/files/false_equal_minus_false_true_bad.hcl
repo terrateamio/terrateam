@@ -1,7 +1,5 @@
-foo = -false true
+foo = -1 true
 ---
-foo = -false 1
+foo = -true true
 ---
-foo = -1 1
----
-foo = -1 foo
+foo = -true foo

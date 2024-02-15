@@ -1,12 +1,3 @@
-false = false % )
---
-bar = false % +
+foo = foo % +
 ---
-bar = baz % +
----
-bar = baz % *
----
-bar = baz % ]
----
-bar = baz % }
-
+foo = foo % )

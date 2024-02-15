@@ -1,9 +1,5 @@
-false = false + )
+foo = foo + }
 ---
-bar = bar + )
+foo = foo + +
 ---
-bar = bar + ]
----
-bar = bar + }
----
-bar = bar + +
+foo = foo + )
