@@ -51,7 +51,8 @@ let rec token buf =
   | "in" -> T.IN
   | "if" -> T.IF
   | '"' -> parse_string_literal buf (Buffer.create 20)
-  | Plus digit, Opt '.', Star digit, exp, Opt plus_minus, Star digit ->
+  | Plus digit, exp, Opt plus_minus, Plus digit -> T.FLOAT (float_of_string (lexeme buf))
+  | Plus digit, '.', Plus digit, exp, Opt plus_minus, Plus digit ->
       T.FLOAT (float_of_string (lexeme buf))
   | Plus digit, '.', Plus digit -> T.FLOAT (float_of_string (lexeme buf))
   | Plus digit -> T.INTEGER (int_of_string (lexeme buf))
