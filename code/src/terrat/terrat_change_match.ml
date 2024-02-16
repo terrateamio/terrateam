@@ -313,11 +313,6 @@ let synthesize_dir_config' ~index ~file_list repo_config =
            CCList.filter_map
              (function
                | Index.Dep.Module mod_path ->
-                   Printf.printf
-                     "FOO = %s %s %s\n%!"
-                     path
-                     mod_path
-                     (Dirs.Dir.process_relative_path (Filename.concat path mod_path));
                    Some (Dirs.Dir.process_relative_path (Filename.concat path mod_path)))
              values
            @ acc)
