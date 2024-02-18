@@ -106,8 +106,8 @@
               "key_output": [ "Id", "name" ],
               "value_output": [ "Id", "user" ],
               "cond": [
-                "Attr",
-                [ [ "Not", [ "Id", "user" ] ], [ "A_string", "is_admin" ] ]
+                "Not",
+                [ "Attr", [ [ "Id", "user" ], [ "A_string", "is_admin" ] ] ]
               ]
             }
           ]

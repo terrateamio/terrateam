@@ -42,15 +42,15 @@
 %type <Expr.t> for_tuple
 %type <Expr.t> for_object
 %type <string list> identifiers_rest
-%type <Expr.t> ops
-%type <Attr.t> attr_expr
-%type <Expr.t> collection_expr
 %type <Expr.t> expr
+%type <Expr.t> expr_term
+%type <Expr.t> conditional
+%type <Expr.t> operation
+%type <Expr.t> collection_expr
 %type <string> identifier
 %type <Expr.t> object_expr
 %type <Expr.t> simple_expr
 %type <Expr.t> tuple_expr
-%type <Expr.t> idx_expr
 
 %%
 
@@ -98,84 +98,46 @@ simple_expr:
   | IDENTIFIER { Expr.Id $1 }
 
 collection_expr:
-  | LBRACKET NEWLINE* tuple_expr { $3 }
-  | LBRACE NEWLINE* object_expr { $3 }
-  | LPAREN FOR RPAREN { Expr.Id "for" }
+  | LBRACKET; NEWLINE*; tuple_expr; RBRACKET { $3 }
+  | LBRACE; NEWLINE*; object_expr; RBRACE { $3 }
+  | LPAREN; FOR; RPAREN { Expr.Id "for" }
 
-expr:
+expr_term:
   | simple_expr { $1 }
   | collection_expr { $1 }
-  | id = IDENTIFIER; LPAREN; NEWLINE*; args = fun_args; NEWLINE*; RPAREN; { Expr.Fun_call (id, args)  }
-  | LPAREN; e = expr; RPAREN { e }
-  | e = expr; ELLIPSIS { Expr.Ellipsis e }
-  | e = expr; LBRACKET; i = idx_expr { Expr.Idx (e, i) }
-  | e = expr; DOT; a = attr_expr { Expr.Attr (e, a) }
-  | e = expr; QUESTION_MARK; thn = expr; COLON; els = expr { Expr.Cond {if_ = e; then_ = thn; else_ = els } }
-  | ops { $1 }
+  | id = IDENTIFIER; LPAREN; NEWLINE*; args = fun_args; RPAREN; { Expr.Fun_call (id, args)  }
+  | LPAREN; NEWLINE*; e = expr_paren; RPAREN { e }
+  | e = expr_term; LBRACKET; MULT; RBRACKET { Expr.Idx (e, Expr.Splat) }
+  | e = expr_term; LBRACKET; i = expr; RBRACKET { Expr.Idx (e, i) }
+  | e = expr_term; DOT; id = IDENTIFIER { Expr.Attr (e, Attr.A_string id) }
+  | e = expr_term; DOT; MULT { Expr.Attr (e, Attr.A_splat) }
+  | e = expr_term; DOT; i = INTEGER { Expr.Attr (e, Attr.A_int i) }
 
-tuple_expr:
-  | NEWLINE*; FOR; NEWLINE*; ft = for_tuple; NEWLINE*; RBRACKET { ft }
-  | NEWLINE*; t = tuple; NEWLINE*; RBRACKET { Expr.Tuple t }
+expr_term_paren:
+  | e = simple_expr { e }
+  | e = collection_expr { e }
+  | id = IDENTIFIER; LPAREN; NEWLINE*; args = fun_args; RPAREN { Expr.Fun_call (id, args)  }
+  | LPAREN; NEWLINE*; e = expr_paren; RPAREN { e }
+  | e = expr_term; LBRACKET; MULT; RBRACKET { Expr.Idx (e, Expr.Splat) }
+  | e = expr_term; LBRACKET; i = expr; RBRACKET { Expr.Idx (e, i) }
+  | e = expr_term; DOT; id = IDENTIFIER { Expr.Attr (e, Attr.A_string id) }
+  | e = expr_term; DOT; MULT { Expr.Attr (e, Attr.A_splat) }
+  | e = expr_term; DOT; i = INTEGER { Expr.Attr (e, Attr.A_int i) }
 
-object_expr:
-  | NEWLINE*; FOR; NEWLINE*; fo = for_object; NEWLINE*; RBRACE { fo }
-  | NEWLINE*; o = obj; NEWLINE*; RBRACE { Expr.Object o }
+operation:
+ | unary_op { $1 }
+ | binary_op { $1 }
 
-idx_expr:
-  | MULT RBRACKET { Expr.Splat }
-  | e = expr;  RBRACKET { e }
+operation_paren:
+ | unary_op { $1 }
+ | binary_op_paren { $1 }
 
-attr_expr:
-  | MULT { Attr.A_splat }
-  | id = IDENTIFIER { Attr.A_string id }
-  | i = INTEGER { Attr.A_int i }
+unary_op:
+  | NOT expr_term { Expr.Not $2 }
+  | MINUS expr_term { Expr.Minus $2 } %prec UMINUS
 
-tuple:
-  | e = expr; COMMA; NEWLINE*; t = tuple { e::t }
-  | e = expr; NEWLINE+; t = tuple { e::t }
-  | expr { [$1] }
-  | /* empty */ { [] }
-
-obj:
-  | e1 = expr; EQUAL; e2 = expr; COMMA; NEWLINE*; o = obj { (e1, e2)::o }
-  | e1 = expr; COLON; e2 = expr; COMMA; NEWLINE*; o = obj { (e1, e2)::o }
-  | e1 = expr; EQUAL; e2 = expr; NEWLINE+; o = obj { (e1, e2)::o }
-  | e1 = expr; COLON; e2 = expr; NEWLINE+; o = obj { (e1, e2)::o }
-  | expr EQUAL expr { [($1, $3)] }
-  | expr COLON expr { [($1, $3)] }
-  | /* empty */ { [] }
-
-fun_args:
-  | e = expr; COMMA; NEWLINE*; args = fun_args { e::args }
-  | expr { [$1] }
-  | /* empty */ { [] }
-
-identifiers_rest:
-  | COMMA IDENTIFIER identifiers_rest { $2::$3 }
-  | /* empty */ { [] }
-
-for_tuple:
-  | id = IDENTIFIER; ids = identifiers_rest; IN; in_ = expr; COLON; e = expr; NEWLINE*; IF; if_ =  expr; NEWLINE*
-    { Expr.For_tuple { identifiers = (id, ids); input = in_; output = e; cond = Some if_ } }
-  | id = IDENTIFIER; ids = identifiers_rest; IN; in_ = expr; COLON; e = expr; NEWLINE*
-    { Expr.For_tuple { identifiers = (id, ids); input = in_; output = e; cond = None } }
-
-for_object:
-  | id = IDENTIFIER; ids = identifiers_rest; IN; in_ = expr; COLON; k = expr; FAT_ARROW; v =  expr; NEWLINE*; IF; if_ = expr; NEWLINE*
-    { Expr.For_object { identifiers = (id, ids);
-                        input = in_;
-                        key_output = k;
-                        value_output = v;
-                        cond = Some if_ } }
-  | id = IDENTIFIER; ids = identifiers_rest; IN; in_ = expr; COLON; k = expr; FAT_ARROW; v = expr; NEWLINE*
-    { Expr.For_object { identifiers = (id, ids);
-                        input = in_;
-                        key_output = k;
-                        value_output = v;
-                        cond = None } }
-
-ops:
-  | expr; PLUS; expr { Expr.Add ($1, $3) }
+binary_op:
+  | expr PLUS expr { Expr.Add ($1, $3) }
   | expr MINUS expr { Expr.Subtract ($1, $3) }
   | expr MULT expr { Expr.Mult ($1, $3) }
   | expr DIV expr { Expr.Div ($1, $3) }
@@ -186,7 +148,93 @@ ops:
   | expr IS_EQUAL expr { Expr.Equal ($1, $3) }
   | expr NOT_EQUAL expr { Expr.Not (Expr.Equal ($1, $3)) }
   | expr LOG_AND expr { Expr.Log_and ($1, $3) }
-  | expr LOG_OR expr {Expr.Log_or ($1, $3) }
+  | expr LOG_OR expr { Expr.Log_or ($1, $3) }
   | expr PERCENT expr { Expr.Mod ($1, $3) }
-  | NOT expr { Expr.Not $2 }
-  | MINUS expr { Expr.Minus $2 } %prec UMINUS
+
+binary_op_paren:
+  | e1 = expr_paren; PLUS; NEWLINE*; e2 = expr_paren { Expr.Add (e1, e2) }
+  | e1 = expr_paren; MINUS; NEWLINE*; e2 = expr_paren { Expr.Subtract (e1, e2) }
+  | e1 = expr_paren; MULT; NEWLINE*; e2 = expr_paren { Expr.Mult (e1, e2) }
+  | e1 = expr_paren; DIV; NEWLINE*; e2 = expr_paren { Expr.Div (e1, e2) }
+  | e1 = expr_paren; LESS_THAN; NEWLINE*; e2 = expr_paren { Expr.Lt (e1, e2) }
+  | e1 = expr_paren; LESS_THAN_EQUAL; NEWLINE*; e2 = expr_paren { Expr.Lte (e1, e2) }
+  | e1 = expr_paren; GREATER_THAN; NEWLINE*; e2 = expr_paren { Expr.Gt (e1, e2) }
+  | e1 = expr_paren; GREATER_THAN_EQUAL; NEWLINE*; e2 = expr_paren { Expr.Gte (e1, e2) }
+  | e1 = expr_paren; IS_EQUAL; NEWLINE*; e2 = expr_paren { Expr.Equal (e1, e2) }
+  | e1 = expr_paren; NOT_EQUAL; NEWLINE*; e2 = expr_paren { Expr.Not (Expr.Equal (e1, e2)) }
+  | e1 = expr_paren; LOG_AND; NEWLINE*; e2 = expr_paren { Expr.Log_and (e1, e2) }
+  | e1 = expr_paren; LOG_OR; NEWLINE*; e2 = expr_paren { Expr.Log_or (e1, e2) }
+  | e1 = expr_paren; PERCENT; NEWLINE*; e2 = expr_paren { Expr.Mod (e1, e2) }
+
+conditional:
+  | e = expr; QUESTION_MARK; thn = expr; COLON; els = expr { Expr.Cond {if_ = e; then_ = thn; else_ = els } }
+
+conditional_paren:
+  | e = expr_paren; QUESTION_MARK; NEWLINE*; thn = expr_paren; COLON; NEWLINE*; els = expr_paren { Expr.Cond {if_ = e; then_ = thn; else_ = els } }
+
+expr:
+  | expr_term { $1 }
+  | operation { $1 }
+  | conditional { $1 }
+
+expr_paren:
+  | expr_term_paren; NEWLINE* { $1 }
+  | operation_paren; NEWLINE* { $1 }
+  | conditional_paren; NEWLINE* { $1 }
+
+%inline tuple_expr:
+  | FOR; NEWLINE*; ft = for_tuple { ft }
+  | t = tuple { Expr.Tuple t }
+
+%inline object_expr:
+  | FOR; NEWLINE*; fo = for_object { fo }
+  | o = obj { Expr.Object o }
+
+tuple:
+  | /* empty */ { [] }
+  | e = expr; ELLIPSIS; NEWLINE* { [Expr.Ellipsis e] }
+  | expr; NEWLINE* { [$1] }
+  | e = expr; NEWLINE*; COMMA; NEWLINE*; t = tuple { e::t }
+
+obj:
+  | /* empty */ { [] }
+  | obj_k; kv_sep; expr { [($1, $3)] }
+  | e1 = obj_k; kv_sep; e2 = expr; COMMA; NEWLINE*; o = obj { (e1, e2)::o }
+  | e1 = obj_k; kv_sep; e2 = expr; NEWLINE+; o = obj { (e1, e2)::o }
+
+obj_k:
+  | expr { $1 }
+  | IN { Expr.Id "in" }
+
+kv_sep:
+  | EQUAL {}
+  | COLON {}
+
+fun_args:
+  | /* empty */ { [] }
+  | e = expr_paren; ELLIPSIS; NEWLINE* { [Expr.Ellipsis e] }
+  | expr_paren; NEWLINE* { [$1] }
+  | e = expr_paren; COMMA; NEWLINE*; args = fun_args { e::args }
+
+identifiers_rest:
+  | COMMA; id = IDENTIFIER; ids = identifiers_rest { id::ids }
+  | /* empty */ { [] }
+
+%inline for_tuple:
+  | id = IDENTIFIER; ids = identifiers_rest; NEWLINE*; IN; NEWLINE*; in_ = expr; NEWLINE*; COLON; NEWLINE*; e = expr; NEWLINE*; if_ = collection_if?
+    { Expr.For_tuple { identifiers = (id, ids); input = in_; output = e; cond = if_ } }
+
+%inline for_object:
+  | id = IDENTIFIER; ids = identifiers_rest; NEWLINE*; IN; NEWLINE*; in_ = expr; NEWLINE*; COLON; NEWLINE*; k = expr; NEWLINE*; FAT_ARROW; NEWLINE*; v =  for_obj_value; NEWLINE*; if_ = collection_if?
+    { Expr.For_object { identifiers = (id, ids);
+                        input = in_;
+                        key_output = k;
+                        value_output = v;
+                        cond = if_ } }
+
+for_obj_value:
+  | expr { $1 }
+  | expr; ELLIPSIS { Expr.Ellipsis $1 }
+
+%inline collection_if:
+  | IF; NEWLINE*; e = expr; NEWLINE* { e }

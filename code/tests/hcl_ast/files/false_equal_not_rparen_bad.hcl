@@ -1,13 +1,5 @@
-false = !)
+foo = !+
 ---
-false = !}
+foo = !)
 ---
-false = !]
----
-bar = !)
----
-bar = !*
----
-bar = !+
----
-bar = !?
+foo = !}

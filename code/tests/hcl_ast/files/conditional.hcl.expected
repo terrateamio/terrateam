@@ -12,10 +12,13 @@
             "Cond",
             {
               "if_": [
-                "Attr",
+                "Not",
                 [
-                  [ "Not", [ "Id", "var" ] ],
-                  [ "A_string", "enable_workload_identity" ]
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "enable_workload_identity" ]
+                  ]
                 ]
               ],
               "then_": [ "Tuple", [] ],

@@ -1,12 +1,5 @@
-false = false [)
+foo = foo[}
 ---
-bar = false [)
+foo = foo[+
 ---
-bar = false [}
----
-bar = bar [)
----
-bar = 1 [)
----
-bar = "foo" [)
-
+foo = foo[)

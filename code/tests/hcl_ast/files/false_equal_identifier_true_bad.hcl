@@ -1,7 +1,5 @@
-false = foo true
+foo = bar true
 ---
-false = foo "true"
+foo = bar 1.2
 ---
-bar = foo 1.2
----
-bar = foo 1
+foo = bar "foo"

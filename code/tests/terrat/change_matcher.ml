@@ -1209,7 +1209,6 @@ let test_index_module_in_same_dir =
       let changes = Terrat_change_match.match_diff_list dirs diff in
       assert (CCList.length changes = 1);
       let dirspace = (CCList.hd changes).Terrat_change_match.dirspace in
-      print_endline (Terrat_change_match.Dirs.show dirs);
       assert (
         Terrat_change.Dirspace.equal
           dirspace

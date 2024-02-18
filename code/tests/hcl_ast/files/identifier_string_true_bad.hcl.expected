@@ -1,1 +1,1 @@
-Expected block labels, which are strings or identifiers, found a non-string literal.
+String or identifier expected in block definition.

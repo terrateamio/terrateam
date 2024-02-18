@@ -1,5 +1,3 @@
-false = false . true
+foo = foo.true
 ---
-bar = bar . true
----
-bar = bar . "foo"
+foo = foo."foo"

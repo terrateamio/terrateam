@@ -1,5 +1,5 @@
-foo = (for 1
+foo = ( for "foo"
 ---
-foo = (for "foo"
+foo = ( for 1
 ---
-foo = (for bar
+foo = ( for 1

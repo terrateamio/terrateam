@@ -1,11 +1,5 @@
-false = { for foo in false : false => )
+foo = {for foo in foo : foo => +
 ---
-bar = { for foo in bar : bar => )
+foo = {for foo in foo : foo => }
 ---
-bar = { for foo in bar : bar => }
----
-bar = { for foo in bar : bar => ]
----
-bar = { for foo in bar : bar => *
----
-bar = { for foo in bar : bar => +
+foo = {for foo in foo : foo => )
