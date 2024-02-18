@@ -324,7 +324,6 @@ module type S = sig
         t ->
         (Pull_request.Lite.t Work_manifest.Dirspace_map.t, [> `Error ]) result Abb.Future.t
 
-      val work_manifest_already_run : t -> unit Abb.Future.t
       val publish_msg_bad_glob : t -> string -> unit Abb.Future.t
     end
 

@@ -464,7 +464,6 @@ module type S = sig
         t ->
         (Pull_request.Lite.t Work_manifest.Dirspace_map.t, [> `Error ]) result Abb.Future.t
 
-      val work_manifest_already_run : t -> unit Abb.Future.t
       val publish_msg_bad_glob : t -> string -> unit Abb.Future.t
     end
 
@@ -1921,7 +1920,7 @@ module Make (S : S) = struct
             | Some t -> (
                 let module State = Terrat_work_manifest.State in
                 match S.Work_manifest.Initiate.work_manifest_state t with
-                | State.Completed -> Abb.Future.return (Error (`Work_manifest_already_run t))
+                | State.Completed -> Abb.Future.return (Ok (Some t))
                 | State.Aborted ->
                     (* Are you reading this line of code because you know
                        someone has updated a PR quickly and the previous plan
@@ -1935,7 +1934,7 @@ module Make (S : S) = struct
                        the same, though, the previous work manifest is aborted
                        and the work will not run. *)
                     Logs.info (fun m -> m "EVALUATOR : %s : WORK_MANIFEST_ABORTED" request_id);
-                    Abb.Future.return (Error `Work_manifest_aborted)
+                    Abb.Future.return (Ok (Some t))
                 | State.Queued -> Abb.Future.return (Error `Work_manifest_in_queue_state)
                 | _ -> (
                     let module Run_type = Terrat_work_manifest.Run_type in
@@ -1981,11 +1980,6 @@ module Make (S : S) = struct
                 >>= fun () -> Abb.Future.return (Error `Error)
             | Error #err as err -> Abb.Future.return err)
         | Ok None -> Abb.Future.return (Error `Work_manifest_not_found)
-        | Error `Work_manifest_aborted -> Abb.Future.return (Error `Work_manifest_aborted)
-        | Error (`Work_manifest_already_run t) ->
-            let open Abb.Future.Infix_monad in
-            S.Work_manifest.Initiate.work_manifest_already_run t
-            >>= fun () -> Abb.Future.return (Error `Error)
         | Error _ as err -> Abb.Future.return err
     end
 

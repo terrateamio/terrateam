@@ -555,6 +555,9 @@
           },
           {
             "$ref": "#/components/schemas/work-manifest-unsafe-apply"
+          },
+          {
+            "$ref": "#/components/schemas/work-manifest-done"
           }
         ]
       },
@@ -662,6 +665,19 @@
           "$ref": "#/components/schemas/work-manifest-dirspace-result"
         },
         "type": "array"
+      },
+      "work-manifest-done": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "done",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
       },
       "work-manifest-index": {
         "additionalProperties": false,

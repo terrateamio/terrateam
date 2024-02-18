@@ -2753,11 +2753,6 @@ module Wm = struct
         |> CCResult.get_exn
         |> fun tmpl -> Snabela.of_template tmpl []
 
-      let work_manifest_already_run =
-        "github_work_manifest_already_run.tmpl"
-        |> Terrat_files_tmpl.read
-        |> CCOption.get_exn_or "github_work_manifest_already_run.tmpl"
-
       let bad_glob = read "bad_glob.tmpl"
     end
 
@@ -3222,30 +3217,6 @@ module Wm = struct
               Abb.Future.return (Error `Error))
       | None -> Abb.Future.return (Ok (Terrat_evaluator.Event.Dirspace_map.of_list []))
 
-    let work_manifest_already_run t =
-      match t.pull_number with
-      | Some pull_number ->
-          let open Abb.Future.Infix_monad in
-          Logs.err (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : WORK_MANIFEST_ALREADY_RUN : work_manifest=%s : owner=%s : \
-                 name=%s : pull_number=%Ld"
-                t.request_id
-                (Uuidm.to_string t.work_manifest.Terrat_work_manifest.id)
-                t.owner
-                t.name
-                pull_number);
-          Terrat_github.with_client
-            t.config
-            (`Token t.access_token)
-            (Terrat_github.publish_comment
-               ~owner:t.owner
-               ~repo:t.name
-               ~pull_number:(CCInt64.to_int pull_number)
-               ~body:Tmpl.work_manifest_already_run)
-          >>= fun _ -> Abb.Future.return ()
-      | None -> Abb.Future.return ()
-
     let publish_msg_bad_glob t glob =
       match t.pull_number with
       | Some pull_number -> (
@@ -3300,8 +3271,14 @@ module Wm = struct
                 ~key:t.encryption_key
                 (Cstruct.of_string (Uuidm.to_string work_manifest.Wm.id))))
       in
-      match (work_manifest.Wm.src.Src.run_kind, work_manifest.Wm.run_type) with
-      | "index", _ ->
+      match
+        (work_manifest.Wm.state, work_manifest.Wm.src.Src.run_kind, work_manifest.Wm.run_type)
+      with
+      | Terrat_work_manifest.State.(Completed | Aborted), _, _ ->
+          let module D = Terrat_api_components.Work_manifest_done in
+          let ret = Terrat_api_components.Work_manifest.Work_manifest_done { D.type_ = "done" } in
+          Abb.Future.return (Ok ret)
+      | _, "index", _ ->
           let module Idx = Terrat_api_components.Work_manifest_index in
           let dirs =
             work_manifest.Wm.changes
@@ -3313,7 +3290,7 @@ module Wm = struct
               { Idx.dirs; base_ref = work_manifest.Wm.src.Src.base_branch; token; type_ = "index" }
           in
           Abb.Future.return (Ok ret)
-      | _, (Wm.Run_type.Plan | Wm.Run_type.Autoplan) ->
+      | _, _, (Wm.Run_type.Plan | Wm.Run_type.Autoplan) ->
           let open Abbs_future_combinators.Infix_result_monad in
           Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : FETCH_ALL_DIRSPACES" request_id);
           Abbs_time_it.run
@@ -3362,7 +3339,7 @@ module Wm = struct
                   })
           in
           Abb.Future.return (Ok ret)
-      | _, (Wm.Run_type.Apply | Wm.Run_type.Autoapply) ->
+      | _, _, (Wm.Run_type.Apply | Wm.Run_type.Autoapply) ->
           let ret =
             Terrat_api_components.(
               Work_manifest.Work_manifest_apply
@@ -3376,7 +3353,7 @@ module Wm = struct
                   })
           in
           Abb.Future.return (Ok ret)
-      | _, Wm.Run_type.Unsafe_apply ->
+      | _, _, Wm.Run_type.Unsafe_apply ->
           let ret =
             Terrat_api_components.(
               Work_manifest.Work_manifest_unsafe_apply
