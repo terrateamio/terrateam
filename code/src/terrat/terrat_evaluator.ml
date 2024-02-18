@@ -549,7 +549,8 @@ module Make (S : S) = struct
 
   let publish_msg event msg =
     Abbs_time_it.run (log_time event "PUBLISH_MSG") (fun () ->
-        Abbs_future_combinators.to_result (S.Event.publish_msg event msg))
+        let open Abb.Future.Infix_monad in
+        S.Event.publish_msg event msg >>= fun () -> Abb.Future.return (Ok None))
 
   module Event = struct
     module Access_control = Terrat_access_control.Make (S.Event.Access_control)
@@ -812,7 +813,7 @@ module Make (S : S) = struct
                 "EVALUATOR : %s : STORED_PULL_REQUEST_WORK_MANIFEST : %s"
                 (S.Event.T.request_id event)
                 (Uuidm.to_string work_manifest.Terrat_work_manifest.id));
-          Abb.Future.return (Ok ())
+          Abb.Future.return (Ok (Some (`Pull_request_work_manifest work_manifest)))
       | Error (#Terrat_tag_query_ast.err as err) -> Abb.Future.return (Error err)
 
     let test_can_perform_operation db event dirspaces operation =
@@ -893,7 +894,7 @@ module Make (S : S) = struct
                 "EVALUATOR : %s : NOOP : AUTOPLAN_NO_MISSING_MATCHES : draft=%s"
                 (S.Event.T.request_id event)
                 (Bool.to_string (S.Event.Pull_request.is_draft_pr pull_request)));
-          Abb.Future.return (Ok ())
+          Abb.Future.return (Ok None)
       | matches -> (
           let open Abb.Future.Infix_monad in
           Access_control_engine.eval_tf_operation access_control matches `Plan
@@ -916,7 +917,7 @@ module Make (S : S) = struct
                         "EVALUATOR : %s : NOOP : AUTOPLAN_NO_MATCHES : draft=%s"
                         (S.Event.T.request_id event)
                         (Bool.to_string (S.Event.Pull_request.is_draft_pr pull_request)));
-                  Abb.Future.return (Ok ())
+                  Abb.Future.return (Ok None)
               | _, _, [] ->
                   Logs.info (fun m ->
                       m
@@ -942,7 +943,6 @@ module Make (S : S) = struct
                         matches
                         deny
                         (Event.Op_class.run_type_of_tf (`Plan tf_mode))
-                      >>= fun () -> Abb.Future.return (Ok ())
                   | `Conflicting_work_manifests wms ->
                       publish_msg event (Event.Msg.Conflicting_work_manifests wms)
                   | `Account_expired -> publish_msg event Event.Msg.Account_expired))
@@ -980,7 +980,7 @@ module Make (S : S) = struct
       | `Apply `Auto, [] ->
           Logs.info (fun m ->
               m "EVALUATOR : %s : NOOP : AUTOAPPLY_NO_MATCHES" (S.Event.T.request_id event));
-          Abb.Future.return (Ok ())
+          Abb.Future.return (Ok None)
       | _, [] ->
           Logs.info (fun m ->
               m "EVALUATOR : %s : NOOP : APPLY_NO_MATCHING_DIRSPACES" (S.Event.T.request_id event));
@@ -1003,8 +1003,11 @@ module Make (S : S) = struct
                 denies
                 (Event.Op_class.run_type_of_tf operation)
               >>= function
-              | () when operation = `Apply `Auto -> publish_msg event Event.Msg.Autoapply_running
-              | () -> Abb.Future.return (Ok ()))
+              | r when operation = `Apply `Auto ->
+                  let open Abb.Future.Infix_monad in
+                  publish_msg event Event.Msg.Autoapply_running
+                  >>= fun _ -> Abb.Future.return (Ok r)
+              | r -> Abb.Future.return (Ok r))
           | [] -> (
               (* None of the dirspaces are owned by another PR, we can proceed *)
               query_dirspaces_without_valid_plans
@@ -1031,9 +1034,11 @@ module Make (S : S) = struct
                         denies
                         (Event.Op_class.run_type_of_tf operation)
                       >>= function
-                      | () when operation = `Apply `Auto ->
+                      | r when operation = `Apply `Auto ->
+                          let open Abb.Future.Infix_monad in
                           publish_msg event Event.Msg.Autoapply_running
-                      | () -> Abb.Future.return (Ok ()))
+                          >>= fun _ -> Abb.Future.return (Ok r)
+                      | r -> Abb.Future.return (Ok r))
                   | `Conflicting_work_manifests wms ->
                       publish_msg event (Event.Msg.Conflicting_work_manifests wms)
                   | `Account_expired -> publish_msg event Event.Msg.Account_expired)
@@ -1418,7 +1423,7 @@ module Make (S : S) = struct
                 "EVALUATOR : %s : %s_BRANCH_NOT_VALID_BRANCH"
                 (S.Event.T.request_id event)
                 msg_fragment);
-          Abb.Future.return (Ok ())
+          Abb.Future.return (Ok None)
       | Event.Event_type.Plan
       | Event.Event_type.Apply
       | Event.Event_type.Apply_autoapprove
@@ -1589,11 +1594,11 @@ module Make (S : S) = struct
             | Terrat_pull_request.State.Closed ->
                 Logs.info (fun m ->
                     m "EVALUATOR : %s : NOOP : PR_CLOSED" (S.Event.T.request_id event));
-                Abb.Future.return (Ok ()))
+                Abb.Future.return (Ok None))
           else (
             Logs.info (fun m ->
                 m "EVALUATOR : %s : NOOP : REPO_CONFIG_DISABLED" (S.Event.T.request_id event));
-            Abb.Future.return (Ok ()))
+            Abb.Future.return (Ok None))
       | Error `No_matching_dest_branch -> handle_branches_error event pull_request "DEST"
       | Error `No_matching_source_branch -> handle_branches_error event pull_request "SOURCE"
 
@@ -1632,7 +1637,7 @@ module Make (S : S) = struct
       Pgsql_pool.with_conn storage ~f:(fun db ->
           create_and_store_index_work_manifest db event repo_config repo_tree pull_request)
       >>= function
-      | Ok _ -> Abb.Future.return (Ok ())
+      | Ok wm -> Abb.Future.return (Ok (Some (`Index_work_manifest wm)))
       | Error (`Tag_query_err err) -> publish_msg event (Event.Msg.Tag_query_err err)
       | Error ((#Pgsql_pool.err | #Pgsql_io.err | `Bad_glob _ | `Error) as err) ->
           Abb.Future.return (Error err)
@@ -1658,7 +1663,7 @@ module Make (S : S) = struct
         (function
           | `Det v -> (
               match v with
-              | Ok () -> Abb.Future.return ()
+              | Ok _ -> Abb.Future.return ()
               | Error `Account_disabled ->
                   Prmths.Counter.inc_one Metrics.op_on_account_disabled_total;
                   Logs.debug (fun m ->
