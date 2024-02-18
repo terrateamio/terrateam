@@ -154,7 +154,6 @@ module type S = sig
       Terrat_repo_config.Version_1.t ->
       Terrat_change_match.t list ->
       Pull_request.t Terrat_work_manifest.New.t ->
-      Terrat_access_control.R.Deny.t list ->
       (Pull_request.t Terrat_work_manifest.Existing_lite.t, [> `Error ]) result Abb.Future.t
 
     val store_index_work_manifest :

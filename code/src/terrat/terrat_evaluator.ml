@@ -296,7 +296,6 @@ module type S = sig
       Terrat_repo_config.Version_1.t ->
       Terrat_change_match.t list ->
       Pull_request.t Terrat_work_manifest.New.t ->
-      Terrat_access_control.R.Deny.t list ->
       (Pull_request.t Terrat_work_manifest.Existing_lite.t, [> `Error ]) result Abb.Future.t
 
     val store_index_work_manifest :
@@ -747,21 +746,9 @@ module Make (S : S) = struct
       Abbs_time_it.run (log_time event "STORE_INDEX_WORK_MANIFEST") (fun () ->
           S.Event.store_index_work_manifest db event all_matches work_manifest)
 
-    let store_pull_request_work_manifest
-        db
-        event
-        repo_config
-        all_matches
-        work_manifest
-        denied_dirspaces =
+    let store_pull_request_work_manifest db event repo_config all_matches work_manifest =
       Abbs_time_it.run (log_time event "STORE_PULL_REQUEST_WORK_MANIFEST") (fun () ->
-          S.Event.store_pull_request_work_manifest
-            db
-            event
-            repo_config
-            all_matches
-            work_manifest
-            denied_dirspaces)
+          S.Event.store_pull_request_work_manifest db event repo_config all_matches work_manifest)
 
     let create_and_store_work_manifest
         db
@@ -786,6 +773,7 @@ module Make (S : S) = struct
                 changes = dirspaceflows;
                 completed_at = None;
                 created_at = ();
+                denied_dirspaces;
                 hash = S.Event.Pull_request.hash pull_request;
                 id = ();
                 src = pull_request;
@@ -799,13 +787,7 @@ module Make (S : S) = struct
           Metrics.Dirspaces_per_work_manifest_histogram.observe
             (Metrics.dirspaces_per_work_manifest (Run_type.to_string run_type))
             (CCFloat.of_int (CCList.length dirspaces));
-          store_pull_request_work_manifest
-            db
-            event
-            repo_config
-            all_matches
-            work_manifest
-            denied_dirspaces
+          store_pull_request_work_manifest db event repo_config all_matches work_manifest
           >>= fun work_manifest ->
           Prmths.Counter.inc_one (Metrics.stored_work_manifests_total (Run_type.to_string run_type));
           Logs.info (fun m ->
@@ -1494,6 +1476,7 @@ module Make (S : S) = struct
                 changes = dirspaceflows;
                 completed_at = None;
                 created_at = ();
+                denied_dirspaces = [];
                 hash = S.Event.Pull_request.base_hash pull_request;
                 id = ();
                 src = index;

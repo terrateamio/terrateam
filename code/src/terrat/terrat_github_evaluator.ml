@@ -365,11 +365,12 @@ module Dr = struct
           changes = dirspaceflows;
           completed_at = None;
           created_at = ();
+          denied_dirspaces = [];
           hash;
           id = ();
-          src = ();
           run_id = ();
           run_type;
+          src = ();
           state = ();
           tag_query = Terrat_tag_query.any;
           user = None;
@@ -1611,11 +1612,12 @@ module Ev = struct
               changes = ();
               completed_at = None;
               created_at;
+              denied_dirspaces = ();
               hash;
               id;
-              src;
               run_id;
               run_type;
+              src;
               state;
               tag_query;
               user = wm_user;
@@ -1772,7 +1774,7 @@ module Ev = struct
               Abb.Future.return err)
         else Abb.Future.return (Ok ())
 
-  let store_pull_request_work_manifest db event repo_config changes work_manifest denied_dirspaces =
+  let store_pull_request_work_manifest db event repo_config changes work_manifest =
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
       let module Wm = Terrat_work_manifest in
@@ -1832,16 +1834,17 @@ module Ev = struct
                  CCOption.map (fun policy -> Yojson.Safe.to_string (Policy.to_yojson policy)) policy)
                denied_dirspaces)
             (CCList.replicate (CCList.length denied_dirspaces) id))
-        (CCList.chunks 500 denied_dirspaces)
+        (CCList.chunks 500 work_manifest.Wm.denied_dirspaces)
       >>= fun () ->
       let wm =
         {
           work_manifest with
           Wm.id;
-          state = CCOption.get_exn_or "work manifest state" (Wm.State.of_string state);
-          created_at;
-          run_id = None;
           changes = ();
+          created_at;
+          denied_dirspaces = ();
+          run_id = None;
+          state = CCOption.get_exn_or "work manifest state" (Wm.State.of_string state);
         }
       in
       let dirspaces =
@@ -1897,10 +1900,11 @@ module Ev = struct
         {
           work_manifest with
           Wm.id;
-          state = CCOption.get_exn_or "work manifest state" (Wm.State.of_string state);
-          created_at;
-          run_id = None;
           changes = ();
+          created_at;
+          denied_dirspaces = ();
+          run_id = None;
+          state = CCOption.get_exn_or "work manifest state" (Wm.State.of_string state);
         }
       in
       Abb.Future.return (Ok wm)
@@ -2955,6 +2959,7 @@ module Wm = struct
               changes = ();
               completed_at;
               created_at;
+              denied_dirspaces = [];
               hash;
               id = work_manifest_id;
               src =
@@ -3020,6 +3025,7 @@ module Wm = struct
                 changes = ();
                 completed_at;
                 created_at;
+                denied_dirspaces = [];
                 hash;
                 id = work_manifest_id;
                 src =
@@ -3958,6 +3964,7 @@ module Wm = struct
               changes = ();
               completed_at;
               created_at;
+              denied_dirspaces = ();
               hash;
               id = work_manifest_id;
               src =

@@ -63,11 +63,12 @@ module Unified_run_type = struct
     | Apply -> "apply"
 end
 
-type ('id, 'created_at, 'run_id, 'state, 'changes, 'src, 'run_type) t = {
+type ('id, 'created_at, 'run_id, 'state, 'changes, 'denied_dirspaces, 'src, 'run_type) t = {
   base_hash : string;
   changes : 'changes;
   completed_at : string option;
   created_at : 'created_at;
+  denied_dirspaces : 'denied_dirspaces;
   hash : string;
   id : 'id;
   run_id : 'run_id;
@@ -85,6 +86,7 @@ module New = struct
       unit,
       unit,
       Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list,
+      Terrat_access_control.R.Deny.t list,
       'src,
       Run_type.t )
     t
@@ -97,11 +99,12 @@ module Existing = struct
       string option,
       State.t,
       int Terrat_change.Dirspaceflow.t list,
+      Terrat_access_control.R.Deny.t list,
       'src,
       Run_type.t )
     t
 end
 
 module Existing_lite = struct
-  type nonrec 'src t = (Uuidm.t, string, string option, State.t, unit, 'src, Run_type.t) t
+  type nonrec 'src t = (Uuidm.t, string, string option, State.t, unit, unit, 'src, Run_type.t) t
 end
