@@ -541,13 +541,17 @@ module type S = sig
 end
 
 module Make (S : S) = struct
-  module Event = struct
-    let log_time ?m event name t =
-      Logs.info (fun m -> m "EVALUATOR : %s : %s : %f" (S.Event.T.request_id event) name t);
-      match m with
-      | Some m -> Metrics.DefaultHistogram.observe m t
-      | None -> ()
+  let log_time ?m event name t =
+    Logs.info (fun m -> m "EVALUATOR : %s : %s : %f" (S.Event.T.request_id event) name t);
+    match m with
+    | Some m -> Metrics.DefaultHistogram.observe m t
+    | None -> ()
 
+  let publish_msg event msg =
+    Abbs_time_it.run (log_time event "PUBLISH_MSG") (fun () ->
+        Abbs_future_combinators.to_result (S.Event.publish_msg event msg))
+
+  module Event = struct
     module Access_control = Terrat_access_control.Make (S.Event.Access_control)
 
     module Access_control_engine = struct
@@ -889,7 +893,7 @@ module Make (S : S) = struct
                 "EVALUATOR : %s : NOOP : AUTOPLAN_NO_MISSING_MATCHES : draft=%s"
                 (S.Event.T.request_id event)
                 (Bool.to_string (S.Event.Pull_request.is_draft_pr pull_request)));
-          Abb.Future.return (Ok None)
+          Abb.Future.return (Ok ())
       | matches -> (
           let open Abb.Future.Infix_monad in
           Access_control_engine.eval_tf_operation access_control matches `Plan
@@ -899,7 +903,7 @@ module Make (S : S) = struct
               (* In this case all have been denied, but not all dirspaces must have
                  access, however this is treated as special because no work will be done
                  so a special message should be given to the usr. *)
-              Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`All_dirspaces deny))))
+              publish_msg event (Event.Msg.Access_control_denied (`All_dirspaces deny))
           | Ok Terrat_access_control.R.{ pass; deny }
             when CCList.is_empty deny
                  || not (Access_control_engine.plan_require_all_dirspace_access access_control) -> (
@@ -912,13 +916,13 @@ module Make (S : S) = struct
                         "EVALUATOR : %s : NOOP : AUTOPLAN_NO_MATCHES : draft=%s"
                         (S.Event.T.request_id event)
                         (Bool.to_string (S.Event.Pull_request.is_draft_pr pull_request)));
-                  Abb.Future.return (Ok None)
+                  Abb.Future.return (Ok ())
               | _, _, [] ->
                   Logs.info (fun m ->
                       m
                         "EVALUATOR : %s : NOOP : PLAN_NO_MATCHING_DIRSPACES"
                         (S.Event.T.request_id event));
-                  Abb.Future.return (Ok (Some Event.Msg.Plan_no_matching_dirspaces))
+                  publish_msg event Event.Msg.Plan_no_matching_dirspaces
               | Terrat_pull_request.State.(Open Open_status.Merge_conflict), _, _ ->
                   Abb.Future.return (Error `Merge_conflict)
               | _, _, _ -> (
@@ -938,14 +942,13 @@ module Make (S : S) = struct
                         matches
                         deny
                         (Event.Op_class.run_type_of_tf (`Plan tf_mode))
-                      >>= fun () -> Abb.Future.return (Ok None)
+                      >>= fun () -> Abb.Future.return (Ok ())
                   | `Conflicting_work_manifests wms ->
-                      Abb.Future.return (Ok (Some (Event.Msg.Conflicting_work_manifests wms)))
-                  | `Account_expired -> Abb.Future.return (Ok (Some Event.Msg.Account_expired))))
+                      publish_msg event (Event.Msg.Conflicting_work_manifests wms)
+                  | `Account_expired -> publish_msg event Event.Msg.Account_expired))
           | Ok Terrat_access_control.R.{ deny; _ } ->
-              Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`Dirspaces deny))))
-          | Error `Error ->
-              Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied `Lookup_err)))
+              publish_msg event (Event.Msg.Access_control_denied (`Dirspaces deny))
+          | Error `Error -> publish_msg event (Event.Msg.Access_control_denied `Lookup_err)
           | Error (#Terrat_tag_query_ast.err as err) ->
               Logs.err (fun m ->
                   m
@@ -953,10 +956,9 @@ module Make (S : S) = struct
                     (S.Event.T.request_id event)
                     Terrat_tag_query_ast.pp_err
                     err);
-              Abb.Future.return (Ok (Some (Event.Msg.Tag_query_err err)))
+              publish_msg event (Event.Msg.Tag_query_err err)
           | Error (`Invalid_query query) ->
-              Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`Invalid_query query))))
-          )
+              publish_msg event (Event.Msg.Access_control_denied (`Invalid_query query)))
 
     let query_dirspaces_owned_by_other_pull_requests db event pull_request dirspaces =
       Abbs_time_it.run (log_time event "QUERY_DIRSPACES_OWNED_BY_OTHER_PRS") (fun () ->
@@ -978,11 +980,11 @@ module Make (S : S) = struct
       | `Apply `Auto, [] ->
           Logs.info (fun m ->
               m "EVALUATOR : %s : NOOP : AUTOAPPLY_NO_MATCHES" (S.Event.T.request_id event));
-          Abb.Future.return (Ok None)
+          Abb.Future.return (Ok ())
       | _, [] ->
           Logs.info (fun m ->
               m "EVALUATOR : %s : NOOP : APPLY_NO_MATCHING_DIRSPACES" (S.Event.T.request_id event));
-          Abb.Future.return (Ok (Some Event.Msg.Apply_no_matching_dirspaces))
+          publish_msg event Event.Msg.Apply_no_matching_dirspaces
       | _, _ -> (
           query_dirspaces_owned_by_other_pull_requests
             db
@@ -1001,9 +1003,8 @@ module Make (S : S) = struct
                 denies
                 (Event.Op_class.run_type_of_tf operation)
               >>= function
-              | () when operation = `Apply `Auto ->
-                  Abb.Future.return (Ok (Some Event.Msg.Autoapply_running))
-              | () -> Abb.Future.return (Ok None))
+              | () when operation = `Apply `Auto -> publish_msg event Event.Msg.Autoapply_running
+              | () -> Abb.Future.return (Ok ()))
           | [] -> (
               (* None of the dirspaces are owned by another PR, we can proceed *)
               query_dirspaces_without_valid_plans
@@ -1031,18 +1032,17 @@ module Make (S : S) = struct
                         (Event.Op_class.run_type_of_tf operation)
                       >>= function
                       | () when operation = `Apply `Auto ->
-                          Abb.Future.return (Ok (Some Event.Msg.Autoapply_running))
-                      | () -> Abb.Future.return (Ok None))
+                          publish_msg event Event.Msg.Autoapply_running
+                      | () -> Abb.Future.return (Ok ()))
                   | `Conflicting_work_manifests wms ->
-                      Abb.Future.return (Ok (Some (Event.Msg.Conflicting_work_manifests wms)))
-                  | `Account_expired -> Abb.Future.return (Ok (Some Event.Msg.Account_expired)))
+                      publish_msg event (Event.Msg.Conflicting_work_manifests wms)
+                  | `Account_expired -> publish_msg event Event.Msg.Account_expired)
               | dirspaces ->
                   (* Some are missing plans *)
-                  Abb.Future.return (Ok (Some (Event.Msg.Missing_plans dirspaces))))
+                  publish_msg event (Event.Msg.Missing_plans dirspaces))
           | dirspaces ->
               (* Some are owned by another PR, abort *)
-              Abb.Future.return
-                (Ok (Some (Event.Msg.Dirspaces_owned_by_other_pull_request dirspaces))))
+              publish_msg event (Event.Msg.Dirspaces_owned_by_other_pull_request dirspaces))
 
     let query_unapplied_dirspaces db event pull_request =
       Abbs_time_it.run (log_time event "MISSING_APPLIED_DIRSPACES") (fun () ->
@@ -1111,14 +1111,15 @@ module Make (S : S) = struct
           | (`Apply _ | `Apply_autoapprove), _ when not passed_apply_requirements ->
               Logs.info (fun m ->
                   m "EVALUATOR : %s : PR_NOT_APPLIABLE" (S.Event.T.request_id event));
-              Abb.Future.return
-                (Ok (Some (Event.Msg.Pull_request_not_appliable (pull_request, apply_requirements))))
+              publish_msg
+                event
+                (Event.Msg.Pull_request_not_appliable (pull_request, apply_requirements))
           | _, Terrat_access_control.R.{ pass = []; deny = _ :: _ as deny }
             when not (Access_control_engine.apply_require_all_dirspace_access access_control) ->
               (* In this case all have been denied, but not all dirspaces must have
                  access, however this is treated as special because no work will be done
                  so a special message should be given to the usr. *)
-              Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`All_dirspaces deny))))
+              publish_msg event (Event.Msg.Access_control_denied (`All_dirspaces deny))
           | _, Terrat_access_control.R.{ pass; deny }
             when CCList.is_empty deny
                  || not (Access_control_engine.apply_require_all_dirspace_access access_control) ->
@@ -1134,12 +1135,11 @@ module Make (S : S) = struct
                 operation
                 deny
           | _, Terrat_access_control.R.{ deny; _ } ->
-              Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`Dirspaces deny)))))
-      | Error `Error -> Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied `Lookup_err)))
-      | Error (#Terrat_tag_query_ast.err as err) ->
-          Abb.Future.return (Ok (Some (Event.Msg.Tag_query_err err)))
+              publish_msg event (Event.Msg.Access_control_denied (`Dirspaces deny)))
+      | Error `Error -> publish_msg event (Event.Msg.Access_control_denied `Lookup_err)
+      | Error (#Terrat_tag_query_ast.err as err) -> publish_msg event (Event.Msg.Tag_query_err err)
       | Error (`Invalid_query query) ->
-          Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`Invalid_query query))))
+          publish_msg event (Event.Msg.Access_control_denied (`Invalid_query query))
 
     let query_pull_request_out_of_diff_applies db event pull_request =
       Abbs_time_it.run (log_time event "QUERY_OUT_OF_DIFF_APPLIES") (fun () ->
@@ -1397,17 +1397,18 @@ module Make (S : S) = struct
           Abbs_future_combinators.List_result.iter
             ~f:(S.Event.perform_unlock storage event)
             unlock_ids
-          >>= fun () -> Abb.Future.return (Ok (Some Event.Msg.Unlock_success))
+          >>= fun () -> publish_msg event Event.Msg.Unlock_success
       | Ok (Some match_list) ->
           Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"denied");
-          Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied (`Unlock match_list))))
+          publish_msg event (Event.Msg.Access_control_denied (`Unlock match_list))
       | Error `Error ->
           Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"denied");
-          Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied `Lookup_err)))
+          publish_msg event (Event.Msg.Access_control_denied `Lookup_err)
       | Error (`Invalid_query query) ->
           Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"denied");
-          Abb.Future.return
-            (Ok (Some (Event.Msg.Access_control_denied (`Terrateam_config_update_bad_query query))))
+          publish_msg
+            event
+            (Event.Msg.Access_control_denied (`Terrateam_config_update_bad_query query))
 
     let handle_branches_error event pull_request msg_fragment =
       match S.Event.T.event_type event with
@@ -1417,7 +1418,7 @@ module Make (S : S) = struct
                 "EVALUATOR : %s : %s_BRANCH_NOT_VALID_BRANCH"
                 (S.Event.T.request_id event)
                 msg_fragment);
-          Abb.Future.return (Ok None)
+          Abb.Future.return (Ok ())
       | Event.Event_type.Plan
       | Event.Event_type.Apply
       | Event.Event_type.Apply_autoapprove
@@ -1430,7 +1431,7 @@ module Make (S : S) = struct
                 "EVALUATOR : %s : %s_BRANCH_NOT_VALID_BRANCH_EXPLICIT"
                 (S.Event.T.request_id event)
                 msg_fragment);
-          Abb.Future.return (Ok (Some (Event.Msg.Dest_branch_no_match pull_request)))
+          publish_msg event (Event.Msg.Dest_branch_no_match pull_request)
 
     let fetch_pull_request event =
       Abbs_time_it.run (log_time event "FETCHING_PULL_REQUEST") (fun () ->
@@ -1568,34 +1569,31 @@ module Make (S : S) = struct
                       (Metrics.access_control_total
                          ~t:(Event.Op_class.to_string operation)
                          ~r:"denied");
-                    Abb.Future.return
-                      (Ok
-                         (Some
-                            (Event.Msg.Access_control_denied (`Terrateam_config_update match_list))))
+                    publish_msg
+                      event
+                      (Event.Msg.Access_control_denied (`Terrateam_config_update match_list))
                 | Error `Error ->
                     Prmths.Counter.inc_one
                       (Metrics.access_control_total
                          ~t:(Event.Op_class.to_string operation)
                          ~r:"denied");
-                    Abb.Future.return (Ok (Some (Event.Msg.Access_control_denied `Lookup_err)))
+                    publish_msg event (Event.Msg.Access_control_denied `Lookup_err)
                 | Error (`Invalid_query query) ->
                     Prmths.Counter.inc_one
                       (Metrics.access_control_total
                          ~t:(Event.Op_class.to_string operation)
                          ~r:"denied");
-                    Abb.Future.return
-                      (Ok
-                         (Some
-                            (Event.Msg.Access_control_denied
-                               (`Terrateam_config_update_bad_query query)))))
+                    publish_msg
+                      event
+                      (Event.Msg.Access_control_denied (`Terrateam_config_update_bad_query query)))
             | Terrat_pull_request.State.Closed ->
                 Logs.info (fun m ->
                     m "EVALUATOR : %s : NOOP : PR_CLOSED" (S.Event.T.request_id event));
-                Abb.Future.return (Ok None))
+                Abb.Future.return (Ok ()))
           else (
             Logs.info (fun m ->
                 m "EVALUATOR : %s : NOOP : REPO_CONFIG_DISABLED" (S.Event.T.request_id event));
-            Abb.Future.return (Ok None))
+            Abb.Future.return (Ok ()))
       | Error `No_matching_dest_branch -> handle_branches_error event pull_request "DEST"
       | Error `No_matching_source_branch -> handle_branches_error event pull_request "SOURCE"
 
@@ -1618,7 +1616,7 @@ module Make (S : S) = struct
       in
       Abb.Future.return
         (Terrat_change_match.synthesize_dir_config ~index ~file_list:repo_tree repo_config)
-      >>= fun dirs -> Abb.Future.return (Ok (Some (Event.Msg.Repo_config (repo_config, dirs))))
+      >>= fun dirs -> publish_msg event (Event.Msg.Repo_config (repo_config, dirs))
 
     let perform_index storage event =
       let module Rc = Terrat_repo_config.Version_1 in
@@ -1634,8 +1632,8 @@ module Make (S : S) = struct
       Pgsql_pool.with_conn storage ~f:(fun db ->
           create_and_store_index_work_manifest db event repo_config repo_tree pull_request)
       >>= function
-      | Ok _ -> Abb.Future.return (Ok None)
-      | Error (`Tag_query_err err) -> Abb.Future.return (Ok (Some (Event.Msg.Tag_query_err err)))
+      | Ok _ -> Abb.Future.return (Ok ())
+      | Error (`Tag_query_err err) -> publish_msg event (Event.Msg.Tag_query_err err)
       | Error ((#Pgsql_pool.err | #Pgsql_io.err | `Bad_glob _ | `Error) as err) ->
           Abb.Future.return (Error err)
 
@@ -1652,19 +1650,15 @@ module Make (S : S) = struct
           | Event.Op_class.Repo_config -> perform_repo_config storage event
           | Event.Op_class.Index -> perform_index storage event)
       | Ok `Disabled -> Abb.Future.return (Error `Account_disabled)
-      | Error `Error -> Abb.Future.return (Ok (Some Event.Msg.Unexpected_temporary_err))
+      | Error `Error -> publish_msg event Event.Msg.Unexpected_temporary_err
       | Error #Pgsql_pool.err as err -> Abb.Future.return err
-
-    let publish_msg event msg =
-      Abbs_time_it.run (log_time event "PUBLISH_MSG") (fun () -> S.Event.publish_msg event msg)
 
     let eval storage event =
       Abb.Future.await_bind
         (function
           | `Det v -> (
               match v with
-              | Ok (Some msg) -> publish_msg event msg
-              | Ok None -> Abb.Future.return ()
+              | Ok () -> Abb.Future.return ()
               | Error `Account_disabled ->
                   Prmths.Counter.inc_one Metrics.op_on_account_disabled_total;
                   Logs.debug (fun m ->
