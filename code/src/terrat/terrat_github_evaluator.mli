@@ -4,29 +4,31 @@ module S : sig
       type t = {
         access_token : string;
         config : Terrat_config.t;
-        installation_id : int;
-        pull_number : int;
-        repo_id : int;
         default_branch : string;
-        owner : string;
-        repo : string;
-        request_id : string;
         event_type : Terrat_evaluator.Event.Event_type.t;
+        installation_id : int;
+        owner : string;
+        pull_number : int;
+        repo : string;
+        repo_id : int;
+        request_id : string;
         tag_query : Terrat_tag_query.t;
         user : string;
+        work_manifest_id : Uuidm.t option;
       }
 
       val make :
+        ?work_manifest_id:Uuidm.t ->
         access_token:string ->
         config:Terrat_config.t ->
-        installation_id:int ->
-        pull_number:int ->
-        repo_id:int ->
         default_branch:string ->
-        owner:string ->
-        repo:string ->
-        request_id:string ->
         event_type:Terrat_evaluator.Event.Event_type.t ->
+        installation_id:int ->
+        owner:string ->
+        pull_number:int ->
+        repo:string ->
+        repo_id:int ->
+        request_id:string ->
         tag_query:Terrat_tag_query.t ->
         user:string ->
         unit ->

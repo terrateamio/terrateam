@@ -102,6 +102,7 @@ module type S = sig
       val tag_query : t -> Terrat_tag_query.t
       val default_branch : t -> string
       val user : t -> string
+      val work_manifest_id : t -> Uuidm.t option
     end
 
     module Pull_request : sig
@@ -148,20 +149,35 @@ module type S = sig
       Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list ->
       (unit, [> `Error ]) result Abb.Future.t
 
+    val fetch_work_manifest :
+      request_id:string ->
+      Pgsql_io.t ->
+      Uuidm.t ->
+      string ->
+      (unit Terrat_work_manifest.Existing_lite.t, [> `Error ]) result Abb.Future.t
+
+    val update_pull_request_work_manifest :
+      Pgsql_io.t ->
+      T.t ->
+      Terrat_repo_config.Version_1.t ->
+      Terrat_change_match.t list ->
+      Pull_request.t Terrat_work_manifest.Existing.t ->
+      (Pull_request.t Terrat_work_manifest.Existing.t, [> `Error ]) result Abb.Future.t
+
     val store_pull_request_work_manifest :
       Pgsql_io.t ->
       T.t ->
       Terrat_repo_config.Version_1.t ->
       Terrat_change_match.t list ->
       Pull_request.t Terrat_work_manifest.New.t ->
-      (Pull_request.t Terrat_work_manifest.Existing_lite.t, [> `Error ]) result Abb.Future.t
+      (Pull_request.t Terrat_work_manifest.Existing.t, [> `Error ]) result Abb.Future.t
 
     val store_index_work_manifest :
       Pgsql_io.t ->
       T.t ->
       Terrat_change_match.t list ->
       Index.t Terrat_work_manifest.New.t ->
-      (Index.t Terrat_work_manifest.Existing_lite.t, [> `Error ]) result Abb.Future.t
+      (Index.t Terrat_work_manifest.Existing.t, [> `Error ]) result Abb.Future.t
 
     val store_pull_request :
       Pgsql_io.t -> T.t -> Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
@@ -190,9 +206,6 @@ module type S = sig
     val fetch_pull_request : T.t -> (Pull_request.t, [> `Error ]) result Abb.Future.t
     val fetch_tree : T.t -> Pull_request.t -> (string list, [> `Error ]) result Abb.Future.t
     val fetch_base_tree : T.t -> Pull_request.t -> (string list, [> `Error ]) result Abb.Future.t
-
-    val query_code_index :
-      sha:string -> T.t -> (Terrat_code_idx.t option, [> `Error ]) result Abb.Future.t
 
     val check_apply_requirements :
       T.t ->
@@ -257,7 +270,7 @@ module type S = sig
 
       val tree : t -> string list
       val repo_config : t -> Terrat_repo_config.Version_1.t
-      val index : t -> Terrat_change_match.Index.t
+      val index : t -> Terrat_change_match.Index.t option
     end
 
     val query_missing_scheduled_runs :
@@ -299,6 +312,30 @@ module type S = sig
 
       val work_manifest_state : t -> Terrat_work_manifest.State.t
       val work_manifest_run_type : t -> Terrat_work_manifest.Run_type.t
+      val work_manifest_run_kind : t -> string
+
+      val fetch_drift_repo :
+        Terrat_storage.t -> t -> (Drift.Repo.t, [> `Error ]) result Abb.Future.t
+
+      val update_drift_work_manifest :
+        Terrat_storage.t ->
+        t ->
+        Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list ->
+        (t, [> `Error ]) result Abb.Future.t
+
+      val reify_event :
+        string ->
+        Terrat_config.t ->
+        Terrat_storage.t ->
+        t ->
+        (Event.T.t, [> `Error ]) result Abb.Future.t
+
+      val make_index_work_manifest :
+        t -> Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list -> t
+
+      val make_completed_work_manifest : t -> t
+      val merge_work_manifest : t -> Event.Pull_request.t Terrat_work_manifest.Existing.t -> t
+      val is_work_manifest_runnable : t -> bool
 
       val to_response :
         t ->

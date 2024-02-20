@@ -244,6 +244,7 @@ module type S = sig
       val tag_query : t -> Terrat_tag_query.t
       val default_branch : t -> string
       val user : t -> string
+      val work_manifest_id : t -> Uuidm.t option
     end
 
     module Pull_request : sig
@@ -290,20 +291,35 @@ module type S = sig
       Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list ->
       (unit, [> `Error ]) result Abb.Future.t
 
+    val fetch_work_manifest :
+      request_id:string ->
+      Pgsql_io.t ->
+      Uuidm.t ->
+      string ->
+      (unit Terrat_work_manifest.Existing_lite.t, [> `Error ]) result Abb.Future.t
+
+    val update_pull_request_work_manifest :
+      Pgsql_io.t ->
+      T.t ->
+      Terrat_repo_config.Version_1.t ->
+      Terrat_change_match.t list ->
+      Pull_request.t Terrat_work_manifest.Existing.t ->
+      (Pull_request.t Terrat_work_manifest.Existing.t, [> `Error ]) result Abb.Future.t
+
     val store_pull_request_work_manifest :
       Pgsql_io.t ->
       T.t ->
       Terrat_repo_config.Version_1.t ->
       Terrat_change_match.t list ->
       Pull_request.t Terrat_work_manifest.New.t ->
-      (Pull_request.t Terrat_work_manifest.Existing_lite.t, [> `Error ]) result Abb.Future.t
+      (Pull_request.t Terrat_work_manifest.Existing.t, [> `Error ]) result Abb.Future.t
 
     val store_index_work_manifest :
       Pgsql_io.t ->
       T.t ->
       Terrat_change_match.t list ->
       Index.t Terrat_work_manifest.New.t ->
-      (Index.t Terrat_work_manifest.Existing_lite.t, [> `Error ]) result Abb.Future.t
+      (Index.t Terrat_work_manifest.Existing.t, [> `Error ]) result Abb.Future.t
 
     val store_pull_request :
       Pgsql_io.t -> T.t -> Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
@@ -332,9 +348,6 @@ module type S = sig
     val fetch_pull_request : T.t -> (Pull_request.t, [> `Error ]) result Abb.Future.t
     val fetch_tree : T.t -> Pull_request.t -> (string list, [> `Error ]) result Abb.Future.t
     val fetch_base_tree : T.t -> Pull_request.t -> (string list, [> `Error ]) result Abb.Future.t
-
-    val query_code_index :
-      sha:string -> T.t -> (Terrat_code_idx.t option, [> `Error ]) result Abb.Future.t
 
     val check_apply_requirements :
       T.t ->
@@ -399,7 +412,7 @@ module type S = sig
 
       val tree : t -> string list
       val repo_config : t -> Terrat_repo_config.Version_1.t
-      val index : t -> Terrat_change_match.Index.t
+      val index : t -> Terrat_change_match.Index.t option
     end
 
     val query_missing_scheduled_runs :
@@ -441,6 +454,30 @@ module type S = sig
 
       val work_manifest_state : t -> Terrat_work_manifest.State.t
       val work_manifest_run_type : t -> Terrat_work_manifest.Run_type.t
+      val work_manifest_run_kind : t -> string
+
+      val fetch_drift_repo :
+        Terrat_storage.t -> t -> (Drift.Repo.t, [> `Error ]) result Abb.Future.t
+
+      val update_drift_work_manifest :
+        Terrat_storage.t ->
+        t ->
+        Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list ->
+        (t, [> `Error ]) result Abb.Future.t
+
+      val reify_event :
+        string ->
+        Terrat_config.t ->
+        Terrat_storage.t ->
+        t ->
+        (Event.T.t, [> `Error ]) result Abb.Future.t
+
+      val make_index_work_manifest :
+        t -> Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list -> t
+
+      val make_completed_work_manifest : t -> t
+      val merge_work_manifest : t -> Event.Pull_request.t Terrat_work_manifest.Existing.t -> t
+      val is_work_manifest_runnable : t -> bool
 
       val to_response :
         t ->
@@ -750,6 +787,18 @@ module Make (S : S) = struct
       Abbs_time_it.run (log_time event "STORE_PULL_REQUEST_WORK_MANIFEST") (fun () ->
           S.Event.store_pull_request_work_manifest db event repo_config all_matches work_manifest)
 
+    let update_pull_request_work_manifest db event repo_config all_matches work_manifest =
+      Abbs_time_it.run (log_time event "UPDATE_PULL_REQUEST_WORK_MANIFEST") (fun () ->
+          S.Event.update_pull_request_work_manifest db event repo_config all_matches work_manifest)
+
+    let fetch_work_manifest event db work_manifest_id sha =
+      Abbs_time_it.run (log_time event "FETCH_WORK_MANIFEST") (fun () ->
+          S.Event.fetch_work_manifest
+            ~request_id:(S.Event.T.request_id event)
+            db
+            work_manifest_id
+            sha)
+
     let create_and_store_work_manifest
         db
         repo_config
@@ -761,16 +810,27 @@ module Make (S : S) = struct
         run_type =
       let open Abbs_future_combinators.Infix_result_monad in
       let module Run_type = Terrat_work_manifest.Run_type in
+      let module Wm = Terrat_work_manifest in
       match dirspaceflows_of_changes repo_config matches with
-      | Ok dirspaceflows ->
+      | Ok dirspaceflows -> (
+          let changes =
+            let module Dsf = Terrat_change.Dirspaceflow in
+            CCList.map
+              (fun ({ Dsf.workflow; _ } as dsf) ->
+                {
+                  dsf with
+                  Dsf.workflow = CCOption.map (fun Dsf.Workflow.{ idx; _ } -> idx) workflow;
+                })
+              dirspaceflows
+          in
           let dirspaces =
             CCList.map (fun Terrat_change_match.{ dirspace; _ } -> dirspace) matches
           in
           let work_manifest =
-            Terrat_work_manifest.
+            Wm.
               {
                 base_hash = S.Event.Pull_request.base_hash pull_request;
-                changes = dirspaceflows;
+                changes;
                 completed_at = None;
                 created_at = ();
                 denied_dirspaces;
@@ -787,15 +847,34 @@ module Make (S : S) = struct
           Metrics.Dirspaces_per_work_manifest_histogram.observe
             (Metrics.dirspaces_per_work_manifest (Run_type.to_string run_type))
             (CCFloat.of_int (CCList.length dirspaces));
-          store_pull_request_work_manifest db event repo_config all_matches work_manifest
-          >>= fun work_manifest ->
-          Prmths.Counter.inc_one (Metrics.stored_work_manifests_total (Run_type.to_string run_type));
-          Logs.info (fun m ->
-              m
-                "EVALUATOR : %s : STORED_PULL_REQUEST_WORK_MANIFEST : %s"
-                (S.Event.T.request_id event)
-                (Uuidm.to_string work_manifest.Terrat_work_manifest.id));
-          Abb.Future.return (Ok (Some (`Pull_request_work_manifest work_manifest)))
+          match S.Event.T.work_manifest_id event with
+          | Some work_manifest_id ->
+              fetch_work_manifest event db work_manifest_id (S.Event.Pull_request.hash pull_request)
+              >>= fun { Wm.id; created_at; state; run_id; _ } ->
+              update_pull_request_work_manifest
+                db
+                event
+                repo_config
+                all_matches
+                { work_manifest with Wm.id; created_at; state; run_id }
+              >>= fun work_manifest ->
+              Logs.info (fun m ->
+                  m
+                    "EVALUATOR : %s : UPDATED_PULL_REQUEST_WORK_MANIFEST : %s"
+                    (S.Event.T.request_id event)
+                    (Uuidm.to_string work_manifest.Terrat_work_manifest.id));
+              Abb.Future.return (Ok (Some (`Pull_request_work_manifest work_manifest)))
+          | None ->
+              store_pull_request_work_manifest db event repo_config all_matches work_manifest
+              >>= fun work_manifest ->
+              Prmths.Counter.inc_one
+                (Metrics.stored_work_manifests_total (Run_type.to_string run_type));
+              Logs.info (fun m ->
+                  m
+                    "EVALUATOR : %s : STORED_PULL_REQUEST_WORK_MANIFEST : %s"
+                    (S.Event.T.request_id event)
+                    (Uuidm.to_string work_manifest.Terrat_work_manifest.id));
+              Abb.Future.return (Ok (Some (`Pull_request_work_manifest work_manifest))))
       | Error (#Terrat_tag_query_ast.err as err) -> Abb.Future.return (Error err)
 
     let test_can_perform_operation db event dirspaces operation =
@@ -1158,6 +1237,13 @@ module Make (S : S) = struct
                  doesn't look like dir1 changes. *)
               query_pull_request_out_of_diff_applies db event pull_request
               >>= fun out_of_change_applies ->
+              let index' =
+                let module V1 = Terrat_repo_config.Version_1 in
+                match repo_config with
+                | { V1.indexer = Some { V1.Indexer.enabled = true; _ }; _ } ->
+                    CCOption.get_or ~default:Terrat_change_match.Index.empty index
+                | _ -> Terrat_change_match.Index.empty
+              in
               Abb.Future.return
                 (compute_matches
                    ~repo_config
@@ -1165,109 +1251,129 @@ module Make (S : S) = struct
                    ~out_of_change_applies
                    ~diff:(S.Event.Pull_request.diff pull_request)
                    ~repo_tree
-                   ~index
+                   ~index:index'
                    ())
               >>= fun (tag_query_matches, all_matches) ->
-              Logs.info (fun m ->
-                  m
-                    "EVALUATOR : %s : NUM_MATCHES : %d"
-                    (S.Event.T.request_id event)
-                    (CCList.length all_matches));
-              let dirs =
-                all_matches
-                |> CCList.map
-                     (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; _ } ->
-                       dir)
-                |> Event.Dir_set.of_list
-              in
-              let existing_dirs =
-                Event.Dir_set.filter
-                  (function
-                    | "." ->
-                        (* The root directory is always there, because...it
-                           has to be. *)
-                        true
-                    | d ->
-                        let d = d ^ "/" in
-                        CCList.exists (CCString.prefix ~pre:d) repo_tree)
-                  dirs
-              in
-              let missing_dirs = Event.Dir_set.diff dirs existing_dirs in
-              Logs.info (fun m ->
-                  m
-                    "EVALUATOR : %s : MISSING_DIRS : %d"
-                    (S.Event.T.request_id event)
-                    (Event.Dir_set.cardinal missing_dirs));
-              let all_match_dirspaces =
-                all_matches
-                |> CCList.filter
-                     (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; _ } ->
-                       Event.Dir_set.mem dir existing_dirs)
-              in
-              let tag_query_matches =
-                tag_query_matches
-                |> CCList.filter
-                     (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; _ } ->
-                       Event.Dir_set.mem dir existing_dirs)
-              in
-              Abb.Future.return (dirspaceflows_of_changes repo_config all_match_dirspaces)
-              >>= fun all_match_dirspaceflows ->
-              Logs.info (fun m ->
-                  m
-                    "EVALUATOR : %s : NUM_DIRSPACEFLOWS : %d"
-                    (S.Event.T.request_id event)
-                    (CCList.length all_match_dirspaceflows));
-              store_dirspaceflows db event pull_request all_match_dirspaceflows
-              >>= fun () ->
-              Prmths.Counter.inc_one
-                (Metrics.operations_total
-                   (Terrat_work_manifest.Run_type.to_string
-                      (Event.Op_class.run_type_of_tf operation)));
-              match operation with
-              | `Plan tf_mode ->
-                  Abbs_time_it.run (log_time event "PROCESS_PLAN") (fun () ->
-                      process_plan
-                        access_control
-                        db
-                        event
-                        tag_query_matches
-                        all_matches
-                        pull_request
-                        repo_config
-                        tf_mode)
-              | `Apply tf_mode ->
-                  Abbs_time_it.run (log_time event "PROCESS_APPLY") (fun () ->
-                      process_apply
-                        access_control
-                        db
-                        event
-                        tag_query_matches
-                        all_match_dirspaceflows
-                        pull_request
-                        repo_config
-                        (`Apply tf_mode))
-              | `Apply_autoapprove ->
-                  Abbs_time_it.run (log_time event "PROCESS_APPLY_AUTOAPPROVE") (fun () ->
-                      process_apply
-                        access_control
-                        db
-                        event
-                        tag_query_matches
-                        all_match_dirspaceflows
-                        pull_request
-                        repo_config
-                        `Apply_autoapprove)
-              | `Apply_force ->
-                  Abbs_time_it.run (log_time event "PROCESS_APPLY_FORCE") (fun () ->
-                      process_apply
-                        access_control
-                        db
-                        event
-                        tag_query_matches
-                        all_match_dirspaceflows
-                        pull_request
-                        repo_config
-                        `Apply_force)))
+              let module V1 = Terrat_repo_config.Version_1 in
+              match (repo_config, index, all_matches) with
+              | { V1.indexer = Some { V1.Indexer.enabled = true; _ }; _ }, None, _ :: _ ->
+                  (* Got here because there are computed matches, but we require
+                     an index but there is no index.  So we need to pause
+                     execution, compute index, then restart.  To do this, we'll
+                     create a work manifest *)
+                  create_and_store_work_manifest
+                    db
+                    repo_config
+                    event
+                    pull_request
+                    []
+                    []
+                    []
+                    (Event.Op_class.run_type_of_tf operation)
+              | _, _, _ -> (
+                  Logs.info (fun m ->
+                      m
+                        "EVALUATOR : %s : NUM_MATCHES : %d"
+                        (S.Event.T.request_id event)
+                        (CCList.length all_matches));
+                  let dirs =
+                    all_matches
+                    |> CCList.map
+                         (fun
+                           Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; _ }
+                         -> dir)
+                    |> Event.Dir_set.of_list
+                  in
+                  let existing_dirs =
+                    Event.Dir_set.filter
+                      (function
+                        | "." ->
+                            (* The root directory is always there, because...it
+                               has to be. *)
+                            true
+                        | d ->
+                            let d = d ^ "/" in
+                            CCList.exists (CCString.prefix ~pre:d) repo_tree)
+                      dirs
+                  in
+                  let missing_dirs = Event.Dir_set.diff dirs existing_dirs in
+                  Logs.info (fun m ->
+                      m
+                        "EVALUATOR : %s : MISSING_DIRS : %d"
+                        (S.Event.T.request_id event)
+                        (Event.Dir_set.cardinal missing_dirs));
+                  let all_match_dirspaces =
+                    all_matches
+                    |> CCList.filter
+                         (fun
+                           Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; _ }
+                         -> Event.Dir_set.mem dir existing_dirs)
+                  in
+                  let tag_query_matches =
+                    tag_query_matches
+                    |> CCList.filter
+                         (fun
+                           Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; _ }
+                         -> Event.Dir_set.mem dir existing_dirs)
+                  in
+                  Abb.Future.return (dirspaceflows_of_changes repo_config all_match_dirspaces)
+                  >>= fun all_match_dirspaceflows ->
+                  Logs.info (fun m ->
+                      m
+                        "EVALUATOR : %s : NUM_DIRSPACEFLOWS : %d"
+                        (S.Event.T.request_id event)
+                        (CCList.length all_match_dirspaceflows));
+                  store_dirspaceflows db event pull_request all_match_dirspaceflows
+                  >>= fun () ->
+                  Prmths.Counter.inc_one
+                    (Metrics.operations_total
+                       (Terrat_work_manifest.Run_type.to_string
+                          (Event.Op_class.run_type_of_tf operation)));
+                  match operation with
+                  | `Plan tf_mode ->
+                      Abbs_time_it.run (log_time event "PROCESS_PLAN") (fun () ->
+                          process_plan
+                            access_control
+                            db
+                            event
+                            tag_query_matches
+                            all_matches
+                            pull_request
+                            repo_config
+                            tf_mode)
+                  | `Apply tf_mode ->
+                      Abbs_time_it.run (log_time event "PROCESS_APPLY") (fun () ->
+                          process_apply
+                            access_control
+                            db
+                            event
+                            tag_query_matches
+                            all_match_dirspaceflows
+                            pull_request
+                            repo_config
+                            (`Apply tf_mode))
+                  | `Apply_autoapprove ->
+                      Abbs_time_it.run (log_time event "PROCESS_APPLY_AUTOAPPROVE") (fun () ->
+                          process_apply
+                            access_control
+                            db
+                            event
+                            tag_query_matches
+                            all_match_dirspaceflows
+                            pull_request
+                            repo_config
+                            `Apply_autoapprove)
+                  | `Apply_force ->
+                      Abbs_time_it.run (log_time event "PROCESS_APPLY_FORCE") (fun () ->
+                          process_apply
+                            access_control
+                            db
+                            event
+                            tag_query_matches
+                            all_match_dirspaceflows
+                            pull_request
+                            repo_config
+                            `Apply_force))))
 
     (* Turn a glob into lua pattern for checking.  We escape all lua pattern
        special characters "().%+-?[^$", turn * into ".*", and wrap the whole thing
@@ -1469,11 +1575,21 @@ module Make (S : S) = struct
       match dirspaceflows_of_changes repo_config matches with
       | Ok dirspaceflows ->
           let index = S.Event.Index.of_pull_request pull_request in
+          let changes =
+            let module Dsf = Terrat_change.Dirspaceflow in
+            CCList.map
+              (fun ({ Dsf.workflow; _ } as dsf) ->
+                {
+                  dsf with
+                  Dsf.workflow = CCOption.map (fun Dsf.Workflow.{ idx; _ } -> idx) workflow;
+                })
+              dirspaceflows
+          in
           let work_manifest =
             Terrat_work_manifest.
               {
                 base_hash = S.Event.Pull_request.base_hash pull_request;
-                changes = dirspaceflows;
+                changes;
                 completed_at = None;
                 created_at = ();
                 denied_dirspaces = [];
@@ -1516,11 +1632,6 @@ module Make (S : S) = struct
         <*> query_index storage event pull_request)
       >>= fun (repo_config, repo_default_config, repo_tree, index) ->
       match repo_default_config with
-      (* | Ok *)
-      (*     Terrat_repo_config.Version_1. *)
-      (*       { enabled = true; indexer = Some Indexer.{ enabled = true; _ }; _ } *)
-      (*   when CCOption.is_none index -> *)
-      (*     perform_index_update storage event repo_config repo_tree pull_request *)
       | Ok repo_default_config ->
           if repo_default_config.Terrat_repo_config.Version_1.enabled then (
             let access_control = Access_control_engine.make event repo_default_config in
@@ -1536,13 +1647,6 @@ module Make (S : S) = struct
                       (Metrics.access_control_total
                          ~t:(Event.Op_class.to_string operation)
                          ~r:"allowed");
-                    let index =
-                      let module V1 = Terrat_repo_config.Version_1 in
-                      match repo_config with
-                      | { V1.indexer = Some { V1.Indexer.enabled = true; _ }; _ } ->
-                          CCOption.get_or ~default:Terrat_change_match.Index.empty index
-                      | _ -> Terrat_change_match.Index.empty
-                    in
                     exec_event
                       access_control
                       storage
@@ -1641,66 +1745,56 @@ module Make (S : S) = struct
       | Error `Error -> publish_msg event Event.Msg.Unexpected_temporary_err
       | Error #Pgsql_pool.err as err -> Abb.Future.return err
 
+    let log_eval_err event = function
+      | `Account_disabled ->
+          Prmths.Counter.inc_one Metrics.op_on_account_disabled_total;
+          Logs.debug (fun m -> m "EVALUATOR : %s : ACCOUNT_DISABLED" (S.Event.T.request_id event));
+          S.Event.publish_msg event Event.Msg.Pull_request_not_mergeable
+      | `Merge_conflict ->
+          Prmths.Counter.inc_one Metrics.op_on_pull_request_not_mergeable;
+          Logs.debug (fun m -> m "EVALUATOR : %s : MERGE_CONFLICT" (S.Event.T.request_id event));
+          S.Event.publish_msg event Event.Msg.Pull_request_not_mergeable
+      | `Bad_glob s ->
+          Logs.err (fun m -> m "EVALUATOR : %s : BAD_GLOB : %s" (S.Event.T.request_id event) s);
+          S.Event.publish_msg event (Event.Msg.Bad_glob s)
+      | `Repo_config_parse_err err ->
+          Logs.info (fun m ->
+              m "EVALUATOR : %s : REPO_CONFIG_PARSE_ERR : %s" (S.Event.T.request_id event) err);
+          S.Event.publish_msg event (Event.Msg.Repo_config_parse_failure err)
+      | `Repo_config_err err ->
+          Logs.info (fun m ->
+              m "EVALUATOR : %s : REPO_CONFIG_ERR : %s" (S.Event.T.request_id event) err);
+          S.Event.publish_msg event (Event.Msg.Repo_config_failure err)
+      | #Terrat_tag_query_ast.err as err ->
+          Logs.err (fun m ->
+              m
+                "EVALUATOR : %s : TAG_QUERY_ERR : %a"
+                (S.Event.T.request_id event)
+                Terrat_tag_query_ast.pp_err
+                err);
+          S.Event.publish_msg event (Event.Msg.Tag_query_err err)
+      | `Error ->
+          Prmths.Counter.inc_one Metrics.error_errors_total;
+          Logs.err (fun m -> m "EVALUATOR : %s : ERROR : ERROR" (S.Event.T.request_id event));
+          Abb.Future.return ()
+      | #Pgsql_pool.err as err ->
+          Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
+          Logs.err (fun m ->
+              m "EVALUATOR : %s : ERROR : %s" (S.Event.T.request_id event) (Pgsql_pool.show_err err));
+          Abb.Future.return ()
+      | #Pgsql_io.err as err ->
+          Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+          Logs.err (fun m ->
+              m "EVALUATOR : %s : ERROR : %s" (S.Event.T.request_id event) (Pgsql_io.show_err err));
+          Abb.Future.return ()
+
     let eval storage event =
       Abb.Future.await_bind
         (function
           | `Det v -> (
               match v with
               | Ok _ -> Abb.Future.return ()
-              | Error `Account_disabled ->
-                  Prmths.Counter.inc_one Metrics.op_on_account_disabled_total;
-                  Logs.debug (fun m ->
-                      m "EVALUATOR : %s : ACCOUNT_DISABLED" (S.Event.T.request_id event));
-                  S.Event.publish_msg event Event.Msg.Pull_request_not_mergeable
-              | Error `Merge_conflict ->
-                  Prmths.Counter.inc_one Metrics.op_on_pull_request_not_mergeable;
-                  Logs.debug (fun m ->
-                      m "EVALUATOR : %s : MERGE_CONFLICT" (S.Event.T.request_id event));
-                  S.Event.publish_msg event Event.Msg.Pull_request_not_mergeable
-              | Error (`Bad_glob s) ->
-                  Logs.err (fun m ->
-                      m "EVALUATOR : %s : BAD_GLOB : %s" (S.Event.T.request_id event) s);
-                  S.Event.publish_msg event (Event.Msg.Bad_glob s)
-              | Error (`Repo_config_parse_err err) ->
-                  Logs.info (fun m ->
-                      m
-                        "EVALUATOR : %s : REPO_CONFIG_PARSE_ERR : %s"
-                        (S.Event.T.request_id event)
-                        err);
-                  S.Event.publish_msg event (Event.Msg.Repo_config_parse_failure err)
-              | Error (`Repo_config_err err) ->
-                  Logs.info (fun m ->
-                      m "EVALUATOR : %s : REPO_CONFIG_ERR : %s" (S.Event.T.request_id event) err);
-                  S.Event.publish_msg event (Event.Msg.Repo_config_failure err)
-              | Error (#Terrat_tag_query_ast.err as err) ->
-                  Logs.err (fun m ->
-                      m
-                        "EVALUATOR : %s : TAG_QUERY_ERR : %a"
-                        (S.Event.T.request_id event)
-                        Terrat_tag_query_ast.pp_err
-                        err);
-                  S.Event.publish_msg event (Event.Msg.Tag_query_err err)
-              | Error `Error ->
-                  Prmths.Counter.inc_one Metrics.error_errors_total;
-                  Logs.err (fun m ->
-                      m "EVALUATOR : %s : ERROR : ERROR" (S.Event.T.request_id event));
-                  Abb.Future.return ()
-              | Error (#Pgsql_pool.err as err) ->
-                  Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
-                  Logs.err (fun m ->
-                      m
-                        "EVALUATOR : %s : ERROR : %s"
-                        (S.Event.T.request_id event)
-                        (Pgsql_pool.show_err err));
-                  Abb.Future.return ()
-              | Error (#Pgsql_io.err as err) ->
-                  Prmths.Counter.inc_one Metrics.pgsql_errors_total;
-                  Logs.err (fun m ->
-                      m
-                        "EVALUATOR : %s : ERROR : %s"
-                        (S.Event.T.request_id event)
-                        (Pgsql_io.show_err err));
-                  Abb.Future.return ())
+              | Error err -> log_eval_err event err)
           | `Aborted ->
               Prmths.Counter.inc_one Metrics.aborted_errors_total;
               Logs.err (fun m -> m "EVALUATOR : %s : ABORTED" (S.Event.T.request_id event));
@@ -1755,29 +1849,34 @@ module Make (S : S) = struct
       let open Abbs_future_combinators.Infix_result_monad in
       fetch_repo config db schedule
       >>= fun repo ->
-      let diff =
-        CCList.map (fun filename -> Terrat_change.Diff.Change { filename }) (S.Drift.Repo.tree repo)
-      in
-      match
-        compute_matches
-          ~repo_config:(S.Drift.Repo.repo_config repo)
-          ~tag_query:Terrat_tag_query.any
-          ~out_of_change_applies:[]
-          ~diff
-          ~repo_tree:(S.Drift.Repo.tree repo)
-          ~index:(S.Drift.Repo.index repo)
-          ()
-      with
-      | Ok (tag_query_matches, _) -> (
-          match dirspaceflows_of_changes (S.Drift.Repo.repo_config repo) tag_query_matches with
-          | Ok dirspaceflows -> f config db schedule repo dirspaceflows
-          | Error (#Terrat_tag_query_ast.err as err) ->
-              Logs.err (fun m ->
-                  m "EVALUATOR : DRIFT : TAG_QUERY_ERR : %a" Terrat_tag_query_ast.pp_err err);
+      match S.Drift.Repo.index repo with
+      | Some index -> (
+          let diff =
+            CCList.map
+              (fun filename -> Terrat_change.Diff.Change { filename })
+              (S.Drift.Repo.tree repo)
+          in
+          match
+            compute_matches
+              ~repo_config:(S.Drift.Repo.repo_config repo)
+              ~tag_query:Terrat_tag_query.any
+              ~out_of_change_applies:[]
+              ~diff
+              ~repo_tree:(S.Drift.Repo.tree repo)
+              ~index
+              ()
+          with
+          | Ok (tag_query_matches, _) -> (
+              match dirspaceflows_of_changes (S.Drift.Repo.repo_config repo) tag_query_matches with
+              | Ok dirspaceflows -> f config db schedule repo dirspaceflows
+              | Error (#Terrat_tag_query_ast.err as err) ->
+                  Logs.err (fun m ->
+                      m "EVALUATOR : DRIFT : TAG_QUERY_ERR : %a" Terrat_tag_query_ast.pp_err err);
+                  Abb.Future.return (Error `Error))
+          | Error (`Bad_glob err) ->
+              Logs.info (fun m -> m "EVALUATOR : DRIFT : BAD_GLOB : %s" err);
               Abb.Future.return (Error `Error))
-      | Error (`Bad_glob err) ->
-          Logs.info (fun m -> m "EVALUATOR : DRIFT : BAD_GLOB : %s" err);
-          Abb.Future.return (Error `Error)
+      | None -> f config db schedule repo []
 
     let run_schedule config storage schedule =
       Abbs_future_combinators.ignore
@@ -1873,6 +1972,140 @@ module Make (S : S) = struct
         ]
       [@@deriving show]
 
+      let fetch_repo_config = Event.fetch_repo_config
+      let fetch_tree = Event.fetch_tree
+      let query_index = Event.query_index
+
+      let create_index_work_manifest repo_config repo_tree t =
+        match
+          Terrat_change_match.synthesize_dir_config
+            ~index:Terrat_change_match.Index.empty
+            ~file_list:repo_tree
+            repo_config
+        with
+        | Ok dirs -> (
+            let matches =
+              Terrat_change_match.match_diff_list
+                dirs
+                (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) repo_tree)
+            in
+            match dirspaceflows_of_changes repo_config matches with
+            | Ok dirspaceflows ->
+                Ok (Some (S.Work_manifest.Initiate.make_index_work_manifest t dirspaceflows))
+            | Error #Terrat_tag_query_ast.err -> failwith "nyi1")
+        | Error _ -> failwith "nyi2"
+
+      let update_drift request_id storage t =
+        let open Abb.Future.Infix_monad in
+        S.Work_manifest.Initiate.fetch_drift_repo storage t
+        >>= function
+        | Ok repo -> (
+            let module V1 = Terrat_repo_config.Version_1 in
+            match (S.Drift.Repo.repo_config repo, S.Drift.Repo.index repo) with
+            | { V1.indexer = Some { V1.Indexer.enabled = true; _ }; _ }, None ->
+                Logs.info (fun m ->
+                    m "EVALUATOR : %s : DRIFT_CHECK_INDEX : MAKE_INDEX_WORK_MANIFEST" request_id);
+                Abb.Future.return
+                  (create_index_work_manifest
+                     (S.Drift.Repo.repo_config repo)
+                     (S.Drift.Repo.tree repo)
+                     t)
+            | _, Some index -> (
+                Logs.info (fun m ->
+                    m "EVALUATOR : %s : DRIFT_CHECK_INDEX : COMPUTING_MATCHES" request_id);
+                let diff =
+                  CCList.map
+                    (fun filename -> Terrat_change.Diff.Change { filename })
+                    (S.Drift.Repo.tree repo)
+                in
+                match
+                  compute_matches
+                    ~repo_config:(S.Drift.Repo.repo_config repo)
+                    ~tag_query:Terrat_tag_query.any
+                    ~out_of_change_applies:[]
+                    ~diff
+                    ~repo_tree:(S.Drift.Repo.tree repo)
+                    ~index
+                    ()
+                with
+                | Ok (tag_query_matches, _) -> (
+                    match
+                      dirspaceflows_of_changes (S.Drift.Repo.repo_config repo) tag_query_matches
+                    with
+                    | Ok dirspaceflows ->
+                        let open Abbs_future_combinators.Infix_result_monad in
+                        Logs.info (fun m ->
+                            m
+                              "EVALUATOR : %s : DRIFT_CHECK_INDEX : RUN_COMPUTED_WORK_MANIFEST"
+                              request_id);
+                        S.Work_manifest.Initiate.update_drift_work_manifest storage t dirspaceflows
+                        >>= fun t -> Abb.Future.return (Ok (Some t))
+                    | Error (#Terrat_tag_query_ast.err as err) ->
+                        Logs.err (fun m ->
+                            m
+                              "EVALUATOR : DRIFT : TAG_QUERY_ERR : %a"
+                              Terrat_tag_query_ast.pp_err
+                              err);
+                        Abb.Future.return (Error `Error))
+                | Error (`Bad_glob err) ->
+                    Logs.info (fun m -> m "EVALUATOR : DRIFT : BAD_GLOB : %s" err);
+                    Abb.Future.return (Error `Error))
+            | _, None -> failwith "nyi10")
+        | Error _ -> failwith "nyi11"
+
+      let maybe_require_index_work_manifest config storage request_id t =
+        match S.Work_manifest.Initiate.work_manifest_run_kind t with
+        | "drift" when S.Work_manifest.Initiate.is_work_manifest_runnable t ->
+            Logs.info (fun m ->
+                m "EVALUATOR : %s : DRIFT_CHECK_INDEX : RUN_WORK_MANIFEST" request_id);
+            Abb.Future.return (Ok (Some t))
+        | "drift" -> update_drift request_id storage t
+        | _ -> (
+            let module V1 = Terrat_repo_config.Version_1 in
+            let open Abbs_future_combinators.Infix_result_monad in
+            S.Work_manifest.Initiate.reify_event request_id config storage t
+            >>= fun event ->
+            Event.fetch_pull_request event
+            >>= fun pull_request ->
+            Abbs_future_combinators.Infix_result_app.(
+              (fun repo_config repo_tree index -> (repo_config, repo_tree, index))
+              <$> fetch_repo_config event pull_request
+              <*> fetch_tree event pull_request
+              <*> query_index storage event pull_request)
+            >>= function
+            | { V1.indexer = Some { V1.Indexer.enabled = true; _ }; _ }, _, Some _
+            | { V1.indexer = None | Some { V1.Indexer.enabled = false; _ }; _ }, _, _
+              when S.Work_manifest.Initiate.is_work_manifest_runnable t ->
+                Logs.info (fun m -> m "EVALUATOR : %s : CHECK_INDEX : RUN_WORK_MANIFEST" request_id);
+                Abb.Future.return (Ok (Some t))
+            | ( ({ V1.indexer = Some { V1.Indexer.enabled = true; _ }; _ } as repo_config),
+                repo_tree,
+                None ) ->
+                Logs.info (fun m ->
+                    m "EVALUATOR : %s : CHECK_INDEX : MAKE_INDEX_WORK_MANIFEST" request_id);
+                Abb.Future.return (create_index_work_manifest repo_config repo_tree t)
+            | _, _, _ -> (
+                let open Abb.Future.Infix_monad in
+                Logs.info (fun m -> m "EVALUATOR : %s : CHECK_INDEX : EVAL" request_id);
+                Event.run' storage event
+                >>= function
+                | Ok (Some (`Pull_request_work_manifest wm)) ->
+                    Logs.info (fun m ->
+                        m "EVALUATOR : %s : CHECK_INDEX : MERGE_WORK_MANIFEST" request_id);
+                    Abb.Future.return
+                      (Ok (Some (S.Work_manifest.Initiate.merge_work_manifest t wm)))
+                | Ok (Some (`Index_work_manifest _)) ->
+                    Logs.err (fun m ->
+                        m "EVALUATOR : %s : CHECK_INDEX : INDEX_WORK_MANIFEST" request_id);
+                    assert false
+                | Ok None ->
+                    Logs.info (fun m ->
+                        m "EVALUATOR : %s : CHECK_INDEX : NO_WORK_MANIFEST" request_id);
+                    Abb.Future.return (Ok None)
+                | Error err ->
+                    let open Abb.Future.Infix_monad in
+                    Event.log_eval_err event err >>= fun () -> Abb.Future.return (Ok None)))
+
       let run config storage request_id work_manifest_id work_manifest_initiate =
         let module I = Terrat_api_components.Work_manifest_initiate in
         let open Abbs_future_combinators.Infix_result_monad in
@@ -1921,7 +2154,14 @@ module Make (S : S) = struct
                 | _ -> (
                     let module Run_type = Terrat_work_manifest.Run_type in
                     match S.Work_manifest.Initiate.work_manifest_run_type t with
-                    | Run_type.(Autoplan | Plan | Unsafe_apply) -> Abb.Future.return (Ok (Some t))
+                    | Run_type.(Autoplan | Plan | Unsafe_apply) -> (
+                        let open Abbs_future_combinators.Infix_result_monad in
+                        maybe_require_index_work_manifest config storage request_id t
+                        >>= function
+                        | Some t -> Abb.Future.return (Ok (Some t))
+                        | None ->
+                            Abb.Future.return
+                              (Ok (Some (S.Work_manifest.Initiate.make_completed_work_manifest t))))
                     | Run_type.(Autoapply | Apply) -> (
                         Logs.debug (fun m ->
                             m "EVALUATOR : %s : QUERY_DIRSPACES_OWNED_BY_OTHER_PR" request_id);
@@ -1974,6 +2214,15 @@ module Make (S : S) = struct
       | Error (#Initiate.err as err) ->
           Logs.err (fun m -> m "EVALUATOR : %s : ERROR : %s" request_id (Initiate.show_err err));
           Abb.Future.return None
+      | Error (`Repo_config_parse_err err) ->
+          Logs.info (fun m -> m "EVALUATOR : %s : REPO_CONFIG_PARSE_ERR : %s" request_id err);
+          failwith "nyi"
+      | Error (`Repo_config_err err) ->
+          Logs.info (fun m -> m "EVALUATOR : %s : REPO_CONFIG_ERR : %s" request_id err);
+          failwith "nyi"
+      | Error (`Tag_query_err err) ->
+          Logs.info (fun m -> m "EVALUATOR : %s : TAG_QUERY_ERR : %s" request_id err);
+          failwith "nyi"
 
     let plan_fetch = S.Work_manifest.Plans.fetch
     let plan_store = S.Work_manifest.Plans.store

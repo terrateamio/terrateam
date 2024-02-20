@@ -85,7 +85,7 @@ module New = struct
       unit,
       unit,
       unit,
-      Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list,
+      int Terrat_change.Dirspaceflow.t list,
       Terrat_access_control.R.Deny.t list,
       'src,
       Run_type.t )

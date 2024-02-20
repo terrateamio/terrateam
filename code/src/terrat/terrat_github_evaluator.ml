@@ -101,7 +101,7 @@ module Sql = struct
     Pgsql_io.Typed_sql.(
       sql
       // (* id *) Ret.uuid
-      // (* state *) Ret.text
+      // (* state *) Ret.ud' Terrat_work_manifest.State.of_string
       // (* created_at *) Ret.text
       /^ read "insert_github_work_manifest.sql"
       /% Var.text "base_sha"
@@ -170,21 +170,23 @@ let insert_work_manifest db repository_id work_manifest pull_number_opt run_kind
     run_kind
   >>= function
   | [] -> assert false
-  | (id, state, created_at) :: _ ->
-      Abbs_future_combinators.List_result.iter
-        ~f:(fun changes ->
-          Pgsql_io.Prepared_stmt.execute
-            db
-            (Sql.insert_work_manifest_dirspaceflow ())
-            (CCList.replicate (CCList.length changes) id)
-            (CCList.map (fun { Dsf.dirspace = { Ds.dir; _ }; _ } -> dir) changes)
-            (CCList.map (fun { Dsf.dirspace = { Ds.workspace; _ }; _ } -> workspace) changes)
-            (CCList.map
-               (fun { Dsf.workflow; _ } ->
-                 CCOption.map (fun Dsf.Workflow.{ idx; _ } -> idx) workflow)
-               changes))
-        (CCList.chunks 500 work_manifest.Wm.changes)
-      >>= fun () -> Abb.Future.return (Ok (id, state, created_at))
+  | (id, state, created_at) :: _ -> Abb.Future.return (Ok (id, state, created_at))
+
+let insert_work_manifest_changes db work_manifest =
+  let module Wm = Terrat_work_manifest in
+  let module Tc = Terrat_change in
+  let module Dsf = Tc.Dirspaceflow in
+  let module Ds = Tc.Dirspace in
+  Abbs_future_combinators.List_result.iter
+    ~f:(fun changes ->
+      Pgsql_io.Prepared_stmt.execute
+        db
+        (Sql.insert_work_manifest_dirspaceflow ())
+        (CCList.replicate (CCList.length changes) work_manifest.Wm.id)
+        (CCList.map (fun { Dsf.dirspace = { Ds.dir; _ }; _ } -> dir) changes)
+        (CCList.map (fun { Dsf.dirspace = { Ds.workspace; _ }; _ } -> workspace) changes)
+        (CCList.map (fun { Dsf.workflow; _ } -> workflow) changes))
+    (CCList.chunks 500 work_manifest.Wm.changes)
 
 let query_index request_id db installation_id hash =
   let open Abb.Future.Infix_monad in
@@ -264,7 +266,7 @@ module Dr = struct
       repo_config : Terrat_repo_config.Version_1.t;
       tree : string list;
       branch : Githubc2_components.Branch_with_protection.t;
-      index : Terrat_change_match.Index.t;
+      index : Terrat_change_match.Index.t option;
     }
 
     let repo_config t = t.repo_config
@@ -292,42 +294,43 @@ module Dr = struct
   let fetch_tree owner repo branch client = Terrat_github.get_tree ~owner ~repo ~sha:branch client
   let fetch_branch owner repo branch client = Terrat_github.fetch_branch ~owner ~repo ~branch client
 
+  let fetch_repo' config db installation_id owner repo_name =
+    let module S = Schedule in
+    let open Abbs_future_combinators.Infix_result_monad in
+    Terrat_github.get_installation_access_token config installation_id
+    >>= fun access_token ->
+    let client = Terrat_github.create config (`Token access_token) in
+    Terrat_github.fetch_repo ~owner ~repo:repo_name client
+    >>= fun repo ->
+    let module Rc = Terrat_repo_config.Version_1 in
+    let module R = Githubc2_components.Full_repository in
+    let default_branch = repo.R.primary.R.Primary.default_branch in
+    Abbs_future_combinators.Infix_result_app.(
+      (fun repo_config tree branch -> (repo_config, tree, branch))
+      <$> fetch_repo_config config owner repo_name default_branch client
+      <*> fetch_tree owner repo_name default_branch client
+      <*> fetch_branch owner repo_name default_branch client)
+    >>= function
+    | ({ Rc.indexer = Some { Rc.Indexer.enabled = true; _ }; _ } as repo_config), tree, branch ->
+        let module B = Githubc2_components.Branch_with_protection in
+        let module C = Githubc2_components.Commit in
+        let commit = branch.B.primary.B.Primary.commit in
+        let hash = commit.C.primary.C.Primary.sha in
+        query_index "DRIFT" db (CCInt64.of_int installation_id) hash
+        >>= fun index -> Abb.Future.return (Ok { Repo.repo_config; tree; branch; index })
+    | repo_config, tree, branch ->
+        Abb.Future.return
+          (Ok { Repo.repo_config; tree; branch; index = Some Terrat_change_match.Index.empty })
+
   let fetch_repo config db schedule =
     let run =
       let module S = Schedule in
-      let open Abbs_future_combinators.Infix_result_monad in
-      Terrat_github.get_installation_access_token config (CCInt64.to_int schedule.S.installation_id)
-      >>= fun access_token ->
-      let client = Terrat_github.create config (`Token access_token) in
-      Terrat_github.fetch_repo ~owner:schedule.S.owner ~repo:schedule.S.name client
-      >>= fun repo ->
-      let module Rc = Terrat_repo_config.Version_1 in
-      let module R = Githubc2_components.Full_repository in
-      let default_branch = repo.R.primary.R.Primary.default_branch in
-      Abbs_future_combinators.Infix_result_app.(
-        (fun repo_config tree branch -> (repo_config, tree, branch))
-        <$> fetch_repo_config config schedule.S.owner schedule.S.name default_branch client
-        <*> fetch_tree schedule.S.owner schedule.S.name default_branch client
-        <*> fetch_branch schedule.S.owner schedule.S.name default_branch client)
-      >>= function
-      | ({ Rc.indexer = Some { Rc.Indexer.enabled = true; _ }; _ } as repo_config), tree, branch ->
-          let module B = Githubc2_components.Branch_with_protection in
-          let module C = Githubc2_components.Commit in
-          let commit = branch.B.primary.B.Primary.commit in
-          let hash = commit.C.primary.C.Primary.sha in
-          query_index "DRIFT" db schedule.S.installation_id hash
-          >>= fun idx ->
-          Abb.Future.return
-            (Ok
-               {
-                 Repo.repo_config;
-                 tree;
-                 branch;
-                 index = CCOption.get_or ~default:Terrat_change_match.Index.empty idx;
-               })
-      | repo_config, tree, branch ->
-          Abb.Future.return
-            (Ok { Repo.repo_config; tree; branch; index = Terrat_change_match.Index.empty })
+      fetch_repo'
+        config
+        db
+        (CCInt64.to_int schedule.S.installation_id)
+        schedule.S.owner
+        schedule.S.name
     in
     let open Abb.Future.Infix_monad in
     run
@@ -377,7 +380,26 @@ module Dr = struct
         }
       in
       insert_work_manifest db (CCInt64.to_int schedule.S.repository) work_manifest None "drift"
-      >>= fun (id, _, _) ->
+      >>= fun (id, state, created_at) ->
+      let module Wm = Terrat_work_manifest in
+      insert_work_manifest_changes
+        db
+        {
+          work_manifest with
+          Wm.id;
+          state;
+          created_at;
+          changes =
+            (let module Dsf = Terrat_change.Dirspaceflow in
+            CCList.map
+              (fun ({ Dsf.workflow; _ } as dsf) ->
+                {
+                  dsf with
+                  Dsf.workflow = CCOption.map (fun Dsf.Workflow.{ idx; _ } -> idx) workflow;
+                })
+              work_manifest.Wm.changes);
+        }
+      >>= fun () ->
       Logs.info (fun m -> m "GITHUB_EVALUATOR : DRIFT : STORE_WORK_MANIFEST : %a" Uuidm.pp id);
       Pgsql_io.Prepared_stmt.execute db (Sql.insert_drift_work_manifest ()) id branch_name
     in
@@ -468,40 +490,46 @@ module R = struct
         Abb.Future.return (Ok (token, Int64_map.add installation_id token access_token_cache))
 
   let start_commit_statuses ~owner ~repo ~sha ~run_type ~dirspaces client =
-    let unified_run_type =
-      Terrat_work_manifest.(run_type |> Unified_run_type.of_run_type |> Unified_run_type.to_string)
-    in
-    let target_url = Printf.sprintf "https://github.com/%s/%s/actions" owner repo in
-    let commit_statuses =
-      let aggregate =
-        Terrat_commit_check.
-          [
-            make
-              ~details_url:target_url
-              ~description:"Running"
-              ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
-              ~status:Status.Queued;
-            make
-              ~details_url:target_url
-              ~description:"Running"
-              ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
-              ~status:Status.Queued;
-          ]
-      in
-      let dirspaces =
-        CCList.map
-          (fun Terrat_change.Dirspace.{ dir; workspace } ->
-            Terrat_commit_check.(
-              make
-                ~details_url:target_url
-                ~description:"Running"
-                ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
-                ~status:Status.Queued))
-          dirspaces
-      in
-      aggregate @ dirspaces
-    in
-    Terrat_github_commit_check.create ~owner ~repo ~ref_:sha ~checks:commit_statuses client
+    match dirspaces with
+    | [] ->
+        (* Don't create anything if there are no dirspaces being runs. *)
+        Abb.Future.return (Ok ())
+    | dirspaces ->
+        let unified_run_type =
+          Terrat_work_manifest.(
+            run_type |> Unified_run_type.of_run_type |> Unified_run_type.to_string)
+        in
+        let target_url = Printf.sprintf "https://github.com/%s/%s/actions" owner repo in
+        let commit_statuses =
+          let aggregate =
+            Terrat_commit_check.
+              [
+                make
+                  ~details_url:target_url
+                  ~description:"Running"
+                  ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
+                  ~status:Status.Queued;
+                make
+                  ~details_url:target_url
+                  ~description:"Running"
+                  ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
+                  ~status:Status.Queued;
+              ]
+          in
+          let dirspaces =
+            CCList.map
+              (fun Terrat_change.Dirspace.{ dir; workspace } ->
+                Terrat_commit_check.(
+                  make
+                    ~details_url:target_url
+                    ~description:"Running"
+                    ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
+                    ~status:Status.Queued))
+              dirspaces
+          in
+          aggregate @ dirspaces
+        in
+        Terrat_github_commit_check.create ~owner ~repo ~ref_:sha ~checks:commit_statuses client
 
   let abort_work_manifest
       ~config
@@ -900,6 +928,28 @@ module Ev = struct
             ($work_manifest, $branch)"
         /% Var.uuid "work_manifest"
         /% Var.text "branch")
+
+    let select_work_manifest () =
+      Pgsql_io.Typed_sql.(
+        sql
+        // (* bash_hash *) Ret.text
+        // (* completed_at *) Ret.(option text)
+        // (* created_at *) Ret.text
+        // (* hash *) Ret.text
+        // (* run_type *) Ret.ud' Terrat_work_manifest.Run_type.of_string
+        // (* state *) Ret.ud' Terrat_work_manifest.State.of_string
+        // (* tag_query *) Ret.ud' CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
+        // (* repository *) Ret.bigint
+        // (* pull_number *) Ret.(option bigint)
+        // (* base_branch *) Ret.text
+        // (* installation_id *) Ret.bigint
+        // (* owner *) Ret.text
+        // (* repo *) Ret.text
+        // (* run_id *) Ret.(option text)
+        // (* username *) Ret.(option text)
+        /^ read "select_github_work_manifest.sql"
+        /% Var.uuid "id"
+        /% Var.text "sha")
   end
 
   module Tmpl = struct
@@ -963,29 +1013,31 @@ module Ev = struct
     type t = {
       access_token : string;
       config : Terrat_config.t;
-      installation_id : int;
-      pull_number : int;
-      repo_id : int;
       default_branch : string;
-      owner : string;
-      repo : string;
-      request_id : string;
       event_type : Terrat_evaluator.Event.Event_type.t;
+      installation_id : int;
+      owner : string;
+      pull_number : int;
+      repo : string;
+      repo_id : int;
+      request_id : string;
       tag_query : Terrat_tag_query.t;
       user : string;
+      work_manifest_id : Uuidm.t option;
     }
 
     let make
+        ?work_manifest_id
         ~access_token
         ~config
-        ~installation_id
-        ~pull_number
-        ~repo_id
         ~default_branch
-        ~owner
-        ~repo
-        ~request_id
         ~event_type
+        ~installation_id
+        ~owner
+        ~pull_number
+        ~repo
+        ~repo_id
+        ~request_id
         ~tag_query
         ~user
         () =
@@ -1013,6 +1065,7 @@ module Ev = struct
         event_type;
         tag_query;
         user;
+        work_manifest_id;
       }
 
     let request_id t = t.request_id
@@ -1020,6 +1073,7 @@ module Ev = struct
     let event_type t = t.event_type
     let default_branch t = t.default_branch
     let user t = t.user
+    let work_manifest_id t = t.work_manifest_id
   end
 
   let log_time ?m event name t =
@@ -1252,11 +1306,19 @@ module Ev = struct
     let repo = event.T.repo in
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
-      Terrat_github.with_client
-        event.T.config
-        (`Token event.T.access_token)
-        (Terrat_github.fetch_pull_request ~owner ~repo ~pull_number:event.T.pull_number)
-      >>= fun resp ->
+      Abbs_future_combinators.Infix_result_app.(
+        (fun resp diff -> (resp, diff))
+        <$> Terrat_github.with_client
+              event.T.config
+              (`Token event.T.access_token)
+              (Terrat_github.fetch_pull_request ~owner ~repo ~pull_number:event.T.pull_number)
+        <*> fetch_diff
+              ~config:event.T.config
+              ~access_token:event.T.access_token
+              ~owner
+              ~repo
+              event.T.pull_number)
+      >>= fun (resp, diff) ->
       let module Ghc_comp = Githubc2_components in
       let module Pr = Ghc_comp.Pull_request in
       let module Head = Pr.Primary.Head in
@@ -1288,13 +1350,6 @@ module Ev = struct
           let branch_name = Head.(head.primary.Primary.ref_) in
           let draft = CCOption.get_or ~default:false draft in
           Prmths.Counter.inc_one (Metrics.pull_request_mergeable_state_count mergeable_state);
-          fetch_diff
-            ~config:event.T.config
-            ~access_token:event.T.access_token
-            ~owner
-            ~repo
-            event.T.pull_number
-          >>= fun diff ->
           Logs.debug (fun m ->
               m
                 "GITHUB_EVALUATOR : %s : MERGEABLE : merged=%s : mergeable_state=%s : \
@@ -1456,8 +1511,6 @@ module Ev = struct
               Terrat_github.pp_get_tree_err
               err);
         Abb.Future.return (Error `Error)
-
-  let query_code_index ~sha t = failwith "nyi"
 
   let fetch_commit_checks event pull_request =
     let open Abb.Future.Infix_monad in
@@ -1640,6 +1693,11 @@ module Ev = struct
 
   let create_commit_checks event pull_request checks =
     let open Abb.Future.Infix_monad in
+    Logs.info (fun m ->
+        m
+          "GITHUB_EVALUATOR : %s : CREATE_COMMIT_CHECKS : num=%d"
+          (T.request_id event)
+          (CCList.length checks));
     Terrat_github.with_client
       event.T.config
       (`Token event.T.access_token)
@@ -1662,58 +1720,43 @@ module Ev = struct
   let get_commit_check_details_url event pull_request =
     Printf.sprintf "https://github.com/%s/%s/actions" event.T.owner event.T.repo
 
-  let maybe_replace_old_commit_statuses event pull_request commit_checks =
-    let open Abb.Future.Infix_monad in
-    let replacement_commit_statuses =
-      commit_checks
-      |> CCList.filter (fun Terrat_commit_check.{ title; status; _ } ->
-             (not Terrat_commit_check.Status.(equal status Completed))
-             && (CCList.mem ~eq:CCString.equal title [ "terrateam plan"; "terrateam apply" ]
-                || CCString.prefix ~pre:"terrateam plan " title
-                || CCString.prefix ~pre:"terrateam apply " title))
-      |> CCList.map (fun check -> Terrat_commit_check.{ check with status = Status.Completed })
-    in
-    create_commit_checks event pull_request replacement_commit_statuses
-    >>= function
-    | Ok () -> Abb.Future.return ()
-    | Error _ ->
-        Logs.err (fun m ->
-            m "GITHUB_EVALUATOR : %s : FAILED_REPLACE_OLD_COMMIT_STATUSES" (T.request_id event));
-        Abb.Future.return ()
-
-  let create_queued_commit_checks event run_type pull_request dirspaces =
-    let details_url = get_commit_check_details_url event pull_request in
-    let unified_run_type =
-      let module Urt = Terrat_work_manifest.Unified_run_type in
-      run_type |> Urt.of_run_type |> Urt.to_string
-    in
-    let aggregate =
-      Terrat_commit_check.
-        [
-          make
-            ~details_url
-            ~description:"Queued"
-            ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
-            ~status:Status.Queued;
-          make
-            ~details_url
-            ~description:"Queued"
-            ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
-            ~status:Status.Queued;
-        ]
-    in
-    let dirspace_checks =
-      CCList.map
-        (fun Terrat_change.Dirspace.{ dir; workspace; _ } ->
-          Terrat_commit_check.(
-            make
-              ~details_url
-              ~description:"Queued"
-              ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
-              ~status:Status.Queued))
-        dirspaces
-    in
-    aggregate @ dirspace_checks
+  let create_queued_commit_checks event run_type pull_request = function
+    | [] ->
+        (* If there are no dirspaces, don't create any. *)
+        []
+    | dirspaces ->
+        let details_url = get_commit_check_details_url event pull_request in
+        let unified_run_type =
+          let module Urt = Terrat_work_manifest.Unified_run_type in
+          run_type |> Urt.of_run_type |> Urt.to_string
+        in
+        let aggregate =
+          Terrat_commit_check.
+            [
+              make
+                ~details_url
+                ~description:"Queued"
+                ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
+                ~status:Status.Queued;
+              make
+                ~details_url
+                ~description:"Queued"
+                ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
+                ~status:Status.Queued;
+            ]
+        in
+        let dirspace_checks =
+          CCList.map
+            (fun Terrat_change.Dirspace.{ dir; workspace; _ } ->
+              Terrat_commit_check.(
+                make
+                  ~details_url
+                  ~description:"Queued"
+                  ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
+                  ~status:Status.Queued))
+            dirspaces
+        in
+        aggregate @ dirspace_checks
 
   let maybe_create_pending_apply event pull_request repo_config = function
     | [] ->
@@ -1731,8 +1774,6 @@ module Ev = struct
               fetch_commit_checks event pull_request)
           >>= function
           | Ok commit_checks -> (
-              Abb.Future.fork (maybe_replace_old_commit_statuses event pull_request commit_checks)
-              >>= fun _ ->
               let details_url = get_commit_check_details_url event pull_request in
               let commit_check_titles =
                 commit_checks
@@ -1774,6 +1815,134 @@ module Ev = struct
               Abb.Future.return err)
         else Abb.Future.return (Ok ())
 
+  let fetch_work_manifest ~request_id db work_manifest_id sha =
+    let open Abb.Future.Infix_monad in
+    Pgsql_io.Prepared_stmt.fetch
+      db
+      (Sql.select_work_manifest ())
+      ~f:(fun
+          base_hash
+          completed_at
+          created_at
+          hash
+          run_type
+          state
+          tag_query
+          repo_id
+          pull_number
+          base_branch
+          installation_id
+          owner
+          name
+          run_id
+          user
+        ->
+        {
+          Terrat_work_manifest.base_hash;
+          changes = ();
+          completed_at;
+          created_at;
+          denied_dirspaces = ();
+          hash;
+          id = work_manifest_id;
+          src = ();
+          run_id;
+          run_type;
+          state;
+          tag_query;
+          user;
+        })
+      work_manifest_id
+      sha
+    >>= function
+    | Ok (wm :: _) -> Abb.Future.return (Ok wm)
+    | Ok [] ->
+        Logs.err (fun m -> m "GITHUB_EVALUATOR : %s : ERROR : WORK_MANIFEST_NOT_FOUND" request_id);
+        Abb.Future.return (Error `Error)
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let update_pull_request_work_manifest' db event repo_config changes work_manifest =
+    let open Abbs_future_combinators.Infix_result_monad in
+    let module Wm = Terrat_work_manifest in
+    let module Pr = Terrat_pull_request in
+    let module Ch = Terrat_change in
+    let module Cm = Terrat_change_match in
+    let module Ac = Terrat_access_control in
+    let pull_request = work_manifest.Terrat_work_manifest.src in
+    insert_work_manifest_changes db work_manifest
+    >>= fun () ->
+    let module Policy = struct
+      type t = string list [@@deriving yojson]
+    end in
+    Abbs_future_combinators.List_result.iter
+      ~f:(fun denied_dirspaces ->
+        Pgsql_io.Prepared_stmt.execute
+          db
+          Sql.insert_work_manifest_access_control_denied_dirspace
+          (CCList.map
+             (fun Ac.R.Deny.{ change_match = Cm.{ dirspace = Ch.Dirspace.{ dir; _ }; _ }; _ } ->
+               dir)
+             denied_dirspaces)
+          (CCList.map
+             (fun Ac.R.Deny.{ change_match = Cm.{ dirspace = Ch.Dirspace.{ workspace; _ }; _ }; _ } ->
+               workspace)
+             denied_dirspaces)
+          (CCList.map
+             (fun Ac.R.Deny.{ policy; _ } ->
+               (* This has a very awkward JSON conversion because we are
+                  performing this insert by passing in a bunch of arrays
+                  of values.  However policy is already an array and SQL
+                  does not support multidimensional arrays where the
+                  inner arrays can have different dimensions.  So we need
+                  to convert the policy to a string so that we can pass
+                  in an array of strings, and it needs to be in a format
+                  postgresql can turn back into an array.  So we use JSON
+                  as the intermediate representation. *)
+               CCOption.map (fun policy -> Yojson.Safe.to_string (Policy.to_yojson policy)) policy)
+             denied_dirspaces)
+          (CCList.replicate (CCList.length denied_dirspaces) work_manifest.Wm.id))
+      (CCList.chunks 500 work_manifest.Wm.denied_dirspaces)
+    >>= fun () ->
+    let dirspaces =
+      CCList.map
+        (fun Terrat_change.Dirspaceflow.{ dirspace; _ } -> dirspace)
+        work_manifest.Wm.changes
+    in
+    Abbs_time_it.run (log_time event "CREATE_COMMIT_CHECKS") (fun () ->
+        create_commit_checks
+          event
+          pull_request
+          (create_queued_commit_checks event work_manifest.Wm.run_type pull_request dirspaces))
+    >>= fun () ->
+    let module Urt = Terrat_work_manifest.Unified_run_type in
+    (match Urt.of_run_type work_manifest.Wm.run_type with
+    | Urt.Plan -> maybe_create_pending_apply event pull_request repo_config changes
+    | Urt.Apply -> Abb.Future.return (Ok ()))
+    >>= fun () -> Abb.Future.return (Ok work_manifest)
+
+  let update_pull_request_work_manifest db event repo_config changes work_manifest =
+    let open Abb.Future.Infix_monad in
+    update_pull_request_work_manifest' db event repo_config changes work_manifest
+    >>= function
+    | Ok _ as r -> Abb.Future.return r
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m ->
+            m "GITHUB_EVALUATOR : %s : ERROR : %s" (T.request_id event) (Pgsql_io.show_err err));
+        Abb.Future.return (Error `Error)
+    | Error (#Githubc2_abb.call_err as err) ->
+        Prmths.Counter.inc_one Metrics.github_errors_total;
+        Logs.err (fun m ->
+            m
+              "GITHUB_EVALUATOR : %s : ERROR : %s"
+              (T.request_id event)
+              (Githubc2_abb.show_call_err err));
+        Abb.Future.return (Error `Error)
+    | Error `Error -> Abb.Future.return (Error `Error)
+
   let store_pull_request_work_manifest db event repo_config changes work_manifest =
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -1803,66 +1972,8 @@ module Ev = struct
             work_manifest.Wm.hash);
       insert_work_manifest db event.T.repo_id work_manifest (Some pull_request.Pr.id) "pr"
       >>= fun (id, state, created_at) ->
-      let module Policy = struct
-        type t = string list [@@deriving yojson]
-      end in
-      Abbs_future_combinators.List_result.iter
-        ~f:(fun denied_dirspaces ->
-          Pgsql_io.Prepared_stmt.execute
-            db
-            Sql.insert_work_manifest_access_control_denied_dirspace
-            (CCList.map
-               (fun Ac.R.Deny.{ change_match = Cm.{ dirspace = Ch.Dirspace.{ dir; _ }; _ }; _ } ->
-                 dir)
-               denied_dirspaces)
-            (CCList.map
-               (fun Ac.R.Deny.
-                      { change_match = Cm.{ dirspace = Ch.Dirspace.{ workspace; _ }; _ }; _ } ->
-                 workspace)
-               denied_dirspaces)
-            (CCList.map
-               (fun Ac.R.Deny.{ policy; _ } ->
-                 (* This has a very awkward JSON conversion because we are
-                    performing this insert by passing in a bunch of arrays
-                    of values.  However policy is already an array and SQL
-                    does not support multidimensional arrays where the
-                    inner arrays can have different dimensions.  So we need
-                    to convert the policy to a string so that we can pass
-                    in an array of strings, and it needs to be in a format
-                    postgresql can turn back into an array.  So we use JSON
-                    as the intermediate representation. *)
-                 CCOption.map (fun policy -> Yojson.Safe.to_string (Policy.to_yojson policy)) policy)
-               denied_dirspaces)
-            (CCList.replicate (CCList.length denied_dirspaces) id))
-        (CCList.chunks 500 work_manifest.Wm.denied_dirspaces)
-      >>= fun () ->
-      let wm =
-        {
-          work_manifest with
-          Wm.id;
-          changes = ();
-          created_at;
-          denied_dirspaces = ();
-          run_id = None;
-          state = CCOption.get_exn_or "work manifest state" (Wm.State.of_string state);
-        }
-      in
-      let dirspaces =
-        CCList.map
-          (fun Terrat_change.Dirspaceflow.{ dirspace; _ } -> dirspace)
-          work_manifest.Wm.changes
-      in
-      Abbs_time_it.run (log_time event "CREATE_COMMIT_CHECKS") (fun () ->
-          create_commit_checks
-            event
-            pull_request
-            (create_queued_commit_checks event wm.Wm.run_type pull_request dirspaces))
-      >>= fun () ->
-      let module Urt = Terrat_work_manifest.Unified_run_type in
-      (match Urt.of_run_type work_manifest.Wm.run_type with
-      | Urt.Plan -> maybe_create_pending_apply event pull_request repo_config changes
-      | Urt.Apply -> Abb.Future.return (Ok ()))
-      >>= fun () -> Abb.Future.return (Ok wm)
+      let work_manifest = { work_manifest with Wm.id; created_at; run_id = None; state } in
+      update_pull_request_work_manifest' db event repo_config changes work_manifest
     in
     let open Abb.Future.Infix_monad in
     run
@@ -1894,19 +2005,11 @@ module Ev = struct
       in
       insert_work_manifest db event.T.repo_id work_manifest pull_number "index"
       >>= fun (id, state, created_at) ->
+      insert_work_manifest_changes db { work_manifest with Wm.id; state; created_at }
+      >>= fun () ->
       Pgsql_io.Prepared_stmt.execute db Sql.insert_index_work_manifest id branch
       >>= fun () ->
-      let wm =
-        {
-          work_manifest with
-          Wm.id;
-          changes = ();
-          created_at;
-          denied_dirspaces = ();
-          run_id = None;
-          state = CCOption.get_exn_or "work manifest state" (Wm.State.of_string state);
-        }
-      in
+      let wm = { work_manifest with Wm.id; created_at; run_id = None; state } in
       Abb.Future.return (Ok wm)
     in
     let open Abb.Future.Infix_monad in
@@ -1920,11 +2023,9 @@ module Ev = struct
         Abb.Future.return (Error `Error)
 
   let query_index db event pr =
-    query_index
-      (T.request_id event)
-      db
-      (CCInt64.of_int event.T.installation_id)
-      (Pull_request.base_hash pr)
+    let sha = pr.Terrat_pull_request.hash in
+    Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : QUERY_INDEX : sha=%s" (T.request_id event) sha);
+    query_index (T.request_id event) db (CCInt64.of_int event.T.installation_id) sha
 
   let fetch_repo_config_by_ref event ref_ =
     let open Abb.Future.Infix_monad in
@@ -1990,9 +2091,6 @@ module Ev = struct
       <*> Abbs_time_it.run (log_time event "FETCH_COMMIT_CHECKS_TIME") (fun () ->
               fetch_commit_checks event pull_request))
     >>= fun (reviews, commit_checks) ->
-    Abbs_future_combinators.to_result
-      (Abb.Future.fork (maybe_replace_old_commit_statuses event pull_request commit_checks))
-    >>= fun _ ->
     let approved_reviews =
       CCList.filter
         (function
@@ -2796,6 +2894,127 @@ module Wm = struct
     let work_manifest_run_type { work_manifest = Terrat_work_manifest.{ run_type; _ }; _ } =
       run_type
 
+    let work_manifest_run_kind
+        { work_manifest = { Terrat_work_manifest.src = { Src.run_kind; _ }; _ }; _ } =
+      run_kind
+
+    let fetch_drift_repo storage t =
+      let open Abb.Future.Infix_monad in
+      let module Wm = Terrat_work_manifest in
+      Pgsql_pool.with_conn storage ~f:(fun db ->
+          Dr.fetch_repo'
+            t.config
+            db
+            (CCInt64.to_int t.work_manifest.Wm.src.Src.installation_id)
+            t.work_manifest.Wm.src.Src.owner
+            t.work_manifest.Wm.src.Src.repo_name)
+      >>= function
+      | Ok repo -> Abb.Future.return (Ok repo)
+      | Error _ -> failwith "nyi45"
+
+    let update_drift_work_manifest storage t dirspaceflows =
+      let module Wm = Terrat_work_manifest in
+      let open Abb.Future.Infix_monad in
+      let changes =
+        let module Dsf = Terrat_change.Dirspaceflow in
+        CCList.map
+          (fun ({ Dsf.workflow; _ } as change) ->
+            {
+              change with
+              Terrat_change.Dirspaceflow.workflow =
+                CCOption.map (fun { Dsf.Workflow.idx; _ } -> idx) workflow;
+            })
+          dirspaceflows
+      in
+      let t = { t with work_manifest = { t.work_manifest with Wm.changes } } in
+      Pgsql_pool.with_conn storage ~f:(fun db -> insert_work_manifest_changes db t.work_manifest)
+      >>= function
+      | Ok () -> Abb.Future.return (Ok t)
+      | Error _ -> failwith "nyi"
+
+    let reify_event request_id config storage t =
+      let run =
+        let open Abbs_future_combinators.Infix_result_monad in
+        let module Wm = Terrat_work_manifest in
+        let module R = Githubc2_components.Full_repository in
+        Terrat_github.with_client
+          config
+          (`Token t.access_token)
+          (Terrat_github.fetch_repo
+             ~owner:t.work_manifest.Wm.src.Src.owner
+             ~repo:t.work_manifest.Wm.src.Src.repo_name)
+        >>= fun { R.primary = { R.Primary.default_branch; _ }; _ } ->
+        Abb.Future.return
+          (Ok
+             {
+               Ev.T.access_token = t.access_token;
+               config;
+               installation_id = CCInt64.to_int t.work_manifest.Wm.src.Src.installation_id;
+               pull_number =
+                 CCOption.get_exn_or
+                   "pull_number"
+                   (CCOption.map CCInt64.to_int t.work_manifest.Wm.src.Src.pull_number);
+               repo_id = CCInt64.to_int t.work_manifest.Wm.src.Src.repository;
+               default_branch;
+               owner = t.work_manifest.Wm.src.Src.owner;
+               repo = t.work_manifest.Wm.src.Src.repo_name;
+               request_id;
+               event_type =
+                 (let module E = Terrat_evaluator.Event.Event_type in
+                 match t.work_manifest.Wm.run_type with
+                 | Wm.Run_type.Autoplan -> E.Autoplan
+                 | Wm.Run_type.Autoapply -> E.Autoapply
+                 | Wm.Run_type.Plan -> E.Plan
+                 | Wm.Run_type.Apply -> E.Apply
+                 | Wm.Run_type.Unsafe_apply -> E.Apply_force);
+               tag_query = t.work_manifest.Wm.tag_query;
+               user = CCOption.get_exn_or "user" t.work_manifest.Wm.user;
+               work_manifest_id = Some t.work_manifest.Wm.id;
+             })
+      in
+      let open Abb.Future.Infix_monad in
+      run
+      >>= function
+      | Ok event -> Abb.Future.return (Ok event)
+      | Error (#Terrat_github.fetch_repo_err as err) ->
+          Logs.err (fun m ->
+              m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Terrat_github.pp_fetch_repo_err err);
+          Abb.Future.return (Error `Error)
+
+    let make_index_work_manifest t dirspaceflows =
+      let changes =
+        let module Dsf = Terrat_change.Dirspaceflow in
+        CCList.map
+          (fun ({ Dsf.workflow; _ } as change) ->
+            {
+              change with
+              Terrat_change.Dirspaceflow.workflow =
+                CCOption.map (fun { Dsf.Workflow.idx; _ } -> idx) workflow;
+            })
+          dirspaceflows
+      in
+      let module Wm = Terrat_work_manifest in
+      {
+        t with
+        work_manifest =
+          {
+            t.work_manifest with
+            Wm.changes;
+            src = { t.work_manifest.Wm.src with Src.run_kind = "index" };
+          };
+      }
+
+    let make_completed_work_manifest t =
+      let module Wm = Terrat_work_manifest in
+      { t with work_manifest = { t.work_manifest with Wm.state = Wm.State.Completed } }
+
+    let merge_work_manifest t work_manifest =
+      let module Wm = Terrat_work_manifest in
+      { t with work_manifest = { work_manifest with Wm.src = t.work_manifest.Wm.src } }
+
+    let is_work_manifest_runnable t =
+      not (CCList.is_empty t.work_manifest.Terrat_work_manifest.changes)
+
     let maybe_update_commit_status
         config
         access_token
@@ -2807,7 +3026,7 @@ module Wm = struct
         run_type
         dirspaces
         hash = function
-      | Terrat_work_manifest.State.Running ->
+      | Terrat_work_manifest.State.Running when not (CCList.is_empty dirspaces) ->
           let unified_run_type =
             Terrat_work_manifest.(
               run_type |> Unified_run_type.of_run_type |> Unified_run_type.to_string)
@@ -2866,6 +3085,7 @@ module Wm = struct
                           request_id
                           (Terrat_github.show_get_installation_access_token_err err));
                     Abb.Future.return (Ok ())))
+      | Terrat_work_manifest.State.Running
       | Terrat_work_manifest.State.Queued
       | Terrat_work_manifest.State.Completed
       | Terrat_work_manifest.State.Aborted -> Abb.Future.return ()
@@ -3569,6 +3789,7 @@ module Wm = struct
           // (* repo *) Ret.text
           // (* run_id *) Ret.(option text)
           // (* username *) Ret.(option text)
+          // (* run_kind *) Ret.text
           /^ read "select_github_work_manifest_for_update.sql"
           /% Var.uuid "id")
 
@@ -3957,8 +4178,9 @@ module Wm = struct
             name
             run_id
             user
+            run_kind
           ->
-          ( (installation_id, owner, name, repo_id, pull_number),
+          ( (installation_id, owner, name, repo_id, pull_number, run_kind),
             {
               Terrat_work_manifest.base_hash;
               changes = ();
@@ -3993,8 +4215,9 @@ module Wm = struct
         : ('a, Pgsql_io.err) result Abb.Future.t
         :> ('a, [> Pgsql_io.err ]) result Abb.Future.t)
       >>= function
-      | ((installation_id, owner, name, _repo_id, pull_number), work_manifest) :: _ ->
-          Abb.Future.return (Ok (installation_id, owner, name, pull_number, work_manifest))
+      | ((installation_id, owner, name, _repo_id, pull_number, run_kind), work_manifest) :: _ ->
+          Abb.Future.return
+            (Ok (installation_id, owner, name, pull_number, run_kind, work_manifest))
       | [] -> Abb.Future.return (Error `Work_manifest_not_found)
 
     let log_work_manifest_result request_id work_manifest_id success =
@@ -4680,7 +4903,7 @@ module Wm = struct
             Pgsql_io.tx db ~f:(fun () ->
                 fetch_work_manifest_tf_operation db work_manifest_id
                 >>= function
-                | ((installation_id, owner, name, repo_id, pull_number), work_manifest) :: _ -> (
+                | ((installation_id, owner, name, repo_id, pull_number, _), work_manifest) :: _ -> (
                     log_work_manifest_result
                       request_id
                       work_manifest_id
@@ -4789,62 +5012,64 @@ module Wm = struct
         name
         pull_number
         work_manifest
-        results =
-      let module Wm = Terrat_work_manifest in
-      match (work_manifest, pull_number) with
-      | { Wm.run_type = Wm.Run_type.Plan; _ }, Some pull_number ->
-          let module R = Terrat_api_components.Work_manifest_index_result in
-          let open Abbs_future_combinators.Infix_result_monad in
-          let module Paths = Terrat_api_components.Work_manifest_index_paths in
-          let paths = Json_schema.String_map.to_list (Paths.additional results.R.paths) in
-          let kv =
-            Snabela.Kv.(
-              Map.of_list
-                [
-                  ("success", bool results.R.success);
-                  ( "failures",
-                    list
-                      (CCList.flatten
-                         (CCList.map
-                            (fun (_path, { Paths.Additional.failures; _ }) ->
-                              let failures =
-                                Json_schema.String_map.to_list
-                                  (Paths.Additional.Failures.additional failures)
-                              in
-                              CCList.map
-                                (fun (path, { Paths.Additional.Failures.Additional.lnum; msg }) ->
-                                  Map.of_list
-                                    (CCList.flatten
-                                       [
-                                         [ ("path", string path); ("failure", string msg) ];
-                                         CCOption.map_or
-                                           ~default:[]
-                                           (fun lnum -> [ ("line", int lnum) ])
-                                           lnum;
-                                       ]))
-                                failures)
-                            paths)) );
-                ])
-          in
-          fetch_access_token request_id config installation_id
-          >>= fun access_token ->
-          let body =
-            match Snabela.apply Tmpl.index_complete kv with
-            | Ok body -> body
-            | Error (#Snabela.err as err) ->
-                Logs.err (fun m ->
-                    m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Snabela.pp_err err);
-                Printf.sprintf "Index failed\n\n%s\n" (Snabela.show_err err)
-          in
-          Terrat_github.with_client
-            config
-            (`Token access_token)
-            (Terrat_github.publish_comment
-               ~owner
-               ~repo:name
-               ~pull_number:(CCInt64.to_int pull_number)
-               ~body)
-      | _, _ -> Abb.Future.return (Ok ())
+        results = function
+      | "index" -> (
+          let module Wm = Terrat_work_manifest in
+          match (work_manifest, pull_number) with
+          | { Wm.run_type = Wm.Run_type.Plan; _ }, Some pull_number ->
+              let module R = Terrat_api_components.Work_manifest_index_result in
+              let open Abbs_future_combinators.Infix_result_monad in
+              let module Paths = Terrat_api_components.Work_manifest_index_paths in
+              let paths = Json_schema.String_map.to_list (Paths.additional results.R.paths) in
+              let kv =
+                Snabela.Kv.(
+                  Map.of_list
+                    [
+                      ("success", bool results.R.success);
+                      ( "failures",
+                        list
+                          (CCList.flatten
+                             (CCList.map
+                                (fun (_path, { Paths.Additional.failures; _ }) ->
+                                  let failures =
+                                    Json_schema.String_map.to_list
+                                      (Paths.Additional.Failures.additional failures)
+                                  in
+                                  CCList.map
+                                    (fun (path, { Paths.Additional.Failures.Additional.lnum; msg }) ->
+                                      Map.of_list
+                                        (CCList.flatten
+                                           [
+                                             [ ("path", string path); ("failure", string msg) ];
+                                             CCOption.map_or
+                                               ~default:[]
+                                               (fun lnum -> [ ("line", int lnum) ])
+                                               lnum;
+                                           ]))
+                                    failures)
+                                paths)) );
+                    ])
+              in
+              fetch_access_token request_id config installation_id
+              >>= fun access_token ->
+              let body =
+                match Snabela.apply Tmpl.index_complete kv with
+                | Ok body -> body
+                | Error (#Snabela.err as err) ->
+                    Logs.err (fun m ->
+                        m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Snabela.pp_err err);
+                    Printf.sprintf "Index failed\n\n%s\n" (Snabela.show_err err)
+              in
+              Terrat_github.with_client
+                config
+                (`Token access_token)
+                (Terrat_github.publish_comment
+                   ~owner
+                   ~repo:name
+                   ~pull_number:(CCInt64.to_int pull_number)
+                   ~body)
+          | _, _ -> Abb.Future.return (Ok ()))
+      | _ -> Abb.Future.return (Ok ())
 
     let log_index_failures request_id work_manifest_id results =
       let module R = Terrat_api_components.Work_manifest_index_result in
@@ -4869,6 +5094,13 @@ module Wm = struct
             failures)
         paths
 
+    let maybe_complete_work_manifest_index request_id db work_manifest_id = function
+      | "index" ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          complete_work_manifest_index request_id db work_manifest_id
+          >>= fun _ -> Abb.Future.return (Ok ())
+      | _ -> Abb.Future.return (Ok ())
+
     let store_index ~request_id config storage work_manifest_id results =
       let run =
         let module R = Terrat_api_components.Work_manifest_index_result in
@@ -4883,8 +5115,8 @@ module Wm = struct
                   (Yojson.Safe.to_string (R.to_yojson results))
                 >>= fun () ->
                 fetch_work_manifest_index db work_manifest_id
-                >>= fun (installation_id, owner, name, pull_number, work_manifest) ->
-                complete_work_manifest_index request_id db work_manifest_id
+                >>= fun (installation_id, owner, name, pull_number, run_kind, work_manifest) ->
+                maybe_complete_work_manifest_index request_id db work_manifest_id run_kind
                 >>= fun _ ->
                 maybe_publish_index_result
                   request_id
@@ -4894,7 +5126,8 @@ module Wm = struct
                   name
                   pull_number
                   work_manifest
-                  results))
+                  results
+                  run_kind))
       in
       let open Abb.Future.Infix_monad in
       run
