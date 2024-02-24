@@ -176,6 +176,7 @@ type t = {
   dirs : Dirs.t option; [@default None]
   drift : Terrat_repo_config_drift.t option; [@default None]
   enabled : bool; [@default true]
+  engine : Terrat_repo_config_engine.t option; [@default None]
   hooks : Hooks.t option; [@default None]
   indexer : Indexer.t option; [@default None]
   parallel_runs : int; [@default 3]
