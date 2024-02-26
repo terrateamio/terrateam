@@ -8,7 +8,8 @@ drift_schedules as (
          when 'weekly' then interval '1 week'
          when 'monthly' then interval '1 month'
          end) as schedule,
-         reconcile
+         reconcile,
+         updated_at
     from github_drift_schedules
     where schedule in ('hourly', 'daily', 'weekly', 'monthly')
     for update skip locked
@@ -50,5 +51,5 @@ inner join github_installations as gi
 left join latest_drift_manifests as ldm
     on ldm.repository = ds.repository
 where (ldm.state is null or ldm.state <> 'running')
-      and (ldm.repository is null or ds.schedule < (now() - ldm.created_at))
+      and (ldm.repository is null or ds.schedule < (now() - ldm.created_at) or ldm.created_at < ds.updated_at)
       and gi.state = 'installed'

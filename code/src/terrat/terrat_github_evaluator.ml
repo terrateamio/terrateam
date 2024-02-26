@@ -1204,6 +1204,8 @@ module Ev = struct
           | None -> Abb.Future.return (Error (`Invalid_query query)))
       | Some (_, _) -> Abb.Future.return (Error (`Invalid_query query))
       | None -> Abb.Future.return (Error (`Invalid_query query))
+
+    let set_user user ctx = { ctx with user }
   end
 
   let create_access_control_ctx ~user event = Access_control.{ user; event }

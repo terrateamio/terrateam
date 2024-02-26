@@ -34,6 +34,7 @@ module type S = sig
   type ctx
 
   val query : ctx -> string -> (bool, [> query_err ]) result Abb.Future.t
+  val set_user : string -> ctx -> ctx
 end
 
 module Make (S : S) : sig
