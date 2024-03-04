@@ -100,7 +100,7 @@ module Sql = struct
       // (* id *) Ret.uuid
       // (* pull_number *) Ret.(option bigint)
       // (* sha *) Ret.text
-      // (* run_type *) Ret.ud' Terrat_work_manifest.Run_type.of_string
+      // (* run_type *) Ret.ud' Terrat_work_manifest2.Run_type.of_string
       /^ read "github_fail_running_work_manifest.sql"
       /% Var.text "run_id")
 
@@ -897,7 +897,7 @@ let process_workflow_job_failure config storage access_token run_id repository =
            ~body:Tmpl.action_failed)
       >>= fun () ->
       let unified_run_type =
-        Terrat_work_manifest.(
+        Terrat_work_manifest2.(
           run_type |> Unified_run_type.of_run_type |> Unified_run_type.to_string)
       in
       let target_url =

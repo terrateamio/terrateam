@@ -16,7 +16,7 @@ module Event = struct
     | Start of { github_app_id : string }
     | Run of {
         github_app_id : string;
-        run_type : Terrat_work_manifest.Run_type.t;
+        run_type : Terrat_work_manifest2.Run_type.t;
         owner : string;
         repo : string;
       }
@@ -45,7 +45,7 @@ let send' telemetry_config event =
               (Printf.sprintf
                  "/event/run/%s/%s/%s/%s"
                  Digest.(to_hex (string github_app_id))
-                 (Terrat_work_manifest.Run_type.to_string run_type)
+                 (Terrat_work_manifest2.Run_type.to_string run_type)
                  Digest.(to_hex (string owner))
                  Digest.(to_hex (string repo)))
           in

@@ -4145,13 +4145,7 @@ module S = struct
       Terrat_telemetry.Event.Run
         {
           github_app_id = Terrat_config.github_app_id config;
-          run_type =
-            (match run_type with
-            | Wm.Run_type.Autoplan -> Terrat_work_manifest.Run_type.Autoplan
-            | Wm.Run_type.Autoapply -> Terrat_work_manifest.Run_type.Autoapply
-            | Wm.Run_type.Plan -> Terrat_work_manifest.Run_type.Plan
-            | Wm.Run_type.Apply -> Terrat_work_manifest.Run_type.Apply
-            | Wm.Run_type.Unsafe_apply -> Terrat_work_manifest.Run_type.Unsafe_apply);
+          run_type;
           owner = repo.Repo.owner;
           repo = repo.Repo.name;
         }

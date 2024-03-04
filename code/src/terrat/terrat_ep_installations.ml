@@ -33,8 +33,8 @@ module Work_manifests = struct
         // (* completed_at *) Ret.(option text)
         // (* created_at *) Ret.text
         // (* hash *) Ret.text
-        // (* run_type *) Ret.ud' Terrat_work_manifest.Run_type.of_string
-        // (* state *) Ret.ud' Terrat_work_manifest.State.of_string
+        // (* run_type *) Ret.ud' Terrat_work_manifest2.Run_type.of_string
+        // (* state *) Ret.ud' Terrat_work_manifest2.State.of_string
         // (* tag_query *) Ret.ud' CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
         // (* repository *) Ret.bigint
         // (* pull_number *) Ret.(option bigint)
@@ -319,8 +319,8 @@ module Work_manifests = struct
                             ref_;
                             repo;
                             repository = CCInt64.to_int repository;
-                            run_type = Terrat_work_manifest.Run_type.to_string run_type;
-                            state = Terrat_work_manifest.State.to_string state;
+                            run_type = Terrat_work_manifest2.Run_type.to_string run_type;
+                            state = Terrat_work_manifest2.State.to_string state;
                             run_id;
                           }
                   | "pr", Some pull_number, Some branch ->
@@ -340,8 +340,8 @@ module Work_manifests = struct
                             ref_;
                             repo;
                             repository = CCInt64.to_int repository;
-                            run_type = Terrat_work_manifest.Run_type.to_string run_type;
-                            state = Terrat_work_manifest.State.to_string state;
+                            run_type = Terrat_work_manifest2.Run_type.to_string run_type;
+                            state = Terrat_work_manifest2.State.to_string state;
                             tag_query = Terrat_tag_query.to_string tag_query;
                             user;
                             run_id;
