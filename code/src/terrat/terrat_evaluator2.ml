@@ -3074,7 +3074,7 @@ module Make (S : S) = struct
       let maybe_update_commit_checks t =
         let module Wm = Terrat_work_manifest2 in
         function
-        | { Wm.src = Wm.Kind.Pull_request pr; changes; run_type; hash = ref_; _ } ->
+        | { Wm.src = Wm.Kind.Pull_request pr; changes; run_type; hash = ref_; run_id; _ } ->
             let open Abbs_future_combinators.Infix_result_monad in
             let module Status = Terrat_commit_check.Status in
             let repo = S.Pull_request.repo pr in
@@ -3085,11 +3085,13 @@ module Make (S : S) = struct
             let aggregate =
               [
                 S.make_commit_check
+                  ?run_id
                   ~description:"Running"
                   ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
                   ~status:Status.Running
                   repo;
                 S.make_commit_check
+                  ?run_id
                   ~description:"Running"
                   ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
                   ~status:Status.Running
@@ -3102,6 +3104,7 @@ module Make (S : S) = struct
               CCList.map
                 (fun { Dsf.dirspace = { Ds.dir; workspace; _ }; _ } ->
                   S.make_commit_check
+                    ?run_id
                     ~description:"Running"
                     ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
                     ~status:Status.Running
@@ -3445,12 +3448,12 @@ module Make (S : S) = struct
           let aggregate =
             [
               S.make_commit_check
-                ~description:"Running"
+                ~description:"Queued"
                 ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
                 ~status:Status.Queued
                 repo;
               S.make_commit_check
-                ~description:"Running"
+                ~description:"Queued"
                 ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
                 ~status:Status.Queued
                 repo;
@@ -3462,7 +3465,7 @@ module Make (S : S) = struct
             CCList.map
               (fun { Dsf.dirspace = { Ds.dir; workspace; _ }; _ } ->
                 S.make_commit_check
-                  ~description:"Running"
+                  ~description:"Queued"
                   ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
                   ~status:Status.Queued
                   repo)

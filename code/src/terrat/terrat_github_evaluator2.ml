@@ -1670,7 +1670,11 @@ module S = struct
     let details_url =
       match run_id with
       | Some run_id ->
-          Printf.sprintf "https://github.com/%s/%s/actions/%s" repo.Repo.owner repo.Repo.name run_id
+          Printf.sprintf
+            "https://github.com/%s/%s/actions/runs/%s"
+            repo.Repo.owner
+            repo.Repo.name
+            run_id
       | None -> Printf.sprintf "https://github.com/%s/%s/actions" repo.Repo.owner repo.Repo.name
     in
     Terrat_commit_check.make ~details_url ~description ~title ~status
