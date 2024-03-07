@@ -9,6 +9,7 @@ drift_schedules as (
          when 'monthly' then interval '1 month'
          end) as schedule,
          reconcile,
+         tag_query,
          updated_at
     from github_drift_schedules
     where schedule in ('hourly', 'daily', 'weekly', 'monthly')
@@ -42,7 +43,8 @@ select
     gir.id as repository,
     gir.owner as owner,
     gir.name as name,
-    ds.reconcile
+    ds.reconcile,
+    ds.tag_query
 from drift_schedules as ds
 inner join github_installation_repositories as gir
     on gir.id = ds.repository

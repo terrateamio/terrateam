@@ -517,6 +517,7 @@ module type S = sig
         val reconcile : t -> bool
         val repo : t -> Repo.t
         val request_id : t -> string
+        val tag_query : t -> Terrat_tag_query.t
       end
 
       module Data : sig

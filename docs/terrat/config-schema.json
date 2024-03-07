@@ -143,6 +143,9 @@
             "monthly"
           ],
           "type": "string"
+        },
+        "tag_query": {
+          "type": "string"
         }
       },
       "required": [

@@ -654,6 +654,7 @@ module type S = sig
         val reconcile : t -> bool
         val repo : t -> Repo.t
         val request_id : t -> string
+        val tag_query : t -> Terrat_tag_query.t
       end
 
       module Data : sig
@@ -1253,7 +1254,7 @@ module Make (S : S) = struct
             run_type = Wm.Run_type.Plan;
             src = Wm.Kind.Drift (S.Drift.make ~account ~branch ~reconcile ~repo ());
             state = ();
-            tag_query = Terrat_tag_query.any;
+            tag_query = S.Event.Drift.Schedule.tag_query sched;
             user = None;
           }
         in
@@ -1275,7 +1276,7 @@ module Make (S : S) = struct
             Abb.Future.return
               (compute_matches
                  ~repo_config:(S.Event.Drift.Data.repo_config data)
-                 ~tag_query:Terrat_tag_query.any
+                 ~tag_query:(S.Event.Drift.Schedule.tag_query sched)
                  ~out_of_change_applies:[]
                  ~diff
                  ~repo_tree:(S.Event.Drift.Data.tree data)
@@ -2915,17 +2916,21 @@ module Make (S : S) = struct
             let open Abb.Future.Infix_monad in
             S.Event.Initiate.done_ t work_manifest >>= fun r -> Abb.Future.return (Ok r)
 
-      let compute_changes repo_config repo_tree index =
+      let compute_changes repo_config repo_tree index work_manifest =
+        let module Wm = Terrat_work_manifest2 in
         let open CCResult.Infix in
         Terrat_change_match.synthesize_dir_config
           ~index:Terrat_change_match.Index.empty
           ~file_list:repo_tree
           repo_config
         >>= fun dirs ->
+        let tag_query = work_manifest.Wm.tag_query in
         let matches =
-          Terrat_change_match.match_diff_list
-            dirs
-            (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) repo_tree)
+          CCList.filter
+            (Terrat_change_match.match_tag_query ~tag_query)
+            (Terrat_change_match.match_diff_list
+               dirs
+               (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) repo_tree))
         in
         dirspaceflows_of_changes repo_config matches
         >>= fun dirspaceflows ->
@@ -2941,7 +2946,7 @@ module Make (S : S) = struct
 
       let update_work_manifest_with_index db repo_config repo_tree index work_manifest =
         let open Abbs_future_combinators.Infix_result_monad in
-        Abb.Future.return (compute_changes repo_config repo_tree index)
+        Abb.Future.return (compute_changes repo_config repo_tree index work_manifest)
         >>= function
         | [] ->
             (* If there are no changes, then return the work manifest unmolested *)
@@ -2959,7 +2964,7 @@ module Make (S : S) = struct
           work_manifest =
         let open CCResult.Infix in
         let module Wm = Terrat_work_manifest2 in
-        compute_changes repo_config repo_tree Terrat_change_match.Index.empty
+        compute_changes repo_config repo_tree Terrat_change_match.Index.empty work_manifest
         >>= function
         | [] ->
             (* If there are no changes, then return the work manifest unmolested *)

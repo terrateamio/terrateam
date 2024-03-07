@@ -14,5 +14,6 @@ type t = {
   enabled : bool; [@default false]
   reconcile : bool; [@default false]
   schedule : Schedule.t;
+  tag_query : string option; [@default None]
 }
 [@@deriving yojson { strict = true; meta = true }, make, show, eq]

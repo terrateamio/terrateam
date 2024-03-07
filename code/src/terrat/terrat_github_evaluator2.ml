@@ -370,19 +370,17 @@ module Sql = struct
       // (* owner *) Ret.text
       // (* name *) Ret.text
       // (* reconcile *) Ret.boolean
+      // (* tag_query *) Ret.(option (ud' CCFun.(Terrat_tag_query.of_string %> CCResult.to_opt)))
       /^ read "github_select_missing_drift_scheduled_runs.sql")
 
   let upsert_drift_schedule =
     Pgsql_io.Typed_sql.(
       sql
-      /^ "insert into github_drift_schedules (repository, schedule, reconcile, updated_at) \
-          values($repo, $schedule, $reconcile, now()) on conflict (repository) do update set \
-          (schedule, reconcile, updated_at) = (excluded.schedule, excluded.reconcile, \
-          excluded.updated_at) where (github_drift_schedules.schedule, \
-          github_drift_schedules.reconcile) <> (excluded.schedule, excluded.reconcile) "
+      /^ read "github_upsert_drift_schedule.sql"
       /% Var.bigint "repo"
       /% Var.text "schedule"
-      /% Var.boolean "reconcile")
+      /% Var.boolean "reconcile"
+      /% Var.(option (ud (text "tag_query") Terrat_tag_query.to_string)))
 
   let delete_drift_schedule =
     Pgsql_io.Typed_sql.(
@@ -3832,12 +3830,14 @@ module S = struct
           repo : Repo.t;
           reconcile : bool;
           request_id : string;
+          tag_query : Terrat_tag_query.t;
         }
 
         let account t = t.account
         let repo t = t.repo
         let reconcile t = t.reconcile
         let request_id t = t.request_id
+        let tag_query t = t.tag_query
       end
 
       module Data = struct
@@ -3875,7 +3875,7 @@ module S = struct
             Pgsql_io.Prepared_stmt.fetch
               db
               (Sql.select_missing_drift_scheduled_runs ())
-              ~f:(fun installation_id repository_id owner name reconcile ->
+              ~f:(fun installation_id repository_id owner name reconcile tag_query ->
                 {
                   Schedule.account =
                     {
@@ -3885,6 +3885,7 @@ module S = struct
                   repo = { Repo.id = CCInt64.to_int repository_id; owner; name };
                   reconcile;
                   request_id = t.request_id;
+                  tag_query = CCOption.get_or ~default:Terrat_tag_query.any tag_query;
                 }))
         >>= function
         | Ok _ as ret -> Abb.Future.return ret
@@ -4020,7 +4021,7 @@ module S = struct
       let request_id t = t.request_id
       let branch t = t.branch
 
-      let enable_drift_schedule t schedule reconcile =
+      let enable_drift_schedule t schedule reconcile tag_query =
         Pgsql_pool.with_conn t.storage ~f:(fun db ->
             Pgsql_io.tx db ~f:(fun () ->
                 Pgsql_io.Prepared_stmt.execute
@@ -4028,7 +4029,8 @@ module S = struct
                   Sql.upsert_drift_schedule
                   (CCInt64.of_int t.repo.Repo.id)
                   schedule
-                  reconcile))
+                  reconcile
+                  tag_query))
 
       let disable_drift_schedule t =
         Pgsql_pool.with_conn t.storage ~f:(fun db ->
@@ -4040,15 +4042,27 @@ module S = struct
       let update_drift_config t =
         let module D = Terrat_repo_config.Drift in
         function
-        | Some { D.enabled = true; schedule; reconcile } ->
+        | Some { D.enabled = true; schedule; reconcile; tag_query } -> (
             Logs.info (fun m ->
                 m
-                  "GITHUB_EVALUATOR : %s : DRIFT : ENABLE : repo=%s : schedule=%s : reconcile=%s"
+                  "GITHUB_EVALUATOR : %s : DRIFT : ENABLE : repo=%s : schedule=%s : reconcile=%s : \
+                   tag_query=%s"
                   t.request_id
                   (Repo.to_string t.repo)
                   schedule
-                  (Bool.to_string reconcile));
-            enable_drift_schedule t schedule reconcile
+                  (Bool.to_string reconcile)
+                  (CCOption.get_or ~default:"" tag_query));
+            match CCOption.map Terrat_tag_query.of_string tag_query with
+            | Some (Ok tag_query) -> enable_drift_schedule t schedule reconcile (Some tag_query)
+            | None -> enable_drift_schedule t schedule reconcile None
+            | Some (Error (#Terrat_tag_query_ast.err as err)) ->
+                Logs.info (fun m ->
+                    m
+                      "GITHUB_EVALUATOR : %s : DRIFT : ERROR : %a"
+                      t.request_id
+                      Terrat_tag_query_ast.pp_err
+                      err);
+                Abb.Future.return (Ok ()))
         | Some { D.enabled = false; _ } | None ->
             Logs.info (fun m ->
                 m
