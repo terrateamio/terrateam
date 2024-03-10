@@ -1031,10 +1031,11 @@ module Make (S : S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : CREATE_COMMIT_CHECKS : repo=%s : num=%d : time=%f"
+              "EVALUATOR : %s : CREATE_COMMIT_CHECKS : repo=%s : num=%d : ref=%s : time=%f"
               (S.Client.request_id client)
               (S.Repo.to_string repo)
               (CCList.length checks)
+              (S.Ref.to_string ref_)
               time))
       (fun () -> S.create_commit_checks client repo ref_ checks)
 
@@ -1512,7 +1513,7 @@ module Make (S : S) = struct
                 m "EVALUATOR : %s : PUBLISH_RESULTS : time=%f" (S.Event.Result.request_id t) time))
           (fun () -> S.Event.Result.publish_result t result pr wm)
 
-      let create_commit_checks
+      let create_pull_request_commit_checks
           t
           run_id
           pull_request
@@ -1578,7 +1579,36 @@ module Make (S : S) = struct
         Abbs_future_combinators.Infix_result_app.(
           (fun _ _ -> ())
           <$> publish_result t result pr wm
-          <*> create_commit_checks t run_id pr run_type hash result_status)
+          <*> create_pull_request_commit_checks t run_id pr run_type hash result_status)
+
+      let publish_index_pull_request_result t result pr wm =
+        let open Abbs_future_combinators.Infix_result_monad in
+        let module Wm = Terrat_work_manifest2 in
+        let module Status = Terrat_commit_check.Status in
+        let pull_number = S.Pull_request.id pr in
+        let repo = S.Pull_request.repo pr in
+        create_client
+          (S.Event.Result.request_id t)
+          (S.Event.Result.config t)
+          (S.Pull_request.account pr)
+        >>= fun client ->
+        let success, failures = S.Event.Result.index_results result in
+        let check =
+          S.make_commit_check
+            ?run_id:wm.Wm.run_id
+            ~description:(if success then "Completed" else "Failed")
+            ~title:"terrateam index"
+            ~status:(if success then Status.Completed else Status.Failed)
+            repo
+        in
+        create_commit_checks client repo (S.Ref.of_string wm.Wm.hash) [ check ]
+        >>= fun () ->
+        if not (CCList.is_empty failures) then
+          let publish_msg = S.Publish_msg.make ~client ~pull_number ~repo ~user:"" () in
+          S.Publish_msg.publish_msg
+            publish_msg
+            (Msg.Index_complete (S.Event.Result.index_results result))
+        else Abb.Future.return (Ok ())
 
       let maybe_publish_index_result t result idx =
         let open Abbs_future_combinators.Infix_result_monad in
@@ -1709,7 +1739,16 @@ module Make (S : S) = struct
             >>= fun _ ->
             maybe_publish_index_result t result idx
             >>= fun () -> Abb.Future.return (Ok (S.Event.Result.noop t))
-        | `Index _, (Wm.Kind.Pull_request _ | Wm.Kind.Drift _) ->
+        | `Index result, Wm.Kind.Pull_request pr ->
+            Logs.info (fun m ->
+                m
+                  "EVALUATOR : %s : WORK_MANIFEST_RESULT : wm_run_kind=%s : result_kind=%s"
+                  (S.Event.Result.request_id t)
+                  "tf_op"
+                  "index");
+            publish_index_pull_request_result t result pr wm
+            >>= fun () -> Abb.Future.return (Ok (S.Event.Result.noop t))
+        | `Index _, Wm.Kind.Drift _ ->
             Logs.info (fun m ->
                 m
                   "EVALUATOR : %s : WORK_MANIFEST_RESULT : wm_run_kind=%s : result_kind=%s"
@@ -1956,12 +1995,10 @@ module Make (S : S) = struct
 
       let create_queued_commit_checks client repo ref_ work_manifest =
         let module Wm = Terrat_work_manifest2 in
+        let module Status = Terrat_commit_check.Status in
         match work_manifest.Wm.changes with
-        | [] ->
-            (* No changes, don't create any commit checks *)
-            Abb.Future.return (Ok ())
+        | [] -> Abb.Future.return (Ok ())
         | dirspaces ->
-            let module Status = Terrat_commit_check.Status in
             let unified_run_type =
               let module Urt = Terrat_work_manifest2.Unified_run_type in
               work_manifest.Wm.run_type |> Urt.of_run_type |> Urt.to_string
@@ -2716,12 +2753,24 @@ module Make (S : S) = struct
             in
             S.Event.Terraform.with_db t.event ~f:(fun db -> S.create_work_manifest db work_manifest)
             >>= fun work_manifest ->
+            let module Status = Terrat_commit_check.Status in
+            let repo = S.Pull_request.repo pull_request in
             Logs.info (fun m ->
                 m
                   "EVALUATOR : %s : INDEX_WORK_MANIFEST : id=%a"
                   (S.Event.Terraform.request_id t.event)
                   Uuidm.pp
                   work_manifest.Wm.id);
+            (* No changes, means this is an index run *)
+            let check =
+              S.make_commit_check
+                ~description:"Queued"
+                ~title:"terrateam index"
+                ~status:Status.Queued
+                repo
+            in
+            create_commit_checks t.client repo (S.Pull_request.branch_ref pull_request) [ check ]
+            >>= fun () ->
             Abb.Future.return (Ok (S.Event.Terraform.created_work_manifest t.event work_manifest))
 
       let run t =
@@ -3108,12 +3157,37 @@ module Make (S : S) = struct
               wm
         | { Wm.src = Wm.Kind.Index _; _ } as wm -> Abb.Future.return (Ok (Some wm))
 
-      let maybe_update_commit_checks t =
+      let maybe_update_commit_checks t old_wm wm =
         let module Wm = Terrat_work_manifest2 in
-        function
-        | { Wm.src = Wm.Kind.Pull_request pr; changes; run_type; hash = ref_; run_id; _ } ->
+        let module Status = Terrat_commit_check.Status in
+        match (old_wm, wm) with
+        | ( { Wm.src = Wm.Kind.Pull_request pr; run_id; hash = ref_; _ },
+            { Wm.src = Wm.Kind.Index _; _ } ) ->
             let open Abbs_future_combinators.Infix_result_monad in
-            let module Status = Terrat_commit_check.Status in
+            let repo = S.Pull_request.repo pr in
+            let check =
+              S.make_commit_check
+                ?run_id
+                ~description:"Running"
+                ~title:"terrateam index"
+                ~status:Status.Running
+                repo
+            in
+            create_client
+              (S.Event.Initiate.request_id t)
+              (S.Event.Initiate.config t)
+              (S.Pull_request.account pr)
+            >>= fun client -> create_commit_checks client repo (S.Ref.of_string ref_) [ check ]
+        | ( _,
+            {
+              Wm.src = Wm.Kind.Pull_request pr;
+              changes = _ :: _ as changes;
+              run_type;
+              hash = ref_;
+              run_id;
+              _;
+            } ) ->
+            let open Abbs_future_combinators.Infix_result_monad in
             let repo = S.Pull_request.repo pr in
             let unified_run_type =
               let module Urt = Terrat_work_manifest2.Unified_run_type in
@@ -3154,7 +3228,23 @@ module Make (S : S) = struct
               (S.Event.Initiate.config t)
               (S.Pull_request.account pr)
             >>= fun client -> create_commit_checks client repo (S.Ref.of_string ref_) checks
-        | _ -> Abb.Future.return (Ok ())
+        | _, { Wm.src = Wm.Kind.Pull_request pr; changes = []; run_type; hash = ref_; run_id; _ } ->
+            let open Abbs_future_combinators.Infix_result_monad in
+            let repo = S.Pull_request.repo pr in
+            let check =
+              S.make_commit_check
+                ?run_id
+                ~description:"Running"
+                ~title:"terrateam index"
+                ~status:Status.Running
+                repo
+            in
+            create_client
+              (S.Event.Initiate.request_id t)
+              (S.Event.Initiate.config t)
+              (S.Pull_request.account pr)
+            >>= fun client -> create_commit_checks client repo (S.Ref.of_string ref_) [ check ]
+        | _, _ -> Abb.Future.return (Ok ())
 
       let process_work_manifest t =
         let module Wm = Terrat_work_manifest2 in
@@ -3163,11 +3253,11 @@ module Make (S : S) = struct
             let open Abbs_future_combinators.Infix_result_monad in
             maybe_require_index_work_manifest t wm
             >>= function
-            | Some wm -> (
-                maybe_update_commit_checks t wm
+            | Some new_wm -> (
+                maybe_update_commit_checks t wm new_wm
                 >>= fun () ->
                 let open Abb.Future.Infix_monad in
-                S.Event.Initiate.of_work_manifest t wm
+                S.Event.Initiate.of_work_manifest t new_wm
                 >>= function
                 | Ok _ as ret -> Abb.Future.return ret
                 | Error (`Bad_glob_err (msg, _)) -> maybe_publish_msg t wm (Msg.Bad_glob msg)
@@ -3193,7 +3283,7 @@ module Make (S : S) = struct
                     >>= function
                     | [] -> (
                         let open Abbs_future_combinators.Infix_result_monad in
-                        maybe_update_commit_checks t wm
+                        maybe_update_commit_checks t wm wm
                         >>= fun () ->
                         let open Abb.Future.Infix_monad in
                         S.Event.Initiate.of_work_manifest t wm
@@ -3208,7 +3298,7 @@ module Make (S : S) = struct
         | { Wm.run_type = Wm.Run_type.(Autoapply | Apply); _ } as wm -> (
             let open Abbs_future_combinators.Infix_result_monad in
             (* TODO this might not be right *)
-            maybe_update_commit_checks t wm
+            maybe_update_commit_checks t wm wm
             >>= fun () ->
             let open Abb.Future.Infix_monad in
             S.Event.Initiate.of_work_manifest t wm
@@ -3433,13 +3523,21 @@ module Make (S : S) = struct
 
     let create_failed_commit_checks t client work_manifest =
       let module Wm = Terrat_work_manifest2 in
+      let module Status = Terrat_commit_check.Status in
+      let ref_ = S.Ref.of_string work_manifest.Wm.hash in
+      let repo = get_repo work_manifest in
       match work_manifest.Wm.changes with
       | [] ->
-          (* Don't create anything if no dirspaces exist *)
-          Abb.Future.return (Ok ())
+          (* No changes, means this is an index run *)
+          let check =
+            S.make_commit_check
+              ~description:"Failed"
+              ~title:"terrateam index"
+              ~status:Status.Failed
+              repo
+          in
+          create_commit_checks client repo ref_ [ check ]
       | changes ->
-          let module Status = Terrat_commit_check.Status in
-          let repo = get_repo work_manifest in
           let unified_run_type =
             let module Urt = Terrat_work_manifest2.Unified_run_type in
             work_manifest.Wm.run_type |> Urt.of_run_type |> Urt.to_string
@@ -3471,55 +3569,13 @@ module Make (S : S) = struct
               changes
           in
           let checks = aggregate @ dirspace_checks in
-          create_commit_checks client repo (S.Ref.of_string work_manifest.Wm.hash) checks
+          create_commit_checks client repo ref_ checks
 
-    let create_commit_checks t client work_manifest =
-      let module Wm = Terrat_work_manifest2 in
-      match work_manifest.Wm.changes with
-      | [] ->
-          (* Don't create anything if no dirspaces exist *)
-          Abb.Future.return (Ok ())
-      | changes ->
-          let module Status = Terrat_commit_check.Status in
-          let repo = get_repo work_manifest in
-          let unified_run_type =
-            let module Urt = Terrat_work_manifest2.Unified_run_type in
-            work_manifest.Wm.run_type |> Urt.of_run_type |> Urt.to_string
-          in
-          let aggregate =
-            [
-              S.make_commit_check
-                ~description:"Queued"
-                ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
-                ~status:Status.Queued
-                repo;
-              S.make_commit_check
-                ~description:"Queued"
-                ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
-                ~status:Status.Queued
-                repo;
-            ]
-          in
-          let dirspace_checks =
-            let module Ds = Terrat_change.Dirspace in
-            let module Dsf = Terrat_change.Dirspaceflow in
-            CCList.map
-              (fun { Dsf.dirspace = { Ds.dir; workspace; _ }; _ } ->
-                S.make_commit_check
-                  ~description:"Queued"
-                  ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
-                  ~status:Status.Queued
-                  repo)
-              changes
-          in
-          let checks = aggregate @ dirspace_checks in
-          create_commit_checks client repo (S.Ref.of_string work_manifest.Wm.hash) checks
-
-    let make_commit_checks =
+    let make_failed_commit_checks_fun =
       let module Wm = Terrat_work_manifest2 in
       function
-      | { Wm.src = Wm.Kind.Pull_request _; _ } -> true
-      | { Wm.src = Wm.Kind.(Drift _ | Index _); _ } -> false
+      | { Wm.src = Wm.Kind.Pull_request _; _ } -> create_failed_commit_checks
+      | { Wm.src = Wm.Kind.(Drift _ | Index _); _ } -> fun _ _ _ -> Abb.Future.return (Ok ())
 
     let rec eval' t =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -3531,13 +3587,11 @@ module Make (S : S) = struct
           let open Abb.Future.Infix_monad in
           run_work_manifest t client work_manifest
           >>= function
-          | Ok () when make_commit_checks work_manifest ->
-              Abbs_future_combinators.ignore (create_commit_checks t client work_manifest)
-              >>= fun () -> eval' t
-          | Error `Error when make_commit_checks work_manifest ->
-              Abbs_future_combinators.ignore (create_failed_commit_checks t client work_manifest)
-              >>= fun () -> eval' t
-          | Ok () | Error `Error -> eval' t)
+          | Ok () -> eval' t
+          | Error `Error ->
+              let commit_checks_fun = make_failed_commit_checks_fun work_manifest in
+              Abbs_future_combinators.ignore (commit_checks_fun t client work_manifest)
+              >>= fun () -> eval' t)
       | None -> Abb.Future.return (Ok (S.Runner.completed t))
 
     let eval t =
