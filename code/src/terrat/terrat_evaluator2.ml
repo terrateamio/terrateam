@@ -305,7 +305,10 @@ module type S = sig
   val fetch_remote_repo : Client.t -> Repo.t -> (Remote_repo.t, [> `Error ]) result Abb.Future.t
 
   val fetch_repo_config :
-    Client.t -> Repo.t -> Ref.t -> (Terrat_repo_config.Version_1.t, [> `Error ]) result Abb.Future.t
+    Client.t ->
+    Repo.t ->
+    Ref.t ->
+    (Terrat_repo_config.Version_1.t, [> `Parse_err of string ]) result Abb.Future.t
 
   val fetch_tree : Client.t -> Repo.t -> Ref.t -> (string list, [> `Error ]) result Abb.Future.t
 
@@ -1763,11 +1766,51 @@ module Make (S : S) = struct
             Logs.err (fun m ->
                 m "EVALUATOR : %s : DB : %a" (S.Event.Result.request_id t) Pgsql_pool.pp_err err);
             Abb.Future.return (Error `Error)
+        | Error (`Parse_err _) -> Abb.Future.return (Error `Error)
         | Error `Error -> Abb.Future.return (Error `Error)
     end
 
     module Repo_config = struct
       let eval' t =
+        let run client pull_request =
+          let open Abbs_future_combinators.Infix_result_monad in
+          let account = S.Event.Repo_config.account t in
+          let repo = S.Event.Repo_config.repo t in
+          let branch_ref = S.Pull_request.branch_ref pull_request in
+          Abbs_future_combinators.Infix_result_app.(
+            (fun repo_config repo_tree index -> (repo_config, repo_tree, index))
+            <$> fetch_repo_config client repo branch_ref
+            <*> fetch_tree client repo branch_ref
+            <*> S.Event.Repo_config.with_db t ~f:(fun db -> query_index db account branch_ref))
+          >>= fun (repo_config, repo_tree, index) ->
+          let index =
+            let module V1 = Terrat_repo_config.Version_1 in
+            match repo_config with
+            | { V1.indexer = Some { V1.Indexer.enabled = true; _ }; _ } ->
+                CCOption.get_or ~default:Terrat_change_match.Index.empty index
+            | _ -> Terrat_change_match.Index.empty
+          in
+          let publish =
+            S.Publish_msg.make
+              ~client
+              ~pull_number:(S.Pull_request.id pull_request)
+              ~repo
+              ~user:(S.Event.Repo_config.user t)
+              ()
+          in
+          match
+            Terrat_change_match.synthesize_dir_config ~index ~file_list:repo_tree repo_config
+          with
+          | Ok dirs ->
+              S.Publish_msg.publish_msg publish (Msg.Repo_config (repo_config, dirs))
+              >>= fun () -> Abb.Future.return (Ok (S.Event.Repo_config.noop t))
+          | Error (`Bad_glob s) ->
+              let open Abb.Future.Infix_monad in
+              Logs.err (fun m ->
+                  m "EVALUATOR : %s : BAD_GLOB : %s" (S.Event.Repo_config.request_id t) s);
+              Abbs_future_combinators.ignore (S.Publish_msg.publish_msg publish (Msg.Bad_glob s))
+              >>= fun () -> Abb.Future.return (Error `Error)
+        in
         let open Abbs_future_combinators.Infix_result_monad in
         let account = S.Event.Repo_config.account t in
         let repo = S.Event.Repo_config.repo t in
@@ -1775,38 +1818,23 @@ module Make (S : S) = struct
         >>= fun client ->
         fetch_pull_request account client repo (S.Event.Repo_config.pull_number t)
         >>= fun pull_request ->
-        let branch_ref = S.Pull_request.branch_ref pull_request in
-        Abbs_future_combinators.Infix_result_app.(
-          (fun repo_config repo_tree index -> (repo_config, repo_tree, index))
-          <$> fetch_repo_config client repo branch_ref
-          <*> fetch_tree client repo branch_ref
-          <*> S.Event.Repo_config.with_db t ~f:(fun db -> query_index db account branch_ref))
-        >>= fun (repo_config, repo_tree, index) ->
-        let index =
-          let module V1 = Terrat_repo_config.Version_1 in
-          match repo_config with
-          | { V1.indexer = Some { V1.Indexer.enabled = true; _ }; _ } ->
-              CCOption.get_or ~default:Terrat_change_match.Index.empty index
-          | _ -> Terrat_change_match.Index.empty
-        in
-        let publish =
-          S.Publish_msg.make
-            ~client
-            ~pull_number:(S.Pull_request.id pull_request)
-            ~repo
-            ~user:(S.Event.Repo_config.user t)
-            ()
-        in
-        match Terrat_change_match.synthesize_dir_config ~index ~file_list:repo_tree repo_config with
-        | Ok dirs ->
-            S.Publish_msg.publish_msg publish (Msg.Repo_config (repo_config, dirs))
-            >>= fun () -> Abb.Future.return (Ok (S.Event.Repo_config.noop t))
-        | Error (`Bad_glob s) ->
-            let open Abb.Future.Infix_monad in
-            Logs.err (fun m ->
-                m "EVALUATOR : %s : BAD_GLOB : %s" (S.Event.Repo_config.request_id t) s);
-            Abbs_future_combinators.ignore (S.Publish_msg.publish_msg publish (Msg.Bad_glob s))
+        let open Abb.Future.Infix_monad in
+        run client pull_request
+        >>= function
+        | Ok _ as ret -> Abb.Future.return ret
+        | Error (`Parse_err err) ->
+            let publish =
+              S.Publish_msg.make
+                ~client
+                ~pull_number:(S.Pull_request.id pull_request)
+                ~repo
+                ~user:(S.Event.Repo_config.user t)
+                ()
+            in
+            Abbs_future_combinators.ignore
+              (S.Publish_msg.publish_msg publish (Msg.Repo_config_parse_failure err))
             >>= fun () -> Abb.Future.return (Error `Error)
+        | Error (#Pgsql_pool.err | `Error) as err -> Abb.Future.return err
 
       let eval t =
         let open Abb.Future.Infix_monad in
@@ -2862,6 +2890,10 @@ module Make (S : S) = struct
                               err);
                         Abbs_future_combinators.ignore (publish_msg t (Msg.Tag_query_err err))
                         >>= fun () -> Abb.Future.return (Error `Error)
+                    | Error (`Parse_err err) ->
+                        Abbs_future_combinators.ignore
+                          (publish_msg t (Msg.Repo_config_parse_failure err))
+                        >>= fun () -> Abb.Future.return (Error `Error)
                     | Error (`No_matching_dest_branch pull_request) ->
                         handle_dest_branch_err t pull_request
                     | Error (`No_matching_source_branch pull_request) ->
@@ -3266,6 +3298,7 @@ module Make (S : S) = struct
                   Terrat_tag_query_ast.pp_err
                   err);
             Abb.Future.return (Error `Error)
+        | Error (`Parse_err _) -> Abb.Future.return (Error `Error)
     end
 
     module Unlock = struct
@@ -3341,6 +3374,9 @@ module Make (S : S) = struct
         eval' t
         >>= function
         | Ok _ as ret -> Abb.Future.return ret
+        | Error (`Parse_err err) ->
+            Abbs_future_combinators.ignore (publish_msg t (Msg.Repo_config_parse_failure err))
+            >>= fun () -> Abb.Future.return (Error `Error)
         | Error `Error -> Abb.Future.return (Error `Error)
     end
 

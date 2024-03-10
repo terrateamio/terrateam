@@ -168,7 +168,10 @@ module type S = sig
   val fetch_remote_repo : Client.t -> Repo.t -> (Remote_repo.t, [> `Error ]) result Abb.Future.t
 
   val fetch_repo_config :
-    Client.t -> Repo.t -> Ref.t -> (Terrat_repo_config.Version_1.t, [> `Error ]) result Abb.Future.t
+    Client.t ->
+    Repo.t ->
+    Ref.t ->
+    (Terrat_repo_config.Version_1.t, [> `Parse_err of string ]) result Abb.Future.t
 
   val fetch_tree : Client.t -> Repo.t -> Ref.t -> (string list, [> `Error ]) result Abb.Future.t
 

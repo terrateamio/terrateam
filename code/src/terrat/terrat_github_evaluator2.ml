@@ -1194,7 +1194,7 @@ module S = struct
               client.Client.request_id
               Terrat_github.pp_fetch_repo_config_err
               err);
-        Abb.Future.return (Error `Error)
+        Abb.Future.return (Error (`Parse_err (Terrat_github.show_fetch_repo_config_err err)))
 
   let fetch_remote_repo client repo =
     let open Abb.Future.Infix_monad in
@@ -2674,6 +2674,7 @@ module S = struct
         >>= function
         | Ok _ as ret -> Abb.Future.return ret
         | Error (`Bad_glob msg) -> Abb.Future.return (Error (`Bad_glob_err (msg, ref_)))
+        | Error (`Parse_err _) -> Abb.Future.return (Error `Error)
         | Error `Error -> Abb.Future.return (Error `Error)
 
       let fetch_dirspaces client repo base_ref ref_ =
@@ -3976,6 +3977,9 @@ module S = struct
                 m "GITHUB_EVALUATOR : %s: ERROR : %a" t.request_id Pgsql_pool.pp_err err);
             Abb.Future.return (Error `Error)
         | Error `Error -> Abb.Future.return (Error `Error)
+        | Error (`Parse_err err) ->
+            Logs.err (fun m -> m "GITHUB_EVALUATOR : %s : PARSE_ERR : %s" t.request_id err);
+            Abb.Future.return (Error `Error)
     end
 
     module Index = struct
@@ -4110,6 +4114,9 @@ module S = struct
                 m "GITHUB_EVALUATOR : %s: ERROR : %a" t.request_id Pgsql_pool.pp_err err);
             Abb.Future.return (Error `Error)
         | Error `Error -> Abb.Future.return (Error `Error)
+        | Error (`Parse_err err) ->
+            Logs.err (fun m -> m "GITHUB_EVALUATOR : %s : PARSE_ERR : %s" t.request_id err);
+            Abb.Future.return (Error `Error)
 
       let drift_of_t t = { Drift.config = t.config; request_id = t.request_id; storage = t.storage }
     end
