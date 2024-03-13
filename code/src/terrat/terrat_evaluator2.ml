@@ -2718,11 +2718,7 @@ module Make (S : S) = struct
              ~file_list:repo_tree
              repo_config)
         >>= fun dirs ->
-        let matches =
-          Terrat_change_match.match_diff_list
-            dirs
-            (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) repo_tree)
-        in
+        let matches = Terrat_change_match.match_diff_list dirs (S.Pull_request.diff pull_request) in
         Abb.Future.return (dirspaceflows_of_changes repo_config matches)
         >>= function
         | [] ->
