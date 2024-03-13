@@ -1636,7 +1636,7 @@ module Make (S : S) = struct
         let open Abbs_future_combinators.Infix_result_monad in
         S.Event.Result.with_db t ~f:(fun db -> query_unapplied_dirspaces db pr)
         >>= function
-        | [] -> (
+        | [] when Wm.Unified_run_type.of_run_type wm.Wm.run_type = Wm.Unified_run_type.Apply -> (
             Logs.info (fun m ->
                 m
                   "EVALUATOR : %s : ALL_DIRSPACES_APPLIED : %a"
@@ -1660,7 +1660,7 @@ module Make (S : S) = struct
                 | Ok () -> Abb.Future.return (Ok ())
                 | Error _ -> failwith "nyi")
             | _ -> Abb.Future.return (Ok ()))
-        | _ :: _ -> Abb.Future.return (Ok ())
+        | [] | _ :: _ -> Abb.Future.return (Ok ())
 
       let maybe_reconcile_drift db t drift work_manifest =
         let module Wm = Terrat_work_manifest2 in
