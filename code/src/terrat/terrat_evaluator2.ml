@@ -1407,7 +1407,17 @@ module Make (S : S) = struct
         S.Event.Index.with_db t ~f:(fun db ->
             create_work_manifest db work_manifest
             >>= fun work_manifest -> update_work_manifest db work_manifest)
-        >>= fun _ -> Abb.Future.return (Ok (S.Event.Index.noop t))
+        >>= fun _ ->
+        let module Status = Terrat_commit_check.Status in
+        let check =
+          S.make_commit_check
+            ~description:"Queued"
+            ~title:"terrateam index"
+            ~status:Status.Queued
+            repo
+        in
+        create_commit_checks client repo (S.Pull_request.branch_ref pull_request) [ check ]
+        >>= fun () -> Abb.Future.return (Ok (S.Event.Index.noop t))
 
       let eval t =
         let open Abb.Future.Infix_monad in
@@ -1610,8 +1620,9 @@ module Make (S : S) = struct
             (Msg.Index_complete (S.Event.Result.index_results result))
         else Abb.Future.return (Ok ())
 
-      let maybe_publish_index_result t result idx =
+      let maybe_publish_index_result t result idx wm =
         let open Abbs_future_combinators.Infix_result_monad in
+        let module Wm = Terrat_work_manifest2 in
         match S.Index.pull_number idx with
         | Some pull_number ->
             create_client
@@ -1625,6 +1636,18 @@ module Make (S : S) = struct
             S.Publish_msg.publish_msg
               publish_msg
               (Msg.Index_complete (S.Event.Result.index_results result))
+            >>= fun () ->
+            let module Status = Terrat_commit_check.Status in
+            let repo = S.Index.repo idx in
+            let check =
+              S.make_commit_check
+                ?run_id:wm.Wm.run_id
+                ~description:(if success then "Completed" else "Failed")
+                ~title:"terrateam index"
+                ~status:(if success then Status.Completed else Status.Failed)
+                repo
+            in
+            create_commit_checks client repo (S.Ref.of_string wm.Wm.hash) [ check ]
         | None -> Abb.Future.return (Ok ())
 
       let automerge_config = function
@@ -1737,7 +1760,7 @@ module Make (S : S) = struct
                   (CCOption.map_or ~default:"" CCInt.to_string (S.Index.pull_number idx)));
             update_work_manifest_state db wm
             >>= fun _ ->
-            maybe_publish_index_result t result idx
+            maybe_publish_index_result t result idx wm
             >>= fun () -> Abb.Future.return (Ok (S.Event.Result.noop t))
         | `Index result, Wm.Kind.Pull_request pr ->
             Logs.info (fun m ->
@@ -2757,7 +2780,6 @@ module Make (S : S) = struct
                   (S.Event.Terraform.request_id t.event)
                   Uuidm.pp
                   work_manifest.Wm.id);
-            (* No changes, means this is an index run *)
             let check =
               S.make_commit_check
                 ~description:"Queued"
@@ -3239,6 +3261,22 @@ module Make (S : S) = struct
               (S.Event.Initiate.request_id t)
               (S.Event.Initiate.config t)
               (S.Pull_request.account pr)
+            >>= fun client -> create_commit_checks client repo (S.Ref.of_string ref_) [ check ]
+        | _, { Wm.src = Wm.Kind.Index idx; run_type; hash = ref_; run_id; _ } ->
+            let open Abbs_future_combinators.Infix_result_monad in
+            let repo = S.Index.repo idx in
+            let check =
+              S.make_commit_check
+                ?run_id
+                ~description:"Running"
+                ~title:"terrateam index"
+                ~status:Status.Running
+                repo
+            in
+            create_client
+              (S.Event.Initiate.request_id t)
+              (S.Event.Initiate.config t)
+              (S.Index.account idx)
             >>= fun client -> create_commit_checks client repo (S.Ref.of_string ref_) [ check ]
         | _, _ -> Abb.Future.return (Ok ())
 
