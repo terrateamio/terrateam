@@ -1603,6 +1603,16 @@ module Make (S : S) = struct
           (S.Pull_request.account pr)
         >>= fun client ->
         let success, failures = S.Event.Result.index_results result in
+        CCList.iter
+          (fun (file, lnum, err) ->
+            Logs.err (fun m ->
+                m
+                  "EVALUATOR : %s : INDEX_FAILURE : file=%s : lnum=%s : msg=%s"
+                  (S.Event.Result.request_id t)
+                  file
+                  (CCOption.map_or ~default:"" CCInt.to_string lnum)
+                  err))
+          failures;
         let check =
           S.make_commit_check
             ?run_id:wm.Wm.run_id
@@ -1630,6 +1640,17 @@ module Make (S : S) = struct
               (S.Event.Result.config t)
               (S.Index.account idx)
             >>= fun client ->
+            let success, failures = S.Event.Result.index_results result in
+            CCList.iter
+              (fun (file, lnum, err) ->
+                Logs.err (fun m ->
+                    m
+                      "EVALUATOR : %s : INDEX_FAILURE : file=%s : lnum=%s : msg=%s"
+                      (S.Event.Result.request_id t)
+                      file
+                      (CCOption.map_or ~default:"" CCInt.to_string lnum)
+                      err))
+              failures;
             let publish_msg =
               S.Publish_msg.make ~client ~pull_number ~repo:(S.Index.repo idx) ~user:"" ()
             in
@@ -1931,6 +1952,33 @@ module Make (S : S) = struct
         Abbs_time_it.run
           (log_time (S.Event.Terraform.request_id t.event) "PUBLISH_MSG")
           (fun () -> S.Publish_msg.publish_msg (S.Event.Terraform.publish_msg t.event t.client) msg)
+
+      let autoplan_enabled =
+        let module V1 = Terrat_repo_config_version_1 in
+        let module When_mod = Terrat_repo_config_when_modified in
+        let module When_mod_n = Terrat_repo_config_when_modified_nullable in
+        function
+        | { V1.when_modified; dirs; _ } ->
+            let global_autoplan =
+              match when_modified with
+              | None -> true
+              | Some { When_mod.autoplan; _ } -> autoplan
+            in
+            let dirs_autoplan =
+              match dirs with
+              | None -> false
+              | Some { V1.Dirs.additional; _ } ->
+                  let module D = Terrat_repo_config_dir in
+                  (* A dir has autoplan enabled if it explicitly sets it,
+                     otherwise it's the global value *)
+                  CCList.exists
+                    (function
+                      | _, { D.when_modified = Some { When_mod_n.autoplan = Some autoplan; _ }; _ }
+                        -> autoplan
+                      | _ -> global_autoplan)
+                    (Json_schema.String_map.bindings additional)
+            in
+            global_autoplan || dirs_autoplan
 
       let fetch_change_data t client remote_repo pull_request =
         let open Abbs_future_combinators.Infix_result_monad in
@@ -2823,8 +2871,11 @@ module Make (S : S) = struct
         | ( ({ V1.enabled = true; indexer = Some { V1.Indexer.enabled = true; _ }; _ } as repo_config),
             repo_default_config,
             repo_tree,
-            None ) ->
-            (* Index required but does not exist *)
+            None )
+          when (S.Event.Terraform.tf_operation t.event = Tf_operation.(Plan Auto))
+               && autoplan_enabled repo_config ->
+            (* Index is required. But we only have to index if autoplan is
+               enabled for any directory *)
             eval_index t remote_repo repo_config repo_default_config repo_tree pull_request
         | ({ V1.enabled = true; _ } as repo_config), repo_default_config, repo_tree, index ->
             eval_change t remote_repo repo_config repo_default_config repo_tree pull_request index
