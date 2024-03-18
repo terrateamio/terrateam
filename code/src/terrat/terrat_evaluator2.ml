@@ -1702,7 +1702,7 @@ module Make (S : S) = struct
                 >>= function
                 | Ok () when delete_branch -> delete_pull_request_branch client pr
                 | Ok () -> Abb.Future.return (Ok ())
-                | Error _ -> failwith "nyi")
+                | Error `Error -> Abb.Future.return (Ok ()))
             | _ -> Abb.Future.return (Ok ()))
         | [] | _ :: _ -> Abb.Future.return (Ok ())
 
