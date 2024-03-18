@@ -139,6 +139,12 @@
         @apply flex flex-row justify-end items-center gap-x-6;
     }
 
+    .header .right .install {
+        @apply flex flex-row justify-center items-center gap-x-1;
+        @apply text-xl;
+        @apply text-white;
+    }
+
     .header .right .installation {
         @apply w-full lg:w-auto lg:ml-auto;
         @apply flex flex-row gap-x-4 items-center;

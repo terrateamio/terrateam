@@ -45,100 +45,115 @@ let nav_bar state =
   nav_bar_div
 
 let run' state =
+  let open Abb_js.Future.Infix_monad in
   let consumed_path = Brtl_js2.State.consumed_path state in
   let app_state = Brtl_js2.State.app_state state in
+  let client = Terrat_ui_js_state.client app_state in
   let user = Terrat_ui_js_state.user app_state in
   let avatar_url = CCOption.get_or ~default:"" user.Terrat_api_components.User.avatar_url in
   let nav_bar_div = nav_bar state in
   let installation_sel_el = installation_sel state in
-  Abb_js.Future.return
-    (Brtl_js2.Output.const
-       Brtl_js2.Brr.El.
-         [
-           Brtl_js2.Router_output.const
-             state
-             (div ~at:At.[ class' (Jstr.v "notifications") ] [])
-             Terrat_ui_js_comp_notifications.run;
-           div
-             ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "content") ]
+  Terrat_ui_js_client.server_config client
+  >>= function
+  | Ok server_config ->
+      let module C = Terrat_api_components_server_config in
+      Abb_js.Future.return
+        (Brtl_js2.Output.const
+           Brtl_js2.Brr.El.
              [
+               Brtl_js2.Router_output.const
+                 state
+                 (div ~at:At.[ class' (Jstr.v "notifications") ] [])
+                 Terrat_ui_js_comp_notifications.run;
                div
-                 ~at:At.[ class' (Jstr.v "header-outer") ]
+                 ~at:At.[ class' (Jstr.v "content") ]
                  [
                    div
-                     ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "header") ]
+                     ~at:At.[ class' (Jstr.v "header-outer") ]
                      [
                        div
-                         ~at:At.[ class' (Jstr.v "left") ]
+                         ~at:At.[ class' (Jstr.v "header") ]
                          [
-                           img
-                             ~at:
-                               Brtl_js2.Brr.At.
-                                 [ src (Jstr.v "/assets/logo.png"); class' (Jstr.v "h-9") ]
-                             ();
                            div
-                             ~at:At.[ class' (Jstr.v "links") ]
+                             ~at:At.[ class' (Jstr.v "left") ]
                              [
+                               img
+                                 ~at:At.[ src (Jstr.v "/assets/logo.png"); class' (Jstr.v "h-9") ]
+                                 ();
                                div
+                                 ~at:At.[ class' (Jstr.v "links") ]
                                  [
-                                   a
-                                     ~at:
-                                       At.
-                                         [
-                                           v (Jstr.v "target") (Jstr.v "_blank");
-                                           href (Jstr.v "https://terrateam.io/docs");
-                                         ]
-                                     [ txt' "Docs" ];
-                                 ];
-                               div
-                                 [
-                                   a
-                                     ~at:
-                                       At.
-                                         [
-                                           v (Jstr.v "target") (Jstr.v "_blank");
-                                           href (Jstr.v "https://terrateam.io/support");
-                                         ]
-                                     [ txt' "Support" ];
-                                 ];
-                               div
-                                 [
-                                   a
-                                     ~at:
-                                       At.
-                                         [
-                                           v (Jstr.v "target") (Jstr.v "_blank");
-                                           href (Jstr.v "https://terrateam.io/slack");
-                                         ]
-                                     [ txt' "Slack" ];
+                                   div
+                                     [
+                                       a
+                                         ~at:
+                                           At.
+                                             [
+                                               v (Jstr.v "target") (Jstr.v "_blank");
+                                               href (Jstr.v "https://terrateam.io/docs");
+                                             ]
+                                         [ txt' "Docs" ];
+                                     ];
+                                   div
+                                     [
+                                       a
+                                         ~at:
+                                           At.
+                                             [
+                                               v (Jstr.v "target") (Jstr.v "_blank");
+                                               href (Jstr.v "https://terrateam.io/support");
+                                             ]
+                                         [ txt' "Support" ];
+                                     ];
+                                   div
+                                     [
+                                       a
+                                         ~at:
+                                           At.
+                                             [
+                                               v (Jstr.v "target") (Jstr.v "_blank");
+                                               href (Jstr.v "https://terrateam.io/slack");
+                                             ]
+                                         [ txt' "Slack" ];
+                                     ];
                                  ];
                              ];
-                         ];
-                       div
-                         ~at:At.[ class' (Jstr.v "right") ]
-                         [
                            div
-                             ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "installation") ]
-                             [ installation_sel_el ];
-                           div
-                             ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "avatar") ]
-                             [ img ~at:Brtl_js2.Brr.At.[ src (Jstr.v avatar_url) ] () ];
+                             ~at:At.[ class' (Jstr.v "right") ]
+                             [
+                               a
+                                 ~at:
+                                   At.
+                                     [
+                                       class' (Jstr.v "install");
+                                       href (Jstr.v server_config.C.github_app_url);
+                                     ]
+                                 [
+                                   span ~at:At.[ class' (Jstr.v "material-icons") ] [ txt' "add" ];
+                                   span [ txt' "Install" ];
+                                 ];
+                               div ~at:At.[ class' (Jstr.v "installation") ] [ installation_sel_el ];
+                               div
+                                 ~at:At.[ class' (Jstr.v "avatar") ]
+                                 [ img ~at:At.[ src (Jstr.v avatar_url) ] () ];
+                             ];
                          ];
                      ];
+                   nav_bar_div;
+                   Brtl_js2.Router_output.create
+                     state
+                     (div ~at:At.[ class' (Jstr.v "main-content") ] [])
+                     Brtl_js2_rtng.
+                       [
+                         Rt.audit_trail consumed_path --> Terrat_ui_js_comp_audit_trail.run;
+                         Rt.repo_new consumed_path --> Terrat_ui_js_comp_repo_new.run;
+                         Rt.repos_refresh consumed_path --> Terrat_ui_js_comp_repos_refresh.run;
+                         Rt.main consumed_path --> Terrat_ui_js_comp_repos.run;
+                       ];
                  ];
-               nav_bar_div;
-               Brtl_js2.Router_output.create
-                 state
-                 (div ~at:Brtl_js2.Brr.At.[ class' (Jstr.v "main-content") ] [])
-                 Brtl_js2_rtng.
-                   [
-                     Rt.audit_trail consumed_path --> Terrat_ui_js_comp_audit_trail.run;
-                     Rt.repo_new consumed_path --> Terrat_ui_js_comp_repo_new.run;
-                     Rt.repos_refresh consumed_path --> Terrat_ui_js_comp_repos_refresh.run;
-                     Rt.main consumed_path --> Terrat_ui_js_comp_repos.run;
-                   ];
-             ];
-         ])
+             ])
+  | Error _ ->
+      Abb_js.Future.return (Brtl_js2.Output.const Brtl_js2.Brr.El.[ txt' "Error loading site" ])
 
 let ph_loading =
   Brtl_js2.Brr.El.
