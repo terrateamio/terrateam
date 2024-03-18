@@ -3426,7 +3426,7 @@ module S = struct
                  -> Some has_changes
                | _ -> None)
 
-      let create_run_output ~view results work_manifest =
+      let create_run_output ~view request_id results work_manifest =
         let module Wm = Terrat_work_manifest2 in
         let module Wmr = Terrat_api_components.Work_manifest_dirspace_result in
         let module R = Terrat_api_components_work_manifest_tf_operation_result in
@@ -3629,13 +3629,13 @@ module S = struct
         match Snabela.apply tmpl kv with
         | Ok body -> body
         | Error (#Snabela.err as err) ->
-            Logs.err (fun m -> m "GITHUB_EVALUATOR : ERROR : %s" (Snabela.show_err err));
+            Logs.err (fun m -> m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Snabela.pp_err err);
             assert false
 
       let rec iterate_comment_posts ?(view = `Full) t results pull_request work_manifest =
         let module Wm = Terrat_work_manifest2 in
         let open Abbs_future_combinators.Infix_result_monad in
-        let output = create_run_output ~view results work_manifest in
+        let output = create_run_output ~view t.request_id results work_manifest in
         Metrics.Run_output_histogram.observe
           (Metrics.run_output_chars ~r:work_manifest.Wm.run_type ~c:(view = `Compact))
           (CCFloat.of_int (CCString.length output));
