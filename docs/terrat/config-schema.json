@@ -229,6 +229,10 @@
           "type": "string"
         },
         "tf_version": {
+          "default": "latest",
+          "type": "string"
+        },
+        "tf_cmd": {
           "default": "terraform",
           "type": "string"
         },
