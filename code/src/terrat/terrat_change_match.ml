@@ -15,10 +15,13 @@ module Index = struct
     type t = Module of string
   end
 
-  type t = Dep.t list String_map.t
+  type t = {
+    deps : Dep.t list String_map.t;
+    symlinks : (string * string) list;
+  }
 
-  let empty = String_map.empty
-  let make = String_map.of_list
+  let empty = { symlinks = []; deps = String_map.empty }
+  let make ~symlinks deps = { symlinks; deps = String_map.of_list deps }
 end
 
 exception Bad_glob of string
@@ -201,7 +204,7 @@ module Dirs = struct
               (if String_set.mem dirname module_paths then []
                else
                  let file_patterns =
-                   match String_map.find_opt dirname index with
+                   match String_map.find_opt dirname index.Index.deps with
                    | Some mods ->
                        CCList.filter_map
                          (function
@@ -234,10 +237,15 @@ module Dirs = struct
   let yojson_of_stringmap m =
     `Assoc (CCList.map (fun (k, v) -> (k, Dir.to_yojson v)) (Json_schema.String_map.to_list m))
 
-  type t =
-    (Dir.t Json_schema.String_map.t
-    [@printer fun fmt v -> pp_t_printer fmt (Json_schema.String_map.to_list v)]
-    [@to_yojson yojson_of_stringmap])
+  let yojson_of_cctrie_string m = `String "opaque"
+
+  type t = {
+    symlinks : (string list CCTrie.String.t[@opaque] [@to_yojson yojson_of_cctrie_string]);
+    dirs :
+      (Dir.t Json_schema.String_map.t
+      [@printer fun fmt v -> pp_t_printer fmt (Json_schema.String_map.to_list v)]
+      [@to_yojson yojson_of_stringmap]);
+  }
   [@@deriving show, to_yojson]
 end
 
@@ -279,12 +287,28 @@ let all_dir_match_patterns =
      checking. *)
   CCList.for_all (CCString.prefix ~pre:"${DIR}/")
 
+let build_symlinks =
+  CCListLabels.fold_left
+    ~f:(fun acc (src, dst) ->
+      match CCTrie.String.find dst acc with
+      | Some srcs -> CCTrie.String.add dst (src :: srcs) acc
+      | None -> CCTrie.String.add dst [ src ] acc)
+    ~init:CCTrie.String.empty
+
+let map_symlink_file_path symlinks fpath =
+  match Iter.head (CCTrie.String.below fpath symlinks) with
+  | Some (dst, srcs) when CCString.prefix ~pre:dst fpath ->
+      CCList.map (fun src -> CCString.replace ~which:`Left ~sub:dst ~by:src fpath) srcs
+  | Some _ | None -> [ fpath ]
+
 (* Given a list of files and a repository configuration, create a directory
    configuration that matches every file with their specific configuration. *)
 let synthesize_dir_config' ~index ~file_list repo_config =
   let module C = Terrat_repo_config in
   let module Dir = Terrat_repo_config.Dir in
   let module Wm = Terrat_repo_config.When_modified in
+  let symlinks = build_symlinks index.Index.symlinks in
+  let file_list = CCList.flat_map (map_symlink_file_path symlinks) file_list in
   let dirs, default_when_modified =
     match repo_config with
     | { C.Version_1.dirs; when_modified; _ } ->
@@ -316,7 +340,7 @@ let synthesize_dir_config' ~index ~file_list repo_config =
                    Some (Dirs.Dir.process_relative_path (Filename.concat path mod_path)))
              values
            @ acc)
-         index
+         index.Index.deps
          [])
   in
   let non_glob_dirs =
@@ -371,7 +395,10 @@ let synthesize_dir_config' ~index ~file_list repo_config =
     |> CCFun.flip (String_map.fold remaining_dir_creator) []
     |> Json_schema.String_map.of_list
   in
-  Json_schema.String_map.union (fun _ v _ -> Some v) specified_dirs remaining_dirs
+  {
+    Dirs.dirs = Json_schema.String_map.union (fun _ v _ -> Some v) specified_dirs remaining_dirs;
+    symlinks;
+  }
 
 let synthesize_dir_config ~index ~file_list repo_config =
   try Ok (synthesize_dir_config' ~index ~file_list repo_config)
@@ -386,11 +413,11 @@ let match_filename_in_dirs dirs fnames =
      directory, we don't have to check any more files.  So we use a local
      exception as a means of local control flow to exit the fold early. *)
   let module Break = struct
-    exception R of (Dirs.Dir.t Json_schema.String_map.t * t list)
+    exception R of (Dirs.t * t list)
   end in
   Json_schema.String_map.fold
     (fun dirname
-         Dirs.Dir.{ create_and_select_workspace; file_pattern_matcher; when_modified; workspaces }
+         { Dirs.Dir.create_and_select_workspace; file_pattern_matcher; when_modified; workspaces }
          (dirs, mtchs) ->
       try
         let mtchs =
@@ -399,7 +426,7 @@ let match_filename_in_dirs dirs fnames =
               if file_pattern_matcher fname then
                 raise
                   (Break.R
-                     ( Json_schema.String_map.remove dirname dirs,
+                     ( { dirs with Dirs.dirs = Json_schema.String_map.remove dirname dirs.Dirs.dirs },
                        Json_schema.String_map.fold
                          (fun workspace Ws.Additional.{ tags } acc ->
                            let mtch =
@@ -419,7 +446,7 @@ let match_filename_in_dirs dirs fnames =
         in
         (dirs, mtchs)
       with Break.R acc -> acc)
-    dirs
+    dirs.Dirs.dirs
     (dirs, [])
 
 let files_of_diff = function
@@ -437,7 +464,7 @@ let match_dir_map dirs dir_map =
     let _, mtchs =
       String_map.fold
         (fun _ files (dirs, acc) ->
-          if String_map.is_empty dirs then
+          if String_map.is_empty dirs.Dirs.dirs then
             (* If there are no more directories to match against, return early *)
             raise (Break.R acc)
           else
@@ -452,6 +479,7 @@ let match_dir_map dirs dir_map =
 let match_diff_list dirs diff_list =
   diff_list
   |> CCList.flat_map files_of_diff
+  |> CCList.flat_map (map_symlink_file_path dirs.Dirs.symlinks)
   |> make_dir_map
   |> match_dir_map dirs
   |> CCList.map (fun ({ dirspace; _ } as mtch) -> (dirspace, mtch))
@@ -462,8 +490,8 @@ let match_diff_list dirs diff_list =
 let of_dirspace dirs (Terrat_change.Dirspace.{ dir; workspace } as dirspace) =
   let module Ws = Terrat_repo_config.Workspaces in
   let open CCOption.Infix in
-  Json_schema.String_map.find_opt dir dirs
-  >>= fun Dirs.Dir.{ create_and_select_workspace; when_modified; workspaces; _ } ->
+  Json_schema.String_map.find_opt dir dirs.Dirs.dirs
+  >>= fun { Dirs.Dir.create_and_select_workspace; when_modified; workspaces; _ } ->
   Json_schema.String_map.find_opt workspace (Ws.additional workspaces)
   >>= fun Ws.Additional.{ tags } ->
   Some { create_and_select_workspace; dirspace; tags = Terrat_tag_set.of_list tags; when_modified }

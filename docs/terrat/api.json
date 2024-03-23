@@ -833,6 +833,9 @@
           "success": {
             "type": "boolean"
           },
+          "symlinks": {
+            "$ref": "#/components/schemas/work-manifest-index-symlinks"
+          },
           "version": {
             "const": 1,
             "type": "integer"
@@ -843,6 +846,12 @@
           "success",
           "version"
         ],
+        "type": "object"
+      },
+      "work-manifest-index-symlinks": {
+        "additionalProperties": {
+          "type": "string"
+        },
         "type": "object"
       },
       "work-manifest-initiate": {

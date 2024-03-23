@@ -1157,7 +1157,7 @@ let test_relative_path_file_pattern_multiple_dots =
 let test_index_basic =
   Oth.test ~name:"Test basic index" (fun _ ->
       let module Idx = Terrat_change_match.Index in
-      let index = Idx.make [ ("tf", Idx.Dep.[ Module "../modules/foo" ]) ] in
+      let index = Idx.make ~symlinks:[] [ ("tf", Idx.Dep.[ Module "../modules/foo" ]) ] in
       let repo_config = CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson (`Assoc [])) in
       let file_list = [ "modules/foo/main.tf"; "tf/main.tf" ] in
       let dirs =
@@ -1175,7 +1175,7 @@ let test_index_basic =
 let test_index_with_dirs_section =
   Oth.test ~name:"Test index with dirs section" (fun _ ->
       let module Idx = Terrat_change_match.Index in
-      let index = Idx.make [ ("tf", Idx.Dep.[ Module "../modules/foo" ]) ] in
+      let index = Idx.make ~symlinks:[] [ ("tf", Idx.Dep.[ Module "../modules/foo" ]) ] in
       let repo_config =
         CCResult.get_exn
           (Terrat_repo_config.Version_1.of_yojson
@@ -1198,7 +1198,9 @@ let test_index_module_in_same_dir =
   Oth.test ~name:"Test basic index" (fun _ ->
       let module Idx = Terrat_change_match.Index in
       let index =
-        Idx.make [ ("tf", Idx.Dep.[ Module "./modules/foo" ]); ("tf/modules/foo", Idx.Dep.[]) ]
+        Idx.make
+          ~symlinks:[]
+          [ ("tf", Idx.Dep.[ Module "./modules/foo" ]); ("tf/modules/foo", Idx.Dep.[]) ]
       in
       let repo_config = CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson (`Assoc [])) in
       let file_list = [ "tf/modules/foo/main.tf"; "tf/main.tf" ] in
@@ -1206,6 +1208,58 @@ let test_index_module_in_same_dir =
         CCResult.get_exn (Terrat_change_match.synthesize_dir_config ~index ~file_list repo_config)
       in
       let diff = Terrat_change.Diff.[ Add { filename = "tf/modules/foo/main.tf" } ] in
+      let changes = Terrat_change_match.match_diff_list dirs diff in
+      assert (CCList.length changes = 1);
+      let dirspace = (CCList.hd changes).Terrat_change_match.dirspace in
+      assert (
+        Terrat_change.Dirspace.equal
+          dirspace
+          Terrat_change.Dirspace.{ dir = "tf"; workspace = "default" }))
+
+let test_index_symlinks =
+  Oth.test ~name:"Test basic symlinks" (fun _ ->
+      let module Idx = Terrat_change_match.Index in
+      let index =
+        Idx.make
+          ~symlinks:[ ("tf/modules/foo", "modules/foo") ]
+          [ ("tf", Idx.Dep.[ Module "./modules/foo" ]) ]
+      in
+      let repo_config = CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson (`Assoc [])) in
+      let file_list = [ "modules/foo/main.tf"; "tf/main.tf" ] in
+      let dirs =
+        CCResult.get_exn (Terrat_change_match.synthesize_dir_config ~index ~file_list repo_config)
+      in
+      let diff = Terrat_change.Diff.[ Add { filename = "modules/foo/main.tf" } ] in
+      let changes = Terrat_change_match.match_diff_list dirs diff in
+      assert (CCList.length changes = 1);
+      let dirspace = (CCList.hd changes).Terrat_change_match.dirspace in
+      assert (
+        Terrat_change.Dirspace.equal
+          dirspace
+          Terrat_change.Dirspace.{ dir = "tf"; workspace = "default" }))
+
+let test_index_symlinks_dir_config =
+  Oth.test ~name:"Test basic symlinks with dir config" (fun _ ->
+      let module Idx = Terrat_change_match.Index in
+      let index = Idx.make ~symlinks:[ ("tf/main.tf", "null/main.tf") ] [] in
+      let repo_config =
+        CCResult.get_exn
+          (Terrat_repo_config.Version_1.of_yojson
+             (`Assoc
+               [
+                 ( "dirs",
+                   `Assoc
+                     [
+                       ("null", `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ]);
+                     ] );
+               ]))
+      in
+      let file_list = [ "tf/main.tf"; "null/main.tf" ] in
+      let dirs =
+        CCResult.get_exn (Terrat_change_match.synthesize_dir_config ~index ~file_list repo_config)
+      in
+      print_endline (Terrat_change_match.Dirs.show dirs);
+      let diff = Terrat_change.Diff.[ Change { filename = "null/main.tf" } ] in
       let changes = Terrat_change_match.match_diff_list dirs diff in
       assert (CCList.length changes = 1);
       let dirspace = (CCList.hd changes).Terrat_change_match.dirspace in
@@ -1251,6 +1305,8 @@ let test =
       test_index_basic;
       test_index_with_dirs_section;
       test_index_module_in_same_dir;
+      test_index_symlinks;
+      test_index_symlinks_dir_config;
     ]
 
 let () =

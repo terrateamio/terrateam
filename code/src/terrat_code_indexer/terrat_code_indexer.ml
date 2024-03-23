@@ -13,7 +13,7 @@ module Cmdline = struct
     C.Cmd.v (C.Cmd.info "index" ~doc ~exits) C.Term.(const f $ paths)
 end
 
-let default_tf_matcher = Path_glob.Glob.parse "<*.tf>"
+let default_tf_matcher = Path_glob.Glob.parse "<**/*.tf>"
 
 module String_map = struct
   include CCMap.Make (CCString)
@@ -65,43 +65,61 @@ module Output = struct
   type t = {
     version : int;
     paths : Dep.t String_map.t;
+    symlinks : string String_map.t;
   }
   [@@deriving yojson]
 end
 
+(* Get the dirname but we want "foo" to translate to "" instead of "." *)
+let dirname file =
+  match Filename.dirname file with
+  | "." -> ""
+  | any -> any
+
 let rec concat_path f1 f2 =
   if CCString.prefix ~pre:"./" f2 then concat_path f1 (CCString.drop 2 f2)
-  else if CCString.prefix ~pre:"../" f2 then concat_path (Filename.dirname f1) (CCString.drop 3 f2)
+  else if CCString.prefix ~pre:"../" f2 then concat_path (dirname f1) (CCString.drop 3 f2)
   else Filename.concat f1 f2
 
+let rec process_symlinks path =
+  let files = Sys.readdir path |> CCArray.to_list |> CCList.map (Filename.concat path) in
+  CCListLabels.fold_left
+    ~f:(fun acc file ->
+      let stat = Unix.lstat file in
+      match stat.Unix.st_kind with
+      | Unix.S_LNK ->
+          let dst = Unix.readlink file in
+          String_map.add file (concat_path (dirname file) dst) acc
+      | Unix.S_DIR -> String_map.union (fun _ _ v -> Some v) acc (process_symlinks file)
+      | Unix.S_REG | Unix.S_CHR | Unix.S_BLK | Unix.S_FIFO | Unix.S_SOCK -> acc)
+    ~init:String_map.empty
+    files
+
 let rec process_path base path =
-  let files =
-    Sys.readdir path
-    |> CCArray.to_list
-    |> CCList.filter (Path_glob.Glob.eval default_tf_matcher)
-    |> CCList.map (Filename.concat path)
-  in
+  let files = Sys.readdir path |> CCArray.to_list |> CCList.map (Filename.concat path) in
   CCList.flat_map
-    (fun path ->
-      let contents = CCIO.with_in path CCIO.read_all in
-      match Hcl_ast.of_string contents with
-      | Ok ast ->
-          CCList.flat_map
-            (fun m ->
-              if Opentofu_mods.Module.is_source_local_path m then
-                [
-                  `Module
-                    (CCOption.map_or
-                       ~default:(Opentofu_mods.Module.source m)
-                       CCFun.(flip concat_path (Opentofu_mods.Module.source m))
-                       base);
-                ]
-                @ process_path
-                    (Some (Opentofu_mods.Module.source m))
-                    (concat_path (Filename.dirname path) (Opentofu_mods.Module.source m))
-              else [])
-            (Opentofu_mods.collect_modules ast)
-      | Error (`Error (pos, _, err)) -> [ `Error (path, pos, err) ])
+    (function
+      | path when Path_glob.Glob.eval default_tf_matcher path -> (
+          let contents = CCIO.with_in path CCIO.read_all in
+          match Hcl_ast.of_string contents with
+          | Ok ast ->
+              CCList.flat_map
+                (fun m ->
+                  if Opentofu_mods.Module.is_source_local_path m then
+                    [
+                      `Module
+                        (CCOption.map_or
+                           ~default:(Opentofu_mods.Module.source m)
+                           CCFun.(flip concat_path (Opentofu_mods.Module.source m))
+                           base);
+                    ]
+                    @ process_path
+                        (Some (Opentofu_mods.Module.source m))
+                        (concat_path (dirname path) (Opentofu_mods.Module.source m))
+                  else [])
+                (Opentofu_mods.collect_modules ast)
+          | Error (`Error (pos, _, err)) -> [ `Error (path, pos, err) ])
+      | path -> [])
     files
 
 let index paths =
@@ -133,6 +151,11 @@ let index paths =
                    ~init:Output.Dep.{ modules = String_set.empty; failures = String_map.empty }
                    (process_path None path) ))
              paths);
+      symlinks =
+        CCListLabels.fold_left
+          ~f:(fun acc path -> String_map.union (fun _ _ v -> Some v) acc (process_symlinks path))
+          ~init:String_map.empty
+          paths;
     }
   in
   print_endline (Yojson.Safe.pretty_to_string (Output.to_yojson output))

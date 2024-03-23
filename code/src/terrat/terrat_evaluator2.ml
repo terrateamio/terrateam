@@ -2892,6 +2892,177 @@ module Make (S : S) = struct
                 m "EVALUATOR : %s : NOOP : PR_CLOSED" (S.Event.Terraform.request_id t.event));
             Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
 
+      let work_manifest_base_of_pull_request_event t repo_config pull_request =
+        let module Wm = Terrat_work_manifest2 in
+        let open Abbs_future_combinators.Infix_result_monad in
+        fetch_tree
+          t.client
+          (S.Event.Terraform.repo t.event)
+          (S.Pull_request.branch_ref pull_request)
+        >>= fun repo_tree ->
+        Abb.Future.return
+          (Terrat_change_match.synthesize_dir_config
+             ~index:Terrat_change_match.Index.empty
+             ~file_list:repo_tree
+             repo_config)
+        >>= fun dirs ->
+        let matches =
+          Terrat_change_match.match_diff_list
+            dirs
+            (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) repo_tree)
+        in
+        Abb.Future.return (dirspaceflows_of_changes repo_config matches)
+        >>= fun dirspaceflows ->
+        let module Wm = Terrat_work_manifest2 in
+        let changes =
+          let module Dsf = Terrat_change.Dirspaceflow in
+          CCList.map
+            (fun ({ Dsf.workflow; _ } as dsf) ->
+              { dsf with Dsf.workflow = CCOption.map (fun Dsf.Workflow.{ idx; _ } -> idx) workflow })
+            dirspaceflows
+        in
+        let work_manifest_base =
+          {
+            Wm.base_hash = S.Ref.to_string (S.Pull_request.base_ref pull_request);
+            changes;
+            completed_at = None;
+            created_at = ();
+            denied_dirspaces = [];
+            hash = S.Ref.to_string (S.Pull_request.base_ref pull_request);
+            id = ();
+            run_id = ();
+            run_type = Wm.Run_type.Autoplan;
+            src =
+              Wm.Kind.Index
+                (S.Index.make
+                   ~pull_number:(S.Pull_request.id pull_request)
+                   ~account:(S.Pull_request.account pull_request)
+                   ~branch:(S.Pull_request.base_branch_name pull_request)
+                   ~repo:(S.Pull_request.repo pull_request)
+                   ());
+            state = ();
+            tag_query = Terrat_tag_query.any;
+            user = Some (S.Event.Terraform.user t.event);
+          }
+        in
+        S.Event.Terraform.with_db t.event ~f:(fun db ->
+            create_work_manifest db work_manifest_base
+            >>= fun work_manifest -> update_work_manifest db work_manifest)
+
+      let work_manifest_of_pull_request_event t pull_request =
+        let module Wm = Terrat_work_manifest2 in
+        let open Abbs_future_combinators.Infix_result_monad in
+        let work_manifest =
+          {
+            Wm.base_hash = S.Ref.to_string (S.Pull_request.base_ref pull_request);
+            changes = [];
+            completed_at = None;
+            created_at = ();
+            denied_dirspaces = [];
+            hash = S.Ref.to_string (S.Pull_request.branch_ref pull_request);
+            id = ();
+            run_id = ();
+            run_type = Tf_operation.to_run_type (S.Event.Terraform.tf_operation t.event);
+            src = Wm.Kind.Pull_request pull_request;
+            state = ();
+            tag_query = S.Event.Terraform.tag_query t.event;
+            user = Some (S.Event.Terraform.user t.event);
+          }
+        in
+        S.Event.Terraform.with_db t.event ~f:(fun db -> create_work_manifest db work_manifest)
+        >>= fun work_manifest ->
+        let module Status = Terrat_commit_check.Status in
+        let account = S.Pull_request.account pull_request in
+        let repo = S.Pull_request.repo pull_request in
+        Logs.info (fun m ->
+            m
+              "EVALUATOR : %s : INDEX_WORK_MANIFEST : id=%a"
+              (S.Event.Terraform.request_id t.event)
+              Uuidm.pp
+              work_manifest.Wm.id);
+        let check =
+          S.make_commit_check
+            ~config:(S.Event.Terraform.config t.event)
+            ~description:"Queued"
+            ~title:"terrateam index"
+            ~status:Status.Queued
+            ~work_manifest
+            account
+        in
+        create_commit_checks t.client repo (S.Pull_request.branch_ref pull_request) [ check ]
+        >>= fun () -> Abb.Future.return (Ok work_manifest)
+
+      let eval_index_dest_branch
+          t
+          remote_repo
+          repo_config
+          repo_default_config
+          repo_tree
+          pull_request =
+        let module Wm = Terrat_work_manifest2 in
+        let open Abbs_future_combinators.Infix_result_monad in
+        S.Event.Terraform.with_db t.event ~f:(fun db ->
+            query_index
+              db
+              (S.Event.Terraform.account t.event)
+              (S.Pull_request.base_ref pull_request))
+        >>= function
+        | Some index -> (
+            Abb.Future.return
+              (Terrat_change_match.synthesize_dir_config ~index ~file_list:repo_tree repo_config)
+            >>= fun dirs ->
+            let matches =
+              Terrat_change_match.match_diff_list dirs (S.Pull_request.diff pull_request)
+            in
+            Abb.Future.return (dirspaceflows_of_changes repo_config matches)
+            >>= function
+            | [] ->
+                Logs.info (fun m ->
+                    m "EVALUATOR : %s : INDEX : NO_CHANGES" (S.Event.Terraform.request_id t.event));
+                (* If there is no index to be generated, then follow through with
+                   the rest of the standard workflow, that way we get the rest of
+                   the processing and any error messages. *)
+                eval_change
+                  t
+                  remote_repo
+                  repo_config
+                  repo_default_config
+                  repo_tree
+                  pull_request
+                  None
+            | _ :: _ ->
+                work_manifest_of_pull_request_event t pull_request
+                >>= fun work_manifest ->
+                Abb.Future.return
+                  (Ok (S.Event.Terraform.created_work_manifest t.event work_manifest)))
+        | None ->
+            Abbs_future_combinators.Infix_result_app.(
+              (fun work_manifest_base work_manifest -> (work_manifest_base, work_manifest))
+              <$> work_manifest_base_of_pull_request_event t repo_default_config pull_request
+              <*> work_manifest_of_pull_request_event t pull_request)
+            >>= fun (work_manifest_base, work_manifest) ->
+            let module Status = Terrat_commit_check.Status in
+            let account = S.Pull_request.account pull_request in
+            let repo = S.Pull_request.repo pull_request in
+            Logs.info (fun m ->
+                m
+                  "EVALUATOR : %s : INDEX_WORK_MANIFEST_BASE : id=%a"
+                  (S.Event.Terraform.request_id t.event)
+                  Uuidm.pp
+                  work_manifest_base.Wm.id);
+            let check =
+              S.make_commit_check
+                ~config:(S.Event.Terraform.config t.event)
+                ~description:"Queued"
+                ~title:"terrateam index"
+                ~status:Status.Queued
+                ~work_manifest
+                account
+            in
+            create_commit_checks t.client repo (S.Pull_request.base_ref pull_request) [ check ]
+            >>= fun () ->
+            Abb.Future.return (Ok (S.Event.Terraform.created_work_manifest t.event work_manifest))
+
       let eval_index t remote_repo repo_config repo_default_config repo_tree pull_request =
         let open Abbs_future_combinators.Infix_result_monad in
         let module Wm = Terrat_work_manifest2 in
@@ -2905,53 +3076,21 @@ module Make (S : S) = struct
         Abb.Future.return (dirspaceflows_of_changes repo_config matches)
         >>= function
         | [] ->
+            (* If there are no changes, we're still not quite sure, because it
+               could be symlinks changes *)
             Logs.info (fun m ->
-                m "EVALUATOR : %s : INDEX : NO_CHANGES" (S.Event.Terraform.request_id t.event));
-            (* If there is no index to be generated, then follow through with
-               the rest of the standard workflow, that way we get the rest of
-               the processing and any error messages. *)
-            eval_change t remote_repo repo_config repo_default_config repo_tree pull_request None
+                m "EVALUATOR : %s : INDEX : EVAL_BASE" (S.Event.Terraform.request_id t.event));
+            eval_index_dest_branch
+              t
+              remote_repo
+              repo_config
+              repo_default_config
+              repo_tree
+              pull_request
         | _ :: _ ->
             (* Only do something if there are any matches *)
-            let work_manifest =
-              {
-                Wm.base_hash = S.Ref.to_string (S.Pull_request.base_ref pull_request);
-                changes = [];
-                completed_at = None;
-                created_at = ();
-                denied_dirspaces = [];
-                hash = S.Ref.to_string (S.Pull_request.branch_ref pull_request);
-                id = ();
-                run_id = ();
-                run_type = Tf_operation.to_run_type (S.Event.Terraform.tf_operation t.event);
-                src = Wm.Kind.Pull_request pull_request;
-                state = ();
-                tag_query = S.Event.Terraform.tag_query t.event;
-                user = Some (S.Event.Terraform.user t.event);
-              }
-            in
-            S.Event.Terraform.with_db t.event ~f:(fun db -> S.create_work_manifest db work_manifest)
+            work_manifest_of_pull_request_event t pull_request
             >>= fun work_manifest ->
-            let module Status = Terrat_commit_check.Status in
-            let account = S.Pull_request.account pull_request in
-            let repo = S.Pull_request.repo pull_request in
-            Logs.info (fun m ->
-                m
-                  "EVALUATOR : %s : INDEX_WORK_MANIFEST : id=%a"
-                  (S.Event.Terraform.request_id t.event)
-                  Uuidm.pp
-                  work_manifest.Wm.id);
-            let check =
-              S.make_commit_check
-                ~config:(S.Event.Terraform.config t.event)
-                ~description:"Queued"
-                ~title:"terrateam index"
-                ~status:Status.Queued
-                ~work_manifest
-                account
-            in
-            create_commit_checks t.client repo (S.Pull_request.branch_ref pull_request) [ check ]
-            >>= fun () ->
             Abb.Future.return (Ok (S.Event.Terraform.created_work_manifest t.event work_manifest))
 
       let run t =

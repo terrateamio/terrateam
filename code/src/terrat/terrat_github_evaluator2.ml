@@ -1242,11 +1242,19 @@ module S = struct
     | Ok (idx :: _) ->
         let module Idx = Terrat_code_idx in
         let module Paths = Terrat_api_components.Work_manifest_index_paths in
+        let module Symlinks = Terrat_api_components.Work_manifest_index_symlinks in
         let paths = Json_schema.String_map.to_list (Paths.additional idx.Idx.paths) in
+        let symlinks =
+          CCOption.map_or
+            ~default:[]
+            (fun idx -> Json_schema.String_map.to_list (Symlinks.additional idx))
+            idx.Idx.symlinks
+        in
         Abb.Future.return
           (Ok
              (Some
                 (Terrat_change_match.Index.make
+                   ~symlinks
                    (CCList.map
                       (fun (path, { Paths.Additional.modules; _ }) ->
                         (path, CCList.map (fun m -> Terrat_change_match.Index.Dep.Module m) modules))

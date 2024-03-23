@@ -16,7 +16,7 @@ module Index : sig
   type t
 
   val empty : t
-  val make : (string * Dep.t list) list -> t
+  val make : symlinks:(string * string) list -> (string * Dep.t list) list -> t
 end
 
 module Dirs : sig
