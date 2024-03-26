@@ -275,6 +275,7 @@ module type S = sig
   (* User notification *)
   val make_commit_check :
     ?run_id:string ->
+    config:Terrat_config.t ->
     description:string ->
     title:string ->
     status:Terrat_commit_check.Status.t ->
@@ -584,6 +585,7 @@ module type S = sig
     type t
     type r
 
+    val config : t -> Terrat_config.t
     val request_id : t -> string
     val completed : t -> r
 

@@ -412,6 +412,7 @@ module type S = sig
   (* User notification *)
   val make_commit_check :
     ?run_id:string ->
+    config:Terrat_config.t ->
     description:string ->
     title:string ->
     status:Terrat_commit_check.Status.t ->
@@ -721,6 +722,7 @@ module type S = sig
     type t
     type r
 
+    val config : t -> Terrat_config.t
     val request_id : t -> string
     val completed : t -> r
 
@@ -1411,6 +1413,7 @@ module Make (S : S) = struct
         let module Status = Terrat_commit_check.Status in
         let check =
           S.make_commit_check
+            ~config:(S.Event.Index.config t)
             ~description:"Queued"
             ~title:"terrateam index"
             ~status:Status.Queued
@@ -1549,12 +1552,14 @@ module Make (S : S) = struct
           [
             S.make_commit_check
               ?run_id
+              ~config:(S.Event.Result.config t)
               ~description:(description pre_hooks)
               ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
               ~status:(status pre_hooks)
               repo;
             S.make_commit_check
               ?run_id
+              ~config:(S.Event.Result.config t)
               ~description:(description post_hooks)
               ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
               ~status:(status post_hooks)
@@ -1567,6 +1572,7 @@ module Make (S : S) = struct
             (fun ({ Ds.dir; workspace }, success) ->
               S.make_commit_check
                 ?run_id
+                ~config:(S.Event.Result.config t)
                 ~description:(description success)
                 ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
                 ~status:(status success)
@@ -1616,6 +1622,7 @@ module Make (S : S) = struct
         let check =
           S.make_commit_check
             ?run_id:wm.Wm.run_id
+            ~config:(S.Event.Result.config t)
             ~description:(if success then "Completed" else "Failed")
             ~title:"terrateam index"
             ~status:(if success then Status.Completed else Status.Failed)
@@ -1663,6 +1670,7 @@ module Make (S : S) = struct
             let check =
               S.make_commit_check
                 ?run_id:wm.Wm.run_id
+                ~config:(S.Event.Result.config t)
                 ~description:(if success then "Completed" else "Failed")
                 ~title:"terrateam index"
                 ~status:(if success then Status.Completed else Status.Failed)
@@ -2064,7 +2072,7 @@ module Make (S : S) = struct
                     matches))
         | Tf_operation.Manual -> Abb.Future.return (Ok matches)
 
-      let create_queued_commit_checks client repo ref_ work_manifest =
+      let create_queued_commit_checks config client repo ref_ work_manifest =
         let module Wm = Terrat_work_manifest2 in
         let module Status = Terrat_commit_check.Status in
         match work_manifest.Wm.changes with
@@ -2077,11 +2085,13 @@ module Make (S : S) = struct
             let aggregate =
               [
                 S.make_commit_check
+                  ~config
                   ~description:"Queued"
                   ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
                   ~status:Status.Queued
                   repo;
                 S.make_commit_check
+                  ~config
                   ~description:"Queued"
                   ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
                   ~status:Status.Queued
@@ -2094,6 +2104,7 @@ module Make (S : S) = struct
               CCList.map
                 (fun { Dsf.dirspace = { Ds.dir; workspace; _ }; _ } ->
                   S.make_commit_check
+                    ~config
                     ~description:"Queued"
                     ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
                     ~status:Status.Queued
@@ -2183,6 +2194,7 @@ module Make (S : S) = struct
         update_work_manifest db work_manifest
         >>= fun work_manifest ->
         create_queued_commit_checks
+          (S.Event.Terraform.config t.event)
           t.client
           (S.Event.Terraform.repo t.event)
           (S.Pull_request.branch_ref pull_request)
@@ -2190,7 +2202,7 @@ module Make (S : S) = struct
         >>= fun () ->
         Abb.Future.return (Ok (S.Event.Terraform.created_work_manifest t.event work_manifest))
 
-      let maybe_create_pending_applies client pull_request = function
+      let maybe_create_pending_applies config client pull_request = function
         | [] ->
             (* No dirspaces, don't create anything *)
             Abb.Future.return (Ok ())
@@ -2221,6 +2233,7 @@ module Make (S : S) = struct
                      if (not autoapply) && not (String_set.mem name commit_check_titles) then
                        Some
                          (S.make_commit_check
+                            ~config
                             ~description:"Waiting"
                             ~title:(Printf.sprintf "terrateam apply: %s %s" dir workspace)
                             ~status:Terrat_commit_check.Status.Queued
@@ -2331,7 +2344,11 @@ module Make (S : S) = struct
                             repo_config.Rc.apply_requirements
                         in
                         (if apply_requirements.Ar.create_pending_apply_check then
-                           maybe_create_pending_applies t.client pull_request all_matches
+                           maybe_create_pending_applies
+                             (S.Event.Terraform.config t.event)
+                             t.client
+                             pull_request
+                             all_matches
                          else Abb.Future.return (Ok ()))
                         >>= fun () -> Abb.Future.return (Ok ret)
                     | `Conflicting_work_manifests wms ->
@@ -2830,6 +2847,7 @@ module Make (S : S) = struct
                   work_manifest.Wm.id);
             let check =
               S.make_commit_check
+                ~config:(S.Event.Terraform.config t.event)
                 ~description:"Queued"
                 ~title:"terrateam index"
                 ~status:Status.Queued
@@ -3237,6 +3255,7 @@ module Make (S : S) = struct
             let check =
               S.make_commit_check
                 ?run_id
+                ~config:(S.Event.Initiate.config t)
                 ~description:"Running"
                 ~title:"terrateam index"
                 ~status:Status.Running
@@ -3266,12 +3285,14 @@ module Make (S : S) = struct
               [
                 S.make_commit_check
                   ?run_id
+                  ~config:(S.Event.Initiate.config t)
                   ~description:"Running"
                   ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
                   ~status:Status.Running
                   repo;
                 S.make_commit_check
                   ?run_id
+                  ~config:(S.Event.Initiate.config t)
                   ~description:"Running"
                   ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
                   ~status:Status.Running
@@ -3285,6 +3306,7 @@ module Make (S : S) = struct
                 (fun { Dsf.dirspace = { Ds.dir; workspace; _ }; _ } ->
                   S.make_commit_check
                     ?run_id
+                    ~config:(S.Event.Initiate.config t)
                     ~description:"Running"
                     ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
                     ~status:Status.Running
@@ -3303,6 +3325,7 @@ module Make (S : S) = struct
             let check =
               S.make_commit_check
                 ?run_id
+                ~config:(S.Event.Initiate.config t)
                 ~description:"Running"
                 ~title:"terrateam index"
                 ~status:Status.Running
@@ -3319,6 +3342,7 @@ module Make (S : S) = struct
             let check =
               S.make_commit_check
                 ?run_id
+                ~config:(S.Event.Initiate.config t)
                 ~description:"Running"
                 ~title:"terrateam index"
                 ~status:Status.Running
@@ -3616,6 +3640,7 @@ module Make (S : S) = struct
           (* No changes, means this is an index run *)
           let check =
             S.make_commit_check
+              ~config:(S.Runner.config t)
               ~description:"Failed"
               ~title:"terrateam index"
               ~status:Status.Failed
@@ -3630,11 +3655,13 @@ module Make (S : S) = struct
           let aggregate =
             [
               S.make_commit_check
+                ~config:(S.Runner.config t)
                 ~description:"Failed"
                 ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
                 ~status:Status.Failed
                 repo;
               S.make_commit_check
+                ~config:(S.Runner.config t)
                 ~description:"Failed"
                 ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
                 ~status:Status.Failed
@@ -3647,6 +3674,7 @@ module Make (S : S) = struct
             CCList.map
               (fun { Dsf.dirspace = { Ds.dir; workspace; _ }; _ } ->
                 S.make_commit_check
+                  ~config:(S.Runner.config t)
                   ~description:"Failed"
                   ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
                   ~status:Status.Failed

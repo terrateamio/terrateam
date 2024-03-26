@@ -1664,16 +1664,22 @@ module S = struct
             m "GITHUB_EVALUATOR : %s : ERROR : %a" db.Db.request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
-  let make_commit_check ?run_id ~description ~title ~status repo =
+  let make_commit_check ?run_id ~config ~description ~title ~status repo =
     let details_url =
       match run_id with
       | Some run_id ->
           Printf.sprintf
-            "https://github.com/%s/%s/actions/runs/%s"
+            "%s/%s/%s/actions/runs/%s"
+            (Uri.to_string (Terrat_config.github_web_base_url config))
             repo.Repo.owner
             repo.Repo.name
             run_id
-      | None -> Printf.sprintf "https://github.com/%s/%s/actions" repo.Repo.owner repo.Repo.name
+      | None ->
+          Printf.sprintf
+            "%s/%s/%s/actions"
+            (Uri.to_string (Terrat_config.github_web_base_url config))
+            repo.Repo.owner
+            repo.Repo.name
     in
     Terrat_commit_check.make ~details_url ~description ~title ~status
 
@@ -4175,6 +4181,7 @@ module S = struct
           repo = repo.Repo.name;
         }
 
+    let config t = t.config
     let request_id t = t.request_id
     let completed _ = ()
 
