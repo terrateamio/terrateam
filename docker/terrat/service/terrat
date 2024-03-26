@@ -22,6 +22,7 @@ def setup_environment():
     os.environ['NGINX_STATUS_URI'] = 'http://localhost:8080/nginx_status'
     os.environ['TERRAT_PORT'] = '8180'
     os.environ.setdefault('GITHUB_WEBHOOK_URL_UPDATE', 'TRUE')
+    os.environ.setdefault(GITHUB_API_BASE_URL, 'https://api.github.com')
     os.environ.setdefault('INFRACOST_PRICING_API_ENDPOINT', '')
     os.environ.setdefault('SELF_HOSTED_INFRACOST_API_KEY', '')
 
