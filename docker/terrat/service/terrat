@@ -9,6 +9,7 @@ import time
 
 
 TERRAT_API_BASE = 'TERRAT_API_BASE'
+GITHUB_API_BASE_URL = 'GITHUB_API_BASE_URL'
 NGROK_ENDPOINT = 'NGROK_ENDPOINT'
 FLY_APP_NAME = 'FLY_APP_NAME'
 REQUIRED_ENV_KEYS = ['GITHUB_APP_PEM']
@@ -94,7 +95,7 @@ def update_github_webhook_url():
             'content_type': 'json',
             'url': webhook_url
         }
-        r = requests.patch('https://api.github.com/app/hook/config',
+        r = requests.patch(os.environ[GITHUB_API_BASE_URL] + '/app/hook/config',
                            json=payload,
                            headers=headers)
         print(r.content)
