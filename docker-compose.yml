@@ -67,6 +67,8 @@ services:
     command: ["http", "http://server:8080"]
     networks:
       - terrateam
+    environment:
+      NGROK_AUTHTOKEN: ""
 
 networks:
   terrateam:
