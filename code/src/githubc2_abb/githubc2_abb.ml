@@ -1,5 +1,6 @@
 module Http = Cohttp_abb.Make (Abb)
 
+let max_redirect_retries = 10
 let base_url = Uri.of_string "https://api.github.com/"
 
 let tls_config =
@@ -14,8 +15,8 @@ module Io = struct
   let ( >>= ) = Abb.Future.Infix_monad.( >>= )
   let return = Abb.Future.return
 
-  let call ?body ~headers ~meth uri =
-    let meth =
+  let rec call' ?body ~tries ~headers ~meth uri =
+    let meth' =
       match meth with
       | `Get -> `GET
       | `Delete -> `DELETE
@@ -23,15 +24,34 @@ module Io = struct
       | `Put -> `PUT
       | `Post -> `POST
     in
-    let headers = Cohttp.Header.of_list headers in
-    let body = CCOption.map Cohttp.Body.of_string body in
-    Http.Client.call ?body ~tls_config ~headers meth uri
+    let headers' = Cohttp.Header.of_list headers in
+    let body' = CCOption.map Cohttp.Body.of_string body in
+    Http.Client.call ?body:body' ~tls_config ~headers:headers' meth' uri
     >>= function
+    | Ok (resp, body')
+      when (resp.Http.Response.status = `See_other
+           || resp.Http.Response.status = `Moved_permanently
+           || resp.Http.Response.status = `Permanent_redirect
+           || resp.Http.Response.status = `Found)
+           && tries < max_redirect_retries -> (
+        match Cohttp.Header.get_location resp.Http.Response.headers with
+        | Some url -> call' ~tries:(tries + 1) ?body ~headers ~meth url
+        | None ->
+            let headers = resp |> Http.Response.headers |> Cohttp.Header.to_list in
+            let status = resp |> Http.Response.status |> Cohttp.Code.code_of_status in
+            return (Ok (Openapi.Response.make ~headers ~status body')))
+    | Ok (resp, body')
+      when resp.Http.Response.status = `See_other
+           || resp.Http.Response.status = `Moved_permanently
+           || resp.Http.Response.status = `Permanent_redirect
+           || resp.Http.Response.status = `Found -> failwith "redirect_limit"
     | Ok (resp, body) ->
         let headers = resp |> Http.Response.headers |> Cohttp.Header.to_list in
         let status = resp |> Http.Response.status |> Cohttp.Code.code_of_status in
         return (Ok (Openapi.Response.make ~headers ~status body))
     | Error err -> return (Error (`Io_err err))
+
+  let call ?body ~headers ~meth uri = call' ~tries:1 ?body ~headers ~meth uri
 end
 
 module Api = Openapi.Make (Io)
