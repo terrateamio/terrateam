@@ -2050,17 +2050,17 @@ module S = struct
                     list
                       (CCList.map
                          (fun Wm.{ created_at; run_type; state; src; _ } ->
-                           let pull_number, is_drift =
+                           let id, is_pr =
                              match src with
                              | Wm.Kind.Pull_request Pull_request.{ id; _ } ->
-                                 (CCInt.to_string id, false)
-                             | Wm.Kind.Drift _ -> ("drift", true)
+                                 (CCInt.to_string id, true)
+                             | Wm.Kind.Drift _ -> ("drift", false)
                              | Wm.Kind.Index _ -> ("index", false)
                            in
                            Map.of_list
                              [
-                               ("pull_number", string pull_number);
-                               ("is_drift", bool is_drift);
+                               ("id", string id);
+                               ("is_pr", bool is_pr);
                                ( "run_type",
                                  string
                                    (CCString.capitalize_ascii

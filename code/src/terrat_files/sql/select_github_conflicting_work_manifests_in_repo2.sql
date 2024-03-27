@@ -41,6 +41,8 @@ left join latest_drift_unlocks
     on latest_drift_unlocks.repository = gwm.repository
 where gwm.repository = $repository
       and gwm.state in ('queued', 'running')
+-- Don't consider index runs conflicting, they don't change the underlying infra
+      and gwm.run_kind <> 'index'
       and ((gwm.pull_number is not null
             and (latest_unlocks.unlocked_at is null or latest_unlocks.unlocked_at < gwm.created_at))
            or (gdwm.work_manifest is not null
