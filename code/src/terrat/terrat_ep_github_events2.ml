@@ -902,7 +902,8 @@ let process_workflow_job_failure config storage access_token run_id repository =
       in
       let target_url =
         Printf.sprintf
-          "https://github.com/%s/%s/actions/runs/%s"
+          "%s/%s/%s/actions/runs/%s"
+          (Uri.to_string (Terrat_config.github_web_base_url config))
           repository.Gw.Repository.owner.Gw.User.login
           repository.Gw.Repository.name
           run_id
@@ -910,12 +911,20 @@ let process_workflow_job_failure config storage access_token run_id repository =
       let commit_statuses =
         let module T = Terrat_github.Commit_status.Create.T in
         let aggregate =
-          T.make
-            ~target_url
-            ~description:"Failed"
-            ~context:(Printf.sprintf "terrateam %s" unified_run_type)
-            ~state:"failure"
-            ()
+          [
+            T.make
+              ~target_url
+              ~description:"Failed"
+              ~context:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
+              ~state:"failure"
+              ();
+            T.make
+              ~target_url
+              ~description:"Failed"
+              ~context:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
+              ~state:"failure"
+              ();
+          ]
         in
         let dirspaces =
           CCList.map
@@ -923,12 +932,12 @@ let process_workflow_job_failure config storage access_token run_id repository =
               T.make
                 ~target_url
                 ~description:"Failed"
-                ~context:(Printf.sprintf "terrateam %s %s %s" unified_run_type dir workspace)
+                ~context:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
                 ~state:"failure"
                 ())
             dirspaces
         in
-        aggregate :: dirspaces
+        aggregate @ dirspaces
       in
       let open Abb.Future.Infix_monad in
       Abb.Future.fork
