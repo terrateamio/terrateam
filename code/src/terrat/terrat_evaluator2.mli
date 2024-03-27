@@ -26,6 +26,7 @@ module Msg : sig
     | Dest_branch_no_match of 'pull_request
     | Dirspaces_owned_by_other_pull_request of (Terrat_change.Dirspace.t * 'pull_request) list
     | Index_complete of (bool * (string * int option * string) list)
+    | Maybe_stale_work_manifests of 'src Terrat_work_manifest2.Existing.t list
     | Missing_plans of Terrat_change.Dirspace.t list
     | Plan_no_matching_dirspaces
     | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
@@ -36,6 +37,12 @@ module Msg : sig
     | Tag_query_err of Terrat_tag_query_ast.err
     | Unexpected_temporary_err
     | Unlock_success
+end
+
+module Conflicting_work_manifests : sig
+  type 'a t =
+    | Conflicting of 'a list
+    | Maybe_stale of 'a list
 end
 
 module Tf_operation : sig
@@ -200,7 +207,8 @@ module type S = sig
     Tf_operation.t ->
     ( (Pull_request.stored Pull_request.t, Drift.t, Index.t) Terrat_work_manifest2.Kind.t
       Terrat_work_manifest2.Existing.t
-      list,
+      Conflicting_work_manifests.t
+      option,
       [> `Error ] )
     result
     Abb.Future.t

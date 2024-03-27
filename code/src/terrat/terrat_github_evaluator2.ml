@@ -163,6 +163,7 @@ module Sql = struct
     Pgsql_io.Typed_sql.(
       sql
       // (* id *) Ret.uuid
+      // (* maybe_stale *) Ret.boolean
       /^ read "select_github_conflicting_work_manifests_in_repo2.sql"
       /% Var.bigint "repository"
       /% Var.bigint "pull_number"
@@ -512,6 +513,7 @@ module Tmpl = struct
     read "github_dirspaces_owned_by_other_pull_requests.tmpl"
 
   let conflicting_work_manifests = read "github_conflicting_work_manifests.tmpl"
+  let maybe_stale_work_manifests = read "github_maybe_stale_work_manifests.tmpl"
   let repo_config_parse_failure = read "github_repo_config_parse_failure.tmpl"
   let repo_config_generic_failure = read "github_repo_config_generic_failure.tmpl"
   let pull_request_not_appliable = read "github_pull_request_not_appliable.tmpl"
@@ -1341,15 +1343,37 @@ module S = struct
       Pgsql_io.Prepared_stmt.fetch
         db.Db.db
         (Sql.select_conflicting_work_manifests_in_repo ())
-        ~f:CCFun.id
+        ~f:(fun id maybe_stale -> (id, maybe_stale))
         (CCInt64.of_int pull_request.Pull_request.repo.Repo.id)
         (CCInt64.of_int pull_request.Pull_request.id)
         run_type
         dirs
         workspaces
       >>= fun ids ->
-      Abbs_future_combinators.List_result.map ~f:(query_work_manifest db) ids
-      >>= fun wms -> Abb.Future.return (Ok (CCList.filter_map CCFun.id wms))
+      match
+        CCList.partition_filter_map
+          (function
+            | id, true -> `Right id
+            | id, false -> `Left id)
+          ids
+      with
+      | (_ :: _ as conflicting), _ ->
+          Abbs_future_combinators.List_result.map ~f:(query_work_manifest db) conflicting
+          >>= fun wms ->
+          Abb.Future.return
+            (Ok
+               (Some
+                  (Terrat_evaluator2.Conflicting_work_manifests.Conflicting
+                     (CCList.filter_map CCFun.id wms))))
+      | _, (_ :: _ as maybe_stale) ->
+          Abbs_future_combinators.List_result.map ~f:(query_work_manifest db) maybe_stale
+          >>= fun wms ->
+          Abb.Future.return
+            (Ok
+               (Some
+                  (Terrat_evaluator2.Conflicting_work_manifests.Maybe_stale
+                     (CCList.filter_map CCFun.id wms))))
+      | _, _ -> Abb.Future.return (Ok None)
     in
     let open Abb.Future.Infix_monad in
     run
@@ -2086,6 +2110,54 @@ module S = struct
           apply_template_and_publish
             "CONFLICTING_WORK_MANIFESTS"
             Tmpl.conflicting_work_manifests
+            kv
+            t
+      | Msg.Maybe_stale_work_manifests wms ->
+          let module Wm = Terrat_work_manifest2 in
+          let kv =
+            Snabela.Kv.(
+              Map.of_list
+                [
+                  ( "work_manifests",
+                    list
+                      (CCList.map
+                         (fun Wm.{ created_at; run_type; state; src; _ } ->
+                           let id, is_pr =
+                             match src with
+                             | Wm.Kind.Pull_request Pull_request.{ id; _ } ->
+                                 (CCInt.to_string id, true)
+                             | Wm.Kind.Drift _ -> ("drift", false)
+                             | Wm.Kind.Index _ -> ("index", false)
+                           in
+                           Map.of_list
+                             [
+                               ("id", string id);
+                               ("is_pr", bool is_pr);
+                               ( "run_type",
+                                 string
+                                   (CCString.capitalize_ascii
+                                      Wm.Unified_run_type.(to_string (of_run_type run_type))) );
+                               ( "state",
+                                 string (CCString.capitalize_ascii (Wm.State.to_string state)) );
+                               ( "created_at",
+                                 string
+                                   (let Unix.{ tm_year; tm_mon; tm_mday; tm_hour; tm_min; _ } =
+                                      Unix.gmtime (ISO8601.Permissive.datetime created_at)
+                                    in
+                                    Printf.sprintf
+                                      "%d-%d-%d %d:%d"
+                                      (1900 + tm_year)
+                                      (tm_mon + 1)
+                                      tm_mday
+                                      tm_hour
+                                      tm_min) );
+                             ])
+                         wms) );
+                ])
+          in
+          apply_template_and_publish
+            "MAYBE_STALE_WORK_MANIFESTS"
+            Tmpl.maybe_stale_work_manifests
             kv
             t
       | Msg.Repo_config_parse_failure err ->

@@ -19,7 +19,11 @@ latest_drift_unlocks as (
 ),
 work_manifests_for_dirspace as (
     select distinct
-        gwm.id
+        gwm.id,
+-- Consider a work manifest as maybe stale if we have no run id after a minute
+-- or it was created over 10 minutes ago
+        ((gwm.run_id is null and (now() - gwm.created_at > interval '1 minutes'))
+         or (gwm.run_id is not null and (now() - gwm.created_at > interval '10 minutes'))) as maybe_stale
     from github_work_manifests as gwm
     inner join github_work_manifest_dirspaceflows as gwmdsfs
         on gwmdsfs.work_manifest = gwm.id
@@ -27,7 +31,8 @@ work_manifests_for_dirspace as (
         on dirspaces.dir = gwmdsfs.path and dirspaces.workspace = gwmdsfs.workspace
 )
 select
-    gwm.id
+    gwm.id,
+    work_manifests_for_dirspace.maybe_stale
 from github_work_manifests as gwm
 inner join work_manifests_for_dirspace
     on work_manifests_for_dirspace.id = gwm.id
@@ -48,5 +53,6 @@ where gwm.repository = $repository
            or (gdwm.work_manifest is not null
                and (latest_drift_unlocks.unlocked_at is null or latest_drift_unlocks.unlocked_at < gwm.created_at)))
       and ((gwm.pull_number is not null and gwm.pull_number = $pull_number)
-           or ($run_type in ('autoapply', 'apply', 'unsafe-apply')))
+           or ($run_type in ('autoapply', 'apply', 'unsafe-apply'))
+           or work_manifests_for_dirspace.maybe_stale)
 order by gwm.created_at

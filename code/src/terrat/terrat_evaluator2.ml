@@ -91,6 +91,7 @@ module Msg = struct
     | Dest_branch_no_match of 'pull_request
     | Dirspaces_owned_by_other_pull_request of (Terrat_change.Dirspace.t * 'pull_request) list
     | Index_complete of (bool * (string * int option * string) list)
+    | Maybe_stale_work_manifests of 'src Terrat_work_manifest2.Existing.t list
     | Missing_plans of Terrat_change.Dirspace.t list
     | Plan_no_matching_dirspaces
     | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
@@ -101,6 +102,12 @@ module Msg = struct
     | Tag_query_err of Terrat_tag_query_ast.err
     | Unexpected_temporary_err
     | Unlock_success
+end
+
+module Conflicting_work_manifests = struct
+  type 'a t =
+    | Conflicting of 'a list
+    | Maybe_stale of 'a list
 end
 
 module Tf_operation = struct
@@ -337,7 +344,8 @@ module type S = sig
     Tf_operation.t ->
     ( (Pull_request.stored Pull_request.t, Drift.t, Index.t) Terrat_work_manifest2.Kind.t
       Terrat_work_manifest2.Existing.t
-      list,
+      Conflicting_work_manifests.t
+      option,
       [> `Error ] )
     result
     Abb.Future.t
@@ -2043,8 +2051,11 @@ module Make (S : S) = struct
         | `Active -> (
             query_conflicting_work_manifests_in_repo db pull_request dirspaces operation
             >>= function
-            | [] -> Abb.Future.return (Ok `Valid)
-            | wms -> Abb.Future.return (Ok (`Conflicting_work_manifests wms)))
+            | None -> Abb.Future.return (Ok `Valid)
+            | Some (Conflicting_work_manifests.Conflicting wms) ->
+                Abb.Future.return (Ok (`Conflicting_work_manifests wms))
+            | Some (Conflicting_work_manifests.Maybe_stale wms) ->
+                Abb.Future.return (Ok (`Maybe_stale_work_manifests wms)))
         | `Expired | `Disabled -> Abb.Future.return (Ok `Account_expired)
 
       (* Given a plan event and the list of matches, if the event is an auto,
@@ -2246,6 +2257,32 @@ module Make (S : S) = struct
               (S.Pull_request.branch_ref pull_request)
               missing_commit_checks
 
+      let run_validated_plan_operation t db repo_config pull_request all_matches matches deny mode =
+        let open Abbs_future_combinators.Infix_result_monad in
+        create_and_store_work_manifest
+          t
+          db
+          repo_config
+          pull_request
+          all_matches
+          matches
+          deny
+          (Tf_operation.Plan mode)
+        >>= fun ret ->
+        let module Rc = Terrat_repo_config.Version_1 in
+        let module Ar = Rc.Apply_requirements in
+        let apply_requirements =
+          CCOption.get_or ~default:(Rc.Apply_requirements.make ()) repo_config.Rc.apply_requirements
+        in
+        (if apply_requirements.Ar.create_pending_apply_check then
+           maybe_create_pending_applies
+             (S.Event.Terraform.config t.event)
+             t.client
+             pull_request
+             all_matches
+         else Abb.Future.return (Ok ()))
+        >>= fun () -> Abb.Future.return (Ok ret)
+
       let eval_plan t db access_control tag_query_matches all_matches pull_request repo_config mode
           =
         let module D = Terrat_access_control.R.Deny in
@@ -2326,7 +2363,7 @@ module Make (S : S) = struct
                       (Tf_operation.Plan mode)
                     >>= function
                     | `Valid ->
-                        create_and_store_work_manifest
+                        run_validated_plan_operation
                           t
                           db
                           repo_config
@@ -2334,23 +2371,21 @@ module Make (S : S) = struct
                           all_matches
                           matches
                           deny
-                          (Tf_operation.Plan mode)
-                        >>= fun ret ->
-                        let module Rc = Terrat_repo_config.Version_1 in
-                        let module Ar = Rc.Apply_requirements in
-                        let apply_requirements =
-                          CCOption.get_or
-                            ~default:(Rc.Apply_requirements.make ())
-                            repo_config.Rc.apply_requirements
-                        in
-                        (if apply_requirements.Ar.create_pending_apply_check then
-                           maybe_create_pending_applies
-                             (S.Event.Terraform.config t.event)
-                             t.client
-                             pull_request
-                             all_matches
-                         else Abb.Future.return (Ok ()))
-                        >>= fun () -> Abb.Future.return (Ok ret)
+                          mode
+                    | `Maybe_stale_work_manifests wms ->
+                        (* For work manifests that might be stale, queue them up still but inform the
+                           user there might be a problem. *)
+                        publish_msg t (Msg.Maybe_stale_work_manifests wms)
+                        >>= fun () ->
+                        run_validated_plan_operation
+                          t
+                          db
+                          repo_config
+                          pull_request
+                          all_matches
+                          matches
+                          deny
+                          mode
                     | `Conflicting_work_manifests wms ->
                         publish_msg t (Msg.Conflicting_work_manifests wms)
                         >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
@@ -2393,6 +2428,24 @@ module Make (S : S) = struct
         | `Apply mode -> Tf_operation.Apply mode
         | `Apply_autoapprove -> Tf_operation.Apply_autoapprove
         | `Apply_force -> Tf_operation.Apply_force
+
+      let run_validated_apply_operation t db repo_config pull_request matches deny operation =
+        let open Abbs_future_combinators.Infix_result_monad in
+        (* All are ready to be applied *)
+        create_and_store_work_manifest
+          t
+          db
+          repo_config
+          pull_request
+          matches
+          matches
+          deny
+          (tf_operation_of_apply_operation operation)
+        >>= function
+        | r when operation = `Apply Tf_operation.Auto ->
+            let open Abb.Future.Infix_monad in
+            publish_msg t Msg.Autoapply_running >>= fun _ -> Abb.Future.return (Ok r)
+        | r -> Abb.Future.return (Ok r)
 
       let eval_apply' t db matches all_matches pull_request repo_config operation deny =
         let module D = Terrat_access_control.R.Deny in
@@ -2453,23 +2506,28 @@ module Make (S : S) = struct
                       dirspaces
                       (tf_operation_of_apply_operation operation)
                     >>= function
-                    | `Valid -> (
-                        (* All are ready to be applied *)
-                        create_and_store_work_manifest
+                    | `Valid ->
+                        run_validated_apply_operation
                           t
                           db
                           repo_config
                           pull_request
                           matches
+                          deny
+                          operation
+                    | `Maybe_stale_work_manifests wms ->
+                        (* For work manifests that might be stale, queue them up still but inform the
+                           user there might be a problem. *)
+                        publish_msg t (Msg.Maybe_stale_work_manifests wms)
+                        >>= fun () ->
+                        run_validated_apply_operation
+                          t
+                          db
+                          repo_config
+                          pull_request
                           matches
                           deny
-                          (tf_operation_of_apply_operation operation)
-                        >>= function
-                        | r when operation = `Apply Tf_operation.Auto ->
-                            let open Abb.Future.Infix_monad in
-                            publish_msg t Msg.Autoapply_running
-                            >>= fun _ -> Abb.Future.return (Ok r)
-                        | r -> Abb.Future.return (Ok r))
+                          operation
                     | `Conflicting_work_manifests wms ->
                         publish_msg t (Msg.Conflicting_work_manifests wms)
                         >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
