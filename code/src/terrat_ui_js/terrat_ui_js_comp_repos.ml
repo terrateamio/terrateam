@@ -66,17 +66,30 @@ let comp state =
           div [ txt' repo.Repo.name ];
           div
             [
-              a
-                ~at:
-                  At.
-                    [
-                      class' (Jstr.v "setup-repo");
-                      href (Jstr.v (consumed_path ^ "/repos/new/" ^ repo.Repo.name));
-                    ]
-                [
-                  txt' "Setup Repo";
-                  span ~at:At.[ class' (Jstr.v "material-icons") ] [ txt' "chevron_right" ];
-                ];
+              (if repo.Repo.setup then
+                 a
+                   ~at:
+                     At.
+                       [
+                         class' (Jstr.v "setup-repo");
+                         href (Jstr.v (consumed_path ^ "/audit-trail?q=repo:" ^ repo.Repo.name));
+                       ]
+                   [
+                     txt' "View Runs";
+                     span ~at:At.[ class' (Jstr.v "material-icons") ] [ txt' "chevron_right" ];
+                   ]
+               else
+                 a
+                   ~at:
+                     At.
+                       [
+                         class' (Jstr.v "setup-repo");
+                         href (Jstr.v (consumed_path ^ "/repos/new/" ^ repo.Repo.name));
+                       ]
+                   [
+                     txt' "Setup";
+                     span ~at:At.[ class' (Jstr.v "material-icons") ] [ txt' "chevron_right" ];
+                   ]);
             ];
         ]
 

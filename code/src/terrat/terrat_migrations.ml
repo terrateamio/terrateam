@@ -115,6 +115,7 @@ let migrations =
     ("add-code-index-created_at", run_file_sql "2024-02-14-add-code-index-created_at.sql");
     ("add-drift-schedule-updated_at", run_file_sql "2024-03-02-add-drift-schedule-updated_at.sql");
     ("add-drift-tag-query", run_file_sql "2024-03-06-add-drift-tag-query.sql");
+    ("add-repo-setup-flag", run_file_sql "2024-03-28-add-repo-setup-flag.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations

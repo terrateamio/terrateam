@@ -663,6 +663,7 @@ module Repos = struct
         // (* installation_id *) Ret.bigint
         // (* name *) Ret.text
         // (* updated_at *) Ret.text
+        // (* setup *) Ret.boolean
         /^ read "select_github_installation_repos_page.sql"
         /% Var.uuid "user_id"
         /% Var.bigint "installation_id"
@@ -696,12 +697,13 @@ module Repos = struct
             search
             db
             (Sql.select_installation_repos_page ())
-            ~f:(fun id installation_id name updated_at ->
+            ~f:(fun id installation_id name updated_at setup ->
               {
                 Terrat_api_components.Installation_repo.id = CCInt64.to_string id;
                 installation_id = CCInt64.to_string installation_id;
                 name;
                 updated_at;
+                setup;
               })
             query.user
             (CCInt64.of_int query.installation_id)

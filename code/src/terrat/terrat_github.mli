@@ -60,11 +60,32 @@ type fetch_repo_config_err =
   ]
 [@@deriving show]
 
+type fetch_file_err =
+  [ Githubc2_abb.call_err
+  | `Forbidden of Githubc2_components.Basic_error.t
+  | `Found
+  | `Not_file
+  ]
+[@@deriving show]
+
 type fetch_repo_err =
   [ Githubc2_abb.call_err
   | `Moved_permanently of Githubc2_repos.Get.Responses.Moved_permanently.t
   | `Forbidden of Githubc2_repos.Get.Responses.Forbidden.t
   | `Not_found of Githubc2_repos.Get.Responses.Not_found.t
+  ]
+[@@deriving show]
+
+type create_pull_request_err =
+  [ Githubc2_abb.call_err
+  | `Forbidden of Githubc2_components.Basic_error.t
+  | `Unprocessable_entity of Githubc2_components.Validation_error.t
+  ]
+[@@deriving show]
+
+type create_ref_err =
+  [ Githubc2_abb.call_err
+  | `Unprocessable_entity of Githubc2_components.Validation_error.t
   ]
 [@@deriving show]
 
@@ -90,7 +111,29 @@ type publish_reaction_err =
   ]
 [@@deriving show]
 
+type get_tree_raw_err =
+  [ Githubc2_abb.call_err
+  | `Not_found of Githubc2_components.Basic_error.t
+  | `Unprocessable_entity of Githubc2_components.Validation_error.t
+  ]
+[@@deriving show]
+
 type get_tree_err =
+  [ Githubc2_abb.call_err
+  | `Not_found of Githubc2_components.Basic_error.t
+  | `Unprocessable_entity of Githubc2_components.Validation_error.t
+  ]
+[@@deriving show]
+
+type create_tree_err =
+  [ Githubc2_abb.call_err
+  | `Forbidden of Githubc2_components.Basic_error.t
+  | `Not_found of Githubc2_components.Basic_error.t
+  | `Unprocessable_entity of Githubc2_components.Validation_error.t
+  ]
+[@@deriving show]
+
+type create_commit_err =
   [ Githubc2_abb.call_err
   | `Not_found of Githubc2_components.Basic_error.t
   | `Unprocessable_entity of Githubc2_components.Validation_error.t
@@ -224,6 +267,14 @@ val fetch_repo_config :
   Githubc2_abb.t ->
   (Terrat_repo_config.Version_1.t, [> fetch_repo_config_err ]) result Abb.Future.t
 
+val fetch_file :
+  owner:string ->
+  repo:string ->
+  ref_:string ->
+  path:string ->
+  Githubc2_abb.t ->
+  (Githubc2_components.Content_file.t option, [> fetch_file_err ]) result Abb.Future.t
+
 val fetch_pull_request_files :
   owner:string ->
   repo:string ->
@@ -247,6 +298,24 @@ val fetch_pull_request :
   Githubc2_abb.t ->
   (Githubc2_pulls.Get.Responses.t Openapi.Response.t, [> Githubc2_abb.call_err ]) result
   Abb.Future.t
+
+val create_pull_request :
+  owner:string ->
+  repo:string ->
+  base_branch:string ->
+  branch:string ->
+  title:string ->
+  body:string ->
+  Githubc2_abb.t ->
+  (Githubc2_components.Pull_request.t, [> create_pull_request_err ]) result Abb.Future.t
+
+val create_ref :
+  owner:string ->
+  repo:string ->
+  ref_:string ->
+  sha:string ->
+  Githubc2_abb.t ->
+  (unit, [> create_ref_err ]) result Abb.Future.t
 
 val compare_commits :
   owner:string ->
@@ -309,12 +378,37 @@ val react_to_comment :
   Githubc2_abb.t ->
   (unit, [> publish_reaction_err ]) result Abb.Future.t
 
+val get_tree_raw :
+  ?recursive:bool ->
+  owner:string ->
+  repo:string ->
+  sha:string ->
+  Githubc2_abb.t ->
+  (Githubc2_components.Git_tree.t, [> get_tree_raw_err ]) result Abb.Future.t
+
 val get_tree :
   owner:string ->
   repo:string ->
   sha:string ->
   Githubc2_abb.t ->
   (string list, [> get_tree_err ]) result Abb.Future.t
+
+val create_tree :
+  owner:string ->
+  repo:string ->
+  base_tree:string ->
+  tree:Githubc2_git.Create_tree.Request_body.Primary.Tree.Items.Primary.t list ->
+  Githubc2_abb.t ->
+  (string, [> create_tree_err ]) result Abb.Future.t
+
+val create_commit :
+  owner:string ->
+  repo:string ->
+  msg:string ->
+  parent:string ->
+  tree_sha:string ->
+  Githubc2_abb.t ->
+  (string, [> create_commit_err ]) result Abb.Future.t
 
 val get_team_membership_in_org :
   org:string ->
