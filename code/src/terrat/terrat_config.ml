@@ -1,6 +1,7 @@
 let default_telemetry_uri = Uri.of_string "https://telemetry.terrateam.io"
 let default_github_web_base_url = Uri.of_string "https://github.com"
 let default_github_app_url = Uri.of_string "https://github.com/apps/terrateam-action"
+let default_terrateam_web_base_url = Uri.of_string "https://app.terrateam.io"
 
 module Telemetry = struct
   type t =
@@ -29,8 +30,9 @@ type t = {
   nginx_status_uri : Uri.t option;
   port : int;
   python_exec : string;
-  telemetry : Telemetry.t;
   statement_timeout : string;
+  telemetry : Telemetry.t;
+  terrateam_web_base_url : Uri.t;
 }
 
 type err =
@@ -110,6 +112,13 @@ let create () =
   let github_app_url =
     CCOption.map_or ~default:default_github_app_url Uri.of_string (Sys.getenv_opt "GITHUB_APP_URL")
   in
+  let terrateam_web_base_url =
+    CCOption.map_or
+      ~default:default_terrateam_web_base_url
+      Uri.of_string
+      (Sys.getenv_opt "TERRAT_WEB_BASE_URL")
+  in
+
   let statement_timeout =
     CCOption.get_or ~default:"500ms" (Sys.getenv_opt "TERRAT_STATEMENT_TIMEOUT")
   in
@@ -137,6 +146,7 @@ let create () =
       python_exec;
       statement_timeout;
       telemetry;
+      terrateam_web_base_url;
     }
 
 let admin_token t = t.admin_token
@@ -161,3 +171,4 @@ let port t = t.port
 let python_exec t = t.python_exec
 let statement_timeout t = t.statement_timeout
 let telemetry t = t.telemetry
+let terrateam_web_base_url t = t.terrateam_web_base_url

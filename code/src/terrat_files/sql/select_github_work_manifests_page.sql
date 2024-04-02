@@ -35,6 +35,7 @@ q as (
         gwm.sha as sha,
         gwm.run_type as run_type,
         (case
+         when gwm.state not in ('running', 'queued') then gwm.state
          when lu.unlocked_at is not null and gwm.created_at <= lu.unlocked_at then 'aborted'
          when (gdwm.work_manifest is not null
                and ldu.unlocked_at is not null

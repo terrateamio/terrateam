@@ -35,3 +35,4 @@ val python_exec : t -> string
 val show_err : err -> string
 val statement_timeout : t -> string
 val telemetry : t -> Telemetry.t
+val terrateam_web_base_url : t -> Uri.t

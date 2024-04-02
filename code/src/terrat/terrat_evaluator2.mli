@@ -282,12 +282,12 @@ module type S = sig
 
   (* User notification *)
   val make_commit_check :
-    ?run_id:string ->
+    ?work_manifest:'a Terrat_work_manifest2.Existing.t ->
     config:Terrat_config.t ->
     description:string ->
     title:string ->
     status:Terrat_commit_check.Status.t ->
-    Repo.t ->
+    Account.t ->
     Terrat_commit_check.t
 
   val create_commit_checks :

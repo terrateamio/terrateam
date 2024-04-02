@@ -419,12 +419,12 @@ module type S = sig
 
   (* User notification *)
   val make_commit_check :
-    ?run_id:string ->
+    ?work_manifest:'a Terrat_work_manifest2.Existing.t ->
     config:Terrat_config.t ->
     description:string ->
     title:string ->
     status:Terrat_commit_check.Status.t ->
-    Repo.t ->
+    Account.t ->
     Terrat_commit_check.t
 
   val create_commit_checks :
@@ -1417,7 +1417,7 @@ module Make (S : S) = struct
         S.Event.Index.with_db t ~f:(fun db ->
             create_work_manifest db work_manifest
             >>= fun work_manifest -> update_work_manifest db work_manifest)
-        >>= fun _ ->
+        >>= fun work_manifest ->
         let module Status = Terrat_commit_check.Status in
         let check =
           S.make_commit_check
@@ -1425,7 +1425,8 @@ module Make (S : S) = struct
             ~description:"Queued"
             ~title:"terrateam index"
             ~status:Status.Queued
-            repo
+            ~work_manifest
+            account
         in
         create_commit_checks client repo (S.Pull_request.branch_ref pull_request) [ check ]
         >>= fun () -> Abb.Future.return (Ok (S.Event.Index.noop t))
@@ -1540,9 +1541,11 @@ module Make (S : S) = struct
           pull_request
           run_type
           ref_
+          work_manifest
           { Result_status.dirspaces; overall; post_hooks; pre_hooks } =
         let open Abbs_future_combinators.Infix_result_monad in
         let module Status = Terrat_commit_check.Status in
+        let account = S.Pull_request.account pull_request in
         let repo = S.Pull_request.repo pull_request in
         let unified_run_type =
           let module Urt = Terrat_work_manifest2.Unified_run_type in
@@ -1559,19 +1562,19 @@ module Make (S : S) = struct
         let aggregate =
           [
             S.make_commit_check
-              ?run_id
               ~config:(S.Event.Result.config t)
               ~description:(description pre_hooks)
               ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
               ~status:(status pre_hooks)
-              repo;
+              ~work_manifest
+              account;
             S.make_commit_check
-              ?run_id
               ~config:(S.Event.Result.config t)
               ~description:(description post_hooks)
               ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
               ~status:(status post_hooks)
-              repo;
+              ~work_manifest
+              account;
           ]
         in
         let dirspace_checks =
@@ -1579,12 +1582,12 @@ module Make (S : S) = struct
           CCList.map
             (fun ({ Ds.dir; workspace }, success) ->
               S.make_commit_check
-                ?run_id
                 ~config:(S.Event.Result.config t)
                 ~description:(description success)
                 ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
                 ~status:(status success)
-                repo)
+                ~work_manifest
+                account)
             dirspaces
         in
         let checks = aggregate @ dirspace_checks in
@@ -1603,13 +1606,14 @@ module Make (S : S) = struct
         Abbs_future_combinators.Infix_result_app.(
           (fun _ _ -> ())
           <$> publish_result t result pr wm
-          <*> create_pull_request_commit_checks t run_id pr run_type hash result_status)
+          <*> create_pull_request_commit_checks t run_id pr run_type hash wm result_status)
 
       let publish_index_pull_request_result t result pr wm =
         let open Abbs_future_combinators.Infix_result_monad in
         let module Wm = Terrat_work_manifest2 in
         let module Status = Terrat_commit_check.Status in
         let pull_number = S.Pull_request.id pr in
+        let account = S.Pull_request.account pr in
         let repo = S.Pull_request.repo pr in
         create_client
           (S.Event.Result.request_id t)
@@ -1629,12 +1633,12 @@ module Make (S : S) = struct
           failures;
         let check =
           S.make_commit_check
-            ?run_id:wm.Wm.run_id
             ~config:(S.Event.Result.config t)
             ~description:(if success then "Completed" else "Failed")
             ~title:"terrateam index"
             ~status:(if success then Status.Completed else Status.Failed)
-            repo
+            ~work_manifest:wm
+            account
         in
         create_commit_checks client repo (S.Ref.of_string wm.Wm.hash) [ check ]
         >>= fun () ->
@@ -1674,15 +1678,16 @@ module Make (S : S) = struct
               (Msg.Index_complete (S.Event.Result.index_results result))
             >>= fun () ->
             let module Status = Terrat_commit_check.Status in
+            let account = S.Index.account idx in
             let repo = S.Index.repo idx in
             let check =
               S.make_commit_check
-                ?run_id:wm.Wm.run_id
                 ~config:(S.Event.Result.config t)
                 ~description:(if success then "Completed" else "Failed")
                 ~title:"terrateam index"
                 ~status:(if success then Status.Completed else Status.Failed)
-                repo
+                ~work_manifest:wm
+                account
             in
             create_commit_checks client repo (S.Ref.of_string wm.Wm.hash) [ check ]
         | None -> Abb.Future.return (Ok ())
@@ -1711,12 +1716,12 @@ module Make (S : S) = struct
             let module Status = Terrat_commit_check.Status in
             let check =
               S.make_commit_check
-                ?run_id:wm.Wm.run_id
                 ~config:(S.Event.Result.config t)
                 ~description:"Completed"
                 ~title:"terrateam apply"
                 ~status:Status.Completed
-                (S.Pull_request.repo pr)
+                ~work_manifest:wm
+                (S.Pull_request.account pr)
             in
             create_commit_checks
               client
@@ -2099,7 +2104,7 @@ module Make (S : S) = struct
                     matches))
         | Tf_operation.Manual -> Abb.Future.return (Ok matches)
 
-      let create_queued_commit_checks config client repo ref_ work_manifest =
+      let create_queued_commit_checks config client account repo ref_ work_manifest =
         let module Wm = Terrat_work_manifest2 in
         let module Status = Terrat_commit_check.Status in
         match work_manifest.Wm.changes with
@@ -2116,13 +2121,15 @@ module Make (S : S) = struct
                   ~description:"Queued"
                   ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
                   ~status:Status.Queued
-                  repo;
+                  ~work_manifest
+                  account;
                 S.make_commit_check
                   ~config
                   ~description:"Queued"
                   ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
                   ~status:Status.Queued
-                  repo;
+                  ~work_manifest
+                  account;
               ]
             in
             let dirspace_checks =
@@ -2135,7 +2142,8 @@ module Make (S : S) = struct
                     ~description:"Queued"
                     ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
                     ~status:Status.Queued
-                    repo)
+                    ~work_manifest
+                    account)
                 dirspaces
             in
             let checks = aggregate @ dirspace_checks in
@@ -2223,6 +2231,7 @@ module Make (S : S) = struct
         create_queued_commit_checks
           (S.Event.Terraform.config t.event)
           t.client
+          (S.Event.Terraform.account t.event)
           (S.Event.Terraform.repo t.event)
           (S.Pull_request.branch_ref pull_request)
           work_manifest
@@ -2264,7 +2273,7 @@ module Make (S : S) = struct
                             ~description:"Waiting"
                             ~title:(Printf.sprintf "terrateam apply: %s %s" dir workspace)
                             ~status:Terrat_commit_check.Status.Queued
-                            (S.Pull_request.repo pull_request))
+                            (S.Pull_request.account pull_request))
                      else None)
             in
             let missing_apply_check =
@@ -2275,7 +2284,7 @@ module Make (S : S) = struct
                     ~description:"Waiting"
                     ~title:"terrateam apply"
                     ~status:Terrat_commit_check.Status.Queued
-                    (S.Pull_request.repo pull_request);
+                    (S.Pull_request.account pull_request);
                 ]
               else []
             in
@@ -2924,6 +2933,7 @@ module Make (S : S) = struct
             S.Event.Terraform.with_db t.event ~f:(fun db -> S.create_work_manifest db work_manifest)
             >>= fun work_manifest ->
             let module Status = Terrat_commit_check.Status in
+            let account = S.Pull_request.account pull_request in
             let repo = S.Pull_request.repo pull_request in
             Logs.info (fun m ->
                 m
@@ -2937,7 +2947,8 @@ module Make (S : S) = struct
                 ~description:"Queued"
                 ~title:"terrateam index"
                 ~status:Status.Queued
-                repo
+                ~work_manifest
+                account
             in
             create_commit_checks t.client repo (S.Pull_request.branch_ref pull_request) [ check ]
             >>= fun () ->
@@ -3337,15 +3348,16 @@ module Make (S : S) = struct
         | ( { Wm.src = Wm.Kind.Pull_request pr; run_id; hash = ref_; _ },
             { Wm.src = Wm.Kind.Index _; _ } ) ->
             let open Abbs_future_combinators.Infix_result_monad in
+            let account = S.Pull_request.account pr in
             let repo = S.Pull_request.repo pr in
             let check =
               S.make_commit_check
-                ?run_id
                 ~config:(S.Event.Initiate.config t)
                 ~description:"Running"
                 ~title:"terrateam index"
                 ~status:Status.Running
-                repo
+                ~work_manifest:wm
+                account
             in
             create_client
               (S.Event.Initiate.request_id t)
@@ -3362,6 +3374,7 @@ module Make (S : S) = struct
               _;
             } ) ->
             let open Abbs_future_combinators.Infix_result_monad in
+            let account = S.Pull_request.account pr in
             let repo = S.Pull_request.repo pr in
             let unified_run_type =
               let module Urt = Terrat_work_manifest2.Unified_run_type in
@@ -3370,19 +3383,19 @@ module Make (S : S) = struct
             let aggregate =
               [
                 S.make_commit_check
-                  ?run_id
                   ~config:(S.Event.Initiate.config t)
                   ~description:"Running"
                   ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
                   ~status:Status.Running
-                  repo;
+                  ~work_manifest:wm
+                  account;
                 S.make_commit_check
-                  ?run_id
                   ~config:(S.Event.Initiate.config t)
                   ~description:"Running"
                   ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
                   ~status:Status.Running
-                  repo;
+                  ~work_manifest:wm
+                  account;
               ]
             in
             let dirspace_checks =
@@ -3391,12 +3404,12 @@ module Make (S : S) = struct
               CCList.map
                 (fun { Dsf.dirspace = { Ds.dir; workspace; _ }; _ } ->
                   S.make_commit_check
-                    ?run_id
                     ~config:(S.Event.Initiate.config t)
                     ~description:"Running"
                     ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
                     ~status:Status.Running
-                    repo)
+                    ~work_manifest:wm
+                    account)
                 changes
             in
             let checks = aggregate @ dirspace_checks in
@@ -3407,15 +3420,16 @@ module Make (S : S) = struct
             >>= fun client -> create_commit_checks client repo (S.Ref.of_string ref_) checks
         | _, { Wm.src = Wm.Kind.Pull_request pr; changes = []; run_type; hash = ref_; run_id; _ } ->
             let open Abbs_future_combinators.Infix_result_monad in
+            let account = S.Pull_request.account pr in
             let repo = S.Pull_request.repo pr in
             let check =
               S.make_commit_check
-                ?run_id
                 ~config:(S.Event.Initiate.config t)
                 ~description:"Running"
                 ~title:"terrateam index"
                 ~status:Status.Running
-                repo
+                ~work_manifest:wm
+                account
             in
             create_client
               (S.Event.Initiate.request_id t)
@@ -3424,15 +3438,16 @@ module Make (S : S) = struct
             >>= fun client -> create_commit_checks client repo (S.Ref.of_string ref_) [ check ]
         | _, { Wm.src = Wm.Kind.Index idx; run_type; hash = ref_; run_id; _ } ->
             let open Abbs_future_combinators.Infix_result_monad in
+            let account = S.Index.account idx in
             let repo = S.Index.repo idx in
             let check =
               S.make_commit_check
-                ?run_id
                 ~config:(S.Event.Initiate.config t)
                 ~description:"Running"
                 ~title:"terrateam index"
                 ~status:Status.Running
-                repo
+                ~work_manifest:wm
+                account
             in
             create_client
               (S.Event.Initiate.request_id t)
@@ -3709,6 +3724,13 @@ module Make (S : S) = struct
                 time))
         (fun () -> S.Runner.run_work_manifest t client work_manifest)
 
+    let get_account =
+      let module Wm = Terrat_work_manifest2 in
+      function
+      | { Wm.src = Wm.Kind.Pull_request pr; _ } -> S.Pull_request.account pr
+      | { Wm.src = Wm.Kind.Drift d; _ } -> S.Drift.account d
+      | { Wm.src = Wm.Kind.Index idx; _ } -> S.Index.account idx
+
     let get_repo =
       let module Wm = Terrat_work_manifest2 in
       function
@@ -3720,6 +3742,7 @@ module Make (S : S) = struct
       let module Wm = Terrat_work_manifest2 in
       let module Status = Terrat_commit_check.Status in
       let ref_ = S.Ref.of_string work_manifest.Wm.hash in
+      let account = get_account work_manifest in
       let repo = get_repo work_manifest in
       match work_manifest.Wm.changes with
       | [] ->
@@ -3730,7 +3753,8 @@ module Make (S : S) = struct
               ~description:"Failed"
               ~title:"terrateam index"
               ~status:Status.Failed
-              repo
+              ~work_manifest
+              account
           in
           create_commit_checks client repo ref_ [ check ]
       | changes ->
@@ -3745,13 +3769,15 @@ module Make (S : S) = struct
                 ~description:"Failed"
                 ~title:(Printf.sprintf "terrateam %s pre-hooks" unified_run_type)
                 ~status:Status.Failed
-                repo;
+                ~work_manifest
+                account;
               S.make_commit_check
                 ~config:(S.Runner.config t)
                 ~description:"Failed"
                 ~title:(Printf.sprintf "terrateam %s post-hooks" unified_run_type)
                 ~status:Status.Failed
-                repo;
+                ~work_manifest
+                account;
             ]
           in
           let dirspace_checks =
@@ -3764,7 +3790,8 @@ module Make (S : S) = struct
                   ~description:"Failed"
                   ~title:(Printf.sprintf "terrateam %s: %s %s" unified_run_type dir workspace)
                   ~status:Status.Failed
-                  repo)
+                  ~work_manifest
+                  account)
               changes
           in
           let checks = aggregate @ dirspace_checks in
