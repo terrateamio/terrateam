@@ -167,11 +167,152 @@ let render_work_manifest_pull_request wm =
            ];
        ])
 
+let render_work_manifest_index wm =
+  let module Wm = Terrat_api_components.Installation_work_manifest_index in
+  let module Dirspace = Terrat_api_components.Work_manifest_dirspace in
+  let open Brtl_js2.Brr.El in
+  Abb_js.Future.return
+    (Brtl_js2.Output.const
+       [
+         div
+           ~at:At.[ class' (Jstr.v "details") ]
+           [
+             h1 [ txt' (CCOption.get_or ~default:"" wm.Wm.pull_request_title) ];
+             div
+               ~at:At.[ class' (Jstr.v "attrs") ]
+               [
+                 div
+                   ~at:At.[ class' (Jstr.v "h-pair") ]
+                   [
+                     div ~at:At.[ class' (Jstr.v "name") ] [ txt' "Pull Request" ];
+                     div
+                       [
+                         a
+                           ~at:
+                             At.
+                               [
+                                 v (Jstr.v "target") (Jstr.v "_blank");
+                                 href
+                                   (Jstr.v
+                                      (Printf.sprintf
+                                         "https://github.com/%s/%s/pull/%d"
+                                         wm.Wm.owner
+                                         wm.Wm.repo
+                                         wm.Wm.pull_number));
+                               ]
+                           [ txt' (Jstr.to_string (Jstr.of_int wm.Wm.pull_number)) ];
+                       ];
+                   ];
+                 div
+                   ~at:At.[ class' (Jstr.v "h-pair") ]
+                   [
+                     div ~at:At.[ class' (Jstr.v "name") ] [ txt' "Operation" ];
+                     div [ txt' "index" ];
+                   ];
+                 div
+                   ~at:At.[ class' (Jstr.v "h-pair") ]
+                   [
+                     div ~at:At.[ class' (Jstr.v "name") ] [ txt' "Repo" ]; div [ txt' wm.Wm.repo ];
+                   ];
+                 div
+                   ~at:At.[ class' (Jstr.v "h-pair") ]
+                   [
+                     div ~at:At.[ class' (Jstr.v "name") ] [ txt' "State" ];
+                     div [ txt' wm.Wm.state ];
+                   ];
+                 div
+                   ~at:At.[ class' (Jstr.v "h-pair") ]
+                   [
+                     div ~at:At.[ class' (Jstr.v "name") ] [ txt' "User" ];
+                     div [ txt' (CCOption.get_or ~default:"" wm.Wm.user) ];
+                   ];
+                 div
+                   ~at:At.[ class' (Jstr.v "h-pair") ]
+                   [
+                     div ~at:At.[ class' (Jstr.v "name") ] [ txt' "Branch" ];
+                     div ~at:At.[ class' (Jstr.v "commit-sha") ] [ txt' wm.Wm.branch ];
+                   ];
+                 div
+                   ~at:At.[ class' (Jstr.v "h-pair") ]
+                   [
+                     div ~at:At.[ class' (Jstr.v "name") ] [ txt' "Created At" ];
+                     div
+                       [ txt' Brtl_js2_datetime.(to_yyyy_mm_dd_hh_mm (of_string wm.Wm.created_at)) ];
+                   ];
+                 div
+                   ~at:At.[ class' (Jstr.v "h-pair") ]
+                   [
+                     div ~at:At.[ class' (Jstr.v "name") ] [ txt' "Completed At" ];
+                     div
+                       [
+                         txt'
+                           (CCOption.map_or
+                              ~default:"--"
+                              CCFun.(Brtl_js2_datetime.(of_string %> to_yyyy_mm_dd_hh_mm))
+                              wm.Wm.completed_at);
+                       ];
+                   ];
+                 div
+                   ~at:At.[ class' (Jstr.v "h-pair") ]
+                   [
+                     div ~at:At.[ class' (Jstr.v "name") ] [ txt' "Action Logs" ];
+                     div
+                       [
+                         CCOption.map_or
+                           ~default:(txt' "--")
+                           (fun run_id ->
+                             a
+                               ~at:
+                                 At.
+                                   [
+                                     v (Jstr.v "target") (Jstr.v "_blank");
+                                     href
+                                       (Jstr.v
+                                          (Printf.sprintf
+                                             "https://github.com/%s/%s/actions/runs/%s"
+                                             wm.Wm.owner
+                                             wm.Wm.repo
+                                             run_id));
+                                   ]
+                               [ txt' run_id ])
+                           wm.Wm.run_id;
+                       ];
+                   ];
+               ];
+             div
+               ~at:At.[ class' (Jstr.v "dirspace-table") ]
+               ([
+                  div ~at:At.[ class' (Jstr.v "table-header") ] [ txt' "Dir" ];
+                  div ~at:At.[ class' (Jstr.v "table-header") ] [ txt' "Workspace" ];
+                  div ~at:At.[ class' (Jstr.v "table-header") ] [ txt' "State" ];
+                ]
+               @ CCList.flat_map
+                   (fun Dirspace.{ dir; workspace; success } ->
+                     [
+                       div [ txt' dir ];
+                       div [ txt' workspace ];
+                       div
+                         [
+                           txt'
+                             (match success with
+                             | Some true -> "Success"
+                             | Some false -> "Fail"
+                             | None -> "Running");
+                         ];
+                     ])
+                   (CCList.sort
+                      (fun Dirspace.{ dir = dir1; _ } Dirspace.{ dir = dir2; _ } ->
+                        CCString.compare dir1 dir2)
+                      wm.Wm.dirspaces));
+           ];
+       ])
+
 let render_work_manifest wm state =
   let module Wm = Terrat_api_components.Installation_work_manifest in
   match wm with
   | Wm.Installation_work_manifest_drift wm -> render_work_manifest_drift wm
   | Wm.Installation_work_manifest_pull_request wm -> render_work_manifest_pull_request wm
+  | Wm.Installation_work_manifest_index wm -> render_work_manifest_index wm
 
 let run dir pull_number state =
   let app_state = Brtl_js2.State.app_state state in

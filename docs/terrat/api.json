@@ -192,6 +192,9 @@
             "$ref": "#/components/schemas/installation-work-manifest-drift"
           },
           {
+            "$ref": "#/components/schemas/installation-work-manifest-index"
+          },
+          {
             "$ref": "#/components/schemas/installation-work-manifest-pull-request"
           }
         ]
@@ -261,6 +264,79 @@
           "repository",
           "run_type",
           "state"
+        ],
+        "type": "object"
+      },
+      "installation-work-manifest-index": {
+        "additionalProperties": false,
+        "properties": {
+          "base_branch": {
+            "type": "string"
+          },
+          "base_ref": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "completed_at": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "dirspaces": {
+            "items": {
+              "$ref": "#/components/schemas/work-manifest-dirspace"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "pull_number": {
+            "type": "integer"
+          },
+          "pull_request_title": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "repo": {
+            "type": "string"
+          },
+          "repository": {
+            "type": "integer"
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/work-manifest-state"
+          },
+          "user": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "base_branch",
+          "base_ref",
+          "branch",
+          "created_at",
+          "dirspaces",
+          "id",
+          "owner",
+          "pull_number",
+          "ref",
+          "repo",
+          "repository",
+          "run_type",
+          "state",
+          "tag_query"
         ],
         "type": "object"
       },

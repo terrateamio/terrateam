@@ -310,49 +310,68 @@ module Work_manifests = struct
                   ->
                   let module D = Terrat_api_components.Installation_work_manifest_drift in
                   let module Pr = Terrat_api_components.Installation_work_manifest_pull_request in
+                  let module Idx = Terrat_api_components.Installation_work_manifest_index in
                   let module Wm = Terrat_api_components.Installation_work_manifest in
                   match (run_kind, pull_number, branch) with
                   | "drift", _, _ ->
                       Wm.Installation_work_manifest_drift
-                        D.
-                          {
-                            base_branch;
-                            base_ref;
-                            completed_at;
-                            created_at;
-                            dirspaces = CCOption.get_or ~default:[] dirspaces;
-                            id = Uuidm.to_string id;
-                            owner;
-                            ref_;
-                            repo;
-                            repository = CCInt64.to_int repository;
-                            run_type = Terrat_work_manifest2.Run_type.to_string run_type;
-                            state = Terrat_work_manifest2.State.to_string state;
-                            run_id;
-                          }
+                        {
+                          D.base_branch;
+                          base_ref;
+                          completed_at;
+                          created_at;
+                          dirspaces = CCOption.get_or ~default:[] dirspaces;
+                          id = Uuidm.to_string id;
+                          owner;
+                          ref_;
+                          repo;
+                          repository = CCInt64.to_int repository;
+                          run_type = Terrat_work_manifest2.Run_type.to_string run_type;
+                          state = Terrat_work_manifest2.State.to_string state;
+                          run_id;
+                        }
                   | "pr", Some pull_number, Some branch ->
                       Wm.Installation_work_manifest_pull_request
-                        Pr.
-                          {
-                            base_branch;
-                            base_ref;
-                            branch;
-                            completed_at;
-                            created_at;
-                            dirspaces = CCOption.get_or ~default:[] dirspaces;
-                            id = Uuidm.to_string id;
-                            owner;
-                            pull_number = CCInt64.to_int pull_number;
-                            pull_request_title;
-                            ref_;
-                            repo;
-                            repository = CCInt64.to_int repository;
-                            run_type = Terrat_work_manifest2.Run_type.to_string run_type;
-                            state = Terrat_work_manifest2.State.to_string state;
-                            tag_query = Terrat_tag_query.to_string tag_query;
-                            user;
-                            run_id;
-                          }
+                        {
+                          Pr.base_branch;
+                          base_ref;
+                          branch;
+                          completed_at;
+                          created_at;
+                          dirspaces = CCOption.get_or ~default:[] dirspaces;
+                          id = Uuidm.to_string id;
+                          owner;
+                          pull_number = CCInt64.to_int pull_number;
+                          pull_request_title;
+                          ref_;
+                          repo;
+                          repository = CCInt64.to_int repository;
+                          run_type = Terrat_work_manifest2.Run_type.to_string run_type;
+                          state = Terrat_work_manifest2.State.to_string state;
+                          tag_query = Terrat_tag_query.to_string tag_query;
+                          user;
+                          run_id;
+                        }
+                  | "index", Some pull_number, Some branch ->
+                      Wm.Installation_work_manifest_index
+                        {
+                          Idx.base_branch;
+                          base_ref;
+                          branch;
+                          completed_at;
+                          created_at;
+                          dirspaces = CCOption.get_or ~default:[] dirspaces;
+                          id = Uuidm.to_string id;
+                          owner;
+                          pull_number = CCInt64.to_int pull_number;
+                          pull_request_title;
+                          ref_;
+                          repo;
+                          repository = CCInt64.to_int repository;
+                          state = Terrat_work_manifest2.State.to_string state;
+                          user;
+                          run_id;
+                        }
                   | _, _, _ ->
                       Logs.info (fun m -> m "Unknown run_kind %a" Uuidm.pp id);
                       raise (Failure ("Failed " ^ Uuidm.to_string id)))
@@ -375,11 +394,12 @@ module Work_manifests = struct
     let cursor_of_el =
       let module Wm = Terrat_api_components.Installation_work_manifest in
       let module D = Terrat_api_components.Installation_work_manifest_drift in
+      let module Idx = Terrat_api_components.Installation_work_manifest_index in
       let module Pr = Terrat_api_components.Installation_work_manifest_pull_request in
       function
       | Wm.Installation_work_manifest_drift D.{ id; created_at; _ }
-      | Wm.Installation_work_manifest_pull_request Pr.{ id; created_at; _ } ->
-          Some [ created_at; id ]
+      | Wm.Installation_work_manifest_pull_request Pr.{ id; created_at; _ }
+      | Wm.Installation_work_manifest_index Idx.{ id; created_at; _ } -> Some [ created_at; id ]
 
     let cursor_of_first t =
       match Pgsql_pagination.results t with

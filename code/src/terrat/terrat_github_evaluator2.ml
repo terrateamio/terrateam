@@ -3127,13 +3127,32 @@ module S = struct
 
       let store_result' db t =
         match t.result with
-        | Terrat_api_components_work_manifest_result.Work_manifest_index_result index ->
+        | Terrat_api_components_work_manifest_result.Work_manifest_index_result index -> (
             let module R = Terrat_api_components.Work_manifest_index_result in
-            Pgsql_io.Prepared_stmt.execute
-              db.Db.db
-              (Sql.insert_index ())
-              t.work_manifest_id
-              (Yojson.Safe.to_string (R.to_yojson index))
+            let module Wm = Terrat_work_manifest2 in
+            let open Abbs_future_combinators.Infix_result_monad in
+            query_work_manifest db t.work_manifest_id
+            >>= function
+            | Some { Wm.changes; _ } ->
+                Pgsql_io.Prepared_stmt.execute
+                  db.Db.db
+                  (Sql.insert_index ())
+                  t.work_manifest_id
+                  (Yojson.Safe.to_string (R.to_yojson index))
+                >>= fun () ->
+                Abbs_future_combinators.List_result.iter
+                  ~f:(fun dsf ->
+                    let module Ds = Terrat_change.Dirspace in
+                    let { Ds.dir; workspace } = Terrat_change.Dirspaceflow.to_dirspace dsf in
+                    Pgsql_io.Prepared_stmt.execute
+                      db.Db.db
+                      Sql.insert_github_work_manifest_result
+                      t.work_manifest_id
+                      dir
+                      workspace
+                      true)
+                  changes
+            | None -> assert false)
         | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result tf_operation
           ->
             let module Rb = Terrat_api_components_work_manifest_tf_operation_result in
@@ -3182,6 +3201,7 @@ module S = struct
             Logs.err (fun m ->
                 m "GITHUB_EVALUATOR : %s : ERROR : %a" db.Db.request_id Pgsql_pool.pp_err err);
             Abb.Future.return (Error `Error)
+        | Error `Error -> Abb.Future.return (Error `Error)
 
       let index_results results =
         let module R = Terrat_api_components.Work_manifest_index_result in
