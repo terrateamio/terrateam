@@ -80,6 +80,10 @@ module Work_manifests = struct
         sort_by = "created_at";
       }
 
+    let append_uuid_equal t n v =
+      CCVector.push t.strings v;
+      Buffer.add_string t.q (Printf.sprintf "%s = ($strings)[%d]::uuid" n (CCVector.size t.strings))
+
     let append_str_equal t n v =
       CCVector.push t.strings v;
       Buffer.add_string t.q (Printf.sprintf "%s = ($strings)[%d]" n (CCVector.size t.strings))
@@ -104,6 +108,9 @@ module Work_manifests = struct
               t.sort_dir <- `Desc;
               (* Cheap hack but we replace these meta attributes with [true]. *)
               Buffer.add_string t.q "true";
+              Ok ()
+          | Some ("id", value) ->
+              append_uuid_equal t "id" value;
               Ok ()
           | Some ("pr", value) -> (
               match CCInt64.of_string value with
