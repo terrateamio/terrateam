@@ -1691,7 +1691,7 @@ module Make (S : S) = struct
         | Terrat_repo_config.(Version_1.{ automerge = Some _ as automerge; _ }) -> automerge
         | _ -> None
 
-      let maybe_merge_and_delete t pr wm =
+      let maybe_all_dirspaces_applied t pr wm =
         let module Wm = Terrat_work_manifest2 in
         let open Abbs_future_combinators.Infix_result_monad in
         S.Event.Result.with_db t ~f:(fun db -> query_unapplied_dirspaces db pr)
@@ -1708,6 +1708,22 @@ module Make (S : S) = struct
               (S.Event.Result.config t)
               (S.Pull_request.account pr)
             >>= fun client ->
+            let module Status = Terrat_commit_check.Status in
+            let check =
+              S.make_commit_check
+                ?run_id:wm.Wm.run_id
+                ~config:(S.Event.Result.config t)
+                ~description:"Completed"
+                ~title:"terrateam apply"
+                ~status:Status.Completed
+                (S.Pull_request.repo pr)
+            in
+            create_commit_checks
+              client
+              (S.Pull_request.repo pr)
+              (S.Ref.of_string wm.Wm.hash)
+              [ check ]
+            >>= fun () ->
             fetch_repo_config client (S.Pull_request.repo pr) (S.Ref.of_string wm.Wm.hash)
             >>= fun repo_config ->
             let module Am = Terrat_repo_config.Automerge in
@@ -1769,7 +1785,7 @@ module Make (S : S) = struct
             >>= fun wm ->
             maybe_publish_result t pr result wm
             >>= fun _ ->
-            maybe_merge_and_delete t pr wm
+            maybe_all_dirspaces_applied t pr wm
             >>= fun () -> Abb.Future.return (Ok (S.Event.Result.noop t))
         | `Tf_operation result, Wm.Kind.Drift drift ->
             let wm = { wm with Wm.state = Wm.State.Completed } in
@@ -2251,11 +2267,23 @@ module Make (S : S) = struct
                             (S.Pull_request.repo pull_request))
                      else None)
             in
+            let missing_apply_check =
+              if not (String_set.mem "terrateam apply" commit_check_titles) then
+                [
+                  S.make_commit_check
+                    ~config
+                    ~description:"Waiting"
+                    ~title:"terrateam apply"
+                    ~status:Terrat_commit_check.Status.Queued
+                    (S.Pull_request.repo pull_request);
+                ]
+              else []
+            in
             create_commit_checks
               client
               (S.Pull_request.repo pull_request)
               (S.Pull_request.branch_ref pull_request)
-              missing_commit_checks
+              (missing_commit_checks @ missing_apply_check)
 
       let run_validated_plan_operation t db repo_config pull_request all_matches matches deny mode =
         let open Abbs_future_combinators.Infix_result_monad in

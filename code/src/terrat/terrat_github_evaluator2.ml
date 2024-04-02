@@ -2586,7 +2586,8 @@ module S = struct
           CCList.filter
             (fun Terrat_commit_check.{ title; _ } ->
               not
-                (CCString.prefix ~pre:"terrateam apply:" title
+                (CCString.equal "terrateam apply" title
+                || CCString.prefix ~pre:"terrateam apply:" title
                 || CCString.prefix ~pre:"terrateam plan:" title
                 || CCList.mem
                      ~eq:CCString.equal
