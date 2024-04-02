@@ -80,7 +80,6 @@ let refresh_repos ~request_id ~config ~storage installation_id =
           Abb.Future.return false)
     repositories
   >>= fun repos_setup ->
-  let open Abbs_future_combinators.Infix_result_monad in
   let installation_id = CCInt64.of_int installation_id in
   Abbs_future_combinators.List_result.iter
     ~f:(fun (repositories, repos_setup) ->
