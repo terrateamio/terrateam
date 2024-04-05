@@ -1673,9 +1673,11 @@ module Make (S : S) = struct
             let publish_msg =
               S.Publish_msg.make ~client ~pull_number ~repo:(S.Index.repo idx) ~user:"" ()
             in
-            S.Publish_msg.publish_msg
-              publish_msg
-              (Msg.Index_complete (S.Event.Result.index_results result))
+            (if not (CCList.is_empty failures) then
+               S.Publish_msg.publish_msg
+                 publish_msg
+                 (Msg.Index_complete (S.Event.Result.index_results result))
+             else Abb.Future.return (Ok ()))
             >>= fun () ->
             let module Status = Terrat_commit_check.Status in
             let account = S.Index.account idx in
@@ -3128,6 +3130,8 @@ module Make (S : S) = struct
             None )
           when (S.Event.Terraform.tf_operation t.event = Tf_operation.(Plan Auto))
                && autoplan_enabled repo_config ->
+            Logs.info (fun m ->
+                m "EVALUATOR : %s : INDEX_NOT_FOUND_BUT_REQUIRED" (S.Client.request_id t.client));
             (* Index is required. But we only have to index if autoplan is
                enabled for any directory *)
             eval_index t remote_repo repo_config repo_default_config repo_tree pull_request
