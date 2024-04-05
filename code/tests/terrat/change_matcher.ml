@@ -1258,7 +1258,6 @@ let test_index_symlinks_dir_config =
       let dirs =
         CCResult.get_exn (Terrat_change_match.synthesize_dir_config ~index ~file_list repo_config)
       in
-      print_endline (Terrat_change_match.Dirs.show dirs);
       let diff = Terrat_change.Diff.[ Change { filename = "null/main.tf" } ] in
       let changes = Terrat_change_match.match_diff_list dirs diff in
       assert (CCList.length changes = 1);
