@@ -346,7 +346,7 @@ let compute_dest_branch_tag ctx repo_config =
         (CCList.find_opt
            (fun (_, pat) ->
              match Lua_pattern.of_string pat with
-             | Some pat -> CCOption.is_some (Lua_pattern.find ctx.Ctx.branch pat)
+             | Some pat -> CCOption.is_some (Lua_pattern.find ctx.Ctx.dest_branch pat)
              | None -> failwith "nyi")
            branch_tags)
   | Some _ | None -> None
