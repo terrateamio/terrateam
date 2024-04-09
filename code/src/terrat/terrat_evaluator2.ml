@@ -161,9 +161,9 @@ module Result_status = struct
   [@@deriving show]
 end
 
-let compute_matches ~repo_config ~tag_query ~out_of_change_applies ~diff ~repo_tree ~index () =
+let compute_matches ~ctx ~repo_config ~tag_query ~out_of_change_applies ~diff ~repo_tree ~index () =
   let open CCResult.Infix in
-  Terrat_change_match.synthesize_dir_config ~index ~file_list:repo_tree repo_config
+  Terrat_change_match.synthesize_dir_config ~ctx ~index ~file_list:repo_tree repo_config
   >>= fun dirs ->
   let all_matching_dirspaces =
     CCList.flat_map
@@ -1289,6 +1289,10 @@ module Make (S : S) = struct
             in
             Abb.Future.return
               (compute_matches
+                 ~ctx:
+                   (Terrat_change_match.Ctx.make
+                      ~branch:(S.Ref.to_string (S.Event.Drift.Data.branch_name data))
+                      ())
                  ~repo_config:(S.Event.Drift.Data.repo_config data)
                  ~tag_query:(S.Event.Drift.Schedule.tag_query sched)
                  ~out_of_change_applies:[]
@@ -1371,6 +1375,10 @@ module Make (S : S) = struct
         >>= fun (repo_config, repo_tree) ->
         Abb.Future.return
           (Terrat_change_match.synthesize_dir_config
+             ~ctx:
+               (Terrat_change_match.Ctx.make
+                  ~branch:(S.Ref.to_string (S.Pull_request.branch_name pull_request))
+                  ())
              ~index:Terrat_change_match.Index.empty
              ~file_list:repo_tree
              repo_config)
@@ -1921,7 +1929,14 @@ module Make (S : S) = struct
               ()
           in
           match
-            Terrat_change_match.synthesize_dir_config ~index ~file_list:repo_tree repo_config
+            Terrat_change_match.synthesize_dir_config
+              ~ctx:
+                (Terrat_change_match.Ctx.make
+                   ~branch:(S.Ref.to_string (S.Pull_request.branch_name pull_request))
+                   ())
+              ~index
+              ~file_list:repo_tree
+              repo_config
           with
           | Ok dirs ->
               S.Publish_msg.publish_msg publish (Msg.Repo_config (repo_config, dirs))
@@ -2706,6 +2721,10 @@ module Make (S : S) = struct
                 >>= fun out_of_change_applies ->
                 Abb.Future.return
                   (compute_matches
+                     ~ctx:
+                       (Terrat_change_match.Ctx.make
+                          ~branch:(S.Ref.to_string (S.Pull_request.branch_name pull_request))
+                          ())
                      ~repo_config
                      ~tag_query:(S.Event.Terraform.tag_query t.event)
                      ~out_of_change_applies
@@ -2904,6 +2923,10 @@ module Make (S : S) = struct
         >>= fun repo_tree ->
         Abb.Future.return
           (Terrat_change_match.synthesize_dir_config
+             ~ctx:
+               (Terrat_change_match.Ctx.make
+                  ~branch:(S.Ref.to_string (S.Pull_request.branch_name pull_request))
+                  ())
              ~index:Terrat_change_match.Index.empty
              ~file_list:repo_tree
              repo_config)
@@ -3011,7 +3034,14 @@ module Make (S : S) = struct
         >>= function
         | Some index -> (
             Abb.Future.return
-              (Terrat_change_match.synthesize_dir_config ~index ~file_list:repo_tree repo_config)
+              (Terrat_change_match.synthesize_dir_config
+                 ~ctx:
+                   (Terrat_change_match.Ctx.make
+                      ~branch:(S.Ref.to_string (S.Pull_request.branch_name pull_request))
+                      ())
+                 ~index
+                 ~file_list:repo_tree
+                 repo_config)
             >>= fun dirs ->
             let matches =
               Terrat_change_match.match_diff_list dirs (S.Pull_request.diff pull_request)
@@ -3070,6 +3100,10 @@ module Make (S : S) = struct
         let module Wm = Terrat_work_manifest2 in
         Abb.Future.return
           (Terrat_change_match.synthesize_dir_config
+             ~ctx:
+               (Terrat_change_match.Ctx.make
+                  ~branch:(S.Ref.to_string (S.Pull_request.branch_name pull_request))
+                  ())
              ~index:Terrat_change_match.Index.empty
              ~file_list:repo_tree
              repo_config)
@@ -3327,7 +3361,14 @@ module Make (S : S) = struct
       let compute_changes repo_config repo_tree index work_manifest =
         let module Wm = Terrat_work_manifest2 in
         let open CCResult.Infix in
+        let branch =
+          match work_manifest.Wm.src with
+          | Wm.Kind.Drift drift -> S.Ref.to_string (S.Drift.branch drift)
+          | Wm.Kind.Pull_request pr -> S.Ref.to_string (S.Pull_request.branch_name pr)
+          | Wm.Kind.Index _ -> assert false
+        in
         Terrat_change_match.synthesize_dir_config
+          ~ctx:(Terrat_change_match.Ctx.make ~branch ())
           ~index:Terrat_change_match.Index.empty
           ~file_list:repo_tree
           repo_config

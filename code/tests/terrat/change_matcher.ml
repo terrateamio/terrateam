@@ -1,3 +1,5 @@
+let ctx = Terrat_change_match.Ctx.make ~branch:"test" ()
+
 (* This configuration is used for tests of the dirs configuration *)
 let dirs_config =
   CCResult.get_exn
@@ -104,6 +106,7 @@ let test_simple =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:[ "ec2/ec2.tf" ]
              repo_config)
@@ -141,6 +144,7 @@ let test_workflow_idx =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:[ "ec2/ec2.tf" ]
              repo_config)
@@ -197,6 +201,7 @@ let test_workflow_idx_tag_in_dir =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:[ "ec2/ec2.tf" ]
              repo_config)
@@ -260,6 +265,7 @@ let test_workflow_idx_multiple_dirs =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:[ "ec2/ec2.tf"; "s3/s3.tf" ]
              repo_config)
@@ -314,6 +320,7 @@ let test_workflow_override =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:[ "ec2/ec2.tf"; "s3/s3.tf" ]
              repo_config)
@@ -347,6 +354,7 @@ let test_dir_match =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:[ "ec2/ec2.tf"; "s3/s3.tf" ]
              repo_config)
@@ -369,6 +377,7 @@ let test_dirspace_map =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:[ "ec2/ec2.tf"; "s3/s3.tf" ]
              repo_config)
@@ -407,6 +416,7 @@ let test_dir_file_pattern =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:[ "ec2/ec2.tf"; "s3/s3.tf" ]
              repo_config)
@@ -420,6 +430,7 @@ let test_dir_config_iam =
       let dirs =
         match
           Terrat_change_match.synthesize_dir_config
+            ~ctx
             ~index:Terrat_change_match.Index.empty
             ~file_list:[ "iam/foo.tf"; "ec2/ec2.tf"; "ebl/ebl.tf"; "lambda/lambda.tf" ]
             dirs_config
@@ -449,6 +460,7 @@ let test_dir_config_ebl =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:[ "iam/foo.tf"; "ec2/ec2.tf"; "ebl/ebl.tf"; "lambda/lambda.tf" ]
              dirs_config)
@@ -471,6 +483,7 @@ let test_dir_config_ebl_modules =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:
                [ "iam/foo.tf"; "ec2/ec2.tf"; "ebl/ebl.tf"; "lambda/lambda.tf"; "ebl_modules" ]
@@ -496,6 +509,7 @@ let test_dir_config_ebl_and_modules =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:
                [ "iam/foo.tf"; "ec2/ec2.tf"; "ebl/ebl.tf"; "lambda/lambda.tf"; "ebl_modules" ]
@@ -519,6 +533,7 @@ let test_dir_config_s3 =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:
                [
@@ -549,6 +564,7 @@ let test_dir_config_lambda_json =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:
                [
@@ -579,6 +595,7 @@ let test_dir_config_module =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:
                [
@@ -601,6 +618,7 @@ let test_dir_config_null_file_patterns =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:
                [
@@ -665,6 +683,7 @@ let test_recursive_dirs_template_dir =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list
              dirs_config)
@@ -710,6 +729,7 @@ let test_recursive_dirs_aws_prod =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list
              dirs_config)
@@ -764,6 +784,7 @@ let test_recursive_dirs_tags =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list
              dirs_config)
@@ -832,6 +853,7 @@ let test_recursive_dirs_without_tags =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list
              dirs_config)
@@ -854,6 +876,7 @@ let test_bad_dir_config_iam =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:
                [ "ec2/ec2.tf"; "iam/foo.tf"; "ebl/ebl.tf"; "s3/s3.tf"; "s3/foo.tf"; "foo.tf" ]
@@ -869,6 +892,7 @@ let test_bad_dir_config_ec2 =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:
                [ "ec2/ec2.tf"; "iam/foo.tf"; "ebl/ebl.tf"; "s3/s3.tf"; "s3/foo.tf"; "foo.tf" ]
@@ -884,6 +908,7 @@ let test_bad_dir_config_ec2_root_dir_change =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:[ "ec2/ec2.tf"; "iam/foo.tf"; "ebl/ebl.tf"; "s3/s3.tf"; "foo.tf" ]
              bad_dirs_config)
@@ -898,6 +923,7 @@ let test_bad_dir_config_s3 =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:
                [ "ec2/ec2.tf"; "iam/foo.tf"; "ebl/ebl.tf"; "s3/s3.tf"; "s3/foo.tf"; "foo.tf" ]
@@ -943,6 +969,7 @@ let test_module_dir_with_root_dir =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:[ "foo.tf"; "module/foo/tf.tf" ]
              dirs_config)
@@ -964,6 +991,7 @@ let test_large_directory_count_unmatching_files =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list
              repo_config)
@@ -989,6 +1017,7 @@ let test_large_directory_count_matching_files =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list
              repo_config)
@@ -1024,6 +1053,7 @@ let test_large_directory_count_non_default_when_modified =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list
              repo_config)
@@ -1047,6 +1077,7 @@ let test_not_match =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:[ "ec2/ec2.tf" ]
              repo_config)
@@ -1073,6 +1104,7 @@ let test_not_match_multiple =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:[ "ec2/ec2.tf" ]
              repo_config)
@@ -1110,6 +1142,7 @@ let test_relative_path_file_pattern =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:[ "d/bar/foo/t.tf"; "d/bar/baz/t.tf" ]
              repo_config)
@@ -1147,6 +1180,7 @@ let test_relative_path_file_pattern_multiple_dots =
       let dirs =
         CCResult.get_exn
           (Terrat_change_match.synthesize_dir_config
+             ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:[ "d/bar/foo/t.tf"; "d/bar/envs/baz/t.tf" ]
              repo_config)
@@ -1161,7 +1195,8 @@ let test_index_basic =
       let repo_config = CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson (`Assoc [])) in
       let file_list = [ "modules/foo/main.tf"; "tf/main.tf" ] in
       let dirs =
-        CCResult.get_exn (Terrat_change_match.synthesize_dir_config ~index ~file_list repo_config)
+        CCResult.get_exn
+          (Terrat_change_match.synthesize_dir_config ~ctx ~index ~file_list repo_config)
       in
       let diff = Terrat_change.Diff.[ Add { filename = "modules/foo/main.tf" } ] in
       let changes = Terrat_change_match.match_diff_list dirs diff in
@@ -1183,7 +1218,8 @@ let test_index_with_dirs_section =
       in
       let file_list = [ "modules/foo/main.tf"; "tf/main.tf" ] in
       let dirs =
-        CCResult.get_exn (Terrat_change_match.synthesize_dir_config ~index ~file_list repo_config)
+        CCResult.get_exn
+          (Terrat_change_match.synthesize_dir_config ~ctx ~index ~file_list repo_config)
       in
       let diff = Terrat_change.Diff.[ Add { filename = "modules/foo/main.tf" } ] in
       let changes = Terrat_change_match.match_diff_list dirs diff in
@@ -1205,7 +1241,8 @@ let test_index_module_in_same_dir =
       let repo_config = CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson (`Assoc [])) in
       let file_list = [ "tf/modules/foo/main.tf"; "tf/main.tf" ] in
       let dirs =
-        CCResult.get_exn (Terrat_change_match.synthesize_dir_config ~index ~file_list repo_config)
+        CCResult.get_exn
+          (Terrat_change_match.synthesize_dir_config ~ctx ~index ~file_list repo_config)
       in
       let diff = Terrat_change.Diff.[ Add { filename = "tf/modules/foo/main.tf" } ] in
       let changes = Terrat_change_match.match_diff_list dirs diff in
@@ -1227,7 +1264,8 @@ let test_index_symlinks =
       let repo_config = CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson (`Assoc [])) in
       let file_list = [ "modules/foo/main.tf"; "tf/main.tf" ] in
       let dirs =
-        CCResult.get_exn (Terrat_change_match.synthesize_dir_config ~index ~file_list repo_config)
+        CCResult.get_exn
+          (Terrat_change_match.synthesize_dir_config ~ctx ~index ~file_list repo_config)
       in
       let diff = Terrat_change.Diff.[ Add { filename = "modules/foo/main.tf" } ] in
       let changes = Terrat_change_match.match_diff_list dirs diff in
@@ -1256,7 +1294,8 @@ let test_index_symlinks_dir_config =
       in
       let file_list = [ "tf/main.tf"; "null/main.tf" ] in
       let dirs =
-        CCResult.get_exn (Terrat_change_match.synthesize_dir_config ~index ~file_list repo_config)
+        CCResult.get_exn
+          (Terrat_change_match.synthesize_dir_config ~ctx ~index ~file_list repo_config)
       in
       let diff = Terrat_change.Diff.[ Change { filename = "null/main.tf" } ] in
       let changes = Terrat_change_match.match_diff_list dirs diff in

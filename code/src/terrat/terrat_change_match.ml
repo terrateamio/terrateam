@@ -10,6 +10,12 @@ type t = {
 }
 [@@deriving show]
 
+module Ctx = struct
+  type t = { branch : string }
+
+  let make ~branch () = { branch }
+end
+
 module Index = struct
   module Dep = struct
     type t = Module of string
@@ -26,7 +32,7 @@ end
 
 exception Bad_glob of string
 
-let workspaces_or_stacks ~default ~dirname ~config_tags workspaces stacks =
+let workspaces_or_stacks ~global_tags ~default ~dirname ~config_tags workspaces stacks =
   let module Ws = Terrat_repo_config.Workspaces in
   match (workspaces, stacks, default) with
   | None, Some st, _ ->
@@ -37,7 +43,10 @@ let workspaces_or_stacks ~default ~dirname ~config_tags workspaces stacks =
             Json_schema.String_map.mapi
               (fun k Ws.Additional.{ tags } ->
                 Ws.Additional.
-                  { tags = (("dir:" ^ dirname) :: ("stack:" ^ k) :: tags) @ config_tags })
+                  {
+                    tags =
+                      (("dir:" ^ dirname) :: ("stack:" ^ k) :: tags) @ global_tags @ config_tags;
+                  })
               st.Ws.additional;
         }
   | Some ws, _, _ | None, None, ws ->
@@ -48,7 +57,10 @@ let workspaces_or_stacks ~default ~dirname ~config_tags workspaces stacks =
             Json_schema.String_map.mapi
               (fun k Ws.Additional.{ tags } ->
                 Ws.Additional.
-                  { tags = (("dir:" ^ dirname) :: ("workspace:" ^ k) :: tags) @ config_tags })
+                  {
+                    tags =
+                      (("dir:" ^ dirname) :: ("workspace:" ^ k) :: tags) @ global_tags @ config_tags;
+                  })
               ws.Ws.additional;
         }
 
@@ -165,7 +177,7 @@ module Dirs = struct
 
     let process_relative_path dirname = process_dot_dot (process_dot dirname)
 
-    let of_config_dir module_paths index default_when_modified dirname config =
+    let of_config_dir ~global_tags module_paths index default_when_modified dirname config =
       let module Dir = Terrat_repo_config.Dir in
       let module Ws = Terrat_repo_config.Workspaces in
       let module Wm = Terrat_repo_config.When_modified in
@@ -177,6 +189,7 @@ module Dirs = struct
          into workspaces. *)
       let workspaces =
         workspaces_or_stacks
+          ~global_tags
           ~default:default_workspaces
           ~dirname
           ~config_tags
@@ -301,14 +314,36 @@ let map_symlink_file_path symlinks fpath =
       CCList.map (fun src -> CCString.replace ~which:`Left ~sub:dst ~by:src fpath) srcs
   | Some _ | None -> [ fpath ]
 
+let compute_branch_tag ctx repo_config =
+  let module V1 = Terrat_repo_config.Version_1 in
+  let module Ct = Terrat_repo_config.Custom_tags in
+  let module Ctb = Terrat_repo_config.Custom_tags_branch in
+  match repo_config.V1.tags with
+  | Some { Ct.branch = Some { Ctb.additional; _ } } ->
+      let branch_tags = Json_schema.String_map.to_list additional in
+      CCOption.map
+        (fun (bt, _) -> bt)
+        (CCList.find_opt
+           (fun (_, pat) ->
+             match Lua_pattern.of_string pat with
+             | Some pat -> CCOption.is_some (Lua_pattern.find ctx.Ctx.branch pat)
+             | None -> failwith "nyi")
+           branch_tags)
+  | Some _ | None -> None
+
 (* Given a list of files and a repository configuration, create a directory
    configuration that matches every file with their specific configuration. *)
-let synthesize_dir_config' ~index ~file_list repo_config =
+let synthesize_dir_config' ~ctx ~index ~file_list repo_config =
   let module C = Terrat_repo_config in
   let module Dir = Terrat_repo_config.Dir in
   let module Wm = Terrat_repo_config.When_modified in
   let symlinks = build_symlinks index.Index.symlinks in
   let file_list = CCList.flat_map (map_symlink_file_path symlinks) file_list in
+  let global_tags =
+    match compute_branch_tag ctx repo_config with
+    | Some branch -> [ "branch:" ^ branch ]
+    | None -> []
+  in
   let dirs, default_when_modified =
     match repo_config with
     | { C.Version_1.dirs; when_modified; _ } ->
@@ -346,7 +381,8 @@ let synthesize_dir_config' ~index ~file_list repo_config =
   let non_glob_dirs =
     dirs
     |> Json_schema.String_map.filter (fun d _ -> not (CCString.contains d '*'))
-    |> Json_schema.String_map.mapi (Dirs.Dir.of_config_dir module_paths index default_when_modified)
+    |> Json_schema.String_map.mapi
+         (Dirs.Dir.of_config_dir ~global_tags module_paths index default_when_modified)
   in
   let synthetic_dirs =
     file_list
@@ -355,7 +391,15 @@ let synthesize_dir_config' ~index ~file_list repo_config =
            CCList.find_opt (fun (d, _) -> Path_glob.Glob.eval d fname) glob_dirs
            >>= fun (_, config) ->
            let dir = Filename.dirname fname in
-           Some (dir, Dirs.Dir.of_config_dir module_paths index default_when_modified dir config))
+           Some
+             ( dir,
+               Dirs.Dir.of_config_dir
+                 ~global_tags
+                 module_paths
+                 index
+                 default_when_modified
+                 dir
+                 config ))
     |> Json_schema.String_map.of_list
   in
   (* Combine the globed ones and the non-globed ones for all dirs that were
@@ -376,13 +420,25 @@ let synthesize_dir_config' ~index ~file_list repo_config =
          match anything, so rather than carry them around, just don't include them.
          It's a waste to try to match anything against them. *)
       let dir =
-        Dirs.Dir.of_config_dir module_paths index default_when_modified dirname default_dir_config
+        Dirs.Dir.of_config_dir
+          ~global_tags
+          module_paths
+          index
+          default_when_modified
+          dirname
+          default_dir_config
       in
       let file_pattern_matcher = dir.Dirs.Dir.file_pattern_matcher in
       if CCList.exists file_pattern_matcher fnames then (dirname, dir) :: acc else acc
     else fun dirname fnames acc ->
       let dir =
-        Dirs.Dir.of_config_dir module_paths index default_when_modified dirname default_dir_config
+        Dirs.Dir.of_config_dir
+          ~global_tags
+          module_paths
+          index
+          default_when_modified
+          dirname
+          default_dir_config
       in
       (dirname, dir) :: acc
   in
@@ -400,8 +456,8 @@ let synthesize_dir_config' ~index ~file_list repo_config =
     symlinks;
   }
 
-let synthesize_dir_config ~index ~file_list repo_config =
-  try Ok (synthesize_dir_config' ~index ~file_list repo_config)
+let synthesize_dir_config ~ctx ~index ~file_list repo_config =
+  try Ok (synthesize_dir_config' ~ctx ~index ~file_list repo_config)
   with Bad_glob s -> Error (`Bad_glob s)
 
 let match_filename_in_dirs dirs fnames =

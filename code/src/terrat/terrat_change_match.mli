@@ -8,6 +8,12 @@ type t = {
 }
 [@@deriving show]
 
+module Ctx : sig
+  type t
+
+  val make : branch:string -> unit -> t
+end
+
 module Index : sig
   module Dep : sig
     type t = Module of string
@@ -29,6 +35,7 @@ end
     The file list is relative to the root of the repository and must NOT begin
     with [.]. *)
 val synthesize_dir_config :
+  ctx:Ctx.t ->
   index:Index.t ->
   file_list:string list ->
   Terrat_repo_config.Version_1.t ->

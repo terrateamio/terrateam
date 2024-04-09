@@ -81,6 +81,22 @@
       },
       "type": "object"
     },
+    "custom-tags": {
+      "additionalProperties": false,
+      "properties": {
+        "branch": {
+          "$ref": "#/definitions/custom-tags-branch"
+        }
+      },
+      "type": "object"
+    },
+    "custom-tags-branch": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {},
+      "type": "object"
+    },
     "destination-branch-name": {
       "type": "string"
     },
@@ -228,12 +244,12 @@
           "const": "terragrunt",
           "type": "string"
         },
-        "tf_version": {
-          "default": "latest",
-          "type": "string"
-        },
         "tf_cmd": {
           "default": "terraform",
+          "type": "string"
+        },
+        "tf_version": {
+          "default": "latest",
           "type": "string"
         },
         "version": {
@@ -834,6 +850,9 @@
             }
           },
           "type": "object"
+        },
+        "tags": {
+          "$ref": "#/definitions/custom-tags"
         },
         "version": {
           "const": "1",
