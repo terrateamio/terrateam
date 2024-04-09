@@ -11,7 +11,7 @@ type t = {
 module Ctx : sig
   type t
 
-  val make : branch:string -> unit -> t
+  val make : dest_branch:string -> branch:string -> unit -> t
 end
 
 module Index : sig

@@ -1,4 +1,4 @@
-let ctx = Terrat_change_match.Ctx.make ~branch:"test" ()
+let ctx = Terrat_change_match.Ctx.make ~dest_branch:"main" ~branch:"test" ()
 
 (* This configuration is used for tests of the dirs configuration *)
 let dirs_config =

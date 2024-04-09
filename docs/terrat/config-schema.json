@@ -86,6 +86,9 @@
       "properties": {
         "branch": {
           "$ref": "#/definitions/custom-tags-branch"
+        },
+        "dest_branch": {
+          "$ref": "#/definitions/custom-tags-branch"
         }
       },
       "type": "object"

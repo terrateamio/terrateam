@@ -11,9 +11,12 @@ type t = {
 [@@deriving show]
 
 module Ctx = struct
-  type t = { branch : string }
+  type t = {
+    dest_branch : string;
+    branch : string;
+  }
 
-  let make ~branch () = { branch }
+  let make ~dest_branch ~branch () = { dest_branch; branch }
 end
 
 module Index = struct
@@ -319,7 +322,24 @@ let compute_branch_tag ctx repo_config =
   let module Ct = Terrat_repo_config.Custom_tags in
   let module Ctb = Terrat_repo_config.Custom_tags_branch in
   match repo_config.V1.tags with
-  | Some { Ct.branch = Some { Ctb.additional; _ } } ->
+  | Some { Ct.branch = Some { Ctb.additional; _ }; _ } ->
+      let branch_tags = Json_schema.String_map.to_list additional in
+      CCOption.map
+        (fun (bt, _) -> bt)
+        (CCList.find_opt
+           (fun (_, pat) ->
+             match Lua_pattern.of_string pat with
+             | Some pat -> CCOption.is_some (Lua_pattern.find ctx.Ctx.branch pat)
+             | None -> failwith "nyi")
+           branch_tags)
+  | Some _ | None -> None
+
+let compute_dest_branch_tag ctx repo_config =
+  let module V1 = Terrat_repo_config.Version_1 in
+  let module Ct = Terrat_repo_config.Custom_tags in
+  let module Ctb = Terrat_repo_config.Custom_tags_branch in
+  match repo_config.V1.tags with
+  | Some { Ct.dest_branch = Some { Ctb.additional; _ }; _ } ->
       let branch_tags = Json_schema.String_map.to_list additional in
       CCOption.map
         (fun (bt, _) -> bt)
@@ -339,11 +359,17 @@ let synthesize_dir_config' ~ctx ~index ~file_list repo_config =
   let module Wm = Terrat_repo_config.When_modified in
   let symlinks = build_symlinks index.Index.symlinks in
   let file_list = CCList.flat_map (map_symlink_file_path symlinks) file_list in
-  let global_tags =
+  let branch_tags =
     match compute_branch_tag ctx repo_config with
     | Some branch -> [ "branch:" ^ branch ]
     | None -> []
   in
+  let dest_branch_tags =
+    match compute_dest_branch_tag ctx repo_config with
+    | Some branch -> [ "dest_branch:" ^ branch ]
+    | None -> []
+  in
+  let global_tags = branch_tags @ dest_branch_tags in
   let dirs, default_when_modified =
     match repo_config with
     | { C.Version_1.dirs; when_modified; _ } ->

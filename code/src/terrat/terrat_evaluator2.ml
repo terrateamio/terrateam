@@ -1291,6 +1291,7 @@ module Make (S : S) = struct
               (compute_matches
                  ~ctx:
                    (Terrat_change_match.Ctx.make
+                      ~dest_branch:(S.Ref.to_string (S.Event.Drift.Data.branch_name data))
                       ~branch:(S.Ref.to_string (S.Event.Drift.Data.branch_name data))
                       ())
                  ~repo_config:(S.Event.Drift.Data.repo_config data)
@@ -1377,6 +1378,7 @@ module Make (S : S) = struct
           (Terrat_change_match.synthesize_dir_config
              ~ctx:
                (Terrat_change_match.Ctx.make
+                  ~dest_branch:(S.Ref.to_string (S.Pull_request.base_branch_name pull_request))
                   ~branch:(S.Ref.to_string (S.Pull_request.branch_name pull_request))
                   ())
              ~index:Terrat_change_match.Index.empty
@@ -1932,6 +1934,7 @@ module Make (S : S) = struct
             Terrat_change_match.synthesize_dir_config
               ~ctx:
                 (Terrat_change_match.Ctx.make
+                   ~dest_branch:(S.Ref.to_string (S.Pull_request.base_branch_name pull_request))
                    ~branch:(S.Ref.to_string (S.Pull_request.branch_name pull_request))
                    ())
               ~index
@@ -2723,6 +2726,8 @@ module Make (S : S) = struct
                   (compute_matches
                      ~ctx:
                        (Terrat_change_match.Ctx.make
+                          ~dest_branch:
+                            (S.Ref.to_string (S.Pull_request.base_branch_name pull_request))
                           ~branch:(S.Ref.to_string (S.Pull_request.branch_name pull_request))
                           ())
                      ~repo_config
@@ -2925,6 +2930,7 @@ module Make (S : S) = struct
           (Terrat_change_match.synthesize_dir_config
              ~ctx:
                (Terrat_change_match.Ctx.make
+                  ~dest_branch:(S.Ref.to_string (S.Pull_request.base_branch_name pull_request))
                   ~branch:(S.Ref.to_string (S.Pull_request.branch_name pull_request))
                   ())
              ~index:Terrat_change_match.Index.empty
@@ -3037,6 +3043,7 @@ module Make (S : S) = struct
               (Terrat_change_match.synthesize_dir_config
                  ~ctx:
                    (Terrat_change_match.Ctx.make
+                      ~dest_branch:(S.Ref.to_string (S.Pull_request.base_branch_name pull_request))
                       ~branch:(S.Ref.to_string (S.Pull_request.branch_name pull_request))
                       ())
                  ~index
@@ -3102,6 +3109,7 @@ module Make (S : S) = struct
           (Terrat_change_match.synthesize_dir_config
              ~ctx:
                (Terrat_change_match.Ctx.make
+                  ~dest_branch:(S.Ref.to_string (S.Pull_request.base_branch_name pull_request))
                   ~branch:(S.Ref.to_string (S.Pull_request.branch_name pull_request))
                   ())
              ~index:Terrat_change_match.Index.empty
@@ -3361,14 +3369,17 @@ module Make (S : S) = struct
       let compute_changes repo_config repo_tree index work_manifest =
         let module Wm = Terrat_work_manifest2 in
         let open CCResult.Infix in
-        let branch =
+        let dest_branch, branch =
           match work_manifest.Wm.src with
-          | Wm.Kind.Drift drift -> S.Ref.to_string (S.Drift.branch drift)
-          | Wm.Kind.Pull_request pr -> S.Ref.to_string (S.Pull_request.branch_name pr)
+          | Wm.Kind.Drift drift ->
+              (S.Ref.to_string (S.Drift.branch drift), S.Ref.to_string (S.Drift.branch drift))
+          | Wm.Kind.Pull_request pr ->
+              ( S.Ref.to_string (S.Pull_request.base_branch_name pr),
+                S.Ref.to_string (S.Pull_request.branch_name pr) )
           | Wm.Kind.Index _ -> assert false
         in
         Terrat_change_match.synthesize_dir_config
-          ~ctx:(Terrat_change_match.Ctx.make ~branch ())
+          ~ctx:(Terrat_change_match.Ctx.make ~dest_branch ~branch ())
           ~index:Terrat_change_match.Index.empty
           ~file_list:repo_tree
           repo_config

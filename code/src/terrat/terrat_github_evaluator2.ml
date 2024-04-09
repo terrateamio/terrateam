@@ -2697,7 +2697,7 @@ module S = struct
                 ~key:encryption_key
                 (Cstruct.of_string (Uuidm.to_string id))))
 
-      let fetch_dirspaces' client repo branch_name ref_ =
+      let fetch_dirspaces' client repo dest_branch branch ref_ =
         let run =
           let open Abbs_future_combinators.Infix_result_monad in
           Abbs_future_combinators.Infix_result_app.(
@@ -2707,7 +2707,7 @@ module S = struct
           >>= fun (repo_config, files) ->
           Abb.Future.return
             (Terrat_change_match.synthesize_dir_config
-               ~ctx:(Terrat_change_match.Ctx.make ~branch:branch_name ())
+               ~ctx:(Terrat_change_match.Ctx.make ~dest_branch ~branch ())
                ~index:Terrat_change_match.Index.empty
                ~file_list:files
                repo_config)
@@ -2763,11 +2763,11 @@ module S = struct
         | Error (`Parse_err _) -> Abb.Future.return (Error `Error)
         | Error `Error -> Abb.Future.return (Error `Error)
 
-      let fetch_dirspaces client repo branch_name base_ref ref_ =
+      let fetch_dirspaces client repo dest_branch_name branch_name base_ref ref_ =
         Abbs_future_combinators.Infix_result_app.(
           (fun base_dirs dirs -> (base_dirs, dirs))
-          <$> fetch_dirspaces' client repo branch_name base_ref
-          <*> fetch_dirspaces' client repo branch_name ref_)
+          <$> fetch_dirspaces' client repo dest_branch_name branch_name base_ref
+          <*> fetch_dirspaces' client repo dest_branch_name branch_name ref_)
 
       let run_kind_of_src =
         let module Wm = Terrat_work_manifest2 in
@@ -2822,9 +2822,15 @@ module S = struct
             _;
           } ->
             let open Abbs_future_combinators.Infix_result_monad in
+            let branch_name =
+              match src with
+              | Wm.Kind.Pull_request { Pull_request.branch_name; _ } -> branch_name
+              | Wm.Kind.Drift _ -> base_branch_name
+              | Wm.Kind.Index _ -> assert false
+            in
             create_client t.config account
             >>= fun client ->
-            fetch_dirspaces client repo base_branch_name base_ref ref_
+            fetch_dirspaces client repo base_branch_name branch_name base_ref ref_
             >>= fun (base_dirspaces, dirspaces) ->
             Abb.Future.return
               (Ok
@@ -2859,9 +2865,15 @@ module S = struct
             _;
           } ->
             let open Abbs_future_combinators.Infix_result_monad in
+            let branch_name =
+              match src with
+              | Wm.Kind.Pull_request { Pull_request.branch_name; _ } -> branch_name
+              | Wm.Kind.Drift _ -> base_branch_name
+              | Wm.Kind.Index _ -> assert false
+            in
             create_client t.config account
             >>= fun client ->
-            fetch_dirspaces client repo base_branch_name base_ref ref_
+            fetch_dirspaces client repo base_branch_name branch_name base_ref ref_
             >>= fun (base_dirspaces, dirspaces) ->
             Abb.Future.return
               (Ok
@@ -2894,9 +2906,15 @@ module S = struct
             _;
           } ->
             let open Abbs_future_combinators.Infix_result_monad in
+            let branch_name =
+              match src with
+              | Wm.Kind.Pull_request { Pull_request.branch_name; _ } -> branch_name
+              | Wm.Kind.Drift _ -> base_branch_name
+              | Wm.Kind.Index _ -> assert false
+            in
             create_client t.config account
             >>= fun client ->
-            fetch_dirspaces client repo base_branch_name base_ref ref_
+            fetch_dirspaces client repo base_branch_name branch_name base_ref ref_
             >>= fun (base_dirspaces, dirspaces) ->
             Abb.Future.return
               (Ok
