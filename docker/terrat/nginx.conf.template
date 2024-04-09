@@ -37,6 +37,7 @@ http {
         listen       8080;
         server_name  localhost;
         access_log   off;
+        server_tokens off;
 
         location / {
             root /usr/local/share/terrat/ui/assets/;
