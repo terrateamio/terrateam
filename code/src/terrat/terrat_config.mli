@@ -1,4 +1,4 @@
-type t
+type t [@@deriving show]
 
 type err =
   [ `Key_error of string

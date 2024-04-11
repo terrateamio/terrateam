@@ -8,6 +8,7 @@ module Telemetry = struct
   type t =
     | Disabled
     | Anonymous of Uri.t
+  [@@deriving show]
 end
 
 type t = {
@@ -16,17 +17,17 @@ type t = {
   db : string;
   db_connect_timeout : float;
   db_host : string;
-  db_password : string;
+  db_password : (string[@opaque]);
   db_user : string;
   github_api_base_url : Uri.t;
   github_app_client_id : string;
-  github_app_client_secret : string;
+  github_app_client_secret : (string[@opaque]);
   github_app_id : string;
-  github_app_pem : Mirage_crypto_pk.Rsa.priv;
+  github_app_pem : (Mirage_crypto_pk.Rsa.priv[@opaque]);
   github_app_url : Uri.t;
   github_web_base_url : Uri.t;
-  github_webhook_secret : string option;
-  infracost_api_key : string;
+  github_webhook_secret : (string[@opaque]) option;
+  infracost_api_key : (string[@opaque]);
   infracost_pricing_api_endpoint : Uri.t;
   nginx_status_uri : Uri.t option;
   port : int;
@@ -35,6 +36,7 @@ type t = {
   telemetry : Telemetry.t;
   terrateam_web_base_url : Uri.t;
 }
+[@@deriving show]
 
 type err =
   [ `Key_error of string
