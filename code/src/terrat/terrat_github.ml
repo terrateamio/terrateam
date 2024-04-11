@@ -211,7 +211,7 @@ let rate_limit_wait resp =
 
 let create config auth =
   Githubc2_abb.create
-    ?base_url:(Terrat_config.github_api_base_url config)
+    ~base_url:(Terrat_config.github_api_base_url config)
     ~user_agent:"Terrateam"
     auth
 
@@ -849,7 +849,12 @@ module Oauth = struct
           ("accept", "application/vnd.github.v3+json");
         ]
     in
-    let uri = Uri.make ~scheme:"https" ~host:"github.com" ~path:"/login/oauth/access_token" () in
+    let uri =
+      Uri.of_string
+        (Printf.sprintf
+           "%s/login/oauth/access_token"
+           (Uri.to_string (Terrat_config.github_web_base_url config)))
+    in
     let body =
       Cohttp.Body.of_string
         (Yojson.Safe.to_string
@@ -880,7 +885,12 @@ module Oauth = struct
           ("content-type", "application/json");
         ]
     in
-    let uri = Uri.make ~scheme:"https" ~host:"github.com" ~path:"/login/oauth/access_token" () in
+    let uri =
+      Uri.of_string
+        (Printf.sprintf
+           "%s/login/oauth/access_token"
+           (Uri.to_string (Terrat_config.github_web_base_url config)))
+    in
     let body =
       Cohttp.Body.of_string
         (Yojson.Safe.to_string

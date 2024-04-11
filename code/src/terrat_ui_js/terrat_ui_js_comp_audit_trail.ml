@@ -1,6 +1,6 @@
 module At = Brtl_js2.Brr.At
 
-let render_work_manifest_drift wm =
+let render_work_manifest_drift github_web_base_url wm =
   let module Wm = Terrat_api_components.Installation_work_manifest_drift in
   let module Dirspace = Terrat_api_components.Work_manifest_dirspace in
   let open Brtl_js2.Brr.El in
@@ -63,7 +63,8 @@ let render_work_manifest_drift wm =
                                      href
                                        (Jstr.v
                                           (Printf.sprintf
-                                             "https://github.com/%s/%s/actions/runs/%s"
+                                             "%s/%s/%s/actions/runs/%s"
+                                             github_web_base_url
                                              wm.Wm.owner
                                              wm.Wm.repo
                                              run_id));
@@ -98,7 +99,7 @@ let render_work_manifest_drift wm =
            ];
        ])
 
-let render_work_manifest_pull_request wm =
+let render_work_manifest_pull_request github_web_base_url wm =
   let module Wm = Terrat_api_components.Installation_work_manifest_pull_request in
   let module Dirspace = Terrat_api_components.Work_manifest_dirspace in
   let open Brtl_js2.Brr.El in
@@ -126,7 +127,8 @@ let render_work_manifest_pull_request wm =
                                  href
                                    (Jstr.v
                                       (Printf.sprintf
-                                         "https://github.com/%s/%s/pull/%d"
+                                         "%s/%s/%s/pull/%d"
+                                         github_web_base_url
                                          wm.Wm.owner
                                          wm.Wm.repo
                                          wm.Wm.pull_number));
@@ -200,7 +202,8 @@ let render_work_manifest_pull_request wm =
                                      href
                                        (Jstr.v
                                           (Printf.sprintf
-                                             "https://github.com/%s/%s/actions/runs/%s"
+                                             "%s/%s/%s/actions/runs/%s"
+                                             github_web_base_url
                                              wm.Wm.owner
                                              wm.Wm.repo
                                              run_id));
@@ -238,7 +241,7 @@ let render_work_manifest_pull_request wm =
            ];
        ])
 
-let render_work_manifest_index wm =
+let render_work_manifest_index github_web_base_url wm =
   let module Wm = Terrat_api_components.Installation_work_manifest_index in
   let module Dirspace = Terrat_api_components.Work_manifest_dirspace in
   let open Brtl_js2.Brr.El in
@@ -266,7 +269,8 @@ let render_work_manifest_index wm =
                                  href
                                    (Jstr.v
                                       (Printf.sprintf
-                                         "https://github.com/%s/%s/pull/%d"
+                                         "%s/%s/%s/pull/%d"
+                                         github_web_base_url
                                          wm.Wm.owner
                                          wm.Wm.repo
                                          wm.Wm.pull_number));
@@ -340,7 +344,8 @@ let render_work_manifest_index wm =
                                      href
                                        (Jstr.v
                                           (Printf.sprintf
-                                             "https://github.com/%s/%s/actions/runs/%s"
+                                             "%s/%s/%s/actions/runs/%s"
+                                             github_web_base_url
                                              wm.Wm.owner
                                              wm.Wm.repo
                                              run_id));
@@ -379,11 +384,16 @@ let render_work_manifest_index wm =
        ])
 
 let render_work_manifest wm state =
+  let module Sc = Terrat_api_components.Server_config in
   let module Wm = Terrat_api_components.Installation_work_manifest in
+  let app_state = Brtl_js2.State.app_state state in
+  let server_config = Terrat_ui_js_state.server_config app_state in
+  let github_web_base_url = server_config.Sc.github_web_base_url in
   match wm with
-  | Wm.Installation_work_manifest_drift wm -> render_work_manifest_drift wm
-  | Wm.Installation_work_manifest_pull_request wm -> render_work_manifest_pull_request wm
-  | Wm.Installation_work_manifest_index wm -> render_work_manifest_index wm
+  | Wm.Installation_work_manifest_drift wm -> render_work_manifest_drift github_web_base_url wm
+  | Wm.Installation_work_manifest_pull_request wm ->
+      render_work_manifest_pull_request github_web_base_url wm
+  | Wm.Installation_work_manifest_index wm -> render_work_manifest_index github_web_base_url wm
 
 let query_help =
   let open Brtl_js2.Brr.El in

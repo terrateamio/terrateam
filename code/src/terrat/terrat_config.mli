@@ -19,7 +19,7 @@ val db_connect_timeout : t -> float
 val db_host : t -> string
 val db_password : t -> string
 val db_user : t -> string
-val github_api_base_url : t -> Uri.t option
+val github_api_base_url : t -> Uri.t
 val github_app_client_id : t -> string
 val github_app_client_secret : t -> string
 val github_app_id : t -> string

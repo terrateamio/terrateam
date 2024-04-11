@@ -1,6 +1,7 @@
-let default_telemetry_uri = Uri.of_string "https://telemetry.terrateam.io"
-let default_github_web_base_url = Uri.of_string "https://github.com"
+let default_github_api_base_url = Uri.of_string "https://api.github.com"
 let default_github_app_url = Uri.of_string "https://github.com/apps/terrateam-action"
+let default_github_web_base_url = Uri.of_string "https://github.com"
+let default_telemetry_uri = Uri.of_string "https://telemetry.terrateam.io"
 let default_terrateam_web_base_url = Uri.of_string "https://app.terrateam.io"
 
 module Telemetry = struct
@@ -17,7 +18,7 @@ type t = {
   db_host : string;
   db_password : string;
   db_user : string;
-  github_api_base_url : Uri.t option;
+  github_api_base_url : Uri.t;
   github_app_client_id : string;
   github_app_client_secret : string;
   github_app_id : string;
@@ -102,7 +103,12 @@ let create () =
     | "disabled" -> Some Telemetry.Disabled
     | _ -> None)
   >>= fun telemetry ->
-  let github_api_base_url = CCOption.map Uri.of_string (Sys.getenv_opt "GITHUB_API_BASE_URL") in
+  let github_api_base_url =
+    CCOption.map_or
+      ~default:default_github_api_base_url
+      Uri.of_string
+      (Sys.getenv_opt "GITHUB_API_BASE_URL")
+  in
   let github_web_base_url =
     CCOption.map_or
       ~default:default_github_web_base_url

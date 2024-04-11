@@ -3,6 +3,7 @@ module Config = struct
     let body =
       Terrat_api_components.Server_config.(
         {
+          github_api_base_url = Uri.to_string (Terrat_config.github_api_base_url config);
           github_app_client_id = Terrat_config.github_app_client_id config;
           github_app_url = Uri.to_string (Terrat_config.github_app_url config);
           github_web_base_url = Uri.to_string (Terrat_config.github_web_base_url config);

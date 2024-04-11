@@ -553,6 +553,9 @@
       "server-config": {
         "additionalProperties": false,
         "properties": {
+          "github_api_base_url": {
+            "type": "string"
+          },
           "github_app_client_id": {
             "type": "string"
           },
@@ -564,6 +567,7 @@
           }
         },
         "required": [
+          "github_api_base_url",
           "github_app_client_id",
           "github_app_url",
           "github_web_base_url"

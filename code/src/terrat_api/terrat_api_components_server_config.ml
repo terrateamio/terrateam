@@ -1,4 +1,5 @@
 type t = {
+  github_api_base_url : string;
   github_app_client_id : string;
   github_app_url : string;
   github_web_base_url : string;

@@ -8,7 +8,9 @@ let run state =
       Abb_js.Future.return
         (Brtl_js2.Output.navigate
            (Uri.of_string
-              ("https://github.com/login/oauth/authorize?client_id=" ^ config.C.github_app_client_id)))
+              (config.C.github_web_base_url
+              ^ "/login/oauth/authorize?client_id="
+              ^ config.C.github_app_client_id)))
   | Error _ ->
       Abb_js.Future.return
         (Brtl_js2.Output.const

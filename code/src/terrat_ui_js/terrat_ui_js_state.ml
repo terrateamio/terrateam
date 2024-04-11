@@ -1,15 +1,16 @@
 type t = {
   client : Terrat_ui_js_client.t;
-  user : Terrat_api_components.User.t;
   installations : Terrat_api_components.Installation.t list Brtl_js2.Note.S.t;
-  selected_installation : Terrat_api_components.Installation.t;
   notifications : Terrat_ui_js_notification.t Brtl_js2.Note.E.t;
   notify : Terrat_ui_js_notification.t Brtl_js2.Note.E.send;
+  selected_installation : Terrat_api_components.Installation.t;
+  server_config : Terrat_api_components.Server_config.t;
+  user : Terrat_api_components.User.t;
 }
 
-let create ~client ~user ~installations ~selected_installation () =
+let create ~client ~user ~installations ~selected_installation ~server_config () =
   let notifications, notify = Brtl_js2.Note.E.create () in
-  { client; user; installations; selected_installation; notifications; notify }
+  { client; user; installations; selected_installation; notifications; notify; server_config }
 
 let user t = t.user
 let client t = t.client
@@ -21,3 +22,4 @@ let notify t msg =
   t.notify notification
 
 let notifications t = t.notifications
+let server_config t = t.server_config
