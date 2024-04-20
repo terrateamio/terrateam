@@ -86,6 +86,7 @@ module Msg = struct
     | Account_expired
     | Apply_no_matching_dirspaces
     | Autoapply_running
+    | Bad_custom_branch_tag_pattern of (string * string)
     | Bad_glob of string
     | Conflicting_work_manifests of 'src Terrat_work_manifest2.Existing.t list
     | Dest_branch_no_match of 'pull_request
@@ -1338,6 +1339,13 @@ module Make (S : S) = struct
         | Error (`Bad_glob err) ->
             Logs.info (fun m -> m "EVALUATOR : DRIFT : BAD_GLOB : %s" err);
             Abb.Future.return (Error `Error)
+        | Error (#Terrat_change_match.synthesize_dir_config_err as err) ->
+            Logs.err (fun m ->
+                m
+                  "EVALUATOR : DRIFT : SYNTHESIZE_DIR_CONFIG : %a"
+                  Terrat_change_match.pp_synthesize_dir_config_err
+                  err);
+            Abb.Future.return (Error `Error)
         | Error `Error -> Abb.Future.return (Error `Error)
 
       let eval' t =
@@ -1949,6 +1957,30 @@ module Make (S : S) = struct
               Logs.err (fun m ->
                   m "EVALUATOR : %s : BAD_GLOB : %s" (S.Event.Repo_config.request_id t) s);
               Abbs_future_combinators.ignore (S.Publish_msg.publish_msg publish (Msg.Bad_glob s))
+              >>= fun () -> Abb.Future.return (Error `Error)
+          | Error (`Bad_branch_pattern pat) ->
+              let open Abb.Future.Infix_monad in
+              Logs.err (fun m ->
+                  m
+                    "EVALUATOR : %s : BAD_BRANCH_PATTERN : %s"
+                    (S.Event.Repo_config.request_id t)
+                    pat);
+              Abbs_future_combinators.ignore
+                (S.Publish_msg.publish_msg
+                   publish
+                   (Msg.Bad_custom_branch_tag_pattern ("branch", pat)))
+              >>= fun () -> Abb.Future.return (Error `Error)
+          | Error (`Bad_dest_branch_pattern pat) ->
+              let open Abb.Future.Infix_monad in
+              Logs.err (fun m ->
+                  m
+                    "EVALUATOR : %s : BAD_DEST_BRANCH_PATTERN : %s"
+                    (S.Event.Repo_config.request_id t)
+                    pat);
+              Abbs_future_combinators.ignore
+                (S.Publish_msg.publish_msg
+                   publish
+                   (Msg.Bad_custom_branch_tag_pattern ("dest_branch", pat)))
               >>= fun () -> Abb.Future.return (Error `Error)
         in
         let open Abbs_future_combinators.Infix_result_monad in
@@ -3315,7 +3347,15 @@ module Make (S : S) = struct
                     | Error (`No_matching_dest_branch pull_request) ->
                         handle_dest_branch_err t pull_request
                     | Error (`No_matching_source_branch pull_request) ->
-                        handle_source_branch_err t pull_request)
+                        handle_source_branch_err t pull_request
+                    | Error (`Bad_branch_pattern pat) ->
+                        Abbs_future_combinators.ignore
+                          (publish_msg t (Msg.Bad_custom_branch_tag_pattern ("branch", pat)))
+                        >>= fun () -> Abb.Future.return (Error `Error)
+                    | Error (`Bad_dest_branch_pattern pat) ->
+                        Abbs_future_combinators.ignore
+                          (publish_msg t (Msg.Bad_custom_branch_tag_pattern ("dest_branch", pat)))
+                        >>= fun () -> Abb.Future.return (Error `Error))
                 | `Aborted ->
                     Prmths.Counter.inc_one Metrics.aborted_errors_total;
                     Logs.err (fun m ->
@@ -3794,6 +3834,8 @@ module Make (S : S) = struct
                   err);
             Abb.Future.return (Error `Error)
         | Error (`Parse_err _) -> Abb.Future.return (Error `Error)
+        | Error (`Bad_branch_pattern _) | Error (`Bad_dest_branch_pattern _) ->
+            Abb.Future.return (Error `Error)
     end
 
     module Unlock = struct

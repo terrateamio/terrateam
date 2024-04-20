@@ -21,6 +21,7 @@ module Msg : sig
     | Account_expired
     | Apply_no_matching_dirspaces
     | Autoapply_running
+    | Bad_custom_branch_tag_pattern of (string * string)
     | Bad_glob of string
     | Conflicting_work_manifests of 'src Terrat_work_manifest2.Existing.t list
     | Dest_branch_no_match of 'pull_request

@@ -522,6 +522,7 @@ module Tmpl = struct
   let plan_no_matching_dirspaces = read "plan_no_matching_dirspaces.tmpl"
   let base_branch_not_default_branch = read "dest_branch_no_match.tmpl"
   let auto_apply_running = read "auto_apply_running.tmpl"
+  let bad_custom_branch_tag_pattern = read "bad_custom_branch_tag_pattern.tmpl"
   let bad_glob = read "bad_glob.tmpl"
   let unlock_success = read "unlock_success.tmpl"
   let access_control_all_dirspaces_denied = read "access_control_all_dirspaces_denied.tmpl"
@@ -2242,6 +2243,13 @@ module S = struct
       | Msg.Autoapply_running ->
           let kv = Snabela.Kv.(Map.of_list []) in
           apply_template_and_publish "AUTO_APPLY_RUNNING" Tmpl.auto_apply_running kv t
+      | Msg.Bad_custom_branch_tag_pattern (tag, pat) ->
+          let kv = Snabela.Kv.(Map.of_list [ ("tag", string tag); ("pattern", string pat) ]) in
+          apply_template_and_publish
+            "BAD_CUSTOM_BRANCH_TAG_PATTERN"
+            Tmpl.bad_custom_branch_tag_pattern
+            kv
+            t
       | Msg.Bad_glob s ->
           let kv = Snabela.Kv.(Map.of_list [ ("glob", string s) ]) in
           apply_template_and_publish "BAD_GLOB" Tmpl.bad_glob kv t
@@ -2761,6 +2769,8 @@ module S = struct
         | Ok _ as ret -> Abb.Future.return ret
         | Error (`Bad_glob msg) -> Abb.Future.return (Error (`Bad_glob_err (msg, ref_)))
         | Error (`Parse_err _) -> Abb.Future.return (Error `Error)
+        | Error (`Bad_branch_pattern pat) -> failwith "nyi"
+        | Error (`Bad_dest_branch_pattern pat) -> failwith "nyi"
         | Error `Error -> Abb.Future.return (Error `Error)
 
       let fetch_dirspaces client repo dest_branch_name branch_name base_ref ref_ =
