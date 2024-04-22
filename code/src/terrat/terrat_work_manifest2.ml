@@ -77,6 +77,7 @@ type ('id, 'created_at, 'run_id, 'state, 'changes, 'denied_dirspaces, 'src, 'run
   completed_at : string option;
   created_at : 'created_at;
   denied_dirspaces : 'denied_dirspaces;
+  environment : string option;
   hash : string;
   id : 'id;
   run_id : 'run_id;

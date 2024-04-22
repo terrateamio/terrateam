@@ -220,6 +220,9 @@
             },
             "type": "array"
           },
+          "environment": {
+            "type": "string"
+          },
           "id": {
             "type": "string"
           },
@@ -363,6 +366,9 @@
               "$ref": "#/components/schemas/work-manifest-dirspace"
             },
             "type": "array"
+          },
+          "environment": {
+            "type": "string"
           },
           "id": {
             "type": "string"

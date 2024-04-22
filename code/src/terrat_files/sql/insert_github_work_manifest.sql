@@ -7,7 +7,8 @@ insert into github_work_manifests (
        tag_query,
        username,
        dirspaces,
-       run_kind
+       run_kind,
+       environment
 ) values (
        $base_sha,
        $pull_number,
@@ -17,6 +18,7 @@ insert into github_work_manifests (
        $tag_query,
        $username,
        $dirspaces,
-       $run_kind
+       $run_kind,
+       $environment
 )
 returning id, state, to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"')

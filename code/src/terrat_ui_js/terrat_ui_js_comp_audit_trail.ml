@@ -73,6 +73,12 @@ let render_work_manifest_drift github_web_base_url wm =
                            wm.Wm.run_id;
                        ];
                    ];
+                 div
+                   ~at:At.[ class' (Jstr.v "h-pair") ]
+                   [
+                     div ~at:At.[ class' (Jstr.v "name") ] [ txt' "Environment" ];
+                     div [ txt' (CCOption.get_or ~default:"" wm.Wm.environment) ];
+                   ];
                ];
              div
                ~at:At.[ class' (Jstr.v "dirspace-table") ]
@@ -211,6 +217,12 @@ let render_work_manifest_pull_request github_web_base_url wm =
                                [ txt' run_id ])
                            wm.Wm.run_id;
                        ];
+                   ];
+                 div
+                   ~at:At.[ class' (Jstr.v "h-pair") ]
+                   [
+                     div ~at:At.[ class' (Jstr.v "name") ] [ txt' "Environment" ];
+                     div [ txt' (CCOption.get_or ~default:"" wm.Wm.environment) ];
                    ];
                ];
              div
@@ -481,6 +493,11 @@ let query_help =
                   span
                     ~at:At.[ class' (Jstr.v "font-semibold") ]
                     [ txt' "Note: the quotes are important" ];
+                ];
+              li [ code [ txt' "environment:production" ]; txt' " - Match an environment." ];
+              li
+                [
+                  code [ txt' "environment:" ]; txt' " - Match runs with no environment specified.";
                 ];
               li
                 [

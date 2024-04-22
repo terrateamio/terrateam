@@ -1,5 +1,6 @@
 module Dir_set = CCSet.Make (CCString)
 module String_set = CCSet.Make (CCString)
+module String_map = CCMap.Make (CCString)
 module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
 module Dirspace_set = CCSet.Make (Terrat_change.Dirspace)
 
@@ -478,10 +479,11 @@ module type S = sig
       (* Return operations *)
       val noop : t -> r
 
-      val created_work_manifest :
+      val created_work_manifests :
         t ->
         (Pull_request.stored Pull_request.t, Drift.t, Index.t) Terrat_work_manifest2.Kind.t
-        Terrat_work_manifest2.Existing.t ->
+        Terrat_work_manifest2.Existing.t
+        list ->
         r
 
       val with_db :
@@ -525,6 +527,7 @@ module type S = sig
         t -> 'a Pull_request.t -> 'b Terrat_work_manifest2.Existing.t -> Terraform.t
 
       val work_manifest_of_terraform_r :
+        t ->
         Terraform.r ->
         (Pull_request.stored Pull_request.t, Drift.t, Index.t) Terrat_work_manifest2.Kind.t
         Terrat_work_manifest2.Existing.t
@@ -1241,6 +1244,18 @@ module Make (S : S) = struct
                   time))
           (fun () -> S.Event.Drift.fetch_data t sched)
 
+      let partition_by_environment dirspaceflows =
+        let module Dsf = Terrat_change.Dirspaceflow in
+        let module We = Terrat_repo_config_workflow_entry in
+        CCListLabels.fold_left
+          ~f:(fun acc dsf ->
+            match dsf with
+            | { Dsf.workflow = Some { Dsf.Workflow.workflow = { We.environment; _ }; _ }; _ } ->
+                String_map.add_to_list (CCOption.get_or ~default:"" environment) dsf acc
+            | _ -> String_map.add_to_list "" dsf acc)
+          ~init:String_map.empty
+          dirspaceflows
+
       let create_scheduled_work_manifest db sched data dirspaceflows =
         let open Abbs_future_combinators.Infix_result_monad in
         let module Wm = Terrat_work_manifest2 in
@@ -1249,33 +1264,53 @@ module Make (S : S) = struct
         let repo = S.Event.Drift.Schedule.repo sched in
         let reconcile = S.Event.Drift.Schedule.reconcile sched in
         let branch_ref = S.Ref.to_string (S.Event.Drift.Data.branch_ref data) in
-        let changes =
-          let module Dsf = Terrat_change.Dirspaceflow in
-          CCList.map
-            (fun ({ Dsf.workflow; _ } as dsf) ->
-              { dsf with Dsf.workflow = CCOption.map (fun Dsf.Workflow.{ idx; _ } -> idx) workflow })
-            dirspaceflows
-        in
-        let work_manifest =
-          {
-            Wm.base_hash = branch_ref;
-            changes;
-            completed_at = None;
-            created_at = ();
-            denied_dirspaces = [];
-            hash = branch_ref;
-            id = ();
-            run_id = ();
-            run_type = Wm.Run_type.Plan;
-            src = Wm.Kind.Drift (S.Drift.make ~account ~branch ~reconcile ~repo ());
-            state = ();
-            tag_query = S.Event.Drift.Schedule.tag_query sched;
-            user = None;
-          }
-        in
-        create_work_manifest db work_manifest
-        >>= fun work_manifest ->
-        update_work_manifest db work_manifest >>= fun _ -> Abb.Future.return (Ok ())
+        let dirspaceflows_by_environment = partition_by_environment dirspaceflows in
+        Abbs_future_combinators.List_result.iter
+          ~f:(fun (environment, dirspaceflows) ->
+            let changes =
+              let module Dsf = Terrat_change.Dirspaceflow in
+              CCList.map
+                (fun ({ Dsf.workflow; _ } as dsf) ->
+                  {
+                    dsf with
+                    Dsf.workflow = CCOption.map (fun Dsf.Workflow.{ idx; _ } -> idx) workflow;
+                  })
+                dirspaceflows
+            in
+            let environment =
+              match environment with
+              | "" -> None
+              | env -> Some env
+            in
+            let work_manifest =
+              {
+                Wm.base_hash = branch_ref;
+                changes;
+                completed_at = None;
+                created_at = ();
+                denied_dirspaces = [];
+                environment;
+                hash = branch_ref;
+                id = ();
+                run_id = ();
+                run_type = Wm.Run_type.Plan;
+                src = Wm.Kind.Drift (S.Drift.make ~account ~branch ~reconcile ~repo ());
+                state = ();
+                tag_query = S.Event.Drift.Schedule.tag_query sched;
+                user = None;
+              }
+            in
+            create_work_manifest db work_manifest
+            >>= fun work_manifest ->
+            Logs.info (fun m ->
+                m
+                  "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a : env=%s"
+                  (S.Event.Drift.Schedule.request_id sched)
+                  Uuidm.pp
+                  work_manifest.Wm.id
+                  (CCOption.get_or ~default:"" work_manifest.Wm.environment));
+            update_work_manifest db work_manifest >>= fun _ -> Abb.Future.return (Ok ()))
+          (String_map.to_list dirspaceflows_by_environment)
 
       let run_schedule' t sched =
         let open Abbs_future_combinators.Infix_result_monad in
@@ -1415,6 +1450,7 @@ module Make (S : S) = struct
             completed_at = None;
             created_at = ();
             denied_dirspaces = [];
+            environment = None;
             hash = S.Ref.to_string (S.Pull_request.branch_ref pull_request);
             id = ();
             src =
@@ -2201,6 +2237,18 @@ module Make (S : S) = struct
             let checks = aggregate @ dirspace_checks in
             create_commit_checks client repo ref_ checks
 
+      let partition_by_environment dirspaceflows =
+        let module Dsf = Terrat_change.Dirspaceflow in
+        let module We = Terrat_repo_config_workflow_entry in
+        CCListLabels.fold_left
+          ~f:(fun acc dsf ->
+            match dsf with
+            | { Dsf.workflow = Some { Dsf.Workflow.workflow = { We.environment; _ }; _ }; _ } ->
+                String_map.add_to_list (CCOption.get_or ~default:"" environment) dsf acc
+            | _ -> String_map.add_to_list "" dsf acc)
+          ~init:String_map.empty
+          dirspaceflows
+
       let create_and_store_work_manifest
           t
           db
@@ -2224,13 +2272,6 @@ module Make (S : S) = struct
         >>= fun () ->
         Abb.Future.return (dirspaceflows_of_changes repo_config matches)
         >>= fun dirspaceflows ->
-        let changes =
-          let module Dsf = Terrat_change.Dirspaceflow in
-          CCList.map
-            (fun ({ Dsf.workflow; _ } as dsf) ->
-              { dsf with Dsf.workflow = CCOption.map (fun Dsf.Workflow.{ idx; _ } -> idx) workflow })
-            dirspaceflows
-        in
         let denied_dirspaces =
           let module Ac = Terrat_access_control in
           let module Cm = Terrat_change_match in
@@ -2239,56 +2280,81 @@ module Make (S : S) = struct
               { Wm.Deny.dirspace; policy })
             denied_dirspaces
         in
-        (match t.work_manifest with
-        | Some wm -> Abb.Future.return (Ok { wm with Wm.changes; denied_dirspaces })
-        | None ->
-            let hash =
-              let module St = Terrat_pull_request.State in
-              match S.Pull_request.state pull_request with
-              | St.Open _ | St.Closed -> S.Ref.to_string (S.Pull_request.branch_ref pull_request)
-              | St.Merged { St.Merged.merged_hash; _ } -> merged_hash
+        let dirspaceflows_by_environment = partition_by_environment dirspaceflows in
+        Abbs_future_combinators.List_result.map
+          ~f:(fun (environment, dirspaceflows) ->
+            let changes =
+              let module Dsf = Terrat_change.Dirspaceflow in
+              CCList.map
+                (fun ({ Dsf.workflow; _ } as dsf) ->
+                  {
+                    dsf with
+                    Dsf.workflow = CCOption.map (fun Dsf.Workflow.{ idx; _ } -> idx) workflow;
+                  })
+                dirspaceflows
             in
-            let work_manifest =
-              {
-                Wm.base_hash = S.Ref.to_string (S.Pull_request.base_ref pull_request);
-                changes;
-                completed_at = None;
-                created_at = ();
-                denied_dirspaces;
-                hash;
-                id = ();
-                src = Wm.Kind.Pull_request pull_request;
-                run_id = ();
-                run_type = Tf_operation.to_run_type operation;
-                state = ();
-                tag_query = S.Event.Terraform.tag_query t.event;
-                user = Some (S.Event.Terraform.user t.event);
-              }
+            let environment =
+              match environment with
+              | "" -> None
+              | env -> Some env
             in
-            Metrics.Dirspaces_per_work_manifest_histogram.observe
-              (Metrics.dirspaces_per_work_manifest (Run_type.to_string work_manifest.Wm.run_type))
-              (CCFloat.of_int (CCList.length changes));
-            create_work_manifest db work_manifest)
-        >>= fun work_manifest ->
-        Prmths.Counter.inc_one
-          (Metrics.stored_work_manifests_total (Run_type.to_string work_manifest.Wm.run_type));
-        Logs.info (fun m ->
-            m
-              "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a"
-              (S.Event.Terraform.request_id t.event)
-              Uuidm.pp
-              work_manifest.Wm.id);
-        update_work_manifest db work_manifest
-        >>= fun work_manifest ->
-        create_queued_commit_checks
-          (S.Event.Terraform.config t.event)
-          t.client
-          (S.Event.Terraform.account t.event)
-          (S.Event.Terraform.repo t.event)
-          (S.Pull_request.branch_ref pull_request)
-          work_manifest
-        >>= fun () ->
-        Abb.Future.return (Ok (S.Event.Terraform.created_work_manifest t.event work_manifest))
+            (match t.work_manifest with
+            | Some wm when CCOption.equal CCString.equal wm.Wm.environment environment ->
+                Abb.Future.return (Ok { wm with Wm.changes; denied_dirspaces })
+            | Some _ | None ->
+                let hash =
+                  let module St = Terrat_pull_request.State in
+                  match S.Pull_request.state pull_request with
+                  | St.Open _ | St.Closed ->
+                      S.Ref.to_string (S.Pull_request.branch_ref pull_request)
+                  | St.Merged { St.Merged.merged_hash; _ } -> merged_hash
+                in
+                let work_manifest =
+                  {
+                    Wm.base_hash = S.Ref.to_string (S.Pull_request.base_ref pull_request);
+                    changes;
+                    completed_at = None;
+                    created_at = ();
+                    denied_dirspaces;
+                    environment;
+                    hash;
+                    id = ();
+                    src = Wm.Kind.Pull_request pull_request;
+                    run_id = ();
+                    run_type = Tf_operation.to_run_type operation;
+                    state = ();
+                    tag_query = S.Event.Terraform.tag_query t.event;
+                    user = Some (S.Event.Terraform.user t.event);
+                  }
+                in
+                Metrics.Dirspaces_per_work_manifest_histogram.observe
+                  (Metrics.dirspaces_per_work_manifest
+                     (Run_type.to_string work_manifest.Wm.run_type))
+                  (CCFloat.of_int (CCList.length changes));
+                create_work_manifest db work_manifest)
+            >>= fun work_manifest ->
+            Prmths.Counter.inc_one
+              (Metrics.stored_work_manifests_total (Run_type.to_string work_manifest.Wm.run_type));
+            Logs.info (fun m ->
+                m
+                  "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a : env=%s"
+                  (S.Event.Terraform.request_id t.event)
+                  Uuidm.pp
+                  work_manifest.Wm.id
+                  (CCOption.get_or ~default:"" work_manifest.Wm.environment));
+            update_work_manifest db work_manifest
+            >>= fun work_manifest ->
+            create_queued_commit_checks
+              (S.Event.Terraform.config t.event)
+              t.client
+              (S.Event.Terraform.account t.event)
+              (S.Event.Terraform.repo t.event)
+              (S.Pull_request.branch_ref pull_request)
+              work_manifest
+            >>= fun () -> Abb.Future.return (Ok work_manifest))
+          (String_map.to_list dirspaceflows_by_environment)
+        >>= fun work_manifests ->
+        Abb.Future.return (Ok (S.Event.Terraform.created_work_manifests t.event work_manifests))
 
       let maybe_create_pending_applies config client pull_request = function
         | [] ->
@@ -2991,6 +3057,7 @@ module Make (S : S) = struct
             completed_at = None;
             created_at = ();
             denied_dirspaces = [];
+            environment = None;
             hash = S.Ref.to_string (S.Pull_request.base_ref pull_request);
             id = ();
             run_id = ();
@@ -3022,6 +3089,7 @@ module Make (S : S) = struct
             completed_at = None;
             created_at = ();
             denied_dirspaces = [];
+            environment = None;
             hash = S.Ref.to_string (S.Pull_request.branch_ref pull_request);
             id = ();
             run_id = ();
@@ -3105,7 +3173,7 @@ module Make (S : S) = struct
                 work_manifest_of_pull_request_event t pull_request
                 >>= fun work_manifest ->
                 Abb.Future.return
-                  (Ok (S.Event.Terraform.created_work_manifest t.event work_manifest)))
+                  (Ok (S.Event.Terraform.created_work_manifests t.event [ work_manifest ])))
         | None ->
             Abbs_future_combinators.Infix_result_app.(
               (fun work_manifest_base work_manifest -> (work_manifest_base, work_manifest))
@@ -3132,7 +3200,8 @@ module Make (S : S) = struct
             in
             create_commit_checks t.client repo (S.Pull_request.base_ref pull_request) [ check ]
             >>= fun () ->
-            Abb.Future.return (Ok (S.Event.Terraform.created_work_manifest t.event work_manifest))
+            Abb.Future.return
+              (Ok (S.Event.Terraform.created_work_manifests t.event [ work_manifest ]))
 
       let eval_index t remote_repo repo_config repo_default_config repo_tree pull_request =
         let open Abbs_future_combinators.Infix_result_monad in
@@ -3167,7 +3236,8 @@ module Make (S : S) = struct
             (* Only do something if there are any matches *)
             work_manifest_of_pull_request_event t pull_request
             >>= fun work_manifest ->
-            Abb.Future.return (Ok (S.Event.Terraform.created_work_manifest t.event work_manifest))
+            Abb.Future.return
+              (Ok (S.Event.Terraform.created_work_manifests t.event [ work_manifest ]))
 
       let run t =
         let module V1 = Terrat_repo_config.Version_1 in
@@ -3537,7 +3607,7 @@ module Make (S : S) = struct
                 m "EVALUATOR : %s : COMPUTE_CHANGES_WITH_INDEX" (S.Event.Initiate.request_id t));
             let event = S.Event.Initiate.terraform_event t pull_request work_manifest in
             Terraform.eval' ~work_manifest event
-            >>= fun r -> Abb.Future.return (Ok (S.Event.Initiate.work_manifest_of_terraform_r r))
+            >>= fun r -> Abb.Future.return (Ok (S.Event.Initiate.work_manifest_of_terraform_r t r))
         | ( ({ V1.indexer = Some { V1.Indexer.enabled = true; _ }; _ } as repo_config),
             repo_tree,
             None ) ->

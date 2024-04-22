@@ -958,6 +958,9 @@
         "engine": {
           "$ref": "#/definitions/engine"
         },
+        "environment": {
+          "type": "string"
+        },
         "integrations": {
           "$ref": "#/definitions/integrations"
         },

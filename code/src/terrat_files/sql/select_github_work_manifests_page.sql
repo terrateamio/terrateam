@@ -54,7 +54,8 @@ q as (
         gwm.username as username,
         gwm.run_id as run_id,
         urt.run_type as unified_run_type,
-        gwm.dirspaces as dirspaces
+        gwm.dirspaces as dirspaces,
+        gwm.environment as environment
     from github_work_manifests as gwm
     inner join github_installation_repositories as gir
         on gir.id = gwm.repository
@@ -101,6 +102,7 @@ select
     title,
     branch,
     username,
-    run_id
+    run_id,
+    environment
 from q as gwm
 {{where}}

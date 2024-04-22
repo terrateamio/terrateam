@@ -47,6 +47,7 @@ module Work_manifests = struct
         // (* branch *) Ret.(option text)
         // (* username *) Ret.(option text)
         // (* run_id *) Ret.(option text)
+        // (* environment *) Ret.(option text)
         /^ replace_where (read "select_github_work_manifests_page.sql") where
         /% Var.uuid "user"
         /% Var.bigint "installation_id"
@@ -87,6 +88,12 @@ module Work_manifests = struct
     let append_str_equal t n v =
       CCVector.push t.strings v;
       Buffer.add_string t.q (Printf.sprintf "%s = ($strings)[%d]" n (CCVector.size t.strings))
+
+    let append_str_equal_or_null t n = function
+      | "" -> Buffer.add_string t.q (Printf.sprintf "%s is null" n)
+      | v ->
+          CCVector.push t.strings v;
+          Buffer.add_string t.q (Printf.sprintf "%s = ($strings)[%d]" n (CCVector.size t.strings))
 
     let append_bigint_equal t n v =
       CCVector.push t.bigints v;
@@ -143,6 +150,9 @@ module Work_manifests = struct
               Ok ()
           | Some ("branch", value) ->
               append_str_equal t "branch" value;
+              Ok ()
+          | Some ("environment", value) ->
+              append_str_equal_or_null t "environment" value;
               Ok ()
           | Some ("workspace", value) ->
               CCVector.push
@@ -307,6 +317,7 @@ module Work_manifests = struct
                     branch
                     user
                     run_id
+                    environment
                   ->
                   let module D = Terrat_api_components.Installation_work_manifest_drift in
                   let module Pr = Terrat_api_components.Installation_work_manifest_pull_request in
@@ -329,6 +340,7 @@ module Work_manifests = struct
                           run_type = Terrat_work_manifest2.Run_type.to_string run_type;
                           state = Terrat_work_manifest2.State.to_string state;
                           run_id;
+                          environment;
                         }
                   | "pr", Some pull_number, Some branch ->
                       Wm.Installation_work_manifest_pull_request
@@ -351,6 +363,7 @@ module Work_manifests = struct
                           tag_query = Terrat_tag_query.to_string tag_query;
                           user;
                           run_id;
+                          environment;
                         }
                   | "index", Some pull_number, Some branch ->
                       Wm.Installation_work_manifest_index

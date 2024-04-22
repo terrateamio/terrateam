@@ -216,7 +216,8 @@ module Sql = struct
       /% Var.text "tag_query"
       /% Var.(option (text "username"))
       /% Var.json "dirspaces"
-      /% Var.text "run_kind")
+      /% Var.text "run_kind"
+      /% Var.(option (text "environment")))
 
   let update_work_manifest_state () =
     Pgsql_io.Typed_sql.(
@@ -305,6 +306,7 @@ module Sql = struct
       // (* repo_id *) Ret.bigint
       // (* repo_owner *) Ret.text
       // (* repo_name *) Ret.text
+      // (* environment *) Ret.(option text)
       /^ read "select_github_work_manifest2.sql"
       /% Var.uuid "id")
 
@@ -838,6 +840,7 @@ module S = struct
             repo_id
             owner
             name
+            environment
           ->
           {
             Wm.base_hash;
@@ -845,6 +848,7 @@ module S = struct
             completed_at;
             created_at;
             denied_dirspaces;
+            environment;
             hash;
             id = work_manifest_id;
             run_id;
@@ -1515,6 +1519,7 @@ module S = struct
         work_manifest.Wm.user
         dirspaces
         run_kind
+        work_manifest.Wm.environment
       >>= function
       | [] -> assert false
       | (id, state, created_at) :: _ -> (
@@ -2452,7 +2457,7 @@ module S = struct
       type r =
         (Pull_request.stored Pull_request.t, Drift.t, Index.t) Terrat_work_manifest2.Kind.t
         Terrat_work_manifest2.Existing.t
-        option
+        list
 
       let account t = { Account.installation_id = t.installation_id; request_id = t.request_id }
       let config t = t.config
@@ -2467,8 +2472,8 @@ module S = struct
         { Publish_msg.client; pull_number = t.pull_number; repo = t.repo; user = t.user }
 
       (* Return operations *)
-      let noop t = None
-      let created_work_manifest _ work_manifest = Some work_manifest
+      let noop t = []
+      let created_work_manifests _ work_manifests = work_manifests
 
       (* Operations *)
       let with_db t ~f =
@@ -2696,7 +2701,10 @@ module S = struct
           user = CCOption.get_exn_or "user" work_manifest.Wm.user;
         }
 
-      let work_manifest_of_terraform_r = CCFun.id
+      let work_manifest_of_terraform_r t work_manifests =
+        let module Wm = Terrat_work_manifest2 in
+        CCOption.of_list
+          (CCList.filter (fun { Wm.id; _ } -> Uuidm.equal id t.work_manifest_id) work_manifests)
 
       let token encryption_key id =
         Base64.encode_exn
@@ -3706,6 +3714,10 @@ module S = struct
                      ~default:[]
                      (fun cost_estimation -> [ ("cost_estimation", list [ cost_estimation ]) ])
                      cost_estimation;
+                   CCOption.map_or
+                     ~default:[]
+                     (fun env -> [ ("environment", string env) ])
+                     work_manifest.Wm.environment;
                    [
                      ("maybe_credentials_error", bool maybe_credentials_error);
                      ("overall_success", bool results.R.overall.R.Overall.success);
@@ -4432,13 +4444,17 @@ module S = struct
                                       primary = Json_schema.Empty_obj.t;
                                       additional =
                                         Json_schema.String_map.of_list
-                                          [
-                                            ( "work-token",
-                                              `String (Uuidm.to_string work_manifest.Wm.id) );
-                                            ( "api-base-url",
-                                              `String (Terrat_config.api_base t.config ^ "/github")
-                                            );
-                                          ];
+                                          ([
+                                             ( "work-token",
+                                               `String (Uuidm.to_string work_manifest.Wm.id) );
+                                             ( "api-base-url",
+                                               `String (Terrat_config.api_base t.config ^ "/github")
+                                             );
+                                           ]
+                                          @
+                                          match work_manifest.Wm.environment with
+                                          | Some env -> [ ("environment", `String env) ]
+                                          | None -> []);
                                     };
                             };
                         additional = Json_schema.String_map.empty;

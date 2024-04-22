@@ -341,10 +341,11 @@ module type S = sig
       (* Return operations *)
       val noop : t -> r
 
-      val created_work_manifest :
+      val created_work_manifests :
         t ->
         (Pull_request.stored Pull_request.t, Drift.t, Index.t) Terrat_work_manifest2.Kind.t
-        Terrat_work_manifest2.Existing.t ->
+        Terrat_work_manifest2.Existing.t
+        list ->
         r
 
       val with_db :
@@ -388,6 +389,7 @@ module type S = sig
         t -> 'a Pull_request.t -> 'b Terrat_work_manifest2.Existing.t -> Terraform.t
 
       val work_manifest_of_terraform_r :
+        t ->
         Terraform.r ->
         (Pull_request.stored Pull_request.t, Drift.t, Index.t) Terrat_work_manifest2.Kind.t
         Terrat_work_manifest2.Existing.t

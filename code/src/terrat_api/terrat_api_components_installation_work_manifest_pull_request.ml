@@ -23,6 +23,7 @@ type t = {
   completed_at : string option; [@default None]
   created_at : string;
   dirspaces : Dirspaces.t;
+  environment : string option; [@default None]
   id : string;
   owner : string;
   pull_number : int;

@@ -64,7 +64,7 @@ module Event : sig
       t ->
       ( (Pull_request.stored Pull_request.t, Drift.t, Index.t) Terrat_work_manifest2.Kind.t
         Terrat_work_manifest2.Existing.t
-        option,
+        list,
         [> `Error ] )
       result
       Abb.Future.t
