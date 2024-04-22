@@ -436,7 +436,7 @@ let test_dir_config_iam =
             dirs_config
         with
         | Ok dirs -> dirs
-        | Error (`Bad_glob s) -> failwith s
+        | Error _ -> assert false
       in
       let changes = Terrat_change_match.match_diff_list dirs diff in
       (* We match the iam and ec2 dir *)

@@ -2,6 +2,15 @@ module String_set = CCSet.Make (CCString)
 module String_map = CCMap.Make (CCString)
 module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
 
+type synthesize_dir_config_err =
+  [ `Bad_glob of string
+  | `Bad_dest_branch_pattern of string
+  | `Bad_branch_pattern of string
+  ]
+[@@deriving show]
+
+exception Synthesize_dir_config_err of synthesize_dir_config_err
+
 type t = {
   create_and_select_workspace : bool;
   dirspace : Terrat_change.Dirspace.t;
@@ -32,8 +41,6 @@ module Index = struct
   let empty = { symlinks = []; deps = String_map.empty }
   let make ~symlinks deps = { symlinks; deps = String_map.of_list deps }
 end
-
-exception Bad_glob of string
 
 let workspaces_or_stacks ~global_tags ~default ~dirname ~config_tags workspaces stacks =
   let module Ws = Terrat_repo_config.Workspaces in
@@ -74,10 +81,10 @@ let parse_glob globs =
     CCList.iter
       (fun s ->
         try ignore (Path_glob.Glob.parse ("<" ^ s ^ ">"))
-        with Path_glob.Ast.Parse_error _ -> raise (Bad_glob s))
+        with Path_glob.Ast.Parse_error _ -> raise (Synthesize_dir_config_err (`Bad_glob s)))
       globs;
     (* Made it this far?  Something is wrong *)
-    raise (Bad_glob "Unknown")
+    raise (Synthesize_dir_config_err (`Bad_glob "Unknown"))
 
 let when_modified_of_when_modified_nullable default when_modified =
   let module Wm = Terrat_repo_config.When_modified in
@@ -317,39 +324,41 @@ let map_symlink_file_path symlinks fpath =
       CCList.map (fun src -> CCString.replace ~which:`Left ~sub:dst ~by:src fpath) srcs
   | Some _ | None -> [ fpath ]
 
-let compute_branch_tag ctx repo_config =
+let match_branch_tag branch_name accessor repo_config =
   let module V1 = Terrat_repo_config.Version_1 in
   let module Ct = Terrat_repo_config.Custom_tags in
   let module Ctb = Terrat_repo_config.Custom_tags_branch in
   match repo_config.V1.tags with
-  | Some { Ct.branch = Some { Ctb.additional; _ }; _ } ->
-      let branch_tags = Json_schema.String_map.to_list additional in
-      CCOption.map
-        (fun (bt, _) -> bt)
-        (CCList.find_opt
-           (fun (_, pat) ->
-             match Lua_pattern.of_string pat with
-             | Some pat -> CCOption.is_some (Lua_pattern.find ctx.Ctx.branch pat)
-             | None -> failwith "nyi")
-           branch_tags)
-  | Some _ | None -> None
+  | Some tags ->
+      let branch_tags = Json_schema.String_map.to_list (accessor tags) in
+      CCList.find_map
+        (fun (bt, pat) ->
+          match Lua_pattern.of_string pat with
+          | Some pat when CCOption.is_some (Lua_pattern.find branch_name pat) -> Some (Ok bt)
+          | Some _ -> None
+          | None -> Some (Error (`Bad_pattern pat)))
+        branch_tags
+  | None -> None
+
+let compute_branch_tag ctx repo_config =
+  let module Ct = Terrat_repo_config.Custom_tags in
+  let module Ctb = Terrat_repo_config.Custom_tags_branch in
+  match_branch_tag
+    ctx.Ctx.branch
+    (function
+      | { Ct.branch = Some { Ctb.additional; _ }; _ } -> additional
+      | _ -> Json_schema.String_map.empty)
+    repo_config
 
 let compute_dest_branch_tag ctx repo_config =
-  let module V1 = Terrat_repo_config.Version_1 in
   let module Ct = Terrat_repo_config.Custom_tags in
   let module Ctb = Terrat_repo_config.Custom_tags_branch in
-  match repo_config.V1.tags with
-  | Some { Ct.dest_branch = Some { Ctb.additional; _ }; _ } ->
-      let branch_tags = Json_schema.String_map.to_list additional in
-      CCOption.map
-        (fun (bt, _) -> bt)
-        (CCList.find_opt
-           (fun (_, pat) ->
-             match Lua_pattern.of_string pat with
-             | Some pat -> CCOption.is_some (Lua_pattern.find ctx.Ctx.dest_branch pat)
-             | None -> failwith "nyi")
-           branch_tags)
-  | Some _ | None -> None
+  match_branch_tag
+    ctx.Ctx.dest_branch
+    (function
+      | { Ct.dest_branch = Some { Ctb.additional; _ }; _ } -> additional
+      | _ -> Json_schema.String_map.empty)
+    repo_config
 
 (* Given a list of files and a repository configuration, create a directory
    configuration that matches every file with their specific configuration. *)
@@ -361,12 +370,15 @@ let synthesize_dir_config' ~ctx ~index ~file_list repo_config =
   let file_list = CCList.flat_map (map_symlink_file_path symlinks) file_list in
   let branch_tags =
     match compute_branch_tag ctx repo_config with
-    | Some branch -> [ "branch:" ^ branch ]
+    | Some (Ok branch) -> [ "branch:" ^ branch ]
+    | Some (Error (`Bad_pattern pat)) -> raise (Synthesize_dir_config_err (`Bad_branch_pattern pat))
     | None -> []
   in
   let dest_branch_tags =
     match compute_dest_branch_tag ctx repo_config with
-    | Some branch -> [ "dest_branch:" ^ branch ]
+    | Some (Ok branch) -> [ "dest_branch:" ^ branch ]
+    | Some (Error (`Bad_pattern pat)) ->
+        raise (Synthesize_dir_config_err (`Bad_dest_branch_pattern pat))
     | None -> []
   in
   let global_tags = branch_tags @ dest_branch_tags in
@@ -484,7 +496,8 @@ let synthesize_dir_config' ~ctx ~index ~file_list repo_config =
 
 let synthesize_dir_config ~ctx ~index ~file_list repo_config =
   try Ok (synthesize_dir_config' ~ctx ~index ~file_list repo_config)
-  with Bad_glob s -> Error (`Bad_glob s)
+  with Synthesize_dir_config_err err ->
+    Error (err : synthesize_dir_config_err :> [> synthesize_dir_config_err ])
 
 let match_filename_in_dirs dirs fnames =
   (* Match a filename to any directories and remove those directories on match.
