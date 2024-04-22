@@ -516,6 +516,25 @@
       ],
       "type": "object"
     },
+    "integrations": {
+      "additionalProperties": false,
+      "properties": {
+        "resourcely": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
     "permission": {
       "items": {
         "additionalProperties": false,
@@ -831,6 +850,9 @@
           "required": [],
           "type": "object"
         },
+        "integrations": {
+          "$ref": "#/definitions/integrations"
+        },
         "parallel_runs": {
           "default": 3,
           "type": "integer"
@@ -935,6 +957,9 @@
         },
         "engine": {
           "$ref": "#/definitions/engine"
+        },
+        "integrations": {
+          "$ref": "#/definitions/integrations"
         },
         "lock_policy": {
           "default": "strict",

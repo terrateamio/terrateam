@@ -24,6 +24,7 @@ module Hook_op_oidc_aws = Terrat_repo_config_hook_op_oidc_aws
 module Hook_op_oidc_gcp = Terrat_repo_config_hook_op_oidc_gcp
 module Hook_op_run = Terrat_repo_config_hook_op_run
 module Hook_op_slack = Terrat_repo_config_hook_op_slack
+module Integrations = Terrat_repo_config_integrations
 module Permission = Terrat_repo_config_permission
 module Retry = Terrat_repo_config_retry
 module Run_on = Terrat_repo_config_run_on

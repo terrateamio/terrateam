@@ -550,6 +550,18 @@
         ],
         "type": "object"
       },
+      "run-kind-data-pull-request": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
       "server-config": {
         "additionalProperties": false,
         "properties": {
@@ -900,6 +912,13 @@
           },
           "run_kind": {
             "type": "string"
+          },
+          "run_kind_data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/run-kind-data-pull-request"
+              }
+            ]
           },
           "token": {
             "type": "string"

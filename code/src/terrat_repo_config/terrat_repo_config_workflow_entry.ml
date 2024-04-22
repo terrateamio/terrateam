@@ -14,6 +14,7 @@ type t = {
   apply : Terrat_repo_config_workflow_op_list.t option; [@default None]
   cdktf : bool; [@default false]
   engine : Terrat_repo_config_engine.t option; [@default None]
+  integrations : Terrat_repo_config_integrations.t option; [@default None]
   lock_policy : Lock_policy.t; [@default "strict"]
   plan : Terrat_repo_config_workflow_op_list.t option; [@default None]
   tag_query : string;

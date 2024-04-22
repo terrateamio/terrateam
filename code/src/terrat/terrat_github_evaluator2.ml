@@ -2786,6 +2786,15 @@ module S = struct
         | Wm.Kind.Drift _ -> "drift"
         | Wm.Kind.Index _ -> "index"
 
+      let run_kind_data_of_src =
+        let module Wm = Terrat_work_manifest2 in
+        let module Rkd = Terrat_api_components.Work_manifest_plan.Run_kind_data in
+        let module Rkdpr = Terrat_api_components.Run_kind_data_pull_request in
+        function
+        | Wm.Kind.Pull_request { Pull_request.id; _ } ->
+            Some (Rkd.Run_kind_data_pull_request { Rkdpr.id = CCInt.to_string id })
+        | Wm.Kind.Drift _ | Wm.Kind.Index _ -> None
+
       let changed_dirspaces changes =
         let module Tc = Terrat_change in
         let module Dsf = Tc.Dirspaceflow in
@@ -2854,6 +2863,7 @@ module S = struct
                          changed_dirspaces = changed_dirspaces changes;
                          dirspaces;
                          run_kind = run_kind_of_src src;
+                         run_kind_data = run_kind_data_of_src src;
                          type_ = "plan";
                        }))
         | {

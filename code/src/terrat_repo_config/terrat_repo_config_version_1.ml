@@ -179,6 +179,7 @@ type t = {
   engine : Terrat_repo_config_engine.t option; [@default None]
   hooks : Hooks.t option; [@default None]
   indexer : Indexer.t option; [@default None]
+  integrations : Terrat_repo_config_integrations.t option; [@default None]
   parallel_runs : int; [@default 3]
   storage : Storage.t option; [@default None]
   tags : Terrat_repo_config_custom_tags.t option; [@default None]

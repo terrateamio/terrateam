@@ -15,6 +15,7 @@ module Output_cost_estimation = Terrat_api_components_output_cost_estimation
 module Output_plan = Terrat_api_components_output_plan
 module Output_text = Terrat_api_components_output_text
 module Plan_create = Terrat_api_components_plan_create
+module Run_kind_data_pull_request = Terrat_api_components_run_kind_data_pull_request
 module Server_config = Terrat_api_components_server_config
 module Task = Terrat_api_components_task
 module User = Terrat_api_components_user
