@@ -31,7 +31,7 @@ RUN opam init -ay --disable-sandboxing
 
 # build-compiler
 RUN eval $(opam env) && \
-    opam switch create -y 4.14.0
+    opam switch create -y 5.1.1
 
 # build-libkqueue
 COPY ./vendor/libkqueue /mono/vendor/libkqueue

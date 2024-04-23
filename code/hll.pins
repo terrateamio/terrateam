@@ -1,4 +1,4 @@
 dns-client = "7.0.3"
-js_of_ocaml = "4.1.0"
+js_of_ocaml = "5.7.2"
 happy-eyeballs = "0.4.0"
 containers = "3.12"
