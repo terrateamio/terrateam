@@ -23,7 +23,7 @@ work_manifests_for_dirspace as (
 -- Consider a work manifest as maybe stale if we have no run id after a minute
 -- or it was created over 10 minutes ago
         ((gwm.run_id is null and (now() - gwm.created_at > interval '1 minutes'))
-         or (gwm.run_id is not null and (now() - gwm.created_at > interval '10 minutes'))) as maybe_stale
+         or (gwm.run_id is not null and (now() - gwm.created_at > interval '1 hour'))) as maybe_stale
     from github_work_manifests as gwm
     inner join github_work_manifest_dirspaceflows as gwmdsfs
         on gwmdsfs.work_manifest = gwm.id
