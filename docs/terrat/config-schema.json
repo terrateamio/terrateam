@@ -525,6 +525,12 @@
             "enabled": {
               "default": false,
               "type": "boolean"
+            },
+            "extra_args": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
             }
           },
           "required": [
