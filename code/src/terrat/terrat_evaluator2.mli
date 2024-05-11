@@ -28,6 +28,7 @@ module Msg : sig
     | Dirspaces_owned_by_other_pull_request of (Terrat_change.Dirspace.t * 'pull_request) list
     | Index_complete of (bool * (string * int option * string) list)
     | Maybe_stale_work_manifests of 'src Terrat_work_manifest2.Existing.t list
+    | Mismatched_refs
     | Missing_plans of Terrat_change.Dirspace.t list
     | Plan_no_matching_dirspaces
     | Pull_request_not_appliable of ('pull_request * 'apply_requirements)

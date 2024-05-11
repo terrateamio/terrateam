@@ -94,6 +94,7 @@ module Msg = struct
     | Dirspaces_owned_by_other_pull_request of (Terrat_change.Dirspace.t * 'pull_request) list
     | Index_complete of (bool * (string * int option * string) list)
     | Maybe_stale_work_manifests of 'src Terrat_work_manifest2.Existing.t list
+    | Mismatched_refs
     | Missing_plans of Terrat_change.Dirspace.t list
     | Plan_no_matching_dirspaces
     | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
@@ -3831,6 +3832,12 @@ module Make (S : S) = struct
             update_work_manifest_run_id db wm >>= fun wm -> Abb.Future.return (Ok wm)
         | wm -> Abb.Future.return (Ok wm)
 
+      let is_pull_request_merged =
+        let module St = Terrat_pull_request.State in
+        function
+        | St.Merged _ -> true
+        | St.Open _ | St.Closed -> false
+
       let eval' t =
         let open Abbs_future_combinators.Infix_result_monad in
         let module Wm = Terrat_work_manifest2 in
@@ -3854,6 +3861,31 @@ module Make (S : S) = struct
                 S.Event.Initiate.done_ t wm >>= fun r -> Abb.Future.return (Ok r)
             | { Wm.state = Wm.State.Aborted; _ } ->
                 Abb.Future.return (Ok (S.Event.Initiate.work_manifest_not_found t)))
+        | Some { Wm.hash; state = Wm.State.(Queued | Running); src = Wm.Kind.Pull_request pr; _ }
+          when is_pull_request_merged (S.Pull_request.state pr) ->
+            Logs.info (fun m ->
+                m
+                  "EVALUATOR : %s : WORK_MANIFEST_REF_MISMATCH_RUNNING : id=%a : wm_ref=%s : ref=%s"
+                  (S.Event.Initiate.request_id t)
+                  Uuidm.pp
+                  work_manifest_id
+                  hash
+                  (S.Ref.to_string (S.Event.Initiate.branch_ref t)));
+            create_client
+              (S.Event.Initiate.request_id t)
+              (S.Event.Initiate.config t)
+              (S.Pull_request.account pr)
+            >>= fun client ->
+            let publish =
+              S.Publish_msg.make
+                ~client
+                ~pull_number:(S.Pull_request.id pr)
+                ~repo:(S.Pull_request.repo pr)
+                ~user:""
+                ()
+            in
+            S.Publish_msg.publish_msg publish Msg.Mismatched_refs
+            >>= fun () -> Abb.Future.return (Ok (S.Event.Initiate.work_manifest_not_found t))
         | Some { Wm.hash; _ } ->
             Logs.info (fun m ->
                 m

@@ -1,0 +1,16 @@
+# Could not run operation
+
+## Why?
+
+This pull request is merged and another pull request has been merged after this pull request.  In order to avoid drift, Terrateam runs all operations against the most recent contents of a branch.  Because a pull request has been merged after this pull request, this pull request is not the most recent contents of the destination branch and Terrateam cannot run any operations against this pull request.
+
+## What to do next?
+
+The recommended action is to revert this change, then create a new pull request and plan and apply it.
+
+## What to do in the future?
+
+In order to avoid this, it is recommended to do one of the following:
+
+1. If you wish to have an apply-after-merge workflow, enable `autoapply`.   Terrateam will apply any changes immediately after merge.  See the [documentation](https://terrateam.io/docs/advanced-workflows/apply-after-merge/) for how to enable `autoapply`.
+2. Use an apply-before-merge workflow.  This is the most robust because an apply may fail for a variety of reasons.  An apply-before-merge workflow gives the most flexibility.

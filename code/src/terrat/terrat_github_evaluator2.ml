@@ -509,6 +509,7 @@ module Tmpl = struct
     |> fun tmpl -> Snabela.of_template tmpl Transformers.[ money; compact_plan; plan_diff ]
 
   let read_raw fname = CCOption.get_exn_or fname (Terrat_files_tmpl.read fname)
+  let mismatched_refs = read "github_mismatched_refs.tmpl"
   let missing_plans = read "github_missing_plans.tmpl"
 
   let dirspaces_owned_by_other_pull_requests =
@@ -1986,6 +1987,9 @@ module S = struct
     let publish_msg' t =
       let module Msg = Terrat_evaluator2.Msg in
       function
+      | Msg.Mismatched_refs ->
+          let kv = Snabela.Kv.(Map.of_list []) in
+          apply_template_and_publish "MISMATCHED_REFS" Tmpl.mismatched_refs kv t
       | Msg.Missing_plans dirspaces ->
           let kv =
             Snabela.Kv.(
