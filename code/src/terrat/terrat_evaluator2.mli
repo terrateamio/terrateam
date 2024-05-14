@@ -359,6 +359,7 @@ module type S = sig
         Client.t ->
         Pull_request.fetched Pull_request.t ->
         Terrat_repo_config.Version_1.t ->
+        Terrat_change_match.t list ->
         (Apply_requirements.t, [> `Error ]) result Abb.Future.t
     end
 

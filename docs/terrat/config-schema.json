@@ -67,6 +67,144 @@
       ],
       "type": "object"
     },
+    "apply-requirements": {
+      "additionalProperties": false,
+      "properties": {
+        "checks": {
+          "$ref": "#/definitions/apply-requirements-checks"
+        },
+        "create_pending_apply_check": {
+          "default": true,
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "apply-requirements-checks": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/apply-requirements-checks-1"
+        },
+        {
+          "$ref": "#/definitions/apply-requirements-checks-2"
+        }
+      ]
+    },
+    "apply-requirements-checks-1": {
+      "additionalProperties": false,
+      "properties": {
+        "approved": {
+          "$ref": "#/definitions/apply-requirements-checks-approved"
+        },
+        "merge_conflicts": {
+          "$ref": "#/definitions/apply-requirements-checks-merge-conflicts"
+        },
+        "status_checks": {
+          "$ref": "#/definitions/apply-requirements-checks-status-checks"
+        }
+      },
+      "type": "object"
+    },
+    "apply-requirements-checks-2": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "approved": {
+            "$ref": "#/definitions/apply-requirements-checks-approved-2"
+          },
+          "merge_conflicts": {
+            "$ref": "#/definitions/apply-requirements-checks-merge-conflicts"
+          },
+          "status_checks": {
+            "$ref": "#/definitions/apply-requirements-checks-status-checks"
+          },
+          "tag_query": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tag_query"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "apply-requirements-checks-approved": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/apply-requirements-checks-approved-1"
+        },
+        {
+          "$ref": "#/definitions/apply-requirements-checks-approved-2"
+        }
+      ]
+    },
+    "apply-requirements-checks-approved-1": {
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "default": 1,
+          "type": "integer"
+        },
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "apply-requirements-checks-approved-2": {
+      "additionalProperties": false,
+      "properties": {
+        "all_of": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "any_of": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "any_of_count": {
+          "default": 1,
+          "type": "integer"
+        },
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "apply-requirements-checks-merge-conflicts": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "apply-requirements-checks-status-checks": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "type": "boolean"
+        },
+        "ignore_matching": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "automerge": {
       "additionalProperties": false,
       "properties": {
@@ -704,60 +842,7 @@
           "$ref": "#/definitions/access-control"
         },
         "apply_requirements": {
-          "additionalProperties": false,
-          "properties": {
-            "checks": {
-              "additionalProperties": false,
-              "properties": {
-                "approved": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "count": {
-                      "default": 1,
-                      "type": "integer"
-                    },
-                    "enabled": {
-                      "default": false,
-                      "type": "boolean"
-                    }
-                  },
-                  "type": "object"
-                },
-                "merge_conflicts": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "enabled": {
-                      "default": true,
-                      "type": "boolean"
-                    }
-                  },
-                  "type": "object"
-                },
-                "status_checks": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "enabled": {
-                      "default": true,
-                      "type": "boolean"
-                    },
-                    "ignore_matching": {
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            "create_pending_apply_check": {
-              "default": true,
-              "type": "boolean"
-            }
-          },
-          "type": "object"
+          "$ref": "#/definitions/apply-requirements"
         },
         "automerge": {
           "$ref": "#/definitions/automerge"

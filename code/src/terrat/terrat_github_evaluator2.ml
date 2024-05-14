@@ -1,4 +1,5 @@
 module String_set = CCSet.Make (CCString)
+module String_map = CCMap.Make (CCString)
 
 let fetch_pull_request_tries = 6
 
@@ -768,17 +769,24 @@ module S = struct
   end
 
   module Apply_requirements = struct
-    type t = {
-      approved : bool option;
-      merge_conflicts : bool option;
-      status_checks : bool option;
-      status_checks_failed : Terrat_commit_check.t list;
-      approved_reviews : Terrat_pull_request_review.t list;
-      passed : bool;
-    }
+    module Result = struct
+      type t = {
+        approved : bool option;
+        approved_reviews : Terrat_pull_request_review.t list;
+        match_ : Terrat_change_match.t;
+        merge_conflicts : bool option;
+        passed : bool;
+        status_checks : bool option;
+        status_checks_failed : Terrat_commit_check.t list;
+      }
+    end
 
-    let passed { passed; _ } = passed
-    let approved_reviews { approved_reviews; _ } = approved_reviews
+    type t = Result.t list
+
+    let passed t = CCList.for_all (fun { Result.passed; _ } -> passed) t
+
+    let approved_reviews t =
+      CCList.flatten (CCList.map (fun { Result.approved_reviews; _ } -> approved_reviews) t)
   end
 
   let create_client' config { Account.installation_id; request_id } =
@@ -2187,28 +2195,43 @@ module S = struct
             kv
             t
       | Msg.Pull_request_not_appliable (_, apply_requirements) ->
-          let module Ar = Apply_requirements in
+          let module Tcm = Terrat_change_match in
+          let module Ds = Terrat_change.Dirspace in
+          let module Ar = Apply_requirements.Result in
           let kv =
             Snabela.Kv.(
               Map.of_list
                 [
-                  ("approved_enabled", bool (CCOption.is_some apply_requirements.Ar.approved));
-                  ( "approved_check",
-                    bool (CCOption.get_or ~default:false apply_requirements.Ar.approved) );
-                  ( "merge_conflicts_enabled",
-                    bool (CCOption.is_some apply_requirements.Ar.merge_conflicts) );
-                  ( "merge_conflicts_check",
-                    bool (CCOption.get_or ~default:false apply_requirements.Ar.merge_conflicts) );
-                  ( "status_checks_enabled",
-                    bool (CCOption.is_some apply_requirements.Ar.status_checks) );
-                  ( "status_checks_check",
-                    bool (CCOption.get_or ~default:false apply_requirements.Ar.status_checks) );
-                  ( "status_checks_failed",
+                  ( "checks",
                     list
                       (CCList.map
-                         (fun Terrat_commit_check.{ title; _ } ->
-                           Map.of_list [ ("title", string title) ])
-                         apply_requirements.Ar.status_checks_failed) );
+                         (fun ar ->
+                           Map.of_list
+                             [
+                               ("dir", string ar.Ar.match_.Tcm.dirspace.Ds.dir);
+                               ("workspace", string ar.Ar.match_.Tcm.dirspace.Ds.workspace);
+                               ("passed", bool ar.Ar.passed);
+                               ("approved_enabled", bool (CCOption.is_some ar.Ar.approved));
+                               ( "approved_check",
+                                 bool (CCOption.get_or ~default:false ar.Ar.approved) );
+                               ( "merge_conflicts_enabled",
+                                 bool (CCOption.is_some ar.Ar.merge_conflicts) );
+                               ( "merge_conflicts_check",
+                                 bool (CCOption.get_or ~default:false ar.Ar.merge_conflicts) );
+                               ("status_checks_enabled", bool (CCOption.is_some ar.Ar.status_checks));
+                               ( "status_checks_check",
+                                 bool (CCOption.get_or ~default:false ar.Ar.status_checks) );
+                               ( "status_checks_failed",
+                                 list
+                                   (CCList.map
+                                      (fun Terrat_commit_check.{ title; _ } ->
+                                        Map.of_list [ ("title", string title) ])
+                                      ar.Ar.status_checks_failed) );
+                             ])
+                         (CCList.sort
+                            (fun { Ar.passed = passed1; _ } { Ar.passed = passed2; _ } ->
+                              Bool.compare passed1 passed2)
+                            apply_requirements)) );
                 ])
           in
           apply_template_and_publish
@@ -2446,6 +2469,15 @@ module S = struct
 
   module Event = struct
     module Terraform = struct
+      module Apply_requirement_check = struct
+        type t = {
+          tag_query : Terrat_tag_query.t;
+          merge_conflicts : Terrat_repo_config.Apply_requirements_checks_merge_conflicts.t;
+          status_checks : Terrat_repo_config.Apply_requirements_checks_status_checks.t;
+          approved : Terrat_repo_config.Apply_requirements_checks_approved_2.t;
+        }
+      end
+
       type t = {
         config : Terrat_config.t;
         installation_id : int;
@@ -2555,57 +2587,137 @@ module S = struct
                   err);
             Abb.Future.return (Error `Error)
 
-      let check_apply_requirements t client pull_request repo_config =
-        let module Rc = Terrat_repo_config.Version_1 in
-        let module Ar = Rc.Apply_requirements in
-        let open Abbs_future_combinators.Infix_result_monad in
-        let apply_requirements =
-          CCOption.get_or ~default:(Rc.Apply_requirements.make ()) repo_config.Rc.apply_requirements
-        in
-        let Ar.Checks.{ approved; merge_conflicts; status_checks } =
-          CCOption.get_or ~default:(Ar.Checks.make ()) apply_requirements.Ar.checks
-        in
-        let approved = CCOption.get_or ~default:(Ar.Checks.Approved.make ()) approved in
-        let merge_conflicts =
-          CCOption.get_or ~default:(Ar.Checks.Merge_conflicts.make ()) merge_conflicts
-        in
-        let status_checks =
-          CCOption.get_or ~default:(Ar.Checks.Status_checks.make ()) status_checks
-        in
-        Abbs_future_combinators.Infix_result_app.(
-          (fun reviews commit_checks -> (reviews, commit_checks))
-          <$> Abbs_time_it.run (log_time t.request_id "FETCH_APPROVED_TIME") (fun () ->
-                  fetch_pull_request_reviews t client pull_request)
-          <*> Abbs_time_it.run (log_time t.request_id "FETCH_COMMIT_CHECKS_TIME") (fun () ->
-                  fetch_commit_checks t client pull_request))
-        >>= fun (reviews, commit_checks) ->
-        let approved_reviews =
-          CCList.filter
-            (function
-              | Terrat_pull_request_review.{ status = Status.Approved; _ } -> true
-              | _ -> false)
-            reviews
-        in
-        let approved_result = CCList.length approved_reviews >= approved.Ar.Checks.Approved.count in
-        let merge_result =
-          CCOption.get_or ~default:false pull_request.Pull_request.value.Pull_request.mergeable
-        in
-        let ignore_matching =
-          CCOption.get_or ~default:[] status_checks.Ar.Checks.Status_checks.ignore_matching
-        in
-        if CCOption.is_none pull_request.Pull_request.value.Pull_request.mergeable then
-          Logs.debug (fun m -> m "GITHUB_EVALUATOR : %s : MERGEABLE_NONE" t.request_id);
-        (* Convert all patterns and ignore those that don't compile.  This eats
-           errors.
+      let get_apply_requirements_checks_approved =
+        let module Ap = Terrat_repo_config.Apply_requirements_checks_approved in
+        let module Ap1 = Terrat_repo_config.Apply_requirements_checks_approved_1 in
+        let module Ap2 = Terrat_repo_config.Apply_requirements_checks_approved_2 in
+        function
+        | Ap.Apply_requirements_checks_approved_1 { Ap1.count; enabled } ->
+            { Ap2.all_of = Some []; enabled; any_of_count = count; any_of = Some [] }
+        | Ap.Apply_requirements_checks_approved_2 ap2 -> ap2
 
-           TODO: Improve handling errors here *)
-        let ignore_matching_pats = CCList.filter_map Lua_pattern.of_string ignore_matching in
-        (* Relevant checks exclude our terrateam checks, and also exclude any
-           ignored patterns.  We check both if a pattern matches OR if there is an
-           exact match with the string.  This is because someone might put in an
-           invalid pattern (because secretly we are using Lua patterns underneath
-           which have a slightly different syntax) *)
-        let relevant_commit_checks =
+      let get_apply_requirement_checks repo_config =
+        let module Rc = Terrat_repo_config.Version_1 in
+        let module Ar = Terrat_repo_config.Apply_requirements in
+        let module Checks = Terrat_repo_config.Apply_requirements_checks in
+        let module C1 = Terrat_repo_config.Apply_requirements_checks_1 in
+        let module C2 = Terrat_repo_config.Apply_requirements_checks_2 in
+        let module Ap2 = Terrat_repo_config.Apply_requirements_checks_approved_2 in
+        let apply_requirements =
+          CCOption.get_or ~default:(Ar.make ()) repo_config.Rc.apply_requirements
+        in
+        match apply_requirements.Ar.checks with
+        | None ->
+            [
+              {
+                Apply_requirement_check.tag_query = Terrat_tag_query.any;
+                approved = Ap2.make ();
+                merge_conflicts =
+                  Terrat_repo_config.Apply_requirements_checks_merge_conflicts.make ();
+                status_checks = Terrat_repo_config.Apply_requirements_checks_status_checks.make ();
+              };
+            ]
+        | Some (Checks.Apply_requirements_checks_1 { C1.approved; merge_conflicts; status_checks })
+          ->
+            [
+              {
+                Apply_requirement_check.tag_query = Terrat_tag_query.any;
+                approved =
+                  CCOption.map_or
+                    ~default:(Ap2.make ())
+                    get_apply_requirements_checks_approved
+                    approved;
+                merge_conflicts =
+                  CCOption.get_or
+                    ~default:(Terrat_repo_config.Apply_requirements_checks_merge_conflicts.make ())
+                    merge_conflicts;
+                status_checks =
+                  CCOption.get_or
+                    ~default:(Terrat_repo_config.Apply_requirements_checks_status_checks.make ())
+                    status_checks;
+              };
+            ]
+        | Some (Checks.Apply_requirements_checks_2 checks) ->
+            let module I = C2.Items in
+            CCList.map
+              (fun { I.approved; merge_conflicts; status_checks; tag_query } ->
+                match Terrat_tag_query.of_string tag_query with
+                | Ok tag_query ->
+                    {
+                      Apply_requirement_check.tag_query;
+                      approved = CCOption.get_or ~default:(Ap2.make ()) approved;
+                      merge_conflicts =
+                        CCOption.get_or
+                          ~default:
+                            (Terrat_repo_config.Apply_requirements_checks_merge_conflicts.make ())
+                          merge_conflicts;
+                      status_checks =
+                        CCOption.get_or
+                          ~default:
+                            (Terrat_repo_config.Apply_requirements_checks_status_checks.make ())
+                          status_checks;
+                    }
+                | Error _ -> failwith "nyi3")
+              checks
+
+      let compute_approved request_id access_control_ctx approved approved_reviews =
+        let open Abbs_future_combinators.Infix_result_monad in
+        let module Tprr = Terrat_pull_request_review in
+        let module Ac = Terrat_repo_config.Apply_requirements_checks_approved_2 in
+        let { Ac.all_of; any_of; any_of_count; enabled } = approved in
+        let all_of = CCOption.get_or ~default:[] all_of in
+        let any_of = CCOption.get_or ~default:[] any_of in
+        let combined_queries = String_set.(to_list (of_list (all_of @ any_of))) in
+        Abbs_future_combinators.List_result.fold_left
+          ~init:String_map.empty
+          ~f:(fun acc query ->
+            Abbs_future_combinators.List_result.filter_map
+              ~f:(function
+                | { Tprr.user = Some user; _ } -> (
+                    let ctx = Access_control.set_user user access_control_ctx in
+                    Access_control.query ctx query
+                    >>= function
+                    | true -> Abb.Future.return (Ok (Some user))
+                    | false -> Abb.Future.return (Ok None))
+                | _ -> Abb.Future.return (Ok None))
+              approved_reviews
+            >>= fun matching_reviews ->
+            Abb.Future.return
+              (Ok
+                 (CCList.fold_left
+                    (fun acc user -> String_map.add_to_list query user acc)
+                    acc
+                    matching_reviews)))
+          combined_queries
+        >>= fun matching_reviews ->
+        let all_of_results = CCList.map (CCFun.flip String_map.mem matching_reviews) all_of in
+        let any_of_results =
+          CCList.flatten
+            (CCList.filter_map (CCFun.flip String_map.find_opt matching_reviews) any_of)
+        in
+        let all_of_passed = CCList.for_all CCFun.id all_of_results in
+        let any_of_passed =
+          (CCList.is_empty any_of && CCList.length approved_reviews >= any_of_count)
+          || ((not (CCList.is_empty any_of)) && CCList.length any_of_results >= any_of_count)
+        in
+        Logs.info (fun m ->
+            m
+              "GITHUB_EVALUATOR : %s : COMPUTE_APPROVED : all_of_passed=%s : any_of_passed=%s"
+              request_id
+              (Bool.to_string all_of_passed)
+              (Bool.to_string any_of_passed));
+        (* Considered approved if all "all_of" passes and any "any_of" passes OR
+           "all of" and "any of" are empty and the approvals is more than count *)
+        Abb.Future.return (Ok (all_of_passed && any_of_passed))
+
+      let check_apply_requirements t client pull_request repo_config matches =
+        let module Abc = Apply_requirement_check in
+        let module Tcm = Terrat_change_match in
+        let module Mc = Terrat_repo_config.Apply_requirements_checks_merge_conflicts in
+        let module Sc = Terrat_repo_config.Apply_requirements_checks_status_checks in
+        let module Ac = Terrat_repo_config.Apply_requirements_checks_approved_2 in
+        let open Abbs_future_combinators.Infix_result_monad in
+        let filter_relevant_commit_checks ignore_matching_pats ignore_matching commit_checks =
           CCList.filter
             (fun Terrat_commit_check.{ title; _ } ->
               not
@@ -2622,60 +2734,138 @@ module S = struct
                 || CCList.exists (CCString.equal title) ignore_matching))
             commit_checks
         in
-        let failed_commit_checks =
-          CCList.filter
-            (function
-              | Terrat_commit_check.{ status = Status.Completed; _ } -> false
-              | _ -> true)
-            relevant_commit_checks
-        in
-        let all_commit_check_success = CCList.is_empty failed_commit_checks in
-        let merged =
-          let module St = Terrat_pull_request.State in
-          match Pull_request.state pull_request with
-          | St.Merged _ -> true
-          | St.Open _ | St.Closed -> false
-        in
-        (* If it's merged, nothing should stop an apply because it's already
-           merged. *)
-        let passed =
-          merged
-          || ((not approved.Ar.Checks.Approved.enabled) || approved_result)
-             && ((not merge_conflicts.Ar.Checks.Merge_conflicts.enabled) || merge_result)
-             && ((not status_checks.Ar.Checks.Status_checks.enabled) || all_commit_check_success)
-        in
-        let apply_requirements =
+        let checks = get_apply_requirement_checks repo_config in
+        let access_control_ctx =
           {
-            Apply_requirements.passed;
-            approved = (if approved.Ar.Checks.Approved.enabled then Some approved_result else None);
-            merge_conflicts =
-              (if merge_conflicts.Ar.Checks.Merge_conflicts.enabled then Some merge_result else None);
-            status_checks =
-              (if status_checks.Ar.Checks.Status_checks.enabled then Some all_commit_check_success
-               else None);
-            status_checks_failed = failed_commit_checks;
-            approved_reviews;
+            Access_control.client = client.Client.client;
+            config = t.config;
+            repo = t.repo;
+            user = t.user;
           }
         in
-        Logs.info (fun m ->
-            m
-              "GITHUB_EVALUATOR : %s : APPLY_REQUIREMENTS_CHECKS : approved=%s merge_conflicts=%s \
-               status_checks=%s"
-              t.request_id
-              (Bool.to_string approved.Ar.Checks.Approved.enabled)
-              (Bool.to_string merge_conflicts.Ar.Checks.Merge_conflicts.enabled)
-              (Bool.to_string status_checks.Ar.Checks.Status_checks.enabled));
-        Logs.info (fun m ->
-            m
-              "GITHUB_EVALUATOR : %s : APPLY_REQUIREMENTS_RESULT : approved=%s merge_check=%s \
-               commit_check=%s merged=%s passed=%s"
-              t.request_id
-              (Bool.to_string approved_result)
-              (Bool.to_string merge_result)
-              (Bool.to_string all_commit_check_success)
-              (Bool.to_string merged)
-              (Bool.to_string passed));
-        Abb.Future.return (Ok apply_requirements)
+        Abbs_future_combinators.Infix_result_app.(
+          (fun reviews commit_checks -> (reviews, commit_checks))
+          <$> Abbs_time_it.run (log_time t.request_id "FETCH_APPROVED_TIME") (fun () ->
+                  fetch_pull_request_reviews t client pull_request)
+          <*> Abbs_time_it.run (log_time t.request_id "FETCH_COMMIT_CHECKS_TIME") (fun () ->
+                  fetch_commit_checks t client pull_request))
+        >>= fun (reviews, commit_checks) ->
+        let approved_reviews =
+          CCList.filter
+            (function
+              | Terrat_pull_request_review.{ status = Status.Approved; _ } -> true
+              | _ -> false)
+            reviews
+        in
+        let merge_result =
+          CCOption.get_or ~default:false pull_request.Pull_request.value.Pull_request.mergeable
+        in
+        if CCOption.is_none pull_request.Pull_request.value.Pull_request.mergeable then
+          Logs.debug (fun m -> m "GITHUB_EVALUATOR : %s : MERGEABLE_NONE" t.request_id);
+        let open Abb.Future.Infix_monad in
+        Abbs_future_combinators.List_result.map
+          ~f:(fun ({ Tcm.tags; dirspace; _ } as match_) ->
+            let open Abbs_future_combinators.Infix_result_monad in
+            match
+              CCList.find_opt
+                (fun { Abc.tag_query; _ } ->
+                  Terrat_tag_query.match_ ~tag_set:tags ~dirspace tag_query)
+                checks
+            with
+            | Some { Abc.tag_query; merge_conflicts; status_checks; approved; _ } ->
+                compute_approved t.request_id access_control_ctx approved approved_reviews
+                >>= fun approved_result ->
+                let ignore_matching =
+                  CCOption.get_or ~default:[] status_checks.Sc.ignore_matching
+                in
+                (* Convert all patterns and ignore those that don't compile.  This eats
+                   errors.
+
+                   TODO: Improve handling errors here *)
+                let ignore_matching_pats =
+                  CCList.filter_map Lua_pattern.of_string ignore_matching
+                in
+                (* Relevant checks exclude our terrateam checks, and also exclude any
+                   ignored patterns.  We check both if a pattern matches OR if there is an
+                   exact match with the string.  This is because someone might put in an
+                   invalid pattern (because secretly we are using Lua patterns underneath
+                   which have a slightly different syntax) *)
+                let relevant_commit_checks =
+                  filter_relevant_commit_checks ignore_matching_pats ignore_matching commit_checks
+                in
+                let failed_commit_checks =
+                  CCList.filter
+                    (function
+                      | Terrat_commit_check.{ status = Status.Completed; _ } -> false
+                      | _ -> true)
+                    relevant_commit_checks
+                in
+                let all_commit_check_success = CCList.is_empty failed_commit_checks in
+                let merged =
+                  let module St = Terrat_pull_request.State in
+                  match Pull_request.state pull_request with
+                  | St.Merged _ -> true
+                  | St.Open _ | St.Closed -> false
+                in
+                let passed =
+                  merged
+                  || ((not approved.Ac.enabled) || approved_result)
+                     && ((not merge_conflicts.Mc.enabled) || merge_result)
+                     && ((not status_checks.Sc.enabled) || all_commit_check_success)
+                in
+                let apply_requirements =
+                  {
+                    Apply_requirements.Result.passed;
+                    match_;
+                    approved = (if approved.Ac.enabled then Some approved_result else None);
+                    merge_conflicts =
+                      (if merge_conflicts.Mc.enabled then Some merge_result else None);
+                    status_checks =
+                      (if status_checks.Sc.enabled then Some all_commit_check_success else None);
+                    status_checks_failed = failed_commit_checks;
+                    approved_reviews;
+                  }
+                in
+                Logs.info (fun m ->
+                    m
+                      "GITHUB_EVALUATOR : %s : APPLY_REQUIREMENTS_CHECKS : tag_query=%s \
+                       approved=%s merge_conflicts=%s status_checks=%s"
+                      t.request_id
+                      (Terrat_tag_query.to_string tag_query)
+                      (Bool.to_string approved.Ac.enabled)
+                      (Bool.to_string merge_conflicts.Mc.enabled)
+                      (Bool.to_string status_checks.Sc.enabled));
+                Logs.info (fun m ->
+                    m
+                      "GITHUB_EVALUATOR : %s : APPLY_REQUIREMENTS_RESULT : tag_query=%s \
+                       approved=%s merge_check=%s commit_check=%s merged=%s passed=%s"
+                      t.request_id
+                      (Terrat_tag_query.to_string tag_query)
+                      (Bool.to_string approved_result)
+                      (Bool.to_string merge_result)
+                      (Bool.to_string all_commit_check_success)
+                      (Bool.to_string merged)
+                      (Bool.to_string passed));
+                Abb.Future.return (Ok apply_requirements)
+            | None ->
+                Abb.Future.return
+                  (Ok
+                     {
+                       Apply_requirements.Result.passed = false;
+                       match_;
+                       approved = None;
+                       merge_conflicts = None;
+                       status_checks = None;
+                       status_checks_failed = [];
+                       approved_reviews = [];
+                     }))
+          matches
+        >>= function
+        | Ok _ as ret -> Abb.Future.return ret
+        | Error `Error -> Abb.Future.return (Error `Error)
+        | Error (`Invalid_query query) ->
+            Logs.info (fun m -> m "INVALID QUERY %s" query);
+            failwith "nyi2"
     end
 
     module Initiate = struct

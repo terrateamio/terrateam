@@ -497,6 +497,7 @@ module type S = sig
         Client.t ->
         Pull_request.fetched Pull_request.t ->
         Terrat_repo_config.Version_1.t ->
+        Terrat_change_match.t list ->
         (Apply_requirements.t, [> `Error ]) result Abb.Future.t
     end
 
@@ -2147,10 +2148,11 @@ module Make (S : S) = struct
           (log_time (S.Db.request_id db) "QUERY_CONFLICTING_WORK_MANIFESTS")
           (fun () -> S.query_conflicting_work_manifests_in_repo db pull_request dirspaces operation)
 
-      let check_apply_requirements t client pull_request repo_config =
+      let check_apply_requirements t client pull_request repo_config matches =
         Abbs_time_it.run
           (log_time (S.Event.Terraform.request_id t) "CHECK_APPLY_REQUIREMENTS")
-          (fun () -> S.Event.Terraform.check_apply_requirements t client pull_request repo_config)
+          (fun () ->
+            S.Event.Terraform.check_apply_requirements t client pull_request repo_config matches)
 
       let test_can_perform_operation t db pull_request dirspaces operation =
         let open Abbs_future_combinators.Infix_result_monad in
@@ -2426,9 +2428,9 @@ module Make (S : S) = struct
           (Tf_operation.Plan mode)
         >>= fun ret ->
         let module Rc = Terrat_repo_config.Version_1 in
-        let module Ar = Rc.Apply_requirements in
+        let module Ar = Terrat_repo_config.Apply_requirements in
         let apply_requirements =
-          CCOption.get_or ~default:(Rc.Apply_requirements.make ()) repo_config.Rc.apply_requirements
+          CCOption.get_or ~default:(Ar.make ()) repo_config.Rc.apply_requirements
         in
         (if apply_requirements.Ar.create_pending_apply_check then
            maybe_create_pending_applies
@@ -2736,7 +2738,7 @@ module Make (S : S) = struct
                 tag_query_matches
           | `Apply Tf_operation.Manual | `Apply_autoapprove | `Apply_force -> tag_query_matches
         in
-        check_apply_requirements t.event t.client pull_request repo_config
+        check_apply_requirements t.event t.client pull_request repo_config matches
         >>= fun apply_requirements ->
         let passed_apply_requirements = S.Apply_requirements.passed apply_requirements in
         let access_control_run_type =
