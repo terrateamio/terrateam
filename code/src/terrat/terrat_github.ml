@@ -387,7 +387,7 @@ let rec fetch_repo_config' ~python ~owner ~repo ref_ client = function
       >>= fun resp ->
       let module C = Githubc2_repos.Get_content.Responses.OK in
       match Openapi.Response.value resp with
-      | `OK (C.Content_file file) -> (
+      | `OK (C.Content_file file) ->
           let content =
             Githubc2_components.Content_file.(
               match file.primary.Primary.encoding with
@@ -395,31 +395,35 @@ let rec fetch_repo_config' ~python ~owner ~repo ref_ client = function
                   Base64.decode_exn (CCString.replace ~sub:"\n" ~by:"" file.primary.Primary.content)
               | _ -> file.primary.Primary.content)
           in
-          parse_repo_config python content
-          >>= fun stdout ->
-          try
-            let json =
-              match stdout with
-              | "" -> `Assoc []
-              | stdout -> Yojson.Safe.from_string stdout
-            in
-            match Terrat_repo_config.Version_1.of_yojson json with
-            | Ok config -> Abb.Future.return (Ok config)
-            | Error err ->
-                (* This is a cheap trick but we just want to make the error message a
-                   little bit more friendly to users by replacing the parts of the
-                   error message that are specific to the implementation. *)
-                Abb.Future.return
-                  (Error
-                     (`Repo_config_parse_err
-                       ("Failed to parse repo config: "
-                       ^ (err
-                         |> CCString.replace ~sub:"Terrat_repo_config." ~by:""
-                         |> CCString.replace ~sub:".t" ~by:""
-                         |> CCString.lowercase_ascii))))
-          with Yojson.Json_error str ->
-            Abb.Future.return
-              (Error (`Repo_config_parse_err ("Failed to parse repo config: " ^ str))))
+          if not (CCString.is_empty (CCString.trim content)) then
+            parse_repo_config python content
+            >>= fun stdout ->
+            try
+              let json =
+                match stdout with
+                | "" -> `Assoc []
+                | stdout -> Yojson.Safe.from_string stdout
+              in
+              match Terrat_repo_config.Version_1.of_yojson json with
+              | Ok config -> Abb.Future.return (Ok config)
+              | Error err ->
+                  (* This is a cheap trick but we just want to make the error message a
+                     little bit more friendly to users by replacing the parts of the
+                     error message that are specific to the implementation. *)
+                  Abb.Future.return
+                    (Error
+                       (`Repo_config_parse_err
+                         ("Failed to parse repo config: "
+                         ^ (err
+                           |> CCString.replace ~sub:"Terrat_repo_config." ~by:""
+                           |> CCString.replace ~sub:".t" ~by:""
+                           |> CCString.lowercase_ascii))))
+            with Yojson.Json_error str ->
+              Abb.Future.return
+                (Error (`Repo_config_parse_err ("Failed to parse repo config: " ^ str)))
+          else
+            let json = `Assoc [] in
+            Abb.Future.return (Ok (CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson json)))
       | `Not_found _ -> fetch_repo_config' ~python ~owner ~repo ref_ client next_config_yml
       | `OK (C.Content_directory _) -> Abb.Future.return (Error `Repo_config_is_dir)
       | `OK (C.Content_symlink _) -> Abb.Future.return (Error `Repo_config_is_symlink)
