@@ -33,6 +33,17 @@ module Make (Fut : Abb_intf.Future.S) = struct
         ~init:[]
         l
       >>| fun ls -> Std_list.rev ls
+
+    let filter_map ~f l =
+      fold_left
+        ~f:(fun acc v ->
+          f v
+          >>= function
+          | Some r -> Fut.return (r :: acc)
+          | None -> Fut.return acc)
+        ~init:[]
+        l
+      >>| fun l -> Std_list.rev l
   end
 
   let link f1 f2 =
@@ -254,5 +265,16 @@ module Make (Fut : Abb_intf.Future.S) = struct
         ~init:[]
         l
       >>| fun ls -> Std_list.rev ls
+
+    let filter_map ~f l =
+      fold_left
+        ~f:(fun acc v ->
+          f v
+          >>= function
+          | Some r -> Fut.return (Ok (r :: acc))
+          | None -> Fut.return (Ok acc))
+        ~init:[]
+        l
+      >>| fun l -> Std_list.rev l
   end
 end

@@ -132,6 +132,7 @@ module Make (Fut : Abb_intf.Future.S) : sig
     val iter_par : f:('a -> unit Fut.t) -> 'a list -> unit Fut.t
 
     val filter : f:('a -> bool Fut.t) -> 'a list -> 'a list Fut.t
+    val filter_map : f:('a -> 'b option Fut.t) -> 'a list -> 'b list Fut.t
   end
 
   module List_result : sig
@@ -142,6 +143,7 @@ module Make (Fut : Abb_intf.Future.S) : sig
 
     val iter : f:('a -> (unit, 'e) result Fut.t) -> 'a list -> (unit, 'e) result Fut.t
     val filter : f:('a -> (bool, 'e) result Fut.t) -> 'a list -> ('a list, 'e) result Fut.t
+    val filter_map : f:('a -> ('b option, 'e) result Fut.t) -> 'a list -> ('b list, 'e) result Fut.t
   end
 
   module Infix_result_monad : sig
