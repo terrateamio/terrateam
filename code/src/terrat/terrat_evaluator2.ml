@@ -2709,6 +2709,7 @@ module Make (S : S) = struct
           all_matches
           pull_request
           repo_config
+          repo_default_config
           operation =
         let open Abbs_future_combinators.Infix_result_monad in
         query_unapplied_dirspaces db pull_request
@@ -2738,7 +2739,7 @@ module Make (S : S) = struct
                 tag_query_matches
           | `Apply Tf_operation.Manual | `Apply_autoapprove | `Apply_force -> tag_query_matches
         in
-        check_apply_requirements t.event t.client pull_request repo_config matches
+        check_apply_requirements t.event t.client pull_request repo_default_config matches
         >>= fun apply_requirements ->
         let passed_apply_requirements = S.Apply_requirements.passed apply_requirements in
         let access_control_run_type =
@@ -2807,7 +2808,14 @@ module Make (S : S) = struct
                  (Access_control_engine.policy_branch access_control, `Invalid_query query))
             >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
 
-      let eval_operation t access_control pull_request repo_config repo_tree index =
+      let eval_operation
+          t
+          access_control
+          pull_request
+          repo_config
+          repo_default_config
+          repo_tree
+          index =
         let open Abbs_future_combinators.Infix_result_monad in
         Logs.info (fun m ->
             m
@@ -2915,6 +2923,7 @@ module Make (S : S) = struct
                           all_matches
                           pull_request
                           repo_config
+                          repo_default_config
                           (`Apply mode))
                 | Tf_operation.Apply_autoapprove ->
                     Abbs_time_it.run
@@ -2927,6 +2936,7 @@ module Make (S : S) = struct
                           tag_query_matches
                           all_matches
                           pull_request
+                          repo_default_config
                           repo_config
                           `Apply_autoapprove)
                 | Tf_operation.Apply_force ->
@@ -2941,6 +2951,7 @@ module Make (S : S) = struct
                           all_matches
                           pull_request
                           repo_config
+                          repo_default_config
                           `Apply_force)))
 
       let eval_change t remote_repo repo_config repo_default_config repo_tree pull_request index =
@@ -2968,6 +2979,7 @@ module Make (S : S) = struct
                   access_control
                   pull_request
                   repo_config
+                  repo_default_config
                   repo_tree
                   (CCOption.get_or ~default:Terrat_change_match.Index.empty index)
             | Ok (Some match_list) ->
