@@ -86,6 +86,8 @@ module Msg = struct
     | Access_control_denied of (string * access_control_denied)
     | Account_expired
     | Apply_no_matching_dirspaces
+    | Apply_requirements_config_err of [ Terrat_tag_query_ast.err | `Invalid_query of string ]
+    | Apply_requirements_validation_err
     | Autoapply_running
     | Bad_custom_branch_tag_pattern of (string * string)
     | Bad_glob of string
@@ -498,7 +500,10 @@ module type S = sig
         Pull_request.fetched Pull_request.t ->
         Terrat_repo_config.Version_1.t ->
         Terrat_change_match.t list ->
-        (Apply_requirements.t, [> `Error ]) result Abb.Future.t
+        ( Apply_requirements.t,
+          [> `Error | `Invalid_query of string | Terrat_tag_query_ast.err ] )
+        result
+        Abb.Future.t
     end
 
     module Initiate : sig
@@ -2739,73 +2744,86 @@ module Make (S : S) = struct
                 tag_query_matches
           | `Apply Tf_operation.Manual | `Apply_autoapprove | `Apply_force -> tag_query_matches
         in
-        check_apply_requirements t.event t.client pull_request repo_default_config matches
-        >>= fun apply_requirements ->
-        let passed_apply_requirements = S.Apply_requirements.passed apply_requirements in
-        let access_control_run_type =
-          match operation with
-          | `Apply _ ->
-              `Apply
-                (CCList.flat_map
-                   (function
-                     | Terrat_pull_request_review.{ user = Some user; _ } -> [ user ]
-                     | _ -> [])
-                   (S.Apply_requirements.approved_reviews apply_requirements))
-          | (`Apply_autoapprove | `Apply_force) as op -> op
-        in
         let open Abb.Future.Infix_monad in
-        Access_control_engine.eval_tf_operation access_control matches access_control_run_type
+        check_apply_requirements t.event t.client pull_request repo_default_config matches
         >>= function
-        | Ok access_control_result -> (
-            match (operation, access_control_result) with
-            | (`Apply _ | `Apply_autoapprove), _ when not passed_apply_requirements ->
+        | Ok apply_requirements -> (
+            let passed_apply_requirements = S.Apply_requirements.passed apply_requirements in
+            let access_control_run_type =
+              match operation with
+              | `Apply _ ->
+                  `Apply
+                    (CCList.flat_map
+                       (function
+                         | Terrat_pull_request_review.{ user = Some user; _ } -> [ user ]
+                         | _ -> [])
+                       (S.Apply_requirements.approved_reviews apply_requirements))
+              | (`Apply_autoapprove | `Apply_force) as op -> op
+            in
+            Access_control_engine.eval_tf_operation access_control matches access_control_run_type
+            >>= function
+            | Ok access_control_result -> (
+                match (operation, access_control_result) with
+                | (`Apply _ | `Apply_autoapprove), _ when not passed_apply_requirements ->
+                    let open Abbs_future_combinators.Infix_result_monad in
+                    Logs.info (fun m ->
+                        m "EVALUATOR : %s : PR_NOT_APPLIABLE" (S.Event.Terraform.request_id t.event));
+                    publish_msg
+                      t
+                      (Msg.Pull_request_not_appliable (pull_request, apply_requirements))
+                    >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
+                | _, Terrat_access_control.R.{ pass = []; deny = _ :: _ as deny }
+                  when not (Access_control_engine.apply_require_all_dirspace_access access_control)
+                  ->
+                    let open Abbs_future_combinators.Infix_result_monad in
+                    (* In this case all have been denied, but not all dirspaces must have
+                       access, however this is treated as special because no work will be done
+                       so a special message should be given to the usr. *)
+                    publish_msg
+                      t
+                      (Msg.Access_control_denied
+                         (Access_control_engine.policy_branch access_control, `All_dirspaces deny))
+                    >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
+                | _, Terrat_access_control.R.{ pass; deny }
+                  when CCList.is_empty deny
+                       || not
+                            (Access_control_engine.apply_require_all_dirspace_access access_control)
+                  ->
+                    (* All have passed or any that we do not require all to pass *)
+                    let matches = pass in
+                    eval_apply' t db matches all_matches pull_request repo_config operation deny
+                | _, Terrat_access_control.R.{ deny; _ } ->
+                    let open Abbs_future_combinators.Infix_result_monad in
+                    publish_msg
+                      t
+                      (Msg.Access_control_denied
+                         (Access_control_engine.policy_branch access_control, `Dirspaces deny))
+                    >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event)))
+            | Error `Error ->
                 let open Abbs_future_combinators.Infix_result_monad in
-                Logs.info (fun m ->
-                    m "EVALUATOR : %s : PR_NOT_APPLIABLE" (S.Event.Terraform.request_id t.event));
-                publish_msg t (Msg.Pull_request_not_appliable (pull_request, apply_requirements))
-                >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
-            | _, Terrat_access_control.R.{ pass = []; deny = _ :: _ as deny }
-              when not (Access_control_engine.apply_require_all_dirspace_access access_control) ->
-                let open Abbs_future_combinators.Infix_result_monad in
-                (* In this case all have been denied, but not all dirspaces must have
-                   access, however this is treated as special because no work will be done
-                   so a special message should be given to the usr. *)
                 publish_msg
                   t
                   (Msg.Access_control_denied
-                     (Access_control_engine.policy_branch access_control, `All_dirspaces deny))
+                     (Access_control_engine.policy_branch access_control, `Lookup_err))
                 >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
-            | _, Terrat_access_control.R.{ pass; deny }
-              when CCList.is_empty deny
-                   || not (Access_control_engine.apply_require_all_dirspace_access access_control)
-              ->
-                (* All have passed or any that we do not require all to pass *)
-                let matches = pass in
-                eval_apply' t db matches all_matches pull_request repo_config operation deny
-            | _, Terrat_access_control.R.{ deny; _ } ->
+            | Error (#Terrat_tag_query_ast.err as err) ->
+                let open Abbs_future_combinators.Infix_result_monad in
+                publish_msg t (Msg.Tag_query_err err)
+                >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
+            | Error (`Invalid_query query) ->
                 let open Abbs_future_combinators.Infix_result_monad in
                 publish_msg
                   t
                   (Msg.Access_control_denied
-                     (Access_control_engine.policy_branch access_control, `Dirspaces deny))
+                     (Access_control_engine.policy_branch access_control, `Invalid_query query))
                 >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event)))
+        | Error ((`Tag_query_error _ | `Invalid_query _) as err) ->
+            let open Abbs_future_combinators.Infix_result_monad in
+            publish_msg t (Msg.Apply_requirements_config_err err)
+            >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
         | Error `Error ->
             let open Abbs_future_combinators.Infix_result_monad in
-            publish_msg
-              t
-              (Msg.Access_control_denied
-                 (Access_control_engine.policy_branch access_control, `Lookup_err))
-            >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
-        | Error (#Terrat_tag_query_ast.err as err) ->
-            let open Abbs_future_combinators.Infix_result_monad in
-            publish_msg t (Msg.Tag_query_err err)
-            >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
-        | Error (`Invalid_query query) ->
-            let open Abbs_future_combinators.Infix_result_monad in
-            publish_msg
-              t
-              (Msg.Access_control_denied
-                 (Access_control_engine.policy_branch access_control, `Invalid_query query))
+            publish_msg t Msg.Apply_requirements_validation_err
             >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
 
       let eval_operation

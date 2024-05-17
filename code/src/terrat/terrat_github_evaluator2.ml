@@ -510,6 +510,14 @@ module Tmpl = struct
     |> fun tmpl -> Snabela.of_template tmpl Transformers.[ money; compact_plan; plan_diff ]
 
   let read_raw fname = CCOption.get_exn_or fname (Terrat_files_tmpl.read fname)
+
+  let apply_requirements_config_err_tag_query =
+    read "github_apply_requirements_config_err_tag_query.tmpl"
+
+  let apply_requirements_config_err_invalid_query =
+    read "github_apply_requirements_config_err_invalid_query.tmpl"
+
+  let apply_requirements_validation_err = read "github_apply_requirements_validation_err.tmpl"
   let mismatched_refs = read "github_mismatched_refs.tmpl"
   let missing_plans = read "github_missing_plans.tmpl"
 
@@ -1995,6 +2003,27 @@ module S = struct
     let publish_msg' t =
       let module Msg = Terrat_evaluator2.Msg in
       function
+      | Msg.Apply_requirements_config_err (`Tag_query_error (query, err)) ->
+          let kv = Snabela.Kv.(Map.of_list [ ("query", string query); ("error", string err) ]) in
+          apply_template_and_publish
+            "APPLY_REQUIREMENTS_CONFIG_ERR_TAG_QUERY"
+            Tmpl.apply_requirements_config_err_tag_query
+            kv
+            t
+      | Msg.Apply_requirements_config_err (`Invalid_query query) ->
+          let kv = Snabela.Kv.(Map.of_list [ ("query", string query) ]) in
+          apply_template_and_publish
+            "APPLY_REQUIREMENTS_CONFIG_ERR_INVALID_QUERY"
+            Tmpl.apply_requirements_config_err_invalid_query
+            kv
+            t
+      | Msg.Apply_requirements_validation_err ->
+          let kv = Snabela.Kv.(Map.of_list []) in
+          apply_template_and_publish
+            "APPLY_REQUIREMENTS_VALIDATION_ERR"
+            Tmpl.apply_requirements_validation_err
+            kv
+            t
       | Msg.Mismatched_refs ->
           let kv = Snabela.Kv.(Map.of_list []) in
           apply_template_and_publish "MISMATCHED_REFS" Tmpl.mismatched_refs kv t
@@ -2597,6 +2626,9 @@ module S = struct
         | Ap.Apply_requirements_checks_approved_2 ap2 -> ap2
 
       let get_apply_requirement_checks repo_config =
+        let module Err = struct
+          exception Tag_query_err of Terrat_tag_query_ast.err
+        end in
         let module Rc = Terrat_repo_config.Version_1 in
         let module Ar = Terrat_repo_config.Apply_requirements in
         let module Checks = Terrat_repo_config.Apply_requirements_checks in
@@ -2608,57 +2640,66 @@ module S = struct
         in
         match apply_requirements.Ar.checks with
         | None ->
-            [
-              {
-                Apply_requirement_check.tag_query = Terrat_tag_query.any;
-                approved = Ap2.make ();
-                merge_conflicts =
-                  Terrat_repo_config.Apply_requirements_checks_merge_conflicts.make ();
-                status_checks = Terrat_repo_config.Apply_requirements_checks_status_checks.make ();
-              };
-            ]
+            Ok
+              [
+                {
+                  Apply_requirement_check.tag_query = Terrat_tag_query.any;
+                  approved = Ap2.make ();
+                  merge_conflicts =
+                    Terrat_repo_config.Apply_requirements_checks_merge_conflicts.make ();
+                  status_checks = Terrat_repo_config.Apply_requirements_checks_status_checks.make ();
+                };
+              ]
         | Some (Checks.Apply_requirements_checks_1 { C1.approved; merge_conflicts; status_checks })
           ->
-            [
-              {
-                Apply_requirement_check.tag_query = Terrat_tag_query.any;
-                approved =
-                  CCOption.map_or
-                    ~default:(Ap2.make ())
-                    get_apply_requirements_checks_approved
-                    approved;
-                merge_conflicts =
-                  CCOption.get_or
-                    ~default:(Terrat_repo_config.Apply_requirements_checks_merge_conflicts.make ())
-                    merge_conflicts;
-                status_checks =
-                  CCOption.get_or
-                    ~default:(Terrat_repo_config.Apply_requirements_checks_status_checks.make ())
-                    status_checks;
-              };
-            ]
-        | Some (Checks.Apply_requirements_checks_2 checks) ->
-            let module I = C2.Items in
-            CCList.map
-              (fun { I.approved; merge_conflicts; status_checks; tag_query } ->
-                match Terrat_tag_query.of_string tag_query with
-                | Ok tag_query ->
-                    {
-                      Apply_requirement_check.tag_query;
-                      approved = CCOption.get_or ~default:(Ap2.make ()) approved;
-                      merge_conflicts =
-                        CCOption.get_or
-                          ~default:
-                            (Terrat_repo_config.Apply_requirements_checks_merge_conflicts.make ())
-                          merge_conflicts;
-                      status_checks =
-                        CCOption.get_or
-                          ~default:
-                            (Terrat_repo_config.Apply_requirements_checks_status_checks.make ())
-                          status_checks;
-                    }
-                | Error _ -> failwith "nyi3")
-              checks
+            Ok
+              [
+                {
+                  Apply_requirement_check.tag_query = Terrat_tag_query.any;
+                  approved =
+                    CCOption.map_or
+                      ~default:(Ap2.make ())
+                      get_apply_requirements_checks_approved
+                      approved;
+                  merge_conflicts =
+                    CCOption.get_or
+                      ~default:
+                        (Terrat_repo_config.Apply_requirements_checks_merge_conflicts.make ())
+                      merge_conflicts;
+                  status_checks =
+                    CCOption.get_or
+                      ~default:(Terrat_repo_config.Apply_requirements_checks_status_checks.make ())
+                      status_checks;
+                };
+              ]
+        | Some (Checks.Apply_requirements_checks_2 checks) -> (
+            try
+              let module I = C2.Items in
+              Ok
+                (CCList.map
+                   (fun { I.approved; merge_conflicts; status_checks; tag_query } ->
+                     match Terrat_tag_query.of_string tag_query with
+                     | Ok tag_query ->
+                         {
+                           Apply_requirement_check.tag_query;
+                           approved = CCOption.get_or ~default:(Ap2.make ()) approved;
+                           merge_conflicts =
+                             CCOption.get_or
+                               ~default:
+                                 (Terrat_repo_config.Apply_requirements_checks_merge_conflicts.make
+                                    ())
+                               merge_conflicts;
+                           status_checks =
+                             CCOption.get_or
+                               ~default:
+                                 (Terrat_repo_config.Apply_requirements_checks_status_checks.make
+                                    ())
+                               status_checks;
+                         }
+                     | Error (#Terrat_tag_query_ast.err as err) -> raise (Err.Tag_query_err err))
+                   checks)
+            with Err.Tag_query_err err ->
+              Error (err : Terrat_tag_query_ast.err :> [> Terrat_tag_query_ast.err ]))
 
       let compute_approved request_id access_control_ctx approved approved_reviews =
         let open Abbs_future_combinators.Infix_result_monad in
@@ -2734,7 +2775,8 @@ module S = struct
                 || CCList.exists (CCString.equal title) ignore_matching))
             commit_checks
         in
-        let checks = get_apply_requirement_checks repo_config in
+        Abb.Future.return (get_apply_requirement_checks repo_config)
+        >>= fun checks ->
         let access_control_ctx =
           {
             Access_control.client = client.Client.client;
@@ -2862,10 +2904,8 @@ module S = struct
           matches
         >>= function
         | Ok _ as ret -> Abb.Future.return ret
-        | Error `Error -> Abb.Future.return (Error `Error)
-        | Error (`Invalid_query query) ->
-            Logs.info (fun m -> m "INVALID QUERY %s" query);
-            failwith "nyi2"
+        | Error ((`Error | #Terrat_tag_query_ast.err | `Invalid_query _) as ret) ->
+            Abb.Future.return (Error ret)
     end
 
     module Initiate = struct

@@ -20,6 +20,8 @@ module Msg : sig
     | Access_control_denied of (string * access_control_denied)
     | Account_expired
     | Apply_no_matching_dirspaces
+    | Apply_requirements_config_err of [ Terrat_tag_query_ast.err | `Invalid_query of string ]
+    | Apply_requirements_validation_err
     | Autoapply_running
     | Bad_custom_branch_tag_pattern of (string * string)
     | Bad_glob of string
@@ -360,7 +362,10 @@ module type S = sig
         Pull_request.fetched Pull_request.t ->
         Terrat_repo_config.Version_1.t ->
         Terrat_change_match.t list ->
-        (Apply_requirements.t, [> `Error ]) result Abb.Future.t
+        ( Apply_requirements.t,
+          [> `Error | `Invalid_query of string | Terrat_tag_query_ast.err ] )
+        result
+        Abb.Future.t
     end
 
     module Initiate : sig
