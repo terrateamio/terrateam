@@ -3240,6 +3240,37 @@
       ],
       "title": "pull_request review_requested event"
     },
+    "pull_request$review_submitted": {
+      "properties": {
+        "action": {
+          "enum": [
+            "submitted"
+          ],
+          "type": "string"
+        },
+        "installation": {
+          "$ref": "#/definitions/installation-lite"
+        },
+        "organization": {
+          "$ref": "#/definitions/organization"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sender": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "action",
+        "review",
+        "pull_request",
+        "repository",
+        "sender"
+      ],
+      "title": "pull_request_review submitted event",
+      "type": "object"
+    },
     "pull_request$synchronize": {
       "$schema": "http://json-schema.org/draft-07/schema",
       "additionalProperties": false,
@@ -3470,6 +3501,9 @@
         },
         {
           "$ref": "#/definitions/pull_request$unlocked"
+        },
+        {
+          "$ref": "#/definitions/pull_request$review_submitted"
         }
       ]
     },

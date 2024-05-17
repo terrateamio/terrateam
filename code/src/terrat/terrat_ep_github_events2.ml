@@ -498,6 +498,9 @@ let process_pull_request_event request_id config storage = function
   | Gw.Pull_request_event.Pull_request_unlocked _ ->
       Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_UNLOCKED" request_id);
       Abb.Future.return (Ok ())
+  | Gw.Pull_request_event.Pull_request_review_submitted _ ->
+      Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_REVIEW_SUBMITTED" request_id);
+      Abb.Future.return (Ok ())
 
 let process_issue_comment request_id config storage = function
   | Gw.Issue_comment_event.Issue_comment_created

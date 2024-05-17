@@ -18,6 +18,7 @@ type t =
   | Pull_request_unassigned of Terrat_github_webhooks_pull_request_unassigned.t
   | Pull_request_unlabeled of Terrat_github_webhooks_pull_request_unlabeled.t
   | Pull_request_unlocked of Terrat_github_webhooks_pull_request_unlocked.t
+  | Pull_request_review_submitted of Terrat_github_webhooks_pull_request_review_submitted.t
 [@@deriving show, eq]
 
 let of_yojson =
@@ -96,6 +97,10 @@ let of_yojson =
          map
            (fun v -> Pull_request_unlocked v)
            (Terrat_github_webhooks_pull_request_unlocked.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Pull_request_review_submitted v)
+           (Terrat_github_webhooks_pull_request_review_submitted.of_yojson v));
      ])
 
 let to_yojson = function
@@ -123,3 +128,5 @@ let to_yojson = function
   | Pull_request_unassigned v -> Terrat_github_webhooks_pull_request_unassigned.to_yojson v
   | Pull_request_unlabeled v -> Terrat_github_webhooks_pull_request_unlabeled.to_yojson v
   | Pull_request_unlocked v -> Terrat_github_webhooks_pull_request_unlocked.to_yojson v
+  | Pull_request_review_submitted v ->
+      Terrat_github_webhooks_pull_request_review_submitted.to_yojson v
