@@ -334,7 +334,6 @@
           "type": "string"
         },
         "tf_cmd": {
-          "default": "terraform",
           "type": "string"
         },
         "tf_version": {
@@ -386,11 +385,9 @@
           "type": "string"
         },
         "tf_cmd": {
-          "default": "terraform",
           "type": "string"
         },
         "tf_version": {
-          "default": "latest",
           "type": "string"
         },
         "version": {

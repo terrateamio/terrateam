@@ -9,8 +9,8 @@ end
 
 type t = {
   name : Name.t;
-  tf_cmd : string; [@default "terraform"]
-  tf_version : string; [@default "latest"]
+  tf_cmd : string option; [@default None]
+  tf_version : string option; [@default None]
   version : string option; [@default None]
 }
 [@@deriving yojson { strict = true; meta = true }, make, show, eq]
