@@ -2,106 +2,221 @@ let ctx = Terrat_change_match.Ctx.make ~dest_branch:"main" ~branch:"test" ()
 
 (* This configuration is used for tests of the dirs configuration *)
 let dirs_config =
-  CCResult.get_exn
-    (Terrat_repo_config.Version_1.of_yojson
-       (`Assoc
+  let module R = Terrat_base_repo_config_v1 in
+  let default_file_patterns =
+    [
+      CCResult.get_exn (R.File_pattern.make "${DIR}/*.tf");
+      CCResult.get_exn (R.File_pattern.make "${DIR}/*.tfvars");
+      CCResult.get_exn (R.File_pattern.make "${DIR}/*.json");
+    ]
+  in
+  let when_modified =
+    R.When_modified.make ~autoapply:true ~autoplan:false ~file_patterns:default_file_patterns ()
+  in
+  R.make
+    ~when_modified
+    ~dirs:
+      (R.String_map.of_list
          [
-           ( "when_modified",
-             `Assoc
-               [
-                 ( "file_patterns",
-                   `List [ `String "**/*.tf"; `String "**/*.tfvars"; `String "**/*.json" ] );
-                 ("autoplan", `Bool false);
-                 ("autoapply", `Bool true);
-               ] );
-           ( "dirs",
-             `Assoc
-               [
-                 ( "iam",
-                   `Assoc
+           ( "iam",
+             R.Dirs.Dir.make
+               ~when_modified:
+                 {
+                   when_modified with
+                   R.When_modified.autoplan = false;
+                   file_patterns = [ CCResult.get_exn (R.File_pattern.make "iam/*.tf") ];
+                 }
+               () );
+           ( "ebl",
+             R.Dirs.Dir.make
+               ~when_modified:
+                 {
+                   when_modified with
+                   R.When_modified.autoapply = true;
+                   file_patterns =
                      [
-                       ( "when_modified",
-                         `Assoc
-                           [
-                             ("autoplan", `Bool false);
-                             ("file_patterns", `List [ `String "iam/*.tf" ]);
-                           ] );
-                     ] );
-                 ( "ebl",
-                   `Assoc
-                     [
-                       ( "when_modified",
-                         `Assoc
-                           [
-                             ("autoapply", `Bool true);
-                             ("file_patterns", `List [ `String "ebl/*.tf"; `String "ebl_modules" ]);
-                           ] );
-                     ] );
-                 ( "ec2",
-                   `Assoc
-                     [
-                       ( "when_modified",
-                         `Assoc
-                           [
-                             (* This actually has an error in that it does not
-                                match files in the ec2 directory, this error is
-                                on purpose used for testing. *)
-                             ("file_patterns", `List [ `String "iam/*.tf" ]);
-                           ] );
-                     ] );
-                 ("s3", `Assoc [ ("tags", `List [ `String "s3" ]) ]);
-                 ("lambda", `Assoc [ ("when_modified", `Assoc [ ("autoplan", `Bool true) ]) ]);
-                 ("module", `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ]);
-                 ( "null_file_patterns",
-                   `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `Null) ]) ] );
-               ] );
-         ]))
+                       CCResult.get_exn (R.File_pattern.make "ebl/*.tf");
+                       CCResult.get_exn (R.File_pattern.make "ebl_modules");
+                     ];
+                 }
+               () );
+           ( "ec2",
+             R.Dirs.Dir.make
+               ~when_modified:
+                 {
+                   when_modified with
+                   (* This actually has an error in that it does not
+                      match files in the ec2 directory, this error is
+                      on purpose used for testing. *)
+                   R.When_modified.file_patterns =
+                     [ CCResult.get_exn (R.File_pattern.make "iam/*.tf") ];
+                 }
+               () );
+           ("s3", R.Dirs.Dir.make ~tags:[ "s3" ] ~when_modified ());
+           ( "lambda",
+             R.Dirs.Dir.make
+               ~when_modified:{ when_modified with R.When_modified.autoplan = true }
+               () );
+           ( "module",
+             R.Dirs.Dir.make
+               ~when_modified:{ when_modified with R.When_modified.file_patterns = [] }
+               () );
+         ])
+    ()
 
-(* This config makes the mistake of having a directory that matches everything *)
+(* let dirs_config = *)
+(*   CCResult.get_exn *)
+(*     (Terrat_base_repo_config_v1.of_version_1 *)
+(*        (CCResult.get_exn *)
+(*           (Terrat_repo_config.Version_1.of_yojson *)
+(*              (`Assoc *)
+(*                [ *)
+(*                  ( "when_modified", *)
+(*                    `Assoc *)
+(*                      [ *)
+(*                        ( "file_patterns", *)
+(*                          `List [ `String "**/*.tf"; `String "**/*.tfvars"; `String "**/*.json" ] ); *)
+(*                        ("autoplan", `Bool false); *)
+(*                        ("autoapply", `Bool true); *)
+(*                      ] ); *)
+(*                  ( "dirs", *)
+(*                    `Assoc *)
+(*                      [ *)
+(*                        ( "iam", *)
+(*                          `Assoc *)
+(*                            [ *)
+(*                              ( "when_modified", *)
+(*                                `Assoc *)
+(*                                  [ *)
+(*                                    ("autoplan", `Bool false); *)
+(*                                    ("file_patterns", `List [ `String "iam/*.tf" ]); *)
+(*                                  ] ); *)
+(*                            ] ); *)
+(*                        ( "ebl", *)
+(*                          `Assoc *)
+(*                            [ *)
+(*                              ( "when_modified", *)
+(*                                `Assoc *)
+(*                                  [ *)
+(*                                    ("autoapply", `Bool true); *)
+(*                                    ( "file_patterns", *)
+(*                                      `List [ `String "ebl/*.tf"; `String "ebl_modules" ] ); *)
+(*                                  ] ); *)
+(*                            ] ); *)
+(*                        ( "ec2", *)
+(*                          `Assoc *)
+(*                            [ *)
+(*                              ( "when_modified", *)
+(*                                `Assoc *)
+(*                                  [ *)
+(*                                    (\* This actually has an error in that it does not *)
+(*                                       match files in the ec2 directory, this error is *)
+(*                                       on purpose used for testing. *\) *)
+(*                                    ("file_patterns", `List [ `String "iam/*.tf" ]); *)
+(*                                  ] ); *)
+(*                            ] ); *)
+(*                        ("s3", `Assoc [ ("tags", `List [ `String "s3" ]) ]); *)
+(*                        ("lambda", `Assoc [ ("when_modified", `Assoc [ ("autoplan", `Bool true) ]) ]); *)
+(*                        ( "module", *)
+(*                          `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ] ); *)
+(*                        ( "null_file_patterns", *)
+(*                          `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `Null) ]) ] ); *)
+(*                      ] ); *)
+(*                ])))) *)
+
+(* this config makes the mistake of having a directory that matches everything *)
 let bad_dirs_config =
-  CCResult.get_exn
-    (Terrat_repo_config.Version_1.of_yojson
-       (`Assoc
+  let module R = Terrat_base_repo_config_v1 in
+  R.make
+    ~dirs:
+      (R.String_map.of_list
          [
-           ( "dirs",
-             `Assoc
-               [
-                 ( "iam",
-                   `Assoc
-                     [
-                       ("when_modified", `Assoc [ ("file_patterns", `List [ `String "iam/*.tf" ]) ]);
-                     ] );
-                 ( "ebl",
-                   `Assoc
-                     [
-                       ( "when_modified",
-                         `Assoc
-                           [
-                             ("file_patterns", `List [ `String "ebl/*.tf"; `String "ebl_modules" ]);
-                           ] );
-                     ] );
-                 ( "ec2",
-                   `Assoc
-                     [
-                       ( "when_modified",
-                         `Assoc
-                           [
-                             (* This should only match changes in the root
-                                directory, no subdirs *)
-                             ("file_patterns", `List [ `String "*.tf" ]);
-                           ] );
-                     ] );
-                 ( "s3",
-                   `Assoc
-                     [
-                       ("when_modified", `Assoc [ ("file_patterns", `List [ `String "**/*.tf" ]) ]);
-                     ] );
-               ] );
-         ]))
+           ( "iam",
+             R.Dirs.Dir.make
+               ~when_modified:
+                 (R.When_modified.make
+                    ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "iam/*.tf") ]
+                    ())
+               () );
+           ( "ebl",
+             R.Dirs.Dir.make
+               ~when_modified:
+                 (R.When_modified.make
+                    ~file_patterns:
+                      [
+                        CCResult.get_exn (R.File_pattern.make "ebl/*.tf");
+                        CCResult.get_exn (R.File_pattern.make "ebl_modules");
+                      ]
+                    ())
+               () );
+           ( "ec2",
+             R.Dirs.Dir.make
+               ~when_modified:
+                 (R.When_modified.make
+                  (* This should only match changes in the root
+                     directory, no subdirs *)
+                    ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "*.tf") ]
+                    ())
+               () );
+           ( "s3",
+             R.Dirs.Dir.make
+               ~when_modified:
+                 (R.When_modified.make
+                    ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "**/*.tf") ]
+                    ())
+               () );
+         ])
+    ()
+
+(* let bad_dirs_config = *)
+(*   CCResult.get_exn *)
+(*     (Terrat_base_repo_config_v1.of_version_1 *)
+(*        (CCResult.get_exn *)
+(*           (Terrat_repo_config.Version_1.of_yojson *)
+(*              (`Assoc *)
+(*                [ *)
+(*                  ( "dirs", *)
+(*                    `Assoc *)
+(*                      [ *)
+(*                        ( "iam", *)
+(*                          `Assoc *)
+(*                            [ *)
+(*                              ( "when_modified", *)
+(*                                `Assoc [ ("file_patterns", `List [ `String "iam/*.tf" ]) ] ); *)
+(*                            ] ); *)
+(*                        ( "ebl", *)
+(*                          `Assoc *)
+(*                            [ *)
+(*                              ( "when_modified", *)
+(*                                `Assoc *)
+(*                                  [ *)
+(*                                    ( "file_patterns", *)
+(*                                      `List [ `String "ebl/*.tf"; `String "ebl_modules" ] ); *)
+(*                                  ] ); *)
+(*                            ] ); *)
+(*                        ( "ec2", *)
+(*                          `Assoc *)
+(*                            [ *)
+(*                              ( "when_modified", *)
+(*                                `Assoc *)
+(*                                  [ *)
+(*                                    (\* This should only match changes in the root *)
+(*                                       directory, no subdirs *\) *)
+(*                                    ("file_patterns", `List [ `String "*.tf" ]); *)
+(*                                  ] ); *)
+(*                            ] ); *)
+(*                        ( "s3", *)
+(*                          `Assoc *)
+(*                            [ *)
+(*                              ( "when_modified", *)
+(*                                `Assoc [ ("file_patterns", `List [ `String "**/*.tf" ]) ] ); *)
+(*                            ] ); *)
+(*                      ] ); *)
+(*                ])))) *)
 
 let test_simple =
   Oth.test ~name:"Test simple" (fun _ ->
-      let repo_config = CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson (`Assoc [])) in
+      let repo_config = Terrat_base_repo_config_v1.make () in
       let diff = Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" } ] in
       let dirs =
         CCResult.get_exn
@@ -117,28 +232,17 @@ let test_simple =
 let test_workflow_idx =
   Oth.test ~name:"Test workflow idx" (fun _ ->
       let repo_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc
-               [
-                 ( "workflows",
-                   `List
-                     [
-                       `Assoc
-                         [
-                           ("tag_query", `String "workspace:default");
-                           ( "plan",
-                             `List
-                               [
-                                 `Assoc
-                                   [
-                                     ("type", `String "run");
-                                     ("cmd", `List [ `String "echo"; `String "hi" ]);
-                                   ];
-                               ] );
-                         ];
-                     ] );
-               ]))
+        let module R = Terrat_base_repo_config_v1 in
+        R.make
+          ~workflows:
+            [
+              R.Workflows.Entry.make
+                ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string "workspace:default"))
+                ~plan:
+                  [ R.Workflows.Entry.Op.Run (R.Workflow_step.Run.make ~cmd:[ "echo"; "hi" ] ()) ]
+                ();
+            ]
+          ()
       in
       let diff = Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" } ] in
       let dirs =
@@ -152,17 +256,13 @@ let test_workflow_idx =
       let changes = Terrat_change_match.match_diff_list dirs diff in
       assert (CCList.length changes = 1);
       let change = CCList.hd changes in
-      let workflows =
-        CCOption.get_or ~default:[] repo_config.Terrat_repo_config.Version_1.workflows
-      in
+      let workflows = repo_config.Terrat_base_repo_config_v1.workflows in
       let workflow_idx =
         CCOption.map
           fst
           (CCList.find_idx
-             (fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
-               Terrat_change_match.match_tag_query
-                 ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string tag_query))
-                 change)
+             (fun { Terrat_base_repo_config_v1.Workflows.Entry.tag_query; _ } ->
+               Terrat_change_match.match_tag_query ~tag_query change)
              workflows)
       in
       assert (workflow_idx = Some 0))
@@ -173,29 +273,18 @@ let test_workflow_idx_tag_in_dir =
     ~desc:"Test workflow idx matches when tag is in dirs"
     (fun _ ->
       let repo_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc
-               [
-                 ( "workflows",
-                   `List
-                     [
-                       `Assoc
-                         [
-                           ("tag_query", `String "ec2");
-                           ( "plan",
-                             `List
-                               [
-                                 `Assoc
-                                   [
-                                     ("type", `String "run");
-                                     ("cmd", `List [ `String "echo"; `String "hi" ]);
-                                   ];
-                               ] );
-                         ];
-                     ] );
-                 ("dirs", `Assoc [ ("ec2", `Assoc [ ("tags", `List [ `String "ec2" ]) ]) ]);
-               ]))
+        let module R = Terrat_base_repo_config_v1 in
+        R.make
+          ~workflows:
+            [
+              R.Workflows.Entry.make
+                ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string "ec2"))
+                ~plan:
+                  [ R.Workflows.Entry.Op.Run (R.Workflow_step.Run.make ~cmd:[ "echo"; "hi" ] ()) ]
+                ();
+            ]
+          ~dirs:(R.String_map.of_list [ ("ec2", R.Dirs.Dir.make ~tags:[ "ec2" ] ()) ])
+          ()
       in
       let diff = Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" } ] in
       let dirs =
@@ -209,17 +298,13 @@ let test_workflow_idx_tag_in_dir =
       let changes = Terrat_change_match.match_diff_list dirs diff in
       assert (CCList.length changes = 1);
       let change = CCList.hd changes in
-      let workflows =
-        CCOption.get_or ~default:[] repo_config.Terrat_repo_config.Version_1.workflows
-      in
+      let workflows = repo_config.Terrat_base_repo_config_v1.workflows in
       let workflow_idx =
         CCOption.map
           fst
           (CCList.find_idx
-             (fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
-               Terrat_change_match.match_tag_query
-                 ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string tag_query))
-                 change)
+             (fun { Terrat_base_repo_config_v1.Workflows.Entry.tag_query; _ } ->
+               Terrat_change_match.match_tag_query ~tag_query change)
              workflows)
       in
       assert (workflow_idx = Some 0))
@@ -230,34 +315,23 @@ let test_workflow_idx_multiple_dirs =
     ~desc:"Test workflow idx matches when tag is in dirs with multiple dirs changed"
     (fun _ ->
       let repo_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc
+        let module R = Terrat_base_repo_config_v1 in
+        R.make
+          ~workflows:
+            [
+              R.Workflows.Entry.make
+                ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string "ec2"))
+                ~plan:
+                  [ R.Workflows.Entry.Op.Run (R.Workflow_step.Run.make ~cmd:[ "echo"; "hi" ] ()) ]
+                ();
+            ]
+          ~dirs:
+            (R.String_map.of_list
                [
-                 ( "workflows",
-                   `List
-                     [
-                       `Assoc
-                         [
-                           ("tag_query", `String "ec2");
-                           ( "plan",
-                             `List
-                               [
-                                 `Assoc
-                                   [
-                                     ("type", `String "run");
-                                     ("cmd", `List [ `String "echo"; `String "hi" ]);
-                                   ];
-                               ] );
-                         ];
-                     ] );
-                 ( "dirs",
-                   `Assoc
-                     [
-                       ("ec2", `Assoc [ ("tags", `List [ `String "ec2" ]) ]);
-                       ("s3", `Assoc [ ("tags", `List [ `String "s3" ]) ]);
-                     ] );
-               ]))
+                 ("ec2", R.Dirs.Dir.make ~tags:[ "ec2" ] ());
+                 ("s3", R.Dirs.Dir.make ~tags:[ "s3" ] ());
+               ])
+          ()
       in
       let diff =
         Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" }; Add { filename = "s3/s3.tf" } ]
@@ -273,17 +347,13 @@ let test_workflow_idx_multiple_dirs =
       let changes = Terrat_change_match.match_diff_list dirs diff in
       assert (CCList.length changes = 2);
       let change = CCList.hd changes in
-      let workflows =
-        CCOption.get_or ~default:[] repo_config.Terrat_repo_config.Version_1.workflows
-      in
+      let workflows = repo_config.Terrat_base_repo_config_v1.workflows in
       let workflow_idx =
         CCOption.map
           fst
           (CCList.find_idx
-             (fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
-               Terrat_change_match.match_tag_query
-                 ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string tag_query))
-                 change)
+             (fun { Terrat_base_repo_config_v1.Workflows.Entry.tag_query; _ } ->
+               Terrat_change_match.match_tag_query ~tag_query change)
              workflows)
       in
       assert (workflow_idx = Some 0))
@@ -291,28 +361,17 @@ let test_workflow_idx_multiple_dirs =
 let test_workflow_override =
   Oth.test ~name:"Test overriding workflow for all" (fun _ ->
       let repo_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc
-               [
-                 ( "workflows",
-                   `List
-                     [
-                       `Assoc
-                         [
-                           ("tag_query", `String "");
-                           ( "plan",
-                             `List
-                               [
-                                 `Assoc
-                                   [
-                                     ("type", `String "run");
-                                     ("cmd", `List [ `String "echo"; `String "hi" ]);
-                                   ];
-                               ] );
-                         ];
-                     ] );
-               ]))
+        let module R = Terrat_base_repo_config_v1 in
+        R.make
+          ~workflows:
+            [
+              R.Workflows.Entry.make
+                ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string ""))
+                ~plan:
+                  [ R.Workflows.Entry.Op.Run (R.Workflow_step.Run.make ~cmd:[ "echo"; "hi" ] ()) ]
+                ();
+            ]
+          ()
       in
       let diff =
         Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" }; Add { filename = "s3/s3.tf" } ]
@@ -327,19 +386,15 @@ let test_workflow_override =
       in
       let changes = Terrat_change_match.match_diff_list dirs diff in
       assert (CCList.length changes = 2);
-      let workflows =
-        CCOption.get_or ~default:[] repo_config.Terrat_repo_config.Version_1.workflows
-      in
+      let workflows = repo_config.Terrat_base_repo_config_v1.workflows in
       CCList.iter
         (fun change ->
           let workflow_idx =
             CCOption.map
               fst
               (CCList.find_idx
-                 (fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
-                   Terrat_change_match.match_tag_query
-                     ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string tag_query))
-                     change)
+                 (fun { Terrat_base_repo_config_v1.Workflows.Entry.tag_query; _ } ->
+                   Terrat_change_match.match_tag_query ~tag_query change)
                  workflows)
           in
           assert (workflow_idx = Some 0))
@@ -347,7 +402,7 @@ let test_workflow_override =
 
 let test_dir_match =
   Oth.test ~name:"Test dir match" (fun _ ->
-      let repo_config = CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson (`Assoc [])) in
+      let repo_config = Terrat_base_repo_config_v1.make () in
       let diff =
         Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" }; Add { filename = "s3/s3.tf" } ]
       in
@@ -369,7 +424,7 @@ let test_dir_match =
 
 let test_dirspace_map =
   Oth.test ~name:"Test dirspace map" (fun _ ->
-      let repo_config = CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson (`Assoc [])) in
+      let repo_config = Terrat_base_repo_config_v1.make () in
       let dirspaces =
         Terrat_change.Dirspace.
           [ { dir = "ec2"; workspace = "default" }; { dir = "s3"; workspace = "default" } ]
@@ -395,22 +450,21 @@ let test_dirspace_map =
 let test_dir_file_pattern =
   Oth.test ~name:"Test dir file pattern" (fun _ ->
       let repo_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc
+        let module R = Terrat_base_repo_config_v1 in
+        R.make
+          ~dirs:
+            (R.String_map.of_list
                [
-                 ( "dirs",
-                   `Assoc
-                     [
-                       ( "iam",
-                         `Assoc
-                           [
-                             ( "when_modified",
-                               `Assoc [ ("file_patterns", `List [ `String "ec2/*.tf" ]) ] );
-                           ] );
-                       ("s3", `Assoc [ ("tags", `List [ `String "s3" ]) ]);
-                     ] );
-               ]))
+                 ( "iam",
+                   R.Dirs.Dir.make
+                     ~when_modified:
+                       (R.When_modified.make
+                          ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "ec2/*.tf") ]
+                          ())
+                     () );
+                 ("s3", R.Dirs.Dir.make ~tags:[ "s3" ] ());
+               ])
+          ()
       in
       let diff = Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" } ] in
       let dirs =
@@ -443,7 +497,7 @@ let test_dir_config_iam =
       assert (CCList.length changes = 2);
       CCList.iter
         (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; when_modified; _ } ->
-          let module Wm = Terrat_repo_config.When_modified in
+          let module Wm = Terrat_base_repo_config_v1.When_modified in
           match dir with
           | "ec2" ->
               assert (not when_modified.Wm.autoplan);
@@ -469,7 +523,7 @@ let test_dir_config_ebl =
       assert (CCList.length changes = 1);
       CCList.iter
         (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; when_modified; _ } ->
-          let module Wm = Terrat_repo_config.When_modified in
+          let module Wm = Terrat_base_repo_config_v1.When_modified in
           match dir with
           | "ebl" ->
               assert (not when_modified.Wm.autoplan);
@@ -493,7 +547,7 @@ let test_dir_config_ebl_modules =
       assert (CCList.length changes = 1);
       CCList.iter
         (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; when_modified; _ } ->
-          let module Wm = Terrat_repo_config.When_modified in
+          let module Wm = Terrat_base_repo_config_v1.When_modified in
           match dir with
           | "ebl" ->
               assert (not when_modified.Wm.autoplan);
@@ -519,7 +573,7 @@ let test_dir_config_ebl_and_modules =
       assert (CCList.length changes = 1);
       CCList.iter
         (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; when_modified; _ } ->
-          let module Wm = Terrat_repo_config.When_modified in
+          let module Wm = Terrat_base_repo_config_v1.When_modified in
           match dir with
           | "ebl" ->
               assert (not when_modified.Wm.autoplan);
@@ -550,7 +604,7 @@ let test_dir_config_s3 =
       assert (CCList.length changes = 1);
       CCList.iter
         (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; when_modified; _ } ->
-          let module Wm = Terrat_repo_config.When_modified in
+          let module Wm = Terrat_base_repo_config_v1.When_modified in
           match dir with
           | "s3" ->
               assert (not when_modified.Wm.autoplan);
@@ -581,7 +635,7 @@ let test_dir_config_lambda_json =
       assert (CCList.length changes = 1);
       CCList.iter
         (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; when_modified; _ } ->
-          let module Wm = Terrat_repo_config.When_modified in
+          let module Wm = Terrat_base_repo_config_v1.When_modified in
           match dir with
           | "lambda" ->
               assert when_modified.Wm.autoplan;
@@ -637,7 +691,7 @@ let test_dir_config_null_file_patterns =
       assert (CCList.length changes = 1);
       CCList.iter
         (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; when_modified; _ } ->
-          let module Wm = Terrat_repo_config.When_modified in
+          let module Wm = Terrat_base_repo_config_v1.When_modified in
           match dir with
           | "null_file_patterns" ->
               assert (not when_modified.Wm.autoplan);
@@ -647,29 +701,27 @@ let test_dir_config_null_file_patterns =
 
 let test_recursive_dirs_template_dir =
   Oth.test ~name:"Test Recursive Dirs Template Dir" (fun _ ->
-      let dirs_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc
+      let repo_config =
+        let module R = Terrat_base_repo_config_v1 in
+        R.make
+          ~dirs:
+            (R.String_map.of_list
                [
-                 ( "dirs",
-                   `Assoc
-                     [
-                       ( "_template/*",
-                         `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ] );
-                       ( "aws/**/terragrunt.hcl",
-                         `Assoc
-                           [
-                             ( "when_modified",
-                               `Assoc
-                                 [
-                                   ( "file_patterns",
-                                     `List [ `String "_templates/**/*.tf"; `String "${DIR}/*.hcl" ]
-                                   );
-                                 ] );
-                           ] );
-                     ] );
-               ]))
+                 ( "_template/*",
+                   R.Dirs.Dir.make ~when_modified:(R.When_modified.make ~file_patterns:[] ()) () );
+                 ( "aws/**/terragrunt.hcl",
+                   R.Dirs.Dir.make
+                     ~when_modified:
+                       (R.When_modified.make
+                          ~file_patterns:
+                            [
+                              CCResult.get_exn (R.File_pattern.make "_templates/**/*.tf");
+                              CCResult.get_exn (R.File_pattern.make "${DIR}/*.hcl");
+                            ]
+                          ())
+                     () );
+               ])
+          ()
       in
       let file_list =
         [
@@ -686,36 +738,34 @@ let test_recursive_dirs_template_dir =
              ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list
-             dirs_config)
+             repo_config)
       in
       let changes = Terrat_change_match.match_diff_list dirs diff in
       assert (CCList.length changes = 0))
 
 let test_recursive_dirs_aws_prod =
   Oth.test ~name:"Test Recursive Dirs AWS Prod" (fun _ ->
-      let dirs_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc
+      let repo_config =
+        let module R = Terrat_base_repo_config_v1 in
+        R.make
+          ~dirs:
+            (R.String_map.of_list
                [
-                 ( "dirs",
-                   `Assoc
-                     [
-                       ( "_template/*",
-                         `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ] );
-                       ( "aws/**/terragrunt.hcl",
-                         `Assoc
-                           [
-                             ( "when_modified",
-                               `Assoc
-                                 [
-                                   ( "file_patterns",
-                                     `List [ `String "_templates/**/*.tf"; `String "${DIR}/*.hcl" ]
-                                   );
-                                 ] );
-                           ] );
-                     ] );
-               ]))
+                 ( "_template/*",
+                   R.Dirs.Dir.make ~when_modified:(R.When_modified.make ~file_patterns:[] ()) () );
+                 ( "aws/**/terragrunt.hcl",
+                   R.Dirs.Dir.make
+                     ~when_modified:
+                       (R.When_modified.make
+                          ~file_patterns:
+                            [
+                              CCResult.get_exn (R.File_pattern.make "_templates/**/*.tf");
+                              CCResult.get_exn (R.File_pattern.make "${DIR}/*.hcl");
+                            ]
+                          ())
+                     () );
+               ])
+          ()
       in
       let file_list =
         [
@@ -732,38 +782,38 @@ let test_recursive_dirs_aws_prod =
              ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list
-             dirs_config)
+             repo_config)
       in
       let changes = Terrat_change_match.match_diff_list dirs diff in
       assert (CCList.length changes = 1))
 
 let test_recursive_dirs_tags =
   Oth.test ~name:"Test Recursive Dirs With Tags" (fun _ ->
-      let dirs_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc
+      let repo_config =
+        let module R = Terrat_base_repo_config_v1 in
+        R.make
+          ~dirs:
+            (R.String_map.of_list
                [
-                 ( "dirs",
-                   `Assoc
-                     [
-                       ( "_template/*",
-                         `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ] );
-                       ( "aws/**/secrets-manager/**/terragrunt.hcl",
-                         `Assoc
-                           [
-                             ("tags", `List [ `String "secrets" ]);
-                             ( "when_modified",
-                               `Assoc [ ("file_patterns", `List [ `String "${DIR}/*.hcl" ]) ] );
-                           ] );
-                       ( "aws/**/terragrunt.hcl",
-                         `Assoc
-                           [
-                             ( "when_modified",
-                               `Assoc [ ("file_patterns", `List [ `String "${DIR}/*.hcl" ]) ] );
-                           ] );
-                     ] );
-               ]))
+                 ( "_template/*",
+                   R.Dirs.Dir.make ~when_modified:(R.When_modified.make ~file_patterns:[] ()) () );
+                 ( "aws/**/secrets-manager/**/terragrunt.hcl",
+                   R.Dirs.Dir.make
+                     ~tags:[ "secrets" ]
+                     ~when_modified:
+                       (R.When_modified.make
+                          ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "${DIR}/*.hcl") ]
+                          ())
+                     () );
+                 ( "aws/**/terragrunt.hcl",
+                   R.Dirs.Dir.make
+                     ~when_modified:
+                       (R.When_modified.make
+                          ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "${DIR}/*.hcl") ]
+                          ())
+                     () );
+               ])
+          ()
       in
       let file_list =
         [
@@ -787,7 +837,7 @@ let test_recursive_dirs_tags =
              ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list
-             dirs_config)
+             repo_config)
       in
       let changes =
         CCList.filter
@@ -798,7 +848,7 @@ let test_recursive_dirs_tags =
       assert (CCList.length changes = 1);
       CCList.iter
         (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; when_modified; _ } ->
-          let module Wm = Terrat_repo_config.When_modified in
+          let module Wm = Terrat_base_repo_config_v1.When_modified in
           match dir with
           | "aws/prod/secrets-manager/us-east-1" ->
               assert when_modified.Wm.autoplan;
@@ -808,31 +858,30 @@ let test_recursive_dirs_tags =
 
 let test_recursive_dirs_without_tags =
   Oth.test ~name:"Test Recursive Dirs Without Tags" (fun _ ->
-      let dirs_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc
+      let repo_config =
+        let module R = Terrat_base_repo_config_v1 in
+        R.make
+          ~dirs:
+            (R.String_map.of_list
                [
-                 ( "dirs",
-                   `Assoc
-                     [
-                       ( "_template/*",
-                         `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ] );
-                       ( "aws/**/secrets-manager/**/terragrunt.hcl",
-                         `Assoc
-                           [
-                             ("tags", `List [ `String "secrets" ]);
-                             ( "when_modified",
-                               `Assoc [ ("file_patterns", `List [ `String "${DIR}/*.hcl" ]) ] );
-                           ] );
-                       ( "aws/**/terragrunt.hcl",
-                         `Assoc
-                           [
-                             ( "when_modified",
-                               `Assoc [ ("file_patterns", `List [ `String "${DIR}/*.hcl" ]) ] );
-                           ] );
-                     ] );
-               ]))
+                 ( "_template/*",
+                   R.Dirs.Dir.make ~when_modified:(R.When_modified.make ~file_patterns:[] ()) () );
+                 ( "aws/**/secrets-manager/**/terragrunt.hcl",
+                   R.Dirs.Dir.make
+                     ~when_modified:
+                       (R.When_modified.make
+                          ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "${DIR}/*.hcl") ]
+                          ())
+                     () );
+                 ( "aws/**/terragrunt.hcl",
+                   R.Dirs.Dir.make
+                     ~when_modified:
+                       (R.When_modified.make
+                          ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "${DIR}/*.hcl") ]
+                          ())
+                     () );
+               ])
+          ()
       in
       let file_list =
         [
@@ -856,13 +905,13 @@ let test_recursive_dirs_without_tags =
              ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list
-             dirs_config)
+             repo_config)
       in
       let changes = Terrat_change_match.match_diff_list dirs diff in
       assert (CCList.length changes = 1);
       CCList.iter
         (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; when_modified; _ } ->
-          let module Wm = Terrat_repo_config.When_modified in
+          let module Wm = Terrat_base_repo_config_v1.When_modified in
           match dir with
           | "aws/prod/secrets-manager/us-east-1" | "aws/prod/us-east-1" ->
               assert when_modified.Wm.autoplan;
@@ -934,36 +983,38 @@ let test_bad_dir_config_s3 =
 
 let test_module_dir_with_root_dir =
   Oth.test ~name:"Test module dir with root dir" (fun _ ->
-      let dirs_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc
+      let repo_config =
+        let module R = Terrat_base_repo_config_v1 in
+        R.make
+          ~when_modified:
+            (R.When_modified.make
+               ~autoapply:true
+               ~autoplan:false
+               ~file_patterns:
+                 [
+                   CCResult.get_exn (R.File_pattern.make "${DIR}/*.tf");
+                   CCResult.get_exn (R.File_pattern.make "${DIR}/*.tfvars");
+                   CCResult.get_exn (R.File_pattern.make "${DIR}/*.json");
+                 ]
+               ())
+          ~dirs:
+            (R.String_map.of_list
                [
-                 ( "when_modified",
-                   `Assoc
-                     [
-                       ( "file_patterns",
-                         `List [ `String "**/*.tf"; `String "**/*.tfvars"; `String "**/*.json" ] );
-                       ("autoplan", `Bool false);
-                       ("autoapply", `Bool true);
-                     ] );
-                 ( "dirs",
-                   `Assoc
-                     [
-                       ( "module",
-                         `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ] );
-                       ( ".",
-                         `Assoc
-                           [
-                             ( "when_modified",
-                               `Assoc
-                                 [
-                                   ( "file_patterns",
-                                     `List [ `String "./*.tf"; `String "module/**/*.tf" ] );
-                                 ] );
-                           ] );
-                     ] );
-               ]))
+                 ( "module",
+                   R.Dirs.Dir.make ~when_modified:(R.When_modified.make ~file_patterns:[] ()) () );
+                 ( ".",
+                   R.Dirs.Dir.make
+                     ~when_modified:
+                       (R.When_modified.make
+                          ~file_patterns:
+                            [
+                              CCResult.get_exn (R.File_pattern.make "./*.tf");
+                              CCResult.get_exn (R.File_pattern.make "module/**/*.tf");
+                            ]
+                          ())
+                     () );
+               ])
+          ()
       in
       let diff = Terrat_change.Diff.[ Add { filename = "module/foo.tf" } ] in
       let dirs =
@@ -972,7 +1023,7 @@ let test_module_dir_with_root_dir =
              ~ctx
              ~index:Terrat_change_match.Index.empty
              ~file_list:[ "foo.tf"; "module/foo/tf.tf" ]
-             dirs_config)
+             repo_config)
       in
       let changes = Terrat_change_match.match_diff_list dirs diff in
       assert (CCList.length changes = 1))
@@ -980,7 +1031,7 @@ let test_module_dir_with_root_dir =
 let test_large_directory_count_unmatching_files =
   Oth.test ~name:"Test large directory count unmatching files" (fun _ ->
       let num_dirs = 4000 in
-      let repo_config = CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson (`Assoc [])) in
+      let repo_config = Terrat_base_repo_config_v1.make () in
       let file_list =
         "ec2/ec2.tf"
         :: CCList.flat_map
@@ -1005,7 +1056,7 @@ let test_large_directory_count_matching_files =
          because each directory is not equal amounts of work. *)
       let num_dirs = 1000 in
       let num_files_per_dir = 10 in
-      let repo_config = CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson (`Assoc [])) in
+      let repo_config = Terrat_base_repo_config_v1.make () in
       let file_list =
         "ec2/ec2.tf"
         :: CCList.flat_map
@@ -1032,14 +1083,17 @@ let test_large_directory_count_non_default_when_modified =
       let num_dirs = 1000 in
       let num_files_per_dir = 10 in
       let repo_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc
-               [
-                 ( "when_modified",
-                   `Assoc [ ("file_patterns", `List [ `String "**/*.bar"; `String "foo/*.txt" ]) ]
-                 );
-               ]))
+        let module R = Terrat_base_repo_config_v1 in
+        R.make
+          ~when_modified:
+            (R.When_modified.make
+               ~file_patterns:
+                 [
+                   CCResult.get_exn (R.File_pattern.make "**/*.bar");
+                   CCResult.get_exn (R.File_pattern.make "foo/*.txt");
+                 ]
+               ())
+          ()
       in
       let file_list =
         "ec2/ec2.tf"
@@ -1064,14 +1118,17 @@ let test_large_directory_count_non_default_when_modified =
 let test_not_match =
   Oth.test ~name:"Test not match" (fun _ ->
       let repo_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc
-               [
-                 ( "when_modified",
-                   `Assoc [ ("file_patterns", `List [ `String "**/*.tf"; `String "!ec2/**/*.tf" ]) ]
-                 );
-               ]))
+        let module R = Terrat_base_repo_config_v1 in
+        R.make
+          ~when_modified:
+            (R.When_modified.make
+               ~file_patterns:
+                 [
+                   CCResult.get_exn (R.File_pattern.make "**/*.tf");
+                   CCResult.get_exn (R.File_pattern.make "!ec2/**/*.tf");
+                 ]
+               ())
+          ()
       in
       let diff = Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" } ] in
       let dirs =
@@ -1088,17 +1145,18 @@ let test_not_match =
 let test_not_match_multiple =
   Oth.test ~name:"Test not match multiple" (fun _ ->
       let repo_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc
-               [
-                 ( "when_modified",
-                   `Assoc
-                     [
-                       ( "file_patterns",
-                         `List [ `String "**/*.tf"; `String "!ec2/**/*.tf"; `String "!foo/*.tf" ] );
-                     ] );
-               ]))
+        let module R = Terrat_base_repo_config_v1 in
+        R.make
+          ~when_modified:
+            (R.When_modified.make
+               ~file_patterns:
+                 [
+                   CCResult.get_exn (R.File_pattern.make "**/*.tf");
+                   CCResult.get_exn (R.File_pattern.make "!ec2/**/*.tf");
+                   CCResult.get_exn (R.File_pattern.make "!foo/*.tf");
+                 ]
+               ())
+          ()
       in
       let diff = Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" } ] in
       let dirs =
@@ -1115,28 +1173,26 @@ let test_not_match_multiple =
 let test_relative_path_file_pattern =
   Oth.test ~name:"Test relative path file pattern" (fun _ ->
       let repo_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc
+        let module R = Terrat_base_repo_config_v1 in
+        R.make
+          ~dirs:
+            (R.String_map.of_list
                [
-                 ( "dirs",
-                   `Assoc
-                     [
-                       ( "d/bar/foo",
-                         `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ] );
-                       ( "d/**/*.tf",
-                         `Assoc
-                           [
-                             ( "when_modified",
-                               `Assoc
-                                 [
-                                   ( "file_patterns",
-                                     `List [ `String "${DIR}/../foo/*.tf"; `String "${DIR}/*.tf" ]
-                                   );
-                                 ] );
-                           ] );
-                     ] );
-               ]))
+                 ( "d/bar/foo",
+                   R.Dirs.Dir.make ~when_modified:(R.When_modified.make ~file_patterns:[] ()) () );
+                 ( "d/**/*.tf",
+                   R.Dirs.Dir.make
+                     ~when_modified:
+                       (R.When_modified.make
+                          ~file_patterns:
+                            [
+                              CCResult.get_exn (R.File_pattern.make "${DIR}/../foo/*.tf");
+                              CCResult.get_exn (R.File_pattern.make "${DIR}/*.tf");
+                            ]
+                          ())
+                     () );
+               ])
+          ()
       in
       let diff = Terrat_change.Diff.[ Add { filename = "d/bar/foo/t.tf" } ] in
       let dirs =
@@ -1153,28 +1209,26 @@ let test_relative_path_file_pattern =
 let test_relative_path_file_pattern_multiple_dots =
   Oth.test ~name:"Test relative path file pattern multiple dots" (fun _ ->
       let repo_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc
+        let module R = Terrat_base_repo_config_v1 in
+        R.make
+          ~dirs:
+            (R.String_map.of_list
                [
-                 ( "dirs",
-                   `Assoc
-                     [
-                       ( "d/bar/foo",
-                         `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ] );
-                       ( "d/**/*.tf",
-                         `Assoc
-                           [
-                             ( "when_modified",
-                               `Assoc
-                                 [
-                                   ( "file_patterns",
-                                     `List
-                                       [ `String "${DIR}/../../foo/*.tf"; `String "${DIR}/*.tf" ] );
-                                 ] );
-                           ] );
-                     ] );
-               ]))
+                 ( "d/bar/foo",
+                   R.Dirs.Dir.make ~when_modified:(R.When_modified.make ~file_patterns:[] ()) () );
+                 ( "d/**/*.tf",
+                   R.Dirs.Dir.make
+                     ~when_modified:
+                       (R.When_modified.make
+                          ~file_patterns:
+                            [
+                              CCResult.get_exn (R.File_pattern.make "${DIR}/../../foo/*.tf");
+                              CCResult.get_exn (R.File_pattern.make "${DIR}/*.tf");
+                            ]
+                          ())
+                     () );
+               ])
+          ()
       in
       let diff = Terrat_change.Diff.[ Add { filename = "d/bar/foo/t.tf" } ] in
       let dirs =
@@ -1192,7 +1246,7 @@ let test_index_basic =
   Oth.test ~name:"Test basic index" (fun _ ->
       let module Idx = Terrat_change_match.Index in
       let index = Idx.make ~symlinks:[] [ ("tf", Idx.Dep.[ Module "../modules/foo" ]) ] in
-      let repo_config = CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson (`Assoc [])) in
+      let repo_config = Terrat_base_repo_config_v1.make () in
       let file_list = [ "modules/foo/main.tf"; "tf/main.tf" ] in
       let dirs =
         CCResult.get_exn
@@ -1212,9 +1266,8 @@ let test_index_with_dirs_section =
       let module Idx = Terrat_change_match.Index in
       let index = Idx.make ~symlinks:[] [ ("tf", Idx.Dep.[ Module "../modules/foo" ]) ] in
       let repo_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc [ ("dirs", `Assoc [ ("tf", `Assoc [ ("tags", `List [ `String "tf" ]) ]) ]) ]))
+        let module R = Terrat_base_repo_config_v1 in
+        R.make ~dirs:(R.String_map.of_list [ ("tf", R.Dirs.Dir.make ~tags:[ "tf" ] ()) ]) ()
       in
       let file_list = [ "modules/foo/main.tf"; "tf/main.tf" ] in
       let dirs =
@@ -1238,7 +1291,7 @@ let test_index_module_in_same_dir =
           ~symlinks:[]
           [ ("tf", Idx.Dep.[ Module "./modules/foo" ]); ("tf/modules/foo", Idx.Dep.[]) ]
       in
-      let repo_config = CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson (`Assoc [])) in
+      let repo_config = Terrat_base_repo_config_v1.make () in
       let file_list = [ "tf/modules/foo/main.tf"; "tf/main.tf" ] in
       let dirs =
         CCResult.get_exn
@@ -1261,7 +1314,7 @@ let test_index_symlinks =
           ~symlinks:[ ("tf/modules/foo", "modules/foo") ]
           [ ("tf", Idx.Dep.[ Module "./modules/foo" ]) ]
       in
-      let repo_config = CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson (`Assoc [])) in
+      let repo_config = Terrat_base_repo_config_v1.make () in
       let file_list = [ "modules/foo/main.tf"; "tf/main.tf" ] in
       let dirs =
         CCResult.get_exn
@@ -1281,16 +1334,15 @@ let test_index_symlinks_dir_config =
       let module Idx = Terrat_change_match.Index in
       let index = Idx.make ~symlinks:[ ("tf/main.tf", "null/main.tf") ] [] in
       let repo_config =
-        CCResult.get_exn
-          (Terrat_repo_config.Version_1.of_yojson
-             (`Assoc
+        let module R = Terrat_base_repo_config_v1 in
+        R.make
+          ~dirs:
+            (R.String_map.of_list
                [
-                 ( "dirs",
-                   `Assoc
-                     [
-                       ("null", `Assoc [ ("when_modified", `Assoc [ ("file_patterns", `List []) ]) ]);
-                     ] );
-               ]))
+                 ( "null",
+                   R.Dirs.Dir.make ~when_modified:(R.When_modified.make ~file_patterns:[] ()) () );
+               ])
+          ()
       in
       let file_list = [ "tf/main.tf"; "null/main.tf" ] in
       let dirs =

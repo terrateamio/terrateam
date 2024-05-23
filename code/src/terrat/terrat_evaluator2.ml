@@ -75,11 +75,9 @@ module Msg = struct
   type access_control_denied =
     [ `All_dirspaces of Terrat_access_control.R.Deny.t list
     | `Dirspaces of Terrat_access_control.R.Deny.t list
-    | `Invalid_query of string
     | `Lookup_err
-    | `Terrateam_config_update of string list
-    | `Terrateam_config_update_bad_query of string
-    | `Unlock of string list
+    | `Terrateam_config_update of Terrat_base_repo_config_v1.Access_control.Match_list.t
+    | `Unlock of Terrat_base_repo_config_v1.Access_control.Match_list.t
     ]
 
   type ('pull_request, 'src, 'apply_requirements) t =
@@ -101,7 +99,8 @@ module Msg = struct
     | Plan_no_matching_dirspaces
     | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
     | Pull_request_not_mergeable
-    | Repo_config of (Terrat_repo_config_version_1.t * Terrat_change_match.Dirs.t)
+    | Repo_config of (Terrat_base_repo_config_v1.t * Terrat_change_match.Dirs.t)
+    | Repo_config_err of Terrat_base_repo_config_v1.of_version_1_err
     | Repo_config_failure of string
     | Repo_config_parse_failure of string
     | Tag_query_err of Terrat_tag_query_ast.err
@@ -192,27 +191,20 @@ let match_tag_queries ~accessor ~changes queries =
     changes
 
 let dirspaceflows_of_changes repo_config changes =
-  let module E = struct
-    exception Err of Terrat_tag_query_ast.err
-  end in
-  let workflows = CCOption.get_or ~default:[] repo_config.Terrat_repo_config.Version_1.workflows in
-  try
-    Ok
-      (CCList.map
-         (fun (Terrat_change_match.{ dirspace; _ }, workflow) ->
-           Terrat_change.Dirspaceflow.
-             {
-               dirspace;
-               workflow = CCOption.map (fun (idx, workflow) -> Workflow.{ idx; workflow }) workflow;
-             })
-         (match_tag_queries
-            ~accessor:(fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
-              match Terrat_tag_query.of_string tag_query with
-              | Ok query -> query
-              | Error err -> raise (E.Err err))
-            ~changes
-            workflows))
-  with E.Err (#Terrat_tag_query_ast.err as err) -> Error err
+  let module R = Terrat_base_repo_config_v1 in
+  let workflows = repo_config.R.workflows in
+  Ok
+    (CCList.map
+       (fun (Terrat_change_match.{ dirspace; _ }, workflow) ->
+         Terrat_change.Dirspaceflow.
+           {
+             dirspace;
+             workflow = CCOption.map (fun (idx, workflow) -> Workflow.{ idx; workflow }) workflow;
+           })
+       (match_tag_queries
+          ~accessor:(fun { R.Workflows.Entry.tag_query; _ } -> tag_query)
+          ~changes
+          workflows))
 
 module type S = sig
   module Account : sig
@@ -320,7 +312,10 @@ module type S = sig
     Client.t ->
     Repo.t ->
     Ref.t ->
-    (Terrat_repo_config.Version_1.t, [> `Parse_err of string ]) result Abb.Future.t
+    ( Terrat_base_repo_config_v1.t,
+      [> Terrat_base_repo_config_v1.of_version_1_err | `Parse_err of string ] )
+    result
+    Abb.Future.t
 
   val fetch_tree : Client.t -> Repo.t -> Ref.t -> (string list, [> `Error ]) result Abb.Future.t
 
@@ -498,7 +493,7 @@ module type S = sig
         t ->
         Client.t ->
         Pull_request.fetched Pull_request.t ->
-        Terrat_repo_config.Version_1.t ->
+        Terrat_base_repo_config_v1.t ->
         Terrat_change_match.t list ->
         ( Apply_requirements.t,
           [> `Error | `Invalid_query of string | Terrat_tag_query_ast.err ] )
@@ -686,7 +681,7 @@ module type S = sig
         val branch_name : t -> Ref.t
         val branch_ref : t -> Ref.t
         val index : t -> Terrat_change_match.Index.t option
-        val repo_config : t -> Terrat_repo_config.Version_1.t
+        val repo_config : t -> Terrat_base_repo_config_v1.t
         val tree : t -> string list
       end
 
@@ -804,21 +799,12 @@ module Make (S : S) = struct
   module Access_control = Terrat_access_control.Make (S.Access_control)
 
   module Access_control_engine = struct
-    module V1 = Terrat_repo_config.Version_1
-    module Ac = Terrat_repo_config.Access_control
-    module P = Terrat_repo_config.Access_control_policy
-
-    let default_terrateam_config_update = [ "*" ]
-    let default_plan = [ "*" ]
-    let default_apply = [ "*" ]
-    let default_apply_force = []
-    let default_apply_autoapprove = []
-    let default_unlock = [ "*" ]
-    let default_apply_with_superapproval = []
-    let default_superapproval = []
+    module V1 = Terrat_base_repo_config_v1
+    module Ac = V1.Access_control
+    module P = V1.Access_control.Policy
 
     type t = {
-      config : Terrat_repo_config.Access_control.t;
+      config : Terrat_base_repo_config_v1.Access_control.t;
       ctx : S.Access_control.ctx;
       policy_branch : S.Ref.t;
       request_id : string;
@@ -826,16 +812,13 @@ module Make (S : S) = struct
     }
 
     let make ~request_id ~ctx ~repo_config ~user ~policy_branch () =
-      let default = Terrat_repo_config.Access_control.make () in
-      let config = CCOption.get_or ~default repo_config.V1.access_control in
+      let config = repo_config.V1.access_control in
       { config; ctx; policy_branch; request_id; user }
 
     let policy_branch t = S.Ref.to_string t.policy_branch
 
     let eval_repo_config t diff =
-      let terrateam_config_update =
-        CCOption.get_or ~default:default_terrateam_config_update t.config.Ac.terrateam_config_update
-      in
+      let terrateam_config_update = t.config.Ac.terrateam_config_update in
       if t.config.Ac.enabled then
         Abbs_time_it.run (log_time t.request_id "ACCESS_CONTROL_EVAL_REPO_CONFIG") (fun () ->
             let open Abbs_future_combinators.Infix_result_monad in
@@ -847,40 +830,22 @@ module Make (S : S) = struct
         Logs.debug (fun m -> m "EVALUATOR : %s : ACCESS_CONTROL_DISABLED" t.request_id);
         Abb.Future.return (Ok None))
 
-    let eval' t change_matches default selector =
-      let module Err = struct
-        exception Err of Terrat_tag_query_ast.err
-      end in
-      try
-        if t.config.Ac.enabled then
-          let policies =
-            match t.config.Ac.policies with
-            | None ->
-                (* If no policy is specified, then use the default *)
-                [
-                  Terrat_access_control.Policy.
-                    { tag_query = Terrat_tag_query.any; policy = default };
-                ]
-            | Some policies ->
-                (* Policies have been specified, but that doesn't mean the specific
-                   operation that is being executed has a configuration.  So iterate
-                   through and pluck out the specific configuration and take the
-                   default if that configuration was not specified. *)
-                policies
-                |> CCList.map
-                     (fun (Terrat_repo_config.Access_control_policy.{ tag_query; _ } as p) ->
-                       match Terrat_tag_query.of_string tag_query with
-                       | Ok tag_query ->
-                           Terrat_access_control.Policy.
-                             { tag_query; policy = CCOption.get_or ~default (selector p) }
-                       | Error err -> raise (Err.Err err))
-          in
-          Abbs_time_it.run (log_time t.request_id "ACCESS_CONTROL_SUPERAPPROVAL_EVAL") (fun () ->
-              Access_control.eval t.ctx policies change_matches)
-        else (
-          Logs.debug (fun m -> m "EVALUATOR : %s : ACCESS_CONTROL_DISABLED" t.request_id);
-          Abb.Future.return (Ok Terrat_access_control.R.{ pass = change_matches; deny = [] }))
-      with Err.Err (#Terrat_tag_query_ast.err as err) -> Abb.Future.return (Error err)
+    let eval' t change_matches selector =
+      if t.config.Ac.enabled then
+        let policies =
+          (* Policies have been specified, but that doesn't mean the specific
+             operation that is being executed has a configuration.  So iterate
+             through and pluck out the specific configuration and take the
+             default if that configuration was not specified. *)
+          t.config.Ac.policies
+          |> CCList.map (fun ({ P.tag_query; _ } as p) ->
+                 Terrat_access_control.Policy.{ tag_query; policy = selector p })
+        in
+        Abbs_time_it.run (log_time t.request_id "ACCESS_CONTROL_SUPERAPPROVAL_EVAL") (fun () ->
+            Access_control.eval t.ctx policies change_matches)
+      else (
+        Logs.debug (fun m -> m "EVALUATOR : %s : ACCESS_CONTROL_DISABLED" t.request_id);
+        Abb.Future.return (Ok Terrat_access_control.R.{ pass = change_matches; deny = [] }))
 
     let eval_superapproved t reviewers change_matches =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -888,11 +853,7 @@ module Make (S : S) = struct
          if there is a superapproval. If there isn't, we return the original
          response, otherwise we have to see if any of the changes have super
          approvals. *)
-      eval'
-        t
-        change_matches
-        default_apply_with_superapproval
-        (fun P.{ apply_with_superapproval; _ } -> apply_with_superapproval)
+      eval' t change_matches (fun { P.apply_with_superapproval; _ } -> apply_with_superapproval)
       >>= function
       | Terrat_access_control.R.{ pass = _ :: _ as pass; deny } ->
           (* Now, of those that passed, let's see if any have been approved by a
@@ -907,7 +868,7 @@ module Make (S : S) = struct
               let changes = acc |> Dirspace_map.to_list |> CCList.map snd in
               let ctx = S.Access_control.set_user user t.ctx in
               let t' = { t with ctx } in
-              eval' t' changes default_superapproval (fun P.{ superapproval; _ } -> superapproval)
+              eval' t' changes (fun { P.superapproval; _ } -> superapproval)
               >>= fun Terrat_access_control.R.{ pass; _ } ->
               let acc =
                 CCListLabels.fold_left
@@ -934,10 +895,10 @@ module Make (S : S) = struct
           Abb.Future.return (Ok Dirspace_map.empty)
 
     let eval_tf_operation t change_matches = function
-      | `Plan -> eval' t change_matches default_plan (fun P.{ plan; _ } -> plan)
+      | `Plan -> eval' t change_matches (fun { P.plan; _ } -> plan)
       | `Apply reviewers -> (
           let open Abbs_future_combinators.Infix_result_monad in
-          eval' t change_matches default_apply (fun P.{ apply; _ } -> apply)
+          eval' t change_matches (fun { P.apply; _ } -> apply)
           >>= function
           | Terrat_access_control.R.{ pass; deny = _ :: _ as deny } ->
               (* If we have some denies, then let's see if any of them can be
@@ -962,16 +923,14 @@ module Make (S : S) = struct
               in
               Abb.Future.return (Ok Terrat_access_control.R.{ pass; deny })
           | r -> Abb.Future.return (Ok r))
-      | `Apply_force ->
-          eval' t change_matches default_apply_force (fun P.{ apply_force; _ } -> apply_force)
+      | `Apply_force -> eval' t change_matches (fun { P.apply_force; _ } -> apply_force)
       | `Apply_autoapprove ->
-          eval' t change_matches default_apply_autoapprove (fun P.{ apply_autoapprove; _ } ->
-              apply_autoapprove)
+          eval' t change_matches (fun { P.apply_autoapprove; _ } -> apply_autoapprove)
 
     let eval_pr_operation t = function
       | `Unlock ->
           if t.config.Ac.enabled then
-            let match_list = CCOption.get_or ~default:default_unlock t.config.Ac.unlock in
+            let match_list = t.config.Ac.unlock in
             Abbs_time_it.run (log_time t.request_id "ACCESS_CONTROL_EVAL") (fun () ->
                 let open Abbs_future_combinators.Infix_result_monad in
                 Access_control.eval_match_list t.ctx match_list
@@ -1160,30 +1119,18 @@ module Make (S : S) = struct
     let pattern = Buffer.contents b in
     CCOption.get_exn_or ("pattern_glob " ^ s ^ " " ^ pattern) (Lua_pattern.of_string pattern)
 
-  (* Get a destination branch from the destination branch configuration and
-     normalize it all on the Destination_branch_object type so it's easier to
-     work with. *)
-  let get_destination_branch =
-    let module D = Terrat_repo_config.Version_1.Destination_branches.Items in
-    let module O = Terrat_repo_config.Destination_branch_object in
-    function
-    | D.Destination_branch_name branch -> O.make ~branch ()
-    | D.Destination_branch_object obj -> obj
-
   let rec eval_destination_branch_match dest_branch source_branch =
-    let module Obj = Terrat_repo_config.Destination_branch_object in
+    let module Ds = Terrat_base_repo_config_v1.Destination_branches.Destination_branch in
     function
     | [] -> Error `No_matching_dest_branch
-    | Obj.{ branch; source_branches } :: valid_branches -> (
+    | { Ds.branch; source_branches } :: valid_branches -> (
         let branch_glob = pattern_of_glob (CCString.lowercase_ascii branch) in
         match Lua_pattern.find dest_branch branch_glob with
         | Some _ ->
             (* Partition the source branches into the not patterns and the
                positive patterns. *)
             let not_branches, branches =
-              CCList.partition
-                (CCString.prefix ~pre:"!")
-                (CCOption.get_or ~default:[ "*" ] source_branches)
+              CCList.partition (CCString.prefix ~pre:"!") source_branches
             in
             (* Remove the exclamation point from the beginning as it's not
                actually part of the pattern. *)
@@ -1225,13 +1172,12 @@ module Make (S : S) = struct
      destination branch and the source branch are valid.  Everything is
      converted to lowercase. *)
   let is_valid_destination_branch repo_config default_branch base_branch_name branch_name =
-    let module Rc = Terrat_repo_config_version_1 in
-    let module Obj = Terrat_repo_config.Destination_branch_object in
+    let module Rc = Terrat_base_repo_config_v1 in
+    let module Ds = Rc.Destination_branches.Destination_branch in
     let valid_branches =
-      CCOption.map_or
-        ~default:[ Obj.make ~branch:(S.Ref.to_string default_branch) () ]
-        (CCList.map get_destination_branch)
-        repo_config.Rc.destination_branches
+      match repo_config.Rc.destination_branches with
+      | [] -> [ Ds.make ~branch:(S.Ref.to_string default_branch) () ]
+      | ds -> ds
     in
     let dest_branch = CCString.lowercase_ascii (S.Ref.to_string base_branch_name) in
     let source_branch = CCString.lowercase_ascii (S.Ref.to_string branch_name) in
@@ -1253,7 +1199,7 @@ module Make (S : S) = struct
 
       let partition_by_environment dirspaceflows =
         let module Dsf = Terrat_change.Dirspaceflow in
-        let module We = Terrat_repo_config_workflow_entry in
+        let module We = Terrat_base_repo_config_v1.Workflows.Entry in
         CCListLabels.fold_left
           ~f:(fun acc dsf ->
             match dsf with
@@ -1380,13 +1326,6 @@ module Make (S : S) = struct
             Abb.Future.return (Error `Error)
         | Error (`Bad_glob err) ->
             Logs.info (fun m -> m "EVALUATOR : DRIFT : BAD_GLOB : %s" err);
-            Abb.Future.return (Error `Error)
-        | Error (#Terrat_change_match.synthesize_dir_config_err as err) ->
-            Logs.err (fun m ->
-                m
-                  "EVALUATOR : DRIFT : SYNTHESIZE_DIR_CONFIG : %a"
-                  Terrat_change_match.pp_synthesize_dir_config_err
-                  err);
             Abb.Future.return (Error `Error)
         | Error `Error -> Abb.Future.return (Error `Error)
 
@@ -1755,16 +1694,14 @@ module Make (S : S) = struct
             create_commit_checks client repo (S.Ref.of_string wm.Wm.hash) [ check ]
         | None -> Abb.Future.return (Ok ())
 
-      let automerge_config = function
-        | Terrat_repo_config.(Version_1.{ automerge = Some _ as automerge; _ }) -> automerge
-        | _ -> None
+      let automerge_config { Terrat_base_repo_config_v1.automerge; _ } = automerge
 
       let maybe_all_dirspaces_applied t pr wm =
         let module Wm = Terrat_work_manifest2 in
         let open Abbs_future_combinators.Infix_result_monad in
         S.Event.Result.with_db t ~f:(fun db -> query_unapplied_dirspaces db pr)
         >>= function
-        | [] when Wm.Unified_run_type.of_run_type wm.Wm.run_type = Wm.Unified_run_type.Apply -> (
+        | [] when Wm.Unified_run_type.of_run_type wm.Wm.run_type = Wm.Unified_run_type.Apply ->
             Logs.info (fun m ->
                 m
                   "EVALUATOR : %s : ALL_DIRSPACES_APPLIED : %a"
@@ -1794,16 +1731,16 @@ module Make (S : S) = struct
             >>= fun () ->
             fetch_repo_config client (S.Pull_request.repo pr) (S.Ref.of_string wm.Wm.hash)
             >>= fun repo_config ->
-            let module Am = Terrat_repo_config.Automerge in
-            match automerge_config repo_config with
-            | Some { Am.enabled = true; delete_branch } -> (
-                let open Abb.Future.Infix_monad in
-                merge_pull_request client pr
-                >>= function
-                | Ok () when delete_branch -> delete_pull_request_branch client pr
-                | Ok () -> Abb.Future.return (Ok ())
-                | Error `Error -> Abb.Future.return (Ok ()))
-            | _ -> Abb.Future.return (Ok ()))
+            let module Am = Terrat_base_repo_config_v1.Automerge in
+            let { Am.enabled; delete_branch } = automerge_config repo_config in
+            if enabled then
+              let open Abb.Future.Infix_monad in
+              merge_pull_request client pr
+              >>= function
+              | Ok () when delete_branch -> delete_pull_request_branch client pr
+              | Ok () -> Abb.Future.return (Ok ())
+              | Error `Error -> Abb.Future.return (Ok ())
+            else Abb.Future.return (Ok ())
         | [] | _ :: _ -> Abb.Future.return (Ok ())
 
       let maybe_reconcile_drift db t drift work_manifest =
@@ -1951,6 +1888,14 @@ module Make (S : S) = struct
             Abb.Future.return (Error `Error)
         | Error (`Parse_err _) -> Abb.Future.return (Error `Error)
         | Error `Error -> Abb.Future.return (Error `Error)
+        | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
+            Logs.err (fun m ->
+                m
+                  "EVALUATOR : %s : REPO_CONFIG_ERR : %a"
+                  (S.Event.Result.request_id t)
+                  Terrat_base_repo_config_v1.pp_of_version_1_err
+                  err);
+            Abb.Future.return (Error `Error)
     end
 
     module Repo_config = struct
@@ -1960,16 +1905,25 @@ module Make (S : S) = struct
           let account = S.Event.Repo_config.account t in
           let repo = S.Event.Repo_config.repo t in
           let branch_ref = S.Pull_request.branch_ref pull_request in
+          fetch_remote_repo client repo
+          >>= fun remote_repo ->
           Abbs_future_combinators.Infix_result_app.(
-            (fun repo_config repo_tree index -> (repo_config, repo_tree, index))
+            (fun repo_config repo_default_config repo_tree index ->
+              (repo_config, repo_default_config, repo_tree, index))
             <$> fetch_repo_config client repo branch_ref
+            <*> fetch_repo_config client repo branch_ref
             <*> fetch_tree client repo branch_ref
             <*> S.Event.Repo_config.with_db t ~f:(fun db -> query_index db account branch_ref))
-          >>= fun (repo_config, repo_tree, index) ->
+          >>= fun (repo_config, repo_default_config, repo_tree, index) ->
+          let repo_config =
+            Terrat_base_repo_config_v1.merge_with_default_branch_config
+              ~default:repo_default_config
+              repo_config
+          in
           let index =
-            let module V1 = Terrat_repo_config.Version_1 in
+            let module R = Terrat_base_repo_config_v1 in
             match repo_config with
-            | { V1.indexer = Some { V1.Indexer.enabled = true; _ }; _ } ->
+            | { R.indexer = { R.Indexer.enabled = true; _ }; _ } ->
                 CCOption.get_or ~default:Terrat_change_match.Index.empty index
             | _ -> Terrat_change_match.Index.empty
           in
@@ -2001,30 +1955,6 @@ module Make (S : S) = struct
                   m "EVALUATOR : %s : BAD_GLOB : %s" (S.Event.Repo_config.request_id t) s);
               Abbs_future_combinators.ignore (S.Publish_msg.publish_msg publish (Msg.Bad_glob s))
               >>= fun () -> Abb.Future.return (Error `Error)
-          | Error (`Bad_branch_pattern pat) ->
-              let open Abb.Future.Infix_monad in
-              Logs.err (fun m ->
-                  m
-                    "EVALUATOR : %s : BAD_BRANCH_PATTERN : %s"
-                    (S.Event.Repo_config.request_id t)
-                    pat);
-              Abbs_future_combinators.ignore
-                (S.Publish_msg.publish_msg
-                   publish
-                   (Msg.Bad_custom_branch_tag_pattern ("branch", pat)))
-              >>= fun () -> Abb.Future.return (Error `Error)
-          | Error (`Bad_dest_branch_pattern pat) ->
-              let open Abb.Future.Infix_monad in
-              Logs.err (fun m ->
-                  m
-                    "EVALUATOR : %s : BAD_DEST_BRANCH_PATTERN : %s"
-                    (S.Event.Repo_config.request_id t)
-                    pat);
-              Abbs_future_combinators.ignore
-                (S.Publish_msg.publish_msg
-                   publish
-                   (Msg.Bad_custom_branch_tag_pattern ("dest_branch", pat)))
-              >>= fun () -> Abb.Future.return (Error `Error)
         in
         let open Abbs_future_combinators.Infix_result_monad in
         let account = S.Event.Repo_config.account t in
@@ -2050,6 +1980,18 @@ module Make (S : S) = struct
               (S.Publish_msg.publish_msg publish (Msg.Repo_config_parse_failure err))
             >>= fun () -> Abb.Future.return (Error `Error)
         | Error (#Pgsql_pool.err | `Error) as err -> Abb.Future.return err
+        | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
+            let publish =
+              S.Publish_msg.make
+                ~client
+                ~pull_number:(S.Pull_request.id pull_request)
+                ~repo
+                ~user:(S.Event.Repo_config.user t)
+                ()
+            in
+            Abbs_future_combinators.ignore
+              (S.Publish_msg.publish_msg publish (Msg.Repo_config_err err))
+            >>= fun () -> Abb.Future.return (Error `Error)
 
       let eval t =
         let open Abb.Future.Infix_monad in
@@ -2086,31 +2028,17 @@ module Make (S : S) = struct
           (fun () -> S.Publish_msg.publish_msg (S.Event.Terraform.publish_msg t.event t.client) msg)
 
       let autoplan_enabled =
-        let module V1 = Terrat_repo_config_version_1 in
-        let module When_mod = Terrat_repo_config_when_modified in
-        let module When_mod_n = Terrat_repo_config_when_modified_nullable in
-        function
-        | { V1.when_modified; dirs; _ } ->
-            let global_autoplan =
-              match when_modified with
-              | None -> true
-              | Some { When_mod.autoplan; _ } -> autoplan
-            in
-            let dirs_autoplan =
-              match dirs with
-              | None -> false
-              | Some { V1.Dirs.additional; _ } ->
-                  let module D = Terrat_repo_config_dir in
-                  (* A dir has autoplan enabled if it explicitly sets it,
-                     otherwise it's the global value *)
-                  CCList.exists
-                    (function
-                      | _, { D.when_modified = Some { When_mod_n.autoplan = Some autoplan; _ }; _ }
-                        -> autoplan
-                      | _ -> global_autoplan)
-                    (Json_schema.String_map.bindings additional)
-            in
-            global_autoplan || dirs_autoplan
+        let module V1 = Terrat_base_repo_config_v1 in
+        let module When_mod = V1.When_modified in
+        let module Dir = V1.Dirs.Dir in
+        fun { V1.when_modified = { When_mod.autoplan = global_autoplan; _ }; dirs; _ } ->
+          let dirs_autoplan =
+            (not (V1.String_map.is_empty dirs))
+            && CCList.exists
+                 (fun (_, { Dir.when_modified = { When_mod.autoplan; _ }; _ }) -> autoplan)
+                 (V1.String_map.to_list dirs)
+          in
+          global_autoplan || dirs_autoplan
 
       let fetch_change_data t client remote_repo pull_request =
         let open Abbs_future_combinators.Infix_result_monad in
@@ -2129,15 +2057,20 @@ module Make (S : S) = struct
                     db
                     (S.Event.Terraform.account t)
                     (S.Pull_request.branch_ref pull_request)))
-        >>= fun ((repo_config, repo_default_config, repo_tree, index) as ret) ->
+        >>= fun (repo_config, repo_default_config, repo_tree, index) ->
+        let repo_config =
+          Terrat_base_repo_config_v1.merge_with_default_branch_config
+            ~default:repo_default_config
+            repo_config
+        in
         match
           is_valid_destination_branch
-            repo_default_config
+            repo_config
             default_repo_branch
             (S.Pull_request.base_branch_name pull_request)
             (S.Pull_request.branch_name pull_request)
         with
-        | Ok () -> Abb.Future.return (Ok ret)
+        | Ok () -> Abb.Future.return (Ok (repo_config, repo_tree, index))
         | Error `No_matching_dest_branch ->
             Abb.Future.return (Error (`No_matching_dest_branch pull_request))
         | Error `No_matching_source_branch ->
@@ -2247,7 +2180,7 @@ module Make (S : S) = struct
 
       let partition_by_environment dirspaceflows =
         let module Dsf = Terrat_change.Dirspaceflow in
-        let module We = Terrat_repo_config_workflow_entry in
+        let module We = Terrat_base_repo_config_v1.Workflows.Entry in
         CCListLabels.fold_left
           ~f:(fun acc dsf ->
             match dsf with
@@ -2387,7 +2320,7 @@ module Make (S : S) = struct
                      Terrat_change_match.
                        {
                          dirspace = Terrat_change.Dirspace.{ dir; workspace };
-                         when_modified = Terrat_repo_config.When_modified.{ autoapply; _ };
+                         when_modified = { Terrat_base_repo_config_v1.When_modified.autoapply; _ };
                          _;
                        }
                    ->
@@ -2432,11 +2365,9 @@ module Make (S : S) = struct
           deny
           (Tf_operation.Plan mode)
         >>= fun ret ->
-        let module Rc = Terrat_repo_config.Version_1 in
-        let module Ar = Terrat_repo_config.Apply_requirements in
-        let apply_requirements =
-          CCOption.get_or ~default:(Ar.make ()) repo_config.Rc.apply_requirements
-        in
+        let module Rc = Terrat_base_repo_config_v1 in
+        let module Ar = Rc.Apply_requirements in
+        let apply_requirements = repo_config.Rc.apply_requirements in
         (if apply_requirements.Ar.create_pending_apply_check then
            maybe_create_pending_applies
              (S.Event.Terraform.config t.event)
@@ -2457,7 +2388,11 @@ module Make (S : S) = struct
                 (fun Terrat_change_match.
                        {
                          when_modified =
-                           Terrat_repo_config.When_modified.{ autoplan; autoplan_draft_pr; _ };
+                           {
+                             Terrat_base_repo_config_v1.When_modified.autoplan;
+                             autoplan_draft_pr;
+                             _;
+                           };
                          _;
                        } ->
                   autoplan && ((not (S.Pull_request.is_draft_pr pull_request)) || autoplan_draft_pr))
@@ -2578,13 +2513,6 @@ module Make (S : S) = struct
                       Terrat_tag_query_ast.pp_err
                       err);
                 publish_msg t (Msg.Tag_query_err err)
-                >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
-            | Error (`Invalid_query query) ->
-                let open Abbs_future_combinators.Infix_result_monad in
-                publish_msg
-                  t
-                  (Msg.Access_control_denied
-                     (Access_control_engine.policy_branch access_control, `Invalid_query query))
                 >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event)))
 
       let tf_operation_of_apply_operation = function
@@ -2714,7 +2642,6 @@ module Make (S : S) = struct
           all_matches
           pull_request
           repo_config
-          repo_default_config
           operation =
         let open Abbs_future_combinators.Infix_result_monad in
         query_unapplied_dirspaces db pull_request
@@ -2739,13 +2666,15 @@ module Make (S : S) = struct
           | `Apply Tf_operation.Auto ->
               CCList.filter
                 (fun Terrat_change_match.
-                       { when_modified = Terrat_repo_config.When_modified.{ autoapply; _ }; _ } ->
-                  autoapply)
+                       {
+                         when_modified = { Terrat_base_repo_config_v1.When_modified.autoapply; _ };
+                         _;
+                       } -> autoapply)
                 tag_query_matches
           | `Apply Tf_operation.Manual | `Apply_autoapprove | `Apply_force -> tag_query_matches
         in
         let open Abb.Future.Infix_monad in
-        check_apply_requirements t.event t.client pull_request repo_default_config matches
+        check_apply_requirements t.event t.client pull_request repo_config matches
         >>= function
         | Ok apply_requirements -> (
             let passed_apply_requirements = S.Apply_requirements.passed apply_requirements in
@@ -2809,13 +2738,6 @@ module Make (S : S) = struct
             | Error (#Terrat_tag_query_ast.err as err) ->
                 let open Abbs_future_combinators.Infix_result_monad in
                 publish_msg t (Msg.Tag_query_err err)
-                >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
-            | Error (`Invalid_query query) ->
-                let open Abbs_future_combinators.Infix_result_monad in
-                publish_msg
-                  t
-                  (Msg.Access_control_denied
-                     (Access_control_engine.policy_branch access_control, `Invalid_query query))
                 >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event)))
         | Error ((`Tag_query_error _ | `Invalid_query _) as err) ->
             let open Abbs_future_combinators.Infix_result_monad in
@@ -2826,14 +2748,7 @@ module Make (S : S) = struct
             publish_msg t Msg.Apply_requirements_validation_err
             >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
 
-      let eval_operation
-          t
-          access_control
-          pull_request
-          repo_config
-          repo_default_config
-          repo_tree
-          index =
+      let eval_operation t access_control pull_request repo_config repo_tree index =
         let open Abbs_future_combinators.Infix_result_monad in
         Logs.info (fun m ->
             m
@@ -2941,7 +2856,6 @@ module Make (S : S) = struct
                           all_matches
                           pull_request
                           repo_config
-                          repo_default_config
                           (`Apply mode))
                 | Tf_operation.Apply_autoapprove ->
                     Abbs_time_it.run
@@ -2954,7 +2868,6 @@ module Make (S : S) = struct
                           tag_query_matches
                           all_matches
                           pull_request
-                          repo_default_config
                           repo_config
                           `Apply_autoapprove)
                 | Tf_operation.Apply_force ->
@@ -2969,15 +2882,14 @@ module Make (S : S) = struct
                           all_matches
                           pull_request
                           repo_config
-                          repo_default_config
                           `Apply_force)))
 
-      let eval_change t remote_repo repo_config repo_default_config repo_tree pull_request index =
+      let eval_change t remote_repo repo_config repo_tree pull_request index =
         let access_control =
           Access_control_engine.make
             ~request_id:(S.Event.Terraform.request_id t.event)
             ~ctx:(S.Event.Terraform.create_access_control_ctx t.event t.client)
-            ~repo_config:repo_default_config
+            ~repo_config
             ~user:(S.Event.Terraform.user t.event)
             ~policy_branch:(S.Remote_repo.default_branch remote_repo)
             ()
@@ -2997,7 +2909,6 @@ module Make (S : S) = struct
                   access_control
                   pull_request
                   repo_config
-                  repo_default_config
                   repo_tree
                   (CCOption.get_or ~default:Terrat_change_match.Index.empty index)
             | Ok (Some match_list) ->
@@ -3026,23 +2937,6 @@ module Make (S : S) = struct
                   t
                   (Msg.Access_control_denied
                      (Access_control_engine.policy_branch access_control, `Lookup_err))
-                >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
-            | Error (`Invalid_query query) ->
-                let open Abbs_future_combinators.Infix_result_monad in
-                Logs.info (fun m ->
-                    m
-                      "EVALUATOR : %s : ACCESS_CONTROL_DENIED : INVALID_QUERY : %s"
-                      (S.Event.Terraform.request_id t.event)
-                      query);
-                Prmths.Counter.inc_one
-                  (Metrics.access_control_total
-                     ~t:(Tf_operation.to_string (S.Event.Terraform.tf_operation t.event))
-                     ~r:"denied");
-                publish_msg
-                  t
-                  (Msg.Access_control_denied
-                     ( Access_control_engine.policy_branch access_control,
-                       `Terrateam_config_update_bad_query query ))
                 >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event)))
         | Terrat_pull_request.State.Closed ->
             Logs.info (fun m ->
@@ -3156,13 +3050,7 @@ module Make (S : S) = struct
         create_commit_checks t.client repo (S.Pull_request.branch_ref pull_request) [ check ]
         >>= fun () -> Abb.Future.return (Ok work_manifest)
 
-      let eval_index_dest_branch
-          t
-          remote_repo
-          repo_config
-          repo_default_config
-          repo_tree
-          pull_request =
+      let eval_index_dest_branch t remote_repo repo_config repo_tree pull_request =
         let module Wm = Terrat_work_manifest2 in
         let open Abbs_future_combinators.Infix_result_monad in
         S.Event.Terraform.with_db t.event ~f:(fun db ->
@@ -3194,14 +3082,7 @@ module Make (S : S) = struct
                 (* If there is no index to be generated, then follow through with
                    the rest of the standard workflow, that way we get the rest of
                    the processing and any error messages. *)
-                eval_change
-                  t
-                  remote_repo
-                  repo_config
-                  repo_default_config
-                  repo_tree
-                  pull_request
-                  None
+                eval_change t remote_repo repo_config repo_tree pull_request None
             | _ :: _ ->
                 work_manifest_of_pull_request_event t pull_request
                 >>= fun work_manifest ->
@@ -3210,7 +3091,7 @@ module Make (S : S) = struct
         | None ->
             Abbs_future_combinators.Infix_result_app.(
               (fun work_manifest_base work_manifest -> (work_manifest_base, work_manifest))
-              <$> work_manifest_base_of_pull_request_event t repo_default_config pull_request
+              <$> work_manifest_base_of_pull_request_event t repo_config pull_request
               <*> work_manifest_of_pull_request_event t pull_request)
             >>= fun (work_manifest_base, work_manifest) ->
             let module Status = Terrat_commit_check.Status in
@@ -3236,7 +3117,7 @@ module Make (S : S) = struct
             Abb.Future.return
               (Ok (S.Event.Terraform.created_work_manifests t.event [ work_manifest ]))
 
-      let eval_index t remote_repo repo_config repo_default_config repo_tree pull_request =
+      let eval_index t remote_repo repo_config repo_tree pull_request =
         let open Abbs_future_combinators.Infix_result_monad in
         let module Wm = Terrat_work_manifest2 in
         Abb.Future.return
@@ -3258,13 +3139,7 @@ module Make (S : S) = struct
                could be symlinks changes *)
             Logs.info (fun m ->
                 m "EVALUATOR : %s : INDEX : EVAL_BASE" (S.Event.Terraform.request_id t.event));
-            eval_index_dest_branch
-              t
-              remote_repo
-              repo_config
-              repo_default_config
-              repo_tree
-              pull_request
+            eval_index_dest_branch t remote_repo repo_config repo_tree pull_request
         | _ :: _ ->
             (* Only do something if there are any matches *)
             work_manifest_of_pull_request_event t pull_request
@@ -3273,7 +3148,7 @@ module Make (S : S) = struct
               (Ok (S.Event.Terraform.created_work_manifests t.event [ work_manifest ]))
 
       let run t =
-        let module V1 = Terrat_repo_config.Version_1 in
+        let module V1 = Terrat_base_repo_config_v1 in
         let open Abbs_future_combinators.Infix_result_monad in
         fetch_pull_request
           (S.Event.Terraform.account t.event)
@@ -3301,8 +3176,7 @@ module Make (S : S) = struct
         >>= fun remote_repo ->
         fetch_change_data t.event t.client remote_repo pull_request
         >>= function
-        | ( ({ V1.enabled = true; indexer = Some { V1.Indexer.enabled = true; _ }; _ } as repo_config),
-            repo_default_config,
+        | ( ({ V1.enabled = true; indexer = { V1.Indexer.enabled = true; _ }; _ } as repo_config),
             repo_tree,
             None )
           when (S.Event.Terraform.tf_operation t.event = Tf_operation.(Plan Auto))
@@ -3311,10 +3185,10 @@ module Make (S : S) = struct
                 m "EVALUATOR : %s : INDEX_NOT_FOUND_BUT_REQUIRED" (S.Client.request_id t.client));
             (* Index is required. But we only have to index if autoplan is
                enabled for any directory *)
-            eval_index t remote_repo repo_config repo_default_config repo_tree pull_request
-        | ({ V1.enabled = true; _ } as repo_config), repo_default_config, repo_tree, index ->
-            eval_change t remote_repo repo_config repo_default_config repo_tree pull_request index
-        | _, _, _, _ ->
+            eval_index t remote_repo repo_config repo_tree pull_request
+        | ({ V1.enabled = true; _ } as repo_config), repo_tree, index ->
+            eval_change t remote_repo repo_config repo_tree pull_request index
+        | _, _, _ ->
             Logs.info (fun m ->
                 m
                   "EVALUATOR : %s : NOOP : REPO_CONFIG_DISABLED"
@@ -3451,13 +3325,8 @@ module Make (S : S) = struct
                         handle_dest_branch_err t pull_request
                     | Error (`No_matching_source_branch pull_request) ->
                         handle_source_branch_err t pull_request
-                    | Error (`Bad_branch_pattern pat) ->
-                        Abbs_future_combinators.ignore
-                          (publish_msg t (Msg.Bad_custom_branch_tag_pattern ("branch", pat)))
-                        >>= fun () -> Abb.Future.return (Error `Error)
-                    | Error (`Bad_dest_branch_pattern pat) ->
-                        Abbs_future_combinators.ignore
-                          (publish_msg t (Msg.Bad_custom_branch_tag_pattern ("dest_branch", pat)))
+                    | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
+                        Abbs_future_combinators.ignore (publish_msg t (Msg.Repo_config_err err))
                         >>= fun () -> Abb.Future.return (Error `Error))
                 | `Aborted ->
                     Prmths.Counter.inc_one Metrics.aborted_errors_total;
@@ -3584,7 +3453,7 @@ module Make (S : S) = struct
             Ok (Some { work_manifest with Wm.changes; src = Wm.Kind.Index index_run_kind })
 
       let maybe_make_index_work_manifest t account branch repo work_manifest =
-        let module V1 = Terrat_repo_config.Version_1 in
+        let module V1 = Terrat_base_repo_config_v1 in
         let open Abbs_future_combinators.Infix_result_monad in
         create_client (S.Event.Initiate.request_id t) (S.Event.Initiate.config t) account
         >>= fun client ->
@@ -3595,16 +3464,13 @@ module Make (S : S) = struct
           <*> S.Event.Initiate.with_db t ~f:(fun db ->
                   query_index db account (S.Event.Initiate.branch_ref t)))
         >>= function
-        | ( ({ V1.indexer = Some { V1.Indexer.enabled = true; _ }; _ } as repo_config),
-            repo_tree,
-            Some idx ) ->
+        | ({ V1.indexer = { V1.Indexer.enabled = true; _ }; _ } as repo_config), repo_tree, Some idx
+          ->
             Logs.info (fun m ->
                 m "EVALUATOR : %s : COMPUTE_CHANGES_WITH_INDEX" (S.Event.Initiate.request_id t));
             S.Event.Initiate.with_db t ~f:(fun db ->
                 update_work_manifest_with_index db repo_config repo_tree idx work_manifest)
-        | ( ({ V1.indexer = Some { V1.Indexer.enabled = true; _ }; _ } as repo_config),
-            repo_tree,
-            None ) ->
+        | ({ V1.indexer = { V1.Indexer.enabled = true; _ }; _ } as repo_config), repo_tree, None ->
             Abb.Future.return
               (make_index_work_manifest_if_changes
                  (S.Event.Initiate.request_id t)
@@ -3612,7 +3478,7 @@ module Make (S : S) = struct
                  repo_tree
                  (S.Index.make ~account ~branch ~repo ())
                  work_manifest)
-        | { V1.indexer = Some { V1.Indexer.enabled = false; _ } | None; _ }, _, _ ->
+        | { V1.indexer = { V1.Indexer.enabled = false; _ }; _ }, _, _ ->
             Logs.info (fun m ->
                 m "EVALUATOR : %s : NO_INDEX_REQUIRED" (S.Event.Initiate.request_id t));
             Abb.Future.return (Ok (Some work_manifest))
@@ -3624,7 +3490,7 @@ module Make (S : S) = struct
           repo
           pull_request
           work_manifest =
-        let module V1 = Terrat_repo_config.Version_1 in
+        let module V1 = Terrat_base_repo_config_v1 in
         let open Abbs_future_combinators.Infix_result_monad in
         create_client (S.Event.Initiate.request_id t) (S.Event.Initiate.config t) account
         >>= fun client ->
@@ -3635,15 +3501,13 @@ module Make (S : S) = struct
           <*> S.Event.Initiate.with_db t ~f:(fun db ->
                   query_index db account (S.Event.Initiate.branch_ref t)))
         >>= function
-        | { V1.indexer = Some { V1.Indexer.enabled = true; _ }; _ }, _, Some idx ->
+        | { V1.indexer = { V1.Indexer.enabled = true; _ }; _ }, _, Some idx ->
             Logs.info (fun m ->
                 m "EVALUATOR : %s : COMPUTE_CHANGES_WITH_INDEX" (S.Event.Initiate.request_id t));
             let event = S.Event.Initiate.terraform_event t pull_request work_manifest in
             Terraform.eval' ~work_manifest event
             >>= fun r -> Abb.Future.return (Ok (S.Event.Initiate.work_manifest_of_terraform_r t r))
-        | ( ({ V1.indexer = Some { V1.Indexer.enabled = true; _ }; _ } as repo_config),
-            repo_tree,
-            None ) ->
+        | ({ V1.indexer = { V1.Indexer.enabled = true; _ }; _ } as repo_config), repo_tree, None ->
             Abb.Future.return
               (make_index_work_manifest_if_changes
                  (S.Event.Initiate.request_id t)
@@ -3651,7 +3515,7 @@ module Make (S : S) = struct
                  repo_tree
                  (S.Index.make ~account ~branch ~repo ())
                  work_manifest)
-        | { V1.indexer = Some { V1.Indexer.enabled = false; _ } | None; _ }, _, _ ->
+        | { V1.indexer = { V1.Indexer.enabled = false; _ }; _ }, _, _ ->
             Logs.info (fun m ->
                 m "EVALUATOR : %s : NO_INDEX_REQUIRED" (S.Event.Initiate.request_id t));
             Abb.Future.return (Ok (Some work_manifest))
@@ -3968,8 +3832,7 @@ module Make (S : S) = struct
                   err);
             Abb.Future.return (Error `Error)
         | Error (`Parse_err _) -> Abb.Future.return (Error `Error)
-        | Error (`Bad_branch_pattern _) | Error (`Bad_dest_branch_pattern _) ->
-            Abb.Future.return (Error `Error)
+        | _ -> failwith "nyi"
     end
 
     module Unlock = struct
@@ -4023,15 +3886,6 @@ module Make (S : S) = struct
               (Msg.Access_control_denied
                  (Access_control_engine.policy_branch access_control, `Lookup_err))
             >>= fun () -> Abb.Future.return (Error `Error)
-        | Error (`Invalid_query query) ->
-            let open Abbs_future_combinators.Infix_result_monad in
-            Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"denied");
-            publish_msg
-              t
-              (Msg.Access_control_denied
-                 ( Access_control_engine.policy_branch access_control,
-                   `Terrateam_config_update_bad_query query ))
-            >>= fun () -> Abb.Future.return (Error `Error)
 
       let eval t =
         let open Abb.Future.Infix_monad in
@@ -4047,6 +3901,9 @@ module Make (S : S) = struct
         | Ok _ as ret -> Abb.Future.return ret
         | Error (`Parse_err err) ->
             Abbs_future_combinators.ignore (publish_msg t (Msg.Repo_config_parse_failure err))
+            >>= fun () -> Abb.Future.return (Error `Error)
+        | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
+            Abbs_future_combinators.ignore (publish_msg t (Msg.Repo_config_err err))
             >>= fun () -> Abb.Future.return (Error `Error)
         | Error `Error -> Abb.Future.return (Error `Error)
     end

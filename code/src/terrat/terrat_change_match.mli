@@ -1,9 +1,4 @@
-type synthesize_dir_config_err =
-  [ `Bad_glob of string
-  | `Bad_dest_branch_pattern of string
-  | `Bad_branch_pattern of string
-  ]
-[@@deriving show]
+type synthesize_dir_config_err = [ `Bad_glob of string ] [@@deriving show]
 
 (** A change match.  The [when_modified] section contains the entire
    configuration for the dirspace. *)
@@ -11,7 +6,7 @@ type t = {
   create_and_select_workspace : bool;
   dirspace : Terrat_change.Dirspace.t;
   tags : Terrat_tag_set.t;
-  when_modified : Terrat_repo_config.When_modified.t;
+  when_modified : Terrat_base_repo_config_v1.When_modified.t;
 }
 [@@deriving show]
 
@@ -45,7 +40,7 @@ val synthesize_dir_config :
   ctx:Ctx.t ->
   index:Index.t ->
   file_list:string list ->
-  Terrat_repo_config.Version_1.t ->
+  Terrat_base_repo_config_v1.t ->
   (Dirs.t, [> synthesize_dir_config_err ]) result
 
 (** Given a dirs configuration and a diff, return the match.  If there is no

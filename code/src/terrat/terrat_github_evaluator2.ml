@@ -100,12 +100,18 @@ module Sql = struct
 
   let policy =
     let module P = struct
-      type t = string list [@@deriving yojson]
+      type t = Terrat_base_repo_config_v1.Access_control.Match_list.t [@@deriving yojson]
     end in
     CCFun.(
       CCOption.wrap Yojson.Safe.from_string
       %> CCOption.map P.of_yojson
       %> CCOption.flat_map CCResult.to_opt)
+
+  let lock_policy = function
+    | Terrat_base_repo_config_v1.Workflows.Entry.Lock_policy.Apply -> "apply"
+    | Terrat_base_repo_config_v1.Workflows.Entry.Lock_policy.Merge -> "merge"
+    | Terrat_base_repo_config_v1.Workflows.Entry.Lock_policy.None -> "none"
+    | Terrat_base_repo_config_v1.Workflows.Entry.Lock_policy.Strict -> "strict"
 
   let select_index =
     let index =
@@ -270,7 +276,7 @@ module Sql = struct
       /% Var.(array (bigint "repository"))
       /% Var.(str_array (text "sha"))
       /% Var.(str_array (text "workspace"))
-      /% Var.(str_array (text "lock_policy")))
+      /% Var.(str_array (ud (text "lock_policy") lock_policy)))
 
   let insert_pull_request =
     Pgsql_io.Typed_sql.(
@@ -382,7 +388,7 @@ module Sql = struct
       sql
       /^ read "github_upsert_drift_schedule.sql"
       /% Var.bigint "repo"
-      /% Var.text "schedule"
+      /% Var.(ud (text "schedule") Terrat_base_repo_config_v1.Drift.Schedule.to_string)
       /% Var.boolean "reconcile"
       /% Var.(option (ud (text "tag_query") Terrat_tag_query.to_string)))
 
@@ -538,15 +544,11 @@ module Tmpl = struct
   let bad_glob = read "bad_glob.tmpl"
   let unlock_success = read "unlock_success.tmpl"
   let access_control_all_dirspaces_denied = read "access_control_all_dirspaces_denied.tmpl"
-  let access_control_invalid_query = read "access_control_invalid_query.tmpl"
   let access_control_dirspaces_denied = read "access_control_dirspaces_denied.tmpl"
   let access_control_unlock_denied = read "access_control_unlock_denied.tmpl"
 
   let access_control_terrateam_config_update_denied =
     read "access_control_terrateam_config_update_denied.tmpl"
-
-  let access_control_terrateam_config_update_bad_query =
-    read "access_control_terrateam_config_update_bad_query.tmpl"
 
   let access_control_lookup_err = read "access_control_lookup_err.tmpl"
   let tag_query_error = read "tag_query_error.tmpl"
@@ -564,6 +566,62 @@ module Tmpl = struct
     |> CCOption.get_exn_or "github_comment_too_large.tmpl"
 
   let index_complete = read "github_index_complete.tmpl"
+
+  (* Repo config errors *)
+  let repo_config_err_access_control_policy_apply_autoapprove_match_parse_err =
+    read "repo_config_err_access_control_policy_apply_autoapprove_match_parse_err.tmpl"
+
+  let repo_config_err_access_control_policy_apply_force_match_parse_err =
+    read "repo_config_err_access_control_policy_apply_force_match_parse_err.tmpl"
+
+  let repo_config_err_access_control_policy_apply_match_parse_err =
+    read "repo_config_err_access_control_policy_apply_match_parse_err.tmpl"
+
+  let repo_config_err_access_control_policy_apply_with_superapproval_match_parse_err =
+    read "repo_config_err_access_control_policy_apply_with_supperapproval_match_parse_err.tmpl"
+
+  let repo_config_err_access_control_policy_plan_match_parse_err =
+    read "repo_config_err_access_control_policy_plan_match_parse_err.tmpl"
+
+  let repo_config_err_access_control_policy_superapproval_match_parse_err =
+    read "repo_config_err_access_control_policy_superapproval_match_parse_err.tmpl"
+
+  let repo_config_err_access_control_policy_tag_query_err =
+    read "repo_config_err_access_control_policy_tag_query_err.tmpl"
+
+  let repo_config_err_access_control_terrateam_config_update_match_parse_err =
+    read "repo_config_err_access_control_terrateam_config_update_match_parse_err.tmpl"
+
+  let repo_config_err_access_control_unlock_match_parse_err =
+    read "repo_config_err_access_control_unlock_match_parse_err.tmpl"
+
+  let repo_config_err_apply_requirements_approved_all_of_match_parse_err =
+    read "repo_config_err_apply_requirements_approved_all_of_match_parse_err.tmpl"
+
+  let repo_config_err_apply_requirements_approved_any_of_match_parse_err =
+    read "repo_config_err_apply_requirements_approved_any_of_match_parse_err.tmpl"
+
+  let repo_config_err_apply_requirements_check_tag_query_err =
+    read "repo_config_err_apply_requirements_check_tag_query_err.tmpl"
+
+  let repo_config_err_drift_schedule_err = read "repo_config_err_drift_schedule_err.tmpl"
+  let repo_config_err_drift_tag_query_err = read "repo_config_err_drift_tag_query_err.tmpl"
+  let repo_config_err_glob_parse_err = read "repo_config_err_glob_parse_err.tmpl"
+
+  let repo_config_err_hooks_unknown_run_on_err =
+    read "repo_config_err_hooks_unknown_run_on_err.tmpl"
+
+  let repo_config_err_pattern_parse_err = read "repo_config_err_pattern_parse_err.tmpl"
+  let repo_config_err_unknown_lock_policy_err = read "repo_config_err_unknown_lock_policy_err.tmpl"
+
+  let repo_config_err_workflows_apply_unknown_run_on_err =
+    read "repo_config_err_workflows_apply_unknown_run_on_err.tmpl"
+
+  let repo_config_err_workflows_plan_unknown_run_on_err =
+    read "repo_config_err_workflows_plan_unknown_run_on_err.tmpl"
+
+  let repo_config_err_workflows_tag_query_parse_err =
+    read "repo_config_err_workflows_tag_query_parse_err.tmpl"
 end
 
 let log_time ?m request_id name t =
@@ -735,10 +793,11 @@ module S = struct
         ("read", "read");
       ]
 
-    let query ctx query =
-      match CCString.Split.left ~by:":" query with
-      | Some ("user", value) -> Abb.Future.return (Ok (CCString.equal value ctx.user))
-      | Some ("team", value) -> (
+    let query ctx =
+      let module M = Terrat_base_repo_config_v1.Access_control.Match in
+      function
+      | M.User value -> Abb.Future.return (Ok (CCString.equal value ctx.user))
+      | M.Team value -> (
           let open Abb.Future.Infix_monad in
           Terrat_github.get_team_membership_in_org
             ~org:ctx.repo.Repo.owner
@@ -748,7 +807,7 @@ module S = struct
           >>= function
           | Ok res -> Abb.Future.return (Ok res)
           | Error _ -> Abb.Future.return (Error `Error))
-      | Some ("repo", value) -> (
+      | M.Repo value -> (
           let open Abb.Future.Infix_monad in
           match CCList.find_idx CCFun.(fst %> CCString.equal value) repo_permission_levels with
           | Some (idx, _) -> (
@@ -769,9 +828,8 @@ module S = struct
                   | None -> Abb.Future.return (Ok false))
               | Ok None -> Abb.Future.return (Ok false)
               | Error _ -> Abb.Future.return (Error `Error))
-          | None -> Abb.Future.return (Error (`Invalid_query query)))
-      | Some (_, _) -> Abb.Future.return (Error (`Invalid_query query))
-      | None -> Abb.Future.return (Error (`Invalid_query query))
+          | None -> failwith "nyi" (* Abb.Future.return (Error (`Invalid_query query)) *))
+      | M.Any -> Abb.Future.return (Ok true)
 
     let set_user user ctx = { ctx with user }
   end
@@ -1210,7 +1268,7 @@ module S = struct
       ~ref_
       client.Client.client
     >>= function
-    | Ok _ as r -> Abb.Future.return r
+    | Ok config -> Abb.Future.return (Terrat_base_repo_config_v1.of_version_1 config)
     | Error (#Terrat_github.fetch_repo_config_err as err) ->
         Logs.err (fun m ->
             m
@@ -1586,7 +1644,7 @@ module S = struct
       insert_work_manifest_changes db work_manifest
       >>= fun () ->
       let module Policy = struct
-        type t = string list [@@deriving yojson]
+        type t = Terrat_base_repo_config_v1.Access_control.Match_list.t [@@deriving yojson]
       end in
       Abbs_future_combinators.List_result.iter
         ~f:(fun denied_dirspaces ->
@@ -1701,9 +1759,9 @@ module S = struct
             (CCList.map
                (fun Terrat_change.{ Dirspaceflow.workflow; _ } ->
                  let module Dfwf = Terrat_change.Dirspaceflow.Workflow in
-                 let module Wf = Terrat_repo_config_workflow_entry in
+                 let module Wf = Terrat_base_repo_config_v1.Workflows.Entry in
                  CCOption.map_or
-                   ~default:"strict"
+                   ~default:Terrat_base_repo_config_v1.Workflows.Entry.Lock_policy.Strict
                    (fun { Dfwf.workflow = { Wf.lock_policy; _ }; _ } -> lock_policy)
                    workflow)
                dirspaceflows))
@@ -2342,7 +2400,16 @@ module S = struct
                                         ( "match_list",
                                           list
                                             (CCList.map
-                                               (fun s -> Map.of_list [ ("item", string s) ])
+                                               (fun s ->
+                                                 Map.of_list
+                                                   [
+                                                     ( "item",
+                                                       string
+                                                         (Terrat_base_repo_config_v1.Access_control
+                                                          .Match
+                                                          .to_string
+                                                            s) );
+                                                   ])
                                                policy) );
                                       ])
                                     policy;
@@ -2353,21 +2420,6 @@ module S = struct
           apply_template_and_publish
             "ACCESS_CONTROL_ALL_DIRSPACES_DENIED"
             Tmpl.access_control_all_dirspaces_denied
-            kv
-            t
-      | Msg.Access_control_denied (default_branch, `Invalid_query query) ->
-          let kv =
-            Snabela.Kv.(
-              Map.of_list
-                [
-                  ("user", string t.user);
-                  ("default_branch", string default_branch);
-                  ("query", string query);
-                ])
-          in
-          apply_template_and_publish
-            "ACCESS_CONTROL_INVALID_QUERY"
-            Tmpl.access_control_invalid_query
             kv
             t
       | Msg.Access_control_denied (default_branch, `Dirspaces denies) ->
@@ -2398,7 +2450,16 @@ module S = struct
                                         ( "match_list",
                                           list
                                             (CCList.map
-                                               (fun s -> Map.of_list [ ("item", string s) ])
+                                               (fun s ->
+                                                 Map.of_list
+                                                   [
+                                                     ( "item",
+                                                       string
+                                                         (Terrat_base_repo_config_v1.Access_control
+                                                          .Match
+                                                          .to_string
+                                                            s) );
+                                                   ])
                                                policy) );
                                       ])
                                     policy;
@@ -2419,27 +2480,21 @@ module S = struct
                   ("user", string t.user);
                   ("default_branch", string default_branch);
                   ( "match_list",
-                    list (CCList.map (fun s -> Map.of_list [ ("item", string s) ]) match_list) );
+                    list
+                      (CCList.map
+                         (fun s ->
+                           Map.of_list
+                             [
+                               ( "item",
+                                 string
+                                   (Terrat_base_repo_config_v1.Access_control.Match.to_string s) );
+                             ])
+                         match_list) );
                 ])
           in
           apply_template_and_publish
             "ACCESS_CONTROL_TERRATEAM_CONFIG_UPDATE_DENIED"
             Tmpl.access_control_terrateam_config_update_denied
-            kv
-            t
-      | Msg.Access_control_denied (default_branch, `Terrateam_config_update_bad_query query) ->
-          let kv =
-            Snabela.Kv.(
-              Map.of_list
-                [
-                  ("user", string t.user);
-                  ("default_branch", string default_branch);
-                  ("query", string query);
-                ])
-          in
-          apply_template_and_publish
-            "ACCESS_CONTROL_TERRATEAM_CONFIG_UPDATE_BAD_QUERY"
-            Tmpl.access_control_terrateam_config_update_bad_query
             kv
             t
       | Msg.Access_control_denied (default_branch, `Lookup_err) ->
@@ -2456,7 +2511,16 @@ module S = struct
                   ("user", string t.user);
                   ("default_branch", string default_branch);
                   ( "match_list",
-                    list (CCList.map (fun s -> Map.of_list [ ("item", string s) ]) match_list) );
+                    list
+                      (CCList.map
+                         (fun s ->
+                           Map.of_list
+                             [
+                               ( "item",
+                                 string
+                                   (Terrat_base_repo_config_v1.Access_control.Match.to_string s) );
+                             ])
+                         match_list) );
                 ])
           in
           apply_template_and_publish
@@ -2475,7 +2539,7 @@ module S = struct
           apply_template_and_publish "ACCOUNT_EXPIRED" Tmpl.account_expired_err kv t
       | Msg.Repo_config (repo_config, dirs) ->
           let repo_config_json =
-            Yojson.Safe.pretty_to_string (Terrat_repo_config_version_1.to_yojson repo_config)
+            Yojson.Safe.pretty_to_string (Terrat_base_repo_config_v1.to_yojson repo_config)
           in
           let dirs_json = Yojson.Safe.pretty_to_string (Terrat_change_match.Dirs.to_yojson dirs) in
           let kv =
@@ -2486,6 +2550,151 @@ module S = struct
       | Msg.Unexpected_temporary_err ->
           let kv = Snabela.Kv.(Map.of_list []) in
           apply_template_and_publish "UNEXPECTED_TEMPORARY_ERR" Tmpl.unexpected_temporary_err kv t
+      | Msg.Repo_config_err err -> (
+          match err with
+          | `Access_control_policy_apply_autoapprove_match_parse_err m ->
+              let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+              apply_template_and_publish
+                "ACCESS_CONTROL_POLICY_APPLY_AUTOAPPROVE_MATCH_PARSE_ERR"
+                Tmpl.repo_config_err_access_control_policy_apply_autoapprove_match_parse_err
+                kv
+                t
+          | `Access_control_policy_apply_force_match_parse_err m ->
+              let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+              apply_template_and_publish
+                "ACCESS_CONTROL_POLICY_APPLY_FORCE_MATCH_PARSE_ERR"
+                Tmpl.repo_config_err_access_control_policy_apply_force_match_parse_err
+                kv
+                t
+          | `Access_control_policy_apply_match_parse_err m ->
+              let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+              apply_template_and_publish
+                "ACCESS_CONTROL_POLICY_APPLY_MATCH_PARSE_ERR"
+                Tmpl.repo_config_err_access_control_policy_apply_match_parse_err
+                kv
+                t
+          | `Access_control_policy_apply_with_superapproval_match_parse_err m ->
+              let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+              apply_template_and_publish
+                "ACCESS_CONTROL_POLICY_APPLY_WITH_SUPERAPPROVAL_MATCH_PARSE_ERR"
+                Tmpl.repo_config_err_access_control_policy_apply_with_superapproval_match_parse_err
+                kv
+                t
+          | `Access_control_policy_plan_match_parse_err m ->
+              let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+              apply_template_and_publish
+                "ACCESS_CONTROL_POLICY_PLAN_MATCH_PARSE_ERR"
+                Tmpl.repo_config_err_access_control_policy_plan_match_parse_err
+                kv
+                t
+          | `Access_control_policy_superapproval_match_parse_err m ->
+              let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+              apply_template_and_publish
+                "ACCESS_CONTROL_POLICY_SUPERAPPROVAL_MATCH_PARSE_ERR"
+                Tmpl.repo_config_err_access_control_policy_superapproval_match_parse_err
+                kv
+                t
+          | `Access_control_policy_tag_query_err (q, err) ->
+              let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
+              apply_template_and_publish
+                "ACCESS_CONTROL_POLICY_TAG_QUERY_ERR"
+                Tmpl.repo_config_err_access_control_policy_tag_query_err
+                kv
+                t
+          | `Access_control_terrateam_config_update_match_parse_err m ->
+              let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+              apply_template_and_publish
+                "ACCESS_CONTROL_TERRATEAM_CONFIG_UPDATE_MATCH_PARSE_ERR"
+                Tmpl.repo_config_err_access_control_terrateam_config_update_match_parse_err
+                kv
+                t
+          | `Access_control_unlock_match_parse_err m ->
+              let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+              apply_template_and_publish
+                "ACCESS_CONTROL_UNLOCK_MATCH_PARSE_ERR"
+                Tmpl.repo_config_err_access_control_unlock_match_parse_err
+                kv
+                t
+          | `Apply_requirements_approved_all_of_match_parse_err m ->
+              let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+              apply_template_and_publish
+                "APPLY_REQUIREMENTS_APPROVED_ALL_OF_MATCH_PARSE_ERR"
+                Tmpl.repo_config_err_apply_requirements_approved_all_of_match_parse_err
+                kv
+                t
+          | `Apply_requirements_approved_any_of_match_parse_err m ->
+              let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+              apply_template_and_publish
+                "APPLY_REQUIREMENTS_APPROVED_ANY_OF_MATCH_PARSE_ERR"
+                Tmpl.repo_config_err_apply_requirements_approved_any_of_match_parse_err
+                kv
+                t
+          | `Apply_requirements_check_tag_query_err (q, err) ->
+              let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
+              apply_template_and_publish
+                "APPLY_REQUIREMENTS_CHECK_TAG_QUERY_ERR"
+                Tmpl.repo_config_err_apply_requirements_check_tag_query_err
+                kv
+                t
+          | `Drift_schedule_err s ->
+              let kv = Snabela.Kv.(Map.of_list [ ("schedule", string s) ]) in
+              apply_template_and_publish
+                "DRIFT_SCHEDULE_ERR"
+                Tmpl.repo_config_err_drift_schedule_err
+                kv
+                t
+          | `Drift_tag_query_err (q, err) ->
+              let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
+              apply_template_and_publish
+                "DRIFT_TAG_QUERY_ERR"
+                Tmpl.repo_config_err_drift_tag_query_err
+                kv
+                t
+          | `Glob_parse_err (s, err) ->
+              let kv = Snabela.Kv.(Map.of_list [ ("glob", string s); ("error", string err) ]) in
+              apply_template_and_publish "GLOB_PARSE_ERR" Tmpl.repo_config_err_glob_parse_err kv t
+          | `Hooks_unknown_run_on_err s ->
+              let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
+              apply_template_and_publish
+                "HOOKS_UNKNOWN_RUN_ON_ERR"
+                Tmpl.repo_config_err_hooks_unknown_run_on_err
+                kv
+                t
+          | `Pattern_parse_err s ->
+              let kv = Snabela.Kv.(Map.of_list [ ("pattern", string s) ]) in
+              apply_template_and_publish
+                "PATTERN_PARSE_ERR"
+                Tmpl.repo_config_err_pattern_parse_err
+                kv
+                t
+          | `Unknown_lock_policy_err s ->
+              let kv = Snabela.Kv.(Map.of_list [ ("lock_policy", string s) ]) in
+              apply_template_and_publish
+                "UNKNOWN_LOCK_POLICY_ERR"
+                Tmpl.repo_config_err_unknown_lock_policy_err
+                kv
+                t
+          | `Workflows_apply_unknown_run_on_err s ->
+              let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
+              apply_template_and_publish
+                "WORKFLOWS_APPLY_UNKNOWN_RUN_ON_ERR"
+                Tmpl.repo_config_err_workflows_apply_unknown_run_on_err
+                kv
+                t
+          | `Workflows_plan_unknown_run_on_err s ->
+              let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
+              apply_template_and_publish
+                "WORKFLOWS_PLAN_UNKNOWN_RUN_ON_ERR"
+                Tmpl.repo_config_err_workflows_plan_unknown_run_on_err
+                kv
+                t
+          | `Workflows_tag_query_parse_err (q, err) ->
+              let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
+              apply_template_and_publish
+                "WORKFLOWS_TAG_QUERY_PARSE_ERR"
+                Tmpl.repo_config_err_workflows_tag_query_parse_err
+                kv
+                t)
 
     let publish_msg t msg =
       let open Abb.Future.Infix_monad in
@@ -2498,15 +2707,6 @@ module S = struct
 
   module Event = struct
     module Terraform = struct
-      module Apply_requirement_check = struct
-        type t = {
-          tag_query : Terrat_tag_query.t;
-          merge_conflicts : Terrat_repo_config.Apply_requirements_checks_merge_conflicts.t;
-          status_checks : Terrat_repo_config.Apply_requirements_checks_status_checks.t;
-          approved : Terrat_repo_config.Apply_requirements_checks_approved_2.t;
-        }
-      end
-
       type t = {
         config : Terrat_config.t;
         installation_id : int;
@@ -2616,101 +2816,16 @@ module S = struct
                   err);
             Abb.Future.return (Error `Error)
 
-      let get_apply_requirements_checks_approved =
-        let module Ap = Terrat_repo_config.Apply_requirements_checks_approved in
-        let module Ap1 = Terrat_repo_config.Apply_requirements_checks_approved_1 in
-        let module Ap2 = Terrat_repo_config.Apply_requirements_checks_approved_2 in
-        function
-        | Ap.Apply_requirements_checks_approved_1 { Ap1.count; enabled } ->
-            { Ap2.all_of = Some []; enabled; any_of_count = count; any_of = Some [] }
-        | Ap.Apply_requirements_checks_approved_2 ap2 -> ap2
-
-      let get_apply_requirement_checks repo_config =
-        let module Err = struct
-          exception Tag_query_err of Terrat_tag_query_ast.err
-        end in
-        let module Rc = Terrat_repo_config.Version_1 in
-        let module Ar = Terrat_repo_config.Apply_requirements in
-        let module Checks = Terrat_repo_config.Apply_requirements_checks in
-        let module C1 = Terrat_repo_config.Apply_requirements_checks_1 in
-        let module C2 = Terrat_repo_config.Apply_requirements_checks_2 in
-        let module Ap2 = Terrat_repo_config.Apply_requirements_checks_approved_2 in
-        let apply_requirements =
-          CCOption.get_or ~default:(Ar.make ()) repo_config.Rc.apply_requirements
-        in
-        match apply_requirements.Ar.checks with
-        | None ->
-            Ok
-              [
-                {
-                  Apply_requirement_check.tag_query = Terrat_tag_query.any;
-                  approved = Ap2.make ();
-                  merge_conflicts =
-                    Terrat_repo_config.Apply_requirements_checks_merge_conflicts.make ();
-                  status_checks = Terrat_repo_config.Apply_requirements_checks_status_checks.make ();
-                };
-              ]
-        | Some (Checks.Apply_requirements_checks_1 { C1.approved; merge_conflicts; status_checks })
-          ->
-            Ok
-              [
-                {
-                  Apply_requirement_check.tag_query = Terrat_tag_query.any;
-                  approved =
-                    CCOption.map_or
-                      ~default:(Ap2.make ())
-                      get_apply_requirements_checks_approved
-                      approved;
-                  merge_conflicts =
-                    CCOption.get_or
-                      ~default:
-                        (Terrat_repo_config.Apply_requirements_checks_merge_conflicts.make ())
-                      merge_conflicts;
-                  status_checks =
-                    CCOption.get_or
-                      ~default:(Terrat_repo_config.Apply_requirements_checks_status_checks.make ())
-                      status_checks;
-                };
-              ]
-        | Some (Checks.Apply_requirements_checks_2 checks) -> (
-            try
-              let module I = C2.Items in
-              Ok
-                (CCList.map
-                   (fun { I.approved; merge_conflicts; status_checks; tag_query } ->
-                     match Terrat_tag_query.of_string tag_query with
-                     | Ok tag_query ->
-                         {
-                           Apply_requirement_check.tag_query;
-                           approved = CCOption.get_or ~default:(Ap2.make ()) approved;
-                           merge_conflicts =
-                             CCOption.get_or
-                               ~default:
-                                 (Terrat_repo_config.Apply_requirements_checks_merge_conflicts.make
-                                    ())
-                               merge_conflicts;
-                           status_checks =
-                             CCOption.get_or
-                               ~default:
-                                 (Terrat_repo_config.Apply_requirements_checks_status_checks.make
-                                    ())
-                               status_checks;
-                         }
-                     | Error (#Terrat_tag_query_ast.err as err) -> raise (Err.Tag_query_err err))
-                   checks)
-            with Err.Tag_query_err err ->
-              Error (err : Terrat_tag_query_ast.err :> [> Terrat_tag_query_ast.err ]))
-
       let compute_approved request_id access_control_ctx approved approved_reviews =
+        let module Match_set = CCSet.Make (Terrat_base_repo_config_v1.Access_control.Match) in
+        let module Match_map = CCMap.Make (Terrat_base_repo_config_v1.Access_control.Match) in
         let open Abbs_future_combinators.Infix_result_monad in
         let module Tprr = Terrat_pull_request_review in
-        let module Ac = Terrat_repo_config.Apply_requirements_checks_approved_2 in
+        let module Ac = Terrat_base_repo_config_v1.Apply_requirements.Approved in
         let { Ac.all_of; any_of; any_of_count; enabled } = approved in
-        let all_of = CCOption.get_or ~default:[] all_of in
-        let any_of = CCOption.get_or ~default:[] any_of in
-        let combined_queries = String_set.(to_list (of_list (all_of @ any_of))) in
+        let combined_queries = Match_set.(to_list (of_list (all_of @ any_of))) in
         Abbs_future_combinators.List_result.fold_left
-          ~init:String_map.empty
+          ~init:Match_map.empty
           ~f:(fun acc query ->
             Abbs_future_combinators.List_result.filter_map
               ~f:(function
@@ -2726,15 +2841,14 @@ module S = struct
             Abb.Future.return
               (Ok
                  (CCList.fold_left
-                    (fun acc user -> String_map.add_to_list query user acc)
+                    (fun acc user -> Match_map.add_to_list query user acc)
                     acc
                     matching_reviews)))
           combined_queries
         >>= fun matching_reviews ->
-        let all_of_results = CCList.map (CCFun.flip String_map.mem matching_reviews) all_of in
+        let all_of_results = CCList.map (CCFun.flip Match_map.mem matching_reviews) all_of in
         let any_of_results =
-          CCList.flatten
-            (CCList.filter_map (CCFun.flip String_map.find_opt matching_reviews) any_of)
+          CCList.flatten (CCList.filter_map (CCFun.flip Match_map.find_opt matching_reviews) any_of)
         in
         let all_of_passed = CCList.for_all CCFun.id all_of_results in
         let any_of_passed =
@@ -2752,11 +2866,13 @@ module S = struct
         Abb.Future.return (Ok (all_of_passed && any_of_passed))
 
       let check_apply_requirements t client pull_request repo_config matches =
-        let module Abc = Apply_requirement_check in
         let module Tcm = Terrat_change_match in
-        let module Mc = Terrat_repo_config.Apply_requirements_checks_merge_conflicts in
-        let module Sc = Terrat_repo_config.Apply_requirements_checks_status_checks in
-        let module Ac = Terrat_repo_config.Apply_requirements_checks_approved_2 in
+        let module R = Terrat_base_repo_config_v1 in
+        let module Ar = R.Apply_requirements in
+        let module Abc = Ar.Check in
+        let module Mc = Ar.Merge_conflicts in
+        let module Sc = Ar.Status_checks in
+        let module Ac = Ar.Approved in
         let open Abbs_future_combinators.Infix_result_monad in
         let filter_relevant_commit_checks ignore_matching_pats ignore_matching commit_checks =
           CCList.filter
@@ -2775,8 +2891,7 @@ module S = struct
                 || CCList.exists (CCString.equal title) ignore_matching))
             commit_checks
         in
-        Abb.Future.return (get_apply_requirement_checks repo_config)
-        >>= fun checks ->
+        let { R.apply_requirements = { Ar.checks; _ }; _ } = repo_config in
         let access_control_ctx =
           {
             Access_control.client = client.Client.client;
@@ -2808,6 +2923,12 @@ module S = struct
         Abbs_future_combinators.List_result.map
           ~f:(fun ({ Tcm.tags; dirspace; _ } as match_) ->
             let open Abbs_future_combinators.Infix_result_monad in
+            Logs.info (fun m ->
+                m
+                  "GITHUB_EVALUATOR : %s : CHECK_APPLY_REQUIREMENTS : dir=%s : workspace=%s"
+                  t.request_id
+                  dirspace.Terrat_dirspace.dir
+                  dirspace.Terrat_dirspace.workspace);
             match
               CCList.find_opt
                 (fun { Abc.tag_query; _ } ->
@@ -2817,9 +2938,7 @@ module S = struct
             | Some { Abc.tag_query; merge_conflicts; status_checks; approved; _ } ->
                 compute_approved t.request_id access_control_ctx approved approved_reviews
                 >>= fun approved_result ->
-                let ignore_matching =
-                  CCOption.get_or ~default:[] status_checks.Sc.ignore_matching
-                in
+                let ignore_matching = status_checks.Sc.ignore_matching in
                 (* Convert all patterns and ignore those that don't compile.  This eats
                    errors.
 
@@ -2960,16 +3079,14 @@ module S = struct
                ~ctx:(Terrat_change_match.Ctx.make ~dest_branch ~branch ())
                ~index:Terrat_change_match.Index.empty
                ~file_list:files
-               repo_config)
+               (repo_config : Terrat_base_repo_config_v1.t))
           >>= fun dirs ->
           let matches =
             Terrat_change_match.match_diff_list
               dirs
               (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) files)
           in
-          let workflows =
-            CCOption.get_or ~default:[] repo_config.Terrat_repo_config.Version_1.workflows
-          in
+          let workflows = repo_config.Terrat_base_repo_config_v1.workflows in
           let dirspaceflows =
             CCList.map
               (fun (Terrat_change_match.{ dirspace; _ } as change) ->
@@ -2980,10 +3097,8 @@ module S = struct
                       CCOption.map
                         (fun (idx, workflow) -> Workflow.{ idx; workflow })
                         (CCList.find_idx
-                           (fun Terrat_repo_config.Workflow_entry.{ tag_query; _ } ->
-                             Terrat_change_match.match_tag_query
-                               ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string tag_query))
-                               change)
+                           (fun { Terrat_base_repo_config_v1.Workflows.Entry.tag_query; _ } ->
+                             Terrat_change_match.match_tag_query ~tag_query change)
                            workflows);
                   })
               matches
@@ -3014,6 +3129,7 @@ module S = struct
         | Error (`Bad_branch_pattern pat) -> failwith "nyi"
         | Error (`Bad_dest_branch_pattern pat) -> failwith "nyi"
         | Error `Error -> Abb.Future.return (Error `Error)
+        | _ -> failwith "nyi"
 
       let fetch_dirspaces client repo dest_branch_name branch_name base_ref ref_ =
         Abbs_future_combinators.Infix_result_app.(
@@ -4002,7 +4118,17 @@ module S = struct
                                                ( "policy",
                                                  list
                                                    (CCList.map
-                                                      (fun p -> Map.of_list [ ("item", string p) ])
+                                                      (fun p ->
+                                                        Map.of_list
+                                                          [
+                                                            ( "item",
+                                                              string
+                                                                (Terrat_base_repo_config_v1
+                                                                 .Access_control
+                                                                 .Match
+                                                                 .to_string
+                                                                   p) );
+                                                          ])
                                                       policy) );
                                              ]
                                          | None -> []);
@@ -4236,7 +4362,7 @@ module S = struct
           branch_name : Ref.t;
           branch_ref : Ref.t;
           index : Terrat_change_match.Index.t option;
-          repo_config : Terrat_repo_config.Version_1.t;
+          repo_config : Terrat_base_repo_config_v1.t;
           tree : string list;
         }
 
@@ -4297,7 +4423,7 @@ module S = struct
         let client = { Client.client; request_id = t.request_id; config = t.config } in
         Terrat_github.fetch_repo ~owner:repo.Repo.owner ~repo:repo.Repo.name client.Client.client
         >>= fun repoository ->
-        let module Rc = Terrat_repo_config.Version_1 in
+        let module Rc = Terrat_base_repo_config_v1 in
         let module R = Githubc2_components.Full_repository in
         let default_branch = repoository.R.primary.R.Primary.default_branch in
         Abbs_future_combinators.Infix_result_app.(
@@ -4310,8 +4436,7 @@ module S = struct
                 ~branch:default_branch
                 client.Client.client)
         >>= function
-        | ({ Rc.indexer = Some { Rc.Indexer.enabled = true; _ }; _ } as repo_config), tree, branch
-          ->
+        | ({ Rc.indexer = { Rc.Indexer.enabled = true; _ }; _ } as repo_config), tree, branch ->
             let module B = Githubc2_components.Branch_with_protection in
             let module C = Githubc2_components.Commit in
             let commit = branch.B.primary.B.Primary.commit in
@@ -4370,6 +4495,7 @@ module S = struct
         | Error (`Parse_err err) ->
             Logs.err (fun m -> m "GITHUB_EVALUATOR : %s : PARSE_ERR : %s" t.request_id err);
             Abb.Future.return (Error `Error)
+        | _ -> failwith "nyi"
     end
 
     module Index = struct
@@ -4434,30 +4560,20 @@ module S = struct
               (CCInt64.of_int t.repo.Repo.id))
 
       let update_drift_config t =
-        let module D = Terrat_repo_config.Drift in
+        let module D = Terrat_base_repo_config_v1.Drift in
         function
-        | Some { D.enabled = true; schedule; reconcile; tag_query } -> (
+        | { D.enabled = true; schedule; reconcile; tag_query } ->
             Logs.info (fun m ->
                 m
                   "GITHUB_EVALUATOR : %s : DRIFT : ENABLE : repo=%s : schedule=%s : reconcile=%s : \
                    tag_query=%s"
                   t.request_id
                   (Repo.to_string t.repo)
-                  schedule
+                  (D.Schedule.to_string schedule)
                   (Bool.to_string reconcile)
-                  (CCOption.get_or ~default:"" tag_query));
-            match CCOption.map Terrat_tag_query.of_string tag_query with
-            | Some (Ok tag_query) -> enable_drift_schedule t schedule reconcile (Some tag_query)
-            | None -> enable_drift_schedule t schedule reconcile None
-            | Some (Error (#Terrat_tag_query_ast.err as err)) ->
-                Logs.info (fun m ->
-                    m
-                      "GITHUB_EVALUATOR : %s : DRIFT : ERROR : %a"
-                      t.request_id
-                      Terrat_tag_query_ast.pp_err
-                      err);
-                Abb.Future.return (Ok ()))
-        | Some { D.enabled = false; _ } | None ->
+                  (Terrat_tag_query.to_string tag_query));
+            enable_drift_schedule t schedule reconcile (Some tag_query)
+        | { D.enabled = false; _ } ->
             Logs.info (fun m ->
                 m
                   "GITHUB_EVALUATOR : %s : DRIFT : DISABLE : repo=%s"
@@ -4478,7 +4594,7 @@ module S = struct
         in
         fetch_repo_config client t.repo t.branch
         >>= fun repo_config ->
-        let module C = Terrat_repo_config.Version_1 in
+        let module C = Terrat_base_repo_config_v1 in
         let drift_config = repo_config.C.drift in
         update_drift_config t drift_config
 
@@ -4507,6 +4623,7 @@ module S = struct
         | Error (`Parse_err err) ->
             Logs.err (fun m -> m "GITHUB_EVALUATOR : %s : PARSE_ERR : %s" t.request_id err);
             Abb.Future.return (Error `Error)
+        | _ -> failwith "nyi"
 
       let drift_of_t t = { Drift.config = t.config; request_id = t.request_id; storage = t.storage }
     end

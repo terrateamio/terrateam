@@ -1,9 +1,4 @@
-type query_err =
-  [ `Invalid_query of string
-  | `Error
-  ]
-[@@deriving show]
-
+type query_err = [ `Error ] [@@deriving show]
 type err = query_err [@@deriving show]
 
 let terrateam_repo_config = [ ".terrateam/config.yml"; ".terrateam/config.yaml" ]
@@ -11,7 +6,7 @@ let terrateam_repo_config = [ ".terrateam/config.yml"; ".terrateam/config.yaml" 
 module Policy = struct
   type t = {
     tag_query : Terrat_tag_query.t;
-    policy : string list;
+    policy : Terrat_base_repo_config_v1.Access_control.Match_list.t;
   }
   [@@deriving show]
 end
@@ -20,7 +15,7 @@ module R = struct
   module Deny = struct
     type t = {
       change_match : Terrat_change_match.t;
-      policy : string list option;
+      policy : Terrat_base_repo_config_v1.Access_control.Match_list.t option;
     }
     [@@deriving show]
   end
@@ -35,7 +30,11 @@ end
 module type S = sig
   type ctx
 
-  val query : ctx -> string -> (bool, [> query_err ]) result Abb.Future.t
+  val query :
+    ctx ->
+    Terrat_base_repo_config_v1.Access_control.Match.t ->
+    (bool, [> query_err ]) result Abb.Future.t
+
   val set_user : string -> ctx -> ctx
 end
 
@@ -52,9 +51,6 @@ module Make (S : S) = struct
 
   let rec test_queries ctx = function
     | [] -> Abb.Future.return (Ok None)
-    | "*" :: qs ->
-        (* Special case for [*] which matches anything. *)
-        Abb.Future.return (Ok (Some "*"))
     | q :: qs -> (
         let open Abbs_future_combinators.Infix_result_monad in
         S.query ctx q

@@ -9,11 +9,9 @@ module Msg : sig
   type access_control_denied =
     [ `All_dirspaces of Terrat_access_control.R.Deny.t list
     | `Dirspaces of Terrat_access_control.R.Deny.t list
-    | `Invalid_query of string
     | `Lookup_err
-    | `Terrateam_config_update of string list
-    | `Terrateam_config_update_bad_query of string
-    | `Unlock of string list
+    | `Terrateam_config_update of Terrat_base_repo_config_v1.Access_control.Match_list.t
+    | `Unlock of Terrat_base_repo_config_v1.Access_control.Match_list.t
     ]
 
   type ('pull_request, 'src, 'apply_requirements) t =
@@ -35,7 +33,8 @@ module Msg : sig
     | Plan_no_matching_dirspaces
     | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
     | Pull_request_not_mergeable
-    | Repo_config of (Terrat_repo_config_version_1.t * Terrat_change_match.Dirs.t)
+    | Repo_config of (Terrat_base_repo_config_v1.t * Terrat_change_match.Dirs.t)
+    | Repo_config_err of Terrat_base_repo_config_v1.of_version_1_err
     | Repo_config_failure of string
     | Repo_config_parse_failure of string
     | Tag_query_err of Terrat_tag_query_ast.err
@@ -182,7 +181,10 @@ module type S = sig
     Client.t ->
     Repo.t ->
     Ref.t ->
-    (Terrat_repo_config.Version_1.t, [> `Parse_err of string ]) result Abb.Future.t
+    ( Terrat_base_repo_config_v1.t,
+      [> Terrat_base_repo_config_v1.of_version_1_err | `Parse_err of string ] )
+    result
+    Abb.Future.t
 
   val fetch_tree : Client.t -> Repo.t -> Ref.t -> (string list, [> `Error ]) result Abb.Future.t
 
@@ -360,7 +362,7 @@ module type S = sig
         t ->
         Client.t ->
         Pull_request.fetched Pull_request.t ->
-        Terrat_repo_config.Version_1.t ->
+        Terrat_base_repo_config_v1.t ->
         Terrat_change_match.t list ->
         ( Apply_requirements.t,
           [> `Error | `Invalid_query of string | Terrat_tag_query_ast.err ] )
@@ -548,7 +550,7 @@ module type S = sig
         val branch_name : t -> Ref.t
         val branch_ref : t -> Ref.t
         val index : t -> Terrat_change_match.Index.t option
-        val repo_config : t -> Terrat_repo_config.Version_1.t
+        val repo_config : t -> Terrat_base_repo_config_v1.t
         val tree : t -> string list
       end
 

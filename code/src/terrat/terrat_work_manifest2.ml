@@ -67,7 +67,7 @@ end
 module Deny = struct
   type t = {
     dirspace : Terrat_change.Dirspace.t;
-    policy : string list option;
+    policy : Terrat_base_repo_config_v1.Access_control.Match_list.t option;
   }
 end
 

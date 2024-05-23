@@ -15,6 +15,7 @@ type t = {
 }
 [@@deriving show]
 
+let equal { s = s1; _ } { s = s2; _ } = CCString.equal s1 s2
 let dir_in_prefix = "dir~"
 let dir_in_prefix_len = CCString.length dir_in_prefix
 
@@ -34,7 +35,7 @@ let rec match' ~tag_set ~dirspace = function
   | Q.Any -> true
   | Q.Not t -> not (match' ~tag_set ~dirspace t)
   | Q.Tag tag -> Terrat_tag_set.mem tag tag_set
-  | Q.Dir_glob (_, eq) -> eq dirspace.Terrat_change.Dirspace.dir
+  | Q.Dir_glob (_, eq) -> eq dirspace.Terrat_dirspace.dir
   | Q.And (l, r) -> match' ~tag_set ~dirspace l && match' ~tag_set ~dirspace r
   | Q.Or (l, r) -> match' ~tag_set ~dirspace l || match' ~tag_set ~dirspace r
 

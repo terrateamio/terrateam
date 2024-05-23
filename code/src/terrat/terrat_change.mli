@@ -11,21 +11,13 @@ module Diff : sig
   [@@deriving eq, show]
 end
 
-(** A dirspace is the name given to the tuple of a directory and a workspace.
-   This is the unit that an [apply] and [plan] can happen on. *)
-module Dirspace : sig
-  type t = {
-    dir : string;
-    workspace : string;
-  }
-  [@@deriving eq, ord, show]
-end
+module Dirspace = Terrat_dirspace
 
 module Dirspaceflow : sig
   module Workflow : sig
     type t = {
       idx : int;
-      workflow : Terrat_repo_config_workflow_entry.t;
+      workflow : Terrat_base_repo_config_v1.Workflows.Entry.t;
     }
     [@@deriving eq, show]
   end
