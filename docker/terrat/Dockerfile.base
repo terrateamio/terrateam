@@ -24,6 +24,7 @@ RUN apk add --no-cache \
     py3-yaml \
     python3 \
     sqlite-dev \
+    yj \
     zlib-dev
 
 # opam-init

@@ -75,6 +75,13 @@ module Result_status : sig
   [@@deriving show]
 end
 
+type fetch_repo_config_err =
+  [ Terrat_base_repo_config_v1.of_version_1_err
+  | `Repo_config_parse_err of string
+  | `Error
+  ]
+[@@deriving show]
+
 module type S = sig
   module Account : sig
     type t
@@ -176,17 +183,10 @@ module type S = sig
     Db.t -> Pull_request.fetched Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
 
   val fetch_remote_repo : Client.t -> Repo.t -> (Remote_repo.t, [> `Error ]) result Abb.Future.t
-
-  val fetch_repo_config :
-    Client.t ->
-    Repo.t ->
-    Ref.t ->
-    ( Terrat_base_repo_config_v1.t,
-      [> Terrat_base_repo_config_v1.of_version_1_err | `Parse_err of string ] )
-    result
-    Abb.Future.t
-
   val fetch_tree : Client.t -> Repo.t -> Ref.t -> (string list, [> `Error ]) result Abb.Future.t
+
+  val fetch_file :
+    Client.t -> Repo.t -> Ref.t -> string -> (string option, [> `Error ]) result Abb.Future.t
 
   val query_index :
     Db.t ->
@@ -379,7 +379,12 @@ module type S = sig
         t ->
         (Pull_request.stored Pull_request.t, Drift.t, Index.t) Terrat_work_manifest2.Kind.t
         Terrat_work_manifest2.Existing.t ->
-        (r, [> `Error | `Bad_glob_err of string * string ]) result Abb.Future.t
+        (Client.t ->
+        Repo.t ->
+        Ref.t ->
+        (Terrat_base_repo_config_v1.t, fetch_repo_config_err) result Abb.Future.t) ->
+        (r, [> `Error | `Bad_glob_err of string * string | fetch_repo_config_err ]) result
+        Abb.Future.t
 
       val done_ :
         t ->
@@ -565,7 +570,15 @@ module type S = sig
         ('a, 'e) result Abb.Future.t
 
       val query_missing_scheduled_runs : t -> (Schedule.t list, [> `Error ]) result Abb.Future.t
-      val fetch_data : t -> Schedule.t -> (Data.t, [> `Error ]) result Abb.Future.t
+
+      val fetch_data :
+        t ->
+        Schedule.t ->
+        (Client.t ->
+        Repo.t ->
+        Ref.t ->
+        (Terrat_base_repo_config_v1.t, fetch_repo_config_err) result Abb.Future.t) ->
+        (Data.t, [> `Error | fetch_repo_config_err ]) result Abb.Future.t
     end
 
     module Index : sig
@@ -593,7 +606,15 @@ module type S = sig
       type r
 
       val noop : t -> r
-      val update_drift_schedule : t -> (unit, [> `Error ]) result Abb.Future.t
+
+      val update_drift_schedule :
+        t ->
+        (Client.t ->
+        Repo.t ->
+        Ref.t ->
+        (Terrat_base_repo_config_v1.t, fetch_repo_config_err) result Abb.Future.t) ->
+        (unit, [> `Error | fetch_repo_config_err ]) result Abb.Future.t
+
       val drift_of_t : t -> Drift.t
       val repo : t -> Repo.t
       val request_id : t -> string

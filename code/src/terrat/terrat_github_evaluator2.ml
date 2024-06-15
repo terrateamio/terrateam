@@ -1259,24 +1259,29 @@ module S = struct
             m "GITHUB_EVALUATOR : %s : ERROR : %a" db.Db.request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
-  let fetch_repo_config client repo ref_ =
+  let fetch_file client repo ref_ path =
     let open Abb.Future.Infix_monad in
-    Terrat_github.fetch_repo_config
-      ~python:(Terrat_config.python_exec client.Client.config)
+    let module C = Githubc2_components.Content_file in
+    Terrat_github.fetch_file
       ~owner:repo.Repo.owner
       ~repo:repo.Repo.name
       ~ref_
+      ~path
       client.Client.client
     >>= function
-    | Ok config -> Abb.Future.return (Terrat_base_repo_config_v1.of_version_1 config)
-    | Error (#Terrat_github.fetch_repo_config_err as err) ->
+    | Ok (Some { C.primary = { C.Primary.encoding = "base64"; content; _ }; _ }) ->
+        Abb.Future.return
+          (Ok (Some (Base64.decode_exn (CCString.replace ~sub:"\n" ~by:"" content))))
+    | Ok (Some { C.primary = { C.Primary.content; _ }; _ }) -> Abb.Future.return (Ok (Some content))
+    | Ok None -> Abb.Future.return (Ok None)
+    | Error (#Terrat_github.fetch_file_err as err) ->
         Logs.err (fun m ->
             m
-              "GITHUB_EVALUATOR : %s : FETCH_REPO_CONFIG : %a"
+              "GITHUB_EVALUATOR : %s : FETCH_FILE : %a"
               client.Client.request_id
-              Terrat_github.pp_fetch_repo_config_err
+              Terrat_github.pp_fetch_file_err
               err);
-        Abb.Future.return (Error (`Parse_err (Terrat_github.show_fetch_repo_config_err err)))
+        Abb.Future.return (Error `Error)
 
   let fetch_remote_repo client repo =
     let open Abb.Future.Infix_monad in
@@ -3066,7 +3071,7 @@ module S = struct
                 ~key:encryption_key
                 (Cstruct.of_string (Uuidm.to_string id))))
 
-      let fetch_dirspaces' client repo dest_branch branch ref_ =
+      let fetch_dirspaces' client repo dest_branch branch ref_ fetch_repo_config =
         let run =
           let open Abbs_future_combinators.Infix_result_monad in
           Abbs_future_combinators.Infix_result_app.(
@@ -3125,17 +3130,14 @@ module S = struct
         >>= function
         | Ok _ as ret -> Abb.Future.return ret
         | Error (`Bad_glob msg) -> Abb.Future.return (Error (`Bad_glob_err (msg, ref_)))
-        | Error (`Parse_err _) -> Abb.Future.return (Error `Error)
-        | Error (`Bad_branch_pattern pat) -> failwith "nyi"
-        | Error (`Bad_dest_branch_pattern pat) -> failwith "nyi"
         | Error `Error -> Abb.Future.return (Error `Error)
         | _ -> failwith "nyi"
 
-      let fetch_dirspaces client repo dest_branch_name branch_name base_ref ref_ =
+      let fetch_dirspaces client repo dest_branch_name branch_name base_ref ref_ fetch_repo_config =
         Abbs_future_combinators.Infix_result_app.(
           (fun base_dirs dirs -> (base_dirs, dirs))
-          <$> fetch_dirspaces' client repo dest_branch_name branch_name base_ref
-          <*> fetch_dirspaces' client repo dest_branch_name branch_name ref_)
+          <$> fetch_dirspaces' client repo dest_branch_name branch_name base_ref fetch_repo_config
+          <*> fetch_dirspaces' client repo dest_branch_name branch_name ref_ fetch_repo_config)
 
       let run_kind_of_src =
         let module Wm = Terrat_work_manifest2 in
@@ -3162,9 +3164,22 @@ module S = struct
             Terrat_api_components.Work_manifest_dir.{ path = dir; workspace; workflow; rank = 0 })
           changes
 
-      let of_work_manifest t work_manifest =
+      let of_work_manifest t work_manifest fetch_repo_config =
         let open Abb.Future.Infix_monad in
         let module Wm = Terrat_work_manifest2 in
+        let fetch_repo_config =
+          (fetch_repo_config
+            : Client.t ->
+              Repo.t ->
+              Ref.t ->
+              (Terrat_base_repo_config_v1.t, Terrat_evaluator2.fetch_repo_config_err) result
+              Abb.Future.t
+            :> Client.t ->
+               Repo.t ->
+               Ref.t ->
+               (Terrat_base_repo_config_v1.t, [> Terrat_evaluator2.fetch_repo_config_err ]) result
+               Abb.Future.t)
+        in
         Abb.Sys.time ()
         >>= fun now ->
         let created_at = ISO8601.Permissive.datetime work_manifest.Wm.created_at in
@@ -3207,7 +3222,7 @@ module S = struct
             in
             create_client t.config account
             >>= fun client ->
-            fetch_dirspaces client repo base_branch_name branch_name base_ref ref_
+            fetch_dirspaces client repo base_branch_name branch_name base_ref ref_ fetch_repo_config
             >>= fun (base_dirspaces, dirspaces) ->
             Abb.Future.return
               (Ok
@@ -3251,7 +3266,7 @@ module S = struct
             in
             create_client t.config account
             >>= fun client ->
-            fetch_dirspaces client repo base_branch_name branch_name base_ref ref_
+            fetch_dirspaces client repo base_branch_name branch_name base_ref ref_ fetch_repo_config
             >>= fun (base_dirspaces, dirspaces) ->
             Abb.Future.return
               (Ok
@@ -3292,7 +3307,7 @@ module S = struct
             in
             create_client t.config account
             >>= fun client ->
-            fetch_dirspaces client repo base_branch_name branch_name base_ref ref_
+            fetch_dirspaces client repo base_branch_name branch_name base_ref ref_ fetch_repo_config
             >>= fun (base_dirspaces, dirspaces) ->
             Abb.Future.return
               (Ok
@@ -4415,7 +4430,7 @@ module S = struct
                 m "GITHUB_EVALUATOR : %s : DRIFT : %a" t.request_id Pgsql_io.pp_err err);
             Abb.Future.return (Error `Error)
 
-      let fetch_data' t account repo =
+      let fetch_data' t account repo fetch_repo_config =
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_github.get_installation_access_token t.config account.Account.installation_id
         >>= fun access_token ->
@@ -4462,9 +4477,22 @@ module S = struct
                    index = Some Terrat_change_match.Index.empty;
                  })
 
-      let fetch_data t sched =
+      let fetch_data t sched fetch_repo_config =
         let open Abb.Future.Infix_monad in
-        fetch_data' t sched.Schedule.account sched.Schedule.repo
+        let fetch_repo_config =
+          (fetch_repo_config
+            : Client.t ->
+              Repo.t ->
+              Ref.t ->
+              (Terrat_base_repo_config_v1.t, Terrat_evaluator2.fetch_repo_config_err) result
+              Abb.Future.t
+            :> Client.t ->
+               Repo.t ->
+               Ref.t ->
+               (Terrat_base_repo_config_v1.t, [> Terrat_evaluator2.fetch_repo_config_err ]) result
+               Abb.Future.t)
+        in
+        fetch_data' t sched.Schedule.account sched.Schedule.repo fetch_repo_config
         >>= function
         | Ok _ as ret -> Abb.Future.return ret
         | Error (#Terrat_github.get_installation_access_token_err as err) ->
@@ -4581,7 +4609,7 @@ module S = struct
                   (Repo.to_string t.repo));
             disable_drift_schedule t
 
-      let update_drift_schedule' t =
+      let update_drift_schedule' t fetch_repo_config =
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_github.get_installation_access_token t.config t.installation_id
         >>= fun access_token ->
@@ -4598,9 +4626,22 @@ module S = struct
         let drift_config = repo_config.C.drift in
         update_drift_config t drift_config
 
-      let update_drift_schedule t =
+      let update_drift_schedule t fetch_repo_config =
         let open Abb.Future.Infix_monad in
-        update_drift_schedule' t
+        let fetch_repo_config =
+          (fetch_repo_config
+            : Client.t ->
+              Repo.t ->
+              Ref.t ->
+              (Terrat_base_repo_config_v1.t, Terrat_evaluator2.fetch_repo_config_err) result
+              Abb.Future.t
+            :> Client.t ->
+               Repo.t ->
+               Ref.t ->
+               (Terrat_base_repo_config_v1.t, [> Terrat_evaluator2.fetch_repo_config_err ]) result
+               Abb.Future.t)
+        in
+        update_drift_schedule' t fetch_repo_config
         >>= function
         | Ok () -> Abb.Future.return (Ok ())
         | Error (#Terrat_github.get_installation_access_token_err as err) ->

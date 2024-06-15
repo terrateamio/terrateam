@@ -48,18 +48,6 @@ type get_installation_repos_err =
   ]
 [@@deriving show]
 
-type fetch_repo_config_err =
-  [ Githubc2_abb.call_err
-  | Abb_process.check_output_err
-  | `Repo_config_in_sub_module
-  | `Repo_config_is_symlink
-  | `Repo_config_is_dir
-  | `Repo_config_permission_denied
-  | `Repo_config_parse_err of string
-  | `Repo_config_unknown_err
-  ]
-[@@deriving show]
-
 type fetch_file_err =
   [ Githubc2_abb.call_err
   | `Forbidden of Githubc2_components.Basic_error.t
@@ -253,19 +241,6 @@ val fetch_branch :
   branch:string ->
   Githubc2_abb.t ->
   (Githubc2_components.Branch_with_protection.t, [> fetch_branch_err ]) result Abb.Future.t
-
-(** Load the configuration from the repo, which should be a YAML file if it
-   exists.  If it exists, convert it to JSON and load it.  If it does not exist
-   then create a default one.  The [python] variable is a bit strange here but
-   that is because Ocaml does not have great Yaml support so we piggyback on
-   Python for converting to JSON. *)
-val fetch_repo_config :
-  python:string ->
-  owner:string ->
-  repo:string ->
-  ref_:string ->
-  Githubc2_abb.t ->
-  (Terrat_repo_config.Version_1.t, [> fetch_repo_config_err ]) result Abb.Future.t
 
 val fetch_file :
   owner:string ->

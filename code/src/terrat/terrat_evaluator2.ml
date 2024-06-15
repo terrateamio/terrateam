@@ -165,6 +165,13 @@ module Result_status = struct
   [@@deriving show]
 end
 
+type fetch_repo_config_err =
+  [ Terrat_base_repo_config_v1.of_version_1_err
+  | `Repo_config_parse_err of string
+  | `Error
+  ]
+[@@deriving show]
+
 let compute_matches ~ctx ~repo_config ~tag_query ~out_of_change_applies ~diff ~repo_tree ~index () =
   let open CCResult.Infix in
   Terrat_change_match.synthesize_dir_config ~ctx ~index ~file_list:repo_tree repo_config
@@ -307,17 +314,10 @@ module type S = sig
     Db.t -> Pull_request.fetched Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
 
   val fetch_remote_repo : Client.t -> Repo.t -> (Remote_repo.t, [> `Error ]) result Abb.Future.t
-
-  val fetch_repo_config :
-    Client.t ->
-    Repo.t ->
-    Ref.t ->
-    ( Terrat_base_repo_config_v1.t,
-      [> Terrat_base_repo_config_v1.of_version_1_err | `Parse_err of string ] )
-    result
-    Abb.Future.t
-
   val fetch_tree : Client.t -> Repo.t -> Ref.t -> (string list, [> `Error ]) result Abb.Future.t
+
+  val fetch_file :
+    Client.t -> Repo.t -> Ref.t -> string -> (string option, [> `Error ]) result Abb.Future.t
 
   val query_index :
     Db.t ->
@@ -510,7 +510,12 @@ module type S = sig
         t ->
         (Pull_request.stored Pull_request.t, Drift.t, Index.t) Terrat_work_manifest2.Kind.t
         Terrat_work_manifest2.Existing.t ->
-        (r, [> `Error | `Bad_glob_err of string * string ]) result Abb.Future.t
+        (Client.t ->
+        Repo.t ->
+        Ref.t ->
+        (Terrat_base_repo_config_v1.t, fetch_repo_config_err) result Abb.Future.t) ->
+        (r, [> `Error | `Bad_glob_err of string * string | fetch_repo_config_err ]) result
+        Abb.Future.t
 
       val done_ :
         t ->
@@ -696,7 +701,15 @@ module type S = sig
         ('a, 'e) result Abb.Future.t
 
       val query_missing_scheduled_runs : t -> (Schedule.t list, [> `Error ]) result Abb.Future.t
-      val fetch_data : t -> Schedule.t -> (Data.t, [> `Error ]) result Abb.Future.t
+
+      val fetch_data :
+        t ->
+        Schedule.t ->
+        (Client.t ->
+        Repo.t ->
+        Ref.t ->
+        (Terrat_base_repo_config_v1.t, fetch_repo_config_err) result Abb.Future.t) ->
+        (Data.t, [> `Error | fetch_repo_config_err ]) result Abb.Future.t
     end
 
     module Index : sig
@@ -724,7 +737,15 @@ module type S = sig
       type r
 
       val noop : t -> r
-      val update_drift_schedule : t -> (unit, [> `Error ]) result Abb.Future.t
+
+      val update_drift_schedule :
+        t ->
+        (Client.t ->
+        Repo.t ->
+        Ref.t ->
+        (Terrat_base_repo_config_v1.t, fetch_repo_config_err) result Abb.Future.t) ->
+        (unit, [> `Error | fetch_repo_config_err ]) result Abb.Future.t
+
       val drift_of_t : t -> Drift.t
       val repo : t -> Repo.t
       val request_id : t -> string
@@ -955,7 +976,7 @@ module Make (S : S) = struct
       (log_time (S.Db.request_id db) "STORE_PULL_REQUEST")
       (fun () -> S.store_pull_request db pull_request)
 
-  let fetch_repo_config client repo ref_ =
+  let fetch_repo_config' client repo ref_ =
     Abbs_time_it.run
       (fun time ->
         Logs.info (fun m ->
@@ -965,7 +986,43 @@ module Make (S : S) = struct
               (S.Repo.to_string repo)
               (S.Ref.to_string ref_)
               time))
-      (fun () -> S.fetch_repo_config client repo ref_)
+      (fun () ->
+        let open Abbs_future_combinators.Infix_result_monad in
+        S.fetch_file client repo ref_ ".terrateam/config.yml"
+        >>= function
+        | Some content -> (
+            Terrat_json.of_yaml_string content
+            >>= fun json ->
+            match Terrat_repo_config.Version_1.of_yojson json with
+            | Ok config -> Abb.Future.return (Terrat_base_repo_config_v1.of_version_1 config)
+            | Error err ->
+                (* This is a cheap trick but we just want to make the error
+                   message a - little bit more friendly to users by replacing the
+                   parts of the - error message that are specific to the
+                   implementation. *)
+                Abb.Future.return
+                  (Error
+                     (`Repo_config_parse_err
+                       ("Failed to parse repo config: "
+                       ^ (err
+                         |> CCString.replace ~sub:"Terrat_repo_config." ~by:""
+                         |> CCString.replace ~sub:".t" ~by:""
+                         |> CCString.lowercase_ascii)))))
+        | None -> Abb.Future.return (Ok (Terrat_base_repo_config_v1.make ())))
+
+  let fetch_repo_config =
+    (fetch_repo_config'
+      : S.Client.t ->
+        S.Repo.t ->
+        S.Ref.t ->
+        (Terrat_base_repo_config_v1.t, fetch_repo_config_err) result Abb.Future.t
+      :> S.Client.t ->
+         S.Repo.t ->
+         S.Ref.t ->
+         (Terrat_base_repo_config_v1.t, [> fetch_repo_config_err ]) result Abb.Future.t)
+
+  let fetch_repo_config_drift = fetch_repo_config'
+  let fetch_repo_config_of_work_manifest = fetch_repo_config'
 
   let fetch_remote_repo client repo =
     Abbs_time_it.run
@@ -1195,7 +1252,7 @@ module Make (S : S) = struct
                   (S.Event.Drift.Schedule.request_id sched)
                   (S.Repo.to_string repo)
                   time))
-          (fun () -> S.Event.Drift.fetch_data t sched)
+          (fun () -> S.Event.Drift.fetch_data t sched fetch_repo_config_drift)
 
       let partition_by_environment dirspaceflows =
         let module Dsf = Terrat_change.Dirspaceflow in
@@ -1327,7 +1384,10 @@ module Make (S : S) = struct
         | Error (`Bad_glob err) ->
             Logs.info (fun m -> m "EVALUATOR : DRIFT : BAD_GLOB : %s" err);
             Abb.Future.return (Error `Error)
-        | Error `Error -> Abb.Future.return (Error `Error)
+        | Error (#fetch_repo_config_err as err) ->
+            Logs.info (fun m ->
+                m "EVALUATOR : DRIFT : FETCH_REPO_CONFIG_ERR : %a" pp_fetch_repo_config_err err);
+            Abb.Future.return (Error `Error)
 
       let eval' t =
         let open Abbs_future_combinators.Infix_result_monad in
@@ -1444,7 +1504,25 @@ module Make (S : S) = struct
         eval' t
         >>= function
         | Ok _ as ret -> Abb.Future.return ret
-        | Error _ -> failwith "nyi"
+        | Error (#Pgsql_io.err as err) ->
+            Logs.err (fun m ->
+                m "EVALUATOR : %s : DB : %a" (S.Event.Index.request_id t) Pgsql_io.pp_err err);
+            Abb.Future.return (Error `Error)
+        | Error (#Pgsql_pool.err as err) ->
+            Logs.err (fun m ->
+                m "EVALUATOR : %s : DB : %a" (S.Event.Index.request_id t) Pgsql_pool.pp_err err);
+            Abb.Future.return (Error `Error)
+        | Error (`Bad_glob err) ->
+            Logs.info (fun m -> m "EVALUATOR : %s : BAD_GLOB : %s" (S.Event.Index.request_id t) err);
+            Abb.Future.return (Error `Error)
+        | Error (#fetch_repo_config_err as err) ->
+            Logs.err (fun m ->
+                m
+                  "EVALUATOR : %s : FETCH_REPO_CONFIG_ERR : %a"
+                  (S.Event.Index.request_id t)
+                  pp_fetch_repo_config_err
+                  err);
+            Abb.Future.return (Error `Error)
     end
 
     module Plan_cleanup = struct
@@ -1888,12 +1966,12 @@ module Make (S : S) = struct
             Abb.Future.return (Error `Error)
         | Error (`Parse_err _) -> Abb.Future.return (Error `Error)
         | Error `Error -> Abb.Future.return (Error `Error)
-        | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
+        | Error (#fetch_repo_config_err as err) ->
             Logs.err (fun m ->
                 m
-                  "EVALUATOR : %s : REPO_CONFIG_ERR : %a"
+                  "EVALUATOR : %s : FETCH_REPO_CONFIG_ERR : %a"
                   (S.Event.Result.request_id t)
-                  Terrat_base_repo_config_v1.pp_of_version_1_err
+                  pp_fetch_repo_config_err
                   err);
             Abb.Future.return (Error `Error)
     end
@@ -1991,6 +2069,24 @@ module Make (S : S) = struct
             in
             Abbs_future_combinators.ignore
               (S.Publish_msg.publish_msg publish (Msg.Repo_config_err err))
+            >>= fun () -> Abb.Future.return (Error `Error)
+        | Error (#fetch_repo_config_err as err) ->
+            Logs.err (fun m ->
+                m
+                  "EVALUATOR : %s : FETCH_REPO_CONFIG_ERR : %a"
+                  (S.Event.Repo_config.request_id t)
+                  pp_fetch_repo_config_err
+                  err);
+            let publish =
+              S.Publish_msg.make
+                ~client
+                ~pull_number:(S.Pull_request.id pull_request)
+                ~repo
+                ~user:(S.Event.Repo_config.user t)
+                ()
+            in
+            Abbs_future_combinators.ignore
+              (S.Publish_msg.publish_msg publish Msg.Unexpected_temporary_err)
             >>= fun () -> Abb.Future.return (Error `Error)
 
       let eval t =
@@ -3327,6 +3423,15 @@ module Make (S : S) = struct
                         handle_source_branch_err t pull_request
                     | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
                         Abbs_future_combinators.ignore (publish_msg t (Msg.Repo_config_err err))
+                        >>= fun () -> Abb.Future.return (Error `Error)
+                    | Error (#fetch_repo_config_err as err) ->
+                        Logs.err (fun m ->
+                            m
+                              "EVALUATOR : %s : FETCH_REPO_CONFIG_ERR : %a"
+                              (S.Event.Terraform.request_id event)
+                              pp_fetch_repo_config_err
+                              err);
+                        Abbs_future_combinators.ignore (publish_msg t Msg.Unexpected_temporary_err)
                         >>= fun () -> Abb.Future.return (Error `Error))
                 | `Aborted ->
                     Prmths.Counter.inc_one Metrics.aborted_errors_total;
@@ -3669,11 +3774,19 @@ module Make (S : S) = struct
                 maybe_update_commit_checks t wm new_wm
                 >>= fun () ->
                 let open Abb.Future.Infix_monad in
-                S.Event.Initiate.of_work_manifest t new_wm
+                S.Event.Initiate.of_work_manifest t new_wm fetch_repo_config_of_work_manifest
                 >>= function
                 | Ok _ as ret -> Abb.Future.return ret
                 | Error (`Bad_glob_err (msg, _)) -> maybe_publish_msg t wm (Msg.Bad_glob msg)
-                | Error `Error -> Abb.Future.return (Error `Error))
+                | Error `Error -> Abb.Future.return (Error `Error)
+                | Error (#fetch_repo_config_err as err) ->
+                    Logs.err (fun m ->
+                        m
+                          "EVALUATOR : %s : FETCH_REPO_CONFIG_ERR : %a"
+                          (S.Event.Initiate.request_id t)
+                          pp_fetch_repo_config_err
+                          err);
+                    maybe_publish_msg t wm Msg.Unexpected_temporary_err)
             | None ->
                 let open Abb.Future.Infix_monad in
                 S.Event.Initiate.done_ t wm >>= fun r -> Abb.Future.return (Ok r))
@@ -3698,12 +3811,20 @@ module Make (S : S) = struct
                         maybe_update_commit_checks t wm wm
                         >>= fun () ->
                         let open Abb.Future.Infix_monad in
-                        S.Event.Initiate.of_work_manifest t wm
+                        S.Event.Initiate.of_work_manifest t wm fetch_repo_config_of_work_manifest
                         >>= function
                         | Ok _ as ret -> Abb.Future.return ret
                         | Error (`Bad_glob_err (msg, _)) ->
                             maybe_publish_msg t wm (Msg.Bad_glob msg)
-                        | Error `Error -> Abb.Future.return (Error `Error))
+                        | Error `Error -> Abb.Future.return (Error `Error)
+                        | Error (#fetch_repo_config_err as err) ->
+                            Logs.err (fun m ->
+                                m
+                                  "EVALUATOR : %s : FETCH_REPO_CONFIG_ERR : %a"
+                                  (S.Event.Initiate.request_id t)
+                                  pp_fetch_repo_config_err
+                                  err);
+                            maybe_publish_msg t wm Msg.Unexpected_temporary_err)
                     | dirspaces -> maybe_publish_msg t wm (Msg.Missing_plans dirspaces))
                 | dirspaces ->
                     maybe_publish_msg t wm (Msg.Dirspaces_owned_by_other_pull_request dirspaces))
@@ -3713,11 +3834,19 @@ module Make (S : S) = struct
             maybe_update_commit_checks t wm wm
             >>= fun () ->
             let open Abb.Future.Infix_monad in
-            S.Event.Initiate.of_work_manifest t wm
+            S.Event.Initiate.of_work_manifest t wm fetch_repo_config_of_work_manifest
             >>= function
             | Ok _ as ret -> Abb.Future.return ret
             | Error (`Bad_glob_err (msg, _)) -> maybe_publish_msg t wm (Msg.Bad_glob msg)
-            | Error `Error -> Abb.Future.return (Error `Error))
+            | Error `Error -> Abb.Future.return (Error `Error)
+            | Error (#fetch_repo_config_err as err) ->
+                Logs.err (fun m ->
+                    m
+                      "EVALUATOR : %s : FETCH_REPO_CONFIG_ERR : %a"
+                      (S.Event.Initiate.request_id t)
+                      pp_fetch_repo_config_err
+                      err);
+                maybe_publish_msg t wm Msg.Unexpected_temporary_err)
 
       let maybe_update_run_id db run_id =
         let open Abbs_future_combinators.Infix_result_monad in
@@ -3905,13 +4034,21 @@ module Make (S : S) = struct
         | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
             Abbs_future_combinators.ignore (publish_msg t (Msg.Repo_config_err err))
             >>= fun () -> Abb.Future.return (Error `Error)
-        | Error `Error -> Abb.Future.return (Error `Error)
+        | Error (#fetch_repo_config_err as err) ->
+            Logs.err (fun m ->
+                m
+                  "EVALUATOR : %s : FETCH_REPO_CONFIG_ERR : %a"
+                  (S.Event.Unlock.request_id t)
+                  pp_fetch_repo_config_err
+                  err);
+            Abbs_future_combinators.ignore (publish_msg t Msg.Unexpected_temporary_err)
+            >>= fun () -> Abb.Future.return (Error `Error)
     end
 
     module Push = struct
       let eval' t =
         let open Abbs_future_combinators.Infix_result_monad in
-        S.Event.Push.update_drift_schedule t
+        S.Event.Push.update_drift_schedule t fetch_repo_config_drift
         >>= fun () ->
         let drift = S.Event.Push.drift_of_t t in
         Drift.eval drift >>= fun _ -> Abb.Future.return (Ok ())
@@ -3928,6 +4065,14 @@ module Make (S : S) = struct
         >>= function
         | Ok _ -> Abb.Future.return (Ok (S.Event.Push.noop t))
         | Error `Error -> Abb.Future.return (Error `Error)
+        | Error (#fetch_repo_config_err as err) ->
+            Logs.err (fun m ->
+                m
+                  "EVALUATOR : %s : FETCH_REPO_CONFIG_ERR : %a"
+                  (S.Event.Push.request_id t)
+                  pp_fetch_repo_config_err
+                  err);
+            Abb.Future.return (Error `Error)
     end
   end
 

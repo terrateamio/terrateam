@@ -1,4 +1,3 @@
-module Process = Abb_process.Make (Abb)
 module Org_admin = CCMap.Make (CCInt)
 
 module Metrics = struct
@@ -24,7 +23,6 @@ end
 
 let terrateam_workflow_name = "Terrateam Workflow"
 let terrateam_workflow_path = ".github/workflows/terrateam.yml"
-let terrateam_config_yml = [ ".terrateam/config.yml"; ".terrateam/config.yaml" ]
 let installation_expiration_sec = 60.0
 
 type user_err =
@@ -74,18 +72,6 @@ type get_installation_repos_err =
   | `Forbidden of Githubc2_components.Basic_error.t
   | `Not_found of Githubc2_components.Basic_error.t
   | `Unauthorized of Githubc2_components.Basic_error.t
-  ]
-[@@deriving show]
-
-type fetch_repo_config_err =
-  [ Githubc2_abb.call_err
-  | Abb_process.check_output_err
-  | `Repo_config_in_sub_module
-  | `Repo_config_is_symlink
-  | `Repo_config_is_dir
-  | `Repo_config_permission_denied
-  | `Repo_config_parse_err of string
-  | `Repo_config_unknown_err
   ]
 [@@deriving show]
 
@@ -296,37 +282,6 @@ let get_installation_access_token
   | (`Unauthorized _ | `Forbidden _ | `Not_found _ | `Unprocessable_entity _) as err ->
       Abb.Future.return (Error err)
 
-let parse_repo_config python content =
-  let open Abb.Future.Infix_monad in
-  Process.check_output
-    ~input:content
-    Abb_intf.Process.
-      {
-        exec_name = python;
-        args =
-          [
-            python;
-            "-c";
-            CCString.concat
-              "\n"
-              [
-                "import sys, yaml, json";
-                "try:";
-                "\tprint(json.dumps(yaml.safe_load(sys.stdin.read())))";
-                "except yaml.parser.ParserError as exn:";
-                "\tsys.stderr.write(str(exn) + '\\n')";
-                "\tsys.exit(1)";
-              ];
-          ];
-        env = None;
-        cwd = None;
-      }
-  >>= function
-  | Ok (stdout, _) -> Abb.Future.return (Ok stdout)
-  | Error (`Run_error (_, _, stderr, _)) ->
-      Abb.Future.return (Error (`Repo_config_parse_err stderr))
-  | Error (#Abb_process.check_output_err as err) -> Abb.Future.return (Error err)
-
 let create_pull_request ~owner ~repo ~base_branch ~branch ~title ~body client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "create_pull_request");
   let open Abbs_future_combinators.Infix_result_monad in
@@ -373,67 +328,6 @@ let fetch_branch ~owner ~repo ~branch client =
   match Openapi.Response.value resp with
   | `OK branch -> Abb.Future.return (Ok branch)
   | (`Moved_permanently _ | `Not_found _) as err -> Abb.Future.return (Error err)
-
-let rec fetch_repo_config' ~python ~owner ~repo ref_ client = function
-  | [] ->
-      let json = `Assoc [] in
-      Abb.Future.return (Ok (CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson json)))
-  | terrateam_config_yml :: next_config_yml -> (
-      let open Abbs_future_combinators.Infix_result_monad in
-      call
-        client
-        Githubc2_repos.Get_content.(
-          make (Parameters.make ~owner ~repo ~ref_:(Some ref_) ~path:terrateam_config_yml ()))
-      >>= fun resp ->
-      let module C = Githubc2_repos.Get_content.Responses.OK in
-      match Openapi.Response.value resp with
-      | `OK (C.Content_file file) ->
-          let content =
-            Githubc2_components.Content_file.(
-              match file.primary.Primary.encoding with
-              | "base64" ->
-                  Base64.decode_exn (CCString.replace ~sub:"\n" ~by:"" file.primary.Primary.content)
-              | _ -> file.primary.Primary.content)
-          in
-          if not (CCString.is_empty (CCString.trim content)) then
-            parse_repo_config python content
-            >>= fun stdout ->
-            try
-              let json =
-                match stdout with
-                | "" -> `Assoc []
-                | stdout -> Yojson.Safe.from_string stdout
-              in
-              match Terrat_repo_config.Version_1.of_yojson json with
-              | Ok config -> Abb.Future.return (Ok config)
-              | Error err ->
-                  (* This is a cheap trick but we just want to make the error message a
-                     little bit more friendly to users by replacing the parts of the
-                     error message that are specific to the implementation. *)
-                  Abb.Future.return
-                    (Error
-                       (`Repo_config_parse_err
-                         ("Failed to parse repo config: "
-                         ^ (err
-                           |> CCString.replace ~sub:"Terrat_repo_config." ~by:""
-                           |> CCString.replace ~sub:".t" ~by:""
-                           |> CCString.lowercase_ascii))))
-            with Yojson.Json_error str ->
-              Abb.Future.return
-                (Error (`Repo_config_parse_err ("Failed to parse repo config: " ^ str)))
-          else
-            let json = `Assoc [] in
-            Abb.Future.return (Ok (CCResult.get_exn (Terrat_repo_config.Version_1.of_yojson json)))
-      | `Not_found _ -> fetch_repo_config' ~python ~owner ~repo ref_ client next_config_yml
-      | `OK (C.Content_directory _) -> Abb.Future.return (Error `Repo_config_is_dir)
-      | `OK (C.Content_symlink _) -> Abb.Future.return (Error `Repo_config_is_symlink)
-      | `OK (C.Content_submodule _) -> Abb.Future.return (Error `Repo_config_in_sub_module)
-      | `Forbidden _ -> Abb.Future.return (Error `Repo_config_permission_denied)
-      | `Found -> Abb.Future.return (Error `Repo_config_unknown_err))
-
-let fetch_repo_config ~python ~owner ~repo ~ref_ client =
-  Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_repo_config");
-  fetch_repo_config' ~python ~owner ~repo ref_ client terrateam_config_yml
 
 let fetch_file ~owner ~repo ~ref_ ~path client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_file");
