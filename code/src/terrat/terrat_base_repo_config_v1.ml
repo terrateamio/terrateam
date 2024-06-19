@@ -33,6 +33,8 @@ let map_opt f = function
       let open CCResult.Infix in
       f v >>= fun v -> Ok (Some v)
 
+let map_opt_if_true test f v = if test v then Some (f v) else None
+
 module Pattern = struct
   type t = {
     s : string;
@@ -49,6 +51,7 @@ module Pattern = struct
   let equal p1 p2 = CCString.equal (pattern p1) (pattern p2)
   let pp formatter { s; _ } = Format.fprintf formatter "%s" s
   let show { s; _ } = s
+  let to_string { s; _ } = s
   let to_yojson { s; _ } = `String s
 
   let of_yojson = function
@@ -85,6 +88,11 @@ module Workflow_step = struct
       | Always
       | Success
     [@@deriving show, yojson, eq]
+
+    let to_string = function
+      | Failure -> "failure"
+      | Always -> "always"
+      | Success -> "success"
   end
 
   module Retry = struct
@@ -344,6 +352,7 @@ module File_pattern = struct
   let equal fp1 fp2 = CCString.equal (file_pattern fp1) (file_pattern fp2)
   let pp formatter { s; _ } = Format.fprintf formatter "%s" s
   let show { s; _ } = s
+  let to_string { s; _ } = s
   let to_yojson { s; _ } = `String s
 
   let of_yojson = function
@@ -571,6 +580,12 @@ module Workflows = struct
         | None
         | Strict
       [@@deriving show, yojson, eq]
+
+      let to_string = function
+        | Apply -> "apply"
+        | Merge -> "merge"
+        | None -> "none"
+        | Strict -> "strict"
     end
 
     type t = {
@@ -1474,6 +1489,527 @@ let of_version_1 v1 =
        ?when_modified
        ?workflows
        ())
+
+let to_version_1_match_list =
+  CCList.map (function
+      | Access_control.Match.User user -> "user:" ^ user
+      | Access_control.Match.Team team -> "team:" ^ team
+      | Access_control.Match.Repo repo -> "repo:" ^ repo
+      | Access_control.Match.Any -> "*")
+
+let to_version_1_policy_list =
+  CCList.map
+    (fun
+      {
+        Access_control.Policy.apply;
+        apply_autoapprove;
+        apply_force;
+        apply_with_superapproval;
+        plan;
+        superapproval;
+        tag_query;
+      }
+    ->
+      let module P = Terrat_repo_config.Access_control_policy in
+      {
+        P.apply = Some (to_version_1_match_list apply);
+        apply_autoapprove = Some (to_version_1_match_list apply_autoapprove);
+        apply_force = Some (to_version_1_match_list apply_force);
+        apply_with_superapproval = Some (to_version_1_match_list apply_with_superapproval);
+        plan = Some (to_version_1_match_list plan);
+        superapproval = Some (to_version_1_match_list superapproval);
+        tag_query = Terrat_tag_query.to_string tag_query;
+      })
+
+let to_version_1_access_control ac =
+  let module Ac = Terrat_repo_config.Access_control in
+  {
+    Ac.apply_require_all_dirspace_access = ac.Access_control.apply_require_all_dirspace_access;
+    enabled = ac.Access_control.enabled;
+    plan_require_all_dirspace_access = ac.Access_control.plan_require_all_dirspace_access;
+    policies = Some (to_version_1_policy_list ac.Access_control.policies);
+    terrateam_config_update =
+      Some (to_version_1_match_list ac.Access_control.terrateam_config_update);
+    unlock = Some (to_version_1_match_list ac.Access_control.unlock);
+  }
+
+let to_version_1_apply_requirements_approved approved =
+  let module Ap = Terrat_repo_config.Apply_requirements_checks_approved_2 in
+  let { Apply_requirements.Approved.all_of; any_of; any_of_count; enabled } = approved in
+  {
+    Ap.all_of = Some (to_version_1_match_list all_of);
+    any_of = Some (to_version_1_match_list any_of);
+    any_of_count;
+    enabled;
+  }
+
+let to_version_1_apply_requirements_merge_conflicts mc =
+  let module Mc = Terrat_repo_config.Apply_requirements_checks_merge_conflicts in
+  let { Apply_requirements.Merge_conflicts.enabled } = mc in
+  { Mc.enabled }
+
+let to_version_1_apply_requirements_status_checks sc =
+  let module Sc = Terrat_repo_config.Apply_requirements_checks_status_checks in
+  let { Apply_requirements.Status_checks.enabled; ignore_matching } = sc in
+  { Sc.enabled; ignore_matching = Some ignore_matching }
+
+let to_version_1_apply_requirements_checks =
+  let module C2 = Terrat_repo_config.Apply_requirements_checks_2 in
+  CCList.map
+    (fun { Apply_requirements.Check.approved; merge_conflicts; status_checks; tag_query } ->
+      {
+        C2.Items.approved = Some (to_version_1_apply_requirements_approved approved);
+        merge_conflicts = Some (to_version_1_apply_requirements_merge_conflicts merge_conflicts);
+        status_checks = Some (to_version_1_apply_requirements_status_checks status_checks);
+        tag_query = Terrat_tag_query.to_string tag_query;
+      })
+
+let to_version_1_apply_requirements ar =
+  let module Ar = Terrat_repo_config.Apply_requirements in
+  let module C = Terrat_repo_config.Apply_requirements_checks in
+  let { Apply_requirements.checks; create_pending_apply_check } = ar in
+  {
+    Ar.checks = Some (C.Apply_requirements_checks_2 (to_version_1_apply_requirements_checks checks));
+    create_pending_apply_check;
+  }
+
+let to_version_1_automerge automerge =
+  let module Am = Terrat_repo_config.Automerge in
+  let { Automerge.delete_branch; enabled } = automerge in
+  { Am.delete_branch; enabled }
+
+let to_version_1_cost_estimation_provider = function
+  | Cost_estimation.Provider.Infracost -> "infracost"
+
+let to_version_1_cost_estimation cost_estimation =
+  let module Ce = Terrat_repo_config.Version_1.Cost_estimation in
+  let { Cost_estimation.currency; enabled; provider } = cost_estimation in
+  { Ce.currency; enabled; provider = to_version_1_cost_estimation_provider provider }
+
+let to_version_1_destination_branches db =
+  let module Db = Terrat_repo_config.Version_1.Destination_branches in
+  let module Obj = Terrat_repo_config.Destination_branch_object in
+  CCList.map
+    (fun { Destination_branches.Destination_branch.branch; source_branches } ->
+      Db.Items.Destination_branch_object { Obj.branch; source_branches = Some source_branches })
+    db
+
+let to_version_1_dirs_dir_workspaces workspaces =
+  let module Ws = Terrat_repo_config.Workspaces in
+  Ws.make
+    ~additional:
+      (String_map.fold
+         (fun k v acc ->
+           let { Dirs.Workspace.tags } = v in
+           Json_schema.String_map.add k { Ws.Additional.tags } acc)
+         workspaces
+         Json_schema.String_map.empty)
+    Json_schema.Empty_obj.t
+
+let to_version_1_dirs_dir_when_modified wm =
+  let module Wm = Terrat_repo_config.When_modified_nullable in
+  let { When_modified.autoapply; autoplan; autoplan_draft_pr; file_patterns } = wm in
+  {
+    Wm.autoapply = Some autoapply;
+    autoplan = Some autoplan;
+    autoplan_draft_pr = Some autoplan_draft_pr;
+    file_patterns = Some (CCList.map File_pattern.to_string file_patterns);
+  }
+
+let to_version_1_dirs_dir dirs =
+  let module D = Terrat_repo_config.Dir in
+  String_map.fold
+    (fun k v acc ->
+      let { Dirs.Dir.create_and_select_workspace; stacks; tags; when_modified; workspaces } = v in
+      Json_schema.String_map.add
+        k
+        {
+          D.create_and_select_workspace;
+          stacks =
+            (if String_map.is_empty stacks then None
+             else Some (to_version_1_dirs_dir_workspaces stacks));
+          tags = Some tags;
+          when_modified = Some (to_version_1_dirs_dir_when_modified when_modified);
+          workspaces =
+            (if String_map.is_empty workspaces then None
+             else Some (to_version_1_dirs_dir_workspaces workspaces));
+        }
+        acc)
+    dirs
+    Json_schema.String_map.empty
+
+let to_version_1_dirs dirs =
+  let module Ds = Terrat_repo_config.Version_1.Dirs in
+  Ds.make ~additional:(to_version_1_dirs_dir dirs) Json_schema.Empty_obj.t
+
+let to_version_1_drift drift =
+  let module D = Terrat_repo_config.Drift in
+  let { Drift.enabled; reconcile; schedule; tag_query } = drift in
+  {
+    D.enabled;
+    reconcile;
+    schedule = Drift.Schedule.to_string schedule;
+    tag_query = Some (Terrat_tag_query.to_string tag_query);
+  }
+
+let to_version_1_engine engine =
+  let module E = Terrat_repo_config.Engine in
+  match engine with
+  | Engine.Cdktf cdktf ->
+      let module Cdktf = Terrat_repo_config.Engine_cdktf in
+      let { Engine.Cdktf.tf_cmd; tf_version } = cdktf in
+      E.Engine_cdktf { Cdktf.name = "cdktf"; tf_cmd = Some tf_cmd; tf_version = Some tf_version }
+  | Engine.Opentofu ot ->
+      let module Ot = Terrat_repo_config.Engine_opentofu in
+      let { Engine.Opentofu.version } = ot in
+      E.Engine_opentofu { Ot.name = "tofu"; version = Some version }
+  | Engine.Terraform tf ->
+      let module Tf = Terrat_repo_config.Engine_terraform in
+      let { Engine.Terraform.version } = tf in
+      E.Engine_terraform { Tf.name = "terraform"; version = Some version }
+  | Engine.Terragrunt tg ->
+      let module Tg = Terrat_repo_config.Engine_terragrunt in
+      let { Engine.Terragrunt.tf_cmd; tf_version; version } = tg in
+      E.Engine_terragrunt
+        {
+          Tg.name = "terragrunt";
+          tf_cmd = Some tf_cmd;
+          tf_version = Some tf_version;
+          version = Some version;
+        }
+
+let to_version_1_hooks_op_env_exec env =
+  let module Op = Terrat_repo_config.Hook_op in
+  let module E = Terrat_repo_config.Hook_op_env_exec in
+  let { Workflow_step.Env.Exec.cmd; name; trim_trailing_newlines } = env in
+  { E.cmd; method_ = Some "exec"; name; trim_trailing_newlines; type_ = "env" }
+
+let to_version_1_hooks_op_env_source env =
+  let module Op = Terrat_repo_config.Hook_op in
+  let module E = Terrat_repo_config.Hook_op_env_source in
+  let { Workflow_step.Env.Source.cmd } = env in
+  { E.cmd; method_ = "source"; type_ = "env" }
+
+let to_version_1_hooks_op_oidc = function
+  | Workflow_step.Oidc.Aws oidc ->
+      let module Oidc = Terrat_repo_config.Hook_op_oidc in
+      let module Aws = Terrat_repo_config.Hook_op_oidc_aws in
+      let {
+        Workflow_step.Oidc.Aws.assume_role_arn;
+        assume_role_enabled;
+        audience;
+        duration;
+        region;
+        role_arn;
+        session_name;
+      } =
+        oidc
+      in
+      Oidc.Hook_op_oidc_aws
+        {
+          Aws.assume_role_arn;
+          assume_role_enabled;
+          audience;
+          duration;
+          provider = Some "aws";
+          region;
+          role_arn;
+          session_name;
+          type_ = "oidc";
+        }
+  | Workflow_step.Oidc.Gcp oidc ->
+      let module Oidc = Terrat_repo_config.Hook_op_oidc in
+      let module Gcp = Terrat_repo_config.Hook_op_oidc_gcp in
+      let {
+        Workflow_step.Oidc.Gcp.access_token_lifetime;
+        access_token_subject;
+        audience;
+        project_id;
+        service_account;
+        workload_identity_provider;
+      } =
+        oidc
+      in
+      Oidc.Hook_op_oidc_gcp
+        {
+          Gcp.access_token_lifetime;
+          access_token_subject;
+          audience;
+          project_id;
+          provider = "gcp";
+          service_account;
+          type_ = "oidc";
+          workload_identity_provider;
+        }
+
+let to_version_1_hooks_op_run r =
+  let module R = Terrat_repo_config.Hook_op_run in
+  let { Workflow_step.Run.capture_output; cmd; env; run_on } = r in
+  {
+    R.capture_output;
+    cmd;
+    env = CCOption.map (fun env -> R.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+    run_on = Some (Workflow_step.Run_on.to_string run_on);
+    type_ = "run";
+  }
+
+let to_version_1_hooks_hook_list =
+  let module Op = Terrat_repo_config.Hook_op in
+  CCList.map (function
+      | Hooks.Hook_op.Drift_create_issue ->
+          let module D = Terrat_repo_config.Hook_op_drift_create_issue in
+          Op.Hook_op_drift_create_issue { D.type_ = Some "drift_create_issue" }
+      | Hooks.Hook_op.Env (Workflow_step.Env.Exec env) ->
+          Op.Hook_op_env_exec (to_version_1_hooks_op_env_exec env)
+      | Hooks.Hook_op.Env (Workflow_step.Env.Source env) ->
+          Op.Hook_op_env_source (to_version_1_hooks_op_env_source env)
+      | Hooks.Hook_op.Oidc oidc -> Op.Hook_op_oidc (to_version_1_hooks_op_oidc oidc)
+      | Hooks.Hook_op.Run r -> Op.Hook_op_run (to_version_1_hooks_op_run r))
+
+let to_version_1_hooks_hook hook =
+  let module H = Terrat_repo_config.Hook in
+  let { Hooks.Hook.pre; post } = hook in
+  {
+    H.post = Some (to_version_1_hooks_hook_list post);
+    pre = Some (to_version_1_hooks_hook_list pre);
+  }
+
+let to_version_1_hooks hooks =
+  let module H = Terrat_repo_config.Version_1.Hooks in
+  let { Hooks.all; apply; plan } = hooks in
+  {
+    H.all = Some (to_version_1_hooks_hook all);
+    apply = Some (to_version_1_hooks_hook apply);
+    plan = Some (to_version_1_hooks_hook plan);
+  }
+
+let to_version_1_indexer indexer =
+  let { Indexer.build_tag; enabled } = indexer in
+  { V1.Indexer.build_tag; enabled }
+
+let to_version_1_integrations integrations =
+  let module I = Terrat_repo_config.Integrations in
+  let { Integrations.resourcely = { Integrations.Resourcely.enabled; extra_args } } =
+    integrations
+  in
+  { I.resourcely = Some { I.Resourcely.enabled; extra_args = Some [] } }
+
+let to_version_1_storage_plans plans =
+  match plans with
+  | Storage.Plans.Terrateam ->
+      let module S = Terrat_repo_config.Storage_plan_terrateam in
+      V1.Storage.Plans.Storage_plan_terrateam { S.method_ = "terrateam" }
+  | Storage.Plans.Cmd cmd ->
+      let module S = Terrat_repo_config.Storage_plan_cmd in
+      let { Storage.Plans.Cmd.delete; fetch; store } = cmd in
+      V1.Storage.Plans.Storage_plan_cmd { S.delete; fetch; method_ = "cmd"; store }
+  | Storage.Plans.S3 s3 ->
+      let module S = Terrat_repo_config.Storage_plan_s3 in
+      let {
+        Storage.Plans.S3.access_key_id;
+        bucket;
+        delete_extra_args;
+        delete_used_plans;
+        fetch_extra_args;
+        path;
+        region;
+        secret_access_key;
+        store_extra_args;
+      } =
+        s3
+      in
+      V1.Storage.Plans.Storage_plan_s3
+        {
+          S.access_key_id;
+          bucket;
+          delete_extra_args = Some delete_extra_args;
+          delete_used_plans;
+          fetch_extra_args = Some fetch_extra_args;
+          method_ = "s3";
+          path;
+          region;
+          secret_access_key;
+          store_extra_args = Some store_extra_args;
+        }
+
+let to_version_1_storage storage =
+  let { Storage.plans } = storage in
+  { V1.Storage.plans = Some (to_version_1_storage_plans plans) }
+
+let to_version_1_tags_branch branch =
+  Terrat_repo_config.Custom_tags_branch.make
+    ~additional:
+      (String_map.fold
+         (fun k v acc -> Json_schema.String_map.add k (Pattern.to_string v) acc)
+         branch
+         Json_schema.String_map.empty)
+    Json_schema.Empty_obj.t
+
+let to_version_1_tags tags =
+  let module T = Terrat_repo_config.Custom_tags in
+  let { Tags.branch; dest_branch } = tags in
+  {
+    T.branch = Some (to_version_1_tags_branch branch);
+    dest_branch = Some (to_version_1_tags_branch dest_branch);
+  }
+
+let to_version_1_when_modified when_modified =
+  let module Wm = Terrat_repo_config.When_modified in
+  let { When_modified.autoapply; autoplan; autoplan_draft_pr; file_patterns } = when_modified in
+  {
+    Wm.autoapply;
+    autoplan;
+    autoplan_draft_pr;
+    file_patterns = CCList.map File_pattern.to_string file_patterns;
+  }
+
+let to_version_1_workflow_retry retry =
+  let module R = Terrat_repo_config.Retry in
+  let { Workflow_step.Retry.backoff; enabled; initial_sleep; tries } = retry in
+  { R.backoff; enabled; initial_sleep; tries }
+
+let to_version_1_workflows_op =
+  let module Op = Terrat_repo_config.Workflow_op_list in
+  CCList.map (function
+      | Workflows.Entry.Op.Init init ->
+          let module I = Terrat_repo_config.Workflow_op_init in
+          let { Workflow_step.Init.env; extra_args } = init in
+          Op.Items.Workflow_op_init
+            {
+              I.env =
+                CCOption.map (fun env -> I.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+              extra_args = Some extra_args;
+              type_ = "init";
+            }
+      | Workflows.Entry.Op.Plan plan ->
+          let module P = Terrat_repo_config.Workflow_op_plan in
+          let { Workflow_step.Plan.env; extra_args } = plan in
+          Op.Items.Workflow_op_plan
+            {
+              P.env =
+                CCOption.map (fun env -> P.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+              extra_args = Some extra_args;
+              type_ = "plan";
+            }
+      | Workflows.Entry.Op.Apply apply ->
+          let module A = Terrat_repo_config.Workflow_op_apply in
+          let { Workflow_step.Apply.env; extra_args; retry } = apply in
+          Op.Items.Workflow_op_apply
+            {
+              A.env =
+                CCOption.map (fun env -> A.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+              extra_args = Some extra_args;
+              retry = CCOption.map to_version_1_workflow_retry retry;
+              type_ = "apply";
+            }
+      | Workflows.Entry.Op.Run r -> Op.Items.Hook_op_run (to_version_1_hooks_op_run r)
+      | Workflows.Entry.Op.Env (Workflow_step.Env.Exec env) ->
+          Op.Items.Hook_op_env_exec (to_version_1_hooks_op_env_exec env)
+      | Workflows.Entry.Op.Env (Workflow_step.Env.Source env) ->
+          Op.Items.Hook_op_env_source (to_version_1_hooks_op_env_source env)
+      | Workflows.Entry.Op.Oidc oidc -> Op.Items.Hook_op_oidc (to_version_1_hooks_op_oidc oidc))
+
+let to_version_1_workflows =
+  CCList.map (fun entry ->
+      let module E = Terrat_repo_config.Workflow_entry in
+      let { Workflows.Entry.apply; engine; environment; integrations; lock_policy; plan; tag_query }
+          =
+        entry
+      in
+      {
+        E.apply = Some (to_version_1_workflows_op apply);
+        cdktf = false;
+        engine = Some (to_version_1_engine engine);
+        environment;
+        integrations =
+          map_opt_if_true
+            CCFun.(Integrations.equal (Integrations.make ()) %> not)
+            to_version_1_integrations
+            integrations;
+        lock_policy = Workflows.Entry.Lock_policy.to_string lock_policy;
+        plan = Some (to_version_1_workflows_op plan);
+        tag_query = Terrat_tag_query.to_string tag_query;
+        terraform_version = None;
+        terragrunt = false;
+      })
+
+let to_version_1 t =
+  let {
+    access_control;
+    apply_requirements;
+    automerge;
+    cost_estimation;
+    create_and_select_workspace;
+    destination_branches;
+    dirs;
+    drift;
+    enabled;
+    engine;
+    hooks;
+    indexer;
+    integrations;
+    parallel_runs;
+    storage;
+    tags;
+    when_modified;
+    workflows;
+  } =
+    t
+  in
+  {
+    V1.access_control =
+      map_opt_if_true
+        CCFun.(Access_control.equal (Access_control.make ()) %> not)
+        to_version_1_access_control
+        access_control;
+    apply_requirements =
+      map_opt_if_true
+        CCFun.(Apply_requirements.equal (Apply_requirements.make ()) %> not)
+        to_version_1_apply_requirements
+        apply_requirements;
+    automerge =
+      map_opt_if_true
+        CCFun.(Automerge.equal (Automerge.make ()) %> not)
+        to_version_1_automerge
+        automerge;
+    checkout_strategy = "merge";
+    cost_estimation =
+      map_opt_if_true
+        CCFun.(Cost_estimation.equal (Cost_estimation.make ()) %> not)
+        to_version_1_cost_estimation
+        cost_estimation;
+    create_and_select_workspace;
+    default_tf_version = None;
+    destination_branches =
+      map_opt_if_true (( <> ) []) to_version_1_destination_branches destination_branches;
+    dirs = map_opt_if_true CCFun.(String_map.is_empty %> not) to_version_1_dirs dirs;
+    drift = map_opt_if_true CCFun.(Drift.equal (Drift.make ()) %> not) to_version_1_drift drift;
+    enabled;
+    engine =
+      map_opt_if_true
+        CCFun.(Engine.equal Engine.(Terraform (Terraform.make ())) %> not)
+        to_version_1_engine
+        engine;
+    hooks = map_opt_if_true CCFun.(Hooks.equal (Hooks.make ()) %> not) to_version_1_hooks hooks;
+    indexer =
+      map_opt_if_true CCFun.(Indexer.equal (Indexer.make ()) %> not) to_version_1_indexer indexer;
+    integrations =
+      map_opt_if_true
+        CCFun.(Integrations.equal (Integrations.make ()) %> not)
+        to_version_1_integrations
+        integrations;
+    parallel_runs;
+    storage =
+      map_opt_if_true CCFun.(Storage.equal (Storage.make ()) %> not) to_version_1_storage storage;
+    tags = map_opt_if_true CCFun.(Tags.equal (Tags.make ()) %> not) to_version_1_tags tags;
+    version = "1";
+    when_modified =
+      map_opt_if_true
+        CCFun.(When_modified.equal (When_modified.make ()) %> not)
+        to_version_1_when_modified
+        when_modified;
+    workflows = map_opt_if_true (( <> ) []) to_version_1_workflows workflows;
+  }
 
 let merge_with_default_branch_config ~default t =
   {

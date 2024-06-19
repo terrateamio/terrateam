@@ -2544,7 +2544,9 @@ module S = struct
           apply_template_and_publish "ACCOUNT_EXPIRED" Tmpl.account_expired_err kv t
       | Msg.Repo_config (repo_config, dirs) ->
           let repo_config_json =
-            Yojson.Safe.pretty_to_string (Terrat_base_repo_config_v1.to_yojson repo_config)
+            Yojson.Safe.pretty_to_string
+              (Terrat_repo_config.Version_1.to_yojson
+                 (Terrat_base_repo_config_v1.to_version_1 repo_config))
           in
           let dirs_json = Yojson.Safe.pretty_to_string (Terrat_change_match.Dirs.to_yojson dirs) in
           let kv =
