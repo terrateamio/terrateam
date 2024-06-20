@@ -2542,18 +2542,32 @@ module S = struct
       | Msg.Account_expired ->
           let kv = Snabela.Kv.(Map.of_list []) in
           apply_template_and_publish "ACCOUNT_EXPIRED" Tmpl.account_expired_err kv t
-      | Msg.Repo_config (repo_config, dirs) ->
+      | Msg.Repo_config (repo_config, dirs) -> (
+          let open Abb.Future.Infix_monad in
           let repo_config_json =
-            Yojson.Safe.pretty_to_string
-              (Terrat_repo_config.Version_1.to_yojson
-                 (Terrat_base_repo_config_v1.to_version_1 repo_config))
+            Terrat_repo_config.Version_1.to_yojson
+              (Terrat_base_repo_config_v1.to_version_1 repo_config)
           in
-          let dirs_json = Yojson.Safe.pretty_to_string (Terrat_change_match.Dirs.to_yojson dirs) in
-          let kv =
-            Snabela.Kv.(
-              Map.of_list [ ("repo_config", string repo_config_json); ("dirs", string dirs_json) ])
-          in
-          apply_template_and_publish "REPO_CONFIG" Tmpl.repo_config kv t
+          Terrat_json.to_yaml_string repo_config_json
+          >>= function
+          | Ok repo_config_yaml ->
+              let dirs_json =
+                Yojson.Safe.pretty_to_string (Terrat_change_match.Dirs.to_yojson dirs)
+              in
+              let kv =
+                Snabela.Kv.(
+                  Map.of_list
+                    [ ("repo_config", string repo_config_yaml); ("dirs", string dirs_json) ])
+              in
+              apply_template_and_publish "REPO_CONFIG" Tmpl.repo_config kv t
+          | Error (#Terrat_json.to_yaml_string_err as err) ->
+              Logs.err (fun m ->
+                  m
+                    "GITHUB_EVALUATOR : %s : TO_YAML : %a"
+                    t.client.Client.request_id
+                    Terrat_json.pp_to_yaml_string_err
+                    err);
+              Abb.Future.return ())
       | Msg.Unexpected_temporary_err ->
           let kv = Snabela.Kv.(Map.of_list []) in
           apply_template_and_publish "UNEXPECTED_TEMPORARY_ERR" Tmpl.unexpected_temporary_err kv t
