@@ -134,7 +134,7 @@ module Schema = struct
   }
   [@@deriving yojson { strict = false }, show, eq]
 
-  and t = t_ value [@@deriving yojson, show, eq]
+  and t = t_ value [@@deriving yojson { strict = false }, show, eq]
 
   let make_t_ () =
     {
@@ -843,15 +843,15 @@ let rec convert_str_schema (config : Config.t) =
       CCList.flatten
         [
           (if is_empty then []
-          else
-            [
-              Ast_helper.(
-                Str.module_
-                  (Mb.mk
-                     (Location.mknoloc (Some "Primary"))
-                     (Mod.structure
-                        (convert_str_schema Config.(set_strict false (tidx_reset config)) schema))));
-            ]);
+           else
+             [
+               Ast_helper.(
+                 Str.module_
+                   (Mb.mk
+                      (Location.mknoloc (Some "Primary"))
+                      (Mod.structure
+                         (convert_str_schema Config.(set_strict false (tidx_reset config)) schema))));
+             ]);
           [
             Ast_helper.(
               Str.include_
@@ -865,7 +865,7 @@ let rec convert_str_schema (config : Config.t) =
                             (Location.mknoloc
                                (Gen.ident
                                   (if is_empty then [ "Json_schema"; "Empty_obj" ]
-                                  else [ "Primary" ])))))
+                                   else [ "Primary" ])))))
                       (Mod.ident (Location.mknoloc (Gen.ident [ "Json_schema"; "Obj" ]))))));
           ];
         ]
@@ -882,15 +882,15 @@ let rec convert_str_schema (config : Config.t) =
       CCList.flatten
         [
           (if is_empty then []
-          else
-            [
-              Ast_helper.(
-                Str.module_
-                  (Mb.mk
-                     (Location.mknoloc (Some "Primary"))
-                     (Mod.structure
-                        (convert_str_schema Config.(set_strict false (tidx_reset config)) schema))));
-            ]);
+           else
+             [
+               Ast_helper.(
+                 Str.module_
+                   (Mb.mk
+                      (Location.mknoloc (Some "Primary"))
+                      (Mod.structure
+                         (convert_str_schema Config.(set_strict false (tidx_reset config)) schema))));
+             ]);
           (match additional_schema with
           | Value.V additional_schema ->
               [
@@ -915,7 +915,7 @@ let rec convert_str_schema (config : Config.t) =
                             (Location.mknoloc
                                (Gen.ident
                                   (if is_empty then [ "Json_schema"; "Empty_obj" ]
-                                  else [ "Primary" ])))))
+                                   else [ "Primary" ])))))
                       (Mod.ident
                          (Location.mknoloc
                             (Gen.ident
