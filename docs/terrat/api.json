@@ -675,6 +675,9 @@
             },
             "type": "array"
           },
+          "config": {
+            "type": null
+          },
           "run_kind": {
             "type": "string"
           },
@@ -689,6 +692,7 @@
         "required": [
           "base_ref",
           "changed_dirspaces",
+          "config",
           "run_kind",
           "token",
           "type"
@@ -787,6 +791,9 @@
           "base_ref": {
             "type": "string"
           },
+          "config": {
+            "type": null
+          },
           "dirs": {
             "items": {
               "type": "string"
@@ -803,6 +810,7 @@
         },
         "required": [
           "base_ref",
+          "config",
           "dirs",
           "token",
           "type"
@@ -910,6 +918,9 @@
             },
             "type": "array"
           },
+          "config": {
+            "type": null
+          },
           "dirspaces": {
             "items": {
               "$ref": "#/components/schemas/work-manifest-dir"
@@ -938,6 +949,7 @@
           "base_dirspaces",
           "base_ref",
           "changed_dirspaces",
+          "config",
           "dirspaces",
           "run_kind",
           "token",
@@ -1005,6 +1017,9 @@
             },
             "type": "array"
           },
+          "config": {
+            "type": null
+          },
           "run_kind": {
             "type": "string"
           },
@@ -1019,6 +1034,7 @@
         "required": [
           "base_ref",
           "changed_dirspaces",
+          "config",
           "run_kind",
           "token",
           "type"

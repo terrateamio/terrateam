@@ -3226,6 +3226,8 @@ module S = struct
             >>= fun client ->
             fetch_dirspaces client repo base_branch_name branch_name base_ref ref_ fetch_repo_config
             >>= fun (base_dirspaces, dirspaces) ->
+            fetch_repo_config client repo ref_
+            >>= fun repo_config ->
             Abb.Future.return
               (Ok
                  Terrat_api_components.(
@@ -3240,6 +3242,10 @@ module S = struct
                          run_kind = run_kind_of_src src;
                          run_kind_data = run_kind_data_of_src src;
                          type_ = "plan";
+                         config =
+                           repo_config
+                           |> Terrat_base_repo_config_v1.to_version_1
+                           |> Terrat_repo_config.Version_1.to_yojson;
                        }))
         | {
             Wm.id;
@@ -3270,6 +3276,8 @@ module S = struct
             >>= fun client ->
             fetch_dirspaces client repo base_branch_name branch_name base_ref ref_ fetch_repo_config
             >>= fun (base_dirspaces, dirspaces) ->
+            fetch_repo_config client repo ref_
+            >>= fun repo_config ->
             Abb.Future.return
               (Ok
                  Terrat_api_components.(
@@ -3281,6 +3289,10 @@ module S = struct
                          changed_dirspaces = changed_dirspaces changes;
                          run_kind = run_kind_of_src src;
                          type_ = "apply";
+                         config =
+                           repo_config
+                           |> Terrat_base_repo_config_v1.to_version_1
+                           |> Terrat_repo_config.Version_1.to_yojson;
                        }))
         | {
             Wm.id;
@@ -3311,6 +3323,8 @@ module S = struct
             >>= fun client ->
             fetch_dirspaces client repo base_branch_name branch_name base_ref ref_ fetch_repo_config
             >>= fun (base_dirspaces, dirspaces) ->
+            fetch_repo_config client repo ref_
+            >>= fun repo_config ->
             Abb.Future.return
               (Ok
                  Terrat_api_components.(
@@ -3322,22 +3336,36 @@ module S = struct
                          changed_dirspaces = changed_dirspaces changes;
                          run_kind = run_kind_of_src src;
                          type_ = "unsafe-apply";
+                         config =
+                           repo_config
+                           |> Terrat_base_repo_config_v1.to_version_1
+                           |> Terrat_repo_config.Version_1.to_yojson;
                        }))
-        | { Wm.id; src = Wm.Kind.Index index; changes; _ } ->
+        | { Wm.id; src = Wm.Kind.Index { Index.account; repo; branch; _ }; changes; hash = ref_; _ }
+          ->
+            let open Abbs_future_combinators.Infix_result_monad in
             let module Idx = Terrat_api_components.Work_manifest_index in
             let dirs =
               changes
               |> CCList.map Terrat_change.Dirspaceflow.to_dirspace
               |> CCList.map (fun Terrat_change.Dirspace.{ dir; _ } -> dir)
             in
+            create_client t.config account
+            >>= fun client ->
+            fetch_repo_config client repo ref_
+            >>= fun repo_config ->
             Abb.Future.return
               (Ok
                  (Terrat_api_components.Work_manifest.Work_manifest_index
                     {
                       Idx.dirs;
-                      base_ref = index.Index.branch;
+                      base_ref = branch;
                       token = token t.encryption_key id;
                       type_ = "index";
+                      config =
+                        repo_config
+                        |> Terrat_base_repo_config_v1.to_version_1
+                        |> Terrat_repo_config.Version_1.to_yojson;
                     }))
 
       let done_ t work_manifest =

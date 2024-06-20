@@ -8,6 +8,10 @@ module Changed_dirspaces = struct
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
+module Config = struct
+  type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
 module Dirspaces = struct
   type t = Terrat_api_components_work_manifest_dir.t list
   [@@deriving yojson { strict = false; meta = true }, show, eq]
@@ -44,6 +48,7 @@ type t = {
   base_dirspaces : Base_dirspaces.t;
   base_ref : string;
   changed_dirspaces : Changed_dirspaces.t;
+  config : Config.t;
   dirspaces : Dirspaces.t;
   run_kind : string;
   run_kind_data : Run_kind_data.t option; [@default None]

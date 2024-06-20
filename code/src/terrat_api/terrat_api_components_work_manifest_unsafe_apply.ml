@@ -3,6 +3,10 @@ module Changed_dirspaces = struct
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
+module Config = struct
+  type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
 module Type = struct
   let t_of_yojson = function
     | `String "unsafe-apply" -> Ok "unsafe-apply"
@@ -15,6 +19,7 @@ end
 type t = {
   base_ref : string;
   changed_dirspaces : Changed_dirspaces.t;
+  config : Config.t;
   run_kind : string;
   token : string;
   type_ : Type.t; [@key "type"]
