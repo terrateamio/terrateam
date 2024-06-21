@@ -549,6 +549,7 @@ type of_version_1_err =
   ]
 [@@deriving show]
 
+val default : t
 val of_version_1 : Terrat_repo_config.Version_1.t -> (t, [> of_version_1_err ]) result
 val to_version_1 : t -> Terrat_repo_config.Version_1.t
 val merge_with_default_branch_config : default:t -> t -> t

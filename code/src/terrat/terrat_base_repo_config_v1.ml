@@ -650,6 +650,8 @@ type of_version_1_err =
   ]
 [@@deriving show]
 
+let default = make ()
+
 (* Converters for the sub elements *)
 let of_version_1_match = Access_control.Match.make
 let of_version_1_match_list = CCResult.map_l of_version_1_match

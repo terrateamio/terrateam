@@ -77,6 +77,18 @@ module Metrics = struct
       ~namespace
       ~subsystem
       "pull_request_mergeable_state_count"
+
+  let cache_fn_call_count =
+    let help = "Count of cache calls by function with hit or miss" in
+    let family =
+      Prmths.Counter.v_labels
+        ~label_names:[ "fn"; "type" ]
+        ~help
+        ~namespace
+        ~subsystem
+        "cache_fn_call_count"
+    in
+    fun ~fn t -> Prmths.Counter.labels family [ fn; t ]
 end
 
 module Sql = struct
@@ -672,6 +684,8 @@ module S = struct
     type t = {
       client : Githubc2_abb.t;
       config : Terrat_config.t;
+      fetch_file_cache :
+        (string * string * string, (string option, [ `Error ]) result Abb.Future.t) Hashtbl.t;
       request_id : string;
     }
 
@@ -701,8 +715,17 @@ module S = struct
 
   module Remote_repo = struct
     module R = Githubc2_components.Full_repository
+    module U = Githubc2_components.Simple_user
 
     type t = R.t
+
+    let to_repo
+        {
+          R.primary =
+            { R.Primary.id; owner = { U.primary = { U.Primary.login = owner; _ }; _ }; name; _ };
+          _;
+        } =
+      Repo.make ~id ~owner ~name ()
 
     let default_branch t = t.R.primary.R.Primary.default_branch
   end
@@ -860,7 +883,8 @@ module S = struct
     Terrat_github.get_installation_access_token config installation_id
     >>= fun access_token ->
     let client = Terrat_github.create config (`Token access_token) in
-    Abb.Future.return (Ok { Client.client; request_id; config })
+    Abb.Future.return
+      (Ok { Client.client; request_id; config; fetch_file_cache = Hashtbl.create 10 })
 
   let create_client config account =
     let open Abb.Future.Infix_monad in
@@ -1259,27 +1283,62 @@ module S = struct
             m "GITHUB_EVALUATOR : %s : ERROR : %a" db.Db.request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
+  let cache metric pool k f =
+    match CCHashtbl.get pool k with
+    | None ->
+        let open Abb.Future.Infix_monad in
+        Prmths.Counter.inc_one (metric "miss");
+        let ret = f () in
+        Hashtbl.add pool k ret;
+        Abb.Future.fork ret >>= fun _ -> ret
+    | Some ret ->
+        Prmths.Counter.inc_one (metric "hit");
+        ret
+
   let fetch_file client repo ref_ path =
+    (cache
+       (Metrics.cache_fn_call_count ~fn:"fetch_file")
+       client.Client.fetch_file_cache
+       (Repo.to_string repo, ref_, path)
+       (fun () ->
+         let open Abb.Future.Infix_monad in
+         let module C = Githubc2_components.Content_file in
+         Terrat_github.fetch_file
+           ~owner:repo.Repo.owner
+           ~repo:repo.Repo.name
+           ~ref_
+           ~path
+           client.Client.client
+         >>= function
+         | Ok (Some { C.primary = { C.Primary.encoding = "base64"; content; _ }; _ }) ->
+             Abb.Future.return
+               (Ok (Some (Base64.decode_exn (CCString.replace ~sub:"\n" ~by:"" content))))
+         | Ok (Some { C.primary = { C.Primary.content; _ }; _ }) ->
+             Abb.Future.return (Ok (Some content))
+         | Ok None -> Abb.Future.return (Ok None)
+         | Error (#Terrat_github.fetch_file_err as err) ->
+             Logs.err (fun m ->
+                 m
+                   "GITHUB_EVALUATOR : %s : FETCH_FILE : %a"
+                   client.Client.request_id
+                   Terrat_github.pp_fetch_file_err
+                   err);
+             Abb.Future.return (Error `Error))
+      : (string option, [ `Error ]) result Abb.Future.t
+      :> (string option, [> `Error ]) result Abb.Future.t)
+
+  let fetch_centralized_repo client owner =
     let open Abb.Future.Infix_monad in
-    let module C = Githubc2_components.Content_file in
-    Terrat_github.fetch_file
-      ~owner:repo.Repo.owner
-      ~repo:repo.Repo.name
-      ~ref_
-      ~path
-      client.Client.client
+    Terrat_github.fetch_repo ~owner ~repo:"terrateam" client.Client.client
     >>= function
-    | Ok (Some { C.primary = { C.Primary.encoding = "base64"; content; _ }; _ }) ->
-        Abb.Future.return
-          (Ok (Some (Base64.decode_exn (CCString.replace ~sub:"\n" ~by:"" content))))
-    | Ok (Some { C.primary = { C.Primary.content; _ }; _ }) -> Abb.Future.return (Ok (Some content))
-    | Ok None -> Abb.Future.return (Ok None)
-    | Error (#Terrat_github.fetch_file_err as err) ->
+    | Ok r -> Abb.Future.return (Ok (Some r))
+    | Error (`Not_found _) -> Abb.Future.return (Ok None)
+    | Error (#Terrat_github.fetch_repo_err as err) ->
         Logs.err (fun m ->
             m
-              "GITHUB_EVALUATOR : %s : FETCH_FILE : %a"
+              "GITHUB_EVALUATOR : %s : FETCH_CENTRALIZED_REPO : %a"
               client.Client.request_id
-              Terrat_github.pp_fetch_file_err
+              Terrat_github.pp_fetch_repo_err
               err);
         Abb.Future.return (Error `Error)
 
@@ -2542,7 +2601,7 @@ module S = struct
       | Msg.Account_expired ->
           let kv = Snabela.Kv.(Map.of_list []) in
           apply_template_and_publish "ACCOUNT_EXPIRED" Tmpl.account_expired_err kv t
-      | Msg.Repo_config (repo_config, dirs) -> (
+      | Msg.Repo_config (provenance, repo_config, dirs) -> (
           let open Abb.Future.Infix_monad in
           let repo_config_json =
             Terrat_repo_config.Version_1.to_yojson
@@ -2557,7 +2616,14 @@ module S = struct
               let kv =
                 Snabela.Kv.(
                   Map.of_list
-                    [ ("repo_config", string repo_config_yaml); ("dirs", string dirs_json) ])
+                    [
+                      ("repo_config", string repo_config_yaml);
+                      ("dirs", string dirs_json);
+                      ( "provenance",
+                        list
+                          (CCList.map (fun src -> Map.of_list [ ("src", string src) ]) provenance)
+                      );
+                    ])
               in
               apply_template_and_publish "REPO_CONFIG" Tmpl.repo_config kv t
           | Error (#Terrat_json.to_yaml_string_err as err) ->
@@ -4342,6 +4408,7 @@ module S = struct
           Client.client = Terrat_github.create t.config (`Token t.access_token);
           config = t.config;
           request_id = t.request_id;
+          fetch_file_cache = Hashtbl.create 10;
         }
 
       let create_access_control_ctx t client =
@@ -4479,7 +4546,14 @@ module S = struct
         Terrat_github.get_installation_access_token t.config account.Account.installation_id
         >>= fun access_token ->
         let client = Terrat_github.create t.config (`Token access_token) in
-        let client = { Client.client; request_id = t.request_id; config = t.config } in
+        let client =
+          {
+            Client.client;
+            request_id = t.request_id;
+            config = t.config;
+            fetch_file_cache = Hashtbl.create 10;
+          }
+        in
         Terrat_github.fetch_repo ~owner:repo.Repo.owner ~repo:repo.Repo.name client.Client.client
         >>= fun repoository ->
         let module Rc = Terrat_base_repo_config_v1 in
@@ -4662,6 +4736,7 @@ module S = struct
             Client.client = Terrat_github.create t.config (`Token access_token);
             config = t.config;
             request_id = t.request_id;
+            fetch_file_cache = Hashtbl.create 10;
           }
         in
         fetch_repo_config client t.repo t.branch
@@ -4782,6 +4857,7 @@ module S = struct
                Client.client = Terrat_github.create t.config (`Token access_token);
                config = t.config;
                request_id = t.request_id;
+               fetch_file_cache = Hashtbl.create 10;
              })
       in
       let open Abb.Future.Infix_monad in

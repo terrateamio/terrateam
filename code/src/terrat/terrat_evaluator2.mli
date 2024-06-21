@@ -33,7 +33,7 @@ module Msg : sig
     | Plan_no_matching_dirspaces
     | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
     | Pull_request_not_mergeable
-    | Repo_config of (Terrat_base_repo_config_v1.t * Terrat_change_match.Dirs.t)
+    | Repo_config of (string list * Terrat_base_repo_config_v1.t * Terrat_change_match.Dirs.t)
     | Repo_config_err of Terrat_base_repo_config_v1.of_version_1_err
     | Repo_config_failure of string
     | Repo_config_parse_failure of string
@@ -78,6 +78,7 @@ end
 type fetch_repo_config_err =
   [ Terrat_base_repo_config_v1.of_version_1_err
   | `Repo_config_parse_err of string
+  | Terrat_json.merge_err
   | `Error
   ]
 [@@deriving show]
@@ -115,12 +116,15 @@ module type S = sig
   module Repo : sig
     type t
 
+    val owner : t -> string
+    val name : t -> string
     val to_string : t -> string
   end
 
   module Remote_repo : sig
     type t
 
+    val to_repo : t -> Repo.t
     val default_branch : t -> Ref.t
   end
 
@@ -181,6 +185,9 @@ module type S = sig
 
   val store_pull_request :
     Db.t -> Pull_request.fetched Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
+
+  val fetch_centralized_repo :
+    Client.t -> string -> (Remote_repo.t option, [> `Error ]) result Abb.Future.t
 
   val fetch_remote_repo : Client.t -> Repo.t -> (Remote_repo.t, [> `Error ]) result Abb.Future.t
   val fetch_tree : Client.t -> Repo.t -> Ref.t -> (string list, [> `Error ]) result Abb.Future.t

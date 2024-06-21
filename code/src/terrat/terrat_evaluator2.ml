@@ -99,7 +99,7 @@ module Msg = struct
     | Plan_no_matching_dirspaces
     | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
     | Pull_request_not_mergeable
-    | Repo_config of (Terrat_base_repo_config_v1.t * Terrat_change_match.Dirs.t)
+    | Repo_config of (string list * Terrat_base_repo_config_v1.t * Terrat_change_match.Dirs.t)
     | Repo_config_err of Terrat_base_repo_config_v1.of_version_1_err
     | Repo_config_failure of string
     | Repo_config_parse_failure of string
@@ -168,6 +168,7 @@ end
 type fetch_repo_config_err =
   [ Terrat_base_repo_config_v1.of_version_1_err
   | `Repo_config_parse_err of string
+  | Terrat_json.merge_err
   | `Error
   ]
 [@@deriving show]
@@ -246,12 +247,15 @@ module type S = sig
   module Repo : sig
     type t
 
+    val owner : t -> string
+    val name : t -> string
     val to_string : t -> string
   end
 
   module Remote_repo : sig
     type t
 
+    val to_repo : t -> Repo.t
     val default_branch : t -> Ref.t
   end
 
@@ -312,6 +316,9 @@ module type S = sig
 
   val store_pull_request :
     Db.t -> Pull_request.fetched Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
+
+  val fetch_centralized_repo :
+    Client.t -> string -> (Remote_repo.t option, [> `Error ]) result Abb.Future.t
 
   val fetch_remote_repo : Client.t -> Repo.t -> (Remote_repo.t, [> `Error ]) result Abb.Future.t
   val fetch_tree : Client.t -> Repo.t -> Ref.t -> (string list, [> `Error ]) result Abb.Future.t
@@ -976,54 +983,6 @@ module Make (S : S) = struct
       (log_time (S.Db.request_id db) "STORE_PULL_REQUEST")
       (fun () -> S.store_pull_request db pull_request)
 
-  let fetch_repo_config' client repo ref_ =
-    Abbs_time_it.run
-      (fun time ->
-        Logs.info (fun m ->
-            m
-              "EVALUATOR : %s : FETCH_REPO_CONFIG : repo=%s : ref=%s : time=%f"
-              (S.Client.request_id client)
-              (S.Repo.to_string repo)
-              (S.Ref.to_string ref_)
-              time))
-      (fun () ->
-        let open Abbs_future_combinators.Infix_result_monad in
-        S.fetch_file client repo ref_ ".terrateam/config.yml"
-        >>= function
-        | Some content -> (
-            Terrat_json.of_yaml_string content
-            >>= fun json ->
-            match Terrat_repo_config.Version_1.of_yojson json with
-            | Ok config -> Abb.Future.return (Terrat_base_repo_config_v1.of_version_1 config)
-            | Error err ->
-                (* This is a cheap trick but we just want to make the error
-                   message a - little bit more friendly to users by replacing the
-                   parts of the - error message that are specific to the
-                   implementation. *)
-                Abb.Future.return
-                  (Error
-                     (`Repo_config_parse_err
-                       ("Failed to parse repo config: "
-                       ^ (err
-                         |> CCString.replace ~sub:"Terrat_repo_config." ~by:""
-                         |> CCString.replace ~sub:".t" ~by:""
-                         |> CCString.lowercase_ascii)))))
-        | None -> Abb.Future.return (Ok (Terrat_base_repo_config_v1.make ())))
-
-  let fetch_repo_config =
-    (fetch_repo_config'
-      : S.Client.t ->
-        S.Repo.t ->
-        S.Ref.t ->
-        (Terrat_base_repo_config_v1.t, fetch_repo_config_err) result Abb.Future.t
-      :> S.Client.t ->
-         S.Repo.t ->
-         S.Ref.t ->
-         (Terrat_base_repo_config_v1.t, [> fetch_repo_config_err ]) result Abb.Future.t)
-
-  let fetch_repo_config_drift = fetch_repo_config'
-  let fetch_repo_config_of_work_manifest = fetch_repo_config'
-
   let fetch_remote_repo client repo =
     Abbs_time_it.run
       (fun time ->
@@ -1034,6 +993,227 @@ module Make (S : S) = struct
               (S.Repo.to_string repo)
               time))
       (fun () -> S.fetch_remote_repo client repo)
+
+  let fetch_centralized_repo client owner =
+    Abbs_time_it.run
+      (fun time ->
+        Logs.info (fun m ->
+            m
+              "EVALUATOR : %s : FETCH_CENTRALIZED_REPO : owner=%s : time=%f"
+              (S.Client.request_id client)
+              owner
+              time))
+      (fun () -> S.fetch_centralized_repo client owner)
+
+  let fetch_file client repo ref_ path =
+    Abbs_time_it.run
+      (fun time ->
+        Logs.info (fun m ->
+            m
+              "EVALUATOR : %s : FETCH_FILE : repo=%s : ref=%s : path=%s : time=%f"
+              (S.Client.request_id client)
+              (S.Repo.to_string repo)
+              (S.Ref.to_string ref_)
+              path
+              time))
+      (fun () -> S.fetch_file client repo ref_ path)
+
+  let fetch_repo_config_file client repo ref_ basename =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Abbs_future_combinators.Infix_result_app.(
+      (fun yml yaml ->
+        match (yml, yaml) with
+        | Some yml, _ ->
+            Some (S.Repo.to_string repo ^ ":" ^ S.Ref.to_string ref_ ^ ":" ^ basename ^ ".yml", yml)
+        | _, Some yaml ->
+            Some
+              (S.Repo.to_string repo ^ ":" ^ S.Ref.to_string ref_ ^ ":" ^ basename ^ ".yaml", yaml)
+        | _, _ -> None)
+      <$> fetch_file client repo ref_ (basename ^ ".yml")
+      <*> fetch_file client repo ref_ (basename ^ ".yaml"))
+    >>= function
+    | None -> Abb.Future.return (Ok None)
+    | Some (_, content) when CCString.is_empty (CCString.trim content) ->
+        Abb.Future.return (Ok None)
+    | Some (fname, content) ->
+        Terrat_json.of_yaml_string content
+        >>= fun json -> Abb.Future.return (Ok (Some (fname, json)))
+
+  let repo_config_of_json json =
+    match Terrat_repo_config.Version_1.of_yojson json with
+    | Ok config -> Abb.Future.return (Terrat_base_repo_config_v1.of_version_1 config)
+    | Error err ->
+        (* This is a cheap trick but we just want to make the error
+           message a - little bit more friendly to users by replacing the
+           parts of the - error message that are specific to the
+           implementation. *)
+        Abb.Future.return
+          (Error
+             (`Repo_config_parse_err
+               ("Failed to parse repo config: "
+               ^ (err
+                 |> CCString.replace ~sub:"Terrat_repo_config." ~by:""
+                 |> CCString.replace ~sub:".t" ~by:""
+                 |> CCString.lowercase_ascii))))
+
+  let maybe_fetch_centralized_repo_config_file client centralized_repo basename =
+    match centralized_repo with
+    | Some remote_repo ->
+        fetch_repo_config_file
+          client
+          (S.Remote_repo.to_repo remote_repo)
+          (S.Remote_repo.default_branch remote_repo)
+          basename
+    | None -> Abb.Future.return (Ok None)
+
+  let fetch_repo_config_files client repo ref_ =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Abbs_future_combinators.Infix_result_app.(
+      (fun remote_repo centralized_repo -> (remote_repo, centralized_repo))
+      <$> fetch_remote_repo client repo
+      <*> fetch_centralized_repo client (S.Repo.owner repo))
+    >>= fun (remote_repo, centralized_repo) ->
+    Abbs_future_combinators.Infix_result_app.(
+      (fun global_default
+           global_overrides
+           repo_defaults
+           repo_overrides
+           repo_forced_config
+           default_repo_config
+           repo_config ->
+        ( global_default,
+          global_overrides,
+          repo_defaults,
+          repo_overrides,
+          repo_forced_config,
+          default_repo_config,
+          repo_config ))
+      <$> maybe_fetch_centralized_repo_config_file client centralized_repo "config/defaults"
+      <*> maybe_fetch_centralized_repo_config_file client centralized_repo "config/overrides"
+      <*> maybe_fetch_centralized_repo_config_file
+            client
+            centralized_repo
+            ("config/" ^ S.Repo.name repo ^ "/defaults")
+      <*> maybe_fetch_centralized_repo_config_file
+            client
+            centralized_repo
+            ("config/" ^ S.Repo.name repo ^ "/overrides")
+      <*> maybe_fetch_centralized_repo_config_file
+            client
+            centralized_repo
+            ("config/" ^ S.Repo.name repo ^ "/config")
+      <*> fetch_repo_config_file
+            client
+            repo
+            (S.Remote_repo.default_branch remote_repo)
+            ".terrateam/config"
+      <*> fetch_repo_config_file client repo ref_ ".terrateam/config")
+    >>= fun ( global_defaults,
+              global_overrides,
+              repo_defaults,
+              repo_overrides,
+              repo_forced_config,
+              default_repo_config,
+              repo_config ) ->
+    let get_json = function
+      | None -> `Assoc []
+      | Some (_, json) -> json
+    in
+    let collect_provenance =
+      CCList.filter_map (function
+          | Some (fname, _) -> Some fname
+          | None -> None)
+    in
+    match (repo_defaults, repo_overrides, repo_forced_config, default_repo_config, repo_config) with
+    | repo_defaults, repo_overrides, None, default_repo_config, repo_config ->
+        let provenance =
+          collect_provenance
+            [
+              global_defaults;
+              global_overrides;
+              repo_defaults;
+              repo_overrides;
+              default_repo_config;
+              repo_config;
+            ]
+        in
+        let global_defaults = get_json global_defaults in
+        let global_overrides = get_json global_overrides in
+        let repo_defaults = get_json repo_defaults in
+        let repo_overrides = get_json repo_overrides in
+        let default_repo_config = get_json default_repo_config in
+        let repo_config = get_json repo_config in
+        Abb.Future.return (Terrat_json.merge ~base:global_defaults repo_defaults)
+        >>= fun repo_defaults ->
+        Abb.Future.return (Terrat_json.merge ~base:repo_defaults default_repo_config)
+        >>= fun default_repo_config ->
+        Abb.Future.return (Terrat_json.merge ~base:default_repo_config global_overrides)
+        >>= fun default_repo_config ->
+        Abb.Future.return (Terrat_json.merge ~base:default_repo_config repo_overrides)
+        >>= fun default_repo_config ->
+        Abb.Future.return (Terrat_json.merge ~base:repo_defaults repo_config)
+        >>= fun repo_config ->
+        Abb.Future.return (Terrat_json.merge ~base:repo_config global_overrides)
+        >>= fun repo_config ->
+        Abb.Future.return (Terrat_json.merge ~base:repo_config repo_overrides)
+        >>= fun repo_config ->
+        Abbs_future_combinators.Infix_result_app.(
+          (fun default_repo_config repo_config -> (default_repo_config, repo_config))
+          <$> repo_config_of_json default_repo_config
+          <*> repo_config_of_json repo_config)
+        >>= fun (default_repo_config, repo_config) ->
+        Abb.Future.return
+          (Ok
+             ( provenance,
+               Terrat_base_repo_config_v1.merge_with_default_branch_config
+                 ~default:default_repo_config
+                 repo_config ))
+    | _, _, (Some (_, repo_forced_config) as config), _, _ ->
+        let provenance = collect_provenance [ global_defaults; config ] in
+        let global_defaults = get_json global_defaults in
+        Abb.Future.return (Terrat_json.merge ~base:global_defaults repo_forced_config)
+        >>= fun repo_config ->
+        repo_config_of_json repo_config
+        >>= fun repo_config -> Abb.Future.return (Ok (provenance, repo_config))
+
+  let fetch_repo_config' client repo ref_ =
+    Abbs_time_it.run
+      (fun time ->
+        Logs.info (fun m ->
+            m
+              "EVALUATOR : %s : FETCH_REPO_CONFIG : repo=%s : ref=%s : time=%f"
+              (S.Client.request_id client)
+              (S.Repo.to_string repo)
+              (S.Ref.to_string ref_)
+              time))
+      (fun () -> fetch_repo_config_files client repo ref_)
+
+  let fetch_repo_config_with_provenance =
+    (fetch_repo_config'
+      : S.Client.t ->
+        S.Repo.t ->
+        S.Ref.t ->
+        (string list * Terrat_base_repo_config_v1.t, fetch_repo_config_err) result Abb.Future.t
+      :> S.Client.t ->
+         S.Repo.t ->
+         S.Ref.t ->
+         (string list * Terrat_base_repo_config_v1.t, [> fetch_repo_config_err ]) result
+         Abb.Future.t)
+
+  let fetch_repo_config client repo ref_ =
+    let open Abbs_future_combinators.Infix_result_monad in
+    fetch_repo_config_with_provenance client repo ref_
+    >>= fun (_, repo_config) -> Abb.Future.return (Ok repo_config)
+
+  let fetch_repo_config_drift client repo ref_ =
+    let open Abbs_future_combinators.Infix_result_monad in
+    fetch_repo_config' client repo ref_
+    >>= fun (_, repo_config) -> Abb.Future.return (Ok repo_config)
+
+  let fetch_repo_config_of_work_manifest client repo ref_ =
+    let open Abbs_future_combinators.Infix_result_monad in
+    fetch_repo_config' client repo ref_
+    >>= fun (_, repo_config) -> Abb.Future.return (Ok repo_config)
 
   let fetch_tree client repo ref_ =
     Abbs_time_it.run
@@ -1986,18 +2166,11 @@ module Make (S : S) = struct
           fetch_remote_repo client repo
           >>= fun remote_repo ->
           Abbs_future_combinators.Infix_result_app.(
-            (fun repo_config repo_default_config repo_tree index ->
-              (repo_config, repo_default_config, repo_tree, index))
-            <$> fetch_repo_config client repo branch_ref
-            <*> fetch_repo_config client repo branch_ref
+            (fun repo_config repo_tree index -> (repo_config, repo_tree, index))
+            <$> fetch_repo_config_with_provenance client repo branch_ref
             <*> fetch_tree client repo branch_ref
             <*> S.Event.Repo_config.with_db t ~f:(fun db -> query_index db account branch_ref))
-          >>= fun (repo_config, repo_default_config, repo_tree, index) ->
-          let repo_config =
-            Terrat_base_repo_config_v1.merge_with_default_branch_config
-              ~default:repo_default_config
-              repo_config
-          in
+          >>= fun ((provenance, repo_config), repo_tree, index) ->
           let index =
             let module R = Terrat_base_repo_config_v1 in
             match repo_config with
@@ -2025,7 +2198,7 @@ module Make (S : S) = struct
               repo_config
           with
           | Ok dirs ->
-              S.Publish_msg.publish_msg publish (Msg.Repo_config (repo_config, dirs))
+              S.Publish_msg.publish_msg publish (Msg.Repo_config (provenance, repo_config, dirs))
               >>= fun () -> Abb.Future.return (Ok (S.Event.Repo_config.noop t))
           | Error (`Bad_glob s) ->
               let open Abb.Future.Infix_monad in
@@ -2140,25 +2313,18 @@ module Make (S : S) = struct
         let open Abbs_future_combinators.Infix_result_monad in
         let default_repo_branch = S.Remote_repo.default_branch remote_repo in
         Abbs_future_combinators.Infix_result_app.(
-          (fun repo_config repo_default_config repo_tree index ->
-            (repo_config, repo_default_config, repo_tree, index))
+          (fun repo_config repo_tree index -> (repo_config, repo_tree, index))
           <$> fetch_repo_config
                 client
                 (S.Event.Terraform.repo t)
                 (S.Pull_request.branch_ref pull_request)
-          <*> fetch_repo_config client (S.Event.Terraform.repo t) default_repo_branch
           <*> fetch_tree client (S.Event.Terraform.repo t) (S.Pull_request.branch_ref pull_request)
           <*> S.Event.Terraform.with_db t ~f:(fun db ->
                   query_index
                     db
                     (S.Event.Terraform.account t)
                     (S.Pull_request.branch_ref pull_request)))
-        >>= fun (repo_config, repo_default_config, repo_tree, index) ->
-        let repo_config =
-          Terrat_base_repo_config_v1.merge_with_default_branch_config
-            ~default:repo_default_config
-            repo_config
-        in
+        >>= fun (repo_config, repo_tree, index) ->
         match
           is_valid_destination_branch
             repo_config
