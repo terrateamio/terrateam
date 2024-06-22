@@ -192,6 +192,9 @@ module type S = sig
   val fetch_remote_repo : Client.t -> Repo.t -> (Remote_repo.t, [> `Error ]) result Abb.Future.t
   val fetch_tree : Client.t -> Repo.t -> Ref.t -> (string list, [> `Error ]) result Abb.Future.t
 
+  val fetch_branch_sha :
+    Client.t -> Repo.t -> Ref.t -> (Ref.t option, [> `Error ]) result Abb.Future.t
+
   val fetch_file :
     Client.t -> Repo.t -> Ref.t -> string -> (string option, [> `Error ]) result Abb.Future.t
 

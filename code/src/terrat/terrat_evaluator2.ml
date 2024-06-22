@@ -323,6 +323,9 @@ module type S = sig
   val fetch_remote_repo : Client.t -> Repo.t -> (Remote_repo.t, [> `Error ]) result Abb.Future.t
   val fetch_tree : Client.t -> Repo.t -> Ref.t -> (string list, [> `Error ]) result Abb.Future.t
 
+  val fetch_branch_sha :
+    Client.t -> Repo.t -> Ref.t -> (Ref.t option, [> `Error ]) result Abb.Future.t
+
   val fetch_file :
     Client.t -> Repo.t -> Ref.t -> string -> (string option, [> `Error ]) result Abb.Future.t
 
@@ -1018,6 +1021,18 @@ module Make (S : S) = struct
               time))
       (fun () -> S.fetch_file client repo ref_ path)
 
+  let fetch_branch_sha client repo ref_ =
+    Abbs_time_it.run
+      (fun time ->
+        Logs.info (fun m ->
+            m
+              "EVALUATOR : %s : FETCH_BRANCH_SHA : repo=%s : ref_=%s : time=%f"
+              (S.Client.request_id client)
+              (S.Repo.to_string repo)
+              (S.Ref.to_string ref_)
+              time))
+      (fun () -> S.fetch_branch_sha client repo ref_)
+
   let fetch_repo_config_file client repo ref_ basename =
     let open Abbs_future_combinators.Infix_result_monad in
     Abbs_future_combinators.Infix_result_app.(
@@ -1058,12 +1073,21 @@ module Make (S : S) = struct
 
   let maybe_fetch_centralized_repo_config_file client centralized_repo basename =
     match centralized_repo with
-    | Some remote_repo ->
-        fetch_repo_config_file
+    | Some (remote_repo, branch) ->
+        fetch_repo_config_file client (S.Remote_repo.to_repo remote_repo) branch basename
+    | None -> Abb.Future.return (Ok None)
+
+  let maybe_fetch_centralized_repo_default_branch_sha client centralized_repo =
+    match centralized_repo with
+    | Some remote_repo -> (
+        let open Abbs_future_combinators.Infix_result_monad in
+        fetch_branch_sha
           client
           (S.Remote_repo.to_repo remote_repo)
           (S.Remote_repo.default_branch remote_repo)
-          basename
+        >>= function
+        | Some branch_sha -> Abb.Future.return (Ok (Some (remote_repo, branch_sha)))
+        | None -> Abb.Future.return (Ok None))
     | None -> Abb.Future.return (Ok None)
 
   let fetch_repo_config_files client repo ref_ =
@@ -1073,6 +1097,8 @@ module Make (S : S) = struct
       <$> fetch_remote_repo client repo
       <*> fetch_centralized_repo client (S.Repo.owner repo))
     >>= fun (remote_repo, centralized_repo) ->
+    maybe_fetch_centralized_repo_default_branch_sha client centralized_repo
+    >>= fun centralized_repo ->
     Abbs_future_combinators.Infix_result_app.(
       (fun global_default
            global_overrides
