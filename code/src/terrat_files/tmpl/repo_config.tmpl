@@ -6,7 +6,7 @@
 To help debug repository configurations, this allows viewing the configuration as Terrateam evaluates it.  The output is in YAML.  There are two sections:
 
 1. The repository configuration as Terrateam sees it.
-2. The `dirs` section evaluated.  The Terrateam backend expands any globs out in this section.  This output is in JSON.
+2. The `dirs` section evaluated.  The Terrateam backend expands any globs out in this section.
 
 **Note**: The repository configuration from the destination branch is used to evaluate user permissions and is not evaluated in this operation.
 </details>
@@ -28,6 +28,6 @@ No configuration files exist, the configuration is the default.
 
 Evaluated `dirs` section:
 
-```json
+```yaml
 @dirs@
 ```

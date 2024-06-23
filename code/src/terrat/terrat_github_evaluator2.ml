@@ -2678,30 +2678,36 @@ module S = struct
           let kv = Snabela.Kv.(Map.of_list []) in
           apply_template_and_publish "ACCOUNT_EXPIRED" Tmpl.account_expired_err kv t
       | Msg.Repo_config (provenance, repo_config, dirs) -> (
-          let open Abb.Future.Infix_monad in
-          let repo_config_json =
-            Terrat_repo_config.Version_1.to_yojson
-              (Terrat_base_repo_config_v1.to_version_1 repo_config)
+          let ret =
+            let open Abbs_future_combinators.Infix_result_monad in
+            let repo_config_json =
+              Terrat_repo_config.Version_1.to_yojson
+                (Terrat_base_repo_config_v1.to_version_1 repo_config)
+            in
+            Terrat_json.to_yaml_string repo_config_json
+            >>= fun repo_config_yaml ->
+            let dirs_json =
+              Yojson.Safe.Util.member "dirs" (Terrat_change_match.Dirs.to_yojson dirs)
+            in
+            Terrat_json.to_yaml_string dirs_json
+            >>= fun dirs_yaml ->
+            let kv =
+              Snabela.Kv.(
+                Map.of_list
+                  [
+                    ("repo_config", string repo_config_yaml);
+                    ("dirs", string dirs_yaml);
+                    ( "provenance",
+                      list (CCList.map (fun src -> Map.of_list [ ("src", string src) ]) provenance)
+                    );
+                  ])
+            in
+            Abb.Future.return (Ok kv)
           in
-          Terrat_json.to_yaml_string repo_config_json
+          let open Abb.Future.Infix_monad in
+          ret
           >>= function
-          | Ok repo_config_yaml ->
-              let dirs_json =
-                Yojson.Safe.pretty_to_string (Terrat_change_match.Dirs.to_yojson dirs)
-              in
-              let kv =
-                Snabela.Kv.(
-                  Map.of_list
-                    [
-                      ("repo_config", string repo_config_yaml);
-                      ("dirs", string dirs_json);
-                      ( "provenance",
-                        list
-                          (CCList.map (fun src -> Map.of_list [ ("src", string src) ]) provenance)
-                      );
-                    ])
-              in
-              apply_template_and_publish "REPO_CONFIG" Tmpl.repo_config kv t
+          | Ok kv -> apply_template_and_publish "REPO_CONFIG" Tmpl.repo_config kv t
           | Error (#Terrat_json.to_yaml_string_err as err) ->
               Logs.err (fun m ->
                   m
