@@ -288,6 +288,10 @@ module type S = sig
     val base_ref : 'a t -> Ref.t
     val branch_name : 'a t -> Ref.t
     val branch_ref : 'a t -> Ref.t
+
+    (** The branch ref based on if the PR is merged or not. *)
+    val working_branch_ref : 'a t -> Ref.t
+
     val diff : fetched t -> Terrat_change.Diff.t list
     val id : 'a t -> int
     val is_draft_pr : fetched t -> bool
@@ -2349,7 +2353,7 @@ module Make (S : S) = struct
                   query_index
                     db
                     (S.Event.Terraform.account t)
-                    (S.Pull_request.branch_ref pull_request)))
+                    (S.Pull_request.working_branch_ref pull_request)))
         >>= fun (repo_config, repo_tree, index) ->
         match
           is_valid_destination_branch
@@ -2531,13 +2535,6 @@ module Make (S : S) = struct
             | Some wm when CCOption.equal CCString.equal wm.Wm.environment environment ->
                 Abb.Future.return (Ok { wm with Wm.changes; denied_dirspaces })
             | Some _ | None ->
-                let hash =
-                  let module St = Terrat_pull_request.State in
-                  match S.Pull_request.state pull_request with
-                  | St.Open _ | St.Closed ->
-                      S.Ref.to_string (S.Pull_request.branch_ref pull_request)
-                  | St.Merged { St.Merged.merged_hash; _ } -> merged_hash
-                in
                 let work_manifest =
                   {
                     Wm.base_hash = S.Ref.to_string (S.Pull_request.base_ref pull_request);
@@ -2546,7 +2543,7 @@ module Make (S : S) = struct
                     created_at = ();
                     denied_dirspaces;
                     environment;
-                    hash;
+                    hash = S.Ref.to_string (S.Pull_request.working_branch_ref pull_request);
                     id = ();
                     src = Wm.Kind.Pull_request pull_request;
                     run_id = ();
@@ -3305,7 +3302,7 @@ module Make (S : S) = struct
             created_at = ();
             denied_dirspaces = [];
             environment = None;
-            hash = S.Ref.to_string (S.Pull_request.branch_ref pull_request);
+            hash = S.Ref.to_string (S.Pull_request.working_branch_ref pull_request);
             id = ();
             run_id = ();
             run_type = Tf_operation.to_run_type (S.Event.Terraform.tf_operation t.event);
@@ -4062,7 +4059,7 @@ module Make (S : S) = struct
         let work_manifest_id = S.Event.Initiate.work_manifest_id t in
         S.Event.Initiate.with_db t ~f:(fun db -> query_work_manifest db work_manifest_id)
         >>= function
-        | Some ({ Wm.hash; _ } as wm)
+        | Some ({ Wm.hash; base_hash; src; _ } as wm)
           when CCString.equal hash (S.Ref.to_string (S.Event.Initiate.branch_ref t)) -> (
             log_work_manifest (S.Event.Initiate.request_id t) wm;
             S.Event.Initiate.with_db t ~f:(fun db ->

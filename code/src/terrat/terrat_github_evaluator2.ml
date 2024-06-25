@@ -815,6 +815,13 @@ module S = struct
     let base_ref t = t.base_ref
     let branch_name t = t.branch_name
     let branch_ref t = t.branch_ref
+
+    let working_branch_ref t =
+      let module St = Terrat_pull_request.State in
+      match t.state with
+      | St.Open _ | St.Closed -> t.branch_ref
+      | St.Merged { St.Merged.merged_hash; _ } -> merged_hash
+
     let diff t = t.value.diff
     let id t = t.id
     let is_draft_pr t = t.value.is_draft_pr
