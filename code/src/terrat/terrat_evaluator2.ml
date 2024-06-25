@@ -3468,11 +3468,12 @@ module Make (S : S) = struct
             repo_tree,
             None )
           when (S.Event.Terraform.tf_operation t.event = Tf_operation.(Plan Auto))
-               && autoplan_enabled repo_config ->
+               && autoplan_enabled repo_config
+               || S.Event.Terraform.tf_operation t.event = Tf_operation.(Plan Manual) ->
             Logs.info (fun m ->
                 m "EVALUATOR : %s : INDEX_NOT_FOUND_BUT_REQUIRED" (S.Client.request_id t.client));
-            (* Index is required. But we only have to index if autoplan is
-               enabled for any directory *)
+            (* Index is required. But we only have to index for autoplan if
+               autoplan is enabled for any directory *)
             eval_index t remote_repo repo_config repo_tree pull_request
         | ({ V1.enabled = true; _ } as repo_config), repo_tree, index ->
             eval_change t remote_repo repo_config repo_tree pull_request index
