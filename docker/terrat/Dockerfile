@@ -55,7 +55,8 @@ RUN apk add --no-cache \
     py3-requests \
     py3-yaml \
     python3 \
-    runit
+    runit \
+    yj
 
 # configs
 RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets
