@@ -1085,7 +1085,7 @@ let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engi
                   ?tf_version:default_tf_version
                   ?version:default_wrapper_version
                   ())))
-  | _, _, _, None -> Ok None
+  | _, _, _, None -> Ok default_engine
 
 let of_version_1_workflow_integrations default_integrations integrations =
   let open CCResult.Infix in
