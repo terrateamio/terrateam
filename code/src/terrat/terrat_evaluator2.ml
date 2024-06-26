@@ -4061,21 +4061,37 @@ module Make (S : S) = struct
         >>= function
         | Some ({ Wm.hash; base_hash; src; _ } as wm)
           when CCString.equal hash (S.Ref.to_string (S.Event.Initiate.branch_ref t)) -> (
-            log_work_manifest (S.Event.Initiate.request_id t) wm;
-            S.Event.Initiate.with_db t ~f:(fun db ->
-                maybe_update_run_id db (S.Event.Initiate.run_id t) wm)
-            >>= fun wm ->
-            match wm with
-            | { Wm.state = Wm.State.Queued; _ } as wm ->
-                let wm = { wm with Wm.state = Wm.State.Running } in
-                S.Event.Initiate.with_db t ~f:(fun db -> update_work_manifest_state db wm)
-                >>= fun wm -> process_work_manifest t wm
-            | { Wm.state = Wm.State.Running; _ } as wm -> process_work_manifest t wm
-            | { Wm.state = Wm.State.Completed; _ } as wm ->
-                let open Abb.Future.Infix_monad in
-                S.Event.Initiate.done_ t wm >>= fun r -> Abb.Future.return (Ok r)
-            | { Wm.state = Wm.State.Aborted; _ } ->
-                Abb.Future.return (Ok (S.Event.Initiate.work_manifest_not_found t)))
+            let ret =
+              log_work_manifest (S.Event.Initiate.request_id t) wm;
+              S.Event.Initiate.with_db t ~f:(fun db ->
+                  maybe_update_run_id db (S.Event.Initiate.run_id t) wm)
+              >>= fun wm ->
+              match wm with
+              | { Wm.state = Wm.State.Queued; _ } as wm ->
+                  let wm = { wm with Wm.state = Wm.State.Running } in
+                  S.Event.Initiate.with_db t ~f:(fun db -> update_work_manifest_state db wm)
+                  >>= fun wm -> process_work_manifest t wm
+              | { Wm.state = Wm.State.Running; _ } as wm -> process_work_manifest t wm
+              | { Wm.state = Wm.State.Completed; _ } as wm ->
+                  let open Abb.Future.Infix_monad in
+                  S.Event.Initiate.done_ t wm >>= fun r -> Abb.Future.return (Ok r)
+              | { Wm.state = Wm.State.Aborted; _ } ->
+                  Abb.Future.return (Ok (S.Event.Initiate.work_manifest_not_found t))
+            in
+            let open Abb.Future.Infix_monad in
+            ret
+            >>= function
+            | Ok _ as r -> Abb.Future.return r
+            | Error (#fetch_repo_config_err as err) ->
+                let open Abbs_future_combinators.Infix_result_monad in
+                Logs.info (fun m ->
+                    m
+                      "EVALUATOR : %s : FETCH_REPO_CONFIG_ERR : %a"
+                      (S.Event.Initiate.request_id t)
+                      pp_fetch_repo_config_err
+                      err);
+                maybe_publish_msg t wm Msg.Unexpected_temporary_err
+            | (Error `Pgsql_pool_error | Error (`Bad_glob _)) as err -> Abb.Future.return err)
         | Some { Wm.hash; state = Wm.State.(Queued | Running); src = Wm.Kind.Pull_request pr; _ }
           when is_pull_request_merged (S.Pull_request.state pr) ->
             Logs.info (fun m ->
@@ -4150,8 +4166,6 @@ module Make (S : S) = struct
                   Terrat_tag_query_ast.pp_err
                   err);
             Abb.Future.return (Error `Error)
-        | Error (`Parse_err _) -> Abb.Future.return (Error `Error)
-        | _ -> failwith "nyi"
     end
 
     module Unlock = struct
