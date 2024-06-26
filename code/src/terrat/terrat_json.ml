@@ -3,8 +3,9 @@ module Process = Abb_process.Make (Abb)
 type to_yaml_string_err = Abb_process.check_output_err [@@deriving show]
 
 type of_yaml_string_err =
-  [ Abb_process.check_output_err
-  | `Json_decode_err of string
+  [ `Json_decode_err of string
+  | `Unexpected_err
+  | `Yaml_decode_err of string
   ]
 [@@deriving show]
 
@@ -29,7 +30,18 @@ let of_yaml_string yaml_str =
   | Ok (stdout, _) -> (
       try Abb.Future.return (Ok (Yojson.Safe.from_string stdout))
       with Yojson.Json_error err -> Abb.Future.return (Error (`Json_decode_err err)))
-  | Error (#Abb_process.check_output_err as err) -> Abb.Future.return (Error err)
+  | Error `E_no_space
+  | Error `E_permission
+  | Error (`Unexpected _)
+  | Error `E_bad_file
+  | Error `E_pipe
+  | Error `E_again
+  | Error `E_invalid
+  | Error `E_io
+  | Error `E_no_memory
+  | Error `E_is_dir -> Abb.Future.return (Error `Unexpected_err)
+  | Error (`Run_error (_, _, stderr, _)) ->
+      Abb.Future.return (Error (`Yaml_decode_err (CCString.trim stderr)))
 
 let rec merge' ~base override =
   match (base, override) with

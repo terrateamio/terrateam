@@ -1,8 +1,9 @@
 type to_yaml_string_err = Abb_process.check_output_err [@@deriving show]
 
 type of_yaml_string_err =
-  [ Abb_process.check_output_err
-  | `Json_decode_err of string
+  [ `Json_decode_err of string
+  | `Unexpected_err
+  | `Yaml_decode_err of string
   ]
 [@@deriving show]
 

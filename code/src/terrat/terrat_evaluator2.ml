@@ -2274,6 +2274,18 @@ module Make (S : S) = struct
             Abbs_future_combinators.ignore
               (S.Publish_msg.publish_msg publish (Msg.Repo_config_err err))
             >>= fun () -> Abb.Future.return (Error `Error)
+        | Error (`Json_decode_err err | `Yaml_decode_err err) ->
+            let publish =
+              S.Publish_msg.make
+                ~client
+                ~pull_number:(S.Pull_request.id pull_request)
+                ~repo
+                ~user:(S.Event.Repo_config.user t)
+                ()
+            in
+            Abbs_future_combinators.ignore
+              (S.Publish_msg.publish_msg publish (Msg.Repo_config_parse_failure err))
+            >>= fun () -> Abb.Future.return (Error `Error)
         | Error (#fetch_repo_config_err as err) ->
             Logs.err (fun m ->
                 m
@@ -3614,6 +3626,10 @@ module Make (S : S) = struct
                         handle_source_branch_err t pull_request
                     | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
                         Abbs_future_combinators.ignore (publish_msg t (Msg.Repo_config_err err))
+                        >>= fun () -> Abb.Future.return (Error `Error)
+                    | Error (`Json_decode_err err | `Yaml_decode_err err) ->
+                        Abbs_future_combinators.ignore
+                          (publish_msg t (Msg.Repo_config_parse_failure err))
                         >>= fun () -> Abb.Future.return (Error `Error)
                     | Error (#fetch_repo_config_err as err) ->
                         Logs.err (fun m ->
