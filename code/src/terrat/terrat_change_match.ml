@@ -37,32 +37,6 @@ module Index = struct
   let make ~symlinks deps = { symlinks; deps = String_map.of_list deps }
 end
 
-let workspaces_or_stacks ~global_tags ~default ~dirname ~config_tags workspaces stacks =
-  let module R = Terrat_base_repo_config_v1 in
-  let module Ws = Terrat_base_repo_config_v1.Dirs.Workspace in
-  match (workspaces, stacks) with
-  | _, st when not (R.String_map.is_empty st) ->
-      R.String_map.mapi
-        (fun k { Ws.tags } ->
-          Ws.make
-            ~tags:((("dir:" ^ dirname) :: ("stack:" ^ k) :: tags) @ global_tags @ config_tags)
-            ())
-        st
-  | ws, _ when not (R.String_map.is_empty ws) ->
-      R.String_map.mapi
-        (fun k { Ws.tags } ->
-          Ws.make
-            ~tags:((("dir:" ^ dirname) :: ("workspace:" ^ k) :: tags) @ global_tags @ config_tags)
-            ())
-        ws
-  | _, _ ->
-      R.String_map.mapi
-        (fun k { Ws.tags } ->
-          Ws.make
-            ~tags:((("dir:" ^ dirname) :: ("workspace:" ^ k) :: tags) @ global_tags @ config_tags)
-            ())
-        default
-
 let parse_glob globs =
   try Path_glob.Glob.parse (CCString.concat " or " (CCList.map (fun pat -> "<" ^ pat ^ ">") globs))
   with Path_glob.Ast.Parse_error _ ->
@@ -76,19 +50,24 @@ let parse_glob globs =
     raise (Synthesize_dir_config_err (`Bad_glob "Unknown"))
 
 module Dirs = struct
+  module Workspace = struct
+    type t = {
+      file_pattern_matcher : string -> bool; [@opaque] [@to_yojson fun _ -> `String "<opaque>"]
+      workspace : Terrat_base_repo_config_v1.Dirs.Workspace.t;
+    }
+    [@@deriving show, to_yojson]
+  end
+
   module Dir = struct
     type t = {
       create_and_select_workspace : bool;
-      file_pattern_matcher : string -> bool; [@opaque] [@to_yojson fun _ -> `String "<opaque>"]
-      when_modified : Terrat_base_repo_config_v1.When_modified.t;
-      workspaces :
-        Terrat_base_repo_config_v1.Dirs.Workspace.t Terrat_base_repo_config_v1.String_map.t;
+      workspaces : Workspace.t Terrat_base_repo_config_v1.String_map.t;
     }
     [@@deriving show, to_yojson]
 
-    let default_workspaces =
+    let default_workspaces when_modified =
       let module R = Terrat_base_repo_config_v1 in
-      R.String_map.of_list [ ("default", R.Dirs.Workspace.make ()) ]
+      R.String_map.of_list [ ("default", R.Dirs.Workspace.make ~when_modified ()) ]
 
     let escape_glob s =
       let b = Buffer.create (CCString.length s) in
@@ -162,28 +141,19 @@ module Dirs = struct
 
     let process_relative_path dirname = process_dot_dot (process_dot dirname)
 
-    let of_config_dir ~global_tags module_paths index dirname config =
+    let workspaces_or_stacks
+        ~global_tags
+        ~default
+        ~dirname
+        ~config_tags
+        ~index
+        ~module_paths
+        workspaces
+        stacks =
       let module R = Terrat_base_repo_config_v1 in
-      let module Dir = R.Dirs.Dir in
-      let module Ws = R.Dirs.Workspace in
+      let module Ws = Terrat_base_repo_config_v1.Dirs.Workspace in
       let module Wm = R.When_modified in
-      let config_tags = config.Dir.tags in
-      (* With CDKTK enabled, users can specify workspaces or stacks (but not
-         both).  So we synthesize a workspaces object from either of these,
-         preferring workspaces if it is present.  We are going to consider
-         workspaces and stacks the same and translate everything that we track
-         into workspaces. *)
-      let workspaces =
-        workspaces_or_stacks
-          ~global_tags
-          ~default:default_workspaces
-          ~dirname
-          ~config_tags
-          config.Dir.workspaces
-          config.Dir.stacks
-      in
-      let when_modified =
-        let wm = config.Dir.when_modified in
+      let update_file_patterns workspace wm =
         let sub, by =
           match dirname with
           | "." ->
@@ -213,15 +183,76 @@ module Dirs = struct
                CCList.map
                  (fun pat ->
                    CCResult.get_exn
-                     (R.File_pattern.make (process_relative_path (CCString.replace ~sub ~by pat))))
+                     (R.File_pattern.make
+                        (process_relative_path
+                           (CCString.replace
+                              ~sub:"${WORKSPACE}"
+                              ~by:workspace
+                              (CCString.replace ~sub ~by pat)))))
                  file_patterns);
         }
       in
+      match (workspaces, stacks) with
+      | _, st when not (R.String_map.is_empty st) ->
+          R.String_map.mapi
+            (fun k { Ws.tags; when_modified } ->
+              {
+                Ws.tags = (("dir:" ^ dirname) :: ("stack:" ^ k) :: tags) @ global_tags @ config_tags;
+                when_modified = update_file_patterns k when_modified;
+              })
+            st
+      | ws, _ when not (R.String_map.is_empty ws) ->
+          R.String_map.mapi
+            (fun k { Ws.tags; when_modified } ->
+              {
+                Ws.tags =
+                  (("dir:" ^ dirname) :: ("workspace:" ^ k) :: tags) @ global_tags @ config_tags;
+                when_modified = update_file_patterns k when_modified;
+              })
+            ws
+      | _, _ ->
+          R.String_map.mapi
+            (fun k { Ws.tags; when_modified } ->
+              {
+                Ws.tags =
+                  (("dir:" ^ dirname) :: ("workspace:" ^ k) :: tags) @ global_tags @ config_tags;
+                when_modified = update_file_patterns k when_modified;
+              })
+            default
+
+    let of_config_dir ~global_tags module_paths index default_when_modified dirname config =
+      let module R = Terrat_base_repo_config_v1 in
+      let module Dir = R.Dirs.Dir in
+      let module Ws = R.Dirs.Workspace in
+      let module Wm = R.When_modified in
+      let config_tags = config.Dir.tags in
+      (* With CDKTK enabled, users can specify workspaces or stacks (but not
+         both).  So we synthesize a workspaces object from either of these,
+         preferring workspaces if it is present.  We are going to consider
+         workspaces and stacks the same and translate everything that we track
+         into workspaces. *)
+      let workspaces =
+        workspaces_or_stacks
+          ~global_tags
+          ~default:(default_workspaces default_when_modified)
+          ~dirname
+          ~config_tags
+          ~index
+          ~module_paths
+          config.Dir.workspaces
+          config.Dir.stacks
+      in
       {
         create_and_select_workspace = config.Dir.create_and_select_workspace;
-        file_pattern_matcher = compile_file_pattern_matcher when_modified.Wm.file_patterns;
-        when_modified;
-        workspaces;
+        workspaces =
+          R.String_map.map
+            (fun ws ->
+              {
+                Workspace.file_pattern_matcher =
+                  compile_file_pattern_matcher ws.Ws.when_modified.Wm.file_patterns;
+                workspace = ws;
+              })
+            workspaces;
       }
   end
 
@@ -330,7 +361,8 @@ let synthesize_dir_config' ~ctx ~index ~file_list repo_config =
   let non_glob_dirs =
     dirs
     |> C.String_map.filter (fun d _ -> not (CCString.contains d '*'))
-    |> C.String_map.mapi (Dirs.Dir.of_config_dir ~global_tags module_paths index)
+    |> C.String_map.mapi
+         (Dirs.Dir.of_config_dir ~global_tags module_paths index default_when_modified)
   in
   let synthetic_dirs =
     file_list
@@ -339,7 +371,15 @@ let synthesize_dir_config' ~ctx ~index ~file_list repo_config =
            CCList.find_opt (fun (d, _) -> Path_glob.Glob.eval d fname) glob_dirs
            >>= fun (_, config) ->
            let dir = Filename.dirname fname in
-           Some (dir, Dirs.Dir.of_config_dir ~global_tags module_paths index dir config))
+           Some
+             ( dir,
+               Dirs.Dir.of_config_dir
+                 ~global_tags
+                 module_paths
+                 index
+                 default_when_modified
+                 dir
+                 config ))
     |> Json_schema.String_map.of_list
   in
   (* Combine the globed ones and the non-globed ones for all dirs that were
@@ -349,7 +389,9 @@ let synthesize_dir_config' ~ctx ~index ~file_list repo_config =
   let specified_dirs =
     Json_schema.String_map.union (fun _ v _ -> Some v) non_glob_dirs synthetic_dirs
   in
-  let default_dir_config = C.Dirs.Dir.make ~when_modified:default_when_modified () in
+  let default_dir_config =
+    C.Dirs.Dir.make ~workspaces:(Dirs.Dir.default_workspaces default_when_modified) ()
+  in
   let remaining_dir_creator =
     if all_dir_match_patterns default_when_modified.Wm.file_patterns then fun dirname fnames acc ->
       (* For the remaining files, we want to construct a default configuration.  But
@@ -359,11 +401,31 @@ let synthesize_dir_config' ~ctx ~index ~file_list repo_config =
          we could have a repository with a lot of directories in it that will never
          match anything, so rather than carry them around, just don't include them.
          It's a waste to try to match anything against them. *)
-      let dir = Dirs.Dir.of_config_dir ~global_tags module_paths index dirname default_dir_config in
-      let file_pattern_matcher = dir.Dirs.Dir.file_pattern_matcher in
+      let dir =
+        Dirs.Dir.of_config_dir
+          ~global_tags
+          module_paths
+          index
+          default_when_modified
+          dirname
+          default_dir_config
+      in
+      let file_pattern_matcher fname =
+        C.String_map.exists
+          (fun _ { Dirs.Workspace.file_pattern_matcher; _ } -> file_pattern_matcher fname)
+          dir.Dirs.Dir.workspaces
+      in
       if CCList.exists file_pattern_matcher fnames then (dirname, dir) :: acc else acc
     else fun dirname fnames acc ->
-      let dir = Dirs.Dir.of_config_dir ~global_tags module_paths index dirname default_dir_config in
+      let dir =
+        Dirs.Dir.of_config_dir
+          ~global_tags
+          module_paths
+          index
+          default_when_modified
+          dirname
+          default_dir_config
+      in
       (dirname, dir) :: acc
   in
   let remaining_dirs =
@@ -398,28 +460,40 @@ let match_filename_in_dirs dirs fnames =
     exception R of (Dirs.t * t list)
   end in
   R.String_map.fold
-    (fun dirname
-         { Dirs.Dir.create_and_select_workspace; file_pattern_matcher; when_modified; workspaces }
-         (dirs, mtchs) ->
+    (fun dirname { Dirs.Dir.create_and_select_workspace; workspaces } (dirs, mtchs) ->
+      let file_pattern_matcher fname =
+        R.String_map.exists
+          (fun _ { Dirs.Workspace.file_pattern_matcher; _ } -> file_pattern_matcher fname)
+          workspaces
+      in
       try
         let mtchs =
           CCList.fold_left
             (fun acc fname ->
+              (* See if there are any matches *)
               if file_pattern_matcher fname then
                 raise
                   (Break.R
                      ( { dirs with Dirs.dirs = R.String_map.remove dirname dirs.Dirs.dirs },
                        R.String_map.fold
-                         (fun workspace { Ws.tags } acc ->
-                           let mtch =
-                             {
-                               create_and_select_workspace;
-                               dirspace = Terrat_change.Dirspace.{ dir = dirname; workspace };
-                               tags = Terrat_tag_set.of_list tags;
-                               when_modified;
-                             }
-                           in
-                           mtch :: acc)
+                         (fun workspace
+                              {
+                                Dirs.Workspace.workspace = { Ws.tags; when_modified };
+                                file_pattern_matcher;
+                              }
+                              acc ->
+                           (* But only add the actual matches *)
+                           if file_pattern_matcher fname then
+                             let mtch =
+                               {
+                                 create_and_select_workspace;
+                                 dirspace = Terrat_change.Dirspace.{ dir = dirname; workspace };
+                                 tags = Terrat_tag_set.of_list tags;
+                                 when_modified;
+                               }
+                             in
+                             mtch :: acc
+                           else acc)
                          workspaces
                          acc ))
               else acc)
@@ -474,9 +548,9 @@ let of_dirspace dirs (Terrat_change.Dirspace.{ dir; workspace } as dirspace) =
   let module Ws = R.Dirs.Workspace in
   let open CCOption.Infix in
   R.String_map.find_opt dir dirs.Dirs.dirs
-  >>= fun { Dirs.Dir.create_and_select_workspace; when_modified; workspaces; _ } ->
+  >>= fun { Dirs.Dir.create_and_select_workspace; workspaces; _ } ->
   R.String_map.find_opt workspace workspaces
-  >>= fun { Ws.tags } ->
+  >>= fun { Dirs.Workspace.workspace = { Ws.tags; when_modified }; _ } ->
   Some { create_and_select_workspace; dirspace; tags = Terrat_tag_set.of_list tags; when_modified }
 
 let merge_with_dedup l r =

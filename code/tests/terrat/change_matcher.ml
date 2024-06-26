@@ -20,46 +20,86 @@ let dirs_config =
          [
            ( "iam",
              R.Dirs.Dir.make
-               ~when_modified:
-                 {
-                   when_modified with
-                   R.When_modified.autoplan = false;
-                   file_patterns = [ CCResult.get_exn (R.File_pattern.make "iam/*.tf") ];
-                 }
+               ~workspaces:
+                 (R.String_map.of_list
+                    [
+                      ( "default",
+                        R.Dirs.Workspace.make
+                          ~when_modified:
+                            {
+                              when_modified with
+                              R.When_modified.autoplan = false;
+                              file_patterns = [ CCResult.get_exn (R.File_pattern.make "iam/*.tf") ];
+                            }
+                          () );
+                    ])
                () );
            ( "ebl",
              R.Dirs.Dir.make
-               ~when_modified:
-                 {
-                   when_modified with
-                   R.When_modified.autoapply = true;
-                   file_patterns =
-                     [
-                       CCResult.get_exn (R.File_pattern.make "ebl/*.tf");
-                       CCResult.get_exn (R.File_pattern.make "ebl_modules");
-                     ];
-                 }
+               ~workspaces:
+                 (R.String_map.of_list
+                    [
+                      ( "default",
+                        R.Dirs.Workspace.make
+                          ~when_modified:
+                            {
+                              when_modified with
+                              R.When_modified.autoapply = true;
+                              file_patterns =
+                                [
+                                  CCResult.get_exn (R.File_pattern.make "ebl/*.tf");
+                                  CCResult.get_exn (R.File_pattern.make "ebl_modules");
+                                ];
+                            }
+                          () );
+                    ])
                () );
            ( "ec2",
              R.Dirs.Dir.make
-               ~when_modified:
-                 {
-                   when_modified with
-                   (* This actually has an error in that it does not
-                      match files in the ec2 directory, this error is
-                      on purpose used for testing. *)
-                   R.When_modified.file_patterns =
-                     [ CCResult.get_exn (R.File_pattern.make "iam/*.tf") ];
-                 }
+               ~workspaces:
+                 (R.String_map.of_list
+                    [
+                      ( "default",
+                        R.Dirs.Workspace.make
+                          ~when_modified:
+                            {
+                              when_modified with
+                              (* This actually has an error in that it does not
+                                 match files in the ec2 directory, this error is
+                                 on purpose used for testing. *)
+                              R.When_modified.file_patterns =
+                                [ CCResult.get_exn (R.File_pattern.make "iam/*.tf") ];
+                            }
+                          () );
+                    ])
                () );
-           ("s3", R.Dirs.Dir.make ~tags:[ "s3" ] ~when_modified ());
+           ( "s3",
+             R.Dirs.Dir.make
+               ~tags:[ "s3" ]
+               ~workspaces:
+                 (R.String_map.of_list [ ("default", R.Dirs.Workspace.make ~when_modified ()) ])
+               () );
            ( "lambda",
              R.Dirs.Dir.make
-               ~when_modified:{ when_modified with R.When_modified.autoplan = true }
+               ~workspaces:
+                 (R.String_map.of_list
+                    [
+                      ( "default",
+                        R.Dirs.Workspace.make
+                          ~when_modified:{ when_modified with R.When_modified.autoplan = true }
+                          () );
+                    ])
                () );
            ( "module",
              R.Dirs.Dir.make
-               ~when_modified:{ when_modified with R.When_modified.file_patterns = [] }
+               ~workspaces:
+                 (R.String_map.of_list
+                    [
+                      ( "default",
+                        R.Dirs.Workspace.make
+                          ~when_modified:{ when_modified with R.When_modified.file_patterns = [] }
+                          () );
+                    ])
                () );
          ])
     ()
@@ -133,37 +173,65 @@ let bad_dirs_config =
          [
            ( "iam",
              R.Dirs.Dir.make
-               ~when_modified:
-                 (R.When_modified.make
-                    ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "iam/*.tf") ]
-                    ())
+               ~workspaces:
+                 (R.String_map.of_list
+                    [
+                      ( "default",
+                        R.Dirs.Workspace.make
+                          ~when_modified:
+                            (R.When_modified.make
+                               ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "iam/*.tf") ]
+                               ())
+                          () );
+                    ])
                () );
            ( "ebl",
              R.Dirs.Dir.make
-               ~when_modified:
-                 (R.When_modified.make
-                    ~file_patterns:
-                      [
-                        CCResult.get_exn (R.File_pattern.make "ebl/*.tf");
-                        CCResult.get_exn (R.File_pattern.make "ebl_modules");
-                      ]
-                    ())
+               ~workspaces:
+                 (R.String_map.of_list
+                    [
+                      ( "default",
+                        R.Dirs.Workspace.make
+                          ~when_modified:
+                            (R.When_modified.make
+                               ~file_patterns:
+                                 [
+                                   CCResult.get_exn (R.File_pattern.make "ebl/*.tf");
+                                   CCResult.get_exn (R.File_pattern.make "ebl_modules");
+                                 ]
+                               ())
+                          () );
+                    ])
                () );
            ( "ec2",
              R.Dirs.Dir.make
-               ~when_modified:
-                 (R.When_modified.make
-                  (* This should only match changes in the root
-                     directory, no subdirs *)
-                    ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "*.tf") ]
-                    ())
+               ~workspaces:
+                 (R.String_map.of_list
+                    [
+                      ( "default",
+                        R.Dirs.Workspace.make
+                          ~when_modified:
+                            (R.When_modified.make
+                             (* This should only match changes in the root
+                                directory, no subdirs *)
+                               ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "*.tf") ]
+                               ())
+                          () );
+                    ])
                () );
            ( "s3",
              R.Dirs.Dir.make
-               ~when_modified:
-                 (R.When_modified.make
-                    ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "**/*.tf") ]
-                    ())
+               ~workspaces:
+                 (R.String_map.of_list
+                    [
+                      ( "default",
+                        R.Dirs.Workspace.make
+                          ~when_modified:
+                            (R.When_modified.make
+                               ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "**/*.tf") ]
+                               ())
+                          () );
+                    ])
                () );
          ])
     ()
@@ -457,10 +525,18 @@ let test_dir_file_pattern =
                [
                  ( "iam",
                    R.Dirs.Dir.make
-                     ~when_modified:
-                       (R.When_modified.make
-                          ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "ec2/*.tf") ]
-                          ())
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:
+                                  (R.When_modified.make
+                                     ~file_patterns:
+                                       [ CCResult.get_exn (R.File_pattern.make "ec2/*.tf") ]
+                                     ())
+                                () );
+                          ])
                      () );
                  ("s3", R.Dirs.Dir.make ~tags:[ "s3" ] ());
                ])
@@ -708,17 +784,33 @@ let test_recursive_dirs_template_dir =
             (R.String_map.of_list
                [
                  ( "_template/*",
-                   R.Dirs.Dir.make ~when_modified:(R.When_modified.make ~file_patterns:[] ()) () );
+                   R.Dirs.Dir.make
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:(R.When_modified.make ~file_patterns:[] ())
+                                () );
+                          ])
+                     () );
                  ( "aws/**/terragrunt.hcl",
                    R.Dirs.Dir.make
-                     ~when_modified:
-                       (R.When_modified.make
-                          ~file_patterns:
-                            [
-                              CCResult.get_exn (R.File_pattern.make "_templates/**/*.tf");
-                              CCResult.get_exn (R.File_pattern.make "${DIR}/*.hcl");
-                            ]
-                          ())
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:
+                                  (R.When_modified.make
+                                     ~file_patterns:
+                                       [
+                                         CCResult.get_exn (R.File_pattern.make "_templates/**/*.tf");
+                                         CCResult.get_exn (R.File_pattern.make "${DIR}/*.hcl");
+                                       ]
+                                     ())
+                                () );
+                          ])
                      () );
                ])
           ()
@@ -752,17 +844,33 @@ let test_recursive_dirs_aws_prod =
             (R.String_map.of_list
                [
                  ( "_template/*",
-                   R.Dirs.Dir.make ~when_modified:(R.When_modified.make ~file_patterns:[] ()) () );
+                   R.Dirs.Dir.make
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:(R.When_modified.make ~file_patterns:[] ())
+                                () );
+                          ])
+                     () );
                  ( "aws/**/terragrunt.hcl",
                    R.Dirs.Dir.make
-                     ~when_modified:
-                       (R.When_modified.make
-                          ~file_patterns:
-                            [
-                              CCResult.get_exn (R.File_pattern.make "_templates/**/*.tf");
-                              CCResult.get_exn (R.File_pattern.make "${DIR}/*.hcl");
-                            ]
-                          ())
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:
+                                  (R.When_modified.make
+                                     ~file_patterns:
+                                       [
+                                         CCResult.get_exn (R.File_pattern.make "_templates/**/*.tf");
+                                         CCResult.get_exn (R.File_pattern.make "${DIR}/*.hcl");
+                                       ]
+                                     ())
+                                () );
+                          ])
                      () );
                ])
           ()
@@ -796,21 +904,46 @@ let test_recursive_dirs_tags =
             (R.String_map.of_list
                [
                  ( "_template/*",
-                   R.Dirs.Dir.make ~when_modified:(R.When_modified.make ~file_patterns:[] ()) () );
+                   R.Dirs.Dir.make
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:(R.When_modified.make ~file_patterns:[] ())
+                                () );
+                          ])
+                     () );
                  ( "aws/**/secrets-manager/**/terragrunt.hcl",
                    R.Dirs.Dir.make
                      ~tags:[ "secrets" ]
-                     ~when_modified:
-                       (R.When_modified.make
-                          ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "${DIR}/*.hcl") ]
-                          ())
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:
+                                  (R.When_modified.make
+                                     ~file_patterns:
+                                       [ CCResult.get_exn (R.File_pattern.make "${DIR}/*.hcl") ]
+                                     ())
+                                () );
+                          ])
                      () );
                  ( "aws/**/terragrunt.hcl",
                    R.Dirs.Dir.make
-                     ~when_modified:
-                       (R.When_modified.make
-                          ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "${DIR}/*.hcl") ]
-                          ())
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:
+                                  (R.When_modified.make
+                                     ~file_patterns:
+                                       [ CCResult.get_exn (R.File_pattern.make "${DIR}/*.hcl") ]
+                                     ())
+                                () );
+                          ])
                      () );
                ])
           ()
@@ -865,20 +998,45 @@ let test_recursive_dirs_without_tags =
             (R.String_map.of_list
                [
                  ( "_template/*",
-                   R.Dirs.Dir.make ~when_modified:(R.When_modified.make ~file_patterns:[] ()) () );
+                   R.Dirs.Dir.make
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:(R.When_modified.make ~file_patterns:[] ())
+                                () );
+                          ])
+                     () );
                  ( "aws/**/secrets-manager/**/terragrunt.hcl",
                    R.Dirs.Dir.make
-                     ~when_modified:
-                       (R.When_modified.make
-                          ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "${DIR}/*.hcl") ]
-                          ())
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:
+                                  (R.When_modified.make
+                                     ~file_patterns:
+                                       [ CCResult.get_exn (R.File_pattern.make "${DIR}/*.hcl") ]
+                                     ())
+                                () );
+                          ])
                      () );
                  ( "aws/**/terragrunt.hcl",
                    R.Dirs.Dir.make
-                     ~when_modified:
-                       (R.When_modified.make
-                          ~file_patterns:[ CCResult.get_exn (R.File_pattern.make "${DIR}/*.hcl") ]
-                          ())
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:
+                                  (R.When_modified.make
+                                     ~file_patterns:
+                                       [ CCResult.get_exn (R.File_pattern.make "${DIR}/*.hcl") ]
+                                     ())
+                                () );
+                          ])
                      () );
                ])
           ()
@@ -1001,17 +1159,33 @@ let test_module_dir_with_root_dir =
             (R.String_map.of_list
                [
                  ( "module",
-                   R.Dirs.Dir.make ~when_modified:(R.When_modified.make ~file_patterns:[] ()) () );
+                   R.Dirs.Dir.make
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:(R.When_modified.make ~file_patterns:[] ())
+                                () );
+                          ])
+                     () );
                  ( ".",
                    R.Dirs.Dir.make
-                     ~when_modified:
-                       (R.When_modified.make
-                          ~file_patterns:
-                            [
-                              CCResult.get_exn (R.File_pattern.make "./*.tf");
-                              CCResult.get_exn (R.File_pattern.make "module/**/*.tf");
-                            ]
-                          ())
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:
+                                  (R.When_modified.make
+                                     ~file_patterns:
+                                       [
+                                         CCResult.get_exn (R.File_pattern.make "./*.tf");
+                                         CCResult.get_exn (R.File_pattern.make "module/**/*.tf");
+                                       ]
+                                     ())
+                                () );
+                          ])
                      () );
                ])
           ()
@@ -1179,17 +1353,33 @@ let test_relative_path_file_pattern =
             (R.String_map.of_list
                [
                  ( "d/bar/foo",
-                   R.Dirs.Dir.make ~when_modified:(R.When_modified.make ~file_patterns:[] ()) () );
+                   R.Dirs.Dir.make
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:(R.When_modified.make ~file_patterns:[] ())
+                                () );
+                          ])
+                     () );
                  ( "d/**/*.tf",
                    R.Dirs.Dir.make
-                     ~when_modified:
-                       (R.When_modified.make
-                          ~file_patterns:
-                            [
-                              CCResult.get_exn (R.File_pattern.make "${DIR}/../foo/*.tf");
-                              CCResult.get_exn (R.File_pattern.make "${DIR}/*.tf");
-                            ]
-                          ())
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:
+                                  (R.When_modified.make
+                                     ~file_patterns:
+                                       [
+                                         CCResult.get_exn (R.File_pattern.make "${DIR}/../foo/*.tf");
+                                         CCResult.get_exn (R.File_pattern.make "${DIR}/*.tf");
+                                       ]
+                                     ())
+                                () );
+                          ])
                      () );
                ])
           ()
@@ -1215,17 +1405,34 @@ let test_relative_path_file_pattern_multiple_dots =
             (R.String_map.of_list
                [
                  ( "d/bar/foo",
-                   R.Dirs.Dir.make ~when_modified:(R.When_modified.make ~file_patterns:[] ()) () );
+                   R.Dirs.Dir.make
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:(R.When_modified.make ~file_patterns:[] ())
+                                () );
+                          ])
+                     () );
                  ( "d/**/*.tf",
                    R.Dirs.Dir.make
-                     ~when_modified:
-                       (R.When_modified.make
-                          ~file_patterns:
-                            [
-                              CCResult.get_exn (R.File_pattern.make "${DIR}/../../foo/*.tf");
-                              CCResult.get_exn (R.File_pattern.make "${DIR}/*.tf");
-                            ]
-                          ())
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:
+                                  (R.When_modified.make
+                                     ~file_patterns:
+                                       [
+                                         CCResult.get_exn
+                                           (R.File_pattern.make "${DIR}/../../foo/*.tf");
+                                         CCResult.get_exn (R.File_pattern.make "${DIR}/*.tf");
+                                       ]
+                                     ())
+                                () );
+                          ])
                      () );
                ])
           ()
@@ -1340,7 +1547,16 @@ let test_index_symlinks_dir_config =
             (R.String_map.of_list
                [
                  ( "null",
-                   R.Dirs.Dir.make ~when_modified:(R.When_modified.make ~file_patterns:[] ()) () );
+                   R.Dirs.Dir.make
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:(R.When_modified.make ~file_patterns:[] ())
+                                () );
+                          ])
+                     () );
                ])
           ()
       in

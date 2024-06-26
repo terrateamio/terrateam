@@ -347,7 +347,10 @@ module File_pattern = struct
     negate : bool;
   }
 
-  let sanitize = CCString.replace ~sub:"${DIR}" ~by:"\\$\\{DIR\\}"
+  let sanitize =
+    CCFun.(
+      CCString.replace ~sub:"${WORKSPACE}" ~by:"\\$\\{WORKSPACE\\}"
+      %> CCString.replace ~sub:"${DIR}" ~by:"\\$\\{DIR\\}")
 
   let make s =
     try
@@ -394,7 +397,11 @@ end
 
 module Dirs = struct
   module Workspace = struct
-    type t = { tags : string list [@default []] } [@@deriving make, show, yojson, eq]
+    type t = {
+      tags : string list; [@default []]
+      when_modified : When_modified.t; [@default When_modified.make ()]
+    }
+    [@@deriving make, show, yojson, eq]
   end
 
   module Dir = struct
@@ -402,8 +409,8 @@ module Dirs = struct
       create_and_select_workspace : bool; [@default true]
       stacks : Workspace.t String_map.t; [@default String_map.empty]
       tags : string list; [@default []]
-      when_modified : When_modified.t; [@default When_modified.make ()]
-      workspaces : Workspace.t String_map.t; [@default String_map.empty]
+      workspaces : Workspace.t String_map.t;
+          [@default String_map.of_list [ ("default", Workspace.make ()) ]]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -813,11 +820,6 @@ let of_version_1_apply_requirements_checks =
                ()))
         checks
 
-let of_version_1_workspace workspace =
-  let module Ws = Terrat_repo_config_workspaces in
-  let { Ws.Additional.tags } = workspace in
-  Dirs.Workspace.make ~tags ()
-
 let of_version_1_file_patterns fp = CCResult.map_l File_pattern.make fp
 
 let of_version_1_dirs_when_modified default_when_modified when_modified =
@@ -839,6 +841,15 @@ let of_version_1_dirs_when_modified default_when_modified when_modified =
        ~file_patterns:
          (CCOption.get_or ~default:default_when_modified.Wm.file_patterns file_patterns)
        ())
+
+let of_version_1_workspace default_when_modified workspace =
+  let open CCResult.Infix in
+  let module Ws = Terrat_repo_config_workspaces in
+  let { Ws.Additional.tags; when_modified } = workspace in
+  map_opt (of_version_1_dirs_when_modified default_when_modified) when_modified
+  >>= fun when_modified ->
+  let when_modified = CCOption.or_ ~else_:default_when_modified when_modified in
+  Ok (Dirs.Workspace.make ?tags ?when_modified ())
 
 let of_version_1_run_on =
   let module R = Workflow_step.Run_on in
@@ -1224,31 +1235,25 @@ let of_version_1_dirs default_when_modified { V1.Dirs.additional; _ } =
   let open CCResult.Infix in
   let module D = Terrat_repo_config_dir in
   let module Ws = Terrat_repo_config_workspaces in
+  let of_workspace default_when_modified { Ws.additional; _ } =
+    CCResult.fold_l
+      (fun acc (key, value) ->
+        let open CCResult.Infix in
+        of_version_1_workspace default_when_modified value
+        >>= fun workspace -> Ok (String_map.add key workspace acc))
+      String_map.empty
+      (Json_schema.String_map.to_list additional)
+  in
   CCResult.map_l
     (fun (dir, { D.create_and_select_workspace; stacks; tags; when_modified; workspaces }) ->
-      map_opt
-        (fun { Ws.additional; _ } ->
-          Ok
-            (Json_schema.String_map.fold
-               (fun key value acc -> String_map.add key (of_version_1_workspace value) acc)
-               additional
-               String_map.empty))
-        stacks
-      >>= fun stacks ->
       map_opt (of_version_1_dirs_when_modified default_when_modified) when_modified
       >>= fun when_modified ->
       let when_modified = CCOption.or_ ~else_:default_when_modified when_modified in
-      map_opt
-        (fun { Ws.additional; _ } ->
-          Ok
-            (Json_schema.String_map.fold
-               (fun key value acc -> String_map.add key (of_version_1_workspace value) acc)
-               additional
-               String_map.empty))
-        workspaces
+      map_opt (of_workspace when_modified) stacks
+      >>= fun stacks ->
+      map_opt (of_workspace when_modified) workspaces
       >>= fun workspaces ->
-      Ok
-        (dir, Dirs.Dir.make ~create_and_select_workspace ?stacks ?tags ?when_modified ?workspaces ()))
+      Ok (dir, Dirs.Dir.make ~create_and_select_workspace ?stacks ?tags ?workspaces ()))
     (Json_schema.String_map.to_list additional)
   >>= fun dirs -> Ok (String_map.of_list dirs)
 
@@ -1637,18 +1642,6 @@ let to_version_1_destination_branches db =
       Db.Items.Destination_branch_object { Obj.branch; source_branches = Some source_branches })
     db
 
-let to_version_1_dirs_dir_workspaces workspaces =
-  let module Ws = Terrat_repo_config.Workspaces in
-  Ws.make
-    ~additional:
-      (String_map.fold
-         (fun k v acc ->
-           let { Dirs.Workspace.tags } = v in
-           Json_schema.String_map.add k { Ws.Additional.tags } acc)
-         workspaces
-         Json_schema.String_map.empty)
-    Json_schema.Empty_obj.t
-
 let to_version_1_dirs_dir_when_modified wm =
   let module Wm = Terrat_repo_config.When_modified_nullable in
   let { When_modified.autoapply; autoplan; autoplan_draft_pr; file_patterns } = wm in
@@ -1659,11 +1652,29 @@ let to_version_1_dirs_dir_when_modified wm =
     file_patterns = Some (CCList.map File_pattern.to_string file_patterns);
   }
 
+let to_version_1_dirs_dir_workspaces workspaces =
+  let module Ws = Terrat_repo_config.Workspaces in
+  Ws.make
+    ~additional:
+      (String_map.fold
+         (fun k v acc ->
+           let { Dirs.Workspace.tags; when_modified } = v in
+           Json_schema.String_map.add
+             k
+             {
+               Ws.Additional.tags = Some tags;
+               when_modified = Some (to_version_1_dirs_dir_when_modified when_modified);
+             }
+             acc)
+         workspaces
+         Json_schema.String_map.empty)
+    Json_schema.Empty_obj.t
+
 let to_version_1_dirs_dir dirs =
   let module D = Terrat_repo_config.Dir in
   String_map.fold
     (fun k v acc ->
-      let { Dirs.Dir.create_and_select_workspace; stacks; tags; when_modified; workspaces } = v in
+      let { Dirs.Dir.create_and_select_workspace; stacks; tags; workspaces } = v in
       Json_schema.String_map.add
         k
         {
@@ -1672,7 +1683,7 @@ let to_version_1_dirs_dir dirs =
             (if String_map.is_empty stacks then None
              else Some (to_version_1_dirs_dir_workspaces stacks));
           tags = Some tags;
-          when_modified = Some (to_version_1_dirs_dir_when_modified when_modified);
+          when_modified = None;
           workspaces =
             (if String_map.is_empty workspaces then None
              else Some (to_version_1_dirs_dir_workspaces workspaces));

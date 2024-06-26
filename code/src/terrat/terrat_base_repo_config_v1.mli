@@ -299,7 +299,11 @@ end
 
 module Dirs : sig
   module Workspace : sig
-    type t = { tags : string list [@default []] } [@@deriving make, show, yojson, eq]
+    type t = {
+      tags : string list; [@default []]
+      when_modified : When_modified.t; [@default When_modified.make ()]
+    }
+    [@@deriving make, show, yojson, eq]
   end
 
   module Dir : sig
@@ -307,8 +311,8 @@ module Dirs : sig
       create_and_select_workspace : bool; [@default true]
       stacks : Workspace.t String_map.t; [@default String_map.empty]
       tags : string list; [@default []]
-      when_modified : When_modified.t; [@default When_modified.make ()]
-      workspaces : Workspace.t String_map.t; [@default String_map.empty]
+      workspaces : Workspace.t String_map.t;
+          [@default String_map.of_list [ ("default", Workspace.make ()) ]]
     }
     [@@deriving make, show, yojson, eq]
   end

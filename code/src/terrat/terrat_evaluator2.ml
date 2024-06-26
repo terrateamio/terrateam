@@ -2383,12 +2383,20 @@ module Make (S : S) = struct
       let autoplan_enabled =
         let module V1 = Terrat_base_repo_config_v1 in
         let module When_mod = V1.When_modified in
+        let module Ws = V1.Dirs.Workspace in
         let module Dir = V1.Dirs.Dir in
+        let is_workspace_autoplan workspaces =
+          CCList.exists
+            (fun (_, { Ws.when_modified = { When_mod.autoplan; _ }; _ }) -> autoplan)
+            (V1.String_map.to_list workspaces)
+        in
+
         fun { V1.when_modified = { When_mod.autoplan = global_autoplan; _ }; dirs; _ } ->
           let dirs_autoplan =
             (not (V1.String_map.is_empty dirs))
             && CCList.exists
-                 (fun (_, { Dir.when_modified = { When_mod.autoplan; _ }; _ }) -> autoplan)
+                 (fun (_, { Dir.workspaces; stacks; _ }) ->
+                   is_workspace_autoplan workspaces || is_workspace_autoplan stacks)
                  (V1.String_map.to_list dirs)
           in
           global_autoplan || dirs_autoplan

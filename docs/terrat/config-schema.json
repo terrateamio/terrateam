@@ -1208,10 +1208,12 @@
         "properties": {
           "tags": {
             "$ref": "#/definitions/tags"
+          },
+          "when_modified": {
+            "$ref": "#/definitions/when-modified-nullable"
           }
         },
         "required": [
-          "tags"
         ],
         "type": "object"
       },

@@ -51,8 +51,7 @@ val synthesize_dir_config :
    dirspace will appear only once in the output. *)
 val match_diff_list : Dirs.t -> Terrat_change.Diff.t list -> t list
 
-(** Given a dirs configuration and dirspace, turn it into a match.  If there is
-   no matching entry in the dirs section, raise [No_matching_dir] exception. *)
+(** Given a dirs configuration and dirspace, turn it into a match. *)
 val of_dirspace : Dirs.t -> Terrat_change.Dirspace.t -> t option
 
 (** Merge to lists of matches, deduplicating them.  In the case of duplicates,
