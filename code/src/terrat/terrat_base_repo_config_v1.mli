@@ -121,9 +121,17 @@ module Workflow_step : sig
   end
 
   module Plan : sig
+    module Mode : sig
+      type t =
+        | Strict
+        | Fast_and_loose
+      [@@deriving show, yojson, eq]
+    end
+
     type t = {
       env : string String_map.t option;
       extra_args : string list; [@default []]
+      mode : Mode.t; [@default Mode.Strict]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -543,6 +551,7 @@ type of_version_1_err =
   | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Pattern_parse_err of string
   | `Unknown_lock_policy_err of string
+  | `Unknown_plan_mode_err of string
   | `Workflows_apply_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Workflows_plan_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Workflows_tag_query_parse_err of string * string

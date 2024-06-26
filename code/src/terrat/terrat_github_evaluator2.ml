@@ -2850,6 +2850,7 @@ module S = struct
                 Tmpl.repo_config_err_unknown_lock_policy_err
                 kv
                 t
+          | `Unknown_plan_mode_err s -> assert false
           | `Workflows_apply_unknown_run_on_err s ->
               let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
               apply_template_and_publish

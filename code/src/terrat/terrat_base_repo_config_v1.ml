@@ -177,9 +177,21 @@ module Workflow_step = struct
   end
 
   module Plan = struct
+    module Mode = struct
+      type t =
+        | Strict
+        | Fast_and_loose
+      [@@deriving show, yojson, eq]
+
+      let to_string = function
+        | Strict -> "strict"
+        | Fast_and_loose -> "fast-and-loose"
+    end
+
     type t = {
       env : string String_map.t option;
       extra_args : string list; [@default []]
+      mode : Mode.t; [@default Mode.Strict]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -644,6 +656,7 @@ type of_version_1_err =
   | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Pattern_parse_err of string
   | `Unknown_lock_policy_err of string
+  | `Unknown_plan_mode_err of string
   | `Workflows_apply_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Workflows_plan_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Workflows_tag_query_parse_err of string * string
@@ -919,6 +932,11 @@ let of_version_1_drift_schedule = function
   | "monthly" -> Ok Drift.Schedule.Monthly
   | unknown -> Error (`Drift_schedule_err unknown)
 
+let of_version_1_workflow_op_plan_mode = function
+  | "strict" -> Ok Workflow_step.Plan.Mode.Strict
+  | "fast-and-loose" -> Ok Workflow_step.Plan.Mode.Fast_and_loose
+  | any -> Error (`Unknown_plan_mode_err any)
+
 let of_version_1_workflow_op_list ops =
   let open CCResult.Infix in
   let module Op = Terrat_repo_config_workflow_op_list.Items in
@@ -932,9 +950,11 @@ let of_version_1_workflow_op_list ops =
           >>= fun env -> Ok (O.Init (Workflow_step.Init.make ?env ?extra_args ()))
       | Op.Workflow_op_plan op ->
           let module Op = Terrat_repo_config_workflow_op_plan in
-          let { Op.env; extra_args; type_ = _ } = op in
+          let { Op.env; extra_args; mode; type_ = _ } = op in
+          of_version_1_workflow_op_plan_mode mode
+          >>= fun mode ->
           map_opt (fun { Op.Env.additional; _ } -> Ok additional) env
-          >>= fun env -> Ok (O.Plan (Workflow_step.Plan.make ?env ?extra_args ()))
+          >>= fun env -> Ok (O.Plan (Workflow_step.Plan.make ?env ?extra_args ~mode ()))
       | Op.Workflow_op_apply op ->
           let module R = Terrat_repo_config_retry in
           let module Op = Terrat_repo_config_workflow_op_apply in
@@ -1382,7 +1402,8 @@ let of_version_1_workflows default_engine default_integrations workflows =
          } ->
       CCResult.map_err
         (function
-          | `Workflows_unknown_run_on_err err -> `Workflows_apply_unknown_run_on_err err)
+          | `Workflows_unknown_run_on_err err -> `Workflows_apply_unknown_run_on_err err
+          | `Unknown_plan_mode_err _ -> assert false)
         (map_opt of_version_1_workflow_op_list apply)
       >>= fun apply ->
       of_version_1_workflow_engine cdktf terraform_version terragrunt default_engine engine
@@ -1393,7 +1414,8 @@ let of_version_1_workflows default_engine default_integrations workflows =
       >>= fun lock_policy ->
       CCResult.map_err
         (function
-          | `Workflows_unknown_run_on_err err -> `Workflows_plan_unknown_run_on_err err)
+          | `Workflows_unknown_run_on_err err -> `Workflows_plan_unknown_run_on_err err
+          | `Unknown_plan_mode_err _ as err -> err)
         (map_opt of_version_1_workflow_op_list plan)
       >>= fun plan ->
       CCResult.map_err
@@ -1885,12 +1907,13 @@ let to_version_1_workflows_op =
             }
       | Workflows.Entry.Op.Plan plan ->
           let module P = Terrat_repo_config.Workflow_op_plan in
-          let { Workflow_step.Plan.env; extra_args } = plan in
+          let { Workflow_step.Plan.env; extra_args; mode } = plan in
           Op.Items.Workflow_op_plan
             {
               P.env =
                 CCOption.map (fun env -> P.Env.make ~additional:env Json_schema.Empty_obj.t) env;
               extra_args = Some extra_args;
+              mode = Workflow_step.Plan.Mode.to_string mode;
               type_ = "plan";
             }
       | Workflows.Entry.Op.Apply apply ->

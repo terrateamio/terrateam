@@ -1180,6 +1180,14 @@
           },
           "type": "array"
         },
+        "mode": {
+          "default": "strict",
+          "enum": [
+            "fast-and-loose",
+            "strict"
+          ],
+          "type": "string"
+        },
         "type": {
           "const": "plan",
           "type": "string"
