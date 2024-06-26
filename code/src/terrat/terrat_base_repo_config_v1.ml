@@ -256,7 +256,7 @@ module Apply_requirements = struct
       all_of : Access_control.Match_list.t; [@default []]
       any_of : Access_control.Match_list.t; [@default []]
       any_of_count : int; [@default 1]
-      enabled : bool; [@default true]
+      enabled : bool; [@default false]
     }
     [@@deriving make, show, yojson, eq]
   end
