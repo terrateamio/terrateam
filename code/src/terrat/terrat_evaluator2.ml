@@ -169,6 +169,7 @@ type fetch_repo_config_err =
   [ Terrat_base_repo_config_v1.of_version_1_err
   | `Repo_config_parse_err of string
   | Terrat_json.merge_err
+  | Terrat_json.of_yaml_string_err
   | `Error
   ]
 [@@deriving show]
@@ -4083,7 +4084,6 @@ module Make (S : S) = struct
             >>= function
             | Ok _ as r -> Abb.Future.return r
             | Error (#fetch_repo_config_err as err) ->
-                let open Abbs_future_combinators.Infix_result_monad in
                 Logs.info (fun m ->
                     m
                       "EVALUATOR : %s : FETCH_REPO_CONFIG_ERR : %a"

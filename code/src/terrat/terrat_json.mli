@@ -1,5 +1,10 @@
-type to_yaml_string_err = [ `Error ] [@@deriving show]
-type of_yaml_string_err = [ `Error ] [@@deriving show]
+type to_yaml_string_err = Abb_process.check_output_err [@@deriving show]
+
+type of_yaml_string_err =
+  [ Abb_process.check_output_err
+  | `Json_decode_err of string
+  ]
+[@@deriving show]
 
 type merge_err = [ `Type_mismatch_err of string option * Yojson.Safe.t * Yojson.Safe.t ]
 [@@deriving show]

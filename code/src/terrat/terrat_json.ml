@@ -1,7 +1,12 @@
 module Process = Abb_process.Make (Abb)
 
-type to_yaml_string_err = [ `Error ] [@@deriving show]
-type of_yaml_string_err = [ `Error ] [@@deriving show]
+type to_yaml_string_err = Abb_process.check_output_err [@@deriving show]
+
+type of_yaml_string_err =
+  [ Abb_process.check_output_err
+  | `Json_decode_err of string
+  ]
+[@@deriving show]
 
 type merge_err = [ `Type_mismatch_err of string option * Yojson.Safe.t * Yojson.Safe.t ]
 [@@deriving show]
@@ -13,7 +18,7 @@ let to_yaml_string json =
     Abb_intf.Process.{ exec_name = "yj"; args = [ "yj"; "-jy" ]; env = None; cwd = None }
   >>= function
   | Ok (stdout, _) -> Abb.Future.return (Ok stdout)
-  | Error #Abb_process.check_output_err -> Abb.Future.return (Error `Error)
+  | Error (#Abb_process.check_output_err as err) -> Abb.Future.return (Error err)
 
 let of_yaml_string yaml_str =
   let open Abb.Future.Infix_monad in
@@ -23,8 +28,8 @@ let of_yaml_string yaml_str =
   >>= function
   | Ok (stdout, _) -> (
       try Abb.Future.return (Ok (Yojson.Safe.from_string stdout))
-      with Yojson.Json_error _ -> Abb.Future.return (Error `Error))
-  | Error #Abb_process.check_output_err -> Abb.Future.return (Error `Error)
+      with Yojson.Json_error err -> Abb.Future.return (Error (`Json_decode_err err)))
+  | Error (#Abb_process.check_output_err as err) -> Abb.Future.return (Error err)
 
 let rec merge' ~base override =
   match (base, override) with

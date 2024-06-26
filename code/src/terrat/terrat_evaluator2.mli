@@ -79,6 +79,7 @@ type fetch_repo_config_err =
   [ Terrat_base_repo_config_v1.of_version_1_err
   | `Repo_config_parse_err of string
   | Terrat_json.merge_err
+  | Terrat_json.of_yaml_string_err
   | `Error
   ]
 [@@deriving show]
