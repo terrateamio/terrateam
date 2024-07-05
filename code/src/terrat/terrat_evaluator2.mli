@@ -36,7 +36,7 @@ module Msg : sig
     | Repo_config of (string list * Terrat_base_repo_config_v1.t * Terrat_change_match.Dirs.t)
     | Repo_config_err of Terrat_base_repo_config_v1.of_version_1_err
     | Repo_config_failure of string
-    | Repo_config_parse_failure of string
+    | Repo_config_parse_failure of string * string
     | Tag_query_err of Terrat_tag_query_ast.err
     | Unexpected_temporary_err
     | Unlock_success
@@ -77,9 +77,11 @@ end
 
 type fetch_repo_config_err =
   [ Terrat_base_repo_config_v1.of_version_1_err
-  | `Repo_config_parse_err of string
+  | `Repo_config_parse_err of string * string
   | Terrat_json.merge_err
-  | Terrat_json.of_yaml_string_err
+  | `Json_decode_err of string * string
+  | `Unexpected_err of string
+  | `Yaml_decode_err of string * string
   | `Error
   ]
 [@@deriving show]

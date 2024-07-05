@@ -2418,8 +2418,8 @@ module S = struct
             Tmpl.maybe_stale_work_manifests
             kv
             t
-      | Msg.Repo_config_parse_failure err ->
-          let kv = Snabela.Kv.(Map.of_list [ ("msg", string err) ]) in
+      | Msg.Repo_config_parse_failure (fname, err) ->
+          let kv = Snabela.Kv.(Map.of_list [ ("fname", string fname); ("msg", string err) ]) in
           apply_template_and_publish "REPO_CONFIG_PARSE_FAILURE" Tmpl.repo_config_parse_failure kv t
       | Msg.Repo_config_failure err ->
           let kv = Snabela.Kv.(Map.of_list [ ("msg", string err) ]) in

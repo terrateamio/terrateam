@@ -102,7 +102,7 @@ module Msg = struct
     | Repo_config of (string list * Terrat_base_repo_config_v1.t * Terrat_change_match.Dirs.t)
     | Repo_config_err of Terrat_base_repo_config_v1.of_version_1_err
     | Repo_config_failure of string
-    | Repo_config_parse_failure of string
+    | Repo_config_parse_failure of string * string
     | Tag_query_err of Terrat_tag_query_ast.err
     | Unexpected_temporary_err
     | Unlock_success
@@ -167,9 +167,11 @@ end
 
 type fetch_repo_config_err =
   [ Terrat_base_repo_config_v1.of_version_1_err
-  | `Repo_config_parse_err of string
+  | `Repo_config_parse_err of string * string
   | Terrat_json.merge_err
-  | Terrat_json.of_yaml_string_err
+  | `Json_decode_err of string * string
+  | `Unexpected_err of string
+  | `Yaml_decode_err of string * string
   | `Error
   ]
 [@@deriving show]
@@ -1056,7 +1058,12 @@ module Make (S : S) = struct
     | Some (_, content) when CCString.is_empty (CCString.trim content) ->
         Abb.Future.return (Ok None)
     | Some (fname, content) ->
-        Terrat_json.of_yaml_string content
+        Abbs_future_combinators.Result.map_err
+          ~f:(function
+            | `Json_decode_err err -> `Json_decode_err (fname, err)
+            | `Unexpected_err -> `Unexpected_err fname
+            | `Yaml_decode_err err -> `Yaml_decode_err (fname, err))
+          (Terrat_json.of_yaml_string content)
         >>= fun json -> Abb.Future.return (Ok (Some (fname, json)))
 
   let repo_config_of_json json =
@@ -1146,6 +1153,38 @@ module Make (S : S) = struct
               repo_forced_config,
               default_repo_config,
               repo_config ) ->
+    let wrap_err fname =
+      Abbs_future_combinators.Result.map_err ~f:(function
+          | ( `Drift_schedule_err _
+            | `Apply_requirements_approved_any_of_match_parse_err _
+            | `Apply_requirements_approved_all_of_match_parse_err _
+            | `Access_control_terrateam_config_update_match_parse_err _
+            | `Workflows_apply_unknown_run_on_err _
+            | `Access_control_policy_plan_match_parse_err _
+            | `Access_control_unlock_match_parse_err _
+            | `Access_control_policy_apply_with_superapproval_match_parse_err _
+            | `Access_control_policy_apply_force_match_parse_err _
+            | `Workflows_plan_unknown_run_on_err _
+            | `Unknown_lock_policy_err _
+            | `Workflows_tag_query_parse_err _
+            | `Access_control_policy_superapproval_match_parse_err _
+            | `Drift_tag_query_err _
+            | `Pattern_parse_err _
+            | `Glob_parse_err _
+            | `Access_control_policy_apply_match_parse_err _
+            | `Access_control_policy_apply_autoapprove_match_parse_err _
+            | `Unknown_plan_mode_err _
+            | `Apply_requirements_check_tag_query_err _
+            | `Hooks_unknown_run_on_err _
+            | `Access_control_policy_tag_query_err _ ) as err -> err
+          | `Repo_config_parse_err err -> `Repo_config_parse_err (fname, err))
+    in
+    let validate_configs =
+      Abbs_future_combinators.List_result.iter ~f:(function
+          | Some (fname, json) ->
+              wrap_err fname (repo_config_of_json json) >>= fun _ -> Abb.Future.return (Ok ())
+          | None -> Abb.Future.return (Ok ()))
+    in
     let get_json = function
       | None -> `Assoc []
       | Some (_, json) -> json
@@ -1168,6 +1207,16 @@ module Make (S : S) = struct
               repo_config;
             ]
         in
+        validate_configs
+          [
+            global_defaults;
+            global_overrides;
+            repo_defaults;
+            repo_overrides;
+            default_repo_config;
+            repo_config;
+          ]
+        >>= fun () ->
         let global_defaults = get_json global_defaults in
         let global_overrides = get_json global_overrides in
         let repo_defaults = get_json repo_defaults in
@@ -1190,8 +1239,8 @@ module Make (S : S) = struct
         >>= fun repo_config ->
         Abbs_future_combinators.Infix_result_app.(
           (fun default_repo_config repo_config -> (default_repo_config, repo_config))
-          <$> repo_config_of_json default_repo_config
-          <*> repo_config_of_json repo_config)
+          <$> wrap_err "default" (repo_config_of_json default_repo_config)
+          <*> wrap_err "repo" (repo_config_of_json repo_config))
         >>= fun (default_repo_config, repo_config) ->
         Abb.Future.return
           (Ok
@@ -1201,10 +1250,12 @@ module Make (S : S) = struct
                  repo_config ))
     | _, _, (Some (_, repo_forced_config) as config), _, _ ->
         let provenance = collect_provenance [ global_defaults; config ] in
+        validate_configs [ global_defaults; config ]
+        >>= fun () ->
         let global_defaults = get_json global_defaults in
         Abb.Future.return (Terrat_json.merge ~base:global_defaults repo_forced_config)
         >>= fun repo_config ->
-        repo_config_of_json repo_config
+        wrap_err "repo" (repo_config_of_json repo_config)
         >>= fun repo_config -> Abb.Future.return (Ok (provenance, repo_config))
 
   let fetch_repo_config' client repo ref_ =
@@ -2175,7 +2226,6 @@ module Make (S : S) = struct
             Logs.err (fun m ->
                 m "EVALUATOR : %s : DB : %a" (S.Event.Result.request_id t) Pgsql_pool.pp_err err);
             Abb.Future.return (Error `Error)
-        | Error (`Parse_err _) -> Abb.Future.return (Error `Error)
         | Error `Error -> Abb.Future.return (Error `Error)
         | Error (#fetch_repo_config_err as err) ->
             Logs.err (fun m ->
@@ -2249,18 +2299,6 @@ module Make (S : S) = struct
         run client pull_request
         >>= function
         | Ok _ as ret -> Abb.Future.return ret
-        | Error (`Parse_err err) ->
-            let publish =
-              S.Publish_msg.make
-                ~client
-                ~pull_number:(S.Pull_request.id pull_request)
-                ~repo
-                ~user:(S.Event.Repo_config.user t)
-                ()
-            in
-            Abbs_future_combinators.ignore
-              (S.Publish_msg.publish_msg publish (Msg.Repo_config_parse_failure err))
-            >>= fun () -> Abb.Future.return (Error `Error)
         | Error (#Pgsql_pool.err | `Error) as err -> Abb.Future.return err
         | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
             let publish =
@@ -2274,7 +2312,10 @@ module Make (S : S) = struct
             Abbs_future_combinators.ignore
               (S.Publish_msg.publish_msg publish (Msg.Repo_config_err err))
             >>= fun () -> Abb.Future.return (Error `Error)
-        | Error (`Json_decode_err err | `Yaml_decode_err err) ->
+        | Error
+            ( `Json_decode_err (fname, err)
+            | `Yaml_decode_err (fname, err)
+            | `Repo_config_parse_err (fname, err) ) ->
             let publish =
               S.Publish_msg.make
                 ~client
@@ -2284,7 +2325,7 @@ module Make (S : S) = struct
                 ()
             in
             Abbs_future_combinators.ignore
-              (S.Publish_msg.publish_msg publish (Msg.Repo_config_parse_failure err))
+              (S.Publish_msg.publish_msg publish (Msg.Repo_config_parse_failure (fname, err)))
             >>= fun () -> Abb.Future.return (Error `Error)
         | Error (#fetch_repo_config_err as err) ->
             Logs.err (fun m ->
@@ -3616,10 +3657,6 @@ module Make (S : S) = struct
                               err);
                         Abbs_future_combinators.ignore (publish_msg t (Msg.Tag_query_err err))
                         >>= fun () -> Abb.Future.return (Error `Error)
-                    | Error (`Parse_err err) ->
-                        Abbs_future_combinators.ignore
-                          (publish_msg t (Msg.Repo_config_parse_failure err))
-                        >>= fun () -> Abb.Future.return (Error `Error)
                     | Error (`No_matching_dest_branch pull_request) ->
                         handle_dest_branch_err t pull_request
                     | Error (`No_matching_source_branch pull_request) ->
@@ -3627,9 +3664,12 @@ module Make (S : S) = struct
                     | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
                         Abbs_future_combinators.ignore (publish_msg t (Msg.Repo_config_err err))
                         >>= fun () -> Abb.Future.return (Error `Error)
-                    | Error (`Json_decode_err err | `Yaml_decode_err err) ->
+                    | Error
+                        ( `Json_decode_err (fname, err)
+                        | `Yaml_decode_err (fname, err)
+                        | `Repo_config_parse_err (fname, err) ) ->
                         Abbs_future_combinators.ignore
-                          (publish_msg t (Msg.Repo_config_parse_failure err))
+                          (publish_msg t (Msg.Repo_config_parse_failure (fname, err)))
                         >>= fun () -> Abb.Future.return (Error `Error)
                     | Error (#fetch_repo_config_err as err) ->
                         Logs.err (fun m ->
@@ -4248,9 +4288,6 @@ module Make (S : S) = struct
         eval' t
         >>= function
         | Ok _ as ret -> Abb.Future.return ret
-        | Error (`Parse_err err) ->
-            Abbs_future_combinators.ignore (publish_msg t (Msg.Repo_config_parse_failure err))
-            >>= fun () -> Abb.Future.return (Error `Error)
         | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
             Abbs_future_combinators.ignore (publish_msg t (Msg.Repo_config_err err))
             >>= fun () -> Abb.Future.return (Error `Error)
