@@ -277,4 +277,12 @@ module Make (Fut : Abb_intf.Future.S) = struct
         l
       >>| fun l -> Std_list.rev l
   end
+
+  module Result = struct
+    let map_err ~f fut =
+      fut
+      >>= function
+      | Ok _ as r -> Fut.return r
+      | Error err -> Fut.return (Error (f err))
+  end
 end

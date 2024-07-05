@@ -163,4 +163,9 @@ module Make (Fut : Abb_intf.Future.S) : sig
     val ( <$> ) : ('a -> 'b) -> ('a, 'c) t -> ('b, 'c) t
     val ( <*> ) : ('a -> 'b, 'c) t -> ('a, 'c) t -> ('b, 'c) t
   end
+
+  module Result : sig
+    (** For a future that returns a result, map the error to a new value *)
+    val map_err : f:('b -> 'c) -> ('a, 'b) result Fut.t -> ('a, 'c) result Fut.t
+  end
 end
