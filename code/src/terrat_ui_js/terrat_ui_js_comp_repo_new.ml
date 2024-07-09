@@ -22,6 +22,9 @@ let workflow_file =
   \        required: true\n\
   \      api-base-url:\n\
   \        description: 'API Base URL'\n\
+  \      environment:\n\
+  \        description: 'Environment in which to run the action'\n\
+  \        type: environment\n\
    jobs:\n\
   \  terrateam:\n\
   \    permissions: # Required to pass credentials to the Terrateam action\n\
@@ -71,7 +74,11 @@ let workflow_file_syntax_highlight =
   \      <span class=\"hl kwa\">api-base-url:</span>\n\
   \        <span class=\"hl kwa\">description:</span> <span class=\"hl sng\">&#39;API Base \
    URL&#39;</span>\n\
-   <span class=\"hl kwa\">jobs:</span>\n\
+  \      <span class=\"hl kwa\">environment:</span>\n\
+  \        <span class=\"hl kwa\">description:</span> <span class=\"hl sng\">&#39;Environment in \
+   which to run the action&#39;</span>\n\
+  \        <span class=\"hl kwa\">type:</span> <span class=\"hl sng\">environment</span>\n\
+  \   <span class=\"hl kwa\">jobs:</span>\n\
   \  <span class=\"hl kwa\">terrateam:</span>\n\
   \    <span class=\"hl kwa\">permissions:</span> <span class=\"hl slc\"># Required to pass \
    credentials to the Terrateam action</span>\n\
