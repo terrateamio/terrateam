@@ -2,54 +2,50 @@ module At = Brtl_js2.Brr.At
 
 let workflow_file =
   "##########################################################################\n\
-   # .github/workflows/terrateam.yml\n\
-   ##########################################################################\n\
    # DO NOT MODIFY\n\
    #\n\
    # THIS FILE SHOULD LIVE IN .github/workflows/terrateam.yml\n\
    #\n\
    # Looking for the Terrateam configuration file? .terrateam/config.yml.\n\
    #\n\
-   # See https://terrateam.io/docs/configuration for details\n\
+   # See https://terrateam.io/docs\n\
    ##########################################################################\n\
-   name: 'Terrateam Workflow'\n\
-   on:\n\
-  \  workflow_dispatch:\n\
-  \    inputs:\n\
-  \      # The work-token and api-base-url are automatically passed in by the Terrateam backend\n\
-  \      work-token:\n\
-  \        description: 'Work Token'\n\
-  \        required: true\n\
-  \      api-base-url:\n\
-  \        description: 'API Base URL'\n\
-  \      environment:\n\
-  \        description: 'Environment in which to run the action'\n\
-  \        type: environment\n\
-   jobs:\n\
-  \  terrateam:\n\
-  \    permissions: # Required to pass credentials to the Terrateam action\n\
-  \      id-token: write\n\
-  \      contents: read\n\
-  \    runs-on: ubuntu-latest\n\
-  \    timeout-minutes: 1440\n\
-  \    name: Terrateam Action\n\
-  \    steps:\n\
-  \      - uses: actions/checkout@v3\n\
-  \      - name: Run Terrateam Action\n\
-  \        id: terrateam\n\
-  \        uses: terrateamio/action@v1 # Do not replace with a custom image. Doing so may cause \
-   Terrateam to not operate as intended.\n\
-  \        with:\n\
-  \          work-token: '${{ github.event.inputs.work-token }}'\n\
-  \          api-base-url: '${{ github.event.inputs.api-base-url }}'\n\
-  \        env:\n\
-  \          SECRETS_CONTEXT: ${{ toJson(secrets) }}"
+  \ name: 'Terrateam Workflow'\n\
+  \ on:\n\
+  \   workflow_dispatch:\n\
+  \     inputs:\n\
+  \       # The work-token and api-base-url are automatically passed in by the Terrateam backend\n\
+  \       work-token:\n\
+  \         description: 'Work Token'\n\
+  \         required: true\n\
+  \       api-base-url:\n\
+  \         description: 'API Base URL'\n\
+  \       environment:\n\
+  \         description: 'Environment in which to run the action'\n\
+  \         type: environment\n\
+  \ jobs:\n\
+  \   terrateam:\n\
+  \     permissions: # Required to pass credentials to the Terrateam action\n\
+  \       id-token: write\n\
+  \       contents: read\n\
+  \     runs-on: ubuntu-latest\n\
+  \     timeout-minutes: 1440\n\
+  \     name: Terrateam Action\n\
+  \     environment: '${{ github.event.inputs.environment }}'\n\
+  \     steps:\n\
+  \       - uses: actions/checkout@v3\n\
+  \       - name: Run Terrateam Action\n\
+  \         id: terrateam\n\
+  \         uses: terrateamio/action@v1\n\
+  \         with:\n\
+  \           work-token: '${{ github.event.inputs.work-token }}'\n\
+  \           api-base-url: '${{ github.event.inputs.api-base-url }}'\n\
+  \         env:\n\
+  \           SECRETS_CONTEXT: ${{ toJson(secrets) }}\n\
+  \           VARIABLES_CONTEXT: ${{ toJson(vars) }}"
 
 let workflow_file_syntax_highlight =
   "<span class=\"hl \
-   slc\">##########################################################################</span>\n\
-   <span class=\"hl slc\"># .github/workflows/terrateam.yml</span>\n\
-   <span class=\"hl \
    slc\">##########################################################################</span>\n\
    <span class=\"hl slc\"># DO NOT MODIFY</span>\n\
    <span class=\"hl slc\">#</span>\n\
@@ -58,50 +54,53 @@ let workflow_file_syntax_highlight =
    <span class=\"hl slc\"># Looking for the Terrateam configuration file? \
    .terrateam/config.yml.</span>\n\
    <span class=\"hl slc\">#</span>\n\
-   <span class=\"hl slc\"># See https://terrateam.io/docs/configuration for details</span>\n\
+   <span class=\"hl slc\"># See https://terrateam.io/docs</span>\n\
    <span class=\"hl \
    slc\">##########################################################################</span>\n\
-   <span class=\"hl kwa\">name:</span> <span class=\"hl sng\">&#39;Terrateam Workflow&#39;</span>\n\
-   <span class=\"hl kwa\">on:</span>\n\
-  \  <span class=\"hl kwa\">workflow_dispatch:</span>\n\
-  \    <span class=\"hl kwa\">inputs:</span>\n\
-  \      <span class=\"hl slc\"># The work-token and api-base-url are automatically passed in by \
+  \ <span class=\"hl kwa\">name:</span> <span class=\"hl sng\">&#39;Terrateam Workflow&#39;</span>\n\
+  \ <span class=\"hl kwa\">on:</span>\n\
+  \   <span class=\"hl kwa\">workflow_dispatch:</span>\n\
+  \     <span class=\"hl kwa\">inputs:</span>\n\
+  \       <span class=\"hl slc\"># The work-token and api-base-url are automatically passed in by \
    the Terrateam backend</span>\n\
-  \      <span class=\"hl kwa\">work-token:</span>\n\
-  \        <span class=\"hl kwa\">description:</span> <span class=\"hl sng\">&#39;Work \
+  \       <span class=\"hl kwa\">work-token:</span>\n\
+  \         <span class=\"hl kwa\">description:</span> <span class=\"hl sng\">&#39;Work \
    Token&#39;</span>\n\
-  \        <span class=\"hl kwa\">required:</span> true\n\
-  \      <span class=\"hl kwa\">api-base-url:</span>\n\
-  \        <span class=\"hl kwa\">description:</span> <span class=\"hl sng\">&#39;API Base \
+  \         <span class=\"hl kwa\">required:</span> true\n\
+  \       <span class=\"hl kwa\">api-base-url:</span>\n\
+  \         <span class=\"hl kwa\">description:</span> <span class=\"hl sng\">&#39;API Base \
    URL&#39;</span>\n\
-  \      <span class=\"hl kwa\">environment:</span>\n\
-  \        <span class=\"hl kwa\">description:</span> <span class=\"hl sng\">&#39;Environment in \
+  \       <span class=\"hl kwa\">environment:</span>\n\
+  \         <span class=\"hl kwa\">description:</span> <span class=\"hl sng\">&#39;Environment in \
    which to run the action&#39;</span>\n\
-  \        <span class=\"hl kwa\">type:</span> <span class=\"hl sng\">environment</span>\n\
-  \   <span class=\"hl kwa\">jobs:</span>\n\
-  \  <span class=\"hl kwa\">terrateam:</span>\n\
-  \    <span class=\"hl kwa\">permissions:</span> <span class=\"hl slc\"># Required to pass \
+  \         <span class=\"hl kwa\">type:</span> environment\n\
+  \ <span class=\"hl kwa\">jobs:</span>\n\
+  \   <span class=\"hl kwa\">terrateam:</span>\n\
+  \     <span class=\"hl kwa\">permissions:</span> <span class=\"hl slc\"># Required to pass \
    credentials to the Terrateam action</span>\n\
-  \      <span class=\"hl kwa\">id-token:</span> write\n\
-  \      <span class=\"hl kwa\">contents:</span> read\n\
-  \    <span class=\"hl kwa\">runs-on:</span> ubuntu<span class=\"hl opt\">-</span>latest\n\
-  \    <span class=\"hl kwa\">timeout-minutes:</span> <span class=\"hl num\">1440</span>\n\
-  \    <span class=\"hl kwa\">name:</span> Terrateam Action\n\
-  \    <span class=\"hl kwa\">steps:</span>\n\
-  \      <span class=\"hl opt\">-</span> <span class=\"hl kwa\">uses:</span> actions/checkout&#64;v3\n\
-  \      <span class=\"hl opt\">-</span> <span class=\"hl kwa\">name:</span> Run Terrateam Action\n\
-  \        <span class=\"hl kwa\">id:</span> terrateam\n\
-  \        <span class=\"hl kwa\">uses:</span> terrateamio/action&#64;v1 <span class=\"hl slc\"># \
-   Do not replace with a custom image. Doing so may cause Terrateam to not operate as \
-   intended.</span>\n\
-  \        <span class=\"hl kwa\">with:</span>\n\
-  \          <span class=\"hl kwa\">work-token:</span> <span class=\"hl sng\">&#39;${{ \
+  \       <span class=\"hl kwa\">id-token:</span> write\n\
+  \       <span class=\"hl kwa\">contents:</span> read\n\
+  \     <span class=\"hl kwa\">runs-on:</span> ubuntu<span class=\"hl opt\">-</span>latest\n\
+  \     <span class=\"hl kwa\">timeout-minutes:</span> <span class=\"hl num\">1440</span>\n\
+  \     <span class=\"hl kwa\">name:</span> Terrateam Action\n\
+  \     <span class=\"hl kwa\">environment:</span> <span class=\"hl sng\">&#39;${{ \
+   github.event.inputs.environment }}&#39;</span>\n\
+  \     <span class=\"hl kwa\">steps:</span>\n\
+  \       <span class=\"hl opt\">-</span> <span class=\"hl kwa\">uses:</span> \
+   actions/checkout&#64;v3\n\
+  \       <span class=\"hl opt\">-</span> <span class=\"hl kwa\">name:</span> Run Terrateam Action\n\
+  \         <span class=\"hl kwa\">id:</span> terrateam\n\
+  \         <span class=\"hl kwa\">uses:</span> terrateamio/action&#64;v1\n\
+  \         <span class=\"hl kwa\">with:</span>\n\
+  \           <span class=\"hl kwa\">work-token:</span> <span class=\"hl sng\">&#39;${{ \
    github.event.inputs.work-token }}&#39;</span>\n\
-  \          <span class=\"hl kwa\">api-base-url:</span> <span class=\"hl sng\">&#39;${{ \
+  \           <span class=\"hl kwa\">api-base-url:</span> <span class=\"hl sng\">&#39;${{ \
    github.event.inputs.api-base-url }}&#39;</span>\n\
-  \        <span class=\"hl kwa\">env:</span>\n\
-  \          <span class=\"hl kwa\">SECRETS_CONTEXT:</span> $<span class=\"hl opt\">{{</span> \
-   toJson<span class=\"hl opt\">(</span>secrets<span class=\"hl opt\">) }}</span>"
+  \         <span class=\"hl kwa\">env:</span>\n\
+  \           <span class=\"hl kwa\">SECRETS_CONTEXT:</span> $<span class=\"hl opt\">{{</span> \
+   toJson<span class=\"hl opt\">(</span>secrets<span class=\"hl opt\">) }}</span>\n\
+  \           <span class=\"hl kwa\">VARIABLES_CONTEXT:</span> $<span class=\"hl opt\">{{</span> \
+   toJson<span class=\"hl opt\">(</span>vars<span class=\"hl opt\">) }}</span>"
 
 let run repo_name state =
   let app_state = Brtl_js2.State.app_state state in
