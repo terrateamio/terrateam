@@ -302,6 +302,7 @@ module Apply_requirements = struct
   type t = {
     checks : Check_list.t; [@default [ Check.make ~approved:(Approved.make ~enabled:false ()) () ]]
     create_pending_apply_check : bool; [@default true]
+    create_completed_apply_check_on_noop : bool; [@default false]
   }
   [@@deriving make, show, yojson, eq]
 end
@@ -1161,9 +1162,17 @@ let of_version_1_access_control access_control =
 let of_version_1_apply_requirements apply_requirements =
   let open CCResult.Infix in
   let module Ar = Terrat_repo_config_apply_requirements in
-  let { Ar.checks; create_pending_apply_check } = apply_requirements in
+  let { Ar.checks; create_pending_apply_check; create_completed_apply_check_on_noop } =
+    apply_requirements
+  in
   of_version_1_apply_requirements_checks checks
-  >>= fun checks -> Ok (Apply_requirements.make ~checks ~create_pending_apply_check ())
+  >>= fun checks ->
+  Ok
+    (Apply_requirements.make
+       ~checks
+       ~create_pending_apply_check
+       ~create_completed_apply_check_on_noop
+       ())
 
 let of_version_automerge automerge =
   let module Am = Terrat_repo_config_automerge in
@@ -1594,10 +1603,17 @@ let to_version_1_apply_requirements_checks =
 let to_version_1_apply_requirements ar =
   let module Ar = Terrat_repo_config.Apply_requirements in
   let module C = Terrat_repo_config.Apply_requirements_checks in
-  let { Apply_requirements.checks; create_pending_apply_check } = ar in
+  let {
+    Apply_requirements.checks;
+    create_pending_apply_check;
+    create_completed_apply_check_on_noop;
+  } =
+    ar
+  in
   {
     Ar.checks = Some (C.Apply_requirements_checks_2 (to_version_1_apply_requirements_checks checks));
     create_pending_apply_check;
+    create_completed_apply_check_on_noop;
   }
 
 let to_version_1_automerge automerge =

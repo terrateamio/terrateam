@@ -231,6 +231,7 @@ module Apply_requirements : sig
   type t = {
     checks : Check_list.t; [@default [ Check.make ~approved:(Approved.make ~enabled:false ()) () ]]
     create_pending_apply_check : bool; [@default true]
+    create_completed_apply_check_on_noop : bool; [@default false]
   }
   [@@deriving make, show, yojson, eq]
 end

@@ -2716,6 +2716,28 @@ module Make (S : S) = struct
          else Abb.Future.return (Ok ()))
         >>= fun () -> Abb.Future.return (Ok ret)
 
+      let maybe_create_completed_apply_check t repo_config pull_request =
+        let module R = Terrat_base_repo_config_v1 in
+        if
+          repo_config.R.apply_requirements.R.Apply_requirements.create_completed_apply_check_on_noop
+        then
+          let checks =
+            [
+              S.make_commit_check
+                ~config:(S.Event.Terraform.config t.event)
+                ~description:"Completed"
+                ~title:"terrateam apply"
+                ~status:Terrat_commit_check.Status.Completed
+                (S.Pull_request.account pull_request);
+            ]
+          in
+          create_commit_checks
+            t.client
+            (S.Pull_request.repo pull_request)
+            (S.Pull_request.branch_ref pull_request)
+            checks
+        else Abb.Future.return (Ok ())
+
       let eval_plan t db access_control tag_query_matches all_matches pull_request repo_config mode
           =
         let module D = Terrat_access_control.R.Deny in
@@ -2747,7 +2769,8 @@ module Make (S : S) = struct
                   "EVALUATOR : %s : NOOP : AUTOPLAN_NO_MISSING_MATCHES : draft=%s"
                   (S.Event.Terraform.request_id t.event)
                   (Bool.to_string (S.Pull_request.is_draft_pr pull_request)));
-            Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
+            maybe_create_completed_apply_check t repo_config pull_request
+            >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
         | matches -> (
             let open Abb.Future.Infix_monad in
             Access_control_engine.eval_tf_operation access_control matches `Plan
@@ -2771,18 +2794,22 @@ module Make (S : S) = struct
                 let matches = pass in
                 match (S.Pull_request.state pull_request, mode, matches) with
                 | _, Tf_operation.Auto, [] ->
+                    let open Abbs_future_combinators.Infix_result_monad in
                     Logs.info (fun m ->
                         m
                           "EVALUATOR : %s : NOOP : AUTOPLAN_NO_MATCHES : draft=%s"
                           (S.Event.Terraform.request_id t.event)
                           (Bool.to_string (S.Pull_request.is_draft_pr pull_request)));
-                    Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
+                    maybe_create_completed_apply_check t repo_config pull_request
+                    >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
                 | _, _, [] ->
                     let open Abbs_future_combinators.Infix_result_monad in
                     Logs.info (fun m ->
                         m
                           "EVALUATOR : %s : NOOP : PLAN_NO_MATCHING_DIRSPACES"
                           (S.Event.Terraform.request_id t.event));
+                    maybe_create_completed_apply_check t repo_config pull_request
+                    >>= fun () ->
                     publish_msg t Msg.Plan_no_matching_dirspaces
                     >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
                 | Terrat_pull_request.State.(Open Open_status.Merge_conflict), _, _ ->
