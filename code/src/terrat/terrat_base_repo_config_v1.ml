@@ -385,6 +385,7 @@ module When_modified = struct
     autoapply : bool; [@default false]
     autoplan : bool; [@default true]
     autoplan_draft_pr : bool; [@default true]
+    depends_on : Tag_query.t option;
     file_patterns : File_pattern_list.t;
         [@default
           [
@@ -661,6 +662,7 @@ type of_version_1_err =
   | `Apply_requirements_approved_all_of_match_parse_err of string
   | `Apply_requirements_approved_any_of_match_parse_err of string
   | `Apply_requirements_check_tag_query_err of string * string
+  | `Depends_on_err of string * string
   | `Drift_schedule_err of string
   | `Drift_tag_query_err of string * string
   | `Glob_parse_err of string * string
@@ -826,14 +828,20 @@ let of_version_1_dirs_when_modified default_when_modified when_modified =
   let open CCResult.Infix in
   let module Wm = When_modified in
   let module Wmn = Terrat_repo_config_when_modified_nullable in
-  let { Wmn.autoapply; autoplan; autoplan_draft_pr; file_patterns } = when_modified in
+  let { Wmn.autoapply; autoplan; autoplan_draft_pr; depends_on; file_patterns } = when_modified in
   let default_when_modified =
     CCOption.get_or ~default:(When_modified.make ()) default_when_modified
   in
+  CCResult.map_err
+    (function
+      | _ -> failwith "nyi")
+    (map_opt Terrat_tag_query.of_string depends_on)
+  >>= fun depends_on ->
   map_opt of_version_1_file_patterns file_patterns
   >>= fun file_patterns ->
   Ok
     (When_modified.make
+       ?depends_on:(CCOption.or_ ~else_:default_when_modified.Wm.depends_on depends_on)
        ~autoapply:(CCOption.get_or ~default:default_when_modified.Wm.autoapply autoapply)
        ~autoplan:(CCOption.get_or ~default:default_when_modified.Wm.autoplan autoplan)
        ~autoplan_draft_pr:
@@ -1226,10 +1234,15 @@ let of_version_1_when_modified when_modified =
         | s when CCString.prefix ~pre:"*" s -> "${DIR}/" ^ s
         | s -> s)
   in
-  let { Wm.autoapply; autoplan; autoplan_draft_pr; file_patterns } = when_modified in
+  let { Wm.autoapply; autoplan; autoplan_draft_pr; depends_on; file_patterns } = when_modified in
+  CCResult.map_err
+    (function
+      | `Tag_query_error err -> `Depends_on_err err)
+    (map_opt Terrat_tag_query.of_string depends_on)
+  >>= fun depends_on ->
   of_version_1_file_patterns (update_file_patterns file_patterns)
   >>= fun file_patterns ->
-  Ok (When_modified.make ~autoapply ~autoplan ~autoplan_draft_pr ~file_patterns ())
+  Ok (When_modified.make ?depends_on ~autoapply ~autoplan ~autoplan_draft_pr ~file_patterns ())
 
 let of_version_1_dirs default_when_modified { V1.Dirs.additional; _ } =
   let open CCResult.Infix in
@@ -1653,11 +1666,12 @@ let to_version_1_destination_branches db =
 
 let to_version_1_dirs_dir_when_modified wm =
   let module Wm = Terrat_repo_config.When_modified_nullable in
-  let { When_modified.autoapply; autoplan; autoplan_draft_pr; file_patterns } = wm in
+  let { When_modified.autoapply; autoplan; autoplan_draft_pr; depends_on; file_patterns } = wm in
   {
     Wm.autoapply = Some autoapply;
     autoplan = Some autoplan;
     autoplan_draft_pr = Some autoplan_draft_pr;
+    depends_on = CCOption.map Terrat_tag_query.to_string depends_on;
     file_patterns = Some (CCList.map File_pattern.to_string file_patterns);
   }
 
@@ -1918,11 +1932,14 @@ let to_version_1_tags tags =
 
 let to_version_1_when_modified when_modified =
   let module Wm = Terrat_repo_config.When_modified in
-  let { When_modified.autoapply; autoplan; autoplan_draft_pr; file_patterns } = when_modified in
+  let { When_modified.autoapply; autoplan; autoplan_draft_pr; depends_on; file_patterns } =
+    when_modified
+  in
   {
     Wm.autoapply;
     autoplan;
     autoplan_draft_pr;
+    depends_on = CCOption.map Terrat_tag_query.to_string depends_on;
     file_patterns = CCList.map File_pattern.to_string file_patterns;
   }
 

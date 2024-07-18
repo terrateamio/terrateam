@@ -287,6 +287,7 @@ module When_modified : sig
     autoapply : bool; [@default false]
     autoplan : bool; [@default false]
     autoplan_draft_pr : bool; [@default true]
+    depends_on : Tag_query.t option;
     file_patterns : File_pattern_list.t;
         [@default
           [
@@ -550,6 +551,7 @@ type of_version_1_err =
   | `Apply_requirements_approved_all_of_match_parse_err of string
   | `Apply_requirements_approved_any_of_match_parse_err of string
   | `Apply_requirements_check_tag_query_err of string * string
+  | `Depends_on_err of string * string
   | `Drift_schedule_err of string
   | `Drift_tag_query_err of string * string
   | `Glob_parse_err of string * string

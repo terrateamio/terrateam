@@ -1003,6 +1003,9 @@
           "default": true,
           "type": "boolean"
         },
+        "depends_on": {
+          "type": "string"
+        },
         "file_patterns": {
           "default": [
             "**/*.tf",
@@ -1027,6 +1030,9 @@
         },
         "autoplan_draft_pr": {
           "type": "boolean"
+        },
+        "depends_on": {
+          "type": "string"
         },
         "file_patterns": {
           "items": {
@@ -1213,8 +1219,7 @@
             "$ref": "#/definitions/when-modified-nullable"
           }
         },
-        "required": [
-        ],
+        "required": [],
         "type": "object"
       },
       "type": "object"

@@ -617,6 +617,7 @@ module Tmpl = struct
   let repo_config_err_apply_requirements_check_tag_query_err =
     read "repo_config_err_apply_requirements_check_tag_query_err.tmpl"
 
+  let repo_config_err_depends_on_err = read "repo_config_err_depends_on_err.tmpl"
   let repo_config_err_drift_schedule_err = read "repo_config_err_drift_schedule_err.tmpl"
   let repo_config_err_drift_tag_query_err = read "repo_config_err_drift_tag_query_err.tmpl"
   let repo_config_err_glob_parse_err = read "repo_config_err_glob_parse_err.tmpl"
@@ -2810,6 +2811,13 @@ module S = struct
               apply_template_and_publish
                 "APPLY_REQUIREMENTS_CHECK_TAG_QUERY_ERR"
                 Tmpl.repo_config_err_apply_requirements_check_tag_query_err
+                kv
+                t
+          | `Depends_on_err (q, err) ->
+              let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
+              apply_template_and_publish
+                "DRIFT_TAG_QUERY_ERR"
+                Tmpl.repo_config_err_depends_on_err
                 kv
                 t
           | `Drift_schedule_err s ->
