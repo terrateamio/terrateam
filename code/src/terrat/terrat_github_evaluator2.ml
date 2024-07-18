@@ -3267,9 +3267,10 @@ module S = struct
                (repo_config : Terrat_base_repo_config_v1.t))
           >>= fun dirs ->
           let matches =
-            Terrat_change_match.match_diff_list
-              dirs
-              (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) files)
+            CCList.flatten
+              (Terrat_change_match.match_diff_list
+                 dirs
+                 (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) files))
           in
           let workflows = repo_config.Terrat_base_repo_config_v1.workflows in
           let dirspaceflows =

@@ -321,7 +321,7 @@ let test_workflow_idx =
              ~file_list:[ "ec2/ec2.tf" ]
              repo_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1);
       let change = CCList.hd changes in
       let workflows = repo_config.Terrat_base_repo_config_v1.workflows in
@@ -363,7 +363,7 @@ let test_workflow_idx_tag_in_dir =
              ~file_list:[ "ec2/ec2.tf" ]
              repo_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1);
       let change = CCList.hd changes in
       let workflows = repo_config.Terrat_base_repo_config_v1.workflows in
@@ -412,7 +412,7 @@ let test_workflow_idx_multiple_dirs =
              ~file_list:[ "ec2/ec2.tf"; "s3/s3.tf" ]
              repo_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 2);
       let change = CCList.hd changes in
       let workflows = repo_config.Terrat_base_repo_config_v1.workflows in
@@ -452,7 +452,7 @@ let test_workflow_override =
              ~file_list:[ "ec2/ec2.tf"; "s3/s3.tf" ]
              repo_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 2);
       let workflows = repo_config.Terrat_base_repo_config_v1.workflows in
       CCList.iter
@@ -486,7 +486,7 @@ let test_dir_match =
         CCList.filter
           (Terrat_change_match.match_tag_query
              ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string "dir:ec2")))
-          (Terrat_change_match.match_diff_list dirs diff)
+          (CCList.flatten (Terrat_change_match.match_diff_list dirs diff))
       in
       assert (CCList.length changes = 1))
 
@@ -551,7 +551,7 @@ let test_dir_file_pattern =
              ~file_list:[ "ec2/ec2.tf"; "s3/s3.tf" ]
              repo_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 2))
 
 let test_dir_config_iam =
@@ -568,7 +568,7 @@ let test_dir_config_iam =
         | Ok dirs -> dirs
         | Error _ -> assert false
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       (* We match the iam and ec2 dir *)
       assert (CCList.length changes = 2);
       CCList.iter
@@ -595,7 +595,7 @@ let test_dir_config_ebl =
              ~file_list:[ "iam/foo.tf"; "ec2/ec2.tf"; "ebl/ebl.tf"; "lambda/lambda.tf" ]
              dirs_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1);
       CCList.iter
         (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; when_modified; _ } ->
@@ -619,7 +619,7 @@ let test_dir_config_ebl_modules =
                [ "iam/foo.tf"; "ec2/ec2.tf"; "ebl/ebl.tf"; "lambda/lambda.tf"; "ebl_modules" ]
              dirs_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1);
       CCList.iter
         (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; when_modified; _ } ->
@@ -645,7 +645,7 @@ let test_dir_config_ebl_and_modules =
                [ "iam/foo.tf"; "ec2/ec2.tf"; "ebl/ebl.tf"; "lambda/lambda.tf"; "ebl_modules" ]
              dirs_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1);
       CCList.iter
         (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; when_modified; _ } ->
@@ -676,7 +676,7 @@ let test_dir_config_s3 =
                ]
              dirs_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1);
       CCList.iter
         (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; when_modified; _ } ->
@@ -707,7 +707,7 @@ let test_dir_config_lambda_json =
                ]
              dirs_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1);
       CCList.iter
         (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; when_modified; _ } ->
@@ -739,7 +739,7 @@ let test_dir_config_module =
                ]
              dirs_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 0))
 
 let test_dir_config_null_file_patterns =
@@ -763,7 +763,7 @@ let test_dir_config_null_file_patterns =
                ]
              dirs_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1);
       CCList.iter
         (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; when_modified; _ } ->
@@ -832,7 +832,7 @@ let test_recursive_dirs_template_dir =
              ~file_list
              repo_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 0))
 
 let test_recursive_dirs_aws_prod =
@@ -892,7 +892,7 @@ let test_recursive_dirs_aws_prod =
              ~file_list
              repo_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1))
 
 let test_recursive_dirs_tags =
@@ -976,7 +976,7 @@ let test_recursive_dirs_tags =
         CCList.filter
           (Terrat_change_match.match_tag_query
              ~tag_query:(CCResult.get_exn (Terrat_tag_query.of_string "secrets")))
-          (Terrat_change_match.match_diff_list dirs diff)
+          (CCList.flatten (Terrat_change_match.match_diff_list dirs diff))
       in
       assert (CCList.length changes = 1);
       CCList.iter
@@ -1065,7 +1065,7 @@ let test_recursive_dirs_without_tags =
              ~file_list
              repo_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1);
       CCList.iter
         (fun Terrat_change_match.{ dirspace = Terrat_change.Dirspace.{ dir; _ }; when_modified; _ } ->
@@ -1089,7 +1089,7 @@ let test_bad_dir_config_iam =
                [ "ec2/ec2.tf"; "iam/foo.tf"; "ebl/ebl.tf"; "s3/s3.tf"; "s3/foo.tf"; "foo.tf" ]
              bad_dirs_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       (* matches s3 and iam *)
       assert (CCList.length changes = 2))
 
@@ -1105,7 +1105,7 @@ let test_bad_dir_config_ec2 =
                [ "ec2/ec2.tf"; "iam/foo.tf"; "ebl/ebl.tf"; "s3/s3.tf"; "s3/foo.tf"; "foo.tf" ]
              bad_dirs_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       (* matches s3 *)
       assert (CCList.length changes = 1))
 
@@ -1120,7 +1120,7 @@ let test_bad_dir_config_ec2_root_dir_change =
              ~file_list:[ "ec2/ec2.tf"; "iam/foo.tf"; "ebl/ebl.tf"; "s3/s3.tf"; "foo.tf" ]
              bad_dirs_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       (* matches ., s3, and ec2 *)
       assert (CCList.length changes = 3))
 
@@ -1136,7 +1136,7 @@ let test_bad_dir_config_s3 =
                [ "ec2/ec2.tf"; "iam/foo.tf"; "ebl/ebl.tf"; "s3/s3.tf"; "s3/foo.tf"; "foo.tf" ]
              bad_dirs_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1))
 
 let test_module_dir_with_root_dir =
@@ -1199,7 +1199,7 @@ let test_module_dir_with_root_dir =
              ~file_list:[ "foo.tf"; "module/foo/tf.tf" ]
              repo_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1))
 
 let test_large_directory_count_unmatching_files =
@@ -1221,7 +1221,7 @@ let test_large_directory_count_unmatching_files =
              ~file_list
              repo_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1))
 
 let test_large_directory_count_matching_files =
@@ -1247,7 +1247,7 @@ let test_large_directory_count_matching_files =
              ~file_list
              repo_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1 + num_dirs))
 
 let test_large_directory_count_non_default_when_modified =
@@ -1286,7 +1286,7 @@ let test_large_directory_count_non_default_when_modified =
              ~file_list
              repo_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 2 + num_dirs))
 
 let test_not_match =
@@ -1313,7 +1313,7 @@ let test_not_match =
              ~file_list:[ "ec2/ec2.tf" ]
              repo_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 0))
 
 let test_not_match_multiple =
@@ -1341,7 +1341,7 @@ let test_not_match_multiple =
              ~file_list:[ "ec2/ec2.tf" ]
              repo_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 0))
 
 let test_relative_path_file_pattern =
@@ -1393,7 +1393,7 @@ let test_relative_path_file_pattern =
              ~file_list:[ "d/bar/foo/t.tf"; "d/bar/baz/t.tf" ]
              repo_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1))
 
 let test_relative_path_file_pattern_multiple_dots =
@@ -1446,7 +1446,7 @@ let test_relative_path_file_pattern_multiple_dots =
              ~file_list:[ "d/bar/foo/t.tf"; "d/bar/envs/baz/t.tf" ]
              repo_config)
       in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1))
 
 let test_index_basic =
@@ -1460,7 +1460,7 @@ let test_index_basic =
           (Terrat_change_match.synthesize_dir_config ~ctx ~index ~file_list repo_config)
       in
       let diff = Terrat_change.Diff.[ Add { filename = "modules/foo/main.tf" } ] in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1);
       let dirspace = (CCList.hd changes).Terrat_change_match.dirspace in
       assert (
@@ -1482,7 +1482,7 @@ let test_index_with_dirs_section =
           (Terrat_change_match.synthesize_dir_config ~ctx ~index ~file_list repo_config)
       in
       let diff = Terrat_change.Diff.[ Add { filename = "modules/foo/main.tf" } ] in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1);
       let dirspace = (CCList.hd changes).Terrat_change_match.dirspace in
       assert (
@@ -1505,7 +1505,7 @@ let test_index_module_in_same_dir =
           (Terrat_change_match.synthesize_dir_config ~ctx ~index ~file_list repo_config)
       in
       let diff = Terrat_change.Diff.[ Add { filename = "tf/modules/foo/main.tf" } ] in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1);
       let dirspace = (CCList.hd changes).Terrat_change_match.dirspace in
       assert (
@@ -1528,7 +1528,7 @@ let test_index_symlinks =
           (Terrat_change_match.synthesize_dir_config ~ctx ~index ~file_list repo_config)
       in
       let diff = Terrat_change.Diff.[ Add { filename = "modules/foo/main.tf" } ] in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1);
       let dirspace = (CCList.hd changes).Terrat_change_match.dirspace in
       assert (
@@ -1566,7 +1566,7 @@ let test_index_symlinks_dir_config =
           (Terrat_change_match.synthesize_dir_config ~ctx ~index ~file_list repo_config)
       in
       let diff = Terrat_change.Diff.[ Change { filename = "null/main.tf" } ] in
-      let changes = Terrat_change_match.match_diff_list dirs diff in
+      let changes = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
       assert (CCList.length changes = 1);
       let dirspace = (CCList.hd changes).Terrat_change_match.dirspace in
       assert (

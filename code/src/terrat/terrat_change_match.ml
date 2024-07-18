@@ -542,6 +542,7 @@ let match_diff_list dirs diff_list =
   |> Dirspace_map.of_list
   |> Dirspace_map.values
   |> Iter.to_list
+  |> CCList.return
 
 let of_dirspace dirs (Terrat_change.Dirspace.{ dir; workspace } as dirspace) =
   let module R = Terrat_base_repo_config_v1 in

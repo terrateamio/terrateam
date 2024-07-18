@@ -185,7 +185,7 @@ let compute_matches ~ctx ~repo_config ~tag_query ~out_of_change_applies ~diff ~r
       CCFun.(Terrat_change_match.of_dirspace dirs %> CCOption.to_list)
       out_of_change_applies
   in
-  let all_matching_diff = Terrat_change_match.match_diff_list dirs diff in
+  let all_matching_diff = CCList.flatten (Terrat_change_match.match_diff_list dirs diff) in
   let all_matches = Terrat_change_match.merge_with_dedup all_matching_diff all_matching_dirspaces in
   let tag_query_matches =
     CCList.filter (Terrat_change_match.match_tag_query ~tag_query) all_matches
@@ -1698,9 +1698,10 @@ module Make (S : S) = struct
              repo_config)
         >>= fun dirs ->
         let matches =
-          Terrat_change_match.match_diff_list
-            dirs
-            (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) repo_tree)
+          CCList.flatten
+            (Terrat_change_match.match_diff_list
+               dirs
+               (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) repo_tree))
         in
         Abb.Future.return (dirspaceflows_of_changes repo_config matches)
         >>= fun dirspaceflows ->
@@ -3338,9 +3339,10 @@ module Make (S : S) = struct
              repo_config)
         >>= fun dirs ->
         let matches =
-          Terrat_change_match.match_diff_list
-            dirs
-            (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) repo_tree)
+          CCList.flatten
+            (Terrat_change_match.match_diff_list
+               dirs
+               (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) repo_tree))
         in
         Abb.Future.return (dirspaceflows_of_changes repo_config matches)
         >>= fun dirspaceflows ->
@@ -3447,7 +3449,8 @@ module Make (S : S) = struct
                  repo_config)
             >>= fun dirs ->
             let matches =
-              Terrat_change_match.match_diff_list dirs (S.Pull_request.diff pull_request)
+              CCList.flatten
+                (Terrat_change_match.match_diff_list dirs (S.Pull_request.diff pull_request))
             in
             Abb.Future.return (dirspaceflows_of_changes repo_config matches)
             >>= function
@@ -3506,7 +3509,10 @@ module Make (S : S) = struct
              ~file_list:repo_tree
              repo_config)
         >>= fun dirs ->
-        let matches = Terrat_change_match.match_diff_list dirs (S.Pull_request.diff pull_request) in
+        let matches =
+          CCList.flatten
+            (Terrat_change_match.match_diff_list dirs (S.Pull_request.diff pull_request))
+        in
         Abb.Future.return (dirspaceflows_of_changes repo_config matches)
         >>= function
         | [] ->
@@ -3788,9 +3794,10 @@ module Make (S : S) = struct
         let matches =
           CCList.filter
             (Terrat_change_match.match_tag_query ~tag_query)
-            (Terrat_change_match.match_diff_list
-               dirs
-               (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) repo_tree))
+            (CCList.flatten
+               (Terrat_change_match.match_diff_list
+                  dirs
+                  (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) repo_tree)))
         in
         dirspaceflows_of_changes repo_config matches
         >>= fun dirspaceflows ->

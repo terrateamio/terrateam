@@ -43,13 +43,13 @@ val synthesize_dir_config :
   Terrat_base_repo_config_v1.t ->
   (Dirs.t, [> synthesize_dir_config_err ]) result
 
-(** Given a dirs configuration and a diff, return the match.  If there is no
-   matching entry in the dirs section, raise [No_matching_dir] exception.  A
-   diff can result in multiple matches being generated, for example renaming a
-   file might impact two directories.  It takes care of de-duping the results.
-   That is, if there are multiple changes that map to the same dirspace, the
-   dirspace will appear only once in the output. *)
-val match_diff_list : Dirs.t -> Terrat_change.Diff.t list -> t list
+(** Given a dirs configuration and a diff, return the matches.  A diff can
+   result in multiple matches being generated, for example renaming a file might
+   impact two directories.  It takes care of de-duping the results.  That is, if
+   there are multiple changes that map to the same dirspace, the dirspace will
+   appear only once in the output.  The result is a list of lists showing the
+   order the changes need to be planned and applied. *)
+val match_diff_list : Dirs.t -> Terrat_change.Diff.t list -> t list list
 
 (** Given a dirs configuration and dirspace, turn it into a match. *)
 val of_dirspace : Dirs.t -> Terrat_change.Dirspace.t -> t option
