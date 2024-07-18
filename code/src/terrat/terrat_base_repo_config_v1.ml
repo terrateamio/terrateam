@@ -1245,10 +1245,19 @@ let of_version_1_dirs default_when_modified { V1.Dirs.additional; _ } =
       (Json_schema.String_map.to_list additional)
   in
   CCResult.map_l
-    (fun (dir, { D.create_and_select_workspace; stacks; tags; when_modified; workspaces }) ->
+    (fun (dir, ({ D.create_and_select_workspace; stacks; tags; when_modified; workspaces } as d)) ->
       map_opt (of_version_1_dirs_when_modified default_when_modified) when_modified
       >>= fun when_modified ->
       let when_modified = CCOption.or_ ~else_:default_when_modified when_modified in
+      let stacks, workspaces =
+        if CCOption.is_none stacks && CCOption.is_none workspaces then
+          ( stacks,
+            Some
+              (Ws.make
+                 ~additional:(Json_schema.String_map.of_list [ ("default", Ws.Additional.make ()) ])
+                 Json_schema.Empty_obj.t) )
+        else (stacks, workspaces)
+      in
       map_opt (of_workspace when_modified) stacks
       >>= fun stacks ->
       map_opt (of_workspace when_modified) workspaces
