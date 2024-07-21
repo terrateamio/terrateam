@@ -896,7 +896,7 @@ module S = struct
       type t = {
         approved : bool option;
         approved_reviews : Terrat_pull_request_review.t list;
-        match_ : Terrat_change_match.t;
+        match_ : Terrat_change_match2.Dirspace_config.t;
         merge_conflicts : bool option;
         passed : bool;
         status_checks : bool option;
@@ -1481,11 +1481,11 @@ module S = struct
         Abb.Future.return
           (Ok
              (Some
-                (Terrat_change_match.Index.make
+                (Terrat_change_match2.Index.make
                    ~symlinks
                    (CCList.map
                       (fun (path, { Paths.Additional.modules; _ }) ->
-                        (path, CCList.map (fun m -> Terrat_change_match.Index.Dep.Module m) modules))
+                        (path, CCList.map (fun m -> Terrat_change_match2.Index.Dep.Module m) modules))
                       paths))))
     | Ok [] -> Abb.Future.return (Ok None)
     | Error (#Pgsql_io.err as err) ->
@@ -1787,7 +1787,6 @@ module S = struct
       let open Abbs_future_combinators.Infix_result_monad in
       let module Wm = Terrat_work_manifest2 in
       let module Ch = Terrat_change in
-      let module Cm = Terrat_change_match in
       let module Ac = Terrat_access_control in
       insert_work_manifest_changes db work_manifest
       >>= fun () ->
@@ -2430,8 +2429,8 @@ module S = struct
             kv
             t
       | Msg.Pull_request_not_appliable (_, apply_requirements) ->
-          let module Tcm = Terrat_change_match in
-          let module Ds = Terrat_change.Dirspace in
+          let module Dc = Terrat_change_match2.Dirspace_config in
+          let module Ds = Terrat_dirspace in
           let module Ar = Apply_requirements.Result in
           let kv =
             Snabela.Kv.(
@@ -2443,8 +2442,8 @@ module S = struct
                          (fun ar ->
                            Map.of_list
                              [
-                               ("dir", string ar.Ar.match_.Tcm.dirspace.Ds.dir);
-                               ("workspace", string ar.Ar.match_.Tcm.dirspace.Ds.workspace);
+                               ("dir", string ar.Ar.match_.Dc.dirspace.Ds.dir);
+                               ("workspace", string ar.Ar.match_.Dc.dirspace.Ds.workspace);
                                ("passed", bool ar.Ar.passed);
                                ("approved_enabled", bool (CCOption.is_some ar.Ar.approved));
                                ( "approved_check",
@@ -2533,8 +2532,11 @@ module S = struct
                          (fun Terrat_access_control.R.Deny.
                                 {
                                   change_match =
-                                    Terrat_change_match.
-                                      { dirspace = Terrat_change.Dirspace.{ dir; workspace }; _ };
+                                    {
+                                      Terrat_change_match2.Dirspace_config.dirspace =
+                                        { Terrat_dirspace.dir; workspace };
+                                      _;
+                                    };
                                   policy;
                                 } ->
                            Map.of_list
@@ -2583,8 +2585,11 @@ module S = struct
                          (fun Terrat_access_control.R.Deny.
                                 {
                                   change_match =
-                                    Terrat_change_match.
-                                      { dirspace = Terrat_change.Dirspace.{ dir; workspace }; _ };
+                                    {
+                                      Terrat_change_match2.Dirspace_config.dirspace =
+                                        { Terrat_dirspace.dir; workspace };
+                                      _;
+                                    };
                                   policy;
                                 } ->
                            Map.of_list
@@ -2694,9 +2699,7 @@ module S = struct
             in
             Terrat_json.to_yaml_string repo_config_json
             >>= fun repo_config_yaml ->
-            let dirs_json =
-              Yojson.Safe.Util.member "dirs" (Terrat_change_match.Dirs.to_yojson dirs)
-            in
+            let dirs_json = Terrat_change_match2.Config.to_yojson dirs in
             Terrat_json.to_yaml_string dirs_json
             >>= fun dirs_yaml ->
             let kv =
@@ -3051,7 +3054,6 @@ module S = struct
         Abb.Future.return (Ok (all_of_passed && any_of_passed))
 
       let check_apply_requirements t client pull_request repo_config matches =
-        let module Tcm = Terrat_change_match in
         let module R = Terrat_base_repo_config_v1 in
         let module Ar = R.Apply_requirements in
         let module Abc = Ar.Check in
@@ -3106,7 +3108,7 @@ module S = struct
           Logs.debug (fun m -> m "GITHUB_EVALUATOR : %s : MERGEABLE_NONE" t.request_id);
         let open Abb.Future.Infix_monad in
         Abbs_future_combinators.List_result.map
-          ~f:(fun ({ Tcm.tags; dirspace; _ } as match_) ->
+          ~f:(fun ({ Terrat_change_match2.Dirspace_config.tags; dirspace; _ } as match_) ->
             let open Abbs_future_combinators.Infix_result_monad in
             Logs.info (fun m ->
                 m
@@ -3260,22 +3262,22 @@ module S = struct
             <*> fetch_tree client repo ref_)
           >>= fun (repo_config, files) ->
           Abb.Future.return
-            (Terrat_change_match.synthesize_dir_config
-               ~ctx:(Terrat_change_match.Ctx.make ~dest_branch ~branch ())
-               ~index:Terrat_change_match.Index.empty
+            (Terrat_change_match2.synthesize_config
+               ~ctx:(Terrat_change_match2.Ctx.make ~dest_branch ~branch ())
+               ~index:Terrat_change_match2.Index.empty
                ~file_list:files
                (repo_config : Terrat_base_repo_config_v1.t))
-          >>= fun dirs ->
+          >>= fun config ->
           let matches =
             CCList.flatten
-              (Terrat_change_match.match_diff_list
-                 dirs
+              (Terrat_change_match2.match_diff_list
+                 config
                  (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) files))
           in
           let workflows = repo_config.Terrat_base_repo_config_v1.workflows in
           let dirspaceflows =
             CCList.map
-              (fun (Terrat_change_match.{ dirspace; _ } as change) ->
+              (fun ({ Terrat_change_match2.Dirspace_config.dirspace; _ } as change) ->
                 Terrat_change.Dirspaceflow.
                   {
                     dirspace;
@@ -3284,7 +3286,7 @@ module S = struct
                         (fun (idx, workflow) -> Workflow.{ idx; workflow })
                         (CCList.find_idx
                            (fun { Terrat_base_repo_config_v1.Workflows.Entry.tag_query; _ } ->
-                             Terrat_change_match.match_tag_query ~tag_query change)
+                             Terrat_change_match2.match_tag_query ~tag_query change)
                            workflows);
                   })
               matches
@@ -4585,7 +4587,7 @@ module S = struct
         type t = {
           branch_name : Ref.t;
           branch_ref : Ref.t;
-          index : Terrat_change_match.Index.t option;
+          index : Terrat_change_match2.Index.t option;
           repo_config : Terrat_base_repo_config_v1.t;
           tree : string list;
         }
@@ -4683,7 +4685,7 @@ module S = struct
                    tree;
                    branch_name = default_branch;
                    branch_ref = hash;
-                   index = Some Terrat_change_match.Index.empty;
+                   index = Some Terrat_change_match2.Index.empty;
                  })
 
       let fetch_data t sched fetch_repo_config =

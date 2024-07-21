@@ -43,6 +43,33 @@ module Dirspace_config = struct
     when_modified : Terrat_base_repo_config_v1.When_modified.t;
   }
   [@@deriving show]
+
+  let to_yojson t =
+    let module Ds = struct
+      type t = {
+        dir : string;
+        workspace : string;
+      }
+      [@@deriving to_yojson]
+    end in
+    let module T = struct
+      type t = {
+        dirspace : Ds.t;
+        tags : string list;
+        when_modified : Terrat_base_repo_config_v1.When_modified.t;
+      }
+      [@@deriving to_yojson]
+    end in
+    T.to_yojson
+      {
+        T.dirspace =
+          {
+            Ds.dir = t.dirspace.Terrat_dirspace.dir;
+            workspace = t.dirspace.Terrat_dirspace.workspace;
+          };
+        tags = Terrat_tag_set.to_list t.tags;
+        when_modified = t.when_modified;
+      }
 end
 
 module Config = struct
@@ -52,6 +79,12 @@ module Config = struct
     topology : Terrat_dirspace.t list Dirspace_map.t;
   }
   [@@deriving show]
+
+  let to_yojson t =
+    let module T = struct
+      type t = Dirspace_config.t list [@@deriving to_yojson]
+    end in
+    T.to_yojson (Iter.to_list (Dirspace_map.values t.dirspaces))
 end
 
 let topology_of_dirspace_configs dirspaces =

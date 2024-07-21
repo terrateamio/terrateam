@@ -33,7 +33,7 @@ module Msg : sig
     | Plan_no_matching_dirspaces
     | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
     | Pull_request_not_mergeable
-    | Repo_config of (string list * Terrat_base_repo_config_v1.t * Terrat_change_match.Dirs.t)
+    | Repo_config of (string list * Terrat_base_repo_config_v1.t * Terrat_change_match2.Config.t)
     | Repo_config_err of Terrat_base_repo_config_v1.of_version_1_err
     | Repo_config_failure of string
     | Repo_config_parse_failure of string * string
@@ -209,7 +209,7 @@ module type S = sig
     Db.t ->
     Account.t ->
     Ref.t ->
-    (Terrat_change_match.Index.t option, [> `Error ]) result Abb.Future.t
+    (Terrat_change_match2.Index.t option, [> `Error ]) result Abb.Future.t
 
   val query_account_status :
     Db.t -> Account.t -> ([ `Active | `Expired | `Disabled ], [> `Error ]) result Abb.Future.t
@@ -380,7 +380,7 @@ module type S = sig
         Client.t ->
         Pull_request.fetched Pull_request.t ->
         Terrat_base_repo_config_v1.t ->
-        Terrat_change_match.t list ->
+        Terrat_change_match2.Dirspace_config.t list ->
         ( Apply_requirements.t,
           [> `Error | `Invalid_query of string | Terrat_tag_query_ast.err ] )
         result
@@ -571,7 +571,7 @@ module type S = sig
 
         val branch_name : t -> Ref.t
         val branch_ref : t -> Ref.t
-        val index : t -> Terrat_change_match.Index.t option
+        val index : t -> Terrat_change_match2.Index.t option
         val repo_config : t -> Terrat_base_repo_config_v1.t
         val tree : t -> string list
       end

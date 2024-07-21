@@ -28,11 +28,11 @@ module Dirspace_config : sig
     tags : Terrat_tag_set.t;
     when_modified : Terrat_base_repo_config_v1.When_modified.t;
   }
-  [@@deriving show]
+  [@@deriving show, to_yojson]
 end
 
 module Config : sig
-  type t [@@deriving show]
+  type t [@@deriving show, to_yojson]
 end
 
 val synthesize_config :
