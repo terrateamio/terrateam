@@ -90,6 +90,7 @@ module Msg = struct
     | Bad_custom_branch_tag_pattern of (string * string)
     | Bad_glob of string
     | Conflicting_work_manifests of 'src Terrat_work_manifest2.Existing.t list
+    | Depends_on_cycle of Terrat_dirspace.t list
     | Dest_branch_no_match of 'pull_request
     | Dirspaces_owned_by_other_pull_request of (Terrat_change.Dirspace.t * 'pull_request) list
     | Index_complete of (bool * (string * int option * string) list)
@@ -176,11 +177,20 @@ type fetch_repo_config_err =
   ]
 [@@deriving show]
 
-let compute_matches ~ctx ~repo_config ~tag_query ~out_of_change_applies ~diff ~repo_tree ~index () =
+let compute_matches
+    ~ctx
+    ~repo_config
+    ~tag_query
+    ~out_of_change_applies
+    ~applied_dirspaces
+    ~diff
+    ~repo_tree
+    ~index
+    () =
   let open CCResult.Infix in
   Terrat_change_match2.synthesize_config ~ctx ~index ~file_list:repo_tree repo_config
   >>= fun config ->
-  let all_matching_dirspaces =
+  let out_of_change_dirspace_configs =
     CCList.flat_map
       CCFun.(Terrat_change_match2.of_dirspace config %> CCOption.to_list)
       out_of_change_applies
@@ -209,10 +219,30 @@ let compute_matches ~ctx ~repo_config ~tag_query ~out_of_change_applies ~diff ~r
             CCList.exists (CCString.prefix ~pre:d) repo_tree)
       dirs
   in
-  let tag_query_matches =
-    CCList.filter (Terrat_change_match2.match_tag_query ~tag_query) all_matches
+  (* Filter out any dirspaces that have been applied or refer to a directory
+     that no longer exists. This could happen because of
+     [out_of_change_applies], these may refer to directories that no longer
+     exist, and thus we can't do much about them other than ignore them. *)
+  let all_unapplied_matches =
+    CCList.filter_map
+      (fun layer ->
+        let module Dc = Terrat_change_match2.Dirspace_config in
+        match
+          CCList.filter
+            (fun { Dc.dirspace = { Terrat_dirspace.dir; _ } as dirspace; _ } ->
+              (not (Dirspace_set.mem dirspace applied_dirspaces)) && Dir_set.mem dir existing_dirs)
+            layer
+        with
+        | [] -> None
+        | layer -> Some layer)
+      all_matches
   in
-  Ok (tag_query_matches, all_matches)
+  let working_set_matches =
+    match all_unapplied_matches with
+    | layer :: _ -> CCList.filter (Terrat_change_match2.match_tag_query ~tag_query) layer
+    | [] -> []
+  in
+  Ok (working_set_matches, all_matches, all_unapplied_matches)
 
 let match_tag_queries ~accessor ~changes queries =
   CCList.map
@@ -390,6 +420,9 @@ module type S = sig
     Abb.Future.t
 
   val query_unapplied_dirspaces :
+    Db.t -> 'a Pull_request.t -> (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
+
+  val query_applied_dirspaces :
     Db.t -> 'a Pull_request.t -> (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
 
   val query_dirspaces_owned_by_other_pull_requests :
@@ -652,6 +685,8 @@ module type S = sig
 
       val publish_result :
         t ->
+        bool ->
+        Terrat_change_match2.Dirspace_config.t list list ->
         Type.tf_operation ->
         Pull_request.stored Pull_request.t ->
         'a Terrat_work_manifest2.Existing.t ->
@@ -1344,10 +1379,20 @@ module Make (S : S) = struct
               time))
       (fun () -> S.query_index db account ref_)
 
+  let query_pull_request_out_of_change_applies db pull_request =
+    Abbs_time_it.run
+      (log_time (S.Db.request_id db) "QUERY_PULL_REQUEST_OUT_OF_CHANGE_APPLIES")
+      (fun () -> S.query_pull_request_out_of_change_applies db pull_request)
+
   let query_unapplied_dirspaces db pull_request =
     Abbs_time_it.run
       (log_time (S.Db.request_id db) "QUERY_UNAPPLIED_DIRSPACES")
       (fun () -> S.query_unapplied_dirspaces db pull_request)
+
+  let query_applied_dirspaces db pull_request =
+    Abbs_time_it.run
+      (log_time (S.Db.request_id db) "QUERY_APPLIED_DIRSPACES")
+      (fun () -> S.query_applied_dirspaces db pull_request)
 
   let create_commit_checks client repo ref_ checks =
     Abbs_time_it.run
@@ -1629,11 +1674,12 @@ module Make (S : S) = struct
                  ~repo_config:(S.Event.Drift.Data.repo_config data)
                  ~tag_query:(S.Event.Drift.Schedule.tag_query sched)
                  ~out_of_change_applies:[]
+                 ~applied_dirspaces:[]
                  ~diff
                  ~repo_tree:(S.Event.Drift.Data.tree data)
                  ~index
                  ())
-            >>= fun (tag_query_matches, _) ->
+            >>= fun (tag_query_matches, _, _) ->
             Abb.Future.return
               (dirspaceflows_of_changes (S.Event.Drift.Data.repo_config data) tag_query_matches)
             >>= fun dirspaceflows ->
@@ -1902,12 +1948,12 @@ module Make (S : S) = struct
     end
 
     module Result = struct
-      let publish_result t result pr wm =
+      let publish_result t is_layered_run remaining_layers result pr wm =
         Abbs_time_it.run
           (fun time ->
             Logs.info (fun m ->
                 m "EVALUATOR : %s : PUBLISH_RESULTS : time=%f" (S.Event.Result.request_id t) time))
-          (fun () -> S.Event.Result.publish_result t result pr wm)
+          (fun () -> S.Event.Result.publish_result t is_layered_run remaining_layers result pr wm)
 
       let create_pull_request_commit_checks
           t
@@ -1973,13 +2019,53 @@ module Make (S : S) = struct
 
       let maybe_publish_result
           t
+          db
           pr
           result
           ({ Terrat_work_manifest2.run_id; run_type; hash; _ } as wm) =
+        let module Wm = Terrat_work_manifest2 in
+        let open Abbs_future_combinators.Infix_result_monad in
+        create_client
+          (S.Event.Result.request_id t)
+          (S.Event.Result.config t)
+          (S.Pull_request.account pr)
+        >>= fun client ->
+        Abbs_future_combinators.Infix_result_app.(
+          (fun repo_config repo_tree pull_request -> (repo_config, repo_tree, pull_request))
+          <$> fetch_repo_config client (S.Pull_request.repo pr) (S.Ref.of_string wm.Wm.hash)
+          <*> fetch_tree client (S.Pull_request.repo pr) (S.Pull_request.branch_ref pr)
+          <*> fetch_pull_request
+                (S.Pull_request.account pr)
+                client
+                (S.Pull_request.repo pr)
+                (S.Pull_request.id pr))
+        >>= fun (repo_config, repo_tree, pull_request) ->
+        query_index db (S.Pull_request.account pr) (S.Pull_request.working_branch_ref pr)
+        >>= fun index ->
+        query_pull_request_out_of_change_applies db pr
+        >>= fun out_of_change_applies ->
+        query_applied_dirspaces db pr
+        >>= fun applied_dirspaces ->
+        Abb.Future.return
+          (compute_matches
+             ~ctx:
+               (Terrat_change_match2.Ctx.make
+                  ~dest_branch:(S.Ref.to_string (S.Pull_request.base_branch_name pr))
+                  ~branch:(S.Ref.to_string (S.Pull_request.branch_name pr))
+                  ())
+             ~repo_config
+             ~tag_query:Terrat_tag_query.any
+             ~out_of_change_applies
+             ~applied_dirspaces
+             ~diff:(S.Pull_request.diff pull_request)
+             ~repo_tree
+             ~index:(CCOption.get_or ~default:Terrat_change_match2.Index.empty index)
+             ())
+        >>= fun (_, layers, remaining_layers) ->
         let result_status = S.Event.Result.result_status result in
         Abbs_future_combinators.Infix_result_app.(
           (fun _ _ -> ())
-          <$> publish_result t result pr wm
+          <$> publish_result t (CCList.length layers > 1) remaining_layers result pr wm
           <*> create_pull_request_commit_checks t run_id pr run_type hash wm result_status)
 
       let publish_index_pull_request_result t result pr wm =
@@ -2162,7 +2248,7 @@ module Make (S : S) = struct
                   "tf_op");
             update_work_manifest_state db wm
             >>= fun wm ->
-            maybe_publish_result t pr result wm
+            maybe_publish_result t db pr result wm
             >>= fun _ ->
             maybe_all_dirspaces_applied t pr wm
             >>= fun () -> Abb.Future.return (Ok (S.Event.Result.noop t))
@@ -2181,6 +2267,7 @@ module Make (S : S) = struct
             >>= fun () -> Abb.Future.return (Ok (S.Event.Result.noop t))
         | `Index result, Wm.Kind.Index idx ->
             let wm = { wm with Wm.state = Wm.State.Completed } in
+            (*  *)
             log_work_manifest (S.Event.Result.request_id t) wm;
             Logs.info (fun m ->
                 m
@@ -2267,6 +2354,14 @@ module Make (S : S) = struct
                   "EVALUATOR : %s : FETCH_REPO_CONFIG_ERR : %a"
                   (S.Event.Result.request_id t)
                   pp_fetch_repo_config_err
+                  err);
+            Abb.Future.return (Error `Error)
+        | Error (#Terrat_change_match2.synthesize_config_err as err) ->
+            Logs.err (fun m ->
+                m
+                  "EVALUATOR : %s : SYNTHESIZE_CONFIG_ERR : %a"
+                  (S.Event.Result.request_id t)
+                  Terrat_change_match2.pp_synthesize_config_err
                   err);
             Abb.Future.return (Error `Error)
     end
@@ -2478,11 +2573,6 @@ module Make (S : S) = struct
             Abb.Future.return (Error (`No_matching_dest_branch pull_request))
         | Error `No_matching_source_branch ->
             Abb.Future.return (Error (`No_matching_source_branch pull_request))
-
-      let query_pull_request_out_of_change_applies db pull_request =
-        Abbs_time_it.run
-          (log_time (S.Db.request_id db) "QUERY_PULL_REQUEST_OUT_OF_CHANGE_APPLIES")
-          (fun () -> S.query_pull_request_out_of_change_applies db pull_request)
 
       let query_conflicting_work_manifests_in_repo db pull_request dirspaces operation =
         Abbs_time_it.run
@@ -2751,6 +2841,7 @@ module Make (S : S) = struct
 
       let run_validated_plan_operation t db repo_config pull_request all_matches matches deny mode =
         let open Abbs_future_combinators.Infix_result_monad in
+        let all_matches = CCList.flatten all_matches in
         create_and_store_work_manifest
           t
           db
@@ -2795,8 +2886,15 @@ module Make (S : S) = struct
             checks
         else Abb.Future.return (Ok ())
 
-      let eval_plan t db access_control tag_query_matches all_matches pull_request repo_config mode
-          =
+      let eval_plan
+          t
+          db
+          access_control
+          working_set_matches
+          all_matches
+          pull_request
+          repo_config
+          mode =
         let module D = Terrat_access_control.R.Deny in
         let matches =
           match mode with
@@ -2808,8 +2906,8 @@ module Make (S : S) = struct
                        _;
                      } ->
                   autoplan && ((not (S.Pull_request.is_draft_pr pull_request)) || autoplan_draft_pr))
-                tag_query_matches
-          | Tf_operation.Manual -> tag_query_matches
+                working_set_matches
+          | Tf_operation.Manual -> working_set_matches
         in
         let open Abbs_future_combinators.Infix_result_monad in
         missing_autoplan_matches t.event db pull_request matches mode
@@ -2975,7 +3073,7 @@ module Make (S : S) = struct
             publish_msg t Msg.Apply_no_matching_dirspaces
             >>= fun () -> Abb.Future.return (Ok (S.Event.Terraform.noop t.event))
         | _, _ -> (
-            Abb.Future.return (dirspaceflows_of_changes repo_config all_matches)
+            Abb.Future.return (dirspaceflows_of_changes repo_config (CCList.flatten all_matches))
             >>= fun all_match_dirspaceflows ->
             query_dirspaces_owned_by_other_pull_requests
               db
@@ -3060,7 +3158,7 @@ module Make (S : S) = struct
           t
           db
           access_control
-          tag_query_matches
+          working_set_matches
           all_matches
           pull_request
           repo_config
@@ -3069,11 +3167,11 @@ module Make (S : S) = struct
         query_unapplied_dirspaces db pull_request
         >>= fun missing_dirspaces ->
         (* Filter only those missing *)
-        let tag_query_matches =
+        let working_set_matches =
           CCList.filter
             (fun { Terrat_change_match2.Dirspace_config.dirspace; _ } ->
               CCList.mem ~eq:Terrat_dirspace.equal dirspace missing_dirspaces)
-            tag_query_matches
+            working_set_matches
         in
         (* To perform an apply we need:
 
@@ -3092,8 +3190,8 @@ module Make (S : S) = struct
                          { Terrat_base_repo_config_v1.When_modified.autoapply; _ };
                        _;
                      } -> autoapply)
-                tag_query_matches
-          | `Apply Tf_operation.Manual | `Apply_autoapprove | `Apply_force -> tag_query_matches
+                working_set_matches
+          | `Apply Tf_operation.Manual | `Apply_autoapprove | `Apply_force -> working_set_matches
         in
         let open Abb.Future.Infix_monad in
         check_apply_requirements t.event t.client pull_request repo_config matches
@@ -3186,6 +3284,8 @@ module Make (S : S) = struct
                    doesn't look like dir1 changes. *)
                 query_pull_request_out_of_change_applies db pull_request
                 >>= fun out_of_change_applies ->
+                query_applied_dirspaces db pull_request
+                >>= fun applied_dirspaces ->
                 Abb.Future.return
                   (compute_matches
                      ~ctx:
@@ -3197,70 +3297,18 @@ module Make (S : S) = struct
                      ~repo_config
                      ~tag_query:(S.Event.Terraform.tag_query t.event)
                      ~out_of_change_applies
+                     ~applied_dirspaces
                      ~diff:(S.Pull_request.diff pull_request)
                      ~repo_tree
                      ~index
                      ())
-                >>= fun (tag_query_matches, all_matches) ->
+                >>= fun (working_set_matches, all_matches, _) ->
                 Logs.info (fun m ->
                     m
-                      "EVALUATOR : %s : NUM_MATCHES : all_matches=%d : tag_query_matches=%d"
+                      "EVALUATOR : %s : NUM_MATCHES : all_matches=%d : working_set_matches=%d"
                       (S.Event.Terraform.request_id t.event)
-                      (CCList.length all_matches)
-                      (CCList.length tag_query_matches));
-                let dirs =
-                  all_matches
-                  |> CCList.map
-                       (fun
-                         {
-                           Terrat_change_match2.Dirspace_config.dirspace =
-                             { Terrat_dirspace.dir; _ };
-                           _;
-                         }
-                       -> dir)
-                  |> Dir_set.of_list
-                in
-                let existing_dirs =
-                  Dir_set.filter
-                    (function
-                      | "." ->
-                          (* The root directory is always there, because...it
-                             has to be. *)
-                          true
-                      | d ->
-                          let d = d ^ "/" in
-                          CCList.exists (CCString.prefix ~pre:d) repo_tree)
-                    dirs
-                in
-                let missing_dirs = Dir_set.diff dirs existing_dirs in
-                Logs.info (fun m ->
-                    m
-                      "EVALUATOR : %s : MISSING_DIRS : num=%d"
-                      (S.Event.Terraform.request_id t.event)
-                      (Dir_set.cardinal missing_dirs));
-                (* This is different behaviour than evaluator1. *)
-                let all_matches =
-                  all_matches
-                  |> CCList.filter
-                       (fun
-                         {
-                           Terrat_change_match2.Dirspace_config.dirspace =
-                             { Terrat_dirspace.dir; _ };
-                           _;
-                         }
-                       -> Dir_set.mem dir existing_dirs)
-                in
-                let tag_query_matches =
-                  tag_query_matches
-                  |> CCList.filter
-                       (fun
-                         {
-                           Terrat_change_match2.Dirspace_config.dirspace =
-                             { Terrat_dirspace.dir; _ };
-                           _;
-                         }
-                       -> Dir_set.mem dir existing_dirs)
-                in
+                      (CCList.length (CCList.flatten all_matches))
+                      (CCList.length working_set_matches));
                 Prmths.Counter.inc_one
                   (Metrics.operations_total
                      (Tf_operation.to_string (S.Event.Terraform.tf_operation t.event)));
@@ -3273,7 +3321,7 @@ module Make (S : S) = struct
                           t
                           db
                           access_control
-                          tag_query_matches
+                          working_set_matches
                           all_matches
                           pull_request
                           repo_config
@@ -3286,7 +3334,7 @@ module Make (S : S) = struct
                           t
                           db
                           access_control
-                          tag_query_matches
+                          working_set_matches
                           all_matches
                           pull_request
                           repo_config
@@ -3299,7 +3347,7 @@ module Make (S : S) = struct
                           t
                           db
                           access_control
-                          tag_query_matches
+                          working_set_matches
                           all_matches
                           pull_request
                           repo_config
@@ -3312,7 +3360,7 @@ module Make (S : S) = struct
                           t
                           db
                           access_control
-                          tag_query_matches
+                          working_set_matches
                           all_matches
                           pull_request
                           repo_config

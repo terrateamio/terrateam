@@ -200,6 +200,15 @@ module Sql = struct
       /% Var.bigint "repo_id"
       /% Var.bigint "pull_number")
 
+  let select_dirspace_applies_for_pull_request =
+    Pgsql_io.Typed_sql.(
+      sql
+      // (* path *) Ret.text
+      // (* workspace *) Ret.text
+      /^ read "select_github_dirspace_applies_for_pull_request.sql"
+      /% Var.bigint "repo_id"
+      /% Var.bigint "pull_number")
+
   let select_dirspaces_owned_by_other_pull_requests () =
     Pgsql_io.Typed_sql.(
       sql
@@ -525,7 +534,9 @@ module Tmpl = struct
     |> Terrat_files_tmpl.read
     |> CCOption.get_exn_or fname
     |> Snabela.Template.of_utf8_string
-    |> CCResult.get_exn
+    |> (function
+         | Ok tmpl -> tmpl
+         | Error (#Snabela.Template.err as err) -> failwith (Snabela.Template.show_err err))
     |> fun tmpl -> Snabela.of_template tmpl Transformers.[ money; compact_plan; plan_diff ]
 
   let read_raw fname = CCOption.get_exn_or fname (Terrat_files_tmpl.read fname)
@@ -544,6 +555,7 @@ module Tmpl = struct
     read "github_dirspaces_owned_by_other_pull_requests.tmpl"
 
   let conflicting_work_manifests = read "github_conflicting_work_manifests.tmpl"
+  let depends_on_cycle = read "github_depends_on_cycle.tmpl"
   let maybe_stale_work_manifests = read "github_maybe_stale_work_manifests.tmpl"
   let repo_config_parse_failure = read "github_repo_config_parse_failure.tmpl"
   let repo_config_generic_failure = read "github_repo_config_generic_failure.tmpl"
@@ -1638,6 +1650,22 @@ module S = struct
             m "GITHUB_EVALUATOR : %s : ERROR : %a" db.Db.request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
+  let query_applied_dirspaces db pull_request =
+    let open Abb.Future.Infix_monad in
+    Pgsql_io.Prepared_stmt.fetch
+      db.Db.db
+      Sql.select_dirspace_applies_for_pull_request
+      ~f:(fun dir workspace -> Terrat_change.Dirspace.{ dir; workspace })
+      (CCInt64.of_int pull_request.Pull_request.repo.Repo.id)
+      (CCInt64.of_int pull_request.Pull_request.id)
+    >>= function
+    | Ok dirspaces -> Abb.Future.return (Ok dirspaces)
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m ->
+            m "GITHUB_EVALUATOR : %s : ERROR : %a" db.Db.request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
   let query_dirspaces_owned_by_other_pull_requests db pull_request dirspaces =
     let open Abb.Future.Infix_monad in
     Pgsql_io.Prepared_stmt.fetch
@@ -2370,6 +2398,20 @@ module S = struct
             Tmpl.conflicting_work_manifests
             kv
             t
+      | Msg.Depends_on_cycle cycle ->
+          let kv =
+            Snabela.Kv.(
+              Map.of_list
+                [
+                  ( "cycle",
+                    list
+                      (CCList.map
+                         (fun { Terrat_dirspace.dir; workspace } ->
+                           Map.of_list [ ("dir", string dir); ("workspace", string workspace) ])
+                         cycle) );
+                ])
+          in
+          apply_template_and_publish "DEPENDS_ON_CYCLE" Tmpl.depends_on_cycle kv t
       | Msg.Maybe_stale_work_manifests wms ->
           let module Wm = Terrat_work_manifest2 in
           let kv =
@@ -4154,7 +4196,13 @@ module S = struct
                  -> Some has_changes
                | _ -> None)
 
-      let create_run_output ~view request_id results work_manifest =
+      let create_run_output
+          ~view
+          request_id
+          is_layered_run
+          remaining_dirspace_configs
+          results
+          work_manifest =
         let module Wm = Terrat_work_manifest2 in
         let module Wmr = Terrat_api_components.Work_manifest_dirspace_result in
         let module R = Terrat_api_components_work_manifest_tf_operation_result in
@@ -4281,6 +4329,7 @@ module S = struct
                         ]))
                  steps))
         in
+        let num_remaining_layers = CCList.length remaining_dirspace_configs in
         let kv =
           Snabela.Kv.(
             Map.of_list
@@ -4295,6 +4344,9 @@ module S = struct
                      (fun env -> [ ("environment", string env) ])
                      work_manifest.Wm.environment;
                    [
+                     ("is_layered_run", bool is_layered_run);
+                     ("is_last_layer", bool (num_remaining_layers = 0));
+                     ("num_more_layers", int num_remaining_layers);
                      ("maybe_credentials_error", bool maybe_credentials_error);
                      ("overall_success", bool results.R.overall.R.Overall.success);
                      ("pre_hooks", kv_of_workflow_step (pre_hook_output_texts pre));
@@ -4374,10 +4426,19 @@ module S = struct
             Logs.err (fun m -> m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Snabela.pp_err err);
             assert false
 
-      let rec iterate_comment_posts ?(view = `Full) t results pull_request work_manifest =
+      let rec iterate_comment_posts
+          ?(view = `Full)
+          t
+          is_layered_run
+          remaining_layers
+          results
+          pull_request
+          work_manifest =
         let module Wm = Terrat_work_manifest2 in
         let open Abbs_future_combinators.Infix_result_monad in
-        let output = create_run_output ~view t.request_id results work_manifest in
+        let output =
+          create_run_output ~view t.request_id is_layered_run remaining_layers results work_manifest
+        in
         Metrics.Run_output_histogram.observe
           (Metrics.run_output_chars ~r:work_manifest.Wm.run_type ~c:(view = `Compact))
           (CCFloat.of_int (CCString.length output));
@@ -4405,7 +4466,14 @@ module S = struct
                       "GITHUB_EVALUATOR : %s : ITERATE_COMMENT_POST : %s"
                       t.request_id
                       (Terrat_github.show_publish_comment_err err));
-                iterate_comment_posts ~view:`Compact t results pull_request work_manifest
+                iterate_comment_posts
+                  ~view:`Compact
+                  t
+                  is_layered_run
+                  remaining_layers
+                  results
+                  pull_request
+                  work_manifest
             | `Compact, [ _ ] ->
                 (* If we're in compact view but there is only one dirspace, then
                    that means there is no way to make the comment smaller. *)
@@ -4437,16 +4505,30 @@ module S = struct
                           [ dirspace ];
                       }
                     in
-                    iterate_comment_posts ~view:`Full t results pull_request work_manifest)
+                    iterate_comment_posts
+                      ~view:`Full
+                      t
+                      is_layered_run
+                      remaining_layers
+                      results
+                      pull_request
+                      work_manifest)
                   dirspaces)
 
-      let publish_result t result pull_request work_manifest =
+      let publish_result t is_layered_run remaining_layers result pull_request work_manifest =
         let open Abb.Future.Infix_monad in
         Abbs_time_it.run
           (fun time ->
             Logs.info (fun m ->
                 m "GITHUB_EVALUATOR : %s : PUBLISH_RESULTS : time=%f" t.request_id time))
-          (fun () -> iterate_comment_posts t result pull_request work_manifest)
+          (fun () ->
+            iterate_comment_posts
+              t
+              is_layered_run
+              remaining_layers
+              result
+              pull_request
+              work_manifest)
         >>= function
         | Ok () -> Abb.Future.return (Ok ())
         | Error (#Terrat_github.publish_comment_err as err) ->

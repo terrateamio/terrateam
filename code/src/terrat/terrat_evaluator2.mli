@@ -24,6 +24,7 @@ module Msg : sig
     | Bad_custom_branch_tag_pattern of (string * string)
     | Bad_glob of string
     | Conflicting_work_manifests of 'src Terrat_work_manifest2.Existing.t list
+    | Depends_on_cycle of Terrat_dirspace.t list
     | Dest_branch_no_match of 'pull_request
     | Dirspaces_owned_by_other_pull_request of (Terrat_change.Dirspace.t * 'pull_request) list
     | Index_complete of (bool * (string * int option * string) list)
@@ -237,6 +238,9 @@ module type S = sig
     Abb.Future.t
 
   val query_unapplied_dirspaces :
+    Db.t -> 'a Pull_request.t -> (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
+
+  val query_applied_dirspaces :
     Db.t -> 'a Pull_request.t -> (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
 
   val query_dirspaces_owned_by_other_pull_requests :
@@ -499,6 +503,8 @@ module type S = sig
 
       val publish_result :
         t ->
+        bool ->
+        Terrat_change_match2.Dirspace_config.t list list ->
         Type.tf_operation ->
         Pull_request.stored Pull_request.t ->
         'a Terrat_work_manifest2.Existing.t ->
