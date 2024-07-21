@@ -1,14 +1,4 @@
-module String_map : sig
-  include module type of CCMap.Make (CCString)
-
-  val to_yojson : ('a -> 'b) -> 'a t -> [> `Assoc of (key * 'b) list ]
-
-  val of_yojson :
-    ('a -> ('b, string) result) -> [> `Assoc of (key * 'a) list ] -> ('b t, string) result
-
-  val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
-  val show : (Format.formatter -> 'a -> unit) -> 'a t -> string
-end
+module String_map = Terrat_data.String_map
 
 module Pattern : sig
   type t [@@deriving show, yojson, eq]

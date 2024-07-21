@@ -1,31 +1,5 @@
 module V1 = Terrat_repo_config.Version_1
-
-module Assoc_string_list = struct
-  type 'a t = (string * 'a) list [@@deriving show]
-end
-
-module String_map = struct
-  include CCMap.Make (CCString)
-
-  let to_yojson f t = `Assoc (CCList.map (fun (k, v) -> (k, f v)) (to_list t))
-
-  let of_yojson f = function
-    | `Assoc obj -> (
-        try
-          Ok
-            (CCListLabels.fold_left
-               ~f:(fun acc (k, v) ->
-                 match f v with
-                 | Ok v -> add k v acc
-                 | Error err -> failwith err)
-               ~init:empty
-               obj)
-        with Failure err -> Error err)
-    | _ -> Error "Expected object"
-
-  let pp f formatter t = Assoc_string_list.pp f formatter (to_list t)
-  let show f t = Assoc_string_list.show f (to_list t)
-end
+module String_map = Terrat_data.String_map
 
 let map_opt f = function
   | None -> Ok None
@@ -1258,7 +1232,7 @@ let of_version_1_dirs default_when_modified { V1.Dirs.additional; _ } =
       (Json_schema.String_map.to_list additional)
   in
   CCResult.map_l
-    (fun (dir, ({ D.create_and_select_workspace; stacks; tags; when_modified; workspaces } as d)) ->
+    (fun (dir, { D.create_and_select_workspace; stacks; tags; when_modified; workspaces }) ->
       map_opt (of_version_1_dirs_when_modified default_when_modified) when_modified
       >>= fun when_modified ->
       let when_modified = CCOption.or_ ~else_:default_when_modified when_modified in
