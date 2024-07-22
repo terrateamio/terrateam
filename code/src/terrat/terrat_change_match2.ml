@@ -100,9 +100,10 @@ let topology_of_dirspace_configs dirspaces =
       (fun dirspace { Dirspace_config.tags; _ } acc ->
         match
           CCList.filter_map
-            (fun (dirspace, depends_on) ->
-              let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-              if Terrat_tag_query.match_ ~ctx ~tag_set:tags depends_on then Some dirspace else None)
+            (fun (working_dirspace, depends_on) ->
+              let ctx = Terrat_tag_query.Ctx.make ~working_dirspace ~dirspace () in
+              if Terrat_tag_query.match_ ~ctx ~tag_set:tags depends_on then Some working_dirspace
+              else None)
             all_depends_on
         with
         | [] -> acc

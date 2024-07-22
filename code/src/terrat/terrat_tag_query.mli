@@ -1,7 +1,7 @@
 module Ctx : sig
   type t
 
-  val make : dirspace:Terrat_dirspace.t -> unit -> t
+  val make : ?working_dirspace:Terrat_dirspace.t -> dirspace:Terrat_dirspace.t -> unit -> t
 end
 
 type t [@@deriving show, eq]

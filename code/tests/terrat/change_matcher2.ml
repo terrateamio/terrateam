@@ -1836,6 +1836,68 @@ let test_depends_on_cycle =
       | Error (`Depends_on_cycle_err _) -> ()
       | Error _ -> assert false)
 
+let test_depends_on_relative_dir =
+  Oth.test ~name:"depends_on relative dir" (fun _ ->
+      let module R = Terrat_base_repo_config_v1 in
+      let repo_config =
+        R.make
+          ~dirs:
+            (R.String_map.of_list
+               [
+                 ( "projects/**/database/*.tf",
+                   R.Dirs.Dir.make
+                     ~workspaces:
+                       (R.String_map.of_list
+                          [
+                            ( "default",
+                              R.Dirs.Workspace.make
+                                ~when_modified:
+                                  (R.When_modified.make
+                                     ~depends_on:
+                                       (CCResult.get_exn
+                                          (Terrat_tag_query.of_string "relative_dir:../base"))
+                                     ())
+                                () );
+                          ])
+                     () );
+               ])
+          ()
+      in
+      let diff = Terrat_change.Diff.[ Add { filename = "projects/proj1/base/main.tf" } ] in
+      let file_list =
+        [
+          "projects/proj1/base/main.tf";
+          "projects/proj1/database/main.tf";
+          "projects/proj2/base/main.tf";
+          "projects/proj2/database/main.tf";
+        ]
+      in
+      let config =
+        CCResult.get_exn
+          (Terrat_change_match2.synthesize_config
+             ~ctx
+             ~index:Terrat_change_match2.Index.empty
+             ~file_list
+             repo_config)
+      in
+      let changes = Terrat_change_match2.match_diff_list config diff in
+      assert (CCList.length changes = 2);
+      let dirspace_eq ds { Terrat_change_match2.Dirspace_config.dirspace; _ } =
+        Terrat_dirspace.equal ds dirspace
+      in
+      let changes = CCList.flatten changes in
+      assert (
+        CCOption.is_some
+          (CCList.find_opt
+             (dirspace_eq { Terrat_dirspace.dir = "projects/proj1/base"; workspace = "default" })
+             changes));
+      assert (
+        CCOption.is_some
+          (CCList.find_opt
+             (dirspace_eq
+                { Terrat_dirspace.dir = "projects/proj1/database"; workspace = "default" })
+             changes)))
+
 let test =
   Oth.parallel
     [
@@ -1880,6 +1942,7 @@ let test =
       test_depends_on_multiple_depends_2;
       test_depends_on_multiple_depends_disjoint;
       test_depends_on_cycle;
+      test_depends_on_relative_dir;
     ]
 
 let () =

@@ -1,7 +1,10 @@
 module Ctx = struct
-  type t = { dirspace : Terrat_dirspace.t }
+  type t = {
+    dirspace : Terrat_dirspace.t;
+    working_dirspace : Terrat_dirspace.t option;
+  }
 
-  let make ~dirspace () = { dirspace }
+  let make ?working_dirspace ~dirspace () = { dirspace; working_dirspace }
 end
 
 module Q = struct
@@ -37,10 +40,29 @@ let escape_glob s =
     s;
   Buffer.contents b
 
+let rec process_dot_dot fname =
+  match CCString.Split.left ~by:"/../" fname with
+  | Some (l, r) -> (
+      match CCString.Split.right ~by:"/" l with
+      | Some (l', _) -> process_dot_dot (l' ^ "/" ^ r)
+      | None -> process_dot_dot r)
+  | None -> fname
+
+let test_relative_dir ctx relative_dir =
+  match ctx.Ctx.working_dirspace with
+  | Some working_dirspace ->
+      CCString.equal
+        ctx.Ctx.dirspace.Terrat_dirspace.dir
+        (process_dot_dot (Filename.concat working_dirspace.Terrat_dirspace.dir relative_dir))
+  | None -> false
+
 let rec match' ~ctx ~tag_set = function
   | Q.Any -> true
   | Q.Not t -> not (match' ~ctx ~tag_set t)
-  | Q.Tag tag -> Terrat_tag_set.mem tag tag_set
+  | Q.Tag tag -> (
+      match CCString.Split.left ~by:":" tag with
+      | Some ("relative_dir", relative_dir) -> test_relative_dir ctx relative_dir
+      | _ -> Terrat_tag_set.mem tag tag_set)
   | Q.Dir_glob (_, eq) -> eq ctx.Ctx.dirspace.Terrat_dirspace.dir
   | Q.And (l, r) -> match' ~ctx ~tag_set l && match' ~ctx ~tag_set r
   | Q.Or (l, r) -> match' ~ctx ~tag_set l || match' ~ctx ~tag_set r
