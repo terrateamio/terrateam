@@ -101,8 +101,8 @@ let topology_of_dirspace_configs dirspaces =
         match
           CCList.filter_map
             (fun (dirspace, depends_on) ->
-              if Terrat_tag_query.match_ ~tag_set:tags ~dirspace depends_on then Some dirspace
-              else None)
+              let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
+              if Terrat_tag_query.match_ ~ctx ~tag_set:tags depends_on then Some dirspace else None)
             all_depends_on
         with
         | [] -> acc
@@ -556,4 +556,5 @@ let merge_with_dedup l1 l2 =
   Iter.to_list (Dirspace_map.values (Dirspace_map.union (fun _ v _ -> Some v) m1 m2))
 
 let match_tag_query ~tag_query { Dirspace_config.dirspace; tags; _ } =
-  Terrat_tag_query.match_ ~tag_set:tags ~dirspace tag_query
+  let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
+  Terrat_tag_query.match_ ~ctx ~tag_set:tags tag_query

@@ -3161,7 +3161,8 @@ module S = struct
             match
               CCList.find_opt
                 (fun { Abc.tag_query; _ } ->
-                  Terrat_tag_query.match_ ~tag_set:tags ~dirspace tag_query)
+                  let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
+                  Terrat_tag_query.match_ ~ctx ~tag_set:tags tag_query)
                 checks
             with
             | Some { Abc.tag_query; merge_conflicts; status_checks; approved; _ } ->

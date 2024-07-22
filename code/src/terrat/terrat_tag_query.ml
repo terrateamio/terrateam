@@ -1,3 +1,9 @@
+module Ctx = struct
+  type t = { dirspace : Terrat_dirspace.t }
+
+  let make ~dirspace () = { dirspace }
+end
+
 module Q = struct
   type t =
     | Or of (t * t)
@@ -31,15 +37,15 @@ let escape_glob s =
     s;
   Buffer.contents b
 
-let rec match' ~tag_set ~dirspace = function
+let rec match' ~ctx ~tag_set = function
   | Q.Any -> true
-  | Q.Not t -> not (match' ~tag_set ~dirspace t)
+  | Q.Not t -> not (match' ~ctx ~tag_set t)
   | Q.Tag tag -> Terrat_tag_set.mem tag tag_set
-  | Q.Dir_glob (_, eq) -> eq dirspace.Terrat_dirspace.dir
-  | Q.And (l, r) -> match' ~tag_set ~dirspace l && match' ~tag_set ~dirspace r
-  | Q.Or (l, r) -> match' ~tag_set ~dirspace l || match' ~tag_set ~dirspace r
+  | Q.Dir_glob (_, eq) -> eq ctx.Ctx.dirspace.Terrat_dirspace.dir
+  | Q.And (l, r) -> match' ~ctx ~tag_set l && match' ~ctx ~tag_set r
+  | Q.Or (l, r) -> match' ~ctx ~tag_set l || match' ~ctx ~tag_set r
 
-let match_ ~tag_set ~dirspace t = match' ~tag_set ~dirspace t.q
+let match_ ~ctx ~tag_set t = match' ~ctx ~tag_set t.q
 
 let rec of_ast =
   let module T = Terrat_tag_query_parser_value in
