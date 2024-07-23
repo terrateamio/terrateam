@@ -77,7 +77,7 @@ let post' config storage path ctx =
                 work_manifest_id
                 (Uri.to_string uri));
           Abbs_future_combinators.timeout
-            ~timeout:(Abb.Sys.sleep 5.0)
+            ~timeout:(Abb.Sys.sleep 30.0)
             (Http.Client.call ~tls_config ~headers ~body:(Http.Body.of_string body) `POST uri)
           >>= function
           | `Ok (Ok (resp, body)) when Cohttp.Response.status resp = `OK ->
