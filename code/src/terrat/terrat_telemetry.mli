@@ -3,7 +3,7 @@ module Event : sig
     | Start of { github_app_id : string }
     | Run of {
         github_app_id : string;
-        run_type : Terrat_work_manifest2.Run_type.t;
+        step : Terrat_work_manifest3.Step.t;
         owner : string;
         repo : string;
       }

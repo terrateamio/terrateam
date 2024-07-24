@@ -8,6 +8,7 @@ module Run_type = struct
     | `String "apply" -> Ok "apply"
     | `String "autoapply" -> Ok "autoapply"
     | `String "autoplan" -> Ok "autoplan"
+    | `String "index" -> Ok "index"
     | `String "plan" -> Ok "plan"
     | `String "unsafe-apply" -> Ok "unsafe-apply"
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)

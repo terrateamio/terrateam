@@ -9,6 +9,7 @@ module Drifts = struct
             let t_of_yojson = function
               | `String "plan" -> Ok "plan"
               | `String "apply" -> Ok "apply"
+              | `String "index" -> Ok "index"
               | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
             type t = (string[@of_yojson t_of_yojson])

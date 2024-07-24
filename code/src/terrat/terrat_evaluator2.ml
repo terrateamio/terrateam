@@ -12,7 +12,7 @@ module Metrics = struct
   end)
 
   let namespace = "terrat"
-  let subsystem = "evaluator"
+  let subsystem = "evaluator2"
 
   let eval_duration_seconds =
     let help = "Time to evaluate an event" in

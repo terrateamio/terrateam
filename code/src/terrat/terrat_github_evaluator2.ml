@@ -19,7 +19,7 @@ module Metrics = struct
   end)
 
   let namespace = "terrat"
-  let subsystem = "github_evaluator"
+  let subsystem = "github_evaluator2"
   let pgsql_pool_errors_total = Terrat_metrics.errors_total ~m:subsystem ~t:"pgsql_pool"
   let pgsql_errors_total = Terrat_metrics.errors_total ~m:subsystem ~t:"pgsql"
   let github_errors_total = Terrat_metrics.errors_total ~m:subsystem ~t:"github"
@@ -5025,16 +5025,6 @@ module S = struct
       | { Wm.src = Wm.Kind.Drift { Drift.branch = branch_name; _ }; _ }
       | { Wm.src = Wm.Kind.Index { Index.branch = branch_name; _ }; _ } -> branch_name
 
-    let make_run_telemetry config run_type repo =
-      let module Wm = Terrat_work_manifest2 in
-      Terrat_telemetry.Event.Run
-        {
-          github_app_id = Terrat_config.github_app_id config;
-          run_type;
-          owner = repo.Repo.owner;
-          repo = repo.Repo.name;
-        }
-
     let config t = t.config
     let request_id t = t.request_id
     let completed _ = ()
@@ -5169,11 +5159,7 @@ module S = struct
                       ~repo:repo.Repo.name
                       ~workflow_id:(Workflow_id.V0 workflow_id)))
             >>= function
-            | Ok _ ->
-                Terrat_telemetry.send
-                  (Terrat_config.telemetry t.config)
-                  (make_run_telemetry t.config work_manifest.Wm.run_type repo)
-                >>= fun () -> Abb.Future.return (Ok ())
+            | Ok _ -> Abb.Future.return (Ok ())
             | Error (`Missing_response resp as err)
               when CCString.mem ~sub:"No ref found for:" (Openapi.Response.value resp) ->
                 (* If the ref has been deleted while we are looking up the

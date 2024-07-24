@@ -246,6 +246,7 @@
               "apply",
               "autoapply",
               "autoplan",
+              "index",
               "plan",
               "unsafe-apply"
             ],
@@ -337,7 +338,6 @@
           "ref",
           "repo",
           "repository",
-          "run_type",
           "state",
           "tag_query"
         ],
@@ -399,6 +399,7 @@
               "apply",
               "autoapply",
               "autoplan",
+              "index",
               "plan",
               "unsafe-apply"
             ],
@@ -1572,7 +1573,8 @@
                           "run_type": {
                             "enum": [
                               "plan",
-                              "apply"
+                              "apply",
+                              "index"
                             ],
                             "type": "string"
                           },

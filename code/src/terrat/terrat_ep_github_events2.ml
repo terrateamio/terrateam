@@ -6,7 +6,7 @@ module Metrics = struct
   end)
 
   let namespace = "terrat"
-  let subsystem = "ep_github_events"
+  let subsystem = "ep_github_events2"
 
   let events_duration_seconds =
     let help = "Number of seconds that handling an incoming event takes" in

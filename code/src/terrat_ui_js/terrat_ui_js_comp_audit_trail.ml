@@ -95,10 +95,11 @@ let render_work_manifest_drift github_web_base_url wm =
                        div
                          [
                            txt'
-                             (match success with
-                             | Some true -> "Success"
-                             | Some false -> "Fail"
-                             | None -> "Running");
+                             (match (wm.Wm.state, success) with
+                             | _, Some true -> "Success"
+                             | _, Some false -> "Fail"
+                             | ("queued" | "running"), None -> "Running"
+                             | _, _ -> "--");
                          ];
                      ])
                    wm.Wm.dirspaces);
@@ -240,10 +241,11 @@ let render_work_manifest_pull_request github_web_base_url wm =
                        div
                          [
                            txt'
-                             (match success with
-                             | Some true -> "Success"
-                             | Some false -> "Fail"
-                             | None -> "Running");
+                             (match (wm.Wm.state, success) with
+                             | _, Some true -> "Success"
+                             | _, Some false -> "Fail"
+                             | ("queued" | "running"), None -> "Running"
+                             | _, _ -> "--");
                          ];
                      ])
                    (CCList.sort
@@ -382,10 +384,11 @@ let render_work_manifest_index github_web_base_url wm =
                        div
                          [
                            txt'
-                             (match success with
-                             | Some true -> "Success"
-                             | Some false -> "Fail"
-                             | None -> "Running");
+                             (match (wm.Wm.state, success) with
+                             | _, Some true -> "Success"
+                             | _, Some false -> "Fail"
+                             | ("queued" | "running"), None -> "Running"
+                             | _, _ -> "--");
                          ];
                      ])
                    (CCList.sort
