@@ -379,7 +379,15 @@ let synthesize_config' ~ctx ~index ~file_list repo_config =
   let synthetic_dirspaces =
     file_list
     |> CCList.flat_map (fun fname ->
-           match CCList.find_opt (fun (d, _) -> Path_glob.Glob.eval d fname) glob_dirs with
+           (* Only going to synthesize directories that match the filename but also their
+              directory is not explicitly specified in the dirs section of the config. *)
+           match
+             CCList.find_opt
+               (fun (d, _) ->
+                 (not (R.String_map.mem (Filename.dirname fname) dirs))
+                 && Path_glob.Glob.eval d fname)
+               glob_dirs
+           with
            | Some (_, config) ->
                let dir = Filename.dirname fname in
                dirspace_configs_of_dir_config
