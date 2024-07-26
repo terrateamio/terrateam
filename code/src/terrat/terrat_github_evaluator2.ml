@@ -1333,7 +1333,17 @@ module S = struct
     | None ->
         let open Abb.Future.Infix_monad in
         Prmths.Counter.inc_one (metric "miss");
-        let ret = f () in
+        let ret =
+          let open Abb.Future.Infix_monad in
+          f ()
+          >>= function
+          | Ok _ as r -> Abb.Future.return r
+          | Error _ as err ->
+              (* If the call results in a failure, remove it from the cache.  We don't want to
+                 cache failures *)
+              Client.Fetch_file_cache.remove k pool;
+              Abb.Future.return err
+        in
         Client.Fetch_file_cache.add k ret pool;
         Client.Fetch_file_cache.trim pool;
         Abb.Future.fork ret >>= fun _ -> ret
