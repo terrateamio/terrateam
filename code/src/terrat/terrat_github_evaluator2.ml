@@ -1328,8 +1328,14 @@ module S = struct
             m "GITHUB_EVALUATOR : %s : ERROR : %a" db.Db.request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
-  let cache metric pool k f =
-    match Client.Fetch_file_cache.find k pool with
+  let cache
+      (type t k o e)
+      metric
+      (module Cache : Lru.M.S with type t = t and type k = k and type v = (o, e) result Abb.Future.t)
+      (pool : t)
+      (k : k)
+      (f : unit -> (o, e) result Abb.Future.t) =
+    match Cache.find k pool with
     | None ->
         let open Abb.Future.Infix_monad in
         Prmths.Counter.inc_one (metric "miss");
@@ -1341,16 +1347,16 @@ module S = struct
           | Error _ as err ->
               (* If the call results in a failure, remove it from the cache.  We don't want to
                  cache failures *)
-              Client.Fetch_file_cache.remove k pool;
+              Cache.remove k pool;
               Abb.Future.return err
         in
-        Client.Fetch_file_cache.add k ret pool;
-        Client.Fetch_file_cache.trim pool;
+        Cache.add k ret pool;
+        Cache.trim pool;
         Abb.Future.fork ret >>= fun _ -> ret
     | Some ret ->
         Prmths.Counter.inc_one (metric "hit");
-        Client.Fetch_file_cache.promote k pool;
-        Client.Fetch_file_cache.trim pool;
+        Cache.promote k pool;
+        Cache.trim pool;
         ret
 
   let fetch_file client repo ref_ path =
@@ -1392,6 +1398,7 @@ module S = struct
     if CCString.length ref_ = fetch_file_length_of_git_hash && probably_is_git_hash ref_ then
       (cache
          (Metrics.cache_fn_call_count ~l:"global" ~fn:"fetch_file")
+         (module Client.Fetch_file_cache)
          client.Client.fetch_file_cache
          (Repo.to_string repo, ref_, path)
          fetch
@@ -1400,6 +1407,7 @@ module S = struct
     else
       (cache
          (Metrics.cache_fn_call_count ~l:"local" ~fn:"fetch_file")
+         (module Client.Fetch_file_cache)
          client.Client.fetch_file_local_cache
          (Repo.to_string repo, ref_, path)
          fetch
