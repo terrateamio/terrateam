@@ -1,6 +1,6 @@
 module File = struct
   type t = { source_location : string option [@default None] }
-  [@@deriving yojson { strict = true; meta = true }, show, eq]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Resolved = struct
@@ -14,4 +14,4 @@ type t = {
   name : string;
   resolved : Resolved.t option; [@default None]
 }
-[@@deriving yojson { strict = true; meta = true }, show, eq]
+[@@deriving yojson { strict = false; meta = true }, show, eq]

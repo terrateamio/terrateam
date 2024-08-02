@@ -29,4 +29,4 @@ type t = {
   relationship : Relationship.t option; [@default None]
   scope : Scope.t option; [@default None]
 }
-[@@deriving yojson { strict = true; meta = true }, show, eq]
+[@@deriving yojson { strict = false; meta = true }, show, eq]

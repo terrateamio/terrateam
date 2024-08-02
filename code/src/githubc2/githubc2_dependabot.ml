@@ -852,7 +852,7 @@ module Update_alert = struct
       dismissed_reason : Dismissed_reason.t option; [@default None]
       state : State.t;
     }
-    [@@deriving make, yojson { strict = true; meta = true }, show, eq]
+    [@@deriving make, yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct

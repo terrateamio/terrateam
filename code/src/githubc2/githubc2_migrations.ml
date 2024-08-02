@@ -740,7 +740,7 @@ module Map_commit_author = struct
       email : string option; [@default None]
       name : string option; [@default None]
     }
-    [@@deriving make, yojson { strict = true; meta = true }, show, eq]
+    [@@deriving make, yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct

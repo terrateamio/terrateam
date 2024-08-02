@@ -4,7 +4,7 @@ module Credits = struct
       login : string;
       type_ : Githubc2_components_security_advisory_credit_types.t; [@key "type"]
     }
-    [@@deriving yojson { strict = true; meta = true }, show, eq]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
@@ -50,7 +50,7 @@ module Vulnerabilities = struct
       vulnerable_functions : Vulnerable_functions.t option; [@default None]
       vulnerable_version_range : string option; [@default None]
     }
-    [@@deriving yojson { strict = true; meta = true }, show, eq]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
@@ -66,4 +66,4 @@ type t = {
   summary : string;
   vulnerabilities : Vulnerabilities.t;
 }
-[@@deriving yojson { strict = true; meta = true }, show, eq]
+[@@deriving yojson { strict = false; meta = true }, show, eq]

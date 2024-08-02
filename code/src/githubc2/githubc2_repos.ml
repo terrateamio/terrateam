@@ -6133,7 +6133,7 @@ module Create_or_update_environment = struct
       reviewers : Reviewers.t option; [@default None]
       wait_timer : int option; [@default None]
     }
-    [@@deriving make, yojson { strict = true; meta = true }, show, eq]
+    [@@deriving make, yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -6903,7 +6903,7 @@ module Create_webhook = struct
       events : Events.t; [@default [ "push" ]]
       name : string option; [@default None]
     }
-    [@@deriving make, yojson { strict = true; meta = true }, show, eq]
+    [@@deriving make, yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -7239,7 +7239,7 @@ module Update_webhook_config_for_repo = struct
       secret : string option; [@default None]
       url : string option; [@default None]
     }
-    [@@deriving make, yojson { strict = true; meta = true }, show, eq]
+    [@@deriving make, yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct

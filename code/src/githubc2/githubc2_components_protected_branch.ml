@@ -1,19 +1,19 @@
 module Primary = struct
   module Allow_deletions = struct
-    type t = { enabled : bool } [@@deriving yojson { strict = true; meta = true }, show, eq]
+    type t = { enabled : bool } [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Allow_force_pushes = struct
-    type t = { enabled : bool } [@@deriving yojson { strict = true; meta = true }, show, eq]
+    type t = { enabled : bool } [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Allow_fork_syncing = struct
     type t = { enabled : bool [@default false] }
-    [@@deriving yojson { strict = true; meta = true }, show, eq]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Block_creations = struct
-    type t = { enabled : bool } [@@deriving yojson { strict = true; meta = true }, show, eq]
+    type t = { enabled : bool } [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Enforce_admins = struct
@@ -21,21 +21,21 @@ module Primary = struct
       enabled : bool;
       url : string;
     }
-    [@@deriving yojson { strict = true; meta = true }, show, eq]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Lock_branch = struct
     type t = { enabled : bool [@default false] }
-    [@@deriving yojson { strict = true; meta = true }, show, eq]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Required_conversation_resolution = struct
     type t = { enabled : bool option [@default None] }
-    [@@deriving yojson { strict = true; meta = true }, show, eq]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Required_linear_history = struct
-    type t = { enabled : bool } [@@deriving yojson { strict = true; meta = true }, show, eq]
+    type t = { enabled : bool } [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Required_pull_request_reviews = struct

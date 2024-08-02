@@ -53,4 +53,4 @@ type t = {
   updated_at : string;
   url : string;
 }
-[@@deriving yojson { strict = true; meta = true }, show, eq]
+[@@deriving yojson { strict = false; meta = true }, show, eq]

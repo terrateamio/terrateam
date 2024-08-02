@@ -3,7 +3,7 @@ module Cvss = struct
     score : float;
     vector_string : string option;
   }
-  [@@deriving yojson { strict = true; meta = true }, show, eq]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Cwes = struct
@@ -12,7 +12,7 @@ module Cwes = struct
       cwe_id : string;
       name : string;
     }
-    [@@deriving yojson { strict = true; meta = true }, show, eq]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
@@ -34,7 +34,7 @@ module Identifiers = struct
       type_ : Type.t; [@key "type"]
       value : string;
     }
-    [@@deriving yojson { strict = true; meta = true }, show, eq]
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
@@ -42,7 +42,7 @@ end
 
 module References = struct
   module Items = struct
-    type t = { url : string } [@@deriving yojson { strict = true; meta = true }, show, eq]
+    type t = { url : string } [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
@@ -80,4 +80,4 @@ type t = {
   vulnerabilities : Vulnerabilities.t;
   withdrawn_at : string option;
 }
-[@@deriving yojson { strict = true; meta = true }, show, eq]
+[@@deriving yojson { strict = false; meta = true }, show, eq]

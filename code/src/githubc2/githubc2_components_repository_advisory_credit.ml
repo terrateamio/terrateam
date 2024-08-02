@@ -14,4 +14,4 @@ type t = {
   type_ : Githubc2_components_security_advisory_credit_types.t; [@key "type"]
   user : Githubc2_components_simple_user.t;
 }
-[@@deriving yojson { strict = true; meta = true }, show, eq]
+[@@deriving yojson { strict = false; meta = true }, show, eq]

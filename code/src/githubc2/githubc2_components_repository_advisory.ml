@@ -414,4 +414,4 @@ type t = {
   vulnerabilities : Vulnerabilities.t option;
   withdrawn_at : string option;
 }
-[@@deriving yojson { strict = true; meta = true }, show, eq]
+[@@deriving yojson { strict = false; meta = true }, show, eq]
