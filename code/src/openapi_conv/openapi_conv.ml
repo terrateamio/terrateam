@@ -451,11 +451,12 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
         ~field_name_of_schema
         ~module_name_of_ref:(module_name_of_ref base_module_name "paths")
         ~module_name_of_field_name:module_name_of_string
-        ~prim_type_attrs:Gen.(deriving [ yojson_deriver ~meta:true (); show_deriver; eq_deriver ])
+        ~prim_type_attrs:
+          Gen.(deriving [ yojson_deriver ~strict:false ~meta:true (); show_deriver; eq_deriver ])
         ~record_type_attrs:(fun strict ->
           Gen.(
             deriving
-              [ make_deriver; yojson_deriver ~strict ~meta:true (); show_deriver; eq_deriver ]))
+              [ make_deriver; yojson_deriver ~strict:false ~meta:true (); show_deriver; eq_deriver ]))
         ~record_field_attrs
         ~resolve_ref:(resolve_schema_ref components)
         ~variant_name_of_ref:(module_name_of_ref base_module_name "paths")
@@ -497,9 +498,10 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
         ~field_name_of_schema
         ~module_name_of_ref:(module_name_of_ref base_module_name "paths")
         ~module_name_of_field_name:module_name_of_string
-        ~prim_type_attrs:Gen.(deriving [ yojson_deriver ~meta:false (); show_deriver; eq_deriver ])
+        ~prim_type_attrs:
+          Gen.(deriving [ yojson_deriver ~strict:false ~meta:false (); show_deriver; eq_deriver ])
         ~record_type_attrs:(fun strict ->
-          Gen.(deriving [ yojson_deriver ~strict (); show_deriver; eq_deriver ]))
+          Gen.(deriving [ yojson_deriver ~strict:false (); show_deriver; eq_deriver ]))
         ~record_field_attrs
         ~resolve_ref:(resolve_schema_ref components)
         ~variant_name_of_ref:(module_name_of_ref base_module_name "paths")
@@ -725,9 +727,9 @@ let convert_str_components
       ~field_name_of_schema
       ~module_name_of_ref
       ~module_name_of_field_name:(module_name_of_field_name components)
-      ~prim_type_attrs:Gen.(deriving [ yojson_deriver (); show_deriver; eq_deriver ])
+      ~prim_type_attrs:Gen.(deriving [ yojson_deriver ~strict:false (); show_deriver; eq_deriver ])
       ~record_type_attrs:(fun strict ->
-        Gen.(deriving [ yojson_deriver ~strict (); show_deriver; eq_deriver ]))
+        Gen.(deriving [ yojson_deriver ~strict:false (); show_deriver; eq_deriver ]))
       ~record_field_attrs
       ~resolve_ref:(resolve_schema_ref components)
       ~variant_name_of_ref
