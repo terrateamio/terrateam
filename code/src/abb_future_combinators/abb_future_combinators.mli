@@ -115,6 +115,14 @@ module Make (Fut : Abb_intf.Future.S) : sig
       will increment the series value by [step] *)
   val series : start:'a -> step:('a -> 'a) -> ('a -> 'b -> 'c Fut.t) -> 'b -> 'c Fut.t
 
+  (** Given an exception, create a failed future with that exception. *)
+  val of_exn : exn -> 'a Fut.t
+
+  (** Execute a function that runs a future where the execution may raise an
+    exception. If an exception is raised, catch the exception and return a
+    failed future. *)
+  val guard : (unit -> 'a Fut.t) -> 'a Fut.t
+
   module List : sig
     (** Map a list in serial *)
     val map : f:('a -> 'b Fut.t) -> 'a list -> 'b list Fut.t
