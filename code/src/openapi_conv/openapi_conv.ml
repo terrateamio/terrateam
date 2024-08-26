@@ -379,7 +379,7 @@ let request_param_of_op_params components param_in params =
    [Openapi.Request] value.
 
    We will convert [parameters] to a module called [Parameters] as a record. *)
-let convert_str_operation base_module_name components uritmpl op_typ op =
+let convert_str_operation strict_records base_module_name components uritmpl op_typ op =
   assert (CCOption.is_some op.Operation.operation_id);
   let operation_id = CCOption.get_exn_or "operation_id" op.Operation.operation_id in
   let params_config =
@@ -456,7 +456,12 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
         ~record_type_attrs:(fun strict ->
           Gen.(
             deriving
-              [ make_deriver; yojson_deriver ~strict:false ~meta:true (); show_deriver; eq_deriver ]))
+              [
+                make_deriver;
+                yojson_deriver ~strict:(strict && strict_records) ~meta:true ();
+                show_deriver;
+                eq_deriver;
+              ]))
         ~record_field_attrs
         ~resolve_ref:(resolve_schema_ref components)
         ~variant_name_of_ref:(module_name_of_ref base_module_name "paths")
@@ -501,7 +506,9 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
         ~prim_type_attrs:
           Gen.(deriving [ yojson_deriver ~strict:false ~meta:false (); show_deriver; eq_deriver ])
         ~record_type_attrs:(fun strict ->
-          Gen.(deriving [ yojson_deriver ~strict:false (); show_deriver; eq_deriver ]))
+          Gen.(
+            deriving
+              [ yojson_deriver ~strict:(strict && strict_records) (); show_deriver; eq_deriver ]))
         ~record_field_attrs
         ~resolve_ref:(resolve_schema_ref components)
         ~variant_name_of_ref:(module_name_of_ref base_module_name "paths")
@@ -765,6 +772,7 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
   (operation_id, parameters_module @ request_body @ [ responses; url; make ])
 
 let convert_str_components
+    strict_records
     output_dir
     base_module_name
     ({ Components.schemas; responses; _ } as components) =
@@ -786,7 +794,9 @@ let convert_str_components
       ~module_name_of_field_name:(module_name_of_field_name components)
       ~prim_type_attrs:Gen.(deriving [ yojson_deriver ~strict:false (); show_deriver; eq_deriver ])
       ~record_type_attrs:(fun strict ->
-        Gen.(deriving [ yojson_deriver ~strict:false (); show_deriver; eq_deriver ]))
+        Gen.(
+          deriving
+            [ yojson_deriver ~strict:(strict && strict_records) (); show_deriver; eq_deriver ]))
       ~record_field_attrs
       ~resolve_ref:(resolve_schema_ref components)
       ~variant_name_of_ref
@@ -822,13 +832,13 @@ let convert_str_components
     (Filename.concat output_dir (CCString.lowercase_ascii (base_module_name ^ "_components.ml")))
     (fun oc -> CCIO.write_line oc (Pprintast.string_of_structure sts))
 
-let convert_str_paths output_base base_module_name components paths =
+let convert_str_paths strict_records output_base base_module_name components paths =
   let modules =
     CCList.map
       (fun (uritmpl, path) ->
         assert (path.Path.parameters = None);
         CCList.map
-          (CCFun.uncurry (convert_str_operation base_module_name components uritmpl))
+          (CCFun.uncurry (convert_str_operation strict_records base_module_name components uritmpl))
           (CCList.filter_map
              (fun (t, op) -> CCOption.map (fun op -> (t, op)) op)
              [
@@ -861,13 +871,13 @@ let convert_str_paths output_base base_module_name components paths =
         (fun oc -> CCIO.write_line oc (Pprintast.string_of_structure modules)))
     (String_map.to_list modules)
 
-let convert_str_document output_dir base_module_name { Document.paths; components } =
+let convert_str_document strict_records output_dir base_module_name { Document.paths; components } =
   let output_base = Filename.concat output_dir (CCString.lowercase_ascii base_module_name) in
-  convert_str_components output_dir base_module_name components;
-  convert_str_paths output_base base_module_name components paths
+  convert_str_components strict_records output_dir base_module_name components;
+  convert_str_paths strict_records output_base base_module_name components paths
 
-let convert ~input_file ~output_name ~output_dir =
+let convert ~strict_records ~input_file ~output_name ~output_dir =
   let base_module_name = CCString.capitalize_ascii output_name in
   match Document.of_yojson (Yojson.Safe.from_file input_file) with
-  | Ok document -> convert_str_document output_dir base_module_name document
+  | Ok document -> convert_str_document strict_records output_dir base_module_name document
   | Error err -> print_endline ("ERROR: " ^ err)
