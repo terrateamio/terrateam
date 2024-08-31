@@ -1,4 +1,26 @@
 with
+latest_unlocks as (
+    select
+        repository,
+        pull_number,
+        max(unlocked_at) as unlocked_at
+    from github_pull_request_unlocks
+    group by repository, pull_number
+),
+work_manifests as (
+    select
+        gwm.id as id,
+        gwm.repository as repository,
+        gwm.pull_number as pull_number,
+        gwm.base_sha as base_sha,
+        gwm.sha as sha,
+        gwm.run_type as run_type,
+        gwm.completed_at as completed_at
+    from github_work_manifests as gwm
+    left join latest_unlocks as unlocks
+        on unlocks.repository = gwm.repository and unlocks.pull_number = gwm.pull_number
+    where gwm.run_kind = 'pr' and (unlocks.unlocked_at is null or unlocks.unlocked_at < gwm.created_at)
+),
 work_manifest_results as (
     select
         gwm.id as id,
@@ -15,7 +37,7 @@ work_manifest_results as (
                                gwmr.path,
                                gwmr.workspace
                            order by gwm.completed_at desc) as rn
-    from github_work_manifests as gwm
+    from work_manifests as gwm
     inner join github_work_manifest_results as gwmr
         on gwmr.work_manifest = gwm.id
 ),
