@@ -724,7 +724,7 @@ let get_apply_requirements_checks_approved =
   let module Ap2 = Terrat_repo_config.Apply_requirements_checks_approved_2 in
   function
   | Ap.Apply_requirements_checks_approved_1 { Ap1.count; enabled } ->
-      Ok (Apply_requirements.Approved.make ())
+      Ok (Apply_requirements.Approved.make ~any_of_count:count ~enabled ())
   | Ap.Apply_requirements_checks_approved_2 { Ap2.enabled; all_of; any_of; any_of_count } ->
       CCResult.map_err
         (function
