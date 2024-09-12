@@ -33,8 +33,9 @@ http {
 
     # Public facing portion of the app
     server {
-        listen       [::]:8080;
         listen       8080;
+        ${IPV6_LISTEN}
+
         server_name  localhost;
         access_log   off;
         server_tokens off;
@@ -100,4 +101,3 @@ http {
         }
     }
 }
-

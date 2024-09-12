@@ -6,6 +6,12 @@ if [ -z "$TERRAT_UI_BASE" ]; then
     export TERRAT_UI_BASE="https://app.terrateam.io/"
 fi
 
+if [ "$DISABLE_IPV6" = "1" ]; then
+  export IPV6_LISTEN=""
+else
+  export IPV6_LISTEN="listen [::]:8080;"
+fi
+
 mkdir -p /run/nginx
-envsubst '$TERRAT_UI_BASE' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+envsubst '$TERRAT_UI_BASE $IPV6_LISTEN' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 exec /usr/sbin/nginx -c /etc/nginx/nginx.conf
