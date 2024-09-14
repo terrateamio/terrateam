@@ -67,7 +67,7 @@ module Msg = struct
     | Plan_no_matching_dirspaces
     | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
     | Pull_request_not_mergeable
-    | Repo_config of (string list * Terrat_base_repo_config_v1.t * Terrat_change_match2.Config.t)
+    | Repo_config of (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t)
     | Repo_config_err of Terrat_base_repo_config_v1.of_version_1_err
     | Repo_config_failure of string
     | Repo_config_parse_failure of string * string
@@ -75,7 +75,7 @@ module Msg = struct
     | Tag_query_err of Terrat_tag_query_ast.err
     | Tf_op_result of {
         is_layered_run : bool;
-        remaining_layers : Terrat_change_match2.Dirspace_config.t list list;
+        remaining_layers : Terrat_change_match3.Dirspace_config.t list list;
         result : Terrat_api_components_work_manifest_tf_operation_result.t;
         work_manifest : ('account, 'target) Terrat_work_manifest3.Existing.t;
       }
@@ -143,7 +143,7 @@ module Index = struct
   type t = {
     success : bool;
     failures : Failure.t list;
-    index : Terrat_change_match2.Index.t;
+    index : Terrat_base_repo_config_v1.Index.t;
   }
 end
 
@@ -501,9 +501,9 @@ module type S = sig
     Terrat_config.t ->
     User.t ->
     Client.t ->
-    Terrat_base_repo_config_v1.t ->
+    'a Terrat_base_repo_config_v1.t ->
     Pull_request.fetched Pull_request.t ->
-    Terrat_change_match2.Dirspace_config.t list ->
+    Terrat_change_match3.Dirspace_config.t list ->
     (Apply_requirements.t, [> `Error ]) result Abb.Future.t
 
   val query_dirspaces_owned_by_other_pull_requests :
@@ -1287,12 +1287,18 @@ module Make (S : S) = struct
           S.Client.t ->
           S.Repo.t ->
           S.Ref.t ->
-          (string list * Terrat_base_repo_config_v1.t, fetch_err) result Abb.Future.t
+          ( string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t,
+            fetch_err )
+          result
+          Abb.Future.t
         :> string ->
            S.Client.t ->
            S.Repo.t ->
            S.Ref.t ->
-           (string list * Terrat_base_repo_config_v1.t, [> fetch_err ]) result Abb.Future.t)
+           ( string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t,
+             [> fetch_err ] )
+           result
+           Abb.Future.t)
 
     let fetch request_id client repo ref_ =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -1727,7 +1733,7 @@ module Make (S : S) = struct
     }
 
     let make ~request_id ~ctx ~repo_config ~user ~policy_branch () =
-      let config = repo_config.V1.access_control in
+      let config = V1.access_control repo_config in
       { config; ctx; policy_branch; request_id; user }
 
     let policy_branch t = S.Ref.to_string t.policy_branch
@@ -1775,7 +1781,7 @@ module Make (S : S) = struct
              super approver.  To do this we'll iterate over the approvers. *)
           let pass_with_superapproval =
             pass
-            |> CCList.map (fun ({ Terrat_change_match2.Dirspace_config.dirspace; _ } as ch) ->
+            |> CCList.map (fun ({ Terrat_change_match3.Dirspace_config.dirspace; _ } as ch) ->
                    (dirspace, ch))
             |> Dirspace_map.of_list
           in
@@ -1788,7 +1794,7 @@ module Make (S : S) = struct
               >>= fun Terrat_access_control.R.{ pass; _ } ->
               let acc =
                 CCListLabels.fold_left
-                  ~f:(fun acc { Terrat_change_match2.Dirspace_config.dirspace; _ } ->
+                  ~f:(fun acc { Terrat_change_match3.Dirspace_config.dirspace; _ } ->
                     Dirspace_map.remove dirspace acc)
                   ~init:acc
                   pass
@@ -1833,7 +1839,7 @@ module Make (S : S) = struct
               let deny =
                 CCList.filter
                   (fun Terrat_access_control.R.Deny.
-                         { change_match = { Terrat_change_match2.Dirspace_config.dirspace; _ }; _ } ->
+                         { change_match = { Terrat_change_match3.Dirspace_config.dirspace; _ }; _ } ->
                     not (Dirspace_map.mem dirspace superapproved))
                   deny
               in
@@ -1872,9 +1878,9 @@ module Make (S : S) = struct
   module Dv = struct
     module Matches = struct
       type t = {
-        working_set_matches : Terrat_change_match2.Dirspace_config.t list;
-        all_matches : Terrat_change_match2.Dirspace_config.t list list;
-        all_unapplied_matches : Terrat_change_match2.Dirspace_config.t list list;
+        working_set_matches : Terrat_change_match3.Dirspace_config.t list;
+        all_matches : Terrat_change_match3.Dirspace_config.t list list;
+        all_unapplied_matches : Terrat_change_match3.Dirspace_config.t list list;
       }
       [@@deriving show]
     end
@@ -1893,7 +1899,7 @@ module Make (S : S) = struct
 
         type err =
           [ Repo_config.fetch_err
-          | Terrat_change_match2.synthesize_config_err
+          | Terrat_change_match3.synthesize_config_err
           ]
 
         type args = unit -> (v, err) result Abb.Future.t
@@ -1915,7 +1921,7 @@ module Make (S : S) = struct
 
         type err =
           [ Repo_config.fetch_err
-          | Terrat_change_match2.synthesize_config_err
+          | Terrat_change_match3.synthesize_config_err
           ]
 
         type args = unit -> (v, err) result Abb.Future.t
@@ -1925,7 +1931,7 @@ module Make (S : S) = struct
 
       module Repo_config = Abb_cache.Lru.Make (struct
         type k = string * S.Account.t * S.Repo.t * S.Ref.t [@@deriving eq]
-        type v = string list * Terrat_base_repo_config_v1.t
+        type v = string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t
         type err = Repo_config.fetch_err
         type args = unit -> (v, err) result Abb.Future.t
 
@@ -2189,7 +2195,9 @@ module Make (S : S) = struct
           let module D = V1.Drift in
           let open Abbs_future_combinators.Infix_result_monad in
           repo_config ctx state
-          >>= fun repo_config -> Abb.Future.return (Ok repo_config.V1.drift.D.tag_query)
+          >>= fun repo_config ->
+          let drift = V1.drift repo_config in
+          Abb.Future.return (Ok drift.D.tag_query)
       | Event.Pull_request_comment _ | Event.Push _ | Event.Run_scheduled_drift -> assert false
 
     let matches ctx state op =
@@ -2205,16 +2213,16 @@ module Make (S : S) = struct
           () =
         let module Dir_set = CCSet.Make (CCString) in
         let open CCResult.Infix in
-        Terrat_change_match2.synthesize_config ~ctx ~index ~file_list:repo_tree repo_config
+        Terrat_change_match3.synthesize_config ~index repo_config
         >>= fun config ->
         let out_of_change_dirspace_configs =
           CCList.flat_map
-            CCFun.(Terrat_change_match2.of_dirspace config %> CCOption.to_list)
+            CCFun.(Terrat_change_match3.of_dirspace config %> CCOption.to_list)
             out_of_change_applies
         in
         let applied_dirspaces = Terrat_data.Dirspace_set.of_list applied_dirspaces in
         let all_matches =
-          Terrat_change_match2.match_diff_list
+          Terrat_change_match3.match_diff_list
             ~force_matches:out_of_change_dirspace_configs
             config
             diff
@@ -2224,7 +2232,7 @@ module Make (S : S) = struct
           |> CCList.flatten
           |> CCList.map
                (fun
-                 { Terrat_change_match2.Dirspace_config.dirspace = { Terrat_dirspace.dir; _ }; _ }
+                 { Terrat_change_match3.Dirspace_config.dirspace = { Terrat_dirspace.dir; _ }; _ }
                -> dir)
           |> Dir_set.of_list
         in
@@ -2247,7 +2255,7 @@ module Make (S : S) = struct
         let all_unapplied_matches =
           CCList.filter_map
             (fun layer ->
-              let module Dc = Terrat_change_match2.Dirspace_config in
+              let module Dc = Terrat_change_match3.Dirspace_config in
               match
                 CCList.filter
                   (fun { Dc.dirspace = { Terrat_dirspace.dir; _ } as dirspace; _ } ->
@@ -2261,13 +2269,13 @@ module Make (S : S) = struct
         in
         let working_set_matches =
           match all_unapplied_matches with
-          | layer :: _ -> CCList.filter (Terrat_change_match2.match_tag_query ~tag_query) layer
+          | layer :: _ -> CCList.filter (Terrat_change_match3.match_tag_query ~tag_query) layer
           | [] -> []
         in
         Ok (working_set_matches, all_matches, all_unapplied_matches)
       in
       let missing_autoplan_matches db pull_request matches =
-        let module Dc = Terrat_change_match2.Dirspace_config in
+        let module Dc = Terrat_change_match3.Dirspace_config in
         let open Abbs_future_combinators.Infix_result_monad in
         query_dirspaces_without_valid_plans
           state.State.request_id
@@ -2334,10 +2342,25 @@ module Make (S : S) = struct
         >>= fun diff ->
         tag_query ctx state
         >>= fun tag_query ->
+        let repo_config =
+          Terrat_base_repo_config_v1.derive
+            ~ctx:
+              (Terrat_base_repo_config_v1.Ctx.make
+                 ~dest_branch:(S.Ref.to_string base_branch_name)
+                 ~branch:(S.Ref.to_string branch_name)
+                 ())
+            ~index:
+              (CCOption.map_or
+                 ~default:Terrat_base_repo_config_v1.Index.empty
+                 (fun { Index.index; _ } -> index)
+                 index)
+            ~file_list:repo_tree
+            repo_config
+        in
         Abb.Future.return
           (compute_matches
              ~ctx:
-               (Terrat_change_match2.Ctx.make
+               (Terrat_base_repo_config_v1.Ctx.make
                   ~dest_branch:(S.Ref.to_string base_branch_name)
                   ~branch:(S.Ref.to_string branch_name)
                   ())
@@ -2349,7 +2372,7 @@ module Make (S : S) = struct
              ~repo_tree
              ~index:
                (CCOption.map_or
-                  ~default:Terrat_change_match2.Index.empty
+                  ~default:Terrat_base_repo_config_v1.Index.empty
                   (fun { Index.index; _ } -> index)
                   index)
              ())
@@ -2363,7 +2386,7 @@ module Make (S : S) = struct
                 let working_set_matches =
                   CCList.filter
                     (fun {
-                           Terrat_change_match2.Dirspace_config.when_modified =
+                           Terrat_change_match3.Dirspace_config.when_modified =
                              {
                                Terrat_base_repo_config_v1.When_modified.autoplan;
                                autoplan_draft_pr;
@@ -2383,7 +2406,7 @@ module Make (S : S) = struct
                 let working_set_matches =
                   CCList.filter
                     (fun {
-                           Terrat_change_match2.Dirspace_config.when_modified =
+                           Terrat_change_match3.Dirspace_config.when_modified =
                              { Terrat_base_repo_config_v1.When_modified.autoapply; _ };
                            _;
                          } -> autoapply)
@@ -2421,7 +2444,7 @@ module Make (S : S) = struct
       >>= function
       | Ok _ as ret -> Abb.Future.return ret
       | Error (#Repo_config.fetch_err as err) -> Abb.Future.return (Error err)
-      | Error (#Terrat_change_match2.synthesize_config_err as err) -> Abb.Future.return (Error err)
+      | Error (#Terrat_change_match3.synthesize_config_err as err) -> Abb.Future.return (Error err)
 
     let access_control ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -2487,7 +2510,7 @@ module Make (S : S) = struct
       >>= function
       | Ok _ as ret -> Abb.Future.return ret
       | Error (#Repo_config.fetch_err as err) -> Abb.Future.return (Error err)
-      | Error (#Terrat_change_match2.synthesize_config_err as err) -> Abb.Future.return (Error err)
+      | Error (#Terrat_change_match3.synthesize_config_err as err) -> Abb.Future.return (Error err)
 
     let dirspaces ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -2497,23 +2520,28 @@ module Make (S : S) = struct
           <$> Repo_config.fetch state.State.request_id client repo ref_
           <*> fetch_tree state.State.request_id client repo ref_)
         >>= fun (repo_config, repo_tree) ->
+        let repo_config =
+          Terrat_base_repo_config_v1.derive
+            ~ctx:(Terrat_base_repo_config_v1.Ctx.make ~dest_branch ~branch ())
+            ~index:Terrat_base_repo_config_v1.Index.empty
+            ~file_list:repo_tree
+            repo_config
+        in
         Abb.Future.return
-          (Terrat_change_match2.synthesize_config
-             ~ctx:(Terrat_change_match2.Ctx.make ~dest_branch ~branch ())
-             ~index:Terrat_change_match2.Index.empty
-             ~file_list:repo_tree
-             (repo_config : Terrat_base_repo_config_v1.t))
+          (Terrat_change_match3.synthesize_config
+             ~index:Terrat_base_repo_config_v1.Index.empty
+             repo_config)
         >>= fun config ->
         let matches =
           CCList.flatten
-            (Terrat_change_match2.match_diff_list
+            (Terrat_change_match3.match_diff_list
                config
                (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) repo_tree))
         in
-        let workflows = repo_config.Terrat_base_repo_config_v1.workflows in
+        let workflows = Terrat_base_repo_config_v1.workflows repo_config in
         let dirspaceflows =
           CCList.map
-            (fun ({ Terrat_change_match2.Dirspace_config.dirspace; _ } as change) ->
+            (fun ({ Terrat_change_match3.Dirspace_config.dirspace; _ } as change) ->
               Terrat_change.Dirspaceflow.
                 {
                   dirspace;
@@ -2522,7 +2550,7 @@ module Make (S : S) = struct
                       (fun (idx, workflow) -> Workflow.{ idx; workflow })
                       (CCList.find_idx
                          (fun { Terrat_base_repo_config_v1.Workflows.Entry.tag_query; _ } ->
-                           Terrat_change_match2.match_tag_query ~tag_query change)
+                           Terrat_change_match3.match_tag_query ~tag_query change)
                          workflows);
                 })
             matches
@@ -3020,7 +3048,7 @@ module Make (S : S) = struct
         (fun change ->
           ( change,
             CCList.find_idx
-              (fun q -> Terrat_change_match2.match_tag_query ~tag_query:(accessor q) change)
+              (fun q -> Terrat_change_match3.match_tag_query ~tag_query:(accessor q) change)
               queries ))
         changes
 
@@ -3031,10 +3059,10 @@ module Make (S : S) = struct
 
     let dirspaceflows_of_changes repo_config changes =
       let module R = Terrat_base_repo_config_v1 in
-      let workflows = repo_config.R.workflows in
+      let workflows = R.workflows repo_config in
       Ok
         (CCList.map
-           (fun ({ Terrat_change_match2.Dirspace_config.dirspace; _ }, workflow) ->
+           (fun ({ Terrat_change_match3.Dirspace_config.dirspace; _ }, workflow) ->
              Terrat_change.Dirspaceflow.
                {
                  dirspace;
@@ -3060,19 +3088,24 @@ module Make (S : S) = struct
       >>= fun (client, repo_config, repo_tree, base_branch_name', branch_name') ->
       let dest_branch = S.Ref.to_string base_branch_name' in
       let branch = S.Ref.to_string branch_name' in
+      let repo_config =
+        Terrat_base_repo_config_v1.derive
+          ~ctx:(Terrat_base_repo_config_v1.Ctx.make ~dest_branch ~branch ())
+          ~index:Terrat_base_repo_config_v1.Index.empty
+          ~file_list:repo_tree
+          repo_config
+      in
       Abb.Future.return
-        (Terrat_change_match2.synthesize_config
-           ~ctx:(Terrat_change_match2.Ctx.make ~dest_branch ~branch ())
-           ~index:Terrat_change_match2.Index.empty
-           ~file_list:repo_tree
+        (Terrat_change_match3.synthesize_config
+           ~index:Terrat_base_repo_config_v1.Index.empty
            repo_config)
       >>= fun config ->
       let tag_query = wm.Wm.tag_query in
       let matches =
         CCList.filter
-          (Terrat_change_match2.match_tag_query ~tag_query)
+          (Terrat_change_match3.match_tag_query ~tag_query)
           (CCList.flatten
-             (Terrat_change_match2.match_diff_list
+             (Terrat_change_match3.match_diff_list
                 config
                 (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) repo_tree)))
       in
@@ -3171,8 +3204,8 @@ module Make (S : S) = struct
     let maybe_create_completed_apply_check request_id config client account repo_config pull_request
         =
       let module R = Terrat_base_repo_config_v1 in
-      if repo_config.R.apply_requirements.R.Apply_requirements.create_completed_apply_check_on_noop
-      then
+      let apply_requirements = R.apply_requirements repo_config in
+      if apply_requirements.R.Apply_requirements.create_completed_apply_check_on_noop then
         let checks =
           [
             S.make_commit_check
@@ -3378,7 +3411,7 @@ module Make (S : S) = struct
           |> CCList.filter_map
                (fun
                  {
-                   Terrat_change_match2.Dirspace_config.dirspace =
+                   Terrat_change_match3.Dirspace_config.dirspace =
                      { Terrat_dirspace.dir; workspace };
                    when_modified = { Terrat_base_repo_config_v1.When_modified.autoapply; _ };
                    _;
@@ -3451,7 +3484,7 @@ module Make (S : S) = struct
       >>= fun dirspaceflows ->
       let denied_dirspaces =
         let module Ac = Terrat_access_control in
-        let module Dc = Terrat_change_match2.Dirspace_config in
+        let module Dc = Terrat_change_match3.Dirspace_config in
         CCList.map
           (fun { Ac.R.Deny.change_match = { Dc.dirspace; _ }; policy } ->
             { Wm.Deny.dirspace; policy })
@@ -3522,7 +3555,7 @@ module Make (S : S) = struct
                 (Event.repo state.State.event)
                 branch_ref
                 (CCList.flatten matches.Dv.Matches.all_matches)
-                repo_config.Terrat_base_repo_config_v1.apply_requirements)
+                (Terrat_base_repo_config_v1.apply_requirements repo_config))
           >>= fun () -> Abb.Future.return (Ok work_manifest))
         (Terrat_data.String_map.to_list dirspaceflows_by_environment)
 
@@ -3562,7 +3595,7 @@ module Make (S : S) = struct
       >>= fun dirspaceflows ->
       let denied_dirspaces =
         let module Ac = Terrat_access_control in
-        let module Dc = Terrat_change_match2.Dirspace_config in
+        let module Dc = Terrat_change_match3.Dirspace_config in
         CCList.map
           (fun { Ac.R.Deny.change_match = { Dc.dirspace; _ }; policy } ->
             { Wm.Deny.dirspace; policy })
@@ -3642,7 +3675,7 @@ module Make (S : S) = struct
                   (Event.repo state.State.event)
                   branch_ref
                   (CCList.flatten matches.Dv.Matches.all_matches)
-                  repo_config.Terrat_base_repo_config_v1.apply_requirements)
+                  (Terrat_base_repo_config_v1.apply_requirements repo_config))
             >>= fun () -> Abb.Future.return (Ok work_manifest)
           else
             Dv.target ctx state
@@ -3692,7 +3725,7 @@ module Make (S : S) = struct
                   (Event.repo state.State.event)
                   branch_ref
                   (CCList.flatten matches.Dv.Matches.all_matches)
-                  repo_config.Terrat_base_repo_config_v1.apply_requirements)
+                  (Terrat_base_repo_config_v1.apply_requirements repo_config))
             >>= fun () -> Abb.Future.return (Ok work_manifest))
         (Terrat_data.String_map.to_list dirspaceflows_by_environment)
 
@@ -3982,9 +4015,8 @@ module Make (S : S) = struct
         <*> Dv.query_index ctx state)
       >>= fun (repo_config, index) ->
       let module R = Terrat_base_repo_config_v1 in
-      match (repo_config, index) with
-      | { R.indexer = { R.Indexer.enabled = true; _ }; _ }, None ->
-          Abb.Future.return (Ok (Id.Index_required, state))
+      match (R.indexer repo_config, index) with
+      | { R.Indexer.enabled = true; _ }, None -> Abb.Future.return (Ok (Id.Index_required, state))
       | _ -> Abb.Future.return (Ok (Id.Index_not_required, state))
 
     let run_index_work_manifest_iter =
@@ -4125,32 +4157,33 @@ module Make (S : S) = struct
         >>= fun (client, pull_request, (provenance, repo_config), repo_tree, index) ->
         let index =
           let module R = Terrat_base_repo_config_v1 in
-          match repo_config with
-          | { R.indexer = { R.Indexer.enabled = true; _ }; _ } ->
+          match R.indexer repo_config with
+          | { R.Indexer.enabled = true; _ } ->
               CCOption.map_or
-                ~default:Terrat_change_match2.Index.empty
+                ~default:Terrat_base_repo_config_v1.Index.empty
                 (fun { Index.index; _ } -> index)
                 index
-          | _ -> Terrat_change_match2.Index.empty
+          | _ -> Terrat_base_repo_config_v1.Index.empty
         in
-        match
-          Terrat_change_match2.synthesize_config
+        let repo_config =
+          Terrat_base_repo_config_v1.derive
             ~ctx:
-              (Terrat_change_match2.Ctx.make
+              (Terrat_base_repo_config_v1.Ctx.make
                  ~dest_branch:(S.Ref.to_string (S.Pull_request.base_branch_name pull_request))
                  ~branch:(S.Ref.to_string (S.Pull_request.branch_name pull_request))
                  ())
             ~index
             ~file_list:repo_tree
             repo_config
-        with
+        in
+        match Terrat_change_match3.synthesize_config ~index repo_config with
         | Ok config ->
             publish_msg
               state.State.request_id
               client
               (Event.user state.State.event)
               pull_request
-              (Msg.Repo_config (provenance, repo_config, config))
+              (Msg.Repo_config (provenance, repo_config))
             >>= fun () -> Abb.Future.return (Ok state)
         | Error (`Bad_glob_err s) ->
             let open Abb.Future.Infix_monad in
@@ -4223,7 +4256,7 @@ module Make (S : S) = struct
       let open Abbs_future_combinators.Infix_result_monad in
       Dv.repo_config ctx state
       >>= fun repo_config ->
-      if repo_config.V1.enabled then Abb.Future.return (Ok state)
+      if V1.enabled repo_config then Abb.Future.return (Ok state)
       else Abb.Future.return (Error (`Noop state))
 
     let react_to_comment ctx state =
@@ -4630,7 +4663,7 @@ module Make (S : S) = struct
       let base_branch_name = S.Pull_request.base_branch_name pull_request in
       let branch_name = S.Pull_request.branch_name pull_request in
       let valid_branches =
-        match repo_config.Rc.destination_branches with
+        match Rc.destination_branches repo_config with
         | [] -> [ Ds.make ~branch:(S.Ref.to_string default_branch) () ]
         | ds -> ds
       in
@@ -4742,7 +4775,7 @@ module Make (S : S) = struct
             (Msg.Access_control_denied
                (Access_control_engine.policy_branch access_control, `Lookup_err))
           >>= fun () -> Abb.Future.return (Error (`Noop state))
-      | Error ((#Repo_config.fetch_err | #Terrat_change_match2.synthesize_config_err) as err) ->
+      | Error ((#Repo_config.fetch_err | #Terrat_change_match3.synthesize_config_err) as err) ->
           Abb.Future.return (Error err)
 
     let check_merge_conflict ctx state =
@@ -4773,7 +4806,7 @@ module Make (S : S) = struct
       >>= fun { Terrat_access_control.R.pass = passed_dirspaces; _ } ->
       let dirspaces =
         CCList.map
-          (fun { Terrat_change_match2.Dirspace_config.dirspace; _ } -> dirspace)
+          (fun { Terrat_change_match3.Dirspace_config.dirspace; _ } -> dirspace)
           passed_dirspaces
       in
       let unified_op =
@@ -4950,7 +4983,7 @@ module Make (S : S) = struct
         ctx.Ctx.storage
         pull_request
         (CCList.map
-           (fun { Terrat_change_match2.Dirspace_config.dirspace; _ } -> dirspace)
+           (fun { Terrat_change_match3.Dirspace_config.dirspace; _ } -> dirspace)
            working_set_matches)
       >>= function
       | [] -> Abb.Future.return (Ok state)
@@ -4981,7 +5014,7 @@ module Make (S : S) = struct
              ~fallthrough:H.log_state_err_iter)
 
     let check_all_dirspaces_applied op ctx state =
-      let automerge_config { Terrat_base_repo_config_v1.automerge; _ } = automerge in
+      let automerge_config = Terrat_base_repo_config_v1.automerge in
       let open Abbs_future_combinators.Infix_result_monad in
       Dv.matches ctx state op
       >>= fun matches ->
@@ -5030,7 +5063,7 @@ module Make (S : S) = struct
               else Abb.Future.return (Ok state)
           | None -> assert false)
       | Some work_manifest_id, unapplied_dirspaces ->
-          let module Dsc = Terrat_change_match2.Dirspace_config in
+          let module Dsc = Terrat_change_match3.Dirspace_config in
           Logs.info (fun m ->
               m
                 "EVALUATOR : %s : UNAPPLIED_DIRSPACES : id=%a : dirspaces=%s"
@@ -5057,7 +5090,7 @@ module Make (S : S) = struct
       let open Abbs_future_combinators.Infix_result_monad in
       Dv.repo_config ctx state
       >>= fun repo_config ->
-      let { D.enabled; schedule; reconcile; tag_query } = repo_config.V1.drift in
+      let { D.enabled; schedule; reconcile; tag_query } = V1.drift repo_config in
       Logs.info (fun m ->
           m
             "EVALUATOR : %s : DRIFT : enabled=%s : repo=%s : schedule=%s : reconcile=%s : \
@@ -5072,7 +5105,7 @@ module Make (S : S) = struct
         state.State.request_id
         ctx.Ctx.storage
         (Event.repo state.State.event)
-        repo_config.V1.drift
+        (V1.drift repo_config)
       >>= fun () -> Abb.Future.return (Ok state)
 
     let create_drift_events ctx state =
@@ -5122,9 +5155,10 @@ module Make (S : S) = struct
       let module D = V1.Drift in
       let open Abbs_future_combinators.Infix_result_monad in
       Dv.repo_config ctx state
-      >>= function
-      | { V1.drift = { D.reconcile = true; _ }; _ } -> Abb.Future.return (Ok state)
-      | { V1.drift = { D.reconcile = false; _ }; _ } -> Abb.Future.return (Error (`Noop state))
+      >>= fun repo_config ->
+      match V1.drift repo_config with
+      | { D.reconcile = true; _ } -> Abb.Future.return (Ok state)
+      | { D.reconcile = false; _ } -> Abb.Future.return (Error (`Noop state))
   end
 
   let maybe_publish_msg ctx state msg =

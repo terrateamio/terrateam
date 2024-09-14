@@ -36,7 +36,7 @@ module Msg : sig
     | Plan_no_matching_dirspaces
     | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
     | Pull_request_not_mergeable
-    | Repo_config of (string list * Terrat_base_repo_config_v1.t * Terrat_change_match2.Config.t)
+    | Repo_config of (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t)
     | Repo_config_err of Terrat_base_repo_config_v1.of_version_1_err
     | Repo_config_failure of string
     | Repo_config_parse_failure of string * string
@@ -44,7 +44,7 @@ module Msg : sig
     | Tag_query_err of Terrat_tag_query_ast.err
     | Tf_op_result of {
         is_layered_run : bool;
-        remaining_layers : Terrat_change_match2.Dirspace_config.t list list;
+        remaining_layers : Terrat_change_match3.Dirspace_config.t list list;
         result : Terrat_api_components_work_manifest_tf_operation_result.t;
         work_manifest : ('account, 'target) Terrat_work_manifest3.Existing.t;
       }
@@ -99,7 +99,7 @@ module Index : sig
   type t = {
     success : bool;
     failures : Failure.t list;
-    index : Terrat_change_match2.Index.t;
+    index : Terrat_base_repo_config_v1.Index.t;
   }
 end
 
@@ -457,9 +457,9 @@ module type S = sig
     Terrat_config.t ->
     User.t ->
     Client.t ->
-    Terrat_base_repo_config_v1.t ->
+    'a Terrat_base_repo_config_v1.t ->
     Pull_request.fetched Pull_request.t ->
-    Terrat_change_match2.Dirspace_config.t list ->
+    Terrat_change_match3.Dirspace_config.t list ->
     (Apply_requirements.t, [> `Error ]) result Abb.Future.t
 
   val query_dirspaces_owned_by_other_pull_requests :

@@ -1,5 +1,6 @@
 module V1 = Terrat_repo_config.Version_1
 module String_map = Terrat_data.String_map
+module String_set = Terrat_data.String_set
 
 let map_opt f = function
   | None -> Ok None
@@ -601,27 +602,56 @@ module Workflows = struct
   type t = Entry.t list [@@deriving show, yojson, eq]
 end
 
-type t = {
-  access_control : Access_control.t; [@default Access_control.make ()]
-  apply_requirements : Apply_requirements.t; [@default Apply_requirements.make ()]
-  automerge : Automerge.t; [@default Automerge.make ()]
-  cost_estimation : Cost_estimation.t; [@default Cost_estimation.make ()]
-  create_and_select_workspace : bool; [@default true]
-  destination_branches : Destination_branches.t; [@default []]
-  dirs : Dirs.t; [@default String_map.empty]
-  drift : Drift.t; [@default Drift.make ()]
-  enabled : bool; [@default true]
-  engine : Engine.t; [@default Engine.(Terraform (Terraform.make ()))]
-  hooks : Hooks.t; [@default Hooks.make ()]
-  indexer : Indexer.t; [@default Indexer.make ()]
-  integrations : Integrations.t; [@default Integrations.make ()]
-  parallel_runs : int; [@default 3]
-  storage : Storage.t; [@default Storage.make ()]
-  tags : Tags.t; [@default Tags.make ()]
-  when_modified : When_modified.t; [@default When_modified.make ()]
-  workflows : Workflows.t; [@default []]
-}
-[@@deriving make, show, yojson, eq]
+module View = struct
+  type t = {
+    access_control : Access_control.t; [@default Access_control.make ()]
+    apply_requirements : Apply_requirements.t; [@default Apply_requirements.make ()]
+    automerge : Automerge.t; [@default Automerge.make ()]
+    cost_estimation : Cost_estimation.t; [@default Cost_estimation.make ()]
+    create_and_select_workspace : bool; [@default true]
+    destination_branches : Destination_branches.t; [@default []]
+    dirs : Dirs.t; [@default String_map.empty]
+    drift : Drift.t; [@default Drift.make ()]
+    enabled : bool; [@default true]
+    engine : Engine.t; [@default Engine.(Terraform (Terraform.make ()))]
+    hooks : Hooks.t; [@default Hooks.make ()]
+    indexer : Indexer.t; [@default Indexer.make ()]
+    integrations : Integrations.t; [@default Integrations.make ()]
+    parallel_runs : int; [@default 3]
+    storage : Storage.t; [@default Storage.make ()]
+    tags : Tags.t; [@default Tags.make ()]
+    when_modified : When_modified.t; [@default When_modified.make ()]
+    workflows : Workflows.t; [@default []]
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
+module Ctx = struct
+  type t = {
+    dest_branch : string;
+    branch : string;
+  }
+
+  let make ~dest_branch ~branch () = { dest_branch; branch }
+end
+
+module Index = struct
+  module Dep = struct
+    type t = Module of string
+  end
+
+  type t = {
+    deps : Dep.t list String_map.t;
+    symlinks : (string * string) list;
+  }
+
+  let empty = { symlinks = []; deps = String_map.empty }
+  let make ~symlinks deps = { symlinks; deps = String_map.of_list deps }
+end
+
+type raw
+type derived
+type 'a t = View.t
 
 type of_version_1_err =
   [ `Access_control_policy_apply_autoapprove_match_parse_err of string
@@ -650,7 +680,9 @@ type of_version_1_err =
   ]
 [@@deriving show]
 
-let default = make ()
+let of_view = CCFun.id
+let to_view = CCFun.id
+let default = View.make ()
 
 (* Converters for the sub elements *)
 let of_version_1_match = Access_control.Match.make
@@ -1506,7 +1538,7 @@ let of_version_1 v1 =
   map_opt (of_version_1_workflows engine integrations) workflows
   >>= fun workflows ->
   Ok
-    (make
+    (View.make
        ?access_control
        ?apply_requirements
        ?automerge
@@ -1990,7 +2022,7 @@ let to_version_1_workflows =
 
 let to_version_1 t =
   let {
-    access_control;
+    View.access_control;
     apply_requirements;
     automerge;
     cost_estimation;
@@ -2069,7 +2101,293 @@ let to_version_1 t =
 let merge_with_default_branch_config ~default t =
   {
     t with
-    access_control = default.access_control;
-    apply_requirements = default.apply_requirements;
-    destination_branches = default.destination_branches;
+    View.access_control = default.View.access_control;
+    apply_requirements = default.View.apply_requirements;
+    destination_branches = default.View.destination_branches;
   }
+
+(* Functionality around derive *)
+
+let process_dot = CCString.replace ~which:`All ~sub:"/./" ~by:"/"
+
+let rec process_dot_dot dirname =
+  (* We want to support relative paths in file_patterns, to some extent.  We
+     only support [/../], and it must be proceeded by a static directory,
+     not a pattern.  The [${DIR}] variable must be expanded as well.  For
+     example, [foo/bar/../baz] will be turned into [foo/baz].  But
+     [foo/**/../baz] will result in [foo/baz] as well, removing the
+     pattern.
+
+     To do this, we recursively split it in [/../], then cut the end off the
+     left portion and sew it back.  It's a little expensive in that it
+     splits and join the string continuously, but it's an easy
+     implementation. *)
+  match CCString.Split.left ~by:"/../" dirname with
+  | Some (l, r) -> (
+      match CCString.Split.right ~by:"/" l with
+      | Some (l', _) -> process_dot_dot (l' ^ "/" ^ r)
+      | None -> process_dot_dot r)
+  | None -> dirname
+
+let process_relative_path dirname = process_dot_dot (process_dot dirname)
+
+let build_symlinks =
+  CCListLabels.fold_left
+    ~f:(fun acc (src, dst) ->
+      match CCTrie.String.find dst acc with
+      | Some srcs -> CCTrie.String.add dst (src :: srcs) acc
+      | None -> CCTrie.String.add dst [ src ] acc)
+    ~init:CCTrie.String.empty
+
+let map_symlink_file_path symlinks fpath =
+  match Iter.head (CCTrie.String.below fpath symlinks) with
+  | Some (dst, srcs) when CCString.prefix ~pre:dst fpath ->
+      CCList.map (fun src -> CCString.replace ~which:`Left ~sub:dst ~by:src fpath) srcs
+  | Some _ | None -> [ fpath ]
+
+let match_branch_tag branch_name accessor repo_config =
+  let tags = repo_config.View.tags in
+  let branch_tags = String_map.to_list (accessor tags) in
+  CCList.find_map
+    (function
+      | bt, pat when Pattern.is_match pat branch_name -> Some bt
+      | _, _ -> None)
+    branch_tags
+
+let compute_branch_tag ctx repo_config =
+  let module T = Tags in
+  match_branch_tag ctx.Ctx.branch (fun { T.branch; _ } -> branch) repo_config
+
+let compute_dest_branch_tag ctx repo_config =
+  let module T = Tags in
+  match_branch_tag ctx.Ctx.dest_branch (fun { T.dest_branch; _ } -> dest_branch) repo_config
+
+let escape_glob s =
+  let b = Buffer.create (CCString.length s) in
+  CCString.iter
+    (function
+      | ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | '-' | '.' | ' ' | '/') as c ->
+          Buffer.add_char b c
+      | c ->
+          Buffer.add_char b '\\';
+          Buffer.add_char b c)
+    s;
+  Buffer.contents b
+
+let update_file_patterns index module_paths dirname workspacename file_patterns =
+  let sub, by =
+    match dirname with
+    | "." ->
+        (* The [.] directory is special in that our directory listings do
+           not start with [./].  So if the directory is "." we assume we can
+           just chop off the [${DIR}/].  So [${DIR}/*.tf] becomes [*.tf]
+           instead of [./*.tf] *)
+        ("${DIR}/", "")
+    | dirname -> ("${DIR}", escape_glob dirname)
+  in
+  if String_set.mem dirname module_paths then []
+  else
+    let file_patterns =
+      match String_map.find_opt dirname index.Index.deps with
+      | Some mods ->
+          CCList.filter_map
+            (function
+              | Index.Dep.Module path ->
+                  Some (Filename.concat "${DIR}" (Filename.concat path "*.tf")))
+            mods
+          @ CCList.map File_pattern.file_pattern file_patterns
+      | None -> CCList.map File_pattern.file_pattern file_patterns
+    in
+    CCList.map
+      (fun pat ->
+        CCResult.get_exn
+          (File_pattern.make
+             (process_relative_path
+                (CCString.replace
+                   ~sub:"${WORKSPACE}"
+                   ~by:(escape_glob workspacename)
+                   (CCString.replace ~sub ~by pat)))))
+      file_patterns
+
+let derive ~ctx ~index ~file_list repo_config =
+  let update_dir_config ~global_tags ~module_paths ~index dirname config =
+    let update_workspace tag_prefix name tags workspace_config =
+      let tags =
+        [ "dir:" ^ dirname; tag_prefix ^ ":" ^ name ] @ tags @ workspace_config.Dirs.Workspace.tags
+      in
+      let when_modified = workspace_config.Dirs.Workspace.when_modified in
+      let file_patterns =
+        update_file_patterns
+          index
+          module_paths
+          dirname
+          name
+          when_modified.When_modified.file_patterns
+      in
+      let when_modified = { when_modified with When_modified.file_patterns } in
+      { Dirs.Workspace.tags; when_modified }
+    in
+    let tags = global_tags @ config.Dirs.Dir.tags in
+    let workspaces =
+      String_map.mapi
+        (fun workspace workspace_config ->
+          update_workspace "workspace" workspace tags workspace_config)
+        config.Dirs.Dir.workspaces
+    in
+    let stacks =
+      String_map.mapi
+        (fun stack stack_config -> update_workspace "stack" stack tags stack_config)
+        config.Dirs.Dir.stacks
+    in
+    { config with Dirs.Dir.tags; workspaces; stacks }
+  in
+  let symlinks = build_symlinks index.Index.symlinks in
+  let file_list = CCList.flat_map (map_symlink_file_path symlinks) file_list in
+  let branch_tags =
+    match compute_branch_tag ctx repo_config with
+    | Some branch -> [ "branch:" ^ branch ]
+    | None -> []
+  in
+  let dest_branch_tags =
+    match compute_dest_branch_tag ctx repo_config with
+    | Some branch -> [ "dest_branch:" ^ branch ]
+    | None -> []
+  in
+  let global_tags = branch_tags @ dest_branch_tags in
+  let dirs = repo_config.View.dirs in
+  let default_when_modified = repo_config.View.when_modified in
+  (* A glob dir is defined by its key in the [dirs] section having an asterisk in it. *)
+  let glob_dirs =
+    dirs
+    |> String_map.to_list
+    (* We sort the dirs section by longest-first (in terms of number of
+       characters).  The heuristic is that a longer directory specification is a
+       more specific and thus, to be preferred in the search. *)
+    |> CCList.sort (fun (d1, _) (d2, _) -> CCInt.compare (CCString.length d2) (CCString.length d1))
+    (* Any dir with '*' is considered a glob, for example foo/bar/* *)
+    |> CCList.filter (fun (d, _) -> CCString.contains d '*')
+    |> CCList.map (fun (d, config) -> (CCResult.get_exn (File_pattern.make d), config))
+  in
+  (* And conversely, non glob dirs are those without an asterisk. *)
+  let non_glob_dirs =
+    dirs |> String_map.to_list |> CCList.filter (fun (d, _) -> not (CCString.contains d '*'))
+  in
+  (* [glob_dir_matches] are those that will be filled out from a dir glob.  A
+     glob dir match must match a dir glob and not have an explicit match in
+     the dirs section, because explicit matches always beat glob matches. *)
+  let glob_dir_matches =
+    file_list
+    |> CCList.filter_map (fun fname ->
+           (* Only going to synthesize directories that match the filename but
+              also their directory is not explicitly specified in the dirs
+              section of the config.  We then translate it back to the dirname.
+              This means we will get the same match multiple times as we walk
+              the file list so we then have to remove duplicates *)
+           CCOption.map
+             (fun (d, config) -> (Filename.dirname fname, config))
+             (CCList.find_opt
+                (fun (d, _) ->
+                  (not (String_map.mem (Filename.dirname fname) dirs))
+                  && File_pattern.is_match d fname)
+                glob_dirs))
+    |> CCList.sort_uniq ~cmp:(fun (d1, _) (d2, _) -> CCString.compare d1 d2)
+  in
+  (* [specified_dirs] is all of those dirs that have been specified in the
+     [dirs] section of the config.  But we also need to create dir entries for
+     all of those files that match the global [when_modified] configuration. *)
+  let specified_dirs = String_map.of_list (non_glob_dirs @ glob_dir_matches) in
+  let remaining_dirs =
+    let make_dir_map file_list =
+      CCList.fold_left
+        (fun acc fname ->
+          let dirname = Filename.dirname fname in
+          String_map.add_to_list dirname fname acc)
+        String_map.empty
+        file_list
+    in
+    let test =
+      let module Wm = When_modified in
+      let all_dir_match_patterns =
+        (* All patterns start with "${DIR}" because we can do an optimization for file
+           checking. *)
+        CCList.for_all CCFun.(File_pattern.file_pattern %> CCString.prefix ~pre:"${DIR}/")
+      in
+      if all_dir_match_patterns default_when_modified.Wm.file_patterns then fun (dirname, fnames) ->
+        let dirname = if CCString.equal "." dirname then "" else dirname ^ "/" in
+        let file_patterns =
+          CCList.map
+            CCFun.(
+              File_pattern.to_string
+              %> CCString.replace ~sub:"${DIR}/" ~by:(escape_glob dirname)
+              %> File_pattern.make
+              %> CCResult.get_exn)
+            default_when_modified.When_modified.file_patterns
+        in
+        CCList.exists
+          (fun fname -> CCList.exists CCFun.(flip File_pattern.is_match fname) file_patterns)
+          fnames
+      else CCFun.const true
+    in
+    file_list
+    |> CCList.filter (fun fname ->
+           let dirname = Filename.dirname fname in
+           not (String_map.mem dirname specified_dirs))
+    |> make_dir_map
+    |> String_map.to_list
+    |> CCList.filter test
+    |> CCList.map (fun (dirname, _) ->
+           let dir = Dirs.Dir.make () in
+           let dir =
+             {
+               dir with
+               Dirs.Dir.workspaces =
+                 String_map.map
+                   (fun config ->
+                     { config with Dirs.Workspace.when_modified = default_when_modified })
+                   dir.Dirs.Dir.workspaces;
+             }
+           in
+           (dirname, dir))
+    |> String_map.of_list
+  in
+  let dirs = String_map.union (fun _ _ _ -> assert false) specified_dirs remaining_dirs in
+  (* Now that we have all of our dirs expanded, we also want to fill out the
+     other information, such as module paths and any tags. *)
+  let module_paths =
+    String_set.of_list
+      (String_map.fold
+         (fun path values acc ->
+           CCList.filter_map
+             (function
+               | Index.Dep.Module mod_path ->
+                   Some (process_relative_path (Filename.concat path mod_path)))
+             values
+           @ acc)
+         index.Index.deps
+         [])
+  in
+  let dirs =
+    String_map.mapi
+      (fun dirname config -> update_dir_config ~global_tags ~module_paths ~index dirname config)
+      dirs
+  in
+  { repo_config with View.dirs }
+
+let access_control t = t.View.access_control
+let apply_requirements t = t.View.apply_requirements
+let automerge t = t.View.automerge
+let cost_estimation t = t.View.cost_estimation
+let create_and_select_workspace t = t.View.create_and_select_workspace
+let destination_branches t = t.View.destination_branches
+let dirs t = t.View.dirs
+let drift t = t.View.drift
+let enabled t = t.View.enabled
+let engine t = t.View.engine
+let hooks t = t.View.hooks
+let indexer t = t.View.indexer
+let integrations t = t.View.integrations
+let parallel_runs t = t.View.parallel_runs
+let storage t = t.View.storage
+let tags t = t.View.tags
+let when_modified t = t.View.when_modified
+let workflows t = t.View.workflows

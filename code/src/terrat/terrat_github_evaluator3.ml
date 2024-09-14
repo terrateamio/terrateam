@@ -932,7 +932,7 @@ module S = struct
       type t = {
         approved : bool option;
         approved_reviews : Terrat_pull_request_review.t list;
-        match_ : Terrat_change_match2.Dirspace_config.t;
+        match_ : Terrat_change_match3.Dirspace_config.t;
         merge_conflicts : bool option;
         passed : bool;
         status_checks : bool option;
@@ -1332,11 +1332,11 @@ module S = struct
         paths
     in
     let index =
-      Terrat_change_match2.Index.make
+      Terrat_base_repo_config_v1.Index.make
         ~symlinks
         (CCList.map
            (fun (path, { Paths.Additional.modules; _ }) ->
-             (path, CCList.map (fun m -> Terrat_change_match2.Index.Dep.Module m) modules))
+             (path, CCList.map (fun m -> Terrat_base_repo_config_v1.Index.Dep.Module m) modules))
            paths)
     in
     { Terrat_evaluator3.Index.success; failures; index }
@@ -2009,7 +2009,7 @@ module S = struct
                               {
                                 change_match =
                                   {
-                                    Terrat_change_match2.Dirspace_config.dirspace =
+                                    Terrat_change_match3.Dirspace_config.dirspace =
                                       { Terrat_dirspace.dir; workspace };
                                     _;
                                   };
@@ -2064,7 +2064,7 @@ module S = struct
                               {
                                 change_match =
                                   {
-                                    Terrat_change_match2.Dirspace_config.dirspace =
+                                    Terrat_change_match3.Dirspace_config.dirspace =
                                       { Terrat_dirspace.dir; workspace };
                                     _;
                                   };
@@ -2513,7 +2513,7 @@ module S = struct
           Tmpl.plan_no_matching_dirspaces
           kv
     | Msg.Pull_request_not_appliable (_, apply_requirements) ->
-        let module Dc = Terrat_change_match2.Dirspace_config in
+        let module Dc = Terrat_change_match3.Dirspace_config in
         let module Ds = Terrat_dirspace in
         let module Ar = Apply_requirements.Result in
         let kv =
@@ -2567,7 +2567,7 @@ module S = struct
           "PULL_REQUEST_NOT_MERGEABLE"
           Tmpl.pull_request_not_mergeable
           kv
-    | Msg.Repo_config (provenance, repo_config, dirs) -> (
+    | Msg.Repo_config (provenance, repo_config) -> (
         let ret =
           let open Abbs_future_combinators.Infix_result_monad in
           let repo_config_json =
@@ -2576,15 +2576,11 @@ module S = struct
           in
           Terrat_json.to_yaml_string repo_config_json
           >>= fun repo_config_yaml ->
-          let dirs_json = Terrat_change_match2.Config.to_yojson dirs in
-          Terrat_json.to_yaml_string dirs_json
-          >>= fun dirs_yaml ->
           let kv =
             Snabela.Kv.(
               Map.of_list
                 [
                   ("repo_config", string repo_config_yaml);
-                  ("dirs", string dirs_yaml);
                   ( "provenance",
                     list (CCList.map (fun src -> Map.of_list [ ("src", string src) ]) provenance) );
                 ])
@@ -3953,7 +3949,7 @@ module S = struct
             || CCList.exists (CCString.equal title) ignore_matching))
         commit_checks
     in
-    let { R.apply_requirements = { Ar.checks; _ }; _ } = repo_config in
+    let { Ar.checks; _ } = R.apply_requirements repo_config in
     let access_control_ctx =
       {
         Access_control.client = client.Client.client;
@@ -3987,7 +3983,7 @@ module S = struct
       Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : MERGEABLE_NONE" request_id);
     let open Abb.Future.Infix_monad in
     Abbs_future_combinators.List_result.map
-      ~f:(fun ({ Terrat_change_match2.Dirspace_config.tags; dirspace; _ } as match_) ->
+      ~f:(fun ({ Terrat_change_match3.Dirspace_config.tags; dirspace; _ } as match_) ->
         let open Abbs_future_combinators.Infix_result_monad in
         Logs.info (fun m ->
             m

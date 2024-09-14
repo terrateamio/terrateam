@@ -506,27 +506,56 @@ module Workflows : sig
   type t = Entry.t list [@@deriving show, yojson, eq]
 end
 
-type t = {
-  access_control : Access_control.t; [@default Access_control.make ()]
-  apply_requirements : Apply_requirements.t; [@default Apply_requirements.make ()]
-  automerge : Automerge.t; [@default Automerge.make ()]
-  cost_estimation : Cost_estimation.t; [@default Cost_estimation.make ()]
-  create_and_select_workspace : bool; [@default true]
-  destination_branches : Destination_branches.t; [@default []]
-  dirs : Dirs.t; [@default String_map.empty]
-  drift : Drift.t; [@default Drift.make ()]
-  enabled : bool; [@default true]
-  engine : Engine.t; [@default Engine.(Terraform (Terraform.make ()))]
-  hooks : Hooks.t; [@default Hooks.make ()]
-  indexer : Indexer.t; [@default Indexer.make ()]
-  integrations : Integrations.t; [@default Integrations.make ()]
-  parallel_runs : int; [@default 3]
-  storage : Storage.t; [@default Storage.make ()]
-  tags : Tags.t; [@default Tags.make ()]
-  when_modified : When_modified.t; [@default When_modified.make ()]
-  workflows : Workflows.t; [@default []]
-}
-[@@deriving make, show, yojson, eq]
+module View : sig
+  type t = {
+    access_control : Access_control.t; [@default Access_control.make ()]
+    apply_requirements : Apply_requirements.t; [@default Apply_requirements.make ()]
+    automerge : Automerge.t; [@default Automerge.make ()]
+    cost_estimation : Cost_estimation.t; [@default Cost_estimation.make ()]
+    create_and_select_workspace : bool; [@default true]
+    destination_branches : Destination_branches.t; [@default []]
+    dirs : Dirs.t; [@default String_map.empty]
+    drift : Drift.t; [@default Drift.make ()]
+    enabled : bool; [@default true]
+    engine : Engine.t; [@default Engine.(Terraform (Terraform.make ()))]
+    hooks : Hooks.t; [@default Hooks.make ()]
+    indexer : Indexer.t; [@default Indexer.make ()]
+    integrations : Integrations.t; [@default Integrations.make ()]
+    parallel_runs : int; [@default 3]
+    storage : Storage.t; [@default Storage.make ()]
+    tags : Tags.t; [@default Tags.make ()]
+    when_modified : When_modified.t; [@default When_modified.make ()]
+    workflows : Workflows.t; [@default []]
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
+module Ctx : sig
+  type t = {
+    dest_branch : string;
+    branch : string;
+  }
+
+  val make : dest_branch:string -> branch:string -> unit -> t
+end
+
+module Index : sig
+  module Dep : sig
+    type t = Module of string
+  end
+
+  type t = {
+    deps : Dep.t list String_map.t;
+    symlinks : (string * string) list;
+  }
+
+  val empty : t
+  val make : symlinks:(string * string) list -> (string * Dep.t list) list -> t
+end
+
+type raw
+type derived
+type 'a t
 
 type of_version_1_err =
   [ `Access_control_policy_apply_autoapprove_match_parse_err of string
@@ -555,7 +584,34 @@ type of_version_1_err =
   ]
 [@@deriving show]
 
-val default : t
-val of_version_1 : Terrat_repo_config.Version_1.t -> (t, [> of_version_1_err ]) result
-val to_version_1 : t -> Terrat_repo_config.Version_1.t
-val merge_with_default_branch_config : default:t -> t -> t
+val of_view : View.t -> raw t
+val to_view : 'a t -> View.t
+val default : raw t
+val of_version_1 : Terrat_repo_config.Version_1.t -> (raw t, [> of_version_1_err ]) result
+val to_version_1 : 'a t -> Terrat_repo_config.Version_1.t
+val merge_with_default_branch_config : default:'a t -> 'a t -> 'a t
+
+(** Given contextual information, take a configuration and produce a derived
+    configuration. *)
+val derive : ctx:Ctx.t -> index:Index.t -> file_list:string list -> 'a t -> derived t
+
+(** Accessors*)
+
+val access_control : 'a t -> Access_control.t
+val apply_requirements : 'a t -> Apply_requirements.t
+val automerge : 'a t -> Automerge.t
+val cost_estimation : 'a t -> Cost_estimation.t
+val create_and_select_workspace : 'a t -> bool
+val destination_branches : 'a t -> Destination_branches.t
+val dirs : 'a t -> Dirs.t
+val drift : 'a t -> Drift.t
+val enabled : 'a t -> bool
+val engine : 'a t -> Engine.t
+val hooks : 'a t -> Hooks.t
+val indexer : 'a t -> Indexer.t
+val integrations : 'a t -> Integrations.t
+val parallel_runs : 'a t -> int
+val storage : 'a t -> Storage.t
+val tags : 'a t -> Tags.t
+val when_modified : 'a t -> When_modified.t
+val workflows : 'a t -> Workflows.t

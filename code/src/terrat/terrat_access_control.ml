@@ -14,14 +14,14 @@ end
 module R = struct
   module Deny = struct
     type t = {
-      change_match : Terrat_change_match2.Dirspace_config.t;
+      change_match : Terrat_change_match3.Dirspace_config.t;
       policy : Terrat_base_repo_config_v1.Access_control.Match_list.t option;
     }
     [@@deriving show]
   end
 
   type t = {
-    pass : Terrat_change_match2.Dirspace_config.t list;
+    pass : Terrat_change_match3.Dirspace_config.t list;
     deny : Deny.t list;
   }
   [@@deriving show]
@@ -70,7 +70,7 @@ module Make (S : S) = struct
       ~f:(fun (R.{ pass; deny } as r) change ->
         match
           CCList.find_opt
-            (fun Policy.{ tag_query; _ } -> Terrat_change_match2.match_tag_query ~tag_query change)
+            (fun Policy.{ tag_query; _ } -> Terrat_change_match3.match_tag_query ~tag_query change)
             policies
         with
         | Some Policy.{ policy; _ } -> (
