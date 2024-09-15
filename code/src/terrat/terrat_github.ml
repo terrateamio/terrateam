@@ -492,13 +492,11 @@ let rec get_tree ~owner ~repo ~sha client =
       >>= fun resp ->
       match Openapi.Response.value resp with
       | `OK tree -> (
-          let
+          let open Abb.Future.Infix_monad in
           (* In the case that the response is truncated, we need to preform
              the recursive calls ourselves.  We will do that in parallel, with
              maximum number of concurrent lookups per level being
              [max_get_tree_chunks]. *)
-          open
-            Abb.Future.Infix_monad in
           let num_items = CCList.length Githubc2_components_git_tree.(tree.primary.Primary.tree) in
           let num_per_chunk =
             match num_items / max_get_tree_chunks with
@@ -554,9 +552,11 @@ let rec get_tree ~owner ~repo ~sha client =
       let tree = Githubc2_components_git_tree.(tree.primary.Primary.tree) in
       let files =
         tree
-        |> CCList.map (fun item ->
+        |> CCList.filter_map (fun item ->
                let module Items = Githubc2_components_git_tree.Primary.Tree.Items in
-               CCOption.get_exn_or "git_tree_item_path" item.Items.primary.Items.Primary.path)
+               match item.Items.primary.Items.Primary.type_ with
+               | Some "blob" -> item.Items.primary.Items.Primary.path
+               | _ -> None)
       in
       Abb.Future.return (Ok files)
   | `Not_found _ as err -> Abb.Future.return (Error err)
