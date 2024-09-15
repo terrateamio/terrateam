@@ -5,24 +5,13 @@ module Drifts = struct
     module OK = struct
       module Results = struct
         module Items = struct
-          module Run_type = struct
-            let t_of_yojson = function
-              | `String "plan" -> Ok "plan"
-              | `String "apply" -> Ok "apply"
-              | `String "index" -> Ok "index"
-              | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-            type t = (string[@of_yojson t_of_yojson])
-            [@@deriving yojson { strict = false; meta = false }, show, eq]
-          end
-
           type t = {
             completed_at : string option; [@default None]
             created_at : string;
             id : string;
             name : string;
             owner : string;
-            run_type : Run_type.t;
+            run_type : Terrat_api_components.Run_type.t;
             state : string;
             unlocked : bool;
           }

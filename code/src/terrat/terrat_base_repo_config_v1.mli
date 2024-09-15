@@ -234,6 +234,14 @@ module Automerge : sig
   [@@deriving make, show, yojson, eq]
 end
 
+module Config_builder : sig
+  type t = {
+    enabled : bool; [@default false]
+    script : string option;
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Cost_estimation : sig
   module Provider : sig
     type t = Infracost [@@deriving show, yojson, eq]
@@ -511,6 +519,7 @@ module View : sig
     access_control : Access_control.t; [@default Access_control.make ()]
     apply_requirements : Apply_requirements.t; [@default Apply_requirements.make ()]
     automerge : Automerge.t; [@default Automerge.make ()]
+    config_builder : Config_builder.t; [@default Config_builder.make ()]
     cost_estimation : Cost_estimation.t; [@default Cost_estimation.make ()]
     create_and_select_workspace : bool; [@default true]
     destination_branches : Destination_branches.t; [@default []]
@@ -600,6 +609,7 @@ val derive : ctx:Ctx.t -> index:Index.t -> file_list:string list -> 'a t -> deri
 val access_control : 'a t -> Access_control.t
 val apply_requirements : 'a t -> Apply_requirements.t
 val automerge : 'a t -> Automerge.t
+val config_builder : 'a t -> Config_builder.t
 val cost_estimation : 'a t -> Cost_estimation.t
 val create_and_select_workspace : 'a t -> bool
 val destination_branches : 'a t -> Destination_branches.t

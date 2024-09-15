@@ -127,6 +127,7 @@ type t = {
   apply_requirements : Terrat_repo_config_apply_requirements.t option; [@default None]
   automerge : Terrat_repo_config_automerge.t option; [@default None]
   checkout_strategy : Checkout_strategy.t; [@default "merge"]
+  config_builder : Terrat_repo_config_config_builder.t option; [@default None]
   cost_estimation : Cost_estimation.t option; [@default None]
   create_and_select_workspace : bool; [@default true]
   default_tf_version : string option; [@default None]

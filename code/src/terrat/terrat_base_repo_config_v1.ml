@@ -290,6 +290,14 @@ module Automerge = struct
   [@@deriving make, show, yojson, eq]
 end
 
+module Config_builder = struct
+  type t = {
+    enabled : bool; [@default false]
+    script : string option;
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Cost_estimation = struct
   module Provider = struct
     type t = Infracost [@@deriving show, yojson, eq]
@@ -607,6 +615,7 @@ module View = struct
     access_control : Access_control.t; [@default Access_control.make ()]
     apply_requirements : Apply_requirements.t; [@default Apply_requirements.make ()]
     automerge : Automerge.t; [@default Automerge.make ()]
+    config_builder : Config_builder.t; [@default Config_builder.make ()]
     cost_estimation : Cost_estimation.t; [@default Cost_estimation.make ()]
     create_and_select_workspace : bool; [@default true]
     destination_branches : Destination_branches.t; [@default []]
@@ -1204,6 +1213,9 @@ let of_version_automerge automerge =
   let { Am.delete_branch; enabled } = automerge in
   Ok (Automerge.make ~delete_branch ~enabled ())
 
+let of_version_1_config_builder { Terrat_repo_config.Config_builder.enabled; script } =
+  Ok (Config_builder.make ~enabled ?script ())
+
 let of_version_1_cost_estimation { V1.Cost_estimation.currency; enabled; provider } =
   assert (provider = "infracost");
   Ok (Cost_estimation.make ~currency ~enabled ())
@@ -1486,6 +1498,7 @@ let of_version_1 v1 =
     apply_requirements;
     automerge;
     checkout_strategy = _;
+    config_builder;
     cost_estimation;
     create_and_select_workspace;
     default_tf_version;
@@ -1513,6 +1526,8 @@ let of_version_1 v1 =
   >>= fun apply_requirements ->
   map_opt of_version_automerge automerge
   >>= fun automerge ->
+  map_opt of_version_1_config_builder config_builder
+  >>= fun config_builder ->
   map_opt of_version_1_cost_estimation cost_estimation
   >>= fun cost_estimation ->
   map_opt of_version_1_destination_branches destination_branches
@@ -1542,6 +1557,7 @@ let of_version_1 v1 =
        ?access_control
        ?apply_requirements
        ?automerge
+       ?config_builder
        ?cost_estimation
        ~create_and_select_workspace
        ?destination_branches
@@ -1653,6 +1669,11 @@ let to_version_1_automerge automerge =
   let module Am = Terrat_repo_config.Automerge in
   let { Automerge.delete_branch; enabled } = automerge in
   { Am.delete_branch; enabled }
+
+let to_version_1_config_builder config_builder =
+  let module Cb = Terrat_repo_config.Config_builder in
+  let { Config_builder.enabled; script } = config_builder in
+  { Cb.enabled; script }
 
 let to_version_1_cost_estimation_provider = function
   | Cost_estimation.Provider.Infracost -> "infracost"
@@ -2025,6 +2046,7 @@ let to_version_1 t =
     View.access_control;
     apply_requirements;
     automerge;
+    config_builder;
     cost_estimation;
     create_and_select_workspace;
     destination_branches;
@@ -2060,6 +2082,11 @@ let to_version_1 t =
         to_version_1_automerge
         automerge;
     checkout_strategy = "merge";
+    config_builder =
+      map_opt_if_true
+        CCFun.(Config_builder.equal (Config_builder.make ()) %> not)
+        to_version_1_config_builder
+        config_builder;
     cost_estimation =
       map_opt_if_true
         CCFun.(Cost_estimation.equal (Cost_estimation.make ()) %> not)
@@ -2376,6 +2403,7 @@ let derive ~ctx ~index ~file_list repo_config =
 let access_control t = t.View.access_control
 let apply_requirements t = t.View.apply_requirements
 let automerge t = t.View.automerge
+let config_builder t = t.View.config_builder
 let cost_estimation t = t.View.cost_estimation
 let create_and_select_workspace t = t.View.create_and_select_workspace
 let destination_branches t = t.View.destination_branches

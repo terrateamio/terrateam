@@ -12,6 +12,7 @@ end
 module Step : sig
   type t =
     | Apply
+    | Build_config
     | Index
     | Plan
     | Unsafe_apply

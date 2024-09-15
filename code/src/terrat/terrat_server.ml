@@ -206,14 +206,13 @@ let run config storage =
   Logs.info (fun m -> m "Starting server");
   start_telemetry config
   >>= fun () ->
-  (* Abb.Future.fork *)
-  (*   Terrat_github_evaluator2.Runner.(eval (make ~config ~request_id:"STARTUP" ~storage ())) *)
-  (* >>= fun _ -> *)
   Abb.Future.fork (Terrat_github_evaluator3.Service.flow_state_cleanup config storage)
   >>= fun _ ->
   Abb.Future.fork (Terrat_github_evaluator3.Service.plan_cleanup config storage)
   >>= fun _ ->
   Abb.Future.fork (Terrat_github_evaluator3.Service.drift config storage)
+  >>= fun _ ->
+  Abb.Future.fork (Terrat_github_evaluator3.Service.repo_config_cleanup config storage)
   >>= fun _ ->
   Abb.Future.fork
     (match Terrat_config.nginx_status_uri config with

@@ -23,6 +23,8 @@ module Msg : sig
     | Autoapply_running
     | Bad_custom_branch_tag_pattern of (string * string)
     | Bad_glob of string
+    | Build_config_err of Terrat_base_repo_config_v1.of_version_1_err
+    | Build_config_failure of string
     | Conflicting_work_manifests of ('account, 'target) Terrat_work_manifest3.Existing.t list
     | Depends_on_cycle of Terrat_dirspace.t list
     | Dest_branch_no_match of 'pull_request
@@ -246,6 +248,23 @@ module type S = sig
     Uuidm.t ->
     Terrat_api_components.Work_manifest_index_result.t ->
     (unit, [> `Error ]) result Abb.Future.t
+
+  val query_repo_config_json :
+    request_id:string ->
+    Db.t ->
+    Account.t ->
+    Ref.t ->
+    (Yojson.Safe.t option, [> `Error ]) result Abb.Future.t
+
+  val store_repo_config_json :
+    request_id:string ->
+    Db.t ->
+    Account.t ->
+    Ref.t ->
+    Yojson.Safe.t ->
+    (unit, [> `Error ]) result Abb.Future.t
+
+  val cleanup_repo_configs : request_id:string -> Db.t -> (unit, [> `Error ]) result Abb.Future.t
 
   val publish_msg :
     request_id:string ->
@@ -587,4 +606,5 @@ module Make (S : S) : sig
   val run_scheduled_drift : Terrat_storage.t Ctx.t -> (unit, [> `Error ]) result Abb.Future.t
   val run_plan_cleanup : Terrat_storage.t Ctx.t -> (unit, [> `Error ]) result Abb.Future.t
   val run_flow_state_cleanup : Terrat_storage.t Ctx.t -> (unit, [> `Error ]) result Abb.Future.t
+  val run_repo_config_cleanup : Terrat_storage.t Ctx.t -> (unit, [> `Error ]) result Abb.Future.t
 end

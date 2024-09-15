@@ -22,20 +22,23 @@ end
 module Step = struct
   type t =
     | Apply
+    | Build_config
     | Index
     | Plan
     | Unsafe_apply
 
   let to_string = function
-    | Plan -> "plan"
-    | Index -> "index"
     | Apply -> "apply"
+    | Build_config -> "build-config"
+    | Index -> "index"
+    | Plan -> "plan"
     | Unsafe_apply -> "unsafe-apply"
 
   let of_string = function
-    | "plan" -> Some Plan
-    | "index" -> Some Index
     | "apply" -> Some Apply
+    | "build-config" -> Some Build_config
+    | "index" -> Some Index
+    | "plan" -> Some Plan
     | "unsafe-apply" -> Some Unsafe_apply
     (* Legacy conversions *)
     | "autoplan" -> Some Plan

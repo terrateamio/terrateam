@@ -9,6 +9,7 @@ unified_run_types as (
            when 'autoplan' then 'plan'
            when 'plan' then 'plan'
            when 'index' then 'index'
+           when 'build-config' then 'build-config'
            end) as run_type
     from github_work_manifests as gwm
 ),

@@ -142,6 +142,28 @@ module Sql = struct
       /% Var.bigint "installation_id"
       /% Var.text "sha")
 
+  let select_repo_config =
+    Pgsql_io.Typed_sql.(
+      sql
+      // (* repo_config *) Ret.ud' (CCOption.wrap Yojson.Safe.from_string)
+      /^ "select github_repo_configs.data from github_repo_configs where sha = $sha and \
+          installation_id = $installation_id"
+      /% Var.bigint "installation_id"
+      /% Var.text "sha")
+
+  let insert_repo_config =
+    Pgsql_io.Typed_sql.(
+      sql
+      /^ "insert into github_repo_configs (installation_id, sha, data) values($installation_id, \
+          $sha, $data) on conflict (installation_id, sha) do update set data = excluded.data"
+      /% Var.bigint "installation_id"
+      /% Var.text "sha"
+      /% Var.json "data")
+
+  let cleanup_repo_configs =
+    Pgsql_io.Typed_sql.(
+      sql /^ "delete from github_repo_configs where (now() - created_at) > interval '1 day'")
+
   let select_work_manifest_dirspaceflows =
     Pgsql_io.Typed_sql.(
       sql
@@ -1405,6 +1427,47 @@ module S = struct
         Abb.Future.return (Error `Error)
     | Error `Error -> Abb.Future.return (Error `Error)
 
+  let query_repo_config_json ~request_id db account ref_ =
+    let open Abb.Future.Infix_monad in
+    Pgsql_io.Prepared_stmt.fetch
+      db
+      Sql.select_repo_config
+      ~f:CCFun.id
+      (CCInt64.of_int account.Account.installation_id)
+      ref_
+    >>= function
+    | Ok (repo_config :: _) -> Abb.Future.return (Ok (Some repo_config))
+    | Ok [] -> Abb.Future.return (Ok None)
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let store_repo_config_json ~request_id db account ref_ repo_config =
+    let open Abb.Future.Infix_monad in
+    Pgsql_io.Prepared_stmt.execute
+      db
+      Sql.insert_repo_config
+      (CCInt64.of_int account.Account.installation_id)
+      ref_
+      (Yojson.Safe.to_string repo_config)
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let cleanup_repo_configs ~request_id db =
+    let open Abb.Future.Infix_monad in
+    Pgsql_io.Prepared_stmt.execute db Sql.cleanup_repo_configs
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
   module Result_publisher = struct
     module Workflow_step_output = struct
       type t = {
@@ -1864,7 +1927,7 @@ module S = struct
       in
       let tmpl =
         match CCList.rev work_manifest.Wm.steps with
-        | [] | Wm.Step.Index :: _ -> assert false
+        | [] | Wm.Step.Index :: _ | Wm.Step.Build_config :: _ -> assert false
         | Wm.Step.Plan :: _ -> Tmpl.plan_complete
         | Wm.Step.(Apply | Unsafe_apply) :: _ -> Tmpl.apply_complete
       in
@@ -1991,6 +2054,221 @@ module S = struct
         Logs.err (fun m ->
             m "GITHUB_EVALUATOR : %s : TEMPLATE_ERROR : %a" request_id Snabela.pp_err err);
         Abb.Future.return (Error `Error)
+
+  let repo_config_failure ~request_id ~client ~pull_request ~title err =
+    (* A bit of a cheap trick here to make it look like a code section in this
+       context *)
+    let err = "```\n" ^ err ^ "\n```" in
+    let kv = Snabela.Kv.(Map.of_list [ ("title", string title); ("msg", string err) ]) in
+    apply_template_and_publish
+      ~request_id
+      client
+      pull_request
+      "REPO_CONFIG_GENERIC_FAILURE"
+      Tmpl.repo_config_generic_failure
+      kv
+
+  let repo_config_err ~request_id ~client ~pull_request ~title err =
+    match err with
+    | `Access_control_policy_apply_autoapprove_match_parse_err m ->
+        let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "ACCESS_CONTROL_POLICY_APPLY_AUTOAPPROVE_MATCH_PARSE_ERR"
+          Tmpl.repo_config_err_access_control_policy_apply_autoapprove_match_parse_err
+          kv
+    | `Access_control_policy_apply_force_match_parse_err m ->
+        let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "ACCESS_CONTROL_POLICY_APPLY_FORCE_MATCH_PARSE_ERR"
+          Tmpl.repo_config_err_access_control_policy_apply_force_match_parse_err
+          kv
+    | `Access_control_policy_apply_match_parse_err m ->
+        let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "ACCESS_CONTROL_POLICY_APPLY_MATCH_PARSE_ERR"
+          Tmpl.repo_config_err_access_control_policy_apply_match_parse_err
+          kv
+    | `Access_control_policy_apply_with_superapproval_match_parse_err m ->
+        let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "ACCESS_CONTROL_POLICY_APPLY_WITH_SUPERAPPROVAL_MATCH_PARSE_ERR"
+          Tmpl.repo_config_err_access_control_policy_apply_with_superapproval_match_parse_err
+          kv
+    | `Access_control_policy_plan_match_parse_err m ->
+        let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "ACCESS_CONTROL_POLICY_PLAN_MATCH_PARSE_ERR"
+          Tmpl.repo_config_err_access_control_policy_plan_match_parse_err
+          kv
+    | `Access_control_policy_superapproval_match_parse_err m ->
+        let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "ACCESS_CONTROL_POLICY_SUPERAPPROVAL_MATCH_PARSE_ERR"
+          Tmpl.repo_config_err_access_control_policy_superapproval_match_parse_err
+          kv
+    | `Access_control_policy_tag_query_err (q, err) ->
+        let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "ACCESS_CONTROL_POLICY_TAG_QUERY_ERR"
+          Tmpl.repo_config_err_access_control_policy_tag_query_err
+          kv
+    | `Access_control_terrateam_config_update_match_parse_err m ->
+        let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "ACCESS_CONTROL_TERRATEAM_CONFIG_UPDATE_MATCH_PARSE_ERR"
+          Tmpl.repo_config_err_access_control_terrateam_config_update_match_parse_err
+          kv
+    | `Access_control_unlock_match_parse_err m ->
+        let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "ACCESS_CONTROL_UNLOCK_MATCH_PARSE_ERR"
+          Tmpl.repo_config_err_access_control_unlock_match_parse_err
+          kv
+    | `Apply_requirements_approved_all_of_match_parse_err m ->
+        let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "APPLY_REQUIREMENTS_APPROVED_ALL_OF_MATCH_PARSE_ERR"
+          Tmpl.repo_config_err_apply_requirements_approved_all_of_match_parse_err
+          kv
+    | `Apply_requirements_approved_any_of_match_parse_err m ->
+        let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "APPLY_REQUIREMENTS_APPROVED_ANY_OF_MATCH_PARSE_ERR"
+          Tmpl.repo_config_err_apply_requirements_approved_any_of_match_parse_err
+          kv
+    | `Apply_requirements_check_tag_query_err (q, err) ->
+        let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "APPLY_REQUIREMENTS_CHECK_TAG_QUERY_ERR"
+          Tmpl.repo_config_err_apply_requirements_check_tag_query_err
+          kv
+    | `Depends_on_err (q, err) ->
+        let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "DRIFT_TAG_QUERY_ERR"
+          Tmpl.repo_config_err_depends_on_err
+          kv
+    | `Drift_schedule_err s ->
+        let kv = Snabela.Kv.(Map.of_list [ ("schedule", string s) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "DRIFT_SCHEDULE_ERR"
+          Tmpl.repo_config_err_drift_schedule_err
+          kv
+    | `Drift_tag_query_err (q, err) ->
+        let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "DRIFT_TAG_QUERY_ERR"
+          Tmpl.repo_config_err_drift_tag_query_err
+          kv
+    | `Glob_parse_err (s, err) ->
+        let kv = Snabela.Kv.(Map.of_list [ ("glob", string s); ("error", string err) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "GLOB_PARSE_ERR"
+          Tmpl.repo_config_err_glob_parse_err
+          kv
+    | `Hooks_unknown_run_on_err s ->
+        let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "HOOKS_UNKNOWN_RUN_ON_ERR"
+          Tmpl.repo_config_err_hooks_unknown_run_on_err
+          kv
+    | `Pattern_parse_err s ->
+        let kv = Snabela.Kv.(Map.of_list [ ("pattern", string s) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "PATTERN_PARSE_ERR"
+          Tmpl.repo_config_err_pattern_parse_err
+          kv
+    | `Unknown_lock_policy_err s ->
+        let kv = Snabela.Kv.(Map.of_list [ ("lock_policy", string s) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "UNKNOWN_LOCK_POLICY_ERR"
+          Tmpl.repo_config_err_unknown_lock_policy_err
+          kv
+    | `Unknown_plan_mode_err s -> assert false
+    | `Workflows_apply_unknown_run_on_err s ->
+        let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "WORKFLOWS_APPLY_UNKNOWN_RUN_ON_ERR"
+          Tmpl.repo_config_err_workflows_apply_unknown_run_on_err
+          kv
+    | `Workflows_plan_unknown_run_on_err s ->
+        let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "WORKFLOWS_PLAN_UNKNOWN_RUN_ON_ERR"
+          Tmpl.repo_config_err_workflows_plan_unknown_run_on_err
+          kv
+    | `Workflows_tag_query_parse_err (q, err) ->
+        let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "WORKFLOWS_TAG_QUERY_PARSE_ERR"
+          Tmpl.repo_config_err_workflows_tag_query_parse_err
+          kv
 
   let publish_msg' ~request_id client user pull_request =
     let module Msg = Terrat_evaluator3.Msg in
@@ -2237,6 +2515,9 @@ module S = struct
     | Msg.Bad_glob s ->
         let kv = Snabela.Kv.(Map.of_list [ ("glob", string s) ]) in
         apply_template_and_publish ~request_id client pull_request "BAD_GLOB" Tmpl.bad_glob kv
+    | Msg.Build_config_err err -> repo_config_err ~request_id ~client ~pull_request ~title:"" err
+    | Msg.Build_config_failure err ->
+        repo_config_failure ~request_id ~client ~pull_request ~title:"built" err
     | Msg.Conflicting_work_manifests wms ->
         let module Wm = Terrat_work_manifest3 in
         let kv =
@@ -2606,216 +2887,9 @@ module S = struct
                   Terrat_json.pp_to_yaml_string_err
                   err);
             Abb.Future.return (Error `Error))
-    | Msg.Repo_config_err err -> (
-        match err with
-        | `Access_control_policy_apply_autoapprove_match_parse_err m ->
-            let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "ACCESS_CONTROL_POLICY_APPLY_AUTOAPPROVE_MATCH_PARSE_ERR"
-              Tmpl.repo_config_err_access_control_policy_apply_autoapprove_match_parse_err
-              kv
-        | `Access_control_policy_apply_force_match_parse_err m ->
-            let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "ACCESS_CONTROL_POLICY_APPLY_FORCE_MATCH_PARSE_ERR"
-              Tmpl.repo_config_err_access_control_policy_apply_force_match_parse_err
-              kv
-        | `Access_control_policy_apply_match_parse_err m ->
-            let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "ACCESS_CONTROL_POLICY_APPLY_MATCH_PARSE_ERR"
-              Tmpl.repo_config_err_access_control_policy_apply_match_parse_err
-              kv
-        | `Access_control_policy_apply_with_superapproval_match_parse_err m ->
-            let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "ACCESS_CONTROL_POLICY_APPLY_WITH_SUPERAPPROVAL_MATCH_PARSE_ERR"
-              Tmpl.repo_config_err_access_control_policy_apply_with_superapproval_match_parse_err
-              kv
-        | `Access_control_policy_plan_match_parse_err m ->
-            let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "ACCESS_CONTROL_POLICY_PLAN_MATCH_PARSE_ERR"
-              Tmpl.repo_config_err_access_control_policy_plan_match_parse_err
-              kv
-        | `Access_control_policy_superapproval_match_parse_err m ->
-            let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "ACCESS_CONTROL_POLICY_SUPERAPPROVAL_MATCH_PARSE_ERR"
-              Tmpl.repo_config_err_access_control_policy_superapproval_match_parse_err
-              kv
-        | `Access_control_policy_tag_query_err (q, err) ->
-            let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "ACCESS_CONTROL_POLICY_TAG_QUERY_ERR"
-              Tmpl.repo_config_err_access_control_policy_tag_query_err
-              kv
-        | `Access_control_terrateam_config_update_match_parse_err m ->
-            let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "ACCESS_CONTROL_TERRATEAM_CONFIG_UPDATE_MATCH_PARSE_ERR"
-              Tmpl.repo_config_err_access_control_terrateam_config_update_match_parse_err
-              kv
-        | `Access_control_unlock_match_parse_err m ->
-            let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "ACCESS_CONTROL_UNLOCK_MATCH_PARSE_ERR"
-              Tmpl.repo_config_err_access_control_unlock_match_parse_err
-              kv
-        | `Apply_requirements_approved_all_of_match_parse_err m ->
-            let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "APPLY_REQUIREMENTS_APPROVED_ALL_OF_MATCH_PARSE_ERR"
-              Tmpl.repo_config_err_apply_requirements_approved_all_of_match_parse_err
-              kv
-        | `Apply_requirements_approved_any_of_match_parse_err m ->
-            let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "APPLY_REQUIREMENTS_APPROVED_ANY_OF_MATCH_PARSE_ERR"
-              Tmpl.repo_config_err_apply_requirements_approved_any_of_match_parse_err
-              kv
-        | `Apply_requirements_check_tag_query_err (q, err) ->
-            let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "APPLY_REQUIREMENTS_CHECK_TAG_QUERY_ERR"
-              Tmpl.repo_config_err_apply_requirements_check_tag_query_err
-              kv
-        | `Depends_on_err (q, err) ->
-            let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "DRIFT_TAG_QUERY_ERR"
-              Tmpl.repo_config_err_depends_on_err
-              kv
-        | `Drift_schedule_err s ->
-            let kv = Snabela.Kv.(Map.of_list [ ("schedule", string s) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "DRIFT_SCHEDULE_ERR"
-              Tmpl.repo_config_err_drift_schedule_err
-              kv
-        | `Drift_tag_query_err (q, err) ->
-            let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "DRIFT_TAG_QUERY_ERR"
-              Tmpl.repo_config_err_drift_tag_query_err
-              kv
-        | `Glob_parse_err (s, err) ->
-            let kv = Snabela.Kv.(Map.of_list [ ("glob", string s); ("error", string err) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "GLOB_PARSE_ERR"
-              Tmpl.repo_config_err_glob_parse_err
-              kv
-        | `Hooks_unknown_run_on_err s ->
-            let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "HOOKS_UNKNOWN_RUN_ON_ERR"
-              Tmpl.repo_config_err_hooks_unknown_run_on_err
-              kv
-        | `Pattern_parse_err s ->
-            let kv = Snabela.Kv.(Map.of_list [ ("pattern", string s) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "PATTERN_PARSE_ERR"
-              Tmpl.repo_config_err_pattern_parse_err
-              kv
-        | `Unknown_lock_policy_err s ->
-            let kv = Snabela.Kv.(Map.of_list [ ("lock_policy", string s) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "UNKNOWN_LOCK_POLICY_ERR"
-              Tmpl.repo_config_err_unknown_lock_policy_err
-              kv
-        | `Unknown_plan_mode_err s -> assert false
-        | `Workflows_apply_unknown_run_on_err s ->
-            let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "WORKFLOWS_APPLY_UNKNOWN_RUN_ON_ERR"
-              Tmpl.repo_config_err_workflows_apply_unknown_run_on_err
-              kv
-        | `Workflows_plan_unknown_run_on_err s ->
-            let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "WORKFLOWS_PLAN_UNKNOWN_RUN_ON_ERR"
-              Tmpl.repo_config_err_workflows_plan_unknown_run_on_err
-              kv
-        | `Workflows_tag_query_parse_err (q, err) ->
-            let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "WORKFLOWS_TAG_QUERY_PARSE_ERR"
-              Tmpl.repo_config_err_workflows_tag_query_parse_err
-              kv)
+    | Msg.Repo_config_err err -> repo_config_err ~request_id ~client ~pull_request ~title:"" err
     | Msg.Repo_config_failure err ->
-        let kv = Snabela.Kv.(Map.of_list [ ("msg", string err) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "REPO_CONFIG_GENERIC_FAILURE"
-          Tmpl.repo_config_generic_failure
-          kv
+        repo_config_failure ~request_id ~client ~pull_request ~title:"Terrateam repository" err
     | Msg.Repo_config_parse_failure (fname, err) ->
         let kv = Snabela.Kv.(Map.of_list [ ("fname", string fname); ("msg", string err) ]) in
         apply_template_and_publish
@@ -4422,4 +4496,15 @@ module Service = struct
             ~request_id:(Uuidm.to_string (Uuidm.v `V4))
             ()))
     >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> plan_cleanup config storage
+
+  let rec repo_config_cleanup config storage =
+    let open Abb.Future.Infix_monad in
+    Abbs_future_combinators.ignore
+      (Evaluator.run_repo_config_cleanup
+         (Terrat_evaluator3.Ctx.make
+            ~config
+            ~storage
+            ~request_id:(Uuidm.to_string (Uuidm.v `V4))
+            ()))
+    >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> repo_config_cleanup config storage
 end

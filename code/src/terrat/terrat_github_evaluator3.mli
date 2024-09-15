@@ -171,4 +171,5 @@ module Service : sig
   val drift : Terrat_config.t -> Terrat_storage.t -> unit Abb.Future.t
   val flow_state_cleanup : Terrat_config.t -> Terrat_storage.t -> unit Abb.Future.t
   val plan_cleanup : Terrat_config.t -> Terrat_storage.t -> unit Abb.Future.t
+  val repo_config_cleanup : Terrat_config.t -> Terrat_storage.t -> unit Abb.Future.t
 end

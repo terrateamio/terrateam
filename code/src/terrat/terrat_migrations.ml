@@ -119,6 +119,7 @@ let migrations =
     ("add-work-manifest-environment", run_file_sql "2024-04-22-add-work-manifest-environment.sql");
     ("add-work-manifest-steps", run_file_sql "2024-08-02-add-work-manifest-steps.sql");
     ("add-flow-states", run_file_sql "2024-08-11-add-flow-states.sql");
+    ("add-config-builder", run_file_sql "2024-09-15-add-config-builder-tables.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations

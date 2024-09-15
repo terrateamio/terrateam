@@ -54,6 +54,8 @@ module Msg = struct
     | Autoapply_running
     | Bad_custom_branch_tag_pattern of (string * string)
     | Bad_glob of string
+    | Build_config_err of Terrat_base_repo_config_v1.of_version_1_err
+    | Build_config_failure of string
     | Conflicting_work_manifests of ('account, 'target) Terrat_work_manifest3.Existing.t list
     | Depends_on_cycle of Terrat_dirspace.t list
     | Dest_branch_no_match of 'pull_request
@@ -290,6 +292,23 @@ module type S = sig
     Uuidm.t ->
     Terrat_api_components.Work_manifest_index_result.t ->
     (unit, [> `Error ]) result Abb.Future.t
+
+  val query_repo_config_json :
+    request_id:string ->
+    Db.t ->
+    Account.t ->
+    Ref.t ->
+    (Yojson.Safe.t option, [> `Error ]) result Abb.Future.t
+
+  val store_repo_config_json :
+    request_id:string ->
+    Db.t ->
+    Account.t ->
+    Ref.t ->
+    Yojson.Safe.t ->
+    (unit, [> `Error ]) result Abb.Future.t
+
+  val cleanup_repo_configs : request_id:string -> Db.t -> (unit, [> `Error ]) result Abb.Future.t
 
   val publish_msg :
     request_id:string ->
@@ -652,6 +671,36 @@ module Make (S : S) = struct
               work_manifest_id
               time))
       (fun () -> S.store_index_result ~request_id db work_manifest_id result)
+
+  let query_repo_config_json request_id db account ref_ =
+    Abbs_time_it.run
+      (fun time ->
+        Logs.info (fun m ->
+            m
+              "EVALUATOR : %s : QUERY_REPO_CONFIG : account=%s : ref=%s : time=%f"
+              request_id
+              (S.Account.to_string account)
+              (S.Ref.to_string ref_)
+              time))
+      (fun () -> S.query_repo_config_json ~request_id db account ref_)
+
+  let store_repo_config_json request_id db account ref_ repo_config =
+    Abbs_time_it.run
+      (fun time ->
+        Logs.info (fun m ->
+            m
+              "EVALUATOR : %s : STORE_REPO_CONFIG : account=%s : ref=%s : time=%f"
+              request_id
+              (S.Account.to_string account)
+              (S.Ref.to_string ref_)
+              time))
+      (fun () -> S.store_repo_config_json ~request_id db account ref_ repo_config)
+
+  let cleanup_repo_configs request_id db =
+    Abbs_time_it.run
+      (fun time ->
+        Logs.info (fun m -> m "EVALUATOR : %s : CLEANUP_REPO_CONFIGS : time=%f" request_id time))
+      (fun () -> S.cleanup_repo_configs ~request_id db)
 
   let publish_msg request_id client user pull_request msg =
     Abbs_time_it.run
@@ -1093,7 +1142,7 @@ module Make (S : S) = struct
           | None -> Abb.Future.return (Ok None))
       | None -> Abb.Future.return (Ok None)
 
-    let fetch_repo_config_files request_id client repo ref_ =
+    let fetch_repo_config_files ?built_config request_id client repo ref_ =
       let open Abbs_future_combinators.Infix_result_monad in
       Abbs_future_combinators.Infix_result_app.(
         (fun remote_repo centralized_repo -> (remote_repo, centralized_repo))
@@ -1203,6 +1252,7 @@ module Make (S : S) = struct
             | Some (fname, _) -> Some fname
             | None -> None)
       in
+      let built_config = CCOption.map (fun config -> ("config_builder", config)) built_config in
       match
         (repo_defaults, repo_overrides, repo_forced_config, default_repo_config, repo_config)
       with
@@ -1215,6 +1265,7 @@ module Make (S : S) = struct
                 repo_defaults;
                 repo_overrides;
                 default_repo_config;
+                built_config;
                 repo_config;
               ]
           in
@@ -1225,6 +1276,7 @@ module Make (S : S) = struct
               repo_defaults;
               repo_overrides;
               default_repo_config;
+              built_config;
               repo_config;
             ]
           >>= fun () ->
@@ -1233,6 +1285,7 @@ module Make (S : S) = struct
           let repo_defaults = get_json repo_defaults in
           let repo_overrides = get_json repo_overrides in
           let default_repo_config = get_json default_repo_config in
+          let built_config = get_json built_config in
           let repo_config = get_json repo_config in
           Abb.Future.return (Terrat_json.merge ~base:global_defaults repo_defaults)
           >>= fun repo_defaults ->
@@ -1242,7 +1295,9 @@ module Make (S : S) = struct
           >>= fun default_repo_config ->
           Abb.Future.return (Terrat_json.merge ~base:default_repo_config repo_overrides)
           >>= fun default_repo_config ->
-          Abb.Future.return (Terrat_json.merge ~base:repo_defaults repo_config)
+          Abb.Future.return (Terrat_json.merge ~base:repo_defaults built_config)
+          >>= fun built_config ->
+          Abb.Future.return (Terrat_json.merge ~base:built_config repo_config)
           >>= fun repo_config ->
           Abb.Future.return (Terrat_json.merge ~base:repo_config global_overrides)
           >>= fun repo_config ->
@@ -1269,7 +1324,7 @@ module Make (S : S) = struct
           wrap_err "repo" (repo_config_of_json repo_config)
           >>= fun repo_config -> Abb.Future.return (Ok (provenance, repo_config))
 
-    let fetch' request_id client repo ref_ =
+    let fetch' ?built_config request_id client repo ref_ =
       Abbs_time_it.run
         (fun time ->
           Logs.info (fun m ->
@@ -1279,11 +1334,12 @@ module Make (S : S) = struct
                 (S.Repo.to_string repo)
                 (S.Ref.to_string ref_)
                 time))
-        (fun () -> fetch_repo_config_files request_id client repo ref_)
+        (fun () -> fetch_repo_config_files ?built_config request_id client repo ref_)
 
     let fetch_with_provenance =
       (fetch'
-        : string ->
+        : ?built_config:Yojson.Safe.t ->
+          string ->
           S.Client.t ->
           S.Repo.t ->
           S.Ref.t ->
@@ -1291,7 +1347,8 @@ module Make (S : S) = struct
             fetch_err )
           result
           Abb.Future.t
-        :> string ->
+        :> ?built_config:Yojson.Safe.t ->
+           string ->
            S.Client.t ->
            S.Repo.t ->
            S.Ref.t ->
@@ -1300,9 +1357,9 @@ module Make (S : S) = struct
            result
            Abb.Future.t)
 
-    let fetch request_id client repo ref_ =
+    let fetch ?built_config request_id client repo ref_ =
       let open Abbs_future_combinators.Infix_result_monad in
-      fetch_with_provenance request_id client repo ref_
+      fetch_with_provenance ?built_config request_id client repo ref_
       >>= fun (_, repo_config) -> Abb.Future.return (Ok repo_config)
   end
 
@@ -1446,6 +1503,8 @@ module Make (S : S) = struct
       | Check_reconcile
       | Check_valid_destination_branch
       | Complete_work_manifest
+      | Config_build_not_required
+      | Config_build_required
       | Create_drift_events
       | Create_work_manifest
       | Event_kind_feedback
@@ -1474,6 +1533,7 @@ module Make (S : S) = struct
       | Store_account_repository
       | Store_pull_request
       | Test_account_status
+      | Test_config_build_required
       | Test_event_kind
       | Test_index_required
       | Test_op_kind
@@ -1504,6 +1564,8 @@ module Make (S : S) = struct
       | Check_reconcile -> "check_reconcile"
       | Check_valid_destination_branch -> "check_valid_destination_branch"
       | Complete_work_manifest -> "complete_work_manifest"
+      | Config_build_not_required -> "config_build_required"
+      | Config_build_required -> "config_build_not_required"
       | Create_drift_events -> "create_drift_events"
       | Create_work_manifest -> "create_work_manifest"
       | Event_kind_feedback -> "event_kind_feedback"
@@ -1532,6 +1594,7 @@ module Make (S : S) = struct
       | Store_account_repository -> "store_account_repository"
       | Store_pull_request -> "store_pull_request"
       | Test_account_status -> "test_account_status"
+      | Test_config_build_required -> "test_config_build_required"
       | Test_event_kind -> "test_event_kind"
       | Test_index_required -> "test_index_required"
       | Test_op_kind -> "test_op_kind"
@@ -1561,6 +1624,8 @@ module Make (S : S) = struct
       | "check_reconcile" -> Some Check_reconcile
       | "check_valid_destination_branch" -> Some Check_valid_destination_branch
       | "complete_work_manifest" -> Some Complete_work_manifest
+      | "config_build_required" -> Some Config_build_not_required
+      | "config_build_not_required" -> Some Config_build_required
       | "create_drift_events" -> Some Create_drift_events
       | "create_work_manifest" -> Some Create_work_manifest
       | "event_kind_feedback" -> Some Event_kind_feedback
@@ -1589,6 +1654,7 @@ module Make (S : S) = struct
       | "store_account_repository" -> Some Store_account_repository
       | "store_pull_request" -> Some Store_pull_request
       | "test_account_status" -> Some Test_account_status
+      | "test_config_build_required" -> Some Test_config_build_required
       | "test_event_kind" -> Some Test_event_kind
       | "test_index_required" -> Some Test_index_required
       | "test_op_kind" -> Some Test_op_kind
@@ -2123,6 +2189,16 @@ module Make (S : S) = struct
           fetch_remote_repo state.State.request_id client (Event.repo state.State.event)
           >>= fun remote_repo -> Abb.Future.return (Ok (S.Remote_repo.default_branch remote_repo))
 
+    let query_repo_config_json ctx state =
+      let open Abbs_future_combinators.Infix_result_monad in
+      working_branch_ref ctx state
+      >>= fun working_branch_ref' ->
+      query_repo_config_json
+        state.State.request_id
+        ctx.Ctx.storage
+        (Event.account state.State.event)
+        working_branch_ref'
+
     let repo_config_with_provenance ctx state =
       let account = Event.account state.State.event in
       let repo = Event.repo state.State.event in
@@ -2132,7 +2208,14 @@ module Make (S : S) = struct
         >>= fun client ->
         branch_ref ctx state
         >>= fun branch_ref' ->
-        Repo_config.fetch_with_provenance state.State.request_id client repo branch_ref'
+        query_repo_config_json ctx state
+        >>= fun built_config ->
+        Repo_config.fetch_with_provenance
+          ?built_config
+          state.State.request_id
+          client
+          repo
+          branch_ref'
       in
       let open Abb.Future.Infix_monad in
       Abbs_time_it.run
@@ -2325,11 +2408,12 @@ module Make (S : S) = struct
       let fetch () =
         let open Abbs_future_combinators.Infix_result_monad in
         Abbs_future_combinators.Infix_result_app.(
-          (fun repo_config repo_tree index -> (repo_config, repo_tree, index))
+          (fun repo_config repo_tree -> (repo_config, repo_tree))
           <$> repo_config ctx state
-          <*> repo_tree_branch ctx state
-          <*> query_index ctx state)
-        >>= fun (repo_config, repo_tree, index) ->
+          <*> repo_tree_branch ctx state)
+        >>= fun (repo_config, repo_tree) ->
+        query_index ctx state
+        >>= fun index ->
         out_of_change_applies ctx state
         >>= fun out_of_change_applies ->
         applied_dirspaces ctx state
@@ -3135,8 +3219,6 @@ module Make (S : S) = struct
       | Some ({ Wm.id; branch_ref; base_ref; state = Wm.State.(Queued | Running); _ } as wm) ->
           generate_index_run_dirs ctx state wm
           >>= fun wm ->
-          Dv.client ctx state
-          >>= fun client ->
           Dv.base_ref ctx state
           >>= fun base_ref' ->
           Dv.repo_config ctx state
@@ -3199,6 +3281,8 @@ module Make (S : S) = struct
                 [ check ])
           >>= fun () -> Abb.Future.return (Ok ())
       | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result _ ->
+          assert false
+      | Terrat_api_components_work_manifest_result.Work_manifest_build_config_result _ ->
           assert false
 
     let maybe_create_completed_apply_check request_id config client account repo_config pull_request
@@ -3825,6 +3909,7 @@ module Make (S : S) = struct
             | Target.Pr pr, (Wm.Step.Apply | Wm.Step.Plan | Wm.Step.Unsafe_apply) ->
                 `Pull_request pr
             | Target.Pr _, Wm.Step.Index -> `Index
+            | Target.Pr _, Wm.Step.Build_config -> `Build_config
             | Target.Drift _, _ -> `Drift
           in
           let run_kind_str =
@@ -3832,6 +3917,7 @@ module Make (S : S) = struct
             | `Pull_request _ -> "pr"
             | `Index -> "index"
             | `Drift -> "drift"
+            | `Build_config -> "build-config"
           in
           let run_kind_data =
             let module Rkd = Terrat_api_components.Work_manifest_plan.Run_kind_data in
@@ -3841,7 +3927,7 @@ module Make (S : S) = struct
                 Some
                   (Rkd.Run_kind_data_pull_request
                      { Rkdpr.id = CCInt.to_string (S.Pull_request.id pr) })
-            | `Index | `Drift -> None
+            | `Index | `Drift | `Build_config -> None
           in
           match step with
           | Wm.Step.Plan ->
@@ -3888,7 +3974,8 @@ module Make (S : S) = struct
                               |> Terrat_base_repo_config_v1.to_version_1
                               |> Terrat_repo_config.Version_1.to_yojson;
                           })))
-          | Wm.Step.Index -> assert false)
+          | Wm.Step.Index -> assert false
+          | Wm.Step.Build_config -> assert false)
       | None -> Abb.Future.return (Ok None)
 
     let run_op_work_manifest_iter_result op ctx state result work_manifest =
@@ -3896,6 +3983,8 @@ module Make (S : S) = struct
       let open Abbs_future_combinators.Infix_result_monad in
       match result with
       | Terrat_api_components_work_manifest_result.Work_manifest_index_result _ -> assert false
+      | Terrat_api_components_work_manifest_result.Work_manifest_build_config_result _ ->
+          assert false
       | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result result ->
           Dv.client ctx state
           >>= fun client ->
@@ -4009,11 +4098,10 @@ module Make (S : S) = struct
 
     let test_index_required ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
-      Abbs_future_combinators.Infix_result_app.(
-        (fun repo_config index -> (repo_config, index))
-        <$> Dv.repo_config ctx state
-        <*> Dv.query_index ctx state)
-      >>= fun (repo_config, index) ->
+      Dv.repo_config ctx state
+      >>= fun repo_config ->
+      Dv.query_index ctx state
+      >>= fun index ->
       let module R = Terrat_base_repo_config_v1 in
       match (R.indexer repo_config, index) with
       | { R.Indexer.enabled = true; _ }, None -> Abb.Future.return (Ok (Id.Index_required, state))
@@ -4078,7 +4166,37 @@ module Make (S : S) = struct
                 Uuidm.pp
                 work_manifest.Wm.id);
           Abb.Future.return (Ok [ work_manifest ]))
-        ~update:(fun ctx state work_manifest -> raise (Failure "nyi"))
+        ~update:(fun ctx state work_manifest ->
+          let module Wm = Terrat_work_manifest3 in
+          let open Abbs_future_combinators.Infix_result_monad in
+          let work_manifest =
+            { work_manifest with Wm.steps = work_manifest.Wm.steps @ [ Wm.Step.Index ] }
+          in
+          update_work_manifest_steps
+            state.State.request_id
+            ctx.Ctx.storage
+            work_manifest.Wm.id
+            work_manifest.Wm.steps
+          >>= fun () ->
+          H.run_interactive ctx state (fun () ->
+              let module Status = Terrat_commit_check.Status in
+              let account = Event.account state.State.event in
+              let repo = Event.repo state.State.event in
+              Dv.client ctx state
+              >>= fun client ->
+              Dv.branch_ref ctx state
+              >>= fun branch_ref' ->
+              let check =
+                S.make_commit_check
+                  ~config:ctx.Ctx.config
+                  ~description:"Queued"
+                  ~title:"terrateam index"
+                  ~status:Status.Queued
+                  ~work_manifest
+                  account
+              in
+              create_commit_checks state.State.request_id client repo branch_ref' [ check ])
+          >>= fun () -> Abb.Future.return (Ok [ work_manifest ]))
         ~run_success:(fun ctx state work_manifest ->
           H.run_interactive ctx state (fun () ->
               let open Abbs_future_combinators.Infix_result_monad in
@@ -4147,14 +4265,15 @@ module Make (S : S) = struct
       let run =
         let open Abbs_future_combinators.Infix_result_monad in
         Abbs_future_combinators.Infix_result_app.(
-          (fun client pull_request repo_config repo_tree index ->
-            (client, pull_request, repo_config, repo_tree, index))
+          (fun client pull_request repo_config repo_tree ->
+            (client, pull_request, repo_config, repo_tree))
           <$> Dv.client ctx state
           <*> Dv.pull_request ctx state
           <*> Dv.repo_config_with_provenance ctx state
-          <*> Dv.repo_tree_branch ctx state
-          <*> Dv.query_index ctx state)
-        >>= fun (client, pull_request, (provenance, repo_config), repo_tree, index) ->
+          <*> Dv.repo_tree_branch ctx state)
+        >>= fun (client, pull_request, (provenance, repo_config), repo_tree) ->
+        Dv.query_index ctx state
+        >>= fun index ->
         let index =
           let module R = Terrat_base_repo_config_v1 in
           match R.indexer repo_config with
@@ -4357,6 +4476,9 @@ module Make (S : S) = struct
             work_manifest_id
             Terrat_work_manifest3.State.Completed
           >>= fun () -> Abb.Future.return (Ok state)
+      | _, _, None ->
+          (* No work manifest was run so ignore *)
+          Abb.Future.return (Ok state)
       | _, _, _ ->
           H.log_state_err
             state.State.request_id
@@ -5159,6 +5281,271 @@ module Make (S : S) = struct
       match V1.drift repo_config with
       | { D.reconcile = true; _ } -> Abb.Future.return (Ok state)
       | { D.reconcile = false; _ } -> Abb.Future.return (Error (`Noop state))
+
+    let test_config_build_required ctx state =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Dv.repo_config ctx state
+      >>= fun repo_config ->
+      let module V1 = Terrat_base_repo_config_v1 in
+      let config_builder = V1.config_builder repo_config in
+      if config_builder.V1.Config_builder.enabled then
+        Dv.query_repo_config_json ctx state
+        >>= function
+        | Some _ -> Abb.Future.return (Ok (Id.Config_build_not_required, state))
+        | None -> Abb.Future.return (Ok (Id.Config_build_required, state))
+      else Abb.Future.return (Ok (Id.Config_build_not_required, state))
+
+    let run_config_builder_work_manifest_iter =
+      H.eval_work_manifest_iter
+        ~name:"CONFIG_BUILDER"
+        ~create:(fun ctx state ->
+          let module Wm = Terrat_work_manifest3 in
+          let open Abbs_future_combinators.Infix_result_monad in
+          let account = Event.account state.State.event in
+          let repo = Event.repo state.State.event in
+          Dv.client ctx state
+          >>= fun client ->
+          Dv.base_ref ctx state
+          >>= fun base_ref' ->
+          Dv.working_branch_ref ctx state
+          >>= fun working_branch_ref' ->
+          Dv.target ctx state
+          >>= fun target ->
+          let work_manifest =
+            {
+              Wm.account;
+              base_ref = S.Ref.to_string base_ref';
+              branch_ref = S.Ref.to_string working_branch_ref';
+              changes = [];
+              completed_at = None;
+              created_at = ();
+              denied_dirspaces = [];
+              environment = None;
+              id = ();
+              initiator = Event.initiator state.State.event;
+              run_id = ();
+              state = ();
+              steps = [ Wm.Step.Build_config ];
+              tag_query = Terrat_tag_query.any;
+              target;
+            }
+          in
+          create_work_manifest state.State.request_id ctx.Ctx.storage work_manifest
+          >>= fun work_manifest ->
+          H.run_interactive ctx state (fun () ->
+              let module Status = Terrat_commit_check.Status in
+              Dv.branch_ref ctx state
+              >>= fun branch_ref' ->
+              let check =
+                S.make_commit_check
+                  ~config:ctx.Ctx.config
+                  ~description:"Queued"
+                  ~title:"terrateam build-config"
+                  ~status:Status.Queued
+                  ~work_manifest
+                  account
+              in
+              create_commit_checks state.State.request_id client repo branch_ref' [ check ])
+          >>= fun () ->
+          Logs.info (fun m ->
+              m
+                "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a"
+                state.State.request_id
+                Uuidm.pp
+                work_manifest.Wm.id);
+          Abb.Future.return (Ok [ work_manifest ]))
+        ~update:(fun ctx state work_manifest -> raise (Failure "nyi"))
+        ~run_success:(fun ctx state work_manifest ->
+          H.run_interactive ctx state (fun () ->
+              let open Abbs_future_combinators.Infix_result_monad in
+              let account = Event.account state.State.event in
+              let repo = Event.repo state.State.event in
+              Dv.client ctx state
+              >>= fun client ->
+              Dv.pull_request ctx state
+              >>= fun pull_request ->
+              let module Status = Terrat_commit_check.Status in
+              let check =
+                S.make_commit_check
+                  ~config:ctx.Ctx.config
+                  ~description:"Running"
+                  ~title:"terrateam build-config"
+                  ~status:Status.Running
+                  ~work_manifest
+                  account
+              in
+              create_commit_checks
+                state.State.request_id
+                client
+                repo
+                (S.Pull_request.branch_ref pull_request)
+                [ check ]
+              >>= fun () -> Abb.Future.return (Ok ())))
+        ~run_failure:(fun ctx state err work_manifest ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          H.run_interactive ctx state (fun () ->
+              let account = Event.account state.State.event in
+              let repo = Event.repo state.State.event in
+              Dv.client ctx state
+              >>= fun client ->
+              Dv.pull_request ctx state
+              >>= fun pull_request ->
+              let module Status = Terrat_commit_check.Status in
+              let check =
+                S.make_commit_check
+                  ~config:ctx.Ctx.config
+                  ~description:"Failed"
+                  ~title:"terrateam build-config"
+                  ~status:Status.Failed
+                  ~work_manifest
+                  account
+              in
+              create_commit_checks
+                state.State.request_id
+                client
+                repo
+                (S.Pull_request.branch_ref pull_request)
+                [ check ]
+              >>= fun () ->
+              H.publish_run_failure
+                state.State.request_id
+                client
+                (Event.user state.State.event)
+                pull_request
+                err
+              >>= fun () -> Abb.Future.return (Error `Failure))
+          >>= fun () -> Abb.Future.return (Error `Failure))
+        ~initiate:(fun ctx state encryption_key run_id sha work_manifest ->
+          let module Wm = Terrat_work_manifest3 in
+          let open Abbs_future_combinators.Infix_result_monad in
+          H.initiate_work_manifest
+            state
+            state.State.request_id
+            ctx.Ctx.storage
+            run_id
+            sha
+            work_manifest
+          >>= function
+          | Some { Wm.id; branch_ref; base_ref; state = Wm.State.(Queued | Running); _ } ->
+              Dv.base_ref ctx state
+              >>= fun base_ref' ->
+              Dv.repo_config ctx state
+              >>= fun repo_config ->
+              let module B = Terrat_api_components.Work_manifest_build_config in
+              let config =
+                repo_config
+                |> Terrat_base_repo_config_v1.to_version_1
+                |> Terrat_repo_config.Version_1.to_yojson
+              in
+              let response =
+                Terrat_api_components.Work_manifest.Work_manifest_build_config
+                  {
+                    B.base_ref = S.Ref.to_string base_ref';
+                    token = H.token encryption_key id;
+                    type_ = "build-config";
+                    config;
+                  }
+              in
+              Abb.Future.return (Ok (Some response))
+          | Some _ | None -> Abb.Future.return (Ok None))
+        ~result:(fun ctx state result work_manifest ->
+          let module Wm = Terrat_work_manifest3 in
+          let module Wmr = Terrat_api_components.Work_manifest_result in
+          let module Bc = Terrat_api_components.Work_manifest_build_config_result in
+          let module Bcs = Terrat_api_components.Work_manifest_build_config_result_success in
+          let module Bcf = Terrat_api_components.Work_manifest_build_config_result_failure in
+          let open Abbs_future_combinators.Infix_result_monad in
+          let fail msg =
+            H.run_interactive ctx state (fun () ->
+                let account = Event.account state.State.event in
+                let repo = Event.repo state.State.event in
+                Dv.client ctx state
+                >>= fun client ->
+                Dv.pull_request ctx state
+                >>= fun pull_request ->
+                let module Status = Terrat_commit_check.Status in
+                let check =
+                  S.make_commit_check
+                    ~config:ctx.Ctx.config
+                    ~description:"Failed"
+                    ~title:"terrateam build-config"
+                    ~status:Status.Failed
+                    ~work_manifest
+                    account
+                in
+                create_commit_checks
+                  state.State.request_id
+                  client
+                  repo
+                  (S.Pull_request.branch_ref pull_request)
+                  [ check ]
+                >>= fun () ->
+                publish_msg
+                  state.State.request_id
+                  client
+                  (Event.user state.State.event)
+                  pull_request
+                  msg)
+          in
+          match result with
+          | Wmr.Work_manifest_build_config_result
+              (Bc.Work_manifest_build_config_result_success { Bcs.config }) -> (
+              let open Abb.Future.Infix_monad in
+              Repo_config.repo_config_of_json config
+              >>= function
+              | Ok _ ->
+                  let open Abbs_future_combinators.Infix_result_monad in
+                  let account = Event.account state.State.event in
+                  Dv.working_branch_ref ctx state
+                  >>= fun working_branch_ref' ->
+                  store_repo_config_json
+                    state.State.request_id
+                    ctx.Ctx.storage
+                    account
+                    working_branch_ref'
+                    config
+                  >>= fun () ->
+                  H.run_interactive ctx state (fun () ->
+                      let account = Event.account state.State.event in
+                      let repo = Event.repo state.State.event in
+                      Dv.client ctx state
+                      >>= fun client ->
+                      Dv.pull_request ctx state
+                      >>= fun pull_request ->
+                      let module Status = Terrat_commit_check.Status in
+                      let check =
+                        S.make_commit_check
+                          ~config:ctx.Ctx.config
+                          ~description:"Completed"
+                          ~title:"terrateam build-config"
+                          ~status:Status.Completed
+                          ~work_manifest
+                          account
+                      in
+                      create_commit_checks
+                        state.State.request_id
+                        client
+                        repo
+                        (S.Pull_request.branch_ref pull_request)
+                        [ check ])
+                  >>= fun () -> Abb.Future.return (Ok ())
+              | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
+                  let open Abbs_future_combinators.Infix_result_monad in
+                  fail (Msg.Build_config_err err)
+                  >>= fun () -> Abb.Future.return (Error (`Noop state))
+              | Error (`Repo_config_parse_err msg) ->
+                  let open Abbs_future_combinators.Infix_result_monad in
+                  fail (Msg.Build_config_failure msg)
+                  >>= fun () -> Abb.Future.return (Error (`Noop state)))
+          | Wmr.Work_manifest_build_config_result
+              (Bc.Work_manifest_build_config_result_failure { Bcf.msg }) ->
+              let open Abbs_future_combinators.Infix_result_monad in
+              fail (Msg.Build_config_failure msg)
+              >>= fun () -> Abb.Future.return (Error (`Noop state))
+          | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result _ ->
+              assert false
+          | Terrat_api_components_work_manifest_result.Work_manifest_index_result _ -> assert false)
+        ~fallthrough:H.log_state_err_iter
   end
 
   let maybe_publish_msg ctx state msg =
@@ -5273,22 +5660,41 @@ module Make (S : S) = struct
       Flow.Flow.(
         action [ Flow.Step.make ~id:Id.Store_pull_request ~f:(eval_step F.store_pull_request) () ])
     in
-    let index_flow =
+    let config_builder_flow =
       Flow.Flow.(
         choice
-          ~id:Id.Test_index_required
-          ~f:F.test_index_required
+          ~id:Id.Test_config_build_required
+          ~f:F.test_config_build_required
           [
-            ( Id.Index_required,
+            ( Id.Config_build_required,
               action
                 [
                   Flow.Step.make
                     ~id:Id.Run_work_manifest_iter
-                    ~f:(eval_step F.run_index_work_manifest_iter)
+                    ~f:(eval_step F.run_config_builder_work_manifest_iter)
                     ();
                 ] );
-            (Id.Index_not_required, action []);
+            (Id.Config_build_not_required, action []);
           ])
+    in
+    let index_flow =
+      Flow.Flow.(
+        seq
+          config_builder_flow
+          (choice
+             ~id:Id.Test_index_required
+             ~f:F.test_index_required
+             [
+               ( Id.Index_required,
+                 action
+                   [
+                     Flow.Step.make
+                       ~id:Id.Run_work_manifest_iter
+                       ~f:(eval_step F.run_index_work_manifest_iter)
+                       ();
+                   ] );
+               (Id.Index_not_required, action []);
+             ]))
     in
     let event_kind_op_flow =
       let op_kind_plan_flow =
@@ -5480,7 +5886,13 @@ module Make (S : S) = struct
         seq
           index_flow
           (action
-             [ Flow.Step.make ~id:Id.Publish_repo_config ~f:(eval_step F.publish_repo_config) () ]))
+             [
+               Flow.Step.make
+                 ~id:Id.Complete_work_manifest
+                 ~f:(eval_step F.complete_work_manifest)
+                 ();
+               Flow.Step.make ~id:Id.Publish_repo_config ~f:(eval_step F.publish_repo_config) ();
+             ]))
     in
     let event_kind_index_flow =
       Flow.Flow.(
@@ -5928,5 +6340,17 @@ module Make (S : S) = struct
     | Error (#Pgsql_pool.err as err) ->
         Logs.err (fun m ->
             m "EVALUATOR : %s : FLOW_STATE_CLEANUP : %a" ctx.Ctx.request_id Pgsql_pool.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let run_repo_config_cleanup ctx =
+    let open Abb.Future.Infix_monad in
+    Logs.info (fun m -> m "EVALUATOR : %s : REPO_CONFIG_CLEANUP" ctx.Ctx.request_id);
+    Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db -> cleanup_repo_configs ctx.Ctx.request_id db)
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error `Error -> Abb.Future.return (Error `Error)
+    | Error (#Pgsql_pool.err as err) ->
+        Logs.err (fun m ->
+            m "EVALUATOR : %s : REPO_CONFIG_CLEANUP : %a" ctx.Ctx.request_id Pgsql_pool.pp_err err);
         Abb.Future.return (Error `Error)
 end
