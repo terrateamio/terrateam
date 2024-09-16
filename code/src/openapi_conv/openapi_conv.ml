@@ -583,14 +583,24 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
                                             (Gen.ident [ "Openapi"; "of_json_body" ])))
                                       [
                                         ( Asttypes.Nolabel,
-                                          Exp.fun_
-                                            Asttypes.Nolabel
+                                          Exp.function_
+                                            [
+                                              {
+                                                Parsetree.pparam_loc = Location.none;
+                                                pparam_desc =
+                                                  Parsetree.Pparam_val
+                                                    ( Asttypes.Nolabel,
+                                                      None,
+                                                      Pat.var (Location.mknoloc "v") );
+                                              };
+                                            ]
                                             None
-                                            (Pat.var (Location.mknoloc "v"))
-                                            (Exp.variant
-                                               (http_status_to_name code)
-                                               (Some
-                                                  (Exp.ident (Location.mknoloc (Gen.ident [ "v" ])))))
+                                            (Parsetree.Pfunction_body
+                                               (Exp.variant
+                                                  (http_status_to_name code)
+                                                  (Some
+                                                     (Exp.ident
+                                                        (Location.mknoloc (Gen.ident [ "v" ]))))))
                                         );
                                         ( Asttypes.Nolabel,
                                           Exp.ident
@@ -603,13 +613,22 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
                                 Exp.tuple
                                   [
                                     Exp.constant (Const.string code);
-                                    Exp.fun_
-                                      Asttypes.Nolabel
+                                    Exp.function_
+                                      [
+                                        {
+                                          Parsetree.pparam_loc = Location.none;
+                                          pparam_desc =
+                                            Parsetree.Pparam_val
+                                              ( Asttypes.Nolabel,
+                                                None,
+                                                Pat.var (Location.mknoloc "_") );
+                                        };
+                                      ]
                                       None
-                                      (Pat.var (Location.mknoloc "_"))
-                                      (Exp.construct
-                                         (Location.mknoloc (Gen.ident [ "Ok" ]))
-                                         (Some (Exp.variant (http_status_to_name code) None)));
+                                      (Parsetree.Pfunction_body
+                                         (Exp.construct
+                                            (Location.mknoloc (Gen.ident [ "Ok" ]))
+                                            (Some (Exp.variant (http_status_to_name code) None))));
                                   ])
                      |> Gen.make_list);
                  ];
@@ -681,12 +700,30 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
     let open Ast_helper in
     match op.Operation.parameters with
     | [] ->
-        Exp.fun_
-          Asttypes.Nolabel
+        Exp.function_
+          [
+            {
+              Parsetree.pparam_loc = Location.none;
+              pparam_desc =
+                Parsetree.Pparam_val
+                  ( Asttypes.Nolabel,
+                    None,
+                    Pat.construct (Location.mknoloc (Gen.ident [ "()" ])) None );
+            };
+          ]
           None
-          (Pat.construct (Location.mknoloc (Gen.ident [ "()" ])) None)
-          make_body
-    | _ -> Exp.fun_ Asttypes.Nolabel None (Pat.var (Location.mknoloc "params")) make_body
+          (Parsetree.Pfunction_body make_body)
+    | _ ->
+        Exp.function_
+          [
+            {
+              Parsetree.pparam_loc = Location.none;
+              pparam_desc =
+                Parsetree.Pparam_val (Asttypes.Nolabel, None, Pat.var (Location.mknoloc "params"));
+            };
+          ]
+          None
+          (Parsetree.Pfunction_body make_body)
   in
   let make =
     Gen.make_func
@@ -697,11 +734,31 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
              && CCOption.is_some (get_json_media_type request_body.Request_body.content) ->
           (* TODO: Handle ref that is required *)
           Ast_helper.(
-            Exp.fun_ (Asttypes.Labelled "body") None (Pat.var (Location.mknoloc "body")) make_params)
+            Exp.function_
+              [
+                {
+                  Parsetree.pparam_loc = Location.none;
+                  pparam_desc =
+                    Parsetree.Pparam_val
+                      (Asttypes.Labelled "body", None, Pat.var (Location.mknoloc "body"));
+                };
+              ]
+              None
+              (Parsetree.Pfunction_body make_params))
       | Some (Value.V request_body)
         when CCOption.is_some (get_json_media_type request_body.Request_body.content) ->
           Ast_helper.(
-            Exp.fun_ (Asttypes.Optional "body") None (Pat.var (Location.mknoloc "body")) make_params)
+            Exp.function_
+              [
+                {
+                  Parsetree.pparam_loc = Location.none;
+                  pparam_desc =
+                    Parsetree.Pparam_val
+                      (Asttypes.Optional "body", None, Pat.var (Location.mknoloc "body"));
+                };
+              ]
+              None
+              (Parsetree.Pfunction_body make_params))
       | Some (Value.Ref _) -> failwith "request body ref not supported"
       | Some (Value.V _) | None -> make_params)
   in
