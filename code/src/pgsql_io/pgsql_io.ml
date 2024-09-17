@@ -19,6 +19,7 @@ type t = {
   notice_response : (char * string) list -> unit;
   mutable expected_frames : (Pgsql_codec.Frame.Backend.t -> bool) list;
   mutable in_tx : bool;
+  mutable busy : bool;
 }
 
 let add_expected_frame t frame = t.expected_frames <- frame :: t.expected_frames
@@ -682,28 +683,33 @@ module Prepared_stmt = struct
     Typed_sql.kbind
       (fun vs ->
         let open Abbs_future_combinators.Infix_result_monad in
-        create conn sql
-        >>= fun stmt ->
-        Abbs_future_combinators.with_finally
-          (fun () ->
-            let portal = gen_unique_id conn "p" in
-            let bind_frame =
-              Pgsql_codec.Frame.Frontend.(
-                Bind
-                  {
-                    portal;
-                    stmt = stmt.id;
-                    format_codes = [];
-                    values = vs;
-                    result_format_codes = [];
-                  })
-            in
-            Io.send_frame conn bind_frame
-            >>= fun () ->
-            add_expected_frame conn Pgsql_codec.Frame.Backend.(equal BindComplete);
-            let cursor = Cursor.make conn (Row_func.ignore sql) portal in
-            Cursor.execute cursor)
-          ~finally:(fun () -> Abbs_future_combinators.ignore (destroy stmt)))
+        if not conn.busy then (
+          conn.busy <- true;
+          create conn sql
+          >>= fun stmt ->
+          Abbs_future_combinators.with_finally
+            (fun () ->
+              let portal = gen_unique_id conn "p" in
+              let bind_frame =
+                Pgsql_codec.Frame.Frontend.(
+                  Bind
+                    {
+                      portal;
+                      stmt = stmt.id;
+                      format_codes = [];
+                      values = vs;
+                      result_format_codes = [];
+                    })
+              in
+              Io.send_frame conn bind_frame
+              >>= fun () ->
+              add_expected_frame conn Pgsql_codec.Frame.Backend.(equal BindComplete);
+              let cursor = Cursor.make conn (Row_func.ignore sql) portal in
+              Cursor.execute cursor)
+            ~finally:(fun () ->
+              conn.busy <- false;
+              Abbs_future_combinators.ignore (destroy stmt)))
+        else raise (Failure "SQL connection busy"))
       sql
 
   let bind_execute t =
@@ -726,28 +732,33 @@ module Prepared_stmt = struct
     Typed_sql.kbind
       (fun vs ->
         let open Abbs_future_combinators.Infix_result_monad in
-        create conn sql
-        >>= fun stmt ->
-        Abbs_future_combinators.with_finally
-          (fun () ->
-            let portal = gen_unique_id conn "p" in
-            let bind_frame =
-              Pgsql_codec.Frame.Frontend.(
-                Bind
-                  {
-                    portal;
-                    stmt = stmt.id;
-                    format_codes = [];
-                    values = vs;
-                    result_format_codes = [];
-                  })
-            in
-            Io.send_frame conn bind_frame
-            >>= fun () ->
-            add_expected_frame conn Pgsql_codec.Frame.Backend.(equal BindComplete);
-            let cursor = Cursor.make conn (Row_func.map sql ~f) portal in
-            Cursor.fetch cursor)
-          ~finally:(fun () -> Abbs_future_combinators.ignore (destroy stmt)))
+        if not conn.busy then (
+          conn.busy <- true;
+          create conn sql
+          >>= fun stmt ->
+          Abbs_future_combinators.with_finally
+            (fun () ->
+              let portal = gen_unique_id conn "p" in
+              let bind_frame =
+                Pgsql_codec.Frame.Frontend.(
+                  Bind
+                    {
+                      portal;
+                      stmt = stmt.id;
+                      format_codes = [];
+                      values = vs;
+                      result_format_codes = [];
+                    })
+              in
+              Io.send_frame conn bind_frame
+              >>= fun () ->
+              add_expected_frame conn Pgsql_codec.Frame.Backend.(equal BindComplete);
+              let cursor = Cursor.make conn (Row_func.map sql ~f) portal in
+              Cursor.fetch cursor)
+            ~finally:(fun () ->
+              conn.busy <- false;
+              Abbs_future_combinators.ignore (destroy stmt)))
+        else raise (Failure "SQL connection busy"))
       sql
 
   let kbind :
@@ -872,6 +883,7 @@ and create_sm_perform_login r w ?passwd ~notice_response ~user database =
       notice_response;
       expected_frames = [];
       in_tx = false;
+      busy = false;
     }
   in
   let msgs = [ ("user", user); ("database", database) ] in
