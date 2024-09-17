@@ -787,13 +787,7 @@ let of_version_1_apply_requirements_checks =
           >>= fun merge_conflicts ->
           map_opt get_apply_requirements_checks_status_checks status_checks
           >>= fun status_checks ->
-          Ok
-            (Ar.Check.make
-               ~tag_query:Terrat_tag_query.any
-               ?approved
-               ?merge_conflicts
-               ?status_checks
-               ()))
+          Ok (Ar.Check.make ~tag_query ?approved ?merge_conflicts ?status_checks ()))
         checks
 
 let of_version_1_file_patterns fp = CCResult.map_l File_pattern.make fp
