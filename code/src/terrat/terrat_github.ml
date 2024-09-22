@@ -647,6 +647,7 @@ module Commit_status = struct
   end
 
   let create ~owner ~repo ~sha ~creates client =
+    let max_parallel = 5 in
     let open Abb.Future.Infix_monad in
     Abbs_future_combinators.List.map_par
       ~f:(fun creates ->
@@ -663,7 +664,7 @@ module Commit_status = struct
                   Parameters.(make ~owner ~repo ~sha))
             >>= fun _ -> Abb.Future.return (Ok ()))
           creates)
-      (CCList.chunks 50 creates)
+      (CCList.chunks (CCInt.max 1 (CCList.length creates / max_parallel)) creates)
     >>= fun res ->
     match CCResult.flatten_l res with
     | Ok _ -> Abb.Future.return (Ok ())
