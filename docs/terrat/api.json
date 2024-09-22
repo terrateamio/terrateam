@@ -242,14 +242,7 @@
             "type": "string"
           },
           "run_type": {
-            "enum": [
-              "apply",
-              "autoapply",
-              "autoplan",
-              "plan",
-              "unsafe-apply"
-            ],
-            "type": "string"
+            "$ref": "#/components/schemas/run-type"
           },
           "state": {
             "$ref": "#/components/schemas/work-manifest-state"
@@ -337,7 +330,6 @@
           "ref",
           "repo",
           "repository",
-          "run_type",
           "state",
           "tag_query"
         ],
@@ -395,14 +387,7 @@
             "type": "string"
           },
           "run_type": {
-            "enum": [
-              "apply",
-              "autoapply",
-              "autoplan",
-              "plan",
-              "unsafe-apply"
-            ],
-            "type": "string"
+            "$ref": "#/components/schemas/run-type"
           },
           "state": {
             "$ref": "#/components/schemas/work-manifest-state"
@@ -568,6 +553,15 @@
         ],
         "type": "object"
       },
+      "run-type": {
+        "enum": [
+          "apply",
+          "build-config",
+          "index",
+          "plan"
+        ],
+        "type": "string"
+      },
       "server-config": {
         "additionalProperties": false,
         "properties": {
@@ -659,6 +653,9 @@
             "$ref": "#/components/schemas/work-manifest-unsafe-apply"
           },
           {
+            "$ref": "#/components/schemas/work-manifest-build-config"
+          },
+          {
             "$ref": "#/components/schemas/work-manifest-done"
           }
         ]
@@ -696,6 +693,65 @@
           "run_kind",
           "token",
           "type"
+        ],
+        "type": "object"
+      },
+      "work-manifest-build-config": {
+        "additionalProperties": false,
+        "properties": {
+          "base_ref": {
+            "type": "string"
+          },
+          "config": {
+            "type": null
+          },
+          "token": {
+            "type": "string"
+          },
+          "type": {
+            "const": "build-config",
+            "type": "string"
+          }
+        },
+        "required": [
+          "base_ref",
+          "config",
+          "token",
+          "type"
+        ],
+        "type": "object"
+      },
+      "work-manifest-build-config-result": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/work-manifest-build-config-result-success"
+          },
+          {
+            "$ref": "#/components/schemas/work-manifest-build-config-result-failure"
+          }
+        ]
+      },
+      "work-manifest-build-config-result-failure": {
+        "additionalProperties": false,
+        "properties": {
+          "msg": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msg"
+        ],
+        "type": "object"
+      },
+      "work-manifest-build-config-result-success": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "type": null
+          }
+        },
+        "required": [
+          "config"
         ],
         "type": "object"
       },
@@ -961,6 +1017,9 @@
         "oneOf": [
           {
             "$ref": "#/components/schemas/work-manifest-index-result"
+          },
+          {
+            "$ref": "#/components/schemas/work-manifest-build-config-result"
           },
           {
             "$ref": "#/components/schemas/work-manifest-tf-operation-result"
@@ -1570,11 +1629,7 @@
                             "type": "string"
                           },
                           "run_type": {
-                            "enum": [
-                              "plan",
-                              "apply"
-                            ],
-                            "type": "string"
+                            "$ref": "#/components/schemas/run-type"
                           },
                           "state": {
                             "type": "string"

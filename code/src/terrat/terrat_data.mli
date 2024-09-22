@@ -10,6 +10,8 @@ module String_map : sig
   val show : (Format.formatter -> 'a -> unit) -> 'a t -> string
 end
 
+module String_set : module type of CCSet.Make (CCString)
+
 module Dirspace_map : sig
   include module type of CCMap.Make (Terrat_dirspace)
 
@@ -21,3 +23,5 @@ module Dirspace_map : sig
   val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
   val show : (Format.formatter -> 'a -> unit) -> 'a t -> string
 end
+
+module Dirspace_set : module type of CCSet.Make (Terrat_dirspace)

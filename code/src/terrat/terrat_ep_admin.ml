@@ -24,7 +24,7 @@ module Drift = struct
           // (* owner *) Ret.text
           // (* name *) Ret.text
           // (* state *) Ret.text
-          // (* run_type *) Ret.ud' Terrat_work_manifest2.Run_type.of_string
+          // (* run_type *) Ret.ud' Terrat_work_manifest3.Step.of_string
           // (* created_at *) Ret.text
           // (* completed_at *) Ret.(option text)
           // (* unlocked *) Ret.boolean
@@ -38,7 +38,7 @@ module Drift = struct
         owner;
         name;
         state;
-        run_type = Terrat_work_manifest2.Unified_run_type.(to_string (of_run_type run_type));
+        run_type = Terrat_work_manifest3.Step.to_string run_type;
         created_at;
         completed_at;
         unlocked;

@@ -33,8 +33,8 @@ module Work_manifests = struct
         // (* completed_at *) Ret.(option text)
         // (* created_at *) Ret.text
         // (* hash *) Ret.text
-        // (* run_type *) Ret.ud' Terrat_work_manifest2.Run_type.of_string
-        // (* state *) Ret.ud' Terrat_work_manifest2.State.of_string
+        // (* run_type *) Ret.ud' Terrat_work_manifest3.Step.of_string
+        // (* state *) Ret.ud' Terrat_work_manifest3.State.of_string
         // (* tag_query *) Ret.ud' CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
         // (* repository *) Ret.bigint
         // (* pull_number *) Ret.(option bigint)
@@ -337,8 +337,8 @@ module Work_manifests = struct
                           ref_;
                           repo;
                           repository = CCInt64.to_int repository;
-                          run_type = Terrat_work_manifest2.Run_type.to_string run_type;
-                          state = Terrat_work_manifest2.State.to_string state;
+                          run_type = Terrat_work_manifest3.Step.to_string run_type;
+                          state = Terrat_work_manifest3.State.to_string state;
                           run_id;
                           environment;
                         }
@@ -358,8 +358,8 @@ module Work_manifests = struct
                           ref_;
                           repo;
                           repository = CCInt64.to_int repository;
-                          run_type = Terrat_work_manifest2.Run_type.to_string run_type;
-                          state = Terrat_work_manifest2.State.to_string state;
+                          run_type = Terrat_work_manifest3.Step.to_string run_type;
+                          state = Terrat_work_manifest3.State.to_string state;
                           tag_query = Terrat_tag_query.to_string tag_query;
                           user;
                           run_id;
@@ -381,7 +381,7 @@ module Work_manifests = struct
                           ref_;
                           repo;
                           repository = CCInt64.to_int repository;
-                          state = Terrat_work_manifest2.State.to_string state;
+                          state = Terrat_work_manifest3.State.to_string state;
                           user;
                           run_id;
                         }

@@ -223,6 +223,19 @@
       },
       "type": "object"
     },
+    "config-builder": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        },
+        "script": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "custom-tags": {
       "additionalProperties": false,
       "properties": {
@@ -855,6 +868,9 @@
             "checkout"
           ],
           "type": "string"
+        },
+        "config_builder": {
+          "$ref": "#/definitions/config-builder"
         },
         "cost_estimation": {
           "additionalProperties": false,

@@ -328,31 +328,48 @@ module Gen = struct
                (make_list
                @@ CCList.map
                     (fun (v, conversion) ->
-                      Ast_helper.Exp.fun_
-                        Asttypes.Nolabel
+                      Ast_helper.Exp.function_
+                        [
+                          {
+                            Parsetree.pparam_loc = Location.none;
+                            pparam_desc =
+                              Parsetree.Pparam_val
+                                (Asttypes.Nolabel, None, Ast_helper.Pat.var (Location.mknoloc "v"));
+                          };
+                        ]
                         None
-                        (Ast_helper.Pat.var (Location.mknoloc "v"))
-                        (Ast_helper.Exp.apply
-                           (Ast_helper.Exp.ident (Location.mknoloc (ident [ "map" ])))
-                           [
-                             ( Asttypes.Nolabel,
-                               Ast_helper.Exp.fun_
-                                 Asttypes.Nolabel
-                                 None
-                                 (Ast_helper.Pat.var (Location.mknoloc "v"))
-                                 (Ast_helper.Exp.construct
-                                    (Location.mknoloc (ident [ v ]))
-                                    (Some (Ast_helper.Exp.ident (Location.mknoloc (ident [ "v" ])))))
-                             );
-                             ( Asttypes.Nolabel,
-                               Ast_helper.Exp.apply
-                                 (Ast_helper.Exp.ident
-                                    (Location.mknoloc (ident (conversion @ [ "of_yojson" ]))))
-                                 [
-                                   ( Asttypes.Nolabel,
-                                     Ast_helper.Exp.ident (Location.mknoloc (ident [ "v" ])) );
-                                 ] );
-                           ]))
+                        (Parsetree.Pfunction_body
+                           (Ast_helper.Exp.apply
+                              (Ast_helper.Exp.ident (Location.mknoloc (ident [ "map" ])))
+                              [
+                                ( Asttypes.Nolabel,
+                                  Ast_helper.Exp.function_
+                                    [
+                                      {
+                                        Parsetree.pparam_loc = Location.none;
+                                        pparam_desc =
+                                          Parsetree.Pparam_val
+                                            ( Asttypes.Nolabel,
+                                              None,
+                                              Ast_helper.Pat.var (Location.mknoloc "v") );
+                                      };
+                                    ]
+                                    None
+                                    (Parsetree.Pfunction_body
+                                       (Ast_helper.Exp.construct
+                                          (Location.mknoloc (ident [ v ]))
+                                          (Some
+                                             (Ast_helper.Exp.ident
+                                                (Location.mknoloc (ident [ "v" ])))))) );
+                                ( Asttypes.Nolabel,
+                                  Ast_helper.Exp.apply
+                                    (Ast_helper.Exp.ident
+                                       (Location.mknoloc (ident (conversion @ [ "of_yojson" ]))))
+                                    [
+                                      ( Asttypes.Nolabel,
+                                        Ast_helper.Exp.ident (Location.mknoloc (ident [ "v" ])) );
+                                    ] );
+                              ])))
                     variant_names) );
          ])
 
@@ -371,34 +388,52 @@ module Gen = struct
     in
     make_func
       (make_yojson_func_name type_name "to_yojson")
-      (Ast_helper.Exp.function_ (f variant_names))
+      (Ast_helper.Exp.function_
+         []
+         None
+         (Parsetree.Pfunction_cases (f variant_names, Location.none, [])))
 
   let make_all_of_of_yojson_func type_name =
     let open Ast_helper in
     make_func
       (make_yojson_func_name type_name "of_yojson")
-      (Exp.fun_
-         Asttypes.Nolabel
+      (Exp.function_
+         [
+           {
+             Parsetree.pparam_loc = Location.none;
+             pparam_desc =
+               Parsetree.Pparam_val (Asttypes.Nolabel, None, Pat.var (Location.mknoloc "json"));
+           };
+         ]
          None
-         (Pat.var (Location.mknoloc "json"))
-         (Exp.open_
-            (Opn.mk (Mod.ident (Location.mknoloc (ident [ "CCResult" ]))))
-            (Exp.apply
-               (Exp.ident (Location.mknoloc (ident [ "flat_map" ])))
-               [
-                 ( Asttypes.Nolabel,
-                   Exp.fun_
-                     Asttypes.Nolabel
-                     None
-                     (Pat.var (Location.mknoloc "_"))
-                     (Exp.apply
-                        (Exp.ident (Location.mknoloc (ident [ "T"; "of_yojson" ])))
-                        [ (Asttypes.Nolabel, Exp.ident (Location.mknoloc (ident [ "json" ]))) ]) );
-                 ( Asttypes.Nolabel,
-                   Exp.apply
-                     (Exp.ident (Location.mknoloc (ident [ "All_of"; "of_yojson" ])))
-                     [ (Asttypes.Nolabel, Exp.ident (Location.mknoloc (ident [ "json" ]))) ] );
-               ])))
+         (Parsetree.Pfunction_body
+            (Exp.open_
+               (Opn.mk (Mod.ident (Location.mknoloc (ident [ "CCResult" ]))))
+               (Exp.apply
+                  (Exp.ident (Location.mknoloc (ident [ "flat_map" ])))
+                  [
+                    ( Asttypes.Nolabel,
+                      Exp.function_
+                        [
+                          {
+                            Parsetree.pparam_loc = Location.none;
+                            pparam_desc =
+                              Parsetree.Pparam_val
+                                (Asttypes.Nolabel, None, Pat.var (Location.mknoloc "_"));
+                          };
+                        ]
+                        None
+                        (Parsetree.Pfunction_body
+                           (Exp.apply
+                              (Exp.ident (Location.mknoloc (ident [ "T"; "of_yojson" ])))
+                              [
+                                (Asttypes.Nolabel, Exp.ident (Location.mknoloc (ident [ "json" ])));
+                              ])) );
+                    ( Asttypes.Nolabel,
+                      Exp.apply
+                        (Exp.ident (Location.mknoloc (ident [ "All_of"; "of_yojson" ])))
+                        [ (Asttypes.Nolabel, Exp.ident (Location.mknoloc (ident [ "json" ]))) ] );
+                  ]))))
 end
 
 module Type_idx = struct
@@ -567,7 +602,11 @@ let rec convert_str_schema (config : Config.t) =
       [
         Gen.make_func
           of_yojson_name
-          Ast_helper.(Exp.function_ (f (Yojson.Safe.Util.filter_string enum)));
+          Ast_helper.(
+            Exp.function_
+              []
+              None
+              (Parsetree.Pfunction_cases (f (Yojson.Safe.Util.filter_string enum), Location.none, [])));
         Gen.(
           make_str_type
             ~attrs:(Config.prim_type_attrs config)

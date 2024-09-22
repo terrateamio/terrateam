@@ -19,49 +19,31 @@ module State = struct
     | _ -> None
 end
 
-module Kind = struct
-  type ('pr, 'd, 'idx) t =
-    | Pull_request of 'pr
-    | Drift of 'd
-    | Index of 'idx
-end
-
-module Run_type = struct
+module Step = struct
   type t =
-    | Autoplan
-    | Autoapply
-    | Plan
     | Apply
+    | Build_config
+    | Index
+    | Plan
     | Unsafe_apply
 
   let to_string = function
-    | Autoplan -> "autoplan"
-    | Plan -> "plan"
-    | Autoapply -> "autoapply"
     | Apply -> "apply"
+    | Build_config -> "build-config"
+    | Index -> "index"
+    | Plan -> "plan"
     | Unsafe_apply -> "unsafe-apply"
 
   let of_string = function
-    | "autoplan" -> Some Autoplan
-    | "plan" -> Some Plan
-    | "autoapply" -> Some Autoapply
     | "apply" -> Some Apply
+    | "build-config" -> Some Build_config
+    | "index" -> Some Index
+    | "plan" -> Some Plan
     | "unsafe-apply" -> Some Unsafe_apply
+    (* Legacy conversions *)
+    | "autoplan" -> Some Plan
+    | "autoapply" -> Some Apply
     | _ -> None
-end
-
-module Unified_run_type = struct
-  type t =
-    | Plan
-    | Apply
-
-  let of_run_type = function
-    | Run_type.(Autoplan | Plan) -> Plan
-    | Run_type.(Autoapply | Apply | Unsafe_apply) -> Apply
-
-  let to_string = function
-    | Plan -> "plan"
-    | Apply -> "apply"
 end
 
 module Deny = struct
@@ -71,41 +53,54 @@ module Deny = struct
   }
 end
 
-type ('id, 'created_at, 'run_id, 'state, 'changes, 'denied_dirspaces, 'src, 'run_type) t = {
-  base_hash : string;
+module Initiator = struct
+  type t =
+    | User of string
+    | System
+end
+
+type ('account, 'id, 'created_at, 'run_id, 'state, 'changes, 'denied_dirspaces, 'target) t = {
+  account : 'account;
+  base_ref : string;
+  branch_ref : string;
   changes : 'changes;
   completed_at : string option;
   created_at : 'created_at;
   denied_dirspaces : 'denied_dirspaces;
   environment : string option;
-  hash : string;
   id : 'id;
+  initiator : Initiator.t;
   run_id : 'run_id;
-  run_type : 'run_type;
-  src : 'src;
   state : 'state;
+  steps : Step.t list;
   tag_query : Terrat_tag_query.t;
-  user : string option;
+  target : 'target;
 }
 
 module New = struct
-  type nonrec 'src t =
-    (unit, unit, unit, unit, int Terrat_change.Dirspaceflow.t list, Deny.t list, 'src, Run_type.t) t
+  (** A new work manifest has no id, create time, run id, or state *)
+  type nonrec ('account, 'target) t =
+    ( 'account,
+      unit,
+      unit,
+      unit,
+      unit,
+      int Terrat_change.Dirspaceflow.t list,
+      Deny.t list,
+      'target )
+    t
 end
 
 module Existing = struct
-  type nonrec 'src t =
-    ( Uuidm.t,
+  (** An existing work manifest has all of the fillings *)
+  type nonrec ('account, 'target) t =
+    ( 'account,
+      Uuidm.t,
       string,
       string option,
       State.t,
       int Terrat_change.Dirspaceflow.t list,
       Deny.t list,
-      'src,
-      Run_type.t )
+      'target )
     t
-end
-
-module Existing_lite = struct
-  type nonrec 'src t = (Uuidm.t, string, string option, State.t, unit, unit, 'src, Run_type.t) t
 end

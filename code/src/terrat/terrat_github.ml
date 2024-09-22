@@ -492,13 +492,11 @@ let rec get_tree ~owner ~repo ~sha client =
       >>= fun resp ->
       match Openapi.Response.value resp with
       | `OK tree -> (
-          let
+          let open Abb.Future.Infix_monad in
           (* In the case that the response is truncated, we need to preform
              the recursive calls ourselves.  We will do that in parallel, with
              maximum number of concurrent lookups per level being
              [max_get_tree_chunks]. *)
-          open
-            Abb.Future.Infix_monad in
           let num_items = CCList.length Githubc2_components_git_tree.(tree.primary.Primary.tree) in
           let num_per_chunk =
             match num_items / max_get_tree_chunks with
@@ -554,9 +552,11 @@ let rec get_tree ~owner ~repo ~sha client =
       let tree = Githubc2_components_git_tree.(tree.primary.Primary.tree) in
       let files =
         tree
-        |> CCList.map (fun item ->
+        |> CCList.filter_map (fun item ->
                let module Items = Githubc2_components_git_tree.Primary.Tree.Items in
-               CCOption.get_exn_or "git_tree_item_path" item.Items.primary.Items.Primary.path)
+               match item.Items.primary.Items.Primary.type_ with
+               | Some "blob" -> item.Items.primary.Items.Primary.path
+               | _ -> None)
       in
       Abb.Future.return (Ok files)
   | `Not_found _ as err -> Abb.Future.return (Error err)
@@ -647,6 +647,7 @@ module Commit_status = struct
   end
 
   let create ~owner ~repo ~sha ~creates client =
+    let max_parallel = 5 in
     let open Abb.Future.Infix_monad in
     Abbs_future_combinators.List.map_par
       ~f:(fun creates ->
@@ -663,7 +664,7 @@ module Commit_status = struct
                   Parameters.(make ~owner ~repo ~sha))
             >>= fun _ -> Abb.Future.return (Ok ()))
           creates)
-      (CCList.chunks 50 creates)
+      (CCList.chunks (CCInt.max 1 (CCList.length creates / max_parallel)) creates)
     >>= fun res ->
     match CCResult.flatten_l res with
     | Ok _ -> Abb.Future.return (Ok ())

@@ -17,9 +17,9 @@ terrat: release_terrat_cli debug_terrat_cli
 
 terrat: release_terrat_ui debug_terrat_ui
 
-terrat: test-debug_abb_fut test-debug_abb_future_combinators
+terrat: test-debug_abb_fut test-debug_abb_future_combinators test-release_abb_flow
 
-terrat: test-release_terrat test-debug_terrat_github_webhooks test-release_terrat_github_webhooks
+terrat: test-release_terrat test-release_terrat_github_webhooks
 
 terrat: release_terrat_code_indexer debug_terrat_code_indexer
 
@@ -41,7 +41,7 @@ terrat-webhooks: release_json_schema_hooks_cli
 github-api: release_openapi_cli
 	rm -rf src/githubc2
 	mkdir -p src/githubc2
-	env OCAMLRUNPARAM=b ./build/release/openapi_cli/openapi_cli.native convert --input ../docs/github_api/api.github.com.json --name "githubc2" --output-dir ./src/githubc2/
+	env OCAMLRUNPARAM=b ./build/release/openapi_cli/openapi_cli.native convert --non-strict-records --input ../docs/github_api/api.github.com.json --name "githubc2" --output-dir ./src/githubc2/
 	find src/githubc2/ -type f -exec ocamlformat -i '{}' \;
 
 -include pds.mk

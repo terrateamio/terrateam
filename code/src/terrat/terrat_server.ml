@@ -129,21 +129,21 @@ let rtng config storage =
           (* Work manifests *)
           ( `POST,
             Rt.github_work_manifest_plan ()
-            --> Terrat_ep_github_work_manifest2.Plans.post config storage );
+            --> Terrat_ep_github_work_manifest3.Plans.post config storage );
           ( `GET,
             Rt.github_get_work_manifest_plan ()
-            --> Terrat_ep_github_work_manifest2.Plans.get config storage );
+            --> Terrat_ep_github_work_manifest3.Plans.get config storage );
           ( `PUT,
             Rt.github_work_manifest_results ()
-            --> Terrat_ep_github_work_manifest2.Results.put config storage );
+            --> Terrat_ep_github_work_manifest3.Results.put config storage );
           ( `POST,
             Rt.github_work_manifest_initiate ()
-            --> Terrat_ep_github_work_manifest2.Initiate.post config storage );
+            --> Terrat_ep_github_work_manifest3.Initiate.post config storage );
           ( `POST,
             Rt.github_work_manifest_access_token ()
-            --> Terrat_ep_github_work_manifest2.Access_token.post config storage );
+            --> Terrat_ep_github_work_manifest3.Access_token.post config storage );
           (* Github *)
-          (`POST, Rt.github_events () --> Terrat_ep_github_events2.post config storage);
+          (`POST, Rt.github_events () --> Terrat_ep_github_events3.post config storage);
           (`GET, Rt.github_callback () --> Terrat_ep_github_callback.get config storage);
           (`GET, Rt.github_client_id () --> Terrat_ep_github_client_id.get config storage);
           (* User *)
@@ -206,17 +206,18 @@ let run config storage =
   Logs.info (fun m -> m "Starting server");
   start_telemetry config
   >>= fun () ->
-  Abb.Future.fork
-    Terrat_github_evaluator2.Runner.(eval (make ~config ~request_id:"STARTUP" ~storage ()))
+  Abb.Future.fork (Terrat_github_evaluator3.Service.flow_state_cleanup config storage)
   >>= fun _ ->
-  Abb.Future.fork (Terrat_github_drift_service.start config storage)
+  Abb.Future.fork (Terrat_github_evaluator3.Service.plan_cleanup config storage)
   >>= fun _ ->
-  Abb.Future.fork (Terrat_github_plan_cleanup2.start storage)
+  Abb.Future.fork (Terrat_github_evaluator3.Service.drift config storage)
+  >>= fun _ ->
+  Abb.Future.fork (Terrat_github_evaluator3.Service.repo_config_cleanup config storage)
   >>= fun _ ->
   Abb.Future.fork
     (match Terrat_config.nginx_status_uri config with
     | Some uri ->
-        Logs.debug (fun m -> m "Starting nginx metrics: %s" (Uri.to_string uri));
+        Logs.info (fun m -> m "Starting nginx metrics: %s" (Uri.to_string uri));
         Terrat_nginx_metrics.start uri
     | None -> Abb.Future.return ())
   >>= fun _ ->

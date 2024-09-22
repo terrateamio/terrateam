@@ -17,3 +17,4 @@ type err =
 [@@deriving show]
 
 val parse : string -> (t, [> err ]) result
+val to_string : t -> string

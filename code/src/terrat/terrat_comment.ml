@@ -48,3 +48,15 @@ let parse s =
   | Some ("index", _) -> Ok Index
   | Some (action, rest) -> Error (`Unknown_action action)
   | None -> Error `Not_terrateam
+
+let to_string = function
+  | Plan { tag_query } -> "terrateam plan " ^ Terrat_tag_query.to_string tag_query
+  | Apply { tag_query } -> "terrateam apply " ^ Terrat_tag_query.to_string tag_query
+  | Apply_autoapprove { tag_query } ->
+      "terrateam apply-autoapprove " ^ Terrat_tag_query.to_string tag_query
+  | Apply_force { tag_query } -> "terrateam apply-force " ^ Terrat_tag_query.to_string tag_query
+  | Unlock ids -> "terrateam unlock " ^ CCString.concat " " ids
+  | Help -> "terrateam help"
+  | Feedback feedback -> "terrateam feedback " ^ feedback
+  | Repo_config -> "terrateam repo-config"
+  | Index -> "terrateam index"

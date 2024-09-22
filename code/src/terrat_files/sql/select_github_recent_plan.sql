@@ -27,6 +27,7 @@ recent_completed_work_manifest as (
           and gwmr.workspace = $workspace
           and ((wm.pull_number is not null and wm.pull_number = gwm.pull_number)
                or (wm.pull_number is null and gdwm.work_manifest is not null))
+          and completed_at is not null
     order by gwm.completed_at desc
     limit 1
 )

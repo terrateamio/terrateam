@@ -1,25 +1,4 @@
-type synthesize_config_err =
-  [ `Bad_glob_err of string
-  | `Depends_on_cycle_err of Terrat_dirspace.t list
-  ]
-[@@deriving show]
-
-module Ctx : sig
-  type t
-
-  val make : dest_branch:string -> branch:string -> unit -> t
-end
-
-module Index : sig
-  module Dep : sig
-    type t = Module of string
-  end
-
-  type t
-
-  val empty : t
-  val make : symlinks:(string * string) list -> (string * Dep.t list) list -> t
-end
+type synthesize_config_err = [ `Depends_on_cycle_err of Terrat_dirspace.t list ] [@@deriving show]
 
 module Dirspace_config : sig
   type t = {
@@ -36,10 +15,8 @@ module Config : sig
 end
 
 val synthesize_config :
-  ctx:Ctx.t ->
-  index:Index.t ->
-  file_list:string list ->
-  Terrat_base_repo_config_v1.t ->
+  index:Terrat_base_repo_config_v1.Index.t ->
+  Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t ->
   (Config.t, [> synthesize_config_err ]) result
 
 (** Given a config and a diff, find all dirspace configs that match the diff and

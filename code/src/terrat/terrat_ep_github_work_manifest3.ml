@@ -1,27 +1,4 @@
-module String_map = CCMap.Make (CCString)
-module Dirspace_map = CCMap.Make (Terrat_change.Dirspace)
-
-module Metrics = struct
-  let namespace = "terrat"
-  let subsystem = "ep_github_work_manifest"
-
-  module Run_output_histogram = Prmths.Histogram (struct
-    let spec =
-      Prmths.Histogram_spec.of_list [ 500.0; 1000.0; 2500.0; 10000.0; 20000.0; 35000.0; 65000.0 ]
-  end)
-
-  module Plan_histogram = Prmths.Histogram (struct
-    let spec = Prmths.Histogram_spec.of_list [ 1000.0; 10000.0; 100000.0; 1000000.0; 1000000.0 ]
-  end)
-
-  module Work_manifest_run_time_histogram = Prmths.Histogram (struct
-    let spec = Prmths.Histogram_spec.of_exponential 20.0 1.5 10
-  end)
-
-  let plan_chars =
-    let help = "Size of plans" in
-    Plan_histogram.v ~help ~namespace ~subsystem "plan_chars"
-end
+let response_headers = Cohttp.Header.of_list [ ("content-type", "application/json") ]
 
 module Sql = struct
   let select_encryption_key () =
@@ -33,12 +10,10 @@ module Sql = struct
       /^ "select encode(data, 'hex') from encryption_keys order by rank limit 1")
 end
 
-let response_headers = Cohttp.Header.of_list [ ("content-type", "application/json") ]
-
 module Initiate = struct
   module I = Terrat_api_components_work_manifest_initiate
 
-  let post' config storage work_manifest_id { I.run_id; sha = branch_ref } ctx =
+  let post' config storage work_manifest_id initiate ctx =
     let open Abbs_future_combinators.Infix_result_monad in
     Pgsql_pool.with_conn storage ~f:(fun db ->
         Pgsql_io.Prepared_stmt.fetch db (Sql.select_encryption_key ()) ~f:CCFun.id)
@@ -46,26 +21,18 @@ module Initiate = struct
     | [] -> assert false
     | encryption_key :: _ ->
         let request_id = Brtl_ctx.token ctx in
-        Terrat_github_evaluator2.Event.Initiate.(
-          eval
-            (make
-               ~branch_ref:(Terrat_github_evaluator2.Ref.of_string branch_ref)
-               ~config
-               ~encryption_key
-               ~request_id
-               ~run_id
-               ~storage
-               ~work_manifest_id
-               ()))
-        >>= fun r ->
-        Terrat_github_evaluator2.Runner.(eval (make ~config ~request_id ~storage ()))
-        >>= fun () -> Abb.Future.return (Ok r)
+        Terrat_github_evaluator3.work_manifest_initiate
+          ~ctx:(Terrat_evaluator3.Ctx.make ~request_id ~config ~storage ())
+          ~encryption_key
+          work_manifest_id
+          initiate
+        >>= fun r -> Abb.Future.return (Ok r)
 
   let post config storage work_manifest_id initiate ctx =
     let open Abb.Future.Infix_monad in
     post' config storage work_manifest_id initiate ctx
     >>= function
-    | Ok response ->
+    | Ok (Some response) ->
         let body =
           response
           |> Terrat_api_work_manifest.Initiate.Responses.OK.to_yojson
@@ -73,6 +40,11 @@ module Initiate = struct
         in
         Abb.Future.return
           (Brtl_ctx.set_response (Brtl_rspnc.create ~headers:response_headers ~status:`OK body) ctx)
+    | Ok None ->
+        Abb.Future.return
+          (Brtl_ctx.set_response
+             (Brtl_rspnc.create ~headers:response_headers ~status:`Not_found "")
+             ctx)
     | Error (#Pgsql_pool.err as err) ->
         Logs.err (fun m ->
             m
@@ -97,25 +69,13 @@ module Initiate = struct
 end
 
 module Plans = struct
-  module Pc = Terrat_api_components.Plan_create
-
-  let post config storage work_manifest_id { Pc.path; workspace; plan_data; has_changes } ctx =
+  let post config storage work_manifest_id plan ctx =
     let open Abb.Future.Infix_monad in
     let request_id = Brtl_ctx.token ctx in
-    let plan = Base64.decode_exn plan_data in
-    Metrics.Plan_histogram.observe Metrics.plan_chars (CCFloat.of_int (CCString.length plan));
-    Terrat_github_evaluator2.Event.Plan_set.(
-      eval
-        (make
-           ~config
-           ~data:plan
-           ~dir:path
-           ~has_changes
-           ~request_id
-           ~storage
-           ~work_manifest_id
-           ~workspace
-           ()))
+    Terrat_github_evaluator3.plan_store
+      ~ctx:(Terrat_evaluator3.Ctx.make ~request_id ~config ~storage ())
+      work_manifest_id
+      plan
     >>= function
     | Ok () -> Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
     | Error `Error ->
@@ -125,13 +85,14 @@ module Plans = struct
   let get config storage work_manifest_id dir workspace ctx =
     let open Abb.Future.Infix_monad in
     let request_id = Brtl_ctx.token ctx in
-    Terrat_github_evaluator2.Event.Plan_get.(
-      eval (make ~config ~dir ~request_id ~storage ~work_manifest_id ~workspace ()))
+    Terrat_github_evaluator3.plan_fetch
+      ~ctx:(Terrat_evaluator3.Ctx.make ~request_id ~config ~storage ())
+      work_manifest_id
+      { Terrat_dirspace.dir; workspace }
     >>= function
     | Ok (Some data) ->
         let response =
-          Terrat_api_work_manifest.Plan_get.Responses.OK.(
-            { data = Base64.encode_exn data } |> to_yojson)
+          Terrat_api_work_manifest.Plan_get.Responses.OK.({ data } |> to_yojson)
           |> Yojson.Safe.to_string
         in
         Abb.Future.return
@@ -149,11 +110,11 @@ module Results = struct
   let put config storage work_manifest_id result ctx =
     let open Abb.Future.Infix_monad in
     let request_id = Brtl_ctx.token ctx in
-    Terrat_github_evaluator2.Event.Result.(
-      eval (make ~config ~request_id ~result ~storage ~work_manifest_id ()))
+    Terrat_github_evaluator3.work_manifest_result
+      ~ctx:(Terrat_evaluator3.Ctx.make ~request_id ~config ~storage ())
+      work_manifest_id
+      result
     >>= fun r ->
-    Terrat_github_evaluator2.Runner.(eval (make ~config ~request_id ~storage ()))
-    >>= fun _ ->
     match r with
     | Ok () -> Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
     | Error `Error ->

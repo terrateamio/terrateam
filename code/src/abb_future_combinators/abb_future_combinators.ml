@@ -208,6 +208,13 @@ module Make (Fut : Abb_intf.Future.S) = struct
       start := step !start;
       f start' v
 
+  let of_exn exn =
+    let open Fut.Infix_monad in
+    let p = Fut.Promise.create () in
+    Fut.Promise.set_exn p (exn, None) >>= fun () -> Fut.Promise.future p
+
+  let guard f = try f () with exn -> of_exn exn
+
   module Infix_result_monad = struct
     type ('a, 'b) t = ('a, 'b) result Fut.t
 

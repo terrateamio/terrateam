@@ -379,7 +379,7 @@ let request_param_of_op_params components param_in params =
    [Openapi.Request] value.
 
    We will convert [parameters] to a module called [Parameters] as a record. *)
-let convert_str_operation base_module_name components uritmpl op_typ op =
+let convert_str_operation strict_records base_module_name components uritmpl op_typ op =
   assert (CCOption.is_some op.Operation.operation_id);
   let operation_id = CCOption.get_exn_or "operation_id" op.Operation.operation_id in
   let params_config =
@@ -456,7 +456,12 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
         ~record_type_attrs:(fun strict ->
           Gen.(
             deriving
-              [ make_deriver; yojson_deriver ~strict:false ~meta:true (); show_deriver; eq_deriver ]))
+              [
+                make_deriver;
+                yojson_deriver ~strict:(strict && strict_records) ~meta:true ();
+                show_deriver;
+                eq_deriver;
+              ]))
         ~record_field_attrs
         ~resolve_ref:(resolve_schema_ref components)
         ~variant_name_of_ref:(module_name_of_ref base_module_name "paths")
@@ -501,7 +506,9 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
         ~prim_type_attrs:
           Gen.(deriving [ yojson_deriver ~strict:false ~meta:false (); show_deriver; eq_deriver ])
         ~record_type_attrs:(fun strict ->
-          Gen.(deriving [ yojson_deriver ~strict:false (); show_deriver; eq_deriver ]))
+          Gen.(
+            deriving
+              [ yojson_deriver ~strict:(strict && strict_records) (); show_deriver; eq_deriver ]))
         ~record_field_attrs
         ~resolve_ref:(resolve_schema_ref components)
         ~variant_name_of_ref:(module_name_of_ref base_module_name "paths")
@@ -583,14 +590,24 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
                                             (Gen.ident [ "Openapi"; "of_json_body" ])))
                                       [
                                         ( Asttypes.Nolabel,
-                                          Exp.fun_
-                                            Asttypes.Nolabel
+                                          Exp.function_
+                                            [
+                                              {
+                                                Parsetree.pparam_loc = Location.none;
+                                                pparam_desc =
+                                                  Parsetree.Pparam_val
+                                                    ( Asttypes.Nolabel,
+                                                      None,
+                                                      Pat.var (Location.mknoloc "v") );
+                                              };
+                                            ]
                                             None
-                                            (Pat.var (Location.mknoloc "v"))
-                                            (Exp.variant
-                                               (http_status_to_name code)
-                                               (Some
-                                                  (Exp.ident (Location.mknoloc (Gen.ident [ "v" ])))))
+                                            (Parsetree.Pfunction_body
+                                               (Exp.variant
+                                                  (http_status_to_name code)
+                                                  (Some
+                                                     (Exp.ident
+                                                        (Location.mknoloc (Gen.ident [ "v" ]))))))
                                         );
                                         ( Asttypes.Nolabel,
                                           Exp.ident
@@ -603,13 +620,22 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
                                 Exp.tuple
                                   [
                                     Exp.constant (Const.string code);
-                                    Exp.fun_
-                                      Asttypes.Nolabel
+                                    Exp.function_
+                                      [
+                                        {
+                                          Parsetree.pparam_loc = Location.none;
+                                          pparam_desc =
+                                            Parsetree.Pparam_val
+                                              ( Asttypes.Nolabel,
+                                                None,
+                                                Pat.var (Location.mknoloc "_") );
+                                        };
+                                      ]
                                       None
-                                      (Pat.var (Location.mknoloc "_"))
-                                      (Exp.construct
-                                         (Location.mknoloc (Gen.ident [ "Ok" ]))
-                                         (Some (Exp.variant (http_status_to_name code) None)));
+                                      (Parsetree.Pfunction_body
+                                         (Exp.construct
+                                            (Location.mknoloc (Gen.ident [ "Ok" ]))
+                                            (Some (Exp.variant (http_status_to_name code) None))));
                                   ])
                      |> Gen.make_list);
                  ];
@@ -681,12 +707,30 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
     let open Ast_helper in
     match op.Operation.parameters with
     | [] ->
-        Exp.fun_
-          Asttypes.Nolabel
+        Exp.function_
+          [
+            {
+              Parsetree.pparam_loc = Location.none;
+              pparam_desc =
+                Parsetree.Pparam_val
+                  ( Asttypes.Nolabel,
+                    None,
+                    Pat.construct (Location.mknoloc (Gen.ident [ "()" ])) None );
+            };
+          ]
           None
-          (Pat.construct (Location.mknoloc (Gen.ident [ "()" ])) None)
-          make_body
-    | _ -> Exp.fun_ Asttypes.Nolabel None (Pat.var (Location.mknoloc "params")) make_body
+          (Parsetree.Pfunction_body make_body)
+    | _ ->
+        Exp.function_
+          [
+            {
+              Parsetree.pparam_loc = Location.none;
+              pparam_desc =
+                Parsetree.Pparam_val (Asttypes.Nolabel, None, Pat.var (Location.mknoloc "params"));
+            };
+          ]
+          None
+          (Parsetree.Pfunction_body make_body)
   in
   let make =
     Gen.make_func
@@ -697,17 +741,38 @@ let convert_str_operation base_module_name components uritmpl op_typ op =
              && CCOption.is_some (get_json_media_type request_body.Request_body.content) ->
           (* TODO: Handle ref that is required *)
           Ast_helper.(
-            Exp.fun_ (Asttypes.Labelled "body") None (Pat.var (Location.mknoloc "body")) make_params)
+            Exp.function_
+              [
+                {
+                  Parsetree.pparam_loc = Location.none;
+                  pparam_desc =
+                    Parsetree.Pparam_val
+                      (Asttypes.Labelled "body", None, Pat.var (Location.mknoloc "body"));
+                };
+              ]
+              None
+              (Parsetree.Pfunction_body make_params))
       | Some (Value.V request_body)
         when CCOption.is_some (get_json_media_type request_body.Request_body.content) ->
           Ast_helper.(
-            Exp.fun_ (Asttypes.Optional "body") None (Pat.var (Location.mknoloc "body")) make_params)
+            Exp.function_
+              [
+                {
+                  Parsetree.pparam_loc = Location.none;
+                  pparam_desc =
+                    Parsetree.Pparam_val
+                      (Asttypes.Optional "body", None, Pat.var (Location.mknoloc "body"));
+                };
+              ]
+              None
+              (Parsetree.Pfunction_body make_params))
       | Some (Value.Ref _) -> failwith "request body ref not supported"
       | Some (Value.V _) | None -> make_params)
   in
   (operation_id, parameters_module @ request_body @ [ responses; url; make ])
 
 let convert_str_components
+    strict_records
     output_dir
     base_module_name
     ({ Components.schemas; responses; _ } as components) =
@@ -729,7 +794,9 @@ let convert_str_components
       ~module_name_of_field_name:(module_name_of_field_name components)
       ~prim_type_attrs:Gen.(deriving [ yojson_deriver ~strict:false (); show_deriver; eq_deriver ])
       ~record_type_attrs:(fun strict ->
-        Gen.(deriving [ yojson_deriver ~strict:false (); show_deriver; eq_deriver ]))
+        Gen.(
+          deriving
+            [ yojson_deriver ~strict:(strict && strict_records) (); show_deriver; eq_deriver ]))
       ~record_field_attrs
       ~resolve_ref:(resolve_schema_ref components)
       ~variant_name_of_ref
@@ -765,13 +832,13 @@ let convert_str_components
     (Filename.concat output_dir (CCString.lowercase_ascii (base_module_name ^ "_components.ml")))
     (fun oc -> CCIO.write_line oc (Pprintast.string_of_structure sts))
 
-let convert_str_paths output_base base_module_name components paths =
+let convert_str_paths strict_records output_base base_module_name components paths =
   let modules =
     CCList.map
       (fun (uritmpl, path) ->
         assert (path.Path.parameters = None);
         CCList.map
-          (CCFun.uncurry (convert_str_operation base_module_name components uritmpl))
+          (CCFun.uncurry (convert_str_operation strict_records base_module_name components uritmpl))
           (CCList.filter_map
              (fun (t, op) -> CCOption.map (fun op -> (t, op)) op)
              [
@@ -804,13 +871,13 @@ let convert_str_paths output_base base_module_name components paths =
         (fun oc -> CCIO.write_line oc (Pprintast.string_of_structure modules)))
     (String_map.to_list modules)
 
-let convert_str_document output_dir base_module_name { Document.paths; components } =
+let convert_str_document strict_records output_dir base_module_name { Document.paths; components } =
   let output_base = Filename.concat output_dir (CCString.lowercase_ascii base_module_name) in
-  convert_str_components output_dir base_module_name components;
-  convert_str_paths output_base base_module_name components paths
+  convert_str_components strict_records output_dir base_module_name components;
+  convert_str_paths strict_records output_base base_module_name components paths
 
-let convert ~input_file ~output_name ~output_dir =
+let convert ~strict_records ~input_file ~output_name ~output_dir =
   let base_module_name = CCString.capitalize_ascii output_name in
   match Document.of_yojson (Yojson.Safe.from_file input_file) with
-  | Ok document -> convert_str_document output_dir base_module_name document
+  | Ok document -> convert_str_document strict_records output_dir base_module_name document
   | Error err -> print_endline ("ERROR: " ^ err)

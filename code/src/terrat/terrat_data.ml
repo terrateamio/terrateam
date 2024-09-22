@@ -25,6 +25,8 @@ module String_map = struct
   let show f t = Assoc_string_list.show f (to_list t)
 end
 
+module String_set = CCSet.Make (CCString)
+
 module Assoc_dirspace_list = struct
   type 'a t = (Terrat_dirspace.t * 'a) list [@@deriving show]
 end
@@ -58,3 +60,5 @@ module Dirspace_map = struct
   let pp f formatter t = Assoc_dirspace_list.pp f formatter (to_list t)
   let show f t = Assoc_dirspace_list.show f (to_list t)
 end
+
+module Dirspace_set = CCSet.Make (Terrat_dirspace)

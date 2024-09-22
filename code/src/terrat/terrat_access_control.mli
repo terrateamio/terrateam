@@ -12,14 +12,14 @@ end
 module R : sig
   module Deny : sig
     type t = {
-      change_match : Terrat_change_match2.Dirspace_config.t;
+      change_match : Terrat_change_match3.Dirspace_config.t;
       policy : Terrat_base_repo_config_v1.Access_control.Match_list.t option;
     }
     [@@deriving show]
   end
 
   type t = {
-    pass : Terrat_change_match2.Dirspace_config.t list;
+    pass : Terrat_change_match3.Dirspace_config.t list;
     deny : Deny.t list;
   }
   [@@deriving show]
@@ -53,7 +53,7 @@ module Make (S : S) : sig
   val eval :
     S.ctx ->
     Policy.t list ->
-    Terrat_change_match2.Dirspace_config.t list ->
+    Terrat_change_match3.Dirspace_config.t list ->
     (R.t, [> err ]) result Abb.Future.t
 
   val eval_match_list :

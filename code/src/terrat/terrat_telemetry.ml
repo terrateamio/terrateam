@@ -16,7 +16,7 @@ module Event = struct
     | Start of { github_app_id : string }
     | Run of {
         github_app_id : string;
-        run_type : Terrat_work_manifest2.Run_type.t;
+        step : Terrat_work_manifest3.Step.t;
         owner : string;
         repo : string;
       }
@@ -38,14 +38,14 @@ let send' telemetry_config event =
           Logs.info (fun m -> m "TELEMETRY : ANONYMOUS : EVENT : START");
           Abbs_future_combinators.ignore
             (Http.Client.call ~headers:http_headers ~tls_config `POST uri)
-      | Event.Run { github_app_id; run_type; owner; repo } ->
+      | Event.Run { github_app_id; step; owner; repo } ->
           let uri =
             Uri.with_path
               uri
               (Printf.sprintf
                  "/event/run/%s/%s/%s/%s"
                  Digest.(to_hex (string github_app_id))
-                 (Terrat_work_manifest2.Run_type.to_string run_type)
+                 (Terrat_work_manifest3.Step.to_string step)
                  Digest.(to_hex (string owner))
                  Digest.(to_hex (string repo)))
           in
