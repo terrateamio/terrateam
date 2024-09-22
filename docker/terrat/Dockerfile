@@ -7,6 +7,7 @@ COPY ./ /mono
 # setup
 WORKDIR /
 RUN eval $(opam env) && \
+    opam option depext=false && \
     opam update && \
     opam repository add opam-acsl mono/opam && \
     opam pin add -y containers 3.12 && \
@@ -24,7 +25,7 @@ RUN eval $(opam env) && \
       --url-override file://$PWD && \
     opam update opam-mono && \
     opam info monorepo && \
-    opam install -j4 -y --deps-only --no-depexts monorepo
+    opam install -j4 -y --deps-only monorepo
 
 # compile
 WORKDIR /mono/code
