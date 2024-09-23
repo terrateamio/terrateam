@@ -8,6 +8,7 @@ end
 module Msg : sig
   type access_control_denied =
     [ `All_dirspaces of Terrat_access_control.R.Deny.t list
+    | `Ci_config_update of Terrat_base_repo_config_v1.Access_control.Match_list.t
     | `Dirspaces of Terrat_access_control.R.Deny.t list
     | `Lookup_err
     | `Terrateam_config_update of Terrat_base_repo_config_v1.Access_control.Match_list.t

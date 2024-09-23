@@ -33,10 +33,20 @@ module type S = sig
     Terrat_base_repo_config_v1.Access_control.Match.t ->
     (bool, [> query_err ]) result Abb.Future.t
 
+  val is_ci_changed : ctx -> Terrat_change.Diff.t list -> (bool, [> err ]) result Abb.Future.t
   val set_user : string -> ctx -> ctx
 end
 
 module Make (S : S) : sig
+  (** Test if any of the CI configuration has changed. Return [true] if no CI
+    changes have been detected or they were detected but passed the permissions
+    check. *)
+  val eval_ci_change :
+    S.ctx ->
+    Terrat_base_repo_config_v1.Access_control.Match_list.t ->
+    Terrat_change.Diff.t list ->
+    (bool, [> err ]) result Abb.Future.t
+
   (** Test if there is a repo config change and it passes the
       configuration. [true] is returned if there is no repo configuration change
       or there is and it passes the permissions check. *)

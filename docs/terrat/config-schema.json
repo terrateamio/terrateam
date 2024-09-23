@@ -8,6 +8,9 @@
           "default": true,
           "type": "boolean"
         },
+        "ci_config_update": {
+          "$ref": "#/definitions/access-control-match-list"
+        },
         "enabled": {
           "default": true,
           "type": "boolean"

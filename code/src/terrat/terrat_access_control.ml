@@ -35,6 +35,7 @@ module type S = sig
     Terrat_base_repo_config_v1.Access_control.Match.t ->
     (bool, [> query_err ]) result Abb.Future.t
 
+  val is_ci_changed : ctx -> Terrat_change.Diff.t list -> (bool, [> err ]) result Abb.Future.t
   val set_user : string -> ctx -> ctx
 end
 
@@ -57,6 +58,15 @@ module Make (S : S) = struct
         >>= function
         | true -> Abb.Future.return (Ok (Some q))
         | false -> test_queries ctx qs)
+
+  let eval_ci_change ctx ci_config_change diff =
+    let open Abbs_future_combinators.Infix_result_monad in
+    S.is_ci_changed ctx diff
+    >>= function
+    | true ->
+        test_queries ctx ci_config_change
+        >>= fun res -> Abb.Future.return (Ok (CCOption.is_some res))
+    | false -> Abb.Future.return (Ok true)
 
   let eval_repo_config ctx terrateam_config_change diff =
     let open Abbs_future_combinators.Infix_result_monad in

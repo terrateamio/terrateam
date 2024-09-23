@@ -228,6 +228,7 @@ module Access_control = struct
 
   type t = {
     apply_require_all_dirspace_access : bool; [@default true]
+    ci_config_update : Match_list.t; [@default [ Match.Any ]]
     enabled : bool; [@default true]
     plan_require_all_dirspace_access : bool; [@default false]
     policies : Policy_list.t; [@default [ Policy.make ~tag_query:Terrat_tag_query.any () ]]
@@ -663,7 +664,8 @@ type derived
 type 'a t = View.t
 
 type of_version_1_err =
-  [ `Access_control_policy_apply_autoapprove_match_parse_err of string
+  [ `Access_control_ci_config_update_match_parse_err of string
+  | `Access_control_policy_apply_autoapprove_match_parse_err of string
   | `Access_control_policy_apply_force_match_parse_err of string
   | `Access_control_policy_apply_match_parse_err of string
   | `Access_control_policy_apply_with_superapproval_match_parse_err of string
@@ -1157,6 +1159,7 @@ let of_version_1_access_control access_control =
   let module Ac = Terrat_repo_config_access_control in
   let {
     Ac.apply_require_all_dirspace_access;
+    ci_config_update;
     enabled;
     plan_require_all_dirspace_access;
     policies;
@@ -1165,6 +1168,11 @@ let of_version_1_access_control access_control =
   } =
     access_control
   in
+  CCResult.map_err
+    (function
+      | `Match_parse_err err -> `Access_control_ci_config_update_match_parse_err err)
+    (map_opt of_version_1_match_list ci_config_update)
+  >>= fun ci_config_update ->
   CCResult.map_err
     (function
       | `Match_parse_err err -> `Access_control_terrateam_config_update_match_parse_err err)
@@ -1180,6 +1188,7 @@ let of_version_1_access_control access_control =
   Ok
     (Access_control.make
        ~apply_require_all_dirspace_access
+       ?ci_config_update
        ~enabled
        ~plan_require_all_dirspace_access
        ?policies
@@ -1604,6 +1613,7 @@ let to_version_1_access_control ac =
   let module Ac = Terrat_repo_config.Access_control in
   {
     Ac.apply_require_all_dirspace_access = ac.Access_control.apply_require_all_dirspace_access;
+    ci_config_update = Some (to_version_1_match_list ac.Access_control.ci_config_update);
     enabled = ac.Access_control.enabled;
     plan_require_all_dirspace_access = ac.Access_control.plan_require_all_dirspace_access;
     policies = Some (to_version_1_policy_list ac.Access_control.policies);

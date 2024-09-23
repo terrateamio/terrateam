@@ -331,6 +331,12 @@ val get_installation_repos :
 (*   string -> *)
 (*   (unit, [> verify_user_installation_access_err ]) result Abb.Future.t *)
 
+val find_workflow_file :
+  owner:string ->
+  repo:string ->
+  Githubc2_abb.t ->
+  (string option, [> get_installation_access_token_err ]) result Abb.Future.t
+
 val load_workflow :
   owner:string ->
   repo:string ->

@@ -564,6 +564,7 @@ module Tmpl = struct
   let access_control_all_dirspaces_denied = read "access_control_all_dirspaces_denied.tmpl"
   let access_control_dirspaces_denied = read "access_control_dirspaces_denied.tmpl"
   let access_control_unlock_denied = read "access_control_unlock_denied.tmpl"
+  let access_control_ci_config_update_denied = read "access_control_ci_config_update_denied.tmpl"
 
   let access_control_terrateam_config_update_denied =
     read "access_control_terrateam_config_update_denied.tmpl"
@@ -608,6 +609,9 @@ module Tmpl = struct
 
   let repo_config_err_access_control_terrateam_config_update_match_parse_err =
     read "repo_config_err_access_control_terrateam_config_update_match_parse_err.tmpl"
+
+  let repo_config_err_access_control_ci_config_update_match_parse_err =
+    read "repo_config_err_access_control_ci_config_update_match_parse_err.tmpl"
 
   let repo_config_err_access_control_unlock_match_parse_err =
     read "repo_config_err_access_control_unlock_match_parse_err.tmpl"
@@ -945,6 +949,33 @@ module S = struct
           | None -> raise (Failure "nyi")
           (* Abb.Future.return (Error (`Invalid_query query)) *))
       | M.Any -> Abb.Future.return (Ok true)
+
+    let is_ci_changed ctx diff =
+      let run =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Terrat_github.find_workflow_file
+          ~owner:(Repo.owner ctx.repo)
+          ~repo:(Repo.name ctx.repo)
+          ctx.client
+        >>= function
+        | Some path ->
+            let diff_paths =
+              CCList.flat_map
+                (function
+                  | Terrat_change.Diff.(
+                      Add { filename } | Change { filename } | Remove { filename }) -> [ filename ]
+                  | Terrat_change.Diff.Move { filename; previous_filename } ->
+                      [ filename; previous_filename ])
+                diff
+            in
+            Abb.Future.return (Ok (CCList.mem ~eq:CCString.equal path diff_paths))
+        | None -> Abb.Future.return (Ok false)
+      in
+      let open Abb.Future.Infix_monad in
+      run
+      >>= function
+      | Ok _ as ret -> Abb.Future.return ret
+      | Error _ -> Abb.Future.return (Error `Error)
 
     let set_user user ctx = { ctx with user }
   end
@@ -2070,6 +2101,15 @@ module S = struct
 
   let repo_config_err ~request_id ~client ~pull_request ~title err =
     match err with
+    | `Access_control_ci_config_update_match_parse_err m ->
+        let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "ACCESS_CONTROL_CI_CONFIG_UPDATE_MATCH_PARSE_ERR"
+          Tmpl.repo_config_err_access_control_ci_config_update_match_parse_err
+          kv
     | `Access_control_policy_apply_autoapprove_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
         apply_template_and_publish
@@ -2327,6 +2367,33 @@ module S = struct
           pull_request
           "ACCESS_CONTROL_ALL_DIRSPACES_DENIED"
           Tmpl.access_control_all_dirspaces_denied
+          kv
+    | Msg.Access_control_denied (default_branch, `Ci_config_update match_list) ->
+        let kv =
+          Snabela.Kv.(
+            Map.of_list
+              [
+                ("user", string user);
+                ("default_branch", string default_branch);
+                ( "match_list",
+                  list
+                    (CCList.map
+                       (fun s ->
+                         Map.of_list
+                           [
+                             ( "item",
+                               string (Terrat_base_repo_config_v1.Access_control.Match.to_string s)
+                             );
+                           ])
+                       match_list) );
+              ])
+        in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "ACCESS_CONTROL_CI_CONFIG_UPDATE_DENIED"
+          Tmpl.access_control_ci_config_update_denied
           kv
     | Msg.Access_control_denied (default_branch, `Dirspaces denies) ->
         let kv =

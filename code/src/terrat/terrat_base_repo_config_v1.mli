@@ -172,6 +172,7 @@ module Access_control : sig
 
   type t = {
     apply_require_all_dirspace_access : bool; [@default true]
+    ci_config_update : Match_list.t; [@default [ Match.Any ]]
     enabled : bool; [@default true]
     plan_require_all_dirspace_access : bool; [@default false]
     policies : Policy_list.t; [@default [ Policy.make ~tag_query:Terrat_tag_query.any () ]]
@@ -567,7 +568,8 @@ type derived
 type 'a t
 
 type of_version_1_err =
-  [ `Access_control_policy_apply_autoapprove_match_parse_err of string
+  [ `Access_control_ci_config_update_match_parse_err of string
+  | `Access_control_policy_apply_autoapprove_match_parse_err of string
   | `Access_control_policy_apply_force_match_parse_err of string
   | `Access_control_policy_apply_match_parse_err of string
   | `Access_control_policy_apply_with_superapproval_match_parse_err of string

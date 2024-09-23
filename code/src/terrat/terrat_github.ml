@@ -424,12 +424,27 @@ let load_workflow' ~owner ~repo client =
         CCString.equal name terrateam_workflow_name || CCString.equal path terrateam_workflow_path)
       workflows
   with
-  | (id, _, _) :: _ -> Abb.Future.return (Ok (Some id))
+  | res :: _ -> Abb.Future.return (Ok (Some res))
   | [] -> Abb.Future.return (Ok None)
+
+let find_workflow_file ~owner ~repo client =
+  Abbs_future_combinators.retry
+    ~f:(fun () ->
+      let open Abbs_future_combinators.Infix_result_monad in
+      load_workflow' ~owner ~repo client
+      >>= fun res -> Abb.Future.return (Ok (CCOption.map (fun (_, _, path) -> path) res)))
+    ~while_:(Abbs_future_combinators.finite_tries 3 CCResult.is_error)
+    ~betwixt:
+      (Abbs_future_combinators.series ~start:1.5 ~step:(( *. ) 1.5) (fun n _ ->
+           Prmths.Counter.inc_one Metrics.call_retries_total;
+           Abb.Sys.sleep n))
 
 let load_workflow ~owner ~repo client =
   Abbs_future_combinators.retry
-    ~f:(fun () -> load_workflow' ~owner ~repo client)
+    ~f:(fun () ->
+      let open Abbs_future_combinators.Infix_result_monad in
+      load_workflow' ~owner ~repo client
+      >>= fun res -> Abb.Future.return (Ok (CCOption.map (fun (id, _, _) -> id) res)))
     ~while_:(Abbs_future_combinators.finite_tries 3 CCResult.is_error)
     ~betwixt:
       (Abbs_future_combinators.series ~start:1.5 ~step:(( *. ) 1.5) (fun n _ ->

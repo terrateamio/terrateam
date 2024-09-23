@@ -5,6 +5,7 @@ end
 
 type t = {
   apply_require_all_dirspace_access : bool; [@default true]
+  ci_config_update : Terrat_repo_config_access_control_match_list.t option; [@default None]
   enabled : bool; [@default true]
   plan_require_all_dirspace_access : bool; [@default false]
   policies : Policies.t option; [@default None]
