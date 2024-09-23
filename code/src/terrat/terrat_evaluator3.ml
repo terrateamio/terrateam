@@ -2962,7 +2962,11 @@ module Make (S : S) = struct
           query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
           >>= function
           | Some work_manifest ->
-              run_failure ctx state err work_manifest >>= fun () -> Abb.Future.return (Error `Error)
+              run_failure ctx state err work_manifest
+              >>= fun () ->
+              Abb.Future.return
+                (Error
+                   (`Noop { state with State.st = State.St.Work_manifest_completed; input = None }))
           | None ->
               Logs.err (fun m ->
                   m
