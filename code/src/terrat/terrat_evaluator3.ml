@@ -3026,8 +3026,11 @@ module Make (S : S) = struct
                   >>= fun () ->
                   Abb.Future.return
                     (Ok { state with State.st = St.Initial; input = None; output = None })
-              | Error (`Noop _ as ret) ->
-                  Abb.Future.Promise.set p (Ok ()) >>= fun () -> Abb.Future.return (Error ret)
+              | Error (`Noop state) ->
+                  Abb.Future.Promise.set p (Ok ())
+                  >>= fun () ->
+                  Abb.Future.return
+                    (Error (`Noop { state with State.st = St.Initial; input = None }))
               | Error err ->
                   Abb.Future.Promise.set p (Error `Error)
                   >>= fun () -> Abb.Future.return (Error err))
@@ -4486,14 +4489,6 @@ module Make (S : S) = struct
           >>= fun () ->
           Abb.Future.return
             (Ok { state with State.st = State.St.Initial; input = None; output = None })
-      | State.St.Waiting_for_work_manifest_result, _, Some work_manifest_id ->
-          let open Abbs_future_combinators.Infix_result_monad in
-          update_work_manifest_state
-            state.State.request_id
-            ctx.Ctx.storage
-            work_manifest_id
-            Terrat_work_manifest3.State.Completed
-          >>= fun () -> Abb.Future.return (Ok state)
       | _, _, None ->
           (* No work manifest was run so ignore *)
           Abb.Future.return (Ok state)
