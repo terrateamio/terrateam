@@ -153,7 +153,12 @@ let test_multistep_with_logging =
       let log = function
         | Flow.Event.Step_start (step, _) -> executed_steps := Flow.Step.id step :: !executed_steps
         | Flow.Event.Step_end _ -> ()
-        | Flow.Event.Choice_start _ | Flow.Event.Choice_end _ -> ()
+        | Flow.Event.Choice_start _
+        | Flow.Event.Choice_end _
+        | Flow.Event.Finally_start _
+        | Flow.Event.Finally_resume _
+        | Flow.Event.Recover_choice _
+        | Flow.Event.Recover_start _ -> ()
       in
       let flow = Flow.create ~log flow in
       let open Abb.Future.Infix_monad in

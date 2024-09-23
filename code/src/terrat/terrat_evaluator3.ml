@@ -1781,6 +1781,25 @@ module Make (S : S) = struct
               (match ret with
               | Ok (choice, _) -> "CHOICE : " ^ Id.to_string choice
               | Error run_err -> "FAILURE : " ^ Flow.show_run_err run_err))
+    | Flow.Event.Finally_start (id, state) ->
+        Logs.info (fun m ->
+            m "EVALUATOR : %s : FLOW : FINALLY_START : %s" state.State.request_id (Id.to_string id))
+    | Flow.Event.Finally_resume (id, state) ->
+        Logs.info (fun m ->
+            m "EVALUATOR : %s : FLOW : FINALLY_RESUME : %s" state.State.request_id (Id.to_string id))
+    | Flow.Event.Recover_choice (recover_id, choice_id, state) ->
+        Logs.info (fun m ->
+            m
+              "EVALUATOR : %s : FLOW : RECOVER_CHOICE : %s : %s"
+              state.State.request_id
+              (Id.to_string recover_id)
+              (Id.to_string choice_id))
+    | Flow.Event.Recover_start (recover_id, state) ->
+        Logs.info (fun m ->
+            m
+              "EVALUATOR : %s : FLOW : RECOVER_START : %s"
+              state.State.request_id
+              (Id.to_string recover_id))
 
   module Access_control = Terrat_access_control.Make (S.Access_control)
 
@@ -2818,8 +2837,7 @@ module Make (S : S) = struct
                       let states = states_of_work_manifests work_manifests in
                       Abb.Future.return
                         (Error
-                           (`Clone
-                             ({ state with State.st = St.Waiting_for_work_manifest_run }, states)))
+                           (`Clone ({ state with State.st = St.Work_manifest_completed }, states)))
                   | [ self ], work_manifests ->
                       let state = { state with State.work_manifest_id = Some self.Wm.id } in
                       run_success ctx state self
@@ -2854,7 +2872,7 @@ module Make (S : S) = struct
       | St.Waiting_for_work_manifest_run, None, Some _ ->
           (* This should be reached if we cloned some work manifests. *)
           Abb.Future.return (Error (`Yield state))
-      | St.Waiting_for_work_manifest_run, None, None ->
+      | St.Work_manifest_completed, None, Some _ ->
           (* This should be reached if we cloned some work manifests. *)
           Abb.Future.return (Error (`Noop state))
       | St.Waiting_for_work_manifest_run, Some I.Work_manifest_run_success, Some work_manifest_id
@@ -4443,7 +4461,7 @@ module Make (S : S) = struct
         | Some _ | None -> Abb.Future.return (Ok ())
       in
       match (state.State.st, state.State.input, state.State.work_manifest_id) with
-      | State.St.Initial, _, Some work_manifest_id ->
+      | (State.St.Initial | State.St.Work_manifest_completed), _, Some work_manifest_id ->
           let open Abbs_future_combinators.Infix_result_monad in
           update_work_manifest_state
             state.State.request_id
@@ -5989,12 +6007,14 @@ module Make (S : S) = struct
                   let request_id = Uuidm.to_string (Uuidm.v `V4) in
                   Logs.info (fun m ->
                       m "EVALUATOR : %s : CLONE : request_id=%s" state.State.request_id request_id);
-                  let state = { state with State.request_id } in
+                  let state = { state with State.request_id; input = None; output = None } in
                   let resume' = Flow.Yield.set_state state resume' in
                   Abbs_future_combinators.ignore (exec_flow ctx resume'))
                 states
               >>= fun () ->
-              exec_flow ctx (Flow.Yield.set_state { state with State.output = None } resume')
+              exec_flow
+                ctx
+                (Flow.Yield.set_state { state with State.input = None; output = None } resume')
           | None -> (
               match state.State.work_manifest_id with
               | Some work_manifest_id ->

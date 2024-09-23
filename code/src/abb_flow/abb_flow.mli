@@ -104,6 +104,10 @@ module Make (Fut : Abb_intf.Future.S) (Id : ID) (State : S) : sig
       | Step_end of ('a Step.t * (State.t, run_err, State.t) Ret.t * State.t)
       | Choice_start of (Id.t * State.t)
       | Choice_end of (Id.t * (Id.t * State.t, run_err) result * State.t)
+      | Finally_start of (Id.t * State.t)
+      | Finally_resume of (Id.t * State.t)
+      | Recover_choice of (Id.t * Id.t * State.t)
+      | Recover_start of (Id.t * State.t)
   end
 
   type 'a t

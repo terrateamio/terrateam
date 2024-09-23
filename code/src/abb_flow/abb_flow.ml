@@ -160,6 +160,10 @@ module Make (Fut : Abb_intf.Future.S) (Id : ID) (State : S) = struct
       | Step_end of ('a Step.t * (State.t, run_err, State.t) Ret.t * State.t)
       | Choice_start of (Id.t * State.t)
       | Choice_end of (Id.t * (Id.t * State.t, run_err) result * State.t)
+      | Finally_start of (Id.t * State.t)
+      | Finally_resume of (Id.t * State.t)
+      | Recover_choice of (Id.t * Id.t * State.t)
+      | Recover_start of (Id.t * State.t)
   end
 
   type 'a t = {
@@ -265,9 +269,14 @@ module Make (Fut : Abb_intf.Future.S) (Id : ID) (State : S) = struct
     | Flow.Finally { id; flow; finally } -> (
         match resume_finally id t.resume_path with
         | Some resume_path ->
+            (* A resume path that has the finally [id] means that the [finally]
+               path has been executed, so we just return with our [id] on it. *)
+            t.log (Event.Finally_resume (id, state));
             Fut.return (`Success ({ t with path = id :: t.path; resume_path }, state))
         | None -> (
             let open Fut.Infix_monad in
+            (* We haven't started (or finished) executing the main flow. *)
+            t.log (Event.Finally_start (id, state));
             run_flow t state run_data flow
             >>= function
             | `Success (t', state) -> (
@@ -280,7 +289,7 @@ module Make (Fut : Abb_intf.Future.S) (Id : ID) (State : S) = struct
                     Fut.return (`Success ({ t' with path }, state))
                 | `Yield _ -> assert false)
             | `Failure _ as ret -> (
-                run_flow t state run_data finally
+                run_flow { t with path = id :: t.path; resume_path = [] } state run_data finally
                 >>= function
                 | `Success _ | `Failure _ -> Fut.return ret
                 | `Yield _ -> assert false)
@@ -290,9 +299,11 @@ module Make (Fut : Abb_intf.Future.S) (Id : ID) (State : S) = struct
            there then that means a recover path is being taken. *)
         match resume_choice id recover t.resume_path with
         | `Ok (flow, choice, resume_path) ->
+            t.log (Event.Recover_choice (id, choice, state));
             run_flow { t with resume_path; path = choice :: id :: t.path } state run_data flow
         | `Empty_resume_path | `Non_empty_resume_path -> (
             let open Fut.Infix_monad in
+            t.log (Event.Recover_start (id, state));
             run_flow t state run_data flow
             >>= function
             | (`Success _ | `Yield _) as ret -> Fut.return ret
@@ -300,6 +311,7 @@ module Make (Fut : Abb_intf.Future.S) (Id : ID) (State : S) = struct
                 choose_flow id (fun ctx state -> f ctx state err) recover run_data state
                 >>= function
                 | Ok (choice, state, flow) ->
+                    t.log (Event.Recover_choice (id, choice, state));
                     run_flow
                       { t with path = choice :: id :: t.path; resume_path = [] }
                       state
