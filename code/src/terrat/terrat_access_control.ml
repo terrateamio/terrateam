@@ -68,6 +68,35 @@ module Make (S : S) = struct
         >>= fun res -> Abb.Future.return (Ok (CCOption.is_some res))
     | false -> Abb.Future.return (Ok true)
 
+  let eval_files ctx files_policy diff =
+    let files =
+      CCList.flat_map
+        (function
+          | Terrat_change.Diff.(Add { filename } | Change { filename } | Remove { filename }) ->
+              [ filename ]
+          | Terrat_change.Diff.Move { filename; previous_filename } ->
+              [ filename; previous_filename ])
+        diff
+    in
+    let matching_files =
+      Terrat_data.String_map.filter
+        (fun key _ -> CCList.mem ~eq:CCString.equal key files)
+        files_policy
+    in
+    let open Abb.Future.Infix_monad in
+    Abbs_future_combinators.List_result.iter
+      ~f:(fun (fname, policy) ->
+        let open Abbs_future_combinators.Infix_result_monad in
+        test_queries ctx policy
+        >>= function
+        | Some _ -> Abb.Future.return (Ok ())
+        | None -> Abb.Future.return (Error (`Denied (fname, policy))))
+      (Terrat_data.String_map.to_list matching_files)
+    >>= function
+    | Ok () -> Abb.Future.return (Ok `Ok)
+    | Error (`Denied _ as ret) -> Abb.Future.return (Ok ret)
+    | Error (#query_err as err) -> Abb.Future.return (Error err)
+
   let eval_repo_config ctx terrateam_config_change diff =
     let open Abbs_future_combinators.Infix_result_monad in
     if is_repo_config_change diff then

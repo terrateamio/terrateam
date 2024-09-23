@@ -39,13 +39,25 @@ end
 
 module Make (S : S) : sig
   (** Test if any of the CI configuration has changed. Return [true] if no CI
-    changes have been detected or they were detected but passed the permissions
-    check. *)
+      changes have been detected or they were detected but passed the
+      permissions check. *)
   val eval_ci_change :
     S.ctx ->
     Terrat_base_repo_config_v1.Access_control.Match_list.t ->
     Terrat_change.Diff.t list ->
     (bool, [> err ]) result Abb.Future.t
+
+  (** Test if any files changed violate the files policy.  Return [`Ok] if no
+      files matching a policy changed or the files matched pass the policy,
+      returns [`Denied filename] for the first file that failed the check. *)
+  val eval_files :
+    S.ctx ->
+    Terrat_base_repo_config_v1.Access_control.Match_list.t Terrat_data.String_map.t ->
+    Terrat_change.Diff.t list ->
+    ( [ `Ok | `Denied of string * Terrat_base_repo_config_v1.Access_control.Match_list.t ],
+      [> err ] )
+    result
+    Abb.Future.t
 
   (** Test if there is a repo config change and it passes the
       configuration. [true] is returned if there is no repo configuration change

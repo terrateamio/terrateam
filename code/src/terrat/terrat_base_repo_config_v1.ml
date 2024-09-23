@@ -230,6 +230,7 @@ module Access_control = struct
     apply_require_all_dirspace_access : bool; [@default true]
     ci_config_update : Match_list.t; [@default [ Match.Any ]]
     enabled : bool; [@default true]
+    files : Match_list.t String_map.t; [@default String_map.empty]
     plan_require_all_dirspace_access : bool; [@default false]
     policies : Policy_list.t; [@default [ Policy.make ~tag_query:Terrat_tag_query.any () ]]
     terrateam_config_update : Match_list.t; [@default [ Match.Any ]]
@@ -665,6 +666,7 @@ type 'a t = View.t
 
 type of_version_1_err =
   [ `Access_control_ci_config_update_match_parse_err of string
+  | `Access_control_file_match_parse_err of string * string
   | `Access_control_policy_apply_autoapprove_match_parse_err of string
   | `Access_control_policy_apply_force_match_parse_err of string
   | `Access_control_policy_apply_match_parse_err of string
@@ -698,6 +700,21 @@ let default = View.make ()
 (* Converters for the sub elements *)
 let of_version_1_match = Access_control.Match.make
 let of_version_1_match_list = CCResult.map_l of_version_1_match
+
+let of_version_1_access_control_files files =
+  let module Ac = Terrat_repo_config_access_control in
+  let files = Ac.Files.additional files in
+  let ret =
+    files
+    |> String_map.to_list
+    |> CCResult.map_l (fun (path, match_list) ->
+           match of_version_1_match_list match_list with
+           | Ok match_list -> Ok (path, match_list)
+           | Error (`Match_parse_err err) ->
+               Error (`Access_control_file_match_parse_err (path, err)))
+  in
+  let open CCResult.Infix in
+  ret >>= fun r -> Ok (String_map.of_list r)
 
 let of_version_1_access_control_policies policies =
   let module Acp = Terrat_repo_config_access_control_policy in
@@ -1161,6 +1178,7 @@ let of_version_1_access_control access_control =
     Ac.apply_require_all_dirspace_access;
     ci_config_update;
     enabled;
+    files;
     plan_require_all_dirspace_access;
     policies;
     terrateam_config_update;
@@ -1178,6 +1196,8 @@ let of_version_1_access_control access_control =
       | `Match_parse_err err -> `Access_control_terrateam_config_update_match_parse_err err)
     (map_opt of_version_1_match_list terrateam_config_update)
   >>= fun terrateam_config_update ->
+  map_opt of_version_1_access_control_files files
+  >>= fun files ->
   CCResult.map_err
     (function
       | `Match_parse_err err -> `Access_control_unlock_match_parse_err err)
@@ -1190,6 +1210,7 @@ let of_version_1_access_control access_control =
        ~apply_require_all_dirspace_access
        ?ci_config_update
        ~enabled
+       ?files
        ~plan_require_all_dirspace_access
        ?policies
        ?terrateam_config_update
@@ -1585,6 +1606,10 @@ let to_version_1_match_list =
       | Access_control.Match.Repo repo -> "repo:" ^ repo
       | Access_control.Match.Any -> "*")
 
+let to_version_1_access_control_files files =
+  let module Ac = Terrat_repo_config_access_control in
+  Ac.Files.make ~additional:(String_map.map to_version_1_match_list files) Json_schema.Empty_obj.t
+
 let to_version_1_policy_list =
   CCList.map
     (fun
@@ -1615,6 +1640,7 @@ let to_version_1_access_control ac =
     Ac.apply_require_all_dirspace_access = ac.Access_control.apply_require_all_dirspace_access;
     ci_config_update = Some (to_version_1_match_list ac.Access_control.ci_config_update);
     enabled = ac.Access_control.enabled;
+    files = Some (to_version_1_access_control_files ac.Access_control.files);
     plan_require_all_dirspace_access = ac.Access_control.plan_require_all_dirspace_access;
     policies = Some (to_version_1_policy_list ac.Access_control.policies);
     terrateam_config_update =

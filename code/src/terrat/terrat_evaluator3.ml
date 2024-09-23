@@ -41,6 +41,7 @@ module Msg = struct
     [ `All_dirspaces of Terrat_access_control.R.Deny.t list
     | `Ci_config_update of Terrat_base_repo_config_v1.Access_control.Match_list.t
     | `Dirspaces of Terrat_access_control.R.Deny.t list
+    | `Files of string * Terrat_base_repo_config_v1.Access_control.Match_list.t
     | `Lookup_err
     | `Terrateam_config_update of Terrat_base_repo_config_v1.Access_control.Match_list.t
     | `Unlock of Terrat_base_repo_config_v1.Access_control.Match_list.t
@@ -1214,6 +1215,7 @@ module Make (S : S) = struct
       let wrap_err fname =
         Abbs_future_combinators.Result.map_err ~f:(function
             | ( `Access_control_ci_config_update_match_parse_err _
+              | `Access_control_file_match_parse_err _
               | `Access_control_policy_apply_autoapprove_match_parse_err _
               | `Access_control_policy_apply_force_match_parse_err _
               | `Access_control_policy_apply_match_parse_err _
@@ -1492,6 +1494,7 @@ module Make (S : S) = struct
       | Always_store_pull_request
       | Check_access_control_apply
       | Check_access_control_ci_change
+      | Check_access_control_files
       | Check_access_control_plan
       | Check_access_control_repo_config
       | Check_account_status_expired
@@ -1553,6 +1556,7 @@ module Make (S : S) = struct
       | Always_store_pull_request -> "always_store_pull_request"
       | Check_access_control_apply -> "check_access_control_apply"
       | Check_access_control_ci_change -> "check_access_control_ci_change"
+      | Check_access_control_files -> "check_access_control_files"
       | Check_access_control_plan -> "check_access_control_plan"
       | Check_access_control_repo_config -> "check_access_control_repo_config"
       | Check_account_status_expired -> "check_account_status_expired"
@@ -1614,6 +1618,7 @@ module Make (S : S) = struct
       | "always_store_pull_request" -> Some Always_store_pull_request
       | "check_access_control_apply" -> Some Check_access_control_apply
       | "check_access_control_ci_change" -> Some Check_access_control_ci_change
+      | "check_access_control_files" -> Some Check_access_control_files
       | "check_access_control_plan" -> Some Check_access_control_plan
       | "check_access_control_repo_config" -> Some Check_access_control_repo_config
       | "check_account_status_expired" -> Some Check_account_status_expired
@@ -1837,6 +1842,19 @@ module Make (S : S) = struct
             >>| function
             | true -> None
             | false -> Some ci_config_update)
+      else (
+        Logs.info (fun m -> m "EVALUATOR : %s : ACCESS_CONTROL_DISABLED" t.request_id);
+        Abb.Future.return (Ok None))
+
+    let eval_files t diff =
+      let files_policy = t.config.Ac.files in
+      if t.config.Ac.enabled then
+        Abbs_time_it.run (log_time t.request_id "ACCESS_CONTROL_FILES") (fun () ->
+            let open Abbs_future_combinators.Infix_result_monad in
+            Access_control.eval_files t.ctx files_policy diff
+            >>| function
+            | `Ok -> None
+            | `Denied denied -> Some denied)
       else (
         Logs.info (fun m -> m "EVALUATOR : %s : ACCESS_CONTROL_DISABLED" t.request_id);
         Abb.Future.return (Ok None))
@@ -4731,6 +4749,45 @@ module Make (S : S) = struct
                (Access_control_engine.policy_branch access_control, `Lookup_err))
           >>= fun () -> Abb.Future.return (Error (`Noop state))
 
+    let check_access_control_files ctx state =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Abbs_future_combinators.Infix_result_app.(
+        (fun access_control pull_request -> (access_control, pull_request))
+        <$> Dv.access_control ctx state
+        <*> Dv.pull_request ctx state)
+      >>= fun (access_control, pull_request) ->
+      let open Abb.Future.Infix_monad in
+      Access_control_engine.eval_files access_control (S.Pull_request.diff pull_request)
+      >>= function
+      | Ok None -> Abb.Future.return (Ok state)
+      | Ok (Some (fname, match_list)) ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          Dv.client ctx state
+          >>= fun client ->
+          publish_msg
+            state.State.request_id
+            client
+            (Event.user state.State.event)
+            pull_request
+            (Msg.Access_control_denied
+               (Access_control_engine.policy_branch access_control, `Files (fname, match_list)))
+          >>= fun () -> Abb.Future.return (Error (`Noop state))
+      | Error `Error ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          Abbs_future_combinators.Infix_result_app.(
+            (fun client pull_request -> (client, pull_request))
+            <$> Dv.client ctx state
+            <*> Dv.pull_request ctx state)
+          >>= fun (client, pull_request) ->
+          publish_msg
+            state.State.request_id
+            client
+            (Event.user state.State.event)
+            pull_request
+            (Msg.Access_control_denied
+               (Access_control_engine.policy_branch access_control, `Lookup_err))
+          >>= fun () -> Abb.Future.return (Error (`Noop state))
+
     let check_access_control_repo_config ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
       Abbs_future_combinators.Infix_result_app.(
@@ -5809,6 +5866,10 @@ module Make (S : S) = struct
                       ~f:(eval_step F.check_access_control_ci_change)
                       ();
                     Flow.Step.make
+                      ~id:Id.Check_access_control_files
+                      ~f:(eval_step F.check_access_control_files)
+                      ();
+                    Flow.Step.make
                       ~id:Id.Check_access_control_repo_config
                       ~f:(eval_step F.check_access_control_repo_config)
                       ();
@@ -5857,6 +5918,10 @@ module Make (S : S) = struct
               Flow.Step.make
                 ~id:Id.Check_access_control_ci_change
                 ~f:(eval_step F.check_access_control_ci_change)
+                ();
+              Flow.Step.make
+                ~id:Id.Check_access_control_files
+                ~f:(eval_step F.check_access_control_files)
                 ();
               Flow.Step.make
                 ~id:Id.Check_access_control_repo_config

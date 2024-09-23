@@ -10,6 +10,7 @@ module Msg : sig
     [ `All_dirspaces of Terrat_access_control.R.Deny.t list
     | `Ci_config_update of Terrat_base_repo_config_v1.Access_control.Match_list.t
     | `Dirspaces of Terrat_access_control.R.Deny.t list
+    | `Files of string * Terrat_base_repo_config_v1.Access_control.Match_list.t
     | `Lookup_err
     | `Terrateam_config_update of Terrat_base_repo_config_v1.Access_control.Match_list.t
     | `Unlock of Terrat_base_repo_config_v1.Access_control.Match_list.t

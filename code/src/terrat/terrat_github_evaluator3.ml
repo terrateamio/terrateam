@@ -563,6 +563,7 @@ module Tmpl = struct
   let unlock_success = read "unlock_success.tmpl"
   let access_control_all_dirspaces_denied = read "access_control_all_dirspaces_denied.tmpl"
   let access_control_dirspaces_denied = read "access_control_dirspaces_denied.tmpl"
+  let access_control_files_denied = read "access_control_files_denied.tmpl"
   let access_control_unlock_denied = read "access_control_unlock_denied.tmpl"
   let access_control_ci_config_update_denied = read "access_control_ci_config_update_denied.tmpl"
 
@@ -612,6 +613,9 @@ module Tmpl = struct
 
   let repo_config_err_access_control_ci_config_update_match_parse_err =
     read "repo_config_err_access_control_ci_config_update_match_parse_err.tmpl"
+
+  let repo_config_err_access_control_file_match_parse_err =
+    read "repo_config_err_access_control_file_match_parse_err.tmpl"
 
   let repo_config_err_access_control_unlock_match_parse_err =
     read "repo_config_err_access_control_unlock_match_parse_err.tmpl"
@@ -2110,6 +2114,15 @@ module S = struct
           "ACCESS_CONTROL_CI_CONFIG_UPDATE_MATCH_PARSE_ERR"
           Tmpl.repo_config_err_access_control_ci_config_update_match_parse_err
           kv
+    | `Access_control_file_match_parse_err (path, m) ->
+        let kv = Snabela.Kv.(Map.of_list [ ("path", string path); ("match", string m) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "ACCESS_CONTROL_FILE_MATCH_PARSE_ERR"
+          Tmpl.repo_config_err_access_control_file_match_parse_err
+          kv
     | `Access_control_policy_apply_autoapprove_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
         apply_template_and_publish
@@ -2449,6 +2462,34 @@ module S = struct
           pull_request
           "ACCESS_CONTROL_DIRSPACES_DENIED"
           Tmpl.access_control_dirspaces_denied
+          kv
+    | Msg.Access_control_denied (default_branch, `Files (fname, match_list)) ->
+        let kv =
+          Snabela.Kv.(
+            Map.of_list
+              [
+                ("user", string user);
+                ("default_branch", string default_branch);
+                ("filename", string fname);
+                ( "match_list",
+                  list
+                    (CCList.map
+                       (fun s ->
+                         Map.of_list
+                           [
+                             ( "item",
+                               string (Terrat_base_repo_config_v1.Access_control.Match.to_string s)
+                             );
+                           ])
+                       match_list) );
+              ])
+        in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "ACCESS_CONTROL_FILES"
+          Tmpl.access_control_files_denied
           kv
     | Msg.Access_control_denied (default_branch, `Terrateam_config_update match_list) ->
         let kv =
