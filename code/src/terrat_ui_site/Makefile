@@ -4,7 +4,8 @@ site_files = $(notdir $(wildcard $(SRC_DIR)/*.html) \
 	$(wildcard $(SRC_DIR)/*.css) \
 	$(wildcard $(SRC_DIR)/*.png) \
 	$(wildcard $(SRC_DIR)/*.json) \
-	$(wildcard $(SRC_DIR)/*.svg))
+	$(wildcard $(SRC_DIR)/*.svg)) \
+	index.html
 
 all: release
 
@@ -20,6 +21,9 @@ clean: clean_all_files
 
 clean_all_files:
 	-rm $(site_files)
+
+index.html: $(SRC_DIR)/index.html.tmpl
+	./"$<" > "$@"
 
 %.html: $(SRC_DIR)/%.html
 	cp $< $@

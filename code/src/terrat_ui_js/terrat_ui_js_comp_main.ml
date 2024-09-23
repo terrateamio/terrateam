@@ -73,7 +73,7 @@ let run' state =
                        div
                          ~at:At.[ class' (Jstr.v "left") ]
                          [
-                           img ~at:At.[ src (Jstr.v "/assets/logo.png"); class' (Jstr.v "h-9") ] ();
+                           img ~at:At.[ src (Jstr.v "/assets/logo.svg"); class' (Jstr.v "h-9") ] ();
                            div
                              ~at:At.[ class' (Jstr.v "links") ]
                              [
