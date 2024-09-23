@@ -2246,9 +2246,9 @@ let derive ~ctx ~index ~file_list repo_config =
           when_modified.When_modified.file_patterns
       in
       let when_modified = { when_modified with When_modified.file_patterns } in
-      { Dirs.Workspace.tags; when_modified }
+      { Dirs.Workspace.tags = Terrat_tag_set.(to_list (of_list tags)); when_modified }
     in
-    let tags = global_tags @ config.Dirs.Dir.tags in
+    let tags = Terrat_tag_set.(to_list (of_list (global_tags @ config.Dirs.Dir.tags))) in
     let workspaces =
       String_map.mapi
         (fun workspace workspace_config ->
