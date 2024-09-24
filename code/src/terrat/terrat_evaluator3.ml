@@ -1067,7 +1067,7 @@ module Make (S : S) = struct
     type fetch_err =
       [ Terrat_base_repo_config_v1.of_version_1_err
       | `Repo_config_parse_err of string * string
-      | Terrat_json.merge_err
+      | Jsonu.merge_err
       | `Json_decode_err of string * string
       | `Unexpected_err of string
       | `Yaml_decode_err of string * string
@@ -1099,7 +1099,7 @@ module Make (S : S) = struct
               | `Json_decode_err err -> `Json_decode_err (fname, err)
               | `Unexpected_err -> `Unexpected_err fname
               | `Yaml_decode_err err -> `Yaml_decode_err (fname, err))
-            (Terrat_json.of_yaml_string content)
+            (Jsonu.of_yaml_string content)
           >>= fun json -> Abb.Future.return (Ok (Some (fname, json)))
 
     let repo_config_of_json json =
@@ -1291,21 +1291,21 @@ module Make (S : S) = struct
           let default_repo_config = get_json default_repo_config in
           let built_config = get_json built_config in
           let repo_config = get_json repo_config in
-          Abb.Future.return (Terrat_json.merge ~base:global_defaults repo_defaults)
+          Abb.Future.return (Jsonu.merge ~base:global_defaults repo_defaults)
           >>= fun repo_defaults ->
-          Abb.Future.return (Terrat_json.merge ~base:repo_defaults default_repo_config)
+          Abb.Future.return (Jsonu.merge ~base:repo_defaults default_repo_config)
           >>= fun default_repo_config ->
-          Abb.Future.return (Terrat_json.merge ~base:default_repo_config global_overrides)
+          Abb.Future.return (Jsonu.merge ~base:default_repo_config global_overrides)
           >>= fun default_repo_config ->
-          Abb.Future.return (Terrat_json.merge ~base:default_repo_config repo_overrides)
+          Abb.Future.return (Jsonu.merge ~base:default_repo_config repo_overrides)
           >>= fun default_repo_config ->
-          Abb.Future.return (Terrat_json.merge ~base:repo_defaults built_config)
+          Abb.Future.return (Jsonu.merge ~base:repo_defaults built_config)
           >>= fun built_config ->
-          Abb.Future.return (Terrat_json.merge ~base:built_config repo_config)
+          Abb.Future.return (Jsonu.merge ~base:built_config repo_config)
           >>= fun repo_config ->
-          Abb.Future.return (Terrat_json.merge ~base:repo_config global_overrides)
+          Abb.Future.return (Jsonu.merge ~base:repo_config global_overrides)
           >>= fun repo_config ->
-          Abb.Future.return (Terrat_json.merge ~base:repo_config repo_overrides)
+          Abb.Future.return (Jsonu.merge ~base:repo_config repo_overrides)
           >>= fun repo_config ->
           Abbs_future_combinators.Infix_result_app.(
             (fun default_repo_config repo_config -> (default_repo_config, repo_config))
@@ -1323,7 +1323,7 @@ module Make (S : S) = struct
           validate_configs [ global_defaults; config ]
           >>= fun () ->
           let global_defaults = get_json global_defaults in
-          Abb.Future.return (Terrat_json.merge ~base:global_defaults repo_forced_config)
+          Abb.Future.return (Jsonu.merge ~base:global_defaults repo_forced_config)
           >>= fun repo_config ->
           wrap_err "repo" (repo_config_of_json repo_config)
           >>= fun repo_config -> Abb.Future.return (Ok (provenance, repo_config))

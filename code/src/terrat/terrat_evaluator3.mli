@@ -513,7 +513,7 @@ module Make (S : S) : sig
     type fetch_err =
       [ Terrat_base_repo_config_v1.of_version_1_err
       | `Repo_config_parse_err of string * string
-      | Terrat_json.merge_err
+      | Jsonu.merge_err
       | `Json_decode_err of string * string
       | `Unexpected_err of string
       | `Yaml_decode_err of string * string

@@ -2995,7 +2995,7 @@ module Make (Terratc : Terratc_intf.S) = struct
               Terrat_repo_config.Version_1.to_yojson
                 (Terrat_base_repo_config_v1.to_version_1 repo_config)
             in
-            Terrat_json.to_yaml_string repo_config_json
+            Jsonu.to_yaml_string repo_config_json
             >>= fun repo_config_yaml ->
             let kv =
               Snabela.Kv.(
@@ -3020,12 +3020,12 @@ module Make (Terratc : Terratc_intf.S) = struct
                 "REPO_CONFIG"
                 Tmpl.repo_config
                 kv
-          | Error (#Terrat_json.to_yaml_string_err as err) ->
+          | Error (#Jsonu.to_yaml_string_err as err) ->
               Logs.err (fun m ->
                   m
                     "GITHUB_EVALUATOR : %s : TO_YAML : %a"
                     request_id
-                    Terrat_json.pp_to_yaml_string_err
+                    Jsonu.pp_to_yaml_string_err
                     err);
               Abb.Future.return (Error `Error))
       | Msg.Repo_config_err err -> repo_config_err ~request_id ~client ~pull_request ~title:"" err

@@ -23,6 +23,8 @@ terrat: test-debug_abb_fut test-debug_abb_future_combinators test-release_abb_fl
 
 terrat: test-release_terrat test-release_terrat_github_webhooks
 
+terrat: test-release_jsonu
+
 terrat: release_terrat_code_indexer debug_terrat_code_indexer
 
 terrat-api: release_openapi_cli

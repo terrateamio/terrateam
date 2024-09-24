@@ -7,27 +7,12 @@ type user_err =
   ]
 [@@deriving show]
 
-type get_access_token_err =
-  [ Pgsql_pool.err
-  | Pgsql_io.err
-  | `Refresh_token_err of Githubc2_abb.call_err
-  | `Renew_refresh_token
-  ]
-[@@deriving show]
-
 type get_installation_access_token_err =
   [ Githubc2_abb.call_err
   | `Unauthorized of Githubc2_components.Basic_error.t
   | `Forbidden of Githubc2_components.Basic_error.t
   | `Not_found of Githubc2_components.Basic_error.t
   | `Unprocessable_entity of Githubc2_components.Validation_error.t
-  ]
-[@@deriving show]
-
-type verify_user_installation_access_err =
-  [ get_access_token_err
-  | Githubc2_abb.call_err
-  | `Forbidden
   ]
 [@@deriving show]
 
@@ -307,29 +292,6 @@ val get_user_installations :
 val get_installation_repos :
   Githubc2_abb.t ->
   (Githubc2_components.Repository.t list, [> get_installation_repos_err ]) result Abb.Future.t
-
-(* val get_access_token :
- *   Terrat_storage.t ->
- *   string ->
- *   string ->
- *   string ->
- *   (string, [> get_access_token_err ]) result Abb.Future.t *)
-
-(* val verify_user_installation_access : *)
-(*   Terrat_config.t -> *)
-(*   Terrat_storage.t -> *)
-(*   Githubc_v3.Schema.t -> *)
-(*   int64 -> *)
-(*   string -> *)
-(*   (unit, [> verify_user_installation_access_err ]) result Abb.Future.t *)
-
-(* val verify_admin_installation_access : *)
-(*   Terrat_config.t -> *)
-(*   Terrat_storage.t -> *)
-(*   Githubc_v3.Schema.t -> *)
-(*   int64 -> *)
-(*   string -> *)
-(*   (unit, [> verify_user_installation_access_err ]) result Abb.Future.t *)
 
 val find_workflow_file :
   owner:string ->

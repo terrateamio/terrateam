@@ -34,27 +34,12 @@ type user_err =
   ]
 [@@deriving show]
 
-type get_access_token_err =
-  [ Pgsql_pool.err
-  | Pgsql_io.err
-  | `Refresh_token_err of Githubc2_abb.call_err
-  | `Renew_refresh_token
-  ]
-[@@deriving show]
-
 type get_installation_access_token_err =
   [ Githubc2_abb.call_err
   | `Unauthorized of Githubc2_components.Basic_error.t
   | `Forbidden of Githubc2_components.Basic_error.t
   | `Not_found of Githubc2_components.Basic_error.t
   | `Unprocessable_entity of Githubc2_components.Validation_error.t
-  ]
-[@@deriving show]
-
-type verify_user_installation_access_err =
-  [ get_access_token_err
-  | Githubc2_abb.call_err
-  | `Forbidden
   ]
 [@@deriving show]
 
