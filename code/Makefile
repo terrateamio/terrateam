@@ -13,7 +13,9 @@ terrat-schemas: terrat-api terrat-repo-config terrat-webhooks
 
 terrat: pds.conf
 
-terrat: release_terrat_cli debug_terrat_cli
+terrat: release_terrat_oss debug_terrat_oss
+
+terrat: release_terrat_ee debug_terrat_ee
 
 terrat: release_terrat_ui debug_terrat_ui
 
