@@ -1,4 +1,10 @@
-module Make (Terratc : Terratc_intf.S) = struct
+module Make
+    (Terratc : Terratc_intf.S
+                 with type Github.Client.t = Terrat_github_evaluator3.S.Client.t
+                  and type Github.Repo.t = Terrat_github_evaluator3.S.Repo.t
+                  and type Github.Remote_repo.t = Terrat_github_evaluator3.S.Remote_repo.t
+                  and type Github.Ref.t = Terrat_github_evaluator3.S.Ref.t) =
+struct
   module Github_evaluator = Terrat_github_evaluator3.Make (Terratc)
   module Github_events = Terrat_ep_github_events3.Make (Terratc)
   module Github_work_manifest = Terrat_ep_github_work_manifest3.Make (Terratc)

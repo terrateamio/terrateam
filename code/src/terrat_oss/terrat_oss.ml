@@ -1,4 +1,8 @@
-module Server = Terrat_server.Make (Terratc_oss)
+module Terratc = Terratc_oss.Make (struct
+  module Github = Terrat_github_evaluator3.S
+end)
+
+module Server = Terrat_server.Make (Terratc)
 
 module Cmdline = struct
   module C = Cmdliner

@@ -37,7 +37,13 @@ module Metrics = struct
     Terrat_metrics.errors_total ~m:"ep_github_events" ~t:"github_webhook_decode"
 end
 
-module Make (Terratc : Terratc_intf.S) = struct
+module Make
+    (Terratc : Terratc_intf.S
+                 with type Github.Client.t = Terrat_github_evaluator3.S.Client.t
+                  and type Github.Repo.t = Terrat_github_evaluator3.S.Repo.t
+                  and type Github.Remote_repo.t = Terrat_github_evaluator3.S.Remote_repo.t
+                  and type Github.Ref.t = Terrat_github_evaluator3.S.Ref.t) =
+struct
   module Github_evaluator = Terrat_github_evaluator3.Make (Terratc)
   module Gw = Terrat_github_webhooks
 
@@ -221,10 +227,10 @@ module Make (Terratc : Terratc_intf.S) = struct
               repository.Gw.Repository.owner.Gw.User.login
               repository.Gw.Repository.name
               sender.Gw.User.login);
-        let account = Github_evaluator.S.Account.make ~installation_id () in
-        let user = Github_evaluator.S.User.make sender.Gw.User.login in
+        let account = Terrat_github_evaluator3.S.Account.make ~installation_id () in
+        let user = Terrat_github_evaluator3.S.User.make sender.Gw.User.login in
         let repo =
-          Github_evaluator.S.Repo.make
+          Terrat_github_evaluator3.S.Repo.make
             ~id:repository.Gw.Repository.id
             ~name:repository.Gw.Repository.name
             ~owner:repository.Gw.Repository.owner.Gw.User.login
@@ -254,10 +260,10 @@ module Make (Terratc : Terratc_intf.S) = struct
               repository.Gw.Repository.owner.Gw.User.login
               repository.Gw.Repository.name
               sender.Gw.User.login);
-        let account = Github_evaluator.S.Account.make ~installation_id () in
-        let user = Github_evaluator.S.User.make sender.Gw.User.login in
+        let account = Terrat_github_evaluator3.S.Account.make ~installation_id () in
+        let user = Terrat_github_evaluator3.S.User.make sender.Gw.User.login in
         let repo =
-          Github_evaluator.S.Repo.make
+          Terrat_github_evaluator3.S.Repo.make
             ~id:repository.Gw.Repository.id
             ~name:repository.Gw.Repository.name
             ~owner:repository.Gw.Repository.owner.Gw.User.login
@@ -289,10 +295,10 @@ module Make (Terratc : Terratc_intf.S) = struct
               repository.Gw.Repository.owner.Gw.User.login
               repository.Gw.Repository.name
               sender.Gw.User.login);
-        let account = Github_evaluator.S.Account.make ~installation_id () in
-        let user = Github_evaluator.S.User.make sender.Gw.User.login in
+        let account = Terrat_github_evaluator3.S.Account.make ~installation_id () in
+        let user = Terrat_github_evaluator3.S.User.make sender.Gw.User.login in
         let repo =
-          Github_evaluator.S.Repo.make
+          Terrat_github_evaluator3.S.Repo.make
             ~id:repository.Gw.Repository.id
             ~name:repository.Gw.Repository.name
             ~owner:repository.Gw.Repository.owner.Gw.User.login
@@ -324,10 +330,10 @@ module Make (Terratc : Terratc_intf.S) = struct
               repository.Gw.Repository.owner.Gw.User.login
               repository.Gw.Repository.name
               sender.Gw.User.login);
-        let account = Github_evaluator.S.Account.make ~installation_id () in
-        let user = Github_evaluator.S.User.make sender.Gw.User.login in
+        let account = Terrat_github_evaluator3.S.Account.make ~installation_id () in
+        let user = Terrat_github_evaluator3.S.User.make sender.Gw.User.login in
         let repo =
-          Github_evaluator.S.Repo.make
+          Terrat_github_evaluator3.S.Repo.make
             ~id:repository.Gw.Repository.id
             ~name:repository.Gw.Repository.name
             ~owner:repository.Gw.Repository.owner.Gw.User.login
@@ -364,10 +370,10 @@ module Make (Terratc : Terratc_intf.S) = struct
               repository.Gw.Repository.owner.Gw.User.login
               repository.Gw.Repository.name
               sender.Gw.User.login);
-        let account = Github_evaluator.S.Account.make ~installation_id () in
-        let user = Github_evaluator.S.User.make sender.Gw.User.login in
+        let account = Terrat_github_evaluator3.S.Account.make ~installation_id () in
+        let user = Terrat_github_evaluator3.S.User.make sender.Gw.User.login in
         let repo =
-          Github_evaluator.S.Repo.make
+          Terrat_github_evaluator3.S.Repo.make
             ~id:repository.Gw.Repository.id
             ~name:repository.Gw.Repository.name
             ~owner:repository.Gw.Repository.owner.Gw.User.login
@@ -456,10 +462,10 @@ module Make (Terratc : Terratc_intf.S) = struct
               sender.Gw.User.login);
         match Terrat_comment.parse comment_body with
         | Ok comment ->
-            let account = Github_evaluator.S.Account.make ~installation_id () in
-            let user = Github_evaluator.S.User.make sender.Gw.User.login in
+            let account = Terrat_github_evaluator3.S.Account.make ~installation_id () in
+            let user = Terrat_github_evaluator3.S.User.make sender.Gw.User.login in
             let repo =
-              Github_evaluator.S.Repo.make
+              Terrat_github_evaluator3.S.Repo.make
                 ~id:repository.Gw.Repository.id
                 ~name:repository.Gw.Repository.name
                 ~owner:repository.Gw.Repository.owner.Gw.User.login
@@ -576,15 +582,15 @@ module Make (Terratc : Terratc_intf.S) = struct
     match event.Gw.Push_event.installation with
     | Some installation_lite when CCString.equal ref_ default_ref ->
         let installation_id = installation_lite.Gw.Installation_lite.id in
-        let account = Github_evaluator.S.Account.make ~installation_id () in
+        let account = Terrat_github_evaluator3.S.Account.make ~installation_id () in
         let repo =
-          Github_evaluator.S.Repo.make
+          Terrat_github_evaluator3.S.Repo.make
             ~id:repository.Gw.Repository.id
             ~name:repository.Gw.Repository.name
             ~owner:repository.Gw.Repository.owner.Gw.User.login
             ()
         in
-        let user = Github_evaluator.S.User.make event.Gw.Push_event.sender.Gw.User.login in
+        let user = Terrat_github_evaluator3.S.User.make event.Gw.Push_event.sender.Gw.User.login in
         Github_evaluator.run_push
           ~ctx:(Terrat_evaluator3.Ctx.make ~request_id ~config ~storage ())
           ~account

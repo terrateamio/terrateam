@@ -506,6 +506,24 @@ module type S = sig
 
   val query_missing_drift_scheduled_runs :
     request_id:string -> Db.t -> ((Account.t * Repo.t) list, [> `Error ]) result Abb.Future.t
+
+  val repo_config_of_json :
+    Yojson.Safe.t ->
+    ( Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t,
+      [> Terrat_base_repo_config_v1.of_version_1_err | `Repo_config_parse_err of string ] )
+    result
+    Abb.Future.t
+
+  val fetch_repo_config_with_provenance :
+    ?built_config:Yojson.Safe.t ->
+    string ->
+    Client.t ->
+    Repo.t ->
+    Ref.t ->
+    ( string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t,
+      [> Terratc_intf.Repo_config.fetch_err ] )
+    result
+    Abb.Future.t
 end
 
 module Make (S : S) : sig
