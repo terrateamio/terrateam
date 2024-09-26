@@ -30,7 +30,7 @@ RUN eval $(opam env) && \
 # compile
 WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && eval $(opam env) && \
-    (time make -j4 release_terrat_cli release_terrat_ui || time make -j1 release_terrat_cli release_terrat_ui)
+    (time make -j4 release_terrat_ee release_terrat_ui || time make -j1 release_terrat_ee release_terrat_ui)
 
 # test
 WORKDIR /mono/code
@@ -67,7 +67,7 @@ COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
 
 # artifacts
 COPY --from=build /usr/lib/libkqueue.so /usr/lib/libkqueue.so
-COPY --from=build /mono/code/build/release/terrat_cli/terrat_cli.native /usr/local/bin/terrat
+COPY --from=build /mono/code/build/release/terrat_ee/terrat_ee.native /usr/local/bin/terrat
 COPY --from=build /mono/code/build/release/terrat_ui_files/assets /usr/local/share/terrat/ui/assets/
 # expose
 EXPOSE 8080
