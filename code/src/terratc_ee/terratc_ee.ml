@@ -65,6 +65,99 @@ module Make (M : S) = struct
     module Ref = M.Github.Ref
     module Remote_repo = M.Github.Remote_repo
 
+    module Access_control = struct
+      module Ctx = struct
+        type t = {
+          client : Githubc2_abb.t;
+          config : Terrat_config.t;
+          repo : Repo.t;
+          user : string;
+        }
+
+        let make ~client ~config ~repo ~user () = { client; config; repo; user }
+      end
+
+      (* Order matters here.  Roles closer to the beginning of the search are more
+         powerful than those closer to the end *)
+      let repo_permission_levels =
+        [
+          ("admin", "admin");
+          ("maintain", "maintain");
+          ("write", "write");
+          ("triage", "triage");
+          ("read", "read");
+        ]
+
+      let query ctx =
+        let module M = Terrat_base_repo_config_v1.Access_control.Match in
+        function
+        | M.User value -> Abb.Future.return (Ok (CCString.equal value ctx.Ctx.user))
+        | M.Team value -> (
+            let open Abb.Future.Infix_monad in
+            Terrat_github.get_team_membership_in_org
+              ~org:(Repo.owner ctx.Ctx.repo)
+              ~team:value
+              ~user:ctx.Ctx.user
+              ctx.Ctx.client
+            >>= function
+            | Ok res -> Abb.Future.return (Ok res)
+            | Error _ -> Abb.Future.return (Error `Error))
+        | M.Repo value -> (
+            let open Abb.Future.Infix_monad in
+            match CCList.find_idx CCFun.(fst %> CCString.equal value) repo_permission_levels with
+            | Some (idx, _) -> (
+                Terrat_github.get_repo_collaborator_permission
+                  ~org:(Repo.owner ctx.Ctx.repo)
+                  ~repo:(Repo.name ctx.Ctx.repo)
+                  ~user:ctx.Ctx.user
+                  ctx.Ctx.client
+                >>= function
+                | Ok (Some role) -> (
+                    match
+                      CCList.find_idx CCFun.(snd %> CCString.equal role) repo_permission_levels
+                    with
+                    | Some (idx_role, _) ->
+                        (* Test if their actual role has an index less than or
+                           equal to the index of the role in the query. *)
+                        Abb.Future.return (Ok (idx_role <= idx))
+                    | None -> Abb.Future.return (Ok false))
+                | Ok None -> Abb.Future.return (Ok false)
+                | Error _ -> Abb.Future.return (Error `Error))
+            | None -> raise (Failure "nyi")
+            (* Abb.Future.return (Error (`Invalid_query query)) *))
+        | M.Any -> Abb.Future.return (Ok true)
+
+      let is_ci_changed ctx diff =
+        let run =
+          let open Abbs_future_combinators.Infix_result_monad in
+          Terrat_github.find_workflow_file
+            ~owner:(Repo.owner ctx.Ctx.repo)
+            ~repo:(Repo.name ctx.Ctx.repo)
+            ctx.Ctx.client
+          >>= function
+          | Some path ->
+              let diff_paths =
+                CCList.flat_map
+                  (function
+                    | Terrat_change.Diff.(
+                        Add { filename } | Change { filename } | Remove { filename }) ->
+                        [ filename ]
+                    | Terrat_change.Diff.Move { filename; previous_filename } ->
+                        [ filename; previous_filename ])
+                  diff
+              in
+              Abb.Future.return (Ok (CCList.mem ~eq:CCString.equal path diff_paths))
+          | None -> Abb.Future.return (Ok false)
+        in
+        let open Abb.Future.Infix_monad in
+        run
+        >>= function
+        | Ok _ as ret -> Abb.Future.return ret
+        | Error _ -> Abb.Future.return (Error `Error)
+
+      let set_user user ctx = { ctx with Ctx.user }
+    end
+
     module Repo_config = struct
       let fetch_repo_config_file request_id client repo ref_ basename =
         let open Abbs_future_combinators.Infix_result_monad in

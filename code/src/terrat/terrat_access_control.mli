@@ -26,15 +26,17 @@ module R : sig
 end
 
 module type S = sig
-  type ctx
+  module Ctx : sig
+    type t
+  end
 
   val query :
-    ctx ->
+    Ctx.t ->
     Terrat_base_repo_config_v1.Access_control.Match.t ->
     (bool, [> query_err ]) result Abb.Future.t
 
-  val is_ci_changed : ctx -> Terrat_change.Diff.t list -> (bool, [> err ]) result Abb.Future.t
-  val set_user : string -> ctx -> ctx
+  val is_ci_changed : Ctx.t -> Terrat_change.Diff.t list -> (bool, [> err ]) result Abb.Future.t
+  val set_user : string -> Ctx.t -> Ctx.t
 end
 
 module Make (S : S) : sig
@@ -42,7 +44,7 @@ module Make (S : S) : sig
       changes have been detected or they were detected but passed the
       permissions check. *)
   val eval_ci_change :
-    S.ctx ->
+    S.Ctx.t ->
     Terrat_base_repo_config_v1.Access_control.Match_list.t ->
     Terrat_change.Diff.t list ->
     (bool, [> err ]) result Abb.Future.t
@@ -51,7 +53,7 @@ module Make (S : S) : sig
       files matching a policy changed or the files matched pass the policy,
       returns [`Denied filename] for the first file that failed the check. *)
   val eval_files :
-    S.ctx ->
+    S.Ctx.t ->
     Terrat_base_repo_config_v1.Access_control.Match_list.t Terrat_data.String_map.t ->
     Terrat_change.Diff.t list ->
     ( [ `Ok | `Denied of string * Terrat_base_repo_config_v1.Access_control.Match_list.t ],
@@ -63,7 +65,7 @@ module Make (S : S) : sig
       configuration. [true] is returned if there is no repo configuration change
       or there is and it passes the permissions check. *)
   val eval_repo_config :
-    S.ctx ->
+    S.Ctx.t ->
     Terrat_base_repo_config_v1.Access_control.Match_list.t ->
     Terrat_change.Diff.t list ->
     (bool, [> err ]) result Abb.Future.t
@@ -73,13 +75,13 @@ module Make (S : S) : sig
       result partitions the passing and deny.  All input changes will be
       represented in these two.. *)
   val eval :
-    S.ctx ->
+    S.Ctx.t ->
     Policy.t list ->
     Terrat_change_match3.Dirspace_config.t list ->
     (R.t, [> err ]) result Abb.Future.t
 
   val eval_match_list :
-    S.ctx ->
+    S.Ctx.t ->
     Terrat_base_repo_config_v1.Access_control.Match_list.t ->
     (bool, [> err ]) result Abb.Future.t
 end

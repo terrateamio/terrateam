@@ -28,15 +28,17 @@ module R = struct
 end
 
 module type S = sig
-  type ctx
+  module Ctx : sig
+    type t
+  end
 
   val query :
-    ctx ->
+    Ctx.t ->
     Terrat_base_repo_config_v1.Access_control.Match.t ->
     (bool, [> query_err ]) result Abb.Future.t
 
-  val is_ci_changed : ctx -> Terrat_change.Diff.t list -> (bool, [> err ]) result Abb.Future.t
-  val set_user : string -> ctx -> ctx
+  val is_ci_changed : Ctx.t -> Terrat_change.Diff.t list -> (bool, [> err ]) result Abb.Future.t
+  val set_user : string -> Ctx.t -> Ctx.t
 end
 
 module Make (S : S) = struct

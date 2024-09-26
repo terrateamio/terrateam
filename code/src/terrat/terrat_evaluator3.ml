@@ -444,7 +444,7 @@ module type S = sig
     request_id:string -> Db.t -> Repo.t -> Unlock_id.t -> (unit, [> `Error ]) result Abb.Future.t
 
   val create_access_control_ctx :
-    request_id:string -> Client.t -> Terrat_config.t -> Repo.t -> User.t -> Access_control.ctx
+    request_id:string -> Client.t -> Terrat_config.t -> Repo.t -> User.t -> Access_control.Ctx.t
 
   val query_pull_request_out_of_change_applies :
     request_id:string ->
@@ -1579,7 +1579,7 @@ module Make (S : S) = struct
 
     type t = {
       config : Terrat_base_repo_config_v1.Access_control.t;
-      ctx : S.Access_control.ctx;
+      ctx : S.Access_control.Ctx.t;
       policy_branch : S.Ref.t;
       request_id : string;
       user : string;

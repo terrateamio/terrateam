@@ -59,6 +59,21 @@ module Make (M : S) = struct
     module Ref = M.Github.Ref
     module Remote_repo = M.Github.Remote_repo
 
+    module Access_control = struct
+      (* Access control is an enterprise feature, so always return success on
+         any requests. *)
+
+      module Ctx = struct
+        type t = unit
+
+        let make ~client ~config ~repo ~user () = ()
+      end
+
+      let query ctx match_list = Abb.Future.return (Ok true)
+      let is_ci_changed ctx diff = Abb.Future.return (Ok false)
+      let set_user user t = ()
+    end
+
     module Repo_config = struct
       let fetch_repo_config_file request_id client repo ref_ basename =
         let open Abbs_future_combinators.Infix_result_monad in
