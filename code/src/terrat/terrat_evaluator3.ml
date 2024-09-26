@@ -3094,7 +3094,7 @@ module Make (S : S) = struct
                     Uuidm.pp
                     work_manifest_id);
               Abb.Future.return (Error `Failure))
-      | _, Some (I.Work_manifest_failure { p }), Some work_manifest_id -> (
+      | _, Some (I.Work_manifest_failure { p }), Some work_manifest_id ->
           Logs.info (fun m ->
               m
                 "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : WORK_MANIFEST_FAILURE : id=%a"
@@ -3102,28 +3102,31 @@ module Make (S : S) = struct
                 name
                 Uuidm.pp
                 work_manifest_id);
-          query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
-          >>= function
-          | Some ({ Wm.state = Wm.State.(Queued | Running); _ } as work_manifest) ->
-              update_work_manifest_state
-                state.State.request_id
-                ctx.Ctx.storage
-                work_manifest_id
-                Wm.State.Aborted
-              >>= fun () ->
-              run_failure ctx state `Error work_manifest
-              >>= fun () -> Abb.Future.return (Error (`Noop state))
-          | Some _ -> Abb.Future.return (Error (`Noop state))
-          | None ->
-              Logs.err (fun m ->
-                  m
-                    "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : WORK_MANIFEST_FAILURE : NOT_FOUND \
-                     : id=%a"
+          Abbs_future_combinators.with_finally
+            (fun () ->
+              query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
+              >>= function
+              | Some ({ Wm.state = Wm.State.(Queued | Running); _ } as work_manifest) ->
+                  update_work_manifest_state
                     state.State.request_id
-                    name
-                    Uuidm.pp
-                    work_manifest_id);
-              Abb.Future.return (Error `Failure))
+                    ctx.Ctx.storage
+                    work_manifest_id
+                    Wm.State.Aborted
+                  >>= fun () ->
+                  run_failure ctx state `Error work_manifest
+                  >>= fun () -> Abb.Future.return (Error (`Noop state))
+              | Some _ -> Abb.Future.return (Error (`Noop state))
+              | None ->
+                  Logs.err (fun m ->
+                      m
+                        "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : WORK_MANIFEST_FAILURE : \
+                         NOT_FOUND : id=%a"
+                        state.State.request_id
+                        name
+                        Uuidm.pp
+                        work_manifest_id);
+                  Abb.Future.return (Error `Failure))
+            ~finally:(fun () -> Abb.Future.Promise.set p (Ok ()))
       | _, _, _ -> fallthrough ctx state
 
     let eval_plan_work_manifest_iter ~store ~fetch ~fallthrough ctx state =
@@ -4643,7 +4646,7 @@ module Make (S : S) = struct
       | Event.Pull_request_comment
           { comment = Terrat_comment.(Feedback _ | Help | Repo_config | Unlock _ | Index); _ } ->
           assert false
-      | Event.Push _ | Event.Run_drift _ -> raise (Failure "nyi")
+      | Event.Push _ | Event.Run_drift _ -> assert false
 
     let check_pull_request_state ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -5310,8 +5313,11 @@ module Make (S : S) = struct
                 merge_pull_request state.State.request_id client pull_request
                 >>= fun () ->
                 if delete_branch then
+                  let open Abb.Future.Infix_monad in
+                  (* Nothing to do if this fails and it can fail for a few valid
+                     reasons, so just ignore. *)
                   delete_pull_request_branch state.State.request_id client pull_request
-                  >>= fun () -> Abb.Future.return (Ok state)
+                  >>= fun _ -> Abb.Future.return (Ok state)
                 else Abb.Future.return (Ok state)
               else Abb.Future.return (Ok state)
           | None -> assert false)
@@ -6231,7 +6237,7 @@ module Make (S : S) = struct
                       let state = update (Flow.Yield.state resume') in
                       let resume' = Flow.Yield.set_state state resume' in
                       resume_event { ctx with Ctx.storage = db } resume' exec_flow
-                  | None -> assert false))
+                  | None -> Abb.Future.return (Error `Error)))
           >>= function
           | `Success _ ->
               let open Abb.Future.Infix_monad in
@@ -6242,7 +6248,7 @@ module Make (S : S) = struct
               let open Abb.Future.Infix_monad in
               Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db ->
                   delete_flow_state ctx.Ctx.request_id db work_manifest_id)
-              >>= fun _ -> raise (Failure "nyi")
+              >>= fun _ -> Abb.Future.return (Error `Error)
           | `Yield _ -> Abb.Future.return (Ok ()))
         ~finally:(fun () ->
           Abbs_future_combinators.ignore (run_work_manifests ctx.Ctx.request_id ctx))
@@ -6383,7 +6389,7 @@ module Make (S : S) = struct
                          Abb.Future.return (Ok ())
                      | Ok (`Yield _) -> Abb.Future.return (Ok ())
                      | Ok (`Failure _) -> Abb.Future.return (Ok ())
-                     | Error `Error -> raise (Failure "nyi")))
+                     | Error `Error -> Abb.Future.return (Error `Error)))
            with _ ->
              Logs.err (fun m -> m "EVALUATOR : %s : EXN" ctx.Ctx.request_id);
              Abb.Future.return (Ok ()))
@@ -6397,8 +6403,8 @@ module Make (S : S) = struct
       (function
         | `Det r -> Abb.Future.return r
         | `Aborted ->
-            Logs.info (fun m -> m "EVALUATOR : %s : RUNNER : ABORTED" ctx.Ctx.request_id);
-            assert false
+            Logs.err (fun m -> m "EVALUATOR : %s : RUNNER : ABORTED" ctx.Ctx.request_id);
+            Abb.Future.return (Error `Error)
         | `Exn (exn, bt_opt) ->
             Logs.err (fun m ->
                 m
@@ -6406,14 +6412,51 @@ module Make (S : S) = struct
                   ctx.Ctx.request_id
                   (Printexc.to_string exn)
                   (CCOption.map_or ~default:"" Printexc.raw_backtrace_to_string bt_opt));
-            assert false)
+            Abb.Future.return (Error `Error))
       (let open Abb.Future.Infix_monad in
        Abbs_future_combinators.with_finally
          (fun () ->
            Runner.resume ctx work_manifest_id update
            >>= function
-           | Ok _ as r -> Abb.Future.return r
-           | Error _ -> raise (Failure "nyi"))
+           | Ok () -> Abb.Future.return (Ok ())
+           | Error (#Pgsql_pool.err as err) ->
+               Logs.err (fun m ->
+                   m
+                     "EVALUATOR : %s : work_manifest_id=%a : %a"
+                     ctx.Ctx.request_id
+                     Uuidm.pp
+                     work_manifest_id
+                     Pgsql_pool.pp_err
+                     err);
+               Abb.Future.return (Error `Error)
+           | Error (#Pgsql_io.err as err) ->
+               Logs.err (fun m ->
+                   m
+                     "EVALUATOR : %s : work_manifest_id=%a : %a"
+                     ctx.Ctx.request_id
+                     Uuidm.pp
+                     work_manifest_id
+                     Pgsql_io.pp_err
+                     err);
+               Abb.Future.return (Error `Error)
+           | Error (#Flow.Yield.of_string_err as err) ->
+               Logs.err (fun m ->
+                   m
+                     "EVALUATOR : %s : work_manifest_id=%a : %a"
+                     ctx.Ctx.request_id
+                     Uuidm.pp
+                     work_manifest_id
+                     Flow.Yield.pp_of_string_err
+                     err);
+               Abb.Future.return (Error `Error)
+           | Error `Error ->
+               Logs.err (fun m ->
+                   m
+                     "EVALUATOR : %s : work_manifest_id=%a : ERROR"
+                     ctx.Ctx.request_id
+                     Uuidm.pp
+                     work_manifest_id);
+               Abb.Future.return (Error `Error))
          ~finally:(fun () -> Abbs_future_combinators.ignore (Abb.Future.fork (Runner.run ctx))))
 
   let run_work_manifest_initiate ctx encryption_key work_manifest_id initiate =
