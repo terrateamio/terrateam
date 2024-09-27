@@ -2775,10 +2775,7 @@ module Make (S : S) = struct
                            output = None;
                            input = None;
                          }))
-              | None ->
-                  let open Abb.Future.Infix_monad in
-                  Abb.Future.Promise.set p (Ok None)
-                  >>= fun () -> Abb.Future.return (Error (`Noop state)))
+              | None -> Abb.Future.return (Error (`Noop state)))
           | Some { Wm.id; state = Wm.State.Aborted; _ } ->
               Logs.info (fun m ->
                   m
@@ -2798,7 +2795,7 @@ module Make (S : S) = struct
                     Uuidm.pp
                     id
                     (Wm.State.to_string state'));
-              Abb.Future.return (Error `Failure)
+              Abb.Future.return (Error (`Noop state))
           | None ->
               Logs.err (fun m ->
                   m
@@ -2807,10 +2804,10 @@ module Make (S : S) = struct
                     name
                     Uuidm.pp
                     work_manifest_id);
-              Abb.Future.return (Error `Failure))
+              Abb.Future.return (Error (`Noop state)))
       | ( St.Waiting_for_work_manifest_result,
           Some (I.Work_manifest_result { result = req; p }),
-          Some work_manifest_id ) -> (
+          Some work_manifest_id ) ->
           Logs.info (fun m ->
               m
                 "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : RESULT : id=%a"
@@ -2818,45 +2815,42 @@ module Make (S : S) = struct
                 name
                 Uuidm.pp
                 work_manifest_id);
-          query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
-          >>= function
-          | Some ({ Wm.state = Wm.State.(Queued | Running); _ } as work_manifest) -> (
-              let open Abb.Future.Infix_monad in
-              result ctx state req work_manifest
+          Abbs_future_combinators.with_finally
+            (fun () ->
+              query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
               >>= function
-              | Ok () ->
-                  Abb.Future.Promise.set p (Ok ())
-                  >>= fun () ->
-                  Abb.Future.return
-                    (Ok { state with State.st = St.Initial; input = None; output = None })
-              | Error (`Noop state) ->
-                  Abb.Future.Promise.set p (Ok ())
-                  >>= fun () ->
-                  Abb.Future.return
-                    (Error (`Noop { state with State.st = St.Initial; input = None }))
-              | Error err ->
-                  Abb.Future.Promise.set p (Error `Error)
-                  >>= fun () -> Abb.Future.return (Error err))
-          | Some { Wm.id; state = state'; _ } ->
-              Logs.err (fun m ->
-                  m
-                    "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : RESULT : INVALID_STATE : id=%a : \
-                     state=%s"
-                    state.State.request_id
-                    name
-                    Uuidm.pp
-                    id
-                    (Wm.State.to_string state'));
-              Abb.Future.return (Error `Failure)
-          | None ->
-              Logs.err (fun m ->
-                  m
-                    "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : RESULT : NOT_FOUND : id=%a"
-                    state.State.request_id
-                    name
-                    Uuidm.pp
-                    work_manifest_id);
-              Abb.Future.return (Error `Failure))
+              | Some ({ Wm.state = Wm.State.(Queued | Running); _ } as work_manifest) -> (
+                  let open Abb.Future.Infix_monad in
+                  result ctx state req work_manifest
+                  >>= function
+                  | Ok () ->
+                      Abb.Future.return
+                        (Ok { state with State.st = St.Initial; input = None; output = None })
+                  | Error (`Noop state) ->
+                      Abb.Future.return
+                        (Error (`Noop { state with State.st = St.Initial; input = None }))
+                  | Error err -> Abb.Future.return (Error err))
+              | Some { Wm.id; state = state'; _ } ->
+                  Logs.err (fun m ->
+                      m
+                        "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : RESULT : INVALID_STATE : id=%a \
+                         : state=%s"
+                        state.State.request_id
+                        name
+                        Uuidm.pp
+                        id
+                        (Wm.State.to_string state'));
+                  Abb.Future.return (Error `Failure)
+              | None ->
+                  Logs.err (fun m ->
+                      m
+                        "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : RESULT : NOT_FOUND : id=%a"
+                        state.State.request_id
+                        name
+                        Uuidm.pp
+                        work_manifest_id);
+                  Abb.Future.return (Error `Failure))
+            ~finally:(fun () -> Abb.Future.Promise.set p (Ok ()))
       | _, Some (I.Work_manifest_failure { p }), Some work_manifest_id ->
           Logs.info (fun m ->
               m
