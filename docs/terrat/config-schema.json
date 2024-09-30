@@ -525,6 +525,12 @@
           "const": "source",
           "type": "string"
         },
+        "sensitive": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "type": {
           "const": "env",
           "type": "string"

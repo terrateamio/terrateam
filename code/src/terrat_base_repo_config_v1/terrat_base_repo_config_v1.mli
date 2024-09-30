@@ -52,7 +52,11 @@ module Workflow_step : sig
     end
 
     module Source : sig
-      type t = { cmd : Cmd.t } [@@deriving make, show, yojson, eq]
+      type t = {
+        cmd : Cmd.t;
+        sensitive : string list; [@default []]
+      }
+      [@@deriving make, show, yojson, eq]
     end
 
     type t =

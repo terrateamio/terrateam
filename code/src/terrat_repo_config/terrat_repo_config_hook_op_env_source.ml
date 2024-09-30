@@ -11,6 +11,10 @@ module Method = struct
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
+module Sensitive = struct
+  type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
 module Type = struct
   let t_of_yojson = function
     | `String "env" -> Ok "env"
@@ -23,6 +27,7 @@ end
 type t = {
   cmd : Cmd.t;
   method_ : Method.t; [@key "method"]
+  sensitive : Sensitive.t option; [@default None]
   type_ : Type.t; [@key "type"]
 }
 [@@deriving yojson { strict = true; meta = true }, make, show, eq]
