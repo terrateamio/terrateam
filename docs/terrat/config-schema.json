@@ -492,6 +492,10 @@
         "name": {
           "type": "string"
         },
+        "sensitive": {
+          "default": false,
+          "type": "boolean"
+        },
         "trim_trailing_newlines": {
           "default": true,
           "type": "boolean"

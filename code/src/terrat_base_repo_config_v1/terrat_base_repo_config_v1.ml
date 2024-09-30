@@ -86,6 +86,7 @@ module Workflow_step = struct
       type t = {
         cmd : Cmd.t;
         name : string;
+        sensitive : bool; [@default false]
         trim_trailing_newlines : bool; [@default true]
       }
       [@@deriving make, show, yojson, eq]
@@ -901,10 +902,10 @@ let of_version_1_hook_op =
   | Op.Hook_op_drift_create_issue _ -> Ok Hooks.Hook_op.Drift_create_issue
   | Op.Hook_op_env_exec op ->
       let module Op = Terrat_repo_config_hook_op_env_exec in
-      let { Op.cmd; name; trim_trailing_newlines; method_ = _; type_ = _ } = op in
+      let { Op.cmd; name; sensitive; trim_trailing_newlines; method_ = _; type_ = _ } = op in
       Ok
         (Hooks.Hook_op.Env
-           Workflow_step.Env.(Exec (Exec.make ~cmd ~name ~trim_trailing_newlines ())))
+           Workflow_step.Env.(Exec (Exec.make ~cmd ~name ~sensitive ~trim_trailing_newlines ())))
   | Op.Hook_op_env_source op ->
       let module Op = Terrat_repo_config_hook_op_env_source in
       let { Op.cmd; method_ = _; type_ = _ } = op in
@@ -1030,8 +1031,10 @@ let of_version_1_workflow_op_list ops =
       | Op.Hook_op_slack _ -> assert false
       | Op.Hook_op_env_exec op ->
           let module Op = Terrat_repo_config_hook_op_env_exec in
-          let { Op.cmd; name; trim_trailing_newlines; method_ = _; type_ = _ } = op in
-          Ok (O.Env Workflow_step.Env.(Exec (Exec.make ~cmd ~name ~trim_trailing_newlines ())))
+          let { Op.cmd; name; sensitive; trim_trailing_newlines; method_ = _; type_ = _ } = op in
+          Ok
+            (O.Env
+               Workflow_step.Env.(Exec (Exec.make ~cmd ~name ~sensitive ~trim_trailing_newlines ())))
       | Op.Hook_op_env_source op ->
           let module Op = Terrat_repo_config_hook_op_env_source in
           let { Op.cmd; method_ = _; type_ = _ } = op in
@@ -1815,8 +1818,8 @@ let to_version_1_engine engine =
 let to_version_1_hooks_op_env_exec env =
   let module Op = Terrat_repo_config.Hook_op in
   let module E = Terrat_repo_config.Hook_op_env_exec in
-  let { Workflow_step.Env.Exec.cmd; name; trim_trailing_newlines } = env in
-  { E.cmd; method_ = Some "exec"; name; trim_trailing_newlines; type_ = "env" }
+  let { Workflow_step.Env.Exec.cmd; name; sensitive; trim_trailing_newlines } = env in
+  { E.cmd; method_ = Some "exec"; name; sensitive; trim_trailing_newlines; type_ = "env" }
 
 let to_version_1_hooks_op_env_source env =
   let module Op = Terrat_repo_config.Hook_op in

@@ -24,6 +24,7 @@ type t = {
   cmd : Cmd.t;
   method_ : Method.t option; [@key "method"] [@default None]
   name : string;
+  sensitive : bool; [@default false]
   trim_trailing_newlines : bool; [@default true]
   type_ : Type.t; [@key "type"]
 }

@@ -45,6 +45,7 @@ module Workflow_step : sig
       type t = {
         cmd : Cmd.t;
         name : string;
+        sensitive : bool; [@default false]
         trim_trailing_newlines : bool; [@default true]
       }
       [@@deriving make, show, yojson, eq]
