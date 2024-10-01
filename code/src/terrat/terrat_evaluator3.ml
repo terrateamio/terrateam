@@ -5980,46 +5980,48 @@ module Make (S : S) = struct
       | `Cont -> run_work_manifests request_id ctx
       | `Done -> Abb.Future.return (Ok ())
 
+    and resume_raw ctx work_manifest_id update =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db ->
+          Pgsql_io.tx db ~f:(fun () ->
+              query_flow_state ctx.Ctx.request_id db work_manifest_id
+              >>= function
+              | Some str ->
+                  Abb.Future.return (Flow.Yield.of_string str)
+                  >>= fun resume' ->
+                  let state = update (Flow.Yield.state resume') in
+                  let resume' = Flow.Yield.set_state state resume' in
+                  resume_event { ctx with Ctx.storage = db } resume' exec_flow
+              | None -> Abb.Future.return (Error `Error)))
+      >>= function
+      | `Success _ ->
+          let open Abb.Future.Infix_monad in
+          Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db ->
+              delete_flow_state ctx.Ctx.request_id db work_manifest_id)
+          >>= fun _ -> Abb.Future.return (Ok ())
+      | `Failure _ ->
+          let open Abb.Future.Infix_monad in
+          Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db ->
+              delete_flow_state ctx.Ctx.request_id db work_manifest_id)
+          >>= fun _ -> Abb.Future.return (Error `Error)
+      | `Yield _ -> Abb.Future.return (Ok ())
+
     and resume ctx work_manifest_id update =
       Abbs_future_combinators.with_finally
-        (fun () ->
-          let open Abbs_future_combinators.Infix_result_monad in
-          Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db ->
-              Pgsql_io.tx db ~f:(fun () ->
-                  query_flow_state ctx.Ctx.request_id db work_manifest_id
-                  >>= function
-                  | Some str ->
-                      Abb.Future.return (Flow.Yield.of_string str)
-                      >>= fun resume' ->
-                      let state = update (Flow.Yield.state resume') in
-                      let resume' = Flow.Yield.set_state state resume' in
-                      resume_event { ctx with Ctx.storage = db } resume' exec_flow
-                  | None -> Abb.Future.return (Error `Error)))
-          >>= function
-          | `Success _ ->
-              let open Abb.Future.Infix_monad in
-              Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db ->
-                  delete_flow_state ctx.Ctx.request_id db work_manifest_id)
-              >>= fun _ -> Abb.Future.return (Ok ())
-          | `Failure _ ->
-              let open Abb.Future.Infix_monad in
-              Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db ->
-                  delete_flow_state ctx.Ctx.request_id db work_manifest_id)
-              >>= fun _ -> Abb.Future.return (Error `Error)
-          | `Yield _ -> Abb.Future.return (Ok ()))
+        (fun () -> resume_raw ctx work_manifest_id update)
         ~finally:(fun () ->
           Abbs_future_combinators.ignore (run_work_manifests ctx.Ctx.request_id ctx))
 
     and notify_work_manifest_run_success request_id ctx work_manifest =
       let module Wm = Terrat_work_manifest3 in
       Abbs_future_combinators.ignore
-        (resume ctx work_manifest.Wm.id (fun state ->
+        (resume_raw ctx work_manifest.Wm.id (fun state ->
              { state with State.input = Some State.Io.I.Work_manifest_run_success }))
 
     and notify_work_manifest_run_failure request_id ctx work_manifest err =
       let module Wm = Terrat_work_manifest3 in
       Abbs_future_combinators.ignore
-        (resume ctx work_manifest.Wm.id (fun state ->
+        (resume_raw ctx work_manifest.Wm.id (fun state ->
              { state with State.input = Some (State.Io.I.Work_manifest_run_failure err) }))
 
     let run ctx =
