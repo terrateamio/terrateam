@@ -33,7 +33,7 @@ let workflow_file =
   \     name: Terrateam Action\n\
   \     environment: '${{ github.event.inputs.environment }}'\n\
   \     steps:\n\
-  \       - uses: actions/checkout@v3\n\
+  \       - uses: actions/checkout@v4\n\
   \       - name: Run Terrateam Action\n\
   \         id: terrateam\n\
   \         uses: terrateamio/action@v1\n\
@@ -87,7 +87,7 @@ let workflow_file_syntax_highlight =
    github.event.inputs.environment }}&#39;</span>\n\
   \     <span class=\"hl kwa\">steps:</span>\n\
   \       <span class=\"hl opt\">-</span> <span class=\"hl kwa\">uses:</span> \
-   actions/checkout&#64;v3\n\
+   actions/checkout&#64;v4\n\
   \       <span class=\"hl opt\">-</span> <span class=\"hl kwa\">name:</span> Run Terrateam Action\n\
   \         <span class=\"hl kwa\">id:</span> terrateam\n\
   \         <span class=\"hl kwa\">uses:</span> terrateamio/action&#64;v1\n\
