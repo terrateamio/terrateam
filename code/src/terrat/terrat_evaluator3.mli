@@ -378,6 +378,7 @@ module type S = sig
     description:string ->
     title:string ->
     status:Terrat_commit_check.Status.t ->
+    repo:Repo.t ->
     Account.t ->
     Terrat_commit_check.t
 

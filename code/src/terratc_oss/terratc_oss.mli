@@ -4,6 +4,12 @@ module type S = sig
       type t
     end
 
+    module Account : sig
+      type t
+
+      val id : t -> int
+    end
+
     module Repo : sig
       type t
 
@@ -55,6 +61,7 @@ end
 module Make (M : S) :
   Terratc_intf.S
     with type Github.Client.t = M.Github.Client.t
+     and type Github.Account.t = M.Github.Account.t
      and type Github.Repo.t = M.Github.Repo.t
      and type Github.Remote_repo.t = M.Github.Remote_repo.t
      and type Github.Ref.t = M.Github.Ref.t

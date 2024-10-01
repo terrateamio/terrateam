@@ -22,6 +22,10 @@ module type S = sig
       type t
     end
 
+    module Account : sig
+      type t
+    end
+
     module Repo : sig
       type t
 
@@ -73,6 +77,18 @@ module type S = sig
           [> Repo_config.fetch_err ] )
         result
         Abb.Future.t
+    end
+
+    module Commit_check : sig
+      val make_commit_check :
+        ?work_manifest:('a, 'b) Terrat_work_manifest3.Existing.t ->
+        config:Terrat_config.t ->
+        description:string ->
+        title:string ->
+        status:Terrat_commit_check.Status.t ->
+        repo:Repo.t ->
+        Account.t ->
+        Terrat_commit_check.t
     end
   end
 end

@@ -4,6 +4,12 @@ module type S = sig
       type t
     end
 
+    module Account : sig
+      type t
+
+      val id : t -> int
+    end
+
     module Repo : sig
       type t
 
@@ -61,6 +67,7 @@ end
 module Make (M : S) = struct
   module Github = struct
     module Client = M.Github.Client
+    module Account = M.Github.Account
     module Repo = M.Github.Repo
     module Ref = M.Github.Ref
     module Remote_repo = M.Github.Remote_repo
@@ -394,6 +401,25 @@ module Make (M : S) = struct
             >>= fun repo_config ->
             wrap_err "repo" (M.Github.repo_config_of_json repo_config)
             >>= fun repo_config -> Abb.Future.return (Ok (provenance, repo_config))
+    end
+
+    module Commit_check = struct
+      let make_commit_check ?work_manifest ~config ~description ~title ~status ~repo account =
+        let module Wm = Terrat_work_manifest3 in
+        let details_url =
+          match work_manifest with
+          | Some work_manifest ->
+              Uri.to_string
+                (Uri.add_query_param'
+                   (Uri.of_string
+                      (Printf.sprintf
+                         "%s/i/%d/audit-trail"
+                         (Uri.to_string (Terrat_config.terrateam_web_base_url config))
+                         (Account.id account)))
+                   ("q", "id:" ^ Uuidm.to_string work_manifest.Wm.id))
+          | None -> Uri.to_string (Terrat_config.terrateam_web_base_url config)
+        in
+        Terrat_commit_check.make ~details_url ~description ~title ~status
     end
   end
 end

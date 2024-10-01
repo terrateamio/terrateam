@@ -658,6 +658,7 @@ module S = struct
     type t = { installation_id : int } [@@deriving make, yojson, eq]
 
     let make ~installation_id () = { installation_id }
+    let id t = t.installation_id
     let to_string t = CCInt.to_string t.installation_id
   end
 
@@ -1017,6 +1018,7 @@ end
 module Make
     (Terratc : Terratc_intf.S
                  with type Github.Client.t = S.Client.t
+                  and type Github.Account.t = S.Account.t
                   and type Github.Repo.t = S.Repo.t
                   and type Github.Ref.t = S.Ref.t) =
 struct
@@ -3412,22 +3414,7 @@ struct
           Abb.Future.return (Error `Error)
       | Error `Error -> Abb.Future.return (Error `Error)
 
-    let make_commit_check ?work_manifest ~config ~description ~title ~status account =
-      let module Wm = Terrat_work_manifest3 in
-      let details_url =
-        match work_manifest with
-        | Some work_manifest ->
-            Uri.to_string
-              (Uri.add_query_param'
-                 (Uri.of_string
-                    (Printf.sprintf
-                       "%s/i/%d/audit-trail"
-                       (Uri.to_string (Terrat_config.terrateam_web_base_url config))
-                       account.Account.installation_id))
-                 ("q", "id:" ^ Uuidm.to_string work_manifest.Wm.id))
-        | None -> Uri.to_string (Terrat_config.terrateam_web_base_url config)
-      in
-      Terrat_commit_check.make ~details_url ~description ~title ~status
+    let make_commit_check = Terratc.Github.Commit_check.make_commit_check
 
     let create_commit_checks ~request_id client repo ref_ checks =
       let open Abb.Future.Infix_monad in

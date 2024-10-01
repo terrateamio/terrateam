@@ -422,6 +422,7 @@ module type S = sig
     description:string ->
     title:string ->
     status:Terrat_commit_check.Status.t ->
+    repo:Repo.t ->
     Account.t ->
     Terrat_commit_check.t
 
@@ -3092,6 +3093,7 @@ module Make (S : S) = struct
                   ~title:"terrateam index"
                   ~status:Status.Completed
                   ~work_manifest
+                  ~repo
                   account
               in
               create_commit_checks
@@ -3106,8 +3108,14 @@ module Make (S : S) = struct
       | Terrat_api_components_work_manifest_result.Work_manifest_build_config_result _ ->
           assert false
 
-    let maybe_create_completed_apply_check request_id config client account repo_config pull_request
-        =
+    let maybe_create_completed_apply_check
+        request_id
+        config
+        client
+        account
+        repo_config
+        repo
+        pull_request =
       let module R = Terrat_base_repo_config_v1 in
       let apply_requirements = R.apply_requirements repo_config in
       if apply_requirements.R.Apply_requirements.create_completed_apply_check_on_noop then
@@ -3118,6 +3126,7 @@ module Make (S : S) = struct
               ~description:"Completed"
               ~title:"terrateam apply"
               ~status:Terrat_commit_check.Status.Completed
+              ~repo
               account;
           ]
         in
@@ -3169,6 +3178,7 @@ module Make (S : S) = struct
                 ~title:(Printf.sprintf "terrateam %s pre-hooks" run_type)
                 ~status
                 ~work_manifest
+                ~repo
                 account;
               S.make_commit_check
                 ~config
@@ -3176,6 +3186,7 @@ module Make (S : S) = struct
                 ~title:(Printf.sprintf "terrateam %s post-hooks" run_type)
                 ~status
                 ~work_manifest
+                ~repo
                 account;
             ]
           in
@@ -3190,6 +3201,7 @@ module Make (S : S) = struct
                   ~title:(Printf.sprintf "terrateam %s: %s %s" run_type dir workspace)
                   ~status
                   ~work_manifest
+                  ~repo
                   account)
               dirspaces
           in
@@ -3229,6 +3241,7 @@ module Make (S : S) = struct
             ~title:(Printf.sprintf "terrateam %s pre-hooks" run_type)
             ~status:(status result.Wmr.pre_hooks_success)
             ~work_manifest
+            ~repo
             account;
           S.make_commit_check
             ~config
@@ -3236,6 +3249,7 @@ module Make (S : S) = struct
             ~title:(Printf.sprintf "terrateam %s post-hooks" run_type)
             ~status:(status result.Wmr.post_hooks_success)
             ~work_manifest
+            ~repo
             account;
         ]
       in
@@ -3250,6 +3264,7 @@ module Make (S : S) = struct
               ~title:(Printf.sprintf "terrateam %s: %s %s" run_type dir workspace)
               ~status:(status success)
               ~work_manifest
+              ~repo
               account)
           result.Wmr.dirspaces_success
       in
@@ -3330,6 +3345,7 @@ module Make (S : S) = struct
                         ~description:"Waiting"
                         ~title:(Printf.sprintf "terrateam apply: %s %s" dir workspace)
                         ~status:Terrat_commit_check.Status.Queued
+                        ~repo
                         account)
                  else None)
         in
@@ -3341,6 +3357,7 @@ module Make (S : S) = struct
                 ~description:"Waiting"
                 ~title:"terrateam apply"
                 ~status:Terrat_commit_check.Status.Queued
+                ~repo
                 account;
             ]
           else []
@@ -3976,6 +3993,7 @@ module Make (S : S) = struct
                   ~title:"terrateam index"
                   ~status:Status.Queued
                   ~work_manifest
+                  ~repo
                   account
               in
               create_commit_checks state.State.request_id client repo branch_ref' [ check ])
@@ -4014,6 +4032,7 @@ module Make (S : S) = struct
                   ~title:"terrateam index"
                   ~status:Status.Queued
                   ~work_manifest
+                  ~repo
                   account
               in
               create_commit_checks state.State.request_id client repo branch_ref' [ check ])
@@ -4035,6 +4054,7 @@ module Make (S : S) = struct
                   ~title:"terrateam index"
                   ~status:Status.Running
                   ~work_manifest
+                  ~repo
                   account
               in
               create_commit_checks
@@ -4061,6 +4081,7 @@ module Make (S : S) = struct
                   ~title:"terrateam index"
                   ~status:Status.Failed
                   ~work_manifest
+                  ~repo
                   account
               in
               create_commit_checks
@@ -4437,6 +4458,7 @@ module Make (S : S) = struct
             client
             (Event.account state.State.event)
             repo_config
+            (Event.repo state.State.event)
             pull_request
           >>= fun () -> Abb.Future.return (Error (`Noop state))
       | [], `Manual ->
@@ -5053,6 +5075,7 @@ module Make (S : S) = struct
                   ~title:"terrateam apply"
                   ~status:Terrat_commit_check.Status.Completed
                   ~work_manifest
+                  ~repo:(Event.repo state.State.event)
                   (Event.account state.State.event)
               in
               create_commit_checks
@@ -5237,6 +5260,7 @@ module Make (S : S) = struct
                   ~title:"terrateam build-config"
                   ~status:Status.Queued
                   ~work_manifest
+                  ~repo
                   account
               in
               create_commit_checks state.State.request_id client repo branch_ref' [ check ])
@@ -5266,6 +5290,7 @@ module Make (S : S) = struct
                   ~title:"terrateam build-config"
                   ~status:Status.Running
                   ~work_manifest
+                  ~repo
                   account
               in
               create_commit_checks
@@ -5292,6 +5317,7 @@ module Make (S : S) = struct
                   ~title:"terrateam build-config"
                   ~status:Status.Failed
                   ~work_manifest
+                  ~repo
                   account
               in
               create_commit_checks
@@ -5388,6 +5414,7 @@ module Make (S : S) = struct
                     ~title:"terrateam build-config"
                     ~status:Status.Failed
                     ~work_manifest
+                    ~repo
                     account
                 in
                 create_commit_checks
@@ -5437,6 +5464,7 @@ module Make (S : S) = struct
                           ~title:"terrateam build-config"
                           ~status:Status.Completed
                           ~work_manifest
+                          ~repo
                           account
                       in
                       create_commit_checks

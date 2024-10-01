@@ -4,6 +4,12 @@ module type S = sig
       type t
     end
 
+    module Account : sig
+      type t
+
+      val id : t -> int
+    end
+
     module Repo : sig
       type t
 
@@ -55,6 +61,7 @@ end
 module Make (M : S) = struct
   module Github = struct
     module Client = M.Github.Client
+    module Account = M.Github.Account
     module Repo = M.Github.Repo
     module Ref = M.Github.Ref
     module Remote_repo = M.Github.Remote_repo
@@ -184,6 +191,28 @@ module Make (M : S) = struct
                Terrat_base_repo_config_v1.merge_with_default_branch_config
                  ~default:default_repo_config
                  repo_config ))
+    end
+
+    module Commit_check = struct
+      let make_commit_check ?work_manifest ~config ~description ~title ~status ~repo account =
+        let module Wm = Terrat_work_manifest3 in
+        let details_url =
+          match work_manifest with
+          | Some { Wm.id; run_id = Some run_id; _ } ->
+              Printf.sprintf
+                "%s/%s/%s/actions/runs/%s"
+                (Uri.to_string (Terrat_config.github_web_base_url config))
+                (Repo.owner repo)
+                (Repo.name repo)
+                run_id
+          | Some _ | None ->
+              Printf.sprintf
+                "%s/%s/%s/actions"
+                (Uri.to_string (Terrat_config.github_web_base_url config))
+                (Repo.owner repo)
+                (Repo.name repo)
+        in
+        Terrat_commit_check.make ~details_url ~description ~title ~status
     end
   end
 end

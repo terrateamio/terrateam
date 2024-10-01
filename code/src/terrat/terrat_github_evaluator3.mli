@@ -13,6 +13,7 @@ module S : sig
     type t
 
     val make : installation_id:int -> unit -> t
+    val id : t -> int
   end
 
   module Ref : sig
@@ -117,6 +118,7 @@ end
 module Make
     (Terratc : Terratc_intf.S
                  with type Github.Client.t = S.Client.t
+                  and type Github.Account.t = S.Account.t
                   and type Github.Repo.t = S.Repo.t
                   and type Github.Ref.t = S.Ref.t) : sig
   type run_err = [ `Error ] [@@deriving show]
