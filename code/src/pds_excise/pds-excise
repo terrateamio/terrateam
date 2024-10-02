@@ -1,4 +1,4 @@
-#! /usr/bin/env python3.7
+#! /usr/bin/env python
 import argparse
 import itertools
 import os
@@ -50,6 +50,11 @@ def make_parser():
                         default=False,
                         action='store_true',
                         help='Assume test names are the same as src build names')
+    parser.add_argument('-p',
+                        '--path',
+                        default=[],
+                        help='Other paths to excise',
+                        action='append')
 
     return parser
 
@@ -99,7 +104,8 @@ def main():
     }
 
     filemap = (['include ' + os.path.join(args.base, 'src', b) for b in src_deps]
-               + ['include ' + os.path.join(args.base, 'tests', b) for b in test_deps])
+               + ['include ' + os.path.join(args.base, 'tests', b) for b in test_deps]
+               + ['include ' + p for p in args.path])
 
     if args.rename:
         filemap += ['rename {} {}'.format(args.base, args.rename)]
