@@ -21,5 +21,4 @@ jobs:
         /home/runner/.fly/bin/flyctl auth docker
         docker pull registry.fly.io/terrateam-app-production:base
         docker build -t "ghcr.io/terrateamio/terrat-code-indexer:latest" --build-arg BASE_IMAGE="registry.fly.io/terrateam-app-production:base" -f docker/terrat/Dockerfile.code_indexer .
-        echo "$TERRATEAM_SELF_HOSTED_BUILD_GH_TOKEN" | docker login ghcr.io -u $ --password-stdin
         docker push "ghcr.io/terrateamio/terrat-code-indexer:latest"
