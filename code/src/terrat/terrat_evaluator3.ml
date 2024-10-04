@@ -560,6 +560,7 @@ module type S = sig
     Abb.Future.t
 
   val fetch_repo_config_with_provenance :
+    ?system_defaults:Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t ->
     ?built_config:Yojson.Safe.t ->
     string ->
     Client.t ->
@@ -1082,7 +1083,7 @@ module Make (S : S) = struct
             m "EVALUATOR : %s : QUERY_MISSING_DRIFT_SCHEDULED_RUNS : time=%f" request_id time))
       (fun () -> S.query_missing_drift_scheduled_runs ~request_id db)
 
-  let fetch_repo_config_with_provenance ?built_config request_id client repo ref_ =
+  let fetch_repo_config_with_provenance ?built_config ~system_defaults request_id client repo ref_ =
     Abbs_time_it.run
       (fun time ->
         Logs.info (fun m ->
@@ -1092,37 +1093,26 @@ module Make (S : S) = struct
               (S.Repo.to_string repo)
               (S.Ref.to_string ref_)
               time))
-      (fun () -> S.fetch_repo_config_with_provenance ?built_config request_id client repo ref_)
+      (fun () ->
+        S.fetch_repo_config_with_provenance
+          ?built_config
+          ~system_defaults
+          request_id
+          client
+          repo
+          ref_)
 
   module Repo_config = struct
     type fetch_err = Terratc_intf.Repo_config.fetch_err [@@deriving show]
 
     let repo_config_of_json = S.repo_config_of_json
 
-    let fetch_with_provenance =
-      (fetch_repo_config_with_provenance
-        : ?built_config:Yojson.Safe.t ->
-          string ->
-          S.Client.t ->
-          S.Repo.t ->
-          S.Ref.t ->
-          ( string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t,
-            fetch_err )
-          result
-          Abb.Future.t
-        :> ?built_config:Yojson.Safe.t ->
-           string ->
-           S.Client.t ->
-           S.Repo.t ->
-           S.Ref.t ->
-           ( string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t,
-             [> fetch_err ] )
-           result
-           Abb.Future.t)
+    let fetch_with_provenance ?built_config ~system_defaults request_id config client repo ref_ =
+      fetch_repo_config_with_provenance ?built_config ~system_defaults request_id client repo ref_
 
-    let fetch ?built_config request_id client repo ref_ =
+    let fetch ?built_config ~system_defaults request_id config client repo ref_ =
       let open Abbs_future_combinators.Infix_result_monad in
-      fetch_with_provenance ?built_config request_id client repo ref_
+      fetch_with_provenance ?built_config ~system_defaults request_id config client repo ref_
       >>= fun (_, repo_config) -> Abb.Future.return (Ok repo_config)
   end
 
@@ -1853,6 +1843,19 @@ module Make (S : S) = struct
       | Event.Pull_request_comment _ -> true
       | Event.Push _ | Event.Run_scheduled_drift | Event.Run_drift _ -> false
 
+    let repo_config_system_defaults ctx state =
+      let module V1 = Terrat_base_repo_config_v1 in
+      match Terrat_config.infracost_pricing_api_endpoint ctx.Ctx.config with
+      | Some _ -> Abb.Future.return (Ok V1.default)
+      | None ->
+          let system_defaults =
+            {
+              (V1.to_view V1.default) with
+              V1.View.cost_estimation = V1.Cost_estimation.make ~enabled:false ();
+            }
+          in
+          Abb.Future.return (Ok (V1.of_view system_defaults))
+
     let client ctx state =
       create_client state.State.request_id ctx.Ctx.config (Event.account state.State.event)
 
@@ -2003,7 +2006,7 @@ module Make (S : S) = struct
           fetch_remote_repo state.State.request_id client (Event.repo state.State.event)
           >>= fun remote_repo -> Abb.Future.return (Ok (S.Remote_repo.default_branch remote_repo))
 
-    let query_repo_config_json ctx state =
+    let query_built_config ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
       working_branch_ref ctx state
       >>= fun working_branch_ref' ->
@@ -2022,11 +2025,15 @@ module Make (S : S) = struct
         >>= fun client ->
         branch_ref ctx state
         >>= fun branch_ref' ->
-        query_repo_config_json ctx state
+        repo_config_system_defaults ctx state
+        >>= fun system_defaults ->
+        query_built_config ctx state
         >>= fun built_config ->
         Repo_config.fetch_with_provenance
           ?built_config
+          ~system_defaults
           state.State.request_id
+          ctx.Ctx.config
           client
           repo
           branch_ref'
@@ -2417,10 +2424,17 @@ module Make (S : S) = struct
 
     let dirspaces ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
-      let fetch_dirspace client dest_branch branch repo ref_ =
+      let fetch_dirspace ~system_defaults ?built_config client dest_branch branch repo ref_ =
         Abbs_future_combinators.Infix_result_app.(
           (fun repo_config repo_tree -> (repo_config, repo_tree))
-          <$> Repo_config.fetch state.State.request_id client repo ref_
+          <$> Repo_config.fetch
+                ?built_config
+                ~system_defaults
+                state.State.request_id
+                ctx.Ctx.config
+                client
+                repo
+                ref_
           <*> fetch_tree state.State.request_id client repo ref_)
         >>= fun (repo_config, repo_tree) ->
         let repo_config =
@@ -2482,15 +2496,43 @@ module Make (S : S) = struct
       >>= fun branch_name ->
       base_ref ctx state
       >>= fun base_ref ->
-      branch_ref ctx state
-      >>= fun branch_ref ->
+      working_branch_ref ctx state
+      >>= fun working_branch_ref ->
       let dest_branch_name = S.Ref.to_string base_branch_name in
       let branch_name = S.Ref.to_string branch_name in
       let repo = Event.repo state.State.event in
+      repo_config_system_defaults ctx state
+      >>= fun system_defaults ->
+      query_repo_config_json
+        state.State.request_id
+        ctx.Ctx.storage
+        (Event.account state.State.event)
+        base_ref
+      >>= fun base_built_config ->
+      query_repo_config_json
+        state.State.request_id
+        ctx.Ctx.storage
+        (Event.account state.State.event)
+        working_branch_ref
+      >>= fun working_branch_built_config ->
       Abbs_future_combinators.Infix_result_app.(
         (fun base_dirspaces dirspaces -> (base_dirspaces, dirspaces))
-        <$> fetch_dirspace client dest_branch_name branch_name repo base_ref
-        <*> fetch_dirspace client dest_branch_name branch_name repo branch_ref)
+        <$> fetch_dirspace
+              ~system_defaults
+              ?built_config:base_built_config
+              client
+              dest_branch_name
+              branch_name
+              repo
+              base_ref
+        <*> fetch_dirspace
+              ~system_defaults
+              ?built_config:working_branch_built_config
+              client
+              dest_branch_name
+              branch_name
+              repo
+              working_branch_ref)
 
     let apply_requirements ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -3769,11 +3811,10 @@ module Make (S : S) = struct
           in
           match step with
           | Wm.Step.Plan ->
-              Abbs_future_combinators.Infix_result_app.(
-                (fun repo_config dirspaces -> (repo_config, dirspaces))
-                <$> Dv.repo_config ctx state
-                <*> Dv.dirspaces ctx state)
-              >>= fun (repo_config, (base_dirspaces, dirspaces)) ->
+              Dv.repo_config ctx state
+              >>= fun repo_config ->
+              Dv.dirspaces ctx state
+              >>= fun (base_dirspaces, dirspaces) ->
               Abb.Future.return
                 (Ok
                    (Some
@@ -5206,7 +5247,7 @@ module Make (S : S) = struct
       let module V1 = Terrat_base_repo_config_v1 in
       let config_builder = V1.config_builder repo_config in
       if config_builder.V1.Config_builder.enabled then
-        Dv.query_repo_config_json ctx state
+        Dv.query_built_config ctx state
         >>= function
         | Some _ -> Abb.Future.return (Ok (Id.Config_build_not_required, state))
         | None -> Abb.Future.return (Ok (Id.Config_build_required, state))

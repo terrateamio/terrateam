@@ -108,7 +108,7 @@ module Make (M : S) = struct
               (Jsonu.of_yaml_string content)
             >>= fun json -> Abb.Future.return (Ok (Some (fname, json)))
 
-      let fetch_with_provenance ?built_config request_id client repo ref_ =
+      let fetch_with_provenance ?system_defaults ?built_config request_id client repo ref_ =
         let open Abbs_future_combinators.Infix_result_monad in
         M.Github.fetch_remote_repo ~request_id client repo
         >>= fun remote_repo ->
@@ -171,14 +171,27 @@ module Make (M : S) = struct
               | Some (fname, _) -> Some fname
               | None -> None)
         in
+        let system_defaults =
+          CCOption.map
+            (fun config ->
+              ( "system_defaults",
+                Terrat_repo_config.Version_1.to_yojson
+                  (Terrat_base_repo_config_v1.to_version_1 config) ))
+            system_defaults
+        in
         let built_config = CCOption.map (fun config -> ("config_builder", config)) built_config in
-        let provenance = collect_provenance [ default_repo_config; built_config; repo_config ] in
-        validate_configs [ default_repo_config; built_config; repo_config ]
+        let provenance =
+          collect_provenance [ system_defaults; default_repo_config; built_config; repo_config ]
+        in
+        validate_configs [ system_defaults; default_repo_config; built_config; repo_config ]
         >>= fun () ->
         let default_repo_config = get_json default_repo_config in
+        let system_defaults = get_json system_defaults in
         let built_config = get_json built_config in
         let repo_config = get_json repo_config in
-        Abb.Future.return (Jsonu.merge ~base:built_config repo_config)
+        Abb.Future.return (Jsonu.merge ~base:system_defaults built_config)
+        >>= fun base_repo_config ->
+        Abb.Future.return (Jsonu.merge ~base:base_repo_config repo_config)
         >>= fun repo_config ->
         Abbs_future_combinators.Infix_result_app.(
           (fun default_repo_config repo_config -> (default_repo_config, repo_config))

@@ -28,7 +28,7 @@ type t = {
   github_web_base_url : Uri.t;
   github_webhook_secret : (string[@opaque]) option;
   infracost_api_key : (string[@opaque]);
-  infracost_pricing_api_endpoint : Uri.t;
+  infracost_pricing_api_endpoint : Uri.t option;
   nginx_status_uri : Uri.t option;
   port : int;
   python_exec : string;
@@ -86,8 +86,9 @@ let create () =
   >>= fun api_base ->
   env_str "TERRAT_PYTHON_EXEC"
   >>= fun python_exec ->
-  env_str "INFRACOST_PRICING_API_ENDPOINT"
-  >>= fun infracost_pricing_api_endpoint ->
+  let infracost_pricing_api_endpoint =
+    CCOption.map Uri.of_string (Sys.getenv_opt "INFRACOST_PRICING_API_ENDPOINT")
+  in
   env_str "SELF_HOSTED_INFRACOST_API_KEY"
   >>= fun infracost_api_key ->
   let nginx_status_uri = CCOption.map Uri.of_string (Sys.getenv_opt "NGINX_STATUS_URI") in
@@ -148,7 +149,7 @@ let create () =
       github_web_base_url;
       github_webhook_secret;
       infracost_api_key;
-      infracost_pricing_api_endpoint = Uri.of_string infracost_pricing_api_endpoint;
+      infracost_pricing_api_endpoint;
       nginx_status_uri;
       port;
       python_exec;

@@ -217,7 +217,7 @@ module Make (M : S) = struct
             | None -> Abb.Future.return (Ok None))
         | None -> Abb.Future.return (Ok None)
 
-      let fetch_with_provenance ?built_config request_id client repo ref_ =
+      let fetch_with_provenance ?system_defaults ?built_config request_id client repo ref_ =
         let open Abbs_future_combinators.Infix_result_monad in
         Abbs_future_combinators.Infix_result_app.(
           (fun remote_repo centralized_repo -> (remote_repo, centralized_repo))
@@ -330,6 +330,14 @@ module Make (M : S) = struct
               | Some (fname, _) -> Some fname
               | None -> None)
         in
+        let system_defaults =
+          CCOption.map
+            (fun config ->
+              ( "system_defaults",
+                Terrat_repo_config.Version_1.to_yojson
+                  (Terrat_base_repo_config_v1.to_version_1 config) ))
+            system_defaults
+        in
         let built_config = CCOption.map (fun config -> ("config_builder", config)) built_config in
         match
           (repo_defaults, repo_overrides, repo_forced_config, default_repo_config, repo_config)
@@ -338,6 +346,7 @@ module Make (M : S) = struct
             let provenance =
               collect_provenance
                 [
+                  system_defaults;
                   global_defaults;
                   global_overrides;
                   repo_defaults;
@@ -349,6 +358,7 @@ module Make (M : S) = struct
             in
             validate_configs
               [
+                system_defaults;
                 global_defaults;
                 global_overrides;
                 repo_defaults;
@@ -358,6 +368,7 @@ module Make (M : S) = struct
                 repo_config;
               ]
             >>= fun () ->
+            let system_defaults = get_json system_defaults in
             let global_defaults = get_json global_defaults in
             let global_overrides = get_json global_overrides in
             let repo_defaults = get_json repo_defaults in
@@ -365,6 +376,8 @@ module Make (M : S) = struct
             let default_repo_config = get_json default_repo_config in
             let built_config = get_json built_config in
             let repo_config = get_json repo_config in
+            Abb.Future.return (Jsonu.merge ~base:system_defaults global_defaults)
+            >>= fun global_defaults ->
             Abb.Future.return (Jsonu.merge ~base:global_defaults repo_defaults)
             >>= fun repo_defaults ->
             Abb.Future.return (Jsonu.merge ~base:repo_defaults default_repo_config)
@@ -393,10 +406,13 @@ module Make (M : S) = struct
                      ~default:default_repo_config
                      repo_config ))
         | _, _, (Some (_, repo_forced_config) as config), _, _ ->
-            let provenance = collect_provenance [ global_defaults; config ] in
-            validate_configs [ global_defaults; config ]
+            let provenance = collect_provenance [ system_defaults; global_defaults; config ] in
+            validate_configs [ system_defaults; global_defaults; config ]
             >>= fun () ->
+            let system_defaults = get_json system_defaults in
             let global_defaults = get_json global_defaults in
+            Abb.Future.return (Jsonu.merge ~base:system_defaults global_defaults)
+            >>= fun global_defaults ->
             Abb.Future.return (Jsonu.merge ~base:global_defaults repo_forced_config)
             >>= fun repo_config ->
             wrap_err "repo" (M.Github.repo_config_of_json repo_config)

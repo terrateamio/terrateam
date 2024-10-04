@@ -516,6 +516,7 @@ module type S = sig
     Abb.Future.t
 
   val fetch_repo_config_with_provenance :
+    ?system_defaults:Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t ->
     ?built_config:Yojson.Safe.t ->
     string ->
     Client.t ->
