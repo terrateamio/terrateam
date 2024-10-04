@@ -3,7 +3,7 @@ name: code-indexer-build-production
 on:
   push:
     branches:
-      - "terrateam-main"
+      - "main"
   workflow_dispatch:
 
 jobs:
