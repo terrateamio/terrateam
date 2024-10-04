@@ -29,5 +29,4 @@ jobs:
         DEPLOYMENT_TAG=$(/home/runner/.fly/bin/flyctl image show -a terrateam-app-$TERRATEAM_ENVIRONMENT | grep deployment | awk '{print $4}' | sort | uniq)
         docker pull "registry.fly.io/terrateam-app-$TERRATEAM_ENVIRONMENT:$DEPLOYMENT_TAG"
         docker tag "registry.fly.io/terrateam-app-$TERRATEAM_ENVIRONMENT:$DEPLOYMENT_TAG" ghcr.io/terrateamio/terrateam:v1
-        echo "$TERRATEAM_SELF_HOSTED_BUILD_GH_TOKEN" | docker login ghcr.io -u $ --password-stdin
         docker push ghcr.io/terrateamio/terrateam:v1
