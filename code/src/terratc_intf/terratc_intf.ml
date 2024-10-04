@@ -68,6 +68,7 @@ module type S = sig
 
     module Repo_config : sig
       val fetch_with_provenance :
+        ?system_defaults:Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t ->
         ?built_config:Yojson.Safe.t ->
         string ->
         Client.t ->

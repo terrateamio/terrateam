@@ -48,7 +48,7 @@ let tls_config =
 
 let header_replace k v h = Cohttp.Header.replace h k v
 
-let post' config storage path ctx =
+let post' config storage infracost_uri path ctx =
   let open Abb.Future.Infix_monad in
   let request = Brtl_ctx.request ctx in
   let request_id = Brtl_ctx.token ctx in
@@ -61,7 +61,6 @@ let post' config storage path ctx =
       | None -> Abb.Future.return (Error `Bad_work_manifest))
       >>= function
       | Ok (_ :: _) -> (
-          let infracost_uri = Terrat_config.infracost_pricing_api_endpoint config in
           let uri = Uri.with_path infracost_uri (Uri.path infracost_uri ^ "/" ^ path) in
           let body = Brtl_ctx.body ctx in
           let headers =
@@ -162,12 +161,17 @@ let post' config storage path ctx =
 
 let post config storage path ctx =
   let request_id = Brtl_ctx.token ctx in
-  Logs.debug (fun m -> m "INFRACOST : %s : START" request_id);
-  Prmths.Counter.inc_one Metrics.requests_total;
-  Metrics.DefaultHistogram.time Metrics.duration_seconds (fun () ->
-      Prmths.Gauge.track_inprogress Metrics.requests_concurrent (fun () ->
-          Abbs_future_combinators.with_finally
-            (fun () -> post' config storage path ctx)
-            ~finally:(fun () ->
-              Logs.debug (fun m -> m "INFRACOST : %s : FINISH" request_id);
-              Abbs_future_combinators.unit)))
+  match Terrat_config.infracost_pricing_api_endpoint config with
+  | Some infracost_uri ->
+      Logs.info (fun m -> m "INFRACOST : %s : START" request_id);
+      Prmths.Counter.inc_one Metrics.requests_total;
+      Metrics.DefaultHistogram.time Metrics.duration_seconds (fun () ->
+          Prmths.Gauge.track_inprogress Metrics.requests_concurrent (fun () ->
+              Abbs_future_combinators.with_finally
+                (fun () -> post' config storage infracost_uri path ctx)
+                ~finally:(fun () ->
+                  Logs.info (fun m -> m "INFRACOST : %s : FINISH" request_id);
+                  Abbs_future_combinators.unit)))
+  | None ->
+      Logs.info (fun m -> m "INFRACOST : %s : DISABLED" request_id);
+      Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)
