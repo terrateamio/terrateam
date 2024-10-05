@@ -203,10 +203,6 @@ module type S = sig
     val base_ref : 'a t -> Ref.t
     val branch_name : 'a t -> Ref.t
     val branch_ref : 'a t -> Ref.t
-
-    (** The branch ref based on if the PR is merged or not. *)
-    val working_branch_ref : 'a t -> Ref.t
-
     val diff : fetched t -> Terrat_change.Diff.t list
     val id : 'a t -> int
     val is_draft_pr : fetched t -> bool
@@ -1952,25 +1948,26 @@ module Make (S : S) = struct
 
     let working_branch_ref ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
+      let default_branch_sha =
+        client ctx state
+        >>= fun client ->
+        fetch_remote_repo state.State.request_id client (Event.repo state.State.event)
+        >>= fun remote_repo ->
+        let default_branch = S.Remote_repo.default_branch remote_repo in
+        fetch_branch_sha state.State.request_id client (Event.repo state.State.event) default_branch
+        >>= function
+        | Some branch_sha -> Abb.Future.return (Ok branch_sha)
+        | None -> assert false
+      in
       match Event.pull_request_id_safe state.State.event with
-      | Some _ ->
+      | Some _ -> (
           pull_request ctx state
           >>= fun pull_request ->
-          Abb.Future.return (Ok (S.Pull_request.working_branch_ref pull_request))
-      | None -> (
-          client ctx state
-          >>= fun client ->
-          fetch_remote_repo state.State.request_id client (Event.repo state.State.event)
-          >>= fun remote_repo ->
-          let default_branch = S.Remote_repo.default_branch remote_repo in
-          fetch_branch_sha
-            state.State.request_id
-            client
-            (Event.repo state.State.event)
-            default_branch
-          >>= function
-          | Some branch_sha -> Abb.Future.return (Ok branch_sha)
-          | None -> assert false)
+          match S.Pull_request.state pull_request with
+          | Terrat_pull_request.State.Open _ | Terrat_pull_request.State.Closed ->
+              Abb.Future.return (Ok (S.Pull_request.branch_ref pull_request))
+          | Terrat_pull_request.State.Merged _ -> default_branch_sha)
+      | None -> default_branch_sha
 
     let base_ref ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -2677,12 +2674,18 @@ module Make (S : S) = struct
                   with
                   | [], work_manifests ->
                       let states = states_of_work_manifests work_manifests in
+                      Abbs_future_combinators.List_result.iter
+                        ~f:(run_success ctx state)
+                        work_manifests
+                      >>= fun () ->
                       Abb.Future.return
                         (Error
                            (`Clone ({ state with State.st = St.Work_manifest_completed }, states)))
                   | [ self ], work_manifests ->
                       let state = { state with State.work_manifest_id = Some self.Wm.id } in
-                      run_success ctx state self
+                      Abbs_future_combinators.List_result.iter
+                        ~f:(run_success ctx state)
+                        (self :: work_manifests)
                       >>= fun () ->
                       let states = states_of_work_manifests work_manifests in
                       Abb.Future.return
@@ -2795,11 +2798,13 @@ module Make (S : S) = struct
           Some work_manifest_id ) -> (
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : INITIATE : id=%a"
+                "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : INITIATE : id=%a : run_id=%s : sha=%s"
                 state.State.request_id
                 name
                 Uuidm.pp
-                work_manifest_id);
+                work_manifest_id
+                run_id
+                sha);
           query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
           >>= function
           | Some ({ Wm.state = Wm.State.(Queued | Running); _ } as work_manifest) -> (
@@ -3509,10 +3514,13 @@ module Make (S : S) = struct
           >>= fun work_manifest ->
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a : env=%s"
+                "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : \
+                 env=%s"
                 state.State.request_id
                 Uuidm.pp
                 work_manifest.Wm.id
+                (S.Ref.to_string base_ref)
+                (S.Ref.to_string branch_ref)
                 (CCOption.get_or ~default:"" work_manifest.Wm.environment));
           run_interactive ctx state (fun () ->
               Dv.client ctx state
@@ -3679,10 +3687,13 @@ module Make (S : S) = struct
             >>= fun work_manifest ->
             Logs.info (fun m ->
                 m
-                  "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a : env=%s"
+                  "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : \
+                   env=%s"
                   state.State.request_id
                   Uuidm.pp
                   work_manifest.Wm.id
+                  (S.Ref.to_string base_ref)
+                  (S.Ref.to_string branch_ref)
                   (CCOption.get_or ~default:"" work_manifest.Wm.environment));
             run_interactive ctx state (fun () ->
                 Dv.client ctx state
@@ -4104,10 +4115,12 @@ module Make (S : S) = struct
           >>= fun () ->
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a"
+                "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s"
                 state.State.request_id
                 Uuidm.pp
-                work_manifest.Wm.id);
+                work_manifest.Wm.id
+                (S.Ref.to_string base_ref')
+                (S.Ref.to_string working_branch_ref'));
           Abb.Future.return (Ok [ work_manifest ]))
         ~update:(fun ctx state work_manifest ->
           let module Wm = Terrat_work_manifest3 in
@@ -5371,10 +5384,12 @@ module Make (S : S) = struct
           >>= fun () ->
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a"
+                "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s"
                 state.State.request_id
                 Uuidm.pp
-                work_manifest.Wm.id);
+                work_manifest.Wm.id
+                (S.Ref.to_string base_ref')
+                (S.Ref.to_string working_branch_ref'));
           Abb.Future.return (Ok [ work_manifest ]))
         ~update:(fun ctx state work_manifest -> raise (Failure "nyi"))
         ~run_success:(fun ctx state work_manifest ->
