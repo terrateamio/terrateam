@@ -159,10 +159,6 @@ module type S = sig
     val base_ref : 'a t -> Ref.t
     val branch_name : 'a t -> Ref.t
     val branch_ref : 'a t -> Ref.t
-
-    (** The branch ref based on if the PR is merged or not. *)
-    val working_branch_ref : 'a t -> Ref.t
-
     val diff : fetched t -> Terrat_change.Diff.t list
     val id : 'a t -> int
     val is_draft_pr : fetched t -> bool
