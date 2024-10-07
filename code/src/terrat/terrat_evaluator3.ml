@@ -3087,6 +3087,23 @@ module Make (S : S) = struct
           >>= fun base_ref' ->
           Dv.repo_config ctx state
           >>= fun repo_config ->
+          Dv.repo_tree_branch ctx state
+          >>= fun repo_tree ->
+          Dv.base_branch_name ctx state
+          >>= fun base_branch_name ->
+          Dv.branch_name ctx state
+          >>= fun branch_name ->
+          let repo_config =
+            Terrat_base_repo_config_v1.derive
+              ~ctx:
+                (Terrat_base_repo_config_v1.Ctx.make
+                   ~dest_branch:(S.Ref.to_string base_branch_name)
+                   ~branch:(S.Ref.to_string branch_name)
+                   ())
+              ~index:Terrat_base_repo_config_v1.Index.empty
+              ~file_list:repo_tree
+              repo_config
+          in
           let module I = Terrat_api_components.Work_manifest_index in
           let dirs =
             wm.Wm.changes
@@ -3813,6 +3830,29 @@ module Make (S : S) = struct
           | Wm.Step.Plan ->
               Dv.repo_config ctx state
               >>= fun repo_config ->
+              Dv.repo_tree_branch ctx state
+              >>= fun repo_tree ->
+              Dv.base_branch_name ctx state
+              >>= fun base_branch_name ->
+              Dv.branch_name ctx state
+              >>= fun branch_name ->
+              Dv.query_index ctx state
+              >>= fun index ->
+              let repo_config =
+                Terrat_base_repo_config_v1.derive
+                  ~ctx:
+                    (Terrat_base_repo_config_v1.Ctx.make
+                       ~dest_branch:(S.Ref.to_string base_branch_name)
+                       ~branch:(S.Ref.to_string branch_name)
+                       ())
+                  ~index:
+                    (CCOption.map_or
+                       ~default:Terrat_base_repo_config_v1.Index.empty
+                       (fun { Index.index; _ } -> index)
+                       index)
+                  ~file_list:repo_tree
+                  repo_config
+              in
               Dv.dirspaces ctx state
               >>= fun (base_dirspaces, dirspaces) ->
               Abb.Future.return
@@ -3837,6 +3877,29 @@ module Make (S : S) = struct
           | Wm.Step.(Apply | Unsafe_apply) ->
               Dv.repo_config ctx state
               >>= fun repo_config ->
+              Dv.repo_tree_branch ctx state
+              >>= fun repo_tree ->
+              Dv.base_branch_name ctx state
+              >>= fun base_branch_name ->
+              Dv.branch_name ctx state
+              >>= fun branch_name ->
+              Dv.query_index ctx state
+              >>= fun index ->
+              let repo_config =
+                Terrat_base_repo_config_v1.derive
+                  ~ctx:
+                    (Terrat_base_repo_config_v1.Ctx.make
+                       ~dest_branch:(S.Ref.to_string base_branch_name)
+                       ~branch:(S.Ref.to_string branch_name)
+                       ())
+                  ~index:
+                    (CCOption.map_or
+                       ~default:Terrat_base_repo_config_v1.Index.empty
+                       (fun { Index.index; _ } -> index)
+                       index)
+                  ~file_list:repo_tree
+                  repo_config
+              in
               Abb.Future.return
                 (Ok
                    (Some
