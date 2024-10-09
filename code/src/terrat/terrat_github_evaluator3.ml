@@ -845,7 +845,7 @@ module S = struct
           {
             Abb_cache.Lru.on_hit = on_hit "fetch_file_by_rev";
             on_miss = on_miss "fetch_file_by_rev";
-            size = 1000;
+            size = 100;
           }
 
       let fetch_repo_cache =
@@ -862,7 +862,7 @@ module S = struct
           {
             Abb_cache.Lru.on_hit = on_hit "fetch_tree_by_rev";
             on_miss = on_miss "fetch_tree_by_rev";
-            size = 1000;
+            size = 100;
           }
     end
 
