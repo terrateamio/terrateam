@@ -1023,6 +1023,9 @@
           },
           {
             "$ref": "#/components/schemas/work-manifest-tf-operation-result"
+          },
+          {
+            "$ref": "#/components/schemas/work-manifest-tf-operation-result2"
           }
         ]
       },
@@ -1061,6 +1064,21 @@
         "required": [
           "dirspaces",
           "overall"
+        ],
+        "type": "object"
+      },
+      "work-manifest-tf-operation-result2": {
+        "additionalProperties": false,
+        "properties": {
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/workflow-step-output"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "steps"
         ],
         "type": "object"
       },
@@ -1424,6 +1442,86 @@
           ]
         },
         "type": "array"
+      },
+      "workflow-step-output": {
+        "additionalProperties": false,
+        "properties": {
+          "ignore_errors": {
+            "type": "boolean"
+          },
+          "payload": {
+            "additionalProperties": {
+              "type": null
+            },
+            "properties": {},
+            "type": "object"
+          },
+          "scope": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/workflow-step-output-scope-dirspace"
+              },
+              {
+                "$ref": "#/components/schemas/workflow-step-output-scope-run"
+              }
+            ]
+          },
+          "step": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ignore_errors",
+          "location",
+          "payload",
+          "scope",
+          "step",
+          "success"
+        ],
+        "type": "object"
+      },
+      "workflow-step-output-scope-dirspace": {
+        "additionalProperties": false,
+        "properties": {
+          "dir": {
+            "type": "string"
+          },
+          "type": {
+            "const": "dirspace",
+            "type": "string"
+          },
+          "workspace": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dir",
+          "workspace"
+        ],
+        "type": "object"
+      },
+      "workflow-step-output-scope-run": {
+        "additionalProperties": false,
+        "properties": {
+          "flow": {
+            "type": "string"
+          },
+          "subflow": {
+            "type": "string"
+          },
+          "type": {
+            "const": "run",
+            "type": "string"
+          }
+        },
+        "required": [
+          "flow",
+          "subflow"
+        ],
+        "type": "object"
       }
     }
   },

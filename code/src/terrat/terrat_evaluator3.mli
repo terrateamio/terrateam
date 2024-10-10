@@ -52,6 +52,12 @@ module Msg : sig
         result : Terrat_api_components_work_manifest_tf_operation_result.t;
         work_manifest : ('account, 'target) Terrat_work_manifest3.Existing.t;
       }
+    | Tf_op_result2 of {
+        is_layered_run : bool;
+        remaining_layers : Terrat_change_match3.Dirspace_config.t list list;
+        result : Terrat_api_components_work_manifest_tf_operation_result2.t;
+        work_manifest : ('account, 'target) Terrat_work_manifest3.Existing.t;
+      }
     | Unexpected_temporary_err
     | Unlock_success
 end
@@ -448,11 +454,21 @@ module type S = sig
   val work_manifest_result :
     Terrat_api_components_work_manifest_tf_operation_result.t -> Work_manifest_result.t
 
+  val work_manifest_result2 :
+    Terrat_api_components_work_manifest_tf_operation_result2.t -> Work_manifest_result.t
+
   val store_tf_operation_result :
     request_id:string ->
     Db.t ->
     Uuidm.t ->
     Terrat_api_components_work_manifest_tf_operation_result.t ->
+    (unit, [> `Error ]) result Abb.Future.t
+
+  val store_tf_operation_result2 :
+    request_id:string ->
+    Db.t ->
+    Uuidm.t ->
+    Terrat_api_components_work_manifest_tf_operation_result2.t ->
     (unit, [> `Error ]) result Abb.Future.t
 
   val query_conflicting_work_manifests_in_repo :
