@@ -6365,6 +6365,18 @@ module Make (S : S) = struct
                Abb.Future.return (Error `Error))
          ~finally:(fun () -> Abbs_future_combinators.ignore (Abb.Future.fork (Runner.run ctx))))
 
+  (* If the flow future finishes first, fail, otherwise return what the flow's
+     promise would return. *)
+  let first err fut =
+    let open Abb.Future.Infix_monad in
+    Abbs_future_combinators.first
+      (err >>= fun _ -> Abb.Future.return (Error `Error))
+      (fut
+      >>= function
+      | Ok r -> Abb.Future.return (Ok r)
+      | Error err -> Abb.Future.return (Error err))
+    >>= fun (r, _) -> Abb.Future.return r
+
   let run_work_manifest_initiate ctx encryption_key work_manifest_id initiate =
     let open Abb.Future.Infix_monad in
     let p = Abb.Future.Promise.create () in
@@ -6375,8 +6387,8 @@ module Make (S : S) = struct
              state with
              State.input = Some (State.Io.I.Work_manifest_initiate { encryption_key; initiate; p });
            }))
-    >>= fun _ ->
-    (Abb.Future.Promise.future p
+    >>= fun fut ->
+    (first fut (Abb.Future.Promise.future p)
       : (Terrat_api_components.Work_manifest.t option, [ `Error ]) result Abb.Future.t
       :> (Terrat_api_components.Work_manifest.t option, [> `Error ]) result Abb.Future.t)
 
@@ -6387,8 +6399,8 @@ module Make (S : S) = struct
       (resume_work ctx work_manifest_id (fun state ->
            Logs.info (fun m -> m "EVALUATOR : %s : RESULT" state.State.request_id);
            { state with State.input = Some (State.Io.I.Work_manifest_result { result; p }) }))
-    >>= fun _ ->
-    (Abb.Future.Promise.future p
+    >>= fun fut ->
+    (first fut (Abb.Future.Promise.future p)
       : (unit, [ `Error ]) result Abb.Future.t
       :> (unit, [> `Error ]) result Abb.Future.t)
 
@@ -6406,8 +6418,8 @@ module Make (S : S) = struct
              State.input =
                Some (State.Io.I.Plan_store { dirspace; data = plan_data; has_changes; p });
            }))
-    >>= fun _ ->
-    (Abb.Future.Promise.future p
+    >>= fun fut ->
+    (first fut (Abb.Future.Promise.future p)
       : (unit, [ `Error ]) result Abb.Future.t
       :> (unit, [> `Error ]) result Abb.Future.t)
 
@@ -6418,8 +6430,8 @@ module Make (S : S) = struct
       (resume_work ctx work_manifest_id (fun state ->
            Logs.info (fun m -> m "EVALUATOR : %s : PLAN_FETCH" state.State.request_id);
            { state with State.input = Some (State.Io.I.Plan_fetch { dirspace; p }) }))
-    >>= fun _ ->
-    (Abb.Future.Promise.future p
+    >>= fun fut ->
+    (first fut (Abb.Future.Promise.future p)
       : (string option, [ `Error ]) result Abb.Future.t
       :> (string option, [> `Error ]) result Abb.Future.t)
 
@@ -6430,8 +6442,8 @@ module Make (S : S) = struct
       (resume_work ctx work_manifest_id (fun state ->
            Logs.info (fun m -> m "EVALUATOR : %s : WORK_MANIFEST_FAILURE" state.State.request_id);
            { state with State.input = Some (State.Io.I.Work_manifest_failure { p }) }))
-    >>= fun _ ->
-    (Abb.Future.Promise.future p
+    >>= fun fut ->
+    (first fut (Abb.Future.Promise.future p)
       : (unit, [ `Error ]) result Abb.Future.t
       :> (unit, [> `Error ]) result Abb.Future.t)
 
