@@ -654,6 +654,8 @@ module Tmpl = struct
 
   let plan_complete = read "github_plan_complete.tmpl"
   let apply_complete = read "github_apply_complete.tmpl"
+  let plan_complete2 = read "github_plan_complete2.tmpl"
+  let apply_complete2 = read "github_apply_complete2.tmpl"
 end
 
 module S = struct
@@ -1475,6 +1477,475 @@ struct
           Prmths.Counter.inc_one Metrics.pgsql_errors_total;
           Logs.err (fun m -> m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Pgsql_io.pp_err err);
           Abb.Future.return (Error `Error)
+
+    module Result = struct
+      module Scope = struct
+        type t =
+          | Dirspace of Terrat_dirspace.t
+          | Run of {
+              flow : string;
+              subflow : string;
+            }
+        [@@deriving eq, ord]
+
+        let of_terrat_api_scope =
+          let module S = Terrat_api_components.Workflow_step_output.Scope in
+          let module Ds = Terrat_api_components.Workflow_step_output_scope_dirspace in
+          let module R = Terrat_api_components.Workflow_step_output_scope_run in
+          function
+          | S.Workflow_step_output_scope_dirspace { Ds.dir; workspace; _ } ->
+              Dirspace { Terrat_dirspace.dir; workspace }
+          | S.Workflow_step_output_scope_run { R.flow; subflow; _ } -> Run { flow; subflow }
+      end
+
+      module By_scope = Terrat_data.Group_by (struct
+        module T = Terrat_api_components.Workflow_step_output
+
+        type t = T.t
+        type key = Scope.t
+
+        let compare = Scope.compare
+        let key { T.scope; _ } = Scope.of_terrat_api_scope scope
+      end)
+
+      let steps_has_changes steps =
+        let module P = struct
+          type t = { has_changes : bool [@default false] } [@@deriving of_yojson { strict = false }]
+        end in
+        let module O = Terrat_api_components.Workflow_step_output in
+        match
+          CCList.find_map
+            (function
+              | { O.step = "tf/plan"; payload; success; _ } -> (
+                  match P.of_yojson (O.Payload.to_yojson payload) with
+                  | Ok { P.has_changes } -> Some has_changes
+                  | _ -> None)
+              | _ -> None)
+            steps
+        with
+        | Some has_changes -> has_changes
+        | None -> false
+
+      let steps_success steps =
+        let module O = Terrat_api_components.Workflow_step_output in
+        CCList.for_all (fun { O.success; ignore_errors; _ } -> success || ignore_errors) steps
+
+      module Publisher2 = struct
+        module Output = struct
+          type t = {
+            cmd : string option;
+            name : string;
+            success : bool;
+            text : string;
+            text_decorator : string option;
+          }
+
+          let make ?cmd ?text_decorator ~name ~success ~text () =
+            (* If name looks like <namespace>/<action> then remove the namespace *)
+            let name = CCOption.map_or ~default:name snd (CCString.Split.right ~by:"/" name) in
+            { cmd; name; success; text; text_decorator }
+
+          let to_kv { cmd; name; success; text; text_decorator } =
+            Snabela.Kv.(
+              Map.of_list
+                (CCList.flatten
+                   [
+                     [
+                       ("name", string name);
+                       ("text", string text);
+                       ("success", bool success);
+                       ("text_decorator", string (CCOption.get_or ~default:"" text_decorator));
+                     ];
+                     CCOption.map_or ~default:[] (fun cmd -> [ ("cmd", string cmd) ]) cmd;
+                   ]))
+        end
+
+        let kv_of_cost_estimation output =
+          let module P = struct
+            module S = struct
+              type t = {
+                prev_monthly_cost : float;
+                total_monthly_cost : float;
+                diff_monthly_cost : float;
+              }
+              [@@deriving of_yojson { strict = false }]
+            end
+
+            module Ds = struct
+              type t = {
+                dir : string;
+                workspace : string;
+                prev_monthly_cost : float;
+                total_monthly_cost : float;
+                diff_monthly_cost : float;
+              }
+              [@@deriving yojson { strict = false }]
+            end
+
+            type t = {
+              summary : S.t;
+              dirspaces : Ds.t list;
+              currency : string;
+            }
+            [@@deriving of_yojson { strict = false }]
+          end in
+          let module O = Terrat_api_components.Workflow_step_output in
+          if output.O.success then
+            let open CCResult.Infix in
+            P.of_yojson (O.Payload.to_yojson output.O.payload)
+            >>= fun payload ->
+            let summary = payload.P.summary in
+            Ok
+              Snabela.Kv.(
+                Map.of_list
+                  [
+                    ("name", string "cost_estimation");
+                    ("success", bool output.O.success);
+                    ("prev_monthly_cost", float summary.P.S.prev_monthly_cost);
+                    ("total_monthly_cost", float summary.P.S.total_monthly_cost);
+                    ("diff_monthly_cost", float summary.P.S.diff_monthly_cost);
+                    ("currency", string payload.P.currency);
+                    ( "dirspaces",
+                      list
+                        (CCList.map
+                           (fun {
+                                  P.Ds.dir;
+                                  workspace;
+                                  total_monthly_cost;
+                                  prev_monthly_cost;
+                                  diff_monthly_cost;
+                                } ->
+                             Map.of_list
+                               [
+                                 ("dir", string dir);
+                                 ("workspace", string workspace);
+                                 ("prev_monthly_cost", float prev_monthly_cost);
+                                 ("total_monthly_cost", float total_monthly_cost);
+                                 ("diff_monthly_cost", float diff_monthly_cost);
+                               ])
+                           payload.P.dirspaces) );
+                  ])
+          else
+            let module P = struct
+              type t = { text : string } [@@deriving of_yojson { strict = false }]
+            end in
+            let open CCResult.Infix in
+            P.of_yojson (O.Payload.to_yojson output.O.payload)
+            >>= fun { P.text } ->
+            Ok
+              Snabela.Kv.(Map.of_list [ ("success", bool output.O.success); ("text", string text) ])
+
+        let output_of_run output =
+          let module P = struct
+            type t = {
+              cmd : string list option; [@default None]
+              text : string option; [@default None]
+            }
+            [@@deriving of_yojson { strict = false }]
+          end in
+          let module O = Terrat_api_components.Workflow_step_output in
+          let open CCResult.Infix in
+          P.of_yojson (O.Payload.to_yojson output.O.payload)
+          >>= fun { P.cmd; text } ->
+          Ok
+            (Output.make
+               ?cmd:(CCOption.map (CCString.concat " ") cmd)
+               ~name:output.O.step
+               ~success:output.O.success
+               ~text:(CCOption.get_or ~default:"" text)
+               ())
+
+        let output_of_plan output =
+          let module P = struct
+            type t = {
+              cmd : string list option; [@default None]
+              text : string;
+              plan : string option; [@default None]
+              has_changes : bool option; [@default None]
+            }
+            [@@deriving of_yojson { strict = false }]
+          end in
+          let module O = Terrat_api_components.Workflow_step_output in
+          let open CCResult.Infix in
+          P.of_yojson (O.Payload.to_yojson output.O.payload)
+          >>= fun { P.cmd; text; has_changes; plan } ->
+          if output.O.success then
+            Ok
+              (Output.make
+                 ?cmd:(CCOption.map (CCString.concat " ") cmd)
+                 ~name:output.O.step
+                 ~success:output.O.success
+                 ~text:(CCOption.get_or ~default:text plan)
+                 ~text_decorator:"diff"
+                 ())
+          else
+            Ok
+              (Output.make
+                 ?cmd:(CCOption.map (CCString.concat " ") cmd)
+                 ~name:output.O.step
+                 ~success:output.O.success
+                 ~text
+                 ())
+
+        let output_of_workflow_output output =
+          let module O = Terrat_api_components.Workflow_step_output in
+          match output.O.step with
+          | "run" | "tf/init" | "env" | "tf/apply" -> output_of_run output
+          | "tf/plan" -> output_of_plan output
+          | step -> output_of_run output
+
+        let output_of_raw output =
+          let module O = Terrat_api_components.Workflow_step_output in
+          let { O.step; success; payload; _ } = output in
+          Output.make
+            ~name:step
+            ~success
+            ~text:(Yojson.Safe.pretty_to_string (O.Payload.to_yojson payload))
+            ()
+
+        let kv_of_steps steps =
+          let module O = Terrat_api_components.Workflow_step_output in
+          CCList.filter_map
+            (fun output ->
+              match output.O.step with
+              | "tf/cost-estimation" -> None
+              | _ -> (
+                  match output_of_workflow_output output with
+                  | Ok output -> Some (Output.to_kv output)
+                  | Error _ -> Some (Output.to_kv (output_of_raw output))))
+            steps
+
+        let dirspace_compare (dirspace1, steps1) (dirspace2, steps2) =
+          let module Cmp = struct
+            type t = bool * bool * Terrat_dirspace.t [@@deriving ord]
+          end in
+          let has_changes1 = steps_has_changes steps1 in
+          let success1 = steps_success steps1 in
+          let has_changes2 = steps_has_changes steps2 in
+          let success2 = steps_success steps2 in
+          (* Negate has_changes because the order of [bool] is [false]
+             before [true]. *)
+          Cmp.compare (not has_changes1, success1, dirspace1) (not has_changes2, success2, dirspace2)
+
+        let create_run_output
+            ~view
+            request_id
+            is_layered_run
+            remaining_dirspace_configs
+            (by_scope : (Scope.t * Terrat_api_components.Workflow_step_output.t list) list)
+            work_manifest =
+          let module Wm = Terrat_work_manifest3 in
+          let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
+          let module O = Terrat_api_components.Workflow_step_output in
+          let module Sds = Terrat_api_components.Workflow_step_output_scope_dirspace in
+          let module Sr = Terrat_api_components.Workflow_step_output_scope_run in
+          let hooks_pre =
+            CCList.Assoc.get
+              ~eq:Scope.equal
+              (Scope.Run { flow = "hooks"; subflow = "pre" })
+              by_scope
+          in
+          let hooks_post =
+            CCList.Assoc.get
+              ~eq:Scope.equal
+              (Scope.Run { flow = "hooks"; subflow = "post" })
+              by_scope
+          in
+          let dirspaces =
+            by_scope
+            |> CCList.filter_map (function
+                   | Scope.Dirspace dirspace, steps -> Some (dirspace, steps)
+                   | _ -> None)
+            |> CCList.sort dirspace_compare
+          in
+          let overall_success =
+            CCList.for_all
+              (fun (_, steps) ->
+                CCList.for_all
+                  (fun { O.success; ignore_errors; _ } -> success || ignore_errors)
+                  steps)
+              by_scope
+          in
+          let num_remaining_layers = CCList.length remaining_dirspace_configs in
+          let denied_dirspaces =
+            match work_manifest.Wm.denied_dirspaces with
+            | [] -> []
+            | dirspaces ->
+                Snabela.Kv.
+                  [
+                    ( "denied_dirspaces",
+                      list
+                        (CCList.map
+                           (fun { Wm.Deny.dirspace = { Terrat_dirspace.dir; workspace }; policy } ->
+                             Map.of_list
+                               (CCList.flatten
+                                  [
+                                    [ ("dir", string dir); ("workspace", string workspace) ];
+                                    (match policy with
+                                    | Some policy ->
+                                        [
+                                          ( "policy",
+                                            list
+                                              (CCList.map
+                                                 (fun p ->
+                                                   Map.of_list
+                                                     [
+                                                       ( "item",
+                                                         string
+                                                           (Terrat_base_repo_config_v1
+                                                            .Access_control
+                                                            .Match
+                                                            .to_string
+                                                              p) );
+                                                     ])
+                                                 policy) );
+                                        ]
+                                    | None -> []);
+                                  ]))
+                           dirspaces) );
+                  ]
+          in
+          let cost_estimation =
+            hooks_pre
+            |> CCOption.get_or ~default:[]
+            |> CCList.filter (fun { O.step; _ } -> CCString.equal step "cost_estimation")
+            |> function
+            | [] -> []
+            | o :: _ -> (
+                match kv_of_cost_estimation o with
+                | Ok kv -> [ ("cost_estimation", Snabela.Kv.list [ kv ]) ]
+                | Error _ ->
+                    [ ("cost_estimation", Snabela.Kv.list [ Output.to_kv (output_of_raw o) ]) ])
+          in
+          let kv =
+            Snabela.Kv.(
+              Map.of_list
+                (CCList.flatten
+                   [
+                     CCOption.map_or
+                       ~default:[]
+                       (fun env -> [ ("environment", string env) ])
+                       work_manifest.Wm.environment;
+                     [
+                       ("is_layered_run", bool is_layered_run);
+                       ("is_last_layer", bool (num_remaining_layers = 0));
+                       ("num_more_layers", int num_remaining_layers);
+                       ("overall_success", bool overall_success);
+                       ("pre_hooks", list (kv_of_steps (CCOption.get_or ~default:[] hooks_pre)));
+                       ("post_hooks", list (kv_of_steps (CCOption.get_or ~default:[] hooks_post)));
+                       ("compact_view", bool (view = `Compact));
+                       ("compact_dirspaces", bool (CCList.length dirspaces > 5));
+                       ( "dirspaces",
+                         list
+                           (CCList.map
+                              (fun ({ Terrat_dirspace.dir; workspace }, steps) ->
+                                let has_changes = steps_has_changes steps in
+                                let success = steps_success steps in
+                                Map.of_list
+                                  (CCList.flatten
+                                     [
+                                       [
+                                         ("dir", string dir);
+                                         ("workspace", string workspace);
+                                         ("success", bool success);
+                                         ("steps", list (kv_of_steps steps));
+                                         ("has_changes", bool has_changes);
+                                       ];
+                                     ]))
+                              dirspaces) );
+                     ];
+                     denied_dirspaces;
+                     cost_estimation;
+                   ]))
+          in
+          let tmpl =
+            match CCList.rev work_manifest.Wm.steps with
+            | [] | Wm.Step.Index :: _ | Wm.Step.Build_config :: _ -> assert false
+            | Wm.Step.Plan :: _ -> Tmpl.plan_complete2
+            | Wm.Step.(Apply | Unsafe_apply) :: _ -> Tmpl.apply_complete2
+          in
+          match Snabela.apply tmpl kv with
+          | Ok body -> body
+          | Error (#Snabela.err as err) ->
+              Logs.err (fun m ->
+                  m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Snabela.pp_err err);
+              assert false
+
+        let rec iterate_comment_posts
+            ?(view = `Full)
+            request_id
+            client
+            is_layered_run
+            remaining_layers
+            results
+            pull_request
+            work_manifest =
+          let module Wm = Terrat_work_manifest3 in
+          let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
+          let by_scope = By_scope.group results.R2.steps in
+          let output =
+            create_run_output
+              ~view
+              request_id
+              is_layered_run
+              remaining_layers
+              by_scope
+              work_manifest
+          in
+          let repo = pull_request.Pull_request.repo in
+          let open Abb.Future.Infix_monad in
+          Terrat_github.publish_comment
+            ~owner:repo.Repo.owner
+            ~repo:repo.Repo.name
+            ~pull_number:pull_request.Pull_request.id
+            ~body:output
+            client.Client.client
+          >>= function
+          | Ok () -> Abb.Future.return (Ok ())
+          | Error (#Terrat_github.publish_comment_err as err) -> (
+              let dirspaces =
+                CCList.filter
+                  (function
+                    | Scope.Dirspace _, _ -> true
+                    | _ -> false)
+                  by_scope
+              in
+              match (view, dirspaces) with
+              | _, [] -> assert false
+              | `Full, _ ->
+                  Prmths.Counter.inc_one Metrics.github_errors_total;
+                  Logs.info (fun m ->
+                      m
+                        "GITHUB_EVALUATOR : %s : ITERATE_COMMENT_POST : %s"
+                        request_id
+                        (Terrat_github.show_publish_comment_err err));
+                  iterate_comment_posts
+                    ~view:`Compact
+                    request_id
+                    client
+                    is_layered_run
+                    remaining_layers
+                    results
+                    pull_request
+                    work_manifest
+              | `Compact, [ _ ] ->
+                  (* If we're in compact view but there is only one dirspace, then
+                     that means there is no way to make the comment smaller. *)
+                  Prmths.Counter.inc_one Metrics.github_errors_total;
+                  Logs.info (fun m ->
+                      m
+                        "GITHUB_EVALUATOR : %s : ITERATE_COMMENT_POST : %s"
+                        request_id
+                        (Terrat_github.show_publish_comment_err err));
+                  Terrat_github.publish_comment
+                    ~owner:repo.Repo.owner
+                    ~repo:repo.Repo.name
+                    ~pull_number:pull_request.Pull_request.id
+                    ~body:Tmpl.comment_too_large
+                    client.Client.client
+              | `Compact, dirspaces -> raise (Failure "nyi"))
+      end
+    end
 
     module Result_publisher = struct
       module Workflow_step_output = struct
@@ -3040,6 +3511,19 @@ struct
           >>= function
           | Ok () -> Abb.Future.return (Ok ())
           | Error _ -> Abb.Future.return (Error `Error))
+      | Msg.Tf_op_result2 { is_layered_run; remaining_layers; result; work_manifest } -> (
+          let open Abb.Future.Infix_monad in
+          Result.Publisher2.iterate_comment_posts
+            request_id
+            client
+            is_layered_run
+            remaining_layers
+            result
+            pull_request
+            work_manifest
+          >>= function
+          | Ok () -> Abb.Future.return (Ok ())
+          | Error _ -> Abb.Future.return (Error `Error))
       | Msg.Unexpected_temporary_err ->
           let kv = Snabela.Kv.(Map.of_list []) in
           apply_template_and_publish
@@ -3892,6 +4376,44 @@ struct
         dirspaces_success;
       }
 
+    let work_manifest_result2 result =
+      let module O = Terrat_api_components.Workflow_step_output in
+      let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
+      let by_scope = Result.By_scope.group result.R2.steps in
+      let hooks_pre =
+        CCList.Assoc.get
+          ~eq:Result.Scope.equal
+          (Result.Scope.Run { flow = "hooks"; subflow = "pre" })
+          by_scope
+      in
+      let hooks_post =
+        CCList.Assoc.get
+          ~eq:Result.Scope.equal
+          (Result.Scope.Run { flow = "hooks"; subflow = "post" })
+          by_scope
+      in
+      let dirspaces =
+        CCList.filter_map
+          (function
+            | Result.Scope.Dirspace dirspace, steps -> Some (dirspace, steps)
+            | _ -> None)
+          by_scope
+      in
+      let pre_hooks_success = Result.steps_success (CCOption.get_or ~default:[] hooks_pre) in
+      let post_hooks_success = Result.steps_success (CCOption.get_or ~default:[] hooks_post) in
+      let dirspaces_success =
+        CCList.map (fun (dirspace, steps) -> (dirspace, Result.steps_success steps)) dirspaces
+      in
+      let overall_success =
+        CCList.for_all (fun (_, steps) -> Result.steps_success steps) by_scope
+      in
+      {
+        Terrat_evaluator3.Work_manifest_result.overall_success;
+        pre_hooks_success;
+        post_hooks_success;
+        dirspaces_success;
+      }
+
     let store_tf_operation_result ~request_id db work_manifest_id result =
       let module Rb = Terrat_api_components_work_manifest_tf_operation_result in
       let open Abb.Future.Infix_monad in
@@ -3923,6 +4445,67 @@ struct
                 result.Wmr.workspace
                 result.Wmr.success)
             result.Rb.dirspaces)
+      >>= function
+      | Ok () -> Abb.Future.return (Ok ())
+      | Error (#Pgsql_io.err as err) ->
+          Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+          Logs.err (fun m -> m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+      | Error `Error -> Abb.Future.return (Error `Error)
+
+    let store_tf_operation_result2 ~request_id db work_manifest_id result =
+      let module R2 = Terrat_api_components_work_manifest_tf_operation_result2 in
+      let open Abb.Future.Infix_monad in
+      let by_scope = Result.By_scope.group result.R2.steps in
+      let overall_success =
+        CCList.for_all (fun (_, steps) -> Result.steps_success steps) by_scope
+      in
+      (* let hooks_pre = *)
+      (*   CCList.Assoc.get *)
+      (*     ~eq:Result.Scope.equal *)
+      (*     (Result.Scope.Run { flow = "hooks"; subflow = "pre" }) *)
+      (*     by_scope *)
+      (* in *)
+      (* let hooks_post = *)
+      (*   CCList.Assoc.get *)
+      (*     ~eq:Result.Scope.equal *)
+      (*     (Result.Scope.Run { flow = "hooks"; subflow = "post" }) *)
+      (*     by_scope *)
+      (* in *)
+      let dirspaces =
+        CCList.filter_map
+          (function
+            | Result.Scope.Dirspace dirspace, steps -> Some (dirspace, steps)
+            | _ -> None)
+          by_scope
+      in
+      Prmths.Counter.inc_one (Metrics.run_overall_result_count (Bool.to_string overall_success));
+      Abbs_time_it.run
+        (fun time ->
+          Logs.info (fun m ->
+              m "GITHUB_EVALUATOR : %s : DIRSPACE_RESULT_STORE : time=%f" request_id time))
+        (fun () ->
+          Abbs_future_combinators.List_result.iter
+            ~f:(fun ({ Terrat_dirspace.dir; workspace }, steps) ->
+              let success = Result.steps_success steps in
+              Logs.info (fun m ->
+                  m
+                    "GITHUB_EVALUATOR : %s : RESULT_STORE : id=%a : dir=%s : workspace=%s : \
+                     result=%s"
+                    request_id
+                    Uuidm.pp
+                    work_manifest_id
+                    dir
+                    workspace
+                    (if success then "SUCCESS" else "FAILURE"));
+              Pgsql_io.Prepared_stmt.execute
+                db
+                Sql.insert_github_work_manifest_result
+                work_manifest_id
+                dir
+                workspace
+                success)
+            dirspaces)
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
