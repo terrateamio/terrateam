@@ -62,3 +62,32 @@ module Dirspace_map = struct
 end
 
 module Dirspace_set = CCSet.Make (Terrat_dirspace)
+
+module type GROUP_BY = sig
+  type t
+  type key
+
+  val compare : key -> key -> int
+  val key : t -> key
+end
+
+module Group_by (G : GROUP_BY) = struct
+  module Map = CCMap.Make (struct
+    type t = G.key
+
+    let compare = G.compare
+  end)
+
+  let group l =
+    let m =
+      CCListLabels.fold_left
+        ~init:Map.empty
+        ~f:(fun m t ->
+          let key = G.key t in
+          match Map.find_opt key m with
+          | Some v -> Map.add key (t :: v) m
+          | None -> Map.add key [ t ] m)
+        l
+    in
+    Map.fold (fun k v acc -> (k, CCList.rev v) :: acc) m []
+end

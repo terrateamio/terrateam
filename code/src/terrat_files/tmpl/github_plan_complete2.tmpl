@@ -1,0 +1,203 @@
+@-?overall_success-@
+## Plans :thumbsup:
+@?compact_view-@
+The plan output exceeds the size limit for pull request comments. You can view the full plan by clicking the GitHub status check link or directly in the action log.
+
+@/compact_view-@
+@^denied_dirspaces-@
+<details open>
+  <summary><h2>Access Control :no_entry:</h2></summary>
+
+Not all [dirspaces](https://terrateam.io/docs/glossary#dirspace) were run because the user did not have access.  The following dirspaces were not run:
+
+| Dir | Workspace | Policy |
+| --- | --------- | ------ |
+@#denied_dirspaces-@
+| `@dir@` | `@workspace@` | @^policy@@#policy@`@item@` @/policy-@@/policy@@^!policy@**No matching policy**@/policy@ |
+@/denied_dirspaces-@
+</details>
+@/denied_dirspaces-@
+@?is_layered_run-@
+This is a **layered run** with @num_more_layers@ layers remaining to apply.  Layered runs require multiple rounds of planning and applying.  After applying this layer, comment `terrateam plan` to plan the next layer and continue until all layers are applied.
+
+@/is_layered_run-@
+## Terrateam Plan Output@^environment@: @environment@@/environment@ :thumbsup:
+<details>
+  <summary>Expand for plan output details</summary>
+
+@/overall_success-@
+@!overall_success-@
+## Plans :heavy_multiplication_x:
+@?compact_view-@
+The plan output exceeds the size limit for pull request comments. You can view the full plan by clicking the GitHub status check link or directly in the action log.
+
+@/compact_view-@
+
+Running plans **FAILED**.  See **Terrateam Plan Output**.
+
+After resolving the issue, run `terrateam plan` to execute the plan operation again.
+
+## Terrateam Plan Output@^environment@: @environment@@/environment@ :heavy_multiplication_x:
+<details>
+  <summary>Expand for plan output details</summary>
+
+<details>
+  <summary><h3>Pre Hooks</h3></summary>
+
+@#pre_hooks-@
+**Step**: @name@
+@?success-@
+**Success**: :thumbsup:
+@/success-@
+@!success-@
+**Success**: :heavy_multiplication_x:
+@/success-@
+@^cmd-@
+**Command**: `@cmd@`
+@/cmd-@
+@^details-@
+**Details**: @details@
+@/details-@
+```
+@text@
+```
+@/pre_hooks-@
+</details>
+
+<details>
+  <summary><h3>Post Hooks</h3></summary>
+
+@#post_hooks-@
+**Step**: @name@
+@?success-@
+**Success**: :thumbsup:
+@/success-@
+@!success-@
+**Success**: :heavy_multiplication_x:
+@/success-@
+@^cmd-@
+**Command**: `@cmd@`
+@/cmd-@
+@^details-@
+**Details**: @details@
+@/details-@
+```
+@text@
+```
+@/post_hooks-@
+</details>
+@/overall_success-@
+
+@#dirspaces-@
+
+## Dir: @dir@ | @?success@@^has_changes@@?has_changes@Success :thumbsup:@/has_changes@@!has_changes@No changes@/has_changes@@/has_changes@@/success@@!success@:heavy_multiplication_x:@/success@
+@?compact_dirspaces-@
+<details>
+  <summary>Expand for details</summary>
+
+---
+
+@/compact_dirspaces-@
+**Dir**: @dir@
+**Workspace**: @workspace@
+**Success**: @?success@:thumbsup:@/success@@!success@:heavy_multiplication_x:@/success@
+@?success-@
+@#steps-@
+@?name=plan-@
+**Command**: `@cmd@`
+
+@!compact_view-@
+```@text_decorator@
+@text | plan_diff@
+```
+@/compact_view-@
+@?compact_view-@
+No output shown due to comment size.
+@/compact_view-@
+@/name=plan-@
+@/steps-@
+
+@/success-@
+@!success-@
+
+@#steps-@
+**Step**: @name@
+@?success-@
+**Success**: :thumbsup:
+@/success-@
+@!success-@
+**Success**: :heavy_multiplication_x:
+@/success-@
+@^cmd-@
+**Command**: `@cmd@`
+@/cmd-@
+@^details-@
+**Details**: @details@
+@/details-@
+@!compact_view-@
+```
+@text@
+```
+@/compact_view-@
+@?compact_view-@
+
+No output shown due to comment size.
+@/compact_view-@
+@/steps-@
+@/success-@
+@?compact_dirspaces-@
+</details>
+@/compact_dirspaces-@
+@/dirspaces-@
+
+</details>
+@?overall_success-@
+
+@^cost_estimation-@
+## Cost Estimation
+@#cost_estimation-@
+@?success-@
+**Total Monthly Difference: @diff_monthly_cost | money@ @currency@**
+<details>
+  <summary>Expand for cost estimation details</summary>
+
+| Dir | Workspace | Previous (@currency@) | New (@currency@) | Diff (@currency@) |
+| :---: | :---: | ---: | ---: | ---: |
+@#dirspaces-@
+| @dir@ | @workspace@ | @prev_monthly_cost | money@ | @total_monthly_cost | money@ | @diff_monthly_cost | money@|
+@/dirspaces-@
+| | **Total** | **@prev_monthly_cost | money@** | **@total_monthly_cost | money@** | **@diff_monthly_cost | money@** |
+</details>
+@/success-@
+@!success-@
+**Error calculating Cost Estimation**
+<details>
+  <summary>Expand for cost estimation details</summary>
+
+```
+@text@
+```
+</details>
+@/success-@
+@/cost_estimation-@
+@/cost_estimation-@
+@/overall_success-@
+@?overall_success-@
+
+---
+
+To apply all these changes, comment:
+
+```
+terrateam apply
+```
+@/overall_success-@
+
+---
+
+<details>
+  <summary><h3>Feedback?</h3></summary>
+
+Questions? Comments? Give feedback by commenting `terrateam feedback <your msg>`.  Your message lands directly in our inbox.
+
+</details>
