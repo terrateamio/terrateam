@@ -18,6 +18,12 @@ module Kv = struct
   let float f = V (F f)
   let string s = V (S s)
   let bool b = V (B b)
+
+  let to_string = function
+    | I v -> CCInt.to_string v
+    | F v -> CCFloat.to_string v
+    | S v -> v
+    | B v -> Bool.to_string v
 end
 
 module Transformer = struct
@@ -214,15 +220,26 @@ let rec eval_template buf t kv template section =
   | _ -> assert false
 
 and eval_bool_section ln buf t kv ts section key b =
-  match Kv.Map.get key kv with
-  | Some (Kv.V (Kv.B v)) when v = b ->
-      let ts = eval_template buf t kv ts key in
-      eval_template buf t kv ts section
-  | Some (Kv.V (Kv.B _)) ->
-      let ts = skip_section key ts in
-      eval_template buf t kv ts section
-  | Some _ -> raise (Apply_error (`Expected_boolean (key, ln)))
-  | None -> raise (Apply_error (`Missing_key (key, ln)))
+  match CCString.Split.left ~by:"=" key with
+  | None -> (
+      match Kv.Map.get key kv with
+      | Some (Kv.V (Kv.B v)) when v = b ->
+          let ts = eval_template buf t kv ts key in
+          eval_template buf t kv ts section
+      | Some (Kv.V (Kv.B _)) ->
+          let ts = skip_section key ts in
+          eval_template buf t kv ts section
+      | Some _ -> raise (Apply_error (`Expected_boolean (key, ln)))
+      | None -> raise (Apply_error (`Missing_key (key, ln))))
+  | Some (key', value) -> (
+      match Kv.Map.get key' kv with
+      | Some (Kv.V v) when CCString.equal (Kv.to_string v) value = b ->
+          let ts = eval_template buf t kv ts key in
+          eval_template buf t kv ts section
+      | Some _ ->
+          let ts = skip_section key ts in
+          eval_template buf t kv ts section
+      | None -> raise (Apply_error (`Missing_key (key, ln))))
 
 and eval_list_section ln buf t kv ts section key =
   match Kv.Map.get key kv with
