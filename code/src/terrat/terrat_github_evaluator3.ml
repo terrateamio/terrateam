@@ -420,10 +420,10 @@ module Sql = struct
     Pgsql_io.Typed_sql.(
       sql
       /^ read "insert_github_work_manifest_result.sql"
-      /% Var.uuid "work_manifest"
-      /% Var.text "path"
-      /% Var.text "workspace"
-      /% Var.boolean "success")
+      /% Var.(str_array (uuid "work_manifest"))
+      /% Var.(str_array (text "path"))
+      /% Var.(str_array (text "workspace"))
+      /% Var.(array (boolean "success")))
 
   let update_abort_duplicate_work_manifests () =
     Pgsql_io.Typed_sql.(
@@ -494,6 +494,20 @@ module Sql = struct
       // (* reconcile *) Ret.boolean
       // (* tag_query *) Ret.(option (ud' CCFun.(Terrat_tag_query.of_string %> CCResult.to_opt)))
       /^ read "github_select_missing_drift_scheduled_runs.sql")
+
+  let insert_workflow_step_output =
+    Pgsql_io.Typed_sql.(
+      sql
+      /^ "insert into github_workflow_step_outputs (idx, ignore_errors, payload, scope, step, \
+          success, work_manifest) select * from unnest($idx, $ignore_errors, $payload, $scope, \
+          $step, $success, $work_manifest) on conflict (work_manifest, scope, step) do nothing"
+      /% Var.(array (smallint "idx"))
+      /% Var.(array (boolean "ignore_errors"))
+      /% Var.(str_array (json "payload"))
+      /% Var.(str_array (json "scope"))
+      /% Var.(str_array (text "step"))
+      /% Var.(array (boolean "success"))
+      /% Var.(str_array (uuid "work_manifest")))
 end
 
 module Tmpl = struct
@@ -1414,9 +1428,24 @@ struct
         >>= function
         | Some { Wm.changes; _ } ->
             Abbs_future_combinators.List_result.iter
-              ~f:(fun dsf ->
+              ~f:(fun chunk ->
                 let module Ds = Terrat_change.Dirspace in
-                let { Ds.dir; workspace } = Terrat_change.Dirspaceflow.to_dirspace dsf in
+                let work_manifest_id = CCList.replicate (CCList.length chunk) work_manifest_id in
+                let success = CCList.replicate (CCList.length chunk) success in
+                let dir =
+                  CCList.map
+                    (fun dsf ->
+                      let { Ds.dir; _ } = Terrat_change.Dirspaceflow.to_dirspace dsf in
+                      dir)
+                    chunk
+                in
+                let workspace =
+                  CCList.map
+                    (fun dsf ->
+                      let { Ds.workspace; _ } = Terrat_change.Dirspaceflow.to_dirspace dsf in
+                      workspace)
+                    chunk
+                in
                 Pgsql_io.Prepared_stmt.execute
                   db
                   Sql.insert_github_work_manifest_result
@@ -1424,7 +1453,7 @@ struct
                   dir
                   workspace
                   success)
-              changes
+              (CCList.chunks not_a_bad_chunk_size changes)
         | None -> assert false
       in
       let open Abb.Future.Infix_monad in
@@ -1558,7 +1587,7 @@ struct
                    ]))
         end
 
-        let kv_of_cost_estimation output =
+        let kv_of_cost_estimation changed_dirspaces output =
           let module P = struct
             module S = struct
               type t = {
@@ -1593,6 +1622,7 @@ struct
             P.of_yojson (O.Payload.to_yojson output.O.payload)
             >>= fun payload ->
             let summary = payload.P.summary in
+            let changed_dirspaces = Terrat_data.Dirspace_set.of_list changed_dirspaces in
             Ok
               Snabela.Kv.(
                 Map.of_list
@@ -1605,7 +1635,7 @@ struct
                     ("currency", string payload.P.currency);
                     ( "dirspaces",
                       list
-                        (CCList.map
+                        (CCList.filter_map
                            (fun {
                                   P.Ds.dir;
                                   workspace;
@@ -1613,14 +1643,21 @@ struct
                                   prev_monthly_cost;
                                   diff_monthly_cost;
                                 } ->
-                             Map.of_list
-                               [
-                                 ("dir", string dir);
-                                 ("workspace", string workspace);
-                                 ("prev_monthly_cost", float prev_monthly_cost);
-                                 ("total_monthly_cost", float total_monthly_cost);
-                                 ("diff_monthly_cost", float diff_monthly_cost);
-                               ])
+                             if
+                               Terrat_data.Dirspace_set.mem
+                                 { Terrat_dirspace.dir; workspace }
+                                 changed_dirspaces
+                             then
+                               Some
+                                 (Map.of_list
+                                    [
+                                      ("dir", string dir);
+                                      ("workspace", string workspace);
+                                      ("prev_monthly_cost", float prev_monthly_cost);
+                                      ("total_monthly_cost", float total_monthly_cost);
+                                      ("diff_monthly_cost", float diff_monthly_cost);
+                                    ])
+                             else None)
                            payload.P.dirspaces) );
                   ])
           else
@@ -1810,7 +1847,12 @@ struct
             |> function
             | [] -> []
             | o :: _ -> (
-                match kv_of_cost_estimation o with
+                let changed_dirspaces =
+                  CCList.map
+                    (fun { Terrat_change.Dirspaceflow.dirspace; _ } -> dirspace)
+                    work_manifest.Wm.changes
+                in
+                match kv_of_cost_estimation changed_dirspaces o with
                 | Ok kv -> [ ("cost_estimation", Snabela.Kv.list [ kv ]) ]
                 | Error _ ->
                     [ ("cost_estimation", Snabela.Kv.list [ Output.to_kv (output_of_raw o) ]) ])
@@ -3773,7 +3815,7 @@ struct
             (CCList.map (fun { Dsf.dirspace = { Ds.dir; _ }; _ } -> dir) changes)
             (CCList.map (fun { Dsf.dirspace = { Ds.workspace; _ }; _ } -> workspace) changes)
             (CCList.map (fun { Dsf.workflow; _ } -> workflow) changes))
-        (CCList.chunks 500 changes)
+        (CCList.chunks not_a_bad_chunk_size changes)
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -3813,7 +3855,7 @@ struct
                  CCOption.map (fun policy -> Yojson.Safe.to_string (Policy.to_yojson policy)) policy)
                denied_dirspaces)
             (CCList.replicate (CCList.length denied_dirspaces) work_manifest_id))
-        (CCList.chunks 500 denied_dirspaces)
+        (CCList.chunks not_a_bad_chunk_size denied_dirspaces)
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -4260,7 +4302,7 @@ struct
                      (fun { Dfwf.workflow = { Wf.lock_policy; _ }; _ } -> lock_policy)
                      workflow)
                  dirspaceflows))
-          (CCList.chunks 500 dirspaceflows)
+          (CCList.chunks not_a_bad_chunk_size dirspaceflows)
       in
       let open Abb.Future.Infix_monad in
       run
@@ -4422,9 +4464,9 @@ struct
           Logs.info (fun m ->
               m "GITHUB_EVALUATOR : %s : DIRSPACE_RESULT_STORE : time=%f" request_id time))
         (fun () ->
-          Abbs_future_combinators.List_result.iter
-            ~f:(fun result ->
-              let module Wmr = Terrat_api_components.Work_manifest_dirspace_result in
+          let module Wmr = Terrat_api_components.Work_manifest_dirspace_result in
+          CCList.iter
+            (fun result ->
               Logs.info (fun m ->
                   m
                     "GITHUB_EVALUATOR : %s : RESULT_STORE : id=%a : dir=%s : workspace=%s : \
@@ -4434,15 +4476,22 @@ struct
                     work_manifest_id
                     result.Wmr.path
                     result.Wmr.workspace
-                    (if result.Wmr.success then "SUCCESS" else "FAILURE"));
+                    (if result.Wmr.success then "SUCCESS" else "FAILURE")))
+            result.Rb.dirspaces;
+          Abbs_future_combinators.List_result.iter
+            ~f:(fun chunk ->
+              let work_manifest_id = CCList.replicate (CCList.length chunk) work_manifest_id in
+              let dir = CCList.map (fun result -> result.Wmr.path) chunk in
+              let workspace = CCList.map (fun result -> result.Wmr.workspace) chunk in
+              let success = CCList.map (fun result -> result.Wmr.success) chunk in
               Pgsql_io.Prepared_stmt.execute
                 db
                 Sql.insert_github_work_manifest_result
                 work_manifest_id
-                result.Wmr.path
-                result.Wmr.workspace
-                result.Wmr.success)
-            result.Rb.dirspaces)
+                dir
+                workspace
+                success)
+            (CCList.chunks not_a_bad_chunk_size result.Rb.dirspaces))
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -4458,18 +4507,6 @@ struct
       let overall_success =
         CCList.for_all (fun (_, steps) -> Result.steps_success steps) by_scope
       in
-      (* let hooks_pre = *)
-      (*   CCList.Assoc.get *)
-      (*     ~eq:Result.Scope.equal *)
-      (*     (Result.Scope.Run { flow = "hooks"; subflow = "pre" }) *)
-      (*     by_scope *)
-      (* in *)
-      (* let hooks_post = *)
-      (*   CCList.Assoc.get *)
-      (*     ~eq:Result.Scope.equal *)
-      (*     (Result.Scope.Run { flow = "hooks"; subflow = "post" }) *)
-      (*     by_scope *)
-      (* in *)
       let dirspaces =
         CCList.filter_map
           (function
@@ -4483,9 +4520,45 @@ struct
           Logs.info (fun m ->
               m "GITHUB_EVALUATOR : %s : DIRSPACE_RESULT_STORE : time=%f" request_id time))
         (fun () ->
+          let module O = Terrat_api_components.Workflow_step_output in
+          let open Abbs_future_combinators.Infix_result_monad in
+          let steps = CCList.mapi (fun idx step -> (idx, step)) result.R2.steps in
           Abbs_future_combinators.List_result.iter
-            ~f:(fun ({ Terrat_dirspace.dir; workspace }, steps) ->
-              let success = Result.steps_success steps in
+            ~f:(fun chunk ->
+              let idx = CCList.map (fun (idx, _) -> idx) chunk in
+              let ignore_errors =
+                CCList.map (fun (_, { O.ignore_errors; _ }) -> ignore_errors) chunk
+              in
+              let payload =
+                CCList.map
+                  (fun (_, { O.payload; _ }) -> Yojson.Safe.to_string (O.Payload.to_yojson payload))
+                  chunk
+              in
+              let scope =
+                CCList.map
+                  (fun (_, { O.scope; _ }) -> Yojson.Safe.to_string (O.Scope.to_yojson scope))
+                  chunk
+              in
+              let step = CCList.map (fun (_, { O.step; _ }) -> step) chunk in
+              let success = CCList.map (fun (_, { O.success; _ }) -> success) chunk in
+              let work_manifest_id = CCList.replicate (CCList.length chunk) work_manifest_id in
+              Pgsql_io.Prepared_stmt.execute
+                db
+                Sql.insert_workflow_step_output
+                idx
+                ignore_errors
+                payload
+                scope
+                step
+                success
+                work_manifest_id)
+            (CCList.chunks not_a_bad_chunk_size steps)
+          >>= fun () ->
+          let dirspaces =
+            CCList.map (fun (dirspace, steps) -> (dirspace, Result.steps_success steps)) dirspaces
+          in
+          CCList.iter
+            (fun ({ Terrat_dirspace.dir; workspace }, success) ->
               Logs.info (fun m ->
                   m
                     "GITHUB_EVALUATOR : %s : RESULT_STORE : id=%a : dir=%s : workspace=%s : \
@@ -4495,7 +4568,16 @@ struct
                     work_manifest_id
                     dir
                     workspace
-                    (if success then "SUCCESS" else "FAILURE"));
+                    (if success then "SUCCESS" else "FAILURE")))
+            dirspaces;
+          Abbs_future_combinators.List_result.iter
+            ~f:(fun chunk ->
+              let work_manifest_id = CCList.replicate (CCList.length chunk) work_manifest_id in
+              let dir = CCList.map (fun ({ Terrat_dirspace.dir; _ }, _) -> dir) chunk in
+              let workspace =
+                CCList.map (fun ({ Terrat_dirspace.workspace; _ }, _) -> workspace) chunk
+              in
+              let success = CCList.map (fun (_, success) -> success) chunk in
               Pgsql_io.Prepared_stmt.execute
                 db
                 Sql.insert_github_work_manifest_result
@@ -4503,7 +4585,7 @@ struct
                 dir
                 workspace
                 success)
-            dirspaces)
+            (CCList.chunks not_a_bad_chunk_size dirspaces))
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
