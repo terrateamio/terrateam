@@ -13,15 +13,6 @@ type work_manifests_err =
   ]
 [@@deriving show]
 
-module Page : sig
-  type 'a t [@@deriving eq, show]
-
-  val empty : unit -> 'a t
-  val page : 'a t -> 'a list
-  val next : 'a t -> string list option
-  val prev : 'a t -> string list option
-end
-
 type t
 
 val create : unit -> t
@@ -48,7 +39,9 @@ val work_manifests :
   ?dir:[ `Asc | `Desc ] ->
   installation_id:string ->
   t ->
-  (Terrat_api_components.Installation_work_manifest.t Page.t, [> work_manifests_err ]) result
+  ( Terrat_api_components.Installation_work_manifest.t Brtl_js2_page.Page.t,
+    [> work_manifests_err ] )
+  result
   Abb_js.Future.t
 
 val pull_requests :
@@ -56,13 +49,14 @@ val pull_requests :
   ?pull_number:int ->
   installation_id:string ->
   t ->
-  (Terrat_api_components.Installation_pull_request.t Page.t, [> err ]) result Abb_js.Future.t
+  (Terrat_api_components.Installation_pull_request.t Brtl_js2_page.Page.t, [> err ]) result
+  Abb_js.Future.t
 
 val repos :
   ?page:string list ->
   installation_id:string ->
   t ->
-  (Terrat_api_components.Installation_repo.t Page.t, [> err ]) result Abb_js.Future.t
+  (Terrat_api_components.Installation_repo.t Brtl_js2_page.Page.t, [> err ]) result Abb_js.Future.t
 
 val repos_refresh : installation_id:string -> t -> (string, [> err ]) result Abb_js.Future.t
 val task : id:string -> t -> (Terrat_api_components.Task.t, [> err ]) result Abb_js.Future.t

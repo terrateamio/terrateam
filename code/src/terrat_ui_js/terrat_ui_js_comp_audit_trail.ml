@@ -551,9 +551,9 @@ let comp state =
   let installation = Terrat_ui_js_state.selected_installation app_state in
   let module I = Terrat_api_components.Installation in
   let module Wm = Terrat_api_components.Installation_work_manifest in
-  let module Page = Terrat_ui_js_comp_page.Make (struct
+  let module Page = Brtl_js2_page.Make (struct
     type fetch_err = Terrat_ui_js_client.work_manifests_err [@@deriving show]
-    type elt = Wm.t [@@deriving eq]
+    type elt = Wm.t [@@deriving eq, show]
     type state = Terrat_ui_js_state.t
 
     type query = {
