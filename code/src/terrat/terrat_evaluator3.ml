@@ -1461,10 +1461,13 @@ module Make (S : S) = struct
               p : (string option, [ `Error ]) result Abb.Future.Promise.t;
             }
           | Work_manifest_failure of { p : (unit, [ `Error ]) result Abb.Future.Promise.t }
+          | Checkpointed
       end
 
       module O = struct
-        type 'a t = Clone of 'a list
+        type 'a t =
+          | Clone of 'a list
+          | Checkpoint
       end
     end
 
@@ -1523,7 +1526,10 @@ module Make (S : S) = struct
               | `Failure (`Step_err (_, `Noop _)) -> "NOOP"
               | `Failure run_err -> "FAILURE : " ^ Flow.show_run_err run_err
               | `Success _ -> "SUCCESS"
-              | `Yield _ -> "YIELD"))
+              | `Yield state -> (
+                  match state.State.output with
+                  | Some State.Io.O.Checkpoint -> "CHECKPOINT"
+                  | _ -> "YIELD")))
     | Flow.Event.Choice_start (id, state) ->
         Logs.info (fun m ->
             m "EVALUATOR : %s : FLOW : CHOICE_START : %s" state.State.request_id (Id.to_string id))
@@ -2586,6 +2592,7 @@ module Make (S : S) = struct
         | Plan_store _ -> "Plan_store"
         | Plan_fetch _ -> "Plan_fetch"
         | Work_manifest_failure _ -> "Work_manifest_failure"
+        | Checkpointed -> "Checkpointed"
       in
       Logs.err (fun m ->
           m
@@ -4008,7 +4015,10 @@ module Make (S : S) = struct
       | Event.Run_drift { account; repo; _ } ->
           let open Abbs_future_combinators.Infix_result_monad in
           store_account_repository state.State.request_id ctx.Ctx.storage account repo
-          >>= fun () -> Abb.Future.return (Ok state)
+          >>= fun () ->
+          (* Checkpoint here so that we do not hold up any other runs for this
+             repository with a db lock *)
+          Abb.Future.return (Error (`Checkpoint state))
       | Event.Run_scheduled_drift -> Abb.Future.return (Ok state)
 
     let test_account_status ctx state =
@@ -5633,49 +5643,54 @@ module Make (S : S) = struct
 
   let eval_step step ctx state =
     let open Abb.Future.Infix_monad in
-    step ctx state
-    >>= function
-    | Ok state -> Abb.Future.return (`Success state)
-    | Error (`Yield _ as r) -> Abb.Future.return r
-    | Error (`Noop _ as r) -> Abb.Future.return (`Failure r)
-    | Error (`Clone (state, v)) ->
-        Abb.Future.return (`Yield { state with State.output = Some (State.Io.O.Clone v) })
-    | Error (`Bad_glob_err s) ->
-        maybe_publish_msg ctx state (Msg.Bad_glob s)
-        >>= fun () -> Abb.Future.return (`Failure `Error)
-    | Error (`Depends_on_cycle_err cycle) ->
-        maybe_publish_msg ctx state (Msg.Depends_on_cycle cycle)
-        >>= fun () -> Abb.Future.return (`Failure `Error)
-    | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
-        Logs.err (fun m ->
-            m
-              "EVALUATOR : %s : ERROR : %a"
-              state.State.request_id
-              Terrat_base_repo_config_v1.pp_of_version_1_err
-              err);
-        maybe_publish_msg ctx state (Msg.Repo_config_err err)
-        >>= fun () -> Abb.Future.return (`Failure `Error)
-    | Error
-        ( `Json_decode_err (fname, err)
-        | `Yaml_decode_err (fname, err)
-        | `Repo_config_parse_err (fname, err) ) ->
-        maybe_publish_msg ctx state (Msg.Repo_config_parse_failure (fname, err))
-        >>= fun () -> Abb.Future.return (`Failure `Error)
-    | Error (#Repo_config.fetch_err as err) ->
-        Logs.err (fun m ->
-            m "EVALUATOR : %s : ERROR : %a" state.State.request_id Repo_config.pp_fetch_err err);
-        maybe_publish_msg ctx state Msg.Unexpected_temporary_err
-        >>= fun () -> Abb.Future.return (`Failure `Error)
-    | Error (`Ref_mismatch_err state) ->
-        maybe_publish_msg ctx state Msg.Mismatched_refs
-        >>= fun () -> Abb.Future.return (`Failure (`Noop state))
-    | Error `Failure ->
-        Logs.err (fun m -> m "EVALUATOR : %s : ERROR : FAILURE" state.State.request_id);
-        Abb.Future.return (`Failure `Error)
-    | Error (#Pgsql_io.err as err) ->
-        Logs.err (fun m ->
-            m "EVALUATOR : %s : ERROR : %a" state.State.request_id Pgsql_io.pp_err err);
-        Abb.Future.return (`Failure `Error)
+    match state.State.input with
+    | Some State.Io.I.Checkpointed -> Abb.Future.return (`Success { state with State.input = None })
+    | _ -> (
+        step ctx state
+        >>= function
+        | Ok state -> Abb.Future.return (`Success state)
+        | Error (`Yield _ as r) -> Abb.Future.return r
+        | Error (`Noop _ as r) -> Abb.Future.return (`Failure r)
+        | Error (`Clone (state, v)) ->
+            Abb.Future.return (`Yield { state with State.output = Some (State.Io.O.Clone v) })
+        | Error (`Checkpoint state) ->
+            Abb.Future.return (`Yield { state with State.output = Some State.Io.O.Checkpoint })
+        | Error (`Bad_glob_err s) ->
+            maybe_publish_msg ctx state (Msg.Bad_glob s)
+            >>= fun () -> Abb.Future.return (`Failure `Error)
+        | Error (`Depends_on_cycle_err cycle) ->
+            maybe_publish_msg ctx state (Msg.Depends_on_cycle cycle)
+            >>= fun () -> Abb.Future.return (`Failure `Error)
+        | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
+            Logs.err (fun m ->
+                m
+                  "EVALUATOR : %s : ERROR : %a"
+                  state.State.request_id
+                  Terrat_base_repo_config_v1.pp_of_version_1_err
+                  err);
+            maybe_publish_msg ctx state (Msg.Repo_config_err err)
+            >>= fun () -> Abb.Future.return (`Failure `Error)
+        | Error
+            ( `Json_decode_err (fname, err)
+            | `Yaml_decode_err (fname, err)
+            | `Repo_config_parse_err (fname, err) ) ->
+            maybe_publish_msg ctx state (Msg.Repo_config_parse_failure (fname, err))
+            >>= fun () -> Abb.Future.return (`Failure `Error)
+        | Error (#Repo_config.fetch_err as err) ->
+            Logs.err (fun m ->
+                m "EVALUATOR : %s : ERROR : %a" state.State.request_id Repo_config.pp_fetch_err err);
+            maybe_publish_msg ctx state Msg.Unexpected_temporary_err
+            >>= fun () -> Abb.Future.return (`Failure `Error)
+        | Error (`Ref_mismatch_err state) ->
+            maybe_publish_msg ctx state Msg.Mismatched_refs
+            >>= fun () -> Abb.Future.return (`Failure (`Noop state))
+        | Error `Failure ->
+            Logs.err (fun m -> m "EVALUATOR : %s : ERROR : FAILURE" state.State.request_id);
+            Abb.Future.return (`Failure `Error)
+        | Error (#Pgsql_io.err as err) ->
+            Logs.err (fun m ->
+                m "EVALUATOR : %s : ERROR : %a" state.State.request_id Pgsql_io.pp_err err);
+            Abb.Future.return (`Failure `Error))
 
   (* Flow start *)
   let flow =
@@ -6077,14 +6092,14 @@ module Make (S : S) = struct
               exec_flow
                 ctx
                 (Flow.Yield.set_state { state with State.input = None; output = None } resume')
-          | None -> (
+          | Some _ | None -> (
               match state.State.work_manifest_id with
               | Some work_manifest_id ->
                   let open Abbs_future_combinators.Infix_result_monad in
                   let data = Flow.Yield.to_string resume' in
                   store_flow_state ctx.Ctx.request_id ctx.Ctx.storage work_manifest_id data
                   >>= fun () -> Abb.Future.return (Ok (`Yield resume'))
-              | None -> assert false))
+              | None -> Abb.Future.return (Ok (`Yield resume'))))
 
     let rec run_work_manifests request_id ctx =
       let module Wm = Terrat_work_manifest3 in
@@ -6127,48 +6142,66 @@ module Make (S : S) = struct
       | `Cont -> run_work_manifests request_id ctx
       | `Done -> Abb.Future.return (Ok ())
 
-    and resume_raw ctx work_manifest_id update =
+    and resume_raw ctx resume_point update =
       let open Abbs_future_combinators.Infix_result_monad in
       Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
-              query_flow_state ctx.Ctx.request_id db work_manifest_id
-              >>= function
-              | Some str ->
-                  Abb.Future.return (Flow.Yield.of_string str)
-                  >>= fun resume' ->
-                  let state = update (Flow.Yield.state resume') in
-                  let resume' = Flow.Yield.set_state state resume' in
-                  resume_event { ctx with Ctx.storage = db } resume' exec_flow
-              | None -> Abb.Future.return (Error `Error)))
+              match resume_point with
+              | `Work_manifest work_manifest_id -> (
+                  query_flow_state ctx.Ctx.request_id db work_manifest_id
+                  >>= function
+                  | Some str ->
+                      Abb.Future.return (Flow.Yield.of_string str)
+                      >>= fun resume' ->
+                      let state = update (Flow.Yield.state resume') in
+                      let resume' = Flow.Yield.set_state state resume' in
+                      resume_event { ctx with Ctx.storage = db } resume' exec_flow
+                  | None -> Abb.Future.return (Error `Error))
+              | `Resume resume' -> resume_event { ctx with Ctx.storage = db } resume' exec_flow))
       >>= function
       | `Success _ ->
           let open Abb.Future.Infix_monad in
-          Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db ->
-              delete_flow_state ctx.Ctx.request_id db work_manifest_id)
+          (match resume_point with
+          | `Work_manifest work_manifest_id ->
+              Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db ->
+                  delete_flow_state ctx.Ctx.request_id db work_manifest_id)
+          | `Resume _ -> Abb.Future.return (Ok ()))
           >>= fun _ -> Abb.Future.return (Ok ())
       | `Failure _ ->
           let open Abb.Future.Infix_monad in
-          Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db ->
-              delete_flow_state ctx.Ctx.request_id db work_manifest_id)
+          (match resume_point with
+          | `Work_manifest work_manifest_id ->
+              Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db ->
+                  delete_flow_state ctx.Ctx.request_id db work_manifest_id)
+          | `Resume _ -> Abb.Future.return (Ok ()))
           >>= fun _ -> Abb.Future.return (Error `Error)
-      | `Yield _ -> Abb.Future.return (Ok ())
+      | `Yield resume' -> (
+          let state = Flow.Yield.state resume' in
+          match state.State.output with
+          | Some State.Io.O.Checkpoint ->
+              let state =
+                { state with State.input = Some State.Io.I.Checkpointed; output = None }
+              in
+              let resume' = Flow.Yield.set_state state resume' in
+              resume_raw ctx (`Resume resume') CCFun.id
+          | _ -> Abb.Future.return (Ok ()))
 
     and resume ctx work_manifest_id update =
       Abbs_future_combinators.with_finally
-        (fun () -> resume_raw ctx work_manifest_id update)
+        (fun () -> resume_raw ctx (`Work_manifest work_manifest_id) update)
         ~finally:(fun () ->
           Abbs_future_combinators.ignore (run_work_manifests ctx.Ctx.request_id ctx))
 
     and notify_work_manifest_run_success request_id ctx work_manifest =
       let module Wm = Terrat_work_manifest3 in
       Abbs_future_combinators.ignore
-        (resume_raw ctx work_manifest.Wm.id (fun state ->
+        (resume_raw ctx (`Work_manifest work_manifest.Wm.id) (fun state ->
              { state with State.input = Some State.Io.I.Work_manifest_run_success }))
 
     and notify_work_manifest_run_failure request_id ctx work_manifest err =
       let module Wm = Terrat_work_manifest3 in
       Abbs_future_combinators.ignore
-        (resume_raw ctx work_manifest.Wm.id (fun state ->
+        (resume_raw ctx (`Work_manifest work_manifest.Wm.id) (fun state ->
              { state with State.input = Some (State.Io.I.Work_manifest_run_failure err) }))
 
     let run ctx =
@@ -6285,20 +6318,7 @@ module Make (S : S) = struct
              }
            in
            log_event state;
-           try
-             Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db ->
-                 Pgsql_io.tx db ~f:(fun () ->
-                     Runner.exec_flow { ctx with Ctx.storage = db } (Flow.yield_of_state state)
-                     >>= function
-                     | Ok (`Success _) ->
-                         Logs.info (fun m -> m "EVALUATOR : %s : SUCCESS" ctx.Ctx.request_id);
-                         Abb.Future.return (Ok ())
-                     | Ok (`Yield _) -> Abb.Future.return (Ok ())
-                     | Ok (`Failure _) -> Abb.Future.return (Ok ())
-                     | Error `Error -> Abb.Future.return (Error `Error)))
-           with _ ->
-             Logs.err (fun m -> m "EVALUATOR : %s : EXN" ctx.Ctx.request_id);
-             Abb.Future.return (Ok ()))
+           Runner.resume_raw ctx (`Resume (Flow.yield_of_state state)) CCFun.id)
          ~finally:(fun () ->
            Logs.info (fun m -> m "EVALUATOR : %s : FLOW : END" ctx.Ctx.request_id);
            Abbs_future_combinators.ignore (Abb.Future.fork (Runner.run ctx))))
