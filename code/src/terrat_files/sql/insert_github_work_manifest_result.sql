@@ -3,7 +3,7 @@ insert into github_work_manifest_results (
        success,
        work_manifest,
        workspace
-) values (
+) select * from unnest(
        $path,
        $success,
        $work_manifest,
