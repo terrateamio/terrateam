@@ -63,18 +63,6 @@ end
 module Api = Openapi.Make (Io)
 
 module Page = struct
-  type 'a t = {
-    elts : 'a list;
-    next : string list option;
-    prev : string list option;
-  }
-  [@@deriving eq, show]
-
-  let empty () = { elts = []; next = None; prev = None }
-  let page t = t.elts
-  let next t = t.next
-  let prev t = t.prev
-
   let parse_link s =
     let open CCOption.Infix in
     CCString.Split.left ~by:"; " s
@@ -112,11 +100,11 @@ module Page = struct
                 (CCFun.flip Uri.get_query_param' "page")
                 (CCList.Assoc.get ~eq:CCString.equal "prev" links)
             in
-            { elts; next; prev }
+            Brtl_js2_page.Page.make ?next ?prev elts
         | None ->
             Brtl_js2.Brr.Console.(log [ Jstr.v "Could not parse links"; Jstr.v link ]);
-            { elts; next = None; prev = None })
-    | None -> { elts; next = None; prev = None }
+            Brtl_js2_page.Page.make elts)
+    | None -> Brtl_js2_page.Page.make elts
 end
 
 type t = unit
