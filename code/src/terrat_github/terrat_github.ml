@@ -723,6 +723,19 @@ end
 module Oauth = struct
   module Http = Cohttp_abb.Make (Abb)
 
+  type authorize_err =
+    [ `Authorize_err of string
+    | Cohttp_abb.request_err
+    ]
+  [@@deriving show]
+
+  type refresh_err =
+    [ `Refresh_err of string
+    | `Bad_refresh_token
+    | Cohttp_abb.request_err
+    ]
+  [@@deriving show]
+
   let tls_config =
     let cfg = Otls.Tls_config.create () in
     Otls.Tls_config.insecure_noverifycert cfg;
@@ -737,7 +750,15 @@ module Oauth = struct
       refresh_token_expires_in : int option; [@default None]
       expires_in : int option; [@default None]
     }
-    [@@deriving yojson { strict = false }, show]
+    [@@deriving of_yojson { strict = false }, show]
+  end
+
+  module Response_err = struct
+    type t = {
+      error : string;
+      error_description : string;
+    }
+    [@@deriving of_yojson { strict = false }, show]
   end
 
   let authorize ~config code =
@@ -772,9 +793,9 @@ module Oauth = struct
       when Cohttp.Code.is_success (Cohttp.Code.code_of_status (Http.Response.status resp)) -> (
         match Response.of_yojson (Yojson.Safe.from_string body) with
         | Ok value -> Ok value
-        | Error _ -> Error `Error)
-    | Ok (resp, _) -> Error `Error
-    | Error _ -> Error `Error
+        | Error _ -> Error (`Authorize_err body))
+    | Ok (resp, body) -> Error (`Authorize_err body)
+    | Error err -> Error err
 
   let refresh ~config refresh_token =
     let open Abb.Future.Infix_monad in
@@ -809,7 +830,10 @@ module Oauth = struct
       when Cohttp.Code.is_success (Cohttp.Code.code_of_status (Http.Response.status resp)) -> (
         match Response.of_yojson (Yojson.Safe.from_string body) with
         | Ok value -> Ok value
-        | Error _ -> Error `Error)
-    | Ok (resp, _) -> Error `Error
-    | Error _ -> Error `Error
+        | Error _ -> (
+            match Response_err.of_yojson (Yojson.Safe.from_string body) with
+            | Ok { Response_err.error = "bad_refresh_token"; _ } -> Error `Bad_refresh_token
+            | _ -> Error (`Refresh_err body)))
+    | Ok (resp, body) -> Error (`Refresh_err body)
+    | Error err -> Error err
 end
