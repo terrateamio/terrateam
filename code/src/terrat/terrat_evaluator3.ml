@@ -1822,6 +1822,21 @@ module Make (S : S) = struct
         let weight v = kb_of_bytes (CCString.length (Terrat_access_control.R.show v))
       end)
 
+      module Apply_requirements = Abbs_cache.Expiring.Make (struct
+        type k = string [@@deriving eq]
+        type v = S.Apply_requirements.t
+
+        type err =
+          [ Repo_config.fetch_err
+          | Terrat_change_match3.synthesize_config_err
+          ]
+
+        type args = unit -> (v, err) result Abb.Future.t
+
+        let fetch f = f ()
+        let weight _ = 1
+      end)
+
       module Repo_config = Abbs_cache.Expiring.Make (struct
         type k = string * S.Account.t * S.Repo.t * S.Ref.t [@@deriving eq]
         type v = string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t
@@ -1870,6 +1885,16 @@ module Make (S : S) = struct
             on_evict = on_evict "access_control_eval_tf_op";
             duration = Duration.of_min 5;
             capacity = cache_capacity_mb_in_kb 5;
+          }
+
+      let apply_requirements =
+        Apply_requirements.create
+          {
+            Abbs_cache.Expiring.on_hit = on_hit "apply_requirements";
+            on_miss = on_miss "apply_requirements";
+            on_evict = on_evict "apply_requirements";
+            duration = Duration.of_min 5;
+            capacity = 50;
           }
 
       let repo_config =
@@ -2595,23 +2620,35 @@ module Make (S : S) = struct
               working_branch_ref)
 
     let apply_requirements ctx state =
-      let open Abbs_future_combinators.Infix_result_monad in
-      Abbs_future_combinators.Infix_result_app.(
-        (fun client repo_config pull_request matches ->
-          (client, repo_config, pull_request, matches))
-        <$> client ctx state
-        <*> repo_config ctx state
-        <*> pull_request ctx state
-        <*> matches ctx state `Apply)
-      >>= fun (client, repo_config, pull_request, matches) ->
-      eval_apply_requirements
-        state.State.request_id
-        ctx.Ctx.config
-        (Event.user state.State.event)
-        client
-        repo_config
-        pull_request
-        matches.Matches.working_set_matches
+      let fetch () =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Abbs_future_combinators.Infix_result_app.(
+          (fun client repo_config pull_request matches ->
+            (client, repo_config, pull_request, matches))
+          <$> client ctx state
+          <*> repo_config ctx state
+          <*> pull_request ctx state
+          <*> matches ctx state `Apply)
+        >>= fun (client, repo_config, pull_request, matches) ->
+        eval_apply_requirements
+          state.State.request_id
+          ctx.Ctx.config
+          (Event.user state.State.event)
+          client
+          repo_config
+          pull_request
+          matches.Matches.working_set_matches
+      in
+      let open Abb.Future.Infix_monad in
+      Abbs_time_it.run
+        (fun time ->
+          Logs.info (fun m ->
+              m "EVALUATOR : %s : DV : APPLY_REQUIREMENTS : time=%f" state.State.request_id time))
+        (fun () -> Cache.Apply_requirements.fetch Cache.apply_requirements ctx.Ctx.request_id fetch)
+      >>= function
+      | Ok _ as ret -> Abb.Future.return ret
+      | Error (#Repo_config.fetch_err as err) -> Abb.Future.return (Error err)
+      | Error (#Terrat_change_match3.synthesize_config_err as err) -> Abb.Future.return (Error err)
 
     let access_control_results ctx state op =
       let open Abbs_future_combinators.Infix_result_monad in
