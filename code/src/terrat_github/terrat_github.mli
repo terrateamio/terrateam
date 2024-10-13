@@ -370,6 +370,19 @@ val get_repo_collaborator_permission :
 (** GitHub does not include Oauth operations in their JSON schema, so
     implementing here. *)
 module Oauth : sig
+  type authorize_err =
+    [ `Authorize_err of string
+    | Cohttp_abb.request_err
+    ]
+  [@@deriving show]
+
+  type refresh_err =
+    [ `Refresh_err of string
+    | `Bad_refresh_token
+    | Cohttp_abb.request_err
+    ]
+  [@@deriving show]
+
   module Response : sig
     type t = {
       access_token : string;
@@ -379,9 +392,12 @@ module Oauth : sig
       refresh_token_expires_in : int option; [@default None]
       expires_in : int option; [@default None]
     }
-    [@@deriving yojson { strict = false }, show]
+    [@@deriving of_yojson { strict = false }, show]
   end
 
-  val authorize : config:Terrat_config.t -> string -> (Response.t, [> `Error ]) result Abb.Future.t
-  val refresh : config:Terrat_config.t -> string -> (Response.t, [> `Error ]) result Abb.Future.t
+  val authorize :
+    config:Terrat_config.t -> string -> (Response.t, [> authorize_err ]) result Abb.Future.t
+
+  val refresh :
+    config:Terrat_config.t -> string -> (Response.t, [> refresh_err ]) result Abb.Future.t
 end
