@@ -83,7 +83,7 @@ def update_github_webhook_url():
         current_time = int(time.time())
         payload = {
             'iat': current_time,
-            'exp': current_time + (10 * 60),
+            'exp': current_time + (5 * 60),
             'iss': os.getenv('GITHUB_APP_ID'),
         }
         private_key = os.getenv('GITHUB_APP_PEM').encode()
