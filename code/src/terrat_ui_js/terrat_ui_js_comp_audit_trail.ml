@@ -592,9 +592,9 @@ let comp state =
       let tz = Brtl_js2_datetime.timezone () in
       Terrat_ui_js_client.work_manifests ?page ?q ~tz ~installation_id:installation.I.id client
 
-    let wrap_page = CCFun.id
+    let wrap_page query = CCFun.id
 
-    let render_elt state elt =
+    let render_elt state query elt =
       [
         Brtl_js2.Router_output.const
           state
