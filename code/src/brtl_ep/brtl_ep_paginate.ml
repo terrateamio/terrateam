@@ -44,6 +44,13 @@ module Param = struct
               let open CCOption.Infix in
               (fun a b c -> (a, b, c)) <$> f1 [ x1 ] <*> f2 [ x2 ] <*> f3 [ x3 ]
           | _ -> None)
+
+    let tuple4 (f1, f2, f3, f4) =
+      ud (function
+          | [ x1; x2; x3; x4 ] ->
+              let open CCOption.Infix in
+              (fun a b c d -> (a, b, c, d)) <$> f1 [ x1 ] <*> f2 [ x2 ] <*> f3 [ x3 ] <*> f4 [ x4 ]
+          | _ -> None)
   end
 
   type 'a t = Dir.t * 'a

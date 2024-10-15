@@ -27,6 +27,7 @@ module Param : sig
     val string : string t
     val tuple : 'a t * 'b t -> ('a * 'b) t
     val tuple3 : 'a t * 'b t * 'c t -> ('a * 'b * 'c) t
+    val tuple4 : 'a t * 'b t * 'c t * 'd t -> ('a * 'b * 'c * 'd) t
   end
 
   type 'a t
