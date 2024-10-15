@@ -16,6 +16,17 @@ end
 
 type page = string list [@@deriving eq]
 
+module Query = struct
+  type 'a t = {
+    query : 'a Brtl_js2.Note.signal;
+    set_query : 'a Brtl_js2.Note.S.set;
+  }
+
+  let query t = Brtl_js2.Note.S.value t.query
+  let signal t = t.query
+  let set_query t v = t.set_query v
+end
+
 module type S = sig
   type fetch_err
   type elt [@@deriving eq, show]
@@ -27,8 +38,8 @@ module type S = sig
   val make_uri : query -> Uri.t -> Uri.t
   val set_page : string list option -> query -> query
   val fetch : query -> (elt Page.t, fetch_err) result Abb_js.Future.t
-  val wrap_page : Brtl_js2.Brr.El.t list -> Brtl_js2.Brr.El.t list
-  val render_elt : state Brtl_js2.State.t -> elt -> Brtl_js2.Brr.El.t list
+  val wrap_page : query Query.t -> Brtl_js2.Brr.El.t list -> Brtl_js2.Brr.El.t list
+  val render_elt : state Brtl_js2.State.t -> query Query.t -> elt -> Brtl_js2.Brr.El.t list
 
   val query_comp :
     (query Brtl_js2.Note.S.set -> fetch_err option Brtl_js2.Note.E.t -> state Brtl_js2.Comp.t)
@@ -63,23 +74,18 @@ module Make (S : S) = struct
 
   let rec refresh_page set_refresh_active refresh_active set_res_page send_fetch_err query =
     let open Abb_js.Future.Infix_monad in
-    perform_fetch
-      set_refresh_active
-      refresh_active
-      set_res_page
-      send_fetch_err
-      (Brtl_js2.Note.S.value query)
+    perform_fetch set_refresh_active refresh_active set_res_page send_fetch_err (Query.query query)
     >>= fun () ->
     Abb_js.sleep 60.0
     >>= fun () -> refresh_page set_refresh_active refresh_active set_res_page send_fetch_err query
 
-  let page_comp res_page state =
+  let page_comp query res_page state =
     let page = Brtl_js2.Note.S.map ~eq:(CCList.equal S.equal_elt) Page.page res_page in
     Abb_js.Future.return
       (Brtl_js2.Output.render
          (Brtl_js2.Note.S.map
             ~eq:( == )
-            (fun elts -> S.wrap_page (CCList.flat_map (S.render_elt state) elts))
+            (fun elts -> S.wrap_page query (CCList.flat_map (S.render_elt state query) elts))
             page))
 
   let run state =
@@ -91,6 +97,7 @@ module Make (S : S) = struct
         (CCOption.map Brtl_js2_rtng.Match.apply (Brtl_js2_rtng.match_uri S.query uri))
     in
     let query, set_query = Brtl_js2.Note.S.create ~eq:S.equal_query query in
+    let query = { Query.query; set_query } in
     let fetch_err, send_fetch_err = Brtl_js2.Note.E.create () in
     let res_page, set_res_page =
       Brtl_js2.Note.S.create ~eq:(Page.equal S.equal_elt) (Page.make [])
@@ -100,7 +107,7 @@ module Make (S : S) = struct
       (refresh_page set_refresh_active refresh_active set_res_page send_fetch_err query)
     >>= fun refresh_fut ->
     let logr =
-      Brtl_js2.Note.S.log ~now:false query (fun query ->
+      Brtl_js2.Note.S.log ~now:false (Query.signal query) (fun query ->
           let uri = Brtl_js2.(Note.S.value (Router.uri (State.router state))) in
           Brtl_js2.Router.navigate
             (Brtl_js2.State.router state)
@@ -118,7 +125,7 @@ module Make (S : S) = struct
             refresh_active
             set_res_page
             send_fetch_err
-            (Brtl_js2.Note.S.value query))
+            (Query.query query))
         (Brtl_js2.Note.S.const ~eq:( == ) Brtl_js2.Brr.El.[ txt' "Refresh" ])
         ()
     in
@@ -128,7 +135,7 @@ module Make (S : S) = struct
       Brtl_js2.Kit.Ui.Button.v'
         ~enabled:(Brtl_js2.Note.S.map ~eq:CCBool.equal CCOption.is_some prev)
         ~action:(fun () ->
-          set_query (S.set_page (Brtl_js2.Note.S.value prev) (Brtl_js2.Note.S.value query));
+          Query.set_query query (S.set_page (Brtl_js2.Note.S.value prev) (Query.query query));
           Abb_js.Future.return ())
         (Brtl_js2.Note.S.const ~eq:( == ) Brtl_js2.Brr.El.[ txt' "Prev" ])
         ()
@@ -137,7 +144,7 @@ module Make (S : S) = struct
       Brtl_js2.Kit.Ui.Button.v'
         ~enabled:(Brtl_js2.Note.S.map ~eq:CCBool.equal CCOption.is_some next)
         ~action:(fun () ->
-          set_query (S.set_page (Brtl_js2.Note.S.value next) (Brtl_js2.Note.S.value query));
+          set_query (S.set_page (Brtl_js2.Note.S.value next) (Query.query query));
           Abb_js.Future.return ())
         (Brtl_js2.Note.S.const ~eq:( == ) Brtl_js2.Brr.El.[ txt' "Next" ])
         ()
@@ -166,7 +173,7 @@ module Make (S : S) = struct
                      div [ Brtl_js2.Kit.Ui.Button.el prev_btn ];
                      div [ Brtl_js2.Kit.Ui.Button.el next_btn ];
                    ];
-                 Brtl_js2.Router_output.const state el (page_comp res_page);
+                 Brtl_js2.Router_output.const state el (page_comp query res_page);
                ];
              ]))
     in
