@@ -139,7 +139,7 @@ let run' state =
                  (div ~at:At.[ class' (Jstr.v "main-content") ] [])
                  Brtl_js2_rtng.
                    [
-                     Rt.audit_trail consumed_path --> Terrat_ui_js_comp_audit_trail.run;
+                     Rt.audit_trail consumed_path --> Terrat_ui_js_comp_audit_trail2.run;
                      Rt.repo_new consumed_path --> Terrat_ui_js_comp_repo_new.run;
                      Rt.repos_refresh consumed_path --> Terrat_ui_js_comp_repos_refresh.run;
                      Rt.main consumed_path --> Terrat_ui_js_comp_repos.run;

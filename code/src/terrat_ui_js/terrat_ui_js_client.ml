@@ -31,6 +31,12 @@ type work_manifests_err =
   ]
 [@@deriving show]
 
+type dirspaces_err =
+  [ err
+  | `Bad_request of Terrat_api_installations.List_dirspaces.Responses.Bad_request.t
+  ]
+[@@deriving show]
+
 module Io = struct
   type 'a t = 'a Abb_js.Future.t
   type err = Jv.Error.t
@@ -159,6 +165,31 @@ let work_manifests ?tz ?page ?q ?dir ~installation_id t =
   >>= fun resp ->
   match Openapi.Response.value resp with
   | `OK R.{ work_manifests } -> Abb_js.Future.return (Ok (Page.of_response resp work_manifests))
+  | `Bad_request _ as err -> Abb_js.Future.return (Error err)
+  | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
+
+let dirspaces ?tz ?page ?q ?dir ~installation_id t =
+  let open Abb_js_future_combinators.Infix_result_monad in
+  let module R = Terrat_api_installations.List_dirspaces.Responses.OK in
+  call
+    Terrat_api_installations.List_dirspaces.(
+      make
+        Parameters.(
+          make
+            ~d:
+              (CCOption.map
+                 (function
+                   | `Asc -> "asc"
+                   | `Desc -> "desc")
+                 dir)
+            ~page
+            ~q
+            ~tz
+            ~installation_id
+            ()))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK { R.dirspaces } -> Abb_js.Future.return (Ok (Page.of_response resp dirspaces))
   | `Bad_request _ as err -> Abb_js.Future.return (Error err)
   | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
 
