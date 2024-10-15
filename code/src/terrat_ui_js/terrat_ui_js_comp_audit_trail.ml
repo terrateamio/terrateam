@@ -564,14 +564,14 @@ let comp state =
 
     let class' = "work-manifests"
 
-    let query =
+    let query return =
       let rt =
         Brtl_js2_rtng.(
           root consumed_path
           /? Query.(option (array (string "page")))
           /? Query.(option (string "q")))
       in
-      Brtl_js2_rtng.(rt --> fun page q -> { page; q })
+      Brtl_js2_rtng.(rt --> fun page q -> return { page; q })
 
     let make_uri { page; q } uri =
       let uri =
