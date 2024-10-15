@@ -16,7 +16,7 @@
 
 @layer components {
     body {
-        @apply bg-white h-screen w-full text-black flex flex-col overflow-y-scroll;
+        @apply bg-slate-50 h-screen w-full text-black flex flex-col overflow-y-scroll;
         @apply font-sans;
     }
 
@@ -163,7 +163,7 @@
     }
 
     .main-content {
-        @apply flex flex-col w-full lg:w-2/3 mx-auto;
+        @apply flex flex-col w-full lg:w-11/12 mx-auto;
         @apply mb-20;
     }
 
@@ -306,6 +306,258 @@
         @apply list-disc list-inside;
     }
 
+    /* Start dirspaces */
+    .dirspaces {
+        @apply w-full mx-auto;
+        @apply flex flex-col;
+        @apply py-2;
+    }
+
+    .dirspaces .page {
+        @apply flex flex-col;
+        @apply gap-2;
+        @apply text-slate-800;
+    }
+
+    .dirspaces .page .heading {
+        @apply p-2;
+        @apply grid grid-cols-12;
+        @apply font-semibold;
+        @apply capitalize;
+        @apply bg-slate-300;
+        @apply rounded-lg;
+    }
+
+    /* Status */
+    .dirspaces .page .heading > div:nth-child(1),
+    .dirspaces .page .item > div:nth-child(1) {
+        @apply col-span-1;
+        @apply text-center;
+        @apply my-auto;
+    }
+
+    /* Directory */
+    .dirspaces .page .heading > div:nth-child(2),
+    .dirspaces .page .item > div:nth-child(2) {
+        @apply col-span-2;
+        @apply my-auto;
+    }
+
+    /* Workspace */
+    .dirspaces .page .heading > div:nth-child(3),
+    .dirspaces .page .item > div:nth-child(3) {
+        @apply col-span-1;
+        @apply my-auto;
+    }
+
+    /* Repo/branch */
+    .dirspaces .page .heading > div:nth-child(4),
+    .dirspaces .page .item > div:nth-child(4) {
+        @apply col-span-2;
+        @apply my-auto;
+    }
+
+    /* Target */
+    .dirspaces .page .heading > div:nth-child(5),
+    .dirspaces .page .item > div:nth-child(5) {
+        @apply col-span-4;
+        @apply my-auto;
+    }
+
+    /* Created at */
+    .dirspaces .page .heading > div:nth-child(6),
+    .dirspaces .page .item > div:nth-child(6) {
+        @apply col-span-1;
+        @apply my-auto;
+        @apply text-center;
+    }
+
+    /* Action */
+    .dirspaces .page .heading > div:nth-child(7),
+    .dirspaces .page .item > div:nth-child(7) {
+        @apply col-span-1;
+        @apply text-center;
+        @apply mx-auto;
+        @apply my-auto;
+    }
+
+    .dirspaces .page .item {
+        @apply grid grid-cols-12 gap-2;
+        @apply p-2;
+    }
+
+    .dirspaces .page .item .icon {
+        @apply h-5 w-5;
+    }
+
+    .dirspaces .page .item .icon > button {
+        @apply h-5 w-5;
+        @apply bg-transparent;
+        @apply text-blue-500;
+    }
+
+    .dirspaces .page .item:nth-child(odd) {
+        @apply bg-slate-100;
+    }
+
+    .dirspaces .page .item .operation {
+        @apply flex flex-col;
+        @apply items-center justify-items-center;
+    }
+
+    .dirspaces .page .item .operation .op {
+        @apply uppercase font-semibold;
+    }
+
+    .dirspaces .page .item .operation .state {
+        @apply py-1 px-2;
+        @apply uppercase;
+        @apply font-semibold;
+        @apply rounded;
+        @apply text-white;
+    }
+
+    .dirspaces .page .item .operation .state.aborted {
+        @apply bg-red-500;
+    }
+
+    .dirspaces .page .item .operation .state.failure {
+        @apply bg-red-500;
+    }
+
+    .dirspaces .page .item .operation .state.unknown {
+        @apply bg-red-500;
+    }
+
+    .dirspaces .page .item .operation .state.success {
+        @apply bg-green-500;
+    }
+
+    .dirspaces .page .item .operation .state.running {
+        @apply bg-slate-500;
+    }
+
+    .dirspaces .page .item .operation .state.queued {
+        @apply bg-slate-500;
+    }
+
+    .dirspaces .page .item .dir > div,
+    .dirspaces .page .item .workspace > div {
+        @apply inline-block;
+        @apply relative top-[3px];
+        @apply px-2;
+    }
+
+    .dirspaces .page .item .repo-branch {
+        @apply flex flex-col;
+        @apply truncate;
+    }
+
+    .dirspaces .page .item .repo-branch > div {
+        @apply flex flex-row gap-1;
+        @apply items-center justify-items-center;
+    }
+
+    .dirspaces .page .item .target.pull-request {
+        @apply flex flex-col;
+    }
+
+    .dirspaces .page .item .target.pull-request div:first-child {
+        @apply flex flex-row gap-1;
+        @apply items-center justify-items-center;
+    }
+
+    .dirspaces .page .item .target.pull-request div:last-child {
+        @apply truncate;
+    }
+
+    .dirspaces .page .item .created_at {
+        @apply flex flex-col;
+        @apply items-center justify-items-center;
+    }
+
+    .dirspaces .page .item .created_at > div {
+        @apply flex flex-row gap-1;
+    }
+
+    .dirspaces .page .item .target.drift,
+    .dirspaces .page .item .target.index {
+        @apply flex flex-row;
+    }
+
+    .dirspaces .page .item .action-details a {
+        @apply bg-blue-800;
+        @apply p-2;
+        @apply text-white;
+        @apply rounded;
+    }
+
+    .dirspaces .query {
+        @apply w-full lg:w-2/3;
+        @apply mx-auto;
+    }
+
+    .dirspaces .query > div > form {
+        @apply flex flex-row;
+    }
+
+    .dirspaces .query > div > form > input {
+        @apply input-primary;
+        @apply rounded-none rounded-l;
+    }
+
+    .dirspaces .query > div > form > button.btn-search {
+        @apply btn-primary;
+        @apply px-2;
+        @apply rounded-none;
+        @apply border-t border-t-blue-800;
+        @apply border-b border-b-blue-800;
+    }
+
+    .dirspaces .query > div > form > button.btn-search.ui-disabled {
+        @apply bg-slate-400;
+        @apply border-t border-t-slate-400;
+        @apply border-b border-b-slate-400;
+    }
+
+    .dirspaces .query > div > form > button.btn-clear {
+        @apply btn-primary;
+        @apply px-2;
+        @apply rounded-none rounded-r;
+        @apply border-l border-l-white;
+        @apply border-t border-t-blue-800;
+        @apply border-b border-b-blue-800;
+    }
+
+    .dirspaces .query > div > form > button.btn-clear.ui-disabled {
+        @apply bg-slate-400;
+        @apply border-t border-t-slate-400;
+        @apply border-b border-b-slate-400;
+    }
+
+    .dirspaces .query details {
+        @apply py-2;
+    }
+
+    .dirspaces .query .error {
+        @apply font-semibold text-red-600;
+    }
+
+    .dirspaces .query summary {
+        @apply py-2;
+        @apply font-semibold;
+        @apply cursor-pointer;
+    }
+
+    .dirspaces .query details .tql-help {
+        @apply flex flex-col gap-y-4;
+    }
+
+    .dirspaces .query details .tql-help ul {
+        @apply list-disc list-inside;
+    }
+    /* End dirspaces */
+
     .pull-requests {
         @apply mx-auto;
         @apply flex flex-col;
@@ -384,7 +636,7 @@
     }
 
     .page-nav {
-        @apply flex flex-row gap-4 justify-end py-2;
+        @apply flex flex-row gap-2 justify-end py-2;
     }
 
     .page-nav button {

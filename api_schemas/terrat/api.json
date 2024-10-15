@@ -3,6 +3,17 @@
     "parameters": {},
     "responses": {},
     "schemas": {
+      "dirspace-state": {
+        "enum": [
+          "aborted",
+          "failure",
+          "queued",
+          "running",
+          "success",
+          "unknown"
+        ],
+        "type": "string"
+      },
       "error": {
         "additionalProperties": false,
         "properties": {
@@ -87,6 +98,94 @@
           "id",
           "name",
           "type"
+        ],
+        "type": "object"
+      },
+      "installation-dirspace": {
+        "additionalProperties": false,
+        "properties": {
+          "base_branch": {
+            "type": "string"
+          },
+          "base_ref": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "branch_ref": {
+            "type": "string"
+          },
+          "completed_at": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "dir": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/kind-drift"
+              },
+              {
+                "$ref": "#/components/schemas/kind-index"
+              },
+              {
+                "$ref": "#/components/schemas/kind-pull-request"
+              }
+            ]
+          },
+          "owner": {
+            "type": "string"
+          },
+          "repo": {
+            "type": "string"
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "run_type": {
+            "$ref": "#/components/schemas/run-type"
+          },
+          "state": {
+            "$ref": "#/components/schemas/dirspace-state"
+          },
+          "tag_query": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string"
+          },
+          "workspace": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "base_branch",
+          "base_ref",
+          "branch",
+          "branch_ref",
+          "created_at",
+          "dir",
+          "dirspaces",
+          "id",
+          "kind",
+          "owner",
+          "ref",
+          "repo",
+          "run_type",
+          "state",
+          "tag_query",
+          "workspace"
         ],
         "type": "object"
       },
@@ -1778,6 +1877,107 @@
                   },
                   "required": [
                     "client_id"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/installations/{installation_id}/dirspaces": {
+      "get": {
+        "operationId": "installations/list-dirspaces",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "d",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tz",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "dirspaces": {
+                      "items": {
+                        "$ref": "#/components/schemas/installation-dirspace"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "dirspaces"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
                   ],
                   "type": "object"
                 }
