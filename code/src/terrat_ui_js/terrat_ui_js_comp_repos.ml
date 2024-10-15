@@ -15,9 +15,9 @@ let comp state =
 
     let class' = "repos"
 
-    let query =
+    let query return =
       let rt = Brtl_js2_rtng.(root consumed_path /? Query.(option (array (string "page")))) in
-      Brtl_js2_rtng.(rt --> fun page -> { page })
+      Brtl_js2_rtng.(rt --> fun page -> return { page })
 
     let make_uri { page } uri =
       match page with
