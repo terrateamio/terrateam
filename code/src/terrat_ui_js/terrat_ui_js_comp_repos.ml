@@ -27,7 +27,7 @@ let comp state =
     let set_page page _ = { page }
     let fetch { page } = Terrat_ui_js_client.repos ?page ~installation_id:installation.I.id client
 
-    let wrap_page els =
+    let wrap_page query els =
       let refresh_btn =
         Brtl_js2.Kit.Ui.Button.v'
           ~class':(Jstr.v "repos-refresh")
@@ -60,7 +60,7 @@ let comp state =
             @ els);
         ]
 
-    let render_elt state repo =
+    let render_elt state query repo =
       Brtl_js2.Brr.El.
         [
           div [ txt' repo.Repo.name ];
