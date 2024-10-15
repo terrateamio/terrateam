@@ -34,7 +34,7 @@ module type S = sig
   type query
 
   val class' : string
-  val query : query Brtl_js2_rtng.Route.t
+  val query : (query -> 'a) -> 'a Brtl_js2_rtng.Route.t
   val make_uri : query -> Uri.t -> Uri.t
   val set_page : string list option -> query -> query
   val fetch : query -> (elt Page.t, fetch_err) result Abb_js.Future.t
@@ -88,16 +88,12 @@ module Make (S : S) = struct
             (fun elts -> S.wrap_page query (CCList.flat_map (S.render_elt state query) elts))
             page))
 
-  let run state =
+  let comp query state =
     let open Abb_js.Future.Infix_monad in
-    let uri = Brtl_js2.(Note.S.value (Router.uri (State.router state))) in
     let query =
-      CCOption.get_exn_or
-        "query"
-        (CCOption.map Brtl_js2_rtng.Match.apply (Brtl_js2_rtng.match_uri S.query uri))
+      let query, set_query = Brtl_js2.Note.S.create ~eq:S.equal_query query in
+      { Query.query; set_query }
     in
-    let query, set_query = Brtl_js2.Note.S.create ~eq:S.equal_query query in
-    let query = { Query.query; set_query } in
     let fetch_err, send_fetch_err = Brtl_js2.Note.E.create () in
     let res_page, set_res_page =
       Brtl_js2.Note.S.create ~eq:(Page.equal S.equal_elt) (Page.make [])
@@ -144,43 +140,51 @@ module Make (S : S) = struct
       Brtl_js2.Kit.Ui.Button.v'
         ~enabled:(Brtl_js2.Note.S.map ~eq:CCBool.equal CCOption.is_some next)
         ~action:(fun () ->
-          set_query (S.set_page (Brtl_js2.Note.S.value next) (Query.query query));
+          Query.set_query query (S.set_page (Brtl_js2.Note.S.value next) (Query.query query));
           Abb_js.Future.return ())
         (Brtl_js2.Note.S.const ~eq:( == ) Brtl_js2.Brr.El.[ txt' "Next" ])
         ()
     in
     let el = Brtl_js2.Brr.El.div ~at:At.[ class' (Jstr.v "page") ] [] in
-    let page_el =
-      Brtl_js2.Brr.El.(
-        div
-          ~at:At.[ class' (Jstr.v S.class') ]
-          (CCList.flatten
-             [
-               (match S.query_comp with
-               | Some comp ->
-                   [
-                     Brtl_js2.Router_output.const
-                       state
-                       (div ~at:At.[ class' (Jstr.v "query") ] [])
-                       (comp set_query fetch_err);
-                   ]
-               | None -> []);
-               [
-                 div
-                   ~at:At.[ class' (Jstr.v "page-nav") ]
-                   [
-                     div [ Brtl_js2.Kit.Ui.Button.el refresh_btn ];
-                     div [ Brtl_js2.Kit.Ui.Button.el prev_btn ];
-                     div [ Brtl_js2.Kit.Ui.Button.el next_btn ];
-                   ];
-                 Brtl_js2.Router_output.const state el (page_comp query res_page);
-               ];
-             ]))
+    let page_els =
+      let open Brtl_js2.Brr.El in
+      CCList.flatten
+        [
+          (match S.query_comp with
+          | Some comp ->
+              [
+                Brtl_js2.Router_output.const
+                  state
+                  (div ~at:At.[ class' (Jstr.v "query") ] [])
+                  (comp query.Query.set_query fetch_err);
+              ]
+          | None -> []);
+          [
+            div
+              ~at:At.[ class' (Jstr.v "page-nav") ]
+              [
+                div [ Brtl_js2.Kit.Ui.Button.el refresh_btn ];
+                div [ Brtl_js2.Kit.Ui.Button.el prev_btn ];
+                div [ Brtl_js2.Kit.Ui.Button.el next_btn ];
+              ];
+            Brtl_js2.Router_output.const state el (page_comp query res_page);
+          ];
+        ]
     in
     Abb_js.Future.return
       (Brtl_js2.Output.const
          ~cleanup:(fun () ->
            Brtl_js2.Note.Logr.destroy logr;
            Abb_js.Future.abort refresh_fut)
-         [ page_el ])
+         page_els)
+
+  let run state =
+    Abb_js.Future.return
+      (Brtl_js2.Output.const
+         [
+           Brtl_js2.Router_output.create
+             state
+             (Brtl_js2.Brr.El.div ~at:At.[ class' (Jstr.v S.class') ] [])
+             Brtl_js2_rtng.[ S.query comp ];
+         ])
 end

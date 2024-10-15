@@ -21,7 +21,7 @@ module type S = sig
   type query
 
   val class' : string
-  val query : query Brtl_js2_rtng.Route.t
+  val query : (query -> 'a) -> 'a Brtl_js2_rtng.Route.t
   val make_uri : query -> Uri.t -> Uri.t
   val set_page : string list option -> query -> query
   val fetch : query -> (elt Page.t, fetch_err) result Abb_js.Future.t
