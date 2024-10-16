@@ -21,7 +21,7 @@ terrat: release_terrat_ui debug_terrat_ui
 
 terrat: test-debug_abb_fut test-debug_abb_future_combinators test-release_abb_flow
 
-terrat: test-release_terrat test-release_terrat_github_webhooks
+terrat: test-release_terrat test-release_terrat_github_webhooks test-release_terrat_sql_of_tag_query
 
 terrat: test-release_jsonu
 
