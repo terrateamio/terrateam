@@ -34,7 +34,6 @@ q as (
         gwm.base_sha as base_sha,
         completed_at,
         created_at,
-        gwm.sha as sha,
         gwm.run_type as run_type,
         (case
          when gwm.state not in ('running', 'queued') then gwm.state
@@ -52,7 +51,8 @@ q as (
         gir.name as name,
         gwm.run_kind as kind,
         gpr.title as title,
-        gpr.branch as branch,
+        coalesce(gdwm.branch, gpr.branch) as branch,
+        gwm.sha as branch_ref,
         gwm.username as username,
         gwm.run_id as run_id,
         urt.run_type as unified_run_type,
@@ -79,13 +79,12 @@ q as (
 select
     id,
     base_sha,
+    branch_ref,
     to_char(gwm.completed_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as completed_at,
     to_char(gwm.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
-    sha,
     unified_run_type,
     state,
     tag_query,
-    repository,
     pull_number,
     base_branch,
     owner,

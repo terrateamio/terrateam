@@ -7,6 +7,6 @@ create table github_workflow_step_outputs (
        step text not null,
        success boolean not null,
        work_manifest uuid not null,
-       primary key (work_manifest, scope, step),
+       primary key (work_manifest, scope, step, idx),
        foreign key (work_manifest) references github_work_manifests (id)
 );
