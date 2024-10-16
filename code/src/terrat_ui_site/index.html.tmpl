@@ -31,8 +31,14 @@ cat << EOF
 
     <link href="/assets/style.css" rel="stylesheet" type="text/css">
     <link href="/assets/mdi-v20210302.css" rel="stylesheet">
+    <link href="/assets/highlight.11.10.0.min.css" rel="stylesheet">
 
     <script src="/assets/terrat_ui_js.js"></script>
+    <script src="/assets/highlight.11.10.0.min.js"></script>
+    <script src="/assets/terraform.2024-11-01-eb1b966.js"></script>
+    <script type="text/javascript">
+        hljs.registerLanguage('terraform', window.hljsDefineTerraform);
+    </script>
 
     ${POSTHOG_ANALYTICS}
   </head>

@@ -286,25 +286,18 @@
         "type": "string"
       },
       "installation-work-manifest": {
-        "oneOf": [
-          {
-            "$ref": "#/components/schemas/installation-work-manifest-drift"
-          },
-          {
-            "$ref": "#/components/schemas/installation-work-manifest-index"
-          },
-          {
-            "$ref": "#/components/schemas/installation-work-manifest-pull-request"
-          }
-        ]
-      },
-      "installation-work-manifest-drift": {
         "additionalProperties": false,
         "properties": {
           "base_branch": {
             "type": "string"
           },
           "base_ref": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "branch_ref": {
             "type": "string"
           },
           "completed_at": {
@@ -325,162 +318,24 @@
           "id": {
             "type": "string"
           },
-          "owner": {
-            "type": "string"
-          },
-          "ref": {
-            "type": "string"
-          },
-          "repo": {
-            "type": "string"
-          },
-          "repository": {
-            "type": "integer"
-          },
-          "run_id": {
-            "type": "string"
-          },
-          "run_type": {
-            "$ref": "#/components/schemas/run-type"
-          },
-          "state": {
-            "$ref": "#/components/schemas/work-manifest-state"
-          }
-        },
-        "required": [
-          "base_branch",
-          "base_ref",
-          "created_at",
-          "dirspaces",
-          "id",
-          "owner",
-          "ref",
-          "repo",
-          "repository",
-          "run_type",
-          "state"
-        ],
-        "type": "object"
-      },
-      "installation-work-manifest-index": {
-        "additionalProperties": false,
-        "properties": {
-          "base_branch": {
-            "type": "string"
-          },
-          "base_ref": {
-            "type": "string"
-          },
-          "branch": {
-            "type": "string"
-          },
-          "completed_at": {
-            "type": "string"
-          },
-          "created_at": {
-            "type": "string"
-          },
-          "dirspaces": {
-            "items": {
-              "$ref": "#/components/schemas/work-manifest-dirspace"
-            },
-            "type": "array"
-          },
-          "id": {
-            "type": "string"
+          "kind": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/kind-drift"
+              },
+              {
+                "$ref": "#/components/schemas/kind-index"
+              },
+              {
+                "$ref": "#/components/schemas/kind-pull-request"
+              }
+            ]
           },
           "owner": {
             "type": "string"
           },
-          "pull_number": {
-            "type": "integer"
-          },
-          "pull_request_title": {
-            "type": "string"
-          },
-          "ref": {
-            "type": "string"
-          },
           "repo": {
             "type": "string"
-          },
-          "repository": {
-            "type": "integer"
-          },
-          "run_id": {
-            "type": "string"
-          },
-          "state": {
-            "$ref": "#/components/schemas/work-manifest-state"
-          },
-          "user": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "base_branch",
-          "base_ref",
-          "branch",
-          "created_at",
-          "dirspaces",
-          "id",
-          "owner",
-          "pull_number",
-          "ref",
-          "repo",
-          "repository",
-          "state",
-          "tag_query"
-        ],
-        "type": "object"
-      },
-      "installation-work-manifest-pull-request": {
-        "additionalProperties": false,
-        "properties": {
-          "base_branch": {
-            "type": "string"
-          },
-          "base_ref": {
-            "type": "string"
-          },
-          "branch": {
-            "type": "string"
-          },
-          "completed_at": {
-            "type": "string"
-          },
-          "created_at": {
-            "type": "string"
-          },
-          "dirspaces": {
-            "items": {
-              "$ref": "#/components/schemas/work-manifest-dirspace"
-            },
-            "type": "array"
-          },
-          "environment": {
-            "type": "string"
-          },
-          "id": {
-            "type": "string"
-          },
-          "owner": {
-            "type": "string"
-          },
-          "pull_number": {
-            "type": "integer"
-          },
-          "pull_request_title": {
-            "type": "string"
-          },
-          "ref": {
-            "type": "string"
-          },
-          "repo": {
-            "type": "string"
-          },
-          "repository": {
-            "type": "integer"
           },
           "run_id": {
             "type": "string"
@@ -502,17 +357,98 @@
           "base_branch",
           "base_ref",
           "branch",
+          "branch",
+          "branch_ref",
           "created_at",
           "dirspaces",
           "id",
+          "kind",
           "owner",
-          "pull_number",
           "ref",
           "repo",
           "repository",
           "run_type",
           "state",
           "tag_query"
+        ],
+        "type": "object"
+      },
+      "installation-work-manifest-target-pull-request": {
+        "additionalProperties": false,
+        "properties": {
+          "pull_number": {
+            "type": "integer"
+          },
+          "pull_request_title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pull_number"
+        ],
+        "type": "object"
+      },
+      "installation-workflow-step-output": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "idx": {
+            "type": "integer"
+          },
+          "ignore_errors": {
+            "type": "boolean"
+          },
+          "payload": {
+            "additionalProperties": {
+              "type": null
+            },
+            "properties": {},
+            "type": "object"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/workflow-step-output-scope"
+          },
+          "state": {
+            "type": "string"
+          },
+          "step": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "created_at",
+          "idx",
+          "ignore_errors",
+          "location",
+          "payload",
+          "scope",
+          "state",
+          "step"
+        ],
+        "type": "object"
+      },
+      "kind-drift": {
+        "const": "drift",
+        "type": "string"
+      },
+      "kind-index": {
+        "const": "index",
+        "type": "string"
+      },
+      "kind-pull-request": {
+        "additionalProperties": false,
+        "properties": {
+          "pull_number": {
+            "type": "integer"
+          },
+          "pull_request_title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pull_number"
         ],
         "type": "object"
       },
@@ -1556,14 +1492,7 @@
             "type": "object"
           },
           "scope": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/workflow-step-output-scope-dirspace"
-              },
-              {
-                "$ref": "#/components/schemas/workflow-step-output-scope-run"
-              }
-            ]
+            "$ref": "#/components/schemas/workflow-step-output-scope"
           },
           "step": {
             "type": "string"
@@ -1581,6 +1510,16 @@
           "success"
         ],
         "type": "object"
+      },
+      "workflow-step-output-scope": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/workflow-step-output-scope-dirspace"
+          },
+          {
+            "$ref": "#/components/schemas/workflow-step-output-scope-run"
+          }
+        ]
       },
       "workflow-step-output-scope-dirspace": {
         "additionalProperties": false,
@@ -1939,6 +1878,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -2190,6 +2137,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -2236,6 +2191,154 @@
             }
           },
           "403": {
+            "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/installations/{installation_id}/work-manifests/{work_manifest_id}": {
+      "get": {
+        "operationId": "installations/get-work-manifest",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "work_manifest_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/installation-work-manifest"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
+          },
+          "404": {
+            "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/installations/{installation_id}/work-manifests/{work_manifest_id}/outputs": {
+      "get": {
+        "operationId": "installations/get-work-manifest-outputs",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "work_manifest_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tz",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "steps": {
+                      "items": {
+                        "$ref": "#/components/schemas/installation-workflow-step-output"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "steps"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
+          },
+          "404": {
             "content": {}
           }
         }

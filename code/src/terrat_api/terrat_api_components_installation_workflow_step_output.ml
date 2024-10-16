@@ -7,10 +7,12 @@ module Payload = struct
 end
 
 type t = {
+  created_at : string;
+  idx : int;
   ignore_errors : bool;
   payload : Payload.t;
   scope : Terrat_api_components_workflow_step_output_scope.t;
+  state : string;
   step : string;
-  success : bool;
 }
 [@@deriving yojson { strict = true; meta = true }, show, eq]

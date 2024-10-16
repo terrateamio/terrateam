@@ -5,6 +5,9 @@ module Rt = struct
   let repo_new consumed_path = Brtl_js2_rtng.(root consumed_path / "repos" / "new" /% Path.string)
   let repos_refresh consumed_path = Brtl_js2_rtng.(root consumed_path / "repos" / "refresh")
   let audit_trail consumed_path = Brtl_js2_rtng.(root consumed_path / "audit-trail")
+
+  let audit_trail_detail consumed_path =
+    Brtl_js2_rtng.(root consumed_path / "audit-trail" /% Path.string)
 end
 
 let installation_sel state =
@@ -139,6 +142,8 @@ let run' state =
                  (div ~at:At.[ class' (Jstr.v "main-content") ] [])
                  Brtl_js2_rtng.
                    [
+                     Rt.audit_trail_detail consumed_path
+                     --> Terrat_ui_js_comp_audit_trail_detail.run;
                      Rt.audit_trail consumed_path --> Terrat_ui_js_comp_audit_trail2.run;
                      Rt.repo_new consumed_path --> Terrat_ui_js_comp_repo_new.run;
                      Rt.repos_refresh consumed_path --> Terrat_ui_js_comp_repos_refresh.run;

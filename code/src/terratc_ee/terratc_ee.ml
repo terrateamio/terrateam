@@ -425,14 +425,11 @@ module Make (M : S) = struct
         let details_url =
           match work_manifest with
           | Some work_manifest ->
-              Uri.to_string
-                (Uri.add_query_param'
-                   (Uri.of_string
-                      (Printf.sprintf
-                         "%s/i/%d/audit-trail"
-                         (Uri.to_string (Terrat_config.terrateam_web_base_url config))
-                         (Account.id account)))
-                   ("q", "id:" ^ Uuidm.to_string work_manifest.Wm.id))
+              Printf.sprintf
+                "%s/i/%d/audit-trail/%s"
+                (Uri.to_string (Terrat_config.terrateam_web_base_url config))
+                (Account.id account)
+                (Uuidm.to_string work_manifest.Wm.id)
           | None -> Uri.to_string (Terrat_config.terrateam_web_base_url config)
         in
         Terrat_commit_check.make ~details_url ~description ~title ~status
