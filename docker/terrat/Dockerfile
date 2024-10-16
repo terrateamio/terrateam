@@ -27,10 +27,12 @@ RUN eval $(opam env) && \
     opam info monorepo && \
     opam install -j4 -y --deps-only monorepo
 
+ARG TERRAT_UI_ANALYTICS=false
 # compile
 WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && eval $(opam env) && \
-    (time make -j4 release_terrat_ee release_terrat_ui || time make -j1 release_terrat_ee release_terrat_ui)
+    (time make TERRAT_UI_ANALYTICS=$TERRAT_UI_ANALYTICS -j4 release_terrat_ee release_terrat_ui \
+     || time make TERRAT_UI_ANALYTICS=$TERRAT_UI_ANALYTICS -j1 release_terrat_ee release_terrat_ui)
 
 # test
 WORKDIR /mono/code
