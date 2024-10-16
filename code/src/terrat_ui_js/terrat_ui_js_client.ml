@@ -31,6 +31,12 @@ type work_manifests_err =
   ]
 [@@deriving show]
 
+type work_manifest_outputs_err =
+  [ err
+  | `Bad_request of Terrat_api_installations.Get_work_manifest_outputs.Responses.Bad_request.t
+  ]
+[@@deriving show]
+
 type dirspaces_err =
   [ err
   | `Bad_request of Terrat_api_installations.List_dirspaces.Responses.Bad_request.t
@@ -143,7 +149,7 @@ let installations t =
   | `OK res -> Abb_js.Future.return (Ok res)
   | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
 
-let work_manifests ?tz ?page ?q ?dir ~installation_id t =
+let work_manifests ?tz ?page ?limit ?q ?dir ~installation_id t =
   let open Abb_js_future_combinators.Infix_result_monad in
   let module R = Terrat_api_installations.List_work_manifests.Responses.OK in
   call
@@ -158,6 +164,7 @@ let work_manifests ?tz ?page ?q ?dir ~installation_id t =
                    | `Desc -> "desc")
                  dir)
             ~page
+            ~limit
             ~q
             ~tz
             ~installation_id
@@ -168,7 +175,20 @@ let work_manifests ?tz ?page ?q ?dir ~installation_id t =
   | `Bad_request _ as err -> Abb_js.Future.return (Error err)
   | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
 
-let dirspaces ?tz ?page ?q ?dir ~installation_id t =
+let work_manifest_outputs ?tz ?page ?limit ?q ~installation_id ~work_manifest_id t =
+  let open Abb_js_future_combinators.Infix_result_monad in
+  let module R = Terrat_api_installations.Get_work_manifest_outputs.Responses.OK in
+  call
+    Terrat_api_installations.Get_work_manifest_outputs.(
+      make Parameters.(make ~page ~limit ~q ~tz ~installation_id ~work_manifest_id ()))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK { R.steps } -> Abb_js.Future.return (Ok (Page.of_response resp steps))
+  | `Bad_request _ as err -> Abb_js.Future.return (Error err)
+  | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
+  | `Not_found -> Abb_js.Future.return (Error `Not_found)
+
+let dirspaces ?tz ?page ?limit ?q ?dir ~installation_id t =
   let open Abb_js_future_combinators.Infix_result_monad in
   let module R = Terrat_api_installations.List_dirspaces.Responses.OK in
   call
@@ -183,6 +203,7 @@ let dirspaces ?tz ?page ?q ?dir ~installation_id t =
                    | `Desc -> "desc")
                  dir)
             ~page
+            ~limit
             ~q
             ~tz
             ~installation_id

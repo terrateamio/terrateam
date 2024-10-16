@@ -85,6 +85,18 @@ struct
                   Brtl_ep_paginate.Param.(of_param Typ.(tuple (string, ud' Uuidm.of_string)))))
         /? Query.(option_default 20 (Query.int "limit")))
 
+    let installation_work_manifest_outputs_rt () =
+      Brtl_rtng.Route.(
+        installation_api_rt ()
+        /% Path.int
+        / "work-manifests"
+        /% Path.ud Uuidm.of_string
+        / "outputs"
+        /? Query.(option (string "q"))
+        /? Query.(option (string "tz"))
+        /? Query.(option (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.int)))
+        /? Query.(option_default 20 (Query.int "limit")))
+
     let installation_dirspaces_rt () =
       Brtl_rtng.Route.(
         installation_api_rt ()
@@ -182,6 +194,9 @@ struct
             ( `GET,
               Rt.installation_work_manifests_rt ()
               --> Terrat_ep_installations.Work_manifests.get config storage );
+            ( `GET,
+              Rt.installation_work_manifest_outputs_rt ()
+              --> Terrat_ep_installations.Work_manifests.Outputs.get config storage );
             ( `GET,
               Rt.installation_pull_requests_manifests_rt ()
               --> Terrat_ep_installations.Pull_requests.get config storage );

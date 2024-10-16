@@ -1,15 +1,3 @@
-/* :root { */
-/*      --color-primary: 203, 213, 225; */
-/*      --color-secondary: 100, 116, 139; */
-/*      --color-success: 34, 197, 94; */
-/*      --color-fail: 239, 68, 68; */
-/*      --color-heading: 255, 98, 31; */
-/*      --color-subheading: 214, 82, 26; */
-/*      --color-action: 37, 99, 235; */
-/*      --color-danger: 181, 31, 31; */
-/*      --color-disabled: 31, 41, 55; */
-/* } */
-
 @tailwind base;
 
 @tailwind components;
@@ -113,6 +101,7 @@
         @apply sticky top-0;
         @apply py-4;
         @apply bg-black;
+        @apply z-40;
     }
 
     .header {
@@ -163,7 +152,7 @@
     }
 
     .main-content {
-        @apply flex flex-col w-full lg:w-11/12 mx-auto;
+        @apply flex flex-col w-full;
         @apply mb-20;
     }
 
@@ -306,9 +295,249 @@
         @apply list-disc list-inside;
     }
 
+    /* Start work manifest details */
+    .work-manifest-details {
+        @apply w-full;
+        @apply flex flex-col gap-8;
+        @apply items-center justify-items-center;
+        @apply mx-auto;
+    }
+
+    .work-manifest-details > .details {
+        @apply w-full lg:w-2/3;
+        @apply grid grid-cols-2 gap-2;
+    }
+
+    .work-manifest-details > .details .title {
+        @apply col-span-2;
+        @apply flex flex-col gap-2;
+        @apply pb-4;
+        @apply border-b border-slate-300;
+    }
+
+    .work-manifest-details > .details .title h1 {
+        @apply text-2xl;
+        @apply font-semibold;
+    }
+
+    .work-manifest-details > .details .title h2 {
+        @apply text-lg;
+        @apply font-semibold;
+        @apply text-slate-500;
+    }
+
+    .work-manifest-details > .details .title > * {
+        @apply flex flex-row gap-2;
+        @apply items-center justify-items-center;
+    }
+
+    .work-manifest-details > .details > div:not(.title) {
+        @apply grid grid-cols-7 gap-2;
+    }
+
+    .work-manifest-details > .details > div:not(.title) > div:first-child {
+        @apply font-semibold;
+        @apply col-span-2;
+    }
+
+    .work-manifest-details > .details > div:not(.title) > div:last-child {
+        @apply col-span-5;
+    }
+
+    .work-manifest-details > .details .state {
+        @apply px-2;
+        @apply uppercase;
+        @apply font-semibold;
+        @apply rounded;
+        @apply text-white;
+        @apply max-w-max;
+    }
+
+    .work-manifest-details > .details .state.aborted,
+    .work-manifest-details > .details .state.failure {
+        @apply bg-red-500;
+    }
+
+    .work-manifest-details > .details .state.success {
+        @apply bg-green-500;
+    }
+
+    .work-manifest-details > .details .state.running,
+    .work-manifest-details >  .details .state.queued {
+        @apply bg-slate-500;
+    }
+
+    .work-manifest-details > .details .run-id {
+        @apply flex flex-row gap-2;
+    }
+
+    .work-manifest-details > .details .run-id svg {
+        @apply h-5 w-5;
+    }
+
+    .work-manifest-details > .details .tag-query {
+        @apply font-mono;
+    }
+
+    .work-manifest-details .outputs-title {
+        @apply w-full lg:w-2/3;
+        @apply text-left;
+        @apply text-2xl;
+        @apply font-semibold;
+        @apply border-b border-slate-300;
+    }
+
+    .work-manifest-details .outputs {
+        @apply w-full lg:w-2/3;
+        @apply flex flex-col gap-4;
+    }
+
+    .work-manifest-details .outputs .treeview {
+        @apply w-full;
+        @apply flex flex-col gap-2;
+        @apply border-l-2 border-slate-300;
+        @apply p-4;
+    }
+
+    .work-manifest-details .outputs .treeview .title {
+        @apply flex flex-row gap-4;
+        @apply items-center justify-items-center;
+        @apply text-left font-semibold text-2xl;
+    }
+
+    .work-manifest-details .outputs .treeview .title.dirspace > div:nth-child(odd) {
+        @apply font-semibold;
+        @apply text-slate-500;
+        @apply text-xl;
+    }
+
+    .work-manifest-details .outputs .treeview .title.cost-estimation > div:nth-child(2),
+    .work-manifest-details .outputs .treeview .title.cost-estimation > div:nth-child(4) {
+        @apply font-semibold;
+        @apply text-slate-500;
+        @apply text-xl;
+    }
+
+    .work-manifest-details .outputs .treeview .branch {
+        @apply w-full;
+        @apply flex flex-row gap-2;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .expander button {
+        @apply text-slate-500;
+        @apply h-14 w-14;
+        @apply ring-transparent;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .expander button > div {
+        @apply transition-all duration-300;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .expander button > div.expanded {
+        @apply rotate-45;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .expander + div {
+        @apply w-full;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .node {
+        @apply w-full;
+        @apply pt-3;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .node .step {
+        @apply flex flex-row gap-4;
+        @apply items-center justify-items-center;
+        @apply text-left font-semibold text-xl;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .node .step > div:nth-child(odd) {
+        @apply font-semibold;
+        @apply text-slate-500;
+        @apply text-lg;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .node .step .state {
+        @apply px-2;
+        @apply uppercase;
+        @apply font-semibold;
+        @apply rounded;
+        @apply text-white;
+        @apply text-base;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .node .step .state.success {
+        @apply bg-green-500;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .node .step .state.failure {
+        @apply bg-red-500;
+    }
+
+    .work-manifest-details .outputs .treeview .leaf {
+        @apply flex flex-col gap-4;
+    }
+
+    .work-manifest-details .outputs .treeview .leaf > div.cmd,
+    .work-manifest-details .outputs .treeview .leaf > div.exit-code {
+        @apply grid grid-cols-7;
+    }
+
+    .work-manifest-details .outputs .treeview .leaf > div.cmd > div:first-child,
+    .work-manifest-details .outputs .treeview .leaf > div.exit-code > div:first-child {
+        @apply col-span-1;
+        @apply font-semibold;
+    }
+
+    .work-manifest-details .outputs .treeview .leaf > div.cmd > div:last-child,
+    .work-manifest-details .outputs .treeview .leaf > div.exit-code > div:last-child {
+        @apply col-span-6;
+        @apply flex flex-row;
+    }
+
+    .work-manifest-details .outputs .treeview .leaf > div.cmd > div:last-child > div,
+    .work-manifest-details .outputs .treeview .leaf > div.exit-code > div:last-child > div {
+        @apply font-mono;
+        @apply text-black bg-slate-200;
+        @apply px-2;
+    }
+
+    .work-manifest-details .outputs .treeview .leaf > div.text {
+        @apply font-mono;
+        @apply text-black bg-slate-200;
+        @apply p-2;
+        @apply overflow-x-auto;
+    }
+
+    .work-manifest-details .outputs .treeview .child-node .cost-estimation {
+        @apply flex flex-col gap-2;
+    }
+
+    .work-manifest-details .outputs .treeview .cost-estimation h2 {
+        @apply text-xl font-semibold;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .node .cost-estimation.summary > div:last-child {
+        @apply grid grid-cols-3;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .node .cost-estimation.summary > div:last-child .heading {
+        @apply font-semibold
+    }
+
+    .work-manifest-details .outputs .treeview .leaf .cost-estimation.details > div:last-child {
+        @apply grid grid-cols-5
+    }
+
+    .work-manifest-details .outputs .treeview .leaf .cost-estimation.details > div:last-child .heading {
+        @apply font-semibold
+    }
+    /* End work manifest details */
+
     /* Start dirspaces */
     .dirspaces {
-        @apply w-full mx-auto;
+        @apply w-full lg:w-11/12 mx-auto;
         @apply flex flex-col;
         @apply py-2;
     }
@@ -471,6 +700,11 @@
         @apply truncate;
     }
 
+    .dirspaces .page .item .target.drift,
+    .dirspaces .page .item .target.index {
+        @apply flex flex-row gap-2;
+    }
+
     .dirspaces .page .item .created_at {
         @apply flex flex-col;
         @apply items-center justify-items-center;
@@ -607,6 +841,11 @@
         @apply btn-primary;
     }
 
+    .repos {
+        @apply w-full lg:w-11/12;
+        @apply mx-auto;
+    }
+
     .repos-toolbar {
         @apply flex flex-row flex-wrap items-center gap-x-4;
     }
@@ -735,12 +974,6 @@
         @apply p-2;
     }
 
-    code {
-        @apply font-mono font-semibold;
-        @apply bg-slate-200;
-        @apply px-1;
-    }
-
     .workflow-file {
         @apply relative;
         @apply bg-slate-100;
@@ -787,7 +1020,6 @@
     }
 
     .notifications > .notification {
-        /* @apply rounded-lg border border-black; */
         @apply animate-fade-in;
     }
 
@@ -799,14 +1031,6 @@
         @apply p-4;
         box-shadow: 0 0 15px 0px rgba(34, 197, 94, 1);
     }
-
-    /* .hl.sng { */
-    /*     @apply  */
-    /* } */
-
-    /* * { */
-    /*     @apply border border-red-500; */
-    /* } */
 }
 
 @tailwind utilities;

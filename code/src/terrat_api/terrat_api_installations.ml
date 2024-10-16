@@ -16,6 +16,7 @@ module List_dirspaces = struct
     type t = {
       d : D.t option; [@default None]
       installation_id : string;
+      limit : int option; [@default None]
       page : Page.t option; [@default None]
       q : string option; [@default None]
       tz : string option; [@default None]
@@ -76,6 +77,7 @@ module List_dirspaces = struct
            ("q", Var (params.q, Option String));
            ("d", Var (params.d, Option String));
            ("tz", Var (params.tz, Option String));
+           ("limit", Var (params.limit, Option Int));
          ])
       ~url
       ~responses:Responses.t
@@ -252,6 +254,7 @@ module List_work_manifests = struct
     type t = {
       d : D.t option; [@default None]
       installation_id : string;
+      limit : int option; [@default None]
       page : Page.t option; [@default None]
       q : string option; [@default None]
       tz : string option; [@default None]
@@ -312,6 +315,139 @@ module List_work_manifests = struct
            ("q", Var (params.q, Option String));
            ("d", Var (params.d, Option String));
            ("tz", Var (params.tz, Option String));
+           ("limit", Var (params.limit, Option Int));
+         ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Get_work_manifest = struct
+  module Parameters = struct
+    type t = {
+      installation_id : string;
+      work_manifest_id : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Terrat_api_components.Installation_work_manifest.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v1/installations/{installation_id}/work-manifests/{work_manifest_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("installation_id", Var (params.installation_id, String));
+           ("work_manifest_id", Var (params.work_manifest_id, String));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Get_work_manifest_outputs = struct
+  module Parameters = struct
+    module Page = struct
+      type t = string list [@@deriving show, eq]
+    end
+
+    type t = {
+      installation_id : string;
+      limit : int option; [@default None]
+      page : Page.t option; [@default None]
+      q : string option; [@default None]
+      tz : string option; [@default None]
+      work_manifest_id : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Steps = struct
+        type t = Terrat_api_components.Installation_workflow_step_output.t list
+        [@@deriving yojson { strict = false; meta = false }, show, eq]
+      end
+
+      type t = { steps : Steps.t } [@@deriving yojson { strict = true; meta = true }, show, eq]
+    end
+
+    module Bad_request = struct
+      type t = {
+        data : string option; [@default None]
+        id : string;
+      }
+      [@@deriving yojson { strict = true; meta = true }, show, eq]
+    end
+
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Bad_request of Bad_request.t
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("400", Openapi.of_json_body (fun v -> `Bad_request v) Bad_request.of_yojson);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v1/installations/{installation_id}/work-manifests/{work_manifest_id}/outputs"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("installation_id", Var (params.installation_id, String));
+           ("work_manifest_id", Var (params.work_manifest_id, String));
+         ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("q", Var (params.q, Option String));
+           ("page", Var (params.page, Option (Array String)));
+           ("tz", Var (params.tz, Option String));
+           ("limit", Var (params.limit, Option Int));
          ])
       ~url
       ~responses:Responses.t

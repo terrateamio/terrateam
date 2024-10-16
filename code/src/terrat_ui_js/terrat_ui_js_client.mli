@@ -13,6 +13,12 @@ type work_manifests_err =
   ]
 [@@deriving show]
 
+type work_manifest_outputs_err =
+  [ err
+  | `Bad_request of Terrat_api_installations.Get_work_manifest_outputs.Responses.Bad_request.t
+  ]
+[@@deriving show]
+
 type dirspaces_err =
   [ err
   | `Bad_request of Terrat_api_installations.List_dirspaces.Responses.Bad_request.t
@@ -41,6 +47,7 @@ val installations :
 val work_manifests :
   ?tz:string ->
   ?page:string list ->
+  ?limit:int ->
   ?q:string ->
   ?dir:[ `Asc | `Desc ] ->
   installation_id:string ->
@@ -50,9 +57,23 @@ val work_manifests :
   result
   Abb_js.Future.t
 
+val work_manifest_outputs :
+  ?tz:string ->
+  ?page:string list ->
+  ?limit:int ->
+  ?q:string ->
+  installation_id:string ->
+  work_manifest_id:string ->
+  t ->
+  ( Terrat_api_components.Installation_workflow_step_output.t Brtl_js2_page.Page.t,
+    [> work_manifest_outputs_err ] )
+  result
+  Abb_js.Future.t
+
 val dirspaces :
   ?tz:string ->
   ?page:string list ->
+  ?limit:int ->
   ?q:string ->
   ?dir:[ `Asc | `Desc ] ->
   installation_id:string ->
