@@ -54,7 +54,7 @@ module Workflow_step : sig
     module Source : sig
       type t = {
         cmd : Cmd.t;
-        sensitive : string list; [@default []]
+        sensitive : bool; [@default false]
       }
       [@@deriving make, show, yojson, eq]
     end

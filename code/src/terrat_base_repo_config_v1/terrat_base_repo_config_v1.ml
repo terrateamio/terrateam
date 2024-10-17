@@ -95,7 +95,7 @@ module Workflow_step = struct
     module Source = struct
       type t = {
         cmd : Cmd.t;
-        sensitive : string list; [@default []]
+        sensitive : bool; [@default false]
       }
       [@@deriving make, show, yojson, eq]
     end
@@ -913,7 +913,7 @@ let of_version_1_hook_op =
   | Op.Hook_op_env_source op ->
       let module Op = Terrat_repo_config_hook_op_env_source in
       let { Op.cmd; sensitive; method_ = _; type_ = _ } = op in
-      Ok (Hooks.Hook_op.Env Workflow_step.Env.(Source (Source.make ~cmd ?sensitive ())))
+      Ok (Hooks.Hook_op.Env Workflow_step.Env.(Source (Source.make ~cmd ~sensitive ())))
   | Op.Hook_op_oidc op -> (
       let module Op = Terrat_repo_config_hook_op_oidc in
       let module Aws = Terrat_repo_config_hook_op_oidc_aws in
@@ -1042,7 +1042,7 @@ let of_version_1_workflow_op_list ops =
       | Op.Hook_op_env_source op ->
           let module Op = Terrat_repo_config_hook_op_env_source in
           let { Op.cmd; sensitive; method_ = _; type_ = _ } = op in
-          Ok (O.Env Workflow_step.Env.(Source (Source.make ~cmd ?sensitive ())))
+          Ok (O.Env Workflow_step.Env.(Source (Source.make ~cmd ~sensitive ())))
       | Op.Hook_op_oidc op -> (
           let module Op = Terrat_repo_config_hook_op_oidc in
           let module Aws = Terrat_repo_config_hook_op_oidc_aws in
@@ -1829,7 +1829,7 @@ let to_version_1_hooks_op_env_source env =
   let module Op = Terrat_repo_config.Hook_op in
   let module E = Terrat_repo_config.Hook_op_env_source in
   let { Workflow_step.Env.Source.cmd; sensitive } = env in
-  { E.cmd; sensitive = Some sensitive; method_ = "source"; type_ = "env" }
+  { E.cmd; sensitive; method_ = "source"; type_ = "env" }
 
 let to_version_1_hooks_op_oidc = function
   | Workflow_step.Oidc.Aws oidc ->
