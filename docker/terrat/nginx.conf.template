@@ -44,7 +44,7 @@ http {
             root /usr/local/share/terrat/ui/assets/;
             index index.html index.htm;
             try_files $uri $uri/ /index.html;
-            add_header Content-Security-Policy "default-src 'self' https://eu.posthog.com; img-src 'self' https://avatars.githubusercontent.com; script-src 'self' 'sha256-gTcMaDcBRHtG+Nc7vtSddc6fnAkWc7NY7dgq0ADsLrY=' https://eu.posthog.com https://eu-assets.i.posthog.com; style-src 'self'; object-src 'none'";
+            add_header Content-Security-Policy "default-src 'self' https://eu.posthog.com; img-src 'self' https://avatars.githubusercontent.com; script-src 'self' 'sha256-gTcMaDcBRHtG+Nc7vtSddc6fnAkWc7NY7dgq0ADsLrY=' https://eu.posthog.com https://eu-assets.i.posthog.com https://eu.i.posthog.com; style-src 'self'; object-src 'none'";
         }
 
         location /assets {
