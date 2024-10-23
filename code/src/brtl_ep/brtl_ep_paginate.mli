@@ -25,6 +25,7 @@ module Param : sig
     val ud : (string list -> 'a option) -> 'a t
     val ud' : (string -> 'a option) -> 'a t
     val string : string t
+    val int : int t
     val tuple : 'a t * 'b t -> ('a * 'b) t
     val tuple3 : 'a t * 'b t * 'c t -> ('a * 'b * 'c) t
     val tuple4 : 'a t * 'b t * 'c t * 'd t -> ('a * 'b * 'c * 'd) t
