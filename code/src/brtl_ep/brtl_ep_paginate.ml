@@ -30,6 +30,7 @@ module Param = struct
       | [] -> None
 
     let string = ud' CCOption.return
+    let int = ud' CCInt.of_string
 
     let tuple (f1, f2) =
       ud (function
