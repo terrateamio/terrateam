@@ -6402,7 +6402,8 @@ module Make (S : S) = struct
     let p = Abb.Future.Promise.create () in
     Abb.Future.fork
       (resume_work ctx work_manifest_id (fun state ->
-           Logs.info (fun m -> m "EVALUATOR : %s : INITIATE" state.State.request_id);
+           Logs.info (fun m ->
+               m "EVALUATOR : %s : INITIATE : state=%s" ctx.Ctx.request_id state.State.request_id);
            {
              state with
              State.input = Some (State.Io.I.Work_manifest_initiate { encryption_key; initiate; p });
@@ -6417,7 +6418,8 @@ module Make (S : S) = struct
     let p = Abb.Future.Promise.create () in
     Abb.Future.fork
       (resume_work ctx work_manifest_id (fun state ->
-           Logs.info (fun m -> m "EVALUATOR : %s : RESULT" state.State.request_id);
+           Logs.info (fun m ->
+               m "EVALUATOR : %s : RESULT : state=%s" ctx.Ctx.request_id state.State.request_id);
            { state with State.input = Some (State.Io.I.Work_manifest_result { result; p }) }))
     >>= fun fut ->
     (first fut (Abb.Future.Promise.future p)
@@ -6432,7 +6434,8 @@ module Make (S : S) = struct
     let dirspace = { Terrat_dirspace.dir = path; workspace } in
     Abb.Future.fork
       (resume_work ctx work_manifest_id (fun state ->
-           Logs.info (fun m -> m "EVALUATOR : %s : PLAN_STORE" state.State.request_id);
+           Logs.info (fun m ->
+               m "EVALUATOR : %s : PLAN_STORE : state=%s" ctx.Ctx.request_id state.State.request_id);
            {
              state with
              State.input =
@@ -6448,7 +6451,8 @@ module Make (S : S) = struct
     let p = Abb.Future.Promise.create () in
     Abb.Future.fork
       (resume_work ctx work_manifest_id (fun state ->
-           Logs.info (fun m -> m "EVALUATOR : %s : PLAN_FETCH" state.State.request_id);
+           Logs.info (fun m ->
+               m "EVALUATOR : %s : PLAN_FETCH : state=%s" ctx.Ctx.request_id state.State.request_id);
            { state with State.input = Some (State.Io.I.Plan_fetch { dirspace; p }) }))
     >>= fun fut ->
     (first fut (Abb.Future.Promise.future p)
@@ -6460,7 +6464,11 @@ module Make (S : S) = struct
     let p = Abb.Future.Promise.create () in
     Abb.Future.fork
       (resume_work ctx work_manifest_id (fun state ->
-           Logs.info (fun m -> m "EVALUATOR : %s : WORK_MANIFEST_FAILURE" state.State.request_id);
+           Logs.info (fun m ->
+               m
+                 "EVALUATOR : %s : WORK_MANIFEST_FAILURE : state=%s"
+                 ctx.Ctx.request_id
+                 state.State.request_id);
            { state with State.input = Some (State.Io.I.Work_manifest_failure { p }) }))
     >>= fun fut ->
     (first fut (Abb.Future.Promise.future p)
