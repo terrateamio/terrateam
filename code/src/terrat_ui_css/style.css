@@ -433,6 +433,11 @@
         @apply flex flex-row items-center justify-end;
     }
 
+    .setup-repo {
+        @apply w-full lg:w-2/3;
+        @apply mx-auto;
+    }
+
     .setup-repo-title {
         @apply text-center text-4xl;
         @apply font-bold;
@@ -473,6 +478,7 @@
     }
 
     button.setup-repo-copy {
+        @apply flex flex-row gap-2;
         @apply btn-primary;
         @apply p-2;
     }
