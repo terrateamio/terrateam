@@ -1,0 +1,107 @@
+---
+title: Apply Requirements and Overrides
+description: Learn how to configure and manage apply requirements and overrides
+---
+
+Terrateam provides a set of [apply requirements](/configuration-reference/apply-requirements) that must be met before an apply operation can be executed. These requirements help ensure that changes to your infrastructure are properly reviewed and approved before being applied. However, there may be situations where you need to override these requirements. Terrateam allows you to configure and manage apply requirements and overrides using [access control](/configuration-reference/access-control).
+
+## Apply Requirements
+By default, Terrateam has the following apply requirements:
+- The pull request must not have any merge conflicts.
+- All status checks associated with the pull request must have passed.
+
+## Configuring Apply Requirements
+You can configure the apply requirements in your Terrateam configuration file (`.terrateam/config.yml`).
+Here's an example configuration:
+```yaml
+apply_requirements:
+  create_pending_apply_check: true
+  checks:
+    - tag_query: ""
+      approved:
+        enabled: true
+        any_of: ["user:alice", "user:bob"]
+        any_of_count: 1
+        all_of: []
+      merge_conflicts:
+        enabled: true
+      status_checks:
+        enabled: true
+        ignore_matching:
+          - "ci/.*"
+```
+In this example:
+- The `approved` requirement is enabled, and the pull request must have at least 1 approval from either the user "alice" or "bob".
+- The `merge_conflicts` requirement is enabled, and the pull request must not have any merge conflicts.
+- The `status_checks` requirement is enabled, and all status checks associated with the pull request must have passed, except for those matching the regular expression `ci/.*`.
+You can also specify different apply requirements for different directories or workspaces using the `tag_query` key. For example:
+```yaml
+apply_requirements:
+  checks:
+    - tag_query: "dir:tf1"
+      approved:
+        enabled: true
+        all_of: ["user:alice"]
+    - tag_query: "dir:tf2"
+      approved:
+        enabled: true
+        all_of: ["user:bob"]
+```
+In this configuration, changes in the "tf1" directory require an approval from the user "alice", while changes in the "tf2" directory require an approval from the user "bob".
+By adjusting these settings, you can customize the apply requirements to match your team's workflows and policies.
+
+## Access Control and Apply Overrides
+Terrateam's access control feature allows you to define a set of capabilities, such as plan and apply, and specify which users can perform those operations. This feature can be used to manage apply overrides and control who has the ability to bypass apply requirements.
+
+### Enabling Access Control
+To enable access control, add the following to your Terrateam configuration file:
+```yaml
+access_control:
+  enabled: true
+```
+
+### Configuring Access Control Policies
+Access control policies define the capabilities and permissions for different users, groups, and roles. Here's an example configuration:
+```yaml
+access_control:
+  enabled: true
+  apply_require_all_dirspace_access: true
+  plan_require_all_dirspace_access: false
+  terrateam_config_update: ['*']
+  unlock: ['*']
+  policies:
+    - tag_query: ''
+      apply: ['role:maintain']
+      apply_autoapprove: ['user:alice']
+      apply_force: ['team:sre']
+      apply_with_superapproval: ['role:write']
+      plan: ['*']
+      superapproval: ['user:bob']
+```
+In this example:
+- The `apply` capability is granted to users with the `maintain` role in the repository.
+- The `apply_autoapprove` capability is granted to the user `alice`.
+- The `apply_force` capability is granted to members of the `sre` team.
+- The `apply_with_superapproval` capability is granted to users with the `write` role in the repository, but only if a user with the `superapproval` capability has approved the pull request.
+- The `plan` capability is granted to all users (`*`).
+- The `superapproval` capability is granted to the user `bob`.
+
+### Using Apply Overrides
+With access control configured, users with the appropriate capabilities can override apply requirements using the following methods:
+
+##### `terrateam apply-force`
+Users with the `apply_force` capability can use this command to bypass all apply requirements and force an apply operation.
+
+##### `terrateam apply-autoapprove`
+Users with the `apply_autoapprove` capability can use this command to automatically approve and apply changes without requiring additional approvals.
+
+##### Super Approval
+Users with the `apply_with_superapproval` capability can apply changes if a user with the `superapproval` capability has approved the pull request.
+
+## Best Practices
+When configuring and managing apply requirements and overrides with access control, consider the following best practices:
+- Grant apply override capabilities only to trusted users or groups who understand the potential risks and consequences of bypassing apply requirements.
+- Use the `apply_require_all_dirspace_access` and `plan_require_all_dirspace_access` settings to control whether users need access to all targeted directories ([dirspaces](/getting-started/concepts#dirspace)) to perform apply or plan operations.
+- Use the `terrateam_config_update` and `unlock` settings to control who can modify the Terrateam configuration and unlock locked resources.
+- Use the `tag_query` key in the apply requirements configuration to define granular requirements for different parts of your infrastructure, such as directories or workspaces.
+- Leverage the `any_of`, `any_of_count`, and `all_of` keys in the `approved` section to create flexible approval rules that match your team's workflow and policies.

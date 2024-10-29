@@ -1,0 +1,108 @@
+---
+title: Azure
+description: Configure Terrateam to integrate with Azure
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+To use Terrateam with Azure, authentication and authorization need to be configured for your Azure account. Setup only takes a few minutes.
+
+## Prerequisites
+Before you begin, ensure you have the following:
+- [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/)
+- [GitHub CLI](https://cli.github.com/)
+
+## Create a Terrateam Service Principal
+A dedicated service principal and client secret is used to access Azure resources.
+<Steps>
+1. Login to the Azure CLI
+   ```
+   az login
+   ```
+2. Get your Subscription ID
+   ```
+   az account list
+   ```
+   Example output:
+   ```json
+   [
+     {
+       "cloudName": "AzureCloud",
+       "id": "00000000-0000-0000-0000-000000000000",
+       "isDefault": true,
+       "name": "PAYG Subscription",
+       "state": "Enabled",
+       "tenantId": "00000000-0000-0000-0000-000000000000",
+       "user": {
+         "name": "user@example.com",
+         "type": "user"
+       }
+     }
+   ]
+   ```
+   :::note
+   The `id` field is your subscription id
+   :::
+3. Export your Subscription ID
+   ```
+   export SUBSCRIPTION_ID="<subscription-id>"
+   ```
+4. Set the Subscription ID
+   ```
+   az account set --subscription "$SUBSCRIPTION_ID"
+   ```
+5. Create a `terrateam` service principal
+   ```
+   az ad sp create-for-rbac --role="Contributor" \
+   --scopes="/subscriptions/$SUBSCRIPTION_ID"
+   ```
+   :::note
+   `Contributor` is an Azure built-in role. This role grants full access to manage all resources, but does not allow you to assign roles in Azure RBAC, manage assignments in Azure Blueprints, or share image galleries.
+   This role is merely a suggestion. Choose whichever role makes the most sense for your organization.
+   :::
+   Example output:
+   ```json
+   {
+     "appId": "00000000-0000-0000-0000-000000000000",
+     "displayName": "azure-cli-2017-06-05-10-41-15",
+     "name": "http://azure-cli-2017-06-05-10-41-15",
+     "password": "0000-0000-0000-0000-000000000000",
+     "tenant": "00000000-0000-0000-0000-000000000000"
+   }
+   ```
+   :::note
+   The Azure Terraform provider uses different variable names for the above values. See mapping below.
+   :::
+   Record the following to use in the next step:
+   - `appID` maps to `ARM_CLIENT_ID`
+   - `password` maps to `ARM_CLIENT_SECRET`
+   - `tenant` maps to `ARM_TENANT_ID`
+</Steps>
+
+## Add Credentials to GitHub Secrets
+Credentials are securely stored in GitHub Secrets and exposed as obfuscated environment variables in the Terrateam GitHub Action runtime environment.
+<Steps>
+1. Export your Terraform `organization/repo` combination as an environment variable.
+   ```
+   export REPO="<OWNER/REPO>"
+   ```
+2. Create the Azure Subscription ID GitHub Secret
+   ```
+   gh secret --repo "$REPO" set ARM_SUBSCRIPTION_ID --body "$SUBSCRIPTION_ID"
+   ```
+3. Create the Azure Client ID (`appID`) GitHub Secret
+   ```
+   gh secret --repo "$REPO" set ARM_CLIENT_ID
+   ```
+4. Create the Azure Client Secret (`password`) GitHub Secret
+   ```
+   gh secret --repo "$REPO" set ARM_CLIENT_SECRET
+   ```
+5. Create the Azure Tenant ID (`tenant`) GitHub Secret
+   ```
+   gh secret --repo "$REPO" set ARM_TENANT_ID
+   ```
+</Steps>
+
+You are now able to use Terrateam for plan and apply operations against Azure resources.

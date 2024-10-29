@@ -1,0 +1,73 @@
+---
+title: storage
+description: The storage configuration reference
+---
+
+The `storage` configuration allows users to define where plan files are stored, providing control over security and access. By default, plan files are stored on the Terrateam backend, but alternative methods are supported.
+
+## Default Configuration
+```yaml
+storage:
+  plans:
+    method: terrateam
+```
+
+## Storage Methods
+The `method` key specifies how plans are stored:
+
+### S3-compatible Storage
+
+To store plans in an S3-compatible storage, configure the following:
+| Key | Type | Description | 
+| --- | --- | --- | 
+| bucket | String | Bucket to store plans. Supports environment variables. Required. | 
+| region | String | Region where the bucket resides. Supports environment variables. Required. | 
+| path | String | Path to store plans within the bucket. Defaults to terrateam/plans/$dir/$workspace/$date-$time-$token. See template variables for details. | 
+| access_key_id | String | Access key ID for authentication. Supports environment variables. Optional. | 
+| secret_access_key | String | Secret access key for authentication. Supports environment variables. Optional. | 
+| delete_used_plans | Boolean | Delete plan after use. Default is true. | 
+| store_extra_args | List | Additional arguments for aws s3 cp during storage. Optional. | 
+| fetch_extra_args | List | Additional arguments for aws s3 cp during fetching. Optional. | 
+| delete_extra_args | List | Additional arguments for aws s3 rm during deletion. Optional. | 
+
+### Custom Command Storage
+For custom commands to store, fetch, and delete plans, configure:
+| Key | Type | Description | 
+| --- | --- | --- | 
+| delete | String list | Command to delete the plan after use. Supports environment and template variables. Optional. | 
+| fetch | String list | Command to fetch the plan. Supports environment and template variables. Required. | 
+| store | String list | Command to store the plan. Supports environment and template variables. Required. | 
+
+## Template Variables
+Variables available during plan and apply operations:
+| Variable | Description | 
+| --- | --- | 
+| date | Date of the plan operation in YYYY-MM-DD format. | 
+| dir | Directory being processed, e.g., foo/bar/baz. | 
+| plan_path | Path on disk where the plan is stored. | 
+| plan_dst_path | Destination path on disk for fetched plans. | 
+| time | Time of the plan operation in HHMMSS format. | 
+| token | Unique token for the run. | 
+| workspace | Workspace being processed, e.g., default. | 
+
+## Examples
+### Storing Plans in AWS S3
+```yaml
+storage:
+  plans:
+    method: s3
+    bucket: my-plan-bucket
+    region: us-west-2
+    access_key_id: $AWS_ACCESS_KEY_ID
+    secret_access_key: $AWS_SECRET_ACCESS_KEY
+```
+
+### Custom Commands for Plan Storage
+```yaml
+storage:
+  plans:
+    method: cmd
+    store: ['gsutil', 'cp', '$plan_path', 'gs://my-plan-bucket/terrateam/plans/$dir/$workspace/$date-$time-$token']
+    fetch: ['gsutil', 'cp', 'gs://my-plan-bucket/terrateam/plans/$dir/$workspace/$date-$time-$token', '$plan_dst_path']
+    delete: ['gsutil', 'rm', 'gs://my-plan-bucket/terrateam/plans/$dir/$workspace/$date-$time-$token']
+```

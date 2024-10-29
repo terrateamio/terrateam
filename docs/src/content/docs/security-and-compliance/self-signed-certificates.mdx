@@ -1,0 +1,33 @@
+---
+title: Self-Signed Certificates
+description: Learn how to configure Terrateam to trust self-signed certificates
+---
+
+Terrateam supports the use of self-signed certificates for secure communication with services in your infrastructure. To ensure that your Terrateam operations can properly trust these certificates, you can configure the system to add them to the trusted Certificate Authority (CA) store using hooks and environment variables.
+
+## Adding a Self-Signed Certificate
+
+To add a self-signed certificate to the trusted CA store during Terrateam operations, you can use [hooks](/configuration-reference/hooks) and GitHub variables.
+
+## Setting the Certificate as a GitHub Variable
+
+To pass the self-signed certificate to Terrateam, you can store it as a GitHub variable and expose it as an environment variable during your operations.
+
+1. Go to your GitHub repository and navigate to **Settings** > **Secrets and variables** > **Actions** > **Variables**.
+2. Click on **New repository variable**.
+3. Add a new variable with the name `SELF_SIGNED_CERT` and paste the contents of your certificate file (including the `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` lines).
+4. The `SELF_SIGNED_CERT` variable will be set as an environment variable automatically.
+
+## Configuring Hooks to Add the Certificate
+
+The following example demonstrates how to configure a hook to install a self-signed certificate for all operations:
+
+```yaml
+hooks:
+  all:
+    pre:
+      - type: run
+        cmd: ['sh', '-c', 'echo "$SELF_SIGNED_CERT" > /usr/local/share/ca-certificates/selfsigned.crt && update-ca-certificates']
+```
+
+By using this hook, the self-signed certificate will be trusted by the system before each operation is executed.

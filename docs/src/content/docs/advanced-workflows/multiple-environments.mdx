@@ -1,0 +1,296 @@
+---
+title: Multiple Environments
+description: Learn how to use Terrateam to manage multiple environments in your Terraform repository
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+When working with infrastructure as code, it's common to have multiple environments, such as production, qa, and staging. Terrateam provides several features and configuration options to help you manage multiple environments within a single Terraform repository.
+
+## Using Directories for Multiple Environments
+One approach to managing multiple environments with Terrateam is to use separate directories for each environment. This method allows you to keep your Terraform code organized and isolated based on the environment.
+
+Consider the following directory structure:
+```
+.
+├── production
+│   └── main.tf
+├── qa
+│   └── main.tf
+└── staging
+    └── main.tf
+```
+
+In this example, we have separate directories for `production`, `qa`, and `staging` environments, each containing its own `main.tf` file.
+
+### Terrateam Configuration
+To configure Terrateam to work with this directory structure, update your `.terrateam/config.yml` file as follows:
+```yaml
+dirs:
+  production:
+    tags: [production]
+  qa:
+    tags: [qa]
+  staging:
+    tags: [staging]
+workflows:
+  - tag_query: production
+    plan:
+      - type: init
+      - type: plan
+    apply:
+      - type: init
+      - type: apply
+  - tag_query: qa
+    plan:
+      - type: init
+      - type: plan
+    apply:
+      - type: init
+      - type: apply
+  - tag_query: staging
+    plan:
+      - type: init
+      - type: plan
+    apply:
+      - type: init
+      - type: apply
+```
+
+In this configuration:
+- We define each environment directory (`production`, `qa`, and `staging`) under the `dirs` section and assign corresponding tags to them.
+- We create separate workflows for each environment using the `tag_query` attribute to target the specific environment based on the assigned tags.
+- Each workflow defines the necessary steps for plan and apply operations, including `init` and `plan`/`apply` steps.
+
+### Triggering Terrateam Operations
+With this configuration, you can trigger Terrateam operations for each environment by specifying the appropriate tag.
+
+To trigger a plan for the `production` environment, comment:
+```
+terrateam plan production
+```
+
+To trigger an apply for the `qa` environment, comment:
+```
+terrateam apply qa
+```
+
+Terrateam will execute the specified operation against the directory that matches the tag.
+
+### Benefits Of Using Directories for Multiple Environments
+Using separate directories for each environment offers several benefits:
+- Clear separation of Terraform code and resources based on the environment.
+- Ability to manage and version control each environment independently.
+- Simplified Terrateam configuration and workflows, as each environment has its own dedicated setup.
+- Reduced risk of accidental changes affecting multiple environments, as each environment is isolated in its own directory.
+
+## Using Directories and Workspaces
+Another way to organize your Terraform code for multiple environments is to use a combination of directories and workspaces. You can create separate directories for each logical group of resources (e.g., `ec2`, `rds`) and use workspaces to represent different environments within each directory.
+
+Here's an example of how you can set up your Terrateam configuration file (`.terrateam/config.yml`) to use directories and workspaces for multiple environments:
+```yaml
+dirs:
+  ec2:
+    tags: [ec2]
+    workspaces:
+      development:
+        tags: [development]
+      production:
+        tags: [production]
+```
+
+In this example, we have an `ec2` directory with two workspaces: `development` and `production`. We also assign tags to the directory and workspaces, which can be used with [tag queries](/advanced-workflows/tags) to target specific environments when running Terrateam commands.
+
+## Using tfvars Files
+Another approach to managing multiple environments is to use separate `.tfvars` files for each environment. You can define different variable values for each environment in their respective `.tfvars` files and use them when running Terrateam operations.
+Consider the following scenario:
+- A single repository named `terraform` with Terraform code
+- Two environments: `qa` and `production`
+
+### Shared Terraform State
+In this example, we'll use a shared Terraform state file for all environments.
+
+#### Terraform Directory Structure
+```bash
+.
+└── aws
+    ├── main.tf
+    ├── production.tfvars
+    └── qa.tfvars
+```
+
+#### Backend Configuration
+Define a single Terraform state file using the `local` backend in your `main.tf` file:
+```hcl
+terraform {
+  backend "local" {
+    path = "terraform.tfstate"
+  }
+}
+
+resource "null_resource" "foobar" {
+}
+```
+
+:::note
+This is just an example. The `local` backend is primarily used for development purposes. In production, you should use a remote backend like S3.
+:::
+
+#### Terrateam Configuration File
+`.terrateam/config.yml`
+```yaml
+when_modified:
+  autoplan: false
+dirs:
+  aws:
+    create_and_select_workspace: false
+    tags: [aws]
+    workspaces:
+      qa:
+        tags: [qa]
+      production:
+        tags: [production]
+workflows:
+  - tag_query: aws qa
+    plan:
+      - type: init
+      - type: plan
+        extra_args: ["-var-file=qa.tfvars"]
+  - tag_query: aws production
+    plan:
+      - type: init
+      - type: plan
+        extra_args: ["-var-file=production.tfvars"]
+```
+
+#### Pull Request Behavior
+With the above configuration, when creating a new pull request with a Terraform change against the `aws` directory, Terrateam won't take any action because `autoplan` is set to `false`.
+
+#### Triggering Terrateam Operations
+
+To trigger a plan for the `qa` environment against the `aws` directory, comment:
+```
+terrateam plan aws qa
+```
+
+To trigger an apply for the `qa` environment against the `aws` directory, comment:
+```
+terrateam apply aws qa
+```
+
+To trigger a plan for the `production` environment against the `aws` directory, comment:
+```
+terrateam plan aws production
+```
+
+To trigger an apply for the `production` environment against the `aws` directory, comment:
+```
+terrateam apply aws production
+```
+
+### Separate Terraform State
+In this example, we'll use separate Terraform state files for each environment.
+
+#### Terraform Directory Structure
+```bash
+.
+└── aws
+    ├── backend-production.conf
+    ├── backend-qa.conf
+    ├── main.tf
+    ├── production.tfvars
+    └── qa.tfvars
+```
+
+#### Backend Configuration
+Define separate backend configuration files for each environment, which will be merged with the `main.tf` backend block during `terraform init`:
+
+`main.tf`
+```hcl
+terraform {
+  backend "local" {
+  }
+}
+
+resource "null_resource" "foobar" {
+}
+```
+`backend-qa.conf`
+```
+path = "qa.tfstate"
+```
+`backend-production.conf`
+```
+path = "production.tfstate"
+```
+
+#### Terrateam Configuration File
+`.terrateam/config.yml`
+```yaml
+when_modified:
+  autoplan: true
+dirs:
+  aws:
+    create_and_select_workspace: false
+    tags: [aws]
+    workspaces:
+      qa:
+        tags: [qa]
+      prod:
+        tags: [production]
+workflows:
+  - tag_query: aws qa
+    plan:
+      - type: init
+        extra_args: ["-backend-config=backend-qa.conf"]
+      - type: plan
+        extra_args: ["-var-file=qa.tfvars"]
+    apply:
+      - type: init
+        extra_args: ["-backend-config=backend-qa.conf"]
+      - type: apply
+  - tag_query: aws production
+    plan:
+      - type: init
+        extra_args: ["-backend-config=backend-production.conf"]
+      - type: plan
+        extra_args: ["-var-file=production.tfvars"]
+    apply:
+      - type: init
+        extra_args: ["-backend-config=backend-production.conf"]
+      - type: apply
+```
+
+#### Pull Request Behavior
+With the above configuration, when creating a new pull request with a Terraform change against the `aws` directory, Terrateam will automatically trigger two plan operations: one for the `qa` environment and one for the `production` environment, both with their respective `backend-config` and `var-file` arguments.
+
+#### Triggering Terrateam Operations
+To trigger a plan for the `qa` environment against the `aws` directory, comment:
+```
+terrateam plan aws qa
+```
+
+To trigger a plan for the `production` environment against the `aws` directory, comment:
+```
+terrateam plan aws production
+```
+
+To trigger a plan for both the `qa` and `production` environments against the `aws` directory, comment:
+```
+terrateam plan aws
+```
+
+To trigger an apply for the `qa` environment against the `aws` directory, comment:
+```
+terrateam apply aws qa
+```
+
+To trigger an apply for the `production` environment against the `aws` directory, comment:
+```
+terrateam apply aws production
+```
+
+## Best Practices
+- Use a consistent naming convention for your directories, workspaces, and `.tfvars` files to make it easy to identify which environment they belong to.
+- Use tags and tag queries to target specific environments when running Terrateam operations, making it easy to manage multiple environments within a single repository.
+- Consider using separate Terraform state files for each environment to reduce the risk of accidental changes affecting multiple environments.

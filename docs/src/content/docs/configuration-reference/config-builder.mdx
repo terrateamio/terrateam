@@ -1,0 +1,47 @@
+---
+title: config_builder
+description: The config_builder configuration reference
+---
+
+The `config_builder` feature allows users to dynamically generate Terrateam configurations at runtime using custom scripts. This feature is useful in cases where configurations depend on external data or require complex logic that isn’t feasible with static files.
+
+## Default Configuration
+
+```yaml
+# .terrateam/config.yml
+config_builder:
+  enabled: false
+```
+
+## Keys
+| Key     | Type    | Description                                                                                          |
+| ------- | ------- | ---------------------------------------------------------------------------------------------------- |
+| enabled | boolean | Enables or disables the config builder. Default is false.                                             |
+| script  | string  | A script that dynamically generates the configuration. The script can include logic such as conditionals, environment variables, or external commands. This key must be set when `enabled` is true. |
+
+## Script Behavior
+When `enabled` is set to `true`, the `script` key defines a script that will be executed at runtime. This script can use external data sources, environment variables, or any other logic required to dynamically generate a configuration. The output of the script must be a valid configuration for Terrateam.
+
+## Configuration Ordering
+It’s important to note that the `config_builder` does not override configurations defined elsewhere, such as in `.terrateam/config.yml` or [centralized configurations](/advanced-workflows/centralized-configuration).
+
+### Examples
+
+#### Using Python to Generate Dynamic Configuration
+This example shows how you can use a Python 3 script within the `config_builder` to generate configurations dynamically.
+
+```yaml
+# .terrateam/config.yml
+config_builder:
+  enabled: true
+  script: |
+    #! /usr/bin/env python3
+    import sys
+    # Generate configuration here
+    sys.exit()
+```
+
+## Considerations
+When configuring the `config_builder`, keep the following in mind:
+- The script is executed during runtime, and it must generate a valid configuration or exit with an error.
+- Be cautious when using external APIs or sensitive data in your script. Make sure to secure API keys and other credentials properly.

@@ -1,0 +1,36 @@
+---
+title: version
+description: The version configuration reference
+---
+
+The `version` configuration allows you to specify the version of the Terrateam configuration file. This helps ensure compatibility between your configuration and the Terrateam runtime.
+
+## Default Configuration
+```yaml
+version: "1"
+```
+
+## Keys
+| Key | Type | Description |
+|-----|------|-------------|
+| version | String | Configuration file version number. Default is 1. |
+
+## Examples
+### Using the Default Version
+```yaml
+version: "1"
+```
+This configuration specifies that the Terrateam configuration file is using version `"1"`, which is the default.
+
+### Specifying a Different Version
+```yaml
+version: "2"
+```
+This configuration specifies that the Terrateam configuration file is using version `"2"`. Note that this is just an example, and version `"2"` may not exist or be supported by your current Terrateam runtime.
+
+## Considerations
+When setting the version in your Terrateam configuration, keep the following in mind:
+- The default version is `"1"`, and it is recommended to use this version unless you have a specific reason to use a different version.
+- When Terrateam introduces breaking changes or new features that require a different configuration format, it may introduce a new version number. In such cases, you will need to update the `version` key in your configuration file to match the required version.
+- Before updating the version in your configuration file, ensure that your Terrateam runtime supports the specified version. Consult the Terrateam documentation or release notes to determine which versions are supported by your runtime.
+- If you are working with multiple repositories or projects, it is a good practice to keep the version consistent across all configuration files to avoid confusion and ensure compatibility.

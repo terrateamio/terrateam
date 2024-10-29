@@ -1,0 +1,49 @@
+---
+title: Rollbacks
+description: Learn how to revert changes and perform rollbacks using Terrateam and GitHub pull requests
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+In the world of infrastructure as code, mistakes or unintended consequences can sometimes occur when applying changes to your infrastructure. When this happens, it's essential to have a reliable and efficient way to roll back those changes and restore your infrastructure to a previous stable state. You can easily perform rollbacks by leveraging GitHub's pull request functionality and Terrateam's plan and apply workflows.
+
+## Understanding Rollbacks
+
+A rollback is the process of reverting changes made to your infrastructure and returning it to a previous known-good state. In the context of Terrateam and Terraform, a rollback typically involves the following steps:
+
+<Steps>
+1. **Identify the Pull Request to Revert**
+
+   1\. Navigate to your repository.
+
+   2\. Click on "Pull requests".
+
+   3\. Select the pull request that introduced the undesired changes.
+
+2. **Create a New Pull Request with Reverted Changes**
+
+   1\. Scroll to the bottom of the selected pull request.
+
+   2\. Click on `Revert`.
+
+3. **Execute Terrateam Plan**
+
+   1\. Wait for the Terrateam plan to execute.
+
+4. **Review the Terrateam Plan Output**
+
+   1\. Assess the output and the potential impact of the rollback.
+
+5. **Apply the Rollback**
+
+   1\. Comment `terrateam apply` to initiate the rollback process using Terrateam.
+</Steps>
+
+By following these steps, you can effectively undo the changes made by a previous pull request and restore your infrastructure to its previous state.
+
+## Best Practices
+
+To ensure smooth and effective rollbacks with Terrateam, consider the following best practices:
+- Regularly review and test your Terraform code changes before merging them into your main branch. This helps catch potential issues early and reduces the likelihood of needing a rollback.
+- Use descriptive and meaningful titles and descriptions for your pull requests, making it easier to identify and track changes over time.
+- Use version control best practices, such as branching and tagging, to maintain a clear history of your infrastructure changes and facilitate rollbacks.

@@ -1,0 +1,109 @@
+---
+title: Custom Plan and Apply
+description: Customize your Terraform Plan and Apply workflows
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Terrateam's custom plan and apply steps feature allows you to customize your Terraform plan and apply [workflows](/configuration-reference/workflows) by adding custom steps, such as running scripts, setting environment variables, or integrating with other tools. This can help you tailor your Terraform workflow to your specific needs and automate complex processes.
+
+## Configuring Custom Steps
+
+To configure custom plan and apply steps, you need to modify your Terrateam configuration file (`.terrateam/config.yml`).
+```yaml
+workflows:
+  - tag_query: "dir:prod"
+    plan:
+      - type: init
+      - type: run
+        cmd: ['${TERRATEAM_ROOT}/scripts/pre-plan.sh']
+      - type: plan
+      - type: run
+        cmd: ['${TERRATEAM_ROOT}/scripts/post-plan.sh']
+    apply:
+      - type: init
+      - type: run
+        cmd: ['${TERRATEAM_ROOT}/scripts/pre-apply.sh']
+      - type: apply
+      - type: run
+        cmd: ['${TERRATEAM_ROOT}/post-apply.sh']
+```
+
+:::note[What is TERRATEAM_ROOT?]
+The `TERRATEAM_ROOT` environment variable is the absolute path to the root of your checked-out repository.
+:::
+
+In this example, we define custom steps for both the plan and apply workflows:
+- `pre-plan.sh`: A script that runs before the Terraform plan step.
+- `post-plan.sh`: A script that runs after the Terraform plan step.
+- `pre-apply.sh`: A script that runs before the Terraform apply step.
+- `post-apply.sh`: A script that runs after the Terraform apply step.
+
+## Custom Step Types
+
+Terrateam supports several types of custom steps that you can use in your workflows:
+
+### Run
+
+The `run` step allows you to execute a command or script as part of your workflow.
+```yaml
+- type: run
+  cmd: ['${TERRATEAM_ROOT}/scripts/my-script.sh']
+```
+- `cmd`: The command to run, specified as an array of strings.
+
+### Env
+
+The `env` step allows you to set environment variables that will be available to subsequent steps in your workflow.
+```yaml
+- type: env
+  name: MY_VAR
+  cmd: ['echo', 'my-value']
+```
+- `name`: The name of the environment variable to set.
+- `cmd`: The command to run to generate the value of the environment variable.
+
+### OIDC
+
+The `oidc` step allows you to authenticate with a cloud provider using OpenID Connect (OIDC).
+```yaml
+- type: oidc
+  provider: aws
+  role_arn: arn:aws:iam::123456789012:role/my-role
+```
+- `provider`: The cloud provider to authenticate with.
+- `role_arn`: The ARN of the role to assume.
+
+See [Workflows](/configuration-reference/workflows#oidc) for a full list of OIDC options.
+
+## Example Workflow
+
+<Steps>
+1. Open a pull request against the `prod` directory with changes to your Terraform code.
+
+1. Terrateam triggers the custom plan workflow:
+   ###### Executes `pre-plan.sh`
+   ###### Executes `terraform init`
+   ###### Executes `terraform plan`
+   ###### Executes `post-plan.sh`
+
+1. Review the plan output and collaborate with your team to ensure the changes are as expected.
+
+1. Once the pull request is approved and merged, Terrateam triggers the custom apply workflow:
+   ###### Executes `pre-apply.sh`
+   ###### Executes `terraform init`
+   ###### Executes Runs `terraform apply`
+   ###### Executes `post-apply.sh`
+
+1. Terrateam comments on the merged pull request with the apply output, confirming that the changes have been applied.
+</Steps>
+
+## Considerations
+- Custom steps can access sensitive information, such as secrets and environment variables. Make sure to properly secure your scripts and avoid leaking sensitive information in logs or output.
+- If a custom step fails, Terrateam will abort the workflow and comment on the pull request with the error details. You may need to manually intervene to resolve the issue and re-run the workflow.
+- Use [Dirs](/configuration-reference/dirs) and [Tags](/advanced-workflows/tags) to selectively apply custom steps to specific directories or workspaces.
+
+## Best Practices
+- Store your custom scripts in a separate directory, such as `scripts/`, to keep your Terraform code organized.
+- Use [Hooks](/configuration-reference/hooks) to run custom steps before or after specific events, such as plan or apply.
+- Use environment variables to pass configuration or secrets to your custom steps, rather than hardcoding them in your scripts.

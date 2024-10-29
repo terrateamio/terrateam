@@ -1,0 +1,34 @@
+---
+title: enabled
+description: The enable configuration reference
+---
+
+The `enabled` configuration allows you to enable or disable a repository. When a repository is disabled, Terrateam will ignore all events from that repository, effectively turning off Terrateam for that specific repository.
+
+## Default Configuration
+```yaml
+enabled: true
+```
+
+## Keys
+| Key | Type | Description |
+|-----|------|-------------|
+| enabled | Boolean | Specifies whether Terrateam is enabled or disabled in this repository. Default is true. |
+
+## Examples
+### Enabling a Repository
+```yaml
+enabled: true
+```
+This configuration will enable Terrateam for the repository, allowing it to process events and perform Terraform operations as configured.
+### Disabling a Repository
+```yaml
+enabled: false
+```
+This configuration will disable Terrateam for the repository, causing it to ignore all events and effectively turning off Terrateam for the repository.
+
+## Considerations
+When setting the enabled status for a repository, keep the following in mind:
+- Disabling a repository can be useful when you need to temporarily stop Terrateam from processing events and performing Terraform operations, such as during maintenance or troubleshooting.
+- When a repository is disabled, Terrateam will not process any events, including pull request creation, updates, and merges. This means that no plans or applies will be performed, and no comments will be added to pull requests.
+- Disabling a repository does not affect any existing Terraform state or resources that have been provisioned by Terrateam. It simply prevents Terrateam from making any further changes to the infrastructure.

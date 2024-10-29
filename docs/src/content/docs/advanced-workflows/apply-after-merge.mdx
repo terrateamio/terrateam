@@ -1,0 +1,84 @@
+---
+title: Apply after Merge
+description: Automatically apply changes after merging a pull request
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Terrateam's Auto-Apply-After-Merge functionality allows you to automatically apply changes to your infrastructure after a pull request has been merged. This can streamline your workflow and reduce the manual steps required to deploy your changes.
+
+## Enabling Auto-Apply-After-Merge
+
+To enable Auto-Apply-After-Merge, you need to configure the `when_modified.autoapply` setting in your Terrateam configuration file (`.terrateam/config.yml`).
+```yaml
+when_modified:
+  autoapply: true
+```
+
+With `when_modified.autoapply` is set to `true`, Terrateam will automatically trigger an Apply operation after a pull request has been merged.
+
+## How It Works
+
+<Steps>
+1. Open a pull request with changes to your Terraform code.
+
+1. Terrateam automatically runs a Plan operation and comments on the pull request with the plan output.
+
+1. Review the plan output and collaborate with your team to ensure the changes are as expected.
+
+1. Once the pull request has been approved and all required checks have passed, merge the pull request.
+
+1. Terrateam detects the merge event and automatically triggers an Apply operation.
+
+1. Terrateam comments on the merged pull request with the apply output, confirming that the changes have been applied.
+
+</Steps>
+
+## Customizing Auto-Apply-After-Merge
+
+### Selective Auto-Apply
+
+If you want to enable Auto-Apply-After-Merge only for specific directories or workspaces, you can use [Dirs](/configuration-reference/dirs) and [Tags](/advanced-workflows/tags).
+
+For example, you could have a configuration like this:
+```yaml
+dirs:
+  prod:
+    tags: [prod]
+    when_modified:
+      autoapply: true
+  staging:
+    tags: [staging]
+    when_modified:
+      autoapply: false
+```
+
+In this case, Auto-Apply-After-Merge will only be enabled for the `prod` directory, while it will be disabled for the `staging` directory.
+
+### Apply Requirements
+
+Terrateam has a set of [Apply Requirements](/configuration-reference/apply-requirements) that must be met before an Apply operation can be triggered, even with Auto-Apply-After-Merged enabled. These include:
+- Requiring a certain number of approvals on the pull request
+- Ensuring there are no merge conflicts
+- Checking that all status checks have passed
+
+You can configure these requirements in your Terrateam configuration file to ensure that changes are only applied when specific conditions are met.
+
+### Notifications
+
+When an Auto-Apply-After-Merge operation is triggered, Terrateam will comment on the merged pull request with the apply output. You can also configure additional notifications, such as sending a message to a Slack channel or triggering a webhook, using [Hooks](/configuration-reference/hooks).
+
+For example, you could add a post-apply hook to send a Slack message:
+```yaml
+hooks:
+  apply:
+    post:
+      - type: run
+        cmd: ['curl', '-X', 'POST', '--data', '{"text":"Changes have been applied!"}', '${SLACK_WEBHOOK_URL}']
+```
+
+## Considerations
+
+- Auto-Apply-After-Merge is a powerful feature that can automate your deployment process, but it's important to ensure that your Terraform code is thoroughly reviewed and tested before merging.
+- If an Auto-Apply-After-Merge operation fails, Terrateam will comment on the merged pull request with the error details. You may need to manually intervene to resolve the issue and apply the changes.
+- Auto-Apply-After-Merge can be disabled at any time by setting `when_modified.autoapply` to `false` in your Terrateam configuration file.

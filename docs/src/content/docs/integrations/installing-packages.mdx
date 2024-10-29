@@ -1,0 +1,57 @@
+---
+title: Installing Packages
+description: Learn how to install additional packages with Terrateam
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+While the Terrateam image comes with a number of pre-installed packages, you may sometimes need to install additional packages to support your specific use case. Terrateam allows you to install packages globally or within specific workflows, giving you the flexibility to customize your environment as needed.
+
+## Installing Packages Globally
+
+If you need a package to be available for all Terrateam executions, you can install it globally by placing the package installation commands in the `hooks.all.pre` section of your Terrateam configuration file (`.terrateam/config.yml`).
+
+Here's an example of installing the `golang-go` package globally:
+```yaml
+hooks:
+  all:
+    pre:
+      - type: run
+        cmd: ['apt-get', 'update']
+      - type: run
+        cmd: ['apt-get', '-y', 'install', 'golang-go']
+```
+
+In this example, the `apt-get update` command is run first to update the package lists, followed by the `apt-get install` command to install the `golang-go` package. The `-y` flag is used to automatically answer "yes" to any prompts during the installation process.
+
+By placing these commands in the `hooks.all.pre` section, they will be executed at the start of any Terrateam operation, ensuring that the `golang-go` package is available for all workflows.
+
+## Installing Packages in a Workflow
+
+In some cases, you may only need a specific package for certain directories or workflows. To avoid installing unnecessary packages globally, you can install them directly within a workflow.
+
+Here's an example of installing the `golang-go` package within a specific workflow:
+```yaml
+workflows:
+  - tag_query: "dir:iac/dir"
+    plan:
+      - type: run
+        cmd: ['apt-get', 'update']
+      - type: run
+        cmd: ['apt-get', '-y', 'install', 'golang-go']
+    apply:
+      - type: run
+        cmd: ['apt-get', 'update']
+      - type: run
+        cmd: ['apt-get', '-y', 'install', 'golang-go']
+```
+
+In this example, the `golang-go` package is installed as part of the plan and apply steps for a workflow that matches the tag query `dir:iac/dir`. This means that the package will only be installed when running Terrateam operations on the `iac/dir` directory.
+
+## Best Practices
+
+When installing external packages with Terrateam, consider the following best practices:
+- Only install packages that are necessary for your specific use case to keep your environment lean and minimize the risk of conflicts or security issues.
+- Use the `apt-get update` command before installing packages to ensure that you have the latest package lists and versions available.
+- Consider installing packages globally if they are needed across multiple workflows to avoid duplication and maintain consistency.
+- If a package is only needed for a specific workflow or directory, install it within the relevant workflow to keep your global environment clean.

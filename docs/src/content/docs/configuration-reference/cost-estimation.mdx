@@ -1,0 +1,71 @@
+---
+title: cost_estimation
+description: The cost_estimation configuration reference
+---
+
+The `cost_estimation` configuration can automatically provide cost estimates on each pull request that Terrateam runs a plan operation against. A comment will be placed alongside plan output showing the monthly spend change for the dirspace.
+
+## Default Configuration
+
+```yaml
+cost_estimation:
+  enabled: true
+  provider: infracost
+  currency: USD
+```
+
+## Keys
+| Key | Type | Description |
+| --- | --- | --- |
+| enabled | boolean | Specifies whether cost estimation is enabled. Default is true. |
+| provider | string | Specifies the provider for cost estimation. Default is infracost. |
+| currency | string | Specifies the currency for cost estimation. Default is USD. |
+
+## Providers
+### Infracost
+:::note
+- No cloud credentials or secrets are sent to the Infracost Cloud Pricing API
+- Infracost does not make any changes to your Terraform state or cloud resources
+:::
+
+#### API Key
+If an Infracost API key is configured as a GitHub Actions Secret, then Terrateam will use the official Infracost public API endpoint.
+To set your Infracost API Key as a GitHub Actions Secret:
+1. Export your Terraform `organization/repo` combination as an environment variable. For example:
+```
+export REPO="OWNER/REPO"
+```
+2. Create the Infracost API Key GitHub Secret:
+```
+gh secret --repo "$REPO" set INFRACOST_API_KEY
+```
+
+#### Environment Variables
+Terrateam supports the following Infracost environment variables:
+| Name | Description |
+|------|-------------|
+| `INFRACOST_API_KEY` | User's Infracost API key. [Sign up](https://www.infracost.io/) and navigate to the `Org Settings` page to get your free Infracost API key. |
+| `INFRACOST_CURRENCY` | An [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217#Active_codes) currency code to report results. The value in the repository configuration takes precedence. |
+
+## Examples
+### Enable Cost Estimation with Default Settings
+```yaml
+cost_estimation:
+  enabled: true
+```
+This configuration will enable cost estimation using the default provider (Infracost) and currency (USD).
+
+### Disable Cost Estimation
+```yaml
+cost_estimation:
+  enabled: false
+```
+This configuration will disable cost estimation.
+
+### Specify a Different Currency
+```yaml
+cost_estimation:
+  enabled: true
+  currency: EUR
+```
+This configuration will enable cost estimation and report results in Euros (EUR).

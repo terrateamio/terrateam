@@ -1,0 +1,110 @@
+---
+title: Webhooks
+description: Integrating Terrateam with external systems using webhooks
+
+---
+Webhooks allow you to integrate Terrateam with external systems by sending HTTP requests to a specified URL when certain events occur during the Terrateam workflow. While Terrateam does not have a dedicated webhooks feature, you can achieve similar functionality by leveraging [hooks](/configuration-reference/hooks) and [workflows](/configuration-reference/workflows) in combination with Terrateam's built-in environment variables.
+
+## Configuring Webhooks
+To configure webhooks in Terrateam, you can use the `hooks` or `workflows` sections in your `.terrateam/config.yml` file. Here's an example configuration that sends a webhook request after a successful apply operation:
+```yaml
+hooks:
+  apply:
+    post:
+      - type: run
+        cmd: ['curl', '-X', 'POST', '-d', '{"text":"Apply completed successfully for directory: $TERRATEAM_DIR"}', 'https://example.com/webhook']
+```
+In this example, the `hooks.apply.post` section defines a `run` step that uses the `curl` command to send an HTTP POST request to the specified URL (`https://example.com/webhook`) with a JSON payload containing a message that includes the directory name using the `TERRATEAM_DIR` environment variable.
+
+## Webhook Events
+You can configure webhooks to be triggered at various points in the Terrateam workflow, such as:
+- Before or after a plan operation
+- Before or after an apply operation
+- On success or failure of a plan or apply operation
+- When a pull request is created, updated, or merged
+
+To trigger webhooks at different events, you can use the appropriate hooks or workflow steps. For example, to send a webhook request before a plan operation, you can use the `hooks.plan.pre` section:
+```yaml
+hooks:
+  plan:
+    pre:
+      - type: run
+        cmd: ['curl', '-X', 'POST', '-d', '{"text":"Plan started for workspace: $TERRATEAM_WORKSPACE"}', 'https://example.com/webhook']
+```
+Similarly, you can use the `workflows` section to define webhook steps for specific directories or workspaces:
+```yaml
+workflows:
+  - tag_query: "dir:infrastructure/production"
+    plan:
+      - type: run
+        cmd: ['curl', '-X', 'POST', '-d', '{"text":"Production plan started"}', 'https://example.com/webhook']
+    apply:
+      - type: run
+        cmd: ['curl', '-X', 'POST', '-d', '{"text":"Production apply completed"}', 'https://example.com/webhook']
+```
+
+## Using Environment Variables in Webhooks
+Terrateam provides several built-in environment variables that you can use to include relevant information about the current workflow execution context in your webhook payloads. Some useful variables include:
+
+##### `TERRATEAM_DIR`
+The directory being processed
+
+##### `TERRATEAM_WORKSPACE`
+The workspace being used
+
+##### `TERRATEAM_PLAN_FILE`
+The path to the generated plan file
+
+##### `TERRATEAM_ROOT`
+The absolute path to the root of your checked-out repository
+
+You can reference these variables in your webhook configurations using the `$` prefix followed by the variable name. For example:
+```yaml
+hooks:
+  apply:
+    post:
+      - type: run
+        cmd: ['curl', '-X', 'POST', '-d', '{"text":"Apply completed for directory: $TERRATEAM_DIR", "workspace":"$TERRATEAM_WORKSPACE", "plan_file":"$TERRATEAM_PLAN_FILE"}', 'https://example.com/webhook']
+```
+In this example, the webhook payload includes the directory name (`$TERRATEAM_DIR`), the workspace name (`$TERRATEAM_WORKSPACE`), and the path to the generated plan file (`$TERRATEAM_PLAN_FILE`).
+
+## Securing Webhooks
+When configuring webhooks, it's important to consider security to prevent unauthorized access to your external systems. Some best practices for securing webhooks include:
+- Use HTTPS for the webhook URL to encrypt the request payload in transit
+- Include a secret token in the webhook URL or payload to authenticate the request
+- Validate and sanitize the incoming webhook data on the receiving end to prevent injection attacks
+- Limit the permissions and access of the webhook receiver to only what is necessary
+Here's an example of a more secure webhook configuration that includes a secret token in the payload:
+```yaml
+hooks:
+  apply:
+    post:
+      - type: run
+        cmd: ['curl', '-X', 'POST', '-d', '{"text":"Apply completed for directory: $TERRATEAM_DIR", "token":"$WEBHOOK_SECRET_TOKEN"}', 'https://example.com/webhook']
+```
+In this example, the `$WEBHOOK_SECRET_TOKEN` variable is used to include a secret token in the webhook payload. You can set this variable as a GitHub Secret to keep it secure.
+
+## Examples
+Here are a few examples of how you can use webhooks with Terrateam:
+
+### Slack Notifications
+You can use webhooks to send notifications to a Slack channel when certain events occur in Terrateam. Here's an example configuration that sends a Slack message after a successful apply operation:
+```yaml
+hooks:
+  apply:
+    post:
+      - type: run
+        cmd: ['curl', '-X', 'POST', '-H', 'Content-type: application/json', '--data', '{"text":"Apply completed successfully for directory: $TERRATEAM_DIR"}', '$SLACK_WEBHOOK_URL']
+```
+In this example, the `$SLACK_WEBHOOK_URL` variable is used to specify the Slack incoming webhook URL, which you can set as a GitHub Secret or an environment variable.
+
+### Custom Webhook Server
+You can create a custom webhook server that receives and processes the webhook requests sent by Terrateam. Here's an example configuration that sends a webhook request to a custom server:
+```yaml
+hooks:
+  plan:
+    post:
+      - type: run
+        cmd: ['curl', '-X', 'POST', '-H', 'Content-type: application/json', '--data', '{"event":"plan_completed", "directory":"$TERRATEAM_DIR", "workspace":"$TERRATEAM_WORKSPACE", "plan_file":"$TERRATEAM_PLAN_FILE"}', 'https://hooks.example.com/terrateam-webhook']
+```
+In this example, the webhook request includes information about the completed plan operation, such as the directory, workspace, and plan file path. Your custom server can then process this information and perform any necessary actions, such as updating a database, triggering a build, or sending notifications.

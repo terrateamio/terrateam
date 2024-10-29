@@ -1,0 +1,44 @@
+---
+title: indexer
+description: The indexer configuration reference
+---
+
+The `indexer` configuration allows Terrateam to automatically generate parts of the Terrateam configuration by analyzing the repository structure and Terraform code. This reduces the amount of manual configuration needed and helps ensure that the correct directories are executed during plan and apply operations.
+
+## Default Configuration
+```yaml
+indexer:
+  enabled: false
+```
+
+## Keys
+| Key | Type | Description |
+|-----|------|-------------|
+| enabled | Boolean | Specifies whether the indexer is enabled. Default is false. |
+
+## Functionality
+When the indexer is enabled, it creates a map of the repository, including:
+- Terraform modules and the directories that reference those modules
+- Symbolic links in the repository
+
+Terrateam uses this information to determine which directories should be executed during plan and apply operations.
+
+### Modules
+If a directory is referenced with a `module` block in the Terraform code, the indexer automatically determines that:
+- The module directory should not be run if it changes
+- The directories referencing the module should be run if the module changes
+
+This ensures that the appropriate directories are executed based on the module dependencies in the Terraform code.
+
+### Symlinks
+If a symbolic link is present in the repository, the indexer treats the symlink as the actual file or directory it references. This allows Terrateam to correctly handle symlinked files and directories during plan and apply operations.
+
+## Usage
+When the indexer is enabled, an indexing step will automatically be executed on a change if there is no index for that commit hash already.
+You can also manually trigger the indexer by commenting `terrateam index` in a pull request. This can be useful if you want to force a re-indexing of the repository.
+To see the parts of the Terrateam configuration that have been automatically generated after an indexing run, comment `terrateam repo-config` in the pull request. This will display the automatically generated configuration, allowing you to review and verify the changes.
+
+## Considerations
+When using the indexer, keep the following in mind:
+- The indexer runs automatically on changes when enabled, but you can also trigger it manually using the `terrateam index` command in a pull request.
+- Reviewing the automatically generated configuration using the `terrateam repo-config` command can help you understand how Terrateam is interpreting your repository structure and Terraform code.

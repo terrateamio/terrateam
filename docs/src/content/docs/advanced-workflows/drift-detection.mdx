@@ -1,0 +1,86 @@
+---
+title: Drift Detection
+description: Automatically detect and reconcile infrastructure drift with Terrateam
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Infrastructure drift is a common challenge when managing infrastructure as code. It occurs when the actual state of your infrastructure differs from the desired state defined in your Terraform configuration. Terrateam's Drift Detection and Reconciliation feature helps you identify and address drift, ensuring that your infrastructure remains consistent and compliant.
+
+## What is Drift Detection?
+Drift Detection in Terrateam automatically runs a plan operation against all [dirspaces](/getting-started/concepts#dirspace) in your repository on a predefined schedule. It compares the current state of your infrastructure with the desired state defined in your Terraform code. If any discrepancies are found, Terrateam creates a GitHub Issue in your repository, notifying you of the detected drift.
+
+## Enabling Drift Detection
+To enable drift detection in Terrateam, you need to configure it in your `.terrateam/config.yml` file. Here's an example configuration:
+```yaml
+drift:
+  enabled: true
+  schedule: daily
+```
+In this example, drift detection is enabled and set to run on a daily schedule. You can choose from `hourly`, `daily`, `weekly`, or `monthly` schedules based on your requirements.
+
+## Drift Reconciliation
+In addition to detecting drift, Terrateam can also automatically reconcile the differences by applying the necessary changes to your infrastructure. This feature is called Drift Reconciliation.
+To enable drift reconciliation, add the following to your Terrateam configuration:
+```yaml
+drift:
+  enabled: true
+  reconcile: true
+  schedule: weekly
+```
+With `reconcile` set to `true`, Terrateam will automatically run an `apply` operation against the generated Terraform plan whenever drift is detected. This ensures that your infrastructure is brought back in sync with your Terraform configuration.
+:::caution
+Enabling automatic reconciliation should be done with caution. Ensure that you have appropriate safeguards and testing in place before enabling this feature, as changes will be applied without manual review or approval.
+:::
+
+## Limiting Drift Detection Scope
+If you have a large repository with multiple directories and workspaces, you may want to limit the scope of drift detection to specific parts of your infrastructure. Terrateam allows you to use tag queries to specify which directories and workspaces should be included in the drift detection process.
+Here's an example configuration that limits drift detection to the `production` directory using a [tag query](/advanced-workflows/tags/):
+```yaml
+drift:
+  - tag_query: "dir:production"
+    enabled: true
+    schedule: hourly
+```
+By specifying a `tag_query`, Terrateam will only run drift detection on the directories and workspaces that match the given query. This helps reduce noise and focuses on the critical parts of your infrastructure.
+
+## Notifications and Alerting
+When drift detection identifies discrepancies, it's crucial to notify the relevant team members and take appropriate actions. Terrateam provides several notification options out of the box.
+
+### GitHub Issues
+Terrateam can create a GitHub Issue in your repository whenever drift is detected. The issue contains details about the affected resources and the necessary changes to reconcile the drift.
+To enable the GitHub Issue creation, you can add the following configuration to your `.terrateam/config.yml` file:
+```yaml
+hooks:
+  plan:
+    post:
+      - type: drift_create_issue
+```
+This configuration ensures that duplicate issues are not created for identical drift findings.
+
+### Slack Notifications
+Terrateam integrates with Slack, allowing you to receive real-time notifications when drift is detected. To set up Slack notifications, follow these steps:
+1. Install the official [GitHub integration for Slack](https://github.com/integrations/slack) in your desired Slack workspace and channel.
+2. Use the `/github` command to subscribe to your Terraform repository:
+   ```
+   /github subscribe owner/repo issues
+   ```
+Now, whenever Terrateam creates a GitHub Issue for detected drift, you'll receive a notification in your Slack channel.
+
+### Custom Notifications
+If you have specific notification requirements or want to integrate drift detection with your existing monitoring and alerting systems, Terrateam allows you to implement custom notifications using hooks.
+Here's an example configuration that runs a custom script whenever drift is detected:
+```yaml
+hooks:
+  plan:
+    post:
+      - type: run
+        cmd: ['bash', '-c', '$TERRATEAM_ROOT/drift-notify.sh']
+```
+In this example, the `drift-notify.sh` script is executed whenever drift detection identifies changes. You can customize the script to send notifications or trigger actions based on your specific needs.
+
+## Best Practices
+When implementing Drift Detection and Reconciliation with Terrateam, consider the following best practices:
+- Start with Drift Detection enabled and monitor the results before enabling automatic reconciliation. This allows you to assess the impact and ensure that the detected drift is valid and requires action.
+- Use tag queries to limit the scope of drift detection to critical parts of your infrastructure. This helps reduce noise and focuses on the areas that matter most.
+- Implement custom notifications and integrate with your existing monitoring and alerting systems to ensure that the right people are notified promptly when drift is detected.

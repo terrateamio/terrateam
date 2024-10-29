@@ -1,0 +1,30 @@
+---
+title: parallel_runs  
+description: The parallel_runs configuration reference
+---
+
+The `parallel_runs` configuration in Terrateam specifies how many concurrent Terraform runs can be executed across different directories or environments. Parallel runs can improve the efficiency of infrastructure changes, particularly for large-scale projects.
+
+## Default Configuration
+
+```yaml
+parallel_runs: 3
+```
+
+## Keys
+
+| Key            | Type    | Description                                                                                   |
+|----------------|---------|-----------------------------------------------------------------------------------------------|
+| `parallel_runs`| Integer | Specifies how many Terraform runs can be executed concurrently. The default is 3, but this value can be adjusted based on your project's needs and available resources. |
+
+## Example Configuration
+
+```yaml
+parallel_runs: 5
+```
+This configuration increases the maximum number of parallel Terraform runs to 5, allowing you to adjust based on your infrastructure's capacity and the complexity of your operations.
+
+## Considerations
+- Increasing the number of parallel runs can improve speed but may require higher resource usage.
+- Ensure your infrastructure can handle the number of parallel runs without bottlenecks or throttling.
+- Parallel runs are ideal for environments or directories that can be processed simultaneously, maximizing efficiency.

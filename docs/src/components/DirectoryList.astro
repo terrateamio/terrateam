@@ -1,0 +1,35 @@
+---
+import { getCollection } from "astro:content";
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+// Get the current slug (directory) dynamically from Astro.params
+const { slug } = Astro.params;
+const currentDirectory = slug ? slug + '/' : '';  // Ensure we're in the right directory
+
+// Get all docs pages
+const allPages = await getCollection('docs');
+
+// Filter for only pages in the current directory and exclude 'index.mdx'
+let searchPages = allPages.filter((p) => {
+    // Ensure the page is within the current directory and not an 'index.mdx' file
+    return p.slug.startsWith(currentDirectory) && !p.slug.endsWith('index');
+});
+
+// Sort pages by sidebar order or title
+searchPages = searchPages.sort((a, b) => {
+    if (a.data.sidebar.order && b.data.sidebar.order) {
+        return a.data.sidebar.order - b.data.sidebar.order;
+    } else if (a.data.sidebar.order) {
+        return 0 - a.data.sidebar.order;
+    } else if (b.data.sidebar.order) {
+        return b.data.sidebar.order - 0;
+    } else {
+        return a.data.title.localeCompare(b.data.title, undefined, { sensitivity: 'base' });
+    }
+});
+---
+<CardGrid>
+  { searchPages.map((p) => (
+    <LinkCard href={'/'.concat(p.slug)} title={p.data.title} description={p.data.description}/>
+  ))}
+</CardGrid>

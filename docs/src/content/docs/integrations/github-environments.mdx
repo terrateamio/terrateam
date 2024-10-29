@@ -1,0 +1,37 @@
+---
+title: GitHub Environments
+description: Integrate Terrateam with GitHub Environments for enhanced security and isolation
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Terrateam supports [GitHub Environments](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) allowing you to associate your Terrateam workflows with specific GitHub Environments. This integration provides an additional layer of security and isolation for your secrets and variables, ensuring that they are only accessible to the intended environment.
+
+## What are GitHub Environments?
+GitHub Environments are a feature in GitHub Actions that allows you to define and manage different environments, such as production, staging, or qa, within your repository. Each environment can have its own set of secrets, variables, protection rules, and deployment workflows, providing a secure and isolated context for your deployments.
+By integrating Terrateam with GitHub Environments, you can leverage the benefits of GitHub Environments while managing your infrastructure as code with Terraform.
+
+## Configuring GitHub Environments
+To associate a Terrateam workflow with a GitHub Environment, you need to specify the `environment` attribute in your Terrateam configuration file (`.terrateam/config.yml`).
+Here's an example configuration:
+```yaml
+workflows:
+  - tag_query: production
+    environment: production
+```
+In this example, the workflow with the `tag_query` of `production` is associated with the GitHub Environment named `production`. Terrateam will use this environment when executing the workflow, ensuring that the secrets and variables defined in the `production` environment are accessible.
+You can configure multiple workflows with different GitHub Environments based on your requirements. For example:
+```yaml
+workflows:
+  - tag_query: staging
+    environment: staging
+  - tag_query: qa
+    environment: qa
+```
+This configuration associates the `staging` workflow with the `staging` GitHub Environment and the `qa` workflow with the `qa` GitHub Environment.
+
+## Best Practices
+When using GitHub Environments with Terrateam, consider the following best practices:
+- Define clear and meaningful names for your GitHub Environments that reflect their purpose, such as `production`, `staging`, or `qa`.
+- Store sensitive information, such as API keys, passwords, or certificates, as secrets within the respective GitHub Environments.
+- Implement appropriate approval processes and checks for critical environments, such as requiring manual approval or passing specific status checks before allowing deployments.

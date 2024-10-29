@@ -1,0 +1,80 @@
+---
+title: destination_branches
+description: The destination_branches configuration reference
+---
+
+The `destination_branches` configuration allows you to specify which branches can be used as the destination for pull requests that trigger Terrateam operations. By default, Terrateam requires pull requests to have the repository's default branch (usually named `main` or `master`) as the destination branch. However, you can customize this behavior using the destination branches configuration.
+
+## Default Configuration
+```yaml
+destination_branches: []
+```
+
+## Keys
+| Key | Type | Description |
+| --- | --- | --- |
+| destination_branches | array | A list of allowed destination branches with an optional list of source branches. Each entry can be either a string or an object. |
+
+### Branch
+The `branch` attribute matches the branch that a pull request will be merged into. You can specify the branch name as a string or as an object with the `branch` key. For example, the following configurations are equivalent:
+
+```yaml
+destination_branches:
+  - main
+```
+
+
+```yaml
+destination_branches:
+  - branch: main
+```
+
+### Source Branches
+The `source_branches` attribute matches the branch name that will be merged. It allows you to restrict which source branches can be merged into the specified destination branch. For example, to allow any source branch to be merged into the `main` branch, you can use the following configuration:
+
+```yaml
+destination_branches:
+  - branch: main
+    source_branches: ['*']
+```
+
+## Example
+Consider the following `destination_branches` configuration:
+
+```yaml
+destination_branches:
+  - main
+```
+
+If a pull request has the following properties:
+- Source branch: `hotfix/revert-ami`
+- Destination branch: `main`
+
+Terrateam would evaluate the pull request as follows:
+- The `main` branch matches against the `branch` attribute.
+- The `hotfix/revert-ami` branch matches against the `source_branches` attribute (implicitly allowing all source branches).
+
+## Globs
+Terrateam supports the use of globs in branch names and source branches using the `*` wildcard character. This allows you to match multiple branches with a single pattern. For example, to allow any branch starting with `feature/` to be merged into the `develop` branch, you can use the following configuration:
+
+```yaml
+destination_branches:
+  - branch: develop
+    source_branches: ['feature/*']
+```
+
+## Not Patterns
+You can negate a source branch pattern by placing a `!` before it. This is useful for excluding specific branches from being merged into a destination branch. For example, to allow any branch except those starting with `hotfix/` to be merged into the `main` branch, you can use the following configuration:
+
+```yaml
+destination_branches:
+  - branch: main
+    source_branches: ['*', '!hotfix/*']
+```
+
+## Considerations
+When configuring destination branches, keep the following in mind:
+
+- The `destination_branches` configuration is always read from the repository's default branch.
+- If no matching destination branch is found, Terrateam will not execute any operations on the pull request.
+- Be cautious when using globs and not patterns, as they can have unintended consequences if not carefully reviewed.

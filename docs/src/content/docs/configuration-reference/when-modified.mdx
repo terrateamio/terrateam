@@ -1,0 +1,110 @@
+---
+title: when_modified
+description: The when_modified configuration reference
+---
+
+The `when_modified` configuration allows you to configure autoplan and autoapply operations based on pull request file changes. This enables you to automatically trigger plan and apply operations when specific files are modified in your repository.
+
+## Default Configuration
+```yaml
+when_modified:
+  file_patterns: ["**/*.tf", "**/*.tfvars"]
+  autoplan: true
+  autoplan_draft_pr: true
+  autoapply: false
+  depends_on: ""
+```
+
+## Keys
+| Key                  | Type    | Description                                                                                       |
+|----------------------|---------|---------------------------------------------------------------------------------------------------|
+| file_patterns        | List    | List of file globs to identify changes in a directory. Always relative to the root of the repository. Prefix with `!` to exclude a file glob. Default is `["**/*.tf", "**/*.tfvars"]`. |
+| autoplan             | Boolean | Automatically run a plan operation on a new pull request or an update on an existing one. Default is true. |
+| autoplan_draft_pr    | Boolean | Automatically run a plan operation on a new draft pull request or an update on an existing one. Default is true. |
+| autoapply            | Boolean | Automatically run an apply operation after merging a pull request. Default is false. |
+| depends_on           | String | Defines dependencies between different directories or environments, allowing for sequential operations. Supports `dir:` for absolute paths or `relative_dir:` for relative paths within the repository. Can also combine dependencies using [tag queries](/advanced-workflows/tags/#tag-query-syntax). Default is an empty string. |
+
+### File Patterns
+The `file_patterns` key specifies a list of file globs that identify changes in a directory. These patterns are relative to the root of the repository.
+
+### Auto-Plan
+The `autoplan` key enables or disables automatic plan operations on new pull requests or updates to existing ones.
+
+### Auto-Plan Draft Pull Request
+The `autoplan_draft_pr` key enables or disables automatic plan operations on new draft pull requests or updates to existing ones.
+
+### Auto-Apply
+The `autoapply` key enables or disables automatic apply operations after merging a pull request.
+
+### Depends-On
+The `depends_on` key allows you to specify dependencies on other directories within your repository. This is particularly useful in scenarios where your infrastructure is structured into functional layers that must be deployed in a specific order. For example, a network setup must be applied before a managed PostgreSQL service can be deployed, as the latter might depend on outputs from the former.
+
+#### Key Features
+- Layered Operations: Supports multi-layered operations, where each layer depends on the successful apply of the previous one.
+- Dependency Management: Automatically triggers plan and apply operations based on changes in the lowest layer, and cascades through dependent layers.
+
+While it's technically possible to specify dependencies using the `depends_on` key at a global level, it is recommended to define them within the `dirs.when_modified` configuration for better granularity and control. The `dirs.when_modified` configuration supports the same keys as the global `when_modified` configuration.
+
+## Examples
+### Auto-Plan on Terraform File Changes
+```yaml
+when_modified:
+  file_patterns: ["**/*.tf"]
+  autoplan: true
+  autoplan_draft_pr: false
+  autoapply: false
+```
+This configuration triggers a plan operation automatically when any `.tf` file in the repository is modified. It does not trigger plans on draft pull requests and does not automatically apply changes after merging.
+
+### Auto-Plan and Auto-Apply on Terraform and tfvars File Changes
+```yaml
+when_modified:
+  file_patterns: ["**/*.tf", "**/*.tfvars"]
+  autoplan: true
+  autoplan_draft_pr: true
+  autoapply: true
+```
+This configuration triggers plan operations automatically on changes to `.tf` or `.tfvars` files, including draft pull requests. It also automatically applies changes after merging and creates a status check for pending applies.
+
+### Exclude Certain Files from Triggering Auto-Plan
+```yaml
+when_modified:
+  file_patterns: ["**/*.tf", "!**/modules/**/*.tf"]
+  autoplan: true
+  autoplan_draft_pr: true
+  autoapply: false
+```
+This configuration triggers plan operations automatically on changes to `.tf` files, including draft pull requests, but excludes `.tf` files in the `modules` directory and its subdirectories.
+
+### Auto-Plan with Single Dependency
+```yaml
+dirs:
+  "database/":
+    when_modified:
+      depends_on: "relative_dir:../base"
+```
+This configuration triggers a plan operation for the `database` directory if changes are found in the `base` directory.
+
+### Depends-On with Multiple Dependencies
+```yaml
+dirs:
+  network:
+    when_modified:
+      file_patterns: ["**/*.tf"]
+  database:
+    when_modified:
+      depends_on: 'dir:network'
+      file_patterns: ["**/*.tf"]
+  application:
+    when_modified:
+      depends_on: 'dir:database'
+      file_patterns: ["**/*.tf"]
+```
+This configuration triggers a plan operation for the `network` layer if changes are detected. If the apply for the `network` layer is successful, a plan operation will be triggered for the `database` layer, which depends on `network`. If the `database` layer's apply is successful, the process continues with a plan operation for the `application` layer, and so on.
+
+:::note
+- A lock is acquired regardless of the success or failure of an apply.
+- Once a single dirspace has been applied in a pull request, that pull request owns locks on all targeted dirspaces associated with the pull request.
+- A lock is only released after a successful apply and merge.
+- A lock can be forcefully unlocked by commenting `terrateam unlock` on the pull request.
+:::

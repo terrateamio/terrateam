@@ -1,0 +1,41 @@
+---
+title: checkout_strategy
+description: The checkout_strategy configuration reference
+---
+
+The `checkout_strategy` configuration in Terrateam allows you to specify how Terrateam performs a code checkout from the pull request.
+
+## Default Configuration
+```yaml
+checkout_strategy: merge   
+```
+
+## Keys
+| Key | Type | Description |
+| --- | --- | --- |
+| checkout_strategy | string | Specifies the strategy Terrateam will use to checkout the code. Default is merge. |
+
+### Values
+| Value | Description |
+| --- | --- |
+| merge | (Default) Terrateam will perform a merge of the pull request's head commit into the base branch. This is equivalent to running git checkout \<base_branch\> followed by git merge \<head_commit>\. |
+| head | Terrateam will checkout the pull request's head commit directly. This is equivalent to running git checkout \<head_commit\>. |
+
+## Examples
+### Using the Default Merge Strategy
+```yaml
+checkout_strategy: merge
+```
+This configuration will use the default `merge` strategy, where Terrateam will perform a merge of the pull request's head commit into the base branch.
+
+### Using the Head Checkout Strategy
+```yaml
+checkout_strategy: head
+```
+This configuration will use the `head` strategy, where Terrateam will checkout the pull request's head commit directly.
+
+## Considerations
+When choosing a checkout strategy, keep the following in mind:
+- The `merge` strategy (default) is generally recommended, as it ensures that the changes being applied are compatible with the current state of the base branch.
+- The `head` strategy can be useful in situations where you want to test the changes in isolation, without considering any changes that may have been made to the base branch since the pull request was opened.
+- If you are using a custom workflow that includes steps that modify the working directory (e.g., running tests or linters), be aware that the checkout strategy can impact the files that are present in the working directory.
