@@ -1,0 +1,114 @@
+---
+title: CDKTF
+description: Using CDKTF with Terrateam
+---
+
+CDKTF (Cloud Development Kit for Terraform) is a tool that allows you to define your infrastructure using familiar programming languages such as TypeScript, Python, Java, C#, and Go. Terrateam supports CDKTF, enabling you to manage your CDKTF-based infrastructure using Terrateam's powerful collaboration and automation features.
+
+## Enabling CDKTF
+To use CDKTF with Terrateam, you need to update your Terrateam configuration file (`.terrateam/config.yml`) to enable CDKTF for specific directories or workflows.
+Here's an example configuration that enables CDKTF for a directory named `prod`:
+```yaml
+workflows:
+  - tag_query: cdktf-code
+    engine:
+      name: cdktf
+dirs:
+  prod:   
+    tags: [cdktf-code]
+    when_modified:   
+      file_patterns: ['${DIR}/*.ts']
+    stacks:
+      'cdktf-stack1':
+        tags: []
+      'cdktf-stack2':
+        tags: []
+```
+In this configuration:
+- The `workflows` section specifies that any directory containing the tag `cdktf-code` will enable CDKTF in a Terrateam operation.
+- The `dirs` section defines the `prod` directory, which:
+  - Triggers Terrateam operations if any file matching the `*.ts` pattern is changed in a pull request.
+  - Assigns the tag `cdktf-code` to be used in workflows.
+  - Defines two stacks: `cdktf-stack1` and `cdktf-stack2`.
+
+## Planning and Applying with CDKTF
+Once CDKTF is enabled in your Terrateam configuration, you can use the standard Terrateam commands to plan and apply your CDKTF-based infrastructure.
+For example, to plan any directory with a stack named `cdktf-stack1`, you can comment the following in a pull request:
+```
+terrateam plan stack:cdktf-stack1
+```
+Terrateam will generate the necessary Terraform configuration files from your CDKTF code and execute the plan operation.
+
+## Using Environment Variables with CDKTF
+Terrateam provides several built-in environment variables that you can use in your CDKTF code to access information about the current workflow execution context. Some useful variables include:
+- `TERRATEAM_DIR`: The directory being processed
+- `TERRATEAM_WORKSPACE`: The workspace being used
+- `TERRATEAM_PLAN_FILE`: The path to the generated plan file
+- `TERRATEAM_ROOT`: The absolute path to the root of your checked-out repository
+You can reference these variables in your CDKTF code to make it more dynamic and adaptable to different environments and workflows.
+
+Here's an example of using environment variables in a TypeScript CDKTF stack:
+```typescript
+import { Construct } from "constructs";
+import { App, TerraformStack } from "cdktf";
+import * as Null from './.gen/providers/null';
+class MyStack extends TerraformStack {
+  constructor(scope: Construct, id: string) {
+    super(scope, id);
+    new Null.provider.NullProvider(this, 'test-provider');
+    new Null.resource.Resource(this, 'test', {
+      triggers: {
+        dir: process.env.TERRATEAM_DIR,
+        workspace: process.env.TERRATEAM_WORKSPACE
+      }
+    });
+  }
+}
+const app = new App();
+new MyStack(app, "cdktf-stack1");
+app.synth();
+```
+In this example, the `TERRATEAM_DIR` and `TERRATEAM_WORKSPACE` environment variables are used to set the `triggers` attribute of a `null_resource`, making the resource dependent on the current directory and workspace being processed by Terrateam.
+
+## CDKTF Frequently Asked Questions
+### What Problem Does CDKTF Solve?
+CDKTF allows developers to manage their infrastructure using familiar programming languages instead of the Terraform HCL language. This enables developers to leverage their existing programming skills and the ecosystem of their language of choice when developing infrastructure components.
+
+### What Languages Does CDKTF Support?
+CDKTF supports the following languages:
+- TypeScript
+- Python
+- Java
+- C#
+- Go
+
+### is CDKTF Production-ready?
+Yes, CDKTF is generally available and ready for production usage as of August 1, 2022. While it is still a maturing technology, you can confidently use it in a production environment.
+
+### What are the Advantages Of CDKTF?
+- Developers familiar with programming languages but not HCL can contribute to infrastructure changes.
+- Leveraging the ecosystem and mature development environments of supported programming languages.
+- Programming languages are more powerful and expressive than HCL.
+- More people are familiar with programming languages than HCL.
+
+### What are the Disadvantages Of CDKTF?
+- CDKTF is still maturing, and the ecosystem of providers and resources is growing.
+- Documentation, especially around providers, may be lacking.
+- CDKTF adds complexity by converting code written in a programming language to HCL.
+- CDKTF introduces new concepts like "stacks," making it not a direct one-to-one translation of Terraform.
+- The increased expressiveness of programming languages can lead to more complex and harder-to-maintain code compared to HCL.
+
+### How Does CDKTF Work?
+The high-level process of how CDKTF works is as follows:
+1. Developers write code in their preferred programming language supported by CDKTF.
+2. The code creates an instance of an "app" and defines "stacks," "providers," and "resources."
+3. The `synth` function is called to convert the app and its components to a JSON representation of HCL.
+4. The CDKTF CLI runs the code and generates the corresponding Terraform HCL files.
+5. The CDKTF CLI can then execute `terraform plan` or `terraform apply` on the generated HCL.
+
+### Where Can I Learn More About CDKTF?
+- [CDK for Terraform Official Documentation](https://developer.hashicorp.com/terraform/cdktf)
+- [`hashicorp/terraform-cdk` repository](https://github.com/hashicorp/terraform-cdk)
+
+## Conclusion
+CDKTF is a powerful tool that allows developers to define their infrastructure using familiar programming languages, making it easier for them to contribute to infrastructure changes and leverage their existing skills and ecosystem.

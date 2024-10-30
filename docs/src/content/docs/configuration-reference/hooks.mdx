@@ -1,0 +1,132 @@
+---
+title: hooks
+description: The hooks configuration reference
+---
+
+The `hooks` configuration allow you to run commands or set environment variables before (pre-hooks) and after (post-hooks) workflows. Pre and post hooks are only executed a single time during a Terrateam operation. Commands are executed from the repository checkout directory `$TERRATEAM_ROOT`.
+
+## Default Configuration
+```yaml
+hooks:
+  all:
+    pre: []
+    post: []
+  plan:
+    pre: []
+    post: []
+  apply:
+    pre: []
+    post: []
+```
+
+## Keys
+| Key | Type | Description |
+|-----|------|-------------|
+| all | Object | Pre and post hooks for all operations. |
+| plan | Object | Pre and post hooks for plan operations. |
+| apply | Object | Pre and post hooks for apply operations. |
+
+## Hook Types
+### `env`
+The `env` hook type allows you to set environment variables that will be available during the Terrateam operation.
+
+#### Command
+| Key | Type | Description |
+|-----|------|-------------|
+| name | String | Name of the environment variable. |
+| cmd | List | Command to use to set the environment variable. |
+| trim_trailing_newlines | Boolean | Trim trailing newlines. Default is true. |
+| sensitive | Boolean | Specify if the value of the environment variable is sensitive.  It will be masked in all output. Default: `false`. |
+
+#### Source Method
+| Key | Type | Description |
+|-----|------|-------------|
+| method | String | Must be set to `source`. |
+| cmd | List | Command or script to execute that exports environment variables. |
+| sensitive | Boolean | Indicates whether the environment variables modified by the script are sensitive. If true, they will be masked in all output. Default: `false`. |
+
+### `run`
+The `run` hook type executes a command from the directory that Terrateam is operating against.
+| Key | Type | Description |
+|-----|------|-------------|
+| cmd | List | Command to run. |
+| run_on | String | Run the command on step success, failure, or always. Default is success. |
+| capture_output | Boolean | When set to true, command output is included in the GitHub pull request comment on a failure. Sensitive data is not masked. Be aware, this data is sent back to the Terrateam backend for processing. Default is false. |
+
+### `oidc`
+The `oidc` hook type can be used to initiate an OIDC connection to a cloud provider.
+| Key | Type | Provider | Description |
+|-----|------|----------|-------------|
+| oidc | List | | Initiate an OIDC connection to a cloud provider. |
+| provider | String | | Name of provider: aws or gcp. |
+| role_arn | String | aws | Specifies the ARN of an IAM role that you want to use. Value can be specified using a GitHub Secret / environment variable. |
+| assume_role_arn | String | aws | Specifies the ARN of an IAM role that you want to assume into. Default is the value of `role_arn`. Value can be specified using a GitHub Secret / environment variable. |
+| assume_role_enabled | Boolean | aws | Retrieve a set of temporary security credentials from AWS and set the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_SESSION_TOKEN environment variables. Default is true. |
+| audience | String | aws | Specifies the AWS audience name to use. Default is sts.amazonaws.com. Value can be specified using a GitHub Secret / environment variable. |
+| region | String | aws | Specifies the AWS region to use and sets the AWS_REGION environment variable. Default is us-east-1. |
+| session_name | String | aws | Specifies the AWS session name. Default is terrateam. |
+| duration | Integer | aws | Specifies the AWS session duration in seconds. Default is 3600. |
+| service_account | String | gcp | Email address or unique identifier of the Google Cloud service account for which to generate credentials. Value can be specified using a GitHub Secret / environment variable. |
+| workload_identity_provider | String | gcp | The full identifier of the Workload Identity Provider, including the project number, pool name, and provider name. Value can be specified using a GitHub Secret / environment variable. |
+| access_token_lifetime | Integer | gcp | Desired lifetime duration of the access token, in seconds. Default is 3600. |
+| audience | String | gcp | Specifies the GCP audience name to use. Default is ht<span>tps://iam.googleapis.com/</span> + workload_identity_provider. |
+| access_token_subject | String | gcp | Email address of a user to impersonate for [Domain-Wide Delegation](https://developers.google.com/workspace/guides/create-credentials). Value can be specified using a GitHub Secret / environment variable. |
+
+## Examples
+### Setting Environment Variables
+You can use the `env` hook type to set environment variables that will be available during the Terrateam operation.
+```yaml
+hooks:
+  plan:
+    pre:
+      - type: env
+        name: TF_VAR_example
+        cmd: ['echo', 'example_value']
+```
+This pre-hook for the `plan` operation sets the `TF_VAR_example` environment variable to `example_value`.
+
+### Running Scripts
+The `run` hook type allows you to execute scripts or commands before or after Terrateam operations.
+```yaml
+hooks:
+  apply:
+    post:
+      - type: run
+        cmd: ['./cleanup_script.sh']
+        run_on: always
+```
+This post-hook for the `apply` operation runs the `cleanup_script.sh` script, regardless of the operation's success or failure (`run_on: always`).
+
+### AWS OIDC Authentication
+```yaml
+hooks:
+  all:
+    pre:
+      - type: oidc
+        provider: aws
+        role_arn: ${AWS_ROLE_ARN}
+```
+This pre-hook for all operations initiates an OIDC connection to AWS using the role ARN specified in the `AWS_ROLE_ARN` environment variable.
+
+### GCP OIDC Authentication
+```yaml
+hooks:
+  all:
+    pre:
+      - type: oidc
+        provider: gcp
+        service_account: ${GCP_SERVICE_ACCOUNT}
+        workload_identity_provider: ${GCP_WORKLOAD_IDENTITY_PROVIDER}
+```
+This pre-hook for all operations initiates an OIDC connection to GCP using the service account and workload identity provider specified in the `GCP_SERVICE_ACCOUNT` and `GCP_WORKLOAD_IDENTITY_PROVIDER` environment variables.
+
+## Considerations
+When using hooks in your Terrateam configuration, keep the following considerations in mind:
+- Hooks are executed in the order they are defined within each section (pre or post) and each operation type (all, plan, or apply).
+- Pre-hooks are executed before the corresponding workflow steps, while post-hooks are executed after the workflow steps.
+- Hooks can significantly impact the execution time of your Terrateam operations, especially if they involve long-running commands or scripts. Be mindful of the performance implications when configuring hooks.
+- Hooks have access to the repository checkout directory (`$TERRATEAM_ROOT`) and can modify files within that directory. Ensure that your hooks are carefully tested and do not unintentionally modify or delete important files.
+- When using the `run` hook type, make sure that the specified command or script is available and executable within the Terrateam environment. Consider using absolute paths or ensuring that the necessary dependencies are installed.
+- Be cautious when using the `capture_output` option with the `run` hook type, as it may expose sensitive information in the GitHub pull request comment if the command fails. Ensure that you properly sanitize or mask any sensitive data before enabling this option.
+- When setting environment variables using the `env` hook type, be aware that the values will be visible in the Terrateam logs and may be accessible to other hooks or workflow steps. Avoid storing sensitive information directly in the hook configuration.
+- If you need to use sensitive information in your hooks, consider using GitHub Secrets or other secure methods to store and retrieve the values.

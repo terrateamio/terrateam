@@ -1,0 +1,238 @@
+---
+title: workflows
+description: The workflows configuration reference
+---
+
+The `workflows` configuration allows you to customize the steps executed during a Terraform operation, replacing the default workflow. This feature enables you to tailor the behavior of Terrateam to better suit your specific use case and requirements.
+
+## Default Configuration
+```yaml
+workflows:
+  - tag_query: ""
+    environment: null
+    lock_policy: "strict"
+    plan:
+      - type: init
+      - type: plan
+    apply:
+      - type: init
+      - type: apply
+```
+
+## Keys
+| Key | Type | Description |
+| --- | --- | --- |
+| environment | String | The GitHub Environment to associate the workflow with. Default is null. |
+| lock_policy | String | When the directory should have a lock acquired. Values are strict (acquire a lock if either it is merged or applied), apply (only acquire a lock when it is applied), merge (only acquire a lock when it is merged), and none (never acquire a lock). Default is strict. |
+| lock_policy | String | When the directory should have a lock acquired. Values are strict (acquire a lock if either it is merged or applied), apply (only acquire a lock when it is applied), merge (only acquire a lock when it is merged), and none (never acquire a lock). Default is strict. |
+
+### Tag Query
+A [tag query](/advanced-workflows/tags) is a list of all tags that must be present in a tag set to match the workflow.
+Each `tag_query` consists of a map with the following attributes:
+| Key | Type | Description |
+|-----|------|-------------|
+| plan | `plan` | `plan` steps. |
+| apply | `apply` | `apply` steps. |
+| terragrunt | Boolean | Override the `terraform` command with `terragrunt`. Default is `false`. |
+| lock_policy | String | When the directory should have a lock acquired. Values are `strict` (acquire a lock if either it is merged or applied), `apply` (only acquire a lock when it is applied), `merge` (only acquire a lock when it is merged), and `none` (never acquire a lock). Default is `strict`. |
+| engine | [Engine](/configuration-reference/engine) | Configuration to override which engine to use for operations. |
+| environment | String | GitHub environment to use for the operation. Default is `null`. |
+:::note
+Be careful when modifying `lock_policy`. Any value other than `strict` is considered less safe, but can be useful in the right situation.
+:::
+
+## Workflow Steps
+Workflows consist of a series of steps that are executed in order. The available step types are:
+- `init`: Runs `terraform init`.
+- `plan`: Runs `terraform plan`.
+- `apply`: Runs `terraform apply`.
+- `env`: Sets environment variables.
+- `run`: Runs a custom command.
+- `oidc`: Initiates an OIDC connection to a cloud provider.
+
+### Plan
+Plan steps are defined under the `plan` key in a workflow.
+| Key | Type | Description |
+|-----|------|-------------|
+| type | String | Terrateam step type: `init`, `plan`, `env`, `run`, `oidc`. |
+| extra_args | List | Extra command line arguments passed to the `terraform` command. |
+
+### Apply
+Apply steps are defined under the `apply` key in a workflow.
+| Key | Type | Description |
+|-----|------|-------------|
+| type | String | Terrateam step type: `init`, `apply`, `env`, `run`, `oidc`. |
+
+### Env
+Environment variables can be set two ways:
+- Using the `env` type combined with a `cmd`.
+- Using the `env` type combined with a `cmd` and `method` set to `source`.
+
+#### Command
+| Key | Type | Description |
+|-----|------|-------------|
+| name | String | Environment variable name. |
+| cmd | List | Command to execute that exports and environment variable. |
+| trim_trailing_newlines | Boolean | Trim trailing newlines. Default is true. |
+| sensitive | Boolean | Specify if the value of the environment variable is sensitive.  It will be masked in all output. Default: `false`. |
+
+#### Source Method
+| Key | Type | Description |
+|-----|------|-------------|
+| method | String | Must be set to `source`. |
+| cmd | List | Command or script to execute that exports environment variables. |
+| sensitive | Boolean | Indicates whether the environment variables modified by the script are sensitive. If true, they will be masked in all output. Default: `false`. |
+
+### Run
+Custom commands can be run using the `run` step type.
+| Key | Type | Description |
+|-----|------|-------------|
+| cmd | List | Command to run from the directory that Terrateam is operating against. |
+| run_on | String | Run the command on step `success`, `failure`, or `always`. Default is `success`. |
+| capture_output | Boolean | When set to `true`, command output is included in the GitHub pull request comment on a failure. Sensitive data is not masked. Be aware, this data is sent back to the Terrateam backend for processing. Default is `false`. |
+| env | Object | Environment variables to set for this execution. Object keys are environment variable names and the value is a string. |
+
+### OIDC
+An OIDC connection to a cloud provider can be initiated using the `oidc` step type, which supports AWS and GCP providers.
+| Key | Type | Provider | Description |
+|-----|------|----------|-------------|
+| oidc | List | | Initiate an OIDC connection to a cloud provider. |
+| provider | String | | Name of provider: `aws` or `gcp`. |
+| role_arn | String | aws | Specifies the ARN of an IAM role that you want to use. Value can be specified using a GitHub Secret / environment variable with `${ENV_VAR}`. |
+| assume_role_arn | String | aws | Specifies the ARN of an IAM role that you want to assume into. Default is the value of `role_arn`. Value can be specified using a GitHub Secret / environment variable with `${ENV_VAR}`. |
+| assume_role_enabled | Boolean | aws | Retrieve a set of temporary security credentials from AWS and set the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` environment variables. Default is `true`. |
+| audience | String | aws | Specifies the AWS audience name to use. Default is `sts.amazonaws.com`. Value can be specified using a GitHub Secret / environment variable with `${ENV_VAR}`. |
+| region | String | aws | Specifies the AWS region to use and sets the `AWS_REGION` environment variable. Default is `us-east-1`. |
+| session_name | String | aws | Specifies the AWS session name. Default is `terrateam`. |
+| duration | Integer | aws | Specifies the AWS session duration in seconds. Default is `3600`. |
+| service_account | String | gcp | Email address or unique identifier of the Google Cloud service account for which to generate credentials. Value can be specified using a GitHub Secret / environment variable with `${ENV_VAR}`. |
+| workload_identity_provider | String | gcp | The full identifier of the Workload Identity Provider, including the project number, pool name, and provider name. Value can be specified using a GitHub Secret / environment variable with `${ENV_VAR}`. |
+| access_token_lifetime | Integer | gcp | Desired lifetime duration of the access token, in seconds. Default is `3600`. |
+| audience | String | gcp | Specifies the GCP audience name to use. Default is `https://iam.googleapis.com/` + `workload_identity_provider`. |
+| access_token_subject | String | gcp | Email address of a user to impersonate for [Domain-Wide Delegation](https://developers.google.com/workspace/guides/create-credentials). Value can be specified using a GitHub Secret / environment variable with `${ENV_VAR}`. |
+
+## Examples
+### Setting an Environment Variable with a Command
+```yaml
+workflows:
+  - tag_query: "dir:prod"
+    plan:
+      - type: env
+        name: MY_CUSTOM_VAR
+        cmd: ['echo', 'Hello, World!']
+      - type: run
+        cmd: ['echo', 'The value of MY_CUSTOM_VAR is: $MY_CUSTOM_VAR']
+```
+### Setting Environment Variables Using the Source Method
+```yaml
+workflows:
+  - tag_query: "dir:prod"
+    plan:
+      - type: env
+        method: source
+        cmd: ['$TERRATEAM_ROOT/scripts/environment']
+      - type: init
+      - type: plan
+    apply:
+      - type: env
+        method: source
+        cmd: ['$TERRATEAM_ROOT/scripts/environment']
+      - type: init
+      - type: apply
+```
+This workflow matches any directories tagged with `dir:prod` and:
+1. Executes the `environment` script to export environment variables.
+2. Runs `terraform init` for both plan and apply.
+3. Runs `terraform plan` with the environment variables set by the `environment` script.
+4. Executes the `environment` script again to export environment variables before applying.
+5. Runs `terraform apply` with the environment variables set by the `environment` script.
+
+### Custom Plan and Apply Steps
+```yaml
+workflows:
+  - tag_query: "dir:production"
+    plan:
+      - type: init
+      - type: run
+        cmd: ['echo', 'Running custom plan step']
+      - type: plan
+        extra_args: ['-input=false']
+    apply:
+      - type: init
+      - type: apply
+        extra_args: ['-auto-approve']
+      - type: run
+        cmd: ['./post_apply_script.sh']
+```
+This workflow matches any directories tagged with `dir:production` and:
+1. Runs `terraform init` for both plan and apply.
+2. Echoes a custom message before running `terraform plan`.
+3. Runs `terraform plan` with the `-input=false` flag.
+4. Runs `terraform apply` with the `-auto-approve` flag.
+5. Runs a custom script after applying changes.
+
+### AWS OIDC Authentication
+```yaml
+workflows:
+  - tag_query: "dir:aws"
+    plan:
+      - type: oidc
+        provider: aws
+        role_arn: ${AWS_ROLE_ARN}
+      - type: init
+      - type: plan
+    apply:
+      - type: oidc
+        provider: aws
+        role_arn: ${AWS_ROLE_ARN}
+      - type: init
+      - type: apply
+```
+This workflow matches any directories tagged with `dir:aws` and:
+1. Initiates an OIDC connection to AWS using the role ARN specified in the `AWS_ROLE_ARN` environment variable for both plan and apply.
+2. Runs `terraform init` for both plan and apply.
+3. Runs `terraform plan`.
+4. Runs `terraform apply`.
+
+### GCP OIDC Authentication
+```yaml
+workflows:
+  - tag_query: "dir:gcp"
+    plan:
+      - type: oidc
+        provider: gcp
+        service_account: ${GCP_SERVICE_ACCOUNT}
+        workload_identity_provider: ${GCP_WORKLOAD_IDENTITY_PROVIDER}
+      - type: init
+      - type: plan
+    apply:
+      - type: oidc
+        provider: gcp
+        service_account: ${GCP_SERVICE_ACCOUNT}
+        workload_identity_provider: ${GCP_WORKLOAD_IDENTITY_PROVIDER}
+      - type: init
+      - type: apply
+```
+This workflow matches any directories tagged with `dir:gcp` and:
+1. Initiates an OIDC connection to GCP using the service account and workload identity provider specified in the `GCP_SERVICE_ACCOUNT` and `GCP_WORKLOAD_IDENTITY_PROVIDER` environment variables for both plan and apply.
+2. Runs `terraform init` for both plan and apply.
+3. Runs `terraform plan`.
+4. Runs `terraform apply`.
+
+### Specifying a GitHub Environment
+```yaml
+workflows:
+  - tag_query: production
+    environment: production
+```
+
+This workflow will run using the `production` GitHub Environment, ensuring that the secrets and variables defined in the `production` environment are accessible.
+
+## Considerations
+When configuring and using workflows in Terrateam, keep the following considerations in mind:
+- Be cautious when modifying the default workflow steps, such as removing the `init` or `plan` steps, as this can lead to unexpected behavior or errors. Ensure that your custom workflows include all the necessary steps for a successful Terraform operation.
+- When defining custom steps using the `run` step type, make sure that the specified command or script is available and executable within the Terrateam environment. Consider using absolute paths or ensuring that the necessary dependencies are installed.
+- If your custom steps require specific environment variables, use the `env` step type with the `source` method to set them before the relevant steps. Be mindful of the order in which environment variables are set and used within the workflow.
+- When using the `source` method for setting environment variables, ensure that the executed script or command properly exports the desired variables. Test the script independently to verify that it generates the expected environment variables.
+- Consider the security implications of using the `capture_output` option with the `run` step type, as it may expose sensitive information in the GitHub pull request comment if the command fails. Ensure that you properly sanitize or mask any sensitive data before enabling this option.
+- Consider using Terrateam's built-in environment variables (e.g., `TERRATEAM_DIR`, `TERRATEAM_WORKSPACE`) within your workflows to make them more dynamic and reusable across different directories and workspaces.

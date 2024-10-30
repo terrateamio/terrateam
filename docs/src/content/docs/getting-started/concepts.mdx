@@ -1,0 +1,62 @@
+---
+title: Concepts
+description: Learn about Terrateam concepts
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+## Key Concepts and Terminology
+To effectively use Terrateam, it's important to understand its key concepts and terminology. In the following section, we'll explore the core components of Terrateam and how they work together to simplify your infrastructure management workflow.
+
+## Dirspace
+
+At the heart of Terrateam is the concept of a Dirspace. A Dirspace represents a unique combination of a repository, a directory, and a workspace. It is denoted as a tuple `(repository, directory, workspace)` or simply `(directory, workspace)` when the repository is implied.
+
+For example, consider a repository named `repo` with two directories, `dir1` and `dir2`, and no extra configuration for workspaces. This repository would have two Dirspaces:
+
+1. `(repo, dir1, default)` or `(dir1, default)`
+2. `(repo, dir2, default)` or `(dir2, default)`
+
+Terrateam executes its operations, such as plan and apply, within the context of a Dirspace.
+
+```
+Repository
+  |
+  |-- Directory 1
+  |     |-- Workspace: default
+  |
+  |-- Directory 2
+        |-- Workspace: default
+```
+
+## Changes and File Patterns
+
+When a pull request is opened or updated, Terrateam detects changes in the repository based on the `file_patterns` specified in the [`when_modified`](/configuration-reference/when-modified) configuration. By default, the `file_patterns` are set to `['**/*.tf', '**/*.tfvars']`, which means Terrateam will consider changes to any files with `.tf` or `.tfvars` extensions.
+
+Terrateam maps the detected changes to their appropriate [Dirspaces](/getting-started/concepts#dirspace). These mapped Dirspaces are referred to as Changes. When Terrateam executes a Plan or Apply operation on the changes in a pull request, it only considers the Dirspaces that have files modified in the pull request.
+
+## Auto-Plan and Auto-Apply
+
+Terrateam offers two automated operations:
+
+- **Auto-Plan**: Automatically runs a Plan on a new pull request or an update to an existing one. This allows you to see the proposed changes to your infrastructure before merging the pull request.
+- **Auto-Apply**: Automatically runs an Apply after merging a pull request. This ensures that the approved changes are applied to your infrastructure immediately after the merge.
+
+These automated operations streamline your workflow and reduce the manual effort required to manage your infrastructure.
+
+## Locks and Unlocks
+
+Terrateam Locks make sure that only a single change to a resource can be applied in a pull request at any given time. This prevents conflicts and maintains consistency in your infrastructure.
+
+* **Lock**: A guarantee that only a single change to a resource can be applied in a pull request at any given time.
+* **Unlock**: The process of releasing a lock, allowing other changes to be applied.
+
+## Tags and Tag Sets
+
+Terrateam uses Tags to group Terraform resources in a repository and match against those labels. There are two types of Tags:
+
+* **Tag Set**: An unordered and deduplicated list of labels assigned to Terraform resources.
+* **Tag Query**: A Tag Set used for matching. Every Tag in a Tag Query must exist in a Tag Set for a match to occur.
+
+Tags provide a flexible way to organize and manage your Terraform resources within Terrateam.

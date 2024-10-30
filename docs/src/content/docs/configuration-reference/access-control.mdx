@@ -1,0 +1,113 @@
+---
+title: access_control
+description: The access_control configuration reference
+---
+
+The `access_control` configuration provides a powerful and flexible way to manage who can perform various operations on your Terraform resources. By defining policies based on user roles, GitHub teams, and repository collaborators, you can ensure that only authorized individuals can trigger potentially impactful actions like applying changes to your infrastructure.
+
+## Default Configuration
+
+```yaml
+access_control:
+  apply_require_all_dirspace_access: true
+  ci_config_update: ['*']
+  enabled: true
+  files: {}
+  plan_require_all_dirspace_access: false
+  policies:
+    - apply: ['*']
+      apply_autoapprove: []
+      apply_force: []
+      apply_with_superapproval: []
+      plan: ['*']
+      superapproval: []
+      tag_query: ""
+  terrateam_config_update: ['*']
+  unlock: ['*']
+```
+
+## Keys
+| Key | Type | Description |
+| --- | --- | --- |
+| `apply_require_all_dirspace_access` | boolean | If true, the user must have permission to all targeted dirspace to trigger an apply operation. Default is true. |
+| `ci_config_update` | array | Ruleset for which users can trigger a Terrateam operation on a pull request with a change to the Terrateam CI/CD configuration.  Default is `['*']` |
+| `enabled` | boolean | Set to true to enable access control. Default is `true`. |
+| `files` | object | An object where the key is a file path and the value is a ruleset for which users can trigger a Terrateam operation on a pull request with a change to the file. |
+| `plan_require_all_dirspace_access` | boolean | If true, the user must have permission to all targeted dirspaces to trigger a plan operation. Default is `false`. |
+| `policies` | array | A list of policy objects that define access rules for various operations. |
+| `terrateam_config_update` | array | Ruleset for which users can trigger a Terrateam operation on a pull request with a Terrateam configuration file change. Default is `['*']`. |
+| `unlock` | array | Ruleset for which users can trigger an unlock operation on a pull request. Default is `['*']`. |
+
+### Policies
+| Key | Type | Description |
+| --- | --- | --- |
+| `apply` | array | Users who can trigger an apply, including autoapply. |
+| `apply_autoapprove` | array | Users who can trigger an apply auto-approve operations. |
+| `apply_force` | array | Users who can trigger an apply-force operation. |
+| `apply_with_superapproval` | array | Allows a user to trigger an apply operation if a user matching the superapproval list has approved the pull request. |
+| `plan` | array | Users who can trigger a plan operation, including autoplan. |
+| `superapproval` | array | Define a list of users whose approvals are considered super approvals. |
+| `tag_query` | string | See [tag queries](/advanced-workflows/tags). |
+
+### Rule Syntax
+| Syntax | Description |
+| --- | --- |
+| `*` | Matches anyone. |
+| `user:username` | Matches a specific user. |
+| `team:teamname` | Matches any user who is a member of the specified GitHub team. |
+| `role:rolename` | Matches users with the specified repository role. Valid roles are `read`, `triage`, `write`, `maintain`, and `admin`. |
+
+GitHub team names must be specified using their slug, which can be retrieved using the GitHub CLI command `gh api orgs/<ORG>/teams`.
+
+## Examples
+
+Here are a few examples of common access control configurations:
+
+### Allow Only SRE Team to Apply Changes
+
+```yaml
+access_control:
+  policies:
+    - tag_query: ''
+      plan: ['*']
+      apply: ['team:sre']
+```
+
+### Require Super Approval for Production Changes
+
+```yaml
+access_control:
+  policies:
+    - tag_query: 'dir:production'
+      apply: []
+      apply_with_superapproval: ['*']
+      superapproval: ['team:sre']
+    - tag_query: ''
+      plan: ['*']
+      apply: ['*']
+```
+
+### Allow Developers to Force Apply in Development Environment
+
+```yaml
+access_control:
+  policies:
+    - tag_query: 'dir:development'
+      apply_force: ['team:developers']
+```
+
+### Allow Only SRE Team when CI Configuration has Changed
+
+```yaml
+access_control:
+  ci_config_update: ['team:sre']
+```
+
+### Allow Only Repo Admins when a File is Changed
+
+
+```yaml
+access_control:
+  files:
+    bin/script-that-handles-sensitive-things: ['role:admin']
+```

@@ -1,0 +1,70 @@
+---
+title: engine
+description: The engine configuration reference
+---
+
+The `engine` configuration allows you to specify which tool should be used for executing plan and apply operations. Terrateam supports multiple tools, including Terraform, OpenTofu, Terragrunt, and CDKTF.
+
+## Default Configuration
+```yaml
+engine:
+  name: terraform
+  tf_version: latest
+  tf_cmd: terraform
+```
+
+## Keys
+| Key | Type | Description |
+|-----|------|-------------|
+| name | String | The name of the tool to use for executing Terraform operations. Can be terraform, tofu, terragrunt, or cdktf. Default is terraform. |
+| version | String | The version of the tool to use. Only applies to terraform, tofu, and terragrunt. This value is overridden by any version information specified in the Terraform or OpenTofu code. Default is latest. |
+| tf_version | String | The version of the Terraform or OpenTofu CLI to use when engine is set to terragrunt or cdktf. Default is latest. |
+| tf_cmd | String | The command to use for terragrunt or cdktf executions. Can be terraform or tofu. Default is terraform. |
+
+## Examples
+### Using Terraform
+```yaml
+engine:
+  name: terraform
+  version: 1.0.0
+```
+This configuration will use Terraform version `1.0.0` for executing Terraform operations.
+
+### Using OpenTofu
+```yaml
+engine:
+  name: tofu
+  version: 1.6.2
+```
+This configuration will use OpenTofu version `1.6.2` for executing Terraform operations.
+
+### Using Terragrunt with a Specific Terraform Version
+```yaml
+engine:
+  name: terragrunt
+  tf_version: 0.15.5
+```
+This configuration will use Terragrunt with Terraform version `0.15.5` for executing Terraform operations.
+
+### Using Terragrunt with OpenTofu
+```yaml
+engine:
+  name: terragrunt
+  tf_cmd: tofu
+```
+This configuration will use Terragrunt with the latest version of OpenTofu.
+
+### Using CDKTF with the Latest Terraform Version
+```yaml
+engine:
+  name: cdktf
+```
+This configuration will use CDKTF with the latest version of Terraform for executing Terraform operations.
+
+## Considerations
+When configuring `engine`, keep the following in mind:
+- The `terraform` engine is the default and most commonly used option. It directly uses the Terraform CLI for executing Terraform operations.
+- The `tofu` engine uses OpenTofu, an open-source reimplementation of the Terraform CLI. It provides additional features and enhancements over the standard Terraform CLI.
+- The `terragrunt` engine uses Terragrunt, a thin wrapper for Terraform that provides extra tools for keeping your configurations DRY, working with multiple Terraform modules, and managing remote state.
+- The `cdktf` engine uses CDKTF (Cloud Development Kit for Terraform), which allows you to define your infrastructure using familiar programming languages like TypeScript, Python, Go, and Java.
+- When using `terragrunt` or `cdktf`, you can specify the version of Terraform or OpenTofu CLI to use with the `tf_version` option. This allows you to control the underlying Terraform version independently of the Terragrunt or CDKTF version.

@@ -1,0 +1,125 @@
+---
+title: Best Practices
+description: Recommended security practices for running Terrateam in a production environment
+---
+
+When running Terrateam in a production environment, it's crucial to follow security best practices to ensure the integrity and safety of your infrastructure as code workflows. This guide focuses on recommendations and examples for securing your Terrateam setup.
+
+## Mitigating Risks from Untrusted HCL
+Running `terraform plan` on untrusted HCL files can potentially lead to security vulnerabilities. An attacker who can open a pull request against your IaC repository managed by Terrateam may be able to leverage the `external` provider, the `null_resource` provider, or other providers to gain code execution on the provisioner where `terraform plan` is executed. This could allow the attacker to access secrets used to provision resources, potentially granting unauthorized access to your production environment.
+
+To mitigate this risk, consider the following best practices:
+###### 1. GitHub Environments + Access Control
+Use [GitHub Environments](/integrations/github-environments) in combination with [access control](/configuration-reference/access-control) to isolate sensitive resources and secrets:
+   ```yaml
+   workflows:
+     - tag_query: 'dir:production'
+       environment: production
+   access_control:
+     enabled: true
+     apply_require_all_dirspace_access: true
+     plan_require_all_dirspace_access: false
+     terrateam_config_update: ['team:admins']
+     unlock: ['team:admins']
+     policies:
+       - tag_query: 'dir:production'
+         plan: ['team:developers']
+         apply: ['team:sre']
+   ```
+
+   This configuration associates the `production` workflow with the `production` GitHub Environment, ensuring that secrets and resources are securely isolated. It also enables access control, requiring all [dirspace](/getting-started/concepts#dirspace) access for apply operations and limiting Terrateam configuration updates and unlock operations to the `admins` team. Additionally, it defines granular access policies based on `dir` tags, granting `developers` plan access and `sre` apply access for production.
+
+   By combining GitHub Environments with access control, you can ensure that only trusted individuals with the necessary permissions can run Terrateam operations on sensitive environments, reducing the risk of unauthorized access or execution of malicious code.
+
+###### 2. Centralized Configuration
+Leverage a [centralized configuration](/advanced-workflows/centralized-configuration) to enforce consistent security policies across your organization.
+See [use cases](/advanced-workflows/centralized-configuration/#use-cases) for examples.
+
+###### 3. Review and Audit
+Regularly review and audit the permissions granted to users and teams in your organization to ensure the principle of least privilege is followed.
+
+###### 4. Monitor and Audit
+Monitor and audit Terrateam operations and logs for any suspicious activities or unauthorized access attempts.
+
+Use the [Terrateam Console](https://app.terrateam.io) and GitHub Actions logs to review operations.
+
+## Secure Workflow Design
+When designing your Terrateam workflows, consider the following security best practices:
+1. Use OIDC for dynamic credentials to avoid managing long-lived static credentials:
+   ```yaml
+   workflows:
+     - tag_query: 'dir:production'
+       plan:
+         - type: oidc
+           provider: aws
+           role_arn: ${AWS_ROLE_PROD_ARN}
+         - type: init
+         - type: plan
+       apply:
+         - type: oidc
+           provider: aws
+           role_arn: ${AWS_ROLE_PROD_ARN}
+         - type: init
+         - type: apply
+   ```
+   This configuration uses OIDC to dynamically generate short-lived credentials for the `production` workflow, ensuring secure access to AWS resources.
+
+2. Implement policy enforcement using tools like Open Policy Agent (OPA) to catch potential issues and misconfigurations before they are applied:
+   ```yaml
+   workflows:
+     - tag_query: 'dir:production'
+       plan:
+         - type: oidc
+           provider: aws
+           role_arn: ${AWS_ROLE_PROD_ARN}
+         - type: run
+           cmd: ['aws', 's3', 'sync', 's3://acme-corp-sre-private-bucket/opa/policies/', '/tmp/policies/']
+         - type: init
+         - type: plan
+         - type: env
+           name: CONFTEST_POLICY
+           cmd: ['echo', '/tmp/policies/']
+         - type: run
+           cmd: ['conftest-wrapper']
+           capture_output: true
+   ```
+   This configuration syncs OPA policies from a private S3 bucket and uses `conftest` to evaluate the Terraform plan against those policies, preventing non-compliant changes from being applied.
+
+3. Enable [drift detection](/configuration-reference/drift) to identify and track changes made to your infrastructure outside of Terraform:
+   ```yaml
+   hooks:
+     plan:
+       post:
+         - type: drift_create_issue
+   drift:
+     enabled: true
+     schedule: daily
+   ```
+   This configuration enables drift detection and sets it to run on a daily schedule, automatically creating a GitHub issue to notify you of any detected drift.
+
+4. Configure [apply requirements](/configuration-reference/apply-requirements) to enforce code reviews and approval processes:
+   ```yaml
+   apply_requirements:
+     checks:
+       - tag_query: 'dir:production'
+         approved:
+           enabled: true
+           any_of_count: 2
+         merge_conflicts:
+           enabled: true
+         status_checks:
+           enabled: true
+   ```
+   This configuration enables apply requirements, requiring pull requests to have at least 2 approvals, no merge conflicts, and all status checks passing before an apply operation can be executed.
+
+## Operational Excellence
+To ensure the smooth and secure operation of your Terrateam setup, consider the following best practices:
+- Integrate Terrateam into your CI/CD pipeline to automate testing, validation, and deployment of all infrastructure changes.
+- Implement monitoring and alerting for your Terrateam setup and the infrastructure it manages, using features like audit trail and notifications for critical events.
+- Rotate and manage secrets securely by storing them as GitHub Secrets or using a secure secrets management system, and regularly rotating access keys and tokens.
+- Continuously review and update your Terrateam configuration, workflows, and practices to align with the evolving needs of your organization and the latest industry standards.
+
+## Conclusion
+By following the security best practices outlined in this guide, you can establish a robust and secure setup for managing your infrastructure as code with Terrateam. Leveraging features like GitHub Environments, centralized configuration, access control, OIDC, policy enforcement, drift detection, and apply requirements, you can mitigate risks, enforce consistent security policies, and ensure the integrity of your production environment.
+
+Remember to regularly review and update your Terrateam configuration, monitor for suspicious activities, and continuously optimize your setup to maintain the highest level of security and operational excellence.

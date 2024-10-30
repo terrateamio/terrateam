@@ -1,0 +1,43 @@
+---
+title: automerge
+description: The automerge configuration reference
+---
+
+The `automerge` configuration can be used to automatically merge the pull request after all directories have been successfully applied.
+
+## Default Configuration
+```yaml
+automerge:
+  enabled: false
+  delete_branch: false
+```
+
+## Keys
+| Key | Type | Description |
+| --- | --- | --- |
+| enabled | boolean | Specifies whether automerge is enabled. Default is false. |
+| delete_branch | boolean | Specifies whether the branch should be deleted after the PR is merged. Default is false. |
+
+## Examples
+### Enable Automerge
+```yaml
+automerge:
+  enabled: true
+```
+This configuration will enable automerge, automatically merging the pull request after all directories have been successfully applied.
+
+### Enable Automerge and Delete Branch
+```yaml
+automerge:
+  enabled: true
+  delete_branch: true
+```
+
+This configuration will enable automerge and delete the source branch after a successful apply and git merge.
+
+## Considerations
+When enabling automerge, keep the following in mind:
+- Automerge will only trigger after all directories in the pull request have been successfully applied.
+- If any directory fails to apply, automerge will not be triggered.
+- Automerge will respect any branch protection rules configured in your repository. If a pull request cannot be merged due to branch protection rules, automerge will not force the merge.
+- If `delete_branch` is enabled, the source branch will only be deleted if the merge is successful.

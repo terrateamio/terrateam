@@ -1,0 +1,145 @@
+---
+title: Gitflow
+description: Implementing a Gitflow-style workflow using Terrateam's destination branches and tags
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import { Icon } from '@astrojs/starlight/components';
+
+Gitflow is a popular branching model that provides a structured approach to managing feature development, releases, and hotfixes. By leveraging Terrateam's destination branches and tags features, you can implement a Gitflow-style workflow for your infrastructure as code projects, ensuring a consistent and organized development process.
+
+## Gitflow Branching Model
+The Gitflow branching model consists of the following main branches:
+
+##### `main` (or `master`)
+Represents the production-ready state of your infrastructure.
+
+##### `develop`
+Serves as the integration branch for feature development and acts as a staging area before merging changes into `main`.
+
+##### `feature/*`
+Used for developing new features or enhancements. Each feature branch is created from `develop` and merged back into `develop` when complete.
+
+##### `release/*`
+Used for preparing a new release. Release branches are created from `develop`, and once they are stable, they are merged into both `main` and `develop`.
+
+##### `hotfix/*`
+Used for addressing critical issues in production. Hotfix branches are created from `main`, and once the fix is complete, they are merged into both `main` and `develop`.
+
+## Configuring Destination Branches and Tags for Gitflow
+To implement a Gitflow-style workflow with Terrateam, you can use the `destination_branches`, `tags`, and `workflows` configuration in your `.terrateam/config.yml` file. Here's an example configuration:
+```yaml
+tags:
+  dest_branch:
+    main: '^main$'
+    staging: '^staging$'
+    dev: '^dev$'
+destination_branches:
+  - branch: main
+    source_branches: ['staging']
+  - branch: staging
+    source_branches: ['dev']
+  - branch: dev
+    source_branches: ['*', '!main', '!staging']
+workflows:
+  - tag_query: 'dest_branch:main'
+    plan:
+      - type: env
+        method: source
+        cmd: ['echo', 'main']
+      - type: init
+      - type: plan
+    apply:
+      - type: env
+        method: source
+        cmd: ['echo', 'main']
+      - type: init
+      - type: apply
+  - tag_query: 'dest_branch:staging'
+    plan:
+      - type: env
+        method: source
+        cmd: ['echo', 'staging']
+      - type: init
+      - type: plan
+    apply:
+      - type: env
+        method: source
+        cmd: ['echo', 'staging']
+      - type: init
+      - type: apply
+  - tag_query: 'dest_branch:dev'
+    plan:
+      - type: env
+        method: source
+        cmd: ['echo', 'dev']
+      - type: init
+      - type: plan
+    apply:
+      - type: env
+        method: source
+        cmd: ['echo', 'dev']
+      - type: init
+      - type: apply
+```
+
+In this configuration:
+- The `tags` section defines the `dest_branch` tag with three possible values: `main`, `staging`, and `dev`. Each value is associated with a regular expression that matches the corresponding branch name.
+- The `destination_branches` section specifies the allowed combinations of destination branches and source branches. For example, pull requests targeting the `main` branch are allowed only from the `staging` branch.
+- The `workflows` section defines different workflows based on the `dest_branch` tag. Each workflow sets the appropriate environment variables and runs the necessary Terraform commands based on the destination branch.
+
+## Workflow Example
+Let's walk through an example of how the Gitflow workflow can be implemented with Terrateam using the above configuration:
+<Steps>
+1. **Feature Development**
+
+   1\. Create a new feature branch from `dev`: `feature/add-new-resource`
+
+   2\. Make the necessary changes to your Terraform code in the feature branch
+
+   3\. Open a pull request from `feature/add-new-resource` to `dev`
+
+   4\. Terrateam will run plans on the pull request, allowing you to review the proposed changes in the `dev` environment
+
+   5\. After the pull request is approved and merged, the changes will be incorporated into `dev`
+
+1. **Staging Deployment**
+
+   1\. When you're ready to deploy the changes to staging, create a pull request from `dev` to `staging`
+
+   2\. Terrateam will run plans and applies on the staging environment, ensuring that the infrastructure is properly provisioned
+
+   3\. If any issues are found during the staging deployment, fix them directly in the `dev` branch and repeat the process
+
+   4\. Once the changes are stable in staging, merge the pull request into `staging`
+
+1. **Production Release**
+
+   1\. When you're ready to release the changes to production, create a pull request from `staging` to `main`
+
+   2\. Terrateam will run plans and applies on the production environment, ensuring that the changes are properly deployed
+
+   3\. If any issues are found during the production release, fix them directly in the `staging` branch and repeat the process
+
+   4\. Once the changes are stable in production, merge the pull request into `main`
+
+1. **Hotfix**
+
+   1\. If a critical issue is discovered in production, create a new hotfix branch from `main`: `hotfix/fix-critical-bug`
+
+   2\. Make the necessary fixes in the hotfix branch
+
+   3\. Open a pull request from `hotfix/fix-critical-bug` to `main`
+
+   4\. Terrateam will run plans and applies on the production environment, ensuring that the fix is properly implemented
+
+   5\. After the pull request is approved and merged, the hotfix will be deployed to production
+
+   6\. Merge the hotfix branch back into `dev` to ensure that the fix is included in future releases
+</Steps>
+
+## Best Practices
+When implementing a Gitflow workflow with Terrateam, consider the following best practices:
+- Ensure that your destination branches and tags configuration accurately reflects your desired branching model and workflow
+- Use descriptive and meaningful names for your branches, following the Gitflow naming conventions
+- Regularly update your `dev` branch with the latest changes from `main` to keep it in sync

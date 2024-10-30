@@ -1,0 +1,63 @@
+---
+title: Resourcely
+description: Integrate Resourcely with Terrateam to automatically evaluate Terraform plans against security guardrails
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+[Resourcely](https://www.resourcely.io/) is a tool that helps businesses create secure-by-default infrastructure resources and prevents security misconfigurations in the cloud. By integrating Resourcely with Terrateam, you can automatically evaluate your Terraform plans against Resourcely Guardrails on every pull request and receive feedback directly within your pull request.
+
+## Enabling Resourcely Integration
+To enable the Resourcely integration in Terrateam, you need to add the following configuration to your Terrateam configuration file (`.terrateam/config.yml`):
+```yaml
+integrations:
+  resourcely:
+    enabled: true
+```
+
+## Storing the Resourcely API Token
+Terrateam needs access to your Resourcely API token to communicate with the Resourcely service and evaluate your Terraform plans. To securely store your Resourcely API token, you need to create a GitHub Secret named `RESOURCELY_API_TOKEN` with your Resourcely API token as the value.
+<Steps>
+1. In your GitHub repository, navigate to "Settings" > "Secrets" > "Actions".
+
+2. Click on "New repository secret".
+
+3. Enter `RESOURCELY_API_TOKEN` as the secret name and paste your Resourcely API token as the value.
+
+4. Click "Add secret" to save the API token.
+</Steps>
+
+## How It Works
+Once the Resourcely integration is enabled and the API token is stored, Terrateam will automatically run the Resourcely CLI against the generated Terraform plan file(s) during the plan operation.
+<Steps>
+1. Open a pull request with changes to your Terraform code.
+
+2. Terrateam automatically runs a plan operation and generates Terraform plan file(s).
+
+3. The Resourcely CLI evaluates the plan file(s) against the configured Resourcely Guardrails.
+
+4. If the plan file evaluation fails any of the Resourcely Guardrails, Terrateam will provide feedback directly in the pull request, indicating which guardrails were violated.
+
+5. Review the Resourcely evaluation results and make necessary adjustments to your Terraform code to ensure compliance with the guardrails.
+
+6. Once the pull request is approved and changes are applied with Terrateam, the infrastructure resources will be provisioned securely according to the Resourcely Guardrails.
+</Steps>
+
+## Resourcely Guardrails
+Resourcely Guardrails govern how cloud resources can be created and altered, preventing infrastructure misconfigurations. Guardrails are applied to Blueprints to ensure they are verified before resource provisioning. Resourcely provides a catalog with a wide set of available guardrails that can be further configured. Guardrails are available for the following categories:
+- Access Control
+- Best Practices
+- Cost Efficiency
+- And more
+
+See the [Resourcely Documentation](https://docs.resourcely.io/) to learn more.
+
+## Viewing Resourcely Evaluation Results
+When a pull request is created or updated, Terrateam will automatically run the Resourcely CLI evaluation as part of the plan operation. The evaluation results will be displayed directly in the pull request comments.
+
+If any guardrails are violated, merging and apply operations will be blocked until the issues are resolved. The Resourcely evaluation results will provide detailed information about the violated guardrails.
+
+## Considerations
+- Resourcely integration adds an additional layer of security and compliance checks to your Terraform workflows, ensuring that your infrastructure resources are provisioned securely and adhere to best practices.
+- Encourage your team to address Resourcely evaluation failures promptly to maintain a secure and compliant infrastructure.
+- Integrating Resourcely with Terrateam enables you to catch potential security misconfigurations early in the development process, reducing the risk of deploying insecure resources to your production environment.

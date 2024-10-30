@@ -1,0 +1,33 @@
+---
+title: terrateam plan
+description: Execute the plan workflow against changes in a pull request
+---
+
+The `terrateam plan` command executes the plan workflow against changes in a pull request.
+
+## All Changes
+To plan all changes, use the following command:
+```
+terrateam plan
+```
+
+## Target a Directory
+To plan a specific directory, use the `dir` implicit tag:
+```
+terrateam plan dir:directory-name
+```
+Replace `directory-name` with the name of the directory you want to target.
+
+## Target a Workspace
+To plan a specific workspace, use the `workspace` implicit tag:
+```
+terrateam plan workspace:workspace-name
+```
+Replace `workspace-name` with the name of the workspace you want to target.
+
+## Target a Tag Query
+To plan a specific tag query, use the following command:
+```
+terrateam plan <tag-query>
+```
+Replace `<tag-query>` with your desired tag query. [Learn more about our tag queries](/advanced-workflows/tags).

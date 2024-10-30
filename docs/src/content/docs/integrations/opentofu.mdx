@@ -1,0 +1,62 @@
+---
+title: OpenTofu
+description: Learn how to use OpenTofu, an open-source Terraform-compatible engine, with Terrateam
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+[OpenTofu](https://opentofu.org) is an open-source, Terraform-compatible engine designed to offer a community-supported, backward-compatible alternative to the official Terraform binary. Terrateam supports the use of OpenTofu, enabling you to leverage its additional features.
+
+## Configuring OpenTofu
+
+### Global
+To integrate OpenTofu into all Terrateam operations, simply configure the `engine` section within your Terrateam configuration file (`.terrateam/config.yml`).
+```yaml
+engine:
+  name: tofu
+  version: 1.6.2
+```
+
+### Specific Workflow
+
+To integrate OpenTofu for a specific workflow, configure the `workflows.engine` section.
+```yaml
+workflows:
+  - tag_query: prod
+    engine:
+      name: tofu
+      version: 1.6.2
+```
+
+## OpenTofu Features
+
+OpenTofu provides several benefits over the official Terraform binary, including:
+- [100% open source](https://github.com/opentofu/opentofu)
+- Mozilla Public License, providing the freedom to use, modify, and distribute
+- Strong community support
+- Feature development directed by the community
+
+## Using OpenTofu with Terrateam
+
+Once you've configured OpenTofu in your Terrateam configuration file, you can use Terrateam commands as usual. Terrateam will automatically use OpenTofu as the underlying engine for your Terraform operations.
+
+<Steps>
+1. Open a pull request with changes to your Terraform code.
+
+1. Terrateam automatically runs a plan operation using OpenTofu and comments on the pull request with the plan output.
+
+1. Review the plan output and collaborate with your team to ensure the changes are as expected.
+
+1. Once the pull request is approved, comment `terrateam apply` to trigger an apply operation using OpenTofu.
+
+1. Terrateam runs the apply operation and comments on the pull request with the apply output.
+</Steps>
+
+## Migrating from Terraform to OpenTofu
+
+Currently, OpenTofu is a drop-in replacement for Terraform, ensuring compatibility with versions 1.5.x and most of 1.6.x. No modifications to your existing code are necessary for continued compatibility. OpenTofu is well-suited for production environments across various use cases without exceptions. For detailed migration instructions, refer to the [official migration guide](https://opentofu.org/docs/intro/migration/).
+
+## Considerations
+
+- OpenTofu's version numbering does not necessarily match that of Terraform. Make sure to use a version of OpenTofu that is compatible with your Terraform code and provider versions.
+- If you need to switch back to the official Terraform binary, simply update your Terrateam configuration file to set the `engine` name to `terraform` and specify the desired version.

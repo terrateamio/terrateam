@@ -1,0 +1,22 @@
+{
+  "name": "purple-pegasi",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev --host",
+    "start": "astro dev --host",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.3",
+    "@astrojs/starlight": "^0.26.1",
+    "@expressive-code/plugin-line-numbers": "^0.35.6",
+    "@fontsource/roboto": "^5.0.14",
+    "astro": "^4.10.2",
+    "sharp": "^0.32.5",
+    "starlight-image-zoom": "^0.7.0",
+    "typescript": "^5.5.4"
+  }
+}

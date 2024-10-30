@@ -1,0 +1,65 @@
+---
+title: Other Providers
+description: Configure Terrateam to integrate with other cloud providers
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+Terrateam can be used with various cloud providers beyond AWS, GCP, and Azure. To integrate Terrateam with other providers, you need to configure authentication and authorization based on the specific provider's requirements.
+
+Terrateam needs permission to access resources in your cloud provider, regardless of which provider you're using. Without proper credentials, Terrateam won't have permission to view or update cloud resources using the Terraform CLI.
+
+Most cloud providers have an official Terraform provider listed on the [Terraform Registry](https://registry.terraform.io/). The authentication process may vary between providers, so it's essential to refer to the official documentation of the Terraform provider you're using for specific setup instructions.
+In general, most Terraform providers require a secret access token for authentication, which can be provided through an environment variable.
+
+## Typical Setup Steps
+While the exact steps may vary depending on the provider, the typical setup process for integrating Terrateam with other cloud providers is as follows:
+<Steps>
+1. Create a user, role, or service account on your cloud provider with the appropriate access permissions for Terrateam.
+
+2. Generate a secret access token for the newly created user, role, or service account.
+
+3. Create the required environment variables for the provider to consume using GitHub Secrets.
+</Steps>
+
+## Example: Fly.io
+Let's take a look at an example of configuring Terrateam with the `Fly.io` Terraform provider.
+
+### Provider Configuration
+The `Fly.io` Terraform provider can be configured with the following Terraform code:
+```hcl
+provider "fly" {
+  # Please don't do this. Use the FLY_API_TOKEN env variable instead.
+  flytoken = "abc123"
+}
+```
+As you can see, the `fly` provider requires a token. This can be specified by using a `flytoken` configuration inside the `provider` block or by setting a `FLY_API_TOKEN` environment variable. It's recommended to use an environment variable to store the token securely, as storing secrets and passwords directly in Git is not a good practice.
+
+### Prerequisites
+Before you begin, ensure you have the following:
+- [GitHub CLI](https://cli.github.com/)
+
+### Setup
+<Steps>
+1. Export your Terraform `organization/repo` combination as an environment variable. For example:
+   ```
+   export REPO="<OWNER/REPO>"
+   ```
+
+2. Choose a `Fly.io` user you wish to use with Terrateam.
+
+3. Create a new `Fly.io` customer access token:
+   ```
+   export FLY_API_TOKEN=$(fly auth token)
+   ```
+
+4. Create the `FLY_API_TOKEN` GitHub Secret:
+   ```
+   gh secret --repo "$REPO" set FLY_API_TOKEN --body "$FLY_API_TOKEN"
+   ```
+</Steps>
+The next time you issue a Terrateam operation, the Terrateam GitHub Action runner will pull down the `FLY_API_TOKEN` GitHub Secret to be used against `Fly.io` resources.
+:::note
+These are generic instructions. Always refer to the official Terraform provider documentation for more details and provider-specific setup instructions.
+:::

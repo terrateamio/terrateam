@@ -1,0 +1,33 @@
+---
+title: terrateam apply
+description: Execute the apply workflow against a stored plan file for changes in a pull request
+---
+
+The `terrateam apply` command executes the apply workflow against a stored plan file for changes in a pull request.
+
+## All Plans
+To apply all plan files, use the following command:
+```
+terrateam apply
+```
+
+## Target a Directory
+To apply a specific directory, use the `dir` implicit tag:
+```
+terrateam apply dir:directory-name
+```
+Replace `directory-name` with the name of the directory you want to target.
+
+## Target a Workspace
+To apply a specific workspace, use the `workspace` implicit tag:
+```
+terrateam apply workspace:workspace-name
+```
+Replace `workspace-name` with the name of the workspace you want to target.
+
+## Target a Tag Query
+To apply a specific tag query, use the following command:
+```
+terrateam apply <tag-query>
+```
+Replace `<tag-query>` with your desired tag query. [Learn more about our tag queries](/advanced-workflows/tags).

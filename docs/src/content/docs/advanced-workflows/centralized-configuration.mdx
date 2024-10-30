@@ -1,0 +1,127 @@
+---
+title: Centralized Configuration
+description: Configuration defaults and overrides can be specified in a central repository.
+---
+
+Terrateam supports specifying defaults, overrides, and repository configurations in a central repository. This Centralized Configuration allows for centralized management, reducing the need for repetitive configurations across multiple repositories.
+
+All configuration files in the central repository have the same structure as the existing configuration. There are three ways that the configuration files are used:
+
+###### 1. Defaults
+###### 2. Overrides
+###### 3. Full Configuration
+
+The following files are used to construct the repository configuration. File paths are given with the `.yml` extension. The `.yaml` extension is supported as well. If both are present, the `.yml` suffix takes precedence.
+
+| Name | Repository | Branch | Path |
+|--- |--- |--- |--- |
+| `global_defaults`| `terrateam` | `default branch` | `config/defaults.yml` |
+| `global_overrides` | `terrateam` | `default branch` | `config/overrides.yml` |
+| `repo_defaults` | `terrateam` | `default branch` | `config/$repository_name/defaults.yml` |
+| `repo_overrides` | `terrateam` | `default branch` | `config/$repository_name/overrides.yml` |
+| `repo_forced_config` | `terrateam` | `default branch` | `config/$repository_name/config.yml` |
+| `repo_default_config` | `$repository` | `default branch` | `.terrateam/config.yml` |
+| `repo_config` | `$repository` | `feature branch` | `.terrateam/config.yml` |
+
+## How It Works
+The configuration files are fetched and merged in a specific order to construct the final configuration for each repository. The process is as follows:
+
+###### 1. Fetch the Centralized Repository Configuration Files:
+- `global_defaults`
+- `global_overrides`
+- `repo_defaults`
+- `repo_overrides`
+- `repo_forced_config`
+
+###### 2. Fetch the Repository-specific Configuration Files from the Default and Feature Branches:
+- `repo_default_config`
+- `repo_config`
+
+###### 3. Merge the Configuration Files:
+
+- If `repo_forced_config` exists, it is merged directly with `global_defaults`.
+- Otherwise, the configurations are merged in two steps:
+  - **Step 1**: Create the default branch configuration by merging:
+    - `global_defaults -> repo_defaults -> global_overrides -> repo_overrides -> repo_default_config`
+  - **Step 2**: Create the feature branch configuration by merging:
+    - `global_defaults -> repo_defaults -> global_overrides -> repo_overrides -> repo_config`
+- Replace specific sections (`access_control`, `apply_requirements`, and `destination_branches`) in the feature branch config with those from the default branch config.
+
+## Use Cases
+### Disable Terrateam by Default
+When transitioning to Terrateam, it may be beneficial to install the Terrateam GitHub application for an entire organization and all of your repositories. This approach allows teams to migrate to Terrateam at their own pace. However, Terrateam will begin acting on any changes to these repositories by default. To disable Terrateam by default, specify the following `global_defaults` configuration:
+
+```yaml
+enabled: false
+```
+
+As teams transition to Terrateam, they can enable it by specifying `enabled: true` in the repository configuration.
+
+### Enforce Strict Set Of Workflows
+Disable repositories from specitying their own workflows section.
+
+Specify the following configuration in your `global_overrides`:
+
+```yaml
+workflows:
+    - tag_query: ""
+      plan:
+          - type: init
+          - type: plan
+      apply:
+          - type: init
+          - type: apply
+```
+
+If specific repositories have workflows they require, they can be specified in the `repo_overrides` configuration.
+
+### Restricting Apply Operations to Specific Teams
+Ensure that only the SRE team can perform apply operations, while everyone can plan.
+
+Specify the following configuration in your `global_overrides`:
+
+```yaml
+access_control:
+  enabled: true
+  policies:
+    - tag_query: ""
+      plan: ['*']
+      apply: ['team:sre']
+```
+
+### Requiring Super Approval for Production Changes
+Changes to the production environment require super approval from the SRE team, while other environments can be managed by developers.
+
+Specify the following configuration in your `global_overrides`:
+
+```yaml
+access_control:
+  enabled: true
+  policies:
+    - tag_query: "dir:production"
+      apply_with_superapproval: ['*']
+      superapproval: ['team:sre']
+    - tag_query: ""
+      plan: ['*']
+      apply: ['team:developers']
+```
+
+### Requiring Approvals and Status Checks
+You want to enforce that all changes across all repositories in your organization must be approved by at least one member from the SRE team and must pass all status checks before applying.
+
+Specify the following configuration in your `global_overrides`:
+
+```yaml
+apply_requirements:
+  checks:
+    - tag_query: ""
+      approved:
+        enabled: true
+        any_of: ["team:sre"]
+        any_of_count: 1
+      status_checks:
+        enabled: true
+```
+
+## Configuration Details
+Users can comment `terrateam repo-config` to get an idea of how the configuration was produced. This feature provides detailed information about which files were used to construct the final configuration.

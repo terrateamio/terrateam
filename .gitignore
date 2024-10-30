@@ -1,9 +1,38 @@
+# Build output
+docs/dist/
+code/build/
+
+# Generated types
+docs/.astro/
+
+# Dependencies
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.production
+
+# macOS-specific files
+.DS_Store
+
+# Temporary files
 *~
+
+# Custom build files
 pds.mk
 Ocamlrules.mk.in
-code/build/
-code/.merlin
+
+# Python cache
 *__pycache__.*
+
+# OCaml and Dune project files
+code/.merlin
 code/dune
 code/dune-project
 code/dune-workspace

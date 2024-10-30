@@ -1,0 +1,163 @@
+---
+title: Configuration 
+description: Understanding the Terrateam configuration file
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+The Terrateam configuration file (`config.yml`) is the primary way to customize how Terrateam interacts with your GitHub repository and Terraform code. This file is stored in the `.terrateam` directory at the root of your repository.
+
+:::note
+The `.terrateam/config.yml` file is the source of truth for Terrateam's behavior in your repository.
+:::
+
+## Basic Structure
+
+The `config.yml` file is written in YAML and has the following basic structure:
+
+```yaml
+access_control:
+  # Access Controls
+apply_requirements:
+  # Apply Requirements
+dirs:
+  # Repository Layout Definitions
+hooks:
+  # Pre/Post Hooks 
+workflows:
+  # Custom Workflow Steps 
+# Other Configuration Options
+```
+
+## Access Control
+
+Access Control allows you to define policies for who can perform various Terrateam operations, such as planning and applying changes. You can configure access based on individual users, GitHub teams, or repository collaborator roles.
+
+Here's an example `access_control` configuration:
+
+```yaml
+access_control:
+  policies:
+    - tag_query: ''
+      plan: ['*']
+      apply: ['team:sre']
+```
+
+This configuration allows anyone to trigger a Plan operation but restricts Apply operations to members of the `sre` team.
+
+For more information, see the [Access Control](/configuration-reference/access-control) section of the Configuration Reference.
+
+## Apply Requirements
+
+Apply Requirements allows you to specify conditions that must be met before an Apply operation can be performed on an unmerged pull request. This helps ensure that changes are properly reviewed and validated before being applied.
+
+Here's an example `apply_requirements` configuration:
+
+```yaml
+apply_requirements:
+  create_pending_apply_check: true
+  checks:
+    - tag_query: ""
+      approved:
+        enabled: true
+        any_of: []
+        any_of_count: 2
+        all_of: []
+      merge_conflicts:
+        enabled: true
+      status_checks:
+        enabled: true
+        ignore_matching:
+          - "ci/.*"
+```
+
+This configuration requires that the pull request has at least 2 approvals, no merge conflicts, and all status checks (except those matching `ci/.*`) have passed before an apply can be performed.
+
+When `create_pending_apply_check` is enabled, Terrateam will create a `Terrateam Apply` GitHub status check. Combined with [GitHub Rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets), this prevents the pull request from being merged until all Apply operations have completed.
+
+For more information, see the [Apply Requirements](/configuration-reference/apply-requirements) section of the Configuration Reference.
+
+## Dirs
+
+Dirs allow you to define which [Tags](/advanced-workflows/tags), Workspaces, and [When Modified](/configuration-reference/when-modified) rules rules apply to specific directories in your repository.
+
+Here's an example `dirs` configuration:
+
+```yaml
+dirs:
+  ec2:
+    tags: [aws, ec2]
+    workspaces:
+      production:
+        tags: [production]
+    when_modified:
+      file_patterns: ["ec2/*.tf", "ec2/*.tfvars", "iam/*.tf", "iam/*.tfvars"]
+  iam:
+    tags: [aws, iam]
+```
+
+This configuration assigns the Tags `aws` and `ec2` to the `ec2` directory, and the Tags `aws` and `iam` to the `iam` directory. It also specifies that the `production` Workspace should be used when a [Tag Query](/advanced-workflows/tags) includes `aws`, `ec2`, and `production` for a [Workflow](/configuration-reference/workflows) or [Command](/command-reference). Additionally, it overrides the [`when_modified`](/configuration-reference/when-modified) file patterns for the `ec2` directory.
+
+Terrateam also supports glob patterns in the `dirs` directive, allowing you to match multiple directories with similar configurations. The `${DIR}` variable can be used to specify the directory that Terrateam is working against, relative to the root of the repository.
+
+For more information, see the [Dirs](/configuration-reference/dirs) section of the Configuration Reference.
+
+## Hooks
+
+Hooks allow you to run custom commands or set environment variables before (pre-hooks) or after (post-hooks) Terrateam operations. There are three types of Hooks:
+
+- `all`: Executed for both Plan and Apply operations
+- `plan`: Executed only for Plan operations
+- `apply`: Executed only for Apply operations
+
+Here's an example `hooks` configuration:
+
+```yaml
+hooks:
+  all:
+    pre:
+      - type: run
+        cmd: ['echo', 'Running pre-hook for all operations']
+  plan:
+    post:
+      - type: run
+        cmd: ['echo', 'Running post-hook for plan operations']
+```
+
+For more details, see the [Hooks](/configuration-reference/hooks) section of the Configuration Reference.
+
+## Workflows
+
+Workflows allow you to define custom steps for Terrateam's Plan and Apply operations. You can use Workflows to replace or augment the default behavior.
+
+Here's an example `workflows` configuration:
+
+```yaml
+workflows:
+  - tag_query: "dir:production"
+    plan:
+      - type: init
+      - type: plan
+        extra_args: ["-var-file=production.tfvars"]
+    apply:
+      - type: init
+      - type: apply
+      - type: run
+        cmd: ['echo', 'Error running apply']
+        run_on: failure
+```
+
+This workflow runs a custom plan and apply process for any changes in the `production` directory.
+
+For more information, see the [Workflows](/configuration-reference/workflows) section of the Configuration Reference.
+
+## Other Configuration Options
+
+The `config.yml` file supports many other configuration options, including:
+
+- `engine`: Set the IaC tool to be used for operations.
+- `when_modified`: Configure when Terrateam should trigger based on file changes
+- `cost_estimation`: Enable and configure cost estimation for Terraform plans
+- `automerge`: Automatically merge pull requests after successful applies
+
+For a complete list of available options and their usage, refer to the [Configuration Reference](/configuration-reference) section of the documentation.

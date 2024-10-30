@@ -1,0 +1,139 @@
+---
+title: Role-Based Access Control
+description: Control access to Terrateam operations with role-based access control
+---
+
+Terrateam provides a comprehensive permission system that allows you to control who can perform Terrateam operations against your infrastructure. By configuring role-based access control, you can ensure that only authorized users can make changes to your infrastructure, reducing the risk of accidental or unauthorized modifications.
+
+## Access Control
+Terrateam's [access control](/configuration-reference/access-control) feature is the foundation of the permission system. It allows you to define a set of capabilities, such as plan and apply, and specify which users or groups can perform those operations.
+
+### Enabling Access Control
+To enable access control, add the following to your Terrateam configuration file (`.terrateam/config.yml`):
+```yaml
+access_control:
+  enabled: true
+```
+
+### Configuring Access Control Policies
+Access control policies define the capabilities and permissions for different users, groups, and roles. Here's an example configuration:
+```yaml
+access_control:
+  enabled: true
+  apply_require_all_dirspace_access: true
+  plan_require_all_dirspace_access: false
+  terrateam_config_update: ['*']
+  unlock: ['*']
+  policies:
+    - tag_query: ''
+      apply: ['role:maintain']
+      apply_autoapprove: ['user:alice']
+      apply_force: ['team:sre']
+      apply_with_superapproval: ['role:write']
+      plan: ['*']
+      superapproval: ['user:bob']
+```
+In this example:
+- The `apply` capability is granted to users with the `maintain` role in the repository.
+- The `apply_autoapprove` capability is granted to the user `alice`.
+- The `apply_force` capability is granted to members of the `sre` team.
+- The `apply_with_superapproval` capability is granted to users with the `write` role in the repository, but only if a user with the `superapproval` capability has approved the pull request.
+- The `plan` capability is granted to all users (`*`).
+- The `superapproval` capability is granted to the user `bob`.
+
+## Plan Permissions
+The `plan` capability in access control determines who can perform plan operations on your infrastructure. By default, Terrateam grants the `plan` capability to all users (`*`), allowing anyone to generate and review plans for proposed changes.
+
+However, you can restrict plan permissions to specific users or groups by modifying the `plan` policy in your `access_control` configuration.
+
+For example, to grant plan permissions only to users with the `write` role, you can use the following configuration:
+```yaml
+access_control:
+  enabled: true
+  policies:
+    - tag_query: ''
+      plan: ['role:write']
+```
+
+## Apply Permissions
+The `apply` capability in access control determines who can perform apply operations on your infrastructure. By default, Terrateam grants the `apply` capability to all users (`*`), allowing anyone to apply
+changes.
+
+You can customize apply permissions by modifying the `apply` policy in your `access_control` configuration.
+
+For example, to grant apply permissions to a specific team, you can use the following configuration:
+```yaml
+access_control:
+  enabled: true
+  policies:
+    - tag_query: ''
+      apply: ['team:devops']
+```
+
+### Apply Requirements
+In addition to the `apply` capability, Terrateam has a set of [apply requirements](/configuration-reference/apply-requirements) that must be met before an apply operation can be executed. These requirements help ensure that changes to your infrastructure are properly reviewed and approved before being applied.
+
+By default, Terrateam has the following apply requirements:
+- The pull request must not have any merge conflicts.
+- All status checks associated with the pull request must have passed.
+
+You can configure these requirements in your Terrateam configuration file using the `apply_requirements.checks` section.
+
+For example:
+```yaml
+apply_requirements:
+  checks:
+    approved:
+      enabled: true
+      count: 2
+    merge_conflicts:
+      enabled: true
+    status_checks:
+      enabled: true
+      ignore_matching:
+        - "ci/.*"
+```
+
+In this example, the apply requirements are configured as follows:
+- The pull request must have at least 2 approvals.
+- The pull request must not have any merge conflicts.
+- All status checks associated with the pull request must have passed, except for those matching the regular expression `ci/.*`.
+
+### Apply Overrides
+In some situations, you may need to override the apply requirements and force an apply operation. Terrateam provides two ways to override the apply requirements:
+
+##### `terrateam apply-force`
+Users with the `apply_force` capability can use this command to bypass all apply requirements and force an apply operation.
+
+##### `terrateam apply-autoapprove`
+Users with the `apply_autoapprove` capability can use this command to automatically approve and apply changes without requiring additional approvals.
+
+:::danger[Warning]
+Override capabilities should be granted only to trusted users who understand the potential risks and consequences of bypassing apply requirements.
+:::
+
+## Combining Plan and App Permissions
+By combining plan and apply permissions, you can create a granular and secure permission system that reflects your organization's roles and responsibilities. For example, you can grant plan permissions to a wider group of users, allowing them to propose and review changes, while restricting apply permissions to a smaller group of trusted users who can approve and execute those changes.
+
+Here's an example configuration that demonstrates this approach:
+```yaml
+access_control:
+  enabled: true
+  policies:
+    - tag_query: ''
+      plan: ['role:write']
+      apply: ['role:maintain']
+      apply_autoapprove: ['user:alice']
+      apply_force: ['team:sre']
+```
+
+In this configuration:
+- Users with the `write` role can perform plan operations and propose changes.
+- Users with the `maintain` role can perform apply operations and approve changes.
+- The user `alice` can use the `apply-autoapprove` command to automatically approve and apply changes.
+- Members of the `sre` team can use the `apply-force` command to bypass apply requirements and force an apply operation.
+
+## Best Practices
+When configuring plan and apply permissions, consider the following best practices:
+- Follow the principle of least privilege, granting users only the permissions they need to perform their tasks.
+- Use the `apply_require_all_dirspace_access` and `plan_require_all_dirspace_access` settings to control whether users need access to all targeted directories ([dirspaces](/getting-started/concepts#dirspace)) to perform apply or plan operations.

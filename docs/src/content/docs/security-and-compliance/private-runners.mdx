@@ -1,0 +1,114 @@
+---
+title: Private Runners
+description: Set up and use GitHub Actions self-hosted runners for Terrateam operations
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Terrateam leverages GitHub Actions to execute Terraform operations, such as plan and apply, in response to various events like pull requests and commits. By default, these operations run on GitHub-hosted runners, which are managed and maintained by GitHub. However, in some cases, you may want to use your own infrastructure to run these operations. This is where GitHub Actions self-hosted runners, also known as private runners, come into play.
+
+## What are Private Runners?
+Private runners, or self-hosted runners, are instances of the GitHub Actions runner application that you deploy and manage on your own infrastructure. These runners can be physical machines, virtual machines, or containers that you configure to run GitHub Actions workflows.
+Using private runners with Terrateam allows you to:
+- Run Terrateam operations on your own infrastructure, giving you more control over the environment and resources.
+- Access private resources or services that are not accessible from the public internet, such as internal APIs or databases.
+- Comply with security or regulatory requirements that mandate running operations on your own infrastructure.
+- Customize the runner environment with specific software, tools, or configurations required by your Terraform workflows.
+
+## Terrateam Self-Hosted Runner
+Terrateam provides a Docker container that simplifies the process of setting up and running a self-hosted runner for Terrateam operations.
+
+### Steps
+<Steps>
+1. Add a self-hosted runner to your organization:
+
+   1\. On GitHub.com, navigate to the main page of the organization.
+
+   2\. Under your organization name, click `Settings`. 
+
+   3\. In the left sidebar, click  `Actions`, then click `Runners`.
+
+   4\. Click `New runner`, then click `New self-hosted runner`.
+
+   5\. Select `x86`
+
+   6\. Note the token for the next step
+
+2. Run the docker container however you run containers:
+   ```sh
+    docker run -d \
+      --restart unless-stopped \
+      --name terrateam-self-hosted-runner \
+      --env ORG_NAME=myGithubOrg \
+      --env RUNNER_NAME=terrateam-self-hosted \
+      --env RUNNER_TOKEN=runnerToken \
+      --env RUNNER_WORKDIR=/tmp/runner/work \
+      --env RUNNER_SCOPE=org \
+      --env LABELS=terrateam-self-hosted \
+      --env EPHEMERAL=1 \
+      --security-opt label:disable \
+      --volume /var/run/docker.sock:/var/run/docker.sock \
+      --volume /tmp/runner:/tmp/runner \
+      ghcr.io/terrateamio/self-hosted-runner:latest
+   ```
+   Replace `myGithubOrg` with your GitHub organization name and `runnerToken` with the runner token obtained from the GitHub Actions settings page.
+
+3. Update your Terrateam GitHub Actions workflow file (`.github/workflows/terrateam.yml`) to use the self-hosted runner:
+   ```yaml
+    jobs:
+      terrateam:
+        permissions:
+            id-token: write
+            contents: read
+        runs-on: terrateam-self-hosted
+   ```
+
+</Steps>
+
+The Terrateam self-hosted runner Docker container simplifies the setup process and ensures that your runner has all the necessary dependencies and configurations required by Terrateam.
+
+## Manual Setup Instructions
+If you prefer to set up the self-hosted runner manually or have specific requirements, you can follow the steps below to configure a self-hosted runner for Terrateam.
+
+### Steps
+<Steps>
+1. Prepare your infrastructure:
+
+   1\. Provision a machine or virtual machine that meets the minimum requirements for running GitHub Actions workflows.
+
+   2\. Ensure the machine has the necessary permissions and network access to communicate with your GitHub repository and any required resources.
+
+2. Install the runner application:
+
+   1\. Download the appropriate version of the runner application for your operating system from the GitHub Actions releases page.
+
+   2\. Extract the runner application and navigate to the installation directory.
+
+3. Configure the runner:
+
+   1\. Run the `config.sh` (Linux/macOS) or `config.cmd` (Windows) script to configure the runner.
+
+   2\. Choose whether to run the runner as a service or manually.
+
+4. Start the runner:
+
+   1\. Run the `run.sh` (Linux/macOS) or `run.cmd` (Windows) script to start the runner.
+
+   2\. The runner will register itself with your GitHub repository and start listening for workflow jobs.
+
+5. Update your Terrateam GitHub Actions workflow file (`.github/workflows/terrateam.yml`) to use the self-hosted runner:
+   ```yaml
+    jobs:
+      terrateam:
+        permissions:
+            id-token: write
+            contents: read
+        runs-on: self-hosted
+   ```
+   Replace `self-hosted` with the label or name of your self-hosted runner if you have multiple runners configured.
+
+6. Commit and push the changes to your workflow file.
+
+</Steps>
+
+For detailed instructions on setting up self-hosted runners, refer to the [GitHub Actions documentation](https://docs.github.com/en/actions/hosting-your-own-runners/adding-self-hosted-runners).
