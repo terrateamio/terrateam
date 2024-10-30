@@ -34,7 +34,9 @@ RUN ulimit -s 524288 && ulimit -a && eval $(opam env) && \
     (time env TERRAT_UI_ANALYTICS=$TERRAT_UI_ANALYTICS make -j4 release_terrat_ee release_terrat_ui \
      || time env TERRAT_UI_ANALYTICS=$TERRAT_UI_ANALYTICS make -j1 release_terrat_ee release_terrat_ui)
 
-# test
+# test stage
+FROM build as test
+
 WORKDIR /mono/code
 RUN eval $(opam env) && \
     time env OCAMLRUNPARAM=b make -j4 -k test && \
@@ -71,6 +73,7 @@ COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
 COPY --from=build /usr/lib/libkqueue.so /usr/lib/libkqueue.so
 COPY --from=build /mono/code/build/release/terrat_ee/terrat_ee.native /usr/local/bin/terrat
 COPY --from=build /mono/code/build/release/terrat_ui_files/assets /usr/local/share/terrat/ui/assets/
+
 # expose
 EXPOSE 8080
 
