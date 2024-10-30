@@ -15,6 +15,7 @@ on:
 jobs:
   deploy-docs:
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - uses: actions/checkout@v4
       - name: Install Vercel CLI
