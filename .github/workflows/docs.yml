@@ -1,4 +1,4 @@
-name: Deploy Docs to Vercel
+name: docs
 
 env:
   REPO_OWNER: ${{ github.repository_owner }}
