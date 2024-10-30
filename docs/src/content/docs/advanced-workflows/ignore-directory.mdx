@@ -1,0 +1,22 @@
+---
+title: Ignoring a Directory
+description: Learn how to configure Terrateam to ignore specific directories and prevent automatic plans and applies in them.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+In some cases, you may want to prevent Terrateam from running plans or applies within certain directories of your repository. Ignoring a directory in Terrateam can be helpful for directories that contain supporting files, documentation, or other resources unrelated to Terraform infrastructure.
+
+## How to Ignore a Directory
+To ignore a directory in Terrateam, add it to the `dirs` section in your `.terrateam/config.yml` file and set `when_modified.file_patterns` to empty.
+
+Here's an example of how to ignore the `docs` directory:
+
+```yaml
+dirs:
+  docs:
+    when_modified:
+      file_patterns: []
+```
+
+The `docs` directory will be ignored by Terrateam, so changes to it will not trigger any plans or applies.
