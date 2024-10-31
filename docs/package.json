@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "astro dev --host",
     "start": "astro dev --host",
-    "build": "astro check && astro build",
+    "generate-ph-init": "node generate-ph-init.js",
+    "build": "npm run generate-ph-init && astro check && astro build",
     "preview": "astro preview",
     "astro": "astro"
   },

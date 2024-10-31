@@ -36,3 +36,6 @@ code/.merlin
 code/dune
 code/dune-project
 code/dune-workspace
+
+# Vercel
+.vercel
