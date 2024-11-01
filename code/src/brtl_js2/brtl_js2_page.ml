@@ -57,8 +57,13 @@ module Make (S : S) = struct
     Abb_js_future_combinators.with_finally
       (fun () ->
         set_refresh_active (Brtl_js2.Note.S.value refresh_active + 1);
-        S.fetch query
+        S.fetch (Query.query query)
         >>= function
+        | Ok res_page when Page.prev res_page = None ->
+            set_res_page res_page;
+            send_fetch_err None;
+            Query.set_query query (S.set_page None (Query.query query));
+            Abb_js.Future.return ()
         | Ok res_page ->
             set_res_page res_page;
             send_fetch_err None;
@@ -74,7 +79,7 @@ module Make (S : S) = struct
 
   let rec refresh_page set_refresh_active refresh_active set_res_page send_fetch_err query =
     let open Abb_js.Future.Infix_monad in
-    perform_fetch set_refresh_active refresh_active set_res_page send_fetch_err (Query.query query)
+    perform_fetch set_refresh_active refresh_active set_res_page send_fetch_err query
     >>= fun () ->
     Abb_js.sleep 60.0
     >>= fun () -> refresh_page set_refresh_active refresh_active set_res_page send_fetch_err query
@@ -103,11 +108,11 @@ module Make (S : S) = struct
       (refresh_page set_refresh_active refresh_active set_res_page send_fetch_err query)
     >>= fun refresh_fut ->
     let logr =
-      Brtl_js2.Note.S.log ~now:false (Query.signal query) (fun query ->
+      Brtl_js2.Note.S.log ~now:false (Query.signal query) (fun _query ->
           let uri = Brtl_js2.(Note.S.value (Router.uri (State.router state))) in
           Brtl_js2.Router.navigate
             (Brtl_js2.State.router state)
-            (Uri.to_string (S.make_uri query uri));
+            (Uri.to_string (S.make_uri (Query.query query) uri));
           Abb_js.Future.run
             (perform_fetch set_refresh_active refresh_active set_res_page send_fetch_err query))
     in
@@ -116,12 +121,7 @@ module Make (S : S) = struct
         ~class':(Jstr.v "refresh")
         ~enabled:(Brtl_js2.Note.S.map ~eq:( = ) (fun v -> v = 0) refresh_active)
         ~action:(fun () ->
-          perform_fetch
-            set_refresh_active
-            refresh_active
-            set_res_page
-            send_fetch_err
-            (Query.query query))
+          perform_fetch set_refresh_active refresh_active set_res_page send_fetch_err query)
         (Brtl_js2.Note.S.const ~eq:( == ) Brtl_js2.Brr.El.[ txt' "Refresh" ])
         ()
     in
