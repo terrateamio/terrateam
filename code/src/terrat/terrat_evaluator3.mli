@@ -53,6 +53,7 @@ module Msg : sig
         work_manifest : ('account, 'target) Terrat_work_manifest3.Existing.t;
       }
     | Tf_op_result2 of {
+        config : Terrat_config.t;
         is_layered_run : bool;
         remaining_layers : Terrat_change_match3.Dirspace_config.t list list;
         result : Terrat_api_components_work_manifest_tf_operation_result2.t;

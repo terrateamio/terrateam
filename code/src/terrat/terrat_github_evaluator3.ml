@@ -1778,6 +1778,7 @@ struct
         let create_run_output
             ~view
             request_id
+            config
             is_layered_run
             remaining_dirspace_configs
             (by_scope : (Scope.t * Terrat_api_components.Workflow_step_output.t list) list)
@@ -1877,6 +1878,14 @@ struct
                    [
                      CCOption.map_or
                        ~default:[]
+                       (fun work_manifest_url ->
+                         [ ("work_manifest_url", string (Uri.to_string work_manifest_url)) ])
+                       (Terratc.Github.Ui.work_manifest_url
+                          config
+                          work_manifest.Wm.account
+                          work_manifest);
+                     CCOption.map_or
+                       ~default:[]
                        (fun env -> [ ("environment", string env) ])
                        work_manifest.Wm.environment;
                      [
@@ -1927,6 +1936,7 @@ struct
         let rec iterate_comment_posts
             ?(view = `Full)
             request_id
+            config
             client
             is_layered_run
             remaining_layers
@@ -1940,6 +1950,7 @@ struct
             create_run_output
               ~view
               request_id
+              config
               is_layered_run
               remaining_layers
               by_scope
@@ -1975,6 +1986,7 @@ struct
                   iterate_comment_posts
                     ~view:`Compact
                     request_id
+                    config
                     client
                     is_layered_run
                     remaining_layers
@@ -3564,10 +3576,11 @@ struct
           >>= function
           | Ok () -> Abb.Future.return (Ok ())
           | Error _ -> Abb.Future.return (Error `Error))
-      | Msg.Tf_op_result2 { is_layered_run; remaining_layers; result; work_manifest } -> (
+      | Msg.Tf_op_result2 { config; is_layered_run; remaining_layers; result; work_manifest } -> (
           let open Abb.Future.Infix_monad in
           Result.Publisher2.iterate_comment_posts
             request_id
+            config
             client
             is_layered_run
             remaining_layers
