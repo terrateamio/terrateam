@@ -227,5 +227,9 @@ module Make (M : S) = struct
         in
         Terrat_commit_check.make ~details_url ~description ~title ~status
     end
+
+    module Ui = struct
+      let work_manifest_url _ _ _ = None
+    end
   end
 end
