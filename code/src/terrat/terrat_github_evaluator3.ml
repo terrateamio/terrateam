@@ -9,6 +9,18 @@ let probably_is_git_hash =
       | '0' .. '9' | 'a' .. 'f' -> true
       | _ -> false)
 
+let replace_nul_byte = CCString.replace ~which:`All ~sub:"\x00" ~by:"\\0"
+
+let rec replace_nul_byte_json = function
+  | `Tuple l -> `Tuple (CCList.map replace_nul_byte_json l)
+  | `Variant (k, None) -> `Variant (replace_nul_byte k, None)
+  | `Variant (k, Some v) -> `Variant (replace_nul_byte k, Some (replace_nul_byte_json v))
+  | `List l -> `List (CCList.map replace_nul_byte_json l)
+  | `Assoc assoc ->
+      `Assoc (CCList.map (fun (k, v) -> (replace_nul_byte k, replace_nul_byte_json v)) assoc)
+  | `String s -> `String (replace_nul_byte s)
+  | (`Bool _ | `Intlit _ | `Null | `Float _ | `Int _) as t -> t
+
 module Metrics = struct
   module DefaultHistogram = Prmths.Histogram (struct
     let spec = Prmths.Histogram_spec.of_list [ 0.005; 0.5; 1.0; 5.0; 10.0; 15.0; 20.0 ]
@@ -4535,15 +4547,17 @@ struct
               in
               let payload =
                 CCList.map
-                  (fun (_, { O.payload; _ }) -> Yojson.Safe.to_string (O.Payload.to_yojson payload))
+                  (fun (_, { O.payload; _ }) ->
+                    Yojson.Safe.to_string (replace_nul_byte_json (O.Payload.to_yojson payload)))
                   chunk
               in
               let scope =
                 CCList.map
-                  (fun (_, { O.scope; _ }) -> Yojson.Safe.to_string (Scope.to_yojson scope))
+                  (fun (_, { O.scope; _ }) ->
+                    Yojson.Safe.to_string (replace_nul_byte_json (Scope.to_yojson scope)))
                   chunk
               in
-              let step = CCList.map (fun (_, { O.step; _ }) -> step) chunk in
+              let step = CCList.map (fun (_, { O.step; _ }) -> replace_nul_byte step) chunk in
               let success = CCList.map (fun (_, { O.success; _ }) -> success) chunk in
               let work_manifest_id = CCList.replicate (CCList.length chunk) work_manifest_id in
               Pgsql_io.Prepared_stmt.execute
