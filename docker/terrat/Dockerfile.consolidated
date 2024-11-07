@@ -74,29 +74,6 @@ FROM ${BASE_IMAGE:-build-base} as build-setup
 # Copy source files
 COPY ./ /mono
 
-# Set up opam repositories and dependencies
-WORKDIR /
-RUN eval $(opam env) && \
-    opam option depext=false && \
-    opam update && \
-    opam repository add opam-acsl mono/opam && \
-    opam pin add -y containers 3.12 && \
-    opam install -y hll pds && \
-    mkdir -p opam-mono/compilers && \
-    mkdir -p opam-mono/packages && \
-    echo 'opam-version: "2.0"' > opam-mono/repo && \
-    opam repository add opam-mono opam-mono && \
-    cd /mono/code && \
-    hll generate \
-      -n monorepo \
-      --opam-dir ../../opam-mono \
-      --tag 1.0 \
-      --test-deps-as-regular-deps \
-      --url-override file://$PWD && \
-    opam update opam-mono && \
-    opam info monorepo && \
-    opam install -j4 -y --deps-only monorepo
-
 # Build target for code-indexer
 FROM build-setup as code-indexer-build
 WORKDIR /mono/code
