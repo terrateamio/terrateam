@@ -11,7 +11,7 @@ on:
       build_base_image:
         description: 'Build base image'
         required: false
-        default: 'false'
+        default: false
         type: boolean
 
 jobs:
