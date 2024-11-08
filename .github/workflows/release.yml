@@ -1,0 +1,88 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Select the deployment environment'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'production' }}
+
+    strategy:
+      matrix:
+        target: [code-indexer, terrat-ee, terrat-oss]
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      MATRIX_PASSWORD: ${{ secrets.MATRIX_PASSWORD }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      TERRATEAM_UI_ANALYTICS: ${{ github.event.inputs.environment == 'production' && vars.TERRATEAM_POSTHOG_TOKEN || 'false' }}
+      TERRATEAM_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
+      GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      MATRIX_TARGET: ${{ matrix.target }}
+
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set version tag
+        run: |
+          ./scripts/version_tag >> $GITHUB_ENV
+
+      - name: Set base image
+        run: |
+          ./scripts/base_image >> $GITHUB_ENV
+
+      - name: Set image tags
+        run: |
+          ./scripts/image_tags >> $GITHUB_ENV
+
+      - name: Create tag
+        run: |
+          ./scripts/create_tag
+
+      - name: Build and push ${{ matrix.target }}
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: docker/terrat/Dockerfile.consolidated
+          push: true
+          platforms: linux/amd64,linux/arm64
+          target: ${{ matrix.target }}
+          build-args: |
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+          tags: ${{ env.IMAGE_TAGS }}
+
+      - name: Create release
+        run: ./scripts/create_release
+
+      - name: Notify Slack
+        run: ./scripts/notify_slack
+
+      - name: Trigger deploy
+        run: ./scripts/trigger_deploy

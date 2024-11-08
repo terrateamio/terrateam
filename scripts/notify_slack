@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euf -o pipefail
+
+if [ "${TERRATEAM_ENVIRONMENT}" == "production" ]; then
+  PAYLOAD=$(cat <<EOF
+{
+  "attachments": [
+    {
+      "fallback": "New release created: ${VERSION_TAG}",
+      "color": "#36a64f",
+      "pretext": "A new release has been created for ${GITHUB_REPOSITORY}!",
+      "title": "Release ${VERSION_TAG}",
+      "title_link": "https://github.com/${GITHUB_REPOSITORY}/releases/tag/${VERSION_TAG}",
+      "footer": "GitHub Actions",
+      "footer_icon": "https://platform.slack-edge.com/img/default_application_icon.png",
+      "ts": $(date +%s)
+    }
+  ]
+}
+EOF
+)
+
+  curl -X POST -H 'Content-type: application/json' --data "${PAYLOAD}" "${SLACK_WEBHOOK_URL}"
+fi

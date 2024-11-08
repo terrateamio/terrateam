@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euf -o pipefail
+
+MATRIX_ACCESS_TOKEN=$(curl -s -X POST -d '{
+  "type": "m.login.password",
+  "user": "terrateam",
+  "password": "'"${MATRIX_PASSWORD}"'"
+}' "https://matrix.org/_matrix/client/r0/login" | jq -r '.access_token')
+MATRIX_MESSAGE="GitHub Actions [${GITHUB_WORKFLOW}]: Deployed ${GITHUB_SHA} to ${TERRATEAM_ENVIRONMENT}"
+
+curl -s -X PUT "https://matrix.org/_matrix/client/r0/rooms/!AJlEMsztoOToHdwijN%3Amatrix.org/send/m.room.message/?access_token=${MATRIX_ACCESS_TOKEN}" \
+  --data '{
+    "msgtype": "m.text",
+    "body": "'"${MATRIX_MESSAGE}"'"
+  }'

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euf -o pipefail
+
+# Validate required environment variables
+: "${GITHUB_TOKEN:?GITHUB_TOKEN is required}"
+: "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is required}"
+: "${VERSION_TAG:?VERSION_TAG is required}"
+
+# Ensure Git user identity is set
+git config --global user.name "GitHub Actions"
+git config --global user.email "actions@github.com"
+
+# Authenticate using the GitHub token
+git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+# Check if the tag already exists on the remote
+if git ls-remote --tags origin | grep -q "refs/tags/${VERSION_TAG}"; then
+  # If the latest tag doesn't match VERSION_TAG, exit with an error
+  if [[ "$(git describe --tags --abbrev=0)" != "${VERSION_TAG}" ]]; then
+    echo "Error: Latest tag does not match VERSION_TAG. Exiting."
+    exit 1
+  fi
+  echo "Tag ${VERSION_TAG} already exists on the remote. Skipping tag creation."
+else
+  # Create and push ${VERSION_TAG}
+  git tag -a "${VERSION_TAG}" -m "Release ${VERSION_TAG}"
+  git push origin "${VERSION_TAG}"
+fi
