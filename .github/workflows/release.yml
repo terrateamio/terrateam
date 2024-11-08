@@ -22,9 +22,6 @@ jobs:
 
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-      MATRIX_PASSWORD: ${{ secrets.MATRIX_PASSWORD }}
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       TERRATEAM_UI_ANALYTICS: ${{ github.event.inputs.environment == 'production' && vars.TERRATEAM_POSTHOG_TOKEN || 'false' }}
       TERRATEAM_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
       GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
@@ -80,11 +77,32 @@ jobs:
             BASE_IMAGE=${{ env.BASE_IMAGE }}
           tags: ${{ env.IMAGE_TAGS }}
 
+  release-notify-deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'production' }}
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      TERRATEAM_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
+      GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+
+    needs: build-push
+
+    steps:
+      - name: Set version tag
+        run: |
+          ./scripts/version_tag >> $GITHUB_ENV
+
       - name: Create release
-        run: ./scripts/create_release
+        run: |
+          ./scripts/create_release
 
       - name: Notify Slack
-        run: ./scripts/notify_slack
+        run: |
+          ./scripts/notify_slack
 
       - name: Trigger deploy
-        run: ./scripts/trigger_deploy
+        run: |
+          ./scripts/trigger_deploy
