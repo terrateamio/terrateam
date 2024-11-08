@@ -8,7 +8,7 @@ set -euf -o pipefail
 : "${VERSION_TAG:?VERSION_TAG is required}"
 
 # Get the previous tag, filtering by a pattern that matches your tag format (e.g., date-time-hash)
-PREVIOUS_TAG="$(git tag -l '20[0-9][0-9][0-1][0-9][0-3][0-9]-[0-2][0-9][0-5][0-9]-[a-f0-9]*' | sort | tail -n2 | head -n1)"
+PREVIOUS_TAG="$(git tag -l '20[0-9]{6}-[0-9]{4}-[a-f0-9]{8}' | sort | tail -n2 | head -n1)"
 
 # Check if PREVIOUS_TAG is empty and exit with an error if so
 if [[ -z "${PREVIOUS_TAG}" ]]; then
