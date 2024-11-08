@@ -17,7 +17,6 @@ git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${G
 if git ls-remote --tags origin | grep -q "refs/tags/${VERSION_TAG}"; then
   # Ensure the tag is checked out if it exists
   git fetch origin "refs/tags/${VERSION_TAG}:refs/tags/${VERSION_TAG}"
-  git checkout "${VERSION_TAG}"
 
   # If the latest tag doesn't match VERSION_TAG, exit with an error
   if [[ "$(git describe --tags --abbrev=0)" != "${VERSION_TAG}" ]]; then
