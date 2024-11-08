@@ -1,0 +1,57 @@
+name: test
+
+on:
+  pull_request:
+    branches:
+      - "main"
+    paths-ignore:
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      build_base_image:
+        description: 'Build base image'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - code-indexer-build
+          - terrat-ee-build
+          - terrat-oss-build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Set base image
+        if: ${{ ! inputs.build_base_image }}
+        run: |
+          ./scripts/base_image >> $GITHUB_ENV
+
+      - name: Build and test ${{ matrix.target }} with BASE_IMAGE
+        if: ${{ ! inputs.build_base_image }}
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: docker/terrat/Dockerfile.consolidated
+          platforms: linux/amd64,linux/arm64
+          target: ${{ matrix.target }}
+          build-args: |
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+
+      - name: Build and test ${{ matrix.target }} without BASE_IMAGE
+        if: ${{ inputs.build_base_image }}
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: docker/terrat/Dockerfile.consolidated
+          platforms: linux/amd64,linux/arm64
+          target: ${{ matrix.target }}
