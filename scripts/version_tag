@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euf -o pipefail
+
+VERSION_TAG=$(date +'%Y%m%d-%H%M')-$(git rev-parse --short HEAD)
+
+echo "VERSION_TAG=${VERSION_TAG}"
