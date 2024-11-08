@@ -1,0 +1,38 @@
+name: deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Select the deployment environment'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+      VERSION_TAG:
+        description: 'Specify the version tag for deployment'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    env:
+      VERSION_TAG: ${{ github.event.inputs.VERSION_TAG }}
+      TERRATEAM_ENVIRONMENT: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Setup Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Fly.io authentication
+        run: ./scripts/auth_flyio
+
+      - name: Deploy to Fly.io
+        run: ./scripts/deploy_flyio
+
+      - name: Notify Matrix
+        run: ./scripts/notify_matrix

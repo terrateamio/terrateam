@@ -1,8 +1,5 @@
 #! /usr/bin/env bash
-
-set -u
-set -e
-set -o pipefail
+set -euf -o pipefail
 
 release_name=""
 github_owner=""

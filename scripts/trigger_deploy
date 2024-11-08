@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euf -o pipefail
+
+if ! gh workflow run deploy.yml \
+  --repo "${GITHUB_REPOSITORY}" \
+  --ref "main" \
+  --field environment="${TERRATEAM_ENVIRONMENT}" \
+  --field VERSION_TAG="${VERSION_TAG}"; then
+  echo "Error: Failed to dispatch workflow" >&2
+  exit 1
+fi
