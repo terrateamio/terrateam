@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euf -o pipefail
+set -x
 
 # Validate required environment variables
 : "${GITHUB_TOKEN:?GITHUB_TOKEN is required}"
