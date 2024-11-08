@@ -23,6 +23,8 @@ jobs:
     env:
       VERSION_TAG: ${{ github.event.inputs.VERSION_TAG }}
       TERRATEAM_ENVIRONMENT: ${{ github.event.inputs.environment }}
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      MATRIX_PASSWORD: ${{ secrets.MATRIX_PASSWORD }}
 
     steps:
       - name: Setup Flyctl
