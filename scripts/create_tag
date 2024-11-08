@@ -24,5 +24,15 @@ if git ls-remote --tags origin | grep -q "refs/tags/${VERSION_TAG}"; then
 else
   # Create and push ${VERSION_TAG}
   git tag -a "${VERSION_TAG}" -m "Release ${VERSION_TAG}"
-  git push origin "${VERSION_TAG}"
+  if git push origin "${VERSION_TAG}"; then
+    echo "Tag ${VERSION_TAG} successfully pushed."
+  else
+    # On failure, check if the tag now exists on the remote
+    if git ls-remote --tags origin | grep -q "refs/tags/${VERSION_TAG}"; then
+      echo "Push failed, but tag ${VERSION_TAG} was created by another job. Skipping."
+    else
+      echo "Error: Tag ${VERSION_TAG} push failed and was not created by another job. Exiting with error."
+      exit 1
+    fi
+  fi
 fi
