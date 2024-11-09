@@ -24,6 +24,7 @@ end
 let terrateam_workflow_name = "Terrateam Workflow"
 let terrateam_workflow_path = ".github/workflows/terrateam.yml"
 let installation_expiration_sec = 60.0
+let call_timeout = 10.0
 
 type user_err =
   [ Githubc2_abb.call_err
@@ -184,6 +185,7 @@ let create config auth =
   Githubc2_abb.create
     ~base_url:(Terrat_config.github_api_base_url config)
     ~user_agent:"Terrateam"
+    ~call_timeout
     auth
 
 let with_client config auth f =
@@ -647,7 +649,7 @@ module Commit_status = struct
   end
 
   let create ~owner ~repo ~sha ~creates client =
-    let max_parallel = 5 in
+    let max_parallel = 20 in
     let open Abb.Future.Infix_monad in
     Abbs_future_combinators.List.map_par
       ~f:(fun creates ->
