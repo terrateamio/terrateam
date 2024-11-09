@@ -710,6 +710,9 @@
           "config": {
             "type": null
           },
+          "result_version": {
+            "type": "integer"
+          },
           "run_kind": {
             "type": "string"
           },
@@ -725,6 +728,7 @@
           "base_ref",
           "changed_dirspaces",
           "config",
+          "result_version",
           "run_kind",
           "token",
           "type"
@@ -1018,6 +1022,9 @@
             },
             "type": "array"
           },
+          "result_version": {
+            "type": "integer"
+          },
           "run_kind": {
             "type": "string"
           },
@@ -1042,6 +1049,7 @@
           "changed_dirspaces",
           "config",
           "dirspaces",
+          "result_version",
           "run_kind",
           "token",
           "type"
