@@ -1,5 +1,6 @@
 let cache_capacity_mb_in_kb = ( * ) 1024
 let kb_of_bytes b = CCInt.max 1 (b / 1024)
+let result_version = 2
 
 module Metrics = struct
   module DefaultHistogram = Prmths.DefaultHistogram
@@ -4012,6 +4013,7 @@ module Make (S : S) = struct
                             run_kind = run_kind_str;
                             run_kind_data;
                             type_ = "plan";
+                            result_version;
                             config =
                               repo_config
                               |> Terrat_base_repo_config_v1.to_version_1
@@ -4054,6 +4056,7 @@ module Make (S : S) = struct
                             changed_dirspaces = changed_dirspaces changes;
                             run_kind = run_kind_str;
                             type_ = "apply";
+                            result_version;
                             config =
                               repo_config
                               |> Terrat_base_repo_config_v1.to_version_1
