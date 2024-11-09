@@ -111,10 +111,8 @@ next_work_manifests as (
     left join rejected_work_manifests as rwm on rwm.id = wm.id
     where wm.state = 'queued' and rwm.id is null
 )
-update github_work_manifests set state = 'running' where id = (
-    select gwm.id from github_work_manifests as gwm
-    inner join next_work_manifests as nwm on nwm.id = gwm.id
-    where nwm.rn = 1
-    for update skip locked
-    limit 1)
-returning id
+select gwm.id from github_work_manifests as gwm
+inner join next_work_manifests as nwm on nwm.id = gwm.id
+where nwm.rn = 1 and gwm.state = 'queued'
+for update of gwm skip locked
+limit 1
