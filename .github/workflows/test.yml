@@ -16,7 +16,7 @@ on:
 
 jobs:
   build-test:
-    runs-on: warp-ubuntu-2204-x64-2x-spot
+    runs-on: self-hosted
     strategy:
       matrix:
         target:

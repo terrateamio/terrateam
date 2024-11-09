@@ -14,7 +14,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: warp-ubuntu-2204-x64-2x-spot
+    runs-on: self-hosted
     environment: production
     steps:
       - name: Checkout code
