@@ -50,6 +50,7 @@ type t = {
   changed_dirspaces : Changed_dirspaces.t;
   config : Config.t;
   dirspaces : Dirspaces.t;
+  result_version : int;
   run_kind : string;
   run_kind_data : Run_kind_data.t option; [@default None]
   token : string;
