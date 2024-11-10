@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Check for required arguments
+if [[ $# -lt 1 ]]; then
+  echo "Usage: $0 <image-name> [<image-name> ...]"
+  exit 1
+fi
+
+# Set the container registry URL
+CONTAINER_REGISTRY="ghcr.io"
+
+# Check if the current GitHub ref and environment allow pushing the "latest" tag
+PUSH_LATEST=false
+if [[ "${GITHUB_REF}" == "refs/heads/main" && "${TERRATEAM_ENVIRONMENT}" == "production" ]]; then
+  PUSH_LATEST=true
+fi
+
+# Iterate over each image name provided as an argument
+for IMAGE_NAME in "$@"; do
+  echo "Creating and pushing multi-architecture manifest for ${IMAGE_NAME}..."
+
+  # Create the multi-architecture manifest for the version tag
+  docker manifest create "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:${VERSION_TAG}" \
+    --amend "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:${VERSION_TAG}-amd64" \
+    --amend "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:${VERSION_TAG}-arm64"
+
+  # Push the multi-architecture manifest for the version tag
+  docker manifest push "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:${VERSION_TAG}"
+
+  # Optionally create and push the "latest" tag if conditions are met
+  if [[ "${PUSH_LATEST}" == "true" && "${IMAGE_NAME}" != "terrat-base" ]]; then
+    echo "Creating and pushing the 'latest' multi-architecture tag for ${IMAGE_NAME}..."
+    docker manifest create "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:latest" \
+      --amend "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:${VERSION_TAG}-amd64" \
+      --amend "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:${VERSION_TAG}-arm64"
+
+    docker manifest push "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:latest"
+  fi
+done
