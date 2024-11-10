@@ -49,7 +49,6 @@ jobs:
         with:
           context: .
           file: docker/terrat/Dockerfile.consolidated
-          platforms: linux/amd64
           target: ${{ matrix.target }}
 
   build-test-arm64:
@@ -86,5 +85,4 @@ jobs:
         with:
           context: .
           file: docker/terrat/Dockerfile.consolidated
-          platforms: linux/arm64
           target: ${{ matrix.target }}
