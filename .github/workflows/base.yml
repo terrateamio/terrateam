@@ -19,8 +19,8 @@ jobs:
         id: set-version-tag
         run: |
           VERSION_TAG=$(./scripts/version_tag)
-          echo "VERSION_TAG=${VERSION_TAG}" >> $GITHUB_ENV
-          echo "::set-output name=version_tag::${VERSION_TAG}"
+          echo "VERSION_TAG=${VERSION_TAG}" >> "${GITHUB_ENV}"
+          echo "version_tag=${VERSION_TAG}" >> "${GITHUB_OUTPUT}"
 
   build-amd64:
     needs: set-version-tag
