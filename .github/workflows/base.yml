@@ -4,7 +4,26 @@ on:
   workflow_dispatch:
 
 jobs:
+  set-version-tag:
+    runs-on: ubuntu-latest
+    environment: production
+
+    outputs:
+      version_tag: ${{ steps.set-version-tag.outputs.version_tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set version tag
+        id: set-version-tag
+        run: |
+          VERSION_TAG=$(./scripts/version_tag)
+          echo "VERSION_TAG=${VERSION_TAG}" >> $GITHUB_ENV
+          echo "::set-output name=version_tag::${VERSION_TAG}"
+
   build-amd64:
+    needs: set-version-tag
     runs-on: ubuntu-latest
     environment: production
 
@@ -12,6 +31,9 @@ jobs:
       contents: write
       packages: write
       id-token: write
+
+    env:
+      VERSION_TAG: ${{ needs.set-version-tag.outputs.version_tag }}
 
     steps:
       - name: Checkout code
@@ -23,10 +45,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set version tag
-        run: |
-          ./scripts/version_tag >> $GITHUB_ENV
 
       - name: Build and push amd64 image
         uses: docker/build-push-action@v6
@@ -39,6 +57,7 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/terrat-base:${{ env.VERSION_TAG }}-amd64
 
   build-arm64:
+    needs: set-version-tag
     runs-on: ubuntu-24.04-arm64
     environment: production
 
@@ -46,6 +65,9 @@ jobs:
       contents: write
       packages: write
       id-token: write
+
+    env:
+      VERSION_TAG: ${{ needs.set-version-tag.outputs.version_tag }}
 
     steps:
       - name: Checkout code
@@ -57,10 +79,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set version tag
-        run: |
-          ./scripts/version_tag >> $GITHUB_ENV
 
       - name: Build and push arm64 image
         uses: docker/build-push-action@v6
@@ -83,6 +101,7 @@ jobs:
       id-token: write
 
     env:
+      VERSION_TAG: ${{ needs.set-version-tag.outputs.version_tag }}
       GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
       GITHUB_REF: ${{ github.ref }}
       TERRATEAM_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
@@ -97,10 +116,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set version tag
-        run: |
-          ./scripts/version_tag >> $GITHUB_ENV
 
       - name: Create and push multi-arch manifest
         run: |
