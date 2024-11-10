@@ -15,7 +15,7 @@ on:
         type: boolean
 
 jobs:
-  build-test:
+  build-test-amd64:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -28,8 +28,42 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+      - name: Set base image
+        if: ${{ ! inputs.build_base_image }}
+        run: |
+          ./scripts/base_image >> $GITHUB_ENV
+
+      - name: Build and test ${{ matrix.target }} with BASE_IMAGE
+        if: ${{ ! inputs.build_base_image }}
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: docker/terrat/Dockerfile.consolidated
+          target: ${{ matrix.target }}
+          build-args: |
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+
+      - name: Build and test ${{ matrix.target }} without BASE_IMAGE
+        if: ${{ inputs.build_base_image }}
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: docker/terrat/Dockerfile.consolidated
+          platforms: linux/amd64
+          target: ${{ matrix.target }}
+
+  build-test-arm64:
+    runs-on: ubuntu-24.04-arm64
+    strategy:
+      matrix:
+        target:
+          - code-indexer-build
+          - terrat-ee-build
+          - terrat-oss-build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set base image
         if: ${{ ! inputs.build_base_image }}
@@ -42,7 +76,6 @@ jobs:
         with:
           context: .
           file: docker/terrat/Dockerfile.consolidated
-          platforms: linux/amd64,linux/arm64
           target: ${{ matrix.target }}
           build-args: |
             BASE_IMAGE=${{ env.BASE_IMAGE }}
@@ -53,5 +86,5 @@ jobs:
         with:
           context: .
           file: docker/terrat/Dockerfile.consolidated
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           target: ${{ matrix.target }}
