@@ -35,7 +35,7 @@ jobs:
 
       - name: Build and test ${{ matrix.target }} with BASE_IMAGE
         if: ${{ ! inputs.build_base_image }}
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/terrat/Dockerfile.consolidated
@@ -45,7 +45,7 @@ jobs:
 
       - name: Build and test ${{ matrix.target }} without BASE_IMAGE
         if: ${{ inputs.build_base_image }}
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/terrat/Dockerfile.consolidated
@@ -71,7 +71,7 @@ jobs:
 
       - name: Build and test ${{ matrix.target }} with BASE_IMAGE
         if: ${{ ! inputs.build_base_image }}
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/terrat/Dockerfile.consolidated
@@ -81,7 +81,7 @@ jobs:
 
       - name: Build and test ${{ matrix.target }} without BASE_IMAGE
         if: ${{ inputs.build_base_image }}
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/terrat/Dockerfile.consolidated
