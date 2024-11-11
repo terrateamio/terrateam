@@ -28,14 +28,14 @@ if [[ -z "${CHANGELOG}" ]]; then
   exit 1
 fi
 
-# Check if a release already exists for the tag
-RELEASE_ID=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${VERSION_TAG}" | jq -r '.id')
+# Define the GitHub API URL for the release
+RELEASE_API_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${VERSION_TAG}"
 
-# Get the release ID using GitHub CLI
-RELEASE_ID=$(gh release view "${VERSION_TAG}" --repo "${GITHUB_REPOSITORY}" --json id -q ".id")
+# Check if the release exists
+HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token ${GITHUB_TOKEN}" "${RELEASE_API_URL}")
 
-if [[ "${RELEASE_ID}" == "release not found" ]]; then
-  # Create a new GitHub release if it doesn't exist
+if [[ "$HTTP_STATUS" -eq 404 ]]; then
+  # Release not found, so create a new release
   echo "Creating new GitHub release..."
   if ! gh release create "${VERSION_TAG}" \
     --title "Release ${VERSION_TAG}" \
@@ -44,8 +44,8 @@ if [[ "${RELEASE_ID}" == "release not found" ]]; then
     echo "Error: Failed to create release" >&2
     exit 1
   fi
-else
-  # Update the existing release if it already exists
+elif [[ "$HTTP_STATUS" -eq 200 ]]; then
+  # Release exists, so update it
   echo "Release for tag ${VERSION_TAG} already exists. Updating release..."
   if ! gh release edit "${VERSION_TAG}" \
     --title "Release ${VERSION_TAG}" \
@@ -54,4 +54,8 @@ else
     echo "Error: Failed to update release" >&2
     exit 1
   fi
+else
+  # Handle other HTTP errors
+  echo "Error: Unexpected HTTP status $HTTP_STATUS when checking release" >&2
+  exit 1
 fi
