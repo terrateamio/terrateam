@@ -16,7 +16,6 @@ on:
 
 jobs:
   build-test-amd64:
-    if: false
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -53,6 +52,7 @@ jobs:
           target: ${{ matrix.target }}
 
   build-test-arm64:
+    if: false
     runs-on: ubuntu-22.04-arm64
     strategy:
       matrix:
