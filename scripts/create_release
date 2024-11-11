@@ -20,7 +20,7 @@ fi
 echo "Previous tag: ${PREVIOUS_TAG}"
 
 # Generate the changelog using the previous and current tags
-CHANGELOG="$(./generate_changelog -p "${PREVIOUS_TAG}" -o "${GITHUB_REPOSITORY_OWNER}" -r "${GITHUB_REPOSITORY}" -n "${VERSION_TAG}")"
+CHANGELOG="$(./scripts/generate_changelog -p "${PREVIOUS_TAG}" -o "${GITHUB_REPOSITORY_OWNER}" -r "${GITHUB_REPOSITORY}" -n "${VERSION_TAG}")"
 
 # Verify that CHANGELOG generation was successful
 if [[ -z "${CHANGELOG}" ]]; then
