@@ -17,7 +17,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     environment: ${{ github.event.inputs.environment }}
 
     env:
@@ -27,6 +27,9 @@ jobs:
       MATRIX_PASSWORD: ${{ secrets.MATRIX_PASSWORD }}
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup Flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
 
