@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Define supported architectures
-ARCHITECTURES=("amd64")
-
 # Check for required arguments
 if [[ $# -lt 1 ]]; then
   echo "Usage: $0 <image-name> [<image-name> ...]"
@@ -23,14 +20,9 @@ fi
 for IMAGE_NAME in "$@"; do
   echo "Creating and pushing multi-architecture manifest for ${IMAGE_NAME}..."
 
-  # Build the amend flags dynamically
-  AMEND_FLAGS=()
-  for ARCH in "${ARCHITECTURES[@]}"; do
-    AMEND_FLAGS+=("--amend ${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:${VERSION_TAG}-${ARCH}")
-  done
-
   # Create the multi-architecture manifest for the version tag
-  docker manifest create "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:${VERSION_TAG}" "${AMEND_FLAGS[@]}"
+  docker manifest create "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:${VERSION_TAG}" \
+    --amend "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:${VERSION_TAG}-amd64"
 
   # Push the multi-architecture manifest for the version tag
   docker manifest push "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:${VERSION_TAG}"
@@ -38,8 +30,9 @@ for IMAGE_NAME in "$@"; do
   # Optionally create and push the "latest" tag if conditions are met
   if [[ "${PUSH_LATEST}" == "true" && "${IMAGE_NAME}" != "terrat-base" ]]; then
     echo "Creating and pushing the 'latest' multi-architecture tag for ${IMAGE_NAME}..."
-    docker manifest create "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:latest" "${AMEND_FLAGS[@]}"
+    docker manifest create "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:latest" \
+      --amend "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:${VERSION_TAG}-amd64"
+
     docker manifest push "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:latest"
   fi
-
 done
