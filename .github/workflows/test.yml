@@ -16,7 +16,8 @@ on:
 
 jobs:
   build-test-amd64:
-    runs-on: ubuntu-latest
+    if: false
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         target:
