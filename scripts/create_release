@@ -34,7 +34,7 @@ RELEASE_ID=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" "https://api.gith
 # Get the release ID using GitHub CLI
 RELEASE_ID=$(gh release view "${VERSION_TAG}" --repo "${GITHUB_REPOSITORY}" --json id -q ".id")
 
-if [[ "${RELEASE_ID}" == "null" ]]; then
+if [[ "${RELEASE_ID}" == "release not found" ]]; then
   # Create a new GitHub release if it doesn't exist
   echo "Creating new GitHub release..."
   if ! gh release create "${VERSION_TAG}" \
