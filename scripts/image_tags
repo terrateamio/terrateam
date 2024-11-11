@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-set -euf -o pipefail
-
-IMAGE_TAGS="ghcr.io/${GITHUB_REPOSITORY_OWNER}/${MATRIX_TARGET}:${VERSION_TAG}"
-if [[ "${GITHUB_REF}" == "refs/heads/main" && "${TERRATEAM_ENVIRONMENT}" == "production" ]] || [[ "${TERRATEAM_ENVIRONMENT}" == "production" ]]; then
-  IMAGE_TAGS="${IMAGE_TAGS},ghcr.io/${GITHUB_REPOSITORY_OWNER}/${MATRIX_TARGET}:latest"
-fi
-
-echo "IMAGE_TAGS=${IMAGE_TAGS}"

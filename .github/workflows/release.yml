@@ -12,8 +12,27 @@ on:
           - staging
 
 jobs:
-  build-push:
-    runs-on: ubuntu-latest
+  set-version-tag:
+    runs-on: ubuntu-22.04
+    environment: production
+
+    outputs:
+      version_tag: ${{ steps.set-version-tag.outputs.version_tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set version tag
+        id: set-version-tag
+        run: |
+          VERSION_TAG=$(./scripts/version_tag)
+          echo "VERSION_TAG=${VERSION_TAG}" >> "${GITHUB_ENV}"
+          echo "version_tag=${VERSION_TAG}" >> "${GITHUB_OUTPUT}"
+
+  build-amd64:
+    needs: set-version-tag
+    runs-on: ubuntu-22.04
     environment: ${{ github.event.inputs.environment || 'production' }}
 
     strategy:
@@ -21,6 +40,7 @@ jobs:
         target: [code-indexer, terrat-ee, terrat-oss]
 
     env:
+      VERSION_TAG: ${{ needs.set-version-tag.outputs.version_tag }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       TERRATEAM_UI_ANALYTICS: ${{ github.event.inputs.environment == 'production' && vars.TERRATEAM_POSTHOG_TOKEN || 'false' }}
       TERRATEAM_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
@@ -49,51 +69,122 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set version tag
-        run: |
-          ./scripts/version_tag >> $GITHUB_ENV
-
       - name: Set base image
         run: |
           ./scripts/base_image >> $GITHUB_ENV
-
-      - name: Set image tags
-        run: |
-          ./scripts/image_tags >> $GITHUB_ENV
 
       - name: Create tag
         run: |
           ./scripts/create_tag
 
-      - name: Build and push ${{ matrix.target }}
+      - name: Build and push ${{ matrix.target }} (amd64)
         uses: docker/build-push-action@v4
         with:
           context: .
           file: docker/terrat/Dockerfile.consolidated
           push: true
-          platforms: linux/amd64,linux/arm64
           target: ${{ matrix.target }}
           build-args: |
             BASE_IMAGE=${{ env.BASE_IMAGE }}
-          tags: ${{ env.IMAGE_TAGS }}
+          tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.target }}:${{ env.VERSION_TAG }}-amd64
+
+  build-arm64:
+    if: false
+    needs: set-version-tag
+    runs-on: ubuntu-22.04-arm64
+    environment: ${{ github.event.inputs.environment || 'production' }}
+
+    strategy:
+      matrix:
+        target: [code-indexer, terrat-ee, terrat-oss]
+
+    env:
+      VERSION_TAG: ${{ needs.set-version-tag.outputs.version_tag }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TERRATEAM_UI_ANALYTICS: ${{ github.event.inputs.environment == 'production' && vars.TERRATEAM_POSTHOG_TOKEN || 'false' }}
+      TERRATEAM_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
+      GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      MATRIX_TARGET: ${{ matrix.target }}
+
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set base image
+        run: |
+          ./scripts/base_image >> $GITHUB_ENV
+
+      - name: Create tag
+        run: |
+          ./scripts/create_tag
+
+      - name: Build and push ${{ matrix.target }} (arm64)
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: docker/terrat/Dockerfile.consolidated
+          push: true
+          target: ${{ matrix.target }}
+          build-args: |
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+          tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.target }}:${{ env.VERSION_TAG }}-arm64
+
+  create-multi-arch-manifest:
+    needs: [set-version-tag, build-amd64, build-arm64]
+    runs-on: ubuntu-22.04
+
+    env:
+      VERSION_TAG: ${{ needs.set-version-tag.outputs.version_tag }}
+      GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+      GITHUB_REF: ${{ github.ref }}
+      TERRATEAM_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push multi-arch manifest
+        run: |
+          ./scripts/create_manifest code-indexer terrat-ee terrat-oss
 
   release-notify-deploy:
-    runs-on: ubuntu-latest
+    needs: [set-version-tag, create-multi-arch-manifest]
+    runs-on: ubuntu-22.04
     environment: ${{ github.event.inputs.environment || 'production' }}
 
     env:
+      VERSION_TAG: ${{ needs.set-version-tag.outputs.version_tag }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       TERRATEAM_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
       GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
       GITHUB_REPOSITORY: ${{ github.repository }}
 
-    needs: build-push
-
     steps:
-      - name: Set version tag
-        run: |
-          ./scripts/version_tag >> $GITHUB_ENV
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Create release
         run: |
