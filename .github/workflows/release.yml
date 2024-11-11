@@ -14,7 +14,7 @@ on:
 jobs:
   set-version-tag:
     runs-on: ubuntu-22.04
-    environment: production
+    environment: ${{ github.event.inputs.environment || 'production' }}
 
     outputs:
       version_tag: ${{ steps.set-version-tag.outputs.version_tag }}
