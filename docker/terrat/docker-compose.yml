@@ -1,0 +1,79 @@
+version: "3.4"
+
+services:
+  setup:
+    image: ghcr.io/terrateamio/terrateam-setup:latest
+    environment:
+      GH_ORG: "${GH_ORG}"
+    ports:
+      - "3000:3000"
+    networks:
+      - terrateam
+
+  db:
+    image: postgres:14.5-alpine
+    user: postgres
+    environment:
+      POSTGRES_PASSWORD: "terrateam"
+      POSTGRES_USER: "terrateam"
+      POSTGRES_DB: "terrateam"
+      POSTGRES_HOST_AUTH_METHOD: "md5"
+      POSTGRES_INITDB_ARGS: "--auth-host=md5"
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-d", "terrateam", "-U", "terrateam" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - db:/var/lib/postgresql/data/
+    networks:
+      - terrateam
+
+  server:
+    image: ghcr.io/terrateamio/terrateam:v1
+    platform: linux/amd64
+    environment:
+      NGROK_ENDPOINT: "http://ngrok:4040"
+      DB_HOST: "db"
+      DB_PORT: "5432"
+      DB_USER: "terrateam"
+      DB_PASS: "terrateam"
+      DB_NAME: "terrateam"
+      GITHUB_WEBHOOK_SECRET: "${GITHUB_WEBHOOK_SECRET}"
+      GITHUB_APP_CLIENT_SECRET: "${GITHUB_APP_CLIENT_SECRET}"
+      GITHUB_APP_CLIENT_ID: "${GITHUB_APP_CLIENT_ID}"
+      GITHUB_APP_ID: "${GITHUB_APP_ID}"
+      GITHUB_APP_PEM: "${GITHUB_APP_PEM}"
+      INFRACOST_PRICING_API_ENDPOINT: "https://pricing.api.infracost.io"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      db:
+        condition: service_healthy
+      ngrok:
+        condition: service_healthy
+    networks:
+      - terrateam
+
+  ngrok:
+    image: ngrok/ngrok:3
+    healthcheck:
+      test: /bin/bash -c "</dev/tcp/localhost/4040"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: ["http", "http://server:8080"]
+    networks:
+      - terrateam
+    environment:
+      NGROK_AUTHTOKEN: "${NGROK_AUTHTOKEN}"
+
+networks:
+  terrateam:
+
+volumes:
+  db:
