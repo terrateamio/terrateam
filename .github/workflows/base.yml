@@ -5,7 +5,7 @@ on:
 
 jobs:
   set-version-tag:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     environment: production
 
     outputs:
@@ -24,7 +24,7 @@ jobs:
 
   build-amd64:
     needs: set-version-tag
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     environment: production
 
     permissions:
@@ -57,8 +57,9 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/terrat-base:${{ env.VERSION_TAG }}-amd64
 
   build-arm64:
+    if: false
     needs: set-version-tag
-    runs-on: ubuntu-24.04-arm64
+    runs-on: ubuntu-22.04-arm64
     environment: production
 
     permissions:
@@ -92,7 +93,7 @@ jobs:
 
   create-manifest:
     needs: [set-version-tag, build-amd64, build-arm64]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     environment: production
 
     permissions:
