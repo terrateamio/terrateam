@@ -27,6 +27,9 @@ jobs:
       MATRIX_PASSWORD: ${{ secrets.MATRIX_PASSWORD }}
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup Flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
 
