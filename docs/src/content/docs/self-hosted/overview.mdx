@@ -24,7 +24,7 @@ Make sure the Terrateam server is running BEFORE you install your Terrateam GitH
 1\. Clone the `terrateamio/terrateam` repository:
    ```sh
    git clone https://github.com/terrateamio/terrateam.git
-   cd terrateam
+   cd terrateam/docker/terrat
    ```
 2\. Start the `setup` container:
    :::danger[IMPORTANT]
@@ -42,16 +42,7 @@ Make sure the Terrateam server is running BEFORE you install your Terrateam GitH
 Choose one of the following deployment methods based on your requirements and infrastructure setup:
 
 ### Option 1: Docker Compose
-1\. Save your private Terrateam GitHub application settings file to `.env` in your `terrateam/` directory next to `docker-compose.yml`:
-   ```sh
-   bender@elmer:~ $ tree terrateam/
-   terrateam/
-   ├── docker-compose.yml
-   ├── .env
-   └── README.md
-   0 directories, 3 files
-   bender@elmer:~ $
-   ```
+1\. Save your private Terrateam GitHub application settings file to `.env` in your `terrateam/docker/terrat` directory next to `docker-compose.yml`:
    Your `.env` file should look like this but with actual values:
    ```
    GITHUB_APP_ID=""
