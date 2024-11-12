@@ -51,7 +51,16 @@ if [[ -z "$release_name" ]]; then
     exit 1
 fi
 
-log="$(git log --format='%s' --no-merges "${prev_tag}..${curr_tag}")"
+tries=10
+while ! (git log -1 --  "${prev_tag}"); do
+    tries=$((tries - 1))
+    if (( tries < 0 )); then
+        exit 1
+    fi
+    git fetch --deepen=10
+done
+
+log="$(git log --format='%s' --no-merges -- "${prev_tag}..${curr_tag}")"
 
 set +e
 fixes="$(echo "$log" | grep -E '^(PRO-[0-9]+ ?|[0-9]+ ?)+ FIX ' | sed 's/^/- /')"
