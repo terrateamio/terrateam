@@ -1,6 +1,11 @@
 name: release
 
 on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
   workflow_dispatch:
     inputs:
       environment:
