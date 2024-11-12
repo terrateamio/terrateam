@@ -38,7 +38,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: docker/terrat/Dockerfile.consolidated
+          file: docker/terrat/Dockerfile
           target: ${{ matrix.target }}
           build-args: |
             BASE_IMAGE=${{ env.BASE_IMAGE }}
@@ -48,7 +48,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: docker/terrat/Dockerfile.consolidated
+          file: docker/terrat/Dockerfile
           target: ${{ matrix.target }}
 
   build-test-arm64:
@@ -75,7 +75,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: docker/terrat/Dockerfile.consolidated
+          file: docker/terrat/Dockerfile
           target: ${{ matrix.target }}
           build-args: |
             BASE_IMAGE=${{ env.BASE_IMAGE }}
@@ -85,5 +85,5 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: docker/terrat/Dockerfile.consolidated
+          file: docker/terrat/Dockerfile
           target: ${{ matrix.target }}
