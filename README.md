@@ -5,7 +5,6 @@
 
 [![Stars](https://img.shields.io/github/stars/terrateamio/terrateam)](https://github.com/terrateamio/terrateam/stargazers)
 [![Join our Slack](https://img.shields.io/badge/slack-join%20chat-blue)](https://terrateam.io/slack)
-[![test](https://github.com/terrateamio/mono/actions/workflows/test.yml/badge.svg)](https://github.com/terrateamio/mono/actions/workflows/test.yml)
 [![Latest Release](https://img.shields.io/github/v/release/terrateamio/mono?color=%239F50DA)](https://github.com/terrateamio/mono/releases)
 [![OCaml](https://img.shields.io/badge/OCaml-EC6813?logo=ocaml&logoColor=fff)](https://ocaml.org)
 [![License: MPL-2.0](https://img.shields.io/badge/License-MPL--2.0-blue.svg)](https://opensource.org/licenses/MPL-2.0)
@@ -55,7 +54,9 @@ Before you begin, ensure you have the following:
    GH_ORG=YOUR_GITHUB_ORG docker-compose up setup
    ```
 
-3. **Navigate to [http://localhost:3000](http://localhost:3000)** to create your private Terrateam GitHub application. Take note of your application URL for use below. **Important:** Do not install your private Terrateam GitHub application until you complete the steps below.
+3. **Navigate to [http://localhost:3000](http://localhost:3000)** to create your private Terrateam GitHub application. Take note of your application URL for use below.
+
+   > ⚠️ **Important:** Do not install your private Terrateam GitHub application until you complete the steps below.
 
 4. **Save your `.env` file** next to the `docker-compose.yml` file in the `terrateam/docker/terrat` directory.
 
@@ -69,7 +70,9 @@ Before you begin, ensure you have the following:
    
 7. **Wait for the server to be ready.** The `docker-compose` command will return you to your shell when the Terrateam Server is ready for connections.
 
-8. **Install your private Terrateam GitHub application** using the application URL from step 3. You can install Terrateam aginst your entire organization or specific repositories. **Important:** Ensure the Terrateam Server is running (see step 7) before installing the GitHub application.
+8. **Install your private Terrateam GitHub application** using the application URL from step 3. You can install Terrateam aginst your entire organization or specific repositories.
+
+   > ⚠️ **Important:** Ensure the Terrateam Server is running (see step 7) before installing the GitHub application.
 
 For non-local setup instructions, including manual setup and Kubernetes deployment options, follow our [Self-Hosted Guide](https://docs.terrateam.io/self-hosted/overview) to get up and running.
 
@@ -137,7 +140,8 @@ For more details and example configurations, explore the [Configuration Referenc
 ## Contributing
 Thank you for your interest in contributing to Terrateam! We appreciate your help in improving the project. Whether you're fixing bugs, suggesting new features, or improving documentation, your contributions are essential to making Terrateam better for everyone.
 
-🌟 If you find Terrateam useful, starring the repo is always appreciated! Your support helps increase the project’s visibility, allowing us to grow and continue improving Terrateam for the community.
+> 🌟 **If you find Terrateam useful, starring the repo is always appreciated!**
+> Your support helps increase the project’s visibility, allowing us to grow and continue improving Terrateam for the community.
 
 ### Ways to Contribute
 - **Reporting Issues**: If you encounter bugs or other issues, please report them via [GitHub Issues](https://github.com/terrateamio/terrateam/issues). Make sure to include as much detail as possible (e.g., steps to reproduce, environment, logs).
@@ -166,7 +170,7 @@ Terrateam is available in two versions:
 |                             | Layered Runs (Dependencies)         | :white_check_mark:       | :white_check_mark:       |
 |                             | Drift Detection & Reconciliation    | :white_check_mark:       | :white_check_mark:       |
 |                             | Cost Estimation                     | :white_check_mark:       | :white_check_mark:       |
-| **Scalability**             | High Availability               | :white_check_mark:       | :white_check_mark:       |
+| **Scalability**             | High Availability                   | :white_check_mark:       | :white_check_mark:       |
 |                             | Unlimited Concurrency               | :white_check_mark:       | :white_check_mark:       |
 |                             | Private Runners                     | :white_check_mark:       | :white_check_mark:       |
 | **Integrations**            | GitHub Environments Support         | :white_check_mark:       | :white_check_mark:       |
