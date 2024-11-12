@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Community Slack
+    url: https://terrateam.io/slack
+    about: Join our Slack community for real-time discussions and quick questions.
+  - name: GitHub Discussions
+    url: https://github.com/orgs/terrateamio/discussions
+    about: Use GitHub Discussions for longer conversations, feature ideas, and general questions.
+  - name: Report a Security Vulnerability
+    url: https://github.com/terrateamio/terrateam/security/policy
+    about: Please report security issues and vulnerabilities here.
