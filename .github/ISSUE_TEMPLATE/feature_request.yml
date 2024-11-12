@@ -1,0 +1,27 @@
+name: Feature Request
+description: Suggest a new feature or enhancement
+labels: enhancement
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Let us know your ideas! Please fill out the following form to submit your feature request.
+
+  - type: input
+    attributes:
+      label: Describe the feature
+      description: A clear and concise description of the feature you are requesting.
+      placeholder: "What feature would you like to add?"
+
+  - type: textarea
+    attributes:
+      label: Why is this feature important?
+      description: Explain why this feature would be useful or solve a specific problem.
+      placeholder: "This feature will help..."
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: Any other context or suggestions for implementing this feature.
+      placeholder: "Provide additional context..."

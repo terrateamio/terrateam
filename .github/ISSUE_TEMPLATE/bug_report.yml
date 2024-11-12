@@ -1,0 +1,51 @@
+name: Bug Report
+description: Report a problem with Terrateam
+labels: bug
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please provide as much detail as possible to help us diagnose the issue!
+
+  - type: input
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+      placeholder: "What went wrong?"
+
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      description: |
+        Steps to reproduce the issue, including relevant Terrateam configuration files, GitHub Actions log files, and any Terraform/OpenTofu plans. Do not share sensitive data.
+      placeholder: |
+        1. Provide the relevant configuration files (e.g., .terrateam/config.yml, main.tf, variables.tf, etc.)
+        2. List the steps to reproduce the issue
+        3. Include logs that might be helpful
+
+  - type: textarea
+    attributes:
+      label: Expected behavior
+      description: What was supposed to happen when you executed the command or operation?
+      placeholder: "I expected that..."
+
+  - type: textarea
+    attributes:
+      label: Actual behavior
+      description: What actually happened? Include any error messages or unexpected behavior.
+      placeholder: "Instead of..."
+
+  - type: textarea
+    attributes:
+      label: Terrateam version & environment details
+      description: |
+        Include details about your Terrateam setup (e.g., Terrateam version, Terraform/OpenTofu version, etc.).
+        This helps us understand the environment you're running.
+      placeholder: "Terrateam version..."
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here (e.g., any specific infrastructure setup, cloud provider configuration, etc.).
+      placeholder: "Add any other information..."
