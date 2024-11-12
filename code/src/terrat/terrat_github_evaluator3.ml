@@ -3467,7 +3467,14 @@ struct
                       Uuidm.pp
                       id
                       time))
-              (fun () -> query_work_manifest ~request_id db id)
+              (fun () ->
+                query_work_manifest ~request_id db id
+                >>= function
+                | Some wm ->
+                    let module Wm = Terrat_work_manifest3 in
+                    assert (wm.Wm.state = Wm.State.Queued);
+                    Abb.Future.return (Ok (Some wm))
+                | None -> Abb.Future.return (Ok None))
         | _ :: _ -> assert false
       in
       let open Abb.Future.Infix_monad in
