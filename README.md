@@ -57,7 +57,7 @@ Before you begin, ensure you have the following:
 
 3. **Navigate to [http://localhost:3000](http://localhost:3000)** to create your private Terrateam GitHub application. Take note of your application URL for use below. **Important:** Do not install your private Terrateam GitHub application until you complete the steps below.
 
-4. **Save your `.env` file** next to the `docker-compose.yml` file in the Terrateam directory.
+4. **Save your `.env` file** next to the `docker-compose.yml` file in the `terrateam/docker/terrat` directory.
 
 5. **Stop the Terrateam setup container** by pressing `Ctrl+C` in the terminal to stop the container.
 
