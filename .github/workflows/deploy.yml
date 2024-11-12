@@ -14,15 +14,25 @@ on:
         description: 'Specify the version tag for deployment'
         required: true
         type: string
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Select the deployment environment'
+        required: true
+        type: string
+      VERSION_TAG:
+        description: 'Specify the version tag for deployment'
+        required: true
+        type: string
 
 jobs:
   deploy:
     runs-on: ubuntu-22.04
-    environment: ${{ github.event.inputs.environment }}
+    environment: ${{ inputs.environment }}
 
     env:
-      VERSION_TAG: ${{ github.event.inputs.VERSION_TAG }}
-      TERRATEAM_ENVIRONMENT: ${{ github.event.inputs.environment }}
+      VERSION_TAG: ${{ inputs.VERSION_TAG }}
+      TERRATEAM_ENVIRONMENT: ${{ inputs.environment }}
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       MATRIX_PASSWORD: ${{ secrets.MATRIX_PASSWORD }}
 

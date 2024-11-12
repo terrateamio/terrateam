@@ -24,6 +24,11 @@ jobs:
     outputs:
       version_tag: ${{ steps.set-version-tag.outputs.version_tag }}
 
+    env:
+      GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,6 +39,10 @@ jobs:
           VERSION_TAG=$(./scripts/version_tag)
           echo "VERSION_TAG=${VERSION_TAG}" >> "${GITHUB_ENV}"
           echo "version_tag=${VERSION_TAG}" >> "${GITHUB_OUTPUT}"
+
+      - name: Create tag
+        run: |
+          ./scripts/create_tag
 
   build-amd64:
     needs: set-version-tag
@@ -49,8 +58,6 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       TERRATEAM_UI_ANALYTICS: ${{ github.event.inputs.environment == 'production' && vars.TERRATEAM_POSTHOG_TOKEN || 'false' }}
       TERRATEAM_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
-      GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
-      GITHUB_REPOSITORY: ${{ github.repository }}
       MATRIX_TARGET: ${{ matrix.target }}
 
     permissions:
@@ -74,10 +81,6 @@ jobs:
       - name: Set base image
         run: |
           ./scripts/base_image >> $GITHUB_ENV
-
-      - name: Create tag
-        run: |
-          ./scripts/create_tag
 
       - name: Build and push ${{ matrix.target }} (amd64)
         uses: docker/build-push-action@v6
@@ -105,8 +108,6 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       TERRATEAM_UI_ANALYTICS: ${{ github.event.inputs.environment == 'production' && vars.TERRATEAM_POSTHOG_TOKEN || 'false' }}
       TERRATEAM_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
-      GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
-      GITHUB_REPOSITORY: ${{ github.repository }}
       MATRIX_TARGET: ${{ matrix.target }}
 
     permissions:
@@ -130,10 +131,6 @@ jobs:
       - name: Set base image
         run: |
           ./scripts/base_image >> $GITHUB_ENV
-
-      - name: Create tag
-        run: |
-          ./scripts/create_tag
 
       - name: Build and push ${{ matrix.target }} (arm64)
         uses: docker/build-push-action@v6
@@ -171,7 +168,7 @@ jobs:
         run: |
           ./scripts/create_manifest code-indexer terrat-ee terrat-oss
 
-  release-notify-deploy:
+  release-notify:
     needs: [set-version-tag, create-multi-arch-manifest]
     runs-on: ubuntu-22.04
     environment: ${{ github.event.inputs.environment || 'production' }}
@@ -198,6 +195,10 @@ jobs:
         run: |
           ./scripts/notify_slack
 
-      - name: Trigger deploy
-        run: |
-          ./scripts/trigger_deploy
+  deploy:
+    needs: [set-version-tag, release-notify]
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: ${{ github.event.inputs.environment || 'production' }}
+      VERSION_TAG: ${{ needs.set-version-tag.outputs.version_tag }}
+    secrets: inherit
