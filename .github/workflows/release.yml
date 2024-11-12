@@ -83,7 +83,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: docker/terrat/Dockerfile.consolidated
+          file: docker/terrat/Dockerfile
           push: true
           target: ${{ matrix.target }}
           build-args: |
@@ -139,7 +139,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: docker/terrat/Dockerfile.consolidated
+          file: docker/terrat/Dockerfile
           push: true
           target: ${{ matrix.target }}
           build-args: |
