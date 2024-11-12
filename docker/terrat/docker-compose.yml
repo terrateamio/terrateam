@@ -30,7 +30,7 @@ services:
       - terrateam
 
   server:
-    image: ghcr.io/terrateamio/terrateam:v1
+    image: ghcr.io/terrateamio/terrat-oss:latest
     platform: linux/amd64
     environment:
       NGROK_ENDPOINT: "http://ngrok:4040"
