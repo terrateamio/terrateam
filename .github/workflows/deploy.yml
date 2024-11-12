@@ -43,9 +43,6 @@ jobs:
       - name: Setup Flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
 
-      - name: Fly.io authentication
-        run: ./scripts/auth_flyio
-
       - name: Deploy to Fly.io
         run: ./scripts/deploy_flyio
 
