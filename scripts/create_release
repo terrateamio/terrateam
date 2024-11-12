@@ -19,15 +19,6 @@ fi
 # Echo PREVIOUS_TAG for debugging purposes
 echo "Previous tag: ${PREVIOUS_TAG}"
 
-# Generate the changelog using the previous and current tags
-CHANGELOG="$(./scripts/generate_changelog -p "${PREVIOUS_TAG}" -o "${GITHUB_REPOSITORY_OWNER}" -r "${GITHUB_REPOSITORY}" -n "${VERSION_TAG}")"
-
-# Verify that CHANGELOG generation was successful
-if [[ -z "${CHANGELOG}" ]]; then
-  echo "Error: Changelog generation failed. Exiting."
-  exit 1
-fi
-
 # Define the GitHub API URL for the release
 RELEASE_API_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${VERSION_TAG}"
 
@@ -39,23 +30,9 @@ if [[ "$HTTP_STATUS" -eq 404 ]]; then
   echo "Creating new GitHub release..."
   if ! gh release create "${VERSION_TAG}" \
     --title "Release ${VERSION_TAG}" \
-    --notes "${CHANGELOG}" \
+    --generate-notes \
     --repo "${GITHUB_REPOSITORY}"; then
     echo "Error: Failed to create release" >&2
     exit 1
   fi
-elif [[ "$HTTP_STATUS" -eq 200 ]]; then
-  # Release exists, so update it
-  echo "Release for tag ${VERSION_TAG} already exists. Updating release..."
-  if ! gh release edit "${VERSION_TAG}" \
-    --title "Release ${VERSION_TAG}" \
-    --notes "${CHANGELOG}" \
-    --repo "${GITHUB_REPOSITORY}"; then
-    echo "Error: Failed to update release" >&2
-    exit 1
-  fi
-else
-  # Handle other HTTP errors
-  echo "Error: Unexpected HTTP status $HTTP_STATUS when checking release" >&2
-  exit 1
 fi
