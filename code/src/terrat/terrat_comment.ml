@@ -1,3 +1,5 @@
+let trigger_words = [ "terrateam"; "terraform"; "tofu" ]
+
 type t =
   | Plan of { tag_query : Terrat_tag_query.t }
   | Apply of { tag_query : Terrat_tag_query.t }
@@ -19,7 +21,8 @@ type err =
 let parse s =
   let split_s =
     match CCString.Split.left ~by:" " (CCString.trim s) with
-    | Some ("terrateam", action_rest) -> (
+    | Some (trigger_word, action_rest)
+      when CCList.mem ~eq:CCString.equal (CCString.lowercase_ascii trigger_word) trigger_words -> (
         match CCString.Split.left ~by:" " (CCString.trim action_rest) with
         | Some (action, rest) -> Some (action, rest)
         | None -> Some (action_rest, ""))
