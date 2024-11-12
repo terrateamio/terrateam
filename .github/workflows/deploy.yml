@@ -14,6 +14,16 @@ on:
         description: 'Specify the version tag for deployment'
         required: true
         type: string
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Select the deployment environment'
+        required: true
+        type: string
+      VERSION_TAG:
+        description: 'Specify the version tag for deployment'
+        required: true
+        type: string
 
 jobs:
   deploy:

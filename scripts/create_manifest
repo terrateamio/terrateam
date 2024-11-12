@@ -7,6 +7,13 @@ if [[ $# -lt 1 ]]; then
   exit 1
 fi
 
+# If not the latest version, then never create a "latest"
+if ./scripts/is_latest_version_tag; then
+    is_latest_version="true"
+else
+    is_latest_version="false"
+fi
+
 # Set the container registry URL
 CONTAINER_REGISTRY="ghcr.io"
 
@@ -28,7 +35,7 @@ for IMAGE_NAME in "$@"; do
   docker manifest push "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:${VERSION_TAG}"
 
   # Optionally create and push the "latest" tag if conditions are met
-  if [[ "${PUSH_LATEST}" == "true" && "${IMAGE_NAME}" != "terrat-base" ]]; then
+  if [[ "${is_latest_version}" == "true" && "${PUSH_LATEST}" == "true" && "${IMAGE_NAME}" != "terrat-base" ]]; then
     echo "Creating and pushing the 'latest' multi-architecture tag for ${IMAGE_NAME}..."
     docker manifest create "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:latest" \
       --amend "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:${VERSION_TAG}-amd64"
