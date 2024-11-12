@@ -7,10 +7,13 @@ USE IN PRODUCTION
 
 This software and associated documentation files (the "Software") may
 only be used in production for the correct number of seats if you and
-any entity that you represent: Have agreed to and are in compliance with
-the Terrateam Terms of Service (https://terrateam.io/terms-of-service;
-or Have entered into any other agreement with Terrateam governing the
-use of the Software as agreed by you and Terrateam;
+any entity that you represent:
+
+1. Have agreed to and are in compliance with the Terrateam Terms of
+Service (https://terrateam.io/terms-of-service) or
+
+2. Have entered into any other agreement with Terrateam governing the
+use of the Software as agreed by you and Terrateam
 
 "License holders" refers to a customer who has purchased a Terrateam
 Self-Hosted Enterprise license.
@@ -28,10 +31,12 @@ USE IN DEVELOPMENT AND TESTING WITHOUT A LICENSE
 You may copy and modify the Software for development and testing purposes
 without a license, subject to the following:
 
-You agree that Terrateam and/or its licensors (as applicable) retain all
-right, title, and interest in all any modifications.  You are not granted
-any other rights beyond what is expressly stated here, and it is forbidden
-to copy, merge, publish, distribute, sublicense, and/or sell the Software.
+1. You agree that Terrateam and/or its licensors (as applicable) retain
+all right, title, and interest in all any modifications.
+
+2. You are not granted any other rights beyond what is expressly stated
+here, and it is forbidden to copy, merge, publish, distribute, sublicense,
+and/or sell the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
