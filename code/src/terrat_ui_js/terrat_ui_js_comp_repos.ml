@@ -7,17 +7,17 @@ let comp state =
   let installation = Terrat_ui_js_state.selected_installation app_state in
   let module I = Terrat_api_components.Installation in
   let module Repo = Terrat_api_components.Installation_repo in
-  let module Page = Terrat_ui_js_comp_page.Make (struct
+  let module Page = Brtl_js2_page.Make (struct
     type fetch_err = Terrat_ui_js_client.err [@@deriving show]
-    type elt = Repo.t [@@deriving eq]
+    type elt = Repo.t [@@deriving eq, show]
     type state = Terrat_ui_js_state.t
     type query = { page : string list option } [@@deriving eq]
 
     let class' = "repos"
 
-    let query =
+    let query return =
       let rt = Brtl_js2_rtng.(root consumed_path /? Query.(option (array (string "page")))) in
-      Brtl_js2_rtng.(rt --> fun page -> { page })
+      Brtl_js2_rtng.(rt --> fun page -> return { page })
 
     let make_uri { page } uri =
       match page with
@@ -27,7 +27,7 @@ let comp state =
     let set_page page _ = { page }
     let fetch { page } = Terrat_ui_js_client.repos ?page ~installation_id:installation.I.id client
 
-    let wrap_page els =
+    let wrap_page query els =
       let refresh_btn =
         Brtl_js2.Kit.Ui.Button.v'
           ~class':(Jstr.v "repos-refresh")
@@ -60,7 +60,7 @@ let comp state =
             @ els);
         ]
 
-    let render_elt state repo =
+    let render_elt state query repo =
       Brtl_js2.Brr.El.
         [
           div [ txt' repo.Repo.name ];

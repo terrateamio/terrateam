@@ -1,27 +1,15 @@
 module Work_manifests : sig
-  module Tag_query_sql : sig
-    type t = {
-      q : Buffer.t;
-      strings : string CCVector.vector;
-      bigints : int64 CCVector.vector;
-      json : string CCVector.vector;
-      timezone : string;
-      mutable sort_dir : [ `Asc | `Desc ];
-      mutable sort_by : string;
-    }
-
-    val empty : ?timezone:string -> unit -> t
-
-    val of_ast :
-      t ->
-      Terrat_tag_query_parser_value.t ->
-      ( unit,
-        [> `Error of string
-        | `In_dir_not_supported
-        | `Bad_date_format of string
-        | `Unknown_tag of string
-        ] )
-      result
+  module Outputs : sig
+    val get :
+      Terrat_config.t ->
+      Terrat_storage.t ->
+      int ->
+      Uuidm.t ->
+      string option ->
+      string option ->
+      int Brtl_ep_paginate.Param.t option ->
+      int ->
+      Brtl_rtng.Handler.t
   end
 
   val get :
@@ -31,6 +19,18 @@ module Work_manifests : sig
     string option ->
     string option ->
     (string * Uuidm.t) Brtl_ep_paginate.Param.t option ->
+    int ->
+    Brtl_rtng.Handler.t
+end
+
+module Dirspaces : sig
+  val get :
+    Terrat_config.t ->
+    Terrat_storage.t ->
+    int ->
+    string option ->
+    string option ->
+    (string * string * string * Uuidm.t) Brtl_ep_paginate.Param.t option ->
     int ->
     Brtl_rtng.Handler.t
 end

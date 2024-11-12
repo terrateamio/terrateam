@@ -9,12 +9,13 @@ type call_err =
   [ `Conversion_err of string * string Openapi.Response.t
   | `Missing_response of string Openapi.Response.t
   | `Io_err of Cohttp_abb.request_err
+  | `Timeout
   ]
 [@@deriving show]
 
 type t
 
-val create : ?user_agent:string -> ?base_url:Uri.t -> Authorization.t -> t
+val create : ?user_agent:string -> ?base_url:Uri.t -> ?call_timeout:float -> Authorization.t -> t
 val call : t -> 'a Openapi.Request.t -> ('a Openapi.Response.t, [> call_err ]) result Abb.Future.t
 
 (** Iterate all of the pages in a paginated response and combine them.  They are

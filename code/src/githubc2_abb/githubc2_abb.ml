@@ -67,6 +67,7 @@ type call_err =
   [ `Conversion_err of string * string Openapi.Response.t
   | `Missing_response of string Openapi.Response.t
   | `Io_err of Cohttp_abb.request_err
+  | `Timeout
   ]
 [@@deriving show]
 
@@ -74,9 +75,10 @@ type t = {
   auth : Authorization.t;
   base_url : Uri.t;
   headers : (string * string) list;
+  call_timeout : float option;
 }
 
-let create ?(user_agent = "Githubc2_abb") ?(base_url = base_url) auth =
+let create ?(user_agent = "Githubc2_abb") ?(base_url = base_url) ?call_timeout auth =
   let base_url =
     base_url
     |> Uri.to_string
@@ -98,9 +100,18 @@ let create ?(user_agent = "Githubc2_abb") ?(base_url = base_url) auth =
           | `Token token -> "token " ^ token
           | `Bearer bearer -> "Bearer " ^ bearer );
       ];
+    call_timeout;
   }
 
-let call t req = Api.call Openapi.Request.(req |> with_base_url t.base_url |> add_headers t.headers)
+let call t req =
+  match t.call_timeout with
+  | None -> Api.call Openapi.Request.(req |> with_base_url t.base_url |> add_headers t.headers)
+  | Some timeout ->
+      let open Abb.Future.Infix_monad in
+      Abbs_future_combinators.first
+        (Abb.Sys.sleep timeout >>= fun () -> Abb.Future.return (Error `Timeout))
+        (Api.call Openapi.Request.(req |> with_base_url t.base_url |> add_headers t.headers))
+      >>= fun (r, fut) -> Abb.Future.abort fut >>= fun () -> Abb.Future.return r
 
 let parse_link s =
   let open CCOption.Infix in

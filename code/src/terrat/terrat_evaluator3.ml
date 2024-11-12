@@ -1,3 +1,5 @@
+let result_version = 2
+
 module Metrics = struct
   module DefaultHistogram = Prmths.DefaultHistogram
 
@@ -81,6 +83,13 @@ module Msg = struct
         is_layered_run : bool;
         remaining_layers : Terrat_change_match3.Dirspace_config.t list list;
         result : Terrat_api_components_work_manifest_tf_operation_result.t;
+        work_manifest : ('account, 'target) Terrat_work_manifest3.Existing.t;
+      }
+    | Tf_op_result2 of {
+        config : Terrat_config.t;
+        is_layered_run : bool;
+        remaining_layers : Terrat_change_match3.Dirspace_config.t list list;
+        result : Terrat_api_components_work_manifest_tf_operation_result2.t;
         work_manifest : ('account, 'target) Terrat_work_manifest3.Existing.t;
       }
     | Unexpected_temporary_err
@@ -492,11 +501,21 @@ module type S = sig
   val work_manifest_result :
     Terrat_api_components_work_manifest_tf_operation_result.t -> Work_manifest_result.t
 
+  val work_manifest_result2 :
+    Terrat_api_components_work_manifest_tf_operation_result2.t -> Work_manifest_result.t
+
   val store_tf_operation_result :
     request_id:string ->
     Db.t ->
     Uuidm.t ->
     Terrat_api_components_work_manifest_tf_operation_result.t ->
+    (unit, [> `Error ]) result Abb.Future.t
+
+  val store_tf_operation_result2 :
+    request_id:string ->
+    Db.t ->
+    Uuidm.t ->
+    Terrat_api_components_work_manifest_tf_operation_result2.t ->
     (unit, [> `Error ]) result Abb.Future.t
 
   val query_conflicting_work_manifests_in_repo :
@@ -1021,6 +1040,18 @@ module Make (S : S) = struct
               work_manifest_id
               time))
       (fun () -> S.store_tf_operation_result ~request_id db work_manifest_id result)
+
+  let store_tf_operation_result2 request_id db work_manifest_id result =
+    Abbs_time_it.run
+      (fun time ->
+        Logs.info (fun m ->
+            m
+              "EVALUATOR : %s : STORE_TF_OPERATION_RESULT2 : id=%a : time=%f"
+              request_id
+              Uuidm.pp
+              work_manifest_id
+              time))
+      (fun () -> S.store_tf_operation_result2 ~request_id db work_manifest_id result)
 
   let query_conflicting_work_manifests_in_repo request_id db pull_request dirspaces op =
     Abbs_time_it.run
@@ -1801,6 +1832,20 @@ module Make (S : S) = struct
         let fetch f = f ()
       end)
 
+      module Apply_requirements = Abb_cache.Lru.Make (struct
+        type k = string [@@deriving eq]
+        type v = S.Apply_requirements.t
+
+        type err =
+          [ Repo_config.fetch_err
+          | Terrat_change_match3.synthesize_config_err
+          ]
+
+        type args = unit -> (v, err) result Abb.Future.t
+
+        let fetch f = f ()
+      end)
+
       module Repo_config = Abb_cache.Lru.Make (struct
         type k = string * S.Account.t * S.Repo.t * S.Ref.t [@@deriving eq]
         type v = string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t
@@ -1825,6 +1870,10 @@ module Make (S : S) = struct
 
       let access_control_eval_tf_op =
         Access_control_eval_tf_op.create
+          { Abb_cache.Lru.on_hit = CCFun.const (); on_miss = CCFun.const (); size = 50 }
+
+      let apply_requirements =
+        Apply_requirements.create
           { Abb_cache.Lru.on_hit = CCFun.const (); on_miss = CCFun.const (); size = 50 }
 
       let repo_config =
@@ -2538,23 +2587,35 @@ module Make (S : S) = struct
               working_branch_ref)
 
     let apply_requirements ctx state =
-      let open Abbs_future_combinators.Infix_result_monad in
-      Abbs_future_combinators.Infix_result_app.(
-        (fun client repo_config pull_request matches ->
-          (client, repo_config, pull_request, matches))
-        <$> client ctx state
-        <*> repo_config ctx state
-        <*> pull_request ctx state
-        <*> matches ctx state `Apply)
-      >>= fun (client, repo_config, pull_request, matches) ->
-      eval_apply_requirements
-        state.State.request_id
-        ctx.Ctx.config
-        (Event.user state.State.event)
-        client
-        repo_config
-        pull_request
-        matches.Matches.working_set_matches
+      let fetch () =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Abbs_future_combinators.Infix_result_app.(
+          (fun client repo_config pull_request matches ->
+            (client, repo_config, pull_request, matches))
+          <$> client ctx state
+          <*> repo_config ctx state
+          <*> pull_request ctx state
+          <*> matches ctx state `Apply)
+        >>= fun (client, repo_config, pull_request, matches) ->
+        eval_apply_requirements
+          state.State.request_id
+          ctx.Ctx.config
+          (Event.user state.State.event)
+          client
+          repo_config
+          pull_request
+          matches.Matches.working_set_matches
+      in
+      let open Abb.Future.Infix_monad in
+      Abbs_time_it.run
+        (fun time ->
+          Logs.info (fun m ->
+              m "EVALUATOR : %s : DV : APPLY_REQUIREMENTS : time=%f" state.State.request_id time))
+        (fun () -> Cache.Apply_requirements.fetch Cache.apply_requirements ctx.Ctx.request_id fetch)
+      >>= function
+      | Ok _ as ret -> Abb.Future.return ret
+      | Error (#Repo_config.fetch_err as err) -> Abb.Future.return (Error err)
+      | Error (#Terrat_change_match3.synthesize_config_err as err) -> Abb.Future.return (Error err)
 
     let access_control_results ctx state op =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -3175,6 +3236,8 @@ module Make (S : S) = struct
                 [ check ])
           >>= fun () -> Abb.Future.return (Ok ())
       | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result _ ->
+          assert false
+      | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result2 _ ->
           assert false
       | Terrat_api_components_work_manifest_result.Work_manifest_build_config_result _ ->
           assert false
@@ -3887,6 +3950,7 @@ module Make (S : S) = struct
                             run_kind = run_kind_str;
                             run_kind_data;
                             type_ = "plan";
+                            result_version;
                             config =
                               repo_config
                               |> Terrat_base_repo_config_v1.to_version_1
@@ -3929,6 +3993,7 @@ module Make (S : S) = struct
                             changed_dirspaces = changed_dirspaces changes;
                             run_kind = run_kind_str;
                             type_ = "apply";
+                            result_version;
                             config =
                               repo_config
                               |> Terrat_base_repo_config_v1.to_version_1
@@ -3945,6 +4010,49 @@ module Make (S : S) = struct
       | Terrat_api_components_work_manifest_result.Work_manifest_index_result _ -> assert false
       | Terrat_api_components_work_manifest_result.Work_manifest_build_config_result _ ->
           assert false
+      | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result2 result ->
+          Dv.client ctx state
+          >>= fun client ->
+          Dv.matches ctx state op
+          >>= fun matches ->
+          let work_manifest_result = S.work_manifest_result2 result in
+          store_tf_operation_result2
+            state.State.request_id
+            ctx.Ctx.storage
+            work_manifest.Wm.id
+            result
+          >>= fun () ->
+          run_interactive ctx state (fun () ->
+              Dv.pull_request ctx state
+              >>= fun pull_request ->
+              create_op_commit_checks_of_result
+                state.State.request_id
+                ctx.Ctx.config
+                client
+                work_manifest.Wm.account
+                (S.Pull_request.repo pull_request)
+                (S.Pull_request.branch_ref pull_request)
+                work_manifest
+                work_manifest_result
+              >>= fun () ->
+              publish_msg
+                state.State.request_id
+                client
+                (Event.user state.State.event)
+                pull_request
+                (Msg.Tf_op_result2
+                   {
+                     config = ctx.Ctx.config;
+                     is_layered_run = CCList.length matches.Dv.Matches.all_matches > 1;
+                     remaining_layers = matches.Dv.Matches.all_unapplied_matches;
+                     result;
+                     work_manifest;
+                   }))
+          >>= fun () ->
+          if not work_manifest_result.Work_manifest_result.overall_success then
+            (* If the run failed, then we're done. *)
+            Abb.Future.return (Error (`Noop state))
+          else Abb.Future.return (Ok ())
       | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result result ->
           Dv.client ctx state
           >>= fun client ->
@@ -5617,6 +5725,8 @@ module Make (S : S) = struct
               fail (Msg.Build_config_failure msg)
               >>= fun () -> Abb.Future.return (Error (`Noop state))
           | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result _ ->
+              assert false
+          | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result2 _ ->
               assert false
           | Terrat_api_components_work_manifest_result.Work_manifest_index_result _ -> assert false)
         ~fallthrough:H.log_state_err_iter

@@ -177,14 +177,19 @@ module Query : sig
   val present : string -> unit t
 end
 
+(** Extract fragment *)
+module Fragment : sig
+  type 'a t
+
+  val ud : (string -> 'a option) -> 'a t
+  val string : string t
+  val option : 'a t -> 'a option t
+end
+
 (** Represents a route, which is a URL pattern and the function it should be
    applied to. *)
 module Route : sig
   type 'r t
-end
-
-module Witness : sig
-  type ('f, 'r) t
 end
 
 module Match : sig
@@ -194,7 +199,7 @@ module Match : sig
   val consumed_path : 'r t -> string
   val remaining_path : 'r t -> string
 
-  (** Compare to matches for equality.  This matches that the same amount of
+  (** Compare two matches for equality.  This matches that the same amount of
      path was consumed and the same query parameters were consumed.  The order
      of query values in the URL does not matter for consumption but it does
      matter in the route.  For example: the routes [(rel /? Query.string "a" /?
@@ -224,6 +229,10 @@ val ( /% ) : ('f, 'a -> 'r) t -> 'a Path.t -> ('f, 'r) t
 
 (** Extract a variable from the query. *)
 val ( /? ) : ('f, 'a -> 'r) t -> 'a Query.t -> ('f, 'r) t
+
+(** Extract a value from the fragment.  Only one of these make sense in a route
+but this is not enforced. *)
+val ( /$ ) : ('f, 'a -> 'r) t -> 'a Fragment.t -> ('f, 'r) t
 
 (** Create a route of a URL and a function that matches the types being
    extracted. *)

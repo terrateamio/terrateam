@@ -906,13 +906,13 @@ let of_version_1_hook_op =
   | Op.Hook_op_drift_create_issue _ -> Ok Hooks.Hook_op.Drift_create_issue
   | Op.Hook_op_env_exec op ->
       let module Op = Terrat_repo_config_hook_op_env_exec in
-      let { Op.cmd; name; sensitive; trim_trailing_newlines; method_ = _; type_ = _ } = op in
+      let { Op.cmd; method_ = _; name; sensitive; trim_trailing_newlines; type_ = _ } = op in
       Ok
         (Hooks.Hook_op.Env
            Workflow_step.Env.(Exec (Exec.make ~cmd ~name ~sensitive ~trim_trailing_newlines ())))
   | Op.Hook_op_env_source op ->
       let module Op = Terrat_repo_config_hook_op_env_source in
-      let { Op.cmd; sensitive; method_ = _; type_ = _ } = op in
+      let { Op.cmd; method_ = _; sensitive; type_ = _ } = op in
       Ok (Hooks.Hook_op.Env Workflow_step.Env.(Source (Source.make ~cmd ~sensitive ())))
   | Op.Hook_op_oidc op -> (
       let module Op = Terrat_repo_config_hook_op_oidc in
@@ -937,8 +937,8 @@ let of_version_1_hook_op =
                  Aws
                    (Aws.make
                       ?assume_role_arn
-                      ~assume_role_enabled
                       ?audience
+                      ~assume_role_enabled
                       ~duration
                       ~region
                       ~role_arn
@@ -960,10 +960,10 @@ let of_version_1_hook_op =
                Workflow_step.Oidc.(
                  Gcp
                    (Gcp.make
-                      ~access_token_lifetime
                       ?access_token_subject
                       ?audience
                       ?project_id
+                      ~access_token_lifetime
                       ~service_account
                       ~workload_identity_provider
                       ()))))
@@ -1035,13 +1035,13 @@ let of_version_1_workflow_op_list ops =
       | Op.Hook_op_slack _ -> assert false
       | Op.Hook_op_env_exec op ->
           let module Op = Terrat_repo_config_hook_op_env_exec in
-          let { Op.cmd; name; sensitive; trim_trailing_newlines; method_ = _; type_ = _ } = op in
+          let { Op.cmd; method_ = _; name; sensitive; trim_trailing_newlines; type_ = _ } = op in
           Ok
             (O.Env
                Workflow_step.Env.(Exec (Exec.make ~cmd ~name ~sensitive ~trim_trailing_newlines ())))
       | Op.Hook_op_env_source op ->
           let module Op = Terrat_repo_config_hook_op_env_source in
-          let { Op.cmd; sensitive; method_ = _; type_ = _ } = op in
+          let { Op.cmd; method_ = _; sensitive; type_ = _ } = op in
           Ok (O.Env Workflow_step.Env.(Source (Source.make ~cmd ~sensitive ())))
       | Op.Hook_op_oidc op -> (
           let module Op = Terrat_repo_config_hook_op_oidc in
@@ -1066,8 +1066,8 @@ let of_version_1_workflow_op_list ops =
                      Aws
                        (Aws.make
                           ?assume_role_arn
-                          ~assume_role_enabled
                           ?audience
+                          ~assume_role_enabled
                           ~duration
                           ~region
                           ~role_arn
@@ -1089,10 +1089,10 @@ let of_version_1_workflow_op_list ops =
                    Workflow_step.Oidc.(
                      Gcp
                        (Gcp.make
-                          ~access_token_lifetime
                           ?access_token_subject
                           ?audience
                           ?project_id
+                          ~access_token_lifetime
                           ~service_account
                           ~workload_identity_provider
                           ())))))
@@ -1829,7 +1829,7 @@ let to_version_1_hooks_op_env_source env =
   let module Op = Terrat_repo_config.Hook_op in
   let module E = Terrat_repo_config.Hook_op_env_source in
   let { Workflow_step.Env.Source.cmd; sensitive } = env in
-  { E.cmd; sensitive; method_ = "source"; type_ = "env" }
+  { E.cmd; method_ = "source"; sensitive; type_ = "env" }
 
 let to_version_1_hooks_op_oidc = function
   | Workflow_step.Oidc.Aws oidc ->

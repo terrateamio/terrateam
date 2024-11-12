@@ -109,7 +109,7 @@ let get config storage code installation_id_opt ctx =
       Logs.err (fun m -> m "GITHUB_CALLBACK : FAIL : %s" (Terrat_github.show_user_err err));
       Abb.Future.return
         (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-  | Error `Error ->
-      Logs.err (fun m -> m "GITHUB_CALLBACK : FAIL : ERROR");
+  | Error (#Terrat_github.Oauth.authorize_err as err) ->
+      Logs.err (fun m -> m "GITHUB_CALLBACK : FAIL : %a" Terrat_github.Oauth.pp_authorize_err err);
       Abb.Future.return
         (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)

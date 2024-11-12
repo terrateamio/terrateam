@@ -1,7 +1,7 @@
 type err =
   [ Pgsql_io.err
   | Pgsql_pool.err
-  | `Error
+  | Terrat_github.Oauth.refresh_err
   ]
 [@@deriving show]
 

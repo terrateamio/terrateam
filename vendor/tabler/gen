@@ -1,0 +1,15 @@
+#! /usr/bin/env bash
+
+for fname in *.svg; do
+    bname="$(echo "${fname%.*}" | sed "s/-/_/g" | sed "s/function/function_/")"
+    svg="$(cat "${fname}" | sed 's/\"/\\\"/g')"
+    cat << EOF
+
+let ${bname} ?at () =
+    let el = Brtl_js2.Brr.El.div ?at [] in
+    let el_jv = Brtl_js2.Brr.El.to_jv el in
+    Jv.set el_jv "innerHTML" (Jv.of_jstr (Jstr.v "${svg}"));
+    el
+
+EOF
+done

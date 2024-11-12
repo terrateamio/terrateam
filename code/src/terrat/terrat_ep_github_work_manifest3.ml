@@ -135,6 +135,25 @@ struct
   end
 
   module Access_token = struct
+    module Cache = Abb_cache.Expiring.Make (struct
+      type k = int64 [@@deriving eq]
+      type v = string
+      type err = Terrat_github.get_installation_access_token_err
+      type args = unit -> (v, err) result Abb.Future.t
+
+      let fetch f = f ()
+    end)
+
+    (*  Cache it for slightly less time than it lives *)
+    let cache =
+      Cache.create
+        {
+          Abb_cache.Expiring.on_hit = CCFun.const ();
+          on_miss = CCFun.const ();
+          duration = Duration.of_sec 50;
+          size = 100;
+        }
+
     module Sql = struct
       let select_encryption_key () =
         Pgsql_io.Typed_sql.(
@@ -265,10 +284,11 @@ struct
                 work_manifest_id)
           >>= function
           | Ok (installation_id :: _) -> (
-              Terrat_github.get_installation_access_token
-                ~permissions:github_permissions
-                config
-                (CCInt64.to_int installation_id)
+              Cache.fetch cache installation_id (fun () ->
+                  Terrat_github.get_installation_access_token
+                    ~permissions:github_permissions
+                    config
+                    (CCInt64.to_int installation_id))
               >>= function
               | Ok access_token ->
                   let body =

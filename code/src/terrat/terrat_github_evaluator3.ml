@@ -1,10 +1,23 @@
 let fetch_pull_request_tries = 6
 let fetch_file_length_of_git_hash = CCString.length "aa2022e256fc3435d05d9d8ca0ef0ad0805e6ea5"
+let not_a_bad_chunk_size = 500
 
 let probably_is_git_hash =
   CCString.for_all (function
       | '0' .. '9' | 'a' .. 'f' -> true
       | _ -> false)
+
+let replace_nul_byte = CCString.replace ~which:`All ~sub:"\x00" ~by:"\\0"
+
+let rec replace_nul_byte_json = function
+  | `Tuple l -> `Tuple (CCList.map replace_nul_byte_json l)
+  | `Variant (k, None) -> `Variant (replace_nul_byte k, None)
+  | `Variant (k, Some v) -> `Variant (replace_nul_byte k, Some (replace_nul_byte_json v))
+  | `List l -> `List (CCList.map replace_nul_byte_json l)
+  | `Assoc assoc ->
+      `Assoc (CCList.map (fun (k, v) -> (replace_nul_byte k, replace_nul_byte_json v)) assoc)
+  | `String s -> `String (replace_nul_byte s)
+  | (`Bool _ | `Intlit _ | `Null | `Float _ | `Int _) as t -> t
 
 module Metrics = struct
   module DefaultHistogram = Prmths.Histogram (struct
@@ -417,10 +430,10 @@ module Sql = struct
     Pgsql_io.Typed_sql.(
       sql
       /^ read "insert_github_work_manifest_result.sql"
-      /% Var.uuid "work_manifest"
-      /% Var.text "path"
-      /% Var.text "workspace"
-      /% Var.boolean "success")
+      /% Var.(str_array (uuid "work_manifest"))
+      /% Var.(str_array (text "path"))
+      /% Var.(str_array (text "workspace"))
+      /% Var.(array (boolean "success")))
 
   let update_abort_duplicate_work_manifests () =
     Pgsql_io.Typed_sql.(
@@ -491,6 +504,21 @@ module Sql = struct
       // (* reconcile *) Ret.boolean
       // (* tag_query *) Ret.(option (ud' CCFun.(Terrat_tag_query.of_string %> CCResult.to_opt)))
       /^ read "github_select_missing_drift_scheduled_runs.sql")
+
+  let insert_workflow_step_output =
+    Pgsql_io.Typed_sql.(
+      sql
+      /^ "insert into github_workflow_step_outputs (idx, ignore_errors, payload, scope, step, \
+          success, work_manifest) select * from unnest($idx, $ignore_errors, $payload, $scope, \
+          $step, $success, $work_manifest) on conflict (work_manifest, scope, step, idx) do \
+          nothing"
+      /% Var.(array (smallint "idx"))
+      /% Var.(array (boolean "ignore_errors"))
+      /% Var.(str_array (json "payload"))
+      /% Var.(str_array (json "scope"))
+      /% Var.(str_array (text "step"))
+      /% Var.(array (boolean "success"))
+      /% Var.(str_array (uuid "work_manifest")))
 end
 
 module Tmpl = struct
@@ -651,6 +679,8 @@ module Tmpl = struct
 
   let plan_complete = read "github_plan_complete.tmpl"
   let apply_complete = read "github_apply_complete.tmpl"
+  let plan_complete2 = read "github_plan_complete2.tmpl"
+  let apply_complete2 = read "github_apply_complete2.tmpl"
 end
 
 module S = struct
@@ -1383,9 +1413,24 @@ struct
         >>= function
         | Some { Wm.changes; _ } ->
             Abbs_future_combinators.List_result.iter
-              ~f:(fun dsf ->
+              ~f:(fun chunk ->
                 let module Ds = Terrat_change.Dirspace in
-                let { Ds.dir; workspace } = Terrat_change.Dirspaceflow.to_dirspace dsf in
+                let work_manifest_id = CCList.replicate (CCList.length chunk) work_manifest_id in
+                let success = CCList.replicate (CCList.length chunk) success in
+                let dir =
+                  CCList.map
+                    (fun dsf ->
+                      let { Ds.dir; _ } = Terrat_change.Dirspaceflow.to_dirspace dsf in
+                      dir)
+                    chunk
+                in
+                let workspace =
+                  CCList.map
+                    (fun dsf ->
+                      let { Ds.workspace; _ } = Terrat_change.Dirspaceflow.to_dirspace dsf in
+                      workspace)
+                    chunk
+                in
                 Pgsql_io.Prepared_stmt.execute
                   db
                   Sql.insert_github_work_manifest_result
@@ -1393,7 +1438,7 @@ struct
                   dir
                   workspace
                   success)
-              changes
+              (CCList.chunks not_a_bad_chunk_size changes)
         | None -> assert false
       in
       let open Abb.Future.Infix_monad in
@@ -1446,6 +1491,494 @@ struct
           Prmths.Counter.inc_one Metrics.pgsql_errors_total;
           Logs.err (fun m -> m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Pgsql_io.pp_err err);
           Abb.Future.return (Error `Error)
+
+    module Result = struct
+      module Scope = struct
+        type t =
+          | Dirspace of Terrat_dirspace.t
+          | Run of {
+              flow : string;
+              subflow : string;
+            }
+        [@@deriving eq, ord]
+
+        let of_terrat_api_scope =
+          let module S = Terrat_api_components.Workflow_step_output_scope in
+          let module Ds = Terrat_api_components.Workflow_step_output_scope_dirspace in
+          let module R = Terrat_api_components.Workflow_step_output_scope_run in
+          function
+          | S.Workflow_step_output_scope_dirspace { Ds.dir; workspace; _ } ->
+              Dirspace { Terrat_dirspace.dir; workspace }
+          | S.Workflow_step_output_scope_run { R.flow; subflow; _ } -> Run { flow; subflow }
+      end
+
+      module By_scope = Terrat_data.Group_by (struct
+        module T = Terrat_api_components.Workflow_step_output
+
+        type t = T.t
+        type key = Scope.t
+
+        let compare = Scope.compare
+        let key { T.scope; _ } = Scope.of_terrat_api_scope scope
+      end)
+
+      let steps_has_changes steps =
+        let module P = struct
+          type t = { has_changes : bool [@default false] } [@@deriving of_yojson { strict = false }]
+        end in
+        let module O = Terrat_api_components.Workflow_step_output in
+        match
+          CCList.find_map
+            (function
+              | { O.step = "plan"; payload; success; _ } -> (
+                  match P.of_yojson (O.Payload.to_yojson payload) with
+                  | Ok { P.has_changes } -> Some has_changes
+                  | _ -> None)
+              | _ -> None)
+            steps
+        with
+        | Some has_changes -> has_changes
+        | None -> false
+
+      let steps_success steps =
+        let module O = Terrat_api_components.Workflow_step_output in
+        CCList.for_all (fun { O.success; ignore_errors; _ } -> success || ignore_errors) steps
+
+      module Publisher2 = struct
+        module Output = struct
+          type t = {
+            cmd : string option;
+            name : string;
+            success : bool;
+            text : string;
+            text_decorator : string option;
+          }
+
+          let make ?cmd ?text_decorator ~name ~success ~text () =
+            { cmd; name; success; text; text_decorator }
+
+          let to_kv { cmd; name; success; text; text_decorator } =
+            Snabela.Kv.(
+              Map.of_list
+                (CCList.flatten
+                   [
+                     [
+                       ("name", string name);
+                       ("text", string text);
+                       ("success", bool success);
+                       ("text_decorator", string (CCOption.get_or ~default:"" text_decorator));
+                     ];
+                     CCOption.map_or ~default:[] (fun cmd -> [ ("cmd", string cmd) ]) cmd;
+                   ]))
+        end
+
+        let kv_of_cost_estimation changed_dirspaces output =
+          let module P = struct
+            module S = struct
+              type t = {
+                prev_monthly_cost : float;
+                total_monthly_cost : float;
+                diff_monthly_cost : float;
+              }
+              [@@deriving of_yojson { strict = false }]
+            end
+
+            module Ds = struct
+              type t = {
+                dir : string;
+                workspace : string;
+                prev_monthly_cost : float;
+                total_monthly_cost : float;
+                diff_monthly_cost : float;
+              }
+              [@@deriving yojson { strict = false }]
+            end
+
+            type t = {
+              summary : S.t;
+              dirspaces : Ds.t list;
+              currency : string;
+            }
+            [@@deriving of_yojson { strict = false }]
+          end in
+          let module O = Terrat_api_components.Workflow_step_output in
+          if output.O.success then
+            let open CCResult.Infix in
+            P.of_yojson (O.Payload.to_yojson output.O.payload)
+            >>= fun payload ->
+            let summary = payload.P.summary in
+            let changed_dirspaces = Terrat_data.Dirspace_set.of_list changed_dirspaces in
+            Ok
+              Snabela.Kv.(
+                Map.of_list
+                  [
+                    ("name", string "cost_estimation");
+                    ("success", bool output.O.success);
+                    ("prev_monthly_cost", float summary.P.S.prev_monthly_cost);
+                    ("total_monthly_cost", float summary.P.S.total_monthly_cost);
+                    ("diff_monthly_cost", float summary.P.S.diff_monthly_cost);
+                    ("currency", string payload.P.currency);
+                    ( "dirspaces",
+                      list
+                        (CCList.filter_map
+                           (fun {
+                                  P.Ds.dir;
+                                  workspace;
+                                  total_monthly_cost;
+                                  prev_monthly_cost;
+                                  diff_monthly_cost;
+                                } ->
+                             if
+                               Terrat_data.Dirspace_set.mem
+                                 { Terrat_dirspace.dir; workspace }
+                                 changed_dirspaces
+                             then
+                               Some
+                                 (Map.of_list
+                                    [
+                                      ("dir", string dir);
+                                      ("workspace", string workspace);
+                                      ("prev_monthly_cost", float prev_monthly_cost);
+                                      ("total_monthly_cost", float total_monthly_cost);
+                                      ("diff_monthly_cost", float diff_monthly_cost);
+                                    ])
+                             else None)
+                           payload.P.dirspaces) );
+                  ])
+          else
+            let module P = struct
+              type t = { text : string } [@@deriving of_yojson { strict = false }]
+            end in
+            let open CCResult.Infix in
+            P.of_yojson (O.Payload.to_yojson output.O.payload)
+            >>= fun { P.text } ->
+            Ok
+              Snabela.Kv.(Map.of_list [ ("success", bool output.O.success); ("text", string text) ])
+
+        let output_of_run output =
+          let module P = struct
+            type t = {
+              cmd : string list option; [@default None]
+              text : string option; [@default None]
+            }
+            [@@deriving of_yojson { strict = false }]
+          end in
+          let module O = Terrat_api_components.Workflow_step_output in
+          let open CCResult.Infix in
+          P.of_yojson (O.Payload.to_yojson output.O.payload)
+          >>= fun { P.cmd; text } ->
+          Ok
+            (Output.make
+               ?cmd:(CCOption.map (CCString.concat " ") cmd)
+               ~name:output.O.step
+               ~success:output.O.success
+               ~text:(CCOption.get_or ~default:"" text)
+               ())
+
+        let output_of_plan output =
+          let module P = struct
+            type t = {
+              cmd : string list option; [@default None]
+              text : string;
+              plan : string option; [@default None]
+              has_changes : bool option; [@default None]
+            }
+            [@@deriving of_yojson { strict = false }]
+          end in
+          let module O = Terrat_api_components.Workflow_step_output in
+          let open CCResult.Infix in
+          P.of_yojson (O.Payload.to_yojson output.O.payload)
+          >>= fun { P.cmd; text; has_changes; plan } ->
+          if output.O.success then
+            Ok
+              (Output.make
+                 ?cmd:(CCOption.map (CCString.concat " ") cmd)
+                 ~name:output.O.step
+                 ~success:output.O.success
+                 ~text:(CCOption.get_or ~default:text plan)
+                 ~text_decorator:"diff"
+                 ())
+          else
+            Ok
+              (Output.make
+                 ?cmd:(CCOption.map (CCString.concat " ") cmd)
+                 ~name:output.O.step
+                 ~success:output.O.success
+                 ~text
+                 ())
+
+        let output_of_workflow_output output =
+          let module O = Terrat_api_components.Workflow_step_output in
+          match output.O.step with
+          | "run" | "init" | "env" | "apply" -> output_of_run output
+          | "plan" -> output_of_plan output
+          | step -> output_of_run output
+
+        let output_of_raw output =
+          let module O = Terrat_api_components.Workflow_step_output in
+          let { O.step; success; payload; _ } = output in
+          Output.make
+            ~name:step
+            ~success
+            ~text:(Yojson.Safe.pretty_to_string (O.Payload.to_yojson payload))
+            ()
+
+        let kv_of_steps steps =
+          let module O = Terrat_api_components.Workflow_step_output in
+          CCList.filter_map
+            (fun output ->
+              match output.O.step with
+              | "cost_estimation" -> None
+              | _ -> (
+                  match output_of_workflow_output output with
+                  | Ok output -> Some (Output.to_kv output)
+                  | Error _ -> Some (Output.to_kv (output_of_raw output))))
+            steps
+
+        let dirspace_compare (dirspace1, steps1) (dirspace2, steps2) =
+          let module Cmp = struct
+            type t = bool * bool * Terrat_dirspace.t [@@deriving ord]
+          end in
+          let has_changes1 = steps_has_changes steps1 in
+          let success1 = steps_success steps1 in
+          let has_changes2 = steps_has_changes steps2 in
+          let success2 = steps_success steps2 in
+          (* Negate has_changes because the order of [bool] is [false]
+             before [true]. *)
+          Cmp.compare (not has_changes1, success1, dirspace1) (not has_changes2, success2, dirspace2)
+
+        let create_run_output
+            ~view
+            request_id
+            config
+            is_layered_run
+            remaining_dirspace_configs
+            (by_scope : (Scope.t * Terrat_api_components.Workflow_step_output.t list) list)
+            work_manifest =
+          let module Wm = Terrat_work_manifest3 in
+          let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
+          let module O = Terrat_api_components.Workflow_step_output in
+          let module Sds = Terrat_api_components.Workflow_step_output_scope_dirspace in
+          let module Sr = Terrat_api_components.Workflow_step_output_scope_run in
+          let hooks_pre =
+            CCList.Assoc.get
+              ~eq:Scope.equal
+              (Scope.Run { flow = "hooks"; subflow = "pre" })
+              by_scope
+          in
+          let hooks_post =
+            CCList.Assoc.get
+              ~eq:Scope.equal
+              (Scope.Run { flow = "hooks"; subflow = "post" })
+              by_scope
+          in
+          let dirspaces =
+            by_scope
+            |> CCList.filter_map (function
+                   | Scope.Dirspace dirspace, steps -> Some (dirspace, steps)
+                   | _ -> None)
+            |> CCList.sort dirspace_compare
+          in
+          let overall_success =
+            CCList.for_all
+              (fun (_, steps) ->
+                CCList.for_all
+                  (fun { O.success; ignore_errors; _ } -> success || ignore_errors)
+                  steps)
+              by_scope
+          in
+          let num_remaining_layers = CCList.length remaining_dirspace_configs in
+          let denied_dirspaces =
+            match work_manifest.Wm.denied_dirspaces with
+            | [] -> []
+            | dirspaces ->
+                Snabela.Kv.
+                  [
+                    ( "denied_dirspaces",
+                      list
+                        (CCList.map
+                           (fun { Wm.Deny.dirspace = { Terrat_dirspace.dir; workspace }; policy } ->
+                             Map.of_list
+                               (CCList.flatten
+                                  [
+                                    [ ("dir", string dir); ("workspace", string workspace) ];
+                                    (match policy with
+                                    | Some policy ->
+                                        [
+                                          ( "policy",
+                                            list
+                                              (CCList.map
+                                                 (fun p ->
+                                                   Map.of_list
+                                                     [
+                                                       ( "item",
+                                                         string
+                                                           (Terrat_base_repo_config_v1
+                                                            .Access_control
+                                                            .Match
+                                                            .to_string
+                                                              p) );
+                                                     ])
+                                                 policy) );
+                                        ]
+                                    | None -> []);
+                                  ]))
+                           dirspaces) );
+                  ]
+          in
+          let cost_estimation =
+            hooks_pre
+            |> CCOption.get_or ~default:[]
+            |> CCList.filter (fun { O.step; _ } -> CCString.equal step "cost_estimation")
+            |> function
+            | [] -> []
+            | o :: _ -> (
+                let changed_dirspaces =
+                  CCList.map
+                    (fun { Terrat_change.Dirspaceflow.dirspace; _ } -> dirspace)
+                    work_manifest.Wm.changes
+                in
+                match kv_of_cost_estimation changed_dirspaces o with
+                | Ok kv -> [ ("cost_estimation", Snabela.Kv.list [ kv ]) ]
+                | Error _ ->
+                    [ ("cost_estimation", Snabela.Kv.list [ Output.to_kv (output_of_raw o) ]) ])
+          in
+          let kv =
+            Snabela.Kv.(
+              Map.of_list
+                (CCList.flatten
+                   [
+                     CCOption.map_or
+                       ~default:[]
+                       (fun work_manifest_url ->
+                         [ ("work_manifest_url", string (Uri.to_string work_manifest_url)) ])
+                       (Terratc.Github.Ui.work_manifest_url
+                          config
+                          work_manifest.Wm.account
+                          work_manifest);
+                     [
+                       ("is_layered_run", bool is_layered_run);
+                       ("is_last_layer", bool (num_remaining_layers = 0));
+                       ("num_more_layers", int num_remaining_layers);
+                       ("overall_success", bool overall_success);
+                       ("pre_hooks", list (kv_of_steps (CCOption.get_or ~default:[] hooks_pre)));
+                       ("post_hooks", list (kv_of_steps (CCOption.get_or ~default:[] hooks_post)));
+                       ("compact_view", bool (view = `Compact));
+                       ("compact_dirspaces", bool (CCList.length dirspaces > 5));
+                       ( "dirspaces",
+                         list
+                           (CCList.map
+                              (fun ({ Terrat_dirspace.dir; workspace }, steps) ->
+                                let has_changes = steps_has_changes steps in
+                                let success = steps_success steps in
+                                Map.of_list
+                                  (CCList.flatten
+                                     [
+                                       [
+                                         ("dir", string dir);
+                                         ("workspace", string workspace);
+                                         ("success", bool success);
+                                         ("steps", list (kv_of_steps steps));
+                                         ("has_changes", bool has_changes);
+                                       ];
+                                     ]))
+                              dirspaces) );
+                     ];
+                     denied_dirspaces;
+                     cost_estimation;
+                   ]))
+          in
+          let tmpl =
+            match CCList.rev work_manifest.Wm.steps with
+            | [] | Wm.Step.Index :: _ | Wm.Step.Build_config :: _ -> assert false
+            | Wm.Step.Plan :: _ -> Tmpl.plan_complete2
+            | Wm.Step.(Apply | Unsafe_apply) :: _ -> Tmpl.apply_complete2
+          in
+          match Snabela.apply tmpl kv with
+          | Ok body -> body
+          | Error (#Snabela.err as err) ->
+              Logs.err (fun m ->
+                  m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Snabela.pp_err err);
+              assert false
+
+        let rec iterate_comment_posts
+            ?(view = `Full)
+            request_id
+            config
+            client
+            is_layered_run
+            remaining_layers
+            results
+            pull_request
+            work_manifest =
+          let module Wm = Terrat_work_manifest3 in
+          let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
+          let by_scope = By_scope.group results.R2.steps in
+          let output =
+            create_run_output
+              ~view
+              request_id
+              config
+              is_layered_run
+              remaining_layers
+              by_scope
+              work_manifest
+          in
+          let repo = pull_request.Pull_request.repo in
+          let open Abb.Future.Infix_monad in
+          Terrat_github.publish_comment
+            ~owner:repo.Repo.owner
+            ~repo:repo.Repo.name
+            ~pull_number:pull_request.Pull_request.id
+            ~body:output
+            client.Client.client
+          >>= function
+          | Ok () -> Abb.Future.return (Ok ())
+          | Error (#Terrat_github.publish_comment_err as err) -> (
+              let dirspaces =
+                CCList.filter
+                  (function
+                    | Scope.Dirspace _, _ -> true
+                    | _ -> false)
+                  by_scope
+              in
+              match (view, dirspaces) with
+              | _, [] -> assert false
+              | `Full, _ ->
+                  Prmths.Counter.inc_one Metrics.github_errors_total;
+                  Logs.info (fun m ->
+                      m
+                        "GITHUB_EVALUATOR : %s : ITERATE_COMMENT_POST : %s"
+                        request_id
+                        (Terrat_github.show_publish_comment_err err));
+                  iterate_comment_posts
+                    ~view:`Compact
+                    request_id
+                    config
+                    client
+                    is_layered_run
+                    remaining_layers
+                    results
+                    pull_request
+                    work_manifest
+              | `Compact, [ _ ] ->
+                  (* If we're in compact view but there is only one dirspace, then
+                     that means there is no way to make the comment smaller. *)
+                  Prmths.Counter.inc_one Metrics.github_errors_total;
+                  Logs.info (fun m ->
+                      m
+                        "GITHUB_EVALUATOR : %s : ITERATE_COMMENT_POST : %s"
+                        request_id
+                        (Terrat_github.show_publish_comment_err err));
+                  Terrat_github.publish_comment
+                    ~owner:repo.Repo.owner
+                    ~repo:repo.Repo.name
+                    ~pull_number:pull_request.Pull_request.id
+                    ~body:Tmpl.comment_too_large
+                    client.Client.client
+              | `Compact, dirspaces -> raise (Failure "nyi"))
+      end
+    end
 
     module Result_publisher = struct
       module Workflow_step_output = struct
@@ -3011,6 +3544,20 @@ struct
           >>= function
           | Ok () -> Abb.Future.return (Ok ())
           | Error _ -> Abb.Future.return (Error `Error))
+      | Msg.Tf_op_result2 { config; is_layered_run; remaining_layers; result; work_manifest } -> (
+          let open Abb.Future.Infix_monad in
+          Result.Publisher2.iterate_comment_posts
+            request_id
+            config
+            client
+            is_layered_run
+            remaining_layers
+            result
+            pull_request
+            work_manifest
+          >>= function
+          | Ok () -> Abb.Future.return (Ok ())
+          | Error _ -> Abb.Future.return (Error `Error))
       | Msg.Unexpected_temporary_err ->
           let kv = Snabela.Kv.(Map.of_list []) in
           apply_template_and_publish
@@ -3262,7 +3809,7 @@ struct
             (CCList.map (fun { Dsf.dirspace = { Ds.dir; _ }; _ } -> dir) changes)
             (CCList.map (fun { Dsf.dirspace = { Ds.workspace; _ }; _ } -> workspace) changes)
             (CCList.map (fun { Dsf.workflow; _ } -> workflow) changes))
-        (CCList.chunks 500 changes)
+        (CCList.chunks not_a_bad_chunk_size changes)
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -3302,7 +3849,7 @@ struct
                  CCOption.map (fun policy -> Yojson.Safe.to_string (Policy.to_yojson policy)) policy)
                denied_dirspaces)
             (CCList.replicate (CCList.length denied_dirspaces) work_manifest_id))
-        (CCList.chunks 500 denied_dirspaces)
+        (CCList.chunks not_a_bad_chunk_size denied_dirspaces)
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -3749,7 +4296,7 @@ struct
                      (fun { Dfwf.workflow = { Wf.lock_policy; _ }; _ } -> lock_policy)
                      workflow)
                  dirspaceflows))
-          (CCList.chunks 500 dirspaceflows)
+          (CCList.chunks not_a_bad_chunk_size dirspaceflows)
       in
       let open Abb.Future.Infix_monad in
       run
@@ -3863,6 +4410,44 @@ struct
         dirspaces_success;
       }
 
+    let work_manifest_result2 result =
+      let module O = Terrat_api_components.Workflow_step_output in
+      let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
+      let by_scope = Result.By_scope.group result.R2.steps in
+      let hooks_pre =
+        CCList.Assoc.get
+          ~eq:Result.Scope.equal
+          (Result.Scope.Run { flow = "hooks"; subflow = "pre" })
+          by_scope
+      in
+      let hooks_post =
+        CCList.Assoc.get
+          ~eq:Result.Scope.equal
+          (Result.Scope.Run { flow = "hooks"; subflow = "post" })
+          by_scope
+      in
+      let dirspaces =
+        CCList.filter_map
+          (function
+            | Result.Scope.Dirspace dirspace, steps -> Some (dirspace, steps)
+            | _ -> None)
+          by_scope
+      in
+      let pre_hooks_success = Result.steps_success (CCOption.get_or ~default:[] hooks_pre) in
+      let post_hooks_success = Result.steps_success (CCOption.get_or ~default:[] hooks_post) in
+      let dirspaces_success =
+        CCList.map (fun (dirspace, steps) -> (dirspace, Result.steps_success steps)) dirspaces
+      in
+      let overall_success =
+        CCList.for_all (fun (_, steps) -> Result.steps_success steps) by_scope
+      in
+      {
+        Terrat_evaluator3.Work_manifest_result.overall_success;
+        pre_hooks_success;
+        post_hooks_success;
+        dirspaces_success;
+      }
+
     let store_tf_operation_result ~request_id db work_manifest_id result =
       let module Rb = Terrat_api_components_work_manifest_tf_operation_result in
       let open Abb.Future.Infix_monad in
@@ -3873,9 +4458,9 @@ struct
           Logs.info (fun m ->
               m "GITHUB_EVALUATOR : %s : DIRSPACE_RESULT_STORE : time=%f" request_id time))
         (fun () ->
-          Abbs_future_combinators.List_result.iter
-            ~f:(fun result ->
-              let module Wmr = Terrat_api_components.Work_manifest_dirspace_result in
+          let module Wmr = Terrat_api_components.Work_manifest_dirspace_result in
+          CCList.iter
+            (fun result ->
               Logs.info (fun m ->
                   m
                     "GITHUB_EVALUATOR : %s : RESULT_STORE : id=%a : dir=%s : workspace=%s : \
@@ -3885,15 +4470,119 @@ struct
                     work_manifest_id
                     result.Wmr.path
                     result.Wmr.workspace
-                    (if result.Wmr.success then "SUCCESS" else "FAILURE"));
+                    (if result.Wmr.success then "SUCCESS" else "FAILURE")))
+            result.Rb.dirspaces;
+          Abbs_future_combinators.List_result.iter
+            ~f:(fun chunk ->
+              let work_manifest_id = CCList.replicate (CCList.length chunk) work_manifest_id in
+              let dir = CCList.map (fun result -> result.Wmr.path) chunk in
+              let workspace = CCList.map (fun result -> result.Wmr.workspace) chunk in
+              let success = CCList.map (fun result -> result.Wmr.success) chunk in
               Pgsql_io.Prepared_stmt.execute
                 db
                 Sql.insert_github_work_manifest_result
                 work_manifest_id
-                result.Wmr.path
-                result.Wmr.workspace
-                result.Wmr.success)
-            result.Rb.dirspaces)
+                dir
+                workspace
+                success)
+            (CCList.chunks not_a_bad_chunk_size result.Rb.dirspaces))
+      >>= function
+      | Ok () -> Abb.Future.return (Ok ())
+      | Error (#Pgsql_io.err as err) ->
+          Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+          Logs.err (fun m -> m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+      | Error `Error -> Abb.Future.return (Error `Error)
+
+    let store_tf_operation_result2 ~request_id db work_manifest_id result =
+      let module R2 = Terrat_api_components_work_manifest_tf_operation_result2 in
+      let open Abb.Future.Infix_monad in
+      let by_scope = Result.By_scope.group result.R2.steps in
+      let overall_success =
+        CCList.for_all (fun (_, steps) -> Result.steps_success steps) by_scope
+      in
+      let dirspaces =
+        CCList.filter_map
+          (function
+            | Result.Scope.Dirspace dirspace, steps -> Some (dirspace, steps)
+            | _ -> None)
+          by_scope
+      in
+      Prmths.Counter.inc_one (Metrics.run_overall_result_count (Bool.to_string overall_success));
+      Abbs_time_it.run
+        (fun time ->
+          Logs.info (fun m ->
+              m "GITHUB_EVALUATOR : %s : DIRSPACE_RESULT_STORE : time=%f" request_id time))
+        (fun () ->
+          let module O = Terrat_api_components.Workflow_step_output in
+          let module Scope = Terrat_api_components.Workflow_step_output_scope in
+          let open Abbs_future_combinators.Infix_result_monad in
+          let steps = CCList.mapi (fun idx step -> (idx, step)) result.R2.steps in
+          Abbs_future_combinators.List_result.iter
+            ~f:(fun chunk ->
+              let idx = CCList.map (fun (idx, _) -> idx) chunk in
+              let ignore_errors =
+                CCList.map (fun (_, { O.ignore_errors; _ }) -> ignore_errors) chunk
+              in
+              let payload =
+                CCList.map
+                  (fun (_, { O.payload; _ }) ->
+                    Yojson.Safe.to_string (replace_nul_byte_json (O.Payload.to_yojson payload)))
+                  chunk
+              in
+              let scope =
+                CCList.map
+                  (fun (_, { O.scope; _ }) ->
+                    Yojson.Safe.to_string (replace_nul_byte_json (Scope.to_yojson scope)))
+                  chunk
+              in
+              let step = CCList.map (fun (_, { O.step; _ }) -> replace_nul_byte step) chunk in
+              let success = CCList.map (fun (_, { O.success; _ }) -> success) chunk in
+              let work_manifest_id = CCList.replicate (CCList.length chunk) work_manifest_id in
+              Pgsql_io.Prepared_stmt.execute
+                db
+                Sql.insert_workflow_step_output
+                idx
+                ignore_errors
+                payload
+                scope
+                step
+                success
+                work_manifest_id)
+            (CCList.chunks not_a_bad_chunk_size steps)
+          >>= fun () ->
+          let dirspaces =
+            CCList.map (fun (dirspace, steps) -> (dirspace, Result.steps_success steps)) dirspaces
+          in
+          CCList.iter
+            (fun ({ Terrat_dirspace.dir; workspace }, success) ->
+              Logs.info (fun m ->
+                  m
+                    "GITHUB_EVALUATOR : %s : RESULT_STORE : id=%a : dir=%s : workspace=%s : \
+                     result=%s"
+                    request_id
+                    Uuidm.pp
+                    work_manifest_id
+                    dir
+                    workspace
+                    (if success then "SUCCESS" else "FAILURE")))
+            dirspaces;
+          Abbs_future_combinators.List_result.iter
+            ~f:(fun chunk ->
+              let work_manifest_id = CCList.replicate (CCList.length chunk) work_manifest_id in
+              let dir = CCList.map (fun ({ Terrat_dirspace.dir; _ }, _) -> dir) chunk in
+              let workspace =
+                CCList.map (fun ({ Terrat_dirspace.workspace; _ }, _) -> workspace) chunk
+              in
+              let success = CCList.map (fun (_, success) -> success) chunk in
+              Pgsql_io.Prepared_stmt.execute
+                db
+                Sql.insert_github_work_manifest_result
+                work_manifest_id
+                dir
+                workspace
+                success)
+            (CCList.chunks not_a_bad_chunk_size dirspaces))
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -4066,6 +4755,7 @@ struct
       Abb.Future.return (Ok (all_of_passed && any_of_passed))
 
     let eval_apply_requirements ~request_id config user client repo_config pull_request matches =
+      let max_parallel = 20 in
       let module R = Terrat_base_repo_config_v1 in
       let module Ar = R.Apply_requirements in
       let module Abc = Ar.Check in
@@ -4130,106 +4820,112 @@ struct
         Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : MERGEABLE_NONE" request_id);
       let open Abb.Future.Infix_monad in
       Abbs_future_combinators.List_result.map
-        ~f:(fun ({ Terrat_change_match3.Dirspace_config.tags; dirspace; _ } as match_) ->
-          let open Abbs_future_combinators.Infix_result_monad in
-          Logs.info (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : CHECK_APPLY_REQUIREMENTS : dir=%s : workspace=%s"
-                request_id
-                dirspace.Terrat_dirspace.dir
-                dirspace.Terrat_dirspace.workspace);
-          match
-            CCList.find_opt
-              (fun { Abc.tag_query; _ } ->
-                let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-                Terrat_tag_query.match_ ~ctx ~tag_set:tags tag_query)
-              checks
-          with
-          | Some { Abc.tag_query; merge_conflicts; status_checks; approved; _ } ->
-              compute_approved request_id access_control_ctx approved approved_reviews
-              >>= fun approved_result ->
-              let ignore_matching = status_checks.Sc.ignore_matching in
-              (* Convert all patterns and ignore those that don't compile.  This eats
-                 errors.
+        ~f:(fun chunk ->
+          Abbs_future_combinators.List_result.map
+            ~f:(fun ({ Terrat_change_match3.Dirspace_config.tags; dirspace; _ } as match_) ->
+              let open Abbs_future_combinators.Infix_result_monad in
+              Logs.info (fun m ->
+                  m
+                    "GITHUB_EVALUATOR : %s : CHECK_APPLY_REQUIREMENTS : dir=%s : workspace=%s"
+                    request_id
+                    dirspace.Terrat_dirspace.dir
+                    dirspace.Terrat_dirspace.workspace);
+              match
+                CCList.find_opt
+                  (fun { Abc.tag_query; _ } ->
+                    let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
+                    Terrat_tag_query.match_ ~ctx ~tag_set:tags tag_query)
+                  checks
+              with
+              | Some { Abc.tag_query; merge_conflicts; status_checks; approved; _ } ->
+                  compute_approved request_id access_control_ctx approved approved_reviews
+                  >>= fun approved_result ->
+                  let ignore_matching = status_checks.Sc.ignore_matching in
+                  (* Convert all patterns and ignore those that don't compile.  This eats
+                     errors.
 
-                 TODO: Improve handling errors here *)
-              let ignore_matching_pats = CCList.filter_map Lua_pattern.of_string ignore_matching in
-              (* Relevant checks exclude our terrateam checks, and also exclude any
-                 ignored patterns.  We check both if a pattern matches OR if there is an
-                 exact match with the string.  This is because someone might put in an
-                 invalid pattern (because secretly we are using Lua patterns underneath
-                 which have a slightly different syntax) *)
-              let relevant_commit_checks =
-                filter_relevant_commit_checks ignore_matching_pats ignore_matching commit_checks
-              in
-              let failed_commit_checks =
-                CCList.filter
-                  (function
-                    | Terrat_commit_check.{ status = Status.Completed; _ } -> false
-                    | _ -> true)
-                  relevant_commit_checks
-              in
-              let all_commit_check_success = CCList.is_empty failed_commit_checks in
-              let merged =
-                let module St = Terrat_pull_request.State in
-                match Pull_request.state pull_request with
-                | St.Merged _ -> true
-                | St.Open _ | St.Closed -> false
-              in
-              let passed =
-                merged
-                || ((not approved.Ac.enabled) || approved_result)
-                   && ((not merge_conflicts.Mc.enabled) || merge_result)
-                   && ((not status_checks.Sc.enabled) || all_commit_check_success)
-              in
-              let apply_requirements =
-                {
-                  Apply_requirements.Result.passed;
-                  match_;
-                  approved = (if approved.Ac.enabled then Some approved_result else None);
-                  merge_conflicts = (if merge_conflicts.Mc.enabled then Some merge_result else None);
-                  status_checks =
-                    (if status_checks.Sc.enabled then Some all_commit_check_success else None);
-                  status_checks_failed = failed_commit_checks;
-                  approved_reviews;
-                }
-              in
-              Logs.info (fun m ->
-                  m
-                    "GITHUB_EVALUATOR : %s : APPLY_REQUIREMENTS_CHECKS : tag_query=%s approved=%s \
-                     merge_conflicts=%s status_checks=%s"
-                    request_id
-                    (Terrat_tag_query.to_string tag_query)
-                    (Bool.to_string approved.Ac.enabled)
-                    (Bool.to_string merge_conflicts.Mc.enabled)
-                    (Bool.to_string status_checks.Sc.enabled));
-              Logs.info (fun m ->
-                  m
-                    "GITHUB_EVALUATOR : %s : APPLY_REQUIREMENTS_RESULT : tag_query=%s approved=%s \
-                     merge_check=%s commit_check=%s merged=%s passed=%s"
-                    request_id
-                    (Terrat_tag_query.to_string tag_query)
-                    (Bool.to_string approved_result)
-                    (Bool.to_string merge_result)
-                    (Bool.to_string all_commit_check_success)
-                    (Bool.to_string merged)
-                    (Bool.to_string passed));
-              Abb.Future.return (Ok apply_requirements)
-          | None ->
-              Abb.Future.return
-                (Ok
-                   {
-                     Apply_requirements.Result.passed = false;
-                     match_;
-                     approved = None;
-                     merge_conflicts = None;
-                     status_checks = None;
-                     status_checks_failed = [];
-                     approved_reviews = [];
-                   }))
-        matches
+                     TODO: Improve handling errors here *)
+                  let ignore_matching_pats =
+                    CCList.filter_map Lua_pattern.of_string ignore_matching
+                  in
+                  (* Relevant checks exclude our terrateam checks, and also exclude any
+                     ignored patterns.  We check both if a pattern matches OR if there is an
+                     exact match with the string.  This is because someone might put in an
+                     invalid pattern (because secretly we are using Lua patterns underneath
+                     which have a slightly different syntax) *)
+                  let relevant_commit_checks =
+                    filter_relevant_commit_checks ignore_matching_pats ignore_matching commit_checks
+                  in
+                  let failed_commit_checks =
+                    CCList.filter
+                      (function
+                        | Terrat_commit_check.{ status = Status.Completed; _ } -> false
+                        | _ -> true)
+                      relevant_commit_checks
+                  in
+                  let all_commit_check_success = CCList.is_empty failed_commit_checks in
+                  let merged =
+                    let module St = Terrat_pull_request.State in
+                    match Pull_request.state pull_request with
+                    | St.Merged _ -> true
+                    | St.Open _ | St.Closed -> false
+                  in
+                  let passed =
+                    merged
+                    || ((not approved.Ac.enabled) || approved_result)
+                       && ((not merge_conflicts.Mc.enabled) || merge_result)
+                       && ((not status_checks.Sc.enabled) || all_commit_check_success)
+                  in
+                  let apply_requirements =
+                    {
+                      Apply_requirements.Result.passed;
+                      match_;
+                      approved = (if approved.Ac.enabled then Some approved_result else None);
+                      merge_conflicts =
+                        (if merge_conflicts.Mc.enabled then Some merge_result else None);
+                      status_checks =
+                        (if status_checks.Sc.enabled then Some all_commit_check_success else None);
+                      status_checks_failed = failed_commit_checks;
+                      approved_reviews;
+                    }
+                  in
+                  Logs.info (fun m ->
+                      m
+                        "GITHUB_EVALUATOR : %s : APPLY_REQUIREMENTS_CHECKS : tag_query=%s \
+                         approved=%s merge_conflicts=%s status_checks=%s"
+                        request_id
+                        (Terrat_tag_query.to_string tag_query)
+                        (Bool.to_string approved.Ac.enabled)
+                        (Bool.to_string merge_conflicts.Mc.enabled)
+                        (Bool.to_string status_checks.Sc.enabled));
+                  Logs.info (fun m ->
+                      m
+                        "GITHUB_EVALUATOR : %s : APPLY_REQUIREMENTS_RESULT : tag_query=%s \
+                         approved=%s merge_check=%s commit_check=%s merged=%s passed=%s"
+                        request_id
+                        (Terrat_tag_query.to_string tag_query)
+                        (Bool.to_string approved_result)
+                        (Bool.to_string merge_result)
+                        (Bool.to_string all_commit_check_success)
+                        (Bool.to_string merged)
+                        (Bool.to_string passed));
+                  Abb.Future.return (Ok apply_requirements)
+              | None ->
+                  Abb.Future.return
+                    (Ok
+                       {
+                         Apply_requirements.Result.passed = false;
+                         match_;
+                         approved = None;
+                         merge_conflicts = None;
+                         status_checks = None;
+                         status_checks_failed = [];
+                         approved_reviews = [];
+                       }))
+            chunk)
+        (CCList.chunks (CCInt.max 1 (CCList.length matches / max_parallel)) matches)
       >>= function
-      | Ok _ as ret -> Abb.Future.return ret
+      | Ok ret -> Abb.Future.return (Ok (CCList.flatten ret))
       | Error (`Error as ret) -> Abb.Future.return (Error ret)
 
     let query_dirspaces_owned_by_other_pull_requests ~request_id db pull_request dirspaces =

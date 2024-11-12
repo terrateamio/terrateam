@@ -81,12 +81,30 @@ module Query = struct
       | Some _ | None -> None )
 end
 
+module Fragment = struct
+  type 'a t = string option -> 'a option
+
+  let ud f = function
+    | Some v -> CCOption.(flatten (wrap f v))
+    | None -> None
+
+  let string = ud CCOption.return
+
+  let option t = function
+    | Some v -> (
+        match CCOption.(flatten (wrap t (Some v))) with
+        | None -> None
+        | r -> Some r)
+    | None -> Some None
+end
+
 type ('f, 'r) t =
   (* | Host : string -> ('r, 'r) t *)
   | Rel : string -> ('r, 'r) t
   | Path_const : (('f, 'r) t * string) -> ('f, 'r) t
   | Path_var : (('f, 'a -> 'r) t * 'a Path.t) -> ('f, 'r) t
   | Query_var : (('f, 'a -> 'r) t * 'a Query.t) -> ('f, 'r) t
+  | Fragment_var : (('f, 'a -> 'r) t * 'a Fragment.t) -> ('f, 'r) t
 
 module Route = struct
   (* Remember the name of Furi.t first *)
@@ -99,6 +117,7 @@ let root s = Rel (CCString.rdrop_while (( = ) '/') s)
 let ( / ) t s = Path_const (t, Uri.pct_encode ~component:`Path s)
 let ( /% ) t v = Path_var (t, v)
 let ( /? ) t v = Query_var (t, v)
+let ( /$ ) t v = Fragment_var (t, v)
 let route t f = Route.Route (t, f)
 let ( --> ) = route
 
@@ -107,6 +126,7 @@ module Witness = struct
   type v_type =
     | Path
     | Query of (string * string list option)
+    | Fragment of string option
 
   type ('f, 'r) t =
     | Start : ('r, 'r) t
@@ -142,6 +162,12 @@ let rec test_uri : type f r. Uri.t -> (f, r) t -> (int * (f, r) Witness.t) optio
       >>= fun (idx, wit) ->
       let q = Uri.get_query_param' uri n in
       v q >>= fun value -> Some (idx, Witness.Var (wit, value, Witness.Query (n, q)))
+  | Fragment_var (t, v) ->
+      let open CCOption.Infix in
+      test_uri uri t
+      >>= fun (idx, wit) ->
+      let fragment = Uri.fragment uri in
+      v fragment >>= fun value -> Some (idx, Witness.Var (wit, value, Witness.Fragment fragment))
 
 let rec apply_uri' : type f r x. (f, x) Witness.t -> (x -> r) -> f -> r =
  fun w k ->

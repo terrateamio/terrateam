@@ -332,7 +332,7 @@ let test_apply11 =
       let t = CCResult.get_exn (Snabela.Template.of_utf8_string template) in
       let capitalize = function
         | Snabela.Kv.S s -> Snabela.Kv.S (CCString.capitalize_ascii s)
-        | _              -> raise (Invalid_argument "not a string")
+        | _ -> raise (Invalid_argument "not a string")
       in
       let compile = Snabela.of_template ~append_transformers:[ capitalize ] t [] in
       let applied = CCResult.get_exn (Snabela.apply compile kv) in
@@ -364,6 +364,42 @@ let test_apply14 =
       let compile = Snabela.of_template t [] in
       let applied = CCResult.get_exn (Snabela.apply compile kv) in
       assert ("Hello, bar" = applied))
+
+let test_apply15 =
+  Oth.test ~name:"Apply: Key equals test" (fun _ ->
+      let template = "Hello, @?name=cat@@name@@/name=cat@" in
+      let kv = Snabela.Kv.(Map.of_list [ ("name", string "cat") ]) in
+      let t = CCResult.get_exn (Snabela.Template.of_utf8_string template) in
+      let compile = Snabela.of_template t [] in
+      let applied = CCResult.get_exn (Snabela.apply compile kv) in
+      assert ("Hello, cat" = applied))
+
+let test_apply16 =
+  Oth.test ~name:"Apply: Key not equals test" (fun _ ->
+      let template = "Hello, @?name=cat@@name@@/name=cat@" in
+      let kv = Snabela.Kv.(Map.of_list [ ("name", string "foo") ]) in
+      let t = CCResult.get_exn (Snabela.Template.of_utf8_string template) in
+      let compile = Snabela.of_template t [] in
+      let applied = CCResult.get_exn (Snabela.apply compile kv) in
+      assert ("Hello, " = applied))
+
+let test_apply17 =
+  Oth.test ~name:"Apply: Key neg equals test" (fun _ ->
+      let template = "Hello, @!name=cat@@name@@/name=cat@" in
+      let kv = Snabela.Kv.(Map.of_list [ ("name", string "cat") ]) in
+      let t = CCResult.get_exn (Snabela.Template.of_utf8_string template) in
+      let compile = Snabela.of_template t [] in
+      let applied = CCResult.get_exn (Snabela.apply compile kv) in
+      assert ("Hello, " = applied))
+
+let test_apply18 =
+  Oth.test ~name:"Apply: Key not neg equals test" (fun _ ->
+      let template = "Hello, @!name=cat@@name@@/name=cat@" in
+      let kv = Snabela.Kv.(Map.of_list [ ("name", string "foo") ]) in
+      let t = CCResult.get_exn (Snabela.Template.of_utf8_string template) in
+      let compile = Snabela.of_template t [] in
+      let applied = CCResult.get_exn (Snabela.apply compile kv) in
+      assert ("Hello, foo" = applied))
 
 let test_apply_fail1 =
   Oth.test ~name:"Apply Fail: Missing key" (fun _ ->
@@ -468,7 +504,7 @@ let test_transformer1 =
       let t = CCResult.get_exn (Snabela.Template.of_utf8_string template) in
       let capitalize = function
         | Snabela.Kv.S s -> Snabela.Kv.S (CCString.capitalize_ascii s)
-        | _              -> raise (Invalid_argument "not a string")
+        | _ -> raise (Invalid_argument "not a string")
       in
       let compile = Snabela.of_template t [ ("capitalize", capitalize) ] in
       let applied = CCResult.get_exn (Snabela.apply compile kv) in
@@ -481,7 +517,7 @@ let test_transformer2 =
       let t = CCResult.get_exn (Snabela.Template.of_utf8_string template) in
       let money = function
         | Snabela.Kv.F f -> Snabela.Kv.S (Printf.sprintf "%0.2f" f)
-        | _              -> raise (Invalid_argument "not a float")
+        | _ -> raise (Invalid_argument "not a float")
       in
       let compile = Snabela.of_template t [ ("money", money) ] in
       let applied = CCResult.get_exn (Snabela.apply compile kv) in
@@ -513,6 +549,10 @@ let test =
       test_apply12;
       test_apply13;
       test_apply14;
+      test_apply15;
+      test_apply16;
+      test_apply17;
+      test_apply18;
       test_apply_fail1;
       test_apply_fail2;
       test_apply_fail3;
