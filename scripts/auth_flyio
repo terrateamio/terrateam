@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-set -euf -o pipefail
-
-flyctl auth token "${FLY_API_TOKEN}"
