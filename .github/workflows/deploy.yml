@@ -36,6 +36,10 @@ jobs:
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       MATRIX_PASSWORD: ${{ secrets.MATRIX_PASSWORD }}
 
+    permissions:
+      contents: read
+      id-token: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
