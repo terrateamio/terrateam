@@ -53,6 +53,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ var.AWS_DEFAULT_REGION }}
 
       - name: Deploy to ECS
         if: ${{ inputs.environment == 'staging' }}
