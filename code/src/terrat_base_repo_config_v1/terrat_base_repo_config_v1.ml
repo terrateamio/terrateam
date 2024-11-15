@@ -193,7 +193,7 @@ module Access_control = struct
       | Team of string
       | Repo of string
       | Any
-    [@@deriving show, yojson, eq, ord]
+    [@@deriving show, eq, ord]
 
     let make m =
       match CCString.Split.left ~by:":" m with
@@ -208,6 +208,20 @@ module Access_control = struct
       | Team team -> "team:" ^ team
       | Repo repo -> "repo:" ^ repo
       | Any -> "*"
+
+    let to_yojson t =
+      let module T = struct
+        type t = string [@@deriving to_yojson]
+      end in
+      T.to_yojson (to_string t)
+
+    let of_yojson json =
+      let module T = struct
+        type t = string [@@deriving of_yojson]
+      end in
+      let open CCResult.Infix in
+      T.of_yojson json
+      >>= fun m -> CCResult.map_err (fun (`Match_parse_err _) -> "Match parse err: " ^ m) (make m)
   end
 
   module Match_list = struct
