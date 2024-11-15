@@ -14,4 +14,6 @@ jq --arg IMAGE "ghcr.io/terrateamio/terrat-ee:${VERSION_TAG}" \
    del(.taskDefinition.taskDefinitionArn, .taskDefinition.revision, .taskDefinition.status, .taskDefinition.requiresAttributes, .taskDefinition.registeredBy, .taskDefinition.registeredAt)' \
   task-def.json > updated-task-def.json
 
+cat updated-task-def.json
+
 echo "Updated task definition written to updated-task-def.json"
