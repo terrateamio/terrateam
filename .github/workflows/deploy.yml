@@ -53,11 +53,6 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: eu-west-3
-
-      - name: Create task definition
-        if: ${{ inputs.environment == 'staging' }}
-        run: ./scripts/create_task_definition
 
       - name: Deploy to ECS
         if: ${{ inputs.environment == 'staging' }}
@@ -66,6 +61,7 @@ jobs:
           task-definition: updated-task-def.json
           service: terrateam-app-service
           cluster: terrateam-app
+          image: ghcr.io/terrateamio/terrat-ee:{{ env.VERSION_TAG }}
           wait-for-service-stability: true
 
       - name: Deploy to Fly.io
