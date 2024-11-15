@@ -57,12 +57,7 @@ jobs:
 
       - name: Deploy to ECS
         if: ${{ inputs.environment == 'staging' }}
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        with:
-          service: terrateam-app-service
-          cluster: terrateam-app
-          image: ghcr.io/terrateamio/terrat-ee:{{ env.VERSION_TAG }}
-          wait-for-service-stability: true
+        run: ./scripts/deploy_ecs
 
       - name: Deploy to Fly.io
         if: ${{ inputs.environment == 'production' }}
