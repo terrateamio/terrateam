@@ -36,14 +36,31 @@ jobs:
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       MATRIX_PASSWORD: ${{ secrets.MATRIX_PASSWORD }}
 
+    permissions:
+      contents: read
+      id-token: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Flyctl
+        if: ${{ inputs.environment == 'production' }}
         uses: superfly/flyctl-actions/setup-flyctl@master
 
+      - name: Configure AWS Credentials with OIDC
+        if: ${{ inputs.environment == 'staging' }}
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_NUMBER }}:role/terrateam
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Deploy to ECS
+        if: ${{ inputs.environment == 'staging' }}
+        run: ./scripts/deploy_ecs
+
       - name: Deploy to Fly.io
+        if: ${{ inputs.environment == 'production' }}
         run: ./scripts/deploy_flyio
 
       - name: Notify Matrix
