@@ -52,8 +52,8 @@ jobs:
         if: ${{ inputs.environment == 'staging' }}
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_DEFAULT_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_NUMBER }}:role/terrateam
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
 
       - name: Deploy to ECS
         if: ${{ inputs.environment == 'staging' }}

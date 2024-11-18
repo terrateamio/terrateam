@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export AWS_PAGER=""
+
 CLUSTER_NAME="terrateam-app"
 SERVICE_NAME="terrateam-app-service"
 IMAGE_NAME="terrat-ee"
@@ -13,15 +15,17 @@ TASK_DEF_ARN=$(jq -r '.services[0].taskDefinition' service.json)
 # Fetch the current task definition
 aws ecs describe-task-definition --task-definition "$TASK_DEF_ARN" > task-def.json
 
-# Update the app container image
+# Create the new task definition JSON
 jq --arg newImage "$GHCR_IMAGE" '
-  .taskDefinition.containerDefinitions |= map(
+  .taskDefinition |
+  .containerDefinitions |= map(
     if .name == "app" then
       .image = $newImage
     else
       .
     end
-  )
+  ) |
+  del(.revision, .status, .taskDefinitionArn, .registeredBy, .registeredAt, .compatibilities, .requiresAttributes)
 ' task-def.json > task-def-updated.json
 
 # Register the new task definition
@@ -33,3 +37,5 @@ aws ecs update-service --cluster "$CLUSTER_NAME" --service "$SERVICE_NAME" --tas
 
 # Wait for the service to stabilize
 aws ecs wait services-stable --cluster "$CLUSTER_NAME" --services "$SERVICE_NAME"
+
+echo "Service updated successfully to task definition: $NEW_TASK_DEF_ARN"
