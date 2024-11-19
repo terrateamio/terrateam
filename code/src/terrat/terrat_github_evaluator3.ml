@@ -4310,8 +4310,11 @@ struct
                 ~repo:repo.Repo.name
                 ~pull_number:pull_request.Pull_request.id))
       >>= fun resp ->
+      let module Mna = Githubc2_pulls.Merge.Responses.Method_not_allowed in
       match Openapi.Response.value resp with
       | `OK _ -> Abb.Future.return (Ok ())
+      | `Method_not_allowed { Mna.primary = { Mna.Primary.message = Some message; _ }; _ }
+        when CCString.equal "Merge already in progress" message -> Abb.Future.return (Ok ())
       | `Method_not_allowed _ -> (
           Logs.info (fun m ->
               m
