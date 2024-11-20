@@ -13,6 +13,9 @@ ECR_IMAGE="${AWS_ACCOUNT_NUMBER}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${E
 # Authenticate Docker to ECR
 aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "${AWS_ACCOUNT_NUMBER}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
 
+# Pull the image from GHCR
+docker pull "$GHCR_IMAGE"
+
 # Tag the image for ECR
 docker tag "$GHCR_IMAGE" "$ECR_IMAGE"
 
