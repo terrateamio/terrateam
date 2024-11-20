@@ -83,7 +83,7 @@ module Lru = struct
   type opts = {
     on_hit : unit -> unit;
     on_miss : unit -> unit;
-    size : int;
+    capacity : int;
   }
 
   module Make (M : S) = struct
@@ -114,7 +114,7 @@ module Lru = struct
     type v = M.v
     type err = M.err
 
-    let create opts = { opts; cache = Lru.create opts.size }
+    let create opts = { opts; cache = Lru.create opts.capacity }
 
     let fetch t k args =
       match Lru.find k t.cache with
@@ -146,7 +146,7 @@ module Expiring = struct
     on_hit : unit -> unit;
     on_miss : unit -> unit;
     duration : Duration.t;
-    size : int;
+    capacity : int;
   }
 
   module Make (M : S) = struct
@@ -168,7 +168,7 @@ module Expiring = struct
       let open Abb.Future.Infix_monad in
       Abb.Sys.monotonic ()
       >>= fun now ->
-      if Hashtbl.length t.cache > t.opts.size then
+      if Hashtbl.length t.cache > t.opts.capacity then
         Hashtbl.filter_map_inplace
           (fun _ ((_, expiration) as v) -> if expiration < now then None else Some v)
           t.cache;

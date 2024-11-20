@@ -837,7 +837,7 @@ module S = struct
             Abb_cache.Expiring.on_hit = on_hit "create_client";
             on_miss = on_miss "create_client";
             duration = Duration.of_sec 60;
-            size = 10;
+            capacity = 10;
           }
 
       let fetch_file_by_rev_cache =
@@ -845,7 +845,7 @@ module S = struct
           {
             Abb_cache.Lru.on_hit = on_hit "fetch_file_by_rev";
             on_miss = on_miss "fetch_file_by_rev";
-            size = 100;
+            capacity = 100;
           }
 
       let fetch_repo_cache =
@@ -854,7 +854,7 @@ module S = struct
             Abb_cache.Expiring.on_hit = on_hit "fetch_repo";
             on_miss = on_miss "fetch_repo";
             duration = Duration.of_sec 60;
-            size = 100;
+            capacity = 100;
           }
 
       let fetch_tree_by_rev_cache =
@@ -862,7 +862,7 @@ module S = struct
           {
             Abb_cache.Lru.on_hit = on_hit "fetch_tree_by_rev";
             on_miss = on_miss "fetch_tree_by_rev";
-            size = 100;
+            capacity = 100;
           }
     end
 

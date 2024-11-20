@@ -1821,19 +1821,19 @@ module Make (S : S) = struct
 
       let matches =
         Matches.create
-          { Abb_cache.Lru.on_hit = CCFun.const (); on_miss = CCFun.const (); size = 50 }
+          { Abb_cache.Lru.on_hit = CCFun.const (); on_miss = CCFun.const (); capacity = 50 }
 
       let access_control_eval_tf_op =
         Access_control_eval_tf_op.create
-          { Abb_cache.Lru.on_hit = CCFun.const (); on_miss = CCFun.const (); size = 50 }
+          { Abb_cache.Lru.on_hit = CCFun.const (); on_miss = CCFun.const (); capacity = 50 }
 
       let repo_config =
         Repo_config.create
-          { Abb_cache.Lru.on_hit = CCFun.const (); on_miss = CCFun.const (); size = 50 }
+          { Abb_cache.Lru.on_hit = CCFun.const (); on_miss = CCFun.const (); capacity = 50 }
 
       let pull_request =
         Pull_request.create
-          { Abb_cache.Lru.on_hit = CCFun.const (); on_miss = CCFun.const (); size = 50 }
+          { Abb_cache.Lru.on_hit = CCFun.const (); on_miss = CCFun.const (); capacity = 50 }
     end
 
     let is_interactive ctx state =

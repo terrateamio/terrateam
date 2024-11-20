@@ -1,7 +1,3 @@
-(** [Abb_data_source] provides was to express a source of data and semantic
-    around it.  A common example is how a source of data is cached, such as for
-    a span of time, LRU, or memoized. *)
-
 module type S = sig
   type k
   type args
@@ -53,7 +49,7 @@ module Lru : sig
   type opts = {
     on_hit : unit -> unit;
     on_miss : unit -> unit;
-    size : int;
+    capacity : int;
   }
 
   module Make (M : S) :
@@ -70,7 +66,7 @@ module Expiring : sig
     on_hit : unit -> unit;
     on_miss : unit -> unit;
     duration : Duration.t;
-    size : int;
+    capacity : int;
   }
 
   module Make (M : S) :
