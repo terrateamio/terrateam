@@ -35,6 +35,8 @@ jobs:
       TERRATEAM_ENVIRONMENT: ${{ inputs.environment }}
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       MATRIX_PASSWORD: ${{ secrets.MATRIX_PASSWORD }}
+      AWS_ACCOUNT_NUMBER: ${{ secrets.AWS_ACCOUNT_NUMBER }}
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
     permissions:
       contents: read

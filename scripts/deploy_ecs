@@ -7,6 +7,17 @@ CLUSTER_NAME="terrateam-app"
 SERVICE_NAME="terrateam-app-service"
 IMAGE_NAME="terrat-ee"
 GHCR_IMAGE="ghcr.io/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:${VERSION_TAG}"
+ECR_REPO_NAME="terrat-ee"
+ECR_IMAGE="${AWS_ACCOUNT_NUMBER}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${ECR_REPO_NAME}:${VERSION_TAG}"
+
+# Authenticate Docker to ECR
+aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "${AWS_ACCOUNT_NUMBER}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+
+# Tag the image for ECR
+docker tag "$GHCR_IMAGE" "$ECR_IMAGE"
+
+# Push the image to ECR
+docker push "$ECR_IMAGE"
 
 # Fetch the current service information
 aws ecs describe-services --cluster "$CLUSTER_NAME" --services "$SERVICE_NAME" > service.json
@@ -16,7 +27,7 @@ TASK_DEF_ARN=$(jq -r '.services[0].taskDefinition' service.json)
 aws ecs describe-task-definition --task-definition "$TASK_DEF_ARN" > task-def.json
 
 # Create the new task definition JSON
-jq --arg newImage "$GHCR_IMAGE" '
+jq --arg newImage "$ECR_IMAGE" '
   .taskDefinition |
   .containerDefinitions |= map(
     if .name == "app" then
