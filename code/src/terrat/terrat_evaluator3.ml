@@ -1778,7 +1778,11 @@ module Make (S : S) = struct
        values but as the values change between resumes the values get
        updated. *)
     module Cache = struct
-      module Matches = Abb_cache.Lru.Make (struct
+      let on_hit v () = Prmths.Counter.inc_one (Metrics.cache_dv_call_count ~v "hit")
+      let on_miss v () = Prmths.Counter.inc_one (Metrics.cache_dv_call_count ~v "miss")
+      let on_evict v () = Prmths.Counter.inc_one (Metrics.cache_dv_call_count ~v "evict")
+
+      module Matches = Abbs_cache.Expiring.Make (struct
         type k = string * S.Account.t * S.Repo.t * S.Ref.t * S.Ref.t * [ `Plan | `Apply ]
         [@@deriving eq]
 
@@ -1795,7 +1799,7 @@ module Make (S : S) = struct
         let weight v = kb_of_bytes (CCString.length (Matches.show v))
       end)
 
-      module Access_control_eval_tf_op = Abb_cache.Lru.Make (struct
+      module Access_control_eval_tf_op = Abbs_cache.Expiring.Make (struct
         type k =
           string
           * S.Account.t
@@ -1818,7 +1822,7 @@ module Make (S : S) = struct
         let weight v = kb_of_bytes (CCString.length (Terrat_access_control.R.show v))
       end)
 
-      module Repo_config = Abb_cache.Lru.Make (struct
+      module Repo_config = Abbs_cache.Expiring.Make (struct
         type k = string * S.Account.t * S.Repo.t * S.Ref.t [@@deriving eq]
         type v = string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t
         type err = Repo_config.fetch_err
@@ -1833,7 +1837,7 @@ module Make (S : S) = struct
                   Terrat_base_repo_config_v1.(View.to_yojson (to_view repo_config))))
       end)
 
-      module Pull_request = Abb_cache.Lru.Make (struct
+      module Pull_request = Abbs_cache.Expiring.Make (struct
         type k = string * S.Account.t * S.Repo.t * int [@@deriving eq]
         type v = S.Pull_request.fetched S.Pull_request.t
         type err = [ `Error ]

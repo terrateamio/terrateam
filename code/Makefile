@@ -25,6 +25,8 @@ terrat: test-release_terrat test-release_terrat_github_webhooks
 
 terrat: test-release_jsonu
 
+terrat: test-release_abb_cache
+
 terrat: release_terrat_code_indexer debug_terrat_code_indexer
 
 terrat-api: release_openapi_cli

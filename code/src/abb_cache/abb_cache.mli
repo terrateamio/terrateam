@@ -1,83 +1,86 @@
-module type S = sig
-  type k
-  type args
-  type v
-  type err
+module Make (Abb : Abb_intf.S) : sig
+  module type S = sig
+    type k
+    type args
+    type v
+    type err
 
-  val fetch : args -> (v, err) result Abb.Future.t
-  val equal_k : k -> k -> bool
+    val fetch : args -> (v, err) result Abb.Future.t
+    val equal_k : k -> k -> bool
 
-  (** Given a value, return how much capacity it consumes.  Must return a number
+    (** Given a value, return how much capacity it consumes.  Must return a number
       greater than or equal to 0.  *)
-  val weight : v -> int
-end
+    val weight : v -> int
+  end
 
-module type SRC = sig
-  type opts
-  type t
-  type k
-  type args
-  type v
-  type err
+  module type SRC = sig
+    type opts
+    type t
+    type k
+    type args
+    type v
+    type err
 
-  val create : opts -> t
-  val fetch : t -> k -> args -> (v, err) result Abb.Future.t
-end
+    val create : opts -> t
+    val fetch : t -> k -> args -> (v, err) result Abb.Future.t
+  end
 
-module Passthrough : sig
-  module Make (M : S) :
-    SRC
-      with type opts = unit
-       and type k = M.k
-       and type args = M.args
-       and type v = M.v
-       and type err = M.err
-end
+  module Passthrough : sig
+    module Make (M : S) :
+      SRC
+        with type opts = unit
+         and type k = M.k
+         and type args = M.args
+         and type v = M.v
+         and type err = M.err
+  end
 
-module Memo : sig
-  type opts = {
-    on_hit : unit -> unit;
-    on_miss : unit -> unit;
-  }
+  module Memo : sig
+    type opts = {
+      on_hit : unit -> unit;
+      on_miss : unit -> unit;
+    }
 
-  module Make (M : S) :
-    SRC
-      with type opts = opts
-       and type k = M.k
-       and type args = M.args
-       and type v = M.v
-       and type err = M.err
-end
+    module Make (M : S) :
+      SRC
+        with type opts = opts
+         and type k = M.k
+         and type args = M.args
+         and type v = M.v
+         and type err = M.err
+  end
 
-module Lru : sig
-  type opts = {
-    on_hit : unit -> unit;
-    on_miss : unit -> unit;
-    capacity : int;
-  }
+  module Lru : sig
+    type opts = {
+      on_hit : unit -> unit;
+      on_miss : unit -> unit;
+      capacity : int;
+    }
 
-  module Make (M : S) :
-    SRC
-      with type opts = opts
-       and type k = M.k
-       and type args = M.args
-       and type v = M.v
-       and type err = M.err
-end
+    module Make (M : S) :
+      SRC
+        with type opts = opts
+         and type k = M.k
+         and type args = M.args
+         and type v = M.v
+         and type err = M.err
+  end
 
-module Expiring : sig
-  type opts = {
-    on_hit : unit -> unit;
-    on_miss : unit -> unit;
-    duration : Duration.t;
-    capacity : int;
-  }
+  module Expiring : sig
+    type opts = {
+      on_hit : unit -> unit;
+      on_miss : unit -> unit;
+      on_evict : unit -> unit;
+      duration : Duration.t;
+      capacity : int;
+    }
 
-  module Make (M : S) :
-    SRC
-      with type opts = opts
-       and type k = M.k
-       and type args = M.args
-       and type v = M.v
-       and type err = M.err
+    module Make (M : S) :
+      SRC
+        with type opts = opts
+         and type k = M.k
+         and type args = M.args
+         and type v = M.v
+         and type err = M.err
+  end
 end

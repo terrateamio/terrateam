@@ -788,7 +788,10 @@ module S = struct
     let on_hit fn () = Prmths.Counter.inc_one (Metrics.cache_fn_call_count ~l:"global" ~fn "hit")
     let on_miss fn () = Prmths.Counter.inc_one (Metrics.cache_fn_call_count ~l:"global" ~fn "miss")
 
-    module Client_cache = Abb_cache.Expiring.Make (struct
+    let on_evict fn () =
+      Prmths.Counter.inc_one (Metrics.cache_fn_call_count ~l:"global" ~fn "evict")
+
+    module Client_cache = Abbs_cache.Expiring.Make (struct
       type k = Account.t [@@deriving eq]
       type v = Githubc2_abb.t
       type err = [ `Error ]
@@ -818,10 +821,10 @@ module S = struct
             v
       end
 
-      module By_rev = Abb_cache.Lru.Make (M)
+      module By_rev = Abbs_cache.Expiring.Make (M)
     end
 
-    module Fetch_repo_cache = Abb_cache.Expiring.Make (struct
+    module Fetch_repo_cache = Abbs_cache.Expiring.Make (struct
       type k = Account.t * (string * string) [@@deriving eq]
       type v = Remote_repo.t
       type err = Terrat_github.fetch_repo_err
@@ -846,14 +849,14 @@ module S = struct
           kb_of_bytes (CCList.fold_left (fun weight v -> weight + CCString.length v) 0 v)
       end
 
-      module By_rev = Abb_cache.Lru.Make (M)
+      module By_rev = Abbs_cache.Expiring.Make (M)
     end
 
     module Globals = struct
       let client_cache =
         Client_cache.create
           {
-            Abb_cache.Expiring.on_hit = on_hit "create_client";
+            Abbs_cache.Expiring.on_hit = on_hit "create_client";
             on_miss = on_miss "create_client";
             on_evict = on_evict "create_client";
             duration = Duration.of_min 1;
@@ -863,7 +866,7 @@ module S = struct
       let fetch_file_by_rev_cache =
         Fetch_file_cache.By_rev.create
           {
-            Abb_cache.Lru.on_hit = on_hit "fetch_file_by_rev";
+            Abbs_cache.Expiring.on_hit = on_hit "fetch_file_by_rev";
             on_miss = on_miss "fetch_file_by_rev";
             on_evict = on_evict "fetch_file_by_rev";
             duration = Duration.of_min 10;
@@ -873,7 +876,7 @@ module S = struct
       let fetch_repo_cache =
         Fetch_repo_cache.create
           {
-            Abb_cache.Expiring.on_hit = on_hit "fetch_repo";
+            Abbs_cache.Expiring.on_hit = on_hit "fetch_repo";
             on_miss = on_miss "fetch_repo";
             on_evict = on_evict "fetch_repo";
             duration = Duration.of_min 1;
@@ -883,7 +886,7 @@ module S = struct
       let fetch_tree_by_rev_cache =
         Fetch_tree_cache.By_rev.create
           {
-            Abb_cache.Lru.on_hit = on_hit "fetch_tree_by_rev";
+            Abbs_cache.Expiring.on_hit = on_hit "fetch_tree_by_rev";
             on_miss = on_miss "fetch_tree_by_rev";
             on_evict = on_evict "fetch_tree_by_rev";
             duration = Duration.of_min 10;
