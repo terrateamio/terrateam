@@ -8,6 +8,7 @@ module type S = sig
 
   val fetch : args -> (v, err) result Abb.Future.t
   val equal_k : k -> k -> bool
+  val weight : v -> int
 end
 
 module type SRC = sig
@@ -97,7 +98,17 @@ module Lru = struct
     module Lru_v = struct
       type t = (M.v, M.err) result Abb.Future.t
 
-      let weight _ = 1
+      let weight v =
+        match Abb.Future.state v with
+        | `Det (Ok v) ->
+            let weight = M.weight v in
+            assert (weight >= 0);
+            CCInt.max 1 weight
+        | `Undet -> 1
+        | `Det (Error _) | `Aborted | `Exn _ ->
+            (* All errors are 1, but errors are removed immediately so this is
+               really more of a dummy value. *)
+            1
     end
 
     module Lru = Lru.M.Make (Lru_k) (Lru_v)
@@ -150,11 +161,17 @@ module Expiring = struct
   }
 
   module Make (M : S) = struct
+    module Expiration_index = CCMap.Make (struct
+      type t = float [@@deriving ord]
+    end)
+
     type nonrec opts = opts
 
     type t = {
       opts : opts;
       cache : (M.k, (M.v, M.err) result Abb.Future.t * float) Hashtbl.t;
+      mutable expiration_index : (M.k * int) list Expiration_index.t;
+      mutable load : int;
     }
 
     type k = M.k
@@ -162,16 +179,27 @@ module Expiring = struct
     type v = M.v
     type err = M.err
 
-    let create opts = { opts; cache = Hashtbl.create 10 }
+    let rec evict_until_capacity t =
+      if t.load > t.opts.capacity then
+        match Expiration_index.min_binding_opt t.expiration_index with
+        | Some (expiration, weights) ->
+            t.expiration_index <- Expiration_index.remove expiration t.expiration_index;
+            CCList.iter
+              (fun (k, weight) ->
+                Hashtbl.remove t.cache k;
+                t.load <- t.load - weight)
+              weights;
+            evict_until_capacity t
+        | None -> ()
+
+    let create opts =
+      { opts; cache = Hashtbl.create 10; expiration_index = Expiration_index.empty; load = 0 }
 
     let fetch t k args =
       let open Abb.Future.Infix_monad in
       Abb.Sys.monotonic ()
       >>= fun now ->
-      if Hashtbl.length t.cache > t.opts.capacity then
-        Hashtbl.filter_map_inplace
-          (fun _ ((_, expiration) as v) -> if expiration < now then None else Some v)
-          t.cache;
+      evict_until_capacity t;
       match CCHashtbl.get t.cache k with
       | Some (v, expiration) when now < expiration ->
           t.opts.on_hit ();
@@ -182,7 +210,15 @@ module Expiring = struct
             Fut_comb.guard (fun () ->
                 M.fetch args
                 >>= function
-                | Ok _ as r -> Abb.Future.return r
+                | Ok v as r ->
+                    let weight = CCInt.max 1 (M.weight v) in
+                    t.expiration_index <-
+                      Expiration_index.add_to_list
+                        (now +. Duration.to_f t.opts.duration)
+                        (k, weight)
+                        t.expiration_index;
+                    t.load <- t.load + weight;
+                    Abb.Future.return r
                 | Error _ as err ->
                     Hashtbl.remove t.cache k;
                     Abb.Future.return err)

@@ -1777,6 +1777,7 @@ module Make (S : S) = struct
         type args = unit -> (v, err) result Abb.Future.t
 
         let fetch f = f ()
+        let weight _ = 1
       end)
 
       module Access_control_eval_tf_op = Abb_cache.Lru.Make (struct
@@ -1799,6 +1800,7 @@ module Make (S : S) = struct
         type args = unit -> (v, err) result Abb.Future.t
 
         let fetch f = f ()
+        let weight _ = 1
       end)
 
       module Repo_config = Abb_cache.Lru.Make (struct
@@ -1808,6 +1810,7 @@ module Make (S : S) = struct
         type args = unit -> (v, err) result Abb.Future.t
 
         let fetch f = f ()
+        let weight _ = 1
       end)
 
       module Pull_request = Abb_cache.Lru.Make (struct
@@ -1817,6 +1820,7 @@ module Make (S : S) = struct
         type args = unit -> (v, err) result Abb.Future.t
 
         let fetch f = f ()
+        let weight _ = 1
       end)
 
       let matches =

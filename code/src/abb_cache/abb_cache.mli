@@ -6,6 +6,10 @@ module type S = sig
 
   val fetch : args -> (v, err) result Abb.Future.t
   val equal_k : k -> k -> bool
+
+  (** Given a value, return how much capacity it consumes.  Must return a number
+      greater than or equal to 0.  *)
+  val weight : v -> int
 end
 
 module type SRC = sig

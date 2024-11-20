@@ -793,6 +793,7 @@ module S = struct
       type args = unit -> (v, err) result Abb.Future.t
 
       let fetch f = f ()
+      let weight _ = 1
     end)
 
     module Fetch_file_cache = struct
@@ -803,6 +804,7 @@ module S = struct
         type args = unit -> (v, err) result Abb.Future.t
 
         let fetch f = f ()
+        let weight _ = 1
       end
 
       module By_rev = Abb_cache.Lru.Make (M)
@@ -815,6 +817,7 @@ module S = struct
       type args = unit -> (v, err) result Abb.Future.t
 
       let fetch f = f ()
+      let weight _ = 1
     end)
 
     module Fetch_tree_cache = struct
@@ -825,6 +828,7 @@ module S = struct
         type args = unit -> (v, err) result Abb.Future.t
 
         let fetch f = f ()
+        let weight _ = 1
       end
 
       module By_rev = Abb_cache.Lru.Make (M)
