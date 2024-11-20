@@ -1,3 +1,5 @@
+let cache_capacity_mb_in_kb = ( * ) 1024
+let kb_of_bytes b = CCInt.max 1 (b / 1024)
 let fetch_pull_request_tries = 6
 let fetch_file_length_of_git_hash = CCString.length "aa2022e256fc3435d05d9d8ca0ef0ad0805e6ea5"
 
@@ -25,7 +27,7 @@ module Metrics = struct
   let pgsql_errors_total = Terrat_metrics.errors_total ~m:subsystem ~t:"pgsql"
 
   let cache_fn_call_count =
-    let help = "Count of cache calls by function with hit or miss" in
+    let help = "Count of cache calls by function with hit or miss or evict" in
     let family =
       Prmths.Counter.v_labels
         ~label_names:[ "lifetime"; "fn"; "type" ]
@@ -804,7 +806,16 @@ module S = struct
         type args = unit -> (v, err) result Abb.Future.t
 
         let fetch f = f ()
-        let weight _ = 1
+
+        let weight v =
+          CCOption.map_or
+            ~default:1
+            CCFun.(
+              Githubc2_components.Content_file.to_yojson
+              %> Yojson.Safe.to_string
+              %> CCString.length
+              %> kb_of_bytes)
+            v
       end
 
       module By_rev = Abb_cache.Lru.Make (M)
@@ -817,7 +828,9 @@ module S = struct
       type args = unit -> (v, err) result Abb.Future.t
 
       let fetch f = f ()
-      let weight _ = 1
+
+      let weight remote_repo =
+        kb_of_bytes (CCString.length (Yojson.Safe.to_string (Remote_repo.to_yojson remote_repo)))
     end)
 
     module Fetch_tree_cache = struct
@@ -828,7 +841,9 @@ module S = struct
         type args = unit -> (v, err) result Abb.Future.t
 
         let fetch f = f ()
-        let weight _ = 1
+
+        let weight v =
+          kb_of_bytes (CCList.fold_left (fun weight v -> weight + CCString.length v) 0 v)
       end
 
       module By_rev = Abb_cache.Lru.Make (M)
@@ -840,8 +855,9 @@ module S = struct
           {
             Abb_cache.Expiring.on_hit = on_hit "create_client";
             on_miss = on_miss "create_client";
-            duration = Duration.of_sec 60;
-            capacity = 10;
+            on_evict = on_evict "create_client";
+            duration = Duration.of_min 1;
+            capacity = 500;
           }
 
       let fetch_file_by_rev_cache =
@@ -849,7 +865,9 @@ module S = struct
           {
             Abb_cache.Lru.on_hit = on_hit "fetch_file_by_rev";
             on_miss = on_miss "fetch_file_by_rev";
-            capacity = 100;
+            on_evict = on_evict "fetch_file_by_rev";
+            duration = Duration.of_min 10;
+            capacity = cache_capacity_mb_in_kb 100;
           }
 
       let fetch_repo_cache =
@@ -857,8 +875,9 @@ module S = struct
           {
             Abb_cache.Expiring.on_hit = on_hit "fetch_repo";
             on_miss = on_miss "fetch_repo";
-            duration = Duration.of_sec 60;
-            capacity = 100;
+            on_evict = on_evict "fetch_repo";
+            duration = Duration.of_min 1;
+            capacity = cache_capacity_mb_in_kb 20;
           }
 
       let fetch_tree_by_rev_cache =
@@ -866,7 +885,9 @@ module S = struct
           {
             Abb_cache.Lru.on_hit = on_hit "fetch_tree_by_rev";
             on_miss = on_miss "fetch_tree_by_rev";
-            capacity = 100;
+            on_evict = on_evict "fetch_tree_by_rev";
+            duration = Duration.of_min 10;
+            capacity = cache_capacity_mb_in_kb 100;
           }
     end
 
