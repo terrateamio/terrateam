@@ -2,6 +2,7 @@ let cache_capacity_mb_in_kb = ( * ) 1024
 let kb_of_bytes b = CCInt.max 1 (b / 1024)
 let fetch_pull_request_tries = 6
 let fetch_file_length_of_git_hash = CCString.length "aa2022e256fc3435d05d9d8ca0ef0ad0805e6ea5"
+let not_a_bad_chunk_size = 500
 
 let probably_is_git_hash =
   CCString.for_all (function
@@ -4094,6 +4095,7 @@ struct
       Abb.Future.return (Ok (all_of_passed && any_of_passed))
 
     let eval_apply_requirements ~request_id config user client repo_config pull_request matches =
+      let max_parallel = 20 in
       let module R = Terrat_base_repo_config_v1 in
       let module Ar = R.Apply_requirements in
       let module Abc = Ar.Check in
@@ -4158,106 +4160,112 @@ struct
         Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : MERGEABLE_NONE" request_id);
       let open Abb.Future.Infix_monad in
       Abbs_future_combinators.List_result.map
-        ~f:(fun ({ Terrat_change_match3.Dirspace_config.tags; dirspace; _ } as match_) ->
-          let open Abbs_future_combinators.Infix_result_monad in
-          Logs.info (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : CHECK_APPLY_REQUIREMENTS : dir=%s : workspace=%s"
-                request_id
-                dirspace.Terrat_dirspace.dir
-                dirspace.Terrat_dirspace.workspace);
-          match
-            CCList.find_opt
-              (fun { Abc.tag_query; _ } ->
-                let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-                Terrat_tag_query.match_ ~ctx ~tag_set:tags tag_query)
-              checks
-          with
-          | Some { Abc.tag_query; merge_conflicts; status_checks; approved; _ } ->
-              compute_approved request_id access_control_ctx approved approved_reviews
-              >>= fun approved_result ->
-              let ignore_matching = status_checks.Sc.ignore_matching in
-              (* Convert all patterns and ignore those that don't compile.  This eats
-                 errors.
+        ~f:(fun chunk ->
+          Abbs_future_combinators.List_result.map
+            ~f:(fun ({ Terrat_change_match3.Dirspace_config.tags; dirspace; _ } as match_) ->
+              let open Abbs_future_combinators.Infix_result_monad in
+              Logs.info (fun m ->
+                  m
+                    "GITHUB_EVALUATOR : %s : CHECK_APPLY_REQUIREMENTS : dir=%s : workspace=%s"
+                    request_id
+                    dirspace.Terrat_dirspace.dir
+                    dirspace.Terrat_dirspace.workspace);
+              match
+                CCList.find_opt
+                  (fun { Abc.tag_query; _ } ->
+                    let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
+                    Terrat_tag_query.match_ ~ctx ~tag_set:tags tag_query)
+                  checks
+              with
+              | Some { Abc.tag_query; merge_conflicts; status_checks; approved; _ } ->
+                  compute_approved request_id access_control_ctx approved approved_reviews
+                  >>= fun approved_result ->
+                  let ignore_matching = status_checks.Sc.ignore_matching in
+                  (* Convert all patterns and ignore those that don't compile.  This eats
+                     errors.
 
-                 TODO: Improve handling errors here *)
-              let ignore_matching_pats = CCList.filter_map Lua_pattern.of_string ignore_matching in
-              (* Relevant checks exclude our terrateam checks, and also exclude any
-                 ignored patterns.  We check both if a pattern matches OR if there is an
-                 exact match with the string.  This is because someone might put in an
-                 invalid pattern (because secretly we are using Lua patterns underneath
-                 which have a slightly different syntax) *)
-              let relevant_commit_checks =
-                filter_relevant_commit_checks ignore_matching_pats ignore_matching commit_checks
-              in
-              let failed_commit_checks =
-                CCList.filter
-                  (function
-                    | Terrat_commit_check.{ status = Status.Completed; _ } -> false
-                    | _ -> true)
-                  relevant_commit_checks
-              in
-              let all_commit_check_success = CCList.is_empty failed_commit_checks in
-              let merged =
-                let module St = Terrat_pull_request.State in
-                match Pull_request.state pull_request with
-                | St.Merged _ -> true
-                | St.Open _ | St.Closed -> false
-              in
-              let passed =
-                merged
-                || ((not approved.Ac.enabled) || approved_result)
-                   && ((not merge_conflicts.Mc.enabled) || merge_result)
-                   && ((not status_checks.Sc.enabled) || all_commit_check_success)
-              in
-              let apply_requirements =
-                {
-                  Apply_requirements.Result.passed;
-                  match_;
-                  approved = (if approved.Ac.enabled then Some approved_result else None);
-                  merge_conflicts = (if merge_conflicts.Mc.enabled then Some merge_result else None);
-                  status_checks =
-                    (if status_checks.Sc.enabled then Some all_commit_check_success else None);
-                  status_checks_failed = failed_commit_checks;
-                  approved_reviews;
-                }
-              in
-              Logs.info (fun m ->
-                  m
-                    "GITHUB_EVALUATOR : %s : APPLY_REQUIREMENTS_CHECKS : tag_query=%s approved=%s \
-                     merge_conflicts=%s status_checks=%s"
-                    request_id
-                    (Terrat_tag_query.to_string tag_query)
-                    (Bool.to_string approved.Ac.enabled)
-                    (Bool.to_string merge_conflicts.Mc.enabled)
-                    (Bool.to_string status_checks.Sc.enabled));
-              Logs.info (fun m ->
-                  m
-                    "GITHUB_EVALUATOR : %s : APPLY_REQUIREMENTS_RESULT : tag_query=%s approved=%s \
-                     merge_check=%s commit_check=%s merged=%s passed=%s"
-                    request_id
-                    (Terrat_tag_query.to_string tag_query)
-                    (Bool.to_string approved_result)
-                    (Bool.to_string merge_result)
-                    (Bool.to_string all_commit_check_success)
-                    (Bool.to_string merged)
-                    (Bool.to_string passed));
-              Abb.Future.return (Ok apply_requirements)
-          | None ->
-              Abb.Future.return
-                (Ok
-                   {
-                     Apply_requirements.Result.passed = false;
-                     match_;
-                     approved = None;
-                     merge_conflicts = None;
-                     status_checks = None;
-                     status_checks_failed = [];
-                     approved_reviews = [];
-                   }))
-        matches
+                     TODO: Improve handling errors here *)
+                  let ignore_matching_pats =
+                    CCList.filter_map Lua_pattern.of_string ignore_matching
+                  in
+                  (* Relevant checks exclude our terrateam checks, and also exclude any
+                     ignored patterns.  We check both if a pattern matches OR if there is an
+                     exact match with the string.  This is because someone might put in an
+                     invalid pattern (because secretly we are using Lua patterns underneath
+                     which have a slightly different syntax) *)
+                  let relevant_commit_checks =
+                    filter_relevant_commit_checks ignore_matching_pats ignore_matching commit_checks
+                  in
+                  let failed_commit_checks =
+                    CCList.filter
+                      (function
+                        | Terrat_commit_check.{ status = Status.Completed; _ } -> false
+                        | _ -> true)
+                      relevant_commit_checks
+                  in
+                  let all_commit_check_success = CCList.is_empty failed_commit_checks in
+                  let merged =
+                    let module St = Terrat_pull_request.State in
+                    match Pull_request.state pull_request with
+                    | St.Merged _ -> true
+                    | St.Open _ | St.Closed -> false
+                  in
+                  let passed =
+                    merged
+                    || ((not approved.Ac.enabled) || approved_result)
+                       && ((not merge_conflicts.Mc.enabled) || merge_result)
+                       && ((not status_checks.Sc.enabled) || all_commit_check_success)
+                  in
+                  let apply_requirements =
+                    {
+                      Apply_requirements.Result.passed;
+                      match_;
+                      approved = (if approved.Ac.enabled then Some approved_result else None);
+                      merge_conflicts =
+                        (if merge_conflicts.Mc.enabled then Some merge_result else None);
+                      status_checks =
+                        (if status_checks.Sc.enabled then Some all_commit_check_success else None);
+                      status_checks_failed = failed_commit_checks;
+                      approved_reviews;
+                    }
+                  in
+                  Logs.info (fun m ->
+                      m
+                        "GITHUB_EVALUATOR : %s : APPLY_REQUIREMENTS_CHECKS : tag_query=%s \
+                         approved=%s merge_conflicts=%s status_checks=%s"
+                        request_id
+                        (Terrat_tag_query.to_string tag_query)
+                        (Bool.to_string approved.Ac.enabled)
+                        (Bool.to_string merge_conflicts.Mc.enabled)
+                        (Bool.to_string status_checks.Sc.enabled));
+                  Logs.info (fun m ->
+                      m
+                        "GITHUB_EVALUATOR : %s : APPLY_REQUIREMENTS_RESULT : tag_query=%s \
+                         approved=%s merge_check=%s commit_check=%s merged=%s passed=%s"
+                        request_id
+                        (Terrat_tag_query.to_string tag_query)
+                        (Bool.to_string approved_result)
+                        (Bool.to_string merge_result)
+                        (Bool.to_string all_commit_check_success)
+                        (Bool.to_string merged)
+                        (Bool.to_string passed));
+                  Abb.Future.return (Ok apply_requirements)
+              | None ->
+                  Abb.Future.return
+                    (Ok
+                       {
+                         Apply_requirements.Result.passed = false;
+                         match_;
+                         approved = None;
+                         merge_conflicts = None;
+                         status_checks = None;
+                         status_checks_failed = [];
+                         approved_reviews = [];
+                       }))
+            chunk)
+        (CCList.chunks (CCInt.max 1 (CCList.length matches / max_parallel)) matches)
       >>= function
-      | Ok _ as ret -> Abb.Future.return ret
+      | Ok ret -> Abb.Future.return (Ok (CCList.flatten ret))
       | Error (`Error as ret) -> Abb.Future.return (Error ret)
 
     let query_dirspaces_owned_by_other_pull_requests ~request_id db pull_request dirspaces =
