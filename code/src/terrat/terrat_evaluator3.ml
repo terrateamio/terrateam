@@ -1,3 +1,6 @@
+let cache_capacity_mb_in_kb = ( * ) 1024
+let kb_of_bytes b = CCInt.max 1 (b / 1024)
+
 module Metrics = struct
   module DefaultHistogram = Prmths.DefaultHistogram
 
@@ -23,6 +26,18 @@ module Metrics = struct
         "access_control_total"
     in
     fun ~t ~r -> Prmths.Counter.labels family [ t; r ]
+
+  let cache_dv_call_count =
+    let help = "Count of cache calls by derived value with hit or miss or evict" in
+    let family =
+      Prmths.Counter.v_labels
+        ~label_names:[ "v"; "type" ]
+        ~help
+        ~namespace
+        ~subsystem
+        "cache_dv_call_count"
+    in
+    fun ~v t -> Prmths.Counter.labels family [ v; t ]
 end
 
 module Unlock_id = struct
@@ -1763,7 +1778,11 @@ module Make (S : S) = struct
        values but as the values change between resumes the values get
        updated. *)
     module Cache = struct
-      module Matches = Abb_cache.Lru.Make (struct
+      let on_hit v () = Prmths.Counter.inc_one (Metrics.cache_dv_call_count ~v "hit")
+      let on_miss v () = Prmths.Counter.inc_one (Metrics.cache_dv_call_count ~v "miss")
+      let on_evict v () = Prmths.Counter.inc_one (Metrics.cache_dv_call_count ~v "evict")
+
+      module Matches = Abbs_cache.Expiring.Make (struct
         type k = string * S.Account.t * S.Repo.t * S.Ref.t * S.Ref.t * [ `Plan | `Apply ]
         [@@deriving eq]
 
@@ -1777,9 +1796,10 @@ module Make (S : S) = struct
         type args = unit -> (v, err) result Abb.Future.t
 
         let fetch f = f ()
+        let weight v = kb_of_bytes (CCString.length (Matches.show v))
       end)
 
-      module Access_control_eval_tf_op = Abb_cache.Lru.Make (struct
+      module Access_control_eval_tf_op = Abbs_cache.Expiring.Make (struct
         type k =
           string
           * S.Account.t
@@ -1799,41 +1819,78 @@ module Make (S : S) = struct
         type args = unit -> (v, err) result Abb.Future.t
 
         let fetch f = f ()
+        let weight v = kb_of_bytes (CCString.length (Terrat_access_control.R.show v))
       end)
 
-      module Repo_config = Abb_cache.Lru.Make (struct
+      module Repo_config = Abbs_cache.Expiring.Make (struct
         type k = string * S.Account.t * S.Repo.t * S.Ref.t [@@deriving eq]
         type v = string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t
         type err = Repo_config.fetch_err
         type args = unit -> (v, err) result Abb.Future.t
 
         let fetch f = f ()
+
+        let weight (_, repo_config) =
+          kb_of_bytes
+            (CCString.length
+               (Yojson.Safe.to_string
+                  Terrat_base_repo_config_v1.(View.to_yojson (to_view repo_config))))
       end)
 
-      module Pull_request = Abb_cache.Lru.Make (struct
+      module Pull_request = Abbs_cache.Expiring.Make (struct
         type k = string * S.Account.t * S.Repo.t * int [@@deriving eq]
         type v = S.Pull_request.fetched S.Pull_request.t
         type err = [ `Error ]
         type args = unit -> (v, err) result Abb.Future.t
 
         let fetch f = f ()
+
+        let weight pull_request =
+          kb_of_bytes
+            (CCString.length
+               (Yojson.Safe.to_string
+                  (S.Pull_request.to_yojson S.Pull_request.fetched_to_yojson pull_request)))
       end)
 
       let matches =
         Matches.create
-          { Abb_cache.Lru.on_hit = CCFun.const (); on_miss = CCFun.const (); size = 50 }
+          {
+            Abbs_cache.Expiring.on_hit = on_hit "matches";
+            on_miss = on_miss "matches";
+            on_evict = on_evict "matches";
+            duration = Duration.of_min 5;
+            capacity = cache_capacity_mb_in_kb 10;
+          }
 
       let access_control_eval_tf_op =
         Access_control_eval_tf_op.create
-          { Abb_cache.Lru.on_hit = CCFun.const (); on_miss = CCFun.const (); size = 50 }
+          {
+            Abbs_cache.Expiring.on_hit = on_hit "access_control_eval_tf_op";
+            on_miss = on_miss "access_control_eval_tf_op";
+            on_evict = on_evict "access_control_eval_tf_op";
+            duration = Duration.of_min 5;
+            capacity = cache_capacity_mb_in_kb 5;
+          }
 
       let repo_config =
         Repo_config.create
-          { Abb_cache.Lru.on_hit = CCFun.const (); on_miss = CCFun.const (); size = 50 }
+          {
+            Abbs_cache.Expiring.on_hit = on_hit "repo_config";
+            on_miss = on_miss "repo_config";
+            on_evict = on_evict "repo_config";
+            duration = Duration.of_min 5;
+            capacity = cache_capacity_mb_in_kb 10;
+          }
 
       let pull_request =
         Pull_request.create
-          { Abb_cache.Lru.on_hit = CCFun.const (); on_miss = CCFun.const (); size = 50 }
+          {
+            Abbs_cache.Expiring.on_hit = on_hit "pull_request";
+            on_miss = on_miss "pull_request";
+            on_evict = on_evict "pull_request";
+            duration = Duration.of_min 5;
+            capacity = cache_capacity_mb_in_kb 10;
+          }
     end
 
     let is_interactive ctx state =
