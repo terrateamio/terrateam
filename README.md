@@ -58,7 +58,8 @@ Before you begin, ensure you have the following:
 
    > ⚠️ **Important:** Do not install your private Terrateam GitHub application until you complete the steps below.
 
-4. **Save your `.env` file** next to the `docker-compose.yml` file in the `terrateam/docker/terrat` directory.
+4. **Save the generated GitHub application settings**
+   Create a `.env` file in the `terrateam/docker/terrat` directory, next to the `docker-compose.yml` file, and save the settings there.
 
 5. **Stop the Terrateam setup container** by pressing `Ctrl+C` in the terminal to stop the container.
 
@@ -73,6 +74,13 @@ Before you begin, ensure you have the following:
 8. **Install your private Terrateam GitHub application** using the application URL from step 3. You can install Terrateam aginst your entire organization or specific repositories.
 
    > ⚠️ **Important:** Ensure the Terrateam Server is running (see step 7) before installing the GitHub application.
+
+9. **Add the Terrateam GitHub Actions Workflow**
+   Download [terrateam.yml](https://raw.githubusercontent.com/terrateamio/terrateam-example/main/github/actions/workflows/default/terrateam.yml) and
+   save it in your repository under `.github/workflows/terrateam.yml`. The Terrateam GitHub Actions workflow file must reside in the default branch of your Terraform repository, typically named `main` or `master`.
+
+10. **Start Using Terrateam**
+    Create a pull request with a Terraform code change to automatically trigger a Terraform `Plan` operation. For detailed instructions on your first Terrateam deployment, refer to the [Quickstart Guide](https://docs.terrateam.io/quickstart-guide#your-first-terrateam-deployment).
 
 For non-local setup instructions, including manual setup and Kubernetes deployment options, follow our [Self-Hosted Guide](https://docs.terrateam.io/self-hosted/overview) to get up and running.
 
