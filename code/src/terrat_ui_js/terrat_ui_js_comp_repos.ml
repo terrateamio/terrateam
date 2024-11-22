@@ -72,7 +72,7 @@ let comp state =
                      At.
                        [
                          class' (Jstr.v "setup-repo");
-                         href (Jstr.v (consumed_path ^ "/audit-trail?q=repo:" ^ repo.Repo.name));
+                         href (Jstr.v (consumed_path ^ "/runs?q=repo:" ^ repo.Repo.name));
                        ]
                    [
                      txt' "View Runs";
