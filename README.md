@@ -39,7 +39,7 @@ For those who prefer more control, you can deploy Terrateam in your own environm
 Before you begin, ensure you have the following:
 
 - Docker and Docker Compose installed on your machine.
-- An [Ngrok auth token](https://dashboard.ngrok.com/get-started/your-authtoken) for tunneling.
+- An [Ngrok auth token](https://ngrok.com/) for tunneling.
 
 #### Terrateam Setup Steps
 
