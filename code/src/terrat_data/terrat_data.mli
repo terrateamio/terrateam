@@ -25,3 +25,19 @@ module Dirspace_map : sig
 end
 
 module Dirspace_set : module type of CCSet.Make (Terrat_dirspace)
+
+module type GROUP_BY = sig
+  type t
+  type key
+
+  val compare : key -> key -> int
+  val key : t -> key
+end
+
+module Group_by (G : GROUP_BY) : sig
+  (** Given a list, group each element in the list by an associated key and
+     return a list mapping keys to the values.  This guarantees that the list in
+     each group is in the same order as they were in the original list, however
+     there are no guarantees around the groups. *)
+  val group : G.t list -> (G.key * G.t list) list
+end

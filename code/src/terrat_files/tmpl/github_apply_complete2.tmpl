@@ -1,0 +1,133 @@
+@-?overall_success-@
+## Applies :white_check_mark:
+@^denied_dirspaces-@
+<details open>
+  <summary><h2>Access Control :no_entry:</h2></summary>
+
+Not all [dirspaces](https://terrateam.io/docs/glossary#dirspace) were run because the user did not have access.  The following dirspaces were not run:
+
+| Dir | Workspace | Policy |
+| --- | --------- | ------ |
+@#denied_dirspaces-@
+| `@dir@` | `@workspace@` | @^policy@@#policy@`@item@` @/policy-@@/policy@@^!policy@**No matching policy**@/policy@ |
+@/denied_dirspaces-@
+</details>
+@/denied_dirspaces-@
+@?is_layered_run-@
+@!is_last_layer-@
+This is a **layered run** with @num_more_layers@ layers remaining to plan and apply.  Layered runs require multiple rounds of planning and applying.  Comment `terrateam plan` to plan the next layer and continue until all layers are applied.
+
+@/is_last_layer-@
+@/is_layered_run-@
+## Terrateam Apply Output@^environment@: @environment@@/environment@ :white_check_mark:
+<details>
+  <summary>Expand for apply output details</summary>
+
+@-/overall_success-@
+@-!overall_success-@
+## Applies :heavy_multiplication_x:
+
+Running plans **FAILED**.  See **Terrateam Apply Output**.
+
+## Terrateam Apply Output@^environment@: @environment@@/environment@ :heavy_multiplication_x:
+<details>
+  <summary>Expand for apply output details</summary>
+
+<details>
+  <summary><h3>Pre Hooks</h3></summary>
+
+@-#pre_hooks-@
+**Step**: @name@
+@-?success-@
+**Success**: :white_check_mark:
+@-/success-@
+@-!success-@
+**Success**: :heavy_multiplication_x:
+@-/success-@
+@^cmd-@
+**Command**: `@cmd@`
+@/cmd-@
+@^details-@
+**Details**: @details@
+@/details-@
+```
+@text@
+```
+@-/pre_hooks-@
+</details>
+
+<details>
+  <summary><h3>Post Hooks</h3></summary>
+
+@-#post_hooks-@
+**Step**: @name@
+@-?success-@
+**Success**: :white_check_mark:
+@-/success-@
+@-!success-@
+**Success**: :heavy_multiplication_x:
+@-/success-@
+@^cmd-@
+**Command**: `@cmd@`
+@/cmd-@
+@^details-@
+**Details**: @details@
+@/details-@
+```
+@text@
+```
+@-/post_hooks-@
+</details>
+@/overall_success-@
+
+@-#dirspaces-@
+
+## @dir@ @?success@:white_check_mark:@/success@@!success@:heavy_multiplication_x:@/success@
+@?compact_dirspaces-@
+<details>
+  <summary>Expand for details</summary>
+
+---
+
+@/compact_dirspaces-@
+**Dir**: @dir@
+**Workspace**: @workspace@
+**Success**: @?success@:white_check_mark:@/success@@!success@:heavy_multiplication_x:@/success@
+@-?success-@
+@-#steps-@
+@?name=apply-@
+**Command**: `@cmd@`
+
+```
+@text@
+```
+@/name=apply-@
+@-/steps-@
+@-/success-@
+@-!success-@
+
+@-#steps-@
+**Step**: @name@
+@-?success-@
+**Success**: :white_check_mark:
+@-/success-@
+@-!success-@
+**Success**: :heavy_multiplication_x:
+@-/success-@
+@^cmd-@
+**Command**: `@cmd@`
+@/cmd-@
+@^details-@
+**Details**: @details@
+@/details-@
+```
+@text@
+```
+@-/steps-@
+@-/success-@
+@?compact_dirspaces-@
+</details>
+@/compact_dirspaces-@
+@-/dirspaces-@
+
+</details>

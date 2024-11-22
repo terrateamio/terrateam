@@ -47,7 +47,8 @@ exception Tokenize_error of err
 open Token
 
 let key =
-  [%sedlex.regexp? ('a' .. 'z' | 'A' .. 'Z'), Star ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_')]
+  [%sedlex.regexp?
+    ('a' .. 'z' | 'A' .. 'Z'), Star ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | '=')]
 
 let rec token ln bldr buf =
   match%sedlex buf with
