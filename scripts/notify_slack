@@ -2,23 +2,33 @@
 set -euf -o pipefail
 
 if [ "${TERRATEAM_ENVIRONMENT}" == "production" ]; then
-  PAYLOAD=$(cat <<EOF
-{
-  "attachments": [
-    {
-      "fallback": "New release created: ${VERSION_TAG}",
-      "color": "#36a64f",
-      "pretext": "A new release has been created for ${GITHUB_REPOSITORY}!",
-      "title": "Release ${VERSION_TAG}",
-      "title_link": "https://github.com/${GITHUB_REPOSITORY}/releases/tag/${VERSION_TAG}",
-      "footer": "GitHub Actions",
-      "footer_icon": "https://platform.slack-edge.com/img/default_application_icon.png",
-      "ts": $(date +%s)
-    }
-  ]
-}
-EOF
-)
+  # Extract "What's Changed" section and format it for Slack
+  RELEASE_NOTES=$(gh release view --repo "${GITHUB_REPOSITORY}" --json body | jq -r '.body' | awk '/## What'\''s Changed/,/^$/' | sed '/^## What'\''s Changed/d' | sed -E 's/\* (.+) by .+/\• \1/')
+
+  PAYLOAD=$(jq -n --arg pretext "A new release has been created for ${GITHUB_REPOSITORY}!" \
+                --arg title "Release ${VERSION_TAG}" \
+                --arg title_link "https://github.com/${GITHUB_REPOSITORY}/releases/tag/${VERSION_TAG}" \
+                --arg text "${RELEASE_NOTES}" \
+                --arg footer "GitHub Actions" \
+                --arg footer_icon "https://platform.slack-edge.com/img/default_application_icon.png" \
+                --arg color "#36a64f" \
+                --arg fallback "New release created: ${VERSION_TAG}" \
+                --argjson ts "$(date +%s)" \
+                '{
+                  attachments: [
+                    {
+                      fallback: $fallback,
+                      color: $color,
+                      pretext: $pretext,
+                      title: $title,
+                      title_link: $title_link,
+                      text: $text,
+                      footer: $footer,
+                      footer_icon: $footer_icon,
+                      ts: $ts
+                    }
+                  ]
+                }')
 
   curl -X POST -H 'Content-type: application/json' --data "${PAYLOAD}" "${SLACK_WEBHOOK_URL}"
 fi
