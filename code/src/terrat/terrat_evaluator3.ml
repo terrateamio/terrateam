@@ -1,5 +1,6 @@
 let cache_capacity_mb_in_kb = ( * ) 1024
 let kb_of_bytes b = CCInt.max 1 (b / 1024)
+let result_version = 2
 
 module Metrics = struct
   module DefaultHistogram = Prmths.DefaultHistogram
@@ -99,6 +100,7 @@ module Msg = struct
         work_manifest : ('account, 'target) Terrat_work_manifest3.Existing.t;
       }
     | Tf_op_result2 of {
+        config : Terrat_config.t;
         is_layered_run : bool;
         remaining_layers : Terrat_change_match3.Dirspace_config.t list list;
         result : Terrat_api_components_work_manifest_tf_operation_result2.t;
@@ -4011,6 +4013,7 @@ module Make (S : S) = struct
                             run_kind = run_kind_str;
                             run_kind_data;
                             type_ = "plan";
+                            result_version;
                             config =
                               repo_config
                               |> Terrat_base_repo_config_v1.to_version_1
@@ -4053,6 +4056,7 @@ module Make (S : S) = struct
                             changed_dirspaces = changed_dirspaces changes;
                             run_kind = run_kind_str;
                             type_ = "apply";
+                            result_version;
                             config =
                               repo_config
                               |> Terrat_base_repo_config_v1.to_version_1
@@ -4101,6 +4105,7 @@ module Make (S : S) = struct
                 pull_request
                 (Msg.Tf_op_result2
                    {
+                     config = ctx.Ctx.config;
                      is_layered_run = CCList.length matches.Dv.Matches.all_matches > 1;
                      remaining_layers = matches.Dv.Matches.all_unapplied_matches;
                      result;

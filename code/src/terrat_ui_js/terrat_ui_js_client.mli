@@ -13,14 +13,17 @@ type work_manifests_err =
   ]
 [@@deriving show]
 
-module Page : sig
-  type 'a t [@@deriving eq, show]
+type work_manifest_outputs_err =
+  [ err
+  | `Bad_request of Terrat_api_installations.Get_work_manifest_outputs.Responses.Bad_request.t
+  ]
+[@@deriving show]
 
-  val empty : unit -> 'a t
-  val page : 'a t -> 'a list
-  val next : 'a t -> string list option
-  val prev : 'a t -> string list option
-end
+type dirspaces_err =
+  [ err
+  | `Bad_request of Terrat_api_installations.List_dirspaces.Responses.Bad_request.t
+  ]
+[@@deriving show]
 
 type t
 
@@ -44,11 +47,38 @@ val installations :
 val work_manifests :
   ?tz:string ->
   ?page:string list ->
+  ?limit:int ->
   ?q:string ->
   ?dir:[ `Asc | `Desc ] ->
   installation_id:string ->
   t ->
-  (Terrat_api_components.Installation_work_manifest.t Page.t, [> work_manifests_err ]) result
+  ( Terrat_api_components.Installation_work_manifest.t Brtl_js2_page.Page.t,
+    [> work_manifests_err ] )
+  result
+  Abb_js.Future.t
+
+val work_manifest_outputs :
+  ?tz:string ->
+  ?page:string list ->
+  ?limit:int ->
+  ?q:string ->
+  installation_id:string ->
+  work_manifest_id:string ->
+  t ->
+  ( Terrat_api_components.Installation_workflow_step_output.t Brtl_js2_page.Page.t,
+    [> work_manifest_outputs_err ] )
+  result
+  Abb_js.Future.t
+
+val dirspaces :
+  ?tz:string ->
+  ?page:string list ->
+  ?limit:int ->
+  ?q:string ->
+  ?dir:[ `Asc | `Desc ] ->
+  installation_id:string ->
+  t ->
+  (Terrat_api_components.Installation_dirspace.t Brtl_js2_page.Page.t, [> dirspaces_err ]) result
   Abb_js.Future.t
 
 val pull_requests :
@@ -56,13 +86,14 @@ val pull_requests :
   ?pull_number:int ->
   installation_id:string ->
   t ->
-  (Terrat_api_components.Installation_pull_request.t Page.t, [> err ]) result Abb_js.Future.t
+  (Terrat_api_components.Installation_pull_request.t Brtl_js2_page.Page.t, [> err ]) result
+  Abb_js.Future.t
 
 val repos :
   ?page:string list ->
   installation_id:string ->
   t ->
-  (Terrat_api_components.Installation_repo.t Page.t, [> err ]) result Abb_js.Future.t
+  (Terrat_api_components.Installation_repo.t Brtl_js2_page.Page.t, [> err ]) result Abb_js.Future.t
 
 val repos_refresh : installation_id:string -> t -> (string, [> err ]) result Abb_js.Future.t
 val task : id:string -> t -> (Terrat_api_components.Task.t, [> err ]) result Abb_js.Future.t

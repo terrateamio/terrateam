@@ -1,20 +1,45 @@
 module At = Brtl_js2.Brr.At
 
+module Page = struct
+  type 'a t = {
+    elts : 'a list;
+    next : string list option;
+    prev : string list option;
+  }
+  [@@deriving eq, show]
+
+  let make ?next ?prev elts = { elts; next; prev }
+  let page t = t.elts
+  let next t = t.next
+  let prev t = t.prev
+end
+
 type page = string list [@@deriving eq]
+
+module Query = struct
+  type 'a t = {
+    query : 'a Brtl_js2.Note.signal;
+    set_query : 'a Brtl_js2.Note.S.set;
+  }
+
+  let query t = Brtl_js2.Note.S.value t.query
+  let signal t = t.query
+  let set_query t v = t.set_query v
+end
 
 module type S = sig
   type fetch_err
-  type elt
+  type elt [@@deriving eq, show]
   type state
   type query
 
   val class' : string
-  val query : query Brtl_js2_rtng.Route.t
+  val query : (query -> 'a) -> 'a Brtl_js2_rtng.Route.t
   val make_uri : query -> Uri.t -> Uri.t
   val set_page : string list option -> query -> query
-  val fetch : query -> (elt Terrat_ui_js_client.Page.t, fetch_err) result Abb_js.Future.t
-  val wrap_page : Brtl_js2.Brr.El.t list -> Brtl_js2.Brr.El.t list
-  val render_elt : state Brtl_js2.State.t -> elt -> Brtl_js2.Brr.El.t list
+  val fetch : query -> (elt Page.t, fetch_err) result Abb_js.Future.t
+  val wrap_page : query Query.t -> Brtl_js2.Brr.El.t list -> Brtl_js2.Brr.El.t list
+  val render_elt : state Brtl_js2.State.t -> query Query.t -> elt -> Brtl_js2.Brr.El.t list
 
   val query_comp :
     (query Brtl_js2.Note.S.set -> fetch_err option Brtl_js2.Note.E.t -> state Brtl_js2.Comp.t)
@@ -32,8 +57,13 @@ module Make (S : S) = struct
     Abb_js_future_combinators.with_finally
       (fun () ->
         set_refresh_active (Brtl_js2.Note.S.value refresh_active + 1);
-        S.fetch query
+        S.fetch (Query.query query)
         >>= function
+        | Ok res_page when Page.prev res_page = None ->
+            set_res_page res_page;
+            send_fetch_err None;
+            Query.set_query query (S.set_page None (Query.query query));
+            Abb_js.Future.return ()
         | Ok res_page ->
             set_res_page res_page;
             send_fetch_err None;
@@ -49,52 +79,40 @@ module Make (S : S) = struct
 
   let rec refresh_page set_refresh_active refresh_active set_res_page send_fetch_err query =
     let open Abb_js.Future.Infix_monad in
-    perform_fetch
-      set_refresh_active
-      refresh_active
-      set_res_page
-      send_fetch_err
-      (Brtl_js2.Note.S.value query)
+    perform_fetch set_refresh_active refresh_active set_res_page send_fetch_err query
     >>= fun () ->
     Abb_js.sleep 60.0
     >>= fun () -> refresh_page set_refresh_active refresh_active set_res_page send_fetch_err query
 
-  let page_comp res_page state =
-    let page =
-      Brtl_js2.Note.S.map ~eq:(CCList.equal S.equal_elt) Terrat_ui_js_client.Page.page res_page
-    in
+  let page_comp query res_page state =
+    let page = Brtl_js2.Note.S.map ~eq:(CCList.equal S.equal_elt) Page.page res_page in
     Abb_js.Future.return
       (Brtl_js2.Output.render
          (Brtl_js2.Note.S.map
             ~eq:( == )
-            (fun elts -> S.wrap_page (CCList.flat_map (S.render_elt state) elts))
+            (fun elts -> S.wrap_page query (CCList.flat_map (S.render_elt state query) elts))
             page))
 
-  let run state =
+  let comp query state =
     let open Abb_js.Future.Infix_monad in
-    let uri = Brtl_js2.(Note.S.value (Router.uri (State.router state))) in
     let query =
-      CCOption.get_exn_or
-        "query"
-        (CCOption.map Brtl_js2_rtng.Match.apply (Brtl_js2_rtng.match_uri S.query uri))
+      let query, set_query = Brtl_js2.Note.S.create ~eq:S.equal_query query in
+      { Query.query; set_query }
     in
-    let query, set_query = Brtl_js2.Note.S.create ~eq:S.equal_query query in
     let fetch_err, send_fetch_err = Brtl_js2.Note.E.create () in
     let res_page, set_res_page =
-      Brtl_js2.Note.S.create
-        ~eq:(Terrat_ui_js_client.Page.equal S.equal_elt)
-        (Terrat_ui_js_client.Page.empty ())
+      Brtl_js2.Note.S.create ~eq:(Page.equal S.equal_elt) (Page.make [])
     in
     let refresh_active, set_refresh_active = Brtl_js2.Note.S.create ~eq:( = ) 0 in
     Abb_js.Future.fork
       (refresh_page set_refresh_active refresh_active set_res_page send_fetch_err query)
     >>= fun refresh_fut ->
     let logr =
-      Brtl_js2.Note.S.log ~now:false query (fun query ->
+      Brtl_js2.Note.S.log ~now:false (Query.signal query) (fun _query ->
           let uri = Brtl_js2.(Note.S.value (Router.uri (State.router state))) in
           Brtl_js2.Router.navigate
             (Brtl_js2.State.router state)
-            (Uri.to_string (S.make_uri query uri));
+            (Uri.to_string (S.make_uri (Query.query query) uri));
           Abb_js.Future.run
             (perform_fetch set_refresh_active refresh_active set_res_page send_fetch_err query))
     in
@@ -103,26 +121,17 @@ module Make (S : S) = struct
         ~class':(Jstr.v "refresh")
         ~enabled:(Brtl_js2.Note.S.map ~eq:( = ) (fun v -> v = 0) refresh_active)
         ~action:(fun () ->
-          perform_fetch
-            set_refresh_active
-            refresh_active
-            set_res_page
-            send_fetch_err
-            (Brtl_js2.Note.S.value query))
+          perform_fetch set_refresh_active refresh_active set_res_page send_fetch_err query)
         (Brtl_js2.Note.S.const ~eq:( == ) Brtl_js2.Brr.El.[ txt' "Refresh" ])
         ()
     in
-    let prev =
-      Brtl_js2.Note.S.map ~eq:(CCOption.equal equal_page) Terrat_ui_js_client.Page.prev res_page
-    in
-    let next =
-      Brtl_js2.Note.S.map ~eq:(CCOption.equal equal_page) Terrat_ui_js_client.Page.next res_page
-    in
+    let prev = Brtl_js2.Note.S.map ~eq:(CCOption.equal equal_page) Page.prev res_page in
+    let next = Brtl_js2.Note.S.map ~eq:(CCOption.equal equal_page) Page.next res_page in
     let prev_btn =
       Brtl_js2.Kit.Ui.Button.v'
         ~enabled:(Brtl_js2.Note.S.map ~eq:CCBool.equal CCOption.is_some prev)
         ~action:(fun () ->
-          set_query (S.set_page (Brtl_js2.Note.S.value prev) (Brtl_js2.Note.S.value query));
+          Query.set_query query (S.set_page (Brtl_js2.Note.S.value prev) (Query.query query));
           Abb_js.Future.return ())
         (Brtl_js2.Note.S.const ~eq:( == ) Brtl_js2.Brr.El.[ txt' "Prev" ])
         ()
@@ -131,43 +140,51 @@ module Make (S : S) = struct
       Brtl_js2.Kit.Ui.Button.v'
         ~enabled:(Brtl_js2.Note.S.map ~eq:CCBool.equal CCOption.is_some next)
         ~action:(fun () ->
-          set_query (S.set_page (Brtl_js2.Note.S.value next) (Brtl_js2.Note.S.value query));
+          Query.set_query query (S.set_page (Brtl_js2.Note.S.value next) (Query.query query));
           Abb_js.Future.return ())
         (Brtl_js2.Note.S.const ~eq:( == ) Brtl_js2.Brr.El.[ txt' "Next" ])
         ()
     in
     let el = Brtl_js2.Brr.El.div ~at:At.[ class' (Jstr.v "page") ] [] in
-    let page_el =
-      Brtl_js2.Brr.El.(
-        div
-          ~at:At.[ class' (Jstr.v S.class') ]
-          (CCList.flatten
-             [
-               (match S.query_comp with
-               | Some comp ->
-                   [
-                     Brtl_js2.Router_output.const
-                       state
-                       (div ~at:At.[ class' (Jstr.v "query") ] [])
-                       (comp set_query fetch_err);
-                   ]
-               | None -> []);
-               [
-                 div
-                   ~at:At.[ class' (Jstr.v "page-nav") ]
-                   [
-                     div [ Brtl_js2.Kit.Ui.Button.el refresh_btn ];
-                     div [ Brtl_js2.Kit.Ui.Button.el prev_btn ];
-                     div [ Brtl_js2.Kit.Ui.Button.el next_btn ];
-                   ];
-                 Brtl_js2.Router_output.const state el (page_comp res_page);
-               ];
-             ]))
+    let page_els =
+      let open Brtl_js2.Brr.El in
+      CCList.flatten
+        [
+          (match S.query_comp with
+          | Some comp ->
+              [
+                Brtl_js2.Router_output.const
+                  state
+                  (div ~at:At.[ class' (Jstr.v "query") ] [])
+                  (comp query.Query.set_query fetch_err);
+              ]
+          | None -> []);
+          [
+            div
+              ~at:At.[ class' (Jstr.v "page-nav") ]
+              [
+                div [ Brtl_js2.Kit.Ui.Button.el refresh_btn ];
+                div [ Brtl_js2.Kit.Ui.Button.el prev_btn ];
+                div [ Brtl_js2.Kit.Ui.Button.el next_btn ];
+              ];
+            Brtl_js2.Router_output.const state el (page_comp query res_page);
+          ];
+        ]
     in
     Abb_js.Future.return
       (Brtl_js2.Output.const
          ~cleanup:(fun () ->
            Brtl_js2.Note.Logr.destroy logr;
            Abb_js.Future.abort refresh_fut)
-         [ page_el ])
+         page_els)
+
+  let run state =
+    Abb_js.Future.return
+      (Brtl_js2.Output.const
+         [
+           Brtl_js2.Router_output.create
+             state
+             (Brtl_js2.Brr.El.div ~at:At.[ class' (Jstr.v S.class') ] [])
+             Brtl_js2_rtng.[ S.query comp ];
+         ])
 end

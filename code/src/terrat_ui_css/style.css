@@ -1,22 +1,10 @@
-/* :root { */
-/*      --color-primary: 203, 213, 225; */
-/*      --color-secondary: 100, 116, 139; */
-/*      --color-success: 34, 197, 94; */
-/*      --color-fail: 239, 68, 68; */
-/*      --color-heading: 255, 98, 31; */
-/*      --color-subheading: 214, 82, 26; */
-/*      --color-action: 37, 99, 235; */
-/*      --color-danger: 181, 31, 31; */
-/*      --color-disabled: 31, 41, 55; */
-/* } */
-
 @tailwind base;
 
 @tailwind components;
 
 @layer components {
     body {
-        @apply bg-white h-screen w-full text-black flex flex-col overflow-y-scroll;
+        @apply bg-slate-50 h-screen w-full text-black flex flex-col overflow-y-scroll;
         @apply font-sans;
     }
 
@@ -113,6 +101,7 @@
         @apply sticky top-0;
         @apply py-4;
         @apply bg-black;
+        @apply z-40;
     }
 
     .header {
@@ -163,7 +152,7 @@
     }
 
     .main-content {
-        @apply flex flex-col w-full lg:w-2/3 mx-auto;
+        @apply flex flex-col w-full;
         @apply mb-20;
     }
 
@@ -306,6 +295,503 @@
         @apply list-disc list-inside;
     }
 
+    /* Start work manifest details */
+    .work-manifest-details {
+        @apply w-full;
+        @apply flex flex-col gap-8;
+        @apply items-center justify-items-center;
+        @apply mx-auto;
+    }
+
+    .work-manifest-details > .details {
+        @apply w-full lg:w-2/3;
+        @apply grid grid-cols-2 gap-2;
+    }
+
+    .work-manifest-details > .details .title {
+        @apply col-span-2;
+        @apply flex flex-col gap-2;
+        @apply pb-4;
+        @apply border-b border-slate-300;
+    }
+
+    .work-manifest-details > .details .title h1 {
+        @apply text-2xl;
+        @apply font-semibold;
+    }
+
+    .work-manifest-details > .details .title h2 {
+        @apply text-lg;
+        @apply font-semibold;
+        @apply text-slate-500;
+    }
+
+    .work-manifest-details > .details .title > * {
+        @apply flex flex-row gap-2;
+        @apply items-center justify-items-center;
+    }
+
+    .work-manifest-details > .details > div:not(.title) {
+        @apply grid grid-cols-7 gap-2;
+    }
+
+    .work-manifest-details > .details > div:not(.title) > div:first-child {
+        @apply font-semibold;
+        @apply col-span-2;
+    }
+
+    .work-manifest-details > .details > div:not(.title) > div:last-child {
+        @apply col-span-5;
+    }
+
+    .work-manifest-details > .details .state {
+        @apply px-2;
+        @apply uppercase;
+        @apply font-semibold;
+        @apply rounded;
+        @apply text-white;
+        @apply max-w-max;
+    }
+
+    .work-manifest-details > .details .state.aborted,
+    .work-manifest-details > .details .state.failure {
+        @apply bg-red-500;
+    }
+
+    .work-manifest-details > .details .state.success {
+        @apply bg-green-500;
+    }
+
+    .work-manifest-details > .details .state.running,
+    .work-manifest-details >  .details .state.queued {
+        @apply bg-slate-500;
+    }
+
+    .work-manifest-details > .details .run-id {
+        @apply flex flex-row gap-2;
+    }
+
+    .work-manifest-details > .details .run-id svg {
+        @apply h-5 w-5;
+    }
+
+    .work-manifest-details > .details .tag-query {
+        @apply font-mono;
+    }
+
+    .work-manifest-details .outputs-title {
+        @apply w-full lg:w-2/3;
+        @apply text-left;
+        @apply text-2xl;
+        @apply font-semibold;
+        @apply border-b border-slate-300;
+    }
+
+    .work-manifest-details .outputs {
+        @apply w-full lg:w-2/3;
+        @apply flex flex-col gap-4;
+    }
+
+    .work-manifest-details .outputs .treeview {
+        @apply w-full;
+        @apply flex flex-col gap-2;
+        @apply border-l-2 border-slate-300;
+        @apply p-4;
+    }
+
+    .work-manifest-details .outputs .treeview .title {
+        @apply flex flex-row gap-4;
+        @apply items-center justify-items-center;
+        @apply text-left font-semibold text-2xl;
+    }
+
+    .work-manifest-details .outputs .treeview .title.dirspace > div:nth-child(odd) {
+        @apply font-semibold;
+        @apply text-slate-500;
+        @apply text-xl;
+    }
+
+    .work-manifest-details .outputs .treeview .title.cost-estimation > div:nth-child(2),
+    .work-manifest-details .outputs .treeview .title.cost-estimation > div:nth-child(4) {
+        @apply font-semibold;
+        @apply text-slate-500;
+        @apply text-xl;
+    }
+
+    .work-manifest-details .outputs .treeview .branch {
+        @apply w-full;
+        @apply flex flex-row gap-2;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .expander button {
+        @apply text-slate-500;
+        @apply h-14 w-14;
+        @apply ring-transparent;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .expander button > div {
+        @apply transition-all duration-300;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .expander button > div.expanded {
+        @apply rotate-45;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .expander + div {
+        @apply w-full;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .node {
+        @apply w-full;
+        @apply pt-3;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .node .step {
+        @apply flex flex-row gap-4;
+        @apply items-center justify-items-center;
+        @apply text-left font-semibold text-xl;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .node .step > div:nth-child(odd) {
+        @apply font-semibold;
+        @apply text-slate-500;
+        @apply text-lg;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .node .step .state {
+        @apply px-2;
+        @apply uppercase;
+        @apply font-semibold;
+        @apply rounded;
+        @apply text-white;
+        @apply text-base;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .node .step .state.success {
+        @apply bg-green-500;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .node .step .state.failure {
+        @apply bg-red-500;
+    }
+
+    .work-manifest-details .outputs .treeview .leaf {
+        @apply flex flex-col gap-4;
+    }
+
+    .work-manifest-details .outputs .treeview .leaf > div.cmd,
+    .work-manifest-details .outputs .treeview .leaf > div.exit-code {
+        @apply grid grid-cols-7;
+    }
+
+    .work-manifest-details .outputs .treeview .leaf > div.cmd > div:first-child,
+    .work-manifest-details .outputs .treeview .leaf > div.exit-code > div:first-child {
+        @apply col-span-1;
+        @apply font-semibold;
+    }
+
+    .work-manifest-details .outputs .treeview .leaf > div.cmd > div:last-child,
+    .work-manifest-details .outputs .treeview .leaf > div.exit-code > div:last-child {
+        @apply col-span-6;
+        @apply flex flex-row;
+    }
+
+    .work-manifest-details .outputs .treeview .leaf > div.cmd > div:last-child > div,
+    .work-manifest-details .outputs .treeview .leaf > div.exit-code > div:last-child > div {
+        @apply font-mono;
+        @apply text-black bg-slate-200;
+        @apply px-2;
+    }
+
+    .work-manifest-details .outputs .treeview .leaf > div.text {
+        @apply font-mono;
+        @apply text-black bg-slate-200;
+        @apply p-2;
+        @apply overflow-x-auto;
+    }
+
+    .work-manifest-details .outputs .treeview .child-node .cost-estimation {
+        @apply flex flex-col gap-2;
+    }
+
+    .work-manifest-details .outputs .treeview .cost-estimation h2 {
+        @apply text-xl font-semibold;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .node .cost-estimation.summary > div:last-child {
+        @apply grid grid-cols-3;
+    }
+
+    .work-manifest-details .outputs .treeview .branch .node .cost-estimation.summary > div:last-child .heading {
+        @apply font-semibold
+    }
+
+    .work-manifest-details .outputs .treeview .leaf .cost-estimation.details > div:last-child {
+        @apply grid grid-cols-5
+    }
+
+    .work-manifest-details .outputs .treeview .leaf .cost-estimation.details > div:last-child .heading {
+        @apply font-semibold
+    }
+    /* End work manifest details */
+
+    /* Start dirspaces */
+    .dirspaces {
+        @apply w-full lg:w-11/12 mx-auto;
+        @apply flex flex-col;
+        @apply py-2;
+    }
+
+    .dirspaces .page {
+        @apply flex flex-col;
+        @apply gap-2;
+        @apply text-slate-800;
+    }
+
+    .dirspaces .page .heading {
+        @apply p-2;
+        @apply grid grid-cols-12;
+        @apply font-semibold;
+        @apply capitalize;
+        @apply bg-slate-300;
+        @apply rounded-lg;
+    }
+
+    /* Status */
+    .dirspaces .page .heading > div:nth-child(1),
+    .dirspaces .page .item > div:nth-child(1) {
+        @apply col-span-1;
+        @apply text-center;
+        @apply my-auto;
+    }
+
+    /* Directory */
+    .dirspaces .page .heading > div:nth-child(2),
+    .dirspaces .page .item > div:nth-child(2) {
+        @apply col-span-2;
+        @apply my-auto;
+    }
+
+    /* Workspace */
+    .dirspaces .page .heading > div:nth-child(3),
+    .dirspaces .page .item > div:nth-child(3) {
+        @apply col-span-1;
+        @apply my-auto;
+    }
+
+    /* Repo/branch */
+    .dirspaces .page .heading > div:nth-child(4),
+    .dirspaces .page .item > div:nth-child(4) {
+        @apply col-span-2;
+        @apply my-auto;
+    }
+
+    /* Target */
+    .dirspaces .page .heading > div:nth-child(5),
+    .dirspaces .page .item > div:nth-child(5) {
+        @apply col-span-4;
+        @apply my-auto;
+    }
+
+    /* Created at */
+    .dirspaces .page .heading > div:nth-child(6),
+    .dirspaces .page .item > div:nth-child(6) {
+        @apply col-span-1;
+        @apply my-auto;
+        @apply text-center;
+    }
+
+    /* Action */
+    .dirspaces .page .heading > div:nth-child(7),
+    .dirspaces .page .item > div:nth-child(7) {
+        @apply col-span-1;
+        @apply text-center;
+        @apply mx-auto;
+        @apply my-auto;
+    }
+
+    .dirspaces .page .item {
+        @apply grid grid-cols-12 gap-2;
+        @apply p-2;
+    }
+
+    .dirspaces .page .item .icon {
+        @apply h-5 w-5;
+    }
+
+    .dirspaces .page .item .icon > button {
+        @apply h-5 w-5;
+        @apply bg-transparent;
+        @apply text-blue-500;
+    }
+
+    .dirspaces .page .item:nth-child(odd) {
+        @apply bg-slate-100;
+    }
+
+    .dirspaces .page .item .operation {
+        @apply flex flex-col;
+        @apply items-center justify-items-center;
+    }
+
+    .dirspaces .page .item .operation .op {
+        @apply uppercase font-semibold;
+    }
+
+    .dirspaces .page .item .operation .state {
+        @apply py-1 px-2;
+        @apply uppercase;
+        @apply font-semibold;
+        @apply rounded;
+        @apply text-white;
+    }
+
+    .dirspaces .page .item .operation .state.aborted {
+        @apply bg-red-500;
+    }
+
+    .dirspaces .page .item .operation .state.failure {
+        @apply bg-red-500;
+    }
+
+    .dirspaces .page .item .operation .state.unknown {
+        @apply bg-red-500;
+    }
+
+    .dirspaces .page .item .operation .state.success {
+        @apply bg-green-500;
+    }
+
+    .dirspaces .page .item .operation .state.running {
+        @apply bg-slate-500;
+    }
+
+    .dirspaces .page .item .operation .state.queued {
+        @apply bg-slate-500;
+    }
+
+    .dirspaces .page .item .dir > div,
+    .dirspaces .page .item .workspace > div {
+        @apply inline-block;
+        @apply relative top-[3px];
+        @apply px-2;
+    }
+
+    .dirspaces .page .item .repo-branch {
+        @apply flex flex-col;
+        @apply truncate;
+    }
+
+    .dirspaces .page .item .repo-branch > div {
+        @apply flex flex-row gap-1;
+        @apply items-center justify-items-center;
+    }
+
+    .dirspaces .page .item .target.pull-request {
+        @apply flex flex-col;
+    }
+
+    .dirspaces .page .item .target.pull-request div:first-child {
+        @apply flex flex-row gap-1;
+        @apply items-center justify-items-center;
+    }
+
+    .dirspaces .page .item .target.pull-request div:last-child {
+        @apply truncate;
+    }
+
+    .dirspaces .page .item .target.drift,
+    .dirspaces .page .item .target.index {
+        @apply flex flex-row gap-2;
+    }
+
+    .dirspaces .page .item .created_at {
+        @apply flex flex-col;
+        @apply items-center justify-items-center;
+    }
+
+    .dirspaces .page .item .created_at > div {
+        @apply flex flex-row gap-1;
+    }
+
+    .dirspaces .page .item .target.drift,
+    .dirspaces .page .item .target.index {
+        @apply flex flex-row;
+    }
+
+    .dirspaces .page .item .action-details a {
+        @apply bg-blue-800;
+        @apply p-2;
+        @apply text-white;
+        @apply rounded;
+    }
+
+    .dirspaces .query {
+        @apply w-full lg:w-2/3;
+        @apply mx-auto;
+    }
+
+    .dirspaces .query > div > form {
+        @apply flex flex-row;
+    }
+
+    .dirspaces .query > div > form > input {
+        @apply input-primary;
+        @apply rounded-none rounded-l;
+    }
+
+    .dirspaces .query > div > form > button.btn-search {
+        @apply btn-primary;
+        @apply px-2;
+        @apply rounded-none;
+        @apply border-t border-t-blue-800;
+        @apply border-b border-b-blue-800;
+    }
+
+    .dirspaces .query > div > form > button.btn-search.ui-disabled {
+        @apply bg-slate-400;
+        @apply border-t border-t-slate-400;
+        @apply border-b border-b-slate-400;
+    }
+
+    .dirspaces .query > div > form > button.btn-clear {
+        @apply btn-primary;
+        @apply px-2;
+        @apply rounded-none rounded-r;
+        @apply border-l border-l-white;
+        @apply border-t border-t-blue-800;
+        @apply border-b border-b-blue-800;
+    }
+
+    .dirspaces .query > div > form > button.btn-clear.ui-disabled {
+        @apply bg-slate-400;
+        @apply border-t border-t-slate-400;
+        @apply border-b border-b-slate-400;
+    }
+
+    .dirspaces .query details {
+        @apply py-2;
+    }
+
+    .dirspaces .query .error {
+        @apply font-semibold text-red-600;
+    }
+
+    .dirspaces .query summary {
+        @apply py-2;
+        @apply font-semibold;
+        @apply cursor-pointer;
+    }
+
+    .dirspaces .query details .tql-help {
+        @apply flex flex-col gap-y-4;
+    }
+
+    .dirspaces .query details .tql-help ul {
+        @apply list-disc list-inside;
+    }
+    /* End dirspaces */
+
     .pull-requests {
         @apply mx-auto;
         @apply flex flex-col;
@@ -355,6 +841,11 @@
         @apply btn-primary;
     }
 
+    .repos {
+        @apply w-full lg:w-11/12;
+        @apply mx-auto;
+    }
+
     .repos-toolbar {
         @apply flex flex-row flex-wrap items-center gap-x-4;
     }
@@ -384,7 +875,7 @@
     }
 
     .page-nav {
-        @apply flex flex-row gap-4 justify-end py-2;
+        @apply flex flex-row gap-2 justify-end py-2;
     }
 
     .page-nav button {
@@ -433,6 +924,11 @@
         @apply flex flex-row items-center justify-end;
     }
 
+    .setup-repo {
+        @apply w-full lg:w-2/3;
+        @apply mx-auto;
+    }
+
     .setup-repo-title {
         @apply text-center text-4xl;
         @apply font-bold;
@@ -473,14 +969,9 @@
     }
 
     button.setup-repo-copy {
+        @apply flex flex-row gap-2;
         @apply btn-primary;
         @apply p-2;
-    }
-
-    code {
-        @apply font-mono font-semibold;
-        @apply bg-slate-200;
-        @apply px-1;
     }
 
     .workflow-file {
@@ -529,7 +1020,6 @@
     }
 
     .notifications > .notification {
-        /* @apply rounded-lg border border-black; */
         @apply animate-fade-in;
     }
 
@@ -541,14 +1031,6 @@
         @apply p-4;
         box-shadow: 0 0 15px 0px rgba(34, 197, 94, 1);
     }
-
-    /* .hl.sng { */
-    /*     @apply  */
-    /* } */
-
-    /* * { */
-    /*     @apply border border-red-500; */
-    /* } */
 }
 
 @tailwind utilities;

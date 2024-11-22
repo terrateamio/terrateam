@@ -4,7 +4,8 @@ module Rt = struct
   let main consumed_path = Brtl_js2_rtng.(root consumed_path)
   let repo_new consumed_path = Brtl_js2_rtng.(root consumed_path / "repos" / "new" /% Path.string)
   let repos_refresh consumed_path = Brtl_js2_rtng.(root consumed_path / "repos" / "refresh")
-  let audit_trail consumed_path = Brtl_js2_rtng.(root consumed_path / "audit-trail")
+  let runs consumed_path = Brtl_js2_rtng.(root consumed_path / "runs")
+  let runs_detail consumed_path = Brtl_js2_rtng.(root consumed_path / "runs" /% Path.string)
 end
 
 let installation_sel state =
@@ -34,13 +35,9 @@ let nav_bar state =
          Brtl_js2_nav_bar.Choice.
            [
              create ~value:`Repos Brtl_js2.Brr.El.[ txt' "Repos" ] consumed_path;
-             create
-               ~value:`Audit_trail
-               Brtl_js2.Brr.El.[ txt' "Audit trail" ]
-               (consumed_path ^ "/audit-trail");
+             create ~value:`Runs Brtl_js2.Brr.El.[ txt' "Runs" ] (consumed_path ^ "/runs");
            ]
-       Brtl_js2_rtng.
-         [ Rt.audit_trail consumed_path --> `Audit_trail; Rt.main consumed_path --> `Repos ]
+       Brtl_js2_rtng.[ Rt.runs consumed_path --> `Runs; Rt.main consumed_path --> `Repos ]
        state);
   nav_bar_div
 
@@ -139,7 +136,8 @@ let run' state =
                  (div ~at:At.[ class' (Jstr.v "main-content") ] [])
                  Brtl_js2_rtng.
                    [
-                     Rt.audit_trail consumed_path --> Terrat_ui_js_comp_audit_trail.run;
+                     Rt.runs_detail consumed_path --> Terrat_ui_js_comp_runs_detail.run;
+                     Rt.runs consumed_path --> Terrat_ui_js_comp_runs.run;
                      Rt.repo_new consumed_path --> Terrat_ui_js_comp_repo_new.run;
                      Rt.repos_refresh consumed_path --> Terrat_ui_js_comp_repos_refresh.run;
                      Rt.main consumed_path --> Terrat_ui_js_comp_repos.run;
