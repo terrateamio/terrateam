@@ -112,9 +112,7 @@ module Make (S : S) = struct
           let uri = Brtl_js2.(Note.S.value (Router.uri (State.router state))) in
           Brtl_js2.Router.navigate
             (Brtl_js2.State.router state)
-            (Uri.to_string (S.make_uri (Query.query query) uri));
-          Abb_js.Future.run
-            (perform_fetch set_refresh_active refresh_active set_res_page send_fetch_err query))
+            (Uri.to_string (S.make_uri (Query.query query) uri)))
     in
     let refresh_btn =
       Brtl_js2.Kit.Ui.Button.v'
