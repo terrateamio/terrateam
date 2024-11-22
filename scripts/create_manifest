@@ -28,7 +28,7 @@ for IMAGE_NAME in "$@"; do
   docker manifest push "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:${VERSION_TAG}"
 
   # Optionally create and push the "latest" tag if conditions are met
-  if [[ "${IS_LATEST_VERSION_TAG}" == "true" && "${PUSH_LATEST}" == "true" && "${IMAGE_NAME}" != "terrat-base" ]]; then
+  if [[ "${IS_LATEST_VERSION_TAG:-false}" == "true" && "${PUSH_LATEST}" == "true" && "${IMAGE_NAME}" != "terrat-base" ]]; then
     echo "Creating and pushing the 'latest' multi-architecture tag for ${IMAGE_NAME}..."
     docker manifest create "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:latest" \
       --amend "${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:${VERSION_TAG}-amd64"
