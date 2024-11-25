@@ -23,6 +23,7 @@ type t = {
   capture_output : bool; [@default false]
   cmd : Cmd.t;
   env : Env.t option; [@default None]
+  ignore_errors : bool; [@default false]
   run_on : Terrat_repo_config_run_on.t option; [@default None]
   type_ : Type.t; [@key "type"]
 }

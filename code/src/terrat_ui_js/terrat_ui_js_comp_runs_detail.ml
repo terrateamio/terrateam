@@ -620,7 +620,7 @@ let render_work_manifest state =
         Abb_js_future_combinators.Infix_result_app.(
           (fun failed_runs header_steps -> (failed_runs, header_steps))
           <$> Terrat_ui_js_client.work_manifest_outputs
-                ~q:"state:failure"
+                ~q:"state:failure and not ignore_errors"
                 ~limit:1
                 ~installation_id
                 ~work_manifest_id

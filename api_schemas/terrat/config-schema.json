@@ -651,6 +651,10 @@
           },
           "type": "object"
         },
+        "ignore_errors": {
+          "default": false,
+          "type": "boolean"
+        },
         "run_on": {
           "$ref": "#/definitions/run-on"
         },

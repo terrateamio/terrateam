@@ -62,6 +62,7 @@ module Work_manifests = struct
         [
           ("dir", (Json_obj "dir", "scope"));
           ("flow", (Json_obj "flow", "scope"));
+          ("ignore_errors", (Bool, "ignore_errors"));
           ("scope", (Json_obj "type", "scope"));
           ("state", (String, "state"));
           ("step", (String, "step"));

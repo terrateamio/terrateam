@@ -9,6 +9,7 @@ type of_ast_err =
 module Tag_map : sig
   type t =
     | Bigint
+    | Bool
     | Datetime
     | Int
     | Json_array of string
