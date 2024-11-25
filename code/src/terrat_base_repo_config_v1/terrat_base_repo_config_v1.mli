@@ -102,6 +102,7 @@ module Workflow_step : sig
       capture_output : bool; [@default false]
       cmd : Cmd.t;
       env : string String_map.t option;
+      ignore_errors : bool; [@default false]
       run_on : Run_on.t; [@default Run_on.Success]
     }
     [@@deriving make, show, yojson, eq]

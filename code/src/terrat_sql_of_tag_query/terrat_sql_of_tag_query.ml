@@ -9,6 +9,7 @@ type of_ast_err =
 module Tag_map = struct
   type t =
     | Bigint
+    | Bool
     | Datetime
     | Int
     | Json_array of string
@@ -76,6 +77,10 @@ let eq_bigint t n v =
       Buffer.add_string t.q (Printf.sprintf "%s = ($bigints)[%d]" n (CCVector.size t.bigints));
       Ok ()
   | None -> Error (`Error v)
+
+let eq_bool t n =
+  Buffer.add_string t.q n;
+  Ok ()
 
 let lte_datetime t n v =
   CCVector.push t.strings v;
@@ -146,7 +151,10 @@ let rec of_ast' ~tag_map t =
   function
   | T.Tag tag -> (
       match CCString.Split.left ~by:":" tag with
-      | None -> Error (`Unknown_tag tag)
+      | None -> (
+          match CCList.Assoc.get ~eq:CCString.equal tag tag_map with
+          | Some (Tag_map.Bool, n) -> eq_bool t n
+          | Some _ | None -> Error (`Unknown_tag tag))
       | Some ("sort", "asc") ->
           t.sort_dir <- `Asc;
           (* Cheap hack but we replace these meta attributes with [true]. *)
@@ -174,7 +182,8 @@ let rec of_ast' ~tag_map t =
           | Some (Tag_map.String, n) -> eq_string t n value
           | Some (Tag_map.Uuid, n) -> eq_uuid t n value
           | Some (Tag_map.Json_array k, n) -> eq_json_array t n k value
-          | Some (Tag_map.Json_obj k, n) -> eq_json_obj t n k value))
+          | Some (Tag_map.Json_obj k, n) -> eq_json_obj t n k value
+          | Some (Tag_map.Bool, _) -> assert false))
   | T.Or (l, r) ->
       let open CCResult.Infix in
       Buffer.add_char t.q '(';
