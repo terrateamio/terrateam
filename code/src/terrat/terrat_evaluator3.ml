@@ -1362,8 +1362,8 @@ module Make (S : S) = struct
       | Check_reconcile -> "check_reconcile"
       | Check_valid_destination_branch -> "check_valid_destination_branch"
       | Complete_work_manifest -> "complete_work_manifest"
-      | Config_build_not_required -> "config_build_required"
-      | Config_build_required -> "config_build_not_required"
+      | Config_build_not_required -> "config_build_not_required"
+      | Config_build_required -> "config_build_required"
       | Create_drift_events -> "create_drift_events"
       | Create_work_manifest -> "create_work_manifest"
       | Event_kind_feedback -> "event_kind_feedback"
@@ -1424,8 +1424,8 @@ module Make (S : S) = struct
       | "check_reconcile" -> Some Check_reconcile
       | "check_valid_destination_branch" -> Some Check_valid_destination_branch
       | "complete_work_manifest" -> Some Complete_work_manifest
-      | "config_build_required" -> Some Config_build_not_required
-      | "config_build_not_required" -> Some Config_build_required
+      | "config_build_not_required" -> Some Config_build_not_required
+      | "config_build_required" -> Some Config_build_required
       | "create_drift_events" -> Some Create_drift_events
       | "create_work_manifest" -> Some Create_work_manifest
       | "event_kind_feedback" -> Some Event_kind_feedback
