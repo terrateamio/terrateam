@@ -104,6 +104,7 @@ module Output_treeview = Brtl_js2_treeview.Make (struct
   let class' = "treeview"
 
   let fetch_outputs client installation_id work_manifest_id query =
+    let module O = Terrat_api_components.Installation_workflow_step_output in
     let open Abb_js_future_combinators.Infix_result_monad in
     Terrat_ui_js_client.work_manifest_outputs
       ~limit:100
@@ -402,13 +403,16 @@ module Output_treeview = Brtl_js2_treeview.Make (struct
     Ok Brtl_js2.Brr.El.[ div ~at:At.[ class' (Jstr.v "text") ] [ pre [ txt' text ] ] ]
 
   let render_payload_any payload =
-    let code_el = Brtl_js2.Brr.El.code [] in
-    let code_el_js = Brtl_js2.Brr.El.to_jv code_el in
-    let code =
-      Hljs.highlight (Hljs.Opts.make ~language:"json" ()) (Yojson.Safe.pretty_to_string payload)
-    in
-    Jv.set code_el_js "innerHTML" (Jv.of_string code);
-    Brtl_js2.Brr.El.[ pre [ code_el ] ]
+    match payload with
+    | `Assoc [] -> Brtl_js2.Brr.El.[]
+    | payload ->
+        let code_el = Brtl_js2.Brr.El.code [] in
+        let code_el_js = Brtl_js2.Brr.El.to_jv code_el in
+        let code =
+          Hljs.highlight (Hljs.Opts.make ~language:"json" ()) (Yojson.Safe.pretty_to_string payload)
+        in
+        Jv.set code_el_js "innerHTML" (Jv.of_string code);
+        Brtl_js2.Brr.El.[ pre [ code_el ] ]
 
   let render_payload step payload =
     let run =
