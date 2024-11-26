@@ -286,6 +286,7 @@ module Apply_requirements = struct
     type t = {
       approved : Approved.t; [@default Approved.make ()]
       merge_conflicts : Merge_conflicts.t; [@default Merge_conflicts.make ()]
+      require_ready_for_review_pr : bool; [@default true]
       status_checks : Status_checks.t; [@default Status_checks.make ()]
       tag_query : Tag_query.t; [@default Terrat_tag_query.any]
     }
@@ -851,7 +852,7 @@ let of_version_1_apply_requirements_checks =
       let open CCResult.Infix in
       let module I = C2.Items in
       CCResult.map_l
-        (fun { I.approved; merge_conflicts; status_checks; tag_query } ->
+        (fun { I.approved; merge_conflicts; require_ready_for_review_pr; status_checks; tag_query } ->
           CCResult.map_err
             (function
               | `Tag_query_error err -> `Apply_requirements_check_tag_query_err err)
@@ -867,7 +868,14 @@ let of_version_1_apply_requirements_checks =
           >>= fun merge_conflicts ->
           map_opt get_apply_requirements_checks_status_checks status_checks
           >>= fun status_checks ->
-          Ok (Ar.Check.make ~tag_query ?approved ?merge_conflicts ?status_checks ()))
+          Ok
+            (Ar.Check.make
+               ~require_ready_for_review_pr
+               ~tag_query
+               ?approved
+               ?merge_conflicts
+               ?status_checks
+               ()))
         checks
 
 let of_version_1_file_patterns fp = CCResult.map_l File_pattern.make fp
@@ -1696,10 +1704,19 @@ let to_version_1_apply_requirements_status_checks sc =
 let to_version_1_apply_requirements_checks =
   let module C2 = Terrat_repo_config.Apply_requirements_checks_2 in
   CCList.map
-    (fun { Apply_requirements.Check.approved; merge_conflicts; status_checks; tag_query } ->
+    (fun
+      {
+        Apply_requirements.Check.approved;
+        merge_conflicts;
+        require_ready_for_review_pr;
+        status_checks;
+        tag_query;
+      }
+    ->
       {
         C2.Items.approved = Some (to_version_1_apply_requirements_approved approved);
         merge_conflicts = Some (to_version_1_apply_requirements_merge_conflicts merge_conflicts);
+        require_ready_for_review_pr;
         status_checks = Some (to_version_1_apply_requirements_status_checks status_checks);
         tag_query = Terrat_tag_query.to_string tag_query;
       })
