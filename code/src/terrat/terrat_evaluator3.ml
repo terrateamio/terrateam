@@ -1362,8 +1362,8 @@ module Make (S : S) = struct
       | Check_reconcile -> "check_reconcile"
       | Check_valid_destination_branch -> "check_valid_destination_branch"
       | Complete_work_manifest -> "complete_work_manifest"
-      | Config_build_not_required -> "config_build_required"
-      | Config_build_required -> "config_build_not_required"
+      | Config_build_not_required -> "config_build_not_required"
+      | Config_build_required -> "config_build_required"
       | Create_drift_events -> "create_drift_events"
       | Create_work_manifest -> "create_work_manifest"
       | Event_kind_feedback -> "event_kind_feedback"
@@ -1424,8 +1424,8 @@ module Make (S : S) = struct
       | "check_reconcile" -> Some Check_reconcile
       | "check_valid_destination_branch" -> Some Check_valid_destination_branch
       | "complete_work_manifest" -> Some Complete_work_manifest
-      | "config_build_required" -> Some Config_build_not_required
-      | "config_build_not_required" -> Some Config_build_required
+      | "config_build_not_required" -> Some Config_build_not_required
+      | "config_build_required" -> Some Config_build_required
       | "create_drift_events" -> Some Create_drift_events
       | "create_work_manifest" -> Some Create_work_manifest
       | "event_kind_feedback" -> Some Event_kind_feedback
@@ -2998,7 +2998,7 @@ module Make (S : S) = struct
             (fun () ->
               query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
               >>= function
-              | Some ({ Wm.state = Wm.State.(Queued | Running); _ } as work_manifest) -> (
+              | Some ({ Wm.state = Wm.State.(Queued | Running | Aborted); _ } as work_manifest) -> (
                   let open Abb.Future.Infix_monad in
                   result ctx state req work_manifest
                   >>= function
@@ -3030,7 +3030,7 @@ module Make (S : S) = struct
                         work_manifest_id);
                   Abb.Future.return (Error `Failure))
             ~finally:(fun () -> Abb.Future.Promise.set p (Ok ()))
-      | _, Some (I.Work_manifest_failure { p }), Some work_manifest_id ->
+      | st, Some (I.Work_manifest_failure { p }), Some work_manifest_id ->
           Logs.info (fun m ->
               m
                 "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : WORK_MANIFEST_FAILURE : id=%a"
@@ -3042,7 +3042,7 @@ module Make (S : S) = struct
             (fun () ->
               query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
               >>= function
-              | Some ({ Wm.state = Wm.State.(Queued | Running); _ } as work_manifest) ->
+              | Some ({ Wm.state = Wm.State.(Queued | Running); _ } as work_manifest) -> (
                   update_work_manifest_state
                     state.State.request_id
                     ctx.Ctx.storage
@@ -3050,7 +3050,15 @@ module Make (S : S) = struct
                     Wm.State.Aborted
                   >>= fun () ->
                   run_failure ctx state `Error work_manifest
-                  >>= fun () -> Abb.Future.return (Error (`Noop state))
+                  >>= fun () ->
+                  (* If we're waiting for the result, then yield, we want to
+                     store the result when we (hopefully) receive it. *)
+                  match st with
+                  | St.Waiting_for_work_manifest_result -> Abb.Future.return (Error (`Yield state))
+                  | _ -> Abb.Future.return (Error (`Noop state)))
+              | Some { Wm.state = Wm.State.Aborted; _ }
+                when st = St.Waiting_for_work_manifest_result ->
+                  Abb.Future.return (Error (`Yield state))
               | Some _ -> Abb.Future.return (Error (`Noop state))
               | None ->
                   Logs.err (fun m ->
@@ -4085,32 +4093,36 @@ module Make (S : S) = struct
             work_manifest.Wm.id
             result
           >>= fun () ->
-          run_interactive ctx state (fun () ->
-              Dv.pull_request ctx state
-              >>= fun pull_request ->
-              create_op_commit_checks_of_result
-                state.State.request_id
-                ctx.Ctx.config
-                client
-                work_manifest.Wm.account
-                (S.Pull_request.repo pull_request)
-                (S.Pull_request.branch_ref pull_request)
-                work_manifest
-                work_manifest_result
-              >>= fun () ->
-              publish_msg
-                state.State.request_id
-                client
-                (Event.user state.State.event)
-                pull_request
-                (Msg.Tf_op_result2
-                   {
-                     config = ctx.Ctx.config;
-                     is_layered_run = CCList.length matches.Dv.Matches.all_matches > 1;
-                     remaining_layers = matches.Dv.Matches.all_unapplied_matches;
-                     result;
-                     work_manifest;
-                   }))
+          (if work_manifest.Wm.state <> Wm.State.Aborted then
+             (* In the case of an abort, we do not report back to the user, we
+                just want to store the results. *)
+             run_interactive ctx state (fun () ->
+                 Dv.pull_request ctx state
+                 >>= fun pull_request ->
+                 create_op_commit_checks_of_result
+                   state.State.request_id
+                   ctx.Ctx.config
+                   client
+                   work_manifest.Wm.account
+                   (S.Pull_request.repo pull_request)
+                   (S.Pull_request.branch_ref pull_request)
+                   work_manifest
+                   work_manifest_result
+                 >>= fun () ->
+                 publish_msg
+                   state.State.request_id
+                   client
+                   (Event.user state.State.event)
+                   pull_request
+                   (Msg.Tf_op_result2
+                      {
+                        config = ctx.Ctx.config;
+                        is_layered_run = CCList.length matches.Dv.Matches.all_matches > 1;
+                        remaining_layers = matches.Dv.Matches.all_unapplied_matches;
+                        result;
+                        work_manifest;
+                      }))
+           else Abb.Future.return (Ok ()))
           >>= fun () ->
           if not work_manifest_result.Work_manifest_result.overall_success then
             (* If the run failed, then we're done. *)
@@ -4128,31 +4140,33 @@ module Make (S : S) = struct
             work_manifest.Wm.id
             result
           >>= fun () ->
-          run_interactive ctx state (fun () ->
-              Dv.pull_request ctx state
-              >>= fun pull_request ->
-              create_op_commit_checks_of_result
-                state.State.request_id
-                ctx.Ctx.config
-                client
-                work_manifest.Wm.account
-                (S.Pull_request.repo pull_request)
-                (S.Pull_request.branch_ref pull_request)
-                work_manifest
-                work_manifest_result
-              >>= fun () ->
-              publish_msg
-                state.State.request_id
-                client
-                (Event.user state.State.event)
-                pull_request
-                (Msg.Tf_op_result
-                   {
-                     is_layered_run = CCList.length matches.Dv.Matches.all_matches > 1;
-                     remaining_layers = matches.Dv.Matches.all_unapplied_matches;
-                     result;
-                     work_manifest;
-                   }))
+          (if work_manifest.Wm.state <> Wm.State.Aborted then
+             run_interactive ctx state (fun () ->
+                 Dv.pull_request ctx state
+                 >>= fun pull_request ->
+                 create_op_commit_checks_of_result
+                   state.State.request_id
+                   ctx.Ctx.config
+                   client
+                   work_manifest.Wm.account
+                   (S.Pull_request.repo pull_request)
+                   (S.Pull_request.branch_ref pull_request)
+                   work_manifest
+                   work_manifest_result
+                 >>= fun () ->
+                 publish_msg
+                   state.State.request_id
+                   client
+                   (Event.user state.State.event)
+                   pull_request
+                   (Msg.Tf_op_result
+                      {
+                        is_layered_run = CCList.length matches.Dv.Matches.all_matches > 1;
+                        remaining_layers = matches.Dv.Matches.all_unapplied_matches;
+                        result;
+                        work_manifest;
+                      }))
+           else Abb.Future.return (Ok ()))
           >>= fun () ->
           if not work_manifest_result.Work_manifest_result.overall_success then
             (* If the run failed, then we're done. *)
