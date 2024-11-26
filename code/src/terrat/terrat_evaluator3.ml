@@ -1988,13 +1988,15 @@ module Make (S : S) = struct
           let open Abb.Future.Infix_monad in
           Abbs_time_it.run
             (fun time ->
-              Logs.info (fun m ->
-                  m
-                    "EVALUATOR : %s : DV : PULL_REQUEST : repo=%s : pull_number=%d : time=%f"
-                    state.State.request_id
-                    (S.Repo.to_string repo)
-                    pull_request_id
-                    time))
+              (* This is pretty noisy, so only log if the value is greater than 0. *)
+              if time > 0.0 then
+                Logs.info (fun m ->
+                    m
+                      "EVALUATOR : %s : DV : PULL_REQUEST : repo=%s : pull_number=%d : time=%f"
+                      state.State.request_id
+                      (S.Repo.to_string repo)
+                      pull_request_id
+                      time))
             (fun () ->
               Cache.Pull_request.fetch
                 Cache.pull_request

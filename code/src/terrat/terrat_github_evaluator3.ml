@@ -1093,6 +1093,7 @@ struct
           match_ : Terrat_change_match3.Dirspace_config.t;
           merge_conflicts : bool option;
           passed : bool;
+          ready_for_review : bool option;
           status_checks : bool option;
           status_checks_failed : Terrat_commit_check.t list;
         }
@@ -3454,6 +3455,10 @@ struct
                                  bool (CCOption.is_some ar.Ar.merge_conflicts) );
                                ( "merge_conflicts_check",
                                  bool (CCOption.get_or ~default:false ar.Ar.merge_conflicts) );
+                               ( "ready_for_review_enabled",
+                                 bool (CCOption.is_some ar.Ar.ready_for_review) );
+                               ( "ready_for_review_check",
+                                 bool (CCOption.get_or ~default:false ar.Ar.ready_for_review) );
                                ("status_checks_enabled", bool (CCOption.is_some ar.Ar.status_checks));
                                ( "status_checks_check",
                                  bool (CCOption.get_or ~default:false ar.Ar.status_checks) );
@@ -4871,7 +4876,14 @@ struct
                     Terrat_tag_query.match_ ~ctx ~tag_set:tags tag_query)
                   checks
               with
-              | Some { Abc.tag_query; merge_conflicts; status_checks; approved; _ } ->
+              | Some
+                  {
+                    Abc.tag_query;
+                    merge_conflicts;
+                    status_checks;
+                    approved;
+                    require_ready_for_review_pr;
+                  } ->
                   compute_approved request_id access_control_ctx approved approved_reviews
                   >>= fun approved_result ->
                   let ignore_matching = status_checks.Sc.ignore_matching in
@@ -4904,11 +4916,15 @@ struct
                     | St.Merged _ -> true
                     | St.Open _ | St.Closed -> false
                   in
+                  let ready_for_review =
+                    (not require_ready_for_review_pr) || not (Pull_request.is_draft_pr pull_request)
+                  in
                   let passed =
                     merged
                     || ((not approved.Ac.enabled) || approved_result)
                        && ((not merge_conflicts.Mc.enabled) || merge_result)
                        && ((not status_checks.Sc.enabled) || all_commit_check_success)
+                       && ready_for_review
                   in
                   let apply_requirements =
                     {
@@ -4917,6 +4933,8 @@ struct
                       approved = (if approved.Ac.enabled then Some approved_result else None);
                       merge_conflicts =
                         (if merge_conflicts.Mc.enabled then Some merge_result else None);
+                      ready_for_review =
+                        (if require_ready_for_review_pr then Some ready_for_review else None);
                       status_checks =
                         (if status_checks.Sc.enabled then Some all_commit_check_success else None);
                       status_checks_failed = failed_commit_checks;
@@ -4926,22 +4944,26 @@ struct
                   Logs.info (fun m ->
                       m
                         "GITHUB_EVALUATOR : %s : APPLY_REQUIREMENTS_CHECKS : tag_query=%s \
-                         approved=%s merge_conflicts=%s status_checks=%s"
+                         approved=%s merge_conflicts=%s status_checks=%s \
+                         require_ready_for_review=%s"
                         request_id
                         (Terrat_tag_query.to_string tag_query)
                         (Bool.to_string approved.Ac.enabled)
                         (Bool.to_string merge_conflicts.Mc.enabled)
-                        (Bool.to_string status_checks.Sc.enabled));
+                        (Bool.to_string status_checks.Sc.enabled)
+                        (Bool.to_string require_ready_for_review_pr));
                   Logs.info (fun m ->
                       m
                         "GITHUB_EVALUATOR : %s : APPLY_REQUIREMENTS_RESULT : tag_query=%s \
-                         approved=%s merge_check=%s commit_check=%s merged=%s passed=%s"
+                         approved=%s merge_check=%s commit_check=%s merged=%s ready_for_review=%s \
+                         passed=%s"
                         request_id
                         (Terrat_tag_query.to_string tag_query)
                         (Bool.to_string approved_result)
                         (Bool.to_string merge_result)
                         (Bool.to_string all_commit_check_success)
                         (Bool.to_string merged)
+                        (Bool.to_string ready_for_review)
                         (Bool.to_string passed));
                   Abb.Future.return (Ok apply_requirements)
               | None ->
@@ -4952,6 +4974,7 @@ struct
                          match_;
                          approved = None;
                          merge_conflicts = None;
+                         ready_for_review = None;
                          status_checks = None;
                          status_checks_failed = [];
                          approved_reviews = [];

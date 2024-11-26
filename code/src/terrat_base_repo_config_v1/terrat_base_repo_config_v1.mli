@@ -216,6 +216,7 @@ module Apply_requirements : sig
     type t = {
       approved : Approved.t; [@default Approved.make ()]
       merge_conflicts : Merge_conflicts.t; [@default Merge_conflicts.make ()]
+      require_ready_for_review_pr : bool; [@default true]
       status_checks : Status_checks.t; [@default Status_checks.make ()]
       tag_query : Tag_query.t; [@default Terrat_tag_query.any]
     }

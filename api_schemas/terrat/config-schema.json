@@ -128,6 +128,10 @@
           "merge_conflicts": {
             "$ref": "#/definitions/apply-requirements-checks-merge-conflicts"
           },
+          "require_ready_for_review_pr": {
+            "default": true,
+            "type": "boolean"
+          },
           "status_checks": {
             "$ref": "#/definitions/apply-requirements-checks-status-checks"
           },
