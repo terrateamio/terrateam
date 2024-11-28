@@ -526,7 +526,7 @@ module Make (Sched_state : S) = struct
                             u'.state <- `Det t;
                             set' undet t s);
                   watchers = [];
-                  deps = [];
+                  deps = [ Dep u ];
                   abort = noop_abort;
                   num_ops = 0;
                 };
@@ -743,7 +743,7 @@ module Make (Sched_state : S) = struct
                   f = Some (run_with_state t);
                   deps = [ Dep u ];
                   watchers = [];
-                  abort = noop_abort;
+                  abort = (fun () -> return (ignore (f `Aborted)));
                   num_ops = 0;
                 };
           }
