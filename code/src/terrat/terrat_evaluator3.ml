@@ -2996,7 +2996,7 @@ module Make (S : S) = struct
                 name
                 Uuidm.pp
                 work_manifest_id);
-          Abbs_future_combinators.with_finally
+          Abbs_future_combinators.on_failure
             (fun () ->
               query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
               >>= function
@@ -3005,9 +3005,13 @@ module Make (S : S) = struct
                   result ctx state req work_manifest
                   >>= function
                   | Ok () ->
+                      Abb.Future.Promise.set p (Ok ())
+                      >>= fun () ->
                       Abb.Future.return
                         (Ok { state with State.st = St.Initial; input = None; output = None })
                   | Error (`Noop state) ->
+                      Abb.Future.Promise.set p (Ok ())
+                      >>= fun () ->
                       Abb.Future.return
                         (Error (`Noop { state with State.st = St.Initial; input = None }))
                   | Error err -> Abb.Future.return (Error err))
@@ -3031,7 +3035,7 @@ module Make (S : S) = struct
                         Uuidm.pp
                         work_manifest_id);
                   Abb.Future.return (Error `Failure))
-            ~finally:(fun () -> Abb.Future.Promise.set p (Ok ()))
+            ~failure:(fun () -> Abb.Future.Promise.set p (Error `Error))
       | _, Some (I.Work_manifest_failure { p }), Some work_manifest_id ->
           Logs.info (fun m ->
               m
@@ -6564,10 +6568,11 @@ module Make (S : S) = struct
 
   (* If the flow future finishes first, fail, otherwise return what the flow's
      promise would return. *)
-  let first err fut =
+  let first ?(timeout = 120.0) workflow fut =
     let open Abb.Future.Infix_monad in
     Abbs_future_combinators.first
-      (err >>= fun _ -> Abb.Future.return (Error `Error))
+      (Abbs_future_combinators.first (Abb.Sys.sleep timeout >>| fun () -> Error `Timeout) workflow
+      >>= fun (_, other) -> Abb.Future.abort other >>= fun () -> Abb.Future.return (Error `Error))
       (fut
       >>= function
       | Ok r -> Abb.Future.return (Ok r)
