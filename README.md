@@ -138,7 +138,7 @@ For more details and example configurations, explore the [Configuration Referenc
 ## Resources
 - [Website](https://terrateam.io/)  
 - [Documentation](https://docs.terrateam.io/)
-- [GitHub Discussions](https://github.com/terrateamio/discussions)
+- [GitHub Discussions](https://github.com/terrateamio/terrateam/discussions)
 - [Join our Slack](https://terrateam.io/slack)
 - [Terrateam Blog](https://terrateam.io/blog)
 - If you have any questions, you can email us at [support@terrateam.io](mailto:support@terrateam.io)
