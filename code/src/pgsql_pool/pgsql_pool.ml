@@ -186,20 +186,20 @@ let destroy t = Abbs_future_combinators.ignore (Abbs_channel.close t)
 
 let with_conn t ~f =
   let open Abb.Future.Infix_monad in
-  Abbs_future_combinators.protect (fun () ->
+  Abbs_future_combinators.protect_finally
+    ~setup:(fun () ->
       let p = Abb.Future.Promise.create () in
       Abbs_channel.send t (Msg.Get p)
       >>= function
-      | `Ok () -> (
-          Abb.Future.Promise.future p
-          >>= function
-          | Ok conn ->
-              Abbs_future_combinators.with_finally
-                (fun () -> f conn)
-                ~finally:(fun () ->
-                  Abbs_channel.send t (Msg.Return conn)
-                  >>= function
-                  | `Ok () -> Abb.Future.return ()
-                  | `Closed -> Abbs_future_combinators.ignore (Pgsql_io.destroy conn))
-          | Error () -> Abb.Future.return (Error `Pgsql_pool_error))
+      | `Ok () -> Abb.Future.Promise.future p
       | `Closed -> raise Pgsql_pool_closed)
+    (function
+      | Ok conn -> f conn
+      | Error () -> Abb.Future.return (Error `Pgsql_pool_error))
+    ~finally:(function
+      | Ok conn -> (
+          Abbs_channel.send t (Msg.Return conn)
+          >>= function
+          | `Ok () -> Abb.Future.return ()
+          | `Closed -> Abbs_future_combinators.ignore (Pgsql_io.destroy conn))
+      | Error () -> Abb.Future.return ())
