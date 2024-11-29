@@ -63,6 +63,9 @@ http {
             proxy_set_header X-Forwarded-Base "$TERRAT_UI_BASE";
 
             client_max_body_size 10m;
+
+            # Add a long timeout to match the timeouts on the server side.
+            proxy_read_timeout 120;
         }
 
         # Turn off rate limit for health checks
