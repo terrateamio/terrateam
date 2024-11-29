@@ -48,6 +48,7 @@ q as (
         gwm.sha as branch_ref,
         gwm.run_type as run_type,
         (case
+         when gwm.state = 'aborted' then 'aborted'
          when gwmr.success then 'success'
          when not gwmr.success then 'failure'
          when (gdwm.work_manifest is null
@@ -56,7 +57,7 @@ q as (
          when (gdwm.work_manifest is not null
                and ldu.unlocked_at is not null
                and gwm.created_at <= ldu.unlocked_at) then 'aborted'
-         when gwm.state in ('running', 'queued', 'aborted') then gwm.state
+         when gwm.state in ('running', 'queued') then gwm.state
          else 'unknown'
          end) as state,
         gwm.tag_query as tag_query,

@@ -1,3 +1,9 @@
+let one_minute = Duration.(to_f (of_min 1))
+let terrateam_workflow_name = "Terrateam Workflow"
+let terrateam_workflow_path = ".github/workflows/terrateam.yml"
+let installation_expiration_sec = one_minute
+let call_timeout = Duration.(to_f (of_sec 10))
+
 module Org_admin = CCMap.Make (CCInt)
 
 module Metrics = struct
@@ -20,11 +26,6 @@ module Metrics = struct
     let help = "Number of calls of a function" in
     Prmths.Counter.v_label ~label_name:"fn" ~help ~namespace ~subsystem "fn_call_total"
 end
-
-let terrateam_workflow_name = "Terrateam Workflow"
-let terrateam_workflow_path = ".github/workflows/terrateam.yml"
-let installation_expiration_sec = 60.0
-let call_timeout = 10.0
 
 type user_err =
   [ Githubc2_abb.call_err
@@ -169,15 +170,19 @@ let rate_limit_wait resp =
     match (get "retry-after", get "x-ratelimit-remaining", get "x-ratelimit-reset") with
     | (Some _ as retry_after), _, _ ->
         Abb.Future.return
-          (CCOption.map
-             CCFloat.of_int
-             (CCOption.map_or ~default:(Some 60) CCInt.of_string retry_after))
+          (CCOption.map_or
+             ~default:(Some one_minute)
+             CCFun.(CCInt.of_string %> CCOption.map CCFloat.of_int)
+             retry_after)
     | None, Some "0", Some retry_time -> (
         match CCFloat.of_string_opt retry_time with
         | Some retry_time ->
             let open Abb.Future.Infix_monad in
-            Abb.Sys.time () >>= fun now -> Abb.Future.return (Some (retry_time -. now))
-        | None -> Abb.Future.return (Some 60.0))
+            Abb.Sys.time ()
+            >>= fun now ->
+            (* Make sure we wait at least one minute before retrying *)
+            Abb.Future.return (Some (CCFloat.max one_minute (retry_time -. now)))
+        | None -> Abb.Future.return (Some one_minute))
     | _, _, _ -> Abb.Future.return None
   else Abb.Future.return None
 

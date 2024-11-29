@@ -435,7 +435,7 @@ let with_finally_nested_exn_sequenced =
         Fut.Infix_app.(
           (fun _ _ -> ())
           <$> (let open Fut.Infix_monad in
-              Fut.Promise.future start >>= fun () -> failwith "exn")
+               Fut.Promise.future start >>= fun () -> failwith "exn")
           <*> business_end)
       in
       ignore (Fut.run_with_state fut dummy_state);
@@ -583,11 +583,201 @@ let protect_test =
             let open Fut.Infix_monad in
             Fut.Promise.future trigger >>= fun () -> Fut.Promise.set protected ())
       in
+      ignore (Fut.run_with_state fut dummy_state);
       ignore (Fut.run_with_state (Fut.abort fut) dummy_state);
       assert (Fut.state fut = `Aborted);
       assert (Fut.state (Fut.Promise.future protected) = `Undet);
       ignore (Fut.run_with_state (Fut.Promise.set trigger ()) dummy_state);
       assert (Fut.state (Fut.Promise.future protected) = `Det ()))
+
+let protect_fork_finally_abort_in_protect_test =
+  Oth.test ~name:"protect fork_finally pattern abort in protect" (fun _ ->
+      let hit_finally = ref false in
+      let protected = Fut.Promise.create () in
+      let trigger1 = Fut.Promise.create () in
+      let trigger2 = Fut.Promise.create () in
+      let fut =
+        let open Fut.Infix_monad in
+        Fut_comb.protect (fun () ->
+            Fut.Promise.future trigger1
+            >>= fun () ->
+            Fut.fork
+              (Fut_comb.with_finally
+                 (fun () -> Fut.Promise.future trigger2 >>= fun () -> Fut.Promise.set protected ())
+                 ~finally:(fun () ->
+                   hit_finally := true;
+                   Fut.return ())))
+        >>= fun fut -> fut
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.abort fut) dummy_state);
+      assert (Fut.state fut = `Aborted);
+      assert (Fut.state (Fut.Promise.future protected) = `Undet);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger1 ()) dummy_state);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger2 ()) dummy_state);
+      assert (Fut.state (Fut.Promise.future protected) = `Det ());
+      assert !hit_finally)
+
+let protect_fork_finally_abort_in_finally_test =
+  Oth.test ~name:"protect fork_finally pattern abort in finally" (fun _ ->
+      let hit_finally = ref false in
+      let protected = Fut.Promise.create () in
+      let trigger1 = Fut.Promise.create () in
+      let trigger2 = Fut.Promise.create () in
+      let fut =
+        let open Fut.Infix_monad in
+        Fut_comb.protect (fun () ->
+            Fut.Promise.future trigger1
+            >>= fun () ->
+            Fut.fork
+              (Fut_comb.with_finally
+                 (fun () -> Fut.Promise.future trigger2 >>= fun () -> Fut.Promise.set protected ())
+                 ~finally:(fun () ->
+                   hit_finally := true;
+                   Fut.return ())))
+        >>= fun fut -> fut
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger1 ()) dummy_state);
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.abort fut) dummy_state);
+      assert (Fut.state fut = `Aborted);
+      assert (Fut.state (Fut.Promise.future protected) = `Undet);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger2 ()) dummy_state);
+      assert (Fut.state (Fut.Promise.future protected) = `Undet);
+      assert !hit_finally)
+
+let protect_fork_finally_abort_in_on_failure_test =
+  Oth.test ~name:"protect fork_on_failure pattern abort in on_failure" (fun _ ->
+      let hit_failure = ref false in
+      let protected = Fut.Promise.create () in
+      let trigger1 = Fut.Promise.create () in
+      let trigger2 = Fut.Promise.create () in
+      let fut =
+        let open Fut.Infix_monad in
+        Fut_comb.protect (fun () ->
+            Fut.Promise.future trigger1
+            >>= fun () ->
+            Fut.fork
+              (Fut_comb.on_failure
+                 (fun () -> Fut.Promise.future trigger2 >>= fun () -> Fut.Promise.set protected ())
+                 ~failure:(fun () ->
+                   hit_failure := true;
+                   Fut.return ())))
+        >>= fun fut -> fut
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger1 ()) dummy_state);
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.abort fut) dummy_state);
+      assert (Fut.state fut = `Aborted);
+      assert (Fut.state (Fut.Promise.future protected) = `Undet);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger2 ()) dummy_state);
+      assert (Fut.state (Fut.Promise.future protected) = `Undet);
+      assert !hit_failure)
+
+let protect_finally_abort_in_protect_test =
+  Oth.test ~name:"protect_finally abort in protect" (fun _ ->
+      let hit_finally = ref false in
+      let protected = Fut.Promise.create () in
+      let trigger1 = Fut.Promise.create () in
+      let trigger2 = Fut.Promise.create () in
+      let fut =
+        let open Fut.Infix_monad in
+        Fut_comb.protect_finally
+          ~setup:(fun () -> Fut.Promise.future trigger1)
+          (fun () -> Fut.Promise.future trigger2 >>= fun () -> Fut.Promise.set protected ())
+          ~finally:(fun () ->
+            hit_finally := true;
+            Fut.return ())
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.abort fut) dummy_state);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger1 ()) dummy_state);
+      ignore (Fut.run_with_state fut dummy_state);
+      assert (Fut.state fut = `Aborted);
+      assert (Fut.state (Fut.Promise.future protected) = `Undet);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger2 ()) dummy_state);
+      assert (Fut.state (Fut.Promise.future protected) = `Undet);
+      assert !hit_finally)
+
+let protect_finally_abort_in_body_test =
+  Oth.test ~name:"protect_finally abort in body" (fun _ ->
+      let hit_finally = ref false in
+      let protected = Fut.Promise.create () in
+      let trigger1 = Fut.Promise.create () in
+      let trigger2 = Fut.Promise.create () in
+      let fut =
+        let open Fut.Infix_monad in
+        Fut_comb.protect_finally
+          ~setup:(fun () -> Fut.Promise.future trigger1)
+          (fun () -> Fut.Promise.future trigger2 >>= fun () -> Fut.Promise.set protected ())
+          ~finally:(fun () ->
+            hit_finally := true;
+            Fut.return ())
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger1 ()) dummy_state);
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.abort fut) dummy_state);
+      assert (Fut.state fut = `Aborted);
+      assert (Fut.state (Fut.Promise.future protected) = `Undet);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger2 ()) dummy_state);
+      assert (Fut.state (Fut.Promise.future protected) = `Undet);
+      assert !hit_finally)
+
+let protect_finally_abort_in_finally_test =
+  Oth.test ~name:"protect_finally abort in body" (fun _ ->
+      let hit_finally = ref false in
+      let protected = Fut.Promise.create () in
+      let trigger1 = Fut.Promise.create () in
+      let trigger2 = Fut.Promise.create () in
+      let trigger3 = Fut.Promise.create () in
+      let fut =
+        let open Fut.Infix_monad in
+        Fut_comb.protect_finally
+          ~setup:(fun () -> Fut.Promise.future trigger1)
+          (fun () -> Fut.Promise.future trigger2 >>= fun () -> Fut.Promise.set protected ())
+          ~finally:(fun () ->
+            Fut.Promise.future trigger3
+            >>= fun () ->
+            hit_finally := true;
+            Fut.return ())
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger1 ()) dummy_state);
+      ignore (Fut.run_with_state fut dummy_state);
+      assert (Fut.state (Fut.Promise.future protected) = `Undet);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger2 ()) dummy_state);
+      assert (Fut.state (Fut.Promise.future protected) = `Det ());
+      ignore (Fut.run_with_state (Fut.abort fut) dummy_state);
+      assert (Fut.state fut = `Aborted);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger3 ()) dummy_state);
+      assert !hit_finally)
+
+let protect_finally_success_test =
+  Oth.test ~name:"protect_finally success" (fun _ ->
+      let hit_finally = ref false in
+      let protected = Fut.Promise.create () in
+      let trigger1 = Fut.Promise.create () in
+      let trigger2 = Fut.Promise.create () in
+      let fut =
+        let open Fut.Infix_monad in
+        Fut_comb.protect_finally
+          ~setup:(fun () -> Fut.Promise.future trigger1)
+          (fun () -> Fut.Promise.future trigger2 >>= fun () -> Fut.Promise.set protected ())
+          ~finally:(fun () ->
+            hit_finally := true;
+            Fut.return ())
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger1 ()) dummy_state);
+      ignore (Fut.run_with_state fut dummy_state);
+      assert (Fut.state (Fut.Promise.future protected) = `Undet);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger2 ()) dummy_state);
+      assert (Fut.state (Fut.Promise.future protected) = `Det ());
+      assert (Fut.state fut = `Det ());
+      assert !hit_finally)
 
 let () =
   Oth.(
@@ -625,4 +815,11 @@ let () =
            timeout_timeout;
            timeout_success;
            protect_test;
+           protect_fork_finally_abort_in_protect_test;
+           protect_fork_finally_abort_in_finally_test;
+           protect_fork_finally_abort_in_on_failure_test;
+           protect_finally_abort_in_protect_test;
+           protect_finally_abort_in_body_test;
+           protect_fork_finally_abort_in_finally_test;
+           protect_finally_success_test;
          ]))

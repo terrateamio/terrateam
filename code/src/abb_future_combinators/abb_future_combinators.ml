@@ -163,6 +163,38 @@ module Make (Fut : Abb_intf.Future.S) = struct
        with exn -> Fut.Promise.set_exn ret (exn, Some (Printexc.get_raw_backtrace ())))
     >>= fun _ -> Fut.Promise.future ret
 
+  let protect_finally ~setup ~finally body =
+    let open Fut.Infix_monad in
+    (* Create a promise which we want to return immediately.  We will use that
+       to track if we have been aborted in any way during the protected setup
+       phase, so that we can execute the finally block. *)
+    let p = Fut.Promise.create () in
+    Fut.fork
+      (protect (fun () ->
+           setup ()
+           >>= fun v ->
+           match Fut.state (Fut.Promise.future p) with
+           | `Det _ -> assert false
+           | `Undet ->
+               (* Need fork executing the body so that we can exit the protected
+                  block. We want running the body to abortable.  Forking lets us
+                  spin the work off to the background, get a future connected to
+                  it out of the [protect] and then add it as a dependency to the
+                  future we returned, thus propagating any aborts to the
+                  underlying future executing the body. *)
+               Fut.fork
+                 (with_finally
+                    (fun () -> body v >>= Fut.Promise.set p)
+                    ~finally:(fun () -> finally v))
+           | `Aborted | `Exn _ ->
+               (* The future we returned while doing the setup has been aborted,
+                  so execute finally. *)
+               Fut.fork (finally v))
+      >>= fun fut ->
+      Fut.add_dep ~dep:fut (Fut.Promise.future p);
+      fut)
+    >>= fun _ -> Fut.Promise.future p
+
   let to_result fut = fut >>= fun v -> Fut.return (Ok v)
 
   let of_option = function

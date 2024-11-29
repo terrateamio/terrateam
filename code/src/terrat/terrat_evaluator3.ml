@@ -2996,7 +2996,7 @@ module Make (S : S) = struct
                 name
                 Uuidm.pp
                 work_manifest_id);
-          Abbs_future_combinators.with_finally
+          Abbs_future_combinators.on_failure
             (fun () ->
               query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
               >>= function
@@ -3005,9 +3005,13 @@ module Make (S : S) = struct
                   result ctx state req work_manifest
                   >>= function
                   | Ok () ->
+                      Abb.Future.Promise.set p (Ok ())
+                      >>= fun () ->
                       Abb.Future.return
                         (Ok { state with State.st = St.Initial; input = None; output = None })
                   | Error (`Noop state) ->
+                      Abb.Future.Promise.set p (Ok ())
+                      >>= fun () ->
                       Abb.Future.return
                         (Error (`Noop { state with State.st = St.Initial; input = None }))
                   | Error err -> Abb.Future.return (Error err))
@@ -3031,8 +3035,8 @@ module Make (S : S) = struct
                         Uuidm.pp
                         work_manifest_id);
                   Abb.Future.return (Error `Failure))
-            ~finally:(fun () -> Abb.Future.Promise.set p (Ok ()))
-      | st, Some (I.Work_manifest_failure { p }), Some work_manifest_id ->
+            ~failure:(fun () -> Abb.Future.Promise.set p (Error `Error))
+      | _, Some (I.Work_manifest_failure { p }), Some work_manifest_id ->
           Logs.info (fun m ->
               m
                 "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : WORK_MANIFEST_FAILURE : id=%a"
@@ -3044,7 +3048,7 @@ module Make (S : S) = struct
             (fun () ->
               query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
               >>= function
-              | Some ({ Wm.state = Wm.State.(Queued | Running); _ } as work_manifest) -> (
+              | Some ({ Wm.state = Wm.State.(Queued | Running); _ } as work_manifest) ->
                   update_work_manifest_state
                     state.State.request_id
                     ctx.Ctx.storage
@@ -3052,15 +3056,7 @@ module Make (S : S) = struct
                     Wm.State.Aborted
                   >>= fun () ->
                   run_failure ctx state `Error work_manifest
-                  >>= fun () ->
-                  (* If we're waiting for the result, then yield, we want to
-                     store the result when we (hopefully) receive it. *)
-                  match st with
-                  | St.Waiting_for_work_manifest_result -> Abb.Future.return (Error (`Yield state))
-                  | _ -> Abb.Future.return (Error (`Noop state)))
-              | Some { Wm.state = Wm.State.Aborted; _ }
-                when st = St.Waiting_for_work_manifest_result ->
-                  Abb.Future.return (Error (`Yield state))
+                  >>= fun () -> Abb.Future.return (Error (`Noop state))
               | Some _ -> Abb.Future.return (Error (`Noop state))
               | None ->
                   Logs.err (fun m ->
@@ -3923,8 +3919,8 @@ module Make (S : S) = struct
             (Event.user state.State.event)
             pull_request
             err
-          >>= fun () -> Abb.Future.return (Error `Failure))
-      >>= fun () -> Abb.Future.return (Error `Failure)
+          >>= fun () -> Abb.Future.return (Ok ()))
+      >>= fun () -> Abb.Future.return (Ok ())
 
     let token encryption_key id =
       Base64.encode_exn
@@ -4411,8 +4407,8 @@ module Make (S : S) = struct
                 (Event.user state.State.event)
                 pull_request
                 err
-              >>= fun () -> Abb.Future.return (Error `Failure))
-          >>= fun () -> Abb.Future.return (Error `Failure))
+              >>= fun () -> Abb.Future.return (Ok ()))
+          >>= fun () -> Abb.Future.return (Ok ()))
         ~initiate:H.generate_index_work_manifest_initiate
         ~result:H.generate_index_work_manifest_result
         ~fallthrough:H.log_state_err_iter
@@ -4601,11 +4597,7 @@ module Make (S : S) = struct
       match (state.State.st, state.State.input, state.State.work_manifest_id) with
       | (State.St.Initial | State.St.Work_manifest_completed), _, Some work_manifest_id ->
           let open Abbs_future_combinators.Infix_result_monad in
-          update_work_manifest_state
-            state.State.request_id
-            ctx.Ctx.storage
-            work_manifest_id
-            Terrat_work_manifest3.State.Completed
+          maybe_complete_work_manifest work_manifest_id
           >>= fun () ->
           Abb.Future.return
             (Error (`Yield { state with State.st = State.St.Waiting_for_work_manifest_initiate }))
@@ -4624,7 +4616,7 @@ module Make (S : S) = struct
           >>= fun () ->
           Abb.Future.return
             (Ok { state with State.st = State.St.Initial; input = None; output = None })
-      | _, _, None ->
+      | _, Some (State.Io.I.Work_manifest_failure _), _ | _, _, None ->
           (* No work manifest was run so ignore *)
           Abb.Future.return (Ok state)
       | _, _, _ ->
@@ -5649,8 +5641,8 @@ module Make (S : S) = struct
                 (Event.user state.State.event)
                 pull_request
                 err
-              >>= fun () -> Abb.Future.return (Error `Failure))
-          >>= fun () -> Abb.Future.return (Error `Failure))
+              >>= fun () -> Abb.Future.return (Ok ()))
+          >>= fun () -> Abb.Future.return (Ok ()))
         ~initiate:(fun ctx state encryption_key run_id sha work_manifest ->
           let module Wm = Terrat_work_manifest3 in
           let open Abbs_future_combinators.Infix_result_monad in
@@ -6576,10 +6568,11 @@ module Make (S : S) = struct
 
   (* If the flow future finishes first, fail, otherwise return what the flow's
      promise would return. *)
-  let first err fut =
+  let first ?(timeout = 120.0) workflow fut =
     let open Abb.Future.Infix_monad in
     Abbs_future_combinators.first
-      (err >>= fun _ -> Abb.Future.return (Error `Error))
+      (Abbs_future_combinators.first (Abb.Sys.sleep timeout >>| fun () -> Error `Timeout) workflow
+      >>= fun (_, other) -> Abb.Future.abort other >>= fun () -> Abb.Future.return (Error `Error))
       (fut
       >>= function
       | Ok r -> Abb.Future.return (Ok r)

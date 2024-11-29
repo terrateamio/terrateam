@@ -230,7 +230,7 @@ let test13 =
       ignore (Fut.run_with_state (Fut.abort fut2) state);
       assert (Fut.state fut1 = `Aborted);
       assert (Fut.state fut2 = `Aborted);
-      assert (not !r))
+      assert !r)
 
 let test14 =
   Oth.test ~desc:"Await bind evaluated if aborted from above" ~name:"Await Bind Abort #2" (fun _ ->

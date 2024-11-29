@@ -77,6 +77,13 @@ module Make (Fut : Abb_intf.Future.S) : sig
       protecting will be executed to completion. *)
   val protect : (unit -> 'a Fut.t) -> 'a Fut.t
 
+  (** Execute a [setup] phase that is protected, if the operation has been
+      terminated due to an [abort] or exception, then execute [finally],
+      otherwise execute the body in an unprotected section.  [finally] is
+      executed on completion. *)
+  val protect_finally :
+    setup:(unit -> 'a Fut.t) -> finally:('a -> unit Fut.t) -> ('a -> 'b Fut.t) -> 'b Fut.t
+
   (** Link two futures together.  If one is aborted or fails the other one will
       be aborted or failed. *)
   val link : 'a Fut.t -> 'b Fut.t -> unit
