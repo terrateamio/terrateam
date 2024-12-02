@@ -426,7 +426,7 @@ module Make (M : S) = struct
           match work_manifest with
           | Some work_manifest ->
               Printf.sprintf
-                "%s/i/%d/audit-trail/%s"
+                "%s/i/%d/runs/%s"
                 (Uri.to_string (Terrat_config.terrateam_web_base_url config))
                 (Account.id account)
                 (Uuidm.to_string work_manifest.Wm.id)
@@ -441,7 +441,7 @@ module Make (M : S) = struct
         Some
           (Uri.of_string
              (Printf.sprintf
-                "%s/i/%d/audit-trail/%s"
+                "%s/i/%d/runs/%s"
                 (Uri.to_string (Terrat_config.terrateam_web_base_url config))
                 (Account.id account)
                 (Uuidm.to_string work_manifest.Wm.id)))
