@@ -128,9 +128,10 @@ struct
         let installation = created.Gw.Installation_created.installation in
         Logs.info (fun m ->
             m
-              "INSTALLATION : CREATE :  %d : %s"
+              "INSTALLATION : CREATE :  account=%d : org=%s : sender=%s"
               installation.Gw.Installation.id
-              installation.Gw.Installation.account.Gw.User.login);
+              installation.Gw.Installation.account.Gw.User.login
+              created.Gw.Installation_created.sender.Gw.User.login);
         Pgsql_pool.with_conn storage ~f:(fun db ->
             Pgsql_io.Prepared_stmt.fetch
               db
@@ -159,9 +160,10 @@ struct
         let installation = deleted.Gw.Installation_deleted.installation in
         Logs.info (fun m ->
             m
-              "INSTALLATION : UNINSTALL : %d : %s"
+              "INSTALLATION : UNINSTALL : account=%d : org=%s : sender=%s"
               installation.Gw.Installation.id
-              installation.Gw.Installation.account.Gw.User.login);
+              installation.Gw.Installation.account.Gw.User.login
+              deleted.Gw.Installation_deleted.sender.Gw.User.login);
         Prmths.Counter.inc_one (Metrics.installation_events_total "deleted");
         Pgsql_pool.with_conn storage ~f:(fun db ->
             Pgsql_io.Prepared_stmt.execute
@@ -175,18 +177,20 @@ struct
         in
         Logs.info (fun m ->
             m
-              "INSTALLATION : ACCEPTED_PERMISSIONS : %d : %s"
+              "INSTALLATION : ACCEPTED_PERMISSIONS : account=%d : org=%s : sender=%s"
               installation.Gw.Installation.id
-              installation.Gw.Installation.account.Gw.User.login);
+              installation.Gw.Installation.account.Gw.User.login
+              installation_event.Gw.Installation_new_permissions_accepted.sender.Gw.User.login);
         Abb.Future.return (Ok ())
     | Gw.Installation_event.Installation_suspend suspended ->
         let installation = suspended.Gw.Installation_suspend.installation in
         let module I = Gw.Installation_suspend.Installation_ in
         Logs.info (fun m ->
             m
-              "INSTALLATION : SUSPENDED : %d : %s"
+              "INSTALLATION : SUSPENDED : account=%d : org=%s : sender=%s"
               installation.I.T.primary.I.T.Primary.id
-              installation.I.T.primary.I.T.Primary.account.Gw.User.login);
+              installation.I.T.primary.I.T.Primary.account.Gw.User.login
+              suspended.Gw.Installation_suspend.sender.Gw.User.login);
         Prmths.Counter.inc_one (Metrics.installation_events_total "suspended");
         Pgsql_pool.with_conn storage ~f:(fun db ->
             Pgsql_io.Prepared_stmt.execute
@@ -198,9 +202,10 @@ struct
         let module I = Gw.Installation_unsuspend.Installation_ in
         Logs.info (fun m ->
             m
-              "INSTALLATION : UNSUSPENDED : %d : %s"
+              "INSTALLATION : UNSUSPENDED : account-%d : org=%s : sender=%s"
               installation.I.T.primary.I.T.Primary.id
-              installation.I.T.primary.I.T.Primary.account.Gw.User.login);
+              installation.I.T.primary.I.T.Primary.account.Gw.User.login
+              unsuspend.Gw.Installation_unsuspend.sender.Gw.User.login);
         Prmths.Counter.inc_one (Metrics.installation_events_total "unsuspended");
         Pgsql_pool.with_conn storage ~f:(fun db ->
             Pgsql_io.Prepared_stmt.execute
