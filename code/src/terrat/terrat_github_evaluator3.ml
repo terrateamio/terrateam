@@ -607,12 +607,7 @@ module Tmpl = struct
   let unexpected_temporary_err = read "unexpected_temporary_err.tmpl"
   let failed_to_start_workflow = read "github_failed_to_start_workflow.tmpl"
   let failed_to_find_workflow = read "github_failed_to_find_workflow.tmpl"
-
-  let comment_too_large =
-    "github_comment_too_large.tmpl"
-    |> Terrat_files_tmpl.read
-    |> CCOption.get_exn_or "github_comment_too_large.tmpl"
-
+  let comment_too_large = read "github_comment_too_large.tmpl"
   let index_complete = read "github_index_complete.tmpl"
   let invalid_lock_id = read "github_unlock_failed_bad_id.tmpl"
 
@@ -1521,6 +1516,38 @@ struct
           Logs.err (fun m -> m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Pgsql_io.pp_err err);
           Abb.Future.return (Error `Error)
 
+    let publish_comment ~request_id client pull_request msg_type body =
+      let open Abb.Future.Infix_monad in
+      Terrat_github.publish_comment
+        ~owner:(Repo.owner (Pull_request.repo pull_request))
+        ~repo:(Repo.name (Pull_request.repo pull_request))
+        ~pull_number:(Pull_request.id pull_request)
+        ~body
+        client.Client.client
+      >>= function
+      | Ok () ->
+          Logs.info (fun m ->
+              m "GITHUB_EVALUATOR : %s : PUBLISHED_COMMENT : %s" request_id msg_type);
+          Abb.Future.return (Ok ())
+      | Error (#Terrat_github.publish_comment_err as err) ->
+          Prmths.Counter.inc_one Metrics.github_errors_total;
+          Logs.err (fun m ->
+              m
+                "GITHUB_EVALUATOR : %s : %s : ERROR : %a"
+                request_id
+                msg_type
+                Terrat_github.pp_publish_comment_err
+                err);
+          Abb.Future.return (Error `Error)
+
+    let apply_template_and_publish ~request_id client pull_request msg_type template kv =
+      match Snabela.apply template kv with
+      | Ok body -> publish_comment ~request_id client pull_request msg_type body
+      | Error (#Snabela.err as err) ->
+          Logs.err (fun m ->
+              m "GITHUB_EVALUATOR : %s : TEMPLATE_ERROR : %a" request_id Snabela.pp_err err);
+          Abb.Future.return (Error `Error)
+
     module Result = struct
       module Scope = struct
         type t =
@@ -1996,22 +2023,32 @@ struct
                     results
                     pull_request
                     work_manifest
-              | `Compact, [ _ ] ->
-                  (* If we're in compact view but there is only one dirspace, then
-                     that means there is no way to make the comment smaller. *)
+              | `Compact, _ ->
                   Prmths.Counter.inc_one Metrics.github_errors_total;
+                  let kv =
+                    Snabela.Kv.(
+                      Map.of_list
+                        (CCOption.map_or
+                           ~default:[]
+                           (fun work_manifest_url ->
+                             [ ("work_manifest_url", string (Uri.to_string work_manifest_url)) ])
+                           (Terratc.Github.Ui.work_manifest_url
+                              config
+                              work_manifest.Wm.account
+                              work_manifest)))
+                  in
                   Logs.info (fun m ->
                       m
                         "GITHUB_EVALUATOR : %s : ITERATE_COMMENT_POST : %s"
                         request_id
                         (Terrat_github.show_publish_comment_err err));
-                  Terrat_github.publish_comment
-                    ~owner:repo.Repo.owner
-                    ~repo:repo.Repo.name
-                    ~pull_number:pull_request.Pull_request.id
-                    ~body:Tmpl.comment_too_large
-                    client.Client.client
-              | `Compact, dirspaces -> raise (Failure "nyi"))
+                  apply_template_and_publish
+                    ~request_id
+                    client
+                    pull_request
+                    "ITERATE_COMMENT_POST2"
+                    Tmpl.comment_too_large
+                    kv)
       end
     end
 
@@ -2551,12 +2588,14 @@ struct
                       "GITHUB_EVALUATOR : %s : ITERATE_COMMENT_POST : %s"
                       request_id
                       (Terrat_github.show_publish_comment_err err));
-                Terrat_github.publish_comment
-                  ~owner:repo.Repo.owner
-                  ~repo:repo.Repo.name
-                  ~pull_number:pull_request.Pull_request.id
-                  ~body:Tmpl.comment_too_large
-                  client.Client.client
+                let kv = Snabela.Kv.(Map.of_list []) in
+                apply_template_and_publish
+                  ~request_id
+                  client
+                  pull_request
+                  "ITERATE_COMMENT_POST"
+                  Tmpl.comment_too_large
+                  kv
             | `Compact, dirspaces ->
                 Abbs_future_combinators.List_result.iter
                   ~f:(fun dirspace ->
@@ -2584,38 +2623,6 @@ struct
                       work_manifest)
                   dirspaces)
     end
-
-    let publish_comment ~request_id client pull_request msg_type body =
-      let open Abb.Future.Infix_monad in
-      Terrat_github.publish_comment
-        ~owner:(Repo.owner (Pull_request.repo pull_request))
-        ~repo:(Repo.name (Pull_request.repo pull_request))
-        ~pull_number:(Pull_request.id pull_request)
-        ~body
-        client.Client.client
-      >>= function
-      | Ok () ->
-          Logs.info (fun m ->
-              m "GITHUB_EVALUATOR : %s : PUBLISHED_COMMENT : %s" request_id msg_type);
-          Abb.Future.return (Ok ())
-      | Error (#Terrat_github.publish_comment_err as err) ->
-          Prmths.Counter.inc_one Metrics.github_errors_total;
-          Logs.err (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : %s : ERROR : %a"
-                request_id
-                msg_type
-                Terrat_github.pp_publish_comment_err
-                err);
-          Abb.Future.return (Error `Error)
-
-    let apply_template_and_publish ~request_id client pull_request msg_type template kv =
-      match Snabela.apply template kv with
-      | Ok body -> publish_comment ~request_id client pull_request msg_type body
-      | Error (#Snabela.err as err) ->
-          Logs.err (fun m ->
-              m "GITHUB_EVALUATOR : %s : TEMPLATE_ERROR : %a" request_id Snabela.pp_err err);
-          Abb.Future.return (Error `Error)
 
     let repo_config_failure ~request_id ~client ~pull_request ~title err =
       (* A bit of a cheap trick here to make it look like a code section in this
