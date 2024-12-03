@@ -35,6 +35,10 @@ When running the config builder, the existing repository configuration will be p
 
 The script should write to `stdout` the produced repository configuration in JSON format. The output must be a valid Terrateam repository configuration.
 
+## Interpreter
+
+If the `script` does not begin with a shebang (`#!`), the script is assumed to be a bash script and a shebang is injected into the script before execution.
+
 ### Errors
 
 Errors, from the configuration builder script failing to the output being invalid, will be communicated via a comment in the pull request and failed status check.

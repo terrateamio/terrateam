@@ -22,6 +22,15 @@ config_builder:
 ## Script Behavior
 When `enabled` is set to `true`, the `script` key defines a script that will be executed at runtime. This script can use external data sources, environment variables, or any other logic required to dynamically generate a configuration. The output of the script must be a valid configuration for Terrateam.
 
+## Input
+The existing configuration is fed into the script as a JSON string via `stdin`.
+
+## Output
+The script should output a new repository configuration, in JSON, to `stdout`.
+
+## Interpreter
+If the `script` does not begin with a shebang (`#!`), the script is assumed to be a bash script and a shebang is injected into the script before execution.
+
 ## Configuration Ordering
 It’s important to note that the `config_builder` does not override configurations defined elsewhere, such as in `.terrateam/config.yml` or [centralized configurations](/advanced-workflows/centralized-configuration).
 
