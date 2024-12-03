@@ -2,6 +2,10 @@
 pds.mk
 Ocamlrules.mk.in
 code/build/
+docs/dist/
+docs/node_modules/
+docs/.astro/astro/content.d.ts
+docs/.astro/types.d.ts
 code/.merlin
 .*__pycache__.*
 code/dune
