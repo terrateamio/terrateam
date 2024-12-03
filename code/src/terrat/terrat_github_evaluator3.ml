@@ -678,6 +678,7 @@ module Tmpl = struct
   let apply_complete = read "github_apply_complete.tmpl"
   let plan_complete2 = read "github_plan_complete2.tmpl"
   let apply_complete2 = read "github_apply_complete2.tmpl"
+  let automerge_failure = read "github_automerge_error.tmpl"
 end
 
 module S = struct
@@ -3145,6 +3146,15 @@ struct
             "AUTO_APPLY_RUNNING"
             Tmpl.auto_apply_running
             kv
+      | Msg.Automerge_failure (pr, msg) ->
+          let kv = Snabela.Kv.(Map.of_list [ ("msg", string msg) ]) in
+          apply_template_and_publish
+            ~request_id
+            client
+            pull_request
+            "AUTOMERGE_FAILURE"
+            Tmpl.automerge_failure
+            kv
       | Msg.Bad_custom_branch_tag_pattern (tag, pat) ->
           let kv = Snabela.Kv.(Map.of_list [ ("tag", string tag); ("pattern", string pat) ]) in
           apply_template_and_publish
@@ -5105,37 +5115,46 @@ struct
           Abb.Future.return (Error err)
 
     let merge_pull_request ~request_id client pull_request =
-      let open Abb.Future.Infix_monad in
-      merge_pull_request' request_id client pull_request
-      >>= function
-      | Ok _ as ret -> Abb.Future.return ret
-      | Error (#Githubc2_abb.call_err as err) ->
-          Logs.err (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %a"
-                request_id
-                Githubc2_abb.pp_call_err
-                err);
-          Abb.Future.return (Error `Error)
-      | Error
-          (`Method_not_allowed
-             Githubc2_pulls.Merge.Responses.Method_not_allowed.
-               { primary = Primary.{ message = Some message; _ }; _ } as err) ->
-          Logs.err (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %a"
-                request_id
-                Githubc2_pulls.Merge.Responses.pp
-                err);
-          Abb.Future.return (Error `Error)
-      | Error (#Githubc2_pulls.Merge.Responses.t as err) ->
-          Logs.err (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %a"
-                request_id
-                Githubc2_pulls.Merge.Responses.pp
-                err);
-          Abb.Future.return (Error `Error)
+      let num_tries = 3 in
+      let sleep_time = Duration.(to_f (of_sec 2)) in
+      Abbs_future_combinators.retry
+        ~f:(fun () ->
+          let open Abb.Future.Infix_monad in
+          merge_pull_request' request_id client pull_request
+          >>= function
+          | Ok _ as ret -> Abb.Future.return ret
+          | Error (#Githubc2_abb.call_err as err) ->
+              Logs.err (fun m ->
+                  m
+                    "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %a"
+                    request_id
+                    Githubc2_abb.pp_call_err
+                    err);
+              Abb.Future.return (Error `Error)
+          | Error
+              (`Method_not_allowed
+                 Githubc2_pulls.Merge.Responses.Method_not_allowed.
+                   { primary = Primary.{ message = Some message; _ }; _ } as err) ->
+              Logs.err (fun m ->
+                  m
+                    "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %a"
+                    request_id
+                    Githubc2_pulls.Merge.Responses.pp
+                    err);
+              Abb.Future.return (Error (`Merge_err message))
+          | Error (#Githubc2_pulls.Merge.Responses.t as err) ->
+              Logs.err (fun m ->
+                  m
+                    "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %a"
+                    request_id
+                    Githubc2_pulls.Merge.Responses.pp
+                    err);
+              Abb.Future.return (Error `Error))
+        ~while_:
+          (Abbs_future_combinators.finite_tries num_tries (function
+              | Error (`Merge_err _) -> true
+              | Ok _ | Error _ -> false))
+        ~betwixt:(fun _ -> Abb.Sys.sleep sleep_time)
 
     let delete_pull_request_branch' request_id client pull_request =
       let open Abbs_future_combinators.Infix_result_monad in
