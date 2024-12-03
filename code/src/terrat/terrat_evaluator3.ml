@@ -70,6 +70,7 @@ module Msg = struct
     | Apply_requirements_config_err of [ Terrat_tag_query_ast.err | `Invalid_query of string ]
     | Apply_requirements_validation_err
     | Autoapply_running
+    | Automerge_failure of ('pull_request * string)
     | Bad_custom_branch_tag_pattern of (string * string)
     | Bad_glob of string
     | Build_config_err of Terrat_base_repo_config_v1.of_version_1_err
@@ -566,7 +567,10 @@ module type S = sig
     Abb.Future.t
 
   val merge_pull_request :
-    request_id:string -> Client.t -> 'a Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
+    request_id:string ->
+    Client.t ->
+    'a Pull_request.t ->
+    (unit, [> `Error | `Merge_err of string ]) result Abb.Future.t
 
   val delete_pull_request_branch :
     request_id:string -> Client.t -> 'a Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
@@ -2735,10 +2739,34 @@ module Make (S : S) = struct
         state.State.st
         state.State.input
         state.State.work_manifest_id;
-      Abb.Future.return (Error `Failure)
+      Abb.Future.return (Error `Silent_failure)
 
     let run_interactive ctx state f =
       if Dv.is_interactive ctx state then f () else Abb.Future.return (Ok ())
+
+    let maybe_publish_msg ctx state msg =
+      let run =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Dv.client ctx state
+        >>= fun client ->
+        Dv.pull_request_safe ctx state
+        >>= function
+        | Some pull_request ->
+            publish_msg
+              state.State.request_id
+              client
+              (Event.user state.State.event)
+              pull_request
+              msg
+        | None -> Abb.Future.return (Ok ())
+      in
+      let open Abb.Future.Infix_monad in
+      run
+      >>= function
+      | Ok () -> Abb.Future.return ()
+      | Error `Error ->
+          Logs.err (fun m -> m "EVALUATOR : %s : MAYBE_PUBLISH_MSG" state.State.request_id);
+          Abb.Future.return ()
 
     (* Implement a work manifest iteration.  This can create a work manifest if
        one doesn't exist already, update the existing one with new information
@@ -2837,7 +2865,7 @@ module Make (S : S) = struct
                     Uuidm.pp
                     id
                     (Wm.State.to_string state'));
-              Abb.Future.return (Error `Failure)
+              Abb.Future.return (Error `Silent_failure)
           | None ->
               Logs.err (fun m ->
                   m
@@ -2846,7 +2874,7 @@ module Make (S : S) = struct
                     name
                     Uuidm.pp
                     work_manifest_id);
-              Abb.Future.return (Error `Failure))
+              Abb.Future.return (Error `Silent_failure))
       | St.Waiting_for_work_manifest_run, None, Some _ ->
           (* This should be reached if we cloned some work manifests. *)
           Abb.Future.return (Error (`Yield state))
@@ -2881,7 +2909,7 @@ module Make (S : S) = struct
                     Uuidm.pp
                     id
                     (Wm.State.to_string state'));
-              Abb.Future.return (Error `Failure)
+              Abb.Future.return (Error `Silent_failure)
           | None ->
               Logs.err (fun m ->
                   m
@@ -2890,7 +2918,7 @@ module Make (S : S) = struct
                     name
                     Uuidm.pp
                     work_manifest_id);
-              Abb.Future.return (Error `Failure))
+              Abb.Future.return (Error `Silent_failure))
       | ( St.Waiting_for_work_manifest_run,
           Some (I.Work_manifest_run_failure err),
           Some work_manifest_id ) -> (
@@ -2917,7 +2945,7 @@ module Make (S : S) = struct
                     name
                     Uuidm.pp
                     work_manifest_id);
-              Abb.Future.return (Error `Failure))
+              Abb.Future.return (Error `Silent_failure))
       | St.Waiting_for_work_manifest_initiate, None, Some _ ->
           Abb.Future.return (Error (`Yield state))
       | ( St.Waiting_for_work_manifest_initiate,
@@ -3025,7 +3053,7 @@ module Make (S : S) = struct
                         Uuidm.pp
                         id
                         (Wm.State.to_string state'));
-                  Abb.Future.return (Error `Failure)
+                  Abb.Future.return (Error `Silent_failure)
               | None ->
                   Logs.err (fun m ->
                       m
@@ -3034,7 +3062,7 @@ module Make (S : S) = struct
                         name
                         Uuidm.pp
                         work_manifest_id);
-                  Abb.Future.return (Error `Failure))
+                  Abb.Future.return (Error `Silent_failure))
             ~failure:(fun () -> Abb.Future.Promise.set p (Error `Error))
       | _, Some (I.Work_manifest_failure { p }), Some work_manifest_id ->
           Logs.info (fun m ->
@@ -3067,7 +3095,7 @@ module Make (S : S) = struct
                         name
                         Uuidm.pp
                         work_manifest_id);
-                  Abb.Future.return (Error `Failure))
+                  Abb.Future.return (Error `Silent_failure))
             ~finally:(fun () -> Abb.Future.Promise.set p (Ok ()))
       | _, _, _ -> fallthrough ctx state
 
@@ -5396,15 +5424,20 @@ module Make (S : S) = struct
               let module Am = Terrat_base_repo_config_v1.Automerge in
               let { Am.enabled; delete_branch } = automerge_config repo_config in
               if enabled then
+                let open Abb.Future.Infix_monad in
                 merge_pull_request state.State.request_id client pull_request
-                >>= fun () ->
-                if delete_branch then
-                  let open Abb.Future.Infix_monad in
-                  (* Nothing to do if this fails and it can fail for a few valid
-                     reasons, so just ignore. *)
-                  delete_pull_request_branch state.State.request_id client pull_request
-                  >>= fun _ -> Abb.Future.return (Ok state)
-                else Abb.Future.return (Ok state)
+                >>= function
+                | Ok () ->
+                    if delete_branch then
+                      (* Nothing to do if this fails and it can fail for a few valid
+                         reasons, so just ignore. *)
+                      delete_pull_request_branch state.State.request_id client pull_request
+                      >>= fun _ -> Abb.Future.return (Ok state)
+                    else Abb.Future.return (Ok state)
+                | Error (`Merge_err reason) ->
+                    H.maybe_publish_msg ctx state (Msg.Automerge_failure (pull_request, reason))
+                    >>= fun () -> Abb.Future.return (Error `Silent_failure)
+                | Error `Error as err -> Abb.Future.return err
               else Abb.Future.return (Ok state)
           | None -> assert false)
       | Some work_manifest_id, unapplied_dirspaces ->
@@ -5490,7 +5523,7 @@ module Make (S : S) = struct
             state.State.st
             state.State.input
             state.State.work_manifest_id;
-          Abb.Future.return (Error `Failure)
+          Abb.Future.return (Error `Silent_failure)
 
     let run_drift_work_manifest_iter = run_plan_work_manifest_iter
     let run_drift_reconcile_work_manifest_iter = run_apply_work_manifest_iter `Apply
@@ -5803,25 +5836,6 @@ module Make (S : S) = struct
         ~fallthrough:H.log_state_err_iter
   end
 
-  let maybe_publish_msg ctx state msg =
-    let run =
-      let open Abbs_future_combinators.Infix_result_monad in
-      Dv.client ctx state
-      >>= fun client ->
-      Dv.pull_request_safe ctx state
-      >>= function
-      | Some pull_request ->
-          publish_msg state.State.request_id client (Event.user state.State.event) pull_request msg
-      | None -> Abb.Future.return (Ok ())
-    in
-    let open Abb.Future.Infix_monad in
-    run
-    >>= function
-    | Ok () -> Abb.Future.return ()
-    | Error `Error ->
-        Logs.err (fun m -> m "EVALUATOR : %s : MAYBE_PUBLISH_MSG" state.State.request_id);
-        Abb.Future.return ()
-
   let eval_step step ctx state =
     let open Abb.Future.Infix_monad in
     match state.State.input with
@@ -5836,11 +5850,15 @@ module Make (S : S) = struct
             Abb.Future.return (`Yield { state with State.output = Some (State.Io.O.Clone v) })
         | Error (`Checkpoint state) ->
             Abb.Future.return (`Yield { state with State.output = Some State.Io.O.Checkpoint })
+        | Error `Error ->
+            Logs.err (fun m -> m "EVALUATOR : %s : ERROR" state.State.request_id);
+            H.maybe_publish_msg ctx state Msg.Unexpected_temporary_err
+            >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error (`Bad_glob_err s) ->
-            maybe_publish_msg ctx state (Msg.Bad_glob s)
+            H.maybe_publish_msg ctx state (Msg.Bad_glob s)
             >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error (`Depends_on_cycle_err cycle) ->
-            maybe_publish_msg ctx state (Msg.Depends_on_cycle cycle)
+            H.maybe_publish_msg ctx state (Msg.Depends_on_cycle cycle)
             >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
             Logs.err (fun m ->
@@ -5849,24 +5867,27 @@ module Make (S : S) = struct
                   state.State.request_id
                   Terrat_base_repo_config_v1.pp_of_version_1_err
                   err);
-            maybe_publish_msg ctx state (Msg.Repo_config_err err)
+            H.maybe_publish_msg ctx state (Msg.Repo_config_err err)
             >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error
             ( `Json_decode_err (fname, err)
             | `Yaml_decode_err (fname, err)
             | `Repo_config_parse_err (fname, err) ) ->
-            maybe_publish_msg ctx state (Msg.Repo_config_parse_failure (fname, err))
+            H.maybe_publish_msg ctx state (Msg.Repo_config_parse_failure (fname, err))
             >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error (#Repo_config.fetch_err as err) ->
             Logs.err (fun m ->
                 m "EVALUATOR : %s : ERROR : %a" state.State.request_id Repo_config.pp_fetch_err err);
-            maybe_publish_msg ctx state Msg.Unexpected_temporary_err
+            H.maybe_publish_msg ctx state Msg.Unexpected_temporary_err
             >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error (`Ref_mismatch_err state) ->
-            maybe_publish_msg ctx state Msg.Mismatched_refs
+            H.maybe_publish_msg ctx state Msg.Mismatched_refs
             >>= fun () -> Abb.Future.return (`Failure (`Noop state))
-        | Error `Failure ->
-            Logs.err (fun m -> m "EVALUATOR : %s : ERROR : FAILURE" state.State.request_id);
+        | Error `Silent_failure ->
+            (* A failure where we know that any communication to the user that
+               is necessary has been done.  So we just want to log that the
+               failure happened. *)
+            Logs.err (fun m -> m "EVALUATOR : %s : ERROR : SILENT_FAILURE" state.State.request_id);
             Abb.Future.return (`Failure `Error)
         | Error (#Pgsql_io.err as err) ->
             Logs.err (fun m ->

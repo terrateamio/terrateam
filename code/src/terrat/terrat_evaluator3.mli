@@ -23,6 +23,7 @@ module Msg : sig
     | Apply_requirements_config_err of [ Terrat_tag_query_ast.err | `Invalid_query of string ]
     | Apply_requirements_validation_err
     | Autoapply_running
+    | Automerge_failure of ('pull_request * string)
     | Bad_custom_branch_tag_pattern of (string * string)
     | Bad_glob of string
     | Build_config_err of Terrat_base_repo_config_v1.of_version_1_err
@@ -506,7 +507,10 @@ module type S = sig
     Abb.Future.t
 
   val merge_pull_request :
-    request_id:string -> Client.t -> 'a Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
+    request_id:string ->
+    Client.t ->
+    'a Pull_request.t ->
+    (unit, [> `Error | `Merge_err of string ]) result Abb.Future.t
 
   val delete_pull_request_branch :
     request_id:string -> Client.t -> 'a Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
