@@ -230,7 +230,7 @@ module Router_output = struct
     | Some mtch ->
         let with_cleanup = ref None in
         let prev_match = ref mtch in
-        let id = Uuidm.to_string (Uuidm.v `V4) in
+        let id = Ouuid.to_string (Ouuid.v4 ()) in
         let iter =
           React.S.fmap
             (fun uri ->
