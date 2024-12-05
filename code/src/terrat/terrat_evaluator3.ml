@@ -1285,6 +1285,7 @@ module Make (S : S) = struct
       | Account_disabled
       | Account_enabled
       | Account_expired
+      | All_layers_completed
       | Always_store_pull_request
       | Check_access_control_apply
       | Check_access_control_ci_change
@@ -1302,6 +1303,7 @@ module Make (S : S) = struct
       | Check_pull_request_state
       | Check_reconcile
       | Check_valid_destination_branch
+      | Checkpoint
       | Complete_work_manifest
       | Config_build_not_required
       | Config_build_required
@@ -1315,8 +1317,10 @@ module Make (S : S) = struct
       | Event_kind_repo_config
       | Event_kind_run_drift
       | Event_kind_unlock
+      | Synthesize_pull_request_sync
       | Index_not_required
       | Index_required
+      | More_layers_to_run
       | Op_kind_apply
       | Op_kind_apply_autoapprove
       | Op_kind_apply_force
@@ -1336,6 +1340,7 @@ module Make (S : S) = struct
       | Test_config_build_required
       | Test_event_kind
       | Test_index_required
+      | Test_more_layers_to_run
       | Test_op_kind
       | Unlock
       | Unset_work_manifest_id
@@ -1347,6 +1352,7 @@ module Make (S : S) = struct
       | Account_disabled -> "account_disabled"
       | Account_enabled -> "account_enabled"
       | Account_expired -> "account_expired"
+      | All_layers_completed -> "all_layers_completed"
       | Always_store_pull_request -> "always_store_pull_request"
       | Check_access_control_apply -> "check_access_control_apply"
       | Check_access_control_ci_change -> "check_access_control_ci_change"
@@ -1365,6 +1371,7 @@ module Make (S : S) = struct
       | Check_pull_request_state -> "check_pull_request_state"
       | Check_reconcile -> "check_reconcile"
       | Check_valid_destination_branch -> "check_valid_destination_branch"
+      | Checkpoint -> "checkpoint"
       | Complete_work_manifest -> "complete_work_manifest"
       | Config_build_not_required -> "config_build_not_required"
       | Config_build_required -> "config_build_required"
@@ -1378,8 +1385,10 @@ module Make (S : S) = struct
       | Event_kind_repo_config -> "event_kind_repo_config"
       | Event_kind_run_drift -> "event_kind_run_drift"
       | Event_kind_unlock -> "event_kind_unlock"
+      | Synthesize_pull_request_sync -> "synthesize_pull_request_sync"
       | Index_not_required -> "index_not_required"
       | Index_required -> "index_required"
+      | More_layers_to_run -> "more_layers_to_run"
       | Op_kind_apply -> "op_kind_apply"
       | Op_kind_apply_autoapprove -> "op_kind_apply_autoapprove"
       | Op_kind_apply_force -> "op_kind_apply_force"
@@ -1399,6 +1408,7 @@ module Make (S : S) = struct
       | Test_config_build_required -> "test_config_build_required"
       | Test_event_kind -> "test_event_kind"
       | Test_index_required -> "test_index_required"
+      | Test_more_layers_to_run -> "test_more_layers_to_run"
       | Test_op_kind -> "test_op_kind"
       | Unlock -> "unlock"
       | Unset_work_manifest_id -> "unset_work_manifest_id"
@@ -1409,6 +1419,7 @@ module Make (S : S) = struct
       | "account_disabled" -> Some Account_disabled
       | "account_enabled" -> Some Account_enabled
       | "account_expired" -> Some Account_expired
+      | "all_layers_completed" -> Some All_layers_completed
       | "always_store_pull_request" -> Some Always_store_pull_request
       | "check_access_control_apply" -> Some Check_access_control_apply
       | "check_access_control_ci_change" -> Some Check_access_control_ci_change
@@ -1427,6 +1438,7 @@ module Make (S : S) = struct
       | "check_pull_request_state" -> Some Check_pull_request_state
       | "check_reconcile" -> Some Check_reconcile
       | "check_valid_destination_branch" -> Some Check_valid_destination_branch
+      | "checkpoint" -> Some Checkpoint
       | "complete_work_manifest" -> Some Complete_work_manifest
       | "config_build_not_required" -> Some Config_build_not_required
       | "config_build_required" -> Some Config_build_required
@@ -1440,8 +1452,10 @@ module Make (S : S) = struct
       | "event_kind_repo_config" -> Some Event_kind_repo_config
       | "event_kind_run_drift" -> Some Event_kind_run_drift
       | "event_kind_unlock" -> Some Event_kind_unlock
+      | "synthesize_pull_request_sync" -> Some Synthesize_pull_request_sync
       | "index_not_required" -> Some Index_not_required
       | "index_required" -> Some Index_required
+      | "more_layers_to_run" -> Some More_layers_to_run
       | "op_kind_apply" -> Some Op_kind_apply
       | "op_kind_apply_autoapprove" -> Some Op_kind_apply_autoapprove
       | "op_kind_apply_force" -> Some Op_kind_apply_force
@@ -1461,6 +1475,7 @@ module Make (S : S) = struct
       | "test_config_build_required" -> Some Test_config_build_required
       | "test_event_kind" -> Some Test_event_kind
       | "test_index_required" -> Some Test_index_required
+      | "test_more_layers_to_run" -> Some Test_more_layers_to_run
       | "test_op_kind" -> Some Test_op_kind
       | "unlock" -> Some Unlock
       | "unset_work_manifest_id" -> Some Unset_work_manifest_id
@@ -1545,6 +1560,7 @@ module Make (S : S) = struct
     type step_err =
       [ `Error
       | Repo_config.fetch_err
+      | Terrat_change_match3.synthesize_config_err
       | `Noop of (t[@opaque])
       ]
     [@@deriving show]
@@ -4220,6 +4236,8 @@ module Make (S : S) = struct
   end
 
   module F = struct
+    let checkpoint ctx state = Abb.Future.return (Error (`Checkpoint state))
+
     let store_account_repository ctx state =
       match state.State.event with
       | Event.Pull_request_open { account; repo; _ }
@@ -4648,7 +4666,14 @@ module Make (S : S) = struct
           maybe_complete_work_manifest work_manifest_id
           >>= fun () ->
           Abb.Future.return
-            (Ok { state with State.st = State.St.Initial; input = None; output = None })
+            (Ok
+               {
+                 state with
+                 State.st = State.St.Initial;
+                 input = None;
+                 output = None;
+                 work_manifest_id = None;
+               })
       | _, Some (State.Io.I.Work_manifest_failure _), _ | _, _, None ->
           (* No work manifest was run so ignore *)
           Abb.Future.return (Ok state)
@@ -5839,6 +5864,22 @@ module Make (S : S) = struct
               assert false
           | Terrat_api_components_work_manifest_result.Work_manifest_index_result _ -> assert false)
         ~fallthrough:H.log_state_err_iter
+
+    let test_more_layers_to_run op ctx state =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Dv.matches ctx state op
+      >>= fun matches ->
+      if CCList.is_empty matches.Dv.Matches.all_unapplied_matches then
+        Abb.Future.return (Ok (Id.All_layers_completed, state))
+      else Abb.Future.return (Ok (Id.More_layers_to_run, state))
+
+    let synthesize_pull_request_sync ctx state =
+      let account = Event.account state.State.event in
+      let user = Event.user state.State.event in
+      let repo = Event.repo state.State.event in
+      let pull_request_id = Event.pull_request_id state.State.event in
+      let event = Event.Pull_request_sync { account; user; repo; pull_request_id } in
+      Abb.Future.return (Ok { state with State.event })
   end
 
   let eval_step step ctx state =
@@ -6045,61 +6086,90 @@ module Make (S : S) = struct
       in
       let op_kind_apply_flow op =
         Flow.Flow.(
-          action
-            [
-              Flow.Step.make
-                ~id:Id.Check_pull_request_state
-                ~f:(eval_step F.check_pull_request_state)
-                ();
-              Flow.Step.make
-                ~id:Id.Check_access_control_ci_change
-                ~f:(eval_step F.check_access_control_ci_change)
-                ();
-              Flow.Step.make
-                ~id:Id.Check_access_control_files
-                ~f:(eval_step F.check_access_control_files)
-                ();
-              Flow.Step.make
-                ~id:Id.Check_access_control_repo_config
-                ~f:(eval_step F.check_access_control_repo_config)
-                ();
-              Flow.Step.make
-                ~id:Id.Check_access_control_apply
-                ~f:(eval_step (F.check_access_control_apply op))
-                ();
-              Flow.Step.make
-                ~id:Id.Check_conflicting_work_manifests
-                ~f:(eval_step (F.check_conflicting_work_manifests op))
-                ();
-              Flow.Step.make
-                ~id:Id.Check_non_empty_matches
-                ~f:(eval_step (F.check_non_empty_matches_apply op))
-                ();
-              Flow.Step.make
-                ~id:Id.Check_account_status_expired
-                ~f:(eval_step F.check_account_status_expired)
-                ();
-              Flow.Step.make
-                ~id:Id.Check_dirspaces_owned_by_other_pull_requests
-                ~f:(eval_step (F.check_dirspaces_owned_by_other_pull_requests op))
-                ();
-              Flow.Step.make
-                ~id:Id.Check_dirspaces_missing_plans
-                ~f:(eval_step (F.check_dirspaces_missing_plans op))
-                ();
-              Flow.Step.make
-                ~id:Id.Run_work_manifest_iter
-                ~f:(eval_step (F.run_apply_work_manifest_iter op))
-                ();
-              Flow.Step.make
-                ~id:Id.Complete_work_manifest
-                ~f:(eval_step F.complete_work_manifest)
-                ();
-              Flow.Step.make
-                ~id:Id.Check_all_dirspaces_applied
-                ~f:(eval_step (F.check_all_dirspaces_applied op))
-                ();
-            ])
+          seq
+            (action
+               [
+                 Flow.Step.make
+                   ~id:Id.Check_pull_request_state
+                   ~f:(eval_step F.check_pull_request_state)
+                   ();
+                 Flow.Step.make
+                   ~id:Id.Check_access_control_ci_change
+                   ~f:(eval_step F.check_access_control_ci_change)
+                   ();
+                 Flow.Step.make
+                   ~id:Id.Check_access_control_files
+                   ~f:(eval_step F.check_access_control_files)
+                   ();
+                 Flow.Step.make
+                   ~id:Id.Check_access_control_repo_config
+                   ~f:(eval_step F.check_access_control_repo_config)
+                   ();
+                 Flow.Step.make
+                   ~id:Id.Check_access_control_apply
+                   ~f:(eval_step (F.check_access_control_apply op))
+                   ();
+                 Flow.Step.make
+                   ~id:Id.Check_conflicting_work_manifests
+                   ~f:(eval_step (F.check_conflicting_work_manifests op))
+                   ();
+                 Flow.Step.make
+                   ~id:Id.Check_non_empty_matches
+                   ~f:(eval_step (F.check_non_empty_matches_apply op))
+                   ();
+                 Flow.Step.make
+                   ~id:Id.Check_account_status_expired
+                   ~f:(eval_step F.check_account_status_expired)
+                   ();
+                 Flow.Step.make
+                   ~id:Id.Check_dirspaces_owned_by_other_pull_requests
+                   ~f:(eval_step (F.check_dirspaces_owned_by_other_pull_requests op))
+                   ();
+                 Flow.Step.make
+                   ~id:Id.Check_dirspaces_missing_plans
+                   ~f:(eval_step (F.check_dirspaces_missing_plans op))
+                   ();
+                 Flow.Step.make
+                   ~id:Id.Run_work_manifest_iter
+                   ~f:(eval_step (F.run_apply_work_manifest_iter op))
+                   ();
+                 (* Perform a checkpoint which clears any cached values.  We
+                    need to do this in order to test if all of dirspaces have
+                    been applied.  If we don't then we will get the cached
+                    values. *)
+                 Flow.Step.make ~id:Id.Checkpoint ~f:(eval_step F.checkpoint) ();
+               ])
+            (choice
+               ~id:Id.Test_more_layers_to_run
+               ~f:(F.test_more_layers_to_run op)
+               [
+                 ( Id.More_layers_to_run,
+                   seq
+                     (action
+                        [
+                          Flow.Step.make
+                            ~id:Id.Complete_work_manifest
+                            ~f:(eval_step F.complete_work_manifest)
+                            ();
+                          Flow.Step.make
+                            ~id:Id.Synthesize_pull_request_sync
+                            ~f:(eval_step F.synthesize_pull_request_sync)
+                            ();
+                        ])
+                     op_kind_plan_flow );
+                 ( Id.All_layers_completed,
+                   action
+                     [
+                       Flow.Step.make
+                         ~id:Id.Check_all_dirspaces_applied
+                         ~f:(eval_step (F.check_all_dirspaces_applied op))
+                         ();
+                       Flow.Step.make
+                         ~id:Id.Complete_work_manifest
+                         ~f:(eval_step F.complete_work_manifest)
+                         ();
+                     ] );
+               ]))
       in
       Flow.Flow.(
         recover
