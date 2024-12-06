@@ -1760,8 +1760,8 @@ module Make (S : S) = struct
               let deny =
                 CCList.filter
                   (fun Terrat_access_control.R.Deny.
-                         { change_match = { Terrat_change_match3.Dirspace_config.dirspace; _ }; _ } ->
-                    not (Dirspace_map.mem dirspace superapproved))
+                         { change_match = { Terrat_change_match3.Dirspace_config.dirspace; _ }; _ }
+                     -> not (Dirspace_map.mem dirspace superapproved))
                   deny
               in
               Abb.Future.return (Ok Terrat_access_control.R.{ pass; deny })
@@ -2424,7 +2424,8 @@ module Make (S : S) = struct
                                _;
                              };
                            _;
-                         } ->
+                         }
+                       ->
                       autoplan
                       && ((not (S.Pull_request.is_draft_pr pull_request)) || autoplan_draft_pr))
                     working_set_matches
@@ -2440,7 +2441,8 @@ module Make (S : S) = struct
                            Terrat_change_match3.Dirspace_config.when_modified =
                              { Terrat_base_repo_config_v1.When_modified.autoapply; _ };
                            _;
-                         } -> autoapply)
+                         }
+                       -> autoapply)
                     working_set_matches
                 in
                 Abb.Future.return
@@ -2596,7 +2598,8 @@ module Make (S : S) = struct
         Abb.Future.return
           (Ok
              (CCList.map
-                (fun Terrat_change.{ Dirspaceflow.dirspace = Dirspace.{ dir; workspace }; workflow } ->
+                (fun Terrat_change.{ Dirspaceflow.dirspace = Dirspace.{ dir; workspace }; workflow }
+                   ->
                   Terrat_api_components.Work_manifest_dir.
                     {
                       path = dir;
@@ -2807,12 +2810,12 @@ module Make (S : S) = struct
               Abb.Future.return
                 (Error
                    (`Clone
-                     ( {
-                         state with
-                         State.st = St.Waiting_for_work_manifest_run;
-                         work_manifest_id = Some self.Wm.id;
-                       },
-                       states_of_work_manifests work_manifests ))))
+                      ( {
+                          state with
+                          State.st = St.Waiting_for_work_manifest_run;
+                          work_manifest_id = Some self.Wm.id;
+                        },
+                        states_of_work_manifests work_manifests ))))
       | St.Initial, None, Some work_manifest_id -> (
           Logs.info (fun m ->
               m
@@ -2852,8 +2855,8 @@ module Make (S : S) = struct
                       Abb.Future.return
                         (Error
                            (`Clone
-                             ( { state with State.st = St.Waiting_for_work_manifest_initiate },
-                               states )))
+                              ( { state with State.st = St.Waiting_for_work_manifest_initiate },
+                                states )))
                   | _ :: _, _ -> assert false))
           | Some { Wm.id; state = state'; _ } ->
               Logs.err (fun m ->
@@ -2898,7 +2901,7 @@ module Make (S : S) = struct
               Abb.Future.return
                 (Error
                    (`Yield
-                     { state with State.st = St.Waiting_for_work_manifest_initiate; input = None }))
+                      { state with State.st = St.Waiting_for_work_manifest_initiate; input = None }))
           | Some { Wm.id; state = state'; _ } ->
               Logs.err (fun m ->
                   m
@@ -2951,11 +2954,11 @@ module Make (S : S) = struct
       | ( St.Waiting_for_work_manifest_initiate,
           Some
             (I.Work_manifest_initiate
-              {
-                encryption_key;
-                initiate = { Terrat_api_components.Work_manifest_initiate.run_id; sha };
-                p;
-              }),
+               {
+                 encryption_key;
+                 initiate = { Terrat_api_components.Work_manifest_initiate.run_id; sha };
+                 p;
+               }),
           Some work_manifest_id ) -> (
           Logs.info (fun m ->
               m
@@ -2978,12 +2981,12 @@ module Make (S : S) = struct
                   Abb.Future.return
                     (Error
                        (`Yield
-                         {
-                           state with
-                           State.st = St.Waiting_for_work_manifest_result;
-                           output = None;
-                           input = None;
-                         }))
+                          {
+                            state with
+                            State.st = St.Waiting_for_work_manifest_result;
+                            output = None;
+                            input = None;
+                          }))
               | None -> Abb.Future.return (Error (`Noop state)))
           | Some { Wm.id; state = Wm.State.Aborted; _ } ->
               Logs.info (fun m ->
@@ -3243,7 +3246,7 @@ module Make (S : S) = struct
         (Cstruct.to_string
            (Mirage_crypto.Hash.SHA256.hmac
               ~key:encryption_key
-              (Cstruct.of_string (Uuidm.to_string id))))
+              (Cstruct.of_string (Ouuid.to_string id))))
 
     let generate_index_work_manifest_initiate ctx state encryption_key run_id sha work_manifest =
       let module Wm = Terrat_work_manifest3 in
@@ -3618,7 +3621,8 @@ module Make (S : S) = struct
                 branch_ref,
                 working_branch_ref,
                 matches,
-                access_control_results ) ->
+                access_control_results )
+            ->
       let { Terrat_access_control.R.pass = passed_dirspaces; deny = denied_dirspaces } =
         access_control_results
       in
@@ -3732,7 +3736,8 @@ module Make (S : S) = struct
                 branch_ref,
                 working_branch_ref,
                 matches,
-                access_control_results ) ->
+                access_control_results )
+            ->
       let { Terrat_access_control.R.pass = passed_dirspaces; deny = denied_dirspaces } =
         access_control_results
       in
@@ -5498,7 +5503,7 @@ module Make (S : S) = struct
           | [] -> Abb.Future.return (Error (`Noop state))
           | self :: needed_runs ->
               let f (account, repo) =
-                let request_id = Uuidm.to_string (Uuidm.v `V4) in
+                let request_id = Ouuid.to_string (Ouuid.v4 ()) in
                 Logs.info (fun m ->
                     m
                       "EVALUATOR : %s : DRIFT : request_id=%s : account=%s : repo=%s"
@@ -6250,7 +6255,7 @@ module Make (S : S) = struct
          example when emitting a value or running a work manifest.  So we always
          create a new request ID before resuming a run, ensuring it gets a
          unique value. *)
-      let request_id' = Uuidm.to_string (Uuidm.v `V4) in
+      let request_id' = Ouuid.to_string (Ouuid.v4 ()) in
       Abbs_future_combinators.with_finally
         (fun () ->
           Logs.info (fun m ->
@@ -6283,7 +6288,7 @@ module Make (S : S) = struct
                  immediately resumed from where they left off. *)
               Abbs_future_combinators.List.iter
                 ~f:(fun state ->
-                  let request_id = Uuidm.to_string (Uuidm.v `V4) in
+                  let request_id = Ouuid.to_string (Ouuid.v4 ()) in
                   Logs.info (fun m ->
                       m "EVALUATOR : %s : CLONE : request_id=%s" state.State.request_id request_id);
                   let state = { state with State.request_id; input = None; output = None } in

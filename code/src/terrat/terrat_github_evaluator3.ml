@@ -6,8 +6,8 @@ let not_a_bad_chunk_size = 500
 
 let probably_is_git_hash =
   CCString.for_all (function
-      | '0' .. '9' | 'a' .. 'f' -> true
-      | _ -> false)
+    | '0' .. '9' | 'a' .. 'f' -> true
+    | _ -> false)
 
 let replace_nul_byte = CCString.replace ~which:`All ~sub:"\x00" ~by:"\\0"
 
@@ -122,7 +122,9 @@ module Sql = struct
   let select_installation_account_status () =
     Pgsql_io.Typed_sql.(
       sql
-      // (* account_status *) Ret.text
+      //
+      (* account_status *)
+      Ret.text
       /^ "select account_status from github_installations where id = $installation_id"
       /% Var.bigint "installation_id")
 
@@ -151,7 +153,9 @@ module Sql = struct
     in
     Pgsql_io.Typed_sql.(
       sql
-      // (* Index *) Ret.(ud' index)
+      //
+      (* Index *)
+      Ret.(ud' index)
       /^ "select index from github_code_index where sha = $sha and installation_id = \
           $installation_id"
       /% Var.bigint "installation_id"
@@ -160,7 +164,9 @@ module Sql = struct
   let select_repo_config =
     Pgsql_io.Typed_sql.(
       sql
-      // (* repo_config *) Ret.ud' (CCOption.wrap Yojson.Safe.from_string)
+      //
+      (* repo_config *)
+      Ret.ud' (CCOption.wrap Yojson.Safe.from_string)
       /^ "select github_repo_configs.data from github_repo_configs where sha = $sha and \
           installation_id = $installation_id"
       /% Var.bigint "installation_id"
@@ -182,9 +188,15 @@ module Sql = struct
   let select_work_manifest_dirspaceflows =
     Pgsql_io.Typed_sql.(
       sql
-      // (* path *) Ret.text
-      // (* workflow_idx *) Ret.(option smallint)
-      // (* workspace *) Ret.text
+      //
+      (* path *)
+      Ret.text
+      //
+      (* workflow_idx *)
+      Ret.(option smallint)
+      //
+      (* workspace *)
+      Ret.text
       /^ "select path, workflow_idx, workspace from github_work_manifest_dirspaceflows where \
           work_manifest = $id"
       /% Var.uuid "id")
@@ -192,9 +204,15 @@ module Sql = struct
   let insert_work_manifest () =
     Pgsql_io.Typed_sql.(
       sql
-      // (* id *) Ret.uuid
-      // (* state *) Ret.ud' Terrat_work_manifest3.State.of_string
-      // (* created_at *) Ret.text
+      //
+      (* id *)
+      Ret.uuid
+      //
+      (* state *)
+      Ret.ud' Terrat_work_manifest3.State.of_string
+      //
+      (* created_at *)
+      Ret.text
       /^ read "insert_github_work_manifest.sql"
       /% Var.text "base_sha"
       /% Var.(option (bigint "pull_number"))
@@ -218,8 +236,12 @@ module Sql = struct
   let select_drift_work_manifest () =
     Pgsql_io.Typed_sql.(
       sql
-      // (* branch *) Ret.text
-      // (* reconcile *) Ret.boolean
+      //
+      (* branch *)
+      Ret.text
+      //
+      (* reconcile *)
+      Ret.boolean
       /^ read "select_github_drift_work_manifest.sql"
       /% Var.uuid "work_manifest")
 
@@ -276,53 +298,118 @@ module Sql = struct
   let select_work_manifest () =
     Pgsql_io.Typed_sql.(
       sql
-      // (* base_sha *) Ret.text
-      // (* completed_at *) Ret.(option text)
-      // (* created_at *) Ret.text
-      // (* pull_number *) Ret.(option bigint)
-      // (* repository *) Ret.bigint
-      // (* run_id *) Ret.(option text)
-      // (* run_type *) Ret.(ud' Terrat_work_manifest3.Step.of_string)
-      // (* sha *) Ret.text
-      // (* state *) Ret.(ud' Terrat_work_manifest3.State.of_string)
-      // (* tag_query *) Ret.(ud' CCFun.(Terrat_tag_query.of_string %> CCResult.to_opt))
-      // (* username *) Ret.(option text)
-      // (* run_kind *) Ret.text
-      // (* installation_id *) Ret.bigint
-      // (* repo_id *) Ret.bigint
-      // (* repo_owner *) Ret.text
-      // (* repo_name *) Ret.text
-      // (* environment *) Ret.(option text)
+      //
+      (* base_sha *)
+      Ret.text
+      //
+      (* completed_at *)
+      Ret.(option text)
+      //
+      (* created_at *)
+      Ret.text
+      //
+      (* pull_number *)
+      Ret.(option bigint)
+      //
+      (* repository *)
+      Ret.bigint
+      //
+      (* run_id *)
+      Ret.(option text)
+      //
+      (* run_type *)
+      Ret.(ud' Terrat_work_manifest3.Step.of_string)
+      //
+      (* sha *)
+      Ret.text
+      //
+      (* state *)
+      Ret.(ud' Terrat_work_manifest3.State.of_string)
+      //
+      (* tag_query *)
+      Ret.(ud' CCFun.(Terrat_tag_query.of_string %> CCResult.to_opt))
+      //
+      (* username *)
+      Ret.(option text)
+      //
+      (* run_kind *)
+      Ret.text
+      //
+      (* installation_id *)
+      Ret.bigint
+      //
+      (* repo_id *)
+      Ret.bigint
+      //
+      (* repo_owner *)
+      Ret.text
+      //
+      (* repo_name *)
+      Ret.text
+      //
+      (* environment *)
+      Ret.(option text)
       /^ read "select_github_work_manifest2.sql"
       /% Var.uuid "id")
 
   let select_work_manifest_access_control_denied_dirspaces =
     Pgsql_io.Typed_sql.(
       sql
-      // (* path *) Ret.text
-      // (* workspace *) Ret.text
-      // (* policy *) Ret.(option (ud' policy))
+      //
+      (* path *)
+      Ret.text
+      //
+      (* workspace *)
+      Ret.text
+      //
+      (* policy *)
+      Ret.(option (ud' policy))
       /^ read "select_github_work_manifest_access_control_denied_dirspaces.sql"
       /% Var.uuid "work_manifest")
 
   let select_work_manifest_pull_request () =
     Pgsql_io.Typed_sql.(
       sql
-      // (* base_branch_name *) Ret.text
-      // (* base_ref *) Ret.text
-      // (* branch_name *) Ret.text
-      // (* branch_ref *) Ret.text
-      // (* pull_number *) Ret.bigint
-      // (* state *) Ret.text
-      // (* merged_sha *) Ret.(option text)
-      // (* merged_at *) Ret.(option text)
-      // (* title *) Ret.(option text)
-      // (* username *) Ret.(option text)
+      //
+      (* base_branch_name *)
+      Ret.text
+      //
+      (* base_ref *)
+      Ret.text
+      //
+      (* branch_name *)
+      Ret.text
+      //
+      (* branch_ref *)
+      Ret.text
+      //
+      (* pull_number *)
+      Ret.bigint
+      //
+      (* state *)
+      Ret.text
+      //
+      (* merged_sha *)
+      Ret.(option text)
+      //
+      (* merged_at *)
+      Ret.(option text)
+      //
+      (* title *)
+      Ret.(option text)
+      //
+      (* username *)
+      Ret.(option text)
       /^ read "select_github_work_manifest_pull_request.sql"
       /% Var.uuid "id")
 
   let select_next_work_manifest =
-    Pgsql_io.Typed_sql.(sql // (* id *) Ret.uuid /^ read "select_next_github_work_manifest.sql")
+    Pgsql_io.Typed_sql.(
+      sql
+      //
+      (* id *)
+      Ret.uuid
+      /^ read "select_next_github_work_manifest.sql")
 
   let insert_index () =
     Pgsql_io.Typed_sql.(
@@ -339,7 +426,9 @@ module Sql = struct
   let select_flow_state () =
     Pgsql_io.Typed_sql.(
       sql
-      // (* data *) Ret.text
+      //
+      (* data *)
+      Ret.text
       /^ "select data from flow_states where id = $id for update"
       /% Var.uuid "id")
 
@@ -363,8 +452,12 @@ module Sql = struct
   let select_out_of_diff_applies =
     Pgsql_io.Typed_sql.(
       sql
-      // (* path *) Ret.text
-      // (* workspace *) Ret.text
+      //
+      (* path *)
+      Ret.text
+      //
+      (* workspace *)
+      Ret.text
       /^ read "select_github_out_of_diff_applies.sql"
       /% Var.bigint "repository"
       /% Var.bigint "pull_number")
@@ -372,8 +465,12 @@ module Sql = struct
   let select_dirspace_applies_for_pull_request =
     Pgsql_io.Typed_sql.(
       sql
-      // (* path *) Ret.text
-      // (* workspace *) Ret.text
+      //
+      (* path *)
+      Ret.text
+      //
+      (* workspace *)
+      Ret.text
       /^ read "select_github_dirspace_applies_for_pull_request.sql"
       /% Var.bigint "repo_id"
       /% Var.bigint "pull_number")
@@ -381,8 +478,12 @@ module Sql = struct
   let select_dirspaces_without_valid_plans =
     Pgsql_io.Typed_sql.(
       sql
-      // (* dir *) Ret.text
-      // (* workspace *) Ret.text
+      //
+      (* dir *)
+      Ret.text
+      //
+      (* workspace *)
+      Ret.text
       /^ read "select_github_dirspaces_without_valid_plans.sql"
       /% Var.bigint "repository"
       /% Var.bigint "pull_number"
@@ -403,7 +504,9 @@ module Sql = struct
   let select_recent_plan =
     Pgsql_io.Typed_sql.(
       sql
-      // (* data *) Ret.ud base64
+      //
+      (* data *)
+      Ret.ud base64
       /^ read "select_github_recent_plan.sql"
       /% Var.uuid "id"
       /% Var.text "dir"
@@ -440,7 +543,9 @@ module Sql = struct
   let update_abort_duplicate_work_manifests () =
     Pgsql_io.Typed_sql.(
       sql
-      // (* work manifest id *) Ret.uuid
+      //
+      (* work manifest id *)
+      Ret.uuid
       /^ read "github_abort_duplicate_work_manifests.sql"
       /% Var.bigint "repository"
       /% Var.bigint "pull_number"
@@ -451,8 +556,12 @@ module Sql = struct
   let select_conflicting_work_manifests_in_repo () =
     Pgsql_io.Typed_sql.(
       sql
-      // (* id *) Ret.uuid
-      // (* maybe_stale *) Ret.boolean
+      //
+      (* id *)
+      Ret.uuid
+      //
+      (* maybe_stale *)
+      Ret.boolean
       /^ read "select_github_conflicting_work_manifests_in_repo2.sql"
       /% Var.bigint "repository"
       /% Var.bigint "pull_number"
@@ -463,18 +572,42 @@ module Sql = struct
   let select_dirspaces_owned_by_other_pull_requests () =
     Pgsql_io.Typed_sql.(
       sql
-      // (* dir *) Ret.text
-      // (* workspace *) Ret.text
-      // (* base_branch *) Ret.text
-      // (* branch *) Ret.text
-      // (* base_hash *) Ret.text
-      // (* hash *) Ret.text
-      // (* merged_hash *) Ret.(option text)
-      // (* merged_at *) Ret.(option text)
-      // (* pull_number *) Ret.bigint
-      // (* state *) Ret.text
-      // (* title *) Ret.(option text)
-      // (* username *) Ret.(option text)
+      //
+      (* dir *)
+      Ret.text
+      //
+      (* workspace *)
+      Ret.text
+      //
+      (* base_branch *)
+      Ret.text
+      //
+      (* branch *)
+      Ret.text
+      //
+      (* base_hash *)
+      Ret.text
+      //
+      (* hash *)
+      Ret.text
+      //
+      (* merged_hash *)
+      Ret.(option text)
+      //
+      (* merged_at *)
+      Ret.(option text)
+      //
+      (* pull_number *)
+      Ret.bigint
+      //
+      (* state *)
+      Ret.text
+      //
+      (* title *)
+      Ret.(option text)
+      //
+      (* username *)
+      Ret.(option text)
       /^ read "select_github_dirspaces_owned_by_other_pull_requests.sql"
       /% Var.bigint "repository"
       /% Var.bigint "pull_number"
@@ -499,12 +632,24 @@ module Sql = struct
   let select_missing_drift_scheduled_runs () =
     Pgsql_io.Typed_sql.(
       sql
-      // (* installation_id *) Ret.bigint
-      // (* repository *) Ret.bigint
-      // (* owner *) Ret.text
-      // (* name *) Ret.text
-      // (* reconcile *) Ret.boolean
-      // (* tag_query *) Ret.(option (ud' CCFun.(Terrat_tag_query.of_string %> CCResult.to_opt)))
+      //
+      (* installation_id *)
+      Ret.bigint
+      //
+      (* repository *)
+      Ret.bigint
+      //
+      (* owner *)
+      Ret.text
+      //
+      (* name *)
+      Ret.text
+      //
+      (* reconcile *)
+      Ret.boolean
+      //
+      (* tag_query *)
+      Ret.(option (ud' CCFun.(Terrat_tag_query.of_string %> CCResult.to_opt)))
       /^ read "github_select_missing_drift_scheduled_runs.sql")
 
   let insert_workflow_step_output =
@@ -558,8 +703,8 @@ module Tmpl = struct
     |> CCOption.get_exn_or fname
     |> Snabela.Template.of_utf8_string
     |> (function
-         | Ok tmpl -> tmpl
-         | Error (#Snabela.Template.err as err) -> failwith (Snabela.Template.show_err err))
+    | Ok tmpl -> tmpl
+    | Error (#Snabela.Template.err as err) -> failwith (Snabela.Template.show_err err))
     |> fun tmpl -> Snabela.of_template tmpl Transformers.[ money; compact_plan; plan_diff ]
 
   let terrateam_comment_help = read "terrateam_comment_help.tmpl"
@@ -950,8 +1095,8 @@ module S = struct
         ~repo:repo.Repo.name
         ~branch:ref_
         client.Client.client
-      >>= fun { B.primary = { B.Primary.commit = { C.primary = { C.Primary.sha; _ }; _ }; _ }; _ } ->
-      Abb.Future.return (Ok sha)
+      >>= fun { B.primary = { B.Primary.commit = { C.primary = { C.Primary.sha; _ }; _ }; _ }; _ }
+            -> Abb.Future.return (Ok sha)
     in
     let open Abb.Future.Infix_monad in
     ret
@@ -1055,19 +1200,20 @@ module S = struct
         Abb.Future.return
           (Error
              (`Repo_config_parse_err
-               ("Failed to parse repo config: "
-               ^ (err
-                 |> CCString.replace ~sub:"Terrat_repo_config." ~by:""
-                 |> CCString.replace ~sub:".t" ~by:""
-                 |> CCString.lowercase_ascii))))
+                ("Failed to parse repo config: "
+                ^ (err
+                  |> CCString.replace ~sub:"Terrat_repo_config." ~by:""
+                  |> CCString.replace ~sub:".t" ~by:""
+                  |> CCString.lowercase_ascii))))
 end
 
 module Make
-    (Terratc : Terratc_intf.S
-                 with type Github.Client.t = S.Client.t
-                  and type Github.Account.t = S.Account.t
-                  and type Github.Repo.t = S.Repo.t
-                  and type Github.Ref.t = S.Ref.t) =
+    (Terratc :
+      Terratc_intf.S
+        with type Github.Client.t = S.Client.t
+         and type Github.Account.t = S.Account.t
+         and type Github.Repo.t = S.Repo.t
+         and type Github.Ref.t = S.Ref.t) =
 struct
   module S = struct
     include S
@@ -1686,7 +1832,8 @@ struct
                                   total_monthly_cost;
                                   prev_monthly_cost;
                                   diff_monthly_cost;
-                                } ->
+                                }
+                              ->
                              if
                                Terrat_data.Dirspace_set.mem
                                  { Terrat_dirspace.dir; workspace }
@@ -1834,8 +1981,8 @@ struct
           let dirspaces =
             by_scope
             |> CCList.filter_map (function
-                   | Scope.Dirspace dirspace, steps -> Some (dirspace, steps)
-                   | _ -> None)
+                 | Scope.Dirspace dirspace, steps -> Some (dirspace, steps)
+                 | _ -> None)
             |> CCList.sort dirspace_compare
           in
           let overall_success =
@@ -2080,60 +2227,59 @@ struct
         let module Oidc = Terrat_api_components_workflow_output_oidc in
         outputs
         |> CCList.filter_map (function
-               | Output.Workflow_output_run
-                   Run.
+             | Output.Workflow_output_run
+                 Run.
+                   {
+                     workflow_step = Workflow_step.{ type_; cmd; _ };
+                     outputs = Some Text.{ text; output_key };
+                     success;
+                     _;
+                   } ->
+                 Some
+                   Workflow_step_output.
                      {
-                       workflow_step = Workflow_step.{ type_; cmd; _ };
-                       outputs = Some Text.{ text; output_key };
+                       key = output_key;
+                       text;
                        success;
-                       _;
-                     } ->
-                   Some
-                     Workflow_step_output.
-                       {
-                         key = output_key;
-                         text;
-                         success;
-                         step_type = type_;
-                         details = Some (CCString.concat " " cmd);
-                       }
-               | Output.Workflow_output_oidc
-                   Oidc.
-                     {
-                       workflow_step = Workflow_step.{ type_; _ };
-                       outputs = Some Text.{ text; output_key };
-                       success;
-                       _;
+                       step_type = type_;
+                       details = Some (CCString.concat " " cmd);
                      }
-               | Output.Workflow_output_checkout
-                   Checkout.
-                     {
-                       workflow_step = Workflow_step.{ type_; _ };
-                       outputs = Text.{ text; output_key };
-                       success;
-                     }
-               | Output.Workflow_output_cost_estimation
-                   Ce.
-                     {
-                       workflow_step = Workflow_step.{ type_; _ };
-                       outputs = Outputs.Output_text Text.{ text; output_key };
-                       success;
-                       _;
-                     } ->
-                   Some
-                     Workflow_step_output.
-                       { key = output_key; text; success; step_type = type_; details = None }
-               | Output.Workflow_output_run
-                   Run.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ }
-               | Output.Workflow_output_oidc
-                   Oidc.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ }
-                 ->
-                   Some
-                     Workflow_step_output.
-                       { key = None; text = ""; success; step_type = type_; details = None }
-               | Output.Workflow_output_env _
-               | Output.Workflow_output_cost_estimation
-                   Ce.{ outputs = Outputs.Output_cost_estimation _; _ } -> None)
+             | Output.Workflow_output_oidc
+                 Oidc.
+                   {
+                     workflow_step = Workflow_step.{ type_; _ };
+                     outputs = Some Text.{ text; output_key };
+                     success;
+                     _;
+                   }
+             | Output.Workflow_output_checkout
+                 Checkout.
+                   {
+                     workflow_step = Workflow_step.{ type_; _ };
+                     outputs = Text.{ text; output_key };
+                     success;
+                   }
+             | Output.Workflow_output_cost_estimation
+                 Ce.
+                   {
+                     workflow_step = Workflow_step.{ type_; _ };
+                     outputs = Outputs.Output_text Text.{ text; output_key };
+                     success;
+                     _;
+                   } ->
+                 Some
+                   Workflow_step_output.
+                     { key = output_key; text; success; step_type = type_; details = None }
+             | Output.Workflow_output_run
+                 Run.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ }
+             | Output.Workflow_output_oidc
+                 Oidc.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ } ->
+                 Some
+                   Workflow_step_output.
+                     { key = None; text = ""; success; step_type = type_; details = None }
+             | Output.Workflow_output_env _
+             | Output.Workflow_output_cost_estimation
+                 Ce.{ outputs = Outputs.Output_cost_estimation _; _ } -> None)
 
       let post_hook_output_texts (outputs : Terrat_api_components_hook_outputs.Post.t) =
         let module Output = Terrat_api_components_hook_outputs.Post.Items in
@@ -2143,53 +2289,53 @@ struct
         let module Drift_create_issue = Terrat_api_components_workflow_output_drift_create_issue in
         outputs
         |> CCList.filter_map (function
-               | Output.Workflow_output_run
-                   Run.
+             | Output.Workflow_output_run
+                 Run.
+                   {
+                     workflow_step = Workflow_step.{ type_; cmd; _ };
+                     outputs = Some Text.{ text; output_key };
+                     success;
+                     _;
+                   } ->
+                 Some
+                   Workflow_step_output.
                      {
-                       workflow_step = Workflow_step.{ type_; cmd; _ };
-                       outputs = Some Text.{ text; output_key };
+                       key = output_key;
+                       text;
                        success;
-                       _;
-                     } ->
-                   Some
-                     Workflow_step_output.
-                       {
-                         key = output_key;
-                         text;
-                         success;
-                         step_type = type_;
-                         details = Some (CCString.concat " " cmd);
-                       }
-               | Output.Workflow_output_oidc
-                   Oidc.
-                     {
-                       workflow_step = Workflow_step.{ type_; _ };
-                       outputs = Some Text.{ text; output_key };
-                       success;
-                       _;
+                       step_type = type_;
+                       details = Some (CCString.concat " " cmd);
                      }
-               | Output.Workflow_output_drift_create_issue
-                   Drift_create_issue.
-                     {
-                       workflow_step = Workflow_step.{ type_; _ };
-                       outputs = Some Text.{ text; output_key };
-                       success;
-                       _;
-                     } ->
-                   Some
-                     Workflow_step_output.
-                       { key = output_key; text; success; step_type = type_; details = None }
-               | Output.Workflow_output_run
-                   Run.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ }
-               | Output.Workflow_output_oidc
-                   Oidc.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ }
-               | Output.Workflow_output_drift_create_issue
-                   Drift_create_issue.
-                     { workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ } ->
-                   Some
-                     Workflow_step_output.
-                       { key = None; text = ""; success; step_type = type_; details = None }
-               | Output.Workflow_output_env _ -> None)
+             | Output.Workflow_output_oidc
+                 Oidc.
+                   {
+                     workflow_step = Workflow_step.{ type_; _ };
+                     outputs = Some Text.{ text; output_key };
+                     success;
+                     _;
+                   }
+             | Output.Workflow_output_drift_create_issue
+                 Drift_create_issue.
+                   {
+                     workflow_step = Workflow_step.{ type_; _ };
+                     outputs = Some Text.{ text; output_key };
+                     success;
+                     _;
+                   } ->
+                 Some
+                   Workflow_step_output.
+                     { key = output_key; text; success; step_type = type_; details = None }
+             | Output.Workflow_output_run
+                 Run.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ }
+             | Output.Workflow_output_oidc
+                 Oidc.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ }
+             | Output.Workflow_output_drift_create_issue
+                 Drift_create_issue.
+                   { workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ } ->
+                 Some
+                   Workflow_step_output.
+                     { key = None; text = ""; success; step_type = type_; details = None }
+             | Output.Workflow_output_env _ -> None)
 
       let workflow_output_texts outputs =
         let module Output = Terrat_api_components_workflow_outputs.Items in
@@ -2202,92 +2348,86 @@ struct
         let module Oidc = Terrat_api_components_workflow_output_oidc in
         outputs
         |> CCList.flat_map (function
-               | Output.Workflow_output_run
-                   Run.
+             | Output.Workflow_output_run
+                 Run.
+                   {
+                     workflow_step = Workflow_step.{ type_; cmd; _ };
+                     outputs = Some Text.{ text; output_key };
+                     success;
+                     _;
+                   } ->
+                 [
+                   Workflow_step_output.
                      {
-                       workflow_step = Workflow_step.{ type_; cmd; _ };
-                       outputs = Some Text.{ text; output_key };
+                       key = output_key;
+                       text;
                        success;
-                       _;
-                     } ->
-                   [
-                     Workflow_step_output.
-                       {
-                         key = output_key;
-                         text;
-                         success;
-                         step_type = type_;
-                         details = Some (CCString.concat " " cmd);
-                       };
-                   ]
-               | Output.Workflow_output_oidc
-                   Oidc.
+                       step_type = type_;
+                       details = Some (CCString.concat " " cmd);
+                     };
+                 ]
+             | Output.Workflow_output_oidc
+                 Oidc.
+                   {
+                     workflow_step = Workflow_step.{ type_; _ };
+                     outputs = Some Text.{ text; output_key };
+                     success;
+                     _;
+                   }
+             | Output.Workflow_output_init
+                 Init.
+                   {
+                     workflow_step = Workflow_step.{ type_; _ };
+                     outputs = Some Text.{ text; output_key };
+                     success;
+                     _;
+                   }
+             | Output.Workflow_output_plan
+                 Plan.
+                   {
+                     workflow_step = Workflow_step.{ type_; _ };
+                     outputs = Some (Plan.Outputs.Output_text Text.{ text; output_key });
+                     success;
+                     _;
+                   }
+             | Output.Workflow_output_apply
+                 Apply.
+                   {
+                     workflow_step = Workflow_step.{ type_; _ };
+                     outputs = Some Text.{ text; output_key };
+                     success;
+                     _;
+                   } ->
+                 [
+                   Workflow_step_output.
+                     { step_type = type_; text; key = output_key; success; details = None };
+                 ]
+             | Output.Workflow_output_plan
+                 Plan.
+                   {
+                     workflow_step = Workflow_step.{ type_; _ };
+                     outputs = Some (Plan.Outputs.Output_plan Output_plan.{ plan; plan_text; _ });
+                     success;
+                     _;
+                   } ->
+                 [
+                   Workflow_step_output.
                      {
-                       workflow_step = Workflow_step.{ type_; _ };
-                       outputs = Some Text.{ text; output_key };
+                       step_type = type_;
+                       text = plan_text;
+                       key = Some "plan_text";
                        success;
-                       _;
-                     }
-               | Output.Workflow_output_init
-                   Init.
-                     {
-                       workflow_step = Workflow_step.{ type_; _ };
-                       outputs = Some Text.{ text; output_key };
-                       success;
-                       _;
-                     }
-               | Output.Workflow_output_plan
-                   Plan.
-                     {
-                       workflow_step = Workflow_step.{ type_; _ };
-                       outputs = Some (Plan.Outputs.Output_text Text.{ text; output_key });
-                       success;
-                       _;
-                     }
-               | Output.Workflow_output_apply
-                   Apply.
-                     {
-                       workflow_step = Workflow_step.{ type_; _ };
-                       outputs = Some Text.{ text; output_key };
-                       success;
-                       _;
-                     } ->
-                   [
-                     Workflow_step_output.
-                       { step_type = type_; text; key = output_key; success; details = None };
-                   ]
-               | Output.Workflow_output_plan
-                   Plan.
-                     {
-                       workflow_step = Workflow_step.{ type_; _ };
-                       outputs = Some (Plan.Outputs.Output_plan Output_plan.{ plan; plan_text; _ });
-                       success;
-                       _;
-                     } ->
-                   [
-                     Workflow_step_output.
-                       {
-                         step_type = type_;
-                         text = plan_text;
-                         key = Some "plan_text";
-                         success;
-                         details = None;
-                       };
-                     Workflow_step_output.
-                       {
-                         step_type = type_;
-                         text = plan;
-                         key = Some "plan";
-                         success;
-                         details = None;
-                       };
-                   ]
-               | Output.Workflow_output_run _
-               | Output.Workflow_output_oidc _
-               | Output.Workflow_output_plan _
-               | Output.Workflow_output_env _
-               | Output.Workflow_output_init Init.{ outputs = None; _ }
-               | Output.Workflow_output_apply Apply.{ outputs = None; _ } -> [])
+                       details = None;
+                     };
+                   Workflow_step_output.
+                     { step_type = type_; text = plan; key = Some "plan"; success; details = None };
+                 ]
+             | Output.Workflow_output_run _
+             | Output.Workflow_output_oidc _
+             | Output.Workflow_output_plan _
+             | Output.Workflow_output_env _
+             | Output.Workflow_output_init Init.{ outputs = None; _ }
+             | Output.Workflow_output_apply Apply.{ outputs = None; _ } -> [])
 
       let has_changes_of_workflow_outputs outputs =
         let module Output = Terrat_api_components_workflow_outputs.Items in
@@ -2296,14 +2436,14 @@ struct
         (* Find the plan output, and then extract the has changes if it's there *)
         outputs
         |> CCList.find_opt (function
-               | Output.Workflow_output_plan _ -> true
-               | _ -> false)
+             | Output.Workflow_output_plan _ -> true
+             | _ -> false)
         |> CCOption.flat_map (function
-               | Output.Workflow_output_plan
-                   Plan.
-                     { outputs = Some (Plan.Outputs.Output_plan Output_plan.{ has_changes; _ }); _ }
-                 -> Some has_changes
-               | _ -> None)
+             | Output.Workflow_output_plan
+                 Plan.
+                   { outputs = Some (Plan.Outputs.Output_plan Output_plan.{ has_changes; _ }); _ }
+               -> Some has_changes
+             | _ -> None)
 
       let create_run_output
           ~view
@@ -2358,18 +2498,18 @@ struct
           let module Ce = Terrat_api_components_output_cost_estimation in
           pre
           |> CCList.filter_map (function
-                 | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_cost_estimation
-                     {
-                       Wce.outputs = Wce.Outputs.Output_cost_estimation Ce.{ cost_estimation; _ };
-                       success = true;
-                       _;
-                     } -> Some cost_estimation
-                 | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_run _
-                 | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_oidc _
-                 | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_env _
-                 | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_checkout _
-                 | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_cost_estimation _ ->
-                     None)
+               | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_cost_estimation
+                   {
+                     Wce.outputs = Wce.Outputs.Output_cost_estimation Ce.{ cost_estimation; _ };
+                     success = true;
+                     _;
+                   } -> Some cost_estimation
+               | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_run _
+               | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_oidc _
+               | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_env _
+               | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_checkout _
+               | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_cost_estimation _ ->
+                   None)
           |> CCOption.of_list
           |> CCOption.map (function
                  | Ce.Cost_estimation.
@@ -2398,7 +2538,8 @@ struct
                                        total_monthly_cost;
                                        prev_monthly_cost;
                                        diff_monthly_cost;
-                                     } ->
+                                     }
+                                 ->
                                 Map.of_list
                                   [
                                     ("dir", string path);
@@ -2494,7 +2635,8 @@ struct
                                 (fun {
                                        Wm.Deny.dirspace = { Terrat_change.Dirspace.dir; workspace };
                                        policy;
-                                     } ->
+                                     }
+                                   ->
                                   Map.of_list
                                     (CCList.flatten
                                        [
@@ -2880,7 +3022,8 @@ struct
                                       _;
                                     };
                                   policy;
-                                } ->
+                                }
+                            ->
                            Map.of_list
                              (CCList.flatten
                                 [
@@ -2962,7 +3105,8 @@ struct
                                       _;
                                     };
                                   policy;
-                                } ->
+                                }
+                            ->
                            Map.of_list
                              (CCList.flatten
                                 [
@@ -3786,9 +3930,9 @@ struct
         ~f
         ~while_:
           (Abbs_future_combinators.finite_tries fetch_pull_request_tries (function
-              | Error _
-              | Ok ("unknown", { Pull_request.state = Terrat_pull_request.State.Open _; _ }) -> true
-              | Ok _ -> false))
+            | Error _ | Ok ("unknown", { Pull_request.state = Terrat_pull_request.State.Open _; _ })
+              -> true
+            | Ok _ -> false))
         ~betwixt:
           (Abbs_future_combinators.series ~start:2.0 ~step:(( *. ) 1.5) (fun n _ ->
                Prmths.Counter.inc_one Metrics.fetch_pull_request_errors_total;
@@ -4133,7 +4277,7 @@ struct
                                         Json_schema.String_map.of_list
                                           ([
                                              ( "work-token",
-                                               `String (Uuidm.to_string work_manifest.Wm.id) );
+                                               `String (Ouuid.to_string work_manifest.Wm.id) );
                                              ( "api-base-url",
                                                `String (Terrat_config.api_base config ^ "/github")
                                              );
@@ -4747,7 +4891,8 @@ struct
                         user =
                           CCOption.map
                             (fun Githubc2_components.Nullable_simple_user.
-                                   { primary = Primary.{ login; _ }; _ } -> login)
+                                   { primary = Primary.{ login; _ }; _ }
+                               -> login)
                             user;
                       })
                   reviews))
@@ -5152,8 +5297,8 @@ struct
               Abb.Future.return (Error `Error))
         ~while_:
           (Abbs_future_combinators.finite_tries num_tries (function
-              | Error (`Merge_err _) -> true
-              | Ok _ | Error _ -> false))
+            | Error (`Merge_err _) -> true
+            | Ok _ | Error _ -> false))
         ~betwixt:(fun _ -> Abb.Sys.sleep sleep_time)
 
     let delete_pull_request_branch' request_id client pull_request =
@@ -5332,7 +5477,7 @@ struct
            (Terrat_evaluator3.Ctx.make
               ~config
               ~storage
-              ~request_id:(Uuidm.to_string (Uuidm.v `V4))
+              ~request_id:(Ouuid.to_string (Ouuid.v4 ()))
               ()))
       >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> drift config storage
 
@@ -5343,7 +5488,7 @@ struct
            (Terrat_evaluator3.Ctx.make
               ~config
               ~storage
-              ~request_id:(Uuidm.to_string (Uuidm.v `V4))
+              ~request_id:(Ouuid.to_string (Ouuid.v4 ()))
               ()))
       >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> flow_state_cleanup config storage
 
@@ -5354,7 +5499,7 @@ struct
            (Terrat_evaluator3.Ctx.make
               ~config
               ~storage
-              ~request_id:(Uuidm.to_string (Uuidm.v `V4))
+              ~request_id:(Ouuid.to_string (Ouuid.v4 ()))
               ()))
       >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> plan_cleanup config storage
 
@@ -5365,7 +5510,7 @@ struct
            (Terrat_evaluator3.Ctx.make
               ~config
               ~storage
-              ~request_id:(Uuidm.to_string (Uuidm.v `V4))
+              ~request_id:(Ouuid.to_string (Ouuid.v4 ()))
               ()))
       >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> repo_config_cleanup config storage
   end
