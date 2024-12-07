@@ -1,9 +1,10 @@
 insert into github_terraform_plans
-       (work_manifest, path, workspace, data)
+       (work_manifest, path, workspace, data, has_changes)
 values (
    $work_manifest,
    $path,
    $workspace,
-   decode($data, 'base64'))
+   decode($data, 'base64'),
+   $has_changes)
 on conflict (work_manifest, path, workspace)
-do update set data = excluded.data
+do update set (data, has_changes) = (excluded.data, excluded.has_changes)

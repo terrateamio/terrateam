@@ -529,7 +529,8 @@ module Sql = struct
       /% Var.uuid "work_manifest"
       /% Var.text "path"
       /% Var.text "workspace"
-      /% Var.(ud (text "data") Base64.encode_string))
+      /% Var.(ud (text "data") Base64.encode_string)
+      /% Var.boolean "has_changes")
 
   let insert_github_work_manifest_result =
     Pgsql_io.Typed_sql.(
@@ -4546,6 +4547,7 @@ struct
         dirspace.Terrat_dirspace.dir
         dirspace.Terrat_dirspace.workspace
         data
+        has_changes
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
