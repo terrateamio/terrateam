@@ -6334,7 +6334,7 @@ module Make (S : S) = struct
                 ctx.Ctx.request_id
                 state.State.request_id
                 request_id');
-          f ctx resume)
+          f { ctx with Ctx.request_id = request_id' } resume)
         ~finally:(fun () ->
           Logs.info (fun m ->
               m
@@ -6434,7 +6434,10 @@ module Make (S : S) = struct
                       let resume' = Flow.Yield.set_state state resume' in
                       resume_event { ctx with Ctx.storage = db } resume' exec_flow
                   | None -> Abb.Future.return (Error `Error))
-              | `Resume resume' -> resume_event { ctx with Ctx.storage = db } resume' exec_flow))
+              | `Resume resume' ->
+                  let state = update (Flow.Yield.state resume') in
+                  let resume' = Flow.Yield.set_state state resume' in
+                  resume_event { ctx with Ctx.storage = db } resume' exec_flow))
       >>= function
       | `Success _ ->
           let open Abb.Future.Infix_monad in
@@ -6454,13 +6457,18 @@ module Make (S : S) = struct
           >>= fun _ -> Abb.Future.return (Error `Error)
       | `Yield resume' -> (
           let state = Flow.Yield.state resume' in
-          match state.State.output with
-          | Some State.Io.O.Checkpoint ->
-              let state =
-                { state with State.input = Some State.Io.I.Checkpointed; output = None }
-              in
+          match state with
+          | {
+           State.output = Some State.Io.O.Checkpoint;
+           work_manifest_id = Some work_manifest_id;
+           _;
+          } ->
+              resume_raw ctx (`Work_manifest work_manifest_id) (fun state ->
+                  { state with State.input = Some State.Io.I.Checkpointed; output = None })
+          | { State.output = Some State.Io.O.Checkpoint; work_manifest_id = None; _ } ->
               let resume' = Flow.Yield.set_state state resume' in
-              resume_raw ctx (`Resume resume') CCFun.id
+              resume_raw ctx (`Resume resume') (fun state ->
+                  { state with State.input = Some State.Io.I.Checkpointed; output = None })
           | _ -> Abb.Future.return (Ok ()))
 
     and resume ctx work_manifest_id update =
