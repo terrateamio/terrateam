@@ -748,7 +748,8 @@ let of_version_1_access_control_policies policies =
            plan;
            superapproval;
            tag_query;
-         } ->
+         }
+       ->
       let open CCResult.Infix in
       CCResult.map_err
         (function
@@ -852,7 +853,8 @@ let of_version_1_apply_requirements_checks =
       let open CCResult.Infix in
       let module I = C2.Items in
       CCResult.map_l
-        (fun { I.approved; merge_conflicts; require_ready_for_review_pr; status_checks; tag_query } ->
+        (fun { I.approved; merge_conflicts; require_ready_for_review_pr; status_checks; tag_query }
+           ->
           CCResult.map_err
             (function
               | `Tag_query_error err -> `Apply_requirements_check_tag_query_err err)
@@ -1303,11 +1305,11 @@ let of_version_1_when_modified when_modified =
        to [${DIR}/*.hcl].  If it starts with [**] then we want to remove that and
        replace it with [${DIR}] so that it does not match subdirs. *)
     CCList.map (function
-        | s when CCString.prefix ~pre:"!**/" s -> "!${DIR}/" ^ CCString.drop 4 s
-        | s when CCString.prefix ~pre:"!*" s -> "!${DIR}/" ^ CCString.drop 1 s
-        | s when CCString.prefix ~pre:"**/" s -> "${DIR}/" ^ CCString.drop 3 s
-        | s when CCString.prefix ~pre:"*" s -> "${DIR}/" ^ s
-        | s -> s)
+      | s when CCString.prefix ~pre:"!**/" s -> "!${DIR}/" ^ CCString.drop 4 s
+      | s when CCString.prefix ~pre:"!*" s -> "!${DIR}/" ^ CCString.drop 1 s
+      | s when CCString.prefix ~pre:"**/" s -> "${DIR}/" ^ CCString.drop 3 s
+      | s when CCString.prefix ~pre:"*" s -> "${DIR}/" ^ s
+      | s -> s)
   in
   let { Wm.autoapply; autoplan; autoplan_draft_pr; depends_on; file_patterns } = when_modified in
   CCResult.map_err
@@ -1513,7 +1515,8 @@ let of_version_1_workflows default_engine default_integrations workflows =
            tag_query;
            terraform_version;
            terragrunt;
-         } ->
+         }
+       ->
       CCResult.map_err
         (function
           | `Workflows_unknown_run_on_err err -> `Workflows_apply_unknown_run_on_err err
@@ -1634,10 +1637,10 @@ let of_version_1 v1 =
 
 let to_version_1_match_list =
   CCList.map (function
-      | Access_control.Match.User user -> "user:" ^ user
-      | Access_control.Match.Team team -> "team:" ^ team
-      | Access_control.Match.Repo repo -> "repo:" ^ repo
-      | Access_control.Match.Any -> "*")
+    | Access_control.Match.User user -> "user:" ^ user
+    | Access_control.Match.Team team -> "team:" ^ team
+    | Access_control.Match.Repo repo -> "repo:" ^ repo
+    | Access_control.Match.Any -> "*")
 
 let to_version_1_access_control_files files =
   let module Ac = Terrat_repo_config_access_control in
@@ -1933,15 +1936,15 @@ let to_version_1_hooks_op_run r =
 let to_version_1_hooks_hook_list =
   let module Op = Terrat_repo_config.Hook_op in
   CCList.map (function
-      | Hooks.Hook_op.Drift_create_issue ->
-          let module D = Terrat_repo_config.Hook_op_drift_create_issue in
-          Op.Hook_op_drift_create_issue { D.type_ = Some "drift_create_issue" }
-      | Hooks.Hook_op.Env (Workflow_step.Env.Exec env) ->
-          Op.Hook_op_env_exec (to_version_1_hooks_op_env_exec env)
-      | Hooks.Hook_op.Env (Workflow_step.Env.Source env) ->
-          Op.Hook_op_env_source (to_version_1_hooks_op_env_source env)
-      | Hooks.Hook_op.Oidc oidc -> Op.Hook_op_oidc (to_version_1_hooks_op_oidc oidc)
-      | Hooks.Hook_op.Run r -> Op.Hook_op_run (to_version_1_hooks_op_run r))
+    | Hooks.Hook_op.Drift_create_issue ->
+        let module D = Terrat_repo_config.Hook_op_drift_create_issue in
+        Op.Hook_op_drift_create_issue { D.type_ = Some "drift_create_issue" }
+    | Hooks.Hook_op.Env (Workflow_step.Env.Exec env) ->
+        Op.Hook_op_env_exec (to_version_1_hooks_op_env_exec env)
+    | Hooks.Hook_op.Env (Workflow_step.Env.Source env) ->
+        Op.Hook_op_env_source (to_version_1_hooks_op_env_source env)
+    | Hooks.Hook_op.Oidc oidc -> Op.Hook_op_oidc (to_version_1_hooks_op_oidc oidc)
+    | Hooks.Hook_op.Run r -> Op.Hook_op_run (to_version_1_hooks_op_run r))
 
 let to_version_1_hooks_hook hook =
   let module H = Terrat_repo_config.Hook in
@@ -2051,44 +2054,41 @@ let to_version_1_workflow_retry retry =
 let to_version_1_workflows_op =
   let module Op = Terrat_repo_config.Workflow_op_list in
   CCList.map (function
-      | Workflows.Entry.Op.Init init ->
-          let module I = Terrat_repo_config.Workflow_op_init in
-          let { Workflow_step.Init.env; extra_args } = init in
-          Op.Items.Workflow_op_init
-            {
-              I.env =
-                CCOption.map (fun env -> I.Env.make ~additional:env Json_schema.Empty_obj.t) env;
-              extra_args = Some extra_args;
-              type_ = "init";
-            }
-      | Workflows.Entry.Op.Plan plan ->
-          let module P = Terrat_repo_config.Workflow_op_plan in
-          let { Workflow_step.Plan.env; extra_args; mode } = plan in
-          Op.Items.Workflow_op_plan
-            {
-              P.env =
-                CCOption.map (fun env -> P.Env.make ~additional:env Json_schema.Empty_obj.t) env;
-              extra_args = Some extra_args;
-              mode = Workflow_step.Plan.Mode.to_string mode;
-              type_ = "plan";
-            }
-      | Workflows.Entry.Op.Apply apply ->
-          let module A = Terrat_repo_config.Workflow_op_apply in
-          let { Workflow_step.Apply.env; extra_args; retry } = apply in
-          Op.Items.Workflow_op_apply
-            {
-              A.env =
-                CCOption.map (fun env -> A.Env.make ~additional:env Json_schema.Empty_obj.t) env;
-              extra_args = Some extra_args;
-              retry = CCOption.map to_version_1_workflow_retry retry;
-              type_ = "apply";
-            }
-      | Workflows.Entry.Op.Run r -> Op.Items.Hook_op_run (to_version_1_hooks_op_run r)
-      | Workflows.Entry.Op.Env (Workflow_step.Env.Exec env) ->
-          Op.Items.Hook_op_env_exec (to_version_1_hooks_op_env_exec env)
-      | Workflows.Entry.Op.Env (Workflow_step.Env.Source env) ->
-          Op.Items.Hook_op_env_source (to_version_1_hooks_op_env_source env)
-      | Workflows.Entry.Op.Oidc oidc -> Op.Items.Hook_op_oidc (to_version_1_hooks_op_oidc oidc))
+    | Workflows.Entry.Op.Init init ->
+        let module I = Terrat_repo_config.Workflow_op_init in
+        let { Workflow_step.Init.env; extra_args } = init in
+        Op.Items.Workflow_op_init
+          {
+            I.env = CCOption.map (fun env -> I.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+            extra_args = Some extra_args;
+            type_ = "init";
+          }
+    | Workflows.Entry.Op.Plan plan ->
+        let module P = Terrat_repo_config.Workflow_op_plan in
+        let { Workflow_step.Plan.env; extra_args; mode } = plan in
+        Op.Items.Workflow_op_plan
+          {
+            P.env = CCOption.map (fun env -> P.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+            extra_args = Some extra_args;
+            mode = Workflow_step.Plan.Mode.to_string mode;
+            type_ = "plan";
+          }
+    | Workflows.Entry.Op.Apply apply ->
+        let module A = Terrat_repo_config.Workflow_op_apply in
+        let { Workflow_step.Apply.env; extra_args; retry } = apply in
+        Op.Items.Workflow_op_apply
+          {
+            A.env = CCOption.map (fun env -> A.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+            extra_args = Some extra_args;
+            retry = CCOption.map to_version_1_workflow_retry retry;
+            type_ = "apply";
+          }
+    | Workflows.Entry.Op.Run r -> Op.Items.Hook_op_run (to_version_1_hooks_op_run r)
+    | Workflows.Entry.Op.Env (Workflow_step.Env.Exec env) ->
+        Op.Items.Hook_op_env_exec (to_version_1_hooks_op_env_exec env)
+    | Workflows.Entry.Op.Env (Workflow_step.Env.Source env) ->
+        Op.Items.Hook_op_env_source (to_version_1_hooks_op_env_source env)
+    | Workflows.Entry.Op.Oidc oidc -> Op.Items.Hook_op_oidc (to_version_1_hooks_op_oidc oidc))
 
 let to_version_1_workflows =
   CCList.map (fun entry ->
@@ -2309,6 +2309,12 @@ let update_file_patterns index module_paths dirname workspacename file_patterns 
                    (CCString.replace ~sub ~by pat)))))
       file_patterns
 
+(* Unique a sorted, guaranteed to keep the first element *)
+let[@tail_mod_cons] rec uniq_succ ~eq = function
+  | [] -> []
+  | x :: xx :: xs when eq x xx -> uniq_succ ~eq (x :: xs)
+  | x :: xs -> x :: uniq_succ ~eq xs
+
 let derive ~ctx ~index ~file_list repo_config =
   let update_dir_config ~global_tags ~module_paths ~index dirname config =
     let update_workspace tag_prefix name tags workspace_config =
@@ -2384,13 +2390,24 @@ let derive ~ctx ~index ~file_list repo_config =
               This means we will get the same match multiple times as we walk
               the file list so we then have to remove duplicates *)
            CCOption.map
-             (fun (d, config) -> (Filename.dirname fname, config))
+             (fun (d, config) ->
+               (* Include the length of the matched directory in the output,
+                  this is used in the case of multiple directory configs
+                  matching, we take the longer. *)
+               (Filename.dirname fname, CCString.length (File_pattern.to_string d), config))
              (CCList.find_opt
                 (fun (d, _) ->
                   (not (String_map.mem (Filename.dirname fname) dirs))
                   && File_pattern.is_match d fname)
                 glob_dirs))
-    |> CCList.sort_uniq ~cmp:(fun (d1, _) (d2, _) -> CCString.compare d1 d2)
+    |> CCList.sort (fun (d1, l1, _) (d2, l2, _) ->
+           (* Sort in reveres order, we want the longer matches first. *)
+           let module Cmp = struct
+             type t = string * int [@@deriving ord]
+           end in
+           Cmp.compare (d2, l2) (d1, l1))
+    |> CCList.map (fun (d1, _, config) -> (d1, config))
+    |> uniq_succ ~eq:(fun (d1, _) (d2, _) -> CCString.equal d1 d2)
   in
   (* [specified_dirs] is all of those dirs that have been specified in the
      [dirs] section of the config.  But we also need to create dir entries for
