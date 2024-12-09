@@ -2035,7 +2035,7 @@ struct
           let cost_estimation =
             hooks_pre
             |> CCOption.get_or ~default:[]
-            |> CCList.filter (fun { O.step; _ } -> CCString.equal step "cost_estimation")
+            |> CCList.filter (fun { O.step; _ } -> CCString.equal step "tf/cost-estimation")
             |> function
             | [] -> []
             | o :: _ -> (
