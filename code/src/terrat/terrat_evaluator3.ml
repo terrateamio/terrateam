@@ -1304,6 +1304,7 @@ module Make (S : S) = struct
       | Check_reconcile
       | Check_valid_destination_branch
       | Checkpoint
+      | Complete_no_change_dirspaces
       | Complete_work_manifest
       | Config_build_not_required
       | Config_build_required
@@ -1317,7 +1318,6 @@ module Make (S : S) = struct
       | Event_kind_repo_config
       | Event_kind_run_drift
       | Event_kind_unlock
-      | Synthesize_pull_request_sync
       | Index_not_required
       | Index_required
       | More_layers_to_run
@@ -1336,6 +1336,7 @@ module Make (S : S) = struct
       | Run_work_manifest_iter
       | Store_account_repository
       | Store_pull_request
+      | Synthesize_pull_request_sync
       | Test_account_status
       | Test_config_build_required
       | Test_event_kind
@@ -1372,6 +1373,7 @@ module Make (S : S) = struct
       | Check_reconcile -> "check_reconcile"
       | Check_valid_destination_branch -> "check_valid_destination_branch"
       | Checkpoint -> "checkpoint"
+      | Complete_no_change_dirspaces -> "complete_no_change_dirspaces"
       | Complete_work_manifest -> "complete_work_manifest"
       | Config_build_not_required -> "config_build_not_required"
       | Config_build_required -> "config_build_required"
@@ -1385,7 +1387,6 @@ module Make (S : S) = struct
       | Event_kind_repo_config -> "event_kind_repo_config"
       | Event_kind_run_drift -> "event_kind_run_drift"
       | Event_kind_unlock -> "event_kind_unlock"
-      | Synthesize_pull_request_sync -> "synthesize_pull_request_sync"
       | Index_not_required -> "index_not_required"
       | Index_required -> "index_required"
       | More_layers_to_run -> "more_layers_to_run"
@@ -1404,6 +1405,7 @@ module Make (S : S) = struct
       | Run_work_manifest_iter -> "run_work_manifest_iter"
       | Store_account_repository -> "store_account_repository"
       | Store_pull_request -> "store_pull_request"
+      | Synthesize_pull_request_sync -> "synthesize_pull_request_sync"
       | Test_account_status -> "test_account_status"
       | Test_config_build_required -> "test_config_build_required"
       | Test_event_kind -> "test_event_kind"
@@ -1439,6 +1441,7 @@ module Make (S : S) = struct
       | "check_reconcile" -> Some Check_reconcile
       | "check_valid_destination_branch" -> Some Check_valid_destination_branch
       | "checkpoint" -> Some Checkpoint
+      | "complete_no_change_dirspaces" -> Some Complete_no_change_dirspaces
       | "complete_work_manifest" -> Some Complete_work_manifest
       | "config_build_not_required" -> Some Config_build_not_required
       | "config_build_required" -> Some Config_build_required
@@ -1452,7 +1455,6 @@ module Make (S : S) = struct
       | "event_kind_repo_config" -> Some Event_kind_repo_config
       | "event_kind_run_drift" -> Some Event_kind_run_drift
       | "event_kind_unlock" -> Some Event_kind_unlock
-      | "synthesize_pull_request_sync" -> Some Synthesize_pull_request_sync
       | "index_not_required" -> Some Index_not_required
       | "index_required" -> Some Index_required
       | "more_layers_to_run" -> Some More_layers_to_run
@@ -1471,6 +1473,7 @@ module Make (S : S) = struct
       | "run_work_manifest_iter" -> Some Run_work_manifest_iter
       | "store_account_repository" -> Some Store_account_repository
       | "store_pull_request" -> Some Store_pull_request
+      | "synthesize_pull_request_sync" -> Some Synthesize_pull_request_sync
       | "test_account_status" -> Some Test_account_status
       | "test_config_build_required" -> Some Test_config_build_required
       | "test_event_kind" -> Some Test_event_kind
@@ -5880,6 +5883,61 @@ module Make (S : S) = struct
       let pull_request_id = Event.pull_request_id state.State.event in
       let event = Event.Pull_request_sync { account; user; repo; pull_request_id } in
       Abb.Future.return (Ok { state with State.event })
+
+    let complete_no_change_dirspaces ctx state =
+      let module Wm = Terrat_work_manifest3 in
+      let module Ds = Terrat_dirspace in
+      let module Dsf = Terrat_change.Dirspaceflow in
+      let module Dc = Terrat_change_match3.Dirspace_config in
+      let open Abbs_future_combinators.Infix_result_monad in
+      H.run_interactive ctx state (fun () ->
+          match state.State.work_manifest_id with
+          | Some work_manifest_id -> (
+              query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
+              >>= function
+              | Some ({ Wm.changes; _ } as work_manifest) ->
+                  Dv.matches ctx state `Plan
+                  >>= fun matches ->
+                  let unapplied_dirspaces =
+                    Terrat_data.Dirspace_set.of_list
+                      (CCList.map
+                         (fun { Dc.dirspace; _ } -> dirspace)
+                         (CCList.flatten matches.Dv.Matches.all_unapplied_matches))
+                  in
+                  let applied_changes =
+                    CCList.filter
+                      (fun { Dsf.dirspace; _ } ->
+                        not (Terrat_data.Dirspace_set.mem dirspace unapplied_dirspaces))
+                      changes
+                  in
+                  let account = Event.account state.State.event in
+                  let repo = Event.repo state.State.event in
+                  let checks =
+                    CCList.map
+                      (fun { Dsf.dirspace = { Ds.dir; workspace; _ }; _ } ->
+                        S.make_commit_check
+                          ~config:ctx.Ctx.config
+                          ~description:"Completed"
+                          ~title:
+                            (Printf.sprintf
+                               "terrateam %s: %s %s"
+                               (Wm.Step.to_string Wm.Step.Apply)
+                               dir
+                               workspace)
+                          ~status:Terrat_commit_check.Status.Completed
+                          ~work_manifest
+                          ~repo
+                          account)
+                      applied_changes
+                  in
+                  Dv.client ctx state
+                  >>= fun client ->
+                  Dv.branch_ref ctx state
+                  >>= fun ref_ ->
+                  create_commit_checks state.State.request_id client repo ref_ checks
+              | None -> Abb.Future.return (Ok ()))
+          | None -> Abb.Future.return (Ok ()))
+      >>= fun () -> Abb.Future.return (Ok state)
   end
 
   let eval_step step ctx state =
@@ -6024,7 +6082,41 @@ module Make (S : S) = struct
              ]))
     in
     let event_kind_op_flow =
-      let op_kind_plan_flow =
+      let layers_flow op next_layer_flow =
+        Flow.Flow.(
+          choice
+            ~id:Id.Test_more_layers_to_run
+            ~f:(F.test_more_layers_to_run op)
+            [
+              ( Id.More_layers_to_run,
+                seq
+                  (action
+                     [
+                       Flow.Step.make
+                         ~id:Id.Complete_work_manifest
+                         ~f:(eval_step F.complete_work_manifest)
+                         ();
+                       Flow.Step.make
+                         ~id:Id.Synthesize_pull_request_sync
+                         ~f:(eval_step F.synthesize_pull_request_sync)
+                         ();
+                     ])
+                  next_layer_flow );
+              ( Id.All_layers_completed,
+                action
+                  [
+                    Flow.Step.make
+                      ~id:Id.Check_all_dirspaces_applied
+                      ~f:(eval_step (F.check_all_dirspaces_applied op))
+                      ();
+                    Flow.Step.make
+                      ~id:Id.Complete_work_manifest
+                      ~f:(eval_step F.complete_work_manifest)
+                      ();
+                  ] );
+            ])
+      in
+      let rec op_kind_plan_flow _ _ =
         Flow.Flow.(
           seq
             (action
@@ -6035,54 +6127,58 @@ module Make (S : S) = struct
                    ();
                ])
             (seq
-               index_flow
-               (action
-                  [
-                    Flow.Step.make
-                      ~id:Id.Check_access_control_ci_change
-                      ~f:(eval_step F.check_access_control_ci_change)
-                      ();
-                    Flow.Step.make
-                      ~id:Id.Check_access_control_files
-                      ~f:(eval_step F.check_access_control_files)
-                      ();
-                    Flow.Step.make
-                      ~id:Id.Check_access_control_repo_config
-                      ~f:(eval_step F.check_access_control_repo_config)
-                      ();
-                    Flow.Step.make
-                      ~id:Id.Check_valid_destination_branch
-                      ~f:(eval_step F.check_valid_destination_branch)
-                      ();
-                    Flow.Step.make
-                      ~id:Id.Check_access_control_plan
-                      ~f:(eval_step F.check_access_control_plan)
-                      ();
-                    Flow.Step.make
-                      ~id:Id.Check_non_empty_matches
-                      ~f:(eval_step F.check_non_empty_matches)
-                      ();
-                    Flow.Step.make
-                      ~id:Id.Check_account_status_expired
-                      ~f:(eval_step F.check_account_status_expired)
-                      ();
-                    Flow.Step.make
-                      ~id:Id.Check_merge_conflict
-                      ~f:(eval_step F.check_merge_conflict)
-                      ();
-                    Flow.Step.make
-                      ~id:Id.Check_conflicting_work_manifests
-                      ~f:(eval_step (F.check_conflicting_work_manifests `Plan))
-                      ();
-                    Flow.Step.make
-                      ~id:Id.Run_work_manifest_iter
-                      ~f:(eval_step F.run_plan_work_manifest_iter)
-                      ();
-                    Flow.Step.make
-                      ~id:Id.Complete_work_manifest
-                      ~f:(eval_step F.complete_work_manifest)
-                      ();
-                  ])))
+               (seq
+                  index_flow
+                  (action
+                     [
+                       Flow.Step.make
+                         ~id:Id.Check_access_control_ci_change
+                         ~f:(eval_step F.check_access_control_ci_change)
+                         ();
+                       Flow.Step.make
+                         ~id:Id.Check_access_control_files
+                         ~f:(eval_step F.check_access_control_files)
+                         ();
+                       Flow.Step.make
+                         ~id:Id.Check_access_control_repo_config
+                         ~f:(eval_step F.check_access_control_repo_config)
+                         ();
+                       Flow.Step.make
+                         ~id:Id.Check_valid_destination_branch
+                         ~f:(eval_step F.check_valid_destination_branch)
+                         ();
+                       Flow.Step.make
+                         ~id:Id.Check_access_control_plan
+                         ~f:(eval_step F.check_access_control_plan)
+                         ();
+                       Flow.Step.make
+                         ~id:Id.Check_non_empty_matches
+                         ~f:(eval_step F.check_non_empty_matches)
+                         ();
+                       Flow.Step.make
+                         ~id:Id.Check_account_status_expired
+                         ~f:(eval_step F.check_account_status_expired)
+                         ();
+                       Flow.Step.make
+                         ~id:Id.Check_merge_conflict
+                         ~f:(eval_step F.check_merge_conflict)
+                         ();
+                       Flow.Step.make
+                         ~id:Id.Check_conflicting_work_manifests
+                         ~f:(eval_step (F.check_conflicting_work_manifests `Plan))
+                         ();
+                       Flow.Step.make
+                         ~id:Id.Run_work_manifest_iter
+                         ~f:(eval_step F.run_plan_work_manifest_iter)
+                         ();
+                       Flow.Step.make ~id:Id.Checkpoint ~f:(eval_step F.checkpoint) ();
+                       (* Complete any commit checks for dirspaces with no changes in them. *)
+                       Flow.Step.make
+                         ~id:Id.Complete_no_change_dirspaces
+                         ~f:(eval_step F.complete_no_change_dirspaces)
+                         ();
+                     ]))
+               (layers_flow `Plan (gen op_kind_plan_flow))))
       in
       let op_kind_apply_flow op =
         Flow.Flow.(
@@ -6139,37 +6235,7 @@ module Make (S : S) = struct
                     values. *)
                  Flow.Step.make ~id:Id.Checkpoint ~f:(eval_step F.checkpoint) ();
                ])
-            (choice
-               ~id:Id.Test_more_layers_to_run
-               ~f:(F.test_more_layers_to_run op)
-               [
-                 ( Id.More_layers_to_run,
-                   seq
-                     (action
-                        [
-                          Flow.Step.make
-                            ~id:Id.Complete_work_manifest
-                            ~f:(eval_step F.complete_work_manifest)
-                            ();
-                          Flow.Step.make
-                            ~id:Id.Synthesize_pull_request_sync
-                            ~f:(eval_step F.synthesize_pull_request_sync)
-                            ();
-                        ])
-                     op_kind_plan_flow );
-                 ( Id.All_layers_completed,
-                   action
-                     [
-                       Flow.Step.make
-                         ~id:Id.Check_all_dirspaces_applied
-                         ~f:(eval_step (F.check_all_dirspaces_applied op))
-                         ();
-                       Flow.Step.make
-                         ~id:Id.Complete_work_manifest
-                         ~f:(eval_step F.complete_work_manifest)
-                         ();
-                     ] );
-               ]))
+            (layers_flow op (gen op_kind_plan_flow)))
       in
       Flow.Flow.(
         recover
@@ -6187,7 +6253,7 @@ module Make (S : S) = struct
                          ~id:Id.Test_op_kind
                          ~f:F.test_op_kind
                          [
-                           (Id.Op_kind_plan, op_kind_plan_flow);
+                           (Id.Op_kind_plan, gen op_kind_plan_flow);
                            (Id.Op_kind_apply, op_kind_apply_flow `Apply);
                            (Id.Op_kind_apply_autoapprove, op_kind_apply_flow `Apply_autoapprove);
                            (Id.Op_kind_apply_force, op_kind_apply_flow `Apply_force);
