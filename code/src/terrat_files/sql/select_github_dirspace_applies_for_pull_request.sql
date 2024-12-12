@@ -57,7 +57,7 @@ plans_with_no_changes as (
            and results.base_sha = gpr.base_sha
            and (results.sha = gpr.sha or results.sha = gpr.merged_sha)
     left join github_terraform_plans as gtp
-        on gtp.work_manifest = results.id
+        on gtp.work_manifest = results.id and gtp.path = results.path and gtp.workspace = results.workspace
     where results.rn = 1 and results.run_type = 'plan' and results.success and not gtp.has_changes
 ),
 applied_dirspaces as (
