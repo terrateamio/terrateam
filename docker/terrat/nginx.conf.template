@@ -41,10 +41,16 @@ http {
         server_tokens off;
 
         location / {
+
+            set $cspNonce '$request_id';
+            sub_filter_once off;
+            sub_filter_types *;
+            sub_filter 'NGINX_CSP_NONCE' '$cspNonce';
+
             root /usr/local/share/terrat/ui/assets/;
             index index.html index.htm;
             try_files $uri $uri/ /index.html;
-            add_header Content-Security-Policy "default-src 'self' https://eu.posthog.com; img-src 'self' https://avatars.githubusercontent.com; script-src 'self' 'sha256-gTcMaDcBRHtG+Nc7vtSddc6fnAkWc7NY7dgq0ADsLrY=' https://eu.posthog.com https://eu-assets.i.posthog.com https://eu.i.posthog.com; style-src 'self'; object-src 'none'; connect-src 'self' https://eu.i.posthog.com https://eu.posthog.com https://eu-assets.i.posthog.com";
+            add_header Content-Security-Policy "default-src 'self' https://*.posthog.com; img-src 'self' https://avatars.githubusercontent.com; script-src 'self' 'nonce-$cspNonce' https://*.posthog.com; style-src 'self'; object-src 'none'; connect-src 'self' https://*.posthog.com";
         }
 
         location /assets {
