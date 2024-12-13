@@ -56,6 +56,11 @@ Before you begin, ensure you have the following:
    GH_ORG=YOUR_GITHUB_ORG docker-compose up setup
    ```
 
+   If you're using a GitHub Enterprise server, set the `GHE_HOST` environment variable:
+   ```sh
+   GHE_HOST=github.mycompany.com GH_ORG=YOUR_GITHUB_ORG docker-compose up setup
+   ```
+
 3. **Navigate to [http://localhost:3000](http://localhost:3000)** to create your private Terrateam GitHub application. Take note of your application URL for use below.
 
    > ⚠️ **Important:** Do not install your private Terrateam GitHub application until you complete the steps below.
@@ -69,6 +74,11 @@ Before you begin, ensure you have the following:
    [Get your Ngrok auth token here](https://dashboard.ngrok.com/get-started/your-authtoken)
    ```sh
    NGROK_AUTHTOKEN=<YOUR-NGROK-AUTH-TOKEN> docker-compose up server -d
+   ```
+
+   If you're using a GitHub Enterprise server, set the `TERRAT_API_BASE`, `GITHUB_API_BASE_URL`, and `GITHUB_WEB_BASE_URL` environment variables:
+   ```sh
+   TERRAT_API_BASE=https://terrateam.example.com GITHUB_API_BASE_URL=https://api.github.example.com GITHUB_WEB_BASE_URL=https://github.example.com
    ```
    
 7. **Wait for the server to be ready.** The `docker-compose` command will return you to your shell when the Terrateam Server is ready for connections.

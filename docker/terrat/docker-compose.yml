@@ -5,6 +5,7 @@ services:
     image: ghcr.io/terrateamio/terrateam-setup:latest
     environment:
       GH_ORG: "${GH_ORG}"
+      GHE_HOST: "${GHE_HOST}"
     ports:
       - "3000:3000"
     networks:
