@@ -39,7 +39,9 @@ For those who prefer more control, you can deploy Terrateam in your own environm
 Before you begin, ensure you have the following:
 
 - Docker and Docker Compose installed on your machine.
-- An [Ngrok auth token](https://ngrok.com/) for tunneling.
+- A way to expose the Terrateam server to the internet. The server must be able to receive GitHub webhooks and allow the GitHub Action to communicate with it.
+  - **For local testing:** Terrateam supports [Ngrok](https://ngrok.com/) natively through the provided `docker-compose.yml` file. Alternatively, you can use [any tunneling](https://github.com/anderspitman/awesome-tunneling) or reverse proxy tool that fits your needs.
+  - **For production environments:** It is recommended to use a load balancer or another production-grade solution for secure and reliable communication. [Read the docs](https://docs.terrateam.io/self-hosted/overview/) for more details.
 
 #### Terrateam Setup Steps
 
