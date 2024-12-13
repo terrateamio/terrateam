@@ -73,7 +73,7 @@ Before you begin, ensure you have the following:
    
 7. **Wait for the server to be ready.** The `docker-compose` command will return you to your shell when the Terrateam Server is ready for connections.
 
-8. **Install your private Terrateam GitHub application** using the application URL from step 3. You can install Terrateam aginst your entire organization or specific repositories.
+8. **Install your private Terrateam GitHub application** using the application URL from step 3. You can install Terrateam against your entire organization or specific repositories.
 
    > ⚠️ **Important:** Ensure the Terrateam Server is running (see step 7) before installing the GitHub application.
 
