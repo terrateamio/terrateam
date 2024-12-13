@@ -76,9 +76,9 @@ Before you begin, ensure you have the following:
    NGROK_AUTHTOKEN=<YOUR-NGROK-AUTH-TOKEN> docker-compose up server -d
    ```
 
-   If you're using a GitHub Enterprise server, set the `TERRAT_API_BASE`, `GITHUB_API_BASE_URL`, and `GITHUB_WEB_BASE_URL` environment variables:
+   If you're using a GitHub Enterprise server that can communicate directly with the Terrateam server, configure the following environment variables instead:
    ```sh
-   TERRAT_API_BASE=https://terrateam.example.com GITHUB_API_BASE_URL=https://api.github.example.com GITHUB_WEB_BASE_URL=https://github.example.com
+   TERRAT_API_BASE=https://terrateam.example.com GITHUB_API_BASE_URL=https://api.github.example.com GITHUB_WEB_BASE_URL=https://github.example.com docker-compose up server -d
    ```
    
 7. **Wait for the server to be ready.** The `docker-compose` command will return you to your shell when the Terrateam Server is ready for connections.
