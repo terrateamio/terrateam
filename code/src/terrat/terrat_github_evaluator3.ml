@@ -5279,9 +5279,12 @@ struct
                     err);
               Abb.Future.return (Error `Error)
           | Error
-              (`Method_not_allowed
-                 Githubc2_pulls.Merge.Responses.Method_not_allowed.
-                   { primary = Primary.{ message = Some message; _ }; _ } as err) ->
+              (( `Method_not_allowed
+                   Githubc2_pulls.Merge.Responses.Method_not_allowed.
+                     { primary = Primary.{ message = Some message; _ }; _ }
+               | `Conflict
+                   Githubc2_pulls.Merge.Responses.Conflict.
+                     { primary = Primary.{ message = Some message; _ }; _ } ) as err) ->
               Logs.err (fun m ->
                   m
                     "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %a"
