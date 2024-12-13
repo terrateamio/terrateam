@@ -76,7 +76,7 @@ Before you begin, ensure you have the following:
    NGROK_AUTHTOKEN=<YOUR-NGROK-AUTH-TOKEN> docker-compose up server -d
    ```
 
-   If you're using a GitHub Enterprise server that can communicate directly with the Terrateam server, configure the following environment variables instead:
+   If you're using a GitHub Enterprise server that can communicate directly with the Terrateam server, use the following environment variables to start the server:
    ```sh
    TERRAT_API_BASE=https://terrateam.example.com GITHUB_API_BASE_URL=https://api.github.example.com GITHUB_WEB_BASE_URL=https://github.example.com docker-compose up server -d
    ```
