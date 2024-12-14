@@ -89,7 +89,7 @@ Custom commands can be run using the `run` step type.
 |-----|------|-------------|
 | cmd | List | Command to run from the directory that Terrateam is operating against. |
 | run_on | String | Run the command on step `success`, `failure`, or `always`. Default is `success`. |
-| capture_output | Boolean | When set to `true`, command output is included in the GitHub pull request comment on a failure. Sensitive data is not masked. Be aware, this data is sent back to the Terrateam backend for processing. Default is `false`. |
+| capture_output | Boolean | When set to `true`, command output is included in the GitHub pull request comment on a failure. Sensitive data is not masked. Be aware, this data is sent back to the Terrateam server for processing. Default is `false`. |
 | env | Object | Environment variables to set for this execution. Object keys are environment variable names and the value is a string. |
 
 ### OIDC

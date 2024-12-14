@@ -51,7 +51,7 @@ The `run` hook type executes a command from the directory that Terrateam is oper
 |-----|------|-------------|
 | cmd | List | Command to run. |
 | run_on | String | Run the command on step success, failure, or always. Default is success. |
-| capture_output | Boolean | When set to true, command output is included in the GitHub pull request comment on a failure. Sensitive data is not masked. Be aware, this data is sent back to the Terrateam backend for processing. Default is false. |
+| capture_output | Boolean | When set to true, command output is included in the GitHub pull request comment on a failure. Sensitive data is not masked. Be aware, this data is sent back to the Terrateam server for processing. Default is false. |
 
 ### `oidc`
 The `oidc` hook type can be used to initiate an OIDC connection to a cloud provider.
