@@ -11,11 +11,11 @@ Terrateam is a powerful GitHub application that seamlessly integrates with your 
 ## Architecture Overview
 Terrateam consists of two main components:
 <CardGrid>
-  <Card title="Terrateam Backend" icon="server">
-    The backend receives GitHub events and makes decisions based on the event payload. It orchestrates the execution of Terraform operations and manages the state of your infrastructure.
+  <Card title="Terrateam Server" icon="server">
+    The server receives GitHub events and makes decisions based on the event payload. It orchestrates the execution of Terraform operations and manages the state of your infrastructure.
   </Card>
   <Card title="Terrateam Runner" icon="running">
-    The runner is responsible for executing the Terraform jobs created by the backend. It interacts with your GitHub repository, performs the necessary Terraform commands, and reports the results back to the backend.
+    The runner is responsible for executing the Terraform jobs created by the server. It interacts with your GitHub repository, performs the necessary Terraform commands, and reports the results back to the server.
   </Card>
 </CardGrid>
 
@@ -24,15 +24,15 @@ Here's a high-level overview of how Terrateam works:
 <Steps>
 1. Event Trigger
 
-   A user performs an action on GitHub, such as opening a pull request, updating it, or commenting on it. This action triggers an event that is sent to the Terrateam backend.
+   A user performs an action on GitHub, such as opening a pull request, updating it, or commenting on it. This action triggers an event that is sent to the Terrateam server.
 
 1. Event Evaluation
 
-   The Terrateam backend evaluates the received event to determine if a Terraform operation needs to be executed. It analyzes the changes in the pull request and decides whether to trigger a plan or apply operation.
+   The Terrateam server evaluates the received event to determine if a Terraform operation needs to be executed. It analyzes the changes in the pull request and decides whether to trigger a plan or apply operation.
 
 1. Workflow Dispatch
 
-   If the backend determines that a Terraform operation is required, it dispatches a GitHub Actions workflow to the Terrateam runner. The workflow contains the necessary information and instructions for executing the Terraform commands.
+   If the server determines that a Terraform operation is required, it dispatches a GitHub Actions workflow to the Terrateam runner. The workflow contains the necessary information and instructions for executing the Terraform commands.
 
 1. Terraform Execution
 
@@ -40,11 +40,11 @@ Here's a high-level overview of how Terrateam works:
 
 1. Result Reporting
 
-   Once the Terraform execution is complete, the Terrateam runner collects the results and sends them back to the Terrateam backend. The results include the output of the Terraform commands, any changes made to the infrastructure, and the overall status of the operation.
+   Once the Terraform execution is complete, the Terrateam runner collects the results and sends them back to the Terrateam server. The results include the output of the Terraform commands, any changes made to the infrastructure, and the overall status of the operation.
 
 1. Feedback and Notifications
 
-   The Terrateam backend processes the received results and provides feedback to the user. It adds comments to the pull request with the Terraform plan output, updates the status checks, and notifies the relevant stakeholders about the outcome of the operation.
+   The Terrateam server processes the received results and provides feedback to the user. It adds comments to the pull request with the Terraform plan output, updates the status checks, and notifies the relevant stakeholders about the outcome of the operation.
 
 </Steps>
 
@@ -64,22 +64,6 @@ Terrateam offers several key features that enhance your Terraform workflow:
     Terrateam allows you to customize your Terraform workflows using a configuration file. You can define custom plan and apply steps, set up notifications, and integrate with other tools and services to tailor Terrateam to your specific needs.
   </Card>
 </CardGrid>
-
-## Architecture Diagram
-Here's a visual representation of Terrateam's architecture:
-
-![Architecture Diagram](../../assets/how-it-works.png)
-
-In this diagram:
-<Steps>
-1. The GitHub pull request triggers an event (e.g., open, close, comment) that is sent to the Terrateam backend.
-
-1. The Terrateam backend evaluates the event and dispatches a workflow to GitHub Actions if a Terraform operation is required.
-
-1. GitHub Actions (the Terrateam runner) executes the Terraform commands and sends the results back to the Terrateam backend.
-
-1. The Terrateam backend processes the results and provides feedback and notifications to the GitHub pull request.
-</Steps>
 
 ## Hierarchy Of Repositories
 Terrateam organizes your Terraform code using the following hierarchy:
