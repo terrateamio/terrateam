@@ -1,10 +1,11 @@
 module Make
-    (Terratc : Terratc_intf.S
-                 with type Github.Client.t = Terrat_github_evaluator3.S.Client.t
-                  and type Github.Account.t = Terrat_github_evaluator3.S.Account.t
-                  and type Github.Repo.t = Terrat_github_evaluator3.S.Repo.t
-                  and type Github.Remote_repo.t = Terrat_github_evaluator3.S.Remote_repo.t
-                  and type Github.Ref.t = Terrat_github_evaluator3.S.Ref.t) =
+    (Terratc :
+      Terratc_intf.S
+        with type Github.Client.t = Terrat_github_evaluator3.S.Client.t
+         and type Github.Account.t = Terrat_github_evaluator3.S.Account.t
+         and type Github.Repo.t = Terrat_github_evaluator3.S.Repo.t
+         and type Github.Remote_repo.t = Terrat_github_evaluator3.S.Remote_repo.t
+         and type Github.Ref.t = Terrat_github_evaluator3.S.Ref.t) =
 struct
   module Github_evaluator = Terrat_github_evaluator3.Make (Terratc)
   module Github_events = Terrat_ep_github_events3.Make (Terratc)
@@ -38,20 +39,21 @@ struct
         /* Body.decode ~json:Terrat_api_work_manifest.Results.Request_body.of_yojson ())
 
     let work_manifest_access_token base = Brtl_rtng.Route.(work_manifest base / "access-token")
-    let github () = Brtl_rtng.Route.(api () / "github" / "v1")
-    let github_events () = Brtl_rtng.Route.(github () / "events")
-    let github_work_manifest_plan () = work_manifest_plan github
-    let github_work_manifest_initiate () = work_manifest_initiate github
-    let github_work_manifest_results () = work_manifest_results github
-    let github_work_manifest_access_token () = work_manifest_access_token github
+    let github () = Brtl_rtng.Route.(api () / "github")
+    let github_v1 () = Brtl_rtng.Route.(github () / "v1")
+    let github_events () = Brtl_rtng.Route.(github_v1 () / "events")
+    let github_work_manifest_plan () = work_manifest_plan github_v1
+    let github_work_manifest_initiate () = work_manifest_initiate github_v1
+    let github_work_manifest_results () = work_manifest_results github_v1
+    let github_work_manifest_access_token () = work_manifest_access_token github_v1
 
     let github_get_work_manifest_plan () =
       Brtl_rtng.Route.(
-        work_manifest github / "plans" /? Query.string "path" /? Query.string "workspace")
+        work_manifest github_v1 / "plans" /? Query.string "path" /? Query.string "workspace")
 
     let github_callback () =
       Brtl_rtng.Route.(
-        github ()
+        github_v1 ()
         / "callback"
         /? Query.string "code"
         /? Query.(option (ud "installation_id" (CCOption.wrap Int64.of_string))))
@@ -137,6 +139,13 @@ struct
     (* Tasks API *)
     let tasks_api_rt () = Brtl_rtng.Route.(api_v1 () / "tasks")
     let task_rt () = Brtl_rtng.Route.(tasks_api_rt () /% Path.ud Uuidm.of_string)
+
+    (* Tenv *)
+    let tenv_github () = Brtl_rtng.Route.(github () / "tenv")
+
+    let tenv_github_releases () =
+      Brtl_rtng.Route.(
+        tenv_github () /% Path.string /% Path.string / "releases" /? Query.(option (int "page")))
   end
 
   let response_404 ctx =
@@ -206,6 +215,8 @@ struct
               --> Terrat_ep_installations.Repos.Refresh.post config storage );
             (* Infracost *)
             (`POST, Rt.infracost () --> Terrat_ep_infracost.post config storage);
+            (* Tenv *)
+            (`GET, Rt.tenv_github_releases () --> Terrat_ep_tenv.Releases.get config storage);
             (* Server *)
             (`GET, Rt.server_config () --> Terrat_ep_server.Config.get config);
             (* API 404s.  This is needed because for any and only UI endpoint we

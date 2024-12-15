@@ -4076,6 +4076,7 @@ module Make (S : S) = struct
                               repo_config
                               |> Terrat_base_repo_config_v1.to_version_1
                               |> Terrat_repo_config.Version_1.to_yojson;
+                            capabilities = [ "tenv" ];
                           })))
           | Wm.Step.(Apply | Unsafe_apply) ->
               Dv.repo_config ctx state
@@ -4119,6 +4120,7 @@ module Make (S : S) = struct
                               repo_config
                               |> Terrat_base_repo_config_v1.to_version_1
                               |> Terrat_repo_config.Version_1.to_yojson;
+                            capabilities = [ "tenv" ];
                           })))
           | Wm.Step.Index -> assert false
           | Wm.Step.Build_config -> assert false)

@@ -23,7 +23,8 @@ module Results = struct
 
   let url = "/api/github/v1/work-manifests/{work_manifest_id}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -95,7 +96,8 @@ module Initiate = struct
 
   let url = "/api/github/v1/work-manifests/{work_manifest_id}/initiate"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -134,7 +136,8 @@ module Plan_create = struct
 
   let url = "/api/github/v1/work-manifests/{work_manifest_id}/plans"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
