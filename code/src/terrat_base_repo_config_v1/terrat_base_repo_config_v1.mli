@@ -147,7 +147,7 @@ module Access_control : sig
     type t =
       | User of string
       | Team of string
-      | Repo of string
+      | Role of string
       | Any
     [@@deriving show, yojson, eq, ord]
 
@@ -611,8 +611,7 @@ val of_version_1 : Terrat_repo_config.Version_1.t -> (raw t, [> of_version_1_err
 val to_version_1 : 'a t -> Terrat_repo_config.Version_1.t
 val merge_with_default_branch_config : default:'a t -> 'a t -> 'a t
 
-(** Given contextual information, take a configuration and produce a derived
-    configuration. *)
+(** Given contextual information, take a configuration and produce a derived configuration. *)
 val derive : ctx:Ctx.t -> index:Index.t -> file_list:string list -> 'a t -> derived t
 
 (** Accessors*)
