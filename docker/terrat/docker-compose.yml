@@ -45,7 +45,6 @@ services:
       GITHUB_APP_CLIENT_ID: "${GITHUB_APP_CLIENT_ID}"
       GITHUB_APP_ID: "${GITHUB_APP_ID}"
       GITHUB_APP_PEM: "${GITHUB_APP_PEM}"
-      INFRACOST_PRICING_API_ENDPOINT: "https://pricing.api.infracost.io"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 60s

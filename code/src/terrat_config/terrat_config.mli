@@ -11,6 +11,14 @@ module Telemetry : sig
     | Anonymous of Uri.t
 end
 
+module Infracost : sig
+  type t = {
+    api_key : string;
+    endpoint : Uri.t;
+  }
+  [@@deriving show]
+end
+
 val admin_token : t -> string option
 val api_base : t -> string
 val create : unit -> (t, [> err ]) result
@@ -27,8 +35,7 @@ val github_app_pem : t -> Mirage_crypto_pk.Rsa.priv
 val github_app_url : t -> Uri.t
 val github_web_base_url : t -> Uri.t
 val github_webhook_secret : t -> string option
-val infracost_api_key : t -> string
-val infracost_pricing_api_endpoint : t -> Uri.t option
+val infracost : t -> Infracost.t option
 val nginx_status_uri : t -> Uri.t option
 val port : t -> int
 val python_exec : t -> string

@@ -1982,7 +1982,7 @@ module Make (S : S) = struct
 
     let repo_config_system_defaults ctx state =
       let module V1 = Terrat_base_repo_config_v1 in
-      match Terrat_config.infracost_pricing_api_endpoint ctx.Ctx.config with
+      match Terrat_config.infracost ctx.Ctx.config with
       | Some _ -> Abb.Future.return (Ok V1.default)
       | None ->
           let system_defaults =
