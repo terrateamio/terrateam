@@ -192,7 +192,7 @@ module Access_control = struct
     type t =
       | User of string
       | Team of string
-      | Repo of string
+      | Role of string
       | Any
     [@@deriving show, eq, ord]
 
@@ -200,14 +200,16 @@ module Access_control = struct
       match CCString.Split.left ~by:":" m with
       | Some ("user", user) -> Ok (User user)
       | Some ("team", team) -> Ok (Team team)
-      | Some ("repo", repo) -> Ok (Repo repo)
+      | Some (("role" | "repo"), repo) ->
+          (* Support 'repo' for backwards compatibility reasons. *)
+          Ok (Role repo)
       | _ when CCString.equal m "*" -> Ok Any
       | _ -> Error (`Match_parse_err m)
 
     let to_string = function
       | User user -> "user:" ^ user
       | Team team -> "team:" ^ team
-      | Repo repo -> "repo:" ^ repo
+      | Role role -> "role:" ^ role
       | Any -> "*"
 
     let to_yojson t =
@@ -1639,7 +1641,7 @@ let to_version_1_match_list =
   CCList.map (function
     | Access_control.Match.User user -> "user:" ^ user
     | Access_control.Match.Team team -> "team:" ^ team
-    | Access_control.Match.Repo repo -> "repo:" ^ repo
+    | Access_control.Match.Role role -> "role:" ^ role
     | Access_control.Match.Any -> "*")
 
 let to_version_1_access_control_files files =
