@@ -35,7 +35,9 @@ module Sql = struct
   let verify_work_manifest =
     Pgsql_io.Typed_sql.(
       sql
-      // (* id *) Ret.uuid
+      //
+      (* id *)
+      Ret.uuid
       /^ "select id from github_work_manifests where state = 'running' and id = $id"
       /% Var.uuid "id")
 end
@@ -48,7 +50,7 @@ let tls_config =
 
 let header_replace k v h = Cohttp.Header.replace h k v
 
-let post' config storage infracost_uri path ctx =
+let post' config storage api_key infracost_uri path ctx =
   let open Abb.Future.Infix_monad in
   let request = Brtl_ctx.request ctx in
   let request_id = Brtl_ctx.token ctx in
@@ -67,7 +69,7 @@ let post' config storage infracost_uri path ctx =
             request
             |> Brtl_ctx.Request.headers
             |> CCFun.flip Cohttp.Header.remove "host"
-            |> header_replace "x-api-key" (Terrat_config.infracost_api_key config)
+            |> header_replace "x-api-key" api_key
           in
           Logs.debug (fun m ->
               m
@@ -161,14 +163,14 @@ let post' config storage infracost_uri path ctx =
 
 let post config storage path ctx =
   let request_id = Brtl_ctx.token ctx in
-  match Terrat_config.infracost_pricing_api_endpoint config with
-  | Some infracost_uri ->
+  match Terrat_config.infracost config with
+  | Some { Terrat_config.Infracost.endpoint = infracost_uri; api_key } ->
       Logs.info (fun m -> m "INFRACOST : %s : START" request_id);
       Prmths.Counter.inc_one Metrics.requests_total;
       Metrics.DefaultHistogram.time Metrics.duration_seconds (fun () ->
           Prmths.Gauge.track_inprogress Metrics.requests_concurrent (fun () ->
               Abbs_future_combinators.with_finally
-                (fun () -> post' config storage infracost_uri path ctx)
+                (fun () -> post' config storage api_key infracost_uri path ctx)
                 ~finally:(fun () ->
                   Logs.info (fun m -> m "INFRACOST : %s : FINISH" request_id);
                   Abbs_future_combinators.unit)))
