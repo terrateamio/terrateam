@@ -109,7 +109,10 @@ applies_for_merged_pull_requests as (
     inner join github_work_manifest_results as results
         on results.work_manifest = gwm.id
            and results.path = gwmds.path and results.workspace = gwmds.workspace
-    where gwm.run_type in ('apply', 'autoapply', 'unsafe-apply') and results.success
+    left join github_terraform_plans as gtp
+        on gtp.work_manifest = gwm.id and gtp.path = gwmds.path and gtp.workspace = gwmds.workspace
+    where (gwm.run_type in ('apply', 'autoapply', 'unsafe-apply') and results.success)
+          or (gwm.run_type in ('autoplan', 'plan') and gtp.has_changes is not null and not gtp.has_changes)
 ),
 unapplied_dirspaces as (
     select
