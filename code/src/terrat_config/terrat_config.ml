@@ -11,6 +11,14 @@ module Telemetry = struct
   [@@deriving show]
 end
 
+module Infracost = struct
+  type t = {
+    api_key : string; [@opaque]
+    endpoint : Uri.t;
+  }
+  [@@deriving show]
+end
+
 type t = {
   admin_token : string option;
   api_base : string;
@@ -27,8 +35,7 @@ type t = {
   github_app_url : Uri.t;
   github_web_base_url : Uri.t;
   github_webhook_secret : (string[@opaque]) option;
-  infracost_api_key : (string[@opaque]);
-  infracost_pricing_api_endpoint : Uri.t option;
+  infracost : Infracost.t option;
   nginx_status_uri : Uri.t option;
   port : int;
   python_exec : string;
@@ -49,6 +56,15 @@ let of_opt fail = function
   | None -> Error fail
 
 let env_str key = of_opt (`Key_error key) (Sys.getenv_opt key)
+
+let infracost () =
+  let infracost_pricing_api_endpoint =
+    CCOption.map Uri.of_string (Sys.getenv_opt "INFRACOST_PRICING_API_ENDPOINT")
+  in
+  let infracost_api_key = Sys.getenv_opt "SELF_HOSTED_INFRACOST_API_KEY" in
+  match (infracost_pricing_api_endpoint, infracost_api_key) with
+  | Some endpoint, Some api_key -> Some { Infracost.endpoint; api_key }
+  | _, _ -> None
 
 let create () =
   let open CCResult.Infix in
@@ -86,11 +102,7 @@ let create () =
   >>= fun api_base ->
   env_str "TERRAT_PYTHON_EXEC"
   >>= fun python_exec ->
-  let infracost_pricing_api_endpoint =
-    CCOption.map Uri.of_string (Sys.getenv_opt "INFRACOST_PRICING_API_ENDPOINT")
-  in
-  env_str "SELF_HOSTED_INFRACOST_API_KEY"
-  >>= fun infracost_api_key ->
+  let infracost = infracost () in
   let nginx_status_uri = CCOption.map Uri.of_string (Sys.getenv_opt "NGINX_STATUS_URI") in
   let admin_token = Sys.getenv_opt "TERRAT_ADMIN_TOKEN" in
   let telemetry_uri =
@@ -148,8 +160,7 @@ let create () =
       github_app_url;
       github_web_base_url;
       github_webhook_secret;
-      infracost_api_key;
-      infracost_pricing_api_endpoint;
+      infracost;
       nginx_status_uri;
       port;
       python_exec;
@@ -173,8 +184,7 @@ let github_app_pem t = t.github_app_pem
 let github_app_url t = t.github_app_url
 let github_web_base_url t = t.github_web_base_url
 let github_webhook_secret t = t.github_webhook_secret
-let infracost_api_key t = t.infracost_api_key
-let infracost_pricing_api_endpoint t = t.infracost_pricing_api_endpoint
+let infracost t = t.infracost
 let nginx_status_uri t = t.nginx_status_uri
 let port t = t.port
 let python_exec t = t.python_exec
