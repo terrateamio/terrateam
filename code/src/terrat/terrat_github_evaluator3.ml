@@ -5271,7 +5271,7 @@ struct
           >>= function
           | Ok _ as ret -> Abb.Future.return ret
           | Error (#Githubc2_abb.call_err as err) ->
-              Logs.err (fun m ->
+              Logs.info (fun m ->
                   m
                     "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %a"
                     request_id
@@ -5285,7 +5285,7 @@ struct
                | `Conflict
                    Githubc2_pulls.Merge.Responses.Conflict.
                      { primary = Primary.{ message = Some message; _ }; _ } ) as err) ->
-              Logs.err (fun m ->
+              Logs.info (fun m ->
                   m
                     "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %a"
                     request_id
@@ -5293,7 +5293,7 @@ struct
                     err);
               Abb.Future.return (Error (`Merge_err message))
           | Error (#Githubc2_pulls.Merge.Responses.t as err) ->
-              Logs.err (fun m ->
+              Logs.info (fun m ->
                   m
                     "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %a"
                     request_id
