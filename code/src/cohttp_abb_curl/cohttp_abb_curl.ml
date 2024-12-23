@@ -16,8 +16,11 @@ let run_client () =
       print_endline "";
       print_endline body;
       Abb.Future.return ()
-  | `Ok (Error _) ->
-      Printf.printf "failed";
+  | `Ok (Error (#Cohttp_abb.connect_err as err)) ->
+      Printf.printf "%s\n%!" (Cohttp_abb.show_connect_err err);
+      Abb.Future.return ()
+  | `Ok (Error (#Cohttp_abb.request_err as err)) ->
+      Printf.printf "%s\n%!" (Cohttp_abb.show_request_err err);
       Abb.Future.return ()
   | `Timeout ->
       Printf.printf "Timeout\n";

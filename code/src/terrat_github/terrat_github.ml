@@ -211,8 +211,8 @@ let call ?(tries = 3) t req =
     ~f:(fun () -> Githubc2_abb.call t req)
     ~while_:
       (Abbs_future_combinators.finite_tries tries (function
-          | Error _ -> true
-          | Ok resp -> Openapi.Response.status resp >= 500 || is_secondary_rate_limit_error resp))
+        | Error _ -> true
+        | Ok resp -> Openapi.Response.status resp >= 500 || is_secondary_rate_limit_error resp))
     ~betwixt:
       (Abbs_future_combinators.series ~start:1.5 ~step:(( *. ) 1.5) (fun n resp ->
            Prmths.Counter.inc_one Metrics.call_retries_total;
@@ -741,11 +741,6 @@ module Oauth = struct
     ]
   [@@deriving show]
 
-  let tls_config =
-    let cfg = Otls.Tls_config.create () in
-    Otls.Tls_config.insecure_noverifycert cfg;
-    cfg
-
   module Response = struct
     type t = {
       access_token : string;
@@ -783,16 +778,15 @@ module Oauth = struct
            (Uri.to_string (Terrat_config.github_web_base_url config)))
     in
     let body =
-      Cohttp.Body.of_string
-        (Yojson.Safe.to_string
-           (`Assoc
-             [
-               ("client_id", `String (Terrat_config.github_app_client_id config));
-               ("client_secret", `String (Terrat_config.github_app_client_secret config));
-               ("code", `String code);
-             ]))
+      Yojson.Safe.to_string
+        (`Assoc
+           [
+             ("client_id", `String (Terrat_config.github_app_client_id config));
+             ("client_secret", `String (Terrat_config.github_app_client_secret config));
+             ("code", `String code);
+           ])
     in
-    Http.Client.call ~headers ~tls_config ~body `POST uri
+    Http.Client.post ~headers ~body uri
     >>| function
     | Ok (resp, body)
       when Cohttp.Code.is_success (Cohttp.Code.code_of_status (Http.Response.status resp)) -> (
@@ -819,17 +813,16 @@ module Oauth = struct
            (Uri.to_string (Terrat_config.github_web_base_url config)))
     in
     let body =
-      Cohttp.Body.of_string
-        (Yojson.Safe.to_string
-           (`Assoc
-             [
-               ("client_id", `String (Terrat_config.github_app_client_id config));
-               ("client_secret", `String (Terrat_config.github_app_client_secret config));
-               ("grant_type", `String "refresh_token");
-               ("refresh_token", `String refresh_token);
-             ]))
+      Yojson.Safe.to_string
+        (`Assoc
+           [
+             ("client_id", `String (Terrat_config.github_app_client_id config));
+             ("client_secret", `String (Terrat_config.github_app_client_secret config));
+             ("grant_type", `String "refresh_token");
+             ("refresh_token", `String refresh_token);
+           ])
     in
-    Http.Client.call ~headers ~tls_config ~body `POST uri
+    Http.Client.post ~headers ~body uri
     >>| function
     | Ok (resp, body)
       when Cohttp.Code.is_success (Cohttp.Code.code_of_status (Http.Response.status resp)) -> (

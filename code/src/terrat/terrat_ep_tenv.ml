@@ -2,7 +2,7 @@ module Http = Cohttp_abb.Make (Abb)
 
 let github_api_host = Uri.of_string "https://api.github.com"
 let user_agent = "Terrateam"
-let timeout = Duration.(to_f (of_sec 10))
+let timeout = Duration.(to_f (of_sec 30))
 
 module Releases = struct
   module Metrics = struct
@@ -62,8 +62,6 @@ module Releases = struct
         /% Var.uuid "id")
   end
 
-  let tls_config = Otls.Tls_config.create ()
-
   let get' config storage owner repo page_opt work_manifest_id =
     match Ouuid.of_string work_manifest_id with
     | Some work_manifest_id -> (
@@ -94,7 +92,6 @@ module Releases = struct
                           [
                             ("user-agent", user_agent); ("authorization", "Bearer " ^ access_token);
                           ])
-                     ~tls_config
                      `GET
                      (github_api_host
                      |> CCFun.flip Uri.with_path (Printf.sprintf "repos/%s/%s/releases" owner repo)
