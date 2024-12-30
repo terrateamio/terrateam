@@ -173,21 +173,7 @@ ALTER DATABASE terrateam OWNER TO terrateam;
 ```
 
 #### Environment Variables
-Set the following environment variables in the Terrateam server container:
-
-Key|Description|
------|------|
-DB_HOST|Database host|
-DB_NAME|Database name|
-DB_PORT|Database port|
-DB_USER|Database user|
-DB_PASS|Database password|
-GITHUB_APP_ID|Github application id|
-TERRAT_API_BASE|Terrateam public-facing URL including a trailing `/api` e.g. `https://terrateam.example.com/api`|
-GITHUB_APP_CLIENT_ID|GitHub application client id|
-GITHUB_APP_CLIENT_SECRET|GitHub application client secret|
-GITHUB_APP_PEM|GitHub application PEM|
-GITHUB_WEBHOOK_SECRET|GitHub application webhook secret|
+Set the environment variables in the Terrateam server container, see [Environment Variables](#environment-variables-1).
 
 #### Docker Run
 ```sh
@@ -227,6 +213,29 @@ include a trailing `/api/github/v1/events`.
 ## Step 4: Start Using Terrateam
 
 Terrateam is now set up and ready to use with your Terraform and OpenTofu repositories. Navigate to our [Quickstart Guide Step 2](/quickstart-guide#add-the-terrateam-github-actions-workflow-file) for next steps.
+
+## Environment Variables
+Set the following environment variables in the Terrateam server container:
+
+Key|Description|
+-----|------|
+DB_HOST|Database host|
+DB_NAME|Database name|
+DB_PORT|Database port|
+DB_USER|Database user|
+DB_PASS|Database password|
+GITHUB_APP_ID|Github application id|
+TERRAT_API_BASE|Terrateam public-facing URL including a trailing `/api` e.g. `https://terrateam.example.com/api`|
+GITHUB_APP_CLIENT_ID|GitHub application client id|
+GITHUB_APP_CLIENT_SECRET|GitHub application client secret|
+GITHUB_APP_PEM|GitHub application PEM|
+GITHUB_WEBHOOK_SECRET|GitHub application webhook secret|
+HTTP_PROXY|*Optional* URL to proxy to use for HTTP requests.  Example: `https://proxy.local:8080`.  For basic authentication include in URL: `https://<user>:<password>@proxy.local:8080`.  `http` also supported for proxy.  Lowercase for environment variable also supported.|
+HTTPS_PROXY|*Optional* URL to proxy to use for HTTPS requests.  Example: `https://proxy.local:8080`.  For basic authentication include in URL: `https://<user>:<password>@proxy.local:8080`.  `http` also supported for proxy.  Lowercase for environment variable also supported.|
+NO_PROXY|*Optional* Comma separated list of hostnames to not use the a proxy for requests.  Lowercase for environment variable also supported.|
+NO_VERIFY_TLS_CERT|*Optional* Comma separated list of hostnames to not verify TLS Certicate.  Useful if self hosting an HTTPS endpoint.  Lowercase for environment variable also supported.|
+NO_VERIFY_TLS_NAME|*Optional* Comma separated list of hostnames to not verify the TLS name of. Useful if self hosting an HTTPS endpoint.  Lowercase for environment variable also supported.|
+
 
 ## Troubleshooting
 If you encounter any issues during the installation process, refer to the following troubleshooting tips:
