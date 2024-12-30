@@ -3,11 +3,6 @@ module Http = Cohttp_abb.Make (Abb)
 let max_redirect_retries = 10
 let base_url = Uri.of_string "https://api.github.com/"
 
-let tls_config =
-  let cfg = Otls.Tls_config.create () in
-  Otls.Tls_config.insecure_noverifycert cfg;
-  cfg
-
 module Io = struct
   type 'a t = 'a Abb.Future.t
   type err = Cohttp_abb.request_err
@@ -25,8 +20,7 @@ module Io = struct
       | `Post -> `POST
     in
     let headers' = Cohttp.Header.of_list headers in
-    let body' = CCOption.map Cohttp.Body.of_string body in
-    Http.Client.call ?body:body' ~tls_config ~headers:headers' meth' uri
+    Http.Client.call ?body ~headers:headers' meth' uri
     >>= function
     | Ok (resp, body')
       when (resp.Http.Response.status = `See_other

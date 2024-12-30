@@ -42,12 +42,6 @@ module Sql = struct
       /% Var.uuid "id")
 end
 
-let tls_config =
-  let cfg = Otls.Tls_config.create () in
-  Otls.Tls_config.insecure_noverifycert cfg;
-  Otls.Tls_config.insecure_noverifyname cfg;
-  cfg
-
 let header_replace k v h = Cohttp.Header.replace h k v
 
 let post' config storage api_key infracost_uri path ctx =
@@ -79,7 +73,7 @@ let post' config storage api_key infracost_uri path ctx =
                 (Uri.to_string uri));
           Abbs_future_combinators.timeout
             ~timeout:(Abb.Sys.sleep 30.0)
-            (Http.Client.call ~tls_config ~headers ~body:(Http.Body.of_string body) `POST uri)
+            (Http.Client.post ~headers ~body uri)
           >>= function
           | `Ok (Ok (resp, body)) when Cohttp.Response.status resp = `OK ->
               Logs.debug (fun m ->

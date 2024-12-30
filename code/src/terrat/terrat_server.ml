@@ -146,6 +146,10 @@ struct
     let tenv_github_releases () =
       Brtl_rtng.Route.(
         tenv_github () /% Path.string /% Path.string / "releases" /? Query.(option (int "page")))
+
+    let tenv_github_download () =
+      Brtl_rtng.Route.(
+        tenv_github () /% Path.string /% Path.string / "releases" / "download" /% Path.any)
   end
 
   let response_404 ctx =
@@ -216,6 +220,7 @@ struct
             (* Infracost *)
             (`POST, Rt.infracost () --> Terrat_ep_infracost.post config storage);
             (* Tenv *)
+            (`GET, Rt.tenv_github_download () --> Terrat_ep_tenv.Download.get config storage);
             (`GET, Rt.tenv_github_releases () --> Terrat_ep_tenv.Releases.get config storage);
             (* Server *)
             (`GET, Rt.server_config () --> Terrat_ep_server.Config.get config);
