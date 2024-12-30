@@ -1,6 +1,7 @@
 module Http = Cohttp_abb.Make (Abb)
 
 let github_api_host = Uri.of_string "https://api.github.com"
+let github_host = Uri.of_string "https://github.com"
 let user_agent = "Terrateam"
 let timeout = Duration.(to_f (of_sec 30))
 
@@ -86,13 +87,12 @@ module Releases = struct
                      config
                      (CCInt64.to_int installation_id)
                    >>= fun access_token ->
-                   Http.Client.call
+                   Http.Client.get
                      ~headers:
                        (Cohttp.Header.of_list
                           [
                             ("user-agent", user_agent); ("authorization", "Bearer " ^ access_token);
                           ])
-                     `GET
                      (github_api_host
                      |> CCFun.flip Uri.with_path (Printf.sprintf "repos/%s/%s/releases" owner repo)
                      |> CCFun.flip
@@ -154,4 +154,36 @@ module Releases = struct
         Logs.err (fun m ->
             m "EP_TENV : %s : %a" (Brtl_ctx.token ctx) Brtl_permissions.pp_get_auth_err err);
         Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx)
+end
+
+module Download = struct
+  let get config storage owner repo path ctx =
+    let open Abb.Future.Infix_monad in
+    let headers =
+      Cohttp.Header.to_list
+        (Cohttp.Header.remove (Cohttp.Request.headers (Brtl_ctx.request ctx)) "host")
+    in
+    Abbs_future_combinators.timeout
+      ~timeout:(Abb.Sys.sleep timeout)
+      (Http.Client.get
+         ~headers:(Cohttp.Header.of_list (("user-agent", user_agent) :: headers))
+         (github_host
+         |> CCFun.flip Uri.with_path (Printf.sprintf "%s/%s/releases/download/%s" owner repo path)))
+    >>= function
+    | `Ok (Ok (response, body)) ->
+        Abb.Future.return
+          (Brtl_ctx.set_response
+             (Brtl_rspnc.create
+                ~headers:(Http.Response.headers response)
+                ~status:(Http.Response.status response)
+                body)
+             ctx)
+    | `Ok (Error (#Cohttp_abb.request_err as err)) ->
+        Logs.err (fun m -> m "EP_TENV : %s : %a" (Brtl_ctx.token ctx) Cohttp_abb.pp_request_err err);
+        Abb.Future.return
+          (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+    | `Timeout ->
+        Logs.err (fun m -> m "EP_TENV : %s : TIMEOUT" (Brtl_ctx.token ctx));
+        Abb.Future.return
+          (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
 end
