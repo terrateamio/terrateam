@@ -3623,6 +3623,242 @@ module Make (S : S) = struct
           (missing_apply_check @ missing_commit_checks)
       else Abb.Future.return (Ok ())
 
+    let run_drift_plan_op_work_manifest_iter_create ctx state =
+      let module Wm = Terrat_work_manifest3 in
+      let open Abbs_future_combinators.Infix_result_monad in
+      Abbs_future_combinators.Infix_result_app.(
+        (fun repo_config base_ref branch_ref working_branch_ref matches ->
+          (repo_config, base_ref, branch_ref, working_branch_ref, matches))
+        <$> Dv.repo_config ctx state
+        <*> Dv.base_ref ctx state
+        <*> Dv.branch_ref ctx state
+        <*> Dv.working_branch_ref ctx state
+        <*> Dv.matches ctx state `Plan)
+      >>= fun (repo_config, base_ref, branch_ref, working_branch_ref, matches) ->
+      let all_matches = CCList.flatten matches.Dv.Matches.all_matches in
+      Abb.Future.return (dirspaceflows_of_changes repo_config all_matches)
+      >>= fun all_dirspaceflows ->
+      store_dirspaceflows
+        ~base_ref
+        ~branch_ref
+        state.State.request_id
+        ctx.Ctx.storage
+        (Event.repo state.State.event)
+        all_dirspaceflows
+      >>= fun () ->
+      let dirspaceflows_by_environment = partition_by_environment all_dirspaceflows in
+      Abbs_future_combinators.List_result.map
+        ~f:(fun (environment, dirspaceflows) ->
+          let changes =
+            let module Dsf = Terrat_change.Dirspaceflow in
+            CCList.map
+              (fun ({ Dsf.workflow; _ } as dsf) ->
+                {
+                  dsf with
+                  Dsf.workflow = CCOption.map (fun Dsf.Workflow.{ idx; _ } -> idx) workflow;
+                })
+              dirspaceflows
+          in
+          let environment =
+            match environment with
+            | "" -> None
+            | env -> Some env
+          in
+          Dv.target ctx state
+          >>= fun target ->
+          Dv.tag_query ctx state
+          >>= fun tag_query ->
+          let work_manifest =
+            make_work_manifest
+              state
+              base_ref
+              working_branch_ref
+              changes
+              []
+              environment
+              tag_query
+              target
+              `Plan
+          in
+          create_work_manifest state.State.request_id ctx.Ctx.storage work_manifest
+          >>= fun work_manifest ->
+          Logs.info (fun m ->
+              m
+                "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : \
+                 env=%s"
+                state.State.request_id
+                Uuidm.pp
+                work_manifest.Wm.id
+                (S.Ref.to_string base_ref)
+                (S.Ref.to_string branch_ref)
+                (CCOption.get_or ~default:"" work_manifest.Wm.environment));
+          run_interactive ctx state (fun () ->
+              Dv.client ctx state
+              >>= fun client ->
+              create_op_commit_checks
+                state.State.request_id
+                ctx.Ctx.config
+                client
+                (Event.account state.State.event)
+                (Event.repo state.State.event)
+                branch_ref
+                work_manifest
+                "Queued"
+                Terrat_commit_check.Status.Queued
+              >>= fun () ->
+              maybe_create_pending_apply_commit_checks
+                state.State.request_id
+                ctx.Ctx.config
+                client
+                (Event.account state.State.event)
+                (Event.repo state.State.event)
+                branch_ref
+                (CCList.flatten matches.Dv.Matches.all_matches)
+                (Terrat_base_repo_config_v1.apply_requirements repo_config))
+          >>= fun () -> Abb.Future.return (Ok work_manifest))
+        (Terrat_data.String_map.to_list dirspaceflows_by_environment)
+
+    let run_drift_plan_op_work_manifest_iter_update ctx state work_manifest =
+      let module Wm = Terrat_work_manifest3 in
+      let open Abbs_future_combinators.Infix_result_monad in
+      Abbs_future_combinators.Infix_result_app.(
+        (fun repo_config base_ref branch_ref working_branch_ref matches ->
+          (repo_config, base_ref, branch_ref, working_branch_ref, matches))
+        <$> Dv.repo_config ctx state
+        <*> Dv.base_ref ctx state
+        <*> Dv.branch_ref ctx state
+        <*> Dv.working_branch_ref ctx state
+        <*> Dv.matches ctx state `Plan)
+      >>= fun (repo_config, base_ref, branch_ref, working_branch_ref, matches) ->
+      let all_matches = CCList.flatten matches.Dv.Matches.all_matches in
+      Abb.Future.return (dirspaceflows_of_changes repo_config all_matches)
+      >>= fun all_dirspaceflows ->
+      store_dirspaceflows
+        ~base_ref
+        ~branch_ref
+        state.State.request_id
+        ctx.Ctx.storage
+        (Event.repo state.State.event)
+        all_dirspaceflows
+      >>= fun () ->
+      let dirspaceflows_by_environment = partition_by_environment all_dirspaceflows in
+      Abbs_future_combinators.List_result.map
+        ~f:(fun (environment, dirspaceflows) ->
+          let changes =
+            let module Dsf = Terrat_change.Dirspaceflow in
+            CCList.map
+              (fun ({ Dsf.workflow; _ } as dsf) ->
+                {
+                  dsf with
+                  Dsf.workflow = CCOption.map (fun Dsf.Workflow.{ idx; _ } -> idx) workflow;
+                })
+              dirspaceflows
+          in
+          let environment =
+            match environment with
+            | "" -> None
+            | env -> Some env
+          in
+          if CCOption.equal CCString.equal work_manifest.Wm.environment environment then
+            let work_manifest =
+              {
+                work_manifest with
+                Wm.changes;
+                denied_dirspaces = [];
+                steps = work_manifest.Wm.steps @ [ Wm.Step.Plan ];
+              }
+            in
+            update_work_manifest_changes
+              state.State.request_id
+              ctx.Ctx.storage
+              work_manifest.Wm.id
+              changes
+            >>= fun () ->
+            update_work_manifest_steps
+              state.State.request_id
+              ctx.Ctx.storage
+              work_manifest.Wm.id
+              work_manifest.Wm.steps
+            >>= fun () ->
+            run_interactive ctx state (fun () ->
+                Dv.client ctx state
+                >>= fun client ->
+                create_op_commit_checks
+                  state.State.request_id
+                  ctx.Ctx.config
+                  client
+                  (Event.account state.State.event)
+                  (Event.repo state.State.event)
+                  branch_ref
+                  work_manifest
+                  "Queued"
+                  Terrat_commit_check.Status.Queued
+                >>= fun () ->
+                maybe_create_pending_apply_commit_checks
+                  state.State.request_id
+                  ctx.Ctx.config
+                  client
+                  (Event.account state.State.event)
+                  (Event.repo state.State.event)
+                  branch_ref
+                  (CCList.flatten matches.Dv.Matches.all_matches)
+                  (Terrat_base_repo_config_v1.apply_requirements repo_config))
+            >>= fun () -> Abb.Future.return (Ok work_manifest)
+          else
+            Dv.target ctx state
+            >>= fun target ->
+            Dv.tag_query ctx state
+            >>= fun tag_query ->
+            let work_manifest =
+              make_work_manifest
+                state
+                base_ref
+                working_branch_ref
+                changes
+                []
+                environment
+                tag_query
+                target
+                `Plan
+            in
+            create_work_manifest state.State.request_id ctx.Ctx.storage work_manifest
+            >>= fun work_manifest ->
+            Logs.info (fun m ->
+                m
+                  "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : \
+                   env=%s"
+                  state.State.request_id
+                  Uuidm.pp
+                  work_manifest.Wm.id
+                  (S.Ref.to_string base_ref)
+                  (S.Ref.to_string branch_ref)
+                  (CCOption.get_or ~default:"" work_manifest.Wm.environment));
+            run_interactive ctx state (fun () ->
+                Dv.client ctx state
+                >>= fun client ->
+                create_op_commit_checks
+                  state.State.request_id
+                  ctx.Ctx.config
+                  client
+                  (Event.account state.State.event)
+                  (Event.repo state.State.event)
+                  branch_ref
+                  work_manifest
+                  "Queued"
+                  Terrat_commit_check.Status.Queued
+                >>= fun () ->
+                maybe_create_pending_apply_commit_checks
+                  state.State.request_id
+                  ctx.Ctx.config
+                  client
+                  (Event.account state.State.event)
+                  (Event.repo state.State.event)
+                  branch_ref
+                  (CCList.flatten matches.Dv.Matches.all_matches)
+                  (Terrat_base_repo_config_v1.apply_requirements repo_config))
+            >>= fun () -> Abb.Future.return (Ok work_manifest))
+        (Terrat_data.String_map.to_list dirspaceflows_by_environment)
+
     let run_op_work_manifest_iter_create op ctx state =
       let module Wm = Terrat_work_manifest3 in
       let open Abbs_future_combinators.Infix_result_monad in
@@ -5264,6 +5500,21 @@ module Make (S : S) = struct
              ~fetch:H.run_op_work_manifest_plan_iter_fetch
              ~fallthrough:H.log_state_err_iter)
 
+    let run_drift_plan_work_manifest_iter =
+      H.eval_work_manifest_iter
+        ~name:"DRIFT_PLAN"
+        ~create:H.run_drift_plan_op_work_manifest_iter_create
+        ~update:H.run_drift_plan_op_work_manifest_iter_update
+        ~run_success:(H.run_op_work_manifest_iter_run_success `Plan)
+        ~run_failure:H.run_op_work_manifest_iter_run_failure
+        ~initiate:H.run_op_work_manifest_iter_initiate
+        ~result:(H.run_op_work_manifest_iter_result `Plan)
+        ~fallthrough:
+          (H.eval_plan_work_manifest_iter
+             ~store:H.run_op_work_manifest_plan_iter_store
+             ~fetch:H.run_op_work_manifest_plan_iter_fetch
+             ~fallthrough:H.log_state_err_iter)
+
     let check_access_control_apply op ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
       Dv.apply_requirements ctx state
@@ -5560,7 +5811,7 @@ module Make (S : S) = struct
             state.State.work_manifest_id;
           Abb.Future.return (Error `Silent_failure)
 
-    let run_drift_work_manifest_iter = run_plan_work_manifest_iter
+    let run_drift_work_manifest_iter = run_drift_plan_work_manifest_iter
     let run_drift_reconcile_work_manifest_iter = run_apply_work_manifest_iter `Apply
 
     let check_reconcile ctx state =
