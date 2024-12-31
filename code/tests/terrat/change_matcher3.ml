@@ -2144,7 +2144,7 @@ let test_files_in_same_dir_match_multiple_dirs =
       let changes = CCList.flatten (Terrat_change_match3.match_diff_list config diff) in
       assert (CCList.length changes = 1);
       match changes with
-      | [ ({ Terrat_change_match3.Dirspace_config.tags; _ } as config) ] ->
+      | [ { Terrat_change_match3.Dirspace_config.tags; _ } ] ->
           assert (Terrat_tag_set.mem "dir1" tags)
       | _ -> assert false)
 
