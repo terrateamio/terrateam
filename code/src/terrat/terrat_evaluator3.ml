@@ -6431,7 +6431,18 @@ module Make (S : S) = struct
                          ~f:(eval_step F.complete_no_change_dirspaces)
                          ();
                      ]))
-               (layers_flow `Plan (gen op_kind_plan_flow))))
+               (* (layers_flow `Plan (gen op_kind_plan_flow))) *)
+               (action
+                  [
+                    Flow.Step.make
+                      ~id:Id.Check_all_dirspaces_applied
+                      ~f:(eval_step (F.check_all_dirspaces_applied `Plan))
+                      ();
+                    Flow.Step.make
+                      ~id:Id.Complete_work_manifest
+                      ~f:(eval_step F.complete_work_manifest)
+                      ();
+                  ])))
       in
       let op_kind_apply_flow op =
         Flow.Flow.(
