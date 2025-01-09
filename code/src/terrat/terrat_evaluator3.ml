@@ -6125,9 +6125,50 @@ module Make (S : S) = struct
       let open Abbs_future_combinators.Infix_result_monad in
       Dv.matches ctx state op
       >>= fun matches ->
-      if CCList.is_empty matches.Dv.Matches.all_unapplied_matches then
-        Abb.Future.return (Ok (Id.All_layers_completed, state))
-      else Abb.Future.return (Ok (Id.More_layers_to_run, state))
+      match matches.Dv.Matches.all_unapplied_matches with
+      | [] -> Abb.Future.return (Ok (Id.All_layers_completed, state))
+      | unapplied_matches :: _ -> (
+          let module Dc = Terrat_change_match3.Dirspace_config in
+          let unapplied_dirspaces =
+            Terrat_data.Dirspace_set.of_list
+              (CCList.map (fun { Dc.dirspace; _ } -> dirspace) unapplied_matches)
+          in
+          match state.State.work_manifest_id with
+          | Some work_manifest_id -> (
+              let module Wm = Terrat_work_manifest3 in
+              query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
+              >>= function
+              | Some { Wm.changes; _ } ->
+                  let module Dsf = Terrat_change.Dirspaceflow in
+                  let changed_dirspaces =
+                    Terrat_data.Dirspace_set.of_list (CCList.map Dsf.to_dirspace changes)
+                  in
+                  if Terrat_data.Dirspace_set.disjoint changed_dirspaces unapplied_dirspaces then
+                    (* If there is no overlap between the dirspaces that were
+                       just ran as part of the work manifest and the remaining
+                       unapplied dirspaces, that means we can safely try to run
+                       the remaining layers.  If there is overlap then it means
+                       we should not try to run another iteration because we'll
+                       just operate on the same dirspaces we just did.  This
+                       doesn't necessarily mean something went wrong.  For
+                       example, planning a change means we'd come to this test
+                       and if the plans had changes, they would be unapplied but
+                       we would have just planned them so we would not want to
+                       try to do another iteration of planning.  But we could
+                       also get in to this situation through some unforseen
+                       series of operations where we are not correctly
+                       determining which changes have been applied (for example
+                       things being merged in an order we did not anticipate) in
+                       which case this also prevents us from getting into an
+                       infinite loop. *)
+                    Abb.Future.return (Ok (Id.More_layers_to_run, state))
+                  else
+                    (* This does not mean that all layers are completely
+                       finished, but it means all layers are done as far as they
+                       can be and there are no more layers that can be run. *)
+                    Abb.Future.return (Ok (Id.All_layers_completed, state))
+              | None -> assert false)
+          | None -> Abb.Future.return (Ok (Id.More_layers_to_run, state)))
 
     let synthesize_pull_request_sync ctx state =
       let account = Event.account state.State.event in
@@ -6431,18 +6472,7 @@ module Make (S : S) = struct
                          ~f:(eval_step F.complete_no_change_dirspaces)
                          ();
                      ]))
-               (* (layers_flow `Plan (gen op_kind_plan_flow))) *)
-               (action
-                  [
-                    Flow.Step.make
-                      ~id:Id.Check_all_dirspaces_applied
-                      ~f:(eval_step (F.check_all_dirspaces_applied `Plan))
-                      ();
-                    Flow.Step.make
-                      ~id:Id.Complete_work_manifest
-                      ~f:(eval_step F.complete_work_manifest)
-                      ();
-                  ])))
+               (layers_flow `Plan (gen op_kind_plan_flow))))
       in
       let op_kind_apply_flow op =
         Flow.Flow.(
