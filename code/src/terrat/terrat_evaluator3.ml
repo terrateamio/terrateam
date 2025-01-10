@@ -982,8 +982,9 @@ module Make (S : S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : QUERY_APPLIED_DIRSPACES : pull_number=%d : time=%f"
+              "EVALUATOR : %s : QUERY_APPLIED_DIRSPACES : repo=%s : pull_number=%d : time=%f"
               request_id
+              (S.Repo.to_string (S.Pull_request.repo pull_request))
               (S.Pull_request.id pull_request)
               time))
       (fun () -> S.query_applied_dirspaces ~request_id db pull_request)

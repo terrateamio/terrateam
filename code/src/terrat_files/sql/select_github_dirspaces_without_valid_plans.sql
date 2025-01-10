@@ -5,6 +5,7 @@ latest_unlocks as (
         pull_number,
         max(unlocked_at) as unlocked_at
     from github_pull_request_unlocks
+    where repository = $repository and pull_number = $pull_number
     group by repository, pull_number
 ),
 latest_drift_unlocks as (
@@ -12,10 +13,24 @@ latest_drift_unlocks as (
         repository,
         max(unlocked_at) as unlocked_at
     from github_drift_unlocks
+    where repository = $repository
     group by repository
 ),
 dirspaces as (
     select dir, workspace from unnest($dirs, $workspaces) as v(dir, workspace)
+),
+--- In the case that the pull request being evaluated here is merged, we want to
+--- use the SHA information of the most recently merged pull request (because
+--- the work manifest will run against the latest sha).
+latest_merged_pull_request as (
+    select
+        repository,
+        pull_number,
+        merged_sha
+    from github_pull_requests as gpr
+    where state = 'merged' and repository = $repository
+    order by merged_at desc
+    limit 1
 ),
 all_completed_runs as (
     select
@@ -36,8 +51,10 @@ all_completed_runs as (
     from github_pull_requests as gpr
     left join latest_unlocks
         on latest_unlocks.repository = gpr.repository and latest_unlocks.pull_number = gpr.pull_number
+    left join latest_merged_pull_request as lmpr
+        on gpr.repository = lmpr.repository
     inner join github_work_manifests as gwm
-        on gpr.base_sha = gwm.base_sha and (gpr.sha = gwm.sha or (gpr.state = 'merged' and gpr.merged_sha = gwm.sha))
+        on gpr.base_sha = gwm.base_sha and (gpr.sha = gwm.sha or (gpr.state = 'merged' and lmpr.merged_sha = gwm.sha))
     inner join github_work_manifest_dirspaceflows as gwmds
         on gwmds.work_manifest = gwm.id
     left join github_work_manifest_results as gwmr
