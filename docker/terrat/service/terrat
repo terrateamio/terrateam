@@ -16,6 +16,12 @@ REQUIRED_ENV_KEYS = ['GITHUB_APP_PEM']
 
 
 def setup_environment():
+    if os.getenv('SELF_SIGNED_CERT'):
+        cert_path = '/usr/local/share/ca-certificates/selfsigned.crt'
+        with open(cert_path, 'w') as cert_file:
+            cert_file.write(os.getenv('SELF_SIGNED_CERT'))
+        subprocess.check_call(['update-ca-certificates'])
+        print(f"Self-signed certificate installed to {cert_path}")
     os.environ['GITHUB_APP_PEM'] = os.environ['GITHUB_APP_PEM'].replace('\\n', '\n')
     os.environ['TERRAT_PYTHON_EXEC'] = '/usr/bin/python3'
     os.environ['OCAMLRUNPARAM'] = 'b'
