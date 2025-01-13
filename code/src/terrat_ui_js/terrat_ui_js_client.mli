@@ -62,6 +62,7 @@ val work_manifest_outputs :
   ?page:string list ->
   ?limit:int ->
   ?q:string ->
+  ?lite:bool ->
   installation_id:string ->
   work_manifest_id:string ->
   t ->

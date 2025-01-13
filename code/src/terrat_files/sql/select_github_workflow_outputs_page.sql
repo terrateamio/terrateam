@@ -4,7 +4,7 @@ q as (
       gwso.created_at as created_at,
       gwso.idx as idx,
       gwso.ignore_errors as ignore_errors,
-      gwso.payload as payload,
+      (case when $lite then null else gwso.payload end) as payload,
       gwso.scope as scope,
       gwso.step as step,
       (case

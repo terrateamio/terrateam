@@ -40,21 +40,37 @@ module Work_manifests = struct
       let select_outputs where =
         Pgsql_io.Typed_sql.(
           sql
-          // (* created_at *) Ret.text
-          // (* idx *) Ret.smallint
-          // (* ignore_errors *) Ret.boolean
-          // (* payload *) Ret.ud' payload
-          // (* scope *) Ret.ud' scope
-          // (* step *) Ret.text
-          // (* status *) Ret.text
+          //
+          (* created_at *)
+          Ret.text
+          //
+          (* idx *)
+          Ret.smallint
+          //
+          (* ignore_errors *)
+          Ret.boolean
+          //
+          (* payload *)
+          Ret.(option (ud' payload))
+          //
+          (* scope *)
+          Ret.ud' scope
+          //
+          (* step *)
+          Ret.text
+          //
+          (* status *)
+          Ret.text
           /^ replace_where (read "select_github_workflow_outputs_page.sql") where
           /% Var.uuid "user"
           /% Var.bigint "installation_id"
           /% Var.uuid "work_manifest_id"
           /% Var.(str_array (text "strings"))
           /% Var.(array (bigint "bigints"))
+          /% Var.(array (integer "ints"))
           /% Var.(str_array (json "json"))
-          /% Var.option (Var.smallint "prev_idx"))
+          /% Var.option (Var.smallint "prev_idx")
+          /% Var.boolean "lite")
     end
 
     let tag_map =
@@ -62,6 +78,7 @@ module Work_manifests = struct
         [
           ("dir", (Json_obj "dir", "scope"));
           ("flow", (Json_obj "flow", "scope"));
+          ("idx", (Int, "idx"));
           ("ignore_errors", (Bool, "ignore_errors"));
           ("scope", (Json_obj "type", "scope"));
           ("state", (String, "state"));
@@ -83,6 +100,7 @@ module Work_manifests = struct
         storage : Terrat_storage.t;
         user : Uuidm.t;
         work_manifest_id : Uuidm.t;
+        lite : bool;
       }
 
       type t = T.t Pgsql_pagination.t
@@ -121,8 +139,10 @@ module Work_manifests = struct
                   query.work_manifest_id
                   (Terrat_sql_of_tag_query.strings q)
                   (Terrat_sql_of_tag_query.bigints q)
+                  (Terrat_sql_of_tag_query.ints q)
                   (Terrat_sql_of_tag_query.json q)
-                  idx))
+                  idx
+                  query.lite))
 
       let next ?cursor query = run_query ?cursor query Pgsql_pagination.next
       let prev ?cursor query = run_query ?cursor query Pgsql_pagination.prev
@@ -162,7 +182,7 @@ module Work_manifests = struct
 
     module Paginate = Brtl_ep_paginate.Make (Page)
 
-    let get config storage installation_id work_manifest_id query timezone page limit =
+    let get config storage installation_id work_manifest_id query timezone page limit lite =
       let module Bad_request =
         Terrat_api_installations.Get_work_manifest_outputs.Responses.Bad_request
       in
@@ -186,6 +206,7 @@ module Work_manifests = struct
                       storage;
                       user = Terrat_user.id user;
                       work_manifest_id;
+                      lite;
                     }
                   in
                   Paginate.run ?page ~page_param:"page" query ctx
@@ -231,6 +252,7 @@ module Work_manifests = struct
                   storage;
                   user = Terrat_user.id user;
                   work_manifest_id;
+                  lite;
                 }
               in
               Paginate.run ?page ~page_param:"page" query ctx
@@ -268,25 +290,63 @@ module Work_manifests = struct
     let select_work_manifests where =
       Pgsql_io.Typed_sql.(
         sql
-        // (* id *) Ret.uuid
-        // (* base_hash *) Ret.text
-        // (* branch_ref *) Ret.text
-        // (* completed_at *) Ret.(option text)
-        // (* created_at *) Ret.text
-        // (* run_type *) Ret.ud' Terrat_work_manifest3.Step.of_string
-        // (* state *) Ret.ud' Terrat_work_manifest3.State.of_string
-        // (* tag_query *) Ret.ud' CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
-        // (* pull_number *) Ret.(option bigint)
-        // (* base_branch *) Ret.text
-        // (* owner *) Ret.text
-        // (* repo *) Ret.text
-        // (* run_kind *) Ret.text
-        // (* dirspaces *) Ret.(option (ud' dirspaces))
-        // (* pull_request_title *) Ret.(option text)
-        // (* branch *) Ret.text
-        // (* username *) Ret.(option text)
-        // (* run_id *) Ret.(option text)
-        // (* environment *) Ret.(option text)
+        //
+        (* id *)
+        Ret.uuid
+        //
+        (* base_hash *)
+        Ret.text
+        //
+        (* branch_ref *)
+        Ret.text
+        //
+        (* completed_at *)
+        Ret.(option text)
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* run_type *)
+        Ret.ud' Terrat_work_manifest3.Step.of_string
+        //
+        (* state *)
+        Ret.ud' Terrat_work_manifest3.State.of_string
+        //
+        (* tag_query *)
+        Ret.ud' CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
+        //
+        (* pull_number *)
+        Ret.(option bigint)
+        //
+        (* base_branch *)
+        Ret.text
+        //
+        (* owner *)
+        Ret.text
+        //
+        (* repo *)
+        Ret.text
+        //
+        (* run_kind *)
+        Ret.text
+        //
+        (* dirspaces *)
+        Ret.(option (ud' dirspaces))
+        //
+        (* pull_request_title *)
+        Ret.(option text)
+        //
+        (* branch *)
+        Ret.text
+        //
+        (* username *)
+        Ret.(option text)
+        //
+        (* run_id *)
+        Ret.(option text)
+        //
+        (* environment *)
+        Ret.(option text)
         /^ replace_where (read "select_github_work_manifests_page.sql") where
         /% Var.uuid "user"
         /% Var.bigint "installation_id"
@@ -558,26 +618,66 @@ module Dirspaces = struct
     let select_dirspaces where =
       Pgsql_io.Typed_sql.(
         sql
-        // (* id *) Ret.uuid
-        // (* dir *) Ret.text
-        // (* workspace *) Ret.text
-        // (* base_ref *) Ret.text
-        // (* branch_ref *) Ret.text
-        // (* completed_at *) Ret.(option text)
-        // (* created_at *) Ret.text
-        // (* run_type *) Ret.ud' Terrat_work_manifest3.Step.of_string
-        // (* state *) Ret.text
-        // (* tag_query *) Ret.ud' CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
-        // (* pull_number *) Ret.(option bigint)
-        // (* base_branch *) Ret.text
-        // (* owner *) Ret.text
-        // (* repo *) Ret.text
-        // (* run_kind *) Ret.text
-        // (* pull_request_title *) Ret.(option text)
-        // (* branch *) Ret.text
-        // (* username *) Ret.(option text)
-        // (* run_id *) Ret.(option text)
-        // (* environment *) Ret.(option text)
+        //
+        (* id *)
+        Ret.uuid
+        //
+        (* dir *)
+        Ret.text
+        //
+        (* workspace *)
+        Ret.text
+        //
+        (* base_ref *)
+        Ret.text
+        //
+        (* branch_ref *)
+        Ret.text
+        //
+        (* completed_at *)
+        Ret.(option text)
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* run_type *)
+        Ret.ud' Terrat_work_manifest3.Step.of_string
+        //
+        (* state *)
+        Ret.text
+        //
+        (* tag_query *)
+        Ret.ud' CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
+        //
+        (* pull_number *)
+        Ret.(option bigint)
+        //
+        (* base_branch *)
+        Ret.text
+        //
+        (* owner *)
+        Ret.text
+        //
+        (* repo *)
+        Ret.text
+        //
+        (* run_kind *)
+        Ret.text
+        //
+        (* pull_request_title *)
+        Ret.(option text)
+        //
+        (* branch *)
+        Ret.text
+        //
+        (* username *)
+        Ret.(option text)
+        //
+        (* run_id *)
+        Ret.(option text)
+        //
+        (* environment *)
+        Ret.(option text)
         /^ replace_where (read "select_github_dirspaces_page.sql") where
         /% Var.uuid "user"
         /% Var.bigint "installation_id"
@@ -859,20 +959,48 @@ module Pull_requests = struct
     let select_pull_requests () =
       Pgsql_io.Typed_sql.(
         sql
-        // (* base_branch *) Ret.text
-        // (* base_sha *) Ret.text
-        // (* branch *) Ret.text
-        // (* latest_work_manifest_run_at *) Ret.(option text)
-        // (* merged_at *) Ret.(option text)
-        // (* merged_sha *) Ret.(option text)
-        // (*name *) Ret.text
-        // (* owner *) Ret.text
-        // (* pull_number *) Ret.bigint
-        // (* repository *) Ret.bigint
-        // (* sha *) Ret.text
-        // (* state *) Ret.text
-        // (* title *) Ret.(option text)
-        // (* username *) Ret.(option text)
+        //
+        (* base_branch *)
+        Ret.text
+        //
+        (* base_sha *)
+        Ret.text
+        //
+        (* branch *)
+        Ret.text
+        //
+        (* latest_work_manifest_run_at *)
+        Ret.(option text)
+        //
+        (* merged_at *)
+        Ret.(option text)
+        //
+        (* merged_sha *)
+        Ret.(option text)
+        //
+        (*name *)
+        Ret.text
+        //
+        (* owner *)
+        Ret.text
+        //
+        (* pull_number *)
+        Ret.bigint
+        //
+        (* repository *)
+        Ret.bigint
+        //
+        (* sha *)
+        Ret.text
+        //
+        (* state *)
+        Ret.text
+        //
+        (* title *)
+        Ret.(option text)
+        //
+        (* username *)
+        Ret.(option text)
         /^ read "select_github_pull_requests_page.sql"
         /% Var.uuid "user"
         /% Var.bigint "installation_id"
@@ -1017,11 +1145,21 @@ module Repos = struct
     let select_installation_repos_page () =
       Pgsql_io.Typed_sql.(
         sql
-        // (* id *) Ret.bigint
-        // (* installation_id *) Ret.bigint
-        // (* name *) Ret.text
-        // (* updated_at *) Ret.text
-        // (* setup *) Ret.boolean
+        //
+        (* id *)
+        Ret.bigint
+        //
+        (* installation_id *)
+        Ret.bigint
+        //
+        (* name *)
+        Ret.text
+        //
+        (* updated_at *)
+        Ret.text
+        //
+        (* setup *)
+        Ret.boolean
         /^ read "select_github_installation_repos_page.sql"
         /% Var.uuid "user_id"
         /% Var.bigint "installation_id"
