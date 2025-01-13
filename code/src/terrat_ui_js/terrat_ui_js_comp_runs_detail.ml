@@ -103,7 +103,7 @@ module Output_treeview = Brtl_js2_treeview.Make (struct
 
   let class' = "treeview"
 
-  let fetch_outputs client installation_id work_manifest_id query =
+  let fetch_outputs ?(lite = true) client installation_id work_manifest_id query =
     let module O = Terrat_api_components.Installation_workflow_step_output in
     let open Abb_js_future_combinators.Infix_result_monad in
     Terrat_ui_js_client.work_manifest_outputs
@@ -111,6 +111,7 @@ module Output_treeview = Brtl_js2_treeview.Make (struct
       ~q:query
       ~installation_id
       ~work_manifest_id
+      ~lite
       client
     >>= fun page ->
     let nodes =
@@ -122,6 +123,10 @@ module Output_treeview = Brtl_js2_treeview.Make (struct
 
   let fetch_nodes state =
     let module O = Terrat_api_components.Installation_workflow_step_output in
+    let payload = function
+      | Some payload -> O.Payload.to_yojson payload
+      | None -> `Assoc []
+    in
     let app_state = Brtl_js2.State.app_state state in
     let { Ots.installation_id; work_manifest_id; client } = app_state in
     function
@@ -146,20 +151,48 @@ module Output_treeview = Brtl_js2_treeview.Make (struct
           installation_id
           work_manifest_id
           "scope:run and flow:hooks and subflow:post"
-    | Output.Output ({ O.step = "tf/cost-estimation"; _ } as step) ->
-        Abb_js.Future.return
-          (Ok
-             [
-               Brtl_js2_treeview.Node.Branch
-                 (Output.Payload ("tf/cost-estimation", O.Payload.to_yojson step.O.payload));
-             ])
-    | Output.Output step ->
-        Abb_js.Future.return
-          (Ok
-             [
-               Brtl_js2_treeview.Node.Leaf
-                 (Output.Payload (step.O.step, O.Payload.to_yojson step.O.payload));
-             ])
+    | Output.Output { O.step = "tf/cost-estimation"; _ } -> (
+        let open Abb_js_future_combinators.Infix_result_monad in
+        Terrat_ui_js_client.work_manifest_outputs
+          ~q:"step:tf/cost-estimation"
+          ~installation_id
+          ~work_manifest_id
+          ~lite:false
+          client
+        >>= fun page ->
+        match Brtl_js2_page.Page.page page with
+        | [] -> assert false
+        | { O.payload = payload'; _ } :: _ ->
+            Abb_js.Future.return
+              (Ok
+                 [
+                   Brtl_js2_treeview.Node.Branch
+                     (Output.Payload ("tf/cost-estimation", payload payload'));
+                 ]))
+    | Output.Output { O.step; idx; scope; _ } -> (
+        let open Abb_js_future_combinators.Infix_result_monad in
+        let module Sc = Terrat_api_components_workflow_step_output_scope in
+        let module Ds = Terrat_api_components_workflow_step_output_scope_dirspace in
+        let module R = Terrat_api_components_workflow_step_output_scope_run in
+        let scope =
+          match scope with
+          | Sc.Workflow_step_output_scope_dirspace { Ds.dir; workspace; _ } ->
+              Printf.sprintf "scope:dirspace and dir:%s and workspace:%s" dir workspace
+          | Sc.Workflow_step_output_scope_run { R.flow; subflow; _ } ->
+              Printf.sprintf "scope:run and flow:%s and subflow:%s" flow subflow
+        in
+        Terrat_ui_js_client.work_manifest_outputs
+          ~q:(Printf.sprintf "step:%s and idx:%d and %s" step idx scope)
+          ~installation_id
+          ~work_manifest_id
+          ~lite:false
+          client
+        >>= fun page ->
+        match Brtl_js2_page.Page.page page with
+        | [] -> assert false
+        | { O.payload = payload'; _ } :: _ ->
+            Abb_js.Future.return
+              (Ok [ Brtl_js2_treeview.Node.Leaf (Output.Payload (step, payload payload')) ]))
     | Output.Payload ("tf/cost-estimation", payload) ->
         Abb_js.Future.return
           (Ok
@@ -191,7 +224,8 @@ module Output_treeview = Brtl_js2_treeview.Make (struct
                diff_monthly_cost = dmc2;
                total_monthly_cost = tmc2;
                _;
-             } ->
+             }
+           ->
           (* Want to have the largest differences and totals at top, and then
              sort alphabetically by directory and workspace *)
           Dirspace_cmp.compare (dmc2, tmc2, d1, w1) (dmc1, tmc1, d2, w2))
@@ -219,7 +253,8 @@ module Output_treeview = Brtl_js2_treeview.Make (struct
                            total_monthly_cost;
                            dir;
                            workspace;
-                         } ->
+                         }
+                       ->
                       [
                         div [ txt' dir ];
                         div [ txt' workspace ];
@@ -404,7 +439,7 @@ module Output_treeview = Brtl_js2_treeview.Make (struct
 
   let render_payload_any payload =
     match payload with
-    | `Assoc [] -> Brtl_js2.Brr.El.[]
+    | `Assoc [] -> []
     | payload ->
         let code_el = Brtl_js2.Brr.El.code [] in
         let code_el_js = Brtl_js2.Brr.El.to_jv code_el in
@@ -437,7 +472,7 @@ module Output_treeview = Brtl_js2_treeview.Make (struct
       output
     in
     let module P = Payload.Cost_estimation in
-    match P.of_yojson (O.Payload.to_yojson payload) with
+    match P.of_yojson (CCOption.map_or ~default:(`Assoc []) O.Payload.to_yojson payload) with
     | Ok { P.summary = { P.Summary.total_monthly_cost; _ }; currency; _ } ->
         Brtl_js2.Brr.El.
           [
@@ -622,19 +657,56 @@ let render_work_manifest state =
         let server_config = Terrat_ui_js_state.server_config app_state in
         let github_web_base_url = server_config.Sc.github_web_base_url in
         Abb_js_future_combinators.Infix_result_app.(
-          (fun failed_runs header_steps -> (failed_runs, header_steps))
+          (fun failed_runs header_steps all_runs -> (failed_runs, header_steps, all_runs))
           <$> Terrat_ui_js_client.work_manifest_outputs
                 ~q:"state:failure and not ignore_errors"
                 ~limit:1
                 ~installation_id
                 ~work_manifest_id
+                ~lite:true
                 client
           <*> Terrat_ui_js_client.work_manifest_outputs
                 ~q:"step:tf/cost-estimation"
                 ~installation_id
                 ~work_manifest_id
+                ~lite:true
+                client
+          <*> Terrat_ui_js_client.work_manifest_outputs
+                ~q:"not step:tf/cost-estimation"
+                ~limit:100
+                ~installation_id
+                ~work_manifest_id
+                ~lite:true
                 client)
-        >>= fun (failed_runs, header_steps) ->
+        >>= fun (failed_runs, header_steps, all_runs) ->
+        let has_prehook, has_posthook =
+          let module O = Terrat_api_components.Installation_workflow_step_output in
+          let module S = Terrat_api_components_workflow_step_output_scope in
+          let module R = Terrat_api_components_workflow_step_output_scope_run in
+          let prehooks =
+            CCList.exists
+              (function
+                | {
+                    O.scope =
+                      S.Workflow_step_output_scope_run { R.flow = "hooks"; subflow = "pre"; _ };
+                    _;
+                  } -> true
+                | _ -> false)
+              (Brtl_js2_page.Page.page all_runs)
+          in
+          let posthooks =
+            CCList.exists
+              (function
+                | {
+                    O.scope =
+                      S.Workflow_step_output_scope_run { R.flow = "hooks"; subflow = "post"; _ };
+                    _;
+                  } -> true
+                | _ -> false)
+              (Brtl_js2_page.Page.page all_runs)
+          in
+          (prehooks, posthooks)
+        in
         let work_manifest_state =
           match work_manifest_state with
           | "completed" when CCList.is_empty (Brtl_js2_page.Page.page failed_runs) -> "success"
@@ -645,7 +717,8 @@ let render_work_manifest state =
           CCList.map
             (fun step -> Brtl_js2_treeview.Node.Branch Output.(Output step))
             (Brtl_js2_page.Page.page header_steps)
-          @ [ Brtl_js2_treeview.Node.Branch Output.(Scope Scope.(Hook Pre)) ]
+          @ (if has_prehook then [ Brtl_js2_treeview.Node.Branch Output.(Scope Scope.(Hook Pre)) ]
+             else [])
           @ CCList.map
               (fun { Ds.dir; workspace; _ } ->
                 Brtl_js2_treeview.Node.Branch
@@ -657,7 +730,9 @@ let render_work_manifest state =
                    end in
                    Cmp.compare (d1, w1) (d2, w2))
                  dirspaces)
-          @ [ Brtl_js2_treeview.Node.Branch Output.(Scope Scope.(Hook Post)) ]
+          @
+          if has_posthook then [ Brtl_js2_treeview.Node.Branch Output.(Scope Scope.(Hook Post)) ]
+          else []
         in
         Abb_js.Future.return
           (Ok

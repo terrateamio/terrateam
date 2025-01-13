@@ -9,6 +9,7 @@ module Work_manifests : sig
       string option ->
       int Brtl_ep_paginate.Param.t option ->
       int ->
+      bool ->
       Brtl_rtng.Handler.t
   end
 

@@ -422,7 +422,6 @@
           "idx",
           "ignore_errors",
           "location",
-          "payload",
           "scope",
           "state",
           "step"
@@ -2311,6 +2310,15 @@
             "required": false,
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lite",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],

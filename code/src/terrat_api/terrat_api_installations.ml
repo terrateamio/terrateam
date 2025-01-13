@@ -382,6 +382,7 @@ module Get_work_manifest_outputs = struct
     type t = {
       installation_id : string;
       limit : int option; [@default None]
+      lite : bool; [@default false]
       page : Page.t option; [@default None]
       q : string option; [@default None]
       tz : string option; [@default None]
@@ -448,6 +449,7 @@ module Get_work_manifest_outputs = struct
            ("page", Var (params.page, Option (Array String)));
            ("tz", Var (params.tz, Option String));
            ("limit", Var (params.limit, Option Int));
+           ("lite", Var (params.lite, Bool));
          ])
       ~url
       ~responses:Responses.t

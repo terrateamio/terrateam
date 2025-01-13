@@ -10,7 +10,7 @@ type t = {
   created_at : string;
   idx : int;
   ignore_errors : bool;
-  payload : Payload.t;
+  payload : Payload.t option; [@default None]
   scope : Terrat_api_components_workflow_step_output_scope.t;
   state : string;
   step : string;

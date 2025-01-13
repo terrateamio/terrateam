@@ -97,7 +97,8 @@ struct
         /? Query.(option (string "q"))
         /? Query.(option (string "tz"))
         /? Query.(option (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.int)))
-        /? Query.(option_default 20 (Query.int "limit")))
+        /? Query.(option_default 20 (Query.int "limit"))
+        /? Query.(option_default false (Query.bool "lite")))
 
     let installation_dirspaces_rt () =
       Brtl_rtng.Route.(
