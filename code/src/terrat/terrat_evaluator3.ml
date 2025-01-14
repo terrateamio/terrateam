@@ -52,6 +52,15 @@ module Unlock_id = struct
     | Drift -> "drift"
 end
 
+module Account_status = struct
+  type t =
+    [ `Active
+    | `Expired
+    | `Disabled
+    | `Trial_ending of Duration.t
+    ]
+end
+
 module Msg = struct
   type access_control_denied =
     [ `All_dirspaces of Terrat_access_control.R.Deny.t list
@@ -101,6 +110,7 @@ module Msg = struct
         work_manifest : ('account, 'target) Terrat_work_manifest3.Existing.t;
       }
     | Tf_op_result2 of {
+        account_status : Account_status.t;
         config : Terrat_config.t;
         is_layered_run : bool;
         remaining_layers : Terrat_change_match3.Dirspace_config.t list list;
@@ -252,10 +262,7 @@ module type S = sig
     request_id:string -> Db.t -> Account.t -> Repo.t -> (unit, [> `Error ]) result Abb.Future.t
 
   val query_account_status :
-    request_id:string ->
-    Db.t ->
-    Account.t ->
-    ([ `Active | `Expired | `Disabled ], [> `Error ]) result Abb.Future.t
+    request_id:string -> Db.t -> Account.t -> (Account_status.t, [> `Error ]) result Abb.Future.t
 
   val store_pull_request :
     request_id:string ->
@@ -4398,6 +4405,11 @@ module Make (S : S) = struct
                    work_manifest
                    work_manifest_result
                  >>= fun () ->
+                 query_account_status
+                   state.State.request_id
+                   ctx.Ctx.storage
+                   (Event.account state.State.event)
+                 >>= fun account_status ->
                  publish_msg
                    state.State.request_id
                    client
@@ -4405,6 +4417,7 @@ module Make (S : S) = struct
                    pull_request
                    (Msg.Tf_op_result2
                       {
+                        account_status;
                         config = ctx.Ctx.config;
                         is_layered_run = CCList.length matches.Dv.Matches.all_matches > 1;
                         remaining_layers = matches.Dv.Matches.all_unapplied_matches;
@@ -4501,7 +4514,7 @@ module Make (S : S) = struct
       let open Abbs_future_combinators.Infix_result_monad in
       query_account_status state.State.request_id ctx.Ctx.storage (Event.account state.State.event)
       >>= function
-      | `Active -> Abb.Future.return (Ok (Id.Account_enabled, state))
+      | `Active | `Trial_ending _ -> Abb.Future.return (Ok (Id.Account_enabled, state))
       | `Expired -> Abb.Future.return (Ok (Id.Account_expired, state))
       | `Disabled -> Abb.Future.return (Ok (Id.Account_disabled, state))
 
@@ -5088,6 +5101,13 @@ module Make (S : S) = struct
       query_account_status state.State.request_id ctx.Ctx.storage (Event.account state.State.event)
       >>= function
       | `Active -> Abb.Future.return (Ok state)
+      | `Trial_ending duration ->
+          Logs.info (fun m ->
+              m
+                "EVALUATOR ; %s : TRIAL_ENDING : days=%d"
+                state.State.request_id
+                (Duration.to_day duration));
+          Abb.Future.return (Ok state)
       | `Expired | `Disabled ->
           Logs.info (fun m -> m "EVALUATOR : %s : ACCOUNT_EXPIRED" state.State.request_id);
           Dv.client ctx state
