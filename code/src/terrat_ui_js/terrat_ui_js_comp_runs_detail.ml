@@ -35,6 +35,7 @@ module Payload = struct
   module Plan = struct
     type t = {
       cmd : string list option; [@default None]
+      error : string option; [@default None]
       exit_code : int option; [@default None]
       has_changes : bool option; [@default None]
       plan : string option; [@default None]
@@ -45,7 +46,8 @@ module Payload = struct
 
   module Apply = struct
     type t = {
-      cmd : string list option;
+      cmd : string list option; [@default None]
+      error : string option; [@default None]
       exit_code : int option; [@default None]
       outputs : Yojson.Safe.t option; [@default None]
       text : string;
@@ -55,15 +57,20 @@ module Payload = struct
 
   module Run = struct
     type t = {
-      exit_code : int option; [@default None]
       cmd : string list;
+      error : string option; [@default None]
+      exit_code : int option; [@default None]
       text : string option; [@default None]
     }
     [@@deriving of_yojson { strict = false }]
   end
 
   module Text = struct
-    type t = { text : string } [@@deriving of_yojson { strict = false }]
+    type t = {
+      error : string option; [@default None]
+      text : string;
+    }
+    [@@deriving of_yojson { strict = false }]
   end
 
   module Cost_estimation = struct
@@ -295,8 +302,8 @@ module Output_treeview = Brtl_js2_treeview.Make (struct
     let module P = Payload.Plan in
     P.of_yojson payload
     >>= function
-    | { P.cmd; exit_code; has_changes; text = _; plan = Some text }
-    | { P.cmd; exit_code; has_changes; text; plan = None } ->
+    | { P.cmd; exit_code; has_changes; text = _; plan = Some text; error }
+    | { P.cmd; exit_code; has_changes; text; plan = None; error } ->
         let text = CCString.trim text in
         let is_plan = exit_code = Some 0 || exit_code = Some 2 in
         let text_el =
@@ -346,6 +353,10 @@ module Output_treeview = Brtl_js2_treeview.Make (struct
                         ];
                     ])
                   exit_code;
+                CCOption.map_or
+                  ~default:[]
+                  (fun error -> [ div ~at:At.[ class' (Jstr.v "text") ] [ pre [ txt' error ] ] ])
+                  error;
                 [ div ~at:At.[ class' (Jstr.v "text") ] [ text_el ] ];
               ])
 
@@ -354,7 +365,7 @@ module Output_treeview = Brtl_js2_treeview.Make (struct
     let module P = Payload.Apply in
     P.of_yojson payload
     >>= function
-    | { P.cmd; exit_code; outputs; text } ->
+    | { P.cmd; exit_code; outputs; text; error } ->
         Ok
           Brtl_js2.Brr.El.(
             CCList.flatten
@@ -379,6 +390,10 @@ module Output_treeview = Brtl_js2_treeview.Make (struct
                         ];
                     ])
                   exit_code;
+                CCOption.map_or
+                  ~default:[]
+                  (fun error -> [ div ~at:At.[ class' (Jstr.v "text") ] [ pre [ txt' error ] ] ])
+                  error;
                 [ div ~at:At.[ class' (Jstr.v "text") ] [ pre [ txt' text ] ] ];
                 CCOption.map_or
                   ~default:[]
@@ -402,7 +417,7 @@ module Output_treeview = Brtl_js2_treeview.Make (struct
     let open CCResult.Infix in
     let module P = Payload.Run in
     P.of_yojson payload
-    >>= fun { P.exit_code; cmd; text } ->
+    >>= fun { P.exit_code; cmd; text; error } ->
     Ok
       Brtl_js2.Brr.El.(
         CCList.flatten
@@ -423,6 +438,10 @@ module Output_treeview = Brtl_js2_treeview.Make (struct
               exit_code;
             CCOption.map_or
               ~default:[]
+              (fun error -> [ div ~at:At.[ class' (Jstr.v "text") ] [ pre [ txt' error ] ] ])
+              error;
+            CCOption.map_or
+              ~default:[]
               (fun text ->
                 let text = CCString.trim text in
                 [ div ~at:At.[ class' (Jstr.v "text") ] [ pre [ txt' text ] ] ])
@@ -433,9 +452,18 @@ module Output_treeview = Brtl_js2_treeview.Make (struct
     let open CCResult.Infix in
     let module P = Payload.Text in
     P.of_yojson payload
-    >>= fun { P.text } ->
+    >>= fun { P.text; error } ->
     let text = CCString.trim text in
-    Ok Brtl_js2.Brr.El.[ div ~at:At.[ class' (Jstr.v "text") ] [ pre [ txt' text ] ] ]
+    Ok
+      Brtl_js2.Brr.El.(
+        CCList.flatten
+          [
+            CCOption.map_or
+              ~default:[]
+              (fun error -> [ div ~at:At.[ class' (Jstr.v "text") ] [ pre [ txt' error ] ] ])
+              error;
+            [ div ~at:At.[ class' (Jstr.v "text") ] [ pre [ txt' text ] ] ];
+          ])
 
   let render_payload_any payload =
     match payload with
