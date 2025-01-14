@@ -125,7 +125,10 @@ module Sql = struct
       //
       (* account_status *)
       Ret.text
-      /^ "select account_status from github_installations where id = $installation_id"
+      //
+      (* trial_end_days *)
+      Ret.(option integer)
+      /^ read "github_select_account_status.sql"
       /% Var.bigint "installation_id")
 
   let insert_pull_request =
@@ -1441,11 +1444,17 @@ struct
       Pgsql_io.Prepared_stmt.fetch
         db
         (Sql.select_installation_account_status ())
-        ~f:CCFun.id
+        ~f:(fun account_status trial_end_days -> (account_status, trial_end_days))
         (CCInt64.of_int account.Account.installation_id)
       >>= function
-      | Ok ("expired" :: _) -> Abb.Future.return (Ok `Expired)
-      | Ok ("disabled" :: _) -> Abb.Future.return (Ok `Disabled)
+      | Ok (("expired", _) :: _) -> Abb.Future.return (Ok `Expired)
+      | Ok (("disabled", _) :: _) -> Abb.Future.return (Ok `Disabled)
+      | Ok (("trial_ending", Some trial_end_days) :: _) ->
+          (* Ensure that trial end always is now or in the future *)
+          Abb.Future.return
+            (Ok (`Trial_ending (Duration.of_day (CCInt.max 0 (CCInt32.to_int trial_end_days)))))
+      | Ok (("trial_ending", None) :: _) ->
+          Abb.Future.return (Ok (`Trial_ending (Duration.of_day 0)))
       | Ok _ -> Abb.Future.return (Ok `Active)
       | Error (#Pgsql_io.err as err) ->
           Prmths.Counter.inc_one Metrics.pgsql_errors_total;
@@ -1957,6 +1966,7 @@ struct
         let create_run_output
             ~view
             request_id
+            account_status
             config
             is_layered_run
             remaining_dirspace_configs
@@ -2068,6 +2078,19 @@ struct
                        (fun env -> [ ("environment", string env) ])
                        work_manifest.Wm.environment;
                      [
+                       ( "account_status",
+                         string
+                           (match account_status with
+                           | `Trial_ending duration when Duration.to_day duration < 15 ->
+                               (* Only mark as trial ending if less than two weeks from now *)
+                               "trial_ending"
+                           | `Trial_ending _ | `Active -> "active"
+                           | `Expired -> "expired"
+                           | `Disabled -> "disabled") );
+                       ( "trial_end_days",
+                         match account_status with
+                         | `Trial_ending duration -> int (Duration.to_day duration)
+                         | _ -> int 0 );
                        ("is_layered_run", bool is_layered_run);
                        ("is_last_layer", bool (num_remaining_layers = 0));
                        ("num_more_layers", int num_remaining_layers);
@@ -2115,6 +2138,7 @@ struct
         let rec iterate_comment_posts
             ?(view = `Full)
             request_id
+            account_status
             config
             client
             is_layered_run
@@ -2129,6 +2153,7 @@ struct
             create_run_output
               ~view
               request_id
+              account_status
               config
               is_layered_run
               remaining_layers
@@ -2165,6 +2190,7 @@ struct
                   iterate_comment_posts
                     ~view:`Compact
                     request_id
+                    account_status
                     config
                     client
                     is_layered_run
@@ -3745,10 +3771,12 @@ struct
           >>= function
           | Ok () -> Abb.Future.return (Ok ())
           | Error _ -> Abb.Future.return (Error `Error))
-      | Msg.Tf_op_result2 { config; is_layered_run; remaining_layers; result; work_manifest } -> (
+      | Msg.Tf_op_result2
+          { account_status; config; is_layered_run; remaining_layers; result; work_manifest } -> (
           let open Abb.Future.Infix_monad in
           Result.Publisher2.iterate_comment_posts
             request_id
+            account_status
             config
             client
             is_layered_run

@@ -5,6 +5,15 @@ module Unlock_id : sig
   [@@deriving show]
 end
 
+module Account_status : sig
+  type t =
+    [ `Active
+    | `Expired
+    | `Disabled
+    | `Trial_ending of Duration.t
+    ]
+end
+
 module Msg : sig
   type access_control_denied =
     [ `All_dirspaces of Terrat_access_control.R.Deny.t list
@@ -54,6 +63,7 @@ module Msg : sig
         work_manifest : ('account, 'target) Terrat_work_manifest3.Existing.t;
       }
     | Tf_op_result2 of {
+        account_status : Account_status.t;
         config : Terrat_config.t;
         is_layered_run : bool;
         remaining_layers : Terrat_change_match3.Dirspace_config.t list list;
@@ -192,10 +202,7 @@ module type S = sig
     request_id:string -> Db.t -> Account.t -> Repo.t -> (unit, [> `Error ]) result Abb.Future.t
 
   val query_account_status :
-    request_id:string ->
-    Db.t ->
-    Account.t ->
-    ([ `Active | `Expired | `Disabled ], [> `Error ]) result Abb.Future.t
+    request_id:string -> Db.t -> Account.t -> (Account_status.t, [> `Error ]) result Abb.Future.t
 
   val store_pull_request :
     request_id:string ->
