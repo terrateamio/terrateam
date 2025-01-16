@@ -26,8 +26,12 @@ module Metrics = struct
     let spec = Prmths.Histogram_spec.of_list [ 0.005; 0.5; 1.0; 5.0; 10.0; 15.0; 20.0 ]
   end)
 
+  module Psql_query_time = Prmths.Histogram (struct
+    let spec = Prmths.Histogram_spec.of_linear ~start:0.0 ~interval:0.1 ~count:15
+  end)
+
   module Work_manifest_run_time_histogram = Prmths.Histogram (struct
-    let spec = Prmths.Histogram_spec.of_exponential 20.0 1.5 10
+    let spec = Prmths.Histogram_spec.of_exponential ~start:20.0 ~factor:1.5 ~count:10
   end)
 
   module Run_output_histogram = Prmths.Histogram (struct
@@ -52,6 +56,10 @@ module Metrics = struct
     fun ~l ~fn t -> Prmths.Counter.labels family [ l; fn; t ]
 
   let github_errors_total = Terrat_metrics.errors_total ~m:subsystem ~t:"github"
+
+  let psql_query_time =
+    let help = "Time for PostgreSQL query" in
+    Psql_query_time.v_label ~help ~label_name:"q" ~namespace ~subsystem "psql_query_time"
 
   let fetch_pull_request_errors_total =
     let help = "Number of errors in fetching a pull request" in
@@ -1269,114 +1277,127 @@ struct
       let module Ds = Terrat_change.Dirspace in
       let run =
         let open Abbs_future_combinators.Infix_result_monad in
-        Pgsql_io.Prepared_stmt.fetch
-          db
-          Sql.select_work_manifest_dirspaceflows
-          ~f:(fun dir idx workspace -> { Dsf.dirspace = { Ds.dir; workspace }; workflow = idx })
-          work_manifest_id
+        Metrics.Psql_query_time.time
+          (Metrics.psql_query_time "select_work_manifest_dirspaceflows")
+          (fun () ->
+            Pgsql_io.Prepared_stmt.fetch
+              db
+              Sql.select_work_manifest_dirspaceflows
+              ~f:(fun dir idx workspace -> { Dsf.dirspace = { Ds.dir; workspace }; workflow = idx })
+              work_manifest_id)
         >>= fun changes ->
-        Pgsql_io.Prepared_stmt.fetch
-          db
-          Sql.select_work_manifest_access_control_denied_dirspaces
-          ~f:(fun dir workspace policy ->
-            { Wm.Deny.dirspace = { Terrat_change.Dirspace.dir; workspace }; policy })
-          work_manifest_id
+        Metrics.Psql_query_time.time
+          (Metrics.psql_query_time "select_work_manifest_access_control_denied_dirspaces")
+          (fun () ->
+            Pgsql_io.Prepared_stmt.fetch
+              db
+              Sql.select_work_manifest_access_control_denied_dirspaces
+              ~f:(fun dir workspace policy ->
+                { Wm.Deny.dirspace = { Terrat_change.Dirspace.dir; workspace }; policy })
+              work_manifest_id)
         >>= fun denied_dirspaces ->
-        Pgsql_io.Prepared_stmt.fetch
-          db
-          (Sql.select_work_manifest ())
-          ~f:(fun
-              base_ref
-              completed_at
-              created_at
-              pull_request_id
-              repository
-              run_id
-              run_type
-              branch_ref
-              state
-              tag_query
-              user
-              run_kind
-              installation_id
-              repo_id
-              owner
-              name
-              environment
-            ->
-            {
-              Wm.account = Account.make ~installation_id:(CCInt64.to_int installation_id) ();
-              base_ref;
-              branch_ref;
-              changes;
-              completed_at;
-              created_at;
-              denied_dirspaces;
-              environment;
-              id = work_manifest_id;
-              initiator =
-                (match user with
-                | Some user -> Wm.Initiator.User user
-                | None -> Wm.Initiator.System);
-              run_id;
-              steps = [ run_type ];
-              state;
-              tag_query;
-              target =
-                ( CCOption.map CCInt64.to_int pull_request_id,
-                  Repo.make ~id:(CCInt64.to_int repo_id) ~owner ~name () );
-            })
-          work_manifest_id
+        Metrics.Psql_query_time.time (Metrics.psql_query_time "select_work_manifest") (fun () ->
+            Pgsql_io.Prepared_stmt.fetch
+              db
+              (Sql.select_work_manifest ())
+              ~f:(fun
+                  base_ref
+                  completed_at
+                  created_at
+                  pull_request_id
+                  repository
+                  run_id
+                  run_type
+                  branch_ref
+                  state
+                  tag_query
+                  user
+                  run_kind
+                  installation_id
+                  repo_id
+                  owner
+                  name
+                  environment
+                ->
+                {
+                  Wm.account = Account.make ~installation_id:(CCInt64.to_int installation_id) ();
+                  base_ref;
+                  branch_ref;
+                  changes;
+                  completed_at;
+                  created_at;
+                  denied_dirspaces;
+                  environment;
+                  id = work_manifest_id;
+                  initiator =
+                    (match user with
+                    | Some user -> Wm.Initiator.User user
+                    | None -> Wm.Initiator.System);
+                  run_id;
+                  steps = [ run_type ];
+                  state;
+                  tag_query;
+                  target =
+                    ( CCOption.map CCInt64.to_int pull_request_id,
+                      Repo.make ~id:(CCInt64.to_int repo_id) ~owner ~name () );
+                })
+              work_manifest_id)
         >>= function
         | [] -> Abb.Future.return (Ok None)
         | wm :: _ -> (
             match wm.Wm.target with
             | Some pull_request_id, repo -> (
-                Pgsql_io.Prepared_stmt.fetch
-                  db
-                  (Sql.select_work_manifest_pull_request ())
-                  ~f:(fun
-                      base_branch_name
-                      base_ref
-                      branch_name
-                      branch_ref
-                      pull_number
-                      state
-                      merged_sha
-                      merged_at
-                      title
-                      user
-                    ->
-                    {
-                      Pull_request.base_branch_name;
-                      base_ref;
-                      branch_name;
-                      branch_ref;
-                      id = CCInt64.to_int pull_number;
-                      repo;
-                      state =
-                        (match (state, merged_sha, merged_at) with
-                        | "open", _, _ -> Pull_request.State.(Open Open_status.Mergeable)
-                        | "closed", _, _ -> Pull_request.State.Closed
-                        | "merged", Some merged_hash, Some merged_at ->
-                            Pull_request.State.(Merged Merged.{ merged_hash; merged_at })
-                        | _ -> assert false);
-                      title;
-                      user;
-                      value = ();
-                    })
-                  work_manifest_id
+                Metrics.Psql_query_time.time
+                  (Metrics.psql_query_time "select_work_manifest_pull_request")
+                  (fun () ->
+                    Pgsql_io.Prepared_stmt.fetch
+                      db
+                      (Sql.select_work_manifest_pull_request ())
+                      ~f:(fun
+                          base_branch_name
+                          base_ref
+                          branch_name
+                          branch_ref
+                          pull_number
+                          state
+                          merged_sha
+                          merged_at
+                          title
+                          user
+                        ->
+                        {
+                          Pull_request.base_branch_name;
+                          base_ref;
+                          branch_name;
+                          branch_ref;
+                          id = CCInt64.to_int pull_number;
+                          repo;
+                          state =
+                            (match (state, merged_sha, merged_at) with
+                            | "open", _, _ -> Pull_request.State.(Open Open_status.Mergeable)
+                            | "closed", _, _ -> Pull_request.State.Closed
+                            | "merged", Some merged_hash, Some merged_at ->
+                                Pull_request.State.(Merged Merged.{ merged_hash; merged_at })
+                            | _ -> assert false);
+                          title;
+                          user;
+                          value = ();
+                        })
+                      work_manifest_id)
                 >>= function
                 | [] -> assert false
                 | pr :: _ ->
                     Abb.Future.return
                       (Ok (Some { wm with Wm.target = Terrat_evaluator3.Target.Pr pr })))
             | None, repo -> (
-                Pgsql_io.Prepared_stmt.fetch
-                  db
-                  (Sql.select_drift_work_manifest ())
-                  ~f:(fun branch _ -> branch)
-                  work_manifest_id
+                Metrics.Psql_query_time.time
+                  (Metrics.psql_query_time "select_drift_work_manifest")
+                  (fun () ->
+                    Pgsql_io.Prepared_stmt.fetch
+                      db
+                      (Sql.select_drift_work_manifest ())
+                      ~f:(fun branch _ -> branch)
+                      work_manifest_id)
                 >>= function
                 | [] -> assert false
                 | branch :: _ ->
@@ -1425,13 +1446,16 @@ struct
 
     let store_account_repository ~request_id db account repo =
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.execute
-        db
-        Sql.insert_github_installation_repository
-        (CCInt64.of_int (Repo.id repo))
-        (CCInt64.of_int account.Account.installation_id)
-        (Repo.owner repo)
-        (Repo.name repo)
+      Metrics.Psql_query_time.time
+        (Metrics.psql_query_time "insert_github_installation_repository")
+        (fun () ->
+          Pgsql_io.Prepared_stmt.execute
+            db
+            Sql.insert_github_installation_repository
+            (CCInt64.of_int (Repo.id repo))
+            (CCInt64.of_int account.Account.installation_id)
+            (Repo.owner repo)
+            (Repo.name repo))
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -1441,11 +1465,14 @@ struct
 
     let query_account_status ~request_id db account =
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.fetch
-        db
-        (Sql.select_installation_account_status ())
-        ~f:(fun account_status trial_end_days -> (account_status, trial_end_days))
-        (CCInt64.of_int account.Account.installation_id)
+      Metrics.Psql_query_time.time
+        (Metrics.psql_query_time "select_installation_account_status")
+        (fun () ->
+          Pgsql_io.Prepared_stmt.fetch
+            db
+            (Sql.select_installation_account_status ())
+            ~f:(fun account_status trial_end_days -> (account_status, trial_end_days))
+            (CCInt64.of_int account.Account.installation_id))
       >>= function
       | Ok (("expired", _) :: _) -> Abb.Future.return (Ok `Expired)
       | Ok (("disabled", _) :: _) -> Abb.Future.return (Ok `Disabled)
@@ -1472,20 +1499,21 @@ struct
         | State.(Merged { Merged.merged_hash; merged_at }) ->
             (Some merged_hash, Some merged_at, "merged")
       in
-      Pgsql_io.Prepared_stmt.execute
-        db
-        Sql.insert_pull_request
-        pull_request.Pr.base_branch_name
-        pull_request.Pr.base_ref
-        pull_request.Pr.branch_name
-        (CCInt64.of_int pull_request.Pr.id)
-        (CCInt64.of_int pull_request.Pr.repo.Repo.id)
-        pull_request.Pr.branch_ref
-        merged_sha
-        merged_at
-        state
-        pull_request.Pr.title
-        pull_request.Pr.user
+      Metrics.Psql_query_time.time (Metrics.psql_query_time "insert_pull_request") (fun () ->
+          Pgsql_io.Prepared_stmt.execute
+            db
+            Sql.insert_pull_request
+            pull_request.Pr.base_branch_name
+            pull_request.Pr.base_ref
+            pull_request.Pr.branch_name
+            (CCInt64.of_int pull_request.Pr.id)
+            (CCInt64.of_int pull_request.Pr.repo.Repo.id)
+            pull_request.Pr.branch_ref
+            merged_sha
+            merged_at
+            state
+            pull_request.Pr.title
+            pull_request.Pr.user)
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -1555,12 +1583,13 @@ struct
 
     let query_index ~request_id db account ref_ =
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.fetch
-        db
-        Sql.select_index
-        ~f:CCFun.id
-        (CCInt64.of_int account.Account.installation_id)
-        ref_
+      Metrics.Psql_query_time.time (Metrics.psql_query_time "select_index") (fun () ->
+          Pgsql_io.Prepared_stmt.fetch
+            db
+            Sql.select_index
+            ~f:CCFun.id
+            (CCInt64.of_int account.Account.installation_id)
+            ref_)
       >>= function
       | Ok (idx :: _) -> Abb.Future.return (Ok (Some (index_of_index idx)))
       | Ok [] -> Abb.Future.return (Ok None)
@@ -1572,11 +1601,12 @@ struct
     let store_index ~request_id db work_manifest_id index =
       let module R = Terrat_api_components.Work_manifest_index_result in
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.execute
-        db
-        (Sql.insert_index ())
-        work_manifest_id
-        (Yojson.Safe.to_string (R.to_yojson index))
+      Metrics.Psql_query_time.time (Metrics.psql_query_time "insert_index") (fun () ->
+          Pgsql_io.Prepared_stmt.execute
+            db
+            (Sql.insert_index ())
+            work_manifest_id
+            (Yojson.Safe.to_string (R.to_yojson index)))
       >>= function
       | Ok () -> Abb.Future.return (Ok (index_of_index index))
       | Error (#Pgsql_io.err as err) ->
@@ -1612,13 +1642,16 @@ struct
                       workspace)
                     chunk
                 in
-                Pgsql_io.Prepared_stmt.execute
-                  db
-                  Sql.insert_github_work_manifest_result
-                  work_manifest_id
-                  dir
-                  workspace
-                  success)
+                Metrics.Psql_query_time.time
+                  (Metrics.psql_query_time "insert_github_work_manifest_result")
+                  (fun () ->
+                    Pgsql_io.Prepared_stmt.execute
+                      db
+                      Sql.insert_github_work_manifest_result
+                      work_manifest_id
+                      dir
+                      workspace
+                      success))
               (CCList.chunks not_a_bad_chunk_size changes)
         | None -> assert false
       in
@@ -1634,12 +1667,13 @@ struct
 
     let query_repo_config_json ~request_id db account ref_ =
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.fetch
-        db
-        Sql.select_repo_config
-        ~f:CCFun.id
-        (CCInt64.of_int account.Account.installation_id)
-        ref_
+      Metrics.Psql_query_time.time (Metrics.psql_query_time "select_repo_config") (fun () ->
+          Pgsql_io.Prepared_stmt.fetch
+            db
+            Sql.select_repo_config
+            ~f:CCFun.id
+            (CCInt64.of_int account.Account.installation_id)
+            ref_)
       >>= function
       | Ok (repo_config :: _) -> Abb.Future.return (Ok (Some repo_config))
       | Ok [] -> Abb.Future.return (Ok None)
@@ -1650,12 +1684,13 @@ struct
 
     let store_repo_config_json ~request_id db account ref_ repo_config =
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.execute
-        db
-        Sql.insert_repo_config
-        (CCInt64.of_int account.Account.installation_id)
-        ref_
-        (Yojson.Safe.to_string repo_config)
+      Metrics.Psql_query_time.time (Metrics.psql_query_time "insert_repo_config") (fun () ->
+          Pgsql_io.Prepared_stmt.execute
+            db
+            Sql.insert_repo_config
+            (CCInt64.of_int account.Account.installation_id)
+            ref_
+            (Yojson.Safe.to_string repo_config))
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -1665,7 +1700,8 @@ struct
 
     let cleanup_repo_configs ~request_id db =
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.execute db Sql.cleanup_repo_configs
+      Metrics.Psql_query_time.time (Metrics.psql_query_time "cleanup_repo_configs") (fun () ->
+          Pgsql_io.Prepared_stmt.execute db Sql.cleanup_repo_configs)
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -4002,7 +4038,8 @@ struct
         | Wm.State.Queued -> assert false
       in
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.execute db (sql ()) work_manifest_id
+      Metrics.Psql_query_time.time (Metrics.psql_query_time "update_work_manifest_state") (fun () ->
+          Pgsql_io.Prepared_stmt.execute db (sql ()) work_manifest_id)
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -4012,11 +4049,14 @@ struct
 
     let update_work_manifest_run_id ~request_id db work_manifest_id run_id =
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.execute
-        db
-        (Sql.update_work_manifest_run_id ())
-        work_manifest_id
-        (Some run_id)
+      Metrics.Psql_query_time.time
+        (Metrics.psql_query_time "update_work_manifest_run_id")
+        (fun () ->
+          Pgsql_io.Prepared_stmt.execute
+            db
+            (Sql.update_work_manifest_run_id ())
+            work_manifest_id
+            (Some run_id))
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -4031,13 +4071,16 @@ struct
       let open Abb.Future.Infix_monad in
       Abbs_future_combinators.List_result.iter
         ~f:(fun changes ->
-          Pgsql_io.Prepared_stmt.execute
-            db
-            (Sql.insert_work_manifest_dirspaceflow ())
-            (CCList.replicate (CCList.length changes) work_manifest_id)
-            (CCList.map (fun { Dsf.dirspace = { Ds.dir; _ }; _ } -> dir) changes)
-            (CCList.map (fun { Dsf.dirspace = { Ds.workspace; _ }; _ } -> workspace) changes)
-            (CCList.map (fun { Dsf.workflow; _ } -> workflow) changes))
+          Metrics.Psql_query_time.time
+            (Metrics.psql_query_time "insert_work_manifest_dirspaceflow")
+            (fun () ->
+              Pgsql_io.Prepared_stmt.execute
+                db
+                (Sql.insert_work_manifest_dirspaceflow ())
+                (CCList.replicate (CCList.length changes) work_manifest_id)
+                (CCList.map (fun { Dsf.dirspace = { Ds.dir; _ }; _ } -> dir) changes)
+                (CCList.map (fun { Dsf.dirspace = { Ds.workspace; _ }; _ } -> workspace) changes)
+                (CCList.map (fun { Dsf.workflow; _ } -> workflow) changes)))
         (CCList.chunks not_a_bad_chunk_size changes)
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
@@ -4055,18 +4098,21 @@ struct
       end in
       Abbs_future_combinators.List_result.iter
         ~f:(fun denied_dirspaces ->
-          Pgsql_io.Prepared_stmt.execute
-            db
-            Sql.insert_work_manifest_access_control_denied_dirspace
-            (CCList.map
-               (fun { Wm.Deny.dirspace = { Ch.Dirspace.dir; _ }; _ } -> dir)
-               denied_dirspaces)
-            (CCList.map
-               (fun { Wm.Deny.dirspace = { Ch.Dirspace.workspace; _ }; _ } -> workspace)
-               denied_dirspaces)
-            (CCList.map
-               (fun { Wm.Deny.policy; _ } ->
-                 (* This has a very awkward JSON conversion because we are
+          Metrics.Psql_query_time.time
+            (Metrics.psql_query_time "insert_work_manifest_access_control_denied_dirspace")
+            (fun () ->
+              Pgsql_io.Prepared_stmt.execute
+                db
+                Sql.insert_work_manifest_access_control_denied_dirspace
+                (CCList.map
+                   (fun { Wm.Deny.dirspace = { Ch.Dirspace.dir; _ }; _ } -> dir)
+                   denied_dirspaces)
+                (CCList.map
+                   (fun { Wm.Deny.dirspace = { Ch.Dirspace.workspace; _ }; _ } -> workspace)
+                   denied_dirspaces)
+                (CCList.map
+                   (fun { Wm.Deny.policy; _ } ->
+                     (* This has a very awkward JSON conversion because we are
                     performing this insert by passing in a bunch of arrays
                     of values.  However policy is already an array and SQL
                     does not support multidimensional arrays where the
@@ -4075,9 +4121,11 @@ struct
                     in an array of strings, and it needs to be in a format
                     postgresql can turn back into an array.  So we use JSON
                     as the intermediate representation. *)
-                 CCOption.map (fun policy -> Yojson.Safe.to_string (Policy.to_yojson policy)) policy)
-               denied_dirspaces)
-            (CCList.replicate (CCList.length denied_dirspaces) work_manifest_id))
+                     CCOption.map
+                       (fun policy -> Yojson.Safe.to_string (Policy.to_yojson policy))
+                       policy)
+                   denied_dirspaces)
+                (CCList.replicate (CCList.length denied_dirspaces) work_manifest_id)))
         (CCList.chunks not_a_bad_chunk_size denied_dirspaces)
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
@@ -4091,7 +4139,9 @@ struct
       let run_type =
         CCOption.map_or ~default:"" Terrat_work_manifest3.Step.to_string (CCList.last_opt steps)
       in
-      Pgsql_io.Prepared_stmt.execute db Sql.update_run_type work_manifest_id run_type
+      Metrics.Psql_query_time.time
+        (Metrics.psql_query_time "update_run_type work_manifest_id")
+        (fun () -> Pgsql_io.Prepared_stmt.execute db Sql.update_run_type work_manifest_id run_type)
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -4141,20 +4191,21 @@ struct
           | Wm.Initiator.User user -> Some user
           | Wm.Initiator.System -> None
         in
-        Pgsql_io.Prepared_stmt.fetch
-          db
-          (Sql.insert_work_manifest ())
-          ~f:(fun id state created_at -> (id, state, created_at))
-          work_manifest.Wm.base_ref
-          (CCOption.map CCInt64.of_int pull_number_opt)
-          (CCInt64.of_int repo_id)
-          run_type
-          work_manifest.Wm.branch_ref
-          (Terrat_tag_query.to_string work_manifest.Wm.tag_query)
-          user
-          dirspaces
-          run_kind
-          work_manifest.Wm.environment
+        Metrics.Psql_query_time.time (Metrics.psql_query_time "insert_work_manifest") (fun () ->
+            Pgsql_io.Prepared_stmt.fetch
+              db
+              (Sql.insert_work_manifest ())
+              ~f:(fun id state created_at -> (id, state, created_at))
+              work_manifest.Wm.base_ref
+              (CCOption.map CCInt64.of_int pull_number_opt)
+              (CCInt64.of_int repo_id)
+              run_type
+              work_manifest.Wm.branch_ref
+              (Terrat_tag_query.to_string work_manifest.Wm.tag_query)
+              user
+              dirspaces
+              run_kind
+              work_manifest.Wm.environment)
         >>= function
         | [] -> assert false
         | (id, state, created_at) :: _ -> (
@@ -4230,7 +4281,9 @@ struct
     let query_next_pending_work_manifest ~request_id db =
       let run =
         let open Abbs_future_combinators.Infix_result_monad in
-        Pgsql_io.Prepared_stmt.fetch db ~f:CCFun.id Sql.select_next_work_manifest
+        Metrics.Psql_query_time.time
+          (Metrics.psql_query_time "select_next_work_manifest")
+          (fun () -> Pgsql_io.Prepared_stmt.fetch db ~f:CCFun.id Sql.select_next_work_manifest)
         >>= function
         | [] -> Abb.Future.return (Ok None)
         | [ id ] ->
@@ -4388,7 +4441,8 @@ struct
 
     let store_flow_state ~request_id db work_manifest_id data =
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.execute db (Sql.upsert_flow_state ()) work_manifest_id data
+      Metrics.Psql_query_time.time (Metrics.psql_query_time "upsert_flow_state") (fun () ->
+          Pgsql_io.Prepared_stmt.execute db (Sql.upsert_flow_state ()) work_manifest_id data)
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -4397,7 +4451,8 @@ struct
 
     let query_flow_state ~request_id db work_manifest_id =
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.fetch db (Sql.select_flow_state ()) ~f:CCFun.id work_manifest_id
+      Metrics.Psql_query_time.time (Metrics.psql_query_time "select_flow_state") (fun () ->
+          Pgsql_io.Prepared_stmt.fetch db (Sql.select_flow_state ()) ~f:CCFun.id work_manifest_id)
       >>= function
       | Ok (data :: _) -> Abb.Future.return (Ok (Some data))
       | Ok [] -> Abb.Future.return (Ok None)
@@ -4407,7 +4462,8 @@ struct
 
     let cleanup_flow_states ~request_id db =
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.execute db (Sql.delete_stale_flow_states ())
+      Metrics.Psql_query_time.time (Metrics.psql_query_time "delete_stale_flow_states") (fun () ->
+          Pgsql_io.Prepared_stmt.execute db (Sql.delete_stale_flow_states ()))
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -4416,7 +4472,8 @@ struct
 
     let delete_flow_state ~request_id db work_manifest_id =
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.execute db (Sql.delete_flow_state ()) work_manifest_id
+      Metrics.Psql_query_time.time (Metrics.psql_query_time "delete_flow_state") (fun () ->
+          Pgsql_io.Prepared_stmt.execute db (Sql.delete_flow_state ()) work_manifest_id)
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -4425,16 +4482,20 @@ struct
 
     let unlock' db repo = function
       | Terrat_evaluator3.Unlock_id.Pull_request pull_request_id ->
-          Pgsql_io.Prepared_stmt.execute
-            db
-            (Sql.insert_pull_request_unlock ())
-            (CCInt64.of_int (Repo.id repo))
-            (CCInt64.of_int pull_request_id)
+          Metrics.Psql_query_time.time
+            (Metrics.psql_query_time "insert_pull_request_unlock")
+            (fun () ->
+              Pgsql_io.Prepared_stmt.execute
+                db
+                (Sql.insert_pull_request_unlock ())
+                (CCInt64.of_int (Repo.id repo))
+                (CCInt64.of_int pull_request_id))
       | Terrat_evaluator3.Unlock_id.Drift ->
-          Pgsql_io.Prepared_stmt.execute
-            db
-            (Sql.insert_drift_unlock ())
-            (CCInt64.of_int (Repo.id repo))
+          Metrics.Psql_query_time.time (Metrics.psql_query_time "insert_drift_unlock") (fun () ->
+              Pgsql_io.Prepared_stmt.execute
+                db
+                (Sql.insert_drift_unlock ())
+                (CCInt64.of_int (Repo.id repo)))
 
     let unlock ~request_id db repo unlock_id =
       let open Abb.Future.Infix_monad in
@@ -4450,12 +4511,15 @@ struct
 
     let query_pull_request_out_of_change_applies ~request_id db pull_request =
       let run =
-        Pgsql_io.Prepared_stmt.fetch
-          db
-          Sql.select_out_of_diff_applies
-          ~f:(fun dir workspace -> Terrat_change.Dirspace.{ dir; workspace })
-          (CCInt64.of_int pull_request.Pull_request.repo.Repo.id)
-          (CCInt64.of_int pull_request.Pull_request.id)
+        Metrics.Psql_query_time.time
+          (Metrics.psql_query_time "select_out_of_diff_applies")
+          (fun () ->
+            Pgsql_io.Prepared_stmt.fetch
+              db
+              Sql.select_out_of_diff_applies
+              ~f:(fun dir workspace -> Terrat_change.Dirspace.{ dir; workspace })
+              (CCInt64.of_int pull_request.Pull_request.repo.Repo.id)
+              (CCInt64.of_int pull_request.Pull_request.id))
       in
       let open Abb.Future.Infix_monad in
       run
@@ -4468,12 +4532,15 @@ struct
 
     let query_applied_dirspaces ~request_id db pull_request =
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.fetch
-        db
-        Sql.select_dirspace_applies_for_pull_request
-        ~f:(fun dir workspace -> { Terrat_dirspace.dir; workspace })
-        (CCInt64.of_int pull_request.Pull_request.repo.Repo.id)
-        (CCInt64.of_int pull_request.Pull_request.id)
+      Metrics.Psql_query_time.time
+        (Metrics.psql_query_time "select_dirspace_applies_for_pull_request")
+        (fun () ->
+          Pgsql_io.Prepared_stmt.fetch
+            db
+            Sql.select_dirspace_applies_for_pull_request
+            ~f:(fun dir workspace -> { Terrat_dirspace.dir; workspace })
+            (CCInt64.of_int pull_request.Pull_request.repo.Repo.id)
+            (CCInt64.of_int pull_request.Pull_request.id))
       >>= function
       | Ok dirspaces -> Abb.Future.return (Ok dirspaces)
       | Error (#Pgsql_io.err as err) ->
@@ -4483,14 +4550,17 @@ struct
 
     let query_dirspaces_without_valid_plans ~request_id db pull_request dirspaces =
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.fetch
-        db
-        ~f:(fun dir workspace -> Terrat_change.Dirspace.{ dir; workspace })
-        Sql.select_dirspaces_without_valid_plans
-        (CCInt64.of_int pull_request.Pull_request.repo.Repo.id)
-        (CCInt64.of_int pull_request.Pull_request.id)
-        (CCList.map (fun { Terrat_change.Dirspace.dir; _ } -> dir) dirspaces)
-        (CCList.map (fun { Terrat_change.Dirspace.workspace; _ } -> workspace) dirspaces)
+      Metrics.Psql_query_time.time
+        (Metrics.psql_query_time "select_dirspaces_without_valid_plans")
+        (fun () ->
+          Pgsql_io.Prepared_stmt.fetch
+            db
+            ~f:(fun dir workspace -> Terrat_change.Dirspace.{ dir; workspace })
+            Sql.select_dirspaces_without_valid_plans
+            (CCInt64.of_int pull_request.Pull_request.repo.Repo.id)
+            (CCInt64.of_int pull_request.Pull_request.id)
+            (CCList.map (fun { Terrat_change.Dirspace.dir; _ } -> dir) dirspaces)
+            (CCList.map (fun { Terrat_change.Dirspace.workspace; _ } -> workspace) dirspaces))
       >>= function
       | Ok _ as ret -> Abb.Future.return ret
       | Error (#Pgsql_io.err as err) ->
@@ -4503,28 +4573,29 @@ struct
       let run =
         Abbs_future_combinators.List_result.iter
           ~f:(fun dirspaceflows ->
-            Pgsql_io.Prepared_stmt.execute
-              db
-              Sql.insert_dirspace
-              (CCList.replicate (CCList.length dirspaceflows) base_ref)
-              (CCList.map
-                 (fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.dir; _ }; _ } -> dir)
-                 dirspaceflows)
-              (CCList.replicate (CCList.length dirspaceflows) id)
-              (CCList.replicate (CCList.length dirspaceflows) branch_ref)
-              (CCList.map
-                 (fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.workspace; _ }; _ } ->
-                   workspace)
-                 dirspaceflows)
-              (CCList.map
-                 (fun Terrat_change.{ Dirspaceflow.workflow; _ } ->
-                   let module Dfwf = Terrat_change.Dirspaceflow.Workflow in
-                   let module Wf = Terrat_base_repo_config_v1.Workflows.Entry in
-                   CCOption.map_or
-                     ~default:Terrat_base_repo_config_v1.Workflows.Entry.Lock_policy.Strict
-                     (fun { Dfwf.workflow = { Wf.lock_policy; _ }; _ } -> lock_policy)
-                     workflow)
-                 dirspaceflows))
+            Metrics.Psql_query_time.time (Metrics.psql_query_time "insert_dirspace") (fun () ->
+                Pgsql_io.Prepared_stmt.execute
+                  db
+                  Sql.insert_dirspace
+                  (CCList.replicate (CCList.length dirspaceflows) base_ref)
+                  (CCList.map
+                     (fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.dir; _ }; _ } -> dir)
+                     dirspaceflows)
+                  (CCList.replicate (CCList.length dirspaceflows) id)
+                  (CCList.replicate (CCList.length dirspaceflows) branch_ref)
+                  (CCList.map
+                     (fun Terrat_change.{ Dirspaceflow.dirspace = { Dirspace.workspace; _ }; _ } ->
+                       workspace)
+                     dirspaceflows)
+                  (CCList.map
+                     (fun Terrat_change.{ Dirspaceflow.workflow; _ } ->
+                       let module Dfwf = Terrat_change.Dirspaceflow.Workflow in
+                       let module Wf = Terrat_base_repo_config_v1.Workflows.Entry in
+                       CCOption.map_or
+                         ~default:Terrat_base_repo_config_v1.Workflows.Entry.Lock_policy.Strict
+                         (fun { Dfwf.workflow = { Wf.lock_policy; _ }; _ } -> lock_policy)
+                         workflow)
+                     dirspaceflows)))
           (CCList.chunks not_a_bad_chunk_size dirspaceflows)
       in
       let open Abb.Future.Infix_monad in
@@ -4539,22 +4610,24 @@ struct
     let fetch_plan ~request_id db work_manifest_id dirspace =
       let run =
         let open Abbs_future_combinators.Infix_result_monad in
-        Pgsql_io.Prepared_stmt.fetch
-          db
-          Sql.select_recent_plan
-          ~f:CCFun.id
-          work_manifest_id
-          dirspace.Terrat_dirspace.dir
-          dirspace.Terrat_dirspace.workspace
+        Metrics.Psql_query_time.time (Metrics.psql_query_time "select_recent_plan") (fun () ->
+            Pgsql_io.Prepared_stmt.fetch
+              db
+              Sql.select_recent_plan
+              ~f:CCFun.id
+              work_manifest_id
+              dirspace.Terrat_dirspace.dir
+              dirspace.Terrat_dirspace.workspace)
         >>= function
         | [] -> Abb.Future.return (Ok None)
         | data :: _ ->
-            Pgsql_io.Prepared_stmt.execute
-              db
-              (Sql.delete_plan ())
-              work_manifest_id
-              dirspace.Terrat_dirspace.dir
-              dirspace.Terrat_dirspace.workspace
+            Metrics.Psql_query_time.time (Metrics.psql_query_time "delete_plan") (fun () ->
+                Pgsql_io.Prepared_stmt.execute
+                  db
+                  (Sql.delete_plan ())
+                  work_manifest_id
+                  dirspace.Terrat_dirspace.dir
+                  dirspace.Terrat_dirspace.workspace)
             >>= fun () -> Abb.Future.return (Ok (Some data))
       in
       let open Abb.Future.Infix_monad in
@@ -4568,14 +4641,15 @@ struct
 
     let store_plan ~request_id db work_manifest_id dirspace data has_changes =
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.execute
-        db
-        Sql.upsert_plan
-        work_manifest_id
-        dirspace.Terrat_dirspace.dir
-        dirspace.Terrat_dirspace.workspace
-        data
-        has_changes
+      Metrics.Psql_query_time.time (Metrics.psql_query_time "upsert_plan") (fun () ->
+          Pgsql_io.Prepared_stmt.execute
+            db
+            Sql.upsert_plan
+            work_manifest_id
+            dirspace.Terrat_dirspace.dir
+            dirspace.Terrat_dirspace.workspace
+            data
+            has_changes)
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -4585,7 +4659,8 @@ struct
 
     let cleanup_plans ~request_id db =
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.execute db Sql.delete_old_plans
+      Metrics.Psql_query_time.time (Metrics.psql_query_time "delete_old_plans") (fun () ->
+          Pgsql_io.Prepared_stmt.execute db Sql.delete_old_plans)
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -4708,13 +4783,16 @@ struct
               let dir = CCList.map (fun result -> result.Wmr.path) chunk in
               let workspace = CCList.map (fun result -> result.Wmr.workspace) chunk in
               let success = CCList.map (fun result -> result.Wmr.success) chunk in
-              Pgsql_io.Prepared_stmt.execute
-                db
-                Sql.insert_github_work_manifest_result
-                work_manifest_id
-                dir
-                workspace
-                success)
+              Metrics.Psql_query_time.time
+                (Metrics.psql_query_time "insert_github_work_manifest_result")
+                (fun () ->
+                  Pgsql_io.Prepared_stmt.execute
+                    db
+                    Sql.insert_github_work_manifest_result
+                    work_manifest_id
+                    dir
+                    workspace
+                    success))
             (CCList.chunks not_a_bad_chunk_size result.Rb.dirspaces))
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
@@ -4769,16 +4847,19 @@ struct
               let step = CCList.map (fun (_, { O.step; _ }) -> replace_nul_byte step) chunk in
               let success = CCList.map (fun (_, { O.success; _ }) -> success) chunk in
               let work_manifest_id = CCList.replicate (CCList.length chunk) work_manifest_id in
-              Pgsql_io.Prepared_stmt.execute
-                db
-                Sql.insert_workflow_step_output
-                idx
-                ignore_errors
-                payload
-                scope
-                step
-                success
-                work_manifest_id)
+              Metrics.Psql_query_time.time
+                (Metrics.psql_query_time "insert_workflow_step_output")
+                (fun () ->
+                  Pgsql_io.Prepared_stmt.execute
+                    db
+                    Sql.insert_workflow_step_output
+                    idx
+                    ignore_errors
+                    payload
+                    scope
+                    step
+                    success
+                    work_manifest_id))
             (CCList.chunks not_a_bad_chunk_size steps)
           >>= fun () ->
           let dirspaces =
@@ -4805,13 +4886,16 @@ struct
                 CCList.map (fun ({ Terrat_dirspace.workspace; _ }, _) -> workspace) chunk
               in
               let success = CCList.map (fun (_, success) -> success) chunk in
-              Pgsql_io.Prepared_stmt.execute
-                db
-                Sql.insert_github_work_manifest_result
-                work_manifest_id
-                dir
-                workspace
-                success)
+              Metrics.Psql_query_time.time
+                (Metrics.psql_query_time "insert_github_work_manifest_result")
+                (fun () ->
+                  Pgsql_io.Prepared_stmt.execute
+                    db
+                    Sql.insert_github_work_manifest_result
+                    work_manifest_id
+                    dir
+                    workspace
+                    success))
             (CCList.chunks not_a_bad_chunk_size dirspaces))
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
@@ -4833,30 +4917,36 @@ struct
       in
       let run =
         let open Abbs_future_combinators.Infix_result_monad in
-        Pgsql_io.Prepared_stmt.fetch
-          db
-          (Sql.update_abort_duplicate_work_manifests ())
-          ~f:CCFun.id
-          (CCInt64.of_int pull_request.Pull_request.repo.Repo.id)
-          (CCInt64.of_int pull_request.Pull_request.id)
-          run_type
-          dirs
-          workspaces
+        Metrics.Psql_query_time.time
+          (Metrics.psql_query_time "update_abort_duplicate_work_manifests")
+          (fun () ->
+            Pgsql_io.Prepared_stmt.fetch
+              db
+              (Sql.update_abort_duplicate_work_manifests ())
+              ~f:CCFun.id
+              (CCInt64.of_int pull_request.Pull_request.repo.Repo.id)
+              (CCInt64.of_int pull_request.Pull_request.id)
+              run_type
+              dirs
+              workspaces)
         >>= fun ids ->
         CCList.iter
           (fun id ->
             Logs.info (fun m ->
                 m "GITHUB_EVALUATOR : %s : ABORTED_WORK_MANIFEST : %a" request_id Uuidm.pp id))
           ids;
-        Pgsql_io.Prepared_stmt.fetch
-          db
-          (Sql.select_conflicting_work_manifests_in_repo ())
-          ~f:(fun id maybe_stale -> (id, maybe_stale))
-          (CCInt64.of_int pull_request.Pull_request.repo.Repo.id)
-          (CCInt64.of_int pull_request.Pull_request.id)
-          run_type
-          dirs
-          workspaces
+        Metrics.Psql_query_time.time
+          (Metrics.psql_query_time "select_conflicting_work_manifests_in_repo")
+          (fun () ->
+            Pgsql_io.Prepared_stmt.fetch
+              db
+              (Sql.select_conflicting_work_manifests_in_repo ())
+              ~f:(fun id maybe_stale -> (id, maybe_stale))
+              (CCInt64.of_int pull_request.Pull_request.repo.Repo.id)
+              (CCInt64.of_int pull_request.Pull_request.id)
+              run_type
+              dirs
+              workspaces)
         >>= fun ids ->
         match
           CCList.partition_filter_map
@@ -5179,46 +5269,49 @@ struct
 
     let query_dirspaces_owned_by_other_pull_requests ~request_id db pull_request dirspaces =
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.fetch
-        db
-        (Sql.select_dirspaces_owned_by_other_pull_requests ())
-        ~f:(fun
-            dir
-            workspace
-            base_branch
-            branch
-            base_hash
-            hash
-            merged_hash
-            merged_at
-            pull_number
-            state
-            title
-            user
-          ->
-          ( Terrat_change.Dirspace.{ dir; workspace },
-            {
-              Pull_request.base_branch_name = base_branch;
-              base_ref = base_hash;
-              branch_name = branch;
-              branch_ref = hash;
-              id = CCInt64.to_int pull_number;
-              repo = pull_request.Pull_request.repo;
-              state =
-                (match (state, merged_hash, merged_at) with
-                | "open", _, _ -> Terrat_pull_request.State.(Open Open_status.Mergeable)
-                | "closed", _, _ -> Terrat_pull_request.State.Closed
-                | "merged", Some merged_hash, Some merged_at ->
-                    Terrat_pull_request.State.(Merged Merged.{ merged_hash; merged_at })
-                | _ -> assert false);
-              title;
-              user;
-              value = ();
-            } ))
-        (CCInt64.of_int pull_request.Pull_request.repo.Repo.id)
-        (CCInt64.of_int pull_request.Pull_request.id)
-        (CCList.map (fun { Terrat_change.Dirspace.dir; _ } -> dir) dirspaces)
-        (CCList.map (fun { Terrat_change.Dirspace.workspace; _ } -> workspace) dirspaces)
+      Metrics.Psql_query_time.time
+        (Metrics.psql_query_time "select_dirspaces_owned_by_other_pull_requests")
+        (fun () ->
+          Pgsql_io.Prepared_stmt.fetch
+            db
+            (Sql.select_dirspaces_owned_by_other_pull_requests ())
+            ~f:(fun
+                dir
+                workspace
+                base_branch
+                branch
+                base_hash
+                hash
+                merged_hash
+                merged_at
+                pull_number
+                state
+                title
+                user
+              ->
+              ( Terrat_change.Dirspace.{ dir; workspace },
+                {
+                  Pull_request.base_branch_name = base_branch;
+                  base_ref = base_hash;
+                  branch_name = branch;
+                  branch_ref = hash;
+                  id = CCInt64.to_int pull_number;
+                  repo = pull_request.Pull_request.repo;
+                  state =
+                    (match (state, merged_hash, merged_at) with
+                    | "open", _, _ -> Terrat_pull_request.State.(Open Open_status.Mergeable)
+                    | "closed", _, _ -> Terrat_pull_request.State.Closed
+                    | "merged", Some merged_hash, Some merged_at ->
+                        Terrat_pull_request.State.(Merged Merged.{ merged_hash; merged_at })
+                    | _ -> assert false);
+                  title;
+                  user;
+                  value = ();
+                } ))
+            (CCInt64.of_int pull_request.Pull_request.repo.Repo.id)
+            (CCInt64.of_int pull_request.Pull_request.id)
+            (CCList.map (fun { Terrat_change.Dirspace.dir; _ } -> dir) dirspaces)
+            (CCList.map (fun { Terrat_change.Dirspace.workspace; _ } -> workspace) dirspaces))
       >>= function
       | Ok _ as res -> Abb.Future.return res
       | Error (#Pgsql_io.err as err) ->
@@ -5411,13 +5504,14 @@ struct
       let module D = Terrat_base_repo_config_v1.Drift in
       let open Abb.Future.Infix_monad in
       (if drift.D.enabled then
-         Pgsql_io.Prepared_stmt.execute
-           db
-           Sql.upsert_drift_schedule
-           (CCInt64.of_int repo.Repo.id)
-           drift.D.schedule
-           drift.D.reconcile
-           (Some drift.D.tag_query)
+         Metrics.Psql_query_time.time (Metrics.psql_query_time "upsert_drift_schedule") (fun () ->
+             Pgsql_io.Prepared_stmt.execute
+               db
+               Sql.upsert_drift_schedule
+               (CCInt64.of_int repo.Repo.id)
+               drift.D.schedule
+               drift.D.reconcile
+               (Some drift.D.tag_query))
        else
          Pgsql_io.Prepared_stmt.execute db Sql.delete_drift_schedule (CCInt64.of_int repo.Repo.id))
       >>= function
@@ -5429,12 +5523,15 @@ struct
 
     let query_missing_drift_scheduled_runs ~request_id db =
       let open Abb.Future.Infix_monad in
-      Pgsql_io.Prepared_stmt.fetch
-        db
-        (Sql.select_missing_drift_scheduled_runs ())
-        ~f:(fun installation_id repository_id owner name _ _ ->
-          ( { Account.installation_id = CCInt64.to_int installation_id },
-            { Repo.id = CCInt64.to_int repository_id; owner; name } ))
+      Metrics.Psql_query_time.time
+        (Metrics.psql_query_time "select_missing_drift_scheduled_runs")
+        (fun () ->
+          Pgsql_io.Prepared_stmt.fetch
+            db
+            (Sql.select_missing_drift_scheduled_runs ())
+            ~f:(fun installation_id repository_id owner name _ _ ->
+              ( { Account.installation_id = CCInt64.to_int installation_id },
+                { Repo.id = CCInt64.to_int repository_id; owner; name } )))
       >>= function
       | Ok _ as ret -> Abb.Future.return ret
       | Error (#Pgsql_io.err as err) ->

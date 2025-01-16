@@ -1,7 +1,6 @@
 (** Collect metrics for Prometheus.
 
-    Copyright 2016-2017 Docker, Inc.
-*)
+    Copyright 2016-2017 Docker, Inc. *)
 
 type metric_type =
   | Counter
@@ -49,11 +48,9 @@ module Sample_set : sig
     bucket : (LabelName.t * float) option;  (** The "le" or "quantile" label and value, if any. *)
   }
 
-  (** A collection of values that together represent a single sample.
-      For a counter, each reading is just a single value, but more complex types
-      require multiple values.
-      For example, a "summary" sample set contains "_sum" and "_count" values.
-   *)
+  (** A collection of values that together represent a single sample. For a counter, each reading is
+      just a single value, but more complex types require multiple values. For example, a "summary"
+      sample set contains "_sum" and "_count" values. *)
   type t = sample list
 
   val sample : ?ext:string -> ?bucket:LabelName.t * float -> float -> sample
@@ -76,30 +73,28 @@ module CollectorRegistry : sig
   (** Read the current value of each metric. *)
   val collect : t -> snapshot
 
-  (** [register t metric collector] adds [metric] to the set of metrics being collected.
-      It will call [collector ()] to collect the values each time [collect] is called. *)
+  (** [register t metric collector] adds [metric] to the set of metrics being collected. It will
+      call [collector ()] to collect the values each time [collect] is called. *)
   val register : t -> MetricInfo.t -> (unit -> Sample_set.t LabelSetMap.t) -> unit
 
-  (** [register_pre_collect t fn] arranges for [fn ()] to be called at the start
-      of each collection. This is useful if one expensive call provides
-      information about multiple metrics. *)
+  (** [register_pre_collect t fn] arranges for [fn ()] to be called at the start of each collection.
+      This is useful if one expensive call provides information about multiple metrics. *)
   val register_pre_collect : t -> (unit -> unit) -> unit
 end
 
 (** Operations common to all types of metric. *)
 module type METRIC = sig
-  (** A collection of metrics that are the same except for their labels.
-      e.g. "Number of HTTP responses" *)
+  (** A collection of metrics that are the same except for their labels. e.g. "Number of HTTP
+      responses" *)
   type family
 
-  (** A particular metric.
-      e.g. "Number of HTTP responses with code=404" *)
+  (** A particular metric. e.g. "Number of HTTP responses with code=404" *)
   type t
 
   (** [v_labels ~label_names ~help ~namespace ~subsystem name] is a family of metrics with full name
-      [namespace_subsystem_name] and documentation string [help]. Each metric in the family will provide
-      a value for each of the labels.
-      The new family is registered with [registry] (default: {!CollectorRegistry.default}). *)
+      [namespace_subsystem_name] and documentation string [help]. Each metric in the family will
+      provide a value for each of the labels. The new family is registered with [registry] (default:
+      {!CollectorRegistry.default}). *)
   val v_labels :
     label_names:string list ->
     ?registry:CollectorRegistry.t ->
@@ -109,14 +104,14 @@ module type METRIC = sig
     string ->
     family
 
-  (** [labels family label_values] is the metric in [family] with these values for the labels.
-      The order of the values must be the same as the order of the [label_names] passed to [v_labels];
-      you may wish to write a wrapper function with labelled arguments to avoid mistakes.
-      If this is called multiple times with the same set of values, the existing metric will be returned. *)
+  (** [labels family label_values] is the metric in [family] with these values for the labels. The
+      order of the values must be the same as the order of the [label_names] passed to [v_labels];
+      you may wish to write a wrapper function with labelled arguments to avoid mistakes. If this is
+      called multiple times with the same set of values, the existing metric will be returned. *)
   val labels : family -> string list -> t
 
-  (** [v_label] is a convenience wrapper around [v_labels] for the case where there is a single label.
-      The result is a function from the single label's value to the metric. *)
+  (** [v_label] is a convenience wrapper around [v_labels] for the case where there is a single
+      label. The result is a function from the single label's value to the metric. *)
   val v_label :
     label_name:string ->
     ?registry:CollectorRegistry.t ->
@@ -137,7 +132,8 @@ module type METRIC = sig
     t
 end
 
-(** A counter is a cumulative metric that represents a single numerical value that only ever goes up. *)
+(** A counter is a cumulative metric that represents a single numerical value that only ever goes
+    up. *)
 module Counter : sig
   include METRIC
 
@@ -147,7 +143,8 @@ module Counter : sig
   val inc : t -> float -> unit
 end
 
-(** A gauge is a metric that represents a single numerical value that can arbitrarily go up and down. *)
+(** A gauge is a metric that represents a single numerical value that can arbitrarily go up and
+    down. *)
 module Gauge : sig
   include METRIC
 
@@ -171,8 +168,8 @@ module Gauge : sig
   val time : t -> (unit -> 'a Abb.Future.t) -> 'a Abb.Future.t
 end
 
-(** A summary is a metric that records both the number of readings and their total.
-    This allows calculating the average. *)
+(** A summary is a metric that records both the number of readings and their total. This allows
+    calculating the average. *)
 module Summary : sig
   include METRIC
 
@@ -186,18 +183,16 @@ end
 module Histogram_spec : sig
   type t
 
-  (** [of_linear start interval count] will return a histogram type with
-      [count] buckets with values starting at [start] and [interval] apart:
-      [(start, start+interval, start + (2 * interval), ... start + ((count-1) * interval), infinity)].
-      [count] does not include the infinity bucket.
-  *)
-  val of_linear : float -> float -> int -> t
+  (** [of_linear start interval count] will return a histogram type with [count] buckets with values
+      starting at [start] and [interval] apart:
+      [(start, start+interval, start + (2 * interval), ... start + ((count-1) * interval),
+       infinity)]. [count] does not include the infinity bucket. *)
+  val of_linear : start:float -> interval:float -> count:int -> t
 
-  (** [of_exponential start factor count] will return a histogram type with
-      [count] buckets with values starting at [start] and every next item [previous*factor].
-      [count] does not include the infinity bucket.
-  *)
-  val of_exponential : float -> float -> int -> t
+  (** [of_exponential start factor count] will return a histogram type with [count] buckets with
+      values starting at [start] and every next item [previous*factor]. [count] does not include the
+      infinity bucket. *)
+  val of_exponential : start:float -> factor:float -> count:int -> t
 
   (** [of_list [0.5; 1.]] will return a histogram with buckets [0.5;1.;infinity]. *)
   val of_list : float list -> t
@@ -217,7 +212,8 @@ module Histogram (Buckets : sig
   val spec : Histogram_spec.t
 end) : HISTOGRAM
 
-(** A histogram configured with reasonable defaults for measuring network request times in seconds. *)
+(** A histogram configured with reasonable defaults for measuring network request times in seconds.
+*)
 module DefaultHistogram : HISTOGRAM
 
 (** Format a snapshot in Prometheus's text format, version 0.0.4. *)

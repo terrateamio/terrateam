@@ -1,3 +1,16 @@
+module Metrics = struct
+  module Psql_query_time = Prmths.Histogram (struct
+    let spec = Prmths.Histogram_spec.of_linear ~start:0.0 ~interval:0.1 ~count:15
+  end)
+
+  let namespace = "terrat"
+  let subsystem = "ep_installations"
+
+  let psql_query_time =
+    let help = "Time for PostgreSQL query" in
+    Psql_query_time.v_label ~help ~label_name:"q" ~namespace ~subsystem "psql_query_time"
+end
+
 let max_page_size = 100
 
 let replace_where q = function
@@ -124,25 +137,26 @@ module Work_manifests = struct
         Pgsql_pool.with_conn query.storage ~f:(fun db ->
             let open Abbs_future_combinators.Infix_result_monad in
             Pgsql_io.tx db ~f:(fun () ->
-                Pgsql_io.Prepared_stmt.execute
-                  db
-                  (set_timeout (Terrat_config.statement_timeout query.config))
-                >>= fun () ->
-                return
-                  search
-                  db
-                  (Sql.select_outputs where)
-                  ~f:(fun created_at idx ignore_errors payload scope step state ->
-                    { T.created_at; idx; ignore_errors; payload; scope; state; step })
-                  query.user
-                  (CCInt64.of_int query.installation_id)
-                  query.work_manifest_id
-                  (Terrat_sql_of_tag_query.strings q)
-                  (Terrat_sql_of_tag_query.bigints q)
-                  (Terrat_sql_of_tag_query.ints q)
-                  (Terrat_sql_of_tag_query.json q)
-                  idx
-                  query.lite))
+                Metrics.Psql_query_time.time (Metrics.psql_query_time "select_outputs") (fun () ->
+                    Pgsql_io.Prepared_stmt.execute
+                      db
+                      (set_timeout (Terrat_config.statement_timeout query.config))
+                    >>= fun () ->
+                    return
+                      search
+                      db
+                      (Sql.select_outputs where)
+                      ~f:(fun created_at idx ignore_errors payload scope step state ->
+                        { T.created_at; idx; ignore_errors; payload; scope; state; step })
+                      query.user
+                      (CCInt64.of_int query.installation_id)
+                      query.work_manifest_id
+                      (Terrat_sql_of_tag_query.strings q)
+                      (Terrat_sql_of_tag_query.bigints q)
+                      (Terrat_sql_of_tag_query.ints q)
+                      (Terrat_sql_of_tag_query.json q)
+                      idx
+                      query.lite)))
 
       let next ?cursor query = run_query ?cursor query Pgsql_pagination.next
       let prev ?cursor query = run_query ?cursor query Pgsql_pagination.prev
@@ -398,7 +412,7 @@ module Work_manifests = struct
       | Pgsql_io.err
       ]
 
-    let run_query ?cursor query f =
+    let run_query ?cursor query return =
       let q = query.query in
       let where = Terrat_sql_of_tag_query.sql q in
       let search =
@@ -420,69 +434,72 @@ module Work_manifests = struct
                 db
                 (set_timeout (Terrat_config.statement_timeout query.config))
               >>= fun () ->
-              f
-                search
-                db
-                (Sql.select_work_manifests where)
-                ~f:(fun
-                    id
-                    base_ref
-                    branch_ref
-                    completed_at
+              Metrics.Psql_query_time.time
+                (Metrics.psql_query_time "select_work_manifests")
+                (fun () ->
+                  return
+                    search
+                    db
+                    (Sql.select_work_manifests where)
+                    ~f:(fun
+                        id
+                        base_ref
+                        branch_ref
+                        completed_at
+                        created_at
+                        run_type
+                        state
+                        tag_query
+                        pull_number
+                        base_branch
+                        owner
+                        repo
+                        run_kind
+                        dirspaces
+                        pull_request_title
+                        branch
+                        user
+                        run_id
+                        environment
+                      ->
+                      let module D = Terrat_api_components.Kind_drift in
+                      let module I = Terrat_api_components.Kind_index in
+                      let module P = Terrat_api_components.Kind_pull_request in
+                      let module Wm = Terrat_api_components.Installation_work_manifest in
+                      {
+                        Wm.base_branch;
+                        base_ref;
+                        branch;
+                        branch_ref;
+                        completed_at;
+                        created_at;
+                        dirspaces = CCOption.get_or ~default:[] dirspaces;
+                        environment;
+                        id = Uuidm.to_string id;
+                        kind =
+                          (match (run_kind, pull_number) with
+                          | "drift", _ -> Wm.Kind.Kind_drift "drift"
+                          | "index", _ -> Wm.Kind.Kind_index "index"
+                          | "pr", Some pull_number ->
+                              Wm.Kind.Kind_pull_request
+                                { P.pull_number = CCInt64.to_int pull_number; pull_request_title }
+                          | _ -> assert false);
+                        owner;
+                        repo;
+                        run_id;
+                        run_type = Terrat_work_manifest3.Step.to_string run_type;
+                        state = Terrat_work_manifest3.State.to_string state;
+                        tag_query = Terrat_tag_query.to_string tag_query;
+                        user;
+                      })
+                    query.user
+                    (CCInt64.of_int query.installation_id)
+                    (Terrat_sql_of_tag_query.timezone q)
+                    (Terrat_sql_of_tag_query.strings q)
+                    (Terrat_sql_of_tag_query.bigints q)
+                    (Terrat_sql_of_tag_query.json q)
                     created_at
-                    run_type
-                    state
-                    tag_query
-                    pull_number
-                    base_branch
-                    owner
-                    repo
-                    run_kind
-                    dirspaces
-                    pull_request_title
-                    branch
-                    user
-                    run_id
-                    environment
-                  ->
-                  let module D = Terrat_api_components.Kind_drift in
-                  let module I = Terrat_api_components.Kind_index in
-                  let module P = Terrat_api_components.Kind_pull_request in
-                  let module Wm = Terrat_api_components.Installation_work_manifest in
-                  {
-                    Wm.base_branch;
-                    base_ref;
-                    branch;
-                    branch_ref;
-                    completed_at;
-                    created_at;
-                    dirspaces = CCOption.get_or ~default:[] dirspaces;
-                    environment;
-                    id = Uuidm.to_string id;
-                    kind =
-                      (match (run_kind, pull_number) with
-                      | "drift", _ -> Wm.Kind.Kind_drift "drift"
-                      | "index", _ -> Wm.Kind.Kind_index "index"
-                      | "pr", Some pull_number ->
-                          Wm.Kind.Kind_pull_request
-                            { P.pull_number = CCInt64.to_int pull_number; pull_request_title }
-                      | _ -> assert false);
-                    owner;
-                    repo;
-                    run_id;
-                    run_type = Terrat_work_manifest3.Step.to_string run_type;
-                    state = Terrat_work_manifest3.State.to_string state;
-                    tag_query = Terrat_tag_query.to_string tag_query;
-                    user;
-                  })
-                query.user
-                (CCInt64.of_int query.installation_id)
-                (Terrat_sql_of_tag_query.timezone q)
-                (Terrat_sql_of_tag_query.strings q)
-                (Terrat_sql_of_tag_query.bigints q)
-                (Terrat_sql_of_tag_query.json q)
-                created_at
-                id))
+                    id)))
 
     let next ?cursor query = run_query ?cursor query Pgsql_pagination.next
     let prev ?cursor query = run_query ?cursor query Pgsql_pagination.prev
@@ -736,7 +753,7 @@ module Dirspaces = struct
       | Pgsql_io.err
       ]
 
-    let run_query ?cursor query f =
+    let run_query ?cursor query return =
       let q = query.query in
       let where = Terrat_sql_of_tag_query.sql q in
       let search =
@@ -759,73 +776,74 @@ module Dirspaces = struct
                 db
                 (set_timeout (Terrat_config.statement_timeout query.config))
               >>= fun () ->
-              f
-                search
-                db
-                (Sql.select_dirspaces where)
-                ~f:(fun
-                    id
+              Metrics.Psql_query_time.time (Metrics.psql_query_time "select_dirspaces") (fun () ->
+                  return
+                    search
+                    db
+                    (Sql.select_dirspaces where)
+                    ~f:(fun
+                        id
+                        dir
+                        workspace
+                        base_ref
+                        branch_ref
+                        completed_at
+                        created_at
+                        run_type
+                        state
+                        tag_query
+                        pull_number
+                        base_branch
+                        owner
+                        repo
+                        run_kind
+                        pull_request_title
+                        branch
+                        user
+                        run_id
+                        environment
+                      ->
+                      let module D = Terrat_api_components.Kind_drift in
+                      let module I = Terrat_api_components.Kind_index in
+                      let module P = Terrat_api_components.Kind_pull_request in
+                      let module Ds = Terrat_api_components.Installation_dirspace in
+                      {
+                        Ds.base_branch;
+                        base_ref;
+                        branch;
+                        branch_ref;
+                        completed_at;
+                        created_at;
+                        dir;
+                        environment;
+                        id = Uuidm.to_string id;
+                        kind =
+                          (match (run_kind, pull_number) with
+                          | "drift", _ -> Ds.Kind.Kind_drift "drift"
+                          | "index", _ -> Ds.Kind.Kind_index "index"
+                          | "pr", Some pull_number ->
+                              Ds.Kind.Kind_pull_request
+                                { P.pull_number = CCInt64.to_int pull_number; pull_request_title }
+                          | _ -> assert false);
+                        owner;
+                        repo;
+                        run_id;
+                        run_type = Terrat_work_manifest3.Step.to_string run_type;
+                        state;
+                        tag_query = Terrat_tag_query.to_string tag_query;
+                        user;
+                        workspace;
+                      })
+                    query.user
+                    (CCInt64.of_int query.installation_id)
+                    (Terrat_sql_of_tag_query.timezone q)
+                    (Terrat_sql_of_tag_query.strings q)
+                    (Terrat_sql_of_tag_query.bigints q)
+                    (Terrat_sql_of_tag_query.json q)
+                    created_at
                     dir
                     workspace
-                    base_ref
-                    branch_ref
-                    completed_at
-                    created_at
-                    run_type
-                    state
-                    tag_query
-                    pull_number
-                    base_branch
-                    owner
-                    repo
-                    run_kind
-                    pull_request_title
-                    branch
-                    user
-                    run_id
-                    environment
-                  ->
-                  let module D = Terrat_api_components.Kind_drift in
-                  let module I = Terrat_api_components.Kind_index in
-                  let module P = Terrat_api_components.Kind_pull_request in
-                  let module Ds = Terrat_api_components.Installation_dirspace in
-                  {
-                    Ds.base_branch;
-                    base_ref;
-                    branch;
-                    branch_ref;
-                    completed_at;
-                    created_at;
-                    dir;
-                    environment;
-                    id = Uuidm.to_string id;
-                    kind =
-                      (match (run_kind, pull_number) with
-                      | "drift", _ -> Ds.Kind.Kind_drift "drift"
-                      | "index", _ -> Ds.Kind.Kind_index "index"
-                      | "pr", Some pull_number ->
-                          Ds.Kind.Kind_pull_request
-                            { P.pull_number = CCInt64.to_int pull_number; pull_request_title }
-                      | _ -> assert false);
-                    owner;
-                    repo;
-                    run_id;
-                    run_type = Terrat_work_manifest3.Step.to_string run_type;
-                    state;
-                    tag_query = Terrat_tag_query.to_string tag_query;
-                    user;
-                    workspace;
-                  })
-                query.user
-                (CCInt64.of_int query.installation_id)
-                (Terrat_sql_of_tag_query.timezone q)
-                (Terrat_sql_of_tag_query.strings q)
-                (Terrat_sql_of_tag_query.bigints q)
-                (Terrat_sql_of_tag_query.json q)
-                created_at
-                dir
-                workspace
-                id))
+                    id)))
 
     let next ?cursor query = run_query ?cursor query Pgsql_pagination.next
     let prev ?cursor query = run_query ?cursor query Pgsql_pagination.prev
