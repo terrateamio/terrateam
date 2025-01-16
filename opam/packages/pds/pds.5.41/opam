@@ -22,7 +22,7 @@ depends: [
 	"ppx_deriving"
 	"process"
 	"sedlex"
-	"toml"
+	"toml" { >= "6" }
 ]
 
 authors: [
@@ -37,7 +37,10 @@ homepage: "https://hg.sr.ht/~mmatalka/pds"
 
 url {
 	src: "http://acsl-pkgs.s3.amazonaws.com/pds-5.41.tar.gz"
-	checksum: "d33bac43a75bbbdb359220665e98708c"
+	checksum: [
+		"md5=d33bac43a75bbbdb359220665e98708c"
+		"sha256=353e38148ff2225c7b05097d0521467a48caf66634780f5bae912fffde35a5fc"
+	]
 }
 bug-reports: "https://todo.sr.ht/~mmatalka/pds"
 dev-repo: "hg+ssh://hg@hg.sr.ht/~mmatalka/pds"
