@@ -30,6 +30,7 @@ module Drift = Terrat_repo_config_drift
 module Engine = Terrat_repo_config_engine
 module Engine_cdktf = Terrat_repo_config_engine_cdktf
 module Engine_opentofu = Terrat_repo_config_engine_opentofu
+module Engine_pulumi = Terrat_repo_config_engine_pulumi
 module Engine_terraform = Terrat_repo_config_engine_terraform
 module Engine_terragrunt = Terrat_repo_config_engine_terragrunt
 module Hook = Terrat_repo_config_hook

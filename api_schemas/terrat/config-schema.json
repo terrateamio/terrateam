@@ -353,6 +353,9 @@
         },
         {
           "$ref": "#/definitions/engine-terragrunt"
+        },
+        {
+          "$ref": "#/definitions/engine-pulumi"
         }
       ]
     },
@@ -383,6 +386,19 @@
           "type": "string"
         },
         "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "engine-pulumi": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "const": "pulumi",
           "type": "string"
         }
       },
