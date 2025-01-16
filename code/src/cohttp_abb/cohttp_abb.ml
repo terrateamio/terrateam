@@ -1,5 +1,9 @@
 module List = ListLabels
 
+let src = Logs.Src.create "cohttp_abb"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 type connect_err =
   [ Abb_happy_eyeballs.connect_err
   | `E_connection_refused
@@ -125,6 +129,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
 
       let connect_to_port host port =
         let open Fut_comb.Infix_result_monad in
+        Logs.debug (fun m -> m "CONNECT : %s : %d" host port);
         Happy_eyeballs.connect host [ port ] >>= fun (_, sock) -> Abb.Future.return (Ok sock)
 
       let connect_with_sock tls_config uri =
@@ -202,13 +207,25 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             CCFun.(CCString.split_on_char ',' %> CCList.map CCString.trim)
             (get_env "no_verify_tls_name")
         in
+        let local_certs_dir = Sys.getenv_opt "CERTS_DIR" in
         let connect tls_config request =
           let tls_config host =
             let config = tls_config host in
+            CCOption.iter
+              (fun local_certs_dir ->
+                Logs.debug (fun m -> m "CERTS_DIR : %s" local_certs_dir);
+                ignore (Otls.Tls_config.set_ca_path config local_certs_dir))
+              local_certs_dir;
             if CCList.mem ~eq:CCString.equal host no_verify_tls_cert || no_verify_tls_cert = [ "*" ]
-            then Otls.Tls_config.insecure_noverifycert config;
+            then (
+              Logs.debug (fun m ->
+                  m "NO_VERIFY_CERT : %s : %s" host (CCString.concat " " no_verify_tls_cert));
+              Otls.Tls_config.insecure_noverifycert config);
             if CCList.mem ~eq:CCString.equal host no_verify_tls_name || no_verify_tls_name = [ "*" ]
-            then Otls.Tls_config.insecure_noverifyname config;
+            then (
+              Logs.debug (fun m ->
+                  m "NO_VERIFY_NAME : %s : %s" host (CCString.concat " " no_verify_tls_name));
+              Otls.Tls_config.insecure_noverifyname config);
             config
           in
           let request_host = Uri.host_with_default ~default:"" (Request.uri request) in
@@ -217,6 +234,8 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             when (not (CCList.mem ~eq:CCString.equal request_host no_proxy)) && no_proxy <> [ "*" ]
             -> (
               (* Proxy only those hosts that are not in the no_proxy list. *)
+              Logs.debug (fun m ->
+                  m "PROXY : %s : %s" (Uri.to_string (Request.uri request)) (Uri.to_string proxy));
               let run =
                 let open Fut_comb.Infix_result_monad in
                 connect_with_sock tls_config proxy

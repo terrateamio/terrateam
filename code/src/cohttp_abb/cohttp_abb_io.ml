@@ -1,3 +1,7 @@
+let src = Logs.Src.create "cohttp_abb.io"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 module Make (Abb : Abb_intf.S) = struct
   module Fut_comb = Abb_future_combinators.Make (Abb.Future)
   module Buffered = Abb_io_buffered.Make (Abb.Future)
@@ -15,7 +19,10 @@ module Make (Abb : Abb_intf.S) = struct
     Buffered.read_line ic
     >>| function
     | Ok s -> Some s
-    | Error _ -> None
+    | Error (`Unexpected End_of_file) -> None
+    | Error (#Abb_io_buffered.read_err as err) ->
+        Logs.debug (fun m -> m "read_line : %a" Abb_io_buffered.pp_read_err err);
+        None
 
   let read ic n =
     let open Abb.Future.Infix_monad in
@@ -24,7 +31,9 @@ module Make (Abb : Abb_intf.S) = struct
     >>| function
     | Ok 0 -> ""
     | Ok n -> Bytes.sub_string buf 0 n
-    | Error _ -> assert false
+    | Error (#Abb_io_buffered.read_err as err) ->
+        Logs.debug (fun m -> m "read : %a" Abb_io_buffered.pp_read_err err);
+        assert false
 
   let flush oc =
     let open Abb.Future.Infix_monad in
