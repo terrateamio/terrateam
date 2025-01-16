@@ -27,6 +27,7 @@ module Tls_config : sig
 
   val create : unit -> t
   val destroy : t -> unit
+  val set_ca_path : t -> string -> (unit, [> err ]) result
   val set_ca_file : t -> string -> (unit, [> err ]) result
   val set_cert_file : t -> string -> (unit, [> err ]) result
   val set_key_file : t -> string -> (unit, [> err ]) result

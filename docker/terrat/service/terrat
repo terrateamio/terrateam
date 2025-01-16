@@ -21,6 +21,7 @@ def setup_environment():
         with open(cert_path, 'w') as cert_file:
             cert_file.write(os.getenv('CUSTOM_CA_CERT'))
         subprocess.check_call(['update-ca-certificates'])
+        os.environ['CERTS_DIR'] = '/etc/ssl/certs'
         print(f"Self-signed certificate installed to {cert_path}")
     os.environ['GITHUB_APP_PEM'] = os.environ['GITHUB_APP_PEM'].replace('\\n', '\n')
     os.environ['TERRAT_PYTHON_EXEC'] = '/usr/bin/python3'

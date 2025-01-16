@@ -17,33 +17,54 @@ module Cmdline = struct
         (* TODO: Make this use the proper Abb time *)
         let time = Unix.gettimeofday () in
         let time_str = ISO8601.Permissive.string_of_datetime time in
-        Format.kfprintf k ppf ("[%s] %a @[" ^^ fmt ^^ "@]@.") time_str Logs.pp_header (level, h)
+        Format.kfprintf
+          k
+          ppf
+          ("[%s] %a [%s] @[" ^^ fmt ^^ "@]@.")
+          time_str
+          Logs.pp_header
+          (level, h)
+          (Logs.Src.name src)
       in
       msgf @@ fun ?header ?tags fmt -> with_stamp header tags k ppf fmt
     in
     { Logs.report }
 
-  let setup_log level dns_logging =
+  let setup_log level dns_logging http_logging =
     Logs.set_reporter (reporter Format.std_formatter);
     Logs.set_level level;
-    if not dns_logging then
-      CCList.iter
-        (fun src ->
-          if
-            CCList.mem
-              ~eq:CCString.equal
-              (Logs.Src.name src)
-              [ "happy-eyeballs"; "dns_client"; "dns_cache"; "abb.dns" ]
-          then
-            (* Increase these loggers because they are too verbose *)
-            Logs.Src.set_level src (Some Logs.Error))
-        (Logs.Src.list ())
+    CCList.iter
+      (fun src ->
+        if
+          (not dns_logging)
+          && CCList.mem
+               ~eq:CCString.equal
+               (Logs.Src.name src)
+               [ "happy-eyeballs"; "dns_client"; "dns_cache"; "abb.dns" ]
+          || (not http_logging)
+             && CCList.mem ~eq:CCString.equal (Logs.Src.name src) [ "cohttp_abb"; "cohttp_abb.io" ]
+        then
+          (* Increase these loggers because they are too verbose *)
+          Logs.Src.set_level src (Some Logs.Error))
+      (Logs.Src.list ())
 
   let dns_logging =
+    let env =
+      let doc = "Enable DNS logging" in
+      C.Cmd.Env.info ~doc "TERRAT_DNS_LOGGING"
+    in
     let doc = "Log DNS operations." in
-    C.Arg.(value & flag & info [ "dns-logging" ] ~doc)
+    C.Arg.(value & flag & info [ "dns-logging" ] ~env ~doc)
 
-  let logs = C.Term.(const setup_log $ Logs_cli.level () $ dns_logging)
+  let http_logging =
+    let env =
+      let doc = "Enable HTTP logging" in
+      C.Cmd.Env.info ~doc "TERRAT_HTTP_LOGGING"
+    in
+    let doc = "Log HTTP operations." in
+    C.Arg.(value & flag & info [ "http-logging" ] ~env ~doc)
+
+  let logs = C.Term.(const setup_log $ Logs_cli.level () $ dns_logging $ http_logging)
 
   let app_id =
     let doc = "App ID." in
