@@ -58,12 +58,11 @@ let of_opt fail = function
 let env_str key = of_opt (`Key_error key) (Sys.getenv_opt key)
 
 let infracost () =
-  let infracost_pricing_api_endpoint =
-    CCOption.map Uri.of_string (Sys.getenv_opt "INFRACOST_PRICING_API_ENDPOINT")
-  in
+  let infracost_pricing_api_endpoint = Sys.getenv_opt "INFRACOST_PRICING_API_ENDPOINT" in
   let infracost_api_key = Sys.getenv_opt "SELF_HOSTED_INFRACOST_API_KEY" in
   match (infracost_pricing_api_endpoint, infracost_api_key) with
-  | Some endpoint, Some api_key -> Some { Infracost.endpoint; api_key }
+  | Some "", _ | _, Some "" -> None
+  | Some endpoint, Some api_key -> Some { Infracost.endpoint = Uri.of_string endpoint; api_key }
   | _, _ -> None
 
 let create () =
