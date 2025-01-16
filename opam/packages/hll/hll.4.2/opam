@@ -19,6 +19,7 @@ depends: [
 	"ocamlfind"
 	"pds" { build & (>= "5" & < "6") }
 	"process"
+	"sha"
 	"toml" { >= "6" }
 ]
 
@@ -34,7 +35,10 @@ homepage: "https://hg.sr.ht/~mmatalka/hll"
 
 url {
 	src: "http://acsl-pkgs.s3.amazonaws.com/hll-4.2.tar.gz"
-	checksum: "543a3742fc4641b15aad53773d16e7e8"
+	checksum: [
+		"md5=543a3742fc4641b15aad53773d16e7e8"
+		"sha256=13981d5d085d1205791f26a9bf046321ddaddbd7147b23ff591bb29954c4e826"
+	]
 }
 bug-reports: "https://todo.sr.ht/~mmatalka/hll"
 dev-repo: "hg+ssh://hg@hg.sr.ht/~mmatalka/hll"
