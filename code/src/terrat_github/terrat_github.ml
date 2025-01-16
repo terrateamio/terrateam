@@ -8,7 +8,7 @@ module Org_admin = CCMap.Make (CCInt)
 
 module Metrics = struct
   module Call_retry_wait_histograph = Prmths.Histogram (struct
-    let spec = Prmths.Histogram_spec.of_exponential 30.0 1.2 20
+    let spec = Prmths.Histogram_spec.of_exponential ~start:30.0 ~factor:1.2 ~count:20
   end)
 
   let namespace = "terrat"
