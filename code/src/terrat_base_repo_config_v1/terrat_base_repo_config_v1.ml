@@ -483,6 +483,7 @@ module Engine = struct
     | Opentofu of Opentofu.t
     | Terraform of Terraform.t
     | Terragrunt of Terragrunt.t
+    | Pulumi
   [@@deriving show, yojson, eq]
 end
 
@@ -1176,7 +1177,8 @@ let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engi
                       ?tf_cmd:(CCOption.or_ ~else_:default_tf_cmd tg.E.tf_cmd)
                       ?tf_version:(CCOption.or_ ~else_:default_tf_version tg.E.tf_version)
                       ?version:(CCOption.or_ ~else_:default_wrapper_version tg.E.version)
-                      ()))))
+                      ())))
+      | E.Engine_pulumi _ -> Ok (Some Engine.Pulumi))
   | true, _, _, _ ->
       (* Cdktf *)
       Ok (Some Engine.(Cdktf (Cdktf.make ?tf_cmd:default_tf_cmd ?tf_version:default_tf_version ())))
@@ -1396,7 +1398,8 @@ let of_version_1_engine default_tf_version engine =
                       ?tf_cmd:tg.E.tf_cmd
                       ?tf_version:tg.E.tf_version
                       ?version:tg.E.version
-                      ()))))
+                      ())))
+      | E.Engine_pulumi _ -> Ok (Some Engine.Pulumi))
   | Some default_tf_version, _ ->
       Ok (Some Engine.(Terraform (Terraform.make ~version:default_tf_version ())))
   | None, None -> Ok None
@@ -1858,6 +1861,9 @@ let to_version_1_engine engine =
           tf_version = Some tf_version;
           version = Some version;
         }
+  | Engine.Pulumi ->
+      let module P = Terrat_repo_config.Engine_pulumi in
+      E.Engine_pulumi { P.name = "pulumi" }
 
 let to_version_1_hooks_op_env_exec env =
   let module Op = Terrat_repo_config.Hook_op in

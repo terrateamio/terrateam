@@ -380,6 +380,7 @@ module Engine : sig
     | Opentofu of Opentofu.t
     | Terraform of Terraform.t
     | Terragrunt of Terragrunt.t
+    | Pulumi
   [@@deriving show, yojson, eq]
 end
 

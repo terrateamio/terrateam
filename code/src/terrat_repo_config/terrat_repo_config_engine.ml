@@ -3,6 +3,7 @@ type t =
   | Engine_opentofu of Terrat_repo_config_engine_opentofu.t
   | Engine_terraform of Terrat_repo_config_engine_terraform.t
   | Engine_terragrunt of Terrat_repo_config_engine_terragrunt.t
+  | Engine_pulumi of Terrat_repo_config_engine_pulumi.t
 [@@deriving show, eq]
 
 let of_yojson =
@@ -15,6 +16,7 @@ let of_yojson =
          map (fun v -> Engine_terraform v) (Terrat_repo_config_engine_terraform.of_yojson v));
        (fun v ->
          map (fun v -> Engine_terragrunt v) (Terrat_repo_config_engine_terragrunt.of_yojson v));
+       (fun v -> map (fun v -> Engine_pulumi v) (Terrat_repo_config_engine_pulumi.of_yojson v));
      ])
 
 let to_yojson = function
@@ -22,3 +24,4 @@ let to_yojson = function
   | Engine_opentofu v -> Terrat_repo_config_engine_opentofu.to_yojson v
   | Engine_terraform v -> Terrat_repo_config_engine_terraform.to_yojson v
   | Engine_terragrunt v -> Terrat_repo_config_engine_terragrunt.to_yojson v
+  | Engine_pulumi v -> Terrat_repo_config_engine_pulumi.to_yojson v

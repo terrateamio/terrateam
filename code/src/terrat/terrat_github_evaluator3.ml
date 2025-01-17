@@ -1779,7 +1779,7 @@ struct
         match
           CCList.find_map
             (function
-              | { O.step = "tf/plan"; payload; success; _ } -> (
+              | { O.step = "tf/plan" | "pulumi/plan"; payload; success; _ } -> (
                   match P.of_yojson (O.Payload.to_yojson payload) with
                   | Ok { P.has_changes } -> Some has_changes
                   | _ -> None)
@@ -1962,8 +1962,9 @@ struct
         let output_of_workflow_output output =
           let module O = Terrat_api_components.Workflow_step_output in
           match output.O.step with
-          | "run" | "tf/init" | "env" | "tf/apply" -> output_of_run output
-          | "tf/plan" -> output_of_plan output
+          | "run" | "tf/init" | "env" | "tf/apply" | "pulumi/init" | "pulumi/apply" ->
+              output_of_run output
+          | "tf/plan" | "pulumi/plan" -> output_of_plan output
           | step -> output_of_run output
 
         let output_of_raw output =
