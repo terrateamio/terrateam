@@ -73,7 +73,7 @@ Before you begin, ensure you have the following:
 6. **Start the Terrateam Server:**
    [Get your Ngrok auth token here](https://dashboard.ngrok.com/get-started/your-authtoken)
    ```sh
-   NGROK_AUTHTOKEN=<YOUR-NGROK-AUTH-TOKEN> docker-compose up server -d
+   NGROK_AUTHTOKEN=<YOUR-NGROK-AUTH-TOKEN> docker-compose up -d server
    ```
 
    If you're using a GitHub Enterprise server that can communicate directly with the Terrateam server, use the following environment variables to start the server:
