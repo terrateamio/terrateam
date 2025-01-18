@@ -61,6 +61,13 @@ engine:
 ```
 This configuration will use CDKTF with the latest version of Terraform for executing Terraform operations.
 
+### Using Pulumi
+```yaml
+engine:
+  name: pulumi
+```
+This configuration will use the latest version of Pulumi. See our [Pulumi](/integrations/pulumi) for more details.
+
 ## Considerations
 When configuring `engine`, keep the following in mind:
 - The `terraform` engine is the default and most commonly used option. It directly uses the Terraform CLI for executing Terraform operations.
