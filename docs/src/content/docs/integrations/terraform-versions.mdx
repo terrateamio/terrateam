@@ -49,7 +49,7 @@ workflows:
   - tag_query: ec2 us-west-1 production
     engine:
       name: terraform
-      version:0.15.5
+      version: 0.15.5
 ```
 In this example, directories tagged with `ec2`, `us-east-1`, and `production` will use Terraform version 1.2.2, while directories tagged with `ec2`, `us-west-1`, and `production` will use Terraform version 0.15.5.
 
