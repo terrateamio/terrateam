@@ -13,6 +13,9 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "Terrateam",
+      components: {
+        Banner: './src/components/Banner.astro',
+      },
       plugins: [starlightImageZoom()],
       expressiveCode: {
         themes: ["starlight-dark", "solarized-light"],
