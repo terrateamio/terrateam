@@ -56,7 +56,8 @@ After resolving the issue, run `terrateam plan` to execute the plan operation ag
 ## Terrateam Plan Output@^environment@: @environment@@/environment@ :heavy_multiplication_x:
 <details>
   <summary>Expand for plan output details</summary>
-
+@/overall_success-@
+@#?pre_hooks-@
 <details>
   <summary><h3>Pre Hooks</h3></summary>
 
@@ -79,7 +80,8 @@ After resolving the issue, run `terrateam plan` to execute the plan operation ag
 ```
 @/pre_hooks-@
 </details>
-
+@/pre_hooks-@
+@#?post_hooks-@
 <details>
   <summary><h3>Post Hooks</h3></summary>
 
@@ -102,8 +104,7 @@ After resolving the issue, run `terrateam plan` to execute the plan operation ag
 ```
 @/post_hooks-@
 </details>
-@/overall_success-@
-
+@/post_hooks-@
 @#dirspaces-@
 
 ## Dir: @dir@ | @?success@@^has_changes@@?has_changes@Success :thumbsup:@/has_changes@@!has_changes@No changes@/has_changes@@/has_changes@@/success@@!success@:heavy_multiplication_x:@/success@
@@ -117,24 +118,6 @@ After resolving the issue, run `terrateam plan` to execute the plan operation ag
 **Dir**: @dir@
 **Workspace**: @workspace@
 **Success**: @?success@:thumbsup:@/success@@!success@:heavy_multiplication_x:@/success@
-@?success-@
-@#steps-@
-@?name=plan-@
-**Command**: `@cmd@`
-
-@!compact_view-@
-```@text_decorator@
-@text | plan_diff@
-```
-@/compact_view-@
-@?compact_view-@
-No output shown due to comment size.
-@/compact_view-@
-@/name=plan-@
-@/steps-@
-
-@/success-@
-@!success-@
 
 @#steps-@
 **Step**: @name@
@@ -151,8 +134,13 @@ No output shown due to comment size.
 **Details**: @details@
 @/details-@
 @!compact_view-@
-```
+```@text_decorator@
+@?name=plan-@
+@text | plan_diff@
+@/name=plan-@
+@!name=plan-@
 @text@
+@/name=plan-@
 ```
 @/compact_view-@
 @?compact_view-@
@@ -160,7 +148,6 @@ No output shown due to comment size.
 No output shown due to comment size.
 @/compact_view-@
 @/steps-@
-@/success-@
 @?compact_dirspaces-@
 </details>
 @/compact_dirspaces-@

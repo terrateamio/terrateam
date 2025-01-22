@@ -681,6 +681,14 @@
         "type": {
           "const": "run",
           "type": "string"
+        },
+        "visible_on": {
+          "enum": [
+            "always",
+            "failure",
+            "success"
+          ],
+          "type": "string"
         }
       },
       "required": [

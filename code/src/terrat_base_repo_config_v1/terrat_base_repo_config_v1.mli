@@ -28,6 +28,16 @@ module Workflow_step : sig
     [@@deriving show, yojson, eq]
   end
 
+  module Visible_on : sig
+    type t =
+      | Always
+      | Failure
+      | Success
+    [@@deriving show, yojson, eq]
+
+    val to_string : t -> string
+  end
+
   module Retry : sig
     type t = {
       backoff : float; [@default 1.5]
@@ -104,6 +114,7 @@ module Workflow_step : sig
       env : string String_map.t option;
       ignore_errors : bool; [@default false]
       run_on : Run_on.t; [@default Run_on.Success]
+      visible_on : Visible_on.t; [@default Visible_on.Failure]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -596,11 +607,14 @@ type of_version_1_err =
   | `Drift_tag_query_err of string * string
   | `Glob_parse_err of string * string
   | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
+  | `Hooks_unknown_visible_on_err of string
   | `Pattern_parse_err of string
   | `Unknown_lock_policy_err of string
   | `Unknown_plan_mode_err of string
   | `Workflows_apply_unknown_run_on_err of Terrat_repo_config_run_on.t
+  | `Workflows_apply_unknown_visible_on_err of string
   | `Workflows_plan_unknown_run_on_err of Terrat_repo_config_run_on.t
+  | `Workflows_plan_unknown_visible_on_err of string
   | `Workflows_tag_query_parse_err of string * string
   ]
 [@@deriving show]

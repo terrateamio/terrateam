@@ -819,14 +819,23 @@ module Tmpl = struct
   let repo_config_err_hooks_unknown_run_on_err =
     read "repo_config_err_hooks_unknown_run_on_err.tmpl"
 
+  let repo_config_err_hooks_unknown_visible_on_err =
+    read "repo_config_err_hooks_unknown_visible_on_err.tmpl"
+
   let repo_config_err_pattern_parse_err = read "repo_config_err_pattern_parse_err.tmpl"
   let repo_config_err_unknown_lock_policy_err = read "repo_config_err_unknown_lock_policy_err.tmpl"
 
   let repo_config_err_workflows_apply_unknown_run_on_err =
     read "repo_config_err_workflows_apply_unknown_run_on_err.tmpl"
 
+  let repo_config_err_workflows_apply_unknown_visible_on_err =
+    read "repo_config_err_workflows_apply_unknown_visible_on_err.tmpl"
+
   let repo_config_err_workflows_plan_unknown_run_on_err =
     read "repo_config_err_workflows_plan_unknown_run_on_err.tmpl"
+
+  let repo_config_err_workflows_plan_unknown_visible_on_err =
+    read "repo_config_err_workflows_plan_unknown_visible_on_err.tmpl"
 
   let repo_config_err_workflows_tag_query_parse_err =
     read "repo_config_err_workflows_tag_query_parse_err.tmpl"
@@ -1794,6 +1803,8 @@ struct
         CCList.for_all (fun { O.success; ignore_errors; _ } -> success || ignore_errors) steps
 
       module Publisher2 = struct
+        module Visible_on = Terrat_base_repo_config_v1.Workflow_step.Visible_on
+
         module Output = struct
           type t = {
             cmd : string option;
@@ -1801,14 +1812,15 @@ struct
             success : bool;
             text : string;
             text_decorator : string option;
+            visible_on : Visible_on.t;
           }
 
-          let make ?cmd ?text_decorator ~name ~success ~text () =
+          let make ?cmd ?text_decorator ~name ~success ~text ~visible_on () =
             (* If name looks like <namespace>/<action> then remove the namespace *)
             let name = CCOption.map_or ~default:name snd (CCString.Split.right ~by:"/" name) in
-            { cmd; name; success; text; text_decorator }
+            { cmd; name; success; text; text_decorator; visible_on }
 
-          let to_kv { cmd; name; success; text; text_decorator } =
+          let to_kv { cmd; name; success; text; text_decorator; visible_on } =
             Snabela.Kv.(
               Map.of_list
                 (CCList.flatten
@@ -1821,6 +1833,12 @@ struct
                      ];
                      CCOption.map_or ~default:[] (fun cmd -> [ ("cmd", string cmd) ]) cmd;
                    ]))
+
+          let filter ~overall_success =
+            CCList.filter (fun { visible_on; _ } ->
+                visible_on = Visible_on.Always
+                || (overall_success && visible_on = Visible_on.Success)
+                || ((not overall_success) && visible_on = Visible_on.Failure))
         end
 
         let kv_of_cost_estimation changed_dirspaces output =
@@ -1907,24 +1925,34 @@ struct
             Ok
               Snabela.Kv.(Map.of_list [ ("success", bool output.O.success); ("text", string text) ])
 
-        let output_of_run output =
+        let output_of_run ?(default_visible_on = Visible_on.Failure) output =
           let module P = struct
             type t = {
               cmd : string list option; [@default None]
               text : string option; [@default None]
+              visible_on : string option;
             }
             [@@deriving of_yojson { strict = false }]
           end in
           let module O = Terrat_api_components.Workflow_step_output in
           let open CCResult.Infix in
           P.of_yojson (O.Payload.to_yojson output.O.payload)
-          >>= fun { P.cmd; text } ->
+          >>= fun { P.cmd; text; visible_on } ->
           Ok
             (Output.make
                ?cmd:(CCOption.map (CCString.concat " ") cmd)
                ~name:output.O.step
                ~success:output.O.success
                ~text:(CCOption.get_or ~default:"" text)
+               ~visible_on:
+                 (CCOption.map_or
+                    ~default:default_visible_on
+                    (function
+                      | "always" -> Visible_on.Always
+                      | "failure" -> Visible_on.Failure
+                      | "success" -> Visible_on.Success
+                      | _ -> Visible_on.Failure)
+                    visible_on)
                ())
 
         let output_of_plan output =
@@ -1949,6 +1977,7 @@ struct
                  ~success:output.O.success
                  ~text:(CCOption.get_or ~default:text plan)
                  ~text_decorator:"diff"
+                 ~visible_on:Visible_on.Always
                  ())
           else
             Ok
@@ -1957,13 +1986,16 @@ struct
                  ~name:output.O.step
                  ~success:output.O.success
                  ~text
+                 ~visible_on:Visible_on.Always
                  ())
 
         let output_of_workflow_output output =
           let module O = Terrat_api_components.Workflow_step_output in
           match output.O.step with
-          | "run" | "tf/init" | "env" | "tf/apply" | "pulumi/init" | "pulumi/apply" ->
-              output_of_run output
+          | "run" | "env" -> output_of_run output
+          | "tf/init" | "pulumi/init" -> output_of_run ~default_visible_on:Visible_on.Failure output
+          | "tf/apply" | "pulumi/apply" ->
+              output_of_run ~default_visible_on:Visible_on.Always output
           | "tf/plan" | "pulumi/plan" -> output_of_plan output
           | step -> output_of_run output
 
@@ -1974,9 +2006,10 @@ struct
             ~name:step
             ~success
             ~text:(Yojson.Safe.pretty_to_string (O.Payload.to_yojson payload))
+            ~visible_on:Visible_on.Failure
             ()
 
-        let kv_of_steps steps =
+        let output_of_steps steps =
           let module O = Terrat_api_components.Workflow_step_output in
           CCList.filter_map
             (fun output ->
@@ -1984,9 +2017,11 @@ struct
               | "tf/cost-estimation" -> None
               | _ -> (
                   match output_of_workflow_output output with
-                  | Ok output -> Some (Output.to_kv output)
-                  | Error _ -> Some (Output.to_kv (output_of_raw output))))
+                  | Ok output -> Some output
+                  | Error _ -> Some (output_of_raw output)))
             steps
+
+        let kv_of_outputs outputs = CCList.map Output.to_kv outputs
 
         let dirspace_compare (dirspace1, steps1) (dirspace2, steps2) =
           let module Cmp = struct
@@ -2132,8 +2167,20 @@ struct
                        ("is_last_layer", bool (num_remaining_layers = 0));
                        ("num_more_layers", int num_remaining_layers);
                        ("overall_success", bool overall_success);
-                       ("pre_hooks", list (kv_of_steps (CCOption.get_or ~default:[] hooks_pre)));
-                       ("post_hooks", list (kv_of_steps (CCOption.get_or ~default:[] hooks_post)));
+                       ( "pre_hooks",
+                         hooks_pre
+                         |> CCOption.get_or ~default:[]
+                         |> output_of_steps
+                         |> Output.filter ~overall_success
+                         |> kv_of_outputs
+                         |> list );
+                       ( "post_hooks",
+                         hooks_post
+                         |> CCOption.get_or ~default:[]
+                         |> output_of_steps
+                         |> Output.filter ~overall_success
+                         |> kv_of_outputs
+                         |> list );
                        ("compact_view", bool (view = `Compact));
                        ("compact_dirspaces", bool (CCList.length dirspaces > 5));
                        ( "dirspaces",
@@ -2149,7 +2196,12 @@ struct
                                          ("dir", string dir);
                                          ("workspace", string workspace);
                                          ("success", bool success);
-                                         ("steps", list (kv_of_steps steps));
+                                         ( "steps",
+                                           list
+                                             (kv_of_outputs
+                                                (Output.filter
+                                                   ~overall_success
+                                                   (output_of_steps steps))) );
                                          ("has_changes", bool has_changes);
                                        ];
                                      ]))
@@ -3017,6 +3069,15 @@ struct
             "HOOKS_UNKNOWN_RUN_ON_ERR"
             Tmpl.repo_config_err_hooks_unknown_run_on_err
             kv
+      | `Hooks_unknown_visible_on_err s ->
+          let kv = Snabela.Kv.(Map.of_list [ ("visible_on", string s) ]) in
+          apply_template_and_publish
+            ~request_id
+            client
+            pull_request
+            "HOOKS_UNKNOWN_VISIBLE_ON_ERR"
+            Tmpl.repo_config_err_hooks_unknown_visible_on_err
+            kv
       | `Pattern_parse_err s ->
           let kv = Snabela.Kv.(Map.of_list [ ("pattern", string s) ]) in
           apply_template_and_publish
@@ -3045,6 +3106,15 @@ struct
             "WORKFLOWS_APPLY_UNKNOWN_RUN_ON_ERR"
             Tmpl.repo_config_err_workflows_apply_unknown_run_on_err
             kv
+      | `Workflows_apply_unknown_visible_on_err s ->
+          let kv = Snabela.Kv.(Map.of_list [ ("visible_on", string s) ]) in
+          apply_template_and_publish
+            ~request_id
+            client
+            pull_request
+            "WORKFLOWS_APPLY_UNKNOWN_VISIBLE_ON_ERR"
+            Tmpl.repo_config_err_workflows_apply_unknown_visible_on_err
+            kv
       | `Workflows_plan_unknown_run_on_err s ->
           let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
           apply_template_and_publish
@@ -3053,6 +3123,15 @@ struct
             pull_request
             "WORKFLOWS_PLAN_UNKNOWN_RUN_ON_ERR"
             Tmpl.repo_config_err_workflows_plan_unknown_run_on_err
+            kv
+      | `Workflows_plan_unknown_visible_on_err s ->
+          let kv = Snabela.Kv.(Map.of_list [ ("visible_on", string s) ]) in
+          apply_template_and_publish
+            ~request_id
+            client
+            pull_request
+            "WORKFLOWS_PLAN_UNKNOWN_VISIBLE_ON_ERR"
+            Tmpl.repo_config_err_workflows_plan_unknown_visible_on_err
             kv
       | `Workflows_tag_query_parse_err (q, err) ->
           let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
