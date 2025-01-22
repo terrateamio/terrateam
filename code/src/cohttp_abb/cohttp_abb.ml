@@ -78,6 +78,8 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
           assert (!state = `Idle);
           state := `In_request;
           let open Abb.Future.Infix_monad in
+          Logs.debug (fun m ->
+              m "write_request : writing_request : %s" (Uri.to_string (Request.uri req)));
           Request_io.write
             ~flush
             (fun writer ->
@@ -87,8 +89,11 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             req
             writer
           >>= fun () ->
+          Logs.debug (fun m -> m "write_request : flushing : %s" (Uri.to_string (Request.uri req)));
           Fut_comb.ignore (Buffered.flushed writer)
           >>= fun () ->
+          Logs.debug (fun m ->
+              m "write_request : reading_response : %s" (Uri.to_string (Request.uri req)));
           Response_io.read reader
           >>| function
           | `Ok resp ->
@@ -96,12 +101,17 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
               | `Yes | `Unknown ->
                   state := `Consuming_body (Response_io.make_body_reader resp reader)
               | `No -> state := `Body_consumed);
+              Logs.debug (fun m ->
+                  m "write_request : success : %s" (Uri.to_string (Request.uri req)));
               Ok resp
           | `Eof ->
               state := `Idle;
+              Logs.debug (fun m -> m "write_request : eof : %s" (Uri.to_string (Request.uri req)));
               Error `Error
           | `Invalid err ->
               state := `Idle;
+              Logs.debug (fun m ->
+                  m "write_request : invalid : %s : %s" (Uri.to_string (Request.uri req)) err);
               Error (`Invalid_request err)
         in
         let read_body_chunk () =
@@ -120,7 +130,10 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
           | `Body_consumed -> Abb.Future.return (Ok None)
           | _ -> assert false
         in
-        let destroy () = Fut_comb.ignore (Buffered.close_writer writer) in
+        let destroy () =
+          Logs.debug (fun m -> m "closing");
+          Fut_comb.ignore (Buffered.close_writer writer)
+        in
         create ~write_request ~read_body_chunk ~destroy
     end
 
@@ -128,9 +141,17 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       type t = Request.t -> (Transport.t, connect_err) result Abb.Future.t
 
       let connect_to_port host port =
-        let open Fut_comb.Infix_result_monad in
+        let open Abb.Future.Infix_monad in
         Logs.debug (fun m -> m "CONNECT : %s : %d" host port);
-        Happy_eyeballs.connect host [ port ] >>= fun (_, sock) -> Abb.Future.return (Ok sock)
+        Happy_eyeballs.connect host [ port ]
+        >>= function
+        | Ok (_, sock) ->
+            Logs.debug (fun m -> m "CONNECT : success :  %s : %d" host port);
+            Abb.Future.return (Ok sock)
+        | Error (#Abb_happy_eyeballs.connect_err as err) ->
+            Logs.debug (fun m ->
+                m "CONNECT : error :  %s : %d : %a" host port Abb_happy_eyeballs.pp_connect_err err);
+            Abb.Future.return (Error err)
 
       let connect_with_sock tls_config uri =
         let open Fut_comb.Infix_result_monad in
@@ -211,6 +232,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         let connect tls_config request =
           let tls_config host =
             let config = tls_config host in
+            ignore (Otls.Tls_config.set_alpn config "http/1.1");
             CCOption.iter
               (fun local_certs_dir ->
                 Logs.debug (fun m -> m "CERTS_DIR : %s" local_certs_dir);
@@ -282,10 +304,28 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
               let open Abb.Future.Infix_monad in
               run
               >>= function
-              | Ok _ as res -> Abb.Future.return res
-              | Error (#connect_err as err) -> Abb.Future.return (Error err)
-              | Error `E_io | Error `E_no_space -> Abb.Future.return (Error `E_connection_refused)
-              | Error (`Unexpected exn) -> raise exn)
+              | Ok _ as res ->
+                  Logs.debug (fun m -> m "connected : %s" (Uri.to_string (Request.uri request)));
+                  Abb.Future.return res
+              | Error (#connect_err as err) ->
+                  Logs.debug (fun m ->
+                      m
+                        "connect_err : %s : %a"
+                        (Uri.to_string (Request.uri request))
+                        pp_connect_err
+                        err);
+                  Abb.Future.return (Error err)
+              | Error `E_io | Error `E_no_space ->
+                  Logs.debug (fun m ->
+                      m "connection_refused : %s" (Uri.to_string (Request.uri request)));
+                  Abb.Future.return (Error `E_connection_refused)
+              | Error (`Unexpected exn) ->
+                  Logs.debug (fun m ->
+                      m
+                        "unexpected : %s : %s"
+                        (Uri.to_string (Request.uri request))
+                        (Printexc.to_string exn));
+                  raise exn)
           | _, _, _ -> connect tls_config request
         in
         make ?tls_config ~connect ()

@@ -18,7 +18,9 @@ module Make (Abb : Abb_intf.S) = struct
     let open Abb.Future.Infix_monad in
     Buffered.read_line ic
     >>| function
-    | Ok s -> Some s
+    | Ok s ->
+        Logs.debug (fun m -> m "read_line: %S" s);
+        Some s
     | Error (`Unexpected End_of_file) -> None
     | Error (#Abb_io_buffered.read_err as err) ->
         Logs.debug (fun m -> m "read_line : %a" Abb_io_buffered.pp_read_err err);
@@ -29,8 +31,12 @@ module Make (Abb : Abb_intf.S) = struct
     let buf = Bytes.create n in
     Buffered.read ic ~buf ~pos:0 ~len:n
     >>| function
-    | Ok 0 -> ""
-    | Ok n -> Bytes.sub_string buf 0 n
+    | Ok 0 ->
+        Logs.debug (fun m -> m "read: ");
+        ""
+    | Ok n ->
+        Logs.debug (fun m -> m "read: %S" (Bytes.sub_string buf 0 n));
+        Bytes.sub_string buf 0 n
     | Error (#Abb_io_buffered.read_err as err) ->
         Logs.debug (fun m -> m "read : %a" Abb_io_buffered.pp_read_err err);
         assert false
@@ -42,6 +48,7 @@ module Make (Abb : Abb_intf.S) = struct
   let write oc s =
     let open Abb.Future.Infix_monad in
     let buf = Bytes.unsafe_of_string s in
+    Logs.debug (fun m -> m "write: %S" s);
     Buffered.write oc ~bufs:Abb_intf.Write_buf.[ { buf; pos = 0; len = Bytes.length buf } ]
     >>= function
     | Ok _ -> Fut_comb.unit
