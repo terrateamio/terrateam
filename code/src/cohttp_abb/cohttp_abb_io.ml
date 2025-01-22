@@ -18,10 +18,12 @@ module Make (Abb : Abb_intf.S) = struct
     let open Abb.Future.Infix_monad in
     Buffered.read_line ic
     >>| function
-    | Ok s ->
+    | Ok (Some s) ->
         Logs.debug (fun m -> m "read_line: %S" s);
         Some s
-    | Error (`Unexpected End_of_file) -> None
+    | Ok None ->
+        Logs.debug (fun m -> m "read_line: eof");
+        None
     | Error (#Abb_io_buffered.read_err as err) ->
         Logs.debug (fun m -> m "read_line : %a" Abb_io_buffered.pp_read_err err);
         None
