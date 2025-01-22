@@ -194,6 +194,39 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
               Some ("proxy-authorization: Basic " ^ Base64.encode_string (user ^ ":" ^ password))
           | _, _ -> None
         in
+        let rec read_remaining_headers uri reader =
+          let open Fut_comb.Infix_result_monad in
+          Buffered.read_line reader
+          >>= function
+          | None | Some "" ->
+              Logs.debug (fun m -> m "proxy : %s : " (Uri.to_string uri));
+              Abb.Future.return (Ok ())
+          | Some line ->
+              Logs.debug (fun m -> m "proxy : %s : %s" (Uri.to_string uri) line);
+              read_remaining_headers uri reader
+        in
+        let finish_proxy_response tls_config uri sock scheme host reader writer =
+          let open Fut_comb.Infix_result_monad in
+          Buffered.read_line reader
+          >>= function
+          | Some line -> (
+              Logs.debug (fun m -> m "proxy : %s : %s" (Uri.to_string uri) line);
+              read_remaining_headers uri reader
+              >>= fun () ->
+              match CCString.split_on_char ' ' line with
+              | "HTTP/1.1" :: status :: _ -> (
+                  match CCInt.of_string status with
+                  | Some status when Cohttp.Code.is_success status && CCString.equal scheme "https"
+                    ->
+                      Abb.Future.return (Abb_tls.client_tcp sock (tls_config host) host)
+                      >>= fun (reader, writer) ->
+                      Abb.Future.return (Ok (Transport.default reader writer))
+                  | Some status when Cohttp.Code.is_success status && CCString.equal scheme "http"
+                    -> Abb.Future.return (Ok (Transport.default reader writer))
+                  | _ -> Abb.Future.return (Error (`Unexpected_err ("PROXY:RESPONSE:" ^ status))))
+              | _ -> Abb.Future.return (Error (`Unexpected_err ("PROXY:RESPONSE:" ^ line))))
+          | None -> Abb.Future.return (Error (`Unexpected_err "PROXY:RESPONSE:EOF"))
+        in
         let port uri =
           CCOption.get_or
             ~default:
@@ -278,6 +311,8 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
                     Buffer.add_string b header
                 | None -> ());
                 Buffer.add_string b "\r\n\r\n";
+                Logs.debug (fun m ->
+                    m "proxy : %s : %s" (Uri.to_string (Request.uri request)) (Buffer.contents b));
                 let contents = Buffer.to_bytes b in
                 Buffered.write
                   writer
@@ -286,20 +321,14 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
                 >>= fun _ ->
                 Buffered.flushed writer
                 >>= fun () ->
-                Buffered.read_line reader
-                >>= fun line ->
-                match CCString.split_on_char ' ' line with
-                | "HTTP/1.1" :: status :: _ -> (
-                    match CCInt.of_string status with
-                    | Some status
-                      when Cohttp.Code.is_success status && CCString.equal scheme "https" ->
-                        Abb.Future.return (Abb_tls.client_tcp sock (tls_config host) host)
-                        >>= fun (reader, writer) ->
-                        Abb.Future.return (Ok (Transport.default reader writer))
-                    | Some status when Cohttp.Code.is_success status && CCString.equal scheme "http"
-                      -> Abb.Future.return (Ok (Transport.default reader writer))
-                    | _ -> Abb.Future.return (Error (`Unexpected_err ("PROXY:RESPONSE:" ^ status))))
-                | _ -> Abb.Future.return (Error (`Unexpected_err ("PROXY:RESPONSE:" ^ line)))
+                finish_proxy_response
+                  tls_config
+                  (Request.uri request)
+                  sock
+                  scheme
+                  host
+                  reader
+                  writer
               in
               let open Abb.Future.Infix_monad in
               run

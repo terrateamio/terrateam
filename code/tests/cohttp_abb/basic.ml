@@ -15,7 +15,7 @@ let basic =
           assert (Cohttp.Code.string_of_status res.Http.Response.status = "200 OK");
           Buffered.read_line rs
           >>= fun ret ->
-          assert (ret = Ok "GET / HTTP/1.1");
+          assert (ret = Ok (Some "GET / HTTP/1.1"));
           Abb.Future.return ()
       | Error _ -> assert false)
 
