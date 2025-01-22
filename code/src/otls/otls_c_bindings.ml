@@ -13,6 +13,7 @@ module Tls_config = struct
   let tls_config_error = F.foreign "tls_config_error" C.(t @-> returning string)
   let tls_config_set_ca_file = F.foreign "tls_config_set_ca_file" C.(t @-> string @-> returning int)
   let tls_config_set_ca_path = F.foreign "tls_config_set_ca_path" C.(t @-> string @-> returning int)
+  let tls_config_set_alpn = F.foreign "tls_config_set_alpn" C.(t @-> string @-> returning int)
 
   let tls_config_set_cert_file =
     F.foreign "tls_config_set_cert_file" C.(t @-> string @-> returning int)

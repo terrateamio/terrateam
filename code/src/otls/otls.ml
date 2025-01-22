@@ -88,6 +88,11 @@ module Tls_config = struct
     match ret with
     | -1 -> Error `Error
     | _ -> Ok ()
+
+  let set_alpn t alpn =
+    match Otls_c_bindings.Tls_config.tls_config_set_alpn t alpn with
+    | -1 -> Error `Error
+    | _ -> Ok ()
 end
 
 module Tls = struct

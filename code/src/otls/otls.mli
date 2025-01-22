@@ -37,6 +37,7 @@ module Tls_config : sig
   val insecure_noverifytime : t -> unit
   val set_protocols : t -> Tls_protocols.t list -> unit
   val set_ciphers : t -> Tls_ciphers.t -> (unit, [> err ]) result
+  val set_alpn : t -> string -> (unit, [> err ]) result
 end
 
 module Tls : sig
