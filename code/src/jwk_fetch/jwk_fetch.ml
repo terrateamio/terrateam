@@ -5,11 +5,6 @@ type err =
   | `Bad_response
   ]
 
-let tls_config =
-  let cfg = Otls.Tls_config.create () in
-  Otls.Tls_config.insecure_noverifycert cfg;
-  cfg
-
 let get_max_age cache_control =
   let vs = CCString.split_on_char ',' cache_control in
   let assoc =
@@ -25,7 +20,7 @@ let get_max_age cache_control =
 
 let fetch uri =
   let open Abbs_future_combinators.Infix_result_monad in
-  Http.Client.call ~tls_config `GET uri
+  Http.Client.get uri
   >>= function
   | resp, body when resp.Http.Response.status = `OK -> (
       let headers = Http.Response.headers resp in
