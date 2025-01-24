@@ -42,7 +42,10 @@ module Cmdline = struct
                (Logs.Src.name src)
                [ "happy-eyeballs"; "dns_client"; "dns_cache"; "abb.dns" ]
           || (not http_logging)
-             && CCList.mem ~eq:CCString.equal (Logs.Src.name src) [ "cohttp_abb"; "cohttp_abb.io" ]
+             && CCList.mem
+                  ~eq:CCString.equal
+                  (Logs.Src.name src)
+                  [ "cohttp_abb"; "cohttp_abb.io"; "abb_curl"; "abb_curl_easy" ]
         then
           (* Increase these loggers because they are too verbose *)
           Logs.Src.set_level src (Some Logs.Error))

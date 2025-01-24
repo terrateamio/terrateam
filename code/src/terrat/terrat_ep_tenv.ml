@@ -1,4 +1,4 @@
-module Http = Cohttp_abb.Make (Abb)
+module Http = Abb_curl_easy.Make (Abb)
 
 let github_api_host = Uri.of_string "https://api.github.com"
 let github_host = Uri.of_string "https://github.com"
@@ -26,10 +26,10 @@ module Releases = struct
   module Cache = Abbs_cache.Expiring.Make (struct
     (* installation_id * owner * repo * page *)
     type k = int64 * string * string * int option [@@deriving eq]
-    type v = Cohttp.Response.t * string
+    type v = Http.Response.t * string
 
     type err =
-      [ Cohttp_abb.request_err
+      [ Http.request_err
       | Terrat_github.get_installation_access_token_err
       ]
 
@@ -87,9 +87,9 @@ module Releases = struct
                      config
                      (CCInt64.to_int installation_id)
                    >>= fun access_token ->
-                   Http.Client.get
+                   Http.get
                      ~headers:
-                       (Cohttp.Header.of_list
+                       (Http.Headers.of_list
                           [
                             ("user-agent", user_agent); ("authorization", "Bearer " ^ access_token);
                           ])
@@ -122,8 +122,12 @@ module Releases = struct
             Abb.Future.return
               (Brtl_ctx.set_response
                  (Brtl_rspnc.create
-                    ~headers:(Http.Response.headers response)
-                    ~status:(Http.Response.status response)
+                    ~headers:
+                      (Cohttp.Header.of_list
+                         (Http.Headers.to_list (Http.Response.headers response)))
+                    ~status:
+                      (Cohttp.Code.status_of_code
+                         (Http.Status.to_int (Http.Response.status response)))
                     body)
                  ctx)
         | Error `Bad_request ->
@@ -136,9 +140,8 @@ module Releases = struct
             Logs.err (fun m -> m "EP_TENV : %s : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
             Abb.Future.return
               (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-        | Error (#Cohttp_abb.request_err as err) ->
-            Logs.err (fun m ->
-                m "EP_TENV : %s : %a" (Brtl_ctx.token ctx) Cohttp_abb.pp_request_err err);
+        | Error (#Http.request_err as err) ->
+            Logs.err (fun m -> m "EP_TENV : %s : %a" (Brtl_ctx.token ctx) Http.pp_request_err err);
             Abb.Future.return
               (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
         | Error (#Terrat_github.get_installation_access_token_err as err) ->
@@ -165,8 +168,9 @@ module Download = struct
     in
     Abbs_future_combinators.timeout
       ~timeout:(Abb.Sys.sleep timeout)
-      (Http.Client.get
-         ~headers:(Cohttp.Header.of_list (("user-agent", user_agent) :: headers))
+      (Http.get
+         ~options:[]
+         ~headers:(Http.Headers.of_list (("user-agent", user_agent) :: headers))
          (github_host
          |> CCFun.flip Uri.with_path (Printf.sprintf "%s/%s/releases/download/%s" owner repo path)))
     >>= function
@@ -174,12 +178,14 @@ module Download = struct
         Abb.Future.return
           (Brtl_ctx.set_response
              (Brtl_rspnc.create
-                ~headers:(Http.Response.headers response)
-                ~status:(Http.Response.status response)
+                ~headers:
+                  (Cohttp.Header.of_list (Http.Headers.to_list (Http.Response.headers response)))
+                ~status:
+                  (Cohttp.Code.status_of_code (Http.Status.to_int (Http.Response.status response)))
                 body)
              ctx)
-    | `Ok (Error (#Cohttp_abb.request_err as err)) ->
-        Logs.err (fun m -> m "EP_TENV : %s : %a" (Brtl_ctx.token ctx) Cohttp_abb.pp_request_err err);
+    | `Ok (Error (#Http.request_err as err)) ->
+        Logs.err (fun m -> m "EP_TENV : %s : %a" (Brtl_ctx.token ctx) Http.pp_request_err err);
         Abb.Future.return
           (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
     | `Timeout ->

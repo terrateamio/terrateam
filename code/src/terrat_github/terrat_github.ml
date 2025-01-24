@@ -726,18 +726,18 @@ module Pull_request_reviews = struct
 end
 
 module Oauth = struct
-  module Http = Cohttp_abb.Make (Abb)
+  module Http = Abb_curl_easy.Make (Abb)
 
   type authorize_err =
     [ `Authorize_err of string
-    | Cohttp_abb.request_err
+    | Http.request_err
     ]
   [@@deriving show]
 
   type refresh_err =
     [ `Refresh_err of string
     | `Bad_refresh_token
-    | Cohttp_abb.request_err
+    | Http.request_err
     ]
   [@@deriving show]
 
@@ -764,7 +764,7 @@ module Oauth = struct
   let authorize ~config code =
     let open Abb.Future.Infix_monad in
     let headers =
-      Cohttp.Header.of_list
+      Http.Headers.of_list
         [
           ("user-agent", "Terrateam");
           ("content-type", "application/json");
@@ -786,10 +786,9 @@ module Oauth = struct
              ("code", `String code);
            ])
     in
-    Http.Client.post ~headers ~body uri
+    Http.post ~headers ~body uri
     >>| function
-    | Ok (resp, body)
-      when Cohttp.Code.is_success (Cohttp.Code.code_of_status (Http.Response.status resp)) -> (
+    | Ok (resp, body) when Http.Status.is_success (Http.Response.status resp) -> (
         match Response.of_yojson (Yojson.Safe.from_string body) with
         | Ok value -> Ok value
         | Error _ -> Error (`Authorize_err body))
@@ -799,7 +798,7 @@ module Oauth = struct
   let refresh ~config refresh_token =
     let open Abb.Future.Infix_monad in
     let headers =
-      Cohttp.Header.of_list
+      Http.Headers.of_list
         [
           ("user-agent", "Terrateam");
           ("accept", "application/json");
@@ -822,10 +821,9 @@ module Oauth = struct
              ("refresh_token", `String refresh_token);
            ])
     in
-    Http.Client.post ~headers ~body uri
+    Http.post ~headers ~body uri
     >>| function
-    | Ok (resp, body)
-      when Cohttp.Code.is_success (Cohttp.Code.code_of_status (Http.Response.status resp)) -> (
+    | Ok (resp, body) when Http.Status.is_success (Http.Response.status resp) -> (
         match Response.of_yojson (Yojson.Safe.from_string body) with
         | Ok value -> Ok value
         | Error _ -> (

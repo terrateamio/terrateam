@@ -367,19 +367,18 @@ val get_repo_collaborator_permission :
   Githubc2_abb.t ->
   (string option, [> get_repo_collaborator_permission_err ]) result Abb.Future.t
 
-(** GitHub does not include Oauth operations in their JSON schema, so
-    implementing here. *)
+(** GitHub does not include Oauth operations in their JSON schema, so implementing here. *)
 module Oauth : sig
   type authorize_err =
     [ `Authorize_err of string
-    | Cohttp_abb.request_err
+    | Abb_curl_easy.Make(Abb).request_err
     ]
   [@@deriving show]
 
   type refresh_err =
     [ `Refresh_err of string
     | `Bad_refresh_token
-    | Cohttp_abb.request_err
+    | Abb_curl_easy.Make(Abb).request_err
     ]
   [@@deriving show]
 
