@@ -52,7 +52,8 @@ Running plans **FAILED**.  See **Terrateam Apply Output**.
 ## Terrateam Apply Output@^environment@: @environment@@/environment@ :heavy_multiplication_x:
 <details>
   <summary>Expand for apply output details</summary>
-
+@/overall_success-@
+@#?pre_hooks-@
 <details>
   <summary><h3>Pre Hooks</h3></summary>
 
@@ -75,7 +76,8 @@ Running plans **FAILED**.  See **Terrateam Apply Output**.
 ```
 @-/pre_hooks-@
 </details>
-
+@/pre_hooks-@
+@#?post_hooks-@
 <details>
   <summary><h3>Post Hooks</h3></summary>
 
@@ -98,8 +100,7 @@ Running plans **FAILED**.  See **Terrateam Apply Output**.
 ```
 @-/post_hooks-@
 </details>
-@/overall_success-@
-
+@/post_hooks-@
 @-#dirspaces-@
 
 ## @dir@ @?success@:white_check_mark:@/success@@!success@:heavy_multiplication_x:@/success@
@@ -113,18 +114,6 @@ Running plans **FAILED**.  See **Terrateam Apply Output**.
 **Dir**: @dir@
 **Workspace**: @workspace@
 **Success**: @?success@:white_check_mark:@/success@@!success@:heavy_multiplication_x:@/success@
-@-?success-@
-@-#steps-@
-@?name=apply-@
-**Command**: `@cmd@`
-
-```
-@text@
-```
-@/name=apply-@
-@-/steps-@
-@-/success-@
-@-!success-@
 
 @-#steps-@
 **Step**: @name@
@@ -144,7 +133,6 @@ Running plans **FAILED**.  See **Terrateam Apply Output**.
 @text@
 ```
 @-/steps-@
-@-/success-@
 @?compact_dirspaces-@
 </details>
 @/compact_dirspaces-@

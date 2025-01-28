@@ -128,39 +128,15 @@ module Make (M : S) = struct
         >>= fun (default_repo_config, repo_config) ->
         let wrap_err fname =
           Abbs_future_combinators.Result.map_err ~f:(function
-              | ( `Access_control_ci_config_update_match_parse_err _
-                | `Access_control_file_match_parse_err _
-                | `Access_control_policy_apply_autoapprove_match_parse_err _
-                | `Access_control_policy_apply_force_match_parse_err _
-                | `Access_control_policy_apply_match_parse_err _
-                | `Access_control_policy_apply_with_superapproval_match_parse_err _
-                | `Access_control_policy_plan_match_parse_err _
-                | `Access_control_policy_superapproval_match_parse_err _
-                | `Access_control_policy_tag_query_err _
-                | `Access_control_terrateam_config_update_match_parse_err _
-                | `Access_control_unlock_match_parse_err _
-                | `Apply_requirements_approved_all_of_match_parse_err _
-                | `Apply_requirements_approved_any_of_match_parse_err _
-                | `Apply_requirements_check_tag_query_err _
-                | `Depends_on_err _
-                | `Drift_schedule_err _
-                | `Drift_tag_query_err _
-                | `Glob_parse_err _
-                | `Hooks_unknown_run_on_err _
-                | `Pattern_parse_err _
-                | `Unknown_lock_policy_err _
-                | `Unknown_plan_mode_err _
-                | `Workflows_apply_unknown_run_on_err _
-                | `Workflows_plan_unknown_run_on_err _
-                | `Workflows_tag_query_parse_err _ ) as err -> err
-              | `Repo_config_parse_err err -> `Repo_config_parse_err (fname, err))
+            | `Repo_config_parse_err err -> `Repo_config_parse_err (fname, err)
+            | #Terrat_base_repo_config_v1.of_version_1_err as err -> err)
         in
         let validate_configs =
           Abbs_future_combinators.List_result.iter ~f:(function
-              | Some (fname, json) ->
-                  wrap_err fname (M.Github.repo_config_of_json json)
-                  >>= fun _ -> Abb.Future.return (Ok ())
-              | None -> Abb.Future.return (Ok ()))
+            | Some (fname, json) ->
+                wrap_err fname (M.Github.repo_config_of_json json)
+                >>= fun _ -> Abb.Future.return (Ok ())
+            | None -> Abb.Future.return (Ok ()))
         in
         let get_json = function
           | None -> `Assoc []
@@ -168,8 +144,8 @@ module Make (M : S) = struct
         in
         let collect_provenance =
           CCList.filter_map (function
-              | Some (fname, _) -> Some fname
-              | None -> None)
+            | Some (fname, _) -> Some fname
+            | None -> None)
         in
         let system_defaults =
           CCOption.map
