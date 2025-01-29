@@ -9,10 +9,17 @@ module Sql = struct
   let select_user_token () =
     Pgsql_io.Typed_sql.(
       sql
-      // (* token *) Ret.text
-      // (* expired *) Ret.boolean
-      // (* refresh_token *) Ret.text
-      /^ "select token, (expiration < now()), refresh_token from github_users where id = $user_id"
+      //
+      (* token *)
+      Ret.text
+      //
+      (* expired *)
+      Ret.boolean
+      //
+      (* refresh_token *)
+      Ret.text
+      /^ "select token, (expiration < now()), refresh_token from github_users where id = $user_id \
+          order by refresh_expiration desc"
       /% Var.uuid "user_id")
 
   let insert_github_user () =

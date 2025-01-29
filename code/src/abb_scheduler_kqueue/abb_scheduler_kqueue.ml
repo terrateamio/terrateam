@@ -26,6 +26,8 @@ module Timers = struct
   let next t = Timer_map.min_binding t
 end
 
+exception Fd_not_found of int
+
 let sec_ns = Mtime.Span.(to_float_ns s)
 
 (* El is short for Event Loop *)
@@ -165,9 +167,11 @@ module El = struct
 
   let dispatch fd get set s =
     let m = get s in
-    let f = Fd_map.find fd m in
-    let s = set (Fd_map.remove fd m) s in
-    f s
+    match Fd_map.get fd m with
+    | Some f ->
+        let s = set (Fd_map.remove fd m) s in
+        f s
+    | None -> raise (Fd_not_found (Kqueue.unsafe_int_of_file_descr fd))
 
   let dispatch_read read s =
     dispatch

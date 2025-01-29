@@ -1,9 +1,9 @@
-module Http = Cohttp_abb.Make (Abb)
+module Http = Abb_curl_easy.Make (Abb)
 
 let one_hour = 60.0 *. 60.0
 
 let http_headers =
-  Cohttp.Header.of_list [ ("content-length", "0"); ("user-agent", "Terrateam Telemetry 1.0") ]
+  Http.Headers.of_list [ ("content-length", "0"); ("user-agent", "Terrateam Telemetry 1.0") ]
 
 module Event = struct
   type t =
@@ -30,7 +30,7 @@ let send' telemetry_config event =
           in
           Logs.info (fun m -> m "%a" Uri.pp uri);
           Logs.info (fun m -> m "TELEMETRY : ANONYMOUS : EVENT : START");
-          Abbs_future_combinators.ignore (Http.Client.post ~headers:http_headers uri)
+          Abbs_future_combinators.ignore (Http.post ~headers:http_headers uri)
       | Event.Run { github_app_id; step; owner; repo } ->
           let uri =
             Uri.with_path
@@ -43,7 +43,7 @@ let send' telemetry_config event =
                  Digest.(to_hex (string repo)))
           in
           Logs.info (fun m -> m "TELEMETRY : ANONYMOUS : EVENT : RUN");
-          Abbs_future_combinators.ignore (Http.Client.post ~headers:http_headers uri)
+          Abbs_future_combinators.ignore (Http.post ~headers:http_headers uri)
       | Event.Ping { github_app_id } ->
           let uri =
             Uri.with_path
@@ -51,7 +51,7 @@ let send' telemetry_config event =
               (Printf.sprintf "/event/ping/%s" Digest.(to_hex (string github_app_id)))
           in
           Logs.info (fun m -> m "TELEMETRY : ANONYMOUS : EVENT : PING");
-          Abbs_future_combinators.ignore (Http.Client.post ~headers:http_headers uri))
+          Abbs_future_combinators.ignore (Http.post ~headers:http_headers uri))
 
 let send telemetry_config event =
   Abbs_future_combinators.ignore (Abb.Future.fork (send' telemetry_config event))

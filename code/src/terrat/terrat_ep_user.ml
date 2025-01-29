@@ -1,10 +1,18 @@
+let src = Logs.Src.create "ep_user"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 module Installations = struct
   module Sql = struct
     let select_installations () =
       Pgsql_io.Typed_sql.(
         sql
-        // (* id *) Ret.bigint
-        // (* login *) Ret.text
+        //
+        (* id *)
+        Ret.bigint
+        //
+        (* login *)
+        Ret.text
         /^ "select id, login from github_installations where id = ANY($installation_ids)"
         /% Var.(array (bigint "installation_ids")))
 
@@ -55,20 +63,30 @@ module Installations = struct
                 { installations } |> to_yojson |> Yojson.Safe.to_string)
             in
             Abb.Future.return (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx))
+        | Error (`Refresh_err _ as err) ->
+            Logs.err (fun m ->
+                m "%s : GET : INSTALLATIONS : %a" (Brtl_ctx.token ctx) Terrat_github_user.pp_err err);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx))
+        | Error `Bad_refresh_token ->
+            Logs.err (fun m ->
+                m "%s : GET : INSTALLATIONS : BAD_REFRESH_TOKEN" (Brtl_ctx.token ctx));
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx))
         | Error (#Pgsql_pool.err as err) ->
             Logs.err (fun m ->
-                m "USER : %s : GET : INSTALLATIONS : %a" (Brtl_ctx.token ctx) Pgsql_pool.pp_err err);
+                m "%s : GET : INSTALLATIONS : %a" (Brtl_ctx.token ctx) Pgsql_pool.pp_err err);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
         | Error (#Pgsql_io.err as err) ->
             Logs.err (fun m ->
-                m "USER : %s : GET : INSTALLATIONS : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
+                m "%s : GET : INSTALLATIONS : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
         | Error (#Terrat_github.get_user_installations_err as err) ->
             Logs.err (fun m ->
                 m
-                  "USER : %s : GET : INSTALLATIONS : %a"
+                  "%s : GET : INSTALLATIONS : %a"
                   (Brtl_ctx.token ctx)
                   Terrat_github.pp_get_user_installations_err
                   err);
@@ -76,11 +94,7 @@ module Installations = struct
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
         | Error (#Terrat_github_user.err as err) ->
             Logs.err (fun m ->
-                m
-                  "USER : %s : GET : INSTALLATIONS : %a"
-                  (Brtl_ctx.token ctx)
-                  Terrat_github_user.pp_err
-                  err);
+                m "%s : GET : INSTALLATIONS : %a" (Brtl_ctx.token ctx) Terrat_github_user.pp_err err);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))
 end

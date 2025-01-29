@@ -12,10 +12,13 @@ RUN apk add --no-cache \
     clang \
     cmake \
     coreutils \
+    curl \
+    curl-dev \
     git \
     gmp-dev \
     libffi-dev \
-    libressl-dev \
+    libretls \
+    libretls-dev \
     m4 \
     make \
     mercurial \
@@ -118,7 +121,7 @@ RUN apk add --no-cache \
     gmp \
     jq \
     libffi \
-    libressl \
+    libretls \
     nginx \
     py3-cryptography \
     py3-jwt \
@@ -146,7 +149,7 @@ RUN apk add --no-cache \
     gmp \
     jq \
     libffi \
-    libressl \
+    libretls \
     nginx \
     py3-cryptography \
     py3-jwt \
