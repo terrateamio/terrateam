@@ -414,8 +414,8 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         CCString.length s)
 
   let perform options headers meth_ uri =
+    let handle = Curl.init () in
     try
-      let handle = Curl.init () in
       Logs.debug (fun m -> Curl.set_verbose handle true);
       CCList.iter
         (function
@@ -438,7 +438,9 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       in
       Curl.cleanup handle;
       Ok ({ Response.status; headers = !resp_headers }, Buffer.contents resp_body)
-    with Curl.CurlException (_, _, err) -> Error (`Curl_request_err err)
+    with Curl.CurlException (_, _, err) ->
+      Curl.cleanup handle;
+      Error (`Curl_request_err err)
 
   let call ?(options = Options.default) ?(headers = Headers.empty) meth_ uri =
     let open Abb.Future.Infix_monad in
