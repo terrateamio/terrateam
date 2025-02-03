@@ -34,7 +34,7 @@ module Work_manifests = struct
                |> CCString.split_on_char '\n'
                |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
                |> CCString.concat "\n")
-             (Terrat_files_sql.read fname))
+             (Terrat_files_github_sql.read fname))
 
       let scope =
         let module T = Terrat_api_components.Workflow_step_output_scope in
@@ -74,7 +74,7 @@ module Work_manifests = struct
           //
           (* status *)
           Ret.text
-          /^ replace_where (read "select_github_workflow_outputs_page.sql") where
+          /^ replace_where (read "select_workflow_outputs_page.sql") where
           /% Var.uuid "user"
           /% Var.bigint "installation_id"
           /% Var.uuid "work_manifest_id"
@@ -290,7 +290,7 @@ module Work_manifests = struct
              |> CCString.split_on_char '\n'
              |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
              |> CCString.concat "\n")
-           (Terrat_files_sql.read fname))
+           (Terrat_files_github_sql.read fname))
 
     let dirspaces =
       let module T = struct
@@ -361,7 +361,7 @@ module Work_manifests = struct
         //
         (* environment *)
         Ret.(option text)
-        /^ replace_where (read "select_github_work_manifests_page.sql") where
+        /^ replace_where (read "select_work_manifests_page.sql") where
         /% Var.uuid "user"
         /% Var.bigint "installation_id"
         /% Var.text "tz"
@@ -630,7 +630,7 @@ module Dirspaces = struct
              |> CCString.split_on_char '\n'
              |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
              |> CCString.concat "\n")
-           (Terrat_files_sql.read fname))
+           (Terrat_files_github_sql.read fname))
 
     let select_dirspaces where =
       Pgsql_io.Typed_sql.(
@@ -695,7 +695,7 @@ module Dirspaces = struct
         //
         (* environment *)
         Ret.(option text)
-        /^ replace_where (read "select_github_dirspaces_page.sql") where
+        /^ replace_where (read "select_dirspaces_page.sql") where
         /% Var.uuid "user"
         /% Var.bigint "installation_id"
         /% Var.text "tz"
@@ -972,7 +972,7 @@ module Pull_requests = struct
              |> CCString.split_on_char '\n'
              |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
              |> CCString.concat "\n")
-           (Terrat_files_sql.read fname))
+           (Terrat_files_github_sql.read fname))
 
     let select_pull_requests () =
       Pgsql_io.Typed_sql.(
@@ -1019,7 +1019,7 @@ module Pull_requests = struct
         //
         (* username *)
         Ret.(option text)
-        /^ read "select_github_pull_requests_page.sql"
+        /^ read "select_pull_requests_page.sql"
         /% Var.uuid "user"
         /% Var.bigint "installation_id"
         /% Var.(option (bigint "pull_number"))
@@ -1158,7 +1158,7 @@ module Repos = struct
              |> CCString.split_on_char '\n'
              |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
              |> CCString.concat "\n")
-           (Terrat_files_sql.read fname))
+           (Terrat_files_github_sql.read fname))
 
     let select_installation_repos_page () =
       Pgsql_io.Typed_sql.(
@@ -1178,7 +1178,7 @@ module Repos = struct
         //
         (* setup *)
         Ret.boolean
-        /^ read "select_github_installation_repos_page.sql"
+        /^ read "select_installation_repos_page.sql"
         /% Var.uuid "user_id"
         /% Var.bigint "installation_id"
         /% Var.(option (text "prev_name")))

@@ -114,7 +114,11 @@ module Response : sig
 end
 
 module Options : sig
-  type opt = Follow_location
+  type opt =
+    | Follow_location
+    | Timeout of Duration.t
+    | Http_version of [ `Http2 | `Http1_1 ]
+
   type t = opt list
 
   val default : t

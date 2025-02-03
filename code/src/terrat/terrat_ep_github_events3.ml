@@ -38,12 +38,13 @@ module Metrics = struct
 end
 
 module Make
-    (Terratc : Terratc_intf.S
-                 with type Github.Client.t = Terrat_github_evaluator3.S.Client.t
-                  and type Github.Account.t = Terrat_github_evaluator3.S.Account.t
-                  and type Github.Repo.t = Terrat_github_evaluator3.S.Repo.t
-                  and type Github.Remote_repo.t = Terrat_github_evaluator3.S.Remote_repo.t
-                  and type Github.Ref.t = Terrat_github_evaluator3.S.Ref.t) =
+    (Terratc :
+      Terratc_intf.S
+        with type Github.Client.t = Terrat_github_evaluator3.S.Client.t
+         and type Github.Account.t = Terrat_github_evaluator3.S.Account.t
+         and type Github.Repo.t = Terrat_github_evaluator3.S.Repo.t
+         and type Github.Remote_repo.t = Terrat_github_evaluator3.S.Remote_repo.t
+         and type Github.Ref.t = Terrat_github_evaluator3.S.Ref.t) =
 struct
   module Github_evaluator = Terrat_github_evaluator3.Make (Terratc)
   module Gw = Terrat_github_webhooks
@@ -58,12 +59,12 @@ struct
              |> CCString.split_on_char '\n'
              |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
              |> CCString.concat "\n")
-           (Terrat_files_sql.read fname))
+           (Terrat_files_github_sql.read fname))
 
     let insert_github_installation =
       Pgsql_io.Typed_sql.(
         sql
-        /^ read "insert_github_installation.sql"
+        /^ read "insert_installation.sql"
         /% Var.bigint "id"
         /% Var.text "login"
         /% Var.uuid "org"
@@ -88,19 +89,29 @@ struct
         /% Var.bigint "id")
 
     let insert_org =
-      Pgsql_io.Typed_sql.(sql // (* id *) Ret.uuid /^ read "insert_org.sql" /% Var.text "name")
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        /^ read "insert_org.sql"
+        /% Var.text "name")
 
     let select_github_installation =
       Pgsql_io.Typed_sql.(
         sql
-        // (* id *) Ret.bigint
+        //
+        (* id *)
+        Ret.bigint
         /^ "select id from github_installations where id = $id"
         /% Var.bigint "id")
 
     let select_work_manifest_by_run_id =
       Pgsql_io.Typed_sql.(
         sql
-        // (* id *) Ret.uuid
+        //
+        (* id *)
+        Ret.uuid
         /^ "select id from github_work_manifests where run_id = $run_id"
         /% Var.text "run_id")
   end
@@ -108,7 +119,7 @@ struct
   module Tmpl = struct
     let read fname =
       fname
-      |> Terrat_files_tmpl.read
+      |> Terrat_files_github_tmpl.read
       |> CCOption.get_exn_or fname
       |> Snabela.Template.of_utf8_string
       |> CCResult.get_exn
@@ -118,7 +129,7 @@ struct
 
     let terrateam_comment_unknown_action =
       let fname = "terrateam_comment_unknown_action.tmpl" in
-      CCOption.get_exn_or fname (Terrat_files_tmpl.read fname)
+      CCOption.get_exn_or fname (Terrat_files_github_tmpl.read fname)
   end
 
   let process_installation request_id config storage = function

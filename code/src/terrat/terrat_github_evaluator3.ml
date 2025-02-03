@@ -94,7 +94,7 @@ module Sql = struct
            |> CCString.split_on_char '\n'
            |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
            |> CCString.concat "\n")
-         (Terrat_files_sql.read fname))
+         (Terrat_files_github_sql.read fname))
 
   let base64 = function
     | Some s :: rest -> (
@@ -121,11 +121,13 @@ module Sql = struct
   let insert_github_installation_repository =
     Pgsql_io.Typed_sql.(
       sql
-      /^ read "insert_github_installation_repository.sql"
+      /^ read "insert_installation_repository.sql"
       /% Var.bigint "id"
       /% Var.bigint "installation_id"
       /% Var.text "owner"
       /% Var.text "name")
+
+  let select_installation_account_status_query = read "select_account_status.sql"
 
   let select_installation_account_status () =
     Pgsql_io.Typed_sql.(
@@ -136,13 +138,13 @@ module Sql = struct
       //
       (* trial_end_days *)
       Ret.(option integer)
-      /^ read "github_select_account_status.sql"
+      /^ select_installation_account_status_query
       /% Var.bigint "installation_id")
 
   let insert_pull_request =
     Pgsql_io.Typed_sql.(
       sql
-      /^ read "insert_github_pull_request.sql"
+      /^ read "insert_pull_request.sql"
       /% Var.text "base_branch"
       /% Var.text "base_sha"
       /% Var.text "branch"
@@ -167,8 +169,7 @@ module Sql = struct
       //
       (* Index *)
       Ret.(ud' index)
-      /^ "select index from github_code_index where sha = $sha and installation_id = \
-          $installation_id"
+      /^ read "select_index.sql"
       /% Var.bigint "installation_id"
       /% Var.text "sha")
 
@@ -178,23 +179,19 @@ module Sql = struct
       //
       (* repo_config *)
       Ret.ud' (CCOption.wrap Yojson.Safe.from_string)
-      /^ "select github_repo_configs.data from github_repo_configs where sha = $sha and \
-          installation_id = $installation_id"
+      /^ read "select_repo_config.sql"
       /% Var.bigint "installation_id"
       /% Var.text "sha")
 
   let insert_repo_config =
     Pgsql_io.Typed_sql.(
       sql
-      /^ "insert into github_repo_configs (installation_id, sha, data) values($installation_id, \
-          $sha, $data) on conflict (installation_id, sha) do update set data = excluded.data"
+      /^ read "insert_repo_config.sql"
       /% Var.bigint "installation_id"
       /% Var.text "sha"
       /% Var.json "data")
 
-  let cleanup_repo_configs =
-    Pgsql_io.Typed_sql.(
-      sql /^ "delete from github_repo_configs where (now() - created_at) > interval '1 day'")
+  let cleanup_repo_configs = Pgsql_io.Typed_sql.(sql /^ read "cleanup_repo_configs.sql")
 
   let select_work_manifest_dirspaceflows =
     Pgsql_io.Typed_sql.(
@@ -208,9 +205,10 @@ module Sql = struct
       //
       (* workspace *)
       Ret.text
-      /^ "select path, workflow_idx, workspace from github_work_manifest_dirspaceflows where \
-          work_manifest = $id"
+      /^ read "select_work_manifest_dirspaceflows.sql"
       /% Var.uuid "id")
+
+  let insert_work_manifest_query = read "insert_work_manifest.sql"
 
   let insert_work_manifest () =
     Pgsql_io.Typed_sql.(
@@ -224,7 +222,7 @@ module Sql = struct
       //
       (* created_at *)
       Ret.text
-      /^ read "insert_github_work_manifest.sql"
+      /^ insert_work_manifest_query
       /% Var.text "base_sha"
       /% Var.(option (bigint "pull_number"))
       /% Var.bigint "repository"
@@ -236,13 +234,13 @@ module Sql = struct
       /% Var.text "run_kind"
       /% Var.(option (text "environment")))
 
+  let insert_drift_work_manifest_query = read "insert_drift_work_manifest.sql"
+
   let insert_drift_work_manifest () =
     Pgsql_io.Typed_sql.(
-      sql
-      /^ "insert into github_drift_work_manifests (work_manifest, branch) values($work_manifest, \
-          $branch)"
-      /% Var.uuid "work_manifest"
-      /% Var.text "branch")
+      sql /^ insert_drift_work_manifest_query /% Var.uuid "work_manifest" /% Var.text "branch")
+
+  let select_drift_work_manifest_query = read "select_drift_work_manifest.sql"
 
   let select_drift_work_manifest () =
     Pgsql_io.Typed_sql.(
@@ -253,38 +251,36 @@ module Sql = struct
       //
       (* reconcile *)
       Ret.boolean
-      /^ read "select_github_drift_work_manifest.sql"
+      /^ select_drift_work_manifest_query
       /% Var.uuid "work_manifest")
 
+  let update_work_manifest_state_running_query = read "update_work_manifest_state_running.sql"
+
   let update_work_manifest_state_running () =
-    Pgsql_io.Typed_sql.(
-      sql /^ "update github_work_manifests set state = 'running' where id = $id" /% Var.uuid "id")
+    Pgsql_io.Typed_sql.(sql /^ update_work_manifest_state_running_query /% Var.uuid "id")
+
+  let update_work_manifest_state_completed_query = read "update_work_manifest_state_completed.sql"
 
   let update_work_manifest_state_completed () =
-    Pgsql_io.Typed_sql.(
-      sql
-      /^ "update github_work_manifests set state = 'completed', completed_at = now() where id = $id"
-      /% Var.uuid "id")
+    Pgsql_io.Typed_sql.(sql /^ update_work_manifest_state_completed_query /% Var.uuid "id")
+
+  let update_work_manifest_state_aborted_query = read "update_work_manifest_state_aborted.sql"
 
   let update_work_manifest_state_aborted () =
-    Pgsql_io.Typed_sql.(
-      sql
-      /^ "update github_work_manifests set state = 'aborted', completed_at = now() where id = $id"
-      /% Var.uuid "id")
+    Pgsql_io.Typed_sql.(sql /^ update_work_manifest_state_aborted_query /% Var.uuid "id")
+
+  let update_work_manifest_run_id_query = read "update_work_manifest_run_id.sql"
 
   let update_work_manifest_run_id () =
     Pgsql_io.Typed_sql.(
-      sql
-      /^ "update github_work_manifests set run_id = $run_id where id = $id"
-      /% Var.uuid "id"
-      /% Var.(option (text "run_id")))
+      sql /^ update_work_manifest_run_id_query /% Var.uuid "id" /% Var.(option (text "run_id")))
+
+  let insert_work_manifest_dirspaceflow_query = read "insert_work_manifest_dirspaceflow.sql"
 
   let insert_work_manifest_dirspaceflow () =
     Pgsql_io.Typed_sql.(
       sql
-      /^ "insert into github_work_manifest_dirspaceflows (work_manifest, path, workspace, \
-          workflow_idx) select * from unnest($work_manifest, $path, $workspace, $workflow_idx) on \
-          conflict (path, workspace, work_manifest) do nothing"
+      /^ insert_work_manifest_dirspaceflow_query
       /% Var.(str_array (uuid "work_manifest"))
       /% Var.(str_array (text "path"))
       /% Var.(str_array (text "workspace"))
@@ -293,18 +289,16 @@ module Sql = struct
   let insert_work_manifest_access_control_denied_dirspace =
     Pgsql_io.Typed_sql.(
       sql
-      /^ read "insert_github_work_manifest_access_control_denied_dirspace.sql"
+      /^ read "insert_work_manifest_access_control_denied_dirspace.sql"
       /% Var.(str_array (text "path"))
       /% Var.(str_array (text "workspace"))
       /% Var.(str_array (option (json "policy")))
       /% Var.(str_array (uuid "work_manifest")))
 
   let update_run_type =
-    Pgsql_io.Typed_sql.(
-      sql
-      /^ "update github_work_manifests set run_type = $run_type where id = $id"
-      /% Var.uuid "id"
-      /% Var.text "run_type")
+    Pgsql_io.Typed_sql.(sql /^ read "update_run_type.sql" /% Var.uuid "id" /% Var.text "run_type")
+
+  let select_work_manifest_query = read "select_work_manifest2.sql"
 
   let select_work_manifest () =
     Pgsql_io.Typed_sql.(
@@ -360,7 +354,7 @@ module Sql = struct
       //
       (* environment *)
       Ret.(option text)
-      /^ read "select_github_work_manifest2.sql"
+      /^ select_work_manifest_query
       /% Var.uuid "id")
 
   let select_work_manifest_access_control_denied_dirspaces =
@@ -375,8 +369,10 @@ module Sql = struct
       //
       (* policy *)
       Ret.(option (ud' policy))
-      /^ read "select_github_work_manifest_access_control_denied_dirspaces.sql"
+      /^ read "select_work_manifest_access_control_denied_dirspaces.sql"
       /% Var.uuid "work_manifest")
+
+  let select_work_manifest_pull_request_query = read "select_work_manifest_pull_request.sql"
 
   let select_work_manifest_pull_request () =
     Pgsql_io.Typed_sql.(
@@ -411,7 +407,7 @@ module Sql = struct
       //
       (* username *)
       Ret.(option text)
-      /^ read "select_github_work_manifest_pull_request.sql"
+      /^ select_work_manifest_pull_request_query
       /% Var.uuid "id")
 
   let select_next_work_manifest =
@@ -420,19 +416,19 @@ module Sql = struct
       //
       (* id *)
       Ret.uuid
-      /^ read "select_next_github_work_manifest.sql")
+      /^ read "select_next_work_manifest.sql")
+
+  let insert_index_query = read "insert_code_index.sql"
 
   let insert_index () =
-    Pgsql_io.Typed_sql.(
-      sql /^ read "github_insert_code_index.sql" /% Var.uuid "work_manifest" /% Var.json "index")
+    Pgsql_io.Typed_sql.(sql /^ insert_index_query /% Var.uuid "work_manifest" /% Var.json "index")
+
+  let upsert_flow_state_query = read "update_flow_state.sql"
 
   let upsert_flow_state () =
-    Pgsql_io.Typed_sql.(
-      sql
-      /^ "insert into flow_states (id, data, updated_at) values($id, $data, now()) on conflict \
-          (id) do update set (data, updated_at) = (excluded.data, excluded.updated_at)"
-      /% Var.uuid "id"
-      /% Var.text "data")
+    Pgsql_io.Typed_sql.(sql /^ upsert_flow_state_query /% Var.uuid "id" /% Var.text "data")
+
+  let select_flow_state_query = read "select_flow_data.sql"
 
   let select_flow_state () =
     Pgsql_io.Typed_sql.(
@@ -440,25 +436,23 @@ module Sql = struct
       //
       (* data *)
       Ret.text
-      /^ "select data from flow_states where id = $id for update"
+      /^ select_flow_state_query
       /% Var.uuid "id")
 
-  let delete_stale_flow_states () =
-    Pgsql_io.Typed_sql.(
-      sql /^ "delete from flow_states where (now() - updated_at) > interval '1 day'")
-
-  let delete_flow_state () =
-    Pgsql_io.Typed_sql.(sql /^ "delete from flow_states where id = $id" /% Var.uuid "id")
+  let delete_stale_flow_states_query = read "delete_stale_flow_states.sql"
+  let delete_stale_flow_states () = Pgsql_io.Typed_sql.(sql /^ delete_stale_flow_states_query)
+  let delete_flow_state_query = read "delete_flow_state.sql"
+  let delete_flow_state () = Pgsql_io.Typed_sql.(sql /^ delete_flow_state_query /% Var.uuid "id")
+  let insert_pull_request_unlock_query = read "insert_pull_request_unlock.sql"
 
   let insert_pull_request_unlock () =
     Pgsql_io.Typed_sql.(
-      sql
-      /^ read "insert_github_pull_request_unlock.sql"
-      /% Var.bigint "repository"
-      /% Var.bigint "pull_number")
+      sql /^ insert_pull_request_unlock_query /% Var.bigint "repository" /% Var.bigint "pull_number")
+
+  let insert_drift_unlock_query = read "insert_drift_unlock.sql"
 
   let insert_drift_unlock () =
-    Pgsql_io.Typed_sql.(sql /^ read "insert_github_drift_unlock.sql" /% Var.bigint "repository")
+    Pgsql_io.Typed_sql.(sql /^ insert_drift_unlock_query /% Var.bigint "repository")
 
   let select_out_of_diff_applies =
     Pgsql_io.Typed_sql.(
@@ -469,7 +463,7 @@ module Sql = struct
       //
       (* workspace *)
       Ret.text
-      /^ read "select_github_out_of_diff_applies.sql"
+      /^ read "select_out_of_diff_applies.sql"
       /% Var.bigint "repository"
       /% Var.bigint "pull_number")
 
@@ -482,7 +476,7 @@ module Sql = struct
       //
       (* workspace *)
       Ret.text
-      /^ read "select_github_dirspace_applies_for_pull_request.sql"
+      /^ read "select_dirspace_applies_for_pull_request.sql"
       /% Var.bigint "repo_id"
       /% Var.bigint "pull_number")
 
@@ -495,7 +489,7 @@ module Sql = struct
       //
       (* workspace *)
       Ret.text
-      /^ read "select_github_dirspaces_without_valid_plans.sql"
+      /^ read "select_dirspaces_without_valid_plans.sql"
       /% Var.bigint "repository"
       /% Var.bigint "pull_number"
       /% Var.(str_array (text "dirs"))
@@ -504,7 +498,7 @@ module Sql = struct
   let insert_dirspace =
     Pgsql_io.Typed_sql.(
       sql
-      /^ read "insert_github_dirspaces.sql"
+      /^ read "insert_dirspaces.sql"
       /% Var.(str_array (text "base_sha"))
       /% Var.(str_array (text "path"))
       /% Var.(array (bigint "repository"))
@@ -518,20 +512,18 @@ module Sql = struct
       //
       (* data *)
       Ret.ud base64
-      /^ read "select_github_recent_plan.sql"
+      /^ read "select_recent_plan.sql"
       /% Var.uuid "id"
       /% Var.text "dir"
       /% Var.text "workspace")
+
+  let delete_plan_query = read "delete_terraform_plan.sql"
 
   let delete_plan () =
     Pgsql_io.Typed_sql.(
-      sql
-      /^ read "delete_github_terraform_plan.sql"
-      /% Var.uuid "id"
-      /% Var.text "dir"
-      /% Var.text "workspace")
+      sql /^ delete_plan_query /% Var.uuid "id" /% Var.text "dir" /% Var.text "workspace")
 
-  let delete_old_plans = Pgsql_io.Typed_sql.(sql /^ read "delete_github_old_terraform_plans.sql")
+  let delete_old_plans = Pgsql_io.Typed_sql.(sql /^ read "delete_old_terraform_plans.sql")
 
   let upsert_plan =
     Pgsql_io.Typed_sql.(
@@ -546,11 +538,13 @@ module Sql = struct
   let insert_github_work_manifest_result =
     Pgsql_io.Typed_sql.(
       sql
-      /^ read "insert_github_work_manifest_result.sql"
+      /^ read "insert_work_manifest_result.sql"
       /% Var.(str_array (uuid "work_manifest"))
       /% Var.(str_array (text "path"))
       /% Var.(str_array (text "workspace"))
       /% Var.(array (boolean "success")))
+
+  let update_abort_duplicate_work_manifests_query = read "abort_duplicate_work_manifests.sql"
 
   let update_abort_duplicate_work_manifests () =
     Pgsql_io.Typed_sql.(
@@ -558,12 +552,15 @@ module Sql = struct
       //
       (* work manifest id *)
       Ret.uuid
-      /^ read "github_abort_duplicate_work_manifests.sql"
+      /^ update_abort_duplicate_work_manifests_query
       /% Var.bigint "repository"
       /% Var.bigint "pull_number"
       /% Var.(ud (text "run_type") Terrat_work_manifest3.Step.to_string)
       /% Var.(str_array (text "dirs"))
       /% Var.(str_array (text "workspaces")))
+
+  let select_conflicting_work_manifests_in_repo_query =
+    read "select_conflicting_work_manifests_in_repo2.sql"
 
   let select_conflicting_work_manifests_in_repo () =
     Pgsql_io.Typed_sql.(
@@ -574,12 +571,15 @@ module Sql = struct
       //
       (* maybe_stale *)
       Ret.boolean
-      /^ read "select_github_conflicting_work_manifests_in_repo2.sql"
+      /^ select_conflicting_work_manifests_in_repo_query
       /% Var.bigint "repository"
       /% Var.bigint "pull_number"
       /% Var.(ud (text "run_type") Terrat_work_manifest3.Step.to_string)
       /% Var.(str_array (text "dirs"))
       /% Var.(str_array (text "workspaces")))
+
+  let select_dirspaces_owned_by_other_pull_requests_query =
+    read "select_dirspaces_owned_by_other_pull_requests.sql"
 
   let select_dirspaces_owned_by_other_pull_requests () =
     Pgsql_io.Typed_sql.(
@@ -620,7 +620,7 @@ module Sql = struct
       //
       (* username *)
       Ret.(option text)
-      /^ read "select_github_dirspaces_owned_by_other_pull_requests.sql"
+      /^ select_dirspaces_owned_by_other_pull_requests_query
       /% Var.bigint "repository"
       /% Var.bigint "pull_number"
       /% Var.(str_array (text "dirs"))
@@ -629,7 +629,7 @@ module Sql = struct
   let upsert_drift_schedule =
     Pgsql_io.Typed_sql.(
       sql
-      /^ read "github_upsert_drift_schedule.sql"
+      /^ read "upsert_drift_schedule.sql"
       /% Var.bigint "repo"
       /% Var.(ud (text "schedule") Terrat_base_repo_config_v1.Drift.Schedule.to_string)
       /% Var.boolean "reconcile"
@@ -640,6 +640,8 @@ module Sql = struct
       sql
       /^ "delete from github_drift_schedules where repository = $repo_id"
       /% Var.bigint "repo_id")
+
+  let select_missing_drift_scheduled_runs_query = read "select_missing_drift_scheduled_runs.sql"
 
   let select_missing_drift_scheduled_runs () =
     Pgsql_io.Typed_sql.(
@@ -662,15 +664,13 @@ module Sql = struct
       //
       (* tag_query *)
       Ret.(option (ud' CCFun.(Terrat_tag_query.of_string %> CCResult.to_opt)))
-      /^ read "github_select_missing_drift_scheduled_runs.sql")
+      /^ select_missing_drift_scheduled_runs_query)
 
   let insert_workflow_step_output =
+    let query = read "insert_workflow_step_output.sql" in
     Pgsql_io.Typed_sql.(
       sql
-      /^ "insert into github_workflow_step_outputs (idx, ignore_errors, payload, scope, step, \
-          success, work_manifest) select * from unnest($idx, $ignore_errors, $payload, $scope, \
-          $step, $success, $work_manifest) on conflict (work_manifest, scope, step, idx) do \
-          nothing"
+      /^ query
       /% Var.(array (smallint "idx"))
       /% Var.(array (boolean "ignore_errors"))
       /% Var.(str_array (json "payload"))
@@ -711,7 +711,7 @@ module Tmpl = struct
 
   let read fname =
     fname
-    |> Terrat_files_tmpl.read
+    |> Terrat_files_github_tmpl.read
     |> CCOption.get_exn_or fname
     |> Snabela.Template.of_utf8_string
     |> (function
@@ -720,27 +720,22 @@ module Tmpl = struct
     |> fun tmpl -> Snabela.of_template tmpl Transformers.[ money; compact_plan; plan_diff ]
 
   let terrateam_comment_help = read "terrateam_comment_help.tmpl"
-
-  let apply_requirements_config_err_tag_query =
-    read "github_apply_requirements_config_err_tag_query.tmpl"
+  let apply_requirements_config_err_tag_query = read "apply_requirements_config_err_tag_query.tmpl"
 
   let apply_requirements_config_err_invalid_query =
-    read "github_apply_requirements_config_err_invalid_query.tmpl"
+    read "apply_requirements_config_err_invalid_query.tmpl"
 
-  let apply_requirements_validation_err = read "github_apply_requirements_validation_err.tmpl"
-  let mismatched_refs = read "github_mismatched_refs.tmpl"
-  let missing_plans = read "github_missing_plans.tmpl"
-
-  let dirspaces_owned_by_other_pull_requests =
-    read "github_dirspaces_owned_by_other_pull_requests.tmpl"
-
-  let conflicting_work_manifests = read "github_conflicting_work_manifests.tmpl"
-  let depends_on_cycle = read "github_depends_on_cycle.tmpl"
-  let maybe_stale_work_manifests = read "github_maybe_stale_work_manifests.tmpl"
-  let repo_config_parse_failure = read "github_repo_config_parse_failure.tmpl"
-  let repo_config_generic_failure = read "github_repo_config_generic_failure.tmpl"
-  let pull_request_not_appliable = read "github_pull_request_not_appliable.tmpl"
-  let pull_request_not_mergeable = read "github_pull_request_not_mergeable.tmpl"
+  let apply_requirements_validation_err = read "apply_requirements_validation_err.tmpl"
+  let mismatched_refs = read "mismatched_refs.tmpl"
+  let missing_plans = read "missing_plans.tmpl"
+  let dirspaces_owned_by_other_pull_requests = read "dirspaces_owned_by_other_pull_requests.tmpl"
+  let conflicting_work_manifests = read "conflicting_work_manifests.tmpl"
+  let depends_on_cycle = read "depends_on_cycle.tmpl"
+  let maybe_stale_work_manifests = read "maybe_stale_work_manifests.tmpl"
+  let repo_config_parse_failure = read "repo_config_parse_failure.tmpl"
+  let repo_config_generic_failure = read "repo_config_generic_failure.tmpl"
+  let pull_request_not_appliable = read "pull_request_not_appliable.tmpl"
+  let pull_request_not_mergeable = read "pull_request_not_mergeable.tmpl"
   let apply_no_matching_dirspaces = read "apply_no_matching_dirspaces.tmpl"
   let plan_no_matching_dirspaces = read "plan_no_matching_dirspaces.tmpl"
   let base_branch_not_default_branch = read "dest_branch_no_match.tmpl"
@@ -762,11 +757,11 @@ module Tmpl = struct
   let account_expired_err = read "account_expired_err.tmpl"
   let repo_config = read "repo_config.tmpl"
   let unexpected_temporary_err = read "unexpected_temporary_err.tmpl"
-  let failed_to_start_workflow = read "github_failed_to_start_workflow.tmpl"
-  let failed_to_find_workflow = read "github_failed_to_find_workflow.tmpl"
-  let comment_too_large = read "github_comment_too_large.tmpl"
-  let index_complete = read "github_index_complete.tmpl"
-  let invalid_lock_id = read "github_unlock_failed_bad_id.tmpl"
+  let failed_to_start_workflow = read "failed_to_start_workflow.tmpl"
+  let failed_to_find_workflow = read "failed_to_find_workflow.tmpl"
+  let comment_too_large = read "comment_too_large.tmpl"
+  let index_complete = read "index_complete.tmpl"
+  let invalid_lock_id = read "unlock_failed_bad_id.tmpl"
 
   (* Repo config errors *)
   let repo_config_err_access_control_policy_apply_autoapprove_match_parse_err =
@@ -840,11 +835,11 @@ module Tmpl = struct
   let repo_config_err_workflows_tag_query_parse_err =
     read "repo_config_err_workflows_tag_query_parse_err.tmpl"
 
-  let plan_complete = read "github_plan_complete.tmpl"
-  let apply_complete = read "github_apply_complete.tmpl"
-  let plan_complete2 = read "github_plan_complete2.tmpl"
-  let apply_complete2 = read "github_apply_complete2.tmpl"
-  let automerge_failure = read "github_automerge_error.tmpl"
+  let plan_complete = read "plan_complete.tmpl"
+  let apply_complete = read "apply_complete.tmpl"
+  let plan_complete2 = read "plan_complete2.tmpl"
+  let apply_complete2 = read "apply_complete2.tmpl"
+  let automerge_failure = read "automerge_error.tmpl"
 end
 
 module S = struct

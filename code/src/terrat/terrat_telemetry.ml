@@ -30,7 +30,16 @@ let send' telemetry_config event =
           in
           Logs.info (fun m -> m "%a" Uri.pp uri);
           Logs.info (fun m -> m "TELEMETRY : ANONYMOUS : EVENT : START");
-          Abbs_future_combinators.ignore (Http.post ~headers:http_headers uri)
+          (* For some reason, on dev ngrok this request hangs if it is HTTP2,
+             but forcing it to HTTP/1.1 works. *)
+          Abbs_future_combinators.ignore
+            (Http.post
+               ~options:
+                 Http.Options.(
+                   with_opt (Http_version `Http1_1)
+                   @@ with_opt (Timeout (Duration.of_sec 1)) default)
+               ~headers:http_headers
+               uri)
       | Event.Run { github_app_id; step; owner; repo } ->
           let uri =
             Uri.with_path
@@ -43,7 +52,16 @@ let send' telemetry_config event =
                  Digest.(to_hex (string repo)))
           in
           Logs.info (fun m -> m "TELEMETRY : ANONYMOUS : EVENT : RUN");
-          Abbs_future_combinators.ignore (Http.post ~headers:http_headers uri)
+          (* For some reason, on dev ngrok this request hangs if it is HTTP2,
+             but forcing it to HTTP/1.1 works. *)
+          Abbs_future_combinators.ignore
+            (Http.post
+               ~options:
+                 Http.Options.(
+                   with_opt (Http_version `Http1_1)
+                   @@ with_opt (Timeout (Duration.of_sec 1)) default)
+               ~headers:http_headers
+               uri)
       | Event.Ping { github_app_id } ->
           let uri =
             Uri.with_path
@@ -51,7 +69,16 @@ let send' telemetry_config event =
               (Printf.sprintf "/event/ping/%s" Digest.(to_hex (string github_app_id)))
           in
           Logs.info (fun m -> m "TELEMETRY : ANONYMOUS : EVENT : PING");
-          Abbs_future_combinators.ignore (Http.post ~headers:http_headers uri))
+          (* For some reason, on dev ngrok this request hangs if it is HTTP2,
+             but forcing it to HTTP/1.1 works. *)
+          Abbs_future_combinators.ignore
+            (Http.post
+               ~options:
+                 Http.Options.(
+                   with_opt (Http_version `Http1_1)
+                   @@ with_opt (Timeout (Duration.of_sec 1)) default)
+               ~headers:http_headers
+               uri))
 
 let send telemetry_config event =
   Abbs_future_combinators.ignore (Abb.Future.fork (send' telemetry_config event))
