@@ -1,3 +1,4 @@
+let () = Curl.global_init Curl.CURLINIT_GLOBALALL
 let src = Logs.Src.create "abb_curl"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
@@ -342,11 +343,26 @@ module Response = struct
 end
 
 module Options = struct
-  type opt = Follow_location
+  type opt =
+    | Follow_location
+    | Timeout of Duration.t
+    | Http_version of [ `Http2 | `Http1_1 ]
+
   type t = opt list
 
-  let default = [ Follow_location ]
-  let with_opt opt t = opt :: t
+  let default = [ Follow_location; Timeout (Duration.of_sec 10) ]
+
+  let with_opt opt t =
+    opt
+    :: CCList.remove
+         ~eq:(fun v1 v2 ->
+           match (v1, v2) with
+           | v1, v2 when v1 = v2 -> true
+           | Timeout _, Timeout _ -> true
+           | _, _ -> false)
+         ~key:opt
+         t
+
   let without_opt opt = CCList.filter (( <> ) opt)
 end
 
@@ -419,8 +435,12 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       Logs.debug (fun m -> Curl.set_verbose handle true);
       CCList.iter
         (function
-          | Options.Follow_location -> Curl.set_followlocation handle true)
+          | Options.Follow_location -> Curl.set_followlocation handle true
+          | Options.Timeout duration -> Curl.set_timeoutms handle (Duration.to_ms duration)
+          | Options.Http_version `Http1_1 -> Curl.set_httpversion handle Curl.HTTP_VERSION_1_1
+          | Options.Http_version `Http2 -> Curl.set_httpversion handle Curl.HTTP_VERSION_2)
         options;
+      Curl.set_nosignal handle true;
       setup_request handle meth_ headers uri;
       let resp_headers = ref Headers.empty in
       let resp_body = Buffer.create 100 in
