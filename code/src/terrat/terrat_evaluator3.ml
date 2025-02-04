@@ -5560,7 +5560,11 @@ module Make (S : S) = struct
       >>= fun (access_control, matches, client, pull_request, access_control_result) ->
       let passed_apply_requirements = S.Apply_requirements.passed apply_requirements in
       match access_control_result with
-      | _ when not passed_apply_requirements ->
+      | _ when (not passed_apply_requirements) && not (op = `Apply_force) ->
+          (* Regardless of access control, if apply requirements were NOT
+             passed, then we cannot apply this change UNLESS we are in an
+             "apply-force" because then access control result is important
+             because we are bypassing the apply requirements. *)
           Logs.info (fun m -> m "EVALUATOR : %s : PR_NOT_APPLIABLE" state.State.request_id);
           publish_msg
             state.State.request_id
