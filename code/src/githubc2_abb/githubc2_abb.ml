@@ -1,6 +1,5 @@
 module Http = Abb_curl_easy.Make (Abb)
 
-let max_redirect_retries = 10
 let base_url = Uri.of_string "https://api.github.com/"
 
 module Io = struct
@@ -10,7 +9,7 @@ module Io = struct
   let ( >>= ) = Abb.Future.Infix_monad.( >>= )
   let return = Abb.Future.return
 
-  let rec call' ?body ~headers ~meth uri =
+  let call' ?body ~headers ~meth uri =
     let meth' =
       match meth with
       | `Get -> `GET
