@@ -59,7 +59,8 @@ module Create = struct
 
   let url = "/repos/{owner}/{repo}/pulls"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -273,7 +274,8 @@ module Update_review_comment = struct
 
   let url = "/repos/{owner}/{repo}/pulls/comments/{comment_id}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -463,7 +465,8 @@ module Update = struct
 
   let url = "/repos/{owner}/{repo}/pulls/{pull_number}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -657,7 +660,8 @@ module Create_review_comment = struct
 
   let url = "/repos/{owner}/{repo}/pulls/{pull_number}/comments"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -792,7 +796,8 @@ module Create_reply_for_review_comment = struct
 
   let url = "/repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1043,7 +1048,8 @@ module Merge = struct
 
   let url = "/repos/{owner}/{repo}/pulls/{pull_number}/merge"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -1160,7 +1166,8 @@ module Remove_requested_reviewers = struct
 
   let url = "/repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1238,7 +1245,8 @@ module Request_reviewers = struct
 
   let url = "/repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -1386,7 +1394,8 @@ module Create_review = struct
 
   let url = "/repos/{owner}/{repo}/pulls/{pull_number}/reviews"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -1558,7 +1567,8 @@ module Update_review = struct
 
   let url = "/repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1758,7 +1768,8 @@ module Dismiss_review = struct
 
   let url = "/repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}/dismissals"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1852,7 +1863,8 @@ module Submit_review = struct
 
   let url = "/repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}/events"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1931,7 +1943,8 @@ module Update_branch = struct
 
   let url = "/repos/{owner}/{repo}/pulls/{pull_number}/update-branch"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]

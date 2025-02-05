@@ -93,7 +93,8 @@ module Create = struct
 
   let url = "/orgs/{org}/teams"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -263,7 +264,8 @@ module Update_in_org = struct
 
   let url = "/orgs/{org}/teams/{team_slug}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -392,7 +394,8 @@ module Create_discussion_in_org = struct
 
   let url = "/orgs/{org}/teams/{team_slug}/discussions"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -497,7 +500,8 @@ module Update_discussion_in_org = struct
 
   let url = "/orgs/{org}/teams/{team_slug}/discussions/{discussion_number}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -623,7 +627,8 @@ module Create_discussion_comment_in_org = struct
 
   let url = "/orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/comments"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -733,7 +738,8 @@ module Update_discussion_comment_in_org = struct
   let url =
     "/orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/comments/{comment_number}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1027,7 +1033,8 @@ module Add_or_update_membership_for_user_in_org = struct
 
   let url = "/orgs/{org}/teams/{team_slug}/memberships/{username}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -1231,7 +1238,8 @@ module Add_or_update_project_permissions_in_org = struct
 
   let url = "/orgs/{org}/teams/{team_slug}/projects/{project_id}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -1407,7 +1415,8 @@ module Add_or_update_repo_permissions_in_org = struct
 
   let url = "/orgs/{org}/teams/{team_slug}/repos/{owner}/{repo}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -1621,7 +1630,8 @@ module Update_legacy = struct
 
   let url = "/teams/{team_id}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1759,7 +1769,8 @@ module Create_discussion_legacy = struct
 
   let url = "/teams/{team_id}/discussions"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1860,7 +1871,8 @@ module Update_discussion_legacy = struct
 
   let url = "/teams/{team_id}/discussions/{discussion_number}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -1980,7 +1992,8 @@ module Create_discussion_comment_legacy = struct
 
   let url = "/teams/{team_id}/discussions/{discussion_number}/comments"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -2085,7 +2098,8 @@ module Update_discussion_comment_legacy = struct
 
   let url = "/teams/{team_id}/discussions/{discussion_number}/comments/{comment_number}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -2511,7 +2525,8 @@ module Add_or_update_membership_for_user_legacy = struct
 
   let url = "/teams/{team_id}/memberships/{username}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -2752,7 +2767,8 @@ module Add_or_update_project_permissions_legacy = struct
 
   let url = "/teams/{team_id}/projects/{project_id}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -2960,7 +2976,8 @@ module Add_or_update_repo_permissions_legacy = struct
 
   let url = "/teams/{team_id}/repos/{owner}/{repo}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]

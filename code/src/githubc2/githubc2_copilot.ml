@@ -227,7 +227,8 @@ module Cancel_copilot_seat_assignment_for_teams = struct
 
   let url = "/orgs/{org}/copilot/billing/selected_teams"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -316,7 +317,8 @@ module Add_copilot_for_business_seats_for_teams = struct
 
   let url = "/orgs/{org}/copilot/billing/selected_teams"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -405,7 +407,8 @@ module Cancel_copilot_seat_assignment_for_users = struct
 
   let url = "/orgs/{org}/copilot/billing/selected_users"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -494,7 +497,8 @@ module Add_copilot_for_business_seats_for_users = struct
 
   let url = "/orgs/{org}/copilot/billing/selected_users"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

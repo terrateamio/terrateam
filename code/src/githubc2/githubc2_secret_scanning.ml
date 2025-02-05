@@ -394,7 +394,8 @@ module Update_alert = struct
 
   let url = "/repos/{owner}/{repo}/secret-scanning/alerts/{alert_number}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

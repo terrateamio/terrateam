@@ -71,7 +71,8 @@ module Update_authenticated = struct
 
   let url = "/user"
 
-  let make ?body () =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -468,7 +469,8 @@ module Set_primary_email_visibility_for_authenticated_user = struct
 
   let url = "/user/email/visibility"
 
-  let make ~body () =
+  let make ~body =
+   fun () ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -555,7 +557,8 @@ module Delete_email_for_authenticated_user = struct
 
   let url = "/user/emails"
 
-  let make ?body () =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -646,7 +649,8 @@ module Add_email_for_authenticated_user = struct
 
   let url = "/user/emails"
 
-  let make ?body () =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -1082,7 +1086,8 @@ module Create_gpg_key_for_authenticated_user = struct
 
   let url = "/user/gpg_keys"
 
-  let make ~body () =
+  let make ~body =
+   fun () ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1354,7 +1359,8 @@ module Create_public_ssh_key_for_authenticated_user = struct
 
   let url = "/user/keys"
 
-  let make ~body () =
+  let make ~body =
+   fun () ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1681,7 +1687,8 @@ module Delete_social_account_for_authenticated_user = struct
 
   let url = "/user/social_accounts"
 
-  let make ~body () =
+  let make ~body =
+   fun () ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1760,7 +1767,8 @@ module Add_social_account_for_authenticated_user = struct
 
   let url = "/user/social_accounts"
 
-  let make ~body () =
+  let make ~body =
+   fun () ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1904,7 +1912,8 @@ module Create_ssh_signing_key_for_authenticated_user = struct
 
   let url = "/user/ssh_signing_keys"
 
-  let make ~body () =
+  let make ~body =
+   fun () ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

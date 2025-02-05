@@ -61,7 +61,8 @@ module Create_for_team_discussion_comment_in_org = struct
   let url =
     "/orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/comments/{comment_number}/reactions"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -251,7 +252,8 @@ module Create_for_team_discussion_in_org = struct
 
   let url = "/orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/reactions"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -442,7 +444,8 @@ module Create_for_commit_comment = struct
 
   let url = "/repos/{owner}/{repo}/comments/{comment_id}/reactions"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -646,7 +649,8 @@ module Create_for_issue_comment = struct
 
   let url = "/repos/{owner}/{repo}/issues/comments/{comment_id}/reactions"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -850,7 +854,8 @@ module Create_for_issue = struct
 
   let url = "/repos/{owner}/{repo}/issues/{issue_number}/reactions"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1061,7 +1066,8 @@ module Create_for_pull_request_review_comment = struct
 
   let url = "/repos/{owner}/{repo}/pulls/comments/{comment_id}/reactions"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1263,7 +1269,8 @@ module Create_for_release = struct
 
   let url = "/repos/{owner}/{repo}/releases/{release_id}/reactions"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1444,7 +1451,8 @@ module Create_for_team_discussion_comment_legacy = struct
 
   let url = "/teams/{team_id}/discussions/{discussion_number}/comments/{comment_number}/reactions"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1574,7 +1582,8 @@ module Create_for_team_discussion_legacy = struct
 
   let url = "/teams/{team_id}/discussions/{discussion_number}/reactions"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

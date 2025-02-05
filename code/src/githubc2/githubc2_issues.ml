@@ -529,7 +529,8 @@ module Create = struct
 
   let url = "/repos/{owner}/{repo}/issues"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -794,7 +795,8 @@ module Update_comment = struct
 
   let url = "/repos/{owner}/{repo}/issues/comments/{comment_id}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1241,7 +1243,8 @@ module Update = struct
 
   let url = "/repos/{owner}/{repo}/issues/{issue_number}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -1366,7 +1369,8 @@ module Remove_assignees = struct
 
   let url = "/repos/{owner}/{repo}/issues/{issue_number}/assignees"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1420,7 +1424,8 @@ module Add_assignees = struct
 
   let url = "/repos/{owner}/{repo}/issues/{issue_number}/assignees"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -1556,7 +1561,8 @@ module Create_comment = struct
 
   let url = "/repos/{owner}/{repo}/issues/{issue_number}/comments"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1878,7 +1884,8 @@ module Add_labels = struct
 
   let url = "/repos/{owner}/{repo}/issues/{issue_number}/labels"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -2008,7 +2015,8 @@ module Set_labels = struct
 
   let url = "/repos/{owner}/{repo}/issues/{issue_number}/labels"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -2300,7 +2308,8 @@ module Lock = struct
 
   let url = "/repos/{owner}/{repo}/issues/{issue_number}/lock"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -2439,7 +2448,8 @@ module Create_label = struct
 
   let url = "/repos/{owner}/{repo}/labels"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -2542,7 +2552,8 @@ module Update_label = struct
 
   let url = "/repos/{owner}/{repo}/labels/{name}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -2717,7 +2728,8 @@ module Create_milestone = struct
 
   let url = "/repos/{owner}/{repo}/milestones"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -2868,7 +2880,8 @@ module Update_milestone = struct
 
   let url = "/repos/{owner}/{repo}/milestones/{milestone_number}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
