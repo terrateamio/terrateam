@@ -1233,6 +1233,7 @@ module Make
 struct
   module S = struct
     include S
+    module Db = Pgsql_io
 
     module Drift = struct
       type t
@@ -1392,7 +1393,7 @@ struct
                 | [] -> assert false
                 | pr :: _ ->
                     Abb.Future.return
-                      (Ok (Some { wm with Wm.target = Terrat_evaluator3.Target.Pr pr })))
+                      (Ok (Some { wm with Wm.target = Terrat_vcs_provider.Target.Pr pr })))
             | None, repo -> (
                 Metrics.Psql_query_time.time
                   (Metrics.psql_query_time "select_drift_work_manifest")
@@ -1408,8 +1409,10 @@ struct
                     Abb.Future.return
                       (Ok
                          (Some
-                            { wm with Wm.target = Terrat_evaluator3.Target.Drift { repo; branch } }))
-                ))
+                            {
+                              wm with
+                              Wm.target = Terrat_vcs_provider.Target.Drift { repo; branch };
+                            }))))
       in
       let open Abb.Future.Infix_monad in
       run
@@ -1571,7 +1574,7 @@ struct
             in
             CCList.map
               (fun (path, { Paths.Additional.Failures.Additional.lnum; msg }) ->
-                { Terrat_evaluator3.Index.Failure.file = path; line_num = lnum; error = msg })
+                { Terrat_vcs_provider.Index.Failure.file = path; line_num = lnum; error = msg })
               failures)
           paths
       in
@@ -1583,7 +1586,7 @@ struct
                (path, CCList.map (fun m -> Terrat_base_repo_config_v1.Index.Dep.Module m) modules))
              paths)
       in
-      { Terrat_evaluator3.Index.success; failures; index }
+      { Terrat_vcs_provider.Index.success; failures; index }
 
     let query_index ~request_id db account ref_ =
       let open Abb.Future.Infix_monad in
@@ -3139,7 +3142,7 @@ struct
             kv
 
     let publish_msg' ~request_id client user pull_request =
-      let module Msg = Terrat_evaluator3.Msg in
+      let module Msg = Terrat_vcs_provider.Msg in
       function
       | Msg.Access_control_denied (default_branch, `All_dirspaces denies) ->
           let kv =
@@ -3464,9 +3467,9 @@ struct
                          (fun { Wm.created_at; steps; state; target; _ } ->
                            let id, is_pr =
                              match target with
-                             | Terrat_evaluator3.Target.Pr pr ->
+                             | Terrat_vcs_provider.Target.Pr pr ->
                                  (CCInt.to_string (Pull_request.id pr), true)
-                             | Terrat_evaluator3.Target.Drift _ -> ("drift", false)
+                             | Terrat_vcs_provider.Target.Drift _ -> ("drift", false)
                            in
                            Map.of_list
                              [
@@ -3647,9 +3650,9 @@ struct
                          (fun Wm.{ created_at; steps; state; target; _ } ->
                            let id, is_pr =
                              match target with
-                             | Terrat_evaluator3.Target.Pr pr ->
+                             | Terrat_vcs_provider.Target.Pr pr ->
                                  (CCInt.to_string (Pull_request.id pr), true)
-                             | Terrat_evaluator3.Target.Drift _ -> ("drift", false)
+                             | Terrat_vcs_provider.Target.Drift _ -> ("drift", false)
                            in
                            Map.of_list
                              [
@@ -4242,18 +4245,18 @@ struct
         let dirspaces = Yojson.Safe.to_string dirspaces_json in
         let pull_number_opt =
           match work_manifest.Wm.target with
-          | Terrat_evaluator3.Target.Pr { Pull_request.id; _ } -> Some id
-          | Terrat_evaluator3.Target.Drift _ -> None
+          | Terrat_vcs_provider.Target.Pr { Pull_request.id; _ } -> Some id
+          | Terrat_vcs_provider.Target.Drift _ -> None
         in
         let repo_id =
           match work_manifest.Wm.target with
-          | Terrat_evaluator3.Target.Pr { Pull_request.repo; _ } -> repo.Repo.id
-          | Terrat_evaluator3.Target.Drift { repo; _ } -> repo.Repo.id
+          | Terrat_vcs_provider.Target.Pr { Pull_request.repo; _ } -> repo.Repo.id
+          | Terrat_vcs_provider.Target.Drift { repo; _ } -> repo.Repo.id
         in
         let run_kind =
           match work_manifest.Wm.target with
-          | Terrat_evaluator3.Target.Pr _ -> "pr"
-          | Terrat_evaluator3.Target.Drift _ -> "drift"
+          | Terrat_vcs_provider.Target.Pr _ -> "pr"
+          | Terrat_vcs_provider.Target.Drift _ -> "drift"
         in
         let run_type =
           CCOption.map_or
@@ -4294,8 +4297,8 @@ struct
             >>= fun () ->
             let work_manifest = { work_manifest with Wm.id; state; created_at; run_id = None } in
             match work_manifest.Wm.target with
-            | Terrat_evaluator3.Target.Pr _ -> Abb.Future.return (Ok work_manifest)
-            | Terrat_evaluator3.Target.Drift { repo; branch } ->
+            | Terrat_vcs_provider.Target.Pr _ -> Abb.Future.return (Ok work_manifest)
+            | Terrat_vcs_provider.Target.Drift { repo; branch } ->
                 Pgsql_io.Prepared_stmt.execute db (Sql.insert_drift_work_manifest ()) id branch
                 >>= fun () -> Abb.Future.return (Ok work_manifest))
       in
@@ -4396,15 +4399,15 @@ struct
     let run_work_manifest ~request_id config client work_manifest =
       let module Wm = Terrat_work_manifest3 in
       let get_repo = function
-        | { Wm.target = Terrat_evaluator3.Target.Pr pr; _ } -> Pull_request.repo pr
-        | { Wm.target = Terrat_evaluator3.Target.Drift { repo; _ }; _ } -> repo
+        | { Wm.target = Terrat_vcs_provider.Target.Pr pr; _ } -> Pull_request.repo pr
+        | { Wm.target = Terrat_vcs_provider.Target.Drift { repo; _ }; _ } -> repo
       in
       let get_branch = function
-        | { Wm.target = Terrat_evaluator3.Target.Pr pr; _ } -> (
+        | { Wm.target = Terrat_vcs_provider.Target.Pr pr; _ } -> (
             match Pull_request.state pr with
             | Pull_request.State.(Open _ | Closed) -> Pull_request.branch_name pr
             | Pull_request.State.Merged _ -> Pull_request.base_branch_name pr)
-        | { Wm.target = Terrat_evaluator3.Target.Drift { branch; _ }; _ } -> branch
+        | { Wm.target = Terrat_vcs_provider.Target.Drift { branch; _ }; _ } -> branch
       in
       let run =
         let open Abbs_future_combinators.Infix_result_monad in
@@ -4556,7 +4559,7 @@ struct
           Abb.Future.return (Error `Error)
 
     let unlock' db repo = function
-      | Terrat_evaluator3.Unlock_id.Pull_request pull_request_id ->
+      | Terrat_vcs_provider.Unlock_id.Pull_request pull_request_id ->
           Metrics.Psql_query_time.time
             (Metrics.psql_query_time "insert_pull_request_unlock")
             (fun () ->
@@ -4565,7 +4568,7 @@ struct
                 (Sql.insert_pull_request_unlock ())
                 (CCInt64.of_int (Repo.id repo))
                 (CCInt64.of_int pull_request_id))
-      | Terrat_evaluator3.Unlock_id.Drift ->
+      | Terrat_vcs_provider.Unlock_id.Drift ->
           Metrics.Psql_query_time.time (Metrics.psql_query_time "insert_drift_unlock") (fun () ->
               Pgsql_io.Prepared_stmt.execute
                 db
@@ -4784,7 +4787,7 @@ struct
           result.R.dirspaces
       in
       {
-        Terrat_evaluator3.Work_manifest_result.overall_success = success;
+        Terrat_vcs_provider.Work_manifest_result.overall_success = success;
         pre_hooks_success = pre_hooks_status;
         post_hooks_success = post_hooks_status;
         dirspaces_success;
@@ -4822,7 +4825,7 @@ struct
         CCList.for_all (fun (_, steps) -> Result.steps_success steps) by_scope
       in
       {
-        Terrat_evaluator3.Work_manifest_result.overall_success;
+        Terrat_vcs_provider.Work_manifest_result.overall_success;
         pre_hooks_success;
         post_hooks_success;
         dirspaces_success;
@@ -5038,7 +5041,7 @@ struct
             Abb.Future.return
               (Ok
                  (Some
-                    (Terrat_evaluator3.Conflicting_work_manifests.Conflicting
+                    (Terrat_vcs_provider.Conflicting_work_manifests.Conflicting
                        (CCList.filter_map CCFun.id wms))))
         | _, (_ :: _ as maybe_stale) ->
             Abbs_future_combinators.List_result.map
@@ -5048,7 +5051,7 @@ struct
             Abb.Future.return
               (Ok
                  (Some
-                    (Terrat_evaluator3.Conflicting_work_manifests.Maybe_stale
+                    (Terrat_vcs_provider.Conflicting_work_manifests.Maybe_stale
                        (CCList.filter_map CCFun.id wms))))
         | _, _ -> Abb.Future.return (Ok None)
       in
@@ -5679,7 +5682,7 @@ struct
       let open Abb.Future.Infix_monad in
       Abbs_future_combinators.ignore
         (Evaluator.run_scheduled_drift
-           (Terrat_evaluator3.Ctx.make
+           (Terrat_vcs_provider.Ctx.make
               ~config
               ~storage
               ~request_id:(Ouuid.to_string (Ouuid.v4 ()))
@@ -5690,7 +5693,7 @@ struct
       let open Abb.Future.Infix_monad in
       Abbs_future_combinators.ignore
         (Evaluator.run_flow_state_cleanup
-           (Terrat_evaluator3.Ctx.make
+           (Terrat_vcs_provider.Ctx.make
               ~config
               ~storage
               ~request_id:(Ouuid.to_string (Ouuid.v4 ()))
@@ -5701,7 +5704,7 @@ struct
       let open Abb.Future.Infix_monad in
       Abbs_future_combinators.ignore
         (Evaluator.run_plan_cleanup
-           (Terrat_evaluator3.Ctx.make
+           (Terrat_vcs_provider.Ctx.make
               ~config
               ~storage
               ~request_id:(Ouuid.to_string (Ouuid.v4 ()))
@@ -5712,7 +5715,7 @@ struct
       let open Abb.Future.Infix_monad in
       Abbs_future_combinators.ignore
         (Evaluator.run_repo_config_cleanup
-           (Terrat_evaluator3.Ctx.make
+           (Terrat_vcs_provider.Ctx.make
               ~config
               ~storage
               ~request_id:(Ouuid.to_string (Ouuid.v4 ()))

@@ -1,3 +1,5 @@
+module Msg = Terrat_vcs_provider.Msg
+
 let cache_capacity_mb_in_kb = ( * ) 1024
 let kb_of_bytes b = CCInt.max 1 (b / 1024)
 let result_version = 2
@@ -41,114 +43,6 @@ module Metrics = struct
     fun ~v t -> Prmths.Counter.labels family [ v; t ]
 end
 
-module Unlock_id = struct
-  type t =
-    | Pull_request of int
-    | Drift
-  [@@deriving show]
-
-  let to_string = function
-    | Pull_request id -> CCInt.to_string id
-    | Drift -> "drift"
-end
-
-module Account_status = struct
-  type t =
-    [ `Active
-    | `Expired
-    | `Disabled
-    | `Trial_ending of Duration.t
-    ]
-end
-
-module Msg = struct
-  type access_control_denied =
-    [ `All_dirspaces of Terrat_access_control.R.Deny.t list
-    | `Ci_config_update of Terrat_base_repo_config_v1.Access_control.Match_list.t
-    | `Dirspaces of Terrat_access_control.R.Deny.t list
-    | `Files of string * Terrat_base_repo_config_v1.Access_control.Match_list.t
-    | `Lookup_err
-    | `Terrateam_config_update of Terrat_base_repo_config_v1.Access_control.Match_list.t
-    | `Unlock of Terrat_base_repo_config_v1.Access_control.Match_list.t
-    ]
-
-  type ('account, 'pull_request, 'target, 'apply_requirements) t =
-    | Access_control_denied of (string * access_control_denied)
-    | Account_expired
-    | Apply_no_matching_dirspaces
-    | Apply_requirements_config_err of [ Terrat_tag_query_ast.err | `Invalid_query of string ]
-    | Apply_requirements_validation_err
-    | Autoapply_running
-    | Automerge_failure of ('pull_request * string)
-    | Bad_custom_branch_tag_pattern of (string * string)
-    | Bad_glob of string
-    | Build_config_err of Terrat_base_repo_config_v1.of_version_1_err
-    | Build_config_failure of string
-    | Conflicting_work_manifests of ('account, 'target) Terrat_work_manifest3.Existing.t list
-    | Depends_on_cycle of Terrat_dirspace.t list
-    | Dest_branch_no_match of 'pull_request
-    | Dirspaces_owned_by_other_pull_request of (Terrat_change.Dirspace.t * 'pull_request) list
-    | Help
-    | Index_complete of (bool * (string * int option * string) list)
-    | Invalid_unlock_id of string
-    | Maybe_stale_work_manifests of ('account, 'target) Terrat_work_manifest3.Existing.t list
-    | Mismatched_refs
-    | Missing_plans of Terrat_change.Dirspace.t list
-    | Plan_no_matching_dirspaces
-    | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
-    | Pull_request_not_mergeable
-    | Repo_config of (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t)
-    | Repo_config_err of Terrat_base_repo_config_v1.of_version_1_err
-    | Repo_config_failure of string
-    | Repo_config_parse_failure of string * string
-    | Run_work_manifest_err of [ `Failed_to_start | `Missing_workflow ]
-    | Tag_query_err of Terrat_tag_query_ast.err
-    | Tf_op_result of {
-        is_layered_run : bool;
-        remaining_layers : Terrat_change_match3.Dirspace_config.t list list;
-        result : Terrat_api_components_work_manifest_tf_operation_result.t;
-        work_manifest : ('account, 'target) Terrat_work_manifest3.Existing.t;
-      }
-    | Tf_op_result2 of {
-        account_status : Account_status.t;
-        config : Terrat_config.t;
-        is_layered_run : bool;
-        remaining_layers : Terrat_change_match3.Dirspace_config.t list list;
-        result : Terrat_api_components_work_manifest_tf_operation_result2.t;
-        work_manifest : ('account, 'target) Terrat_work_manifest3.Existing.t;
-      }
-    | Unexpected_temporary_err
-    | Unlock_success
-end
-
-module Ctx = struct
-  type 's t = {
-    request_id : string;
-    config : Terrat_config.t;
-    storage : 's;
-  }
-
-  let make ~request_id ~config ~storage () = { request_id; config; storage }
-  let request_id t = t.request_id
-  let config t = t.config
-  let storage t = t.storage
-end
-
-module Work_manifest_result = struct
-  type t = {
-    dirspaces_success : (Terrat_change.Dirspace.t * bool) list;
-    overall_success : bool;
-    post_hooks_success : bool;
-    pre_hooks_success : bool;
-  }
-end
-
-module Conflicting_work_manifests = struct
-  type 'a t =
-    | Conflicting of 'a list
-    | Maybe_stale of 'a list
-end
-
 module Comment = struct
   let to_yojson = CCFun.(Terrat_comment.to_string %> [%to_yojson: string])
 
@@ -158,461 +52,7 @@ module Comment = struct
     >>= fun comment -> CCResult.map_err Terrat_comment.show_err (Terrat_comment.parse comment)
 end
 
-module Db = Pgsql_io
-
-module Target = struct
-  type ('pr, 'repo) t =
-    | Pr of 'pr
-    | Drift of {
-        repo : 'repo;
-        branch : string;
-      }
-end
-
-module Index = struct
-  module Failure = struct
-    type t = {
-      file : string;
-      line_num : int option;
-      error : string;
-    }
-  end
-
-  type t = {
-    success : bool;
-    failures : Failure.t list;
-    index : Terrat_base_repo_config_v1.Index.t;
-  }
-end
-
-module type S = sig
-  module User : sig
-    type t [@@deriving yojson]
-
-    val to_string : t -> string
-  end
-
-  module Account : sig
-    type t [@@deriving eq, yojson]
-
-    val to_string : t -> string
-  end
-
-  module Client : sig
-    type t
-  end
-
-  module Drift : sig
-    type t
-  end
-
-  module Ref : sig
-    type t [@@deriving eq, yojson]
-
-    val to_string : t -> string
-    val of_string : string -> t
-  end
-
-  module Repo : sig
-    type t [@@deriving eq, yojson]
-
-    val owner : t -> string
-    val name : t -> string
-    val to_string : t -> string
-  end
-
-  module Remote_repo : sig
-    type t [@@deriving yojson]
-
-    val to_repo : t -> Repo.t
-    val default_branch : t -> Ref.t
-  end
-
-  module Pull_request : sig
-    type stored [@@deriving yojson]
-    type fetched [@@deriving yojson]
-    type 'a t [@@deriving yojson]
-
-    val base_branch_name : 'a t -> Ref.t
-    val base_ref : 'a t -> Ref.t
-    val branch_name : 'a t -> Ref.t
-    val branch_ref : 'a t -> Ref.t
-    val diff : fetched t -> Terrat_change.Diff.t list
-    val id : 'a t -> int
-    val is_draft_pr : fetched t -> bool
-    val provisional_merge_ref : fetched t -> Ref.t option
-    val repo : 'a t -> Repo.t
-    val state : 'a t -> Terrat_pull_request.State.t
-    val stored_of_fetched : fetched t -> stored t
-  end
-
-  module Access_control : Terrat_access_control.S
-
-  module Apply_requirements : sig
-    type t
-
-    val passed : t -> bool
-    val approved_reviews : t -> Terrat_pull_request_review.t list
-  end
-
-  val create_client :
-    request_id:string -> Terrat_config.t -> Account.t -> (Client.t, [> `Error ]) result Abb.Future.t
-
-  val store_account_repository :
-    request_id:string -> Db.t -> Account.t -> Repo.t -> (unit, [> `Error ]) result Abb.Future.t
-
-  val query_account_status :
-    request_id:string -> Db.t -> Account.t -> (Account_status.t, [> `Error ]) result Abb.Future.t
-
-  val store_pull_request :
-    request_id:string ->
-    Db.t ->
-    Pull_request.fetched Pull_request.t ->
-    (unit, [> `Error ]) result Abb.Future.t
-
-  val fetch_branch_sha :
-    request_id:string ->
-    Client.t ->
-    Repo.t ->
-    Ref.t ->
-    (Ref.t option, [> `Error ]) result Abb.Future.t
-
-  val fetch_file :
-    request_id:string ->
-    Client.t ->
-    Repo.t ->
-    Ref.t ->
-    string ->
-    (string option, [> `Error ]) result Abb.Future.t
-
-  val fetch_remote_repo :
-    request_id:string -> Client.t -> Repo.t -> (Remote_repo.t, [> `Error ]) result Abb.Future.t
-
-  val fetch_centralized_repo :
-    request_id:string ->
-    Client.t ->
-    string ->
-    (Remote_repo.t option, [> `Error ]) result Abb.Future.t
-
-  val fetch_tree :
-    request_id:string ->
-    Client.t ->
-    Repo.t ->
-    Ref.t ->
-    (string list, [> `Error ]) result Abb.Future.t
-
-  val query_index :
-    request_id:string ->
-    Db.t ->
-    Account.t ->
-    Ref.t ->
-    (Index.t option, [> `Error ]) result Abb.Future.t
-
-  val store_index :
-    request_id:string ->
-    Db.t ->
-    Uuidm.t ->
-    Terrat_api_components.Work_manifest_index_result.t ->
-    (Index.t, [> `Error ]) result Abb.Future.t
-
-  val store_index_result :
-    request_id:string ->
-    Db.t ->
-    Uuidm.t ->
-    Terrat_api_components.Work_manifest_index_result.t ->
-    (unit, [> `Error ]) result Abb.Future.t
-
-  val query_repo_config_json :
-    request_id:string ->
-    Db.t ->
-    Account.t ->
-    Ref.t ->
-    (Yojson.Safe.t option, [> `Error ]) result Abb.Future.t
-
-  val store_repo_config_json :
-    request_id:string ->
-    Db.t ->
-    Account.t ->
-    Ref.t ->
-    Yojson.Safe.t ->
-    (unit, [> `Error ]) result Abb.Future.t
-
-  val cleanup_repo_configs : request_id:string -> Db.t -> (unit, [> `Error ]) result Abb.Future.t
-
-  val publish_msg :
-    request_id:string ->
-    Client.t ->
-    User.t ->
-    'a Pull_request.t ->
-    (Account.t, 'b Pull_request.t, ('c Pull_request.t, Repo.t) Target.t, Apply_requirements.t) Msg.t ->
-    (unit, [> `Error ]) result Abb.Future.t
-
-  val fetch_pull_request :
-    request_id:string ->
-    Account.t ->
-    Client.t ->
-    Repo.t ->
-    int ->
-    (Pull_request.fetched Pull_request.t, [> `Error ]) result Abb.Future.t
-
-  val react_to_comment :
-    request_id:string -> Client.t -> Repo.t -> int -> (unit, [> `Error ]) result Abb.Future.t
-
-  val query_next_pending_work_manifest :
-    request_id:string ->
-    Db.t ->
-    ( ( Account.t,
-        (Pull_request.stored Pull_request.t, Repo.t) Target.t )
-      Terrat_work_manifest3.Existing.t
-      option,
-      [> `Error ] )
-    result
-    Abb.Future.t
-
-  val run_work_manifest :
-    request_id:string ->
-    Terrat_config.t ->
-    Client.t ->
-    ( Account.t,
-      (Pull_request.stored Pull_request.t, Repo.t) Target.t )
-    Terrat_work_manifest3.Existing.t ->
-    (unit, [> `Failed_to_start | `Missing_workflow | `Error ]) result Abb.Future.t
-
-  val store_flow_state :
-    request_id:string -> Db.t -> Uuidm.t -> string -> (unit, [> `Error ]) result Abb.Future.t
-
-  val query_flow_state :
-    request_id:string -> Db.t -> Uuidm.t -> (string option, [> `Error ]) result Abb.Future.t
-
-  val delete_flow_state :
-    request_id:string -> Db.t -> Uuidm.t -> (unit, [> `Error ]) result Abb.Future.t
-
-  val cleanup_flow_states : request_id:string -> Db.t -> (unit, [> `Error ]) result Abb.Future.t
-
-  val create_work_manifest :
-    request_id:string ->
-    Db.t ->
-    (Account.t, (Pull_request.stored Pull_request.t, Repo.t) Target.t) Terrat_work_manifest3.New.t ->
-    ( ( Account.t,
-        (Pull_request.stored Pull_request.t, Repo.t) Target.t )
-      Terrat_work_manifest3.Existing.t,
-      [> `Error ] )
-    result
-    Abb.Future.t
-
-  val update_work_manifest_state :
-    request_id:string ->
-    Db.t ->
-    Uuidm.t ->
-    Terrat_work_manifest3.State.t ->
-    (unit, [> `Error ]) result Abb.Future.t
-
-  val update_work_manifest_run_id :
-    request_id:string -> Db.t -> Uuidm.t -> string -> (unit, [> `Error ]) result Abb.Future.t
-
-  val update_work_manifest_changes :
-    request_id:string ->
-    Db.t ->
-    Uuidm.t ->
-    int Terrat_change.Dirspaceflow.t list ->
-    (unit, [> `Error ]) result Abb.Future.t
-
-  val update_work_manifest_denied_dirspaces :
-    request_id:string ->
-    Db.t ->
-    Uuidm.t ->
-    Terrat_work_manifest3.Deny.t list ->
-    (unit, [> `Error ]) result Abb.Future.t
-
-  val update_work_manifest_steps :
-    request_id:string ->
-    Db.t ->
-    Uuidm.t ->
-    Terrat_work_manifest3.Step.t list ->
-    (unit, [> `Error ]) result Abb.Future.t
-
-  val query_work_manifest :
-    request_id:string ->
-    Db.t ->
-    Uuidm.t ->
-    ( ( Account.t,
-        (Pull_request.stored Pull_request.t, Repo.t) Target.t )
-      Terrat_work_manifest3.Existing.t
-      option,
-      [> `Error ] )
-    result
-    Abb.Future.t
-
-  val make_commit_check :
-    ?work_manifest:('a, 'b) Terrat_work_manifest3.Existing.t ->
-    config:Terrat_config.t ->
-    description:string ->
-    title:string ->
-    status:Terrat_commit_check.Status.t ->
-    repo:Repo.t ->
-    Account.t ->
-    Terrat_commit_check.t
-
-  val create_commit_checks :
-    request_id:string ->
-    Client.t ->
-    Repo.t ->
-    Ref.t ->
-    Terrat_commit_check.t list ->
-    (unit, [> `Error ]) result Abb.Future.t
-
-  val fetch_commit_checks :
-    request_id:string ->
-    Client.t ->
-    Repo.t ->
-    Ref.t ->
-    (Terrat_commit_check.t list, [> `Error ]) result Abb.Future.t
-
-  val unlock :
-    request_id:string -> Db.t -> Repo.t -> Unlock_id.t -> (unit, [> `Error ]) result Abb.Future.t
-
-  val create_access_control_ctx :
-    request_id:string -> Client.t -> Terrat_config.t -> Repo.t -> User.t -> Access_control.Ctx.t
-
-  val query_pull_request_out_of_change_applies :
-    request_id:string ->
-    Db.t ->
-    'a Pull_request.t ->
-    (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
-
-  val query_applied_dirspaces :
-    request_id:string ->
-    Db.t ->
-    'a Pull_request.t ->
-    (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
-
-  val query_dirspaces_without_valid_plans :
-    request_id:string ->
-    Db.t ->
-    'a Pull_request.t ->
-    Terrat_change.Dirspace.t list ->
-    (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
-
-  val store_dirspaceflows :
-    request_id:string ->
-    base_ref:Ref.t ->
-    branch_ref:Ref.t ->
-    Db.t ->
-    Repo.t ->
-    Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list ->
-    (unit, [> `Error ]) result Abb.Future.t
-
-  val fetch_plan :
-    request_id:string ->
-    Db.t ->
-    Uuidm.t ->
-    Terrat_dirspace.t ->
-    (string option, [> `Error ]) result Abb.Future.t
-
-  val store_plan :
-    request_id:string ->
-    Db.t ->
-    Uuidm.t ->
-    Terrat_dirspace.t ->
-    string ->
-    bool ->
-    (unit, [> `Error ]) result Abb.Future.t
-
-  val cleanup_plans : request_id:string -> Db.t -> (unit, [> `Error ]) result Abb.Future.t
-
-  val work_manifest_result :
-    Terrat_api_components_work_manifest_tf_operation_result.t -> Work_manifest_result.t
-
-  val work_manifest_result2 :
-    Terrat_api_components_work_manifest_tf_operation_result2.t -> Work_manifest_result.t
-
-  val store_tf_operation_result :
-    request_id:string ->
-    Db.t ->
-    Uuidm.t ->
-    Terrat_api_components_work_manifest_tf_operation_result.t ->
-    (unit, [> `Error ]) result Abb.Future.t
-
-  val store_tf_operation_result2 :
-    request_id:string ->
-    Db.t ->
-    Uuidm.t ->
-    Terrat_api_components_work_manifest_tf_operation_result2.t ->
-    (unit, [> `Error ]) result Abb.Future.t
-
-  val query_conflicting_work_manifests_in_repo :
-    request_id:string ->
-    Db.t ->
-    'a Pull_request.t ->
-    Terrat_change.Dirspace.t list ->
-    [< `Plan | `Apply ] ->
-    ( ( Account.t,
-        (Pull_request.stored Pull_request.t, Repo.t) Target.t )
-      Terrat_work_manifest3.Existing.t
-      Conflicting_work_manifests.t
-      option,
-      [> `Error ] )
-    result
-    Abb.Future.t
-
-  val eval_apply_requirements :
-    request_id:string ->
-    Terrat_config.t ->
-    User.t ->
-    Client.t ->
-    'a Terrat_base_repo_config_v1.t ->
-    Pull_request.fetched Pull_request.t ->
-    Terrat_change_match3.Dirspace_config.t list ->
-    (Apply_requirements.t, [> `Error ]) result Abb.Future.t
-
-  val query_dirspaces_owned_by_other_pull_requests :
-    request_id:string ->
-    Db.t ->
-    'a Pull_request.t ->
-    Terrat_change.Dirspace.t list ->
-    ((Terrat_change.Dirspace.t * Pull_request.stored Pull_request.t) list, [> `Error ]) result
-    Abb.Future.t
-
-  val merge_pull_request :
-    request_id:string ->
-    Client.t ->
-    'a Pull_request.t ->
-    (unit, [> `Error | `Merge_err of string ]) result Abb.Future.t
-
-  val delete_pull_request_branch :
-    request_id:string -> Client.t -> 'a Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
-
-  val store_drift_schedule :
-    request_id:string ->
-    Db.t ->
-    Repo.t ->
-    Terrat_base_repo_config_v1.Drift.t ->
-    (unit, [> `Error ]) result Abb.Future.t
-
-  val query_missing_drift_scheduled_runs :
-    request_id:string -> Db.t -> ((Account.t * Repo.t) list, [> `Error ]) result Abb.Future.t
-
-  val repo_config_of_json :
-    Yojson.Safe.t ->
-    ( Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t,
-      [> Terrat_base_repo_config_v1.of_version_1_err | `Repo_config_parse_err of string ] )
-    result
-    Abb.Future.t
-
-  val fetch_repo_config_with_provenance :
-    ?system_defaults:Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t ->
-    ?built_config:Yojson.Safe.t ->
-    string ->
-    Client.t ->
-    Repo.t ->
-    Ref.t ->
-    ( string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t,
-      [> Terratc_intf.Repo_config.fetch_err ] )
-    result
-    Abb.Future.t
-end
-
-module Make (S : S) = struct
+module Make (S : Terrat_vcs_provider.S) = struct
   (* Logging wrappers *)
   let log_time ?m request_id name t =
     Logs.info (fun m -> m "EVALUATOR : %s : %s : time=%f" request_id name t);
@@ -969,7 +409,7 @@ module Make (S : S) = struct
               "EVALUATOR : %s : UNLOCK : repo=%s : unlock_id=%s : time=%f"
               request_id
               (S.Repo.to_string repo)
-              (Unlock_id.to_string unlock_id)
+              (Terrat_vcs_provider.Unlock_id.to_string unlock_id)
               time))
       (fun () -> S.unlock ~request_id db repo unlock_id)
 
@@ -1990,7 +1430,7 @@ module Make (S : S) = struct
 
     let repo_config_system_defaults ctx state =
       let module V1 = Terrat_base_repo_config_v1 in
-      match Terrat_config.infracost ctx.Ctx.config with
+      match Terrat_config.infracost (Terrat_vcs_provider.Ctx.config ctx) with
       | Some _ -> Abb.Future.return (Ok V1.default)
       | None ->
           let system_defaults =
@@ -2002,7 +1442,10 @@ module Make (S : S) = struct
           Abb.Future.return (Ok (V1.of_view system_defaults))
 
     let client ctx state =
-      create_client state.State.request_id ctx.Ctx.config (Event.account state.State.event)
+      create_client
+        state.State.request_id
+        (Terrat_vcs_provider.Ctx.config ctx)
+        (Event.account state.State.event)
 
     let pull_request_safe ctx state =
       match Event.pull_request_id_safe state.State.event with
@@ -2012,7 +1455,7 @@ module Make (S : S) = struct
           let repo = Event.repo state.State.event in
           let fetch () =
             let open Abbs_future_combinators.Infix_result_monad in
-            create_client state.State.request_id ctx.Ctx.config account
+            create_client state.State.request_id (Terrat_vcs_provider.Ctx.config ctx) account
             >>= fun client ->
             fetch_pull_request state.State.request_id account client repo pull_request_id
           in
@@ -2031,7 +1474,7 @@ module Make (S : S) = struct
             (fun () ->
               Cache.Pull_request.fetch
                 Cache.pull_request
-                (ctx.Ctx.request_id, account, repo, pull_request_id)
+                (Terrat_vcs_provider.Ctx.request_id ctx, account, repo, pull_request_id)
                 fetch)
           >>= function
           | Ok pull_request -> Abb.Future.return (Ok (Some pull_request))
@@ -2054,14 +1497,15 @@ module Make (S : S) = struct
       | Event.Pull_request_comment _ ->
           pull_request ctx state
           >>= fun pull_request ->
-          Abb.Future.return (Ok (Target.Pr (S.Pull_request.stored_of_fetched pull_request)))
+          Abb.Future.return
+            (Ok (Terrat_vcs_provider.Target.Pr (S.Pull_request.stored_of_fetched pull_request)))
       | Event.Run_drift { repo; _ } ->
           client ctx state
           >>= fun client ->
           fetch_remote_repo state.State.request_id client repo
           >>= fun remote_repo ->
           let branch = S.Ref.to_string (S.Remote_repo.default_branch remote_repo) in
-          Abb.Future.return (Ok (Target.Drift { repo; branch }))
+          Abb.Future.return (Ok (Terrat_vcs_provider.Target.Drift { repo; branch }))
       | Event.Push _ | Event.Run_scheduled_drift -> assert false
 
     let branch_ref ctx state =
@@ -2160,7 +1604,7 @@ module Make (S : S) = struct
       >>= fun working_branch_ref' ->
       query_repo_config_json
         state.State.request_id
-        ctx.Ctx.storage
+        (Terrat_vcs_provider.Ctx.storage ctx)
         (Event.account state.State.event)
         working_branch_ref'
 
@@ -2181,7 +1625,7 @@ module Make (S : S) = struct
           ?built_config
           ~system_defaults
           state.State.request_id
-          ctx.Ctx.config
+          (Terrat_vcs_provider.Ctx.config ctx)
           client
           repo
           branch_ref'
@@ -2202,7 +1646,7 @@ module Make (S : S) = struct
           >>= fun branch_ref' ->
           Cache.Repo_config.fetch
             Cache.repo_config
-            (ctx.Ctx.request_id, account, repo, branch_ref')
+            (Terrat_vcs_provider.Ctx.request_id ctx, account, repo, branch_ref')
             fetch)
       >>= function
       | Ok _ as ret -> Abb.Future.return ret
@@ -2227,7 +1671,7 @@ module Make (S : S) = struct
       >>= fun working_branch_ref' ->
       query_index
         state.State.request_id
-        ctx.Ctx.storage
+        (Terrat_vcs_provider.Ctx.storage ctx)
         (Event.account state.State.event)
         working_branch_ref'
 
@@ -2354,7 +1798,7 @@ module Make (S : S) = struct
         | Some pull_request ->
             query_pull_request_out_of_change_applies
               state.State.request_id
-              ctx.Ctx.storage
+              (Terrat_vcs_provider.Ctx.storage ctx)
               pull_request
         | None -> Abb.Future.return (Ok [])
       in
@@ -2363,7 +1807,10 @@ module Make (S : S) = struct
         pull_request_safe ctx state
         >>= function
         | Some pull_request ->
-            query_applied_dirspaces state.State.request_id ctx.Ctx.storage pull_request
+            query_applied_dirspaces
+              state.State.request_id
+              (Terrat_vcs_provider.Ctx.storage ctx)
+              pull_request
         | None -> Abb.Future.return (Ok [])
       in
       let diff ctx state =
@@ -2410,7 +1857,7 @@ module Make (S : S) = struct
             ~index:
               (CCOption.map_or
                  ~default:Terrat_base_repo_config_v1.Index.empty
-                 (fun { Index.index; _ } -> index)
+                 (fun { Terrat_vcs_provider.Index.index; _ } -> index)
                  index)
             ~file_list:repo_tree
             repo_config
@@ -2431,7 +1878,7 @@ module Make (S : S) = struct
              ~index:
                (CCOption.map_or
                   ~default:Terrat_base_repo_config_v1.Index.empty
-                  (fun { Index.index; _ } -> index)
+                  (fun { Terrat_vcs_provider.Index.index; _ } -> index)
                   index)
              ())
         >>= fun (working_set_matches, all_matches, all_unapplied_matches) ->
@@ -2457,7 +1904,10 @@ module Make (S : S) = struct
                       && ((not (S.Pull_request.is_draft_pr pull_request)) || autoplan_draft_pr))
                     working_set_matches
                 in
-                missing_autoplan_matches ctx.Ctx.storage pull_request working_set_matches
+                missing_autoplan_matches
+                  (Terrat_vcs_provider.Ctx.storage ctx)
+                  pull_request
+                  working_set_matches
                 >>= fun working_set_matches ->
                 Abb.Future.return
                   (Ok { Matches.working_set_matches; all_matches; all_unapplied_matches })
@@ -2499,7 +1949,7 @@ module Make (S : S) = struct
           in
           Cache.Matches.fetch
             Cache.matches
-            (ctx.Ctx.request_id, account, repo, base_ref', branch_ref', op)
+            (Terrat_vcs_provider.Ctx.request_id ctx, account, repo, base_ref', branch_ref', op)
             fetch)
       >>= function
       | Ok _ as ret -> Abb.Future.return ret
@@ -2524,7 +1974,7 @@ module Make (S : S) = struct
                 (S.create_access_control_ctx
                    ~request_id:state.State.request_id
                    client
-                   ctx.Ctx.config
+                   (Terrat_vcs_provider.Ctx.config ctx)
                    (S.Pull_request.repo pull_request)
                    (Event.user state.State.event))
               ~repo_config
@@ -2560,7 +2010,7 @@ module Make (S : S) = struct
           >>= fun pull_request ->
           Cache.Access_control_eval_tf_op.fetch
             Cache.access_control_eval_tf_op
-            ( ctx.Ctx.request_id,
+            ( Terrat_vcs_provider.Ctx.request_id ctx,
               account,
               repo,
               pull_request_id,
@@ -2581,7 +2031,7 @@ module Make (S : S) = struct
                 ?built_config
                 ~system_defaults
                 state.State.request_id
-                ctx.Ctx.config
+                (Terrat_vcs_provider.Ctx.config ctx)
                 client
                 repo
                 ref_
@@ -2656,13 +2106,13 @@ module Make (S : S) = struct
       >>= fun system_defaults ->
       query_repo_config_json
         state.State.request_id
-        ctx.Ctx.storage
+        (Terrat_vcs_provider.Ctx.storage ctx)
         (Event.account state.State.event)
         base_ref
       >>= fun base_built_config ->
       query_repo_config_json
         state.State.request_id
-        ctx.Ctx.storage
+        (Terrat_vcs_provider.Ctx.storage ctx)
         (Event.account state.State.event)
         working_branch_ref
       >>= fun working_branch_built_config ->
@@ -2698,7 +2148,7 @@ module Make (S : S) = struct
         >>= fun (client, repo_config, pull_request, matches) ->
         eval_apply_requirements
           state.State.request_id
-          ctx.Ctx.config
+          (Terrat_vcs_provider.Ctx.config ctx)
           (Event.user state.State.event)
           client
           repo_config
@@ -2710,7 +2160,11 @@ module Make (S : S) = struct
         (fun time ->
           Logs.info (fun m ->
               m "EVALUATOR : %s : DV : APPLY_REQUIREMENTS : time=%f" state.State.request_id time))
-        (fun () -> Cache.Apply_requirements.fetch Cache.apply_requirements ctx.Ctx.request_id fetch)
+        (fun () ->
+          Cache.Apply_requirements.fetch
+            Cache.apply_requirements
+            (Terrat_vcs_provider.Ctx.request_id ctx)
+            fetch)
       >>= function
       | Ok _ as ret -> Abb.Future.return ret
       | Error (#Repo_config.fetch_err as err) -> Abb.Future.return (Error err)
@@ -2851,7 +2305,10 @@ module Make (S : S) = struct
                 name
                 Uuidm.pp
                 work_manifest_id);
-          query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
+          query_work_manifest
+            state.State.request_id
+            (Terrat_vcs_provider.Ctx.storage ctx)
+            work_manifest_id
           >>= function
           | Some ({ Wm.state = Wm.State.(Queued | Running); _ } as work_manifest) -> (
               update ctx state work_manifest
@@ -2920,7 +2377,10 @@ module Make (S : S) = struct
                 name
                 Uuidm.pp
                 work_manifest_id);
-          query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
+          query_work_manifest
+            state.State.request_id
+            (Terrat_vcs_provider.Ctx.storage ctx)
+            work_manifest_id
           >>= function
           | Some ({ Wm.state = Wm.State.(Queued | Running); _ } as work_manifest) ->
               run_success ctx state work_manifest
@@ -2959,7 +2419,10 @@ module Make (S : S) = struct
                 name
                 Uuidm.pp
                 work_manifest_id);
-          query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
+          query_work_manifest
+            state.State.request_id
+            (Terrat_vcs_provider.Ctx.storage ctx)
+            work_manifest_id
           >>= function
           | Some work_manifest ->
               run_failure ctx state err work_manifest
@@ -2996,7 +2459,10 @@ module Make (S : S) = struct
                 work_manifest_id
                 run_id
                 sha);
-          query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
+          query_work_manifest
+            state.State.request_id
+            (Terrat_vcs_provider.Ctx.storage ctx)
+            work_manifest_id
           >>= function
           | Some ({ Wm.state = Wm.State.(Queued | Running); _ } as work_manifest) -> (
               initiate ctx state encryption_key run_id sha work_manifest
@@ -3056,7 +2522,10 @@ module Make (S : S) = struct
                 work_manifest_id);
           Abbs_future_combinators.on_failure
             (fun () ->
-              query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
+              query_work_manifest
+                state.State.request_id
+                (Terrat_vcs_provider.Ctx.storage ctx)
+                work_manifest_id
               >>= function
               | Some ({ Wm.state = Wm.State.(Queued | Running | Aborted); _ } as work_manifest) -> (
                   let open Abb.Future.Infix_monad in
@@ -3104,12 +2573,15 @@ module Make (S : S) = struct
                 work_manifest_id);
           Abbs_future_combinators.with_finally
             (fun () ->
-              query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
+              query_work_manifest
+                state.State.request_id
+                (Terrat_vcs_provider.Ctx.storage ctx)
+                work_manifest_id
               >>= function
               | Some ({ Wm.state = Wm.State.(Queued | Running); _ } as work_manifest) ->
                   update_work_manifest_state
                     state.State.request_id
-                    ctx.Ctx.storage
+                    (Terrat_vcs_provider.Ctx.storage ctx)
                     work_manifest_id
                     Wm.State.Aborted
                   >>= fun () ->
@@ -3278,7 +2750,13 @@ module Make (S : S) = struct
     let generate_index_work_manifest_initiate ctx state encryption_key run_id sha work_manifest =
       let module Wm = Terrat_work_manifest3 in
       let open Abbs_future_combinators.Infix_result_monad in
-      initiate_work_manifest state state.State.request_id ctx.Ctx.storage run_id sha work_manifest
+      initiate_work_manifest
+        state
+        state.State.request_id
+        (Terrat_vcs_provider.Ctx.storage ctx)
+        run_id
+        sha
+        work_manifest
       >>= function
       | Some ({ Wm.id; branch_ref; base_ref; state = Wm.State.(Queued | Running); _ } as wm) ->
           generate_index_run_dirs ctx state wm
@@ -3333,9 +2811,17 @@ module Make (S : S) = struct
       let open Abbs_future_combinators.Infix_result_monad in
       match result with
       | Terrat_api_components.Work_manifest_result.Work_manifest_index_result index ->
-          store_index_result state.State.request_id ctx.Ctx.storage work_manifest.Wm.id index
+          store_index_result
+            state.State.request_id
+            (Terrat_vcs_provider.Ctx.storage ctx)
+            work_manifest.Wm.id
+            index
           >>= fun () ->
-          store_index state.State.request_id ctx.Ctx.storage work_manifest.Wm.id index
+          store_index
+            state.State.request_id
+            (Terrat_vcs_provider.Ctx.storage ctx)
+            work_manifest.Wm.id
+            index
           >>= fun _ ->
           run_interactive ctx state (fun () ->
               let account = Event.account state.State.event in
@@ -3347,7 +2833,7 @@ module Make (S : S) = struct
               let module Status = Terrat_commit_check.Status in
               let check =
                 S.make_commit_check
-                  ~config:ctx.Ctx.config
+                  ~config:(Terrat_vcs_provider.Ctx.config ctx)
                   ~description:"Completed"
                   ~title:"terrateam index"
                   ~status:Status.Completed
@@ -3479,7 +2965,7 @@ module Make (S : S) = struct
         work_manifest
         result =
       let module Wm = Terrat_work_manifest3 in
-      let module Wmr = Work_manifest_result in
+      let module Wmr = Terrat_vcs_provider.Work_manifest_result in
       let module Status = Terrat_commit_check.Status in
       let status = function
         | true -> Terrat_commit_check.Status.Completed
@@ -3650,7 +3136,7 @@ module Make (S : S) = struct
         ~base_ref
         ~branch_ref
         state.State.request_id
-        ctx.Ctx.storage
+        (Terrat_vcs_provider.Ctx.storage ctx)
         (Event.repo state.State.event)
         all_dirspaceflows
       >>= fun () ->
@@ -3688,7 +3174,10 @@ module Make (S : S) = struct
               target
               `Plan
           in
-          create_work_manifest state.State.request_id ctx.Ctx.storage work_manifest
+          create_work_manifest
+            state.State.request_id
+            (Terrat_vcs_provider.Ctx.storage ctx)
+            work_manifest
           >>= fun work_manifest ->
           Logs.info (fun m ->
               m
@@ -3705,7 +3194,7 @@ module Make (S : S) = struct
               >>= fun client ->
               create_op_commit_checks
                 state.State.request_id
-                ctx.Ctx.config
+                (Terrat_vcs_provider.Ctx.config ctx)
                 client
                 (Event.account state.State.event)
                 (Event.repo state.State.event)
@@ -3716,7 +3205,7 @@ module Make (S : S) = struct
               >>= fun () ->
               maybe_create_pending_apply_commit_checks
                 state.State.request_id
-                ctx.Ctx.config
+                (Terrat_vcs_provider.Ctx.config ctx)
                 client
                 (Event.account state.State.event)
                 (Event.repo state.State.event)
@@ -3745,7 +3234,7 @@ module Make (S : S) = struct
         ~base_ref
         ~branch_ref
         state.State.request_id
-        ctx.Ctx.storage
+        (Terrat_vcs_provider.Ctx.storage ctx)
         (Event.repo state.State.event)
         all_dirspaceflows
       >>= fun () ->
@@ -3778,13 +3267,13 @@ module Make (S : S) = struct
             in
             update_work_manifest_changes
               state.State.request_id
-              ctx.Ctx.storage
+              (Terrat_vcs_provider.Ctx.storage ctx)
               work_manifest.Wm.id
               changes
             >>= fun () ->
             update_work_manifest_steps
               state.State.request_id
-              ctx.Ctx.storage
+              (Terrat_vcs_provider.Ctx.storage ctx)
               work_manifest.Wm.id
               work_manifest.Wm.steps
             >>= fun () ->
@@ -3793,7 +3282,7 @@ module Make (S : S) = struct
                 >>= fun client ->
                 create_op_commit_checks
                   state.State.request_id
-                  ctx.Ctx.config
+                  (Terrat_vcs_provider.Ctx.config ctx)
                   client
                   (Event.account state.State.event)
                   (Event.repo state.State.event)
@@ -3804,7 +3293,7 @@ module Make (S : S) = struct
                 >>= fun () ->
                 maybe_create_pending_apply_commit_checks
                   state.State.request_id
-                  ctx.Ctx.config
+                  (Terrat_vcs_provider.Ctx.config ctx)
                   client
                   (Event.account state.State.event)
                   (Event.repo state.State.event)
@@ -3829,7 +3318,10 @@ module Make (S : S) = struct
                 target
                 `Plan
             in
-            create_work_manifest state.State.request_id ctx.Ctx.storage work_manifest
+            create_work_manifest
+              state.State.request_id
+              (Terrat_vcs_provider.Ctx.storage ctx)
+              work_manifest
             >>= fun work_manifest ->
             Logs.info (fun m ->
                 m
@@ -3846,7 +3338,7 @@ module Make (S : S) = struct
                 >>= fun client ->
                 create_op_commit_checks
                   state.State.request_id
-                  ctx.Ctx.config
+                  (Terrat_vcs_provider.Ctx.config ctx)
                   client
                   (Event.account state.State.event)
                   (Event.repo state.State.event)
@@ -3857,7 +3349,7 @@ module Make (S : S) = struct
                 >>= fun () ->
                 maybe_create_pending_apply_commit_checks
                   state.State.request_id
-                  ctx.Ctx.config
+                  (Terrat_vcs_provider.Ctx.config ctx)
                   client
                   (Event.account state.State.event)
                   (Event.repo state.State.event)
@@ -3896,7 +3388,7 @@ module Make (S : S) = struct
         ~base_ref
         ~branch_ref
         state.State.request_id
-        ctx.Ctx.storage
+        (Terrat_vcs_provider.Ctx.storage ctx)
         (Event.repo state.State.event)
         all_dirspaceflows
       >>= fun () ->
@@ -3944,7 +3436,10 @@ module Make (S : S) = struct
               target
               op
           in
-          create_work_manifest state.State.request_id ctx.Ctx.storage work_manifest
+          create_work_manifest
+            state.State.request_id
+            (Terrat_vcs_provider.Ctx.storage ctx)
+            work_manifest
           >>= fun work_manifest ->
           Logs.info (fun m ->
               m
@@ -3961,7 +3456,7 @@ module Make (S : S) = struct
               >>= fun client ->
               create_op_commit_checks
                 state.State.request_id
-                ctx.Ctx.config
+                (Terrat_vcs_provider.Ctx.config ctx)
                 client
                 (Event.account state.State.event)
                 (Event.repo state.State.event)
@@ -3972,7 +3467,7 @@ module Make (S : S) = struct
               >>= fun () ->
               maybe_create_pending_apply_commit_checks
                 state.State.request_id
-                ctx.Ctx.config
+                (Terrat_vcs_provider.Ctx.config ctx)
                 client
                 (Event.account state.State.event)
                 (Event.repo state.State.event)
@@ -4011,7 +3506,7 @@ module Make (S : S) = struct
         ~base_ref
         ~branch_ref
         state.State.request_id
-        ctx.Ctx.storage
+        (Terrat_vcs_provider.Ctx.storage ctx)
         (Event.repo state.State.event)
         all_dirspaceflows
       >>= fun () ->
@@ -4061,19 +3556,19 @@ module Make (S : S) = struct
             in
             update_work_manifest_changes
               state.State.request_id
-              ctx.Ctx.storage
+              (Terrat_vcs_provider.Ctx.storage ctx)
               work_manifest.Wm.id
               changes
             >>= fun () ->
             update_work_manifest_denied_dirspaces
               state.State.request_id
-              ctx.Ctx.storage
+              (Terrat_vcs_provider.Ctx.storage ctx)
               work_manifest.Wm.id
               denied_dirspaces
             >>= fun () ->
             update_work_manifest_steps
               state.State.request_id
-              ctx.Ctx.storage
+              (Terrat_vcs_provider.Ctx.storage ctx)
               work_manifest.Wm.id
               work_manifest.Wm.steps
             >>= fun () ->
@@ -4082,7 +3577,7 @@ module Make (S : S) = struct
                 >>= fun client ->
                 create_op_commit_checks
                   state.State.request_id
-                  ctx.Ctx.config
+                  (Terrat_vcs_provider.Ctx.config ctx)
                   client
                   (Event.account state.State.event)
                   (Event.repo state.State.event)
@@ -4093,7 +3588,7 @@ module Make (S : S) = struct
                 >>= fun () ->
                 maybe_create_pending_apply_commit_checks
                   state.State.request_id
-                  ctx.Ctx.config
+                  (Terrat_vcs_provider.Ctx.config ctx)
                   client
                   (Event.account state.State.event)
                   (Event.repo state.State.event)
@@ -4118,7 +3613,10 @@ module Make (S : S) = struct
                 target
                 op
             in
-            create_work_manifest state.State.request_id ctx.Ctx.storage work_manifest
+            create_work_manifest
+              state.State.request_id
+              (Terrat_vcs_provider.Ctx.storage ctx)
+              work_manifest
             >>= fun work_manifest ->
             Logs.info (fun m ->
                 m
@@ -4135,7 +3633,7 @@ module Make (S : S) = struct
                 >>= fun client ->
                 create_op_commit_checks
                   state.State.request_id
-                  ctx.Ctx.config
+                  (Terrat_vcs_provider.Ctx.config ctx)
                   client
                   (Event.account state.State.event)
                   (Event.repo state.State.event)
@@ -4146,7 +3644,7 @@ module Make (S : S) = struct
                 >>= fun () ->
                 maybe_create_pending_apply_commit_checks
                   state.State.request_id
-                  ctx.Ctx.config
+                  (Terrat_vcs_provider.Ctx.config ctx)
                   client
                   (Event.account state.State.event)
                   (Event.repo state.State.event)
@@ -4173,7 +3671,7 @@ module Make (S : S) = struct
           let module Status = Terrat_commit_check.Status in
           create_op_commit_checks
             state.State.request_id
-            ctx.Ctx.config
+            (Terrat_vcs_provider.Ctx.config ctx)
             client
             (Event.account state.State.event)
             (S.Pull_request.repo pull_request)
@@ -4200,7 +3698,7 @@ module Make (S : S) = struct
           let module Status = Terrat_commit_check.Status in
           create_op_commit_checks
             state.State.request_id
-            ctx.Ctx.config
+            (Terrat_vcs_provider.Ctx.config ctx)
             client
             (Event.account state.State.event)
             (S.Pull_request.repo pull_request)
@@ -4237,7 +3735,13 @@ module Make (S : S) = struct
     let run_op_work_manifest_iter_initiate ctx state encryption_key run_id sha work_manifest =
       let module Wm = Terrat_work_manifest3 in
       let open Abbs_future_combinators.Infix_result_monad in
-      initiate_work_manifest state state.State.request_id ctx.Ctx.storage run_id sha work_manifest
+      initiate_work_manifest
+        state
+        state.State.request_id
+        (Terrat_vcs_provider.Ctx.storage ctx)
+        run_id
+        sha
+        work_manifest
       >>= function
       | Some { Wm.steps; base_ref; branch_ref; changes; target; _ } -> (
           Dv.base_branch_name ctx state
@@ -4248,12 +3752,13 @@ module Make (S : S) = struct
             | step :: _ -> step
           in
           let run_kind =
+            let module Vcs = Terrat_vcs_provider in
             match (target, step) with
-            | Target.Pr pr, (Wm.Step.Apply | Wm.Step.Plan | Wm.Step.Unsafe_apply) ->
+            | Vcs.Target.Pr pr, (Wm.Step.Apply | Wm.Step.Plan | Wm.Step.Unsafe_apply) ->
                 `Pull_request pr
-            | Target.Pr _, Wm.Step.Index -> `Index
-            | Target.Pr _, Wm.Step.Build_config -> `Build_config
-            | Target.Drift _, _ -> `Drift
+            | Vcs.Target.Pr _, Wm.Step.Index -> `Index
+            | Vcs.Target.Pr _, Wm.Step.Build_config -> `Build_config
+            | Vcs.Target.Drift _, _ -> `Drift
           in
           let run_kind_str =
             match run_kind with
@@ -4294,7 +3799,7 @@ module Make (S : S) = struct
                   ~index:
                     (CCOption.map_or
                        ~default:Terrat_base_repo_config_v1.Index.empty
-                       (fun { Index.index; _ } -> index)
+                       (fun { Terrat_vcs_provider.Index.index; _ } -> index)
                        index)
                   ~file_list:repo_tree
                   repo_config
@@ -4343,7 +3848,7 @@ module Make (S : S) = struct
                   ~index:
                     (CCOption.map_or
                        ~default:Terrat_base_repo_config_v1.Index.empty
-                       (fun { Index.index; _ } -> index)
+                       (fun { Terrat_vcs_provider.Index.index; _ } -> index)
                        index)
                   ~file_list:repo_tree
                   repo_config
@@ -4385,7 +3890,7 @@ module Make (S : S) = struct
           let work_manifest_result = S.work_manifest_result2 result in
           store_tf_operation_result2
             state.State.request_id
-            ctx.Ctx.storage
+            (Terrat_vcs_provider.Ctx.storage ctx)
             work_manifest.Wm.id
             result
           >>= fun () ->
@@ -4397,7 +3902,7 @@ module Make (S : S) = struct
                  >>= fun pull_request ->
                  create_op_commit_checks_of_result
                    state.State.request_id
-                   ctx.Ctx.config
+                   (Terrat_vcs_provider.Ctx.config ctx)
                    client
                    work_manifest.Wm.account
                    (S.Pull_request.repo pull_request)
@@ -4407,7 +3912,7 @@ module Make (S : S) = struct
                  >>= fun () ->
                  query_account_status
                    state.State.request_id
-                   ctx.Ctx.storage
+                   (Terrat_vcs_provider.Ctx.storage ctx)
                    (Event.account state.State.event)
                  >>= fun account_status ->
                  publish_msg
@@ -4418,7 +3923,7 @@ module Make (S : S) = struct
                    (Msg.Tf_op_result2
                       {
                         account_status;
-                        config = ctx.Ctx.config;
+                        config = Terrat_vcs_provider.Ctx.config ctx;
                         is_layered_run = CCList.length matches.Dv.Matches.all_matches > 1;
                         remaining_layers = matches.Dv.Matches.all_unapplied_matches;
                         result;
@@ -4426,7 +3931,8 @@ module Make (S : S) = struct
                       }))
            else Abb.Future.return (Ok ()))
           >>= fun () ->
-          if not work_manifest_result.Work_manifest_result.overall_success then
+          let module Wmr = Terrat_vcs_provider.Work_manifest_result in
+          if not work_manifest_result.Wmr.overall_success then
             (* If the run failed, then we're done. *)
             Abb.Future.return (Error (`Noop state))
           else Abb.Future.return (Ok ())
@@ -4438,7 +3944,7 @@ module Make (S : S) = struct
           let work_manifest_result = S.work_manifest_result result in
           store_tf_operation_result
             state.State.request_id
-            ctx.Ctx.storage
+            (Terrat_vcs_provider.Ctx.storage ctx)
             work_manifest.Wm.id
             result
           >>= fun () ->
@@ -4448,7 +3954,7 @@ module Make (S : S) = struct
                  >>= fun pull_request ->
                  create_op_commit_checks_of_result
                    state.State.request_id
-                   ctx.Ctx.config
+                   (Terrat_vcs_provider.Ctx.config ctx)
                    client
                    work_manifest.Wm.account
                    (S.Pull_request.repo pull_request)
@@ -4470,7 +3976,8 @@ module Make (S : S) = struct
                       }))
            else Abb.Future.return (Ok ()))
           >>= fun () ->
-          if not work_manifest_result.Work_manifest_result.overall_success then
+          let module Wmr = Terrat_vcs_provider.Work_manifest_result in
+          if not work_manifest_result.Wmr.overall_success then
             (* If the run failed, then we're done. *)
             Abb.Future.return (Error (`Noop state))
           else Abb.Future.return (Ok ())
@@ -4478,7 +3985,7 @@ module Make (S : S) = struct
     let run_op_work_manifest_plan_iter_store ctx state dirspace data has_changes work_manifest_id =
       store_plan
         state.State.request_id
-        ctx.Ctx.storage
+        (Terrat_vcs_provider.Ctx.storage ctx)
         work_manifest_id
         dirspace
         (Base64.decode_exn data)
@@ -4486,7 +3993,11 @@ module Make (S : S) = struct
 
     let run_op_work_manifest_plan_iter_fetch ctx state dirspace work_manifest_id =
       let open Abbs_future_combinators.Infix_result_monad in
-      fetch_plan state.State.request_id ctx.Ctx.storage work_manifest_id dirspace
+      fetch_plan
+        state.State.request_id
+        (Terrat_vcs_provider.Ctx.storage ctx)
+        work_manifest_id
+        dirspace
       >>= fun data -> Abb.Future.return (Ok (CCOption.map Base64.encode_exn data))
   end
 
@@ -4503,7 +4014,11 @@ module Make (S : S) = struct
       | Event.Push { account; repo; _ }
       | Event.Run_drift { account; repo; _ } ->
           let open Abbs_future_combinators.Infix_result_monad in
-          store_account_repository state.State.request_id ctx.Ctx.storage account repo
+          store_account_repository
+            state.State.request_id
+            (Terrat_vcs_provider.Ctx.storage ctx)
+            account
+            repo
           >>= fun () ->
           (* Checkpoint here so that we do not hold up any other runs for this
              repository with a db lock *)
@@ -4512,7 +4027,10 @@ module Make (S : S) = struct
 
     let test_account_status ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
-      query_account_status state.State.request_id ctx.Ctx.storage (Event.account state.State.event)
+      query_account_status
+        state.State.request_id
+        (Terrat_vcs_provider.Ctx.storage ctx)
+        (Event.account state.State.event)
       >>= function
       | `Active | `Trial_ending _ -> Abb.Future.return (Ok (Id.Account_enabled, state))
       | `Expired -> Abb.Future.return (Ok (Id.Account_expired, state))
@@ -4594,7 +4112,10 @@ module Make (S : S) = struct
               target;
             }
           in
-          create_work_manifest state.State.request_id ctx.Ctx.storage work_manifest
+          create_work_manifest
+            state.State.request_id
+            (Terrat_vcs_provider.Ctx.storage ctx)
+            work_manifest
           >>= fun work_manifest ->
           H.run_interactive ctx state (fun () ->
               let module Status = Terrat_commit_check.Status in
@@ -4602,7 +4123,7 @@ module Make (S : S) = struct
               >>= fun branch_ref' ->
               let check =
                 S.make_commit_check
-                  ~config:ctx.Ctx.config
+                  ~config:(Terrat_vcs_provider.Ctx.config ctx)
                   ~description:"Queued"
                   ~title:"terrateam index"
                   ~status:Status.Queued
@@ -4629,7 +4150,7 @@ module Make (S : S) = struct
           in
           update_work_manifest_steps
             state.State.request_id
-            ctx.Ctx.storage
+            (Terrat_vcs_provider.Ctx.storage ctx)
             work_manifest.Wm.id
             work_manifest.Wm.steps
           >>= fun () ->
@@ -4643,7 +4164,7 @@ module Make (S : S) = struct
               >>= fun branch_ref' ->
               let check =
                 S.make_commit_check
-                  ~config:ctx.Ctx.config
+                  ~config:(Terrat_vcs_provider.Ctx.config ctx)
                   ~description:"Queued"
                   ~title:"terrateam index"
                   ~status:Status.Queued
@@ -4665,7 +4186,7 @@ module Make (S : S) = struct
               let module Status = Terrat_commit_check.Status in
               let check =
                 S.make_commit_check
-                  ~config:ctx.Ctx.config
+                  ~config:(Terrat_vcs_provider.Ctx.config ctx)
                   ~description:"Running"
                   ~title:"terrateam index"
                   ~status:Status.Running
@@ -4692,7 +4213,7 @@ module Make (S : S) = struct
               let module Status = Terrat_commit_check.Status in
               let check =
                 S.make_commit_check
-                  ~config:ctx.Ctx.config
+                  ~config:(Terrat_vcs_provider.Ctx.config ctx)
                   ~description:"Failed"
                   ~title:"terrateam index"
                   ~status:Status.Failed
@@ -4738,7 +4259,7 @@ module Make (S : S) = struct
           | { R.Indexer.enabled = true; _ } ->
               CCOption.map_or
                 ~default:Terrat_base_repo_config_v1.Index.empty
-                (fun { Index.index; _ } -> index)
+                (fun { Terrat_vcs_provider.Index.index; _ } -> index)
                 index
           | _ -> Terrat_base_repo_config_v1.Index.empty
         in
@@ -4821,10 +4342,11 @@ module Make (S : S) = struct
             (Event.user state.State.event)
             pull_request
             (Msg.Index_complete
-               ( index.Index.success,
+               ( index.Terrat_vcs_provider.Index.success,
                  CCList.map
-                   (fun { Index.Failure.file; line_num; error } -> (file, line_num, error))
-                   index.Index.failures ))
+                   (fun { Terrat_vcs_provider.Index.Failure.file; line_num; error } ->
+                     (file, line_num, error))
+                   index.Terrat_vcs_provider.Index.failures ))
           >>= fun () -> Abb.Future.return (Ok state)
       | None -> assert false
 
@@ -4858,7 +4380,7 @@ module Make (S : S) = struct
       >>= fun client ->
       Dv.pull_request ctx state
       >>= fun pull_request ->
-      store_pull_request state.State.request_id ctx.Ctx.storage pull_request
+      store_pull_request state.State.request_id (Terrat_vcs_provider.Ctx.storage ctx) pull_request
       >>= fun () -> Abb.Future.return (Ok state)
 
     let record_feedback ctx state =
@@ -4890,12 +4412,15 @@ module Make (S : S) = struct
       let maybe_complete_work_manifest work_manifest_id =
         let module Wm = Terrat_work_manifest3 in
         let open Abbs_future_combinators.Infix_result_monad in
-        query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
+        query_work_manifest
+          state.State.request_id
+          (Terrat_vcs_provider.Ctx.storage ctx)
+          work_manifest_id
         >>= function
         | Some { Wm.state = Wm.State.(Queued | Running); _ } ->
             update_work_manifest_state
               state.State.request_id
-              ctx.Ctx.storage
+              (Terrat_vcs_provider.Ctx.storage ctx)
               work_manifest_id
               Wm.State.Completed
         | Some _ | None -> Abb.Future.return (Ok ())
@@ -4943,14 +4468,14 @@ module Make (S : S) = struct
     let unlock ctx state =
       let repo = Event.repo state.State.event in
       let parse_unlock_ids pull_request_id = function
-        | [] -> Ok [ Unlock_id.Pull_request pull_request_id ]
+        | [] -> Ok [ Terrat_vcs_provider.Unlock_id.Pull_request pull_request_id ]
         | unlock_ids ->
             CCResult.map_l
               (function
-                | "drift" -> Ok Unlock_id.Drift
+                | "drift" -> Ok Terrat_vcs_provider.Unlock_id.Drift
                 | s -> (
                     match CCInt.of_string s with
-                    | Some n -> Ok (Unlock_id.Pull_request n)
+                    | Some n -> Ok (Terrat_vcs_provider.Unlock_id.Pull_request n)
                     | None -> Error (`Invalid_unlock_id s)))
               unlock_ids
       in
@@ -4969,7 +4494,7 @@ module Make (S : S) = struct
             Prmths.Counter.inc_one (Metrics.access_control_total ~t:"unlock" ~r:"allowed");
             let open Abbs_future_combinators.Infix_result_monad in
             Abbs_future_combinators.List_result.iter
-              ~f:(unlock state.State.request_id ctx.Ctx.storage repo)
+              ~f:(unlock state.State.request_id (Terrat_vcs_provider.Ctx.storage ctx) repo)
               unlock_ids
             >>= fun () ->
             publish_msg
@@ -5073,7 +4598,7 @@ module Make (S : S) = struct
           >>= fun client ->
           H.maybe_create_completed_apply_check
             state.State.request_id
-            ctx.Ctx.config
+            (Terrat_vcs_provider.Ctx.config ctx)
             client
             (Event.account state.State.event)
             repo_config
@@ -5098,7 +4623,10 @@ module Make (S : S) = struct
 
     let check_account_status_expired ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
-      query_account_status state.State.request_id ctx.Ctx.storage (Event.account state.State.event)
+      query_account_status
+        state.State.request_id
+        (Terrat_vcs_provider.Ctx.storage ctx)
+        (Event.account state.State.event)
       >>= function
       | `Active -> Abb.Future.return (Ok state)
       | `Trial_ending duration ->
@@ -5460,6 +4988,7 @@ module Make (S : S) = struct
       | Terrat_pull_request.State.Merged _ -> Abb.Future.return (Ok state)
 
     let check_conflicting_work_manifests op ctx state =
+      let module Vcs = Terrat_vcs_provider in
       let open Abbs_future_combinators.Infix_result_monad in
       Dv.pull_request ctx state
       >>= fun pull_request ->
@@ -5477,13 +5006,13 @@ module Make (S : S) = struct
       in
       query_conflicting_work_manifests_in_repo
         state.State.request_id
-        ctx.Ctx.storage
+        (Terrat_vcs_provider.Ctx.storage ctx)
         pull_request
         dirspaces
         unified_op
       >>= function
       | None -> Abb.Future.return (Ok state)
-      | Some (Conflicting_work_manifests.Conflicting wms) ->
+      | Some (Vcs.Conflicting_work_manifests.Conflicting wms) ->
           Dv.client ctx state
           >>= fun client ->
           publish_msg
@@ -5493,7 +5022,7 @@ module Make (S : S) = struct
             pull_request
             (Msg.Conflicting_work_manifests wms)
           >>= fun () -> Abb.Future.return (Error (`Noop state))
-      | Some (Conflicting_work_manifests.Maybe_stale wms) ->
+      | Some (Vcs.Conflicting_work_manifests.Maybe_stale wms) ->
           (* Stale operations will still be queued but we will inform the user
              that there is something up. *)
           Dv.client ctx state
@@ -5636,7 +5165,7 @@ module Make (S : S) = struct
       >>= fun all_match_dirspaceflows ->
       query_dirspaces_owned_by_other_pull_requests
         state.State.request_id
-        ctx.Ctx.storage
+        (Terrat_vcs_provider.Ctx.storage ctx)
         pull_request
         (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows)
       >>= function
@@ -5660,7 +5189,7 @@ module Make (S : S) = struct
       >>= fun { Terrat_access_control.R.pass = working_set_matches; _ } ->
       query_dirspaces_without_valid_plans
         state.State.request_id
-        ctx.Ctx.storage
+        (Terrat_vcs_provider.Ctx.storage ctx)
         pull_request
         (CCList.map
            (fun { Terrat_change_match3.Dirspace_config.dirspace; _ } -> dirspace)
@@ -5700,7 +5229,10 @@ module Make (S : S) = struct
       >>= fun matches ->
       match (state.State.work_manifest_id, matches.Dv.Matches.all_unapplied_matches) with
       | Some work_manifest_id, [] -> (
-          query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
+          query_work_manifest
+            state.State.request_id
+            (Terrat_vcs_provider.Ctx.storage ctx)
+            work_manifest_id
           >>= function
           | Some work_manifest ->
               Logs.info (fun m ->
@@ -5715,7 +5247,7 @@ module Make (S : S) = struct
               >>= fun pull_request ->
               let check =
                 S.make_commit_check
-                  ~config:ctx.Ctx.config
+                  ~config:(Terrat_vcs_provider.Ctx.config ctx)
                   ~description:"Completed"
                   ~title:"terrateam apply"
                   ~status:Terrat_commit_check.Status.Completed
@@ -5792,7 +5324,7 @@ module Make (S : S) = struct
             (Terrat_tag_query.to_string tag_query));
       store_drift_schedule
         state.State.request_id
-        ctx.Ctx.storage
+        (Terrat_vcs_provider.Ctx.storage ctx)
         (Event.repo state.State.event)
         (V1.drift repo_config)
       >>= fun () -> Abb.Future.return (Ok state)
@@ -5804,7 +5336,9 @@ module Make (S : S) = struct
           let module D = V1.Drift in
           let module Wm = Terrat_work_manifest3 in
           let open Abbs_future_combinators.Infix_result_monad in
-          query_missing_drift_scheduled_runs state.State.request_id ctx.Ctx.storage
+          query_missing_drift_scheduled_runs
+            state.State.request_id
+            (Terrat_vcs_provider.Ctx.storage ctx)
           >>= function
           | [] -> Abb.Future.return (Error (`Noop state))
           | self :: needed_runs ->
@@ -5897,7 +5431,10 @@ module Make (S : S) = struct
               target;
             }
           in
-          create_work_manifest state.State.request_id ctx.Ctx.storage work_manifest
+          create_work_manifest
+            state.State.request_id
+            (Terrat_vcs_provider.Ctx.storage ctx)
+            work_manifest
           >>= fun work_manifest ->
           H.run_interactive ctx state (fun () ->
               let module Status = Terrat_commit_check.Status in
@@ -5905,7 +5442,7 @@ module Make (S : S) = struct
               >>= fun branch_ref' ->
               let check =
                 S.make_commit_check
-                  ~config:ctx.Ctx.config
+                  ~config:(Terrat_vcs_provider.Ctx.config ctx)
                   ~description:"Queued"
                   ~title:"terrateam build-config"
                   ~status:Status.Queued
@@ -5937,7 +5474,7 @@ module Make (S : S) = struct
               let module Status = Terrat_commit_check.Status in
               let check =
                 S.make_commit_check
-                  ~config:ctx.Ctx.config
+                  ~config:(Terrat_vcs_provider.Ctx.config ctx)
                   ~description:"Running"
                   ~title:"terrateam build-config"
                   ~status:Status.Running
@@ -5964,7 +5501,7 @@ module Make (S : S) = struct
               let module Status = Terrat_commit_check.Status in
               let check =
                 S.make_commit_check
-                  ~config:ctx.Ctx.config
+                  ~config:(Terrat_vcs_provider.Ctx.config ctx)
                   ~description:"Failed"
                   ~title:"terrateam build-config"
                   ~status:Status.Failed
@@ -5993,7 +5530,7 @@ module Make (S : S) = struct
           H.initiate_work_manifest
             state
             state.State.request_id
-            ctx.Ctx.storage
+            (Terrat_vcs_provider.Ctx.storage ctx)
             run_id
             sha
             work_manifest
@@ -6021,7 +5558,7 @@ module Make (S : S) = struct
                   ~index:
                     (CCOption.map_or
                        ~default:Terrat_base_repo_config_v1.Index.empty
-                       (fun { Index.index; _ } -> index)
+                       (fun { Terrat_vcs_provider.Index.index; _ } -> index)
                        index)
                   ~file_list:repo_tree
                   repo_config
@@ -6061,7 +5598,7 @@ module Make (S : S) = struct
                 let module Status = Terrat_commit_check.Status in
                 let check =
                   S.make_commit_check
-                    ~config:ctx.Ctx.config
+                    ~config:(Terrat_vcs_provider.Ctx.config ctx)
                     ~description:"Failed"
                     ~title:"terrateam build-config"
                     ~status:Status.Failed
@@ -6096,7 +5633,7 @@ module Make (S : S) = struct
                   >>= fun working_branch_ref' ->
                   store_repo_config_json
                     state.State.request_id
-                    ctx.Ctx.storage
+                    (Terrat_vcs_provider.Ctx.storage ctx)
                     account
                     working_branch_ref'
                     config
@@ -6111,7 +5648,7 @@ module Make (S : S) = struct
                       let module Status = Terrat_commit_check.Status in
                       let check =
                         S.make_commit_check
-                          ~config:ctx.Ctx.config
+                          ~config:(Terrat_vcs_provider.Ctx.config ctx)
                           ~description:"Completed"
                           ~title:"terrateam build-config"
                           ~status:Status.Completed
@@ -6161,7 +5698,10 @@ module Make (S : S) = struct
           match state.State.work_manifest_id with
           | Some work_manifest_id -> (
               let module Wm = Terrat_work_manifest3 in
-              query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
+              query_work_manifest
+                state.State.request_id
+                (Terrat_vcs_provider.Ctx.storage ctx)
+                work_manifest_id
               >>= function
               | Some { Wm.changes; _ } ->
                   let module Dsf = Terrat_change.Dirspaceflow in
@@ -6212,7 +5752,10 @@ module Make (S : S) = struct
       H.run_interactive ctx state (fun () ->
           match state.State.work_manifest_id with
           | Some work_manifest_id -> (
-              query_work_manifest state.State.request_id ctx.Ctx.storage work_manifest_id
+              query_work_manifest
+                state.State.request_id
+                (Terrat_vcs_provider.Ctx.storage ctx)
+                work_manifest_id
               >>= function
               | Some ({ Wm.changes; _ } as work_manifest) ->
                   Dv.matches ctx state `Plan
@@ -6235,7 +5778,7 @@ module Make (S : S) = struct
                     CCList.map
                       (fun { Dsf.dirspace = { Ds.dir; workspace; _ }; _ } ->
                         S.make_commit_check
-                          ~config:ctx.Ctx.config
+                          ~config:(Terrat_vcs_provider.Ctx.config ctx)
                           ~description:"Completed"
                           ~title:
                             (Printf.sprintf
@@ -6716,15 +6259,15 @@ module Make (S : S) = struct
           Logs.info (fun m ->
               m
                 "EVALUATOR : %s : FLOW : RESUME_START : id=%s : new_request_id=%s"
-                ctx.Ctx.request_id
+                (Terrat_vcs_provider.Ctx.request_id ctx)
                 state.State.request_id
                 request_id');
-          f { ctx with Ctx.request_id = request_id' } resume)
+          f (Terrat_vcs_provider.Ctx.set_request_id request_id' ctx) resume)
         ~finally:(fun () ->
           Logs.info (fun m ->
               m
                 "EVALUATOR : %s : FLOW : RESUME_END : id=%s : new_request_id=%s"
-                ctx.Ctx.request_id
+                (Terrat_vcs_provider.Ctx.request_id ctx)
                 state.State.request_id
                 request_id');
           Abb.Future.return ())
@@ -6759,22 +6302,33 @@ module Make (S : S) = struct
               | Some work_manifest_id ->
                   let open Abbs_future_combinators.Infix_result_monad in
                   let data = Flow.Yield.to_string resume' in
-                  store_flow_state ctx.Ctx.request_id ctx.Ctx.storage work_manifest_id data
+                  store_flow_state
+                    (Terrat_vcs_provider.Ctx.request_id ctx)
+                    (Terrat_vcs_provider.Ctx.storage ctx)
+                    work_manifest_id
+                    data
                   >>= fun () -> Abb.Future.return (Ok (`Yield resume'))
               | None -> Abb.Future.return (Ok (`Yield resume'))))
 
     let rec run_work_manifests request_id ctx =
       let module Wm = Terrat_work_manifest3 in
       let open Abbs_future_combinators.Infix_result_monad in
-      Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db ->
+      Pgsql_pool.with_conn (Terrat_vcs_provider.Ctx.storage ctx) ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
               query_next_pending_work_manifest request_id db
               >>= function
               | Some work_manifest -> (
                   let run =
-                    create_client request_id ctx.Ctx.config work_manifest.Wm.account
+                    create_client
+                      request_id
+                      (Terrat_vcs_provider.Ctx.config ctx)
+                      work_manifest.Wm.account
                     >>= fun client ->
-                    run_work_manifest request_id ctx.Ctx.config client work_manifest
+                    run_work_manifest
+                      request_id
+                      (Terrat_vcs_provider.Ctx.config ctx)
+                      client
+                      work_manifest
                   in
                   let open Abb.Future.Infix_monad in
                   run
@@ -6806,38 +6360,38 @@ module Make (S : S) = struct
 
     and resume_raw ctx resume_point update =
       let open Abbs_future_combinators.Infix_result_monad in
-      Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db ->
+      Pgsql_pool.with_conn (Terrat_vcs_provider.Ctx.storage ctx) ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
               match resume_point with
               | `Work_manifest work_manifest_id -> (
-                  query_flow_state ctx.Ctx.request_id db work_manifest_id
+                  query_flow_state (Terrat_vcs_provider.Ctx.request_id ctx) db work_manifest_id
                   >>= function
                   | Some str ->
                       Abb.Future.return (Flow.Yield.of_string str)
                       >>= fun resume' ->
                       let state = update (Flow.Yield.state resume') in
                       let resume' = Flow.Yield.set_state state resume' in
-                      resume_event { ctx with Ctx.storage = db } resume' exec_flow
+                      resume_event (Terrat_vcs_provider.Ctx.set_storage db ctx) resume' exec_flow
                   | None -> Abb.Future.return (Error `Error))
               | `Resume resume' ->
                   let state = update (Flow.Yield.state resume') in
                   let resume' = Flow.Yield.set_state state resume' in
-                  resume_event { ctx with Ctx.storage = db } resume' exec_flow))
+                  resume_event (Terrat_vcs_provider.Ctx.set_storage db ctx) resume' exec_flow))
       >>= function
       | `Success _ ->
           let open Abb.Future.Infix_monad in
           (match resume_point with
           | `Work_manifest work_manifest_id ->
-              Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db ->
-                  delete_flow_state ctx.Ctx.request_id db work_manifest_id)
+              Pgsql_pool.with_conn (Terrat_vcs_provider.Ctx.storage ctx) ~f:(fun db ->
+                  delete_flow_state (Terrat_vcs_provider.Ctx.request_id ctx) db work_manifest_id)
           | `Resume _ -> Abb.Future.return (Ok ()))
           >>= fun _ -> Abb.Future.return (Ok ())
       | `Failure _ ->
           let open Abb.Future.Infix_monad in
           (match resume_point with
           | `Work_manifest work_manifest_id ->
-              Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db ->
-                  delete_flow_state ctx.Ctx.request_id db work_manifest_id)
+              Pgsql_pool.with_conn (Terrat_vcs_provider.Ctx.storage ctx) ~f:(fun db ->
+                  delete_flow_state (Terrat_vcs_provider.Ctx.request_id ctx) db work_manifest_id)
           | `Resume _ -> Abb.Future.return (Ok ()))
           >>= fun _ -> Abb.Future.return (Error `Error)
       | `Yield resume' -> (
@@ -6860,7 +6414,8 @@ module Make (S : S) = struct
       Abbs_future_combinators.with_finally
         (fun () -> resume_raw ctx (`Work_manifest work_manifest_id) update)
         ~finally:(fun () ->
-          Abbs_future_combinators.ignore (run_work_manifests ctx.Ctx.request_id ctx))
+          Abbs_future_combinators.ignore
+            (run_work_manifests (Terrat_vcs_provider.Ctx.request_id ctx) ctx))
 
     and notify_work_manifest_run_success request_id ctx work_manifest =
       let module Wm = Terrat_work_manifest3 in
@@ -6880,26 +6435,35 @@ module Make (S : S) = struct
         (function
           | `Det () -> Abb.Future.return ()
           | `Aborted ->
-              Logs.info (fun m -> m "EVALUATOR : %s : RUNNER : ABORTED" ctx.Ctx.request_id);
+              Logs.info (fun m ->
+                  m "EVALUATOR : %s : RUNNER : ABORTED" (Terrat_vcs_provider.Ctx.request_id ctx));
               Abb.Future.return ()
           | `Exn (exn, bt_opt) ->
               Logs.err (fun m ->
                   m
                     "EVALUATOR : %s : RUNNER : %s : %s"
-                    ctx.Ctx.request_id
+                    (Terrat_vcs_provider.Ctx.request_id ctx)
                     (Printexc.to_string exn)
                     (CCOption.map_or ~default:"" Printexc.raw_backtrace_to_string bt_opt));
               Abb.Future.return ())
-        (run_work_manifests ctx.Ctx.request_id ctx
+        (run_work_manifests (Terrat_vcs_provider.Ctx.request_id ctx) ctx
         >>= function
         | Ok () -> Abb.Future.return ()
         | Error (#Pgsql_io.err as err) ->
             Logs.err (fun m ->
-                m "EVALUATOR : %s : ERROR : %a" ctx.Ctx.request_id Pgsql_io.pp_err err);
+                m
+                  "EVALUATOR : %s : ERROR : %a"
+                  (Terrat_vcs_provider.Ctx.request_id ctx)
+                  Pgsql_io.pp_err
+                  err);
             Abb.Future.return ()
         | Error (#Pgsql_pool.err as err) ->
             Logs.err (fun m ->
-                m "EVALUATOR : %s : ERROR : %a" ctx.Ctx.request_id Pgsql_pool.pp_err err);
+                m
+                  "EVALUATOR : %s : ERROR : %a"
+                  (Terrat_vcs_provider.Ctx.request_id ctx)
+                  Pgsql_pool.pp_err
+                  err);
             Abb.Future.return ()
         | Error `Error -> Abb.Future.return ())
   end
@@ -6976,10 +6540,11 @@ module Make (S : S) = struct
     Abb.Future.fork
       (Abbs_future_combinators.with_finally
          (fun () ->
-           Logs.info (fun m -> m "EVALUATOR : %s : FLOW : START" ctx.Ctx.request_id);
+           Logs.info (fun m ->
+               m "EVALUATOR : %s : FLOW : START" (Terrat_vcs_provider.Ctx.request_id ctx));
            let state =
              {
-               State.request_id = ctx.Ctx.request_id;
+               State.request_id = Terrat_vcs_provider.Ctx.request_id ctx;
                event;
                work_manifest_id = None;
                st = State.St.Initial;
@@ -6990,7 +6555,8 @@ module Make (S : S) = struct
            log_event state;
            Runner.resume_raw ctx (`Resume (Flow.yield_of_state state)) CCFun.id)
          ~finally:(fun () ->
-           Logs.info (fun m -> m "EVALUATOR : %s : FLOW : END" ctx.Ctx.request_id);
+           Logs.info (fun m ->
+               m "EVALUATOR : %s : FLOW : END" (Terrat_vcs_provider.Ctx.request_id ctx));
            Abbs_future_combinators.ignore (Abb.Future.fork (Runner.run ctx))))
     >>= fun _ -> Abb.Future.return ()
 
@@ -6999,13 +6565,14 @@ module Make (S : S) = struct
       (function
         | `Det r -> Abb.Future.return r
         | `Aborted ->
-            Logs.err (fun m -> m "EVALUATOR : %s : RUNNER : ABORTED" ctx.Ctx.request_id);
+            Logs.err (fun m ->
+                m "EVALUATOR : %s : RUNNER : ABORTED" (Terrat_vcs_provider.Ctx.request_id ctx));
             Abb.Future.return (Error `Error)
         | `Exn (exn, bt_opt) ->
             Logs.err (fun m ->
                 m
                   "EVALUATOR : %s : RUNNER : %s : %s"
-                  ctx.Ctx.request_id
+                  (Terrat_vcs_provider.Ctx.request_id ctx)
                   (Printexc.to_string exn)
                   (CCOption.map_or ~default:"" Printexc.raw_backtrace_to_string bt_opt));
             Abb.Future.return (Error `Error))
@@ -7019,7 +6586,7 @@ module Make (S : S) = struct
                Logs.err (fun m ->
                    m
                      "EVALUATOR : %s : work_manifest_id=%a : %a"
-                     ctx.Ctx.request_id
+                     (Terrat_vcs_provider.Ctx.request_id ctx)
                      Uuidm.pp
                      work_manifest_id
                      Pgsql_pool.pp_err
@@ -7029,7 +6596,7 @@ module Make (S : S) = struct
                Logs.err (fun m ->
                    m
                      "EVALUATOR : %s : work_manifest_id=%a : %a"
-                     ctx.Ctx.request_id
+                     (Terrat_vcs_provider.Ctx.request_id ctx)
                      Uuidm.pp
                      work_manifest_id
                      Pgsql_io.pp_err
@@ -7039,7 +6606,7 @@ module Make (S : S) = struct
                Logs.err (fun m ->
                    m
                      "EVALUATOR : %s : work_manifest_id=%a : %a"
-                     ctx.Ctx.request_id
+                     (Terrat_vcs_provider.Ctx.request_id ctx)
                      Uuidm.pp
                      work_manifest_id
                      Flow.Yield.pp_of_string_err
@@ -7049,7 +6616,7 @@ module Make (S : S) = struct
                Logs.err (fun m ->
                    m
                      "EVALUATOR : %s : work_manifest_id=%a : ERROR"
-                     ctx.Ctx.request_id
+                     (Terrat_vcs_provider.Ctx.request_id ctx)
                      Uuidm.pp
                      work_manifest_id);
                Abb.Future.return (Error `Error))
@@ -7074,7 +6641,10 @@ module Make (S : S) = struct
     Abb.Future.fork
       (resume_work ctx work_manifest_id (fun state ->
            Logs.info (fun m ->
-               m "EVALUATOR : %s : INITIATE : state=%s" ctx.Ctx.request_id state.State.request_id);
+               m
+                 "EVALUATOR : %s : INITIATE : state=%s"
+                 (Terrat_vcs_provider.Ctx.request_id ctx)
+                 state.State.request_id);
            {
              state with
              State.input = Some (State.Io.I.Work_manifest_initiate { encryption_key; initiate; p });
@@ -7090,7 +6660,10 @@ module Make (S : S) = struct
     Abb.Future.fork
       (resume_work ctx work_manifest_id (fun state ->
            Logs.info (fun m ->
-               m "EVALUATOR : %s : RESULT : state=%s" ctx.Ctx.request_id state.State.request_id);
+               m
+                 "EVALUATOR : %s : RESULT : state=%s"
+                 (Terrat_vcs_provider.Ctx.request_id ctx)
+                 state.State.request_id);
            { state with State.input = Some (State.Io.I.Work_manifest_result { result; p }) }))
     >>= fun fut ->
     (first fut (Abb.Future.Promise.future p)
@@ -7106,7 +6679,10 @@ module Make (S : S) = struct
     Abb.Future.fork
       (resume_work ctx work_manifest_id (fun state ->
            Logs.info (fun m ->
-               m "EVALUATOR : %s : PLAN_STORE : state=%s" ctx.Ctx.request_id state.State.request_id);
+               m
+                 "EVALUATOR : %s : PLAN_STORE : state=%s"
+                 (Terrat_vcs_provider.Ctx.request_id ctx)
+                 state.State.request_id);
            {
              state with
              State.input =
@@ -7123,7 +6699,10 @@ module Make (S : S) = struct
     Abb.Future.fork
       (resume_work ctx work_manifest_id (fun state ->
            Logs.info (fun m ->
-               m "EVALUATOR : %s : PLAN_FETCH : state=%s" ctx.Ctx.request_id state.State.request_id);
+               m
+                 "EVALUATOR : %s : PLAN_FETCH : state=%s"
+                 (Terrat_vcs_provider.Ctx.request_id ctx)
+                 state.State.request_id);
            { state with State.input = Some (State.Io.I.Plan_fetch { dirspace; p }) }))
     >>= fun fut ->
     (first fut (Abb.Future.Promise.future p)
@@ -7138,7 +6717,7 @@ module Make (S : S) = struct
            Logs.info (fun m ->
                m
                  "EVALUATOR : %s : WORK_MANIFEST_FAILURE : state=%s"
-                 ctx.Ctx.request_id
+                 (Terrat_vcs_provider.Ctx.request_id ctx)
                  state.State.request_id);
            { state with State.input = Some (State.Io.I.Work_manifest_failure { p }) }))
     >>= fun fut ->
@@ -7147,42 +6726,60 @@ module Make (S : S) = struct
       :> (unit, [> `Error ]) result Abb.Future.t)
 
   let run_scheduled_drift ctx =
-    Logs.info (fun m -> m "EVALUATOR : %s : SCHEDULED_DRIFT" ctx.Ctx.request_id);
+    Logs.info (fun m ->
+        m "EVALUATOR : %s : SCHEDULED_DRIFT" (Terrat_vcs_provider.Ctx.request_id ctx));
     Abbs_future_combinators.to_result (run_event ctx Event.Run_scheduled_drift)
 
   let run_plan_cleanup ctx =
     let open Abb.Future.Infix_monad in
-    Logs.info (fun m -> m "EVALUATOR : %s : PLAN_CLEANUP" ctx.Ctx.request_id);
-    Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db -> cleanup_plans ctx.Ctx.request_id db)
+    Logs.info (fun m -> m "EVALUATOR : %s : PLAN_CLEANUP" (Terrat_vcs_provider.Ctx.request_id ctx));
+    Pgsql_pool.with_conn (Terrat_vcs_provider.Ctx.storage ctx) ~f:(fun db ->
+        cleanup_plans (Terrat_vcs_provider.Ctx.request_id ctx) db)
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
     | Error `Error -> Abb.Future.return (Error `Error)
     | Error (#Pgsql_pool.err as err) ->
         Logs.err (fun m ->
-            m "EVALUATOR : %s : PLAN_CLEANUP : %a" ctx.Ctx.request_id Pgsql_pool.pp_err err);
+            m
+              "EVALUATOR : %s : PLAN_CLEANUP : %a"
+              (Terrat_vcs_provider.Ctx.request_id ctx)
+              Pgsql_pool.pp_err
+              err);
         Abb.Future.return (Error `Error)
 
   let run_flow_state_cleanup ctx =
     let open Abb.Future.Infix_monad in
-    Logs.info (fun m -> m "EVALUATOR : %s : FLOW_STATE_CLEANUP" ctx.Ctx.request_id);
-    Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db -> cleanup_flow_states ctx.Ctx.request_id db)
+    Logs.info (fun m ->
+        m "EVALUATOR : %s : FLOW_STATE_CLEANUP" (Terrat_vcs_provider.Ctx.request_id ctx));
+    Pgsql_pool.with_conn (Terrat_vcs_provider.Ctx.storage ctx) ~f:(fun db ->
+        cleanup_flow_states (Terrat_vcs_provider.Ctx.request_id ctx) db)
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
     | Error `Error -> Abb.Future.return (Error `Error)
     | Error (#Pgsql_pool.err as err) ->
         Logs.err (fun m ->
-            m "EVALUATOR : %s : FLOW_STATE_CLEANUP : %a" ctx.Ctx.request_id Pgsql_pool.pp_err err);
+            m
+              "EVALUATOR : %s : FLOW_STATE_CLEANUP : %a"
+              (Terrat_vcs_provider.Ctx.request_id ctx)
+              Pgsql_pool.pp_err
+              err);
         Abb.Future.return (Error `Error)
 
   let run_repo_config_cleanup ctx =
     let open Abb.Future.Infix_monad in
-    Logs.info (fun m -> m "EVALUATOR : %s : REPO_CONFIG_CLEANUP" ctx.Ctx.request_id);
-    Pgsql_pool.with_conn ctx.Ctx.storage ~f:(fun db -> cleanup_repo_configs ctx.Ctx.request_id db)
+    Logs.info (fun m ->
+        m "EVALUATOR : %s : REPO_CONFIG_CLEANUP" (Terrat_vcs_provider.Ctx.request_id ctx));
+    Pgsql_pool.with_conn (Terrat_vcs_provider.Ctx.storage ctx) ~f:(fun db ->
+        cleanup_repo_configs (Terrat_vcs_provider.Ctx.request_id ctx) db)
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
     | Error `Error -> Abb.Future.return (Error `Error)
     | Error (#Pgsql_pool.err as err) ->
         Logs.err (fun m ->
-            m "EVALUATOR : %s : REPO_CONFIG_CLEANUP : %a" ctx.Ctx.request_id Pgsql_pool.pp_err err);
+            m
+              "EVALUATOR : %s : REPO_CONFIG_CLEANUP : %a"
+              (Terrat_vcs_provider.Ctx.request_id ctx)
+              Pgsql_pool.pp_err
+              err);
         Abb.Future.return (Error `Error)
 end

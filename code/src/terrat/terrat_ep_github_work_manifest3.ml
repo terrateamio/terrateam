@@ -1,10 +1,11 @@
 module Make
-    (Terratc : Terratc_intf.S
-                 with type Github.Client.t = Terrat_github_evaluator3.S.Client.t
-                  and type Github.Account.t = Terrat_github_evaluator3.S.Account.t
-                  and type Github.Repo.t = Terrat_github_evaluator3.S.Repo.t
-                  and type Github.Remote_repo.t = Terrat_github_evaluator3.S.Remote_repo.t
-                  and type Github.Ref.t = Terrat_github_evaluator3.S.Ref.t) =
+    (Terratc :
+      Terratc_intf.S
+        with type Github.Client.t = Terrat_github_evaluator3.S.Client.t
+         and type Github.Account.t = Terrat_github_evaluator3.S.Account.t
+         and type Github.Repo.t = Terrat_github_evaluator3.S.Repo.t
+         and type Github.Remote_repo.t = Terrat_github_evaluator3.S.Remote_repo.t
+         and type Github.Ref.t = Terrat_github_evaluator3.S.Ref.t) =
 struct
   module Github_evaluator = Terrat_github_evaluator3.Make (Terratc)
 
@@ -16,7 +17,9 @@ struct
          the string *)
       Pgsql_io.Typed_sql.(
         sql
-        // (* data *) Ret.ud' CCFun.(Cstruct.of_hex %> CCOption.return)
+        //
+        (* data *)
+        Ret.ud' CCFun.(Cstruct.of_hex %> CCOption.return)
         /^ "select encode(data, 'hex') from encryption_keys order by rank limit 1")
   end
 
@@ -32,7 +35,7 @@ struct
       | encryption_key :: _ ->
           let request_id = Brtl_ctx.token ctx in
           Github_evaluator.work_manifest_initiate
-            ~ctx:(Terrat_evaluator3.Ctx.make ~request_id ~config ~storage ())
+            ~ctx:(Terrat_vcs_provider.Ctx.make ~request_id ~config ~storage ())
             ~encryption_key
             work_manifest_id
             initiate
@@ -85,7 +88,7 @@ struct
       let open Abb.Future.Infix_monad in
       let request_id = Brtl_ctx.token ctx in
       Github_evaluator.plan_store
-        ~ctx:(Terrat_evaluator3.Ctx.make ~request_id ~config ~storage ())
+        ~ctx:(Terrat_vcs_provider.Ctx.make ~request_id ~config ~storage ())
         work_manifest_id
         plan
       >>= function
@@ -98,7 +101,7 @@ struct
       let open Abb.Future.Infix_monad in
       let request_id = Brtl_ctx.token ctx in
       Github_evaluator.plan_fetch
-        ~ctx:(Terrat_evaluator3.Ctx.make ~request_id ~config ~storage ())
+        ~ctx:(Terrat_vcs_provider.Ctx.make ~request_id ~config ~storage ())
         work_manifest_id
         { Terrat_dirspace.dir; workspace }
       >>= function
@@ -123,7 +126,7 @@ struct
       let open Abb.Future.Infix_monad in
       let request_id = Brtl_ctx.token ctx in
       Github_evaluator.work_manifest_result
-        ~ctx:(Terrat_evaluator3.Ctx.make ~request_id ~config ~storage ())
+        ~ctx:(Terrat_vcs_provider.Ctx.make ~request_id ~config ~storage ())
         work_manifest_id
         result
       >>= fun r ->
@@ -160,20 +163,26 @@ struct
       let select_encryption_key () =
         Pgsql_io.Typed_sql.(
           sql
-          // (* data *) Ret.ud' CCFun.(Cstruct.of_hex %> CCOption.return)
+          //
+          (* data *)
+          Ret.ud' CCFun.(Cstruct.of_hex %> CCOption.return)
           /^ "select encode(data, 'hex') from encryption_keys order by rank limit 1")
 
       let select_running_work_manifest () =
         Pgsql_io.Typed_sql.(
           sql
-          // (* id *) Ret.uuid
+          //
+          (* id *)
+          Ret.uuid
           /^ "select id from github_work_manifests where id = $id and state = 'running'"
           /% Var.uuid "id")
 
       let select_installation_id () =
         Pgsql_io.Typed_sql.(
           sql
-          // (* id *) Ret.bigint
+          //
+          (* id *)
+          Ret.bigint
           /^ "select gir.installation_id from github_work_manifests as gwm inner join \
               github_installation_repositories as gir on gwm.repository = gir.id where gwm.id = \
               $id"

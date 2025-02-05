@@ -254,7 +254,7 @@ struct
             ()
         in
         Github_evaluator.run_pull_request_open
-          ~ctx:(Terrat_evaluator3.Ctx.make ~request_id ~config ~storage ())
+          ~ctx:(Terrat_vcs_provider.Ctx.make ~request_id ~config ~storage ())
           ~account
           ~user
           ~repo
@@ -287,7 +287,7 @@ struct
             ()
         in
         Github_evaluator.run_pull_request_sync
-          ~ctx:(Terrat_evaluator3.Ctx.make ~request_id ~config ~storage ())
+          ~ctx:(Terrat_vcs_provider.Ctx.make ~request_id ~config ~storage ())
           ~account
           ~user
           ~repo
@@ -322,7 +322,7 @@ struct
             ()
         in
         Github_evaluator.run_pull_request_open
-          ~ctx:(Terrat_evaluator3.Ctx.make ~request_id ~config ~storage ())
+          ~ctx:(Terrat_vcs_provider.Ctx.make ~request_id ~config ~storage ())
           ~account
           ~user
           ~repo
@@ -357,7 +357,7 @@ struct
             ()
         in
         Github_evaluator.run_pull_request_ready_for_review
-          ~ctx:(Terrat_evaluator3.Ctx.make ~request_id ~config ~storage ())
+          ~ctx:(Terrat_vcs_provider.Ctx.make ~request_id ~config ~storage ())
           ~account
           ~user
           ~repo
@@ -397,7 +397,7 @@ struct
             ()
         in
         Github_evaluator.run_pull_request_close
-          ~ctx:(Terrat_evaluator3.Ctx.make ~request_id ~config ~storage ())
+          ~ctx:(Terrat_vcs_provider.Ctx.make ~request_id ~config ~storage ())
           ~account
           ~user
           ~repo
@@ -489,7 +489,7 @@ struct
                 ()
             in
             Github_evaluator.run_pull_request_comment
-              ~ctx:(Terrat_evaluator3.Ctx.make ~request_id ~config ~storage ())
+              ~ctx:(Terrat_vcs_provider.Ctx.make ~request_id ~config ~storage ())
               ~account
               ~user
               ~comment
@@ -579,7 +579,7 @@ struct
         >>= function
         | Some work_manifest_id ->
             Github_evaluator.work_manifest_failure
-              ~ctx:(Terrat_evaluator3.Ctx.make ~request_id ~config ~storage ())
+              ~ctx:(Terrat_vcs_provider.Ctx.make ~request_id ~config ~storage ())
               work_manifest_id
         | None ->
             Logs.info (fun m ->
@@ -609,7 +609,7 @@ struct
         in
         let user = Terrat_github_evaluator3.S.User.make event.Gw.Push_event.sender.Gw.User.login in
         Github_evaluator.run_push
-          ~ctx:(Terrat_evaluator3.Ctx.make ~request_id ~config ~storage ())
+          ~ctx:(Terrat_vcs_provider.Ctx.make ~request_id ~config ~storage ())
           ~account
           ~user
           ~repo

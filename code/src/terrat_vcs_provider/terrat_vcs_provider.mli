@@ -3,6 +3,8 @@ module Unlock_id : sig
     | Pull_request of int
     | Drift
   [@@deriving show]
+
+  val to_string : t -> string
 end
 
 module Account_status : sig
@@ -81,6 +83,8 @@ module Ctx : sig
   val request_id : 's t -> string
   val config : 's t -> Terrat_config.t
   val storage : 's t -> 's
+  val set_request_id : string -> 's t -> 's t
+  val set_storage : 's -> 'a t -> 's t
 end
 
 module Work_manifest_result : sig
@@ -124,9 +128,7 @@ module Index : sig
 end
 
 module type S = sig
-  module Db : sig
-    type t
-  end
+  module Db = Pgsql_io
 
   module User : sig
     type t [@@deriving yojson]

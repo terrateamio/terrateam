@@ -89,6 +89,8 @@ module Ctx = struct
   let request_id t = t.request_id
   let config t = t.config
   let storage t = t.storage
+  let set_request_id request_id t = { t with request_id }
+  let set_storage storage t = { t with storage }
 end
 
 module Work_manifest_result = struct
@@ -104,15 +106,6 @@ module Conflicting_work_manifests = struct
   type 'a t =
     | Conflicting of 'a list
     | Maybe_stale of 'a list
-end
-
-module Comment = struct
-  let to_yojson = CCFun.(Terrat_comment.to_string %> [%to_yojson: string])
-
-  let of_yojson json =
-    let open CCResult.Infix in
-    [%of_yojson: string] json
-    >>= fun comment -> CCResult.map_err Terrat_comment.show_err (Terrat_comment.parse comment)
 end
 
 module Target = struct
@@ -141,9 +134,7 @@ module Index = struct
 end
 
 module type S = sig
-  module Db : sig
-    type t
-  end
+  module Db = Pgsql_io
 
   module User : sig
     type t [@@deriving yojson]
