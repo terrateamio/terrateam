@@ -494,6 +494,12 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
               >>= fun () ->
               Fut_comb.ignore (Channel.send wc ret) >>= fun () -> run_handler config conn r w wc
           | `Det (`Timeout as err) | (`Exn _ as err) -> (
+              (* If it was a timeout, then close the connection.  If it was an
+                 exception, this will be done for us in the [failure]
+                 handler. *)
+              (if err = `Timeout then Fut_comb.ignore (Abb.Socket.close conn)
+               else Abb.Future.return ())
+              >>= fun () ->
               (* On timeout or error, run the error handler, which can only make
                  decisions about whether to continue or stop the server. *)
               Abb.Future.await
@@ -501,19 +507,10 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
                    (fun () -> Config.on_handler_err config req err)
                    ~failure:(fun () -> Fut_comb.unit))
               >>= function
-              | `Det (`Ok as ret) | `Det (`Stop as ret) ->
-                  (* Send an HTTP 500 response. *)
-                  Response_io.write
-                    (fun writer -> Response_io.write_body writer "")
-                    (Cohttp.Response.make ~status:`Internal_server_error ())
-                    w
-                  >>= fun () ->
-                  Fut_comb.ignore (Buffered.flushed w)
-                  >>= fun () ->
-                  Fut_comb.ignore (Channel.send wc ret) >>= fun () -> run_handler config conn r w wc
-              | `Aborted -> Fut_comb.ignore (Channel.send wc `Stop)
+              | `Det (`Ok as ret) | `Det (`Stop as ret) -> Fut_comb.ignore (Channel.send wc ret)
+              | `Aborted -> Abb.Future.return ()
               | `Exn (exn, _) -> Fut_comb.ignore (Channel.send wc (`Exn exn)))
-          | `Aborted -> Fut_comb.ignore (Abb.Socket.close conn))
+          | `Aborted -> Abb.Future.return ())
       | `Req `Eof ->
           Fut_comb.ignore (Abb.Socket.close conn)
           >>= fun () -> Fut_comb.ignore (Abb.Future.fork (Channel.send wc `Ok))
