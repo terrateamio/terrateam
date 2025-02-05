@@ -39,7 +39,8 @@ module Render = struct
 
   let url = "/markdown"
 
-  let make ~body () =
+  let make ~body =
+   fun () ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

@@ -73,7 +73,8 @@ module Start_for_org = struct
 
   let url = "/orgs/{org}/migrations"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -461,7 +462,8 @@ module Update_import = struct
 
   let url = "/repos/{owner}/{repo}/import"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -597,7 +599,8 @@ module Start_import = struct
 
   let url = "/repos/{owner}/{repo}/import"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -784,7 +787,8 @@ module Map_commit_author = struct
 
   let url = "/repos/{owner}/{repo}/import/authors/{author_id}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -912,7 +916,8 @@ module Set_lfs_preference = struct
 
   let url = "/repos/{owner}/{repo}/import/lfs"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1010,7 +1015,8 @@ module Start_for_authenticated_user = struct
 
   let url = "/user/migrations"
 
-  let make ~body () =
+  let make ~body =
+   fun () ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

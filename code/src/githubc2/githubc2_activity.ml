@@ -221,7 +221,8 @@ module Mark_notifications_as_read = struct
 
   let url = "/notifications"
 
-  let make ?body () =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -511,7 +512,8 @@ module Set_thread_subscription = struct
 
   let url = "/notifications/threads/{thread_id}/subscription"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -707,7 +709,8 @@ module Mark_repo_notifications_as_read = struct
 
   let url = "/repos/{owner}/{repo}/notifications"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -956,7 +959,8 @@ module Set_repo_subscription = struct
 
   let url = "/repos/{owner}/{repo}/subscription"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]

@@ -209,7 +209,8 @@ module Update_webhook_config_for_app = struct
 
   let url = "/app/hook/config"
 
-  let make ~body () =
+  let make ~body =
+   fun () ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1210,7 +1211,8 @@ module Create_installation_access_token = struct
 
   let url = "/app/installations/{installation_id}/access_tokens"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -1344,7 +1346,8 @@ module Delete_authorization = struct
 
   let url = "/applications/{client_id}/grant"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1399,7 +1402,8 @@ module Reset_token = struct
 
   let url = "/applications/{client_id}/token"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1451,7 +1455,8 @@ module Delete_token = struct
 
   let url = "/applications/{client_id}/token"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1513,7 +1518,8 @@ module Check_token = struct
 
   let url = "/applications/{client_id}/token"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1604,7 +1610,8 @@ module Scope_token = struct
 
   let url = "/applications/{client_id}/token/scoped"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

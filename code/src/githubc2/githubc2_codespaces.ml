@@ -169,7 +169,8 @@ module Set_codespaces_access = struct
 
   let url = "/orgs/{org}/codespaces/access"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -247,7 +248,8 @@ module Delete_codespaces_access_users = struct
 
   let url = "/orgs/{org}/codespaces/access/selected_users"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -325,7 +327,8 @@ module Set_codespaces_access_users = struct
 
   let url = "/orgs/{org}/codespaces/access/selected_users"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -542,7 +545,8 @@ module Create_or_update_org_secret = struct
 
   let url = "/orgs/{org}/codespaces/secrets/{secret_name}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -640,7 +644,8 @@ module Set_selected_repos_for_org_secret = struct
 
   let url = "/orgs/{org}/codespaces/secrets/{secret_name}/repositories"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1205,7 +1210,8 @@ module Create_with_repo_for_authenticated_user = struct
 
   let url = "/repos/{owner}/{repo}/codespaces"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1769,7 +1775,8 @@ module Create_or_update_repo_secret = struct
 
   let url = "/repos/{owner}/{repo}/codespaces/secrets/{secret_name}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1931,7 +1938,8 @@ module Create_with_pr_for_authenticated_user = struct
 
   let url = "/repos/{owner}/{repo}/pulls/{pull_number}/codespaces"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -2108,7 +2116,8 @@ module Create_for_authenticated_user = struct
 
   let url = "/user/codespaces"
 
-  let make ~body () =
+  let make ~body =
+   fun () ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -2399,7 +2408,8 @@ module Create_or_update_secret_for_authenticated_user = struct
 
   let url = "/user/codespaces/secrets/{secret_name}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -2508,7 +2518,8 @@ module Set_repositories_for_secret_for_authenticated_user = struct
 
   let url = "/user/codespaces/secrets/{secret_name}/repositories"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -2805,7 +2816,8 @@ module Update_for_authenticated_user = struct
 
   let url = "/user/codespaces/{codespace_name}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -3234,7 +3246,8 @@ module Publish_for_authenticated_user = struct
 
   let url = "/user/codespaces/{codespace_name}/publish"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

@@ -63,7 +63,8 @@ module Set_restrictions_for_org = struct
 
   let url = "/orgs/{org}/interaction-limits"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -200,7 +201,8 @@ module Set_restrictions_for_repo = struct
 
   let url = "/repos/{owner}/{repo}/interaction-limits"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -326,7 +328,8 @@ module Set_restrictions_for_authenticated_user = struct
 
   let url = "/user/interaction-limits"
 
-  let make ~body () =
+  let make ~body =
+   fun () ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

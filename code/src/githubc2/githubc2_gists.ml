@@ -105,7 +105,8 @@ module Create = struct
 
   let url = "/gists"
 
-  let make ~body () =
+  let make ~body =
+   fun () ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -369,7 +370,8 @@ module Update = struct
 
   let url = "/gists/{gist_id}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -560,7 +562,8 @@ module Create_comment = struct
 
   let url = "/gists/{gist_id}/comments"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -680,7 +683,8 @@ module Update_comment = struct
 
   let url = "/gists/{gist_id}/comments/{comment_id}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
