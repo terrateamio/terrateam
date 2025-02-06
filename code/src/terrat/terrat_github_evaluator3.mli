@@ -116,11 +116,12 @@ module S : sig
 end
 
 module Make
-    (Terratc : Terratc_intf.S
-                 with type Github.Client.t = S.Client.t
-                  and type Github.Account.t = S.Account.t
-                  and type Github.Repo.t = S.Repo.t
-                  and type Github.Ref.t = S.Ref.t) : sig
+    (Terratc :
+      Terratc_intf.S
+        with type Github.Client.t = S.Client.t
+         and type Github.Account.t = S.Account.t
+         and type Github.Repo.t = S.Repo.t
+         and type Github.Ref.t = S.Ref.t) : sig
   type run_err = [ `Error ] [@@deriving show]
 
   module State : sig
@@ -132,7 +133,7 @@ module Make
   end
 
   val run_pull_request_open :
-    ctx:Terrat_storage.t Terrat_evaluator3.Ctx.t ->
+    ctx:Terrat_storage.t Terrat_vcs_provider.Ctx.t ->
     account:S.Account.t ->
     user:S.User.t ->
     repo:S.Repo.t ->
@@ -141,7 +142,7 @@ module Make
     (unit, [> run_err ]) result Abb.Future.t
 
   val run_pull_request_close :
-    ctx:Terrat_storage.t Terrat_evaluator3.Ctx.t ->
+    ctx:Terrat_storage.t Terrat_vcs_provider.Ctx.t ->
     account:S.Account.t ->
     user:S.User.t ->
     repo:S.Repo.t ->
@@ -150,7 +151,7 @@ module Make
     (unit, [> run_err ]) result Abb.Future.t
 
   val run_pull_request_sync :
-    ctx:Terrat_storage.t Terrat_evaluator3.Ctx.t ->
+    ctx:Terrat_storage.t Terrat_vcs_provider.Ctx.t ->
     account:S.Account.t ->
     user:S.User.t ->
     repo:S.Repo.t ->
@@ -159,7 +160,7 @@ module Make
     (unit, [> run_err ]) result Abb.Future.t
 
   val run_pull_request_ready_for_review :
-    ctx:Terrat_storage.t Terrat_evaluator3.Ctx.t ->
+    ctx:Terrat_storage.t Terrat_vcs_provider.Ctx.t ->
     account:S.Account.t ->
     user:S.User.t ->
     repo:S.Repo.t ->
@@ -168,7 +169,7 @@ module Make
     (unit, [> run_err ]) result Abb.Future.t
 
   val run_pull_request_comment :
-    ctx:Terrat_storage.t Terrat_evaluator3.Ctx.t ->
+    ctx:Terrat_storage.t Terrat_vcs_provider.Ctx.t ->
     account:S.Account.t ->
     user:S.User.t ->
     comment:Terrat_comment.t ->
@@ -179,7 +180,7 @@ module Make
     (unit, [> run_err ]) result Abb.Future.t
 
   val run_push :
-    ctx:Terrat_storage.t Terrat_evaluator3.Ctx.t ->
+    ctx:Terrat_storage.t Terrat_vcs_provider.Ctx.t ->
     account:S.Account.t ->
     user:S.User.t ->
     repo:S.Repo.t ->
@@ -188,31 +189,31 @@ module Make
     (unit, [> run_err ]) result Abb.Future.t
 
   val work_manifest_initiate :
-    ctx:Terrat_storage.t Terrat_evaluator3.Ctx.t ->
+    ctx:Terrat_storage.t Terrat_vcs_provider.Ctx.t ->
     encryption_key:Cstruct.t ->
     Uuidm.t ->
     Terrat_api_components.Work_manifest_initiate.t ->
     (Terrat_api_components.Work_manifest.t option, [> `Error ]) result Abb.Future.t
 
   val work_manifest_result :
-    ctx:Terrat_storage.t Terrat_evaluator3.Ctx.t ->
+    ctx:Terrat_storage.t Terrat_vcs_provider.Ctx.t ->
     Uuidm.t ->
     Terrat_api_components.Work_manifest_result.t ->
     (unit, [> `Error ]) result Abb.Future.t
 
   val work_manifest_failure :
-    ctx:Terrat_storage.t Terrat_evaluator3.Ctx.t ->
+    ctx:Terrat_storage.t Terrat_vcs_provider.Ctx.t ->
     Uuidm.t ->
     (unit, [> `Error ]) result Abb.Future.t
 
   val plan_store :
-    ctx:Terrat_storage.t Terrat_evaluator3.Ctx.t ->
+    ctx:Terrat_storage.t Terrat_vcs_provider.Ctx.t ->
     Uuidm.t ->
     Terrat_api_components.Plan_create.t ->
     (unit, [> `Error ]) result Abb.Future.t
 
   val plan_fetch :
-    ctx:Terrat_storage.t Terrat_evaluator3.Ctx.t ->
+    ctx:Terrat_storage.t Terrat_vcs_provider.Ctx.t ->
     Uuidm.t ->
     Terrat_dirspace.t ->
     (string option, [> `Error ]) result Abb.Future.t

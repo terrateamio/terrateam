@@ -80,7 +80,7 @@ COPY ./ /mono
 # Build target for code-indexer
 FROM build-setup as code-indexer-build
 WORKDIR /mono/code
-RUN ulimit -s 524288 && ulimit -a && eval $(opam env) && \
+RUN ulimit -s 524288 && ulimit -a && eval $(opam env) && pds && \
     (time make -j4 release_terrat_code_indexer || time make -j1 release_terrat_code_indexer)
 RUN eval $(opam env) && \
     time env OCAMLRUNPARAM=b make -j4 -k test && \
@@ -90,7 +90,7 @@ RUN eval $(opam env) && \
 FROM build-setup as terrat-ee-build
 ARG TERRAT_UI_ANALYTICS=false
 WORKDIR /mono/code
-RUN ulimit -s 524288 && ulimit -a && eval $(opam env) && \
+RUN ulimit -s 524288 && ulimit -a && eval $(opam env) && pds && \
     (time env TERRAT_UI_ANALYTICS=$TERRAT_UI_ANALYTICS make -j4 release_terrat_ee release_terrat_ui \
      || time env TERRAT_UI_ANALYTICS=$TERRAT_UI_ANALYTICS make -j1 release_terrat_ee release_terrat_ui)
 RUN eval $(opam env) && \
@@ -100,7 +100,7 @@ RUN eval $(opam env) && \
 # Build target for terrat-oss
 FROM build-setup as terrat-oss-build
 WORKDIR /mono/code
-RUN ulimit -s 524288 && ulimit -a && eval $(opam env) && \
+RUN ulimit -s 524288 && ulimit -a && eval $(opam env) && pds && \
     (time make -j4 release_terrat_oss || time make -j1 release_terrat_oss)
 RUN eval $(opam env) && \
     time env OCAMLRUNPARAM=b make -j4 -k test && \
