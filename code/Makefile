@@ -1,4 +1,5 @@
 .PHONY: terrat-api terrat-repo-config terrat-webhooks
+.PHONY: terrat release-terrat debug-terrat
 
 all: .merlin
 
@@ -11,23 +12,25 @@ pds.mk: pds.conf
 
 terrat-schemas: terrat-api terrat-repo-config terrat-webhooks
 
-terrat: pds.conf
+terrat: release-terrat debug-terrat
 
-terrat: release_terrat_oss debug_terrat_oss
+release-terrat: release_terrat_oss release_terrat_ee release_terrat_ui
 
-terrat: release_terrat_ee debug_terrat_ee
+debug-terrat: debug_terrat_oss debug_terrat_ee debug_terrat_ui
 
-terrat: release_terrat_ui debug_terrat_ui
+debug-terrat: test-debug_abb_fut test-debug_abb_future_combinators
 
-terrat: test-debug_abb_fut test-debug_abb_future_combinators test-release_abb_flow
+release-terrat: test-release_abb_flow
 
-terrat: test-release_terrat test-release_terrat_github_webhooks test-release_terrat_sql_of_tag_query
+release-terrat: test-release_terrat test-release_terrat_github_webhooks test-release_terrat_sql_of_tag_query
 
-terrat: test-release_jsonu
+release-terrat: test-release_jsonu
 
-terrat: test-release_abb_cache
+release-terrat: test-release_abb_cache
 
-terrat: release_terrat_code_indexer debug_terrat_code_indexer
+release-terrat: release_terrat_code_indexer
+
+debug-terrat: debug_terrat_code_indexer
 
 terrat-api: release_openapi_cli
 	rm -f ./src/terrat_api/*.ml
