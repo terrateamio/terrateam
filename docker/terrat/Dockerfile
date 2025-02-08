@@ -55,7 +55,7 @@ RUN eval $(opam env) && \
     eval $(opam env) && \
     opam repository add opam-acsl mono/opam && \
     opam pin add -y containers 3.12 && \
-    opam pin add -y pds 6.48 --no-depexts && \
+    opam pin add -y pds 6.49 --no-depexts && \
     opam pin add -y hll 4.3 --no-depexts && \
     mkdir -p opam-mono/compilers opam-mono/packages && \
     echo 'opam-version: "2.0"' > opam-mono/repo && \
