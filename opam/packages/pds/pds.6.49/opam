@@ -16,11 +16,13 @@ remove: [
 depends: [
 	"cmdliner" { >= "1.3.0" }
 	"containers" { >= "3.12" }
+	"crunch"
 	"ocaml" { >= "4.12.0" }
 	"ocamlfind"
-	"pds" { build & (>= "6" & < "7") }
+	"ppx_deriving"
 	"process" { >= "0.2.1" }
-	"sha"
+	"sedlex"
+	"sqlite3"
 	"toml" { >= "6" }
 ]
 
@@ -29,18 +31,18 @@ authors: [
 ]
 
 description: """
-Create opam package files from a repository.
+A tool to build Makefiles for Ocaml projects.
 """
 
-homepage: "https://hg.sr.ht/~mmatalka/hll"
+homepage: "https://hg.sr.ht/~mmatalka/pds"
 
 url {
-	src: "http://acsl-pkgs.s3.amazonaws.com/hll-4.3.tar.gz"
+	src: "http://acsl-pkgs.s3.amazonaws.com/pds-6.49.tar.gz"
 	checksum: [
-		"md5=06478a115f258009bca9471d2523cb86"
-		"sha256=429223479883308e5cf1d1f04329614c9466f2e856391999ba8a69472c304cde"
+		"md5=b4305f44ed86f82b10f27a15225f6d60"
+		"sha256=21101c38b22dfef5219c46ce141c250674c0989ccf621c867422196a9ce90b52"
 	]
 }
-bug-reports: "https://todo.sr.ht/~mmatalka/hll"
-dev-repo: "hg+ssh://hg@hg.sr.ht/~mmatalka/hll"
+bug-reports: "https://todo.sr.ht/~mmatalka/pds"
+dev-repo: "hg+ssh://hg@hg.sr.ht/~mmatalka/pds"
 
