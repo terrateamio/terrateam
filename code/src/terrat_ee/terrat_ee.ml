@@ -1,5 +1,5 @@
 module Terratc = Terratc_ee.Make (struct
-  module Github = Terrat_github_evaluator3.S
+  module Github = Terrat_vcs_github.S
 end)
 
 module Server = Terrat_server.Make (Terratc)

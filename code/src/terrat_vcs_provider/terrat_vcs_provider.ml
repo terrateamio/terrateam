@@ -136,6 +136,10 @@ end
 module type S = sig
   module Db = Pgsql_io
 
+  module Routes : sig
+    val get : (Brtl_rtng.Method.t * Brtl_rtng.Handler.t Brtl_rtng.Route.Route.t) list
+  end
+
   module User : sig
     type t [@@deriving yojson]
 

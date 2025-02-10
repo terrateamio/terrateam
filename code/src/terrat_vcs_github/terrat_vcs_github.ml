@@ -1235,6 +1235,10 @@ struct
     include S
     module Db = Pgsql_io
 
+    module Routes = struct
+      let get = []
+    end
+
     module Drift = struct
       type t
     end
@@ -4321,7 +4325,7 @@ struct
             "GITHUB_EVALUATOR : %s : CREATE_COMMIT_CHECKS : num=%d"
             request_id
             (CCList.length checks));
-      Terrat_github_commit_check.create
+      Terrat_vcs_github_commit_check.create
         ~owner:(Repo.owner repo)
         ~repo:(Repo.name repo)
         ~ref_
@@ -4343,16 +4347,21 @@ struct
         (fun time ->
           Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : LIST_COMMIT_CHECKS : %f" request_id time))
         (fun () ->
-          Terrat_github_commit_check.list ~log_id:request_id ~owner ~repo ~ref_ client.Client.client)
+          Terrat_vcs_github_commit_check.list
+            ~log_id:request_id
+            ~owner
+            ~repo
+            ~ref_
+            client.Client.client)
       >>= function
       | Ok _ as res -> Abb.Future.return res
-      | Error (#Terrat_github_commit_check.list_err as err) ->
+      | Error (#Terrat_vcs_github_commit_check.list_err as err) ->
           Prmths.Counter.inc_one Metrics.github_errors_total;
           Logs.err (fun m ->
               m
                 "GITHUB_EVALUATOR : %s : FETCH_COMMIT_CHECKS : %a"
                 request_id
-                Terrat_github_commit_check.pp_list_err
+                Terrat_vcs_github_commit_check.pp_list_err
                 err);
           Abb.Future.return (Error `Error)
 

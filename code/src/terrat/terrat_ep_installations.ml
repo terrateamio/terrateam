@@ -1280,11 +1280,11 @@ module Repos = struct
           Terrat_user.enforce_installation_access storage user installation_id ctx
           >>= fun () ->
           let open Abb.Future.Infix_monad in
-          Terrat_github_installation.refresh_repos'
+          Terrat_vcs_github_installation.refresh_repos'
             ~request_id:(Brtl_ctx.token ctx)
             ~config
             ~storage
-            (Terrat_github_installation.Id.make installation_id)
+            (Terrat_vcs_github_installation.Id.make installation_id)
           >>= function
           | Ok task ->
               let id = Uuidm.to_string (Terrat_task.id task) in

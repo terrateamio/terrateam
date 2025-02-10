@@ -6,5 +6,5 @@ module Make
          and type Github.Repo.t = Terrat_vcs_github.S.Repo.t
          and type Github.Remote_repo.t = Terrat_vcs_github.S.Remote_repo.t
          and type Github.Ref.t = Terrat_vcs_github.S.Ref.t) : sig
-  val run : Terrat_config.t -> Terrat_storage.t -> unit Abb.Future.t
+  val post : Terrat_config.t -> Terrat_storage.t -> Brtl_rtng.Handler.t
 end
