@@ -1,15 +1,15 @@
 module Make
     (Terratc :
       Terratc_intf.S
-        with type Github.Client.t = Terrat_github_evaluator3.S.Client.t
-         and type Github.Account.t = Terrat_github_evaluator3.S.Account.t
-         and type Github.Repo.t = Terrat_github_evaluator3.S.Repo.t
-         and type Github.Remote_repo.t = Terrat_github_evaluator3.S.Remote_repo.t
-         and type Github.Ref.t = Terrat_github_evaluator3.S.Ref.t) =
+        with type Github.Client.t = Terrat_vcs_github.S.Client.t
+         and type Github.Account.t = Terrat_vcs_github.S.Account.t
+         and type Github.Repo.t = Terrat_vcs_github.S.Repo.t
+         and type Github.Remote_repo.t = Terrat_vcs_github.S.Remote_repo.t
+         and type Github.Ref.t = Terrat_vcs_github.S.Ref.t) =
 struct
-  module Github_evaluator = Terrat_github_evaluator3.Make (Terratc)
-  module Github_events = Terrat_ep_github_events3.Make (Terratc)
-  module Github_work_manifest = Terrat_ep_github_work_manifest3.Make (Terratc)
+  module Github_evaluator = Terrat_vcs_github.Make (Terratc)
+  module Github_events = Terrat_vcs_github_ep_events3.Make (Terratc)
+  module Github_work_manifest = Terrat_vcs_github_ep_work_manifest.Make (Terratc)
 
   module Rt = struct
     let api () = Brtl_rtng.Route.(rel / "api")
@@ -196,8 +196,8 @@ struct
               --> Github_work_manifest.Access_token.post config storage );
             (* Github *)
             (`POST, Rt.github_events () --> Github_events.post config storage);
-            (`GET, Rt.github_callback () --> Terrat_ep_github_callback.get config storage);
-            (`GET, Rt.github_client_id () --> Terrat_ep_github_client_id.get config storage);
+            (`GET, Rt.github_callback () --> Terrat_vcs_github_ep_callback.get config storage);
+            (`GET, Rt.github_client_id () --> Terrat_vcs_github_ep_client_id.get config storage);
             (* User *)
             (`GET, Rt.whoami () --> Terrat_ep_whoami.get config storage);
             (`GET, Rt.user_installations_rt () --> Terrat_ep_user.Installations.get config storage);

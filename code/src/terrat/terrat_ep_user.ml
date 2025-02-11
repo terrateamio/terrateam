@@ -27,7 +27,7 @@ module Installations = struct
 
   let get' config storage user =
     let open Abbs_future_combinators.Infix_result_monad in
-    Terrat_github_user.get_token config storage user
+    Terrat_vcs_github_user.get_token config storage user
     >>= fun token ->
     Terrat_github.with_client config (`Bearer token) Terrat_github.get_user_installations
     >>= fun installations ->
@@ -65,7 +65,11 @@ module Installations = struct
             Abb.Future.return (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx))
         | Error (`Refresh_err _ as err) ->
             Logs.err (fun m ->
-                m "%s : GET : INSTALLATIONS : %a" (Brtl_ctx.token ctx) Terrat_github_user.pp_err err);
+                m
+                  "%s : GET : INSTALLATIONS : %a"
+                  (Brtl_ctx.token ctx)
+                  Terrat_vcs_github_user.pp_err
+                  err);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx))
         | Error `Bad_refresh_token ->
@@ -92,9 +96,13 @@ module Installations = struct
                   err);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-        | Error (#Terrat_github_user.err as err) ->
+        | Error (#Terrat_vcs_github_user.err as err) ->
             Logs.err (fun m ->
-                m "%s : GET : INSTALLATIONS : %a" (Brtl_ctx.token ctx) Terrat_github_user.pp_err err);
+                m
+                  "%s : GET : INSTALLATIONS : %a"
+                  (Brtl_ctx.token ctx)
+                  Terrat_vcs_github_user.pp_err
+                  err);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))
 end
