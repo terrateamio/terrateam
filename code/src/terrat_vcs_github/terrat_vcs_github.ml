@@ -840,6 +840,7 @@ module Tmpl = struct
   let plan_complete2 = read "plan_complete2.tmpl"
   let apply_complete2 = read "apply_complete2.tmpl"
   let automerge_failure = read "automerge_error.tmpl"
+  let premium_feature_err_access_control = read "premium_feature_err_access_control.tmpl"
 end
 
 module S = struct
@@ -3736,6 +3737,15 @@ struct
             pull_request
             "PLAN_NO_MATCHING_DIRSPACES"
             Tmpl.plan_no_matching_dirspaces
+            kv
+      | Msg.Premium_feature_err `Access_control ->
+          let kv = Snabela.Kv.(Map.of_list []) in
+          apply_template_and_publish
+            ~request_id
+            client
+            pull_request
+            "PREMIUM_FEATURE_ACCESS_CONTROL"
+            Tmpl.premium_feature_err_access_control
             kv
       | Msg.Pull_request_not_appliable (_, apply_requirements) ->
           let module Dc = Terrat_change_match3.Dirspace_config in

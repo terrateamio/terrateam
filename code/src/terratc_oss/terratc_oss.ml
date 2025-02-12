@@ -108,8 +108,20 @@ module Make (M : S) = struct
               (Jsonu.of_yaml_string content)
             >>= fun json -> Abb.Future.return (Ok (Some (fname, json)))
 
+      let repo_config_system_defaults system_defaults =
+        (* Access control should be disabled for OSS *)
+        let module V1 = Terrat_base_repo_config_v1 in
+        let system_defaults = CCOption.get_or ~default:V1.default system_defaults in
+        V1.of_view
+          {
+            (V1.to_view system_defaults) with
+            V1.View.access_control = V1.Access_control.make ~enabled:false ();
+          }
+
       let fetch_with_provenance ?system_defaults ?built_config request_id client repo ref_ =
+        let module V1 = Terrat_base_repo_config_v1 in
         let open Abbs_future_combinators.Infix_result_monad in
+        let system_defaults = repo_config_system_defaults system_defaults in
         M.Github.fetch_remote_repo ~request_id client repo
         >>= fun remote_repo ->
         M.Github.fetch_branch_sha
@@ -148,12 +160,10 @@ module Make (M : S) = struct
             | None -> None)
         in
         let system_defaults =
-          CCOption.map
-            (fun config ->
-              ( "system_defaults",
-                Terrat_repo_config.Version_1.to_yojson
-                  (Terrat_base_repo_config_v1.to_version_1 config) ))
-            system_defaults
+          Some
+            ( "system_defaults",
+              Terrat_repo_config.Version_1.to_yojson
+                (Terrat_base_repo_config_v1.to_version_1 system_defaults) )
         in
         let built_config = CCOption.map (fun config -> ("config_builder", config)) built_config in
         let provenance =
@@ -165,6 +175,8 @@ module Make (M : S) = struct
         let system_defaults = get_json system_defaults in
         let built_config = get_json built_config in
         let repo_config = get_json repo_config in
+        Abb.Future.return (Jsonu.merge ~base:system_defaults default_repo_config)
+        >>= fun default_repo_config ->
         Abb.Future.return (Jsonu.merge ~base:system_defaults built_config)
         >>= fun base_repo_config ->
         Abb.Future.return (Jsonu.merge ~base:base_repo_config repo_config)
@@ -174,12 +186,15 @@ module Make (M : S) = struct
           <$> wrap_err "default" (M.Github.repo_config_of_json default_repo_config)
           <*> wrap_err "repo" (M.Github.repo_config_of_json repo_config))
         >>= fun (default_repo_config, repo_config) ->
-        Abb.Future.return
-          (Ok
-             ( provenance,
-               Terrat_base_repo_config_v1.merge_with_default_branch_config
-                 ~default:default_repo_config
-                 repo_config ))
+        let final_repo_config =
+          Terrat_base_repo_config_v1.merge_with_default_branch_config
+            ~default:default_repo_config
+            repo_config
+        in
+        match V1.to_view final_repo_config with
+        | { V1.View.access_control = { V1.Access_control.enabled = true; _ }; _ } ->
+            Abb.Future.return (Error (`Premium_feature_err `Access_control))
+        | _ -> Abb.Future.return (Ok (provenance, final_repo_config))
     end
 
     module Commit_check = struct

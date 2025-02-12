@@ -31,7 +31,7 @@ access_control:
 | --- | --- | --- |
 | `apply_require_all_dirspace_access` | boolean | If true, the user must have permission to all targeted dirspace to trigger an apply operation. Default is true. |
 | `ci_config_update` | array | Ruleset for which users can trigger a Terrateam operation on a pull request with a change to the Terrateam CI/CD configuration.  Default is `['*']` |
-| `enabled` | boolean | Set to true to enable access control. Default is `true`. |
+| `enabled` | boolean | Set to true to enable access control. Default is `true` in Enterprise, Default is `false` in Open Source. |
 | `files` | object | An object where the key is a file path and the value is a ruleset for which users can trigger a Terrateam operation on a pull request with a change to the file. |
 | `plan_require_all_dirspace_access` | boolean | If true, the user must have permission to all targeted dirspaces to trigger a plan operation. Default is `false`. |
 | `policies` | array | A list of policy objects that define access rules for various operations. |
