@@ -1,21 +1,30 @@
+module type ID = sig
+  type t
+
+  val of_string : string -> t option
+  val to_string : t -> string
+end
+
 module type S = sig
   module User : sig
+    module Id : ID
+
     type t [@@deriving yojson]
 
+    val make : Id.t -> t
     val to_string : t -> string
   end
 
   module Account : sig
+    module Id : ID
+
     type t [@@deriving eq, yojson]
 
+    val make : Id.t -> t
     val to_string : t -> string
   end
 
   module Client : sig
-    type t
-  end
-
-  module Drift : sig
     type t
   end
 
@@ -42,6 +51,8 @@ module type S = sig
   end
 
   module Pull_request : sig
+    module Id : ID
+
     type t
 
     val base_branch_name : t -> Ref.t
@@ -49,7 +60,7 @@ module type S = sig
     val branch_name : t -> Ref.t
     val branch_ref : t -> Ref.t
     val diff : t -> Terrat_change.Diff.t list
-    val id : t -> string
+    val id : t -> Id.t
     val is_draft_pr : t -> bool
     val provisional_merge_ref : t -> Ref.t option
     val repo : t -> Repo.t
@@ -102,8 +113,14 @@ module type S = sig
     Account.t ->
     Client.t ->
     Repo.t ->
-    int ->
+    Pull_request.Id.t ->
     (Pull_request.t, [> `Error ]) result Abb.Future.t
+
+  val fetch_pull_request_reviews :
+    request_id:string ->
+    Client.t ->
+    Pull_request.t ->
+    (Terrat_pull_request_review.t list, [> `Error ]) result Abb.Future.t
 
   val react_to_comment :
     request_id:string -> Client.t -> Repo.t -> int -> (unit, [> `Error ]) result Abb.Future.t
@@ -130,5 +147,5 @@ module type S = sig
     (unit, [> `Error | `Merge_err of string ]) result Abb.Future.t
 
   val delete_branch :
-    request_id:string -> Client.t -> string -> (unit, [> `Error ]) result Abb.Future.t
+    request_id:string -> Client.t -> Repo.t -> string -> (unit, [> `Error ]) result Abb.Future.t
 end
