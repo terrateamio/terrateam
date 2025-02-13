@@ -1,0 +1,76 @@
+---
+title: Best Practices
+description: Best practices for running Terrateam in production
+---
+
+Running Terrateam in production requires thoughtful infrastructure decisions to ensure reliability, security, and scalability. This guide outlines best practices specific to Terrateam deployments.
+
+## Database (PostgreSQL)
+
+Terrateam requires a PostgreSQL database to store state and workflow metadata. Any PostgreSQL deployment works, whether self-hosted or managed.
+
+- Backups should retain at least 7 days of history to enable recovery if needed.
+- Enable point-in-time recovery (PITR) if your database provider supports it.
+- Use read replicas for failover support.
+- Restrict network access to ensure only the Terrateam server can connect.
+
+## Terrateam Server Deployment
+
+Terrateam servers are stateless and can be horizontally scaled.
+
+- Run multiple instances to avoid a single point of failure.
+- All instances must point to the same PostgreSQL database.
+- Use a process manager like `systemd`, `supervisord`, or an orchestrator like Kubernetes.
+- Ensure logs are collected for debugging and auditing.
+
+## Load Balancer and Health Checks
+
+A load balancer is required to distribute traffic across multiple Terrateam servers.
+
+- Configure the load balancer to check the `/health` endpoint.
+- Use connection draining to ensure requests finish before stopping an instance.
+- Enable automatic failover so unhealthy instances are removed from rotation.
+
+## Rolling Restarts and Zero Downtime Deployments
+
+Since Terrateam is stateless, updates can be deployed without downtime.
+
+- Rolling restarts ensure no instance is removed before another is ready.
+- Load balancers should have a deregistration delay so active requests complete before an instance stops.
+- Always monitor the `/health` endpoint after deploying changes.
+
+## Security Hardening
+
+Terrateam interacts with infrastructure credentials and GitHub repositories, so security should be a priority.
+
+- Use the principle of least privilege for database and cloud access.
+- Store credentials securely with a secret manager or environment variables.
+- Restrict access to Terrateam's API to trusted sources only.
+- Use TLS to encrypt database and API traffic.
+- Regularly rotate database and GitHub app credentials.
+
+## Scaling Considerations
+
+Terrateam scales based on repository activity and concurrent workflows.
+
+- Multiple instances can handle high request volumes.
+- The database is the main bottleneck.
+- Consider auto-scaling based on CPU/memory usage or request volume.
+
+## Disaster Recovery
+
+Have a plan to restore operations if something goes wrong.
+
+- Regularly test database backups.
+- Maintain a rollback strategy for failed deployments.
+- Use multiple availability zones if hosting Terrateam in the cloud.
+- Document recovery procedures for quick response during incidents.
+
+## GitHub Webhook Reliability
+
+Terrateam relies on GitHub webhooks for processing infrastructure changes.
+
+- Ensure the Terrateam server is accessible from GitHub's webhook IPs.
+- Monitor webhook delivery logs in GitHub to catch failures early.
+
+Following these best practices ensures a stable, secure, and scalable Terrateam deployment.
