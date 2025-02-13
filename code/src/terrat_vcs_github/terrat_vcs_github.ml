@@ -5288,6 +5288,16 @@ struct
                         | _ -> true)
                       relevant_commit_checks
                   in
+                  CCList.iter
+                    (fun { Terrat_commit_check.title; status; _ } ->
+                      Logs.debug (fun m ->
+                          m
+                            "GITHUB_EVALUATOR : %s : COMMIT_CHECK : %s : %a"
+                            request_id
+                            title
+                            Terrat_commit_check.Status.pp
+                            status))
+                    relevant_commit_checks;
                   let all_commit_check_success = CCList.is_empty failed_commit_checks in
                   let merged =
                     let module St = Terrat_pull_request.State in
