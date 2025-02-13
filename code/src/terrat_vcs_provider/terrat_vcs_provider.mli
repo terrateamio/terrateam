@@ -50,6 +50,7 @@ module Msg : sig
     | Mismatched_refs
     | Missing_plans of Terrat_change.Dirspace.t list
     | Plan_no_matching_dirspaces
+    | Premium_feature_err of [ `Access_control ]
     | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
     | Pull_request_not_mergeable
     | Repo_config of (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t)

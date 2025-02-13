@@ -1,15 +1,6 @@
 module Make (S : Terrat_vcs_provider.S) : sig
   module Repo_config : sig
-    type fetch_err =
-      [ Terrat_base_repo_config_v1.of_version_1_err
-      | `Repo_config_parse_err of string * string
-      | Jsonu.merge_err
-      | `Json_decode_err of string * string
-      | `Unexpected_err of string
-      | `Yaml_decode_err of string * string
-      | `Error
-      ]
-    [@@deriving show]
+    type fetch_err = Terratc_intf.Repo_config.fetch_err [@@deriving show]
   end
 
   module State : Abb_flow.S
