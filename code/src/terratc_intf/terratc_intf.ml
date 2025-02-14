@@ -2,7 +2,7 @@ module Repo_config = struct
   type fetch_err =
     [ Terrat_base_repo_config_v1.of_version_1_err
     | `Repo_config_parse_err of string * string
-    | Jsonu.merge_err
+    | `Config_merge_err of (string * string) * (string option * Yojson.Safe.t * Yojson.Safe.t)
     | `Json_decode_err of string * string
     | `Unexpected_err of string
     | `Yaml_decode_err of string * string

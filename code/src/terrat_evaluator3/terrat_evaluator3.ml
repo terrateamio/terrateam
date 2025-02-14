@@ -5846,6 +5846,11 @@ module Make (S : Terrat_vcs_provider.S) = struct
                 m "EVALUATOR : %s : %a" state.State.request_id Repo_config.pp_fetch_err err);
             H.maybe_publish_msg ctx state (Msg.Premium_feature_err feature)
             >>= fun () -> Abb.Future.return (`Failure `Error)
+        | Error (`Config_merge_err details as err) ->
+            Logs.info (fun m ->
+                m "EVALUATOR : %s : %a" state.State.request_id Repo_config.pp_fetch_err err);
+            H.maybe_publish_msg ctx state (Msg.Repo_config_merge_err details)
+            >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error (#Repo_config.fetch_err as err) ->
             Logs.info (fun m ->
                 m "EVALUATOR : %s : %a" state.State.request_id Repo_config.pp_fetch_err err);

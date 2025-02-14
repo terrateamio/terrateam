@@ -303,10 +303,28 @@ module Make (M : S) = struct
           | None -> `Assoc []
           | Some (_, json) -> json
         in
+        let get_fname = CCOption.map (fun (fname, _) -> fname) in
         let collect_provenance =
           CCList.filter_map (function
             | Some (fname, _) -> Some fname
             | None -> None)
+        in
+        let merge ~base v =
+          CCResult.map_err
+            (fun (`Type_mismatch_err err) ->
+              `Config_merge_err
+                ( ( CCOption.get_or ~default:"" (get_fname base),
+                    CCOption.get_or ~default:"" (get_fname v) ),
+                  err ))
+            (CCResult.map
+               (fun r ->
+                 Some
+                   ( Printf.sprintf
+                       "%s,%s"
+                       (CCOption.get_or ~default:"" (get_fname base))
+                       (CCOption.get_or ~default:"" (get_fname v)),
+                     r ))
+               (Jsonu.merge ~base:(get_json base) (get_json v)))
         in
         let system_defaults =
           CCOption.map
@@ -346,36 +364,28 @@ module Make (M : S) = struct
                 repo_config;
               ]
             >>= fun () ->
-            let system_defaults = get_json system_defaults in
-            let global_defaults = get_json global_defaults in
-            let global_overrides = get_json global_overrides in
-            let repo_defaults = get_json repo_defaults in
-            let repo_overrides = get_json repo_overrides in
-            let default_repo_config = get_json default_repo_config in
-            let built_config = get_json built_config in
-            let repo_config = get_json repo_config in
-            Abb.Future.return (Jsonu.merge ~base:system_defaults global_defaults)
+            Abb.Future.return (merge ~base:system_defaults global_defaults)
             >>= fun global_defaults ->
-            Abb.Future.return (Jsonu.merge ~base:global_defaults repo_defaults)
+            Abb.Future.return (merge ~base:global_defaults repo_defaults)
             >>= fun repo_defaults ->
-            Abb.Future.return (Jsonu.merge ~base:repo_defaults default_repo_config)
+            Abb.Future.return (merge ~base:repo_defaults default_repo_config)
             >>= fun default_repo_config ->
-            Abb.Future.return (Jsonu.merge ~base:default_repo_config global_overrides)
+            Abb.Future.return (merge ~base:default_repo_config global_overrides)
             >>= fun default_repo_config ->
-            Abb.Future.return (Jsonu.merge ~base:default_repo_config repo_overrides)
+            Abb.Future.return (merge ~base:default_repo_config repo_overrides)
             >>= fun default_repo_config ->
-            Abb.Future.return (Jsonu.merge ~base:repo_defaults built_config)
+            Abb.Future.return (merge ~base:repo_defaults built_config)
             >>= fun built_config ->
-            Abb.Future.return (Jsonu.merge ~base:built_config repo_config)
+            Abb.Future.return (merge ~base:built_config repo_config)
             >>= fun repo_config ->
-            Abb.Future.return (Jsonu.merge ~base:repo_config global_overrides)
+            Abb.Future.return (merge ~base:repo_config global_overrides)
             >>= fun repo_config ->
-            Abb.Future.return (Jsonu.merge ~base:repo_config repo_overrides)
+            Abb.Future.return (merge ~base:repo_config repo_overrides)
             >>= fun repo_config ->
             Abbs_future_combinators.Infix_result_app.(
               (fun default_repo_config repo_config -> (default_repo_config, repo_config))
-              <$> wrap_err "default" (M.Github.repo_config_of_json default_repo_config)
-              <*> wrap_err "repo" (M.Github.repo_config_of_json repo_config))
+              <$> wrap_err "default" (M.Github.repo_config_of_json (get_json default_repo_config))
+              <*> wrap_err "repo" (M.Github.repo_config_of_json (get_json repo_config)))
             >>= fun (default_repo_config, repo_config) ->
             Abb.Future.return
               (Ok
@@ -383,17 +393,17 @@ module Make (M : S) = struct
                    Terrat_base_repo_config_v1.merge_with_default_branch_config
                      ~default:default_repo_config
                      repo_config ))
-        | _, _, (Some (_, repo_forced_config) as config), _, _ ->
-            let provenance = collect_provenance [ system_defaults; global_defaults; config ] in
-            validate_configs [ system_defaults; global_defaults; config ]
+        | _, _, (Some (_, _) as forced_repo_config), _, _ ->
+            let provenance =
+              collect_provenance [ system_defaults; global_defaults; forced_repo_config ]
+            in
+            validate_configs [ system_defaults; global_defaults; forced_repo_config ]
             >>= fun () ->
-            let system_defaults = get_json system_defaults in
-            let global_defaults = get_json global_defaults in
-            Abb.Future.return (Jsonu.merge ~base:system_defaults global_defaults)
+            Abb.Future.return (merge ~base:system_defaults global_defaults)
             >>= fun global_defaults ->
-            Abb.Future.return (Jsonu.merge ~base:global_defaults repo_forced_config)
+            Abb.Future.return (merge ~base:global_defaults forced_repo_config)
             >>= fun repo_config ->
-            wrap_err "repo" (M.Github.repo_config_of_json repo_config)
+            wrap_err "repo" (M.Github.repo_config_of_json (get_json repo_config))
             >>= fun repo_config -> Abb.Future.return (Ok (provenance, repo_config))
     end
 
