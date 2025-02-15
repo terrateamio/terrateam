@@ -124,6 +124,7 @@ let migrations =
     ("remake-step-output-table", run_file_sql "2024-11-22-remake-step-output-table.sql");
     ("add-has_changes-to-plans", run_file_sql "2024-12-07-add-has_changes-to-plans.sql");
     ("add-trial-columns", run_file_sql "2025-01-14-add-trial-columns.sql");
+    ("add-multiple-drift-schedules", run_file_sql "2025-02-15-add-multiple-drift-schedules.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations
