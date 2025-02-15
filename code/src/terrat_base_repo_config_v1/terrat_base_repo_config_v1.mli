@@ -340,22 +340,41 @@ module Dirs : sig
 end
 
 module Drift : sig
-  module Schedule : sig
-    type t =
-      | Hourly
-      | Daily
-      | Weekly
-      | Monthly
+  module Window : sig
+    type t = {
+      end_ : string;
+      start : string;
+    }
     [@@deriving show, yojson, eq]
 
-    val to_string : t -> string
+    val make :
+      start:string -> end_:string -> unit -> (t, [> `Window_parse_timezone_err of string ]) result
+  end
+
+  module Schedule : sig
+    module Sched : sig
+      type t =
+        | Hourly
+        | Daily
+        | Weekly
+        | Monthly
+      [@@deriving show, yojson, eq]
+
+      val to_string : t -> string
+    end
+
+    type t = {
+      tag_query : Tag_query.t;
+      schedule : Sched.t;
+      reconcile : bool; [@default false]
+      window : Window.t option;
+    }
+    [@@deriving make, show, yojson, eq]
   end
 
   type t = {
     enabled : bool; [@default false]
-    reconcile : bool; [@default false]
-    schedule : Schedule.t; [@default Schedule.Weekly]
-    tag_query : Tag_query.t; [@default Tag_query.any]
+    schedules : Schedule.t String_map.t; [@default String_map.empty]
   }
   [@@deriving make, show, yojson, eq]
 end
@@ -611,6 +630,7 @@ type of_version_1_err =
   | `Pattern_parse_err of string
   | `Unknown_lock_policy_err of string
   | `Unknown_plan_mode_err of string
+  | `Window_parse_timezone_err of string
   | `Workflows_apply_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Workflows_apply_unknown_visible_on_err of string
   | `Workflows_plan_unknown_run_on_err of Terrat_repo_config_run_on.t

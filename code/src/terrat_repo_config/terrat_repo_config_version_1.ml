@@ -59,6 +59,25 @@ module Dirs = struct
   include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Terrat_repo_config_dir)
 end
 
+module Drift = struct
+  type t =
+    | Drift_1 of Terrat_repo_config_drift_1.t
+    | Drift_2 of Terrat_repo_config_drift_2.t
+  [@@deriving show, eq]
+
+  let of_yojson =
+    Json_schema.one_of
+      (let open CCResult in
+       [
+         (fun v -> map (fun v -> Drift_1 v) (Terrat_repo_config_drift_1.of_yojson v));
+         (fun v -> map (fun v -> Drift_2 v) (Terrat_repo_config_drift_2.of_yojson v));
+       ])
+
+  let to_yojson = function
+    | Drift_1 v -> Terrat_repo_config_drift_1.to_yojson v
+    | Drift_2 v -> Terrat_repo_config_drift_2.to_yojson v
+end
+
 module Hooks = struct
   type t = {
     all : Terrat_repo_config_hook.t option; [@default None]
@@ -133,7 +152,7 @@ type t = {
   default_tf_version : string option; [@default None]
   destination_branches : Destination_branches.t option; [@default None]
   dirs : Dirs.t option; [@default None]
-  drift : Terrat_repo_config_drift.t option; [@default None]
+  drift : Drift.t option; [@default None]
   enabled : bool; [@default true]
   engine : Terrat_repo_config_engine.t option; [@default None]
   hooks : Hooks.t option; [@default None]

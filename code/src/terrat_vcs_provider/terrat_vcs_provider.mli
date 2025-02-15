@@ -50,7 +50,7 @@ module Msg : sig
     | Mismatched_refs
     | Missing_plans of Terrat_change.Dirspace.t list
     | Plan_no_matching_dirspaces
-    | Premium_feature_err of [ `Access_control ]
+    | Premium_feature_err of [ `Access_control | `Multiple_drift_schedules ]
     | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
     | Pull_request_not_mergeable
     | Repo_config of (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t)
@@ -540,7 +540,10 @@ module type S = sig
     (unit, [> `Error ]) result Abb.Future.t
 
   val query_missing_drift_scheduled_runs :
-    request_id:string -> Db.t -> ((Account.t * Repo.t) list, [> `Error ]) result Abb.Future.t
+    request_id:string ->
+    Db.t ->
+    ((string * Account.t * Repo.t * bool * Terrat_tag_query.t) list, [> `Error ]) result
+    Abb.Future.t
 
   val repo_config_of_json :
     Yojson.Safe.t ->

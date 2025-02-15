@@ -631,21 +631,29 @@ module Sql = struct
       sql
       /^ read "upsert_drift_schedule.sql"
       /% Var.bigint "repo"
-      /% Var.(ud (text "schedule") Terrat_base_repo_config_v1.Drift.Schedule.to_string)
+      /% Var.(ud (text "schedule") Terrat_base_repo_config_v1.Drift.Schedule.Sched.to_string)
       /% Var.boolean "reconcile"
-      /% Var.(option (ud (text "tag_query") Terrat_tag_query.to_string)))
+      /% Var.(option (ud (text "tag_query") Terrat_tag_query.to_string))
+      /% Var.text "name"
+      /% Var.(option (timetz "window_start"))
+      /% Var.(option (timetz "window_end")))
 
-  let delete_drift_schedule =
+  let delete_drift_schedules =
     Pgsql_io.Typed_sql.(
       sql
-      /^ "delete from github_drift_schedules where repository = $repo_id"
-      /% Var.bigint "repo_id")
+      /^ "delete from github_drift_schedules where repository = $repo_id and not (name = \
+          any($names))"
+      /% Var.bigint "repo_id"
+      /% Var.(str_array (text "names")))
 
   let select_missing_drift_scheduled_runs_query = read "select_missing_drift_scheduled_runs.sql"
 
   let select_missing_drift_scheduled_runs () =
     Pgsql_io.Typed_sql.(
       sql
+      //
+      (* drift name *)
+      Ret.text
       //
       (* installation_id *)
       Ret.bigint
@@ -820,6 +828,9 @@ module Tmpl = struct
   let repo_config_err_pattern_parse_err = read "repo_config_err_pattern_parse_err.tmpl"
   let repo_config_err_unknown_lock_policy_err = read "repo_config_err_unknown_lock_policy_err.tmpl"
 
+  let repo_config_err_window_parse_timezone_err =
+    read "repo_config_err_window_parse_timezone_err.tmpl"
+
   let repo_config_err_workflows_apply_unknown_run_on_err =
     read "repo_config_err_workflows_apply_unknown_run_on_err.tmpl"
 
@@ -841,6 +852,10 @@ module Tmpl = struct
   let apply_complete2 = read "apply_complete2.tmpl"
   let automerge_failure = read "automerge_error.tmpl"
   let premium_feature_err_access_control = read "premium_feature_err_access_control.tmpl"
+
+  let premium_feature_err_multiple_drift_schedules =
+    read "premium_feature_err_multiple_drift_schedules.tmpl"
+
   let repo_config_merge_err = read "repo_config_merge_err.tmpl"
 end
 
@@ -3101,6 +3116,15 @@ struct
             Tmpl.repo_config_err_unknown_lock_policy_err
             kv
       | `Unknown_plan_mode_err s -> assert false
+      | `Window_parse_timezone_err tz ->
+          let kv = Snabela.Kv.(Map.of_list [ ("tz", string tz) ]) in
+          apply_template_and_publish
+            ~request_id
+            client
+            pull_request
+            "WINDOW_PARSE_TIMEZONE_ERR"
+            Tmpl.repo_config_err_window_parse_timezone_err
+            kv
       | `Workflows_apply_unknown_run_on_err s ->
           let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
           apply_template_and_publish
@@ -3747,6 +3771,15 @@ struct
             pull_request
             "PREMIUM_FEATURE_ACCESS_CONTROL"
             Tmpl.premium_feature_err_access_control
+            kv
+      | Msg.Premium_feature_err `Multiple_drift_schedules ->
+          let kv = Snabela.Kv.(Map.of_list []) in
+          apply_template_and_publish
+            ~request_id
+            client
+            pull_request
+            "PREMIUM_FEATURE_MULTIPLE_DRIFT_SCHEDULES"
+            Tmpl.premium_feature_err_multiple_drift_schedules
             kv
       | Msg.Pull_request_not_appliable (_, apply_requirements) ->
           let module Dc = Terrat_change_match3.Dirspace_config in
@@ -5646,19 +5679,45 @@ struct
       | Error `Error -> Abb.Future.return (Error `Error)
 
     let store_drift_schedule ~request_id db repo drift =
+      let module V1 = Terrat_base_repo_config_v1 in
       let module D = Terrat_base_repo_config_v1.Drift in
+      let { D.enabled; schedules; _ } = drift in
       let open Abb.Future.Infix_monad in
-      (if drift.D.enabled then
+      (if enabled then
          Metrics.Psql_query_time.time (Metrics.psql_query_time "upsert_drift_schedule") (fun () ->
+             let open Abbs_future_combinators.Infix_result_monad in
+             let names = Iter.to_list @@ V1.String_map.keys schedules in
              Pgsql_io.Prepared_stmt.execute
                db
-               Sql.upsert_drift_schedule
+               Sql.delete_drift_schedules
                (CCInt64.of_int repo.Repo.id)
-               drift.D.schedule
-               drift.D.reconcile
-               (Some drift.D.tag_query))
+               names
+             >>= fun () ->
+             Abbs_future_combinators.List_result.iter
+               ~f:(fun (name, { D.Schedule.reconcile; schedule; tag_query; window }) ->
+                 let window_start, window_end =
+                   CCOption.map_or
+                     ~default:(None, None)
+                     (fun { D.Window.start; end_ } -> (Some start, Some end_))
+                     window
+                 in
+                 Pgsql_io.Prepared_stmt.execute
+                   db
+                   Sql.upsert_drift_schedule
+                   (CCInt64.of_int repo.Repo.id)
+                   schedule
+                   reconcile
+                   (Some tag_query)
+                   name
+                   window_start
+                   window_end)
+               (V1.String_map.to_list schedules))
        else
-         Pgsql_io.Prepared_stmt.execute db Sql.delete_drift_schedule (CCInt64.of_int repo.Repo.id))
+         Pgsql_io.Prepared_stmt.execute
+           db
+           Sql.delete_drift_schedules
+           (CCInt64.of_int repo.Repo.id)
+           [])
       >>= function
       | Ok () -> Abb.Future.return (Ok ())
       | Error (#Pgsql_io.err as err) ->
@@ -5674,9 +5733,12 @@ struct
           Pgsql_io.Prepared_stmt.fetch
             db
             (Sql.select_missing_drift_scheduled_runs ())
-            ~f:(fun installation_id repository_id owner name _ _ ->
-              ( { Account.installation_id = CCInt64.to_int installation_id },
-                { Repo.id = CCInt64.to_int repository_id; owner; name } )))
+            ~f:(fun drift_name installation_id repository_id owner name reconcile tag_query ->
+              ( drift_name,
+                { Account.installation_id = CCInt64.to_int installation_id },
+                { Repo.id = CCInt64.to_int repository_id; owner; name },
+                reconcile,
+                CCOption.get_or ~default:Terrat_tag_query.any tag_query )))
       >>= function
       | Ok _ as ret -> Abb.Future.return ret
       | Error (#Pgsql_io.err as err) ->

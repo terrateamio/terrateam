@@ -52,6 +52,16 @@ module Comment = struct
     >>= fun comment -> CCResult.map_err Terrat_comment.show_err (Terrat_comment.parse comment)
 end
 
+module Tag_query = struct
+  let to_yojson = CCFun.(Terrat_tag_query.to_string %> [%to_yojson: string])
+
+  let of_yojson json =
+    let open CCResult.Infix in
+    [%of_yojson: string] json
+    >>= fun tag_query ->
+    CCResult.map_err Terrat_tag_query_ast.show_err (Terrat_tag_query.of_string tag_query)
+end
+
 module Make (S : Terrat_vcs_provider.S) = struct
   (* Logging wrappers *)
   let log_time ?m request_id name t =
@@ -653,6 +663,11 @@ module Make (S : Terrat_vcs_provider.S) = struct
       | Run_drift of {
           account : S.Account.t;
           repo : S.Repo.t;
+          reconcile : bool option; [@default None]
+          tag_query :
+            (Terrat_tag_query.t[@to_yojson Tag_query.to_yojson] [@of_yojson Tag_query.of_yojson])
+            option;
+              [@default None]
         }
     [@@deriving yojson]
 
@@ -1269,6 +1284,7 @@ module Make (S : Terrat_vcs_provider.S) = struct
         working_set_matches : Terrat_change_match3.Dirspace_config.t list;
         all_matches : Terrat_change_match3.Dirspace_config.t list list;
         all_unapplied_matches : Terrat_change_match3.Dirspace_config.t list list;
+        all_tag_query_matches : Terrat_change_match3.Dirspace_config.t list list;
       }
       [@@deriving show]
     end
@@ -1690,15 +1706,18 @@ module Make (S : Terrat_vcs_provider.S) = struct
                 | Apply_autoapprove { tag_query }
                 | Apply_force { tag_query } ));
             _;
-          } -> Abb.Future.return (Ok tag_query)
-      | Event.Run_drift _ ->
+          }
+      | Event.Run_drift { tag_query = Some tag_query; _ } -> Abb.Future.return (Ok tag_query)
+      | Event.Run_drift _ -> (
           let module V1 = Terrat_base_repo_config_v1 in
           let module D = V1.Drift in
           let open Abbs_future_combinators.Infix_result_monad in
           repo_config ctx state
           >>= fun repo_config ->
-          let drift = V1.drift repo_config in
-          Abb.Future.return (Ok drift.D.tag_query)
+          let { D.schedules; _ } = V1.drift repo_config in
+          match V1.String_map.to_list schedules with
+          | (_, { D.Schedule.tag_query; _ }) :: _ -> Abb.Future.return (Ok tag_query)
+          | [] -> Abb.Future.return (Ok Terrat_tag_query.any))
       | Event.Pull_request_comment _ | Event.Push _ | Event.Run_scheduled_drift -> assert false
 
     let matches ctx state op =
@@ -1773,7 +1792,10 @@ module Make (S : Terrat_vcs_provider.S) = struct
           | layer :: _ -> CCList.filter (Terrat_change_match3.match_tag_query ~tag_query) layer
           | [] -> []
         in
-        Ok (working_set_matches, all_matches, all_unapplied_matches)
+        let all_tag_query_matches =
+          CCList.map (CCList.filter (Terrat_change_match3.match_tag_query ~tag_query)) all_matches
+        in
+        Ok (working_set_matches, all_matches, all_tag_query_matches, all_unapplied_matches)
       in
       let missing_autoplan_matches db pull_request matches =
         let module Dc = Terrat_change_match3.Dirspace_config in
@@ -1881,7 +1903,7 @@ module Make (S : Terrat_vcs_provider.S) = struct
                   (fun { Terrat_vcs_provider.Index.index; _ } -> index)
                   index)
              ())
-        >>= fun (working_set_matches, all_matches, all_unapplied_matches) ->
+        >>= fun (working_set_matches, all_matches, all_tag_query_matches, all_unapplied_matches) ->
         pull_request_safe ctx state
         >>= function
         | Some pull_request -> (
@@ -1910,7 +1932,13 @@ module Make (S : Terrat_vcs_provider.S) = struct
                   working_set_matches
                 >>= fun working_set_matches ->
                 Abb.Future.return
-                  (Ok { Matches.working_set_matches; all_matches; all_unapplied_matches })
+                  (Ok
+                     {
+                       Matches.working_set_matches;
+                       all_matches;
+                       all_tag_query_matches;
+                       all_unapplied_matches;
+                     })
             | (`Apply | `Apply_autoapprove | `Apply_force), `Auto ->
                 let working_set_matches =
                   CCList.filter
@@ -1923,13 +1951,31 @@ module Make (S : Terrat_vcs_provider.S) = struct
                     working_set_matches
                 in
                 Abb.Future.return
-                  (Ok { Matches.working_set_matches; all_matches; all_unapplied_matches })
+                  (Ok
+                     {
+                       Matches.working_set_matches;
+                       all_matches;
+                       all_tag_query_matches;
+                       all_unapplied_matches;
+                     })
             | (`Plan | `Apply | `Apply_autoapprove | `Apply_force), `Manual ->
                 Abb.Future.return
-                  (Ok { Matches.working_set_matches; all_matches; all_unapplied_matches }))
+                  (Ok
+                     {
+                       Matches.working_set_matches;
+                       all_matches;
+                       all_tag_query_matches;
+                       all_unapplied_matches;
+                     }))
         | None ->
             Abb.Future.return
-              (Ok { Matches.working_set_matches; all_matches; all_unapplied_matches })
+              (Ok
+                 {
+                   Matches.working_set_matches;
+                   all_matches;
+                   all_tag_query_matches;
+                   all_unapplied_matches;
+                 })
       in
       let open Abb.Future.Infix_monad in
       Abbs_time_it.run
@@ -3129,7 +3175,7 @@ module Make (S : Terrat_vcs_provider.S) = struct
         <*> Dv.working_branch_ref ctx state
         <*> Dv.matches ctx state `Plan)
       >>= fun (repo_config, base_ref, branch_ref, working_branch_ref, matches) ->
-      let all_matches = CCList.flatten matches.Dv.Matches.all_matches in
+      let all_matches = CCList.flatten matches.Dv.Matches.all_tag_query_matches in
       Abb.Future.return (dirspaceflows_of_changes repo_config all_matches)
       >>= fun all_dirspaceflows ->
       store_dirspaceflows
@@ -5311,17 +5357,25 @@ module Make (S : Terrat_vcs_provider.S) = struct
       let open Abbs_future_combinators.Infix_result_monad in
       Dv.repo_config ctx state
       >>= fun repo_config ->
-      let { D.enabled; schedule; reconcile; tag_query } = V1.drift repo_config in
-      Logs.info (fun m ->
-          m
-            "EVALUATOR : %s : DRIFT : enabled=%s : repo=%s : schedule=%s : reconcile=%s : \
-             tag_query=%s"
-            state.State.request_id
-            (Bool.to_string enabled)
-            (S.Repo.to_string (Event.repo state.State.event))
-            (D.Schedule.to_string schedule)
-            (Bool.to_string reconcile)
-            (Terrat_tag_query.to_string tag_query));
+      let { D.enabled; schedules } = V1.drift repo_config in
+      CCList.iter
+        (fun (name, { D.Schedule.tag_query; reconcile; schedule; window }) ->
+          Logs.info (fun m ->
+              m
+                "EVALUATOR : %s : DRIFT : name=%s : enabled=%s : repo=%s : schedule=%s : \
+                 reconcile=%s : tag_query=%s : window=%s"
+                state.State.request_id
+                name
+                (Bool.to_string enabled)
+                (S.Repo.to_string (Event.repo state.State.event))
+                (D.Schedule.Sched.to_string schedule)
+                (Bool.to_string reconcile)
+                (Terrat_tag_query.to_string tag_query)
+                (CCOption.map_or
+                   ~default:""
+                   (fun { D.Window.start; end_ } -> start ^ "-" ^ end_)
+                   window)))
+        (V1.String_map.to_list schedules);
       store_drift_schedule
         state.State.request_id
         (Terrat_vcs_provider.Ctx.storage ctx)
@@ -5342,20 +5396,23 @@ module Make (S : Terrat_vcs_provider.S) = struct
           >>= function
           | [] -> Abb.Future.return (Error (`Noop state))
           | self :: needed_runs ->
-              let f (account, repo) =
-                let request_id = Ouuid.to_string (Ouuid.v4 ()) in
+              let f (name, account, repo, reconcile, tag_query) =
                 Logs.info (fun m ->
                     m
-                      "EVALUATOR : %s : DRIFT : request_id=%s : account=%s : repo=%s"
+                      "EVALUATOR : %s : DRIFT : name=%s : account=%s : repo=%s : reconcile=%s : \
+                       tag_query=%s"
                       state.State.request_id
-                      request_id
+                      name
                       (S.Account.to_string account)
-                      (S.Repo.to_string repo));
+                      (S.Repo.to_string repo)
+                      (Bool.to_string reconcile)
+                      (Terrat_tag_query.to_string tag_query));
                 {
                   state with
                   State.st = State.St.Resume;
-                  request_id;
-                  event = Event.Run_drift { account; repo };
+                  event =
+                    Event.Run_drift
+                      { account; repo; reconcile = Some reconcile; tag_query = Some tag_query };
                 }
               in
               let states = CCList.map f needed_runs in
@@ -5376,12 +5433,17 @@ module Make (S : Terrat_vcs_provider.S) = struct
     let check_reconcile ctx state =
       let module V1 = Terrat_base_repo_config_v1 in
       let module D = V1.Drift in
-      let open Abbs_future_combinators.Infix_result_monad in
-      Dv.repo_config ctx state
-      >>= fun repo_config ->
-      match V1.drift repo_config with
-      | { D.reconcile = true; _ } -> Abb.Future.return (Ok state)
-      | { D.reconcile = false; _ } -> Abb.Future.return (Error (`Noop state))
+      match state.State.event with
+      | Event.Run_drift { reconcile = Some true; _ } -> Abb.Future.return (Ok state)
+      | Event.Run_drift { reconcile = Some false | None; _ } ->
+          Abb.Future.return (Error (`Noop state))
+      | Event.Pull_request_open _ -> assert false
+      | Event.Pull_request_close _ -> assert false
+      | Event.Pull_request_sync _ -> assert false
+      | Event.Pull_request_ready_for_review _ -> assert false
+      | Event.Pull_request_comment _ -> assert false
+      | Event.Push _ -> assert false
+      | Event.Run_scheduled_drift -> assert false
 
     let test_config_build_required ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -6143,40 +6205,39 @@ module Make (S : Terrat_vcs_provider.S) = struct
              (action
                 [
                   Flow.Step.make ~id:Id.Create_drift_events ~f:(eval_step F.create_drift_events) ();
+                  (* Checkpoint to ensure that every work manifest runs in its
+                     own transaction with its own caches. *)
+                  Flow.Step.make ~id:Id.Checkpoint ~f:(eval_step F.checkpoint) ();
                 ])
-             (seq
-                account_status_flow
-                (seq
-                   enabled_flow
-                   (seq
-                      index_flow
-                      (action
-                         [
-                           Flow.Step.make
-                             ~id:Id.Run_work_manifest_iter
-                             ~f:(eval_step F.run_drift_work_manifest_iter)
-                             ();
-                           Flow.Step.make
-                             ~id:Id.Complete_work_manifest
-                             ~f:(eval_step F.complete_work_manifest)
-                             ();
-                           Flow.Step.make
-                             ~id:Id.Unset_work_manifest_id
-                             ~f:
-                               (eval_step (fun _ state ->
-                                    Abb.Future.return
-                                      (Ok { state with State.work_manifest_id = None })))
-                             ();
-                           Flow.Step.make ~id:Id.Check_reconcile ~f:(eval_step F.check_reconcile) ();
-                           Flow.Step.make
-                             ~id:Id.Run_work_manifest_iter
-                             ~f:(eval_step F.run_drift_reconcile_work_manifest_iter)
-                             ();
-                           Flow.Step.make
-                             ~id:Id.Complete_work_manifest
-                             ~f:(eval_step F.complete_work_manifest)
-                             ();
-                         ])))))
+          @@ seq account_status_flow
+          @@ seq enabled_flow
+          @@ seq index_flow
+          @@ action
+               [
+                 Flow.Step.make
+                   ~id:Id.Run_work_manifest_iter
+                   ~f:(eval_step F.run_drift_work_manifest_iter)
+                   ();
+                 Flow.Step.make
+                   ~id:Id.Complete_work_manifest
+                   ~f:(eval_step F.complete_work_manifest)
+                   ();
+                 Flow.Step.make
+                   ~id:Id.Unset_work_manifest_id
+                   ~f:
+                     (eval_step (fun _ state ->
+                          Abb.Future.return (Ok { state with State.work_manifest_id = None })))
+                   ();
+                 Flow.Step.make ~id:Id.Check_reconcile ~f:(eval_step F.check_reconcile) ();
+                 Flow.Step.make
+                   ~id:Id.Run_work_manifest_iter
+                   ~f:(eval_step F.run_drift_reconcile_work_manifest_iter)
+                   ();
+                 Flow.Step.make
+                   ~id:Id.Complete_work_manifest
+                   ~f:(eval_step F.complete_work_manifest)
+                   ();
+               ])
           ~f:(fun _ state -> function
             | `Step_err (_, `Noop state) -> Abb.Future.return (Ok (Id.Recover_noop, state))
             | _ -> Abb.Future.return (Error `Error))
@@ -6286,27 +6347,29 @@ module Make (S : Terrat_vcs_provider.S) = struct
       let open Abb.Future.Infix_monad in
       Flow.resume ctx resume' flow
       >>= function
-      | (`Success _ | `Failure _) as ret -> Abb.Future.return (Ok ret)
+      | (`Success _ | `Failure _) as ret -> Abb.Future.return (Ok [ ret ])
       | `Yield resume' -> (
           let state = Flow.Yield.state resume' in
           match state.State.output with
           | Some (State.Io.O.Clone states) ->
-              let open Abb.Future.Infix_monad in
+              let open Abbs_future_combinators.Infix_result_monad in
               (* Cloning is used to fan a state out.  The new state's are
                  immediately resumed from where they left off. *)
-              Abbs_future_combinators.List.iter
+              Abbs_future_combinators.List_result.map
                 ~f:(fun state ->
                   let request_id = Ouuid.to_string (Ouuid.v4 ()) in
                   Logs.info (fun m ->
                       m "EVALUATOR : %s : CLONE : request_id=%s" state.State.request_id request_id);
                   let state = { state with State.request_id; input = None; output = None } in
                   let resume' = Flow.Yield.set_state state resume' in
-                  Abbs_future_combinators.ignore (exec_flow ctx resume'))
+                  exec_flow ctx resume')
                 states
-              >>= fun () ->
+              >>= fun rets ->
+              let rets = CCList.flatten rets in
               exec_flow
                 ctx
                 (Flow.Yield.set_state { state with State.input = None; output = None } resume')
+              >>= fun vs -> Abb.Future.return (Ok (rets @ vs))
           | Some _ | None -> (
               match state.State.work_manifest_id with
               | Some work_manifest_id ->
@@ -6317,8 +6380,8 @@ module Make (S : Terrat_vcs_provider.S) = struct
                     (Terrat_vcs_provider.Ctx.storage ctx)
                     work_manifest_id
                     data
-                  >>= fun () -> Abb.Future.return (Ok (`Yield resume'))
-              | None -> Abb.Future.return (Ok (`Yield resume'))))
+                  >>= fun () -> Abb.Future.return (Ok [ `Yield resume' ])
+              | None -> Abb.Future.return (Ok [ `Yield resume' ])))
 
     let rec run_work_manifests request_id ctx =
       let module Wm = Terrat_work_manifest3 in
@@ -6387,38 +6450,55 @@ module Make (S : Terrat_vcs_provider.S) = struct
                   let state = update (Flow.Yield.state resume') in
                   let resume' = Flow.Yield.set_state state resume' in
                   resume_event (Terrat_vcs_provider.Ctx.set_storage db ctx) resume' exec_flow))
-      >>= function
-      | `Success _ ->
-          let open Abb.Future.Infix_monad in
-          (match resume_point with
-          | `Work_manifest work_manifest_id ->
-              Pgsql_pool.with_conn (Terrat_vcs_provider.Ctx.storage ctx) ~f:(fun db ->
-                  delete_flow_state (Terrat_vcs_provider.Ctx.request_id ctx) db work_manifest_id)
-          | `Resume _ -> Abb.Future.return (Ok ()))
-          >>= fun _ -> Abb.Future.return (Ok ())
-      | `Failure _ ->
-          let open Abb.Future.Infix_monad in
-          (match resume_point with
-          | `Work_manifest work_manifest_id ->
-              Pgsql_pool.with_conn (Terrat_vcs_provider.Ctx.storage ctx) ~f:(fun db ->
-                  delete_flow_state (Terrat_vcs_provider.Ctx.request_id ctx) db work_manifest_id)
-          | `Resume _ -> Abb.Future.return (Ok ()))
-          >>= fun _ -> Abb.Future.return (Error `Error)
-      | `Yield resume' -> (
-          let state = Flow.Yield.state resume' in
-          match state with
-          | {
-           State.output = Some State.Io.O.Checkpoint;
-           work_manifest_id = Some work_manifest_id;
-           _;
-          } ->
-              resume_raw ctx (`Work_manifest work_manifest_id) (fun state ->
-                  { state with State.input = Some State.Io.I.Checkpointed; output = None })
-          | { State.output = Some State.Io.O.Checkpoint; work_manifest_id = None; _ } ->
-              let resume' = Flow.Yield.set_state state resume' in
-              resume_raw ctx (`Resume resume') (fun state ->
-                  { state with State.input = Some State.Io.I.Checkpointed; output = None })
-          | _ -> Abb.Future.return (Ok ()))
+      >>= fun rets ->
+      let open Abb.Future.Infix_monad in
+      Abbs_future_combinators.List.map
+        ~f:(function
+          | `Success _ ->
+              let open Abb.Future.Infix_monad in
+              (match resume_point with
+              | `Work_manifest work_manifest_id ->
+                  Pgsql_pool.with_conn (Terrat_vcs_provider.Ctx.storage ctx) ~f:(fun db ->
+                      delete_flow_state (Terrat_vcs_provider.Ctx.request_id ctx) db work_manifest_id)
+              | `Resume _ -> Abb.Future.return (Ok ()))
+              >>= fun _ -> Abb.Future.return (Ok ())
+          | `Failure _ ->
+              let open Abb.Future.Infix_monad in
+              (match resume_point with
+              | `Work_manifest work_manifest_id ->
+                  Pgsql_pool.with_conn (Terrat_vcs_provider.Ctx.storage ctx) ~f:(fun db ->
+                      delete_flow_state (Terrat_vcs_provider.Ctx.request_id ctx) db work_manifest_id)
+              | `Resume _ -> Abb.Future.return (Ok ()))
+              >>= fun _ -> Abb.Future.return (Error `Error)
+          | `Yield resume' -> (
+              let state = Flow.Yield.state resume' in
+              match state with
+              | {
+               State.output = Some State.Io.O.Checkpoint;
+               work_manifest_id = Some work_manifest_id;
+               request_id;
+               _;
+              } ->
+                  Logs.info (fun m ->
+                      m "EVALUATOR : %s : RESUME_CHECKPOINTED_WITH_WORK_MANIFEST_ID" request_id);
+                  resume_raw ctx (`Work_manifest work_manifest_id) (fun state ->
+                      { state with State.input = Some State.Io.I.Checkpointed; output = None })
+              | {
+               State.output = Some State.Io.O.Checkpoint;
+               work_manifest_id = None;
+               request_id;
+               _;
+              } ->
+                  Logs.info (fun m ->
+                      m "EVALUATOR : %s : RESUME_CHECKPOINTED_WITHOUT_WORK_MANIFEST_ID" request_id);
+                  let resume' = Flow.Yield.set_state state resume' in
+                  resume_raw ctx (`Resume resume') (fun state ->
+                      { state with State.input = Some State.Io.I.Checkpointed; output = None })
+              | _ -> Abb.Future.return (Ok ())))
+        rets
+      >>= fun rets ->
+      let open Abbs_future_combinators.Infix_result_monad in
+      Abb.Future.return (CCResult.flatten_l rets) >>= fun _ -> Abb.Future.return (Ok ())
 
     and resume ctx work_manifest_id update =
       Abbs_future_combinators.with_finally
