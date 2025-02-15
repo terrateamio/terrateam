@@ -154,10 +154,28 @@ module Make (M : S) = struct
           | None -> `Assoc []
           | Some (_, json) -> json
         in
+        let get_fname = CCOption.map (fun (fname, _) -> fname) in
         let collect_provenance =
           CCList.filter_map (function
             | Some (fname, _) -> Some fname
             | None -> None)
+        in
+        let merge ~base v =
+          CCResult.map_err
+            (fun (`Type_mismatch_err err) ->
+              `Config_merge_err
+                ( ( CCOption.get_or ~default:"" (get_fname base),
+                    CCOption.get_or ~default:"" (get_fname v) ),
+                  err ))
+            (CCResult.map
+               (fun r ->
+                 Some
+                   ( Printf.sprintf
+                       "%s,%s"
+                       (CCOption.get_or ~default:"" (get_fname base))
+                       (CCOption.get_or ~default:"" (get_fname v)),
+                     r ))
+               (Jsonu.merge ~base:(get_json base) (get_json v)))
         in
         let system_defaults =
           Some
@@ -171,20 +189,16 @@ module Make (M : S) = struct
         in
         validate_configs [ system_defaults; default_repo_config; built_config; repo_config ]
         >>= fun () ->
-        let default_repo_config = get_json default_repo_config in
-        let system_defaults = get_json system_defaults in
-        let built_config = get_json built_config in
-        let repo_config = get_json repo_config in
-        Abb.Future.return (Jsonu.merge ~base:system_defaults default_repo_config)
+        Abb.Future.return (merge ~base:system_defaults default_repo_config)
         >>= fun default_repo_config ->
-        Abb.Future.return (Jsonu.merge ~base:system_defaults built_config)
+        Abb.Future.return (merge ~base:system_defaults built_config)
         >>= fun base_repo_config ->
-        Abb.Future.return (Jsonu.merge ~base:base_repo_config repo_config)
+        Abb.Future.return (merge ~base:base_repo_config repo_config)
         >>= fun repo_config ->
         Abbs_future_combinators.Infix_result_app.(
           (fun default_repo_config repo_config -> (default_repo_config, repo_config))
-          <$> wrap_err "default" (M.Github.repo_config_of_json default_repo_config)
-          <*> wrap_err "repo" (M.Github.repo_config_of_json repo_config))
+          <$> wrap_err "default" (M.Github.repo_config_of_json (get_json default_repo_config))
+          <*> wrap_err "repo" (M.Github.repo_config_of_json (get_json repo_config)))
         >>= fun (default_repo_config, repo_config) ->
         let final_repo_config =
           Terrat_base_repo_config_v1.merge_with_default_branch_config

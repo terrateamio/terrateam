@@ -841,6 +841,7 @@ module Tmpl = struct
   let apply_complete2 = read "apply_complete2.tmpl"
   let automerge_failure = read "automerge_error.tmpl"
   let premium_feature_err_access_control = read "premium_feature_err_access_control.tmpl"
+  let repo_config_merge_err = read "repo_config_merge_err.tmpl"
 end
 
 module S = struct
@@ -3850,6 +3851,43 @@ struct
       | Msg.Repo_config_err err -> repo_config_err ~request_id ~client ~pull_request ~title:"" err
       | Msg.Repo_config_failure err ->
           repo_config_failure ~request_id ~client ~pull_request ~title:"Terrateam repository" err
+      | Msg.Repo_config_merge_err ((base, src), (key, base_value, src_value)) -> (
+          let open Abb.Future.Infix_monad in
+          Abbs_future_combinators.Infix_result_app.(
+            (fun base_value src_value -> (base_value, src_value))
+            <$> Jsonu.to_yaml_string base_value
+            <*> Jsonu.to_yaml_string src_value)
+          >>= function
+          | Ok (base_value, src_value) ->
+              let bases = CCList.filter (( <> ) "") @@ CCString.split ~by:"," base in
+              let kv =
+                Snabela.Kv.(
+                  Map.of_list
+                    [
+                      ( "base",
+                        list (CCList.map (fun name -> Map.of_list [ ("name", string name) ]) bases)
+                      );
+                      ("src", string src);
+                      ("key", string (CCOption.get_or ~default:"<unknown>" key));
+                      ("base_value", string base_value);
+                      ("src_value", string src_value);
+                    ])
+              in
+              apply_template_and_publish
+                ~request_id
+                client
+                pull_request
+                "REPO_CONFIG_MERGE_ERR"
+                Tmpl.repo_config_merge_err
+                kv
+          | Error (#Jsonu.to_yaml_string_err as err) ->
+              Logs.err (fun m ->
+                  m
+                    "GITHUB_EVALUATOR : %s : REPO_CONFIG_MERGE_ERR : %a"
+                    request_id
+                    Jsonu.pp_to_yaml_string_err
+                    err);
+              Abb.Future.return (Error `Error))
       | Msg.Repo_config_parse_failure (fname, err) ->
           let kv = Snabela.Kv.(Map.of_list [ ("fname", string fname); ("msg", string err) ]) in
           apply_template_and_publish

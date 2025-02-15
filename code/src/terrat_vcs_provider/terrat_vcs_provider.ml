@@ -58,6 +58,7 @@ module Msg = struct
     | Repo_config of (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t)
     | Repo_config_err of Terrat_base_repo_config_v1.of_version_1_err
     | Repo_config_failure of string
+    | Repo_config_merge_err of ((string * string) * (string option * Yojson.Safe.t * Yojson.Safe.t))
     | Repo_config_parse_failure of string * string
     | Run_work_manifest_err of [ `Failed_to_start | `Missing_workflow ]
     | Tag_query_err of Terrat_tag_query_ast.err

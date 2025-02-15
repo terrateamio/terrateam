@@ -5817,7 +5817,7 @@ module Make (S : Terrat_vcs_provider.S) = struct
         | Error (`Checkpoint state) ->
             Abb.Future.return (`Yield { state with State.output = Some State.Io.O.Checkpoint })
         | Error `Error ->
-            Logs.err (fun m -> m "EVALUATOR : %s : ERROR" state.State.request_id);
+            Logs.info (fun m -> m "EVALUATOR : %s" state.State.request_id);
             H.maybe_publish_msg ctx state Msg.Unexpected_temporary_err
             >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error (`Bad_glob_err s) ->
@@ -5827,9 +5827,9 @@ module Make (S : Terrat_vcs_provider.S) = struct
             H.maybe_publish_msg ctx state (Msg.Depends_on_cycle cycle)
             >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
-            Logs.err (fun m ->
+            Logs.info (fun m ->
                 m
-                  "EVALUATOR : %s : ERROR : %a"
+                  "EVALUATOR : %s : %a"
                   state.State.request_id
                   Terrat_base_repo_config_v1.pp_of_version_1_err
                   err);
@@ -5842,13 +5842,18 @@ module Make (S : Terrat_vcs_provider.S) = struct
             H.maybe_publish_msg ctx state (Msg.Repo_config_parse_failure (fname, err))
             >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error (`Premium_feature_err feature as err) ->
-            Logs.err (fun m ->
-                m "EVALUATOR : %s : ERROR : %a" state.State.request_id Repo_config.pp_fetch_err err);
+            Logs.info (fun m ->
+                m "EVALUATOR : %s : %a" state.State.request_id Repo_config.pp_fetch_err err);
             H.maybe_publish_msg ctx state (Msg.Premium_feature_err feature)
             >>= fun () -> Abb.Future.return (`Failure `Error)
+        | Error (`Config_merge_err details as err) ->
+            Logs.info (fun m ->
+                m "EVALUATOR : %s : %a" state.State.request_id Repo_config.pp_fetch_err err);
+            H.maybe_publish_msg ctx state (Msg.Repo_config_merge_err details)
+            >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error (#Repo_config.fetch_err as err) ->
-            Logs.err (fun m ->
-                m "EVALUATOR : %s : ERROR : %a" state.State.request_id Repo_config.pp_fetch_err err);
+            Logs.info (fun m ->
+                m "EVALUATOR : %s : %a" state.State.request_id Repo_config.pp_fetch_err err);
             H.maybe_publish_msg ctx state Msg.Unexpected_temporary_err
             >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error (`Ref_mismatch_err state) ->
@@ -5858,7 +5863,7 @@ module Make (S : Terrat_vcs_provider.S) = struct
             (* A failure where we know that any communication to the user that
                is necessary has been done.  So we just want to log that the
                failure happened. *)
-            Logs.err (fun m -> m "EVALUATOR : %s : ERROR : SILENT_FAILURE" state.State.request_id);
+            Logs.info (fun m -> m "EVALUATOR : %s : SILENT_FAILURE" state.State.request_id);
             Abb.Future.return (`Failure `Error)
         | Error (#Pgsql_io.err as err) ->
             Logs.err (fun m ->
