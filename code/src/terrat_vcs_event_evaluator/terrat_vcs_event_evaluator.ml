@@ -6671,7 +6671,51 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Error err -> Abb.Future.return (Error err))
     >>= fun (r, _) -> Abb.Future.return r
 
-  let run_work_manifest_initiate ctx encryption_key work_manifest_id initiate =
+  let run_pull_request_open ~ctx ~account ~user ~repo ~pull_request_id () =
+    let open Abb.Future.Infix_monad in
+    let event = Event.Pull_request_open { account; user; repo; pull_request_id } in
+    (run_event ctx event >>= fun _ -> Abb.Future.return (Ok ())
+      : (unit, [ `Error ]) result Abb.Future.t
+      :> (unit, [> `Error ]) result Abb.Future.t)
+
+  let run_pull_request_close ~ctx ~account ~user ~repo ~pull_request_id () =
+    let open Abb.Future.Infix_monad in
+    let event = Event.Pull_request_close { account; user; repo; pull_request_id } in
+    (run_event ctx event >>= fun _ -> Abb.Future.return (Ok ())
+      : (unit, [ `Error ]) result Abb.Future.t
+      :> (unit, [> `Error ]) result Abb.Future.t)
+
+  let run_pull_request_sync ~ctx ~account ~user ~repo ~pull_request_id () =
+    let open Abb.Future.Infix_monad in
+    let event = Event.Pull_request_sync { account; user; repo; pull_request_id } in
+    (run_event ctx event >>= fun _ -> Abb.Future.return (Ok ())
+      : (unit, [ `Error ]) result Abb.Future.t
+      :> (unit, [> `Error ]) result Abb.Future.t)
+
+  let run_pull_request_ready_for_review ~ctx ~account ~user ~repo ~pull_request_id () =
+    let open Abb.Future.Infix_monad in
+    let event = Event.Pull_request_ready_for_review { account; user; repo; pull_request_id } in
+    (run_event ctx event >>= fun _ -> Abb.Future.return (Ok ())
+      : (unit, [ `Error ]) result Abb.Future.t
+      :> (unit, [> `Error ]) result Abb.Future.t)
+
+  let run_pull_request_comment ~ctx ~account ~user ~comment ~repo ~pull_request_id ~comment_id () =
+    let open Abb.Future.Infix_monad in
+    let event =
+      Event.Pull_request_comment { account; user; comment; repo; pull_request_id; comment_id }
+    in
+    (run_event ctx event >>= fun _ -> Abb.Future.return (Ok ())
+      : (unit, [ `Error ]) result Abb.Future.t
+      :> (unit, [> `Error ]) result Abb.Future.t)
+
+  let run_push ~ctx ~account ~user ~repo ~branch () =
+    let open Abb.Future.Infix_monad in
+    let event = Event.Push { account; user; repo; branch } in
+    (run_event ctx event >>= fun _ -> Abb.Future.return (Ok ())
+      : (unit, [ `Error ]) result Abb.Future.t
+      :> (unit, [> `Error ]) result Abb.Future.t)
+
+  let run_work_manifest_initiate ~ctx ~encryption_key work_manifest_id initiate =
     let open Abb.Future.Infix_monad in
     let p = Abb.Future.Promise.create () in
     Abb.Future.fork
@@ -6687,7 +6731,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       : (Terrat_api_components.Work_manifest.t option, [ `Error ]) result Abb.Future.t
       :> (Terrat_api_components.Work_manifest.t option, [> `Error ]) result Abb.Future.t)
 
-  let run_work_manifest_result ctx work_manifest_id result =
+  let run_work_manifest_result ~ctx work_manifest_id result =
     let open Abb.Future.Infix_monad in
     let p = Abb.Future.Promise.create () in
     Abb.Future.fork
@@ -6700,7 +6744,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       : (unit, [ `Error ]) result Abb.Future.t
       :> (unit, [> `Error ]) result Abb.Future.t)
 
-  let run_plan_store ctx work_manifest_id plan =
+  let run_plan_store ~ctx work_manifest_id plan =
     let module Pc = Terrat_api_components.Plan_create in
     let open Abb.Future.Infix_monad in
     let p = Abb.Future.Promise.create () in
@@ -6723,7 +6767,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       : (unit, [ `Error ]) result Abb.Future.t
       :> (unit, [> `Error ]) result Abb.Future.t)
 
-  let run_plan_fetch ctx work_manifest_id dirspace =
+  let run_plan_fetch ~ctx work_manifest_id dirspace =
     let open Abb.Future.Infix_monad in
     let p = Abb.Future.Promise.create () in
     Abb.Future.fork
@@ -6739,7 +6783,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       : (string option, [ `Error ]) result Abb.Future.t
       :> (string option, [> `Error ]) result Abb.Future.t)
 
-  let run_work_manifest_failure ctx work_manifest_id =
+  let run_work_manifest_failure ~ctx work_manifest_id =
     let open Abb.Future.Infix_monad in
     let p = Abb.Future.Promise.create () in
     Abb.Future.fork
