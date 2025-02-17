@@ -1,7 +1,7 @@
 insert into github_drift_schedules as gds
-  (repository, schedule, reconcile, tag_query, updated_at)
-values ($repo, $schedule, $reconcile, $tag_query, now())
-on conflict (repository)
+  (repository, schedule, reconcile, tag_query, updated_at, name)
+values ($repo, $schedule, $reconcile, $tag_query, now(), 'default')
+on conflict (repository, name)
 do update set
   (schedule,
    reconcile,
