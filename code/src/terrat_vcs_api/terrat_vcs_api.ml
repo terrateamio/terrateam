@@ -1,5 +1,5 @@
 module type ID = sig
-  type t
+  type t [@@deriving yojson, eq, show]
 
   val of_string : string -> t option
   val to_string : t -> string
@@ -12,6 +12,7 @@ module type S = sig
     type t [@@deriving yojson]
 
     val make : Id.t -> t
+    val id : t -> Id.t
     val to_string : t -> string
   end
 
@@ -53,7 +54,7 @@ module type S = sig
   module Pull_request : sig
     module Id : ID
 
-    type t
+    type t [@@deriving yojson]
 
     val base_branch_name : t -> Ref.t
     val base_ref : t -> Ref.t

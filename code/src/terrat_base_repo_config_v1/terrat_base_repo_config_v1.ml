@@ -2005,6 +2005,21 @@ let of_version_1 v1 =
        ?workflows
        ())
 
+let of_version_1_json json =
+  match Terrat_repo_config.Version_1.of_yojson json with
+  | Ok config -> of_version_1 config
+  | Error err ->
+      (* This is a cheap trick but we just want to make the error message a
+         little bit more friendly to users by replacing the parts of the error
+         message that are specific to the implementation. *)
+      Error
+        (`Repo_config_parse_err
+           ("Failed to parse repo config: "
+           ^ (err
+             |> CCString.replace ~sub:"Terrat_repo_config." ~by:""
+             |> CCString.replace ~sub:".t" ~by:""
+             |> CCString.lowercase_ascii)))
+
 let to_version_1_match_list =
   CCList.map (function
     | Access_control.Match.User user -> "user:" ^ user
