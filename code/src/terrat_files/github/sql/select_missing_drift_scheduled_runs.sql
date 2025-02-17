@@ -1,6 +1,7 @@
 with
 drift_schedules as (
     select
+        name,
         repository,
         (case schedule
          when 'hourly' then interval '1 hour'
@@ -10,7 +11,9 @@ drift_schedules as (
          end) as schedule,
          reconcile,
          tag_query,
-         updated_at
+         updated_at,
+         (current_date + window_start at time zone current_setting('timezone')) as window_start,
+         (current_date + window_end at time zone current_setting('timezone')) as window_end
     from github_drift_schedules
     where schedule in ('hourly', 'daily', 'weekly', 'monthly')
     for update skip locked
@@ -37,8 +40,21 @@ drift_work_manifests as (
 ),
 latest_drift_manifests as (
     select * from drift_work_manifests where rn = 1
+),
+drift_schedule_windows as (
+    select
+        repository,
+        name,
+        window_start,
+        (case
+           when window_end < window_start then window_end + interval '1 day'
+           else window_end
+         end) as window_end
+    from drift_schedules as ds
+    where window_start is not null and window_end is not null
 )
 select
+    ds.name as drift_name,
     gir.installation_id as installation_id,
     gir.id as repository,
     gir.owner as owner,
@@ -52,6 +68,12 @@ inner join github_installations as gi
     on gi.id = gir.installation_id
 left join latest_drift_manifests as ldm
     on ldm.repository = ds.repository
+left join drift_schedule_windows as dsw
+    on (dsw.repository, dsw.name) = (ds.repository, ds.name)
 where (ldm.state is null or ldm.state <> 'running')
-      and (ldm.repository is null or ds.schedule < (now() - ldm.created_at) or ldm.created_at < ds.updated_at)
+      and ((ldm.repository is null
+            or ds.schedule < (current_timestamp - ldm.created_at)
+            or ldm.created_at < ds.updated_at)
+           and (dsw.window_start is null
+                or (dsw.window_start <= current_timestamp and current_timestamp < dsw.window_end)))
       and gi.state = 'installed'

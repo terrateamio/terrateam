@@ -107,9 +107,9 @@ module Io = struct
     let open Abbs_future_combinators.Infix_result_monad in
     conn.expected_frames <- [];
     consume_until conn (function
-        | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'T' | 'E' } when conn.in_tx -> true
-        | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'I' } when not conn.in_tx -> true
-        | _ -> false)
+      | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'T' | 'E' } when conn.in_tx -> true
+      | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'I' } when not conn.in_tx -> true
+      | _ -> false)
     >>= fun res ->
     assert (res = []);
     Abb.Future.return (Ok ())
@@ -240,6 +240,7 @@ module Typed_sql = struct
     let boolean = make Oid.bool (fun b vs -> (if b then Some "true" else Some "false") :: vs)
     let date = make Oid.date (fun s vs -> Some s :: vs)
     let time = make Oid.time (fun s vs -> Some s :: vs)
+    let timetz = make Oid.timetz (fun s vs -> Some s :: vs)
     let timestamp = make Oid.timestamp (fun s vs -> Some s :: vs)
     let timestamptz = make Oid.timestamptz (fun s vs -> Some s :: vs)
     let ud t f = make t.oid (fun v vs -> t.f (f v) vs) t.name
@@ -314,9 +315,9 @@ module Typed_sql = struct
 
     let boolean =
       take_one (function
-          | "true" | "t" -> Some true
-          | "false" | "f" -> Some false
-          | _ -> None)
+        | "true" | "t" -> Some true
+        | "false" | "f" -> Some false
+        | _ -> None)
 
     let ud f xs = f xs
 
@@ -343,8 +344,8 @@ module Typed_sql = struct
   let ( /% ) t v = Variable (t, v)
   let ( // ) t r = Ret (t, r)
 
-  let rec concat :
-      type q qr p pr qr' pr'. (q, qr, p, pr) t -> (qr, qr', pr, pr') t -> (q, qr', p, pr') t =
+  let rec concat : type q qr p pr qr' pr'.
+      (q, qr, p, pr) t -> (qr, qr', pr, pr') t -> (q, qr', p, pr') t =
    fun t1 t2 ->
     match t2 with
     | Sql -> t1

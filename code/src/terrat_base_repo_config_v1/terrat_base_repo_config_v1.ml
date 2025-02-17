@@ -2,6 +2,226 @@ module V1 = Terrat_repo_config.Version_1
 module String_map = Terrat_data.String_map
 module String_set = Terrat_data.String_set
 
+let timezone_abbreviations =
+  String_set.of_list
+    [
+      "ACDT";
+      "ACST";
+      "ACT";
+      "ACT";
+      "ACWST";
+      "ADT";
+      "AEDT";
+      "AEST";
+      "AEST";
+      "AEDT";
+      "AFT";
+      "AKDT";
+      "AKST";
+      "ALMT";
+      "AMST";
+      "AMT";
+      "AMT";
+      "ANAT";
+      "AQTT";
+      "ART";
+      "AST";
+      "AST";
+      "AWST";
+      "AZOST";
+      "AZOT";
+      "AZT";
+      "BNT";
+      "BIOT";
+      "BIT";
+      "BOT";
+      "BRST";
+      "BRT";
+      "BST";
+      "BST";
+      "BST";
+      "BTT";
+      "CAT";
+      "CCT";
+      "CDT";
+      "CDT";
+      "CEST";
+      "CET";
+      "CHADT";
+      "CHAST";
+      "CHOT";
+      "CHOST";
+      "CHST";
+      "CHUT";
+      "CIST";
+      "CKT";
+      "CLST";
+      "CLT";
+      "COST";
+      "COT";
+      "CST";
+      "CST";
+      "CST";
+      "CST";
+      "CDT";
+      "CVT";
+      "CWST";
+      "CXT";
+      "DAVT";
+      "DDUT";
+      "DFT";
+      "EASST";
+      "EAST";
+      "EAT";
+      "ECT";
+      "ECT";
+      "EDT";
+      "EEST";
+      "EET";
+      "EGST";
+      "EGT";
+      "EST";
+      "EST";
+      "EDT";
+      "FET";
+      "FJT";
+      "FKST";
+      "FKT";
+      "FNT";
+      "GALT";
+      "GAMT";
+      "GET";
+      "GFT";
+      "GILT";
+      "GIT";
+      "GMT";
+      "GST";
+      "GST";
+      "GYT";
+      "HDT";
+      "HAEC";
+      "HST";
+      "HKT";
+      "HMT";
+      "HOVST";
+      "HOVT";
+      "ICT";
+      "IDLW";
+      "IDT";
+      "IOT";
+      "IRDT";
+      "IRKT";
+      "IRST";
+      "IST";
+      "IST";
+      "IST";
+      "JST";
+      "KALT";
+      "KGT";
+      "KOST";
+      "KRAT";
+      "KST";
+      "LHST";
+      "LHST";
+      "LINT";
+      "MAGT";
+      "MART";
+      "MAWT";
+      "MDT";
+      "MET";
+      "MEST";
+      "MHT";
+      "MIST";
+      "MIT";
+      "MMT";
+      "MSK";
+      "MST";
+      "MST";
+      "MST";
+      "MDT";
+      "MUT";
+      "MVT";
+      "MYT";
+      "NCT";
+      "NDT";
+      "NFT";
+      "NOVT";
+      "NPT";
+      "NST";
+      "NT";
+      "NUT";
+      "NZDT";
+      "NZST";
+      "OMST";
+      "ORAT";
+      "PDT";
+      "PET";
+      "PETT";
+      "PGT";
+      "PHOT";
+      "PHT";
+      "PHST";
+      "PKT";
+      "PMDT";
+      "PMST";
+      "PONT";
+      "PST";
+      "PST";
+      "PDT";
+      "PWT";
+      "PYST";
+      "PYT";
+      "RET";
+      "ROTT";
+      "SAKT";
+      "SAMT";
+      "SAST";
+      "SBT";
+      "SCT";
+      "SDT";
+      "SGT";
+      "SLST";
+      "SRET";
+      "SRT";
+      "SST";
+      "SYOT";
+      "TAHT";
+      "THA";
+      "TFT";
+      "TJT";
+      "TKT";
+      "TLT";
+      "TMT";
+      "TRT";
+      "TOT";
+      "TST";
+      "TVT";
+      "ULAST";
+      "ULAT";
+      "UTC";
+      "UYST";
+      "UYT";
+      "UZT";
+      "VET";
+      "VLAT";
+      "VOLT";
+      "VOST";
+      "VUT";
+      "WAKT";
+      "WAST";
+      "WAT";
+      "WEST";
+      "WET";
+      "WIB";
+      "WIT";
+      "WITA";
+      "WGST";
+      "WGT";
+      "WST";
+      "YAKT";
+      "YEKT";
+    ]
+
 let map_opt f = function
   | None -> Ok None
   | Some v ->
@@ -442,26 +662,51 @@ module Dirs = struct
 end
 
 module Drift = struct
-  module Schedule = struct
-    type t =
-      | Hourly
-      | Daily
-      | Weekly
-      | Monthly
+  module Window = struct
+    type t = {
+      end_ : string;
+      start : string;
+    }
     [@@deriving show, yojson, eq]
 
-    let to_string = function
-      | Hourly -> "hourly"
-      | Daily -> "daily"
-      | Weekly -> "weekly"
-      | Monthly -> "monthly"
+    let make ~start ~end_ () =
+      match (CCString.Split.right ~by:" " start, CCString.Split.right ~by:" " end_) with
+      | Some (_, tz), _ when not (String_set.mem tz timezone_abbreviations) ->
+          Error (`Window_parse_timezone_err tz)
+      | _, Some (_, tz) when not (String_set.mem tz timezone_abbreviations) ->
+          Error (`Window_parse_timezone_err tz)
+      | None, _ | _, None -> Error (`Window_parse_timezone_err "")
+      | _, _ -> Ok { start; end_ }
+  end
+
+  module Schedule = struct
+    module Sched = struct
+      type t =
+        | Hourly
+        | Daily
+        | Weekly
+        | Monthly
+      [@@deriving show, yojson, eq]
+
+      let to_string = function
+        | Hourly -> "hourly"
+        | Daily -> "daily"
+        | Weekly -> "weekly"
+        | Monthly -> "monthly"
+    end
+
+    type t = {
+      tag_query : Tag_query.t;
+      schedule : Sched.t;
+      reconcile : bool; [@default false]
+      window : Window.t option;
+    }
+    [@@deriving make, show, yojson, eq]
   end
 
   type t = {
     enabled : bool; [@default false]
-    reconcile : bool; [@default false]
-    schedule : Schedule.t; [@default Schedule.Weekly]
-    tag_query : Tag_query.t; [@default Tag_query.any]
+    schedules : Schedule.t String_map.t; [@default String_map.empty]
   }
   [@@deriving make, show, yojson, eq]
 end
@@ -726,6 +971,7 @@ type of_version_1_err =
   | `Pattern_parse_err of string
   | `Unknown_lock_policy_err of string
   | `Unknown_plan_mode_err of string
+  | `Window_parse_timezone_err of string
   | `Workflows_apply_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Workflows_apply_unknown_visible_on_err of string
   | `Workflows_plan_unknown_run_on_err of Terrat_repo_config_run_on.t
@@ -1042,10 +1288,10 @@ let of_version_1_hook_op =
   | Op.Hook_op_slack _ -> assert false
 
 let of_version_1_drift_schedule = function
-  | "hourly" -> Ok Drift.Schedule.Hourly
-  | "daily" -> Ok Drift.Schedule.Daily
-  | "weekly" -> Ok Drift.Schedule.Weekly
-  | "monthly" -> Ok Drift.Schedule.Monthly
+  | "hourly" -> Ok Drift.Schedule.Sched.Hourly
+  | "daily" -> Ok Drift.Schedule.Sched.Daily
+  | "weekly" -> Ok Drift.Schedule.Sched.Weekly
+  | "monthly" -> Ok Drift.Schedule.Sched.Monthly
   | unknown -> Error (`Drift_schedule_err unknown)
 
 let of_version_1_workflow_op_plan_mode = function
@@ -1404,9 +1650,9 @@ let of_version_1_dirs default_when_modified { V1.Dirs.additional; _ } =
     (Json_schema.String_map.to_list additional)
   >>= fun dirs -> Ok (String_map.of_list dirs)
 
-let of_version_1_drift drift =
+let of_version_1_drift_1 drift =
   let open CCResult.Infix in
-  let module Dr = Terrat_repo_config_drift in
+  let module Dr = Terrat_repo_config_drift_1 in
   let { Dr.enabled; reconcile; schedule; tag_query } = drift in
   of_version_1_drift_schedule schedule
   >>= fun schedule ->
@@ -1414,7 +1660,40 @@ let of_version_1_drift drift =
     (function
       | `Tag_query_error err -> `Drift_tag_query_err err)
     (map_opt Terrat_tag_query.of_string tag_query)
-  >>= fun tag_query -> Ok (Drift.make ~enabled ~reconcile ~schedule ?tag_query ())
+  >>= fun tag_query ->
+  let tag_query = CCOption.get_or ~default:Tag_query.any tag_query in
+  Ok
+    (Drift.make
+       ~enabled
+       ~schedules:
+         (String_map.of_list
+            [ ("default", Drift.Schedule.make ~tag_query ~schedule ~reconcile ()) ])
+       ())
+
+let of_version_1_drift_2 drift =
+  let open CCResult.Infix in
+  let module Dr = Terrat_repo_config_drift_2 in
+  let module Schedule = Terrat_repo_config_drift_schedule in
+  let { Dr.enabled; schedules } = drift in
+  CCResult.map_l
+    (fun (name, { Schedule.tag_query; reconcile; schedule; window }) ->
+      of_version_1_drift_schedule schedule
+      >>= fun schedule ->
+      CCResult.map_err
+        (function
+          | `Tag_query_error err -> `Drift_tag_query_err err)
+        (Terrat_tag_query.of_string tag_query)
+      >>= fun tag_query ->
+      map_opt (fun { Schedule.Window.start; end_ } -> Drift.Window.make ~start ~end_ ()) window
+      >>= fun window -> Ok (name, Drift.Schedule.make ~tag_query ~reconcile ~schedule ?window ()))
+    (Json_schema.String_map.to_list @@ Dr.Schedules.additional schedules)
+  >>= fun schedules -> Ok (Drift.make ~enabled ~schedules:(String_map.of_list schedules) ())
+
+let of_version_1_drift =
+  let module V1 = Terrat_repo_config_version_1 in
+  function
+  | V1.Drift.Drift_1 drift -> of_version_1_drift_1 drift
+  | V1.Drift.Drift_2 drift -> of_version_1_drift_2 drift
 
 let of_version_1_engine default_tf_version engine =
   match (default_tf_version, engine) with
@@ -1873,14 +2152,32 @@ let to_version_1_dirs dirs =
   Ds.make ~additional:(to_version_1_dirs_dir dirs) Json_schema.Empty_obj.t
 
 let to_version_1_drift drift =
-  let module D = Terrat_repo_config.Drift in
-  let { Drift.enabled; reconcile; schedule; tag_query } = drift in
-  {
-    D.enabled;
-    reconcile;
-    schedule = Drift.Schedule.to_string schedule;
-    tag_query = Some (Terrat_tag_query.to_string tag_query);
-  }
+  let module D = Terrat_repo_config.Drift_2 in
+  let module Schedule = Terrat_repo_config_drift_schedule in
+  let { Drift.enabled; schedules } = drift in
+  let schedules =
+    CCList.map
+      (fun (name, { Drift.Schedule.tag_query; reconcile; schedule; window }) ->
+        let window =
+          CCOption.map (fun { Drift.Window.start; end_ } -> { Schedule.Window.start; end_ }) window
+        in
+        ( name,
+          {
+            Schedule.reconcile;
+            schedule = Drift.Schedule.Sched.to_string schedule;
+            tag_query = Terrat_tag_query.to_string tag_query;
+            window;
+          } ))
+      (String_map.to_list schedules)
+  in
+  Terrat_repo_config_version_1.Drift.Drift_2
+    {
+      D.enabled;
+      schedules =
+        D.Schedules.make
+          ~additional:(Json_schema.String_map.of_list schedules)
+          Json_schema.Empty_obj.t;
+    }
 
 let to_version_1_engine engine =
   let module E = Terrat_repo_config.Engine in

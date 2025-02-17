@@ -50,6 +50,8 @@ module Make (S : Terrat_vcs_provider.S) : sig
       | Run_drift of {
           account : S.Account.t;
           repo : S.Repo.t;
+          reconcile : bool option;
+          tag_query : Terrat_tag_query.t option;
         }
   end
 

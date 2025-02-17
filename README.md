@@ -183,25 +183,25 @@ Terrateam is available in two versions:
   
 - **Enterprise Edition (EE)**: Designed for larger teams and organizations that require advanced features like RBAC, UI-based audit trails, centralized configuration, and more. Available via [Terrateam Cloud](https://terrateam.io) (all plans), Private Cloud, or Self-Hosted options. The Enterprise Edition is ideal for companies with stricter compliance and governance requirements. [Contact us](https://terrateam.io/contact) for more details.
 
-| Category                    | Feature                             | Open-Source (MPL-2.0)    | Enterprise (Proprietary) |
-|-----------------------------|-------------------------------------|--------------------------|--------------------------|
-| **Core Features**           | Plan & Apply Operations             | :white_check_mark:       | :white_check_mark:       |
-|                             | Apply Before / After Merge          | :white_check_mark:       | :white_check_mark:       |
-|                             | Layered Runs (Dependencies)         | :white_check_mark:       | :white_check_mark:       |
-|                             | Drift Detection & Reconciliation    | :white_check_mark:       | :white_check_mark:       |
-|                             | Cost Estimation                     | :white_check_mark:       | :white_check_mark:       |
-| **Scalability**             | High Availability                   | :white_check_mark:       | :white_check_mark:       |
-|                             | Unlimited Concurrency               | :white_check_mark:       | :white_check_mark:       |
-|                             | Private Runners                     | :white_check_mark:       | :white_check_mark:       |
-| **Integrations**            | GitHub Environments Support         | :white_check_mark:       | :white_check_mark:       |
-|                             | GitHub Secrets Integration          | :white_check_mark:       | :white_check_mark:       |
-|                             | OPA, Checkov, and more              | :white_check_mark:       | :white_check_mark:       |
-| **Advanced Features**       | Centralized Configuration           | :heavy_minus_sign:       | :white_check_mark:       |
-|                             | Dynamic Configuration Builder       | :white_check_mark:       | :white_check_mark:       |
-| **Security & Compliance**   | Fine-Grained Apply Requirements     | :white_check_mark:       | :white_check_mark:       |
-|                             | OIDC Authentication                 | :white_check_mark:       | :white_check_mark:       |
-|                             | Role-Based Access Control (RBAC)    | :heavy_minus_sign:       | :white_check_mark:       |
-|                             | Audit Trail UI                      | :heavy_minus_sign:       | :white_check_mark:       |
+| Category                  | Feature                          | Open-Source (MPL-2.0)                | Enterprise (Proprietary)                |
+|---------------------------|----------------------------------|--------------------------------------|-----------------------------------------|
+| **Core Features**         | Plan & Apply Operations          | :white_check_mark:                   | :white_check_mark:                      |
+|                           | Apply Before / After Merge       | :white_check_mark:                   | :white_check_mark:                      |
+|                           | Layered Runs (Dependencies)      | :white_check_mark:                   | :white_check_mark:                      |
+|                           | Drift Detection & Reconciliation | :white_check_mark: (Single schedule) | :white_check_mark: (Multiple schedules) |
+|                           | Cost Estimation                  | :white_check_mark:                   | :white_check_mark:                      |
+| **Scalability**           | High Availability                | :white_check_mark:                   | :white_check_mark:                      |
+|                           | Unlimited Concurrency            | :white_check_mark:                   | :white_check_mark:                      |
+|                           | Private Runners                  | :white_check_mark:                   | :white_check_mark:                      |
+| **Integrations**          | GitHub Environments Support      | :white_check_mark:                   | :white_check_mark:                      |
+|                           | GitHub Secrets Integration       | :white_check_mark:                   | :white_check_mark:                      |
+|                           | OPA, Checkov, and more           | :white_check_mark:                   | :white_check_mark:                      |
+| **Advanced Features**     | Centralized Configuration        | :heavy_minus_sign:                   | :white_check_mark:                      |
+|                           | Dynamic Configuration Builder    | :white_check_mark:                   | :white_check_mark:                      |
+| **Security & Compliance** | Fine-Grained Apply Requirements  | :white_check_mark:                   | :white_check_mark:                      |
+|                           | OIDC Authentication              | :white_check_mark:                   | :white_check_mark:                      |
+|                           | Role-Based Access Control (RBAC) | :heavy_minus_sign:                   | :white_check_mark:                      |
+|                           | Audit Trail UI                   | :heavy_minus_sign:                   | :white_check_mark:                      |
 
 Both versions include essential automation features, but the Enterprise Edition offers additional capabilities that help manage larger infrastructures, provide more granular control, and ensure security and compliance at scale.
 

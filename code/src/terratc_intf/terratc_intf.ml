@@ -6,7 +6,7 @@ module Repo_config = struct
     | `Json_decode_err of string * string
     | `Unexpected_err of string
     | `Yaml_decode_err of string * string
-    | `Premium_feature_err of [ `Access_control ]
+    | `Premium_feature_err of [ `Access_control | `Multiple_drift_schedules ]
     | `Error
     ]
   [@@deriving show]

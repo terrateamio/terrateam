@@ -9,23 +9,51 @@ The `drift` configuration can be used to control drift detection and reconciliat
 ```yaml
 drift:
   enabled: false
-  reconcile: false
+  schedules: {}
 ```
 
 ## Keys
 | Key | Type | Description |
 |-----|------|-------------|
 | enabled | Boolean | Specifies whether drift detection is enabled. If set to false, drift detection and reconciliation will not run. Default is false. |
-| schedule | String | The interval to run drift detection and reconciliation: hourly, daily, weekly, monthly. |
+| schedules | Object | An object where the key is the unique name of the schedule and the value is the configuration for the schedule. |
+
+:::note
+More than one schedule is a SaaS (all plans) and Enterprise Edition feature.
+:::
+
+### Schedule
+| Key | Type | Description |
+|-----|------|-------------|
+| schedule | String | The interval to run drift detection and reconciliation: `hourly`, `daily`, `weekly`, `monthly`. |
 | reconcile | Boolean | Specifies whether reconciliation is enabled. Default is false. |
 | tag_query | String | A tag query that specifies which directories and workspaces drift detection and reconciliation should be applied to. |
+| window | Object | The window that the scheduled drift can run in. Optional. |
+
+The `schedule` defines how frequently drift can run.  There is no guarantee that drift will run as frequently as specified or when it will run.  In practice, this is only relevant for `hourly`, as a drift run might take longer than an hour to run.
+
+### Window
+| Key | Type | Description |
+|-----|------|-------------|
+| start | String | The start of the window, inclusive, in the form `HH:MM TZ`.  Hour should be in 24-hour notation. |
+| end | String | The end of the window, exclusive, in the form `HH:MM TZ`.  Hour should be in 24-hour notation. |
+
+For a list of valid timezone abbreviations, see [here](https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations).
+
+:::note
+If `end` is less than `start`, it is interpreted as crossing over to the next day.  For example if `start` is `21:00 EST` and `end` is `01:00 EST`, the window wills start at `21:00 EST` today and end at `01:00 EST` tomorrow.
+:::
+
 
 ## Examples
 ### Enabling Drift Detection
 ```yaml
 drift:
   enabled: true
-  schedule: daily
+  schedules:
+    default:
+      tag_query: ''
+      schedule: daily
 ```
 This configuration will enable drift detection and run it on a daily schedule.
 
@@ -33,8 +61,11 @@ This configuration will enable drift detection and run it on a daily schedule.
 ```yaml
 drift:
   enabled: true
-  reconcile: true
-  schedule: weekly
+  schedules:
+    default:
+      tag_query: ''
+      schedule: weekly
+      reconcile: true
 ```
 This configuration will enable drift detection with automatic reconciliation and run it on a weekly schedule.
 
@@ -42,8 +73,10 @@ This configuration will enable drift detection with automatic reconciliation and
 ```yaml
 drift:
   enabled: true
-  schedule: hourly
-  tag_query: 'dir:production'
+  schedules:
+    prod:
+      tag_query: 'dir:production'
+      schedule: hourly
 ```
 This configuration will enable drift detection, run it on an hourly schedule, and limit it to to the `dir:production` [tag query](/advanced-workflows/tags).
 
@@ -56,6 +89,23 @@ The `schedule` key can be set to one of the following values:
 :::info
 There is no default value for `schedule`, and this key is required when drift detection is enabled.
 :::
+
+### Enable drift for production after work hours and development any time
+```yaml
+drift:
+  enabled: true
+  schedules:
+    prod:
+      tag_query: 'dir:production'
+      schedule: daily
+      window:
+        start: '18:00 EST'
+        end: '07:00 EST'
+    dev:
+      tag_query: 'dir:dev'
+      schedule: daily
+```
+This configuration runs drift daily for both production and development environments, however the production window is limited to after 6pm to 7am the next day.
 
 ## Reconciliation
 The `reconcile` key enables or disables automatic reconciliation. When enabled, if changes are found during drift detection, an apply operation will automatically run against the generated Terraform plan to reconcile the infrastructure state.
@@ -101,6 +151,8 @@ fi
 
 ## Considerations
 When configuring drift detection, keep the following in mind:
+
+- When a drift schedule is created or updated, it is immediately run.
 - Drift detection operations are equivalent to plan operations. Existing [workflows](/configuration-reference/workflows) and [hooks](/configuration-reference/hooks) run for all drift detection operations.
 - The following environment variable is defined for plan and apply operations initiated by drift detection: `TERRATEAM_RUN_KIND=drift`
 - If reconciliation is enabled, changes will be automatically applied without manual review or approval. Ensure that you have appropriate safeguards and testing in place before enabling automatic reconciliation.

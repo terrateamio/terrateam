@@ -205,9 +205,15 @@ module Make (M : S) = struct
             ~default:default_repo_config
             repo_config
         in
+        (* Warn OSS users about enabled functionality that only is part of the
+           EE edition.  This is to make sure someone doesn't enable
+           functionality and is surprised when it doesn't work. *)
         match V1.to_view final_repo_config with
         | { V1.View.access_control = { V1.Access_control.enabled = true; _ }; _ } ->
             Abb.Future.return (Error (`Premium_feature_err `Access_control))
+        | { V1.View.drift = { V1.Drift.enabled = true; schedules }; _ }
+          when V1.String_map.cardinal schedules > 1 ->
+            Abb.Future.return (Error (`Premium_feature_err `Multiple_drift_schedules))
         | _ -> Abb.Future.return (Ok (provenance, final_repo_config))
     end
 
