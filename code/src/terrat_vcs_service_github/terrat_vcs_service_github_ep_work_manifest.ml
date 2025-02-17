@@ -1,13 +1,5 @@
-module Make
-    (Terratc :
-      Terratc_intf.S
-        with type Github.Client.t = Terrat_vcs_github.S.Client.t
-         and type Github.Account.t = Terrat_vcs_github.S.Account.t
-         and type Github.Repo.t = Terrat_vcs_github.S.Repo.t
-         and type Github.Remote_repo.t = Terrat_vcs_github.S.Remote_repo.t
-         and type Github.Ref.t = Terrat_vcs_github.S.Ref.t) =
-struct
-  module Github_evaluator = Terrat_vcs_github.Make (Terratc)
+module Make (P : Terrat_vcs_provider2_github.S) = struct
+  module Evaluator = Terrat_vcs_event_evaluator.Make (P)
 
   let response_headers = Cohttp.Header.of_list [ ("content-type", "application/json") ]
 
@@ -34,8 +26,8 @@ struct
       | [] -> assert false
       | encryption_key :: _ ->
           let request_id = Brtl_ctx.token ctx in
-          Github_evaluator.work_manifest_initiate
-            ~ctx:(Terrat_vcs_provider.Ctx.make ~request_id ~config ~storage ())
+          Evaluator.run_work_manifest_initiate
+            ~ctx:(Terrat_vcs_event_evaluator.Ctx.make ~request_id ~config ~storage ())
             ~encryption_key
             work_manifest_id
             initiate
@@ -87,8 +79,8 @@ struct
     let post config storage work_manifest_id plan ctx =
       let open Abb.Future.Infix_monad in
       let request_id = Brtl_ctx.token ctx in
-      Github_evaluator.plan_store
-        ~ctx:(Terrat_vcs_provider.Ctx.make ~request_id ~config ~storage ())
+      Evaluator.run_plan_store
+        ~ctx:(Terrat_vcs_event_evaluator.Ctx.make ~request_id ~config ~storage ())
         work_manifest_id
         plan
       >>= function
@@ -100,8 +92,8 @@ struct
     let get config storage work_manifest_id dir workspace ctx =
       let open Abb.Future.Infix_monad in
       let request_id = Brtl_ctx.token ctx in
-      Github_evaluator.plan_fetch
-        ~ctx:(Terrat_vcs_provider.Ctx.make ~request_id ~config ~storage ())
+      Evaluator.run_plan_fetch
+        ~ctx:(Terrat_vcs_event_evaluator.Ctx.make ~request_id ~config ~storage ())
         work_manifest_id
         { Terrat_dirspace.dir; workspace }
       >>= function
@@ -125,8 +117,8 @@ struct
     let put config storage work_manifest_id result ctx =
       let open Abb.Future.Infix_monad in
       let request_id = Brtl_ctx.token ctx in
-      Github_evaluator.work_manifest_result
-        ~ctx:(Terrat_vcs_provider.Ctx.make ~request_id ~config ~storage ())
+      Evaluator.run_work_manifest_result
+        ~ctx:(Terrat_vcs_event_evaluator.Ctx.make ~request_id ~config ~storage ())
         work_manifest_id
         result
       >>= fun r ->

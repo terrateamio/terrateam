@@ -70,34 +70,90 @@ module Make (S : Terrat_vcs_provider2.S) : sig
 
   val run_event : Terrat_storage.t Ctx.t -> Event.t -> unit Abb.Future.t
 
+  val run_pull_request_open :
+    ctx:Terrat_storage.t Ctx.t ->
+    account:S.Api.Account.t ->
+    user:S.Api.User.t ->
+    repo:S.Api.Repo.t ->
+    pull_request_id:S.Api.Pull_request.Id.t ->
+    unit ->
+    (unit, [> `Error ]) result Abb.Future.t
+
+  val run_pull_request_close :
+    ctx:Terrat_storage.t Ctx.t ->
+    account:S.Api.Account.t ->
+    user:S.Api.User.t ->
+    repo:S.Api.Repo.t ->
+    pull_request_id:S.Api.Pull_request.Id.t ->
+    unit ->
+    (unit, [> `Error ]) result Abb.Future.t
+
+  val run_pull_request_sync :
+    ctx:Terrat_storage.t Ctx.t ->
+    account:S.Api.Account.t ->
+    user:S.Api.User.t ->
+    repo:S.Api.Repo.t ->
+    pull_request_id:S.Api.Pull_request.Id.t ->
+    unit ->
+    (unit, [> `Error ]) result Abb.Future.t
+
+  val run_pull_request_ready_for_review :
+    ctx:Terrat_storage.t Ctx.t ->
+    account:S.Api.Account.t ->
+    user:S.Api.User.t ->
+    repo:S.Api.Repo.t ->
+    pull_request_id:S.Api.Pull_request.Id.t ->
+    unit ->
+    (unit, [> `Error ]) result Abb.Future.t
+
+  val run_pull_request_comment :
+    ctx:Terrat_storage.t Ctx.t ->
+    account:S.Api.Account.t ->
+    user:S.Api.User.t ->
+    comment:Terrat_comment.t ->
+    repo:S.Api.Repo.t ->
+    pull_request_id:S.Api.Pull_request.Id.t ->
+    comment_id:int ->
+    unit ->
+    (unit, [> `Error ]) result Abb.Future.t
+
+  val run_push :
+    ctx:Terrat_storage.t Ctx.t ->
+    account:S.Api.Account.t ->
+    user:S.Api.User.t ->
+    repo:S.Api.Repo.t ->
+    branch:S.Api.Ref.t ->
+    unit ->
+    (unit, [> `Error ]) result Abb.Future.t
+
   val run_work_manifest_initiate :
-    Terrat_storage.t Ctx.t ->
-    Cstruct.t ->
+    ctx:Terrat_storage.t Ctx.t ->
+    encryption_key:Cstruct.t ->
     Uuidm.t ->
     Terrat_api_components.Work_manifest_initiate.t ->
     (Terrat_api_components.Work_manifest.t option, [> `Error ]) result Abb.Future.t
 
   val run_work_manifest_result :
-    Terrat_storage.t Ctx.t ->
+    ctx:Terrat_storage.t Ctx.t ->
     Uuidm.t ->
     Terrat_api_components.Work_manifest_result.t ->
     (unit, [> `Error ]) result Abb.Future.t
 
   val run_plan_store :
-    Terrat_storage.t Ctx.t ->
+    ctx:Terrat_storage.t Ctx.t ->
     Uuidm.t ->
     Terrat_api_components.Plan_create.t ->
     (unit, [> `Error ]) result Abb.Future.t
 
   val run_plan_fetch :
-    Terrat_storage.t Ctx.t ->
+    ctx:Terrat_storage.t Ctx.t ->
     Uuidm.t ->
     Terrat_dirspace.t ->
     (string option, [> `Error ]) result Abb.Future.t
 
-  (** Signal that the work manifest failed for OOB reasons. *)
+  (** Signal that the work manifest failed for out-of-band reasons. *)
   val run_work_manifest_failure :
-    Terrat_storage.t Ctx.t -> Uuidm.t -> (unit, [> `Error ]) result Abb.Future.t
+    ctx:Terrat_storage.t Ctx.t -> Uuidm.t -> (unit, [> `Error ]) result Abb.Future.t
 
   val run_scheduled_drift : Terrat_storage.t Ctx.t -> (unit, [> `Error ]) result Abb.Future.t
   val run_plan_cleanup : Terrat_storage.t Ctx.t -> (unit, [> `Error ]) result Abb.Future.t

@@ -46,7 +46,7 @@ end
 
 module User = struct
   module Id = struct
-    type t = string
+    type t = string [@@deriving yojson, show, eq]
 
     let of_string = CCOption.return
     let to_string = CCFun.id
@@ -55,12 +55,13 @@ module User = struct
   type t = string [@@deriving yojson]
 
   let make = CCFun.id
+  let id = CCFun.id
   let to_string = CCFun.id
 end
 
 module Account = struct
   module Id = struct
-    type t = int
+    type t = int [@@deriving yojson, show, eq]
 
     let of_string = CCInt.of_string
     let to_string = CCInt.to_string
@@ -73,6 +74,13 @@ module Account = struct
 end
 
 module Repo = struct
+  module Id = struct
+    type t = int [@@deriving yojson, show, eq]
+
+    let of_string = CCInt.of_string
+    let to_string = CCInt.to_string
+  end
+
   type t = {
     id : int;
     name : string;
@@ -112,7 +120,7 @@ end
 
 module Pull_request = struct
   module Id = struct
-    type t = int
+    type t = int [@@deriving yojson, show, eq]
 
     let of_string = CCInt.of_string
     let to_string = CCInt.to_string

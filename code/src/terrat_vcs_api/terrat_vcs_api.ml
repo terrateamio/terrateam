@@ -37,8 +37,11 @@ module type S = sig
   end
 
   module Repo : sig
+    module Id : ID
+
     type t [@@deriving eq, yojson]
 
+    val make : id:Id.t -> name:string -> owner:string -> unit -> t
     val owner : t -> string
     val name : t -> string
     val to_string : t -> string
