@@ -1,27 +1,17 @@
 type fetch_repo_config_with_provenance_err =
   [ Terrat_base_repo_config_v1.of_version_1_err
   | `Repo_config_parse_err of string * string
-  | Jsonu.merge_err
+  | `Config_merge_err of (string * string) * (string option * Yojson.Safe.t * Yojson.Safe.t)
   | `Json_decode_err of string * string
   | `Unexpected_err of string
   | `Yaml_decode_err of string * string
+  | `Premium_feature_err of [ `Access_control | `Multiple_drift_schedules ]
   | `Error
   ]
 [@@deriving show]
 
 type access_control_query_err = [ `Error ] [@@deriving show]
 type access_control_err = access_control_query_err [@@deriving show]
-
-module Unlock_id = struct
-  type t =
-    | Pull_request of int
-    | Drift
-  [@@deriving show]
-
-  let to_string = function
-    | Pull_request id -> CCInt.to_string id
-    | Drift -> "drift"
-end
 
 module Account_status = struct
   type t =
@@ -32,6 +22,21 @@ module Account_status = struct
     ]
 end
 
+module Work_manifest_result = struct
+  type t = {
+    dirspaces_success : (Terrat_change.Dirspace.t * bool) list;
+    overall_success : bool;
+    post_hooks_success : bool;
+    pre_hooks_success : bool;
+  }
+end
+
+module Conflicting_work_manifests = struct
+  type 'a t =
+    | Conflicting of 'a list
+    | Maybe_stale of 'a list
+end
+
 module Target = struct
   type ('pr, 'repo) t =
     | Pr of 'pr
@@ -39,6 +44,22 @@ module Target = struct
         repo : 'repo;
         branch : string;
       }
+end
+
+module Index = struct
+  module Failure = struct
+    type t = {
+      file : string;
+      line_num : int option;
+      error : string;
+    }
+  end
+
+  type t = {
+    success : bool;
+    failures : Failure.t list;
+    index : Terrat_base_repo_config_v1.Index.t;
+  }
 end
 
 module Msg = struct
@@ -75,12 +96,13 @@ module Msg = struct
     | Mismatched_refs
     | Missing_plans of Terrat_change.Dirspace.t list
     | Plan_no_matching_dirspaces
-    | Premium_feature_err of [ `Access_control ]
+    | Premium_feature_err of [ `Access_control | `Multiple_drift_schedules ]
     | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
     | Pull_request_not_mergeable
     | Repo_config of (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t)
     | Repo_config_err of Terrat_base_repo_config_v1.of_version_1_err
     | Repo_config_failure of string
+    | Repo_config_merge_err of ((string * string) * (string option * Yojson.Safe.t * Yojson.Safe.t))
     | Repo_config_parse_failure of string * string
     | Run_work_manifest_err of [ `Failed_to_start | `Missing_workflow ]
     | Tag_query_err of Terrat_tag_query_ast.err
@@ -105,15 +127,200 @@ end
 module type S = sig
   module Api : Terrat_vcs_api.S
 
-  module Apply_requirements : sig
+  module Unlock_id : sig
     type t
 
-    val passed : t -> bool
-    val approved_reviews : t -> Terrat_pull_request_review.t list
+    val of_pull_request : Api.Pull_request.Id.t -> t
+    val drift : unit -> t
+    val to_string : t -> string
   end
 
-  module Pull_request : sig
-    type 'a t
+  module Db : sig
+    type t = Pgsql_io.t
+
+    val store_account_repository :
+      request_id:string ->
+      t ->
+      Api.Account.t ->
+      Api.Repo.t ->
+      (unit, [> `Error ]) result Abb.Future.t
+
+    val store_pull_request :
+      request_id:string -> t -> Api.Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
+
+    val store_index :
+      request_id:string ->
+      t ->
+      Uuidm.t ->
+      Terrat_api_components.Work_manifest_index_result.t ->
+      (Index.t, [> `Error ]) result Abb.Future.t
+
+    val store_index_result :
+      request_id:string ->
+      t ->
+      Uuidm.t ->
+      Terrat_api_components.Work_manifest_index_result.t ->
+      (unit, [> `Error ]) result Abb.Future.t
+
+    val store_repo_config_json :
+      request_id:string ->
+      t ->
+      Api.Account.t ->
+      Api.Ref.t ->
+      Yojson.Safe.t ->
+      (unit, [> `Error ]) result Abb.Future.t
+
+    val store_flow_state :
+      request_id:string -> t -> Uuidm.t -> string -> (unit, [> `Error ]) result Abb.Future.t
+
+    val store_dirspaceflows :
+      request_id:string ->
+      base_ref:Api.Ref.t ->
+      branch_ref:Api.Ref.t ->
+      t ->
+      Api.Repo.t ->
+      Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list ->
+      (unit, [> `Error ]) result Abb.Future.t
+
+    val store_tf_operation_result :
+      request_id:string ->
+      t ->
+      Uuidm.t ->
+      Terrat_api_components_work_manifest_tf_operation_result.t ->
+      (unit, [> `Error ]) result Abb.Future.t
+
+    val store_tf_operation_result2 :
+      request_id:string ->
+      t ->
+      Uuidm.t ->
+      Terrat_api_components_work_manifest_tf_operation_result2.t ->
+      (unit, [> `Error ]) result Abb.Future.t
+
+    val store_drift_schedule :
+      request_id:string ->
+      t ->
+      Api.Repo.t ->
+      Terrat_base_repo_config_v1.Drift.t ->
+      (unit, [> `Error ]) result Abb.Future.t
+
+    val query_account_status :
+      request_id:string -> t -> Api.Account.t -> (Account_status.t, [> `Error ]) result Abb.Future.t
+
+    val query_index :
+      request_id:string ->
+      t ->
+      Api.Account.t ->
+      Api.Ref.t ->
+      (Index.t option, [> `Error ]) result Abb.Future.t
+
+    val query_repo_config_json :
+      request_id:string ->
+      t ->
+      Api.Account.t ->
+      Api.Ref.t ->
+      (Yojson.Safe.t option, [> `Error ]) result Abb.Future.t
+
+    val query_next_pending_work_manifest :
+      request_id:string ->
+      t ->
+      ( (Api.Account.t, (Api.Pull_request.t, Api.Repo.t) Target.t) Terrat_work_manifest3.Existing.t
+        option,
+        [> `Error ] )
+      result
+      Abb.Future.t
+
+    val query_flow_state :
+      request_id:string -> t -> Uuidm.t -> (string option, [> `Error ]) result Abb.Future.t
+
+    val delete_flow_state :
+      request_id:string -> t -> Uuidm.t -> (unit, [> `Error ]) result Abb.Future.t
+
+    val query_pull_request_out_of_change_applies :
+      request_id:string ->
+      t ->
+      Api.Pull_request.t ->
+      (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
+
+    val query_applied_dirspaces :
+      request_id:string ->
+      t ->
+      Api.Pull_request.t ->
+      (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
+
+    val query_dirspaces_without_valid_plans :
+      request_id:string ->
+      t ->
+      Api.Pull_request.t ->
+      Terrat_change.Dirspace.t list ->
+      (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
+
+    val query_conflicting_work_manifests_in_repo :
+      request_id:string ->
+      t ->
+      Api.Pull_request.t ->
+      Terrat_change.Dirspace.t list ->
+      [< `Plan | `Apply ] ->
+      ( (Api.Account.t, (Api.Pull_request.t, Api.Repo.t) Target.t) Terrat_work_manifest3.Existing.t
+        Conflicting_work_manifests.t
+        option,
+        [> `Error ] )
+      result
+      Abb.Future.t
+
+    val query_dirspaces_owned_by_other_pull_requests :
+      request_id:string ->
+      t ->
+      Api.Pull_request.t ->
+      Terrat_change.Dirspace.t list ->
+      ((Terrat_change.Dirspace.t * Api.Pull_request.t) list, [> `Error ]) result Abb.Future.t
+
+    val query_missing_drift_scheduled_runs :
+      request_id:string ->
+      t ->
+      ((string * Api.Account.t * Api.Repo.t * bool * Terrat_tag_query.t) list, [> `Error ]) result
+      Abb.Future.t
+
+    val cleanup_repo_configs : request_id:string -> t -> (unit, [> `Error ]) result Abb.Future.t
+    val cleanup_flow_states : request_id:string -> t -> (unit, [> `Error ]) result Abb.Future.t
+    val cleanup_plans : request_id:string -> t -> (unit, [> `Error ]) result Abb.Future.t
+
+    val unlock :
+      request_id:string -> t -> Api.Repo.t -> Unlock_id.t -> (unit, [> `Error ]) result Abb.Future.t
+
+    val query_plan :
+      request_id:string ->
+      t ->
+      Uuidm.t ->
+      Terrat_dirspace.t ->
+      (string option, [> `Error ]) result Abb.Future.t
+
+    val store_plan :
+      request_id:string ->
+      t ->
+      Uuidm.t ->
+      Terrat_dirspace.t ->
+      string ->
+      bool ->
+      (unit, [> `Error ]) result Abb.Future.t
+  end
+
+  module Apply_requirements : sig
+    module Result : sig
+      type t
+
+      val passed : t -> bool
+      val approved_reviews : t -> Terrat_pull_request_review.t list
+    end
+
+    val eval :
+      request_id:string ->
+      Terrat_config.t ->
+      Api.User.t ->
+      Api.Client.t ->
+      'a Terrat_base_repo_config_v1.t ->
+      Api.Pull_request.t ->
+      Terrat_change_match3.Dirspace_config.t list ->
+      (Result.t, [> `Error ]) result Abb.Future.t
   end
 
   module Comment : sig
@@ -121,11 +328,11 @@ module type S = sig
       request_id:string ->
       Api.Client.t ->
       Api.User.t ->
-      'a Pull_request.t ->
+      Api.Pull_request.t ->
       ( Api.Account.t,
-        'a Pull_request.t,
-        ('b Pull_request.t, Api.Repo.t) Target.t,
-        Apply_requirements.t )
+        Api.Pull_request.t,
+        (Api.Pull_request.t, Api.Repo.t) Target.t,
+        Apply_requirements.Result.t )
       Msg.t ->
       (unit, [> `Error ]) result Abb.Future.t
   end
@@ -164,7 +371,7 @@ module type S = sig
   end
 
   module Commit_check : sig
-    val make_commit_check :
+    val make :
       ?work_manifest:('a, 'b) Terrat_work_manifest3.Existing.t ->
       config:Terrat_config.t ->
       description:string ->
@@ -173,6 +380,70 @@ module type S = sig
       repo:Api.Repo.t ->
       Api.Account.t ->
       Terrat_commit_check.t
+  end
+
+  module Work_manifest : sig
+    val run :
+      request_id:string ->
+      Terrat_config.t ->
+      Api.Client.t ->
+      (Api.Account.t, (Api.Pull_request.t, Api.Repo.t) Target.t) Terrat_work_manifest3.Existing.t ->
+      (unit, [> `Failed_to_start | `Missing_workflow | `Error ]) result Abb.Future.t
+
+    val create :
+      request_id:string ->
+      Db.t ->
+      (Api.Account.t, (Api.Pull_request.t, Api.Repo.t) Target.t) Terrat_work_manifest3.New.t ->
+      ( (Api.Account.t, (Api.Pull_request.t, Api.Repo.t) Target.t) Terrat_work_manifest3.Existing.t,
+        [> `Error ] )
+      result
+      Abb.Future.t
+
+    val query :
+      request_id:string ->
+      Db.t ->
+      Uuidm.t ->
+      ( (Api.Account.t, (Api.Pull_request.t, Api.Repo.t) Target.t) Terrat_work_manifest3.Existing.t
+        option,
+        [> `Error ] )
+      result
+      Abb.Future.t
+
+    val update_state :
+      request_id:string ->
+      Db.t ->
+      Uuidm.t ->
+      Terrat_work_manifest3.State.t ->
+      (unit, [> `Error ]) result Abb.Future.t
+
+    val update_run_id :
+      request_id:string -> Db.t -> Uuidm.t -> string -> (unit, [> `Error ]) result Abb.Future.t
+
+    val update_changes :
+      request_id:string ->
+      Db.t ->
+      Uuidm.t ->
+      int Terrat_change.Dirspaceflow.t list ->
+      (unit, [> `Error ]) result Abb.Future.t
+
+    val update_denied_dirspaces :
+      request_id:string ->
+      Db.t ->
+      Uuidm.t ->
+      Terrat_work_manifest3.Deny.t list ->
+      (unit, [> `Error ]) result Abb.Future.t
+
+    val update_steps :
+      request_id:string ->
+      Db.t ->
+      Uuidm.t ->
+      Terrat_work_manifest3.Step.t list ->
+      (unit, [> `Error ]) result Abb.Future.t
+
+    val result : Terrat_api_components_work_manifest_tf_operation_result.t -> Work_manifest_result.t
+
+    val result2 :
+      Terrat_api_components_work_manifest_tf_operation_result2.t -> Work_manifest_result.t
   end
 
   module Ui : sig
