@@ -445,7 +445,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             m
               "EVALUATOR : %s : QUERY_PULL_REQUEST_OUT_OF_CHANGE_APPLIES : pull_number=%s : time=%f"
               request_id
-              (S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pull_request))
+              (S.Api.Pull_request.Id.to_string (S.Pull_request.id pull_request))
               time))
       (fun () -> S.Db.query_pull_request_out_of_change_applies ~request_id db pull_request)
 
@@ -456,8 +456,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             m
               "EVALUATOR : %s : QUERY_APPLIED_DIRSPACES : repo=%s : pull_number=%s : time=%f"
               request_id
-              (S.Api.Repo.to_string (S.Api.Pull_request.repo pull_request))
-              (S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pull_request))
+              (S.Api.Repo.to_string @@ S.Pull_request.repo pull_request)
+              (S.Api.Pull_request.Id.to_string @@ S.Pull_request.id pull_request)
               time))
       (fun () -> S.Db.query_applied_dirspaces ~request_id db pull_request)
 
@@ -468,7 +468,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             m
               "EVALUATOR : %s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS : pull_number=%s : time=%f"
               request_id
-              (S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pull_request))
+              (S.Api.Pull_request.Id.to_string @@ S.Pull_request.id pull_request)
               time))
       (fun () -> S.Db.query_dirspaces_without_valid_plans ~request_id db pull_request dirspaces)
 
@@ -1527,7 +1527,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Event.Pull_request_comment _ ->
           pull_request ctx state
           >>= fun pull_request ->
-          Abb.Future.return (Ok (Terrat_vcs_provider2.Target.Pr pull_request))
+          Abb.Future.return
+            (Ok (Terrat_vcs_provider2.Target.Pr (S.Pull_request.of_api pull_request)))
       | Event.Run_drift { repo; _ } ->
           client ctx state
           >>= fun client ->
@@ -1838,7 +1839,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             query_pull_request_out_of_change_applies
               state.State.request_id
               (Ctx.storage ctx)
-              pull_request
+              (S.Pull_request.of_api pull_request)
         | None -> Abb.Future.return (Ok [])
       in
       let applied_dirspaces ctx state =
@@ -1846,7 +1847,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         pull_request_safe ctx state
         >>= function
         | Some pull_request ->
-            query_applied_dirspaces state.State.request_id (Ctx.storage ctx) pull_request
+            query_applied_dirspaces
+              state.State.request_id
+              (Ctx.storage ctx)
+              (S.Pull_request.of_api pull_request)
         | None -> Abb.Future.return (Ok [])
       in
       let diff ctx state =
@@ -1940,7 +1944,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                       && ((not (S.Api.Pull_request.is_draft_pr pull_request)) || autoplan_draft_pr))
                     working_set_matches
                 in
-                missing_autoplan_matches (Ctx.storage ctx) pull_request working_set_matches
+                missing_autoplan_matches
+                  (Ctx.storage ctx)
+                  (S.Pull_request.of_api pull_request)
+                  working_set_matches
                 >>= fun working_set_matches ->
                 Abb.Future.return
                   (Ok
@@ -2282,7 +2289,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let run_interactive ctx state f =
       if Dv.is_interactive ctx state then f () else Abb.Future.return (Ok ())
 
-    let maybe_publish_msg ctx state msg =
+    let maybe_publish_msg
+        ctx
+        state
+        (msg :
+          ( S.Api.Account.t,
+            S.Pull_request.t,
+            'target,
+            'apply_requirements )
+          Terrat_vcs_provider2.Msg.t) =
       let run =
         let open Abbs_future_combinators.Infix_result_monad in
         Dv.client ctx state
@@ -3778,7 +3793,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             | `Pull_request pr ->
                 Some
                   (Rkd.Run_kind_data_pull_request
-                     { Rkdpr.id = S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pr) })
+                     { Rkdpr.id = S.Api.Pull_request.Id.to_string (S.Pull_request.id pr) })
             | `Index | `Drift | `Build_config -> None
           in
           match step with
@@ -3996,7 +4011,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         has_changes
 
     let run_op_work_manifest_plan_iter_fetch ctx state dirspace work_manifest_id =
-      let open Abbs_future_combinators.Infix_result_monad in
       query_plan state.State.request_id (Ctx.storage ctx) work_manifest_id dirspace
   end
 
@@ -4871,7 +4885,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 client
                 (Event.user state.State.event)
                 pull_request
-                (Msg.Dest_branch_no_match pull_request)
+                (Msg.Dest_branch_no_match (S.Pull_request.of_api pull_request))
               >>= fun () -> Abb.Future.return (Error `Error))
       | Error `No_matching_source_branch -> (
           match Event.trigger_type state.State.event with
@@ -4894,7 +4908,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 client
                 (Event.user state.State.event)
                 pull_request
-                (Msg.Dest_branch_no_match pull_request)
+                (Msg.Dest_branch_no_match (S.Pull_request.of_api pull_request))
               >>= fun () -> Abb.Future.return (Error (`Noop state)))
 
     let check_access_control_plan ctx state =
@@ -4997,7 +5011,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       query_conflicting_work_manifests_in_repo
         state.State.request_id
         (Ctx.storage ctx)
-        pull_request
+        (S.Pull_request.of_api pull_request)
         dirspaces
         unified_op
       >>= function
@@ -5090,7 +5104,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             client
             (Event.user state.State.event)
             pull_request
-            (Msg.Pull_request_not_appliable (pull_request, apply_requirements))
+            (Msg.Pull_request_not_appliable (S.Pull_request.of_api pull_request, apply_requirements))
           >>= fun () -> Abb.Future.return (Error (`Noop state))
       | { Terrat_access_control.R.pass = []; deny = _ :: _ as deny }
         when not (Access_control_engine.apply_require_all_dirspace_access access_control) ->
@@ -5156,7 +5170,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       query_dirspaces_owned_by_other_pull_requests
         state.State.request_id
         (Ctx.storage ctx)
-        pull_request
+        (S.Pull_request.of_api pull_request)
         (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows)
       >>= function
       | [] -> Abb.Future.return (Ok state)
@@ -5180,7 +5194,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       query_dirspaces_without_valid_plans
         state.State.request_id
         (Ctx.storage ctx)
-        pull_request
+        (S.Pull_request.of_api pull_request)
         (CCList.map
            (fun { Terrat_change_match3.Dirspace_config.dirspace; _ } -> dirspace)
            working_set_matches)
@@ -5269,7 +5283,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                       >>= fun _ -> Abb.Future.return (Ok state)
                     else Abb.Future.return (Ok state)
                 | Error (`Merge_err reason) ->
-                    H.maybe_publish_msg ctx state (Msg.Automerge_failure (pull_request, reason))
+                    H.maybe_publish_msg
+                      ctx
+                      state
+                      (Msg.Automerge_failure (S.Pull_request.of_api pull_request, reason))
                     >>= fun () -> Abb.Future.return (Error (`Noop state))
                 | Error `Error as err -> Abb.Future.return err
               else Abb.Future.return (Ok state)

@@ -22,6 +22,7 @@ module type S = sig
     type t [@@deriving eq, yojson]
 
     val make : Id.t -> t
+    val id : t -> Id.t
     val to_string : t -> string
   end
 
@@ -42,6 +43,7 @@ module type S = sig
     type t [@@deriving eq, yojson]
 
     val make : id:Id.t -> name:string -> owner:string -> unit -> t
+    val id : t -> Id.t
     val owner : t -> string
     val name : t -> string
     val to_string : t -> string
@@ -69,6 +71,8 @@ module type S = sig
     val provisional_merge_ref : t -> Ref.t option
     val repo : t -> Repo.t
     val state : t -> Terrat_pull_request.State.t
+    val title : t -> string option
+    val user : t -> User.t option
   end
 
   val create_client :

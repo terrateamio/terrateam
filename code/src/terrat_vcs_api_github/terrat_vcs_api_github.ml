@@ -70,6 +70,7 @@ module Account = struct
   type t = { installation_id : int } [@@deriving make, yojson, eq]
 
   let make installation_id = { installation_id }
+  let id t = t.installation_id
   let to_string t = CCInt.to_string t.installation_id
 end
 
@@ -89,6 +90,7 @@ module Repo = struct
   [@@deriving eq, yojson]
 
   let make ~id ~name ~owner () = { id; name; owner }
+  let id t = t.id
   let name t = t.name
   let owner t = t.owner
   let to_string t = t.owner ^ "/" ^ t.name
@@ -190,6 +192,8 @@ module Pull_request = struct
   let pull_number t = t.id
   let repo t = t.repo
   let state t = t.state
+  let title t = t.title
+  let user t = t.user
 end
 
 module Client = struct
